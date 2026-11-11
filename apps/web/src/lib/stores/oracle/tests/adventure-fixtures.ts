@@ -67,6 +67,11 @@ export function dependencies() {
         return completeProposal;
       },
     },
+    summary: {
+      async summarize(request: { throughSequence: number }) {
+        return { text: "Notes.", throughSequence: request.throughSequence };
+      },
+    },
     clearGenerationInteraction: async () => {},
     confirmGenerationInteraction: async () => {},
     context: {

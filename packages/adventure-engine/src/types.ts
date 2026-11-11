@@ -46,6 +46,14 @@ export interface PlaceMoveProposal {
   relation?: string;
 }
 
+/** Notes written from player-visible text only (the player's actions and the GM's narration). */
+export interface StorySoFar {
+  text: string;
+  /** Sequence of the last turn folded into `text`. */
+  throughSequence: number;
+  updatedAt: string;
+}
+
 export interface RelationshipFact extends StateFact {
   subjectId: string;
   disposition: string;
@@ -397,6 +405,8 @@ export interface AdventureSession {
   places?: Place[];
   /** Where the player is now. Absent when unknown; unplaced facts then apply everywhere. */
   currentPlaceId?: string;
+  /** Rolling notes on turns that have left the prompt's transcript window. Absent until the first summary. */
+  storySoFar?: StorySoFar;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];

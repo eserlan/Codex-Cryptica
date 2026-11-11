@@ -4,6 +4,7 @@ import { ensureScenarioSecrets } from "./hidden-state";
 import { worldEntryPacing } from "./world-entry-pacing";
 import { projectVisibleState } from "./prompt-state";
 import { sceneStallPacing } from "./scene-pacing";
+import { PROMPT_TRANSCRIPT_TURNS } from "./story-summary";
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import type {
   AdventureSession,
@@ -113,6 +114,8 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     // Includes registered scenario secrets so their IDs can be revealed.
     "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
     "GM-ONLY fictional time": input.session.worldTime,
+    // Turns older than the transcript window, written from player-visible text only.
+    storySoFar: input.session.storySoFar?.text,
     provisionalFacts: input.session.provisionalFacts,
     pendingRoll:
       input.phase === "roll-resolution" ? input.session.pendingRoll : undefined,
@@ -141,7 +144,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     anchors: input.anchors,
     relevant: input.relevant,
     transcript: JSON.stringify(
-      input.session.turns.slice(-8).map((turn) => ({
+      input.session.turns.slice(-PROMPT_TRANSCRIPT_TURNS).map((turn) => ({
         playerAction: turn.playerAction,
         narration: turn.narration,
       })),

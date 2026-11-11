@@ -250,6 +250,15 @@ const scenarioElaborationProposalSchema = z
   })
   .strict();
 
+export const MAX_STORY_SO_FAR_CHARS = 1_500;
+const storySoFarSchema = z
+  .object({
+    text: z.string().trim().min(1).max(MAX_STORY_SO_FAR_CHARS),
+    throughSequence: z.number().int().nonnegative(),
+    updatedAt: timestamp,
+  })
+  .strict();
+
 export const MAX_PLACES = 30;
 const MAX_PLACE_NAME_CHARS = 120;
 const placeName = z.string().trim().min(1).max(MAX_PLACE_NAME_CHARS);
@@ -376,6 +385,7 @@ export const adventureSessionSchema = z
     worldTime: worldTimeSchema.optional(),
     places: z.array(placeSchema).max(MAX_PLACES).optional(),
     currentPlaceId: id.optional(),
+    storySoFar: storySoFarSchema.optional(),
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
@@ -476,6 +486,7 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     worldEntry: parsed.worldEntry,
     worldTime: parsed.worldTime,
     places: parsed.places,
+    storySoFar: parsed.storySoFar,
   }).length;
   if (stateLength > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
@@ -655,6 +666,7 @@ export function validateStateBudget(session: AdventureSession): boolean {
       worldEntry: session.worldEntry,
       worldTime: session.worldTime,
       places: session.places,
+      storySoFar: session.storySoFar,
     }).length <= MAX_SERIALIZED_STATE_CHARS
   );
 }

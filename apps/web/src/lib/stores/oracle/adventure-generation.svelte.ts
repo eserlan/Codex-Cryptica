@@ -1,5 +1,7 @@
 import {
+  adventureSummaryService,
   adventureTurnGenerationService,
+  type AdventureSummaryService,
   type AdventureTurnGenerationService,
 } from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
@@ -17,6 +19,30 @@ export function defaultGenerationService(): Pick<
       oracleBridge.isReady
         ? generateWorkerTurn(request, options)
         : adventureTurnGenerationService.generate(request, options),
+  };
+}
+
+/** The story-notes call, in the worker when it is ready and on this thread otherwise. */
+export function defaultSummaryService(): Pick<
+  AdventureSummaryService,
+  "summarize"
+> {
+  return {
+    summarize: (request, options) => {
+      if (!oracleBridge.isReady)
+        return adventureSummaryService.summarize(request, options);
+      const signal = options?.signal;
+      const { signal: _signal, ...workerOptions } = options ?? {};
+      const requestId = `summary-${++nextAdventureTurnRequestId}`;
+      const removeCancellation = forwardWorkerCancellation(requestId, signal);
+      return (
+        oracleBridge.summarizeAdventure(
+          $state.snapshot(request),
+          requestId,
+          workerOptions,
+        ) as ReturnType<AdventureSummaryService["summarize"]>
+      ).finally(removeCancellation);
+    },
   };
 }
 

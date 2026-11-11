@@ -1,9 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { adventureTurnGenerationService } from "@codex/ai-engine";
+import {
+  adventureSummaryService,
+  adventureTurnGenerationService,
+} from "@codex/ai-engine";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import {
   abortReason,
   defaultGenerationService,
+  defaultSummaryService,
   clearDefaultGenerationInteraction,
   confirmDefaultGenerationInteraction,
 } from "../adventure-generation.svelte";
@@ -17,12 +21,14 @@ vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
       return bridgeState.ready;
     },
     generateAdventureTurn: vi.fn(),
+    summarizeAdventure: vi.fn(),
     cancelAdventureTurn: vi.fn(async () => undefined),
     clearAdventureInteraction: vi.fn(),
     confirmAdventureInteraction: vi.fn(),
   },
 }));
 vi.mock("@codex/ai-engine", () => ({
+  adventureSummaryService: { summarize: vi.fn() },
   adventureTurnGenerationService: {
     generate: vi.fn(),
     clearInteraction: vi.fn(),
@@ -166,3 +172,47 @@ it.each([false, true])(
     expect(call[0]).toMatchObject({ anchors: [], relevant: sources });
   },
 );
+
+describe("story summary adapter", () => {
+  const request = { turns: [], throughSequence: 3 } as never;
+  const result = { text: "Notes.", throughSequence: 3 };
+
+  it("uses the local service while the worker is unavailable", async () => {
+    vi.mocked(adventureSummaryService.summarize).mockResolvedValue(result);
+    await expect(defaultSummaryService().summarize(request)).resolves.toEqual(
+      result,
+    );
+    expect(oracleBridge.summarizeAdventure).not.toHaveBeenCalled();
+  });
+
+  it("sends a plain snapshot to the worker without the signal", async () => {
+    bridgeState.ready = true;
+    vi.mocked(oracleBridge.summarizeAdventure).mockResolvedValue(result);
+    const controller = new AbortController();
+    await expect(
+      defaultSummaryService().summarize(request, { signal: controller.signal }),
+    ).resolves.toEqual(result);
+    const [sent, requestId, options] = vi.mocked(
+      oracleBridge.summarizeAdventure,
+    ).mock.calls[0]!;
+    expect(sent).toEqual(request);
+    expect(requestId).toMatch(/^summary-/);
+    expect(options).not.toHaveProperty("signal");
+    expect(adventureSummaryService.summarize).not.toHaveBeenCalled();
+  });
+
+  it("cancels the worker request when the caller aborts", async () => {
+    bridgeState.ready = true;
+    vi.mocked(oracleBridge.summarizeAdventure).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    const controller = new AbortController();
+    void defaultSummaryService().summarize(request, {
+      signal: controller.signal,
+    });
+    controller.abort();
+    expect(oracleBridge.cancelAdventureTurn).toHaveBeenCalledWith(
+      vi.mocked(oracleBridge.summarizeAdventure).mock.calls[0]![1],
+    );
+  });
+});
