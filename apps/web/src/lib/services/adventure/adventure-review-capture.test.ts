@@ -181,6 +181,50 @@ describe("Adventure diagnostic JSON for AI", () => {
     return base;
   }
 
+  it("scores every turn, including condensed ones, and counts quiet streaks", () => {
+    const source = manyTurns(10);
+    const quietTurn = (i: number) => ({
+      ...source.turns[i]!,
+      timeAdvance: undefined,
+      revealedSecretIds: [],
+      provisionalFactIds: [],
+      visiblePatch: {
+        objectives: { add: [], update: [], removeIds: [] },
+        activeCharacters: { add: [], update: [], removeIds: [] },
+        knownFacts: { add: [], update: [], removeIds: [] },
+        relationships: { add: [], update: [], removeIds: [] },
+      },
+      hiddenPatch: {
+        secrets: { add: [], update: [], removeIds: [] },
+        gmThreads: { add: [], update: [], removeIds: [] },
+      },
+    });
+    source.turns = source.turns.map((_, i) => quietTurn(i));
+    // Turn 4 moves the player and adds a fact; turn 9 stays quiet.
+    source.turns[4] = {
+      ...quietTurn(4),
+      visiblePatch: {
+        ...quietTurn(4).visiblePatch,
+        location: { id: "l", text: "The lane", source: "provisional" },
+        knownFacts: {
+          add: [{ id: "f", text: "A fact", source: "provisional" }],
+          update: [],
+          removeIds: [],
+        },
+      },
+    } as never;
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 2 }));
+    const signals = out.turns.map((t: { signals: unknown }) => t.signals);
+    expect(out.turns[0].detail).toBe("condensed");
+    expect(signals[0]).toEqual({ quiet: true });
+    expect(signals[4]).toEqual({ locationChanged: true, stateChanges: 1 });
+    expect(out.turns[9].signals.quiet).toBe(true);
+    // Quiet runs: turns 0-3 (4 long) and 5-9 (5 long): longest 5, two reached 4.
+    expect(out.summary.longestQuietRun).toBe(5);
+    expect(out.summary.stalledScenes).toBe(2);
+    expect(out._readme).toContain("signals");
+  });
+
   it("reports where the player is and keeps place tags in the snapshot", () => {
     const source = manyTurns(2);
     source.places = [
