@@ -76,6 +76,9 @@ export class RegionGenerationStore {
   review = $state<RegionReview | null>(null);
   message = $state<RegionMessage | null>(null);
   busy = $state(false);
+  /** The map the preview, message or undo belongs to. */
+  mapId = $state<string | null>(null);
+  private generation = 0;
   private undoRecord = $state<(RegionUndo & { revision: number }) | null>(null);
 
   constructor(private readonly deps: RegionGenerationDeps) {}
@@ -124,19 +127,23 @@ export class RegionGenerationStore {
     centre: HexCoord,
     radius = 3,
   ): boolean {
-    if (!this.deps.canEdit()) return false;
+    if (!this.deps.canEdit() || this.busy) return false;
+    this.mapId = mapId;
     const memory = this.remembered(mapId);
     return this.build({
       mapId,
       operation,
       centre,
       radius,
-      seed: this.deps.newSeed(),
+      seed: memory?.seed ?? this.deps.newSeed(),
       settings: memory?.settings ?? DEFAULT_REGION_SETTINGS,
     });
   }
 
-  private build(input: Omit<RegionReview, "proposal" | "adjustments">) {
+  private build(
+    input: Omit<RegionReview, "proposal" | "adjustments">,
+    keep: RegionAdjustments = {},
+  ) {
     const state = this.deps.hexes.stateFor(input.mapId);
     const inBounds = (hex: HexCoord) => this.deps.inBounds(input.mapId, hex);
     const targets = selectRegionTargets({
@@ -163,8 +170,10 @@ export class RegionGenerationStore {
     });
     if (!result.ok) return this.refuse(result.reason);
     this.message = null;
-    this.review = { ...input, proposal: result.proposal, adjustments: {} };
-    this.remember(this.review);
+    const adjustments = Object.fromEntries(
+      Object.entries(keep).filter(([key]) => key in result.proposal.hexes),
+    );
+    this.review = { ...input, proposal: result.proposal, adjustments };
     return true;
   }
 
@@ -173,11 +182,12 @@ export class RegionGenerationStore {
     return false;
   }
 
-  private rebuild(patch: Partial<RegionReview>): boolean {
+  /** Rebuild the proposal. Hand changes stay for hexes still in it unless `reseed` is set. */
+  private rebuild(patch: Partial<RegionReview>, reseed = false): boolean {
     const current = this.review;
-    if (!current) return false;
-    const { proposal: _p, adjustments: _a, ...rest } = current;
-    const ok = this.build({ ...rest, ...patch });
+    if (!current || this.busy) return false;
+    const { proposal: _p, adjustments, ...rest } = current;
+    const ok = this.build({ ...rest, ...patch }, reseed ? {} : adjustments);
     if (!ok) this.review = current;
     return ok;
   }
@@ -189,11 +199,11 @@ export class RegionGenerationStore {
   /** Returns false for an empty or over-long seed, leaving the preview unchanged. */
   setSeed(text: string): boolean {
     const seed = normalizeSeed(text);
-    return seed ? this.rebuild({ seed }) : false;
+    return seed ? this.rebuild({ seed }, true) : false;
   }
 
   reroll(): boolean {
-    return this.rebuild({ seed: this.deps.newSeed() });
+    return this.rebuild({ seed: this.deps.newSeed() }, true);
   }
 
   setPreset(preset: LandscapePresetId): boolean {
@@ -215,56 +225,75 @@ export class RegionGenerationStore {
   /** Change one proposed hex by hand; null puts the proposal back. */
   adjust(key: HexKey, terrain: Terrain | null): void {
     const current = this.review;
-    if (!current || !(key in current.proposal.hexes)) return;
+    if (!current || this.busy || !(key in current.proposal.hexes)) return;
     const adjustments = { ...current.adjustments };
     if (terrain) adjustments[key] = terrain;
     else delete adjustments[key];
     this.review = { ...current, adjustments };
   }
 
-  /** Write the reviewed terrain in one save. Nothing is written on failure. */
-  async accept(): Promise<boolean> {
-    const current = this.review;
-    if (!current || this.busy || !this.deps.canEdit()) return false;
+  /**
+   * Run one write through the hex store. `settle` records the result and says
+   * whether it counts as done. If the map was left meanwhile, nothing is
+   * recorded for it.
+   */
+  private async run(
+    mapId: string,
+    change: (state: HexCrawlState) => HexCrawlState,
+    settle: (written: boolean) => boolean,
+  ): Promise<boolean> {
     this.busy = true;
-    const now = this.deps.clock.now();
-    let outcome: ReturnType<typeof applyRegionProposal> | null = null;
+    const token = this.generation;
     try {
-      const written = await this.deps.hexes.applyChange(
-        current.mapId,
-        (state) => {
-          outcome = applyRegionProposal(
-            state,
-            current.proposal,
-            current.adjustments,
-            now,
-          );
-          return outcome.state;
-        },
-      );
-      const done = outcome as ReturnType<typeof applyRegionProposal> | null;
-      if (!written || !done) {
-        this.message = { kind: "failed" };
-        return false;
-      }
-      this.undoRecord = {
-        mapId: current.mapId,
-        ...done.undo,
-        revision: this.deps.hexes.revision,
-      };
-      this.message = {
-        kind: "saved",
-        applied: done.applied.length,
-        skipped: done.skipped.length,
-      };
-      this.review = null;
-      return true;
+      const written = await this.deps.hexes.applyChange(mapId, change);
+      return token === this.generation ? settle(written) : written;
     } catch {
-      this.message = { kind: "failed" };
+      if (token === this.generation) this.message = { kind: "failed" };
       return false;
     } finally {
       this.busy = false;
     }
+  }
+
+  /** Write the reviewed terrain in one save. Nothing is written on failure. */
+  accept(): Promise<boolean> {
+    const current = this.review;
+    if (!current || this.busy || !this.deps.canEdit())
+      return Promise.resolve(false);
+    const now = this.deps.clock.now();
+    let outcome: ReturnType<typeof applyRegionProposal> | null = null;
+    return this.run(
+      current.mapId,
+      (state) => {
+        outcome = applyRegionProposal(
+          state,
+          current.proposal,
+          current.adjustments,
+          now,
+        );
+        return outcome.state;
+      },
+      (written) => {
+        const done = outcome as ReturnType<typeof applyRegionProposal> | null;
+        if (!written || !done) {
+          this.message = { kind: "failed" };
+          return false;
+        }
+        this.remember(current);
+        this.undoRecord = {
+          mapId: current.mapId,
+          ...done.undo,
+          revision: this.deps.hexes.revision,
+        };
+        this.message = {
+          kind: "saved",
+          applied: done.applied.length,
+          skipped: done.skipped.length,
+        };
+        this.review = null;
+        return true;
+      },
+    );
   }
 
   cancel(): void {
@@ -272,36 +301,28 @@ export class RegionGenerationStore {
   }
 
   /** Put every hex the last accept changed back, if none has been touched since. */
-  async undo(): Promise<boolean> {
+  undo(): Promise<boolean> {
     const record = this.undoRecord;
-    if (!record || !this.undoAvailable || this.busy) return false;
-    this.busy = true;
+    if (!record || !this.undoAvailable || this.busy)
+      return Promise.resolve(false);
     let blocked = false;
-    try {
-      const written = await this.deps.hexes.applyChange(
-        record.mapId,
-        (state) => {
-          const restored = undoRegion(state, record);
-          if (!restored) {
-            blocked = true;
-            return state;
-          }
-          return restored;
-        },
-      );
-      if (blocked || !written) {
-        this.message = { kind: blocked ? "undo-blocked" : "failed" };
-        return false;
-      }
-      this.undoRecord = null;
-      this.message = { kind: "undone" };
-      return true;
-    } catch {
-      this.message = { kind: "failed" };
-      return false;
-    } finally {
-      this.busy = false;
-    }
+    return this.run(
+      record.mapId,
+      (state) => {
+        const restored = undoRegion(state, record);
+        blocked = restored === null;
+        return restored ?? state;
+      },
+      (written) => {
+        if (blocked || !written) {
+          this.message = { kind: blocked ? "undo-blocked" : "failed" };
+          return false;
+        }
+        this.undoRecord = null;
+        this.message = { kind: "undone" };
+        return true;
+      },
+    );
   }
 
   dismissMessage(): void {
@@ -310,6 +331,8 @@ export class RegionGenerationStore {
 
   /** Called when the map or mode changes: drop the preview and the undo. */
   leave(): void {
+    this.generation++;
+    this.mapId = null;
     this.review = null;
     this.message = null;
     this.undoRecord = null;

@@ -8,6 +8,16 @@ import {
 } from "map-engine";
 
 /** Who may see any hex crawl UI (FR-041). Player View previews count as players. */
+/*
+ * Tailwind finds icon classes by scanning source text, and the terrain icons are
+ * defined in the hex-crawl-engine package, which the app stylesheet does not
+ * reach. Listing them here keeps them in the generated CSS:
+ * icon-[lucide--wheat] icon-[lucide--trees] icon-[lucide--land-plot]
+ * icon-[lucide--mountain] icon-[lucide--droplets] icon-[lucide--sun]
+ * icon-[lucide--waves] icon-[lucide--anchor] icon-[lucide--snowflake]
+ * icon-[lucide--map-pin]
+ */
+
 export interface HexCrawlAccess {
   isGM: boolean;
   isGuest: boolean;

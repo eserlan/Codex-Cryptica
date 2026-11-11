@@ -47,6 +47,8 @@ export const HINT_KEYS = {
   ADVENTURE: "adventure-hint-seen",
   /** The Explore area's AI disclosure for hex discovery (FR-031). Device-local. */
   HEX_CRAWL_AI_NOTICE: "hex-crawl-ai-notice-seen",
+  /** The Generate region first-use hint in the hex panel. Device-local. */
+  HEX_REGION_HINT: "hex-region-hint-seen",
   /** The Biome Explorer's first-use note about the optional AI helper. Device-local. */
   BIOME_AI_NOTICE: "biome-ai-notice-seen",
 } as const;

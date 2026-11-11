@@ -17,6 +17,7 @@
   import {
     activeHexGridConfig,
     canSeeHexCrawl,
+    hexLabelFor,
     isHexGridType,
   } from "./hex-crawl-view";
   import HexCrawlOverlay from "./HexCrawlOverlay.svelte";
@@ -166,12 +167,14 @@
       : null,
   );
   $effect(() => {
-    // Leaving the map or turning the mode off drops the preview and the undo.
+    // Leaving the map or turning the mode off drops the preview, the message and the undo.
     const active = visible ? mapId : null;
-    if (services.region.review && services.region.review.mapId !== active) {
+    if (services.region.mapId && services.region.mapId !== active) {
       services.region.leave();
     }
     if (!services.region.review) regionPick = null;
+    // A tap on the map during a review must not open the hex panel behind it.
+    else if (services.store.selectedHex) services.store.closeHex();
   });
   onDestroy(() => {
     services.journey.dispose();
@@ -209,8 +212,18 @@
       {zoom}
       selectedKey={regionPick}
       onPick={(key) => (regionPick = key)}
+      labelFor={(key) => {
+        const [q, r] = key.split(",").map(Number);
+        return hexLabelFor({ q, r }, labelConfig, orientation);
+      }}
     />
-    <RegionReviewBar store={services.region} selectedKey={regionPick} />
+    <RegionReviewBar
+      store={services.region}
+      selectedKey={regionPick}
+      {labelConfig}
+      {orientation}
+      onSelect={(key) => (regionPick = key)}
+    />
   {:else}
     <RegionUndoBar store={services.region} />
   {/if}
@@ -245,7 +258,7 @@
     </div>
   {/if}
 
-  {#if selected && mapId}
+  {#if selected && mapId && !review}
     <HexCrawlPanel
       store={services.store}
       journey={services.journey}

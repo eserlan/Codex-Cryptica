@@ -1,9 +1,8 @@
 <script lang="ts">
+  import RegionProposedHex from "./RegionProposedHex.svelte";
   import { hexToPoint, type HexGridConfig } from "map-engine";
   import type { Point } from "schema";
   import {
-    terrainIcon,
-    terrainLabel,
     type RegionAdjustments,
     type RegionProposal,
     type Terrain,
@@ -21,6 +20,7 @@
     zoom,
     selectedKey,
     onPick,
+    labelFor = (key: string) => key,
   }: {
     proposal: RegionProposal;
     adjustments: RegionAdjustments;
@@ -29,9 +29,11 @@
     zoom: number;
     selectedKey: string | null;
     onPick: (key: string) => void;
+    /** The hex name the GM sees, such as C04. */
+    labelFor?: (key: string) => string;
   } = $props();
 
-  const size = $derived(Math.max(28, gridConfig.size * zoom * 1.2));
+  const size = $derived(Math.max(44, gridConfig.size * zoom * 1.2));
 
   const items = $derived(
     Object.entries(proposal.hexes).map(([key, id]) => {
@@ -45,14 +47,10 @@
         terrain,
         adjusted: key in adjustments,
         changes: proposal.changes.includes(key),
+        explored: proposal.exploredChanges.includes(key),
       };
     }),
   );
-
-  function stop(event: Event) {
-    // A tap here picks a proposed hex; it must not also open the hex panel.
-    event.stopPropagation();
-  }
 </script>
 
 <div
@@ -60,33 +58,18 @@
   class="pointer-events-none absolute inset-0 z-30"
 >
   {#each items as item (item.key)}
-    <button
-      type="button"
-      data-testid="region-proposed-hex"
-      data-hex={item.key}
-      aria-label="Proposed {terrainLabel(item.terrain)} at {item.key}"
-      aria-pressed={selectedKey === item.key}
-      onpointerdown={stop}
-      onpointerup={stop}
-      onclick={(event) => {
-        stop(event);
-        onPick(item.key);
-      }}
-      class="pointer-events-auto absolute flex items-center justify-center rounded-full border-2 bg-theme-bg/60 text-theme-text {selectedKey ===
-      item.key
-        ? 'border-theme-primary'
-        : item.adjusted
-          ? 'border-theme-secondary'
-          : item.changes
-            ? 'border-dashed border-theme-primary/80'
-            : 'border-dashed border-theme-primary/40'}"
-      style:left={`${item.x - size / 2}px`}
-      style:top={`${item.y - size / 2}px`}
-      style:width={`${size}px`}
-      style:height={`${size}px`}
-    >
-      <span class="{terrainIcon(item.terrain)} h-4 w-4" aria-hidden="true"
-      ></span>
-    </button>
+    <RegionProposedHex
+      hexKey={item.key}
+      label={labelFor(item.key)}
+      terrain={item.terrain}
+      x={item.x}
+      y={item.y}
+      {size}
+      selected={selectedKey === item.key}
+      adjusted={item.adjusted}
+      changes={item.changes}
+      explored={item.explored}
+      {onPick}
+    />
   {/each}
 </div>

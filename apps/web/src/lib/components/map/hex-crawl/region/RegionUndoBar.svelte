@@ -1,17 +1,9 @@
 <script lang="ts">
+  import { REFUSAL_TEXT } from "./region-messages";
   import type { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
 
   /** The result of the last accept or undo, with Undo while it is still safe. */
   let { store }: { store: RegionGenerationStore } = $props();
-
-  const REFUSAL_TEXT = {
-    "nothing-to-generate": "There is nothing to generate here.",
-    "too-large": "That area is too large.",
-    "invalid-radius": "Pick a radius from 1 to 12.",
-    "centre-off-map": "That hex is off the map.",
-    "no-terrain-available":
-      "Every terrain is set to None, so nothing can be proposed.",
-  } as const;
 
   const text = $derived.by(() => {
     const message = store.message;

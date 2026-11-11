@@ -17,8 +17,11 @@
   let timer: ReturnType<typeof setTimeout> | undefined;
   onDestroy(() => clearTimeout(timer));
 
+  const seed = $derived(store.review?.seed ?? "");
+  // Follow the seed itself, not the review object, so tapping a hex does not
+  // overwrite text that is still being typed.
   $effect(() => {
-    if (store.review) seedText = store.review.seed;
+    seedText = seed;
   });
 
   function applySeed() {

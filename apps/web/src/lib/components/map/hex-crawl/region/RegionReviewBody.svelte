@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { HexLabelConfig, HexOrientation } from "map-engine";
   import type { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
   import RegionAdjustHex from "./RegionAdjustHex.svelte";
   import RegionImpactNotice from "./RegionImpactNotice.svelte";
@@ -11,10 +12,16 @@
     store,
     selectedKey,
     copy,
+    labelConfig,
+    orientation,
+    onSelect,
   }: {
     store: RegionGenerationStore;
     selectedKey: string | null;
     copy?: (text: string) => Promise<boolean>;
+    labelConfig?: HexLabelConfig;
+    orientation?: HexOrientation;
+    onSelect?: (key: string) => void;
   } = $props();
 
   let showSettings = $state(false);
@@ -53,5 +60,13 @@
     />
   {/if}
 
-  <div class="mt-3"><RegionAdjustHex {store} {selectedKey} /></div>
+  <div class="mt-3">
+    <RegionAdjustHex
+      {store}
+      {selectedKey}
+      {labelConfig}
+      {orientation}
+      {onSelect}
+    />
+  </div>
 {/if}
