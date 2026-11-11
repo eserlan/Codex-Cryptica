@@ -23,6 +23,27 @@ export interface StateFact {
   text: string;
   source: "canonical" | "provisional" | "revealed-secret";
   sourceRecordId?: string;
+  /** Where this fact belongs. Absent means it applies everywhere (legacy and unplaced facts). */
+  placeId?: string;
+}
+
+/** A named place the player has been to, kept so facts and people can be tied to it. */
+export interface Place {
+  id: string;
+  name: string;
+  /** Vault record this place stands for, when it is canonical. */
+  sourceRecordId?: string;
+  /** How it relates to other places, in plain words, e.g. "below Tiny village". */
+  relation?: string;
+}
+
+/** The model's declaration that the player has changed place. Never needed for scene changes inside one place. */
+export interface PlaceMoveProposal {
+  /** An existing place's id. */
+  placeId?: string;
+  /** A place name, for a place not yet recorded or to match one by name. */
+  name?: string;
+  relation?: string;
 }
 
 export interface RelationshipFact extends StateFact {
@@ -372,6 +393,10 @@ export interface AdventureSession {
   worldEntry?: WorldEntryContext;
   /** Optional for backwards-compatible local-first sessions. */
   worldTime?: WorldTimeState;
+  /** Places visited so far. Absent on sessions from before places existed. */
+  places?: Place[];
+  /** Where the player is now. Absent when unknown; unplaced facts then apply everywhere. */
+  currentPlaceId?: string;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
@@ -395,6 +420,8 @@ export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
   timeAdvance?: TimeAdvanceProposal;
+  /** Set only when the player changes place in this turn. */
+  moveTo?: PlaceMoveProposal;
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];

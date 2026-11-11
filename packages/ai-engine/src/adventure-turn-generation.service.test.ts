@@ -490,6 +490,16 @@ describe("AdventureTurnGenerationService", () => {
       request.generationConfig.responseSchema.oneOf[0].properties.visiblePatch
         .properties.activeCharacters.properties.add.items.required,
     ).not.toContain("id");
+    const moveTo =
+      request.generationConfig.responseSchema.oneOf[0].properties.moveTo;
+    expect(Object.keys(moveTo.properties).sort()).toEqual([
+      "name",
+      "placeId",
+      "relation",
+    ]);
+    expect(
+      request.generationConfig.responseSchema.oneOf[0].required,
+    ).not.toContain("moveTo");
     const userMessage = request.contents[0].parts[0].text;
     const serializedPrompt = JSON.parse(userMessage);
     expect(serializedPrompt.input.adventure.premise).toBe("Find the road");
@@ -510,6 +520,35 @@ describe("AdventureTurnGenerationService", () => {
     expect(request).not.toHaveProperty("input");
     expect(request).not.toHaveProperty("previous_interaction_id");
     expect(request).not.toHaveProperty("store");
+  });
+
+  it("keeps a move declared by the model and rejects a move with no place", async () => {
+    const respond = (moveTo: unknown) =>
+      new AdventureTurnGenerationService({
+        async getModel() {
+          return {
+            async generateContent() {
+              return {
+                response: {
+                  text: () =>
+                    JSON.stringify({ ...JSON.parse(completeResponse), moveTo }),
+                },
+              };
+            },
+          };
+        },
+      }).generate({
+        session,
+        phase: "action",
+        playerAction: "Walk uphill",
+        anchors: [],
+        relevant: [],
+      });
+    const moved = await respond({ name: "Tiny village", relation: "uphill" });
+    expect(moved).toMatchObject({
+      moveTo: { name: "Tiny village", relation: "uphill" },
+    });
+    await expect(respond({})).rejects.toThrow("invalid-adventure-response");
   });
 
   it("rejects malformed provider output", async () => {

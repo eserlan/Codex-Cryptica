@@ -32,6 +32,7 @@ const stateFactSchema = z.object({
   text,
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
+  placeId: id.optional(),
 });
 const newStateFactSchema = stateFactSchema.omit({ id: true }).strict();
 
@@ -249,10 +250,35 @@ const scenarioElaborationProposalSchema = z
   })
   .strict();
 
+export const MAX_PLACES = 30;
+const MAX_PLACE_NAME_CHARS = 120;
+const placeName = z.string().trim().min(1).max(MAX_PLACE_NAME_CHARS);
+
+const placeSchema = z
+  .object({
+    id,
+    name: placeName,
+    sourceRecordId: id.optional(),
+    relation: text.optional(),
+  })
+  .strict();
+
+const placeMoveSchema = z
+  .object({
+    placeId: id.optional(),
+    name: placeName.optional(),
+    relation: text.optional(),
+  })
+  .strict()
+  .refine((move) => Boolean(move.placeId || move.name), {
+    message: "A move needs a placeId or a name.",
+  });
+
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
   timeAdvance: timeAdvanceSchema.optional(),
+  moveTo: placeMoveSchema.optional(),
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
@@ -348,6 +374,8 @@ export const adventureSessionSchema = z
     scenarioCollection: scenarioCollectionSchema.optional(),
     worldEntry: worldEntrySchema.optional(),
     worldTime: worldTimeSchema.optional(),
+    places: z.array(placeSchema).max(MAX_PLACES).optional(),
+    currentPlaceId: id.optional(),
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
@@ -447,6 +475,7 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     scenarioCollection: parsed.scenarioCollection,
     worldEntry: parsed.worldEntry,
     worldTime: parsed.worldTime,
+    places: parsed.places,
   }).length;
   if (stateLength > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
@@ -625,6 +654,7 @@ export function validateStateBudget(session: AdventureSession): boolean {
       scenarioCollection: session.scenarioCollection,
       worldEntry: session.worldEntry,
       worldTime: session.worldTime,
+      places: session.places,
     }).length <= MAX_SERIALIZED_STATE_CHARS
   );
 }

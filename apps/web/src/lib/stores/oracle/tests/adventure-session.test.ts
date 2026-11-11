@@ -52,4 +52,26 @@ describe("adventure session setup", () => {
       }),
     ).toBe(true);
   });
+
+  it("seeds the first place from a world entry, and none for an ordinary adventure", () => {
+    let n = 0;
+    const idGenerator = () => `id-${++n}`;
+    const seeded = initialSession({
+      ...startInput,
+      now,
+      idGenerator,
+      worldEntry: {
+        version: 1,
+        location: { kind: "canonical", name: "Northbrook", recordId: "town" },
+        intent: "explore",
+      },
+    });
+    expect(seeded.places).toEqual([
+      { id: seeded.currentPlaceId, name: "Northbrook", sourceRecordId: "town" },
+    ]);
+    expect(parseAdventureSession(seeded)).toEqual(seeded);
+    const ordinary = initialSession({ ...startInput, now, idGenerator });
+    expect(ordinary.places).toBeUndefined();
+    expect(ordinary.currentPlaceId).toBeUndefined();
+  });
 });
