@@ -242,4 +242,28 @@ describe("selectAdventureForPlay", () => {
       expect((e as AdventureSelectionError).reason).toBe("missing-gm-section");
     }
   });
+  it("uses the injected idGenerator when manualId is absent", () => {
+    const draft = generateAdventureLocal(
+      { themeId: "fantasy", genre: "Classic Fantasy" },
+      seededRng(42),
+    );
+
+    let calls = 0;
+    const mockedIdGenerator = {
+      uuid: () => {
+        calls++;
+        return "mocked-uuid-42";
+      },
+    };
+
+    const selected = selectAdventureForPlay(
+      draft,
+      undefined,
+      undefined,
+      mockedIdGenerator,
+    );
+
+    expect(calls).toBe(1);
+    expect(selected.origin.manualId).toBe("mocked-uuid-42");
+  });
 });
