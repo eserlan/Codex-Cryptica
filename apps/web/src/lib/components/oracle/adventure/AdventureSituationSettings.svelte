@@ -92,12 +92,14 @@
           : adventureReviewJson(session);
       await navigator.clipboard.writeText(text);
       notificationStore.notify(
-        "GM-only adventure " + (format === "markdown" ? "Markdown" : "JSON") +
+        "GM-only adventure " +
+          (format === "markdown" ? "Markdown" : "JSON") +
           " copied to clipboard.",
         "success",
       );
     } catch {
-      error = "Could not copy the session. Check clipboard permissions and retry.";
+      error =
+        "Could not copy the session. Check clipboard permissions and retry.";
     } finally {
       copyBusy = false;
     }
@@ -183,28 +185,31 @@
       </div>
     </div>
 
-    <div class="space-y-2 border-t border-theme-border pt-3" data-testid="adventure-review-copy">
+    <div
+      class="space-y-2 border-t border-theme-border pt-3"
+      data-testid="adventure-review-copy"
+    >
       <h4 class="text-sm font-semibold text-theme-text">
         Copy play session for review
       </h4>
       <p class="text-xs text-theme-text">
-        GM-only: both copies include the complete committed play history,
-        hidden scenario truths and private world state. Keep them away from
-        players. Copying stays on this device until you paste it elsewhere.
+        GM-only: both copies include the complete committed play history, hidden
+        scenario truths and private world state. Keep them away from players.
+        Copying stays on this device until you paste it elsewhere.
       </p>
       <div class="flex flex-wrap gap-2">
         <button
           type="button"
           class={buttonClass}
           disabled={copyBusy}
-          onclick={() => void copySession("markdown")}
-        >Copy Markdown</button>
+          onclick={() => void copySession("markdown")}>Copy Markdown</button
+        >
         <button
           type="button"
           class={buttonClass}
           disabled={copyBusy}
-          onclick={() => void copySession("json")}
-        >Copy JSON</button>
+          onclick={() => void copySession("json")}>Copy JSON</button
+        >
       </div>
     </div>
 
