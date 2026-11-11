@@ -375,6 +375,8 @@ export interface AdventureSession {
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
+  /** Review decisions, separate from immutable committed discovery history. */
+  dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
   pendingRoll: PendingRoll | null;
   /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
