@@ -81,7 +81,7 @@ describe("completed turn commits", () => {
   it("still rejects elaborating a closed scenario listed for reveal", () => {
     const current = session();
     const closedScenario = scenario();
-    closedScenario.knowledge = "heard";
+    closedScenario.knowledge = "unheard";
     closedScenario.status = "resolved";
     current.scenarioCollection = {
       version: 1,

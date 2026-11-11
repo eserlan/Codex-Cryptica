@@ -175,11 +175,12 @@ export function applyScenarioElaborations(
   const revealedThisTurn = new Set(revealedScenarioIds ?? []);
 
   for (const elaboration of elaborations) {
+    const validation = validateScenarioAvailability(candidate, elaboration);
+    if ("error" in validation) return validation.error;
+
     // A rumour is introduced at hearsay, so elaborating it in the same turn adds
     // nothing. Skip it rather than fail the player's turn over a model slip.
     if (revealedThisTurn.has(elaboration.scenarioId)) continue;
-    const validation = validateScenarioAvailability(candidate, elaboration);
-    if ("error" in validation) return validation.error;
     const stageError = validateElaborationStage(
       validation.scenario,
       elaboration,
