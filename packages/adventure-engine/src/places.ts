@@ -44,6 +44,39 @@ export function seedPlaces(
 
 type Resolved = { places: Place[]; currentId: string | undefined };
 
+/** The known place a name refers to; a longer variant of its name is remembered as an alias. */
+function resolveKnownName(places: Place[], name: string): Resolved | undefined {
+  const match = matchPlace(places, name);
+  if (!match) return undefined;
+  const renamed = match.extended ? withAlias(match.place, name) : match.place;
+  return {
+    places:
+      renamed === match.place
+        ? places
+        : places.map((place) => (place === match.place ? renamed : place)),
+    currentId: match.place.id,
+  };
+}
+
+function createPlace(
+  places: Place[],
+  name: string,
+  relation: string | undefined,
+  ids: Set<string>,
+  createId: IdFactory,
+): Resolved | { error: string } {
+  // A full registry never fails a turn: the player is simply unplaced for now.
+  if (places.length >= MAX_PLACES) return { places, currentId: undefined };
+  const id = allocateId(ids, createId);
+  if (!id) return { error: "id-allocation-failed" };
+  const place: Place = {
+    id,
+    name: name.slice(0, MAX_PLACE_NAME),
+    ...(relation ? { relation } : {}),
+  };
+  return { places: [...places, place], currentId: id };
+}
+
 function resolveMove(
   places: Place[],
   previousId: string | undefined,
@@ -60,28 +93,10 @@ function resolveMove(
   // one, otherwise the player stays where they were.
   const name = clean(move.name ?? "");
   if (!name) return { places, currentId: previousId };
-  const match = matchPlace(places, name);
-  if (match) {
-    // A longer variant of a known name is remembered so it resolves next time too.
-    const renamed = match.extended ? withAlias(match.place, name) : match.place;
-    return {
-      places:
-        renamed === match.place
-          ? places
-          : places.map((place) => (place === match.place ? renamed : place)),
-      currentId: match.place.id,
-    };
-  }
-  // A full registry never fails a turn: the player is simply unplaced for now.
-  if (places.length >= MAX_PLACES) return { places, currentId: undefined };
-  const id = allocateId(ids, createId);
-  if (!id) return { error: "id-allocation-failed" };
-  const place: Place = {
-    id,
-    name: name.slice(0, MAX_PLACE_NAME),
-    ...(move.relation ? { relation: move.relation } : {}),
-  };
-  return { places: [...places, place], currentId: id };
+  return (
+    resolveKnownName(places, name) ??
+    createPlace(places, name, move.relation, ids, createId)
+  );
 }
 
 function touchedIds(patch: {
