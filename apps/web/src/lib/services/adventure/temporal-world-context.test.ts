@@ -471,17 +471,17 @@ describe("fictional clock and temporal precision", () => {
 
   it("reclassifies upcoming events without changing the start date", () => {
     const before = resolveTemporalWorldContext(query);
-    expect(
-      before.gmOnly.find((r) => r.id === "festival")?.applicability,
-    ).toBe("future");
+    expect(before.gmOnly.find((r) => r.id === "festival")?.applicability).toBe(
+      "future",
+    );
     expect(before.playerSafe.some((r) => r.id === "festival")).toBe(false);
     const after = resolveTemporalWorldContext({
       ...query,
       elapsedMinutes: 2 * 1_440,
     });
-    expect(
-      after.gmOnly.find((r) => r.id === "festival")?.applicability,
-    ).toBe("historical");
+    expect(after.gmOnly.find((r) => r.id === "festival")?.applicability).toBe(
+      "historical",
+    );
     expect(after.playerSafe.some((r) => r.id === "festival")).toBe(true);
     expect(after.at).toEqual(query.at);
     expect(query.at).toEqual({ year: 618, month: 2, day: 3 });
@@ -509,9 +509,9 @@ describe("fictional clock and temporal precision", () => {
 
   it("uses custom months and rejects invalid clock values", () => {
     expect(classifyEntityAt(festival, query.at, shortCalendar)).toBe("future");
-    expect(
-      classifyEntityAt(festival, query.at, shortCalendar, 2 * 1_440),
-    ).toBe("historical");
+    expect(classifyEntityAt(festival, query.at, shortCalendar, 2 * 1_440)).toBe(
+      "historical",
+    );
     expect(() =>
       resolveTemporalWorldContext({
         ...query,
@@ -525,24 +525,4 @@ describe("fictional clock and temporal precision", () => {
       }),
     ).toThrow("temporal-world-invalid-date");
   });
-});
-
-it("TEMP_FORMAT_PROBE", async () => {
-  const prettier = await import("prettier");
-  const { readFile } = await import("node:fs/promises");
-  const path = new URL(import.meta.url).pathname;
-  const original = await readFile(path, "utf8");
-  const marker = '\nit("TEMP_FORMAT_PROBE"';
-  const clean = original.slice(0, original.indexOf(marker));
-  const typescript = await import("prettier/plugins/typescript");
-  const estree = await import("prettier/plugins/estree");
-  const formatted = await prettier.format(clean, {
-    filepath: path,
-    parser: "typescript",
-    plugins: [typescript, estree],
-  });
-  const fragment = formatted.slice(
-    formatted.indexOf('describe("fictional clock and temporal precision"'),
-  );
-  throw new Error("FORMAT_PROBE_OUTPUT_" + JSON.stringify(fragment));
 });
