@@ -311,4 +311,43 @@ describe("AdventureStart", () => {
     );
     expect(m.start).not.toHaveBeenCalled();
   });
+
+  it("renders Prepared adventure seed preview and cancel button for manual scenario seeds", async () => {
+    const m = manager(async () => undefined);
+    const mockSeed: any = {
+      id: "manual-seed-1",
+      origin: { kind: "manual", manualId: "manual-seed-1" },
+      playerVisible: {
+        rumour: "A strange obelisk rises from the sand.",
+        lead: "Investigate before the sandstorm.",
+        source: "The Obsidian Monolith",
+      },
+      gmOnly: { truth: "An alien engine hums inside." },
+    };
+    const onCancelScenario = vi.fn();
+
+    render(AdventureStart, {
+      props: {
+        manager: m,
+        vaultId: "vault-1",
+        title: "The Obsidian Monolith",
+        premise: "A strange obelisk rises from the sand.",
+        scenarioSeed: mockSeed,
+        onCancelScenario,
+      },
+    });
+
+    expect(screen.getByText("Prepared adventure seed")).toBeTruthy();
+    expect(
+      screen.getByText("A strange obelisk rises from the sand."),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/Objective:\s*Investigate before the sandstorm\./),
+    ).toBeTruthy();
+
+    const cancelButton = screen.getByTestId("cancel-rumour-start");
+    expect(cancelButton.textContent?.trim()).toBe("Cancel prepared adventure");
+    await fireEvent.click(cancelButton);
+    expect(onCancelScenario).toHaveBeenCalledTimes(1);
+  });
 });

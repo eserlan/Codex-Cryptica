@@ -48,7 +48,15 @@ describe("AdventureEntryChoices", () => {
 
     expect(onDiscover).not.toHaveBeenCalled();
     expect(onOwnPremise).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(/fully loaded Vault/)).toBeTruthy();
+
+    expect(
+      (screen.getByTestId("adventure-discover") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(
+      (screen.getByTestId("adventure-surprise-me") as HTMLButtonElement)
+        .disabled,
+    ).toBe(true);
+    expect(screen.getAllByText(/fully loaded Vault/)).toHaveLength(2);
   });
 
   it("opens the new in-world scene setup without a generated quest", async () => {
@@ -62,7 +70,7 @@ describe("AdventureEntryChoices", () => {
     expect(entry.tagName).toBe("BUTTON");
     await fireEvent.click(entry);
     expect(onEnterWorld).toHaveBeenCalledOnce();
-    expect(screen.getAllByRole("button")).toHaveLength(3);
+    expect(screen.getAllByRole("button")).toHaveLength(4);
   });
 
   it("uses touch-sized cards in a single-column mobile layout", () => {
@@ -75,6 +83,7 @@ describe("AdventureEntryChoices", () => {
     );
     for (const id of [
       "adventure-discover",
+      "adventure-surprise-me",
       "adventure-own-premise",
       "adventure-enter-world",
     ]) {

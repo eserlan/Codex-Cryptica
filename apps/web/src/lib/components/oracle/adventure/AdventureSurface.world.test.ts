@@ -88,6 +88,7 @@ const scenario = {
 
 beforeEach(() => {
   env.openGeneratorWorkflow.mockClear();
+  env.openIntentGeneratorWorkflow.mockClear();
   rumourAdventureHandoff.clear();
   surfaceEnv.vault.activeVaultId = "vault-1";
   surfaceEnv.vault.createEntity = vi.fn(async () => "entity-id");
@@ -341,7 +342,9 @@ describe("AdventureSurface rumour handoff", () => {
     };
     render(AdventureSurface);
     await screen.findByTestId("adventure-play-surface");
-    expect(screen.queryByTestId("existing-adventure-rumour-choice")).toBeNull();
+    expect(
+      screen.queryByTestId("existing-adventure-conflict-choice"),
+    ).toBeNull();
   });
 
   it("still offers the archive choice for a different active adventure", async () => {
@@ -352,7 +355,7 @@ describe("AdventureSurface rumour handoff", () => {
     };
     render(AdventureSurface);
     expect(
-      await screen.findByTestId("existing-adventure-rumour-choice"),
+      await screen.findByTestId("existing-adventure-conflict-choice"),
     ).toBeTruthy();
   });
 
@@ -382,7 +385,7 @@ describe("AdventureSurface rumour handoff", () => {
     rumourAdventureHandoff.prepare("vault-1", selected, scenario, draft as any);
     render(AdventureSurface);
     await fireEvent.click(await screen.findByTestId("cancel-rumour-start"));
-    expect(env.openGeneratorWorkflow).toHaveBeenCalledWith("rumour");
+    expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("rumour");
     expect(rumourAdventureHandoff.forVault("vault-1")).toBeNull();
     expect(rumourAdventureHandoff.takeSourceDraft("vault-2")).toBeNull();
     expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toEqual(draft);

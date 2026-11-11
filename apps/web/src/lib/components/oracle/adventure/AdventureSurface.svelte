@@ -135,12 +135,18 @@
     }
     if (previouslyPrefilledScenario === selectedRumour.scenario.id) return;
     previouslyPrefilledScenario = selectedRumour.scenario.id;
-    startTitle =
-      "Rumour " +
-      selectedRumour.selected.index +
-      ": " +
-      selectedRumour.selected.playerVisible.lead;
-    startPremise = selectedRumour.selected.playerVisible.rumour;
+    const selected = selectedRumour.selected;
+    if ("index" in selected) {
+      startTitle =
+        "Rumour " + selected.index + ": " + selected.playerVisible.lead;
+      startPremise = selected.playerVisible.rumour;
+    } else {
+      startTitle =
+        selectedRumour.adventureTitle ||
+        selected.playerVisible.title ||
+        "Adventure";
+      startPremise = selectedRumour.scenario.playerVisible.rumour;
+    }
   });
 
   function reviewWorldEntry(draft: WorldEntryDraft): void {
@@ -241,12 +247,16 @@
   }
 
   function cancelRumour(): void {
-    // Keep the source batch so the generator reopens on the same six rumours.
+    const generatorId =
+      selectedRumour?.sourceGeneratorId === "adventure"
+        ? "adventure"
+        : "rumour";
+    // Keep the source batch so the generator reopens on the same draft.
     const hasSourceBatch = rumourAdventureHandoff.cancel(vaultId);
     startApproach = "choose";
     startTitle = "";
     startPremise = "";
-    if (hasSourceBatch) modalUIStore.openGeneratorWorkflow("rumour");
+    if (hasSourceBatch) modalUIStore.openIntentGeneratorWorkflow(generatorId);
   }
 
   let existingEntityTitles = $derived(
@@ -500,6 +510,9 @@
   {:else if oracle.adventure.session}
     {#if selectedRumour && !oracle.adventure.session.scenarioCollection?.items.some((item) => item.id === selectedRumour.scenario.id)}
       <AdventureRumourConflict
+        kind={selectedRumour.sourceGeneratorId === "adventure"
+          ? "adventure"
+          : "rumour"}
         readOnly={oracle.adventure.readOnly}
         pendingRoll={!!oracle.adventure.session.pendingRoll}
         archiving={archivingForRumour}
@@ -529,6 +542,8 @@
       <AdventureEntryChoices
         {canDiscover}
         onDiscover={discoverAdventure}
+        onSurpriseMe={() =>
+          modalUIStore.openIntentGeneratorWorkflow("adventure")}
         onOwnPremise={() => (startApproach = "premise")}
         onEnterWorld={() => (startApproach = "world")}
       />
