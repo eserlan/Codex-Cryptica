@@ -2,6 +2,11 @@
   import { formatWorldElapsedMinutes } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
+  import {
+    adventureReviewJson,
+    adventureReviewMarkdown,
+  } from "#lib/services/adventure/adventure-review-capture.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let {
     manager,
@@ -13,6 +18,7 @@
   let busyId = $state<string | null>(null);
   let error = $state<string | null>(null);
   let advanceMinutes = $state(60);
+  let copyBusy = $state(false);
 
   const scenarios = $derived(
     manager.session?.scenarioCollection?.items.filter(
@@ -71,6 +77,31 @@
       }
     } catch (cause) {
       error = describeScenarioMutationError(cause);
+    }
+  }
+
+  async function copySession(format: "markdown" | "json") {
+    const session = manager.session;
+    if (!session || copyBusy) return;
+    copyBusy = true;
+    error = null;
+    try {
+      const text =
+        format === "markdown"
+          ? adventureReviewMarkdown(session)
+          : adventureReviewJson(session);
+      await navigator.clipboard.writeText(text);
+      notificationStore.notify(
+        "GM-only adventure " +
+          (format === "markdown" ? "Markdown" : "JSON") +
+          " copied to clipboard.",
+        "success",
+      );
+    } catch {
+      error =
+        "Could not copy the session. Check clipboard permissions and retry.";
+    } finally {
+      copyBusy = false;
     }
   }
 
@@ -151,6 +182,34 @@
         >
           Advance time
         </button>
+      </div>
+    </div>
+
+    <div
+      class="space-y-2 border-t border-theme-border pt-3"
+      data-testid="adventure-review-copy"
+    >
+      <h4 class="text-sm font-semibold text-theme-text">
+        Copy play session for review
+      </h4>
+      <p class="text-xs text-theme-text">
+        GM-only: both copies include the complete committed play history, hidden
+        scenario truths and private world state. Keep them away from players.
+        Copying stays on this device until you paste it elsewhere.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={copyBusy}
+          onclick={() => void copySession("markdown")}>Copy Markdown</button
+        >
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={copyBusy}
+          onclick={() => void copySession("json")}>Copy JSON</button
+        >
       </div>
     </div>
 
