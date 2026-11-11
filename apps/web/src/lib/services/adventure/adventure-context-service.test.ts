@@ -678,13 +678,10 @@ describe("dated Adventure grounding after committed world-time advances", () => 
     };
     const sources = [town, festival];
     const service = new AdventureContextService({
-      getWorldSnapshot: async () =>
-        ({ entities: sources, calendar }) as any,
+      getWorldSnapshot: async () => ({ entities: sources, calendar }) as any,
       getById: async (_vaultId, id) => {
         const record = sources.find((item) => item.id === id);
-        return record
-          ? { ...record, text: record.content }
-          : null;
+        return record ? { ...record, text: record.content } : null;
       },
       search: async () => [{ ...festival, text: festival.content }],
     });
@@ -707,7 +704,9 @@ describe("dated Adventure grounding after committed world-time advances", () => 
       },
     } as any;
     const initialOpening = await service.resolveOpeningRelevant(entry);
-    const initialFestival = initialOpening.find((record) => record.recordId === "festival");
+    const initialFestival = initialOpening.find(
+      (record) => record.recordId === "festival",
+    );
     expect(initialFestival?.content).toContain("Period applicability: future");
     expect(initialFestival?.content).not.toContain("begins at Bloom");
 
@@ -716,9 +715,14 @@ describe("dated Adventure grounding after committed world-time advances", () => 
       worldTime: { version: 1, elapsedMinutes: 2 * 1_440, events: [] },
     };
     const laterOpening = await service.resolveOpeningRelevant(advanced);
-    const laterAction = await service.resolveActionRelevant(advanced, "Return for the festival");
+    const laterAction = await service.resolveActionRelevant(
+      advanced,
+      "Return for the festival",
+    );
     for (const relevant of [laterOpening, laterAction]) {
-      const record = relevant.find((source) => source.recordId === "festival");
+      const record = relevant.find(
+        (source) => source.recordId === "festival",
+      );
       expect(record?.content).toContain("Period applicability: historical");
       expect(record?.content).toContain("begins at Bloom");
     }
@@ -728,7 +732,9 @@ describe("dated Adventure grounding after committed world-time advances", () => 
       at,
       elapsedMinutes: 2 * 1_440,
     });
-    expect(directSnapshot.playerSafe.some((record) => record.id === "festival")).toBe(true);
+    expect(
+      directSnapshot.playerSafe.some((record) => record.id === "festival"),
+    ).toBe(true);
     expect(entry.worldEntry.at).toEqual(at);
   });
 });
