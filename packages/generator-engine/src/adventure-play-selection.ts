@@ -160,7 +160,7 @@ export function selectAdventureForPlay(
       ...(sourceRecordId ? { sourceRecordId } : {}),
     },
     playerVisible: {
-      title: draft.title.trim(),
+      title: clampText(draft.title),
       openingSituation: clampText(initialSituation, 600),
       primaryObjective: clampText(primaryObjective, 600),
       startingLocations,

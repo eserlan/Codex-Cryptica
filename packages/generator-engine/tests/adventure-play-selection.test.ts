@@ -149,6 +149,20 @@ describe("selectAdventureForPlay", () => {
     expect(selected.gmOnly.npcsAndFactions).toEqual(["Archmage Vane"]);
   });
 
+  it("bounds a long adventure title to the scenario text limit", () => {
+    const draft = generateAdventureLocal(
+      { themeId: "fantasy", genre: "Classic Fantasy" },
+      seededRng(42),
+    );
+    const selected = selectAdventureForPlay({
+      ...draft,
+      title: "A".repeat(601),
+    });
+
+    expect(selected.playerVisible.title).toHaveLength(600);
+    expect(selected.playerVisible.title.endsWith("…")).toBe(true);
+  });
+
   it("throws invalid-adventure-draft when title, content or lore are missing", () => {
     expect(() =>
       selectAdventureForPlay({ title: "", content: "abc", lore: "def" }),

@@ -1,5 +1,6 @@
 <script lang="ts">
   let {
+    kind,
     readOnly,
     archiving,
     pendingRoll,
@@ -9,6 +10,7 @@
     onCancel,
     onArchive,
   }: {
+    kind: "rumour" | "adventure";
     readOnly: boolean;
     archiving: boolean;
     pendingRoll: boolean;
@@ -22,14 +24,17 @@
 
 <section
   class="rounded-md border border-theme-border bg-theme-surface p-3"
-  data-testid="existing-adventure-rumour-choice"
+  data-testid="existing-adventure-conflict-choice"
 >
   <h3 class="text-sm font-semibold text-theme-text">
-    A rumour can join this adventure
+    {kind === "adventure"
+      ? "A prepared adventure is ready"
+      : "A rumour can join this adventure"}
   </h3>
   <p class="mt-1 text-xs text-theme-text">
-    Add it as a known situation, keep playing, or cancel and return to the six
-    rumours.
+    {kind === "adventure"
+      ? "Add it to your current adventure, keep playing, or cancel and return to the prepared adventure."
+      : "Add it as a known situation, keep playing, or cancel and return to the six rumours."}
   </p>
   <div class="mt-3 flex flex-wrap gap-2">
     <button
@@ -53,8 +58,12 @@
       class="rounded-md border border-theme-border px-3 py-2 text-sm text-theme-text disabled:opacity-50"
       disabled={archiving || readOnly}
       onclick={onArchive}
-      data-testid="archive-active-for-rumour"
-      >{archiving ? "Archiving…" : "Archive and start rumour"}</button
+      data-testid="archive-active-for-selection"
+      >{archiving
+        ? "Archiving…"
+        : kind === "adventure"
+          ? "Archive and start adventure"
+          : "Archive and start rumour"}</button
     >
   </div>
   {#if readOnly}<p class="mt-2 text-xs text-theme-text">

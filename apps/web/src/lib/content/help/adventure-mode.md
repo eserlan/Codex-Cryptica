@@ -29,6 +29,11 @@ navigation menu. If you have no active adventure, choose a starting approach:
   or select **Customize** to change the generator options. Only that rumour
   and its matching hidden GM preparation pass to Adventure Mode. Review the
   prefilled premise, choose your character, and start.
+- **Surprise Me with an Adventure** opens the Adventure Idea generator. Review
+  the player-safe opening situation and objective, then choose **Play with
+  Oracle** to review the title, premise and character before starting. The
+  generated plot and GM notes stay behind the spoiler shield in the generator.
+  You need an Oracle connection to generate the adventure and begin play.
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
   starting situation and character yourself. You can return to the starting
   choices without discarding an unsaved draft.

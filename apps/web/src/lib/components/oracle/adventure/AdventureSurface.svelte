@@ -510,6 +510,9 @@
   {:else if oracle.adventure.session}
     {#if selectedRumour && !oracle.adventure.session.scenarioCollection?.items.some((item) => item.id === selectedRumour.scenario.id)}
       <AdventureRumourConflict
+        kind={selectedRumour.sourceGeneratorId === "adventure"
+          ? "adventure"
+          : "rumour"}
         readOnly={oracle.adventure.readOnly}
         pendingRoll={!!oracle.adventure.session.pendingRoll}
         archiving={archivingForRumour}
