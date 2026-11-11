@@ -544,5 +544,5 @@ it("TEMP_FORMAT_PROBE", async () => {
   const fragment = formatted.slice(
     formatted.indexOf('describe("fictional clock and temporal precision"'),
   );
-  console.log("FORMAT_PROBE_OUTPUT_" + JSON.stringify(fragment));
+  throw new Error("FORMAT_PROBE_OUTPUT_" + JSON.stringify(fragment));
 });
