@@ -260,6 +260,28 @@ describe("AdventureScenarioControls", () => {
     );
   });
 
+  it("offers conjecture forms for resolved and abandoned heard leads", () => {
+    const abandoned = {
+      ...heard,
+      id: "known-3",
+      status: "abandoned",
+      playerVisible: { rumour: "A drowned bell", lead: "The quay" },
+    };
+    const m = manager([resolved, abandoned], null);
+    render(AdventureScenarioControls, { props: { manager: m } });
+
+    expect(
+      screen.getByRole("textbox", {
+        name: "Record conjecture for The north gate",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("textbox", {
+        name: "Record conjecture for The quay",
+      }),
+    ).toBeTruthy();
+  });
+
   it("renders Vault entity badges and Solo Thread status, and allows saving to Solo Threads without duplicates", async () => {
     const { soloThreads } =
       await import("#lib/stores/solo-session-instance.js");

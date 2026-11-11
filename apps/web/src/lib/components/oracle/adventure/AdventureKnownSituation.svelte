@@ -145,7 +145,7 @@
 {/snippet}
 
 {#snippet conjectureForm()}
-  {#if onRecordTheory && item.status === "open"}
+  {#if onRecordTheory}
     <form
       class="flex flex-wrap items-center gap-2 border-t border-theme-border pt-2"
       onsubmit={submitTheory}
