@@ -235,6 +235,11 @@
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       <AdventureProvisionalFacts
         facts={manager.session?.provisionalFacts ?? []}
+        dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+        onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+        canDismiss={!manager.readOnly &&
+          manager.phase !== "generating" &&
+          !manager.session?.pendingRoll}
         {existingTitles}
         onAdd={onAddProvisionalFact}
         onAddAll={onAddAllProvisionalFacts}
