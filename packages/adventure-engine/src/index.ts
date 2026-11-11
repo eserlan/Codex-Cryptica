@@ -22,3 +22,4 @@ export * from "./grounding";
 export * from "./places";
 export * from "./prompt-state";
 export * from "./story-summary";
+export * from "./place-names";

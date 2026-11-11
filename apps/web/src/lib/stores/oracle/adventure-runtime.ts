@@ -9,6 +9,7 @@ import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
 import { AdventureScenarios } from "./adventure-scenarios";
+import { AdventurePlaceLinker } from "./adventure-places";
 import { AdventureSummarizer } from "./adventure-summary";
 
 /** Shared generation lifetime and persistence boundary for all workflows. */
@@ -18,6 +19,7 @@ export class AdventureRuntime {
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
   readonly summarizer: AdventureSummarizer;
+  readonly placeLinker: AdventurePlaceLinker;
   constructor(
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
@@ -32,6 +34,7 @@ export class AdventureRuntime {
       genreForTheme(themeStore.worldThemeId),
     );
     this.summarizer = new AdventureSummarizer(state, deps);
+    this.placeLinker = new AdventurePlaceLinker(deps);
     this.scenarios = new AdventureScenarios(state, deps, (session) =>
       this.verifySession(session),
     );

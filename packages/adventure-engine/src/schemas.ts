@@ -260,6 +260,7 @@ const storySoFarSchema = z
   .strict();
 
 export const MAX_PLACES = 30;
+export const MAX_PLACE_ALIASES = 5;
 const MAX_PLACE_NAME_CHARS = 120;
 const placeName = z.string().trim().min(1).max(MAX_PLACE_NAME_CHARS);
 
@@ -269,6 +270,7 @@ const placeSchema = z
     name: placeName,
     sourceRecordId: id.optional(),
     relation: text.optional(),
+    aliases: z.array(placeName).max(MAX_PLACE_ALIASES).optional(),
   })
   .strict();
 

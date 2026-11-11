@@ -75,6 +75,9 @@ export function dependencies() {
     clearGenerationInteraction: async () => {},
     confirmGenerationInteraction: async () => {},
     context: {
+      async listPlaceRecords() {
+        return undefined;
+      },
       async resolveAnchors() {
         return [];
       },

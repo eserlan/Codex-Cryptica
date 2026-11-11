@@ -78,6 +78,18 @@ export function requiredGroundingSources(
       displayName: currentLocation.text,
     });
   }
+  const here = session.places?.find(
+    (place) => place.id === session.currentPlaceId,
+  );
+  if (here?.sourceRecordId) {
+    references.push({
+      recordId: here.sourceRecordId,
+      role: "anchor",
+      recordType: "location",
+      availability: "available",
+      displayName: here.name,
+    });
+  }
   const seen = new Set<string>();
   return references.filter(
     (reference) =>
