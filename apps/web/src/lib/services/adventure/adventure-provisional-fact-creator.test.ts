@@ -172,6 +172,27 @@ describe("promoteProvisionalFacts", () => {
     expect(d.createEntity).toHaveBeenCalledTimes(1);
   });
 
+  it("does not link a created record after the adventure or Vault changes", async () => {
+    let current = true;
+    const d = deps({
+      isCurrent: () => current,
+      createEntity: vi.fn(async () => {
+        current = false;
+        return "rec-1";
+      }),
+    });
+
+    const result = await promoteProvisionalFacts(
+      [fact("a", "Bridge"), fact("b", "Mill")],
+      "Tale",
+      d,
+    );
+
+    expect(result).toEqual({ added: 1, interrupted: true });
+    expect(d.createEntity).toHaveBeenCalledTimes(1);
+    expect(d.linkRecord).not.toHaveBeenCalled();
+  });
+
   it("skips GM-only facts and reports each attempt", async () => {
     const attempts: string[] = [];
     const d = deps({ onAttempt: (f) => attempts.push(f.id) });

@@ -107,8 +107,9 @@ export async function promoteProvisionalFacts(
       draft.title,
       draft.initialData,
     );
-    await deps.linkRecord(fact, recordId);
     added += 1;
+    if (!deps.isCurrent()) return { added, interrupted: true };
+    await deps.linkRecord(fact, recordId);
   }
   return { added, interrupted: false };
 }

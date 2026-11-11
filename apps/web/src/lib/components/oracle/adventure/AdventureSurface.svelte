@@ -393,6 +393,10 @@
   async function addProvisionalFact(fact: ProvisionalFact): Promise<void> {
     const session = oracle.adventure.session;
     if (!session) throw new Error("No active adventure.");
+    const originatingVaultId = oracle.vault.activeVaultId;
+    const isCurrent = () =>
+      oracle.adventure.session?.id === session.id &&
+      oracle.vault.activeVaultId === originatingVaultId;
     const draft = createAdventureEntityDraft(fact, session.title);
     if (!draft) throw new Error("This discovery is not available to save.");
     const existing = oracle.vault.allEntities.find(
@@ -401,17 +405,20 @@
         draft.title.toLocaleLowerCase(),
     );
     if (existing) {
+      if (!isCurrent())
+        throw new Error("The active adventure or Vault changed.");
       await linkPlaceToRecord(fact, existing.id);
       notificationStore.notify(`${draft.title} is already in Codex.`, "info");
       return;
     }
-    const recordId = await oracle.vault.createEntity(
-      draft.type,
-      draft.title,
-      draft.initialData,
+    const { added, interrupted } = await promoteProvisionalFacts(
+      [fact],
+      session.title,
+      promotionDeps(session.id, originatingVaultId),
     );
-    await linkPlaceToRecord(fact, recordId);
-    notificationStore.notify(`Added ${draft.title} to Codex.`, "success");
+    if (interrupted) throw new Error("The active adventure or Vault changed.");
+    if (added > 0)
+      notificationStore.notify(`Added ${draft.title} to Codex.`, "success");
   }
 
   async function addAllProvisionalFacts(
