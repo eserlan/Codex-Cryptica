@@ -18,6 +18,7 @@ export class AdventureSummarizer {
     null;
   private request: AbortController | null = null;
   private generation = 0;
+  private lifecycleGeneration = 0;
 
   constructor(
     private readonly state: AdventureState,
@@ -40,13 +41,23 @@ export class AdventureSummarizer {
   /** Abort and invalidate work when its session leaves the active view. */
   cancel(): void {
     this.generation += 1;
+    this.lifecycleGeneration += 1;
     this.request?.abort();
     this.request = null;
     this.ready = null;
   }
 
+  /** Capture the current session lifetime before work that may await. */
+  lifecycleToken(): number {
+    return this.lifecycleGeneration;
+  }
+
   /** Start a summary call if one is due. Never throws and never blocks play. */
-  schedule(session: AdventureSession): void {
+  schedule(
+    session: AdventureSession,
+    lifecycleToken = this.lifecycleGeneration,
+  ): void {
+    if (lifecycleToken !== this.lifecycleGeneration) return;
     if (this.request || this.state.readOnly) return;
     if (typeof navigator !== "undefined" && !navigator.onLine) return;
     const request = buildStorySummaryRequest(session);

@@ -93,6 +93,7 @@ export class AdventureRuntime {
     previous: AdventureSession,
     next: AdventureSession,
   ): Promise<AdventureSession> {
+    const summaryLifecycle = this.summarizer.lifecycleToken();
     await this.verifySession(previous);
     const saved = await this.deps.repository.save(previous.revision, next);
     if (!saved.ok) throw saved.error;
@@ -111,7 +112,7 @@ export class AdventureRuntime {
         .catch(() => {});
     }
     // Fold older turns into the story notes while the player reads.
-    this.summarizer.schedule(saved.session);
+    this.summarizer.schedule(saved.session, summaryLifecycle);
     return saved.session;
   }
 

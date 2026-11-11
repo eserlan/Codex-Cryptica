@@ -170,6 +170,26 @@ describe("story summarizer", () => {
 });
 
 describe("story notes through a real turn", () => {
+  it("does not schedule a summary when close happens during turn confirmation", async () => {
+    const h = harness();
+    h.deps.generation = {
+      generate: vi.fn(async () => completeProposal),
+    } as never;
+    let confirmTurn!: () => void;
+    h.deps.confirmGenerationInteraction = vi.fn(
+      () => new Promise<void>((resolve) => (confirmTurn = resolve)),
+    );
+
+    const turn = new AdventureActions(h.runtime).submitAction("Walk on");
+    await flush();
+    await new AdventureLifecycle(h.runtime).close();
+    confirmTurn();
+    await turn;
+    await flush();
+
+    expect(h.summarize).not.toHaveBeenCalled();
+  });
+
   it("summarises after a turn saves, then rides on the following turn's save", async () => {
     const h = harness();
     const requests: AdventureSession[] = [];
