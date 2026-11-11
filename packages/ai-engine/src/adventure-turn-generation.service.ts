@@ -8,6 +8,7 @@ import {
   parseTurnProposal,
   type AdventureSession,
   type AdventureTurnProposal,
+  type AdventureWorldStyle,
   type ResolvedSourceExcerpt,
   type SuppliedRollOutcome,
 } from "@codex/adventure-engine";
@@ -27,6 +28,8 @@ export interface AdventureTurnGenerationRequest {
   rollResolution?: SuppliedRollOutcome;
   anchors: ResolvedSourceExcerpt[];
   relevant: ResolvedSourceExcerpt[];
+  /** Vault genre or theme; plain data so it crosses the worker boundary. */
+  worldStyle?: AdventureWorldStyle;
   signal?: AbortSignal;
   /** Ephemeral player-facing preview; never a committed or trusted turn. */
   onNarration?: (text: string) => void;

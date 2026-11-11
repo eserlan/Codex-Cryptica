@@ -123,6 +123,38 @@ describe("world entry session and GM contract", () => {
     }
   });
 
+  it("adds a bounded world style block only when a style is supplied", () => {
+    const session = parseAdventureSession(rawSession());
+    const base = {
+      session,
+      phase: "action" as const,
+      anchors: [],
+      relevant: [],
+    };
+    const none = buildAdventurePrompt(base).behavior;
+    expect(none).not.toContain("World style:");
+
+    const styled = buildAdventurePrompt({
+      ...base,
+      worldStyle: {
+        name: "Neon  Night",
+        description: "Cyberpunk, neon-noir.\n" + "x".repeat(900),
+      },
+    }).behavior;
+    expect(styled).toContain('"Neon Night" world: Cyberpunk, neon-noir. xxx');
+    expect(styled).toContain("do not introduce technology, magic or tropes");
+    expect(styled).not.toContain("x".repeat(301));
+
+    for (const worldStyle of [
+      { name: "", description: "Something" },
+      { name: "Something", description: "   " },
+    ]) {
+      expect(
+        buildAdventurePrompt({ ...base, worldStyle }).behavior,
+      ).not.toContain("World style:");
+    }
+  });
+
   it("instructs Oracle to allow quiet exploration and respect chronological context", () => {
     const session = parseAdventureSession(rawSession());
     const prompt = buildAdventurePrompt({

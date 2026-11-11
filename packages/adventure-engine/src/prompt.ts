@@ -9,7 +9,14 @@ import type {
   SuppliedRollOutcome,
 } from "./types";
 
+/** The Vault's chosen genre or theme, used to steer the GM's voice. */
+export interface AdventureWorldStyle {
+  name: string;
+  description: string;
+}
+
 export interface AdventurePromptInput {
+  worldStyle?: AdventureWorldStyle;
   session: AdventureSession;
   phase: "opening" | "action" | "roll-resolution";
   playerAction?: string;
@@ -32,6 +39,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Act as the adventure GM.",
     ...(worldEntry ? worldEntryBehavior(worldEntry, input.session) : []),
     phaseInstruction,
+    ...worldStyleBehavior(input.worldStyle),
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
     'You are the world, so speak in the fiction. Never say what has or has not been "established", never refer to your own knowledge or to being an AI, and never refuse a harmless question about the scene.',
     "Scene details are yours to decide: when the player asks about, or hands you, a detail nobody has fixed yet (time of day, weather, light, a minor NPC's name, a price, a distance), choose a fitting answer in character and commit it. If the player says you decide, decide. The ban on inventing precise calendar dates does not apply to scene details; keep a detail consistent once chosen.",
@@ -128,6 +136,20 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       })),
     ),
   });
+}
+
+const MAX_STYLE_TEXT = 300;
+
+function worldStyleBehavior(style?: AdventureWorldStyle): string[] {
+  const name = style?.name.replace(/\s+/g, " ").trim().slice(0, 80);
+  const description = style?.description
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, MAX_STYLE_TEXT);
+  if (!name || !description) return [];
+  return [
+    `World style: the Vault is set in a "${name}" world: ${description} Use this genre's vocabulary, props, institutions and tone in narration and NPC speech, so the world reads as that genre rather than generic fantasy. Stay inside the genre: do not introduce technology, magic or tropes from other genres, and canonical source records still outrank this style.`,
+  ];
 }
 
 function worldEntryBehavior(

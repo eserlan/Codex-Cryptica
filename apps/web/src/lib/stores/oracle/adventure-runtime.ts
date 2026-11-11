@@ -1,3 +1,8 @@
+import {
+  genreForTheme,
+  worldStyleForTheme,
+} from "#lib/services/adventure/world-style.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
 import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
@@ -15,11 +20,15 @@ export class AdventureRuntime {
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
   ) {
-    const grounding = new AdventureGroundingService(deps.context, (session) =>
-      this.verifySession(session),
+    const grounding = new AdventureGroundingService(
+      deps.context,
+      (session) => this.verifySession(session),
+      () => worldStyleForTheme(themeStore.worldThemeId),
     );
     deps.generation = grounding.wrap(deps.generation);
-    this.background = new AdventureBackground(deps.idGenerator, grounding);
+    this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
+      genreForTheme(themeStore.worldThemeId),
+    );
     this.scenarios = new AdventureScenarios(state, deps, (session) =>
       this.verifySession(session),
     );
