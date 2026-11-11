@@ -331,3 +331,40 @@ describe("HexCrawlStore.applyChange (region generation seam)", () => {
     expect(store.revision).toBe(2);
   });
 });
+
+describe("HexCrawlStore rollback with a reactive map", () => {
+  it("restores the previous state after a failed save even when the map wraps what it stores", async () => {
+    const raw = makeMap();
+    // Like a reactive proxy, reading hexCrawl returns a different object than was stored.
+    const wrapped = new Proxy(raw, {
+      get(target, key, receiver) {
+        const value = Reflect.get(target, key, receiver);
+        return key === "hexCrawl" && value ? { ...value } : value;
+      },
+    });
+    const { store } = setup({
+      getMap: () => wrapped,
+      saveMaps: vi.fn(async () => false),
+    });
+    await expect(
+      store.applyChange(MAP_ID, (state) => ({ ...state, enabled: true })),
+    ).rejects.toThrow();
+    expect(raw.hexCrawl).toBeUndefined();
+  });
+
+  it("does not undo a newer write when an older save fails", async () => {
+    const { store, maps } = setup();
+    let releaseFirst!: (ok: boolean) => void;
+    const first = new Promise<boolean>((resolve) => (releaseFirst = resolve));
+    const saves = [() => first, async () => true];
+    (
+      store as never as { deps: { saveMaps: () => Promise<boolean> } }
+    ).deps.saveMaps = () => saves.shift()!();
+    const older = store.applyChange(MAP_ID, (s) => ({ ...s, enabled: true }));
+    const newer = store.applyChange(MAP_ID, (s) => ({ ...s, enabled: true }));
+    await newer;
+    releaseFirst(false);
+    await expect(older).rejects.toThrow();
+    expect(maps[MAP_ID].hexCrawl?.enabled).toBe(true);
+  });
+});

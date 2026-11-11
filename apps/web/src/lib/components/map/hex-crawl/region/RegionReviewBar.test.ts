@@ -106,8 +106,10 @@ describe("RegionReviewBar", () => {
     opener.focus();
     const { store } = open();
     const view = render(RegionReviewBar, { store, selectedKey: null });
-    expect(document.activeElement).toBe(
-      screen.getByTestId("region-review-bar"),
+    await vi.waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByTestId("region-review-bar"),
+      ),
     );
     view.unmount();
     expect(document.activeElement).toBe(opener);

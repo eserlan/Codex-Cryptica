@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { HexLabelConfig, HexOrientation } from "map-engine";
-  import { onMount } from "svelte";
   import RegionReviewMessage from "./RegionReviewMessage.svelte";
   import RegionReviewBody from "./RegionReviewBody.svelte";
   import type { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
@@ -29,11 +28,16 @@
   let collapsed = $state(false);
   let bar = $state<HTMLElement | null>(null);
 
-  onMount(() => {
-    // Move focus into the review, and give it back to where it came from when it closes.
+  // Move focus into the review when it opens, and give it back when it closes.
+  // Focus waits a tick: the hex panel that started the review is closing and
+  // gives its own focus back as it goes.
+  $effect(() => {
+    const element = bar;
+    if (!element) return;
     const opener = document.activeElement;
-    bar?.focus();
+    const timer = setTimeout(() => element.focus(), 0);
     return () => {
+      clearTimeout(timer);
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus();
     };
   });

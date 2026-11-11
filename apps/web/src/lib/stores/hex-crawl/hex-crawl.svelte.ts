@@ -47,6 +47,7 @@ export class HexCrawlStore {
   selectedHex = $state<SelectedHex | null>(null);
   /** Goes up by one after every successful hex write on any map. */
   revision = $state(0);
+  private writeSeq = 0;
   private opener: HTMLElement | null = null;
 
   constructor(private readonly deps: HexCrawlStoreDeps) {}
@@ -118,6 +119,7 @@ export class HexCrawlStore {
     if (!map) return false;
     const previous = map.hexCrawl;
     const next = change(this.stateFor(mapId));
+    const seq = ++this.writeSeq;
     map.hexCrawl = next;
     try {
       const saved = await this.deps.saveMaps();
@@ -125,7 +127,8 @@ export class HexCrawlStore {
     } catch (error) {
       // Do not overwrite a newer write if another operation committed while
       // this persistence attempt was pending.
-      if (map.hexCrawl === next) {
+      // (Compared by sequence: a reactive map wraps `next` in a proxy, so `===` never matches.)
+      if (this.writeSeq === seq) {
         if (previous === undefined) delete map.hexCrawl;
         else map.hexCrawl = previous;
       }
