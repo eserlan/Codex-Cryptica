@@ -67,7 +67,7 @@
                   aria-hidden="true"
                 ></span>
                 <p
-                  class="text-micro font-bold uppercase tracking-widest font-header text-theme-primary"
+                  class="text-micro font-bold uppercase tracking-widest font-header text-theme-text"
                 >
                   {faq.exclusiveLabel ?? "Codex Cryptica exclusive"}
                 </p>
@@ -86,7 +86,7 @@
                   class="w-full h-auto block border-b border-theme-primary/20"
                 />
                 <span
-                  class="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-nano font-bold uppercase tracking-widest font-header text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="absolute bottom-3 right-3 inline-flex items-center gap-1 rounded-full bg-black/60 px-2.5 py-1 text-nano font-bold uppercase tracking-widest font-header text-white opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity"
                 >
                   <span
                     class="icon-[lucide--zoom-in] w-3 h-3"
@@ -101,7 +101,7 @@
                 >
                   {faq.question}
                 </h3>
-                <p class="text-sm text-theme-muted leading-relaxed">
+                <p class="text-sm text-theme-text leading-relaxed">
                   {faq.answer}
                 </p>
                 {#if faq.inlineImage}
@@ -113,7 +113,7 @@
                       class="rounded-lg border border-theme-primary/25 max-w-full h-auto"
                     />
                     <span
-                      class="text-nano uppercase tracking-widest font-header text-theme-muted/70"
+                      class="text-nano uppercase tracking-widest font-header text-theme-text"
                     >
                       {faq.inlineImageCaption ?? faq.inlineImageAlt ?? ""}
                     </span>
@@ -130,7 +130,7 @@
               >
                 {faq.question}
               </h3>
-              <p class="text-sm text-theme-muted leading-relaxed">
+              <p class="text-sm text-theme-text leading-relaxed">
                 {faq.answer}
               </p>
             </article>
