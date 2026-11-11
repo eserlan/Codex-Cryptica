@@ -183,6 +183,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -- The established discovery-review dialog is large; only its persistence callback changed. -->
 <svelte:window
   onkeydown={(event) => {
     if (expanded && event.key === "Escape") {
