@@ -401,7 +401,7 @@
     let addedCount = 0;
     for (const fact of facts) {
       if (
-        oracle.adventure.session !== session ||
+        oracle.adventure.session?.id !== session.id ||
         oracle.vault.activeVaultId !== originatingVaultId
       ) {
         throw new Error(
@@ -461,7 +461,7 @@
         let addedCount = 0;
         for (const fact of pending) {
           if (
-            oracle.adventure.session !== session ||
+            oracle.adventure.session?.id !== session.id ||
             oracle.vault.activeVaultId !== originatingVaultId
           ) {
             break;
