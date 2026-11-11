@@ -471,13 +471,17 @@ describe("fictional clock and temporal precision", () => {
 
   it("uses elapsed time to reclassify a coming event without mutating the start date", () => {
     const before = resolveTemporalWorldContext(query);
-    expect(before.gmOnly.find((r) => r.id === "festival")?.applicability).toBe("future");
+    expect(
+      before.gmOnly.find((r) => r.id === "festival")?.applicability,
+    ).toBe("future");
     expect(before.playerSafe.some((r) => r.id === "festival")).toBe(false);
     const after = resolveTemporalWorldContext({
       ...query,
       elapsedMinutes: 2 * 1_440,
     });
-    expect(after.gmOnly.find((r) => r.id === "festival")?.applicability).toBe("historical");
+    expect(
+      after.gmOnly.find((r) => r.id === "festival")?.applicability,
+    ).toBe("historical");
     expect(after.playerSafe.some((r) => r.id === "festival")).toBe(true);
     expect(after.at).toEqual(query.at);
     expect(query.at).toEqual({ year: 618, month: 2, day: 3 });
@@ -488,27 +492,37 @@ describe("fictional clock and temporal precision", () => {
       ...query,
       elapsedMinutes: 60,
     });
-    expect(partialDay.gmOnly.find((r) => r.id === "festival")?.applicability).toBe("uncertain");
+    expect(
+      partialDay.gmOnly.find((r) => r.id === "festival")?.applicability,
+    ).toBe("uncertain");
 
     const yearOnly = resolveTemporalWorldContext({
       ...query,
       at: { year: 618 },
       elapsedMinutes: 2 * 1_440,
     });
-    expect(yearOnly.gmOnly.find((r) => r.id === "festival")?.applicability).toBe("uncertain");
+    expect(
+      yearOnly.gmOnly.find((r) => r.id === "festival")?.applicability,
+    ).toBe("uncertain");
     expect(yearOnly.playerSafe.some((r) => r.id === "festival")).toBe(false);
   });
 
   it("honours custom months, avoids wall-clock dates and rejects invalid elapsed minutes", () => {
     expect(classifyEntityAt(festival, query.at, shortCalendar)).toBe("future");
-    expect(classifyEntityAt(festival, query.at, shortCalendar, 2 * 1_440)).toBe("historical");
-    expect(() => resolveTemporalWorldContext({
-      ...query,
-      elapsedMinutes: -1,
-    })).toThrow("temporal-world-invalid-date");
-    expect(() => resolveTemporalWorldContext({
-      ...query,
-      elapsedMinutes: 1.5,
-    })).toThrow("temporal-world-invalid-date");
+    expect(
+      classifyEntityAt(festival, query.at, shortCalendar, 2 * 1_440),
+    ).toBe("historical");
+    expect(() =>
+      resolveTemporalWorldContext({
+        ...query,
+        elapsedMinutes: -1,
+      }),
+    ).toThrow("temporal-world-invalid-date");
+    expect(() =>
+      resolveTemporalWorldContext({
+        ...query,
+        elapsedMinutes: 1.5,
+      }),
+    ).toThrow("temporal-world-invalid-date");
   });
 });
