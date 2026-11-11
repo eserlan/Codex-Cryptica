@@ -181,7 +181,9 @@ describe("AdventureScenarios workflow", () => {
     expect(dismissed.revision).toBe(session.revision + 1);
 
     // The saved JSON is the source of truth, not the component's local state.
-    state.session = parseAdventureSession(JSON.parse(JSON.stringify(dismissed)));
+    state.session = parseAdventureSession(
+      JSON.parse(JSON.stringify(dismissed)),
+    );
     expect(state.session.dismissedProvisionalFactIds).toEqual(["fact-1"]);
     const again = await runtime.scenarios.dismissDiscoveries(["fact-1"]);
     expect(again.revision).toBe(dismissed.revision);
@@ -190,14 +192,16 @@ describe("AdventureScenarios workflow", () => {
 
   it("rejects attempts to dismiss GM-only or unknown facts", async () => {
     const { state, runtime } = createAdventureRuntime();
-    state.session!.provisionalFacts = [{
-      id: "gm-only",
-      kind: "clue",
-      name: "Hidden plan",
-      summary: "secret",
-      introducedOnTurnId: "turn-1",
-      visibility: "gm-only",
-    }];
+    state.session!.provisionalFacts = [
+      {
+        id: "gm-only",
+        kind: "clue",
+        name: "Hidden plan",
+        summary: "secret",
+        introducedOnTurnId: "turn-1",
+        visibility: "gm-only",
+      },
+    ];
     await expect(
       runtime.scenarios.dismissDiscoveries(["gm-only"]),
     ).rejects.toThrow("unknown-discovery");
@@ -209,14 +213,16 @@ describe("AdventureScenarios workflow", () => {
 
   it("keeps a dismissed discovery available when the save fails", async () => {
     const { state, deps, runtime } = createAdventureRuntime();
-    state.session!.provisionalFacts = [{
-      id: "fact-1",
-      kind: "place",
-      name: "Bridge",
-      summary: "Old bridge",
-      introducedOnTurnId: "turn-1",
-      visibility: "player-visible",
-    }];
+    state.session!.provisionalFacts = [
+      {
+        id: "fact-1",
+        kind: "place",
+        name: "Bridge",
+        summary: "Old bridge",
+        introducedOnTurnId: "turn-1",
+        visibility: "player-visible",
+      },
+    ];
     const before = state.session;
     vi.spyOn(deps.repository, "save").mockResolvedValueOnce({
       ok: false,
