@@ -71,7 +71,7 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
     state facts; optional `places` and `storySoFar` on the session; optional `moveTo`
     on the complete-turn proposal.
   - `packages/adventure-engine/src/places.ts` (new): resolve or create a place, tag
-    new facts, re-tag on a move, evict when the character cap is reached.
+    new facts, re-tag on a move.
   - `packages/adventure-engine/src/turn-state.ts` / `completed-turn.ts`: call the
     place step during commit.
   - `packages/adventure-engine/src/story-summary.ts` (new): `pendingSummaryTurns`,
@@ -88,9 +88,12 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
 - **Data Contracts & State Flow** (all additive and optional; `schemaVersion` stays 3):
   - `Place = { id, name, sourceRecordId?, relation? }`; `session.places?: Place[]` (max 30).
   - `stateFact.placeId?: id`. Untagged means "applies everywhere".
-  - `visibleState.location.placeId?: id` is the current place.
-  - Proposal `moveTo?: { placeId?: id; name?: text; relation?: text; sourceRecordId?: id }`.
-    The model sets it only when the player changes place.
+  - `session.currentPlaceId?: id` is the current place. It lives on the session, not on
+    `visibleState.location`, because the model rewrites the location text for scene
+    changes inside one place.
+  - Proposal `moveTo?: { placeId?: id; name?: text; relation?: text }`. The model sets it
+    only when the player changes place. It cannot attach a Vault record id; the seed
+    place takes one from the world entry.
   - `session.storySoFar?: { text (max 1,500), throughSequence: number, updatedAt }`.
   - Persistence: the existing `.codex/adventures/<session-id>.json` document. No new store.
 
@@ -101,8 +104,8 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
   fail the same way. Cost: a companion must be mentioned in the move turn's patch
   to travel with the player.
 - **Nothing is deleted on a move.** Characters and facts elsewhere stay stored and
-  are shown in short form. When `activeCharacters` reaches its cap of 30, the engine
-  drops the oldest character at another place rather than failing the commit.
+  are shown in short form. The existing caps (30 characters, 60 facts) are unchanged
+  and parking adds no entries, so it does not make them easier to reach.
 - **Stall line fires on every 4th quiet turn**, not on every turn past the
   threshold, so it stays a nudge. A turn is quiet when its visible and hidden
   patches are empty, nothing was revealed, no provisional fact was added and time
@@ -127,8 +130,8 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
   - `moveTo.placeId` unknown: reject the proposal as `conflicting-patch` (existing
     repair path).
   - `moveTo` with neither `placeId` nor `name`: schema-invalid.
-  - `places` at 30: reuse the closest name match if any, otherwise keep the location
-    text and leave it untagged; never fail the turn.
+  - `places` at 30: reuse a place with the same name if any; otherwise record no new
+    place and leave the player unplaced (facts untagged); never fail the turn.
   - Summary call fails, returns empty or over-length text, or the device is offline:
     discard, keep the previous summary, retry at the next trigger.
 - **Cancellation / Edge Case**:
@@ -177,20 +180,21 @@ and a message addressed to the GM ("To dm…") is handled correctly only by luck
 
 ### PR B — places
 
-- [ ] **Task B1: Tests** — schema: legacy session parses unchanged; `moveTo`
+- [x] **Task B1: Tests** — schema: legacy session parses unchanged; `moveTo`
       validation. `tests/places.test.ts`: new place created; existing place reused
       by id; unknown id rejected; new facts tagged; companions travel, others stay;
-      eviction at the character cap; registry full. Prompt-state test: full versus
+      registry full. Prompt-state test: full versus
       short form, 5 per place, 120 characters.
-- [ ] **Task B2: Schema and types** — Optional `placeId`, `places`, `moveTo`.
-- [ ] **Task B3: Engine** — `places.ts`, wired into the commit in `turn-state.ts`.
+- [x] **Task B2: Schema and types** — Optional `placeId`, `places`, `moveTo`.
+- [x] **Task B3: Engine** — `places.ts`, wired into the commit in `turn-state.ts`.
       Seed the first place from `worldEntry.location` in `initialSession`.
-- [ ] **Task B4: Prompt** — `prompt-state.ts` projection; behaviour rule telling the
+- [x] **Task B4: Prompt** — `prompt-state.ts` projection; behaviour rule telling the
       model when to set `moveTo` and that place names are fixed once recorded.
-- [ ] **Task B5: Response schema** — `moveTo` in `adventureTurnResponseSchema`.
-- [ ] **Task B6: UI and diagnostics** — State panel lists only characters at the
-      current place; diagnostic JSON includes `places`.
-- [ ] **Task B7: Verification gate and PR.**
+- [x] **Task B5: Response schema** — `moveTo` in `adventureTurnResponseSchema`.
+- [x] **Task B6: UI and diagnostics** — The recap (which feeds the "Who's here" list)
+      shows only people and facts at the current place; diagnostic JSON includes
+      `places`. No Svelte change was needed.
+- [x] **Task B7: Verification gate and PR.** (#4724)
 
 ### PR C — story so far
 
