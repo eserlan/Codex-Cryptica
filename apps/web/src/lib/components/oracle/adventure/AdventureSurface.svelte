@@ -33,6 +33,8 @@
   import {
     batchFilterPromotableFacts,
     createAdventureEntityDraft,
+    promoteProvisionalFacts,
+    type FactPromotionDeps,
   } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
   import { adventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -368,6 +370,26 @@
     }
   }
 
+  function promotionDeps(
+    adventureId: string,
+    vaultId: string | null | undefined,
+  ): FactPromotionDeps {
+    return {
+      isCurrent: () =>
+        oracle.adventure.session?.id === adventureId &&
+        oracle.vault.activeVaultId === vaultId,
+      findExistingId: (title) =>
+        oracle.vault.allEntities.find(
+          (entity) =>
+            entity.title.trim().toLocaleLowerCase() ===
+            title.trim().toLocaleLowerCase(),
+        )?.id,
+      createEntity: (type, title, data) =>
+        oracle.vault.createEntity(type, title, data),
+      linkRecord: linkPlaceToRecord,
+    };
+  }
+
   async function addProvisionalFact(fact: ProvisionalFact): Promise<void> {
     const session = oracle.adventure.session;
     if (!session) throw new Error("No active adventure.");
@@ -398,34 +420,15 @@
     const session = oracle.adventure.session;
     if (!session) throw new Error("No active adventure.");
     const originatingVaultId = oracle.vault.activeVaultId;
-    let addedCount = 0;
-    for (const fact of facts) {
-      if (
-        oracle.adventure.session?.id !== session.id ||
-        oracle.vault.activeVaultId !== originatingVaultId
-      ) {
-        throw new Error(
-          "The active adventure changed. Add the remaining discoveries from that adventure.",
-        );
-      }
-      const draft = createAdventureEntityDraft(fact, session.title);
-      if (!draft) continue;
-      const existing = oracle.vault.allEntities.find(
-        (entity) =>
-          entity.title.trim().toLocaleLowerCase() ===
-          draft.title.trim().toLocaleLowerCase(),
+    const { added: addedCount, interrupted } = await promoteProvisionalFacts(
+      facts,
+      session.title,
+      promotionDeps(session.id, originatingVaultId),
+    );
+    if (interrupted) {
+      throw new Error(
+        "The active adventure changed. Add the remaining discoveries from that adventure.",
       );
-      if (existing) {
-        await linkPlaceToRecord(fact, existing.id);
-        continue;
-      }
-      const recordId = await oracle.vault.createEntity(
-        draft.type,
-        draft.title,
-        draft.initialData,
-      );
-      await linkPlaceToRecord(fact, recordId);
-      addedCount += 1;
     }
     if (addedCount > 0) {
       notificationStore.notify(
@@ -458,25 +461,14 @@
     autoPromoting = true;
     void (async () => {
       try {
-        let addedCount = 0;
-        for (const fact of pending) {
-          if (
-            oracle.adventure.session?.id !== session.id ||
-            oracle.vault.activeVaultId !== originatingVaultId
-          ) {
-            break;
-          }
-          processedAutoPromoteFactIds.add(fact.id);
-          const draft = createAdventureEntityDraft(fact, session.title);
-          if (!draft) continue;
-          const recordId = await oracle.vault.createEntity(
-            draft.type,
-            draft.title,
-            draft.initialData,
-          );
-          await linkPlaceToRecord(fact, recordId);
-          addedCount += 1;
-        }
+        const { added: addedCount } = await promoteProvisionalFacts(
+          pending,
+          session.title,
+          {
+            ...promotionDeps(session.id, originatingVaultId),
+            onAttempt: (fact) => processedAutoPromoteFactIds.add(fact.id),
+          },
+        );
         if (addedCount > 0) {
           notificationStore.notify(
             `Auto-promoted ${addedCount} ${addedCount === 1 ? "discovery" : "discoveries"} to Codex.`,
