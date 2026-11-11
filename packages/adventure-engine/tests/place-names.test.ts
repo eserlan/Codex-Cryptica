@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  linkAdventurePlaceRecord,
   linkPlaceRecords,
   MAX_PLACE_ALIASES,
   matchPlace,
@@ -198,5 +199,57 @@ describe("the current place's record as an anchor", () => {
       intent: "explore",
     };
     expect(ids(s)).toEqual(["r-nombe"]);
+  });
+});
+
+describe("linking a saved place to its record", () => {
+  const withPlaces = (places: Place[]): AdventureSession => ({
+    ...session(),
+    places,
+  });
+
+  it("ties the place with that name to the record", () => {
+    const base = withPlaces([place("p1", "Tiny village")]);
+    const result = linkAdventurePlaceRecord(
+      base,
+      "the tiny village",
+      "rec-1",
+      base.revision,
+    );
+    expect(result.ok && result.changed).toBe(true);
+    if (result.ok)
+      expect(result.session.places?.[0]?.sourceRecordId).toBe("rec-1");
+  });
+
+  it("leaves places alone when the name is unknown, only extends a known one, or is already linked", () => {
+    const base = withPlaces([
+      place("p1", "Tiny village"),
+      place("p2", "Mill", { sourceRecordId: "rec-old" }),
+    ]);
+    for (const name of [
+      "Ravenhold",
+      "Tiny village in the high slopes",
+      "Mill",
+    ]) {
+      const result = linkAdventurePlaceRecord(
+        base,
+        name,
+        "rec-1",
+        base.revision,
+      );
+      expect(result).toMatchObject({ ok: true, changed: false });
+    }
+  });
+
+  it("refuses a stale revision", () => {
+    const base = withPlaces([place("p1", "Tiny village")]);
+    expect(
+      linkAdventurePlaceRecord(
+        base,
+        "Tiny village",
+        "rec-1",
+        base.revision + 1,
+      ),
+    ).toEqual({ ok: false, reason: "stale-revision" });
   });
 });

@@ -209,6 +209,10 @@ export class AdventureManager extends AdventureState {
     return this.scenarios.recordTheory(...args);
   }
 
+  linkPlaceRecord(...args: Parameters<AdventureScenarios["linkPlaceRecord"]>) {
+    return this.scenarios.linkPlaceRecord(...args);
+  }
+
   dismissDiscoveries(
     ...args: Parameters<AdventureScenarios["dismissDiscoveries"]>
   ) {

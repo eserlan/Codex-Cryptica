@@ -269,3 +269,7 @@ Places were only linked to a record when they were the world-entry start. Now:
   stays a separate place. The model sees each place's aliases and a `canonical` flag.
 - Not done: fuzzy matching, linking by records' own aliases (entities have none), or
   letting the model supply record ids.
+
+## Follow-up: promotion records the Vault link
+
+Saving a place discovery to Codex (single, bulk or auto-promote), or finding it already saved, now ties the adventure place of that exact name to the record through `linkAdventurePlaceRecord`. `sourceRecordId` is an id, so a later rename in the Vault no longer breaks the link. It is best effort: a pending roll or a failed save leaves the exact-title linker to link it at the next turn. Places stay in the session registry because they carry aliases, fact tags and `currentPlaceId`, and places that never reach the Vault still need them.
