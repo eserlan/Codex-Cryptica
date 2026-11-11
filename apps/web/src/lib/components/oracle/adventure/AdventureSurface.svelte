@@ -428,7 +428,10 @@
     const pending = batchFilterPromotableFacts(
       facts,
       existingEntityTitles,
-      Array.from(processedAutoPromoteFactIds),
+      [
+        ...processedAutoPromoteFactIds,
+        ...(session.dismissedProvisionalFactIds ?? []),
+      ],
     );
     if (pending.length === 0 || autoPromoting) return;
 
