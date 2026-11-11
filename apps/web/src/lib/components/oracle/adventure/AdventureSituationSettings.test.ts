@@ -216,7 +216,11 @@ describe("AdventureSituationSettings", () => {
         },
         hiddenState: {
           secrets: [
-            { id: "secret-1", text: "The reeve stole the grain", status: "hidden" },
+            {
+              id: "secret-1",
+              text: "The reeve stole the grain",
+              status: "hidden",
+            },
           ],
           gmThreads: [],
         },
