@@ -165,6 +165,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -- Existing full-screen adventure shell includes the discovery review launcher. -->
 <svelte:document bind:fullscreenElement />
 <svelte:window
   onkeydown={(event) => utilitiesOpen && event.key === "Escape" && closeTools()}
