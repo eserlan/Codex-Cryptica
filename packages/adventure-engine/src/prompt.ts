@@ -2,6 +2,7 @@ import { allocatePromptBudget } from "./context-budget";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
 import { worldEntryPacing } from "./world-entry-pacing";
+import { sceneStallPacing } from "./scene-pacing";
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import type {
   AdventureSession,
@@ -29,6 +30,8 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   const scenarios = candidateScenariosForLocation(input.session);
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
+  const stalled = sceneStallPacing(input.session);
+  const stallDue = stalled?.stalled ? stalled : undefined;
   const phaseInstruction =
     input.phase === "opening"
       ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
@@ -45,6 +48,12 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Scene details are yours to decide: when the player asks about, or hands you, a detail nobody has fixed yet (time of day, weather, light, a minor NPC's name, a price, a distance), choose a fitting answer in character and commit it. If the player says you decide, decide. The ban on inventing precise calendar dates does not apply to scene details; keep a detail consistent once chosen.",
     "A character may not know something, but a reply must never be a dead end. Let the NPC offer a name, point to someone or somewhere that knows more, or let the player notice a visible clue. When the player repeats a question about the same unknown, someone present offers a concrete observable clue or safe lead; do not disclose GM-only truths, and reveal scenario secrets only through justified fictional discovery.",
     "Do not repeat the ambient detail (sounds, hearth, cups, weather) used in the previous turn; vary the sensory colour or leave it out. If the last few turns stayed in one scene without new information, change something: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Never decide the player's response.",
+    'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
+    ...(stallDue
+      ? [
+          `STALLED SCENE: the last ${stallDue.quietTurns} turns changed nothing in the world: no new fact, character, place or consequence. In this turn, change something concrete: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Do not repeat any detail from the previous turns, and still never decide the player's response.`,
+        ]
+      : []),
     "Canonical source records outrank provisional session material.",
     ...(scenarios.length
       ? [
