@@ -47,6 +47,8 @@ export const HINT_KEYS = {
   ADVENTURE: "adventure-hint-seen",
   /** The Explore area's AI disclosure for hex discovery (FR-031). Device-local. */
   HEX_CRAWL_AI_NOTICE: "hex-crawl-ai-notice-seen",
+  /** The Generate region first-use hint in the hex panel. Device-local. */
+  HEX_REGION_HINT: "hex-region-hint-seen",
   /** The Biome Explorer's first-use note about the optional AI helper. Device-local. */
   BIOME_AI_NOTICE: "biome-ai-notice-seen",
 } as const;
@@ -833,7 +835,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "hex-crawl-mode",
     title: "Hex Crawl mode",
     content:
-      "Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.",
+      "Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers. Use Generate region in a hex panel to propose seeded, coherent terrain on your device with no AI, review it on the map, then accept or cancel.",
     icon: "icon-[lucide--hexagon]",
   },
   "biome-explorer": {

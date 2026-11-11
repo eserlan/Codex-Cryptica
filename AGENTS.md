@@ -106,6 +106,9 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `hex-crawl-engine` (extended with `region/`), `map-engine` (`getHexNeighbors`, `getHexRange`, `hexDistance`, `hexToPoint`, `getHexCorners`), `zod`, the existing `HexCrawlStore`, `HexTerrainPicker`, Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (4659-hex-region-generation)
+- One optional additive field, `generated`, on existing hex records in `.codex/maps.json` (synced, backed up and exported with maps; removed from guest exports with the rest of `hexCrawl`). One device-local `localStorage` key, `codex-hex-region:<mapId>`. No IndexedDB, OPFS layout or migration change. (4659-hex-region-generation)
+
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `schema` (one optional `biome` field on `EntitySchema`), the existing `vault` store (`createEntity`/`updateEntity`), `ClipboardService`, the entity `image` path, `@codex/ai-engine` (`aiClientManager`) for one optional AI action, Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/biome-engine`. No new third-party dependency. (180-biome-explorer)
 - Profiles are Note entities (`kind: "biome"`) carrying an optional structured `biome` field plus generated Markdown `content`; the catalogue is bundled data and images are hosted on R2. Device-local: `codex-biome-explorer-view` and one AI-notice hint key. No IndexedDB, OPFS layout or migration change. (180-biome-explorer)
 

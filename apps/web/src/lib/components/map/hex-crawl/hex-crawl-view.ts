@@ -1,5 +1,6 @@
 import {
   formatHexLabel,
+  hexToPoint,
   type HexCoord,
   type HexGridConfig,
   type HexLabelConfig,
@@ -7,6 +8,16 @@ import {
 } from "map-engine";
 
 /** Who may see any hex crawl UI (FR-041). Player View previews count as players. */
+/*
+ * Tailwind finds icon classes by scanning source text, and the terrain icons are
+ * defined in the hex-crawl-engine package, which the app stylesheet does not
+ * reach. Listing them here keeps them in the generated CSS:
+ * icon-[lucide--wheat] icon-[lucide--trees] icon-[lucide--land-plot]
+ * icon-[lucide--mountain] icon-[lucide--droplets] icon-[lucide--sun]
+ * icon-[lucide--waves] icon-[lucide--anchor] icon-[lucide--snowflake]
+ * icon-[lucide--map-pin]
+ */
+
 export interface HexCrawlAccess {
   isGM: boolean;
   isGuest: boolean;
@@ -60,4 +71,24 @@ export function hexLabelFor(
     return formatHexLabel(hex, { style: "numeric" }, orientation);
   }
   return formatHexLabel(hex, labelConfig, orientation);
+}
+
+/**
+ * Whether a hex is on the map: its centre lies inside the map image. Used to
+ * keep generated terrain off the edge. With no hex grid nothing is on the map.
+ */
+export function hexOnMap(
+  dimensions: { width: number; height: number },
+  gridConfig: HexGridConfig | null,
+): (hex: HexCoord) => boolean {
+  if (!gridConfig) return () => false;
+  return (hex) => {
+    const point = hexToPoint(hex, gridConfig);
+    return (
+      point.x >= 0 &&
+      point.y >= 0 &&
+      point.x <= dimensions.width &&
+      point.y <= dimensions.height
+    );
+  };
 }

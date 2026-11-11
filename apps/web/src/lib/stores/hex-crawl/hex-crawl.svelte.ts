@@ -45,11 +45,14 @@ export interface SelectedHex {
  */
 export class HexCrawlStore {
   selectedHex = $state<SelectedHex | null>(null);
+  /** Goes up by one after every successful hex write on any map. */
+  revision = $state(0);
+  private writeSeq = 0;
   private opener: HTMLElement | null = null;
 
   constructor(private readonly deps: HexCrawlStoreDeps) {}
 
-  private stateFor(mapId: string): HexCrawlState {
+  stateFor(mapId: string): HexCrawlState {
     return normalizeHexCrawlState(this.deps.getMap(mapId)?.hexCrawl);
   }
 
@@ -94,6 +97,18 @@ export class HexCrawlStore {
     return this.deps.isGM() && !this.deps.isGuest();
   }
 
+  /**
+   * Apply one change to a map's hex state and save it in a single write. GM
+   * only, never in guest vaults. If the save fails the previous state is
+   * restored and the error is rethrown. Returns false if nothing was written.
+   */
+  applyChange(
+    mapId: string,
+    change: (state: HexCrawlState) => HexCrawlState,
+  ): Promise<boolean> {
+    return this.commit(mapId, change);
+  }
+
   /** Apply one change to the map's hex state and save. Returns false if nothing was written. */
   private async commit(
     mapId: string,
@@ -104,6 +119,7 @@ export class HexCrawlStore {
     if (!map) return false;
     const previous = map.hexCrawl;
     const next = change(this.stateFor(mapId));
+    const seq = ++this.writeSeq;
     map.hexCrawl = next;
     try {
       const saved = await this.deps.saveMaps();
@@ -111,12 +127,14 @@ export class HexCrawlStore {
     } catch (error) {
       // Do not overwrite a newer write if another operation committed while
       // this persistence attempt was pending.
-      if (map.hexCrawl === next) {
+      // (Compared by sequence: a reactive map wraps `next` in a proxy, so `===` never matches.)
+      if (this.writeSeq === seq) {
         if (previous === undefined) delete map.hexCrawl;
         else map.hexCrawl = previous;
       }
       throw error;
     }
+    this.revision++;
     return true;
   }
 

@@ -4,10 +4,11 @@ import {
   pointToHex,
   type HexCoord,
 } from "map-engine";
-import { HexDiscoveryService } from "hex-crawl-engine";
+import { HexDiscoveryService, formatSeed } from "hex-crawl-engine";
 import { aiClientManager } from "@codex/ai-engine";
 import { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
 import { HexCrawlMoveObserver } from "#lib/stores/hex-crawl/hex-crawl-move-observer.js";
+import { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
 import { HexJourneyStore } from "#lib/stores/hex-crawl/hex-journey.svelte.js";
 import { HexDiscoveryController } from "#lib/services/hex-discovery.js";
 import { mapStore } from "#lib/stores/map.svelte.js";
@@ -16,9 +17,9 @@ import { vault } from "#lib/stores/vault.svelte.js";
 import { oracle } from "#lib/stores/oracle.svelte.js";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-import { systemClock } from "#lib/utils/runtime-deps.js";
+import { browserStorage, systemClock } from "#lib/utils/runtime-deps.js";
 import { publishSoloMapMove } from "../solo-exploration-recorder.svelte";
-import { activeHexGridConfig } from "./hex-crawl-view";
+import { activeHexGridConfig, hexOnMap } from "./hex-crawl-view";
 import { pinAtHex as pinAtHexOnScreen } from "./hex-map-port";
 
 const REGION_CONTEXT_LIMIT = 1_500;
@@ -34,6 +35,7 @@ export interface HexCrawlServices {
   controller: HexDiscoveryController;
   offer: ExploreOfferState;
   journey: HexJourneyStore;
+  region: RegionGenerationStore;
 }
 
 /** Orientation of the active map's hex grid, for labels. */
@@ -148,5 +150,19 @@ export function createHexCrawlServices(): HexCrawlServices {
     },
   });
 
-  return { store, observer, controller, offer, journey };
+  const region = new RegionGenerationStore({
+    hexes: store,
+    inBounds: (mapId, hex) => {
+      const dimensions = vault.maps[mapId]?.dimensions;
+      return dimensions
+        ? hexOnMap(dimensions, activeHexGridConfig(mapStore))(hex)
+        : false;
+    },
+    newSeed: () => formatSeed(crypto.getRandomValues(new Uint8Array(8))),
+    storage: browserStorage,
+    clock: systemClock,
+    canEdit: () => !sessionModeStore.isGuestMode && mapStore.isGMMode,
+  });
+
+  return { store, observer, controller, offer, journey, region };
 }
