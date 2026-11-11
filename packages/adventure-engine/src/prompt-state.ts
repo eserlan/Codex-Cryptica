@@ -29,18 +29,18 @@ function withoutPlaceTag(fact: StateFact): StateFact {
  * What the model sees of the player-visible state. People and facts tied to the
  * place the player is in (or tied to none) are sent in full; those tied to other
  * places are sent as short notes grouped by place, so a long adventure does not
- * keep every old place at full weight. Sessions with no known current place are
- * sent unchanged.
+ * keep every old place at full weight. If the registry is full and the player is
+ * unplaced, only untagged records are sent in full and all known places stay brief.
  */
 export function projectVisibleState(
   session: AdventureSession,
 ): VisibleAdventureState | Record<string, unknown> {
   const places = session.places;
   const here = places?.find((place) => place.id === session.currentPlaceId);
-  if (!places?.length || !here) return session.visibleState;
+  if (!places?.length) return session.visibleState;
   const state = session.visibleState;
   const elsewhere = places
-    .filter((place) => place.id !== here.id)
+    .filter((place) => place.id !== here?.id)
     .map((place) => ({
       ...describe(place),
       people: state.activeCharacters
@@ -61,8 +61,8 @@ export function projectVisibleState(
     knownFacts: state.knownFacts
       .filter((fact) => isHere(fact, session))
       .map(withoutPlaceTag),
-    currentPlace: describe(here),
     knownPlaces: places.map(describe),
+    ...(here ? { currentPlace: describe(here) } : {}),
     ...(elsewhere.length > 0 ? { elsewhere } : {}),
   };
 }

@@ -60,7 +60,11 @@ describe("moving between places", () => {
       moveTo: { name: "Tiny village", relation: "up the track" },
     });
     next.visiblePatch.knownFacts.add = [
-      { text: "A child carries kindling", source: "provisional" },
+      {
+        text: "A child carries kindling",
+        source: "provisional",
+        placeId: "p-high",
+      },
     ];
     const after = commit(session(), next);
     const place = after.places?.at(-1);
@@ -107,7 +111,7 @@ describe("moving between places", () => {
   it("leaves people not mentioned in the move turn at the place left behind", () => {
     const next = turn({ moveTo: { placeId: "p-high" } });
     next.visiblePatch.activeCharacters.update = [
-      fact("c-pell", "Pell the drinker, now walking with you"),
+      fact("c-pell", "Pell the drinker, now walking with you", "p-low"),
     ];
     const after = commit(placedSession(), next);
     const byId = Object.fromEntries(
@@ -132,7 +136,9 @@ describe("moving between places", () => {
 
   it("keeps an updated fact's place when the player has not moved", () => {
     const next = turn();
-    next.visiblePatch.knownFacts.update = [fact("f-bake", "Sela bakes rye")];
+    next.visiblePatch.knownFacts.update = [
+      fact("f-bake", "Sela bakes rye", "p-low"),
+    ];
     const after = commit(placedSession(), next);
     expect(
       after.visibleState.knownFacts.find((f) => f.id === "f-bake")?.placeId,
@@ -163,6 +169,52 @@ describe("moving between places", () => {
     expect(after.places).toHaveLength(MAX_PLACES);
     expect(after.currentPlaceId).toBeUndefined();
     expect(after.visibleState.knownFacts.at(-1)?.placeId).toBeUndefined();
+  });
+
+  it("keeps place-tagged state scoped when the player is unplaced at capacity", () => {
+    const s = placedSession();
+    s.places = Array.from({ length: MAX_PLACES }, (_, i) => ({
+      id: `p-${i}`,
+      name: `Place ${i}`,
+    }));
+    delete s.currentPlaceId;
+    s.visibleState.activeCharacters = [
+      fact("c-away", "A person elsewhere", "p-0"),
+      fact("c-global", "A person everywhere"),
+    ];
+    s.visibleState.knownFacts = [
+      fact("f-away", "A fact elsewhere", "p-1"),
+      fact("f-global", "A fact everywhere"),
+    ];
+
+    const promptState = projectVisibleState(s) as Record<string, any>;
+    expect(
+      promptState.activeCharacters.map((person: any) => person.id),
+    ).toEqual(["c-global"]);
+    expect(promptState.knownFacts.map((item: any) => item.id)).toEqual([
+      "f-global",
+    ]);
+    expect(promptState).not.toHaveProperty("currentPlace");
+    expect(promptState.elsewhere).toEqual([
+      {
+        id: "p-0",
+        name: "Place 0",
+        people: ["A person elsewhere"],
+        facts: [],
+      },
+      {
+        id: "p-1",
+        name: "Place 1",
+        people: [],
+        facts: ["A fact elsewhere"],
+      },
+    ]);
+
+    const recap = buildAdventureRecap(s);
+    expect(recap.activeCharacters.map((person) => person.id)).toEqual([
+      "c-global",
+    ]);
+    expect(recap.knownFacts.map((item) => item.id)).toEqual(["f-global"]);
   });
 
   it("never reuses an existing place id for a new place", () => {
@@ -285,12 +337,9 @@ describe("what the model and the player see", () => {
     expect(notes.every((n) => n.length <= 120)).toBe(true);
   });
 
-  it("sends a session with no known current place unchanged", () => {
+  it("sends a legacy session with no place registry unchanged", () => {
     const legacy = session();
     expect(projectVisibleState(legacy)).toBe(legacy.visibleState);
-    const unplaced = placedSession();
-    delete unplaced.currentPlaceId;
-    expect(projectVisibleState(unplaced)).toBe(unplaced.visibleState);
   });
 
   it("puts the projection and the move rule in the prompt", () => {
@@ -319,5 +368,8 @@ describe("what the model and the player see", () => {
     expect(isHere({}, placedSession())).toBe(true);
     expect(isHere({ placeId: "p-high" }, session())).toBe(true);
     expect(isHere({ placeId: "p-high" }, placedSession())).toBe(false);
+    const unplaced = placedSession();
+    delete unplaced.currentPlaceId;
+    expect(isHere({ placeId: "p-high" }, unplaced)).toBe(false);
   });
 });

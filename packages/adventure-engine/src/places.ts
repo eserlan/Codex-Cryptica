@@ -100,6 +100,11 @@ function placeFor(fact: StateFact, c: TagContext): string | undefined {
 }
 
 function tagFact(fact: StateFact, c: TagContext): StateFact {
+  if (c.touched.has(fact.id)) {
+    const { placeId: _modelPlaceId, ...withoutModelPlace } = fact;
+    const placeId = placeFor(fact, c);
+    return placeId ? { ...withoutModelPlace, placeId } : withoutModelPlace;
+  }
   if (fact.placeId) return fact;
   const placeId = placeFor(fact, c);
   return placeId ? { ...fact, placeId } : fact;
@@ -168,7 +173,6 @@ export function isHere(
   fact: Pick<StateFact, "placeId">,
   session: Pick<AdventureSession, "currentPlaceId" | "places">,
 ): boolean {
-  if (!fact.placeId || !session.currentPlaceId || !session.places?.length)
-    return true;
+  if (!fact.placeId || !session.places?.length) return true;
   return fact.placeId === session.currentPlaceId;
 }
