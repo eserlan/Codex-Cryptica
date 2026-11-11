@@ -526,3 +526,20 @@ describe("fictional clock and temporal precision", () => {
     ).toThrow("temporal-world-invalid-date");
   });
 });
+
+it("TEMP_FORMAT_PROBE", async () => {
+  const prettier = await import("prettier");
+  const { readFile } = await import("node:fs/promises");
+  const path = new URL(import.meta.url).pathname;
+  const original = await readFile(path, "utf8");
+  const marker = '\nit("TEMP_FORMAT_PROBE"';
+  const clean = original.slice(0, original.indexOf(marker));
+  const formatted = await prettier.format(clean, {
+    ...(await prettier.resolveConfig(path)),
+    filepath: path,
+  });
+  const fragment = formatted.slice(
+    formatted.indexOf('describe("fictional clock and temporal precision"'),
+  );
+  console.log("FORMAT_PROBE_OUTPUT_" + JSON.stringify(fragment));
+});
