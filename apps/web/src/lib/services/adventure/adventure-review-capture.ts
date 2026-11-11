@@ -211,10 +211,54 @@ function diagnosticTurns(session: AdventureSession, cutoff: number) {
   });
 }
 
+function secretCounts(session: AdventureSession) {
+  return {
+    hiddenSecrets: session.hiddenState.secrets.filter(
+      (secret) => secret.status === "hidden",
+    ).length,
+    revealedSecrets: session.hiddenState.secrets.filter(
+      (secret) => secret.status === "revealed",
+    ).length,
+  };
+}
+
+function scenarioCounts(scenarios: AdventureSession["scenarioCollection"]) {
+  const items = scenarios?.items ?? [];
+  return {
+    openScenarios: items.filter((item) => item.status === "open").length,
+    unheardScenarios: items.filter((item) => item.knowledge === "unheard")
+      .length,
+  };
+}
+
+function diagnosticPlaceSummary(session: AdventureSession) {
+  return {
+    currentLocation: session.visibleState.location?.text ?? null,
+    currentPlace:
+      session.places?.find((place) => place.id === session.currentPlaceId)
+        ?.name ?? null,
+    currentSituation: session.visibleState.situation?.text ?? null,
+  };
+}
+
+function diagnosticTurnSummary(
+  session: AdventureSession,
+  cutoff: number,
+  lastTurn: AdventureSession["turns"][number] | undefined,
+) {
+  return {
+    turnsTotal: session.turns.length,
+    turnsFull: session.turns.length - cutoff,
+    turnsCondensed: cutoff,
+    pendingRoll: session.pendingRoll != null,
+    quietTurns: sceneStallPacing(session)?.quietTurns ?? 0,
+    lastPlayerAction: lastTurn?.playerAction ?? null,
+  };
+}
+
 function diagnosticSummary(
   session: AdventureSession,
   cutoff: number,
-  scenarios: NonNullable<AdventureSession["scenarioCollection"]>["items"],
   lastTurn: AdventureSession["turns"][number] | undefined,
 ) {
   return {
@@ -223,27 +267,11 @@ function diagnosticSummary(
     schemaVersion: session.schemaVersion,
     revision: session.revision,
     status: session.status,
-    turnsTotal: session.turns.length,
-    turnsFull: session.turns.length - cutoff,
-    turnsCondensed: cutoff,
     elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
-    currentLocation: session.visibleState.location?.text ?? null,
-    currentPlace:
-      session.places?.find((place) => place.id === session.currentPlaceId)?.name ??
-      null,
-    currentSituation: session.visibleState.situation?.text ?? null,
-    hiddenSecrets: session.hiddenState.secrets.filter(
-      (secret) => secret.status === "hidden",
-    ).length,
-    revealedSecrets: session.hiddenState.secrets.filter(
-      (secret) => secret.status === "revealed",
-    ).length,
-    openScenarios: scenarios.filter((item) => item.status === "open").length,
-    unheardScenarios: scenarios.filter((item) => item.knowledge === "unheard")
-      .length,
-    pendingRoll: session.pendingRoll != null,
-    quietTurns: sceneStallPacing(session)?.quietTurns ?? 0,
-    lastPlayerAction: lastTurn?.playerAction ?? null,
+    ...diagnosticPlaceSummary(session),
+    ...secretCounts(session),
+    ...scenarioCounts(session.scenarioCollection),
+    ...diagnosticTurnSummary(session, cutoff, lastTurn),
     lastPlayedAt: session.lastPlayedAt,
   };
 }
@@ -280,13 +308,12 @@ export function adventureDiagnosticJson(
     options.recentTurns ?? DEFAULT_DIAGNOSTIC_RECENT_TURNS,
   );
   const cutoff = Math.max(0, session.turns.length - recent);
-  const scenarios = session.scenarioCollection?.items ?? [];
   const lastTurn = session.turns.at(-1);
 
   return JSON.stringify(
     {
       _readme: DIAGNOSTIC_README,
-      summary: diagnosticSummary(session, cutoff, scenarios, lastTurn),
+      summary: diagnosticSummary(session, cutoff, lastTurn),
       integrityChecks: integrityChecks(session),
       state: diagnosticState(session),
       turns: diagnosticTurns(session, cutoff),
