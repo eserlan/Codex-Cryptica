@@ -79,7 +79,12 @@ describe("scenario turn progression", () => {
         createId,
       ),
     ).toBeNull();
-    expect(item.events).toHaveLength(2);
+    expect(item.events).toHaveLength(3);
+    expect(item.events[2]).toMatchObject({
+      kind: "stage-change",
+      visibility: "gm",
+      turnId: turn.id,
+    });
     expect(
       markRevealedScenarios(current, undefined, turn, createId),
     ).toBeNull();

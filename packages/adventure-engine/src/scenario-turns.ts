@@ -134,7 +134,24 @@ function recordScenarioElaborationDiscovery(
   createId: IdFactory,
 ): ReturnType<typeof error> | null {
   const text = elaboration.discovery?.trim();
-  if (!text) return null;
+  if (!text) {
+    const id = allocateId(existingIds(candidate), createId);
+    if (!id || scenario.events.length >= 100) {
+      return error(
+        "id-allocation-failed",
+        "Unable to record scenario stage transition",
+      );
+    }
+    scenario.events.push({
+      id,
+      kind: "stage-change",
+      visibility: "gm",
+      text: `Scenario advanced to ${elaboration.stage}`,
+      at: turn.committedAt,
+      turnId: turn.id,
+    });
+    return null;
+  }
 
   if (!recordScenarioDiscovery(candidate, scenario, text, turn, createId)) {
     return error(

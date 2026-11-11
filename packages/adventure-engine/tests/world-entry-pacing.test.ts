@@ -8,6 +8,7 @@ import {
   type CommittedAdventureTurn,
   type ScenarioItem,
 } from "../src";
+import { applyScenarioElaborations } from "../src/scenario-turns";
 
 const emptyPatch = () => ({ add: [], update: [], removeIds: [] });
 
@@ -113,6 +114,7 @@ function session(
     vaultId: "vault-1",
     title: "Lira in Northbrook",
     premise: "Explore Northbrook",
+    sourceRecords: [],
     playerCharacter: { kind: "provisional", name: "Lira" },
     worldEntry: {
       version: 1,
@@ -379,6 +381,36 @@ describe("world entry pacing", () => {
       timeToFirstSign: null,
       timeToFirstActionableLead: null,
     });
+  });
+
+  it("counts an actionable stage reached without discovery text", () => {
+    const rumour = scenarioItem("rumour-1", "heard");
+    const s = session([turn(1), turn(2)], {
+      scenarioCollection: {
+        version: 1,
+        items: [rumour],
+        focusedScenarioId: null,
+      },
+    });
+
+    expect(
+      applyScenarioElaborations(
+        s,
+        [{ scenarioId: rumour.id, stage: "actionable-clue" }],
+        [],
+        s.turns[1]!,
+        () => "stage-change-1",
+      ),
+    ).toBeNull();
+    expect(rumour.events).toContainEqual({
+      id: "stage-change-1",
+      kind: "stage-change",
+      visibility: "gm",
+      text: "Scenario advanced to actionable-clue",
+      at: s.turns[1]!.committedAt,
+      turnId: s.turns[1]!.id,
+    });
+    expect(worldEntryDiscoveryMetrics(s).timeToFirstActionableLead).toBe(2);
   });
 
   it.each(["status-change", "consequence"] as const)(

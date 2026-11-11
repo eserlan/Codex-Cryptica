@@ -39,6 +39,13 @@ function hasActionableDiscoveryOnTurn(
     item.stage === "actionable-clue" || item.stage === "revelation-crisis";
 
   if (!stageIsActionable) return false;
+  if (
+    item.events.some(
+      (event) => event.turnId === turnId && event.kind === "stage-change",
+    )
+  ) {
+    return true;
+  }
   if (eventIndex === 0) return item.origin.kind === "manual";
   return eventIndex > 0 && playerEvents[eventIndex]?.kind === "discovery";
 }

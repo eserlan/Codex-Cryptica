@@ -322,7 +322,8 @@ export interface ScenarioSeed {
 
 export interface ScenarioEvent {
   id: string;
-  kind: "discovery" | "consequence" | "status-change" | "theory";
+  kind:
+    "discovery" | "consequence" | "status-change" | "theory" | "stage-change";
   visibility: "player" | "gm";
   text: string;
   at: string;
