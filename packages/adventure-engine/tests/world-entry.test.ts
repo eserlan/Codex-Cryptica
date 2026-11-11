@@ -98,6 +98,31 @@ describe("world entry session and GM contract", () => {
     ).toThrow();
   });
 
+  it("tells the GM to decide scene details, avoid dead ends and stay in the fiction on every phase", () => {
+    const session = parseAdventureSession(rawSession());
+    for (const phase of ["opening", "action", "roll-resolution"] as const) {
+      const { behavior } = buildAdventurePrompt({
+        session,
+        phase,
+        playerAction: "What time of day is it?",
+        anchors: [],
+        relevant: [],
+      });
+      expect(behavior).toContain("If the player says you decide, decide.");
+      expect(behavior).toContain("must never be a dead end");
+      expect(behavior).toContain("concrete observable clue or safe lead");
+      expect(behavior).toContain("do not disclose GM-only truths");
+      expect(behavior).toContain(
+        "reveal scenario secrets only through justified fictional discovery",
+      );
+      expect(behavior).toContain("Never say what has or has not been");
+      expect(behavior).toContain("Do not repeat the ambient detail");
+      // The calendar-date ban is kept, but scoped away from scene details.
+      expect(behavior).toContain("Never invent a precise calendar date");
+      expect(behavior).toContain("does not apply to scene details");
+    }
+  });
+
   it("instructs Oracle to allow quiet exploration and respect chronological context", () => {
     const session = parseAdventureSession(rawSession());
     const prompt = buildAdventurePrompt({
