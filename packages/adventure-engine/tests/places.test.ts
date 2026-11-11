@@ -91,21 +91,35 @@ describe("moving between places", () => {
     expect(byName.places).toHaveLength(2);
   });
 
-  it("rejects a move to an unknown place id and leaves the session unchanged", () => {
+  it("ignores an unknown place id instead of failing the turn", () => {
     const before = placedSession();
-    const snapshot = structuredClone(before);
-    const result = applyCompletedTurn(
-      before,
-      turn({ moveTo: { placeId: "nowhere" } }),
-      meta,
-      meta.now,
-      nextId,
+    const after = commit(before, turn({ moveTo: { placeId: "nowhere" } }));
+    expect(after.currentPlaceId).toBe("p-low");
+    expect(after.places).toEqual(before.places);
+    expect(after.turns).toHaveLength(1);
+  });
+
+  it("falls back to the name when the place id is unknown", () => {
+    const known = commit(
+      placedSession(),
+      turn({ moveTo: { placeId: "nowhere", name: "Tiny village" } }),
     );
-    expect(result).toMatchObject({
-      ok: false,
-      errors: [{ code: "conflicting-patch" }],
-    });
-    expect(before).toEqual(snapshot);
+    expect(known.currentPlaceId).toBe("p-high");
+    expect(known.places).toHaveLength(2);
+    const fresh = commit(
+      placedSession(),
+      turn({ moveTo: { placeId: "nowhere", name: "The mill" } }),
+    );
+    expect(fresh.places?.at(-1)?.name).toBe("The mill");
+    expect(fresh.currentPlaceId).toBe(fresh.places?.at(-1)?.id);
+  });
+
+  it("does not fail when the id is another record's id, such as a fact", () => {
+    const after = commit(
+      placedSession(),
+      turn({ moveTo: { placeId: "f-ale" } }),
+    );
+    expect(after.currentPlaceId).toBe("p-low");
   });
 
   it("leaves people not mentioned in the move turn at the place left behind", () => {
@@ -353,6 +367,7 @@ describe("what the model and the player see", () => {
     expect(prompt.state).toContain('"currentPlace"');
     expect(prompt.state).not.toContain('Mara the traveller","source');
     expect(prompt.behavior).toContain("set moveTo");
+    expect(prompt.behavior).toContain("copied from knownPlaces");
   });
 
   it("limits the player's who-is-here list to the current place", () => {
