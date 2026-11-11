@@ -65,7 +65,7 @@ describe("completed turn commits", () => {
     const next = proposal();
     next.revealScenarioIds = ["scenario-1"];
     next.elaborateScenarios = [
-      { scenarioId: "scenario-1", stage: "actionable-clue" },
+      { scenarioId: "missing", stage: "actionable-clue" },
     ];
     const result = applyCompletedTurn(
       current,
@@ -74,7 +74,7 @@ describe("completed turn commits", () => {
       now,
       () => "event-1",
     );
-    expect(!result.ok && result.errors[0]?.code).toBe("invalid-transition");
+    expect(!result.ok && result.errors[0]?.code).toBe("unknown-fact");
     expect(current).toEqual(before);
   });
 

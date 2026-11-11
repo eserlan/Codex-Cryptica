@@ -64,7 +64,6 @@ type ScenarioElaborationValidation =
 function validateScenarioAvailability(
   candidate: AdventureSession,
   elaboration: ScenarioElaborationProposal,
-  revealedThisTurn: Set<string>,
 ): ScenarioElaborationValidation {
   const scenario = candidate.scenarioCollection?.items.find(
     (item) => item.id === elaboration.scenarioId,
@@ -82,14 +81,6 @@ function validateScenarioAvailability(
       error: error(
         "invalid-transition",
         `Scenario ${elaboration.scenarioId} is not open`,
-      ),
-    };
-  }
-  if (revealedThisTurn.has(elaboration.scenarioId)) {
-    return {
-      error: error(
-        "invalid-transition",
-        `Cannot elaborate scenario ${elaboration.scenarioId} in the same turn it is discovered`,
       ),
     };
   }
@@ -175,11 +166,10 @@ export function applyScenarioElaborations(
   const revealedThisTurn = new Set(revealedScenarioIds ?? []);
 
   for (const elaboration of elaborations) {
-    const validation = validateScenarioAvailability(
-      candidate,
-      elaboration,
-      revealedThisTurn,
-    );
+    // A rumour is introduced at hearsay, so elaborating it in the same turn adds
+    // nothing. Skip it rather than fail the player's turn over a model slip.
+    if (revealedThisTurn.has(elaboration.scenarioId)) continue;
+    const validation = validateScenarioAvailability(candidate, elaboration);
     if ("error" in validation) return validation.error;
     const stageError = validateElaborationStage(
       validation.scenario,

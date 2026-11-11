@@ -128,11 +128,6 @@ describe("scenario turn progression", () => {
       code: "invalid-transition",
     },
     {
-      name: "discovered",
-      revealed: ["scenario-1"],
-      code: "invalid-transition",
-    },
-    {
       name: "unheard",
       item: { knowledge: "unheard" },
       code: "invalid-transition",
@@ -183,4 +178,21 @@ describe("scenario turn progression", () => {
       expect(result?.errors[0]?.code).toBe(code);
     },
   );
+
+  it("skips an elaboration of a scenario revealed this turn, leaving it untouched", () => {
+    const current = candidate();
+    Object.assign(current.scenarioCollection!.items[0]!, {
+      knowledge: "heard",
+    });
+    const before = structuredClone(current);
+    const result = applyScenarioElaborations(
+      current,
+      [clue],
+      ["scenario-1"],
+      turn,
+      () => "new-event",
+    );
+    expect(result).toBeNull();
+    expect(current).toEqual(before);
+  });
 });
