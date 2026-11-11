@@ -91,6 +91,28 @@ function withoutAnchored<T extends { id: string }>(
   return records.filter((record) => !anchored.has(record.id));
 }
 
+/**
+ * Resolve canonical roots from committed play, not the initial location alone.
+ * In a long adventure the current place may differ from World Entry.
+ */
+function worldEntryCanonicalRoots(session: AdventureSession): {
+  characterId?: string;
+  locationId?: string;
+} {
+  const entry = session.worldEntry!;
+  return {
+    characterId:
+      session.playerCharacter.kind === "canonical"
+        ? session.playerCharacter.recordId
+        : undefined,
+    locationId:
+      session.visibleState?.location?.sourceRecordId ??
+      (entry.location.kind === "canonical"
+        ? entry.location.recordId
+        : undefined),
+  };
+}
+
 export class AdventureContextService {
   constructor(private resolver: AdventureSourceResolver) {}
 
@@ -376,40 +398,30 @@ export class AdventureContextService {
     maxRecords: number,
   ) {
     const entry = session.worldEntry!;
+    const { characterId, locationId } = worldEntryCanonicalRoots(session);
+    if (entry.at && (characterId || locationId)) {
+      return (
+        await this.resolveTemporalWorld({
+          vaultId: session.vaultId,
+          characterId,
+          locationId,
+          at: entry.at,
+          elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
+          maxRecords,
+        })
+      ).gmOnly;
+    }
+    // Only undated/provisional entry needs the fallback preview; a dated
+    // lookup already fetched the graph once inside resolveTemporalWorld.
     const snapshot = await this.resolver.getWorldSnapshot!(session.vaultId);
-    const characterId =
-      session.playerCharacter.kind === "canonical"
-        ? session.playerCharacter.recordId
-        : undefined;
-    const locationId =
-      session.visibleState?.location?.sourceRecordId ??
-      (entry.location.kind === "canonical"
-        ? entry.location.recordId
-        : undefined);
-    // Date-aware context is hydrated only for a bounded selection. With a
-    // date and at least one canonical root, classify by date; only a fully
-    // provisional or undated start uses the conservative undated fallback.
-    const candidateRecords =
-      entry.at && (characterId || locationId)
-        ? (
-            await this.resolveTemporalWorld({
-              vaultId: session.vaultId,
-              characterId,
-              locationId,
-              at: entry.at,
-              elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
-              maxRecords,
-            })
-          ).gmOnly
-        : resolveWorldEntryPreview({
-            entities: snapshot.entities,
-            calendar: snapshot.calendar,
-            characterId,
-            locationId,
-            at: entry.at,
-            maxRecords,
-          }).records;
-    return candidateRecords;
+    return resolveWorldEntryPreview({
+      entities: snapshot.entities,
+      calendar: snapshot.calendar,
+      characterId,
+      locationId,
+      at: entry.at,
+      maxRecords,
+    }).records;
   }
 
   private async searchSources(
