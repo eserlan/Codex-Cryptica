@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import AdventureControlRetry from "./AdventureControlRetry.svelte";
   import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
 
   let {
@@ -23,8 +24,6 @@
       manager.phase === "awaiting-roll" ||
       manager.phase === "ready-to-resolve",
   );
-  let retryingControl = $state(false);
-  let controlRetryMessage = $state<string | null>(null);
   let textarea = $state<HTMLTextAreaElement>();
   let typing = $state(false);
 
@@ -44,24 +43,6 @@
     });
   });
 
-  async function retryControl(): Promise<void> {
-    if (retryingControl) return;
-    retryingControl = true;
-    controlRetryMessage = null;
-    try {
-      if (!(await manager.tryTakeControl())) {
-        controlRetryMessage =
-          "This adventure is still in use elsewhere. Leave it in the other tab and try again.";
-      }
-    } catch (cause) {
-      controlRetryMessage =
-        cause instanceof Error
-          ? `Unable to take control: ${cause.message}`
-          : "Unable to take control of this adventure.";
-    } finally {
-      retryingControl = false;
-    }
-  }
   // Preserve controls in the DOM during phase transitions. Unmounting a
   // focused button can exit native fullscreen unexpectedly in Chrome.
   let actionControlsVisible = $derived(
@@ -89,26 +70,7 @@
     data-testid="adventure-dock-extras"
   >
     {#if manager.readOnly && manager.session?.status === "active"}
-      <div
-        class="rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
-        role="status"
-      >
-        <p>
-          Another tab may be controlling this adventure. Leave it there or close
-          that tab, then try again here. Your progress is saved.
-        </p>
-        <button
-          type="button"
-          class="mt-2 min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
-          disabled={retryingControl}
-          onclick={() => void retryControl()}
-        >
-          {retryingControl ? "Checking…" : "Try to take control"}
-        </button>
-        {#if controlRetryMessage}
-          <p class="mt-2 text-theme-text">{controlRetryMessage}</p>
-        {/if}
-      </div>
+      <AdventureControlRetry {manager} />
     {/if}
     <AdventureSuggestedActions
       {manager}

@@ -16,7 +16,16 @@ function isReadOnlyLoad(
   );
 }
 
+/**
+ * A control lease lapses at most 10s after its holder stops renewing (a
+ * closed, reloaded or backgrounded tab often cannot release it). Waiting that
+ * long once beats making the player click again and again.
+ */
+export const TAKE_CONTROL_WAIT_MS = 11_000;
+export const TAKE_CONTROL_POLL_MS = 1_000;
+
 export class AdventureLifecycle {
+  private leaseHeldByOther = false;
   private readonly state;
   constructor(
     private readonly runtime: AdventureRuntime,
@@ -130,8 +139,25 @@ export class AdventureLifecycle {
       request === this.runtime.activeRestoreRequest &&
       this.state.session?.vaultId === session.vaultId &&
       this.state.session?.id === session.id;
-    await this.open(session.vaultId, session.id, isCurrent);
-    return isCurrent() && !this.state.readOnly;
+    return this.openUntilLeaseLapses(session, isCurrent);
+  }
+
+  private async openUntilLeaseLapses(
+    session: AdventureSession,
+    isCurrent: () => boolean,
+  ): Promise<boolean> {
+    const deadline = Date.now() + TAKE_CONTROL_WAIT_MS;
+    do {
+      this.leaseHeldByOther = false;
+      await this.open(session.vaultId, session.id, isCurrent);
+      if (!isCurrent()) return false;
+      if (!this.state.readOnly) return true;
+      // Only a held lease can clear by waiting; other read-only causes
+      // (archived, recovery) will not.
+      if (!this.leaseHeldByOther) return false;
+      await new Promise((resolve) => setTimeout(resolve, TAKE_CONTROL_POLL_MS));
+    } while (Date.now() < deadline);
+    return false;
   }
 
   private async acquireOpenedSessionLease(
@@ -150,6 +176,7 @@ export class AdventureLifecycle {
         await this.runtime.deps.authority.release(acquired.lease);
       return null;
     }
+    this.leaseHeldByOther = !acquired.ok && acquired.reason === "held";
     return acquired.ok ? acquired.lease : null;
   }
 
