@@ -81,6 +81,30 @@ function touchedIds(patch: {
   return new Set([...patch.add, ...patch.update].map((fact) => fact.id));
 }
 
+interface TagContext {
+  touched: Set<string>;
+  earlier: Map<string, StateFact>;
+  moved: boolean;
+  currentId: string | undefined;
+  previousId: string | undefined;
+  /** People not mentioned in a move turn stay where the player left them. */
+  park: boolean;
+}
+
+function placeFor(fact: StateFact, c: TagContext): string | undefined {
+  if (c.touched.has(fact.id)) {
+    const stayed = c.moved ? undefined : c.earlier.get(fact.id)?.placeId;
+    return stayed ?? c.currentId;
+  }
+  return c.park && c.moved ? c.previousId : undefined;
+}
+
+function tagFact(fact: StateFact, c: TagContext): StateFact {
+  if (fact.placeId) return fact;
+  const placeId = placeFor(fact, c);
+  return placeId ? { ...fact, placeId } : fact;
+}
+
 /**
  * Tag facts and people with where they belong, and move the player. The model
  * only declares a move; the engine does the bookkeeping, because a model asked
@@ -121,24 +145,18 @@ export function applyPlaces(
 
   const moved = Boolean(move) && currentId !== previousId;
   const state = candidate.visibleState;
-  const before = previous.visibleState;
-  const tag = (
-    key: "knownFacts" | "activeCharacters",
-    parkLeftBehind: boolean,
-  ) => {
-    const touched = touchedIds(visiblePatch[key]);
-    const earlier = new Map(before[key].map((fact) => [fact.id, fact]));
-    state[key] = state[key].map((fact) => {
-      if (fact.placeId) return fact;
-      if (touched.has(fact.id)) {
-        const stayed = !moved ? earlier.get(fact.id)?.placeId : undefined;
-        const placeId = stayed ?? currentId;
-        return placeId ? { ...fact, placeId } : fact;
-      }
-      return parkLeftBehind && moved && previousId
-        ? { ...fact, placeId: previousId }
-        : fact;
-    });
+  const tag = (key: "knownFacts" | "activeCharacters", park: boolean) => {
+    const context: TagContext = {
+      touched: touchedIds(visiblePatch[key]),
+      earlier: new Map(
+        previous.visibleState[key].map((fact) => [fact.id, fact]),
+      ),
+      moved,
+      currentId,
+      previousId,
+      park,
+    };
+    state[key] = state[key].map((fact) => tagFact(fact, context));
   };
   tag("knownFacts", false);
   tag("activeCharacters", true);
