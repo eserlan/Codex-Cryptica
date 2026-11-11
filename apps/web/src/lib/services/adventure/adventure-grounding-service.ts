@@ -3,6 +3,7 @@ import {
   buildAdventurePrompt,
   selectGroundingCandidates,
   type AdventureSession,
+  type AdventureWorldStyle,
   type ResolvedSourceExcerpt,
   type GroundingContext,
   type GroundingFailureCode,
@@ -39,6 +40,8 @@ export class AdventureGroundingService {
     private readonly verifyCurrent: (
       session: AdventureSession,
     ) => Promise<void> = async () => {},
+    private readonly getWorldStyle: () =>
+      AdventureWorldStyle | undefined = () => undefined,
   ) {}
 
   async prepare(
@@ -104,6 +107,7 @@ export class AdventureGroundingService {
           ...request,
           anchors: context.anchors,
           relevant: context.relevant,
+          worldStyle: this.getWorldStyle(),
         };
         return options === undefined
           ? transport.generate(prepared)

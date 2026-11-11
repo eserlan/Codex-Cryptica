@@ -52,6 +52,36 @@ describe("AdventureGroundingService", () => {
     );
   });
 
+  it("passes the Vault's world style to the model and omits it when none is set", async () => {
+    const style = { name: "Neon Night", description: "Cyberpunk neon-noir." };
+    const request = {
+      session: session(),
+      phase: "opening" as const,
+      anchors: [],
+      relevant: [],
+    };
+    const styled = { generate: vi.fn(async () => completeProposal) };
+    await new AdventureGroundingService(
+      context(),
+      async () => {},
+      () => style,
+    )
+      .wrap(styled)
+      .generate(request);
+    expect(styled.generate).toHaveBeenCalledWith(
+      expect.objectContaining({ worldStyle: style }),
+    );
+    const plain = {
+      generate: vi.fn(async (_request: unknown) => completeProposal),
+    };
+    await new AdventureGroundingService(context())
+      .wrap(plain)
+      .generate(request);
+    expect(
+      (plain.generate.mock.calls[0]![0] as { worldStyle?: unknown }).worldStyle,
+    ).toBeUndefined();
+  });
+
   it("uses persisted roll action and preserves the supplied outcome", async () => {
     const sources = context();
     const current = session();
