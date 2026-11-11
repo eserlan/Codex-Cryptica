@@ -1,3 +1,5 @@
+import { type IdGenerator, systemIdGenerator } from "@codex/runtime";
+
 export interface SelectedAdventureForPlay {
   origin: {
     kind: "manual";
@@ -91,6 +93,7 @@ export function selectAdventureForPlay(
   },
   sourceRecordId?: string,
   manualId?: string,
+  idGenerator: IdGenerator = systemIdGenerator,
 ): SelectedAdventureForPlay {
   if (
     !draft ||
@@ -151,7 +154,7 @@ export function selectAdventureForPlay(
   ].filter(Boolean);
   const ifInvestigated = clampText(investigatedParts.join("\n\n"), 600);
 
-  const resolvedManualId = manualId ?? crypto.randomUUID();
+  const resolvedManualId = manualId ?? idGenerator.uuid();
 
   return {
     origin: {
