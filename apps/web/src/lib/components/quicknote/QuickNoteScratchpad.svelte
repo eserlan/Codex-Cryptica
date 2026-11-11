@@ -4,6 +4,7 @@
   import SessionJournalView from "./SessionJournalView.svelte";
   import { fade, scale } from "svelte/transition";
   import { onDestroy } from "svelte";
+  import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
   import {
     clampBounds,
     getCenteredBounds,
@@ -15,6 +16,8 @@
     MIN_WINDOW_HEIGHT,
     type WindowBounds,
   } from "#lib/utils/window-bounds.js";
+
+  let { storage = browserStorage }: { storage?: StorageLike } = $props();
 
   /**
    * Notes and Journal are deliberately separate tabs, not merged into one
@@ -63,7 +66,7 @@
     if (quickNoteStore.isOpen) {
       bounds = loadSavedBounds(
         SCRATCHPAD_WINDOW_STORAGE_KEY,
-        typeof window !== "undefined" ? window.localStorage : null,
+        storage,
         getViewportSize(),
         SCRATCHPAD_DEFAULT_SIZE,
       );
@@ -78,7 +81,7 @@
       SCRATCHPAD_MIN_WIDTH,
       SCRATCHPAD_MIN_HEIGHT,
     );
-    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
+    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds, storage);
   }
 
   function handleResizePointerDown(e: PointerEvent) {
@@ -131,7 +134,7 @@
       bounds.width !== resizeStart.width ||
       bounds.height !== resizeStart.height
     ) {
-      saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
+      saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds, storage);
     }
   }
 
@@ -165,7 +168,7 @@
     if (next.width === bounds.width && next.height === bounds.height) return;
 
     bounds = next;
-    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds);
+    saveBounds(SCRATCHPAD_WINDOW_STORAGE_KEY, bounds, storage);
   }
 
   // Auto-save debounce effect
@@ -261,7 +264,7 @@
       <div class="flex items-center gap-2">
         {#if activeTab === "notes"}
           <span
-            class="text-micro text-theme-muted px-2 py-0.5 rounded-full bg-theme-bg/50 border border-theme-border/30"
+            class="text-micro text-theme-text px-2 py-0.5 rounded-full bg-theme-bg/50 border border-theme-border/30"
           >
             {saveStatus}
           </span>
@@ -269,7 +272,7 @@
         <button
           type="button"
           onclick={() => quickNoteStore.close()}
-          class="p-1.5 rounded-lg text-theme-muted hover:text-theme-text hover:bg-theme-border/25 transition-all"
+          class="p-1.5 rounded-lg text-theme-text hover:bg-theme-border/25 transition-all"
           aria-label="Close scratchpad"
         >
           <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
@@ -295,7 +298,7 @@
       tabindex="0"
       aria-label="Resize scratchpad with the arrow keys"
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
-      class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 text-theme-muted/40 hover:text-theme-primary touch-none transition-colors z-10"
+      class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize flex items-end justify-end p-0.5 text-theme-text hover:text-theme-text touch-none transition-colors z-10"
       onpointerdown={handleResizePointerDown}
       onpointermove={handleResizePointerMove}
       onpointerup={handleResizePointerUp}
@@ -362,7 +365,7 @@
                 }}
                 disabled={quickNoteStore.isElevating ||
                   !quickNoteStore.currentNote.content.trim()}
-                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-micro uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
+                class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-theme-primary text-theme-on-primary border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary font-bold text-micro uppercase font-header tracking-widest disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md"
                 title="Make Entity with AI"
               >
                 <span
@@ -377,10 +380,10 @@
         </div>
       {:else}
         <div
-          class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-muted"
+          class="flex-1 flex flex-col items-center justify-center text-center p-6 text-theme-text"
         >
           <span
-            class="icon-[lucide--sticky-note] h-12 w-12 opacity-30 mb-3 text-theme-accent"
+            class="icon-[lucide--sticky-note] h-12 w-12 opacity-30 mb-3 text-theme-text"
           ></span>
           <p class="text-xs font-medium">
             Select a note or create a new one to begin editing.
@@ -403,14 +406,14 @@
     onclick={() => (quickNoteStore.activeTab = tab)}
     class="flex items-center gap-1.5 rounded px-2 py-1 font-header text-xs font-bold uppercase tracking-wider transition-colors {activeTab ===
     tab
-      ? 'text-theme-primary'
-      : 'text-theme-muted hover:text-theme-text'}"
+      ? 'text-theme-text'
+      : 'text-theme-text hover:text-theme-text'}"
     data-testid={testId}
   >
     <span
       aria-hidden="true"
       class="{icon} h-4 w-4 {pulseIcon && activeTab === tab
-        ? 'animate-pulse text-theme-accent'
+        ? 'animate-pulse text-theme-text'
         : ''}"
     ></span>
     {label}
