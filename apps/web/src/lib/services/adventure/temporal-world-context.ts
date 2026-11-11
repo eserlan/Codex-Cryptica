@@ -445,7 +445,11 @@ export function resolveTemporalWorldContext(
 ): TemporalWorldContext {
   const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
   const roots = contextSeeds(query, byId);
-  const at = effectiveTargetInterval(query.at, query.calendar, query.elapsedMinutes);
+  const at = effectiveTargetInterval(
+    query.at,
+    query.calendar,
+    query.elapsedMinutes,
+  );
   if (!at) throw new Error("temporal-world-invalid-date");
 
   const applicability = new Map<string, TemporalApplicability>();
