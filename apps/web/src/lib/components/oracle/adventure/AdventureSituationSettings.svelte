@@ -3,6 +3,7 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
   import {
+    adventureDiagnosticJson,
     adventureReviewJson,
     adventureReviewMarkdown,
   } from "#lib/services/adventure/adventure-review-capture.js";
@@ -80,7 +81,7 @@
     }
   }
 
-  async function copySession(format: "markdown" | "json") {
+  async function copySession(format: "markdown" | "json" | "diagnostic") {
     const session = manager.session;
     if (!session || copyBusy) return;
     copyBusy = true;
@@ -89,11 +90,17 @@
       const text =
         format === "markdown"
           ? adventureReviewMarkdown(session)
-          : adventureReviewJson(session);
+          : format === "diagnostic"
+            ? adventureDiagnosticJson(session)
+            : adventureReviewJson(session);
       await navigator.clipboard.writeText(text);
       notificationStore.notify(
         "GM-only adventure " +
-          (format === "markdown" ? "Markdown" : "JSON") +
+          (format === "markdown"
+            ? "Markdown"
+            : format === "diagnostic"
+              ? "compact JSON for AI"
+              : "JSON") +
           " copied to clipboard.",
         "success",
       );
@@ -209,6 +216,14 @@
           class={buttonClass}
           disabled={copyBusy}
           onclick={() => void copySession("json")}>Copy JSON</button
+        >
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={copyBusy}
+          title="Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat."
+          onclick={() => void copySession("diagnostic")}
+          >Copy JSON for AI</button
         >
       </div>
     </div>

@@ -266,6 +266,14 @@ describe("AdventureSituationSettings", () => {
       expect(JSON.parse(json).turns[0].playerAction).toBe(
         "Buy a loaf of bread.",
       );
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy JSON for AI" }),
+      );
+      const compact = JSON.parse(writeText.mock.calls[2]![0]);
+      expect(compact._readme).toContain("GM-only");
+      expect(compact.summary.turnsTotal).toBe(1);
+      expect(compact.turns[0].timeAdvance).toBeNull();
     } finally {
       if (previous) {
         Object.defineProperty(navigator, "clipboard", previous);

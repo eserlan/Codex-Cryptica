@@ -142,3 +142,134 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
   addJsonSection(lines, "Pending roll", session.pendingRoll);
   return lines.join("\n").trimEnd() + "\n";
 }
+
+export const DEFAULT_DIAGNOSTIC_RECENT_TURNS = 20;
+
+const DIAGNOSTIC_README = [
+  "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
+  "It contains hidden secrets and GM threads. Do not share with players.",
+  "summary: quick orientation. integrityChecks: precomputed consistency findings (empty arrays mean clean).",
+  "state: the current truth. visibleState is what the player knows; hiddenState and scenarioCollection are GM-only.",
+  "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
+  "turns: oldest first. Turns marked detail 'condensed' keep only action, narration and time; detail 'full' also keeps every state patch.",
+  "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
+].join(" ");
+
+export interface AdventureDiagnosticOptions {
+  /** Turns that keep their full patches. Older turns are condensed. */
+  recentTurns?: number;
+}
+
+function integrityChecks(session: AdventureSession) {
+  const turnIds = new Set(session.turns.map((turn) => turn.id));
+  const factIds = new Set(session.provisionalFacts.map((fact) => fact.id));
+  const secretIds = new Set(session.hiddenState.secrets.map((s) => s.id));
+  return {
+    nonContiguousTurnSequences: session.turns
+      .filter((turn, index) => turn.sequence !== index)
+      .map((turn) => turn.id),
+    factsIntroducedOnMissingTurn: session.provisionalFacts
+      .filter((fact) => !turnIds.has(fact.introducedOnTurnId))
+      .map((fact) => fact.id),
+    turnsReferencingMissingFacts: session.turns
+      .filter((turn) =>
+        (turn.provisionalFactIds ?? []).some((id) => !factIds.has(id)),
+      )
+      .map((turn) => turn.id),
+    turnsRevealingUnknownSecrets: session.turns
+      .filter((turn) =>
+        (turn.revealedSecretIds ?? []).some((id) => !secretIds.has(id)),
+      )
+      .map((turn) => turn.id),
+    secretsMarkedRevealedWithoutTurn: session.hiddenState.secrets
+      .filter(
+        (secret) =>
+          secret.status === "revealed" &&
+          (!secret.revealedOnTurnId || !turnIds.has(secret.revealedOnTurnId)),
+      )
+      .map((secret) => secret.id),
+  };
+}
+
+/**
+ * Compact, LLM-oriented JSON snapshot. Keeps the current state in full, the
+ * latest turns in full and older turns as action, narration and time only, so
+ * long sessions stay within a model's context. The full-fidelity copy remains
+ * `adventureReviewJson`.
+ */
+export function adventureDiagnosticJson(
+  session: AdventureSession,
+  options: AdventureDiagnosticOptions = {},
+): string {
+  const recent = Math.max(
+    0,
+    options.recentTurns ?? DEFAULT_DIAGNOSTIC_RECENT_TURNS,
+  );
+  const cutoff = Math.max(0, session.turns.length - recent);
+  const scenarios = session.scenarioCollection?.items ?? [];
+  const lastTurn = session.turns.at(-1);
+
+  const turns = session.turns.map((turn, index) => {
+    if (index >= cutoff) {
+      return { detail: "full", ...turn, timeAdvance: turn.timeAdvance ?? null };
+    }
+    return {
+      detail: "condensed",
+      id: turn.id,
+      sequence: turn.sequence,
+      playerAction: turn.playerAction,
+      narration: turn.narration,
+      timeAdvance: turn.timeAdvance ?? null,
+      committedAt: turn.committedAt,
+    };
+  });
+
+  return JSON.stringify(
+    {
+      _readme: DIAGNOSTIC_README,
+      summary: {
+        sessionId: session.id,
+        title: session.title,
+        schemaVersion: session.schemaVersion,
+        revision: session.revision,
+        status: session.status,
+        turnsTotal: session.turns.length,
+        turnsFull: session.turns.length - cutoff,
+        turnsCondensed: cutoff,
+        elapsedMinutes: session.worldTime?.elapsedMinutes ?? 0,
+        currentLocation: session.visibleState.location?.text ?? null,
+        currentSituation: session.visibleState.situation?.text ?? null,
+        hiddenSecrets: session.hiddenState.secrets.filter(
+          (secret) => secret.status === "hidden",
+        ).length,
+        revealedSecrets: session.hiddenState.secrets.filter(
+          (secret) => secret.status === "revealed",
+        ).length,
+        openScenarios: scenarios.filter((item) => item.status === "open")
+          .length,
+        unheardScenarios: scenarios.filter(
+          (item) => item.knowledge === "unheard",
+        ).length,
+        pendingRoll: session.pendingRoll != null,
+        lastPlayerAction: lastTurn?.playerAction ?? null,
+        lastPlayedAt: session.lastPlayedAt,
+      },
+      integrityChecks: integrityChecks(session),
+      state: {
+        premise: session.premise,
+        worldEntry: session.worldEntry,
+        playerCharacter: session.playerCharacter,
+        visibleState: session.visibleState,
+        hiddenState: session.hiddenState,
+        scenarioCollection: session.scenarioCollection ?? null,
+        worldTime: session.worldTime ?? null,
+        provisionalFacts: session.provisionalFacts,
+        sourceRecords: session.sourceRecords,
+        pendingRoll: session.pendingRoll ?? null,
+      },
+      turns,
+    },
+    null,
+    1,
+  );
+}
