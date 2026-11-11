@@ -51,6 +51,8 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
       scenarios.filter((item) => item.knowledge === "unheard").length,
     "- Heard scenarios: " +
       scenarios.filter((item) => item.knowledge === "heard").length,
+    "- Dismissed discoveries: " +
+      (session.dismissedProvisionalFactIds?.length ?? 0),
     "- Elapsed fictional time: " +
       formatWorldElapsedMinutes(session.worldTime?.elapsedMinutes ?? 0),
     "- Last played: " + session.lastPlayedAt,
@@ -114,6 +116,11 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
     lines,
     "Provisional entities and facts",
     session.provisionalFacts,
+  );
+  addJsonSection(
+    lines,
+    "Dismissed discovery IDs",
+    session.dismissedProvisionalFactIds ?? [],
   );
   addJsonSection(lines, "Source record references", session.sourceRecords);
   addJsonSection(
