@@ -75,27 +75,33 @@ describe("turn state materialisation", () => {
     },
   );
 
-  it.each(["visible", "hidden"])("rejects conflicting %s updates", (kind) => {
-    const current = session();
-    const next = proposal();
-    if (kind === "visible")
-      next.visiblePatch.knownFacts.update = [
-        { id: "missing", text: "Fact", source: "provisional" },
-      ];
-    else
-      next.hiddenPatch.secrets.update = [
-        { id: "missing", text: "Secret", status: "hidden" },
-      ];
-    expect(
-      materializeTurnState(current, next, "turn-1", () => "unused"),
-    ).toEqual({
-      error: {
-        ok: false,
-        errors: [
-          { code: "conflicting-patch", message: "unknown-update:missing" },
-        ],
-      },
-    });
-    expect(current).toEqual(session());
-  });
+  it.each(["visible", "hidden"])(
+    "drops an update to a missing entry and keeps the rest (%s)",
+    (kind) => {
+      const current = session();
+      const next = proposal();
+      if (kind === "visible")
+        next.visiblePatch.knownFacts.update = [
+          { id: "missing", text: "Fact", source: "provisional" },
+        ];
+      else
+        next.hiddenPatch.secrets.update = [
+          { id: "missing", text: "Secret", status: "hidden" },
+        ];
+      const result = materializeTurnState(
+        current,
+        next,
+        "turn-1",
+        () => "unused",
+      );
+      expect("error" in result).toBe(false);
+      if ("error" in result) return;
+      expect(result.dropped).toEqual([
+        expect.stringContaining("update of unknown entry missing"),
+      ]);
+      expect(result.visiblePatch.knownFacts.update).toEqual([]);
+      expect(result.hiddenPatch.secrets.update).toEqual([]);
+      expect(current).toEqual(session());
+    },
+  );
 });

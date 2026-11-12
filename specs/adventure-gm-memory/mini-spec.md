@@ -273,3 +273,7 @@ Places were only linked to a record when they were the world-entry start. Now:
 ## Follow-up: promotion records the Vault link
 
 Saving a place discovery to Codex (single, bulk or auto-promote), or finding it already saved, now ties the adventure place of that exact name to the record through `linkAdventurePlaceRecord`. `sourceRecordId` is an id, so a later rename in the Vault no longer breaks the link. It is best effort: a pending roll or a failed save leaves the exact-title linker to link it at the next turn. Places stay in the session registry because they carry aliases, fact tags and `currentPlaceId`, and places that never reach the Vault still need them.
+
+## Follow-up: forgiving turns
+
+A model slip no longer fails the player's turn when it corrupts nothing. The engine drops that part of the reply, commits the rest, and records what it left out in an optional `dropped` list on the turn (shown in the diagnostic export, with `summary.droppedParts`). Dropped: an update to an entry that is not there, a repeated removal, a time advance the clock cannot take, a reveal of an unknown or out-of-place rumour, and any elaboration that is not allowed (unknown, closed, unheard, repeated, wrong stage). Still fatal: hidden-information leakage, a baseline-truth rewrite, a secret reveal of an unknown id, a duplicate input, an invalid roll, the state budget, and a failure to allocate an id for a recorded event.

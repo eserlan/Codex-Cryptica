@@ -251,6 +251,27 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(out.summary.stalledScenes).toBe(0);
   });
 
+  it("reports what the engine dropped from a turn, condensed or full, and totals it", () => {
+    const source = manyTurns(6);
+    source.turns[0] = {
+      ...source.turns[0]!,
+      dropped: ["reveal: unknown scenario s-1"],
+    };
+    source.turns[5] = {
+      ...source.turns[5]!,
+      dropped: ["elaborate: repeated", "timeAdvance: invalid-fictional-time"],
+    };
+
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 2 }));
+
+    expect(out.turns[0].detail).toBe("condensed");
+    expect(out.turns[0].dropped).toEqual(["reveal: unknown scenario s-1"]);
+    expect(out.turns[5].dropped).toHaveLength(2);
+    expect(out.turns[1].dropped).toBeUndefined();
+    expect(out.summary.droppedParts).toBe(3);
+    expect(out._readme).toContain("dropped");
+  });
+
   it("reports where the player is and keeps place tags in the snapshot", () => {
     const source = manyTurns(2);
     source.places = [

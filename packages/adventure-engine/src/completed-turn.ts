@@ -66,6 +66,32 @@ function completedTurnProposalError(
   return null;
 }
 
+/**
+ * The clock after the turn's time advance. An advance the clock cannot take
+ * (an unknown background thread, too long a step) leaves the clock alone and is
+ * recorded in `dropped`; the turn stands.
+ */
+function resolveClock(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  turnId: string,
+  dropped: string[],
+) {
+  const requested = applyTimeAdvance(session, proposal.timeAdvance, turnId);
+  if (requested.ok)
+    return {
+      time: requested,
+      timeAdvance: proposal.timeAdvance,
+      applied: true,
+    };
+  dropped.push(`timeAdvance: ${requested.reason}`);
+  return {
+    time: { ok: true as const, value: session.worldTime },
+    timeAdvance: undefined,
+    applied: false,
+  };
+}
+
 export function applyCompletedTurn(
   sessionInput: AdventureSession,
   proposalInput: AdventureTurnProposal,
@@ -101,8 +127,9 @@ export function applyCompletedTurn(
     meta.turnId,
   );
   if (revealError) return error("unknown-secret", revealError);
-  const time = applyTimeAdvance(session, proposal.timeAdvance, meta.turnId);
-  if (!time.ok) return error("invalid-transition", time.reason);
+  const dropped = [...materialized.dropped];
+  const clock = resolveClock(session, proposal, meta.turnId, dropped);
+  const { time, timeAdvance } = clock;
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   const placeStep = applyPlaces(
@@ -113,7 +140,7 @@ export function applyCompletedTurn(
     createId,
   );
   if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
-  if (time.value) {
+  if (time.value && clock.applied) {
     const pressureResult = applyTurnWorldTimeAndPressures(
       candidate,
       proposal,
@@ -132,7 +159,14 @@ export function applyCompletedTurn(
     candidate.provisionalFacts,
     materialized,
   );
-  const turn = createCommittedTurn(session, proposal, materialized, meta, now);
+  const turn = createCommittedTurn(
+    session,
+    proposal,
+    materialized,
+    meta,
+    now,
+    timeAdvance,
+  );
   candidate.turns = [...candidate.turns, turn];
   const newlyRevealedScenarioIds = new Set<string>();
   const scenarioError = markRevealedScenarios(
@@ -140,6 +174,7 @@ export function applyCompletedTurn(
     proposal.revealScenarioIds,
     turn,
     createId,
+    dropped,
     newlyRevealedScenarioIds,
   );
   if (scenarioError) return error("unknown-fact", scenarioError);
@@ -149,8 +184,10 @@ export function applyCompletedTurn(
     [...newlyRevealedScenarioIds],
     turn,
     createId,
+    dropped,
   );
   if (elaborationError) return elaborationError;
+  if (dropped.length > 0) turn.dropped = dropped.slice(0, 24);
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
   if (!validateStateBudget(candidate)) {
@@ -224,6 +261,10 @@ function createCommittedTurn(
   materialized: MaterializedTurnState,
   meta: CommitMetadata,
   now: string,
+  timeAdvance: Extract<
+    AdventureTurnProposal,
+    { kind: "complete" }
+  >["timeAdvance"],
 ): CommittedAdventureTurn {
   return {
     id: meta.turnId,
@@ -240,11 +281,11 @@ function createCommittedTurn(
       ...materialized.updatedProvisionalFacts.map((fact) => fact.id),
     ],
     committedAt: now,
-    ...(proposal.timeAdvance
+    ...(timeAdvance
       ? {
           timeAdvance: {
-            minutes: proposal.timeAdvance.minutes,
-            cause: proposal.timeAdvance.cause,
+            minutes: timeAdvance.minutes,
+            cause: timeAdvance.cause,
           },
         }
       : {}),

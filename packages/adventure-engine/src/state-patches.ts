@@ -181,3 +181,81 @@ function patchCollections<
   }
   return { ok: true, value: current };
 }
+
+/**
+ * Drop the parts of a collection patch that cannot apply: an update to an entry
+ * that is not there (or is removed in the same patch) and a repeated removal. Each
+ * is a model slip that corrupts nothing, so the rest of the patch still applies.
+ */
+function sanitizeCollectionPatch<T extends { id: string }>(
+  label: string,
+  current: T[],
+  patch: CollectionPatch<T>,
+  dropped: string[],
+): CollectionPatch<T> {
+  const ids = new Set(current.map((entry) => entry.id));
+  const removeIds = [...new Set(patch.removeIds)];
+  if (removeIds.length !== patch.removeIds.length)
+    dropped.push(`${label}: repeated removal`);
+  const update = patch.update.filter((entry) => {
+    const ok = ids.has(entry.id) && !removeIds.includes(entry.id);
+    if (!ok) dropped.push(`${label}: update of unknown entry ${entry.id}`);
+    return ok;
+  });
+  return { add: patch.add, update, removeIds };
+}
+
+export function sanitizeVisiblePatch(
+  state: AdventureSession["visibleState"],
+  patch: VisibleStatePatch,
+  dropped: string[],
+): VisibleStatePatch {
+  return {
+    ...patch,
+    objectives: sanitizeCollectionPatch(
+      "objectives",
+      state.objectives,
+      patch.objectives,
+      dropped,
+    ),
+    activeCharacters: sanitizeCollectionPatch(
+      "activeCharacters",
+      state.activeCharacters,
+      patch.activeCharacters,
+      dropped,
+    ),
+    knownFacts: sanitizeCollectionPatch(
+      "knownFacts",
+      state.knownFacts,
+      patch.knownFacts,
+      dropped,
+    ),
+    relationships: sanitizeCollectionPatch(
+      "relationships",
+      state.relationships,
+      patch.relationships,
+      dropped,
+    ),
+  };
+}
+
+export function sanitizeHiddenPatch(
+  state: AdventureSession["hiddenState"],
+  patch: HiddenStatePatch,
+  dropped: string[],
+): HiddenStatePatch {
+  return {
+    secrets: sanitizeCollectionPatch(
+      "secrets",
+      state.secrets,
+      patch.secrets,
+      dropped,
+    ),
+    gmThreads: sanitizeCollectionPatch(
+      "gmThreads",
+      state.gmThreads,
+      patch.gmThreads,
+      dropped,
+    ),
+  };
+}

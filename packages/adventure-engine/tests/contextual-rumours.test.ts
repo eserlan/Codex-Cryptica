@@ -315,7 +315,7 @@ describe("contextual rumours domain pipeline", () => {
     ).toEqual(["batch-Oakhaven", "batch-Oakhaven"]);
   });
 
-  it("rejects proposal that attempts to reveal an unheard scenario from another location", () => {
+  it("skips revealing an unheard scenario from another location without failing the turn", () => {
     const sOther = mockScenario(
       "s-other",
       "unheard",
@@ -360,8 +360,10 @@ describe("contextual rumours domain pipeline", () => {
       },
     );
 
-    expect(result.ok).toBe(false);
-    expect(result.errors[0]?.message).toContain(
+    // The turn stands; the rumour from elsewhere stays unheard.
+    expect(result.ok).toBe(true);
+    expect(result.value.scenarioCollection.items[0].knowledge).toBe("unheard");
+    expect(result.value.turns[0].dropped[0]).toContain(
       "does not match active location",
     );
   });
