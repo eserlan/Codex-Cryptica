@@ -79,8 +79,8 @@ test.describe("AI Entity Regeneration", () => {
     // 7. Check Chronicle Preview
     await expect(page.locator("text=New atmospheric chronicle.")).toBeVisible();
 
-    // 8. Switch to the lore tab (labelled "GM notes") and check preview
-    await page.getByTestId("tab-lore").click();
+    // 8. Open the GM notes section and check preview
+    await page.getByRole("button", { name: "GM notes" }).click();
     await expect(
       page.locator("text=New detailed lore with secrets."),
     ).toBeVisible();

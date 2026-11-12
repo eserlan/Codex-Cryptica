@@ -124,22 +124,44 @@ describe("DetailStatusTab", () => {
     (vault as any).isGuest = false;
   });
 
-  it("reads text, then Connections, then tools", () => {
+  const renderStatus = (entity: any, isEditing = false) =>
     render(DetailStatusTab, {
-      entity: mockEntity,
-      isEditing: false,
+      entity,
+      isEditing,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
+
+  it("reads text, then GM notes, then Connections, then tools", () => {
+    renderStatus({ ...mockEntity, lore: "Secret plans." });
     const text = screen.getByTestId("entity-main-text");
+    const gmNotes = screen.getByTestId("entity-gm-notes");
     const heading = screen.getByRole("heading", { name: "Connections" });
     const tools = screen.getByTestId("entity-overview-tools");
     const follows = (a: Node, b: Node) =>
       !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
-    expect(follows(text, heading)).toBe(true);
+    expect(follows(text, gmNotes)).toBe(true);
+    expect(follows(gmNotes, heading)).toBe(true);
     expect(follows(heading, tools)).toBe(true);
+  });
+
+  it("shows no GM notes for an owner without lore", () => {
+    renderStatus(mockEntity);
+    expect(screen.queryByTestId("entity-gm-notes")).toBeNull();
+  });
+
+  it("shows GM notes while an owner edits an entity without lore", () => {
+    renderStatus(mockEntity, true);
+    expect(screen.getByTestId("entity-gm-notes")).toBeTruthy();
+  });
+
+  it("shows no GM notes to a guest, even with lore", () => {
+    (vault as any).isGuest = true;
+    renderStatus({ ...mockEntity, lore: "Secret plans." });
+    expect(screen.queryByTestId("entity-gm-notes")).toBeNull();
   });
 
   it("shows a guest no tools group", () => {
@@ -149,6 +171,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -161,6 +184,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "## Summary\nHe is a blacksmith.",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -178,6 +202,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -201,6 +226,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -224,6 +250,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -242,6 +269,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -258,6 +286,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -278,6 +307,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -293,6 +323,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -342,6 +373,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -360,6 +392,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -397,6 +430,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -419,6 +453,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -433,6 +468,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -447,6 +483,7 @@ describe("DetailStatusTab", () => {
         isEditing: false,
         editType: "npc",
         editContent: "",
+        editLore: "",
         editStartDate: undefined as any,
         editEndDate: undefined as any,
       });

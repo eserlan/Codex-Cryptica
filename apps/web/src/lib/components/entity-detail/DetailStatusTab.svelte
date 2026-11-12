@@ -11,6 +11,8 @@
   import GenerateRelatedButton from "./GenerateRelatedButton.svelte";
   import GenerateBusinessButton from "./GenerateBusinessButton.svelte";
   import EntityProposals from "./EntityProposals.svelte";
+  import EntityGmNotes from "./EntityGmNotes.svelte";
+  import DelveCanvasBlock from "./DelveCanvasBlock.svelte";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { revisionService } from "#lib/services/RevisionService.svelte.js";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
@@ -20,20 +22,14 @@
     toConnectionRows,
     vaultConnectionContext,
   } from "./entity-connections";
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-  import {
-    dungeonDelveService,
-    isDelveLocationEntity,
-  } from "#lib/services/dungeon-delve-service.js";
-  import { goto } from "$app/navigation";
-  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
-  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
+  import { isDelveLocationEntity } from "#lib/services/dungeon-delve-service.js";
 
   let {
     entity,
     isEditing,
     editType,
     editContent = $bindable(),
+    editLore = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
   }: {
@@ -41,6 +37,7 @@
     isEditing: boolean;
     editType: string;
     editContent: string;
+    editLore: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
   } = $props();
@@ -114,15 +111,6 @@
       ? revisionService.pendingDraft
       : null,
   );
-
-  const existingCanvas = $derived.by(() => {
-    if (!entity) return undefined;
-    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
-  });
-
-  const delveCanvasLabel = $derived(
-    getDelveCanvasLabel(themeStore.activeTheme.id),
-  );
 </script>
 
 <div class="space-y-4 md:space-y-6">
@@ -186,6 +174,15 @@
       </div>
     </div>
   {/if}
+
+  <EntityGmNotes
+    {entity}
+    {isEditing}
+    bind:editLore
+    onEntityClick={(id) => {
+      vault.selectedEntityId = id;
+    }}
+  />
 
   <!-- Connections -->
   <div>
@@ -486,84 +483,7 @@
         </div>
       {/if}
       {#if isVisible && isDelveLocationEntity(entity)}
-        <div
-          class="mb-4 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
-        >
-          <div class="flex items-center gap-2.5">
-            <span
-              aria-hidden="true"
-              class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
-            ></span>
-            <div>
-              <span
-                class="text-xs font-bold text-theme-text uppercase font-header tracking-wider block"
-              >
-                Spatial {delveCanvasLabel}
-              </span>
-              <span class="text-micro text-theme-text">
-                {existingCanvas
-                  ? "Interactive room & sector floor plan on Spatial Canvas."
-                  : "Generate an interactive room & sector floor plan on Spatial Canvas."}
-              </span>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            {#if existingCanvas}
-              <button
-                type="button"
-                onclick={() => {
-                  openCanvasFromZen(existingCanvas, goto);
-                }}
-                class="px-3.5 py-1.5 bg-theme-primary text-theme-on-primary font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
-              >
-                <span
-                  aria-hidden="true"
-                  class="icon-[lucide--external-link] w-3.5 h-3.5"
-                ></span>
-                Open {delveCanvasLabel}
-              </button>
-              <button
-                type="button"
-                title="Rebuild Canvas Map"
-                onclick={async () => {
-                  try {
-                    const canvasDoc =
-                      dungeonDelveService.buildDelveCanvasFromConcept(entity);
-                    const slug = await canvasRegistry.importCanvas(canvasDoc);
-                    openCanvasFromZen({ slug }, goto);
-                  } catch (err) {
-                    console.error("[DelveCanvas] Rebuild failed:", err);
-                  }
-                }}
-                class="p-1.5 text-theme-text hover:text-theme-primary transition-colors cursor-pointer"
-              >
-                <span
-                  aria-hidden="true"
-                  class="icon-[lucide--rotate-cw] w-3.5 h-3.5"
-                ></span>
-              </button>
-            {:else}
-              <button
-                type="button"
-                onclick={async () => {
-                  try {
-                    const canvasDoc =
-                      dungeonDelveService.buildDelveCanvasFromConcept(entity);
-                    const slug = await canvasRegistry.importCanvas(canvasDoc);
-                    openCanvasFromZen({ slug }, goto);
-                  } catch (err) {
-                    console.error("[DelveCanvas] Build failed:", err);
-                  }
-                }}
-                class="px-3.5 py-1.5 bg-theme-primary text-theme-on-primary font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
-              >
-                <span aria-hidden="true" class="icon-[lucide--map] w-3.5 h-3.5"
-                ></span>
-                Build {delveCanvasLabel}
-              </button>
-            {/if}
-          </div>
-        </div>
+        <DelveCanvasBlock {entity} />
       {/if}
     </div>
   {/if}

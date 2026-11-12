@@ -1,7 +1,6 @@
 export const entityDetailTabs = [
-  "status",
+  "overview",
   "connections",
-  "lore",
   "map",
   "chats",
   "family",
@@ -12,6 +11,13 @@ export const entityDetailTabs = [
 export { entityDetailTabLabels } from "./detail-tab-labels";
 
 export type EntityDetailTab = (typeof entityDetailTabs)[number];
+
+/** Maps any stored or external tab value, including the old `status` and `lore`, to a current tab. */
+export function toEntityDetailTab(value: unknown): EntityDetailTab {
+  return (entityDetailTabs as readonly unknown[]).includes(value)
+    ? (value as EntityDetailTab)
+    : "overview";
+}
 
 export type EntityDetailTabIds = {
   tabIds: Record<EntityDetailTab, string>;

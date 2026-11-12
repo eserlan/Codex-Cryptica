@@ -20,14 +20,13 @@ vi.mock("#lib/stores/calendar.svelte.js", () => ({
   calendarStore: { config: { useGregorian: true, months: [], anchors: [] } },
 }));
 
-const renderTabs = (type: string, canGuestEdit = false) =>
+const renderTabs = (type: string) =>
   render(DetailTabs, {
     entity: { id: "e1", type, title: "E" } as never,
-    activeTab: "status",
+    activeTab: "overview",
     isEditing: false,
     editType: type,
     idPrefix: "t",
-    canGuestEdit,
   });
 
 const tabText = () =>
@@ -49,7 +48,6 @@ describe.each([
     expect(tabText()).toEqual([
       "Overview",
       "Connections",
-      "GM notes",
       "Map",
       "Stats",
       "Timeline",
@@ -66,10 +64,14 @@ describe.each([
     expect(tabText()).toContain("Family");
   });
 
-  it("hides GM notes from a guest", () => {
+  it("has no GM notes tab for an owner or a guest", () => {
     mocks.theme.activeTheme.id = id;
+    renderTabs("location");
+    expect(tabText()).not.toContain("GM notes");
+    cleanup();
     mocks.vault.isGuest = true;
     renderTabs("location");
     expect(tabText()).not.toContain("GM notes");
+    expect(screen.queryByTestId("tab-lore")).toBeNull();
   });
 });
