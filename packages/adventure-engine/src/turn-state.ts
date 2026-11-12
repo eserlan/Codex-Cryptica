@@ -6,6 +6,8 @@ import {
   applyVisiblePatch,
   materializeHiddenPatch,
   materializeVisiblePatch,
+  sanitizeHiddenPatch,
+  sanitizeVisiblePatch,
 } from "./state-patches";
 import type {
   AdventureSession,
@@ -22,6 +24,8 @@ export type MaterializedTurnState = {
   updatedProvisionalFacts: ProvisionalFact[];
   visiblePatch: VisibleStatePatch;
   hiddenPatch: HiddenStatePatch;
+  /** Parts of the model's patches that could not apply and were left out. */
+  dropped: string[];
 };
 
 export function materializeTurnState(
@@ -59,14 +63,22 @@ export function materializeTurnState(
     createId,
   );
   if ("error" in materializedFacts) return materializedFacts;
-  const visibleState = applyVisiblePatch(
+  const dropped: string[] = [];
+  const visibleApplied = sanitizeVisiblePatch(
     session.visibleState,
     visiblePatch.value,
+    dropped,
   );
+  const hiddenApplied = sanitizeHiddenPatch(
+    session.hiddenState,
+    hiddenPatch.value,
+    dropped,
+  );
+  const visibleState = applyVisiblePatch(session.visibleState, visibleApplied);
   if (!visibleState.ok) {
     return { error: error("conflicting-patch", visibleState.errors) };
   }
-  const hiddenState = applyHiddenPatch(session.hiddenState, hiddenPatch.value);
+  const hiddenState = applyHiddenPatch(session.hiddenState, hiddenApplied);
   if (!hiddenState.ok) {
     return { error: error("conflicting-patch", hiddenState.errors) };
   }
@@ -75,7 +87,8 @@ export function materializeTurnState(
     hiddenState: hiddenState.value,
     provisionalFacts: materializedFacts.provisionalFacts,
     updatedProvisionalFacts: materializedFacts.updatedProvisionalFacts,
-    visiblePatch: visiblePatch.value,
-    hiddenPatch: hiddenPatch.value,
+    visiblePatch: visibleApplied,
+    hiddenPatch: hiddenApplied,
+    dropped,
   };
 }

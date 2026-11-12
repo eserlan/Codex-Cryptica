@@ -10,21 +10,37 @@ import type {
   ScenarioItem,
 } from "./types";
 
+/**
+ * Returns a message only when the turn cannot commit (no id could be allocated).
+ * A rumour that does not exist, or is not located here, is left unrevealed and
+ * recorded in `dropped`: the model's slip never fails the player's turn.
+ */
 function revealScenarioIfUnheard(
   candidate: AdventureSession,
   scenarioId: string,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  dropped: string[],
   newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   const scenario = candidate.scenarioCollection?.items.find(
     (item) => item.id === scenarioId,
   );
-  if (!scenario) return `Unknown scenario: ${scenarioId}`;
+  if (!scenario) {
+    dropped.push(`reveal: unknown scenario ${scenarioId}`);
+    return null;
+  }
   if (scenario.knowledge !== "unheard") return null;
+  if (scenario.status !== "open") {
+    dropped.push(`reveal: Scenario ${scenarioId} is not open`);
+    return null;
+  }
 
   const locationError = validateRevealedScenarioLocation(candidate, scenario);
-  if (locationError) return locationError;
+  if (locationError) {
+    dropped.push(`reveal: ${locationError}`);
+    return null;
+  }
 
   if (
     !recordScenarioDiscovery(
@@ -47,6 +63,7 @@ export function markRevealedScenarios(
   scenarioIds: string[] | undefined,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  dropped: string[] = [],
   newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   for (const scenarioId of scenarioIds ?? []) {
@@ -55,6 +72,7 @@ export function markRevealedScenarios(
       scenarioId,
       turn,
       createId,
+      dropped,
       newlyRevealedScenarioIds,
     );
     if (err) return err;
@@ -164,49 +182,63 @@ function recordScenarioElaborationDiscovery(
   return null;
 }
 
-function hasDuplicateScenarioElaborations(
-  elaborations: ScenarioElaborationProposal[],
-): boolean {
-  const scenarioIds = new Set<string>();
-  for (const elaboration of elaborations) {
-    if (scenarioIds.has(elaboration.scenarioId)) return true;
-    scenarioIds.add(elaboration.scenarioId);
+type ElaborationCheck = { scenario: ScenarioItem } | { skip: string | null };
+
+/** The scenario to elaborate, or why to skip (null: skip without a record). */
+function checkElaboration(
+  candidate: AdventureSession,
+  elaboration: ScenarioElaborationProposal,
+  revealedThisTurn: Set<string>,
+  seen: Set<string>,
+): ElaborationCheck {
+  const id = elaboration.scenarioId;
+  if (seen.has(id)) return { skip: `elaborate: ${id} repeated in one turn` };
+  seen.add(id);
+  const validation = validateScenarioAvailability(candidate, elaboration);
+  const failure =
+    "error" in validation
+      ? validation.error
+      : validateElaborationStage(validation.scenario, elaboration);
+  if (failure) return { skip: `elaborate: ${failure.errors[0]?.message}` };
+  if (revealedThisTurn.has(id)) {
+    return {
+      skip: `elaborate: ${id} was revealed this turn and starts at hearsay`,
+    };
   }
-  return false;
+  return "scenario" in validation ? validation : { skip: null };
 }
 
+/**
+ * Apply the turn's elaborations. An elaboration that is not allowed (unknown or
+ * closed scenario, not heard yet, wrong stage, a repeat) is skipped and recorded
+ * in `dropped`; only a failure to record the discovery, which would corrupt the
+ * scenario's history, fails the turn.
+ */
 export function applyScenarioElaborations(
   candidate: AdventureSession,
   elaborations: ScenarioElaborationProposal[] | undefined,
   revealedScenarioIds: string[] | undefined,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  dropped: string[] = [],
 ): ReturnType<typeof error> | null {
   if (!elaborations || elaborations.length === 0) return null;
 
-  if (hasDuplicateScenarioElaborations(elaborations)) {
-    return error(
-      "invalid-transition",
-      "A scenario can only be elaborated once per turn",
-    );
-  }
-
   const revealedThisTurn = new Set(revealedScenarioIds ?? []);
+  const seen = new Set<string>();
 
   for (const elaboration of elaborations) {
-    const validation = validateScenarioAvailability(candidate, elaboration);
-    if ("error" in validation) return validation.error;
-
-    const stageError = validateElaborationStage(
-      validation.scenario,
+    const checked = checkElaboration(
+      candidate,
       elaboration,
+      revealedThisTurn,
+      seen,
     );
-    if (stageError) return stageError;
-
-    // A newly heard rumour is introduced at hearsay; a valid next-stage
-    // elaboration in the same turn is ignored rather than rejecting the turn.
-    if (revealedThisTurn.has(elaboration.scenarioId)) continue;
-
+    if ("skip" in checked) {
+      if (checked.skip) dropped.push(checked.skip);
+      continue;
+    }
+    const validation = checked;
     validation.scenario.stage = elaboration.stage;
     const discoveryError = recordScenarioElaborationDiscovery(
       validation.scenario,

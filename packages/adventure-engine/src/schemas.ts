@@ -418,6 +418,7 @@ export const adventureSessionSchema = z
           .pick({ minutes: true, cause: true })
           .optional(),
         suggestedActions: z.array(text).length(3).optional(),
+        dropped: z.array(z.string().max(240)).max(24).optional(),
       }),
     ),
     pendingRoll: pendingRollSchema.nullable(),

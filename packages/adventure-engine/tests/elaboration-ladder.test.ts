@@ -198,7 +198,7 @@ describe("progressive scenario elaboration ladder", () => {
     expect(updated?.stage).toBe("revelation-crisis");
   });
 
-  it("rejects multi-step leaps (e.g. hearsay directly to revelation-crisis)", () => {
+  it("skips a multi-step leap (hearsay directly to revelation-crisis) and keeps the turn", () => {
     const session = createSession([
       createTestScenario("scen-1", "heard", "hearsay"),
     ]);
@@ -222,14 +222,15 @@ describe("progressive scenario elaboration ladder", () => {
       { turnId: "turn-err", inputId: "input-err", now },
     );
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.some((e) => e.code === "invalid-transition")).toBe(
-      true,
-    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.scenarioCollection?.items[0]?.stage).toBe("hearsay");
+    expect(result.value.turns[0]?.dropped).toEqual([
+      expect.stringContaining("Cannot skip elaboration stages"),
+    ]);
   });
 
-  it("rejects elaborating the same scenario twice in one turn", () => {
+  it("applies the first of two elaborations of one scenario and records the repeat", () => {
     const session = createSession([
       createTestScenario("scen-1", "heard", "hearsay"),
     ]);
@@ -251,11 +252,14 @@ describe("progressive scenario elaboration ladder", () => {
       { turnId: "turn-repeat", inputId: "input-repeat", now },
     );
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.some((e) => e.code === "invalid-transition")).toBe(
-      true,
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.scenarioCollection?.items[0]?.stage).toBe(
+      "actionable-clue",
     );
+    expect(result.value.turns[0]?.dropped).toEqual([
+      expect.stringContaining("repeated in one turn"),
+    ]);
   });
 
   it("skips, rather than fails the turn over, elaborating a rumour revealed in that same turn", () => {
@@ -292,7 +296,7 @@ describe("progressive scenario elaboration ladder", () => {
     expect(items.find((i) => i.id === "scen-2")?.stage).toBe("actionable-clue");
   });
 
-  it("rejects stage regression (e.g. actionable-clue back to hearsay)", () => {
+  it("skips a stage regression (actionable-clue back to hearsay) and keeps the turn", () => {
     const session = createSession([
       createTestScenario("scen-1", "heard", "actionable-clue"),
     ]);
@@ -316,11 +320,14 @@ describe("progressive scenario elaboration ladder", () => {
       { turnId: "turn-regr", inputId: "input-regr", now },
     );
 
-    expect(result.ok).toBe(false);
-    if (result.ok) return;
-    expect(result.errors.some((e) => e.code === "invalid-transition")).toBe(
-      true,
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.scenarioCollection?.items[0]?.stage).toBe(
+      "actionable-clue",
     );
+    expect(result.value.turns[0]?.dropped).toEqual([
+      expect.stringContaining("Cannot transition scenario"),
+    ]);
   });
 
   it("allows peaceful off-script play without escalating the scenario stage", () => {
