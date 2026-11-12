@@ -498,9 +498,11 @@ def advance(job, stage):
                 next_round(job)
 
     elif old == "approve":
-        want = "APPROVE" if stage == "merging" else "ESCALATE"
+        # The factory never merges: an APPROVE goes to a human as well, and the
+        # posted decision says the approver would have merged it.
+        want = ("APPROVE",) if stage == "merging" else ("APPROVE", "ESCALATE")
         line = first_line(d / "decision.md")
-        require(line == want, f"decision.md starts with {line!r}, not {want}")
+        require(line in want, f"decision.md starts with {line!r}, not {' or '.join(want)}")
 
     elif old == "merging" and stage == "merged":
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
