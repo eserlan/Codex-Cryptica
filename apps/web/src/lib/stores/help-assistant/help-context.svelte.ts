@@ -105,6 +105,11 @@ function entityTabActions(
   return tabs;
 }
 
+/** The help wire vocabulary still calls the overview tab "status". */
+function helpTabFor(tab: string | null): string | null {
+  return tab === "overview" ? "status" : tab;
+}
+
 function entityActionsFor(
   surface: HelpContextSources["surfaces"]["entityDetail"],
 ): string[] {
@@ -112,7 +117,7 @@ function entityActionsFor(
 
   const actions = entityTabActions(surface);
 
-  const onStatusTab = surface.activeTab() === "status";
+  const onStatusTab = surface.activeTab() === "overview";
   if (onStatusTab && surface.canAddConnection()) {
     actions.push("add-connection-button");
   }
@@ -198,7 +203,7 @@ export class HelpContextStore {
         tab:
           area === "settings"
             ? sources.getOpenSettingsTab()
-            : (surface?.activeTab() ?? null),
+            : helpTabFor(surface?.activeTab() ?? null),
         mode: surface?.isEditing() ? "edit" : "view",
         surface: "vault",
         flags: flagsFor(sources, surface, area),
