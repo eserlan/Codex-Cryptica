@@ -22,6 +22,7 @@
   import AdventureSituationSettings from "./AdventureSituationSettings.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
+  import AdventureSituationsDialog from "./AdventureSituationsDialog.svelte";
   import {
     exitAdventureFullscreen,
     requestAdventureFullscreen,
@@ -245,6 +246,7 @@
         onAdd={onAddProvisionalFact}
         onAddAll={onAddAllProvisionalFacts}
       />
+      <AdventureSituationsDialog {manager} />
       <button
         bind:this={toolsButton}
         class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"

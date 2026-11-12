@@ -164,3 +164,13 @@ export function describeScenarioMutationError(cause: unknown): string {
     "Could not update the situation. Please retry."
   );
 }
+
+export function extractHeardScenarios(
+  session: AdventureSession | null | undefined,
+): ScenarioItem[] {
+  return (
+    session?.scenarioCollection?.items.filter(
+      (item) => item.knowledge === "heard",
+    ) ?? []
+  );
+}

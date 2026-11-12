@@ -1,7 +1,10 @@
 <script lang="ts">
   import type { ScenarioItem } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
+  import {
+    describeScenarioMutationError,
+    extractHeardScenarios,
+  } from "#lib/stores/oracle/adventure-scenarios.js";
   import { soloThreads } from "#lib/stores/solo-session-instance.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import AdventureKnownSituations from "./AdventureKnownSituations.svelte";
@@ -10,11 +13,7 @@
   let busy = $state(false);
   let error = $state<string | null>(null);
 
-  const scenarios = $derived(
-    manager.session?.scenarioCollection?.items.filter(
-      (item) => item.knowledge === "heard",
-    ) ?? [],
-  );
+  const scenarios = $derived(extractHeardScenarios(manager.session));
   const focusedId = $derived(
     manager.session?.scenarioCollection?.focusedScenarioId ?? "",
   );
