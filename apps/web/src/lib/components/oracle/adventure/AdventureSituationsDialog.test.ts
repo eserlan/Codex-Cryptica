@@ -68,11 +68,30 @@ describe("AdventureSituationsDialog", () => {
     render(AdventureSituationsDialog, { props: { manager } });
 
     const trigger = screen.getByRole("button", {
-      name: /adventure situations \(2 known\)/i,
+      name: /adventure situations \(2 active\)/i,
     });
     expect(trigger).toBeTruthy();
     expect(trigger.textContent).toContain("2");
     expect(trigger.textContent).toContain("Situations");
+  });
+
+  it("counts only open heard situations in the badge while retaining history in the drawer", async () => {
+    const manager = createMockManager([
+      heard1,
+      { ...heard2, status: "resolved" },
+      { ...hidden, knowledge: "heard", status: "abandoned" },
+    ]);
+    render(AdventureSituationsDialog, { props: { manager } });
+
+    const trigger = screen.getByRole("button", {
+      name: /adventure situations \(1 active\)/i,
+    });
+    expect(trigger.textContent).toContain("1");
+    await fireEvent.click(trigger);
+
+    expect(screen.getAllByText("The Sunken Belfry").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mud Flats Crossing").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Hidden Vault").length).toBeGreaterThan(0);
   });
 
   it("renders trigger button without a badge when 0 situations are heard", () => {
@@ -132,6 +151,47 @@ describe("AdventureSituationsDialog", () => {
     expect(manager.submitAction).toHaveBeenCalledWith(
       "Ask around for local rumours and news.",
     );
+  });
+
+  it("dismisses the drawer as soon as rumour submission starts", async () => {
+    const manager = createMockManager([heard1]);
+    let finishSubmission!: () => void;
+    manager.submitAction.mockImplementation(() => {
+      manager.phase = "generating";
+      return new Promise<void>((resolve) => {
+        finishSubmission = () => {
+          manager.phase = "ready";
+          resolve();
+        };
+      });
+    });
+    render(AdventureSituationsDialog, { props: { manager } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /adventure situations/i }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: /look for local rumours/i }),
+    );
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    finishSubmission();
+  });
+
+  it("keeps the drawer open when rumour submission is rejected before generation", async () => {
+    const manager = createMockManager([heard1]);
+    manager.submitAction.mockRejectedValueOnce(new Error("submission failed"));
+    render(AdventureSituationsDialog, { props: { manager } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /adventure situations/i }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: /look for local rumours/i }),
+    );
+
+    expect(screen.getByRole("dialog")).toBeTruthy();
+    expect(screen.getByRole("alert").textContent).toMatch(/could not update/i);
   });
 
   it("closes dialog on close button click or Escape key and restores focus", async () => {

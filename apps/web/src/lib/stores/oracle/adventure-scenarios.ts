@@ -174,3 +174,11 @@ export function extractHeardScenarios(
     ) ?? []
   );
 }
+
+export function extractActiveHeardScenarios(
+  session: AdventureSession | null | undefined,
+): ScenarioItem[] {
+  return extractHeardScenarios(session).filter(
+    (item) => item.status === "open",
+  );
+}

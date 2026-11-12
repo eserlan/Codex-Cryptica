@@ -557,7 +557,7 @@ describe("AdventureFocusPlay", () => {
     render(AdventureFocusPlay, { props: props({ manager: m }) });
 
     const trigger = screen.getByRole("button", {
-      name: "Adventure situations (1 known)",
+      name: "Adventure situations (1 active)",
     });
     expect(trigger).toBeTruthy();
     await fireEvent.click(trigger);

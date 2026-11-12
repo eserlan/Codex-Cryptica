@@ -4,6 +4,7 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import {
     describeScenarioMutationError,
+    extractActiveHeardScenarios,
     extractHeardScenarios,
   } from "#lib/stores/oracle/adventure-scenarios.js";
   import { containTab } from "./adventure-phone-surface.js";
@@ -20,6 +21,9 @@
   let dialogPanel = $state<HTMLElement>();
 
   const scenarios = $derived(extractHeardScenarios(manager.session));
+  const activeScenarios = $derived(
+    extractActiveHeardScenarios(manager.session),
+  );
 
   const focusedId = $derived(
     manager.session?.scenarioCollection?.focusedScenarioId ?? "",
@@ -53,10 +57,13 @@
     busy = true;
     error = null;
     try {
-      await manager.submitAction("Ask around for local rumours and news.");
+      const submission = manager.submitAction(
+        "Ask around for local rumours and news.",
+      );
       if (manager.phase === "generating") {
         closeDialog();
       }
+      await submission;
     } catch (cause) {
       error = describeScenarioMutationError(cause);
     } finally {
@@ -78,19 +85,19 @@
   bind:this={triggerButton}
   type="button"
   class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md border border-theme-border px-2.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:gap-2 sm:px-3 sm:text-sm"
-  aria-label={scenarios.length > 0
-    ? `Adventure situations (${scenarios.length} known)`
+  aria-label={activeScenarios.length > 0
+    ? `Adventure situations (${activeScenarios.length} active)`
     : "Adventure situations"}
   aria-expanded={expanded}
   aria-controls="adventure-situations-dialog"
   onclick={openDialog}
 >
   <span class="icon-[lucide--compass] h-4 w-4" aria-hidden="true"></span>
-  {#if scenarios.length > 0}
+  {#if activeScenarios.length > 0}
     <span
       class="rounded-full bg-theme-primary/10 px-1.5 py-0.5 tabular-nums font-semibold"
     >
-      {scenarios.length}
+      {activeScenarios.length}
     </span>
   {/if}
   <span class="hidden sm:inline">Situations</span>
@@ -167,7 +174,7 @@
               <p class="text-xs font-semibold text-theme-text">
                 Gather Rumours
               </p>
-              <p class="text-[11px] text-theme-text">
+              <p class="text-helper text-theme-text">
                 Ask locals, bartenders, or travellers about recent happenings.
               </p>
             </div>
