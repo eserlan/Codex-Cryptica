@@ -1,6 +1,5 @@
 <script lang="ts">
   import { vault } from "#lib/stores/vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
 
   let {
     isEditing,
@@ -33,22 +32,22 @@
     <div class="flex gap-2 w-full justify-end items-center">
       {#if isDirty}
         <span
-          class="text-nano text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto"
+          class="text-nano text-theme-text font-bold font-header animate-pulse mr-auto"
         >
           • Unsaved changes
         </span>
       {/if}
       <button
         onclick={onCancel}
-        class="text-theme-muted hover:text-theme-text text-xs font-bold px-4 py-2 rounded tracking-widest transition disabled:opacity-50"
+        class="text-theme-text text-xs font-bold px-4 py-2 rounded transition disabled:opacity-50"
         disabled={isSaving}
       >
-        CANCEL
+        Cancel
       </button>
       <button
         type="button"
         onclick={onSave}
-        class="text-xs font-bold px-6 py-2 rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border"
+        class="text-xs font-bold px-6 py-2 rounded transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border"
         style:background-color="var(--theme-action-bg)"
         style:border-color="var(--theme-selected-border)"
         style:color="var(--theme-action-text)"
@@ -60,9 +59,9 @@
             class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
             aria-hidden="true"
           ></span>
-          <span>SAVING...</span>
+          <span>Saving…</span>
         {:else}
-          {themeStore.jargon.save.toUpperCase()} CHANGES
+          Save changes
         {/if}
       </button>
     </div>
@@ -74,17 +73,17 @@
         <button
           onclick={onDelete}
           data-testid="delete-entity-button"
-          class="touch-target border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-micro font-bold px-3 py-2 rounded tracking-widest transition"
+          class="touch-target border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-micro font-bold px-3 py-2 rounded transition"
         >
-          {themeStore.jargon.delete.toUpperCase()}
+          Delete
         </button>
       {/if}
       {#if !vault.isGuest || canGuestEdit}
         <button
           onclick={onStartEdit}
-          class="border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary text-xs font-bold px-4 py-2 rounded tracking-widest transition"
+          class="border border-theme-border text-theme-text hover:text-theme-primary hover:border-theme-primary text-xs font-bold px-4 py-2 rounded transition"
         >
-          EDIT
+          Edit
         </button>
       {/if}
     </div>

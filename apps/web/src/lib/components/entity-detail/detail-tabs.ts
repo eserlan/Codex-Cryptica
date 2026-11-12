@@ -9,6 +9,8 @@ export const entityDetailTabs = [
   "timeline",
 ] as const;
 
+export { entityDetailTabLabels } from "./detail-tab-labels";
+
 export type EntityDetailTab = (typeof entityDetailTabs)[number];
 
 export type EntityDetailTabIds = {
