@@ -82,7 +82,8 @@ intake → spec → build → gate → review → approve, one PR per issue. Sta
 open http://localhost:8000/dashboard.html.
 
 The factory never merges. After review the approver's decision is posted on the
-PR, the PR is marked ready and the issue is labeled `factory:needs-human`; the
+PR, the PR is marked ready and both the PR and the issue are labeled
+`factory:needs-human` (review bots should not merge a PR with that label); the
 review-and-fix loop and a person take it from there. Merging the PR on GitHub
 finishes the job.
 
