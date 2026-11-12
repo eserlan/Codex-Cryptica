@@ -10,6 +10,7 @@
   import GenerateRelatedButton from "#lib/components/entity-detail/GenerateRelatedButton.svelte";
   import EntityProposals from "#lib/components/entity-detail/EntityProposals.svelte";
   import ZenConnections from "./ZenConnections.svelte";
+  import EntityGmNotes from "#lib/components/entity-detail/EntityGmNotes.svelte";
   import { getTemporalLabel } from "#lib/components/entity-detail/detail-tabs.js";
   import { isEntityVisible, type Entity } from "schema";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
@@ -99,31 +100,6 @@
 >
   <HelpZenDetailSurface {entity} isEditing={editState.isEditing} />
   <div class="max-w-3xl mx-auto space-y-6">
-    {#if entity && !editState.isEditing && !vault.isGuest}
-      <div class="flex flex-wrap justify-end gap-2">
-        <button
-          type="button"
-          onclick={() => modalUIStore.openRevisionDialog(entity.id)}
-          disabled={revisionService.isRevising}
-          class="text-xs font-bold uppercase tracking-widest bg-theme-surface text-theme-primary border border-theme-primary/50 hover:bg-theme-primary/10 hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
-          aria-label="Revise Chronicle and Lore with AI"
-          title="Revise Chronicle and Lore with AI"
-        >
-          {#if revisionService.isRevising}
-            <span
-              aria-hidden="true"
-              class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-            ></span>
-            Revising
-          {:else}
-            <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"
-            ></span>
-            AI Revise
-          {/if}
-        </button>
-        <GenerateRelatedButton entityId={entity.id} />
-      </div>
-    {/if}
     <!-- Temporal Data -->
     {#if editState.isEditing}
       <div class="bg-theme-surface p-4 rounded border border-theme-border">
@@ -197,14 +173,85 @@
 
     <!-- Chronicle -->
     {#if editState.isEditing || isVisible}
-      <div>
-        <h2
-          class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
-        >
-          <span aria-hidden="true" class="icon-[lucide--book-open] w-5 h-5"
-          ></span>
-          {themeStore.jargon.chronicle_header}
-        </h2>
+      <div data-testid="entity-main-text">
+        {#if editState.isEditing}
+          <MarkdownEditor
+            content={editState.content}
+            editable={true}
+            onUpdate={(md) => (editState.content = md)}
+          />
+        {:else if isVisible}
+          <div
+            class="prose-container {draft
+              ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
+              : ''}"
+          >
+            {#if draft}
+              <div
+                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
+              >
+                Proposed
+              </div>
+            {/if}
+            <MarkdownEditor
+              content={draft
+                ? draft.chronicle
+                : entity?.content || "No records found."}
+              editable={false}
+              {entityIndex}
+              currentEntityId={entity?.id ?? ""}
+              onEntityClick={(id) => onNavigate(id)}
+            />
+          </div>
+        {:else}
+          <div
+            class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
+          >
+            <span aria-hidden="true" class="icon-[lucide--lock] w-4 h-4"></span>
+            Chronicle is hidden in shared mode
+          </div>
+        {/if}
+      </div>
+    {/if}
+
+    {#if entity}
+      <EntityGmNotes
+        {entity}
+        isEditing={editState.isEditing}
+        bind:editLore={editState.lore}
+        onEntityClick={(id) => onNavigate(id)}
+      />
+    {/if}
+
+    <ZenConnections {entity} {isPopout} {onNavigate} class="block md:hidden" />
+
+    {#if entity && !editState.isEditing && (!vault.isGuest || (isVisible && isDelveLocationEntity(entity)))}
+      <div class="space-y-4" data-testid="entity-overview-tools">
+        {#if !vault.isGuest}
+          <div class="flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onclick={() => modalUIStore.openRevisionDialog(entity.id)}
+              disabled={revisionService.isRevising}
+              class="text-xs font-bold uppercase tracking-widest bg-theme-surface text-theme-primary border border-theme-primary/50 hover:bg-theme-primary/10 hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Revise Chronicle and Lore with AI"
+              title="Revise Chronicle and Lore with AI"
+            >
+              {#if revisionService.isRevising}
+                <span
+                  aria-hidden="true"
+                  class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+                ></span>
+                Revising
+              {:else}
+                <span aria-hidden="true" class="icon-[lucide--sparkles] w-4 h-4"
+                ></span>
+                AI Revise
+              {/if}
+            </button>
+            <GenerateRelatedButton entityId={entity.id} />
+          </div>
+        {/if}
         {#if !editState.isEditing && entity && isDelveLocationEntity(entity)}
           <div
             class="my-3 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
@@ -287,89 +334,8 @@
             </div>
           </div>
         {/if}
-        {#if editState.isEditing}
-          <MarkdownEditor
-            content={editState.content}
-            editable={true}
-            onUpdate={(md) => (editState.content = md)}
-          />
-        {:else if isVisible}
-          <div
-            class="prose-container {draft
-              ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
-              : ''}"
-          >
-            {#if draft}
-              <div
-                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
-              >
-                Proposed
-              </div>
-            {/if}
-            <MarkdownEditor
-              content={draft
-                ? draft.chronicle
-                : entity?.content || "No records found."}
-              editable={false}
-              {entityIndex}
-              currentEntityId={entity?.id ?? ""}
-              onEntityClick={(id) => onNavigate(id)}
-            />
-          </div>
-        {:else}
-          <div
-            class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
-          >
-            <span aria-hidden="true" class="icon-[lucide--lock] w-4 h-4"></span>
-            Chronicle is hidden in shared mode
-          </div>
-        {/if}
       </div>
     {/if}
-
-    {#if !vault.isGuest && (editState.isEditing || entity?.lore || draft !== null)}
-      <div>
-        <h2
-          class="text-xl font-header font-bold text-theme-primary mb-2 flex items-center gap-2 border-b border-theme-border pb-2"
-        >
-          <span aria-hidden="true" class="icon-[lucide--scroll-text] w-5 h-5"
-          ></span>
-          {themeStore.jargon.lore_header}
-        </h2>
-        {#if editState.isEditing}
-          <MarkdownEditor
-            content={editState.lore}
-            editable={true}
-            onUpdate={(md) => (editState.lore = md)}
-          />
-        {:else}
-          <div
-            class="prose-container {draft
-              ? 'bg-theme-primary/5 ring-1 ring-theme-primary/20 p-3 -m-3 rounded-lg relative overflow-hidden'
-              : ''}"
-          >
-            {#if draft}
-              <div
-                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
-              >
-                Proposed
-              </div>
-            {/if}
-            <MarkdownEditor
-              content={draft
-                ? draft.lore
-                : entity?.lore || "No detailed lore available."}
-              editable={false}
-              {entityIndex}
-              currentEntityId={entity?.id ?? ""}
-              onEntityClick={(id) => onNavigate(id)}
-            />
-          </div>
-        {/if}
-      </div>
-    {/if}
-
-    <ZenConnections {entity} {isPopout} {onNavigate} class="block md:hidden" />
 
     <DetailProposals isEditing={editState.isEditing} entityId={entity?.id} />
     <EntityProposals

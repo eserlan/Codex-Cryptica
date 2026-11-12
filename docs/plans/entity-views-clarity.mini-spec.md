@@ -244,18 +244,18 @@ least one failure, guest or cancellation path.
 
 ### Slice 4 — Same structure in both views ([#4742](https://github.com/eserlan/Codex-Cryptica/issues/4742))
 
-- [ ] **4.1 Tests** — `detail-tabs`: no `lore`, `status` maps to `overview`. GM notes: closed by default,
+- [x] **4.1 Tests** — `detail-tabs`: no `lore`, `status` maps to `overview`. GM notes: closed by default,
       opens on click and while editing, remembers the choice, and is absent from the DOM for guests. Panel: lore section appears
       for owners when lore exists or while editing, and never for guests. Zen: tools sit below the text
       (`ZenContent.order.test.ts`).
-- [ ] **4.2 Tab ids** — rename `status` to `overview`; map old values.
-- [ ] **4.3 GM notes section** — one shared `EntityGmNotes.svelte` used by both views: heading "GM notes",
+- [x] **4.2 Tab ids** — rename `status` to `overview`; map old values.
+- [x] **4.3 GM notes section** — one shared `EntityGmNotes.svelte` used by both views: heading "GM notes",
       themed subtitle, "GM only" marker, closed by default, open while editing, preference remembered.
       Move `DetailLoreTab` content into it and use it in `ZenContent`.
-- [ ] **4.3b Main text heading** — remove the `chronicle_header` heading from `ZenContent`; the delve and
+- [x] **4.3b Main text heading** — remove the `chronicle_header` heading from `ZenContent`; the delve and
       canvas controls that sit in that heading row move to the tools group.
-- [ ] **4.4 Zen order** — move AI revise and Generate related below the text in `ZenContent`.
-- [ ] **4.5 Connections wording** — "Connections" in both; one row component if `ZenConnectionRow` fits
+- [x] **4.4 Zen order** — move AI revise and Generate related below the text in `ZenContent`.
+- [x] **4.5 Connections wording** — "Connections" in both; one row component if `ZenConnectionRow` fits
       the panel without layout change, otherwise leave two and match the words and icons.
 - [ ] **4.6 Verification gate.**
 

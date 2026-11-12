@@ -11,6 +11,7 @@
   import GenerateRelatedButton from "./GenerateRelatedButton.svelte";
   import GenerateBusinessButton from "./GenerateBusinessButton.svelte";
   import EntityProposals from "./EntityProposals.svelte";
+  import EntityGmNotes from "./EntityGmNotes.svelte";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { revisionService } from "#lib/services/RevisionService.svelte.js";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
@@ -34,6 +35,7 @@
     isEditing,
     editType,
     editContent = $bindable(),
+    editLore = $bindable(),
     editStartDate = $bindable(),
     editEndDate = $bindable(),
   }: {
@@ -41,6 +43,7 @@
     isEditing: boolean;
     editType: string;
     editContent: string;
+    editLore: string;
     editStartDate: Entity["start_date"];
     editEndDate: Entity["end_date"];
   } = $props();
@@ -186,6 +189,15 @@
       </div>
     </div>
   {/if}
+
+  <EntityGmNotes
+    {entity}
+    {isEditing}
+    bind:editLore
+    onEntityClick={(id) => {
+      vault.selectedEntityId = id;
+    }}
+  />
 
   <!-- Connections -->
   <div>
