@@ -35,6 +35,8 @@ export interface Place {
   sourceRecordId?: string;
   /** How it relates to other places, in plain words, e.g. "below Tiny village". */
   relation?: string;
+  /** Other names the story has used for it, so a variant resolves to the same place. */
+  aliases?: string[];
 }
 
 /** The model's declaration that the player has changed place. Never needed for scene changes inside one place. */
@@ -253,6 +255,12 @@ export interface CommittedAdventureTurn {
   /** Player-safe time interval; private developments live in worldTime. */
   timeAdvance?: { minutes: number; cause: string };
   suggestedActions?: string[];
+  /**
+   * What the engine left out of this turn because the model got it wrong in a way
+   * that corrupts nothing (an unknown id, a step that is not allowed yet). The turn
+   * itself committed. Diagnostic only: never shown to the player or sent to the model.
+   */
+  dropped?: string[];
 }
 
 /** A user-named, reusable dice expression. Convenience only — never changes when Oracle requests a roll. */
@@ -320,7 +328,8 @@ export interface ScenarioSeed {
 
 export interface ScenarioEvent {
   id: string;
-  kind: "discovery" | "consequence" | "status-change" | "theory";
+  kind:
+    "discovery" | "consequence" | "status-change" | "theory" | "stage-change";
   visibility: "player" | "gm";
   text: string;
   at: string;

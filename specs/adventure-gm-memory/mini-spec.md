@@ -248,3 +248,36 @@ bunx fallow audit --format json --quiet --explain --gate-marker agent
 Then the `codex-review` review before opening the PR. No changelog entry for PR A;
 PRs B and C get one user-facing line each ("The GM remembers where people are" /
 "The GM remembers earlier events in long adventures").
+
+### Follow-up: places linked to Vault records
+
+Places were only linked to a record when they were the world-entry start. Now:
+
+- **Link by exact title.** Before each turn the app compares place names (and aliases)
+  with the Vault's location records, by exact title ignoring case, punctuation and a
+  leading "the", and links a place only when exactly one record matches. A link whose
+  record has been deleted is dropped silently. The links are attached to the
+  in-memory session the turn is generated from and saved by that turn's own save, like
+  the story notes. A missing Vault or failed lookup never fails the turn.
+- **The current place's record is an anchor**, sent in full like the start location.
+  Other places' records are not, to keep the prompt budget.
+- **Aliases.** A place keeps up to five other names. A move by name matches a name or
+  alias ignoring case, punctuation and "the", or a name that continues a known
+  name of two or more words at a word boundary ("Tiny village in the high slopes" for
+  "Tiny village"). When it continues several places the longest known name wins and a
+  tie matches nothing. A one-word name ("Nombe") is never continued, so "Nombe slopes"
+  stays a separate place. The model sees each place's aliases and a `canonical` flag.
+- Not done: fuzzy matching, linking by records' own aliases (entities have none), or
+  letting the model supply record ids.
+
+## Follow-up: promotion records the Vault link
+
+Saving a place discovery to Codex (single, bulk or auto-promote), or finding it already saved, now ties the adventure place of that exact name to the record through `linkAdventurePlaceRecord`. `sourceRecordId` is an id, so a later rename in the Vault no longer breaks the link. It is best effort: a pending roll or a failed save leaves the exact-title linker to link it at the next turn. Places stay in the session registry because they carry aliases, fact tags and `currentPlaceId`, and places that never reach the Vault still need them.
+
+## Follow-up: forgiving turns
+
+A model slip no longer fails the player's turn when it corrupts nothing. The engine drops that part of the reply, commits the rest, and records what it left out in an optional `dropped` list on the turn (shown in the diagnostic export, with `summary.droppedParts`). Dropped: an update to an entry that is not there, a repeated removal, a time advance the clock cannot take, a reveal of an unknown or out-of-place rumour, and any elaboration that is not allowed (unknown, closed, unheard, repeated, wrong stage). Still fatal: hidden-information leakage, a baseline-truth rewrite, a secret reveal of an unknown id, a duplicate input, an invalid roll, the state budget, and a failure to allocate an id for a recorded event.
+
+### Forgiving turns, part 2: one retry and plain copy
+
+When the engine still refuses the GM's reply (leakage, a baseline rewrite, an invalid roll), the turn is regenerated once with a `CORRECTION:` line giving the reason (capped at 300 characters), after the provider thread is reset so the refused reply is not remembered. A second refusal shows "The GM lost the thread on that one. Your action is still in the box; try again." and the reason goes to the console only. Generation failures (offline, provider, cancelled) are never retried. Applies to action turns and roll resolutions; the opening keeps its own start-failure copy.

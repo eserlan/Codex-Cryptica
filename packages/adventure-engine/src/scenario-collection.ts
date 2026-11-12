@@ -4,6 +4,7 @@ import type {
   ScenarioItem,
   ScenarioStatus,
 } from "./types";
+import { matchPlace } from "./place-names";
 import { parseAdventureSession, scenarioEventSchema } from "./schemas";
 import { scenarioItemIdentityIds } from "./scenario-schemas";
 
@@ -449,4 +450,40 @@ export function scenarioEventTurnIds(session: AdventureSession): Set<string> {
     }
   }
   return ids;
+}
+
+/** Ids of the turns that logged a player-visible scenario event (a lead surfacing or a stage advancing). */
+export function playerScenarioEventTurnIds(
+  session: AdventureSession,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const item of session.scenarioCollection?.items ?? []) {
+    for (const event of item.events) {
+      if (event.turnId && event.visibility === "player") ids.add(event.turnId);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Tie the adventure place called `name` to the Vault record the player has just
+ * saved or found for it, so the link survives the record being renamed. Only a
+ * place already known by exactly that name (or alias) links; nothing is made up.
+ * A place that is already linked is left alone.
+ */
+export function linkAdventurePlaceRecord(
+  session: AdventureSession,
+  name: string,
+  recordId: string,
+  expectedRevision: number,
+  now = session.updatedAt,
+): ScenarioCommandResult {
+  const match = matchPlace(session.places ?? [], name);
+  if (!match || match.extended || match.place.sourceRecordId)
+    return { ok: true, session, changed: false };
+  const placeId = match.place.id;
+  return commit(session, expectedRevision, now, (copy) => {
+    const place = copy.places?.find((entry) => entry.id === placeId);
+    if (place) place.sourceRecordId = recordId;
+  });
 }

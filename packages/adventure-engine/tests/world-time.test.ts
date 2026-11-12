@@ -264,7 +264,7 @@ describe("fictional world time", () => {
     expect(next.ok && next.value?.events).toEqual([]);
   });
 
-  it("rejects invalid temporal events atomically", () => {
+  it("leaves the clock alone for invalid temporal events and still commits the turn", () => {
     const current = session();
     const advance = {
       minutes: 1440,
@@ -282,7 +282,15 @@ describe("fictional world time", () => {
       inputId: "wait-input",
       now,
     });
-    expect(committed.ok).toBe(false);
+    // The clock stays put and the turn still commits, with the slip recorded.
+    expect(committed.ok).toBe(true);
+    if (committed.ok) {
+      expect(committed.value.worldTime).toBeUndefined();
+      expect(committed.value.turns[0]?.timeAdvance).toBeUndefined();
+      expect(committed.value.turns[0]?.dropped).toEqual([
+        "timeAdvance: unknown-or-duplicate-background-thread",
+      ]);
+    }
     expect(current.worldTime).toBeUndefined();
     const oversized = applyTimeAdvance(
       current,

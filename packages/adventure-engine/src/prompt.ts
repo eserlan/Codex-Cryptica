@@ -26,12 +26,18 @@ export interface AdventurePromptInput {
   rollResolution?: SuppliedRollOutcome;
   anchors: ResolvedSourceExcerpt[];
   relevant: ResolvedSourceExcerpt[];
+  /**
+   * Why the previous reply for this same action could not be used. Set only on the
+   * one automatic retry, so the GM can fix that and answer again.
+   */
+  correction?: string;
 }
 
 export function buildAdventurePrompt(input: AdventurePromptInput) {
   const scenarios = candidateScenariosForLocation(input.session);
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
+  const pacing = worldEntry ? worldEntryPacing(input.session) : undefined;
   const stalled = sceneStallPacing(input.session);
   const stallDue = stalled?.stalled ? stalled : undefined;
   const phaseInstruction =
@@ -42,7 +48,9 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
         : "This is an action turn. Resolve the player's submitted action and return a complete or roll-required proposal.";
   const behavior = [
     "Act as the adventure GM.",
-    ...(worldEntry ? worldEntryBehavior(worldEntry, input.session) : []),
+    ...(worldEntry
+      ? worldEntryBehavior(worldEntry, input.session, pacing)
+      : []),
     phaseInstruction,
     ...worldStyleBehavior(input.worldStyle),
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
@@ -50,7 +58,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Scene details are yours to decide: when the player asks about, or hands you, a detail nobody has fixed yet (time of day, weather, light, a minor NPC's name, a price, a distance), choose a fitting answer in character and commit it. If the player says you decide, decide. The ban on inventing precise calendar dates does not apply to scene details; keep a detail consistent once chosen.",
     "A character may not know something, but a reply must never be a dead end. Let the NPC offer a name, point to someone or somewhere that knows more, or let the player notice a visible clue. When the player repeats a question about the same unknown, someone present offers a concrete observable clue or safe lead; do not disclose GM-only truths, and reveal scenario secrets only through justified fictional discovery.",
     "Do not repeat the ambient detail (sounds, hearth, cups, weather) used in the previous turn; vary the sensory colour or leave it out. If the last few turns stayed in one scene without new information, change something: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Never decide the player's response.",
-    "Places: currentPlace is where the player is now and knownPlaces lists the places they have been to; people and facts listed under elsewhere are not here unless the story brings them back. When the player travels to a different place, set moveTo: use placeId for a known place, copied from knownPlaces and never made up, or name (with a short relation such as \"below Tiny village\") for a new one. Never set moveTo for movement inside the same place, and keep a place's recorded name instead of inventing a variant. People who should travel with the player must appear in this turn's activeCharacters patch.",
+    "Places: currentPlace is where the player is now and knownPlaces lists the places they have been to; people and facts listed under elsewhere are not here unless the story brings them back. When the player travels to a different place, set moveTo: use placeId for a known place, copied from knownPlaces and never made up, or name (with a short relation such as \"below Tiny village\") for a new one. Never set moveTo for movement inside the same place, and keep a place's recorded name instead of inventing a variant. A place marked canonical is a Vault location: its source record outranks anything you would invent about it. A place may be known by more than one name; use a recorded name rather than a variant. People who should travel with the player must appear in this turn's activeCharacters patch.",
     'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
     ...(stallDue
       ? [
@@ -58,10 +66,15 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
         ]
       : []),
     "Canonical source records outrank provisional session material.",
+    ...(input.correction
+      ? [
+          `CORRECTION: your previous reply to this same turn could not be used (${input.correction.slice(0, 300)}). Answer the same turn again as one complete reply and avoid that problem.`,
+        ]
+      : []),
     ...(scenarios.length
       ? [
           "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
-          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios.",
+          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios, and never in the turn a rumour is first revealed.",
           "Voluntary engagement: when the player investigates an emerging lead, consequential actions must advance the situation, reveal a credible witness, expose a discoverable clue, or resolve the matter; avoid endlessly substituting unrelated mundane chores.",
           "Peaceful/off-script: if the player ignores or declines a lead, or pursues ordinary daily life, allow peaceful exploration without forced villains, artificial deadlines, or mandatory combat.",
           "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
@@ -125,6 +138,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           at: worldEntry.at,
           intent: worldEntry.intent,
           scenePrompt: worldEntry.scenePrompt,
+          ...(pacing ? { pacing } : {}),
         }
       : undefined,
   });
@@ -169,8 +183,8 @@ function worldStyleBehavior(style?: AdventureWorldStyle): string[] {
 function worldEntryBehavior(
   worldEntry: NonNullable<AdventureSession["worldEntry"]>,
   session: AdventureSession,
+  pacing = worldEntryPacing(session),
 ): string[] {
-  const pacing = worldEntryPacing(session);
   return [
     "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
     "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
@@ -180,12 +194,13 @@ function worldEntryBehavior(
     "For scenarioCollection seeds, knowledge=unheard means unnoticed. When a player-visible sign or hearsay surfaces, include its scenario ID in revealScenarioIds; this atomically marks it heard and records a discovery event. This reveals only the lead, never its GM truth. Advance at most one stage per turn. Legacy gmThreads alone use hiddenPatch.gmThreads for visibility updates.",
     "Candidate rumours and leads are contextual to the player's current location. When the player asks an NPC about local news, gossip or rumours, or looks around for local leads: draw upon a fitting unnoticed seed for the current settlement or scene, and include its scenario ID in revealScenarioIds to record the discovery. Present it strictly as local hearsay or opinion, never as an assigned quest, mission objective or obligation. If no seed fits or the area is quiet, report ordinary peaceful life or that all has been quiet (a meaningful empty result) without inventing forced conflict.",
     "When the player explores, asks around or investigates a sign, naturally reveal at most one further plausible lead, clue or hearsay from the relevant seed. Do not dump every seed, assign quests or turn every mundane interaction into an ominous event.",
-    "Avoid endlessly substituting unrelated chores (such as fetching water or fixing windows) when the player actively asks about local news or pursues an emerging lead. Show observable consequences and actionable choices. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
+    "Avoid endlessly substituting unrelated chores (such as fetching water or fixing windows) when the player actively asks about local news or pursues an emerging lead: offer a concrete person, place or decision to follow (via revealScenarioIds or elaborateScenarios), while keeping it optional. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
+    "If the player deliberately ignores or declines a sign or lead, let them explore peacefully without repeated prompts, cyclic re-revelation, or forced escalation.",
     "Keep each seeded secret's original GM truth unchanged. A seed's underlying situation develops only when committed player actions or explicit in-world time passage justify it; otherwise only its visibility changes. Never raise a situation's stakes merely because another chat turn passed.",
     "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest. When speaking with locals in a settlement, one suggestedAction may offer asking about local news.",
     ...(pacing?.signDue
       ? [
-          `PACING: At least ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and include its scenario ID in revealScenarioIds to record the discovery; for legacy gmThreads use hiddenPatch.gmThreads.`,
+          `PACING: At least ${pacing.quietTurns} turns have passed without any player-observable seed surfacing (eligible candidate IDs: ${pacing.eligibleScenarioIds.length > 0 ? pacing.eligibleScenarioIds.join(", ") : "legacy gmThreads"}). In this turn, weave one small background sign from one of these seeds into the scene, include its scenario ID in revealScenarioIds to record the discovery (for legacy gmThreads use hiddenPatch.gmThreads), and offer at least one suggestedAction with a concrete person, place or choice to follow up.`,
         ]
       : []),
     "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",

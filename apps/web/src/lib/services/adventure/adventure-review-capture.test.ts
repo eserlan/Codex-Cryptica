@@ -251,6 +251,27 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(out.summary.stalledScenes).toBe(0);
   });
 
+  it("reports what the engine dropped from a turn, condensed or full, and totals it", () => {
+    const source = manyTurns(6);
+    source.turns[0] = {
+      ...source.turns[0]!,
+      dropped: ["reveal: unknown scenario s-1"],
+    };
+    source.turns[5] = {
+      ...source.turns[5]!,
+      dropped: ["elaborate: repeated", "timeAdvance: invalid-fictional-time"],
+    };
+
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 2 }));
+
+    expect(out.turns[0].detail).toBe("condensed");
+    expect(out.turns[0].dropped).toEqual(["reveal: unknown scenario s-1"]);
+    expect(out.turns[5].dropped).toHaveLength(2);
+    expect(out.turns[1].dropped).toBeUndefined();
+    expect(out.summary.droppedParts).toBe(3);
+    expect(out._readme).toContain("dropped");
+  });
+
   it("reports where the player is and keeps place tags in the snapshot", () => {
     const source = manyTurns(2);
     source.places = [
@@ -296,6 +317,8 @@ describe("Adventure diagnostic JSON for AI", () => {
       unheardScenarios: 1,
       pendingRoll: false,
       quietTurns: expect.any(Number),
+      timeToFirstSign: null,
+      timeToFirstActionableLead: null,
     });
     expect(out.turns.map((t: { detail: string }) => t.detail)).toEqual([
       "condensed",
@@ -344,5 +367,32 @@ describe("Adventure diagnostic JSON for AI", () => {
     const out = JSON.parse(adventureDiagnosticJson(source));
     expect(out.turns).toEqual([]);
     expect(out.summary.lastPlayerAction).toBeNull();
+  });
+
+  it("reports discovery and actionable lead metrics in diagnostic summary", () => {
+    const source = manyTurns(4);
+    const scenario = source.scenarioCollection!.items[0]!;
+    scenario.knowledge = "heard";
+    scenario.events.push({
+      id: "ev-sign",
+      kind: "discovery",
+      visibility: "player",
+      text: "Miller missing rumour",
+      at: "2026-11-11T10:01:00.000Z",
+      turnId: "turn-1",
+    });
+    scenario.events.push({
+      id: "ev-lead",
+      kind: "discovery",
+      visibility: "player",
+      text: "Actionable clue: grain ledger found",
+      at: "2026-11-11T10:02:00.000Z",
+      turnId: "turn-2",
+    });
+    scenario.stage = "actionable-clue";
+
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.timeToFirstSign).toBe(2);
+    expect(out.summary.timeToFirstActionableLead).toBe(3);
   });
 });

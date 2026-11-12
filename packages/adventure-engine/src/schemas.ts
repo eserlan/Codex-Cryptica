@@ -260,6 +260,7 @@ const storySoFarSchema = z
   .strict();
 
 export const MAX_PLACES = 30;
+export const MAX_PLACE_ALIASES = 5;
 const MAX_PLACE_NAME_CHARS = 120;
 const placeName = z.string().trim().min(1).max(MAX_PLACE_NAME_CHARS);
 
@@ -269,6 +270,7 @@ const placeSchema = z
     name: placeName,
     sourceRecordId: id.optional(),
     relation: text.optional(),
+    aliases: z.array(placeName).max(MAX_PLACE_ALIASES).optional(),
   })
   .strict();
 
@@ -324,7 +326,13 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
 export const scenarioEventSchema = z
   .object({
     id,
-    kind: z.enum(["discovery", "consequence", "status-change", "theory"]),
+    kind: z.enum([
+      "discovery",
+      "consequence",
+      "status-change",
+      "theory",
+      "stage-change",
+    ]),
     visibility: z.enum(["player", "gm"]),
     text,
     at: timestamp,
@@ -410,6 +418,7 @@ export const adventureSessionSchema = z
           .pick({ minutes: true, cause: true })
           .optional(),
         suggestedActions: z.array(text).length(3).optional(),
+        dropped: z.array(z.string().max(240)).max(24).optional(),
       }),
     ),
     pendingRoll: pendingRollSchema.nullable(),

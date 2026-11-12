@@ -18,6 +18,7 @@ import {
 } from "@codex/adventure-engine";
 import type {
   AdventureSession,
+  PlaceRecordCandidate,
   ResolvedSourceExcerpt,
   SourceRecordReference,
 } from "@codex/adventure-engine";
@@ -125,6 +126,19 @@ export class AdventureContextService {
       0,
       MAX_GROUNDING_RECORDS - requiredGroundingSources(session).length,
     );
+  }
+
+  /**
+   * Titles and types of the open Vault's records, from the in-memory index (no
+   * bodies are loaded), so places can be tied to location records. Undefined when
+   * the resolver has no world snapshot, so callers can tell "unknown" from "empty".
+   */
+  async listPlaceRecords(
+    vaultId: string,
+  ): Promise<PlaceRecordCandidate[] | undefined> {
+    if (!this.resolver.getWorldSnapshot) return undefined;
+    const { entities } = await this.resolver.getWorldSnapshot(vaultId);
+    return entities.map(({ id, title, type }) => ({ id, title, type }));
   }
 
   /** Recheck explicitly selected records after asynchronous retrieval. */

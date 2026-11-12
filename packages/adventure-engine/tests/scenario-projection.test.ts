@@ -160,7 +160,7 @@ describe("scenario player projection and disclosure", () => {
     expect(current.scenarioCollection?.items[1]?.revealedSecretIds).toEqual([]);
   });
 
-  it("commits a heard transition in the same turn and rejects an unknown target atomically", () => {
+  it("commits a heard transition in the same turn and skips an unknown target", () => {
     const current = session([
       item("new-lead", "unheard", "A hidden baseline."),
     ]);
@@ -172,6 +172,8 @@ describe("scenario player projection and disclosure", () => {
     expect(worldEntryPacing(current)).toEqual({
       quietTurns: 0,
       signDue: false,
+      eligibleScenarioIds: ["new-lead"],
+      activeLeadIds: [],
     });
     expect(
       buildAdventurePrompt({
@@ -234,8 +236,10 @@ describe("scenario player projection and disclosure", () => {
         ],
       };
       expect(worldEntryPacing(waiting)).toEqual({
-        quietTurns: 3,
+        quietTurns: 1,
         signDue: true,
+        eligibleScenarioIds: ["still-hidden"],
+        activeLeadIds: ["new-lead"],
       });
       expect(
         buildAdventurePrompt({
@@ -256,7 +260,12 @@ describe("scenario player projection and disclosure", () => {
       { ...proposal, revealScenarioIds: ["unknown"] },
       { turnId: "turn-2", inputId: "input-2", now: at },
     );
-    expect(invalid).toMatchObject({ ok: false });
+    // An unknown target is left out and recorded; the turn itself stands.
+    expect(invalid.ok).toBe(true);
+    if (invalid.ok)
+      expect(invalid.value.turns[0]?.dropped).toEqual([
+        "reveal: unknown scenario unknown",
+      ]);
     expect(current.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
     expect(current.turns).toEqual([]);
   });

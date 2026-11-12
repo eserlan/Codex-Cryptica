@@ -13,6 +13,8 @@ const describe = (place: Place) => ({
   id: place.id,
   name: place.name,
   ...(place.relation ? { relation: place.relation } : {}),
+  ...(place.aliases?.length ? { aliases: place.aliases } : {}),
+  ...(place.sourceRecordId ? { canonical: true } : {}),
 });
 
 const brief = (text: string) =>
