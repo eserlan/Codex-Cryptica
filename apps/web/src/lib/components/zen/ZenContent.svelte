@@ -2,7 +2,6 @@
   import { vault } from "#lib/stores/vault.svelte.js";
   import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
   import HelpZenDetailSurface from "#lib/components/help-assistant/HelpZenDetailSurface.svelte";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
   import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
   import TemporalEditor from "#lib/components/timeline/TemporalEditor.svelte";
   import { revisionService } from "#lib/services/RevisionService.svelte.js";
@@ -10,18 +9,12 @@
   import GenerateRelatedButton from "#lib/components/entity-detail/GenerateRelatedButton.svelte";
   import EntityProposals from "#lib/components/entity-detail/EntityProposals.svelte";
   import ZenConnections from "./ZenConnections.svelte";
+  import DelveCanvasBlock from "#lib/components/entity-detail/DelveCanvasBlock.svelte";
   import EntityGmNotes from "#lib/components/entity-detail/EntityGmNotes.svelte";
   import { getTemporalLabel } from "#lib/components/entity-detail/detail-tabs.js";
   import { isEntityVisible, type Entity } from "schema";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-  import {
-    dungeonDelveService,
-    isDelveLocationEntity,
-  } from "#lib/services/dungeon-delve-service.js";
-  import { goto } from "$app/navigation";
-  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
-  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
+  import { isDelveLocationEntity } from "#lib/services/dungeon-delve-service.js";
 
   let {
     entity,
@@ -37,14 +30,6 @@
     isPopout?: boolean;
   } = $props();
 
-  const existingCanvas = $derived.by(() => {
-    if (!entity) return undefined;
-    return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
-  });
-
-  const delveCanvasLabel = $derived(
-    getDelveCanvasLabel(themeStore.activeTheme.id),
-  );
   // Check if this entity is visible in guest/shared mode
   const isVisible = $derived.by(() => {
     if (!entity) return false;
@@ -252,87 +237,8 @@
             <GenerateRelatedButton entityId={entity.id} />
           </div>
         {/if}
-        {#if !editState.isEditing && entity && isDelveLocationEntity(entity)}
-          <div
-            class="my-3 p-3 bg-theme-primary/5 border border-theme-border rounded-xl flex items-center justify-between gap-3"
-          >
-            <div class="flex items-center gap-2.5">
-              <span
-                class="icon-[lucide--map] text-theme-primary w-5 h-5 shrink-0"
-              ></span>
-              <div>
-                <span
-                  class="text-xs font-bold text-theme-primary uppercase font-header tracking-wider block"
-                >
-                  Spatial {delveCanvasLabel}
-                </span>
-                <span class="text-micro text-theme-muted">
-                  {existingCanvas
-                    ? "Interactive room & sector floor plan on Spatial Canvas."
-                    : "Generate an interactive room & sector floor plan on Spatial Canvas."}
-                </span>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              {#if existingCanvas}
-                <button
-                  type="button"
-                  onclick={() => {
-                    openCanvasFromZen(existingCanvas, goto);
-                  }}
-                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="icon-[lucide--external-link] w-3.5 h-3.5"
-                  ></span>
-                  Open {delveCanvasLabel}
-                </button>
-                <button
-                  type="button"
-                  title="Rebuild Canvas Map"
-                  aria-label="Rebuild Canvas Map"
-                  onclick={async () => {
-                    try {
-                      const canvasDoc =
-                        dungeonDelveService.buildDelveCanvasFromConcept(entity);
-                      const slug = await canvasRegistry.importCanvas(canvasDoc);
-                      openCanvasFromZen({ slug }, goto);
-                    } catch (err) {
-                      console.error("[DelveCanvas] Rebuild failed:", err);
-                    }
-                  }}
-                  class="p-1.5 text-theme-muted hover:text-theme-primary transition-colors cursor-pointer"
-                >
-                  <span
-                    class="icon-[lucide--rotate-cw] w-3.5 h-3.5"
-                    aria-hidden="true"
-                  ></span>
-                </button>
-              {:else}
-                <button
-                  type="button"
-                  onclick={async () => {
-                    try {
-                      const canvasDoc =
-                        dungeonDelveService.buildDelveCanvasFromConcept(entity);
-                      const slug = await canvasRegistry.importCanvas(canvasDoc);
-                      openCanvasFromZen({ slug }, goto);
-                    } catch (err) {
-                      console.error("[DelveCanvas] Build failed:", err);
-                    }
-                  }}
-                  class="px-3.5 py-1.5 bg-theme-primary text-theme-bg font-bold text-micro rounded-lg uppercase font-header tracking-widest hover:bg-theme-secondary transition-colors shrink-0 flex items-center gap-1.5 shadow-md cursor-pointer"
-                >
-                  <span
-                    aria-hidden="true"
-                    class="icon-[lucide--map] w-3.5 h-3.5"
-                  ></span>
-                  Build {delveCanvasLabel}
-                </button>
-              {/if}
-            </div>
-          </div>
+        {#if isVisible && isDelveLocationEntity(entity)}
+          <DelveCanvasBlock {entity} />
         {/if}
       </div>
     {/if}
