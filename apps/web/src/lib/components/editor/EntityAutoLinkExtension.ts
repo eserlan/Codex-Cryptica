@@ -150,6 +150,11 @@ export function createEntityAutoLinkExtension(
   });
 }
 
+/** `[[inner]]`: inner has no brackets or newlines. */
+const WIKI_LINK_PATTERN = /\[\[([^[\]\n]+)\]\]/g;
+
+const HIDDEN_BRACKET = { style: "display: none", "data-wiki-bracket": "" };
+
 function buildDecorations(
   doc: PMNode,
   sorted: EntityIndexEntry[],
@@ -163,20 +168,46 @@ function buildDecorations(
 
   doc.descendants((node, pos) => {
     if (!node.isText || !node.text) return;
-    const matches = detectEntityMentions(node.text, sorted, currentEntityId);
+    const text = node.text;
+
+    // Explicit [[Name]] links: every occurrence, brackets always hidden.
+    for (const w of text.matchAll(WIKI_LINK_PATTERN)) {
+      const open = pos + w.index;
+      const innerStart = open + 2;
+      const innerEnd = innerStart + w[1].length;
+      const close = innerEnd + 2;
+      const name = w[1].trim().toLowerCase();
+      const target = sorted.find((e) => e.text === name);
+      decos.push(Decoration.inline(open, innerStart, HIDDEN_BRACKET));
+      decos.push(Decoration.inline(innerEnd, close, HIDDEN_BRACKET));
+      if (target && target.id !== currentEntityId) {
+        decos.push(
+          Decoration.inline(innerStart, innerEnd, linkAttrs(target.id)),
+        );
+      }
+    }
+
+    // Blank out wiki links (same length, so offsets hold) so the plain name
+    // detection never decorates text inside them.
+    const scan = text.replace(WIKI_LINK_PATTERN, (m) => " ".repeat(m.length));
+    const matches = detectEntityMentions(scan, sorted, currentEntityId);
     for (const m of matches) {
       if (seen.has(m.entityId)) continue;
       seen.add(m.entityId);
       decos.push(
-        Decoration.inline(pos + m.start, pos + m.end, {
-          class: "entity-auto-link text-theme-primary underline cursor-pointer",
-          "data-entity-id": m.entityId,
-          role: "link",
-          tabindex: "0",
-        }),
+        Decoration.inline(pos + m.start, pos + m.end, linkAttrs(m.entityId)),
       );
     }
   });
 
   return DecorationSet.create(doc, decos);
+}
+
+function linkAttrs(entityId: string) {
+  return {
+    class: "entity-auto-link text-theme-primary underline cursor-pointer",
+    "data-entity-id": entityId,
+    role: "link",
+    tabindex: "0",
+  };
 }
