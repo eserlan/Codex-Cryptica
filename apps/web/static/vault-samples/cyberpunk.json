@@ -7,7 +7,6 @@
       "tags": ["urban", "neon", "crowded"],
       "connections": [],
       "content": "A dense sprawl of neon-lit alleys and vertical housing. Home to hackers, hustlers, and those the corporations forgot.",
-      "lore": "A dense sprawl of neon-lit alleys and vertical housing. Home to hackers, hustlers, and those the corporations forgot.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-city.png",
       "_path": ["locations", "sector-7-slums.md"],
       "lastModified": 1700000000000
@@ -30,7 +29,6 @@
         }
       ],
       "content": "A legendary netrunner with a cybernetic eye and a vendetta against Arasaka. They can bypass almost any ICE.\n\nCurrently planning [[The Arasaka Data Heist]].",
-      "lore": "A legendary netrunner with a cybernetic eye and a vendetta against Arasaka. They can bypass almost any ICE.\n\nCurrently planning [[The Arasaka Data Heist]].",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-hacker.png",
       "_path": ["npcs", "glitch.md"],
       "lastModified": 1700000000000
@@ -48,7 +46,6 @@
         }
       ],
       "content": "A back-alley street doc who specializes in high-end cybernetics. He knows the medical history of every runner in the slums.",
-      "lore": "A back-alley street doc who specializes in high-end cybernetics. He knows the medical history of every runner in the slums.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-npc2.png",
       "_path": ["npcs", "chrome-eyes.md"],
       "lastModified": 1700000000000
@@ -66,7 +63,6 @@
         }
       ],
       "content": "A global collective of netrunners fighting for data sovereignty and corporate transparency.",
-      "lore": "A global collective of netrunners fighting for data sovereignty and corporate transparency.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-faction.png",
       "_path": ["factions", "net-ghosts.md"],
       "lastModified": 1700000000000
@@ -84,7 +80,6 @@
         }
       ],
       "content": "A high-speed mechanical predator equipped with scent-tracking sensors and shock-jaws.",
-      "lore": "A high-speed mechanical predator equipped with scent-tracking sensors and shock-jaws.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-creature.png",
       "_path": ["creatures", "cyber-hound.md"],
       "lastModified": 1700000000000
@@ -102,7 +97,6 @@
         }
       ],
       "content": "Detailed schematics for a custom netrunning rig featuring multi-core processing and specialized ICE-breakers.",
-      "lore": "Detailed schematics for a custom netrunning rig featuring multi-core processing and specialized ICE-breakers.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-note.png",
       "_path": ["notes", "cyberdeck-blueprint.md"],
       "lastModified": 1700000000000
@@ -120,7 +114,6 @@
         }
       ],
       "content": "A high-risk operation to infiltrate the Arasaka mainframe and steal classified neural mapping data.",
-      "lore": "A high-risk operation to infiltrate the Arasaka mainframe and steal classified neural mapping data.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/cyberpunk-city.png",
       "_path": ["events", "the-arasaka-data-heist.md"],
       "lastModified": 1700000000000
@@ -138,7 +131,6 @@
         }
       ],
       "content": "Six blocks of vendors, noodle carts and unlicensed clinics under a canopy of advertising. Everything is for sale and nothing has a receipt.",
-      "lore": "Six blocks of vendors, noodle carts and unlicensed clinics under a canopy of advertising. Everything is for sale and nothing has a receipt.",
       "_path": ["locations", "neon-strip.md"],
       "lastModified": 1700000000000
     },
@@ -155,7 +147,6 @@
         }
       ],
       "content": "Forty floors of converted cargo housing. The lifts fail weekly, so the upper stacks have their own economy and their own rules.",
-      "lore": "Forty floors of converted cargo housing. The lifts fail weekly, so the upper stacks have their own economy and their own rules.",
       "_path": ["locations", "vertical-stacks.md"],
       "lastModified": 1700000000000
     },
@@ -172,7 +163,6 @@
         }
       ],
       "content": "A basement bar where the music is loud enough to defeat directional microphones. Deals happen at the back booths; nobody looks.",
-      "lore": "A basement bar where the music is loud enough to defeat directional microphones. Deals happen at the back booths; nobody looks.",
       "_path": ["locations", "static-bar.md"],
       "lastModified": 1700000000000
     },
@@ -189,7 +179,6 @@
         }
       ],
       "content": "Ninety floors of mirrored glass with its own weather. Visible from every alley in Sector 7, which is the point.",
-      "lore": "Ninety floors of mirrored glass with its own weather. Visible from every alley in Sector 7, which is the point.",
       "_path": ["locations", "helix-tower.md"],
       "lastModified": 1700000000000
     },
@@ -206,7 +195,6 @@
         }
       ],
       "content": "Twelve blocks that went under when the seawall failed and were never reclaimed. The grid still runs down there, which is why people go.",
-      "lore": "Twelve blocks that went under when the seawall failed and were never reclaimed. The grid still runs down there, which is why people go.",
       "_path": ["locations", "drowned-district.md"],
       "lastModified": 1700000000000
     },
@@ -228,7 +216,6 @@
         }
       ],
       "content": "A decommissioned church whose nave now holds server racks. The Net-Ghosts route their heaviest traffic through its cold, quiet dark.",
-      "lore": "A decommissioned church whose nave now holds server racks. The Net-Ghosts route their heaviest traffic through its cold, quiet dark.",
       "_path": ["locations", "cathedral-node.md"],
       "lastModified": 1700000000000
     },
@@ -250,7 +237,6 @@
         }
       ],
       "content": "The maglev line that stitches the sectors together. Corporate cars run the upper rail; everyone else rides below it.",
-      "lore": "The maglev line that stitches the sectors together. Corporate cars run the upper rail; everyone else rides below it.",
       "_path": ["locations", "transit-spine.md"],
       "lastModified": 1700000000000
     },
@@ -272,7 +258,6 @@
         }
       ],
       "content": "The fixer who decides which jobs reach which crews. Keeps no files, forgets nothing, and has never once been arrested.",
-      "lore": "The fixer who decides which jobs reach which crews. Keeps no files, forgets nothing, and has never once been arrested.",
       "_path": ["npcs", "vesper-kade.md"],
       "lastModified": 1700000000000
     },
@@ -294,7 +279,6 @@
         }
       ],
       "content": "Helix Dynamics' field asset for problems that cannot go through legal. Eight confirmed augmentations, none of them cosmetic.",
-      "lore": "Helix Dynamics' field asset for problems that cannot go through legal. Eight confirmed augmentations, none of them cosmetic.",
       "_path": ["npcs", "kestrel-9.md"],
       "lastModified": 1700000000000
     },
@@ -316,7 +300,6 @@
         }
       ],
       "content": "Independent reporter who has been building a case against Helix for three years. Publishes from a different address every week.",
-      "lore": "Independent reporter who has been building a case against Helix for three years. Publishes from a different address every week.",
       "_path": ["npcs", "mila-ferran.md"],
       "lastModified": 1700000000000
     },
@@ -338,7 +321,6 @@
         }
       ],
       "content": "Runs cargo through the drowned district in a boat that should not float. Charges by risk, not by weight.",
-      "lore": "Runs cargo through the drowned district in a boat that should not float. Charges by risk, not by weight.",
       "_path": ["npcs", "rook.md"],
       "lastModified": 1700000000000
     },
@@ -360,7 +342,6 @@
         }
       ],
       "content": "Spins at the Static Bar four nights a week and sells what the crowd says on the other three. Information priced by how badly you want it.",
-      "lore": "Spins at the Static Bar four nights a week and sells what the crowd says on the other three. Information priced by how badly you want it.",
       "_path": ["npcs", "saint-decibel.md"],
       "lastModified": 1700000000000
     },
@@ -382,7 +363,6 @@
         }
       ],
       "content": "Helix's internal auditor, sent down from the tower to find out who has been moving numbers. Does not carry a weapon and does not need to.",
-      "lore": "Helix's internal auditor, sent down from the tower to find out who has been moving numbers. Does not carry a weapon and does not need to.",
       "_path": ["npcs", "auditor-grey.md"],
       "lastModified": 1700000000000
     },
@@ -404,7 +384,6 @@
         }
       ],
       "content": "Built ICE for Helix for eleven years, then walked out. Now maintains the Cathedral Node for people who cannot pay.",
-      "lore": "Built ICE for Helix for eleven years, then walked out. Now maintains the Cathedral Node for people who cannot pay.",
       "_path": ["npcs", "tam-oyelaran.md"],
       "lastModified": 1700000000000
     },
@@ -426,7 +405,6 @@
         }
       ],
       "content": "The legitimate surgeon Helix employees are sent to. Better equipment than Chrome-Eyes, and a waiting list you cannot join.",
-      "lore": "The legitimate surgeon Helix employees are sent to. Better equipment than Chrome-Eyes, and a waiting list you cannot join.",
       "_path": ["npcs", "dr-solene-marrow.md"],
       "lastModified": 1700000000000
     },
@@ -443,7 +421,6 @@
         }
       ],
       "content": "Biotech megacorp holding the augmentation patents most of the sector depends on. Owns the tower, the upper rail, and a great deal of the council.",
-      "lore": "Biotech megacorp holding the augmentation patents most of the sector depends on. Owns the tower, the upper rail, and a great deal of the council.",
       "_path": ["factions", "helix-dynamics.md"],
       "lastModified": 1700000000000
     },
@@ -465,7 +442,6 @@
         }
       ],
       "content": "Street crew running the Vertical Stacks. Sells protection to the same people it threatens, and calls the arrangement stability.",
-      "lore": "Street crew running the Vertical Stacks. Sells protection to the same people it threatens, and calls the arrangement stability.",
       "_path": ["factions", "red-vector.md"],
       "lastModified": 1700000000000
     },
@@ -487,7 +463,6 @@
         }
       ],
       "content": "A smuggling network older than the seawall. Moves cargo, people and data, and never asks which it is carrying.",
-      "lore": "A smuggling network older than the seawall. Moves cargo, people and data, and never asks which it is carrying.",
       "_path": ["factions", "the-quiet-hand.md"],
       "lastModified": 1700000000000
     },
@@ -504,7 +479,6 @@
         }
       ],
       "content": "Nine elected seats meant to govern Sector 7. Meets publicly, decides privately, and has not refused Helix anything in six years.",
-      "lore": "Nine elected seats meant to govern Sector 7. Meets publicly, decides privately, and has not refused Helix anything in six years.",
       "_path": ["factions", "sector-council.md"],
       "lastModified": 1700000000000
     },
@@ -521,7 +495,6 @@
         }
       ],
       "content": "An encrypted chip carrying Helix's real recall figures. Three parties want it and none of them can decrypt it alone.",
-      "lore": "An encrypted chip carrying Helix's real recall figures. Three parties want it and none of them can decrypt it alone.",
       "_path": ["notes", "black-ledger.md"],
       "lastModified": 1700000000000
     },
@@ -543,7 +516,6 @@
         }
       ],
       "content": "A hand-built intrusion suite that adapts to ICE rather than brute-forcing it. Three known copies; two are Helix's.",
-      "lore": "A hand-built intrusion suite that adapts to ICE rather than brute-forcing it. Three known copies; two are Helix's.",
       "_path": ["notes", "ghostwire-suite.md"],
       "lastModified": 1700000000000
     },
@@ -565,7 +537,6 @@
         }
       ],
       "content": "A surgical shunt that lets a runner hold a connection far past safe limits. It works. It also shortens the list of things you remember.",
-      "lore": "A surgical shunt that lets a runner hold a connection far past safe limits. It works. It also shortens the list of things you remember.",
       "_path": ["notes", "neural-shunt.md"],
       "lastModified": 1700000000000
     },
@@ -587,7 +558,6 @@
         }
       ],
       "content": "Eleven hours with no grid, no lifts and no lights. Officially a cascade fault. Nobody in the slums believes that.",
-      "lore": "Eleven hours with no grid, no lifts and no lights. Officially a cascade fault. Nobody in the slums believes that.",
       "_path": ["events", "blackout-of-49.md"],
       "lastModified": 1700000000000
     },
@@ -609,7 +579,6 @@
         }
       ],
       "content": "Helix quietly recalled a run of neural implants and offered replacements to anyone who signed. Most signed.",
-      "lore": "Helix quietly recalled a run of neural implants and offered replacements to anyone who signed. Most signed.",
       "_path": ["events", "the-helix-recall.md"],
       "lastModified": 1700000000000
     },
@@ -636,7 +605,6 @@
         }
       ],
       "content": "Four nights of fires along the Neon Strip after a Red Vector shakedown killed a vendor. The council promised an inquiry.",
-      "lore": "Four nights of fires along the Neon Strip after a Red Vector shakedown killed a vendor. The council promised an inquiry.",
       "_path": ["events", "strip-riots.md"],
       "lastModified": 1700000000000
     },
@@ -653,7 +621,6 @@
         }
       ],
       "content": "A maintenance swarm that outlived its contract and kept patrolling. It still repairs things. It still removes what it reads as damage.",
-      "lore": "A maintenance swarm that outlived its contract and kept patrolling. It still repairs things. It still removes what it reads as damage.",
       "_path": ["creatures", "sable-drone-swarm.md"],
       "lastModified": 1700000000000
     },
@@ -675,7 +642,6 @@
         }
       ],
       "content": "Not written anywhere, and everyone can recite it. Do not burn a fixer. Do not touch a clinic. Do not take corporate money to hunt your own.",
-      "lore": "Not written anywhere, and everyone can recite it. Do not burn a fixer. Do not touch a clinic. Do not take corporate money to hunt your own.",
       "_path": ["notes", "runners-code.md"],
       "lastModified": 1700000000000
     },
@@ -697,7 +663,6 @@
         }
       ],
       "content": "Working notes on Helix's intrusion countermeasures: what each layer watches for, and how long you have once it notices you.",
-      "lore": "Working notes on Helix's intrusion countermeasures: what each layer watches for, and how long you have once it notices you.",
       "_path": ["notes", "ice-protocols.md"],
       "lastModified": 1700000000000
     }

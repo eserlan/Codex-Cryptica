@@ -7,7 +7,6 @@
       "tags": ["hub", "tatooine", "scum-and-villainy"],
       "connections": [],
       "content": "A dimly lit tavern known for its diverse clientele and 'no droids' policy. A perfect place to find a pilot for hire.",
-      "lore": "A dimly lit tavern known for its diverse clientele and 'no droids' policy. A perfect place to find a pilot for hire.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-location.png",
       "_path": ["locations", "mos-eisley-cantina.md"],
       "lastModified": 1700000000000
@@ -25,7 +24,6 @@
         }
       ],
       "content": "A legendary Jedi Master living in exile on Tatooine. He watches over young Luke Skywalker from a distance.",
-      "lore": "A legendary Jedi Master living in exile on Tatooine. He watches over young Luke Skywalker from a distance.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-npc.png",
       "_path": ["npcs", "obi-wan-kenobi.md"],
       "lastModified": 1700000000000
@@ -43,7 +41,6 @@
         }
       ],
       "content": "The dark lord of the Sith and primary enforcer of the Galactic Empire. He is currently hunting for the stolen Death Star plans.",
-      "lore": "The dark lord of the Sith and primary enforcer of the Galactic Empire. He is currently hunting for the stolen Death Star plans.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-npc2.png",
       "_path": ["npcs", "darth-vader.md"],
       "lastModified": 1700000000000
@@ -55,7 +52,6 @@
       "tags": ["authoritarian", "powerful", "military"],
       "connections": [],
       "content": "The tyrannical government that rules the galaxy with an iron fist. They are currently constructing a massive superweapon.",
-      "lore": "The tyrannical government that rules the galaxy with an iron fist. They are currently constructing a massive superweapon.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-faction.png",
       "_path": ["factions", "galactic-empire.md"],
       "lastModified": 1700000000000
@@ -67,7 +63,6 @@
       "tags": ["predator", "tatooine", "deadly"],
       "connections": [],
       "content": "A massive carnivorous reptile native to Tatooine. Its pearls are highly valued by Tusken Raiders.",
-      "lore": "A massive carnivorous reptile native to Tatooine. Its pearls are highly valued by Tusken Raiders.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-creature.png",
       "_path": ["creatures", "krayt-dragon.md"],
       "lastModified": 1700000000000
@@ -85,7 +80,6 @@
         }
       ],
       "content": "Technical readouts for the Empire's ultimate weapon. They contain a fatal flaw hidden by a rebel sympathizer.",
-      "lore": "Technical readouts for the Empire's ultimate weapon. They contain a fatal flaw hidden by a rebel sympathizer.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-note.png",
       "_path": ["notes", "death-star-plans.md"],
       "lastModified": 1700000000000
@@ -103,7 +97,6 @@
         }
       ],
       "content": "A major confrontation that resulted in the destruction of the first Death Star. It marked the first major victory for the Rebel Alliance.",
-      "lore": "A major confrontation that resulted in the destruction of the first Death Star. It marked the first major victory for the Rebel Alliance.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-location.png",
       "_path": ["events", "battle-of-yavin.md"],
       "lastModified": 1700000000000
