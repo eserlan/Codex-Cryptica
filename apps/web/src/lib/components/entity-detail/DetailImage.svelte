@@ -217,7 +217,7 @@
             class="touch-target flex flex-1 items-center justify-center gap-1.5 text-center rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
           >
             <span
-              class="icon-[lucide--user-round] inline-block h-4 w-4 shrink-0 text-theme-accent"
+              class="icon-[lucide--user-round] inline-block h-4 w-4 shrink-0 text-theme-text"
               aria-hidden="true"
             ></span>
             Choose silhouette

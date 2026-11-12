@@ -27,7 +27,7 @@
     aria-busy={isVisualizing}
     aria-label="{label} for {entity.title}"
     data-testid="generate-art-button"
-    class="touch-target mt-1.5 flex w-fit items-center gap-1.5 rounded border border-theme-primary/30 bg-theme-surface px-2 py-1 text-nano font-bold uppercase tracking-widest text-theme-primary transition hover:border-theme-primary disabled:opacity-60"
+    class="touch-target mt-1.5 flex w-fit items-center gap-1.5 rounded border border-theme-primary/30 bg-theme-surface px-2 py-1 text-nano font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary disabled:opacity-60"
   >
     <span
       aria-hidden="true"
