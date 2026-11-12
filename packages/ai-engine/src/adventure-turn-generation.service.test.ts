@@ -1,57 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   AdventureTurnGenerationService,
   extractAdventureNarrationPrefix,
 } from "./adventure-turn-generation.service";
 
-const session = {
-  schemaVersion: 1 as const,
-  id: "session-1",
-  vaultId: "vault-1",
-  title: "Road",
-  status: "active" as const,
-  createdAt: "2026-08-16T12:00:00.000Z",
-  updatedAt: "2026-08-16T12:00:00.000Z",
-  lastPlayedAt: "2026-08-16T12:00:00.000Z",
-  revision: 0,
-  playerCharacter: {
-    kind: "provisional" as const,
-    name: "Mara",
-    description: "Guide",
-  },
-  premise: "Find the road",
-  sourceRecords: [],
-  visibleState: {
-    objectives: [],
-    activeCharacters: [],
-    knownFacts: [],
-    relationships: [],
-  },
-  hiddenState: { secrets: [], gmThreads: [] },
-  provisionalFacts: [],
-  turns: [],
-  pendingRoll: null,
-  dicePresets: [],
-  resourceCounters: [],
-};
-
-const completeResponse = JSON.stringify({
-  kind: "complete",
-  narration: "The road opens.",
-  visiblePatch: {
-    objectives: { add: [], update: [], removeIds: [] },
-    activeCharacters: { add: [], update: [], removeIds: [] },
-    knownFacts: { add: [], update: [], removeIds: [] },
-    relationships: { add: [], update: [], removeIds: [] },
-  },
-  hiddenPatch: {
-    secrets: { add: [], update: [], removeIds: [] },
-    gmThreads: { add: [], update: [], removeIds: [] },
-  },
-  revealSecretIds: [],
-  provisionalFacts: [],
-  sourceRecordIds: [],
-});
+import {
+  session,
+  completeResponse,
+} from "./adventure-generation.test-fixtures";
 
 if (typeof navigator === "undefined") {
   Object.defineProperty(globalThis, "navigator", {
@@ -66,6 +22,91 @@ if (typeof navigator === "undefined") {
 }
 
 describe("AdventureTurnGenerationService", () => {
+  it.each([
+    "interaction-client-unavailable",
+    "interaction-stream-unavailable",
+    "INTERACTION not supported",
+  ])(
+    "uses stateless generation when retained history reports %s",
+    async (reason) => {
+      const sendInteraction = vi.fn(async () => {
+        throw new Error(reason);
+      });
+      const getModel = vi.fn(async () => ({
+        async generateContent() {
+          return { response: { text: () => completeResponse } };
+        },
+      }));
+      const service = new AdventureTurnGenerationService({
+        getModel,
+        sendInteraction,
+      });
+      await expect(
+        service.generate({
+          session,
+          phase: "opening",
+          anchors: [],
+          relevant: [],
+        }),
+      ).resolves.toMatchObject({ kind: "complete" });
+      expect(sendInteraction).toHaveBeenCalledOnce();
+      expect(getModel).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each([new Error("rate-limit"), "unrecognised failure"])(
+    "propagates retained-history failures without a stateless retry: %s",
+    async (error) => {
+      const getModel = vi.fn(async (): Promise<never> => {
+        throw new Error("unexpected stateless call");
+      });
+      const service = new AdventureTurnGenerationService({
+        getModel,
+        async sendInteraction() {
+          throw error;
+        },
+      });
+      await expect(
+        service.generate({
+          session,
+          phase: "opening",
+          anchors: [],
+          relevant: [],
+        }),
+      ).rejects.toBe(error);
+      expect(getModel).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects offline and pre-cancelled requests before contacting the provider", async () => {
+    const getModel = vi.fn(async (): Promise<never> => {
+      throw new Error("unexpected provider call");
+    });
+    const service = new AdventureTurnGenerationService({ getModel });
+    const request = {
+      session,
+      phase: "opening" as const,
+      anchors: [],
+      relevant: [],
+    };
+    Object.defineProperty(navigator, "onLine", {
+      value: false,
+      writable: true,
+    });
+    try {
+      await expect(service.generate(request)).rejects.toThrow("offline");
+    } finally {
+      Object.defineProperty(navigator, "onLine", {
+        value: true,
+        writable: true,
+      });
+    }
+    await expect(
+      service.generate({ ...request, signal: AbortSignal.abort() }),
+    ).rejects.toThrow("Cancelled");
+    expect(getModel).not.toHaveBeenCalled();
+  });
+
   it("emits only the first top-level player narration from partial JSON", () => {
     expect(
       extractAdventureNarrationPrefix(
