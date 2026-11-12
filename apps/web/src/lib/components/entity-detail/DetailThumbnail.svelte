@@ -92,7 +92,7 @@
 </script>
 
 <div
-  class="h-16 w-16 shrink-0 overflow-hidden rounded border border-theme-border bg-theme-bg/30 {isDraggingOver
+  class="h-10 w-10 shrink-0 md:h-16 md:w-16 overflow-hidden rounded border border-theme-border bg-theme-bg/30 {isDraggingOver
     ? 'ring-2 ring-oracle-primary'
     : ''}"
   data-testid="detail-thumbnail"

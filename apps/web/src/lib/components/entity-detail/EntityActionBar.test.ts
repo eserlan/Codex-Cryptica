@@ -43,6 +43,19 @@ describe("EntityActionBar", () => {
     expect(text("expand").className).toContain("@max-[300px]:hidden");
   });
 
+  it("in compact mode keeps only Edit on the bar, icon-only, and moves the rest into More", () => {
+    const { getByTestId, queryByTestId } = render(EntityActionBar, {
+      compact: true,
+      actions: [action("edit"), action("expand")],
+    });
+    const text = getByTestId("edit-button").querySelector(
+      "span:not([aria-hidden])",
+    )!;
+    expect(text.className).toContain("sr-only");
+    expect(queryByTestId("expand-button")).toBeNull();
+    expect(getByTestId("entity-actions-more-button")).toBeTruthy();
+  });
+
   it("runs an action when pressed", async () => {
     const edit = action("edit");
     const { getByTestId } = render(EntityActionBar, { actions: [edit] });

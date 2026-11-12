@@ -27,7 +27,7 @@
     aria-busy={isVisualizing}
     aria-label="{label} for {entity.title}"
     data-testid="generate-art-button"
-    class="touch-target mt-1.5 flex w-fit items-center gap-1.5 rounded border border-theme-primary/30 bg-theme-surface px-2 py-1 text-nano font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary disabled:opacity-60"
+    class="mt-1.5 flex w-fit items-center gap-1.5 rounded border border-theme-primary/30 bg-theme-surface px-2 py-1 max-md:mt-0 max-md:p-1 text-nano font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary disabled:opacity-60"
   >
     <span
       aria-hidden="true"
@@ -35,6 +35,8 @@
         ? 'icon-[lucide--loader-2] animate-spin'
         : 'icon-[lucide--palette]'} h-3 w-3"
     ></span>
-    {isVisualizing ? "Visualizing..." : label}
+    <span class="max-md:sr-only"
+      >{isVisualizing ? "Visualizing..." : label}</span
+    >
   </button>
 {/if}
