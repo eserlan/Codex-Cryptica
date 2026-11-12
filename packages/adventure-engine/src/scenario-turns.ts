@@ -178,14 +178,15 @@ export function applyScenarioElaborations(
     const validation = validateScenarioAvailability(candidate, elaboration);
     if ("error" in validation) return validation.error;
 
-    // A rumour is introduced at hearsay, so elaborating it in the same turn adds
-    // nothing. Skip it rather than fail the player's turn over a model slip.
-    if (revealedThisTurn.has(elaboration.scenarioId)) continue;
     const stageError = validateElaborationStage(
       validation.scenario,
       elaboration,
     );
     if (stageError) return stageError;
+
+    // A newly heard rumour is introduced at hearsay; a valid next-stage
+    // elaboration in the same turn is ignored rather than rejecting the turn.
+    if (revealedThisTurn.has(elaboration.scenarioId)) continue;
 
     validation.scenario.stage = elaboration.stage;
     const discoveryError = recordScenarioElaborationDiscovery(
