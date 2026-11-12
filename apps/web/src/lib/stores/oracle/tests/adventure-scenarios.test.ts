@@ -6,6 +6,10 @@ import {
   type ScenarioSeed,
 } from "@codex/adventure-engine";
 import { createAdventureRuntime } from "./adventure-fixtures";
+import {
+  extractActiveHeardScenarios,
+  extractHeardScenarios,
+} from "../adventure-scenarios";
 
 function item(id: string, batchId = `batch-${id}`): ScenarioItem {
   const seed: ScenarioSeed = {
@@ -24,6 +28,26 @@ function item(id: string, batchId = `batch-${id}`): ScenarioItem {
 }
 
 describe("AdventureScenarios workflow", () => {
+  it("selects only open heard situations for the active count", () => {
+    const { state } = createAdventureRuntime();
+    const open = item("open");
+    const resolved = { ...item("resolved"), status: "resolved" as const };
+    const abandoned = { ...item("abandoned"), status: "abandoned" as const };
+    const unheard = { ...item("unheard"), knowledge: "unheard" as const };
+    state.session!.scenarioCollection = {
+      version: 1,
+      items: [open, resolved, abandoned, unheard],
+      focusedScenarioId: null,
+    };
+
+    expect(extractActiveHeardScenarios(state.session)).toEqual([open]);
+    expect(extractHeardScenarios(state.session)).toEqual([
+      open,
+      resolved,
+      abandoned,
+    ]);
+  });
+
   it("adds state locally through revision-checked persistence without calling AI", async () => {
     const { state, deps, runtime } = createAdventureRuntime();
     const generate = vi.spyOn(deps.generation, "generate");
@@ -253,5 +277,22 @@ describe("AdventureScenarios workflow", () => {
     ).rejects.toThrow("revision-conflict");
     expect(state.session).toBe(before);
     expect(state.session?.places?.[0]?.sourceRecordId).toBeUndefined();
+  });
+
+  it("extracts heard scenarios safely from session or returns empty list", () => {
+    expect(extractHeardScenarios(null)).toEqual([]);
+    expect(extractHeardScenarios(undefined)).toEqual([]);
+
+    const session = {
+      scenarioCollection: {
+        items: [
+          { id: "h1", knowledge: "heard" },
+          { id: "u1", knowledge: "unheard" },
+        ],
+      },
+    } as any;
+    expect(extractHeardScenarios(session)).toEqual([
+      { id: "h1", knowledge: "heard" },
+    ]);
   });
 });

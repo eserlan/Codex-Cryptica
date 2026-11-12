@@ -535,4 +535,36 @@ describe("AdventureFocusPlay", () => {
     expect(screen.getByText("Sunken Barrow")).toBeTruthy();
     expect(screen.getByText("1 discovery awaiting review")).toBeTruthy();
   });
+
+  it("opens situations and rumours directly from the adventure header", async () => {
+    const m = manager();
+    (m.session as any).scenarioCollection = {
+      items: [
+        {
+          id: "sit-1",
+          knowledge: "heard",
+          status: "open",
+          playerVisible: {
+            rumour: "The beacon is dark.",
+            lead: "The High Beacon",
+          },
+          events: [],
+          anchorRefs: [],
+        },
+      ],
+      focusedScenarioId: "sit-1",
+    };
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+
+    const trigger = screen.getByRole("button", {
+      name: "Adventure situations (1 active)",
+    });
+    expect(trigger).toBeTruthy();
+    await fireEvent.click(trigger);
+
+    expect(
+      screen.getByRole("dialog", { name: "Situations & Rumours" }),
+    ).toBeTruthy();
+    expect(screen.getAllByText("The High Beacon").length).toBeGreaterThan(0);
+  });
 });
