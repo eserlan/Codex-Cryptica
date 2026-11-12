@@ -5,7 +5,7 @@
   import { createZenModeActions } from "#lib/hooks/useZenModeActions.svelte.js";
   import ZenHeader from "./ZenHeader.svelte";
   import EntityNotices from "#lib/components/entity-detail/EntityNotices.svelte";
-  import { entityDetailTabLabels } from "#lib/components/entity-detail/detail-tab-labels";
+  import { entityDetailTabLabels } from "#lib/components/entity-detail/detail-tab-labels.js";
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
