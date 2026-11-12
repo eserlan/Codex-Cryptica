@@ -162,7 +162,7 @@ describe("completed turn commits", () => {
     );
   });
 
-  it("records a skipped stage jump on a rumour revealed this turn", () => {
+  it("records a skipped next stage on a rumour revealed this turn", () => {
     const current = session();
     const unheard = scenario();
     unheard.knowledge = "unheard";
@@ -174,7 +174,7 @@ describe("completed turn commits", () => {
     const next = proposal();
     next.revealScenarioIds = [unheard.id];
     next.elaborateScenarios = [
-      { scenarioId: unheard.id, stage: "revelation-crisis" },
+      { scenarioId: unheard.id, stage: "actionable-clue" },
     ];
     const result = applyCompletedTurn(
       current,
@@ -187,7 +187,7 @@ describe("completed turn commits", () => {
     if (!result.ok) return;
     expect(result.value.scenarioCollection?.items[0]?.stage).toBe("hearsay");
     expect(result.value.turns[0]?.dropped).toEqual([
-      expect.stringContaining("Cannot skip elaboration stages"),
+      "elaborate: scenario-1 was revealed this turn and starts at hearsay",
     ]);
   });
 

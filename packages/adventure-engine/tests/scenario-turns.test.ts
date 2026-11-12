@@ -249,6 +249,8 @@ describe("scenario turn progression", () => {
     );
     expect(result).toBeNull();
     expect(current).toEqual(before);
-    expect(dropped).toEqual([]);
+    expect(dropped).toEqual([
+      "elaborate: scenario-1 was revealed this turn and starts at hearsay",
+    ]);
   });
 });

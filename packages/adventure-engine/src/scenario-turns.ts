@@ -181,7 +181,11 @@ function checkElaboration(
       ? validation.error
       : validateElaborationStage(validation.scenario, elaboration);
   if (failure) return { skip: `elaborate: ${failure.errors[0]?.message}` };
-  if (revealedThisTurn.has(id)) return { skip: null };
+  if (revealedThisTurn.has(id)) {
+    return {
+      skip: `elaborate: ${id} was revealed this turn and starts at hearsay`,
+    };
+  }
   return "scenario" in validation ? validation : { skip: null };
 }
 
