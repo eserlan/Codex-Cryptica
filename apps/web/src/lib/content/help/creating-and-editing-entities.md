@@ -53,7 +53,7 @@ Renaming changes the existing entity; it does not create a second entry.
 You can revise an entity’s text and **GM notes** directly from its entity view.
 
 1. Open the entity in the side panel or **Zen Mode**.
-2. Click **AI revise description**. In both views it is in the **More** menu in the header. Zen Mode also has it below the text.
+2. In the side panel, open **More** near the entity title and choose **AI revise description**. In Zen Mode, click **AI Revise Description** in the editor toolbar.
 3. In **Revise Description**, optionally enter guidance in **AI Instructions / Corrections (Highest Priority)**. For example: “Keep the history, but explain their alliance more clearly.”
 4. Click **Revise**, or press **Ctrl + Enter** (Cmd + Enter on macOS).
 5. Review the generated text and GM notes. Click **Apply Changes** to save, or **Discard** to keep the original.

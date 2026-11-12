@@ -4,7 +4,7 @@ export const entityEditing: FeatureEntry = {
   id: "entity-editing",
   title: "Creating and Editing Entities",
   summary:
-    "Create entries with + Create. Edit them with Edit in the header, then Save changes. AI revise description for text and GM notes is in the More menu in the side panel or Zen mode, or use /revise in chat. Review the draft before Apply Changes.",
+    "Create entries with + Create. Edit them with Edit in the header, then Save changes. AI revise description for text and GM notes is in the side panel's More menu or the Zen Mode editor toolbar, or use /revise in chat. Review the draft before Apply Changes.",
   channel: "production",
   routes: ["/(app)"],
   areas: ["entity-detail"],
@@ -15,7 +15,7 @@ export const entityEditing: FeatureEntry = {
       id: "ai-revisions",
       title: "AI-assisted revisions of text and GM notes",
       steps: [
-        "Open More in the header of the side panel or Zen mode and choose AI revise description. Zen mode also has it below the text.",
+        "In the side panel, open More near the entity title and choose AI revise description. In Zen mode, click AI Revise Description in the editor toolbar.",
         "In Revise Description, optionally add AI Instructions / Corrections, then click Revise. Cancel closes the dialog without generating a revision.",
         "Review the text and GM notes draft. Apply Changes saves it; Discard keeps the original. Review lore changes may ask which sections to keep.",
         "Alternatively, use /revise in Lore Oracle chat for the selected entity.",
