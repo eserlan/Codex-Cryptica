@@ -1,4 +1,5 @@
 import { validateRevealedScenarioLocation } from "./contextual-rumours";
+import { scenarioEventSecretId } from "./hidden-state";
 import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import { error } from "./reducer-result";
 import type {
@@ -150,6 +151,7 @@ function recordScenarioElaborationDiscovery(
       at: turn.committedAt,
       turnId: turn.id,
     });
+    scenario.secretBindings.eventIds[id] = scenarioEventSecretId(id);
     return null;
   }
 
