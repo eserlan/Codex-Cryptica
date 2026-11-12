@@ -452,6 +452,19 @@ export function scenarioEventTurnIds(session: AdventureSession): Set<string> {
   return ids;
 }
 
+/** Ids of the turns that logged a player-visible scenario event (a lead surfacing or a stage advancing). */
+export function playerScenarioEventTurnIds(
+  session: AdventureSession,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const item of session.scenarioCollection?.items ?? []) {
+    for (const event of item.events) {
+      if (event.turnId && event.visibility === "player") ids.add(event.turnId);
+    }
+  }
+  return ids;
+}
+
 /**
  * Tie the adventure place called `name` to the Vault record the player has just
  * saved or found for it, so the link survives the record being renamed. Only a

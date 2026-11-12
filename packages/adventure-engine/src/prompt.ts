@@ -37,6 +37,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   const scenarios = candidateScenariosForLocation(input.session);
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
+  const pacing = worldEntry ? worldEntryPacing(input.session) : undefined;
   const stalled = sceneStallPacing(input.session);
   const stallDue = stalled?.stalled ? stalled : undefined;
   const phaseInstruction =
@@ -47,7 +48,9 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
         : "This is an action turn. Resolve the player's submitted action and return a complete or roll-required proposal.";
   const behavior = [
     "Act as the adventure GM.",
-    ...(worldEntry ? worldEntryBehavior(worldEntry, input.session) : []),
+    ...(worldEntry
+      ? worldEntryBehavior(worldEntry, input.session, pacing)
+      : []),
     phaseInstruction,
     ...worldStyleBehavior(input.worldStyle),
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
@@ -135,6 +138,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           at: worldEntry.at,
           intent: worldEntry.intent,
           scenePrompt: worldEntry.scenePrompt,
+          ...(pacing ? { pacing } : {}),
         }
       : undefined,
   });
@@ -179,8 +183,8 @@ function worldStyleBehavior(style?: AdventureWorldStyle): string[] {
 function worldEntryBehavior(
   worldEntry: NonNullable<AdventureSession["worldEntry"]>,
   session: AdventureSession,
+  pacing = worldEntryPacing(session),
 ): string[] {
-  const pacing = worldEntryPacing(session);
   return [
     "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
     "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
@@ -190,12 +194,13 @@ function worldEntryBehavior(
     "For scenarioCollection seeds, knowledge=unheard means unnoticed. When a player-visible sign or hearsay surfaces, include its scenario ID in revealScenarioIds; this atomically marks it heard and records a discovery event. This reveals only the lead, never its GM truth. Advance at most one stage per turn. Legacy gmThreads alone use hiddenPatch.gmThreads for visibility updates.",
     "Candidate rumours and leads are contextual to the player's current location. When the player asks an NPC about local news, gossip or rumours, or looks around for local leads: draw upon a fitting unnoticed seed for the current settlement or scene, and include its scenario ID in revealScenarioIds to record the discovery. Present it strictly as local hearsay or opinion, never as an assigned quest, mission objective or obligation. If no seed fits or the area is quiet, report ordinary peaceful life or that all has been quiet (a meaningful empty result) without inventing forced conflict.",
     "When the player explores, asks around or investigates a sign, naturally reveal at most one further plausible lead, clue or hearsay from the relevant seed. Do not dump every seed, assign quests or turn every mundane interaction into an ominous event.",
-    "Avoid endlessly substituting unrelated chores (such as fetching water or fixing windows) when the player actively asks about local news or pursues an emerging lead. Show observable consequences and actionable choices. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
+    "Avoid endlessly substituting unrelated chores (such as fetching water or fixing windows) when the player actively asks about local news or pursues an emerging lead: offer a concrete person, place or decision to follow (via revealScenarioIds or elaborateScenarios), while keeping it optional. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
+    "If the player deliberately ignores or declines a sign or lead, let them explore peacefully without repeated prompts, cyclic re-revelation, or forced escalation.",
     "Keep each seeded secret's original GM truth unchanged. A seed's underlying situation develops only when committed player actions or explicit in-world time passage justify it; otherwise only its visibility changes. Never raise a situation's stakes merely because another chat turn passed.",
     "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest. When speaking with locals in a settlement, one suggestedAction may offer asking about local news.",
     ...(pacing?.signDue
       ? [
-          `PACING: At least ${pacing.quietTurns} turns have passed without any world-entry seed surfacing. In this turn, weave one small background sign from a fitting unnoticed seed into the scene, and include its scenario ID in revealScenarioIds to record the discovery; for legacy gmThreads use hiddenPatch.gmThreads.`,
+          `PACING: At least ${pacing.quietTurns} turns have passed without any player-observable seed surfacing (eligible candidate IDs: ${pacing.eligibleScenarioIds.length > 0 ? pacing.eligibleScenarioIds.join(", ") : "legacy gmThreads"}). In this turn, weave one small background sign from one of these seeds into the scene, include its scenario ID in revealScenarioIds to record the discovery (for legacy gmThreads use hiddenPatch.gmThreads), and offer at least one suggestedAction with a concrete person, place or choice to follow up.`,
         ]
       : []),
     "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",

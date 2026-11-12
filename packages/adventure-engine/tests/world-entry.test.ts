@@ -601,4 +601,290 @@ describe("world entry session and GM contract", () => {
       "When the player returns to a previously visited location, reflect established facts, prior conversations, and committed scenario consequences",
     );
   });
+
+  it("embeds explicit pacing signal in prompt state and guides early actionable opportunity", () => {
+    let session = parseAdventureSession(rawSession());
+    const seed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-1",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Northbrook",
+          batchId: "batch-1",
+          index: 1,
+          sourceRecordId: "place-1",
+        },
+        playerVisible: {
+          rumour: "Cattle wander near the ruined tower.",
+          lead: "Ruined Tower",
+          source: "Herdsman",
+        },
+        gmOnly: {
+          truth: "Bandits are using the tower as a staging ground.",
+          ifInvestigated: "Tracks lead to a cellar beneath the rubble.",
+        },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: ["place-1"],
+      revealedSecretIds: [],
+      secretBindings: { truth: "truth-tower", eventIds: {} },
+    };
+
+    const added = addScenario(session, seed, session.revision, now);
+    expect(added.ok).toBe(true);
+    if (!added.ok) return;
+    session = added.session;
+
+    // After 1 quiet turn (e.g. opening), sign is due promptly
+    const turn1Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration: "The village gate creaks in the morning breeze.",
+      visiblePatch: {
+        objectives: { add: [], update: [], removeIds: [] },
+        activeCharacters: { add: [], update: [], removeIds: [] },
+        knownFacts: { add: [], update: [], removeIds: [] },
+        relationships: { add: [], update: [], removeIds: [] },
+      },
+      hiddenPatch: {
+        secrets: { add: [], update: [], removeIds: [] },
+        gmThreads: { add: [], update: [], removeIds: [] },
+      },
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: ["Walk to the square", "Visit the inn", "Look around"],
+    };
+    const t1 = applyCompletedTurn(session, turn1Proposal, {
+      turnId: "turn-1",
+      inputId: "input-1",
+      playerAction: "Look around the gate.",
+      now,
+    });
+    expect(t1.ok).toBe(true);
+    if (!t1.ok) return;
+    session = t1.value;
+
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Ask the herdsman by the gate",
+      anchors: [],
+      relevant: [],
+    });
+
+    const parsedState = JSON.parse(prompt.state);
+    expect(parsedState.worldEntry.pacing).toEqual({
+      quietTurns: 1,
+      signDue: true,
+      eligibleScenarioIds: ["rumour-1"],
+      activeLeadIds: [],
+    });
+    expect(prompt.behavior).toContain(
+      "PACING: At least 1 turns have passed without any player-observable seed surfacing (eligible candidate IDs: rumour-1)",
+    );
+    expect(prompt.behavior).toContain(
+      "offer at least one suggestedAction with a concrete person, place or choice to follow up",
+    );
+    expect(prompt.behavior).toContain(
+      "offer a concrete person, place or decision to follow (via revealScenarioIds or elaborateScenarios)",
+    );
+    expect(prompt.behavior).toContain(
+      "If the player deliberately ignores or declines a sign or lead, let them explore peacefully",
+    );
+  });
+
+  it("supports voluntarily ignoring a sign and continuing peaceful exploration without forced escalation", () => {
+    let session = parseAdventureSession(rawSession());
+    const seed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-lights",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Northbrook",
+          batchId: "batch-1",
+          index: 1,
+          sourceRecordId: "place-1",
+        },
+        playerVisible: {
+          rumour: "Strange lanterns were spotted on Barrow Hill.",
+          lead: "Barrow Hill",
+        },
+        gmOnly: { truth: "Smugglers are signalling a river barge." },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: ["place-1"],
+      revealedSecretIds: [],
+      secretBindings: { truth: "truth-lights", eventIds: {} },
+    };
+    const added = addScenario(session, seed, session.revision, now);
+    if (!added.ok) return;
+    session = added.session;
+
+    const emptyVisible = {
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: { add: [], update: [], removeIds: [] },
+      relationships: { add: [], update: [], removeIds: [] },
+    };
+    const emptyHidden = {
+      secrets: { add: [], update: [], removeIds: [] },
+      gmThreads: { add: [], update: [], removeIds: [] },
+    };
+
+    // Turn 1: Sign surfaces and is marked heard
+    const t1 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "An old forester mentions odd lantern glimmers seen on Barrow Hill last night.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealScenarioIds: ["rumour-lights"],
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Ask about the lanterns",
+          "Ignore the talk and order stew",
+          "Sit quietly by the fire",
+        ],
+      },
+      { turnId: "t-1", inputId: "i-1", playerAction: "Sit at the bar.", now },
+    );
+    if (!t1.ok) return;
+    session = t1.value;
+
+    expect(session.scenarioCollection?.items[0]?.knowledge).toBe("heard");
+
+    // Turn 2: Player deliberately ignores the rumour
+    const t2 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "You enjoy a warm bowl of venison stew as rain begins tapping softly on the tavern shutters.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Listen to the tavern chatter",
+          "Head up to your room",
+          "Inquire about room rates",
+        ],
+      },
+      {
+        turnId: "t-2",
+        inputId: "i-2",
+        playerAction: "Ignore the lantern talk and enjoy your stew.",
+        now,
+      },
+    );
+    if (!t2.ok) return;
+    session = t2.value;
+
+    expect(session.scenarioCollection?.items[0]?.status).toBe("open");
+    expect(session.scenarioCollection?.items[0]?.stage).toBe("hearsay");
+
+    // Turn 3: Prompt does not force the ignored rumour as an urgent quest
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Ask for another cup of cider",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.behavior).toContain(
+      "If the player deliberately ignores or declines a sign or lead, let them explore peacefully without repeated prompts, cyclic re-revelation, or forced escalation",
+    );
+    const parsedState = JSON.parse(prompt.state);
+    // Since rumour-lights is already heard, eligibleScenarioIds for unheard seeds is empty
+    expect(parsedState.worldEntry?.pacing).toBeUndefined();
+  });
+
+  it("handles a sci-fi world style fixture with early opportunity and secrecy protection", () => {
+    let session = parseAdventureSession({
+      ...rawSession(),
+      title: "Cora on Outpost 9",
+      premise: "Docked at Outpost 9 for refueling",
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Outpost 9" },
+        intent: "explore",
+      },
+      visibleState: {
+        location: {
+          id: "loc-op9",
+          text: "Outpost 9",
+          source: "provisional",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+    });
+
+    const secretTech = "Corrupt port authority siphoning fusion coolant.";
+    const scifiSeed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-coolant",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Outpost 9",
+          batchId: "batch-scifi",
+          index: 1,
+        },
+        playerVisible: {
+          rumour: "Docking bay coolant pressure has been fluctuating wildly.",
+          lead: "Docking Ring C",
+          source: "Refueling technician",
+        },
+        gmOnly: {
+          truth: secretTech,
+          ifInvestigated: "Altered telemetry logs on console 4.",
+        },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: { truth: "truth-coolant", eventIds: {} },
+    };
+
+    const added = addScenario(session, scifiSeed, session.revision, now);
+    if (!added.ok) return;
+    session = added.session;
+
+    const styledPrompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Inspect the refueling readout",
+      anchors: [],
+      relevant: [],
+      worldStyle: {
+        name: "Retro Sci-Fi",
+        description: "Analog terminals, neon vacuum tubes, worn space suits.",
+      },
+    });
+
+    expect(styledPrompt.behavior).toContain(
+      'World style: the Vault is set in a "Retro Sci-Fi" world',
+    );
+    const parsedState = JSON.parse(styledPrompt.state);
+    expect(parsedState.worldEntry.pacing.eligibleScenarioIds).toEqual([
+      "rumour-coolant",
+    ]);
+
+    // Zero secret leakage
+    const transcript = JSON.stringify(createPlayerTranscript(session));
+    expect(transcript).not.toContain(secretTech);
+    expect(JSON.stringify(parsedState.playerScenarios)).not.toContain(
+      secretTech,
+    );
+  });
 });

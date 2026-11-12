@@ -317,6 +317,8 @@ describe("Adventure diagnostic JSON for AI", () => {
       unheardScenarios: 1,
       pendingRoll: false,
       quietTurns: expect.any(Number),
+      timeToFirstSign: null,
+      timeToFirstActionableLead: null,
     });
     expect(out.turns.map((t: { detail: string }) => t.detail)).toEqual([
       "condensed",
@@ -365,5 +367,32 @@ describe("Adventure diagnostic JSON for AI", () => {
     const out = JSON.parse(adventureDiagnosticJson(source));
     expect(out.turns).toEqual([]);
     expect(out.summary.lastPlayerAction).toBeNull();
+  });
+
+  it("reports discovery and actionable lead metrics in diagnostic summary", () => {
+    const source = manyTurns(4);
+    const scenario = source.scenarioCollection!.items[0]!;
+    scenario.knowledge = "heard";
+    scenario.events.push({
+      id: "ev-sign",
+      kind: "discovery",
+      visibility: "player",
+      text: "Miller missing rumour",
+      at: "2026-11-11T10:01:00.000Z",
+      turnId: "turn-1",
+    });
+    scenario.events.push({
+      id: "ev-lead",
+      kind: "discovery",
+      visibility: "player",
+      text: "Actionable clue: grain ledger found",
+      at: "2026-11-11T10:02:00.000Z",
+      turnId: "turn-2",
+    });
+    scenario.stage = "actionable-clue";
+
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.timeToFirstSign).toBe(2);
+    expect(out.summary.timeToFirstActionableLead).toBe(3);
   });
 });

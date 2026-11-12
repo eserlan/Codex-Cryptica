@@ -94,7 +94,13 @@ const origin = z
 const event = z
   .object({
     id,
-    kind: z.enum(["discovery", "consequence", "status-change", "theory"]),
+    kind: z.enum([
+      "discovery",
+      "consequence",
+      "status-change",
+      "theory",
+      "stage-change",
+    ]),
     visibility: z.enum(["player", "gm"]),
     text,
     at: z.string().datetime({ offset: true }),
