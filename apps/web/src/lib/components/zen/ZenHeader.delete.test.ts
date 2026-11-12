@@ -128,4 +128,28 @@ describe("ZenHeader delete action", () => {
     );
     expect(editing.queryByTestId("delete-entity-button")).toBeNull();
   });
+
+  it("offers Zen-only copy and pop-out actions in the More menu", async () => {
+    const onCopy = vi.fn();
+    const onPopOut = vi.fn();
+    const onDelete = vi.fn();
+    const { getByTestId } = renderHeader({}, { onCopy, onPopOut, onDelete });
+
+    await fireEvent.click(getByTestId("entity-actions-more-button"));
+
+    const copyBtn = getByTestId("zen-copy-content-button");
+    const popOutBtn = getByTestId("zen-pop-out-button");
+    const deleteBtn = getByTestId("delete-entity-button");
+    const menu = deleteBtn.closest('[role="menu"]')!;
+    expect(copyBtn.closest('[role="menu"]')).toBe(menu);
+    expect(popOutBtn.closest('[role="menu"]')).toBe(menu);
+    const items = menu.querySelectorAll("[role=menuitem]");
+    expect(items[items.length - 1]).toBe(deleteBtn);
+
+    await fireEvent.click(copyBtn);
+    expect(onCopy).toHaveBeenCalledTimes(1);
+    await fireEvent.click(getByTestId("entity-actions-more-button"));
+    await fireEvent.click(getByTestId("zen-pop-out-button"));
+    expect(onPopOut).toHaveBeenCalledTimes(1);
+  });
 });
