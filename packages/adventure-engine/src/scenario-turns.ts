@@ -14,6 +14,7 @@ function revealScenarioIfUnheard(
   scenarioId: string,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   const scenario = candidate.scenarioCollection?.items.find(
     (item) => item.id === scenarioId,
@@ -36,6 +37,7 @@ function revealScenarioIfUnheard(
     return "Unable to record scenario discovery";
   }
   scenario.knowledge = "heard";
+  newlyRevealedScenarioIds?.add(scenarioId);
   return null;
 }
 
@@ -44,9 +46,16 @@ export function markRevealedScenarios(
   scenarioIds: string[] | undefined,
   turn: CommittedAdventureTurn,
   createId: IdFactory,
+  newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   for (const scenarioId of scenarioIds ?? []) {
-    const err = revealScenarioIfUnheard(candidate, scenarioId, turn, createId);
+    const err = revealScenarioIfUnheard(
+      candidate,
+      scenarioId,
+      turn,
+      createId,
+      newlyRevealedScenarioIds,
+    );
     if (err) return err;
   }
   return null;
@@ -64,7 +73,6 @@ type ScenarioElaborationValidation =
 function validateScenarioAvailability(
   candidate: AdventureSession,
   elaboration: ScenarioElaborationProposal,
-  revealedThisTurn: Set<string>,
 ): ScenarioElaborationValidation {
   const scenario = candidate.scenarioCollection?.items.find(
     (item) => item.id === elaboration.scenarioId,
@@ -82,14 +90,6 @@ function validateScenarioAvailability(
       error: error(
         "invalid-transition",
         `Scenario ${elaboration.scenarioId} is not open`,
-      ),
-    };
-  }
-  if (revealedThisTurn.has(elaboration.scenarioId)) {
-    return {
-      error: error(
-        "invalid-transition",
-        `Cannot elaborate scenario ${elaboration.scenarioId} in the same turn it is discovered`,
       ),
     };
   }
@@ -175,17 +175,18 @@ export function applyScenarioElaborations(
   const revealedThisTurn = new Set(revealedScenarioIds ?? []);
 
   for (const elaboration of elaborations) {
-    const validation = validateScenarioAvailability(
-      candidate,
-      elaboration,
-      revealedThisTurn,
-    );
+    const validation = validateScenarioAvailability(candidate, elaboration);
     if ("error" in validation) return validation.error;
+
     const stageError = validateElaborationStage(
       validation.scenario,
       elaboration,
     );
     if (stageError) return stageError;
+
+    // A newly heard rumour is introduced at hearsay; a valid next-stage
+    // elaboration in the same turn is ignored rather than rejecting the turn.
+    if (revealedThisTurn.has(elaboration.scenarioId)) continue;
 
     validation.scenario.stage = elaboration.stage;
     const discoveryError = recordScenarioElaborationDiscovery(

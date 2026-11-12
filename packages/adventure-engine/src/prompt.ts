@@ -61,7 +61,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     ...(scenarios.length
       ? [
           "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
-          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios.",
+          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios, and never in the turn a rumour is first revealed.",
           "Voluntary engagement: when the player investigates an emerging lead, consequential actions must advance the situation, reveal a credible witness, expose a discoverable clue, or resolve the matter; avoid endlessly substituting unrelated mundane chores.",
           "Peaceful/off-script: if the player ignores or declines a lead, or pursues ordinary daily life, allow peaceful exploration without forced villains, artificial deadlines, or mandatory combat.",
           "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",

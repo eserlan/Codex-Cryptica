@@ -258,6 +258,40 @@ describe("progressive scenario elaboration ladder", () => {
     );
   });
 
+  it("skips, rather than fails the turn over, elaborating a rumour revealed in that same turn", () => {
+    const session = createSession([
+      createTestScenario("scen-2", "heard", "hearsay"),
+      createTestScenario("scen-1", "unheard", "hearsay"),
+    ]);
+    const result = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "Pilgrims mention the vanished bell-ringer, and a trail opens.",
+        visiblePatch: emptyPatch(),
+        hiddenPatch: emptyHiddenPatch(),
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        revealScenarioIds: ["scen-1"],
+        elaborateScenarios: [
+          { scenarioId: "scen-1", stage: "actionable-clue" },
+          { scenarioId: "scen-2", stage: "actionable-clue" },
+        ],
+      },
+      { turnId: "turn-same", inputId: "input-same", now },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const items = result.value.scenarioCollection?.items ?? [];
+    expect(items.find((i) => i.id === "scen-1")?.stage).toBe("hearsay");
+    expect(items.find((i) => i.id === "scen-1")?.knowledge).toBe("heard");
+    // Other elaborations in the same turn still apply.
+    expect(items.find((i) => i.id === "scen-2")?.stage).toBe("actionable-clue");
+  });
+
   it("rejects stage regression (e.g. actionable-clue back to hearsay)", () => {
     const session = createSession([
       createTestScenario("scen-1", "heard", "actionable-clue"),
