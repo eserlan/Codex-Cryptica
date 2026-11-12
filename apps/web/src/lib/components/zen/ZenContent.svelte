@@ -188,7 +188,7 @@
           >
             {#if draft}
               <div
-                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
+                class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-text uppercase tracking-[0.2em]"
               >
                 Proposed
               </div>
@@ -205,7 +205,7 @@
           </div>
         {:else}
           <div
-            class="text-theme-muted italic text-sm flex items-center gap-2 py-4"
+            class="text-theme-text italic text-sm flex items-center gap-2 py-4"
           >
             <span aria-hidden="true" class="icon-[lucide--lock] w-4 h-4"></span>
             Chronicle is hidden in shared mode
@@ -233,7 +233,7 @@
               type="button"
               onclick={() => modalUIStore.openRevisionDialog(entity.id)}
               disabled={revisionService.isRevising}
-              class="text-xs font-bold uppercase tracking-widest bg-theme-surface text-theme-primary border border-theme-primary/50 hover:bg-theme-primary/10 hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
+              class="text-xs font-bold uppercase tracking-widest bg-theme-surface text-theme-text border border-theme-primary/50 hover:bg-theme-primary/10 hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Revise Chronicle and Lore with AI"
               title="Revise Chronicle and Lore with AI"
             >

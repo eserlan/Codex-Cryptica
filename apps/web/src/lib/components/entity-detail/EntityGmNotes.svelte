@@ -62,12 +62,13 @@
   >
     <span aria-hidden="true" class="icon-[lucide--scroll-text] h-4 w-4"></span>
     <span>GM notes</span>
+    <!-- ui-check-ignore: The spec asks for a muted, decorative themed subtitle. -->
     <span class="text-helper font-normal text-theme-muted" aria-hidden="true"
       >{themeStore.jargon.lore_header}</span
     >
   </h3>
   <span
-    class="ml-auto inline-flex shrink-0 items-center gap-1 rounded border border-theme-border px-1.5 py-0.5 text-helper font-bold uppercase tracking-wider text-theme-muted"
+    class="ml-auto inline-flex shrink-0 items-center gap-1 rounded border border-theme-border px-1.5 py-0.5 text-helper font-bold uppercase tracking-wider text-theme-text"
   >
     <span aria-hidden="true" class="icon-[lucide--eye-off] h-3 w-3"></span>
     GM only
@@ -94,7 +95,7 @@
   >
     {#if draft}
       <div
-        class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-primary uppercase tracking-[0.2em]"
+        class="absolute top-0 right-0 p-2 text-nano font-bold text-theme-text uppercase tracking-[0.2em]"
       >
         Proposed
       </div>
