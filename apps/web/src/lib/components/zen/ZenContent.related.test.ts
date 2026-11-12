@@ -76,7 +76,7 @@ describe("ZenContent Related Entity Generation Trigger", () => {
     (revisionService as any).isRevising = false;
   });
 
-  it("renders 'Generate Related' button and triggers dialog when clicked", async () => {
+  it("renders 'Generate related' button and triggers dialog when clicked", async () => {
     const mockEntity = {
       id: "entity-1",
       title: "Zen Source",
@@ -90,7 +90,7 @@ describe("ZenContent Related Entity Generation Trigger", () => {
       scrollContainer: undefined,
     });
 
-    const generateBtn = screen.getByText("Generate Related");
+    const generateBtn = screen.getByText("Generate related");
     expect(generateBtn).toBeDefined();
 
     await fireEvent.click(generateBtn);
@@ -99,7 +99,7 @@ describe("ZenContent Related Entity Generation Trigger", () => {
     );
   });
 
-  it("hides 'Generate Related' for guest sessions", async () => {
+  it("hides 'Generate related' for guest sessions", async () => {
     (vault as any).isGuest = true;
     const mockEntity = {
       id: "entity-1",
@@ -114,7 +114,7 @@ describe("ZenContent Related Entity Generation Trigger", () => {
       scrollContainer: undefined,
     });
 
-    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(screen.queryByText("Generate related")).toBeNull();
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 
