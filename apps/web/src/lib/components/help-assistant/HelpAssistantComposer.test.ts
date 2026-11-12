@@ -64,6 +64,11 @@ describe("HelpAssistantComposer", () => {
     }) as HTMLButtonElement;
     expect(askButton.disabled).toBe(true);
     expect(askButton.getAttribute("aria-busy")).toBe("true");
+    expect(
+      askButton
+        .querySelector('[class*="icon-[lucide--loader-2]"]')
+        ?.getAttribute("aria-hidden"),
+    ).toBe("true");
     await type("another");
     await fireEvent.keyDown(box(), { key: "Enter" });
     expect(onAsk).not.toHaveBeenCalled();

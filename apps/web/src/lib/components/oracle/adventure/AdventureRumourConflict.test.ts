@@ -13,6 +13,7 @@ describe("AdventureRumourConflict", () => {
     };
     render(AdventureRumourConflict, {
       props: {
+        kind: "rumour",
         readOnly: false,
         pendingRoll: false,
         archiving: false,
@@ -37,6 +38,7 @@ describe("AdventureRumourConflict", () => {
   it("retains failed-save feedback and blocks add while read-only or a roll is pending", () => {
     render(AdventureRumourConflict, {
       props: {
+        kind: "rumour",
         readOnly: false,
         pendingRoll: true,
         archiving: false,
@@ -53,5 +55,27 @@ describe("AdventureRumourConflict", () => {
         .hasAttribute("disabled"),
     ).toBe(true);
     expect(screen.getByRole("alert").textContent).toContain("not added");
+  });
+
+  it("uses prepared-adventure copy for an adventure handoff", () => {
+    render(AdventureRumourConflict, {
+      props: {
+        kind: "adventure",
+        readOnly: false,
+        pendingRoll: false,
+        archiving: false,
+        error: null,
+        onAdd: vi.fn(),
+        onContinue: vi.fn(),
+        onCancel: vi.fn(),
+        onArchive: vi.fn(),
+      },
+    });
+    expect(screen.getByText("A prepared adventure is ready")).toBeTruthy();
+    expect(screen.getByText(/return to the prepared adventure/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Archive and start adventure" }),
+    ).toBeTruthy();
+    expect(screen.queryByText(/six rumours/)).toBeNull();
   });
 });

@@ -16,6 +16,7 @@ Usage:
   job agents <job> <json>        record the routed agent set (called by factory/bin/route)
   job sync <job>                 refresh reviews, gate and cost from the job's files
   job summary [<job>...]         table of jobs: issue, stage, PR, cost, time
+  job costs [<job>...]           cost by agent and model, per job and in total
 
 <job> is a job id (004-dark-mode) or an issue number (12).
 """
@@ -256,18 +257,43 @@ def prompt_text(line):
     return " ".join(b.get("text", "") for b in content if isinstance(b, dict))
 
 
-def cost_usd(job):
+def message_usd(price, u):
+    """API-equivalent cost of one message's usage at one model's prices."""
+    split = u.get("cache_creation") or {}
+    write_1h = split.get("ephemeral_1h_input_tokens", 0)
+    write_5m = u.get("cache_creation_input_tokens", 0) - write_1h
+    return (u.get("input_tokens", 0) * price["input"]
+            + u.get("output_tokens", 0) * price["output"]
+            + write_5m * price["cache_write_5m"]
+            + write_1h * price["cache_write_1h"]
+            + u.get("cache_read_input_tokens", 0) * price["cache_read"]) / 1e6
+
+
+def agent_type(transcript):
+    """The subagent type Claude Code recorded next to a transcript, or "unknown"."""
+    meta = transcript.with_suffix(".meta.json")
+    try:
+        return json.loads(meta.read_text()).get("agentType") or "unknown"
+    except (OSError, ValueError):
+        return "unknown"
+
+
+def job_costs(job):
     """API-equivalent cost of every subagent whose prompt names this job's folder.
 
     Claude Code writes each subagent's messages, with model and token usage, to
-    <config>/projects/<project>/<session>/subagents/agent-<id>.jsonl. Every
-    factory prompt starts with `Job folder: <path>`, which ties a transcript to
-    its job across sessions.
+    <config>/projects/<project>/<session>/subagents/agent-<id>.jsonl, and its
+    type to agent-<id>.meta.json. Every factory prompt starts with
+    `Job folder: <path>`, which ties a transcript to its job across sessions.
+
+    Returns (total, by_agent). by_agent maps each agent type to its cost, the
+    number of transcripts (spawns), model turns (assistant messages, which is
+    what drives cache reads), token counts and the models it ran on.
     """
     needle = f"Job folder: {job_dir(job['id'])}/"
     prices = CONFIG["prices_usd_per_mtok"]
-    total = 0.0
-    for path in transcripts_dir().glob("*/subagents/agent-*.jsonl"):
+    by_agent = {}
+    for path in sorted(transcripts_dir().glob("*/subagents/agent-*.jsonl")):
         with path.open() as f:
             first = f.readline()
             if not first or needle not in prompt_text(first):
@@ -278,6 +304,10 @@ def cost_usd(job):
                 msg = entry.get("message")
                 if entry.get("type") == "assistant" and isinstance(msg, dict) and msg.get("usage"):
                     usage_by_message[msg["id"]] = (msg["model"], msg["usage"])
+        row = by_agent.setdefault(agent_type(path), {
+            "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
+            "cache_read_tokens": 0, "models": []})
+        row["spawns"] += 1
         for model, u in usage_by_message.values():
             tokens = (u.get("input_tokens", 0) + u.get("output_tokens", 0)
                       + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0))
@@ -285,16 +315,17 @@ def cost_usd(job):
                 continue
             if model not in prices:
                 die(f"no price for model {model} in factory/config.json prices_usd_per_mtok")
-            p = prices[model]
-            split = u.get("cache_creation") or {}
-            write_1h = split.get("ephemeral_1h_input_tokens", 0)
-            write_5m = u.get("cache_creation_input_tokens", 0) - write_1h
-            total += (u.get("input_tokens", 0) * p["input"]
-                      + u.get("output_tokens", 0) * p["output"]
-                      + write_5m * p["cache_write_5m"]
-                      + write_1h * p["cache_write_1h"]
-                      + u.get("cache_read_input_tokens", 0) * p["cache_read"]) / 1e6
-    return round(total, 2)
+            row["usd"] += message_usd(prices[model], u)
+            row["turns"] += 1
+            row["input_tokens"] += u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+            row["output_tokens"] += u.get("output_tokens", 0)
+            row["cache_read_tokens"] += u.get("cache_read_input_tokens", 0)
+            if model not in row["models"]:
+                row["models"].append(model)
+    total = round(sum(row["usd"] for row in by_agent.values()), 2)
+    for row in by_agent.values():
+        row["usd"] = round(row["usd"], 4)
+    return total, dict(sorted(by_agent.items(), key=lambda kv: -kv[1]["usd"]))
 
 
 # ---- Sync: fields derived from files ---------------------------------------
@@ -322,7 +353,7 @@ def sync(job):
                 line = first_line(rd / f"review-{r}.md")
                 m = re.fullmatch(r"VERDICT:\s*(PASS|CHANGES)", line or "")
                 job["reviews"][r] = m.group(1) if m else ("pending" if line is None else "invalid")
-    job["cost_usd"] = cost_usd(job)
+    job["cost_usd"], job["cost_by_agent"] = job_costs(job)
     return job
 
 
@@ -536,7 +567,7 @@ def cmd_create(number):
         "worktree": str(REPO / ".worktrees" / job_id),
         "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
         "intake": None, "agents": None, "gate": None, "reviews": {},
-        "cost_usd": 0.0, "started": now(), "ended": None,
+        "cost_usd": 0.0, "cost_by_agent": {}, "started": now(), "ended": None,
     }
     write_issue_md(job)
     save(job)
@@ -677,6 +708,60 @@ def cmd_summary(args):
     print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent, factory agents only)")
 
 
+def short_model(model):
+    return model.removeprefix("claude-")
+
+
+def tokens(n):
+    return f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}k"
+
+
+def cmd_costs(args):
+    """Cost per agent for each job, then per agent and model across the jobs."""
+    jobs = [resolve(a) for a in args] if args else all_jobs()
+    header = ("agent", "models", "spawns", "turns", "input", "output", "cache read", "tokens", "cost")
+    totals = {}
+    for j in jobs:
+        sync(j)  # for display only; the orchestrator owns the saved state
+        print(f"{j['id']}  round {j['round']}  {j['stage']}  ${j['cost_usd']:.2f}")
+        rows = [header]
+        for agent, r in j["cost_by_agent"].items():
+            turns = r.get("turns", 0)
+            all_tokens = r["input_tokens"] + r["output_tokens"] + r["cache_read_tokens"]
+            rows.append((agent, ", ".join(short_model(m) for m in r["models"]) or "-", str(r["spawns"]),
+                         str(turns), tokens(r["input_tokens"]), tokens(r["output_tokens"]),
+                         tokens(r["cache_read_tokens"]), tokens(all_tokens), f"${r['usd']:.2f}"))
+            key = (agent, ", ".join(short_model(m) for m in r["models"]) or "-")
+            t = totals.setdefault(key, {"usd": 0.0, "spawns": 0, "jobs": 0, "turns": 0,
+                                        "output": 0, "tokens": 0})
+            t["usd"] += r["usd"]
+            t["spawns"] += r["spawns"]
+            t["jobs"] += 1
+            t["turns"] += turns
+            t["output"] += r["output_tokens"]
+            t["tokens"] += all_tokens
+        print_table(rows, indent="  ")
+        print()
+    rows = [("agent", "models", "jobs", "spawns", "turns/job", "output/job", "tokens/job",
+             "tokens", "cost", "cost/job")]
+    for (agent, models), t in sorted(totals.items(), key=lambda kv: -kv[1]["usd"]):
+        n = t["jobs"]
+        rows.append((agent, models, str(n), str(t["spawns"]), f"{t['turns'] / n:.0f}",
+                     tokens(t["output"] / n), tokens(t["tokens"] / n), tokens(t["tokens"]),
+                     f"${t['usd']:.2f}", f"${t['usd'] / n:.2f}"))
+    print(f"all {len(jobs)} jobs")
+    print_table(rows, indent="  ")
+    all_tokens = sum(t["tokens"] for t in totals.values())
+    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent), {tokens(all_tokens)} tokens, "
+          f"{sum(t['turns'] for t in totals.values())} turns (factory agents only)")
+
+
+def print_table(rows, indent=""):
+    widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
+    for r in rows:
+        print(indent + "  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip())
+
+
 def main(argv):
     if not argv or argv[0] in {"-h", "--help"}:
         print(__doc__.strip())
@@ -706,6 +791,8 @@ def main(argv):
             print(f"{job['id']}: {job['stage']} round {job['round']} gate {job['gate'] or '-'} {reviews}".rstrip())
         elif cmd == "summary":
             cmd_summary(args)
+        elif cmd == "costs":
+            cmd_costs(args)
         else:
             die(f"bad arguments: {' '.join(argv)}\n\n{__doc__.strip()}")
     except Refused as e:

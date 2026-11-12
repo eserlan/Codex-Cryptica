@@ -1,6 +1,5 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { hubContext } from "#lib/stores/hub-context.svelte.js";
   import { getLandingPagesForHub } from "#lib/content/for/registry.js";
   import type { PageData } from "./$types";
@@ -15,7 +14,7 @@
   const landingPages = $derived(getLandingPagesForHub(data.theme));
 
   function applyTheme() {
-    themeStore.setTheme(config.localStorageId);
+    publicThemeStore.setTheme(config.localStorageId);
   }
 
   function selectGenerator() {
@@ -23,7 +22,10 @@
     hubContext.set(data.theme);
   }
 
-  onMount(applyTheme);
+  $effect(() => {
+    // Handles client navigation between different themed hubs as well.
+    applyTheme();
+  });
 </script>
 
 <ThemeHubHead theme={data.theme} {config} />

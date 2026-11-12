@@ -167,6 +167,7 @@ export const howDoIBuildABelievableEconomyForAFantasyWorld: AnswerConfigInput =
       "how-should-a-fantasy-adventuring-guild-handle-wages-dues-and-shared-expenses",
       "how-do-i-build-a-believable-post-scarcity-civilisation",
       "how-would-a-realistic-adventurers-guild-work",
+      "how-much-loot-and-how-many-magic-items-should-i-give-my-players",
     ],
     discovery: {
       id: "answer-believable-fantasy-economy",

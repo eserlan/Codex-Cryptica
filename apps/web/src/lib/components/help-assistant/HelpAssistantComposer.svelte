@@ -74,6 +74,12 @@
       aria-busy={pending}
       class="touch-target rounded bg-chrome-accent px-3 py-2 text-meta font-bold uppercase tracking-wider text-chrome-bg transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-chrome-accent"
     >
+      {#if pending}
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--loader-2] mr-1 inline-block h-4 w-4 animate-spin align-[-0.2em] motion-reduce:animate-none"
+        ></span>
+      {/if}
       Ask
     </button>
   </div>

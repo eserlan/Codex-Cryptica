@@ -198,6 +198,26 @@ export class AdventureManager extends AdventureState {
   setScenarioStatus(...args: Parameters<AdventureScenarios["status"]>) {
     return this.scenarios.status(...args);
   }
+
+  advanceWorldTime(...args: Parameters<AdventureScenarios["advanceTime"]>) {
+    return this.scenarios.advanceTime(...args);
+  }
+
+  recordScenarioTheory(
+    ...args: Parameters<AdventureScenarios["recordTheory"]>
+  ) {
+    return this.scenarios.recordTheory(...args);
+  }
+
+  linkPlaceRecord(...args: Parameters<AdventureScenarios["linkPlaceRecord"]>) {
+    return this.scenarios.linkPlaceRecord(...args);
+  }
+
+  dismissDiscoveries(
+    ...args: Parameters<AdventureScenarios["dismissDiscoveries"]>
+  ) {
+    return this.scenarios.dismissDiscoveries(...args);
+  }
 }
 
 export const adventureManager = new AdventureManager();

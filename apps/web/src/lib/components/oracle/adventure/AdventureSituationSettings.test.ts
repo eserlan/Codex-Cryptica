@@ -3,6 +3,10 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureSituationSettings from "./AdventureSituationSettings.svelte";
 
+vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
+  notificationStore: { notify: vi.fn() },
+}));
+
 function manager(
   items: unknown[],
   extra: Record<string, unknown> = {},
@@ -122,14 +126,16 @@ describe("AdventureSituationSettings", () => {
       props: { manager: readOnly },
     });
     for (const button of screen.getAllByRole("button")) {
-      expect((button as HTMLButtonElement).disabled).toBe(true);
+      const isCopy = /Copy (Markdown|JSON)/.test(button.textContent ?? "");
+      expect((button as HTMLButtonElement).disabled).toBe(!isCopy);
     }
     unmount();
     render(AdventureSituationSettings, {
       props: { manager: manager([lead("a", "open")], {}, { id: "roll" }) },
     });
     for (const button of screen.getAllByRole("button")) {
-      expect((button as HTMLButtonElement).disabled).toBe(true);
+      const isCopy = /Copy (Markdown|JSON)/.test(button.textContent ?? "");
+      expect((button as HTMLButtonElement).disabled).toBe(!isCopy);
     }
   });
 
@@ -165,5 +171,152 @@ describe("AdventureSituationSettings", () => {
     await fireEvent.click(button);
     expect(m.setScenarioStatus).toHaveBeenCalledTimes(1);
     finish();
+  });
+
+  it("displays elapsed fictional time and offline advancement guidance when world time has advanced", () => {
+    const m = manager([lead("a", "open")]);
+    m.session.worldTime = {
+      version: 1,
+      elapsedMinutes: 5760,
+      events: [],
+    };
+    render(AdventureSituationSettings, { props: { manager: m } });
+    const elapsedTime = screen.getByTestId("adventure-elapsed-time");
+    expect(elapsedTime.textContent).toContain("4d");
+    expect(
+      screen.getByTestId("adventure-situation-settings").textContent,
+    ).toContain("Advances the local world clock deterministically offline");
+  });
+
+  it("copies a full GM-only snapshot as Markdown or JSON from the tools panel", async () => {
+    const writeText = vi.fn(async (_value: string) => {});
+    const previous = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    try {
+      const m = manager([lead("unheard-1", "open", "unheard")], {
+        phase: "ready",
+      });
+      m.session = {
+        id: "session-1",
+        title: "Northbrook",
+        status: "active",
+        revision: 2,
+        premise: "Explore a quiet town.",
+        lastPlayedAt: "2026-11-11T10:00:00.000Z",
+        playerCharacter: { kind: "provisional", name: "Mara" },
+        sourceRecords: [],
+        visibleState: {
+          objectives: [],
+          activeCharacters: [],
+          knownFacts: [],
+          relationships: [],
+        },
+        hiddenState: {
+          secrets: [
+            {
+              id: "secret-1",
+              text: "The reeve stole the grain",
+              status: "hidden",
+            },
+          ],
+          gmThreads: [],
+        },
+        scenarioCollection: {
+          items: [
+            {
+              ...lead("unheard-1", "open", "unheard"),
+              stage: "hearsay",
+              gmOnly: { truth: "The reeve stole the grain" },
+            },
+          ],
+          focusedScenarioId: null,
+        },
+        provisionalFacts: [],
+        turns: [
+          {
+            id: "turn-1",
+            sequence: 0,
+            playerAction: "Buy a loaf of bread.",
+            narration: "The baker counts your coins.",
+            committedAt: "2026-11-11T10:00:00.000Z",
+            // A committed turn always carries these; the diagnostic scores them.
+            revealedSecretIds: [],
+            provisionalFactIds: [],
+            sourceRecordIds: [],
+            visiblePatch: {
+              objectives: { add: [], update: [], removeIds: [] },
+              activeCharacters: { add: [], update: [], removeIds: [] },
+              knownFacts: { add: [], update: [], removeIds: [] },
+              relationships: { add: [], update: [], removeIds: [] },
+            },
+            hiddenPatch: {
+              secrets: { add: [], update: [], removeIds: [] },
+              gmThreads: { add: [], update: [], removeIds: [] },
+            },
+          },
+        ],
+        pendingRoll: null,
+      };
+      render(AdventureSituationSettings, { props: { manager: m } });
+      expect(screen.getByTestId("adventure-review-copy").textContent).toContain(
+        "GM-only",
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy Markdown" }),
+      );
+      expect(writeText).toHaveBeenCalledOnce();
+      const markdown = writeText.mock.calls[0]![0];
+      expect(markdown).toContain("Buy a loaf of bread.");
+      expect(markdown).toContain("The reeve stole the grain");
+
+      await fireEvent.click(screen.getByRole("button", { name: "Copy JSON" }));
+      const json = writeText.mock.calls[1]![0];
+      expect(JSON.parse(json).hiddenState.secrets[0].text).toBe(
+        "The reeve stole the grain",
+      );
+      expect(JSON.parse(json).turns[0].playerAction).toBe(
+        "Buy a loaf of bread.",
+      );
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy JSON for AI" }),
+      );
+      const compact = JSON.parse(writeText.mock.calls[2]![0]);
+      expect(compact._readme).toContain("GM-only");
+      expect(compact.summary.turnsTotal).toBe(1);
+      expect(compact.turns[0].timeAdvance).toBeNull();
+    } finally {
+      if (previous) {
+        Object.defineProperty(navigator, "clipboard", previous);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
+  });
+
+  it("reports a fixed failure when clipboard permission is denied", async () => {
+    const previous = Object.getOwnPropertyDescriptor(navigator, "clipboard");
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText: vi.fn().mockRejectedValue(new Error("secret data")) },
+    });
+    try {
+      render(AdventureSituationSettings, {
+        props: { manager: manager([]) },
+      });
+      await fireEvent.click(screen.getByRole("button", { name: "Copy JSON" }));
+      const alert = await screen.findByRole("alert");
+      expect(alert.textContent).toContain("Check clipboard permissions");
+      expect(alert.textContent).not.toContain("secret data");
+    } finally {
+      if (previous) {
+        Object.defineProperty(navigator, "clipboard", previous);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
   });
 });

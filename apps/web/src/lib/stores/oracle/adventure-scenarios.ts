@@ -1,5 +1,9 @@
 import {
   addScenario,
+  advanceManualWorldTime,
+  dismissAdventureDiscoveries,
+  linkAdventurePlaceRecord,
+  recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
   type ScenarioItem,
@@ -59,6 +63,57 @@ export class AdventureScenarios {
     );
   }
 
+  advanceTime(minutes: number, cause: string): Promise<AdventureSession> {
+    const eventId = this.deps.idGenerator();
+    return this.mutate((session) =>
+      advanceManualWorldTime(
+        session,
+        minutes,
+        cause,
+        eventId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
+  dismissDiscoveries(factIds: string[]): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      dismissAdventureDiscoveries(
+        session,
+        factIds,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
+  linkPlaceRecord(name: string, recordId: string): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      linkAdventurePlaceRecord(
+        session,
+        name,
+        recordId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
+  recordTheory(scenarioId: string, text: string): Promise<AdventureSession> {
+    const eventId = this.deps.idGenerator();
+    return this.mutate((session) =>
+      recordScenarioTheory(
+        session,
+        scenarioId,
+        text,
+        eventId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
   private async mutate(
     command: (session: AdventureSession) => ReturnType<typeof addScenario>,
   ): Promise<AdventureSession> {
@@ -81,6 +136,8 @@ export class AdventureScenarios {
 }
 
 const SCENARIO_ERROR_COPY: Record<string, string> = {
+  "invalid-fictional-time":
+    "Invalid time advance. The world clock is unchanged.",
   "revision-conflict":
     "This adventure changed elsewhere. Reopen it before updating a situation.",
   "stale-revision":
@@ -89,6 +146,7 @@ const SCENARIO_ERROR_COPY: Record<string, string> = {
     "Resolve or dismiss the pending roll before changing a situation.",
   "read-only-adventure": "This adventure is read-only in this tab.",
   "unknown-scenario": "That situation is no longer available.",
+  "unknown-discovery": "That discovery is no longer available to dismiss.",
   "scenario-not-heard": "That situation has not been discovered yet.",
   "invalid-transition": "That situation can no longer be changed.",
   "origin-conflict":
@@ -104,5 +162,23 @@ export function describeScenarioMutationError(cause: unknown): string {
   return (
     SCENARIO_ERROR_COPY[cause.message] ??
     "Could not update the situation. Please retry."
+  );
+}
+
+export function extractHeardScenarios(
+  session: AdventureSession | null | undefined,
+): ScenarioItem[] {
+  return (
+    session?.scenarioCollection?.items.filter(
+      (item) => item.knowledge === "heard",
+    ) ?? []
+  );
+}
+
+export function extractActiveHeardScenarios(
+  session: AdventureSession | null | undefined,
+): ScenarioItem[] {
+  return extractHeardScenarios(session).filter(
+    (item) => item.status === "open",
   );
 }

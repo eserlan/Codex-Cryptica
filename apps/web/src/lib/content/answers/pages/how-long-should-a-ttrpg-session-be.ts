@@ -224,6 +224,7 @@ export const howLongShouldATtrpgSessionBe: AnswerConfigInput = {
     "how-do-you-run-a-campaign-when-you-only-play-once-a-month",
     "how-do-i-prepare-an-rpg-session-step-by-step",
     "how-do-you-help-players-remember-what-happened-in-a-ttrpg-campaign",
+    "how-do-i-enjoy-tabletop-rpgs-again",
   ],
   discovery: {
     id: "answer-ttrpg-session-length",

@@ -45,6 +45,22 @@
         : null),
   );
 
+  const isManualSeed = $derived(scenarioSeed?.origin?.kind === "manual");
+  const headingText = $derived(
+    scenarioSeed
+      ? isManualSeed
+        ? "Play ready-made adventure with Oracle"
+        : "Play a rumour with Oracle"
+      : "Start an adventure",
+  );
+  const seedPreviewTitle = $derived(
+    isManualSeed ? "Prepared adventure seed" : "Selected rumour",
+  );
+  const seedLeadLabel = $derived(isManualSeed ? "Objective: " : "Lead: ");
+  const cancelLabel = $derived(
+    isManualSeed ? "Cancel prepared adventure" : "Cancel selected rumour",
+  );
+
   function startInput(): Parameters<AdventureManager["start"]>[0] | null {
     if (!title.trim() || !premise.trim()) return null;
     const canonical = characters.find(
@@ -127,6 +143,7 @@
   }
 </script>
 
+<!-- fallow-ignore-next-line complexity -->
 <form
   class="space-y-4 rounded-xl border border-theme-border bg-theme-surface p-5"
   onsubmit={(event) => {
@@ -136,7 +153,7 @@
 >
   <div>
     <h2 class="text-lg font-semibold text-theme-text">
-      {scenarioSeed ? "Play a rumour with Oracle" : "Start an adventure"}
+      {headingText}
     </h2>
     <p class="mt-1 text-sm text-theme-text">
       Oracle will act as GM and use your campaign as grounding.
@@ -147,12 +164,14 @@
       class="rounded-md border border-theme-border bg-theme-surface p-3"
       data-testid="selected-rumour-preview"
     >
-      <p class="text-sm font-semibold text-theme-text">Selected rumour</p>
+      <p class="text-sm font-semibold text-theme-text">
+        {seedPreviewTitle}
+      </p>
       <p class="mt-1 text-sm text-theme-text">
         {scenarioSeed.playerVisible.rumour}
       </p>
       <p class="mt-1 text-xs text-theme-text">
-        Lead: {scenarioSeed.playerVisible.lead}
+        {seedLeadLabel}{scenarioSeed.playerVisible.lead}
       </p>
     </div>
   {/if}
@@ -231,7 +250,7 @@
       onclick={onCancelScenario}
       data-testid="cancel-rumour-start"
     >
-      Cancel selected rumour
+      {cancelLabel}
     </button>
   {/if}
   {#if shownError}

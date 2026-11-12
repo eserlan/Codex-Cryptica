@@ -17,6 +17,7 @@
   import {
     activeHexGridConfig,
     canSeeHexCrawl,
+    hexLabelFor,
     isHexGridType,
   } from "./hex-crawl-view";
   import HexCrawlOverlay from "./HexCrawlOverlay.svelte";
@@ -26,6 +27,9 @@
   import HexExploreOffer from "./HexExploreOffer.svelte";
   import HexJourneyControls from "./HexJourneyControls.svelte";
   import HexJourneyOverlay from "./HexJourneyOverlay.svelte";
+  import RegionProposalOverlay from "./region/RegionProposalOverlay.svelte";
+  import RegionReviewBar from "./region/RegionReviewBar.svelte";
+  import RegionUndoBar from "./region/RegionUndoBar.svelte";
   import type { NoticeStorage } from "./hex-discovery-notice";
   import { browserStorage } from "#lib/utils/runtime-deps.js";
 
@@ -156,7 +160,26 @@
       services.offer.current = null;
     }
   });
-  onDestroy(() => services.journey.dispose());
+  let regionPick = $state<string | null>(null);
+  const review = $derived(
+    services.region.review && services.region.review.mapId === mapId
+      ? services.region.review
+      : null,
+  );
+  $effect(() => {
+    // Leaving the map or turning the mode off drops the preview, the message and the undo.
+    const active = visible ? mapId : null;
+    if (services.region.mapId && services.region.mapId !== active) {
+      services.region.leave();
+    }
+    if (!services.region.review) regionPick = null;
+    // A tap on the map during a review must not open the hex panel behind it.
+    else if (services.store.selectedHex) services.store.closeHex();
+  });
+  onDestroy(() => {
+    services.journey.dispose();
+    services.region.leave();
+  });
 </script>
 
 {#if visible && config}
@@ -179,6 +202,31 @@
     viewport={viewportSize}
     visible={journeyVisible}
   />
+
+  {#if review}
+    <RegionProposalOverlay
+      proposal={review.proposal}
+      adjustments={review.adjustments}
+      gridConfig={config}
+      {project}
+      {zoom}
+      selectedKey={regionPick}
+      onPick={(key) => (regionPick = key)}
+      labelFor={(key) => {
+        const [q, r] = key.split(",").map(Number);
+        return hexLabelFor({ q, r }, labelConfig, orientation);
+      }}
+    />
+    <RegionReviewBar
+      store={services.region}
+      selectedKey={regionPick}
+      {labelConfig}
+      {orientation}
+      onSelect={(key) => (regionPick = key)}
+    />
+  {:else}
+    <RegionUndoBar store={services.region} />
+  {/if}
 
   <div
     class="pointer-events-auto absolute left-2 top-2 z-20 flex flex-wrap items-center gap-2"
@@ -210,7 +258,7 @@
     </div>
   {/if}
 
-  {#if selected && mapId}
+  {#if selected && mapId && !review}
     <HexCrawlPanel
       store={services.store}
       journey={services.journey}
@@ -226,6 +274,7 @@
       {entities}
       {discovery}
       {storage}
+      region={isGM && !isGuest ? services.region : undefined}
     />
   {/if}
 {/if}

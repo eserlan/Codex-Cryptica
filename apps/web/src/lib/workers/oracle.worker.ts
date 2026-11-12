@@ -3,9 +3,11 @@
 import * as Comlink from "comlink";
 import {
   aiClientManager,
+  AdventureSummaryService,
   AdventureTurnGenerationService,
   type AdventureTurnGenerationRequest,
 } from "@codex/ai-engine";
+import type { StorySummaryRequest } from "@codex/adventure-engine";
 import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
 import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
@@ -24,6 +26,7 @@ class OracleWorker {
   private eventBus: BroadcastChannel;
   private sessionToken: RelayedSessionToken;
   private adventureGeneration: AdventureTurnGenerationService;
+  private adventureSummary: AdventureSummaryService;
   private adventureTurnControllers = new Map<string, AbortController>();
 
   constructor() {
@@ -31,6 +34,7 @@ class OracleWorker {
     this.adventureGeneration = new AdventureTurnGenerationService(
       aiClientManager,
     );
+    this.adventureSummary = new AdventureSummaryService(aiClientManager);
     this.eventBus = new BroadcastChannel("codex-oracle-events");
 
     // This worker has its own isolated aiClientManager instance (Workers
@@ -317,6 +321,26 @@ class OracleWorker {
         },
         { ...options, signal: controller.signal },
       );
+    } finally {
+      if (this.adventureTurnControllers.get(requestId) === controller) {
+        this.adventureTurnControllers.delete(requestId);
+      }
+    }
+  }
+
+  /** One-shot story-notes call; cancelled through the same request-id map as a turn. */
+  async summarizeAdventure(
+    request: StorySummaryRequest,
+    requestId: string,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<any> {
+    const controller = new AbortController();
+    this.adventureTurnControllers.set(requestId, controller);
+    try {
+      return await this.adventureSummary.summarize(request, {
+        ...options,
+        signal: controller.signal,
+      });
     } finally {
       if (this.adventureTurnControllers.get(requestId) === controller) {
         this.adventureTurnControllers.delete(requestId);

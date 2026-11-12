@@ -31,6 +31,7 @@ export function seedWorldEntryBackground(
   allocateId: () => string,
   generatedBatch?: RumourSelectionInput,
   locationOverride?: LocationContext | null,
+  genre?: string,
 ): AdventureSession {
   if (!needsWorldEntryBackground(session, locationOverride)) return session;
 
@@ -44,7 +45,7 @@ export function seedWorldEntryBackground(
     selectCompleteSet(generatedBatch) ??
     selectCompleteSet(
       generateRumourLocal(
-        { locationContext },
+        { locationContext, ...(genre ? { genre } : {}) },
         seededRandom(`${session.id}:${location.name}`),
       ),
     );
@@ -99,6 +100,7 @@ export function seedWorldEntryBackground(
         ifInvestigated: selected.gmOnly.ifInvestigated,
       },
       knowledge: "unheard" as const,
+      stage: "hearsay" as const,
       status: "open" as const,
       events: [],
       anchorRefs: location.recordId ? [location.recordId] : [],

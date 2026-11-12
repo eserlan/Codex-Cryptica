@@ -4,6 +4,7 @@ import {
   type GroundingContext,
 } from "@codex/adventure-engine";
 import type { GeneratorRunRequest } from "generator-engine";
+import { worldStyleForTheme } from "./world-style";
 
 /** Uses only prepared Adventure sources, never an unfiltered present-day sample. */
 export function createAdventureBackgroundRequest(
@@ -13,6 +14,7 @@ export function createAdventureBackgroundRequest(
   themeId = "workspace",
 ): GeneratorRunRequest {
   const location = currentLocationContext(session);
+  const style = worldStyleForTheme(themeId);
   if (
     !location ||
     context.purpose !== "background" ||
@@ -29,6 +31,11 @@ export function createAdventureBackgroundRequest(
     options: { locationContext: location.name },
     instructions: [
       `Create local rumours for ${location.name} as hidden preparation.`,
+      ...(style
+        ? [
+            `World style: ${style.name}. ${style.description} Rumours must be native to this genre: use its vocabulary, institutions and tone, and never import tropes from other genres.`,
+          ]
+        : []),
       "Canonical sources outrank provisional session knowledge. Preserve source period applicability, uncertainty and contradictions. Never treat future facts as current.",
       "Source lore and GM-only session knowledge are hidden: never encode their actual secrets in player-visible rumours. Mix mundane, misleading and substantial situations without assigning quests.",
       "Committed Adventure knowledge (GM-only sections remain hidden):",

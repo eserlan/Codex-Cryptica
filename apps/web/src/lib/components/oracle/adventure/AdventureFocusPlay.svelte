@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
 <script lang="ts">
   import { tick } from "svelte";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
@@ -21,6 +22,7 @@
   import AdventureSituationSettings from "./AdventureSituationSettings.svelte";
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
+  import AdventureSituationsDialog from "./AdventureSituationsDialog.svelte";
   import {
     exitAdventureFullscreen,
     requestAdventureFullscreen,
@@ -30,6 +32,7 @@
     manager,
     existingTitles,
     onAddProvisionalFact,
+    onAddAllProvisionalFacts,
     repository,
     vaultId,
     onResume,
@@ -38,6 +41,7 @@
     manager: AdventureManager;
     existingTitles: string[];
     onAddProvisionalFact: (fact: ProvisionalFact) => Promise<void>;
+    onAddAllProvisionalFacts?: (facts: ProvisionalFact[]) => Promise<void>;
     repository: AdventureSessionRepository;
     vaultId: string;
     onResume: (sessionId: string) => Promise<void>;
@@ -173,11 +177,6 @@
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />
-  <AdventureProvisionalFacts
-    facts={manager.session?.provisionalFacts ?? []}
-    {existingTitles}
-    onAdd={onAddProvisionalFact}
-  />
   <AdventureArchive {repository} {vaultId} {onResume} {onResumeArchived} />
 {/snippet}
 
@@ -236,6 +235,18 @@
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+      <AdventureProvisionalFacts
+        facts={manager.session?.provisionalFacts ?? []}
+        dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+        onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+        canDismiss={!manager.readOnly &&
+          manager.phase !== "generating" &&
+          !manager.session?.pendingRoll}
+        {existingTitles}
+        onAdd={onAddProvisionalFact}
+        onAddAll={onAddAllProvisionalFacts}
+      />
+      <AdventureSituationsDialog {manager} />
       <button
         bind:this={toolsButton}
         class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"

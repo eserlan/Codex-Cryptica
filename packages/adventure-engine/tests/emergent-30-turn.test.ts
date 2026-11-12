@@ -13,6 +13,8 @@ import {
   parseAdventureSession,
   recordPendingRollOutcome,
   resolveRecordedRoll,
+  worldEntryDiscoveryMetrics,
+  worldEntryPacing,
   type AdventureSession,
   type AdventureTurnProposal,
   type ScenarioItem,
@@ -162,6 +164,53 @@ describe("30-turn emergent adventure regression", () => {
     ).toBe(truth);
   });
 
+  it("survives 60 turns with three independent situations, roundtrips, and no clock drift", () => {
+    let active = addConcurrentScenarios(baseline());
+    for (let turn = 0; turn < 60; turn += 1) {
+      active = playTurn(active, turn);
+      if (turn === 29 || turn === 59) {
+        active = parseAdventureSession(JSON.parse(JSON.stringify(active)));
+      }
+    }
+    expect(active.turns).toHaveLength(60);
+    expect(active.scenarioCollection?.items).toHaveLength(3);
+    expect(active.scenarioCollection?.items[0]?.status).toBe("open");
+    expect(active.scenarioCollection?.items[1]?.status).toBe("resolved");
+    expect(active.scenarioCollection?.items[2]?.knowledge).toBe("unheard");
+    expect(active.worldTime).toBeUndefined();
+
+    // A duplicate submit must be rejected without committing another turn.
+    const retry = applyCompletedTurn(active, ordinaryTurn(59), {
+      turnId: "duplicate-60",
+      inputId: "input-59",
+      now,
+    });
+    expect(retry.ok).toBe(false);
+    if (!retry.ok) {
+      expect(retry.errors.map((entry) => entry.code)).toContain(
+        "duplicate-input",
+      );
+    }
+    expect(active.turns).toHaveLength(60);
+
+    const transcript = createPlayerTranscript(active);
+    const state = buildAdventurePrompt({
+      session: active,
+      phase: "action",
+      playerAction: "Return to the village",
+      anchors: [],
+      relevant: [],
+    }).state;
+    expect(JSON.stringify(transcript)).not.toContain(truth);
+    expect(JSON.stringify(transcript)).not.toContain("Independent truth");
+    expect(JSON.stringify(JSON.parse(state).playerScenarios)).not.toContain(
+      "Independent truth",
+    );
+    expect(JSON.parse(state)["GM-ONLY scenarios"][0].baselineTruth.truth).toBe(
+      truth,
+    );
+  });
+
   it("rejects hidden truth, duplicates and stale replay without changing state", () => {
     const session = baseline();
     expect(
@@ -209,6 +258,287 @@ describe("30-turn emergent adventure regression", () => {
     expect(next.value.scenarioCollection?.items[0]?.status).toBe("open");
     expect(next.value.visibleState.objectives).toEqual([]);
     expect(next.value.turns[0].narration).toContain("quiet day");
+  });
+
+  it("evaluates world-entry early sign pacing, actionable lead follow-up, and immunity to GM-only time churn (#4715)", () => {
+    const { scenarioState: _oldState, ...base } =
+      baseline() as unknown as Record<string, unknown>;
+    let session = parseAdventureSession({
+      ...base,
+      title: "Mara in Northbrook",
+      premise: "Arrive at Northbrook and look for work",
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Northbrook" },
+        intent: "explore",
+      },
+      visibleState: {
+        location: {
+          id: "loc-nb",
+          text: "Northbrook",
+          source: "provisional",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      hiddenState: {
+        secrets: [{ id: "truth-miller", text: truth, status: "hidden" }],
+        gmThreads: [
+          { id: "thread-1", text: "Miller working secretly", status: "hidden" },
+        ],
+      },
+      scenarioCollection: {
+        version: 1,
+        items: [
+          {
+            ...createScenarioState({
+              id: "rumour-miller",
+              origin: {
+                kind: "rumour",
+                batchTitle: "Rumours in Northbrook",
+                batchId: "batch-miller",
+                index: 1,
+              },
+              playerVisible: {
+                rumour: "The miller has vanished from his mill.",
+                lead: "Old Mill",
+                source: "Tavern keeper",
+              },
+              gmOnly: {
+                truth,
+                ifInvestigated: "Ledger is missing three pages.",
+              },
+            }),
+            knowledge: "unheard",
+            stage: "hearsay",
+            anchorRefs: [],
+            revealedSecretIds: [],
+            secretBindings: { truth: "truth-miller", eventIds: {} },
+          },
+        ],
+        focusedScenarioId: null,
+      },
+    });
+
+    // --- Turn 1: Opening exploration (no sign surfaced yet) ---
+    const t1 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration: "You arrive at the Northbrook market square at noon.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Browse stalls",
+          "Walk to the tavern",
+          "Sit by fountain",
+        ],
+      },
+      {
+        turnId: "t-1",
+        inputId: "in-1",
+        playerAction: "Look around the market.",
+        now,
+      },
+    );
+    expect(t1.ok).toBe(true);
+    if (!t1.ok) return;
+    session = t1.value;
+
+    // After 1 quiet turn, pacing immediately demands an observable sign
+    const pacing1 = worldEntryPacing(session);
+    expect(pacing1).toEqual({
+      quietTurns: 1,
+      signDue: true,
+      eligibleScenarioIds: ["rumour-miller"],
+      activeLeadIds: [],
+    });
+
+    // --- Turn 2: GM-only time passage + hidden thread update occurs ---
+    // This must NOT reset quietTurns or clear signDue!
+    const t2 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration: "A few hours drift by as the market slowly winds down.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: {
+          secrets: emptyHidden.secrets,
+          gmThreads: {
+            add: [],
+            update: [
+              { id: "thread-1", text: "Miller moves grain", status: "hidden" },
+            ],
+            removeIds: [],
+          },
+        },
+        timeAdvance: {
+          minutes: 120,
+          cause: "Waited around until late afternoon",
+          developments: [],
+        },
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: ["Visit tavern", "Ask for news", "Find lodging"],
+      },
+      {
+        turnId: "t-2",
+        inputId: "in-2",
+        playerAction: "Rest by the fountain.",
+        now,
+      },
+    );
+    expect(t2.ok).toBe(true);
+    if (!t2.ok) return;
+    session = t2.value;
+
+    // Pacing still demands the sign because GM-only updates do NOT count as player-observable activity
+    const pacing2 = worldEntryPacing(session);
+    expect(pacing2?.signDue).toBe(true);
+    expect(pacing2?.quietTurns).toBe(1);
+
+    // Prompt contains PACING with candidate ID
+    const prompt2 = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Ask tavern keeper for news",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt2.behavior).toContain("PACING:");
+    expect(prompt2.behavior).toContain("rumour-miller");
+
+    // --- Turn 3: Player asks for news; sign surfaces with concrete lead ---
+    const t3 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "The tavern keeper leans across the counter and mutters that nobody has seen the miller since Tuesday.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealScenarioIds: ["rumour-miller"],
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Ask what the miller was like",
+          "Walk out to the Old Mill",
+          "Order a pint and mind your business",
+        ],
+      },
+      {
+        turnId: "t-3",
+        inputId: "in-3",
+        playerAction: "Ask the tavern keeper for news.",
+        now,
+      },
+    );
+    expect(t3.ok).toBe(true);
+    if (!t3.ok) return;
+    session = t3.value;
+
+    expect(session.scenarioCollection?.items[0]?.knowledge).toBe("heard");
+
+    // Metrics after discovery: first sign occurred on turn 3
+    const metricsAfterSign = worldEntryDiscoveryMetrics(session);
+    expect(metricsAfterSign.timeToFirstSign).toBe(3);
+    expect(metricsAfterSign.timeToFirstActionableLead).toBeNull();
+
+    // --- Turn 4: Player pursues the lead and elaborates it ---
+    const t4 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "At the quiet mill, you find the ledger open on the desk with three pages torn out.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        elaborateScenarios: [
+          {
+            scenarioId: "rumour-miller",
+            stage: "actionable-clue",
+            discovery: "Ledger with missing pages",
+          },
+        ],
+        provisionalFacts: [
+          {
+            name: "Torn Mill Ledger",
+            kind: "clue",
+            summary: "Three pages torn from the harvest register",
+            visibility: "player-visible",
+            scenarioId: "rumour-miller",
+          },
+        ],
+        revealSecretIds: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Examine the desk drawers",
+          "Check the mill cellar",
+          "Head back to town",
+        ],
+      },
+      {
+        turnId: "t-4",
+        inputId: "in-4",
+        playerAction: "Inspect the mill office.",
+        now,
+      },
+    );
+    expect(t4.ok).toBe(true);
+    if (!t4.ok) return;
+    session = t4.value;
+
+    // Metrics after actionable lead:
+    const finalMetrics = worldEntryDiscoveryMetrics(session);
+    expect(finalMetrics.timeToFirstSign).toBe(3);
+    expect(finalMetrics.timeToFirstActionableLead).toBe(4);
+
+    // Duplicate input retry is rejected and does not corrupt metrics
+    const duplicateRetry = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration: "Retry attempt",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      },
+      {
+        turnId: "t-retry",
+        inputId: "in-4",
+        playerAction: "Inspect the mill office.",
+        now,
+      },
+    );
+    expect(duplicateRetry.ok).toBe(false);
+    expect(worldEntryDiscoveryMetrics(session)).toEqual({
+      timeToFirstSign: 3,
+      timeToFirstActionableLead: 4,
+    });
+
+    // Zero secret leakage
+    const transcript = JSON.stringify(createPlayerTranscript(session));
+    expect(transcript).not.toContain(truth);
+    expect(
+      detectHiddenLeakage(session, {
+        kind: "complete",
+        narration: "Safe player observation",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+      }),
+    ).toHaveLength(0);
   });
 });
 

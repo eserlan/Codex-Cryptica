@@ -92,6 +92,15 @@ export class OracleBridge {
     );
   }
 
+  public summarizeAdventure(
+    request: unknown,
+    requestId: string,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<unknown> {
+    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
+    return this.api.summarizeAdventure(request, requestId, options);
+  }
+
   public cancelAdventureTurn(requestId: string): Promise<void> {
     if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
     return this.api.cancelAdventureTurn(requestId);

@@ -10,10 +10,10 @@ The primary action button uses the project's brand color and is typically used f
 
 ```svelte
 <button
-  class="rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)]"
+  class="rounded-xl px-6 py-3 text-sm font-bold transition-all bg-theme-primary text-theme-bg border border-theme-primary hover:bg-theme-secondary hover:border-theme-secondary shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)]"
   onclick={() => _handleAction()}
 >
-  Primary Action
+  Primary action
 </button>
 ```
 
@@ -40,10 +40,10 @@ Used for destructive actions (Delete, Remove).
 
 ```svelte
 <button
-  class="rounded-xl px-6 py-3 text-xs font-bold uppercase tracking-widest transition-all bg-red-600 text-white border border-red-600 hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.25)]"
+  class="rounded-xl px-6 py-3 text-sm font-bold transition-all bg-red-600 text-white border border-red-600 hover:bg-red-700 shadow-[0_0_20px_rgba(220,38,38,0.25)]"
   onclick={() => _handleDelete()}
 >
-  Delete Entity
+  Delete entity
 </button>
 ```
 
@@ -51,8 +51,10 @@ Used for destructive actions (Delete, Remove).
 
 1.  **Svelte 5 Events**: Always use the `onclick` attribute instead of the deprecated `on:click`.
 2.  **Transitions**: Use `transition-all` to ensure smooth hover and active states.
-3.  **Typography**: Most buttons should use a compact, high-contrast label treatment such as `text-xs font-bold uppercase tracking-widest` when the action needs strong visual emphasis.
-4.  **Theme Agnostic Tokens**: Prefer semantic tokens such as `theme-primary`, `theme-secondary`, `theme-border`, `theme-bg`, `theme-text`, and `theme-muted` so button markup does not need to change across themes.
+3.  **Typography**: Button labels use sentence case in the body font, such as `text-sm font-bold`. Do not use capitals with widened letter-spacing on buttons; see [principle 6](../../STYLE_GUIDE.md#6-type-has-three-roles).
+4.  **Plain Labels**: Button labels are plain words that stay the same in every theme (Save, Delete, Create). Do not read action labels from theme jargon; see [principle 1](../../STYLE_GUIDE.md#1-flavour-belongs-to-the-world-function-stays-plain).
+5.  **One Primary**: Use the primary style for one action per surface.
+6.  **Theme Agnostic Tokens**: Prefer semantic tokens such as `theme-primary`, `theme-secondary`, `theme-border`, `theme-bg`, `theme-text`, and `theme-muted` so button markup does not need to change across themes.
 
 ## Applying the Current Theme
 

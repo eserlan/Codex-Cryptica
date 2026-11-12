@@ -42,10 +42,7 @@ A standard modal includes a backdrop, a container with transition effects, a hea
     >
       <!-- Content here -->
       <div class="p-8">
-        <h3
-          id="modal-title"
-          class="font-header text-xl uppercase tracking-widest text-theme-text"
-        >
+        <h3 id="modal-title" class="font-header text-xl text-theme-text">
           {dialog.title}
         </h3>
         <p class="mt-4 text-sm text-theme-muted">{dialog.message}</p>

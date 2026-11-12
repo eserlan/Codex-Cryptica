@@ -1,18 +1,40 @@
 <script lang="ts">
+  import type { ScenarioItem } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
+  import {
+    describeScenarioMutationError,
+    extractHeardScenarios,
+  } from "#lib/stores/oracle/adventure-scenarios.js";
+  import { soloThreads } from "#lib/stores/solo-session-instance.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
   import AdventureKnownSituations from "./AdventureKnownSituations.svelte";
+
   let { manager }: { manager: AdventureManager } = $props();
   let busy = $state(false);
   let error = $state<string | null>(null);
-  const scenarios = $derived(
-    manager.session?.scenarioCollection?.items.filter(
-      (item) => item.knowledge === "heard",
-    ) ?? [],
-  );
+
+  const scenarios = $derived(extractHeardScenarios(manager.session));
   const focusedId = $derived(
     manager.session?.scenarioCollection?.focusedScenarioId ?? "",
   );
+
+  const entitiesById = $derived.by(() => {
+    const map: Record<string, { id: string; title: string }> = {};
+    for (const entity of vault.allEntities ?? []) {
+      if (entity.visibility !== "hidden") {
+        map[entity.id] = { id: entity.id, title: entity.title };
+      }
+    }
+    return map;
+  });
+
+  const threads = $derived.by(() => {
+    return soloThreads.threads.map((t) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+    }));
+  });
 
   async function run(action: () => Promise<unknown>) {
     if (busy || manager.readOnly || manager.session?.pendingRoll) return;
@@ -26,6 +48,27 @@
       busy = false;
     }
   }
+
+  function saveToSoloThreads(item: ScenarioItem) {
+    const title = item.playerVisible.lead.trim();
+    if (!title || !soloThreads.editable) return;
+    const existing = soloThreads.threads.find(
+      (t) => t.title.trim().toLowerCase() === title.toLowerCase(),
+    );
+    if (existing) return;
+    const created = soloThreads.add({
+      title,
+      kind: "lead",
+      note: item.playerVisible.rumour,
+    });
+    if (created.ok) {
+      for (const anchorId of item.anchorRefs) {
+        if (entitiesById[anchorId]) {
+          soloThreads.link(created.thread.id, anchorId);
+        }
+      }
+    }
+  }
 </script>
 
 {#if scenarios.length > 0}
@@ -34,7 +77,22 @@
     aria-label="Known situations"
     data-testid="adventure-scenario-controls"
   >
-    <AdventureKnownSituations {scenarios} />
+    <AdventureKnownSituations
+      {scenarios}
+      {focusedId}
+      {entitiesById}
+      {threads}
+      canCreateThread={soloThreads.editable}
+      disabled={busy ||
+        manager.readOnly ||
+        !!manager.session?.pendingRoll ||
+        manager.phase === "generating"}
+      onFollow={(scenarioId) =>
+        void run(() => manager.focusScenario(scenarioId))}
+      onRecordTheory={(scenarioId, text) =>
+        run(() => manager.recordScenarioTheory(scenarioId, text))}
+      onSaveThread={saveToSoloThreads}
+    />
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-xs font-medium text-theme-text" aria-hidden="true"
         >Focus</span

@@ -650,3 +650,136 @@ it("keeps relevant future and hidden opening sources in labelled GM context", as
   expect(hidden?.content).not.toContain("betrayal");
   expect(hidden?.lore).toContain("betrayal");
 });
+
+describe("dated Adventure grounding after time advances", () => {
+  it("refreshes opening and action context after fictional days pass", async () => {
+    const calendar = {
+      ...DEFAULT_CALENDAR,
+      useGregorian: false,
+      months: [
+        { id: "bloom", name: "Bloom", days: 2 },
+        { id: "frost", name: "Frost", days: 3 },
+      ],
+    };
+    const town = {
+      id: "town",
+      title: "Town",
+      type: "location",
+      content: "Town",
+      connections: [{ target: "festival", type: "associated", strength: 1 }],
+    };
+    const festival = {
+      id: "festival",
+      title: "Festival",
+      type: "event",
+      content: "A festival begins at Bloom 1 of year 619.",
+      date: { year: 619, month: 1, day: 1 },
+      connections: [{ target: "town", type: "associated", strength: 1 }],
+    };
+    const sources = [town, festival];
+    const service = new AdventureContextService({
+      getWorldSnapshot: async () => ({ entities: sources, calendar }) as any,
+      getById: async (_vaultId, id) => {
+        const record = sources.find((item) => item.id === id);
+        return record ? { ...record, text: record.content } : null;
+      },
+      search: async () => [{ ...festival, text: festival.content }],
+    });
+    const at = { year: 618, month: 2, day: 3 };
+    const entry = {
+      ...session,
+      sourceRecords: [{ recordId: "town", role: "anchor" }],
+      visibleState: {
+        location: {
+          source: "canonical",
+          sourceRecordId: "town",
+          text: "Town",
+        },
+      },
+      worldEntry: {
+        version: 1,
+        location: { kind: "canonical", name: "Town", recordId: "town" },
+        at,
+        intent: "explore",
+      },
+    } as any;
+    const initialOpening = await service.resolveOpeningRelevant(entry);
+    const initialFestival = initialOpening.find(
+      (record) => record.recordId === "festival",
+    );
+    expect(initialFestival?.content).toContain("Period applicability: future");
+    expect(initialFestival?.content).not.toContain("begins at Bloom");
+
+    const advanced = {
+      ...entry,
+      worldTime: { version: 1, elapsedMinutes: 2 * 1_440, events: [] },
+    };
+    const laterOpening = await service.resolveOpeningRelevant(advanced);
+    const laterAction = await service.resolveActionRelevant(
+      advanced,
+      "Return for the festival",
+    );
+    for (const relevant of [laterOpening, laterAction]) {
+      const record = relevant.find((source) => source.recordId === "festival");
+      expect(record?.content).toContain("Period applicability: historical");
+      expect(record?.content).toContain("begins at Bloom");
+    }
+    const directSnapshot = await service.resolveTemporalWorld({
+      vaultId: "vault-1",
+      locationId: "town",
+      at,
+      elapsedMinutes: 2 * 1_440,
+    });
+    expect(
+      directSnapshot.playerSafe.some((record) => record.id === "festival"),
+    ).toBe(true);
+    expect(entry.worldEntry.at).toEqual(at);
+  });
+
+  describe("place records", () => {
+    const entities = [
+      { id: "r-1", title: "Nombe", type: "location", content: "x".repeat(500) },
+      { id: "r-2", title: "Orra", type: "character", content: "y" },
+    ];
+
+    it("lists only ids, titles and types from the in-memory index", async () => {
+      const getWorldSnapshot = vi.fn().mockResolvedValue({
+        entities,
+        calendar: DEFAULT_CALENDAR,
+      });
+      const service = new AdventureContextService({
+        getById: vi.fn(),
+        search: vi.fn(),
+        getWorldSnapshot,
+      });
+      await expect(service.listPlaceRecords("vault-1")).resolves.toEqual([
+        { id: "r-1", title: "Nombe", type: "location" },
+        { id: "r-2", title: "Orra", type: "character" },
+      ]);
+      expect(getWorldSnapshot).toHaveBeenCalledWith("vault-1");
+    });
+
+    it("says unknown, not empty, when there is no world snapshot", async () => {
+      const service = new AdventureContextService({
+        getById: vi.fn(),
+        search: vi.fn(),
+      });
+      await expect(
+        service.listPlaceRecords("vault-1"),
+      ).resolves.toBeUndefined();
+    });
+
+    it("lets a closed Vault's error through for the caller to handle", async () => {
+      const service = new AdventureContextService({
+        getById: vi.fn(),
+        search: vi.fn(),
+        getWorldSnapshot: vi
+          .fn()
+          .mockRejectedValue(new Error("vault-not-open")),
+      });
+      await expect(service.listPlaceRecords("vault-1")).rejects.toThrow(
+        "vault-not-open",
+      );
+    });
+  });
+});

@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file complexity -- Existing adventure entry and restoration view; only filtering of dismissed facts changed. -->
 <script lang="ts">
   import { untrack } from "svelte";
   import { oracle } from "#lib/stores/oracle.svelte.js";
@@ -29,7 +30,13 @@
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
   import { configureAdventureRepository } from "#lib/services/adventure/configure-adventure-repository.js";
-  import { createAdventureEntityDraft } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
+  import {
+    batchFilterPromotableFacts,
+    createAdventureEntityDraft,
+    promoteProvisionalFacts,
+    type FactPromotionDeps,
+  } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
+  import { adventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import type { ProvisionalFact } from "@codex/adventure-engine";
   import type { Entity } from "schema";
@@ -131,12 +138,18 @@
     }
     if (previouslyPrefilledScenario === selectedRumour.scenario.id) return;
     previouslyPrefilledScenario = selectedRumour.scenario.id;
-    startTitle =
-      "Rumour " +
-      selectedRumour.selected.index +
-      ": " +
-      selectedRumour.selected.playerVisible.lead;
-    startPremise = selectedRumour.selected.playerVisible.rumour;
+    const selected = selectedRumour.selected;
+    if ("index" in selected) {
+      startTitle =
+        "Rumour " + selected.index + ": " + selected.playerVisible.lead;
+      startPremise = selected.playerVisible.rumour;
+    } else {
+      startTitle =
+        selectedRumour.adventureTitle ||
+        selected.playerVisible.title ||
+        "Adventure";
+      startPremise = selectedRumour.scenario.playerVisible.rumour;
+    }
   });
 
   function reviewWorldEntry(draft: WorldEntryDraft): void {
@@ -237,12 +250,16 @@
   }
 
   function cancelRumour(): void {
-    // Keep the source batch so the generator reopens on the same six rumours.
+    const generatorId =
+      selectedRumour?.sourceGeneratorId === "adventure"
+        ? "adventure"
+        : "rumour";
+    // Keep the source batch so the generator reopens on the same draft.
     const hasSourceBatch = rumourAdventureHandoff.cancel(vaultId);
     startApproach = "choose";
     startTitle = "";
     startPremise = "";
-    if (hasSourceBatch) modalUIStore.openGeneratorWorkflow("rumour");
+    if (hasSourceBatch) modalUIStore.openIntentGeneratorWorkflow(generatorId);
   }
 
   let existingEntityTitles = $derived(
@@ -340,9 +357,46 @@
     },
   });
 
+  /** Best effort: a place the player saves (or finds already saved) is tied to its Vault record. */
+  async function linkPlaceToRecord(
+    fact: ProvisionalFact,
+    recordId: string,
+  ): Promise<void> {
+    if (fact.kind !== "place") return;
+    try {
+      await oracle.adventure.linkPlaceRecord(fact.name, recordId);
+    } catch {
+      // The title match at the next turn links it instead.
+    }
+  }
+
+  function promotionDeps(
+    adventureId: string,
+    vaultId: string | null | undefined,
+  ): FactPromotionDeps {
+    return {
+      isCurrent: () =>
+        oracle.adventure.session?.id === adventureId &&
+        oracle.vault.activeVaultId === vaultId,
+      findExistingId: (title) =>
+        oracle.vault.allEntities.find(
+          (entity) =>
+            entity.title.trim().toLocaleLowerCase() ===
+            title.trim().toLocaleLowerCase(),
+        )?.id,
+      createEntity: (type, title, data) =>
+        oracle.vault.createEntity(type, title, data),
+      linkRecord: linkPlaceToRecord,
+    };
+  }
+
   async function addProvisionalFact(fact: ProvisionalFact): Promise<void> {
     const session = oracle.adventure.session;
     if (!session) throw new Error("No active adventure.");
+    const originatingVaultId = oracle.vault.activeVaultId;
+    const isCurrent = () =>
+      oracle.adventure.session?.id === session.id &&
+      oracle.vault.activeVaultId === originatingVaultId;
     const draft = createAdventureEntityDraft(fact, session.title);
     if (!draft) throw new Error("This discovery is not available to save.");
     const existing = oracle.vault.allEntities.find(
@@ -351,12 +405,90 @@
         draft.title.toLocaleLowerCase(),
     );
     if (existing) {
+      if (!isCurrent())
+        throw new Error("The active adventure or Vault changed.");
+      await linkPlaceToRecord(fact, existing.id);
       notificationStore.notify(`${draft.title} is already in Codex.`, "info");
       return;
     }
-    await oracle.vault.createEntity(draft.type, draft.title, draft.initialData);
-    notificationStore.notify(`Added ${draft.title} to Codex.`, "success");
+    const { added, interrupted } = await promoteProvisionalFacts(
+      [fact],
+      session.title,
+      promotionDeps(session.id, originatingVaultId),
+    );
+    if (interrupted) throw new Error("The active adventure or Vault changed.");
+    if (added > 0)
+      notificationStore.notify(`Added ${draft.title} to Codex.`, "success");
   }
+
+  async function addAllProvisionalFacts(
+    facts: ProvisionalFact[],
+  ): Promise<void> {
+    const session = oracle.adventure.session;
+    if (!session) throw new Error("No active adventure.");
+    const originatingVaultId = oracle.vault.activeVaultId;
+    const { added: addedCount, interrupted } = await promoteProvisionalFacts(
+      facts,
+      session.title,
+      promotionDeps(session.id, originatingVaultId),
+    );
+    if (interrupted) {
+      throw new Error(
+        "The active adventure changed. Add the remaining discoveries from that adventure.",
+      );
+    }
+    if (addedCount > 0) {
+      notificationStore.notify(
+        `Added ${addedCount} ${addedCount === 1 ? "discovery" : "discoveries"} to Codex.`,
+        "success",
+      );
+    }
+  }
+
+  let autoPromoting = false;
+  const processedAutoPromoteFactIds = new Set<string>();
+
+  $effect(() => {
+    const session = oracle.adventure.session;
+    if (
+      !session ||
+      !adventurePromotionSettings.autoPromote ||
+      !oracle.vault.isInitialized
+    ) {
+      return;
+    }
+    const originatingVaultId = oracle.vault.activeVaultId;
+    const facts = session.provisionalFacts ?? [];
+    const pending = batchFilterPromotableFacts(facts, existingEntityTitles, [
+      ...processedAutoPromoteFactIds,
+      ...(session.dismissedProvisionalFactIds ?? []),
+    ]);
+    if (pending.length === 0 || autoPromoting) return;
+
+    autoPromoting = true;
+    void (async () => {
+      try {
+        const { added: addedCount } = await promoteProvisionalFacts(
+          pending,
+          session.title,
+          {
+            ...promotionDeps(session.id, originatingVaultId),
+            onAttempt: (fact) => processedAutoPromoteFactIds.add(fact.id),
+          },
+        );
+        if (addedCount > 0) {
+          notificationStore.notify(
+            `Auto-promoted ${addedCount} ${addedCount === 1 ? "discovery" : "discoveries"} to Codex.`,
+            "success",
+          );
+        }
+      } catch (err) {
+        console.error("Auto-promote error:", err);
+      } finally {
+        autoPromoting = false;
+      }
+    })();
+  });
 
   $effect(() => {
     const currentVaultId = vaultId;
@@ -401,6 +533,9 @@
   {:else if oracle.adventure.session}
     {#if selectedRumour && !oracle.adventure.session.scenarioCollection?.items.some((item) => item.id === selectedRumour.scenario.id)}
       <AdventureRumourConflict
+        kind={selectedRumour.sourceGeneratorId === "adventure"
+          ? "adventure"
+          : "rumour"}
         readOnly={oracle.adventure.readOnly}
         pendingRoll={!!oracle.adventure.session.pendingRoll}
         archiving={archivingForRumour}
@@ -416,6 +551,7 @@
         manager={oracle.adventure}
         existingTitles={existingEntityTitles}
         onAddProvisionalFact={addProvisionalFact}
+        onAddAllProvisionalFacts={addAllProvisionalFacts}
         repository={adventureSessionRepository}
         {vaultId}
         onResume={(sessionId) => oracle.adventure.switchTo(vaultId, sessionId)}
@@ -429,6 +565,8 @@
       <AdventureEntryChoices
         {canDiscover}
         onDiscover={discoverAdventure}
+        onSurpriseMe={() =>
+          modalUIStore.openIntentGeneratorWorkflow("adventure")}
         onOwnPremise={() => (startApproach = "premise")}
         onEnterWorld={() => (startApproach = "world")}
       />

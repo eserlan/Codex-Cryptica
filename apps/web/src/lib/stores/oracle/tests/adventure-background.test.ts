@@ -94,6 +94,29 @@ describe("grounded background generation", () => {
     expect(generator).not.toHaveBeenCalled();
   });
 
+  it("puts the Vault's genre in the rumour request, for any appearance suffix, and nothing for neutral themes", async () => {
+    const { current, context } = setup();
+    const grounding = await new AdventureGroundingService(context).prepare({
+      session: current,
+      purpose: "background",
+    });
+    const styled = createAdventureBackgroundRequest(
+      current,
+      grounding,
+      true,
+      "cyberpunk_dark",
+    );
+    expect(styled.instructions).toContain("World style: Neon Night.");
+    expect(styled.instructions).toContain("never import tropes");
+    const neutral = createAdventureBackgroundRequest(
+      current,
+      grounding,
+      true,
+      "workspace",
+    );
+    expect(neutral.instructions).not.toContain("World style:");
+  });
+
   it("rejects a context from another session", async () => {
     const { current, context } = setup();
     const grounding = await new AdventureGroundingService(context).prepare({

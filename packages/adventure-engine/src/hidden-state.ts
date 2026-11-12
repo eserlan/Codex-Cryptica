@@ -54,6 +54,16 @@ function scenarioSecretSources(
             },
           ]
         : []),
+      ...(scenario.pressure?.expectedConsequence?.trim() &&
+      scenario.pressure.triggeredAtMinute === undefined
+        ? [
+            {
+              id: `scenario-pressure-${scenario.id}`,
+              text: scenario.pressure.expectedConsequence,
+              revealed: false,
+            },
+          ]
+        : []),
       ...scenario.events
         .filter((event) => event.visibility === "gm")
         .flatMap((event) => {
@@ -92,8 +102,14 @@ function playerFacingStrings(
   proposal: AdventureTurnProposal,
 ): Array<[string, string]> {
   if (proposal.kind === "complete") {
-    const { hiddenPatch: _hidden, ...visible } = proposal;
-    return strings(visible);
+    const { hiddenPatch: _hidden, timeAdvance, ...visible } = proposal;
+    const playerTimeAdvance = timeAdvance
+      ? { minutes: timeAdvance.minutes, cause: timeAdvance.cause }
+      : undefined;
+    return strings({
+      ...visible,
+      ...(playerTimeAdvance ? { timeAdvance: playerTimeAdvance } : {}),
+    });
   }
   return strings(proposal);
 }

@@ -189,6 +189,32 @@ describe("AdventureComposer", () => {
     expect(m.submitSuggestedAction).not.toHaveBeenCalled();
   });
 
+  it("explains the wait, blocks double clicks, then reports a live holder", async () => {
+    const m = manager("ready");
+    m.readOnly = true;
+    m.session = { status: "active" };
+    let finish!: (value: boolean) => void;
+    m.tryTakeControl = vi.fn(
+      () => new Promise<boolean>((resolve) => (finish = resolve)),
+    );
+    render(AdventureComposer, { props: { manager: m } });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Try to take control" }),
+    );
+    expect(screen.getByTestId("control-retry-waiting").textContent).toContain(
+      "This may take around 11 seconds.",
+    );
+    const busy = screen.getByRole("button", { name: "Checking…" });
+    expect(busy.hasAttribute("disabled")).toBe(true);
+    await fireEvent.click(busy);
+    expect(m.tryTakeControl).toHaveBeenCalledOnce();
+
+    finish(false);
+    expect(await screen.findByText(/still in use elsewhere/)).toBeTruthy();
+    expect(screen.queryByTestId("control-retry-waiting")).toBeNull();
+  });
+
   it.each(["awaiting-roll", "ready-to-resolve"] as const)(
     "hides competing action controls while a roll is %s",
     (phase) => {

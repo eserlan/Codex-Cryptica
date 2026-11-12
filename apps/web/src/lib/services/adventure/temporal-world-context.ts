@@ -55,6 +55,8 @@ export interface TemporalWorldQuery {
   at: TemporalMetadata | DateSelection;
   maxRecords?: number;
   maxExcerptChars?: number;
+  /** Committed fictional time since world entry, never device/wall-clock time. */
+  elapsedMinutes?: number;
 }
 
 type DateLike = TemporalMetadata | DateSelection;
@@ -127,6 +129,34 @@ function interval(date: DateLike, calendar: WorldCalendar): DayInterval | null {
   return "precision" in date
     ? metadataInterval(date, calendar)
     : selectionInterval(date, calendar);
+}
+
+/**
+ * Project the *starting* date to the committed fictional clock without
+ * inventing precision. A year-only start stays a year-wide interval; for a
+ * day-precise start, fractional days may fall on either adjacent calendar day
+ * because Adventure does not persist the initial hour.
+ */
+function effectiveTargetInterval(
+  date: DateLike,
+  calendar: WorldCalendar,
+  elapsedMinutes = 0,
+): DayInterval | null {
+  if (
+    !Number.isSafeInteger(elapsedMinutes) ||
+    elapsedMinutes < 0 ||
+    elapsedMinutes > 52_560_000
+  ) {
+    return null;
+  }
+  const start = interval(date, calendar);
+  if (!start) return null;
+  const wholeDays = Math.floor(elapsedMinutes / 1_440);
+  const partialDay = elapsedMinutes % 1_440 === 0 ? 0 : 1;
+  return {
+    first: start.first + wholeDays,
+    last: start.last + wholeDays + partialDay,
+  };
 }
 
 function temporalBounds(entity: Entity): {
@@ -415,7 +445,11 @@ export function resolveTemporalWorldContext(
 ): TemporalWorldContext {
   const byId = new Map(query.entities.map((entity) => [entity.id, entity]));
   const roots = contextSeeds(query, byId);
-  const at = interval(query.at, query.calendar);
+  const at = effectiveTargetInterval(
+    query.at,
+    query.calendar,
+    query.elapsedMinutes,
+  );
   if (!at) throw new Error("temporal-world-invalid-date");
 
   const applicability = new Map<string, TemporalApplicability>();
@@ -469,8 +503,9 @@ export function classifyEntityAt(
   entity: Entity,
   at: TemporalMetadata | DateSelection,
   calendar: WorldCalendar,
+  elapsedMinutes = 0,
 ): TemporalApplicability | null {
-  const target = interval(at, calendar);
+  const target = effectiveTargetInterval(at, calendar, elapsedMinutes);
   return target ? classify(entity, target, calendar) : null;
 }
 

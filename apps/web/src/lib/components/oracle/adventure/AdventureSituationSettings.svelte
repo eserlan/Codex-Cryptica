@@ -1,6 +1,13 @@
 <script lang="ts">
+  import { formatWorldElapsedMinutes } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
+  import {
+    adventureDiagnosticJson,
+    adventureReviewJson,
+    adventureReviewMarkdown,
+  } from "#lib/services/adventure/adventure-review-capture.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
   let {
     manager,
@@ -11,6 +18,8 @@
   } = $props();
   let busyId = $state<string | null>(null);
   let error = $state<string | null>(null);
+  let advanceMinutes = $state(60);
+  let copyBusy = $state(false);
 
   const scenarios = $derived(
     manager.session?.scenarioCollection?.items.filter(
@@ -43,6 +52,22 @@
     }
   }
 
+  async function advanceTime() {
+    if (locked) return;
+    busyId = "world-clock";
+    error = null;
+    try {
+      await manager.advanceWorldTime(
+        advanceMinutes,
+        "Player advanced world time",
+      );
+    } catch (cause) {
+      error = describeScenarioMutationError(cause);
+    } finally {
+      busyId = null;
+    }
+  }
+
   async function lookForRumours() {
     if (locked) return;
     error = null;
@@ -53,6 +78,37 @@
       }
     } catch (cause) {
       error = describeScenarioMutationError(cause);
+    }
+  }
+
+  async function copySession(format: "markdown" | "json" | "diagnostic") {
+    const session = manager.session;
+    if (!session || copyBusy) return;
+    copyBusy = true;
+    error = null;
+    try {
+      const text =
+        format === "markdown"
+          ? adventureReviewMarkdown(session)
+          : format === "diagnostic"
+            ? adventureDiagnosticJson(session)
+            : adventureReviewJson(session);
+      await navigator.clipboard.writeText(text);
+      notificationStore.notify(
+        "GM-only adventure " +
+          (format === "markdown"
+            ? "Markdown"
+            : format === "diagnostic"
+              ? "compact JSON for AI"
+              : "JSON") +
+          " copied to clipboard.",
+        "success",
+      );
+    } catch {
+      error =
+        "Could not copy the session. Check clipboard permissions and retry.";
+    } finally {
+      copyBusy = false;
     }
   }
 
@@ -90,6 +146,86 @@
         ></span>
         Look for local rumours
       </button>
+    </div>
+
+    <div class="space-y-2 border-t border-theme-border pt-3">
+      <h4 class="text-sm font-semibold text-theme-text">
+        Advance fictional time
+      </h4>
+      {#if manager.session.worldTime?.elapsedMinutes}
+        <p class="text-xs text-theme-text" data-testid="adventure-elapsed-time">
+          Elapsed fictional time: <span class="font-medium"
+            >{formatWorldElapsedMinutes(
+              manager.session.worldTime.elapsedMinutes,
+            )}</span
+          >
+        </p>
+      {/if}
+      <p class="text-xs text-theme-text">
+        Advances the local world clock deterministically offline. Off-screen
+        scenario pressures advance automatically without AI; qualitative NPC
+        reactions are woven in by Oracle on your next action.
+      </p>
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="text-sm text-theme-text" for="adventure-time-step"
+          >Duration</label
+        >
+        <select
+          id="adventure-time-step"
+          class={buttonClass}
+          bind:value={advanceMinutes}
+          disabled={locked}
+        >
+          <option value={60}>One hour</option>
+          <option value={480}>Eight hours</option>
+          <option value={1440}>One day</option>
+          <option value={10080}>One week</option>
+        </select>
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={locked}
+          onclick={() => void advanceTime()}
+        >
+          Advance time
+        </button>
+      </div>
+    </div>
+
+    <div
+      class="space-y-2 border-t border-theme-border pt-3"
+      data-testid="adventure-review-copy"
+    >
+      <h4 class="text-sm font-semibold text-theme-text">
+        Copy play session for review
+      </h4>
+      <p class="text-xs text-theme-text">
+        GM-only: both copies include the complete committed play history, hidden
+        scenario truths and private world state. Keep them away from players.
+        Copying stays on this device until you paste it elsewhere.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={copyBusy}
+          onclick={() => void copySession("markdown")}>Copy Markdown</button
+        >
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={copyBusy}
+          onclick={() => void copySession("json")}>Copy JSON</button
+        >
+        <button
+          type="button"
+          class={buttonClass}
+          disabled={copyBusy}
+          title="Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat."
+          onclick={() => void copySession("diagnostic")}
+          >Copy JSON for AI</button
+        >
+      </div>
     </div>
 
     {#if scenarios.length > 0}

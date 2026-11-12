@@ -4,6 +4,7 @@ import type {
   ScenarioItem,
   ScenarioStatus,
 } from "./types";
+import { matchPlace } from "./place-names";
 import { parseAdventureSession, scenarioEventSchema } from "./schemas";
 import { scenarioItemIdentityIds } from "./scenario-schemas";
 
@@ -18,7 +19,9 @@ export type ScenarioCommandError =
   | "id-collision"
   | "already-applied"
   | "state-budget-exceeded"
-  | "invalid-scenario";
+  | "invalid-scenario"
+  | "invalid-fictional-time"
+  | "unknown-discovery";
 
 export type ScenarioCommandResult =
   | { ok: true; session: AdventureSession; changed: boolean }
@@ -107,6 +110,38 @@ function commit(
   } catch {
     return { ok: false, reason: "state-budget-exceeded" };
   }
+}
+
+/**
+ * Persist player review decisions alongside the adventure without touching
+ * committed turn history or the underlying provisional facts. Idempotent on
+ * repeated dismissal and validated against player-visible discoveries only.
+ */
+export function dismissAdventureDiscoveries(
+  session: AdventureSession,
+  factIds: string[],
+  expectedRevision: number,
+  now = session.updatedAt,
+): ScenarioCommandResult {
+  if (session.revision !== expectedRevision)
+    return { ok: false, reason: "stale-revision" };
+  if (session.status !== "active")
+    return { ok: false, reason: "read-only-session" };
+  if (session.pendingRoll) return { ok: false, reason: "pending-roll" };
+  const available = new Set(
+    session.provisionalFacts
+      .filter((fact) => fact.visibility === "player-visible")
+      .map((fact) => fact.id),
+  );
+  const unique = [...new Set(factIds)];
+  if (unique.some((id) => !available.has(id)))
+    return { ok: false, reason: "unknown-discovery" };
+  const dismissed = session.dismissedProvisionalFactIds ?? [];
+  const toAdd = unique.filter((id) => !dismissed.includes(id));
+  if (!toAdd.length) return { ok: true, session, changed: false };
+  return commit(session, expectedRevision, now, (copy) => {
+    copy.dismissedProvisionalFactIds = [...dismissed, ...toAdd];
+  });
 }
 
 export function addScenario(
@@ -299,6 +334,36 @@ function hasSessionIdentity(session: AdventureSession, id: string): boolean {
   );
 }
 
+export function recordScenarioTheory(
+  session: AdventureSession,
+  scenarioId: string,
+  text: string,
+  eventId: string,
+  expectedRevision: number,
+  now = session.updatedAt,
+): ScenarioCommandResult {
+  const target = session.scenarioCollection?.items.find(
+    (item) => item.id === scenarioId,
+  );
+  if (!target) return { ok: false, reason: "unknown-scenario" };
+  if (target.knowledge !== "heard") {
+    return { ok: false, reason: "scenario-not-heard" };
+  }
+  return appendScenarioEvent(
+    session,
+    scenarioId,
+    {
+      id: eventId,
+      kind: "theory",
+      visibility: "player",
+      text: text.trim(),
+      at: now,
+    },
+    expectedRevision,
+    now,
+  );
+}
+
 const STATUS_EVENT_PREFIX: Record<ScenarioStatus, string> = {
   open: "Reopened",
   resolved: "Resolved",
@@ -374,4 +439,51 @@ export function setScenarioStatus(
   } catch {
     return { ok: false, reason: "invalid-scenario" };
   }
+}
+
+/** Ids of the turns that logged a scenario event (a lead surfacing or a stage advancing). */
+export function scenarioEventTurnIds(session: AdventureSession): Set<string> {
+  const ids = new Set<string>();
+  for (const item of session.scenarioCollection?.items ?? []) {
+    for (const event of item.events) {
+      if (event.turnId) ids.add(event.turnId);
+    }
+  }
+  return ids;
+}
+
+/** Ids of the turns that logged a player-visible scenario event (a lead surfacing or a stage advancing). */
+export function playerScenarioEventTurnIds(
+  session: AdventureSession,
+): Set<string> {
+  const ids = new Set<string>();
+  for (const item of session.scenarioCollection?.items ?? []) {
+    for (const event of item.events) {
+      if (event.turnId && event.visibility === "player") ids.add(event.turnId);
+    }
+  }
+  return ids;
+}
+
+/**
+ * Tie the adventure place called `name` to the Vault record the player has just
+ * saved or found for it, so the link survives the record being renamed. Only a
+ * place already known by exactly that name (or alias) links; nothing is made up.
+ * A place that is already linked is left alone.
+ */
+export function linkAdventurePlaceRecord(
+  session: AdventureSession,
+  name: string,
+  recordId: string,
+  expectedRevision: number,
+  now = session.updatedAt,
+): ScenarioCommandResult {
+  const match = matchPlace(session.places ?? [], name);
+  if (!match || match.extended || match.place.sourceRecordId)
+    return { ok: true, session, changed: false };
+  const placeId = match.place.id;
+  return commit(session, expectedRevision, now, (copy) => {
+    const place = copy.places?.find((entry) => entry.id === placeId);
+    if (place) place.sourceRecordId = recordId;
+  });
 }

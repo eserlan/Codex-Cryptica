@@ -118,6 +118,19 @@ With **AI Disabled** turned on in Settings, Explore rolls on built-in terrain ta
 
 Explore is not available in a guest vault.
 
+## Generate a region
+
+Open a hex and choose **Generate region** to fill empty hexes with terrain that hangs together: forests beside plains, hills leading up to mountains, coast where land meets water. It runs on your device. No AI is used, so it works with **AI Disabled** on.
+
+- **Grow from this hex** proposes terrain for this hex and its empty neighbours.
+- **Generate area** proposes terrain for the empty hexes around this one. Use the radius slider, 1 to 12.
+- **Fill gaps** proposes terrain only for empty hexes between areas you have already mapped.
+- **Regenerate generated terrain** replaces only terrain this tool made earlier, and tells you how many hexes would change and how many of those are explored.
+
+You see the proposal on the map first and nothing is saved. Tap a proposed hex to change it by hand, **Reroll** for a new seed, or type a seed to get the same result again. **Landscape and amounts** lets you pick a landscape and make a terrain less or more common, or turn it off. **Accept** saves everything in one go; **Cancel** saves nothing. If saving fails, nothing is changed. After accepting you can **Undo** until you change anything else.
+
+Terrain you set yourself is never replaced, and notes, pins, fog and exploration are never touched. Hexes that gain terrain while you are reviewing are skipped when you accept.
+
 ## Hex crawling solo
 
 In solo play, with Hex Crawl mode on, the party moving into an unexplored hex offers Explore. The offer appears near the travel readout with **Explore** and **Not now**.

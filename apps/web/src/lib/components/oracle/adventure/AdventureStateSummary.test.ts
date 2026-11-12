@@ -111,4 +111,42 @@ describe("AdventureStateSummary", () => {
     expect(full.textContent).toContain(long);
     expect(full.querySelector(".truncate")).toBeNull();
   });
+
+  it("shows elapsed fictional time and known leads summary when available in recap", () => {
+    render(AdventureStateSummary, {
+      manager: manager({
+        location: { id: "loc-1", text: "The crossroad" },
+        situation: undefined,
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+        elapsedTimeLabel: "3h 15m",
+        knownLeads: [
+          {
+            id: "lead-1",
+            lead: "The missing wagon",
+            status: "open",
+            focused: true,
+            lastUpdate: "Tracks lead north",
+          },
+          {
+            id: "lead-2",
+            lead: "The miller's debt",
+            status: "resolved",
+            focused: false,
+          },
+        ],
+      }),
+    });
+
+    expect(screen.getByText("3h 15m")).toBeTruthy();
+    expect(screen.getByText("Known leads")).toBeTruthy();
+    expect(
+      screen.getByText(
+        "The missing wagon (Open, following) — Tracks lead north",
+      ),
+    ).toBeTruthy();
+    expect(screen.getByText("The miller's debt (Resolved)")).toBeTruthy();
+  });
 });

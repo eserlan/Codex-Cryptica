@@ -1,5 +1,6 @@
 import type { AdventureSession } from "@codex/adventure-engine";
 import { proposedSession, validateRollExpression } from "./adventure-session";
+import { generateAcceptedTurn } from "./adventure-turn-retry";
 import { abortReason } from "./adventure-generation.svelte";
 
 import type { AdventureRuntime } from "./adventure-runtime";
@@ -24,19 +25,23 @@ export class AdventureActions {
     action: string,
     signal: AbortSignal,
   ): Promise<void> {
-    const { prepared, proposal } = await this.generateActionProposal(
-      session,
-      action,
+    const next = await generateAcceptedTurn({
+      generate: (correction) =>
+        this.generateActionProposal(session, action, signal, correction),
+      apply: ({ prepared, proposal }) => {
+        if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
+        validateRollExpression(proposal);
+        return proposedSession(
+          prepared,
+          proposal,
+          this.runtime.newTurnMetadata(action),
+          "turn-rejected",
+        );
+      },
       signal,
-    );
-    if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-    validateRollExpression(proposal);
-    const next = proposedSession(
-      prepared,
-      proposal,
-      this.runtime.newTurnMetadata(action),
-      "turn-rejected",
-    );
+      resetProviderContext: () =>
+        this.runtime.deps.clearGenerationInteraction(session.id),
+    });
     const saved = await this.runtime.saveTurn(session, next);
     this.state.session = saved;
     this.state.streamedNarration = "";
@@ -48,12 +53,17 @@ export class AdventureActions {
     session: AdventureSession,
     action: string,
     signal: AbortSignal,
+    correction?: string,
   ) {
     await this.runtime.verifyControl();
     // Older World Entry sessions began without background situations.
     // Seed on their next committed action too, without mutating the persisted
     // session until the same optimistic-concurrency save succeeds.
-    const prepared = await this.runtime.background.prepare(session, signal);
+    const prepared = await this.runtime.placeLinker.link(
+      this.runtime.summarizer.attach(
+        await this.runtime.background.prepare(session, signal),
+      ),
+    );
     if (signal.aborted) throw abortReason(signal);
     const proposal = await this.runtime.deps.generation.generate(
       {
@@ -62,6 +72,7 @@ export class AdventureActions {
         playerAction: action,
         anchors: [],
         relevant: [],
+        ...(correction ? { correction } : {}),
         onNarration: this.runtime.narrationPreview(session.id, signal),
       },
       { signal },

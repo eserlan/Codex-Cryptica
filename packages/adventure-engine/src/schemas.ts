@@ -32,6 +32,7 @@ const stateFactSchema = z.object({
   text,
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
+  placeId: id.optional(),
 });
 const newStateFactSchema = stateFactSchema.omit({ id: true }).strict();
 
@@ -98,6 +99,7 @@ const provisionalFactSchema = z.object({
   summary: text,
   introducedOnTurnId: id,
   visibility: z.enum(["player-visible", "gm-only"]),
+  scenarioId: id.optional(),
 });
 const newProvisionalFactSchema = provisionalFactSchema
   .omit({ id: true, introducedOnTurnId: true })
@@ -240,14 +242,62 @@ const timeAdvanceSchema = z
   })
   .strict();
 
+const scenarioElaborationProposalSchema = z
+  .object({
+    scenarioId: id,
+    stage: z.enum(["hearsay", "actionable-clue", "revelation-crisis"]),
+    discovery: text.optional(),
+  })
+  .strict();
+
+export const MAX_STORY_SO_FAR_CHARS = 1_500;
+const storySoFarSchema = z
+  .object({
+    text: z.string().trim().min(1).max(MAX_STORY_SO_FAR_CHARS),
+    throughSequence: z.number().int().nonnegative(),
+    updatedAt: timestamp,
+  })
+  .strict();
+
+export const MAX_PLACES = 30;
+export const MAX_PLACE_ALIASES = 5;
+const MAX_PLACE_NAME_CHARS = 120;
+const placeName = z.string().trim().min(1).max(MAX_PLACE_NAME_CHARS);
+
+const placeSchema = z
+  .object({
+    id,
+    name: placeName,
+    sourceRecordId: id.optional(),
+    relation: text.optional(),
+    aliases: z.array(placeName).max(MAX_PLACE_ALIASES).optional(),
+  })
+  .strict();
+
+const placeMoveSchema = z
+  .object({
+    placeId: id.optional(),
+    name: placeName.optional(),
+    relation: text.optional(),
+  })
+  .strict()
+  .refine((move) => Boolean(move.placeId || move.name), {
+    message: "A move needs a placeId or a name.",
+  });
+
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
   timeAdvance: timeAdvanceSchema.optional(),
+  moveTo: placeMoveSchema.optional(),
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
   revealScenarioIds: z.array(id).max(8).optional(),
+  elaborateScenarios: z
+    .array(scenarioElaborationProposalSchema)
+    .max(8)
+    .optional(),
   provisionalFacts: z.array(newProvisionalFactSchema),
   sourceRecordIds: z.array(id),
   suggestedActions: z.array(text).length(3).optional(),
@@ -276,11 +326,21 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
 export const scenarioEventSchema = z
   .object({
     id,
-    kind: z.enum(["discovery", "consequence", "status-change"]),
+    kind: z.enum([
+      "discovery",
+      "consequence",
+      "status-change",
+      "theory",
+      "stage-change",
+    ]),
     visibility: z.enum(["player", "gm"]),
     text,
     at: timestamp,
     turnId: id.optional(),
+    causedBy: z
+      .object({ scenarioId: id, eventId: id, anchorRef: id })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -331,9 +391,13 @@ export const adventureSessionSchema = z
     scenarioCollection: scenarioCollectionSchema.optional(),
     worldEntry: worldEntrySchema.optional(),
     worldTime: worldTimeSchema.optional(),
+    places: z.array(placeSchema).max(MAX_PLACES).optional(),
+    currentPlaceId: id.optional(),
+    storySoFar: storySoFarSchema.optional(),
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
+    dismissedProvisionalFactIds: z.array(id).max(60).optional().default([]),
     turns: z.array(
       z.object({
         id,
@@ -354,6 +418,7 @@ export const adventureSessionSchema = z
           .pick({ minutes: true, cause: true })
           .optional(),
         suggestedActions: z.array(text).length(3).optional(),
+        dropped: z.array(z.string().max(240)).max(24).optional(),
       }),
     ),
     pendingRoll: pendingRollSchema.nullable(),
@@ -425,9 +490,12 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     visibleState: parsed.visibleState,
     hiddenState: parsed.hiddenState,
     provisionalFacts: parsed.provisionalFacts,
+    dismissedProvisionalFactIds: parsed.dismissedProvisionalFactIds,
     scenarioCollection: parsed.scenarioCollection,
     worldEntry: parsed.worldEntry,
     worldTime: parsed.worldTime,
+    places: parsed.places,
+    storySoFar: parsed.storySoFar,
   }).length;
   if (stateLength > MAX_SERIALIZED_STATE_CHARS) {
     throw new Error("state-budget-exceeded");
@@ -602,9 +670,12 @@ export function validateStateBudget(session: AdventureSession): boolean {
       visibleState: session.visibleState,
       hiddenState: session.hiddenState,
       provisionalFacts: session.provisionalFacts,
+      dismissedProvisionalFactIds: session.dismissedProvisionalFactIds,
       scenarioCollection: session.scenarioCollection,
       worldEntry: session.worldEntry,
       worldTime: session.worldTime,
+      places: session.places,
+      storySoFar: session.storySoFar,
     }).length <= MAX_SERIALIZED_STATE_CHARS
   );
 }

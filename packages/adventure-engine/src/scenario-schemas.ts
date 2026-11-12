@@ -94,11 +94,38 @@ const origin = z
 const event = z
   .object({
     id,
-    kind: z.enum(["discovery", "consequence", "status-change"]),
+    kind: z.enum([
+      "discovery",
+      "consequence",
+      "status-change",
+      "theory",
+      "stage-change",
+    ]),
     visibility: z.enum(["player", "gm"]),
     text,
     at: z.string().datetime({ offset: true }),
     turnId: id.optional(),
+    causedBy: z
+      .object({
+        scenarioId: id,
+        eventId: id,
+        anchorRef: id,
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+export const scenarioPressureSchema = z
+  .object({
+    actor: text,
+    goal: text,
+    currentStance: text,
+    trigger: text,
+    progression: text,
+    expectedConsequence: text,
+    triggerAfterMinutes: z.number().int().min(1).max(52_560_000).optional(),
+    triggeredAtMinute: z.number().int().min(0).max(52_560_000).optional(),
   })
   .strict();
 
@@ -111,7 +138,11 @@ export const scenarioItemSchema = z
       .object({ rumour: text, lead: text, source: text.optional() })
       .strict(),
     gmOnly: z.object({ truth: text, ifInvestigated: text.optional() }).strict(),
+    pressure: scenarioPressureSchema.optional(),
     knowledge: z.enum(["unheard", "heard"]),
+    stage: z
+      .enum(["hearsay", "actionable-clue", "revelation-crisis"])
+      .default("hearsay"),
     status: z.enum(["open", "resolved", "abandoned"]),
     events: z.array(event).max(100),
     anchorRefs: z.array(id).max(12),

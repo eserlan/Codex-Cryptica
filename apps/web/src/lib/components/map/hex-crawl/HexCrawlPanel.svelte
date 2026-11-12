@@ -23,6 +23,8 @@
   import HexContentsList from "./HexContentsList.svelte";
   import HexDiscoveryReview from "./HexDiscoveryReview.svelte";
   import HexExploreControls from "./HexExploreControls.svelte";
+  import RegionGenerateMenu from "./region/RegionGenerateMenu.svelte";
+  import type { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
   import type {
     HexDiscoveryControls,
     HexDiscoveryWiring,
@@ -54,9 +56,11 @@
     entities,
     discovery,
     storage,
+    region,
   }: {
     store: HexCrawlStore;
     journey?: HexJourneyStore;
+    region?: RegionGenerationStore;
     mapId: string;
     hex: HexCoord;
     isGM: boolean;
@@ -360,6 +364,10 @@
         </h3>
         <HexTerrainPicker terrain={record?.terrain} onChoose={chooseTerrain} />
       </div>
+
+      {#if region}
+        <RegionGenerateMenu store={region} {mapId} {hex} />
+      {/if}
 
       {#key hexKey}
         {@const notesMapId = mapId}

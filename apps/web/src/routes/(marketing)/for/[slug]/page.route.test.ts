@@ -2,16 +2,16 @@ import { render } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LandingPageConfig } from "#lib/content/for/schema.js";
 
-const previewTheme = vi.fn();
+const setPublicTheme = vi.fn();
 
 vi.mock("$app/paths", () => ({
   base: "",
   asset: (p: string) => p,
   resolve: (p: string) => p,
 }));
-vi.mock("#lib/stores/theme.svelte.js", () => ({
-  themeStore: {
-    previewTheme: (id: string | null) => previewTheme(id),
+vi.mock("#lib/stores/public-theme.svelte.js", () => ({
+  publicThemeStore: {
+    setTheme: (id: string) => setPublicTheme(id),
   },
 }));
 
@@ -30,30 +30,26 @@ const makeConfig = (
   ...overrides,
 });
 
-describe("/for/[slug] theme preview", () => {
+describe("/for/[slug] public genre context", () => {
   beforeEach(() => {
-    previewTheme.mockClear();
+    setPublicTheme.mockClear();
   });
 
-  it("previews the theme a pack declares", () => {
+  it("publishes the theme a pack declares", () => {
     render(LandingPage, {
       props: { data: { config: makeConfig({ theme: "fantasy" }) } },
     });
 
-    expect(previewTheme).toHaveBeenCalledWith("fantasy");
+    expect(setPublicTheme).toHaveBeenCalledWith("fantasy");
   });
 
-  it("clears the preview for a pack with no theme", () => {
-    // SvelteKit reuses this component between /for/[slug] pages, so onDestroy
-    // does not run in between. A campaign-style pack ships without a theme; if
-    // it only set a preview when one existed, it would inherit the theme of
-    // whichever page the reader came from.
+  it("does not erase browsing genre on a pack with no theme", () => {
+    // Genre-less public pages inherit the visitor's existing public context.
     render(LandingPage, {
       props: { data: { config: makeConfig({ theme: undefined }) } },
     });
 
-    expect(previewTheme).toHaveBeenCalledWith(null);
-    expect(previewTheme).not.toHaveBeenCalledWith("fantasy");
+    expect(setPublicTheme).not.toHaveBeenCalled();
   });
 });
 

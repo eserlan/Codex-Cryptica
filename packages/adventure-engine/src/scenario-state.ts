@@ -19,7 +19,9 @@ export function createScenarioState(seed: ScenarioSeed): ScenarioState {
     origin: structuredClone(seed.origin),
     playerVisible: structuredClone(seed.playerVisible),
     gmOnly: structuredClone(seed.gmOnly),
+    ...(seed.pressure ? { pressure: structuredClone(seed.pressure) } : {}),
     status: "open",
+    stage: "hearsay",
     events: [],
   };
 }
@@ -34,19 +36,30 @@ export function playerScenarioProjection(
     version: scenario.version,
     id: scenario.id,
     origin: {
-      kind: scenario.origin.kind,
+      kind: scenario.origin?.kind ?? "rumour",
       // A source record may be GM-only; do not expose its ID or provenance.
     },
     playerVisible: structuredClone(scenario.playerVisible),
+    stage: scenario.stage ?? "hearsay",
     status: scenario.status,
-    events: scenario.events
-      .filter((event) => event.visibility === "player")
-      .map(({ id, kind, text, at, turnId }) => ({
+    events: (scenario.events ?? [])
+      .filter((event) => {
+        if (event.visibility === "player") return true;
+        if ("secretBindings" in scenario && "revealedSecretIds" in scenario) {
+          const secretId = scenario.secretBindings.eventIds[event.id];
+          if (secretId && scenario.revealedSecretIds.includes(secretId)) {
+            return true;
+          }
+        }
+        return false;
+      })
+      .map(({ id, kind, text, at, turnId, causedBy }) => ({
         id,
         kind,
         text,
         at,
         turnId,
+        ...(causedBy ? { causedBy: structuredClone(causedBy) } : {}),
       })),
   };
 }

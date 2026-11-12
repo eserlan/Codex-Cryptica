@@ -178,6 +178,50 @@ describe("AdventureLiveTranscript", () => {
     expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
   });
 
+  it("lays the preview out like a committed turn, including the submitted action", () => {
+    const m = manager({
+      phase: "generating",
+      draft: "Go into the alehouse",
+      streamedNarration: "The door sticks, then gives.",
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    const preview = screen.getByTestId("adventure-stream-preview");
+    expect(preview.textContent).toContain("You");
+    expect(preview.textContent).toContain("Go into the alehouse");
+    expect(preview.textContent).toContain("Oracle");
+    const text = screen.getByText("The door sticks, then gives.");
+    expect(text.className).toContain("text-[15px]");
+    expect(text.className).toContain("leading-7");
+    expect(screen.getByText("Oracle is writing…")).toBeTruthy();
+  });
+
+  it("uses the pending roll action while streaming its resolution", () => {
+    const m = manager({
+      phase: "generating",
+      session: {
+        pendingRoll: { playerAction: "Cross the guarded bridge" },
+      },
+      streamedNarration: "The guard lowers the spear.",
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    const preview = screen.getByTestId("adventure-stream-preview");
+    expect(preview.textContent).toContain("You");
+    expect(preview.textContent).toContain("Cross the guarded bridge");
+    expect(preview.textContent).toContain("The guard lowers the spear.");
+  });
+
+  it("omits the You bubble when there is no submitted action", () => {
+    const m = manager({
+      phase: "generating",
+      draft: "   ",
+      streamedNarration: "Dawn breaks.",
+    });
+    render(AdventureLiveTranscript, { props: { manager: m } });
+    expect(
+      screen.getByTestId("adventure-stream-preview").textContent,
+    ).not.toContain("You");
+  });
+
   it("shows no generating indicator when the player can act", () => {
     render(AdventureLiveTranscript, { props: { manager: manager() } });
 

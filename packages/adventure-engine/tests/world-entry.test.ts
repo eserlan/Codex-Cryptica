@@ -1,5 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { buildAdventurePrompt, parseAdventureSession } from "../src";
+import {
+  addScenario,
+  appendScenarioEvent,
+  applyCompletedTurn,
+  buildAdventurePrompt,
+  createPlayerTranscript,
+  createScenarioState,
+  parseAdventureSession,
+  playerScenarioCollectionProjection,
+  propagateKnownConsequence,
+  setScenarioStatus,
+  type AdventureTurnProposal,
+  type ScenarioItem,
+} from "../src";
 
 const now = "2026-11-02T10:00:00.000Z";
 
@@ -85,6 +98,63 @@ describe("world entry session and GM contract", () => {
     ).toThrow();
   });
 
+  it("tells the GM to decide scene details, avoid dead ends and stay in the fiction on every phase", () => {
+    const session = parseAdventureSession(rawSession());
+    for (const phase of ["opening", "action", "roll-resolution"] as const) {
+      const { behavior } = buildAdventurePrompt({
+        session,
+        phase,
+        playerAction: "What time of day is it?",
+        anchors: [],
+        relevant: [],
+      });
+      expect(behavior).toContain("If the player says you decide, decide.");
+      expect(behavior).toContain("must never be a dead end");
+      expect(behavior).toContain("concrete observable clue or safe lead");
+      expect(behavior).toContain("do not disclose GM-only truths");
+      expect(behavior).toContain(
+        "reveal scenario secrets only through justified fictional discovery",
+      );
+      expect(behavior).toContain("Never say what has or has not been");
+      expect(behavior).toContain("Do not repeat the ambient detail");
+      // The calendar-date ban is kept, but scoped away from scene details.
+      expect(behavior).toContain("Never invent a precise calendar date");
+      expect(behavior).toContain("does not apply to scene details");
+    }
+  });
+
+  it("adds a bounded world style block only when a style is supplied", () => {
+    const session = parseAdventureSession(rawSession());
+    const base = {
+      session,
+      phase: "action" as const,
+      anchors: [],
+      relevant: [],
+    };
+    const none = buildAdventurePrompt(base).behavior;
+    expect(none).not.toContain("World style:");
+
+    const styled = buildAdventurePrompt({
+      ...base,
+      worldStyle: {
+        name: "Neon  Night",
+        description: "Cyberpunk, neon-noir.\n" + "x".repeat(900),
+      },
+    }).behavior;
+    expect(styled).toContain('"Neon Night" world: Cyberpunk, neon-noir. xxx');
+    expect(styled).toContain("do not introduce technology, magic or tropes");
+    expect(styled).not.toContain("x".repeat(301));
+
+    for (const worldStyle of [
+      { name: "", description: "Something" },
+      { name: "Something", description: "   " },
+    ]) {
+      expect(
+        buildAdventurePrompt({ ...base, worldStyle }).behavior,
+      ).not.toContain("World style:");
+    }
+  });
+
   it("instructs Oracle to allow quiet exploration and respect chronological context", () => {
     const session = parseAdventureSession(rawSession());
     const prompt = buildAdventurePrompt({
@@ -126,5 +196,695 @@ describe("world entry session and GM contract", () => {
       raw.worldEntry.at = at;
       expect(() => parseAdventureSession(raw)).toThrow();
     }
+  });
+
+  // fallow-ignore-next-line complexity
+  it("completes full free-exploration loop: mundane chat, rumour discovery, resolution, travel and revisit with memory", () => {
+    let session = parseAdventureSession(rawSession());
+    const grainTruth = "The storehouse roof leaked and ruined the flour.";
+
+    // Seed an unheard location rumour in Northbrook
+    const backgroundSeed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-grain",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Northbrook",
+          batchId: "batch-nb",
+          index: 1,
+          sourceRecordId: "place-1",
+        },
+        playerVisible: {
+          rumour: "Grain sacks have gone missing from the storehouse.",
+          lead: "Old Storehouse",
+          source: "Market vendor",
+        },
+        gmOnly: {
+          truth: grainTruth,
+          ifInvestigated: "Damp sacks hidden in the cellar.",
+        },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: ["place-1"],
+      revealedSecretIds: [],
+      secretBindings: {
+        truth: "secret-grain-truth",
+        ifInvestigated: "secret-grain-inv",
+        eventIds: {},
+      },
+    };
+
+    const added = addScenario(session, backgroundSeed, session.revision, now);
+    expect(added.ok).toBe(true);
+    if (!added.ok) return;
+    session = added.session;
+
+    const emptyVisible = {
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: { add: [], update: [], removeIds: [] },
+      relationships: { add: [], update: [], removeIds: [] },
+    };
+    const emptyHidden = {
+      secrets: { add: [], update: [], removeIds: [] },
+      gmThreads: { add: [], update: [], removeIds: [] },
+    };
+
+    // --- Turn 1: Mundane conversation (no scenario triggered or forced) ---
+    const turn1Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration:
+        "The village blacksmith nods as you inquire about travel gear.",
+      visiblePatch: emptyVisible,
+      hiddenPatch: emptyHidden,
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: [
+        "Ask about the mountain pass",
+        "Inspect the smithy wares",
+        "Walk towards the village square",
+      ],
+    };
+    const t1 = applyCompletedTurn(session, turn1Proposal, {
+      turnId: "turn-1",
+      inputId: "input-1",
+      playerAction: "Talk to the blacksmith about gear.",
+      now,
+    });
+    expect(t1.ok).toBe(true);
+    if (!t1.ok) return;
+    session = t1.value;
+
+    expect(session.turns).toHaveLength(1);
+    expect(session.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
+    expect(session.scenarioCollection?.focusedScenarioId).toBeNull();
+
+    // --- Turn 2: Player asks about local news, surfacing the rumour lead ---
+    const turn2Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration:
+        "The vendor leans in and whispers that grain sacks have gone missing from the storehouse.",
+      visiblePatch: emptyVisible,
+      hiddenPatch: emptyHidden,
+      revealScenarioIds: ["rumour-grain"],
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: [
+        "Ask who had the keys",
+        "Head over to the old storehouse",
+        "Ignore the talk and buy provisions",
+      ],
+    };
+    const t2 = applyCompletedTurn(session, turn2Proposal, {
+      turnId: "turn-2",
+      inputId: "input-2",
+      playerAction: "Ask around for local news.",
+      now,
+    });
+    expect(t2.ok).toBe(true);
+    if (!t2.ok) return;
+    session = t2.value;
+
+    expect(session.scenarioCollection?.items[0]?.knowledge).toBe("heard");
+    expect(session.scenarioCollection?.items[0]?.events).toHaveLength(1);
+    expect(session.scenarioCollection?.items[0]?.events[0]?.kind).toBe(
+      "discovery",
+    );
+
+    // --- Turn 3: Investigate the lead & elaborate ---
+    const turn3Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration:
+        "Inside the cellar, you find damp, water-damaged flour sacks pushed into the shadows.",
+      visiblePatch: emptyVisible,
+      hiddenPatch: emptyHidden,
+      elaborateScenarios: [
+        {
+          scenarioId: "rumour-grain",
+          stage: "actionable-clue",
+          discovery: "Water damage on hidden sacks",
+        },
+      ],
+      provisionalFacts: [
+        {
+          name: "Ruined Storehouse Grain",
+          kind: "clue",
+          summary: "Damp sacks hidden in the cellar",
+          visibility: "player-visible",
+          scenarioId: "rumour-grain",
+        },
+      ],
+      revealSecretIds: [],
+      sourceRecordIds: [],
+      suggestedActions: [
+        "Examine the ceiling leak",
+        "Notify the village elder",
+        "Leave the cellar quietly",
+      ],
+    };
+    const t3 = applyCompletedTurn(session, turn3Proposal, {
+      turnId: "turn-3",
+      inputId: "input-3",
+      playerAction: "Inspect the storehouse cellar.",
+      now,
+    });
+    expect(t3.ok).toBe(true);
+    if (!t3.ok) return;
+    session = t3.value;
+
+    expect(session.scenarioCollection?.items[0]?.stage).toBe("actionable-clue");
+    expect(session.provisionalFacts).toHaveLength(1);
+    expect(session.provisionalFacts[0]?.name).toBe("Ruined Storehouse Grain");
+
+    // --- Turn 4: Conclude/Resolve the scenario and record consequence ---
+    const resolved = setScenarioStatus(
+      session,
+      "rumour-grain",
+      "resolved",
+      session.revision,
+      {
+        id: "event-resolved",
+        kind: "status-change",
+        visibility: "player",
+        text: "The village elder acknowledged the water leak.",
+        at: now,
+      },
+      now,
+    );
+    expect(resolved.ok).toBe(true);
+    if (!resolved.ok) return;
+    session = resolved.session;
+
+    const consequence = appendScenarioEvent(
+      session,
+      "rumour-grain",
+      {
+        id: "event-consequence-grain",
+        kind: "consequence",
+        visibility: "player",
+        text: "Northbrook sent emergency riders to Southwatch for replacement flour.",
+        at: now,
+      },
+      session.revision,
+      now,
+    );
+    expect(consequence.ok).toBe(true);
+    if (!consequence.ok) return;
+    session = consequence.session;
+
+    expect(session.scenarioCollection?.items[0]?.status).toBe("resolved");
+    expect(session.scenarioCollection?.focusedScenarioId).toBeNull();
+
+    // --- Turn 5: Everyday continuation after resolution ---
+    const turn5Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration:
+        "The sun warms the courtyard as villagers return to their daily routines.",
+      visiblePatch: emptyVisible,
+      hiddenPatch: emptyHidden,
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: [
+        "Rest at the village inn",
+        "Walk down to the river trail",
+        "Prepare travel rations for Southwatch",
+      ],
+    };
+    const t5 = applyCompletedTurn(session, turn5Proposal, {
+      turnId: "turn-5",
+      inputId: "input-5",
+      playerAction: "Enjoy a peaceful afternoon in the square.",
+      now,
+    });
+    expect(t5.ok).toBe(true);
+    if (!t5.ok) return;
+    session = t5.value;
+
+    expect(session.status).toBe("active");
+    expect(session.turns).toHaveLength(4);
+
+    // Verify post-resolution prompt rules kick in
+    const promptAfterResolve = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Look around",
+      anchors: [],
+      relevant: [],
+    });
+    expect(promptAfterResolve.behavior).toContain(
+      "When all scenarios are resolved or abandoned, or when the player pursues everyday life, portray ongoing unscripted world activity",
+    );
+
+    // --- Turn 6: Travel to Southwatch ---
+    const turn6Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration:
+        "Following the southern trade highway past amber wheat fields, you reach the gates of Southwatch.",
+      visiblePatch: {
+        ...emptyVisible,
+        location: {
+          text: "Southwatch",
+          source: "canonical",
+          sourceRecordId: "place-2",
+        },
+      },
+      hiddenPatch: emptyHidden,
+      timeAdvance: {
+        minutes: 180,
+        cause: "Three-hour trek on foot",
+        developments: [],
+      },
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: [
+        "Enter the Southwatch grain exchange",
+        "Find lodging for the night",
+        "Ask the guards about merchant arrivals",
+      ],
+    };
+    const t6 = applyCompletedTurn(session, turn6Proposal, {
+      turnId: "turn-6",
+      inputId: "input-6",
+      playerAction: "Walk south along the highway to Southwatch.",
+      now,
+    });
+    expect(t6.ok).toBe(true);
+    if (!t6.ok) return;
+    session = t6.value;
+
+    expect(session.visibleState.location?.text).toBe("Southwatch");
+    expect(session.worldTime?.elapsedMinutes).toBe(180);
+
+    // Seed and propagate consequence to Southwatch scenario
+    const southwatchScenario: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-southwatch-mill",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Southwatch",
+          batchId: "batch-sw",
+          index: 1,
+          sourceRecordId: "place-2",
+        },
+        playerVisible: {
+          rumour: "Grain traders are working overtime.",
+          lead: "Southwatch Mill",
+        },
+        gmOnly: { truth: "Southwatch grain reserves are stretched thin." },
+      }),
+      knowledge: "heard",
+      stage: "hearsay",
+      anchorRefs: ["place-1", "place-2"],
+      revealedSecretIds: [],
+      secretBindings: {
+        truth: "secret-sw-truth",
+        eventIds: {},
+      },
+    };
+    const addedSw = addScenario(
+      session,
+      southwatchScenario,
+      session.revision,
+      now,
+    );
+    expect(addedSw.ok).toBe(true);
+    if (!addedSw.ok) return;
+    session = addedSw.session;
+
+    const propagated = propagateKnownConsequence(
+      session,
+      {
+        sourceScenarioId: "rumour-grain",
+        sourceEventId: "event-consequence-grain",
+        targetScenarioId: "rumour-southwatch-mill",
+        anchorRef: "place-1",
+        eventId: "event-propagated-grain",
+        text: "Grain wagons are being prepared for Northbrook.",
+        at: now,
+      },
+      session.revision,
+    );
+    expect(propagated.ok).toBe(true);
+    if (!propagated.ok) return;
+    session = propagated.session;
+
+    // --- Turn 7: Return to Northbrook ---
+    const turn7Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration: "You journey back north, arriving at Northbrook by dusk.",
+      visiblePatch: {
+        ...emptyVisible,
+        location: {
+          text: "Northbrook",
+          source: "canonical",
+          sourceRecordId: "place-1",
+        },
+      },
+      hiddenPatch: emptyHidden,
+      timeAdvance: {
+        minutes: 180,
+        cause: "Return trek on foot",
+        developments: [],
+      },
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: [
+        "Check on the village storehouse",
+        "Retire to the inn for supper",
+        "Speak with the local steward",
+      ],
+    };
+    const t7 = applyCompletedTurn(session, turn7Proposal, {
+      turnId: "turn-7",
+      inputId: "input-7",
+      playerAction: "Return to Northbrook.",
+      now,
+    });
+    expect(t7.ok).toBe(true);
+    if (!t7.ok) return;
+    session = t7.value;
+
+    expect(session.visibleState.location?.text).toBe("Northbrook");
+    expect(session.worldTime?.elapsedMinutes).toBe(360);
+    expect(session.provisionalFacts).toHaveLength(1);
+    expect(session.provisionalFacts[0]?.name).toBe("Ruined Storehouse Grain");
+
+    // Verify player projection retains causedBy
+    const projection = playerScenarioCollectionProjection(session);
+    const swItem = projection.items.find(
+      (item) => item?.id === "rumour-southwatch-mill",
+    );
+    expect(
+      swItem?.events.some((e) => e.causedBy?.scenarioId === "rumour-grain"),
+    ).toBe(true);
+
+    // Verify zero secret leakage
+    const transcript = JSON.stringify(createPlayerTranscript(session));
+    expect(transcript).not.toContain(grainTruth);
+    expect(transcript).not.toContain("stretched thin");
+
+    // Verify prompt on revisit contains location revisit memory
+    const promptOnRevisit = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Look around Northbrook",
+      anchors: [],
+      relevant: [],
+    });
+    expect(promptOnRevisit.behavior).toContain(
+      "When the player returns to a previously visited location, reflect established facts, prior conversations, and committed scenario consequences",
+    );
+  });
+
+  it("embeds explicit pacing signal in prompt state and guides early actionable opportunity", () => {
+    let session = parseAdventureSession(rawSession());
+    const seed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-1",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Northbrook",
+          batchId: "batch-1",
+          index: 1,
+          sourceRecordId: "place-1",
+        },
+        playerVisible: {
+          rumour: "Cattle wander near the ruined tower.",
+          lead: "Ruined Tower",
+          source: "Herdsman",
+        },
+        gmOnly: {
+          truth: "Bandits are using the tower as a staging ground.",
+          ifInvestigated: "Tracks lead to a cellar beneath the rubble.",
+        },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: ["place-1"],
+      revealedSecretIds: [],
+      secretBindings: { truth: "truth-tower", eventIds: {} },
+    };
+
+    const added = addScenario(session, seed, session.revision, now);
+    expect(added.ok).toBe(true);
+    if (!added.ok) return;
+    session = added.session;
+
+    // After 1 quiet turn (e.g. opening), sign is due promptly
+    const turn1Proposal: AdventureTurnProposal = {
+      kind: "complete",
+      narration: "The village gate creaks in the morning breeze.",
+      visiblePatch: {
+        objectives: { add: [], update: [], removeIds: [] },
+        activeCharacters: { add: [], update: [], removeIds: [] },
+        knownFacts: { add: [], update: [], removeIds: [] },
+        relationships: { add: [], update: [], removeIds: [] },
+      },
+      hiddenPatch: {
+        secrets: { add: [], update: [], removeIds: [] },
+        gmThreads: { add: [], update: [], removeIds: [] },
+      },
+      revealSecretIds: [],
+      provisionalFacts: [],
+      sourceRecordIds: [],
+      suggestedActions: ["Walk to the square", "Visit the inn", "Look around"],
+    };
+    const t1 = applyCompletedTurn(session, turn1Proposal, {
+      turnId: "turn-1",
+      inputId: "input-1",
+      playerAction: "Look around the gate.",
+      now,
+    });
+    expect(t1.ok).toBe(true);
+    if (!t1.ok) return;
+    session = t1.value;
+
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Ask the herdsman by the gate",
+      anchors: [],
+      relevant: [],
+    });
+
+    const parsedState = JSON.parse(prompt.state);
+    expect(parsedState.worldEntry.pacing).toEqual({
+      quietTurns: 1,
+      signDue: true,
+      eligibleScenarioIds: ["rumour-1"],
+      activeLeadIds: [],
+    });
+    expect(prompt.behavior).toContain(
+      "PACING: At least 1 turns have passed without any player-observable seed surfacing (eligible candidate IDs: rumour-1)",
+    );
+    expect(prompt.behavior).toContain(
+      "offer at least one suggestedAction with a concrete person, place or choice to follow up",
+    );
+    expect(prompt.behavior).toContain(
+      "offer a concrete person, place or decision to follow (via revealScenarioIds or elaborateScenarios)",
+    );
+    expect(prompt.behavior).toContain(
+      "If the player deliberately ignores or declines a sign or lead, let them explore peacefully",
+    );
+  });
+
+  it("supports voluntarily ignoring a sign and continuing peaceful exploration without forced escalation", () => {
+    let session = parseAdventureSession(rawSession());
+    const seed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-lights",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Northbrook",
+          batchId: "batch-1",
+          index: 1,
+          sourceRecordId: "place-1",
+        },
+        playerVisible: {
+          rumour: "Strange lanterns were spotted on Barrow Hill.",
+          lead: "Barrow Hill",
+        },
+        gmOnly: { truth: "Smugglers are signalling a river barge." },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: ["place-1"],
+      revealedSecretIds: [],
+      secretBindings: { truth: "truth-lights", eventIds: {} },
+    };
+    const added = addScenario(session, seed, session.revision, now);
+    if (!added.ok) return;
+    session = added.session;
+
+    const emptyVisible = {
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: { add: [], update: [], removeIds: [] },
+      relationships: { add: [], update: [], removeIds: [] },
+    };
+    const emptyHidden = {
+      secrets: { add: [], update: [], removeIds: [] },
+      gmThreads: { add: [], update: [], removeIds: [] },
+    };
+
+    // Turn 1: Sign surfaces and is marked heard
+    const t1 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "An old forester mentions odd lantern glimmers seen on Barrow Hill last night.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealScenarioIds: ["rumour-lights"],
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Ask about the lanterns",
+          "Ignore the talk and order stew",
+          "Sit quietly by the fire",
+        ],
+      },
+      { turnId: "t-1", inputId: "i-1", playerAction: "Sit at the bar.", now },
+    );
+    if (!t1.ok) return;
+    session = t1.value;
+
+    expect(session.scenarioCollection?.items[0]?.knowledge).toBe("heard");
+
+    // Turn 2: Player deliberately ignores the rumour
+    const t2 = applyCompletedTurn(
+      session,
+      {
+        kind: "complete",
+        narration:
+          "You enjoy a warm bowl of venison stew as rain begins tapping softly on the tavern shutters.",
+        visiblePatch: emptyVisible,
+        hiddenPatch: emptyHidden,
+        revealSecretIds: [],
+        provisionalFacts: [],
+        sourceRecordIds: [],
+        suggestedActions: [
+          "Listen to the tavern chatter",
+          "Head up to your room",
+          "Inquire about room rates",
+        ],
+      },
+      {
+        turnId: "t-2",
+        inputId: "i-2",
+        playerAction: "Ignore the lantern talk and enjoy your stew.",
+        now,
+      },
+    );
+    if (!t2.ok) return;
+    session = t2.value;
+
+    expect(session.scenarioCollection?.items[0]?.status).toBe("open");
+    expect(session.scenarioCollection?.items[0]?.stage).toBe("hearsay");
+
+    // Turn 3: Prompt does not force the ignored rumour as an urgent quest
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Ask for another cup of cider",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.behavior).toContain(
+      "If the player deliberately ignores or declines a sign or lead, let them explore peacefully without repeated prompts, cyclic re-revelation, or forced escalation",
+    );
+    const parsedState = JSON.parse(prompt.state);
+    // Since rumour-lights is already heard, eligibleScenarioIds for unheard seeds is empty
+    expect(parsedState.worldEntry?.pacing).toBeUndefined();
+  });
+
+  it("handles a sci-fi world style fixture with early opportunity and secrecy protection", () => {
+    let session = parseAdventureSession({
+      ...rawSession(),
+      title: "Cora on Outpost 9",
+      premise: "Docked at Outpost 9 for refueling",
+      worldEntry: {
+        version: 1,
+        location: { kind: "provisional", name: "Outpost 9" },
+        intent: "explore",
+      },
+      visibleState: {
+        location: {
+          id: "loc-op9",
+          text: "Outpost 9",
+          source: "provisional",
+        },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+    });
+
+    const secretTech = "Corrupt port authority siphoning fusion coolant.";
+    const scifiSeed: ScenarioItem = {
+      ...createScenarioState({
+        id: "rumour-coolant",
+        origin: {
+          kind: "rumour",
+          batchTitle: "Rumours in Outpost 9",
+          batchId: "batch-scifi",
+          index: 1,
+        },
+        playerVisible: {
+          rumour: "Docking bay coolant pressure has been fluctuating wildly.",
+          lead: "Docking Ring C",
+          source: "Refueling technician",
+        },
+        gmOnly: {
+          truth: secretTech,
+          ifInvestigated: "Altered telemetry logs on console 4.",
+        },
+      }),
+      knowledge: "unheard",
+      stage: "hearsay",
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: { truth: "truth-coolant", eventIds: {} },
+    };
+
+    const added = addScenario(session, scifiSeed, session.revision, now);
+    if (!added.ok) return;
+    session = added.session;
+
+    const styledPrompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Inspect the refueling readout",
+      anchors: [],
+      relevant: [],
+      worldStyle: {
+        name: "Retro Sci-Fi",
+        description: "Analog terminals, neon vacuum tubes, worn space suits.",
+      },
+    });
+
+    expect(styledPrompt.behavior).toContain(
+      'World style: the Vault is set in a "Retro Sci-Fi" world',
+    );
+    const parsedState = JSON.parse(styledPrompt.state);
+    expect(parsedState.worldEntry.pacing.eligibleScenarioIds).toEqual([
+      "rumour-coolant",
+    ]);
+
+    // Zero secret leakage
+    const transcript = JSON.stringify(createPlayerTranscript(session));
+    expect(transcript).not.toContain(secretTech);
+    expect(JSON.stringify(parsedState.playerScenarios)).not.toContain(
+      secretTech,
+    );
   });
 });

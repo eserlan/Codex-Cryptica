@@ -238,6 +238,7 @@ export const howCommonShouldMagicBeInAFantasyWorld: AnswerConfigInput = {
     "how-do-i-build-a-believable-economy-for-a-fantasy-world",
     "how-do-you-create-a-fantasy-faction",
     "how-does-magic-change-society-in-a-fantasy-world",
+    "how-much-loot-and-how-many-magic-items-should-i-give-my-players",
   ],
   discovery: {
     id: "answer-how-common-should-magic-be-in-a-fantasy-world",

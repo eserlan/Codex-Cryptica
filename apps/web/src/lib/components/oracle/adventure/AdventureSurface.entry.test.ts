@@ -19,13 +19,8 @@ const env = vi.hoisted(() => ({
   })),
   notify: vi.fn(),
   characters: [] as Array<{ id: string; name: string }>,
-  pendingRumour: null as null | {
-    selected: {
-      index: number;
-      playerVisible: { lead: string; rumour: string };
-    };
-    scenario: { id: string; playerVisible: { lead: string; rumour: string } };
-  },
+  pendingRumour: null as any,
+  cancelRumourReturn: true,
 }));
 
 vi.mock("#lib/stores/oracle.svelte.js", () => ({
@@ -61,6 +56,7 @@ vi.mock("#lib/stores/calendar.svelte.js", () => ({
 vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openIntentGeneratorWorkflow: env.openIntentGeneratorWorkflow,
+    openGeneratorWorkflow: env.openIntentGeneratorWorkflow,
   },
 }));
 vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
@@ -88,6 +84,7 @@ vi.mock("#lib/stores/oracle/rumour-adventure-handoff.svelte.js", () => ({
   rumourAdventureHandoff: {
     forVault: () => env.pendingRumour,
     clear: vi.fn(),
+    cancel: vi.fn(() => env.cancelRumourReturn),
   },
 }));
 
@@ -176,5 +173,79 @@ describe("AdventureSurface entry", () => {
       (screen.getByTestId("adventure-character-picker") as HTMLSelectElement)
         .value,
     ).toBe("kael");
+  });
+
+  it("opens the ready-made adventure generator when clicking Surprise Me with an Adventure", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    await fireEvent.click(screen.getByTestId("adventure-surprise-me"));
+
+    expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledTimes(1);
+    expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("adventure");
+  });
+
+  it("prefills title and premise when a ready-made adventure handoff is present", async () => {
+    env.pendingRumour = {
+      selected: {
+        playerVisible: {
+          title: "The Whispering Spire",
+          openingSituation: "A spire hums with blue lightning at twilight.",
+          primaryObjective: "Deactivate the core before the storm breaks.",
+          startingLocations: ["The Base"],
+        },
+      },
+      scenario: {
+        id: "adv-scenario-1",
+        playerVisible: {
+          rumour: "A spire hums with blue lightning at twilight.",
+          lead: "Deactivate the core before the storm breaks.",
+        },
+        origin: { kind: "manual", manualId: "adv-scenario-1" },
+      },
+      adventureTitle: "The Whispering Spire",
+      sourceGeneratorId: "adventure",
+    };
+
+    render(AdventureSurface);
+
+    expect(await screen.findByTestId("selected-rumour-preview")).toBeTruthy();
+    expect(screen.getByText("Prepared adventure seed")).toBeTruthy();
+    expect(
+      (screen.getByLabelText("Adventure title") as HTMLInputElement).value,
+    ).toBe("The Whispering Spire");
+    expect(
+      (screen.getByLabelText("Premise") as HTMLTextAreaElement).value,
+    ).toBe("A spire hums with blue lightning at twilight.");
+  });
+
+  it("reopens the adventure generator when cancelling a prepared adventure start", async () => {
+    env.pendingRumour = {
+      selected: {
+        playerVisible: {
+          title: "The Whispering Spire",
+          openingSituation: "A spire hums with blue lightning at twilight.",
+          primaryObjective: "Deactivate the core.",
+          startingLocations: [],
+        },
+      },
+      scenario: {
+        id: "adv-scenario-1",
+        playerVisible: {
+          rumour: "A spire hums.",
+          lead: "Deactivate core.",
+        },
+        origin: { kind: "manual", manualId: "adv-scenario-1" },
+      },
+      adventureTitle: "The Whispering Spire",
+      sourceGeneratorId: "adventure",
+    };
+
+    render(AdventureSurface);
+    const cancelBtn = await screen.findByTestId("cancel-rumour-start");
+    expect(cancelBtn.textContent?.trim()).toBe("Cancel prepared adventure");
+
+    await fireEvent.click(cancelBtn);
+    expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("adventure");
   });
 });

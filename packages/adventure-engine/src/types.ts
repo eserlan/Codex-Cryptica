@@ -23,6 +23,37 @@ export interface StateFact {
   text: string;
   source: "canonical" | "provisional" | "revealed-secret";
   sourceRecordId?: string;
+  /** Where this fact belongs. Absent means it applies everywhere (legacy and unplaced facts). */
+  placeId?: string;
+}
+
+/** A named place the player has been to, kept so facts and people can be tied to it. */
+export interface Place {
+  id: string;
+  name: string;
+  /** Vault record this place stands for, when it is canonical. */
+  sourceRecordId?: string;
+  /** How it relates to other places, in plain words, e.g. "below Tiny village". */
+  relation?: string;
+  /** Other names the story has used for it, so a variant resolves to the same place. */
+  aliases?: string[];
+}
+
+/** The model's declaration that the player has changed place. Never needed for scene changes inside one place. */
+export interface PlaceMoveProposal {
+  /** An existing place's id. */
+  placeId?: string;
+  /** A place name, for a place not yet recorded or to match one by name. */
+  name?: string;
+  relation?: string;
+}
+
+/** Notes written from player-visible text only (the player's actions and the GM's narration). */
+export interface StorySoFar {
+  text: string;
+  /** Sequence of the last turn folded into `text`. */
+  throughSequence: number;
+  updatedAt: string;
 }
 
 export interface RelationshipFact extends StateFact {
@@ -75,6 +106,7 @@ export interface ProvisionalFact {
   summary: string;
   introducedOnTurnId: string;
   visibility: "player-visible" | "gm-only";
+  scenarioId?: string;
 }
 
 /**
@@ -223,6 +255,12 @@ export interface CommittedAdventureTurn {
   /** Player-safe time interval; private developments live in worldTime. */
   timeAdvance?: { minutes: number; cause: string };
   suggestedActions?: string[];
+  /**
+   * What the engine left out of this turn because the model got it wrong in a way
+   * that corrupts nothing (an unknown id, a step that is not allowed yet). The turn
+   * itself committed. Diagnostic only: never shown to the player or sent to the model.
+   */
+  dropped?: string[];
 }
 
 /** A user-named, reusable dice expression. Convenience only — never changes when Oracle requests a roll. */
@@ -245,6 +283,31 @@ export interface ResourceCounter {
 /** A lightweight situation, never a mandatory quest or separate play session. */
 export type ScenarioStatus = "open" | "resolved" | "abandoned";
 
+export interface KnownLeadRecap {
+  id: string;
+  lead: string;
+  status: ScenarioStatus;
+  focused: boolean;
+  lastUpdate?: string;
+}
+
+/**
+ * Speculative GM-only actor intention and progression model.
+ * Distinct from committed ScenarioEvent history.
+ */
+export interface ScenarioPressure {
+  actor: string;
+  goal: string;
+  currentStance: string;
+  trigger: string;
+  progression: string;
+  expectedConsequence: string;
+  /** Optional deterministic fictional elapsed minutes threshold for AI-off advancement. */
+  triggerAfterMinutes?: number;
+  /** Fictional minute when the expected consequence was triggered (at most once). */
+  triggeredAtMinute?: number;
+}
+
 export interface ScenarioSeed {
   id: string;
   origin: {
@@ -260,20 +323,33 @@ export interface ScenarioSeed {
   };
   playerVisible: { rumour: string; lead: string; source?: string };
   gmOnly: { truth: string; ifInvestigated?: string };
+  pressure?: ScenarioPressure;
 }
 
 export interface ScenarioEvent {
   id: string;
-  kind: "discovery" | "consequence" | "status-change";
+  kind:
+    "discovery" | "consequence" | "status-change" | "theory" | "stage-change";
   visibility: "player" | "gm";
   text: string;
   at: string;
   turnId?: string;
+  /** Provenance for an explicitly linked cross-scenario consequence. */
+  causedBy?: {
+    scenarioId: string;
+    eventId: string;
+    anchorRef: string;
+  };
 }
+
+/** Progressive elaboration depth of a situation. */
+export type ScenarioElaborationStage =
+  "hearsay" | "actionable-clue" | "revelation-crisis";
 
 export interface ScenarioState extends ScenarioSeed {
   version: 1;
   status: ScenarioStatus;
+  stage: ScenarioElaborationStage;
   events: ScenarioEvent[];
 }
 
@@ -334,9 +410,17 @@ export interface AdventureSession {
   worldEntry?: WorldEntryContext;
   /** Optional for backwards-compatible local-first sessions. */
   worldTime?: WorldTimeState;
+  /** Places visited so far. Absent on sessions from before places existed. */
+  places?: Place[];
+  /** Where the player is now. Absent when unknown; unplaced facts then apply everywhere. */
+  currentPlaceId?: string;
+  /** Rolling notes on turns that have left the prompt's transcript window. Absent until the first summary. */
+  storySoFar?: StorySoFar;
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
+  /** Review decisions, separate from immutable committed discovery history. */
+  dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
   pendingRoll: PendingRoll | null;
   /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
@@ -345,15 +429,25 @@ export interface AdventureSession {
   resourceCounters: ResourceCounter[];
 }
 
+export interface ScenarioElaborationProposal {
+  scenarioId: string;
+  stage: ScenarioElaborationStage;
+  discovery?: string;
+}
+
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
   timeAdvance?: TimeAdvanceProposal;
+  /** Set only when the player changes place in this turn. */
+  moveTo?: PlaceMoveProposal;
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];
   /** Scenario leads fictionally disclosed in this same committed turn. */
   revealScenarioIds?: string[];
+  /** Scenarios escalated along the progressive elaboration ladder in this turn. */
+  elaborateScenarios?: ScenarioElaborationProposal[];
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
@@ -432,6 +526,8 @@ export interface AdventureRecap {
   activeCharacters: StateFact[];
   knownFacts: StateFact[];
   recentTurnSummaries: string[];
+  elapsedTimeLabel?: string;
+  knownLeads?: KnownLeadRecap[];
 }
 
 /** A roll history entry: a committed turn paired with the roll it resolved. */

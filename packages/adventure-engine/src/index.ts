@@ -11,8 +11,15 @@ export * from "./scenario-state";
 export * from "./scenario-schemas";
 export * from "./scenario-migration";
 export * from "./scenario-collection";
+export * from "./cross-scenario-causality";
 export * from "./world-time";
+export * from "./manual-world-time";
 export * from "./world-entry-pacing";
+export * from "./scene-pacing";
 export * from "./contextual-rumours";
 
 export * from "./grounding";
+export * from "./places";
+export * from "./prompt-state";
+export * from "./story-summary";
+export * from "./place-names";

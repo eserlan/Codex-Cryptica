@@ -1,9 +1,17 @@
+import {
+  genreForTheme,
+  worldStyleForTheme,
+} from "#lib/services/adventure/world-style.js";
+import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
 import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
 import { AdventureScenarios } from "./adventure-scenarios";
+import { AdventurePlaceLinker } from "./adventure-places";
+import { AdventureSummarizer } from "./adventure-summary";
+import { turnErrorCopy } from "./adventure-turn-retry";
 
 /** Shared generation lifetime and persistence boundary for all workflows. */
 export class AdventureRuntime {
@@ -11,15 +19,23 @@ export class AdventureRuntime {
   generationController: AbortController | null = null;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
+  readonly summarizer: AdventureSummarizer;
+  readonly placeLinker: AdventurePlaceLinker;
   constructor(
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
   ) {
-    const grounding = new AdventureGroundingService(deps.context, (session) =>
-      this.verifySession(session),
+    const grounding = new AdventureGroundingService(
+      deps.context,
+      (session) => this.verifySession(session),
+      () => worldStyleForTheme(themeStore.worldThemeId),
     );
     deps.generation = grounding.wrap(deps.generation);
-    this.background = new AdventureBackground(deps.idGenerator, grounding);
+    this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
+      genreForTheme(themeStore.worldThemeId),
+    );
+    this.summarizer = new AdventureSummarizer(state, deps);
+    this.placeLinker = new AdventurePlaceLinker(deps);
     this.scenarios = new AdventureScenarios(state, deps, (session) =>
       this.verifySession(session),
     );
@@ -81,6 +97,7 @@ export class AdventureRuntime {
     previous: AdventureSession,
     next: AdventureSession,
   ): Promise<AdventureSession> {
+    const summaryLifecycle = this.summarizer.lifecycleToken();
     await this.verifySession(previous);
     const saved = await this.deps.repository.save(previous.revision, next);
     if (!saved.ok) throw saved.error;
@@ -98,6 +115,8 @@ export class AdventureRuntime {
         .clearGenerationInteraction(saved.session.id)
         .catch(() => {});
     }
+    // Fold older turns into the story notes while the player reads.
+    this.summarizer.schedule(saved.session, summaryLifecycle);
     return saved.session;
   }
 
@@ -127,7 +146,7 @@ export class AdventureRuntime {
     const cancelled =
       (cause instanceof DOMException && cause.name === "AbortError") ||
       message === "cancelled";
-    this.state.errorMessage = message;
+    this.state.errorMessage = turnErrorCopy(cause, message);
     this.state.phase =
       retryPhase === "ready" && message === "offline"
         ? "offline"

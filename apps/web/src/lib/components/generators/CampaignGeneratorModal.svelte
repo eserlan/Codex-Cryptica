@@ -2,13 +2,19 @@
   import { CampaignGeneration } from "./campaign-generation.svelte.js";
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
-  import { selectRumourForPlay } from "generator-engine";
+  import { page } from "$app/state";
+  import {
+    selectRumourForPlay,
+    type SelectedAdventureForPlay,
+  } from "generator-engine";
   import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
   import {
     rumourAdventureHandoff,
     buildRumourScenario,
+    buildReadyAdventureScenario,
   } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
   import RumourPlayActions from "./RumourPlayActions.svelte";
+  import AdventurePlayAction from "./AdventurePlayAction.svelte";
   import {
     campaignGeneratorSaver,
     type CampaignSaveOptions,
@@ -55,10 +61,12 @@
   import { soloSessionStore } from "#lib/stores/solo-session-instance.js";
 
   // Generators whose output is a plot the player will go on to play. During a
-  // solo session these open with the spoilers hidden.
+  // solo session or from the Adventure surface these open with the spoilers hidden.
   const SPOILER_SHIELDED_GENERATORS = new Set(["adventure", "point-crawl"]);
+  const isAdventureRoute = $derived(page.url.pathname.includes("/adventure"));
   const shouldShieldSpoilers = (id?: string | null) =>
-    soloSessionStore.isActive && SPOILER_SHIELDED_GENERATORS.has(id ?? "");
+    (soloSessionStore.isActive || isAdventureRoute) &&
+    SPOILER_SHIELDED_GENERATORS.has(id ?? "");
 
   const workflow = $derived(modalUIStore.generatorWorkflow);
   const singleQuestHook = $derived(findSingleQuestHook(vault.entities));
@@ -173,10 +181,15 @@
     modalUIStore.openIntentGeneratorWorkflow("npc", null, context);
   }
 
-  // Returning from a cancelled rumour start: show the same batch again.
+  // Returning from a cancelled rumour or adventure start: show the same draft again.
   $effect(() => {
     const vaultId = oracle.vault.activeVaultId;
-    if (!vaultId || workflow.generatorId !== "rumour") return;
+    if (
+      !vaultId ||
+      (workflow.generatorId !== "rumour" &&
+        workflow.generatorId !== "adventure")
+    )
+      return;
     const kept = rumourAdventureHandoff.takeSourceDraft(vaultId);
     if (kept) generation.restoreDraft(kept);
   });
@@ -212,6 +225,32 @@
       selected,
       buildRumourScenario(selected, systemIdGenerator.uuid()),
       // Kept in memory so cancelling the start can return to this batch.
+      $state.snapshot(draft),
+    );
+    try {
+      await goto(resolve("/(app)/adventure"));
+      close({ preserveSession: true });
+    } catch (cause) {
+      rumourAdventureHandoff.clear();
+      throw cause;
+    }
+  }
+
+  async function playGeneratedAdventure(
+    selected: SelectedAdventureForPlay,
+  ): Promise<void> {
+    const draft = generation.draft;
+    const vaultId = oracle.vault.activeVaultId;
+    if (!draft || draft.sourceGeneratorId !== "adventure") {
+      throw new Error("missing-adventure-draft");
+    }
+    if (!vaultId || vault.isGuest) throw new Error("oracle-unavailable");
+    if (discoveryPolicyStore.aiDisabled) throw new Error("ai-disabled");
+
+    rumourAdventureHandoff.prepareAdventure(
+      vaultId,
+      selected,
+      buildReadyAdventureScenario(selected, systemIdGenerator.uuid()),
       $state.snapshot(draft),
     );
     try {
@@ -416,6 +455,13 @@
           aiDisabled={discoveryPolicyStore.aiDisabled}
           disabled={generation.stage === "saving"}
           onplay={playGeneratedRumour}
+        />
+      {:else if generation.draft.sourceGeneratorId === "adventure" && !vault.isGuest}
+        <AdventurePlayAction
+          draft={generation.draft}
+          aiDisabled={discoveryPolicyStore.aiDisabled}
+          disabled={generation.stage === "saving"}
+          onplay={playGeneratedAdventure}
         />
       {/if}
     {:else if generation.stage === "error"}

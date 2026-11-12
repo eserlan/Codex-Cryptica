@@ -569,4 +569,63 @@ describe("CampaignGeneratorModal", () => {
       }
     });
   });
+
+  describe("ready-made adventure play", () => {
+    async function adventureDraft() {
+      const { generateAdventureLocal } =
+        await vi.importActual<typeof import("generator-engine")>(
+          "generator-engine",
+        );
+      let seed = 42;
+      const output = generateAdventureLocal({ themeId: "fantasy" }, () => {
+        seed = (seed * 1664525 + 1013904223) >>> 0;
+        return seed / 0x100000000;
+      });
+      return {
+        title: output.title,
+        summary: output.summary ?? "",
+        content: output.content,
+        lore: output.lore,
+        labels: ["adventure"],
+        entityType: "note",
+        sourceGeneratorId: "adventure" as const,
+        templateApplied: false,
+      };
+    }
+
+    it("renders adventure-play-action when reviewing an adventure draft", async () => {
+      store._workflow.generatorId = "adventure";
+      Object.assign(draftOverrides, await adventureDraft());
+      render(CampaignGeneratorModal);
+      await fireEvent.click(screen.getByRole("button", { name: "Generate" }));
+
+      expect(await screen.findByTestId("adventure-play-action")).toBeTruthy();
+      expect(screen.getByTestId("play-generated-adventure")).toBeTruthy();
+    });
+
+    it("reopens on the kept adventure draft after a cancelled start", async () => {
+      const { rumourAdventureHandoff } =
+        await import("#lib/stores/oracle/rumour-adventure-handoff.svelte.js");
+      (vaultMock as any).activeVaultId = "vault-1";
+      try {
+        const kept = await adventureDraft();
+        rumourAdventureHandoff.prepareAdventure(
+          "vault-1",
+          { playerVisible: { title: kept.title } } as any,
+          {} as any,
+          kept,
+        );
+        expect(rumourAdventureHandoff.cancel("vault-1")).toBe(true);
+        store._workflow.generatorId = "adventure";
+
+        render(CampaignGeneratorModal);
+        expect(await screen.findByTestId("adventure-play-action")).toBeTruthy();
+        expect(screen.getByDisplayValue(kept.title)).toBeTruthy();
+        expect(rumourAdventureHandoff.takeSourceDraft("vault-1")).toBeNull();
+      } finally {
+        delete (vaultMock as any).activeVaultId;
+        rumourAdventureHandoff.clear();
+      }
+    });
+  });
 });

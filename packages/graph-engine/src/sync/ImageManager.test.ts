@@ -434,6 +434,35 @@ describe("GraphImageManager", () => {
       expect(silhouette).not.toHaveBeenCalled();
     });
 
+    it("reports resolve duration from the injected measurement clock", async () => {
+      const node = makeNode("timed");
+      const onLog = vi.fn();
+      const measureNow = vi
+        .fn()
+        .mockReturnValueOnce(10)
+        .mockReturnValueOnce(22.34);
+      const manager = new GraphImageManager(
+        graphOf([node]) as any,
+        undefined,
+        measureNow,
+      );
+
+      manager.sync({
+        showImages: true,
+        resolveImageUrl: vi.fn().mockResolvedValue("blob:ready"),
+        releaseImageUrl: vi.fn(),
+        onLog,
+      });
+      await until(() =>
+        onLog.mock.calls.some(([message]) => message.includes("Resolved 1")),
+      );
+
+      expect(onLog).toHaveBeenCalledWith(
+        "[GraphImageManager] Resolved 1 node visuals in 12.34ms",
+      );
+      expect(measureNow).toHaveBeenCalledTimes(2);
+    });
+
     it("holds a failure fallback stable until retry time, then retries", async () => {
       const node = makeNode("failed");
       const cy = graphOf([node]);

@@ -342,6 +342,11 @@ export {
   type RumourSelectionInput,
 } from "./rumour-play-selection";
 export {
+  selectAdventureForPlay,
+  AdventureSelectionError,
+  type SelectedAdventureForPlay,
+} from "./adventure-play-selection";
+export {
   buildRumourPrompt,
   parseRumourResponse,
   generateRumourLocal,

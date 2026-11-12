@@ -96,6 +96,13 @@ test.describe("Tools pages show an example draft on load", () => {
     test(`${path} lands on its example, not a spinner`, async ({ page }) => {
       await page.goto(path);
 
+      if (path === "/tools/fantasy-name-generator") {
+        await page
+          .locator("summary")
+          .filter({ hasText: "See example names with notes" })
+          .click();
+      }
+
       // The deterministic guard. An on-mount generation produces a random
       // title; the fixture's is fixed. So the exact title is the assertion
       // that actually catches the regression, verified by detaching the quest

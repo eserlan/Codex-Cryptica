@@ -77,16 +77,15 @@ async function solveInvisibleChallenge(
 
   const turnstile = await loadTurnstile();
   const container = document.createElement("div");
-  container.setAttribute("aria-hidden", "true");
+  // Managed widgets must remain accessible if verification needs interaction.
   document.body.appendChild(container);
 
   return new Promise((resolve, reject) => {
     let widgetId = "";
     const cleanup = () => {
-      if (widgetId) turnstile.remove(widgetId);
-      // Defers removal to the next microtask/tick to prevent racing Turnstile's
-      // internal error recovery/reset logic on the container element.
+      // Leave the widget intact until Turnstile finishes handling its callback.
       setTimeout(() => {
+        if (widgetId) turnstile.remove(widgetId);
         container.remove();
       }, 0);
     };
@@ -114,7 +113,14 @@ async function solveInvisibleChallenge(
         cleanup();
         resolve(token);
       },
-      "error-callback": (err: unknown) => fail("failed")(err),
+      "error-callback": (err: unknown) => {
+        // Challenge failures can recover through Turnstile's automatic retry.
+        // Rejecting/removing on the first failure prevents that recovery and
+        // leaves subsequent AI calls without a capability token.
+        if (/^(300|600)/.test(String(err))) return false;
+        fail("failed")(err);
+        return true;
+      },
       "expired-callback": () => fail("expired")(),
     });
     turnstile.execute(widgetId);

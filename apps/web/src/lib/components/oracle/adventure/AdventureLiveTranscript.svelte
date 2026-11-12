@@ -41,12 +41,17 @@
     {/each}
   {/if}
   {#if manager.phase === "generating" && manager.streamedNarration}
-    <div class="space-y-2" data-testid="adventure-stream-preview">
-      <p class="text-xs text-theme-text">Oracle is writing…</p>
-      <p class="whitespace-pre-wrap text-sm leading-relaxed text-theme-text">
-        {manager.streamedNarration}
-      </p>
-    </div>
+    <!-- Same component as a committed turn, so committing swaps content in
+         place instead of re-flowing the page (type size, "You" bubble). -->
+    <span class="sr-only">Oracle is writing…</span>
+    <AdventureNarrativeTurn
+      testId="adventure-stream-preview"
+      turn={{
+        playerAction:
+          manager.session?.pendingRoll?.playerAction ?? manager.draft ?? "",
+        narration: manager.streamedNarration,
+      }}
+    />
   {:else if manager.phase === "generating"}
     <div
       class="flex items-center gap-2 text-sm text-theme-text"

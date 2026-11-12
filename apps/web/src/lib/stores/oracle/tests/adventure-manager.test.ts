@@ -177,16 +177,71 @@ describe("AdventureManager", () => {
       .mockResolvedValueOnce({ ok: false, reason: "held" })
       .mockResolvedValueOnce({ ok: true, lease });
 
-    expect(await manager.tryTakeControl()).toBe(false);
-    expect(manager.readOnly).toBe(true);
-    expect(manager.session?.turns).toHaveLength(1);
-
-    expect(await manager.tryTakeControl()).toBe(true);
+    // One click: the lapsed holder is waited out instead of failing first.
+    vi.useFakeTimers();
+    const retry = manager.tryTakeControl();
+    await vi.advanceTimersByTimeAsync(1_000);
+    expect(await retry).toBe(true);
+    vi.useRealTimers();
     expect(manager.readOnly).toBe(false);
     expect(manager.lease).toMatchObject({ ownerId: "new-owner" });
     expect(manager.session?.turns).toHaveLength(1);
     expect(manager.draft).toBe("Ask about the shutter");
     expect(deps.authority.acquire).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps waiting for a live holder, then gives up once after the lease window", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    manager.readOnly = true;
+    manager.lease = null;
+    deps.authority.acquire = vi
+      .fn()
+      .mockResolvedValue({ ok: false, reason: "held" });
+    vi.useFakeTimers();
+    try {
+      const retry = manager.tryTakeControl();
+      await vi.advanceTimersByTimeAsync(12_000);
+      expect(await retry).toBe(false);
+      expect(manager.readOnly).toBe(true);
+      const calls = deps.authority.acquire.mock.calls.length;
+      expect(calls).toBeGreaterThan(5);
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(deps.authority.acquire).toHaveBeenCalledTimes(calls);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not wait when read-only for a reason a lease cannot fix", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Road",
+      premise: "Find the road",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+    });
+    manager.readOnly = true;
+    manager.lease = null;
+    manager.session = { ...manager.session!, status: "archived" } as any;
+    deps.authority.acquire = vi.fn();
+    expect(await manager.tryTakeControl()).toBe(false);
+    expect(deps.authority.acquire).not.toHaveBeenCalled();
   });
 
   it("reloads the session after acquiring a retry lease", async () => {
@@ -1138,6 +1193,7 @@ describe("AdventureManager Phase 2 tools", () => {
       playerVisible: { rumour: "A rumour", lead: "A lead" },
       gmOnly: { truth },
       status: "open" as const,
+      stage: "hearsay" as const,
       events: [],
     });
 

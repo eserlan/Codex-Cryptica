@@ -1,11 +1,13 @@
 <script lang="ts">
   let {
     onDiscover,
+    onSurpriseMe,
     onOwnPremise,
     onEnterWorld = () => {},
     canDiscover = true,
   }: {
     onDiscover: () => void;
+    onSurpriseMe?: () => void;
     onOwnPremise: () => void;
     onEnterWorld?: () => void;
     canDiscover?: boolean;
@@ -33,7 +35,7 @@
     </p>
   </header>
 
-  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+  <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
     <button
       type="button"
       data-testid="adventure-discover"
@@ -69,6 +71,39 @@
 
     <button
       type="button"
+      data-testid="adventure-surprise-me"
+      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-primary/40 bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+      disabled={!canDiscover}
+      onclick={() => {
+        if (canDiscover && onSurpriseMe) onSurpriseMe();
+      }}
+      aria-describedby="adventure-surprise-me-description"
+    >
+      <span
+        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text"
+        aria-hidden="true"
+      >
+        <span class="icon-[lucide--wand-sparkles] h-5 w-5"></span>
+      </span>
+      <span class="font-header text-base font-semibold text-theme-text">
+        Surprise Me with an Adventure
+      </span>
+      <span
+        id="adventure-surprise-me-description"
+        class="text-sm leading-relaxed text-theme-text"
+      >
+        Generate a ready-to-play adventure with structured locations, threats,
+        and hidden GM secrets, then jump straight into play.
+      </span>
+      {#if !canDiscover}
+        <span class="text-xs text-theme-text">
+          Open a fully loaded Vault to generate an adventure.
+        </span>
+      {/if}
+    </button>
+
+    <button
+      type="button"
       data-testid="adventure-own-premise"
       class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       onclick={onOwnPremise}
@@ -94,7 +129,7 @@
 
     <button
       type="button"
-      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:col-span-2 xl:col-span-1"
+      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       data-testid="adventure-enter-world"
       onclick={onEnterWorld}
       aria-describedby="adventure-world-description"

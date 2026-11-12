@@ -1,4 +1,8 @@
-import { applyCompletedTurn, applyRollRequest } from "@codex/adventure-engine";
+import {
+  applyCompletedTurn,
+  applyRollRequest,
+  seedPlaces,
+} from "@codex/adventure-engine";
 import type { CommitMetadata } from "@codex/adventure-engine";
 import { diceParser } from "dice-engine";
 import type {
@@ -26,7 +30,7 @@ export function initialSession(input: {
   now: string;
   idGenerator: () => string;
 }): AdventureSession {
-  return {
+  const session: AdventureSession = {
     schemaVersion: 3,
     id: input.idGenerator(),
     vaultId: input.vaultId,
@@ -68,11 +72,14 @@ export function initialSession(input: {
     visibleState: initialVisibleState(input.worldEntry, input.idGenerator),
     hiddenState: initialHiddenState(input.scenarioSeed, input.idGenerator),
     provisionalFacts: [],
+    dismissedProvisionalFactIds: [],
     turns: [],
     pendingRoll: null,
     dicePresets: [],
     resourceCounters: [],
   };
+  // Last, so the ids drawn for everything else keep their order.
+  return { ...session, ...seedPlaces(session, input.idGenerator) };
 }
 
 export function validateRollExpression(proposal: {
