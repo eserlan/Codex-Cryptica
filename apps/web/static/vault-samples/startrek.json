@@ -13,6 +13,7 @@
         }
       ],
       "content": "Captain of the USS Enterprise-D. Known for his tactical brilliance and diplomatic skills.",
+      "lore": "Picard still has nightmares of his assimilation and has told no one how often. He keeps a sealed Starfleet report on what he remembers of the Collective.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-npc.png",
       "_path": ["personnel", "jean-luc-picard.md"],
       "lastModified": 1700000000000
@@ -24,6 +25,7 @@
       "tags": ["starship", "galaxy-class", "federation"],
       "connections": [],
       "content": "The flagship of the United Federation of Planets. A Galaxy-class starship designed for exploration and defense.",
+      "lore": "The saucer section has a classified bay on Deck 29. It holds equipment Starfleet Command has not told the crew about.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-location.png",
       "_path": ["ships", "uss-enterprise-d.md"],
       "lastModified": 1700000000000
@@ -35,6 +37,7 @@
       "tags": ["interstellar", "democratic", "alliance"],
       "connections": [],
       "content": "An interstellar union of planetary governments that agree to exist semi-autonomously under a single central government.",
+      "lore": "A faction in the Federation Council is quietly arguing to hold back help from a struggling member world. It will become public within the month.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-faction.png",
       "_path": ["factions", "federation.md"],
       "lastModified": 1700000000000
@@ -46,6 +49,7 @@
       "tags": ["cybernetic", "hive-mind", "adversary"],
       "connections": [],
       "content": "A pseudo-species of cybernetic organisms that assimilate other species into their hive mind.",
+      "lore": "A single Borg drone is still active on the ship's lower decks, cut off from the Collective. It is trying to decide whether to call for help.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-creature.png",
       "_path": ["adversaries", "borg.md"],
       "lastModified": 1700000000000

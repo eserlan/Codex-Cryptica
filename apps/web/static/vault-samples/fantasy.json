@@ -7,6 +7,7 @@
       "tags": ["hub", "city", "safe-zone"],
       "connections": [],
       "content": "The most popular tavern in the Lower District. Known for its bitter ale and loud patrons.",
+      "lore": "The barkeep sells information to the Gilded Hand. The cellar has a locked door the staff say leads to a storeroom, but it is the way into the old sewers.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-tavern.png",
       "_path": ["locations", "black-iron-tavern.md"],
       "lastModified": 1700000000000
@@ -29,6 +30,7 @@
         }
       ],
       "content": "An elderly mage who knows more than he lets on. He spends most of his time reading dusty scrolls.\n\nHe is currently investigating the [[The Missing Heirloom]].",
+      "lore": "Eldrin has already found the ring. He is hiding it because it is cursed, and he is searching for who will come for it.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-mage.png",
       "_path": ["npcs", "eldrin-the-wise.md"],
       "lastModified": 1700000000000
@@ -46,6 +48,7 @@
         }
       ],
       "content": "A highly disciplined guard captain with a scar across her left eye. She has no patience for tavern brawls.",
+      "lore": "Vaelen's scar came from the Gilded Hand, not a fight. She is investigating them privately and will not trust anyone who drinks with their agents.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-npc2.png",
       "_path": ["npcs", "vaelen-the-stern.md"],
       "lastModified": 1700000000000
@@ -63,6 +66,7 @@
         }
       ],
       "content": "The most powerful merchant guild in the realm. They control the flow of gold and secrets.",
+      "lore": "The guild is behind the missing ring. It was stolen to blackmail the Mayor over a debt nobody knows he owes.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-faction.png",
       "_path": ["factions", "gilded-hand.md"],
       "lastModified": 1700000000000
@@ -80,6 +84,7 @@
         }
       ],
       "content": "A massive beast whose scales are indistinguishable from moss and leaves. It protects the heart of the woods.",
+      "lore": "The dragon is not guarding the forest, it is guarding an egg. It will treat any attempt to hunt it as an attack on its young.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-creature.png",
       "_path": ["creatures", "forest-dragon.md"],
       "lastModified": 1700000000000
@@ -97,6 +102,7 @@
         }
       ],
       "content": "An ancient text predicting a time when the stars will fall and the heavens will break apart.",
+      "lore": "The prophecy was altered in later copies. The original text says the sky breaks only if someone chooses to break it.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-note.png",
       "_path": ["notes", "sky-prophecy.md"],
       "lastModified": 1700000000000
@@ -114,6 +120,7 @@
         }
       ],
       "content": "A valuable family ring has gone missing from the Mayor's estate.\n\nRumor has it that someone from the [[Black Iron Tavern]] was seen near the estate that night.",
+      "lore": "The ring is a key to the Mayor's vault. The thief wanted the key and the ring was nothing to them.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-tavern.png",
       "_path": ["events", "the-missing-heirloom.md"],
       "lastModified": 1700000000000

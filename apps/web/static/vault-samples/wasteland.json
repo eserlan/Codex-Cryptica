@@ -7,6 +7,7 @@
       "tags": ["fort", "rust", "survivors"],
       "connections": [],
       "content": "A makeshift citadel built from airplane wings and shipping containers. It stands as a bastion of order in the lawless wastes.",
+      "lore": "The fortress water is running low. Mama Rust has hidden the real number so that the council does not panic.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-fort.png",
       "_path": ["locations", "scrap-fortress.md"],
       "lastModified": 1700000000000
@@ -29,6 +30,7 @@
         }
       ],
       "content": "A seasoned survivalist who knows every inch of the Deadlands. Jax can find water in a stone and scrap in a graveyard.\n\nJax is leading the search for a solution to [[The Great Drought]].",
+      "lore": "Jax has already seen the Hidden Vault and walked away. The door was open and the supplies were gone, and Jax is afraid of who took them.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-hero.png",
       "_path": ["npcs", "scavenger-jax.md"],
       "lastModified": 1700000000000
@@ -46,6 +48,7 @@
         }
       ],
       "content": "An elderly mechanic who can fix anything with a piece of wire and a hammer. She maintains the fortress's generator.",
+      "lore": "The generator is failing and Mama Rust cannot fix it with the parts she has. She is stripping the fortress's defences to keep it running.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-npc2.png",
       "_path": ["npcs", "mama-rust.md"],
       "lastModified": 1700000000000
@@ -63,6 +66,7 @@
         }
       ],
       "content": "A brutal gang of scavengers who prey on the weak. They value strength and gasoline above all else.",
+      "lore": "The raiders' leader has a deal with someone inside the fortress. The next attack will come from the inside gate.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-faction.png",
       "_path": ["factions", "dust-raiders.md"],
       "lastModified": 1700000000000
@@ -80,6 +84,7 @@
         }
       ],
       "content": "A house-sized scorpion with a glowing green stinger. Its venom is highly prized but extremely difficult to extract.",
+      "lore": "The glowing stinger is bioluminescent bait. The real danger is the nest of young sting-pups waiting beneath the dune.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-creature.png",
       "_path": ["creatures", "sand-stinger.md"],
       "lastModified": 1700000000000
@@ -97,6 +102,7 @@
         }
       ],
       "content": "A tattered piece of leather with hand-drawn landmarks leading to a legendary pre-war bunker filled with supplies.",
+      "lore": "The map is a forgery with one correct landmark. The real vault is a day's walk in the opposite direction.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-note.png",
       "_path": ["notes", "hidden-vault-map.md"],
       "lastModified": 1700000000000
@@ -114,6 +120,7 @@
         }
       ],
       "content": "A catastrophic lack of rainfall that has lasted for three years, drying up the last remaining oases in the sector.",
+      "lore": "The oases did not dry up on their own. Someone is diverting the water north, and the pipes lead to a secret reservoir.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/wasteland-fort.png",
       "_path": ["events", "the-great-drought.md"],
       "lastModified": 1700000000000
