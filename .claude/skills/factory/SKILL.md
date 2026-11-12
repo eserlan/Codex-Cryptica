@@ -169,7 +169,7 @@ A job is finished for this run when it reaches `merged`, `rejected`,
 3. Each time a job finishes, run `factory/bin/job queue` again and start its
    `resume` lines you aren't already running and its `new` lines.
 4. When nothing is queued or running, print `factory/bin/job summary <ids>`
-   for the jobs this run touched, then list what waits on a human: PRs to
+   and `factory/bin/job costs <ids>` for the jobs this run touched, then list what waits on a human: PRs to
    review (merge one to approve it, or give feedback with `/factory`) and
    questions waiting on authors.
 
@@ -199,7 +199,8 @@ scripts. When it isn't clear which job they mean, or whether it's feedback or a
 new feature, ask.
 
 - **A question** (status, cost, why a job escalated, what a reviewer said):
-  answer from `factory/bin/job summary`, `job.json` and the job's files. Here
+  answer from `factory/bin/job summary`, `factory/bin/job costs` (cost by
+  agent and model), `job.json` and the job's files. Here
   you may read a file in full when the answer is in it.
 - **What needs them**: run `factory/bin/job queue`. For each `wait` line, say
   what the job is waiting for: the question in `decision.md` for `needs-human`,
