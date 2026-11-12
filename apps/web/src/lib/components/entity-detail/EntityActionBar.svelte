@@ -19,10 +19,7 @@
       title={action.label}
       data-testid={action.testId}
       data-help-target={action.helpTarget}
-      class="touch-target flex items-center justify-center gap-1.5 rounded px-2 py-1 text-sm transition hover:bg-theme-primary/10 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-theme-primary disabled:opacity-50 {action.state ===
-      'done'
-        ? 'text-theme-primary'
-        : 'text-theme-text'}"
+      class="touch-target flex items-center justify-center gap-1.5 rounded px-2 py-1 text-sm transition hover:bg-theme-primary/10 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-theme-primary disabled:opacity-50 text-theme-text"
     >
       <span aria-hidden="true" class="{action.icon} h-5 w-5 shrink-0"></span>
       <span class={action.id === "edit" ? "" : "@max-[300px]:hidden"}
