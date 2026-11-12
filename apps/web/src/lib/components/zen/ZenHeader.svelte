@@ -17,10 +17,7 @@
   import { guestVault } from "#lib/stores/guest-vault.svelte.js";
   import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
   import EntityActionBar from "#lib/components/entity-detail/EntityActionBar.svelte";
-  import {
-    createEntityActions,
-    type EntityAction,
-  } from "#lib/components/entity-detail/entity-actions.svelte.js";
+  import { createEntityActions } from "#lib/components/entity-detail/entity-actions.svelte.js";
   import SaveStatusIndicator from "#lib/components/ui/SaveStatusIndicator.svelte";
   import { entityToHandoffSource } from "#lib/services/seo/monsterlabs-handoff.js";
   import { createMonsterLabsHandoffFlow } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
@@ -129,43 +126,11 @@
     monsterlabs: "zen-send-to-monsterlabs-button",
   };
 
-  const zenOnlyActions = $derived.by((): EntityAction[] => {
-    const extra: EntityAction[] = [
-      {
-        id: "copy-content",
-        label: "Copy content",
-        icon: isCopied ? "icon-[lucide--check]" : "icon-[lucide--copy]",
-        run: async () => onCopy(),
-        placement: "menu",
-        tone: "default",
-        testId: "zen-copy-content-button",
-        state: isCopied ? "done" : undefined,
-      },
-    ];
-    if (onPopOut) {
-      extra.push({
-        id: "pop-out",
-        label: "Open in new tab",
-        icon: "icon-[lucide--square-arrow-out-up-right]",
-        run: async () => onPopOut(),
-        placement: "menu",
-        tone: "default",
-        testId: "zen-pop-out-button",
-      });
-    }
-    return extra;
-  });
-
-  const zenActions = $derived.by(() => {
-    const shared = entityActions.actions
+  const zenActions = $derived(
+    entityActions.actions
       .filter((a) => a.id !== "expand")
-      .map((a) => ({ ...a, testId: zenTestIds[a.id] ?? a.testId }));
-    // Delete stays last, set apart from the rest.
-    const last = shared.at(-1);
-    return last?.tone === "danger"
-      ? [...shared.slice(0, -1), ...zenOnlyActions, last]
-      : [...shared, ...zenOnlyActions];
-  });
+      .map((a) => ({ ...a, testId: zenTestIds[a.id] ?? a.testId })),
+  );
 </script>
 
 <header
@@ -309,6 +274,21 @@
     <div class="flex items-center gap-1.5 md:gap-3 shrink-0 ml-auto">
       {#if !editState.isEditing}
         <EntityActionBar actions={zenActions} />
+        <button
+          type="button"
+          onclick={onCopy}
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+          title={isCopied ? "Content copied!" : "Copy content"}
+          aria-label="Copy content"
+          data-testid="zen-copy-content-button"
+        >
+          <span
+            aria-hidden="true"
+            class="{isCopied
+              ? 'icon-[lucide--check] text-theme-primary'
+              : 'icon-[lucide--copy]'} w-4 h-4"
+          ></span>
+        </button>
       {/if}
 
       {#if !editState.isEditing && entity?.kind === "report" && !vault.isGuest}
@@ -364,6 +344,22 @@
             <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"></span>
             <span class="hidden sm:inline">SAVE</span>
           {/if}
+        </button>
+      {/if}
+
+      {#if onPopOut && !editState.isEditing}
+        <button
+          type="button"
+          onclick={onPopOut}
+          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
+          title="Open in new tab"
+          aria-label="Open in new tab"
+          data-testid="zen-pop-out-button"
+        >
+          <span
+            aria-hidden="true"
+            class="icon-[lucide--square-arrow-out-up-right] w-4 h-4"
+          ></span>
         </button>
       {/if}
 
