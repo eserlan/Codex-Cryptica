@@ -11,6 +11,7 @@
     type EntityDetailTab,
     getTemporalLabel,
   } from "./detail-tabs";
+  import { entityDetailTabLabels } from "./detail-tab-labels";
   import CategoryRadioGroup from "#lib/components/labels/CategoryRadioGroup.svelte";
   import HelpEntityDetailSurface from "#lib/components/help-assistant/HelpEntityDetailSurface.svelte";
 
@@ -159,7 +160,7 @@
     role="tablist"
     aria-label="Entity detail sections"
     tabindex="0"
-    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-micro font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-sm font-bold text-theme-muted border-b border-theme-border pb-2 font-body"
     style:border-color={isFantasyTheme
       ? "var(--theme-selected-border)"
       : undefined}
@@ -191,7 +192,7 @@
         ? "var(--theme-focus-bg)"
         : undefined}
       onclick={() => (activeTab = "status")}
-      >{themeStore.jargon.tab_status.toUpperCase()}</button
+      >{entityDetailTabLabels.status}</button
     >
     <button
       id={tabIds.connections}
@@ -218,7 +219,8 @@
       style:background-color={activeTab === "connections" && isFantasyTheme
         ? "var(--theme-focus-bg)"
         : undefined}
-      onclick={() => (activeTab = "connections")}>CONNECTIONS</button
+      onclick={() => (activeTab = "connections")}
+      >{entityDetailTabLabels.connections}</button
     >
 
     {#if !vault.isGuest || canGuestEdit}
@@ -248,7 +250,7 @@
           : undefined}
         onclick={() => {
           activeTab = "lore";
-        }}>{themeStore.jargon.tab_lore.toUpperCase()}</button
+        }}>{entityDetailTabLabels.lore}</button
       >
     {/if}
 
@@ -276,7 +278,7 @@
       style:background-color={activeTab === "map" && isFantasyTheme
         ? "var(--theme-focus-bg)"
         : undefined}
-      onclick={() => (activeTab = "map")}>MAP</button
+      onclick={() => (activeTab = "map")}>{entityDetailTabLabels.map}</button
     >
 
     {#if visibleTabs.includes("chats")}
@@ -304,7 +306,8 @@
         style:background-color={activeTab === "chats" && isFantasyTheme
           ? "var(--theme-focus-bg)"
           : undefined}
-        onclick={() => (activeTab = "chats")}>CHATS</button
+        onclick={() => (activeTab = "chats")}
+        >{entityDetailTabLabels.chats}</button
       >
     {/if}
 
@@ -333,7 +336,8 @@
         style:background-color={activeTab === "family" && isFantasyTheme
           ? "var(--theme-focus-bg)"
           : undefined}
-        onclick={() => (activeTab = "family")}>FAMILY</button
+        onclick={() => (activeTab = "family")}
+        >{entityDetailTabLabels.family}</button
       >
     {/if}
 
@@ -361,7 +365,8 @@
       style:background-color={activeTab === "stats" && isFantasyTheme
         ? "var(--theme-focus-bg)"
         : undefined}
-      onclick={() => (activeTab = "stats")}>STATS</button
+      onclick={() => (activeTab = "stats")}
+      >{entityDetailTabLabels.stats}</button
     >
 
     <button
@@ -388,7 +393,8 @@
       style:background-color={activeTab === "timeline" && isFantasyTheme
         ? "var(--theme-focus-bg)"
         : undefined}
-      onclick={() => (activeTab = "timeline")}>TIMELINE</button
+      onclick={() => (activeTab = "timeline")}
+      >{entityDetailTabLabels.timeline}</button
     >
   </div>
 </div>

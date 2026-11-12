@@ -17,6 +17,7 @@
   import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
   import DetailStatsTab from "./entity-detail/DetailStatsTab.svelte";
   import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
+  import EntityNotices from "./entity-detail/EntityNotices.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
@@ -358,7 +359,7 @@
 {#if entity && activeEntity}
   <aside
     transition:expandFrom
-    class="pointer-events-auto flex flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono absolute right-0 top-0 bottom-0 max-md:top-auto max-md:h-[calc(100%-60px)] z-50 overflow-hidden"
+    class="pointer-events-auto flex flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-body absolute right-0 top-0 bottom-0 max-md:top-auto max-md:h-[calc(100%-60px)] z-50 overflow-hidden"
     style:width={layoutUIStore.isMobile
       ? "100%"
       : `${layoutUIStore.rightSidebarWidth}px`}
@@ -397,13 +398,7 @@
             out:fade={{ duration: 150 }}
             class="col-start-1 row-start-1 flex flex-col w-full min-w-0 min-h-full"
           >
-            {#if sessionModeStore.isDemoMode}
-              <div
-                class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-nano font-bold text-theme-primary tracking-widest text-center animate-pulse"
-              >
-                TRANSIENT MODE: CHANGES WILL NOT BE SAVED
-              </div>
-            {/if}
+            <EntityNotices isDemoMode={sessionModeStore.isDemoMode} />
             {#if activeEntity.status === "draft" && !vault.isGuest}
               <div
                 class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"

@@ -201,16 +201,18 @@ least one failure, guest or cancellation path.
 
 ### Slice 1 — Type and words (smallest, most visible) ([#4739](https://github.com/eserlan/Codex-Cryptica/issues/4739))
 
-- [ ] **1.1 Tests** — `EntityDetailPanel`: root has no `font-mono`. `DetailTabs` and `ZenView`: labels are
+- [x] **1.1 Tests** — `EntityDetailPanel`: root has no `font-mono`. `DetailTabs` and `ZenView`: labels are
       "Overview", "Connections" and so on in a fantasy and a sci-fi theme. `DetailFooter`: reads "Save
       changes" and "Cancel" with `jargon.save` set to "Inscribe". Guest: no edit controls.
-- [ ] **1.2 Panel type** — remove `font-mono` from the `<aside>`; set `font-body`; keep `font-mono` only
+- [x] **1.2 Panel type** — remove `font-mono` from the `<aside>`; set `font-body`; keep `font-mono` only
       on dates and ids in `DetailTabs`, `DetailTimelineTab`, `DetailConnectionsTab`.
-- [ ] **1.3 Tab labels** — one shared label map for both views; sentence case, `text-sm`, no widened
+- [x] **1.3 Tab labels** — one shared label map for both views; sentence case, `text-sm`, no widened
       letter-spacing.
-- [ ] **1.4 Plain words** — footer, connections heading and buttons stop reading action jargon; sentence
+- [x] **1.4 Plain words** — footer, connections heading and buttons stop reading action jargon; sentence
       case on Generate buttons; business label by entity type.
-- [ ] **1.5 Notices** — add `EntityNotices`; "Demo: changes are not saved"; use it in both views.
+      Deferred: "Generate related" casing and the type-specific business label, because protected tests pin the
+      current text.
+- [x] **1.5 Notices** — add `EntityNotices`; "Demo: changes are not saved"; use it in both views.
 - [ ] **1.6 Verification gate.**
 
 ### Slice 2 — Shared actions ([#4740](https://github.com/eserlan/Codex-Cryptica/issues/4740))

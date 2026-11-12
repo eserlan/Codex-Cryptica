@@ -286,11 +286,11 @@
     >
       <h3
         class="font-header text-lg {isFantasyTheme
-          ? 'uppercase tracking-[0.16em] text-sm font-bold'
+          ? 'text-sm font-bold'
           : 'italic'}"
         style:color="var(--theme-section-title)"
       >
-        {themeStore.jargon.connections_header}
+        Connections
       </h3>
       {#if !vault.isGuest && !isAddingConnection}
         <button
