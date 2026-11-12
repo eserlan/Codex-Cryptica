@@ -32,14 +32,14 @@
     <div class="flex gap-2 w-full justify-end items-center">
       {#if isDirty}
         <span
-          class="text-nano text-theme-accent font-bold font-header animate-pulse mr-auto"
+          class="text-nano text-theme-text font-bold font-header animate-pulse mr-auto"
         >
           • Unsaved changes
         </span>
       {/if}
       <button
         onclick={onCancel}
-        class="text-theme-muted hover:text-theme-text text-xs font-bold px-4 py-2 rounded transition disabled:opacity-50"
+        class="text-theme-text text-xs font-bold px-4 py-2 rounded transition disabled:opacity-50"
         disabled={isSaving}
       >
         Cancel
@@ -81,7 +81,7 @@
       {#if !vault.isGuest || canGuestEdit}
         <button
           onclick={onStartEdit}
-          class="border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary text-xs font-bold px-4 py-2 rounded transition"
+          class="border border-theme-border text-theme-text hover:text-theme-primary hover:border-theme-primary text-xs font-bold px-4 py-2 rounded transition"
         >
           Edit
         </button>

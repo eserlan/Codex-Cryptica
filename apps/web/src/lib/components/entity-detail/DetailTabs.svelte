@@ -160,7 +160,7 @@
     role="tablist"
     aria-label="Entity detail sections"
     tabindex="0"
-    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-sm font-bold text-theme-muted border-b border-theme-border pb-2 font-body"
+    class="flex overflow-x-auto custom-scrollbar gap-x-4 md:gap-x-6 gap-y-2 text-sm font-bold text-theme-text border-b border-theme-border pb-2 font-body"
     style:border-color={isFantasyTheme
       ? "var(--theme-selected-border)"
       : undefined}
