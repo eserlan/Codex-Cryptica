@@ -287,7 +287,8 @@ def job_costs(job):
     `Job folder: <path>`, which ties a transcript to its job across sessions.
 
     Returns (total, by_agent). by_agent maps each agent type to its cost, the
-    number of transcripts (spawns), token counts and the models it ran on.
+    number of transcripts (spawns), model turns (assistant messages, which is
+    what drives cache reads), token counts and the models it ran on.
     """
     needle = f"Job folder: {job_dir(job['id'])}/"
     prices = CONFIG["prices_usd_per_mtok"]
@@ -304,7 +305,7 @@ def job_costs(job):
                 if entry.get("type") == "assistant" and isinstance(msg, dict) and msg.get("usage"):
                     usage_by_message[msg["id"]] = (msg["model"], msg["usage"])
         row = by_agent.setdefault(agent_type(path), {
-            "usd": 0.0, "spawns": 0, "input_tokens": 0, "output_tokens": 0,
+            "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
             "cache_read_tokens": 0, "models": []})
         row["spawns"] += 1
         for model, u in usage_by_message.values():
@@ -315,6 +316,7 @@ def job_costs(job):
             if model not in prices:
                 die(f"no price for model {model} in factory/config.json prices_usd_per_mtok")
             row["usd"] += message_usd(prices[model], u)
+            row["turns"] += 1
             row["input_tokens"] += u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
             row["output_tokens"] += u.get("output_tokens", 0)
             row["cache_read_tokens"] += u.get("cache_read_input_tokens", 0)
@@ -717,30 +719,41 @@ def tokens(n):
 def cmd_costs(args):
     """Cost per agent for each job, then per agent and model across the jobs."""
     jobs = [resolve(a) for a in args] if args else all_jobs()
-    header = ("agent", "models", "spawns", "input", "output", "cache read", "cost")
+    header = ("agent", "models", "spawns", "turns", "input", "output", "cache read", "tokens", "cost")
     totals = {}
     for j in jobs:
         sync(j)  # for display only; the orchestrator owns the saved state
         print(f"{j['id']}  round {j['round']}  {j['stage']}  ${j['cost_usd']:.2f}")
         rows = [header]
         for agent, r in j["cost_by_agent"].items():
+            turns = r.get("turns", 0)
+            all_tokens = r["input_tokens"] + r["output_tokens"] + r["cache_read_tokens"]
             rows.append((agent, ", ".join(short_model(m) for m in r["models"]) or "-", str(r["spawns"]),
-                         tokens(r["input_tokens"]), tokens(r["output_tokens"]),
-                         tokens(r["cache_read_tokens"]), f"${r['usd']:.2f}"))
+                         str(turns), tokens(r["input_tokens"]), tokens(r["output_tokens"]),
+                         tokens(r["cache_read_tokens"]), tokens(all_tokens), f"${r['usd']:.2f}"))
             key = (agent, ", ".join(short_model(m) for m in r["models"]) or "-")
-            t = totals.setdefault(key, {"usd": 0.0, "spawns": 0, "jobs": 0})
+            t = totals.setdefault(key, {"usd": 0.0, "spawns": 0, "jobs": 0, "turns": 0,
+                                        "output": 0, "tokens": 0})
             t["usd"] += r["usd"]
             t["spawns"] += r["spawns"]
             t["jobs"] += 1
+            t["turns"] += turns
+            t["output"] += r["output_tokens"]
+            t["tokens"] += all_tokens
         print_table(rows, indent="  ")
         print()
-    rows = [("agent", "models", "jobs", "spawns", "cost", "per job")]
+    rows = [("agent", "models", "jobs", "spawns", "turns/job", "output/job", "tokens/job",
+             "tokens", "cost", "cost/job")]
     for (agent, models), t in sorted(totals.items(), key=lambda kv: -kv[1]["usd"]):
-        rows.append((agent, models, str(t["jobs"]), str(t["spawns"]),
-                     f"${t['usd']:.2f}", f"${t['usd'] / t['jobs']:.2f}"))
+        n = t["jobs"]
+        rows.append((agent, models, str(n), str(t["spawns"]), f"{t['turns'] / n:.0f}",
+                     tokens(t["output"] / n), tokens(t["tokens"] / n), tokens(t["tokens"]),
+                     f"${t['usd']:.2f}", f"${t['usd'] / n:.2f}"))
     print(f"all {len(jobs)} jobs")
     print_table(rows, indent="  ")
-    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent, factory agents only)")
+    all_tokens = sum(t["tokens"] for t in totals.values())
+    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent), {tokens(all_tokens)} tokens, "
+          f"{sum(t['turns'] for t in totals.values())} turns (factory agents only)")
 
 
 def print_table(rows, indent=""):
