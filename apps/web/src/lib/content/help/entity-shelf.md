@@ -15,7 +15,7 @@ Built a monster you want in another campaign? A stash of magic items worth reusi
 
 Three ways in:
 
-- Open an entity and click **Send to Shelf** in its header
+- Open an entity and click **Send to Shelf** in the side panel's **More** menu or the Zen mode header
 - Select several entities in the **graph**, right-click, and choose **Send to Shelf**
 - Do the same from the **table**
 

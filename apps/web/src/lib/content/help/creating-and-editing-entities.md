@@ -42,7 +42,7 @@ Renaming changes the existing entity; it does not create a second entry.
 You can revise an entity’s **Chronicle and Lore** directly from its entity view.
 
 1. Open the entity in the side panel or **Zen Mode**.
-2. Click the sparkle button labelled **AI Revise Description**. In the side panel it is near the entity title; in Zen Mode it is in the editor toolbar.
+2. Click the sparkle button labelled **AI Revise Description**. In the side panel it is in the **More** menu next to the entity title; in Zen Mode it is in the editor toolbar.
 3. In **Revise Description**, optionally enter guidance in **AI Instructions / Corrections (Highest Priority)**. For example: “Keep the history, but explain their alliance more clearly.”
 4. Click **Revise**, or press **Ctrl + Enter** (Cmd + Enter on macOS).
 5. Review the generated Chronicle and Lore. Click **Apply Changes** to save, or **Discard** to keep the original.
@@ -58,7 +58,7 @@ sparkle button when you want the instructions dialog and inline draft review. AI
 
 ## Delete an entity
 
-Click **DELETE** at the bottom of the entity page and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
+Open **More** in the side panel header, choose **Delete**, and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
 
 ## Guest vaults
 

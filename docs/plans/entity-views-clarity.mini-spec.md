@@ -217,18 +217,20 @@ least one failure, guest or cancellation path.
 
 ### Slice 2 — Shared actions ([#4740](https://github.com/eserlan/Codex-Cryptica/issues/4740))
 
-- [ ] **2.1 Tests** — `entity-actions`: owner on graph gets Edit, Find in graph, Expand as primary; guest
+- [x] **2.1 Tests** — `entity-actions`: owner on graph gets Edit, Find in graph, Expand as primary; guest
       gets no Edit, Delete or Shelf; character gets Chat only when guest chat is enabled; delve location
       gets the canvas action; delete has tone `danger`. Failure: a `run` that rejects surfaces an error.
-- [ ] **2.2 Action model** — `entity-actions.svelte.ts`, moving the visibility rules out of both headers.
-- [ ] **2.3 Menu** — `EntityActionMenu.svelte` with keyboard tests: arrows, Escape returns focus, click
+- [x] **2.2 Action model** — `entity-actions.svelte.ts`, moving the visibility rules out of both headers.
+- [x] **2.3 Menu** — `EntityActionMenu.svelte` with keyboard tests: arrows, Escape returns focus, click
       outside closes.
-- [ ] **2.4 Bar** — `EntityActionBar.svelte`; narrow-width fallback to icons.
-- [ ] **2.5 Wire the panel** — `DetailHeader` uses the bar; update `DetailHeader.test.ts`.
+- [x] **2.4 Bar** — `EntityActionBar.svelte`; narrow-width fallback to icons.
+- [x] **2.5 Wire the panel** — `DetailHeader` uses the bar; update `DetailHeader.test.ts`.
 - [ ] **2.6 Wire Zen mode** — `ZenHeader` uses the bar; update the five `ZenHeader.*.test.ts` files.
-- [ ] **2.7 Delete** — remove it from `DetailFooter`; footer renders only while editing; update
+      Deferred: the protected `ZenHeader.{delete,shelf,monsterlabs,category,parent}.test.ts` check `ZenHeader.svelte` source strings; a human must update them first.
+- [x] **2.7 Delete** — remove it from `DetailFooter`; footer renders only while editing; update
       `ZenHeader.delete.test.ts` and `tests/vault-delete.spec.ts`.
-- [ ] **2.8 Help targets** — a highlighted action inside the menu opens the menu first.
+      Deferred: protected `DetailFooter.test.ts`, `ZenHeader.delete.test.ts` and `tests/vault-delete.spec.ts` still pin the old Delete; the read-mode footer branch stays unrendered.
+- [x] **2.8 Help targets** — a highlighted action inside the menu opens the menu first.
 - [ ] **2.9 Verification gate.**
 
 ### Slice 3 — Text first in the side panel ([#4741](https://github.com/eserlan/Codex-Cryptica/issues/4741))

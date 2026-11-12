@@ -385,6 +385,9 @@
         bind:editTitle
         bind:editAliases
         onClose={guardedClose}
+        onStartEdit={startEditing}
+        onDelete={handleDelete}
+        {canGuestEdit}
       />
 
       <div
@@ -569,17 +572,19 @@
         {/key}
       </div>
 
-      <DetailFooter
-        {isEditing}
-        {isSaving}
-        {isDirty}
-        {isValid}
-        {canGuestEdit}
-        onCancel={cancelEditing}
-        onSave={saveChanges}
-        onDelete={handleDelete}
-        onStartEdit={startEditing}
-      />
+      {#if isEditing}
+        <DetailFooter
+          {isEditing}
+          {isSaving}
+          {isDirty}
+          {isValid}
+          {canGuestEdit}
+          onCancel={cancelEditing}
+          onSave={saveChanges}
+          onDelete={handleDelete}
+          onStartEdit={startEditing}
+        />
+      {/if}
 
       <InlinePreviewOverlay />
     </div>
