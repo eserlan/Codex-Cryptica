@@ -1,15 +1,15 @@
 {
-  "updated_at": 1794491473,
+  "updated_at": 1794492544,
   "candidates": [
     {
-      "id": "reddit-43212774013-oracle-adventure-play-follow-what-happen",
-      "title": "Oracle Adventure Play: Follow what happens next",
-      "body": "When players leave the prepared route, it can be hard to know which lead will matter or how the world should respond. I built Oracle adventure play to start from a ready-made adventure and let the story develop as you explore.\n\n- Start with an adventure ready to play\n- Follow leads through a living world\n- Let situations, rumours, and consequences shape what comes next\n\nWhen your group takes an unexpected turn, how do you decide which lead to follow?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/adventure-dead-mans-tontine.jpg)",
+      "id": "reddit-43212774013-seeded-hex-regions-review-the-layout-bef",
+      "title": "Seeded Hex Regions: Review the layout before committing",
+      "body": "When I\u2019m building a hex region, I want to see how the terrain fits together before I settle on a layout. I added seeded generation that lets you review a proposed region before committing it.\n\n- Generate terrain from a seed\n- Review the proposed hexes as a region\n- Commit the layout when it\u2019s ready\n\nWhen you make a hex map, how much do you prefer to plan before exploring it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-43212774013-2.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/adventure-dead-mans-tontine.jpg",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-43212774013-2.png",
       "source_id": "43212774013",
       "status": "approved",
-      "created_at": 1794491473
+      "created_at": 1794492544
     }
   ]
 }
