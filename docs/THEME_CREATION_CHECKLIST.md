@@ -21,6 +21,8 @@ Related guide: [Theme Guide](./THEME_GUIDE.md).
 - [ ] The theme is selected for the matching app appearance in `apps/web/src/lib/stores/theme.svelte.ts`.
 - [ ] Text, controls, focus states, borders, surfaces, and graph connections have sufficient contrast in both variants.
 - [ ] The graph style, texture, typography, and jargon reinforce the genre without making ordinary app tasks harder to read.
+- [ ] Jargon overrides are limited to headings and voice; action and core-noun keys (`save`, `delete`, `new`, `search`, `syncing`, `vault`, `entity`, `entity_plural`) keep their plain defaults.
+- [ ] The display face is readable at the graph's smallest label size.
 - [ ] Art direction and aliases are registered in the schema art-direction catalogue when image generation uses the theme.
 - [ ] Schema and store tests cover both variants and theme selection.
 

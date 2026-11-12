@@ -115,6 +115,8 @@ follows.
 
 Override only what fits the theme. Anything not specified falls back to `DEFAULT_JARGON`. See [Jargon keys](#jargon-keys) for the full list.
 
+Jargon is for headings and voice, not for actions. Under [Style Guide principle 1](./STYLE_GUIDE.md#1-flavour-belongs-to-the-world-function-stays-plain), leave the action and core-noun keys (`save`, `delete`, `new`, `search`, `syncing`, `vault`, `entity`, `entity_plural`) at their defaults in new themes. Several existing themes still override them (for example "Burn" and "Purge" for `delete`); treat those as drift to remove, not as a pattern to copy.
+
 ### 4. Add the primary variant to `THEMES`
 
 In `packages/schema/src/theme-templates.ts`, add your theme to the `THEMES` object:
