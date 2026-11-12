@@ -19,14 +19,7 @@
   },
   "protected_paths": [
     "factory/checks.sh",
-    "factory/config.json",
-    "*.test.ts",
-    "*.test.js",
-    "*.test.mjs",
-    "*.spec.ts",
-    "*.spec.ts-snapshots/*",
-    "*/__tests__/*",
-    "*/tests/*"
+    "factory/config.json"
   ],
   "ports": { "base": 5300, "step": 10 },
   "prices_usd_per_mtok": {
