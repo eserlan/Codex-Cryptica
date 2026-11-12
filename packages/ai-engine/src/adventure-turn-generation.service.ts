@@ -27,7 +27,8 @@ import {
   buildAdventurePrompt,
   type AdventureTurnProposal,
 } from "@codex/adventure-engine";
-import { LoreDeltaTracker, entityContentHash } from "@codex/oracle-engine";
+import { AdventureInteractionContext } from "./adventure-interaction-context";
+import { buildAdventureInteractionInput } from "./adventure-interaction-input";
 
 /** Stream failures that are safe to retry once as a buffered Interaction. */
 const BUFFERED_FALLBACK_ERRORS = new Set([
@@ -36,152 +37,19 @@ const BUFFERED_FALLBACK_ERRORS = new Set([
   "interaction-stream-read-error",
 ]);
 
-interface AdventureInteraction {
-  /** Only acknowledged after the local OPFS session commits this proposal. */
-  previousInteractionId: string | null;
-  tracker: LoreDeltaTracker;
-  successfulTurns: number;
-  revision: number | null;
-  stateSnapshot: Record<string, unknown> | null;
-  sourceHashes: Map<string, string>;
-  modelName: string | null;
-  /** A validated model reply is not necessarily a committed adventure turn. */
-  pending: {
-    id: string;
-    revision: number;
-    modelName: string;
-    state: Record<string, unknown>;
-    sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
-  } | null;
-}
-
-/** Only changes to the state snapshot are sent while provider history is valid.
- * A null represents removal of an optional top-level field. */
-function stateDelta(
-  previous: Record<string, unknown>,
-  current: Record<string, unknown>,
-): Record<string, unknown> {
-  const delta: Record<string, unknown> = {};
-  for (const key of new Set([
-    ...Object.keys(previous),
-    ...Object.keys(current),
-  ])) {
-    if (JSON.stringify(previous[key]) !== JSON.stringify(current[key])) {
-      delta[key] = key in current ? current[key] : null;
-    }
-  }
-  return delta;
-}
-
-// Continue long stories across many turns; refresh from local state before
-// retained provider history becomes excessively large. Expiry and invalid IDs
-// independently trigger a fresh conversation at any time.
-const CONTEXT_REFRESH_TURNS = 80;
-
 export class AdventureTurnGenerationService {
-  private readonly interactions = new Map<string, AdventureInteraction>();
+  private readonly interactionContext = new AdventureInteractionContext();
 
   constructor(
     private readonly aiClient: AdventureAIClient = defaultAiClientManager,
   ) {}
 
-  private getInteraction(sessionId: string): AdventureInteraction {
-    let interaction = this.interactions.get(sessionId);
-    if (!interaction) {
-      interaction = {
-        previousInteractionId: null,
-        tracker: new LoreDeltaTracker(),
-        successfulTurns: 0,
-        revision: null,
-        stateSnapshot: null,
-        sourceHashes: new Map(),
-        modelName: null,
-        pending: null,
-      };
-      this.interactions.set(sessionId, interaction);
-    }
-    return interaction;
-  }
-
-  /** Drops retained provider context after an uncommitted or ended session. */
   clearInteraction(sessionId: string): void {
-    this.interactions.delete(sessionId);
+    this.interactionContext.clear(sessionId);
   }
 
-  /** Promote a provider interaction only after the adventure repository saved
-   * the corresponding validated turn. A generated-but-unsaved reply is discarded. */
   confirmInteraction(sessionId: string, savedRevision?: number): void {
-    const interaction = this.interactions.get(sessionId);
-    if (!interaction) return;
-    const pending = interaction.pending;
-    if (!pending) {
-      // Dice outcomes, dismissals and other deterministic local saves need
-      // no AI turn, but must not break the retained provider conversation.
-      // The next request sends these local changes via stateDelta.
-      if (
-        interaction.previousInteractionId &&
-        savedRevision !== undefined &&
-        interaction.revision === savedRevision - 1
-      )
-        interaction.revision = savedRevision;
-      return;
-    }
-    if (savedRevision !== undefined && savedRevision !== pending.revision + 1) {
-      this.clearInteraction(sessionId);
-      return;
-    }
-    interaction.previousInteractionId = pending.id;
-    interaction.modelName = pending.modelName;
-    interaction.revision = pending.revision + 1;
-    interaction.stateSnapshot = pending.state;
-    interaction.tracker.commit(pending.sourceEntries);
-    for (const entry of pending.sourceEntries) {
-      interaction.sourceHashes.set(entry.id, entry.hash);
-    }
-    interaction.successfulTurns += 1;
-    interaction.pending = null;
-  }
-
-  private buildInteractionInput(
-    prompt: ReturnType<typeof buildAdventurePrompt>,
-    interaction: AdventureInteraction,
-    responseRepair?: string,
-  ): {
-    input: string;
-    state: Record<string, unknown>;
-    sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
-  } {
-    const seen = new Set<string>();
-    const sourceEntries = [...prompt.anchors, ...prompt.relevant].flatMap(
-      (source) => {
-        if (seen.has(source.recordId)) return [];
-        seen.add(source.recordId);
-        const snippet = JSON.stringify(source);
-        return [
-          {
-            id: source.recordId,
-            snippet,
-            hash: entityContentHash(snippet),
-          },
-        ];
-      },
-    );
-    const payload = JSON.parse(prompt.serialized) as Record<string, unknown>;
-    const state = JSON.parse(prompt.state) as Record<string, unknown>;
-    if (interaction.previousInteractionId && interaction.stateSnapshot) {
-      const partition = interaction.tracker.partition(sourceEntries);
-      const changed = new Set(partition.newOrChanged.map((entry) => entry.id));
-      payload.anchors = prompt.anchors.filter((s) => changed.has(s.recordId));
-      payload.relevant = prompt.relevant.filter((s) => changed.has(s.recordId));
-      payload.retainedSourceIds = partition.unchanged.map((s) => s.id);
-      payload.stateDelta = stateDelta(interaction.stateSnapshot, state);
-      delete payload.state;
-      // Earlier dialogue is already retained by the provider; on an expired
-      // ID, resetting the interaction resends the bounded local transcript.
-      delete payload.transcript;
-    }
-    if (responseRepair) payload.responseRepair = responseRepair;
-    return { input: JSON.stringify(payload), state, sourceEntries };
+    this.interactionContext.confirm(sessionId, savedRevision);
   }
 
   // fallow-ignore-next-line complexity
@@ -197,32 +65,11 @@ export class AdventureTurnGenerationService {
     if (!sendInteraction && !sendStream)
       throw new Error("interaction-client-unavailable");
 
-    let interaction = this.getInteraction(request.session.id);
-    // A revision mismatch means the game was changed by a non-model action,
-    // a failed save, or a cancelled turn: rebuild from authoritative OPFS.
-    if (
-      interaction.pending ||
-      (interaction.modelName !== null &&
-        interaction.modelName !== (options.modelName ?? "luna-fast")) ||
-      (interaction.revision !== null &&
-        interaction.revision !== request.session.revision) ||
-      interaction.successfulTurns >= CONTEXT_REFRESH_TURNS
-    ) {
-      this.clearInteraction(request.session.id);
-      interaction = this.getInteraction(request.session.id);
-    }
-    // Provider histories cannot delete earlier source text. A changed
-    // canonical record must start a clean thread to avoid stale canon.
-    const sources = [...prompt.anchors, ...prompt.relevant];
-    if (
-      sources.some((source) => {
-        const oldHash = interaction.sourceHashes.get(source.recordId);
-        return oldHash && oldHash !== entityContentHash(JSON.stringify(source));
-      })
-    ) {
-      this.clearInteraction(request.session.id);
-      interaction = this.getInteraction(request.session.id);
-    }
+    let interaction = this.interactionContext.prepare(
+      request.session,
+      prompt,
+      options.modelName ?? "luna-fast",
+    );
 
     const instruction =
       systemInstruction +
@@ -238,7 +85,11 @@ export class AdventureTurnGenerationService {
       sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
     }> => {
       streamAborted(signal);
-      const prepared = this.buildInteractionInput(prompt, interaction, repair);
+      const prepared = buildAdventureInteractionInput(
+        prompt,
+        interaction,
+        repair,
+      );
       const params = {
         model: options.modelName ?? "luna-fast",
         input: prepared.input,
@@ -297,7 +148,7 @@ export class AdventureTurnGenerationService {
         if (!(error instanceof InteractionExpiredError)) throw error;
         // Retention expiry: rebuild from current session and local transcript.
         this.clearInteraction(request.session.id);
-        interaction = this.getInteraction(request.session.id);
+        interaction = this.interactionContext.get(request.session.id);
         result = await send();
       }
       let proposal: AdventureTurnProposal;

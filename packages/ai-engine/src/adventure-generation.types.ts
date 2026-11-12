@@ -1,4 +1,6 @@
+import type { LoreDeltaTracker } from "@codex/oracle-engine";
 import type {
+  buildAdventurePrompt,
   AdventureSession,
   AdventureWorldStyle,
   ResolvedSourceExcerpt,
@@ -60,4 +62,25 @@ export interface AdventureGenerationOptions {
   apiKey?: string;
   modelName?: string;
   signal?: AbortSignal;
+}
+
+export type AdventurePrompt = ReturnType<typeof buildAdventurePrompt>;
+
+export interface AdventureInteraction {
+  /** Only acknowledged after the local OPFS session commits this proposal. */
+  previousInteractionId: string | null;
+  tracker: LoreDeltaTracker;
+  successfulTurns: number;
+  revision: number | null;
+  stateSnapshot: Record<string, unknown> | null;
+  sourceHashes: Map<string, string>;
+  modelName: string | null;
+  /** A validated model reply is not necessarily a committed adventure turn. */
+  pending: {
+    id: string;
+    revision: number;
+    modelName: string;
+    state: Record<string, unknown>;
+    sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
+  } | null;
 }
