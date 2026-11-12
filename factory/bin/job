@@ -515,6 +515,8 @@ def advance(job, stage):
             job["round_limit"] = job["round"] + CONFIG["max_rounds"]
             next_round(job)
             label("issue", job["issue"], remove=LABELS["needs_human"])
+            if job["pr"]:
+                label("pr", job["pr"], remove=LABELS["needs_human"])
 
     if stage == "needs-human":
         body = f"### Factory: needs a human\n\n{(d / 'decision.md').read_text().split(chr(10), 1)[1].strip()}"
@@ -522,6 +524,8 @@ def advance(job, stage):
             if gh_json("pr", "view", str(job["pr"]), "--json", "isDraft")["isDraft"]:
                 gh("pr", "ready", str(job["pr"]))
             comment("pr", job["pr"], body)
+            # The label on the PR is what tells review bots and people to wait.
+            label("pr", job["pr"], add=LABELS["needs_human"])
         else:
             comment("issue", job["issue"], body)
         label("issue", job["issue"], add=LABELS["needs_human"])
