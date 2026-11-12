@@ -317,7 +317,7 @@ Used when a list or panel has no content. Say what the surface is for in one sho
 ```svelte
 {#if items.length === 0}
   <div class="py-8 text-center">
-    <p class="text-sm text-theme-muted">No entries yet.</p>
+    <p class="text-sm text-theme-muted">This list holds your entries.</p>
     <button
       type="button"
       onclick={handleAdd}
@@ -376,9 +376,7 @@ Used on the front page to display recently modified entities. Single-click opens
       <header
         class="flex items-center justify-between gap-3 rounded-2xl border border-theme-primary/15 bg-theme-bg/75 backdrop-blur-md px-3 py-2"
       >
-        <h3
-          class="font-header text-sm uppercase tracking-[0.14em] text-theme-text truncate"
-        >
+        <h3 class="font-header text-sm text-theme-text truncate">
           {title}
         </h3>
         <span class="text-[10px] text-theme-muted whitespace-nowrap"
