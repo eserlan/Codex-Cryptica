@@ -129,32 +129,27 @@ describe("ZenHeader delete action", () => {
     expect(editing.queryByTestId("delete-entity-button")).toBeNull();
   });
 
-  it("keeps Zen-only toolbar controls (copy content, pop-out) outside the shared More menu", async () => {
+  it("offers Zen-only copy and pop-out actions in the More menu", async () => {
     const onCopy = vi.fn();
     const onPopOut = vi.fn();
     const onDelete = vi.fn();
     const { getByTestId } = renderHeader({}, { onCopy, onPopOut, onDelete });
 
+    await fireEvent.click(getByTestId("entity-actions-more-button"));
+
     const copyBtn = getByTestId("zen-copy-content-button");
     const popOutBtn = getByTestId("zen-pop-out-button");
     const deleteBtn = getByTestId("delete-entity-button");
-
-    // Copy and pop-out are header toolbar buttons, outside the More menu
-    expect(copyBtn.closest('[role="menu"]')).toBeNull();
-    expect(popOutBtn.closest('[role="menu"]')).toBeNull();
-
-    // Delete is inside the More menu and is the last menu item
     const menu = deleteBtn.closest('[role="menu"]')!;
-    expect(menu).toBeTruthy();
-    expect(
-      menu.querySelector('[data-testid="zen-copy-content-button"]'),
-    ).toBeNull();
-    expect(menu.querySelector('[data-testid="zen-pop-out-button"]')).toBeNull();
+    expect(copyBtn.closest('[role="menu"]')).toBe(menu);
+    expect(popOutBtn.closest('[role="menu"]')).toBe(menu);
+    const items = menu.querySelectorAll("[role=menuitem]");
+    expect(items[items.length - 1]).toBe(deleteBtn);
 
     await fireEvent.click(copyBtn);
     expect(onCopy).toHaveBeenCalledTimes(1);
-
-    await fireEvent.click(popOutBtn);
+    await fireEvent.click(getByTestId("entity-actions-more-button"));
+    await fireEvent.click(getByTestId("zen-pop-out-button"));
     expect(onPopOut).toHaveBeenCalledTimes(1);
   });
 });

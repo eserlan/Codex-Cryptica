@@ -164,6 +164,7 @@ test.describe("Guest Mode (P2P Share)", () => {
 
     // Lore should stay hidden for guests.
     await expect(page.getByTestId("tab-lore")).toHaveCount(0);
+    await expect(page.getByTestId("entity-gm-notes")).toHaveCount(0);
 
     // Check if the title input is disabled
     const entityTitleInput = page.locator("input[placeholder='Title']");

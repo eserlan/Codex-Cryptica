@@ -51,20 +51,18 @@ vi.mock("chronology-engine", async (importOriginal) => {
 vi.mock("./detail-tabs", () => ({
   createEntityDetailTabIds: () => ({
     tabIds: {
-      status: "tab-status",
-      lore: "tab-lore",
+      overview: "tab-overview",
       map: "tab-map",
       chats: "tab-chats",
     },
     panelIds: {
-      status: "panel-status",
-      lore: "panel-lore",
+      overview: "panel-overview",
       map: "panel-map",
       chats: "panel-chats",
     },
   }),
   getNextEntityDetailTabInList: vi.fn(),
-  entityDetailTabs: ["status", "lore", "map"],
+  entityDetailTabs: ["overview", "map"],
   getTemporalLabel: (_type: string, kind: string) =>
     kind === "start" ? "Born" : "Died",
 }));
@@ -85,11 +83,10 @@ function makeEntity(overrides = {}) {
 }
 
 const baseProps = {
-  activeTab: "status" as const,
+  activeTab: "overview" as const,
   isEditing: false,
   editType: "character",
   idPrefix: "test",
-  canGuestEdit: false,
 };
 
 describe("DetailTabs getNavigableDate", () => {

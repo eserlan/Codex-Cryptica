@@ -113,6 +113,60 @@ describe("createEntityActions", () => {
     expect(actions.filter((a) => a.tone === "danger")).toHaveLength(1);
   });
 
+  it("gives an owner the image actions in the menu, with Delete still last", () => {
+    const actions = createEntityActions(
+      () =>
+        ownerInput({
+          onChangeImage: vi.fn(),
+          onChooseSilhouette: vi.fn(),
+          onShowToGuests: vi.fn(),
+        }),
+      makeDeps(),
+    ).actions;
+    for (const id of [
+      "change-image",
+      "choose-silhouette",
+      "show-image-to-guests",
+    ]) {
+      expect(actions.find((a) => a.id === id)?.placement).toBe("menu");
+    }
+    expect(actions[actions.length - 1].id).toBe("delete");
+    const icons = actions.map((a) => a.icon);
+    expect(new Set(icons).size).toBe(icons.length);
+  });
+
+  it("runs the image callbacks", async () => {
+    const onChangeImage = vi.fn();
+    const actions = createEntityActions(
+      () => ownerInput({ onChangeImage }),
+      makeDeps(),
+    ).actions;
+    await actions.find((a) => a.id === "change-image")?.run();
+    expect(onChangeImage).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives a guest no image actions even with the callbacks", () => {
+    const list = ids(
+      ownerInput({
+        isGuest: true,
+        onChangeImage: vi.fn(),
+        onChooseSilhouette: vi.fn(),
+        onShowToGuests: vi.fn(),
+      }),
+    );
+    expect(list).not.toContain("change-image");
+    expect(list).not.toContain("choose-silhouette");
+    expect(list).not.toContain("show-image-to-guests");
+  });
+
+  it("leaves out Show image to guests without its callback", () => {
+    const list = ids(
+      ownerInput({ onChangeImage: vi.fn(), onChooseSilhouette: vi.fn() }),
+    );
+    expect(list).toContain("change-image");
+    expect(list).not.toContain("show-image-to-guests");
+  });
+
   it("leaves out Find in graph off the graph route", () => {
     expect(ids(ownerInput({ isGraphView: false }))).not.toContain(
       "find-in-graph",
@@ -204,33 +258,31 @@ describe("createEntityActions", () => {
   });
 
   it("notifies when sending to the Shelf fails", async () => {
-    const deps = makeDeps({
-      shelve: vi.fn(async () => false),
-    });
+    const deps = makeDeps({ shelve: vi.fn(async () => false) });
     const model = createEntityActions(
       () => ownerInput({}, { type: "note" }),
       deps,
     );
-    const shelfAction = model.actions.find((a) => a.id === "shelf")!;
-    await shelfAction.run();
+    await model.actions.find((action) => action.id === "shelf")!.run();
     expect(deps.notify).toHaveBeenCalledWith(
       "Could not send this to the Shelf.",
       "error",
     );
-    expect(model.actions.find((a) => a.id === "shelf")?.state).toBeUndefined();
+    expect(model.actions.find((action) => action.id === "shelf")?.state).toBe(
+      undefined,
+    );
   });
 
   it("marks Shelf as done after a successful send", async () => {
-    const deps = makeDeps({
-      shelve: vi.fn(async () => true),
-    });
+    const deps = makeDeps({ shelve: vi.fn(async () => true) });
     const model = createEntityActions(
       () => ownerInput({}, { type: "note" }),
       deps,
     );
-    const shelfAction = model.actions.find((a) => a.id === "shelf")!;
-    await shelfAction.run();
+    await model.actions.find((action) => action.id === "shelf")!.run();
     expect(deps.shelve).toHaveBeenCalledWith("e1");
-    expect(model.actions.find((a) => a.id === "shelf")?.state).toBe("done");
+    expect(model.actions.find((action) => action.id === "shelf")?.state).toBe(
+      "done",
+    );
   });
 });

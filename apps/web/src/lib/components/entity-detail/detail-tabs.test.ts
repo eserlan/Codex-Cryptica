@@ -5,6 +5,7 @@ import {
   getNextEntityDetailTab,
   getNextEntityDetailTabInList,
   getTemporalLabel,
+  toEntityDetailTab,
 } from "./detail-tabs";
 
 describe("entity detail tab ids", () => {
@@ -22,49 +23,67 @@ describe("entity detail tab ids", () => {
     }
   });
 
+  it("has no lore or status tab and starts with overview", () => {
+    expect(entityDetailTabs).not.toContain("lore");
+    expect(entityDetailTabs).not.toContain("status");
+    expect(entityDetailTabs[0]).toBe("overview");
+  });
+
   it("wraps keyboard navigation across the tab list", () => {
-    expect(getNextEntityDetailTab("status", "ArrowRight")).toBe("connections");
-    expect(getNextEntityDetailTab("connections", "ArrowRight")).toBe("lore");
-    expect(getNextEntityDetailTab("lore", "ArrowRight")).toBe("map");
+    expect(getNextEntityDetailTab("overview", "ArrowRight")).toBe(
+      "connections",
+    );
+    expect(getNextEntityDetailTab("connections", "ArrowRight")).toBe("map");
     expect(getNextEntityDetailTab("map", "ArrowRight")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowRight")).toBe("family");
     expect(getNextEntityDetailTab("family", "ArrowRight")).toBe("stats");
     expect(getNextEntityDetailTab("stats", "ArrowRight")).toBe("timeline");
-    expect(getNextEntityDetailTab("timeline", "ArrowRight")).toBe("status");
-    expect(getNextEntityDetailTab("status", "ArrowLeft")).toBe("timeline");
+    expect(getNextEntityDetailTab("timeline", "ArrowRight")).toBe("overview");
+    expect(getNextEntityDetailTab("overview", "ArrowLeft")).toBe("timeline");
     expect(getNextEntityDetailTab("timeline", "ArrowLeft")).toBe("stats");
     expect(getNextEntityDetailTab("stats", "ArrowLeft")).toBe("family");
     expect(getNextEntityDetailTab("family", "ArrowLeft")).toBe("chats");
     expect(getNextEntityDetailTab("chats", "ArrowLeft")).toBe("map");
-    expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("lore");
-    expect(getNextEntityDetailTab("lore", "ArrowLeft")).toBe("connections");
-    expect(getNextEntityDetailTab("status", "End")).toBe("timeline");
+    expect(getNextEntityDetailTab("map", "ArrowLeft")).toBe("connections");
+    expect(getNextEntityDetailTab("connections", "ArrowLeft")).toBe("overview");
+    expect(getNextEntityDetailTab("overview", "End")).toBe("timeline");
+    expect(getNextEntityDetailTab("timeline", "Home")).toBe("overview");
   });
 
-  it("skips hidden tabs when navigating a guest-visible subset", () => {
-    const visibleTabs = entityDetailTabs.filter((tab) => tab !== "lore");
+  it("skips hidden tabs when navigating a subset", () => {
+    const visibleTabs = entityDetailTabs.filter(
+      (tab) => tab !== "chats" && tab !== "family",
+    );
 
-    expect(
-      getNextEntityDetailTabInList(visibleTabs, "status", "ArrowRight"),
-    ).toBe("connections");
-    expect(
-      getNextEntityDetailTabInList(visibleTabs, "connections", "ArrowRight"),
-    ).toBe("map");
     expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowRight")).toBe(
-      "chats",
+      "stats",
     );
     expect(
-      getNextEntityDetailTabInList(visibleTabs, "chats", "ArrowRight"),
-    ).toBe("family");
+      getNextEntityDetailTabInList(visibleTabs, "stats", "ArrowLeft"),
+    ).toBe("map");
     expect(
       getNextEntityDetailTabInList(visibleTabs, "timeline", "ArrowRight"),
-    ).toBe("status");
-    expect(getNextEntityDetailTabInList(visibleTabs, "map", "ArrowLeft")).toBe(
-      "connections",
-    );
-    expect(getNextEntityDetailTabInList(visibleTabs, "status", "End")).toBe(
+    ).toBe("overview");
+    expect(getNextEntityDetailTabInList(visibleTabs, "overview", "End")).toBe(
       "timeline",
     );
+    expect(getNextEntityDetailTabInList([], "overview", "End")).toBe(
+      "overview",
+    );
+  });
+});
+
+describe("toEntityDetailTab", () => {
+  it("keeps a current tab id", () => {
+    expect(toEntityDetailTab("stats")).toBe("stats");
+    expect(toEntityDetailTab("overview")).toBe("overview");
+  });
+
+  it("opens Overview for old, missing or unknown values", () => {
+    expect(toEntityDetailTab("status")).toBe("overview");
+    expect(toEntityDetailTab("lore")).toBe("overview");
+    expect(toEntityDetailTab(undefined)).toBe("overview");
+    expect(toEntityDetailTab("bogus")).toBe("overview");
   });
 });
 

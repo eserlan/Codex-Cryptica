@@ -11,7 +11,6 @@
   import DetailTabs from "./entity-detail/DetailTabs.svelte";
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
   import DetailConnectionsTab from "./entity-detail/DetailConnectionsTab.svelte";
-  import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
   import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
@@ -132,15 +131,9 @@
     }
   });
 
-  let activeTab = $state<EntityDetailTab>("status");
+  let activeTab = $state<EntityDetailTab>("overview");
   let isSaving = $state(false);
   const { tabIds, panelIds } = createEntityDetailTabIds(tabInstanceId);
-
-  $effect(() => {
-    if (vault.isGuest && !canGuestEdit && activeTab === "lore") {
-      activeTab = "status";
-    }
-  });
 
   // Clear lastSelectedNodePosition whenever entity changes (or component is destroyed).
   // This prevents the next intro animation from inheriting a stale graph-node position
@@ -448,7 +441,9 @@
               class="bg-theme-surface shrink-0"
               style:background-color="var(--theme-panel-fill)"
             >
-              <DetailImage entity={activeEntity} {isEditing} bind:editImage />
+              {#if isEditing || !activeEntity.content?.trim()}
+                <DetailImage entity={activeEntity} {isEditing} bind:editImage />
+              {/if}
 
               <DetailTabs
                 entity={activeEntity}
@@ -456,7 +451,6 @@
                 {isEditing}
                 bind:editType
                 idPrefix={tabInstanceId}
-                {canGuestEdit}
                 {onDateClick}
               />
             </div>
@@ -464,16 +458,17 @@
             <div class="px-4 pb-4 pt-2 md:px-6 md:pb-6 md:pt-2">
               <div
                 role="tabpanel"
-                id={panelIds.status}
-                aria-labelledby={tabIds.status}
-                hidden={activeTab !== "status"}
+                id={panelIds.overview}
+                aria-labelledby={tabIds.overview}
+                hidden={activeTab !== "overview"}
               >
-                {#if activeTab === "status"}
+                {#if activeTab === "overview"}
                   <DetailStatusTab
                     entity={activeEntity}
                     {isEditing}
                     {editType}
                     bind:editContent
+                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
                   />
@@ -489,22 +484,6 @@
                   <DetailConnectionsTab entity={activeEntity} />
                 {/if}
               </div>
-              <div
-                role="tabpanel"
-                id={panelIds.lore}
-                aria-labelledby={tabIds.lore}
-                hidden={activeTab !== "lore" ||
-                  (vault.isGuest && !canGuestEdit)}
-              >
-                {#if activeTab === "lore" && (!vault.isGuest || canGuestEdit)}
-                  <DetailLoreTab
-                    entity={activeEntity}
-                    {isEditing}
-                    bind:editLore
-                  />
-                {/if}
-              </div>
-
               <div
                 role="tabpanel"
                 id={panelIds.map}
