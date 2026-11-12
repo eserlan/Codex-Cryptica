@@ -166,7 +166,6 @@ test.describe("Responsive Entity Detail Panel", () => {
         .poll(async () => (await text.boundingBox())?.y ?? Infinity)
         .toBeLessThanOrEqual(viewport.maxY);
       const y = (await text.boundingBox())!.y;
-      console.log(`first line y at ${viewport.width}px: ${y}`);
       expect(y).toBeGreaterThanOrEqual(0);
     });
   }

@@ -222,7 +222,7 @@
             <h2
               class="{isFantasyTheme
                 ? 'text-xl md:text-3xl font-header tracking-wider'
-                : 'text-xl md:text-3xl font-body tracking-wide'} break-words whitespace-normal font-bold"
+                : 'text-xl md:text-3xl font-body tracking-wide'} max-w-full break-words whitespace-normal font-bold"
               style:color={isFantasyTheme
                 ? "var(--theme-title-ink)"
                 : undefined}
