@@ -48,7 +48,7 @@
         }
       ],
       "content": "A brilliant astrophysicist who was the first to detect the anomaly. He spent most of his life studying the Void.",
-      "lore": "Vance did not discover the anomaly. He received a message telling him where to look, and he has never learned who sent it.",
+      "lore": "Vance did not find the anomaly alone. A message told him where to look; it came from the crew member erased from the station logs, and he has never learned who sent it.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-npc2.png",
       "_path": ["npcs", "dr-aris-vance.md"],
       "lastModified": 1700000000000
@@ -120,7 +120,7 @@
         }
       ],
       "content": "A spontaneous rupture in the space-time continuum that nearly swallowed the station. Its origin remains unknown.",
-      "lore": "The breach opened exactly when the station's drive was fired for the first time in years. Someone aboard did it on purpose.",
+      "lore": "The breach opened the first time the station's drive was fired in years. The crew member erased from the logs did it on purpose, and Unit X-99 still recites their poetry.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/scifi-station.png",
       "_path": ["events", "the-void-breach.md"],
       "lastModified": 1700000000000

@@ -30,7 +30,7 @@
         }
       ],
       "content": "Born in Vault 101, the Lone Wanderer left the only home they ever knew to find their father and uncover the secrets of Project Purity. Armed with a trusty Pip-Boy 3000 and an iron will.",
-      "lore": "The Wanderer's father left because he knew the Vault's real purpose. The mother's death was not an accident of the birth, but a consequence of it.",
+      "lore": "The Wanderer's mother was kept in the Vault for the experiment, and her death in childbirth was expected. The Overseer has the records and will not hand them over.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fallout-hero.png",
       "_path": ["npcs", "lone-wanderer.md"],
       "lastModified": 1700000000000

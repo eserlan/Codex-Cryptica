@@ -7,7 +7,7 @@
       "tags": ["hub", "city", "safe-zone"],
       "connections": [],
       "content": "The most popular tavern in the Lower District. Known for its bitter ale and loud patrons.",
-      "lore": "The barkeep sells information to the Gilded Hand. The cellar has a locked door the staff say leads to a storeroom, but it is the way into the old sewers.",
+      "lore": "The barkeep sells information to the Gilded Hand and was paid to be seen near the Mayor's estate. The cellar has a locked door that leads into the old sewers.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-tavern.png",
       "_path": ["locations", "black-iron-tavern.md"],
       "lastModified": 1700000000000
@@ -30,7 +30,7 @@
         }
       ],
       "content": "An elderly mage who knows more than he lets on. He spends most of his time reading dusty scrolls.\n\nHe is currently investigating the [[The Missing Heirloom]].",
-      "lore": "Eldrin has already found the ring. He is hiding it because it is cursed, and he is searching for who will come for it.",
+      "lore": "Eldrin already knows the Gilded Hand took the ring and why. He is quietly tracking it instead of telling the guard, because he suspects someone in Vaelen's ranks is paid by the guild.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-mage.png",
       "_path": ["npcs", "eldrin-the-wise.md"],
       "lastModified": 1700000000000
@@ -66,7 +66,7 @@
         }
       ],
       "content": "The most powerful merchant guild in the realm. They control the flow of gold and secrets.",
-      "lore": "The guild is behind the missing ring. It was stolen to blackmail the Mayor over a debt nobody knows he owes.",
+      "lore": "The guild stole the Mayor's ring because it is the key to his private vault, where his debts to the guild are recorded. The tavern sighting was staged.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-faction.png",
       "_path": ["factions", "gilded-hand.md"],
       "lastModified": 1700000000000
@@ -120,7 +120,7 @@
         }
       ],
       "content": "A valuable family ring has gone missing from the Mayor's estate.\n\nRumor has it that someone from the [[Black Iron Tavern]] was seen near the estate that night.",
-      "lore": "The ring is a key to the Mayor's vault. The thief wanted the key and the ring was nothing to them.",
+      "lore": "The ring is a key to the Mayor's vault, and the Gilded Hand has it. The rumour about the Black Iron Tavern was planted to send the guard the wrong way.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/fantasy-tavern.png",
       "_path": ["events", "the-missing-heirloom.md"],
       "lastModified": 1700000000000
