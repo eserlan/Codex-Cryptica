@@ -261,14 +261,16 @@ least one failure, guest or cancellation path.
 
 ### Slice 5 — Links and polish ([#4743](https://github.com/eserlan/Codex-Cryptica/issues/4743))
 
-- [ ] **5.1 Tests** — read-only text with `[[Name]]` renders a link and no brackets; an unknown name
+- [x] **5.1 Tests** — read-only text with `[[Name]]` renders a link and no brackets; an unknown name
       renders as plain text without brackets; edit mode still shows the raw source.
-- [ ] **5.2 Wiki links** in the read-only render path.
+- [x] **5.2 Wiki links** in the read-only render path.
 - [ ] **5.3 Theme pass** — check both views in all 18 themes at both sizes; fix contrast or overflow found.
-- [ ] **5.4 Help content** — update the Help article and any `FeatureHint` that names moved controls
+  - Only the three acceptance themes were checked in the build; the full 18-theme sweep is done by hand.
+- [x] **5.4 Help content** — update the Help article and any `FeatureHint` that names moved controls
       (Constitution VII).
-- [ ] **5.4b Demo data** — give the demo entities GM notes that differ from their main text, or none.
+- [x] **5.4b Demo data** — give the demo entities GM notes that differ from their main text, or none.
 - [ ] **5.5 Re-score** — add a dated row to the assessment scorecard for the entity views.
+  - The re-score is done by hand (assessment task K3).
 - [ ] **5.6 Verification gate.**
 
 ### Traceability

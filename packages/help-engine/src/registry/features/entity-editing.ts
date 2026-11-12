@@ -4,7 +4,7 @@ export const entityEditing: FeatureEntry = {
   id: "entity-editing",
   title: "Creating and Editing Entities",
   summary:
-    "Create entries with + Create and edit them with EDIT. AI-assisted revisions of Chronicle and Lore start from AI Revise Description in the entity side panel or Zen Mode, or /revise in Lore Oracle chat. Review the draft before Apply Changes.",
+    "Create entries with + Create. Edit them with Edit in the header, then Save changes. AI revise description for text and GM notes is in the side panel's More menu or the Zen Mode editor toolbar, or use /revise in chat. Review the draft before Apply Changes.",
   channel: "production",
   routes: ["/(app)"],
   areas: ["entity-detail"],
@@ -13,11 +13,11 @@ export const entityEditing: FeatureEntry = {
   workflows: [
     {
       id: "ai-revisions",
-      title: "AI-assisted revisions of Chronicle and Lore",
+      title: "AI-assisted revisions of text and GM notes",
       steps: [
-        "Open More near the entity title in the side panel and choose AI revise description, or in the Zen Mode editor toolbar.",
+        "In the side panel, open More near the entity title and choose AI revise description. In Zen mode, click AI Revise Description in the editor toolbar.",
         "In Revise Description, optionally add AI Instructions / Corrections, then click Revise. Cancel closes the dialog without generating a revision.",
-        "Review the Chronicle and Lore draft. Apply Changes saves it; Discard keeps the original. Review lore changes may ask which sections to keep.",
+        "Review the text and GM notes draft. Apply Changes saves it; Discard keeps the original. Review lore changes may ask which sections to keep.",
         "Alternatively, use /revise in Lore Oracle chat for the selected entity.",
         "AI revisions are unavailable in guest or demo vaults. A failed revision leaves existing text unchanged.",
       ],
@@ -38,8 +38,8 @@ export const entityEditing: FeatureEntry = {
       title: "Edit an entity",
       steps: [
         "Open the entity.",
-        "Click EDIT at the bottom of its page.",
-        "Change what you need, then click SAVE CHANGES.",
+        "Click Edit in the header of the side panel or Zen mode.",
+        "Change what you need, then click Save changes.",
       ],
       actionIds: ["entity-editing.open-help"],
     },

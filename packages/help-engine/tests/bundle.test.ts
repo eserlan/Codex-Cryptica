@@ -238,7 +238,7 @@ describe("buildBundle", () => {
       result.chunks.some(
         ({ chunk }) =>
           chunk.helpId === "creating-and-editing-entities" &&
-          chunk.text.includes("AI Revise Description"),
+          chunk.text.includes("AI revise description"),
       ),
     ).toBe(true);
     const article = productionArticles.find(
