@@ -1,4 +1,8 @@
-import { candidateScenariosForLocation } from "./contextual-rumours";
+import {
+  candidateScenariosForLocation,
+  currentLocationContext,
+  matchesScenarioLocation,
+} from "./contextual-rumours";
 import { playerScenarioEventTurnIds } from "./scenario-collection";
 import type {
   AdventureSession,
@@ -91,11 +95,23 @@ export function worldEntryPacing(
     (thread) => thread.status === "hidden",
   );
   const candidates = candidateScenariosForLocation(session);
+  const location = currentLocationContext(session);
   const eligibleScenarioIds = candidates
     .filter((item) => item.status === "open" && item.knowledge === "unheard")
     .map((item) => item.id);
   const activeLeadIds = candidates
-    .filter((item) => item.status === "open" && item.knowledge === "heard")
+    .filter((item) => {
+      if (item.status !== "open" || item.knowledge !== "heard") return false;
+      if (!location || matchesScenarioLocation(item, location)) return true;
+
+      // Keep general heard leads local to every location, while excluding
+      // location-bound leads that belong elsewhere.
+      const isLocationBound =
+        Boolean(item.origin.batchTitle?.startsWith("Rumours in ")) ||
+        Boolean(item.origin.sourceRecordId) ||
+        item.anchorRefs.length > 0;
+      return !isLocationBound;
+    })
     .map((item) => item.id);
 
   if (!hasHiddenThread && eligibleScenarioIds.length === 0) return undefined;

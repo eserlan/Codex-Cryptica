@@ -257,6 +257,27 @@ describe("world entry pacing", () => {
     });
   });
 
+  it("includes only heard leads relevant to the current location", () => {
+    const generalLead = scenarioItem("general-lead", "heard");
+    generalLead.origin = { kind: "manual" };
+    const s = session(quietTurns(1), {
+      scenarioCollection: {
+        version: 1,
+        items: [
+          scenarioItem("local-lead", "heard", "Northbrook"),
+          scenarioItem("faraway-lead", "heard", "Southwatch"),
+          generalLead,
+        ],
+        focusedScenarioId: null,
+      },
+    });
+
+    expect(worldEntryPacing(s)?.activeLeadIds).toEqual([
+      "local-lead",
+      "general-lead",
+    ]);
+  });
+
   it("restarts the quiet count when a player-visible provisional fact with scenarioId is introduced", () => {
     const s = session([turn(1), turn(2)], {
       provisionalFacts: [
