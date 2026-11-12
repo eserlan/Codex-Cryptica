@@ -274,7 +274,12 @@ export function createEntityActions(
       state: shelved ? "done" : undefined,
       failure: "Could not send this to the Shelf.",
       run: async () => {
-        if (await deps.shelve(entity.id)) markDone("shelf");
+        const ok = await deps.shelve(entity.id);
+        if (ok) {
+          markDone("shelf");
+        } else {
+          deps.notify("Could not send this to the Shelf.", "error");
+        }
       },
     };
   };

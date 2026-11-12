@@ -202,4 +202,35 @@ describe("createEntityActions", () => {
     await delve!.run();
     expect(deps.notify).toHaveBeenCalledWith(expect.any(String), "error");
   });
+
+  it("notifies when sending to the Shelf fails", async () => {
+    const deps = makeDeps({
+      shelve: vi.fn(async () => false),
+    });
+    const model = createEntityActions(
+      () => ownerInput({}, { type: "note" }),
+      deps,
+    );
+    const shelfAction = model.actions.find((a) => a.id === "shelf")!;
+    await shelfAction.run();
+    expect(deps.notify).toHaveBeenCalledWith(
+      "Could not send this to the Shelf.",
+      "error",
+    );
+    expect(model.actions.find((a) => a.id === "shelf")?.state).toBeUndefined();
+  });
+
+  it("marks Shelf as done after a successful send", async () => {
+    const deps = makeDeps({
+      shelve: vi.fn(async () => true),
+    });
+    const model = createEntityActions(
+      () => ownerInput({}, { type: "note" }),
+      deps,
+    );
+    const shelfAction = model.actions.find((a) => a.id === "shelf")!;
+    await shelfAction.run();
+    expect(deps.shelve).toHaveBeenCalledWith("e1");
+    expect(model.actions.find((a) => a.id === "shelf")?.state).toBe("done");
+  });
 });
