@@ -2,11 +2,23 @@ import { describe, expect, it } from "vitest";
 import {
   adventureTurnResponseSchema,
   buildAdventureContentInput,
+  isInvalidAdventureResponse,
   parseAdventureResponse,
 } from "./adventure-response-schema";
 import { completeResponse } from "./adventure-generation.test-fixtures";
 
 describe("adventure structured response contract", () => {
+  it("distinguishes repairable validation failures from provider errors", () => {
+    expect(
+      isInvalidAdventureResponse(new Error("invalid-adventure-response")),
+    ).toBe(true);
+    expect(isInvalidAdventureResponse(new Error("provider-failed"))).toBe(
+      false,
+    );
+    expect(isInvalidAdventureResponse("invalid-adventure-response")).toBe(
+      false,
+    );
+  });
   it("supplies the same schema for buffered and streamed content", () => {
     expect(buildAdventureContentInput("prompt")).toEqual({
       contents: [{ role: "user", parts: [{ text: "prompt" }] }],

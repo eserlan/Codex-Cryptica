@@ -291,3 +291,9 @@ export function buildAdventureContentInput(serialized: string) {
     },
   };
 }
+
+export function isInvalidAdventureResponse(error: unknown): error is Error {
+  return (
+    error instanceof Error && error.message === "invalid-adventure-response"
+  );
+}

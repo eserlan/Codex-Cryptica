@@ -1,42 +1,54 @@
-import { AdventureInteractionTransport } from "./adventure-interaction-transport";
+import {
+  buildAdventurePrompt,
+  type AdventureTurnProposal,
+} from "@codex/adventure-engine";
+import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import type {
   AdventureAIClient,
   AdventureTurnGenerationRequest,
+  AdventurePrompt,
+  AdventureGenerationOptions,
 } from "./adventure-generation.types";
+import { AdventureInteractionContext } from "./adventure-interaction-context";
+import { AdventureInteractionGeneration } from "./adventure-interaction-generation";
+import { AdventureContentGeneration } from "./adventure-content-generation";
+import { streamAborted } from "./adventure-narration-stream";
+import {
+  adventureTurnResponseSchema,
+  isInvalidAdventureResponse,
+} from "./adventure-response-schema";
+
 export type {
   AdventureAIClient,
   AdventureTurnGenerationRequest,
 } from "./adventure-generation.types";
 export { extractAdventureNarrationPrefix } from "./adventure-narration-stream";
-import {
-  collectAdventureStream,
-  publishAdventureNarration,
-  streamAborted,
-  type AdventureStream,
-  type AdventureStreamEvent,
-} from "./adventure-narration-stream";
-import {
-  adventureTurnResponseSchema,
-  buildAdventureContentInput,
-  parseAdventureResponse,
-} from "./adventure-response-schema";
-import {
-  aiClientManager as defaultAiClientManager,
-  InteractionExpiredError,
-} from "./client-manager";
-import {
-  buildAdventurePrompt,
-  type AdventureTurnProposal,
-} from "@codex/adventure-engine";
-import { AdventureInteractionContext } from "./adventure-interaction-context";
-import { buildAdventureInteractionInput } from "./adventure-interaction-input";
 
+function canUseStatelessFallback(error: unknown): boolean {
+  const reason = error instanceof Error ? error.message.toLowerCase() : "";
+  return /interaction-client-unavailable|interaction-stream-unavailable|interaction.*(?:unsupported|not supported|not available)/.test(
+    reason,
+  );
+}
+
+/** Coordinates turn generation while keeping the existing import path and API. */
 export class AdventureTurnGenerationService {
   private readonly interactionContext = new AdventureInteractionContext();
+  private readonly interactionGeneration: AdventureInteractionGeneration;
+  private readonly contentGeneration: AdventureContentGeneration;
 
   constructor(
     private readonly aiClient: AdventureAIClient = defaultAiClientManager,
-  ) {}
+  ) {
+    this.interactionGeneration = new AdventureInteractionGeneration(
+      aiClient,
+      this.interactionContext,
+    );
+    this.contentGeneration = new AdventureContentGeneration(
+      aiClient,
+      this.interactionContext,
+    );
+  }
 
   clearInteraction(sessionId: string): void {
     this.interactionContext.clear(sessionId);
@@ -46,144 +58,11 @@ export class AdventureTurnGenerationService {
     this.interactionContext.confirm(sessionId, savedRevision);
   }
 
-  // fallow-ignore-next-line complexity
-  private async generateViaInteraction(
-    request: AdventureTurnGenerationRequest,
-    prompt: ReturnType<typeof buildAdventurePrompt>,
-    systemInstruction: string,
-    options: { modelName?: string; signal?: AbortSignal },
-  ): Promise<AdventureTurnProposal> {
-    const signal = options.signal ?? request.signal;
-    const transport = new AdventureInteractionTransport(this.aiClient);
-    if (!transport.available) throw new Error("interaction-client-unavailable");
-
-    let interaction = this.interactionContext.prepare(
-      request.session,
-      prompt,
-      options.modelName ?? "luna-fast",
-    );
-
-    const instruction =
-      systemInstruction +
-      "\n\nOn continuation requests, stateDelta contains only changed top-level state fields and supersedes your previous state; null deletes a field. The present input and retrieved Vault sources outrank any previous turn. Never reveal GM-only fields.";
-    const send = async (
-      repair?: string,
-      preferStream = true,
-    ): Promise<{
-      id: string;
-      text: string;
-      state: Record<string, unknown>;
-      sourceEntries: Array<{ id: string; snippet: string; hash: string }>;
-    }> => {
-      streamAborted(signal);
-      const prepared = buildAdventureInteractionInput(
-        prompt,
-        interaction,
-        repair,
-      );
-      const params = {
-        model: options.modelName ?? "luna-fast",
-        input: prepared.input,
-        systemInstruction: instruction,
-        previousInteractionId: interaction.previousInteractionId,
-        generationConfig: { responseMimeType: "application/json" },
-        signal,
-      };
-      const result = await transport.send(request, params, preferStream);
-      return { ...prepared, id: result.id, text: result.text };
-    };
-
-    try {
-      let result;
-      try {
-        result = await send();
-      } catch (error) {
-        if (!(error instanceof InteractionExpiredError)) throw error;
-        // Retention expiry: rebuild from current session and local transcript.
-        this.clearInteraction(request.session.id);
-        interaction = this.interactionContext.get(request.session.id);
-        result = await send();
-      }
-      let proposal: AdventureTurnProposal;
-      try {
-        proposal = parseAdventureResponse(result.text);
-      } catch (error) {
-        if (
-          !(error instanceof Error) ||
-          error.message !== "invalid-adventure-response"
-        )
-          throw error;
-        streamAborted(signal);
-        request.onNarration?.("");
-        // Retry the same uncommitted action against the *last committed*
-        // conversation ID; never chain from an invalid model response.
-        result = await send(
-          "Previous JSON failed validation. Return a complete corrected JSON proposal with all required fields.",
-          !transport.canBuffer,
-        );
-        proposal = parseAdventureResponse(result.text);
-      }
-      streamAborted(signal);
-      if (!result.id) throw new Error("interaction-id-missing");
-      interaction.pending = {
-        id: result.id,
-        revision: request.session.revision,
-        modelName: options.modelName ?? "luna-fast",
-        state: result.state,
-        sourceEntries: result.sourceEntries,
-      };
-      return proposal;
-    } catch (error) {
-      // Never retain a conversation containing a rejected/aborted output.
-      this.clearInteraction(request.session.id);
-      throw error;
-    }
-  }
-
-  /**
-   * Adventure streaming uses the standard structured-generation SSE path.
-   * The Interactions endpoint currently buffers complete JSON, so when
-   * streaming is available we send a self-contained prompt (recent transcript,
-   * world state and selected Vault sources) rather than a delta interaction.
-   */
-  private async generateViaStream(
-    request: AdventureTurnGenerationRequest,
-    prompt: ReturnType<typeof buildAdventurePrompt>,
-    systemInstruction: string,
-    options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
-  ): Promise<AdventureTurnProposal | null> {
-    const signal = options.signal ?? request.signal;
-    const model = await this.aiClient.getModel(
-      options.apiKey ?? "",
-      options.modelName ?? "luna-fast",
-      systemInstruction,
-    );
-    const streamModel = model as typeof model & {
-      generateContentStream?: (
-        input: unknown,
-        signal?: AbortSignal,
-      ) => AsyncIterable<AdventureStreamEvent> | Promise<AdventureStream>;
-    };
-    if (!streamModel.generateContentStream) return null;
-    // The streamed request is self-contained; stale Interactions state is
-    // never reused after switching transport.
-    this.clearInteraction(request.session.id);
-    const input = buildAdventureContentInput(prompt.serialized);
-    streamAborted(signal);
-    const stream = await streamModel.generateContentStream(input, signal);
-    const buffer = await collectAdventureStream(
-      stream,
-      (text) => publishAdventureNarration(request, text, signal),
-      signal,
-    );
-    return parseAdventureResponse(buffer);
-  }
-
   private async generateBuffered(
     request: AdventureTurnGenerationRequest,
-    prompt: ReturnType<typeof buildAdventurePrompt>,
+    prompt: AdventurePrompt,
     systemInstruction: string,
-    options: { apiKey?: string; modelName?: string; signal?: AbortSignal },
+    options: AdventureGenerationOptions,
     forceStructuredOutput = false,
   ): Promise<AdventureTurnProposal> {
     streamAborted(options.signal ?? request.signal);
@@ -192,36 +71,30 @@ export class AdventureTurnGenerationService {
       !options.apiKey &&
       !forceStructuredOutput
     ) {
-      return this.generateViaInteraction(
+      return this.interactionGeneration.generate(
         request,
         prompt,
         systemInstruction,
         options,
       );
     }
-    const model = await this.aiClient.getModel(
-      options.apiKey ?? "",
-      options.modelName ?? "luna-fast",
+    return this.contentGeneration.buffered(
+      request,
+      prompt,
       systemInstruction,
+      options,
     );
-    const result = await model.generateContent(
-      buildAdventureContentInput(prompt.serialized),
-      { signal: options.signal ?? request.signal },
-    );
-    streamAborted(options.signal ?? request.signal);
-    return parseAdventureResponse(result.response.text());
   }
 
-  // fallow-ignore-next-line complexity
   async generate(
     request: AdventureTurnGenerationRequest,
-    options: { apiKey?: string; modelName?: string; signal?: AbortSignal } = {},
+    options: AdventureGenerationOptions = {},
   ): Promise<AdventureTurnProposal> {
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       throw new Error("offline");
     }
     const signal = options.signal ?? request.signal;
-    if (signal?.aborted) throw new DOMException("Cancelled", "AbortError");
+    streamAborted(signal);
     const prompt = buildAdventurePrompt(request);
     const systemInstruction =
       prompt.behavior +
@@ -236,21 +109,14 @@ export class AdventureTurnGenerationService {
       (this.aiClient.sendInteraction || this.aiClient.sendInteractionStream)
     ) {
       try {
-        return await this.generateViaInteraction(
+        return await this.interactionGeneration.generate(
           request,
           prompt,
           systemInstruction,
           options,
         );
       } catch (error) {
-        const reason =
-          error instanceof Error ? error.message.toLowerCase() : "";
-        if (
-          !/interaction-client-unavailable|interaction-stream-unavailable|interaction.*(?:unsupported|not supported|not available)/.test(
-            reason,
-          )
-        )
-          throw error;
+        if (!canUseStatelessFallback(error)) throw error;
         // Providers that cannot store conversations retain the original
         // stateless structured streaming path. No remote ID is persisted.
         this.clearInteraction(request.session.id);
@@ -258,9 +124,26 @@ export class AdventureTurnGenerationService {
       }
     }
 
+    return this.generateStateless(
+      request,
+      prompt,
+      systemInstruction,
+      options,
+      fallbackToStateless,
+    );
+  }
+
+  private async generateStateless(
+    request: AdventureTurnGenerationRequest,
+    prompt: AdventurePrompt,
+    systemInstruction: string,
+    options: AdventureGenerationOptions,
+    fallbackToStateless: boolean,
+  ): Promise<AdventureTurnProposal> {
+    const signal = options.signal ?? request.signal;
     if (request.onNarration) {
       try {
-        const streamed = await this.generateViaStream(
+        const streamed = await this.contentGeneration.stream(
           request,
           prompt,
           systemInstruction,
@@ -271,12 +154,7 @@ export class AdventureTurnGenerationService {
         // A complete stream can still contain malformed JSON or a response
         // that violates the turn schema. Retry once with the provider's
         // structured output constraint; never retry transport or abort errors.
-        if (
-          !(error instanceof Error) ||
-          error.message !== "invalid-adventure-response"
-        ) {
-          throw error;
-        }
+        if (!isInvalidAdventureResponse(error)) throw error;
         streamAborted(signal);
         // The preview was never committed and may differ from the repaired
         // result. Withdraw it before trying again.

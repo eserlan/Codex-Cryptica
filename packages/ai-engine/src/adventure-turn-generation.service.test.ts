@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   AdventureTurnGenerationService,
   extractAdventureNarrationPrefix,
@@ -22,6 +22,91 @@ if (typeof navigator === "undefined") {
 }
 
 describe("AdventureTurnGenerationService", () => {
+  it.each([
+    "interaction-client-unavailable",
+    "interaction-stream-unavailable",
+    "INTERACTION not supported",
+  ])(
+    "uses stateless generation when retained history reports %s",
+    async (reason) => {
+      const sendInteraction = vi.fn(async () => {
+        throw new Error(reason);
+      });
+      const getModel = vi.fn(async () => ({
+        async generateContent() {
+          return { response: { text: () => completeResponse } };
+        },
+      }));
+      const service = new AdventureTurnGenerationService({
+        getModel,
+        sendInteraction,
+      });
+      await expect(
+        service.generate({
+          session,
+          phase: "opening",
+          anchors: [],
+          relevant: [],
+        }),
+      ).resolves.toMatchObject({ kind: "complete" });
+      expect(sendInteraction).toHaveBeenCalledOnce();
+      expect(getModel).toHaveBeenCalledOnce();
+    },
+  );
+
+  it.each([new Error("rate-limit"), "unrecognised failure"])(
+    "propagates retained-history failures without a stateless retry: %s",
+    async (error) => {
+      const getModel = vi.fn(async (): Promise<never> => {
+        throw new Error("unexpected stateless call");
+      });
+      const service = new AdventureTurnGenerationService({
+        getModel,
+        async sendInteraction() {
+          throw error;
+        },
+      });
+      await expect(
+        service.generate({
+          session,
+          phase: "opening",
+          anchors: [],
+          relevant: [],
+        }),
+      ).rejects.toBe(error);
+      expect(getModel).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects offline and pre-cancelled requests before contacting the provider", async () => {
+    const getModel = vi.fn(async (): Promise<never> => {
+      throw new Error("unexpected provider call");
+    });
+    const service = new AdventureTurnGenerationService({ getModel });
+    const request = {
+      session,
+      phase: "opening" as const,
+      anchors: [],
+      relevant: [],
+    };
+    Object.defineProperty(navigator, "onLine", {
+      value: false,
+      writable: true,
+    });
+    try {
+      await expect(service.generate(request)).rejects.toThrow("offline");
+    } finally {
+      Object.defineProperty(navigator, "onLine", {
+        value: true,
+        writable: true,
+      });
+    }
+    await expect(
+      service.generate({ ...request, signal: AbortSignal.abort() }),
+    ).rejects.toThrow("Cancelled");
+    expect(getModel).not.toHaveBeenCalled();
+  });
+
   it("emits only the first top-level player narration from partial JSON", () => {
     expect(
       extractAdventureNarrationPrefix(
