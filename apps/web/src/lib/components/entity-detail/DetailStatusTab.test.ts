@@ -359,7 +359,7 @@ describe("DetailStatusTab", () => {
     );
   });
 
-  it("renders 'Generate Related' button and triggers modal open when clicked", async () => {
+  it("renders 'Generate related' button and triggers modal open when clicked", async () => {
     const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
     render(DetailStatusTab, {
       entity: mockEntity,
@@ -370,7 +370,7 @@ describe("DetailStatusTab", () => {
       editEndDate: undefined as any,
     });
 
-    const generateBtn = screen.getByText("Generate Related");
+    const generateBtn = screen.getByText("Generate related");
     expect(generateBtn).toBeDefined();
 
     await fireEvent.click(generateBtn);
@@ -379,7 +379,7 @@ describe("DetailStatusTab", () => {
     );
   });
 
-  it("hides the 'Generate Related' button for guest sessions", async () => {
+  it("hides the 'Generate related' button for guest sessions", async () => {
     const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
     (vault as any).isGuest = true;
 
@@ -392,7 +392,7 @@ describe("DetailStatusTab", () => {
       editEndDate: undefined as any,
     });
 
-    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(screen.queryByText("Generate related")).toBeNull();
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 
