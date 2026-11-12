@@ -111,7 +111,13 @@ describe("completed turn commits", () => {
     next.elaborateScenarios = [
       { scenarioId: "missing", stage: "actionable-clue" },
     ];
-    const result = applyCompletedTurn(current, next, meta, now, () => "event-1");
+    const result = applyCompletedTurn(
+      current,
+      next,
+      meta,
+      now,
+      () => "event-1",
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.scenarioCollection?.items[0]?.knowledge).toBe("heard");
@@ -135,14 +141,25 @@ describe("completed turn commits", () => {
     next.elaborateScenarios = [
       { scenarioId: closedScenario.id, stage: "actionable-clue" },
     ];
-    const result = applyCompletedTurn(current, next, meta, now, () => "event-1");
+    const result = applyCompletedTurn(
+      current,
+      next,
+      meta,
+      now,
+      () => "event-1",
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.value.scenarioCollection?.items[0]?.knowledge).toBe("unheard");
-    expect(result.value.turns[0]?.dropped).toEqual(expect.arrayContaining([
-      expect.stringContaining("is not open"),
-      expect.stringContaining("must be heard"),
-    ]));
+    expect(result.value.scenarioCollection?.items[0]?.knowledge).toBe(
+      "unheard",
+    );
+    expect(result.value.turns[0]?.dropped).toHaveLength(2);
+    expect(result.value.turns[0]?.dropped).toContain(
+      "reveal: Scenario scenario-1 is not open",
+    );
+    expect(result.value.turns[0]?.dropped).toContain(
+      "elaborate: Scenario scenario-1 is not open",
+    );
   });
 
   it("records a skipped stage jump on a rumour revealed this turn", () => {
@@ -159,7 +176,13 @@ describe("completed turn commits", () => {
     next.elaborateScenarios = [
       { scenarioId: unheard.id, stage: "revelation-crisis" },
     ];
-    const result = applyCompletedTurn(current, next, meta, now, () => "event-1");
+    const result = applyCompletedTurn(
+      current,
+      next,
+      meta,
+      now,
+      () => "event-1",
+    );
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.value.scenarioCollection?.items[0]?.stage).toBe("hearsay");
