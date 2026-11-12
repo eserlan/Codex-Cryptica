@@ -54,6 +54,9 @@ export interface EntityActionsInput {
   onStartEdit?: () => void;
   onDelete?: () => void | Promise<void>;
   onExpand?: () => void;
+  onChangeImage?: () => void;
+  onChooseSilhouette?: () => void;
+  onShowToGuests?: () => void;
   onMonsterLabs?: () => void;
   monsterLabsOpen?: boolean;
   monsterLabsLoading?: boolean;
@@ -213,6 +216,51 @@ export function createEntityActions(
     };
   };
 
+  const imageAction =
+    (
+      id: string,
+      label: string,
+      icon: string,
+      testId: string,
+      pick: (input: EntityActionsInput) => (() => void) | undefined,
+    ): Builder =>
+    (input) => {
+      const callback = pick(input);
+      return callback && !input.isGuest
+        ? {
+            id,
+            label,
+            icon,
+            placement: "menu",
+            testId,
+            failure: `Could not ${label.toLowerCase()}.`,
+            run: () => callback(),
+          }
+        : null;
+    };
+
+  const changeImageAction = imageAction(
+    "change-image",
+    "Change image",
+    "icon-[lucide--image-up]",
+    "change-image-button",
+    (input) => input.onChangeImage,
+  );
+  const chooseSilhouetteAction = imageAction(
+    "choose-silhouette",
+    "Choose silhouette",
+    "icon-[lucide--user-round]",
+    "choose-silhouette-button",
+    (input) => input.onChooseSilhouette,
+  );
+  const showToGuestsAction = imageAction(
+    "show-image-to-guests",
+    "Show image to guests",
+    "icon-[lucide--share-2]",
+    "show-image-to-guests-button",
+    (input) => input.onShowToGuests,
+  );
+
   const chatAction: Builder = ({ entity, isGuest }) =>
     isGuest &&
     entity.type === "character" &&
@@ -318,6 +366,9 @@ export function createEntityActions(
     findInGraphAction,
     expandAction,
     reviseAction,
+    changeImageAction,
+    chooseSilhouetteAction,
+    showToGuestsAction,
     chatAction,
     soundBiteAction,
     delveMapAction,

@@ -19,6 +19,13 @@
   import EntityActionBar from "./EntityActionBar.svelte";
   import { createEntityActions } from "./entity-actions.svelte.js";
   import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
+  import DetailThumbnail from "./DetailThumbnail.svelte";
+  import DetailGenerateArt from "./DetailGenerateArt.svelte";
+  import {
+    pickEntityImage,
+    showEntityImageToGuests,
+  } from "./entity-image-file.js";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
 
   let {
     entity,
@@ -65,6 +72,12 @@
     existingCanvas,
     onStartEdit,
     onDelete,
+    onChangeImage: () => pickEntityImage(entity.id),
+    onChooseSilhouette: () => modalUIStore.openSilhouettePicker(entity),
+    onShowToGuests:
+      p2pHost.isHosting && entity.image
+        ? () => showEntityImageToGuests(entity)
+        : undefined,
     onMonsterLabs: handleSendToMonsterLabs,
     monsterLabsOpen: monsterLabsFlow.open,
     monsterLabsLoading: monsterLabsFlow.state === "loading",
@@ -195,6 +208,7 @@
     <div
       class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
     >
+      <DetailThumbnail {entity} />
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
           <div class="flex items-center gap-2">
@@ -289,6 +303,7 @@
               </button>
             </div>
           {/if}
+          <DetailGenerateArt {entity} />
         </div>
       {/if}
     </div>
@@ -312,9 +327,9 @@
     </div>
   </div>
 
-  <!-- Labels Section -->
-  <div class="mt-4 mb-2 space-y-2">
-    <div class="flex flex-wrap gap-1.5 min-h-[24px]">
+  <!-- Labels Section: chips and the add field share one row -->
+  <div class="mt-2 mb-1">
+    <div class="flex flex-wrap items-center gap-1.5 min-h-[24px]">
       {#each entity.labels || [] as label}
         <LabelBadge
           {label}
@@ -352,11 +367,14 @@
           No labels
         </span>
       {/if}
+      {#if !vault.isGuest}
+        <div
+          class="w-32 transition-[width] duration-200 focus-within:w-56 max-w-full"
+        >
+          <LabelInput entityId={entity.id} />
+        </div>
+      {/if}
     </div>
-
-    {#if !vault.isGuest}
-      <LabelInput entityId={entity.id} />
-    {/if}
   </div>
 
   {#if !vault.isGuest}

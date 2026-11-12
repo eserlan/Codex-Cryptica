@@ -9,7 +9,12 @@ vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
   layoutUIStore: { findInGraph: vi.fn() },
 }));
 vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
-  modalUIStore: { openZenMode: vi.fn(), openParentPicker: vi.fn() },
+  modalUIStore: {
+    openZenMode: vi.fn(),
+    openParentPicker: vi.fn(),
+    openSilhouettePicker: vi.fn(),
+    openLightbox: vi.fn(),
+  },
 }));
 vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
@@ -17,6 +22,7 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
     selectedEntityId: "entity-1",
     entities: {},
     allEntities: [],
+    resolveImageUrl: vi.fn().mockResolvedValue(""),
   },
 }));
 vi.mock("#lib/stores/theme.svelte.js", () => ({
@@ -82,6 +88,24 @@ describe("DetailHeader actions", () => {
 
     await fireEvent.click(item);
     expect(onDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists Change image and Choose silhouette in the menu, and Choose silhouette opens the picker", async () => {
+    const { getAllByTestId } = renderHeader();
+    const change = getAllByTestId("change-image-button")[0];
+    expect(change.closest('[role="menu"]')).toBeTruthy();
+    const pick = getAllByTestId("choose-silhouette-button")[0];
+    expect(pick.closest('[role="menu"]')).toBeTruthy();
+
+    await fireEvent.click(pick);
+    expect(modalUIStore.openSilhouettePicker).toHaveBeenCalledWith(entity);
+  });
+
+  it("offers a guest neither image action", () => {
+    (vault as any).isGuest = true;
+    const { queryByTestId } = renderHeader();
+    expect(queryByTestId("change-image-button")).toBeNull();
+    expect(queryByTestId("choose-silhouette-button")).toBeNull();
   });
 
   it("offers no Edit or Delete without the callbacks", () => {

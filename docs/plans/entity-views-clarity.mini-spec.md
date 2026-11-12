@@ -232,14 +232,14 @@ least one failure, guest or cancellation path.
 
 ### Slice 3 — Text first in the side panel ([#4741](https://github.com/eserlan/Codex-Cryptica/issues/4741))
 
-- [ ] **3.1 Tests** — component test for DOM order: title, tabs, text, connections, tools. Playwright
+- [x] **3.1 Tests** — component test for DOM order: title, tabs, text, connections, tools. Playwright
       check in `tests/responsive-entity-panel.spec.ts`: first line of text is within the viewport at
       1440 × 900 and 390 × 844. Edge: entity with no text shows the empty prompt and large image.
-- [ ] **3.2 Thumbnail** — `DetailThumbnail` in the header; click opens the lightbox; silhouette fallback.
-- [ ] **3.3 Image tools** — "Change image" and "Choose silhouette" move to the More menu and stay as
+- [x] **3.2 Thumbnail** — `DetailThumbnail` in the header; click opens the lightbox; silhouette fallback.
+- [x] **3.3 Image tools** — "Change image" and "Choose silhouette" move to the More menu and stay as
       buttons in edit mode.
-- [ ] **3.4 Reorder the overview** — text, connections, tools.
-- [ ] **3.5 Labels row** — one line under the header; the field expands on focus.
+- [x] **3.4 Reorder the overview** — text, connections, tools.
+- [x] **3.5 Labels row** — one line under the header; the field expands on focus.
 - [ ] **3.6 Verification gate.**
 
 ### Slice 4 — Same structure in both views ([#4742](https://github.com/eserlan/Codex-Cryptica/issues/4742))

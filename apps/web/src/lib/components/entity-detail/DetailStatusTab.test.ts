@@ -124,6 +124,37 @@ describe("DetailStatusTab", () => {
     (vault as any).isGuest = false;
   });
 
+  it("reads text, then Connections, then tools", () => {
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+    const text = screen.getByTestId("entity-main-text");
+    const heading = screen.getByRole("heading", { name: "Connections" });
+    const tools = screen.getByTestId("entity-overview-tools");
+    const follows = (a: Node, b: Node) =>
+      !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(text, heading)).toBe(true);
+    expect(follows(heading, tools)).toBe(true);
+  });
+
+  it("shows a guest no tools group", () => {
+    (vault as any).isGuest = true;
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+    expect(screen.queryByTestId("entity-overview-tools")).toBeNull();
+  });
+
   it("renders outbound and inbound connections with delete buttons", () => {
     render(DetailStatusTab, {
       entity: mockEntity,

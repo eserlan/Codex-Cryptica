@@ -448,7 +448,9 @@
               class="bg-theme-surface shrink-0"
               style:background-color="var(--theme-panel-fill)"
             >
-              <DetailImage entity={activeEntity} {isEditing} bind:editImage />
+              {#if isEditing || !activeEntity.content?.trim()}
+                <DetailImage entity={activeEntity} {isEditing} bind:editImage />
+              {/if}
 
               <DetailTabs
                 entity={activeEntity}
