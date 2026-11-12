@@ -90,13 +90,11 @@ test.describe("Responsive Entity Detail Panel", () => {
         }
 
         for (const actionName of [
-          "AI Revise Description",
-          "Find in Graph",
-          "Sound bite",
-          "Enter Zen Mode",
+          "Find in graph",
+          "Expand",
           "Close panel",
-          "DELETE",
-          "EDIT",
+          "Edit",
+          "More",
         ]) {
           await expect(
             panel.getByRole("button", { name: actionName }),

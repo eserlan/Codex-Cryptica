@@ -18,7 +18,7 @@ export const entityShelf: FeatureEntry = {
       id: "put-on-the-shelf",
       title: "Put entries on the Shelf",
       steps: [
-        "Open an entry and choose Send to Shelf in the side panel's More menu or the Zen mode header, or select several in the graph or the table, right-click and choose Send to Shelf.",
+        "Open an entry and choose Send to Shelf in the More menu, in the side panel or in Zen mode, or select several in the graph or the table, right-click and choose Send to Shelf.",
         "Shelving only reads: the vault you shelved from is not changed.",
       ],
       actionIds: ["entity-shelf.open-help"],

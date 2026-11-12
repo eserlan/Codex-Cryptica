@@ -574,15 +574,11 @@
 
       {#if isEditing}
         <DetailFooter
-          {isEditing}
           {isSaving}
           {isDirty}
           {isValid}
-          {canGuestEdit}
           onCancel={cancelEditing}
           onSave={saveChanges}
-          onDelete={handleDelete}
-          onStartEdit={startEditing}
         />
       {/if}
 

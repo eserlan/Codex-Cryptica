@@ -58,7 +58,7 @@ sparkle button when you want the instructions dialog and inline draft review. AI
 
 ## Delete an entity
 
-Open **More** in the side panel header, choose **Delete**, and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
+Open **More** in the side panel or Zen mode header, choose **Delete**, and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
 
 ## Guest vaults
 

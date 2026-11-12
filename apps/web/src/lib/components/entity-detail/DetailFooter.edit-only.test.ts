@@ -9,6 +9,7 @@ const source = readFileSync(
 describe("EntityDetailPanel footer", () => {
   it("renders the footer only while editing", () => {
     expect(source).toMatch(/\{#if isEditing\}\s*<DetailFooter/);
+    expect(source).not.toMatch(/<DetailFooter[^>]*onDelete/);
     expect(source.match(/<DetailFooter/g)).toHaveLength(1);
   });
 

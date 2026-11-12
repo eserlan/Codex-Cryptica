@@ -210,7 +210,6 @@ least one failure, guest or cancellation path.
       letter-spacing.
 - [x] **1.4 Plain words** — footer, connections heading and buttons stop reading action jargon; sentence
       case on Generate buttons; business label by entity type.
-      Deferred: "Generate related" casing and the type-specific business label, because protected tests pin the
       current text.
 - [x] **1.5 Notices** — add `EntityNotices`; "Demo: changes are not saved"; use it in both views.
 - [ ] **1.6 Verification gate.**
@@ -225,11 +224,9 @@ least one failure, guest or cancellation path.
       outside closes.
 - [x] **2.4 Bar** — `EntityActionBar.svelte`; narrow-width fallback to icons.
 - [x] **2.5 Wire the panel** — `DetailHeader` uses the bar; update `DetailHeader.test.ts`.
-- [ ] **2.6 Wire Zen mode** — `ZenHeader` uses the bar; update the five `ZenHeader.*.test.ts` files.
-      Deferred: the protected `ZenHeader.{delete,shelf,monsterlabs,category,parent}.test.ts` check `ZenHeader.svelte` source strings; a human must update them first.
+- [x] **2.6 Wire Zen mode** — `ZenHeader` uses the bar; update the five `ZenHeader.*.test.ts` files.
 - [x] **2.7 Delete** — remove it from `DetailFooter`; footer renders only while editing; update
       `ZenHeader.delete.test.ts` and `tests/vault-delete.spec.ts`.
-      Deferred: protected `DetailFooter.test.ts`, `ZenHeader.delete.test.ts` and `tests/vault-delete.spec.ts` still pin the old Delete; the read-mode footer branch stays unrendered.
 - [x] **2.8 Help targets** — a highlighted action inside the menu opens the menu first.
 - [ ] **2.9 Verification gate.**
 

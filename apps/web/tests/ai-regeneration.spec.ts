@@ -47,8 +47,13 @@ test.describe("AI Entity Regeneration", () => {
     const sidePanel = page.getByRole("complementary");
     await expect(sidePanel.getByText("Initial chronicle")).toBeVisible();
 
-    // 3. Verify AI Regen button exists
-    const regenButton = sidePanel.getByLabel("AI Revise Description").last();
+    // 3. Verify AI Regen item exists in the More menu
+    await sidePanel
+      .locator('[data-testid="entity-actions-more-button"]:visible')
+      .click();
+    const regenButton = sidePanel
+      .getByRole("menuitem", { name: "AI Revise Description" })
+      .last();
     await expect(regenButton).toBeVisible();
 
     // 4. Mock AI revision response at the Oracle boundary
@@ -74,9 +79,8 @@ test.describe("AI Entity Regeneration", () => {
     // 7. Check Chronicle Preview
     await expect(page.locator("text=New atmospheric chronicle.")).toBeVisible();
 
-    // 8. Switch to Lore Tab and check preview
-    // Note: Tab names depend on theme, but usually "Lore" or jargon
-    await page.click('[role="tab"]:has-text("Lore")');
+    // 8. Switch to the lore tab (labelled "GM notes") and check preview
+    await page.getByTestId("tab-lore").click();
     await expect(
       page.locator("text=New detailed lore with secrets."),
     ).toBeVisible();
@@ -93,7 +97,7 @@ test.describe("AI Entity Regeneration", () => {
 
     // 10. Verify persistence
     await expect(page.locator("text=AI Suggestion Ready")).not.toBeVisible();
-    await page.getByRole("tab", { name: "STATUS" }).click();
+    await page.getByTestId("tab-status").click();
     await expect(page.locator("text=New atmospheric chronicle.")).toBeVisible();
   });
 });
