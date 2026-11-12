@@ -393,6 +393,15 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
+def refresh_pr(job):
+    """Point the job at its branch's open PR when the recorded one was merged or
+    closed while the job kept working (someone merged an earlier round)."""
+    if job["pr"] and pr_state(job) != "OPEN":
+        prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
+        if len(prs) == 1:
+            job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
+
+
 def check_reviews_done(job):
     rd = round_dir(job)
     missing = [r for r in reviewers(job) if not (rd / f"review-{r}.md").exists()]
@@ -411,6 +420,8 @@ def next_round(job):
 def advance(job, stage):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
+    if stage != "merged" and old not in TERMINAL:
+        refresh_pr(job)
     d = job_dir(job["id"])
     decision = header(d / "intake.md").get("DECISION") if (d / "intake.md").exists() else None
     intake_body = lambda: "\n".join((d / "intake.md").read_text().split("\n\n", 1)[1:]).strip()
