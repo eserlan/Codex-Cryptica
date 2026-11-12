@@ -133,9 +133,10 @@ test.describe("Responsive Entity Detail Panel", () => {
   const pixel =
     "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
 
+  // Phones get a compact header, so the text must start much higher there.
   for (const viewport of [
-    { width: 1440, height: 900 },
-    { width: 390, height: 844 },
+    { width: 1440, height: 900, maxY: 880 },
+    { width: 390, height: 844, maxY: 400 },
   ]) {
     test(`shows the first line of text without scrolling at ${viewport.width}px`, async ({
       page,
@@ -163,8 +164,9 @@ test.describe("Responsive Entity Detail Panel", () => {
       // The panel slides in, so wait for the text to settle before measuring.
       await expect
         .poll(async () => (await text.boundingBox())?.y ?? Infinity)
-        .toBeLessThanOrEqual(viewport.height - 20);
-      expect((await text.boundingBox())!.y).toBeGreaterThanOrEqual(0);
+        .toBeLessThanOrEqual(viewport.maxY);
+      const y = (await text.boundingBox())!.y;
+      expect(y).toBeGreaterThanOrEqual(0);
     });
   }
 

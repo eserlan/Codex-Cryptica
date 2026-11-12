@@ -175,39 +175,33 @@
   </div>
 {/if}
 
-{#snippet headerActions()}
+{#snippet headerActions(compact = false)}
   {#if !isEditing}
-    <EntityActionBar actions={entityActions.actions} />
+    <EntityActionBar actions={entityActions.actions} {compact} />
   {/if}
 {/snippet}
 
 <div
-  class="@container p-4 md:p-6 border-b border-theme-border bg-theme-surface"
+  class="@container px-4 py-2 md:p-6 border-b border-theme-border bg-theme-surface"
   style:background-color="var(--theme-panel-fill)"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Mobile-only top bar -->
-  <div class="flex md:hidden justify-between items-center mb-4">
-    <button
-      type="button"
-      onclick={onClose}
-      class="touch-target flex items-center justify-center text-theme-text hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
-      aria-label="Back"
-    >
-      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
-      ></span>
-    </button>
-    <div class="flex min-w-0 items-center justify-end">
-      {@render headerActions()}
-    </div>
-  </div>
-
   <div
-    class="mb-2 min-w-0 md:flex md:flex-wrap md:items-center md:justify-between"
+    class="mb-1 min-w-0 md:mb-2 md:flex md:flex-wrap md:items-center md:justify-between"
   >
+    <!-- On phones this is the one top row: back, thumbnail, title, actions. -->
     <div
-      class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
+      class="flex w-full min-w-0 items-center gap-2 md:flex-[1_1_14rem] md:gap-4"
     >
+      <button
+        type="button"
+        onclick={onClose}
+        class="touch-target -ml-2 flex shrink-0 items-center justify-center rounded-full p-1 text-theme-text transition hover:text-theme-primary md:hidden"
+        aria-label="Back"
+      >
+        <span aria-hidden="true" class="icon-[lucide--chevron-left] h-7 w-7"
+        ></span>
+      </button>
       <DetailThumbnail {entity} {isEditing} />
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
@@ -223,12 +217,12 @@
           <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
         </div>
       {:else}
-        <div class="flex flex-col gap-0.5 min-w-0 w-full">
+        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
           <div class="flex items-center gap-2 flex-wrap">
             <h2
               class="{isFantasyTheme
                 ? 'text-xl md:text-3xl font-header tracking-wider'
-                : 'text-xl md:text-3xl font-body tracking-wide'} break-words whitespace-normal font-bold"
+                : 'text-xl md:text-3xl font-body tracking-wide'} max-w-full break-words whitespace-normal font-bold"
               style:color={isFantasyTheme
                 ? "var(--theme-title-ink)"
                 : undefined}
@@ -254,58 +248,65 @@
               {/each}
             </div>
           {/if}
-          {#if parentEntity}
-            <div
-              class="flex items-center gap-1.5 text-xs text-theme-text mt-1.5"
-              data-testid="sidebar-parent-indicator"
-            >
-              <span
-                class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
-              ></span>
-              <span>Parent:</span>
-              <button
-                type="button"
-                onclick={handleOpenParent}
-                class="text-theme-text hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+          <div
+            class="max-md:flex max-md:flex-wrap max-md:items-center max-md:gap-x-3"
+          >
+            {#if parentEntity}
+              <div
+                class="flex items-center gap-1.5 text-xs text-theme-text mt-1.5"
+                data-testid="sidebar-parent-indicator"
               >
-                {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    aria-hidden="true">*</sup
-                  ><span class="sr-only"> (past)</span>{/if}
-              </button>
-              {#if canEditParent}
+                <span
+                  class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
+                ></span>
+                <span>Parent:</span>
+                <button
+                  type="button"
+                  onclick={handleOpenParent}
+                  class="text-theme-text hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+                >
+                  {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                      aria-hidden="true">*</sup
+                    ><span class="sr-only"> (past)</span>{/if}
+                </button>
+                {#if canEditParent}
+                  <button
+                    type="button"
+                    onclick={() => modalUIStore.openParentPicker(entity.id)}
+                    class="p-0.5 text-theme-text hover:text-theme-primary transition-colors"
+                    aria-label="Change parent"
+                    title="Change parent"
+                    data-testid="change-parent-button"
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--pencil] h-3 w-3"
+                    ></span>
+                  </button>
+                {/if}
+              </div>
+            {:else if canEditParent}
+              <div class="mt-1.5">
                 <button
                   type="button"
                   onclick={() => modalUIStore.openParentPicker(entity.id)}
-                  class="p-0.5 text-theme-text hover:text-theme-primary transition-colors"
-                  aria-label="Change parent"
-                  title="Change parent"
-                  data-testid="change-parent-button"
+                  class="flex items-center gap-1.5 text-xs text-theme-text hover:text-theme-primary transition-colors focus:outline-none"
+                  title="Nest this under another entity"
+                  data-testid="set-parent-button"
                 >
-                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--folder-plus] h-3.5 w-3.5"
                   ></span>
+                  <span>Set parent</span>
                 </button>
-              {/if}
-            </div>
-          {:else if canEditParent}
-            <div class="mt-1.5">
-              <button
-                type="button"
-                onclick={() => modalUIStore.openParentPicker(entity.id)}
-                class="touch-target flex items-center gap-1.5 text-xs text-theme-text hover:text-theme-primary transition-colors focus:outline-none"
-                title="Nest this under another entity"
-                data-testid="set-parent-button"
-              >
-                <span
-                  aria-hidden="true"
-                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
-                ></span>
-                <span>Set parent</span>
-              </button>
-            </div>
-          {/if}
-          <DetailGenerateArt {entity} />
+              </div>
+            {/if}
+            <DetailGenerateArt {entity} />
+          </div>
         </div>
       {/if}
+      <div class="shrink-0 md:hidden">{@render headerActions(true)}</div>
     </div>
 
     <div
@@ -329,47 +330,52 @@
 
   <!-- Labels Section: chips and the add field share one row -->
   <div class="mt-2 mb-1">
-    <div class="flex flex-wrap items-center gap-1.5 min-h-[24px]">
-      {#each entity.labels || [] as label}
-        <LabelBadge
-          {label}
-          removable={!vault.isGuest}
-          onRemove={async () => await vault.removeLabel(entity.id, label)}
-        />
-      {/each}
-      {#if statureLabel}
-        <span
-          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider self-center"
-          title={statureFromLabel
-            ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
-            : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
-          data-testid="entity-stature-badge"
-        >
-          Drawn as {statureLabel}
-        </span>
-        {#if canKeepStature}
-          <button
-            type="button"
-            onclick={keepStature}
-            disabled={isKeepingStature}
-            title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
-            data-testid="entity-stature-keep"
-            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+    <!-- Phones: one line that scrolls sideways; the add field stays beside it. -->
+    <div class="flex items-center gap-1.5 min-h-[24px] md:flex-wrap">
+      <div
+        class="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap md:contents"
+      >
+        {#each entity.labels || [] as label}
+          <LabelBadge
+            {label}
+            removable={!vault.isGuest}
+            onRemove={async () => await vault.removeLabel(entity.id, label)}
+          />
+        {/each}
+        {#if statureLabel}
+          <span
+            class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider self-center"
+            title={statureFromLabel
+              ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
+              : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
+            data-testid="entity-stature-badge"
           >
-            Keep
-          </button>
+            Drawn as {statureLabel}
+          </span>
+          {#if canKeepStature}
+            <button
+              type="button"
+              onclick={keepStature}
+              disabled={isKeepingStature}
+              title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
+              data-testid="entity-stature-keep"
+              class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+            >
+              Keep
+            </button>
+          {/if}
         {/if}
-      {/if}
-      {#if !entity.labels?.length && vault.isGuest}
-        <span
-          class="text-nano text-theme-text italic uppercase tracking-tighter"
-        >
-          No labels
-        </span>
-      {/if}
+        {#if !entity.labels?.length && vault.isGuest}
+          <span
+            class="text-nano text-theme-text italic uppercase tracking-tighter"
+          >
+            No labels
+          </span>
+        {/if}
+      </div>
       {#if !vault.isGuest}
         <div
-          class="w-32 transition-[width] duration-200 focus-within:w-56 max-w-full"
+          class="w-32 shrink-0 transition-[width] duration-200 focus-within:w-56 max-w-full"
         >
           <LabelInput entityId={entity.id} />
         </div>

@@ -3,7 +3,8 @@
   import { computePosition, flip, shift, offset } from "@floating-ui/dom";
   import type { EntityAction } from "./entity-actions.svelte.js";
 
-  let { items }: { items: EntityAction[] } = $props();
+  let { items, compact = false }: { items: EntityAction[]; compact?: boolean } =
+    $props();
 
   let isOpen = $state(false);
   let rootEl = $state<HTMLDivElement | null>(null);
@@ -135,7 +136,7 @@
       data-testid="entity-actions-more-button"
     >
       <span aria-hidden="true" class="icon-[lucide--ellipsis] h-5 w-5"></span>
-      <span class="@max-[300px]:hidden">More</span>
+      <span class={compact ? "sr-only" : "@max-[300px]:hidden"}>More</span>
     </button>
 
     <div
