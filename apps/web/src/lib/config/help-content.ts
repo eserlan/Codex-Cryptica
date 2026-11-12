@@ -646,7 +646,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "ai-revision",
     title: "AI Description Revision",
     content:
-      "Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.",
+      "Instantly generate or refine entity descriptions. The AI produces both the main text and the GM notes based on your existing notes, tags, and connections. Open the More menu in the side panel or Zen mode and choose AI revise description, then review and save changes.",
     icon: "icon-[lucide--sparkles]",
   },
   "p2p-connection-manager": {
@@ -674,7 +674,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-auto-link",
     title: "Entity Links in Content",
     content:
-      "When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode; the editor shows plain text while you are writing.",
+      "When reading an entity's text or GM notes, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. Writing [[Name]] makes an explicit link, and the brackets are hidden when reading. They only appear in read mode; the editor shows plain text while you are writing.",
     icon: "icon-[lucide--link]",
   },
   "guest-character-chat": {
