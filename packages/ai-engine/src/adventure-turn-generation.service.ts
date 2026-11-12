@@ -1,3 +1,4 @@
+import { AdventureInteractionTransport } from "./adventure-interaction-transport";
 import type {
   AdventureAIClient,
   AdventureTurnGenerationRequest,
@@ -30,13 +31,6 @@ import {
 import { AdventureInteractionContext } from "./adventure-interaction-context";
 import { buildAdventureInteractionInput } from "./adventure-interaction-input";
 
-/** Stream failures that are safe to retry once as a buffered Interaction. */
-const BUFFERED_FALLBACK_ERRORS = new Set([
-  "interaction-stream-unavailable",
-  "interaction-stream-incomplete",
-  "interaction-stream-read-error",
-]);
-
 export class AdventureTurnGenerationService {
   private readonly interactionContext = new AdventureInteractionContext();
 
@@ -60,10 +54,8 @@ export class AdventureTurnGenerationService {
     options: { modelName?: string; signal?: AbortSignal },
   ): Promise<AdventureTurnProposal> {
     const signal = options.signal ?? request.signal;
-    const sendInteraction = this.aiClient.sendInteraction;
-    const sendStream = this.aiClient.sendInteractionStream;
-    if (!sendInteraction && !sendStream)
-      throw new Error("interaction-client-unavailable");
+    const transport = new AdventureInteractionTransport(this.aiClient);
+    if (!transport.available) throw new Error("interaction-client-unavailable");
 
     let interaction = this.interactionContext.prepare(
       request.session,
@@ -74,7 +66,6 @@ export class AdventureTurnGenerationService {
     const instruction =
       systemInstruction +
       "\n\nOn continuation requests, stateDelta contains only changed top-level state fields and supersedes your previous state; null deletes a field. The present input and retrieved Vault sources outrank any previous turn. Never reveal GM-only fields.";
-    // fallow-ignore-next-line complexity
     const send = async (
       repair?: string,
       preferStream = true,
@@ -98,45 +89,7 @@ export class AdventureTurnGenerationService {
         generationConfig: { responseMimeType: "application/json" },
         signal,
       };
-      // Streaming with provider-held history: the proxy returns only
-      // player-safe model_output text, never thought/GM-only provider events.
-      if (preferStream && request.onNarration && sendStream) {
-        try {
-          let buffer = "";
-          let finalId = "";
-          let completed = false;
-          for await (const event of sendStream.call(this.aiClient, params)) {
-            streamAborted(signal);
-            if (event.type === "error") throw new Error(event.error);
-            if (event.type === "delta") buffer += event.text;
-            if (event.type === "complete") {
-              buffer = event.text || buffer;
-              finalId = event.id;
-              completed = true;
-            }
-            publishAdventureNarration(request, buffer);
-          }
-          streamAborted(signal);
-          if (!completed || !finalId)
-            throw new Error("interaction-stream-incomplete");
-          return { ...prepared, id: finalId, text: buffer };
-        } catch (error) {
-          if (
-            !(error instanceof Error) ||
-            !BUFFERED_FALLBACK_ERRORS.has(error.message) ||
-            !sendInteraction
-          )
-            throw error;
-          streamAborted(signal);
-          // Old proxy / provider does not support conversation SSE yet, or the
-          // stream ended before a completed turn (nothing was committed, so
-          // the same continuation id is still valid). Buffered Interactions
-          // still preserve continuity and JSON mode.
-        }
-      }
-      if (!sendInteraction) throw new Error("interaction-client-unavailable");
-      const result = await sendInteraction.call(this.aiClient, params);
-      streamAborted(signal);
+      const result = await transport.send(request, params, preferStream);
       return { ...prepared, id: result.id, text: result.text };
     };
 
@@ -166,7 +119,7 @@ export class AdventureTurnGenerationService {
         // conversation ID; never chain from an invalid model response.
         result = await send(
           "Previous JSON failed validation. Return a complete corrected JSON proposal with all required fields.",
-          !sendInteraction,
+          !transport.canBuffer,
         );
         proposal = parseAdventureResponse(result.text);
       }
