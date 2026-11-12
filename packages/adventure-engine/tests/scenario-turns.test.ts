@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { parseAdventureSession } from "../src/schemas";
 import {
   applyScenarioElaborations,
   markRevealedScenarios,
@@ -91,6 +92,40 @@ describe("scenario turn progression", () => {
     expect(
       applyScenarioElaborations(current, undefined, undefined, turn, createId),
     ).toBeNull();
+  });
+
+  it("persists a GM-only stage transition without discovery text", () => {
+    const current = candidate();
+    const item = current.scenarioCollection!.items[0]!;
+    item.knowledge = "heard";
+
+    expect(
+      applyScenarioElaborations(
+        current,
+        [{ ...clue, discovery: " " }],
+        [],
+        turn,
+        () => "stage-event-1",
+      ),
+    ).toBeNull();
+
+    expect(item.stage).toBe("actionable-clue");
+    expect(item.events[0]).toMatchObject({
+      id: "stage-event-1",
+      kind: "stage-change",
+      visibility: "gm",
+      turnId: turn.id,
+    });
+    expect(item.secretBindings.eventIds).toEqual({
+      "stage-event-1": "scenario-event-stage-event-1",
+    });
+    const persisted = parseAdventureSession(current);
+    expect(persisted.scenarioCollection?.items[0]?.stage).toBe(
+      "actionable-clue",
+    );
+    expect(persisted.scenarioCollection?.items[0]?.events[0]?.kind).toBe(
+      "stage-change",
+    );
   });
 
   it("rejects missing, out-of-location, and unrecordable discoveries", () => {
