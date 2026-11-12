@@ -39,7 +39,7 @@
     },
     "apps/web": {
       "name": "web",
-      "version": "0.36.20",
+      "version": "0.36.22",
       "dependencies": {
         "@capacitor/app": "^8.1.1",
         "@capacitor/core": "^8.5.0",

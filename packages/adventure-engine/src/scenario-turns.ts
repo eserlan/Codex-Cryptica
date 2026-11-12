@@ -20,6 +20,7 @@ function revealScenarioIfUnheard(
   turn: CommittedAdventureTurn,
   createId: IdFactory,
   dropped: string[],
+  newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   const scenario = candidate.scenarioCollection?.items.find(
     (item) => item.id === scenarioId,
@@ -29,6 +30,10 @@ function revealScenarioIfUnheard(
     return null;
   }
   if (scenario.knowledge !== "unheard") return null;
+  if (scenario.status !== "open") {
+    dropped.push(`reveal: Scenario ${scenarioId} is not open`);
+    return null;
+  }
 
   const locationError = validateRevealedScenarioLocation(candidate, scenario);
   if (locationError) {
@@ -48,6 +53,7 @@ function revealScenarioIfUnheard(
     return "Unable to record scenario discovery";
   }
   scenario.knowledge = "heard";
+  newlyRevealedScenarioIds?.add(scenarioId);
   return null;
 }
 
@@ -57,6 +63,7 @@ export function markRevealedScenarios(
   turn: CommittedAdventureTurn,
   createId: IdFactory,
   dropped: string[] = [],
+  newlyRevealedScenarioIds?: Set<string>,
 ): string | null {
   for (const scenarioId of scenarioIds ?? []) {
     const err = revealScenarioIfUnheard(
@@ -65,6 +72,7 @@ export function markRevealedScenarios(
       turn,
       createId,
       dropped,
+      newlyRevealedScenarioIds,
     );
     if (err) return err;
   }
@@ -167,15 +175,13 @@ function checkElaboration(
   const id = elaboration.scenarioId;
   if (seen.has(id)) return { skip: `elaborate: ${id} repeated in one turn` };
   seen.add(id);
-  // A rumour is introduced at hearsay, so elaborating it in the same turn adds
-  // nothing.
-  if (revealedThisTurn.has(id)) return { skip: null };
   const validation = validateScenarioAvailability(candidate, elaboration);
   const failure =
     "error" in validation
       ? validation.error
       : validateElaborationStage(validation.scenario, elaboration);
   if (failure) return { skip: `elaborate: ${failure.errors[0]?.message}` };
+  if (revealedThisTurn.has(id)) return { skip: null };
   return "scenario" in validation ? validation : { skip: null };
 }
 
