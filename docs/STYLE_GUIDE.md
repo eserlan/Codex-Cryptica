@@ -22,6 +22,8 @@ This document establishes the core design principles and component implementatio
 
 Codex Cryptica's character lives in the user's world: the graph, the themes, the genre voice. The controls around that world should be quiet and predictable. These principles say where flavour belongs and where plain design wins. They extend the [Dual-Layer Theming Model](#dual-layer-theming-model) from colour and texture to words, type and layout, and they apply Constitution IX (Natural Language) to the interface.
 
+These principles cover the app itself. Public `(marketing)` pages follow the [Marketing & Landing Page Pattern](#marketing--landing-page-pattern-marketing-routes); where the two differ, such as monospace eyebrows, the marketing pattern applies on those pages.
+
 Parts of the app predate these principles. Apply them to new work and to any screen you touch. The gaps found on 12 November 2026 are listed in [usability-look-feel-assessment-2026-11-12.md](./usability-look-feel-assessment-2026-11-12.md).
 
 ### 1. Flavour belongs to the world; function stays plain

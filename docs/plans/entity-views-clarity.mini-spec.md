@@ -154,7 +154,7 @@ Paths are under `apps/web/src/lib/components/`.
 ### Key Technical Decisions & Tradeoffs
 
 - **Share the action model, not the whole header.** A single header component for both views would be
-  cleaner but is a larger rewrite of two 580-line files with 10 test files between them. Sharing the action
+  cleaner but is a larger rewrite of two 580-line files with six test files between them. Sharing the action
   list and bar removes the duplication that causes the drift, and leaves each header's layout alone.
 - **Thumbnail in the panel, full image in Zen.** The portrait matters to the app's character, so it stays
   visible beside the title and opens the lightbox on click. The alternative, a short banner image above
