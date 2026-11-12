@@ -124,7 +124,7 @@ def base_of(job):
     parent = job.get("stacked_on")
     if parent and (job_dir(parent) / "job.json").exists():
         p = json.loads((job_dir(parent) / "job.json").read_text())
-        if p["stage"] not in TERMINAL:
+        if p["stage"] not in TERMINAL and not (p["pr"] and pr_state(p) == "MERGED"):
             return p["branch"]
     return BASE
 
