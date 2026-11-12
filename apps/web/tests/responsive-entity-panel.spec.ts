@@ -160,10 +160,11 @@ test.describe("Responsive Entity Detail Panel", () => {
       await expect(panel.getByTestId("detail-thumbnail")).toBeVisible();
       const text = panel.getByTestId("entity-main-text");
       await expect(text).toBeVisible();
-      const box = await text.boundingBox();
-      expect(box).toBeTruthy();
-      expect(box!.y).toBeGreaterThanOrEqual(0);
-      expect(box!.y).toBeLessThanOrEqual(viewport.height - 20);
+      // The panel slides in, so wait for the text to settle before measuring.
+      await expect
+        .poll(async () => (await text.boundingBox())?.y ?? Infinity)
+        .toBeLessThanOrEqual(viewport.height - 20);
+      expect((await text.boundingBox())!.y).toBeGreaterThanOrEqual(0);
     });
   }
 
