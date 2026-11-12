@@ -146,7 +146,7 @@ through the dev-agents review-and-fix loop and a human before they ship, and
 `gh pr merge` seconds after marking a PR ready would skip both. So whatever the
 approver decided, run `factory/bin/job advance <id> needs-human`. It marks the
 PR ready, posts the decision (including whether the approver would have
-merged it) on the PR and labels the issue `factory:needs-human`. Do not run
+merged it) on the PR and labels both the PR and the issue `factory:needs-human`. Do not run
 `factory/bin/job merge`. The job finishes when the PR is merged on GitHub:
 `factory/bin/job queue` notices and moves it to `merged`.
 

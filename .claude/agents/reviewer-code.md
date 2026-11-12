@@ -49,7 +49,9 @@ rewrites files, such as `--fix`.
 - **Docs**: AGENTS.md and any docs it lists are updated where the change
   requires it.
 - **Tests**: new behaviour has tests where the repo has a test runner, and no
-  existing test was weakened, skipped or special-cased to pass.
+  existing test was weakened, skipped or special-cased to pass. Read the diff
+  of every existing test the branch changed: each change must check the new
+  behaviour the spec asks for, and build.md must say why.
 - **Commits**: short one-line messages and nothing stray committed. Trailers
   and attribution (`Co-Authored-By` and the like) are the builder's, not
   yours: the builder runs on a different model than you, so never compare
