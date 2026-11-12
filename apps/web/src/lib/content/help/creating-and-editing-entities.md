@@ -5,18 +5,7 @@ description: Add a character, location or any other entry to your vault, then ed
 icon: icon-[lucide--square-pen]
 rank: 2
 tags:
-  [
-    "entity",
-    "create",
-    "edit",
-    "save",
-    "cancel",
-    "delete",
-    "basics",
-    "template",
-    "link",
-    "wiki",
-  ]
+  ["entity", "create", "edit", "save", "cancel", "delete", "basics", "template"]
 ---
 
 # Creating and Editing Entities
@@ -66,10 +55,6 @@ If generation fails, your existing entity text remains unchanged.
 You can also use **`/revise`** in the **Lore Oracle** chat to revise the selected entity.
 The chat command returns suggested text in the conversation. Use the entity-view
 sparkle button when you want the instructions dialog and inline draft review. AI revisions are unavailable in guest or demo vaults.
-
-## Link to another entity
-
-Write `[[Name]]` in an entity's text or GM notes, using another entity's title or alias, to link to it. When you read the entity, the name shows as a link without the brackets. If no entity has that name, it shows as plain text. While you edit, the brackets stay visible.
 
 ## Delete an entity
 

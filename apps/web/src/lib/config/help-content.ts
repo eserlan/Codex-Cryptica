@@ -674,7 +674,7 @@ export const FEATURE_HINTS: Record<string, FeatureHint> = {
     id: "entity-auto-link",
     title: "Entity Links in Content",
     content:
-      "When reading an entity's text or GM notes, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. Writing [[Name]] makes an explicit link, and the brackets are hidden when reading. They only appear in read mode; the editor shows plain text while you are writing.",
+      "When reading an entity's text or GM notes, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode; the editor shows plain text while you are writing.",
     icon: "icon-[lucide--link]",
   },
   "guest-character-chat": {
