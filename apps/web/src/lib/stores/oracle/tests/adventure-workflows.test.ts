@@ -63,6 +63,34 @@ describe("AdventureLifecycle", () => {
     expect(acquire).not.toHaveBeenCalled();
   });
 
+  it("stops waiting for a held lease at the injected clock deadline", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    state.readOnly = true;
+    vi.spyOn(deps.repository, "load").mockResolvedValue({
+      condition: "normal",
+      session: state.session!,
+    });
+    vi.spyOn(deps.authority, "acquire").mockResolvedValue({
+      ok: false,
+      reason: "held",
+    } as any);
+    vi.spyOn(globalThis, "setTimeout").mockImplementation(((
+      callback: TimerHandler,
+    ) => {
+      if (typeof callback === "function") callback();
+      return 0;
+    }) as typeof setTimeout);
+    const now = vi.fn().mockReturnValueOnce(0).mockReturnValueOnce(11_000);
+
+    const tookControl = await new AdventureLifecycle(runtime, undefined, {
+      now,
+    }).tryTakeControl();
+
+    expect(tookControl).toBe(false);
+    expect(now).toHaveBeenCalledTimes(2);
+    expect(deps.authority.acquire).toHaveBeenCalledOnce();
+  });
+
   it("calls the injected roll recovery after opening a recorded outcome", async () => {
     const { runtime, state, deps } = createAdventureRuntime();
     const pending = proposedSession(
