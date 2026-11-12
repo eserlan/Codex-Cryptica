@@ -30,6 +30,8 @@ export interface AdventureTurnGenerationRequest {
   relevant: ResolvedSourceExcerpt[];
   /** Vault genre or theme; plain data so it crosses the worker boundary. */
   worldStyle?: AdventureWorldStyle;
+  /** Why the previous reply could not be used; set only on the one automatic retry. */
+  correction?: string;
   signal?: AbortSignal;
   /** Ephemeral player-facing preview; never a committed or trusted turn. */
   onNarration?: (text: string) => void;

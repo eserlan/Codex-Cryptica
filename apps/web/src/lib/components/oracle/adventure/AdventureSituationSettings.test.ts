@@ -242,6 +242,20 @@ describe("AdventureSituationSettings", () => {
             playerAction: "Buy a loaf of bread.",
             narration: "The baker counts your coins.",
             committedAt: "2026-11-11T10:00:00.000Z",
+            // A committed turn always carries these; the diagnostic scores them.
+            revealedSecretIds: [],
+            provisionalFactIds: [],
+            sourceRecordIds: [],
+            visiblePatch: {
+              objectives: { add: [], update: [], removeIds: [] },
+              activeCharacters: { add: [], update: [], removeIds: [] },
+              knownFacts: { add: [], update: [], removeIds: [] },
+              relationships: { add: [], update: [], removeIds: [] },
+            },
+            hiddenPatch: {
+              secrets: { add: [], update: [], removeIds: [] },
+              gmThreads: { add: [], update: [], removeIds: [] },
+            },
           },
         ],
         pendingRoll: null,

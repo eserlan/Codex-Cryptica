@@ -26,6 +26,11 @@ export interface AdventurePromptInput {
   rollResolution?: SuppliedRollOutcome;
   anchors: ResolvedSourceExcerpt[];
   relevant: ResolvedSourceExcerpt[];
+  /**
+   * Why the previous reply for this same action could not be used. Set only on the
+   * one automatic retry, so the GM can fix that and answer again.
+   */
+  correction?: string;
 }
 
 export function buildAdventurePrompt(input: AdventurePromptInput) {
@@ -58,6 +63,11 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
         ]
       : []),
     "Canonical source records outrank provisional session material.",
+    ...(input.correction
+      ? [
+          `CORRECTION: your previous reply to this same turn could not be used (${input.correction.slice(0, 300)}). Answer the same turn again as one complete reply and avoid that problem.`,
+        ]
+      : []),
     ...(scenarios.length
       ? [
           "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
