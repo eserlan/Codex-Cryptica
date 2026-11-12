@@ -124,7 +124,20 @@ export function worldEntryPacing(
 export function worldEntryDiscoveryMetrics(
   session: AdventureSession,
 ): WorldEntryDiscoveryMetrics {
+  if (!session.worldEntry) {
+    return { timeToFirstSign: null, timeToFirstActionableLead: null };
+  }
+
   const playerTurnIds = playerScenarioEventTurnIds(session);
+  const scenarioSecretIds = new Set(
+    (session.scenarioCollection?.items ?? []).flatMap((item) => [
+      item.secretBindings.truth,
+      ...(item.secretBindings.ifInvestigated
+        ? [item.secretBindings.ifInvestigated]
+        : []),
+      ...Object.values(item.secretBindings.eventIds),
+    ]),
+  );
   let timeToFirstSign: number | null = null;
   let timeToFirstActionableLead: number | null = null;
 
@@ -134,7 +147,7 @@ export function worldEntryDiscoveryMetrics(
 
     const hasSign =
       playerTurnIds.has(turn.id) ||
-      turn.revealedSecretIds.length > 0 ||
+      turn.revealedSecretIds.some((id) => scenarioSecretIds.has(id)) ||
       session.provisionalFacts.some(
         (f) =>
           f.introducedOnTurnId === turn.id &&

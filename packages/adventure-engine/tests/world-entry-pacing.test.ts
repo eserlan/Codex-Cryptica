@@ -383,6 +383,40 @@ describe("world entry pacing", () => {
     });
   });
 
+  it("does not count unrelated secret reveals or non-World Entry sessions", () => {
+    const rumour = scenarioItem("rumour-1");
+    const unrelatedReveal = turn(1, { activity: "secret-reveal" });
+    const s = session([unrelatedReveal], {
+      scenarioCollection: {
+        version: 1,
+        items: [rumour],
+        focusedScenarioId: null,
+      },
+    });
+
+    expect(worldEntryDiscoveryMetrics(s)).toEqual({
+      timeToFirstSign: null,
+      timeToFirstActionableLead: null,
+    });
+    expect(
+      worldEntryDiscoveryMetrics({
+        ...s,
+        turns: [
+          {
+            ...unrelatedReveal,
+            revealedSecretIds: [rumour.secretBindings.truth],
+          },
+        ],
+      }).timeToFirstSign,
+    ).toBe(1);
+    expect(worldEntryDiscoveryMetrics({ ...s, worldEntry: undefined })).toEqual(
+      {
+        timeToFirstSign: null,
+        timeToFirstActionableLead: null,
+      },
+    );
+  });
+
   it("counts an actionable stage reached without discovery text", () => {
     const rumour = scenarioItem("rumour-1", "heard");
     const s = session([turn(1), turn(2)], {
