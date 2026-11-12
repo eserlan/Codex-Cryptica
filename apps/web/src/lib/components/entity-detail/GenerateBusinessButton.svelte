@@ -12,6 +12,11 @@
   /** A business is anchored to a place, a person or an organisation (FR-012). */
   const ANCHOR_TYPES = ["location", "character", "faction"];
   const visible = $derived(ANCHOR_TYPES.includes(entityType));
+  const label = $derived(
+    entityType === "location"
+      ? "Generate a business here"
+      : "Generate a business",
+  );
 </script>
 
 {#if visible}
@@ -23,6 +28,6 @@
     class="touch-target text-xs font-bold bg-theme-surface text-theme-text border border-theme-border hover:border-theme-primary px-4 py-2 rounded-xl flex items-center gap-1.5 transition cursor-pointer"
   >
     <span aria-hidden="true" class="icon-[lucide--store] w-4 h-4"></span>
-    Generate a business here
+    {label}
   </button>
 {/if}

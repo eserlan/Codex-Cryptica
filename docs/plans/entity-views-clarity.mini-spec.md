@@ -210,7 +210,7 @@ least one failure, guest or cancellation path.
       letter-spacing.
 - [x] **1.4 Plain words** — footer, connections heading and buttons stop reading action jargon; sentence
       case on Generate buttons; business label by entity type.
-      current text.
+      The "Generate related" casing and the type-specific business label followed once their tests were updated.
 - [x] **1.5 Notices** — add `EntityNotices`; "Demo: changes are not saved"; use it in both views.
 - [ ] **1.6 Verification gate.**
 
