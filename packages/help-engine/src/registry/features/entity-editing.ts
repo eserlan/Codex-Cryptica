@@ -15,7 +15,7 @@ export const entityEditing: FeatureEntry = {
       id: "ai-revisions",
       title: "AI-assisted revisions of Chronicle and Lore",
       steps: [
-        "Click AI Revise Description (sparkles) near the entity title in the side panel, or in the Zen Mode editor toolbar.",
+        "Open More near the entity title in the side panel and choose AI revise description, or in the Zen Mode editor toolbar.",
         "In Revise Description, optionally add AI Instructions / Corrections, then click Revise. Cancel closes the dialog without generating a revision.",
         "Review the Chronicle and Lore draft. Apply Changes saves it; Discard keeps the original. Review lore changes may ask which sections to keep.",
         "Alternatively, use /revise in Lore Oracle chat for the selected entity.",

@@ -1,6 +1,5 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { calendarEngine } from "chronology-engine";
   import { calendarStore } from "#lib/stores/calendar.svelte.js";
@@ -21,7 +20,6 @@
     isEditing,
     editType = $bindable(),
     idPrefix,
-    canGuestEdit = false,
     onDateClick,
   }: {
     entity: Entity;
@@ -29,7 +27,6 @@
     isEditing: boolean;
     editType: string;
     idPrefix: string;
-    canGuestEdit?: boolean;
     onDateClick?: (year: number, month: number) => void;
   } = $props();
 
@@ -51,10 +48,7 @@
   let tabIds = $derived.by(() => createEntityDetailTabIds(idPrefix).tabIds);
   let panelIds = $derived.by(() => createEntityDetailTabIds(idPrefix).panelIds);
   let visibleTabs = $derived.by(() => {
-    let tabs: EntityDetailTab[] =
-      vault.isGuest && !canGuestEdit
-        ? entityDetailTabs.filter((tab) => tab !== "lore")
-        : [...entityDetailTabs];
+    let tabs: EntityDetailTab[] = [...entityDetailTabs];
     if (entity.type !== "character") {
       tabs = tabs.filter((tab) => tab !== "chats" && tab !== "family");
     }
@@ -167,32 +161,32 @@
     onkeydown={handleTabKeydown}
   >
     <button
-      id={tabIds.status}
+      id={tabIds.overview}
       type="button"
       role="tab"
       class:shrink-0={true}
       class:touch-target={true}
       class:items-center={true}
-      aria-selected={activeTab === "status"}
-      aria-controls={panelIds.status}
-      tabindex={activeTab === "status" ? 0 : -1}
+      aria-selected={activeTab === "overview"}
+      aria-controls={panelIds.overview}
+      tabindex={activeTab === "overview" ? 0 : -1}
       data-testid="tab-status"
       data-help-target="status-tab"
-      class={activeTab === "status"
+      class={activeTab === "overview"
         ? isFantasyTheme
           ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
           : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
         : isFantasyTheme
           ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
           : "hover:text-theme-text transition"}
-      style:border-color={activeTab === "status" && isFantasyTheme
+      style:border-color={activeTab === "overview" && isFantasyTheme
         ? "var(--theme-focus-border)"
         : undefined}
-      style:background-color={activeTab === "status" && isFantasyTheme
+      style:background-color={activeTab === "overview" && isFantasyTheme
         ? "var(--theme-focus-bg)"
         : undefined}
-      onclick={() => (activeTab = "status")}
-      >{entityDetailTabLabels.status}</button
+      onclick={() => (activeTab = "overview")}
+      >{entityDetailTabLabels.overview}</button
     >
     <button
       id={tabIds.connections}
@@ -222,37 +216,6 @@
       onclick={() => (activeTab = "connections")}
       >{entityDetailTabLabels.connections}</button
     >
-
-    {#if !vault.isGuest || canGuestEdit}
-      <button
-        id={tabIds.lore}
-        type="button"
-        role="tab"
-        class:shrink-0={true}
-        class:touch-target={true}
-        class:items-center={true}
-        aria-selected={activeTab === "lore"}
-        aria-controls={panelIds.lore}
-        tabindex={activeTab === "lore" ? 0 : -1}
-        data-testid="tab-lore"
-        class={activeTab === "lore"
-          ? isFantasyTheme
-            ? "border px-3 py-1.5 rounded-sm text-[color:var(--color-accent-primary)]"
-            : "text-theme-primary border-b-2 border-theme-primary pb-2 -mb-2.5"
-          : isFantasyTheme
-            ? "transition text-[color:var(--theme-meta-text)] hover:text-[color:var(--theme-title-ink)]"
-            : "hover:text-theme-text transition"}
-        style:border-color={activeTab === "lore" && isFantasyTheme
-          ? "var(--theme-focus-border)"
-          : undefined}
-        style:background-color={activeTab === "lore" && isFantasyTheme
-          ? "var(--theme-focus-bg)"
-          : undefined}
-        onclick={() => {
-          activeTab = "lore";
-        }}>{entityDetailTabLabels.lore}</button
-      >
-    {/if}
 
     <button
       id={tabIds.map}

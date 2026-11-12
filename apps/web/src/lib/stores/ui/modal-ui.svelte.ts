@@ -1,4 +1,8 @@
 import type { AspectRatio, Entity } from "schema";
+import {
+  toEntityDetailTab,
+  type EntityDetailTab,
+} from "#lib/components/entity-detail/detail-tabs.js";
 import { sessionModeStore } from "./session-mode.svelte";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
@@ -61,15 +65,7 @@ export class ModalUIStore {
   showZenMode = $state(false);
   zenModeEntityId = $state<string | null>(null);
   lastAppPath = $state<string | null>(null);
-  zenModeActiveTab = $state<
-    | "overview"
-    | "connections"
-    | "map"
-    | "chats"
-    | "family"
-    | "timeline"
-    | "stats"
-  >("overview");
+  zenModeActiveTab = $state<EntityDetailTab>("overview");
 
   mergeDialog = $state<{
     open: boolean;
@@ -489,19 +485,9 @@ export class ModalUIStore {
     }
   }
 
-  openZenMode(
-    entityId: string,
-    tab:
-      | "overview"
-      | "connections"
-      | "map"
-      | "chats"
-      | "family"
-      | "timeline"
-      | "stats" = "overview",
-  ) {
+  openZenMode(entityId: string, tab: EntityDetailTab = "overview") {
     this.zenModeEntityId = entityId;
-    this.zenModeActiveTab = tab;
+    this.zenModeActiveTab = toEntityDetailTab(tab);
     this.showZenMode = true;
   }
 

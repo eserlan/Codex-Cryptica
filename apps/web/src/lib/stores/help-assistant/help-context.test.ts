@@ -213,9 +213,41 @@ describe("HelpContextStore", () => {
     });
   });
 
-  it("lists the Add button as available only on the Status tab", () => {
+  it("maps the overview tab to the status tab on the help wire", () => {
+    const { ctx, registry } = store({ isGuestMode: () => false });
+    registry.registerEntityDetail(
+      surface({
+        activeTab: () => "overview",
+        canGenerateRelated: () => true,
+      }),
+    );
+    expect(ctx.current.tab).toBe("status");
+    expect(ctx.current.availableActions).toEqual(
+      expect.arrayContaining([
+        "add-connection-button",
+        "generate-related-button",
+      ]),
+    );
+  });
+
+  it("offers neither connection control on the connections tab", () => {
+    const { ctx, registry } = store({ isGuestMode: () => false });
+    registry.registerEntityDetail(
+      surface({
+        activeTab: () => "connections",
+        canGenerateRelated: () => true,
+      }),
+    );
+    expect(ctx.current.tab).toBe("connections");
+    expect(ctx.current.availableActions).not.toContain("add-connection-button");
+    expect(ctx.current.availableActions).not.toContain(
+      "generate-related-button",
+    );
+  });
+
+  it("lists the Add button as available only on the Overview tab", () => {
     const { ctx, registry } = store();
-    registry.registerEntityDetail(surface({ activeTab: () => "status" }));
+    registry.registerEntityDetail(surface({ activeTab: () => "overview" }));
     expect(ctx.current.availableActions).toContain("add-connection-button");
   });
 
@@ -223,7 +255,7 @@ describe("HelpContextStore", () => {
     const { ctx, registry } = store({ isGuestMode: () => false });
     registry.registerEntityDetail(
       surface({
-        activeTab: () => "status",
+        activeTab: () => "overview",
         canGenerateRelated: () => true,
       }),
     );
@@ -244,7 +276,7 @@ describe("HelpContextStore", () => {
     const { ctx, registry } = store({ isGuestMode: () => false });
     registry.registerZenEntityDetail(
       surface({
-        activeTab: () => "status",
+        activeTab: () => "overview",
         canGenerateRelated: () => true,
         canSwitchTabs: () => false,
       }),
@@ -260,7 +292,7 @@ describe("HelpContextStore", () => {
   it("does not claim connections are editable in a read-only vault", () => {
     const { ctx, registry } = store();
     registry.registerEntityDetail(
-      surface({ activeTab: () => "status", canAddConnection: () => false }),
+      surface({ activeTab: () => "overview", canAddConnection: () => false }),
     );
     expect(ctx.current.flags).not.toContain("connections-editable");
     expect(ctx.current.availableActions).not.toContain("add-connection-button");
@@ -314,7 +346,7 @@ describe("HelpContextStore", () => {
     const { ctx, registry } = store();
     registry.registerEntityDetail(surface({ activeTab: () => tab }));
     const before = ctx.signature;
-    tab = "status";
+    tab = "overview";
     expect(ctx.signature).not.toBe(before);
   });
 

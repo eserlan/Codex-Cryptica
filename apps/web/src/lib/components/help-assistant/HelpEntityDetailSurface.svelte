@@ -2,7 +2,10 @@
   import type { Entity } from "schema";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { helpSurfaces } from "#lib/stores/help-assistant/help-surface.svelte.js";
-  import type { EntityDetailTab } from "#lib/components/entity-detail/detail-tabs.js";
+  import {
+    toEntityDetailTab,
+    type EntityDetailTab,
+  } from "#lib/components/entity-detail/detail-tabs.js";
 
   /**
    * Renderless. Tells the help assistant which entry kind and tab are showing
@@ -27,7 +30,7 @@
       canAddConnection: () => !vault.isGuest,
       canGenerateRelated: () => !vault.isGuest && !isEditing,
       openTab: (tab) => {
-        activeTab = tab;
+        activeTab = toEntityDetailTab(tab);
       },
     }),
   );

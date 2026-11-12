@@ -15,7 +15,7 @@
     if (!entity) return;
     return helpSurfaces.registerZenEntityDetail({
       entityKind: () => entity.type ?? null,
-      activeTab: () => "status",
+      activeTab: () => "overview",
       isEditing: () => isEditing,
       canAddConnection: () => false,
       canGenerateRelated: () => !vault.isGuest && !isEditing,

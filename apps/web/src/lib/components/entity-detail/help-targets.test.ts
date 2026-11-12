@@ -48,7 +48,7 @@ describe("help target contract", () => {
   it("every catalogue control that lives on the tab strip has a matching data-help-target", () => {
     const { container } = render(DetailTabs, {
       entity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: false,
       editType: "location",
       idPrefix: "t",
@@ -69,7 +69,7 @@ describe("help target contract", () => {
   it("the tab targets are the real tab buttons", () => {
     const { container } = render(DetailTabs, {
       entity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: false,
       editType: "location",
       idPrefix: "t",
