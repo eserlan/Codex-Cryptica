@@ -65,7 +65,7 @@ describe("completed turn commits", () => {
     const next = proposal();
     next.revealScenarioIds = ["scenario-1"];
     next.elaborateScenarios = [
-      { scenarioId: "scenario-1", stage: "actionable-clue" },
+      { scenarioId: "missing", stage: "actionable-clue" },
     ];
     const result = applyCompletedTurn(
       current,
@@ -74,6 +74,67 @@ describe("completed turn commits", () => {
       now,
       () => "event-1",
     );
+    expect(!result.ok && result.errors[0]?.code).toBe("unknown-fact");
+    expect(current).toEqual(before);
+  });
+
+  it("still rejects elaborating a closed scenario listed for reveal", () => {
+    const current = session();
+    const closedScenario = scenario();
+    closedScenario.knowledge = "unheard";
+    closedScenario.status = "resolved";
+    current.scenarioCollection = {
+      version: 1,
+      items: [closedScenario],
+      focusedScenarioId: null,
+    };
+    const before = structuredClone(current);
+    const next = proposal();
+    next.revealScenarioIds = [closedScenario.id];
+    next.elaborateScenarios = [
+      {
+        scenarioId: closedScenario.id,
+        stage: "actionable-clue",
+      },
+    ];
+
+    const result = applyCompletedTurn(
+      current,
+      next,
+      meta,
+      now,
+      () => "event-1",
+    );
+
+    expect(!result.ok && result.errors[0]?.code).toBe("invalid-transition");
+    expect(current).toEqual(before);
+  });
+
+  it("rejects an invalid stage jump when a rumour is revealed and elaborated in the same turn", () => {
+    const current = session();
+    const unheard = scenario();
+    unheard.knowledge = "unheard";
+    unheard.stage = "hearsay";
+    current.scenarioCollection = {
+      version: 1,
+      items: [unheard],
+      focusedScenarioId: null,
+    };
+    const before = structuredClone(current);
+    const next = proposal();
+    next.revealScenarioIds = [unheard.id];
+    next.elaborateScenarios = [
+      { scenarioId: unheard.id, stage: "revelation-crisis" },
+    ];
+
+    const result = applyCompletedTurn(
+      current,
+      next,
+      meta,
+      now,
+      () => "event-1",
+    );
+
     expect(!result.ok && result.errors[0]?.code).toBe("invalid-transition");
     expect(current).toEqual(before);
   });
