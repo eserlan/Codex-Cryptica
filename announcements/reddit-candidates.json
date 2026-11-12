@@ -1,15 +1,15 @@
 {
-  "updated_at": 1794492544,
+  "updated_at": 1794494223,
   "candidates": [
     {
-      "id": "reddit-43212774013-seeded-hex-regions-review-the-layout-bef",
-      "title": "Seeded Hex Regions: Review the layout before committing",
-      "body": "When I\u2019m building a hex region, I want to see how the terrain fits together before I settle on a layout. I added seeded generation that lets you review a proposed region before committing it.\n\n- Generate terrain from a seed\n- Review the proposed hexes as a region\n- Commit the layout when it\u2019s ready\n\nWhen you make a hex map, how much do you prefer to plan before exploring it?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-43212774013-2.png)",
+      "id": "reddit-43212774013-loot-and-magic-items-a-new-guide-for-gms",
+      "title": "Loot and Magic Items: A new guide for GMs",
+      "body": "It can be hard to judge how much treasure to hand out, especially when magic items change what the party can do. I added an answer page to help GMs decide how much loot and how many magic items to give players.\n\n- A reference for setting loot amounts\n- Guidance on magic item counts\n- A starting point for reward decisions at your table\n\nHow do you decide when your players have enough magic items?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-43212774013-3.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-43212774013-2.png",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-43212774013-3.png",
       "source_id": "43212774013",
       "status": "approved",
-      "created_at": 1794492544
+      "created_at": 1794494223
     }
   ]
 }
