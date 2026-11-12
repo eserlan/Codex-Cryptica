@@ -1,5 +1,6 @@
 import type { AdventureSession } from "@codex/adventure-engine";
 import type { AdventureControlLease } from "#lib/services/adventure/adventure-control-lease.js";
+import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
@@ -30,6 +31,7 @@ export class AdventureLifecycle {
   constructor(
     private readonly runtime: AdventureRuntime,
     private readonly resolveRoll: () => Promise<void> = async () => {},
+    private readonly clock: Clock = systemClock,
   ) {
     this.state = runtime.state;
   }
@@ -146,7 +148,7 @@ export class AdventureLifecycle {
     session: AdventureSession,
     isCurrent: () => boolean,
   ): Promise<boolean> {
-    const deadline = Date.now() + TAKE_CONTROL_WAIT_MS;
+    const deadline = this.clock.now() + TAKE_CONTROL_WAIT_MS;
     do {
       this.leaseHeldByOther = false;
       await this.open(session.vaultId, session.id, isCurrent);
@@ -156,7 +158,7 @@ export class AdventureLifecycle {
       // (archived, recovery) will not.
       if (!this.leaseHeldByOther) return false;
       await new Promise((resolve) => setTimeout(resolve, TAKE_CONTROL_POLL_MS));
-    } while (Date.now() < deadline);
+    } while (this.clock.now() < deadline);
     return false;
   }
 
