@@ -208,7 +208,7 @@
     <div
       class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
     >
-      <DetailThumbnail {entity} />
+      <DetailThumbnail {entity} {isEditing} />
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
           <div class="flex items-center gap-2">

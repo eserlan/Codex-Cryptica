@@ -93,4 +93,17 @@ describe("DetailThumbnail", () => {
     expect(vault.updateEntity).not.toHaveBeenCalled();
     expect(vault.saveImageToVault).not.toHaveBeenCalled();
   });
+
+  it("ignores a dropped image while editing, so Save cannot overwrite it", async () => {
+    const { getByTestId } = render(DetailThumbnail, {
+      entity: withImage as any,
+      isEditing: true,
+    });
+    const file = new File(["x"], "a.png", { type: "image/png" });
+    await fireEvent.drop(getByTestId("detail-thumbnail"), {
+      dataTransfer: { files: [file], types: ["Files"], getData: () => "" },
+    });
+    expect(vault.saveImageToVault).not.toHaveBeenCalled();
+    expect(vault.updateEntity).not.toHaveBeenCalled();
+  });
 });

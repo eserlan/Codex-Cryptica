@@ -7,7 +7,9 @@
   import SilhouetteAvatar from "#lib/components/ui/SilhouetteAvatar.svelte";
   import { saveEntityImageFile } from "./entity-image-file.js";
 
-  let { entity }: { entity: Entity } = $props();
+  // While editing, drops go to the image block, which also updates the edit form.
+  let { entity, isEditing = false }: { entity: Entity; isEditing?: boolean } =
+    $props();
 
   let resolvedImageUrl = $state("");
   let isDraggingOver = $state(false);
@@ -42,7 +44,7 @@
   });
 
   const handleDragOver = (e: DragEvent) => {
-    if (vault.isGuest) return;
+    if (vault.isGuest || isEditing) return;
     if (
       e.dataTransfer?.types.includes("application/codex-image-id") ||
       e.dataTransfer?.types.includes("Files")
@@ -54,7 +56,7 @@
   };
 
   const handleDrop = async (e: DragEvent) => {
-    if (vault.isGuest) return;
+    if (vault.isGuest || isEditing) return;
     e.preventDefault();
     isDraggingOver = false;
 

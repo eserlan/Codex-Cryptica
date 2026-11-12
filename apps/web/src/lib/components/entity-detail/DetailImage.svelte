@@ -456,7 +456,7 @@
   {#if imageUploadError}
     <p
       id="entity-image-upload-error"
-      class="mb-4 px-4 text-xs text-theme-error md:px-6"
+      class="mb-4 px-4 text-xs text-theme-danger md:px-6"
       role="alert"
     >
       {imageUploadError}
