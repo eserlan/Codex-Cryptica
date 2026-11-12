@@ -26,7 +26,6 @@ If the user wants a specific Speckit step, direct them to the matching command:
 - `/speckit.implement`
 - `/speckit.converge` (optional: assess remaining work after implementation)
 - `/speckit.constitution`
-- `/speckit.taskstoissues`
 
 If no step is specified, explain the workflow order:
 

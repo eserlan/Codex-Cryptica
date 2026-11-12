@@ -1,18 +1,18 @@
 # Maintaining Spec Kit
 
-This repository uses the **Spec Kit 1.1.0** release, from upstream commit
-`f1d3a4f8337ebbd3ae22760a9c12e3352b93a175`.
+This repository uses the **Spec Kit 1.4.0** release, from upstream commit
+`14ddec8cb22db2a3b50e5ae6861b31053f132bfa`.
 
 Run a pinned CLI without changing the machine's installed tools:
 
 ```bash
-uvx --from git+https://github.com/github/spec-kit.git@v1.1.0 specify integration status
+uvx --from git+https://github.com/github/spec-kit.git@v1.4.0 specify integration status
 ```
 
 For direct Bash command execution with installed presets, install the pinned CLI:
 
 ```bash
-uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v1.1.0
+uv tool install specify-cli --from git+https://github.com/github/spec-kit.git@v1.4.0
 ```
 
 Preset composition requires Python and PyYAML. The Bash resolver uses the
@@ -25,7 +25,7 @@ This small local resolver adaptation must be preserved during future upgrades.
 Gemini is the managed integration and `.gemini/commands/speckit.*.toml` contains
 the canonical command definitions. The previous installation recorded
 Antigravity as the default, despite the repository's Gemini-first maintenance
-rules. Spec Kit 1.1.0 does not permit Antigravity alongside another managed
+rules. Spec Kit 1.4.0 does not permit Antigravity alongside another managed
 integration, so only Gemini is registered.
 
 After changing a canonical command, synchronise its Markdown counterpart in
@@ -97,8 +97,9 @@ to keep future release merges reviewable; no application behaviour is added.
 PowerShell scripts are refreshed from the same release. Bash is the configured
 runtime; PowerShell execution needs verification on a machine with `pwsh`.
 
-`/speckit.taskstoissues` remains available in 1.1.0. Its future move into the
-bundled GitHub extension does not require installing that extension now.
+Upstream Spec Kit removed `/speckit.taskstoissues` from core in 1.3.0 in favour
+of the optional GitHub extension; as this repository does not use that workflow,
+the command was cleanly retired during the 1.4.0 upgrade.
 
-Upstream references: [release](https://github.com/github/spec-kit/releases/tag/v1.1.0)
-and [upgrade guide](https://github.com/github/spec-kit/blob/v1.1.0/docs/upgrade.md).
+Upstream references: [release](https://github.com/github/spec-kit/releases/tag/v1.4.0)
+and [upgrade guide](https://github.com/github/spec-kit/blob/v1.4.0/docs/upgrade.md).
