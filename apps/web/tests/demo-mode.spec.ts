@@ -129,7 +129,9 @@ test.describe("Interactive Demo Mode", () => {
     await expect(
       page.getByRole("heading", { name: "New Transient Node" }),
     ).toBeVisible();
-    await expect(page.getByText(/TRANSIENT MODE/)).toBeVisible();
+    await expect(
+      page.getByText("Demo: changes are not saved").first(),
+    ).toBeVisible();
 
     // Reload page
     await page.reload();
