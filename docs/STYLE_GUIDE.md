@@ -16,6 +16,101 @@ This document establishes the core design principles and component implementatio
 7.  **Clipboard intent**: Copy authored or generated document content through the shared smart-copy service so Markdown/plain text and sanitised rich text are written together. Keep literal values such as URLs, secrets, prompts, identifiers, raw source, logs, and image-only exports on the plain or format-specific clipboard path.
 8.  **Art Direction & Editorial Imagery**: Follow [docs/ART_DIRECTION_EDITORIAL_IMAGES.md](./ART_DIRECTION_EDITORIAL_IMAGES.md) for public-facing discovery, answer page, and social share illustrations (grounded cinematic realism, full-bleed 16:9, strictly no text or storybook frames), and [docs/ART_DIRECTION_V2.md](./ART_DIRECTION_V2.md) for in-app Lore Oracle entity image generation.
 
+9.  **Usability and Clarity**: Keep the soul in the world and make the tools plain. Follow the [Usability and Clarity Principles](#usability-and-clarity-principles) below for wording, layout, labelling, feedback and typography.
+
+## Usability and Clarity Principles
+
+Codex Cryptica's character lives in the user's world: the graph, the themes, the genre voice. The controls around that world should be quiet and predictable. These principles say where flavour belongs and where plain design wins. They extend the [Dual-Layer Theming Model](#dual-layer-theming-model) from colour and texture to words, type and layout, and they apply Constitution IX (Natural Language) to the interface.
+
+These principles cover the app itself. Public `(marketing)` pages follow the [Marketing & Landing Page Pattern](#marketing--landing-page-pattern-marketing-routes); where the two differ, such as monospace eyebrows, the marketing pattern applies on those pages.
+
+Parts of the app predate these principles. Apply them to new work and to any screen you touch. The gaps found on 12 November 2026 are listed in [usability-look-feel-assessment-2026-11-12.md](./usability-look-feel-assessment-2026-11-12.md).
+
+### 1. Flavour belongs to the world; function stays plain
+
+| Themed (may use genre voice and jargon)                 | Plain (same words in every theme)                               |
+| ------------------------------------------------------- | --------------------------------------------------------------- |
+| Greetings and Oracle voice                              | Action labels: Create, Save, Edit, Delete, Search, Close        |
+| Empty-state headings and decorative section headings    | Navigation names: Graph, Map, Canvas, Timeline, Table, Settings |
+| World front pages, graph styling, display type, texture | Confirmations, errors, notices and help text                    |
+|                                                         | Core nouns in navigation, settings and help: vault, entity      |
+
+- A user must never have to work out what a button does. "Burn" is a heading-level flourish, not a delete button.
+- Both views of the same thing use the same words. If a themed heading is used, read it through the one jargon helper in every place it appears.
+- Never show internal terms or raw markup: no storage names (OPFS), mode names ("transient mode"), relation ids (`related_to`), or unrendered `**bold**` and `[[links]]`.
+
+### 2. Content first
+
+- When something is opened, its name and its content are on the first screen, at desktop and phone sizes.
+- Tools for the content (image actions, generators, rarer commands) sit below the content or in a labelled menu.
+- One primary action per surface. If two elements use the primary style side by side, one of them is wrong.
+
+### 3. One way to do each core thing
+
+- One entity view, shown at two sizes, with the same sections, words and controls.
+- One shared toolbar and zoom control across Graph, Map and Canvas.
+- One Create entry point. It always offers a blank entity; AI generation is an option beside it, never the only path.
+- Before adding a second way to do something, extend the first.
+
+### 4. Label navigation and actions
+
+- Navigation shows text labels by default. An icon-only rail is an opt-in collapsed state.
+- Icon-only buttons are for actions most people recognise without help (close, search, zoom, back) and for dense toolbars on the world canvas. They always carry `aria-label` and `title`.
+- Show at most three actions beside a title. Put the rest in a "More" menu with text labels.
+- One icon per meaning across the app, and one meaning per icon.
+- Simpler modes show fewer items in the same layout. Switching mode adds or removes items; it does not move them.
+
+### 5. Every action ends visibly
+
+- Every action ends in a visible result, a message, or an undo. Nothing closes silently.
+- Anything that waits has a time limit and a way out, and says what happened when the limit is reached.
+- "Close" and "Cancel" never discard changes without saying so. The button that keeps changes is called "Save" or "Apply".
+- Every feature works plainly first. With AI disabled or unreachable, the action offers the manual path instead of failing.
+- A view restores what it changed. If selecting something changes display settings, clearing the selection puts them back.
+
+### 6. Type has three roles
+
+| Role                          | Token                             | Use for                                                   |
+| ----------------------------- | --------------------------------- | --------------------------------------------------------- |
+| Display and functional header | `--font-display`, `--font-header` | Titles, world headings, graph labels                      |
+| Interface and body            | `--font-body`                     | All controls, body text, lists, notices                   |
+| Monospace                     | `font-mono`                       | Code-like values only: dice, coordinates, zoom, ids, keys |
+
+- Use sentence case for buttons, tabs, notices, menu items and empty states.
+- Capitals with widened letter-spacing are for short eyebrow labels of one to three words, at most one per group.
+- Anything a user must read is at least 12px (`text-helper` or larger). `text-micro` and `text-meta` are for badges and chips.
+- Aim for about five text sizes on a screen.
+- A themed display face must stay readable at the smallest size it is used. Below that size, fall back to the body face.
+
+### 7. Give the world room
+
+- Inside the app, chrome is the header and the navigation. Legal and marketing links live in Settings or Help.
+- Floating controls must not cover content. "Fit to screen" leaves room for toolbars, and panels have fixed slots that cannot overlap.
+- The header always fits search, Create and Settings. Temporary states (demo, guest, staging) get their own slim bar.
+
+### 8. Reveal depth in place
+
+- No feature may be reachable only by hover, right-click or long-press. Those are shortcuts to something also visible.
+- Offer advanced modes where they become relevant, with a labelled control, such as "Make this a hex map" on a map.
+- Every empty state says what the surface is for and offers one action to start.
+
+### 9. Keep the soul
+
+- Do not reduce or flatten the themes. Mood comes from colour, texture, display type, graph styling and voice.
+- Do not make the graph generic. Portraits, type rings and relationship sentences are the product's identity.
+- Keep the genre voice in greetings, empty-state headings and world headings.
+- Local-first and AI-optional are part of the character: the user's world works without an account, a network or AI.
+
+### Checking a change
+
+Before opening a pull request for a UI change, check that:
+
+1. A new user could say what every visible control does without hovering.
+2. The content is visible on the first screen at 1440 × 900 and at phone width.
+3. Every action you added ends in a result, a message or an undo, including with AI disabled.
+4. Action labels are plain words and read the same in a fantasy, a sci-fi and the Workspace theme.
+5. Nothing floats over content, and nothing is cut off.
+
 ## Naming Conventions
 
 Consistent naming is critical for maintainability and readability across our large codebase.
@@ -114,18 +209,16 @@ These snippets represent the most common UI building blocks used across the appl
 <div
   class="p-6 border border-theme-border bg-theme-surface rounded-2xl shadow-sm"
 >
-  <h4 class="font-header text-lg text-theme-primary uppercase tracking-wide">
-    Entity Name
-  </h4>
+  <h4 class="font-header text-lg text-theme-primary">Entity Name</h4>
   <p class="mt-2 text-sm text-theme-muted">
     Brief description of the entity goes here.
   </p>
 
   <div class="mt-6 flex justify-end">
     <button
-      class="bg-theme-primary text-theme-bg px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest"
+      class="bg-theme-primary text-theme-bg px-4 py-2 rounded-lg text-sm font-bold"
     >
-      Edit Entity
+      Edit entity
     </button>
   </div>
 </div>
@@ -173,7 +266,7 @@ A compact inline badge used to tag entities. The optional remove button uses `e.
 
 ### Icon Action Button
 
-Small icon-only toolbar buttons. Use Iconify utility classes and always provide an `aria-label` and `title`.
+Small icon-only toolbar buttons. Use Iconify utility classes and always provide an `aria-label` and `title`. Use icon-only buttons only where [principle 4](#4-label-navigation-and-actions) allows; otherwise show a text label.
 
 ```svelte
 <button
@@ -195,7 +288,7 @@ Accessible tab navigation using ARIA roles and keyboard arrow-key support. The a
 <div
   role="tablist"
   aria-label="Entity detail sections"
-  class="flex gap-x-6 text-[10px] font-bold tracking-widest text-theme-muted border-b border-theme-border pb-2 font-header"
+  class="flex gap-x-6 text-sm font-bold text-theme-muted border-b border-theme-border pb-2 font-body"
   onkeydown={handleTabKeydown}
 >
   {#each tabs as tab}
@@ -211,7 +304,7 @@ Accessible tab navigation using ARIA roles and keyboard arrow-key support. The a
         : "hover:text-theme-text transition"}
       onclick={() => (activeTab = tab)}
     >
-      {tab.toUpperCase()}
+      {tab}
     </button>
   {/each}
 </div>
@@ -219,14 +312,19 @@ Accessible tab navigation using ARIA roles and keyboard arrow-key support. The a
 
 ### Empty State
 
-Used when a list or panel has no content. Keep the message brief, muted, and uppercase.
+Used when a list or panel has no content. Say what the surface is for in one short sentence and offer one action to start. Use sentence case at a readable size.
 
 ```svelte
 {#if items.length === 0}
-  <div
-    class="text-theme-muted text-[10px] text-center py-8 italic uppercase tracking-widest opacity-50"
-  >
-    No entries yet
+  <div class="py-8 text-center">
+    <p class="text-sm text-theme-muted">This list holds your entries.</p>
+    <button
+      type="button"
+      onclick={handleAdd}
+      class="mt-3 rounded-lg border border-theme-border px-4 py-2 text-sm font-bold text-theme-text"
+    >
+      Add an entry
+    </button>
   </div>
 {/if}
 ```
@@ -278,9 +376,7 @@ Used on the front page to display recently modified entities. Single-click opens
       <header
         class="flex items-center justify-between gap-3 rounded-2xl border border-theme-primary/15 bg-theme-bg/75 backdrop-blur-md px-3 py-2"
       >
-        <h3
-          class="font-header text-sm uppercase tracking-[0.14em] text-theme-text truncate"
-        >
+        <h3 class="font-header text-sm text-theme-text truncate">
           {title}
         </h3>
         <span class="text-[10px] text-theme-muted whitespace-nowrap"
