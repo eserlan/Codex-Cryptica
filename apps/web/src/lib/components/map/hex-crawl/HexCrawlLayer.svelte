@@ -175,22 +175,58 @@
       ? services.geography.review
       : null,
   );
+  const hasReview = $derived(Boolean(review || geographyReview));
+  const showRegionUndo = $derived(!review && !geographyReview);
+  const showPanel = $derived(Boolean(selected && mapId && !hasReview));
+  const canAuthor = $derived(isGM && !isGuest);
+  const authorRegion = $derived(canAuthor ? services.region : undefined);
+  const authorGeography = $derived(canAuthor ? services.geography : undefined);
+  const onToggleEdge = $derived(
+    geographyReview
+      ? (key: string) => services.geography.toggleEdge(key)
+      : undefined,
+  );
+  const onToggleSite = $derived(
+    geographyReview
+      ? (key: string) => services.geography.toggleSite(key)
+      : undefined,
+  );
+  const regionLabelFor = (key: string) => {
+    const [q, r] = key.split(",").map(Number);
+    return hexLabelFor({ q, r }, labelConfig, orientation);
+  };
+  const pickRegionHex = (key: string) => {
+    regionPick = key;
+  };
+  const toggleTerrainIcons = (next: boolean) => {
+    mapStore.showTerrainIcons = next;
+  };
+  const dismissOffer = () => {
+    services.offer.current = null;
+  };
+  const unprojectPoint = (point: Point) => mapStore.unproject(point);
+
+  function leaveIfInactive(
+    service: { mapId?: string | null; leave: () => void } | undefined,
+    active: string | null,
+  ) {
+    if (service?.mapId && service.mapId !== active) service.leave();
+  }
+
+  function syncActiveReviewServices(active: string | null) {
+    leaveIfInactive(services.region, active);
+    if (!services.region.review) regionPick = null;
+    leaveIfInactive(services.geography, active);
+    // A tap on the map during either review must not open the hex panel behind it.
+    const reviewing = Boolean(
+      services.region.review || services.geography?.review,
+    );
+    if (reviewing && services.store.selectedHex) services.store.closeHex();
+  }
+
   $effect(() => {
     // Leaving the map or turning the mode off drops the preview, the message and the undo.
-    const active = visible ? mapId : null;
-    if (services.region.mapId && services.region.mapId !== active) {
-      services.region.leave();
-    }
-    if (!services.region.review) regionPick = null;
-    if (services.geography?.mapId && services.geography.mapId !== active) {
-      services.geography.leave();
-    }
-    // A tap on the map during either review must not open the hex panel behind it.
-    if (
-      (services.region.review || services.geography?.review) &&
-      services.store.selectedHex
-    )
-      services.store.closeHex();
+    syncActiveReviewServices(visible ? mapId : null);
   });
   onDestroy(() => {
     services.journey.dispose();
@@ -206,7 +242,7 @@
     showTerrainIcons={mapStore.showTerrainIcons}
     gridConfig={config}
     {project}
-    unproject={(point) => mapStore.unproject(point)}
+    unproject={unprojectPoint}
     viewport={viewportSize}
     {zoom}
   />
@@ -220,12 +256,8 @@
     {project}
     viewport={viewportSize}
     {zoom}
-    onToggleEdge={geographyReview
-      ? (key) => services.geography.toggleEdge(key)
-      : undefined}
-    onToggleSite={geographyReview
-      ? (key) => services.geography.toggleSite(key)
-      : undefined}
+    {onToggleEdge}
+    {onToggleSite}
   />
 
   <HexJourneyOverlay
@@ -245,20 +277,17 @@
       {project}
       {zoom}
       selectedKey={regionPick}
-      onPick={(key) => (regionPick = key)}
-      labelFor={(key) => {
-        const [q, r] = key.split(",").map(Number);
-        return hexLabelFor({ q, r }, labelConfig, orientation);
-      }}
+      onPick={pickRegionHex}
+      labelFor={regionLabelFor}
     />
     <RegionReviewBar
       store={services.region}
       selectedKey={regionPick}
       {labelConfig}
       {orientation}
-      onSelect={(key) => (regionPick = key)}
+      onSelect={pickRegionHex}
     />
-  {:else if !geographyReview}
+  {:else if showRegionUndo}
     <RegionUndoBar store={services.region} />
   {/if}
 
@@ -272,7 +301,7 @@
     <HexGoTo {labelConfig} {orientation} onGo={goTo} />
     <HexCrawlDisplayToggle
       checked={mapStore.showTerrainIcons}
-      onChange={(next: boolean) => (mapStore.showTerrainIcons = next)}
+      onChange={toggleTerrainIcons}
       {isGM}
       {isGuest}
       modeOn={hexMode}
@@ -289,14 +318,11 @@
     <div
       class="pointer-events-auto absolute bottom-16 left-1/2 z-20 -translate-x-1/2"
     >
-      <HexExploreOffer
-        onExplore={openOffered}
-        onDismiss={() => (services.offer.current = null)}
-      />
+      <HexExploreOffer onExplore={openOffered} onDismiss={dismissOffer} />
     </div>
   {/if}
 
-  {#if selected && mapId && !review && !geographyReview}
+  {#if showPanel && selected && mapId}
     <HexCrawlPanel
       store={services.store}
       journey={services.journey}
@@ -312,8 +338,8 @@
       {entities}
       {discovery}
       {storage}
-      region={isGM && !isGuest ? services.region : undefined}
-      geography={isGM && !isGuest ? services.geography : undefined}
+      region={authorRegion}
+      geography={authorGeography}
     />
   {/if}
 {/if}

@@ -81,26 +81,26 @@ describe("shared-edge topology", () => {
   });
 
   it("coast edges match land/water and proposed connections cross adjacent hexes", () => {
+    const isWaterHex = (
+      s: ReturnType<typeof state>,
+      coord: { q: number; r: number },
+    ) => {
+      const terrain = s.hexes[toHexKey(coord)]?.terrain;
+      return terrain?.kind === "preset" && terrain.id === "water";
+    };
     const s = state();
     const proposal = make(s);
     expect(Object.values(proposal.edges).some((e) => e.coast)).toBe(true);
     for (const [key, edge] of Object.entries(proposal.edges)) {
-      const pair = parseHexEdgeKey(key);
+      const pair = parseHexEdgeKey(key)!;
       expect(pair).not.toBeNull();
-      if (edge.coast) {
-        const [a, b] = pair!;
-        const waterA =
-          s.hexes[toHexKey(a)].terrain?.kind === "preset" &&
-          s.hexes[toHexKey(a)].terrain?.id === "water";
-        const waterB =
-          s.hexes[toHexKey(b)].terrain?.kind === "preset" &&
-          s.hexes[toHexKey(b)].terrain?.id === "water";
-        expect(waterA).not.toBe(waterB);
-      }
-      if (edge.river)
-        expect([toHexKey(pair![0]), toHexKey(pair![1])].sort()).toEqual(
+      if (edge.coast)
+        expect(isWaterHex(s, pair[0])).not.toBe(isWaterHex(s, pair[1]));
+      if (edge.river) {
+        expect([toHexKey(pair[0]), toHexKey(pair[1])].sort()).toEqual(
           [edge.river.from, edge.river.to].sort(),
         );
+      }
     }
   });
 

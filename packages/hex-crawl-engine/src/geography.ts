@@ -280,31 +280,37 @@ function addRivers(
   }
 }
 
+const TERRAIN_ROAD_PENALTY: Record<string, number> = {
+  mountains: 12,
+  swamp: 8,
+  hills: 3,
+  forest: 2,
+  coast: 1.5,
+  tundra: 3,
+  desert: 4,
+  plains: 1,
+};
+
+function terrainRoadPenalty(
+  terrain: HexCrawlState["hexes"][HexKey]["terrain"],
+): number {
+  if (!terrain) return Infinity;
+  if (terrain.kind !== "preset") return 4;
+  if (terrain.id === "water") return Infinity;
+  return TERRAIN_ROAD_PENALTY[terrain.id] ?? 2;
+}
+
 function stepCost(
   from: HexKey,
   to: HexKey,
   state: HexCrawlState,
   edges: Readonly<Record<HexEdgeKey, HexEdgeFeature>>,
 ): number {
-  const terrain = state.hexes[to]?.terrain;
-  if (!terrain || (terrain.kind === "preset" && terrain.id === "water"))
-    return Infinity;
-  const penalty: Record<string, number> = {
-    mountains: 12,
-    swamp: 8,
-    hills: 3,
-    forest: 2,
-    coast: 1.5,
-    tundra: 3,
-    desert: 4,
-    plains: 1,
-  };
+  const base = terrainRoadPenalty(state.hexes[to]?.terrain);
+  if (!Number.isFinite(base)) return Infinity;
   const edge = edges[hexEdgeKey(parseHexKey(from)!, parseHexKey(to)!)!];
   if (edge?.road) return 0.2;
-  return (
-    (terrain.kind === "preset" ? (penalty[terrain.id] ?? 2) : 4) +
-    (edge?.river ? 7 : 0)
-  );
+  return base + (edge?.river ? 7 : 0);
 }
 
 /** Dijkstra: tiny bounded hex graphs, no new dependency or map-wide pathfinder. */
@@ -377,6 +383,46 @@ function roadPath(
   return cost.has(to) ? backtrackRoad(from, to, previous) : [];
 }
 
+function collectRoadTargets(
+  domain: ReadonlySet<HexKey>,
+  state: HexCrawlState,
+  settlements: readonly HexCoord[],
+  sites: HexTopology["sites"],
+): HexKey[] {
+  return [
+    ...new Set([
+      ...settlements.map(toHexKey),
+      ...Object.keys(state.topology?.sites ?? {}),
+      ...Object.keys(sites),
+    ]),
+  ]
+    .filter((key) => domain.has(key) && !isWater(state, key))
+    .sort(keyOrder);
+}
+
+function applyRoadPath(
+  path: readonly HexKey[],
+  civilisation: CivilisationLevel,
+  edges: Record<HexEdgeKey, HexEdgeFeature>,
+  provenance: { source: "generated"; seed: string; rules: number },
+): void {
+  const roadKind = civilisation === "settled" ? "road" : "path";
+  const crossingKind = civilisation === "settled" ? "bridge" : "ford";
+  for (let i = 1; i < path.length; i++) {
+    const edgeKey = hexEdgeKey(
+      parseHexKey(path[i - 1])!,
+      parseHexKey(path[i])!,
+    )!;
+    const edge = edges[edgeKey] ?? {};
+    const next: HexEdgeFeature = {
+      ...edge,
+      road: edge.road ?? { kind: roadKind, provenance },
+    };
+    if (edge.river && !edge.crossing) next.crossing = crossingKind;
+    edges[edgeKey] = next;
+  }
+}
+
 function addRoads(
   keys: readonly HexKey[],
   state: HexCrawlState,
@@ -387,50 +433,64 @@ function addRoads(
   provenance: { source: "generated"; seed: string; rules: number },
 ): void {
   const domain = new Set(keys);
-  const targets = [
-    ...new Set([
-      ...settlements.map(toHexKey),
-      ...Object.keys(state.topology?.sites ?? {}),
-      ...Object.keys(sites),
-    ]),
-  ]
-    .filter((key) => domain.has(key) && !isWater(state, key))
-    .sort(keyOrder);
+  const targets = collectRoadTargets(domain, state, settlements, sites);
   if (targets.length < 2) return;
   const connected = new Set<HexKey>([targets.shift()!]);
   for (const target of targets) {
+    const targetCoord = parseHexKey(target)!;
     const nearest = [...connected].sort(
       (a, b) =>
-        hexDistance(parseHexKey(a)!, parseHexKey(target)!) -
-          hexDistance(parseHexKey(b)!, parseHexKey(target)!) || keyOrder(a, b),
+        hexDistance(parseHexKey(a)!, targetCoord) -
+          hexDistance(parseHexKey(b)!, targetCoord) || keyOrder(a, b),
     )[0];
     const path = roadPath(target, nearest, domain, state, edges);
-    for (let i = 1; i < path.length; i++) {
-      const from = path[i - 1];
-      const to = path[i];
-      const edgeKey = hexEdgeKey(parseHexKey(from)!, parseHexKey(to)!)!;
-      const edge = edges[edgeKey] ?? {};
-      const road = edge.road ?? {
-        kind:
-          civilisation === "settled" ? ("road" as const) : ("path" as const),
-        provenance,
-      };
-      edges[edgeKey] = {
-        ...edge,
-        road,
-        ...(edge.river
-          ? {
-              crossing:
-                edge.crossing ??
-                (civilisation === "settled"
-                  ? ("bridge" as const)
-                  : ("ford" as const)),
-            }
-          : {}),
-      };
-    }
+    applyRoadPath(path, civilisation, edges, provenance);
     if (path.length) connected.add(target);
   }
+}
+
+function isValidGeographyRequest(
+  request: GeographyRequest,
+  inBounds: (hex: HexCoord) => boolean,
+): boolean {
+  return (
+    Number.isInteger(request.radius) &&
+    request.radius >= 1 &&
+    request.radius <= GEOGRAPHY_MAX_RADIUS &&
+    inBounds(request.centre) &&
+    Boolean(request.seed.trim())
+  );
+}
+
+function addCoastEdges(
+  keys: readonly HexKey[],
+  domain: ReadonlySet<HexKey>,
+  state: HexCrawlState,
+  working: Record<HexEdgeKey, HexEdgeFeature>,
+): void {
+  // A coast is always the border of a land hex and a known water hex.
+  for (const key of keys) {
+    const a = parseHexKey(key)!;
+    for (const b of getHexNeighbors(a)) {
+      const nk = toHexKey(b);
+      if (!domain.has(nk) || isWater(state, key) === isWater(state, nk))
+        continue;
+      const edgeKey = hexEdgeKey(a, b)!;
+      working[edgeKey] = { ...working[edgeKey], coast: true };
+    }
+  }
+}
+
+function diffEdges(
+  existing: Readonly<Record<HexEdgeKey, HexEdgeFeature>>,
+  working: Readonly<Record<HexEdgeKey, HexEdgeFeature>>,
+): GeographyProposal["edges"] {
+  const edges: GeographyProposal["edges"] = {};
+  for (const [key, value] of Object.entries(working)) {
+    if (JSON.stringify(value) !== JSON.stringify(existing[key]))
+      edges[key] = value;
+  }
+  return edges;
 }
 
 /** Pure, deterministic proposal: never mutates established terrain, roads, pins or Vault entities. */
@@ -438,14 +498,7 @@ export function generateHexGeography(
   input: GeographyInput,
 ): GeographyProposal | null {
   const { request, state, settlements, inBounds } = input;
-  if (
-    !Number.isInteger(request.radius) ||
-    request.radius < 1 ||
-    request.radius > GEOGRAPHY_MAX_RADIUS ||
-    !inBounds(request.centre) ||
-    !request.seed.trim()
-  )
-    return null;
+  if (!isValidGeographyRequest(request, inBounds)) return null;
   const keys = getHexRange(request.centre, request.radius)
     .filter(inBounds)
     .map(toHexKey)
@@ -462,17 +515,7 @@ export function generateHexGeography(
   const working: Record<HexEdgeKey, HexEdgeFeature> = structuredClone(existing);
   const domain = new Set(keys);
 
-  // A coast is always the border of a land hex and a known water hex.
-  for (const key of keys) {
-    const a = parseHexKey(key)!;
-    for (const b of getHexNeighbors(a)) {
-      const nk = toHexKey(b);
-      if (!domain.has(nk) || isWater(state, key) === isWater(state, nk))
-        continue;
-      const edgeKey = hexEdgeKey(a, b)!;
-      working[edgeKey] = { ...working[edgeKey], coast: true };
-    }
-  }
+  addCoastEdges(keys, domain, state, working);
   addRivers(keys, state, seed, working, inBounds, provenance);
   const sites = planSettlements(
     keys,
@@ -492,21 +535,27 @@ export function generateHexGeography(
     working,
     provenance,
   );
-  const edges: GeographyProposal["edges"] = {};
-  for (const [key, value] of Object.entries(working)) {
-    if (JSON.stringify(value) !== JSON.stringify(existing[key]))
-      edges[key] = value;
-  }
   const terrainStamps = Object.fromEntries(
     keys.map((key) => [key, state.hexes[key]?.updatedAt ?? 0]),
   );
   return {
     request,
-    edges,
+    edges: diffEdges(existing, working),
     sites,
     terrainStamps,
     topologyStamp: JSON.stringify(state.topology ?? null),
   };
+}
+
+function hasStaleSources(
+  state: HexCrawlState,
+  proposal: GeographyProposal,
+): boolean {
+  if (JSON.stringify(state.topology ?? null) !== proposal.topologyStamp)
+    return true;
+  return Object.entries(proposal.terrainStamps).some(
+    ([key, stamp]) => (state.hexes[key]?.updatedAt ?? 0) !== stamp,
+  );
 }
 
 /**
@@ -520,11 +569,7 @@ export function applyHexGeography(
   disabledEdges: ReadonlySet<HexEdgeKey>,
   disabledSites: ReadonlySet<HexKey>,
 ): HexCrawlState | null {
-  if (JSON.stringify(state.topology ?? null) !== proposal.topologyStamp)
-    return null;
-  for (const [key, stamp] of Object.entries(proposal.terrainStamps)) {
-    if ((state.hexes[key]?.updatedAt ?? 0) !== stamp) return null;
-  }
+  if (hasStaleSources(state, proposal)) return null;
   const edges = { ...(state.topology?.edges ?? {}) };
   const sites = { ...(state.topology?.sites ?? {}) };
   for (const [key, feature] of Object.entries(proposal.edges)) {

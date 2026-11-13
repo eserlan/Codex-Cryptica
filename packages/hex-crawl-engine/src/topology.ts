@@ -89,18 +89,25 @@ export function parseHexEdgeKey(key: HexEdgeKey): [HexCoord, HexCoord] | null {
   return a && b && hexEdgeKey(a, b) === key ? [a, b] : null;
 }
 
+function hasValidRiverFlow(
+  river: HexEdgeFeature["river"],
+  pair: [HexCoord, HexCoord],
+): boolean {
+  if (!river) return true;
+  const [a, b] = pair.map(toHexKey);
+  return (
+    (river.from === a && river.to === b) || (river.from === b && river.to === a)
+  );
+}
+
 function validEdge(key: string, raw: unknown): HexEdgeFeature | null {
   const pair = parseHexEdgeKey(key);
   if (!pair) return null;
   const parsed = HexEdgeFeatureSchema.safeParse(raw);
   if (!parsed.success) return null;
   const edge = parsed.data;
-  if (edge.river) {
-    const [a, b] = pair.map(toHexKey);
-    const { from, to } = edge.river;
-    if (!((from === a && to === b) || (from === b && to === a))) return null;
-  }
   if (!edge.river && !edge.road && !edge.coast) return null;
+  if (!hasValidRiverFlow(edge.river, pair)) return null;
   if (!edge.road || !edge.river) delete edge.crossing;
   return edge;
 }
