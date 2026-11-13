@@ -14,50 +14,31 @@
  *   anything for a vault with no local record, which is what makes "off by
  *   default" enforceable rather than merely intended (FR-001, FR-003).
  */
-import {
-  LocalCloudBackupRecordSchema,
-  type CloudBackupManifest,
-  type LocalCloudBackupRecord,
-} from "schema";
+import { type CloudBackupManifest, type LocalCloudBackupRecord } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
-import { formatRecoveryKey } from "./recovery-key";
 import { detectConflict } from "./auto-sync";
-
-export interface VaultBundlePayload {
-  vaultTitle: string;
-  bundle: unknown;
-  /**
-   * Media as raw bytes. Uploaded one request each rather than inlined here, so
-   * neither end has to hold a whole vault in memory (and so base64 does not
-   * add a third to every byte on the wire).
-   */
-  assets?: { assetId: string; bytes: Uint8Array; mimeType: string }[];
-}
-
-/** Progress across a snapshot upload, for a caller that wants to show it. */
-export interface UploadProgress {
-  uploaded: number;
-  total: number;
-}
-
-/**
- * Privacy-safe stage timing: counts, bytes and milliseconds only, never
- * content. Shared vocabulary so the app can attribute a save across layers —
- * `hydrate`/`build` are measured where the snapshot is assembled, `hash`
- * where unchanged media is detected, `serialize`/`upload` where it leaves.
- * Exists to answer "is the main thread the bottleneck" with numbers.
- */
-export type CloudBackupTimingStage =
-  "hydrate" | "build" | "hash" | "serialize" | "upload";
-
-export interface CloudBackupTiming {
-  stage: CloudBackupTimingStage;
-  durationMs: number;
-  /** Items processed (entities hydrated, assets hashed, files uploaded). */
-  count?: number;
-  /** Bytes processed (asset bytes read, commit body length). */
-  bytes?: number;
-}
+import { getLocalCloudBackupRecord as readRecord } from "./backup-records";
+import { responseFailure } from "./backup-response";
+import type {
+  VaultBundlePayload,
+  UploadProgress,
+  SnapshotUploadOptions,
+  CloudBackupOutcome,
+} from "./types";
+export type {
+  VaultBundlePayload,
+  UploadProgress,
+  CloudBackupTimingStage,
+  CloudBackupTiming,
+  SnapshotUploadOptions,
+  CloudBackupOutcome,
+} from "./types";
+export {
+  getLocalCloudBackupRecord,
+  listKnownCloudBackups,
+  getCloudBackupOwnershipCode,
+  type KnownCloudBackup,
+} from "./backup-records";
 
 /** Monotonic clock that survives environments without `performance`. */
 function nowMs(): number {
@@ -71,106 +52,8 @@ function nowMs(): number {
  */
 export const ASSET_UPLOAD_CONCURRENCY = 8;
 
-export type CloudBackupOutcome<T> =
-  | { ok: true; value: T }
-  | {
-      ok: false;
-      error: string;
-      status?: number;
-      /**
-       * Set on the conflict path (#3189): the remote changed since our last
-       * push, so nothing was uploaded. The caller must preserve local data
-       * and surface the conflict instead of retrying blindly.
-       */
-      conflict?: boolean;
-      remoteLastPushedAt?: string | null;
-    };
-
 function nowIso(runtime: CloudBackupRuntime): string {
   return (runtime.now?.() ?? new Date()).toISOString();
-}
-
-async function readRecord(
-  runtime: CloudBackupRuntime,
-  vaultId: string,
-): Promise<LocalCloudBackupRecord | null> {
-  const raw = await runtime.storage.read(vaultId);
-  if (!raw) return null;
-  const parsed = LocalCloudBackupRecordSchema.safeParse(raw);
-  return parsed.success ? parsed.data : null;
-}
-
-async function errorFrom(response: {
-  status: number;
-  json: () => Promise<unknown>;
-}): Promise<string> {
-  try {
-    const body = (await response.json()) as any;
-    return body?.error?.message || `Request failed (${response.status})`;
-  } catch {
-    return `Request failed (${response.status})`;
-  }
-}
-
-/**
- * Reads the stored record for a vault.
- *
- * The app calls this on load so a previously-enabled vault comes back showing
- * its real state rather than a fresh consent prompt (FR-020).
- */
-export async function getLocalCloudBackupRecord(
-  runtime: CloudBackupRuntime,
-  vaultId: string,
-): Promise<LocalCloudBackupRecord | null> {
-  return readRecord(runtime, vaultId);
-}
-
-/**
- * Every backup this device knows the key to.
- *
- * A recovery key that is already on the device should never have to be typed
- * back in: after switching vaults, or restoring onto the same machine, the
- * user can pick a known backup instead of hunting for the key they copied.
- * Records that fail to parse are skipped rather than failing the whole list —
- * one bad entry must not hide the rest.
- */
-export interface KnownCloudBackup {
-  vaultId: string;
-  backupId: string;
-  vaultTitle: string | null;
-  recoveryKey: string;
-  lastPushedAt: string | null;
-}
-
-export async function listKnownCloudBackups(
-  runtime: CloudBackupRuntime,
-): Promise<KnownCloudBackup[]> {
-  const entries = (await runtime.storage.list?.()) ?? [];
-  const known: KnownCloudBackup[] = [];
-  for (const entry of entries) {
-    const parsed = LocalCloudBackupRecordSchema.safeParse(entry.record);
-    if (!parsed.success) continue;
-    const record = parsed.data;
-    known.push({
-      vaultId: record.vaultId,
-      backupId: record.backupId,
-      vaultTitle: record.vaultTitle ?? null,
-      recoveryKey: formatRecoveryKey(record.backupId, record.ownerCode),
-      lastPushedAt: record.lastPushedAt,
-    });
-  }
-  // Most recently saved first: the one a user wants is rarely the oldest.
-  return known.sort((a, b) =>
-    (b.lastPushedAt ?? "").localeCompare(a.lastPushedAt ?? ""),
-  );
-}
-
-/** The vault's ownership code, for display or copying in Settings (FR-013). */
-export async function getCloudBackupOwnershipCode(
-  runtime: CloudBackupRuntime,
-  vaultId: string,
-): Promise<string | null> {
-  return (await readRecord(runtime, vaultId))?.ownerCode ?? null;
 }
 
 /**
@@ -210,11 +93,7 @@ export async function enableCloudBackup(
   );
 
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
 
   const body = (await response.json().catch(() => null)) as {
@@ -317,19 +196,6 @@ export async function attachCloudBackup(
  * A failed asset aborts before the commit, which leaves the previous snapshot
  * whole rather than half-replaced.
  */
-export interface SnapshotUploadOptions {
-  /**
-   * Asset ids whose bytes the server already holds (#3189 autosync): their
-   * PUT is skipped but they are still listed in the commit, so nothing is
-   * pruned. Skipped assets count as uploaded for progress purposes.
-   */
-  skipAssetUploadIds?: ReadonlySet<string> | readonly string[];
-  /** Cancels remaining uploads and prevents an aborted push from rewriting local status. */
-  signal?: AbortSignal;
-  /** Stage timings for the worker-or-not question; same pattern as `onProgress`. */
-  onTiming?: (timing: CloudBackupTiming) => void;
-}
-
 async function uploadSnapshot(
   runtime: CloudBackupRuntime,
   record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
@@ -371,8 +237,7 @@ async function uploadSnapshot(
           // First failure wins; the rest stop picking up work and the commit
           // below never runs, so a half-uploaded snapshot is never published.
           failures.push({
-            error: await errorFrom(response),
-            status: response.status,
+            ...(await responseFailure(response)),
           });
           return;
         }
@@ -432,11 +297,7 @@ async function uploadSnapshot(
   });
 
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
 
   // A 200 with an unreadable body is still a failure, never a silent success.
@@ -712,11 +573,7 @@ export async function fetchCloudBackupIndex(
     { headers: { Authorization: `Bearer ${record.ownerCode}` } },
   );
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
   const body = (await response.json().catch(() => null)) as {
     entityHashes?: unknown;
@@ -757,11 +614,7 @@ async function readRemoteLastPushedAt(
 ): Promise<CloudBackupOutcome<string | null>> {
   const response = await fetchBackupStatus(runtime, record, signal);
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
   const body = (await response.json().catch(() => null)) as {
     lastPushedAt?: unknown;
@@ -792,11 +645,7 @@ export async function getCloudBackupStatus(
 
   const response = await fetchBackupStatus(runtime, record);
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
   return {
     ok: true,
@@ -832,11 +681,7 @@ export async function fetchCloudBackupAsset(
     { headers: { Authorization: `Bearer ${credentials.ownerCode}` } },
   );
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
   return { ok: true, value: new Uint8Array(await response.arrayBuffer()) };
 }
@@ -852,11 +697,7 @@ export async function restoreVaultFromCloudBackup(
     { headers: { Authorization: `Bearer ${credentials.ownerCode}` } },
   );
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
 
   const body = (await response.json()) as {
@@ -906,11 +747,7 @@ export async function deleteCloudBackup(
     },
   );
   if (!response.ok) {
-    return {
-      ok: false,
-      error: await errorFrom(response),
-      status: response.status,
-    };
+    return responseFailure(response);
   }
 
   // Only cleared once the remote copy is confirmed gone, so a failed delete
