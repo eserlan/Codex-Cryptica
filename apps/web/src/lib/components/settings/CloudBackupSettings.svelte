@@ -432,7 +432,7 @@
 
   {#if isOn && mergeLines.length > 0}
     <div class="flex flex-col gap-1 text-sm text-theme-text" role="status">
-      {#each mergeLines as line (line)}
+      {#each mergeLines as line, index (index)}
         <p>{line}</p>
       {/each}
     </div>

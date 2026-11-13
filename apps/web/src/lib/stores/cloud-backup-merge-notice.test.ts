@@ -21,4 +21,24 @@ describe("mergeNoticeLines", () => {
   it("is empty without a notice", () => {
     expect(mergeNoticeLines(null)).toEqual([]);
   });
+
+  it("keeps duplicate titles as separate lines", () => {
+    expect(mergeNoticeLines({ merged: 0, copies: ["Mara", "Mara"] })).toEqual([
+      "Kept your version of Mara as a copy",
+      "Kept your version of Mara as a copy",
+    ]);
+  });
+
+  it("falls back to Untitled for a blank title", () => {
+    expect(mergeNoticeLines({ merged: 0, copies: ["  "] })).toEqual([
+      "Kept your version of Untitled as a copy",
+    ]);
+  });
+
+  it("caps the copy lines at five and counts the rest", () => {
+    const copies = Array.from({ length: 8 }, (_, i) => `E${i}`);
+    const lines = mergeNoticeLines({ merged: 0, copies });
+    expect(lines).toHaveLength(6);
+    expect(lines[5]).toBe("and 3 more kept as copies");
+  });
 });
