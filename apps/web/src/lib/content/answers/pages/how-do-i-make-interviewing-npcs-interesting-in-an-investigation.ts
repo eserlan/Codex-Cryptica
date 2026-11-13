@@ -339,6 +339,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-i-make-roleplay-more-engaging",
       "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
       "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+      "how-do-i-handle-players-discussing-plans-in-front-of-npcs",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
@@ -373,6 +374,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
           with: "answer-npc-tell-us-everything",
           reason:
             "This answer covers overall witness texture, social stakes, and separating facts from interpretations; the companion answer resolves the specific table dilemma of players asking an NPC to tell them everything they know.",
+        },
+        {
+          with: "answer-players-discussing-plans-front-npcs",
+          reason:
+            "That answer sets the table convention for whether player conferences are audible to an NPC; this answer structures witness knowledge and how targeted questions draw it out.",
         },
         {
           with: "answer-run-mystery-without-railroading",
