@@ -89,7 +89,7 @@ export class GraphPresetController {
    */
   async updateLayout(
     id: string,
-    viewport: Viewport,
+    viewport: Viewport | undefined,
     layout: ViewLayoutSnapshot | null,
   ): Promise<ViewPreset | null> {
     const updated = await this.presets.setPresetLayout(

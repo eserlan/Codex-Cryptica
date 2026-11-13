@@ -301,7 +301,7 @@ export class GraphStore {
 
   updateViewPresetLayout(
     id: string,
-    viewport: ViewPresetState["viewport"],
+    viewport: ViewPresetState["viewport"] | undefined,
     layout: ViewLayoutSnapshot | null,
   ): Promise<ViewPreset | null> {
     return this.presets.updateLayout(id, viewport, layout);
