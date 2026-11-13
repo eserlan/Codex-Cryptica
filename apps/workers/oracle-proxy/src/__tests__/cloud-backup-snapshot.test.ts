@@ -2,14 +2,15 @@ import { describe, expect, it, vi } from "vitest";
 import { handleCommitCloudBackup } from "../cloud-backup-snapshot";
 import {
   getAssetKey,
-  getBundleKey,
-  getIndexKey,
   getManifestKey,
-  readJson,
   readManifest,
 } from "../cloud-backup-storage";
 import { readAllEntities } from "../cloud-backup-shards";
-import { createBackupFixture, jsonRequest } from "./cloud-backup-fixtures";
+import {
+  createBackupFixture,
+  jsonRequest,
+  readCurrent,
+} from "./cloud-backup-fixtures";
 
 describe("cloud backup full snapshots", () => {
   it("shards entity bundles and writes the manifest before pruning assets", async () => {
@@ -36,17 +37,28 @@ describe("cloud backup full snapshots", () => {
       entityCount: 1,
       vaultTitle: "New title",
     });
-    expect(await readAllEntities(env, backupId)).toEqual([
-      { id: "a", title: "A" },
-    ]);
-    expect(await readJson(env, getBundleKey(backupId))).toEqual({ maps: [] });
+    expect(
+      await readAllEntities(
+        env,
+        backupId,
+        (await readManifest(env, backupId))!.objects!,
+      ),
+    ).toEqual([{ id: "a", title: "A" }]);
+    expect(await readCurrent(env, backupId, "bundle")).toEqual({ maps: [] });
     expect(await env.BUCKET.head(getAssetKey(backupId, "old"))).toBeNull();
     expect(await env.BUCKET.head(getAssetKey(backupId, "keep"))).not.toBeNull();
+    const stagedBundle = put.mock.calls.findIndex(([key]) =>
+      String(key).endsWith("/bundle.json"),
+    );
+    expect(String(put.mock.calls[stagedBundle][0])).toContain("/commits/1-");
     const manifestWrite = put.mock.calls.findIndex(
       ([key]) => key === getManifestKey(backupId),
     );
     const prune = remove.mock.calls.findIndex(
       ([key]) => key === getAssetKey(backupId, "old"),
+    );
+    expect(put.mock.invocationCallOrder[stagedBundle]).toBeLessThan(
+      put.mock.invocationCallOrder[manifestWrite],
     );
     expect(put.mock.invocationCallOrder[manifestWrite]).toBeLessThan(
       remove.mock.invocationCallOrder[prune],
@@ -64,7 +76,7 @@ describe("cloud backup full snapshots", () => {
       backupId,
     );
     expect((await response.json()).manifest.schemaVersion).toBe(1);
-    expect(await readJson(env, getBundleKey(backupId))).toEqual({
+    expect(await readCurrent(env, backupId, "bundle")).toEqual({
       opaque: true,
     });
     env.BUCKET.resetOps();
@@ -109,7 +121,7 @@ describe("cloud backup full snapshots", () => {
     const second = await commit({ entities: [{ id: "a" }, { id: "b" }] });
     expect(second.revision).toBe(2);
     expect((await readManifest(env, backupId))!.manifest.revision).toBe(2);
-    const index = await readJson<any>(env, getIndexKey(backupId));
+    const index = await readCurrent(env, backupId, "index");
     for (const id of ["a", "b"]) {
       expect(index.entityMeta[id]).toEqual({
         rev: 2,
@@ -118,7 +130,15 @@ describe("cloud backup full snapshots", () => {
       });
     }
     expect(
-      (await readAllEntities(env, backupId)).map((entity) => entity.id).sort(),
+      (
+        await readAllEntities(
+          env,
+          backupId,
+          (await readManifest(env, backupId))!.objects!,
+        )
+      )
+        .map((entity) => entity.id)
+        .sort(),
     ).toEqual(["a", "b"]);
   });
 

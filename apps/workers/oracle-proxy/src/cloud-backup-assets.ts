@@ -2,7 +2,8 @@ import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing"
 import {
   type CloudBackupEnv,
   getAssetKey,
-  storedBytes,
+  reachableBytes,
+  resolveObjects,
 } from "./cloud-backup-storage";
 import {
   cors,
@@ -53,7 +54,11 @@ export async function handleCloudBackupAssetUpload(
   // replaces, so a re-uploaded file is not counted twice.
   const existing = await env.BUCKET.head(key);
   const projected =
-    (await storedBytes(env, backupId)) -
+    (await reachableBytes(
+      env,
+      backupId,
+      await resolveObjects(env, backupId, auth.objects),
+    )) -
     (existing?.size ?? 0) +
     bytes.byteLength;
   const vaultTooLarge = sizeLimitResponse(

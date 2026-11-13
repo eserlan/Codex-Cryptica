@@ -12,23 +12,28 @@ import {
 } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import {
+  type BackupObjects,
   type CloudBackupEnv,
-  getBundleKey,
-  getShardKey,
-  getIndexKey,
+  absoluteKey,
+  cleanupSuperseded,
+  discardStaged,
   getAssetKey,
-  storedBytes,
+  getStagedKey,
   jsonByteLength,
   readJson,
+  readManifest,
+  readReferenced,
+  reachableBytes,
+  resolveObjects,
   writeJson,
   writeManifest,
   pruneAssets,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
-import { writeIndex, writeShards } from "./cloud-backup-shards";
+import { stageIndex, stageShards, stagedName } from "./cloud-backup-shards";
 
-function conflict(
+export function conflict(
   request: Request,
   code: "full_push_required" | "diverged",
   message: string,
@@ -49,10 +54,33 @@ function conflict(
   );
 }
 
+/**
+ * A commit lost the manifest switch: drop what it staged and report the
+ * winner's revision, so nothing of the loser is left reachable or pruned.
+ */
+export async function lostRace(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+  staged: BackupObjects,
+  fallback: CloudBackupManifest,
+): Promise<Response> {
+  await discardStaged(env, backupId, staged);
+  const winner = (await readManifest(env, backupId))?.manifest ?? fallback;
+  return conflict(
+    request,
+    "diverged",
+    "The cloud backup changed since this upload was prepared.",
+    winner.lastPushedAt,
+    cloudBackupRevisionOf(winner),
+  );
+}
+
 async function readTouchedShards(
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
+  base: BackupObjects,
 ): Promise<Map<string, Shard>> {
   const touched = new Set<string>();
   for (const entity of delta.upserts)
@@ -61,11 +89,11 @@ async function readTouchedShards(
 
   const shards = new Map<string, Shard>();
   for (const name of touched) {
-    const existing = await readJson<Shard>(env, getShardKey(backupId, name));
-    shards.set(
-      name,
-      Object.assign(Object.create(null) as Shard, existing ?? {}),
-    );
+    const reference = base.shards?.[name];
+    const existing = reference
+      ? await readReferenced<Shard>(env, backupId, reference)
+      : {};
+    shards.set(name, Object.assign(Object.create(null) as Shard, existing));
   }
 
   return shards;
@@ -76,18 +104,21 @@ async function applyEntityDelta(
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
+  base: BackupObjects,
   stamp: CloudBackupEntitySyncMeta,
 ): Promise<{
   shards: Map<string, Shard>;
   hashes: Record<string, string>;
   meta: Record<string, CloudBackupEntitySyncMeta>;
 }> {
-  const shards = await readTouchedShards(env, backupId, delta);
+  const shards = await readTouchedShards(env, backupId, delta, base);
 
-  const index = await readJson<{
-    entityHashes: Record<string, string>;
-    entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
-  }>(env, getIndexKey(backupId));
+  const index = base.index
+    ? await readReferenced<{
+        entityHashes: Record<string, string>;
+        entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
+      }>(env, backupId, base.index)
+    : null;
   const hashes = Object.assign(
     Object.create(null) as Record<string, string>,
     index?.entityHashes ?? {},
@@ -109,16 +140,28 @@ async function applyEntityDelta(
   return { shards, hashes, meta };
 }
 
-/** Bytes the changed shards add to the stored total, for the vault ceiling. */
+async function sizeOfReferenced(
+  env: CloudBackupEnv,
+  backupId: string,
+  relative: string | undefined,
+): Promise<number> {
+  if (!relative) return 0;
+  const existing = await env.BUCKET.head(absoluteKey(backupId, relative));
+  return existing?.size ?? 0;
+}
+
+/** Bytes the changed shards add to the reachable total, for the vault ceiling. */
 async function shardGrowth(
   env: CloudBackupEnv,
   backupId: string,
+  base: BackupObjects,
   shards: Map<string, Shard>,
 ): Promise<number> {
   let growth = 0;
   for (const [name, shard] of shards) {
-    const existing = await env.BUCKET.head(getShardKey(backupId, name));
-    growth += jsonByteLength(shard) - (existing?.size ?? 0);
+    const next = Object.keys(shard).length === 0 ? 0 : jsonByteLength(shard);
+    growth +=
+      next - (await sizeOfReferenced(env, backupId, base.shards?.[name]));
   }
   return growth;
 }
@@ -126,19 +169,20 @@ async function shardGrowth(
 async function indexGrowth(
   env: CloudBackupEnv,
   backupId: string,
+  base: BackupObjects,
   hashes: Record<string, string>,
   meta: Record<string, CloudBackupEntitySyncMeta>,
 ): Promise<number> {
-  const existing = await env.BUCKET.head(getIndexKey(backupId));
   return (
     jsonByteLength({ entityHashes: hashes, entityMeta: meta }) -
-    (existing?.size ?? 0)
+    (await sizeOfReferenced(env, backupId, base.index))
   );
 }
 
 async function prepareBundleSections(
   env: CloudBackupEnv,
   backupId: string,
+  base: BackupObjects,
   delta: CloudBackupDelta,
 ): Promise<{
   bundle: Record<string, unknown> | null;
@@ -151,24 +195,20 @@ async function prepareBundleSections(
   };
   if (Object.keys(sections).length === 0) return { bundle: null, growth: 0 };
 
-  const key = getBundleKey(backupId);
   const [bundle, existing] = await Promise.all([
-    readJson<Record<string, unknown>>(env, key),
-    env.BUCKET.head(key),
+    base.bundle
+      ? readJson<Record<string, unknown>>(
+          env,
+          absoluteKey(backupId, base.bundle),
+        )
+      : null,
+    sizeOfReferenced(env, backupId, base.bundle),
   ]);
   const nextBundle = { ...(bundle ?? {}), ...sections };
   return {
     bundle: nextBundle,
-    growth: jsonByteLength(nextBundle) - (existing?.size ?? 0),
+    growth: jsonByteLength(nextBundle) - existing,
   };
-}
-
-async function writeBundleSections(
-  env: CloudBackupEnv,
-  backupId: string,
-  bundle: Record<string, unknown> | null,
-): Promise<void> {
-  if (bundle) await writeJson(env, getBundleKey(backupId), bundle);
 }
 
 function validateDelta(
@@ -228,19 +268,21 @@ async function prepareDelta(
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
+  base: BackupObjects,
   stamp: CloudBackupEntitySyncMeta,
 ): Promise<PreparedDelta> {
   const { shards, hashes, meta } = await applyEntityDelta(
     env,
     backupId,
     delta,
+    base,
     stamp,
   );
-  const bundleUpdate = await prepareBundleSections(env, backupId, delta);
+  const bundleUpdate = await prepareBundleSections(env, backupId, base, delta);
   const projected =
-    (await storedBytes(env, backupId)) +
-    (await shardGrowth(env, backupId, shards)) +
-    (await indexGrowth(env, backupId, hashes, meta)) +
+    (await reachableBytes(env, backupId, base)) +
+    (await shardGrowth(env, backupId, base, shards)) +
+    (await indexGrowth(env, backupId, base, hashes, meta)) +
     bundleUpdate.growth;
   return {
     shards,
@@ -251,29 +293,74 @@ async function prepareDelta(
   };
 }
 
+/**
+ * Stages the changes under a key set owned by this commit, then switches the
+ * manifest to them. Answers 409 when another commit switched it first.
+ */
 async function commitDelta(
+  request: Request,
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
-  auth: { manifest: CloudBackupManifest; ownerCodeHash: string },
+  auth: {
+    manifest: CloudBackupManifest;
+    ownerCodeHash: string;
+    etag?: string;
+  },
+  base: BackupObjects,
   prepared: PreparedDelta,
   lastPushedAt: string,
-): Promise<CloudBackupManifest> {
+): Promise<Response> {
   const { shards, hashes, meta } = prepared;
-  await writeShards(env, backupId, shards, false);
-  await writeIndex(env, backupId, hashes, meta);
-  await writeBundleSections(env, backupId, prepared.bundle);
+  const revision = cloudBackupRevisionOf(auth.manifest) + 1;
+  const tag = `${revision}-${crypto.randomUUID()}`;
+
+  const stagedShards = await stageShards(env, backupId, tag, shards);
+  const staged: BackupObjects = {
+    index: await stageIndex(env, backupId, tag, hashes, meta),
+    shards: stagedShards,
+  };
+  if (prepared.bundle) {
+    await writeJson(
+      env,
+      getStagedKey(backupId, tag, "bundle.json"),
+      prepared.bundle,
+    );
+    staged.bundle = stagedName(tag, "bundle.json");
+  }
+
+  const untouched = Object.fromEntries(
+    Object.entries(base.shards ?? {}).filter(([name]) => !shards.has(name)),
+  );
+  const objects: BackupObjects = {
+    ...(staged.bundle || base.bundle
+      ? { bundle: staged.bundle ?? base.bundle }
+      : {}),
+    index: staged.index,
+    shards: { ...untouched, ...stagedShards },
+  };
 
   const committed: CloudBackupManifest = {
     ...auth.manifest,
     vaultTitle: delta.vaultTitle,
     entityCount: Object.keys(hashes).length,
-    sizeBytes: await storedBytes(env, backupId),
+    sizeBytes: await reachableBytes(env, backupId, objects),
     lastPushedAt,
-    revision: cloudBackupRevisionOf(auth.manifest) + 1,
+    revision,
   };
-  await writeManifest(env, backupId, committed, auth.ownerCodeHash);
+  const won = await writeManifest(
+    env,
+    backupId,
+    committed,
+    auth.ownerCodeHash,
+    objects,
+    auth.etag,
+  );
+  if (!won) {
+    return lostRace(request, env, backupId, staged, auth.manifest);
+  }
 
+  await cleanupSuperseded(env, backupId, revision, objects, base);
   if (delta.assetIds) {
     await pruneAssets(
       env,
@@ -282,7 +369,7 @@ async function commitDelta(
     );
   }
 
-  return committed;
+  return json(request, { manifest: committed });
 }
 
 /**
@@ -290,10 +377,10 @@ async function commitDelta(
  *
  * Refuses (409) unless the backup is already v2 and the client computed the
  * delta against the current remote (`baseLastPushedAt`, and `baseRevision`
- * when sent), so a delta can never
- * land on a copy it does not describe. Same write order as a full commit:
- * shards and index, then `bundle.json` if its sections changed, then the
- * manifest, then prune.
+ * when sent), so a delta can never land on a copy it does not describe. Changes
+ * are staged under keys of their own and the manifest is then switched to them
+ * with an etag-conditional write; a delta that loses that switch gets the same
+ * 409 and leaves nothing a reader can see. Prune runs only after a win.
  */
 export async function handleCloudBackupDelta(
   request: Request,
@@ -307,8 +394,9 @@ export async function handleCloudBackupDelta(
   if ("response" in parsed) return parsed.response;
   const { delta } = parsed;
 
+  const base = await resolveObjects(env, backupId, auth.objects);
   const lastPushedAt = new Date().toISOString();
-  const prepared = await prepareDelta(env, backupId, delta, {
+  const prepared = await prepareDelta(env, backupId, delta, base, {
     rev: cloudBackupRevisionOf(auth.manifest) + 1,
     editedBy: CLOUD_BACKUP_OWNER_EDITOR,
     editedAt: lastPushedAt,
@@ -321,13 +409,14 @@ export async function handleCloudBackupDelta(
   );
   if (oversized) return oversized;
 
-  const committed = await commitDelta(
+  return commitDelta(
+    request,
     env,
     backupId,
     delta,
     auth,
+    base,
     prepared,
     lastPushedAt,
   );
-  return json(request, { manifest: committed });
 }

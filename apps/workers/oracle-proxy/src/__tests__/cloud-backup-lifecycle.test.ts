@@ -23,6 +23,7 @@ describe("cloud backup lifecycle", () => {
     expect(manifest.sizeBytes).toBe(0);
     expect(await readManifest(env, backupId)).toEqual({
       manifest,
+      etag: expect.any(String),
       ownerCodeHash: await hashOwnerCode(ownerCode),
     });
     expect(JSON.stringify([...env.BUCKET.store])).not.toContain(ownerCode);

@@ -56,10 +56,11 @@ describe("cloud backup credentials", () => {
       lastPushedAt: "2026-01-01T00:00:00.000Z",
     };
     const ownerCodeHash = await hashOwnerCode("code");
-    await writeManifest(env, "b", manifest, ownerCodeHash);
+    await writeManifest(env, "b", manifest, ownerCodeHash, undefined);
     expect(await authorizeStoredBackup(request("code"), env, "b")).toEqual({
       manifest,
       ownerCodeHash,
+      etag: expect.any(String),
     });
     const failures = await Promise.all([
       authorize(request("wrong"), env, "b"),
@@ -102,7 +103,11 @@ describe("cloud backup credentials", () => {
       backupId,
     );
     expect(accepted).toEqual({
-      auth: { manifest, ownerCodeHash: await hashOwnerCode(ownerCode) },
+      auth: {
+        manifest,
+        ownerCodeHash: await hashOwnerCode(ownerCode),
+        etag: expect.any(String),
+      },
       body: { value: true },
     });
     const invalid = await readAuthorizedJsonBody(
