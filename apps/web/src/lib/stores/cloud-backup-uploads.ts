@@ -321,13 +321,13 @@ export class CloudBackupUploads {
     rejected: SnapshotOutcome,
   ): Promise<SnapshotOutcome | null | "again"> {
     const stopped = pullStop(await this.runPull!(), rejected);
-    if (stopped || signal.aborted) return signal.aborted ? BACKUP_OFF : stopped;
+    if (stopped) return stopped;
     const rows = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
-    if (signal.aborted) return BACKUP_OFF;
+    // Edits made during the pull are in these rows, and clear with them.
     this.sentRows = rows;
     if (!isEntityOnly(rows)) return rejected;
     const out = await this.trySendDelta(vaultId, rows, signal);
-    return out && !out.ok && out.conflict ? "again" : out;
+    return out?.conflict ? "again" : out;
   }
 
   /**

@@ -106,14 +106,24 @@ export class CloudBackupPulls {
     void this.pullNow();
   };
 
+  /** Nothing is stopping a pull: not paused, off, pushing or already pulling. */
+  private idle(): boolean {
+    const { status, autoState } = this.state;
+    const paused = status === "off" || autoState === "conflict";
+    return (
+      !paused && !this.unsupported && !this.uploads.pushing && !this.running
+    );
+  }
+
   private canPullNow(vaultId: string | null): vaultId is string {
     const deps = this.deps;
-    if (!deps?.remote || !vaultId || this.unsupported) return false;
-    if (this.state.status === "off" || this.state.autoState === "conflict") {
-      return false;
-    }
-    if (deps.activeVaultId() !== vaultId || !onlineStatus.current) return false;
-    return !this.uploads.pushing && !this.running;
+    return Boolean(
+      deps?.remote &&
+      vaultId &&
+      this.idle() &&
+      deps.activeVaultId() === vaultId &&
+      onlineStatus.current,
+    );
   }
 
   /** A background pull; skipped whenever it would get in the way. */
@@ -152,15 +162,12 @@ export class CloudBackupPulls {
     const deps = this.deps!;
     const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
     if (!record?.enabled || !deps.base) return { kind: "off" };
-    const status = await readRemoteLastPushedAt(deps.runtime, record);
-    if (!status.ok) return { kind: "failed", error: status.error };
-    const feed = await fetchCloudBackupChanges(deps.runtime, vaultId);
-    if (feed.kind === "failed") return { kind: "failed", error: feed.error };
-    if (feed.kind !== "changes" && feed.kind !== "resync") return feed;
-    const loaded = await this.loadFed(record, feed, status.value);
+    const read = await this.readFeed(record, vaultId);
+    if ("outcome" in read) return read.outcome;
+    const loaded = await this.loadFed(record, read.feed, read.statusAt);
     if (!loaded.ok) return { kind: "failed", error: loaded.error };
     const { fed, revision, lastPushedAt } = loaded;
-    const held = await this.merge(vaultId, fed, feed.kind === "resync");
+    const held = await this.merge(vaultId, fed, read.feed.kind === "resync");
     if (held) return { kind: "held" };
     await storePulledCloudBackupRecord(deps.runtime, vaultId, {
       revision,
@@ -168,6 +175,30 @@ export class CloudBackupPulls {
     });
     if (lastPushedAt) this.state.lastPushedAt = lastPushedAt;
     return { kind: "done" };
+  }
+
+  /** The remote timestamp and the feed, or the outcome that ends the pull. */
+  private async readFeed(
+    record: LocalCloudBackupRecord,
+    vaultId: string,
+  ): Promise<
+    | {
+        feed: Extract<ChangeFeedOutcome, { kind: "changes" | "resync" }>;
+        statusAt: string | null;
+      }
+    | { outcome: PullOutcome }
+  > {
+    const { runtime } = this.deps!;
+    const status = await readRemoteLastPushedAt(runtime, record);
+    if (!status.ok) return { outcome: { kind: "failed", error: status.error } };
+    const feed = await fetchCloudBackupChanges(runtime, vaultId);
+    if (feed.kind === "failed") {
+      return { outcome: { kind: "failed", error: feed.error } };
+    }
+    if (feed.kind === "changes" || feed.kind === "resync") {
+      return { feed, statusAt: status.value };
+    }
+    return { outcome: feed };
   }
 
   /** The entries to merge; a resync reads them from the whole backup. */
