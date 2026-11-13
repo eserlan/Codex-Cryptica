@@ -97,7 +97,7 @@ export function visibleGeographyEdges(
 ): EdgeItem[] {
   const existing = topology?.edges ?? {};
   const features = { ...existing, ...(proposal?.edges ?? {}) };
-  const result = Object.entries(features).flatMap(([key, feature]) => {
+  return Object.entries(features).flatMap(([key, feature]) => {
     const item = toEdgeItem(
       key,
       feature,
@@ -112,7 +112,6 @@ export function visibleGeographyEdges(
     );
     return item ? [item] : [];
   });
-  return result.length > 2500 ? [] : result;
 }
 
 export function visibleGeographySites(
@@ -122,22 +121,20 @@ export function visibleGeographySites(
   config: Projection,
 ): SiteItem[] {
   const sites = { ...(topology?.sites ?? {}), ...(proposal?.sites ?? {}) };
-  return Object.entries(sites)
-    .flatMap(([key, site]) => {
-      const hex = parseHexKey(key);
-      if (!hex) return [];
-      const point = config.project(hexToPoint(hex, config.gridConfig));
-      return withinViewport(point, config.viewport)
-        ? [
-            {
-              key,
-              site,
-              point,
-              proposed: Boolean(proposal && key in proposal.sites),
-              disabled: disabled.has(key),
-            },
-          ]
-        : [];
-    })
-    .slice(0, 2500);
+  return Object.entries(sites).flatMap(([key, site]) => {
+    const hex = parseHexKey(key);
+    if (!hex) return [];
+    const point = config.project(hexToPoint(hex, config.gridConfig));
+    return withinViewport(point, config.viewport)
+      ? [
+          {
+            key,
+            site,
+            point,
+            proposed: Boolean(proposal && key in proposal.sites),
+            disabled: disabled.has(key),
+          },
+        ]
+      : [];
+  });
 }
