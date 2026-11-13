@@ -5,6 +5,7 @@ import {
   type VaultDeltaPayload,
 } from "@codex/cloud-backup-sync";
 import { browserStorage } from "#lib/utils/runtime-deps.js";
+import type { CloudBackupBaseStore } from "./cloud-backup-base";
 import type { CloudBackupDirtyRow } from "./cloud-backup-dirty";
 import {
   BACKUP_OFF,
@@ -33,11 +34,17 @@ function uploadFailure(result: {
   };
 }
 
+/** Plain JSON copy, so later edits and reactive proxies cannot change it. */
+const deepCopy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
 /** Serial snapshot/delta uploads, cancellation and version-guarded dirty clearing. */
 export class CloudBackupUploads {
   pushing = false;
   private activeBuild: AbortController | null = null;
   private activePush: Promise<SnapshotOutcome> | null = null;
+  /** What the running push sends, copied before the request, to become the merge base. */
+  private sentBase: ((base: CloudBackupBaseStore) => Promise<void>) | null =
+    null;
   readonly media: CloudBackupMediaCache;
 
   constructor(
@@ -101,6 +108,7 @@ export class CloudBackupUploads {
     // Check before building: the snapshot reads every entity, so learning
     // that backup is off only at upload time costs a whole-vault read.
     if (!(await this.isBackupEnabled(vaultId, signal))) return BACKUP_OFF;
+    this.sentBase = null;
 
     // Taken before building, so anything changed after this point stays
     // pending even though the snapshot may happen to include it.
@@ -119,8 +127,24 @@ export class CloudBackupUploads {
     signal: AbortSignal,
   ): Promise<SnapshotOutcome> {
     if (signal.aborted) return BACKUP_OFF;
-    if (out.ok) await this.deps!.dirty?.clearSent(sent);
+    if (out.ok) {
+      await this.recordBase();
+      await this.deps!.dirty?.clearSent(sent);
+    }
     return out;
+  }
+
+  /** A failure to record the base never fails a push that went through. */
+  private async recordBase(): Promise<void> {
+    const record = this.sentBase;
+    const base = this.deps!.base;
+    this.sentBase = null;
+    if (!record || !base) return;
+    try {
+      await record(base);
+    } catch (error) {
+      console.warn("[CloudBackup] Could not record the merge base", error);
+    }
   }
 
   private async dispatchScopedUpload(
@@ -164,6 +188,9 @@ export class CloudBackupUploads {
     );
     if (signal.aborted) return BACKUP_OFF;
     if (!delta) return null;
+    const upserts = deepCopy(delta.upserts);
+    const deletes = [...delta.deletes];
+    this.sentBase = (base) => base.recordSent(vaultId, upserts, deletes);
     return this.sendDelta(vaultId, delta, this.state.lastPushedAt!, signal);
   }
 
@@ -232,6 +259,9 @@ export class CloudBackupUploads {
       payload.assets ?? [],
       deps.timing,
     );
+    const entities = (payload.bundle as { entities?: unknown })?.entities;
+    const copy = Array.isArray(entities) ? deepCopy(entities) : null;
+    this.sentBase = copy && ((base) => base.replaceVault(vaultId, copy));
     const result = await pushVaultToCloudBackup(
       deps.runtime,
       vaultId,

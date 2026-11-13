@@ -191,6 +191,7 @@ export class CloudBackupStore {
     // Changes made while off are never recorded, so the pending set would be
     // incomplete by the time backup is re-enabled — which re-uploads in full.
     await this.deps.dirty?.clearVault(vaultId);
+    await this.deps.base?.clearVault(vaultId);
     this.status = "off";
     this.errorMessage = null;
   }

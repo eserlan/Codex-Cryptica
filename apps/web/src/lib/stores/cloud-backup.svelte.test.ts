@@ -31,6 +31,7 @@ import {
   CloudBackupDirtyStore,
   memoryDirtyStorage,
 } from "./cloud-backup-dirty";
+import { CloudBackupBaseStore, memoryBaseStorage } from "./cloud-backup-base";
 
 const MANIFEST = {
   schemaVersion: 1,
@@ -491,6 +492,19 @@ describe("saving is explicit", () => {
 });
 
 describe("disable, delete and restore", () => {
+  it("drops the merge base when backup is turned off", async () => {
+    const base = new CloudBackupBaseStore(memoryBaseStorage());
+    const { store } = harness([ENABLE], { base });
+    await store.enable("v-1");
+    await base.recordSent("v-1", [{ id: "a", title: "A" }], []);
+    await base.recordSent("v-2", [{ id: "b", title: "B" }], []);
+
+    await store.disable("v-1");
+
+    expect(await base.list("v-1")).toEqual([]);
+    expect(await base.list("v-2")).toHaveLength(1);
+  });
+
   it("disables locally without contacting the server", async () => {
     const { store, calls } = harness([ENABLE]);
     await store.enable("v-1");

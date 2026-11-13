@@ -287,7 +287,7 @@ see.
 - [ ] **Slice 3: Tombstones and change feed** (#4779) — a tombstone for each
       removed entity, with its last content kept; `changes?since`, with a
       "resync" answer.
-- [ ] **Slice 4: Merge engine** (#4774) — `merge.ts` in `cloud-backup-sync`
+- [x] **Slice 4: Merge engine** (#4774) — `merge.ts` in `cloud-backup-sync`
       as pure functions; the last synced copy kept per entity. Not yet used by
       sync.
 - [ ] **Slice 5: Pull, merge and retry** (#4780) — `change-feed.ts`; pull,
