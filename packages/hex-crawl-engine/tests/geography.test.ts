@@ -1,12 +1,20 @@
 import { describe, expect, it } from "bun:test";
 import { getHexRange } from "map-engine";
 import {
-  applyHexGeography, generateHexGeography, hexEdgeKey, normalizeHexCrawlState,
-  parseHexEdgeKey, toHexKey, type HexCoord, type HexCrawlState, type CivilisationLevel,
+  applyHexGeography,
+  generateHexGeography,
+  hexEdgeKey,
+  normalizeHexCrawlState,
+  parseHexEdgeKey,
+  toHexKey,
+  type HexCoord,
+  type HexCrawlState,
+  type CivilisationLevel,
 } from "../src";
 
 const centre = { q: 0, r: 0 };
-const inside = (h: HexCoord) => Math.max(Math.abs(h.q), Math.abs(h.r), Math.abs(h.q + h.r)) <= 8;
+const inside = (h: HexCoord) =>
+  Math.max(Math.abs(h.q), Math.abs(h.r), Math.abs(h.q + h.r)) <= 8;
 function state(): HexCrawlState {
   const hexes: HexCrawlState["hexes"] = {};
   for (const hex of getHexRange(centre, 5)) {
@@ -15,10 +23,18 @@ function state(): HexCrawlState {
   }
   return { enabled: true, hexes };
 }
-function make(s: HexCrawlState, civilisation: CivilisationLevel = "frontier", seed = "TEST-SEED") {
+function make(
+  s: HexCrawlState,
+  civilisation: CivilisationLevel = "frontier",
+  seed = "TEST-SEED",
+) {
   return generateHexGeography({
-    state: s, request: { centre, radius: 5, seed, civilisation },
-    settlements: [{ q: 0, r: 0 }, { q: 3, r: 0 }],
+    state: s,
+    request: { centre, radius: 5, seed, civilisation },
+    settlements: [
+      { q: 0, r: 0 },
+      { q: 3, r: 0 },
+    ],
     inBounds: inside,
   })!;
 }
@@ -36,12 +52,23 @@ describe("shared-edge topology", () => {
   it("drops malformed shared edges and mismatched flow while retaining valid ones", () => {
     const a = hexEdgeKey(centre, { q: 1, r: 0 })!;
     const normal = normalizeHexCrawlState({
-      enabled: true, hexes: {},
-      topology: { version: 1, edges: {
-        [a]: { river: { from: "0,0", to: "1,0", provenance: { source: "manual" } } },
-        "0,0|5,5": { road: { kind: "road", provenance: { source: "manual" } } },
-        "1,-1|1,0": { river: { from: "0,0", to: "1,0", provenance: { source: "manual" } } },
-      }, sites: {} },
+      enabled: true,
+      hexes: {},
+      topology: {
+        version: 1,
+        edges: {
+          [a]: {
+            river: { from: "0,0", to: "1,0", provenance: { source: "manual" } },
+          },
+          "0,0|5,5": {
+            road: { kind: "road", provenance: { source: "manual" } },
+          },
+          "1,-1|1,0": {
+            river: { from: "0,0", to: "1,0", provenance: { source: "manual" } },
+          },
+        },
+        sites: {},
+      },
     });
     expect(Object.keys(normal.topology!.edges)).toEqual([a]);
   });
@@ -62,11 +89,18 @@ describe("shared-edge topology", () => {
       expect(pair).not.toBeNull();
       if (edge.coast) {
         const [a, b] = pair!;
-        const waterA = s.hexes[toHexKey(a)].terrain?.kind === "preset" && s.hexes[toHexKey(a)].terrain?.id === "water";
-        const waterB = s.hexes[toHexKey(b)].terrain?.kind === "preset" && s.hexes[toHexKey(b)].terrain?.id === "water";
+        const waterA =
+          s.hexes[toHexKey(a)].terrain?.kind === "preset" &&
+          s.hexes[toHexKey(a)].terrain?.id === "water";
+        const waterB =
+          s.hexes[toHexKey(b)].terrain?.kind === "preset" &&
+          s.hexes[toHexKey(b)].terrain?.id === "water";
         expect(waterA).not.toBe(waterB);
       }
-      if (edge.river) expect([toHexKey(pair![0]), toHexKey(pair![1])].sort()).toEqual([edge.river.from, edge.river.to].sort());
+      if (edge.river)
+        expect([toHexKey(pair![0]), toHexKey(pair![1])].sort()).toEqual(
+          [edge.river.from, edge.river.to].sort(),
+        );
     }
   });
 
@@ -77,7 +111,10 @@ describe("shared-edge topology", () => {
     for (const [key, edge] of Object.entries(proposal.edges)) {
       if (!edge.road) continue;
       const [a, b] = parseHexEdgeKey(key)!;
-      for (const [x, y] of [[toHexKey(a), toHexKey(b)], [toHexKey(b), toHexKey(a)]]) {
+      for (const [x, y] of [
+        [toHexKey(a), toHexKey(b)],
+        [toHexKey(b), toHexKey(a)],
+      ]) {
         if (!graph.has(x)) graph.set(x, new Set());
         graph.get(x)!.add(y);
       }
@@ -86,7 +123,10 @@ describe("shared-edge topology", () => {
     const pending = ["0,0"];
     while (pending.length) {
       for (const next of graph.get(pending.shift()!) ?? []) {
-        if (!visited.has(next)) { visited.add(next); pending.push(next); }
+        if (!visited.has(next)) {
+          visited.add(next);
+          pending.push(next);
+        }
       }
     }
     expect(visited.has("3,0")).toBe(true);
@@ -96,9 +136,14 @@ describe("shared-edge topology", () => {
     const s = state();
     const wilderness = make(s, "wilderness");
     const settled = make(s, "settled");
-    expect(Object.keys(settled.sites).length).toBeGreaterThan(Object.keys(wilderness.sites).length);
+    expect(Object.keys(settled.sites).length).toBeGreaterThan(
+      Object.keys(wilderness.sites).length,
+    );
     for (const key of Object.keys(settled.sites)) {
-      expect(s.hexes[key].terrain?.kind === "preset" && s.hexes[key].terrain.id === "water").toBe(false);
+      expect(
+        s.hexes[key].terrain?.kind === "preset" &&
+          s.hexes[key].terrain.id === "water",
+      ).toBe(false);
       expect(["0,0", "3,0"]).not.toContain(key);
     }
   });
@@ -106,18 +151,35 @@ describe("shared-edge topology", () => {
   it("persists topology without minting entities, and refuses stale writes", () => {
     const s = state();
     const a = hexEdgeKey({ q: 0, r: 0 }, { q: 1, r: 0 })!;
-    s.topology = { version: 1, edges: {
-      [a]: { road: { kind: "path", provenance: { source: "manual" } } },
-    }, sites: {} };
+    s.topology = {
+      version: 1,
+      edges: {
+        [a]: { road: { kind: "path", provenance: { source: "manual" } } },
+      },
+      sites: {},
+    };
     const proposal = make(s);
     const result = applyHexGeography(s, proposal, new Set(), new Set());
     expect(result).not.toBeNull();
     expect(result!.topology!.edges[a].road?.provenance.source).toBe("manual");
-    expect(normalizeHexCrawlState(JSON.parse(JSON.stringify(result))).topology).toEqual(result!.topology);
+    expect(
+      normalizeHexCrawlState(JSON.parse(JSON.stringify(result))).topology,
+    ).toEqual(result!.topology);
     expect(s.topology.edges).toHaveProperty(a);
-    expect(applyHexGeography({ ...s, hexes: {
-      ...s.hexes, "0,0": { ...s.hexes["0,0"], updatedAt: 2 },
-    } }, proposal, new Set(), new Set())).toBeNull();
+    expect(
+      applyHexGeography(
+        {
+          ...s,
+          hexes: {
+            ...s.hexes,
+            "0,0": { ...s.hexes["0,0"], updatedAt: 2 },
+          },
+        },
+        proposal,
+        new Set(),
+        new Set(),
+      ),
+    ).toBeNull();
   });
 
   it("river flow graph has no cycles or contradictory shared-edge directions", () => {
