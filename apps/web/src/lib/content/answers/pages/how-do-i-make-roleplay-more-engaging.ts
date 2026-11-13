@@ -290,6 +290,11 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
           "The investigation interview answer separates observations, interpretations, and omissions to handle fragile clues; this answer structures negotiations around competing goals, trade-offs, and terms that change resources or relationships.",
       },
       {
+        with: "answer-players-discussing-plans-front-npcs",
+        reason:
+          "That answer establishes whether player discussion counts as character speech and what an NPC can perceive; this answer structures social scenes around meaningful choices, NPC wants, and boundaries.",
+      },
+      {
         with: "answer-run-diplomats-nobles-courtiers",
         reason:
           "The diplomat answer focuses on status, authority, and durable formal commitments; this answer addresses everyday social scenes and duration judgement, showing when a brief exchange is the right outcome.",

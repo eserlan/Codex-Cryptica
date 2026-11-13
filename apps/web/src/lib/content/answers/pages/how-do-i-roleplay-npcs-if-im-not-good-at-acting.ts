@@ -198,6 +198,11 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
     ],
     acknowledgedOverlap: [
       {
+        with: "answer-players-discussing-plans-front-npcs",
+        reason:
+          "That answer governs whether an NPC may react to the players' table discussion; this answer helps a GM portray and switch between NPCs without relying on acting technique.",
+      },
+      {
         with: "answer-improvise-npcs-in-dnd",
         reason:
           "That answer gives a six-part sketch for inventing an unexpected NPC and handling Charisma checks; this answer gives a three-part cue and minimal non-accent signals for portraying and switching between planned NPCs without acting talent.",

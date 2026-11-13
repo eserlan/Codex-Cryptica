@@ -376,6 +376,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
             "This answer covers overall witness texture, social stakes, and separating facts from interpretations; the companion answer resolves the specific table dilemma of players asking an NPC to tell them everything they know.",
         },
         {
+          with: "answer-players-discussing-plans-front-npcs",
+          reason:
+            "That answer sets the table convention for whether player conferences are audible to an NPC; this answer structures witness knowledge and how targeted questions draw it out.",
+        },
+        {
           with: "answer-run-mystery-without-railroading",
           reason:
             "The mystery answer covers resilient scenario structure and clue redundancy across an investigation; this answer covers the distinct skill of running individual witness interviews through personal perspective, social stakes, and follow-up questions.",
