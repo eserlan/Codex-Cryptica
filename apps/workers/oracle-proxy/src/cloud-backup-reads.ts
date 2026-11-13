@@ -173,7 +173,7 @@ async function readChangedEntities(
     if (!reference) throw new MissingBackupObjectError(name);
     const shard = await readReferenced<Shard>(env, backupId, reference);
     for (const id of ids) {
-      if (!(id in shard)) throw new MissingBackupObjectError(id);
+      if (!Object.hasOwn(shard, id)) throw new MissingBackupObjectError(id);
       entities.push({
         entity: shard[id],
         ...(meta[id] ? { meta: meta[id] } : {}),

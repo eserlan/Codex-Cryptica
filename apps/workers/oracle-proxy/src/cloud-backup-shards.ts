@@ -96,7 +96,7 @@ export async function carryTombstones(
   base: BackupObjects,
   liveIds: ReadonlySet<string>,
 ): Promise<{ tombstones: Tombstones; trash: Map<string, Shard> }> {
-  const tombstones: Tombstones = {};
+  const tombstones: Tombstones = Object.create(null);
   const trash = new Map<string, Shard>();
   if (!base.index || !base.trash) return { tombstones, trash };
 
@@ -111,7 +111,7 @@ export async function carryTombstones(
   for (const [name, reference] of Object.entries(base.trash)) {
     const shard = await readReferenced<Shard>(env, backupId, reference);
     for (const [id, entity] of Object.entries(shard)) {
-      if (!(id in tombstones)) continue;
+      if (!Object.hasOwn(tombstones, id)) continue;
       const kept = trash.get(name) ?? Object.create(null);
       kept[id] = entity;
       trash.set(name, kept);

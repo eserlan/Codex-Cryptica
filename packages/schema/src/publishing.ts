@@ -515,6 +515,12 @@ export const CLOUD_BACKUP_LIMITS = {
    */
   maxVaultBytes: 50 * 1024 * 1024,
   /**
+   * Removed entities' content kept for restore. Not part of `maxVaultBytes`,
+   * so a delete never fails an upload; past this the oldest content is dropped
+   * and only the tombstone records stay.
+   */
+  maxTrashBytes: 50 * 1024 * 1024,
+  /**
    * One asset per request, so no single upload can approach the Worker's
    * memory ceiling. Matches the publish path's per-asset cap.
    */

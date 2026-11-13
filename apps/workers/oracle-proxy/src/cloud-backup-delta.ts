@@ -31,6 +31,7 @@ import {
   pruneAssets,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
+import { evictOldestTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
   type Tombstones,
@@ -327,6 +328,7 @@ async function prepareDelta(
     base,
     stamp,
   );
+  await evictOldestTrash(env, backupId, base, trash, tombstones);
   const bundleUpdate = await prepareBundleSections(env, backupId, base, delta);
   const projected =
     (await reachableBytes(env, backupId, base)) +

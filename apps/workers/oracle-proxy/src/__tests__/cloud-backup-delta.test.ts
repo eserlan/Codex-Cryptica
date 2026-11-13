@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  CLOUD_BACKUP_LIMITS,
   cloudBackupRevisionOf,
   cloudBackupShardOf,
   hashCloudBackupEntity,
@@ -526,6 +527,50 @@ describe("cloud backup incremental commits", () => {
       expect(
         (await readManifest(f.env, f.backupId))!.manifest.feedHorizon,
       ).toBe(1);
+    });
+
+    it("keeps trash under its cap across delete cycles, tombstones included", async () => {
+      const f = await seeded();
+      const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+      const original = limits.maxTrashBytes;
+      limits.maxTrashBytes = 3000;
+      try {
+        const trashBytes = async () => {
+          const { objects } = (await readManifest(f.env, f.backupId))!;
+          let total = 0;
+          for (const key of Object.values(objects!.trash ?? {})) {
+            total +=
+              (await f.env.BUCKET.head(absoluteKey(f.backupId, key)))?.size ??
+              0;
+          }
+          return total;
+        };
+        const body = "x".repeat(1000);
+        for (let cycle = 0; cycle < 8; cycle++) {
+          const id = `cycle-${cycle}`;
+          const base = (await readManifest(f.env, f.backupId))!.manifest;
+          await send(f, base, { upserts: [{ id, title: id, body }] });
+          const next = (await readManifest(f.env, f.backupId))!.manifest;
+          const response = await send(f, next, { deletes: [id] });
+          expect(response.status).toBe(200);
+          expect(await trashBytes()).toBeLessThanOrEqual(3000 + 200);
+        }
+        const index = await readCurrent(f.env, f.backupId, "index");
+        expect(Object.keys(index.tombstones)).toHaveLength(8);
+        const { objects } = (await readManifest(f.env, f.backupId))!;
+        const kept = Object.assign(
+          {},
+          ...(await Promise.all(
+            Object.values(objects!.trash!).map((key) =>
+              readJson<any>(f.env, absoluteKey(f.backupId, key)),
+            ),
+          )),
+        );
+        expect(kept).toHaveProperty("cycle-7");
+        expect(kept).not.toHaveProperty("cycle-0");
+      } finally {
+        limits.maxTrashBytes = original;
+      }
     });
 
     it("does not count trash in sizeBytes", async () => {
