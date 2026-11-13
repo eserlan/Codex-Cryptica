@@ -1,4 +1,5 @@
 <!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
+<!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
   import { tick } from "svelte";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";

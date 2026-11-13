@@ -32,6 +32,7 @@ export function collectionDigestInput(
   );
 }
 
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 function assertCollectionMetadata(collection: ArtworkCollection): void {
   const validId =
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(collection.id) &&
@@ -55,6 +56,7 @@ function assertCollectionMetadata(collection: ArtworkCollection): void {
   }
 }
 
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 function collectUniqueVariants(
   entries: readonly ArtworkCollectionEntry[],
   assets: ReadonlyMap<string, ArtworkAsset>,

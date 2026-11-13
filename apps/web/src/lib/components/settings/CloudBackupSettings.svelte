@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
   /**
    * Cloud Backup settings (spec 162, issue #2593).

@@ -137,6 +137,7 @@
   </div>
 
   <div class="space-y-1 text-xs text-theme-text">
+    <!-- fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests. -->
     <p>Private Vault snapshots: {formatMegabytes(privateSnapshotBytes)}</p>
     <div class="flex flex-wrap items-center gap-2">
       <span

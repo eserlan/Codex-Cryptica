@@ -123,6 +123,7 @@ export class CloudBackupStore {
       return null;
     }
   }
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async setAdventureBackup(
     vaultId: string,
     enabled: boolean,

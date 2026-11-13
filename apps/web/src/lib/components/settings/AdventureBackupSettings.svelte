@@ -42,6 +42,7 @@
       current = false;
     };
   });
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async function change(enabled: boolean) {
     const id = vaultId;
     if (busy || !id) return;

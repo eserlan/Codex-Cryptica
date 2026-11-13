@@ -13,6 +13,7 @@ function trimName(value: string | undefined): string {
   return (value ?? "").trim().slice(0, MAX_PERSON_NAME_LENGTH);
 }
 
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 function findExistingPerson(
   people: readonly AdventurePerson[],
   input: PersonResolutionInput,

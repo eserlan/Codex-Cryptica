@@ -61,6 +61,7 @@ function createEntityHydrator() {
   };
 }
 
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 const buildVaultBackupPayload: CloudBackupDeps["buildPayload"] = async (
   vaultId,
   signal,

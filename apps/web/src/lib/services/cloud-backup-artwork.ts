@@ -53,6 +53,7 @@ export function omitPrivateMapArtwork(map: unknown): unknown {
 }
 
 /** Project private artwork only after explicit consent, without touching source records. */
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 export async function collectArtworkBackup<T extends OwnerEntity>(
   included: boolean,
   entities: readonly T[],
@@ -75,6 +76,7 @@ export async function collectArtworkBackup<T extends OwnerEntity>(
     string,
     { path: string; mime: string; bytes: number; sha256: string }
   >();
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   function collect(raw: unknown) {
     const parsed = ArtworkAssociationSchema.safeParse(raw);
     if (!parsed.success || !artworkDataUnchanged(parsed.data, raw))

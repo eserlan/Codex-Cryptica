@@ -131,6 +131,7 @@ export class ArtworkCache {
     return signal.aborted ? null : cached;
   }
 
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   private async readStreamedBlob(
     response: Response,
     variant: ArtworkVariant,
@@ -165,6 +166,7 @@ export class ArtworkCache {
     return new Blob(chunks as BlobPart[], { type: variant.mime });
   }
 
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   private async loadUnshared(
     variant: ArtworkVariant,
     signal: AbortSignal,

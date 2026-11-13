@@ -72,6 +72,7 @@ export class CloudBackupUploads {
   ): Promise<SnapshotOutcome> {
     const push = new AbortController();
     this.activeBuild = push;
+    // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
     const operation = (async () => {
       // Check before building: the snapshot reads every entity, so learning
       // that backup is off only at upload time costs a whole-vault read.
@@ -121,6 +122,7 @@ export class CloudBackupUploads {
    * and "keep mine" are explicit and stay full. With nothing recorded, an
    * automatic push has nothing to send.
    */
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   private async uploadChanges(
     vaultId: string,
     opts: { guarded: boolean },

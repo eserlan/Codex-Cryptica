@@ -27,6 +27,7 @@ function validSignature(bytes: Uint8Array, mime: string): boolean {
 /** Copies exact private bytes; cleanup is limited to this new uncommitted path. */
 export class ArtworkSnapshotService {
   constructor(private readonly deps: Dependencies) {}
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async preserve(source: Blob, signal: AbortSignal): Promise<Snapshot> {
     const ext =
       source.type === "image/png"

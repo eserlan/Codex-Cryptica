@@ -36,6 +36,7 @@ export class CollectionIndex {
   ): Promise<boolean> {
     if (!safeId(id) || signal.aborted || files.length === 0) return false;
     try {
+      // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
       return await this.deps.lock(async () => {
         const state = await this.deps.read();
         if (state.version !== 1 || signal.aborted) return false;

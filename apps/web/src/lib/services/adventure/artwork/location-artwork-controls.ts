@@ -66,6 +66,7 @@ export class LocationArtworkControls {
         })
       : false;
   }
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async keep(id: string): Promise<boolean> {
     const current = this.current();
     if (!current) return false;

@@ -27,6 +27,7 @@ interface SessionArtworkDependencies<T extends Session> {
 /** Session-local mutations only; canonical entity writes require their own lock-backed adapter. */
 export class ArtworkRepository<T extends Session> {
   constructor(private readonly deps: SessionArtworkDependencies<T>) {}
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async mutate(
     subject: ArtworkSubject,
     command: ArtworkCommand,

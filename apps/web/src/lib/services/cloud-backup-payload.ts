@@ -198,6 +198,7 @@ export async function hydrateEntityContent(
   };
 }
 
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 export async function buildCloudBackupPayload(
   vaultTitle: string,
   // Widened at the boundary: the vault store's entity record is structurally

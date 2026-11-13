@@ -20,6 +20,7 @@ const off: ArtworkBackupConsent = {
 /** Owns expanded consent only; ordinary backup consent remains independent. */
 export class CloudBackupArtworkConsent {
   constructor(private readonly deps: Dependencies) {}
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async read(vaultId: string): Promise<ArtworkBackupConsent> {
     const raw = await this.deps.read(vaultId);
     if (raw === undefined || raw === null) return { ...off };

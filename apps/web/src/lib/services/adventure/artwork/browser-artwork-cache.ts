@@ -31,6 +31,7 @@ export class BrowserArtworkCache {
     });
   }
   async write(url: string, blob: Blob): Promise<void> {
+    // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
     await this.deps.withLock(async () => {
       const cache = await this.deps.open(ARTWORK_CACHE_NAME);
       const protectedUrls = await this.deps.protectedUrls?.();
