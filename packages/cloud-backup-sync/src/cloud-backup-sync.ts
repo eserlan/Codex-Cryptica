@@ -39,7 +39,11 @@ export {
   deleteCloudBackup,
 } from "./backup-lifecycle";
 export { pushDeltaToCloudBackup, type VaultDeltaPayload } from "./delta-sync";
-export { fetchCloudBackupIndex, getCloudBackupStatus } from "./backup-metadata";
+export {
+  fetchCloudBackupIndex,
+  getCloudBackupStatus,
+  readRemoteLastPushedAt,
+} from "./backup-metadata";
 export {
   fetchCloudBackupAsset,
   restoreVaultFromCloudBackup,

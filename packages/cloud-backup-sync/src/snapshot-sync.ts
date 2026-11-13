@@ -1,4 +1,4 @@
-import type { CloudBackupManifest } from "schema";
+import type { CloudBackupManifest, LocalCloudBackupRecord } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { detectConflict } from "./auto-sync";
 import { readRemoteLastPushedAt } from "./backup-metadata";
@@ -22,6 +22,25 @@ export interface PushVaultOptions extends SnapshotUploadOptions {
    * effort only: a true race needs the race-safe commit (shared vault slice 2); revisions now exist.
    */
   expectLastPushedAt?: string | null;
+}
+
+/**
+ * The record after a commit. An unguarded push is the user's explicit
+ * overwrite, so it settles any commit another device made; a guarded one
+ * leaves the flag as it was.
+ */
+function committedRecord(
+  record: LocalCloudBackupRecord,
+  manifest: CloudBackupManifest,
+  guard: string | null | undefined,
+): LocalCloudBackupRecord {
+  const { foreignCommitSeen, ...committed } = withCommittedRevision(
+    record,
+    manifest,
+  );
+  return foreignCommitSeen && guard !== undefined
+    ? { ...committed, foreignCommitSeen }
+    : committed;
 }
 
 /**
@@ -92,7 +111,7 @@ export async function pushVaultToCloudBackup(
     if (result.value === null) return { ok: true, value: null };
 
     await runtime.storage.write(vaultId, {
-      ...withCommittedRevision(record, result.value),
+      ...committedRecord(record, result.value, options?.expectLastPushedAt),
       status: "idle",
       lastPushedAt: result.value.lastPushedAt,
       // A renamed vault should show under its current name, not the old one.

@@ -326,6 +326,11 @@ see.
 
 - The device cap is proposed at 10 active devices per shared vault. Confirm
   the number in slice 6.
-- How often a device pulls is proposed at 30 seconds while the app is open.
-  Confirm against the worker's rate limits in slice 5.
+- ~~How often a device pulls.~~ Settled in slice 5: every 30 seconds while the
+  app is open and visible, and at once when the app regains focus or comes back
+  online. `enforcePublishRateLimit` returns early for `GET`, so `/changes` and
+  `/status` are not rate-limited. Each retry round after a rejected push adds
+  one `POST /delta` against the write limit of 300 per minute, and a push makes
+  at most four. Maps, canvases and full snapshots are not merged yet: they
+  still pause once another device has committed, until slice 10.
 - The storage cost and limit for restore points. Settle in slice 11.
