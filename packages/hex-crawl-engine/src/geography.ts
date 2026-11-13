@@ -153,6 +153,106 @@ function planSettlements(
  * terrain height, until sea, a known river or an unmapped region boundary.
  * Strict descent makes cycles impossible; unsuccessful runs are discarded.
  */
+interface RiverContext {
+  domain: ReadonlySet<HexKey>;
+  state: HexCrawlState;
+  seed: number;
+  edges: Record<HexEdgeKey, HexEdgeFeature>;
+  inBounds: (hex: HexCoord) => boolean;
+  provenance: { source: "generated"; seed: string; rules: number };
+  downstream: Map<HexKey, HexKey>;
+}
+function riverHeads(keys: readonly HexKey[], ctx: RiverContext): HexKey[] {
+  const thresholds: Record<string, number> = {
+    mountains: 0.27,
+    hills: 0.11,
+    forest: 0.035,
+  };
+  const incoming = new Set(ctx.downstream.values());
+  return keys
+    .filter((key) => incoming.has(key) && !ctx.downstream.has(key))
+    .concat(
+      keys.filter((key) => {
+        const terrain = ctx.state.hexes[key]?.terrain;
+        return (
+          terrain?.kind === "preset" &&
+          randomAt(ctx.seed ^ 0x77abc, key) < (thresholds[terrain.id] ?? 0)
+        );
+      }),
+    )
+    .sort(keyOrder);
+}
+function nextRiverHex(
+  current: HexKey,
+  visited: ReadonlySet<HexKey>,
+  ctx: RiverContext,
+): HexKey | null {
+  const from = parseHexKey(current)!;
+  const height = terrainHeight(ctx.state, current, ctx.seed);
+  const options = getHexNeighbors(from)
+    .map((to) => ({ to, key: toHexKey(to) }))
+    .filter(
+      (n) =>
+        ctx.domain.has(n.key) &&
+        !visited.has(n.key) &&
+        (isWater(ctx.state, n.key) ||
+          terrainHeight(ctx.state, n.key, ctx.seed) < height - 0.001),
+    )
+    .sort(
+      (a, b) =>
+        Number(isWater(ctx.state, b.key)) - Number(isWater(ctx.state, a.key)) ||
+        terrainHeight(ctx.state, a.key, ctx.seed) -
+          terrainHeight(ctx.state, b.key, ctx.seed) ||
+        keyOrder(a.key, b.key),
+    );
+  for (const n of options) {
+    const river = ctx.edges[hexEdgeKey(from, n.to)!]?.river;
+    if (!river || (river.from === current && river.to === n.key)) return n.key;
+  }
+  return null;
+}
+function riverTerminal(key: HexKey, ctx: RiverContext): boolean {
+  if (isWater(ctx.state, key) || ctx.downstream.has(key)) return true;
+  // A mapped region boundary is a terminal; no one-sided edge is invented.
+  return getHexNeighbors(parseHexKey(key)!).some(
+    (n) => ctx.inBounds(n) && !ctx.domain.has(toHexKey(n)),
+  );
+}
+function traceRiver(
+  start: HexKey,
+  limit: number,
+  ctx: RiverContext,
+): Array<[HexKey, HexKey]> {
+  const visited = new Set([start]);
+  const path: Array<[HexKey, HexKey]> = [];
+  let current = start;
+  for (let step = 0; step < limit; step++) {
+    const next = nextRiverHex(current, visited, ctx);
+    if (!next) break;
+    path.push([current, next]);
+    visited.add(next);
+    current = next;
+    if (riverTerminal(current, ctx)) return path.length >= 2 ? path : [];
+  }
+  return [];
+}
+function commitRiver(
+  path: readonly [HexKey, HexKey][],
+  ctx: RiverContext,
+): void {
+  for (const [from, to] of path) {
+    if (ctx.downstream.has(from)) break;
+    const edgeKey = hexEdgeKey(parseHexKey(from)!, parseHexKey(to)!)!;
+    const prior = ctx.edges[edgeKey] ?? {};
+    if (prior.river && (prior.river.from !== from || prior.river.to !== to))
+      break;
+    ctx.edges[edgeKey] = {
+      ...prior,
+      river: prior.river ?? { from, to, provenance: ctx.provenance },
+    };
+    ctx.downstream.set(from, to);
+  }
+}
 function addRivers(
   keys: readonly HexKey[],
   state: HexCrawlState,
@@ -161,93 +261,22 @@ function addRivers(
   inBounds: (hex: HexCoord) => boolean,
   provenance: { source: "generated"; seed: string; rules: number },
 ): void {
-  const domain = new Set(keys);
   const downstream = new Map<HexKey, HexKey>();
-  const hasIncoming = new Set<HexKey>();
   for (const edge of Object.values(edges)) {
-    if (!edge.river) continue;
-    downstream.set(edge.river.from, edge.river.to);
-    hasIncoming.add(edge.river.to);
+    if (edge.river) downstream.set(edge.river.from, edge.river.to);
   }
-  const endpoints = keys.filter(
-    (key) => hasIncoming.has(key) && !downstream.has(key),
-  );
-  const heads = keys.filter((key) => {
-    const terrain = state.hexes[key]?.terrain;
-    return (
-      terrain?.kind === "preset" &&
-      (terrain.id === "mountains" ||
-        terrain.id === "hills" ||
-        terrain.id === "forest") &&
-      randomAt(seed ^ 0x77abc, key) <
-        (terrain.id === "mountains"
-          ? 0.27
-          : terrain.id === "hills"
-            ? 0.11
-            : 0.035)
-    );
-  });
-  for (const start of [...endpoints, ...heads].sort(keyOrder)) {
+  const ctx: RiverContext = {
+    domain: new Set(keys),
+    state,
+    seed,
+    edges,
+    inBounds,
+    provenance,
+    downstream,
+  };
+  for (const start of riverHeads(keys, ctx)) {
     if (downstream.has(start) || isWater(state, start)) continue;
-    const visited = new Set<HexKey>([start]);
-    const path: Array<[HexKey, HexKey]> = [];
-    let current = start;
-    let success = false;
-    for (let step = 0; step < keys.length; step++) {
-      const from = parseHexKey(current)!;
-      const height = terrainHeight(state, current, seed);
-      const options = getHexNeighbors(from)
-        .map((to) => ({
-          to,
-          key: toHexKey(to),
-        }))
-        .filter(
-          (n) =>
-            domain.has(n.key) &&
-            !visited.has(n.key) &&
-            (isWater(state, n.key) ||
-              terrainHeight(state, n.key, seed) < height - 0.001),
-        );
-      options.sort(
-        (a, b) =>
-          Number(isWater(state, b.key)) - Number(isWater(state, a.key)) ||
-          terrainHeight(state, a.key, seed) -
-            terrainHeight(state, b.key, seed) ||
-          keyOrder(a.key, b.key),
-      );
-      const next = options.find((n) => {
-        const edgeKey = hexEdgeKey(from, n.to)!;
-        const river = edges[edgeKey]?.river;
-        return !river || (river.from === current && river.to === n.key);
-      });
-      if (!next) break;
-      path.push([current, next.key]);
-      visited.add(next.key);
-      current = next.key;
-      const at = parseHexKey(current)!;
-      // A mapped boundary is an explicit terminal; never invent a one-sided edge.
-      const atBoundary = getHexNeighbors(at).some(
-        (n) => inBounds(n) && !domain.has(toHexKey(n)),
-      );
-      if (isWater(state, current) || downstream.has(current) || atBoundary) {
-        success = true;
-        break;
-      }
-    }
-    if (!success || path.length < 2) continue;
-    for (const [from, to] of path) {
-      if (downstream.has(from)) break;
-      const edgeKey = hexEdgeKey(parseHexKey(from)!, parseHexKey(to)!)!;
-      const prior = edges[edgeKey] ?? {};
-      if (prior.river && (prior.river.from !== from || prior.river.to !== to))
-        break;
-      edges[edgeKey] = {
-        ...prior,
-        river: prior.river ?? { from, to, provenance },
-      };
-      downstream.set(from, to);
-      hasIncoming.add(to);
-    }
+    commitRiver(traceRiver(start, keys.length, ctx), ctx);
   }
 }
 
@@ -279,6 +308,55 @@ function stepCost(
 }
 
 /** Dijkstra: tiny bounded hex graphs, no new dependency or map-wide pathfinder. */
+/** Choose the cheapest queued hex, breaking ties by axial coordinates. */
+function cheapestNode(
+  queue: ReadonlySet<HexKey>,
+  cost: ReadonlyMap<HexKey, number>,
+): HexKey | null {
+  let best: HexKey | null = null;
+  for (const key of queue) {
+    if (
+      best === null ||
+      cost.get(key)! < cost.get(best)! ||
+      (cost.get(key) === cost.get(best) && keyOrder(key, best) < 0)
+    )
+      best = key;
+  }
+  return best;
+}
+function relaxRoadNeighbours(
+  current: HexKey,
+  keys: ReadonlySet<HexKey>,
+  state: HexCrawlState,
+  edges: Readonly<Record<HexEdgeKey, HexEdgeFeature>>,
+  cost: Map<HexKey, number>,
+  previous: Map<HexKey, HexKey>,
+  queue: Set<HexKey>,
+): void {
+  for (const n of getHexNeighbors(parseHexKey(current)!)) {
+    const nk = toHexKey(n);
+    if (!keys.has(nk)) continue;
+    const nextCost = cost.get(current)! + stepCost(current, nk, state, edges);
+    if (nextCost >= (cost.get(nk) ?? Infinity)) continue;
+    cost.set(nk, nextCost);
+    previous.set(nk, current);
+    queue.add(nk);
+  }
+}
+function backtrackRoad(
+  from: HexKey,
+  to: HexKey,
+  previous: ReadonlyMap<HexKey, HexKey>,
+): HexKey[] {
+  const path = [to];
+  while (path[0] !== from) {
+    const prev = previous.get(path[0]);
+    if (!prev) return [];
+    path.unshift(prev);
+  }
+  return path;
+}
+/** Dijkstra over bounded hex graphs, favouring roads and easy terrain. */
 function roadPath(
   from: HexKey,
   to: HexKey,
@@ -290,36 +368,13 @@ function roadPath(
   const previous = new Map<HexKey, HexKey>();
   const queue = new Set<HexKey>([from]);
   while (queue.size) {
-    let current: HexKey | null = null;
-    for (const k of queue) {
-      if (
-        current === null ||
-        cost.get(k)! < cost.get(current)! ||
-        (cost.get(k) === cost.get(current) && keyOrder(k, current) < 0)
-      )
-        current = k;
-    }
+    const current = cheapestNode(queue, cost);
     if (!current) break;
     queue.delete(current);
     if (current === to) break;
-    for (const neighbour of getHexNeighbors(parseHexKey(current)!)) {
-      const nk = toHexKey(neighbour);
-      if (!keys.has(nk)) continue;
-      const costNext = cost.get(current)! + stepCost(current, nk, state, edges);
-      if (costNext >= (cost.get(nk) ?? Infinity)) continue;
-      cost.set(nk, costNext);
-      previous.set(nk, current);
-      queue.add(nk);
-    }
+    relaxRoadNeighbours(current, keys, state, edges, cost, previous, queue);
   }
-  if (!cost.has(to)) return [];
-  const path = [to];
-  while (path[0] !== from) {
-    const prev = previous.get(path[0]);
-    if (!prev) return [];
-    path.unshift(prev);
-  }
-  return path;
+  return cost.has(to) ? backtrackRoad(from, to, previous) : [];
 }
 
 function addRoads(
