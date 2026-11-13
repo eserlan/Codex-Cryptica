@@ -1,4 +1,5 @@
 <!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
+<!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
   import { tick } from "svelte";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
@@ -23,6 +24,11 @@
   import AdventureStateSummary from "./AdventureStateSummary.svelte";
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
   import AdventureSituationsDialog from "./AdventureSituationsDialog.svelte";
+  import AdventureArtworkFeature from "./artwork/AdventureArtworkFeature.svelte";
+  import ArtworkSettings from "./artwork/ArtworkSettings.svelte";
+  import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
   import {
     exitAdventureFullscreen,
     requestAdventureFullscreen,
@@ -173,6 +179,9 @@
 />
 
 {#snippet utilities()}
+  {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+    <ArtworkSettings preferences={artworkPreferences} />
+  {/if}
   <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
@@ -298,6 +307,18 @@
       data-testid="adventure-play-viewport"
     >
       <div class="mx-auto max-w-3xl space-y-4">
+        {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+          <AdventureArtworkFeature
+            session={manager.session}
+            entities={vault.entities}
+            activeVaultId={vault.activeVaultId}
+            resolve={(path) => vault.resolveImageUrl(path)}
+            readOnly={manager.readOnly ||
+              (manager.phase !== "ready" && manager.phase !== "offline")}
+            theme={themeStore.worldThemeId}
+            mutate={(...args) => manager.mutateLocalArtwork(...args)}
+          />
+        {/if}
         <AdventureStateSummary {manager} />
         <AdventureScenarioControls {manager} />
         <AdventurePlay {manager} showComposer={false} />

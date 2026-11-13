@@ -11,3 +11,4 @@ export * from "./parser";
 export * from "./migrations/runner";
 export * from "./migrations/store";
 export * from "./services/GuestExporter";
+export * from "./artwork-snapshots";

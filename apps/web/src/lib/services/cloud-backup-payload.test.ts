@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import {
   buildCloudBackupPayload,
   hydrateEntityContent,
@@ -119,6 +120,131 @@ describe("collectAssetPaths", () => {
 });
 
 describe("buildCloudBackupPayload", () => {
+  it("includes adventures and their referenced snapshot bytes only after explicit inclusion", async () => {
+    const choice = {
+      version: 1,
+      override: {
+        kind: "snapshot",
+        path: "images/artwork_keep.png",
+        mime: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        sha256:
+          "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81",
+      },
+    };
+    const source = { id: "e1", title: "Place", adventureArtwork: choice };
+    const adventure = {
+      id: "a1",
+      artwork: {
+        version: 1,
+        associations: [
+          { subject: { kind: "place", id: "p1" }, association: choice },
+        ],
+      },
+    };
+    const readAdventures = vi.fn(async () => [adventure]);
+    const result = await buildCloudBackupPayload("V", [source], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      digestSnapshot: async (bytes) =>
+        createHash("sha256").update(bytes).digest("hex"),
+      adventureInclusion: { consented: true, readAdventures },
+    });
+    expect(readAdventures).toHaveBeenCalledOnce();
+    expect(result.bundle.adventures).toEqual([adventure]);
+    expect(result.bundle.entities[0].adventureArtwork).toEqual(choice);
+    expect(result.bundle.assetManifest.map((asset) => asset.path)).toEqual([
+      "images/artwork_keep.png",
+    ]);
+  });
+  it("fails the full snapshot if a required private snapshot cannot be read", async () => {
+    const choice = {
+      version: 1,
+      override: {
+        kind: "snapshot",
+        path: "images/artwork_keep.png",
+        mime: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        sha256: "a".repeat(64),
+      },
+    };
+    await expect(
+      buildCloudBackupPayload("V", [{ id: "e1", adventureArtwork: choice }], {
+        resolveImageUrl: async () => null,
+        adventureInclusion: { consented: true, readAdventures: async () => [] },
+      }),
+    ).rejects.toThrow("snapshot");
+  });
+  it("rejects a private snapshot whose bytes do not match its saved digest", async () => {
+    const choice = {
+      version: 1,
+      override: {
+        kind: "snapshot",
+        path: "images/artwork_keep.png",
+        mime: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        sha256: "a".repeat(64),
+      },
+    };
+    await expect(
+      buildCloudBackupPayload("V", [{ id: "e1", adventureArtwork: choice }], {
+        resolveImageUrl: async () => "blob:x",
+        fetch: okFetch,
+        digestSnapshot: async (bytes) =>
+          createHash("sha256").update(bytes).digest("hex"),
+        adventureInclusion: { consented: true, readAdventures: async () => [] },
+      }),
+    ).rejects.toThrow("snapshot");
+  });
+  it("omits private adventure artwork before consent without mutating local records", async () => {
+    const record = {
+      id: "e1",
+      title: "Place",
+      image: "images/ordinary.png",
+      adventureArtwork: {
+        version: 1,
+        override: { kind: "snapshot", path: "images/artwork_private.png" },
+      },
+    };
+    const result = await buildCloudBackupPayload("V", [record], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+    });
+    expect(result.bundle.entities[0]).not.toHaveProperty("adventureArtwork");
+    expect(result.bundle.assetManifest.map((entry) => entry.path)).toEqual([
+      "images/ordinary.png",
+    ]);
+    expect(record.adventureArtwork.override.path).toBe(
+      "images/artwork_private.png",
+    );
+  });
+  it("never uploads private snapshots referenced as ordinary entity images before consent", async () => {
+    const path = "images/artwork_private.png";
+    const resolveImageUrl = vi.fn(async () => "blob:x");
+    const result = await buildCloudBackupPayload(
+      "V",
+      [{ id: "e1", image: path } as never],
+      { resolveImageUrl, fetch: okFetch },
+    );
+    expect(result.bundle.entities[0]).not.toHaveProperty("image");
+    expect(result.bundle.assetManifest).toEqual([]);
+    expect(resolveImageUrl).not.toHaveBeenCalled();
+    await expect(
+      buildCloudBackupPayload(
+        "V",
+        [],
+        { resolveImageUrl, fetch: okFetch },
+        { maps: [{ id: "m1", fogOfWar: { maskPath: path } }] },
+      ),
+    ).rejects.toThrow("private adventure artwork");
+    expect(resolveImageUrl).not.toHaveBeenCalled();
+  });
   it("includes the entities and every readable asset", async () => {
     // The consent screen promises media, so entities alone is not enough.
     const result = await buildCloudBackupPayload(
@@ -581,6 +707,23 @@ describe("buildCloudBackupDelta (#3354)", () => {
     kind: "entity" as const,
     id,
     deleted,
+  });
+
+  it("omits artwork metadata from entity deltas while retaining local fields", async () => {
+    const artwork = {
+      version: 1,
+      override: { kind: "snapshot", path: "images/artwork_private.png" },
+    };
+    const vault = vaultOf(0, {
+      loaded: { id: "loaded", title: "L", adventureArtwork: artwork },
+    });
+    const delta = await buildCloudBackupDelta(
+      "V",
+      [change("loaded")],
+      vault.deps as never,
+    );
+    expect(delta?.upserts[0]).not.toHaveProperty("adventureArtwork");
+    expect(vault.records.loaded.adventureArtwork).toBe(artwork);
   });
 
   it("reads only the changed entities of a large vault", async () => {

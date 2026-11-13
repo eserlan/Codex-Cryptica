@@ -12,6 +12,9 @@ import { AdventureScenarios } from "./adventure-scenarios";
 import { AdventurePlaceLinker } from "./adventure-places";
 import { AdventureSummarizer } from "./adventure-summary";
 import { turnErrorCopy } from "./adventure-turn-retry";
+import { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventure-artwork-session.js";
+import { assignCommittedPlaceArtwork } from "#lib/services/adventure/artwork/committed-place-artwork.js";
+import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
 
 /** Shared generation lifetime and persistence boundary for all workflows. */
 export class AdventureRuntime {
@@ -21,6 +24,7 @@ export class AdventureRuntime {
   readonly scenarios: AdventureScenarios;
   readonly summarizer: AdventureSummarizer;
   readonly placeLinker: AdventurePlaceLinker;
+  readonly artwork: AdventureArtworkSession;
   constructor(
     readonly state: AdventureState,
     readonly deps: Required<AdventureManagerDependencies>,
@@ -36,6 +40,10 @@ export class AdventureRuntime {
     );
     this.summarizer = new AdventureSummarizer(state, deps);
     this.placeLinker = new AdventurePlaceLinker(deps);
+    this.artwork = new AdventureArtworkSession(state, {
+      verify: (lease) => deps.authority.verify(lease),
+      save: (revision, session) => deps.repository.save(revision, session),
+    });
     this.scenarios = new AdventureScenarios(state, deps, (session) =>
       this.verifySession(session),
     );
@@ -99,7 +107,19 @@ export class AdventureRuntime {
   ): Promise<AdventureSession> {
     const summaryLifecycle = this.summarizer.lifecycleToken();
     await this.verifySession(previous);
-    const saved = await this.deps.repository.save(previous.revision, next);
+    let candidate = next;
+    try {
+      candidate = assignCommittedPlaceArtwork(
+        previous,
+        next,
+        this.deps.artworkCatalogue(),
+        themeStore.worldThemeId,
+        artworkPreferences.enabled,
+      );
+    } catch {
+      // Artwork is supplementary and cannot reject a valid narrative turn.
+    }
+    const saved = await this.deps.repository.save(previous.revision, candidate);
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
     // A provider reply is provisional until the OPFS write has succeeded.

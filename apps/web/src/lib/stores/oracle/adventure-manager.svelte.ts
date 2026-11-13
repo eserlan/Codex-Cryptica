@@ -10,6 +10,7 @@ import { AdventureActions } from "./adventure-actions";
 import { AdventureRolls } from "./adventure-rolls";
 import { AdventureTools } from "./adventure-tools";
 import type { AdventureScenarios } from "./adventure-scenarios";
+import type { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventure-artwork-session.js";
 export type { AdventureManagerDependencies } from "./adventure-dependencies";
 export { hasCommittedOpening } from "./adventure-session";
 
@@ -217,6 +218,10 @@ export class AdventureManager extends AdventureState {
     ...args: Parameters<AdventureScenarios["dismissDiscoveries"]>
   ) {
     return this.scenarios.dismissDiscoveries(...args);
+  }
+
+  mutateLocalArtwork(...args: Parameters<AdventureArtworkSession["mutate"]>) {
+    return this.runtime.artwork.mutate(...args);
   }
 }
 

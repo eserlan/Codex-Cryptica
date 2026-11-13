@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AdventureManager } from "../adventure-manager.svelte";
+import type { AdventureSession } from "@codex/adventure-engine";
 
 import {
   completeProposal,
@@ -8,6 +9,46 @@ import {
 } from "./adventure-fixtures";
 
 describe("AdventureManager", () => {
+  it("saves local artwork changes through adventure ownership and rejects stale revisions", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      revision: 3,
+      places: [{ id: "p1", name: "Forest" }],
+    } as unknown as AdventureSession;
+    manager.phase = "ready";
+    manager.lease = {
+      vaultId: "vault-1",
+      sessionId: "s1",
+      ownerId: "owner",
+      fencingToken: 1,
+      expiresAt: Date.now() + 10000,
+    };
+    const context = {
+      vaultId: "vault-1",
+      sessionId: "s1",
+      expectedRevision: 3,
+    };
+    expect(
+      (
+        await manager.mutateLocalArtwork(
+          { kind: "place", id: "p1" },
+          { kind: "dismiss" },
+          context,
+        )
+      ).ok,
+    ).toBe(true);
+    expect(manager.session?.revision).toBe(4);
+    expect(
+      await manager.mutateLocalArtwork(
+        { kind: "place", id: "p1" },
+        { kind: "restore" },
+        context,
+      ),
+    ).toEqual({ ok: false, reason: "stale-adventure" });
+  });
   it("uses the paired output of the normal Rumour Generator", async () => {
     const { generateRumourLocal } = await import("generator-engine");
     const deps: any = dependencies();

@@ -17,11 +17,20 @@ const mocks = vi.hoisted(() => ({
   maps: { allMaps: [{ id: "map-1" }] as unknown[] | undefined },
   canvases: { allCanvases: [{ id: "canvas-1" }] as unknown[] | undefined },
   getAllFromIndex: vi.fn(),
+  getSetting: vi.fn(),
   buildPayload: vi.fn(),
   buildDelta: vi.fn(),
   collectAssetPaths: vi.fn(),
   restore: {},
   fetch: vi.fn(),
+  readAdventures: vi.fn(),
+  setChangeListener: vi.fn(),
+}));
+vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
+  adventureSessionRepository: { setChangeListener: mocks.setChangeListener },
+  AdventureSessionRepository: class {
+    readAllForBackup = mocks.readAdventures;
+  },
 }));
 vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: mocks.vault }));
 vi.mock("#lib/stores/map-registry.svelte.js", () => ({
@@ -38,7 +47,10 @@ vi.mock("#lib/stores/cloud-backup-dirty.js", () => ({
   CloudBackupDirtyStore: class {},
 }));
 vi.mock("#lib/utils/idb.js", () => ({
-  getDB: async () => ({ getAllFromIndex: mocks.getAllFromIndex }),
+  getDB: async () => ({
+    getAllFromIndex: mocks.getAllFromIndex,
+    get: mocks.getSetting,
+  }),
 }));
 vi.mock("../../config/oracle-proxy", () => ({
   resolveOracleProxyUrl: () => "https://worker.test",
@@ -72,6 +84,44 @@ function configured() {
 }
 
 describe("cloud backup configuration", () => {
+  it("keeps the consent scope wired even when the artwork UI is disabled", () => {
+    const deps = configured();
+    expect(deps.artworkScope).toBeDefined();
+    expect(mocks.setChangeListener).toHaveBeenCalledOnce();
+  });
+  it("does not request adventure documents unless the upload scope has consent", async () => {
+    mocks.buildPayload.mockResolvedValue({ snapshot: true });
+    const deps = configured();
+    await deps.buildPayload("vault-1", undefined, { includeAdventures: false });
+    expect(
+      mocks.buildPayload.mock.calls[0][2].adventureInclusion,
+    ).toBeUndefined();
+    expect(mocks.readAdventures).not.toHaveBeenCalled();
+    mocks.getSetting.mockResolvedValue({
+      enabled: true,
+      remoteRemovalPending: false,
+    });
+    await deps.buildPayload("vault-1", undefined, { includeAdventures: true });
+    const inclusion = mocks.buildPayload.mock.calls[1][2].adventureInclusion;
+    expect(inclusion.consented).toBe(true);
+    await inclusion.readAdventures();
+    expect(mocks.readAdventures).toHaveBeenCalledWith("vault-1", undefined);
+  });
+  it("rejects an inclusion request without stored consent before reading adventures", async () => {
+    mocks.getSetting.mockResolvedValue(undefined);
+    const deps = configured();
+    await expect(
+      deps.buildPayload("vault-1", undefined, { includeAdventures: true }),
+    ).rejects.toThrow();
+    expect(mocks.readAdventures).not.toHaveBeenCalled();
+  });
+  it("refuses expanded payloads for a Vault that is no longer active", async () => {
+    const deps = configured();
+    await expect(
+      deps.buildPayload("other-vault", undefined, { includeAdventures: true }),
+    ).rejects.toThrow();
+    expect(mocks.readAdventures).not.toHaveBeenCalled();
+  });
   it("wires the worker endpoint, storage, restore and lazy fetch adapter", async () => {
     const deps = configured();
     expect(deps.runtime.baseUrl).toBe("https://worker.test");

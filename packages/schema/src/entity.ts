@@ -205,6 +205,8 @@ export const EntitySchema = z.object({
   content: z.string().default(""), // Markdown content, default empty
   lore: z.string().optional(), // Extended lore & rich notes
   artDirection: z.string().optional(),
+  /** Opaque owner-only extension; validate before use and retain for recovery. */
+  adventureArtwork: z.unknown().optional(),
   image: z.string().optional(),
   silhouette: z.string().optional(),
   thumbnail: z.string().optional(),

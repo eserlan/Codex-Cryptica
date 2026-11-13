@@ -54,6 +54,7 @@ export class CloudBackupStore {
   uploadProgress = $state<{ uploaded: number; total: number } | null>(null);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
+  artworkConsentVersion = $state(0);
   /** Ephemeral automatic-sync state (#3189); never persisted. */
   autoState = $state<CloudAutoSyncState>("idle");
   /**
@@ -112,6 +113,57 @@ export class CloudBackupStore {
 
   enable(vaultId: string): Promise<boolean> {
     return this.account.enable(vaultId);
+  }
+  async readAdventureBackup(vaultId: string) {
+    if (!this.deps?.artworkConsent || this.deps.activeVaultId() !== vaultId)
+      return null;
+    try {
+      return await this.deps.artworkConsent.read(vaultId);
+    } catch {
+      return null;
+    }
+  }
+  private hasAdventureBackupDeps(): boolean {
+    return Boolean(this.deps?.artworkConsent && this.deps.artworkScope);
+  }
+
+  private canUpdateAdventureBackup(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): boolean {
+    if (!this.hasAdventureBackupDeps()) return false;
+    if (this.status === "off") return false;
+    if (this.deps!.activeVaultId() !== vaultId) return false;
+    return !enabled || confirmed;
+  }
+
+  private async persistAdventureConsent(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): Promise<boolean> {
+    if (!enabled) await this.uploads.cancel();
+    const consent = this.deps!.artworkConsent!;
+    return enabled
+      ? consent.enable(vaultId, confirmed)
+      : consent.disable(vaultId);
+  }
+
+  async setAdventureBackup(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): Promise<boolean> {
+    if (!this.canUpdateAdventureBackup(vaultId, enabled, confirmed)) {
+      return false;
+    }
+    const ok = await this.persistAdventureConsent(vaultId, enabled, confirmed);
+    if (ok && this.deps?.activeVaultId() === vaultId) {
+      this.notifyLocalChange(vaultId);
+      this.changes.schedule(vaultId);
+    }
+    return ok;
   }
   attachToExistingBackup(
     vaultId: string,

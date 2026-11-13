@@ -2,6 +2,11 @@ import type { LocalEntity } from "#lib/stores/vault/types.js";
 import type { CloudBackupTiming } from "@codex/cloud-backup-sync";
 
 import { systemClock, type Clock } from "../utils/runtime-deps";
+import {
+  collectArtworkBackup,
+  omitArtworkForBackup,
+  omitPrivateMapArtwork,
+} from "./cloud-backup-artwork";
 
 /** Monotonic clock for stage timings; counts, bytes and ms only, never content. */
 function nowMs(clock: Clock = systemClock): number {
@@ -36,6 +41,12 @@ export interface CloudBackupPayloadDeps {
   /** Resolves a vault-relative path to a fetchable URL, as the vault store does. */
   resolveImageUrl: (path: string) => Promise<string | null | undefined>;
   fetch?: typeof fetch;
+  digestSnapshot?: (bytes: Uint8Array) => Promise<string>;
+  /** Present only after the owner explicitly opts in to expanded backup. */
+  adventureInclusion?: {
+    consented: true;
+    readAdventures: Parameters<typeof collectArtworkBackup>[2];
+  };
   /**
    * Loads an entity's full markdown body. Required for a faithful backup:
    * without it the snapshot stores whatever `content` happens to be in memory,
@@ -80,6 +91,7 @@ export interface CloudBackupPayloadResult {
     /** Session Journal (spec 163-session-journal, FR-016) — the GM's own
      *  private play log, never included in a player-facing/guest export. */
     sessionJournals: unknown[];
+    adventures?: readonly unknown[];
     assetManifest: { assetId: string; path: string; mimeType: string }[];
   };
   /** Raw bytes per file. Uploaded one request each, never inlined in JSON. */
@@ -186,6 +198,224 @@ export async function hydrateEntityContent(
   };
 }
 
+type BackupSnapshotMeta = {
+  path: string;
+  mime: string;
+  bytes: number;
+  sha256: string;
+};
+
+type BackupAsset = { assetId: string; bytes: Uint8Array; mimeType: string };
+type BackupAssetManifestEntry = {
+  assetId: string;
+  path: string;
+  mimeType: string;
+};
+
+async function sha256Hex(input: Uint8Array): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new Uint8Array(input));
+  return Array.from(new Uint8Array(digest))
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function hydrateEntitiesIfNeeded(
+  entities: readonly LocalEntity[],
+  deps: CloudBackupPayloadDeps,
+): Promise<{ entities: readonly LocalEntity[]; skippedEntities: string[] }> {
+  if (!deps.hydrateEntities) {
+    return { entities, skippedEntities: [] };
+  }
+  const hydrateStartedAt = nowMs(deps.clock);
+  const result = await hydrateEntityContent(
+    entities,
+    deps.hydrateEntities,
+    HYDRATION_CONCURRENCY,
+    deps.signal,
+  );
+  deps.onTiming?.({
+    stage: "hydrate",
+    durationMs: nowMs(deps.clock) - hydrateStartedAt,
+    count: entities.length,
+  });
+  return result;
+}
+
+function resolveBackupMaps(
+  rawMaps: readonly unknown[] | undefined,
+  consented: boolean | undefined,
+): readonly unknown[] {
+  const maps = rawMaps ?? [];
+  return consented ? maps : maps.map(omitPrivateMapArtwork);
+}
+
+async function verifyExpectedSnapshot(
+  blob: Blob,
+  bytes: Uint8Array,
+  expected: BackupSnapshotMeta,
+  digestSnapshot?: (input: Uint8Array) => Promise<string>,
+): Promise<void> {
+  const digest = digestSnapshot ?? sha256Hex;
+  const actualHash = await digest(bytes);
+  if (
+    blob.type !== expected.mime ||
+    bytes.byteLength !== expected.bytes ||
+    actualHash !== expected.sha256
+  ) {
+    throw new Error("Invalid kept artwork snapshot");
+  }
+}
+
+async function fetchAssetBytes(
+  path: string,
+  deps: CloudBackupPayloadDeps,
+): Promise<{ blob: Blob; bytes: Uint8Array }> {
+  const url = await deps.resolveImageUrl(path);
+  if (!url) throw new Error("unresolved");
+  const fetcher = deps.fetch ?? fetch;
+  const response = await fetcher(url);
+  if (!response.ok) throw new Error(`status ${response.status}`);
+  const blob = await response.blob();
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  return { blob, bytes };
+}
+
+async function readAssetEntry(
+  path: string,
+  deps: CloudBackupPayloadDeps,
+  expected?: BackupSnapshotMeta,
+): Promise<{
+  asset: BackupAsset;
+  manifest: BackupAssetManifestEntry;
+  bytesLength: number;
+}> {
+  const { blob, bytes } = await fetchAssetBytes(path, deps);
+  if (expected) {
+    await verifyExpectedSnapshot(blob, bytes, expected, deps.digestSnapshot);
+  }
+  const assetId = assetIdForPath(path);
+  const mimeType = blob.type || "application/octet-stream";
+  return {
+    asset: { assetId, bytes, mimeType },
+    manifest: { assetId, path, mimeType },
+    bytesLength: bytes.length,
+  };
+}
+
+function isAssetLoopAborted(deps: CloudBackupPayloadDeps): boolean {
+  if (!deps.signal?.aborted) return false;
+  if (deps.adventureInclusion?.consented) throw new Error("Backup cancelled");
+  return true;
+}
+
+function recordAssetReadFailure(
+  path: string,
+  privateSnapshots: ReadonlySet<string>,
+  skippedAssets: string[],
+): void {
+  if (privateSnapshots.has(path)) {
+    throw new Error("Could not read a kept artwork snapshot");
+  }
+  // One unreadable image must not cost the user their whole backup. It is
+  // recorded so the caller can say what was left out rather than implying
+  // a complete copy.
+  skippedAssets.push(path);
+}
+
+async function collectBackupAssets(
+  allPaths: ReadonlySet<string>,
+  deps: CloudBackupPayloadDeps,
+  privateSnapshots: ReadonlySet<string>,
+  expectedSnapshots: ReadonlyMap<string, BackupSnapshotMeta>,
+): Promise<{
+  assets: BackupAsset[];
+  assetManifest: BackupAssetManifestEntry[];
+  skippedAssets: string[];
+  assetBytesTotal: number;
+}> {
+  const assets: BackupAsset[] = [];
+  const assetManifest: BackupAssetManifestEntry[] = [];
+  const skippedAssets: string[] = [];
+  let assetBytesTotal = 0;
+
+  for (const path of allPaths) {
+    if (isAssetLoopAborted(deps)) break;
+    try {
+      const entry = await readAssetEntry(
+        path,
+        deps,
+        expectedSnapshots.get(path),
+      );
+      assets.push(entry.asset);
+      assetManifest.push(entry.manifest);
+      assetBytesTotal += entry.bytesLength;
+    } catch {
+      recordAssetReadFailure(path, privateSnapshots, skippedAssets);
+    }
+  }
+  return { assets, assetManifest, skippedAssets, assetBytesTotal };
+}
+
+function assertNotAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) throw new Error("Backup cancelled");
+}
+
+async function collectConsentedArtwork(
+  entities: readonly LocalEntity[],
+  deps: CloudBackupPayloadDeps,
+) {
+  const inclusion = deps.adventureInclusion;
+  const consented = inclusion?.consented === true;
+  const readAdventures = inclusion?.readAdventures ?? (async () => []);
+  return collectArtworkBackup(consented, entities, readAdventures);
+}
+
+function buildBackupContentPaths(
+  artwork: Awaited<ReturnType<typeof collectConsentedArtwork>>,
+  maps: readonly unknown[],
+) {
+  const privateSnapshots = new Set(artwork.snapshotPaths);
+  const expectedSnapshots = new Map(
+    artwork.snapshots.map((snapshot) => [snapshot.path, snapshot]),
+  );
+  const allPaths = new Set([
+    ...collectAssetPaths(artwork.entities, maps),
+    ...privateSnapshots,
+  ]);
+  return { privateSnapshots, expectedSnapshots, allPaths };
+}
+
+function assemblePayloadResult(
+  vaultTitle: string,
+  artwork: Awaited<ReturnType<typeof collectConsentedArtwork>>,
+  maps: readonly unknown[],
+  content: {
+    canvases?: readonly unknown[];
+    sessionJournals?: readonly unknown[];
+  },
+  collected: Awaited<ReturnType<typeof collectBackupAssets>>,
+  skippedEntities: string[],
+): CloudBackupPayloadResult {
+  const adventuresField = artwork.adventures
+    ? { adventures: artwork.adventures }
+    : {};
+  return {
+    vaultTitle,
+    bundle: {
+      schemaVersion: 1,
+      entities: artwork.entities,
+      maps: maps as unknown[],
+      canvases: [...(content.canvases ?? [])],
+      sessionJournals: [...(content.sessionJournals ?? [])],
+      ...adventuresField,
+      assetManifest: collected.assetManifest,
+    },
+    assets: collected.assets,
+    skippedAssets: collected.skippedAssets,
+    skippedEntities,
+  };
+}
+
 export async function buildCloudBackupPayload(
   vaultTitle: string,
   // Widened at the boundary: the vault store's entity record is structurally
@@ -198,84 +428,48 @@ export async function buildCloudBackupPayload(
     sessionJournals?: readonly unknown[];
   } = {},
 ): Promise<CloudBackupPayloadResult> {
-  let list = entities as readonly LocalEntity[];
-  const skippedEntities: string[] = [];
   const buildStartedAt = nowMs(deps.clock);
-
   // Before anything else: the snapshot must hold real markdown, not the
   // warm-start preview. Asset collection reads the hydrated list too, since
   // hydration can replace the records it scans.
-  if (deps.hydrateEntities) {
-    const hydrateStartedAt = nowMs(deps.clock);
-    const result = await hydrateEntityContent(
-      list,
-      deps.hydrateEntities,
-      HYDRATION_CONCURRENCY,
-      deps.signal,
-    );
-    list = result.entities;
-    skippedEntities.push(...result.skippedEntities);
-    deps.onTiming?.({
-      stage: "hydrate",
-      durationMs: nowMs(deps.clock) - hydrateStartedAt,
-      count: entities.length,
-    });
-  }
+  const hydrated = await hydrateEntitiesIfNeeded(
+    entities as readonly LocalEntity[],
+    deps,
+  );
+  const maps = resolveBackupMaps(
+    content.maps,
+    deps.adventureInclusion?.consented,
+  );
+  assertNotAborted(deps.signal);
 
-  const maps = content.maps ?? [];
-  const canvases = content.canvases ?? [];
-  const sessionJournals = content.sessionJournals ?? [];
-  const fetcher = deps.fetch ?? fetch;
-  const assets: { assetId: string; bytes: Uint8Array; mimeType: string }[] = [];
-  const assetManifest: { assetId: string; path: string; mimeType: string }[] =
-    [];
-  const skippedAssets: string[] = [];
-  let assetBytesTotal = 0;
+  const artwork = await collectConsentedArtwork(hydrated.entities, deps);
+  assertNotAborted(deps.signal);
 
-  for (const path of collectAssetPaths(list, maps)) {
-    if (deps.signal?.aborted) break;
-    try {
-      const url = await deps.resolveImageUrl(path);
-      if (!url) throw new Error("unresolved");
-      const response = await fetcher(url);
-      if (!response.ok) throw new Error(`status ${response.status}`);
-      const blob = await response.blob();
-      const bytes = new Uint8Array(await blob.arrayBuffer());
-
-      const assetId = assetIdForPath(path);
-      const mimeType = blob.type || "application/octet-stream";
-      assets.push({ assetId, bytes, mimeType });
-      assetManifest.push({ assetId, path, mimeType });
-      assetBytesTotal += bytes.length;
-    } catch {
-      // One unreadable image must not cost the user their whole backup. It is
-      // recorded so the caller can say what was left out rather than implying
-      // a complete copy.
-      skippedAssets.push(path);
-    }
-  }
+  const { privateSnapshots, expectedSnapshots, allPaths } =
+    buildBackupContentPaths(artwork, maps);
+  const collected = await collectBackupAssets(
+    allPaths,
+    deps,
+    privateSnapshots,
+    expectedSnapshots,
+  );
+  if (deps.adventureInclusion?.consented) assertNotAborted(deps.signal);
 
   deps.onTiming?.({
     stage: "build",
     durationMs: nowMs(deps.clock) - buildStartedAt,
-    count: list.length,
-    bytes: assetBytesTotal,
+    count: hydrated.entities.length,
+    bytes: collected.assetBytesTotal,
   });
 
-  return {
+  return assemblePayloadResult(
     vaultTitle,
-    bundle: {
-      schemaVersion: 1,
-      entities: list as LocalEntity[],
-      maps: maps as unknown[],
-      canvases: canvases as unknown[],
-      sessionJournals: sessionJournals as unknown[],
-      assetManifest,
-    },
-    assets,
-    skippedAssets,
-    skippedEntities,
-  };
+    artwork,
+    maps,
+    content,
+    collected,
+    hydrated.skippedEntities,
+  );
 }
 
 /* ---------------------------------------------------------------- delta -- */
@@ -351,7 +545,7 @@ export async function buildCloudBackupDelta(
   });
 
   const maps = changes.some((change) => change.kind === "maps")
-    ? [...(content.maps ?? [])]
+    ? (content.maps ?? []).map(omitPrivateMapArtwork)
     : undefined;
   if (referencesNewMedia(entities.upserts, maps, deps.uploadedAssetIds)) {
     return null;
@@ -388,7 +582,7 @@ async function readChangedEntities(
     }
     const full = await readFullOrNull(id, current, deps.hydrateEntities);
     if (!full) return null;
-    upserts.push(full);
+    upserts.push(omitArtworkForBackup(full));
   }
   return { upserts, deletes };
 }

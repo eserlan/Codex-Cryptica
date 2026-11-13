@@ -23,3 +23,7 @@ export * from "./places";
 export * from "./prompt-state";
 export * from "./story-summary";
 export * from "./place-names";
+export * from "./people-types";
+export * from "./people";
+export * from "./scene-types";
+export * from "./scene-identities";
