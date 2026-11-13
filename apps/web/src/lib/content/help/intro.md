@@ -10,7 +10,7 @@ rank: 1
 
 **In short:** Codex Cryptica is a place to build and run your tabletop campaign — your characters, places, factions, maps, and notes, all in one workspace. Your working vault is saved on your device. No account is needed for local writing, and the core tools work offline after the app has loaded. AI requests send relevant context to a provider; publishing and opted-in cloud backups also upload data.
 
-You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main description, and **Lore** is your private, GM-only notes. Don't worry about memorising them; they're explained in context the first time they matter.
+You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main text (its description), and **Lore** is the private part, shown as **GM notes**. Don't worry about memorising them; they're explained in context the first time they matter.
 
 For power users: your worlds are saved as clean local Markdown files (in the browser's Origin Private File System), so they remain fully yours, portable, and safe from cloud platform lock-in.
 
@@ -22,8 +22,8 @@ Follow this quick checklist to set up your first vault and see Codex Cryptica's 
 
 1. **Create a vault**: Open the vault switcher, choose **NEW**, and name your world.
 2. **Add an entity**: Use **+ Create** in the header or **+** in the explorer, choose **Character**, and name your character.
-3. **Write**: Open the entity, click **EDIT**, add its Chronicle and any private Lore, then **SAVE CHANGES**.
-4. **Connect**: Create a Location, return to the character’s **Status** tab, and use **+ Add** under Connections to link them.
+3. **Write**: Open the entity, click **Edit**, write its text and any **GM notes**, then **Save changes**.
+4. **Connect**: Create a Location, return to the character’s **Overview** tab, and use **+ Add** under Connections to link them.
 5. **Explore**: Open the **Graph** to see both entities and their connection. Use **Groups** for connected group backgrounds, or **Redraw** to rearrange the graph.
 
 For AI revisions, use **AI Revise Description** (sparkles) in the entity side panel or Zen Mode. Review the draft before **Apply Changes**. See [Creating and Editing Entities](/help#help/creating-and-editing-entities).
@@ -45,8 +45,8 @@ Your worldbuilding begins with a **Vault**—a dedicated workspace containing al
 Every person, place, or thing in your world is represented as an **Entity**.
 
 - **Entities**: Classified by category (Character, Creature, Location, Item, Event, Faction, or Note).
-- **Chronicles**: The primary, public-facing text field of your entity, written in Markdown. Think of it as the entity's main description or log (which can be styled and custom-renamed under different world themes as a _Tome_, _Log_, or _Journal_ for flavor).
-- **Lore**: Hidden metadata and secrets. The Lore section is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
+- **Chronicles**: The entity's main text, written in Markdown. It is the entity's description. Some themes show their own word beside it, such as _Tome_, _Log_, or _Journal_.
+- **Lore**: The private part of an entity, shown as **GM notes** (a theme may show its own word beside it). It is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
 - **Hierarchy & Nesting**: In the left-hand Explorer panel, drag and drop entities to nest them (e.g., place a _Tavern_ inside a _City_). CC automatically checks for recursive loops to prevent cycle errors, and deleting a parent automatically promotes child entities to the root level.
 
 ---
@@ -106,7 +106,7 @@ The Lore Oracle is your co-author and worldbuilding assistant, powered by OpenAI
 - **Connection**: See **Settings → Intelligence** for system-proxy access or a personal key. See **Oracle AI Access and Personal Keys** for the provider and privacy details.
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
-  - `/revise`: Generate suggested Chronicle and Lore text for a selected entity in chat. You can also use **AI Revise Description** in the entity side panel or Zen Mode, then review and apply or discard the draft.
+  - `/revise`: Generate suggested text and GM notes for a selected entity in chat. You can also use **AI Revise Description** in the entity side panel or Zen Mode (in the **More** menu), then review and apply or discard the draft.
   - `/create [concept]`: Ask the Oracle to draft a new entity.
 - **Guest Character Chat**: Let players chat in-character with Characters. GMs can review transcripts to turn conversational roleplay into official lore.
 

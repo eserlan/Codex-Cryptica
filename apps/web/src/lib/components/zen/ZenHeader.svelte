@@ -2,7 +2,6 @@
   import { getIconClass } from "#lib/utils/icon.js";
   import { categories } from "#lib/stores/categories.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
-  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
   import type { Entity } from "schema";
   import ReportZenButtons from "#lib/components/reports/ReportZenButtons.svelte";
   import AliasInput from "#lib/components/labels/AliasInput.svelte";
@@ -15,25 +14,15 @@
   import { page } from "$app/state";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { soundBiteService } from "@codex/audio-engine";
   import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { copyGuestEntityLink } from "#lib/services/publishing/guest-link.js";
-  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+  import EntityActionBar from "#lib/components/entity-detail/EntityActionBar.svelte";
   import {
-    dungeonDelveService,
-    isDelveLocationEntity,
-  } from "#lib/services/dungeon-delve-service.js";
-  import { goto } from "$app/navigation";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
-  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
-  import { shelf } from "#lib/features/shelf/index.js";
+    createEntityActions,
+    type EntityAction,
+  } from "#lib/components/entity-detail/entity-actions.svelte.js";
   import SaveStatusIndicator from "#lib/components/ui/SaveStatusIndicator.svelte";
-  import {
-    isMonsterLabsHandoffEligibleType,
-    getMonsterLabsActionLabel,
-  } from "#lib/services/seo/monsterlabs-handoff.js";
+  import { entityToHandoffSource } from "#lib/services/seo/monsterlabs-handoff.js";
   import { createMonsterLabsHandoffFlow } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
   import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
 
@@ -69,21 +58,6 @@
     isDraftActioning?: boolean;
   } = $props();
 
-  let linkCopied = $state(false);
-  let shelvedJustNow = $state(false);
-
-  /**
-   * Copies this entity onto the Shelf so it can be brought into another vault.
-   * Read-only against this vault — nothing here is modified.
-   */
-  const handleSendToShelf = async () => {
-    if (!entity) return;
-    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
-    if (!ok) return;
-    shelvedJustNow = true;
-    setTimeout(() => (shelvedJustNow = false), 2000);
-  };
-
   /**
    * Hands this entity's content off to MonsterLabs' D&D monster or magic
    * item generator in a new tab (#2871, #2872). Read-only against this
@@ -92,27 +66,6 @@
    * own "loading" state), and MonsterLabs opens once the URL is ready.
    */
   const monsterLabsFlow = createMonsterLabsHandoffFlow();
-  const handleSendToMonsterLabs = () => {
-    if (!entity) return;
-    monsterLabsFlow.start({
-      name: entity.title,
-      type: entity.type,
-      description: [entity.content, entity.lore]
-        .filter((part): part is string => Boolean(part?.trim()))
-        .join("\n\n"),
-    });
-  };
-
-  const handleCopyGuestLink = async () => {
-    if (!guestVault.publishId || !entity) return;
-    try {
-      await copyGuestEntityLink(guestVault.publishId, entity.id);
-      linkCopied = true;
-      setTimeout(() => (linkCopied = false), 2000);
-    } catch {
-      notificationStore.notify("Could not copy the link.", "error");
-    }
-  };
 
   const isGraphView = $derived(
     page.url.pathname === "/" || page.url.pathname === "",
@@ -147,9 +100,72 @@
     return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
   });
 
-  const delveCanvasLabel = $derived(
-    getDelveCanvasLabel(themeStore.activeTheme.id),
+  const entityActions = createEntityActions(
+    () => ({
+      entity,
+      isGuest: vault.isGuest,
+      isGraphView,
+      canGuestEdit: false,
+      publishId: guestVault.publishId,
+      existingCanvas,
+      onStartEdit,
+      onDelete,
+      onMonsterLabs: () => monsterLabsFlow.start(entityToHandoffSource(entity)),
+      monsterLabsOpen: monsterLabsFlow.open,
+      monsterLabsLoading: monsterLabsFlow.state === "loading",
+    }),
+    { findInGraph: () => handleFindInGraph() },
   );
+
+  // Zen keeps its long-standing test ids; Expand makes no sense inside Zen.
+  const zenTestIds: Record<string, string> = {
+    edit: "edit-entity-button",
+    "copy-link": "zen-copy-guest-link-button",
+    "find-in-graph": "zen-find-in-graph-button",
+    chat: "zen-guest-chat-button",
+    "sound-bite": "zen-sound-bite-button",
+    "delve-map": "zen-build-delve-canvas-button",
+    shelf: "zen-send-to-shelf-button",
+    monsterlabs: "zen-send-to-monsterlabs-button",
+  };
+
+  const zenOnlyActions = $derived.by((): EntityAction[] => {
+    const extra: EntityAction[] = [
+      {
+        id: "copy-content",
+        label: "Copy content",
+        icon: isCopied ? "icon-[lucide--check]" : "icon-[lucide--copy]",
+        run: async () => onCopy(),
+        placement: "menu",
+        tone: "default",
+        testId: "zen-copy-content-button",
+        state: isCopied ? "done" : undefined,
+      },
+    ];
+    if (onPopOut) {
+      extra.push({
+        id: "pop-out",
+        label: "Open in new tab",
+        icon: "icon-[lucide--square-arrow-out-up-right]",
+        run: async () => onPopOut(),
+        placement: "menu",
+        tone: "default",
+        testId: "zen-pop-out-button",
+      });
+    }
+    return extra;
+  });
+
+  const zenActions = $derived.by(() => {
+    const shared = entityActions.actions
+      .filter((a) => a.id !== "expand")
+      .map((a) => ({ ...a, testId: zenTestIds[a.id] ?? a.testId }));
+    // Delete stays last, set apart from the rest.
+    const last = shared.at(-1);
+    return last?.tone === "danger"
+      ? [...shared.slice(0, -1), ...zenOnlyActions, last]
+      : [...shared, ...zenOnlyActions];
+  });
 </script>
 
 <header
@@ -292,177 +308,7 @@
 
     <div class="flex items-center gap-1.5 md:gap-3 shrink-0 ml-auto">
       {#if !editState.isEditing}
-        {#if entity && isDelveLocationEntity(entity)}
-          <button
-            type="button"
-            onclick={async () => {
-              try {
-                if (existingCanvas) {
-                  openCanvasFromZen(existingCanvas, goto);
-                  return;
-                }
-                const canvasDoc =
-                  dungeonDelveService.buildDelveCanvasFromConcept(entity);
-                const slug = await canvasRegistry.importCanvas(canvasDoc);
-                openCanvasFromZen({ slug }, goto);
-              } catch (err) {
-                console.error("[DelveCanvas] ZenHeader build failed:", err);
-              }
-            }}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-1.5 rounded text-micro md:text-xs font-bold tracking-widest cursor-pointer"
-            title={existingCanvas
-              ? `Open ${delveCanvasLabel}`
-              : `Build ${delveCanvasLabel}`}
-            aria-label={existingCanvas
-              ? `Open ${delveCanvasLabel}`
-              : `Build ${delveCanvasLabel}`}
-            data-testid="zen-build-delve-canvas-button"
-          >
-            <span
-              aria-hidden="true"
-              class="{existingCanvas
-                ? 'icon-[lucide--external-link]'
-                : 'icon-[lucide--map]'} w-4 h-4"
-            ></span>
-            <span class="hidden sm:inline"
-              >{existingCanvas
-                ? `Open ${delveCanvasLabel}`
-                : delveCanvasLabel}</span
-            >
-          </button>
-        {/if}
-        {#if isGraphView}
-          <button
-            type="button"
-            onclick={handleFindInGraph}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
-            title="Find in Graph"
-            aria-label="Find in Graph"
-            data-testid="zen-find-in-graph-button"
-          >
-            <span aria-hidden="true" class="icon-[lucide--target] w-4 h-4"
-            ></span>
-          </button>
-        {/if}
-        {#if entity && !vault.isGuest}
-          <button
-            type="button"
-            onclick={handleSendToShelf}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {shelvedJustNow
-              ? 'text-theme-primary'
-              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
-            title={shelvedJustNow
-              ? "On the Shelf"
-              : "Send to Shelf — to bring into another vault"}
-            aria-label="Send to Shelf"
-            data-testid="zen-send-to-shelf-button"
-          >
-            <span
-              aria-hidden="true"
-              class="{shelvedJustNow
-                ? 'icon-[lucide--check]'
-                : 'icon-[lucide--library]'} w-4 h-4"
-            ></span>
-          </button>
-        {/if}
-        {#if entity && isMonsterLabsHandoffEligibleType(entity.type)}
-          <button
-            type="button"
-            onclick={handleSendToMonsterLabs}
-            disabled={monsterLabsFlow.open}
-            aria-busy={monsterLabsFlow.state === "loading"}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest disabled:opacity-50"
-            title="{getMonsterLabsActionLabel(
-              entity.type,
-            )} — opens monsterlabs.app in a new tab"
-            aria-label={getMonsterLabsActionLabel(entity.type)}
-            data-testid="zen-send-to-monsterlabs-button"
-          >
-            <span
-              aria-hidden="true"
-              class="{monsterLabsFlow.state === 'loading'
-                ? 'icon-[lucide--loader-2] animate-spin'
-                : 'icon-[lucide--external-link]'} w-4 h-4"
-            ></span>
-          </button>
-        {/if}
-        {#if entity && (!vault.isGuest || entity.soundBite)}
-          <button
-            onclick={() => {
-              if (!entity) return;
-              // Skip loadFromEntity if the modal is already showing this entity —
-              // calling it again would reset result/error and interrupt active playback.
-              const alreadyOpen =
-                modalUIStore.soundBite?.show &&
-                modalUIStore.soundBite.entityId === entity.id;
-              if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
-              modalUIStore.openSoundBite(entity.id);
-            }}
-            class="touch-target px-2 md:px-3 py-1.5 border transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest {entity.soundBite
-              ? 'border-theme-accent/30 text-theme-accent hover:border-theme-accent/50 hover:text-theme-accent/80'
-              : 'border-theme-border text-theme-secondary hover:text-theme-primary'}"
-            title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
-            aria-label="Sound bite"
-            data-testid="zen-sound-bite-button"
-          >
-            <span
-              class="{entity.soundBite
-                ? 'icon-[lucide--volume-2]'
-                : 'icon-[lucide--mic]'} w-4 h-4"
-              aria-hidden="true"
-            ></span>
-          </button>
-        {/if}
-        {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
-          <button
-            type="button"
-            onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
-            title="Chat with character"
-            aria-label="Chat with character"
-            data-testid="zen-guest-chat-button"
-          >
-            <span
-              aria-hidden="true"
-              class="icon-[lucide--messages-square] w-4 h-4"
-            ></span>
-          </button>
-        {/if}
-        {#if vault.isGuest && guestVault.publishId && entity}
-          <button
-            type="button"
-            onclick={handleCopyGuestLink}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-border {linkCopied
-              ? 'text-theme-primary'
-              : 'text-theme-secondary hover:text-theme-primary'} transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
-            title={linkCopied ? "Link copied!" : "Copy link to this entity"}
-            aria-label="Copy link to this entity"
-            data-testid="zen-copy-guest-link-button"
-          >
-            <span
-              class="{linkCopied
-                ? 'icon-[lucide--check]'
-                : 'icon-[lucide--link]'} w-4 h-4"
-              aria-hidden="true"
-            ></span>
-          </button>
-        {/if}
-        <button
-          type="button"
-          onclick={onCopy}
-          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
-          title="Copy Content"
-          aria-label="Copy Content"
-        >
-          {#if isCopied}
-            <span
-              aria-hidden="true"
-              class="icon-[lucide--check] w-4 h-4 text-theme-primary"
-            ></span>
-          {:else}
-            <span aria-hidden="true" class="icon-[lucide--copy] w-4 h-4"></span>
-          {/if}
-        </button>
+        <EntityActionBar actions={zenActions} />
       {/if}
 
       {#if !editState.isEditing && entity?.kind === "report" && !vault.isGuest}
@@ -496,29 +342,7 @@
           <span class="hidden sm:inline">REJECT</span>
         </button>
       {/if}
-      {#if !editState.isEditing && !vault.isGuest && entity}
-        {#if onDelete}
-          <button
-            type="button"
-            onclick={onDelete}
-            class="touch-target px-2 md:px-3 py-1.5 border border-theme-danger/40 text-theme-danger hover:bg-theme-danger/10 text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
-            title="Delete entity"
-            aria-label="Delete entity"
-            data-testid="delete-entity-button"
-          >
-            <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
-            ></span>
-          </button>
-        {/if}
-        <button
-          onclick={onStartEdit}
-          class="touch-target px-2 md:px-4 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary text-micro md:text-xs font-bold rounded tracking-widest transition flex items-center gap-2"
-          data-testid="edit-entity-button"
-        >
-          <span aria-hidden="true" class="icon-[lucide--edit-2] w-3 h-3"></span>
-          <span class="hidden sm:inline">EDIT</span>
-        </button>
-      {:else if editState.isEditing}
+      {#if editState.isEditing}
         <button
           onclick={onCancelEdit}
           class="touch-target px-2 md:px-4 py-1.5 text-theme-muted hover:text-theme-text text-micro md:text-xs font-bold rounded tracking-widest transition"
@@ -540,21 +364,6 @@
             <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"></span>
             <span class="hidden sm:inline">SAVE</span>
           {/if}
-        </button>
-      {/if}
-
-      {#if onPopOut && !editState.isEditing}
-        <button
-          type="button"
-          onclick={onPopOut}
-          class="touch-target px-2 md:px-3 py-1.5 border border-theme-border text-theme-secondary hover:text-theme-primary transition flex items-center gap-2 rounded text-micro md:text-xs font-bold tracking-widest"
-          title="Open in new tab"
-          aria-label="Open in new tab"
-        >
-          <span
-            aria-hidden="true"
-            class="icon-[heroicons--arrow-top-right-on-square] w-4 h-4"
-          ></span>
         </button>
       {/if}
 

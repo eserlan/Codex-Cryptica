@@ -63,6 +63,7 @@
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import { guidedModeStore } from "#lib/stores/ui/guided-mode.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { toEntityDetailTab } from "#lib/components/entity-detail/detail-tabs.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
@@ -566,8 +567,9 @@
           if (state.zenModeEntityId && vault.entities[state.zenModeEntityId]) {
             modalUIStore.zenModeEntityId = state.zenModeEntityId;
             modalUIStore.showZenMode = !!state.showZenMode;
-            modalUIStore.zenModeActiveTab =
-              state.zenModeActiveTab || "overview";
+            modalUIStore.zenModeActiveTab = toEntityDetailTab(
+              state.zenModeActiveTab,
+            );
           } else {
             modalUIStore.closeZenMode();
           }

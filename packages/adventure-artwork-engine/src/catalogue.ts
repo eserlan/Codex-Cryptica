@@ -153,6 +153,7 @@ const assetSchema = z
     withdrawn: z.boolean().optional(),
   })
   .strict()
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   .superRefine((asset, ctx) => {
     validateAssetCues(asset, ctx);
     validateAssetGenres(asset, ctx);

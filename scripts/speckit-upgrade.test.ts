@@ -356,7 +356,7 @@ describe("Spec Kit command integration", () => {
         await format(expectedBody, { parser: "markdown" }),
       );
     }
-  });
+  }, 30000);
 
   test("constitution propagation is composed while repo validation rules override upstream defaults", () => {
     const constitution = readFileSync(

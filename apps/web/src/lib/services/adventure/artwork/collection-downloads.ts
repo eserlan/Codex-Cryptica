@@ -180,6 +180,7 @@ async function continueAfterPreflight(
 }
 
 /** Explicit download with resumable validated files and no more than two consumers. */
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 export async function downloadCollection(
   variants: readonly CollectionVariant[],
   signal: AbortSignal,

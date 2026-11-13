@@ -17,4 +17,19 @@ describe("EntityDetailPanel type", () => {
     expect(source).toContain("<EntityNotices");
     expect(source).not.toContain("TRANSIENT MODE");
   });
+
+  it("reads header, then tabs, then the overview", () => {
+    const header = source.indexOf("<DetailHeader");
+    const tabs = source.indexOf("<DetailTabs");
+    const status = source.indexOf("<DetailStatusTab");
+    expect(header).toBeGreaterThan(-1);
+    expect(header).toBeLessThan(tabs);
+    expect(tabs).toBeLessThan(status);
+  });
+
+  it("shows the large image block only when editing or without text", () => {
+    expect(source).toMatch(
+      /\{#if isEditing \|\| !activeEntity\.content\?\.trim\(\)\}\s*<DetailImage/,
+    );
+  });
 });

@@ -34,10 +34,14 @@ bun scripts/test-changed.mjs --base "$BASE"
 echo "== fallow audit (new findings only)"
 # A JSON runtime error ({"error": true}) is non-blocking per AGENTS.md; only
 # a "fail" verdict blocks.
-fallow_json="$(bunx fallow audit --base "$BASE" --format json --quiet --explain --gate-marker agent 2>/dev/null || true)"
+# The report can pass 128 KB, too big for one command-line argument, so it
+# goes through a file.
+fallow_json="$(mktemp)"
+trap 'rm -f "$fallow_json"' EXIT
+bunx fallow audit --base "$BASE" --format json --quiet --explain --gate-marker agent >"$fallow_json" 2>/dev/null || true
 python3 - "$fallow_json" <<'PY'
 import json, sys
-raw = sys.argv[1]
+raw = open(sys.argv[1]).read()
 try:
     report = json.loads(raw[raw.index("{"):])
 except ValueError:

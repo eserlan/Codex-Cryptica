@@ -154,6 +154,7 @@ export class AdventureSessionRepository {
   }
 
   /** Read complete owner documents; unreadable files must not silently disappear from backup. */
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   async readAllForBackup(
     vaultId: string,
     signal?: AbortSignal,

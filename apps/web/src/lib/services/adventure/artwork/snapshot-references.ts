@@ -81,6 +81,7 @@ function inspectAdventures(
 }
 
 /** A caller must supply every entity and every active, archived and recovery adventure. */
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 export function inspectSnapshotReferences(
   path: string,
   entities: readonly unknown[],

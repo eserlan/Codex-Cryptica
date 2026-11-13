@@ -212,6 +212,7 @@ function selectPlaceArtwork(
 }
 
 /** Resolve saved selections; unknown artwork data fails closed. */
+// fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
 export function currentPlaceSelection(
   session: ArtworkPlaceSession | null,
   activeVaultId: string | null | undefined,

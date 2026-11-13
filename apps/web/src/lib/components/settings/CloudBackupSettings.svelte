@@ -1,3 +1,4 @@
+<!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
   /**
    * Cloud Backup settings (spec 162, issue #2593).
@@ -264,7 +265,7 @@
     <div class="flex flex-col gap-3 border border-theme-border p-4">
       {#if cloudBackupStore.knownBackups.length > 0}
         <div class="flex flex-col gap-2">
-          <p class="text-sm text-theme-muted">
+          <p class="text-sm text-theme-text">
             Backups this device already has the key to:
           </p>
           <ul class="flex flex-col gap-1">
@@ -278,7 +279,7 @@
                   <span class="text-sm text-theme-text"
                     >{backupLabel(backup)}</span
                   >
-                  <span class="font-mono text-micro uppercase text-theme-muted">
+                  <span class="font-mono text-micro uppercase text-theme-text">
                     {savedAt(backup.lastPushedAt)}
                   </span>
                 </button>
@@ -288,12 +289,12 @@
         </div>
       {/if}
 
-      <p class="text-sm text-theme-muted">
+      <p class="text-sm text-theme-text">
         Or paste a recovery key from another device — the "Copy recovery key"
         button in its Settings. The vault is loaded into a new vault, so nothing
         you have open is replaced.
       </p>
-      <label class="flex flex-col gap-1 text-xs text-theme-muted">
+      <label class="flex flex-col gap-1 text-xs text-theme-text">
         Recovery key
         <input
           bind:value={restoreKey}
@@ -305,7 +306,7 @@
         type="button"
         onclick={runRestore}
         disabled={busy || !restoreKey.trim()}
-        class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg disabled:opacity-50"
+        class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary disabled:opacity-50"
       >
         Load from cloud
       </button>
@@ -338,7 +339,7 @@
         </h2>
 
         <div
-          class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-theme-muted"
+          class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-theme-text"
         >
           <p>
             <strong class="text-theme-text">What gets stored:</strong> your entities,
@@ -379,7 +380,7 @@
           <button
             type="button"
             onclick={() => (showConsent = false)}
-            class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
+            class="px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
           >
             Not now
           </button>
@@ -387,7 +388,7 @@
             type="button"
             onclick={confirmConsent}
             disabled={busy}
-            class="bg-theme-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+            class="bg-theme-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
           >
             I understand — turn it on
           </button>
@@ -406,7 +407,7 @@
       >
         Cloud Backup
       </h3>
-      <p class="mt-1 text-sm text-theme-muted">
+      <p class="mt-1 text-sm text-theme-text">
         Keep a copy of this vault in Codex Cryptica Cloud, so you can get it
         back if you lose this device. Off unless you turn it on; while on, your
         changes sync automatically a few seconds after editing settles.
@@ -418,7 +419,7 @@
         class="shrink-0 font-mono text-micro uppercase tracking-wider {status ===
         'error'
           ? 'text-red-400'
-          : 'text-theme-primary'}"
+          : 'text-theme-text'}"
         aria-live="polite"
       >
         {statusText}
@@ -431,13 +432,13 @@
       type="button"
       onclick={() => (showConsent = true)}
       disabled={busy || !vaultId}
-      class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+      class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
     >
       {cloudBackupStore.consented ? "Turn back on" : "Set up cloud backup"}
     </button>
   {:else}
     <div class="flex flex-col gap-2 border border-theme-border p-4">
-      <p class="text-sm text-theme-muted">
+      <p class="text-sm text-theme-text">
         {#if lastPushed}
           Last saved {lastPushed}. Changes sync automatically while backup is on
           — Save to cloud pushes immediately.
@@ -457,7 +458,7 @@
             {cloudBackupStore.errorMessage ??
               "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
           </p>
-          <p class="mt-1 text-sm text-theme-muted">
+          <p class="mt-1 text-sm text-theme-text">
             Keep editing safely: nothing will upload until you choose. To see
             the cloud version, restore it into a new vault from the recovery key
             below.
@@ -465,7 +466,7 @@
           <button
             type="button"
             onclick={() => void cloudBackupStore.resolveConflictKeepMine()}
-            class="mt-2 bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90"
+            class="mt-2 bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90"
           >
             Keep my version
           </button>
@@ -494,21 +495,21 @@
           type="button"
           onclick={saveToCloud}
           disabled={isSaving || busy}
-          class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-bg transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+          class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
         >
           {isSaving ? "Saving…" : "Save to cloud"}
         </button>
         <button
           type="button"
           onclick={copyCode}
-          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
+          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
         >
           Copy recovery key
         </button>
         <button
           type="button"
           onclick={turnOff}
-          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-muted transition-colors hover:text-theme-text"
+          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
         >
           Turn off
         </button>
@@ -531,7 +532,7 @@
   <button
     type="button"
     onclick={openRestore}
-    class="self-start text-xs text-theme-muted underline underline-offset-4 transition-colors hover:text-theme-primary"
+    class="self-start text-xs text-theme-text underline underline-offset-4 transition-colors hover:text-theme-primary"
   >
     Load a vault from the cloud
   </button>

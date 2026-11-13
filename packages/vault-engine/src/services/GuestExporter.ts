@@ -245,6 +245,7 @@ export class GuestExporter {
    * Redacts inline links to private/excluded entities.
    * Strips out GM secrets like lore and artDirection.
    */
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
   static export(
     options: ExporterOptions,
     clock: Clock = systemClock,

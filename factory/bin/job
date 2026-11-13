@@ -8,7 +8,9 @@ orchestrator never improvises them.
 
 Usage:
   job queue                      what /factory run should do with each labeled issue
-  job create <issue>             new job for an open `factory` issue; prints the job id
+  job create <issue> [--on <job>] new job for an open `factory` issue; prints the job id.
+                                 --on stacks it on <job>: it branches from that job's branch
+                                 and its PR targets it, until that job's PR is merged
   job advance <job> <stage>      move a job to <stage>, or refuse
   job merge <job>                APPROVE → sync with the base branch, gate, merge the PR
   job feedback <job>             needs-human → build, with your feedback (stdin) as feedback-<k>.md
@@ -113,6 +115,18 @@ def load(job_id):
         _locks[job_id] = open(job_dir(job_id) / ".lock", "w")
         fcntl.flock(_locks[job_id], fcntl.LOCK_EX)
     return json.loads(path.read_text())
+
+
+def base_of(job):
+    """The branch a job builds on and its PR targets: the parent job's branch
+    while a stacked job's parent is unmerged, otherwise the base branch. When
+    the parent's PR merges, GitHub retargets the child PR to the base branch."""
+    parent = job.get("stacked_on")
+    if parent and (job_dir(parent) / "job.json").exists():
+        p = json.loads((job_dir(parent) / "job.json").read_text())
+        if p["stage"] not in TERMINAL and not (p["pr"] and pr_state(p) == "MERGED"):
+            return p["branch"]
+    return BASE
 
 
 def save(job):
@@ -333,6 +347,7 @@ def job_costs(job):
 
 def sync(job):
     d = job_dir(job["id"])
+    job["base"] = base_of(job)
     intake = d / "intake.md"
     if intake.exists():
         h = header(intake)
@@ -378,6 +393,15 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
+def refresh_pr(job):
+    """Point the job at its branch's open PR when the recorded one was merged or
+    closed while the job kept working (someone merged an earlier round)."""
+    if job["pr"] and pr_state(job) != "OPEN":
+        prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
+        if len(prs) == 1:
+            job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
+
+
 def check_reviews_done(job):
     rd = round_dir(job)
     missing = [r for r in reviewers(job) if not (rd / f"review-{r}.md").exists()]
@@ -396,6 +420,8 @@ def next_round(job):
 def advance(job, stage):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
+    if stage != "merged" and old not in TERMINAL:
+        refresh_pr(job)
     d = job_dir(job["id"])
     decision = header(d / "intake.md").get("DECISION") if (d / "intake.md").exists() else None
     intake_body = lambda: "\n".join((d / "intake.md").read_text().split("\n\n", 1)[1:]).strip()
@@ -424,9 +450,10 @@ def advance(job, stage):
         elif stage == "rejected":
             label("issue", job["issue"], remove=LABELS["queue"])
         else:
-            run(["git", "fetch", "origin", BASE])
+            base = base_of(job)
+            run(["git", "fetch", "origin", base])
             Path(job["worktree"]).parent.mkdir(parents=True, exist_ok=True)
-            run(["git", "worktree", "add", "-b", job["branch"], job["worktree"], f"origin/{BASE}"])
+            run(["git", "worktree", "add", "-b", job["branch"], job["worktree"], f"origin/{base}"])
 
     elif old == "needs-info":
         require_slot(job["id"])
@@ -444,8 +471,10 @@ def advance(job, stage):
         status = first_line(d / "build.md")
         require(status == "STATUS: READY", f"build.md starts with {status!r}, not STATUS: READY")
         require(not git(job, "status", "--porcelain").stdout.strip(), "the worktree has uncommitted changes")
-        require(int(git(job, "rev-list", "--count", f"origin/{BASE}..HEAD").stdout) > 0,
-                f"{job['branch']} has no commits on top of origin/{BASE}")
+        base = base_of(job)
+        git(job, "fetch", "origin", base, check=False)
+        require(int(git(job, "rev-list", "--count", f"origin/{base}..HEAD").stdout) > 0,
+                f"{job['branch']} has no commits on top of origin/{base}")
         git(job, "fetch", "origin", job["branch"], check=False)
         head = git(job, "rev-parse", "HEAD").stdout.strip()
         res = git(job, "rev-parse", f"origin/{job['branch']}", check=False)
@@ -498,9 +527,11 @@ def advance(job, stage):
                 next_round(job)
 
     elif old == "approve":
-        want = "APPROVE" if stage == "merging" else "ESCALATE"
+        # The factory never merges: an APPROVE goes to a human as well, and the
+        # posted decision says the approver would have merged it.
+        want = ("APPROVE",) if stage == "merging" else ("APPROVE", "ESCALATE")
         line = first_line(d / "decision.md")
-        require(line == want, f"decision.md starts with {line!r}, not {want}")
+        require(line in want, f"decision.md starts with {line!r}, not {' or '.join(want)}")
 
     elif old == "merging" and stage == "merged":
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
@@ -547,7 +578,7 @@ def slugify(title):
     return "-".join(words) or "issue"
 
 
-def cmd_create(number):
+def cmd_create(number, on=None):
     existing = [j for j in all_jobs() if j["issue"] == int(number)]
     if existing:
         die(f"issue #{number} already has job {existing[0]['id']} ({existing[0]['stage']})")
@@ -555,6 +586,11 @@ def cmd_create(number):
         require_slot(None)
     except Refused as e:
         die(str(e))
+    parent = None
+    if on:
+        parent = resolve(on)
+        if parent["stage"] in TERMINAL:
+            die(f"can't stack on {parent['id']}: it is {parent['stage']}")
     issue = fetch_issue(number)
     if issue["state"] != "OPEN":
         die(f"issue #{number} is {issue['state'].lower()}")
@@ -572,6 +608,7 @@ def cmd_create(number):
         "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
         "intake": None, "agents": None, "gate": None, "reviews": {},
         "cost_usd": 0.0, "cost_by_agent": {}, "started": now(), "ended": None,
+        "stacked_on": parent["id"] if parent else None, "base": parent["branch"] if parent else BASE,
     }
     write_issue_md(job)
     save(job)
@@ -776,6 +813,8 @@ def main(argv):
             cmd_queue()
         elif cmd == "create" and len(args) == 1 and args[0].isdigit():
             cmd_create(args[0])
+        elif cmd == "create" and len(args) == 3 and args[0].isdigit() and args[1] == "--on":
+            cmd_create(args[0], on=args[2])
         elif cmd == "advance" and len(args) == 2:
             job = advance(sync(resolve(args[0])), args[1])
             save(sync(job))
