@@ -205,6 +205,18 @@ export const adventureTurnResponseSchema = {
             relation: textSchema,
           },
         },
+        personRefs: {
+          type: "array",
+          maxItems: 8,
+          items: idSchema,
+        },
+        sceneTransition: {
+          type: "object",
+          properties: {
+            sceneId: idSchema,
+            title: { ...textSchema, maxLength: 120 },
+          },
+        },
         visiblePatch: {
           type: "object",
           properties: {

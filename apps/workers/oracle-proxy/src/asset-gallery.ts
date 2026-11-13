@@ -19,6 +19,7 @@ import {
  * names/categories a bare object key doesn't.
  */
 const ALLOWED_PREFIXES = [
+  "adventure-artwork/",
   "announcements/",
   "blog/",
   "discussions/",
@@ -36,6 +37,32 @@ interface GalleryEnv {
 interface BucketObject {
   key: string;
   size: number;
+  uploaded?: string;
+  uploadedMs: number | null;
+}
+
+function parseUploadedTimestamp(raw: unknown): {
+  uploaded?: string;
+  uploadedMs: number | null;
+} {
+  let uploaded: string | undefined;
+  if (raw instanceof Date) uploaded = raw.toISOString();
+  else if (typeof raw === "string") uploaded = raw;
+  const parsedMs = uploaded ? Date.parse(uploaded) : NaN;
+  return {
+    uploaded,
+    uploadedMs: Number.isFinite(parsedMs) ? parsedMs : null,
+  };
+}
+
+function toBucketObject(obj: any): BucketObject {
+  const { uploaded, uploadedMs } = parseUploadedTimestamp(obj.uploaded);
+  return {
+    key: obj.key,
+    size: obj.size,
+    uploaded,
+    uploadedMs,
+  };
 }
 
 async function listAllObjects(bucket: any): Promise<BucketObject[]> {
@@ -44,7 +71,7 @@ async function listAllObjects(bucket: any): Promise<BucketObject[]> {
   for (let i = 0; i < 25; i++) {
     const page = await bucket.list({ cursor, limit: 1000 });
     for (const obj of page.objects) {
-      objects.push({ key: obj.key, size: obj.size });
+      objects.push(toBucketObject(obj));
     }
     if (!page.truncated) break;
     cursor = page.cursor;
@@ -65,7 +92,9 @@ function formatBytes(bytes: number): string {
 
 function titleFromFilename(key: string): string {
   const filename = key.split("/").pop() || key;
-  const stem = filename.replace(/\.[a-z0-9]+$/i, "");
+  const stem = filename
+    .replace(/\.[a-z0-9]+$/i, "")
+    .replace(/-(?:preview|display)-[a-z0-9]+$/i, "");
   return stem
     .replace(/[-_]+/g, " ")
     .replace(/\s+/g, " ")
@@ -74,6 +103,10 @@ function titleFromFilename(key: string): string {
 }
 
 const GROUP_META: Record<string, { title: string; note: string }> = {
+  "adventure-artwork": {
+    title: "Adventure Artwork",
+    note: "Scene and character illustrations for Solo Adventure Mode (preview thumbnails link to full display images).",
+  },
   announcements: {
     title: "Announcements",
     note: "Launch & discussion imagery for Bluesky and GitHub Discussions posts.",
@@ -98,21 +131,143 @@ const GROUP_META: Record<string, { title: string; note: string }> = {
 };
 
 const IMAGE_EXTENSIONS = /\.(png|jpe?g|webp|gif|svg)$/i;
+const ADVENTURE_VARIANT_RE = /^(.+)-(preview|display)-[a-z0-9]+\.[a-z0-9]+$/i;
 
-function buildGroups(objects: BucketObject[]) {
+interface GalleryItem {
+  key: string;
+  url: string;
+  thumbUrl?: string;
+  size: string;
+  purpose: string;
+  uploaded: string | null;
+}
+
+type ArtworkPair = {
+  preview?: BucketObject;
+  display?: BucketObject;
+  other?: BucketObject;
+};
+
+function getOrCreatePair(
+  pairs: Map<string, ArtworkPair>,
+  baseId: string,
+): ArtworkPair {
+  let entry = pairs.get(baseId);
+  if (!entry) {
+    entry = {};
+    pairs.set(baseId, entry);
+  }
+  return entry;
+}
+
+function addToArtworkPair(
+  pairs: Map<string, ArtworkPair>,
+  obj: BucketObject,
+): void {
+  const filename = obj.key.split("/").pop() || obj.key;
+  const match = ADVENTURE_VARIANT_RE.exec(filename);
+  const entry = getOrCreatePair(pairs, match ? match[1] : obj.key);
+  if (!match) {
+    entry.other = obj;
+    return;
+  }
+  if (match[2].toLowerCase() === "preview") entry.preview = obj;
+  else entry.display = obj;
+}
+
+function pickPrimaryArtwork(entry: ArtworkPair): BucketObject | undefined {
+  return entry.display ?? entry.preview ?? entry.other;
+}
+
+function buildThumbField(
+  entry: ArtworkPair,
+  url: string,
+): { thumbUrl?: string } {
+  if (!entry.preview) return {};
+  const thumbUrl = ASSET_BASE + entry.preview.key;
+  return thumbUrl !== url ? { thumbUrl } : {};
+}
+
+function toAdventureGalleryItem(entry: ArtworkPair): GalleryItem | null {
+  const primary = pickPrimaryArtwork(entry);
+  if (!primary) return null;
+  const url = ASSET_BASE + primary.key;
+  return {
+    key: primary.key,
+    url,
+    ...buildThumbField(entry, url),
+    size: formatBytes(primary.size),
+    purpose: titleFromFilename(primary.key),
+    uploaded: primary.uploaded ?? null,
+  };
+}
+
+function buildAdventureArtworkItems(items: BucketObject[]): GalleryItem[] {
+  const pairs = new Map<string, ArtworkPair>();
+  for (const obj of items) addToArtworkPair(pairs, obj);
+
+  const result: GalleryItem[] = [];
+  for (const entry of pairs.values()) {
+    const item = toAdventureGalleryItem(entry);
+    if (item) result.push(item);
+  }
+  result.sort((a, b) => a.key.localeCompare(b.key));
+  return result;
+}
+
+function isGalleryImageKey(key: string): boolean {
+  return isAllowed(key) && IMAGE_EXTENSIONS.test(key);
+}
+
+function groupObjectsByPrefix(
+  objects: BucketObject[],
+): Map<string, BucketObject[]> {
   const byPrefix = new Map<string, BucketObject[]>();
   for (const obj of objects) {
-    if (!isAllowed(obj.key)) continue;
-    if (!IMAGE_EXTENSIONS.test(obj.key)) continue;
+    if (!isGalleryImageKey(obj.key)) continue;
     const prefix = obj.key.split("/")[0];
-    if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
-    byPrefix.get(prefix)!.push(obj);
+    const bucket = byPrefix.get(prefix) ?? [];
+    bucket.push(obj);
+    byPrefix.set(prefix, bucket);
   }
+  return byPrefix;
+}
+
+function toStandardGalleryItems(rawItems: BucketObject[]): GalleryItem[] {
+  return rawItems
+    .slice()
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map((it) => ({
+      key: it.key,
+      url: ASSET_BASE + it.key,
+      size: formatBytes(it.size),
+      purpose: titleFromFilename(it.key),
+      uploaded: it.uploaded ?? null,
+    }));
+}
+
+function buildSingleGroup(id: string, rawItems: BucketObject[]) {
+  const meta = GROUP_META[id] ?? { title: titleFromFilename(id), note: "" };
+  const items =
+    id === "adventure-artwork"
+      ? buildAdventureArtworkItems(rawItems)
+      : toStandardGalleryItems(rawItems);
+  return {
+    id,
+    title: meta.title,
+    note: meta.note,
+    items,
+  };
+}
+
+function buildGroups(objects: BucketObject[]) {
+  const byPrefix = groupObjectsByPrefix(objects);
 
   // Fixed order, fixed set — every id here has an ALLOWED_PREFIXES entry, so
   // nothing outside the allowlist can ever surface through this loop.
   const order = [
     "screenshots",
+    "adventure-artwork",
     "og",
     "announcements",
     "images",
@@ -121,21 +276,9 @@ function buildGroups(objects: BucketObject[]) {
   ];
   const groups = [];
   for (const id of order) {
-    const items = byPrefix.get(id);
-    if (!items || !items.length) continue;
-    items.sort((a, b) => a.key.localeCompare(b.key));
-    const meta = GROUP_META[id] ?? { title: titleFromFilename(id), note: "" };
-    groups.push({
-      id,
-      title: meta.title,
-      note: meta.note,
-      items: items.map((it) => ({
-        key: it.key,
-        url: ASSET_BASE + it.key,
-        size: formatBytes(it.size),
-        purpose: titleFromFilename(it.key),
-      })),
-    });
+    const rawItems = byPrefix.get(id);
+    if (!rawItems?.length) continue;
+    groups.push(buildSingleGroup(id, rawItems));
   }
   return groups;
 }
@@ -244,6 +387,12 @@ function renderPage(data: {
   .search-field input:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
   .search-field input::placeholder { color: var(--ink-dim); }
   .search-field svg { position: absolute; left: 10px; top: 50%; translate: 0 -50%; width: 14px; height: 14px; color: var(--ink-dim); }
+  .sort-field select {
+    font-family: var(--font-body); font-size: 13.5px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--rule); background: var(--parchment-deep); color: var(--ink);
+    cursor: pointer;
+  }
+  .sort-field select:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
   nav.jumplist { display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-mono); font-size: 11.5px; }
   nav.jumplist a {
     text-decoration: none; padding: 5px 10px; border-radius: 999px; border: 1px solid var(--rule);
@@ -304,6 +453,13 @@ function renderPage(data: {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
     <input type="text" id="searchInput" aria-label="Filter assets by name or purpose" placeholder="Filter by name or purpose…" autocomplete="off">
   </label>
+  <label class="sort-field">
+    <select id="sortSelect" aria-label="Sort assets">
+      <option value="name-asc" selected>Name (A–Z)</option>
+      <option value="date-desc">Newest first</option>
+      <option value="date-asc">Oldest first</option>
+    </select>
+  </label>
   <nav class="jumplist" id="jumplist" aria-label="Jump to group"></nav>
 </div>
 <main id="groupsRoot"></main>
@@ -324,25 +480,52 @@ function renderPage(data: {
   function tile(item, isSilhouette) {
     const name = isSilhouette ? item.name : item.key.split("/").pop();
     const meta = isSilhouette ? (item.category + " · " + item.archetype) : item.size;
+    const dateStr = !isSilhouette && item.uploaded ? String(item.uploaded).slice(0, 10) : "";
     const purpose = isSilhouette ? item.r2Path.split("/").pop() : item.purpose;
     const safeName = escapeHtml(name);
     const safeMeta = escapeHtml(meta);
+    const safeDate = dateStr ? escapeHtml(dateStr) : "";
     const safePurpose = escapeHtml(purpose);
     const safeSearch = escapeHtml((name + " " + purpose).toLowerCase());
     const safeUrl = escapeHtml(item.url);
+    const safeThumbUrl = escapeHtml(isSilhouette ? item.url : (item.thumbUrl || item.url));
     return \`<a class="tile-link" href="\${safeUrl}" target="_blank" rel="noopener noreferrer" data-search="\${safeSearch}">
       <figure class="tile">
-        <div class="thumb-wrap"><img src="\${safeUrl}" alt="\${safeName}" loading="lazy" decoding="async"></div>
+        <div class="thumb-wrap"><img src="\${safeThumbUrl}" alt="\${safeName}" loading="lazy" decoding="async"></div>
         <figcaption>
           <span class="tile-name">\${safeName}</span>
-          <span class="tile-meta"><span>\${safeMeta}</span></span>
+          <span class="tile-meta"><span>\${safeMeta}</span>\${safeDate ? \`<span>\${safeDate}</span>\` : ""}</span>
           <span class="tile-purpose">\${safePurpose}</span>
         </figcaption>
       </figure>
     </a>\`;
   }
+  function itemTime(it) {
+    if (!it.uploaded) return null;
+    const t = Date.parse(it.uploaded);
+    return Number.isFinite(t) ? t : null;
+  }
+  function sortItems(items, mode) {
+    const copy = items.slice();
+    if (mode === "date-desc" || mode === "date-asc") {
+      const dir = mode === "date-desc" ? -1 : 1;
+      copy.sort((a, b) => {
+        const ta = itemTime(a);
+        const tb = itemTime(b);
+        if (ta === null && tb === null) return a.key.localeCompare(b.key);
+        if (ta === null) return 1;
+        if (tb === null) return -1;
+        if (ta !== tb) return (ta - tb) * dir;
+        return a.key.localeCompare(b.key);
+      });
+      return copy;
+    }
+    copy.sort((a, b) => a.key.localeCompare(b.key));
+    return copy;
+  }
   const root = document.getElementById("groupsRoot");
   const jumplist = document.getElementById("jumplist");
+  const sortSelect = document.getElementById("sortSelect");
   let sectionsHtml = "";
   let jumpHtml = "";
   for (const g of data.groups) {
@@ -354,7 +537,7 @@ function renderPage(data: {
         <span class="group-tally">\${fmtCount(g.items.length)} files</span>
       </div>
       <p class="group-note">\${g.note}</p>
-      <div class="grid">\${g.items.map((it) => tile(it, false)).join("")}</div>
+      <div class="grid">\${sortItems(g.items, sortSelect.value).map((it) => tile(it, false)).join("")}</div>
     </section>\`;
   }
   jumpHtml += \`<a href="#g-silhouettes">Silhouettes<span class="count">\${data.silhouettes.length}</span></a>\`;
@@ -375,7 +558,7 @@ function renderPage(data: {
   const searchInput = document.getElementById("searchInput");
   const noResults = document.getElementById("noResults");
   const noResultsQuery = document.getElementById("noResultsQuery");
-  searchInput.addEventListener("input", () => {
+  function applyFilter() {
     const q = searchInput.value.trim().toLowerCase();
     let visibleGroups = 0;
     document.querySelectorAll("section[data-group]").forEach((section) => {
@@ -391,6 +574,16 @@ function renderPage(data: {
     });
     noResults.classList.toggle("visible", q.length > 0 && visibleGroups === 0);
     noResultsQuery.textContent = searchInput.value.trim();
+  }
+  searchInput.addEventListener("input", applyFilter);
+  sortSelect.addEventListener("change", () => {
+    for (const g of data.groups) {
+      if (!g.items.length) continue;
+      const grid = document.querySelector("#g-" + g.id + " .grid");
+      if (!grid) continue;
+      grid.innerHTML = sortItems(g.items, sortSelect.value).map((it) => tile(it, false)).join("");
+    }
+    applyFilter();
   });
 </script>
 </body>

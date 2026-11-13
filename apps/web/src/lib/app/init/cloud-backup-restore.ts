@@ -4,6 +4,8 @@ import { mapRegistry } from "#lib/stores/map-registry.svelte.js";
 import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
 import { getDB } from "#lib/utils/idb.js";
 import { writeOpfsFile } from "#lib/utils/opfs.js";
+import { parseAdventureSessionForRecovery } from "@codex/adventure-engine";
+import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
 
 /** Writes restored records and raw media into the newly created vault. */
 export function createCloudBackupRestore(): NonNullable<
@@ -44,6 +46,40 @@ export function createCloudBackupRestore(): NonNullable<
         await db.put("session_journals", { ...journal, vaultId } as never);
       }
     },
+    importAdventures: async (vaultId: string, adventures: unknown[]) => {
+      if (vault.activeVaultId !== vaultId)
+        throw new Error("The destination Vault is no longer open.");
+      const seen = new Set<string>();
+      const documents = adventures.map((input) => {
+        if (!input || typeof input !== "object" || Array.isArray(input))
+          throw new Error("Invalid adventure in backup.");
+        const raw = input as Record<string, unknown>;
+        const id = raw.id;
+        if (
+          typeof id !== "string" ||
+          !/^[a-zA-Z0-9_-]{1,160}$/.test(id) ||
+          seen.has(id)
+        )
+          throw new Error("Invalid or duplicate adventure ID in backup.");
+        const parsed = parseAdventureSessionForRecovery(raw);
+        if (parsed.session.id !== id)
+          throw new Error("Invalid adventure identity in backup.");
+        seen.add(id);
+        return { id, data: JSON.stringify({ ...raw, vaultId }) };
+      });
+      const root = await vault.getActiveVaultHandle();
+      if (!root) throw new Error("No vault is open to restore into.");
+      for (const document of documents) {
+        if (vault.activeVaultId !== vaultId)
+          throw new Error("The destination Vault is no longer open.");
+        await writeOpfsFile(
+          [".codex", "adventures", `${document.id}.json`],
+          document.data,
+          root,
+          vaultId,
+        );
+      }
+    },
     /**
      * Writes a restored file back at the exact path it came from.
      *
@@ -58,6 +94,8 @@ export function createCloudBackupRestore(): NonNullable<
       if (!root) throw new Error("No vault is open to restore into.");
       const segments = path.split("/").filter(Boolean);
       if (segments.length === 0) return;
+      if (!isSafeRestoredAssetPath(segments.join("/")))
+        throw new Error("Invalid asset path in backup.");
       await writeOpfsFile(
         segments,
         new Blob([bytes as unknown as BlobPart], { type: mimeType }),

@@ -64,6 +64,7 @@ export class AdventureSessionRepository {
   private rootResolver: AdventureVaultRootResolver;
   private readonly idGenerator: IdGenerator;
   private readonly clock: Clock;
+  private changeListener?: (vaultId: string) => Promise<void>;
 
   constructor(
     resolveVaultRoot: AdventureVaultRootResolver,
@@ -76,6 +77,18 @@ export class AdventureSessionRepository {
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
     this.rootResolver = resolveVaultRoot;
+  }
+
+  setChangeListener(listener: (vaultId: string) => Promise<void>): void {
+    this.changeListener = listener;
+  }
+
+  private async notifyChange(vaultId: string): Promise<void> {
+    try {
+      await this.changeListener?.(vaultId);
+    } catch (error) {
+      console.warn("[Adventure] Could not record backup change", error);
+    }
   }
 
   private async adventuresDirectory(vaultId: string, create = false) {
@@ -96,6 +109,68 @@ export class AdventureSessionRepository {
     if (session.session.id !== id || session.session.vaultId !== vaultId)
       throw new Error("vault-or-id-mismatch");
     return session;
+  }
+
+  private async openAdventuresDirectoryForRead(
+    vaultId: string,
+  ): Promise<FileSystemDirectoryHandle | null> {
+    const root = await this.rootResolver(vaultId);
+    try {
+      const codex = await root.getDirectoryHandle(".codex");
+      return await codex.getDirectoryHandle("adventures");
+    } catch (error) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "name" in error &&
+        error.name === "NotFoundError"
+      ) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  private async readBackupEntry(
+    vaultId: string,
+    name: string,
+    handle: FileSystemFileHandle,
+  ): Promise<Record<string, unknown>> {
+    const id = name.slice(0, -5);
+    if (!isSafeSessionId(id)) throw new Error("Invalid adventure filename");
+    const raw: unknown = JSON.parse(await (await handle.getFile()).text());
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      throw new Error("Unreadable adventure");
+    }
+    const parsed = parseAdventureSessionForRecovery(raw);
+    if (parsed.session.id !== id || parsed.session.vaultId !== vaultId) {
+      throw new Error("vault-or-id-mismatch");
+    }
+    return raw as Record<string, unknown>;
+  }
+
+  private assertBackupNotAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) throw new Error("Backup cancelled");
+  }
+
+  /** Read complete owner documents; unreadable files must not silently disappear from backup. */
+  // fallow-ignore-next-line complexity -- Adventure artwork orchestration; branches are validation and fallback guards covered by feature tests.
+  async readAllForBackup(
+    vaultId: string,
+    signal?: AbortSignal,
+  ): Promise<Record<string, unknown>[]> {
+    this.assertBackupNotAborted(signal);
+    const directory = await this.openAdventuresDirectoryForRead(vaultId);
+    if (!directory) return [];
+    const documents: Record<string, unknown>[] = [];
+    for await (const [name, handle] of (directory as any).entries()) {
+      this.assertBackupNotAborted(signal);
+      if (name.endsWith(".json") && handle.kind === "file") {
+        documents.push(await this.readBackupEntry(vaultId, name, handle));
+      }
+    }
+    this.assertBackupNotAborted(signal);
+    return documents;
   }
 
   async load(vaultId: string, sessionId: string): Promise<AdventureLoadResult> {
@@ -218,6 +293,7 @@ export class AdventureSessionRepository {
           error: cause instanceof Error ? cause : new Error(String(cause)),
         };
       }
+      await this.notifyChange(session.vaultId);
       return { ok: true, session };
     } finally {
       release();
@@ -360,16 +436,7 @@ export class AdventureSessionRepository {
     if (loaded.session.revision !== expectedRevision) {
       return { ok: false, error: new Error("revision-conflict") };
     }
-    try {
-      const directory = await this.adventuresDirectory(vaultId);
-      await directory.removeEntry(`${sessionId}.json`);
-      return { ok: true };
-    } catch (cause) {
-      return {
-        ok: false,
-        error: cause instanceof Error ? cause : new Error(String(cause)),
-      };
-    }
+    return this.removeSessionFile(vaultId, sessionId);
   }
 
   async deleteUnreadable(
@@ -383,9 +450,17 @@ export class AdventureSessionRepository {
     if (loaded.condition !== "unreadable") {
       return { ok: false, error: new Error("session-is-readable") };
     }
+    return this.removeSessionFile(vaultId, sessionId);
+  }
+
+  private async removeSessionFile(
+    vaultId: string,
+    sessionId: string,
+  ): Promise<AdventureDeleteResult> {
     try {
       const directory = await this.adventuresDirectory(vaultId);
       await directory.removeEntry(`${sessionId}.json`);
+      await this.notifyChange(vaultId);
       return { ok: true };
     } catch (cause) {
       return {

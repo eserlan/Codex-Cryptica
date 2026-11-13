@@ -12,6 +12,7 @@ describe("GuestExporter", () => {
       "This is a public node with a link to [Secret Node](entity-2) and [Public Node 2](entity-3) and [Google](https://google.com).",
     lore: "Top secret GM only note",
     artDirection: "GM visual description",
+    adventureArtwork: { version: 2, privatePath: "images/artwork_secret.png" },
     connections: [
       { target: "entity-2", type: "neutral" },
       { target: "entity-3", type: "friendly", label: "Ally" },
@@ -77,7 +78,56 @@ describe("GuestExporter", () => {
     const exportedE1 = bundle.entities.find((e) => e.id === "entity-1")!;
     expect(exportedE1.lore).toBeUndefined();
     expect(exportedE1.artDirection).toBeUndefined();
+    expect(exportedE1.adventureArtwork).toBeUndefined();
     expect((exportedE1 as any)._path).toBeUndefined();
+  });
+  it("never exposes private artwork snapshot paths through ordinary media fields", () => {
+    const entity = {
+      ...publicEntity,
+      image: "images/artwork_secret.png",
+      thumbnail: "./images/artwork_thumb.webp",
+    };
+    const bundle = GuestExporter.export({
+      ...defaultOptions,
+      entities: [entity, { ...publicEntity2, image: "images/public.png" }],
+      maps: [
+        {
+          id: "private-map",
+          name: "Private image",
+          playerVisible: true,
+          assetPath: "images/artwork_secret.png",
+          pins: [],
+        } as never,
+      ],
+      assetManifest: [
+        {
+          assetId: "private",
+          filename: "images/artwork_secret.png",
+          mimeType: "image/png",
+          hash: "h",
+        },
+        {
+          assetId: "public",
+          filename: "images/public.png",
+          mimeType: "image/png",
+          hash: "h",
+        },
+      ],
+      metadata: {
+        description: "Visible description",
+        coverImage: "images/artwork_secret.png",
+      },
+    });
+    expect(bundle.entities[0].image).toBeUndefined();
+    expect(bundle.entities[0].thumbnail).toBeUndefined();
+    expect(bundle.entities[1].image).toBe("images/public.png");
+    expect(bundle.maps).toEqual([]);
+    expect(bundle.assetManifest.map((item) => item.assetId)).toEqual([
+      "public",
+    ]);
+    expect(bundle.metadata?.coverImage).toBeUndefined();
+    expect(bundle.metadata?.description).toBe("Visible description");
+    expect(entity.image).toBe("images/artwork_secret.png");
   });
 
   it("should redact links to private/excluded entities but preserve public and external links", () => {

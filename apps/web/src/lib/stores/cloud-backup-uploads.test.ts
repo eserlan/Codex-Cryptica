@@ -28,6 +28,7 @@ function harness() {
     skippedAssets: [],
     skippedEntities: [],
     uploadProgress: null,
+    artworkConsentVersion: 0,
   };
   const deps: CloudBackupDeps = {
     runtime: createInertRuntime(),
@@ -60,6 +61,59 @@ beforeEach(() => {
 });
 
 describe("cloud backup uploads", () => {
+  it("uses consent scope for full adventure uploads and confirms removal only on success", async () => {
+    const { deps, uploads, state } = harness();
+    const confirmRemoval = vi.fn(async () => true);
+    deps.artworkScope = {
+      lock: async (_key, action) => action(),
+      readConsent: async () => ({
+        enabled: false,
+        remoteRemovalPending: true,
+        removalId: "r1",
+      }),
+      confirmRemoval,
+    };
+    expect(await uploads.pushSnapshot("vault", { guarded: true })).toEqual({
+      ok: true,
+    });
+    expect(deps.buildPayload).toHaveBeenCalledWith(
+      "vault",
+      expect.any(AbortSignal),
+      { includeAdventures: false },
+    );
+    expect(confirmRemoval).toHaveBeenCalledWith("vault", "r1");
+    expect(state.artworkConsentVersion).toBe(1);
+  });
+  it("includes adventures only for an accepted scope and retains failed removal", async () => {
+    const { deps, uploads } = harness();
+    const confirmRemoval = vi.fn(async () => true);
+    deps.artworkScope = {
+      lock: async (_key, action) => action(),
+      readConsent: async () => ({ enabled: true, remoteRemovalPending: false }),
+      confirmRemoval,
+    };
+    expect(await uploads.pushSnapshot("vault", { guarded: false })).toEqual({
+      ok: true,
+    });
+    expect(deps.buildPayload).toHaveBeenCalledWith(
+      "vault",
+      expect.any(AbortSignal),
+      { includeAdventures: true },
+    );
+    deps.artworkScope.readConsent = async () => ({
+      enabled: false,
+      remoteRemovalPending: true,
+      removalId: "r1",
+    });
+    vi.mocked(pushVaultToCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      error: "offline",
+    });
+    expect((await uploads.pushSnapshot("vault", { guarded: false })).ok).toBe(
+      false,
+    );
+    expect(confirmRemoval).not.toHaveBeenCalled();
+  });
   it("updates full-upload state and clears only versions sent", async () => {
     const { deps, uploads, state } = harness();
     await deps.dirty!.record("vault", { kind: "entity", ids: ["edited"] });

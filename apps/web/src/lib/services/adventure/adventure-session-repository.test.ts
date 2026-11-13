@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseAdventureSession } from "@codex/adventure-engine";
 import { AdventureSessionRepository } from "./adventure-session-repository";
+import { initialSession } from "#lib/stores/oracle/adventure-session.js";
 
 const archivedSession = {
   id: "session-1",
@@ -9,7 +10,122 @@ const archivedSession = {
   revision: 3,
 };
 
+describe("AdventureSessionRepository backup enumeration", () => {
+  const session = (id: string, status: "active" | "archived") => ({
+    ...initialSession({
+      vaultId: "vault-1",
+      title: "Journey",
+      premise: "Explore",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      now: "2026-01-01T00:00:00.000Z",
+      idGenerator: () => id,
+    }),
+    status,
+  });
+  it("reads active and archived original documents, preserving opaque artwork", async () => {
+    const one = {
+      ...session("a1", "active"),
+      artwork: { version: 2, secret: true },
+    };
+    const two = session("a2", "archived");
+    const directory = {
+      async *entries() {
+        yield [
+          "a1.json",
+          {
+            kind: "file",
+            getFile: async () => ({ text: async () => JSON.stringify(one) }),
+          },
+        ];
+        yield [
+          "a2.json",
+          {
+            kind: "file",
+            getFile: async () => ({ text: async () => JSON.stringify(two) }),
+          },
+        ];
+      },
+    };
+    const repository = new AdventureSessionRepository(
+      async () =>
+        ({
+          getDirectoryHandle: async () => ({
+            getDirectoryHandle: async () => directory,
+          }),
+        }) as never,
+    );
+    expect(await repository.readAllForBackup("vault-1")).toEqual([one, two]);
+  });
+  it("distinguishes a missing directory from denied or unreadable documents", async () => {
+    let open = async (): Promise<unknown> => {
+      throw new DOMException("missing", "NotFoundError");
+    };
+    const repository = new AdventureSessionRepository(
+      async () => ({ getDirectoryHandle: () => open() }) as never,
+    );
+    expect(await repository.readAllForBackup("vault-1")).toEqual([]);
+    open = async () => {
+      throw new DOMException("denied", "NotAllowedError");
+    };
+    await expect(repository.readAllForBackup("vault-1")).rejects.toThrow();
+    open = async () => ({
+      getDirectoryHandle: async () => ({
+        async *entries() {
+          yield [
+            "bad.json",
+            {
+              kind: "file",
+              getFile: async () => ({ text: async () => "invalid json" }),
+            },
+          ];
+        },
+      }),
+    });
+    await expect(repository.readAllForBackup("vault-1")).rejects.toThrow();
+  });
+  it("does not treat an unavailable Vault or cancelled read as an empty backup", async () => {
+    const repository = new AdventureSessionRepository(async () => {
+      throw new DOMException("missing vault", "NotFoundError");
+    });
+    await expect(repository.readAllForBackup("vault-1")).rejects.toThrow();
+    const controller = new AbortController();
+    controller.abort();
+    await expect(
+      repository.readAllForBackup("vault-1", controller.signal),
+    ).rejects.toThrow("cancelled");
+  });
+});
+
 describe("AdventureSessionRepository.deleteArchived", () => {
+  it("notifies backup after a durable delete without turning listener failure into a failed delete", async () => {
+    const repository = new AdventureSessionRepository(async () => {
+      throw new Error("not used");
+    });
+    const listener = vi.fn(async () => {
+      throw new Error("backup unavailable");
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    repository.setChangeListener(listener);
+    (repository as any).load = vi.fn(async () => ({
+      condition: "normal",
+      session: archivedSession,
+    }));
+    (repository as any).adventuresDirectory = vi.fn(async () => ({
+      removeEntry: vi.fn(async () => undefined),
+    }));
+    await expect(
+      repository.deleteArchived("vault-1", "session-1", 3),
+    ).resolves.toEqual({ ok: true });
+    expect(listener).toHaveBeenCalledWith("vault-1");
+    listener.mockClear();
+    await repository.deleteArchived("vault-1", "session-1", 2);
+    expect(listener).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
   it("removes an archived session after its revision is verified", async () => {
     const repository = new AdventureSessionRepository(async () => {
       throw new Error("not used");
@@ -317,9 +433,17 @@ describe("AdventureSessionRepository v3 persistence", () => {
       },
     });
 
+    const changed = vi.fn(async () => undefined);
+    repository.setChangeListener(changed);
     await expect(repository.save(null, session)).resolves.toMatchObject({
       ok: true,
     });
+    expect(changed).toHaveBeenCalledOnce();
+    expect(changed).toHaveBeenCalledWith("vault-1");
+    await expect(repository.save(5, session)).resolves.toMatchObject({
+      ok: false,
+    });
+    expect(changed).toHaveBeenCalledOnce();
     const loaded = await repository.load("vault-1", "session-v3");
     expect(loaded).toMatchObject({
       condition: "normal",

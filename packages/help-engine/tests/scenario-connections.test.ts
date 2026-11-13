@@ -189,6 +189,11 @@ const bundle = buildBundle({
       "## adventure-mode\nAbout adventure-mode.",
     ),
     article(
+      "adventure-artwork",
+      "adventure-artwork",
+      "## adventure-artwork\nAbout adventure-artwork.",
+    ),
+    article(
       "entity-explorer",
       "entity-explorer",
       "## entity-explorer\nAbout entity-explorer.",

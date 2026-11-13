@@ -101,11 +101,14 @@ read `.gitignore` sees those copies too; exclude `.worktrees/` in its config
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/178-hex-crawl-mode/plan.md).
+shell commands, and other important information, read the [current plan](./specs/181-adventure-artwork/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3 (current repository), Bun 1.3.14. + Existing `zod`, `schema`, `@codex/adventure-engine`, `@codex/vault-engine`, `@codex/runtime`, browser CacheStorage/fetch/Web Crypto, existing modal/DI patterns, Tailwind 4 semantic tokens and Iconify utilities. New internal package `packages/adventure-artwork-engine`; no new third-party dependency. (181-adventure-artwork)
+- Optional `adventureArtwork` on existing entity records; optional artwork/people/scene fields in existing `.codex/adventures/<id>.json`; private immutable snapshots under existing Vault `images/`; disposable `codex-adventure-artwork-v1` CacheStorage and device-local preference/cache index via injected storage. Cloud backup gains optional `adventures` collection behind explicit inclusion consent. No new database/object-store migration. (181-adventure-artwork)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `hex-crawl-engine` (extended with `region/`), `map-engine` (`getHexNeighbors`, `getHexRange`, `hexDistance`, `hexToPoint`, `getHexCorners`), `zod`, the existing `HexCrawlStore`, `HexTerrainPicker`, Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (4659-hex-region-generation)
 - One optional additive field, `generated`, on existing hex records in `.codex/maps.json` (synced, backed up and exported with maps; removed from guest exports with the rest of `hexCrawl`). One device-local `localStorage` key, `codex-hex-region:<mapId>`. No IndexedDB, OPFS layout or migration change. (4659-hex-region-generation)

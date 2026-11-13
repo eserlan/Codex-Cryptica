@@ -15,6 +15,7 @@ vi.hoisted(() => {
 
 // Mock IndexedDB
 import { getDB } from "../utils/idb";
+import { getFocusTargetCount, resolveFocalId } from "./graph-focus";
 vi.mock("../utils/idb", () => ({
   getDB: vi.fn().mockResolvedValue({
     get: vi.fn(),
@@ -260,12 +261,12 @@ describe("GraphStore", () => {
     );
     const store = new GraphStore();
 
-    expect(
-      (store as any).getFocusTargetCount(MAX_FOCUS_DEPTH, entities.length),
-    ).toBe(FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (MAX_FOCUS_DEPTH - 1));
-    expect(
-      (store as any).getFocusTargetCount(MAX_FOCUS_DEPTH + 10, entities.length),
-    ).toBe(FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (MAX_FOCUS_DEPTH - 1));
+    expect(getFocusTargetCount(MAX_FOCUS_DEPTH, entities.length)).toBe(
+      FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (MAX_FOCUS_DEPTH - 1),
+    );
+    expect(getFocusTargetCount(MAX_FOCUS_DEPTH + 10, entities.length)).toBe(
+      FOCUS_BASE_COUNT + FOCUS_DETAIL_STEP * (MAX_FOCUS_DEPTH - 1),
+    );
 
     store.increaseFocusDetail();
     expect(store.focusDepth).toBe(2);
@@ -342,9 +343,9 @@ describe("GraphStore", () => {
 
     expect(store.focusRootId).toBe(root);
     expect(
-      (store as any).resolveFocalId(
-        entities,
-        new Set(entities.map((entity) => entity.id)),
+      resolveFocalId(
+        { entities, ids: new Set(entities.map((entity) => entity.id)) },
+        (store as any).focusContext(),
       ),
     ).toBe(root);
     expect(store.elements.map((element: any) => element.data.id)).toEqual(
@@ -395,9 +396,9 @@ describe("GraphStore", () => {
     expect(store.focusRootId).toBe("node-700");
     (vault as any).selectedEntityId = "node-1";
     expect(
-      (store as any).resolveFocalId(
-        entities,
-        new Set(entities.map((entity) => entity.id)),
+      resolveFocalId(
+        { entities, ids: new Set(entities.map((entity) => entity.id)) },
+        (store as any).focusContext(),
       ),
     ).toBe("node-700");
   });

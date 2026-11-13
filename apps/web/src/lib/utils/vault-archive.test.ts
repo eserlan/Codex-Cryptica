@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { zipSync, strToU8 } from "fflate";
+import { initialSession } from "#lib/stores/oracle/adventure-session.js";
+import { parseAdventureSessionForRecovery } from "@codex/adventure-engine";
 
 // In-memory stand-in for OPFS. Keys are "vaultId/relative/path".
 const store = new Map<string, Uint8Array>();
@@ -101,6 +103,50 @@ describe("vault-archive", () => {
       137, 80, 78, 71,
     ]);
     expect(store.has("restored/.codex/canvases/map.json")).toBe(true);
+  });
+
+  it("restores adventure documents for the new Vault and preserves private image bytes and opaque artwork", async () => {
+    const session = initialSession({
+      vaultId: "source",
+      title: "Journey",
+      premise: "Explore",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      now: "2026-01-01T00:00:00.000Z",
+      idGenerator: () => "session-1",
+    });
+    const artwork = { version: 99, future: { path: "images/artwork_a.png" } };
+    store.set(
+      "source/.codex/adventures/session-1.json",
+      strToU8(JSON.stringify({ ...session, artwork })),
+    );
+    store.set("source/.codex/adventures/broken.json", strToU8("{broken"));
+    store.set("source/images/artwork_a.png", new Uint8Array([137, 80, 78, 71]));
+    await exportVaultToZip("source", "World");
+    await writeArchiveToVault(
+      "restored",
+      await parseVaultArchive(capturedDownload!.blob),
+    );
+    const document = JSON.parse(
+      new TextDecoder().decode(
+        store.get("restored/.codex/adventures/session-1.json"),
+      ),
+    );
+    expect(parseAdventureSessionForRecovery(document).session.vaultId).toBe(
+      "restored",
+    );
+    expect(document.artwork).toEqual(artwork);
+    expect(store.get("restored/images/artwork_a.png")).toEqual(
+      new Uint8Array([137, 80, 78, 71]),
+    );
+    expect(
+      new TextDecoder().decode(
+        store.get("restored/.codex/adventures/broken.json"),
+      ),
+    ).toBe("{broken");
   });
 
   it("rejects a non-zip file", async () => {

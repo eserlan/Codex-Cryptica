@@ -208,7 +208,12 @@ describe("service worker lifecycle", () => {
         open: vi.fn().mockResolvedValue({ put }),
         keys: vi
           .fn()
-          .mockResolvedValue(["cache-old", "cache-current", "image-cache"]),
+          .mockResolvedValue([
+            "cache-old",
+            "cache-current",
+            "image-cache",
+            "codex-adventure-artwork-v1",
+          ]),
         delete: deleteCache,
       },
       fetchResource,
@@ -220,6 +225,7 @@ describe("service worker lifecycle", () => {
     expect(deleteCache).toHaveBeenCalledOnce();
     expect(deleteCache).toHaveBeenCalledWith("cache-old");
     expect(deleteCache).not.toHaveBeenCalledWith("image-cache");
+    expect(deleteCache).not.toHaveBeenCalledWith("codex-adventure-artwork-v1");
   });
 
   it("retains old caches when any vault shell resource cannot be seeded", async () => {

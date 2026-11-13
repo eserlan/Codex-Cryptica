@@ -51,6 +51,27 @@ describe("adventure structured response contract", () => {
     ).toMatchObject({ kind: "roll-required" });
   });
 
+  it("accepts optional bounded sceneTransition/personRefs and rejects oversized arrays", () => {
+    const base = JSON.parse(completeResponse) as Record<string, unknown>;
+    expect(
+      parseAdventureResponse(
+        JSON.stringify({
+          ...base,
+          personRefs: ["person-1"],
+          sceneTransition: { sceneId: "scene-1", title: "Harbour" },
+        }),
+      ),
+    ).toMatchObject({ kind: "complete" });
+    expect(() =>
+      parseAdventureResponse(
+        JSON.stringify({
+          ...base,
+          personRefs: Array.from({ length: 9 }, (_, i) => `p-${i}`),
+        }),
+      ),
+    ).toThrow("invalid-adventure-response");
+  });
+
   it.each(["not-json", '{"kind":"complete"}', '{"kind":"unknown"}'])(
     "rejects malformed or incomplete output: %s",
     (text) => {

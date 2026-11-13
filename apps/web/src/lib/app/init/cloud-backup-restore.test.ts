@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createCloudBackupRestore } from "./cloud-backup-restore";
+import { initialSession } from "#lib/stores/oracle/adventure-session.js";
 
 const mocks = vi.hoisted(() => ({
   vault: {
@@ -32,6 +33,62 @@ beforeEach(() => {
 });
 
 describe("cloud backup restore adapters", () => {
+  it("restores adventure documents with destination ownership and preserves artwork", async () => {
+    const root = {};
+    mocks.vault.getActiveVaultHandle.mockResolvedValue(root);
+    const session = initialSession({
+      vaultId: "old-vault",
+      title: "Journey",
+      premise: "Explore",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      now: "2026-01-01T00:00:00.000Z",
+      idGenerator: () => "adventure1",
+    });
+    const artwork = { version: 2, unknown: { kept: true } };
+    await createCloudBackupRestore().importAdventures!("new-vault", [
+      { ...session, artwork },
+    ]);
+    expect(mocks.writeOpfsFile).toHaveBeenCalledWith(
+      [".codex", "adventures", "adventure1.json"],
+      expect.any(String),
+      root,
+      "new-vault",
+    );
+    const restored = JSON.parse(mocks.writeOpfsFile.mock.calls[0][1]);
+    expect(restored.vaultId).toBe("new-vault");
+    expect(restored.artwork).toEqual(artwork);
+    expect(session.vaultId).toBe("old-vault");
+  });
+  it("rejects unsafe or duplicate adventure IDs before writing anything", async () => {
+    const root = {};
+    mocks.vault.getActiveVaultHandle.mockResolvedValue(root);
+    const doc = initialSession({
+      vaultId: "old-vault",
+      title: "Journey",
+      premise: "Explore",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      now: "2026-01-01T00:00:00.000Z",
+      idGenerator: () => "adventure1",
+    });
+    await expect(
+      createCloudBackupRestore().importAdventures!("new-vault", [
+        doc,
+        { ...doc, id: "../escape" },
+      ]),
+    ).rejects.toThrow();
+    await expect(
+      createCloudBackupRestore().importAdventures!("new-vault", [doc, doc]),
+    ).rejects.toThrow();
+    expect(mocks.writeOpfsFile).not.toHaveBeenCalled();
+  });
   it("creates a vault and passes entities to its batch importer", async () => {
     mocks.vault.createVault.mockResolvedValue("new-vault");
     const restore = createCloudBackupRestore();
@@ -105,6 +162,17 @@ describe("cloud backup restore adapters", () => {
         "image/png",
       ),
     ).rejects.toThrow("No vault is open to restore into.");
+    expect(mocks.writeOpfsFile).not.toHaveBeenCalled();
+  });
+  it("rejects traversal in a restored media path", async () => {
+    mocks.vault.getActiveVaultHandle.mockResolvedValue({});
+    await expect(
+      createCloudBackupRestore().importAsset!(
+        "images/../../outside.png",
+        new Uint8Array([1]),
+        "image/png",
+      ),
+    ).rejects.toThrow("Invalid");
     expect(mocks.writeOpfsFile).not.toHaveBeenCalled();
   });
 

@@ -30,6 +30,7 @@ function target(): NonNullable<CloudBackupDeps["restore"]> {
     importMaps: vi.fn(async () => {}),
     importCanvases: vi.fn(async () => {}),
     importSessionJournals: vi.fn(async () => {}),
+    importAdventures: vi.fn(async () => {}),
   };
 }
 
@@ -89,6 +90,33 @@ describe("cloud backup restore", () => {
       material({ entities: {}, maps: [1], assetManifest: [{ assetId: "a" }] }),
     );
     expect(restore.importEntities).not.toHaveBeenCalled();
+    expect(result.missingAssets).toBe(1);
+  });
+  it("restores adventure documents into the newly created Vault", async () => {
+    const restore = target();
+    const doc = { id: "adventure-1", vaultId: "old-vault" };
+    await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      restore,
+      credentials,
+      material({ adventures: [doc] }),
+    );
+    expect(restore.importAdventures).toHaveBeenCalledWith("new-vault", [doc]);
+  });
+  it("never imports unsafe paths from the remote asset manifest", async () => {
+    const restore = target();
+    restore.importAsset = vi.fn();
+    const result = await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      restore,
+      credentials,
+      material({
+        assetManifest: [
+          { assetId: "escape", path: "../outside.png", mimeType: "image/png" },
+        ],
+      }),
+    );
+    expect(restore.importAsset).not.toHaveBeenCalled();
     expect(result.missingAssets).toBe(1);
   });
 

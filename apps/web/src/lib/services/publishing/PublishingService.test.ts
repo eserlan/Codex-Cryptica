@@ -110,6 +110,31 @@ describe("PublishingService", () => {
     expect(preview.included.mapCount).toBe(1); // map-1 is playerVisible, map-2 is not
     expect(preview.excluded.mapCount).toBe(1); // map-2
   });
+  it("never resolves or uploads private artwork snapshots during guest publishing", async () => {
+    deps.vault.allEntities = [
+      {
+        id: "e1",
+        type: "note",
+        title: "Location",
+        status: "active",
+        image: "images/artwork_secret.png",
+        adventureArtwork: {
+          version: 1,
+          override: { kind: "snapshot", path: "images/artwork_secret.png" },
+        },
+      },
+    ] as never;
+    deps.mapRegistry.allMaps = [];
+    const service = new PublishingService(deps);
+    const preview = await service.getPublishPreview("vault-1");
+    expect(preview.included.assetCount).toBe(0);
+    await service.publish("vault-1");
+    expect(deps.vault.resolveImageUrl).not.toHaveBeenCalled();
+    const publication = mockFetch.mock.calls.find(([url]: [string]) =>
+      url.includes("/api/publish-vault"),
+    );
+    expect(JSON.stringify(publication)).not.toContain("artwork_secret");
+  });
 
   it("should publish a new campaign snapshot successfully", async () => {
     const mockBlob = new Blob(["image data"], { type: "image/webp" });

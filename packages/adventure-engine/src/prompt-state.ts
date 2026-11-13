@@ -66,5 +66,23 @@ export function projectVisibleState(
     knownPlaces: places.map(describe),
     ...(here ? { currentPlace: describe(here) } : {}),
     ...(elsewhere.length > 0 ? { elsewhere } : {}),
+    ...(session.people?.length
+      ? {
+          knownPeople: session.people.map((person) => ({
+            id: person.id,
+            name: person.name,
+            ...(person.aliases.length ? { aliases: person.aliases } : {}),
+          })),
+        }
+      : {}),
+    ...(session.scenes?.length
+      ? {
+          knownScenes: session.scenes.map((scene) => ({
+            id: scene.id,
+            placeId: scene.placeId,
+            ...(scene.title ? { title: scene.title } : {}),
+          })),
+        }
+      : {}),
   };
 }
