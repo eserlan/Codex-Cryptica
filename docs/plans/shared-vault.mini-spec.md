@@ -59,6 +59,46 @@ a slice; raise a new issue instead.
   - Sharing session journals, adventures, or kept adventure artwork.
   - Sharing through Google Drive.
 
+### Remote-storage privacy conditions
+
+Sharing is an opt-in mode of Cloud Backup. Before any shared vault data is
+uploaded, the feature must satisfy all six conditions in Constitution V:
+
+1. **Off by default:** sharing stays disabled until the owner accepts its
+   separate consent screen. Creating or using an ordinary backup does not
+   enable sharing.
+2. **Informed consent before upload:** before the first shared byte leaves a
+   device, the consent screen explains that the remote copy contains the
+   shared vault data (entities, notes, labels, connections, images, maps and
+   canvases); that the owner and every group member with the link can read it;
+   and that Codex Cryptica's Cloudflare R2 provider holds the stored bytes and
+   can technically read them because the copy is not end-to-end encrypted.
+   Each member must see this disclosure before their first upload; the owner's
+   consent does not cover a member's later upload. The screen also explains
+   how to turn sharing off and permanently erase the remote copy. Codex
+   Cryptica support can see backup metadata (vault title, size, entry count and
+   last backup time) for service operation and lost-key recovery, but not vault
+   contents; disclose any broader access if the deployed controls allow it.
+3. **Reversible:** using the recovery key, the owner can turn sharing off in
+   Cloud Backup settings to revoke the link and stop sync, or separately
+   permanently delete the remote backup there. Deletion removes the manifest,
+   current shared data, assets, trash and restore points; it does not delete
+   members' local vaults. Neither action requires contacting support.
+4. **Local authority:** every member keeps a full local vault that remains
+   usable without the shared backup. Cloud storage is a sync mirror; losing
+   remote access does not prevent local use.
+5. **No onward sharing:** Codex Cryptica does not sell, forward or disclose
+   shared vault data beyond the disclosed Cloudflare infrastructure provider,
+   and the data never enters an AI training pipeline.
+6. **Internal access disclosed:** Codex Cryptica staff can access the listed
+   backup metadata for service operation and lost-key recovery, but not vault
+   contents. The consent screen states this scope; if deployed controls grant
+   staff broader access, sharing cannot ship until that access is narrowed or
+   the disclosure is updated.
+
+The release gate must compare the provider and staff-access statements with
+the deployed storage, worker and support controls before enabling sharing.
+
 ### Acceptance Criteria
 
 - [ ] Two members add different entities while offline. After both come online,
@@ -161,10 +201,17 @@ title }`. The server keeps the entity's last content with the tombstone for
   device then pulls, merges and pushes again. The server never has to
   understand entity fields, and a group of a few devices rarely collides.
   The cost is a retry loop on the device.
-- **Close the real race with a conditional write.** Two commits can pass the
-  revision check at the same moment. The manifest write must be conditional
-  on the manifest's R2 etag, so the loser gets 409. This is the follow-up the
-  existing code asks for.
+- **Close the real race without exposing partial commits.** Two commits can
+  pass the revision check at the same moment. Each commit stages changed
+  shards, the index, bundle sections and asset references under immutable,
+  revision-specific keys. It then conditionally switches the manifest's
+  current-revision pointer using the prior R2 etag. Readers use only objects
+  reachable from that pointer, so a loser gets 409 without overwriting data
+  visible to the winner. Failed commits can leave unreachable staged objects;
+  these are not visible changes and can be pruned after confirming that no
+  manifest points to them. Asset bytes must also use immutable or
+  content-addressed keys so a failed commit cannot replace bytes referenced
+  by the current revision.
 - **Merge by top-level field.** Two edits to different fields merge. Two edits
   to the same field do not, even if they touch different sentences. Merging
   inside a text field is left out: it is harder to get right, and "keep both"
@@ -232,9 +279,11 @@ see.
 - [ ] **Slice 1: Revision numbers** (#4773) — `revision` on the manifest;
       `rev`, `editedBy`, `editedAt` per entity. The client sends a base
       revision instead of a timestamp.
-- [ ] **Slice 2: Race-safe commit** (#4782) — the manifest write conditional
-      on its etag, so two commits from one revision cannot both succeed; the
-      loser leaves nothing behind and is told to retry.
+- [ ] **Slice 2: Race-safe commit** (#4782) — stage changed objects under
+      immutable revision-specific keys, then conditionally switch the
+      manifest pointer using its etag. Two commits from one revision cannot
+      both become visible; a loser leaves no visible changes and is told to
+      retry. Unreachable staged objects can be pruned safely.
 - [ ] **Slice 3: Tombstones and change feed** (#4779) — a tombstone for each
       removed entity, with its last content kept; `changes?since`, with a
       "resync" answer.
