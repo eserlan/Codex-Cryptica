@@ -25,6 +25,7 @@
   import HexExploreControls from "./HexExploreControls.svelte";
   import RegionGenerateMenu from "./region/RegionGenerateMenu.svelte";
   import type { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
+  import type { GeographyGenerationStore } from "#lib/stores/hex-crawl/geography-generation.svelte.js";
   import type {
     HexDiscoveryControls,
     HexDiscoveryWiring,
@@ -57,10 +58,12 @@
     discovery,
     storage,
     region,
+    geography,
   }: {
     store: HexCrawlStore;
     journey?: HexJourneyStore;
     region?: RegionGenerationStore;
+    geography?: GeographyGenerationStore;
     mapId: string;
     hex: HexCoord;
     isGM: boolean;
@@ -86,6 +89,10 @@
     version++;
   };
 
+  const suggestedSite = $derived.by(() => {
+    void version;
+    return store.stateFor(mapId).topology?.sites[`${hex.q},${hex.r}`];
+  });
   const record = $derived.by(() => {
     void version;
     return store.recordFor(mapId, hex);
@@ -367,6 +374,21 @@
 
       {#if region}
         <RegionGenerateMenu store={region} {mapId} {hex} />
+      {/if}
+      {#if geography && isGM && !isGuest}
+        <div class="space-y-2" data-testid="hex-geography-menu">
+          <h3 class="text-micro font-bold uppercase tracking-widest text-theme-text">Generate geography</h3>
+          <button type="button"
+            class="min-h-11 w-full rounded-lg border border-theme-border px-3 py-1.5 text-left text-sm font-bold text-theme-text hover:border-theme-primary/40"
+            onclick={() => { if (geography.open(mapId, hex)) store.closeHex(); }}>
+            Propose rivers, roads & settlement sites
+          </button>
+          {#if suggestedSite}
+            <p class="text-xs text-theme-muted">
+              Accepted {suggestedSite.kind} site in this hex. Use the location controls below to attach an existing place or create a new one.
+            </p>
+          {/if}
+        </div>
       {/if}
 
       {#key hexKey}
