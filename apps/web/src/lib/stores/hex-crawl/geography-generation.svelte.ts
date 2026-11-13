@@ -5,6 +5,8 @@ import {
   normalizeSeed,
   type CivilisationLevel,
   type GeographyProposal,
+  type HexEdgeFeatureKind,
+  type HexEdgeFeatureKey,
   type HexCoord,
   type HexEdgeKey,
   type HexKey,
@@ -23,7 +25,7 @@ export interface GeographyDeps {
 export interface GeographyReview {
   mapId: string;
   proposal: GeographyProposal;
-  disabledEdges: Set<HexEdgeKey>;
+  disabledEdgeFeatures: Set<HexEdgeFeatureKey>;
   disabledSites: Set<HexKey>;
 }
 
@@ -61,7 +63,7 @@ export class GeographyGenerationStore {
     this.review = {
       mapId,
       proposal,
-      disabledEdges: new Set(),
+      disabledEdgeFeatures: new Set(),
       disabledSites: new Set(),
     };
     return true;
@@ -93,13 +95,14 @@ export class GeographyGenerationStore {
     return this.rebuild({ seed: this.deps.newSeed() });
   }
 
-  toggleEdge(key: HexEdgeKey): void {
+  toggleEdge(key: HexEdgeKey, kind: HexEdgeFeatureKind): void {
     if (!this.review || this.busy || !(key in this.review.proposal.edges))
       return;
-    const disabled = new Set(this.review.disabledEdges);
-    if (disabled.has(key)) disabled.delete(key);
-    else disabled.add(key);
-    this.review.disabledEdges = disabled;
+    const disabled = new Set(this.review.disabledEdgeFeatures);
+    const featureKey = `${key}#${kind}`;
+    if (disabled.has(featureKey)) disabled.delete(featureKey);
+    else disabled.add(featureKey);
+    this.review.disabledEdgeFeatures = disabled;
   }
   toggleSite(key: HexKey): void {
     if (!this.review || this.busy || !(key in this.review.proposal.sites))
@@ -122,7 +125,7 @@ export class GeographyGenerationStore {
           const result = applyHexGeography(
             state,
             review.proposal,
-            review.disabledEdges,
+            review.disabledEdgeFeatures,
             review.disabledSites,
           );
           if (!result) {

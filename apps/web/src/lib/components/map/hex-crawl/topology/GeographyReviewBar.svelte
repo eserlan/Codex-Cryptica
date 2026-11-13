@@ -7,7 +7,14 @@
   let collapsed = $state(false);
   const edgesCount = $derived(
     review
-      ? Object.keys(review.proposal.edges).length - review.disabledEdges.size
+      ? Object.values(review.proposal.edges).reduce(
+          (count, edge) =>
+            count +
+            Number(Boolean(edge.river)) +
+            Number(Boolean(edge.road)) +
+            Number(Boolean(edge.coast)),
+          0,
+        ) - review.disabledEdgeFeatures.size
       : 0,
   );
   const sitesCount = $derived(
@@ -19,7 +26,7 @@
     review
       ? Object.entries(review.proposal.edges).filter(
           ([key, edge]) =>
-            !review.disabledEdges.has(key) &&
+            !review.disabledEdgeFeatures.has(`${key}#${kind}`) &&
             (kind === "coast"
               ? edge.coast
               : kind === "river"
@@ -129,8 +136,8 @@
           later to link or create a location.
         </p>
         <p class="text-xs text-theme-text">
-          {review.disabledEdges.size} edges and {review.disabledSites.size} sites
-          rejected.
+          {review.disabledEdgeFeatures.size} edge features and {review
+            .disabledSites.size} sites rejected.
         </p>
       </div>
     {/if}

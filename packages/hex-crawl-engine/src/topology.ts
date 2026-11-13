@@ -13,6 +13,12 @@ function parseHexKey(key: string): HexCoord | null {
  * not by the order of traversal. A connection can carry a river and a road.
  */
 export type HexEdgeKey = string;
+export type HexEdgeFeatureKind = "river" | "road" | "coast";
+export type HexEdgeFeatureKey = string;
+export const hexEdgeFeatureKey = (
+  edge: HexEdgeKey,
+  feature: HexEdgeFeatureKind,
+): HexEdgeFeatureKey => `${edge}#${feature}`;
 export const TOPOLOGY_VERSION = 1 as const;
 export type CivilisationLevel = "wilderness" | "frontier" | "settled";
 export type FeatureOrigin = "manual" | "generated";

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { GEOGRAPHY_MAX_RADIUS, type HexCrawlState } from "hex-crawl-engine";
+import {
+  GEOGRAPHY_MAX_RADIUS,
+  hexEdgeFeatureKey,
+  type HexCrawlState,
+} from "hex-crawl-engine";
 import { GeographyGenerationStore } from "./geography-generation.svelte";
 
 function makeStore(initial: HexCrawlState) {
@@ -59,6 +63,34 @@ describe("GeographyGenerationStore", () => {
     expect(store.open("map-1", { q: 0, r: 0 })).toBe(true);
     expect(store.setSeed("   ")).toBe(false);
     expect(store.review?.proposal.request.seed).toBe("seed-1");
+  });
+
+  it("tracks rejection independently for features sharing an edge", () => {
+    const { store } = makeStore({
+      enabled: true,
+      hexes: {
+        "0,0": { terrain: { kind: "preset", id: "plains" }, updatedAt: 1 },
+      },
+    });
+    expect(store.open("map-1", { q: 0, r: 0 })).toBe(true);
+    const edge = "0,0|1,0";
+    store.review!.proposal.edges = {
+      [edge]: {
+        river: {
+          from: "0,0",
+          to: "1,0",
+          provenance: { source: "generated" },
+        },
+        road: { kind: "road", provenance: { source: "generated" } },
+      },
+    };
+
+    store.toggleEdge(edge, "road");
+    expect(store.review!.disabledEdgeFeatures).toEqual(
+      new Set([hexEdgeFeatureKey(edge, "road")]),
+    );
+    store.toggleEdge(edge, "road");
+    expect(store.review!.disabledEdgeFeatures.size).toBe(0);
   });
 
   it("ignores cancel while an accept save is in flight", async () => {

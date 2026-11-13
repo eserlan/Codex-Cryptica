@@ -183,7 +183,8 @@
   const authorGeography = $derived(canAuthor ? services.geography : undefined);
   const onToggleEdge = $derived(
     geographyReview
-      ? (key: string) => services.geography.toggleEdge(key)
+      ? (key: string, kind: "river" | "road" | "coast") =>
+          services.geography.toggleEdge(key, kind)
       : undefined,
   );
   const onToggleSite = $derived(
@@ -250,13 +251,13 @@
   <HexGeographyOverlay
     {topology}
     proposal={geographyReview?.proposal}
-    disabledEdges={geographyReview?.disabledEdges}
+    disabledEdgeFeatures={geographyReview?.disabledEdgeFeatures}
     disabledSites={geographyReview?.disabledSites}
     gridConfig={config}
     {project}
     viewport={viewportSize}
     {zoom}
-    {onToggleEdge}
+    onToggleEdgeFeature={onToggleEdge}
     {onToggleSite}
   />
 

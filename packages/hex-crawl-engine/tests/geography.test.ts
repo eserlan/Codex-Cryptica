@@ -4,6 +4,7 @@ import {
   applyHexGeography,
   generateHexGeography,
   hexEdgeKey,
+  hexEdgeFeatureKey,
   normalizeHexCrawlState,
   parseHexEdgeKey,
   toHexKey,
@@ -180,6 +181,82 @@ describe("shared-edge topology", () => {
         new Set(),
       ),
     ).toBeNull();
+  });
+
+  it("refuses acceptance when an empty in-range hex gains terrain during review", () => {
+    const s = state();
+    delete s.hexes["1,0"];
+    const proposal = make(s);
+    const changed = {
+      ...s,
+      hexes: {
+        ...s.hexes,
+        "1,0": {
+          terrain: { kind: "preset" as const, id: "water" as const },
+          updatedAt: 2,
+        },
+      },
+    };
+    expect(
+      applyHexGeography(changed, proposal, new Set(), new Set()),
+    ).toBeNull();
+  });
+
+  it("accepts or rejects shared-edge features independently", () => {
+    const s = state();
+    const edge = hexEdgeKey(centre, { q: 1, r: 0 })!;
+    const generated = make(s);
+    const proposal = {
+      ...generated,
+      edges: {
+        [edge]: {
+          river: {
+            from: "0,0",
+            to: "1,0",
+            provenance: {
+              source: "generated" as const,
+              seed: "TEST-SEED",
+              rules: 1,
+            },
+          },
+          road: {
+            kind: "road" as const,
+            provenance: {
+              source: "generated" as const,
+              seed: "TEST-SEED",
+              rules: 1,
+            },
+          },
+          crossing: "bridge" as const,
+          coast: true,
+        },
+      },
+    };
+    const roadRejected = applyHexGeography(
+      s,
+      proposal,
+      new Set([hexEdgeFeatureKey(edge, "road")]),
+      new Set(),
+    )!;
+    expect(roadRejected.topology!.edges[edge]).toMatchObject({
+      river: proposal.edges[edge].river,
+      coast: true,
+    });
+    expect(roadRejected.topology!.edges[edge].road).toBeUndefined();
+    expect(roadRejected.topology!.edges[edge].crossing).toBeUndefined();
+
+    const riverRejected = applyHexGeography(
+      s,
+      proposal,
+      new Set([hexEdgeFeatureKey(edge, "river")]),
+      new Set(),
+    )!;
+    expect(riverRejected.topology!.edges[edge]).toMatchObject({
+      road: proposal.edges[edge].road,
+      coast: true,
+    });
+    expect(riverRejected.topology!.edges[edge].river).toBeUndefined();
+    expect(riverRejected.topology!.edges[edge].crossing).toBeUndefined();
   });
 
   it("river flow graph has no cycles or contradictory shared-edge directions", () => {

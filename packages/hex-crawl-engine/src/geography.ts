@@ -11,10 +11,12 @@ import { hashSeed } from "./region/seed";
 import { hexNoise } from "./region/noise";
 import {
   hexEdgeKey,
+  hexEdgeFeatureKey,
   parseHexEdgeKey,
   TOPOLOGY_VERSION,
   type CivilisationLevel,
   type HexEdgeFeature,
+  type HexEdgeFeatureKey,
   type HexEdgeKey,
   type HexTopology,
   type SettlementSite,
@@ -34,7 +36,7 @@ export interface GeographyProposal {
   sites: Record<HexKey, SettlementSite>;
   /** Fingerprints prevent accepting a stale preview over changes made meanwhile. */
   topologyStamp: string;
-  terrainStamps: Record<HexKey, number>;
+  terrainStamps: Record<HexKey, string>;
 }
 export interface GeographyInput {
   request: GeographyRequest;
@@ -487,8 +489,17 @@ function diffEdges(
 ): GeographyProposal["edges"] {
   const edges: GeographyProposal["edges"] = {};
   for (const [key, value] of Object.entries(working)) {
-    if (JSON.stringify(value) !== JSON.stringify(existing[key]))
-      edges[key] = value;
+    const before = existing[key] ?? {};
+    const additions: HexEdgeFeature = {};
+    for (const kind of ["river", "road", "crossing", "coast"] as const) {
+      if (
+        value[kind] !== undefined &&
+        JSON.stringify(value[kind]) !== JSON.stringify(before[kind])
+      ) {
+        Object.assign(additions, { [kind]: value[kind] });
+      }
+    }
+    if (Object.keys(additions).length) edges[key] = additions;
   }
   return edges;
 }
@@ -499,11 +510,11 @@ export function generateHexGeography(
 ): GeographyProposal | null {
   const { request, state, settlements, inBounds } = input;
   if (!isValidGeographyRequest(request, inBounds)) return null;
-  const keys = getHexRange(request.centre, request.radius)
+  const inRangeKeys = getHexRange(request.centre, request.radius)
     .filter(inBounds)
     .map(toHexKey)
-    .filter((key) => state.hexes[key]?.terrain)
     .sort(keyOrder);
+  const keys = inRangeKeys.filter((key) => state.hexes[key]?.terrain);
   if (!keys.length) return null;
   const seed = hashSeed(request.seed);
   const provenance = {
@@ -536,7 +547,13 @@ export function generateHexGeography(
     provenance,
   );
   const terrainStamps = Object.fromEntries(
-    keys.map((key) => [key, state.hexes[key]?.updatedAt ?? 0]),
+    inRangeKeys.map((key) => [
+      key,
+      JSON.stringify({
+        terrain: state.hexes[key]?.terrain ?? null,
+        updatedAt: state.hexes[key]?.updatedAt ?? 0,
+      }),
+    ]),
   );
   return {
     request,
@@ -554,8 +571,66 @@ function hasStaleSources(
   if (JSON.stringify(state.topology ?? null) !== proposal.topologyStamp)
     return true;
   return Object.entries(proposal.terrainStamps).some(
-    ([key, stamp]) => (state.hexes[key]?.updatedAt ?? 0) !== stamp,
+    ([key, stamp]) =>
+      JSON.stringify({
+        terrain: state.hexes[key]?.terrain ?? null,
+        updatedAt: state.hexes[key]?.updatedAt ?? 0,
+      }) !== stamp,
   );
+}
+
+function shouldApplyEdgeFeature(
+  key: HexEdgeKey,
+  kind: "river" | "road" | "coast",
+  candidate:
+    HexEdgeFeature["river"] | HexEdgeFeature["road"] | boolean | undefined,
+  existing:
+    HexEdgeFeature["river"] | HexEdgeFeature["road"] | boolean | undefined,
+  disabled: ReadonlySet<HexEdgeFeatureKey>,
+): boolean {
+  return (
+    candidate !== undefined &&
+    JSON.stringify(candidate) !== JSON.stringify(existing) &&
+    !disabled.has(hexEdgeFeatureKey(key, kind))
+  );
+}
+
+function addProposedCrossing(
+  feature: HexEdgeFeature,
+  current: HexEdgeFeature,
+  accepted: HexEdgeFeature,
+): void {
+  if (
+    feature.crossing &&
+    !current.crossing &&
+    accepted.river &&
+    accepted.road
+  ) {
+    accepted.crossing = feature.crossing;
+  }
+}
+
+function hasEdgeConnection(edge: HexEdgeFeature): boolean {
+  return Boolean(edge.river || edge.road || edge.coast);
+}
+
+function applyEdgeProposal(
+  key: HexEdgeKey,
+  feature: HexEdgeFeature,
+  existing: HexEdgeFeature | undefined,
+  disabled: ReadonlySet<HexEdgeFeatureKey>,
+): HexEdgeFeature | null {
+  if (!parseHexEdgeKey(key)) return null;
+  const current = existing ?? {};
+  const accepted: HexEdgeFeature = { ...current };
+  for (const kind of ["river", "road", "coast"] as const) {
+    const candidate = feature[kind];
+    if (shouldApplyEdgeFeature(key, kind, candidate, current[kind], disabled)) {
+      Object.assign(accepted, { [kind]: candidate });
+    }
+  }
+  addProposedCrossing(feature, current, accepted);
+  return hasEdgeConnection(accepted) ? accepted : null;
 }
 
 /**
@@ -566,14 +641,20 @@ function hasStaleSources(
 export function applyHexGeography(
   state: HexCrawlState,
   proposal: GeographyProposal,
-  disabledEdges: ReadonlySet<HexEdgeKey>,
+  disabledEdgeFeatures: ReadonlySet<HexEdgeFeatureKey>,
   disabledSites: ReadonlySet<HexKey>,
 ): HexCrawlState | null {
   if (hasStaleSources(state, proposal)) return null;
   const edges = { ...(state.topology?.edges ?? {}) };
   const sites = { ...(state.topology?.sites ?? {}) };
   for (const [key, feature] of Object.entries(proposal.edges)) {
-    if (!disabledEdges.has(key) && parseHexEdgeKey(key)) edges[key] = feature;
+    const accepted = applyEdgeProposal(
+      key,
+      feature,
+      edges[key],
+      disabledEdgeFeatures,
+    );
+    if (accepted) edges[key] = accepted;
   }
   for (const [key, site] of Object.entries(proposal.sites)) {
     if (!disabledSites.has(key) && !sites[key] && state.hexes[key]?.terrain)

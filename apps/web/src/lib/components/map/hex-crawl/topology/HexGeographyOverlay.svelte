@@ -3,7 +3,6 @@
   import type { Point } from "schema";
   import type {
     GeographyProposal,
-    HexEdgeKey,
     HexKey,
     HexTopology,
   } from "hex-crawl-engine";
@@ -18,35 +17,46 @@
   let {
     topology,
     proposal,
-    disabledEdges = new Set<HexEdgeKey>(),
+    disabledEdgeFeatures = new Set<string>(),
     disabledSites = new Set<HexKey>(),
     gridConfig,
     project,
     viewport,
     zoom,
-    onToggleEdge,
+    onToggleEdgeFeature,
     onToggleSite,
   }: {
     topology?: HexTopology;
     proposal?: GeographyProposal | null;
-    disabledEdges?: ReadonlySet<HexEdgeKey>;
+    disabledEdgeFeatures?: ReadonlySet<string>;
     disabledSites?: ReadonlySet<HexKey>;
     gridConfig: HexGridConfig;
     project: (point: Point) => Point;
     viewport: { width: number; height: number };
     zoom: number;
-    onToggleEdge?: (key: HexEdgeKey) => void;
+    onToggleEdgeFeature?: (
+      key: string,
+      kind: "river" | "road" | "coast",
+    ) => void;
     onToggleSite?: (key: HexKey) => void;
   } = $props();
 
   const projection = $derived({ gridConfig, project, viewport, zoom });
   const edges = $derived(
-    visibleGeographyEdges(topology, proposal, disabledEdges, projection),
+    visibleGeographyEdges(topology, proposal, disabledEdgeFeatures, projection),
   );
   const sites = $derived(
     visibleGeographySites(topology, proposal, disabledSites, projection),
   );
-  const editableEdges = $derived(edges.filter((edge) => edge.proposed));
+  const editableEdges = $derived(
+    edges.flatMap((item) =>
+      item.proposedFeatures.map((kind, index, kinds) => ({
+        item,
+        kind,
+        index: index - (kinds.length - 1) / 2,
+      })),
+    ),
+  );
 </script>
 
 <div
@@ -63,9 +73,14 @@
       <GeographyEdgeLines {item} />
     {/each}
   </svg>
-  {#if onToggleEdge}
-    {#each editableEdges as item (item.key)}
-      <GeographyEdgeToggle {item} onToggle={onToggleEdge} />
+  {#if onToggleEdgeFeature}
+    {#each editableEdges as toggle (`${toggle.item.key}#${toggle.kind}`)}
+      <GeographyEdgeToggle
+        item={toggle.item}
+        kind={toggle.kind}
+        index={toggle.index}
+        onToggle={onToggleEdgeFeature}
+      />
     {/each}
   {/if}
   {#each sites as item (item.key)}

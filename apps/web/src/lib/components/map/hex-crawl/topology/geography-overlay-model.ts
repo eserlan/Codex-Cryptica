@@ -2,6 +2,8 @@ import { hexToPoint, type HexGridConfig } from "map-engine";
 import {
   parseHexKey,
   parseHexEdgeKey,
+  type HexEdgeFeatureKey,
+  type HexEdgeFeatureKind,
   type GeographyProposal,
   type HexEdgeFeature,
   type HexEdgeKey,
@@ -14,8 +16,8 @@ import type { Point } from "schema";
 export interface EdgeItem {
   key: HexEdgeKey;
   edge: HexEdgeFeature;
-  proposed: boolean;
-  disabled: boolean;
+  proposedFeatures: HexEdgeFeatureKind[];
+  disabledFeatures: ReadonlySet<HexEdgeFeatureKey>;
   a: Point;
   b: Point;
   mid: Point;
@@ -64,8 +66,8 @@ function toEdgeItem(
   key: HexEdgeKey,
   edge: HexEdgeFeature,
   config: Projection,
-  proposed: boolean,
-  disabled: boolean,
+  proposedFeatures: HexEdgeFeatureKind[],
+  disabledFeatures: ReadonlySet<HexEdgeFeatureKey>,
 ): EdgeItem | null {
   const pair = parseHexEdgeKey(key);
   if (!pair) return null;
@@ -76,23 +78,37 @@ function toEdgeItem(
     !withinViewport(b, config.viewport)
   )
     return null;
-  return { key, edge, proposed, disabled, a, b, ...edgePoints(a, b, config) };
+  return {
+    key,
+    edge,
+    proposedFeatures,
+    disabledFeatures,
+    a,
+    b,
+    ...edgePoints(a, b, config),
+  };
 }
 
 export function visibleGeographyEdges(
   topology: HexTopology | undefined,
   proposal: GeographyProposal | null | undefined,
-  disabled: ReadonlySet<HexEdgeKey>,
+  disabled: ReadonlySet<HexEdgeFeatureKey>,
   config: Projection,
 ): EdgeItem[] {
-  const features = { ...(topology?.edges ?? {}), ...(proposal?.edges ?? {}) };
+  const existing = topology?.edges ?? {};
+  const features = { ...existing, ...(proposal?.edges ?? {}) };
   const result = Object.entries(features).flatMap(([key, feature]) => {
     const item = toEdgeItem(
       key,
       feature,
       config,
-      Boolean(proposal && key in proposal.edges),
-      disabled.has(key),
+      (["river", "road", "coast"] as const).filter(
+        (kind) =>
+          proposal?.edges[key]?.[kind] !== undefined &&
+          JSON.stringify(proposal.edges[key][kind]) !==
+            JSON.stringify(existing[key]?.[kind]),
+      ),
+      disabled,
     );
     return item ? [item] : [];
   });
