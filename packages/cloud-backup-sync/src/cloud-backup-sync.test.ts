@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
+import * as legacy from "./cloud-backup-sync";
+import * as entrypoint from "./index";
 import {
   ASSET_UPLOAD_CONCURRENCY,
   attachCloudBackup,
@@ -21,6 +23,30 @@ import {
   enableResponse,
   enabled,
 } from "./test-helpers";
+
+it("preserves the original module's runtime exports through the package entrypoint", () => {
+  expect(Object.keys(legacy).sort()).toEqual(
+    [
+      "ASSET_UPLOAD_CONCURRENCY",
+      "attachCloudBackup",
+      "deleteCloudBackup",
+      "disableCloudBackup",
+      "enableCloudBackup",
+      "fetchCloudBackupAsset",
+      "fetchCloudBackupIndex",
+      "getCloudBackupOwnershipCode",
+      "getCloudBackupStatus",
+      "getLocalCloudBackupRecord",
+      "listKnownCloudBackups",
+      "pushDeltaToCloudBackup",
+      "pushVaultToCloudBackup",
+      "restoreVaultFromCloudBackup",
+    ].sort(),
+  );
+  for (const key of Object.keys(legacy) as (keyof typeof legacy)[]) {
+    expect(entrypoint[key]).toBe(legacy[key]);
+  }
+});
 
 describe("enableCloudBackup", () => {
   it("stores the record returned by the server", async () => {
