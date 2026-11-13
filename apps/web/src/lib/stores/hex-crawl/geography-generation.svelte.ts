@@ -1,6 +1,7 @@
 import {
   applyHexGeography,
   generateHexGeography,
+  GEOGRAPHY_MAX_RADIUS,
   normalizeSeed,
   type CivilisationLevel,
   type GeographyProposal,
@@ -74,7 +75,12 @@ export class GeographyGenerationStore {
   }
 
   setRadius(radius: number): boolean {
-    return this.rebuild({ radius });
+    if (!Number.isFinite(radius)) return false;
+    const clamped = Math.max(
+      1,
+      Math.min(GEOGRAPHY_MAX_RADIUS, Math.round(radius)),
+    );
+    return this.rebuild({ radius: clamped });
   }
   setCivilisation(civilisation: CivilisationLevel): boolean {
     return this.rebuild({ civilisation });

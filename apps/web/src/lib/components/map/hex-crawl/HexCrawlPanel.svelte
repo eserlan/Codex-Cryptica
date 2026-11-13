@@ -391,6 +391,12 @@
           >
             Propose rivers, roads & settlement sites
           </button>
+          {#if geography.message === "empty"}
+            <p role="alert" class="text-xs text-theme-text">
+              No mapped terrain in range. Paint or generate terrain around this
+              hex first.
+            </p>
+          {/if}
           {#if suggestedSite}
             <p class="text-xs text-theme-text">
               Accepted {suggestedSite.kind} site in this hex. Use the location controls

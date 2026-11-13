@@ -212,7 +212,7 @@ Dynamically resize the left and right sidebars to suit your workspace needs. Hov
 Draft entities stay separate from your active lore until you review them. Open the Review tab in Entity Explorer, or use the draft controls in the entity panel, to approve or reject them.
 
 ### AI Description Revision
-Instantly generate or refine entity descriptions. The AI produces both a player-facing 'Chronicle' and a GM-facing 'Lore' entry based on your existing notes, tags, and connections. Review and save changes directly within the entity detail view.
+Instantly generate or refine entity descriptions. The AI produces both the main text and the GM notes based on your existing notes, tags, and connections. Open the More menu in the side panel or Zen mode and choose AI revise description, then review and save changes.
 
 ### P2P Connection Manager
 Establish direct peer-to-peer connections between campaign hosts and trusted guests. Features an active heartbeat monitor to maintain connection stability, measure round-trip latency, and support automatic reconnection backoffs during brief signal drops.
@@ -224,7 +224,7 @@ Capture fleeting ideas instantly. Press Ctrl+I or Cmd+I from anywhere to toggle 
 Organize your world hierarchically. Drag and drop entities in the explorer to nest them under parents (e.g. putting a tavern inside a city), or open an entity and use Set parent beneath its title to search for one; the same place shows the current parent, and lets you change it or move the entity back to the top level. Expand/collapse nodes using the chevron. When you delete a parent, its children are promoted to the root level. Cycle detection prevents recursive loop errors, so an entity is never offered itself or anything nested beneath it.
 
 ### Entity Links in Content
-When reading an entity's content or lore, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode; the editor shows plain text while you are writing.
+When reading an entity's text or GM notes, names of other vault entities are automatically highlighted as clickable links. Click any highlighted name to navigate directly to that entity. Links work with full titles and registered aliases. They only appear in read mode; the editor shows plain text while you are writing.
 
 ### Guest Character Chat
 Invite world participants to chat in-character with NPCs. GMs can enable guest chat on specific characters, configure a 'Public' or 'Hybrid' context scope, and review synced transcripts to promote emergent lore directly into official rumors. In a private host chat, choose a campaign character to speak as so the NPC can respond to their role and relationship. If you speak as another saved character, that conversation also appears (read-only, with a link back) under that character's own Chat tab.
@@ -293,7 +293,7 @@ Change how a Stat Sheet looks without touching its data. Click Presentations to 
 Run overland exploration with point-to-point hex grids. Choose pointy-topped or flat-topped orientation, toggle in-cell coordinates, snap tokens and pins to hex centers, and reveal or hide fog of war by hex. Rulers measure travel distance directly in hexes.
 
 ### Hex Crawl mode
-Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers.
+Click a hex with no pin or token to open its panel. Track its terrain, your notes and whether the party has explored it. Only you see this: players and guests never see hex notes, terrain, drafts or explored markers. Use Generate region in a hex panel to propose seeded, coherent terrain on your device with no AI, review it on the map, then accept or cancel.
 
 ### Biome Explorer
 Browse real-world environments with credited pictures, see why each one looks the way it does, and explore it under /biomes or Tools. Everything works without AI and the text works offline.
@@ -311,7 +311,7 @@ Create one commercial organisation with its owner, staff, suppliers, rivals, pre
 
 **In short:** Codex Cryptica is a place to build and run your tabletop campaign — your characters, places, factions, maps, and notes, all in one workspace. Your working vault is saved on your device. No account is needed for local writing, and the core tools work offline after the app has loaded. AI requests send relevant context to a provider; publishing and opted-in cloud backups also upload data.
 
-You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main description, and **Lore** is your private, GM-only notes. Don't worry about memorising them; they're explained in context the first time they matter.
+You'll see a few Codex-specific words as you go — a **Vault** is one world (your whole campaign), a **Chronicle** is an entity's main text (its description), and **Lore** is the private part, shown as **GM notes**. Don't worry about memorising them; they're explained in context the first time they matter.
 
 For power users: your worlds are saved as clean local Markdown files (in the browser's Origin Private File System), so they remain fully yours, portable, and safe from cloud platform lock-in.
 
@@ -323,8 +323,8 @@ Follow this quick checklist to set up your first vault and see Codex Cryptica's 
 
 1. **Create a vault**: Open the vault switcher, choose **NEW**, and name your world.
 2. **Add an entity**: Use **+ Create** in the header or **+** in the explorer, choose **Character**, and name your character.
-3. **Write**: Open the entity, click **EDIT**, add its Chronicle and any private Lore, then **SAVE CHANGES**.
-4. **Connect**: Create a Location, return to the character’s **Status** tab, and use **+ Add** under Connections to link them.
+3. **Write**: Open the entity, click **Edit**, write its text and any **GM notes**, then **Save changes**.
+4. **Connect**: Create a Location, return to the character’s **Overview** tab, and use **+ Add** under Connections to link them.
 5. **Explore**: Open the **Graph** to see both entities and their connection. Use **Groups** for connected group backgrounds, or **Redraw** to rearrange the graph.
 
 For AI revisions, use **AI Revise Description** (sparkles) in the entity side panel or Zen Mode. Review the draft before **Apply Changes**. See [Creating and Editing Entities](/help#help/creating-and-editing-entities).
@@ -346,8 +346,8 @@ Your worldbuilding begins with a **Vault**—a dedicated workspace containing al
 Every person, place, or thing in your world is represented as an **Entity**.
 
 - **Entities**: Classified by category (Character, Creature, Location, Item, Event, Faction, or Note).
-- **Chronicles**: The primary, public-facing text field of your entity, written in Markdown. Think of it as the entity's main description or log (which can be styled and custom-renamed under different world themes as a _Tome_, _Log_, or _Journal_ for flavor).
-- **Lore**: Hidden metadata and secrets. The Lore section is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
+- **Chronicles**: The entity's main text, written in Markdown. It is the entity's description. Some themes show their own word beside it, such as _Tome_, _Log_, or _Journal_.
+- **Lore**: The private part of an entity, shown as **GM notes** (a theme may show its own word beside it). It is only visible to the GM and is used by the **Lore Oracle (AI)** as confidential context. It is automatically stripped when sharing or publishing player-facing snapshots.
 - **Hierarchy & Nesting**: In the left-hand Explorer panel, drag and drop entities to nest them (e.g., place a _Tavern_ inside a _City_). CC automatically checks for recursive loops to prevent cycle errors, and deleting a parent automatically promotes child entities to the root level.
 
 ---
@@ -407,7 +407,7 @@ The Lore Oracle is your co-author and worldbuilding assistant, powered by OpenAI
 - **Connection**: See **Settings → Intelligence** for system-proxy access or a personal key. See **Oracle AI Access and Personal Keys** for the provider and privacy details.
 - **Oracle Commands**:
   - `/draw [subject]`: Generate an image for an entity using your world's custom **Art Direction** metadata or theme styles.
-  - `/revise`: Generate suggested Chronicle and Lore text for a selected entity in chat. You can also use **AI Revise Description** in the entity side panel or Zen Mode, then review and apply or discard the draft.
+  - `/revise`: Generate suggested text and GM notes for a selected entity in chat. You can also use **AI Revise Description** in the entity side panel or Zen Mode (in the **More** menu), then review and apply or discard the draft.
   - `/create [concept]`: Ask the Oracle to draft a new entity.
 - **Guest Character Chat**: Let players chat in-character with Characters. GMs can review transcripts to turn conversational roleplay into official lore.
 
@@ -459,27 +459,27 @@ If you would rather have a draft written for you, use a generator or the Oracle.
 ## Edit an entity
 
 1. Open the entity from the explorer, the graph or search.
-2. Click **EDIT** at the bottom of its page.
+2. Click **Edit** in the header of the side panel or Zen mode.
 3. Change the title, aliases, labels or text.
-4. Click **SAVE CHANGES**, or **CANCEL** to leave the entity as it was.
+4. Click **Save changes**, or **Cancel** to leave the entity as it was.
 
 While you have unsaved edits, the footer shows **Unsaved changes**. Cancelling discards them.
 
 ## Rename an entity or entry
 
-To rename an entry, open the entity and click **EDIT**. Change its title, then
-click **SAVE CHANGES**. **CANCEL** leaves the original name unchanged.
+To rename an entry, open the entity and click **Edit** in the header of the side panel or Zen mode. Change its
+title, then click **Save changes**. **Cancel** leaves the original name unchanged.
 Renaming changes the existing entity; it does not create a second entry.
 
 ## AI-assisted revisions
 
-You can revise an entity’s **Chronicle and Lore** directly from its entity view.
+You can revise an entity’s text and **GM notes** directly from its entity view.
 
 1. Open the entity in the side panel or **Zen Mode**.
-2. Click the sparkle button labelled **AI Revise Description**. In the side panel it is near the entity title; in Zen Mode it is in the editor toolbar.
+2. In the side panel, open **More** near the entity title and choose **AI revise description**. In Zen Mode, click **AI Revise Description** in the editor toolbar.
 3. In **Revise Description**, optionally enter guidance in **AI Instructions / Corrections (Highest Priority)**. For example: “Keep the history, but explain their alliance more clearly.”
 4. Click **Revise**, or press **Ctrl + Enter** (Cmd + Enter on macOS).
-5. Review the generated Chronicle and Lore. Click **Apply Changes** to save, or **Discard** to keep the original.
+5. Review the generated text and GM notes. Click **Apply Changes** to save, or **Discard** to keep the original.
 
 Click **Cancel** in the instructions dialog to leave without generating a revision.
 Generating a draft does not save it. When applying a revision changes existing Lore
@@ -492,7 +492,7 @@ sparkle button when you want the instructions dialog and inline draft review. AI
 
 ## Delete an entity
 
-Click **DELETE** at the bottom of the entity page and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
+Open **More** in the side panel or Zen mode header, choose **Delete**, and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
 
 ## Guest vaults
 
@@ -1685,6 +1685,28 @@ Explore only sends anything when you ask for it, with AI enabled. The first time
 With **AI Disabled** turned on in Settings, Explore rolls on built-in terrain tables instead. You get the same six parts and can review and save them the same way. Custom terrain has no tables of its own, so general tables are used, and the panel tells you so. If an AI draft fails, you see a plain message with **Try again** and **Roll on terrain tables**.
 
 Explore is not available in a guest vault.
+
+## Generate a region
+
+Open a hex and choose **Generate region** to fill empty hexes with terrain that hangs together: forests beside plains, hills leading up to mountains, coast where land meets water. It runs on your device. No AI is used, so it works with **AI Disabled** on.
+
+- **Grow from this hex** proposes terrain for this hex and its empty neighbours.
+- **Generate area** proposes terrain for the empty hexes around this one. Use the radius slider, 1 to 12.
+- **Fill gaps** proposes terrain only for empty hexes between areas you have already mapped.
+- **Regenerate generated terrain** replaces only terrain this tool made earlier, and tells you how many hexes would change and how many of those are explored.
+
+You see the proposal on the map first and nothing is saved. Tap a proposed hex to change it by hand, **Reroll** for a new seed, or type a seed to get the same result again. **Landscape and amounts** lets you pick a landscape and make a terrain less or more common, or turn it off. **Accept** saves everything in one go; **Cancel** saves nothing. If saving fails, nothing is changed. After accepting you can **Undo** until you change anything else.
+
+Terrain you set yourself is never replaced, and notes, pins, fog and exploration are never touched. Hexes that gain terrain while you are reviewing are skipped when you accept.
+
+## Generate rivers, roads and settlement sites
+
+Open a hex as the GM and choose **Generate geography** → **Propose rivers, roads & settlement sites** to lay down coastlines, rivers, roads or paths, crossings and suggested settlement sites across mapped terrain. It runs deterministically on your device with **AI Disabled** supported, and requires mapped terrain in range (not available in guest vaults).
+
+- **Review controls**: Choose **Civilisation** (**Wilderness**, **Frontier**, or **Settled**), adjust **Radius (hexes)** (1 to 12), edit the **Seed**, or choose **Reroll proposals** for a new seed.
+- **Reject or restore features**: Tap the checkmark button on any proposed river, road, coast edge, or settlement site directly on the map to reject or restore it before saving.
+- **Accept or cancel**: **Accept** saves all remaining proposals in one atomic update; **Cancel** discards them. Existing terrain, pinned places, and authored edges stay fixed. If the map changes during review, **Accept** refuses the stale write so you can cancel and regenerate; if saving fails, no partial changes are applied.
+- **Settlement sites are suggestions**: Accepted sites remain map suggestions rather than Vault entities. Select a hex with an accepted site later and use the location controls to attach an existing place or create a new one.
 
 ## Hex crawling solo
 
@@ -3945,7 +3967,7 @@ Built a monster you want in another campaign? A stash of magic items worth reusi
 
 Three ways in:
 
-- Open an entity and click **Send to Shelf** in its header
+- Open an entity and click **Send to Shelf** in the **More** menu, in the side panel or in Zen mode
 - Select several entities in the **graph**, right-click, and choose **Send to Shelf**
 - Do the same from the **table**
 

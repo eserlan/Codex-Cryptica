@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { GEOGRAPHY_MAX_RADIUS } from "hex-crawl-engine";
   import type { GeographyGenerationStore } from "#lib/stores/hex-crawl/geography-generation.svelte.js";
 
   let { store }: { store: GeographyGenerationStore } = $props();
@@ -26,6 +27,21 @@
                 : edge.road),
         ).length
       : 0;
+
+  function onRadiusChange(event: Event & { currentTarget: HTMLInputElement }) {
+    if (!review) return;
+    store.setRadius(Number(event.currentTarget.value));
+    event.currentTarget.value = String(
+      store.review?.proposal.request.radius ?? review.proposal.request.radius,
+    );
+  }
+
+  function onSeedChange(event: Event & { currentTarget: HTMLInputElement }) {
+    if (!review) return;
+    if (!store.setSeed(event.currentTarget.value)) {
+      event.currentTarget.value = review.proposal.request.seed;
+    }
+  }
 </script>
 
 {#if review}
@@ -86,11 +102,10 @@
             aria-label="Geography radius"
             type="number"
             min="1"
-            max="12"
+            max={GEOGRAPHY_MAX_RADIUS}
             step="1"
             value={review.proposal.request.radius}
-            onchange={(event) =>
-              store.setRadius(Number(event.currentTarget.value))}
+            onchange={onRadiusChange}
           />
         </label>
         <label class="block space-y-1 text-xs">
@@ -100,7 +115,7 @@
             aria-label="Geography seed"
             value={review.proposal.request.seed}
             maxlength="32"
-            onchange={(event) => store.setSeed(event.currentTarget.value)}
+            onchange={onSeedChange}
           />
         </label>
         <button
@@ -127,6 +142,10 @@
     {:else if store.message === "failed"}
       <p role="alert" class="mt-2 text-xs">
         Could not save the geography. No partial changes were applied.
+      </p>
+    {:else if store.message === "empty"}
+      <p role="alert" class="mt-2 text-xs">
+        No mapped terrain in range to propose geography.
       </p>
     {/if}
     <div class="sticky bottom-0 mt-3 flex gap-2 bg-theme-surface pt-2">
