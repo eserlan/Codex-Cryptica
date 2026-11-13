@@ -30,6 +30,8 @@
   import RegionProposalOverlay from "./region/RegionProposalOverlay.svelte";
   import RegionReviewBar from "./region/RegionReviewBar.svelte";
   import RegionUndoBar from "./region/RegionUndoBar.svelte";
+  import HexGeographyOverlay from "./topology/HexGeographyOverlay.svelte";
+  import GeographyReviewBar from "./topology/GeographyReviewBar.svelte";
   import type { NoticeStorage } from "./hex-discovery-notice";
   import { browserStorage } from "#lib/utils/runtime-deps.js";
 
@@ -61,11 +63,11 @@
     mapStore.gridType === "hex-flat" ? "flat" : "pointy",
   );
   const labelConfig = $derived(mapStore.hexLabelConfig);
-  const records = $derived(
-    mapId && visible
-      ? normalizeHexCrawlState(vault.maps[mapId]?.hexCrawl).hexes
-      : {},
+  const crawl = $derived(
+    mapId && visible ? normalizeHexCrawlState(vault.maps[mapId]?.hexCrawl) : null,
   );
+  const records = $derived(crawl?.hexes ?? {});
+  const topology = $derived(crawl?.topology);
   const selected = $derived(
     services.store.selectedHex && services.store.selectedHex.mapId === mapId
       ? services.store.selectedHex
@@ -166,6 +168,11 @@
       ? services.region.review
       : null,
   );
+  const geographyReview = $derived(
+    services.geography.review && services.geography.review.mapId === mapId
+      ? services.geography.review
+      : null,
+  );
   $effect(() => {
     // Leaving the map or turning the mode off drops the preview, the message and the undo.
     const active = visible ? mapId : null;
@@ -173,12 +180,17 @@
       services.region.leave();
     }
     if (!services.region.review) regionPick = null;
-    // A tap on the map during a review must not open the hex panel behind it.
-    else if (services.store.selectedHex) services.store.closeHex();
+    if (services.geography.mapId && services.geography.mapId !== active) {
+      services.geography.leave();
+    }
+    // A tap on the map during either review must not open the hex panel behind it.
+    if ((services.region.review || services.geography.review) && services.store.selectedHex)
+      services.store.closeHex();
   });
   onDestroy(() => {
     services.journey.dispose();
     services.region.leave();
+    services.geography.leave();
   });
 </script>
 
@@ -192,6 +204,19 @@
     unproject={(point) => mapStore.unproject(point)}
     viewport={viewportSize}
     {zoom}
+  />
+
+  <HexGeographyOverlay
+    {topology}
+    proposal={geographyReview?.proposal}
+    disabledEdges={geographyReview?.disabledEdges}
+    disabledSites={geographyReview?.disabledSites}
+    gridConfig={config}
+    {project}
+    viewport={viewportSize}
+    {zoom}
+    onToggleEdge={geographyReview ? (key) => services.geography.toggleEdge(key) : undefined}
+    onToggleSite={geographyReview ? (key) => services.geography.toggleSite(key) : undefined}
   />
 
   <HexJourneyOverlay
@@ -224,8 +249,12 @@
       {orientation}
       onSelect={(key) => (regionPick = key)}
     />
-  {:else}
+  {:else if !geographyReview}
     <RegionUndoBar store={services.region} />
+  {/if}
+
+  {#if geographyReview}
+    <GeographyReviewBar store={services.geography} />
   {/if}
 
   <div
@@ -258,7 +287,7 @@
     </div>
   {/if}
 
-  {#if selected && mapId && !review}
+  {#if selected && mapId && !review && !geographyReview}
     <HexCrawlPanel
       store={services.store}
       journey={services.journey}
@@ -275,6 +304,7 @@
       {discovery}
       {storage}
       region={isGM && !isGuest ? services.region : undefined}
+      geography={isGM && !isGuest ? services.geography : undefined}
     />
   {/if}
 {/if}
