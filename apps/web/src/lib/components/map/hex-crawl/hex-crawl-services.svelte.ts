@@ -177,6 +177,7 @@ export function createHexCrawlServices(): HexCrawlServices {
     settlements: (mapId) => {
       const config = activeHexGridConfig(mapStore);
       return (vault.maps[mapId]?.pins ?? []).flatMap((pin) => {
+        if (!pin.entityId || vault.entities[pin.entityId]?.type !== "location") return [];
         if (pin.hexCoordinates) return [pin.hexCoordinates];
         return config && pin.coordinates ? [pointToHex(pin.coordinates, config)] : [];
       });
