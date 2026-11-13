@@ -3,7 +3,7 @@
 A gaming group edits one vault together. Each member keeps a full local copy
 that works offline, and Codex Cryptica Cloud merges their changes.
 
-This plan steers the epic. Each slice in section 3 is one issue, sized for one
+This plan steers the epic (#4772). Each slice in section 3 is one issue, sized for one
 factory job, and ships on its own.
 
 ## 1. Specification (What & Why)
@@ -209,42 +209,52 @@ title }`. The server keeps the entity's last content with the tombstone for
 
 ### Risks
 
-- Slices 1 and 3 change how the worker stores and authorises backups. Treat
+- Slices 1, 2 and 5 change how the worker stores and authorises backups. Treat
   them as high risk: security review, and a worker deploy that is separate
   from the web deploy. The web app must keep working against the old worker
   and the worker against the old web app.
-- Automatic sync spreads a mistake to every member within seconds. Slices 4
-  and 6 are the safety net; until they ship, keep sharing behind a feature
+- Automatic sync spreads a mistake to every member within seconds. Slices 7
+  and 9 are the safety net; until they ship, keep sharing behind a feature
   flag.
-- Restore points multiply storage per shared vault. Slice 6 must state the
+- Restore points multiply storage per shared vault. Slice 9 must state the
   cost and the limit before it is built.
 
 ---
 
 ## 3. Tasks & Execution Sequence (When)
 
-Six slices, in order. Each is one issue and one factory job, stacked on the one
-before. Every slice starts with failing tests that cover the success path and
-at least one failure path, and ends with the verification gate.
+Nine slices, in order. Each is one issue and one factory job, stacked on the
+one before, and none is larger than medium. Every slice starts with failing
+tests that cover the success path and at least one failure path, and ends with
+the verification gate. Slices 1 to 3 and slice 5 change nothing a user can
+see.
 
-- [ ] **Slice 1: Server revisions and change feed** — `revision` on the
-      manifest; `rev`, `editedBy`, `editedAt` per entity; tombstones; the
-      commit conditional on the manifest etag; `changes?since`. The client
-      sends a base revision instead of a timestamp. Behaviour for users is
-      unchanged.
-- [ ] **Slice 2: Merge on the device** — `merge.ts` and `change-feed.ts` in
-      `cloud-backup-sync`; the last synced copy kept per entity; pull, merge
-      and retry on 409; background pull. One owner with two devices stops
-      seeing "Sync paused" for changes that merge.
-- [ ] **Slice 3: Share with group** — the editor role and token; sharing on,
-      off and replace link; the consent screen; the join route with a display
-      name; attribution; the device cap; help content. Behind a feature flag.
-- [ ] **Slice 4: Shared trash** — the trash list, restore, the 30-day purge,
-      and "an edit beats a delete".
-- [ ] **Slice 5: Maps and canvases** — whole-item sync with a revision each,
-      and "keep both" on a clash.
-- [ ] **Slice 6: Restore points and rollback** — one snapshot per day for 30
-      days; the owner's list; rollback as a commit. Remove the feature flag.
+- [ ] **Slice 1: Revisions and safe commit** (#4773) — `revision` on the
+      manifest; `rev`, `editedBy`, `editedAt` per entity; the commit
+      conditional on the manifest etag. The client sends a base revision
+      instead of a timestamp.
+- [ ] **Slice 2: Tombstones and change feed** (#4779) — a tombstone for each
+      removed entity, with its last content kept; `changes?since`, with a
+      "resync" answer.
+- [ ] **Slice 3: Merge engine** (#4774) — `merge.ts` in `cloud-backup-sync`
+      as pure functions; the last synced copy kept per entity. Not yet used by
+      sync.
+- [ ] **Slice 4: Pull, merge and retry** (#4780) — `change-feed.ts`; pull,
+      merge and retry on 409; background pull. One owner with two devices
+      stops seeing "Sync paused" for changes that merge.
+- [ ] **Slice 5: Editor link on the server** (#4775) — the editor role and
+      token; sharing on, off and replace link; the owner-only guard; the
+      device cap.
+- [ ] **Slice 6: Share and join in the app** (#4781) — the consent screen;
+      the link; the join route with a display name; attribution; help
+      content. Behind a feature flag.
+- [ ] **Slice 7: Shared trash** (#4776) — the trash list, restore, the 30-day
+      purge, and "an edit beats a delete".
+- [ ] **Slice 8: Maps and canvases** (#4777) — whole-item sync with a
+      revision each, and "keep both" on a clash.
+- [ ] **Slice 9: Restore points and rollback** (#4778) — one snapshot per day
+      for 30 days; the owner's list; rollback as a commit. Remove the feature
+      flag.
 
 ### Verification gate (every slice)
 
@@ -262,7 +272,7 @@ at least one failure path, and ends with the verification gate.
 ## Open questions
 
 - The device cap is proposed at 10 active devices per shared vault. Confirm
-  the number in slice 3.
+  the number in slice 5.
 - How often a device pulls is proposed at 30 seconds while the app is open.
-  Confirm against the worker's rate limits in slice 2.
-- The storage cost and limit for restore points. Settle in slice 6.
+  Confirm against the worker's rate limits in slice 4.
+- The storage cost and limit for restore points. Settle in slice 9.
