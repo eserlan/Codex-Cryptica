@@ -8,10 +8,9 @@
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
-  import { mapSession } from "#lib/stores/map-session.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import SilhouetteAvatar from "#lib/components/ui/SilhouetteAvatar.svelte";
+  import { saveEntityImageFile } from "./entity-image-file.js";
 
   let {
     entity,
@@ -129,6 +128,7 @@
           entity.id,
         );
         await vault.updateEntity(entity.id, { image, thumbnail });
+        if (isEditing) editImage = image;
       } catch (err) {
         debugStore.error("[DetailImage] Failed to save Oracle image:", err);
         notificationStore.notify(
@@ -159,23 +159,13 @@
 
   async function handleImageFile(file: File) {
     if (!entity || !file) return;
-    if (!file.type.startsWith("image/")) {
-      imageUploadError = "Choose an image file to upload.";
-      notificationStore.notify(imageUploadError, "error");
-      return;
-    }
-
-    try {
-      const { image, thumbnail } = await vault.saveImageToVault(
-        file,
-        entity.id,
-      );
-      await vault.updateEntity(entity.id, { image, thumbnail });
+    const result = await saveEntityImageFile(entity.id, file);
+    if (result.ok) {
       imageUploadError = "";
-    } catch (err) {
-      debugStore.error("[DetailImage] Failed to save external file:", err);
-      imageUploadError = "Failed to save image. Please try again.";
-      notificationStore.notify(imageUploadError, "error");
+      // Editing keeps its own copy of the path; Save would overwrite the upload.
+      if (isEditing) editImage = result.image;
+    } else {
+      imageUploadError = result.error;
     }
   }
 
@@ -197,60 +187,43 @@
   role="region"
   aria-label="Image drop zone"
 >
-  {#if !isEditing && !vault.isGuest}
-    <input
-      bind:this={fileInput}
-      type="file"
-      accept="image/*"
-      class="sr-only"
-      onchange={handleFileInputChange}
-      aria-hidden="true"
-      tabindex="-1"
-    />
-    <div class="mb-4 px-4 md:px-6">
-      <div class="flex items-stretch gap-2">
-        <button
-          type="button"
-          onclick={() => fileInput?.click()}
-          class="touch-target flex flex-1 items-center justify-center gap-1.5 text-center rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
-          aria-describedby={imageUploadError
-            ? "entity-image-upload-error"
-            : undefined}
-        >
-          <span
-            class="icon-[lucide--upload] inline-block h-4 w-4 shrink-0 text-theme-primary"
-            aria-hidden="true"
-          ></span>
-          {entity.image ? "Replace image" : "Choose image"}
-        </button>
-
-        <button
-          type="button"
-          onclick={() => modalUIStore.openSilhouettePicker(entity)}
-          class="touch-target rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50 flex items-center justify-center gap-1.5"
-          title="Customize vector silhouette"
-        >
-          <span
-            class="icon-[lucide--user] inline-block h-4 w-4 shrink-0 text-theme-accent"
-            aria-hidden="true"
-          ></span>
-          Silhouette
-        </button>
-      </div>
-      {#if imageUploadError}
-        <p
-          id="entity-image-upload-error"
-          class="mt-2 text-xs text-theme-error"
-          role="alert"
-        >
-          {imageUploadError}
-        </p>
-      {/if}
-    </div>
-  {/if}
-
   {#if isEditing}
     <div class="mb-4 px-4 md:px-6">
+      {#if !vault.isGuest}
+        <input
+          bind:this={fileInput}
+          type="file"
+          accept="image/*"
+          class="sr-only"
+          onchange={handleFileInputChange}
+          aria-hidden="true"
+          tabindex="-1"
+        />
+        <div class="mb-3 flex items-stretch gap-2">
+          <button
+            type="button"
+            onclick={() => fileInput?.click()}
+            class="touch-target flex flex-1 items-center justify-center gap-1.5 text-center rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          >
+            <span
+              class="icon-[lucide--image-up] inline-block h-4 w-4 shrink-0 text-theme-primary"
+              aria-hidden="true"
+            ></span>
+            Change image
+          </button>
+          <button
+            type="button"
+            onclick={() => modalUIStore.openSilhouettePicker(entity)}
+            class="touch-target flex flex-1 items-center justify-center gap-1.5 text-center rounded border border-theme-border bg-theme-surface px-3 py-2 text-micro font-bold uppercase tracking-widest text-theme-text transition hover:border-theme-primary hover:bg-theme-bg/50"
+          >
+            <span
+              class="icon-[lucide--user-round] inline-block h-4 w-4 shrink-0 text-theme-text"
+              aria-hidden="true"
+            ></span>
+            Choose silhouette
+          </button>
+        </div>
+      {/if}
       <label
         class="block text-micro text-theme-secondary font-bold mb-1"
         for="entity-image-url">IMAGE URL</label
@@ -335,32 +308,6 @@
           Click to enlarge
         </div>
       </button>
-      {#if p2pHost.isHosting}
-        <button
-          type="button"
-          onclick={() => {
-            if (!entity.image) return;
-            const success = mapSession.showImageToPlayers(
-              entity.title,
-              entity.image,
-            );
-            if (success) {
-              notificationStore.notify("Shared image with guests", "success");
-            }
-          }}
-          class="w-full mt-2 bg-theme-surface hover:bg-theme-surface/80 border border-theme-primary/30 hover:border-theme-primary transition-all flex items-center justify-center gap-2 px-3 py-1.5 rounded shadow-sm group/btn relative overflow-hidden mb-4"
-          aria-label="Show image to guests"
-        >
-          <span
-            aria-hidden="true"
-            class="icon-[lucide--share-2] w-4 h-4 text-theme-primary"
-          ></span>
-          <span
-            class="text-nano font-bold tracking-widest text-theme-primary relative z-10"
-            >SHOW TO GUESTS</span
-          >
-        </button>
-      {/if}
     </div>
   {:else}
     <div class="px-4 md:px-6">
@@ -504,6 +451,16 @@
         </button>
       {/if}
     </div>
+  {/if}
+
+  {#if imageUploadError}
+    <p
+      id="entity-image-upload-error"
+      class="mb-4 px-4 text-xs text-theme-danger md:px-6"
+      role="alert"
+    >
+      {imageUploadError}
+    </p>
   {/if}
 
   {#if isDraggingOver}

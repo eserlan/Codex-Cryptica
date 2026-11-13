@@ -25,27 +25,27 @@ If you would rather have a draft written for you, use a generator or the Oracle.
 ## Edit an entity
 
 1. Open the entity from the explorer, the graph or search.
-2. Click **EDIT** at the bottom of its page.
+2. Click **Edit** in the header of the side panel or Zen mode.
 3. Change the title, aliases, labels or text.
-4. Click **SAVE CHANGES**, or **CANCEL** to leave the entity as it was.
+4. Click **Save changes**, or **Cancel** to leave the entity as it was.
 
 While you have unsaved edits, the footer shows **Unsaved changes**. Cancelling discards them.
 
 ## Rename an entity or entry
 
-To rename an entry, open the entity and click **EDIT**. Change its title, then
-click **SAVE CHANGES**. **CANCEL** leaves the original name unchanged.
+To rename an entry, open the entity and click **Edit** in the header of the side panel or Zen mode. Change its
+title, then click **Save changes**. **Cancel** leaves the original name unchanged.
 Renaming changes the existing entity; it does not create a second entry.
 
 ## AI-assisted revisions
 
-You can revise an entity’s **Chronicle and Lore** directly from its entity view.
+You can revise an entity’s text and **GM notes** directly from its entity view.
 
 1. Open the entity in the side panel or **Zen Mode**.
-2. Click the sparkle button labelled **AI Revise Description**. In the side panel it is near the entity title; in Zen Mode it is in the editor toolbar.
+2. In the side panel, open **More** near the entity title and choose **AI revise description**. In Zen Mode, click **AI Revise Description** in the editor toolbar.
 3. In **Revise Description**, optionally enter guidance in **AI Instructions / Corrections (Highest Priority)**. For example: “Keep the history, but explain their alliance more clearly.”
 4. Click **Revise**, or press **Ctrl + Enter** (Cmd + Enter on macOS).
-5. Review the generated Chronicle and Lore. Click **Apply Changes** to save, or **Discard** to keep the original.
+5. Review the generated text and GM notes. Click **Apply Changes** to save, or **Discard** to keep the original.
 
 Click **Cancel** in the instructions dialog to leave without generating a revision.
 Generating a draft does not save it. When applying a revision changes existing Lore
@@ -58,7 +58,7 @@ sparkle button when you want the instructions dialog and inline draft review. AI
 
 ## Delete an entity
 
-Click **DELETE** at the bottom of the entity page and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
+Open **More** in the side panel or Zen mode header, choose **Delete**, and confirm. Deleting is permanent. Take a Portable Backup first if you might want it back.
 
 ## Guest vaults
 

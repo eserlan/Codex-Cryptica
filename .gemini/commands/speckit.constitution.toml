@@ -203,7 +203,7 @@ so the dependent artifacts reflect the amended principles:
    preset or extension.** Command files that are composed from the resolution stack (anything
    provided or wrapped by a preset/extension) must be regenerated through the stack — do **not**
    edit them in place, because reconciliation (`specify integration use`, `specify integration
-   upgrade`, or any preset/extension install/remove) will clobber the edits.
+upgrade`, or any preset/extension install/remove) will clobber the edits.
 5. Read any runtime guidance docs (e.g., `README.md`, `docs/quickstart.md`, or agent-specific
    guidance files if present) and update references to principles that changed.
 

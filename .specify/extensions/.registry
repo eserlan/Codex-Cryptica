@@ -2,9 +2,12 @@
   "schema_version": "1.0",
   "extensions": {
     "git": {
-      "version": "1.0.1",
-      "source": "local",
-      "manifest_hash": "sha256:698cc7089602db44622de39730555db4999cda94ab47195bcfe18f41d08b430a",
+      "version": "1.0.4",
+      "source": {
+        "kind": "catalog",
+        "catalog": "default"
+      },
+      "manifest_hash": "sha256:7a190a397b702e38a1f5d0db01072b944d6b28c990651aef2df28385df06aeee",
       "enabled": true,
       "priority": 10,
       "registered_commands": {

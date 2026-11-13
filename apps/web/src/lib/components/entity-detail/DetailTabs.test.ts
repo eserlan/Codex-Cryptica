@@ -55,7 +55,7 @@ describe("DetailTabs Date Display", () => {
 
     const { getByText } = render(DetailTabs, {
       entity: mockEntity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: false,
       editType: "event",
       idPrefix: "test-prefix",
@@ -77,7 +77,7 @@ describe("DetailTabs Date Display", () => {
 
     const { getByText } = render(DetailTabs, {
       entity: mockEntity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: false,
       editType: "character",
       idPrefix: "test-prefix",
@@ -97,7 +97,7 @@ describe("DetailTabs Date Display", () => {
 
     const { getByText } = render(DetailTabs, {
       entity: mockEntity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: false,
       editType: "character",
       idPrefix: "test-prefix",
@@ -116,7 +116,7 @@ describe("DetailTabs Date Display", () => {
 
     const { getByText } = render(DetailTabs, {
       entity: mockEntity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: false,
       editType: "character",
       idPrefix: "test-prefix",
@@ -135,7 +135,7 @@ describe("DetailTabs Date Display", () => {
 
     const { queryByText } = render(DetailTabs, {
       entity: mockEntity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: true,
       editType: "event",
       idPrefix: "test-prefix",
@@ -153,7 +153,7 @@ describe("DetailTabs Date Display", () => {
 
     const { getByRole, getAllByRole } = render(DetailTabs, {
       entity: mockEntity,
-      activeTab: "status",
+      activeTab: "overview",
       isEditing: true,
       editType: "npc",
       idPrefix: "test-prefix",

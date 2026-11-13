@@ -7,7 +7,7 @@
       "tags": ["city", "law", "central"],
       "connections": [],
       "content": "A bustling hub of law enforcement in the heart of the city. The glass and steel building houses the latest in forensic technology.",
-      "lore": "A bustling hub of law enforcement in the heart of the city. The glass and steel building houses the latest in forensic technology.",
+      "lore": "The forensic lab has a leak. Evidence from the heist went missing for six hours on the second night, and the log has been altered.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-hq.png",
       "_path": ["locations", "police-hq.md"],
       "lastModified": 1700000000000
@@ -30,7 +30,7 @@
         }
       ],
       "content": "A sharp-witted detective known for her unconventional methods and high solve rate. She doesn't sleep until the case is closed.\n\nShe is currently working on [[The Diamond Heist]].",
-      "lore": "A sharp-witted detective known for her unconventional methods and high solve rate. She doesn't sleep until the case is closed.\n\nShe is currently working on [[The Diamond Heist]].",
+      "lore": "Miller does not sleep because she was the first officer to arrive at a case that was never solved, and she has an old file she has told nobody about.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-detective.png",
       "_path": ["npcs", "sarah-miller.md"],
       "lastModified": 1700000000000
@@ -48,7 +48,7 @@
         }
       ],
       "content": "A former intelligence officer who now works as a high-priced consultant. He provides Miller with technical intel that 'doesn't exist'.",
-      "lore": "A former intelligence officer who now works as a high-priced consultant. He provides Miller with technical intel that 'doesn't exist'.",
+      "lore": "Cooper's intel is real, but he is selling the same information to the Syndicate. Miller will find out only if she checks his timing.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-npc2.png",
       "_path": ["npcs", "agent-cooper.md"],
       "lastModified": 1700000000000
@@ -66,7 +66,7 @@
         }
       ],
       "content": "A global crime syndicate involved in high-end theft and money laundering. They are the target of Miller's investigation.",
-      "lore": "A global crime syndicate involved in high-end theft and money laundering. They are the target of Miller's investigation.",
+      "lore": "The Syndicate sold the real stone years ago through an insider. The staged heist covers the swap, and a later break-in at the museum archive will erase the records.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-faction.png",
       "_path": ["factions", "the-syndicate.md"],
       "lastModified": 1700000000000
@@ -80,7 +80,7 @@
         { "target": "police-hq", "type": "related_to", "label": "K9 Unit" }
       ],
       "content": "A highly trained police dog used for tracking and apprehension. It is loyal, fast, and extremely effective.",
-      "lore": "A highly trained police dog used for tracking and apprehension. It is loyal, fast, and extremely effective.",
+      "lore": "The dog was trained by an ex-handler who now works for the Syndicate. It still responds to his whistle.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-creature.png",
       "_path": ["creatures", "attack-doberman.md"],
       "lastModified": 1700000000000
@@ -98,7 +98,7 @@
         }
       ],
       "content": "A thick folder containing crime scene photos, fingerprint analysis, and suspect lists related to the museum heist.",
-      "lore": "A thick folder containing crime scene photos, fingerprint analysis, and suspect lists related to the museum heist.",
+      "lore": "One fingerprint in the file was added after the fact. It belongs to the insider who arranged the swap, who asked for the case to be reopened.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-note.png",
       "_path": ["notes", "diamond-case-file.md"],
       "lastModified": 1700000000000
@@ -116,7 +116,7 @@
         }
       ],
       "content": "A sophisticated robbery at the National Museum where the 'Star of the East' diamond was stolen without a single alarm being triggered.",
-      "lore": "A sophisticated robbery at the National Museum where the 'Star of the East' diamond was stolen without a single alarm being triggered.",
+      "lore": "The stone on display was already a replica, and the real diamond left the museum years ago. Nothing of value was stolen; the heist exists to hide the earlier sale.",
       "image": "https://assets.codexcryptica.com/cdn-cgi/image/format=auto,quality=80/vault-samples/images/modern-hq.png",
       "_path": ["events", "the-diamond-heist.md"],
       "lastModified": 1700000000000

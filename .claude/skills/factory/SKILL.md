@@ -80,7 +80,9 @@ Job: <id>. Job folder: <repo>/factory/jobs/<id>/. Main checkout: <repo>. Worktre
 ```
 
 `<header>` below means that line. Keep `Job folder: <path>/` exactly as shown:
-the job's cost is found by that string.
+the job's cost is found by that string. `<base>` is `job.json` `base`, which
+`job sync` keeps current: the base branch, or the parent job's branch for a
+stacked job (see **Stacking**). The builder opens its PR against it.
 
 Agents that open pages get ports. With `n` the job number (`004` → 4), the
 builder gets `5300 + 10n`, `reviewer-ux` `5301 + 10n` and `reviewer-ui`
@@ -190,6 +192,16 @@ as `resume`: run `factory/bin/job advance <id> intake` and go to **intake**.
 Run one issue with the same steps. If `factory/bin/job queue` shows a job for
 it, resume that job; otherwise `factory/bin/job create <n>`. Finish with the
 summary line for that job.
+
+## Stacking
+
+When the user asks to stack an issue on another job (its work needs that job's
+unmerged changes), create it with `factory/bin/job create <n> --on <job>`. Its
+worktree branches from the parent job's branch and its PR targets that branch,
+so the PRs can only merge bottom-up. When the parent's PR merges, `base` goes
+back to the base branch and GitHub retargets the child PR. Tell the builder in
+its prompt to merge `origin/<base>` in before pushing when the parent has moved,
+and tell reviewers and the approver to judge only the diff from `origin/<base>`.
 
 ## /factory <anything>
 

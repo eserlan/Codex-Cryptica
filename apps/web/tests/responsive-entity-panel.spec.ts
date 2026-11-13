@@ -90,13 +90,11 @@ test.describe("Responsive Entity Detail Panel", () => {
         }
 
         for (const actionName of [
-          "AI Revise Description",
-          "Find in Graph",
-          "Sound bite",
-          "Enter Zen Mode",
+          "Find in graph",
+          "Expand",
           "Close panel",
-          "DELETE",
-          "EDIT",
+          "Edit",
+          "More",
         ]) {
           await expect(
             panel.getByRole("button", { name: actionName }),
@@ -130,4 +128,63 @@ test.describe("Responsive Entity Detail Panel", () => {
       });
     }
   }
+
+  // A 1x1 PNG, enough for the thumbnail to show an image.
+  const pixel =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+  // Phones get a compact header, so the text must start much higher there.
+  for (const viewport of [
+    { width: 1440, height: 900, maxY: 880 },
+    { width: 390, height: 844, maxY: 400 },
+  ]) {
+    test(`shows the first line of text without scrolling at ${viewport.width}px`, async ({
+      page,
+    }) => {
+      await page.setViewportSize(viewport);
+      await page.addInitScript(() => {
+        localStorage.setItem("codex_guided_mode_active", "false");
+      });
+      await setupVaultPage(page);
+      await seedEntities(page, [
+        {
+          id: "text-first",
+          title: "Bob",
+          type: "character",
+          content: "Bob is a blacksmith.",
+          data: { labels: ["human"], image: pixel },
+        },
+      ]);
+      await openEntitySidepanel(page, "text-first");
+
+      const panel = page.getByTestId("entity-detail-panel");
+      await expect(panel.getByTestId("detail-thumbnail")).toBeVisible();
+      const text = panel.getByTestId("entity-main-text");
+      await expect(text).toBeVisible();
+      // The panel slides in, so wait for the text to settle before measuring.
+      await expect
+        .poll(async () => (await text.boundingBox())?.y ?? Infinity)
+        .toBeLessThanOrEqual(viewport.maxY);
+      const y = (await text.boundingBox())!.y;
+      expect(y).toBeGreaterThanOrEqual(0);
+    });
+  }
+
+  test("shows the large image block and the empty-text prompt without text", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.addInitScript(() => {
+      localStorage.setItem("codex_guided_mode_active", "false");
+    });
+    await setupVaultPage(page);
+    await seedEntities(page, [
+      { id: "no-text", title: "Blank", type: "character", content: "" },
+    ]);
+    await openEntitySidepanel(page, "no-text");
+
+    const panel = page.getByTestId("entity-detail-panel");
+    await expect(panel.getByText("No content yet.")).toBeVisible();
+    await expect(panel.locator("[aria-label='Image drop zone']")).toBeVisible();
+  });
 });
