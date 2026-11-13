@@ -127,6 +127,7 @@ export class GeographyGenerationStore {
             review.proposal,
             review.disabledEdgeFeatures,
             review.disabledSites,
+            this.deps.settlements(review.mapId),
           );
           if (!result) {
             stale = true;

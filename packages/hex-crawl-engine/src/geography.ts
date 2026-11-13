@@ -37,6 +37,7 @@ export interface GeographyProposal {
   /** Fingerprints prevent accepting a stale preview over changes made meanwhile. */
   topologyStamp: string;
   terrainStamps: Record<HexKey, string>;
+  settlementStamp: string;
 }
 export interface GeographyInput {
   request: GeographyRequest;
@@ -69,6 +70,9 @@ function randomAt(seed: number, key: HexKey): number {
   return (n >>> 0) / 0x100000000;
 }
 const coordOrder = (a: HexCoord, b: HexCoord) => a.q - b.q || a.r - b.r;
+function settlementStamp(settlements: readonly HexCoord[]): string {
+  return JSON.stringify([...settlements].sort(coordOrder));
+}
 const keyOrder = (a: string, b: string) =>
   coordOrder(parseHexKey(a)!, parseHexKey(b)!);
 const siteTerrainScore: Record<string, number> = {
@@ -561,15 +565,18 @@ export function generateHexGeography(
     sites,
     terrainStamps,
     topologyStamp: JSON.stringify(state.topology ?? null),
+    settlementStamp: settlementStamp(settlements),
   };
 }
 
 function hasStaleSources(
   state: HexCrawlState,
   proposal: GeographyProposal,
+  settlements: readonly HexCoord[],
 ): boolean {
   if (JSON.stringify(state.topology ?? null) !== proposal.topologyStamp)
     return true;
+  if (settlementStamp(settlements) !== proposal.settlementStamp) return true;
   return Object.entries(proposal.terrainStamps).some(
     ([key, stamp]) =>
       JSON.stringify({
@@ -643,8 +650,9 @@ export function applyHexGeography(
   proposal: GeographyProposal,
   disabledEdgeFeatures: ReadonlySet<HexEdgeFeatureKey>,
   disabledSites: ReadonlySet<HexKey>,
+  settlements: readonly HexCoord[],
 ): HexCrawlState | null {
-  if (hasStaleSources(state, proposal)) return null;
+  if (hasStaleSources(state, proposal, settlements)) return null;
   const edges = { ...(state.topology?.edges ?? {}) };
   const sites = { ...(state.topology?.sites ?? {}) };
   for (const [key, feature] of Object.entries(proposal.edges)) {

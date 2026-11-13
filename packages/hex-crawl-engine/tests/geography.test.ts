@@ -14,6 +14,10 @@ import {
 } from "../src";
 
 const centre = { q: 0, r: 0 };
+const settlements = [
+  { q: 0, r: 0 },
+  { q: 3, r: 0 },
+];
 const inside = (h: HexCoord) =>
   Math.max(Math.abs(h.q), Math.abs(h.r), Math.abs(h.q + h.r)) <= 8;
 function state(): HexCrawlState {
@@ -32,10 +36,7 @@ function make(
   return generateHexGeography({
     state: s,
     request: { centre, radius: 5, seed, civilisation },
-    settlements: [
-      { q: 0, r: 0 },
-      { q: 3, r: 0 },
-    ],
+    settlements,
     inBounds: inside,
   })!;
 }
@@ -160,7 +161,13 @@ describe("shared-edge topology", () => {
       sites: {},
     };
     const proposal = make(s);
-    const result = applyHexGeography(s, proposal, new Set(), new Set());
+    const result = applyHexGeography(
+      s,
+      proposal,
+      new Set(),
+      new Set(),
+      settlements,
+    );
     expect(result).not.toBeNull();
     expect(result!.topology!.edges[a].road?.provenance.source).toBe("manual");
     expect(
@@ -179,6 +186,7 @@ describe("shared-edge topology", () => {
         proposal,
         new Set(),
         new Set(),
+        settlements,
       ),
     ).toBeNull();
   });
@@ -198,8 +206,27 @@ describe("shared-edge topology", () => {
       },
     };
     expect(
-      applyHexGeography(changed, proposal, new Set(), new Set()),
+      applyHexGeography(changed, proposal, new Set(), new Set(), settlements),
     ).toBeNull();
+  });
+
+  it("refuses acceptance when pinned settlements change during review", () => {
+    const s = state();
+    const proposal = make(s);
+    const changedSettlements = [...settlements, { q: 1, r: 0 }];
+
+    expect(
+      applyHexGeography(s, proposal, new Set(), new Set(), changedSettlements),
+    ).toBeNull();
+    expect(
+      applyHexGeography(
+        s,
+        proposal,
+        new Set(),
+        new Set(),
+        [...settlements].reverse(),
+      ),
+    ).not.toBeNull();
   });
 
   it("accepts or rejects shared-edge features independently", () => {
@@ -237,6 +264,7 @@ describe("shared-edge topology", () => {
       proposal,
       new Set([hexEdgeFeatureKey(edge, "road")]),
       new Set(),
+      settlements,
     )!;
     expect(roadRejected.topology!.edges[edge]).toMatchObject({
       river: proposal.edges[edge].river,
@@ -250,6 +278,7 @@ describe("shared-edge topology", () => {
       proposal,
       new Set([hexEdgeFeatureKey(edge, "river")]),
       new Set(),
+      settlements,
     )!;
     expect(riverRejected.topology!.edges[edge]).toMatchObject({
       road: proposal.edges[edge].road,

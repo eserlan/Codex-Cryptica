@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import {
   GEOGRAPHY_MAX_RADIUS,
   hexEdgeFeatureKey,
+  type HexCoord,
   type HexCrawlState,
 } from "hex-crawl-engine";
 import { GeographyGenerationStore } from "./geography-generation.svelte";
 
 function makeStore(initial: HexCrawlState) {
   let state = initial;
+  let settlements: HexCoord[] = [];
   const store = new GeographyGenerationStore({
     hexes: {
       revision: 0,
@@ -17,12 +19,16 @@ function makeStore(initial: HexCrawlState) {
         return true;
       },
     },
-    settlements: () => [],
+    settlements: () => settlements,
     inBounds: (_mapId, hex) => Math.abs(hex.q) <= 8 && Math.abs(hex.r) <= 8,
     newSeed: () => "seed-1",
     canEdit: () => true,
   });
-  return { store, getState: () => state };
+  return {
+    store,
+    getState: () => state,
+    setSettlements: (value: HexCoord[]) => (settlements = value),
+  };
 }
 
 describe("GeographyGenerationStore", () => {
@@ -63,6 +69,22 @@ describe("GeographyGenerationStore", () => {
     expect(store.open("map-1", { q: 0, r: 0 })).toBe(true);
     expect(store.setSeed("   ")).toBe(false);
     expect(store.review?.proposal.request.seed).toBe("seed-1");
+  });
+
+  it("refuses acceptance when a pin changes after the proposal is built", async () => {
+    const { store, getState, setSettlements } = makeStore({
+      enabled: true,
+      hexes: {
+        "0,0": { terrain: { kind: "preset", id: "plains" }, updatedAt: 1 },
+      },
+    });
+    expect(store.open("map-1", { q: 0, r: 0 })).toBe(true);
+    const before = getState();
+
+    setSettlements([{ q: 1, r: 0 }]);
+    expect(await store.accept()).toBe(false);
+    expect(store.message).toBe("stale");
+    expect(getState()).toBe(before);
   });
 
   it("tracks rejection independently for features sharing an edge", () => {
