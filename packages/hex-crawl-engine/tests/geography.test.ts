@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
-import { getHexNeighbors, getHexRange } from "map-engine";
+import { getHexRange } from "map-engine";
 import {
   applyHexGeography, generateHexGeography, hexEdgeKey, normalizeHexCrawlState,
-  parseHexEdgeKey, toHexKey, type HexCoord, type HexCrawlState,
+  parseHexEdgeKey, toHexKey, type HexCoord, type HexCrawlState, type CivilisationLevel,
 } from "../src";
 
 const centre = { q: 0, r: 0 };
@@ -15,7 +15,7 @@ function state(): HexCrawlState {
   }
   return { enabled: true, hexes };
 }
-function make(s: HexCrawlState, civilisation = "frontier" as const, seed = "TEST-SEED") {
+function make(s: HexCrawlState, civilisation: CivilisationLevel = "frontier", seed = "TEST-SEED") {
   return generateHexGeography({
     state: s, request: { centre, radius: 5, seed, civilisation },
     settlements: [{ q: 0, r: 0 }, { q: 3, r: 0 }],
