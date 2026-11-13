@@ -138,11 +138,13 @@ function clash(
 function mergeOneSideGone(
   ctx: Ctx,
   id: string,
-  base: MergeEntity,
+  base: MergeEntity | null,
   present: MergeEntity,
 ): void {
   const { result } = ctx;
-  if (changedKeys(base, present).length > 0) {
+  if (!base) {
+    result.entities[id] = present;
+  } else if (changedKeys(base, present).length > 0) {
     result.entities[id] = present;
     result.summary.editsKeptOverDelete.push(id);
   } else {
@@ -170,6 +172,18 @@ function mergeAgainstBase(
   }
 }
 
+function mergeBothPresent(
+  ctx: Ctx,
+  id: string,
+  base: MergeEntity | null,
+  mine: MergeEntity,
+  theirs: MergeEntity,
+): void {
+  if (base) mergeAgainstBase(ctx, id, base, mine, theirs);
+  else if (equalContent(mine, theirs)) ctx.result.entities[id] = theirs;
+  else clash(ctx, id, mine, theirs);
+}
+
 function mergeOne(
   ctx: Ctx,
   id: string,
@@ -177,21 +191,11 @@ function mergeOne(
   mine: MergeEntity | null,
   theirs: MergeEntity | null,
 ): void {
-  const { result } = ctx;
-  if (!mine && !theirs) {
-    result.deletes.push(id);
-    if (base) result.summary.deleted.push(id);
-  } else if (!mine || !theirs) {
-    const present = (mine ?? theirs)!;
-    if (base) mergeOneSideGone(ctx, id, base, present);
-    else result.entities[id] = present;
-  } else if (base) {
-    mergeAgainstBase(ctx, id, base, mine, theirs);
-  } else if (equalContent(mine, theirs)) {
-    result.entities[id] = theirs;
-  } else {
-    clash(ctx, id, mine, theirs);
-  }
+  if (mine && theirs) return mergeBothPresent(ctx, id, base, mine, theirs);
+  const present = mine ?? theirs;
+  if (present) return mergeOneSideGone(ctx, id, base, present);
+  ctx.result.deletes.push(id);
+  if (base) ctx.result.summary.deleted.push(id);
 }
 
 export function mergeEntities(
