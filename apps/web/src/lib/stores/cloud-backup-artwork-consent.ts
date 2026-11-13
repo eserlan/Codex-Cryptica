@@ -17,31 +17,52 @@ const off: ArtworkBackupConsent = {
   remoteRemovalPending: false,
 };
 
+const REMOVAL_ID_RE = /^[a-zA-Z0-9_-]{1,160}$/;
+
+function isValidRemovalId(value: unknown): value is string {
+  return typeof value === "string" && REMOVAL_ID_RE.test(value);
+}
+
+function isConsentRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function parseSteadyConsent(
+  state: Record<string, unknown>,
+): ArtworkBackupConsent | null {
+  if (state.remoteRemovalPending !== false) return null;
+  if (state.enabled === true) {
+    return { enabled: true, remoteRemovalPending: false };
+  }
+  return state.enabled === false ? { ...off } : null;
+}
+
+function parsePendingRemovalConsent(
+  state: Record<string, unknown>,
+): ArtworkBackupConsent | null {
+  if (state.enabled !== false || state.remoteRemovalPending !== true) {
+    return null;
+  }
+  if (!isValidRemovalId(state.removalId)) return null;
+  return {
+    enabled: false,
+    remoteRemovalPending: true,
+    removalId: state.removalId,
+  };
+}
+
 /** Owns expanded consent only; ordinary backup consent remains independent. */
 export class CloudBackupArtworkConsent {
   constructor(private readonly deps: Dependencies) {}
   async read(vaultId: string): Promise<ArtworkBackupConsent> {
     const raw = await this.deps.read(vaultId);
-    if (raw === undefined || raw === null) return { ...off };
-    if (!raw || typeof raw !== "object" || Array.isArray(raw))
+    if (raw == null) return { ...off };
+    if (!isConsentRecord(raw)) {
       throw new Error("Invalid adventure backup consent");
-    const state = raw as Record<string, unknown>;
-    if (state.enabled === true && state.remoteRemovalPending === false)
-      return { enabled: true, remoteRemovalPending: false };
-    if (state.enabled === false && state.remoteRemovalPending === false)
-      return { ...off };
-    if (
-      state.enabled === false &&
-      state.remoteRemovalPending === true &&
-      typeof state.removalId === "string" &&
-      /^[a-zA-Z0-9_-]{1,160}$/.test(state.removalId)
-    )
-      return {
-        enabled: false,
-        remoteRemovalPending: true,
-        removalId: state.removalId,
-      };
-    throw new Error("Invalid adventure backup consent");
+    }
+    const parsed = parseSteadyConsent(raw) ?? parsePendingRemovalConsent(raw);
+    if (!parsed) throw new Error("Invalid adventure backup consent");
+    return parsed;
   }
   async enable(vaultId: string, confirmed: boolean): Promise<boolean> {
     if (!confirmed) return false;

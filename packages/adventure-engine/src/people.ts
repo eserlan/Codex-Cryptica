@@ -13,31 +13,38 @@ function trimName(value: string | undefined): string {
   return (value ?? "").trim().slice(0, MAX_PERSON_NAME_LENGTH);
 }
 
+function findPersonByAlias(
+  people: readonly AdventurePerson[],
+  alias: string | undefined,
+): { person: AdventurePerson | null; reason?: "ambiguous" | "missing" } {
+  if (!alias) return { person: null };
+  const aliasTrimmed = trimName(alias);
+  const matches = people.filter((p) => p.aliases.includes(aliasTrimmed));
+  if (matches.length === 1) return { person: matches[0] };
+  if (matches.length > 1) return { person: null, reason: "ambiguous" };
+  return { person: null };
+}
+
 function findExistingPerson(
   people: readonly AdventurePerson[],
   input: PersonResolutionInput,
 ): { person: AdventurePerson | null; reason?: "ambiguous" | "missing" } {
-  if (input.sourceRecordId) {
-    const byRecord = people.find(
-      (p) => p.sourceRecordId === input.sourceRecordId,
-    );
-    if (byRecord) return { person: byRecord };
+  const matchers: Array<() => AdventurePerson | undefined> = [
+    () =>
+      input.sourceRecordId
+        ? people.find((p) => p.sourceRecordId === input.sourceRecordId)
+        : undefined,
+    () => (input.id ? people.find((p) => p.id === input.id) : undefined),
+    () =>
+      input.factId
+        ? people.find((p) => p.linkedFactIds.includes(input.factId!))
+        : undefined,
+  ];
+  for (const match of matchers) {
+    const person = match();
+    if (person) return { person };
   }
-  if (input.id) {
-    const byId = people.find((p) => p.id === input.id);
-    if (byId) return { person: byId };
-  }
-  if (input.factId) {
-    const byFact = people.find((p) => p.linkedFactIds.includes(input.factId!));
-    if (byFact) return { person: byFact };
-  }
-  if (input.alias) {
-    const aliasTrimmed = trimName(input.alias);
-    const matches = people.filter((p) => p.aliases.includes(aliasTrimmed));
-    if (matches.length === 1) return { person: matches[0] };
-    if (matches.length > 1) return { person: null, reason: "ambiguous" };
-  }
-  return { person: null };
+  return findPersonByAlias(people, input.alias);
 }
 
 function attachFactLink(

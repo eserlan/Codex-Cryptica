@@ -41,26 +41,37 @@ interface BucketObject {
   uploadedMs: number | null;
 }
 
+function parseUploadedTimestamp(raw: unknown): {
+  uploaded?: string;
+  uploadedMs: number | null;
+} {
+  let uploaded: string | undefined;
+  if (raw instanceof Date) uploaded = raw.toISOString();
+  else if (typeof raw === "string") uploaded = raw;
+  const parsedMs = uploaded ? Date.parse(uploaded) : NaN;
+  return {
+    uploaded,
+    uploadedMs: Number.isFinite(parsedMs) ? parsedMs : null,
+  };
+}
+
+function toBucketObject(obj: any): BucketObject {
+  const { uploaded, uploadedMs } = parseUploadedTimestamp(obj.uploaded);
+  return {
+    key: obj.key,
+    size: obj.size,
+    uploaded,
+    uploadedMs,
+  };
+}
+
 async function listAllObjects(bucket: any): Promise<BucketObject[]> {
   const objects: BucketObject[] = [];
   let cursor: string | undefined;
   for (let i = 0; i < 25; i++) {
     const page = await bucket.list({ cursor, limit: 1000 });
     for (const obj of page.objects) {
-      const uploaded =
-        obj.uploaded instanceof Date
-          ? obj.uploaded.toISOString()
-          : typeof obj.uploaded === "string"
-            ? obj.uploaded
-            : undefined;
-      const parsedMs = uploaded ? Date.parse(uploaded) : NaN;
-      const uploadedMs = Number.isFinite(parsedMs) ? parsedMs : null;
-      objects.push({
-        key: obj.key,
-        size: obj.size,
-        uploaded,
-        uploadedMs,
-      });
+      objects.push(toBucketObject(obj));
     }
     if (!page.truncated) break;
     cursor = page.cursor;
@@ -131,57 +142,126 @@ interface GalleryItem {
   uploaded: string | null;
 }
 
-function buildAdventureArtworkItems(items: BucketObject[]): GalleryItem[] {
-  const pairs = new Map<
-    string,
-    { preview?: BucketObject; display?: BucketObject; other?: BucketObject }
-  >();
-  for (const obj of items) {
-    const filename = obj.key.split("/").pop() || obj.key;
-    const match = ADVENTURE_VARIANT_RE.exec(filename);
-    const baseId = match ? match[1] : obj.key;
-    let entry = pairs.get(baseId);
-    if (!entry) {
-      entry = {};
-      pairs.set(baseId, entry);
-    }
-    if (match) {
-      const variant = match[2].toLowerCase();
-      if (variant === "preview") entry.preview = obj;
-      else entry.display = obj;
-    } else {
-      entry.other = obj;
-    }
+type ArtworkPair = {
+  preview?: BucketObject;
+  display?: BucketObject;
+  other?: BucketObject;
+};
+
+function getOrCreatePair(
+  pairs: Map<string, ArtworkPair>,
+  baseId: string,
+): ArtworkPair {
+  let entry = pairs.get(baseId);
+  if (!entry) {
+    entry = {};
+    pairs.set(baseId, entry);
   }
+  return entry;
+}
+
+function addToArtworkPair(
+  pairs: Map<string, ArtworkPair>,
+  obj: BucketObject,
+): void {
+  const filename = obj.key.split("/").pop() || obj.key;
+  const match = ADVENTURE_VARIANT_RE.exec(filename);
+  const entry = getOrCreatePair(pairs, match ? match[1] : obj.key);
+  if (!match) {
+    entry.other = obj;
+    return;
+  }
+  if (match[2].toLowerCase() === "preview") entry.preview = obj;
+  else entry.display = obj;
+}
+
+function pickPrimaryArtwork(entry: ArtworkPair): BucketObject | undefined {
+  return entry.display ?? entry.preview ?? entry.other;
+}
+
+function buildThumbField(
+  entry: ArtworkPair,
+  url: string,
+): { thumbUrl?: string } {
+  if (!entry.preview) return {};
+  const thumbUrl = ASSET_BASE + entry.preview.key;
+  return thumbUrl !== url ? { thumbUrl } : {};
+}
+
+function toAdventureGalleryItem(entry: ArtworkPair): GalleryItem | null {
+  const primary = pickPrimaryArtwork(entry);
+  if (!primary) return null;
+  const url = ASSET_BASE + primary.key;
+  return {
+    key: primary.key,
+    url,
+    ...buildThumbField(entry, url),
+    size: formatBytes(primary.size),
+    purpose: titleFromFilename(primary.key),
+    uploaded: primary.uploaded ?? null,
+  };
+}
+
+function buildAdventureArtworkItems(items: BucketObject[]): GalleryItem[] {
+  const pairs = new Map<string, ArtworkPair>();
+  for (const obj of items) addToArtworkPair(pairs, obj);
 
   const result: GalleryItem[] = [];
   for (const entry of pairs.values()) {
-    const primary = entry.display ?? entry.preview ?? entry.other;
-    if (!primary) continue;
-    const url = ASSET_BASE + primary.key;
-    const thumbUrl = entry.preview ? ASSET_BASE + entry.preview.key : undefined;
-    result.push({
-      key: primary.key,
-      url,
-      ...(thumbUrl && thumbUrl !== url ? { thumbUrl } : {}),
-      size: formatBytes(primary.size),
-      purpose: titleFromFilename(primary.key),
-      uploaded: primary.uploaded ?? null,
-    });
+    const item = toAdventureGalleryItem(entry);
+    if (item) result.push(item);
   }
   result.sort((a, b) => a.key.localeCompare(b.key));
   return result;
 }
 
-function buildGroups(objects: BucketObject[]) {
+function isGalleryImageKey(key: string): boolean {
+  return isAllowed(key) && IMAGE_EXTENSIONS.test(key);
+}
+
+function groupObjectsByPrefix(
+  objects: BucketObject[],
+): Map<string, BucketObject[]> {
   const byPrefix = new Map<string, BucketObject[]>();
   for (const obj of objects) {
-    if (!isAllowed(obj.key)) continue;
-    if (!IMAGE_EXTENSIONS.test(obj.key)) continue;
+    if (!isGalleryImageKey(obj.key)) continue;
     const prefix = obj.key.split("/")[0];
-    if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
-    byPrefix.get(prefix)!.push(obj);
+    const bucket = byPrefix.get(prefix) ?? [];
+    bucket.push(obj);
+    byPrefix.set(prefix, bucket);
   }
+  return byPrefix;
+}
+
+function toStandardGalleryItems(rawItems: BucketObject[]): GalleryItem[] {
+  return rawItems
+    .slice()
+    .sort((a, b) => a.key.localeCompare(b.key))
+    .map((it) => ({
+      key: it.key,
+      url: ASSET_BASE + it.key,
+      size: formatBytes(it.size),
+      purpose: titleFromFilename(it.key),
+      uploaded: it.uploaded ?? null,
+    }));
+}
+
+function buildSingleGroup(id: string, rawItems: BucketObject[]) {
+  const meta = GROUP_META[id] ?? { title: titleFromFilename(id), note: "" };
+  const items =
+    id === "adventure-artwork"
+      ? buildAdventureArtworkItems(rawItems)
+      : toStandardGalleryItems(rawItems);
+  return {
+    id,
+    title: meta.title,
+    note: meta.note,
+    items,
+  };
+}
+
+function buildGroups(objects: BucketObject[]) {
+  const byPrefix = groupObjectsByPrefix(objects);
 
   // Fixed order, fixed set — every id here has an ALLOWED_PREFIXES entry, so
   // nothing outside the allowlist can ever surface through this loop.
@@ -197,27 +277,8 @@ function buildGroups(objects: BucketObject[]) {
   const groups = [];
   for (const id of order) {
     const rawItems = byPrefix.get(id);
-    if (!rawItems || !rawItems.length) continue;
-    const meta = GROUP_META[id] ?? { title: titleFromFilename(id), note: "" };
-    const items: GalleryItem[] =
-      id === "adventure-artwork"
-        ? buildAdventureArtworkItems(rawItems)
-        : rawItems
-            .slice()
-            .sort((a, b) => a.key.localeCompare(b.key))
-            .map((it) => ({
-              key: it.key,
-              url: ASSET_BASE + it.key,
-              size: formatBytes(it.size),
-              purpose: titleFromFilename(it.key),
-              uploaded: it.uploaded ?? null,
-            }));
-    groups.push({
-      id,
-      title: meta.title,
-      note: meta.note,
-      items,
-    });
+    if (!rawItems?.length) continue;
+    groups.push(buildSingleGroup(id, rawItems));
   }
   return groups;
 }

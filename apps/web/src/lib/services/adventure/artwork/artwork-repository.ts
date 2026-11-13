@@ -24,59 +24,159 @@ interface SessionArtworkDependencies<T extends Session> {
     session: T,
   ): Promise<{ ok: true; session: T } | { ok: false; error: Error }>;
 }
+type ArtworkState = Extract<
+  ReturnType<typeof readAdventureArtworkState>,
+  { kind: "known" }
+>["value"];
+
+function sessionMatchesContext(
+  session: Session | null,
+  context: ArtworkControlContext,
+): session is Session {
+  return Boolean(
+    session &&
+    session.id === context.sessionId &&
+    session.vaultId === context.vaultId &&
+    session.revision === context.expectedRevision,
+  );
+}
+
+function readArtworkState(
+  session: Session,
+):
+  | { ok: true; state: ArtworkState }
+  | { ok: false; reason: "unsupported-artwork" } {
+  const parsed = readAdventureArtworkState(session.artwork);
+  if (parsed.kind === "opaque") {
+    return { ok: false, reason: "unsupported-artwork" };
+  }
+  const state =
+    parsed.kind === "known"
+      ? parsed.value
+      : { version: 1 as const, associations: [] };
+  return { ok: true, state };
+}
+
+type SessionArtworkSubject = Exclude<ArtworkSubject, { kind: "entity" }>;
+type FailedMutation = Extract<ArtworkMutationResult, { ok: false }>;
+
+function upsertAssociation(
+  associations: ArtworkState["associations"],
+  index: number,
+  subject: SessionArtworkSubject,
+  association: Extract<
+    ReturnType<typeof applyArtworkCommand>,
+    { ok: true }
+  >["association"],
+): ArtworkState["associations"] {
+  const next = associations.slice();
+  const entry = { subject, association };
+  if (index < 0) next.push(entry);
+  else next[index] = entry;
+  return next;
+}
+
+function applySubjectCommand(
+  state: ArtworkState,
+  subject: SessionArtworkSubject,
+  command: ArtworkCommand,
+):
+  | {
+      ok: true;
+      association: Extract<
+        ReturnType<typeof applyArtworkCommand>,
+        { ok: true }
+      >["association"];
+      artwork: ArtworkState;
+    }
+  | FailedMutation {
+  const index = state.associations.findIndex(
+    (entry) =>
+      entry.subject.kind === subject.kind && entry.subject.id === subject.id,
+  );
+  if (index < 0 && state.associations.length >= 200) {
+    return { ok: false, reason: "artwork-capacity" };
+  }
+  const current =
+    index < 0 ? { version: 1 as const } : state.associations[index].association;
+  const result = applyArtworkCommand(current, command);
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    association: result.association,
+    artwork: {
+      ...state,
+      associations: upsertAssociation(
+        state.associations,
+        index,
+        subject,
+        result.association,
+      ),
+    },
+  };
+}
+
 /** Session-local mutations only; canonical entity writes require their own lock-backed adapter. */
 export class ArtworkRepository<T extends Session> {
   constructor(private readonly deps: SessionArtworkDependencies<T>) {}
+  private async loadValidSession(
+    subject: SessionArtworkSubject,
+    context: ArtworkControlContext,
+  ): Promise<{ ok: true; session: T } | FailedMutation> {
+    const session = await this.deps.load(context);
+    if (!session || !sessionMatchesContext(session, context)) {
+      return { ok: false, reason: "stale-adventure" };
+    }
+    if (!this.deps.isKnownSubject(session, subject)) {
+      return { ok: false, reason: "unknown-subject" };
+    }
+    return { ok: true, session };
+  }
+  private async commitSessionArtwork(
+    session: T,
+    artwork: ArtworkState,
+    association: Extract<
+      ReturnType<typeof applyArtworkCommand>,
+      { ok: true }
+    >["association"],
+  ): Promise<ArtworkMutationResult> {
+    await this.deps.verify(session);
+    const saved = await this.deps.save(session.revision, {
+      ...session,
+      revision: session.revision + 1,
+      artwork,
+    });
+    return saved.ok
+      ? { ok: true, association }
+      : { ok: false, reason: "save-failed" };
+  }
+  private async executeMutation(
+    subject: SessionArtworkSubject,
+    command: ArtworkCommand,
+    context: ArtworkControlContext,
+  ): Promise<ArtworkMutationResult> {
+    const loaded = await this.loadValidSession(subject, context);
+    if (!loaded.ok) return loaded;
+    const parsed = readArtworkState(loaded.session);
+    if (!parsed.ok) return parsed;
+    const updated = applySubjectCommand(parsed.state, subject, command);
+    if (!updated.ok) return updated;
+    return await this.commitSessionArtwork(
+      loaded.session,
+      updated.artwork,
+      updated.association,
+    );
+  }
   async mutate(
     subject: ArtworkSubject,
     command: ArtworkCommand,
     context: ArtworkControlContext,
   ): Promise<ArtworkMutationResult> {
-    if (subject.kind === "entity")
+    if (subject.kind === "entity") {
       return { ok: false, reason: "canonical-adapter-required" };
+    }
     try {
-      const session = await this.deps.load(context);
-      if (
-        !session ||
-        session.id !== context.sessionId ||
-        session.vaultId !== context.vaultId ||
-        session.revision !== context.expectedRevision
-      )
-        return { ok: false, reason: "stale-adventure" };
-      if (!this.deps.isKnownSubject(session, subject))
-        return { ok: false, reason: "unknown-subject" };
-      const parsed = readAdventureArtworkState(session.artwork);
-      if (parsed.kind === "opaque")
-        return { ok: false, reason: "unsupported-artwork" };
-      const state =
-        parsed.kind === "known"
-          ? parsed.value
-          : { version: 1 as const, associations: [] };
-      const index = state.associations.findIndex(
-        (entry) =>
-          entry.subject.kind === subject.kind &&
-          entry.subject.id === subject.id,
-      );
-      if (index < 0 && state.associations.length >= 200)
-        return { ok: false, reason: "artwork-capacity" };
-      const result = applyArtworkCommand(
-        index < 0 ? { version: 1 } : state.associations[index].association,
-        command,
-      );
-      if (!result.ok) return result;
-      const associations = state.associations.slice();
-      const nextEntry = { subject, association: result.association };
-      if (index < 0) associations.push(nextEntry);
-      else associations[index] = nextEntry;
-      await this.deps.verify(session);
-      const saved = await this.deps.save(session.revision, {
-        ...session,
-        revision: session.revision + 1,
-        artwork: { ...state, associations },
-      });
-      return saved.ok
-        ? { ok: true, association: result.association }
-        : { ok: false, reason: "save-failed" };
+      return await this.executeMutation(subject, command, context);
     } catch {
       return { ok: false, reason: "control-or-storage-failed" };
     }

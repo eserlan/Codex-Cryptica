@@ -31,6 +31,77 @@ const variant = z
   })
   .strict();
 const text = z.string().trim().min(1);
+const DISPLAY_LIMITS = {
+  portrait: { width: 768, height: 1024, bytes: 256 * 1024 },
+  landscape: { width: 1280, height: 720, bytes: 384 * 1024 },
+} as const;
+
+type VariantDimensions = z.infer<typeof variant>;
+
+function validateAssetCues(
+  asset: {
+    primaryCues: readonly string[];
+    settingCues: readonly string[];
+    moodCues: readonly string[];
+    timeCues: readonly string[];
+    excludes: readonly string[];
+  },
+  ctx: z.RefinementCtx,
+): void {
+  const cues = [
+    ...asset.primaryCues,
+    ...asset.settingCues,
+    ...asset.moodCues,
+    ...asset.timeCues,
+    ...asset.excludes,
+  ];
+  if (
+    cues.length > 24 ||
+    new Set(cues).size !== cues.length ||
+    cues.some((value) => !isArtworkCue(value))
+  ) {
+    ctx.addIssue({ code: "custom", message: "Invalid cues" });
+  }
+}
+
+function validateAssetGenres(
+  asset: { genres: readonly string[] },
+  ctx: z.RefinementCtx,
+): void {
+  if (new Set(asset.genres).size !== asset.genres.length) {
+    ctx.addIssue({ code: "custom", message: "Duplicate genres" });
+  }
+}
+
+function validatePreviewVariant(
+  preview: VariantDimensions,
+  ctx: z.RefinementCtx,
+): void {
+  if (
+    Math.max(preview.width, preview.height) > 320 ||
+    preview.bytes > 32 * 1024
+  ) {
+    ctx.addIssue({ code: "custom", message: "Preview exceeds budget" });
+  }
+}
+
+function validateDisplayVariant(
+  display: VariantDimensions,
+  isPortrait: boolean,
+  ctx: z.RefinementCtx,
+): void {
+  const limits = isPortrait
+    ? DISPLAY_LIMITS.portrait
+    : DISPLAY_LIMITS.landscape;
+  if (
+    display.width > limits.width ||
+    display.height > limits.height ||
+    display.bytes > limits.bytes
+  ) {
+    ctx.addIssue({ code: "custom", message: "Display exceeds budget" });
+  }
+}
+
 const assetSchema = z
   .object({
     id: identifier.max(100),
@@ -83,34 +154,10 @@ const assetSchema = z
   })
   .strict()
   .superRefine((asset, ctx) => {
-    const cues = [
-      ...asset.primaryCues,
-      ...asset.settingCues,
-      ...asset.moodCues,
-      ...asset.timeCues,
-      ...asset.excludes,
-    ];
-    if (
-      cues.length > 24 ||
-      new Set(cues).size !== cues.length ||
-      cues.some((value) => !isArtworkCue(value))
-    )
-      ctx.addIssue({ code: "custom", message: "Invalid cues" });
-    if (new Set(asset.genres).size !== asset.genres.length)
-      ctx.addIssue({ code: "custom", message: "Duplicate genres" });
-    const { preview, display } = asset.variants;
-    if (
-      Math.max(preview.width, preview.height) > 320 ||
-      preview.bytes > 32 * 1024
-    )
-      ctx.addIssue({ code: "custom", message: "Preview exceeds budget" });
-    const portrait = asset.type === "npc";
-    if (
-      display.width > (portrait ? 768 : 1280) ||
-      display.height > (portrait ? 1024 : 720) ||
-      display.bytes > (portrait ? 256 : 384) * 1024
-    )
-      ctx.addIssue({ code: "custom", message: "Display exceeds budget" });
+    validateAssetCues(asset, ctx);
+    validateAssetGenres(asset, ctx);
+    validatePreviewVariant(asset.variants.preview, ctx);
+    validateDisplayVariant(asset.variants.display, asset.type === "npc", ctx);
   });
 export type ArtworkAsset = z.infer<typeof assetSchema>;
 export function parseCatalogue(input: unknown): ArtworkAsset[] {

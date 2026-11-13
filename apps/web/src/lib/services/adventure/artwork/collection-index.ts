@@ -26,9 +26,98 @@ interface Dependencies {
 const safeId = (id: string) =>
   /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) && id.length <= 100;
 
+function isValidCollectionFile(
+  file: CollectionFile,
+  seen: ReadonlySet<string>,
+): boolean {
+  return (
+    Boolean(file.id) &&
+    Number.isSafeInteger(file.bytes) &&
+    file.bytes > 0 &&
+    !seen.has(file.id)
+  );
+}
+
+function recordCollectionItems(
+  all: Map<string, number>,
+  items: readonly CollectionFile[],
+): boolean {
+  for (const item of items) {
+    const existing = all.get(item.id);
+    if (existing !== undefined && existing !== item.bytes) return false;
+    all.set(item.id, item.bytes);
+  }
+  return true;
+}
+
+function sumCollectionBytes(
+  collections: Record<string, CollectionFile[]>,
+): number | null {
+  const all = new Map<string, number>();
+  for (const items of Object.values(collections)) {
+    if (!recordCollectionItems(all, items)) return null;
+  }
+  return [...all.values()].reduce((sum, bytes) => sum + bytes, 0);
+}
+
+function isWithinCacheBudget(total: number): boolean {
+  return (
+    Number.isSafeInteger(total) &&
+    total >= 0 &&
+    total <= TOTAL_ARTWORK_CACHE_LIMIT
+  );
+}
+
 /** Tracks public collection membership; callers keep this index under the shared cache lock. */
 export class CollectionIndex {
   constructor(private readonly deps: Dependencies) {}
+  private async verifyFiles(
+    files: readonly CollectionFile[],
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    const seen = new Set<string>();
+    let totalBytes = 0;
+    for (const file of files) {
+      if (!isValidCollectionFile(file, seen)) return false;
+      seen.add(file.id);
+      totalBytes += file.bytes;
+      if ((await this.deps.size(file.id)) !== file.bytes || signal.aborted) {
+        return false;
+      }
+    }
+    return totalBytes <= COLLECTION_LIMIT;
+  }
+  private async withinTotalLimit(
+    collections: Record<string, CollectionFile[]>,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    const protectedTotal = sumCollectionBytes(collections);
+    if (protectedTotal === null || protectedTotal > TOTAL_ARTWORK_CACHE_LIMIT) {
+      return false;
+    }
+    const total = await this.deps.totalStoredBytes();
+    return isWithinCacheBudget(total) && !signal.aborted;
+  }
+  private async installLocked(
+    id: string,
+    files: readonly CollectionFile[],
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    const state = await this.deps.read();
+    if (state.version !== 1 || signal.aborted) return false;
+    if (!(await this.verifyFiles(files, signal))) return false;
+    const collections = {
+      ...state.collections,
+      [id]: files.map((file) => ({ ...file })),
+    };
+    if (!(await this.withinTotalLimit(collections, signal))) return false;
+    await this.deps.write({
+      version: 1,
+      collections,
+      suppressed: state.suppressed.filter((value) => value !== id),
+    });
+    return true;
+  }
   async install(
     id: string,
     files: readonly CollectionFile[],
@@ -36,55 +125,7 @@ export class CollectionIndex {
   ): Promise<boolean> {
     if (!safeId(id) || signal.aborted || files.length === 0) return false;
     try {
-      return await this.deps.lock(async () => {
-        const state = await this.deps.read();
-        if (state.version !== 1 || signal.aborted) return false;
-        const unique = new Map<string, number>();
-        for (const file of files) {
-          if (
-            !file.id ||
-            !Number.isSafeInteger(file.bytes) ||
-            file.bytes <= 0 ||
-            unique.has(file.id)
-          )
-            return false;
-          unique.set(file.id, file.bytes);
-          if ((await this.deps.size(file.id)) !== file.bytes || signal.aborted)
-            return false;
-        }
-        if (
-          [...unique.values()].reduce((sum, bytes) => sum + bytes, 0) >
-          COLLECTION_LIMIT
-        )
-          return false;
-        const collections = {
-          ...state.collections,
-          [id]: files.map((file) => ({ ...file })),
-        };
-        const all = new Map<string, number>();
-        for (const items of Object.values(collections))
-          for (const item of items) {
-            if (all.has(item.id) && all.get(item.id) !== item.bytes)
-              return false;
-            all.set(item.id, item.bytes);
-          }
-        const total = await this.deps.totalStoredBytes();
-        if (
-          !Number.isSafeInteger(total) ||
-          total < 0 ||
-          total > TOTAL_ARTWORK_CACHE_LIMIT ||
-          [...all.values()].reduce((sum, bytes) => sum + bytes, 0) >
-            TOTAL_ARTWORK_CACHE_LIMIT ||
-          signal.aborted
-        )
-          return false;
-        await this.deps.write({
-          version: 1,
-          collections,
-          suppressed: state.suppressed.filter((value) => value !== id),
-        });
-        return true;
-      });
+      return await this.deps.lock(() => this.installLocked(id, files, signal));
     } catch {
       return false;
     }

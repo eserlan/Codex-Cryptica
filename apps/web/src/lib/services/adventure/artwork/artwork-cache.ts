@@ -131,94 +131,139 @@ export class ArtworkCache {
     return signal.aborted ? null : cached;
   }
 
+  private isAllowedVariant(
+    variant: ArtworkVariant,
+    signal: AbortSignal,
+  ): boolean {
+    if (signal.aborted || variant.bytes <= 0 || variant.bytes > 384 * 1024) {
+      return false;
+    }
+    return /^https:\/\/assets\.codexcryptica\.com\/adventure-artwork\/[a-zA-Z0-9_/-]+\.webp$/.test(
+      variant.url,
+    );
+  }
+
+  private isValidStreamResponse(
+    response: Response,
+    mime: ArtworkVariant["mime"],
+  ): boolean {
+    if (!response.ok || response.type === "opaque" || !response.body) {
+      return false;
+    }
+    const contentType = response.headers
+      .get("content-type")
+      ?.split(";")[0]
+      .trim();
+    return contentType === mime;
+  }
+
+  private async readBoundedChunks(
+    reader: ReadableStreamDefaultReader<Uint8Array>,
+    maxBytes: number,
+    signal: AbortSignal,
+  ): Promise<Uint8Array[] | null> {
+    const chunks: Uint8Array[] = [];
+    let size = 0;
+    while (true) {
+      const part = await abortable(reader.read(), signal);
+      if (part.done) return chunks;
+      size += part.value.byteLength;
+      if (signal.aborted || size > maxBytes) {
+        await reader.cancel();
+        return null;
+      }
+      chunks.push(part.value);
+    }
+  }
+
   private async readStreamedBlob(
     response: Response,
     variant: ArtworkVariant,
     signal: AbortSignal,
   ): Promise<Blob | null> {
-    if (
-      !response.ok ||
-      response.type === "opaque" ||
-      response.headers.get("content-type")?.split(";")[0].trim() !==
-        variant.mime ||
-      !response.body
-    )
+    if (!this.isValidStreamResponse(response, variant.mime) || !response.body) {
       return null;
+    }
     const reader = response.body.getReader();
-    const chunks: Uint8Array[] = [];
-    let size = 0;
     try {
-      while (true) {
-        const part = await abortable(reader.read(), signal);
-        if (part.done) break;
-        size += part.value.byteLength;
-        if (signal.aborted || size > variant.bytes) {
-          await reader.cancel();
-          return null;
-        }
-        chunks.push(part.value);
-      }
+      const chunks = await this.readBoundedChunks(
+        reader,
+        variant.bytes,
+        signal,
+      );
+      return chunks
+        ? new Blob(chunks as BlobPart[], { type: variant.mime })
+        : null;
     } finally {
       if (signal.aborted) void reader.cancel().catch(() => {});
       reader.releaseLock();
     }
-    return new Blob(chunks as BlobPart[], { type: variant.mime });
+  }
+
+  private async validateAndWriteBlob(
+    blob: Blob,
+    variant: ArtworkVariant,
+    signal: AbortSignal,
+  ): Promise<Blob | null> {
+    if (signal.aborted) return null;
+    if (!(await abortable(this.valid(blob, variant), signal))) return null;
+    if (signal.aborted) return null;
+    await abortable(
+      this.deps.write(variant.url, blob).catch(() => {}),
+      signal,
+    );
+    return signal.aborted ? null : blob;
+  }
+
+  private async fetchAndCacheBlob(
+    variant: ArtworkVariant,
+    signal: AbortSignal,
+  ): Promise<Blob | null> {
+    const response = await abortable(
+      this.deps.fetch(variant.url, {
+        signal,
+        credentials: "omit",
+        referrerPolicy: "no-referrer",
+        redirect: "error",
+      }),
+      signal,
+    );
+    const blob = await this.readStreamedBlob(response, variant, signal);
+    if (!blob) return null;
+    return await this.validateAndWriteBlob(blob, variant, signal);
+  }
+
+  private async loadWithTimeout(
+    variant: ArtworkVariant,
+    signal: AbortSignal,
+  ): Promise<Blob | null> {
+    const cached = await this.readCachedBlob(variant, signal);
+    if (cached) return cached;
+    if (signal.aborted) return null;
+    const release = await this.slots.acquire(signal);
+    if (!release) return null;
+    try {
+      if (signal.aborted) return null;
+      return await this.fetchAndCacheBlob(variant, signal);
+    } finally {
+      release();
+    }
   }
 
   private async loadUnshared(
     variant: ArtworkVariant,
     signal: AbortSignal,
   ): Promise<Blob | null> {
-    if (
-      signal.aborted ||
-      variant.bytes <= 0 ||
-      variant.bytes > 384 * 1024 ||
-      !/^https:\/\/assets\.codexcryptica\.com\/adventure-artwork\/[a-zA-Z0-9_/-]+\.webp$/.test(
-        variant.url,
-      )
-    )
-      return null;
+    if (!this.isAllowedVariant(variant, signal)) return null;
     const controller = new AbortController();
     const abort = () => controller.abort();
     signal.addEventListener("abort", abort, { once: true });
     const timeout = setTimeout(abort, 8000);
-    let release: (() => void) | null = null;
     try {
-      const cached = await this.readCachedBlob(variant, controller.signal);
-      if (cached) return cached;
-      if (controller.signal.aborted) return null;
-      release = await this.slots.acquire(controller.signal);
-      if (!release || controller.signal.aborted) return null;
-      const response = await abortable(
-        this.deps.fetch(variant.url, {
-          signal: controller.signal,
-          credentials: "omit",
-          referrerPolicy: "no-referrer",
-          redirect: "error",
-        }),
-        controller.signal,
-      );
-      const blob = await this.readStreamedBlob(
-        response,
-        variant,
-        controller.signal,
-      );
-      if (
-        !blob ||
-        controller.signal.aborted ||
-        !(await abortable(this.valid(blob, variant), controller.signal)) ||
-        controller.signal.aborted
-      )
-        return null;
-      await abortable(
-        this.deps.write(variant.url, blob).catch(() => {}),
-        controller.signal,
-      );
-      return controller.signal.aborted ? null : blob;
+      return await this.loadWithTimeout(variant, controller.signal);
     } catch {
       return null;
     } finally {
-      release?.();
       clearTimeout(timeout);
       signal.removeEventListener("abort", abort);
     }

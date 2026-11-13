@@ -79,6 +79,166 @@ export class GuestExporter {
     );
   }
 
+  private static collectIncludedEntities(
+    entities: readonly Entity[],
+    defaultVisibility: "visible" | "hidden",
+  ): globalThis.Map<string, Entity> {
+    const visibilitySettings = { sharedMode: true, defaultVisibility };
+    const included = new globalThis.Map<string, Entity>();
+    for (const entity of entities) {
+      if (
+        entity.status === "draft" ||
+        entity.kind === "report" ||
+        !isEntityVisible(entity, visibilitySettings)
+      ) {
+        continue;
+      }
+      included.set(entity.id, entity);
+    }
+    return included;
+  }
+
+  private static toGuestRelationship(
+    sourceId: string,
+    conn: NonNullable<Entity["connections"]>[number],
+  ): GuestRelationship {
+    const type = conn.type || "neutral";
+    return {
+      id: `${sourceId}-${conn.target}-${type}`,
+      sourceId,
+      targetId: conn.target,
+      label: conn.label || conn.type || "",
+      description: "",
+    };
+  }
+
+  private static collectEntityRelationships(
+    entity: Entity,
+    includedEntityIds: ReadonlySet<string>,
+  ): GuestRelationship[] {
+    return (entity.connections ?? [])
+      .filter(
+        (conn) => Boolean(conn.target) && includedEntityIds.has(conn.target),
+      )
+      .map((conn) => GuestExporter.toGuestRelationship(entity.id, conn));
+  }
+
+  private static buildGuestRelationships(
+    includedEntitiesMap: ReadonlyMap<string, Entity>,
+    includedEntityIds: ReadonlySet<string>,
+  ): GuestRelationship[] {
+    const relationships: GuestRelationship[] = [];
+    for (const entity of includedEntitiesMap.values()) {
+      relationships.push(
+        ...GuestExporter.collectEntityRelationships(entity, includedEntityIds),
+      );
+    }
+    return relationships;
+  }
+
+  private static sanitizeGuestMaps(
+    maps: readonly Map[],
+    includedEntityIds: ReadonlySet<string>,
+  ): Map[] {
+    // hexCrawl is GM-only working data (FR-041): notes, AI drafts and explored
+    // state never reach guests. Grid geometry is kept, since it is map layout.
+    return maps
+      .filter(
+        (m) =>
+          m.playerVisible === true &&
+          !isPrivateArtworkSnapshotPath(m.assetPath),
+      )
+      .map((m) => {
+        const pins = (m.pins || []).filter(
+          (p) => !p.entityId || includedEntityIds.has(p.entityId),
+        );
+        const { hexCrawl: _hexCrawl, ...publicMap } = m;
+        return { ...publicMap, pins };
+      });
+  }
+
+  private static sanitizeCanvas(
+    canvas: any,
+    includedEntityIds: ReadonlySet<string>,
+  ): any {
+    const nodes = (canvas.nodes || []).filter(
+      (n: any) => n.type !== "entity" || includedEntityIds.has(n.entityId),
+    );
+    const nodeIds = new Set(nodes.map((n: any) => n.id));
+    const edges = (canvas.edges || []).filter(
+      (e: any) => nodeIds.has(e.source) && nodeIds.has(e.target),
+    );
+    return { ...canvas, nodes, edges };
+  }
+
+  private static sanitizeGuestCanvases(
+    canvases: readonly any[],
+    includedEntityIds: ReadonlySet<string>,
+  ): any[] {
+    return canvases
+      .filter((c) => c.playerVisible === true)
+      .map((c) => GuestExporter.sanitizeCanvas(c, includedEntityIds));
+  }
+
+  private static stripPrivateEntityFields(sanitized: Entity): void {
+    delete sanitized.lore;
+    delete sanitized.artDirection;
+    delete sanitized.adventureArtwork;
+    if (isPrivateArtworkSnapshotPath(sanitized.image)) delete sanitized.image;
+    if (isPrivateArtworkSnapshotPath(sanitized.thumbnail)) {
+      delete sanitized.thumbnail;
+    }
+    delete (sanitized as any)._path;
+  }
+
+  private static sanitizeEntityBiome(sanitized: Entity): void {
+    if (!sanitized.biome) return;
+    const referenceLinks = sanitized.biome.referenceLinks;
+    sanitized.biome = { ...sanitized.biome, referenceLinks: [] };
+    if (sanitized.content) {
+      sanitized.content = this.redactBiomeReferenceLinks(
+        sanitized.content,
+        referenceLinks,
+      );
+    }
+  }
+
+  private static sanitizeEntity(
+    entity: Entity,
+    includedEntitiesMap: globalThis.Map<string, Entity>,
+    includedEntityIds: Set<string>,
+    allKnownEntityIds: Set<string>,
+    sanitizeStatSheet?: GuestSheetSanitizer,
+  ): Entity {
+    const sanitized = { ...entity };
+    GuestExporter.stripPrivateEntityFields(sanitized);
+    if (sanitized.statSheet) {
+      sanitized.statSheet = this.sanitizeSheet(
+        sanitized.statSheet,
+        includedEntitiesMap,
+        sanitizeStatSheet,
+      );
+    }
+    GuestExporter.sanitizeEntityBiome(sanitized);
+    if (sanitized.content) {
+      sanitized.content = this.redactDanglingLinks(
+        sanitized.content,
+        includedEntityIds,
+        allKnownEntityIds,
+      );
+    }
+    return sanitized;
+  }
+
+  private static sanitizeMetadata(
+    metadata: ExporterOptions["metadata"],
+  ): ExporterOptions["metadata"] {
+    if (metadata && isPrivateArtworkSnapshotPath(metadata.coverImage)) {
+      return { ...metadata, coverImage: undefined };
+    }
+    return metadata;
+  }
+
   /**
    * Compiles a sanitized guest-safe bundle of a campaign.
    * Excludes drafts and entities hidden by VisibilitySettings (Fog of War).
@@ -103,140 +263,21 @@ export class GuestExporter {
       sanitizeStatSheet,
     } = options;
 
-    const visibilitySettings = {
-      sharedMode: true,
-      defaultVisibility,
-    };
-
-    // 1. Identify which entities are visible / included
     const allKnownEntityIds = new Set(entities.map((e) => e.id));
-    const includedEntitiesMap = new Map<string, Entity>();
-
-    for (const entity of entities) {
-      // Exclude drafts
-      if (entity.status === "draft") {
-        continue;
-      }
-
-      // Reports can hold GM-only text and are never published
-      if (entity.kind === "report") {
-        continue;
-      }
-
-      // Exclude hidden entities based on Fog of War settings
-      if (!isEntityVisible(entity, visibilitySettings)) {
-        continue;
-      }
-
-      includedEntitiesMap.set(entity.id, entity);
-    }
-
+    const includedEntitiesMap = GuestExporter.collectIncludedEntities(
+      entities,
+      defaultVisibility,
+    );
     const includedEntityIds = new Set(includedEntitiesMap.keys());
-
-    // 2. Filter and build relationships
-    const guestRelationships: GuestRelationship[] = [];
-    for (const entity of includedEntitiesMap.values()) {
-      for (const conn of entity.connections ?? []) {
-        const targetId = conn.target;
-        if (targetId && includedEntityIds.has(targetId)) {
-          guestRelationships.push({
-            id: `${entity.id}-${targetId}-${conn.type || "neutral"}`,
-            sourceId: entity.id,
-            targetId,
-            label: conn.label || conn.type || "",
-            description: "",
-          });
-        }
-      }
-    }
-
-    // 3. Filter and sanitize maps
-    // hexCrawl is GM-only working data (FR-041): notes, AI drafts and explored
-    // state never reach guests. Grid geometry is kept, since it is map layout.
-    const guestMaps = maps
-      .filter(
-        (m) =>
-          m.playerVisible === true &&
-          !isPrivateArtworkSnapshotPath(m.assetPath),
-      )
-      .map((m) => {
-        const pins = (m.pins || []).filter(
-          (p) => !p.entityId || includedEntityIds.has(p.entityId),
-        );
-        const { hexCrawl: _hexCrawl, ...publicMap } = m;
-        return {
-          ...publicMap,
-          pins,
-        };
-      });
-
-    // 4. Filter and sanitize canvases
-    const guestCanvases = canvases
-      .filter((c) => c.playerVisible === true)
-      .map((c) => {
-        const nodes = (c.nodes || []).filter(
-          (n: any) => n.type !== "entity" || includedEntityIds.has(n.entityId),
-        );
-        const nodeIds = new Set(nodes.map((n: any) => n.id));
-        const edges = (c.edges || []).filter(
-          (e: any) => nodeIds.has(e.source) && nodeIds.has(e.target),
-        );
-        return {
-          ...c,
-          nodes,
-          edges,
-        };
-      });
-
-    // 5. Sanitize and redact content for included entities
-    const sanitizedEntities: Entity[] = [];
-    for (const entity of includedEntitiesMap.values()) {
-      // Clone the entity to avoid modifying the original in-memory state
-      const sanitized = { ...entity };
-
-      // Physically delete GM secrets
-      delete sanitized.lore;
-      delete sanitized.artDirection;
-      delete sanitized.adventureArtwork;
-      if (isPrivateArtworkSnapshotPath(sanitized.image)) delete sanitized.image;
-      if (isPrivateArtworkSnapshotPath(sanitized.thumbnail))
-        delete sanitized.thumbnail;
-
-      // Clean runtime fields
-      delete (sanitized as any)._path;
-
-      // Stat sheets reach players only through the sanitiser
-      if (sanitized.statSheet) {
-        sanitized.statSheet = this.sanitizeSheet(
-          sanitized.statSheet,
-          includedEntitiesMap,
-          sanitizeStatSheet,
-        );
-      }
-
-      // A biome profile's reference links are the owner's private research
-      if (sanitized.biome) {
-        const referenceLinks = sanitized.biome.referenceLinks;
-        sanitized.biome = { ...sanitized.biome, referenceLinks: [] };
-        if (sanitized.content) {
-          sanitized.content = this.redactBiomeReferenceLinks(
-            sanitized.content,
-            referenceLinks,
-          );
-        }
-      }
-
-      // Redact dangling links in content
-      if (sanitized.content) {
-        sanitized.content = this.redactDanglingLinks(
-          sanitized.content,
-          includedEntityIds,
-          allKnownEntityIds,
-        );
-      }
-
-      sanitizedEntities.push(sanitized);
-    }
+    const sanitizedEntities = [...includedEntitiesMap.values()].map((entity) =>
+      GuestExporter.sanitizeEntity(
+        entity,
+        includedEntitiesMap,
+        includedEntityIds,
+        allKnownEntityIds,
+        sanitizeStatSheet,
+      ),
+    );
 
     return {
       schemaVersion: 1,
@@ -245,14 +286,17 @@ export class GuestExporter {
       publishedAt: new Date(clock.now()).toISOString(),
       publisherVersion,
       activeTheme: activeTheme || {},
-      metadata:
-        metadata && isPrivateArtworkSnapshotPath(metadata.coverImage)
-          ? { ...metadata, coverImage: undefined }
-          : metadata,
+      metadata: GuestExporter.sanitizeMetadata(metadata),
       entities: sanitizedEntities,
-      relationships: guestRelationships,
-      maps: guestMaps,
-      canvases: guestCanvases,
+      relationships: GuestExporter.buildGuestRelationships(
+        includedEntitiesMap,
+        includedEntityIds,
+      ),
+      maps: GuestExporter.sanitizeGuestMaps(maps, includedEntityIds),
+      canvases: GuestExporter.sanitizeGuestCanvases(
+        canvases,
+        includedEntityIds,
+      ),
       assetManifest: assetManifest.filter(
         (item) => !isPrivateArtworkSnapshotPath(item.filename),
       ),

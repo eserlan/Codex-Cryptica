@@ -2,30 +2,39 @@ import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { parseCatalogue } from "../packages/adventure-artwork-engine/src/catalogue.ts";
 
+function assertNoMissingHistoricalAssets(oldMap, currentIds) {
+  for (const id of oldMap.keys()) {
+    if (!currentIds.has(id)) {
+      throw new Error(`Missing historical asset ${id}; retain it as withdrawn`);
+    }
+  }
+}
+
+function assertImmutableVariants(asset, prior) {
+  for (const variant of ["preview", "display"]) {
+    const next = asset.variants[variant];
+    const prev = prior.variants[variant];
+    if (next.url !== prev.url || next.sha256 !== prev.sha256) {
+      throw new Error(
+        `Asset ${asset.id} has changed its immutable ${variant} image`,
+      );
+    }
+  }
+}
+
 /** Validate the released catalogue and ensure an existing ID retains its variants. */
 export function validateCatalogueTransition(current, previous) {
   const assets = parseCatalogue(current);
   const old = new Map(
     parseCatalogue(previous).map((asset) => [asset.id, asset]),
   );
-  const currentIds = new Set(assets.map((asset) => asset.id));
-  for (const id of old.keys()) {
-    if (!currentIds.has(id))
-      throw new Error(`Missing historical asset ${id}; retain it as withdrawn`);
-  }
+  assertNoMissingHistoricalAssets(
+    old,
+    new Set(assets.map((asset) => asset.id)),
+  );
   for (const asset of assets) {
     const prior = old.get(asset.id);
-    if (!prior) continue;
-    for (const variant of ["preview", "display"]) {
-      if (
-        asset.variants[variant].url !== prior.variants[variant].url ||
-        asset.variants[variant].sha256 !== prior.variants[variant].sha256
-      ) {
-        throw new Error(
-          `Asset ${asset.id} has changed its immutable ${variant} image`,
-        );
-      }
-    }
+    if (prior) assertImmutableVariants(asset, prior);
   }
   return assets;
 }
@@ -59,8 +68,8 @@ export function validateReleaseCatalogue(current, previous) {
   return assets;
 }
 
-async function readBoundedVariantBytes(response, variant, assetId) {
-  const reader = response.body.getReader();
+async function readStreamUpToLimit(body, maxBytes, assetId) {
+  const reader = body.getReader();
   const chunks = [];
   let size = 0;
   try {
@@ -68,7 +77,7 @@ async function readBoundedVariantBytes(response, variant, assetId) {
       const part = await reader.read();
       if (part.done) break;
       size += part.value.byteLength;
-      if (size > variant.bytes) {
+      if (size > maxBytes) {
         await reader.cancel();
         throw new Error(`Oversized artwork variant ${assetId}`);
       }
@@ -77,36 +86,77 @@ async function readBoundedVariantBytes(response, variant, assetId) {
   } finally {
     reader.releaseLock();
   }
-  const bytes = Buffer.concat(chunks);
+  return Buffer.concat(chunks);
+}
+
+function hasWebpHeader(bytes) {
+  return (
+    bytes.subarray(0, 4).toString() === "RIFF" &&
+    bytes.subarray(8, 12).toString() === "WEBP"
+  );
+}
+
+function hasExpectedDigest(bytes, expectedSha256) {
+  return createHash("sha256").update(bytes).digest("hex") === expectedSha256;
+}
+
+function assertValidWebpBytes(bytes, variant, assetId) {
   if (
-    size !== variant.bytes ||
-    bytes.subarray(0, 4).toString() !== "RIFF" ||
-    bytes.subarray(8, 12).toString() !== "WEBP" ||
-    createHash("sha256").update(bytes).digest("hex") !== variant.sha256
+    bytes.byteLength !== variant.bytes ||
+    !hasWebpHeader(bytes) ||
+    !hasExpectedDigest(bytes, variant.sha256)
   ) {
     throw new Error(`Invalid artwork bytes for ${assetId}`);
   }
+}
+
+async function readBoundedVariantBytes(response, variant, assetId) {
+  const bytes = await readStreamUpToLimit(
+    response.body,
+    variant.bytes,
+    assetId,
+  );
+  assertValidWebpBytes(bytes, variant, assetId);
   return bytes;
 }
 
+function hasUnexpectedRedirect(response, expectedUrl) {
+  return (
+    response.redirected ||
+    (Boolean(response.url) && response.url !== expectedUrl)
+  );
+}
+
+function readContentTypeMime(response) {
+  const contentType = response.headers.get("content-type");
+  return contentType ? contentType.split(";")[0].trim() : "";
+}
+
+function isOkWebpStream(response) {
+  return (
+    response.ok &&
+    Boolean(response.body) &&
+    readContentTypeMime(response) === "image/webp"
+  );
+}
+
+function assertValidVariantResponse(response, expectedUrl, assetId) {
+  if (
+    !isOkWebpStream(response) ||
+    hasUnexpectedRedirect(response, expectedUrl)
+  ) {
+    throw new Error(`Unable to fetch artwork variant ${assetId}`);
+  }
+}
+
 async function verifySingleVariant(assetId, variant, fetcher, decode) {
-  const signal = AbortSignal.timeout(8000);
   const response = await fetcher(variant.url, {
-    signal,
+    signal: AbortSignal.timeout(8000),
     redirect: "error",
     credentials: "omit",
     referrerPolicy: "no-referrer",
   });
-  const mime = response.headers.get("content-type")?.split(";")[0].trim();
-  if (
-    !response.ok ||
-    response.redirected ||
-    (response.url && response.url !== variant.url) ||
-    mime !== "image/webp" ||
-    !response.body
-  ) {
-    throw new Error(`Unable to fetch artwork variant ${assetId}`);
-  }
+  assertValidVariantResponse(response, variant.url, assetId);
   const bytes = await readBoundedVariantBytes(response, variant, assetId);
   const dimensions = await decode(bytes);
   if (
@@ -117,17 +167,27 @@ async function verifySingleVariant(assetId, variant, fetcher, decode) {
   }
 }
 
+async function verifyAssetVariants(asset, fetcher, decode) {
+  for (const variant of [asset.variants.preview, asset.variants.display]) {
+    await verifySingleVariant(asset.id, variant, fetcher, decode);
+  }
+}
+
+function assertVerificationDeps(fetcher, decode) {
+  if (typeof fetcher !== "function" || typeof decode !== "function") {
+    throw new Error("Artwork verification requires fetch and an image decoder");
+  }
+}
+
 /** Check the published variants with a caller-supplied full image decoder. */
 export async function verifyArtworkVariants(
   assets,
   { fetch: fetcher, decode },
 ) {
-  if (typeof fetcher !== "function" || typeof decode !== "function")
-    throw new Error("Artwork verification requires fetch and an image decoder");
+  assertVerificationDeps(fetcher, decode);
   for (const asset of parseCatalogue(assets)) {
-    if (asset.withdrawn) continue;
-    for (const variant of [asset.variants.preview, asset.variants.display]) {
-      await verifySingleVariant(asset.id, variant, fetcher, decode);
+    if (!asset.withdrawn) {
+      await verifyAssetVariants(asset, fetcher, decode);
     }
   }
 }

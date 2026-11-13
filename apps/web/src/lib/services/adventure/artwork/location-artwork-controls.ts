@@ -3,7 +3,7 @@ import {
   type ArtworkAsset,
   type ArtworkCommand,
 } from "@codex/adventure-artwork-engine";
-import { readAdventureArtworkState } from "schema";
+import { readAdventureArtworkState, type ArtworkAssociation } from "schema";
 import { describeVisiblePlace } from "./artwork-resolver";
 import type {
   ArtworkControlContext,
@@ -28,6 +28,45 @@ interface Dependencies {
     command: ArtworkCommand,
     context: ArtworkControlContext,
   ): Promise<ArtworkMutationResult>;
+}
+
+function findPlaceAssociation(
+  artwork: unknown,
+  placeId: string,
+): ArtworkAssociation | undefined {
+  const state = readAdventureArtworkState(artwork);
+  if (state.kind !== "known") return undefined;
+  return state.value.associations.find(
+    (entry) => entry.subject.kind === "place" && entry.subject.id === placeId,
+  )?.association;
+}
+
+function isApprovedLocationAsset(candidate: ArtworkAsset, id: string): boolean {
+  return (
+    candidate.id === id &&
+    candidate.type === "location" &&
+    !candidate.withdrawn &&
+    candidate.review.status === "approved"
+  );
+}
+
+function isAlreadyKept(
+  association: ArtworkAssociation | undefined,
+  asset: ArtworkAsset,
+): boolean {
+  const override = association?.override;
+  return (
+    override?.kind === "catalogue" &&
+    override.assetId === asset.id &&
+    override.sha256 === asset.variants.display.sha256
+  );
+}
+
+function canKeepAutomatic(
+  association: ArtworkAssociation | undefined,
+  id: string,
+): boolean {
+  return association?.automatic?.assetId === id && !association.override;
 }
 
 /** Commands for provisional locations; canonical choices need the Vault adapter. */
@@ -69,43 +108,24 @@ export class LocationArtworkControls {
   async keep(id: string): Promise<boolean> {
     const current = this.current();
     if (!current) return false;
-    const state = readAdventureArtworkState(current.session.artwork);
-    const association =
-      state.kind === "known"
-        ? state.value.associations.find(
-            (entry) =>
-              entry.subject.kind === "place" &&
-              entry.subject.id === current.place.id,
-          )?.association
-        : undefined;
     const asset = this.deps
       .catalogue()
-      .find(
-        (candidate) =>
-          candidate.id === id &&
-          candidate.type === "location" &&
-          !candidate.withdrawn &&
-          candidate.review.status === "approved",
-      );
-    if (
-      asset &&
-      association?.override?.kind === "catalogue" &&
-      association.override.assetId === id &&
-      association.override.sha256 === asset.variants.display.sha256
-    )
-      return true;
-    if (association?.automatic?.assetId !== id || association.override)
-      return false;
-    return asset
-      ? this.apply({
-          kind: "keep",
-          choice: {
-            kind: "catalogue",
-            assetId: asset.id,
-            sha256: asset.variants.display.sha256,
-          },
-        })
-      : false;
+      .find((candidate) => isApprovedLocationAsset(candidate, id));
+    if (!asset) return false;
+    const association = findPlaceAssociation(
+      current.session.artwork,
+      current.place.id,
+    );
+    if (isAlreadyKept(association, asset)) return true;
+    if (!canKeepAutomatic(association, id)) return false;
+    return this.apply({
+      kind: "keep",
+      choice: {
+        kind: "catalogue",
+        assetId: asset.id,
+        sha256: asset.variants.display.sha256,
+      },
+    });
   }
   dismiss() {
     return this.apply({ kind: "dismiss" });

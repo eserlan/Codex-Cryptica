@@ -12,6 +12,41 @@ export interface BrowserArtworkCacheDependencies {
   now?: () => number;
 }
 
+function toCachedEntry(
+  url: string,
+  bytes: number,
+  headers: Headers,
+  protectedUrls: ReadonlySet<string> | undefined,
+): CachedArtworkEntry {
+  const stamp = Number(headers.get("x-artwork-last-used"));
+  const isProtected = protectedUrls
+    ? protectedUrls.has(url)
+    : headers.get("x-artwork-protected") === "true";
+  return {
+    id: url,
+    bytes,
+    lastUsed: Number.isFinite(stamp) ? stamp : 0,
+    protected: isProtected,
+  };
+}
+
+function buildWriteHeaders(
+  blob: Blob,
+  url: string,
+  now: () => number,
+  protectedUrls: ReadonlySet<string> | undefined,
+  entries: readonly CachedArtworkEntry[],
+): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": blob.type,
+    "x-artwork-last-used": String(now()),
+  };
+  const keepProtected =
+    !protectedUrls && entries.find((entry) => entry.id === url)?.protected;
+  if (keepProtected) headers["x-artwork-protected"] = "true";
+  return headers;
+}
+
 /** CacheStorage adapter; public blobs only. Writes and eviction share a cross-tab lock. */
 export class BrowserArtworkCache {
   constructor(private readonly deps: BrowserArtworkCacheDependencies) {}
@@ -30,43 +65,48 @@ export class BrowserArtworkCache {
       await cache.put(url, new Response(await response.blob(), { headers }));
     });
   }
-  async write(url: string, blob: Blob): Promise<void> {
-    await this.deps.withLock(async () => {
-      const cache = await this.deps.open(ARTWORK_CACHE_NAME);
-      const protectedUrls = await this.deps.protectedUrls?.();
-      const entries: CachedArtworkEntry[] = [];
-      for (const request of await cache.keys()) {
-        const response = await cache.match(request);
-        if (!response) continue;
-        const bytes = (await response.blob()).size;
-        const stamp = Number(response.headers.get("x-artwork-last-used"));
-        entries.push({
-          id: request.url,
-          bytes,
-          lastUsed: Number.isFinite(stamp) ? stamp : 0,
-          protected: protectedUrls
-            ? protectedUrls.has(request.url)
-            : response.headers.get("x-artwork-protected") === "true",
-        });
-      }
-      const plan = planCacheMutation(entries, { id: url, bytes: blob.size });
-      if (!plan.ok) throw new Error(`artwork-cache-${plan.reason}`);
-      for (const id of plan.evict)
-        if (!(await cache.delete(id)))
-          throw new Error("artwork-cache-eviction-failed");
-      await cache.put(
-        url,
-        new Response(blob, {
-          headers: {
-            "Content-Type": blob.type,
-            "x-artwork-last-used": String((this.deps.now ?? Date.now)()),
-            ...(!protectedUrls &&
-            entries.find((entry) => entry.id === url)?.protected
-              ? { "x-artwork-protected": "true" }
-              : {}),
-          },
-        }),
+  private async collectEntries(
+    cache: Cache,
+    protectedUrls: ReadonlySet<string> | undefined,
+  ): Promise<CachedArtworkEntry[]> {
+    const entries: CachedArtworkEntry[] = [];
+    for (const request of await cache.keys()) {
+      const response = await cache.match(request);
+      if (!response) continue;
+      const bytes = (await response.blob()).size;
+      entries.push(
+        toCachedEntry(request.url, bytes, response.headers, protectedUrls),
       );
-    });
+    }
+    return entries;
+  }
+  private async evictPlanned(
+    cache: Cache,
+    ids: readonly string[],
+  ): Promise<void> {
+    for (const id of ids) {
+      if (!(await cache.delete(id))) {
+        throw new Error("artwork-cache-eviction-failed");
+      }
+    }
+  }
+  private async writeLocked(url: string, blob: Blob): Promise<void> {
+    const cache = await this.deps.open(ARTWORK_CACHE_NAME);
+    const protectedUrls = await this.deps.protectedUrls?.();
+    const entries = await this.collectEntries(cache, protectedUrls);
+    const plan = planCacheMutation(entries, { id: url, bytes: blob.size });
+    if (!plan.ok) throw new Error(`artwork-cache-${plan.reason}`);
+    await this.evictPlanned(cache, plan.evict);
+    const headers = buildWriteHeaders(
+      blob,
+      url,
+      this.deps.now ?? Date.now,
+      protectedUrls,
+      entries,
+    );
+    await cache.put(url, new Response(blob, { headers }));
+  }
+  async write(url: string, blob: Blob): Promise<void> {
+    await this.deps.withLock(() => this.writeLocked(url, blob));
   }
 }

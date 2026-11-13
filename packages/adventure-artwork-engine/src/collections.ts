@@ -32,27 +32,68 @@ export function collectionDigestInput(
   );
 }
 
-function assertCollectionMetadata(collection: ArtworkCollection): void {
-  const validId =
-    /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(collection.id) &&
-    collection.id.length <= 100;
-  const validVersion =
-    Number.isSafeInteger(collection.version) && collection.version >= 1;
-  const validText =
+function isValidCollectionId(id: string): boolean {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) && id.length <= 100;
+}
+
+function isValidCollectionVersion(version: number): boolean {
+  return Number.isSafeInteger(version) && version >= 1;
+}
+
+function hasValidCollectionText(collection: ArtworkCollection): boolean {
+  return (
     Boolean(collection.title.trim()) &&
     Boolean(collection.coverage.trim()) &&
     collection.credits.length > 0 &&
-    collection.credits.every((credit) => Boolean(credit.trim()));
-  const validDigest = /^[a-f0-9]{64}$/.test(collection.digest);
-  if (
-    !validId ||
-    !validVersion ||
-    !validText ||
-    !collection.entries.length ||
-    !validDigest
-  ) {
+    collection.credits.every((credit) => Boolean(credit.trim()))
+  );
+}
+
+function assertCollectionMetadata(collection: ArtworkCollection): void {
+  const checks = [
+    isValidCollectionId(collection.id),
+    isValidCollectionVersion(collection.version),
+    hasValidCollectionText(collection),
+    collection.entries.length > 0,
+    /^[a-f0-9]{64}$/.test(collection.digest),
+  ];
+  if (checks.some((ok) => !ok)) {
     throw new Error("Invalid collection metadata");
   }
+}
+
+function assertEntryAssetAvailable(
+  key: string,
+  asset: ArtworkAsset | undefined,
+  seenEntries: ReadonlySet<string>,
+): ArtworkAsset {
+  if (
+    seenEntries.has(key) ||
+    !asset ||
+    asset.withdrawn ||
+    asset.review.status !== "approved"
+  ) {
+    throw new Error("Invalid collection asset");
+  }
+  return asset;
+}
+
+function resolveEntryVariant(
+  entry: ArtworkCollectionEntry,
+  assets: ReadonlyMap<string, ArtworkAsset>,
+  seenEntries: Set<string>,
+): CollectionVariant {
+  if (entry.variant !== "preview" && entry.variant !== "display") {
+    throw new Error("Invalid variant");
+  }
+  const key = `${entry.assetId}:${entry.variant}`;
+  const asset = assertEntryAssetAvailable(
+    key,
+    assets.get(entry.assetId),
+    seenEntries,
+  );
+  seenEntries.add(key);
+  return asset.variants[entry.variant];
 }
 
 function collectUniqueVariants(
@@ -62,20 +103,7 @@ function collectUniqueVariants(
   const seenEntries = new Set<string>();
   const variants = new Map<string, CollectionVariant>();
   for (const entry of entries) {
-    if (entry.variant !== "preview" && entry.variant !== "display")
-      throw new Error("Invalid variant");
-    const key = `${entry.assetId}:${entry.variant}`;
-    const asset = assets.get(entry.assetId);
-    if (
-      seenEntries.has(key) ||
-      !asset ||
-      asset.withdrawn ||
-      asset.review.status !== "approved"
-    ) {
-      throw new Error("Invalid collection asset");
-    }
-    seenEntries.add(key);
-    const variant = asset.variants[entry.variant];
+    const variant = resolveEntryVariant(entry, assets, seenEntries);
     const existing = variants.get(variant.url);
     if (existing && variantMismatch(existing, variant)) {
       throw new Error("Conflicting collection variant");

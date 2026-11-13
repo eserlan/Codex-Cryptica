@@ -149,21 +149,26 @@ export class AdventureSessionRepository {
     return raw as Record<string, unknown>;
   }
 
+  private assertBackupNotAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) throw new Error("Backup cancelled");
+  }
+
   /** Read complete owner documents; unreadable files must not silently disappear from backup. */
   async readAllForBackup(
     vaultId: string,
     signal?: AbortSignal,
   ): Promise<Record<string, unknown>[]> {
-    if (signal?.aborted) throw new Error("Backup cancelled");
+    this.assertBackupNotAborted(signal);
     const directory = await this.openAdventuresDirectoryForRead(vaultId);
     if (!directory) return [];
     const documents: Record<string, unknown>[] = [];
     for await (const [name, handle] of (directory as any).entries()) {
-      if (signal?.aborted) throw new Error("Backup cancelled");
-      if (!name.endsWith(".json") || handle.kind !== "file") continue;
-      documents.push(await this.readBackupEntry(vaultId, name, handle));
+      this.assertBackupNotAborted(signal);
+      if (name.endsWith(".json") && handle.kind === "file") {
+        documents.push(await this.readBackupEntry(vaultId, name, handle));
+      }
     }
-    if (signal?.aborted) throw new Error("Backup cancelled");
+    this.assertBackupNotAborted(signal);
     return documents;
   }
 

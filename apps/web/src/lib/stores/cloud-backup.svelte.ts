@@ -123,25 +123,43 @@ export class CloudBackupStore {
       return null;
     }
   }
+  private hasAdventureBackupDeps(): boolean {
+    return Boolean(this.deps?.artworkConsent && this.deps.artworkScope);
+  }
+
+  private canUpdateAdventureBackup(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): boolean {
+    if (!this.hasAdventureBackupDeps()) return false;
+    if (this.status === "off") return false;
+    if (this.deps!.activeVaultId() !== vaultId) return false;
+    return !enabled || confirmed;
+  }
+
+  private async persistAdventureConsent(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): Promise<boolean> {
+    if (!enabled) await this.uploads.cancel();
+    const consent = this.deps!.artworkConsent!;
+    return enabled
+      ? consent.enable(vaultId, confirmed)
+      : consent.disable(vaultId);
+  }
+
   async setAdventureBackup(
     vaultId: string,
     enabled: boolean,
     confirmed: boolean,
   ): Promise<boolean> {
-    const deps = this.deps;
-    if (
-      !deps?.artworkConsent ||
-      !deps.artworkScope ||
-      this.status === "off" ||
-      deps.activeVaultId() !== vaultId ||
-      (enabled && !confirmed)
-    )
+    if (!this.canUpdateAdventureBackup(vaultId, enabled, confirmed)) {
       return false;
-    if (!enabled) await this.uploads.cancel();
-    const ok = enabled
-      ? await deps.artworkConsent.enable(vaultId, confirmed)
-      : await deps.artworkConsent.disable(vaultId);
-    if (ok && deps.activeVaultId() === vaultId) {
+    }
+    const ok = await this.persistAdventureConsent(vaultId, enabled, confirmed);
+    if (ok && this.deps?.activeVaultId() === vaultId) {
       this.notifyLocalChange(vaultId);
       this.changes.schedule(vaultId);
     }

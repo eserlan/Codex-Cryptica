@@ -42,21 +42,21 @@
       current = false;
     };
   });
-  async function change(enabled: boolean) {
-    const id = vaultId;
-    if (busy || !id) return;
-    if (
-      enabled &&
-      !(await confirm({
-        title: "Include adventures in cloud backup?",
-        message:
-          "This adds adventure transcripts, private GM notes, artwork choices and kept pictures to your backup. Cloudflare hosts the data. The backup is not end-to-end encrypted, so Codex Cryptica staff and Cloudflare can technically read it; support can also see backup metadata. It is not sold, shared onward or used to train AI. You can turn this inclusion off here to remove the added cloud data, or delete the whole backup. Your local Vault stays on this device.",
-        confirmLabel: "Include adventures",
-        cancelLabel: "Not now",
-      }))
-    )
-      return;
-    if (id !== vaultId) return;
+  function confirmInclusion(): Promise<boolean> {
+    return confirm({
+      title: "Include adventures in cloud backup?",
+      message:
+        "This adds adventure transcripts, private GM notes, artwork choices and kept pictures to your backup. Cloudflare hosts the data. The backup is not end-to-end encrypted, so Codex Cryptica staff and Cloudflare can technically read it; support can also see backup metadata. It is not sold, shared onward or used to train AI. You can turn this inclusion off here to remove the added cloud data, or delete the whole backup. Your local Vault stays on this device.",
+      confirmLabel: "Include adventures",
+      cancelLabel: "Not now",
+    });
+  }
+
+  function confirmIfEnabling(enabled: boolean): Promise<boolean> {
+    return enabled ? confirmInclusion() : Promise.resolve(true);
+  }
+
+  async function applyConsentChange(id: string, enabled: boolean) {
     busy = true;
     error = false;
     try {
@@ -68,6 +68,14 @@
     } finally {
       busy = false;
     }
+  }
+
+  async function change(enabled: boolean) {
+    const id = vaultId;
+    if (busy || !id) return;
+    if (!(await confirmIfEnabling(enabled))) return;
+    if (id !== vaultId) return;
+    await applyConsentChange(id, enabled);
   }
 </script>
 

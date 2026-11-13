@@ -22,26 +22,172 @@ export interface CollectionDownloadResult {
   total: number;
 }
 
+function variantsConflict(a: CollectionVariant, b: CollectionVariant): boolean {
+  return (
+    a.sha256 !== b.sha256 ||
+    a.bytes !== b.bytes ||
+    a.width !== b.width ||
+    a.height !== b.height
+  );
+}
+
+function dedupeVariants(
+  variants: readonly CollectionVariant[],
+): CollectionVariant[] | null {
+  const unique = new Map<string, CollectionVariant>();
+  for (const variant of variants) {
+    const prior = unique.get(variant.url);
+    if (prior && variantsConflict(prior, variant)) return null;
+    unique.set(variant.url, variant);
+  }
+  return [...unique.values()];
+}
+
+async function partitionMissing(
+  all: readonly CollectionVariant[],
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+): Promise<{
+  aborted: boolean;
+  completed: number;
+  missing: CollectionVariant[];
+}> {
+  const missing: CollectionVariant[] = [];
+  let completed = 0;
+  for (const variant of all) {
+    if (signal.aborted) return { aborted: true, completed, missing };
+    if (await deps.hasValidated(variant)) completed++;
+    else missing.push(variant);
+  }
+  return { aborted: false, completed, missing };
+}
+
+async function downloadOne(
+  variant: CollectionVariant,
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+): Promise<boolean> {
+  try {
+    if (!(await deps.load(variant, signal))) return false;
+    return await deps.hasValidated(variant);
+  } catch {
+    return false;
+  }
+}
+
+async function downloadMissing(
+  missing: readonly CollectionVariant[],
+  total: number,
+  initialCompleted: number,
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+): Promise<{ completed: number; failed: boolean }> {
+  let next = 0;
+  let completed = initialCompleted;
+  let failed = false;
+  const work = async () => {
+    while (!signal.aborted) {
+      const index = next++;
+      if (index >= missing.length) return;
+      if (await downloadOne(missing[index], signal, deps)) {
+        completed++;
+        deps.progress?.(completed, total);
+      } else {
+        failed = true;
+      }
+    }
+  };
+  await Promise.all([work(), work()]);
+  return { completed, failed };
+}
+
+async function finalizeInstall(
+  all: readonly CollectionVariant[],
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+  result: (status: DownloadStatus) => CollectionDownloadResult,
+): Promise<CollectionDownloadResult> {
+  const installed = await deps.install(all, signal);
+  if (signal.aborted && !installed) return result("cancelled");
+  return result(installed ? "installed" : "incomplete");
+}
+
+async function runDownloadPipeline(
+  all: readonly CollectionVariant[],
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+  setCompleted: (value: number) => void,
+  result: (status: DownloadStatus) => CollectionDownloadResult,
+): Promise<CollectionDownloadResult> {
+  if (signal.aborted) return result("cancelled");
+  const partition = await partitionMissing(all, signal, deps);
+  setCompleted(partition.completed);
+  if (partition.aborted) return result("cancelled");
+  deps.progress?.(partition.completed, all.length);
+  return await continueAfterPreflight(
+    all,
+    partition.missing,
+    partition.completed,
+    signal,
+    deps,
+    setCompleted,
+    result,
+  );
+}
+
+async function runDownloadAndInstall(
+  all: readonly CollectionVariant[],
+  missing: readonly CollectionVariant[],
+  initialCompleted: number,
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+  setCompleted: (value: number) => void,
+  result: (status: DownloadStatus) => CollectionDownloadResult,
+): Promise<CollectionDownloadResult> {
+  const run = await downloadMissing(
+    missing,
+    all.length,
+    initialCompleted,
+    signal,
+    deps,
+  );
+  setCompleted(run.completed);
+  if (signal.aborted) return result("cancelled");
+  if (run.failed || run.completed !== all.length) return result("incomplete");
+  return await finalizeInstall(all, signal, deps, result);
+}
+
+async function continueAfterPreflight(
+  all: readonly CollectionVariant[],
+  missing: readonly CollectionVariant[],
+  initialCompleted: number,
+  signal: AbortSignal,
+  deps: DownloadDependencies,
+  setCompleted: (value: number) => void,
+  result: (status: DownloadStatus) => CollectionDownloadResult,
+): Promise<CollectionDownloadResult> {
+  if (signal.aborted) return result("cancelled");
+  if (!(await deps.preflight(missing))) return result("capacity");
+  return await runDownloadAndInstall(
+    all,
+    missing,
+    initialCompleted,
+    signal,
+    deps,
+    setCompleted,
+    result,
+  );
+}
+
 /** Explicit download with resumable validated files and no more than two consumers. */
 export async function downloadCollection(
   variants: readonly CollectionVariant[],
   signal: AbortSignal,
   deps: DownloadDependencies,
 ): Promise<CollectionDownloadResult> {
-  const unique = new Map<string, CollectionVariant>();
-  for (const variant of variants) {
-    const prior = unique.get(variant.url);
-    if (
-      prior &&
-      (prior.sha256 !== variant.sha256 ||
-        prior.bytes !== variant.bytes ||
-        prior.width !== variant.width ||
-        prior.height !== variant.height)
-    )
-      return { status: "unavailable", completed: 0, total: variants.length };
-    unique.set(variant.url, variant);
-  }
-  const all = [...unique.values()];
+  const all = dedupeVariants(variants);
+  if (!all)
+    return { status: "unavailable", completed: 0, total: variants.length };
   let completed = 0;
   const result = (status: DownloadStatus): CollectionDownloadResult => ({
     status,
@@ -49,44 +195,15 @@ export async function downloadCollection(
     total: all.length,
   });
   try {
-    if (signal.aborted) return result("cancelled");
-    const missing: CollectionVariant[] = [];
-    for (const variant of all) {
-      if (signal.aborted) return result("cancelled");
-      if (await deps.hasValidated(variant)) completed++;
-      else missing.push(variant);
-    }
-    deps.progress?.(completed, all.length);
-    if (signal.aborted) return result("cancelled");
-    if (!(await deps.preflight(missing))) return result("capacity");
-    let next = 0;
-    let failed = false;
-    const work = async () => {
-      while (!signal.aborted) {
-        const index = next++;
-        if (index >= missing.length) return;
-        const variant = missing[index];
-        try {
-          if (
-            !(await deps.load(variant, signal)) ||
-            !(await deps.hasValidated(variant))
-          ) {
-            failed = true;
-            continue;
-          }
-          completed++;
-          deps.progress?.(completed, all.length);
-        } catch {
-          failed = true;
-        }
-      }
-    };
-    await Promise.all([work(), work()]);
-    if (signal.aborted) return result("cancelled");
-    if (failed || completed !== all.length) return result("incomplete");
-    const installed = await deps.install(all, signal);
-    if (signal.aborted && !installed) return result("cancelled");
-    return result(installed ? "installed" : "incomplete");
+    return await runDownloadPipeline(
+      all,
+      signal,
+      deps,
+      (value) => {
+        completed = value;
+      },
+      result,
+    );
   } catch {
     return result(signal.aborted ? "cancelled" : "unavailable");
   }

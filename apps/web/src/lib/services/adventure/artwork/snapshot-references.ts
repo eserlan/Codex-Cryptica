@@ -19,42 +19,80 @@ function associationReference(path: string, value: unknown): ReferenceStatus {
     : "unreferenced";
 }
 
+function inspectEntity(path: string, entity: unknown): ReferenceStatus {
+  if (!isRecord(entity)) return "unknown";
+  if (entity.adventureArtwork === undefined) return "unreferenced";
+  return associationReference(path, entity.adventureArtwork);
+}
+
+function inspectEntities(
+  path: string,
+  entities: readonly unknown[],
+): ReferenceStatus {
+  let unknown = false;
+  for (const entity of entities) {
+    const result = inspectEntity(path, entity);
+    if (result === "referenced") return "referenced";
+    if (result === "unknown") unknown = true;
+  }
+  return unknown ? "unknown" : "unreferenced";
+}
+
+function inspectAssociations(
+  path: string,
+  associations: readonly { association: unknown }[],
+): boolean {
+  return associations.some(
+    (entry) => associationReference(path, entry.association) === "referenced",
+  );
+}
+
+function inspectKnownAdventure(
+  path: string,
+  value: {
+    associations: readonly { association: unknown }[];
+    pendingCanonicalLinks?: readonly unknown[];
+  },
+): ReferenceStatus {
+  if (inspectAssociations(path, value.associations)) return "referenced";
+  // Pending links may carry references in formats a newer writer understands.
+  return value.pendingCanonicalLinks?.length ? "unknown" : "unreferenced";
+}
+
+function inspectAdventure(path: string, adventure: unknown): ReferenceStatus {
+  if (!isRecord(adventure)) return "unknown";
+  const artwork = readAdventureArtworkState(adventure.artwork);
+  if (artwork.kind === "opaque") return "unknown";
+  if (artwork.kind === "absent") return "unreferenced";
+  return inspectKnownAdventure(path, artwork.value);
+}
+
+function inspectAdventures(
+  path: string,
+  adventures: readonly unknown[],
+): ReferenceStatus {
+  let unknown = false;
+  for (const adventure of adventures) {
+    const result = inspectAdventure(path, adventure);
+    if (result === "referenced") return "referenced";
+    if (result === "unknown") unknown = true;
+  }
+  return unknown ? "unknown" : "unreferenced";
+}
+
 /** A caller must supply every entity and every active, archived and recovery adventure. */
 export function inspectSnapshotReferences(
   path: string,
   entities: readonly unknown[],
   adventures: readonly unknown[],
 ): ReferenceStatus {
-  let unknown = false;
-  for (const entity of entities) {
-    if (!isRecord(entity)) {
-      unknown = true;
-      continue;
-    }
-    if (entity.adventureArtwork === undefined) continue;
-    const result = associationReference(path, entity.adventureArtwork);
-    if (result === "referenced") return result;
-    if (result === "unknown") unknown = true;
-  }
-  for (const adventure of adventures) {
-    if (!isRecord(adventure)) {
-      unknown = true;
-      continue;
-    }
-    const artwork = readAdventureArtworkState(adventure.artwork);
-    if (artwork.kind === "opaque") {
-      unknown = true;
-      continue;
-    }
-    if (artwork.kind === "absent") continue;
-    // Pending links may carry references in formats a newer writer understands.
-    if (artwork.value.pendingCanonicalLinks?.length) unknown = true;
-    for (const entry of artwork.value.associations) {
-      if (associationReference(path, entry.association) === "referenced")
-        return "referenced";
-    }
-  }
-  return unknown ? "unknown" : "unreferenced";
+  const entityStatus = inspectEntities(path, entities);
+  if (entityStatus === "referenced") return "referenced";
+  const adventureStatus = inspectAdventures(path, adventures);
+  if (adventureStatus === "referenced") return "referenced";
+  return entityStatus === "unknown" || adventureStatus === "unknown"
+    ? "unknown"
+    : "unreferenced";
 }
 
 interface CleanupDependencies {

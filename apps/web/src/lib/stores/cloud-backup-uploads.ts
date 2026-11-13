@@ -72,37 +72,7 @@ export class CloudBackupUploads {
   ): Promise<SnapshotOutcome> {
     const push = new AbortController();
     this.activeBuild = push;
-    const operation = (async () => {
-      // Check before building: the snapshot reads every entity, so learning
-      // that backup is off only at upload time costs a whole-vault read.
-      const record = await getLocalCloudBackupRecord(
-        this.deps!.runtime,
-        vaultId,
-      );
-      if (push.signal.aborted || !record?.enabled) return BACKUP_OFF;
-
-      // Taken before building, so anything changed after this point stays
-      // pending even though the snapshot may happen to include it.
-      const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
-      if (push.signal.aborted) return BACKUP_OFF;
-
-      // Keep the cancellation guard live through upload, including delta
-      // writes, so disable can wait before persisting the off record.
-      const scope = this.deps!.artworkScope;
-      const out = scope
-        ? await runArtworkBackup(vaultId, {
-            ...scope,
-            upload: (artwork) =>
-              this.uploadChanges(vaultId, opts, sent, push.signal, artwork),
-          })
-        : await this.uploadChanges(vaultId, opts, sent, push.signal);
-      if (scope)
-        this.state.artworkConsentVersion =
-          (this.state.artworkConsentVersion ?? 0) + 1;
-      if (push.signal.aborted) return BACKUP_OFF;
-      if (out.ok) await this.deps!.dirty?.clearSent(sent);
-      return out;
-    })();
+    const operation = this.executePushOperation(vaultId, opts, push.signal);
     this.activePush = operation;
     try {
       const out = await operation;
@@ -113,6 +83,88 @@ export class CloudBackupUploads {
         this.activePush = null;
       }
     }
+  }
+
+  private async isBackupEnabled(
+    vaultId: string,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
+    return !signal.aborted && Boolean(record?.enabled);
+  }
+
+  private async executePushOperation(
+    vaultId: string,
+    opts: { guarded: boolean },
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    // Check before building: the snapshot reads every entity, so learning
+    // that backup is off only at upload time costs a whole-vault read.
+    if (!(await this.isBackupEnabled(vaultId, signal))) return BACKUP_OFF;
+
+    // Taken before building, so anything changed after this point stays
+    // pending even though the snapshot may happen to include it.
+    const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+    if (signal.aborted) return BACKUP_OFF;
+
+    // Keep the cancellation guard live through upload, including delta
+    // writes, so disable can wait before persisting the off record.
+    const out = await this.dispatchScopedUpload(vaultId, opts, sent, signal);
+    return this.finalizePushOperation(out, sent, signal);
+  }
+
+  private async finalizePushOperation(
+    out: SnapshotOutcome,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    if (signal.aborted) return BACKUP_OFF;
+    if (out.ok) await this.deps!.dirty?.clearSent(sent);
+    return out;
+  }
+
+  private async dispatchScopedUpload(
+    vaultId: string,
+    opts: { guarded: boolean },
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    const scope = this.deps!.artworkScope;
+    if (!scope) return this.uploadChanges(vaultId, opts, sent, signal);
+    const out = await runArtworkBackup(vaultId, {
+      ...scope,
+      upload: (artwork) =>
+        this.uploadChanges(vaultId, opts, sent, signal, artwork),
+    });
+    this.state.artworkConsentVersion =
+      (this.state.artworkConsentVersion ?? 0) + 1;
+    return out;
+  }
+
+  private canUseDelta(
+    opts: { guarded: boolean },
+    artwork?: { forceFull: boolean },
+  ): boolean {
+    if (artwork?.forceFull) return false;
+    if (!opts.guarded) return false;
+    const deps = this.deps!;
+    return Boolean(deps.dirty && deps.buildDelta && this.state.lastPushedAt);
+  }
+
+  private async trySendDelta(
+    vaultId: string,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome | null> {
+    const delta = await this.deps!.buildDelta!(
+      vaultId,
+      sent,
+      new Set(Object.keys(this.media.hashes)),
+      signal,
+    );
+    if (signal.aborted) return BACKUP_OFF;
+    if (!delta) return null;
+    return this.sendDelta(vaultId, delta, this.state.lastPushedAt!, signal);
   }
 
   /**
@@ -128,29 +180,11 @@ export class CloudBackupUploads {
     signal: AbortSignal,
     artwork?: { includeAdventures: boolean; forceFull: boolean },
   ): Promise<SnapshotOutcome> {
-    const deps = this.deps!;
-    const base = this.state.lastPushedAt;
-    if (
-      artwork?.forceFull ||
-      !opts.guarded ||
-      !deps.dirty ||
-      !deps.buildDelta ||
-      !base
-    ) {
+    if (!this.canUseDelta(opts, artwork)) {
       return this.uploadSnapshot(vaultId, opts, signal, artwork);
     }
     if (sent.length === 0) return { ok: true };
-
-    const delta = await deps.buildDelta(
-      vaultId,
-      sent,
-      new Set(Object.keys(this.media.hashes)),
-      signal,
-    );
-    if (signal.aborted) return BACKUP_OFF;
-    const out = delta
-      ? await this.sendDelta(vaultId, delta, base, signal)
-      : null;
+    const out = await this.trySendDelta(vaultId, sent, signal);
     return out ?? this.uploadSnapshot(vaultId, opts, signal, artwork);
   }
 
