@@ -117,69 +117,114 @@ function makeCopy(mine: MergeEntity, options: MergeOptions): MergeEntity {
   return copy;
 }
 
+type Ctx = { result: MergeResult; options: MergeOptions };
+
+function clash(
+  ctx: Ctx,
+  id: string,
+  mine: MergeEntity,
+  theirs: MergeEntity,
+): void {
+  const copy = makeCopy(mine, ctx.options);
+  ctx.result.entities[id] = theirs;
+  ctx.result.copies.push(copy);
+  ctx.result.summary.copies.push({
+    originalId: id,
+    copyId: copy.id,
+    title: copy.title,
+  });
+}
+
+function mergeOneSideGone(
+  ctx: Ctx,
+  id: string,
+  base: MergeEntity,
+  present: MergeEntity,
+): void {
+  const { result } = ctx;
+  if (changedKeys(base, present).length > 0) {
+    result.entities[id] = present;
+    result.summary.editsKeptOverDelete.push(id);
+  } else {
+    result.deletes.push(id);
+    result.summary.deleted.push(id);
+  }
+}
+
+function mergeAgainstBase(
+  ctx: Ctx,
+  id: string,
+  base: MergeEntity,
+  mine: MergeEntity,
+  theirs: MergeEntity,
+): void {
+  const mineKeys = changedKeys(base, mine);
+  const theirKeys = changedKeys(base, theirs);
+  const clashing = mineKeys.some(
+    (key) => theirKeys.includes(key) && differs(mine, theirs, key),
+  );
+  if (clashing) return clash(ctx, id, mine, theirs);
+  ctx.result.entities[id] = combine(base, mine, theirs, mineKeys, theirKeys);
+  if (mineKeys.length > 0 && theirKeys.length > 0) {
+    ctx.result.summary.combined.push(id);
+  }
+}
+
+function mergeOne(
+  ctx: Ctx,
+  id: string,
+  base: MergeEntity | null,
+  mine: MergeEntity | null,
+  theirs: MergeEntity | null,
+): void {
+  const { result } = ctx;
+  if (!mine && !theirs) {
+    result.deletes.push(id);
+    if (base) result.summary.deleted.push(id);
+  } else if (!mine || !theirs) {
+    const present = (mine ?? theirs)!;
+    if (base) mergeOneSideGone(ctx, id, base, present);
+    else result.entities[id] = present;
+  } else if (base) {
+    mergeAgainstBase(ctx, id, base, mine, theirs);
+  } else if (equalContent(mine, theirs)) {
+    result.entities[id] = theirs;
+  } else {
+    clash(ctx, id, mine, theirs);
+  }
+}
+
 export function mergeEntities(
   input: MergeInput,
   options: MergeOptions,
 ): MergeResult {
-  const result: MergeResult = {
-    entities: {},
-    deletes: [],
-    copies: [],
-    summary: { combined: [], editsKeptOverDelete: [], copies: [], deleted: [] },
+  const ctx: Ctx = {
+    options,
+    result: {
+      entities: {},
+      deletes: [],
+      copies: [],
+      summary: {
+        combined: [],
+        editsKeptOverDelete: [],
+        copies: [],
+        deleted: [],
+      },
+    },
   };
   const ids = new Set([
     ...Object.keys(input.base),
     ...Object.keys(input.mine),
     ...Object.keys(input.theirs),
   ]);
-
-  const clash = (id: string, mine: MergeEntity, theirs: MergeEntity) => {
-    const copy = makeCopy(mine, options);
-    result.entities[id] = theirs;
-    result.copies.push(copy);
-    result.summary.copies.push({
-      originalId: id,
-      copyId: copy.id,
-      title: copy.title,
-    });
-  };
-
   for (const id of ids) {
-    const base = input.base[id] ?? null;
-    const mine = input.mine[id] ?? null;
-    const theirs = input.theirs[id] ?? null;
-
-    if (!mine && !theirs) {
-      result.deletes.push(id);
-      if (base) result.summary.deleted.push(id);
-    } else if (!base) {
-      if (!mine || !theirs) result.entities[id] = (mine ?? theirs)!;
-      else if (equalContent(mine, theirs)) result.entities[id] = theirs;
-      else clash(id, mine, theirs);
-    } else if (!mine || !theirs) {
-      const present = (mine ?? theirs)!;
-      if (changedKeys(base, present).length > 0) {
-        result.entities[id] = present;
-        result.summary.editsKeptOverDelete.push(id);
-      } else {
-        result.deletes.push(id);
-        result.summary.deleted.push(id);
-      }
-    } else {
-      const mineKeys = changedKeys(base, mine);
-      const theirKeys = changedKeys(base, theirs);
-      const clashing = mineKeys.some(
-        (key) => theirKeys.includes(key) && differs(mine, theirs, key),
-      );
-      if (clashing) {
-        clash(id, mine, theirs);
-      } else {
-        result.entities[id] = combine(base, mine, theirs, mineKeys, theirKeys);
-        if (mineKeys.length > 0 && theirKeys.length > 0) {
-          result.summary.combined.push(id);
-        }
-      }
-    }
+    mergeOne(
+      ctx,
+      id,
+      input.base[id] ?? null,
+      input.mine[id] ?? null,
+      input.theirs[id] ?? null,
+    );
   }
-  return result;
+  return ctx.result;
 }

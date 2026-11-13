@@ -37,6 +37,14 @@ function uploadFailure(result: {
 /** Plain JSON copy, so later edits and reactive proxies cannot change it. */
 const deepCopy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
 
+/** Records a full snapshot's entities as the new bases, if it has any. */
+function fullSnapshotBase(vaultId: string, bundle: unknown) {
+  const entities = (bundle as { entities?: unknown })?.entities;
+  if (!Array.isArray(entities)) return null;
+  const copy = deepCopy(entities);
+  return (base: CloudBackupBaseStore) => base.replaceVault(vaultId, copy);
+}
+
 /** Serial snapshot/delta uploads, cancellation and version-guarded dirty clearing. */
 export class CloudBackupUploads {
   pushing = false;
@@ -259,9 +267,7 @@ export class CloudBackupUploads {
       payload.assets ?? [],
       deps.timing,
     );
-    const entities = (payload.bundle as { entities?: unknown })?.entities;
-    const copy = Array.isArray(entities) ? deepCopy(entities) : null;
-    this.sentBase = copy && ((base) => base.replaceVault(vaultId, copy));
+    this.sentBase = fullSnapshotBase(vaultId, payload.bundle);
     const result = await pushVaultToCloudBackup(
       deps.runtime,
       vaultId,

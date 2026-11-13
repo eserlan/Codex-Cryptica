@@ -20,7 +20,8 @@ export interface CloudBackupBaseStorage {
   listVault(vaultId: string): Promise<CloudBackupBaseRow[]>;
 }
 
-const plain = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+const plain = <T>(value: T): T =>
+  value === undefined ? value : JSON.parse(JSON.stringify(value));
 
 const idOf = (entity: unknown): string => (entity as { id: string }).id;
 
@@ -97,22 +98,23 @@ export function idbBaseStorage(): CloudBackupBaseStorage {
 /** In-memory rows, for tests and contexts without IndexedDB. */
 export function memoryBaseStorage(): CloudBackupBaseStorage {
   const rows = new Map<string, CloudBackupBaseRow>();
-  const k = (key: RowKey) => key.join("\u0000");
+  const k = ([vaultId, id]: RowKey) => `${vaultId}\u0000${id}`;
   return {
     async put(row) {
       rows.set(k([row.vaultId, row.id]), plain(row));
     },
     async get(key) {
-      const row = rows.get(k(key));
-      return row ? plain(row) : undefined;
+      return plain(rows.get(k(key)));
     },
     async delete(key) {
       rows.delete(k(key));
     },
     async listVault(vaultId) {
-      return [...rows.values()]
-        .filter((row) => row.vaultId === vaultId)
-        .map((row) => plain(row));
+      const found: CloudBackupBaseRow[] = [];
+      for (const row of rows.values()) {
+        if (row.vaultId === vaultId) found.push(plain(row));
+      }
+      return found;
     },
   };
 }
