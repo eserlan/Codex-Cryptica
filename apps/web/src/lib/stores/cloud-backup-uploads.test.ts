@@ -286,6 +286,133 @@ describe("merge base recording", () => {
     expect(await base.get("vault", "e1")).toEqual(ent("e1"));
   });
 
+  it("serialises the same detached snapshot that it records as the base", async () => {
+    const { deps, uploads, base } = withBase();
+    const { pushVaultToCloudBackup: realPush } = await vi.importActual<
+      typeof import("@codex/cloud-backup-sync")
+    >("@codex/cloud-backup-sync");
+    const entity = ent("e1", "old");
+    const assetStarted = Promise.withResolvers<void>();
+    const assetRelease = Promise.withResolvers<void>();
+    await deps.runtime.storage.write("vault", {
+      vaultId: "vault",
+      backupId: "backup",
+      ownerCode: "owner",
+      enabled: true,
+      status: "idle",
+      lastPushedAt: "previous",
+      consentedAt: "now",
+    });
+    deps.runtime.fetch = vi.fn(async (url: string, init: any) => {
+      if (url.endsWith("/assets/portrait.png")) {
+        assetStarted.resolve();
+        await assetRelease.promise;
+        return { ok: true, status: 200, json: async () => ({}) } as any;
+      }
+      expect(url.endsWith("/commit")).toBe(true);
+      const body = JSON.parse(init.body);
+      expect(body.bundle.entities).toEqual([ent("e1", "old")]);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          manifest: {
+            schemaVersion: 1,
+            backupId: "backup",
+            vaultTitle: "Vault",
+            sizeBytes: 0,
+            createdAt: "previous",
+            lastPushedAt: "new",
+          },
+        }),
+      } as any;
+    }) as any;
+    vi.mocked(deps.buildPayload).mockResolvedValueOnce({
+      vaultTitle: "Vault",
+      bundle: { entities: [entity] },
+      assets: [
+        {
+          assetId: "portrait.png",
+          bytes: new Uint8Array([1]),
+          mimeType: "image/png",
+        },
+      ],
+    });
+    vi.mocked(pushVaultToCloudBackup).mockImplementationOnce((...args) =>
+      realPush(...args),
+    );
+
+    const pushing = uploads.pushSnapshot("vault", { guarded: false });
+    await assetStarted.promise;
+    entity.content = "new";
+    assetRelease.resolve();
+    expect(await pushing).toEqual({ ok: true });
+    expect(await base.get("vault", "e1")).toEqual(ent("e1", "old"));
+  });
+
+  it("serialises the same detached delta that it records as the base", async () => {
+    const { deps, uploads, base } = withBase();
+    const { pushDeltaToCloudBackup: realPush } = await vi.importActual<
+      typeof import("@codex/cloud-backup-sync")
+    >("@codex/cloud-backup-sync");
+    const entity = ent("e1", "old");
+    const syncing = Promise.withResolvers<void>();
+    const releaseWrite = Promise.withResolvers<void>();
+    const storage = deps.runtime.storage;
+    const write = storage.write.bind(storage);
+    storage.write = async (vaultId, record) => {
+      if ((record as { status?: string } | undefined)?.status === "syncing") {
+        syncing.resolve();
+        await releaseWrite.promise;
+      }
+      await write(vaultId, record);
+    };
+    await write("vault", {
+      vaultId: "vault",
+      backupId: "backup",
+      ownerCode: "owner",
+      enabled: true,
+      status: "idle",
+      lastPushedAt: "previous",
+      consentedAt: "now",
+    });
+    deps.runtime.fetch = vi.fn(async (_url: string, init: any) => {
+      const body = JSON.parse(init.body);
+      expect(body.upserts).toEqual([ent("e1", "old")]);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          manifest: {
+            schemaVersion: 1,
+            backupId: "backup",
+            vaultTitle: "Vault",
+            sizeBytes: 0,
+            createdAt: "previous",
+            lastPushedAt: "newer",
+          },
+        }),
+      } as any;
+    }) as any;
+    deps.buildDelta = vi.fn(async () => ({
+      vaultTitle: "Vault",
+      upserts: [entity],
+      deletes: [],
+      assetIds: [],
+    }));
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["e1"] });
+    vi.mocked(pushDeltaToCloudBackup).mockImplementationOnce((...args) =>
+      realPush(...args),
+    );
+
+    const pushing = uploads.pushSnapshot("vault", { guarded: true });
+    await syncing.promise;
+    entity.content = "new";
+    releaseWrite.resolve();
+    expect(await pushing).toEqual({ ok: true });
+    expect(await base.get("vault", "e1")).toEqual(ent("e1", "old"));
+  });
+
   it("records nothing when a bundle has no entities", async () => {
     const { uploads, base } = withBase();
     await base.recordSent("vault", [ent("keep")], []);

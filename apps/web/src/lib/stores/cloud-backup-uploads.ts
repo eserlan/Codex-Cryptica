@@ -196,10 +196,15 @@ export class CloudBackupUploads {
     );
     if (signal.aborted) return BACKUP_OFF;
     if (!delta) return null;
-    const upserts = deepCopy(delta.upserts);
-    const deletes = [...delta.deletes];
-    this.sentBase = (base) => base.recordSent(vaultId, upserts, deletes);
-    return this.sendDelta(vaultId, delta, this.state.lastPushedAt!, signal);
+    const outboundDelta = deepCopy(delta);
+    this.sentBase = (base) =>
+      base.recordSent(vaultId, outboundDelta.upserts, outboundDelta.deletes);
+    return this.sendDelta(
+      vaultId,
+      outboundDelta,
+      this.state.lastPushedAt!,
+      signal,
+    );
   }
 
   /**
@@ -259,6 +264,10 @@ export class CloudBackupUploads {
         })
       : await deps.buildPayload(vaultId, signal);
     if (signal.aborted) return BACKUP_OFF;
+    // Snapshot construction returns live entity objects. Detach the bundle
+    // before hashing or uploading assets, both of which await before the
+    // request body is serialised.
+    const outboundPayload = { ...payload, bundle: deepCopy(payload.bundle) };
     this.state.skippedAssets =
       (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
     this.state.skippedEntities =
@@ -267,11 +276,11 @@ export class CloudBackupUploads {
       payload.assets ?? [],
       deps.timing,
     );
-    this.sentBase = fullSnapshotBase(vaultId, payload.bundle);
+    this.sentBase = fullSnapshotBase(vaultId, outboundPayload.bundle);
     const result = await pushVaultToCloudBackup(
       deps.runtime,
       vaultId,
-      payload,
+      outboundPayload,
       (progress) => {
         this.state.uploadProgress = progress;
       },
