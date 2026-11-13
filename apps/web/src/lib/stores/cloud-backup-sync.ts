@@ -27,6 +27,7 @@ export class CloudBackupSync {
     private state: SyncState,
     private getDeps: CloudBackupDepsProvider,
     private uploads: Pick<CloudBackupUploads, "pushing" | "pushSnapshot">,
+    private pullRunning: () => boolean = () => false,
   ) {}
   private get deps() {
     return this.getDeps();
@@ -126,7 +127,7 @@ export class CloudBackupSync {
     if (!onlineStatus.current) {
       return this.deferAutoSyncOffline();
     }
-    if (this.uploads.pushing) {
+    if (this.uploads.pushing || this.pullRunning()) {
       return this.deferAutoSyncWhilePushing();
     }
     this.clearTimer();
@@ -165,6 +166,7 @@ export class CloudBackupSync {
       return this.completeSave();
     }
     if (out.conflict) return this.pauseAutoSyncOnConflict(out);
+    if (out.held) return this.deferHeldPush();
     // Ordinary failure: local data is untouched; stay pending and retry
     // with backoff. Offline flips to the offline state instead.
     this.pending = true;
@@ -191,6 +193,26 @@ export class CloudBackupSync {
     this.state.autoConflictRemoteAt = out.remoteAt ?? null;
     this.state.errorMessage = out.error ?? "Cloud backup failed.";
     return false;
+  }
+
+  /** An open editor held a pull back: keep everything and try again later. */
+  private deferHeldPush(): false {
+    this.pending = true;
+    this.state.autoState = "pending";
+    this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+    return false;
+  }
+
+  /** Runs a push that fell due while a pull was running. */
+  resumeAfterPull(): void {
+    if (
+      this.pending &&
+      !this.autoTimer &&
+      this.state.autoState !== "conflict" &&
+      this.state.status !== "off"
+    ) {
+      this.scheduleAutoPush();
+    }
   }
 
   private deferConflictRetry(error?: string): void {

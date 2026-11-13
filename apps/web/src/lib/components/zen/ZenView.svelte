@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { clipboardService } from "#lib/services/ClipboardService.js";
   import { createEditState } from "#lib/hooks/useEditState.svelte.js";
@@ -50,6 +51,7 @@
 
   // Logic & State Hooks
   let editState = $state(createEditState(null));
+  onDestroy(() => editState.dispose());
   const actions = createZenModeActions(() => editState);
 
   let isEditing = $derived(editState.isEditing);
