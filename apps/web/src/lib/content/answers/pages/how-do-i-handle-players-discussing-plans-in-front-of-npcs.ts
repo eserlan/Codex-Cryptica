@@ -54,7 +54,7 @@ export const howDoIHandlePlayersDiscussingPlansInFrontOfNpcs: AnswerConfigInput 
         heading: "Ask before you make an assumption",
         paragraphs: [
           'When the mode is unclear, clarify before you impose a consequence. One short question settles it without breaking the scene: "Are you discussing this as players, or are your characters saying it aloud?" Variants that work just as well are "Is that at the table or at the counter?" and "Do your characters say that where she can hear it?"',
-          "Ask first, then apply the answer consistently. If the players say it was player talk, let the NPC have heard nothing and continue from the last line spoken in character. If they say their characters said it aloud, let the NPC respond to what was actually said. What erodes trust is the retrospective ruling: letting a long table discussion run, then announcing that the innkeeper heard the whole plan and has already acted on it. The party had no chance to choose discretion because nobody established that discretion was needed.",
+          "Ask first, then apply the answer consistently from the last line spoken in character. If the players say their characters said it aloud, let the NPC respond to what was actually said. What erodes trust is the retrospective ruling: letting a long table discussion run, then announcing that the innkeeper heard the whole plan and has already acted on it. The party had no chance to choose discretion because nobody established that discretion was needed.",
           "You do not need to ask every time. Once a table has a settled convention, a brief check is enough for the ambiguous moments: a sudden strategy huddle in a tense audience, or a joke at the table that lands like an insult in the fiction. Ask, note the answer, and play on.",
         ],
       },
@@ -89,7 +89,7 @@ export const howDoIHandlePlayersDiscussingPlansInFrontOfNpcs: AnswerConfigInput 
         heading: "Make room for tactical discussion",
         paragraphs: [
           "Players often need more thinking time than their characters would. A new player may need a minute to weigh two replies that a seasoned negotiator would choose between at once, and the whole party may need to recall what an NPC said three sessions ago before anyone can answer well. That gap is normal. Competent characters can be assumed to handle routine social signals, timing, and courtesies better than their players can improvise them, in the same way a character's swordplay is not limited by a player's reflexes.",
-          "Keep tension without forcing real-time play. If a scene carries genuine time pressure, such as a guard returning shortly or a ritual nearing completion, say so before the discussion starts and agree what the pressure means: a short pause is fine, a long one will change what the party returns to. Where there is no such pressure, let the pause run. Summarise longer deliberations when play resumes so the scene restarts from a shared position: restate the NPC's last line, the offer on the table, and the question the party was deciding.",
+          "Keep tension without forcing real-time play by keeping two modes distinct. An agreed out-of-character pause is bounded thinking time for the players: fictional time stops for its duration, even in a tense scene, and the NPC waits at the last spoken line. An in-character conference is fictional time: characters whisper, step away, or wait, and the scene can move around them. The table switches modes explicitly. Anyone can call \"as players\" to enter a pause, and play leaves the pause when a player declares a character's next words or action, or when the party chooses an in-character conference instead. Where a scene carries genuine time pressure, such as a guard returning shortly or a ritual nearing completion, agree a brief thinking break in advance rather than shortening it after it starts. When that break ends, ask the players to declare their next action; if they need longer, invite them to switch to an in-character conference, where the pressure can advance. Summarise longer deliberations when play resumes so the scene restarts from a shared position: restate the NPC's last line, the offer on the table, and the question the party was deciding.",
           "If sidebars repeatedly stall play, treat that as pacing information rather than misconduct. Long conferences often mean the decision is unclear, the stakes have not been stated, or one player is dominating the planning. A gentle cue helps more than a ban: name the open question, check whether the table is ready to answer it, and offer the clarifying question from the section above. Save a direct conversation about table habits for between sessions, and keep it about pacing and enjoyment rather than blame.",
         ],
       },
@@ -102,7 +102,7 @@ export const howDoIHandlePlayersDiscussingPlansInFrontOfNpcs: AnswerConfigInput 
         items: [
           {
             term: "OOC pause",
-            text: 'The players talk it through at the table: whether naming the rider helps or harms, and who should ask. Nobody has declared any of it in character, so fictional time waits. Sella has heard only the party\'s last spoken question. Play resumes with a player declaring the line: "My character asks whether a rider named Corvin came through last night." Nothing from the table discussion reaches Sella, because none of it happened at the counter.',
+            text: 'The players talk it through at the table: whether naming the rider helps or harms, and who should ask. Nobody has declared any of it in character, so fictional time waits. Sella has heard only the party\'s last spoken question. Play resumes with a player declaring the line: "My character asks whether a rider named Corvin came through last night."',
           },
           {
             term: "IC sidebar at the counter",
@@ -142,7 +142,7 @@ export const howDoIHandlePlayersDiscussingPlansInFrontOfNpcs: AnswerConfigInput 
           },
           {
             term: "To name time pressure fairly",
-            text: '"You have a short pause here before the watch changes. If you want a long conference, your characters can step outside, but the scene will have moved on when you return. Which would you like?"',
+            text: '"The watch changes soon, so take your brief pause as players now. When it ends, declare your next move, or switch to a conference in character and we will let the watch change play out. Which suits you?"',
           },
         ],
       },
@@ -152,12 +152,11 @@ export const howDoIHandlePlayersDiscussingPlansInFrontOfNpcs: AnswerConfigInput 
         intro:
           "Agree this convention before play, write it where everyone can see it, and review it after a session or two:",
         items: [
-          "Agree the default: player discussion is out of character and fictional time pauses, unless a player declares that their character speaks.",
+          "Agree the default: player discussion is out of character and fictional time pauses, with the NPC waiting at the last spoken line, unless a player declares that their character speaks.",
           'Pick a clear pause signal anyone can use, such as a raised hand, a marker placed on the table, or simply saying "as players" before thinking aloud.',
-          "Agree what the NPC experiences during a pause: nothing, because the fiction is waiting at the last spoken line.",
           "Agree how play resumes: the GM restates the NPC's last line and the open question, then a player declares the character's next words.",
           "Agree how the characters gain real privacy when they need it: asking for a moment, stepping aside, or using a communication method, with the NPC reacting only to what that action makes observable.",
-          "Agree what genuine time pressure does to a pause, stated openly before discussion starts, so a long conference is an informed choice rather than a trap.",
+          "For tense scenes, agree a brief thinking break in advance; when it ends, declare the next action or switch to an in-character conference that uses fictional time.",
           "If sidebars grow long or interrupt tense scenes, raise pacing gently at the table or between sessions and adjust the convention together instead of banning discussion.",
         ],
       },
