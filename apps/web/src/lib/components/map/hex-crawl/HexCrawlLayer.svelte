@@ -169,7 +169,7 @@
       : null,
   );
   const geographyReview = $derived(
-    services.geography.review && services.geography.review.mapId === mapId
+    services.geography?.review && services.geography.review.mapId === mapId
       ? services.geography.review
       : null,
   );
@@ -180,17 +180,17 @@
       services.region.leave();
     }
     if (!services.region.review) regionPick = null;
-    if (services.geography.mapId && services.geography.mapId !== active) {
+    if (services.geography?.mapId && services.geography.mapId !== active) {
       services.geography.leave();
     }
     // A tap on the map during either review must not open the hex panel behind it.
-    if ((services.region.review || services.geography.review) && services.store.selectedHex)
+    if ((services.region.review || services.geography?.review) && services.store.selectedHex)
       services.store.closeHex();
   });
   onDestroy(() => {
     services.journey.dispose();
     services.region.leave();
-    services.geography.leave();
+    services.geography?.leave();
   });
 </script>
 
