@@ -17,7 +17,7 @@ export const PREFIX = "cloud-backup/";
 const OBJECT_KEY = z
   .string()
   .regex(
-    /^(?:commits\/[A-Za-z0-9-]+\/)?(?:bundle\.json|index\.json|entities\/[A-Za-z0-9_-]+\.json)$/,
+    /^(?:(?:commits\/[A-Za-z0-9-]+\/)?(?:bundle\.json|index\.json|entities\/[A-Za-z0-9_-]+\.json)|commits\/[A-Za-z0-9-]+\/trash\/[A-Za-z0-9_-]+\.json)$/,
   );
 
 /**
@@ -28,6 +28,8 @@ const BackupObjectsSchema = z.object({
   bundle: OBJECT_KEY.optional(),
   index: OBJECT_KEY.optional(),
   shards: z.record(z.string(), OBJECT_KEY).optional(),
+  /** Last content of removed entities, one object per shard; never counted in sizeBytes. */
+  trash: z.record(z.string(), OBJECT_KEY).optional(),
 });
 export type BackupObjects = z.infer<typeof BackupObjectsSchema>;
 
@@ -153,6 +155,7 @@ export function referencedKeys(objects: BackupObjects): Set<string> {
       objects.bundle,
       objects.index,
       ...Object.values(objects.shards ?? {}),
+      ...Object.values(objects.trash ?? {}),
     ].filter((key): key is string => key !== undefined),
   );
 }
@@ -170,14 +173,15 @@ export async function readReferenced<T>(
 
 /**
  * Bytes a backup holds that a reader can reach: the referenced objects plus
- * every asset. Staged orphans and the grace generation do not count.
+ * every asset. Trash, staged orphans and the grace generation do not count.
  */
 export async function reachableBytes(
   env: CloudBackupEnv,
   backupId: string,
   objects: BackupObjects,
 ): Promise<number> {
-  const keep = referencedKeys(objects);
+  // Trash is kept for restore, not billed: a delete must never grow the size.
+  const keep = referencedKeys({ ...objects, trash: undefined });
   let total = 0;
   const prefix = getBackupPrefix(backupId);
   for await (const listed of listObjectPages(env, prefix)) {

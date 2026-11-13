@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { handleCloudBackupDelta } from "../cloud-backup-delta";
 import { handleCommitCloudBackup } from "../cloud-backup-snapshot";
 import {
   getAssetKey,
@@ -150,5 +151,78 @@ describe("cloud backup full snapshots", () => {
       backupId,
     );
     expect((await response.json()).manifest.revision).toBe(1);
+  });
+
+  it("moves feedHorizon to its own revision and carries tombstones forward", async () => {
+    const { env, backupId, ownerCode } = await createBackupFixture();
+    const commit = async (entities: unknown[]) =>
+      (
+        await (
+          await handleCommitCloudBackup(
+            jsonRequest({ vaultTitle: "V", bundle: { entities } }, ownerCode),
+            env,
+            backupId,
+          )
+        ).json()
+      ).manifest;
+    const first = await commit([
+      { id: "a", title: "A" },
+      { id: "b", title: "B" },
+      { id: "c", title: "C" },
+    ]);
+    expect(first.feedHorizon).toBe(1);
+    await handleCloudBackupDelta(
+      jsonRequest(
+        {
+          vaultTitle: "V",
+          baseLastPushedAt: first.lastPushedAt,
+          baseRevision: 1,
+          upserts: [],
+          deletes: ["b", "c"],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+    const before = (await readManifest(env, backupId))!;
+    expect(Object.keys(before.objects!.trash!).length).toBeGreaterThan(0);
+
+    // The snapshot brings "c" back live and leaves "b" out.
+    const full = await commit([
+      { id: "a", title: "A" },
+      { id: "c", title: "C again" },
+    ]);
+    expect(full.revision).toBe(3);
+    expect(full.feedHorizon).toBe(3);
+    const stored = (await readManifest(env, backupId))!;
+    const index = await readCurrent(env, backupId, "index");
+    expect(Object.keys(index.tombstones)).toEqual(["b"]);
+    expect(index.tombstones.b.rev).toBe(2);
+    const trashed = Object.assign(
+      {},
+      ...(await Promise.all(
+        Object.values(stored.objects!.trash!).map(async (key) =>
+          JSON.parse(
+            await (
+              await env.BUCKET.get(`cloud-backup/${backupId}/${key}`)
+            ).text(),
+          ),
+        ),
+      )),
+    );
+    expect(trashed).toEqual({ b: { id: "b", title: "B" } });
+  });
+
+  it("writes no tombstones or trash for a v1 bundle", async () => {
+    const { env, backupId, ownerCode } = await createBackupFixture();
+    await handleCommitCloudBackup(
+      jsonRequest({ vaultTitle: "V", bundle: { notes: [] } }, ownerCode),
+      env,
+      backupId,
+    );
+    const stored = (await readManifest(env, backupId))!;
+    expect(stored.objects!.trash).toBeUndefined();
+    expect(stored.manifest.feedHorizon).toBe(1);
   });
 });

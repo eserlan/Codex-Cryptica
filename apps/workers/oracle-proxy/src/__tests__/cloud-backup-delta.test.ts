@@ -1,12 +1,15 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   cloudBackupRevisionOf,
+  cloudBackupShardOf,
   hashCloudBackupEntity,
 } from "../../../../../packages/schema/src/publishing";
 import { handleCloudBackupDelta } from "../cloud-backup-delta";
 import { handleCommitCloudBackup } from "../cloud-backup-snapshot";
 import {
+  absoluteKey,
   getAssetKey,
+  readJson,
   getManifestKey,
   readManifest,
   writeManifest,
@@ -88,6 +91,15 @@ describe("cloud backup incremental commits", () => {
           rev: 2,
           editedBy: "owner",
           editedAt: (await readManifest(env, backupId))!.manifest.lastPushedAt,
+        },
+      },
+      tombstones: {
+        remove: {
+          id: "remove",
+          rev: 2,
+          deletedBy: "owner",
+          deletedAt: (await readManifest(env, backupId))!.manifest.lastPushedAt,
+          title: "",
         },
       },
     });
@@ -360,5 +372,181 @@ describe("cloud backup incremental commits", () => {
       baseLastPushedAt: "2020-01-01T00:00:00.000Z",
     });
     expect(stale.status).toBe(409);
+  });
+
+  describe("tombstones", () => {
+    async function seeded() {
+      const fixture = await createBackupFixture();
+      const { env, backupId, ownerCode } = fixture;
+      const response = await handleCommitCloudBackup(
+        jsonRequest(
+          {
+            vaultTitle: "Vault",
+            bundle: {
+              entities: [
+                { id: "x", title: "Old Tower", body: "stone" },
+                { id: "keep", title: "Keep" },
+              ],
+            },
+          },
+          ownerCode,
+        ),
+        env,
+        backupId,
+      );
+      return { ...fixture, manifest: (await response.json()).manifest };
+    }
+
+    function send(
+      f: Awaited<ReturnType<typeof seeded>>,
+      base: { lastPushedAt: string; revision?: number },
+      body: { upserts?: unknown[]; deletes?: string[] },
+    ) {
+      return handleCloudBackupDelta(
+        jsonRequest(
+          {
+            vaultTitle: "Vault",
+            baseLastPushedAt: base.lastPushedAt,
+            baseRevision: base.revision,
+            upserts: [],
+            deletes: [],
+            ...body,
+          },
+          f.ownerCode,
+        ),
+        f.env,
+        f.backupId,
+      );
+    }
+
+    it("writes a tombstone and keeps the content in trash", async () => {
+      const f = await seeded();
+      const response = await send(f, f.manifest, { deletes: ["x"] });
+      const committed = (await response.json()).manifest;
+      const stored = (await readManifest(f.env, f.backupId))!;
+      const index = await readCurrent(f.env, f.backupId, "index");
+      expect(index.tombstones).toEqual({
+        x: {
+          id: "x",
+          rev: committed.revision,
+          deletedBy: "owner",
+          deletedAt: committed.lastPushedAt,
+          title: "Old Tower",
+        },
+      });
+      expect(index.entityHashes).not.toHaveProperty("x");
+      expect(committed.entityCount).toBe(1);
+      const trash = await readJson<any>(
+        f.env,
+        absoluteKey(
+          f.backupId,
+          stored.objects!.trash![cloudBackupShardOf("x")],
+        ),
+      );
+      expect(trash).toEqual({
+        x: { id: "x", title: "Old Tower", body: "stone" },
+      });
+      const live = await readAllEntities(f.env, f.backupId, stored.objects!);
+      expect(live.map((entity) => entity.id)).toEqual(["keep"]);
+      const body = await (
+        await handleGetCloudBackupIndex(
+          ownerRequest(f.ownerCode),
+          f.env,
+          f.backupId,
+        )
+      ).json();
+      expect(body).not.toHaveProperty("tombstones");
+      expect(Object.keys(body.entityHashes)).toEqual(["keep"]);
+    });
+
+    it("writes no tombstone for an unknown or already deleted id", async () => {
+      const f = await seeded();
+      await send(f, f.manifest, { deletes: ["ghost"] });
+      let stored = (await readManifest(f.env, f.backupId))!;
+      expect(stored.objects!.trash).toBeUndefined();
+      expect(
+        (await readCurrent(f.env, f.backupId, "index")).tombstones,
+      ).toBeUndefined();
+
+      await send(f, stored.manifest, { deletes: ["x"] });
+      stored = (await readManifest(f.env, f.backupId))!;
+      const first = (await readCurrent(f.env, f.backupId, "index")).tombstones;
+      await send(f, stored.manifest, { deletes: ["x"] });
+      expect(
+        (await readCurrent(f.env, f.backupId, "index")).tombstones,
+      ).toEqual(first);
+    });
+
+    it("brings an entity back when it is upserted again", async () => {
+      const f = await seeded();
+      await send(f, f.manifest, { deletes: ["x"] });
+      const stored = (await readManifest(f.env, f.backupId))!;
+      await send(f, stored.manifest, { upserts: [{ id: "x", title: "Back" }] });
+      const after = (await readManifest(f.env, f.backupId))!;
+      expect(
+        (await readCurrent(f.env, f.backupId, "index")).tombstones,
+      ).toBeUndefined();
+      expect(after.objects!.trash).toBeUndefined();
+      expect(after.manifest.entityCount).toBe(2);
+    });
+
+    it("writes no tombstone for an id both deleted and upserted", async () => {
+      const f = await seeded();
+      await send(f, f.manifest, {
+        deletes: ["x"],
+        upserts: [{ id: "x", title: "Same" }],
+      });
+      expect(
+        (await readCurrent(f.env, f.backupId, "index")).tombstones,
+      ).toBeUndefined();
+      expect((await readManifest(f.env, f.backupId))!.objects!.trash).toBe(
+        undefined,
+      );
+    });
+
+    it("sets feedHorizon to the base revision on the first delta only", async () => {
+      const f = await seeded();
+      expect(f.manifest.feedHorizon).toBe(1);
+      const legacy = { ...f.manifest };
+      delete legacy.feedHorizon;
+      const stored = (await readManifest(f.env, f.backupId))!;
+      await writeManifest(
+        f.env,
+        f.backupId,
+        legacy,
+        stored.ownerCodeHash!,
+        stored.objects,
+        stored.etag,
+      );
+      await send(f, legacy, { upserts: [{ id: "n" }] });
+      const first = (await readManifest(f.env, f.backupId))!.manifest;
+      expect(first.revision).toBe(2);
+      expect(first.feedHorizon).toBe(1);
+      await send(f, first, { upserts: [{ id: "m" }] });
+      expect(
+        (await readManifest(f.env, f.backupId))!.manifest.feedHorizon,
+      ).toBe(1);
+    });
+
+    it("does not count trash in sizeBytes", async () => {
+      const f = await seeded();
+      const before = f.manifest.sizeBytes;
+      const response = await send(f, f.manifest, { deletes: ["x"] });
+      const after = (await response.json()).manifest.sizeBytes;
+      const index = await readCurrent(f.env, f.backupId, "index");
+      const added = new TextEncoder().encode(
+        JSON.stringify(index.tombstones),
+      ).length;
+      expect(after).toBeLessThanOrEqual(before + added + 16);
+      const stored = (await readManifest(f.env, f.backupId))!;
+      expect(
+        await f.env.BUCKET.head(
+          absoluteKey(
+            f.backupId,
+            stored.objects!.trash![cloudBackupShardOf("x")],
+          ),
+        ),
+      ).not.toBeNull();
+    });
   });
 });

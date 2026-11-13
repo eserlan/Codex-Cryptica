@@ -557,6 +557,12 @@ export const CloudBackupManifestSchema = z.object({
    * revisions existed has none and counts as 0 (`cloudBackupRevisionOf`).
    */
   revision: z.number().int().nonnegative().optional(),
+  /**
+   * The oldest revision the change feed can vouch for. Deletes before it were
+   * never recorded as tombstones, and a full upload can drop entities without
+   * one, so a device older than this must reload the whole backup.
+   */
+  feedHorizon: z.number().int().nonnegative().optional(),
 });
 
 export type CloudBackupManifest = z.infer<typeof CloudBackupManifestSchema>;
@@ -581,6 +587,21 @@ export const CloudBackupEntitySyncMetaSchema = z.object({
 export type CloudBackupEntitySyncMeta = z.infer<
   typeof CloudBackupEntitySyncMetaSchema
 >;
+
+/**
+ * A removed entity: kept in the index so the change feed can report the
+ * delete. The entity's last content sits in a trash object beside it.
+ */
+export const CloudBackupTombstoneSchema = z.object({
+  id: z.string().min(1).max(255),
+  /** The revision of the commit that removed it. */
+  rev: z.number().int().nonnegative(),
+  deletedBy: z.string().min(1),
+  deletedAt: z.string(),
+  title: z.string(),
+});
+
+export type CloudBackupTombstone = z.infer<typeof CloudBackupTombstoneSchema>;
 
 /** `editedBy` until backups have members: the owner is the only writer. */
 export const CLOUD_BACKUP_OWNER_EDITOR = "owner";
