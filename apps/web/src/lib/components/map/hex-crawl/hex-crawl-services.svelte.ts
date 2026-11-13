@@ -9,6 +9,7 @@ import { aiClientManager } from "@codex/ai-engine";
 import { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
 import { HexCrawlMoveObserver } from "#lib/stores/hex-crawl/hex-crawl-move-observer.js";
 import { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
+import { GeographyGenerationStore } from "#lib/stores/hex-crawl/geography-generation.svelte.js";
 import { HexJourneyStore } from "#lib/stores/hex-crawl/hex-journey.svelte.js";
 import { HexDiscoveryController } from "#lib/services/hex-discovery.js";
 import { mapStore } from "#lib/stores/map.svelte.js";
@@ -36,6 +37,7 @@ export interface HexCrawlServices {
   offer: ExploreOfferState;
   journey: HexJourneyStore;
   region: RegionGenerationStore;
+  geography: GeographyGenerationStore;
 }
 
 /** Orientation of the active map's hex grid, for labels. */
@@ -150,19 +152,36 @@ export function createHexCrawlServices(): HexCrawlServices {
     },
   });
 
+  const inBounds = (mapId: string, hex: HexCoord) => {
+    const dimensions = vault.maps[mapId]?.dimensions;
+    return dimensions
+      ? hexOnMap(dimensions, activeHexGridConfig(mapStore))(hex)
+      : false;
+  };
+  const newSeed = () => formatSeed(crypto.getRandomValues(new Uint8Array(8)));
+
   const region = new RegionGenerationStore({
     hexes: store,
-    inBounds: (mapId, hex) => {
-      const dimensions = vault.maps[mapId]?.dimensions;
-      return dimensions
-        ? hexOnMap(dimensions, activeHexGridConfig(mapStore))(hex)
-        : false;
-    },
-    newSeed: () => formatSeed(crypto.getRandomValues(new Uint8Array(8))),
+    inBounds,
+    newSeed,
     storage: browserStorage,
     clock: systemClock,
     canEdit: () => !sessionModeStore.isGuestMode && mapStore.isGMMode,
   });
 
-  return { store, observer, controller, offer, journey, region };
+  const geography = new GeographyGenerationStore({
+    hexes: store,
+    inBounds,
+    newSeed,
+    canEdit: () => !sessionModeStore.isGuestMode && mapStore.isGMMode,
+    settlements: (mapId) => {
+      const config = activeHexGridConfig(mapStore);
+      return (vault.maps[mapId]?.pins ?? []).flatMap((pin) => {
+        if (pin.hexCoordinates) return [pin.hexCoordinates];
+        return config && pin.coordinates ? [pointToHex(pin.coordinates, config)] : [];
+      });
+    },
+  });
+
+  return { store, observer, controller, offer, journey, region, geography };
 }
