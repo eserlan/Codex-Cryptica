@@ -105,6 +105,27 @@ The following high-impact candidate specifications target performance, scaling, 
 
 ## 🏛️ Historical Roadmap & Release Timeline
 
+### v0.37.0 — The Living World & AI GM Update (2026-11-13)
+
+- **Highlights**: Major solo adventure AI GM upgrades (rolling story memory, place tracking, vault genre awareness, stall nudges, forgiving turn recovery, and quick header access for situations and rumours); living-world exploration with concurrent scenarios, event-driven world time, scenario pressure, contextual rumours, emerging-leads journal, ready-made adventure starts, and reviewable vault canon promotion with location linking; seeded hex region generation with preview and undo; the Biome Explorer with reusable biome profiles; Business/Enterprise and staged Villain generators plus Quick Names; adjustable dice pools on stat sheets; and unified, text-first entity views.
+- **Associated Specifications**:
+  - [adventure-gm-memory](./adventure-gm-memory/spec.md) (GM rolling story notes and place tracking)
+  - [4715-early-actionable-opportunities](./4715-early-actionable-opportunities/spec.md) (Early actionable opportunities)
+  - [4530-world-time-scenario-pressure](./4530-world-time-scenario-pressure/spec.md) (World time and scenario pressure)
+  - [4531-contextual-rumours](./4531-contextual-rumours/spec.md) (Contextual rumour and opportunity discovery)
+  - [4532-emerging-leads-journal](./4532-emerging-leads-journal/spec.md) (Emerging leads adventure journal)
+  - [4533-progressive-elaboration](./4533-progressive-elaboration/spec.md) (Progressive scenario elaboration)
+  - [4534-ready-made-adventure-start](./4534-ready-made-adventure-start/spec.md) (Ready-made adventure start)
+  - [4535-vault-canon-promotion](./4535-vault-canon-promotion/spec.md) (Reviewable vault canon promotion)
+  - [4537-free-world-exploration](./4537-free-world-exploration/spec.md) (Free world exploration lifecycle)
+  - [4572-adventure-world-retrieval](./4572-adventure-world-retrieval/spec.md) (Adventure world retrieval)
+  - [4573-concurrent-scenarios](./4573-concurrent-scenarios/spec.md) (Concurrent scenarios)
+  - [4659-hex-region-generation](./4659-hex-region-generation/spec.md) (Seeded hex region generation)
+  - [180-biome-explorer](./180-biome-explorer/spec.md) (Biome Explorer)
+  - [180-business-enterprise-generator](./180-business-enterprise-generator/spec.md) (Business & Enterprise generator)
+  - [3159-adjustable-dice-pools](./3159-adjustable-dice-pools/spec.md) (Adjustable dice pools)
+  - [179-in-app-feedback](./179-in-app-feedback/spec.md) (In-app feedback)
+
 ### v0.36.0 — The Adventure Crafting & Play Update (2026-10-19)
 
 - **Highlights**: A staged One-Shot Adventure Builder with playability checks and repairs; dungeon, point crawl, tome, and staged Adventure Idea generators; solo hexcrawl exploration with journal capture and expanded solo-play tools; Tales of the Valiant character sheets, text stat block import, and encounter guidance; reusable entity sheets and a Shop/Merchant sheet with stock, player catalogue, and confirmed trades; Cif-guided onboarding and contextual tips; and expanded RPG guidance for GMs and solo players.

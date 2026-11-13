@@ -1,5 +1,20 @@
 [
   {
+    "version": "0.37.0",
+    "title": "The Living World & AI GM Update",
+    "date": "2026-11-13",
+    "type": "minor",
+    "highlights": [
+      "A Smarter, More Resilient AI GM: Your solo adventure GM now keeps rolling story notes, tracks places and your world's genre, nudges stalled scenes forward, and recovers smoothly from interrupted or awkward replies without losing your turn.",
+      "Follow a Living World: Uncover local rumours and emerging situations from your vault, pursue leads at your own pace, and let fictional time and your choices shape how events unfold. Keep multiple adventures going and jump straight back into your latest session.",
+      "Start and Save Adventures Easily: Launch a solo adventure with a character, place and optional date from your vault, or start directly from a generated adventure idea. Review people, places and other discoveries before saving them to your vault, with saved places linking back to their location records.",
+      "Build Hex Regions: Preview coherent terrain around any hex, generate a region or fill gaps, adjust the proposal before accepting it, reproduce regions from a seed, and undo an accepted generation before your next change.",
+      "Explore Biomes: Browse real-world environments, compare climate and terrain, and create reusable biome profiles for your own settings with reference pictures and illustration prompts.",
+      "Create More Table-Ready Material: Generate businesses and develop heists, forbidden books and campaign villains in stages. Quick Names helps you find and copy names for characters, places, factions and items.",
+      "Clearer Entity Views & Adjustable Dice Pools: Read and edit entities in a cleaner, text-first layout across both full-page and side-panel views, and adjust dice pool sizes directly on stat sheets to inspect individual dice alongside their total."
+    ]
+  },
+  {
     "version": "0.36.0",
     "title": "The Adventure Crafting & Play Update",
     "date": "2026-10-19",
