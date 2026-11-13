@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach } from "vitest";
 import worker from "../index";
+import { handleCopyrightReport } from "../reports";
 
 class MemoryKV {
   store = new Map<string, any>();
@@ -137,12 +138,14 @@ describe("POST /api/reports/copyright", () => {
         turnstileToken: "dev-turnstile-token",
       },
     );
-    const res = await worker.fetch(req, env, ctx);
+    const res = await handleCopyrightReport(req, env, {
+      idGenerator: { uuid: () => "fixed-report-id" },
+      clock: { now: () => Date.parse("2026-07-11T10:20:30.000Z") },
+    });
     expect(res.status).toBe(200);
     const data = (await res.json()) as any;
-    expect(data.reportId).toBeDefined();
-    expect(typeof data.reportId).toBe("string");
-    expect(data.receivedAt).toBeDefined();
+    expect(data.reportId).toBe("fixed-report-id");
+    expect(data.receivedAt).toBe("2026-07-11T10:20:30.000Z");
 
     // Verify R2 persistence
     const reportObj = await bucket.get(

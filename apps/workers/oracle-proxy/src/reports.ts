@@ -2,6 +2,12 @@ import {
   CopyrightReportSchema,
   CopyrightReport,
 } from "../../../../packages/schema/src/publishing";
+import {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "./runtime";
 import { verifyTurnstile } from "./turnstile";
 
 interface ReportsEnv {
@@ -27,7 +33,9 @@ function getHeaders(
 export async function handleCopyrightReport(
   request: Request,
   env: ReportsEnv,
+  deps: { clock?: Clock; idGenerator?: IdGenerator } = {},
 ): Promise<Response> {
+  const { clock = systemClock, idGenerator = systemIdGenerator } = deps;
   const headers = getHeaders(request.headers, env);
 
   if (!env.BUCKET) {
@@ -117,8 +125,8 @@ export async function handleCopyrightReport(
     );
   }
 
-  const reportId = crypto.randomUUID();
-  const receivedAt = new Date().toISOString();
+  const reportId = idGenerator.uuid();
+  const receivedAt = new Date(clock.now()).toISOString();
   const vaultUrl: string = body.vaultUrl.trim();
 
   // Extract publishId from vaultUrl
