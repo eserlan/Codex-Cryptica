@@ -3,6 +3,7 @@ import { handleCommitCloudBackup } from "../cloud-backup-snapshot";
 import {
   getAssetKey,
   getBundleKey,
+  getIndexKey,
   getManifestKey,
   readJson,
   readManifest,
@@ -90,5 +91,44 @@ describe("cloud backup full snapshots", () => {
     expect((await readManifest(env, backupId))?.manifest).toEqual(manifest);
     expect(await env.BUCKET.head(getAssetKey(backupId, "old"))).not.toBeNull();
     expect(env.BUCKET.ops.delete).toBe(0);
+  });
+
+  it("counts every full commit as a revision and stamps every entity", async () => {
+    const { env, backupId, ownerCode } = await createBackupFixture();
+    const commit = async (bundle: unknown) =>
+      (
+        await (
+          await handleCommitCloudBackup(
+            jsonRequest({ vaultTitle: "V", bundle }, ownerCode),
+            env,
+            backupId,
+          )
+        ).json()
+      ).manifest;
+    expect((await commit({ entities: [{ id: "a" }] })).revision).toBe(1);
+    const second = await commit({ entities: [{ id: "a" }, { id: "b" }] });
+    expect(second.revision).toBe(2);
+    expect((await readManifest(env, backupId))!.manifest.revision).toBe(2);
+    const index = await readJson<any>(env, getIndexKey(backupId));
+    for (const id of ["a", "b"]) {
+      expect(index.entityMeta[id]).toEqual({
+        rev: 2,
+        editedBy: "owner",
+        editedAt: second.lastPushedAt,
+      });
+    }
+    expect(
+      (await readAllEntities(env, backupId)).map((entity) => entity.id).sort(),
+    ).toEqual(["a", "b"]);
+  });
+
+  it("raises the revision for a v1 bundle too", async () => {
+    const { env, backupId, ownerCode } = await createBackupFixture();
+    const response = await handleCommitCloudBackup(
+      jsonRequest({ vaultTitle: "V", bundle: { notes: [] } }, ownerCode),
+      env,
+      backupId,
+    );
+    expect((await response.json()).manifest.revision).toBe(1);
   });
 });

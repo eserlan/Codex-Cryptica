@@ -552,9 +552,38 @@ export const CloudBackupManifestSchema = z.object({
    * a later change to the default can never misread existing shards.
    */
   shardCount: z.number().int().positive().optional(),
+  /**
+   * Raised by exactly one on every accepted commit. A backup written before
+   * revisions existed has none and counts as 0 (`cloudBackupRevisionOf`).
+   */
+  revision: z.number().int().nonnegative().optional(),
 });
 
 export type CloudBackupManifest = z.infer<typeof CloudBackupManifestSchema>;
+
+/** The manifest's revision, where a missing one means 0. */
+export function cloudBackupRevisionOf(
+  manifest: Pick<CloudBackupManifest, "revision">,
+): number {
+  return manifest.revision ?? 0;
+}
+
+/**
+ * Who last wrote an entity and in which commit. Stored in the backup's
+ * `index.json` beside the hashes, never inside the entity itself.
+ */
+export const CloudBackupEntitySyncMetaSchema = z.object({
+  rev: z.number().int().nonnegative(),
+  editedBy: z.string().min(1),
+  editedAt: z.string(),
+});
+
+export type CloudBackupEntitySyncMeta = z.infer<
+  typeof CloudBackupEntitySyncMetaSchema
+>;
+
+/** `editedBy` until backups have members: the owner is the only writer. */
+export const CLOUD_BACKUP_OWNER_EDITOR = "owner";
 
 /**
  * Storage layouts. v1 keeps every entity inside one `bundle.json`; v2 (#3354)
@@ -626,6 +655,8 @@ const CloudBackupEntitySchema = z
 export const CloudBackupDeltaSchema = z.object({
   vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
   baseLastPushedAt: z.string().min(1),
+  /** When present, must equal the backup's current revision. */
+  baseRevision: z.number().int().nonnegative().optional(),
   upserts: z.array(CloudBackupEntitySchema),
   deletes: z.array(z.string().min(1).max(255)),
   maps: z.array(z.unknown()).optional(),
@@ -660,6 +691,8 @@ export const LocalCloudBackupRecordSchema = z.object({
    * this existed must still load.
    */
   vaultTitle: z.string().optional(),
+  /** Revision returned by the last commit; absent when the worker sent none. */
+  revision: z.number().int().nonnegative().optional(),
 });
 
 export type LocalCloudBackupRecord = z.infer<

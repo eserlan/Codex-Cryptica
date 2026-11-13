@@ -30,7 +30,8 @@ export function getShardKey(backupId: string, shard: string): string {
 }
 
 /**
- * v2 (#3354): `{ entityHashes: { [entityId]: sha256 } }`. Kept out of the
+ * v2 (#3354): `{ entityHashes: { [entityId]: sha256 }, entityMeta?: {
+ * [entityId]: { rev, editedBy, editedAt } } }`. Kept out of the
  * manifest on purpose — every authorised request reads the manifest, and a
  * per-entity hash map would make each of them pay for the whole vault's index.
  */

@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   CLOUD_BACKUP_SHARD_COUNT,
   CloudBackupDeltaSchema,
+  CloudBackupEntitySyncMetaSchema,
+  CLOUD_BACKUP_OWNER_EDITOR,
+  cloudBackupRevisionOf,
   canonicalJson,
   cloudBackupShardOf,
   hashCloudBackupEntity,
@@ -484,6 +487,61 @@ describe("cloud backup incremental helpers (#3354)", () => {
     ).toBe(true);
     expect(
       CloudBackupDeltaSchema.safeParse({ ...base, upserts: [{ title: "a" }] })
+        .success,
+    ).toBe(false);
+  });
+
+  it("accepts revisions on manifests, records and deltas, and rejects bad ones", () => {
+    const record = {
+      vaultId: "v-1",
+      backupId: "b-1",
+      ownerCode: "code-1",
+      enabled: true,
+      status: "idle" as const,
+      lastPushedAt: null,
+      consentedAt: "2026-08-31T10:00:00.000Z",
+    };
+    const manifest = {
+      schemaVersion: 2,
+      backupId: "b-1",
+      vaultTitle: "V",
+      sizeBytes: 1,
+      createdAt: "2026-08-31T10:00:00.000Z",
+      lastPushedAt: "2026-08-31T10:00:00.000Z",
+    };
+    const delta = {
+      vaultTitle: "V",
+      baseLastPushedAt: "2026-09-24T00:00:00.000Z",
+      upserts: [],
+      deletes: [],
+    };
+    for (const schema of [
+      CloudBackupManifestSchema,
+      LocalCloudBackupRecordSchema,
+    ]) {
+      const base = schema === CloudBackupManifestSchema ? manifest : record;
+      expect(schema.safeParse(base).success).toBe(true);
+      expect(schema.safeParse({ ...base, revision: 3 }).success).toBe(true);
+      expect(schema.safeParse({ ...base, revision: -1 }).success).toBe(false);
+    }
+    expect(CloudBackupDeltaSchema.safeParse(delta).success).toBe(true);
+    expect(
+      CloudBackupDeltaSchema.safeParse({ ...delta, baseRevision: 0 }).success,
+    ).toBe(true);
+    for (const baseRevision of [-1, 1.5]) {
+      expect(
+        CloudBackupDeltaSchema.safeParse({ ...delta, baseRevision }).success,
+      ).toBe(false);
+    }
+    expect(cloudBackupRevisionOf({ ...manifest })).toBe(0);
+    expect(cloudBackupRevisionOf({ ...manifest, revision: 4 })).toBe(4);
+  });
+
+  it("validates entity sync metadata", () => {
+    const meta = { rev: 1, editedBy: CLOUD_BACKUP_OWNER_EDITOR, editedAt: "t" };
+    expect(CloudBackupEntitySyncMetaSchema.safeParse(meta).success).toBe(true);
+    expect(
+      CloudBackupEntitySyncMetaSchema.safeParse({ ...meta, editedBy: "" })
         .success,
     ).toBe(false);
   });

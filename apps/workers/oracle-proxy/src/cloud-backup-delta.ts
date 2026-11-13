@@ -1,10 +1,13 @@
 import {
   CLOUD_BACKUP_LIMITS,
   CLOUD_BACKUP_SCHEMA_V2,
+  CLOUD_BACKUP_OWNER_EDITOR,
   CloudBackupDeltaSchema,
+  cloudBackupRevisionOf,
   cloudBackupShardOf,
   hashCloudBackupEntity,
   type CloudBackupDelta,
+  type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
 } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
@@ -30,8 +33,20 @@ function conflict(
   code: "full_push_required" | "diverged",
   message: string,
   lastPushedAt: string,
+  revision?: number,
 ): Response {
-  return json(request, { error: { code, message, lastPushedAt } }, 409);
+  return json(
+    request,
+    {
+      error: {
+        code,
+        message,
+        lastPushedAt,
+        ...(revision === undefined ? {} : { revision }),
+      },
+    },
+    409,
+  );
 }
 
 async function readTouchedShards(
@@ -61,26 +76,37 @@ async function applyEntityDelta(
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
-): Promise<{ shards: Map<string, Shard>; hashes: Record<string, string> }> {
+  stamp: CloudBackupEntitySyncMeta,
+): Promise<{
+  shards: Map<string, Shard>;
+  hashes: Record<string, string>;
+  meta: Record<string, CloudBackupEntitySyncMeta>;
+}> {
   const shards = await readTouchedShards(env, backupId, delta);
 
-  const index = await readJson<{ entityHashes: Record<string, string> }>(
-    env,
-    getIndexKey(backupId),
-  );
+  const index = await readJson<{
+    entityHashes: Record<string, string>;
+    entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
+  }>(env, getIndexKey(backupId));
   const hashes = Object.assign(
     Object.create(null) as Record<string, string>,
     index?.entityHashes ?? {},
   );
+  const meta = Object.assign(
+    Object.create(null) as Record<string, CloudBackupEntitySyncMeta>,
+    index?.entityMeta ?? {},
+  );
   for (const id of delta.deletes) {
     delete shards.get(cloudBackupShardOf(id))![id];
     delete hashes[id];
+    delete meta[id];
   }
   for (const entity of delta.upserts as EntityRecord[]) {
     shards.get(cloudBackupShardOf(entity.id))![entity.id] = entity;
     hashes[entity.id] = await hashCloudBackupEntity(entity);
+    meta[entity.id] = stamp;
   }
-  return { shards, hashes };
+  return { shards, hashes, meta };
 }
 
 /** Bytes the changed shards add to the stored total, for the vault ceiling. */
@@ -101,9 +127,13 @@ async function indexGrowth(
   env: CloudBackupEnv,
   backupId: string,
   hashes: Record<string, string>,
+  meta: Record<string, CloudBackupEntitySyncMeta>,
 ): Promise<number> {
   const existing = await env.BUCKET.head(getIndexKey(backupId));
-  return jsonByteLength({ entityHashes: hashes }) - (existing?.size ?? 0);
+  return (
+    jsonByteLength({ entityHashes: hashes, entityMeta: meta }) -
+    (existing?.size ?? 0)
+  );
 }
 
 async function prepareBundleSections(
@@ -167,13 +197,18 @@ function validateDelta(
       ),
     };
   }
-  if (delta.baseLastPushedAt !== manifest.lastPushedAt) {
+  const revision = cloudBackupRevisionOf(manifest);
+  if (
+    delta.baseLastPushedAt !== manifest.lastPushedAt ||
+    (delta.baseRevision !== undefined && delta.baseRevision !== revision)
+  ) {
     return {
       response: conflict(
         request,
         "diverged",
         "The cloud backup changed since this upload was prepared.",
         manifest.lastPushedAt,
+        revision,
       ),
     };
   }
@@ -184,6 +219,7 @@ function validateDelta(
 interface PreparedDelta {
   shards: Map<string, Shard>;
   hashes: Record<string, string>;
+  meta: Record<string, CloudBackupEntitySyncMeta>;
   bundle: Record<string, unknown> | null;
   projectedBytes: number;
 }
@@ -192,17 +228,24 @@ async function prepareDelta(
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
+  stamp: CloudBackupEntitySyncMeta,
 ): Promise<PreparedDelta> {
-  const { shards, hashes } = await applyEntityDelta(env, backupId, delta);
+  const { shards, hashes, meta } = await applyEntityDelta(
+    env,
+    backupId,
+    delta,
+    stamp,
+  );
   const bundleUpdate = await prepareBundleSections(env, backupId, delta);
   const projected =
     (await storedBytes(env, backupId)) +
     (await shardGrowth(env, backupId, shards)) +
-    (await indexGrowth(env, backupId, hashes)) +
+    (await indexGrowth(env, backupId, hashes, meta)) +
     bundleUpdate.growth;
   return {
     shards,
     hashes,
+    meta,
     bundle: bundleUpdate.bundle,
     projectedBytes: projected,
   };
@@ -214,10 +257,11 @@ async function commitDelta(
   delta: CloudBackupDelta,
   auth: { manifest: CloudBackupManifest; ownerCodeHash: string },
   prepared: PreparedDelta,
+  lastPushedAt: string,
 ): Promise<CloudBackupManifest> {
-  const { shards, hashes } = prepared;
+  const { shards, hashes, meta } = prepared;
   await writeShards(env, backupId, shards, false);
-  await writeIndex(env, backupId, hashes);
+  await writeIndex(env, backupId, hashes, meta);
   await writeBundleSections(env, backupId, prepared.bundle);
 
   const committed: CloudBackupManifest = {
@@ -225,7 +269,8 @@ async function commitDelta(
     vaultTitle: delta.vaultTitle,
     entityCount: Object.keys(hashes).length,
     sizeBytes: await storedBytes(env, backupId),
-    lastPushedAt: new Date().toISOString(),
+    lastPushedAt,
+    revision: cloudBackupRevisionOf(auth.manifest) + 1,
   };
   await writeManifest(env, backupId, committed, auth.ownerCodeHash);
 
@@ -244,7 +289,8 @@ async function commitDelta(
  * POST /api/cloud-backup/{backupId}/delta (#3354) — publishes only what changed.
  *
  * Refuses (409) unless the backup is already v2 and the client computed the
- * delta against the current remote (`baseLastPushedAt`), so a delta can never
+ * delta against the current remote (`baseLastPushedAt`, and `baseRevision`
+ * when sent), so a delta can never
  * land on a copy it does not describe. Same write order as a full commit:
  * shards and index, then `bundle.json` if its sections changed, then the
  * manifest, then prune.
@@ -261,7 +307,12 @@ export async function handleCloudBackupDelta(
   if ("response" in parsed) return parsed.response;
   const { delta } = parsed;
 
-  const prepared = await prepareDelta(env, backupId, delta);
+  const lastPushedAt = new Date().toISOString();
+  const prepared = await prepareDelta(env, backupId, delta, {
+    rev: cloudBackupRevisionOf(auth.manifest) + 1,
+    editedBy: CLOUD_BACKUP_OWNER_EDITOR,
+    editedAt: lastPushedAt,
+  });
   const oversized = sizeLimitResponse(
     request,
     prepared.projectedBytes,
@@ -270,6 +321,13 @@ export async function handleCloudBackupDelta(
   );
   if (oversized) return oversized;
 
-  const committed = await commitDelta(env, backupId, delta, auth, prepared);
+  const committed = await commitDelta(
+    env,
+    backupId,
+    delta,
+    auth,
+    prepared,
+    lastPushedAt,
+  );
   return json(request, { manifest: committed });
 }

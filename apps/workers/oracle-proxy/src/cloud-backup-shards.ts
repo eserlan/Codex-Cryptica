@@ -1,3 +1,4 @@
+import type { CloudBackupEntitySyncMeta } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import {
   type CloudBackupEnv,
@@ -13,8 +14,9 @@ export async function writeIndex(
   env: CloudBackupEnv,
   backupId: string,
   entityHashes: Record<string, string>,
+  entityMeta: Record<string, CloudBackupEntitySyncMeta>,
 ): Promise<void> {
-  await writeJson(env, getIndexKey(backupId), { entityHashes });
+  await writeJson(env, getIndexKey(backupId), { entityHashes, entityMeta });
 }
 
 /**

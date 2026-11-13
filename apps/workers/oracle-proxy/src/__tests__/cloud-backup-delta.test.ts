@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
-import { hashCloudBackupEntity } from "../../../../../packages/schema/src/publishing";
+import {
+  cloudBackupRevisionOf,
+  hashCloudBackupEntity,
+} from "../../../../../packages/schema/src/publishing";
 import { handleCloudBackupDelta } from "../cloud-backup-delta";
 import { handleCommitCloudBackup } from "../cloud-backup-snapshot";
 import {
@@ -9,7 +12,13 @@ import {
   getManifestKey,
   readJson,
   readManifest,
+  writeManifest,
 } from "../cloud-backup-storage";
+import {
+  handleGetCloudBackupBundle,
+  handleGetCloudBackupIndex,
+} from "../cloud-backup-reads";
+import { ownerRequest } from "./cloud-backup-fixtures";
 import { readAllEntities } from "../cloud-backup-shards";
 import { createBackupFixture, jsonRequest } from "./cloud-backup-fixtures";
 
@@ -67,6 +76,13 @@ describe("cloud backup incremental commits", () => {
     expect(await readAllEntities(env, backupId)).toEqual([entity]);
     expect(await readJson(env, getIndexKey(backupId))).toEqual({
       entityHashes: { a: await hashCloudBackupEntity(entity) },
+      entityMeta: {
+        a: {
+          rev: 2,
+          editedBy: "owner",
+          editedAt: (await readManifest(env, backupId))!.manifest.lastPushedAt,
+        },
+      },
     });
     expect(await readJson(env, getBundleKey(backupId))).toEqual({
       maps: [{ id: "map" }],
@@ -185,5 +201,140 @@ describe("cloud backup incremental commits", () => {
     ).rejects.toThrow("index failed");
     expect((await readManifest(env, backupId))?.manifest).toEqual(manifest);
     expect(await env.BUCKET.head(getAssetKey(backupId, "keep"))).not.toBeNull();
+  });
+
+  const send = (
+    fixture: Awaited<ReturnType<typeof committedFixture>>,
+    extra: Record<string, unknown>,
+    upserts: unknown[] = [],
+    deletes: string[] = [],
+  ) =>
+    handleCloudBackupDelta(
+      jsonRequest(
+        { vaultTitle: "Vault", upserts, deletes, ...extra },
+        fixture.ownerCode,
+      ),
+      fixture.env,
+      fixture.backupId,
+    );
+
+  it("raises the revision by one per commit", async () => {
+    const fixture = await committedFixture();
+    const { env, backupId } = fixture;
+    expect(cloudBackupRevisionOf(fixture.manifest)).toBe(1);
+    let manifest = fixture.manifest;
+    for (const expected of [2, 3]) {
+      const response = await send(fixture, {
+        baseLastPushedAt: manifest.lastPushedAt,
+        baseRevision: cloudBackupRevisionOf(manifest),
+      });
+      expect(response.status).toBe(200);
+      manifest = (await response.json()).manifest;
+      expect(manifest.revision).toBe(expected);
+      expect((await readManifest(env, backupId))!.manifest.revision).toBe(
+        expected,
+      );
+    }
+  });
+
+  it("refuses a stale base revision without writing", async () => {
+    const fixture = await committedFixture();
+    fixture.env.BUCKET.resetOps();
+    const response = await send(fixture, {
+      baseLastPushedAt: fixture.manifest.lastPushedAt,
+      baseRevision: 0,
+    });
+    expect(response.status).toBe(409);
+    const { error } = await response.json();
+    expect(error.code).toBe("diverged");
+    expect(error.revision).toBe(1);
+    expect(fixture.env.BUCKET.ops.put).toBe(0);
+    expect(fixture.env.BUCKET.ops.delete).toBe(0);
+  });
+
+  it("stamps upserts, keeps other stamps and leaves content untouched", async () => {
+    const fixture = await committedFixture();
+    const { env, backupId, ownerCode, manifest } = fixture;
+    const before = (await readJson<any>(env, getIndexKey(backupId))).entityMeta;
+    const entity = { id: "a", title: "New" };
+    const response = await send(
+      fixture,
+      { baseLastPushedAt: manifest.lastPushedAt, baseRevision: 1 },
+      [entity],
+      ["remove"],
+    );
+    const committed = (await response.json()).manifest;
+    const index = await readJson<any>(env, getIndexKey(backupId));
+    expect(index.entityMeta.a).toEqual({
+      rev: 2,
+      editedBy: "owner",
+      editedAt: committed.lastPushedAt,
+    });
+    expect(index.entityMeta.remove).toBeUndefined();
+    expect(before.remove).toEqual({
+      rev: 1,
+      editedBy: "owner",
+      editedAt: expect.any(String),
+    });
+    expect(await readAllEntities(env, backupId)).toEqual([entity]);
+    expect(index.entityHashes.a).toBe(await hashCloudBackupEntity(entity));
+
+    const bundle = await (
+      await handleGetCloudBackupBundle(ownerRequest(ownerCode), env, backupId)
+    ).json();
+    expect(bundle.bundle.entities).toEqual([entity]);
+    expect(
+      await (
+        await handleGetCloudBackupIndex(ownerRequest(ownerCode), env, backupId)
+      ).json(),
+    ).toEqual({
+      lastPushedAt: committed.lastPushedAt,
+      entityHashes: index.entityHashes,
+    });
+  });
+
+  it("keeps existing stamps for entities a delta does not touch", async () => {
+    const fixture = await committedFixture();
+    const { env, backupId, manifest } = fixture;
+    const before = (await readJson<any>(env, getIndexKey(backupId))).entityMeta;
+    await send(fixture, { baseLastPushedAt: manifest.lastPushedAt }, [
+      { id: "b" },
+    ]);
+    const after = (await readJson<any>(env, getIndexKey(backupId))).entityMeta;
+    expect(after.a).toEqual(before.a);
+    expect(after.b.rev).toBe(2);
+  });
+
+  it("treats a backup without a revision as revision 0", async () => {
+    const fixture = await committedFixture();
+    const { env, backupId } = fixture;
+    const { manifest, ownerCodeHash } = (await readManifest(env, backupId))!;
+    const { revision: _revision, ...legacy } = manifest;
+    await writeManifest(env, backupId, legacy, ownerCodeHash!);
+    const stale = await send(fixture, {
+      baseLastPushedAt: manifest.lastPushedAt,
+      baseRevision: 1,
+    });
+    expect(stale.status).toBe(409);
+    expect((await stale.json()).error.revision).toBe(0);
+    const ok = await send(fixture, {
+      baseLastPushedAt: manifest.lastPushedAt,
+      baseRevision: 0,
+    });
+    expect(ok.status).toBe(200);
+    expect((await ok.json()).manifest.revision).toBe(1);
+  });
+
+  it("accepts a timestamp-only delta from an older web app", async () => {
+    const fixture = await committedFixture();
+    const ok = await send(fixture, {
+      baseLastPushedAt: fixture.manifest.lastPushedAt,
+    });
+    expect(ok.status).toBe(200);
+    expect((await ok.json()).manifest.revision).toBe(2);
+    const stale = await send(fixture, {
+      baseLastPushedAt: "2020-01-01T00:00:00.000Z",
+    });
+    expect(stale.status).toBe(409);
   });
 });
