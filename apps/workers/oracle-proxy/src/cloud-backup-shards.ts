@@ -1,4 +1,7 @@
-import type { CloudBackupEntitySyncMeta } from "../../../../packages/schema/src/publishing";
+import type {
+  CloudBackupEntitySyncMeta,
+  CloudBackupTombstone,
+} from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import {
   type BackupObjects,
@@ -13,17 +16,34 @@ export function stagedName(tag: string, name: string): string {
   return `commits/${tag}/${name}`;
 }
 
+export type Tombstones = Record<string, CloudBackupTombstone>;
+
+/** The index object; `tombstones` is written only when there are any. */
+export function indexRecord(
+  entityHashes: Record<string, string>,
+  entityMeta: Record<string, CloudBackupEntitySyncMeta>,
+  tombstones: Tombstones,
+) {
+  return {
+    entityHashes,
+    entityMeta,
+    ...(Object.keys(tombstones).length > 0 ? { tombstones } : {}),
+  };
+}
+
 export async function stageIndex(
   env: CloudBackupEnv,
   backupId: string,
   tag: string,
   entityHashes: Record<string, string>,
   entityMeta: Record<string, CloudBackupEntitySyncMeta>,
+  tombstones: Tombstones = {},
 ): Promise<string> {
-  await writeJson(env, getStagedKey(backupId, tag, "index.json"), {
-    entityHashes,
-    entityMeta,
-  });
+  await writeJson(
+    env,
+    getStagedKey(backupId, tag, "index.json"),
+    indexRecord(entityHashes, entityMeta, tombstones),
+  );
   return stagedName(tag, "index.json");
 }
 
@@ -36,16 +56,17 @@ export async function stageShards(
   backupId: string,
   tag: string,
   shards: Map<string, Shard>,
+  directory: "entities" | "trash" = "entities",
 ): Promise<Record<string, string>> {
   const staged: Record<string, string> = {};
   for (const [name, shard] of shards) {
     if (Object.keys(shard).length === 0) continue;
     await writeJson(
       env,
-      getStagedKey(backupId, tag, `entities/${name}.json`),
+      getStagedKey(backupId, tag, `${directory}/${name}.json`),
       shard,
     );
-    staged[name] = stagedName(tag, `entities/${name}.json`);
+    staged[name] = stagedName(tag, `${directory}/${name}.json`);
   }
   return staged;
 }
@@ -63,4 +84,38 @@ export async function readAllEntities(
     entities.push(...Object.values(shard));
   }
   return entities;
+}
+
+/**
+ * The base's tombstones and trash content, minus the ids a full upload brings
+ * back as live entities. Trash is read only when the base has any.
+ */
+export async function carryTombstones(
+  env: CloudBackupEnv,
+  backupId: string,
+  base: BackupObjects,
+  liveIds: ReadonlySet<string>,
+): Promise<{ tombstones: Tombstones; trash: Map<string, Shard> }> {
+  const tombstones: Tombstones = Object.create(null);
+  const trash = new Map<string, Shard>();
+  if (!base.index || !base.trash) return { tombstones, trash };
+
+  const index = await readReferenced<{ tombstones?: Tombstones }>(
+    env,
+    backupId,
+    base.index,
+  );
+  for (const [id, tombstone] of Object.entries(index.tombstones ?? {})) {
+    if (!liveIds.has(id)) tombstones[id] = tombstone;
+  }
+  for (const [name, reference] of Object.entries(base.trash)) {
+    const shard = await readReferenced<Shard>(env, backupId, reference);
+    for (const [id, entity] of Object.entries(shard)) {
+      if (!Object.hasOwn(tombstones, id)) continue;
+      const kept = trash.get(name) ?? Object.create(null);
+      kept[id] = entity;
+      trash.set(name, kept);
+    }
+  }
+  return { tombstones, trash };
 }

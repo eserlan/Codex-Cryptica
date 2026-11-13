@@ -45,6 +45,7 @@ Writes the bundle, then the manifest, then prunes every asset the snapshot does 
 
 - **Request body**: `{ vaultTitle: string, bundle: <vault export shape>, assetIds?: string[] }` — a full snapshot. Used for every full upload of FR-023; incremental uploads use `/delta` below. The bundle is text only (entities, maps, canvases, asset manifest), so it stays small.
 - **Storage** _(#3354)_: writes schema v2 — entities split into shards, their hashes in `index.json`, rest of the bundle in `bundle.json` — then deletes any shard no longer populated. A v1 backup becomes v2 on its first full commit.
+- **Change feed**: sets the manifest's `feedHorizon` to the commit's own revision, since a full upload can drop entities without tombstones. Tombstones and trash of earlier deletes are carried forward, except for ids the snapshot includes as live.
 - **Response 200**: `{ manifest: CloudBackupManifest }` with `sizeBytes` measured from what is actually stored.
 - **Errors**: `400` invalid bundle shape or asset list; `404` unknown `backupId` or wrong code; `413` body larger than 8 MB.
 
@@ -54,6 +55,7 @@ Publishes an incremental change to a **v2** backup (FR-021). Same auth, guard an
 
 - **Request body**: `{ vaultTitle: string, baseLastPushedAt: string, upserts: Entity[], deletes: string[], maps?: unknown[], canvases?: unknown[], assetManifest?: [...], assetIds?: string[] }`. `maps`/`canvases`/`assetManifest`, when present, replace their v2 `bundle.json` fields whole (they are few and small).
 - **Behaviour**: rejects with `409` when `baseLastPushedAt` differs from the manifest's `lastPushedAt` (same divergence rule as the guarded push), so a delta never lands on a remote it was not computed against. Reads and rewrites only the shards containing an upserted or deleted id; updates `index.json` hashes for exactly those ids. A delta never carries media: the client sends one only when every image its entities and maps reference is already stored, and otherwise uploads in full.
+- **Deletes**: each id in `deletes` that is live writes a tombstone (`rev` of this commit, `deletedBy: "owner"`) and keeps the entity's last content in trash. Unknown or already-deleted ids write nothing; an id that is also upserted ends live. The first delta on a manifest without `feedHorizon` sets it to the base revision.
 - **Response 200**: `{ manifest: CloudBackupManifest }`.
 - **Errors**: `400` invalid shape; `404` unknown backup or wrong code; `409` diverged base **or the backup is still v1** (client falls back to a full commit); `413` body larger than 8 MB or the vault would exceed 50 MB.
 
@@ -62,6 +64,21 @@ Publishes an incremental change to a **v2** backup (FR-021). Same auth, guard an
 - **Auth**: `Authorization: Bearer {ownerCode}`.
 - **Response 200**: `{ lastPushedAt: string, entityHashes: { [entityId]: string } }`. Hashes only, never content. Empty for a v1 backup.
 - **Errors**: `404`, same undifferentiated shape as status.
+
+## GET /api/cloud-backup/{backupId}/changes?since=N
+
+What changed after revision `N`, for a device that last saw `N`.
+
+- **Auth**: `Authorization: Bearer {ownerCode}`, checked first; a wrong or missing key answers exactly like `GET /index`, whatever the query.
+- **Errors**: `400` `{ error: { message: "Invalid since" } }` unless `since` matches `^\d+$` and is a safe integer.
+- **Response 200**, with `R` the manifest revision and `H` = `feedHorizon ?? R`, first match wins:
+  1. `since > R` gives `{ status: "resync", revision: R }`.
+  2. `since === R` (and `since > 0`) gives `{ status: "changes", revision: R, entities: [], tombstones: [] }`.
+  3. Not a schema v2 backup gives `resync`.
+  4. `since === 0` gives every live entity and every tombstone.
+  5. `since < H` gives `resync`.
+  6. Otherwise the live entities with `entityMeta[id].rev > since` (no meta counts as 0) and the tombstones with `rev > since`.
+- **Changes shape**: `{ status: "changes", revision, entities: [{ entity, meta? }], tombstones: CloudBackupTombstone[] }`, each ordered by id. No trash content, `objects` or hashes. A missing referenced object answers `500` "Backup is incomplete".
 
 ## GET /api/cloud-backup/{backupId}/status
 

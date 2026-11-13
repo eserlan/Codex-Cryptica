@@ -9,6 +9,7 @@ import {
   type CloudBackupDelta,
   type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
+  type CloudBackupTombstone,
 } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import {
@@ -30,8 +31,15 @@ import {
   pruneAssets,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
+import { evictOldestTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
-import { stageIndex, stageShards, stagedName } from "./cloud-backup-shards";
+import {
+  type Tombstones,
+  indexRecord,
+  stageIndex,
+  stageShards,
+  stagedName,
+} from "./cloud-backup-shards";
 
 export function conflict(
   request: Request,
@@ -76,27 +84,69 @@ export async function lostRace(
   );
 }
 
-async function readTouchedShards(
+async function readShards(
   env: CloudBackupEnv,
   backupId: string,
-  delta: CloudBackupDelta,
-  base: BackupObjects,
+  names: Iterable<string>,
+  references: Record<string, string> | undefined,
 ): Promise<Map<string, Shard>> {
-  const touched = new Set<string>();
-  for (const entity of delta.upserts)
-    touched.add(cloudBackupShardOf(entity.id));
-  for (const id of delta.deletes) touched.add(cloudBackupShardOf(id));
-
   const shards = new Map<string, Shard>();
-  for (const name of touched) {
-    const reference = base.shards?.[name];
+  for (const name of names) {
+    const reference = references?.[name];
     const existing = reference
       ? await readReferenced<Shard>(env, backupId, reference)
       : {};
     shards.set(name, Object.assign(Object.create(null) as Shard, existing));
   }
-
   return shards;
+}
+
+function touchedShardNames(delta: CloudBackupDelta): Set<string> {
+  const touched = new Set<string>();
+  for (const entity of delta.upserts)
+    touched.add(cloudBackupShardOf(entity.id));
+  for (const id of delta.deletes) touched.add(cloudBackupShardOf(id));
+  return touched;
+}
+
+function tombstoneOf(
+  entity: EntityRecord,
+  id: string,
+  stamp: CloudBackupEntitySyncMeta,
+): CloudBackupTombstone {
+  return {
+    id,
+    rev: stamp.rev,
+    deletedBy: stamp.editedBy,
+    deletedAt: stamp.editedAt,
+    title: typeof entity.title === "string" ? entity.title : "",
+  };
+}
+
+interface IndexState {
+  hashes: Record<string, string>;
+  meta: Record<string, CloudBackupEntitySyncMeta>;
+  tombstones: Tombstones;
+}
+
+/** The base index as mutable, prototype-free maps. */
+async function readIndexState(
+  env: CloudBackupEnv,
+  backupId: string,
+  base: BackupObjects,
+): Promise<IndexState> {
+  const index = base.index
+    ? await readReferenced<{
+        entityHashes: Record<string, string>;
+        entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
+        tombstones?: Tombstones;
+      }>(env, backupId, base.index)
+    : null;
+  return {
+    hashes: Object.assign(Object.create(null), index?.entityHashes ?? {}),
+    meta: Object.assign(Object.create(null), index?.entityMeta ?? {}),
+    tombstones: Object.assign(Object.create(null), index?.tombstones ?? {}),
+  };
 }
 
 /** Applies a delta's upserts and deletes to only the shards they touch. */
@@ -106,38 +156,35 @@ async function applyEntityDelta(
   delta: CloudBackupDelta,
   base: BackupObjects,
   stamp: CloudBackupEntitySyncMeta,
-): Promise<{
-  shards: Map<string, Shard>;
-  hashes: Record<string, string>;
-  meta: Record<string, CloudBackupEntitySyncMeta>;
-}> {
-  const shards = await readTouchedShards(env, backupId, delta, base);
+): Promise<
+  IndexState & { shards: Map<string, Shard>; trash: Map<string, Shard> }
+> {
+  const names = touchedShardNames(delta);
+  const shards = await readShards(env, backupId, names, base.shards);
+  const trash = await readShards(env, backupId, names, base.trash);
+  const state = await readIndexState(env, backupId, base);
+  const { hashes, meta, tombstones } = state;
 
-  const index = base.index
-    ? await readReferenced<{
-        entityHashes: Record<string, string>;
-        entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
-      }>(env, backupId, base.index)
-    : null;
-  const hashes = Object.assign(
-    Object.create(null) as Record<string, string>,
-    index?.entityHashes ?? {},
-  );
-  const meta = Object.assign(
-    Object.create(null) as Record<string, CloudBackupEntitySyncMeta>,
-    index?.entityMeta ?? {},
-  );
   for (const id of delta.deletes) {
-    delete shards.get(cloudBackupShardOf(id))![id];
+    const name = cloudBackupShardOf(id);
+    const entity = shards.get(name)![id];
+    if (entity) {
+      tombstones[id] = tombstoneOf(entity, id, stamp);
+      trash.get(name)![id] = entity;
+    }
+    delete shards.get(name)![id];
     delete hashes[id];
     delete meta[id];
   }
   for (const entity of delta.upserts as EntityRecord[]) {
-    shards.get(cloudBackupShardOf(entity.id))![entity.id] = entity;
+    const name = cloudBackupShardOf(entity.id);
+    shards.get(name)![entity.id] = entity;
     hashes[entity.id] = await hashCloudBackupEntity(entity);
     meta[entity.id] = stamp;
+    delete tombstones[entity.id];
+    delete trash.get(name)![entity.id];
   }
-  return { shards, hashes, meta };
+  return { ...state, shards, trash };
 }
 
 async function sizeOfReferenced(
@@ -172,9 +219,10 @@ async function indexGrowth(
   base: BackupObjects,
   hashes: Record<string, string>,
   meta: Record<string, CloudBackupEntitySyncMeta>,
+  tombstones: Tombstones,
 ): Promise<number> {
   return (
-    jsonByteLength({ entityHashes: hashes, entityMeta: meta }) -
+    jsonByteLength(indexRecord(hashes, meta, tombstones)) -
     (await sizeOfReferenced(env, backupId, base.index))
   );
 }
@@ -258,6 +306,8 @@ function validateDelta(
 
 interface PreparedDelta {
   shards: Map<string, Shard>;
+  trash: Map<string, Shard>;
+  tombstones: Tombstones;
   hashes: Record<string, string>;
   meta: Record<string, CloudBackupEntitySyncMeta>;
   bundle: Record<string, unknown> | null;
@@ -271,26 +321,78 @@ async function prepareDelta(
   base: BackupObjects,
   stamp: CloudBackupEntitySyncMeta,
 ): Promise<PreparedDelta> {
-  const { shards, hashes, meta } = await applyEntityDelta(
+  const { shards, trash, hashes, meta, tombstones } = await applyEntityDelta(
     env,
     backupId,
     delta,
     base,
     stamp,
   );
+  await evictOldestTrash(env, backupId, base, trash, tombstones);
   const bundleUpdate = await prepareBundleSections(env, backupId, base, delta);
   const projected =
     (await reachableBytes(env, backupId, base)) +
     (await shardGrowth(env, backupId, base, shards)) +
-    (await indexGrowth(env, backupId, base, hashes, meta)) +
+    (await indexGrowth(env, backupId, base, hashes, meta, tombstones)) +
     bundleUpdate.growth;
   return {
     shards,
+    trash,
+    tombstones,
     hashes,
     meta,
     bundle: bundleUpdate.bundle,
     projectedBytes: projected,
   };
+}
+
+/** The base's references for untouched shards, plus the freshly staged ones. */
+function carriedReferences(
+  base: Record<string, string> | undefined,
+  touched: Map<string, Shard>,
+  staged: Record<string, string>,
+): Record<string, string> {
+  const untouched = Object.entries(base ?? {}).filter(
+    ([name]) => !touched.has(name),
+  );
+  return { ...Object.fromEntries(untouched), ...staged };
+}
+
+/** Writes the delta's objects under the commit's tag and builds the new `objects`. */
+async function stageDelta(
+  env: CloudBackupEnv,
+  backupId: string,
+  tag: string,
+  base: BackupObjects,
+  prepared: PreparedDelta,
+): Promise<{ staged: BackupObjects; objects: BackupObjects }> {
+  const { shards, trash, hashes, meta, tombstones } = prepared;
+  const stagedShards = await stageShards(env, backupId, tag, shards);
+  const stagedTrash = await stageShards(env, backupId, tag, trash, "trash");
+  const staged: BackupObjects = {
+    index: await stageIndex(env, backupId, tag, hashes, meta, tombstones),
+    shards: stagedShards,
+    ...(Object.keys(stagedTrash).length > 0 ? { trash: stagedTrash } : {}),
+  };
+  if (prepared.bundle) {
+    await writeJson(
+      env,
+      getStagedKey(backupId, tag, "bundle.json"),
+      prepared.bundle,
+    );
+    staged.bundle = stagedName(tag, "bundle.json");
+  }
+
+  const allTrash = carriedReferences(base.trash, trash, stagedTrash);
+  const objects: BackupObjects = {
+    ...(staged.bundle || base.bundle
+      ? { bundle: staged.bundle ?? base.bundle }
+      : {}),
+    index: staged.index,
+    shards: carriedReferences(base.shards, shards, stagedShards),
+    ...(Object.keys(allTrash).length > 0 ? { trash: allTrash } : {}),
+  };
+  return { staged, objects };
 }
 
 /**
@@ -311,34 +413,16 @@ async function commitDelta(
   prepared: PreparedDelta,
   lastPushedAt: string,
 ): Promise<Response> {
-  const { shards, hashes, meta } = prepared;
+  const { hashes } = prepared;
   const revision = cloudBackupRevisionOf(auth.manifest) + 1;
   const tag = `${revision}-${crypto.randomUUID()}`;
-
-  const stagedShards = await stageShards(env, backupId, tag, shards);
-  const staged: BackupObjects = {
-    index: await stageIndex(env, backupId, tag, hashes, meta),
-    shards: stagedShards,
-  };
-  if (prepared.bundle) {
-    await writeJson(
-      env,
-      getStagedKey(backupId, tag, "bundle.json"),
-      prepared.bundle,
-    );
-    staged.bundle = stagedName(tag, "bundle.json");
-  }
-
-  const untouched = Object.fromEntries(
-    Object.entries(base.shards ?? {}).filter(([name]) => !shards.has(name)),
+  const { staged, objects } = await stageDelta(
+    env,
+    backupId,
+    tag,
+    base,
+    prepared,
   );
-  const objects: BackupObjects = {
-    ...(staged.bundle || base.bundle
-      ? { bundle: staged.bundle ?? base.bundle }
-      : {}),
-    index: staged.index,
-    shards: { ...untouched, ...stagedShards },
-  };
 
   const committed: CloudBackupManifest = {
     ...auth.manifest,
@@ -347,6 +431,8 @@ async function commitDelta(
     sizeBytes: await reachableBytes(env, backupId, objects),
     lastPushedAt,
     revision,
+    feedHorizon:
+      auth.manifest.feedHorizon ?? cloudBackupRevisionOf(auth.manifest),
   };
   const won = await writeManifest(
     env,

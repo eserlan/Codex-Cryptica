@@ -31,6 +31,7 @@ export {
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
   handleGetCloudBackupIndex,
+  handleGetCloudBackupChanges,
 } from "./cloud-backup-reads";
 export {
   handleCloudBackupAssetUpload,
