@@ -152,7 +152,8 @@
       <button
         type="button"
         onclick={() => store.cancel()}
-        class="min-h-11 flex-1 rounded-lg border border-theme-border text-sm font-bold"
+        disabled={store.busy}
+        class="min-h-11 flex-1 rounded-lg border border-theme-border text-sm font-bold disabled:opacity-50"
         >Cancel</button
       >
       <button

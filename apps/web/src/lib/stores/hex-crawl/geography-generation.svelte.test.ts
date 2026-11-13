@@ -60,4 +60,43 @@ describe("GeographyGenerationStore", () => {
     expect(store.setSeed("   ")).toBe(false);
     expect(store.review?.proposal.request.seed).toBe("seed-1");
   });
+
+  it("ignores cancel while an accept save is in flight", async () => {
+    let resolveSave!: (value: boolean) => void;
+    let state: HexCrawlState = {
+      enabled: true,
+      hexes: {
+        "0,0": { terrain: { kind: "preset", id: "plains" }, updatedAt: 1 },
+        "1,0": { terrain: { kind: "preset", id: "water" }, updatedAt: 1 },
+      },
+    };
+    const store = new GeographyGenerationStore({
+      hexes: {
+        revision: 0,
+        stateFor: () => state,
+        applyChange: async (_mapId, mutator) => {
+          state = mutator(state);
+          return new Promise<boolean>((resolve) => {
+            resolveSave = resolve;
+          });
+        },
+      },
+      settlements: () => [],
+      inBounds: (_mapId, hex) => Math.abs(hex.q) <= 8 && Math.abs(hex.r) <= 8,
+      newSeed: () => "seed-1",
+      canEdit: () => true,
+    });
+    expect(store.open("map-1", { q: 0, r: 0 })).toBe(true);
+
+    const pending = store.accept();
+    expect(store.busy).toBe(true);
+    store.cancel();
+    expect(store.review).not.toBeNull();
+
+    resolveSave(true);
+    expect(await pending).toBe(true);
+    expect(store.busy).toBe(false);
+    expect(store.review).toBeNull();
+    expect(store.message).toBe("saved");
+  });
 });

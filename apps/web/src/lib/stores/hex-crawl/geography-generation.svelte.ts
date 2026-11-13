@@ -148,6 +148,7 @@ export class GeographyGenerationStore {
   }
 
   cancel(): void {
+    if (this.busy) return;
     this.review = null;
   }
   leave(): void {
