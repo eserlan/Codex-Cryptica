@@ -252,7 +252,7 @@
         type="button"
         aria-label="Acknowledge AI notice"
         onclick={acknowledgeAiNotice}
-        class="text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+        class="text-micro font-bold uppercase tracking-widest text-theme-text hover:text-theme-text"
       >
         I understand
       </button>
@@ -288,7 +288,7 @@
         type="button"
         aria-label="Close hex panel"
         onclick={close}
-        class="text-theme-muted hover:text-theme-text"
+        class="text-theme-text hover:text-theme-text"
       >
         <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
       </button>
@@ -311,7 +311,7 @@
       </div>
       {#if journey.error}<p
           role="status"
-          class="mt-1 text-micro text-theme-muted"
+          class="mt-1 text-micro text-theme-text"
         >
           {journey.error}
         </p>{/if}
@@ -322,11 +322,11 @@
         role="note"
         class="mt-3 flex items-start gap-2 rounded-lg bg-theme-primary/5 p-2"
       >
-        <p class="flex-1 text-micro text-theme-muted">{HEX_HINT_TEXT}</p>
+        <p class="flex-1 text-micro text-theme-text">{HEX_HINT_TEXT}</p>
         <button
           type="button"
           onclick={dismissHint}
-          class="text-micro font-bold uppercase tracking-widest text-theme-muted hover:text-theme-text"
+          class="text-micro font-bold uppercase tracking-widest text-theme-text hover:text-theme-text"
         >
           Got it
         </button>
@@ -365,7 +365,7 @@
     <div class="mt-4 space-y-4">
       <div class="space-y-2">
         <h3
-          class="text-micro uppercase tracking-widest font-bold text-theme-muted"
+          class="text-micro uppercase tracking-widest font-bold text-theme-text"
         >
           Terrain
         </h3>
