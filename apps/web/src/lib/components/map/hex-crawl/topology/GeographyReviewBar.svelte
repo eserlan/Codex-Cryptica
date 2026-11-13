@@ -54,4 +54,95 @@
     <p class="text-xs">
       {countOf("river")} river segments, {countOf("road")} road/path segments, {countOf(
         "coast",
-      )} coast edges and {sitesCount} sites propose...[truncated]
+      )} coast edges and {sitesCount} sites proposed.
+    </p>
+    <p class="mt-1 text-xs text-theme-muted">
+      Generated locally, AI off. Tap the checkmarks on the map to reject or
+      restore a feature. Existing terrain, pinned places and authored
+      connections stay fixed.
+    </p>
+    {#if !collapsed}
+      <div class="mt-3 space-y-3">
+        <label class="block space-y-1 text-xs">
+          <span class="font-bold">Civilisation</span>
+          <select
+            class="min-h-11 w-full rounded-lg border border-theme-border bg-theme-bg px-2 text-theme-text"
+            value={review.proposal.request.civilisation}
+            onchange={(event) =>
+              store.setCivilisation(
+                event.currentTarget.value as
+                  "wilderness" | "frontier" | "settled",
+              )}
+          >
+            <option value="wilderness">Wilderness</option>
+            <option value="frontier">Frontier</option>
+            <option value="settled">Settled</option>
+          </select>
+        </label>
+        <label class="block space-y-1 text-xs">
+          <span class="font-bold">Radius (hexes)</span>
+          <input
+            class="min-h-11 w-full rounded-lg border border-theme-border bg-theme-bg px-2 text-theme-text"
+            aria-label="Geography radius"
+            type="number"
+            min="1"
+            max="12"
+            step="1"
+            value={review.proposal.request.radius}
+            onchange={(event) =>
+              store.setRadius(Number(event.currentTarget.value))}
+          />
+        </label>
+        <label class="block space-y-1 text-xs">
+          <span class="font-bold">Seed</span>
+          <input
+            class="min-h-11 w-full rounded-lg border border-theme-border bg-theme-bg px-2 text-theme-text"
+            aria-label="Geography seed"
+            value={review.proposal.request.seed}
+            maxlength="32"
+            onchange={(event) => store.setSeed(event.currentTarget.value)}
+          />
+        </label>
+        <button
+          type="button"
+          onclick={() => store.reroll()}
+          class="min-h-11 w-full rounded-lg border border-theme-border px-2 text-xs font-bold"
+          >Reroll proposals</button
+        >
+        <p class="text-xs text-theme-muted">
+          Accepted sites are map suggestions, not Vault entities. Select a site
+          later to link or create a location.
+        </p>
+        <p class="text-xs text-theme-muted">
+          {review.disabledEdges.size} edges and {review.disabledSites.size} sites
+          rejected.
+        </p>
+      </div>
+    {/if}
+    {#if store.message === "stale"}
+      <p role="alert" class="mt-2 text-xs">
+        The map changed during review. Cancel and regenerate to preserve its
+        fixed features.
+      </p>
+    {:else if store.message === "failed"}
+      <p role="alert" class="mt-2 text-xs">
+        Could not save the geography. No partial changes were applied.
+      </p>
+    {/if}
+    <div class="sticky bottom-0 mt-3 flex gap-2 bg-theme-surface pt-2">
+      <button
+        type="button"
+        onclick={() => store.cancel()}
+        class="min-h-11 flex-1 rounded-lg border border-theme-border text-sm font-bold"
+        >Cancel</button
+      >
+      <button
+        type="button"
+        onclick={() => store.accept()}
+        disabled={store.busy || edgesCount + sitesCount === 0}
+        class="min-h-11 flex-1 rounded-lg bg-theme-primary text-sm font-bold text-theme-on-primary disabled:opacity-50"
+        >Accept</button
+      >
+    </div>
+  </section>
+{/if}
