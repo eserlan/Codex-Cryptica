@@ -1,6 +1,9 @@
 import {
+  CLOUD_BACKUP_OWNER_EDITOR,
   CLOUD_BACKUP_SCHEMA_V2,
   CLOUD_BACKUP_SHARD_COUNT,
+  cloudBackupRevisionOf,
+  type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
 } from "../../../../packages/schema/src/publishing";
 import {
@@ -48,7 +51,15 @@ async function commitSnapshot(
       unknown
     >;
     await writeShards(env, backupId, groupByShard(entities), true);
-    await writeIndex(env, backupId, await hashEntities(entities));
+    const stamp: CloudBackupEntitySyncMeta = {
+      rev: cloudBackupRevisionOf(manifest),
+      editedBy: CLOUD_BACKUP_OWNER_EDITOR,
+      editedAt: manifest.lastPushedAt,
+    };
+    const entityMeta = Object.fromEntries(
+      entities.map((entity) => [entity.id, stamp]),
+    );
+    await writeIndex(env, backupId, await hashEntities(entities), entityMeta);
     await writeJson(env, getBundleKey(backupId), rest);
     committed = {
       ...manifest,
@@ -95,6 +106,7 @@ export async function handleCommitCloudBackup(
     sizeBytes:
       (await storedBytes(env, backupId)) + jsonByteLength(payload.bundle),
     lastPushedAt: new Date().toISOString(),
+    revision: cloudBackupRevisionOf(auth.manifest) + 1,
   };
 
   // `authorize` already proved the presented code matches, and a commit never
