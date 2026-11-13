@@ -1,595 +1,92 @@
 import { CampaignGeneratorLanguageService } from "./campaign-generator-service-language";
-import { parseGenericGeneratorOutput } from "./campaign-generator-output-parsing";
+import type { AIRouteContext } from "./campaign-ai-route-context";
+import { generateDungeonWithAI } from "./campaign-dungeon-generation";
 import {
-  CampaignGeneratorCore,
-  completeText,
-  promptMetrics,
-  buildGenericGeneratorPrompt,
-  withGeneratorRequest,
-  normalizeDungeonOutput,
-  MAX_AI_ATTEMPTS,
-} from "./campaign-generator-service-core";
+  generateGenericWithAI,
+  withNameSuggestion,
+} from "./campaign-generic-generation";
+import { generateLocalDraft } from "./campaign-local-generation";
 import {
-  buildCampaignAdventurePrompt,
-  buildCampaignDungeonPrompt,
-  buildCampaignHeistPrompt,
-  buildCampaignVillainPrompt,
-  buildCampaignTomePrompt,
-  getGenerator,
-  isTitleBanned,
-  pointCrawlOptions,
-  SYSTEM_INSTRUCTION,
-} from "./campaign-generator-registry";
-import { generatePointCrawlStaged } from "./point-crawl-staged";
+  generateAdventureWithAI,
+  generateHeistWithAI,
+  generatePointCrawlWithAI,
+  generateTomeWithAI,
+  generateVillainWithAI,
+} from "./campaign-staged-generation";
+import { getGenerator } from "./campaign-generator-registry";
 import { generateBusinessWithAI } from "./campaign-business-generation";
-import { pointCrawlToOutput } from "./public-point-crawl";
-import { suggestName } from "./name-candidates";
-import {
-  buildDungeonCoherencePrompt,
-  buildDungeonRetryMessage,
-  parseDungeonResponseDetailed,
-} from "./public-dungeon";
-import { generateDungeonStaged } from "./dungeon-staged";
-import { generateAdventureStaged } from "./adventure-staged";
-import { generateHeistStaged } from "./heist-staged";
-import { generateVillainStaged } from "./villain-staged";
-import { generateTomeStaged } from "./tome-staged";
-import { generateTomeTwoPass } from "./public-tome";
-import { generateCampaignHeist } from "./campaign-heist-generation";
 import { generateCouncilVoteWithAI } from "./campaign-council-vote-generation";
 import { generateCampaignMysteryWithAI } from "./campaign-mystery-generation";
-import {
-  assertValidLanguageFallback,
-  LanguageGenerationError,
-} from "./campaign-generator-language";
 import { getThemeDefaults } from "./campaign-generator-theme";
 import type {
-  AIGeneratorCompleteResult,
-  AIGeneratorGateway,
   CampaignGeneratorDefinition,
   GeneratedDraft,
-  GeneratorOutput,
   GeneratorRunRequest,
 } from "./campaign-generator-types";
 
-function getAcceptedDungeonInteraction(
-  result: Awaited<ReturnType<NonNullable<AIGeneratorGateway>["complete"]>>,
-): AIGeneratorCompleteResult | undefined {
-  return typeof result !== "string" && result.usedInteraction
-    ? result
-    : undefined;
-}
-
-type DungeonCompletionMetadata = {
-  replayed: boolean;
-  usedInteraction: boolean;
-};
-
-function getDungeonCompletionMetadata(
-  result: Awaited<ReturnType<NonNullable<AIGeneratorGateway>["complete"]>>,
-): DungeonCompletionMetadata {
-  return typeof result === "string"
-    ? { replayed: false, usedInteraction: false }
-    : {
-        replayed: !!result.replayed,
-        usedInteraction: !!result.usedInteraction,
-      };
-}
-
-function getDungeonSentPrompt(
-  fullPrompt: string,
-  interaction: GeneratorRunRequest["interaction"],
-  replayed: boolean,
-): string {
-  if (replayed) return interaction?.replayPrompt ?? fullPrompt;
-  return interaction?.input ?? fullPrompt;
-}
-
-function getDungeonPromptMetrics(
+type AIRoute = (
+  ctx: AIRouteContext,
+  generator: CampaignGeneratorDefinition,
   request: GeneratorRunRequest,
-  fullPrompt: string,
-  interaction: GeneratorRunRequest["interaction"],
-  metadata: DungeonCompletionMetadata,
-) {
-  return promptMetrics({
-    request,
-    fullPrompt,
-    sentPrompt: getDungeonSentPrompt(
-      fullPrompt,
-      interaction,
-      metadata.replayed,
-    ),
-    usedInteraction: metadata.usedInteraction,
-    replayed: metadata.replayed,
-  });
-}
+  bannedNames: Set<string>,
+  signal?: AbortSignal,
+) => Promise<GeneratedDraft | null>;
 
-export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLanguageService {
-  protected async generateDungeonWithAI(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-  ): Promise<GeneratedDraft | null> {
-    if (!this.aiGateway) return null;
-    const prompt = buildCampaignDungeonPrompt(request);
-    // `options.staged === false` forces the one-pass route (baseline, tests).
-    // A continuity thread stays on the one-pass route: staged calls cannot
-    // carry it, so they would drop the thread and its follow-ups.
-    const staged =
-      request.options?.staged === false || request.interaction
-        ? null
-        : await this.generateDungeonStaged(generator, request, prompt);
-    if (staged) return staged;
-    const interaction = this.buildDungeonInteraction(
-      request,
-      prompt.userMessage,
-    );
-
-    try {
-      const result = await this.aiGateway.complete(
-        prompt.userMessage,
-        prompt.systemInstruction,
-        { interaction },
-      );
-      const first = parseDungeonResponseDetailed(
-        completeText(result),
-        prompt.options,
-        undefined,
-        prompt.resolved,
-      );
-      const resolved = await this.resolveDungeonResponse(prompt, first, result);
-      this.reportDungeonGeneration(
-        request,
-        prompt.userMessage,
-        interaction,
-        result,
-        resolved.interaction,
-      );
-      return generator.mapOutputToDraft(
-        normalizeDungeonOutput(resolved.output),
-        request,
-      );
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Staged route (foundation, sectors, factions, coherence). Resolves `null`
-   * when a stage is unusable so the one-pass route can run; staged calls do
-   * not use the interaction thread or report prompt metrics.
-   */
-  private async generateDungeonStaged(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
-  ): Promise<GeneratedDraft | null> {
-    try {
-      const result = await generateDungeonStaged(
-        prompt.resolved,
-        prompt.options,
-        {
-          contextPrefix: prompt.contextPrefix,
-          onStats: this._deps.onDungeonStagedStats,
-          complete: async (instruction, message) =>
-            completeText(await this.aiGateway!.complete(message, instruction)),
-        },
-      );
-      return result
-        ? generator.mapOutputToDraft(
-            normalizeDungeonOutput(result.output),
-            request,
-          )
-        : null;
-    } catch {
-      return null;
-    }
-  }
-
-  /**
-   * Staged route (situation, places and people, consequences), then the
-   * generic route if a stage is unusable. `options.staged === false` forces
-   * the generic route, and a continuity thread stays on it, since staged
-   * calls cannot carry the thread.
-   */
-  protected async generateAdventureWithAI(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    if (request.options?.staged !== false && !request.interaction) {
-      const staged = await this.generateAdventureStaged(
+/** Generators with their own route; anything else uses the generic one. */
+const AI_ROUTES = new Map<string, AIRoute>([
+  [
+    "mystery-investigation",
+    (ctx, generator, request, bannedNames, signal) =>
+      generateCampaignMysteryWithAI(
+        ctx.gateway,
         generator,
         request,
+        bannedNames,
         signal,
-      );
-      if (staged) return staged;
-    }
-    return this.generateGenericWithAI(generator, request, bannedNames);
-  }
+      ),
+  ],
+  ["tome", generateTomeWithAI],
+  [
+    "heist",
+    (ctx, generator, request, _bannedNames, signal) =>
+      generateHeistWithAI(ctx, generator, request, signal),
+  ],
+  ["villain", generateVillainWithAI],
+  [
+    "dungeon",
+    (ctx, generator, request) => generateDungeonWithAI(ctx, generator, request),
+  ],
+  ["adventure", generateAdventureWithAI],
+  [
+    "council-vote",
+    (ctx, generator, request, _bannedNames, signal) =>
+      generateCouncilVoteWithAI(ctx.gateway, generator, request, { signal }),
+  ],
+  [
+    "business",
+    (ctx, generator, request, _bannedNames, signal) =>
+      generateBusinessWithAI(ctx.gateway, generator, request, { signal }),
+  ],
+  [
+    "point-crawl",
+    (ctx, generator, request, _bannedNames, signal) =>
+      generatePointCrawlWithAI(ctx, generator, request, signal),
+  ],
+]);
 
-  private async generateAdventureStaged(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    const prompt = buildCampaignAdventurePrompt(request);
-    try {
-      const result = await generateAdventureStaged(prompt, prompt.options, {
-        contextPrefix: prompt.contextPrefix,
-        signal,
-        onStats: this._deps.onAdventureStagedStats,
-        complete: async (instruction, message) =>
-          completeText(
-            await this.aiGateway!.complete(message, instruction, { signal }),
-          ),
-      });
-      if (!result) return null;
-      const { output } = result;
-      return generator.mapOutputToDraft(
-        {
-          title: output.title,
-          summary: output.summary ?? "",
-          content: output.content,
-          lore: output.lore,
-          labels: output.labels,
-        },
-        request,
-      );
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return null;
-    }
-  }
-
+export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLanguageService {
   /**
-   * Staged route (objective, security rings, response), then the existing
-   * one-pass route if a stage is unusable. `options.staged === false` forces
-   * the one-pass route, and a continuity thread stays on it.
-   */
-  // fallow-ignore-next-line code-duplication
-  protected async generateHeistWithAI(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    if (request.options?.staged !== false && !request.interaction) {
-      const staged = await this.generateHeistStaged(generator, request, signal);
-      if (staged) return staged;
-    }
-    try {
-      const output = await generateCampaignHeist(
-        request,
-        this.aiGateway!,
-        signal,
-      );
-      return generator.mapOutputToDraft(
-        { ...output, summary: output.summary ?? "" },
-        request,
-      );
-    } catch {
-      return null;
-    }
-  }
-
-  private async generateHeistStaged(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    const prompt = buildCampaignHeistPrompt(request);
-    try {
-      const result = await generateHeistStaged(prompt, prompt.options, {
-        contextPrefix: prompt.contextPrefix,
-        signal,
-        onStats: this._deps.onHeistStagedStats,
-        // fallow-ignore-next-line code-duplication
-        complete: async (instruction, message) =>
-          completeText(
-            await this.aiGateway!.complete(message, instruction, { signal }),
-          ),
-      });
-      if (!result) return null;
-      const { output } = result;
-      return generator.mapOutputToDraft(
-        {
-          title: output.title,
-          summary: output.summary ?? "",
-          content: output.content,
-          lore: output.lore,
-          labels: output.labels,
-        },
-        request,
-      );
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return null;
-    }
-  }
-
-  private buildDungeonInteraction(
-    request: GeneratorRunRequest,
-    prompt: string,
-  ): GeneratorRunRequest["interaction"] {
-    return request.interaction
-      ? {
-          ...request.interaction,
-          input: withGeneratorRequest(request.interaction.input, prompt),
-          replayPrompt: request.interaction.replayPrompt ?? prompt,
-        }
-      : undefined;
-  }
-
-  private async resolveDungeonResponse(
-    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
-    first: ReturnType<typeof parseDungeonResponseDetailed>,
-    result: Awaited<
-      ReturnType<
-        NonNullable<
-          CampaignGeneratorAIGenerationService["aiGateway"]
-        >["complete"]
-      >
-    >,
-  ): Promise<{
-    output: ReturnType<typeof parseDungeonResponseDetailed>["output"];
-    interaction?: AIGeneratorCompleteResult;
-  }> {
-    const initialInteraction = getAcceptedDungeonInteraction(result);
-    if (first.rejected) {
-      return this.resolveRejectedDungeon(prompt, first, initialInteraction);
-    }
-    if (first.structured) {
-      return this.resolveCoherentDungeon(prompt, first, initialInteraction);
-    }
-    return { output: first.output, interaction: initialInteraction };
-  }
-
-  private async resolveRejectedDungeon(
-    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
-    first: ReturnType<typeof parseDungeonResponseDetailed>,
-    initialInteraction?: AIGeneratorCompleteResult,
-  ) {
-    const retried = await this.retryRejectedDungeon(prompt, first);
-    return {
-      output: retried?.output ?? first.output,
-      interaction: retried ? undefined : initialInteraction,
-    };
-  }
-
-  private async resolveCoherentDungeon(
-    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
-    first: ReturnType<typeof parseDungeonResponseDetailed>,
-    initialInteraction?: AIGeneratorCompleteResult,
-  ) {
-    const repaired = await this.repairDungeonCoherence(prompt, first);
-    const accepted = repaired && !repaired.rejected;
-    return {
-      output: accepted ? repaired.output : first.output,
-      interaction: accepted ? undefined : initialInteraction,
-    };
-  }
-
-  private async retryRejectedDungeon(
-    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
-    first: ReturnType<typeof parseDungeonResponseDetailed>,
-  ) {
-    const retry = await this.aiGateway!.complete(
-      buildDungeonRetryMessage(prompt.userMessage, first.problems),
-      prompt.systemInstruction,
-    );
-    const second = parseDungeonResponseDetailed(
-      completeText(retry),
-      prompt.options,
-      undefined,
-      prompt.resolved,
-    );
-    return second.problems.length === 0 || !second.rejected ? second : null;
-  }
-
-  private async repairDungeonCoherence(
-    prompt: ReturnType<typeof buildCampaignDungeonPrompt>,
-    first: ReturnType<typeof parseDungeonResponseDetailed>,
-  ) {
-    const coherence = buildDungeonCoherencePrompt(
-      first.structured!,
-      prompt.resolved,
-    );
-    const repair = await this.aiGateway!.complete(
-      coherence.userMessage,
-      coherence.systemInstruction,
-    );
-    return parseDungeonResponseDetailed(
-      completeText(repair),
-      prompt.options,
-      undefined,
-      prompt.resolved,
-    );
-  }
-
-  private reportDungeonGeneration(
-    request: GeneratorRunRequest,
-    fullPrompt: string,
-    interaction: GeneratorRunRequest["interaction"],
-    result: Awaited<
-      ReturnType<
-        NonNullable<
-          CampaignGeneratorAIGenerationService["aiGateway"]
-        >["complete"]
-      >
-    >,
-    acceptedInteraction?: AIGeneratorCompleteResult,
-  ): void {
-    if (acceptedInteraction) this.onInteractionResult?.(acceptedInteraction);
-    const metadata = getDungeonCompletionMetadata(result);
-    this.onPromptMetrics?.(
-      getDungeonPromptMetrics(request, fullPrompt, interaction, metadata),
-    );
-  }
-
-  /**
-   * Runs the fast name-only pre-pass (see `name-candidates.ts`) and returns the
-   * request to build the main prompt from. Falls back to the request unchanged
-   * whenever no name is wanted or the pre-pass fails.
+   * Runs the fast name-only pre-pass and returns the request to build the main
+   * prompt from. Unchanged when there is no gateway or no name is wanted.
    */
   protected async withNameSuggestion(
     request: GeneratorRunRequest,
   ): Promise<GeneratorRunRequest> {
     if (!this.aiGateway) return request;
-    const nameSuggestion = await suggestName(this.aiGateway, request);
-    return nameSuggestion ? { ...request, nameSuggestion } : request;
+    return withNameSuggestion(this.aiGateway, request);
   }
 
-  /**
-   * Staged route (provenance, revelations, hooks), then the existing
-   * two-pass route if a stage is unusable. `options.staged === false` forces
-   * the two-pass route, and a continuity thread stays on it.
-   */
-  // fallow-ignore-next-line complexity
-  protected async generateTomeWithAI(
-    generator: ReturnType<typeof getGenerator>,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    if (request.options?.staged !== false && !request.interaction) {
-      const staged = await this.generateTomeStaged(generator, request, signal);
-      if (staged && !isTitleBanned(staged.title, bannedNames)) return staged;
-    }
-    const gateway = this.aiGateway;
-    if (!gateway) return null;
-    try {
-      const prompt = buildCampaignTomePrompt(request);
-      const reviewed = await generateTomeTwoPass(
-        prompt,
-        async (instruction, message, passSignal) =>
-          completeText(
-            await gateway.complete(message, instruction, {
-              signal: passSignal,
-            }),
-          ),
-        signal,
-      );
-      if (!reviewed || isTitleBanned(reviewed.title, bannedNames)) return null;
-
-      this.onPromptMetrics?.(
-        promptMetrics({
-          request,
-          fullPrompt: prompt.userMessage,
-          sentPrompt: prompt.userMessage,
-          usedInteraction: false,
-          replayed: false,
-        }),
-      );
-      return generator.mapOutputToDraft(
-        { ...reviewed, summary: reviewed.summary ?? "" },
-        request,
-      );
-    } catch {
-      // An invalid first or second pass falls back to local generation.
-      return null;
-    }
-  }
-
-  private async generateTomeStaged(
-    generator: ReturnType<typeof getGenerator>,
-    request: GeneratorRunRequest,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    const prompt = buildCampaignTomePrompt(request);
-    try {
-      const result = await generateTomeStaged(prompt, prompt.options, {
-        contextPrefix: prompt.contextPrefix,
-        signal,
-        onStats: this._deps.onTomeStagedStats,
-        // fallow-ignore-next-line code-duplication
-        complete: async (instruction, message) =>
-          completeText(
-            await this.aiGateway!.complete(message, instruction, { signal }),
-          ),
-      });
-      if (!result) return null;
-      const { output } = result;
-      return generator.mapOutputToDraft(
-        {
-          title: output.title,
-          summary: output.summary ?? "",
-          content: output.content,
-          lore: output.lore,
-          labels: output.labels,
-        },
-        request,
-      );
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return null;
-    }
-  }
-
-  /**
-   * Staged route (concept, organisation, plan, ending), then the generic
-   * one-pass route if a stage is unusable. `options.staged === false` forces
-   * the one-pass route, and a continuity thread stays on it.
-   */
-  // fallow-ignore-next-line code-duplication
-  protected async generateVillainWithAI(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    if (request.options?.staged !== false && !request.interaction) {
-      const staged = await this.generateVillainStaged(
-        generator,
-        request,
-        bannedNames,
-        signal,
-      );
-      if (staged) return staged;
-    }
-    signal?.throwIfAborted();
-    return this.generateGenericWithAI(generator, request, bannedNames, signal);
-  }
-
-  private async generateVillainStaged(
-    generator: CampaignGeneratorDefinition,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    const prompt = buildCampaignVillainPrompt(request);
-    try {
-      const result = await generateVillainStaged(prompt.resolved, {
-        // The context chain already carries the request's instructions.
-        contextPrefix: prompt.contextPrefix,
-        avoidNames: [...bannedNames],
-        signal,
-        onStats: this._deps.onVillainStagedStats,
-        // fallow-ignore-next-line code-duplication
-        complete: async (instruction, message) =>
-          completeText(
-            await this.aiGateway!.complete(message, instruction, { signal }),
-          ),
-      });
-      if (!result) return null;
-      const { output } = result;
-      return generator.mapOutputToDraft(
-        {
-          title: output.title,
-          summary: output.summary ?? "",
-          content: output.content,
-          lore: output.lore,
-          labels: output.labels,
-        },
-        request,
-      );
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return null;
-    }
-  }
-
-  // fallow-ignore-next-line complexity
+  /** Sends the request to the route for its generator, or the generic route. */
   protected async generateAIDraft(
     generator: ReturnType<typeof getGenerator>,
     request: GeneratorRunRequest,
@@ -598,78 +95,18 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
   ): Promise<GeneratedDraft | null> {
     const gateway = this.aiGateway;
     if (!gateway) return null;
+    const ctx: AIRouteContext = {
+      gateway,
+      deps: this._deps,
+      onInteractionResult: this.onInteractionResult,
+      onPromptMetrics: this.onPromptMetrics,
+    };
 
-    switch (request.generatorId) {
-      case "mystery-investigation":
-        return generateCampaignMysteryWithAI(
-          gateway,
-          generator,
-          request,
-          bannedNames,
-          signal,
-        );
-      case "tome":
-        return this.generateTomeWithAI(generator, request, bannedNames, signal);
-      case "heist":
-        return this.generateHeistWithAI(
-          generator,
-          request,
-          bannedNames,
-          signal,
-        );
-      case "villain":
-        return this.generateVillainWithAI(
-          generator,
-          request,
-          bannedNames,
-          signal,
-        );
-      case "dungeon":
-        return this.generateDungeonWithAI(generator, request);
-      case "adventure":
-        return this.generateAdventureWithAI(
-          generator,
-          request,
-          bannedNames,
-          signal,
-        );
-      case "language":
-        return this.generateLanguageWithAI(generator, request, bannedNames);
-      case "council-vote":
-        return generateCouncilVoteWithAI(gateway, generator, request, {
-          signal,
-        });
-      case "business":
-        return generateBusinessWithAI(gateway, generator, request, { signal });
-      case "point-crawl":
-        try {
-          const network = await generatePointCrawlStaged(
-            pointCrawlOptions(request),
-            async (prompt) =>
-              completeText(
-                await gateway.complete(prompt, SYSTEM_INSTRUCTION, { signal }),
-              ),
-            undefined,
-            signal,
-          );
-          const output = pointCrawlToOutput(network);
-          return generator.mapOutputToDraft(
-            {
-              title: output.title,
-              summary: output.summary ?? "",
-              content: output.content,
-              lore: output.lore,
-              labels: output.labels,
-              pointCrawl: output.pointCrawl,
-            },
-            request,
-          );
-        } catch {
-          return null;
-        }
-      default:
-        return this.generateGenericWithAI(generator, request, bannedNames);
+    if (request.generatorId === "language") {
+      return this.generateLanguageWithAI(generator, request, bannedNames);
     }
+    const route = AI_ROUTES.get(request.generatorId) ?? generateGenericWithAI;
+    return route(ctx, generator, request, bannedNames, signal);
   }
 
   protected async generateAIDraftIfAvailable(
@@ -694,164 +131,7 @@ export class CampaignGeneratorAIGenerationService extends CampaignGeneratorLangu
     request: GeneratorRunRequest,
     bannedNames: Set<string>,
   ): GeneratedDraft {
-    let output: GeneratorOutput;
-    try {
-      output = generator.generate(request);
-    } catch (error) {
-      if (request.generatorId === "language") {
-        throw new LanguageGenerationError(
-          "The local language generator could not produce a valid profile. Please try again.",
-        );
-      }
-      throw error;
-    }
-    if (request.generatorId === "language") {
-      assertValidLanguageFallback(output, bannedNames);
-      return generator.mapOutputToDraft(output, request);
-    }
-    for (
-      let attempt = 0;
-      attempt < 5 && isTitleBanned(output.title, bannedNames);
-      attempt++
-    ) {
-      output = generator.generate(request);
-    }
-    return generator.mapOutputToDraft(output, request);
-  }
-
-  protected async generateGenericWithAI(
-    generator: ReturnType<typeof getGenerator>,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    signal?.throwIfAborted();
-    const gateway = this.aiGateway;
-    if (!gateway) return null;
-    const { fullPrompt, interaction } = buildGenericGeneratorPrompt(
-      generator,
-      await this.withNameSuggestion(request),
-    );
-    signal?.throwIfAborted();
-    return this.retryGenericAttempts(
-      gateway,
-      generator,
-      request,
-      bannedNames,
-      fullPrompt,
-      interaction,
-      signal,
-    );
-  }
-
-  protected async retryGenericAttempts(
-    gateway: NonNullable<CampaignGeneratorCore["aiGateway"]>,
-    generator: ReturnType<typeof getGenerator>,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    fullPrompt: string,
-    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
-    signal?: AbortSignal,
-  ): Promise<GeneratedDraft | null> {
-    for (let attempt = 0; attempt < MAX_AI_ATTEMPTS; attempt++) {
-      signal?.throwIfAborted();
-      const result = await this.runGenericAttempt(
-        gateway,
-        generator,
-        request,
-        bannedNames,
-        fullPrompt,
-        interaction,
-        signal,
-      );
-      if (result.kind === "draft") return result.draft;
-      if (result.kind === "stop") return null;
-    }
-    return null;
-  }
-
-  protected async runGenericAttempt(
-    gateway: NonNullable<CampaignGeneratorCore["aiGateway"]>,
-    generator: ReturnType<typeof getGenerator>,
-    request: GeneratorRunRequest,
-    bannedNames: Set<string>,
-    fullPrompt: string,
-    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
-    signal?: AbortSignal,
-  ): Promise<
-    | { kind: "draft"; draft: GeneratedDraft }
-    | { kind: "retry" }
-    | { kind: "stop" }
-  > {
-    try {
-      const result = await gateway.complete(fullPrompt, SYSTEM_INSTRUCTION, {
-        interaction,
-        signal,
-      });
-      const output = parseGenericGeneratorOutput(
-        completeText(result),
-        request.generatorId,
-      );
-      if (!output) return { kind: "stop" };
-      if (isTitleBanned(output.title, bannedNames)) return { kind: "retry" };
-      this.recordGenericMetrics(result, request, fullPrompt, interaction);
-      return {
-        kind: "draft",
-        draft: generator.mapOutputToDraft(output, request),
-      };
-    } catch {
-      return { kind: "stop" };
-    }
-  }
-
-  protected recordGenericMetrics(
-    result: Awaited<
-      ReturnType<NonNullable<CampaignGeneratorCore["aiGateway"]>["complete"]>
-    >,
-    request: GeneratorRunRequest,
-    fullPrompt: string,
-    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
-  ): void {
-    const interactionResult = this.getGenericInteractionResult(result);
-    if (interactionResult) this.onInteractionResult?.(interactionResult);
-    this.onPromptMetrics?.(
-      promptMetrics({
-        request,
-        fullPrompt,
-        sentPrompt: this.getGenericSentPrompt(result, fullPrompt, interaction),
-        usedInteraction: !!interactionResult,
-        replayed: this.isGenericReplay(result),
-      }),
-    );
-  }
-
-  protected getGenericInteractionResult(
-    result: Awaited<
-      ReturnType<NonNullable<CampaignGeneratorCore["aiGateway"]>["complete"]>
-    >,
-  ) {
-    if (typeof result === "string" || !result.usedInteraction) return undefined;
-    return result;
-  }
-
-  protected isGenericReplay(
-    result: Awaited<
-      ReturnType<NonNullable<CampaignGeneratorCore["aiGateway"]>["complete"]>
-    >,
-  ): boolean {
-    return typeof result !== "string" && !!result.replayed;
-  }
-
-  protected getGenericSentPrompt(
-    result: Awaited<
-      ReturnType<NonNullable<CampaignGeneratorCore["aiGateway"]>["complete"]>
-    >,
-    fullPrompt: string,
-    interaction: ReturnType<typeof buildGenericGeneratorPrompt>["interaction"],
-  ): string {
-    return this.isGenericReplay(result)
-      ? (interaction?.replayPrompt ?? fullPrompt)
-      : (interaction?.input ?? fullPrompt);
+    return generateLocalDraft(generator, request, bannedNames);
   }
 
   /**
