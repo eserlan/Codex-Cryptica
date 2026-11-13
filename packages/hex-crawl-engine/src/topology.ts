@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { parseHexKey, toHexKey, type HexCoord, type HexKey } from "./model";
+import type { HexCoord, HexKey } from "./model";
+
+const HEX_COORD_PATTERN = /^(-?\d+),(-?\d+)$/;
+const toHexKey = (hex: HexCoord): HexKey => `${hex.q},${hex.r}`;
+function parseHexKey(key: string): HexCoord | null {
+  const match = HEX_COORD_PATTERN.exec(key);
+  return match ? { q: Number(match[1]), r: Number(match[2]) } : null;
+}
 
 /**
  * Store a shared border exactly once. The stable key is sorted by coordinates,
@@ -82,48 +89,48 @@ export function parseHexEdgeKey(key: HexEdgeKey): [HexCoord, HexCoord] | null {
   return a && b && hexEdgeKey(a, b) === key ? [a, b] : null;
 }
 
-/** Malformed edge keys, non-adjacent endpoints and one-sided river directions disappear. */
+function validEdge(key: string, raw: unknown): HexEdgeFeature | null {
+  const pair = parseHexEdgeKey(key);
+  if (!pair) return null;
+  const parsed = HexEdgeFeatureSchema.safeParse(raw);
+  if (!parsed.success) return null;
+  const edge = parsed.data;
+  if (edge.river) {
+    const [a, b] = pair.map(toHexKey);
+    const { from, to } = edge.river;
+    if (!((from === a && to === b) || (from === b && to === a))) return null;
+  }
+  if (!edge.river && !edge.road && !edge.coast) return null;
+  if (!edge.road || !edge.river) delete edge.crossing;
+  return edge;
+}
+function normalizeEdges(raw: unknown): HexTopology["edges"] {
+  const edges: HexTopology["edges"] = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return edges;
+  for (const [key, value] of Object.entries(raw)) {
+    const edge = validEdge(key, value);
+    if (edge) edges[key] = edge;
+  }
+  return edges;
+}
+function normalizeSites(raw: unknown): HexTopology["sites"] {
+  const sites: HexTopology["sites"] = {};
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return sites;
+  for (const [key, value] of Object.entries(raw)) {
+    if (!parseHexKey(key)) continue;
+    const parsed = SiteSchema.safeParse(value);
+    if (parsed.success) sites[key] = parsed.data;
+  }
+  return sites;
+}
+/** Malformed edge keys, non-adjacent endpoints and mismatched river directions disappear. */
 export function normalizeHexTopology(raw: unknown): HexTopology | undefined {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const input = raw as Record<string, unknown>;
   if (input.version !== TOPOLOGY_VERSION) return undefined;
-  const edges: HexTopology["edges"] = {};
-  if (
-    input.edges &&
-    typeof input.edges === "object" &&
-    !Array.isArray(input.edges)
-  ) {
-    for (const [key, value] of Object.entries(input.edges)) {
-      const pair = parseHexEdgeKey(key);
-      const parsed = HexEdgeFeatureSchema.safeParse(value);
-      if (!pair || !parsed.success) continue;
-      const edge = parsed.data;
-      const [a, b] = pair.map(toHexKey);
-      if (
-        edge.river &&
-        !(
-          (edge.river.from === a && edge.river.to === b) ||
-          (edge.river.from === b && edge.river.to === a)
-        )
-      )
-        continue;
-      if (!edge.river && !edge.road && !edge.coast) continue;
-      // Crossings are meaningful only with a road and a river.
-      if (!edge.road || !edge.river) delete edge.crossing;
-      edges[key] = edge;
-    }
-  }
-  const sites: HexTopology["sites"] = {};
-  if (
-    input.sites &&
-    typeof input.sites === "object" &&
-    !Array.isArray(input.sites)
-  ) {
-    for (const [key, value] of Object.entries(input.sites)) {
-      if (!parseHexKey(key)) continue;
-      const parsed = SiteSchema.safeParse(value);
-      if (parsed.success) sites[key] = parsed.data;
-    }
-  }
-  return { version: TOPOLOGY_VERSION, edges, sites };
+  return {
+    version: TOPOLOGY_VERSION,
+    edges: normalizeEdges(input.edges),
+    sites: normalizeSites(input.sites),
+  };
 }
