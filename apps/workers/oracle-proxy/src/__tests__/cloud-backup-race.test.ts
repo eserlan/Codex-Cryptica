@@ -27,6 +27,7 @@ import {
   createBackupFixture,
   jsonRequest,
   ownerRequest,
+  readCurrent,
 } from "./cloud-backup-fixtures";
 import { Bucket } from "./r2-memory-bucket";
 
@@ -157,6 +158,30 @@ describe("race-safe cloud backup commit", () => {
     const { manifest } = (await readManifest(env, backupId))!;
     expect(manifest.entityCount).toBe(3);
     expect(manifest.revision).toBe(fixture.manifest.revision + 1);
+  });
+
+  it("leaves no staged trash from a losing delta that deleted an entity", async () => {
+    const fixture = await committedFixture();
+    const { env, backupId } = fixture;
+    const base = {
+      lastPushedAt: fixture.manifest.lastPushedAt,
+      revision: fixture.manifest.revision,
+    };
+    let winner!: Response;
+    beforeManifestPut(env.BUCKET, async () => {
+      winner = await sendDelta(fixture, base, [], { deletes: ["b"] });
+    });
+    const loser = await sendDelta(fixture, base, [], { deletes: ["a"] });
+    expect(winner.status).toBe(200);
+    expect(loser.status).toBe(409);
+    const stored = (await readManifest(env, backupId))!;
+    const index = await readCurrent(env, backupId, "index");
+    expect(Object.keys(index.tombstones)).toEqual(["b"]);
+    const prefix = `cloud-backup/${backupId}/`;
+    const trashKeys = (await env.BUCKET.list({ prefix })).objects
+      .map((object: { key: string }) => object.key.slice(prefix.length))
+      .filter((key: string) => key.includes("/trash/"));
+    expect(trashKeys.sort()).toEqual(Object.values(stored.objects!.trash!));
   });
 
   it("lets the loser retry on the revision it was given", async () => {

@@ -26,7 +26,12 @@ import {
 import { json, type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import { lostRace } from "./cloud-backup-delta";
-import { stageIndex, stageShards, stagedName } from "./cloud-backup-shards";
+import {
+  carryTombstones,
+  stageIndex,
+  stageShards,
+  stagedName,
+} from "./cloud-backup-shards";
 
 /**
  * Commits a staged snapshot: bundle, then manifest, then prune.
@@ -62,7 +67,10 @@ async function commitSnapshot(
     vaultTitle: payload.vaultTitle,
     lastPushedAt,
     revision,
+    // A full upload can drop entities without tombstones, so the feed restarts here.
+    feedHorizon: revision,
   };
+  const base = await resolveObjects(env, backupId, auth.objects);
   if (entities) {
     // Schema v2 (#3354): shard the entities so later uploads can be deltas.
     const { entities: _entities, ...rest } = payload.bundle as Record<
@@ -83,12 +91,21 @@ async function commitSnapshot(
     const entityMeta = Object.fromEntries(
       entities.map((entity) => [entity.id, stamp]),
     );
+    const carried = await carryTombstones(
+      env,
+      backupId,
+      base,
+      new Set(entities.map((entity) => entity.id)),
+    );
+    const trash = await stageShards(env, backupId, tag, carried.trash, "trash");
+    if (Object.keys(trash).length > 0) staged.trash = trash;
     staged.index = await stageIndex(
       env,
       backupId,
       tag,
       await hashEntities(entities),
       entityMeta,
+      carried.tombstones,
     );
     await writeJson(env, getStagedKey(backupId, tag, "bundle.json"), rest);
     committed = {
@@ -117,13 +134,7 @@ async function commitSnapshot(
   );
   if (!won) return lostRace(request, env, backupId, staged, auth.manifest);
 
-  await cleanupSuperseded(
-    env,
-    backupId,
-    revision,
-    staged,
-    await resolveObjects(env, backupId, auth.objects),
-  );
+  await cleanupSuperseded(env, backupId, revision, staged, base);
   const keep = new Set(
     (payload.assetIds ?? []).map((id) => getAssetKey(backupId, id)),
   );
