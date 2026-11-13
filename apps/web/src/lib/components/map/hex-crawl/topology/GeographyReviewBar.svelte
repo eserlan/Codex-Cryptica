@@ -56,7 +56,7 @@
         "coast",
       )} coast edges and {sitesCount} sites proposed.
     </p>
-    <p class="mt-1 text-xs text-theme-muted">
+    <p class="mt-1 text-xs text-theme-text">
       Generated locally, AI off. Tap the checkmarks on the map to reject or
       restore a feature. Existing terrain, pinned places and authored
       connections stay fixed.
@@ -109,11 +109,11 @@
           class="min-h-11 w-full rounded-lg border border-theme-border px-2 text-xs font-bold"
           >Reroll proposals</button
         >
-        <p class="text-xs text-theme-muted">
+        <p class="text-xs text-theme-text">
           Accepted sites are map suggestions, not Vault entities. Select a site
           later to link or create a location.
         </p>
-        <p class="text-xs text-theme-muted">
+        <p class="text-xs text-theme-text">
           {review.disabledEdges.size} edges and {review.disabledSites.size} sites
           rejected.
         </p>
