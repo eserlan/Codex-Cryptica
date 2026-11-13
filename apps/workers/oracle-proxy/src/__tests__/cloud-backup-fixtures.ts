@@ -1,5 +1,6 @@
 import type { CloudBackupManifest } from "../../../../../packages/schema/src/publishing";
 import { handleEnableCloudBackup } from "../cloud-backup-lifecycle";
+import { absoluteKey, readJson, readManifest } from "../cloud-backup-storage";
 import { Bucket } from "./r2-memory-bucket";
 
 export function ownerRequest(
@@ -34,4 +35,14 @@ export async function createBackupFixture() {
     manifest: CloudBackupManifest;
   };
   return { env, ...opened };
+}
+
+/** Reads the bundle or index the current manifest references. */
+export async function readCurrent<T = any>(
+  env: { BUCKET: Bucket },
+  backupId: string,
+  which: "bundle" | "index",
+): Promise<T> {
+  const objects = (await readManifest(env, backupId))!.objects!;
+  return (await readJson<T>(env, absoluteKey(backupId, objects[which]!)))!;
 }

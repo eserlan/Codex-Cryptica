@@ -13,8 +13,6 @@ import {
   getManifestKey,
   getBundleKey,
   getAssetKey,
-  getIndexKey,
-  getShardKey,
   type CloudBackupEnv,
 } from "../cloud-backup";
 import {
@@ -23,7 +21,9 @@ import {
   handleCloudBackupReissueCode,
   handleCloudBackupAdminDelete,
 } from "../cloud-backup-admin";
+import { readManifest } from "../cloud-backup-storage";
 import { Bucket } from "./r2-memory-bucket";
+import { readCurrent } from "./cloud-backup-fixtures";
 import {
   CLOUD_BACKUP_SCHEMA_V2,
   cloudBackupShardOf,
@@ -615,6 +615,15 @@ describe("support lookup", () => {
     );
     expect(stored.vaultTitle).toBe("Kept Title");
   });
+
+  it("keeps the stored objects through a re-issue", async () => {
+    const env = makeEnv();
+    const { backupId } = await enableAndCommit(env);
+    const before = (await readManifest(env, backupId))!.objects;
+    expect(before).toBeDefined();
+    await handleCloudBackupReissueCode(post({}, ADMIN_TOKEN), env, backupId);
+    expect((await readManifest(env, backupId))!.objects).toEqual(before);
+  });
 });
 
 describe("admin stats", () => {
@@ -765,12 +774,16 @@ describe("schema v2 storage (#3354)", () => {
 
     expect((manifest as any).schemaVersion).toBe(CLOUD_BACKUP_SCHEMA_V2);
     expect((manifest as any).entityCount).toBe(1);
-    const stored = JSON.parse(
-      env.BUCKET.store.get(getBundleKey(backupId))!.body as string,
-    );
+    const stored = await readCurrent(env, backupId, "bundle");
     expect(stored.entities).toBeUndefined();
+    const objects = (await readManifest(env, backupId))!.objects!;
+    expect(objects.shards![cloudBackupShardOf("e1")]).toMatch(
+      /^commits\/1-.+\/entities\//,
+    );
     expect(
-      env.BUCKET.store.has(getShardKey(backupId, cloudBackupShardOf("e1"))),
+      env.BUCKET.store.has(
+        `cloud-backup/${backupId}/${objects.shards![cloudBackupShardOf("e1")]}`,
+      ),
     ).toBe(true);
 
     const bundle = await bundleOf(env, backupId, ownerCode);
@@ -798,9 +811,7 @@ describe("schema v2 storage (#3354)", () => {
     expect(await bundleOf(env, backupId, ownerCode)).toMatchObject({
       entities: [{ id: "__proto__", title: "Prototype" }],
     });
-    const index = JSON.parse(
-      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
-    );
+    const index = await readCurrent(env, backupId, "index");
     expect(index.entityHashes["__proto__"]).toBe(
       await hashCloudBackupEntity({ id: "__proto__", title: "Prototype" }),
     );
@@ -885,8 +896,10 @@ describe("schema v2 storage (#3354)", () => {
     expect(bundle.entities.map((e: any) => e.id)).toEqual(["only"]);
     if (cloudBackupShardOf("e1") !== cloudBackupShardOf("only")) {
       expect(
-        env.BUCKET.store.has(getShardKey(backupId, cloudBackupShardOf("e1"))),
-      ).toBe(false);
+        (await readManifest(env, backupId))!.objects!.shards![
+          cloudBackupShardOf("e1")
+        ],
+      ).toBeUndefined();
     }
   });
 
@@ -897,9 +910,10 @@ describe("schema v2 storage (#3354)", () => {
     const raw = JSON.parse(
       env.BUCKET.store.get(getManifestKey(backupId))!.body as string,
     );
+    const { objects: _objects, ...unstaged } = raw;
     await env.BUCKET.put(
       getManifestKey(backupId),
-      JSON.stringify({ ...raw, schemaVersion: 1 }),
+      JSON.stringify({ ...unstaged, schemaVersion: 1 }),
       {
         customMetadata: env.BUCKET.store.get(getManifestKey(backupId))!
           .customMetadata,
@@ -967,13 +981,11 @@ describe("POST /delta (#3354)", () => {
 
     const bundle = await bundleOf(env, backupId, ownerCode);
     expect(bundle.entities).toEqual([{ id: "e2", title: "Nell" }]);
-    const index = JSON.parse(
-      env.BUCKET.store.get(getIndexKey(backupId))!.body as string,
-    );
+    const index = await readCurrent(env, backupId, "index");
     expect(Object.keys(index.entityHashes)).toEqual(["e2"]);
   });
 
-  it("rewrites only the shards it touches", async () => {
+  it("stages only the shards it touches", async () => {
     const env = makeEnv();
     const { backupId, ownerCode } = await enableAndCommit(env);
     const ids = Array.from({ length: 40 }, (_, i) => `n${i}`);
@@ -1008,10 +1020,13 @@ describe("POST /delta (#3354)", () => {
     );
 
     const shardWrites = writes.filter((key) => key.includes("/entities/"));
-    expect(shardWrites).toEqual([
-      getShardKey(backupId, cloudBackupShardOf("n3")),
-    ]);
-    expect(writes).not.toContain(getBundleKey(backupId));
+    expect(shardWrites).toHaveLength(1);
+    expect(shardWrites[0]).toMatch(
+      new RegExp(
+        `/commits/3-[^/]+/entities/${cloudBackupShardOf("n3")}\\.json$`,
+      ),
+    );
+    expect(writes.filter((key) => key.endsWith("/bundle.json"))).toEqual([]);
   });
 
   it("refuses a diverged base without writing", async () => {
@@ -1111,7 +1126,7 @@ describe("POST /delta (#3354)", () => {
       getAssetKey(backupId, "near-limit.bin"),
       new Uint8Array(49 * 1024 * 1024),
     );
-    const previousBundle = env.BUCKET.store.get(getBundleKey(backupId))!.body;
+    const previousObjects = (await readManifest(env, backupId))!.objects;
 
     const res = await handleCloudBackupDelta(
       post(
@@ -1123,8 +1138,11 @@ describe("POST /delta (#3354)", () => {
     );
 
     expect(res.status).toBe(413);
-    expect(env.BUCKET.store.get(getBundleKey(backupId))!.body).toBe(
-      previousBundle,
+    expect((await readManifest(env, backupId))!.objects).toEqual(
+      previousObjects,
     );
+    expect(
+      [...env.BUCKET.store.keys()].filter((key) => key.includes("/commits/2-")),
+    ).toEqual([]);
   });
 });

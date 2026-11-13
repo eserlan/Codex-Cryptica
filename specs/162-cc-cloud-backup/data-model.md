@@ -24,6 +24,13 @@ The vault's actual content (entities, labels, notes, media) lives in sibling key
 - `cloud-backup/{backupId}/entities/{shard}.json` — **v2** _(#3354)_: `{ [entityId]: Entity }` for every entity whose id hashes to that shard (`fnv1a(id) % shardCount`, zero-padded, e.g. `07.json`). Sharded rather than one object per entity so a restore costs 64 R2 reads, not one per entity, staying inside the Worker's subrequest limit.
 - `cloud-backup/{backupId}/assets/{assetId}` — media, mirroring `published/{publishId}/assets/{assetId}`'s existing layout.
 
+**Staged commits and the `objects` field** _(shared vault slice 2)_: each commit, delta or full, writes its shards, index and bundle under `cloud-backup/{backupId}/commits/<revision>-<id>/…` (same file names as above; `<id>` is a random UUID, because two racing commits share a revision). It then switches the manifest with an **etag-conditional** write (`onlyIf: etagMatches`). The stored manifest body carries a worker-only `objects` field, `{ bundle?, index?, shards?: { [shard]: key } }`, whose values are keys relative to the backup prefix (a staged key, or a legacy key such as `bundle.json`). It is never in `packages/schema` and never returned by any API response. Every reader resolves the bundle, index and shards through it, and a referenced object that is missing fails the read.
+
+- **Legacy fallback**: a manifest with no `objects` (written before this change, or a fresh one) reads `bundle.json`, `index.json` and the shards found by listing `entities/`. Its first commit builds its base `objects` from those keys and keeps untouched legacy shards referenced in place.
+- **Loser**: a commit that loses the switch answers 409 `diverged` with the winner's `revision` and `lastPushedAt`, deletes only what it staged, and prunes nothing.
+- **Cleanup**: after a winning switch from manifest B to revision N, the worker deletes best-effort every staged object with tag revision ≤ N and every legacy `bundle.json`/`index.json`/`entities/*` object that neither the new manifest nor B references. That is one generation of grace for in-flight readers; tags with revision > N are never touched. Errors are ignored.
+- **Size**: `sizeBytes` and the vault ceiling count only referenced objects plus `assets/`, never staged orphans or the grace generation.
+
 **Validation rules**:
 
 - `vaultTitle` MUST be non-empty (used by Story 4 lookup; an empty title would make every vault ambiguous).

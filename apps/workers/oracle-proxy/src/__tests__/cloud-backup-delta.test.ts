@@ -7,10 +7,7 @@ import { handleCloudBackupDelta } from "../cloud-backup-delta";
 import { handleCommitCloudBackup } from "../cloud-backup-snapshot";
 import {
   getAssetKey,
-  getBundleKey,
-  getIndexKey,
   getManifestKey,
-  readJson,
   readManifest,
   writeManifest,
 } from "../cloud-backup-storage";
@@ -18,9 +15,13 @@ import {
   handleGetCloudBackupBundle,
   handleGetCloudBackupIndex,
 } from "../cloud-backup-reads";
-import { ownerRequest } from "./cloud-backup-fixtures";
 import { readAllEntities } from "../cloud-backup-shards";
-import { createBackupFixture, jsonRequest } from "./cloud-backup-fixtures";
+import {
+  createBackupFixture,
+  jsonRequest,
+  ownerRequest,
+  readCurrent,
+} from "./cloud-backup-fixtures";
 
 async function committedFixture() {
   const fixture = await createBackupFixture();
@@ -73,8 +74,14 @@ describe("cloud backup incremental commits", () => {
       vaultTitle: "Updated",
       entityCount: 1,
     });
-    expect(await readAllEntities(env, backupId)).toEqual([entity]);
-    expect(await readJson(env, getIndexKey(backupId))).toEqual({
+    expect(
+      await readAllEntities(
+        env,
+        backupId,
+        (await readManifest(env, backupId))!.objects!,
+      ),
+    ).toEqual([entity]);
+    expect(await readCurrent(env, backupId, "index")).toEqual({
       entityHashes: { a: await hashCloudBackupEntity(entity) },
       entityMeta: {
         a: {
@@ -84,13 +91,17 @@ describe("cloud backup incremental commits", () => {
         },
       },
     });
-    expect(await readJson(env, getBundleKey(backupId))).toEqual({
+    expect(await readCurrent(env, backupId, "bundle")).toEqual({
       maps: [{ id: "map" }],
       untouched: true,
     });
     const bundleWrite = put.mock.calls.findIndex(
-      ([key]) => key === getBundleKey(backupId),
+      ([key]) =>
+        typeof key === "string" &&
+        key.startsWith(`cloud-backup/${backupId}/commits/`) &&
+        key.endsWith("/bundle.json"),
     );
+    expect(bundleWrite).toBeGreaterThanOrEqual(0);
     const manifestWrite = put.mock.calls.findIndex(
       ([key]) => key === getManifestKey(backupId),
     );
@@ -108,6 +119,7 @@ describe("cloud backup incremental commits", () => {
 
   it("leaves the bundle and assets alone when those sections are omitted", async () => {
     const { env, backupId, ownerCode, manifest } = await committedFixture();
+    const bundleBefore = (await readManifest(env, backupId))!.objects!.bundle;
     await env.BUCKET.put(getAssetKey(backupId, "keep"), "bytes");
     const put = vi.spyOn(env.BUCKET, "put");
     expect(
@@ -127,8 +139,11 @@ describe("cloud backup incremental commits", () => {
         )
       ).status,
     ).toBe(200);
-    expect(put.mock.calls.map(([key]) => key)).not.toContain(
-      getBundleKey(backupId),
+    expect(
+      put.mock.calls.filter(([key]) => String(key).endsWith("/bundle.json")),
+    ).toEqual([]);
+    expect((await readManifest(env, backupId))!.objects!.bundle).toBe(
+      bundleBefore,
     );
     expect(await env.BUCKET.head(getAssetKey(backupId, "keep"))).not.toBeNull();
   });
@@ -255,7 +270,7 @@ describe("cloud backup incremental commits", () => {
   it("stamps upserts, keeps other stamps and leaves content untouched", async () => {
     const fixture = await committedFixture();
     const { env, backupId, ownerCode, manifest } = fixture;
-    const before = (await readJson<any>(env, getIndexKey(backupId))).entityMeta;
+    const before = (await readCurrent(env, backupId, "index")).entityMeta;
     const entity = { id: "a", title: "New" };
     const response = await send(
       fixture,
@@ -264,7 +279,7 @@ describe("cloud backup incremental commits", () => {
       ["remove"],
     );
     const committed = (await response.json()).manifest;
-    const index = await readJson<any>(env, getIndexKey(backupId));
+    const index = await readCurrent(env, backupId, "index");
     expect(index.entityMeta.a).toEqual({
       rev: 2,
       editedBy: "owner",
@@ -276,7 +291,13 @@ describe("cloud backup incremental commits", () => {
       editedBy: "owner",
       editedAt: expect.any(String),
     });
-    expect(await readAllEntities(env, backupId)).toEqual([entity]);
+    expect(
+      await readAllEntities(
+        env,
+        backupId,
+        (await readManifest(env, backupId))!.objects!,
+      ),
+    ).toEqual([entity]);
     expect(index.entityHashes.a).toBe(await hashCloudBackupEntity(entity));
 
     const bundle = await (
@@ -296,11 +317,11 @@ describe("cloud backup incremental commits", () => {
   it("keeps existing stamps for entities a delta does not touch", async () => {
     const fixture = await committedFixture();
     const { env, backupId, manifest } = fixture;
-    const before = (await readJson<any>(env, getIndexKey(backupId))).entityMeta;
+    const before = (await readCurrent(env, backupId, "index")).entityMeta;
     await send(fixture, { baseLastPushedAt: manifest.lastPushedAt }, [
       { id: "b" },
     ]);
-    const after = (await readJson<any>(env, getIndexKey(backupId))).entityMeta;
+    const after = (await readCurrent(env, backupId, "index")).entityMeta;
     expect(after.a).toEqual(before.a);
     expect(after.b.rev).toBe(2);
   });
@@ -308,9 +329,12 @@ describe("cloud backup incremental commits", () => {
   it("treats a backup without a revision as revision 0", async () => {
     const fixture = await committedFixture();
     const { env, backupId } = fixture;
-    const { manifest, ownerCodeHash } = (await readManifest(env, backupId))!;
+    const { manifest, ownerCodeHash, objects, etag } = (await readManifest(
+      env,
+      backupId,
+    ))!;
     const { revision: _revision, ...legacy } = manifest;
-    await writeManifest(env, backupId, legacy, ownerCodeHash!);
+    await writeManifest(env, backupId, legacy, ownerCodeHash!, objects, etag);
     const stale = await send(fixture, {
       baseLastPushedAt: manifest.lastPushedAt,
       baseRevision: 1,
