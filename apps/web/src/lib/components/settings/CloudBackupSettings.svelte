@@ -9,6 +9,7 @@
    */
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
+  import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
@@ -340,9 +341,9 @@
           class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-theme-muted"
         >
           <p>
-            <strong class="text-theme-text">What gets stored:</strong> everything
-            in this vault — your entities, labels, notes, maps, canvases, session
-            journals, and the images they use.
+            <strong class="text-theme-text">What gets stored:</strong> your entities,
+            labels, notes, maps, canvases, session journals, and the images they use.
+            Adventures and their kept illustrations require a separate opt-in.
           </p>
           <p>
             <strong class="text-theme-text">Where:</strong> Codex Cryptica Cloud,
@@ -469,6 +470,17 @@
             Keep my version
           </button>
         </div>
+      {/if}
+
+      {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+        <AdventureBackupSettings
+          {vaultId}
+          refreshKey={cloudBackupStore.artworkConsentVersion}
+          read={(id) => cloudBackupStore.readAdventureBackup(id)}
+          set={(id, enabled, confirmed) =>
+            cloudBackupStore.setAdventureBackup(id, enabled, confirmed)}
+          confirm={(options) => notificationStore.confirm(options)}
+        />
       {/if}
 
       {#if codeVisible && cloudBackupStore.recoveryKey}

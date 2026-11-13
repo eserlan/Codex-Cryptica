@@ -8,6 +8,7 @@ import type {
   CloudBackupViewState,
   CloudBackupDeps,
 } from "./cloud-backup-types";
+import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
 
 type RestoreTarget = NonNullable<CloudBackupDeps["restore"]>;
 type RestoreMaterial = Extract<
@@ -28,6 +29,7 @@ function readCollections(bundle: unknown) {
     maps: listFrom(bundle, "maps"),
     canvases: listFrom(bundle, "canvases"),
     sessionJournals: listFrom(bundle, "sessionJournals"),
+    adventures: listFrom(bundle, "adventures"),
   };
 }
 
@@ -51,6 +53,11 @@ async function importCollections(
       await restore[method](vaultId, items);
     }
   }
+  if (collections.adventures.length) {
+    if (!restore.importAdventures)
+      throw new Error("Adventure restore is not available.");
+    await restore.importAdventures(vaultId, collections.adventures);
+  }
 }
 
 async function restoreAsset(
@@ -59,6 +66,13 @@ async function restoreAsset(
   asset: RestoreAsset,
   importAsset: NonNullable<RestoreTarget["importAsset"]>,
 ): Promise<boolean> {
+  if (
+    !asset ||
+    !isSafeRestoredAssetPath(asset.path) ||
+    typeof asset.assetId !== "string" ||
+    !asset.assetId
+  )
+    return false;
   const bytes = await fetchCloudBackupAsset(
     runtime,
     credentials,

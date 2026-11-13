@@ -56,6 +56,7 @@ export const KNOWN_HELP_IDS = [
   "vault-audit",
   "dice-roller",
   "adventure-mode",
+  "adventure-artwork",
   "entity-explorer",
   "entity-shelf",
   "finding-your-way-around",

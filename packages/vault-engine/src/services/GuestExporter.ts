@@ -1,5 +1,6 @@
 import {
   isEntityVisible,
+  isPrivateArtworkSnapshotPath,
   type Entity,
   type GuestBundle,
   type GuestRelationship,
@@ -153,7 +154,11 @@ export class GuestExporter {
     // hexCrawl is GM-only working data (FR-041): notes, AI drafts and explored
     // state never reach guests. Grid geometry is kept, since it is map layout.
     const guestMaps = maps
-      .filter((m) => m.playerVisible === true)
+      .filter(
+        (m) =>
+          m.playerVisible === true &&
+          !isPrivateArtworkSnapshotPath(m.assetPath),
+      )
       .map((m) => {
         const pins = (m.pins || []).filter(
           (p) => !p.entityId || includedEntityIds.has(p.entityId),
@@ -192,6 +197,10 @@ export class GuestExporter {
       // Physically delete GM secrets
       delete sanitized.lore;
       delete sanitized.artDirection;
+      delete sanitized.adventureArtwork;
+      if (isPrivateArtworkSnapshotPath(sanitized.image)) delete sanitized.image;
+      if (isPrivateArtworkSnapshotPath(sanitized.thumbnail))
+        delete sanitized.thumbnail;
 
       // Clean runtime fields
       delete (sanitized as any)._path;
@@ -236,12 +245,17 @@ export class GuestExporter {
       publishedAt: new Date(clock.now()).toISOString(),
       publisherVersion,
       activeTheme: activeTheme || {},
-      metadata,
+      metadata:
+        metadata && isPrivateArtworkSnapshotPath(metadata.coverImage)
+          ? { ...metadata, coverImage: undefined }
+          : metadata,
       entities: sanitizedEntities,
       relationships: guestRelationships,
       maps: guestMaps,
       canvases: guestCanvases,
-      assetManifest,
+      assetManifest: assetManifest.filter(
+        (item) => !isPrivateArtworkSnapshotPath(item.filename),
+      ),
     };
   }
 

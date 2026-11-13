@@ -2,6 +2,11 @@ import type { LocalEntity } from "#lib/stores/vault/types.js";
 import type { CloudBackupTiming } from "@codex/cloud-backup-sync";
 
 import { systemClock, type Clock } from "../utils/runtime-deps";
+import {
+  collectArtworkBackup,
+  omitArtworkForBackup,
+  omitPrivateMapArtwork,
+} from "./cloud-backup-artwork";
 
 /** Monotonic clock for stage timings; counts, bytes and ms only, never content. */
 function nowMs(clock: Clock = systemClock): number {
@@ -36,6 +41,12 @@ export interface CloudBackupPayloadDeps {
   /** Resolves a vault-relative path to a fetchable URL, as the vault store does. */
   resolveImageUrl: (path: string) => Promise<string | null | undefined>;
   fetch?: typeof fetch;
+  digestSnapshot?: (bytes: Uint8Array) => Promise<string>;
+  /** Present only after the owner explicitly opts in to expanded backup. */
+  adventureInclusion?: {
+    consented: true;
+    readAdventures: Parameters<typeof collectArtworkBackup>[2];
+  };
   /**
    * Loads an entity's full markdown body. Required for a faithful backup:
    * without it the snapshot stores whatever `content` happens to be in memory,
@@ -80,6 +91,7 @@ export interface CloudBackupPayloadResult {
     /** Session Journal (spec 163-session-journal, FR-016) — the GM's own
      *  private play log, never included in a player-facing/guest export. */
     sessionJournals: unknown[];
+    adventures?: readonly unknown[];
     assetManifest: { assetId: string; path: string; mimeType: string }[];
   };
   /** Raw bytes per file. Uploaded one request each, never inlined in JSON. */
@@ -222,9 +234,18 @@ export async function buildCloudBackupPayload(
     });
   }
 
-  const maps = content.maps ?? [];
+  const maps = deps.adventureInclusion?.consented
+    ? (content.maps ?? [])
+    : (content.maps ?? []).map(omitPrivateMapArtwork);
   const canvases = content.canvases ?? [];
   const sessionJournals = content.sessionJournals ?? [];
+  if (deps.signal?.aborted) throw new Error("Backup cancelled");
+  const artwork = await collectArtworkBackup(
+    deps.adventureInclusion?.consented === true,
+    list,
+    deps.adventureInclusion?.readAdventures ?? (async () => []),
+  );
+  if (deps.signal?.aborted) throw new Error("Backup cancelled");
   const fetcher = deps.fetch ?? fetch;
   const assets: { assetId: string; bytes: Uint8Array; mimeType: string }[] = [];
   const assetManifest: { assetId: string; path: string; mimeType: string }[] =
@@ -232,8 +253,20 @@ export async function buildCloudBackupPayload(
   const skippedAssets: string[] = [];
   let assetBytesTotal = 0;
 
-  for (const path of collectAssetPaths(list, maps)) {
-    if (deps.signal?.aborted) break;
+  const privateSnapshots = new Set(artwork.snapshotPaths);
+  const expectedSnapshots = new Map(
+    artwork.snapshots.map((snapshot) => [snapshot.path, snapshot]),
+  );
+  const allPaths = new Set([
+    ...collectAssetPaths(artwork.entities, maps),
+    ...privateSnapshots,
+  ]);
+  for (const path of allPaths) {
+    if (deps.signal?.aborted) {
+      if (deps.adventureInclusion?.consented)
+        throw new Error("Backup cancelled");
+      break;
+    }
     try {
       const url = await deps.resolveImageUrl(path);
       if (!url) throw new Error("unresolved");
@@ -241,6 +274,25 @@ export async function buildCloudBackupPayload(
       if (!response.ok) throw new Error(`status ${response.status}`);
       const blob = await response.blob();
       const bytes = new Uint8Array(await blob.arrayBuffer());
+      const expected = expectedSnapshots.get(path);
+      if (expected) {
+        const digest =
+          deps.digestSnapshot ??
+          (async (input: Uint8Array) =>
+            Array.from(
+              new Uint8Array(
+                await crypto.subtle.digest("SHA-256", new Uint8Array(input)),
+              ),
+            )
+              .map((value) => value.toString(16).padStart(2, "0"))
+              .join(""));
+        if (
+          blob.type !== expected.mime ||
+          bytes.byteLength !== expected.bytes ||
+          (await digest(bytes)) !== expected.sha256
+        )
+          throw new Error("Invalid kept artwork snapshot");
+      }
 
       const assetId = assetIdForPath(path);
       const mimeType = blob.type || "application/octet-stream";
@@ -248,12 +300,16 @@ export async function buildCloudBackupPayload(
       assetManifest.push({ assetId, path, mimeType });
       assetBytesTotal += bytes.length;
     } catch {
+      if (privateSnapshots.has(path))
+        throw new Error("Could not read a kept artwork snapshot");
       // One unreadable image must not cost the user their whole backup. It is
       // recorded so the caller can say what was left out rather than implying
       // a complete copy.
       skippedAssets.push(path);
     }
   }
+  if (deps.signal?.aborted && deps.adventureInclusion?.consented)
+    throw new Error("Backup cancelled");
 
   deps.onTiming?.({
     stage: "build",
@@ -266,10 +322,11 @@ export async function buildCloudBackupPayload(
     vaultTitle,
     bundle: {
       schemaVersion: 1,
-      entities: list as LocalEntity[],
+      entities: artwork.entities,
       maps: maps as unknown[],
       canvases: canvases as unknown[],
       sessionJournals: sessionJournals as unknown[],
+      ...(artwork.adventures ? { adventures: artwork.adventures } : {}),
       assetManifest,
     },
     assets,
@@ -351,7 +408,7 @@ export async function buildCloudBackupDelta(
   });
 
   const maps = changes.some((change) => change.kind === "maps")
-    ? [...(content.maps ?? [])]
+    ? (content.maps ?? []).map(omitPrivateMapArtwork)
     : undefined;
   if (referencesNewMedia(entities.upserts, maps, deps.uploadedAssetIds)) {
     return null;
@@ -388,7 +445,7 @@ async function readChangedEntities(
     }
     const full = await readFullOrNull(id, current, deps.hydrateEntities);
     if (!full) return null;
-    upserts.push(full);
+    upserts.push(omitArtworkForBackup(full));
   }
   return { upserts, deletes };
 }

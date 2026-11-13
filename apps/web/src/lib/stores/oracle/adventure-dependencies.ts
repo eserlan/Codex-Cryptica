@@ -2,6 +2,8 @@ import type {
   AdventureSummaryService,
   AdventureTurnGenerationService,
 } from "@codex/ai-engine";
+import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
+import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
 import {
   adventureControlAuthority,
   type AdventureControlAuthority,
@@ -42,6 +44,8 @@ export interface AdventureManagerDependencies {
   now?: () => string;
   dice?: Pick<typeof defaultDiceEngine, "evaluate">;
   idGenerator?: () => string;
+  /** Already-loaded public metadata; turn commits never wait for a catalogue fetch. */
+  artworkCatalogue?: () => readonly ArtworkAsset[];
 }
 
 export function resolveAdventureDependencies({
@@ -56,6 +60,7 @@ export function resolveAdventureDependencies({
   now = () => new Date().toISOString(),
   dice = defaultDiceEngine,
   idGenerator = systemIdGenerator.uuid,
+  artworkCatalogue = () => defaultArtworkCatalogue.peek() ?? [],
 }: AdventureManagerDependencies = {}): Required<AdventureManagerDependencies> {
   return {
     repository,
@@ -69,5 +74,6 @@ export function resolveAdventureDependencies({
     now,
     dice,
     idGenerator,
+    artworkCatalogue,
   };
 }

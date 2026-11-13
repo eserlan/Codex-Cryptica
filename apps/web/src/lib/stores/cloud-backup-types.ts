@@ -9,6 +9,8 @@ import type {
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
 import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { ArtworkBackupScope } from "./cloud-backup-artwork-scope";
+import type { CloudBackupArtworkConsent } from "./cloud-backup-artwork-consent";
 
 export type CloudBackupStatus = "off" | "idle" | "syncing" | "error";
 
@@ -54,7 +56,11 @@ export interface CloudBackupDeps {
   buildPayload: (
     vaultId: string,
     signal?: AbortSignal,
+    artwork?: { includeAdventures: boolean },
   ) => Promise<VaultBundlePayload>;
+  /** Optional until expanded adventure inclusion is configured. */
+  artworkScope?: ArtworkBackupScope;
+  artworkConsent?: CloudBackupArtworkConsent;
   activeVaultId: () => string | null;
   /**
    * Vault-writing side of restore. Injected rather than imported so this store
@@ -72,6 +78,11 @@ export interface CloudBackupDeps {
     importSessionJournals?: (
       vaultId: string,
       journals: unknown[],
+    ) => Promise<void>;
+    /** Restores adventure documents into the newly created Vault. */
+    importAdventures?: (
+      vaultId: string,
+      adventures: unknown[],
     ) => Promise<void>;
     /** Writes one restored media file back into the vault. */
     importAsset?: (

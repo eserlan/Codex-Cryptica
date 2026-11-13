@@ -54,6 +54,7 @@ export class CloudBackupStore {
   uploadProgress = $state<{ uploaded: number; total: number } | null>(null);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
+  artworkConsentVersion = $state(0);
   /** Ephemeral automatic-sync state (#3189); never persisted. */
   autoState = $state<CloudAutoSyncState>("idle");
   /**
@@ -112,6 +113,39 @@ export class CloudBackupStore {
 
   enable(vaultId: string): Promise<boolean> {
     return this.account.enable(vaultId);
+  }
+  async readAdventureBackup(vaultId: string) {
+    if (!this.deps?.artworkConsent || this.deps.activeVaultId() !== vaultId)
+      return null;
+    try {
+      return await this.deps.artworkConsent.read(vaultId);
+    } catch {
+      return null;
+    }
+  }
+  async setAdventureBackup(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): Promise<boolean> {
+    const deps = this.deps;
+    if (
+      !deps?.artworkConsent ||
+      !deps.artworkScope ||
+      this.status === "off" ||
+      deps.activeVaultId() !== vaultId ||
+      (enabled && !confirmed)
+    )
+      return false;
+    if (!enabled) await this.uploads.cancel();
+    const ok = enabled
+      ? await deps.artworkConsent.enable(vaultId, confirmed)
+      : await deps.artworkConsent.disable(vaultId);
+    if (ok && deps.activeVaultId() === vaultId) {
+      this.notifyLocalChange(vaultId);
+      this.changes.schedule(vaultId);
+    }
+    return ok;
   }
   attachToExistingBackup(
     vaultId: string,

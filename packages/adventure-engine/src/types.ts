@@ -1,3 +1,6 @@
+import type { AdventurePerson } from "./people-types";
+import type { AdventureScene } from "./scene-types";
+
 export type AdventureStatus = "active" | "archived";
 export type ProposalKind = "complete" | "roll-required";
 export type RollResolutionStatus = "awaiting-outcome" | "ready-to-resolve";
@@ -414,6 +417,12 @@ export interface AdventureSession {
   places?: Place[];
   /** Where the player is now. Absent when unknown; unplaced facts then apply everywhere. */
   currentPlaceId?: string;
+  /** Opaque artwork extension; validate before display or mutation. */
+  artwork?: unknown;
+  /** Persistent player-visible people identities; absent on older sessions. */
+  people?: AdventurePerson[];
+  /** Explicit within-place scene identities; absent on older sessions. */
+  scenes?: AdventureScene[];
   /** Rolling notes on turns that have left the prompt's transcript window. Absent until the first summary. */
   storySoFar?: StorySoFar;
   visibleState: VisibleAdventureState;

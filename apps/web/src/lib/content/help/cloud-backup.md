@@ -35,6 +35,8 @@ For vault-owned local files, the current backup payload includes these asset cla
 - a map's background **asset**; and
 - a map's **fog-of-war mask**.
 
+Adventure sessions and kept private adventure artwork (`adventureArtwork` metadata and `images/artwork_*` snapshots) are **off by default** and are not uploaded until you explicitly accept the **Include adventures and kept artwork** disclosure in **Settings → Vault → Codex Cryptica Cloud**. You can turn off adventure inclusion and remove remote adventure data at any time without deleting your local adventures or snapshots.
+
 Other referenced files are not automatically collected. In particular, **sound-bite audio files are not currently backed up**, so keep a separate copy of audio you need to preserve. Remote URLs are kept as references rather than downloaded into the backup.
 
 The copy is hosted on third-party cloud infrastructure. It is **not end-to-end encrypted**, so Codex Cryptica and its hosting provider are technically able to read the stored data. The Cloud Backup consent screen is the authoritative summary shown before anything leaves your device.

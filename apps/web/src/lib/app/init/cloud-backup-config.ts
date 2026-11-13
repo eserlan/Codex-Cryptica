@@ -17,6 +17,29 @@ import {
 } from "#lib/services/cloud-backup-payload.js";
 import { CloudBackupDirtyStore } from "#lib/stores/cloud-backup-dirty.js";
 import { createCloudBackupRestore } from "./cloud-backup-restore";
+import { createArtworkBackupRuntime } from "#lib/stores/cloud-backup-artwork-runtime.js";
+import {
+  AdventureSessionRepository,
+  adventureSessionRepository,
+} from "#lib/services/adventure/adventure-session-repository.js";
+import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { isPrivateArtworkSnapshotPath } from "schema";
+
+const dirty = new CloudBackupDirtyStore();
+const artworkRuntime = createArtworkBackupRuntime({
+  read: async (key) => (await getDB()).get("settings", key),
+  write: async (key, value) => {
+    await (await getDB()).put("settings", value, key);
+  },
+  locks: typeof navigator === "undefined" ? undefined : navigator.locks,
+  requireFullPush: (vaultId) => dirty.requireFullPush(vaultId),
+  newRemovalId: () => systemIdGenerator.uuid(),
+});
+const adventures = new AdventureSessionRepository(async (vaultId) => {
+  const root = await vault.getSpecificVaultHandle(vaultId);
+  if (!root) throw new Error("Vault unavailable for backup");
+  return root;
+});
 
 /**
  * Silent stage timings for the worker-or-not question (counts, bytes and ms
@@ -41,7 +64,15 @@ function createEntityHydrator() {
 const buildVaultBackupPayload: CloudBackupDeps["buildPayload"] = async (
   vaultId,
   signal,
+  artwork,
 ) => {
+  if (artwork?.includeAdventures) {
+    if (
+      vault.activeVaultId !== vaultId ||
+      !(await artworkRuntime.consent.read(vaultId)).enabled
+    )
+      throw new Error("Adventure backup inclusion is not authorised.");
+  }
   // Do not use the store's reactive snapshot here: its initial vault read
   // is asynchronous, so a backup requested immediately after app startup
   // could otherwise omit existing journals. Read the requested vault's
@@ -60,6 +91,18 @@ const buildVaultBackupPayload: CloudBackupDeps["buildPayload"] = async (
       hydrateEntities: createEntityHydrator(),
       signal,
       onTiming: timeCloudBackupSave,
+      ...(artwork?.includeAdventures
+        ? {
+            adventureInclusion: {
+              consented: true as const,
+              readAdventures: () => {
+                if (vault.activeVaultId !== vaultId)
+                  throw new Error("The active Vault changed.");
+                return adventures.readAllForBackup(vaultId, signal);
+              },
+            },
+          }
+        : {}),
     },
     {
       maps: mapRegistry.allMaps ?? [],
@@ -88,7 +131,9 @@ const buildVaultBackupDelta: NonNullable<
       referencedAssetIds: collectAssetPaths(
         Object.values(vault.entities ?? {}) as never[],
         mapRegistry.allMaps ?? [],
-      ).map(assetIdForPath),
+      )
+        .filter((path) => !isPrivateArtworkSnapshotPath(path))
+        .map(assetIdForPath),
       signal,
     },
     {
@@ -110,7 +155,14 @@ export function configureCloudBackup(): void {
       storage: cloudBackupBrowserStorage(),
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
-    dirty: new CloudBackupDirtyStore(),
+    dirty,
+    // A previously consented backup remains protected if the UI flag changes.
+    artworkScope: artworkRuntime.scope,
+    ...(import.meta.env.VITE_ADVENTURE_ARTWORK === "true"
+      ? {
+          artworkConsent: artworkRuntime.consent,
+        }
+      : {}),
     timing: timeCloudBackupSave,
     // Everything the consent screen promises: entities, maps, canvases,
     // session journals, and the media the first three reference.
@@ -125,5 +177,14 @@ export function configureCloudBackup(): void {
       })),
     activeVaultId: () => vault.activeVaultId ?? null,
     restore: createCloudBackupRestore(),
+  });
+  adventureSessionRepository.setChangeListener(async (vaultId) => {
+    let enabled = true;
+    try {
+      enabled = (await artworkRuntime.consent.read(vaultId)).enabled;
+    } catch {
+      // A full backup is safer than losing a change when consent cannot be read.
+    }
+    if (enabled) await cloudBackupStore.recordLocalChange(vaultId);
   });
 }

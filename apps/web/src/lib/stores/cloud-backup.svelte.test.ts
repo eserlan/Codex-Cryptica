@@ -123,6 +123,44 @@ afterEach(() => {
 });
 
 describe("privacy gates", () => {
+  it("requires active backup and explicit consent before enabling adventure inclusion", async () => {
+    const consent = {
+      read: vi.fn(async () => ({
+        enabled: false,
+        remoteRemovalPending: false,
+      })),
+      enable: vi.fn(async () => true),
+      disable: vi.fn(async () => true),
+    };
+    const { store } = harness([], {
+      artworkConsent: consent,
+      artworkScope: {},
+    });
+    expect(await store.setAdventureBackup("v-1", true, true)).toBe(false);
+    expect(consent.enable).not.toHaveBeenCalled();
+    store.status = "idle";
+    expect(await store.setAdventureBackup("v-1", true, false)).toBe(false);
+    expect(consent.enable).not.toHaveBeenCalled();
+    expect(await store.setAdventureBackup("wrong-vault", true, true)).toBe(
+      false,
+    );
+    expect(await store.setAdventureBackup("v-1", true, true)).toBe(true);
+    expect(consent.enable).toHaveBeenCalledWith("v-1", true);
+  });
+  it("does not claim an expanded backup change succeeded on storage failure", async () => {
+    const consent = {
+      read: vi.fn(),
+      enable: vi.fn(async () => false),
+      disable: vi.fn(async () => false),
+    };
+    const { store } = harness([], {
+      artworkConsent: consent,
+      artworkScope: {},
+    });
+    store.status = "idle";
+    expect(await store.setAdventureBackup("v-1", false, true)).toBe(false);
+    expect(consent.disable).toHaveBeenCalledOnce();
+  });
   it("stays off and silent for a vault that never consented", async () => {
     // FR-001, FR-003, SC-002: the machinery must be off, not just the UI.
     const { store, calls } = harness();

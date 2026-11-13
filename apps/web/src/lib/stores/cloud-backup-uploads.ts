@@ -13,11 +13,12 @@ import {
   type SnapshotOutcome,
 } from "./cloud-backup-types";
 import { CloudBackupMediaCache } from "./cloud-backup-media-cache";
+import { runArtworkBackup } from "./cloud-backup-artwork-scope";
 
 type UploadState = Pick<
   CloudBackupViewState,
   "lastPushedAt" | "skippedAssets" | "skippedEntities" | "uploadProgress"
->;
+> & { artworkConsentVersion?: number };
 
 function uploadFailure(result: {
   error: string;
@@ -87,7 +88,17 @@ export class CloudBackupUploads {
 
       // Keep the cancellation guard live through upload, including delta
       // writes, so disable can wait before persisting the off record.
-      const out = await this.uploadChanges(vaultId, opts, sent, push.signal);
+      const scope = this.deps!.artworkScope;
+      const out = scope
+        ? await runArtworkBackup(vaultId, {
+            ...scope,
+            upload: (artwork) =>
+              this.uploadChanges(vaultId, opts, sent, push.signal, artwork),
+          })
+        : await this.uploadChanges(vaultId, opts, sent, push.signal);
+      if (scope)
+        this.state.artworkConsentVersion =
+          (this.state.artworkConsentVersion ?? 0) + 1;
       if (push.signal.aborted) return BACKUP_OFF;
       if (out.ok) await this.deps!.dirty?.clearSent(sent);
       return out;
@@ -115,11 +126,18 @@ export class CloudBackupUploads {
     opts: { guarded: boolean },
     sent: readonly CloudBackupDirtyRow[],
     signal: AbortSignal,
+    artwork?: { includeAdventures: boolean; forceFull: boolean },
   ): Promise<SnapshotOutcome> {
     const deps = this.deps!;
     const base = this.state.lastPushedAt;
-    if (!opts.guarded || !deps.dirty || !deps.buildDelta || !base) {
-      return this.uploadSnapshot(vaultId, opts, signal);
+    if (
+      artwork?.forceFull ||
+      !opts.guarded ||
+      !deps.dirty ||
+      !deps.buildDelta ||
+      !base
+    ) {
+      return this.uploadSnapshot(vaultId, opts, signal, artwork);
     }
     if (sent.length === 0) return { ok: true };
 
@@ -133,7 +151,7 @@ export class CloudBackupUploads {
     const out = delta
       ? await this.sendDelta(vaultId, delta, base, signal)
       : null;
-    return out ?? this.uploadSnapshot(vaultId, opts, signal);
+    return out ?? this.uploadSnapshot(vaultId, opts, signal, artwork);
   }
 
   /** Publishes a delta; `null` means the backup needs a full upload instead. */
@@ -163,9 +181,14 @@ export class CloudBackupUploads {
     vaultId: string,
     opts: { guarded: boolean },
     signal: AbortSignal,
+    artwork?: { includeAdventures: boolean },
   ): Promise<SnapshotOutcome> {
     const deps = this.deps!;
-    const payload = await deps.buildPayload(vaultId, signal);
+    const payload = artwork
+      ? await deps.buildPayload(vaultId, signal, {
+          includeAdventures: artwork.includeAdventures,
+        })
+      : await deps.buildPayload(vaultId, signal);
     if (signal.aborted) return BACKUP_OFF;
     this.state.skippedAssets =
       (payload as { skippedAssets?: string[] }).skippedAssets ?? [];

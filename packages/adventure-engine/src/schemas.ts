@@ -290,6 +290,13 @@ const completeProposalSchema = z.object({
   narration,
   timeAdvance: timeAdvanceSchema.optional(),
   moveTo: placeMoveSchema.optional(),
+  personRefs: z.array(id).max(8).optional(),
+  sceneTransition: z
+    .object({
+      sceneId: id.optional(),
+      title: z.string().min(1).max(120).optional(),
+    })
+    .optional(),
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
   revealSecretIds: z.array(id),
@@ -394,6 +401,32 @@ export const adventureSessionSchema = z
     places: z.array(placeSchema).max(MAX_PLACES).optional(),
     currentPlaceId: id.optional(),
     storySoFar: storySoFarSchema.optional(),
+    // Artwork is parsed independently so future or damaged data survives saves.
+    artwork: z.unknown().optional(),
+    people: z
+      .array(
+        z.object({
+          id,
+          name: z.string().min(1).max(120),
+          aliases: z.array(z.string().min(1).max(120)).max(8).default([]),
+          linkedFactIds: z.array(id).max(32).default([]),
+          sourceRecordId: id.optional(),
+        }),
+      )
+      .max(200)
+      .optional(),
+    scenes: z
+      .array(
+        z.object({
+          id,
+          placeId: id,
+          introducedTurnId: id,
+          endedTurnId: id.optional(),
+          title: z.string().min(1).max(120).optional(),
+        }),
+      )
+      .max(200)
+      .optional(),
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
