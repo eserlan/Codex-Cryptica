@@ -392,7 +392,7 @@
             Propose rivers, roads & settlement sites
           </button>
           {#if suggestedSite}
-            <p class="text-xs text-theme-muted">
+            <p class="text-xs text-theme-text">
               Accepted {suggestedSite.kind} site in this hex. Use the location controls
               below to attach an existing place or create a new one.
             </p>
