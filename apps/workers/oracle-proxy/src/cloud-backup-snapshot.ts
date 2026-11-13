@@ -22,6 +22,7 @@ import {
   writeJson,
   writeManifest,
   pruneAssets,
+  type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
@@ -55,6 +56,7 @@ async function commitSnapshot(
     ownerCodeHash: string;
     etag?: string;
     objects?: BackupObjects;
+    sharing?: SharingRecord;
   },
 ): Promise<Response> {
   const lastPushedAt = new Date().toISOString();
@@ -131,6 +133,7 @@ async function commitSnapshot(
     auth.ownerCodeHash,
     staged,
     auth.etag,
+    auth.sharing,
   );
   if (!won) return lostRace(request, env, backupId, staged, auth.manifest);
 
@@ -156,7 +159,7 @@ export async function handleCommitCloudBackup(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  const read = await readAuthorizedJsonBody(request, env, backupId);
+  const read = await readAuthorizedJsonBody(request, env, backupId, true);
   if ("response" in read) return read.response;
   const { auth, body } = read;
 

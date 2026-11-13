@@ -38,7 +38,7 @@ export function handleCorsPreflight(request: Request, env: CorsEnv): Response {
 
   headers.set(
     "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename, X-Codex-Automation-Key",
+    "Content-Type, Authorization, X-Requested-With, X-Turnstile-Token, X-Filename, X-Codex-Automation-Key, X-Codex-Device-Id",
   );
   headers.set(
     "Access-Control-Allow-Methods",

@@ -324,8 +324,8 @@ see.
 
 ## Open questions
 
-- The device cap is proposed at 10 active devices per shared vault. Confirm
-  the number in slice 6.
+- The device cap is settled. Confirmed at 10 active devices in 30 days in
+  slice 6.
 - How often a device pulls is proposed at 30 seconds while the app is open.
   Confirm against the worker's rate limits in slice 5.
 - The storage cost and limit for restore points. Settle in slice 11.

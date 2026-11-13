@@ -33,8 +33,20 @@ const BackupObjectsSchema = z.object({
 });
 export type BackupObjects = z.infer<typeof BackupObjectsSchema>;
 
+/**
+ * Worker-only manifest field: the editor link. Holds only the token's hash, and
+ * is never returned in a response.
+ */
+const SharingRecordSchema = z.object({
+  editorTokenHash: z.string(),
+  linkVersion: z.number().int().min(1),
+  enabledAt: z.string(),
+});
+export type SharingRecord = z.infer<typeof SharingRecordSchema>;
+
 const StoredManifestSchema = CloudBackupManifestSchema.extend({
   objects: BackupObjectsSchema.optional(),
+  sharing: SharingRecordSchema.optional(),
 });
 
 /** Thrown when an object the manifest references is not in storage. */
@@ -67,6 +79,11 @@ export function getIndexKey(backupId: string): string {
   return `${PREFIX}${backupId}/index.json`;
 }
 
+/** Seen editor devices; kept out of the manifest so bookkeeping never moves its etag. */
+export function getSharingDevicesKey(backupId: string): string {
+  return `${PREFIX}${backupId}/sharing-devices.json`;
+}
+
 export function getAssetKey(backupId: string, assetId: string): string {
   return `${PREFIX}${backupId}/assets/${assetId}`;
 }
@@ -97,6 +114,7 @@ export async function readManifest(
   ownerCodeHash?: string;
   etag?: string;
   objects?: BackupObjects;
+  sharing?: SharingRecord;
 } | null> {
   const object = await env.BUCKET?.get(getManifestKey(backupId));
   if (!object) return null;
@@ -104,12 +122,13 @@ export async function readManifest(
     const text = await objectText(object);
     const parsed = StoredManifestSchema.safeParse(JSON.parse(text));
     if (!parsed.success) return null;
-    const { objects, ...manifest } = parsed.data;
+    const { objects, sharing, ...manifest } = parsed.data;
     return {
       manifest,
       ownerCodeHash: object.customMetadata?.ownerCodeHash,
       etag: object.etag,
       objects,
+      sharing,
     };
   } catch {
     return null;
@@ -235,10 +254,15 @@ export async function writeManifest(
   ownerCodeHash: string,
   objects: BackupObjects | undefined,
   etag?: string,
+  sharing?: SharingRecord,
 ): Promise<boolean> {
   const written = await env.BUCKET.put(
     getManifestKey(backupId),
-    JSON.stringify(objects ? { ...manifest, objects } : manifest),
+    JSON.stringify({
+      ...manifest,
+      ...(objects ? { objects } : {}),
+      ...(sharing ? { sharing } : {}),
+    }),
     {
       httpMetadata: { contentType: "application/json" },
       customMetadata: { ownerCodeHash, vaultTitle: manifest.vaultTitle },

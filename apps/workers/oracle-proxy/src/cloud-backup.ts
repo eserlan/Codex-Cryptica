@@ -38,3 +38,12 @@ export {
   handleGetCloudBackupAsset,
 } from "./cloud-backup-assets";
 export { handleCloudBackupDelta } from "./cloud-backup-delta";
+export {
+  handleCloudBackupSharingOn,
+  handleCloudBackupSharingOff,
+  handleCloudBackupSharingReplace,
+} from "./cloud-backup-sharing";
+export {
+  CLOUD_BACKUP_SHARING_DEVICE_CAP,
+  CLOUD_BACKUP_SHARING_DEVICE_WINDOW_DAYS,
+} from "./cloud-backup-sharing-devices";
