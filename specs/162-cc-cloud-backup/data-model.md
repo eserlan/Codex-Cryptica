@@ -74,6 +74,22 @@ Object store `cloud_backup_dirty` (DB version 25), key `[vaultId, kind, id]`, in
 - An upload snapshots the rows before building. After a successful commit or delta, each row is deleted **only if it still holds the stamp that was sent**, so an edit made mid-upload stays pending.
 - Disabling backup clears the vault's rows. Re-enabling uploads in full, so no marker is needed.
 
+## CloudBackupBaseRow (client-side, IndexedDB) _(shared vault, slice 4)_
+
+Object store `cloud_backup_base` (DB version 27, additive, no data migration), key `[vaultId, id]`, index `by-vault`. One row per entity, holding the content it had when it was last pushed successfully. It is the base for a three-way merge; nothing reads it yet.
+
+| Field     | Type    | Notes                                                       |
+| --------- | ------- | ----------------------------------------------------------- |
+| `vaultId` | string  | Local vault id                                              |
+| `id`      | string  | Entity id                                                   |
+| `entity`  | unknown | Deep plain-JSON copy of the entity as sent in the push body |
+
+**Rules**:
+
+- Written only after a push succeeds and was not aborted. A delta push writes each upsert and drops the row for each deleted id. A full snapshot push replaces the vault's rows with exactly the entities sent.
+- Failed, conflicting, cancelled and empty pushes write nothing. If recording fails, the push still succeeds and a warning is logged.
+- Disabling backup clears the vault's rows.
+
 ## ConsentRecord
 
 Not necessarily a separate stored entity — folded into `LocalCloudBackupRecord.consentedAt` above, since there is exactly one meaningful consent event per vault (first enable) and no partial/tiered consent in this spec. Called out separately in spec.md's Key Entities because it's a distinct _concept_ stakeholders reason about, even though it isn't a distinct table.
