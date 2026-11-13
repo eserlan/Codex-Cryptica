@@ -201,73 +201,76 @@ least one failure, guest or cancellation path.
 
 ### Slice 1 — Type and words (smallest, most visible) ([#4739](https://github.com/eserlan/Codex-Cryptica/issues/4739))
 
-- [ ] **1.1 Tests** — `EntityDetailPanel`: root has no `font-mono`. `DetailTabs` and `ZenView`: labels are
+- [x] **1.1 Tests** — `EntityDetailPanel`: root has no `font-mono`. `DetailTabs` and `ZenView`: labels are
       "Overview", "Connections" and so on in a fantasy and a sci-fi theme. `DetailFooter`: reads "Save
       changes" and "Cancel" with `jargon.save` set to "Inscribe". Guest: no edit controls.
-- [ ] **1.2 Panel type** — remove `font-mono` from the `<aside>`; set `font-body`; keep `font-mono` only
+- [x] **1.2 Panel type** — remove `font-mono` from the `<aside>`; set `font-body`; keep `font-mono` only
       on dates and ids in `DetailTabs`, `DetailTimelineTab`, `DetailConnectionsTab`.
-- [ ] **1.3 Tab labels** — one shared label map for both views; sentence case, `text-sm`, no widened
+- [x] **1.3 Tab labels** — one shared label map for both views; sentence case, `text-sm`, no widened
       letter-spacing.
-- [ ] **1.4 Plain words** — footer, connections heading and buttons stop reading action jargon; sentence
+- [x] **1.4 Plain words** — footer, connections heading and buttons stop reading action jargon; sentence
       case on Generate buttons; business label by entity type.
-- [ ] **1.5 Notices** — add `EntityNotices`; "Demo: changes are not saved"; use it in both views.
+      The "Generate related" casing and the type-specific business label followed once their tests were updated.
+- [x] **1.5 Notices** — add `EntityNotices`; "Demo: changes are not saved"; use it in both views.
 - [ ] **1.6 Verification gate.**
 
 ### Slice 2 — Shared actions ([#4740](https://github.com/eserlan/Codex-Cryptica/issues/4740))
 
-- [ ] **2.1 Tests** — `entity-actions`: owner on graph gets Edit, Find in graph, Expand as primary; guest
+- [x] **2.1 Tests** — `entity-actions`: owner on graph gets Edit, Find in graph, Expand as primary; guest
       gets no Edit, Delete or Shelf; character gets Chat only when guest chat is enabled; delve location
       gets the canvas action; delete has tone `danger`. Failure: a `run` that rejects surfaces an error.
-- [ ] **2.2 Action model** — `entity-actions.svelte.ts`, moving the visibility rules out of both headers.
-- [ ] **2.3 Menu** — `EntityActionMenu.svelte` with keyboard tests: arrows, Escape returns focus, click
+- [x] **2.2 Action model** — `entity-actions.svelte.ts`, moving the visibility rules out of both headers.
+- [x] **2.3 Menu** — `EntityActionMenu.svelte` with keyboard tests: arrows, Escape returns focus, click
       outside closes.
-- [ ] **2.4 Bar** — `EntityActionBar.svelte`; narrow-width fallback to icons.
-- [ ] **2.5 Wire the panel** — `DetailHeader` uses the bar; update `DetailHeader.test.ts`.
-- [ ] **2.6 Wire Zen mode** — `ZenHeader` uses the bar; update the five `ZenHeader.*.test.ts` files.
-- [ ] **2.7 Delete** — remove it from `DetailFooter`; footer renders only while editing; update
+- [x] **2.4 Bar** — `EntityActionBar.svelte`; narrow-width fallback to icons.
+- [x] **2.5 Wire the panel** — `DetailHeader` uses the bar; update `DetailHeader.test.ts`.
+- [x] **2.6 Wire Zen mode** — `ZenHeader` uses the bar; update the five `ZenHeader.*.test.ts` files.
+- [x] **2.7 Delete** — remove it from `DetailFooter`; footer renders only while editing; update
       `ZenHeader.delete.test.ts` and `tests/vault-delete.spec.ts`.
-- [ ] **2.8 Help targets** — a highlighted action inside the menu opens the menu first.
+- [x] **2.8 Help targets** — a highlighted action inside the menu opens the menu first.
 - [ ] **2.9 Verification gate.**
 
 ### Slice 3 — Text first in the side panel ([#4741](https://github.com/eserlan/Codex-Cryptica/issues/4741))
 
-- [ ] **3.1 Tests** — component test for DOM order: title, tabs, text, connections, tools. Playwright
+- [x] **3.1 Tests** — component test for DOM order: title, tabs, text, connections, tools. Playwright
       check in `tests/responsive-entity-panel.spec.ts`: first line of text is within the viewport at
       1440 × 900 and 390 × 844. Edge: entity with no text shows the empty prompt and large image.
-- [ ] **3.2 Thumbnail** — `DetailThumbnail` in the header; click opens the lightbox; silhouette fallback.
-- [ ] **3.3 Image tools** — "Change image" and "Choose silhouette" move to the More menu and stay as
+- [x] **3.2 Thumbnail** — `DetailThumbnail` in the header; click opens the lightbox; silhouette fallback.
+- [x] **3.3 Image tools** — "Change image" and "Choose silhouette" move to the More menu and stay as
       buttons in edit mode.
-- [ ] **3.4 Reorder the overview** — text, connections, tools.
-- [ ] **3.5 Labels row** — one line under the header; the field expands on focus.
+- [x] **3.4 Reorder the overview** — text, connections, tools.
+- [x] **3.5 Labels row** — one line under the header; the field expands on focus.
 - [ ] **3.6 Verification gate.**
 
 ### Slice 4 — Same structure in both views ([#4742](https://github.com/eserlan/Codex-Cryptica/issues/4742))
 
-- [ ] **4.1 Tests** — `detail-tabs`: no `lore`, `status` maps to `overview`. GM notes: closed by default,
+- [x] **4.1 Tests** — `detail-tabs`: no `lore`, `status` maps to `overview`. GM notes: closed by default,
       opens on click and while editing, remembers the choice, and is absent from the DOM for guests. Panel: lore section appears
       for owners when lore exists or while editing, and never for guests. Zen: tools sit below the text
       (`ZenContent.order.test.ts`).
-- [ ] **4.2 Tab ids** — rename `status` to `overview`; map old values.
-- [ ] **4.3 GM notes section** — one shared `EntityGmNotes.svelte` used by both views: heading "GM notes",
+- [x] **4.2 Tab ids** — rename `status` to `overview`; map old values.
+- [x] **4.3 GM notes section** — one shared `EntityGmNotes.svelte` used by both views: heading "GM notes",
       themed subtitle, "GM only" marker, closed by default, open while editing, preference remembered.
       Move `DetailLoreTab` content into it and use it in `ZenContent`.
-- [ ] **4.3b Main text heading** — remove the `chronicle_header` heading from `ZenContent`; the delve and
+- [x] **4.3b Main text heading** — remove the `chronicle_header` heading from `ZenContent`; the delve and
       canvas controls that sit in that heading row move to the tools group.
-- [ ] **4.4 Zen order** — move AI revise and Generate related below the text in `ZenContent`.
-- [ ] **4.5 Connections wording** — "Connections" in both; one row component if `ZenConnectionRow` fits
+- [x] **4.4 Zen order** — move AI revise and Generate related below the text in `ZenContent`.
+- [x] **4.5 Connections wording** — "Connections" in both; one row component if `ZenConnectionRow` fits
       the panel without layout change, otherwise leave two and match the words and icons.
 - [ ] **4.6 Verification gate.**
 
 ### Slice 5 — Links and polish ([#4743](https://github.com/eserlan/Codex-Cryptica/issues/4743))
 
-- [ ] **5.1 Tests** — read-only text with `[[Name]]` renders a link and no brackets; an unknown name
+- [x] **5.1 Tests** — read-only text with `[[Name]]` renders a link and no brackets; an unknown name
       renders as plain text without brackets; edit mode still shows the raw source.
-- [ ] **5.2 Wiki links** in the read-only render path.
+- [x] **5.2 Wiki links** in the read-only render path.
 - [ ] **5.3 Theme pass** — check both views in all 18 themes at both sizes; fix contrast or overflow found.
-- [ ] **5.4 Help content** — update the Help article and any `FeatureHint` that names moved controls
+  - Only the three acceptance themes were checked in the build; the full 18-theme sweep is done by hand.
+- [x] **5.4 Help content** — update the Help article and any `FeatureHint` that names moved controls
       (Constitution VII).
-- [ ] **5.4b Demo data** — give the demo entities GM notes that differ from their main text, or none.
+- [x] **5.4b Demo data** — give the demo entities GM notes that differ from their main text, or none.
 - [ ] **5.5 Re-score** — add a dated row to the assessment scorecard for the entity views.
+  - The re-score is done by hand (assessment task K3).
 - [ ] **5.6 Verification gate.**
 
 ### Traceability

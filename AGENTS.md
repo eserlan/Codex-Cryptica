@@ -10,7 +10,7 @@ This file is the Codex-facing instruction layer for this repository.
 - Staging checkout & pull is available through [`.codex/commands/stg.md`](./.codex/commands/stg.md) and [`.gemini/commands/stg.toml`](./.gemini/commands/stg.toml). Trigger it whenever a request mentions `/stg`, "to stg n pull", or "pull stg" to verify tree cleanliness, switch to `staging`, pull `origin/staging`, and clean up any merged local feature branch.
 - Community announcement drafting is available through [`.codex/skills/cc-announcer/SKILL.md`](./.codex/skills/cc-announcer/SKILL.md). Use it whenever a request concerns a Codex Cryptica Reddit post, devlog, release announcement, or community update.
 - Keep command behavior synchronized in the canonical Speckit files first, then mirror any Codex-specific guidance here.
-- Spec Kit is pinned to 1.1.0 with Gemini as the managed integration; maintenance and compatibility-copy rules are in [docs/speckit-maintenance.md](./docs/speckit-maintenance.md). Preserve the installed `constitution-sync` preset and repository policy overrides when upgrading.
+- Spec Kit is pinned to 1.4.0 with Gemini as the managed integration; maintenance and compatibility-copy rules are in [docs/speckit-maintenance.md](./docs/speckit-maintenance.md). Preserve the installed `constitution-sync` preset and repository policy overrides when upgrading.
 - If these instructions ever conflict with [`.specify/memory/constitution.md`](./.specify/memory/constitution.md), the constitution wins.
 - **Verify against the Constitution**: Always refer to the project constitution at [`.specify/memory/constitution.md`](./.specify/memory/constitution.md) to guide design/architecture decisions, and verify all implementation plans against it. To manage, update, or synchronize the constitution, refer to the [`.agent/workflows/sdd-constitution.md`](./.agent/workflows/sdd-constitution.md) workflow.
 
@@ -82,7 +82,8 @@ intake → spec → build → gate → review → approve, one PR per issue. Sta
 open http://localhost:8000/dashboard.html.
 
 The factory never merges. After review the approver's decision is posted on the
-PR, the PR is marked ready and the issue is labeled `factory:needs-human`; the
+PR, the PR is marked ready and both the PR and the issue are labeled
+`factory:needs-human` (review bots should not merge a PR with that label); the
 review-and-fix loop and a person take it from there. Merging the PR on GitHub
 finishes the job.
 

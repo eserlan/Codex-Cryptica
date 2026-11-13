@@ -53,9 +53,16 @@ other jobs.
 - Make the simplest change that fully meets the spec. No fallbacks, hidden
   defaults or extras the spec doesn't ask for.
 - Never modify or delete an existing file that matches `protected_paths` in
-  `factory/config.json`; the gate fails the branch if you do. Adding new tests
-  is fine. If the spec can't be met without changing a protected file, write a
-  BLOCKED build.md that says which file and why.
+  `factory/config.json`; the gate fails the branch if you do. If the spec can't
+  be met without changing a protected file, write a BLOCKED build.md that says
+  which file and why.
+- You may update existing tests, including Playwright specs in
+  `apps/web/tests/`, when the spec changes the behaviour they check. Change
+  them to check the new behaviour; never weaken, skip or delete a check to make
+  it pass. List every existing test you changed, and why, in build.md.
+- The gate doesn't run Playwright. When you change UI that a spec in
+  `apps/web/tests/` drives, update that spec and run it:
+  `E2E_PORT=<port> bunx playwright test tests/<file>` in `apps/web`.
 
 ## Test
 

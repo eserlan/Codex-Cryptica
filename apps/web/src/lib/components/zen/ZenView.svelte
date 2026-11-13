@@ -4,6 +4,9 @@
   import { createEditState } from "#lib/hooks/useEditState.svelte.js";
   import { createZenModeActions } from "#lib/hooks/useZenModeActions.svelte.js";
   import ZenHeader from "./ZenHeader.svelte";
+  import EntityNotices from "#lib/components/entity-detail/EntityNotices.svelte";
+  import { entityDetailTabLabels } from "#lib/components/entity-detail/detail-tab-labels.js";
+  import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import ZenSidebar from "./ZenSidebar.svelte";
   import ZenContent from "./ZenContent.svelte";
   import {
@@ -367,6 +370,8 @@
       {isDraftActioning}
     />
 
+    <EntityNotices isDemoMode={sessionModeStore.isDemoMode} />
+
     <!-- Navigation Tabs -->
     <div
       role="tablist"
@@ -381,14 +386,14 @@
         aria-selected={activeTab === "overview"}
         aria-controls="panel-overview"
         tabindex={activeTab === "overview" ? 0 : -1}
-        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
         'overview'
           ? 'text-theme-primary border-theme-primary'
           : 'text-theme-muted border-transparent hover:text-theme-text'}"
         onclick={() => (modalUIStore.zenModeActiveTab = "overview")}
         onkeydown={handleTabKeydown}
       >
-        OVERVIEW
+        {entityDetailTabLabels.overview}
       </button>
       <button
         bind:this={tabConnections}
@@ -398,14 +403,14 @@
         aria-selected={activeTab === "connections"}
         aria-controls="panel-connections"
         tabindex={activeTab === "connections" ? 0 : -1}
-        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
         'connections'
           ? 'text-theme-primary border-theme-primary'
           : 'text-theme-muted border-transparent hover:text-theme-text'}"
         onclick={() => (modalUIStore.zenModeActiveTab = "connections")}
         onkeydown={handleTabKeydown}
       >
-        CONNECTIONS
+        {entityDetailTabLabels.connections}
       </button>
       {#if !vault.isGuest}
         <button
@@ -415,14 +420,14 @@
           aria-selected={activeTab === "map"}
           aria-controls="panel-map"
           tabindex={activeTab === "map" ? 0 : -1}
-          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'map'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "map")}
           onkeydown={handleTabKeydown}
         >
-          MAP
+          {entityDetailTabLabels.map}
         </button>
       {/if}
       {#if visibleZenTabs.includes("chats")}
@@ -433,14 +438,14 @@
           aria-selected={activeTab === "chats"}
           aria-controls="panel-chats"
           tabindex={activeTab === "chats" ? 0 : -1}
-          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'chats'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "chats")}
           onkeydown={handleTabKeydown}
         >
-          CHATS
+          {entityDetailTabLabels.chats}
         </button>
       {/if}
       {#if visibleZenTabs.includes("family")}
@@ -451,14 +456,14 @@
           aria-selected={activeTab === "family"}
           aria-controls="panel-family"
           tabindex={activeTab === "family" ? 0 : -1}
-          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'family'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "family")}
           onkeydown={handleTabKeydown}
         >
-          FAMILY
+          {entityDetailTabLabels.family}
         </button>
       {/if}
       {#if visibleZenTabs.includes("stats")}
@@ -469,14 +474,14 @@
           aria-selected={activeTab === "stats"}
           aria-controls="panel-stats"
           tabindex={activeTab === "stats" ? 0 : -1}
-          class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+          class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'stats'
             ? 'text-theme-primary border-theme-primary'
             : 'text-theme-muted border-transparent hover:text-theme-text'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "stats")}
           onkeydown={handleTabKeydown}
         >
-          STATS
+          {entityDetailTabLabels.stats}
         </button>
       {/if}
 
@@ -487,14 +492,14 @@
         aria-selected={activeTab === "timeline"}
         aria-controls="panel-timeline"
         tabindex={activeTab === "timeline" ? 0 : -1}
-        class="py-2 text-xs font-bold tracking-widest transition-colors border-b-2 font-header {activeTab ===
+        class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
         'timeline'
           ? 'text-theme-primary border-theme-primary'
           : 'text-theme-muted border-transparent hover:text-theme-text'}"
         onclick={() => (modalUIStore.zenModeActiveTab = "timeline")}
         onkeydown={handleTabKeydown}
       >
-        TIMELINE
+        {entityDetailTabLabels.timeline}
       </button>
     </div>
 

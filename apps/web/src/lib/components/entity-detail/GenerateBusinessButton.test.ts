@@ -25,17 +25,16 @@ describe("GenerateBusinessButton", () => {
     expect(openForEntity).toHaveBeenCalledWith("ent-1", "business");
   });
 
-  it.each(["location", "character", "faction"])(
-    "appears for a %s",
-    (entityType) => {
-      render(GenerateBusinessButton, {
-        props: { entityId: "ent-1", entityType },
-      });
-      expect(
-        screen.getByRole("button", { name: /Generate a business here/i }),
-      ).toBeTruthy();
-    },
-  );
+  it.each([
+    ["location", "Generate a business here"],
+    ["character", "Generate a business"],
+    ["faction", "Generate a business"],
+  ])("appears for a %s as %s", (entityType, label) => {
+    render(GenerateBusinessButton, {
+      props: { entityId: "ent-1", entityType },
+    });
+    expect(screen.getByRole("button", { name: label })).toBeTruthy();
+  });
 
   it.each(["note", "item", "event", "creature"])(
     "is hidden for a %s",

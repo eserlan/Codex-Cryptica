@@ -8,6 +8,7 @@ hooks:
     command: speckit.git.initialize
     enabled: true
     optional: false
+    priority: 10
     prompt: Execute speckit.git.initialize?
     description: Initialize Git repository before constitution setup
     condition: null
@@ -16,6 +17,7 @@ hooks:
     command: speckit.git.feature
     enabled: true
     optional: false
+    priority: 10
     prompt: Execute speckit.git.feature?
     description: Create feature branch before specification
     condition: null
@@ -24,6 +26,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before clarification?
     description: Auto-commit before spec clarification
     condition: null
@@ -32,6 +35,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before planning?
     description: Auto-commit before implementation planning
     condition: null
@@ -40,6 +44,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before task generation?
     description: Auto-commit before task generation
     condition: null
@@ -48,6 +53,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before implementation?
     description: Auto-commit before implementation
     condition: null
@@ -56,6 +62,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before checklist?
     description: Auto-commit before checklist generation
     condition: null
@@ -64,6 +71,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before analysis?
     description: Auto-commit before analysis
     condition: null
@@ -72,6 +80,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit outstanding changes before issue sync?
     description: Auto-commit before tasks-to-issues conversion
     condition: null
@@ -80,6 +89,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit constitution changes?
     description: Auto-commit after constitution update
     condition: null
@@ -88,6 +98,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit specification changes?
     description: Auto-commit after specification
     condition: null
@@ -96,6 +107,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit clarification changes?
     description: Auto-commit after spec clarification
     condition: null
@@ -104,6 +116,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit plan changes?
     description: Auto-commit after implementation planning
     condition: null
@@ -112,6 +125,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit task changes?
     description: Auto-commit after task generation
     condition: null
@@ -120,6 +134,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit implementation changes?
     description: Auto-commit after implementation
     condition: null
@@ -128,6 +143,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit checklist changes?
     description: Auto-commit after checklist generation
     condition: null
@@ -136,6 +152,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit analysis results?
     description: Auto-commit after analysis
     condition: null
@@ -144,6 +161,7 @@ hooks:
     command: speckit.git.commit
     enabled: true
     optional: true
+    priority: 10
     prompt: Commit after syncing issues?
     description: Auto-commit after tasks-to-issues conversion
     condition: null

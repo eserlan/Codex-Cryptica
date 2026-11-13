@@ -86,6 +86,29 @@ export class HelpHighlightService {
     return null;
   }
 
+  /**
+   * Opens a closed entity action menu that holds the target, so the item can
+   * be pointed at. Returns the item once it is on screen.
+   */
+  private revealInMenu(target: ControlId): Element | null {
+    const elements = this.doc?.querySelectorAll(
+      `[data-help-target="${target}"]`,
+    );
+    if (!elements) return null;
+    for (const el of elements) {
+      const root = el.closest("[data-help-reveal]");
+      if (!root || !this.isRendered(root)) continue;
+      root.dispatchEvent(new CustomEvent("codex:help-reveal"));
+      const found = this.findVisible(target);
+      if (found) {
+        // The menu places itself a moment after opening; re-measure then.
+        setTimeout(() => this.measure(), 0);
+        return found;
+      }
+    }
+    return null;
+  }
+
   private measure(): void {
     if (!this.element || !this.current) return;
     if (!this.element.isConnected) {
@@ -102,7 +125,7 @@ export class HelpHighlightService {
   /** Returns true when the control was found and highlighted. */
   show(target: ControlId, label: string): boolean {
     this.clear();
-    const el = this.findVisible(target);
+    const el = this.findVisible(target) ?? this.revealInMenu(target);
     if (!el || !this.doc || !this.win) return false;
 
     this.element = el;

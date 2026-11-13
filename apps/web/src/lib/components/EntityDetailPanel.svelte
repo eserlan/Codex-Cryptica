@@ -11,12 +11,12 @@
   import DetailTabs from "./entity-detail/DetailTabs.svelte";
   import DetailStatusTab from "./entity-detail/DetailStatusTab.svelte";
   import DetailConnectionsTab from "./entity-detail/DetailConnectionsTab.svelte";
-  import DetailLoreTab from "./entity-detail/DetailLoreTab.svelte";
   import DetailMapTab from "./entity-detail/DetailMapTab.svelte";
   import DetailChatsTab from "./entity-detail/DetailChatsTab.svelte";
   import DetailFamilyTab from "./entity-detail/DetailFamilyTab.svelte";
   import DetailStatsTab from "./entity-detail/DetailStatsTab.svelte";
   import DetailTimelineTab from "./entity-detail/DetailTimelineTab.svelte";
+  import EntityNotices from "./entity-detail/EntityNotices.svelte";
   import DetailFooter from "./entity-detail/DetailFooter.svelte";
   import InlinePreviewOverlay from "./ui/InlinePreviewOverlay.svelte";
   import {
@@ -131,15 +131,9 @@
     }
   });
 
-  let activeTab = $state<EntityDetailTab>("status");
+  let activeTab = $state<EntityDetailTab>("overview");
   let isSaving = $state(false);
   const { tabIds, panelIds } = createEntityDetailTabIds(tabInstanceId);
-
-  $effect(() => {
-    if (vault.isGuest && !canGuestEdit && activeTab === "lore") {
-      activeTab = "status";
-    }
-  });
 
   // Clear lastSelectedNodePosition whenever entity changes (or component is destroyed).
   // This prevents the next intro animation from inheriting a stale graph-node position
@@ -358,7 +352,7 @@
 {#if entity && activeEntity}
   <aside
     transition:expandFrom
-    class="pointer-events-auto flex flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-mono absolute right-0 top-0 bottom-0 max-md:top-auto max-md:h-[calc(100%-60px)] z-50 overflow-hidden"
+    class="pointer-events-auto flex flex-col border-l border-theme-border bg-theme-surface shadow-2xl font-body absolute right-0 top-0 bottom-0 max-md:top-auto max-md:h-[calc(100%-60px)] z-50 overflow-hidden"
     style:width={layoutUIStore.isMobile
       ? "100%"
       : `${layoutUIStore.rightSidebarWidth}px`}
@@ -384,6 +378,9 @@
         bind:editTitle
         bind:editAliases
         onClose={guardedClose}
+        onStartEdit={startEditing}
+        onDelete={handleDelete}
+        {canGuestEdit}
       />
 
       <div
@@ -397,13 +394,7 @@
             out:fade={{ duration: 150 }}
             class="col-start-1 row-start-1 flex flex-col w-full min-w-0 min-h-full"
           >
-            {#if sessionModeStore.isDemoMode}
-              <div
-                class="bg-theme-primary/10 border-b border-theme-primary/30 px-4 py-1.5 text-nano font-bold text-theme-primary tracking-widest text-center animate-pulse"
-              >
-                TRANSIENT MODE: CHANGES WILL NOT BE SAVED
-              </div>
-            {/if}
+            <EntityNotices isDemoMode={sessionModeStore.isDemoMode} />
             {#if activeEntity.status === "draft" && !vault.isGuest}
               <div
                 class="flex items-center justify-between gap-2 border-b border-amber-500/30 bg-amber-500/10 px-4 py-2"
@@ -450,7 +441,9 @@
               class="bg-theme-surface shrink-0"
               style:background-color="var(--theme-panel-fill)"
             >
-              <DetailImage entity={activeEntity} {isEditing} bind:editImage />
+              {#if isEditing || !activeEntity.content?.trim()}
+                <DetailImage entity={activeEntity} {isEditing} bind:editImage />
+              {/if}
 
               <DetailTabs
                 entity={activeEntity}
@@ -458,7 +451,6 @@
                 {isEditing}
                 bind:editType
                 idPrefix={tabInstanceId}
-                {canGuestEdit}
                 {onDateClick}
               />
             </div>
@@ -466,16 +458,17 @@
             <div class="px-4 pb-4 pt-2 md:px-6 md:pb-6 md:pt-2">
               <div
                 role="tabpanel"
-                id={panelIds.status}
-                aria-labelledby={tabIds.status}
-                hidden={activeTab !== "status"}
+                id={panelIds.overview}
+                aria-labelledby={tabIds.overview}
+                hidden={activeTab !== "overview"}
               >
-                {#if activeTab === "status"}
+                {#if activeTab === "overview"}
                   <DetailStatusTab
                     entity={activeEntity}
                     {isEditing}
                     {editType}
                     bind:editContent
+                    bind:editLore
                     bind:editStartDate
                     bind:editEndDate
                   />
@@ -491,22 +484,6 @@
                   <DetailConnectionsTab entity={activeEntity} />
                 {/if}
               </div>
-              <div
-                role="tabpanel"
-                id={panelIds.lore}
-                aria-labelledby={tabIds.lore}
-                hidden={activeTab !== "lore" ||
-                  (vault.isGuest && !canGuestEdit)}
-              >
-                {#if activeTab === "lore" && (!vault.isGuest || canGuestEdit)}
-                  <DetailLoreTab
-                    entity={activeEntity}
-                    {isEditing}
-                    bind:editLore
-                  />
-                {/if}
-              </div>
-
               <div
                 role="tabpanel"
                 id={panelIds.map}
@@ -574,17 +551,15 @@
         {/key}
       </div>
 
-      <DetailFooter
-        {isEditing}
-        {isSaving}
-        {isDirty}
-        {isValid}
-        {canGuestEdit}
-        onCancel={cancelEditing}
-        onSave={saveChanges}
-        onDelete={handleDelete}
-        onStartEdit={startEditing}
-      />
+      {#if isEditing}
+        <DetailFooter
+          {isSaving}
+          {isDirty}
+          {isValid}
+          onCancel={cancelEditing}
+          onSave={saveChanges}
+        />
+      {/if}
 
       <InlinePreviewOverlay />
     </div>

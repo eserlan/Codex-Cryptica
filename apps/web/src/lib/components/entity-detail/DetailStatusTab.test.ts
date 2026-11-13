@@ -124,12 +124,67 @@ describe("DetailStatusTab", () => {
     (vault as any).isGuest = false;
   });
 
+  const renderStatus = (entity: any, isEditing = false) =>
+    render(DetailStatusTab, {
+      entity,
+      isEditing,
+      editType: "npc",
+      editContent: "",
+      editLore: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+
+  it("reads text, then GM notes, then Connections, then tools", () => {
+    renderStatus({ ...mockEntity, lore: "Secret plans." });
+    const text = screen.getByTestId("entity-main-text");
+    const gmNotes = screen.getByTestId("entity-gm-notes");
+    const heading = screen.getByRole("heading", { name: "Connections" });
+    const tools = screen.getByTestId("entity-overview-tools");
+    const follows = (a: Node, b: Node) =>
+      !!(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(follows(text, gmNotes)).toBe(true);
+    expect(follows(gmNotes, heading)).toBe(true);
+    expect(follows(heading, tools)).toBe(true);
+  });
+
+  it("shows no GM notes for an owner without lore", () => {
+    renderStatus(mockEntity);
+    expect(screen.queryByTestId("entity-gm-notes")).toBeNull();
+  });
+
+  it("shows GM notes while an owner edits an entity without lore", () => {
+    renderStatus(mockEntity, true);
+    expect(screen.getByTestId("entity-gm-notes")).toBeTruthy();
+  });
+
+  it("shows no GM notes to a guest, even with lore", () => {
+    (vault as any).isGuest = true;
+    renderStatus({ ...mockEntity, lore: "Secret plans." });
+    expect(screen.queryByTestId("entity-gm-notes")).toBeNull();
+  });
+
+  it("shows a guest no tools group", () => {
+    (vault as any).isGuest = true;
+    render(DetailStatusTab, {
+      entity: mockEntity,
+      isEditing: false,
+      editType: "npc",
+      editContent: "",
+      editLore: "",
+      editStartDate: undefined as any,
+      editEndDate: undefined as any,
+    });
+    expect(screen.queryByTestId("entity-overview-tools")).toBeNull();
+  });
+
   it("renders outbound and inbound connections with delete buttons", () => {
     render(DetailStatusTab, {
       entity: mockEntity,
       isEditing: false,
       editType: "npc",
       editContent: "## Summary\nHe is a blacksmith.",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -147,6 +202,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -170,6 +226,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -193,6 +250,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -211,6 +269,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -227,6 +286,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -247,6 +307,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -262,6 +323,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -311,6 +373,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -329,6 +392,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -359,18 +423,19 @@ describe("DetailStatusTab", () => {
     );
   });
 
-  it("renders 'Generate Related' button and triggers modal open when clicked", async () => {
+  it("renders 'Generate related' button and triggers modal open when clicked", async () => {
     const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
     render(DetailStatusTab, {
       entity: mockEntity,
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
 
-    const generateBtn = screen.getByText("Generate Related");
+    const generateBtn = screen.getByText("Generate related");
     expect(generateBtn).toBeDefined();
 
     await fireEvent.click(generateBtn);
@@ -379,7 +444,7 @@ describe("DetailStatusTab", () => {
     );
   });
 
-  it("hides the 'Generate Related' button for guest sessions", async () => {
+  it("hides the 'Generate related' button for guest sessions", async () => {
     const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
     (vault as any).isGuest = true;
 
@@ -388,11 +453,12 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
 
-    expect(screen.queryByText("Generate Related")).toBeNull();
+    expect(screen.queryByText("Generate related")).toBeNull();
     expect(modalUIStore.openGeneratorWorkflowForEntity).not.toHaveBeenCalled();
   });
 
@@ -402,6 +468,7 @@ describe("DetailStatusTab", () => {
       isEditing: false,
       editType: "npc",
       editContent: "",
+      editLore: "",
       editStartDate: undefined as any,
       editEndDate: undefined as any,
     });
@@ -416,6 +483,7 @@ describe("DetailStatusTab", () => {
         isEditing: false,
         editType: "npc",
         editContent: "",
+        editLore: "",
         editStartDate: undefined as any,
         editEndDate: undefined as any,
       });

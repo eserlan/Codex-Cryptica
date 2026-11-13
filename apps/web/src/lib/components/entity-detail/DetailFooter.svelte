@@ -1,27 +1,16 @@
 <script lang="ts">
-  import { vault } from "#lib/stores/vault.svelte.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
-
   let {
-    isEditing,
     isSaving = false,
     isDirty = false,
     isValid = true,
-    canGuestEdit = false,
     onCancel,
     onSave,
-    onDelete,
-    onStartEdit,
   }: {
-    isEditing: boolean;
     isSaving?: boolean;
     isDirty?: boolean;
     isValid?: boolean;
-    canGuestEdit?: boolean;
     onCancel: () => void;
     onSave: () => void;
-    onDelete: () => void;
-    onStartEdit: () => void;
   } = $props();
 </script>
 
@@ -29,64 +18,40 @@
   class="p-3 md:p-4 border-t border-theme-border flex justify-between items-center bg-theme-surface"
   style:background-image="var(--bg-texture-overlay)"
 >
-  {#if isEditing}
-    <div class="flex gap-2 w-full justify-end items-center">
-      {#if isDirty}
+  <div class="flex gap-2 w-full justify-end items-center">
+    {#if isDirty}
+      <span
+        class="text-nano text-theme-text font-bold font-header animate-pulse mr-auto"
+      >
+        • Unsaved changes
+      </span>
+    {/if}
+    <button
+      onclick={onCancel}
+      class="text-theme-text text-xs font-bold px-4 py-2 rounded transition disabled:opacity-50"
+      disabled={isSaving}
+    >
+      Cancel
+    </button>
+    <button
+      type="button"
+      onclick={onSave}
+      class="text-xs font-bold px-6 py-2 rounded transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border"
+      style:background-color="var(--theme-action-bg)"
+      style:border-color="var(--theme-selected-border)"
+      style:color="var(--theme-action-text)"
+      disabled={isSaving || !isValid}
+      aria-busy={isSaving}
+    >
+      {#if isSaving}
         <span
-          class="text-nano text-theme-accent font-bold font-header uppercase tracking-widest animate-pulse mr-auto"
-        >
-          • Unsaved changes
-        </span>
+          class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
+          aria-hidden="true"
+        ></span>
+        <span>Saving…</span>
+      {:else}
+        Save changes
       {/if}
-      <button
-        onclick={onCancel}
-        class="text-theme-muted hover:text-theme-text text-xs font-bold px-4 py-2 rounded tracking-widest transition disabled:opacity-50"
-        disabled={isSaving}
-      >
-        CANCEL
-      </button>
-      <button
-        type="button"
-        onclick={onSave}
-        class="text-xs font-bold px-6 py-2 rounded tracking-widest transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed border"
-        style:background-color="var(--theme-action-bg)"
-        style:border-color="var(--theme-selected-border)"
-        style:color="var(--theme-action-text)"
-        disabled={isSaving || !isValid}
-        aria-busy={isSaving}
-      >
-        {#if isSaving}
-          <span
-            class="icon-[lucide--loader-2] w-4 h-4 animate-spin"
-            aria-hidden="true"
-          ></span>
-          <span>SAVING...</span>
-        {:else}
-          {themeStore.jargon.save.toUpperCase()} CHANGES
-        {/if}
-      </button>
-    </div>
-  {:else}
-    <div></div>
-    <!-- Spacer -->
-    <div class="flex gap-2">
-      {#if !vault.isGuest}
-        <button
-          onclick={onDelete}
-          data-testid="delete-entity-button"
-          class="touch-target border border-red-900/50 text-red-700 hover:text-red-500 hover:border-red-700 text-micro font-bold px-3 py-2 rounded tracking-widest transition"
-        >
-          {themeStore.jargon.delete.toUpperCase()}
-        </button>
-      {/if}
-      {#if !vault.isGuest || canGuestEdit}
-        <button
-          onclick={onStartEdit}
-          class="border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary text-xs font-bold px-4 py-2 rounded tracking-widest transition"
-        >
-          EDIT
-        </button>
-      {/if}
-    </div>
-  {/if}
+    </button>
+  </div>
 </div>

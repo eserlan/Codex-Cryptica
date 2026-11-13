@@ -1,42 +1,31 @@
 <script lang="ts">
   import type { Entity } from "schema";
   import { vault } from "#lib/stores/vault.svelte.js";
-  import { guestChatStore } from "#lib/stores/guest-chat.svelte.js";
   import { isEntityVisible, resolveStatureFromLabels } from "schema";
   import { fade } from "svelte/transition";
   import LabelBadge from "#lib/components/labels/LabelBadge.svelte";
   import LabelInput from "#lib/components/labels/LabelInput.svelte";
   import AliasInput from "#lib/components/labels/AliasInput.svelte";
-  import SidepanelRevisionButton from "#lib/components/entity/SidepanelRevisionButton.svelte";
-  import { shelf } from "#lib/features/shelf/index.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { page } from "$app/state";
-  import {
-    dispatchSearchEntityFocus,
-    DEFAULT_SEARCH_ENTITY_ZOOM,
-  } from "#lib/components/search/search-focus.js";
-  import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { soundBiteService } from "@codex/audio-engine";
   import { guestVault } from "#lib/stores/guest-vault.svelte.js";
-  import { copyGuestEntityLink } from "#lib/services/publishing/guest-link.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
-  import {
-    dungeonDelveService,
-    isDelveLocationEntity,
-  } from "#lib/services/dungeon-delve-service.js";
-  import { goto } from "$app/navigation";
-  import { openCanvasFromZen } from "#lib/stores/ui/navigation.js";
   import StructuralSuggestionBanner from "#lib/components/guided/StructuralSuggestionBanner.svelte";
-  import { getDelveCanvasLabel } from "#lib/utils/delve-terminology.js";
   import SaveStatusIndicator from "#lib/components/ui/SaveStatusIndicator.svelte";
-  import {
-    isMonsterLabsHandoffEligibleType,
-    getMonsterLabsActionLabel,
-  } from "#lib/services/seo/monsterlabs-handoff.js";
   import { createMonsterLabsHandoffFlow } from "#lib/services/seo/monsterlabs-handoff-flow.svelte.js";
+  import { entityToHandoffSource } from "#lib/services/seo/monsterlabs-handoff.js";
+  import EntityActionBar from "./EntityActionBar.svelte";
+  import { createEntityActions } from "./entity-actions.svelte.js";
   import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
+  import DetailThumbnail from "./DetailThumbnail.svelte";
+  import DetailGenerateArt from "./DetailGenerateArt.svelte";
+  import {
+    pickEntityImage,
+    showEntityImageToGuests,
+  } from "./entity-image-file.js";
+  import { p2pHost } from "#lib/cloud-bridge/p2p/host-service.svelte.js";
 
   let {
     entity,
@@ -44,26 +33,19 @@
     editTitle = $bindable(),
     editAliases = $bindable([]),
     onClose,
+    onStartEdit,
+    onDelete,
+    canGuestEdit = false,
   }: {
     entity: Entity;
     isEditing: boolean;
     editTitle: string;
     editAliases: string[];
     onClose: () => void;
+    onStartEdit?: () => void;
+    onDelete?: () => void | Promise<void>;
+    canGuestEdit?: boolean;
   } = $props();
-
-  let linkCopied = $state(false);
-
-  const handleCopyGuestLink = async () => {
-    if (!guestVault.publishId) return;
-    try {
-      await copyGuestEntityLink(guestVault.publishId, entity.id);
-      linkCopied = true;
-      setTimeout(() => (linkCopied = false), 2000);
-    } catch {
-      notificationStore.notify("Could not copy the link.", "error");
-    }
-  };
 
   const isGraphView = $derived(
     page.url.pathname === "/" || page.url.pathname === "",
@@ -77,46 +59,29 @@
     });
   });
 
-  let shelvedJustNow = $state(false);
-
-  /**
-   * Copies this entity onto the Shelf so it can be brought into another vault.
-   * Read-only against this vault — nothing here is modified.
-   */
-  const handleSendToShelf = async () => {
-    const ok = await shelf.shelve([entity.id], vault.vaultName ?? "This vault");
-    if (!ok) return;
-    shelvedJustNow = true;
-    setTimeout(() => (shelvedJustNow = false), 2000);
-  };
-
-  /**
-   * Hands this entity's content off to MonsterLabs' D&D monster or magic
-   * item generator in a new tab (#2871, #2872). Read-only against this
-   * vault, like Send to Shelf. The user confirms in a modal first; only
-   * after that confirm does the Oracle compression call run (shown as its
-   * own "loading" state), and MonsterLabs opens once the URL is ready.
-   */
   const monsterLabsFlow = createMonsterLabsHandoffFlow();
-  const handleSendToMonsterLabs = () => {
-    monsterLabsFlow.start({
-      name: entity.title,
-      type: entity.type,
-      description: [entity.content, entity.lore]
-        .filter((part): part is string => Boolean(part?.trim()))
-        .join("\n\n"),
-    });
-  };
+  const handleSendToMonsterLabs = () =>
+    monsterLabsFlow.start(entityToHandoffSource(entity));
 
-  const handleFindInGraph = () => {
-    const nodeId = vault.selectedEntityId;
-    if (!nodeId) return;
-
-    layoutUIStore.findInGraph();
-
-    // Trigger centering and zooming
-    dispatchSearchEntityFocus(nodeId, DEFAULT_SEARCH_ENTITY_ZOOM);
-  };
+  const entityActions = createEntityActions(() => ({
+    entity,
+    isGuest: vault.isGuest,
+    isGraphView,
+    canGuestEdit,
+    publishId: guestVault.publishId,
+    existingCanvas,
+    onStartEdit,
+    onDelete,
+    onChangeImage: () => pickEntityImage(entity.id),
+    onChooseSilhouette: () => modalUIStore.openSilhouettePicker(entity),
+    onShowToGuests:
+      p2pHost.isHosting && entity.image
+        ? () => showEntityImageToGuests(entity)
+        : undefined,
+    onMonsterLabs: handleSendToMonsterLabs,
+    monsterLabsOpen: monsterLabsFlow.open,
+    monsterLabsLoading: monsterLabsFlow.state === "loading",
+  }));
 
   const isFantasyTheme = $derived(themeStore.activeTheme.id === "fantasy");
 
@@ -165,10 +130,6 @@
     return canvasRegistry.findCanvasForEntity(entity.id, entity.title);
   });
 
-  const delveCanvasLabel = $derived(
-    getDelveCanvasLabel(themeStore.activeTheme.id),
-  );
-
   const handleOpenParent = () => {
     if (parentEntity) {
       vault.selectedEntityId = parentEntity.id;
@@ -198,7 +159,7 @@
       Protocol Redacted
     </h3>
 
-    <p class="text-xs text-theme-muted leading-relaxed max-w-xs">
+    <p class="text-xs text-theme-text leading-relaxed max-w-xs">
       This {themeStore.jargon.entity.toLowerCase()} is currently obscured by Fog of
       War. Switch to Admin Mode or remove the
       <code class="text-amber-500">hidden</code>
@@ -207,203 +168,41 @@
     <button
       type="button"
       onclick={onClose}
-      class="mt-8 px-6 py-2 border border-theme-border text-theme-secondary hover:text-theme-primary hover:border-theme-primary transition-all text-micro font-bold tracking-widest uppercase font-header"
+      class="mt-8 px-6 py-2 border border-theme-border text-theme-text hover:text-theme-primary hover:border-theme-primary transition-all text-micro font-bold tracking-widest uppercase font-header"
     >
       Return to Overview
     </button>
   </div>
 {/if}
 
-{#snippet headerActions()}
+{#snippet headerActions(compact = false)}
   {#if !isEditing}
-    <SidepanelRevisionButton entityId={entity.id} />
-    {#if isDelveLocationEntity(entity)}
-      <button
-        type="button"
-        onclick={async () => {
-          try {
-            if (existingCanvas) {
-              openCanvasFromZen(existingCanvas, goto);
-              return;
-            }
-            const canvasDoc =
-              dungeonDelveService.buildDelveCanvasFromConcept(entity);
-            const slug = await canvasRegistry.importCanvas(canvasDoc);
-            openCanvasFromZen({ slug }, goto);
-          } catch (err) {
-            console.error("[DelveCanvas] Header action failed:", err);
-          }
-        }}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-        aria-label={existingCanvas
-          ? `Open ${delveCanvasLabel}`
-          : `Build ${delveCanvasLabel}`}
-        title={existingCanvas
-          ? `Open ${delveCanvasLabel}`
-          : `Build ${delveCanvasLabel}`}
-        data-testid="build-delve-canvas-header-button"
-      >
-        <span
-          aria-hidden="true"
-          class="{existingCanvas
-            ? 'icon-[lucide--external-link]'
-            : 'icon-[lucide--map]'} w-5 h-5"
-        ></span>
-      </button>
-    {/if}
-    {#if !vault.isGuest}
-      <button
-        type="button"
-        onclick={handleSendToShelf}
-        class="touch-target transition flex items-center justify-center p-1 {shelvedJustNow
-          ? 'text-theme-primary'
-          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
-        aria-label="Send to Shelf"
-        title={shelvedJustNow
-          ? "On the Shelf"
-          : "Send to Shelf — to bring into another vault"}
-        data-testid="send-to-shelf-button"
-      >
-        <span
-          aria-hidden="true"
-          class="{shelvedJustNow
-            ? 'icon-[lucide--check]'
-            : 'icon-[lucide--library]'} w-5 h-5"
-        ></span>
-      </button>
-    {/if}
-    {#if isMonsterLabsHandoffEligibleType(entity.type)}
-      <button
-        type="button"
-        onclick={handleSendToMonsterLabs}
-        disabled={monsterLabsFlow.open}
-        aria-busy={monsterLabsFlow.state === "loading"}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)] disabled:opacity-50"
-        aria-label={getMonsterLabsActionLabel(entity.type)}
-        title="{getMonsterLabsActionLabel(
-          entity.type,
-        )} — opens monsterlabs.app in a new tab"
-        data-testid="send-to-monsterlabs-button"
-      >
-        <span
-          aria-hidden="true"
-          class="{monsterLabsFlow.state === 'loading'
-            ? 'icon-[lucide--loader-2] animate-spin'
-            : 'icon-[lucide--external-link]'} w-5 h-5"
-        ></span>
-      </button>
-    {/if}
-    {#if isGraphView}
-      <button
-        type="button"
-        onclick={handleFindInGraph}
-        class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-        aria-label="Find in Graph"
-        title="Find in Graph"
-        data-testid="find-in-graph-button"
-      >
-        <span aria-hidden="true" class="icon-[lucide--target] w-5 h-5"></span>
-      </button>
-    {/if}
-    {#if vault.isGuest && guestVault.publishId}
-      <button
-        type="button"
-        onclick={handleCopyGuestLink}
-        class="transition flex items-center justify-center p-1 {linkCopied
-          ? 'text-theme-primary'
-          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
-        aria-label="Copy link to this entity"
-        title={linkCopied ? "Link copied!" : "Copy link to this entity"}
-        data-testid="copy-guest-link-button"
-      >
-        <span
-          class="{linkCopied
-            ? 'icon-[lucide--check]'
-            : 'icon-[lucide--link]'} w-5 h-5"
-          aria-hidden="true"
-        ></span>
-      </button>
-    {/if}
-    {#if !vault.isGuest || entity.soundBite}
-      <button
-        type="button"
-        onclick={() => {
-          // Skip loadFromEntity if the modal is already showing this entity —
-          // calling it again would reset result/error and interrupt active playback.
-          const alreadyOpen =
-            modalUIStore.soundBite?.show &&
-            modalUIStore.soundBite.entityId === entity.id;
-          if (!alreadyOpen) soundBiteService.loadFromEntity(entity);
-          modalUIStore.openSoundBite(entity.id);
-        }}
-        class="touch-target transition flex items-center justify-center p-1 {entity.soundBite
-          ? 'text-theme-accent hover:opacity-85'
-          : 'text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]'}"
-        aria-label="Sound bite"
-        title={entity.soundBite ? "Play sound bite" : "Generate sound bite"}
-        data-testid="sound-bite-button"
-      >
-        <span
-          class="{entity.soundBite
-            ? 'icon-[lucide--volume-2]'
-            : 'icon-[lucide--mic]'} w-5 h-5"
-          aria-hidden="true"
-        ></span>
-      </button>
-    {/if}
-    {#if vault.isGuest && entity.type === "character" && entity.guestChatConfig?.isEnabled && entity.guestChatConfig.extraInstructions?.trim()}
-      <button
-        type="button"
-        onclick={() => guestChatStore.openChat(entity.id, entity.title)}
-        class="transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-        aria-label="Chat with character"
-        title="Chat with character"
-        data-testid="guest-chat-button"
-      >
-        <span aria-hidden="true" class="icon-[lucide--messages-square] w-5 h-5"
-        ></span>
-      </button>
-    {/if}
-    <button
-      type="button"
-      onclick={() => modalUIStore.openZenMode(entity.id)}
-      class="touch-target transition flex items-center justify-center p-1 text-[color:var(--theme-icon-default)] hover:text-[color:var(--theme-icon-active)]"
-      aria-label="Enter Zen Mode"
-      title="Zen Mode (Full Screen)"
-      data-testid="enter-zen-mode-button"
-    >
-      <span aria-hidden="true" class="icon-[lucide--maximize-2] w-5 h-5"></span>
-    </button>
+    <EntityActionBar actions={entityActions.actions} {compact} />
   {/if}
 {/snippet}
 
 <div
-  class="p-4 md:p-6 border-b border-theme-border bg-theme-surface"
+  class="@container px-4 py-2 md:p-6 border-b border-theme-border bg-theme-surface"
   style:background-color="var(--theme-panel-fill)"
   style:background-image="var(--bg-texture-overlay)"
 >
-  <!-- Mobile-only top bar -->
-  <div class="flex md:hidden justify-between items-center mb-4">
-    <button
-      type="button"
-      onclick={onClose}
-      class="touch-target flex items-center justify-center text-theme-muted hover:text-theme-primary transition p-1 -ml-2 rounded-full shrink-0"
-      aria-label="Back"
-    >
-      <span aria-hidden="true" class="icon-[lucide--chevron-left] w-7 h-7"
-      ></span>
-    </button>
-    <div class="flex items-center gap-1.5">
-      {@render headerActions()}
-    </div>
-  </div>
-
   <div
-    class="mb-2 min-w-0 md:flex md:flex-wrap md:items-center md:justify-between"
+    class="mb-1 min-w-0 md:mb-2 md:flex md:flex-wrap md:items-center md:justify-between"
   >
+    <!-- On phones this is the one top row: back, thumbnail, title, actions. -->
     <div
-      class="flex w-full min-w-0 items-start gap-3 md:flex-[1_1_14rem] md:items-center md:gap-4"
+      class="flex w-full min-w-0 items-center gap-2 md:flex-[1_1_14rem] md:gap-4"
     >
+      <button
+        type="button"
+        onclick={onClose}
+        class="touch-target -ml-2 flex shrink-0 items-center justify-center rounded-full p-1 text-theme-text transition hover:text-theme-primary md:hidden"
+        aria-label="Back"
+      >
+        <span aria-hidden="true" class="icon-[lucide--chevron-left] h-7 w-7"
+        ></span>
+      </button>
+      <DetailThumbnail {entity} {isEditing} />
       {#if isEditing}
         <div class="flex flex-col gap-2 w-full mr-4">
           <div class="flex items-center gap-2">
@@ -418,12 +217,12 @@
           <AliasInput bind:aliases={editAliases} placeholder="Add alias..." />
         </div>
       {:else}
-        <div class="flex flex-col gap-0.5 min-w-0 w-full">
+        <div class="flex min-w-0 flex-1 flex-col gap-0.5">
           <div class="flex items-center gap-2 flex-wrap">
             <h2
               class="{isFantasyTheme
                 ? 'text-xl md:text-3xl font-header tracking-wider'
-                : 'text-xl md:text-3xl font-body tracking-wide'} break-words whitespace-normal font-bold"
+                : 'text-xl md:text-3xl font-body tracking-wide'} max-w-full break-words whitespace-normal font-bold"
               style:color={isFantasyTheme
                 ? "var(--theme-title-ink)"
                 : undefined}
@@ -437,73 +236,81 @@
           {#if entity.aliases && entity.aliases.length > 0}
             <div class="flex flex-wrap gap-1 md:gap-1.5 mt-0.5">
               <span
-                class="text-nano md:text-nano font-bold text-theme-muted uppercase tracking-widest self-center mr-0.5 md:mr-1"
+                class="text-nano md:text-nano font-bold text-theme-text uppercase tracking-widest self-center mr-0.5 md:mr-1"
                 >aka:</span
               >
               {#each entity.aliases as alias}
                 <div
-                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-nano font-bold text-theme-secondary uppercase tracking-wider"
+                  class="px-1.5 py-0.5 rounded bg-theme-primary/5 border border-theme-primary/10 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider"
                 >
                   {alias}
                 </div>
               {/each}
             </div>
           {/if}
-          {#if parentEntity}
-            <div
-              class="flex items-center gap-1.5 text-xs text-theme-muted mt-1.5"
-              data-testid="sidebar-parent-indicator"
-            >
-              <span
-                class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
-              ></span>
-              <span>Parent:</span>
-              <button
-                type="button"
-                onclick={handleOpenParent}
-                class="text-theme-primary hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+          <div
+            class="max-md:flex max-md:flex-wrap max-md:items-center max-md:gap-x-3"
+          >
+            {#if parentEntity}
+              <div
+                class="flex items-center gap-1.5 text-xs text-theme-text mt-1.5"
+                data-testid="sidebar-parent-indicator"
               >
-                {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
-                    aria-hidden="true">*</sup
-                  ><span class="sr-only"> (past)</span>{/if}
-              </button>
-              {#if canEditParent}
+                <span
+                  class="icon-[lucide--folder-up] h-3.5 w-3.5 text-theme-muted"
+                ></span>
+                <span>Parent:</span>
+                <button
+                  type="button"
+                  onclick={handleOpenParent}
+                  class="text-theme-text hover:text-theme-primary/80 hover:underline font-semibold focus:outline-none transition-all"
+                >
+                  {parentEntity.title}{#if parentEntity.labels?.some((l: string) => l.toLowerCase() === "past")}<sup
+                      aria-hidden="true">*</sup
+                    ><span class="sr-only"> (past)</span>{/if}
+                </button>
+                {#if canEditParent}
+                  <button
+                    type="button"
+                    onclick={() => modalUIStore.openParentPicker(entity.id)}
+                    class="p-0.5 text-theme-text hover:text-theme-primary transition-colors"
+                    aria-label="Change parent"
+                    title="Change parent"
+                    data-testid="change-parent-button"
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="icon-[lucide--pencil] h-3 w-3"
+                    ></span>
+                  </button>
+                {/if}
+              </div>
+            {:else if canEditParent}
+              <div class="mt-1.5">
                 <button
                   type="button"
                   onclick={() => modalUIStore.openParentPicker(entity.id)}
-                  class="p-0.5 text-theme-muted hover:text-theme-primary transition-colors"
-                  aria-label="Change parent"
-                  title="Change parent"
-                  data-testid="change-parent-button"
+                  class="flex items-center gap-1.5 text-xs text-theme-text hover:text-theme-primary transition-colors focus:outline-none"
+                  title="Nest this under another entity"
+                  data-testid="set-parent-button"
                 >
-                  <span aria-hidden="true" class="icon-[lucide--pencil] h-3 w-3"
+                  <span
+                    aria-hidden="true"
+                    class="icon-[lucide--folder-plus] h-3.5 w-3.5"
                   ></span>
+                  <span>Set parent</span>
                 </button>
-              {/if}
-            </div>
-          {:else if canEditParent}
-            <div class="mt-1.5">
-              <button
-                type="button"
-                onclick={() => modalUIStore.openParentPicker(entity.id)}
-                class="touch-target flex items-center gap-1.5 text-xs text-theme-muted hover:text-theme-primary transition-colors focus:outline-none"
-                title="Nest this under another entity"
-                data-testid="set-parent-button"
-              >
-                <span
-                  aria-hidden="true"
-                  class="icon-[lucide--folder-plus] h-3.5 w-3.5"
-                ></span>
-                <span>Set parent</span>
-              </button>
-            </div>
-          {/if}
+              </div>
+            {/if}
+            <DetailGenerateArt {entity} />
+          </div>
         </div>
       {/if}
+      <div class="shrink-0 md:hidden">{@render headerActions(true)}</div>
     </div>
 
     <div
-      class="ml-2 hidden shrink-0 items-center gap-1.5 md:ml-auto md:flex md:gap-2"
+      class="ml-2 hidden min-w-0 items-center gap-1.5 md:ml-auto md:flex md:gap-2"
     >
       {@render headerActions()}
 
@@ -521,51 +328,59 @@
     </div>
   </div>
 
-  <!-- Labels Section -->
-  <div class="mt-4 mb-2 space-y-2">
-    <div class="flex flex-wrap gap-1.5 min-h-[24px]">
-      {#each entity.labels || [] as label}
-        <LabelBadge
-          {label}
-          removable={!vault.isGuest}
-          onRemove={async () => await vault.removeLabel(entity.id, label)}
-        />
-      {/each}
-      {#if statureLabel}
-        <span
-          class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-nano md:text-nano font-bold text-theme-secondary uppercase tracking-wider self-center"
-          title={statureFromLabel
-            ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
-            : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
-          data-testid="entity-stature-badge"
-        >
-          Drawn as {statureLabel}
-        </span>
-        {#if canKeepStature}
-          <button
-            type="button"
-            onclick={keepStature}
-            disabled={isKeepingStature}
-            title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
-            data-testid="entity-stature-keep"
-            class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-nano md:text-nano font-bold text-theme-primary uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+  <!-- Labels Section: chips and the add field share one row -->
+  <div class="mt-2 mb-1">
+    <!-- Phones: one line that scrolls sideways; the add field stays beside it. -->
+    <div class="flex items-center gap-1.5 min-h-[24px] md:flex-wrap">
+      <div
+        class="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto max-md:[&>*]:shrink-0 max-md:[&>*]:whitespace-nowrap md:contents"
+      >
+        {#each entity.labels || [] as label}
+          <LabelBadge
+            {label}
+            removable={!vault.isGuest}
+            onRemove={async () => await vault.removeLabel(entity.id, label)}
+          />
+        {/each}
+        {#if statureLabel}
+          <span
+            class="px-1.5 py-0.5 rounded bg-theme-primary/10 border border-theme-primary/20 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider self-center"
+            title={statureFromLabel
+              ? `Images of this entity are drawn at ${statureLabel} stature, from its labels.`
+              : `The Oracle read this as ${statureLabel} in your lore, and images are drawn that way.`}
+            data-testid="entity-stature-badge"
           >
-            Keep
-          </button>
+            Drawn as {statureLabel}
+          </span>
+          {#if canKeepStature}
+            <button
+              type="button"
+              onclick={keepStature}
+              disabled={isKeepingStature}
+              title="Add {stature} as a label so it stops being re-read, and stays the same across pictures."
+              data-testid="entity-stature-keep"
+              class="px-1.5 py-0.5 rounded border border-dashed border-theme-primary/30 text-nano md:text-nano font-bold text-theme-text uppercase tracking-wider self-center transition hover:bg-theme-primary/10 disabled:opacity-50"
+            >
+              Keep
+            </button>
+          {/if}
         {/if}
-      {/if}
-      {#if !entity.labels?.length && vault.isGuest}
-        <span
-          class="text-nano text-theme-muted italic uppercase tracking-tighter"
+        {#if !entity.labels?.length && vault.isGuest}
+          <span
+            class="text-nano text-theme-text italic uppercase tracking-tighter"
+          >
+            No labels
+          </span>
+        {/if}
+      </div>
+      {#if !vault.isGuest}
+        <div
+          class="w-32 shrink-0 transition-[width] duration-200 focus-within:w-56 max-w-full"
         >
-          No labels
-        </span>
+          <LabelInput entityId={entity.id} />
+        </div>
       {/if}
     </div>
-
-    {#if !vault.isGuest}
-      <LabelInput entityId={entity.id} />
-    {/if}
   </div>
 
   {#if !vault.isGuest}

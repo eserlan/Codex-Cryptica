@@ -22,8 +22,13 @@ test.describe("Vault Node Deletion", () => {
       timeout: 5000,
     });
 
-    // 3. Click the delete button
-    const deleteButton = page.getByTestId("delete-entity-button");
+    // 3. Open the More menu, then click Delete
+    await page
+      .locator('[data-testid="entity-actions-more-button"]:visible')
+      .click();
+    const deleteButton = page.locator(
+      '[data-testid="delete-entity-button"]:visible',
+    );
     await expect(deleteButton).toBeVisible();
     await deleteButton.click();
 
@@ -57,7 +62,10 @@ test.describe("Vault Node Deletion", () => {
     });
 
     // 3. Click delete, then cancel via Svelte dialog
-    await page.getByTestId("delete-entity-button").click();
+    await page
+      .locator('[data-testid="entity-actions-more-button"]:visible')
+      .click();
+    await page.locator('[data-testid="delete-entity-button"]:visible').click();
     const cancelBtn = page.getByRole("button", { name: "Keep entity" });
     await expect(cancelBtn).toBeVisible({ timeout: 5000 });
     await cancelBtn.click();

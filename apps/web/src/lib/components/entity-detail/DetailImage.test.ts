@@ -49,6 +49,7 @@ vi.mock("#lib/stores/theme.svelte.js", () => ({
 vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
   modalUIStore: {
     openLightbox: vi.fn(),
+    openSilhouettePicker: vi.fn(),
   },
 }));
 
@@ -181,16 +182,17 @@ describe("DetailImage file picker", () => {
     vi.clearAllMocks();
   });
 
-  it("saves an image selected with the file picker", async () => {
-    const { container, getByRole } = render(DetailImage, {
+  it("saves an image chosen in edit mode and updates the edit field", async () => {
+    const { container, getByRole, getByLabelText } = render(DetailImage, {
       entity: mockEntity,
-      isEditing: false,
-      editImage: "",
+      isEditing: true,
+      editImage: "old.png",
     });
     const input = container.querySelector('input[type="file"]');
     const image = new File(["image"], "portrait.png", { type: "image/png" });
 
-    expect(getByRole("button", { name: "Choose image" })).toBeTruthy();
+    expect(getByRole("button", { name: "Change image" })).toBeTruthy();
+    expect(getByRole("button", { name: "Choose silhouette" })).toBeTruthy();
     expect(input).toBeTruthy();
 
     await fireEvent.change(input!, { target: { files: [image] } });
@@ -202,7 +204,32 @@ describe("DetailImage file picker", () => {
         image: "images/entity.png",
         thumbnail: "",
       });
+      expect((getByLabelText("IMAGE URL") as HTMLInputElement).value).toBe(
+        "images/entity.png",
+      );
     });
+  });
+
+  it("opens the silhouette picker from edit mode", async () => {
+    const { getByRole } = render(DetailImage, {
+      entity: mockEntity,
+      isEditing: true,
+      editImage: "",
+    });
+    await fireEvent.click(getByRole("button", { name: "Choose silhouette" }));
+    const { modalUIStore } = await import("#lib/stores/ui/modal-ui.svelte.js");
+    expect(modalUIStore.openSilhouettePicker).toHaveBeenCalledWith(mockEntity);
+  });
+
+  it("has no Choose image or Replace image button in view mode", () => {
+    const { queryByRole } = render(DetailImage, {
+      entity: mockEntity,
+      isEditing: false,
+      editImage: "",
+    });
+    expect(queryByRole("button", { name: "Choose image" })).toBeNull();
+    expect(queryByRole("button", { name: "Replace image" })).toBeNull();
+    expect(queryByRole("button", { name: "Change image" })).toBeNull();
   });
 
   it("continues to save an image dropped from a desktop", async () => {
@@ -234,7 +261,7 @@ describe("DetailImage file picker", () => {
   it("rejects a non-image selected with the file picker without changing the entity", async () => {
     const { container, getByRole } = render(DetailImage, {
       entity: mockEntity,
-      isEditing: false,
+      isEditing: true,
       editImage: "",
     });
     const input = container.querySelector('input[type="file"]');

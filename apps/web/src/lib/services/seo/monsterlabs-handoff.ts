@@ -49,6 +49,22 @@ export interface MonsterLabsHandoffSource {
   description: string;
 }
 
+/** The handoff source for an entity: its title, type and written content. */
+export function entityToHandoffSource(entity: {
+  title: string;
+  type: string;
+  content?: string;
+  lore?: string;
+}): MonsterLabsHandoffSource {
+  return {
+    name: entity.title,
+    type: entity.type,
+    description: [entity.content, entity.lore]
+      .filter((part): part is string => Boolean(part?.trim()))
+      .join("\n\n"),
+  };
+}
+
 function titleCase(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
