@@ -47,6 +47,8 @@ export async function listKnownCloudBackups(
     const parsed = LocalCloudBackupRecordSchema.safeParse(entry.record);
     if (!parsed.success) continue;
     const record = parsed.data;
+    // An editor record holds a group token, not a recovery key.
+    if (record.role === "editor") continue;
     known.push({
       vaultId: record.vaultId,
       backupId: record.backupId,
@@ -66,7 +68,8 @@ export async function getCloudBackupOwnershipCode(
   runtime: CloudBackupRuntime,
   vaultId: string,
 ): Promise<string | null> {
-  return (await getLocalCloudBackupRecord(runtime, vaultId))?.ownerCode ?? null;
+  const record = await getLocalCloudBackupRecord(runtime, vaultId);
+  return record && record.role !== "editor" ? record.ownerCode : null;
 }
 
 /**

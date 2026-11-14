@@ -4,6 +4,7 @@ import {
   buildCloudBackupPayload,
   hydrateEntityContent,
   buildCloudBackupDelta,
+  buildCloudBackupEditorDelta,
   DELTA_MAX_ENTITIES,
   collectAssetPaths,
   isLocalAssetPath,
@@ -840,5 +841,89 @@ describe("buildCloudBackupDelta (#3354)", () => {
     expect(
       await buildCloudBackupDelta("Vault", [change("known")], deps),
     ).not.toBeNull();
+  });
+});
+
+describe("buildCloudBackupEditorDelta (shared vault member)", () => {
+  const records: Record<string, any> = {
+    a: { id: "a", title: "A", content: "x" },
+    pic: { id: "pic", title: "Pic", content: "x", image: "images/new.png" },
+    old: { id: "old", title: "Old", content: "x", image: "images/known.png" },
+    bad: { id: "bad", title: "Bad", content: "x" },
+  };
+  const deps = (signal?: AbortSignal) => ({
+    getEntity: (id: string) => records[id],
+    hydrateEntities: {
+      isContentLoaded: (id: string) => id !== "bad",
+      readFullEntity: async () => {
+        throw new Error("unreadable");
+      },
+    },
+    uploadedAssetIds: new Set<string>(["images_known.png"]),
+    referencedAssetIds: ["images_known.png"],
+    signal,
+  });
+  const entity = (id: string, deleted = false) => ({
+    kind: "entity" as const,
+    id,
+    deleted,
+  });
+
+  it("sends only entities that need no new media and leaves the rest pending", async () => {
+    const rows = [
+      entity("a"),
+      entity("pic"),
+      entity("old"),
+      entity("bad"),
+      entity("gone", true),
+      { kind: "maps" as const, id: "*", deleted: false },
+      { kind: "canvas" as const, id: "c", deleted: false },
+    ];
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      rows,
+      deps() as never,
+    );
+    expect(sent.map((row) => row.id)).toEqual(["a", "old", "gone"]);
+    expect(delta?.upserts.map((u) => u.id)).toEqual(["a", "old"]);
+    expect(delta?.deletes).toEqual(["gone"]);
+    expect(delta).not.toHaveProperty("maps");
+    expect(delta).not.toHaveProperty("canvases");
+  });
+
+  it("sends nothing when only maps and canvases are pending", async () => {
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      [{ kind: "maps", id: "*", deleted: false }],
+      deps() as never,
+    );
+    expect(delta).toBeNull();
+    expect(sent).toEqual([]);
+  });
+
+  it("caps the delta and keeps the extra rows pending", async () => {
+    const many = Array.from({ length: 205 }, (_, i) => {
+      records[`m${i}`] = { id: `m${i}`, title: "M", content: "x" };
+      return entity(`m${i}`);
+    });
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      many,
+      deps() as never,
+    );
+    expect(sent).toHaveLength(200);
+    expect(delta?.upserts).toHaveLength(200);
+  });
+
+  it("sends nothing when aborted", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    expect(
+      await buildCloudBackupEditorDelta(
+        "V",
+        [entity("a")],
+        deps(controller.signal) as never,
+      ),
+    ).toEqual({ delta: null, sent: [] });
   });
 });

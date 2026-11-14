@@ -1,6 +1,7 @@
 import type { CloudBackupDeps } from "#lib/stores/cloud-backup-types.js";
 import {
   sha256Hex,
+  type CloudBackupRuntime,
   type CloudBackupTiming,
   type MergeEntity,
 } from "@codex/cloud-backup-sync";
@@ -16,6 +17,7 @@ import {
 import {
   assetIdForPath,
   buildCloudBackupDelta,
+  buildCloudBackupEditorDelta,
   buildCloudBackupPayload,
   collectAssetPaths,
   isLocalAssetPath,
@@ -28,12 +30,16 @@ import {
   AdventureSessionRepository,
   adventureSessionRepository,
 } from "#lib/services/adventure/adventure-session-repository.js";
-import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { browserStorage, systemIdGenerator } from "#lib/utils/runtime-deps.js";
+import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
+import { SharedVaultJoin } from "#lib/stores/shared-vault-join.js";
 import { isPrivateArtworkSnapshotPath } from "schema";
 import { omitArtworkForBackup } from "#lib/services/cloud-backup-artwork.js";
 import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
 import { entityEditingRegistry } from "#lib/stores/entity-editing-registry.js";
 import { readOpfsBlob } from "#lib/utils/opfs.js";
+import { sharedVaultIdentity } from "#lib/stores/shared-vault-identity.js";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 const dirty = new CloudBackupDirtyStore();
 const base = new CloudBackupBaseStore();
@@ -145,31 +151,47 @@ const buildVaultBackupPayload: CloudBackupDeps["buildPayload"] = async (
   );
 };
 
+function deltaDeps(uploadedAssetIds: ReadonlySet<string>, signal: AbortSignal) {
+  return {
+    // Same boundary widening as the full payload above: the store's
+    // record is structurally compatible but not nominally LocalEntity.
+    getEntity: (id: string) => vault.entities?.[id] as never,
+    hydrateEntities: createEntityHydrator(),
+    uploadedAssetIds,
+    onTiming: timeCloudBackupSave,
+    referencedAssetIds: collectAssetPaths(
+      Object.values(vault.entities ?? {}) as never[],
+      mapRegistry.allMaps ?? [],
+    )
+      .filter((path) => !isPrivateArtworkSnapshotPath(path))
+      .map(assetIdForPath),
+    signal,
+  };
+}
+
 const buildVaultBackupDelta: NonNullable<
   CloudBackupDeps["buildDelta"]
 > = async (_vaultId, changes, uploadedAssetIds, signal) =>
   buildCloudBackupDelta(
     vault.vaultName || "Vault",
     changes,
-    {
-      // Same boundary widening as the full payload above: the store's
-      // record is structurally compatible but not nominally LocalEntity.
-      getEntity: (id: string) => vault.entities?.[id] as never,
-      hydrateEntities: createEntityHydrator(),
-      uploadedAssetIds,
-      onTiming: timeCloudBackupSave,
-      referencedAssetIds: collectAssetPaths(
-        Object.values(vault.entities ?? {}) as never[],
-        mapRegistry.allMaps ?? [],
-      )
-        .filter((path) => !isPrivateArtworkSnapshotPath(path))
-        .map(assetIdForPath),
-      signal,
-    },
+    deltaDeps(uploadedAssetIds, signal),
     {
       maps: mapRegistry.allMaps ?? [],
       canvases: canvasRegistry.allCanvases ?? [],
     },
+  );
+
+const buildMemberDelta: NonNullable<CloudBackupDeps["buildEditorDelta"]> = (
+  _vaultId,
+  changes,
+  uploadedAssetIds,
+  signal,
+) =>
+  buildCloudBackupEditorDelta(
+    vault.vaultName || "Vault",
+    changes,
+    deltaDeps(uploadedAssetIds, signal),
   );
 
 const MIME_BY_EXTENSION: Record<string, string> = {
@@ -331,19 +353,43 @@ const remote: NonNullable<CloudBackupDeps["remote"]> = {
   },
 };
 
+function createCloudBackupRuntime(): CloudBackupRuntime {
+  return {
+    // An empty base URL resolves `/api/cloud-backup/*` against the page
+    // origin, and codexcryptica.com is static Pages with no `/api` — every
+    // enable POST came back 405. Fall back to the deployed worker the way
+    // every other proxy consumer does.
+    baseUrl: resolveOracleProxyUrl(),
+    storage: cloudBackupBrowserStorage(),
+    fetch: ((url: string, init?: any) => fetch(url, init)) as never,
+    deviceId: () => sharedVaultIdentity.deviceId(),
+  };
+}
+
+/** The join flow on real stores, for the `/join` page. */
+export function createSharedVaultJoin(): SharedVaultJoin {
+  return new SharedVaultJoin({
+    runtime: createCloudBackupRuntime(),
+    restore: createCloudBackupRestore(),
+    vaultExists: async (vaultId) =>
+      (await vaultRegistry.listVaults()).some(
+        (record) => record.id === vaultId,
+      ),
+    deleteVault: (vaultId) => vault.deleteVault(vaultId),
+    switchVault: (vaultId) => vault.switchVault(vaultId),
+    base,
+    dirty,
+    storage: browserStorage,
+    identity: sharedVaultIdentity,
+    hydrate: (vaultId) => cloudBackupStore.hydrate(vaultId),
+  });
+}
+
 export function configureCloudBackup(): void {
   // Cloud Backup stays inert until a vault opts in; configuring it only wires
   // the dependencies it would need (spec 162).
   cloudBackupStore.configure({
-    runtime: {
-      // An empty base URL resolves `/api/cloud-backup/*` against the page
-      // origin, and codexcryptica.com is static Pages with no `/api` — every
-      // enable POST came back 405. Fall back to the deployed worker the way
-      // every other proxy consumer does.
-      baseUrl: resolveOracleProxyUrl(),
-      storage: cloudBackupBrowserStorage(),
-      fetch: ((url: string, init?: any) => fetch(url, init)) as never,
-    },
+    runtime: createCloudBackupRuntime(),
     dirty,
     base,
     // A previously consented backup remains protected if the UI flag changes.
@@ -359,6 +405,9 @@ export function configureCloudBackup(): void {
     buildPayload: buildVaultBackupPayload,
     // Incremental uploads (#3354): only the recorded changes are read.
     buildDelta: buildVaultBackupDelta,
+    buildEditorDelta: buildMemberDelta,
+    notify: (message) => notificationStore.notify(message, "info"),
+    displayName: () => sharedVaultIdentity.displayName(),
     remote,
     listLocalEntities: () =>
       Object.values(vault.entities ?? {}).map((entity) => ({

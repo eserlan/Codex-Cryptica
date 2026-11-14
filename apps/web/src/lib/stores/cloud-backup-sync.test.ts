@@ -12,6 +12,7 @@ function harness() {
     autoState: "idle",
     autoConflictRemoteAt: null,
     uploadProgress: null,
+    syncStopped: false,
   };
   const deps: CloudBackupDeps = {
     runtime: createInertRuntime(),

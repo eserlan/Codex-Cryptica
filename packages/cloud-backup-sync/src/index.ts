@@ -4,5 +4,7 @@ export * from "./recovery-key";
 export * from "./auto-sync";
 export * from "./merge";
 export * from "./backup-sharing";
+export * from "./request-headers";
+export { isDeviceLimit } from "./backup-response";
 export * from "./change-feed";
 export { readRemoteLastPushedAt } from "./backup-metadata";

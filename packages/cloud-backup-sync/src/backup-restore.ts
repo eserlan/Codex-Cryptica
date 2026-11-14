@@ -1,6 +1,10 @@
 import type { CloudBackupManifest } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { responseFailure } from "./backup-response";
+import {
+  cloudBackupHeaders,
+  type CloudBackupCredentials,
+} from "./request-headers";
 import type { CloudBackupOutcome } from "./types";
 
 /**
@@ -11,12 +15,12 @@ import type { CloudBackupOutcome } from "./types";
  */
 export async function fetchCloudBackupAsset(
   runtime: CloudBackupRuntime,
-  credentials: { backupId: string; ownerCode: string },
+  credentials: CloudBackupCredentials,
   assetId: string,
 ): Promise<CloudBackupOutcome<Uint8Array>> {
   const response = await runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${credentials.backupId}/assets/${assetId}`,
-    { headers: { Authorization: `Bearer ${credentials.ownerCode}` } },
+    { headers: cloudBackupHeaders(runtime, credentials) },
   );
   if (!response.ok) {
     return responseFailure(response);
@@ -34,16 +38,16 @@ export async function fetchCloudBackupAsset(
  */
 export async function restoreVaultFromCloudBackup(
   runtime: CloudBackupRuntime,
-  credentials: { backupId: string; ownerCode: string },
+  credentials: CloudBackupCredentials,
 ): Promise<
   CloudBackupOutcome<{ manifest: CloudBackupManifest; bundle: unknown }>
 > {
   const response = await runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${credentials.backupId}/bundle`,
-    { headers: { Authorization: `Bearer ${credentials.ownerCode}` } },
+    { headers: cloudBackupHeaders(runtime, credentials) },
   );
   if (!response.ok) {
-    return responseFailure(response);
+    return responseFailure(response, credentials);
   }
 
   const body = (await response.json()) as {

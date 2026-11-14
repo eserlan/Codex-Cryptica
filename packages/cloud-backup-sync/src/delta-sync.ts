@@ -4,6 +4,7 @@ import {
   getLocalCloudBackupRecord as readRecord,
   withCommittedRevision,
 } from "./backup-records";
+import { cloudBackupHeaders } from "./request-headers";
 import type { CloudBackupOutcome } from "./types";
 
 /** The changed-only part of a vault, for `pushDeltaToCloudBackup` (#3354). */
@@ -47,10 +48,9 @@ export async function pushDeltaToCloudBackup(
       `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/delta`,
       {
         method: "POST",
-        headers: {
+        headers: cloudBackupHeaders(runtime, record, {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${record.ownerCode}`,
-        },
+        }),
         body: JSON.stringify({
           ...delta,
           baseLastPushedAt,
@@ -86,6 +86,7 @@ async function restoreDeltaRecordAfterAbort(
   return true;
 }
 
+// fallow-ignore-next-line complexity -- owner and editor 404 handling are tested in shared-vault-editor.test.ts.
 async function applyDeltaFailure(
   runtime: CloudBackupRuntime,
   vaultId: string,
@@ -103,6 +104,15 @@ async function applyDeltaFailure(
     return { ok: true, value: null };
   }
   const code = body?.error?.code;
+  if (record.role === "editor" && response.status === 404) {
+    await runtime.storage.write(vaultId, record);
+    return {
+      ok: false,
+      error: body?.error?.message ?? "Request failed (404)",
+      status: 404,
+      linkGone: true,
+    };
+  }
   const fullPushRequired =
     response.status === 404 || code === "full_push_required";
   const outcome = fullPushRequired
@@ -132,6 +142,7 @@ function ordinaryDeltaFailure(
     ok: false as const,
     error: error?.message ?? `Request failed (${status})`,
     status,
+    ...(code ? { code } : {}),
     ...(code === "diverged"
       ? { conflict: true, remoteLastPushedAt: error?.lastPushedAt ?? null }
       : {}),

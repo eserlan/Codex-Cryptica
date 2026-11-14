@@ -41,7 +41,7 @@ Other referenced files are not automatically collected. In particular, **sound-b
 
 The copy is hosted on third-party cloud infrastructure. It is **not end-to-end encrypted**, so Codex Cryptica and its hosting provider are technically able to read the stored data. The Cloud Backup consent screen is the authoritative summary shown before anything leaves your device.
 
-Cloud Backup is for restoring your vault, and it never makes the vault public. It does not share your vault with anyone unless the owner separately turns on a group-sharing mode, which has its own consent screen. Where that mode is available, it gives one link that lets anyone holding it read and change the whole vault.
+Cloud Backup is for restoring your vault, and it never makes the vault public. It does not share your vault with anyone unless the owner separately turns on a group-sharing mode, which has its own consent screen. Where that mode is available, it gives one link that lets anyone holding it read and change the whole vault. See [Joining a shared vault](/help#help/shared-vault) for what a member sees.
 
 ## Automatic Cloud Save
 

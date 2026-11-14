@@ -1,4 +1,5 @@
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
+<!-- fallow-ignore-file complexity -- the owner and member panels are tested in CloudBackupSettings.editor.test.ts. -->
 <script lang="ts">
   /**
    * Cloud Backup settings (spec 162, issue #2593).
@@ -19,6 +20,11 @@
   import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { sharedVaultIdentity } from "#lib/stores/shared-vault-identity.js";
+  import {
+    KEPT_LOCAL_MESSAGE,
+    LINK_GONE_MESSAGE,
+  } from "#lib/stores/shared-vault-messages.js";
 
   let showConsent = $state(false);
   let showRestore = $state(false);
@@ -29,6 +35,8 @@
 
   const status = $derived(cloudBackupStore.status);
   const isOn = $derived(status !== "off");
+  /** A member of a shared vault holds none of the owner's controls. */
+  const isEditor = $derived(cloudBackupStore.role === "editor");
   const vaultId = $derived(vault.activeVaultId ?? "");
 
   const STATUS_LABEL: Record<string, string> = {
@@ -405,23 +413,47 @@
 
 {#snippet activeBackupPanel()}
   <div class="flex flex-col gap-2 border border-theme-border p-4">
-    <p class="text-sm text-theme-text">
+    {#if isEditor}
+      <p class="text-sm text-theme-text">
+        You joined this shared vault as {sharedVaultIdentity.displayName() ??
+          "a member"}. The owner manages the link and the shared copy.
+      </p>
       {#if lastPushed}
-        Last saved {lastPushed}. Changes sync automatically while backup is on —
-        Save to cloud pushes immediately.
-      {:else}
-        Not saved yet. Changes will sync automatically once the first save
-        completes.
+        <p class="text-sm text-theme-text">Last synced {lastPushed}.</p>
       {/if}
-    </p>
+      {#if cloudBackupStore.linkGone}
+        <p class="text-sm text-theme-danger" role="alert">
+          {LINK_GONE_MESSAGE}
+        </p>
+      {:else if cloudBackupStore.syncStopped && cloudBackupStore.errorMessage}
+        <p class="text-sm text-theme-danger" role="alert">
+          {cloudBackupStore.errorMessage}
+        </p>
+      {/if}
+      {#if cloudBackupStore.keptLocal}
+        <p class="text-sm text-theme-text" role="status">
+          {KEPT_LOCAL_MESSAGE}
+        </p>
+      {/if}
+    {:else}
+      <p class="text-sm text-theme-text">
+        {#if lastPushed}
+          Last saved {lastPushed}. Changes sync automatically while backup is on
+          — Save to cloud pushes immediately.
+        {:else}
+          Not saved yet. Changes will sync automatically once the first save
+          completes.
+        {/if}
+      </p>
+    {/if}
     {#if status === "error" && cloudBackupStore.errorMessage}
-      <p class="text-sm text-red-400" role="alert">
+      <p class="text-sm text-theme-danger" role="alert">
         {cloudBackupStore.errorMessage}
       </p>
     {/if}
-    {#if autoState === "conflict"}
-      <div class="border border-red-400/40 p-3">
-        <p class="text-sm text-red-400" role="alert">
+    {#if !isEditor && autoState === "conflict"}
+      <div class="border border-theme-danger/40 p-3">
+        <p class="text-sm text-theme-danger" role="alert">
           {cloudBackupStore.errorMessage ??
             "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
         </p>
@@ -440,7 +472,7 @@
       </div>
     {/if}
 
-    {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+    {#if !isEditor && import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
       <AdventureBackupSettings
         {vaultId}
         refreshKey={cloudBackupStore.artworkConsentVersion}
@@ -451,28 +483,30 @@
       />
     {/if}
 
-    {#if codeVisible && cloudBackupStore.recoveryKey}
+    {#if !isEditor && codeVisible && cloudBackupStore.recoveryKey}
       <p class="break-all font-mono text-xs text-theme-text">
         {cloudBackupStore.recoveryKey}
       </p>
     {/if}
 
     <div class="mt-2 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onclick={saveToCloud}
-        disabled={isSaving || busy}
-        class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
-      >
-        {isSaving ? "Saving…" : "Save to cloud"}
-      </button>
-      <button
-        type="button"
-        onclick={copyCode}
-        class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
-      >
-        Copy recovery key
-      </button>
+      {#if !isEditor}
+        <button
+          type="button"
+          onclick={saveToCloud}
+          disabled={isSaving || busy}
+          class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+        >
+          {isSaving ? "Saving…" : "Save to cloud"}
+        </button>
+        <button
+          type="button"
+          onclick={copyCode}
+          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
+        >
+          Copy recovery key
+        </button>
+      {/if}
       <button
         type="button"
         onclick={turnOff}
@@ -480,14 +514,16 @@
       >
         Turn off
       </button>
-      <button
-        type="button"
-        onclick={deleteBackup}
-        disabled={busy}
-        class="border border-red-500/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
-      >
-        Delete backup
-      </button>
+      {#if !isEditor}
+        <button
+          type="button"
+          onclick={deleteBackup}
+          disabled={busy}
+          class="border border-theme-danger/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-danger transition-colors hover:bg-theme-danger/10 disabled:opacity-50"
+        >
+          Delete backup
+        </button>
+      {/if}
     </div>
   </div>
 {/snippet}
@@ -512,7 +548,7 @@
       <span
         class="shrink-0 font-mono text-micro uppercase tracking-wider {status ===
         'error'
-          ? 'text-red-400'
+          ? 'text-theme-danger'
           : 'text-theme-text'}"
         aria-live="polite"
       >
@@ -542,7 +578,7 @@
     {@render activeBackupPanel()}
   {/if}
 
-  {#if isSharedVaultEnabled()}
+  {#if isSharedVaultEnabled() && !isEditor}
     <CloudBackupSharingSettings
       {vaultId}
       backupOn={isOn}

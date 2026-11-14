@@ -563,6 +563,52 @@ export async function buildCloudBackupDelta(
 }
 
 /**
+ * What a group member may send: entity changes only, as one delta. Anything a
+ * member cannot send yet is left out of `sent` and stays pending: maps and
+ * canvases, entities that reference media the backup lacks or that cannot be
+ * read, and entity changes beyond the delta limit. `delta` is `null` when
+ * nothing can go.
+ */
+export async function buildCloudBackupEditorDelta<T extends CloudBackupChange>(
+  vaultTitle: string,
+  changes: readonly T[],
+  deps: CloudBackupDeltaDeps,
+): Promise<{ delta: CloudBackupDelta | null; sent: T[] }> {
+  const sent: T[] = [];
+  const upserts: LocalEntity[] = [];
+  const deletes: string[] = [];
+  const entityChanges = changes
+    .filter((change) => change.kind === "entity")
+    .slice(0, DELTA_MAX_ENTITIES);
+  for (const change of entityChanges) {
+    if (deps.signal?.aborted) return { delta: null, sent: [] };
+    const current = deps.getEntity(change.id);
+    if (change.deleted || !current) {
+      deletes.push(change.id);
+      sent.push(change);
+      continue;
+    }
+    const full = await readFullOrNull(change.id, current, deps.hydrateEntities);
+    if (!full) continue;
+    const entity = omitArtworkForBackup(full);
+    if (referencesNewMedia([entity], undefined, deps.uploadedAssetIds))
+      continue;
+    upserts.push(entity);
+    sent.push(change);
+  }
+  if (sent.length === 0) return { delta: null, sent };
+  return {
+    delta: {
+      vaultTitle,
+      upserts,
+      deletes,
+      assetIds: [...deps.referencedAssetIds],
+    },
+    sent,
+  };
+}
+
+/**
  * Splits entity changes into full records to upload and ids to delete, or
  * `null` when a read fails or the build is aborted. Tombstones and entities
  * that no longer exist are deletes; loaded bodies are used as they are.

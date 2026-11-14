@@ -6,9 +6,13 @@ import type {
   VaultBundlePayload,
 } from "./types";
 import { responseFailure } from "./backup-response";
+import { cloudBackupHeaders } from "./request-headers";
 
 type Asset = NonNullable<VaultBundlePayload["assets"]>[number];
-type Credentials = Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">;
+type Credentials = Pick<
+  LocalCloudBackupRecord,
+  "backupId" | "ownerCode" | "role"
+>;
 
 /**
  * Asset PUTs in flight at once. Mirrors the hydration bound: enough to stop a
@@ -27,10 +31,9 @@ function putAsset(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/assets/${encodeURIComponent(asset.assetId)}`,
     {
       method: "PUT",
-      headers: {
+      headers: cloudBackupHeaders(runtime, record, {
         "Content-Type": asset.mimeType || "application/octet-stream",
-        Authorization: `Bearer ${record.ownerCode}`,
-      },
+      }),
       body: asset.bytes,
       signal,
     },
