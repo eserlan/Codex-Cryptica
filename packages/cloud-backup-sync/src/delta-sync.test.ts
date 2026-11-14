@@ -75,4 +75,66 @@ describe("delta sync", () => {
     ).toEqual({ ok: true, value: null });
     expect(await getLocalCloudBackupRecord(runtime, "v-1")).toEqual(before);
   });
+
+  const withRevision = async (revision: number | undefined, ...then: any[]) => {
+    const h = await enabled(...then);
+    const record = (await getLocalCloudBackupRecord(h.runtime, "v-1"))!;
+    await h.runtime.storage.write("v-1", { ...record, revision });
+    return h;
+  };
+
+  it("sends and stores the revision", async () => {
+    const { runtime, calls } = await withRevision(4, {
+      ok: true,
+      status: 200,
+      body: { manifest: { ...MANIFEST, revision: 5 } },
+    });
+    await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
+    expect(JSON.parse(calls[0].init.body)).toMatchObject({
+      baseRevision: 4,
+      baseLastPushedAt: "base",
+    });
+    expect((await getLocalCloudBackupRecord(runtime, "v-1"))?.revision).toBe(5);
+  });
+
+  it("falls back to the timestamp when the record has no revision", async () => {
+    const { runtime, calls } = await withRevision(undefined);
+    await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
+    const body = JSON.parse(calls[0].init.body);
+    expect(body).not.toHaveProperty("baseRevision");
+    expect(body.baseLastPushedAt).toBe("base");
+  });
+
+  it("drops the stored revision when the worker returns none", async () => {
+    const { runtime } = await withRevision(4);
+    await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
+    const record = await getLocalCloudBackupRecord(runtime, "v-1");
+    expect(record).not.toHaveProperty("revision");
+    expect(record?.lastPushedAt).toBe(MANIFEST.lastPushedAt);
+  });
+
+  it("reports a diverged answer as a conflict and keeps the revision", async () => {
+    const { runtime } = await withRevision(4, {
+      ok: false,
+      status: 409,
+      body: {
+        error: {
+          code: "diverged",
+          lastPushedAt: "2026-09-01T00:00:00.000Z",
+          revision: 7,
+        },
+      },
+    });
+    expect(
+      await pushDeltaToCloudBackup(runtime, "v-1", delta, "base"),
+    ).toMatchObject({
+      ok: false,
+      conflict: true,
+      remoteLastPushedAt: "2026-09-01T00:00:00.000Z",
+    });
+    expect(await getLocalCloudBackupRecord(runtime, "v-1")).toMatchObject({
+      status: "error",
+      revision: 4,
+    });
+  });
 });

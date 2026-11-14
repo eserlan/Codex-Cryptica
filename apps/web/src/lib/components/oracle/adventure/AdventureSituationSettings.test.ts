@@ -281,18 +281,25 @@ describe("AdventureSituationSettings", () => {
         "Buy a loaf of bread.",
       );
 
+      writeText.mockRejectedValueOnce(new Error("clipboard denied"));
       await fireEvent.click(
         screen.getByRole("button", { name: "Copy JSON for AI" }),
       );
-      const compact = JSON.parse(writeText.mock.calls[2]![0]);
-      expect(compact._readme).toContain("GM-only");
-      expect(compact.summary.turnsTotal).toBe(1);
-      expect(compact.turns[0].timeAdvance).toBeNull();
+      expect(await screen.findByRole("alert")).toBeTruthy();
 
       await fireEvent.click(
         screen.getByRole("button", { name: "Copy JSON for AI" }),
       );
-      const delta = JSON.parse(writeText.mock.calls[3]![0]);
+      const compact = JSON.parse(writeText.mock.calls[3]![0]);
+      expect(compact._readme).toContain("GM-only");
+      expect(compact.summary.turnsTotal).toBe(1);
+      expect(compact.turns[0].timeAdvance).toBeNull();
+      expect(compact.delta).toBeUndefined();
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy JSON for AI" }),
+      );
+      const delta = JSON.parse(writeText.mock.calls[4]![0]);
       expect(delta.delta).toEqual({
         fromRevision: 2,
         toRevision: 2,

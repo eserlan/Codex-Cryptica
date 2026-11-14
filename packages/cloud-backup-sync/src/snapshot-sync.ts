@@ -2,7 +2,10 @@ import type { CloudBackupManifest } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { detectConflict } from "./auto-sync";
 import { readRemoteLastPushedAt } from "./backup-metadata";
-import { getLocalCloudBackupRecord as readRecord } from "./backup-records";
+import {
+  getLocalCloudBackupRecord as readRecord,
+  withCommittedRevision,
+} from "./backup-records";
 import { uploadSnapshot } from "./snapshot-upload";
 import type {
   VaultBundlePayload,
@@ -16,7 +19,7 @@ export interface PushVaultOptions extends SnapshotUploadOptions {
    * Optimistic-concurrency guard (#3189): when set, the remote state is read
    * first and the push aborts — uploading nothing — if the remote
    * lastPushedAt differs, meaning another device committed since. Best
-   * effort only: a true race needs server revisions (follow-up).
+   * effort only: a true race needs the race-safe commit (shared vault slice 2); revisions now exist.
    */
   expectLastPushedAt?: string | null;
 }
@@ -89,7 +92,7 @@ export async function pushVaultToCloudBackup(
     if (result.value === null) return { ok: true, value: null };
 
     await runtime.storage.write(vaultId, {
-      ...record,
+      ...withCommittedRevision(record, result.value),
       status: "idle",
       lastPushedAt: result.value.lastPushedAt,
       // A renamed vault should show under its current name, not the old one.

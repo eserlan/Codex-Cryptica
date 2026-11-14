@@ -59,7 +59,20 @@ export async function handleEnableCloudBackup(
     lastPushedAt: now,
   };
 
-  await writeManifest(env, backupId, manifest, await hashOwnerCode(ownerCode));
+  const created = await writeManifest(
+    env,
+    backupId,
+    manifest,
+    await hashOwnerCode(ownerCode),
+    undefined,
+  );
+  if (!created) {
+    return json(
+      request,
+      { error: { message: "Could not open the backup. Try again." } },
+      409,
+    );
+  }
 
   // The only time the raw code is ever transmitted.
   return json(request, { backupId, ownerCode, manifest }, 201);

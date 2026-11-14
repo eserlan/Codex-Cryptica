@@ -2,6 +2,7 @@
   import type { AdventureLightboxController } from "./adventure-artwork-lightbox.svelte.js";
 
   let { controller }: { controller: AdventureLightboxController } = $props();
+  let dialog = $state<HTMLDivElement>();
   let closeButton = $state<HTMLButtonElement>();
   let fullSrc = $state<string | undefined>(undefined);
 
@@ -51,9 +52,28 @@
     };
   });
 
+  function trapTab(event: KeyboardEvent): void {
+    if (!dialog) return;
+    const focusable = dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+    if (!focusable.length) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+    const reverse = event.shiftKey;
+    const onBoundary = reverse ? active === first : active === last;
+    if (dialog.contains(active) && !onBoundary) return;
+    event.preventDefault();
+    (reverse ? last : first).focus();
+  }
+
   function handleKeydown(event: KeyboardEvent): void {
     if (!controller.show) return;
-    if (event.key === "Escape") {
+    if (event.key === "Tab") {
+      trapTab(event);
+    } else if (event.key === "Escape") {
       event.preventDefault();
       controller.close();
     } else if (event.key === "ArrowRight") {
@@ -72,10 +92,12 @@
   {@const current = controller.current}
   {@const total = controller.items.length}
   <div
+    bind:this={dialog}
     role="dialog"
     aria-modal="true"
     aria-label={current.title}
     data-testid="adventure-artwork-lightbox"
+    tabindex="-1"
     class="fixed inset-0 z-[200] flex flex-col items-center justify-between bg-black/90 p-4 text-white"
   >
     <button

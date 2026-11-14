@@ -255,6 +255,10 @@ describe("handleAssetGallery", () => {
     expect(html).toContain("ArrowLeft");
     expect(html).toContain("ArrowRight");
     expect(html).toContain("Escape");
+    expect(html).toContain("if (!wasOpen) lbClose.focus()");
+    expect(html).toContain('evt.key === "Tab"');
+    expect(html).toContain("lightbox.contains(document.activeElement)");
+    expect(html).toContain("width: 44px; height: 44px");
   });
 
   it("returns 500 when the bucket binding is missing", async () => {

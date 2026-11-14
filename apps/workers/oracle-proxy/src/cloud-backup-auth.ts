@@ -1,5 +1,9 @@
 import type { CloudBackupManifest } from "../../../../packages/schema/src/publishing";
-import { readManifest, type CloudBackupEnv } from "./cloud-backup-storage";
+import {
+  readManifest,
+  type BackupObjects,
+  type CloudBackupEnv,
+} from "./cloud-backup-storage";
 import {
   notFoundOrUnauthorized,
   storageUnavailable,
@@ -46,7 +50,12 @@ export async function authorize(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<
-  | { manifest: CloudBackupManifest; ownerCodeHash: string }
+  | {
+      manifest: CloudBackupManifest;
+      ownerCodeHash: string;
+      etag?: string;
+      objects?: BackupObjects;
+    }
   | { response: Response }
 > {
   const code = bearerToken(request);
@@ -62,7 +71,12 @@ export async function authorize(
   if (record.ownerCodeHash !== (await hashOwnerCode(code))) {
     return { response: notFoundOrUnauthorized(request) };
   }
-  return { manifest: record.manifest, ownerCodeHash: record.ownerCodeHash };
+  return {
+    manifest: record.manifest,
+    ownerCodeHash: record.ownerCodeHash,
+    etag: record.etag,
+    objects: record.objects,
+  };
 }
 
 export function isAdmin(request: Request, env: CloudBackupEnv): boolean {

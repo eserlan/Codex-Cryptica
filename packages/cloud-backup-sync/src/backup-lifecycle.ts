@@ -72,6 +72,9 @@ export async function enableCloudBackup(
     enabled: true,
     status: "idle",
     lastPushedAt: body.manifest.lastPushedAt,
+    ...(typeof body.manifest.revision === "number"
+      ? { revision: body.manifest.revision }
+      : {}),
     consentedAt: nowIso(runtime),
     // Kept so this device can offer the backup by name later.
     vaultTitle: payload.vaultTitle,

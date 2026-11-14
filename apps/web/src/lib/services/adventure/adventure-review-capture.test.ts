@@ -6,6 +6,7 @@ import {
   adventureReviewJson,
   adventureReviewMarkdown,
   copyDiagnosticSnapshot,
+  saveDiagnosticBaseline,
 } from "./adventure-review-capture";
 
 function exampleSession(): AdventureSession {
@@ -413,6 +414,7 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(first.fromTurnCount).toBe(0);
     expect(first.toTurnCount).toBe(1);
     expect(JSON.parse(first.text).state.premise).toBe(firstSession.premise);
+    saveDiagnosticBaseline(firstSession, storage);
 
     const nextSession = exampleSession();
     nextSession.revision = 3;
@@ -449,6 +451,7 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(delta.stateChanges.visibleState.knownFacts.added[0].id).toBe(
       "fact-new",
     );
+    saveDiagnosticBaseline(nextSession, storage);
 
     const forced = copyDiagnosticSnapshot(nextSession, storage, {
       forceFull: true,
@@ -468,6 +471,7 @@ describe("Adventure diagnostic JSON for AI", () => {
 
     const twoTurns = manyTurns(2);
     copyDiagnosticSnapshot(twoTurns, storage);
+    saveDiagnosticBaseline(twoTurns, storage);
 
     const rewound = exampleSession();
     const afterRewind = copyDiagnosticSnapshot(rewound, storage);

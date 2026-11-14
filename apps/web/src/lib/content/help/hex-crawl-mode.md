@@ -131,6 +131,15 @@ You see the proposal on the map first and nothing is saved. Tap a proposed hex t
 
 Terrain you set yourself is never replaced, and notes, pins, fog and exploration are never touched. Hexes that gain terrain while you are reviewing are skipped when you accept.
 
+## Generate rivers, roads and settlement sites
+
+Open a hex as the GM and choose **Generate geography** → **Propose rivers, roads & settlement sites** to lay down coastlines, rivers, roads or paths, crossings and suggested settlement sites across mapped terrain. It runs deterministically on your device with **AI Disabled** supported, and requires mapped terrain in range (not available in guest vaults).
+
+- **Review controls**: Choose **Civilisation** (**Wilderness**, **Frontier**, or **Settled**), adjust **Radius (hexes)** (1 to 12), edit the **Seed**, or choose **Reroll proposals** for a new seed.
+- **Reject or restore features**: Tap the checkmark button on any proposed river, road, coast edge, or settlement site directly on the map to reject or restore it before saving.
+- **Accept or cancel**: **Accept** saves all remaining proposals in one atomic update; **Cancel** discards them. Existing terrain, pinned places, and authored edges stay fixed. If the map changes during review, **Accept** refuses the stale write so you can cancel and regenerate; if saving fails, no partial changes are applied.
+- **Settlement sites are suggestions**: Accepted sites remain map suggestions rather than Vault entities. Select a hex with an accepted site later and use the location controls to attach an existing place or create a new one.
+
 ## Hex crawling solo
 
 In solo play, with Hex Crawl mode on, the party moving into an unexplored hex offers Explore. The offer appears near the travel readout with **Explore** and **Not now**.

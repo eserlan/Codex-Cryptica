@@ -1,6 +1,9 @@
 import {
+  CLOUD_BACKUP_OWNER_EDITOR,
   CLOUD_BACKUP_SCHEMA_V2,
   CLOUD_BACKUP_SHARD_COUNT,
+  cloudBackupRevisionOf,
+  type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
 } from "../../../../packages/schema/src/publishing";
 import {
@@ -9,64 +12,134 @@ import {
   hashEntities,
 } from "./cloud-backup-entities";
 import {
+  type BackupObjects,
   type CloudBackupEnv,
-  getBundleKey,
+  cleanupSuperseded,
   getAssetKey,
-  storedBytes,
-  jsonByteLength,
+  getStagedKey,
+  reachableBytes,
+  resolveObjects,
   writeJson,
   writeManifest,
   pruneAssets,
 } from "./cloud-backup-storage";
 import { json, type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
-import { writeIndex, writeShards } from "./cloud-backup-shards";
+import { lostRace } from "./cloud-backup-delta";
+import {
+  carryTombstones,
+  stageIndex,
+  stageShards,
+  stagedName,
+} from "./cloud-backup-shards";
 
 /**
  * Commits a staged snapshot: bundle, then manifest, then prune.
  *
  * Order matters. Assets are already uploaded individually by this point, so
- * the only writes here are small. The manifest lands after the bundle because
- * until it does the backup still describes the previous, complete state; the
- * prune runs last because deleting first would leave a bundle whose media is
- * gone — a corrupt remote copy the user has no way to detect. The worst case
- * is a few orphaned assets, which the next commit clears.
+ * the only writes here are small. Everything is staged under keys of this
+ * commit alone, so until the manifest switch the backup still describes the
+ * previous, complete state; the switch is etag-conditional, so a commit that
+ * lost a race changes nothing. The prune runs last because deleting first would
+ * leave a bundle whose media is gone — a corrupt remote copy the user has no
+ * way to detect. The worst case is a few orphaned assets, which the next commit
+ * clears.
  */
 async function commitSnapshot(
+  request: Request,
   env: CloudBackupEnv,
   backupId: string,
   payload: BackupPayload,
-  manifest: CloudBackupManifest,
-  ownerCodeHash: string,
-): Promise<CloudBackupManifest> {
+  auth: {
+    manifest: CloudBackupManifest;
+    ownerCodeHash: string;
+    etag?: string;
+    objects?: BackupObjects;
+  },
+): Promise<Response> {
+  const lastPushedAt = new Date().toISOString();
+  const revision = cloudBackupRevisionOf(auth.manifest) + 1;
+  const tag = `${revision}-${crypto.randomUUID()}`;
   const entities = bundleEntities(payload.bundle);
-  let committed = manifest;
+  const staged: BackupObjects = {};
+  let committed: CloudBackupManifest = {
+    ...auth.manifest,
+    vaultTitle: payload.vaultTitle,
+    lastPushedAt,
+    revision,
+    // A full upload can drop entities without tombstones, so the feed restarts here.
+    feedHorizon: revision,
+  };
+  const base = await resolveObjects(env, backupId, auth.objects);
   if (entities) {
     // Schema v2 (#3354): shard the entities so later uploads can be deltas.
     const { entities: _entities, ...rest } = payload.bundle as Record<
       string,
       unknown
     >;
-    await writeShards(env, backupId, groupByShard(entities), true);
-    await writeIndex(env, backupId, await hashEntities(entities));
-    await writeJson(env, getBundleKey(backupId), rest);
+    staged.shards = await stageShards(
+      env,
+      backupId,
+      tag,
+      groupByShard(entities),
+    );
+    const stamp: CloudBackupEntitySyncMeta = {
+      rev: revision,
+      editedBy: CLOUD_BACKUP_OWNER_EDITOR,
+      editedAt: lastPushedAt,
+    };
+    const entityMeta = Object.fromEntries(
+      entities.map((entity) => [entity.id, stamp]),
+    );
+    const carried = await carryTombstones(
+      env,
+      backupId,
+      base,
+      new Set(entities.map((entity) => entity.id)),
+    );
+    const trash = await stageShards(env, backupId, tag, carried.trash, "trash");
+    if (Object.keys(trash).length > 0) staged.trash = trash;
+    staged.index = await stageIndex(
+      env,
+      backupId,
+      tag,
+      await hashEntities(entities),
+      entityMeta,
+      carried.tombstones,
+    );
+    await writeJson(env, getStagedKey(backupId, tag, "bundle.json"), rest);
     committed = {
-      ...manifest,
+      ...committed,
       schemaVersion: CLOUD_BACKUP_SCHEMA_V2,
       shardCount: CLOUD_BACKUP_SHARD_COUNT,
       entityCount: entities.length,
     };
   } else {
-    await writeJson(env, getBundleKey(backupId), payload.bundle);
+    await writeJson(
+      env,
+      getStagedKey(backupId, tag, "bundle.json"),
+      payload.bundle,
+    );
   }
+  staged.bundle = stagedName(tag, "bundle.json");
+  committed.sizeBytes = await reachableBytes(env, backupId, staged);
 
-  await writeManifest(env, backupId, committed, ownerCodeHash);
+  const won = await writeManifest(
+    env,
+    backupId,
+    committed,
+    auth.ownerCodeHash,
+    staged,
+    auth.etag,
+  );
+  if (!won) return lostRace(request, env, backupId, staged, auth.manifest);
 
+  await cleanupSuperseded(env, backupId, revision, staged, base);
   const keep = new Set(
     (payload.assetIds ?? []).map((id) => getAssetKey(backupId, id)),
   );
   await pruneAssets(env, backupId, keep);
-  return committed;
+  return json(request, { manifest: committed });
 }
 
 /**
@@ -74,7 +147,9 @@ async function commitSnapshot(
  *
  * Carries the bundle, which is text only and so stays small, plus the ids of
  * the assets that belong to this snapshot. Anything else under the backup is
- * pruned, which is how a deleted image eventually leaves storage.
+ * pruned, which is how a deleted image eventually leaves storage. Answers 409
+ * `diverged` if another commit switched the manifest after this one was
+ * authorised.
  */
 export async function handleCommitCloudBackup(
   request: Request,
@@ -87,25 +162,6 @@ export async function handleCommitCloudBackup(
 
   const validated = validatePayload(request, body);
   if ("response" in validated) return validated.response;
-  const { payload } = validated;
 
-  const manifest: CloudBackupManifest = {
-    ...auth.manifest,
-    vaultTitle: payload.vaultTitle,
-    sizeBytes:
-      (await storedBytes(env, backupId)) + jsonByteLength(payload.bundle),
-    lastPushedAt: new Date().toISOString(),
-  };
-
-  // `authorize` already proved the presented code matches, and a commit never
-  // changes it — carry the stored hash through rather than re-deriving it.
-  const committed = await commitSnapshot(
-    env,
-    backupId,
-    payload,
-    manifest,
-    auth.ownerCodeHash,
-  );
-
-  return json(request, { manifest: committed });
+  return commitSnapshot(request, env, backupId, validated.payload, auth);
 }

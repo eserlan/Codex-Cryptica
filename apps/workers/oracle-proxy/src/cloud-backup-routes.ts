@@ -8,6 +8,7 @@ import {
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
   handleGetCloudBackupIndex,
+  handleGetCloudBackupChanges,
   handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
@@ -166,6 +167,10 @@ function handleCloudBackupActionRoute(
     index: {
       method: "GET",
       run: () => handleGetCloudBackupIndex(request, env, backupId),
+    },
+    changes: {
+      method: "GET",
+      run: () => handleGetCloudBackupChanges(request, env, backupId),
     },
     delta: {
       method: "POST",
