@@ -13,8 +13,8 @@
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
   import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
   import CloudBackupSharingSettings from "#lib/components/settings/CloudBackupSharingSettings.svelte";
+  import CloudBackupRestorePointsSettings from "#lib/components/settings/CloudBackupRestorePointsSettings.svelte";
   import CloudBackupTrashSettings from "#lib/components/settings/CloudBackupTrashSettings.svelte";
-  import { isSharedVaultEnabled } from "#lib/config/shared-vault.js";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { mergeNoticeLines } from "#lib/stores/cloud-backup-merge-notice.js";
   import { vault } from "#lib/stores/vault.svelte.js";
@@ -579,7 +579,7 @@
     {@render activeBackupPanel()}
   {/if}
 
-  {#if isSharedVaultEnabled() && !isEditor}
+  {#if !isEditor}
     <CloudBackupSharingSettings
       {vaultId}
       backupOn={isOn}
@@ -591,8 +591,15 @@
     />
   {/if}
 
-  {#if isSharedVaultEnabled() && isOn && (isEditor || cloudBackupStore.sharing)}
+  {#if isOn && (isEditor || cloudBackupStore.sharing)}
     <CloudBackupTrashSettings {vaultId} />
+  {/if}
+
+  {#if isOn && cloudBackupStore.role === "owner" && cloudBackupStore.sharing && cloudBackupStore.ownerCode}
+    <CloudBackupRestorePointsSettings
+      {vaultId}
+      confirm={(options) => notificationStore.confirm(options)}
+    />
   {/if}
 
   {#if !isOn}
