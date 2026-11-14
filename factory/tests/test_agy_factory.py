@@ -81,6 +81,43 @@ class TestAgyFactory(unittest.TestCase):
                 self.assertEqual(self.job_mod.other_worktree_jobs()[4200]["id"], "042-sibling-job")
                 self.assertGreaterEqual(self.job_mod.next_job_number(), 43)
 
+    def test_next_job_number_parses_complete_numeric_prefixes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            jobs = Path(tmp)
+            (jobs / "1000-existing-job").mkdir()
+            refs = "factory/1002-existing-branch\n"
+
+            def fake_run(cmd, **kwargs):
+                if cmd[:2] == ["git", "for-each-ref"]:
+                    return type("Result", (), {"stdout": refs})()
+                return type("Result", (), {"stdout": ""})()
+
+            with patch.object(self.job_mod, "JOBS", jobs), \
+                    patch.object(self.job_mod, "other_worktree_jobs", return_value={
+                        1001: {"id": "1001-sibling-job"},
+                    }), patch.object(self.job_mod, "run", side_effect=fake_run):
+                self.assertEqual(self.job_mod.next_job_number(), 1003)
+
+    def test_single_issue_skip_row_reports_owner_without_driving_job(self):
+        ns = self.wf_ns
+        ns["args"] = {"mode": "single", "issue": 4200}
+        ns["JOB_BIN"] = "factory/bin/job"
+        ns["run_cmd"] = lambda *_args, **_kwargs: type(
+            "Result", (), {"stdout": "skip\t4200\t042-sibling-job\tintake\towned by another worktree"},
+        )()
+        messages = []
+        ns["wf_log"] = messages.append
+        driven = []
+
+        async def drive_job(job_id, **_kwargs):
+            driven.append(job_id)
+
+        ns["drive_job"] = drive_job
+        asyncio.run(ns["run_factory_workflow"]())
+
+        self.assertEqual(messages, ["Issue #4200 cannot run: owned by another worktree"])
+        self.assertEqual(driven, [])
+
     def test_load_all_eight_role_instructions(self):
         """All 8 .claude/agents/*.md files load cleanly with frontmatter stripped and AGY contract added."""
         roles = [

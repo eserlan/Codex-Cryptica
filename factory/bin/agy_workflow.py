@@ -420,10 +420,16 @@ async def run_factory_workflow():
         else:
             q_rows = parse_queue_output(run_cmd([JOB_BIN, "queue"]).stdout)
             for r in q_rows:
-                if r["issue"] == int(target) and r["job"]:
-                    job_id = r["job"]
+                if r["issue"] == int(target):
+                    if r["action"] not in {"resume", "new"}:
+                        wf_log(f"Issue #{target} cannot run: {r['note']}")
+                        return
+                    if r["action"] == "resume":
+                        job_id = r["job"]
                     if r["stage"] == "needs-info" and r["action"] == "resume":
                         run_cmd([JOB_BIN, "advance", job_id, "intake"])
+                    elif r["action"] == "new":
+                        job_id = None
                     break
             if not job_id:
                 cmd = [JOB_BIN, "create", target]

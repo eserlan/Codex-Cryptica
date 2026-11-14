@@ -724,16 +724,19 @@ def other_worktree_jobs():
 
 def next_job_number():
     """Highest existing job number across registered worktrees and factory branches, plus 1."""
-    numbers = [int(p.name.split("-")[0]) for p in JOBS.iterdir() if p.name[:3].isdigit()] if JOBS.exists() else []
+    numbers = [int(p.name.split("-", 1)[0]) for p in JOBS.iterdir()
+               if p.name.split("-", 1)[0].isdigit()] if JOBS.exists() else []
     for data in other_worktree_jobs().values():
-        if data["id"][:3].isdigit():
-            numbers.append(int(data["id"][:3]))
+        prefix = data["id"].split("-", 1)[0]
+        if prefix.isdigit():
+            numbers.append(int(prefix))
     refs = run(["git", "for-each-ref", "--format=%(refname:short)",
                 "refs/heads/factory/", "refs/remotes/origin/factory/"], check=False).stdout.splitlines()
     for ref in refs:
         slug = ref.rsplit("factory/", 1)[-1]
-        if len(slug) >= 3 and slug[:3].isdigit():
-            numbers.append(int(slug[:3]))
+        prefix = slug.split("-", 1)[0]
+        if prefix.isdigit():
+            numbers.append(int(prefix))
     return max(numbers, default=0) + 1
 
 
