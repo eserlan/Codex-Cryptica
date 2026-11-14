@@ -3,6 +3,7 @@ import {
   cloudBackupRevisionOf,
   hashCloudBackupEntity,
 } from "../../../../../packages/schema/src/publishing";
+import { handleCloudBackupSharingOn } from "../cloud-backup-sharing";
 import { handleCloudBackupReissueCode } from "../cloud-backup-admin";
 import { handleCloudBackupDelta } from "../cloud-backup-delta";
 import { handleEnableCloudBackup } from "../cloud-backup-lifecycle";
@@ -18,6 +19,7 @@ import {
   getIndexKey,
   getManifestKey,
   getShardKey,
+  getSharingDevicesKey,
   referencedKeys,
   readManifest,
   writeJson,
@@ -491,7 +493,16 @@ describe("race-safe cloud backup commit", () => {
     expect(await entitiesOf({ ...fixture, ownerCode })).toEqual(before);
 
     const stored = env.BUCKET.store.get(getManifestKey(backupId));
-    env.BUCKET.injectConflicts(3);
+    const manifestKey = getManifestKey(backupId);
+    const put = env.BUCKET.put.bind(env.BUCKET);
+    let manifestConflicts = 3;
+    env.BUCKET.put = async (key: string, body: any, options: any) => {
+      if (key === manifestKey && manifestConflicts > 0) {
+        manifestConflicts--;
+        return null;
+      }
+      return put(key, body, options);
+    };
     const refused = await handleCloudBackupReissueCode(
       ownerRequest("admin", { method: "POST" }),
       env,
@@ -499,5 +510,47 @@ describe("race-safe cloud backup commit", () => {
     );
     expect(refused.status).toBe(409);
     expect(env.BUCKET.store.get(getManifestKey(backupId))).toBe(stored);
+  });
+
+  it("keeps sharing and the device file when a shared reissue loses the race", async () => {
+    const fixture = await committedFixture();
+    const { backupId } = fixture;
+    const env = { ...fixture.env, CLOUD_BACKUP_ADMIN_TOKEN: "admin" };
+    const on = await handleCloudBackupSharingOn(
+      ownerRequest(fixture.ownerCode, { method: "POST" }),
+      env,
+      backupId,
+    );
+    expect(on.status).toBe(200);
+    const shared = (await readManifest(env, backupId))!;
+    const devicesKey = getSharingDevicesKey(backupId, shared.sharing!);
+    await env.BUCKET.put(devicesKey, "{}");
+    const stored = env.BUCKET.store.get(getManifestKey(backupId));
+
+    // Conflicts only on the manifest write; the lock's own writes still land.
+    const put = env.BUCKET.put.bind(env.BUCKET);
+    const spy = vi
+      .spyOn(env.BUCKET, "put")
+      .mockImplementation(async (key: string, ...rest: any[]) =>
+        key === getManifestKey(backupId) ? null : (put as any)(key, ...rest),
+      );
+    const refused = await handleCloudBackupReissueCode(
+      ownerRequest("admin", { method: "POST" }),
+      env,
+      backupId,
+    );
+    expect(refused.status).toBe(409);
+    expect(env.BUCKET.store.get(getManifestKey(backupId))).toBe(stored);
+    expect((await readManifest(env, backupId))!.sharing).toBeDefined();
+    expect(await env.BUCKET.get(devicesKey)).not.toBe(null);
+    spy.mockRestore();
+
+    const retry = await handleCloudBackupReissueCode(
+      ownerRequest("admin", { method: "POST" }),
+      env,
+      backupId,
+    );
+    expect(retry.status).toBe(200);
+    expect(await env.BUCKET.get(devicesKey)).toBe(null);
   });
 });
