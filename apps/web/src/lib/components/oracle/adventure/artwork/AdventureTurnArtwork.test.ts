@@ -179,4 +179,52 @@ describe("compact callout lazy loading", () => {
     ).toBeTruthy();
     expect(resolve).toHaveBeenCalledTimes(1);
   });
+
+  it("does not load the CSS-hidden inline NPC portrait on wide surfaces", async () => {
+    const instances: Array<{
+      cb: IntersectionObserverCallback;
+      target?: Element;
+    }> = [];
+    class FakeObserver {
+      cb: IntersectionObserverCallback;
+      target?: Element;
+      constructor(cb: IntersectionObserverCallback) {
+        this.cb = cb;
+        instances.push(this);
+      }
+      observe(el: Element) {
+        this.target = el;
+      }
+      disconnect() {}
+      unobserve() {}
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    const resolve = vi.fn((path: string) => `blob:${path}`);
+    setup({ location: undefined, npcs: makeReveal().npcs }, resolve);
+    await Promise.resolve();
+
+    const inlineObserver = instances.find((instance) =>
+      screen
+        .getByTestId("adventure-turn-artwork")
+        .contains(instance.target ?? null),
+    )!;
+    const calloutObserver = instances.find((instance) =>
+      screen
+        .getByTestId("adventure-turn-artwork-compact")
+        .contains(instance.target ?? null),
+    )!;
+    expect(inlineObserver).toBeTruthy();
+    expect(calloutObserver).toBeTruthy();
+    expect(resolve).not.toHaveBeenCalled();
+
+    calloutObserver.cb(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      calloutObserver as unknown as IntersectionObserver,
+    );
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(1));
+
+    // A display:none ancestor has no intersection, so the inline observer is
+    // intentionally left untouched at this wide container size.
+    expect(resolve).toHaveBeenCalledWith("images/mira.webp");
+  });
 });
