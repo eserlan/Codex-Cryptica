@@ -200,14 +200,10 @@ async function reissueOnce(
   record: ReissueRecord,
   ownerCodeHash: string,
 ): Promise<"written" | "lost" | "busy"> {
-  const { sharing } = record;
-  const release = sharing
-    ? await acquireBackupMutationLock(env, backupId)
-    : undefined;
-  if (sharing && !release) return "busy";
-  let written: boolean;
+  const release = await acquireBackupMutationLock(env, backupId);
+  if (!release) return "busy";
   try {
-    written = await writeManifest(
+    const written = await writeManifest(
       env,
       backupId,
       record.manifest,
@@ -216,20 +212,21 @@ async function reissueOnce(
       record.etag,
       undefined,
     );
-  } finally {
-    await release?.();
-  }
-  if (!written) return "lost";
-  try {
+    if (!written) return "lost";
     // The manifest commit is the security boundary: after sharing is removed,
-    // cleanup failure must not hide the new owner code. Listing the prefix on
-    // every reissue also gives a later request a way to retry orphan cleanup.
-    await cleanupSharingDeviceRecords(env, backupId);
-  } catch {
-    // The stale records are no longer reachable while sharing is off; a later
-    // reissue will retry deleting anything still under this prefix.
+    // keep the mutation lock through cleanup so a newly enabled link cannot
+    // have its device record deleted. Listing on every reissue also lets a
+    // later request retry orphan cleanup.
+    try {
+      await cleanupSharingDeviceRecords(env, backupId);
+    } catch {
+      // The stale records are no longer reachable while sharing is off; a later
+      // reissue will retry deleting anything still under this prefix.
+    }
+    return "written";
+  } finally {
+    await release();
   }
-  return "written";
 }
 
 /**

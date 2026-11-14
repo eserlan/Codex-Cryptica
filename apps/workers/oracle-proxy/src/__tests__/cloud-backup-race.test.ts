@@ -493,7 +493,16 @@ describe("race-safe cloud backup commit", () => {
     expect(await entitiesOf({ ...fixture, ownerCode })).toEqual(before);
 
     const stored = env.BUCKET.store.get(getManifestKey(backupId));
-    env.BUCKET.injectConflicts(3);
+    const manifestKey = getManifestKey(backupId);
+    const put = env.BUCKET.put.bind(env.BUCKET);
+    let manifestConflicts = 3;
+    env.BUCKET.put = async (key: string, body: any, options: any) => {
+      if (key === manifestKey && manifestConflicts > 0) {
+        manifestConflicts--;
+        return null;
+      }
+      return put(key, body, options);
+    };
     const refused = await handleCloudBackupReissueCode(
       ownerRequest("admin", { method: "POST" }),
       env,

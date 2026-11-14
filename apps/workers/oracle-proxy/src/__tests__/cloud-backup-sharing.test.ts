@@ -646,6 +646,65 @@ describe("reissue-code turns sharing off", () => {
     expect(await fx.env.BUCKET.get(devicesKey)).toBe(null);
   });
 
+  it("holds the mutation lock until device cleanup finishes", async () => {
+    const fx = await shared();
+    const bucket = fx.env.BUCKET;
+    const listObjects = bucket.list.bind(bucket);
+    let pauseCleanupList!: () => void;
+    let continueCleanupList!: () => void;
+    const cleanupListPaused = new Promise<void>((resolve) => {
+      pauseCleanupList = resolve;
+    });
+    const cleanupListContinue = new Promise<void>((resolve) => {
+      continueCleanupList = resolve;
+    });
+    let pauseNextCleanupList = true;
+    bucket.list = async (options: any) => {
+      if (
+        pauseNextCleanupList &&
+        options.prefix === `cloud-backup/${fx.backupId}/sharing-devices/`
+      ) {
+        pauseNextCleanupList = false;
+        pauseCleanupList();
+        await cleanupListContinue;
+      }
+      return listObjects(options);
+    };
+
+    const firstReissue = reissue(fx, ADMIN);
+    await cleanupListPaused;
+    const concurrentReissue = await reissue(fx, ADMIN);
+    expect(concurrentReissue.status).toBe(503);
+
+    continueCleanupList();
+    const completedReissue = await firstReissue;
+    expect(completedReissue.status).toBe(200);
+    const { ownerCode } = (await completedReissue.json()) as {
+      ownerCode: string;
+    };
+    const on = await call(fx, "POST", "/sharing", { key: ownerCode });
+    expect(on.status).toBe(200);
+    const { editorToken } = (await on.json()) as { editorToken: string };
+    for (let i = 0; i < CLOUD_BACKUP_SHARING_DEVICE_CAP; i++) {
+      expect(
+        (
+          await call(fx, "GET", "/status", {
+            key: editorToken,
+            device: newDevice(),
+          })
+        ).status,
+      ).toBe(200);
+    }
+    expect(
+      (
+        await call(fx, "GET", "/status", {
+          key: editorToken,
+          device: newDevice(),
+        })
+      ).status,
+    ).toBe(403);
+  });
+
   it("refuses without admin access and writes nothing", async () => {
     const fx = await shared();
     const device = newDevice();
