@@ -1,6 +1,9 @@
 import type { CloudBackupManifest, LocalCloudBackupRecord } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
-import { getLocalCloudBackupRecord as readRecord } from "./backup-records";
+import {
+  getLocalCloudBackupRecord as readRecord,
+  withCommittedRevision,
+} from "./backup-records";
 import type { CloudBackupOutcome } from "./types";
 
 /** The changed-only part of a vault, for `pushDeltaToCloudBackup` (#3354). */
@@ -48,7 +51,13 @@ export async function pushDeltaToCloudBackup(
           "Content-Type": "application/json",
           Authorization: `Bearer ${record.ownerCode}`,
         },
-        body: JSON.stringify({ ...delta, baseLastPushedAt }),
+        body: JSON.stringify({
+          ...delta,
+          baseLastPushedAt,
+          ...(typeof record.revision === "number"
+            ? { baseRevision: record.revision }
+            : {}),
+        }),
         signal,
       },
     );
@@ -153,7 +162,7 @@ async function applyDeltaSuccess(
     };
   }
   await runtime.storage.write(vaultId, {
-    ...record,
+    ...withCommittedRevision(record, manifest),
     status: "idle",
     lastPushedAt: manifest.lastPushedAt,
     vaultTitle: delta.vaultTitle,

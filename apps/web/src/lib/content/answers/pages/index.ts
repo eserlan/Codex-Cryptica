@@ -27,6 +27,7 @@ import { howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg } from "./how-do-i-give
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
+import { howDoIHandlePlayersDiscussingPlansInFrontOfNpcs } from "./how-do-i-handle-players-discussing-plans-in-front-of-npcs";
 import { howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies } from "./how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies";
 import { howDoIImproviseNpcsInDnd } from "./how-do-i-improvise-npcs-in-dnd";
 import { howDoIIntroduceChildrenToDndWithoutOverwhelmingThem } from "./how-do-i-introduce-children-to-dnd-without-overwhelming-them";
@@ -230,6 +231,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
+    howDoIHandlePlayersDiscussingPlansInFrontOfNpcs,
     howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies,
     howDoIImproviseNpcsInDnd,
     howDoIIntroduceChildrenToDndWithoutOverwhelmingThem,

@@ -570,6 +570,38 @@ describe("the committed registry", () => {
     });
   });
 
+  it("records both sides of the player-planning-in-front-of-NPCs overlaps", () => {
+    const planning = registry.find(
+      (entry) => entry.id === "answer-players-discussing-plans-front-npcs",
+    );
+
+    for (const [id, reasonFragment] of [
+      [
+        "answer-make-roleplay-more-engaging",
+        "meaningful choices, NPC wants, and boundaries",
+      ],
+      [
+        "answer-interviewing-npcs-investigation",
+        "witness knowledge and how targeted questions draw it out",
+      ],
+      [
+        "answer-roleplay-npcs-without-acting",
+        "portray and switch between NPCs without relying on acting technique",
+      ],
+    ]) {
+      expect(planning?.acknowledgedOverlap).toContainEqual({
+        with: id,
+        reason: expect.any(String),
+      });
+      expect(
+        registry.find((entry) => entry.id === id)?.acknowledgedOverlap,
+      ).toContainEqual({
+        with: planning?.id,
+        reason: expect.stringContaining(reasonFragment),
+      });
+    }
+  });
+
   it("records the distinct scope of sci-fi team roles and investigator guidance", () => {
     const sciFiCrew = registry.find(
       (entry) => entry.id === "answer-sci-fi-character-roles",

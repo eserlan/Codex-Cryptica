@@ -68,3 +68,17 @@ export async function getCloudBackupOwnershipCode(
 ): Promise<string | null> {
   return (await getLocalCloudBackupRecord(runtime, vaultId))?.ownerCode ?? null;
 }
+
+/**
+ * The record carrying the revision a commit returned. A worker that returns
+ * none leaves the record without one, so a stale revision is never sent later.
+ */
+export function withCommittedRevision(
+  record: LocalCloudBackupRecord,
+  manifest: { revision?: number },
+): LocalCloudBackupRecord {
+  const { revision: _stale, ...rest } = record;
+  return typeof manifest.revision === "number"
+    ? { ...rest, revision: manifest.revision }
+    : rest;
+}

@@ -169,6 +169,7 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
     "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
     "how-can-i-practise-being-a-dungeon-master-without-a-group",
     "stop-players-investigating-every-detail",
+    "how-do-i-handle-players-discussing-plans-in-front-of-npcs",
   ],
   discovery: {
     id: "answer-roleplay-npcs-without-acting",
@@ -196,6 +197,11 @@ export const howDoIRoleplayNpcsIfImNotGoodAtActing: AnswerConfigInput = {
       "answer-interviewing-npcs-investigation",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-players-discussing-plans-front-npcs",
+        reason:
+          "That answer governs whether an NPC may react to the players' table discussion; this answer helps a GM portray and switch between NPCs without relying on acting technique.",
+      },
       {
         with: "answer-improvise-npcs-in-dnd",
         reason:

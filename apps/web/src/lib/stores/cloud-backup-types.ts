@@ -8,6 +8,7 @@ import type {
   CloudBackupDirtyRow,
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
+import type { CloudBackupBaseStore } from "./cloud-backup-base";
 import type { StorageLike } from "#lib/utils/runtime-deps.js";
 import type { ArtworkBackupScope } from "./cloud-backup-artwork-scope";
 import type { CloudBackupArtworkConsent } from "./cloud-backup-artwork-consent";
@@ -97,6 +98,11 @@ export interface CloudBackupDeps {
    * exactly the changes it carried.
    */
   dirty?: CloudBackupDirtyStore;
+  /**
+   * Keeps what each entity held when last pushed, the base for a later
+   * three-way merge. Optional; written only after a successful push.
+   */
+  base?: CloudBackupBaseStore;
   /**
    * Builds an incremental upload from recorded changes, or `null` when they
    * call for a full upload (#3354). `uploadedAssetIds` are the media the
