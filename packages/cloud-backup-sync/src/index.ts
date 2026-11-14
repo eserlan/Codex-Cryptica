@@ -3,5 +3,6 @@ export * from "./runtime";
 export * from "./recovery-key";
 export * from "./auto-sync";
 export * from "./merge";
+export * from "./backup-sharing";
 export * from "./change-feed";
 export { readRemoteLastPushedAt } from "./backup-metadata";

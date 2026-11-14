@@ -34,6 +34,7 @@ const record = {
 function harness() {
   const state: ConstructorParameters<typeof CloudBackupAccount>[0] = {
     consented: false,
+    sharing: null,
     ownerCode: null,
     lastPushedAt: null,
     status: "off",
