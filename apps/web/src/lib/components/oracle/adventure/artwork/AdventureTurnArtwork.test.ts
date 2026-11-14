@@ -132,6 +132,20 @@ describe("adventure turn artwork presentations", () => {
 describe("compact callout lazy loading", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it("skips the CSS-hidden inline portrait when IntersectionObserver is unavailable", async () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+    vi.stubGlobal("getComputedStyle", (element: Element) => ({
+      display: element.closest('[data-testid="adventure-turn-artwork"]')
+        ? "none"
+        : "block",
+    }));
+    const resolve = vi.fn((path: string) => `blob:${path}`);
+    setup({ location: undefined, npcs: makeReveal().npcs }, resolve);
+
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(1));
+    expect(resolve).toHaveBeenCalledWith("images/mira.webp");
+  });
+
   it("starts loading only after the callout becomes visible", async () => {
     const instances: Array<{
       cb: IntersectionObserverCallback;

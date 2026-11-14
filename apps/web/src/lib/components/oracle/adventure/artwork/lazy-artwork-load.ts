@@ -44,6 +44,14 @@ export function loadWhenVisible(
         if (active) onSettled(null);
       });
   }
+  function isDisplayed(): boolean {
+    let current: HTMLElement | null = element;
+    while (current) {
+      if (getComputedStyle(current).display === "none") return false;
+      current = current.parentElement;
+    }
+    return true;
+  }
   const observer =
     typeof IntersectionObserver === "undefined"
       ? null
@@ -57,7 +65,7 @@ export function loadWhenVisible(
           { rootMargin: "200px" },
         );
   if (observer) observer.observe(element);
-  else start();
+  else if (isDisplayed()) start();
   return () => {
     active = false;
     controller.abort();
