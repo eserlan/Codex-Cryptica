@@ -1,6 +1,7 @@
 import type { Entity } from "schema";
 import { vault as defaultVault } from "../stores/vault.svelte";
 import { debugStore } from "../stores/debug.svelte";
+import { entityEditingRegistry } from "../stores/entity-editing-registry";
 
 /**
  * Minimal interface describing the vault capabilities that `createEditState`
@@ -31,6 +32,13 @@ export function createEditState(
   let editStartDate = $state<Entity["start_date"]>(_initialEntity?.start_date);
   let editEndDate = $state<Entity["end_date"]>(_initialEntity?.end_date);
 
+  // Cloud Backup holds pulled changes back from an entity while it is open here.
+  let releaseEditing: (() => void) | null = null;
+  function trackEditing(id: string | null) {
+    releaseEditing?.();
+    releaseEditing = id ? entityEditingRegistry.begin(id) : null;
+  }
+
   function start(entity: Entity) {
     const session = ++editSession;
     activeEditEntityId = entity.id;
@@ -44,6 +52,7 @@ export function createEditState(
     editStartDate = entity.start_date;
     editEndDate = entity.end_date;
     isEditing = true;
+    trackEditing(entity.id);
 
     // Ensure content is fully loaded from Dexie before the editor opens.
     // If the entity was populated from the graph-entity cache the content
@@ -83,6 +92,7 @@ export function createEditState(
     editSession++;
     activeEditEntityId = null;
     isEditing = false;
+    trackEditing(null);
   }
 
   return {
@@ -91,7 +101,10 @@ export function createEditState(
     },
     set isEditing(v) {
       isEditing = v;
+      if (!v) trackEditing(null);
     },
+    /** Releases the editing mark; called when the view goes away. */
+    dispose: () => trackEditing(null),
     get title() {
       return editTitle;
     },

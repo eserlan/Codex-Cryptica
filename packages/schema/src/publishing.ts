@@ -720,6 +720,22 @@ export const LocalCloudBackupRecordSchema = z.object({
   vaultTitle: z.string().optional(),
   /** Revision returned by the last commit; absent when the worker sent none. */
   revision: z.number().int().nonnegative().optional(),
+  /**
+   * Group sharing state this device last saw. Absent when sharing is off or
+   * unknown. Never holds the editor token: that is shown once and not kept.
+   */
+  sharing: z
+    .object({
+      linkVersion: z.number().int().min(1),
+      enabledAt: z.string(),
+    })
+    .optional(),
+  /**
+   * Set when a pull found that another device had committed. A push that
+   * replaces whole items (maps, canvases, a full snapshot) pauses while it is
+   * set, because those are not merged. An unguarded push clears it.
+   */
+  foreignCommitSeen: z.boolean().optional(),
 });
 
 export type LocalCloudBackupRecord = z.infer<

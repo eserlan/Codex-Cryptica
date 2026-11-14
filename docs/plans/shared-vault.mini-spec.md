@@ -324,12 +324,16 @@ see.
 
 ## Open questions
 
-- The device cap is settled. Confirmed at 10 active devices in 30 days in
-  slice 6.
-- How often a device pulls is proposed at 30 seconds while the app is open.
-  Confirm against the worker's rate limits in slice 5.
-- Restore point storage cost and limit (pending owner confirmation in PR for
-  #4778; figures are estimates): 30 points per backup, one per UTC day, none
-  counted in `sizeBytes` or the 50 MiB cap. About 14 MiB for 30 days in the
-  best case (one small edit a day), about 23 MiB typical, and at most about
-  2.93 GiB (30 x 100 MiB) in the worst case, per shared vault.
+- The device cap is settled at 10 active devices in 30 days in slice 6.
+- ~~How often a device pulls.~~ Settled in slice 5: every 30 seconds while the
+  app is open and visible, and at once when the app regains focus or comes back
+  online. `enforcePublishRateLimit` returns early for `GET`, so `/changes` and
+  `/status` are not rate-limited. Each retry round after a rejected push adds
+  one `POST /delta` against the write limit of 300 per minute, and a push makes
+  at most four. Maps, canvases and full snapshots are not merged yet: they
+  still pause once another device has committed, until slice 10.
+- Restore points are kept for 30 UTC days, with at most one point per day.
+  Points reference committed objects; only asset versions that would otherwise
+  be overwritten are copied. Restore point data is excluded from `sizeBytes`
+  and the backup size cap, and unreferenced asset copies are capped at one
+  version per asset.

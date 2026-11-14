@@ -11,7 +11,10 @@
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
   import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
+  import CloudBackupSharingSettings from "#lib/components/settings/CloudBackupSharingSettings.svelte";
+  import { isSharedVaultEnabled } from "#lib/config/shared-vault.js";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
+  import { mergeNoticeLines } from "#lib/stores/cloud-backup-merge-notice.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -56,6 +59,8 @@
       : (autoState !== "idle" && AUTO_STATUS_LABEL[autoState]) ||
           STATUS_LABEL[status],
   );
+
+  const mergeLines = $derived(mergeNoticeLines(cloudBackupStore.mergeNotice));
 
   const handleConsentKeydown = (event: KeyboardEvent) => {
     // Escape must dismiss without consenting — the same contract every other
@@ -398,6 +403,95 @@
   {/if}
 {/snippet}
 
+{#snippet activeBackupPanel()}
+  <div class="flex flex-col gap-2 border border-theme-border p-4">
+    <p class="text-sm text-theme-text">
+      {#if lastPushed}
+        Last saved {lastPushed}. Changes sync automatically while backup is on —
+        Save to cloud pushes immediately.
+      {:else}
+        Not saved yet. Changes will sync automatically once the first save
+        completes.
+      {/if}
+    </p>
+    {#if status === "error" && cloudBackupStore.errorMessage}
+      <p class="text-sm text-red-400" role="alert">
+        {cloudBackupStore.errorMessage}
+      </p>
+    {/if}
+    {#if autoState === "conflict"}
+      <div class="border border-red-400/40 p-3">
+        <p class="text-sm text-red-400" role="alert">
+          {cloudBackupStore.errorMessage ??
+            "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
+        </p>
+        <p class="mt-1 text-sm text-theme-text">
+          Keep editing safely: nothing will upload until you choose. To see the
+          cloud version, restore it into a new vault from the recovery key
+          below.
+        </p>
+        <button
+          type="button"
+          onclick={() => void cloudBackupStore.resolveConflictKeepMine()}
+          class="mt-2 bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90"
+        >
+          Keep my version
+        </button>
+      </div>
+    {/if}
+
+    {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+      <AdventureBackupSettings
+        {vaultId}
+        refreshKey={cloudBackupStore.artworkConsentVersion}
+        read={(id) => cloudBackupStore.readAdventureBackup(id)}
+        set={(id, enabled, confirmed) =>
+          cloudBackupStore.setAdventureBackup(id, enabled, confirmed)}
+        confirm={(options) => notificationStore.confirm(options)}
+      />
+    {/if}
+
+    {#if codeVisible && cloudBackupStore.recoveryKey}
+      <p class="break-all font-mono text-xs text-theme-text">
+        {cloudBackupStore.recoveryKey}
+      </p>
+    {/if}
+
+    <div class="mt-2 flex flex-wrap gap-2">
+      <button
+        type="button"
+        onclick={saveToCloud}
+        disabled={isSaving || busy}
+        class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+      >
+        {isSaving ? "Saving…" : "Save to cloud"}
+      </button>
+      <button
+        type="button"
+        onclick={copyCode}
+        class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
+      >
+        Copy recovery key
+      </button>
+      <button
+        type="button"
+        onclick={turnOff}
+        class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
+      >
+        Turn off
+      </button>
+      <button
+        type="button"
+        onclick={deleteBackup}
+        disabled={busy}
+        class="border border-red-500/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+      >
+        Delete backup
+      </button>
+    </div>
+  </div>
+{/snippet}
+
 <section class="flex flex-col gap-4" aria-labelledby="cloud-backup-heading">
   <div class="flex items-start justify-between gap-4">
     <div>
@@ -427,6 +521,14 @@
     {/if}
   </div>
 
+  {#if isOn && mergeLines.length > 0}
+    <div class="flex flex-col gap-1 text-sm text-theme-text" role="status">
+      {#each mergeLines as line, index (index)}
+        <p>{line}</p>
+      {/each}
+    </div>
+  {/if}
+
   {#if !isOn}
     <button
       type="button"
@@ -437,92 +539,19 @@
       {cloudBackupStore.consented ? "Turn back on" : "Set up cloud backup"}
     </button>
   {:else}
-    <div class="flex flex-col gap-2 border border-theme-border p-4">
-      <p class="text-sm text-theme-text">
-        {#if lastPushed}
-          Last saved {lastPushed}. Changes sync automatically while backup is on
-          — Save to cloud pushes immediately.
-        {:else}
-          Not saved yet. Changes will sync automatically once the first save
-          completes.
-        {/if}
-      </p>
-      {#if status === "error" && cloudBackupStore.errorMessage}
-        <p class="text-sm text-red-400" role="alert">
-          {cloudBackupStore.errorMessage}
-        </p>
-      {/if}
-      {#if autoState === "conflict"}
-        <div class="border border-red-400/40 p-3">
-          <p class="text-sm text-red-400" role="alert">
-            {cloudBackupStore.errorMessage ??
-              "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
-          </p>
-          <p class="mt-1 text-sm text-theme-text">
-            Keep editing safely: nothing will upload until you choose. To see
-            the cloud version, restore it into a new vault from the recovery key
-            below.
-          </p>
-          <button
-            type="button"
-            onclick={() => void cloudBackupStore.resolveConflictKeepMine()}
-            class="mt-2 bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90"
-          >
-            Keep my version
-          </button>
-        </div>
-      {/if}
+    {@render activeBackupPanel()}
+  {/if}
 
-      {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
-        <AdventureBackupSettings
-          {vaultId}
-          refreshKey={cloudBackupStore.artworkConsentVersion}
-          read={(id) => cloudBackupStore.readAdventureBackup(id)}
-          set={(id, enabled, confirmed) =>
-            cloudBackupStore.setAdventureBackup(id, enabled, confirmed)}
-          confirm={(options) => notificationStore.confirm(options)}
-        />
-      {/if}
-
-      {#if codeVisible && cloudBackupStore.recoveryKey}
-        <p class="break-all font-mono text-xs text-theme-text">
-          {cloudBackupStore.recoveryKey}
-        </p>
-      {/if}
-
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onclick={saveToCloud}
-          disabled={isSaving || busy}
-          class="bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
-        >
-          {isSaving ? "Saving…" : "Save to cloud"}
-        </button>
-        <button
-          type="button"
-          onclick={copyCode}
-          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
-        >
-          Copy recovery key
-        </button>
-        <button
-          type="button"
-          onclick={turnOff}
-          class="border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text"
-        >
-          Turn off
-        </button>
-        <button
-          type="button"
-          onclick={deleteBackup}
-          disabled={busy}
-          class="border border-red-500/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
-        >
-          Delete backup
-        </button>
-      </div>
-    </div>
+  {#if isSharedVaultEnabled()}
+    <CloudBackupSharingSettings
+      {vaultId}
+      backupOn={isOn}
+      sharing={cloudBackupStore.sharing}
+      enable={() => cloudBackupStore.enableSharing(vaultId)}
+      replace={() => cloudBackupStore.replaceSharingLink(vaultId)}
+      disable={() => cloudBackupStore.disableSharing(vaultId)}
+      confirm={(options) => notificationStore.confirm(options)}
+    />
   {/if}
 
   {#if !isOn}

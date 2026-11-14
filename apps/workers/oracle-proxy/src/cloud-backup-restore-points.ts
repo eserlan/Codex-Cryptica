@@ -37,11 +37,11 @@ type RestorePoint = z.infer<typeof RestorePointSchema>;
 const POINTS_DIR = "restore-points/points/";
 const ASSETS_DIR = "restore-points/assets/";
 
-export function getRestorePointKey(backupId: string, date: string): string {
+function getRestorePointKey(backupId: string, date: string): string {
   return `${getBackupPrefix(backupId)}${POINTS_DIR}${date}.json`;
 }
 
-export function getPreservedAssetKey(
+function getPreservedAssetKey(
   backupId: string,
   assetId: string,
   etag: string,

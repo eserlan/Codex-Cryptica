@@ -124,7 +124,7 @@ describe("BusinessRefinePanel", () => {
     });
     await fireEvent.click(
       screen.getByRole("button", {
-        name: new RegExp(`Rewrite ${d.leadership.name}`),
+        name: `Rewrite ${d.leadership.name}, ${d.leadership.role}`,
       }),
     );
     await waitFor(() =>

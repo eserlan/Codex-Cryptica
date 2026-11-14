@@ -434,6 +434,50 @@ function renderPage(data: {
     .search-field { max-width: none; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
   }
+  .lightbox {
+    position: fixed; inset: 0; z-index: 50; display: none; align-items: center; justify-content: center;
+    padding: 20px; background: rgba(15, 13, 11, 0.88); backdrop-filter: blur(8px);
+  }
+  .lightbox.open { display: flex; }
+  .lightbox-frame {
+    position: relative; max-width: min(1160px, 94vw); max-height: 92vh; width: 100%;
+    display: flex; flex-direction: column; gap: 12px; align-items: center;
+  }
+  .lightbox-stage {
+    position: relative; width: 100%; display: flex; align-items: center; justify-content: center; gap: 12px;
+  }
+  .lightbox-media {
+    max-width: min(980px, calc(94vw - 110px)); max-height: 76vh; border-radius: 10px;
+    border: 1px solid var(--rule); background: var(--parchment-flat); overflow: hidden;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  }
+  .lightbox-media.silhouette { background: var(--swatch); padding: 28px; }
+  .lightbox-media img { max-width: 100%; max-height: 76vh; width: auto; height: auto; display: block; object-fit: contain; }
+  .lightbox-nav, .lightbox-close {
+    appearance: none; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(24, 21, 18, 0.85);
+    color: #f6f1e7; border-radius: 999px; width: 44px; height: 44px; font-size: 22px; line-height: 1;
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: border-color 120ms, background 120ms, transform 120ms;
+  }
+  .lightbox-nav:hover, .lightbox-close:hover,
+  .lightbox-nav:focus-visible, .lightbox-close:focus-visible {
+    border-color: var(--gold); background: rgba(38, 33, 27, 0.96); outline: none;
+  }
+  .lightbox-close { position: fixed; top: 16px; right: 16px; font-size: 20px; }
+  .lightbox-caption {
+    width: 100%; max-width: 780px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
+    gap: 8px 16px; color: #ece5d8; font-size: 13px; line-height: 1.45;
+  }
+  .lightbox-title { font-weight: 600; font-size: 14px; color: #fff; }
+  .lightbox-meta { font-family: var(--font-mono); font-size: 11.5px; color: #c7bdb0; display: flex; gap: 12px; align-items: center; }
+  .lightbox-meta a { color: var(--gold); text-decoration: underline; text-underline-offset: 2px; }
+  .lightbox-purpose { flex-basis: 100%; color: #cfc6b9; font-size: 12.5px; }
+  @media (max-width: 640px) {
+    .lightbox-media { max-width: 94vw; }
+    .lightbox-nav { position: fixed; bottom: 18px; z-index: 52; }
+    #lbPrev { left: 18px; }
+    #lbNext { right: 18px; }
+  }
 </style>
 </head>
 <body>
@@ -464,6 +508,25 @@ function renderPage(data: {
 </div>
 <main id="groupsRoot"></main>
 <p class="no-results" id="noResults">No assets match "<span id="noResultsQuery"></span>".</p>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Image preview">
+  <button type="button" class="lightbox-close" id="lbClose" aria-label="Close preview">&times;</button>
+  <div class="lightbox-frame">
+    <div class="lightbox-stage">
+      <button type="button" class="lightbox-nav" id="lbPrev" aria-label="Previous image">&#8249;</button>
+      <div class="lightbox-media" id="lbMedia"><img id="lbImg" alt=""></div>
+      <button type="button" class="lightbox-nav" id="lbNext" aria-label="Next image">&#8250;</button>
+    </div>
+    <div class="lightbox-caption">
+      <span class="lightbox-title" id="lbTitle"></span>
+      <span class="lightbox-meta">
+        <span id="lbCounter"></span>
+        <span id="lbDetails"></span>
+        <a id="lbRawLink" target="_blank" rel="noopener noreferrer">Open raw &#8599;</a>
+      </span>
+      <span class="lightbox-purpose" id="lbPurpose"></span>
+    </div>
+  </div>
+</div>
 <footer class="colophon">
   Listed live from the <code>codex-cryptica-statics</code> R2 bucket via
   <code>env.BUCKET.list()</code> on every request (5 min edge cache) — silhouette
@@ -489,7 +552,7 @@ function renderPage(data: {
     const safeSearch = escapeHtml((name + " " + purpose).toLowerCase());
     const safeUrl = escapeHtml(item.url);
     const safeThumbUrl = escapeHtml(isSilhouette ? item.url : (item.thumbUrl || item.url));
-    return \`<a class="tile-link" href="\${safeUrl}" target="_blank" rel="noopener noreferrer" data-search="\${safeSearch}">
+    return \`<a class="tile-link" href="\${safeUrl}" target="_blank" rel="noopener noreferrer" data-search="\${safeSearch}" data-name="\${safeName}" data-meta="\${safeMeta}" data-date="\${safeDate}" data-purpose="\${safePurpose}" data-silhouette="\${isSilhouette ? "1" : "0"}">
       <figure class="tile">
         <div class="thumb-wrap"><img src="\${safeThumbUrl}" alt="\${safeName}" loading="lazy" decoding="async"></div>
         <figcaption>
@@ -584,6 +647,88 @@ function renderPage(data: {
       grid.innerHTML = sortItems(g.items, sortSelect.value).map((it) => tile(it, false)).join("");
     }
     applyFilter();
+  });
+  const lightbox = document.getElementById("lightbox");
+  const lbMedia = document.getElementById("lbMedia");
+  const lbImg = document.getElementById("lbImg");
+  const lbTitle = document.getElementById("lbTitle");
+  const lbCounter = document.getElementById("lbCounter");
+  const lbDetails = document.getElementById("lbDetails");
+  const lbRawLink = document.getElementById("lbRawLink");
+  const lbPurpose = document.getElementById("lbPurpose");
+  const lbClose = document.getElementById("lbClose");
+  const lbPrev = document.getElementById("lbPrev");
+  const lbNext = document.getElementById("lbNext");
+  let activeTile = null;
+  function visibleTiles() {
+    return Array.from(root.querySelectorAll(".tile-link")).filter((el) => el.style.display !== "none");
+  }
+  function showTile(link) {
+    const wasOpen = lightbox.classList.contains("open");
+    const tiles = visibleTiles();
+    if (!tiles.length || !link) return;
+    const idx = tiles.indexOf(link);
+    if (idx === -1) return;
+    activeTile = link;
+    lbImg.src = link.href;
+    lbImg.alt = link.dataset.name || "";
+    lbMedia.classList.toggle("silhouette", link.dataset.silhouette === "1");
+    lbTitle.textContent = link.dataset.name || "";
+    lbCounter.textContent = (idx + 1) + " / " + tiles.length;
+    lbDetails.textContent = [link.dataset.meta, link.dataset.date].filter(Boolean).join(" · ");
+    lbRawLink.href = link.href;
+    lbPurpose.textContent = link.dataset.purpose || "";
+    lightbox.classList.add("open");
+    if (!wasOpen) lbClose.focus();
+  }
+  function closeLightbox() {
+    if (!lightbox.classList.contains("open")) return;
+    lightbox.classList.remove("open");
+    lbImg.removeAttribute("src");
+    if (activeTile && typeof activeTile.focus === "function") activeTile.focus();
+    activeTile = null;
+  }
+  function stepLightbox(delta) {
+    const tiles = visibleTiles();
+    if (!tiles.length) return;
+    const idx = activeTile ? tiles.indexOf(activeTile) : 0;
+    const nextIdx = (idx + delta + tiles.length) % tiles.length;
+    showTile(tiles[nextIdx]);
+  }
+  root.addEventListener("click", (evt) => {
+    if (evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey || evt.button !== 0) return;
+    const link = evt.target.closest(".tile-link");
+    if (!link) return;
+    evt.preventDefault();
+    showTile(link);
+  });
+  lbClose.addEventListener("click", closeLightbox);
+  lbPrev.addEventListener("click", () => stepLightbox(-1));
+  lbNext.addEventListener("click", () => stepLightbox(1));
+  lightbox.addEventListener("click", (evt) => {
+    if (evt.target === lightbox) closeLightbox();
+  });
+  document.addEventListener("keydown", (evt) => {
+    if (!lightbox.classList.contains("open")) return;
+    if (evt.key === "Tab") {
+      const focusable = Array.from(lightbox.querySelectorAll(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      ));
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!lightbox.contains(document.activeElement)) {
+        evt.preventDefault();
+        first && first.focus();
+      } else if (evt.shiftKey && document.activeElement === first) {
+        evt.preventDefault();
+        last && last.focus();
+      } else if (!evt.shiftKey && document.activeElement === last) {
+        evt.preventDefault();
+        first && first.focus();
+      }
+    } else if (evt.key === "ArrowLeft") { evt.preventDefault(); stepLightbox(-1); }
+    else if (evt.key === "ArrowRight") { evt.preventDefault(); stepLightbox(1); }
+    else if (evt.key === "Escape") { evt.preventDefault(); closeLightbox(); }
   });
 </script>
 </body>

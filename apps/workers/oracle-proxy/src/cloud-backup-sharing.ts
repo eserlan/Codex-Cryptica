@@ -27,11 +27,13 @@ async function changeSharing(
   request: Request,
   env: CloudBackupEnv,
   backupId: string,
-  change: (
-    auth: Authorized,
-  ) => Promise<
+  change: (auth: Authorized) => Promise<
     | { response: Response }
-    | { sharing: SharingRecord | undefined; respond: () => Response }
+    | {
+        sharing: SharingRecord | undefined;
+        respond: () => Response;
+        afterWrite?: () => Promise<void>;
+      }
   >,
 ): Promise<Response> {
   for (let attempt = 0; attempt < SHARING_ATTEMPTS; attempt++) {
@@ -48,7 +50,10 @@ async function changeSharing(
       auth.etag,
       result.sharing,
     );
-    if (written) return result.respond();
+    if (written) {
+      await result.afterWrite?.();
+      return result.respond();
+    }
   }
   return json(
     request,
@@ -104,14 +109,16 @@ export async function handleCloudBackupSharingOff(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  const response = await changeSharing(request, env, backupId, async () => ({
-    sharing: undefined,
-    respond: () => json(request, { sharing: false }),
-  }));
-  if (response.status === 200) {
-    await env.BUCKET.delete(getSharingDevicesKey(backupId));
-  }
-  return response;
+  return changeSharing(request, env, backupId, async (auth) => {
+    const sharing = auth.sharing;
+    return {
+      sharing: undefined,
+      afterWrite: sharing
+        ? () => env.BUCKET.delete(getSharingDevicesKey(backupId, sharing))
+        : undefined,
+      respond: () => json(request, { sharing: false }),
+    };
+  });
 }
 
 /** POST /api/cloud-backup/{backupId}/sharing/replace-link — a new link, old one dies. */

@@ -1,7 +1,9 @@
 import {
+  equalContent,
   getLocalCloudBackupRecord,
   pushDeltaToCloudBackup,
   pushVaultToCloudBackup,
+  type MergeEntity,
   type VaultDeltaPayload,
 } from "@codex/cloud-backup-sync";
 import { browserStorage } from "#lib/utils/runtime-deps.js";
@@ -15,6 +17,13 @@ import {
 } from "./cloud-backup-types";
 import { CloudBackupMediaCache } from "./cloud-backup-media-cache";
 import { runArtworkBackup } from "./cloud-backup-artwork-scope";
+import type { PullOutcome } from "./cloud-backup-pulls";
+
+/** Pull-merge-push rounds after a first push is rejected. */
+const REBASE_ROUNDS = 3;
+
+const FOREIGN_COMMIT_MESSAGE =
+  "Another device updated this backup. Automatic sync paused so nothing is overwritten.";
 
 type UploadState = Pick<
   CloudBackupViewState,
@@ -45,6 +54,30 @@ function fullSnapshotBase(vaultId: string, bundle: unknown) {
   return (base: CloudBackupBaseStore) => base.replaceVault(vaultId, copy);
 }
 
+const isEntityOnly = (rows: readonly CloudBackupDirtyRow[]) =>
+  rows.every((row) => row.kind === "entity");
+
+/** The outcome that ends a rebase because a pull did not complete; null to go on. */
+function pullStop(
+  pulled: PullOutcome,
+  rejected: SnapshotOutcome,
+): SnapshotOutcome | null {
+  if (pulled.kind === "done") return null;
+  if (pulled.kind === "unsupported") return rejected;
+  if (pulled.kind === "held") {
+    return { ok: false, held: true, error: "An entity is open for editing." };
+  }
+  const error =
+    pulled.kind === "failed" ? pulled.error : "Cloud backup is off.";
+  return { ok: false, error };
+}
+
+const isEmptyDelta = (delta: VaultDeltaPayload) =>
+  delta.upserts.length === 0 &&
+  delta.deletes.length === 0 &&
+  !delta.maps &&
+  !delta.canvases;
+
 /** Serial snapshot/delta uploads, cancellation and version-guarded dirty clearing. */
 export class CloudBackupUploads {
   pushing = false;
@@ -53,11 +86,14 @@ export class CloudBackupUploads {
   /** What the running push sends, copied before the request, to become the merge base. */
   private sentBase: ((base: CloudBackupBaseStore) => Promise<void>) | null =
     null;
+  /** The dirty rows the running push clears on success; a rebase refreshes them. */
+  private sentRows: readonly CloudBackupDirtyRow[] = [];
   readonly media: CloudBackupMediaCache;
 
   constructor(
     private state: UploadState,
     private getDeps: CloudBackupDepsProvider,
+    private runPull?: () => Promise<PullOutcome>,
   ) {
     this.media = new CloudBackupMediaCache(
       () => this.deps?.storage ?? browserStorage,
@@ -125,8 +161,9 @@ export class CloudBackupUploads {
 
     // Keep the cancellation guard live through upload, including delta
     // writes, so disable can wait before persisting the off record.
+    this.sentRows = sent;
     const out = await this.dispatchScopedUpload(vaultId, opts, sent, signal);
-    return this.finalizePushOperation(out, sent, signal);
+    return this.finalizePushOperation(out, this.sentRows, signal);
   }
 
   private async finalizePushOperation(
@@ -196,7 +233,15 @@ export class CloudBackupUploads {
     );
     if (signal.aborted) return BACKUP_OFF;
     if (!delta) return null;
-    const outboundDelta = deepCopy(delta);
+    const outboundDelta = await this.dropEchoes(vaultId, deepCopy(delta));
+    // Only a delta that held nothing but echoes is skipped.
+    if (
+      outboundDelta.upserts.length < delta.upserts.length &&
+      isEmptyDelta(outboundDelta)
+    ) {
+      this.sentBase = null;
+      return { ok: true };
+    }
     this.sentBase = (base) =>
       base.recordSent(vaultId, outboundDelta.upserts, outboundDelta.deletes);
     return this.sendDelta(
@@ -205,6 +250,84 @@ export class CloudBackupUploads {
       this.state.lastPushedAt!,
       signal,
     );
+  }
+
+  /** Upserts equal to their merge base are pulled changes echoing back. */
+  private async dropEchoes(
+    vaultId: string,
+    delta: VaultDeltaPayload,
+  ): Promise<VaultDeltaPayload> {
+    const base = this.deps!.base;
+    if (!base) return delta;
+    const upserts: { id: string }[] = [];
+    for (const upsert of delta.upserts) {
+      const stored = (await base.get(vaultId, upsert.id)) as
+        MergeEntity | undefined;
+      if (!stored || !equalContent(stored, upsert as MergeEntity)) {
+        upserts.push(upsert);
+      }
+    }
+    return { ...delta, upserts };
+  }
+
+  /** A pause outcome when another device committed and whole items would be replaced. */
+  private async foreignCommitPause(
+    vaultId: string,
+  ): Promise<SnapshotOutcome | null> {
+    const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
+    if (!record?.foreignCommitSeen) return null;
+    return {
+      ok: false,
+      conflict: true,
+      remoteAt: this.state.lastPushedAt,
+      error: FOREIGN_COMMIT_MESSAGE,
+    };
+  }
+
+  /** A guarded full snapshot, unless a whole-item push would overwrite another device. */
+  private async uploadWhole(
+    vaultId: string,
+    opts: { guarded: boolean },
+    signal: AbortSignal,
+    artwork?: { includeAdventures: boolean },
+  ): Promise<SnapshotOutcome> {
+    if (opts.guarded) {
+      const paused = await this.foreignCommitPause(vaultId);
+      if (paused) return paused;
+    }
+    return this.uploadSnapshot(vaultId, opts, signal, artwork);
+  }
+
+  /**
+   * After a rejected entity delta: pull, merge, push again. Gives up after
+   * three rounds, or when a pull fails, and leaves every dirty row in place.
+   */
+  private async rebase(
+    vaultId: string,
+    signal: AbortSignal,
+    rejected: SnapshotOutcome,
+  ): Promise<SnapshotOutcome | null> {
+    for (let round = 0; round < REBASE_ROUNDS; round++) {
+      const step = await this.rebaseRound(vaultId, signal, rejected);
+      if (step !== "again") return step;
+    }
+    return { ok: false, error: "Another device keeps changing this backup." };
+  }
+
+  /** One pull-merge-push; "again" when the push was rejected once more. */
+  private async rebaseRound(
+    vaultId: string,
+    signal: AbortSignal,
+    rejected: SnapshotOutcome,
+  ): Promise<SnapshotOutcome | null | "again"> {
+    const stopped = pullStop(await this.runPull!(), rejected);
+    if (stopped) return stopped;
+    const rows = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+    // Edits made during the pull are in these rows, and clear with them.
+    this.sentRows = rows;
+    if (!isEntityOnly(rows)) return rejected;
+    const out = await this.trySendDelta(vaultId, rows, signal);
+    return out?.conflict ? "again" : out;
   }
 
   /**
@@ -221,11 +344,29 @@ export class CloudBackupUploads {
     artwork?: { includeAdventures: boolean; forceFull: boolean },
   ): Promise<SnapshotOutcome> {
     if (!this.canUseDelta(opts, artwork)) {
-      return this.uploadSnapshot(vaultId, opts, signal, artwork);
+      return this.uploadWhole(vaultId, opts, signal, artwork);
     }
     if (sent.length === 0) return { ok: true };
+    const out = await this.sendRecorded(vaultId, sent, signal);
+    return out ?? this.uploadWhole(vaultId, opts, signal, artwork);
+  }
+
+  /** The delta for the recorded rows, rebased when another device got there first. */
+  private async sendRecorded(
+    vaultId: string,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome | null> {
+    const entityOnly = isEntityOnly(sent);
+    if (!entityOnly) {
+      const paused = await this.foreignCommitPause(vaultId);
+      if (paused) return paused;
+    }
     const out = await this.trySendDelta(vaultId, sent, signal);
-    return out ?? this.uploadSnapshot(vaultId, opts, signal, artwork);
+    if (!out?.conflict || !entityOnly) return out;
+    return this.runPull && this.deps!.remote
+      ? this.rebase(vaultId, signal, out)
+      : out;
   }
 
   /** Publishes a delta; `null` means the backup needs a full upload instead. */

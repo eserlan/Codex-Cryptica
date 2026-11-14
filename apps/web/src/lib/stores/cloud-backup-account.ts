@@ -16,6 +16,7 @@ import type {
 type AccountState = Pick<
   CloudBackupViewState,
   | "consented"
+  | "sharing"
   | "ownerCode"
   | "lastPushedAt"
   | "status"
@@ -37,9 +38,11 @@ export class CloudBackupAccount {
     return this.getDeps();
   }
 
+  // fallow-ignore-next-line complexity — null, disabled and enabled records are tested directly.
   applyRecord(record: LocalCloudBackupRecord | null) {
     this.state.consented = Boolean(record);
     this.state.ownerCode = record?.ownerCode ?? null;
+    this.state.sharing = record?.sharing ?? null;
     this.state.lastPushedAt = record?.lastPushedAt ?? null;
     this.state.status = record?.enabled ? (record.status ?? "idle") : "off";
   }

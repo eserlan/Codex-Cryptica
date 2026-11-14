@@ -91,4 +91,43 @@ describe("adventure artwork assembly", () => {
     await waitFor(() => expect(mocks.get).toHaveBeenCalled());
     expect(screen.queryByRole("img")).toBeNull();
   });
+
+  it("renders an NPC portrait when provided and omits it when cleared", async () => {
+    mocks.get.mockResolvedValue([]);
+    const view = render(AdventureArtworkFeature, {
+      props: {
+        session: null,
+        activeVaultId: "v1",
+        entities: {},
+        resolve: async () => "",
+        readOnly: false,
+        theme: "fantasy",
+        mutate: vi.fn(),
+        portrait: {
+          name: "Elara",
+          src: "blob:elara",
+          alt: "Portrait of Elara",
+          aiLabel: "AI illustration",
+          credits: "Codex Cryptica Team",
+        },
+      },
+    });
+    const img = (await screen.findByAltText(
+      "Portrait of Elara",
+    )) as HTMLImageElement;
+    expect(img.src).toBe("blob:elara");
+    expect(screen.getByText("Elara")).toBeTruthy();
+
+    await view.rerender({
+      session: null,
+      activeVaultId: "v1",
+      entities: {},
+      resolve: async () => "",
+      readOnly: false,
+      theme: "fantasy",
+      mutate: vi.fn(),
+      portrait: null,
+    });
+    expect(screen.queryByAltText("Portrait of Elara")).toBeNull();
+  });
 });

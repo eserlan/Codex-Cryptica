@@ -1,5 +1,6 @@
 import type {
   CloudBackupRuntime,
+  MergeEntity,
   CloudBackupTiming,
   VaultBundlePayload,
   VaultDeltaPayload,
@@ -29,6 +30,9 @@ export const AUTO_SYNC_DEBOUNCE_MS = 5000;
 /** Wait before retrying a failed auto-push (default 30s). */
 export const AUTO_SYNC_RETRY_MS = 30000;
 
+/** Background pull interval while the app is open and visible. */
+export const PULL_INTERVAL_MS = 30_000;
+
 /** Wait after a vault opens before the once-per-session consistency check. */
 export const RECONCILE_DELAY_MS = 60_000;
 
@@ -38,6 +42,11 @@ export interface SnapshotOutcome {
   conflict?: boolean;
   remoteAt?: string | null;
   error?: string;
+  /**
+   * Set when a pull was held back by an open editor: not a failure, so the
+   * push is retried later and nothing is cleared.
+   */
+  held?: boolean;
 }
 
 export const BACKUP_OFF: SnapshotOutcome = {
@@ -45,6 +54,45 @@ export const BACKUP_OFF: SnapshotOutcome = {
   notEnabled: true,
   error: "Cloud backup is off.",
 };
+
+/** What a pull writes into the local vault. */
+export interface PulledChanges {
+  updates: MergeEntity[];
+  creates: MergeEntity[];
+  deletes: string[];
+}
+
+/**
+ * The vault side of pulling other devices' changes. Injected so the stores
+ * stay vault-agnostic; without it sync never pulls and a conflict pauses.
+ */
+export interface CloudBackupRemoteDeps {
+  /**
+   * Local entities as the delta builder would upload them. `null` reads every
+   * entity. Ids with no local entity are left out.
+   */
+  readLocal: (
+    vaultId: string,
+    ids: readonly string[] | null,
+  ) => Promise<Record<string, MergeEntity>>;
+  /** Writes the merge result. Throws when any write fails. */
+  apply: (vaultId: string, changes: PulledChanges) => Promise<void>;
+  /**
+   * Downloads the local images the vault lacks for these entities. Returns
+   * the SHA-256 per asset id it stored; a failed download is left out.
+   */
+  ensureAssets: (
+    vaultId: string,
+    entities: readonly MergeEntity[],
+    download: (assetId: string) => Promise<Uint8Array | null>,
+  ) => Promise<Record<string, string>>;
+  /** True while the entity is open in an editor. */
+  isEditing: (id: string) => boolean;
+  /** Calls back when the last open editor closes; returns the unsubscribe. */
+  onEditingReleased: (listener: () => void) => () => void;
+  /** An id for a "keep both" copy, unique in the vault. */
+  newId: () => string;
+}
 
 export interface CloudBackupDeps {
   runtime: CloudBackupRuntime;
@@ -90,6 +138,7 @@ export interface CloudBackupDeps {
       path: string,
       bytes: Uint8Array,
       mimeType: string,
+      vaultId?: string,
     ) => Promise<void>;
   };
   /**
@@ -130,6 +179,10 @@ export interface CloudBackupDeps {
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
   retryMs?: number;
+  /** Pulls and merges other devices' changes; absent means no pulling. */
+  remote?: CloudBackupRemoteDeps;
+  /** Background pull interval; overridable in tests. */
+  pullIntervalMs?: number;
   /** Local storage for persisting caches across sessions. */
   storage?: StorageLike;
 }
@@ -146,8 +199,17 @@ export interface CloudBackupViewState {
   skippedEntities: string[];
   uploadProgress: { uploaded: number; total: number } | null;
   consented: boolean;
+  sharing: { linkVersion: number; enabledAt: string } | null;
   autoState: CloudAutoSyncState;
   autoConflictRemoteAt: string | null;
+  /** The last merge that changed something locally. */
+  mergeNotice: MergeNotice | null;
+}
+
+export interface MergeNotice {
+  merged: number;
+  /** Titles of the entities whose local version was kept as a copy. */
+  copies: string[];
 }
 
 export type CloudBackupDepsProvider = () => CloudBackupDeps | null;
