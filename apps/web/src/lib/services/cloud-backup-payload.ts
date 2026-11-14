@@ -7,6 +7,11 @@ import {
   omitArtworkForBackup,
   omitPrivateMapArtwork,
 } from "./cloud-backup-artwork";
+import {
+  buildWholeItemFields,
+  type CloudBackupWholeFields,
+  type CloudBackupWholeSources,
+} from "./cloud-backup-whole-items";
 
 /** Monotonic clock for stage timings; counts, bytes and ms only, never content. */
 function nowMs(clock: Clock = systemClock): number {
@@ -501,32 +506,44 @@ export interface CloudBackupDeltaDeps {
   onTiming?: (timing: CloudBackupTiming) => void;
 }
 
-export interface CloudBackupDelta {
+export interface CloudBackupDelta extends CloudBackupWholeFields {
   vaultTitle: string;
   upserts: LocalEntity[];
   deletes: string[];
   /** Full current reference set; the worker prunes assets absent from it. */
   assetIds: string[];
-  maps?: unknown[];
-  canvases?: unknown[];
 }
+
+/** The maps and canvases of a vault; each part is empty when not given. */
+export type CloudBackupWholeContent = Partial<CloudBackupWholeSources>;
+
+const wholeSources = (
+  content: CloudBackupWholeContent,
+): CloudBackupWholeSources => ({
+  maps: content.maps ?? [],
+  canvases: content.canvases ?? [],
+  mapBases: content.mapBases ?? {},
+  canvasBases: content.canvasBases ?? {},
+  prepareMapAssets: content.prepareMapAssets ?? (async () => []),
+});
 
 /**
  * Builds an incremental upload from the recorded changes (#3354), reading only
  * the changed entities.
  *
  * Returns `null` when the change set calls for a full upload instead: a
- * `full` marker, too many changes, an entity that cannot be read, or media the
- * backup does not hold yet. A delta deliberately carries no media — image
+ * `full` marker, too many changes, an entity that cannot be read, or entity
+ * media the backup does not hold yet. A delta carries no entity media — image
  * changes are rare next to text edits, and a full upload already knows how to
- * rebuild the asset manifest and prune what is gone.
+ * rebuild the asset manifest and prune what is gone. Maps go as whole items
+ * with their files already uploaded; one whose files fail stays pending.
  */
-export async function buildCloudBackupDelta(
+export async function buildCloudBackupDelta<T extends CloudBackupChange>(
   vaultTitle: string,
-  changes: readonly CloudBackupChange[],
+  changes: readonly T[],
   deps: CloudBackupDeltaDeps,
-  content: { maps?: readonly unknown[]; canvases?: readonly unknown[] } = {},
-): Promise<CloudBackupDelta | null> {
+  content: CloudBackupWholeContent = {},
+): Promise<(CloudBackupDelta & { held?: T[] }) | null> {
   const entityChanges = changes.filter((change) => change.kind === "entity");
   if (
     changes.some((change) => change.kind === "full") ||
@@ -544,35 +561,37 @@ export async function buildCloudBackupDelta(
     count: entities.upserts.length + entities.deletes.length,
   });
 
-  const maps = changes.some((change) => change.kind === "maps")
-    ? (content.maps ?? []).map(omitPrivateMapArtwork)
-    : undefined;
-  if (referencesNewMedia(entities.upserts, maps, deps.uploadedAssetIds)) {
+  if (referencesNewMedia(entities.upserts, deps.uploadedAssetIds)) {
     return null;
   }
 
+  const whole = await buildWholeItemFields(
+    changes,
+    wholeSources(content),
+    deps.signal,
+  );
+  if (deps.signal?.aborted) return null;
   return {
     vaultTitle,
     ...entities,
-    assetIds: [...deps.referencedAssetIds],
-    ...(maps ? { maps } : {}),
-    ...(changes.some((change) => change.kind === "canvas")
-      ? { canvases: [...(content.canvases ?? [])] }
-      : {}),
+    assetIds: [...new Set([...deps.referencedAssetIds, ...whole.assetIds])],
+    ...whole.fields,
+    ...(whole.held.length > 0 ? { held: whole.held } : {}),
   };
 }
 
 /**
- * What a group member may send: entity changes only, as one delta. Anything a
- * member cannot send yet is left out of `sent` and stays pending: maps and
- * canvases, entities that reference media the backup lacks or that cannot be
- * read, and entity changes beyond the delta limit. `delta` is `null` when
- * nothing can go.
+ * What a group member may send: entity, map and canvas changes, as one delta.
+ * Anything a member cannot send yet is left out of `sent` and stays pending:
+ * entities that reference media the backup lacks or that cannot be read, maps
+ * whose files cannot be sent, and entity changes beyond the delta limit.
+ * `delta` is `null` when nothing can go.
  */
 export async function buildCloudBackupEditorDelta<T extends CloudBackupChange>(
   vaultTitle: string,
   changes: readonly T[],
   deps: CloudBackupDeltaDeps,
+  content: CloudBackupWholeContent = {},
 ): Promise<{ delta: CloudBackupDelta | null; sent: T[] }> {
   const sent: T[] = [];
   const upserts: LocalEntity[] = [];
@@ -591,18 +610,25 @@ export async function buildCloudBackupEditorDelta<T extends CloudBackupChange>(
     const full = await readFullOrNull(change.id, current, deps.hydrateEntities);
     if (!full) continue;
     const entity = omitArtworkForBackup(full);
-    if (referencesNewMedia([entity], undefined, deps.uploadedAssetIds))
-      continue;
+    if (referencesNewMedia([entity], deps.uploadedAssetIds)) continue;
     upserts.push(entity);
     sent.push(change);
   }
+  const whole = await buildWholeItemFields(
+    changes,
+    wholeSources(content),
+    deps.signal,
+  );
+  if (deps.signal?.aborted) return { delta: null, sent: [] };
+  sent.push(...whole.sent);
   if (sent.length === 0) return { delta: null, sent };
   return {
     delta: {
       vaultTitle,
       upserts,
       deletes,
-      assetIds: [...deps.referencedAssetIds],
+      assetIds: [...new Set([...deps.referencedAssetIds, ...whole.assetIds])],
+      ...whole.fields,
     },
     sent,
   };
@@ -647,13 +673,12 @@ async function readFullOrNull(
   }
 }
 
-/** True when an upload would reference media the backup does not hold yet. */
+/** True when an entity upload would reference media the backup does not hold yet. */
 function referencesNewMedia(
   entities: readonly LocalEntity[],
-  maps: readonly unknown[] | undefined,
   uploaded: ReadonlySet<string>,
 ): boolean {
-  return collectAssetPaths(entities, maps ?? []).some(
+  return collectAssetPaths(entities).some(
     (path) => !uploaded.has(assetIdForPath(path)),
   );
 }

@@ -127,6 +127,11 @@ export async function restoreCloudBackupIntoNewVault(
   assetHashes?: Record<string, string>;
 }> {
   const collections = readCollections(material.bundle);
+  // A member never takes the owner's play logs, whatever the bundle holds.
+  if (credentials.role === "editor") {
+    collections.sessionJournals = [];
+    collections.adventures = [];
+  }
   const vaultTitle = material.manifest.vaultTitle;
   const vaultId = await restore.createVault(vaultTitle);
   await importCollections(restore, vaultId, collections);

@@ -119,7 +119,7 @@ export class CloudBackupStore {
   /** The shared trash: the list, and restoring from it. */
   trash = new CloudBackupTrash(
     () => this.deps,
-    (vaultId, ids) => this.recordLocalChange(vaultId, { kind: "entity", ids }),
+    (vaultId, change) => this.recordLocalChange(vaultId, change),
   );
   private changes = new CloudBackupChanges(
     this,

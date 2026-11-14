@@ -1,8 +1,9 @@
-import type { CloudBackupTombstone } from "schema";
+import type { CloudBackupTombstone, CloudBackupWholeItemAsset } from "schema";
 import {
   isDeviceLimit,
   type CloudBackupRuntime,
   type MergeEntity,
+  type WholeItem,
   type CloudBackupTiming,
   type VaultBundlePayload,
   type VaultDeltaPayload,
@@ -11,7 +12,7 @@ import type {
   CloudBackupDirtyRow,
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
-import type { CloudBackupBaseStore } from "./cloud-backup-base";
+import type { CloudBackupBaseStore, WholeKind } from "./cloud-backup-base";
 import type { StorageLike } from "#lib/utils/runtime-deps.js";
 import type { ArtworkBackupScope } from "./cloud-backup-artwork-scope";
 import type { CloudBackupArtworkConsent } from "./cloud-backup-artwork-consent";
@@ -86,6 +87,28 @@ export interface PulledChanges {
   deletes: string[];
 }
 
+/** What a pull writes for the maps or canvases it merged. */
+export interface PulledWholeChanges {
+  /** Keep-both copies of this device's version, made before anything is written. */
+  copies: { copy: WholeItem; fromId: string }[];
+  /** Items to create or replace, with the files a map carries. */
+  writes: { item: WholeItem; assets?: CloudBackupWholeItemAsset[] }[];
+  deletes: string[];
+}
+
+/** Downloads one stored file; null when it cannot be had. */
+export type AssetDownload = (assetId: string) => Promise<Uint8Array | null>;
+
+/** Stores a map's files in the backup, giving each a content-addressed id. */
+export type MapAssetPreparer = (
+  map: unknown,
+) => Promise<CloudBackupWholeItemAsset[] | null>;
+
+/** A delta, with the pending rows that were left out of it. */
+export type BuiltDelta = VaultDeltaPayload & {
+  held?: readonly CloudBackupDirtyRow[];
+};
+
 /**
  * The vault side of pulling other devices' changes. Injected so the stores
  * stay vault-agnostic; without it sync never pulls and a conflict pauses.
@@ -110,12 +133,34 @@ export interface CloudBackupRemoteDeps {
     entities: readonly MergeEntity[],
     download: (assetId: string) => Promise<Uint8Array | null>,
   ) => Promise<Record<string, string>>;
+  /** The local maps or canvases as the delta builder would upload them; `null` reads all. */
+  readLocalWhole: (
+    vaultId: string,
+    kind: WholeKind,
+    ids: readonly string[] | null,
+  ) => Promise<Record<string, WholeItem>>;
+  /**
+   * Writes the merged maps or canvases: copies first, then the items (a map's
+   * files are downloaded and written over the local ones), then deletes.
+   * Returns the SHA-256 per asset id it stored and the ids it could not
+   * download; a map whose file failed is still written.
+   */
+  applyWhole: (
+    vaultId: string,
+    kind: WholeKind,
+    changes: PulledWholeChanges,
+    download: AssetDownload,
+  ) => Promise<{ hashes: Record<string, string>; failed: string[] }>;
   /** True while the entity is open in an editor. */
   isEditing: (id: string) => boolean;
+  /** True while the map or canvas is open on this device. */
+  isWholeOpen: (kind: WholeKind, id: string) => boolean;
   /** Calls back when the last open editor closes; returns the unsubscribe. */
   onEditingReleased: (listener: () => void) => () => void;
   /** An id for a "keep both" copy, unique in the vault. */
   newId: () => string;
+  /** A uuid for a "keep both" copy of a map or canvas, unique in the vault. */
+  newWholeId: () => string;
 }
 
 export interface CloudBackupDeps {
@@ -186,7 +231,13 @@ export interface CloudBackupDeps {
     changes: readonly CloudBackupDirtyRow[],
     uploadedAssetIds: ReadonlySet<string>,
     signal: AbortSignal,
-  ) => Promise<VaultDeltaPayload | null>;
+    prepareMapAssets: MapAssetPreparer,
+  ) => Promise<BuiltDelta | null>;
+  /** Reads one vault-owned file's bytes, or null when it is missing. */
+  readLocalFile?: (
+    vaultId: string,
+    path: string,
+  ) => Promise<{ bytes: Uint8Array; mimeType: string } | null>;
   /**
    * Local entities for the idle consistency check (#3354). `entity` is the
    * full record when `loaded`; unloaded bodies are never read for the check.
@@ -219,14 +270,15 @@ export interface CloudBackupDeps {
   /** The member's display name, for conflict copies in a shared vault. */
   displayName?: () => string | undefined;
   /**
-   * Builds the delta an editor may send: entity rows only, and only those that
-   * need no media the backup lacks. Rows left out stay pending.
+   * Builds the delta an editor may send: entity, map and canvas rows, minus
+   * entities that need media the backup lacks. Rows left out stay pending.
    */
   buildEditorDelta?: (
     vaultId: string,
     changes: readonly CloudBackupDirtyRow[],
     uploadedAssetIds: ReadonlySet<string>,
     signal: AbortSignal,
+    prepareMapAssets: MapAssetPreparer,
   ) => Promise<{
     delta: VaultDeltaPayload | null;
     sent: readonly CloudBackupDirtyRow[];
@@ -252,7 +304,7 @@ export interface CloudBackupViewState {
   linkGone: boolean;
   /** Pulls and pushes are stopped for this session (link gone or device cap). */
   syncStopped: boolean;
-  /** Changes an editor holds back (maps, canvases, new images). */
+  /** Changes an editor holds back (new images on entries). */
   keptLocal: boolean;
   autoState: CloudAutoSyncState;
   autoConflictRemoteAt: string | null;
@@ -262,7 +314,7 @@ export interface CloudBackupViewState {
 
 export interface MergeNotice {
   merged: number;
-  /** Titles of the entities whose local version was kept as a copy. */
+  /** Titles or names of the items whose local version was kept as a copy. */
   copies: string[];
 }
 

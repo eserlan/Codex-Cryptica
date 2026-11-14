@@ -43,6 +43,43 @@ describe("CloudBackupBaseStore", () => {
     expect(await ids(store, "v2")).toEqual(["z"]);
   });
 
+  it("keeps map and canvas bases beside entities without listing them as entities", async () => {
+    const map = { id: "m1", name: "Atlas" };
+    await store.recordSent("v1", [ent("a")], []);
+    await store.recordSentWhole("v1", "map", [map], []);
+    await store.recordSentWhole(
+      "v1",
+      "canvas",
+      [{ id: "m1", name: "Plot" }],
+      [],
+    );
+    expect(await store.getWhole("v1", "map", "m1")).toEqual(map);
+    expect(await store.getWhole("v1", "canvas", "m1")).toEqual({
+      id: "m1",
+      name: "Plot",
+    });
+    expect(await ids(store, "v1")).toEqual(["a"]);
+    expect(await store.listWhole("v1", "map")).toEqual({ m1: map });
+    await store.recordSentWhole("v1", "map", [], ["m1"]);
+    expect(await store.getWhole("v1", "map", "m1")).toBeUndefined();
+  });
+
+  it("keeps map and canvas bases through an entity-only replace, and replaces them when given", async () => {
+    await store.recordSentWhole("v1", "map", [{ id: "m1", name: "A" }], []);
+    await store.recordSentWhole("v1", "canvas", [{ id: "c1", name: "C" }], []);
+    await store.replaceVault("v1", [ent("a")]);
+    expect(Object.keys(await store.listWhole("v1", "map"))).toEqual(["m1"]);
+    expect(Object.keys(await store.listWhole("v1", "canvas"))).toEqual(["c1"]);
+
+    await store.replaceVault("v1", [ent("a")], {
+      maps: [{ id: "m2", name: "B" }],
+      canvases: [],
+    });
+    expect(Object.keys(await store.listWhole("v1", "map"))).toEqual(["m2"]);
+    expect(await store.listWhole("v1", "canvas")).toEqual({});
+    expect(await ids(store, "v1")).toEqual(["a"]);
+  });
+
   it("clears one vault only", async () => {
     await store.recordSent("v1", [ent("a")], []);
     await store.recordSent("v2", [ent("z")], []);

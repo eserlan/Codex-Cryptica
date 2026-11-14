@@ -59,8 +59,15 @@ async function setup(
   extraDeps: Record<string, unknown> = {},
 ) {
   const { remote: remoteOverrides, ...dependencyOverrides } = extraDeps;
-  const calls: { tail: string; method: string }[] = [];
+  const calls: { tail: string; method: string; body?: any }[] = [];
   const local = new Map<string, Entity>();
+  const wholeLocal = {
+    map: new Map<string, Entity>(),
+    canvas: new Map<string, Entity>(),
+  };
+  const wholeApplied: { kind: string; changes: any }[] = [];
+  const wholeDownloads: string[] = [];
+  const wholeOpen = new Set<string>();
   const editing = new Set<string>();
   const released = new Set<() => void>();
   const writes: string[] = [];
@@ -92,9 +99,16 @@ async function setup(
     runtime: {
       baseUrl: "https://worker.test",
       storage,
-      fetch: (async (url: string, init?: { method?: string }) => {
+      fetch: (async (
+        url: string,
+        init?: { method?: string; body?: string },
+      ) => {
         const tail = url.split("?")[0].split("/").pop()!;
-        calls.push({ tail, method: init?.method ?? "GET" });
+        calls.push({
+          tail,
+          method: init?.method ?? "GET",
+          body: init?.body ? JSON.parse(init.body) : undefined,
+        });
         const next = routes[tail]?.shift() ?? defaults[tail];
         return {
           ok: next.ok,
@@ -133,6 +147,39 @@ async function setup(
         for (const id of deletes) local.delete(id);
       },
       ensureAssets: async () => ({}),
+      readLocalWhole: async (
+        _vaultId: string,
+        kind: "map" | "canvas",
+        ids: readonly string[] | null,
+      ) =>
+        Object.fromEntries(
+          [...wholeLocal[kind]]
+            .filter(([id]) => !ids || ids.includes(id))
+            .map(([id, item]) => [id, structuredClone(item)]),
+        ),
+      applyWhole: async (
+        _vaultId: string,
+        kind: "map" | "canvas",
+        changes: any,
+        download: (assetId: string) => Promise<Uint8Array | null>,
+      ) => {
+        wholeApplied.push({ kind, changes });
+        const hashes: Record<string, string> = {};
+        const failed: string[] = [];
+        for (const { copy } of changes.copies)
+          wholeLocal[kind].set(copy.id, copy);
+        for (const { item, assets } of changes.writes) {
+          for (const asset of assets ?? []) {
+            wholeDownloads.push(asset.assetId);
+            if (await download(asset.assetId)) hashes[asset.assetId] = "h";
+            else failed.push(asset.assetId);
+          }
+          wholeLocal[kind].set(item.id, item);
+        }
+        for (const id of changes.deletes) wholeLocal[kind].delete(id);
+        return { hashes, failed };
+      },
+      isWholeOpen: (kind: string, id: string) => wholeOpen.has(`${kind}:${id}`),
       ...(remoteOverrides as Partial<CloudBackupRemoteDeps> | undefined),
       isEditing: (id: string) => editing.has(id),
       onEditingReleased: (listener: () => void) => {
@@ -140,6 +187,7 @@ async function setup(
         return () => released.delete(listener);
       },
       newId: () => `copy-${++copies}`,
+      newWholeId: () => `00000000-0000-4000-8000-00000000000${++copies}`,
     },
     ...dependencyOverrides,
   } as never);
@@ -154,6 +202,10 @@ async function setup(
     store,
     calls,
     local,
+    wholeLocal,
+    wholeApplied,
+    wholeDownloads,
+    wholeOpen,
     editing,
     released,
     writes,
@@ -376,11 +428,42 @@ describe("pull, merge and retry", () => {
     expect(h.store.autoState).toBe("saved");
   });
 
-  it("pauses a whole-item push once another device has committed", async () => {
-    const h = await setup({}, { foreignCommitSeen: true });
+  it("sends a map push even once another device has committed", async () => {
+    const h = await setup(
+      {},
+      { foreignCommitSeen: true },
+      {
+        buildDelta: async () => ({
+          vaultTitle: "T",
+          upserts: [],
+          deletes: [],
+          assetIds: [],
+          mapUpserts: [{ item: { id: "m" }, assets: [] }],
+        }),
+      },
+    );
     await h.start();
 
     await h.store.recordLocalChange("v-1", { kind: "maps" });
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(h.count("delta")).toBe(1);
+    expect(h.calls.find((c) => c.tail === "delta")?.body.mapUpserts).toEqual([
+      { item: { id: "m" }, assets: [] },
+    ]);
+    expect(h.count("commit")).toBe(0);
+    expect(h.store.autoState).not.toBe("conflict");
+  });
+
+  it("still pauses a full snapshot once another device has committed", async () => {
+    const h = await setup(
+      {},
+      { foreignCommitSeen: true },
+      { buildDelta: async () => null },
+    );
+    await h.start();
+
+    await h.store.recordLocalChange("v-1");
     await vi.advanceTimersByTimeAsync(200);
 
     expect(h.count("delta")).toBe(0);
@@ -545,5 +628,291 @@ describe("delete notices", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(h.local.has("a")).toBe(true);
     expect(notifyDeletes).not.toHaveBeenCalled();
+  });
+});
+
+describe("maps and canvases as whole items", () => {
+  const MAP_ID = "11111111-1111-4111-8111-111111111111";
+  const asset = (path: string, assetId: string) => ({
+    path,
+    assetId,
+    mimeType: "image/png",
+  });
+  const map = (over: Record<string, unknown> = {}): Entity => ({
+    id: MAP_ID,
+    title: "",
+    name: "Atlas",
+    assetPath: "maps/a.webp",
+    pins: [],
+    ...over,
+  });
+  const wholeFeed = (
+    revision: number,
+    maps: { item: Entity; assets?: unknown[] }[],
+    tombstones: unknown[] = [],
+    canvases: { item: Entity }[] = [],
+  ) =>
+    ok({
+      status: "changes",
+      revision,
+      entities: [],
+      maps: maps.map(({ item, assets }) => ({
+        item,
+        ...(assets ? { meta: { rev: revision, assets } } : {}),
+      })),
+      canvases,
+      tombstones,
+    });
+  const mapTomb = (id: string, kind = "map") => ({
+    id,
+    rev: 2,
+    deletedBy: "Mara",
+    deletedAt: "2026-09-01T00:00:00.000Z",
+    title: "Atlas",
+    kind,
+  });
+  const pull = async (h: Awaited<ReturnType<typeof setup>>) => {
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+  };
+
+  it("creates a map another member added and keeps it as the base", async () => {
+    const h = await setup({ changes: [wholeFeed(2, [{ item: map() }])] });
+    await pull(h);
+    expect(h.wholeLocal.map.get(MAP_ID)).toMatchObject({ name: "Atlas" });
+    expect(await h.base.getWhole("v-1", "map", MAP_ID)).toMatchObject({
+      name: "Atlas",
+    });
+    expect(h.store.mergeNotice).toEqual({ merged: 1, copies: [] });
+    expect((await h.record())?.revision).toBe(2);
+  });
+
+  it("updates a map that only they changed", async () => {
+    const h = await setup({
+      changes: [wholeFeed(2, [{ item: map({ pins: ["p"] }) }])],
+    });
+    h.wholeLocal.map.set(MAP_ID, map());
+    await h.base.recordSentWhole("v-1", "map", [map()], []);
+    await pull(h);
+    expect(h.wholeLocal.map.get(MAP_ID)?.pins).toEqual(["p"]);
+  });
+
+  it("keeps theirs and a named copy when both changed the same map", async () => {
+    const h = await setup(
+      { changes: [wholeFeed(2, [{ item: map({ pins: ["theirs"] }) }])] },
+      {},
+      { displayName: () => "Zed" },
+    );
+    h.wholeLocal.map.set(MAP_ID, map({ pins: ["mine"] }));
+    await h.base.recordSentWhole("v-1", "map", [map()], []);
+    await pull(h);
+
+    expect(h.wholeLocal.map.get(MAP_ID)?.pins).toEqual(["theirs"]);
+    const copy = [...h.wholeLocal.map.values()].find((m) => m.id !== MAP_ID)!;
+    expect(copy.id).toMatch(/^0{8}-0000-4000-8000-/);
+    expect(copy.pins).toEqual(["mine"]);
+    expect(copy.name).toMatch(/^Atlas \(.+'s version\)$/);
+    expect(h.store.mergeNotice).toEqual({ merged: 1, copies: ["Atlas"] });
+  });
+
+  it("treats a fog edit as a local change that clashes with theirs", async () => {
+    const h = await setup({
+      changes: [wholeFeed(2, [{ item: map({ pins: ["theirs"] }) }])],
+    });
+    h.wholeLocal.map.set(MAP_ID, map());
+    await h.base.recordSentWhole("v-1", "map", [map()], []);
+    await h.dirty.record("v-1", { kind: "maps", ids: [MAP_ID] });
+    await pull(h);
+    expect(h.wholeApplied[0].changes.copies).toHaveLength(1);
+    expect(h.wholeLocal.map.get(MAP_ID)?.pins).toEqual(["theirs"]);
+  });
+
+  it("downloads a received map's files by the ids its commit recorded", async () => {
+    const assets = [
+      asset("maps/a.webp", "maps_a.webp--aaaa"),
+      asset("maps/m_mask.png", "maps_m_mask.png--bbbb"),
+    ];
+    const h = await setup({
+      changes: [wholeFeed(2, [{ item: map(), assets }])],
+    });
+    await pull(h);
+    expect(h.wholeDownloads).toEqual([
+      "maps_a.webp--aaaa",
+      "maps_m_mask.png--bbbb",
+    ]);
+  });
+
+  it("still applies a map when a file cannot be downloaded", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const assets = [asset("maps/a.webp", "maps_a.webp--aaaa")];
+    const h = await setup(
+      { changes: [wholeFeed(2, [{ item: map(), assets }])] },
+      {},
+      {
+        remote: {
+          applyWhole: async () => ({
+            hashes: {},
+            failed: ["maps_a.webp--aaaa"],
+          }),
+        },
+      },
+    );
+    await pull(h);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("map files"), [
+      "maps_a.webp--aaaa",
+    ]);
+    expect((await h.record())?.revision).toBe(2);
+    warn.mockRestore();
+  });
+
+  it("removes an unchanged map and canvas a tombstone names, with the delete notice", async () => {
+    const notifyDeletes = vi.fn();
+    const canvas = { id: "c1", title: "", name: "Plot" };
+    const h = await setup(
+      {
+        changes: [wholeFeed(2, [], [mapTomb(MAP_ID), mapTomb("c1", "canvas")])],
+      },
+      {},
+      { notifyDeletes },
+    );
+    h.wholeLocal.map.set(MAP_ID, map());
+    h.wholeLocal.canvas.set("c1", canvas);
+    await h.base.recordSentWhole("v-1", "map", [map()], []);
+    await h.base.recordSentWhole("v-1", "canvas", [canvas], []);
+    await pull(h);
+    expect(h.wholeLocal.map.size).toBe(0);
+    expect(h.wholeLocal.canvas.size).toBe(0);
+    expect(await h.base.getWhole("v-1", "map", MAP_ID)).toBeUndefined();
+    expect(notifyDeletes).toHaveBeenCalledTimes(2);
+    expect(h.local.size).toBe(0);
+  });
+
+  it("keeps a map edited before the delete arrived", async () => {
+    const h = await setup({ changes: [wholeFeed(2, [], [mapTomb(MAP_ID)])] });
+    h.wholeLocal.map.set(MAP_ID, map({ pins: ["mine"] }));
+    await h.base.recordSentWhole("v-1", "map", [map()], []);
+    await pull(h);
+    expect(h.wholeLocal.map.has(MAP_ID)).toBe(true);
+  });
+
+  it("holds a map that is open and does not advance the revision", async () => {
+    const h = await setup({
+      changes: [wholeFeed(2, [{ item: map({ pins: ["theirs"] }) }])],
+    });
+    h.wholeLocal.map.set(MAP_ID, map());
+    await h.base.recordSentWhole("v-1", "map", [map()], []);
+    h.wholeOpen.add(`map:${MAP_ID}`);
+    await pull(h);
+    expect(h.wholeLocal.map.get(MAP_ID)?.pins).toEqual([]);
+    expect(h.wholeApplied).toEqual([]);
+    expect((await h.record())?.revision).toBe(1);
+  });
+
+  it("takes maps from the bundle on a resync, with their files from the manifest", async () => {
+    const h = await setup({
+      changes: [ok({ status: "resync", revision: 5 })],
+      bundle: [
+        ok({
+          manifest: { ...MANIFEST, revision: 5, lastPushedAt: "t5" },
+          bundle: {
+            entities: [],
+            maps: [map()],
+            canvases: [],
+            assetManifest: [
+              asset("maps/a.webp", "maps_a.webp--aaaa"),
+              asset("images/other.png", "images_other.png"),
+            ],
+          },
+        }),
+      ],
+    });
+    await pull(h);
+    expect(h.wholeLocal.map.has(MAP_ID)).toBe(true);
+    expect(h.wholeDownloads).toEqual(["maps_a.webp--aaaa"]);
+    expect(await h.base.getWhole("v-1", "map", MAP_ID)).toBeTruthy();
+  });
+
+  it("pulls, merges and retries a map push that another device beat", async () => {
+    const h = await setup(
+      {
+        delta: [DIVERGED],
+        changes: [
+          NO_CHANGES,
+          wholeFeed(2, [{ item: map({ name: "Theirs" }) }]),
+        ],
+      },
+      {},
+      {
+        buildDelta: async () => ({
+          vaultTitle: "T",
+          upserts: [],
+          deletes: [],
+          assetIds: [],
+          mapUpserts: [{ item: { id: "other" }, assets: [] }],
+        }),
+      },
+    );
+    await h.start();
+    await h.store.recordLocalChange("v-1", { kind: "maps" });
+    await vi.advanceTimersByTimeAsync(200);
+
+    expect(h.count("delta")).toBe(2);
+    expect(h.wholeLocal.map.get(MAP_ID)?.name).toBe("Theirs");
+    expect(h.store.autoState).toBe("saved");
+    expect(await h.dirty.snapshot("v-1")).toEqual([]);
+  });
+
+  it("records the maps and canvases a push sent as their bases", async () => {
+    const h = await setup(
+      {},
+      {},
+      {
+        buildDelta: async () => ({
+          vaultTitle: "T",
+          upserts: [],
+          deletes: [],
+          assetIds: [],
+          mapUpserts: [{ item: { id: "m", name: "Atlas" }, assets: [] }],
+          canvasUpserts: [{ item: { id: "c", name: "Plot" } }],
+          canvasDeletes: ["gone"],
+        }),
+      },
+    );
+    await h.start();
+    await h.base.recordSentWhole(
+      "v-1",
+      "canvas",
+      [{ id: "gone", name: "G" }],
+      [],
+    );
+    await h.store.recordLocalChange("v-1", { kind: "maps" });
+    await vi.advanceTimersByTimeAsync(200);
+    expect(await h.base.getWhole("v-1", "map", "m")).toEqual({
+      id: "m",
+      name: "Atlas",
+    });
+    expect(await h.base.getWhole("v-1", "canvas", "c")).toBeTruthy();
+    expect(await h.base.getWhole("v-1", "canvas", "gone")).toBeUndefined();
+  });
+
+  it("sends nothing when every map matches its base, and clears the row", async () => {
+    const h = await setup(
+      {},
+      {},
+      {
+        buildDelta: async () => ({
+          vaultTitle: "T",
+          upserts: [],
+          deletes: [],
+          assetIds: [],
+        }),
+      },
+    );
+    await h.start();
+    await h.store.recordLocalChange("v-1", { kind: "maps" });
+    await vi.advanceTimersByTimeAsync(200);
+    expect(h.count("delta")).toBe(0);
+    expect(await h.dirty.snapshot("v-1")).toEqual([]);
+    expect(h.store.autoState).toBe("saved");
   });
 });

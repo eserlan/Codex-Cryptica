@@ -744,8 +744,8 @@ describe("buildCloudBackupDelta (#3354)", () => {
     ]);
     expect(delta?.deletes).toEqual([]);
     expect(delta?.assetIds).toEqual(["known.png"]);
-    expect(delta).not.toHaveProperty("maps");
-    expect(delta).not.toHaveProperty("canvases");
+    expect(delta).not.toHaveProperty("mapUpserts");
+    expect(delta).not.toHaveProperty("canvasUpserts");
   });
 
   it("uses an already-loaded body without reading it again", async () => {
@@ -791,21 +791,116 @@ describe("buildCloudBackupDelta (#3354)", () => {
     expect(delta?.assetIds).toEqual(["still-used.png"]);
   });
 
-  it("includes maps and canvases whole only when they changed", async () => {
+  it("sends only the changed maps and canvases, as whole items by id", async () => {
     const vault = vaultOf(0);
+    const m1 = { id: "m1", name: "One", pins: [] };
+    const m2 = { id: "m2", name: "Two", pins: [] };
+    const c1 = { id: "c1", name: "Plot", nodes: [], lastModified: 9 };
+    const c2 = { id: "c2", name: "Cast", nodes: [], lastModified: 1 };
 
     const delta = await buildCloudBackupDelta(
       "Vault",
       [
         { kind: "maps", id: "*", deleted: false },
         { kind: "canvas", id: "c1", deleted: false },
+        { kind: "canvas", id: "c2", deleted: false },
       ],
       vault.deps as never,
-      { maps: [{ id: "m1" }], canvases: [{ id: "c1" }, { id: "c2" }] },
+      {
+        maps: [m1, { ...m2, pins: ["p"] }],
+        canvases: [c1, c2],
+        // m1 matches its base, so it is an echo; m2 changed; m3 has no map left.
+        mapBases: { m1, m2, m3: { id: "m3", name: "Gone" } },
+        canvasBases: {
+          c1: { ...c1, lastModified: 1 },
+          c2: { ...c2, name: "Old" },
+        },
+      },
     );
 
-    expect(delta?.maps).toEqual([{ id: "m1" }]);
-    expect(delta?.canvases).toEqual([{ id: "c1" }, { id: "c2" }]);
+    expect(delta?.mapUpserts).toEqual([
+      { item: { ...m2, pins: ["p"] }, assets: [] },
+    ]);
+    expect(delta?.mapDeletes).toEqual(["m3"]);
+    expect(delta?.canvasUpserts).toEqual([{ item: c2 }]);
+    expect(delta).not.toHaveProperty("maps");
+    expect(delta).not.toHaveProperty("canvases");
+  });
+
+  it("sends a map with no base and a canvas that was deleted", async () => {
+    const vault = vaultOf(0);
+    const fresh = { id: "new", name: "New", pins: [] };
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [
+        { kind: "maps", id: "*", deleted: false },
+        { kind: "canvas", id: "c9", deleted: true },
+      ],
+      vault.deps as never,
+      { maps: [fresh], canvases: [] },
+    );
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["new"]);
+    expect(delta?.canvasDeletes).toEqual(["c9"]);
+  });
+
+  it("forces a map named by its own row even when it matches its base", async () => {
+    const vault = vaultOf(0);
+    const map = { id: "m1", name: "One" };
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [{ kind: "maps", id: "m1", deleted: false }],
+      vault.deps as never,
+      { maps: [map], mapBases: { m1: map } },
+    );
+    expect(delta?.mapUpserts).toEqual([{ item: map, assets: [] }]);
+  });
+
+  it("lists a map's file ids in the delta and in assetIds", async () => {
+    const vault = vaultOf(0);
+    const assets = [
+      {
+        path: "maps/m1.webp",
+        assetId: "maps_m1.webp--abc",
+        mimeType: "image/webp",
+      },
+    ];
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [{ kind: "maps", id: "m1", deleted: false }],
+      vault.deps as never,
+      {
+        maps: [{ id: "m1", name: "One" }],
+        prepareMapAssets: async () => assets,
+      },
+    );
+    expect(delta?.mapUpserts?.[0].assets).toEqual(assets);
+    expect(delta?.assetIds).toEqual(["known.png", "maps_m1.webp--abc"]);
+  });
+
+  it("leaves out a map whose files cannot be sent and keeps its row pending", async () => {
+    const vault = vaultOf(0);
+    const rows = [
+      { kind: "maps" as const, id: "bad", deleted: false },
+      { kind: "maps" as const, id: "good", deleted: false },
+      { kind: "canvas" as const, id: "c1", deleted: false },
+    ];
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      rows,
+      vault.deps as never,
+      {
+        maps: [
+          { id: "bad", name: "Bad" },
+          { id: "good", name: "Good" },
+        ],
+        canvases: [{ id: "c1", name: "Plot" }],
+        prepareMapAssets: async (map) =>
+          (map as { id: string }).id === "bad" ? null : [],
+      },
+    );
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["good"]);
+    expect(delta?.canvasUpserts?.map((u) => u.item.id)).toEqual(["c1"]);
+    expect(delta?.held).toEqual([rows[0]]);
   });
 
   it("asks for a full upload when it cannot send a faithful delta", async () => {
@@ -869,7 +964,7 @@ describe("buildCloudBackupEditorDelta (shared vault member)", () => {
     deleted,
   });
 
-  it("sends only entities that need no new media and leaves the rest pending", async () => {
+  it("sends entities that need no new media, with maps and canvases", async () => {
     const rows = [
       entity("a"),
       entity("pic"),
@@ -883,22 +978,42 @@ describe("buildCloudBackupEditorDelta (shared vault member)", () => {
       "V",
       rows,
       deps() as never,
+      { maps: [{ id: "m1", name: "One" }], canvases: [{ id: "c", name: "C" }] },
     );
-    expect(sent.map((row) => row.id)).toEqual(["a", "old", "gone"]);
+    expect(sent.map((row) => row.id)).toEqual(["a", "old", "gone", "*", "c"]);
     expect(delta?.upserts.map((u) => u.id)).toEqual(["a", "old"]);
     expect(delta?.deletes).toEqual(["gone"]);
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["m1"]);
+    expect(delta?.canvasUpserts?.map((u) => u.item.id)).toEqual(["c"]);
     expect(delta).not.toHaveProperty("maps");
     expect(delta).not.toHaveProperty("canvases");
   });
 
-  it("sends nothing when only maps and canvases are pending", async () => {
+  it("sends maps and canvases when only they are pending", async () => {
     const { delta, sent } = await buildCloudBackupEditorDelta(
       "V",
       [{ kind: "maps", id: "*", deleted: false }],
       deps() as never,
+      { maps: [{ id: "m1", name: "One" }] },
     );
-    expect(delta).toBeNull();
-    expect(sent).toEqual([]);
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["m1"]);
+    expect(sent).toHaveLength(1);
+  });
+
+  it("keeps a map whose files fail pending while the rest goes", async () => {
+    const rows = [
+      { kind: "maps" as const, id: "m1", deleted: false },
+      entity("a"),
+    ];
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      rows,
+      deps() as never,
+      { maps: [{ id: "m1", name: "One" }], prepareMapAssets: async () => null },
+    );
+    expect(delta?.upserts.map((u) => u.id)).toEqual(["a"]);
+    expect(delta).not.toHaveProperty("mapUpserts");
+    expect(sent).toEqual([rows[1]]);
   });
 
   it("caps the delta and keeps the extra rows pending", async () => {

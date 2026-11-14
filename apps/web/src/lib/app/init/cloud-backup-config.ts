@@ -1,14 +1,24 @@
-import type { CloudBackupDeps } from "#lib/stores/cloud-backup-types.js";
+import type {
+  AssetDownload,
+  CloudBackupDeps,
+  PulledWholeChanges,
+} from "#lib/stores/cloud-backup-types.js";
 import {
   sha256Hex,
   type CloudBackupRuntime,
   type CloudBackupTiming,
   type MergeEntity,
+  type WholeItem,
 } from "@codex/cloud-backup-sync";
 import { resolveOracleProxyUrl } from "../../config/oracle-proxy";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { mapRegistry } from "#lib/stores/map-registry.svelte.js";
+import { mapStore } from "#lib/stores/map.svelte.js";
 import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
+import { deleteCanvasFromDisk } from "#lib/stores/vault/io.js";
+import { toRouteSlug } from "#lib/utils/slug.js";
+import { CanvasSchema } from "@codex/canvas-engine";
+import { MapSchema } from "schema";
 import { getDB } from "#lib/utils/idb.js";
 import {
   cloudBackupStore,
@@ -22,7 +32,10 @@ import {
   collectAssetPaths,
   isLocalAssetPath,
 } from "#lib/services/cloud-backup-payload.js";
-import { CloudBackupBaseStore } from "#lib/stores/cloud-backup-base.js";
+import {
+  CloudBackupBaseStore,
+  type WholeKind,
+} from "#lib/stores/cloud-backup-base.js";
 import { CloudBackupDirtyStore } from "#lib/stores/cloud-backup-dirty.js";
 import { createCloudBackupRestore } from "./cloud-backup-restore";
 import { createArtworkBackupRuntime } from "#lib/stores/cloud-backup-artwork-runtime.js";
@@ -37,7 +50,7 @@ import { isPrivateArtworkSnapshotPath } from "schema";
 import { omitArtworkForBackup } from "#lib/services/cloud-backup-artwork.js";
 import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
 import { entityEditingRegistry } from "#lib/stores/entity-editing-registry.js";
-import { readOpfsBlob } from "#lib/utils/opfs.js";
+import { readOpfsBlob, writeOpfsFile } from "#lib/utils/opfs.js";
 import { sharedVaultIdentity } from "#lib/stores/shared-vault-identity.js";
 import { deleteNoticeText } from "#lib/stores/cloud-backup-delete-notice.js";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -170,29 +183,38 @@ function deltaDeps(uploadedAssetIds: ReadonlySet<string>, signal: AbortSignal) {
   };
 }
 
+/** The maps and canvases a delta compares with what each held when last synced. */
+async function wholeContent(
+  vaultId: string,
+  prepareMapAssets: Parameters<NonNullable<CloudBackupDeps["buildDelta"]>>[4],
+) {
+  return {
+    maps: mapRegistry.allMaps ?? [],
+    canvases: canvasRegistry.allCanvases ?? [],
+    mapBases: await base.listWhole(vaultId, "map"),
+    canvasBases: await base.listWhole(vaultId, "canvas"),
+    prepareMapAssets,
+  };
+}
+
 const buildVaultBackupDelta: NonNullable<
   CloudBackupDeps["buildDelta"]
-> = async (_vaultId, changes, uploadedAssetIds, signal) =>
+> = async (vaultId, changes, uploadedAssetIds, signal, prepareMapAssets) =>
   buildCloudBackupDelta(
     vault.vaultName || "Vault",
     changes,
     deltaDeps(uploadedAssetIds, signal),
-    {
-      maps: mapRegistry.allMaps ?? [],
-      canvases: canvasRegistry.allCanvases ?? [],
-    },
+    await wholeContent(vaultId, prepareMapAssets),
   );
 
-const buildMemberDelta: NonNullable<CloudBackupDeps["buildEditorDelta"]> = (
-  _vaultId,
-  changes,
-  uploadedAssetIds,
-  signal,
-) =>
+const buildMemberDelta: NonNullable<
+  CloudBackupDeps["buildEditorDelta"]
+> = async (vaultId, changes, uploadedAssetIds, signal, prepareMapAssets) =>
   buildCloudBackupEditorDelta(
     vault.vaultName || "Vault",
     changes,
     deltaDeps(uploadedAssetIds, signal),
+    await wholeContent(vaultId, prepareMapAssets),
   );
 
 const MIME_BY_EXTENSION: Record<string, string> = {
@@ -338,11 +360,251 @@ const ensurePulledAssets: NonNullable<
   return hashes;
 };
 
+const mimeOf = (path: string) =>
+  MIME_BY_EXTENSION[path.split(".").pop()?.toLowerCase() ?? ""] ??
+  "application/octet-stream";
+
+/** One vault-owned file's bytes, read from the vault itself rather than a cached URL. */
+const readLocalFile: NonNullable<CloudBackupDeps["readLocalFile"]> = async (
+  vaultId,
+  path,
+) => {
+  const root = await vault.getSpecificVaultHandle(vaultId);
+  if (!root) return null;
+  try {
+    const blob = await readOpfsBlob(path.split("/").filter(Boolean), root);
+    return {
+      bytes: new Uint8Array(await blob.arrayBuffer()),
+      mimeType: blob.type || mimeOf(path),
+    };
+  } catch {
+    return null;
+  }
+};
+
+/** Plain copies of the local maps or canvases, as the delta builder reads them. */
+async function readLocalWhole(
+  vaultId: string,
+  kind: WholeKind,
+  ids: readonly string[] | null,
+): Promise<Record<string, WholeItem>> {
+  assertActiveVault(vaultId);
+  const source: Record<string, unknown> =
+    kind === "map" ? mapRegistry.maps : canvasRegistry.canvases;
+  const local: Record<string, WholeItem> = {};
+  for (const id of ids ?? Object.keys(source)) {
+    if (source[id]) local[id] = JSON.parse(JSON.stringify(source[id]));
+  }
+  return local;
+}
+
+const extensionOf = (path: string) =>
+  /\.[a-z0-9]+$/i.exec(path)?.[0] ?? ".webp";
+
+/** Copies a map's local file to a new path; a file that is not there is skipped. */
+async function copyVaultFile(
+  vaultId: string,
+  from: string,
+  to: string,
+): Promise<void> {
+  const file = await readLocalFile(vaultId, from);
+  const root = await vault.getSpecificVaultHandle(vaultId);
+  if (!file || !root) return;
+  await writeOpfsFile(
+    to.split("/"),
+    new Blob([file.bytes as BlobPart], { type: file.mimeType }),
+    root,
+    vaultId,
+  );
+}
+
+/** A keep-both copy of a map gets its own background and mask files. */
+async function withOwnMapFiles(
+  vaultId: string,
+  copy: WholeItem,
+): Promise<WholeItem> {
+  const map = copy as unknown as {
+    id: string;
+    assetPath: string;
+    fogOfWar?: { maskPath: string };
+  };
+  const next = { ...map };
+  if (isLocalAssetPath(map.assetPath)) {
+    next.assetPath = `maps/${map.id}${extensionOf(map.assetPath)}`;
+    await copyVaultFile(vaultId, map.assetPath, next.assetPath);
+  }
+  if (map.fogOfWar && isLocalAssetPath(map.fogOfWar.maskPath)) {
+    const maskPath = `maps/${map.id}_mask.png`;
+    await copyVaultFile(vaultId, map.fogOfWar.maskPath, maskPath);
+    next.fogOfWar = { ...map.fogOfWar, maskPath };
+  }
+  return next as unknown as WholeItem;
+}
+
+/** Downloads and stores one map file; returns its asset id and hash (null when it failed). */
+async function storeMapFile(
+  vaultId: string,
+  path: string,
+  write: PulledWholeChanges["writes"][number],
+  download: AssetDownload,
+): Promise<{ assetId: string; hash: string | null }> {
+  const listed = write.assets?.find((asset) => asset.path === path);
+  const assetId = listed?.assetId ?? assetIdForPath(path);
+  try {
+    assertActiveVault(vaultId);
+    const bytes = await download(assetId);
+    assertActiveVault(vaultId);
+    if (!bytes) return { assetId, hash: null };
+    await createCloudBackupRestore().importAsset!(
+      path,
+      bytes,
+      listed?.mimeType || mimeOf(path),
+      vaultId,
+    );
+    return { assetId, hash: await sha256Hex(bytes) };
+  } catch (error) {
+    console.warn("[CloudBackup] Could not store a pulled map file", error);
+    return { assetId, hash: null };
+  }
+}
+
+/**
+ * Downloads a received map's background and mask over the local files, by the
+ * ids its commit recorded (or the path-derived ones for an older commit).
+ */
+async function storeMapFiles(
+  vaultId: string,
+  write: PulledWholeChanges["writes"][number],
+  download: AssetDownload,
+  outcome: { hashes: Record<string, string>; failed: string[] },
+): Promise<void> {
+  const paths = collectAssetPaths([], [write.item]).filter(
+    (path) =>
+      isSafeRestoredAssetPath(path) && !isPrivateArtworkSnapshotPath(path),
+  );
+  for (const path of paths) {
+    const { assetId, hash } = await storeMapFile(
+      vaultId,
+      path,
+      write,
+      download,
+    );
+    if (hash) outcome.hashes[assetId] = hash;
+    else outcome.failed.push(assetId);
+  }
+}
+
+async function applyMapChanges(
+  vaultId: string,
+  changes: PulledWholeChanges,
+  download: AssetDownload,
+) {
+  const outcome = {
+    hashes: {} as Record<string, string>,
+    failed: [] as string[],
+  };
+  const maps = { ...mapRegistry.maps } as Record<string, unknown>;
+  // Copies first: they move the local files before the received ones land.
+  for (const { copy } of changes.copies) {
+    const own = await withOwnMapFiles(vaultId, copy);
+    maps[own.id] = own;
+  }
+  for (const write of changes.writes) {
+    const parsed = MapSchema.safeParse(write.item);
+    if (!parsed.success) {
+      outcome.failed.push(write.item.id);
+      continue;
+    }
+    await storeMapFiles(vaultId, write, download, outcome);
+    maps[write.item.id] = write.item;
+  }
+  assertActiveVault(vaultId);
+  mapRegistry.maps = maps as typeof mapRegistry.maps;
+  if (changes.copies.length + changes.writes.length > 0) {
+    await mapRegistry.saveMaps();
+  }
+  for (const id of changes.deletes) {
+    assertActiveVault(vaultId);
+    await mapRegistry.deleteMap(id);
+  }
+  return outcome;
+}
+
+/** A canvas copy's slug, unique among the canvases. */
+function uniqueSlug(name: string, id: string): string {
+  const slug = toRouteSlug(name) || id.slice(0, 8);
+  const taken = Object.values(canvasRegistry.canvases).some(
+    (canvas) => canvas.slug === slug && canvas.id !== id,
+  );
+  return taken ? `${slug}-${id.slice(0, 4)}` : slug;
+}
+
+async function applyCanvasChanges(
+  vaultId: string,
+  changes: PulledWholeChanges,
+) {
+  const outcome = {
+    hashes: {} as Record<string, string>,
+    failed: [] as string[],
+  };
+  const canvases = { ...canvasRegistry.canvases };
+  const saved: string[] = [];
+  for (const { copy } of changes.copies) {
+    const parsed = CanvasSchema.safeParse({
+      ...copy,
+      slug: uniqueSlug(copy.name, copy.id),
+    });
+    if (parsed.success) {
+      canvases[copy.id] = parsed.data;
+      saved.push(copy.id);
+    } else outcome.failed.push(copy.id);
+  }
+  for (const { item } of changes.writes) {
+    const parsed = CanvasSchema.safeParse(item);
+    if (parsed.success) {
+      canvases[item.id] = parsed.data;
+      saved.push(item.id);
+    } else outcome.failed.push(item.id);
+  }
+  const root = await vault.getSpecificVaultHandle(vaultId);
+  for (const id of changes.deletes) {
+    assertActiveVault(vaultId);
+    if (root) await deleteCanvasFromDisk(root, id);
+    delete canvases[id];
+  }
+  assertActiveVault(vaultId);
+  canvasRegistry.canvases = canvases;
+  for (const id of saved) {
+    await canvasRegistry.saveCanvas(id, { explicitVaultId: vaultId });
+  }
+  return outcome;
+}
+
+const applyWholeChanges: NonNullable<
+  NonNullable<CloudBackupDeps["remote"]>["applyWhole"]
+> = (vaultId, kind, changes, download) =>
+  kind === "map"
+    ? applyMapChanges(vaultId, changes, download)
+    : applyCanvasChanges(vaultId, changes);
+
+/** Whether the map or canvas is on screen; a pulled change waits until it is closed. */
+function isWholeOpen(kind: WholeKind, id: string): boolean {
+  const path = globalThis.location?.pathname ?? "";
+  if (kind === "map") {
+    return mapStore.activeMapId === id && path.startsWith("/map");
+  }
+  const slug = canvasRegistry.canvases[id]?.slug;
+  return !!slug && path.startsWith(`/canvas/${slug}`);
+}
+
 /** Another device's changes: how they are read, merged and written locally. */
 const remote: NonNullable<CloudBackupDeps["remote"]> = {
   readLocal: readLocalForMerge,
   apply: applyPulledChanges,
   ensureAssets: ensurePulledAssets,
+  readLocalWhole,
+  applyWhole: applyWholeChanges,
+  isWholeOpen,
   isEditing: (id) => entityEditingRegistry.isEditing(id),
   onEditingReleased: (listener) =>
     entityEditingRegistry.onAllReleased(listener),
@@ -350,6 +612,12 @@ const remote: NonNullable<CloudBackupDeps["remote"]> = {
     let id: string;
     do id = `copy-${systemIdGenerator.uuid()}`;
     while (vault.entities?.[id]);
+    return id;
+  },
+  newWholeId: () => {
+    let id: string;
+    do id = systemIdGenerator.uuid();
+    while (mapRegistry.maps[id] || canvasRegistry.canvases[id]);
     return id;
   },
 };
@@ -408,6 +676,7 @@ export function configureCloudBackup(): void {
     // Incremental uploads (#3354): only the recorded changes are read.
     buildDelta: buildVaultBackupDelta,
     buildEditorDelta: buildMemberDelta,
+    readLocalFile,
     notify: (message) => notificationStore.notify(message, "info"),
     displayName: () => sharedVaultIdentity.displayName(),
     notifyDeletes: (vaultId, tombstones) =>

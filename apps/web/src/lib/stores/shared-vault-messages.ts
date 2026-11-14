@@ -3,7 +3,7 @@ export const LINK_GONE_MESSAGE =
   "This group link no longer works. Ask the owner for the new link.";
 
 export const KEPT_LOCAL_MESSAGE =
-  "Map, canvas and image changes stay on this device for now. Your other changes still sync.";
+  "Some changes, such as new images on entries, stay on this device for now. Your other changes still sync.";
 
 export const JOIN_NETWORK_MESSAGE =
   "Could not reach Codex Cryptica Cloud. Check your connection and try again.";

@@ -1,24 +1,32 @@
 import type { CloudBackupTombstone, LocalCloudBackupRecord } from "schema";
 import {
-  fetchCloudBackupAsset,
   fetchCloudBackupChanges,
   getLocalCloudBackupRecord,
   readRemoteLastPushedAt,
   restoreVaultFromCloudBackup,
   storePulledCloudBackupRecord,
   type ChangeFeedOutcome,
+  type FeedWholeItem,
   type MergeEntity,
   type MergeSide,
+  type WholeItem,
+  type WholeSide,
 } from "@codex/cloud-backup-sync";
 import { onlineStatus } from "./online.svelte";
+import { createAssetDownloader } from "./cloud-backup-downloader";
 import {
   PULL_INTERVAL_MS,
   blockedFrom,
   type Blocked,
   type CloudBackupDepsProvider,
+  type AssetDownload,
   type CloudBackupViewState,
+  type MergeNotice,
+  type PulledWholeChanges,
 } from "./cloud-backup-types";
-import { planPull } from "./cloud-backup-pull-plan";
+import { collectAssetPaths } from "#lib/services/cloud-backup-payload.js";
+import { planPull, planWholePull } from "./cloud-backup-pull-plan";
+import type { WholeKind } from "./cloud-backup-base";
 import type { CloudBackupMediaCache } from "./cloud-backup-media-cache";
 
 export type PullOutcome =
@@ -49,7 +57,42 @@ function failureOutcome(failure: {
     : { kind: "failed", error: failure.error };
 }
 
-type Fed = { entities: MergeEntity[]; tombstones: CloudBackupTombstone[] };
+type Fed = {
+  entities: MergeEntity[];
+  tombstones: CloudBackupTombstone[];
+  maps: FeedWholeItem[];
+  canvases: FeedWholeItem[];
+  mapTombstones: CloudBackupTombstone[];
+  canvasTombstones: CloudBackupTombstone[];
+};
+
+const isWholeItem = (value: unknown): value is WholeItem =>
+  Boolean(value) &&
+  typeof (value as WholeItem).id === "string" &&
+  typeof (value as WholeItem).name === "string";
+
+/** A resync's maps or canvases, with the files the bundle's manifest lists for each. */
+const bundleWholeItems = (
+  bundle: unknown,
+  key: "maps" | "canvases",
+): FeedWholeItem[] => {
+  const section = (bundle as Record<string, unknown>)?.[key];
+  const manifest = (bundle as { assetManifest?: unknown })?.assetManifest;
+  const listed = Array.isArray(manifest)
+    ? (manifest as { assetId: string; path: string; mimeType: string }[])
+    : [];
+  return (Array.isArray(section) ? section : [])
+    .filter(isWholeItem)
+    .map((item) => {
+      const assets =
+        key === "maps"
+          ? listed.filter((entry) =>
+              collectAssetPaths([], [item]).includes(entry.path),
+            )
+          : [];
+      return { item, ...(assets.length > 0 ? { assets } : {}) };
+    });
+};
 
 const isEntity = (value: unknown): value is MergeEntity =>
   Boolean(value) &&
@@ -60,6 +103,45 @@ const bundleEntities = (bundle: unknown): MergeEntity[] => {
   const entities = (bundle as { entities?: unknown })?.entities;
   return Array.isArray(entities) ? entities.filter(isEntity) : [];
 };
+
+/** Splits a feed into what an open editor holds and what the merge may touch. */
+function splitHeld<T>(
+  items: readonly T[],
+  idOf: (item: T) => string,
+  tombstones: readonly CloudBackupTombstone[],
+  isHeld: (id: string) => boolean,
+): {
+  held: Set<string>;
+  kept: T[];
+  tombstones: CloudBackupTombstone[];
+  tombstoneIds: string[];
+} {
+  const held = new Set(
+    [...items.map(idOf), ...tombstones.map((t) => t.id)].filter(isHeld),
+  );
+  const open = tombstones.filter((t) => !held.has(t.id));
+  return {
+    held,
+    kept: items.filter((item) => !held.has(idOf(item))),
+    tombstones: open,
+    tombstoneIds: open.map((t) => t.id),
+  };
+}
+
+/** Takes the held ids out of the sides, and returns their bases. */
+function dropHeld<T>(
+  sides: { mine: Record<string, unknown>; base: Record<string, T> },
+  held: ReadonlySet<string>,
+): NonNullable<T>[] {
+  const heldBase = [...held]
+    .map((id) => sides.base[id])
+    .filter((base): base is NonNullable<T> => !!base);
+  for (const id of held) {
+    delete sides.mine[id];
+    delete sides.base[id];
+  }
+  return heldBase;
+}
 
 /** Pulls other devices' entity changes and merges them into the local vault. */
 export class CloudBackupPulls {
@@ -246,7 +328,14 @@ export class CloudBackupPulls {
     if (feed.kind === "changes") {
       return {
         ok: true,
-        fed: { entities: feed.entities, tombstones: feed.tombstones },
+        fed: {
+          entities: feed.entities,
+          tombstones: feed.tombstones,
+          maps: feed.maps,
+          canvases: feed.canvases,
+          mapTombstones: feed.mapTombstones,
+          canvasTombstones: feed.canvasTombstones,
+        },
         revision: feed.revision,
         lastPushedAt: statusAt,
       };
@@ -259,7 +348,14 @@ export class CloudBackupPulls {
     const { manifest } = bundle.value;
     return {
       ok: true,
-      fed: { entities: bundleEntities(bundle.value.bundle), tombstones: [] },
+      fed: {
+        entities: bundleEntities(bundle.value.bundle),
+        tombstones: [],
+        maps: bundleWholeItems(bundle.value.bundle, "maps"),
+        canvases: bundleWholeItems(bundle.value.bundle, "canvases"),
+        mapTombstones: [],
+        canvasTombstones: [],
+      },
       revision: manifest.revision ?? feed.revision,
       lastPushedAt: manifest.lastPushedAt,
     };
@@ -299,26 +395,66 @@ export class CloudBackupPulls {
     resync: boolean,
     copyAuthorName?: string,
   ): Promise<boolean> {
+    const entityPart = await this.mergeEntities(
+      vaultId,
+      fed,
+      resync,
+      copyAuthorName,
+    );
+    const maps = await this.mergeWhole(
+      vaultId,
+      "map",
+      { items: fed.maps, tombstones: fed.mapTombstones },
+      resync,
+      copyAuthorName,
+    );
+    const canvases = await this.mergeWhole(
+      vaultId,
+      "canvas",
+      { items: fed.canvases, tombstones: fed.canvasTombstones },
+      resync,
+      copyAuthorName,
+    );
+    if (resync) {
+      await this.deps!.base!.replaceVault(vaultId, entityPart.baseEntities, {
+        maps: maps.baseItems,
+        canvases: canvases.baseItems,
+      });
+    }
+    const notices = [entityPart.notice, maps.notice, canvases.notice].filter(
+      (notice): notice is MergeNotice => notice !== null,
+    );
+    if (notices.length > 0) {
+      this.state.mergeNotice = {
+        merged: notices.reduce((total, notice) => total + notice.merged, 0),
+        copies: notices.flatMap((notice) => notice.copies),
+      };
+    }
+    return entityPart.held || maps.held || canvases.held;
+  }
+
+  private async mergeEntities(
+    vaultId: string,
+    fed: Fed,
+    resync: boolean,
+    copyAuthorName?: string,
+  ): Promise<{
+    held: boolean;
+    notice: MergeNotice | null;
+    baseEntities: MergeEntity[];
+  }> {
     const { remote, base, activeVaultId } = this.deps!;
-    const held = new Set(
-      [
-        ...fed.entities.map((entity) => entity.id),
-        ...fed.tombstones.map((tombstone) => tombstone.id),
-      ].filter((id) => remote!.isEditing(id)),
+    const { held, kept, tombstones, tombstoneIds } = splitHeld(
+      fed.entities,
+      (entity) => entity.id,
+      fed.tombstones,
+      (id) => remote!.isEditing(id),
     );
-    const entities = fed.entities.filter((entity) => !held.has(entity.id));
-    const tombstones = fed.tombstones.filter(
-      (tombstone) => !held.has(tombstone.id),
-    );
-    const tombstoneIds = tombstones.map((tombstone) => tombstone.id);
+    const entities = kept;
     const ids = [...entities.map((entity) => entity.id), ...tombstoneIds];
     const sides = await this.readSides(vaultId, ids, resync);
     // Whatever an open editor holds stays out of the merge and the base.
-    const heldBase = [...held].flatMap((id) => sides.base[id] ?? []);
-    for (const id of held) {
-      delete sides.mine[id];
-      delete sides.base[id];
-    }
+    const heldBase = dropHeld(sides, held);
 
     const plan = planPull({
       entities,
@@ -337,11 +473,142 @@ export class CloudBackupPulls {
     await remote!.apply(vaultId, plan.changes);
     if (activeVaultId() !== vaultId) throw new Error("The vault changed.");
 
-    if (resync) await base!.replaceVault(vaultId, [...entities, ...heldBase]);
-    else await base!.recordSent(vaultId, entities, tombstoneIds);
-    if (plan.notice) this.state.mergeNotice = plan.notice;
-    if (!resync) this.notifyDeletes(vaultId, tombstones, plan.changes.deletes);
-    return held.size > 0;
+    if (!resync) {
+      await base!.recordSent(vaultId, entities, tombstoneIds);
+      this.notifyDeletes(vaultId, tombstones, plan.changes.deletes);
+    }
+    return {
+      held: held.size > 0,
+      notice: plan.notice,
+      baseEntities: [...entities, ...heldBase],
+    };
+  }
+
+  /** The local and base copies of the maps or canvases the feed touches. */
+  private async readWholeSides(
+    vaultId: string,
+    kind: WholeKind,
+    ids: readonly string[],
+    resync: boolean,
+  ): Promise<{ mine: WholeSide; base: WholeSide }> {
+    const { remote, base } = this.deps!;
+    const mine = await remote!.readLocalWhole(
+      vaultId,
+      kind,
+      resync ? null : ids,
+    );
+    if (this.deps?.activeVaultId() !== vaultId)
+      throw new Error("The vault changed.");
+    const stored = resync
+      ? await base!.listWhole(vaultId, kind)
+      : Object.fromEntries(
+          await Promise.all(
+            ids.map(async (id) => [
+              id,
+              await base!.getWhole(vaultId, kind, id),
+            ]),
+          ),
+        );
+    const baseSide: WholeSide = {};
+    for (const [id, item] of Object.entries(stored)) {
+      if (item) baseSide[id] = item as WholeItem;
+    }
+    return { mine, base: baseSide };
+  }
+
+  /** Ids of maps with a pending change the content does not show, such as a fog edit. */
+  private async dirtyMapIds(vaultId: string): Promise<Set<string>> {
+    const rows = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+    return new Set(
+      rows
+        .filter((row) => row.kind === "maps" && row.id !== "*")
+        .map((row) => row.id),
+    );
+  }
+
+  /** Merges and applies the feed's maps or canvases as whole items. */
+  private async mergeWhole(
+    vaultId: string,
+    kind: WholeKind,
+    fed: { items: FeedWholeItem[]; tombstones: CloudBackupTombstone[] },
+    resync: boolean,
+    copyAuthorName?: string,
+  ): Promise<{
+    held: boolean;
+    notice: MergeNotice | null;
+    baseItems: WholeItem[];
+  }> {
+    const { remote, base, activeVaultId } = this.deps!;
+    const { held, kept, tombstones, tombstoneIds } = splitHeld(
+      fed.items,
+      (entry) => entry.item.id,
+      fed.tombstones,
+      (id) => remote!.isWholeOpen(kind, id),
+    );
+    const items = kept;
+    const ids = [...items.map((entry) => entry.item.id), ...tombstoneIds];
+    const sides = await this.readWholeSides(vaultId, kind, ids, resync);
+    const heldBase = dropHeld(sides, held);
+
+    const plan = planWholePull({
+      items,
+      tombstoneIds,
+      ...sides,
+      mineDirty: kind === "map" ? await this.dirtyMapIds(vaultId) : new Set(),
+      resync,
+      newId: remote!.newWholeId,
+      hasFiles: (entry) => this.hasFiles(kind, entry),
+      ...(copyAuthorName ? { copyAuthorName } : {}),
+    });
+    if (activeVaultId() !== vaultId) throw new Error("The vault changed.");
+    const { copies, writes, deletes } = plan.changes;
+    if (copies.length + writes.length + deletes.length > 0) {
+      await this.applyWhole(vaultId, kind, plan.changes);
+    }
+
+    if (!resync) {
+      await base!.recordSentWhole(
+        vaultId,
+        kind,
+        items.map((entry) => entry.item),
+        tombstoneIds,
+      );
+      this.notifyDeletes(vaultId, tombstones, deletes);
+    }
+    return {
+      held: held.size > 0,
+      notice: plan.notice,
+      baseItems: [...items.map((entry) => entry.item), ...heldBase],
+    };
+  }
+
+  /** Whether the files a map names are already here, going by the media cache. */
+  private hasFiles(kind: WholeKind, entry: FeedWholeItem): boolean {
+    if (kind === "canvas") return true;
+    const { hashes } = this.uploads.media;
+    if (entry.assets) return entry.assets.every((a) => a.assetId in hashes);
+    return collectAssetPaths([], [entry.item]).length === 0;
+  }
+
+  /** Writes merged maps or canvases; a file that cannot be downloaded is reported, not fatal. */
+  private async applyWhole(
+    vaultId: string,
+    kind: WholeKind,
+    changes: PulledWholeChanges,
+  ): Promise<void> {
+    const deps = this.deps!;
+    const download = (await this.downloader(vaultId)) ?? (async () => null);
+    const { hashes, failed } = await deps.remote!.applyWhole(
+      vaultId,
+      kind,
+      changes,
+      download,
+    );
+    if (deps.activeVaultId() !== vaultId) throw new Error("The vault changed.");
+    this.rememberHashes(vaultId, hashes);
+    if (failed.length > 0) {
+      console.warn("[CloudBackup] Could not download map files", failed);
+    }
   }
 
   /** Tells the user about deletes this pull applied, which a resync never does. */
@@ -356,6 +623,20 @@ export class CloudBackupPulls {
     if (applied.length > 0) this.deps?.notifyDeletes?.(vaultId, applied);
   }
 
+  /** Fetches one stored file with this vault's credentials; null on any failure. */
+  private downloader(vaultId: string): Promise<AssetDownload | null> {
+    return createAssetDownloader(this.deps!.runtime, vaultId);
+  }
+
+  private rememberHashes(
+    vaultId: string,
+    hashes: Record<string, string>,
+  ): void {
+    if (Object.keys(hashes).length === 0) return;
+    Object.assign(this.uploads.media.hashes, hashes);
+    this.uploads.media.save(vaultId);
+  }
+
   /** Downloads pulled images the vault lacks; a failure never fails the pull. */
   private async fetchAssets(
     vaultId: string,
@@ -363,28 +644,12 @@ export class CloudBackupPulls {
   ): Promise<void> {
     const deps = this.deps!;
     try {
-      const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
-      if (!record) return;
-      const hashes = await deps.remote!.ensureAssets(
+      const download = await this.downloader(vaultId);
+      if (!download) return;
+      this.rememberHashes(
         vaultId,
-        entities,
-        async (assetId) => {
-          try {
-            const asset = await fetchCloudBackupAsset(
-              deps.runtime,
-              record,
-              assetId,
-            );
-            return asset.ok ? asset.value : null;
-          } catch {
-            return null;
-          }
-        },
+        await deps.remote!.ensureAssets(vaultId, entities, download),
       );
-      if (Object.keys(hashes).length > 0) {
-        Object.assign(this.uploads.media.hashes, hashes);
-        this.uploads.media.save(vaultId);
-      }
     } catch (error) {
       console.warn("[CloudBackup] Could not fetch pulled images", error);
     }

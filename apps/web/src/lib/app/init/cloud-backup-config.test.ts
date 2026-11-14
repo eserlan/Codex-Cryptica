@@ -17,6 +17,7 @@ const mocks = vi.hoisted(() => ({
   maps: { allMaps: [{ id: "map-1" }] as unknown[] | undefined },
   canvases: { allCanvases: [{ id: "canvas-1" }] as unknown[] | undefined },
   getAllFromIndex: vi.fn(),
+  listWhole: vi.fn(),
   getSetting: vi.fn(),
   buildPayload: vi.fn(),
   buildDelta: vi.fn(),
@@ -43,6 +44,11 @@ vi.mock("#lib/stores/cloud-backup.svelte.js", () => ({
   cloudBackupStore: { configure: mocks.configure },
   cloudBackupBrowserStorage: () => mocks.storage,
 }));
+vi.mock("#lib/stores/cloud-backup-base.js", () => ({
+  CloudBackupBaseStore: class {
+    listWhole = mocks.listWhole;
+  },
+}));
 vi.mock("#lib/stores/cloud-backup-dirty.js", () => ({
   CloudBackupDirtyStore: class {},
 }));
@@ -68,6 +74,7 @@ vi.mock("./cloud-backup-restore", () => ({
 beforeEach(() => {
   vi.resetAllMocks();
   mocks.getAllFromIndex.mockResolvedValue([]);
+  mocks.listWhole.mockResolvedValue({});
   mocks.collectAssetPaths.mockReturnValue([]);
   mocks.vault.vaultName = "World";
   mocks.vault.activeVaultId = "vault-1";
@@ -199,8 +206,12 @@ describe("cloud backup configuration", () => {
         deleted: false,
       },
     ];
+    const prepare = vi.fn();
+    mocks.listWhole.mockImplementation(async (_vaultId, kind) =>
+      kind === "map" ? { "map-1": { id: "map-1" } } : {},
+    );
     expect(
-      await deps.buildDelta!("vault-1", changes, uploaded, signal),
+      await deps.buildDelta!("vault-1", changes, uploaded, signal, prepare),
     ).toBeNull();
     expect(mocks.buildDelta).toHaveBeenCalledWith(
       "World",
@@ -210,7 +221,13 @@ describe("cloud backup configuration", () => {
         signal,
         referencedAssetIds: ["images_art.png"],
       }),
-      { maps: mocks.maps.allMaps, canvases: mocks.canvases.allCanvases },
+      {
+        maps: mocks.maps.allMaps,
+        canvases: mocks.canvases.allCanvases,
+        mapBases: { "map-1": { id: "map-1" } },
+        canvasBases: {},
+        prepareMapAssets: prepare,
+      },
     );
     const options = mocks.buildDelta.mock.calls[0][2];
     expect(options.getEntity("entity-1")).toBe(
@@ -251,17 +268,25 @@ describe("cloud backup configuration", () => {
       expect.any(Object),
       { maps: [], canvases: [], sessionJournals: [] },
     );
+    const prepare = vi.fn();
     await deps.buildDelta!(
       "empty",
       [],
       new Set(),
       new AbortController().signal,
+      prepare,
     );
     expect(mocks.buildDelta).toHaveBeenCalledWith(
       "Vault",
       [],
       expect.any(Object),
-      { maps: [], canvases: [] },
+      {
+        maps: [],
+        canvases: [],
+        mapBases: {},
+        canvasBases: {},
+        prepareMapAssets: prepare,
+      },
     );
     expect(deps.listLocalEntities!()).toEqual([]);
   });

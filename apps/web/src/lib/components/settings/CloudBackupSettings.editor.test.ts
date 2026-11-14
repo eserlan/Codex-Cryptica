@@ -107,7 +107,7 @@ describe("CloudBackupSettings for a member of a shared vault", () => {
     store.keptLocal = true;
     render(CloudBackupSettings);
     const line = screen.getByText(
-      "Map, canvas and image changes stay on this device for now. Your other changes still sync.",
+      "Some changes, such as new images on entries, stay on this device for now. Your other changes still sync.",
     );
     expect(line.getAttribute("role")).toBe("status");
     expect(screen.queryByText(/Sync failed/)).toBeNull();
