@@ -3,7 +3,9 @@ import {
   readManifest,
   type BackupObjects,
   type CloudBackupEnv,
+  type SharingRecord,
 } from "./cloud-backup-storage";
+import { checkEditorDevice } from "./cloud-backup-sharing-devices";
 import {
   notFoundOrUnauthorized,
   storageUnavailable,
@@ -55,6 +57,8 @@ export async function authorize(
       ownerCodeHash: string;
       etag?: string;
       objects?: BackupObjects;
+      sharing?: SharingRecord;
+      role: "owner" | "editor";
     }
   | { response: Response }
 > {
@@ -68,14 +72,21 @@ export async function authorize(
   // A backup's code only ever unlocks that backup: the hash compared here comes
   // from the requested backup's own manifest, so another vault's valid code
   // fails exactly like an invalid one (FR-012).
-  if (record.ownerCodeHash !== (await hashOwnerCode(code))) {
-    return { response: notFoundOrUnauthorized(request) };
-  }
+  const hash = await hashOwnerCode(code);
+  const role =
+    record.ownerCodeHash === hash
+      ? "owner"
+      : record.sharing && record.sharing.editorTokenHash === hash
+        ? "editor"
+        : null;
+  if (!role) return { response: notFoundOrUnauthorized(request) };
   return {
     manifest: record.manifest,
     ownerCodeHash: record.ownerCodeHash,
     etag: record.etag,
     objects: record.objects,
+    sharing: record.sharing,
+    role,
   };
 }
 
@@ -86,14 +97,42 @@ export function isAdmin(request: Request, env: CloudBackupEnv): boolean {
   return bearerToken(request) === expected;
 }
 
-/** Storage must be available before any protected route reads credentials. */
+/**
+ * Storage must be available before any protected route reads credentials.
+ * An editor must also be an identified device within the sharing cap.
+ */
 export async function authorizeStoredBackup(
   request: Request,
   env: CloudBackupEnv,
   backupId: string,
 ): ReturnType<typeof authorize> {
   if (!env.BUCKET) return { response: storageUnavailable(request) };
-  return authorize(request, env, backupId);
+  const auth = await authorize(request, env, backupId);
+  if ("response" in auth || auth.role === "owner") return auth;
+  const refused = await checkEditorDevice(
+    request,
+    env,
+    backupId,
+    auth.sharing!,
+  );
+  return refused ? { response: refused } : auth;
+}
+
+/**
+ * For owner-only routes: an editor token gets the same response as a wrong key,
+ * before any device check or other work.
+ */
+export async function authorizeOwner(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+): ReturnType<typeof authorize> {
+  if (!env.BUCKET) return { response: storageUnavailable(request) };
+  const auth = await authorize(request, env, backupId);
+  if ("response" in auth) return auth;
+  return auth.role === "owner"
+    ? auth
+    : { response: notFoundOrUnauthorized(request) };
 }
 
 /** Authenticate before parsing a protected write's size-checked JSON body. */
@@ -101,8 +140,13 @@ export async function readAuthorizedJsonBody(
   request: Request,
   env: CloudBackupEnv,
   backupId: string,
+  ownerOnly = false,
 ) {
-  const auth = await authorizeStoredBackup(request, env, backupId);
+  const auth = await (ownerOnly ? authorizeOwner : authorizeStoredBackup)(
+    request,
+    env,
+    backupId,
+  );
   if ("response" in auth) return auth;
   const read = await readJsonBody(request);
   if ("response" in read) return read;

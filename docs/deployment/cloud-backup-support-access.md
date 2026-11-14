@@ -104,6 +104,10 @@ This **invalidates the previous code immediately**. If the user later finds
 their original, it will not work. Tell them that as part of the handover, or
 they will assume something is broken.
 
+If the backup has an active editor link (shared vault), re-issuing the code
+leaves that link working. Only the owner, with the recovery key, can replace
+the link or turn sharing off.
+
 ### 5. Give them a recovery key, not just the code
 
 The app asks for a **recovery key**, which is the backup id and the ownership

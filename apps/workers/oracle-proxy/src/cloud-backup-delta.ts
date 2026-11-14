@@ -29,6 +29,7 @@ import {
   writeJson,
   writeManifest,
   pruneAssets,
+  type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
 import { evictOldestTrash } from "./cloud-backup-trash";
@@ -408,6 +409,7 @@ async function commitDelta(
     manifest: CloudBackupManifest;
     ownerCodeHash: string;
     etag?: string;
+    sharing?: SharingRecord;
   },
   base: BackupObjects,
   prepared: PreparedDelta,
@@ -441,6 +443,7 @@ async function commitDelta(
     auth.ownerCodeHash,
     objects,
     auth.etag,
+    auth.sharing,
   );
   if (!won) {
     return lostRace(request, env, backupId, staged, auth.manifest);

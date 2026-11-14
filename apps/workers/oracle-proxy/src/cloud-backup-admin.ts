@@ -204,6 +204,7 @@ export async function handleCloudBackupReissueCode(
       ownerCodeHash,
       record.objects,
       record.etag,
+      record.sharing,
     );
     if (written) return json(request, { ownerCode });
   }
