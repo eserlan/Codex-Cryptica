@@ -407,8 +407,8 @@
   <div class="flex flex-col gap-2 border border-theme-border p-4">
     <p class="text-sm text-theme-text">
       {#if lastPushed}
-        Last saved {lastPushed}. Changes sync automatically while backup is on
-        — Save to cloud pushes immediately.
+        Last saved {lastPushed}. Changes sync automatically while backup is on —
+        Save to cloud pushes immediately.
       {:else}
         Not saved yet. Changes will sync automatically once the first save
         completes.
@@ -427,7 +427,8 @@
         </p>
         <p class="mt-1 text-sm text-theme-text">
           Keep editing safely: nothing will upload until you choose. To see the
-          cloud version, restore it into a new vault from the recovery key below.
+          cloud version, restore it into a new vault from the recovery key
+          below.
         </p>
         <button
           type="button"

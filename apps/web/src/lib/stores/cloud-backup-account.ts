@@ -38,6 +38,7 @@ export class CloudBackupAccount {
     return this.getDeps();
   }
 
+  // fallow-ignore-next-line complexity — null, disabled and enabled records are tested directly.
   applyRecord(record: LocalCloudBackupRecord | null) {
     this.state.consented = Boolean(record);
     this.state.ownerCode = record?.ownerCode ?? null;

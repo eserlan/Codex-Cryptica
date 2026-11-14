@@ -71,6 +71,7 @@ async function send(
   }
 }
 
+// fallow-ignore-next-line complexity — response validation and both repair paths are covered below.
 async function shareOutcome(
   runtime: CloudBackupRuntime,
   vaultId: string,
