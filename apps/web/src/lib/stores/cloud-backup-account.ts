@@ -25,6 +25,19 @@ type AccountState = Pick<
   | "recoveryKey"
 >;
 
+function recordStatus(record: LocalCloudBackupRecord | null) {
+  if (!record?.enabled) return "off";
+  return record.status ?? "idle";
+}
+
+function recordFields(record: LocalCloudBackupRecord | null) {
+  return {
+    ownerCode: record?.ownerCode ?? null,
+    sharing: record?.sharing ?? null,
+    lastPushedAt: record?.lastPushedAt ?? null,
+  };
+}
+
 /** Consent, backup association and the device's recovery credentials. */
 export class CloudBackupAccount {
   /** Track edits during the first build, before its enabled record exists. */
@@ -40,10 +53,8 @@ export class CloudBackupAccount {
 
   applyRecord(record: LocalCloudBackupRecord | null) {
     this.state.consented = Boolean(record);
-    this.state.ownerCode = record?.ownerCode ?? null;
-    this.state.sharing = record?.sharing ?? null;
-    this.state.lastPushedAt = record?.lastPushedAt ?? null;
-    this.state.status = record?.enabled ? (record.status ?? "idle") : "off";
+    this.state.status = recordStatus(record);
+    Object.assign(this.state, recordFields(record));
   }
 
   /**

@@ -9,6 +9,10 @@
    * provider — and how to get rid of it.
    */
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
+  import CloudBackupConflictNotice from "#lib/components/settings/CloudBackupConflictNotice.svelte";
+  import CloudBackupKnownBackups from "#lib/components/settings/CloudBackupKnownBackups.svelte";
+  import CloudBackupSavedLines from "#lib/components/settings/CloudBackupSavedLines.svelte";
+  import CloudBackupStatusBadge from "#lib/components/settings/CloudBackupStatusBadge.svelte";
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
   import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
   import CloudBackupSharingSettings from "#lib/components/settings/CloudBackupSharingSettings.svelte";
@@ -28,6 +32,9 @@
 
   const status = $derived(cloudBackupStore.status);
   const isOn = $derived(status !== "off");
+  const setupLabel = $derived(
+    cloudBackupStore.consented ? "Turn back on" : "Set up cloud backup",
+  );
   const vaultId = $derived(vault.activeVaultId ?? "");
 
   const STATUS_LABEL: Record<string, string> = {
@@ -265,31 +272,12 @@
 {#snippet restorePanel()}
   {#if showRestore}
     <div class="flex flex-col gap-3 border border-theme-border p-4">
-      {#if cloudBackupStore.knownBackups.length > 0}
-        <div class="flex flex-col gap-2">
-          <p class="text-sm text-theme-text">
-            Backups this device already has the key to:
-          </p>
-          <ul class="flex flex-col gap-1">
-            {#each cloudBackupStore.knownBackups as backup (backup.backupId)}
-              <li>
-                <button
-                  type="button"
-                  onclick={() => (restoreKey = backup.recoveryKey)}
-                  class="flex w-full items-baseline justify-between gap-3 border border-theme-border px-3 py-2 text-left transition-colors hover:border-theme-primary/40"
-                >
-                  <span class="text-sm text-theme-text"
-                    >{backupLabel(backup)}</span
-                  >
-                  <span class="font-mono text-micro uppercase text-theme-text">
-                    {savedAt(backup.lastPushedAt)}
-                  </span>
-                </button>
-              </li>
-            {/each}
-          </ul>
-        </div>
-      {/if}
+      <CloudBackupKnownBackups
+        backups={cloudBackupStore.knownBackups}
+        label={backupLabel}
+        {savedAt}
+        onpick={(key) => (restoreKey = key)}
+      />
 
       <p class="text-sm text-theme-text">
         Or paste a recovery key from another device — the "Copy recovery key"
@@ -416,17 +404,11 @@
       </p>
     </div>
 
-    {#if isOn}
-      <span
-        class="shrink-0 font-mono text-micro uppercase tracking-wider {status ===
-        'error'
-          ? 'text-red-400'
-          : 'text-theme-text'}"
-        aria-live="polite"
-      >
-        {statusText}
-      </span>
-    {/if}
+    <CloudBackupStatusBadge
+      {isOn}
+      isError={status === "error"}
+      text={statusText}
+    />
   </div>
 
   {#if !isOn}
@@ -436,44 +418,20 @@
       disabled={busy || !vaultId}
       class="self-start bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
     >
-      {cloudBackupStore.consented ? "Turn back on" : "Set up cloud backup"}
+      {setupLabel}
     </button>
   {:else}
     <div class="flex flex-col gap-2 border border-theme-border p-4">
-      <p class="text-sm text-theme-text">
-        {#if lastPushed}
-          Last saved {lastPushed}. Changes sync automatically while backup is on
-          — Save to cloud pushes immediately.
-        {:else}
-          Not saved yet. Changes will sync automatically once the first save
-          completes.
-        {/if}
-      </p>
-      {#if status === "error" && cloudBackupStore.errorMessage}
-        <p class="text-sm text-red-400" role="alert">
-          {cloudBackupStore.errorMessage}
-        </p>
-      {/if}
-      {#if autoState === "conflict"}
-        <div class="border border-red-400/40 p-3">
-          <p class="text-sm text-red-400" role="alert">
-            {cloudBackupStore.errorMessage ??
-              "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
-          </p>
-          <p class="mt-1 text-sm text-theme-text">
-            Keep editing safely: nothing will upload until you choose. To see
-            the cloud version, restore it into a new vault from the recovery key
-            below.
-          </p>
-          <button
-            type="button"
-            onclick={() => void cloudBackupStore.resolveConflictKeepMine()}
-            class="mt-2 bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90"
-          >
-            Keep my version
-          </button>
-        </div>
-      {/if}
+      <CloudBackupSavedLines
+        {lastPushed}
+        error={status === "error" ? cloudBackupStore.errorMessage : null}
+        recoveryKey={codeVisible ? cloudBackupStore.recoveryKey : null}
+      />
+      <CloudBackupConflictNotice
+        conflict={autoState === "conflict"}
+        message={cloudBackupStore.errorMessage}
+        onkeep={() => void cloudBackupStore.resolveConflictKeepMine()}
+      />
 
       {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
         <AdventureBackupSettings
@@ -484,12 +442,6 @@
             cloudBackupStore.setAdventureBackup(id, enabled, confirmed)}
           confirm={(options) => notificationStore.confirm(options)}
         />
-      {/if}
-
-      {#if codeVisible && cloudBackupStore.recoveryKey}
-        <p class="break-all font-mono text-xs text-theme-text">
-          {cloudBackupStore.recoveryKey}
-        </p>
       {/if}
 
       <div class="mt-2 flex flex-wrap gap-2">

@@ -71,40 +71,13 @@ async function send(
   }
 }
 
-async function shareOutcome(
-  runtime: CloudBackupRuntime,
-  vaultId: string,
-  origin: string,
-  suffix: string,
-): Promise<CloudBackupOutcome<CloudBackupShareResult>> {
-  const sent = await send(runtime, vaultId, "POST", suffix);
-  if ("ok" in sent) return sent;
-  const { record, response } = sent;
-
-  if (!response.ok) {
-    const error = await failureMessage(response);
-    if (response.status === 409 && suffix === "" && error === ALREADY_ON) {
-      await runtime.storage.write(vaultId, {
-        ...record,
-        sharing: record.sharing ?? {
-          linkVersion: 1,
-          enabledAt: nowIso(runtime),
-        },
-      });
-      return {
-        ok: false,
-        status: 409,
-        error: "Sharing is already on. Replace the link to get a new one.",
-      };
-    }
-    if (response.status === 409 && suffix !== "" && error === SHARING_OFF) {
-      const { sharing: _off, ...rest } = record;
-      await runtime.storage.write(vaultId, rest);
-      return { ok: false, status: 409, error: "Sharing is off." };
-    }
-    return { ok: false, status: response.status, error };
-  }
-
+async function readShareBody(
+  response: Awaited<ReturnType<CloudBackupRuntime["fetch"]>>,
+): Promise<{
+  editorToken: string;
+  linkVersion: number;
+  enabledAt: string;
+} | null> {
   const body = (await response.json().catch(() => null)) as {
     editorToken?: unknown;
     linkVersion?: unknown;
@@ -117,13 +90,72 @@ async function shareOutcome(
     (body.linkVersion as number) < 1 ||
     typeof body.enabledAt !== "string"
   ) {
+    return null;
+  }
+  return {
+    editorToken: body.editorToken,
+    linkVersion: body.linkVersion as number,
+    enabledAt: body.enabledAt,
+  };
+}
+
+async function conflictOutcome(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  record: LocalCloudBackupRecord,
+  suffix: string,
+  error: string,
+): Promise<CloudBackupOutcome<CloudBackupShareResult> | null> {
+  if (suffix === "" && error === ALREADY_ON) {
+    await runtime.storage.write(vaultId, {
+      ...record,
+      sharing: record.sharing ?? {
+        linkVersion: 1,
+        enabledAt: nowIso(runtime),
+      },
+    });
+    return {
+      ok: false,
+      status: 409,
+      error: "Sharing is already on. Replace the link to get a new one.",
+    };
+  }
+  if (suffix !== "" && error === SHARING_OFF) {
+    const { sharing: _off, ...rest } = record;
+    await runtime.storage.write(vaultId, rest);
+    return { ok: false, status: 409, error: "Sharing is off." };
+  }
+  return null;
+}
+
+async function shareOutcome(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  origin: string,
+  suffix: string,
+): Promise<CloudBackupOutcome<CloudBackupShareResult>> {
+  const sent = await send(runtime, vaultId, "POST", suffix);
+  if ("ok" in sent) return sent;
+  const { record, response } = sent;
+
+  if (!response.ok) {
+    const error = await failureMessage(response);
+    const conflict =
+      response.status === 409
+        ? await conflictOutcome(runtime, vaultId, record, suffix, error)
+        : null;
+    return conflict ?? { ok: false, status: response.status, error };
+  }
+
+  const body = await readShareBody(response);
+  if (!body) {
     return {
       ok: false,
       error: "The backup service returned an unreadable response.",
     };
   }
 
-  const linkVersion = body.linkVersion as number;
+  const { linkVersion } = body;
   await runtime.storage.write(vaultId, {
     ...record,
     sharing: { linkVersion, enabledAt: body.enabledAt },
