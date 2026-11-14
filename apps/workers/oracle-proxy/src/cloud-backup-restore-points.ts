@@ -1,5 +1,8 @@
 import { z } from "zod";
-import type { CloudBackupManifest } from "../../../../packages/schema/src/publishing";
+import {
+  CLOUD_BACKUP_LIMITS,
+  type CloudBackupManifest,
+} from "../../../../packages/schema/src/publishing";
 import {
   BackupObjectsSchema,
   type BackupObjects,
@@ -145,6 +148,9 @@ async function takePoint(
   const assets = Object.fromEntries(
     Object.entries(listed).filter(([id]) => !wanted || wanted.has(id)),
   );
+  // Older backups may predate the asset-count limit. Do not write a point
+  // whose metadata would exceed the documented bound.
+  if (Object.keys(assets).length > CLOUD_BACKUP_LIMITS.maxAssetCount) return;
   const record: RestorePoint = {
     date,
     takenAt: now.toISOString(),
@@ -153,7 +159,14 @@ async function takePoint(
     objects,
     assets,
   };
-  const written = await env.BUCKET.put(key, JSON.stringify(record), {
+  const serialized = JSON.stringify(record);
+  if (
+    new TextEncoder().encode(serialized).byteLength >
+    CLOUD_BACKUP_LIMITS.maxRestorePointMetadataBytes
+  ) {
+    return;
+  }
+  const written = await env.BUCKET.put(key, serialized, {
     httpMetadata: { contentType: "application/json" },
     onlyIf: { etagDoesNotMatch: "*" },
   });

@@ -525,6 +525,10 @@ export const CLOUD_BACKUP_LIMITS = {
    * memory ceiling. Matches the publish path's per-asset cap.
    */
   maxAssetBytes: 5 * 1024 * 1024,
+  /** Bounds restore-point asset metadata independently of the byte ceiling. */
+  maxAssetCount: 1_000,
+  /** Hard cap for the complete serialized restore-point record. */
+  maxRestorePointMetadataBytes: 1024 * 1024,
   /**
    * Ceiling on a JSON body (enable and commit). The bundle is text only —
    * entities, maps and canvases — so this is generous for it while keeping any
@@ -689,7 +693,10 @@ export const CloudBackupDeltaSchema = z.object({
   maps: z.array(z.unknown()).optional(),
   canvases: z.array(z.unknown()).optional(),
   assetManifest: z.array(z.unknown()).optional(),
-  assetIds: z.array(z.string()).optional(),
+  assetIds: z
+    .array(z.string())
+    .max(CLOUD_BACKUP_LIMITS.maxAssetCount)
+    .optional(),
 });
 
 export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;

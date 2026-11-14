@@ -3,6 +3,8 @@ import {
   type CloudBackupEnv,
   acquireBackupMutationLock,
   getAssetKey,
+  getBackupPrefix,
+  listKeys,
   reachableBytes,
   resolveObjects,
 } from "./cloud-backup-storage";
@@ -62,6 +64,22 @@ export async function handleCloudBackupAssetUpload(
     // Measured against what is already stored, minus whatever this upload
     // replaces, so a re-uploaded file is not counted twice.
     const existing = await env.BUCKET.head(key);
+    if (
+      !existing &&
+      (await listKeys(env, `${getBackupPrefix(backupId)}assets/`)).length >=
+        CLOUD_BACKUP_LIMITS.maxAssetCount
+    ) {
+      return json(
+        request,
+        {
+          error: {
+            message: "This backup contains too many assets.",
+            limit: CLOUD_BACKUP_LIMITS.maxAssetCount,
+          },
+        },
+        413,
+      );
+    }
     const projected =
       (await reachableBytes(
         env,

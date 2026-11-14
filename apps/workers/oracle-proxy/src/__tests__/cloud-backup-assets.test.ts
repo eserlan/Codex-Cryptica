@@ -95,4 +95,20 @@ describe("cloud backup asset transfer", () => {
       ).status,
     ).toBe(404);
   });
+
+  it("rejects a new asset when the backup reaches its asset-count limit", async () => {
+    const { env, backupId, ownerCode } = await createBackupFixture();
+    for (let index = 0; index < CLOUD_BACKUP_LIMITS.maxAssetCount; index++) {
+      await env.BUCKET.put(getAssetKey(backupId, `asset-${index}`), "");
+    }
+
+    const response = await handleCloudBackupAssetUpload(
+      ownerRequest(ownerCode, { method: "PUT", body: "" }),
+      env,
+      backupId,
+      "overflow",
+    );
+    expect(response.status).toBe(413);
+    expect(await env.BUCKET.head(getAssetKey(backupId, "overflow"))).toBeNull();
+  });
 });
