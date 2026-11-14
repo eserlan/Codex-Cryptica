@@ -67,7 +67,7 @@
   class="mx-auto flex min-h-full w-full max-w-xl flex-col gap-4 bg-theme-bg p-4 font-body text-theme-text md:p-8"
 >
   {#if !ready}
-    <p class="text-sm text-theme-muted">Loading…</p>
+    <p class="text-sm text-theme-text">Loading…</p>
   {:else if !link}
     <h1 class="font-header text-xl font-bold">This link does not work</h1>
     <p class="text-sm">
@@ -141,7 +141,7 @@
       />
     </label>
     {#if !trimmed}
-      <p class="text-xs text-theme-muted">
+      <p class="text-xs text-theme-text">
         Type a name so the group can see who made a change.
       </p>
     {/if}
