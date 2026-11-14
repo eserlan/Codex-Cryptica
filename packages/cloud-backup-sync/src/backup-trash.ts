@@ -3,7 +3,12 @@
  * member can still bring back, and one item's kept content.
  */
 import { z } from "zod";
-import { CloudBackupTombstoneSchema, type CloudBackupTombstone } from "schema";
+import {
+  CloudBackupTombstoneSchema,
+  CloudBackupWholeItemAssetSchema,
+  type CloudBackupTombstone,
+  type CloudBackupWholeItemAsset,
+} from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord } from "./backup-records";
 import { cloudBackupHeaders } from "./request-headers";
@@ -11,6 +16,8 @@ import { cloudBackupHeaders } from "./request-headers";
 const TrashItemSchema = z.object({
   id: z.string(),
   title: z.string(),
+  /** Absent from an older worker, which only trashes entities. */
+  kind: z.enum(["entity", "map", "canvas"]).default("entity"),
   deletedBy: z.string(),
   deletedAt: z.string(),
   restorable: z.boolean(),
@@ -23,7 +30,9 @@ const TrashListSchema = z.object({
 
 const TrashEntitySchema = z.object({
   tombstone: CloudBackupTombstoneSchema,
-  entity: z.object({ id: z.string(), title: z.string() }).passthrough(),
+  entity: z.object({ id: z.string() }).passthrough(),
+  /** The files a removed map carried. */
+  assets: z.array(CloudBackupWholeItemAssetSchema).optional(),
 });
 
 export type CloudBackupTrashItem = z.infer<typeof TrashItemSchema>;
@@ -38,8 +47,9 @@ export type CloudBackupTrashOutcome =
 export type CloudBackupTrashItemOutcome =
   | {
       kind: "entity";
-      entity: { id: string; title: string } & Record<string, unknown>;
+      entity: { id: string } & Record<string, unknown>;
       tombstone: CloudBackupTombstone;
+      assets?: CloudBackupWholeItemAsset[];
     }
   /** Restored, expired, or its content was dropped to keep trash small. */
   | { kind: "gone" }

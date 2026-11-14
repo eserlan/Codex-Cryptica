@@ -1,4 +1,8 @@
-import type { CloudBackupManifest, LocalCloudBackupRecord } from "schema";
+import type {
+  CloudBackupManifest,
+  CloudBackupWholeItemAsset,
+  LocalCloudBackupRecord,
+} from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import {
   getLocalCloudBackupRecord as readRecord,
@@ -14,10 +18,14 @@ export interface VaultDeltaPayload {
   deletes: string[];
   /** Complete set of currently referenced media, used to prune removed files. */
   assetIds: string[];
-  /** Present only when maps changed; replaces the backup's maps whole. */
-  maps?: unknown[];
-  /** Present only when canvases changed; replaces the backup's canvases whole. */
-  canvases?: unknown[];
+  /** Maps that changed, whole, with the files each one carries. */
+  mapUpserts?: {
+    item: { id: string };
+    assets?: CloudBackupWholeItemAsset[];
+  }[];
+  mapDeletes?: string[];
+  canvasUpserts?: { item: { id: string } }[];
+  canvasDeletes?: string[];
 }
 
 /** An editor's display name, trimmed and capped; an owner never sends one. */

@@ -55,25 +55,35 @@ function deepEqual(a: unknown, b: unknown): boolean {
   return ak.every((k) => k in bo && deepEqual(ao[k], bo[k]));
 }
 
-const isContentKey = (key: string) =>
-  key !== "id" && !BOOKKEEPING.includes(key);
-
-function contentKeys(...entities: MergeEntity[]): string[] {
+function contentKeys(
+  ignored: readonly string[],
+  ...entities: Record<string, unknown>[]
+): string[] {
   const keys = new Set<string>();
   for (const entity of entities) {
     for (const key of Object.keys(entity)) {
-      if (isContentKey(key)) keys.add(key);
+      if (key !== "id" && !ignored.includes(key)) keys.add(key);
     }
   }
   return [...keys];
 }
 
-function differs(a: MergeEntity, b: MergeEntity, key: string): boolean {
+function differs(
+  a: Record<string, unknown>,
+  b: Record<string, unknown>,
+  key: string,
+): boolean {
   return key in a !== key in b || !deepEqual(a[key], b[key]);
 }
 
-function changedKeys(base: MergeEntity, side: MergeEntity): string[] {
-  return contentKeys(base, side).filter((key) => differs(base, side, key));
+function changedKeys(
+  base: Record<string, unknown>,
+  side: Record<string, unknown>,
+  ignored: readonly string[] = BOOKKEEPING,
+): string[] {
+  return contentKeys(ignored, base, side).filter((key) =>
+    differs(base, side, key),
+  );
 }
 
 /** True when two entities hold the same content, ignoring `id` and bookkeeping stamps. */
@@ -109,16 +119,39 @@ function combine(
   return result;
 }
 
-function makeCopy(mine: MergeEntity, options: MergeOptions): MergeEntity {
+/** A keep-both copy: a new id and "Title (Name's version)", never suffixed twice. */
+function makeCopy<T extends { id: string }>(
+  mine: T,
+  options: MergeOptions,
+  titleField: "title" | "name" = "title",
+): T {
   const suffix = ` (${options.copyAuthorName}'s version)`;
-  const copy: MergeEntity = { ...mine };
+  const title = String((mine as Record<string, unknown>)[titleField] ?? "");
+  const copy: Record<string, unknown> = { ...mine };
   copy.id = options.newId();
-  copy.title = mine.title.endsWith(suffix) ? mine.title : mine.title + suffix;
+  copy[titleField] = title.endsWith(suffix) ? title : title + suffix;
   delete copy._path;
-  return copy;
+  return copy as T;
 }
 
 type Ctx = { result: MergeResult; options: MergeOptions };
+
+/** Makes the keep-both copy of `mine`, records it in the result and returns it. */
+function recordCopy<T extends { id: string }>(
+  result: { copies: T[]; summary: MergeSummary },
+  originalId: string,
+  mine: T,
+  options: MergeOptions,
+  titleField: "title" | "name",
+): void {
+  const copy = makeCopy(mine, options, titleField);
+  result.copies.push(copy);
+  result.summary.copies.push({
+    originalId,
+    copyId: copy.id,
+    title: String((copy as Record<string, unknown>)[titleField]),
+  });
+}
 
 function clash(
   ctx: Ctx,
@@ -126,14 +159,8 @@ function clash(
   mine: MergeEntity,
   theirs: MergeEntity,
 ): void {
-  const copy = makeCopy(mine, ctx.options);
+  recordCopy(ctx.result, id, mine, ctx.options, "title");
   ctx.result.entities[id] = theirs;
-  ctx.result.copies.push(copy);
-  ctx.result.summary.copies.push({
-    originalId: id,
-    copyId: copy.id,
-    title: copy.title,
-  });
 }
 
 function mergeOneSideGone(
@@ -199,6 +226,16 @@ function mergeOne(
   if (base) ctx.result.summary.deleted.push(id);
 }
 
+const emptySummary = (): MergeSummary => ({
+  combined: [],
+  editsKeptOverDelete: [],
+  copies: [],
+  deleted: [],
+});
+
+const unionIds = (...sides: object[]): Set<string> =>
+  new Set(sides.flatMap((side) => Object.keys(side)));
+
 export function mergeEntities(
   input: MergeInput,
   options: MergeOptions,
@@ -209,26 +246,144 @@ export function mergeEntities(
       entities: {},
       deletes: [],
       copies: [],
-      summary: {
-        combined: [],
-        editsKeptOverDelete: [],
-        copies: [],
-        deleted: [],
-      },
+      summary: emptySummary(),
     },
   };
-  const ids = new Set([
-    ...Object.keys(input.base),
-    ...Object.keys(input.mine),
-    ...Object.keys(input.theirs),
-  ]);
-  for (const id of ids) {
+  for (const id of unionIds(input.base, input.mine, input.theirs)) {
     mergeOne(
       ctx,
       id,
       input.base[id] ?? null,
       input.mine[id] ?? null,
       input.theirs[id] ?? null,
+    );
+  }
+  return ctx.result;
+}
+
+/** A map or canvas: one whole item, named by `name`. */
+export interface WholeItem {
+  id: string;
+  name: string;
+  [key: string]: unknown;
+}
+
+export type WholeSide = Record<string, WholeItem | null | undefined>;
+
+export interface WholeMergeInput {
+  base: WholeSide;
+  mine: WholeSide;
+  theirs: WholeSide;
+  /** Ids with a local change the content does not show, such as a fog mask. */
+  mineDirty: ReadonlySet<string>;
+}
+
+export interface WholeMergeOptions extends MergeOptions {
+  /** Content keys to ignore besides the entity ones; `lastModified` always is. */
+  bookkeeping?: readonly string[];
+}
+
+export interface WholeMergeResult {
+  items: Record<string, WholeItem>;
+  deletes: string[];
+  copies: WholeItem[];
+  summary: MergeSummary;
+}
+
+/** True when two maps or canvases hold the same content, ignoring `lastModified`. */
+export function equalWholeContent(a: WholeItem, b: WholeItem): boolean {
+  return changedKeys(a, b, [...BOOKKEEPING, "lastModified"]).length === 0;
+}
+
+type WholeCtx = {
+  result: WholeMergeResult;
+  options: WholeMergeOptions;
+  ignored: readonly string[];
+};
+
+/** Mine and theirs are both here; theirs stays unless mine changed and differs. */
+function mergeWholeBothPresent(
+  ctx: WholeCtx,
+  id: string,
+  mine: WholeItem,
+  theirs: WholeItem,
+  mineChanged: boolean,
+): void {
+  ctx.result.items[id] = theirs;
+  if (mineChanged && changedKeys(mine, theirs, ctx.ignored).length > 0) {
+    recordCopy(ctx.result, id, mine, ctx.options, "name");
+  }
+}
+
+/** Their side is gone: an unchanged item goes, an edited or new one stays. */
+function mergeWholeTheirsGone(
+  ctx: WholeCtx,
+  id: string,
+  base: WholeItem | null,
+  mine: WholeItem,
+  mineChanged: boolean,
+): void {
+  const { result } = ctx;
+  if (base && !mineChanged) {
+    result.deletes.push(id);
+    result.summary.deleted.push(id);
+    return;
+  }
+  result.items[id] = mine;
+  if (base) result.summary.editsKeptOverDelete.push(id);
+}
+
+function mergeWholeOne(
+  ctx: WholeCtx,
+  id: string,
+  sides: {
+    base: WholeItem | null;
+    mine: WholeItem | null;
+    theirs: WholeItem | null;
+  },
+  dirty: boolean,
+): void {
+  const { base, mine, theirs } = sides;
+  const mineChanged =
+    !!mine &&
+    (dirty || !base || changedKeys(base, mine, ctx.ignored).length > 0);
+  if (mine && theirs) {
+    return mergeWholeBothPresent(ctx, id, mine, theirs, mineChanged);
+  }
+  if (mine) return mergeWholeTheirsGone(ctx, id, base, mine, mineChanged);
+  if (theirs) {
+    // Mine was deleted: theirs, changed or not, comes back.
+    ctx.result.items[id] = theirs;
+    return;
+  }
+  ctx.result.deletes.push(id);
+  if (base) ctx.result.summary.deleted.push(id);
+}
+
+/**
+ * Merges maps or canvases, which never merge field by field: an item is
+ * either taken whole from theirs or, when both sides changed it, theirs stays
+ * and mine becomes a keep-both copy.
+ */
+export function mergeWholeItems(
+  input: WholeMergeInput,
+  options: WholeMergeOptions,
+): WholeMergeResult {
+  const ctx: WholeCtx = {
+    options,
+    ignored: [...BOOKKEEPING, "lastModified", ...(options.bookkeeping ?? [])],
+    result: { items: {}, deletes: [], copies: [], summary: emptySummary() },
+  };
+  for (const id of unionIds(input.base, input.mine, input.theirs)) {
+    mergeWholeOne(
+      ctx,
+      id,
+      {
+        base: input.base[id] ?? null,
+        mine: input.mine[id] ?? null,
+        theirs: input.theirs[id] ?? null,
+      },
+      input.mineDirty.has(id),
     );
   }
   return ctx.result;
