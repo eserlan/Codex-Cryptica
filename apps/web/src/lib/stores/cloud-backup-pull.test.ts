@@ -629,6 +629,36 @@ describe("delete notices", () => {
     expect(h.local.has("a")).toBe(true);
     expect(notifyDeletes).not.toHaveBeenCalled();
   });
+
+  it("keeps a member's unsynced edits through an owner rollback", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      {
+        // The rollback's feed: one entity back at the point's title, and one
+        // the point did not have, now a tombstone.
+        changes: [
+          feed(4, [e("a", "Rolled back")], [tomb("d", "Newer entity")]),
+        ],
+      },
+      {},
+      { notifyDeletes },
+    );
+    h.local.set("a", e("a", "Old title", { content: "my edit" }));
+    await h.base.recordSent("v-1", [e("a", "Old title")], []);
+    h.local.set("d", e("d", "Newer entity", { content: "my edit" }));
+    await h.base.recordSent("v-1", [e("d", "Newer entity")], []);
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+
+    // Their title lands, my edit to another field stays.
+    expect(h.local.get("a")).toMatchObject({
+      title: "Rolled back",
+      content: "my edit",
+    });
+    // An edited entity survives the tombstone and is not announced as deleted.
+    expect(h.local.get("d")?.content).toBe("my edit");
+    expect(notifyDeletes).not.toHaveBeenCalled();
+  });
 });
 
 describe("maps and canvases as whole items", () => {

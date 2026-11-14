@@ -96,7 +96,7 @@ export async function lostRace(
   );
 }
 
-async function readShards(
+export async function readShards(
   env: CloudBackupEnv,
   backupId: string,
   names: Iterable<string>,
@@ -121,7 +121,7 @@ function touchedShardNames(delta: CloudBackupDelta): Set<string> {
   return touched;
 }
 
-function tombstoneOf(
+export function tombstoneOf(
   entity: EntityRecord,
   id: string,
   stamp: CloudBackupEntitySyncMeta,
@@ -135,14 +135,14 @@ function tombstoneOf(
   };
 }
 
-interface IndexState extends WholeMeta {
+export interface IndexState extends WholeMeta {
   hashes: Record<string, string>;
   meta: Record<string, CloudBackupEntitySyncMeta>;
   tombstones: Tombstones;
 }
 
 /** The base index as mutable, prototype-free maps. */
-async function readIndexState(
+export async function readIndexState(
   env: CloudBackupEnv,
   backupId: string,
   base: BackupObjects,
@@ -162,6 +162,25 @@ async function readIndexState(
     meta: Object.assign(Object.create(null), index?.entityMeta ?? {}),
     tombstones: Object.assign(Object.create(null), index?.tombstones ?? {}),
   };
+}
+
+/** Tombstones an entity and moves its content to the trash, like a delete. */
+export function trashEntity(
+  id: string,
+  stamp: CloudBackupEntitySyncMeta,
+  { hashes, meta, tombstones }: IndexState,
+  shards: Map<string, Shard>,
+  trash: Map<string, Shard>,
+): void {
+  const name = cloudBackupShardOf(id);
+  const entity = shards.get(name)![id];
+  if (entity) {
+    tombstones[id] = tombstoneOf(entity, id, stamp);
+    trash.get(name)![id] = entity;
+  }
+  delete shards.get(name)![id];
+  delete hashes[id];
+  delete meta[id];
 }
 
 /**
@@ -188,15 +207,7 @@ async function applyEntityDelta(
   const { hashes, meta, tombstones } = state;
 
   for (const id of delta.deletes) {
-    const name = cloudBackupShardOf(id);
-    const entity = shards.get(name)![id];
-    if (entity) {
-      tombstones[id] = tombstoneOf(entity, id, stamp);
-      trash.get(name)![id] = entity;
-    }
-    delete shards.get(name)![id];
-    delete hashes[id];
-    delete meta[id];
+    trashEntity(id, stamp, state, shards, trash);
   }
   for (const entity of delta.upserts as EntityRecord[]) {
     const name = cloudBackupShardOf(entity.id);
@@ -209,7 +220,7 @@ async function applyEntityDelta(
   return { shards, trash };
 }
 
-async function sizeOfReferenced(
+export async function sizeOfReferenced(
   env: CloudBackupEnv,
   backupId: string,
   relative: string | undefined,
@@ -220,7 +231,7 @@ async function sizeOfReferenced(
 }
 
 /** Bytes the changed shards add to the reachable total, for the vault ceiling. */
-async function shardGrowth(
+export async function shardGrowth(
   env: CloudBackupEnv,
   backupId: string,
   base: BackupObjects,
@@ -235,7 +246,7 @@ async function shardGrowth(
   return growth;
 }
 
-async function indexGrowth(
+export async function indexGrowth(
   env: CloudBackupEnv,
   backupId: string,
   base: BackupObjects,
@@ -328,7 +339,7 @@ function validateDelta(
   return { delta };
 }
 
-interface PreparedDelta {
+export interface PreparedDelta {
   /** The highest `rev` of a tombstone the purge removed, or 0. */
   purgedRev: number;
   shards: Map<string, Shard>;
@@ -477,7 +488,7 @@ function carriedReferences(
 }
 
 /** Writes the delta's objects under the commit's tag and builds the new `objects`. */
-async function stageDelta(
+export async function stageDelta(
   env: CloudBackupEnv,
   backupId: string,
   tag: string,
@@ -517,6 +528,7 @@ async function stageDelta(
     index: staged.index,
     shards: carriedReferences(base.shards, shards, stagedShards),
     ...(Object.keys(allTrash).length > 0 ? { trash: allTrash } : {}),
+    ...(base.assetVersions ? { assetVersions: base.assetVersions } : {}),
   };
   return { staged, objects };
 }

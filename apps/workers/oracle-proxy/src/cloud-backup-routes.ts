@@ -16,6 +16,7 @@ import {
   handleCloudBackupSharingOff,
   handleCloudBackupSharingReplace,
   handleListRestorePoints,
+  handleCloudBackupRollback,
   handleListTrash,
   handleGetTrashItem,
 } from "./cloud-backup";
@@ -209,6 +210,10 @@ function handleCloudBackupActionRoute(
     "restore-points": {
       method: "GET",
       run: () => handleListRestorePoints(request, env, backupId),
+    },
+    rollback: {
+      method: "POST",
+      run: () => handleCloudBackupRollback(request, env, backupId),
     },
     sharing: {
       method: request.method === "DELETE" ? "DELETE" : "POST",

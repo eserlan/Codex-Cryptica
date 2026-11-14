@@ -261,8 +261,7 @@ title }`. The server keeps the entity's last content with the tombstone for
   from the web deploy. The web app must keep working against the old worker
   and the worker against the old web app.
 - Automatic sync spreads a mistake to every member within seconds. Slices 9
-  and 12 are the safety net; until they ship, keep sharing behind a feature
-  flag.
+  and 12 are the safety net. Done: the feature flag was removed in slice 12.
 - Restore points multiply storage per shared vault. Slice 11 limits backups to
   30 daily points and 1,000 assets, and caps each serialized point record at
   1 MiB. The worst case is therefore at most 101 MiB per point (100 MiB of
@@ -307,9 +306,9 @@ see.
       purge, and "an edit beats a delete".
 - [x] **Slice 10: Maps and canvases** (#4777) — whole-item sync with a
       revision each, and "keep both" on a clash.
-- [ ] **Slice 11: Restore points** (#4778) — one snapshot per day for 30
+- [x] **Slice 11: Restore points** (#4778) — one snapshot per day for 30
       days, with the storage cost stated first; the owner-only list.
-- [ ] **Slice 12: Rollback** (#4784) — rollback as a commit; the owner's
+- [x] **Slice 12: Rollback** (#4784) — rollback as a commit; the owner's
       screen. Remove the feature flag.
 
 ### Verification gate (every slice)
