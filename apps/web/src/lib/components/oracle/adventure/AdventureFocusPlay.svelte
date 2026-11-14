@@ -314,7 +314,7 @@
 <section
   bind:this={focusElement}
   use:bodyPortal={phone}
-  class="fixed inset-0 z-[100] flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-theme-bg sm:relative sm:inset-auto sm:z-auto sm:h-auto sm:min-h-[65vh] sm:flex-1"
+  class="@container fixed inset-0 z-[100] flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-theme-bg sm:relative sm:inset-auto sm:z-auto sm:h-auto sm:min-h-[65vh] sm:flex-1"
   style={keyboardStyle}
   role={phone ? "dialog" : undefined}
   aria-modal={phone ? "true" : undefined}
@@ -421,36 +421,49 @@
     </div>
   </header>
 
-  <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
-    {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+  {#if manager.session && manager.recap}
+    <!-- Narrow surfaces: the scene strip is pinned above the transcript. -->
+    <div
+      class="shrink-0 px-3 pt-3 @4xl:hidden"
+      data-testid="adventure-scene-strip-wrap"
+    >
+      <AdventureStateSummary {manager} />
+    </div>
+  {/if}
+
+  <div class="flex min-h-0 flex-1 flex-col @4xl:flex-row">
+    {#if manager.session && manager.recap}
       <aside
-        aria-label="Scene artwork"
+        aria-label="Current scene"
         data-testid="adventure-artwork-panel"
-        class="hidden lg:block lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-theme-border lg:bg-theme-surface/40 lg:p-4 xl:w-96"
+        class="hidden @4xl:block @4xl:w-80 @4xl:shrink-0 @4xl:overflow-y-auto @4xl:border-r @4xl:border-theme-border @4xl:bg-theme-surface/40 @4xl:p-4 @6xl:w-96"
       >
-        <div class="space-y-3">
-          <AdventureArtworkFeature
-            session={manager.session}
-            entities={vault.entities}
-            activeVaultId={vault.activeVaultId}
-            resolve={(path) => vault.resolveImageUrl(path)}
-            readOnly={manager.readOnly ||
-              (manager.phase !== "ready" && manager.phase !== "offline")}
-            theme={themeStore.worldThemeId}
-            mutate={(...args) => manager.mutateLocalArtwork(...args)}
-            portrait={npcPortrait}
-          />
-        </div>
+        <AdventureStateSummary {manager} variant="panel">
+          {#snippet media()}
+            {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+              <AdventureArtworkFeature
+                session={manager.session}
+                entities={vault.entities}
+                activeVaultId={vault.activeVaultId}
+                resolve={(path) => vault.resolveImageUrl(path)}
+                readOnly={manager.readOnly ||
+                  (manager.phase !== "ready" && manager.phase !== "offline")}
+                theme={themeStore.worldThemeId}
+                mutate={(...args) => manager.mutateLocalArtwork(...args)}
+                portrait={npcPortrait}
+              />
+            {/if}
+          {/snippet}
+        </AdventureStateSummary>
       </aside>
     {/if}
     <!-- fallow-ignore-next-line css-broken-reference -->
     <main
-      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 lg:p-6"
+      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
       bind:this={playViewport}
       data-testid="adventure-play-viewport"
     >
       <div class="mx-auto max-w-3xl space-y-4">
-        <AdventureStateSummary {manager} />
         <AdventureScenarioControls {manager} />
         <AdventurePlay {manager} showComposer={false} />
         <AdventureRollPrompt {manager} />
@@ -467,14 +480,17 @@
     suggestionChips={!phone}
   />
 
-  <AdventureArtworkLightbox controller={artworkLightbox} />
+  <!-- Portaled to <body> so the fixed lightbox always covers the viewport and
+       never depends on the surface (a size container) as an ancestor. -->
+  <div class="contents" use:bodyPortal={true}>
+    <AdventureArtworkLightbox controller={artworkLightbox} />
+  </div>
 
-  <!-- A bottom sheet rather than a side-by-side aside: this surface is often
-       hosted in the app's own (already-narrow) sidebar panel, where a lg:
-       viewport breakpoint still fires even though the actual container is
-       far from lg-wide, splitting the layout into two cramped columns. A
-       sheet anchored to this section's own bounds is correct regardless of
-       how wide the host container actually is. -->
+  <!-- No viewport breakpoints for side-by-side layout: this surface is often
+       hosted in the app's own (already-narrow) sidebar panel, where a viewport
+       breakpoint still fires. The scene panel uses a container query on the
+       surface's own width; the tools stay a bottom sheet anchored to this
+       section's bounds, correct however wide the host is. -->
   {#if utilitiesOpen}
     <button
       type="button"
