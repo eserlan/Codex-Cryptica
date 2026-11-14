@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ArtworkBlobHandle } from "#lib/services/adventure/artwork/ports.js";
+  import { loadWhenVisible } from "./lazy-artwork-load.js";
   import { getAdventureLightbox } from "./adventure-artwork-lightbox.svelte.js";
 
   let {
@@ -49,64 +50,12 @@
     const element = container;
     const loader = load;
     if (!element) return;
-    const controller = new AbortController();
-    let active = true;
-    let started = false;
-    let owned: ArtworkBlobHandle | null = null;
     handle = null;
     pending = true;
-    function start() {
-      if (started) return;
-      started = true;
-      void Promise.resolve()
-        .then(() =>
-          controller.signal.aborted ? null : loader(controller.signal),
-        )
-        .then((result) => {
-          if (!active || controller.signal.aborted) {
-            result?.release();
-            return;
-          }
-          if (result) {
-            let released = false;
-            owned = {
-              url: result.url,
-              release: () => {
-                if (!released) {
-                  released = true;
-                  result.release();
-                }
-              },
-            };
-          }
-          handle = owned;
-          pending = false;
-        })
-        .catch(() => {
-          if (active) pending = false;
-        });
-    }
-    const observer =
-      typeof IntersectionObserver === "undefined"
-        ? null
-        : new IntersectionObserver(
-            (entries) => {
-              if (entries.some((entry) => entry.isIntersecting)) {
-                observer?.disconnect();
-                start();
-              }
-            },
-            { rootMargin: "200px" },
-          );
-    if (observer) observer.observe(element);
-    else start();
-    return () => {
-      active = false;
-      controller.abort();
-      observer?.disconnect();
-      owned?.release();
-      owned = null;
-    };
+    return loadWhenVisible(element, loader, (result) => {
+      handle = result;
+      pending = false;
+    });
   });
 
   function failed() {
