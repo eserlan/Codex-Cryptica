@@ -74,8 +74,11 @@ describe("CloudBackupSharingSettings", () => {
     expect(p.enable).toHaveBeenCalledOnce();
     const field = (await screen.findByDisplayValue(LINK)) as HTMLInputElement;
     expect(field.value).toMatch(/\/join#[^:]+:[0-9a-f]+$/);
+    expect(document.activeElement).toBe(field);
+    expect(field.closest("[role=status]")).toBeTruthy();
     await click("Copy link");
     expect(writeText).toHaveBeenCalledWith(LINK);
+    expect(await screen.findByText("Link copied.")).toBeTruthy();
     expect(screen.getByText(/Sharing is on/)).toBeTruthy();
   });
 
@@ -90,7 +93,10 @@ describe("CloudBackupSharingSettings", () => {
     await click(/I understand/);
     await screen.findByDisplayValue(LINK);
     await click("Copy link");
-    await screen.findByText(/copy it by hand/);
+    expect(
+      (await screen.findByText(/copy it by hand/)).getAttribute("role"),
+    ).toBe("alert");
+    expect(screen.queryByText("Link copied.")).toBeNull();
     expect(screen.getByDisplayValue(LINK)).toBeTruthy();
   });
 
@@ -158,5 +164,60 @@ describe("CloudBackupSharingSettings", () => {
     expect(
       screen.getByRole("button", { name: "Turn off sharing" }),
     ).toBeTruthy();
+  });
+
+  it("moves focus to the new link after replace", async () => {
+    setup({ sharing: ON });
+    await click("Replace link");
+    const field = await screen.findByDisplayValue(LINK);
+    await waitFor(() => expect(document.activeElement).toBe(field));
+  });
+
+  it("shows a working status while a request runs", async () => {
+    let finish!: (v: { ok: true }) => void;
+    const disable = vi.fn(() => new Promise<{ ok: true }>((r) => (finish = r)));
+    const p = setup({ sharing: ON, disable });
+    await click("Turn off sharing");
+    expect(
+      (await screen.findByText(/Turning off sharing…/)).getAttribute("role"),
+    ).toBe("status");
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Replace link",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    finish({ ok: true });
+    await waitFor(() =>
+      expect(screen.queryByText(/Turning off sharing…/)).toBeNull(),
+    );
+    expect(p.confirm).toHaveBeenCalled();
+  });
+
+  it("keeps the progress status region mounted before and after a request", async () => {
+    setup({ sharing: ON });
+    const region = screen.getByRole("status");
+    expect(region.textContent).toBe("");
+    await click("Turn off sharing");
+    await waitFor(() => expect(screen.getByRole("status")).toBe(region));
+    await waitFor(() => expect(region.textContent).toBe(""));
+  });
+
+  it("tells the owner members keep their copy when turning off", async () => {
+    const p = setup({ sharing: ON });
+    await click("Turn off sharing");
+    expect(p.confirm.mock.calls[0][0].message).toContain(
+      "Members keep the copy they already have",
+    );
+  });
+
+  it("clears a shown link when turn off succeeds", async () => {
+    const p = setup({ sharing: ON });
+    await click("Replace link");
+    await screen.findByDisplayValue(LINK);
+    await click("Turn off sharing");
+    await waitFor(() => expect(screen.queryByDisplayValue(LINK)).toBeNull());
+    expect(p.disable).toHaveBeenCalled();
   });
 });
