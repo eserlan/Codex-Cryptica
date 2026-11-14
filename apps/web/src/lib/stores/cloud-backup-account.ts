@@ -18,6 +18,9 @@ type AccountState = Pick<
   | "consented"
   | "sharing"
   | "ownerCode"
+  | "role"
+  | "linkGone"
+  | "syncStopped"
   | "lastPushedAt"
   | "status"
   | "errorMessage"
@@ -41,7 +44,12 @@ export class CloudBackupAccount {
   // fallow-ignore-next-line complexity — null, disabled and enabled records are tested directly.
   applyRecord(record: LocalCloudBackupRecord | null) {
     this.state.consented = Boolean(record);
-    this.state.ownerCode = record?.ownerCode ?? null;
+    const editor = record?.role === "editor";
+    // An editor token is a group credential, never a recovery key.
+    this.state.ownerCode = editor ? null : (record?.ownerCode ?? null);
+    this.state.role = record ? (editor ? "editor" : "owner") : null;
+    this.state.linkGone = editor && record?.linkGone === true;
+    this.state.syncStopped = this.state.linkGone;
     this.state.sharing = record?.sharing ?? null;
     this.state.lastPushedAt = record?.lastPushedAt ?? null;
     this.state.status = record?.enabled ? (record.status ?? "idle") : "off";

@@ -1,9 +1,10 @@
-import type {
-  CloudBackupRuntime,
-  MergeEntity,
-  CloudBackupTiming,
-  VaultBundlePayload,
-  VaultDeltaPayload,
+import {
+  isDeviceLimit,
+  type CloudBackupRuntime,
+  type MergeEntity,
+  type CloudBackupTiming,
+  type VaultBundlePayload,
+  type VaultDeltaPayload,
 } from "@codex/cloud-backup-sync";
 import type {
   CloudBackupDirtyRow,
@@ -47,6 +48,28 @@ export interface SnapshotOutcome {
    * push is retried later and nothing is cleared.
    */
   held?: boolean;
+  /** An editor's link is gone, or its device is over the cap: stop syncing. */
+  blocked?: Blocked;
+  /** An editor's changes that cannot go yet stay on this device. */
+  keptLocal?: boolean;
+}
+
+/** Why an editor's sync stopped. `deviceLimit` carries the server's message. */
+export type Blocked =
+  { kind: "linkGone" } | { kind: "deviceLimit"; message: string };
+
+/** The stop an editor's failed request calls for, or null for an ordinary failure. */
+export function blockedFrom(failure: {
+  error: string;
+  status?: number;
+  code?: string;
+  linkGone?: true;
+}): Blocked | null {
+  if (failure.linkGone) return { kind: "linkGone" };
+  if (isDeviceLimit(failure)) {
+    return { kind: "deviceLimit", message: failure.error };
+  }
+  return null;
 }
 
 export const BACKUP_OFF: SnapshotOutcome = {
@@ -185,6 +208,23 @@ export interface CloudBackupDeps {
   pullIntervalMs?: number;
   /** Local storage for persisting caches across sessions. */
   storage?: StorageLike;
+  /** Shows a short message to the user. */
+  notify?: (message: string) => void;
+  /** The member's display name, for conflict copies in a shared vault. */
+  displayName?: () => string | undefined;
+  /**
+   * Builds the delta an editor may send: entity rows only, and only those that
+   * need no media the backup lacks. Rows left out stay pending.
+   */
+  buildEditorDelta?: (
+    vaultId: string,
+    changes: readonly CloudBackupDirtyRow[],
+    uploadedAssetIds: ReadonlySet<string>,
+    signal: AbortSignal,
+  ) => Promise<{
+    delta: VaultDeltaPayload | null;
+    sent: readonly CloudBackupDirtyRow[];
+  }>;
 }
 
 /** Reactive values shared by the app-side backup workflows. */
@@ -200,6 +240,14 @@ export interface CloudBackupViewState {
   uploadProgress: { uploaded: number; total: number } | null;
   consented: boolean;
   sharing: { linkVersion: number; enabledAt: string } | null;
+  /** How this device is linked to the backup; null while backup is off. */
+  role: "owner" | "editor" | null;
+  /** An editor's group link no longer works. */
+  linkGone: boolean;
+  /** Pulls and pushes are stopped for this session (link gone or device cap). */
+  syncStopped: boolean;
+  /** Changes an editor holds back (maps, canvases, new images). */
+  keptLocal: boolean;
   autoState: CloudAutoSyncState;
   autoConflictRemoteAt: string | null;
   /** The last merge that changed something locally. */

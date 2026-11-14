@@ -9,6 +9,7 @@ import type {
 } from "./types";
 import { uploadSnapshotAssets } from "./asset-upload";
 import { responseFailure } from "./backup-response";
+import { cloudBackupHeaders } from "./request-headers";
 
 /** Monotonic clock that survives environments without `performance`. */
 function nowMs(): number {
@@ -64,13 +65,12 @@ async function readCommitOutcome(
  */
 export async function uploadSnapshot(
   runtime: CloudBackupRuntime,
-  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode" | "role">,
   payload: VaultBundlePayload,
   onProgress?: (progress: UploadProgress) => void,
   options?: SnapshotUploadOptions,
 ): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
   const assets = payload.assets ?? [];
-  const auth = `Bearer ${record.ownerCode}`;
   const skip = new Set(options?.skipAssetUploadIds ?? []);
   const uploadStartedAt = nowMs();
   const uploaded = await uploadSnapshotAssets(
@@ -88,7 +88,9 @@ export async function uploadSnapshot(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/commit`,
     {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: auth },
+      headers: cloudBackupHeaders(runtime, record, {
+        "Content-Type": "application/json",
+      }),
       body: commitBody,
       signal: options?.signal,
     },

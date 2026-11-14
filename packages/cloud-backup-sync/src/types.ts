@@ -41,12 +41,19 @@ export type CloudBackupOutcome<T> =
       ok: false;
       error: string;
       status?: number;
+      /** The worker's error code, when it sent one (for example `device_limit`). */
+      code?: string;
       /**
        * Set on the conflict path (#3189): the remote changed since our last
        * push, so nothing was uploaded. The caller must preserve local data
        * and surface the conflict instead of retrying blindly.
        */
       conflict?: boolean;
+      /**
+       * An editor got 404: the group link was replaced, sharing was turned
+       * off or the backup is gone. Never a reason to try a full upload.
+       */
+      linkGone?: true;
       remoteLastPushedAt?: string | null;
     };
 

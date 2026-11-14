@@ -25,6 +25,8 @@ export function planPull(input: {
   base: MergeSide;
   resync: boolean;
   newId: () => string;
+  /** Names the local side of a conflict copy; "this device" by default. */
+  copyAuthorName?: string;
 }): PullPlan {
   const { mine } = input;
   const result = mergeEntities(
@@ -35,7 +37,10 @@ export function planPull(input: {
       base: input.base,
       resync: input.resync,
     }),
-    { copyAuthorName: "this device", newId: input.newId },
+    {
+      copyAuthorName: input.copyAuthorName ?? "this device",
+      newId: input.newId,
+    },
   );
   const creates: MergeEntity[] = [];
   const updates: MergeEntity[] = [];

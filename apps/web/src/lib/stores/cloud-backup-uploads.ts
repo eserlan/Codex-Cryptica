@@ -11,6 +11,7 @@ import type { CloudBackupBaseStore } from "./cloud-backup-base";
 import type { CloudBackupDirtyRow } from "./cloud-backup-dirty";
 import {
   BACKUP_OFF,
+  blockedFrom,
   type CloudBackupDepsProvider,
   type CloudBackupViewState,
   type SnapshotOutcome,
@@ -28,20 +29,34 @@ const FOREIGN_COMMIT_MESSAGE =
 type UploadState = Pick<
   CloudBackupViewState,
   "lastPushedAt" | "skippedAssets" | "skippedEntities" | "uploadProgress"
-> & { artworkConsentVersion?: number };
+> & { artworkConsentVersion?: number; keptLocal?: boolean };
+
+/** What an editor's push needs from the rest of the store. */
+export interface EditorHooks {
+  /** The consistency check; `ok` is false when the index could not be read. */
+  reconcile: (vaultId: string) => Promise<{ ok: boolean; recorded: number }>;
+}
 
 function uploadFailure(result: {
   error: string;
+  status?: number;
+  code?: string;
+  linkGone?: true;
   conflict?: boolean;
   remoteLastPushedAt?: string | null;
 }): SnapshotOutcome {
+  const blocked = blockedFrom(result);
   return {
     ok: false,
     conflict: result.conflict,
     remoteAt: result.remoteLastPushedAt,
     error: result.error,
+    ...(blocked ? { blocked } : {}),
   };
 }
+
+/** An editor's push that sent nothing the backup cannot take: changes stay here. */
+const KEPT_LOCAL: SnapshotOutcome = { ok: true, keptLocal: true };
 
 /** Plain JSON copy, so later edits and reactive proxies cannot change it. */
 const deepCopy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
@@ -67,6 +82,13 @@ function pullStop(
   if (pulled.kind === "held") {
     return { ok: false, held: true, error: "An entity is open for editing." };
   }
+  if (pulled.kind === "blocked") {
+    return {
+      ok: false,
+      blocked: pulled.blocked,
+      error: "Sync has stopped for this shared vault.",
+    };
+  }
   const error =
     pulled.kind === "failed" ? pulled.error : "Cloud backup is off.";
   return { ok: false, error };
@@ -88,12 +110,17 @@ export class CloudBackupUploads {
     null;
   /** The dirty rows the running push clears on success; a rebase refreshes them. */
   private sentRows: readonly CloudBackupDirtyRow[] = [];
+  /** True while the running push is for an editor, who never sends a full snapshot. */
+  private editor = false;
+  /** Whether the running editor push left some changes pending. */
+  private kept = false;
   readonly media: CloudBackupMediaCache;
 
   constructor(
     private state: UploadState,
     private getDeps: CloudBackupDepsProvider,
     private runPull?: () => Promise<PullOutcome>,
+    private editorHooks?: EditorHooks,
   ) {
     this.media = new CloudBackupMediaCache(
       () => this.deps?.storage ?? browserStorage,
@@ -141,7 +168,9 @@ export class CloudBackupUploads {
     signal: AbortSignal,
   ): Promise<boolean> {
     const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
-    return !signal.aborted && Boolean(record?.enabled);
+    // A gone link makes no request until a rejoin clears it.
+    this.editor = record?.role === "editor";
+    return !signal.aborted && Boolean(record?.enabled) && !record?.linkGone;
   }
 
   private async executePushOperation(
@@ -175,7 +204,10 @@ export class CloudBackupUploads {
     if (out.ok) {
       await this.recordBase();
       await this.deps!.dirty?.clearSent(sent);
+      if (this.editor) this.state.keptLocal = this.kept;
     }
+    // An editor never has a conflict to resolve: the failure just retries.
+    if (this.editor && out.conflict) return { ok: false, error: out.error };
     return out;
   }
 
@@ -199,7 +231,8 @@ export class CloudBackupUploads {
     signal: AbortSignal,
   ): Promise<SnapshotOutcome> {
     const scope = this.deps!.artworkScope;
-    if (!scope) return this.uploadChanges(vaultId, opts, sent, signal);
+    if (!scope || this.editor)
+      return this.uploadChanges(vaultId, opts, sent, signal);
     const out = await runArtworkBackup(vaultId, {
       ...scope,
       upload: (artwork) =>
@@ -225,14 +258,9 @@ export class CloudBackupUploads {
     sent: readonly CloudBackupDirtyRow[],
     signal: AbortSignal,
   ): Promise<SnapshotOutcome | null> {
-    const delta = await this.deps!.buildDelta!(
-      vaultId,
-      sent,
-      new Set(Object.keys(this.media.hashes)),
-      signal,
-    );
+    const delta = await this.buildDelta(vaultId, sent, signal);
     if (signal.aborted) return BACKUP_OFF;
-    if (!delta) return null;
+    if (!delta) return this.editor ? KEPT_LOCAL : null;
     const outboundDelta = await this.dropEchoes(vaultId, deepCopy(delta));
     // Only a delta that held nothing but echoes is skipped.
     if (
@@ -250,6 +278,30 @@ export class CloudBackupUploads {
       this.state.lastPushedAt!,
       signal,
     );
+  }
+
+  /**
+   * The delta for these rows. An editor's carries only the entity rows that
+   * need no new media, and `sentRows` shrinks to exactly those, so the rest
+   * stay pending.
+   */
+  private async buildDelta(
+    vaultId: string,
+    rows: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<VaultDeltaPayload | null> {
+    const deps = this.deps!;
+    const uploaded = new Set(Object.keys(this.media.hashes));
+    if (!this.editor) return deps.buildDelta!(vaultId, rows, uploaded, signal);
+    const built = await deps.buildEditorDelta?.(
+      vaultId,
+      rows,
+      uploaded,
+      signal,
+    );
+    this.sentRows = built?.sent ?? [];
+    this.kept = this.kept || rows.length > this.sentRows.length;
+    return built?.delta ?? null;
   }
 
   /** Upserts equal to their merge base are pulled changes echoing back. */
@@ -291,6 +343,7 @@ export class CloudBackupUploads {
     signal: AbortSignal,
     artwork?: { includeAdventures: boolean },
   ): Promise<SnapshotOutcome> {
+    if (this.editor) return KEPT_LOCAL;
     if (opts.guarded) {
       const paused = await this.foreignCommitPause(vaultId);
       if (paused) return paused;
@@ -325,8 +378,10 @@ export class CloudBackupUploads {
     const rows = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
     // Edits made during the pull are in these rows, and clear with them.
     this.sentRows = rows;
-    if (!isEntityOnly(rows)) return rejected;
-    const out = await this.trySendDelta(vaultId, rows, signal);
+    let toSend = rows;
+    if (this.editor) toSend = this.editorEntityRows(rows);
+    else if (!isEntityOnly(rows)) return rejected;
+    const out = await this.trySendDelta(vaultId, toSend, signal);
     return out?.conflict ? "again" : out;
   }
 
@@ -343,12 +398,70 @@ export class CloudBackupUploads {
     signal: AbortSignal,
     artwork?: { includeAdventures: boolean; forceFull: boolean },
   ): Promise<SnapshotOutcome> {
+    if (this.editor) return this.uploadEditorChanges(vaultId, sent, signal);
     if (!this.canUseDelta(opts, artwork)) {
       return this.uploadWhole(vaultId, opts, signal, artwork);
     }
     if (sent.length === 0) return { ok: true };
     const out = await this.sendRecorded(vaultId, sent, signal);
     return out ?? this.uploadWhole(vaultId, opts, signal, artwork);
+  }
+
+  /**
+   * An editor's upload: the recorded entity changes as one delta. Maps and
+   * canvases stay pending, as do entities that need new media. A `full` row
+   * means the change set cannot be trusted; the consistency check replaces it
+   * with specific entity rows, and the row is cleared only once that worked.
+   */
+  private async uploadEditorChanges(
+    vaultId: string,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    this.kept = false;
+    const deps = this.deps!;
+    const fullRows = sent.filter((row) => row.kind === "full");
+    if (fullRows.length === 0)
+      return this.sendEditorRows(vaultId, sent, signal);
+    const checked = await this.editorHooks?.reconcile(vaultId);
+    if (signal.aborted) return BACKUP_OFF;
+    if (!checked?.ok) {
+      return {
+        ok: false,
+        error: "Could not check this vault against the group.",
+      };
+    }
+    await deps.dirty?.clearSent(fullRows);
+    const rows = (await deps.dirty?.snapshot(vaultId)) ?? [];
+    this.sentRows = rows;
+    return this.sendEditorRows(vaultId, rows, signal);
+  }
+
+  /** The rows an editor may send; the others stay pending. */
+  private editorEntityRows(
+    rows: readonly CloudBackupDirtyRow[],
+  ): CloudBackupDirtyRow[] {
+    const entityRows = rows.filter((row) => row.kind === "entity");
+    this.kept = rows.length > entityRows.length;
+    this.sentRows = entityRows;
+    return entityRows;
+  }
+
+  /** Sends the entity rows of an editor's pending set, rebasing like an owner's. */
+  private async sendEditorRows(
+    vaultId: string,
+    rows: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    const out = await this.trySendDelta(
+      vaultId,
+      this.editorEntityRows(rows),
+      signal,
+    );
+    if (!out?.conflict) return out ?? KEPT_LOCAL;
+    return this.runPull && this.deps!.remote
+      ? ((await this.rebase(vaultId, signal, out)) ?? KEPT_LOCAL)
+      : out;
   }
 
   /** The delta for the recorded rows, rebased when another device got there first. */
@@ -384,12 +497,20 @@ export class CloudBackupUploads {
       signal,
     );
     if (!result.ok) {
-      if ("fullPushRequired" in result) return null;
+      if ("fullPushRequired" in result) return this.keepLocal();
       return uploadFailure(result);
     }
     if (!result.value) return BACKUP_OFF;
     this.state.lastPushedAt = result.value.lastPushedAt;
     return { ok: true };
+  }
+
+  /** A full upload was asked for; an editor keeps everything and sends nothing. */
+  private keepLocal(): SnapshotOutcome | null {
+    if (!this.editor) return null;
+    this.sentRows = [];
+    this.kept = true;
+    return KEPT_LOCAL;
   }
 
   private async uploadSnapshot(

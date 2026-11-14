@@ -20,6 +20,7 @@ vi.mock("@codex/cloud-backup-sync", async (importOriginal) => ({
 function harness() {
   const state: ConstructorParameters<typeof CloudBackupChanges>[0] = {
     status: "idle",
+    syncStopped: false,
   };
   const deps: CloudBackupDeps = {
     runtime: createInertRuntime(),

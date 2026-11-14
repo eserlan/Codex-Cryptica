@@ -1,6 +1,7 @@
 import type { LocalCloudBackupRecord } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord as readRecord } from "./backup-records";
+import { cloudBackupHeaders } from "./request-headers";
 import type { CloudBackupOutcome } from "./types";
 
 export interface CloudBackupShareResult {
@@ -22,6 +23,22 @@ export function formatShareLink(
   editorToken: string,
 ): string {
   return `${origin}/join#${backupId}:${editorToken}`;
+}
+
+/**
+ * Reads the part of a group link after `#`. Returns null for anything that is
+ * not exactly `<backupId>:<editorToken>`; nothing is trimmed or repaired.
+ */
+export function parseShareLinkFragment(
+  fragment: string,
+): { backupId: string; editorToken: string } | null {
+  const text = fragment.startsWith("#") ? fragment.slice(1) : fragment;
+  const parts = text.split(":");
+  if (parts.length !== 2) return null;
+  const [backupId, editorToken] = parts;
+  if (!/^[0-9a-fA-F-]{8,}$/.test(backupId)) return null;
+  if (!/^[0-9a-fA-F]{16,}$/.test(editorToken)) return null;
+  return { backupId, editorToken: editorToken.toLowerCase() };
 }
 
 function nowIso(runtime: CloudBackupRuntime): string {
@@ -63,7 +80,7 @@ async function send(
   try {
     const response = await runtime.fetch(
       `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/sharing${suffix}`,
-      { method, headers: { Authorization: `Bearer ${record.ownerCode}` } },
+      { method, headers: cloudBackupHeaders(runtime, record) },
     );
     return { record, response };
   } catch {

@@ -2,6 +2,7 @@ import type { CloudBackupManifest, LocalCloudBackupRecord } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord as readRecord } from "./backup-records";
 import { responseFailure } from "./backup-response";
+import { cloudBackupHeaders } from "./request-headers";
 import type { CloudBackupOutcome } from "./types";
 import type { VaultBundlePayload } from "./types";
 import { readRemoteLastPushedAt } from "./backup-metadata";
@@ -170,7 +171,7 @@ export async function deleteCloudBackup(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}`,
     {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${record.ownerCode}` },
+      headers: cloudBackupHeaders(runtime, record),
     },
   );
   if (!response.ok) {
