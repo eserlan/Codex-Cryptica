@@ -28,6 +28,7 @@ function makeReveal(
         selection: {
           kind: "vault",
           name: "Mira",
+          subjectKey: "npc:mira",
           image: "images/mira.webp",
           alt: "Portrait of Mira",
         },
