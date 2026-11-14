@@ -48,6 +48,8 @@ describe("reference one-shot answer key schema", () => {
       "duplicated section sourceId",
       (k: any) => (k.sections[1].sourceId = k.sections[0].sourceId),
     ],
+    ["duplicated secret id", (k: any) => (k.secrets[1].id = k.secrets[0].id)],
+    ["duplicated ending id", (k: any) => (k.endings[1].id = k.endings[0].id)],
   ])("rejects a key with %s", (_name, mutate) => {
     const bad = structuredClone(rawKey);
     mutate(bad);
@@ -86,6 +88,98 @@ describe("answer key against adventure.md", () => {
       let i = at - 1;
       while (i >= 0 && lines[i].trim() === "") i--;
       expect(lines[i].replace(/^#{1,6} /, "")).toBe(s.title);
+    }
+  });
+
+  it("matches NPC motivations and secrets to their referenced sections", () => {
+    for (const npc of key.npcs) {
+      const body = sectionBody(adventure, npc.sourceId).toLowerCase();
+      const motivation = npc.motivation.toLowerCase();
+      expect(body).toContain(motivation);
+    }
+
+    for (const secret of key.secrets) {
+      expect(sectionBody(adventure, secret.sourceId)).toContain(secret.text);
+    }
+  });
+
+  it("matches conditions and adventure paths to their referenced content", () => {
+    for (const { sourceId, condition } of key.sceneConditions) {
+      const body = sectionBody(adventure, sourceId).toLowerCase();
+      expect(condition).not.toBe("");
+      const evidence = {
+        "ros-scene-1-landing": ["arrives after dark", "Maren is absent"],
+        "ros-scene-2-yard": ["makes noise in the yard", "begins on alert"],
+        "ros-scene-3-wheel-room": ["lever is pulled", "five turns"],
+        "ros-scene-4-cellar": [
+          "stays more than five turns",
+          "water reaches the ceiling",
+        ],
+      }[sourceId];
+      expect(evidence).toBeDefined();
+      for (const phrase of evidence ?? []) {
+        expect(body).toContain(phrase.toLowerCase());
+        expect(condition.toLowerCase()).toContain(phrase.toLowerCase());
+      }
+    }
+
+    const branch = sectionBody(adventure, key.branch.sourceId).toLowerCase();
+    expect(branch).toContain("side path");
+    expect(branch).toContain("skipped");
+    expect(branch).toContain("hint");
+    expect(branch).toContain("may be repeated once");
+    expect(key.branch.description.toLowerCase()).toContain("side path");
+    expect(key.branch.description.toLowerCase()).toContain("re-roll");
+    expect(key.branch.description.toLowerCase()).toContain("hint");
+    expect(key.branch.description.toLowerCase()).toContain("skipped");
+
+    const solution = sectionBody(
+      adventure,
+      key.alternativeSolution.sourceId,
+    ).toLowerCase();
+    expect(solution).toContain("by talk");
+    expect(solution).toContain("tobiah's debt");
+    expect(solution).toContain("filed pin");
+    expect(key.alternativeSolution.description.toLowerCase()).toContain(
+      "tobiah's debt",
+    );
+    expect(key.alternativeSolution.description.toLowerCase()).toContain(
+      "filed pin",
+    );
+    expect(key.alternativeSolution.description.toLowerCase()).toContain(
+      "instead of fighting",
+    );
+    expect(key.alternativeSolution.obstacleSourceId).toBe(
+      key.alternativeSolution.sourceId,
+    );
+
+    const clueEvidence = [
+      sectionBody(adventure, key.missableClue.primarySourceId),
+      sectionBody(adventure, key.missableClue.alternativeSourceId),
+    ]
+      .join(" ")
+      .toLowerCase();
+    expect(clueEvidence).toContain("sluice pin");
+    expect(clueEvidence).toContain("lock");
+    expect(key.missableClue.clue.toLowerCase()).toContain("sluice pin");
+    expect(key.missableClue.clue.toLowerCase()).toContain("lock");
+  });
+
+  it("matches each ending description to its referenced ending section", () => {
+    const evidence = {
+      "ending-restored": ["bailiff cannot sell the mill"],
+      "ending-flooded": ["cellar floods", "Maren leaves the bend"],
+    };
+    for (const ending of key.endings) {
+      const body = sectionBody(adventure, ending.sourceId).toLowerCase();
+      const phrases = evidence[ending.id as keyof typeof evidence];
+      expect(phrases).toBeDefined();
+      for (const phrase of phrases ?? []) {
+        expect(body).toContain(phrase.toLowerCase());
+        expect(ending.description.toLowerCase()).toContain(
+          phrase.toLowerCase(),
+        );
+      }
     }
   });
 
