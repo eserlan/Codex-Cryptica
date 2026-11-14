@@ -39,7 +39,7 @@ const RestorePointSchema = z.object({
   objects: BackupObjectsSchema,
   assets: z.record(z.string(), z.string()),
 });
-type RestorePoint = z.infer<typeof RestorePointSchema>;
+export type RestorePoint = z.infer<typeof RestorePointSchema>;
 
 const POINTS_DIR = "restore-points/points/";
 const ASSETS_DIR = "restore-points/assets/";
@@ -48,7 +48,7 @@ function getRestorePointKey(backupId: string, date: string): string {
   return `${getBackupPrefix(backupId)}${POINTS_DIR}${date}.json`;
 }
 
-function getPreservedAssetKey(
+export function getPreservedAssetKey(
   backupId: string,
   assetId: string,
   etag: string,
@@ -74,6 +74,19 @@ async function loadPoints(
     }
   }
   return points;
+}
+
+/** One point, or null when none exists for that date. Throws when unreadable. */
+export async function readRestorePoint(
+  env: CloudBackupEnv,
+  backupId: string,
+  date: string,
+): Promise<RestorePoint | null> {
+  const stored = await readJson<unknown>(
+    env,
+    getRestorePointKey(backupId, date),
+  );
+  return stored === null ? null : RestorePointSchema.parse(stored);
 }
 
 function pointKeys(

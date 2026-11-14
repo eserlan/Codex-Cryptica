@@ -48,6 +48,7 @@ export {
   CLOUD_BACKUP_SHARING_DEVICE_WINDOW_DAYS,
 } from "./cloud-backup-sharing-devices";
 export { handleListRestorePoints } from "./cloud-backup-restore-points";
+export { handleCloudBackupRollback } from "./cloud-backup-rollback";
 export {
   handleListTrash,
   handleGetTrashItem,
