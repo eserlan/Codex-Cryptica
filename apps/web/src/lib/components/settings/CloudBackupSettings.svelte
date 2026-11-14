@@ -12,6 +12,7 @@
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
   import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
+  import { mergeNoticeLines } from "#lib/stores/cloud-backup-merge-notice.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -56,6 +57,8 @@
       : (autoState !== "idle" && AUTO_STATUS_LABEL[autoState]) ||
           STATUS_LABEL[status],
   );
+
+  const mergeLines = $derived(mergeNoticeLines(cloudBackupStore.mergeNotice));
 
   const handleConsentKeydown = (event: KeyboardEvent) => {
     // Escape must dismiss without consenting — the same contract every other
@@ -426,6 +429,14 @@
       </span>
     {/if}
   </div>
+
+  {#if isOn && mergeLines.length > 0}
+    <div class="flex flex-col gap-1 text-sm text-theme-text" role="status">
+      {#each mergeLines as line, index (index)}
+        <p>{line}</p>
+      {/each}
+    </div>
+  {/if}
 
   {#if !isOn}
     <button

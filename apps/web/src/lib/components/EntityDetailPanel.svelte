@@ -3,6 +3,7 @@
   import { fade } from "svelte/transition";
   import { quintOut } from "svelte/easing";
   import { vault } from "#lib/stores/vault.svelte.js";
+  import { entityEditingRegistry } from "#lib/stores/entity-editing-registry.js";
   import ResizerHandle from "./layout/ResizerHandle.svelte";
 
   // Sub-components
@@ -67,6 +68,11 @@
   });
 
   let isEditing = $state(false);
+  // Cloud Backup holds pulled changes back from an entity while it is open here.
+  $effect(() => {
+    if (!isEditing || !entity?.id) return;
+    return entityEditingRegistry.begin(entity.id);
+  });
   let previousEntityId = $state<string | undefined>(undefined);
 
   // Edit State

@@ -22,4 +22,8 @@ describe("ZenView tab labels", () => {
   it("renders the notices", () => {
     expect(source).toContain("<EntityNotices");
   });
+
+  it("clears the copy indicator timer when the view is destroyed", () => {
+    expect(source).toContain("clearTimeout(copyResetTimeout)");
+  });
 });
