@@ -96,3 +96,43 @@ describe("snapshot sync", () => {
     );
   });
 });
+
+describe("foreignCommitSeen", () => {
+  async function flagged(guarded: boolean) {
+    const h = await enabled(
+      ...(guarded
+        ? [
+            {
+              ok: true,
+              status: 200,
+              body: { lastPushedAt: MANIFEST.lastPushedAt },
+            },
+          ]
+        : []),
+    );
+    const record = await getLocalCloudBackupRecord(h.runtime, "v-1");
+    await h.runtime.storage.write("v-1", {
+      ...record,
+      foreignCommitSeen: true,
+    });
+    return h;
+  }
+
+  it("is kept by a guarded push", async () => {
+    const { runtime } = await flagged(true);
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD, undefined, {
+      expectLastPushedAt: MANIFEST.lastPushedAt,
+    });
+    expect(
+      (await getLocalCloudBackupRecord(runtime, "v-1"))?.foreignCommitSeen,
+    ).toBe(true);
+  });
+
+  it("is cleared by an unguarded push", async () => {
+    const { runtime } = await flagged(false);
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
+    expect(
+      (await getLocalCloudBackupRecord(runtime, "v-1"))?.foreignCommitSeen,
+    ).toBeUndefined();
+  });
+});

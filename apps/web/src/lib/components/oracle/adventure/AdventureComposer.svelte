@@ -27,6 +27,11 @@
   let textarea = $state<HTMLTextAreaElement>();
   let typing = $state(false);
 
+  function submitDraft() {
+    if (disabled || !manager.draft.trim()) return;
+    void manager.submitAction(action);
+  }
+
   // Keep the action field compact for one line, then grow as the player types.
   // Long prose scrolls inside the field so it never pushes the dock offscreen.
   $effect(() => {
@@ -96,7 +101,7 @@
     class="mx-auto w-full max-w-3xl shrink-0 space-y-2"
     onsubmit={(event) => {
       event.preventDefault();
-      void manager.submitAction(action);
+      submitDraft();
     }}
   >
     <div
@@ -137,6 +142,12 @@
         bind:value={manager.draft}
         onfocus={() => (typing = true)}
         onblur={() => (typing = false)}
+        onkeydown={(event) => {
+          if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            submitDraft();
+          }
+        }}
         {disabled}
         placeholder="What do you do?"
       ></textarea>

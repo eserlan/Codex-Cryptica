@@ -76,7 +76,8 @@ function changedKeys(base: MergeEntity, side: MergeEntity): string[] {
   return contentKeys(base, side).filter((key) => differs(base, side, key));
 }
 
-function equalContent(a: MergeEntity, b: MergeEntity): boolean {
+/** True when two entities hold the same content, ignoring `id` and bookkeeping stamps. */
+export function equalContent(a: MergeEntity, b: MergeEntity): boolean {
   return changedKeys(a, b).length === 0;
 }
 

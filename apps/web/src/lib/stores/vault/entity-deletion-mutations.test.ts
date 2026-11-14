@@ -219,6 +219,26 @@ describe("EntityDeletionMutations", () => {
     expect(span.cancel).toHaveBeenCalled();
   });
 
+  it("cancels a vault-bound delete when the vault changes during handle lookup", async () => {
+    const { context, deps, recorder, span } = mutationTestContext();
+    const before = context.entities;
+    deps.getActiveVaultHandle.mockImplementation(async () => {
+      deps.activeVaultId.mockReturnValue("other");
+      return {} as FileSystemDirectoryHandle;
+    });
+
+    const result = await new EntityDeletionMutations(
+      context,
+      recorder,
+    ).bulkDelete(["hero"], "vault");
+
+    expect(result.cancelledIds).toEqual(["hero"]);
+    expect(deps.getActiveFolderHandle).not.toHaveBeenCalled();
+    expect(vaultEntities.deleteEntityFiles).not.toHaveBeenCalled();
+    expect(context.entities).toBe(before);
+    expect(span.cancel).toHaveBeenCalled();
+  });
+
   it("does not commit or announce failed file deletions", async () => {
     const { context, deps, recorder, persistence } = mutationTestContext();
     const error = new Error("disk");
