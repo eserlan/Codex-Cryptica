@@ -305,7 +305,7 @@ see.
       `editedBy`) moved to a follow-up issue.
 - [x] **Slice 9: Shared trash** (#4776) — the trash list, restore, the 30-day
       purge, and "an edit beats a delete".
-- [ ] **Slice 10: Maps and canvases** (#4777) — whole-item sync with a
+- [x] **Slice 10: Maps and canvases** (#4777) — whole-item sync with a
       revision each, and "keep both" on a clash.
 - [ ] **Slice 11: Restore points** (#4778) — one snapshot per day for 30
       days, with the storage cost stated first; the owner-only list.
@@ -333,8 +333,8 @@ see.
   online. `enforcePublishRateLimit` returns early for `GET`, so `/changes` and
   `/status` are not rate-limited. Each retry round after a rejected push adds
   one `POST /delta` against the write limit of 300 per minute, and a push makes
-  at most four. Maps, canvases and full snapshots are not merged yet: they
-  still pause once another device has committed, until slice 10.
+  at most four. Only full snapshots still pause once another device has
+  committed; maps and canvases sync as whole items and keep both on a clash.
 - Restore points are kept for 30 UTC days, with at most one point per day.
   Points reference committed objects; only asset versions that would otherwise
   be overwritten are copied. Restore point data is excluded from `sizeBytes`

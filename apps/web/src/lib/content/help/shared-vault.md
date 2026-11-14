@@ -54,9 +54,19 @@ A restored entity keeps its own links, but entities that linked to it before it 
 
 Only the owner can replace the link, turn sharing off, delete the shared copy and manage restore points. In **Settings → Vault → Cloud Backup** you see a note saying you joined as a member, and none of those controls.
 
-## Maps, canvases and images stay on this device for now
+## Maps and canvases
 
-Changes to maps, canvases and new images are not shared yet. They stay on this device, and the Cloud Backup panel says so. Your other changes still sync.
+Maps and canvases sync as whole items. A map's background image and fog-of-war mask travel with it.
+
+- **Same map changed by two people:** the first to sync stays as it is. The other version is kept as a copy named "Name (Your name's version)", with its own background and mask, so nothing is lost.
+- **Deleted maps and canvases** go to the trash with a **Map** or **Canvas** label, and can be restored like any other item.
+- **Open on your screen:** a map or canvas you have open is not replaced while you are using it. The change arrives after you close it.
+
+## Not shared with the group
+
+Session journals and adventures are never shared with the group. They stay on each device, and a member who joins does not receive the owner's.
+
+New images on entries stay on this device for now, and the Cloud Backup panel says so. Your other changes still sync.
 
 ## "This group link no longer works"
 
