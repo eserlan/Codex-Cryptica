@@ -44,7 +44,7 @@ export async function checkEditorDevice(
     );
   }
 
-  const key = getSharingDevicesKey(backupId);
+  const key = getSharingDevicesKey(backupId, sharing);
   const now = Date.now();
   for (let attempt = 0; attempt < RECORD_ATTEMPTS; attempt++) {
     const object = await env.BUCKET.get(key);

@@ -79,9 +79,12 @@ export function getIndexKey(backupId: string): string {
   return `${PREFIX}${backupId}/index.json`;
 }
 
-/** Seen editor devices; kept out of the manifest so bookkeeping never moves its etag. */
-export function getSharingDevicesKey(backupId: string): string {
-  return `${PREFIX}${backupId}/sharing-devices.json`;
+/** Seen editor devices for one link generation; bookkeeping never moves the manifest etag. */
+export function getSharingDevicesKey(
+  backupId: string,
+  sharing: SharingRecord,
+): string {
+  return `${PREFIX}${backupId}/sharing-devices/${sharing.linkVersion}-${sharing.editorTokenHash}.json`;
 }
 
 export function getAssetKey(backupId: string, assetId: string): string {
