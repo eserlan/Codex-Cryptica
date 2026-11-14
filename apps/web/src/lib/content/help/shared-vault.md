@@ -54,6 +54,18 @@ A restored entity keeps its own links, but entities that linked to it before it 
 
 Only the owner can replace the link, turn sharing off, delete the shared copy and manage restore points. In **Settings → Vault → Cloud Backup** you see a note saying you joined as a member, and none of those controls.
 
+## Roll back to an earlier day (owner)
+
+The owner can roll the whole group back to how the vault looked on an earlier day. Open **Settings → Vault → Cloud Backup**, find **Restore points** and press **Roll back to this day** next to a date. One restore point is kept for each day the group makes changes, for 30 days.
+
+Before anything changes you see a summary with three numbers:
+
+- **Will change:** items that exist both then and now but differ. They go back to how they were.
+- **Will come back from the trash:** items that were deleted since that day. They return.
+- **Will go to the trash:** items that did not exist that day. They are not lost: they go to the shared trash and can be restored for 30 days.
+
+Nothing is erased. Members receive the result on their next sync and do not need to rejoin. Changes a member has made but not yet synced are kept by the usual rules. Session journals and adventures are not rolled back, because they are never shared with the group.
+
 ## Maps and canvases
 
 Maps and canvases sync as whole items. A map's background image and fog-of-war mask travel with it.
