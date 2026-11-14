@@ -66,11 +66,10 @@ describe("adventure turn artwork presentations", () => {
         name: "Show illustration of Mossy Bridge",
       }),
     ).toBeTruthy();
-    expect(
-      await screen.findByRole("button", {
-        name: "Show portrait of Mira, enters",
-      }),
-    ).toBeTruthy();
+    const npcCallout = await screen.findByRole("button", {
+      name: "Show portrait of Mira, enters",
+    });
+    expect(npcCallout.classList.contains("border-theme-text")).toBe(true);
   });
 
   it("uses the returns cue for a reintroduced NPC", async () => {
