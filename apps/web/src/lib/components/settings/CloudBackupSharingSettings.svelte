@@ -134,6 +134,55 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
+{#snippet sharingControls()}
+  {#if link}
+    <div class="mt-2 flex flex-col gap-2">
+      <label class="text-xs" for="share-link-field">
+        Copy this link now. It will not be shown again.
+      </label>
+      <input
+        id="share-link-field"
+        readonly
+        value={link}
+        class="w-full border border-theme-border bg-theme-bg px-2 py-1 font-mono text-xs"
+        onfocus={(event) => event.currentTarget.select()}
+      />
+      <button
+        type="button"
+        class="{buttonClass} self-start"
+        onclick={copyLink}>Copy link</button
+      >
+      {#if copyFailed}
+        <p>Could not copy automatically. Select the link and copy it by hand.</p>
+      {/if}
+    </div>
+  {/if}
+
+  <div class="mt-2 flex flex-wrap gap-2">
+    {#if isOn}
+      <button
+        type="button"
+        class={buttonClass}
+        disabled={busy}
+        onclick={replaceLink}>Replace link</button
+      >
+      <button
+        type="button"
+        class={buttonClass}
+        disabled={busy}
+        onclick={turnOff}>Turn off sharing</button
+      >
+    {:else}
+      <button
+        type="button"
+        class="bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
+        disabled={busy}
+        onclick={() => (showConsent = true)}>Share with group</button
+      >
+    {/if}
+  </div>
+{/snippet}
+
 <div class="border-t border-theme-border pt-3 text-sm text-theme-text">
   <p class="font-semibold">Share with group</p>
   {#if !backupOn}
@@ -149,58 +198,12 @@
       </p>
     {/if}
 
-    {#if link}
-      <div class="mt-2 flex flex-col gap-2">
-        <label class="text-xs" for="share-link-field">
-          Copy this link now. It will not be shown again.
-        </label>
-        <input
-          id="share-link-field"
-          readonly
-          value={link}
-          class="w-full border border-theme-border bg-theme-bg px-2 py-1 font-mono text-xs"
-          onfocus={(event) => event.currentTarget.select()}
-        />
-        <button
-          type="button"
-          class="{buttonClass} self-start"
-          onclick={copyLink}>Copy link</button
-        >
-        {#if copyFailed}
-          <p>
-            Could not copy automatically. Select the link and copy it by hand.
-          </p>
-        {/if}
-      </div>
-    {/if}
-
-    <div class="mt-2 flex flex-wrap gap-2">
-      {#if isOn}
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={busy}
-          onclick={replaceLink}>Replace link</button
-        >
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={busy}
-          onclick={turnOff}>Turn off sharing</button
-        >
-      {:else}
-        <button
-          type="button"
-          class="bg-theme-primary px-4 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
-          disabled={busy}
-          onclick={() => (showConsent = true)}>Share with group</button
-        >
-      {/if}
-    </div>
+    {@render sharingControls()}
   {/if}
   {#if error}<p class="mt-2 text-red-400" role="alert">{error}</p>{/if}
 </div>
 
+{#snippet consentDialog()}
 {#if showConsent}
   <div class="fixed inset-0 z-[200] flex items-center justify-center p-4">
     <button
@@ -280,3 +283,6 @@
     </div>
   </div>
 {/if}
+{/snippet}
+
+{@render consentDialog()}

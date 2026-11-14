@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { AdventureSession } from "@codex/adventure-engine";
 import {
+  adventureDiagnosticDeltaJson,
   adventureDiagnosticJson,
   adventureReviewJson,
   adventureReviewMarkdown,
+  copyDiagnosticSnapshot,
+  saveDiagnosticBaseline,
 } from "./adventure-review-capture";
 
 function exampleSession(): AdventureSession {
@@ -394,5 +397,89 @@ describe("Adventure diagnostic JSON for AI", () => {
     const out = JSON.parse(adventureDiagnosticJson(source));
     expect(out.summary.timeToFirstSign).toBe(2);
     expect(out.summary.timeToFirstActionableLead).toBe(3);
+  });
+
+  it("emits a delta on subsequent diagnostic copies and supports forceFull", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+
+    const firstSession = exampleSession();
+    const first = copyDiagnosticSnapshot(firstSession, storage);
+    expect(first.isDelta).toBe(false);
+    expect(first.fromTurnCount).toBe(0);
+    expect(first.toTurnCount).toBe(1);
+    expect(JSON.parse(first.text).state.premise).toBe(firstSession.premise);
+    saveDiagnosticBaseline(firstSession, storage);
+
+    const nextSession = exampleSession();
+    nextSession.revision = 3;
+    nextSession.visibleState.knownFacts.push({
+      id: "fact-new",
+      source: "provisional",
+      text: "The sluice gate was jammed.",
+    });
+    nextSession.turns.push({
+      ...nextSession.turns[0]!,
+      id: "turn-2",
+      inputId: "input-2",
+      sequence: 1,
+      playerAction: "Inspect the sluice gate.",
+      narration: "A wedge of oak holds the gate shut.",
+    });
+
+    const second = copyDiagnosticSnapshot(nextSession, storage);
+    expect(second.isDelta).toBe(true);
+    expect(second.fromTurnCount).toBe(1);
+    expect(second.toTurnCount).toBe(2);
+    const delta = JSON.parse(second.text);
+    expect(delta.delta).toEqual({
+      fromRevision: 2,
+      toRevision: 3,
+      fromTurnCount: 1,
+      toTurnCount: 2,
+      newTurnsCount: 1,
+    });
+    expect(delta.turns).toHaveLength(1);
+    expect(delta.turns[0].id).toBe("turn-2");
+    expect(delta.stateChanges.premise).toBeUndefined();
+    expect(delta.stateChanges.visibleState.knownFacts.added).toHaveLength(1);
+    expect(delta.stateChanges.visibleState.knownFacts.added[0].id).toBe(
+      "fact-new",
+    );
+    saveDiagnosticBaseline(nextSession, storage);
+
+    const forced = copyDiagnosticSnapshot(nextSession, storage, {
+      forceFull: true,
+    });
+    expect(forced.isDelta).toBe(false);
+    expect(JSON.parse(forced.text).turns).toHaveLength(2);
+  });
+
+  it("falls back to full diagnostic JSON on rewind or corrupt baseline storage", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+
+    const twoTurns = manyTurns(2);
+    copyDiagnosticSnapshot(twoTurns, storage);
+    saveDiagnosticBaseline(twoTurns, storage);
+
+    const rewound = exampleSession();
+    const afterRewind = copyDiagnosticSnapshot(rewound, storage);
+    expect(afterRewind.isDelta).toBe(false);
+
+    store.set("codex-adventure-diagnostic-baseline:session-1", "{bad-json");
+    const afterCorrupt = copyDiagnosticSnapshot(rewound, storage);
+    expect(afterCorrupt.isDelta).toBe(false);
+    expect(typeof adventureDiagnosticDeltaJson).toBe("function");
   });
 });

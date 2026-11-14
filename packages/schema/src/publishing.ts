@@ -730,6 +730,12 @@ export const LocalCloudBackupRecordSchema = z.object({
       enabledAt: z.string(),
     })
     .optional(),
+  /**
+   * Set when a pull found that another device had committed. A push that
+   * replaces whole items (maps, canvases, a full snapshot) pauses while it is
+   * set, because those are not merged. An unguarded push clears it.
+   */
+  foreignCommitSeen: z.boolean().optional(),
 });
 
 export type LocalCloudBackupRecord = z.infer<

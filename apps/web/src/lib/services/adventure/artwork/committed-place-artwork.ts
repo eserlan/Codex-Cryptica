@@ -22,13 +22,11 @@ export function assignCommittedPlaceArtwork(
     next.revision <= previous.revision ||
     !turn ||
     previous.turns.at(-1)?.id === turn.id ||
-    !next.currentPlaceId ||
-    previous.currentPlaceId === next.currentPlaceId
+    !next.currentPlaceId
   )
     return next;
   const place = next.places?.find((entry) => entry.id === next.currentPlaceId);
-  // Canonical preferences require their own Vault/entity write boundary.
-  if (!place || place.sourceRecordId) return next;
+  if (!place) return next;
   const parsed = readAdventureArtworkState(next.artwork);
   if (parsed.kind === "opaque") return next;
   const state =

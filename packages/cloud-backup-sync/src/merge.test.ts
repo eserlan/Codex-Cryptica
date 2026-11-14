@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mergeEntities, type MergeEntity } from "./merge";
+import { equalContent, mergeEntities, type MergeEntity } from "./merge";
 
 const ids = () => {
   let n = 0;
@@ -189,5 +189,15 @@ describe("mergeEntities", () => {
     };
     const input = freeze(clashInput());
     expect(() => mergeEntities(input, opts())).not.toThrow();
+  });
+});
+
+describe("equalContent", () => {
+  it("ignores id and bookkeeping but not content", () => {
+    const a = { id: "a", title: "T", body: "x", updatedAt: 1, modifiedAt: 1 };
+    expect(equalContent(a, { ...a, id: "b", updatedAt: 9, createdAt: 3 })).toBe(
+      true,
+    );
+    expect(equalContent(a, { ...a, body: "y" })).toBe(false);
   });
 });

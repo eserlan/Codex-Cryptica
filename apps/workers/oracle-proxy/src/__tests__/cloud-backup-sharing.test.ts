@@ -91,6 +91,11 @@ const stored = async (fx: Fixture) =>
     o.text(),
   )) as string;
 
+const sharingDevicesKey = async (fx: Fixture) => {
+  const { sharing } = (await readManifest(fx.env, fx.backupId))!;
+  return getSharingDevicesKey(fx.backupId, sharing!);
+};
+
 describe("editor link: turning sharing on", () => {
   it("returns a token once and stores only its hash", async () => {
     const fx = await createBackupFixture();
@@ -283,9 +288,8 @@ describe("replacing and turning off the link", () => {
     const fx = await shared();
     const device = newDevice();
     await call(fx, "GET", "/status", { key: fx.editorToken, device });
-    expect(await fx.env.BUCKET.get(getSharingDevicesKey(fx.backupId))).not.toBe(
-      null,
-    );
+    const devicesKey = await sharingDevicesKey(fx);
+    expect(await fx.env.BUCKET.get(devicesKey)).not.toBe(null);
     const before = (await readManifest(fx.env, fx.backupId))!.manifest;
     const res = await call(fx, "DELETE", "/sharing", { key: fx.ownerCode });
     expect(res.status).toBe(200);
@@ -294,9 +298,7 @@ describe("replacing and turning off the link", () => {
     expect(after!.sharing).toBeUndefined();
     expect(after!.manifest).toEqual(before);
     expect(await stored(fx)).not.toContain("sharing");
-    expect(await fx.env.BUCKET.get(getSharingDevicesKey(fx.backupId))).toBe(
-      null,
-    );
+    expect(await fx.env.BUCKET.get(devicesKey)).toBe(null);
     for (const [method, path, body] of [
       ["GET", "/status", undefined],
       ["POST", "/delta", { vaultTitle: "V" }],
@@ -320,6 +322,53 @@ describe("replacing and turning off the link", () => {
     expect(
       (await call(fx, "DELETE", "/sharing", { key: fx.ownerCode })).status,
     ).toBe(200);
+  });
+
+  it("keeps a re-enabled link's device record when the prior disable cleanup finishes", async () => {
+    const fx = await shared();
+    const oldSharing = (await readManifest(fx.env, fx.backupId))!.sharing!;
+    const oldKey = getSharingDevicesKey(fx.backupId, oldSharing);
+    let cleanupStarted!: () => void;
+    let continueCleanup!: () => void;
+    const started = new Promise<void>((resolve) => (cleanupStarted = resolve));
+    const blocked = new Promise<void>((resolve) => (continueCleanup = resolve));
+    const bucket = fx.env.BUCKET;
+    const deleteObject = bucket.delete.bind(bucket);
+    bucket.delete = async (key: string) => {
+      if (key === oldKey) {
+        cleanupStarted();
+        await blocked;
+      }
+      return deleteObject(key);
+    };
+
+    const disabling = call(fx, "DELETE", "/sharing", { key: fx.ownerCode });
+    await started;
+    const enabled = await call(fx, "POST", "/sharing", { key: fx.ownerCode });
+    expect(enabled.status).toBe(200);
+    const next = (await enabled.json()) as any;
+    const nextSharing = (await readManifest(fx.env, fx.backupId))!.sharing!;
+    const nextKey = getSharingDevicesKey(fx.backupId, nextSharing);
+    expect(nextKey).not.toBe(oldKey);
+    for (let i = 0; i < CLOUD_BACKUP_SHARING_DEVICE_CAP; i++) {
+      expect(
+        (
+          await call(fx, "GET", "/status", {
+            key: next.editorToken,
+            device: newDevice(),
+          })
+        ).status,
+      ).toBe(200);
+    }
+
+    continueCleanup();
+    expect((await disabling).status).toBe(200);
+    expect(await fx.env.BUCKET.get(nextKey)).not.toBe(null);
+    const capped = await call(fx, "GET", "/status", {
+      key: next.editorToken,
+      device: newDevice(),
+    });
+    expect(capped.status).toBe(403);
   });
 });
 
@@ -355,7 +404,7 @@ describe("device cap", () => {
   async function seed(fx: Fixture, devices: Record<string, string>) {
     const { sharing } = (await readManifest(fx.env, fx.backupId))!;
     await fx.env.BUCKET.put(
-      getSharingDevicesKey(fx.backupId),
+      getSharingDevicesKey(fx.backupId, sharing!),
       JSON.stringify({
         linkVersion: sharing!.linkVersion,
         enabledAt: sharing!.enabledAt,
@@ -383,7 +432,7 @@ describe("device cap", () => {
       ).status,
     ).toBe(200);
     const record = JSON.parse(
-      await (await fx.env.BUCKET.get(getSharingDevicesKey(fx.backupId))).text(),
+      await (await fx.env.BUCKET.get(await sharingDevicesKey(fx))).text(),
     );
     expect(record.devices["seeded-0-device"]).toBeUndefined();
   });
@@ -398,7 +447,7 @@ describe("device cap", () => {
     await call(fx, "GET", "/status", { key: fx.editorToken, device: fresh });
     await call(fx, "GET", "/status", { key: fx.editorToken, device: old });
     const record = JSON.parse(
-      await (await fx.env.BUCKET.get(getSharingDevicesKey(fx.backupId))).text(),
+      await (await fx.env.BUCKET.get(await sharingDevicesKey(fx))).text(),
     );
     expect(record.devices[fresh]).toBe(recent);
     expect(record.devices[old]).not.toBe(day);
@@ -508,7 +557,7 @@ describe("erasing a shared backup", () => {
       const prefix = `cloud-backup/${fx.backupId}/`;
       expect(
         (await fx.env.BUCKET.list({ prefix })).objects.map((o: any) => o.key),
-      ).toContain(getSharingDevicesKey(fx.backupId));
+      ).toContain(await sharingDevicesKey(fx));
       if (admin) {
         await handleCloudBackupAdminDelete(
           new Request("https://example.test", {
@@ -541,8 +590,6 @@ describe("erasing a shared backup", () => {
     const { manifest } = (await delta.json()) as any;
     expect(manifest.sizeBytes).toBeGreaterThan(0);
     expect(manifest.sizeBytes).toBeLessThan(before.sizeBytes + 500);
-    expect(await fx.env.BUCKET.get(getSharingDevicesKey(fx.backupId))).not.toBe(
-      null,
-    );
+    expect(await fx.env.BUCKET.get(await sharingDevicesKey(fx))).not.toBe(null);
   });
 });

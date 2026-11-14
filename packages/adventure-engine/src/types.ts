@@ -28,6 +28,8 @@ export interface StateFact {
   sourceRecordId?: string;
   /** Where this fact belongs. Absent means it applies everywhere (legacy and unplaced facts). */
   placeId?: string;
+  /** Optional visual artwork cues emitted by the GM (used for activeCharacters). */
+  cues?: string[];
 }
 
 /** A named place the player has been to, kept so facts and people can be tied to it. */
@@ -40,6 +42,8 @@ export interface Place {
   relation?: string;
   /** Other names the story has used for it, so a variant resolves to the same place. */
   aliases?: string[];
+  /** Optional visual artwork cues emitted by the GM or player. */
+  cues?: string[];
 }
 
 /** The model's declaration that the player has changed place. Never needed for scene changes inside one place. */
@@ -49,6 +53,7 @@ export interface PlaceMoveProposal {
   /** A place name, for a place not yet recorded or to match one by name. */
   name?: string;
   relation?: string;
+  cues?: string[];
 }
 
 /** Notes written from player-visible text only (the player's actions and the GM's narration). */
@@ -450,6 +455,8 @@ export interface CompletedTurnProposal {
   timeAdvance?: TimeAdvanceProposal;
   /** Set only when the player changes place in this turn. */
   moveTo?: PlaceMoveProposal;
+  /** Optional artwork cues to attach to the current place if untagged. */
+  placeCues?: string[];
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];

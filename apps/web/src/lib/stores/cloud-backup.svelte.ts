@@ -11,11 +11,13 @@ import {
   type SharingOutcome,
 } from "./cloud-backup-sharing";
 import { CloudBackupSync } from "./cloud-backup-sync";
+import { CloudBackupPulls } from "./cloud-backup-pulls";
 import type { DurableVaultChange } from "./vault/registry";
 import type {
   CloudBackupStatus,
   CloudAutoSyncState,
   CloudBackupDeps,
+  MergeNotice,
 } from "./cloud-backup-types";
 import { CloudBackupRestore } from "./cloud-backup-restore";
 
@@ -69,10 +71,27 @@ export class CloudBackupStore {
    * both versions are preserved (local untouched, remote untouched).
    */
   autoConflictRemoteAt = $state<string | null>(null);
+  /** What the last merge that changed something locally did; cleared on reset. */
+  mergeNotice = $state<MergeNotice | null>(null);
 
   private deps: CloudBackupDeps | null = null;
-  private uploads = new CloudBackupUploads(this, () => this.deps);
-  private sync = new CloudBackupSync(this, () => this.deps, this.uploads);
+  private uploads: CloudBackupUploads = new CloudBackupUploads(
+    this,
+    () => this.deps,
+    () => this.pulls.pullForPush(),
+  );
+  private sync: CloudBackupSync = new CloudBackupSync(
+    this,
+    () => this.deps,
+    this.uploads,
+    () => this.pulls.running,
+  );
+  private pulls: CloudBackupPulls = new CloudBackupPulls(
+    this,
+    () => this.deps,
+    this.uploads,
+    () => this.sync.resumeAfterPull(),
+  );
   private account = new CloudBackupAccount(
     this,
     () => this.deps,
@@ -104,7 +123,9 @@ export class CloudBackupStore {
     // Clear the previous vault's state, so the status on screen never keeps
     // describing the vault the user has left.
     this.errorMessage = null;
+    this.mergeNotice = null;
     this.changes.clearTimer();
+    this.pulls.stop();
     this.sync.reset();
 
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
@@ -115,11 +136,16 @@ export class CloudBackupStore {
     if (this.status !== "off") {
       this.notifyLocalChange(vaultId);
       this.changes.schedule(vaultId);
+      this.pulls.start(vaultId);
     }
   }
 
-  enable(vaultId: string): Promise<boolean> {
-    return this.account.enable(vaultId);
+  async enable(vaultId: string): Promise<boolean> {
+    const enabled = await this.account.enable(vaultId);
+    if (enabled && this.deps?.activeVaultId() === vaultId) {
+      this.pulls.start(vaultId);
+    }
+    return enabled;
   }
   async readAdventureBackup(vaultId: string) {
     if (!this.deps?.artworkConsent || this.deps.activeVaultId() !== vaultId)
@@ -192,7 +218,9 @@ export class CloudBackupStore {
     // "off" would stop meaning "nothing leaves the device".
     await this.uploads.cancel();
     this.changes.clearTimer();
+    this.pulls.stop();
     this.sync.reset();
+    this.mergeNotice = null;
     if (!this.deps) return;
     await disableCloudBackup(this.deps.runtime, vaultId);
     // Changes made while off are never recorded, so the pending set would be
@@ -241,6 +269,7 @@ export class CloudBackupStore {
   /** Releases the injected dependencies; used on teardown and in tests. */
   destroy() {
     this.stopAutoSyncListeners();
+    this.pulls.stop();
     this.sync.clearTimer();
     this.changes.clearTimer();
     this.deps = null;
@@ -270,6 +299,7 @@ export class CloudBackupStore {
     this.sync.startAutoSyncListeners();
   }
   stopAutoSyncListeners(): void {
+    this.pulls.stop();
     this.sync.stopAutoSyncListeners();
   }
 }

@@ -87,8 +87,11 @@ export class EntityMutationService {
     return this.deletions.deleteEntity(id);
   }
 
-  async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
-    return this.deletions.bulkDelete(ids);
+  async bulkDelete(
+    ids: string[],
+    expectedVaultId?: string,
+  ): Promise<BulkMutationResult> {
+    return this.deletions.bulkDelete(ids, expectedVaultId);
   }
 
   async addConnection(

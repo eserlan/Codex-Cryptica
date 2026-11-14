@@ -292,6 +292,7 @@
       "version": "0.0.0",
       "dependencies": {
         "schema": "workspace:*",
+        "zod": "^4.4.3",
       },
       "devDependencies": {
         "@vitest/coverage-v8": "^5.0.0",

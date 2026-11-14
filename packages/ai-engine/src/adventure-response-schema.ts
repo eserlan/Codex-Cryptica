@@ -35,6 +35,28 @@ const newStateFactSchema = {
   },
 } as const;
 
+const npcCuesSchema = {
+  type: "array",
+  maxItems: 4,
+  items: { type: "string", maxLength: 40 },
+} as const;
+
+const activeCharacterSchema = {
+  ...stateFactSchema,
+  properties: {
+    ...stateFactSchema.properties,
+    cues: npcCuesSchema,
+  },
+} as const;
+
+const newActiveCharacterSchema = {
+  ...newStateFactSchema,
+  properties: {
+    ...newStateFactSchema.properties,
+    cues: npcCuesSchema,
+  },
+} as const;
+
 const relationshipSchema = {
   ...stateFactSchema,
   required: [...stateFactSchema.required, "subjectId", "disposition"],
@@ -164,6 +186,12 @@ const bandSchema = {
   },
 } as const;
 
+const placeCuesSchema = {
+  type: "array",
+  maxItems: 8,
+  items: { type: "string", minLength: 1, maxLength: 32 },
+} as const;
+
 export const adventureTurnResponseSchema = {
   oneOf: [
     {
@@ -203,8 +231,10 @@ export const adventureTurnResponseSchema = {
             placeId: idSchema,
             name: { ...textSchema, maxLength: 120 },
             relation: textSchema,
+            cues: placeCuesSchema,
           },
         },
+        placeCues: placeCuesSchema,
         personRefs: {
           type: "array",
           maxItems: 8,
@@ -223,7 +253,10 @@ export const adventureTurnResponseSchema = {
             location: { anyOf: [newStateFactSchema, { type: "null" }] },
             situation: { anyOf: [newStateFactSchema, { type: "null" }] },
             objectives: patchSchema(newStateFactSchema, stateFactSchema),
-            activeCharacters: patchSchema(newStateFactSchema, stateFactSchema),
+            activeCharacters: patchSchema(
+              newActiveCharacterSchema,
+              activeCharacterSchema,
+            ),
             knownFacts: patchSchema(newStateFactSchema, stateFactSchema),
             relationships: patchSchema(
               newRelationshipSchema,
