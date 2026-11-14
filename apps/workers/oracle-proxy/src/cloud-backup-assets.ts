@@ -12,7 +12,9 @@ import {
   tooLargeToRead,
   isValidAssetId,
   sizeLimitResponse,
+  storageUnavailable,
 } from "./cloud-backup-http";
+import { preserveBeforeOverwrite } from "./cloud-backup-restore-points";
 import { authorizeStoredBackup } from "./cloud-backup-auth";
 
 /**
@@ -68,6 +70,20 @@ export async function handleCloudBackupAssetUpload(
     "This vault is too large to back up.",
   );
   if (vaultTooLarge) return vaultTooLarge;
+
+  if (
+    existing &&
+    existing.etag &&
+    !(await preserveBeforeOverwrite(
+      env,
+      backupId,
+      assetId,
+      existing.etag,
+      auth.sharing !== undefined,
+    ))
+  ) {
+    return storageUnavailable(request);
+  }
 
   await env.BUCKET.put(key, bytes, {
     httpMetadata: {

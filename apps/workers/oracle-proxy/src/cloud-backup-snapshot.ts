@@ -14,19 +14,17 @@ import {
 import {
   type BackupObjects,
   type CloudBackupEnv,
-  cleanupSuperseded,
-  getAssetKey,
   getStagedKey,
   reachableBytes,
   resolveObjects,
   writeJson,
   writeManifest,
-  pruneAssets,
   type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import { lostRace } from "./cloud-backup-delta";
+import { finishCommit } from "./cloud-backup-restore-points";
 import {
   carryTombstones,
   stageIndex,
@@ -137,11 +135,13 @@ async function commitSnapshot(
   );
   if (!won) return lostRace(request, env, backupId, staged, auth.manifest);
 
-  await cleanupSuperseded(env, backupId, revision, staged, base);
-  const keep = new Set(
-    (payload.assetIds ?? []).map((id) => getAssetKey(backupId, id)),
-  );
-  await pruneAssets(env, backupId, keep);
+  await finishCommit(env, backupId, {
+    committed,
+    objects: staged,
+    base,
+    shared: auth.sharing !== undefined,
+    assetIds: payload.assetIds ?? [],
+  });
   return json(request, { manifest: committed });
 }
 

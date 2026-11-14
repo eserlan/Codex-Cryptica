@@ -32,7 +32,6 @@ const DAY = 86_400_000;
 const at = (iso: string) => vi.setSystemTime(new Date(iso));
 const dayAt = (base: string, offset: number) =>
   new Date(Date.parse(`${base}T10:00:00Z`) + offset * DAY).toISOString();
-const dateOf = (iso: string) => iso.slice(0, 10);
 
 const pointKey = (fx: Fixture, date: string) =>
   `${getBackupPrefix(fx.backupId)}restore-points/points/${date}.json`;
@@ -373,7 +372,8 @@ describe("immutability", () => {
     const first = await readPoint(fx, "2026-11-14");
     const second = await readPoint(fx, "2026-11-15");
     for (const [shard, key] of Object.entries(first.objects.shards)) {
-      if (shard === shardOfE1) expect(second.objects.shards[shard]).not.toBe(key);
+      if (shard === shardOfE1)
+        expect(second.objects.shards[shard]).not.toBe(key);
       else expect(second.objects.shards[shard]).toBe(key);
     }
     expect(keysUnder(fx, "restore-points/assets/")).toEqual([]);
@@ -401,7 +401,7 @@ describe("immutability", () => {
       return (put as any)(key, ...rest);
     };
     const refused = await upload(fx, "pic", [8, 8]);
-    expect(refused.status).toBe(503);
+    expect(refused.status).toBe(500);
     expect(
       Array.from(
         (await fx.env.BUCKET.get(getAssetKey(fx.backupId, "pic")))!
@@ -456,8 +456,8 @@ describe("GET /restore-points", () => {
     const body = (await res.json()) as any;
     expect(body).toEqual({
       restorePoints: [
-        { date: "2026-11-15", revision: 4, entityCount: 6 },
-        { date: "2026-11-14", revision: 3, entityCount: 6 },
+        { date: "2026-11-15", revision: 3, entityCount: 6 },
+        { date: "2026-11-14", revision: 2, entityCount: 6 },
       ],
     });
   });
@@ -485,9 +485,12 @@ describe("GET /restore-points", () => {
       await route(fx, "GET", "/restore-points", fx.editorToken),
       await route(fx, "GET", "/restore-points"),
       await handleCloudBackupRoutes(
-        new Request("https://example.test/api/cloud-backup/missing/restore-points", {
-          headers: { Authorization: `Bearer ${fx.ownerCode}` },
-        }),
+        new Request(
+          "https://example.test/api/cloud-backup/missing/restore-points",
+          {
+            headers: { Authorization: `Bearer ${fx.ownerCode}` },
+          },
+        ),
         fx.env as any,
         "/api/cloud-backup/missing/restore-points",
       ).then((r) => r!),

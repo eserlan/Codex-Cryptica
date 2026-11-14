@@ -24,7 +24,7 @@ const OBJECT_KEY = z
  * Worker-only manifest field: which stored objects are current. Never part of
  * the shared schema and never returned in a response.
  */
-const BackupObjectsSchema = z.object({
+export const BackupObjectsSchema = z.object({
   bundle: OBJECT_KEY.optional(),
   index: OBJECT_KEY.optional(),
   shards: z.record(z.string(), OBJECT_KEY).optional(),
@@ -288,9 +288,10 @@ export async function pruneAssets(
   env: CloudBackupEnv,
   backupId: string,
   keep: Set<string>,
+  canDelete?: (object: ListedObject) => Promise<boolean>,
 ): Promise<void> {
   const prefix = `${getBackupPrefix(backupId)}assets/`;
-  await deleteListedObjects(env, prefix, keep);
+  await deleteListedObjects(env, prefix, keep, canDelete);
 }
 
 /** Best-effort removal of the objects a losing commit staged. */
@@ -319,9 +320,14 @@ export async function cleanupSuperseded(
   revision: number,
   current: BackupObjects,
   base: BackupObjects,
+  protectedKeys: ReadonlySet<string> = new Set(),
 ): Promise<void> {
   try {
-    const kept = new Set([...referencedKeys(current), ...referencedKeys(base)]);
+    const kept = new Set([
+      ...referencedKeys(current),
+      ...referencedKeys(base),
+      ...protectedKeys,
+    ]);
     const prefix = getBackupPrefix(backupId);
     for (const key of await listKeys(env, prefix)) {
       const relative = key.slice(prefix.length);
@@ -355,19 +361,28 @@ async function deleteListedObjects(
   env: CloudBackupEnv,
   prefix: string,
   keep: ReadonlySet<string>,
+  canDelete?: (object: ListedObject) => Promise<boolean>,
 ): Promise<void> {
   for await (const objects of listObjectPages(env, prefix, true)) {
     for (const object of objects) {
-      if (!keep.has(object.key)) await env.BUCKET.delete(object.key);
+      if (keep.has(object.key)) continue;
+      if (canDelete && !(await canDelete(object))) continue;
+      await env.BUCKET.delete(object.key);
     }
   }
 }
 
-async function* listObjectPages(
+export interface ListedObject {
+  key: string;
+  size?: number;
+  etag?: string;
+}
+
+export async function* listObjectPages(
   env: CloudBackupEnv,
   prefix: string,
   stopWhenEmpty = false,
-): AsyncGenerator<Array<{ key: string; size?: number }>> {
+): AsyncGenerator<ListedObject[]> {
   let listed = await env.BUCKET.list({ prefix });
   for (;;) {
     // Destructive listings historically stop at an empty page; read listings

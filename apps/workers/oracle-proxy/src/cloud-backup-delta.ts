@@ -16,9 +16,7 @@ import {
   type BackupObjects,
   type CloudBackupEnv,
   absoluteKey,
-  cleanupSuperseded,
   discardStaged,
-  getAssetKey,
   getStagedKey,
   jsonByteLength,
   readJson,
@@ -28,10 +26,10 @@ import {
   resolveObjects,
   writeJson,
   writeManifest,
-  pruneAssets,
   type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
+import { finishCommit } from "./cloud-backup-restore-points";
 import { evictOldestTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
@@ -449,14 +447,13 @@ async function commitDelta(
     return lostRace(request, env, backupId, staged, auth.manifest);
   }
 
-  await cleanupSuperseded(env, backupId, revision, objects, base);
-  if (delta.assetIds) {
-    await pruneAssets(
-      env,
-      backupId,
-      new Set(delta.assetIds.map((id) => getAssetKey(backupId, id))),
-    );
-  }
+  await finishCommit(env, backupId, {
+    committed,
+    objects,
+    base,
+    shared: auth.sharing !== undefined,
+    assetIds: delta.assetIds,
+  });
 
   return json(request, { manifest: committed });
 }

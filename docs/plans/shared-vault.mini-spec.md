@@ -328,4 +328,8 @@ see.
   slice 6.
 - How often a device pulls is proposed at 30 seconds while the app is open.
   Confirm against the worker's rate limits in slice 5.
-- The storage cost and limit for restore points. Settle in slice 11.
+- Restore point storage cost and limit (pending owner confirmation in PR for
+  #4778; figures are estimates): 30 points per backup, one per UTC day, none
+  counted in `sizeBytes` or the 50 MiB cap. About 14 MiB for 30 days in the
+  best case (one small edit a day), about 23 MiB typical, and at most about
+  2.93 GiB (30 x 100 MiB) in the worst case, per shared vault.
