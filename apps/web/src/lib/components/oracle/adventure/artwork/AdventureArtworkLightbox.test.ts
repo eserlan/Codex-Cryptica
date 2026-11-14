@@ -135,4 +135,42 @@ describe("AdventureArtworkLightbox", () => {
     expect(document.activeElement).toBe(opener);
     opener.remove();
   });
+
+  it("shows the full attribution and the description when given", async () => {
+    const controller = new AdventureLightboxController();
+    const item = {
+      key: "npc:mira",
+      src: "blob:mira",
+      alt: "Portrait of Mira",
+      title: "Mira",
+      subtitle: "AI illustration · Codex Cryptica Team",
+      description: "a grey-haired herb-wife",
+    };
+    controller.register(item);
+    render(AdventureArtworkLightbox, { props: { controller } });
+    controller.open(item);
+    await Promise.resolve();
+    expect(
+      screen.getByText("AI illustration · Codex Cryptica Team"),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("adventure-lightbox-description").textContent,
+    ).toContain("a grey-haired herb-wife");
+  });
+
+  it("renders no description line when the item has none", async () => {
+    const controller = new AdventureLightboxController();
+    const item = {
+      key: "scene:1",
+      src: "blob:s",
+      alt: "A forest road",
+      title: "Road",
+      subtitle: "AI illustration · Codex Cryptica Team",
+    };
+    controller.register(item);
+    render(AdventureArtworkLightbox, { props: { controller } });
+    controller.open(item);
+    await Promise.resolve();
+    expect(screen.queryByTestId("adventure-lightbox-description")).toBeNull();
+  });
 });

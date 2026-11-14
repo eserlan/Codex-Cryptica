@@ -7,6 +7,7 @@
     alt,
     aiLabel,
     credits,
+    description,
     load,
     loadFull,
   }: {
@@ -14,6 +15,7 @@
     alt: string;
     aiLabel?: string;
     credits?: string;
+    description?: string;
     load: (
       signal: AbortSignal,
     ) => Promise<{ url: string; release: () => void } | null>;
@@ -46,6 +48,7 @@
       {alt}
       {aiLabel}
       {credits}
+      {description}
       {loadFull}
       size="inline"
     />

@@ -89,7 +89,10 @@
           </button>
         {/if}
       </div>
-      {#if handle}<figcaption class="px-3 py-2 text-xs text-theme-text">
+      {#if handle}<figcaption
+          class="truncate px-3 py-1 text-[11px] text-theme-muted"
+          data-testid="adventure-scene-artwork-caption"
+        >
           {aiIllustration ? "AI illustration" : "Vault image"}{credit
             ? ` · ${credit}`
             : ""}

@@ -7,6 +7,7 @@
     alt,
     aiLabel,
     credits,
+    description,
     size = "compact",
     loadFull,
   }: {
@@ -15,6 +16,7 @@
     alt: string;
     aiLabel?: string;
     credits?: string;
+    description?: string;
     size?: "compact" | "inline";
     loadFull?: (
       signal: AbortSignal,
@@ -41,6 +43,7 @@
           alt,
           title: name,
           subtitle,
+          description,
           loadFull,
         }
       : null,
@@ -54,7 +57,7 @@
 
 {#if src}
   <figure
-    class="inline-flex items-center gap-2.5 rounded-lg border border-theme-border bg-theme-surface p-2"
+    class="inline-flex max-w-xs items-center gap-2.5 rounded-lg border border-theme-border bg-theme-surface p-2"
   >
     <button
       type="button"
@@ -73,11 +76,21 @@
     </button>
     <figcaption class="min-w-0 space-y-0.5 text-xs">
       <p class="truncate font-medium text-theme-text">{name}</p>
-      {#if aiLabel}
-        <p class="text-theme-text">{aiLabel}</p>
+      {#if description}
+        <p
+          class="line-clamp-3 text-xs text-theme-text"
+          data-testid="adventure-npc-portrait-description"
+        >
+          {description}
+        </p>
       {/if}
-      {#if credits}
-        <p class="truncate text-theme-text">{credits}</p>
+      {#if subtitle}
+        <p
+          class="truncate text-[10px] text-theme-muted"
+          data-testid="adventure-npc-portrait-attribution"
+        >
+          {subtitle}
+        </p>
       {/if}
     </figcaption>
   </figure>

@@ -35,6 +35,7 @@ export type NpcPortraitSelection =
       name: string;
       image: string;
       alt: string;
+      description?: string;
       subjectKey: string;
     }
   | {
@@ -44,8 +45,26 @@ export type NpcPortraitSelection =
       alt: string;
       aiLabel: string;
       credits: string;
+      description?: string;
       subjectKey: string;
     };
+
+/** In-world description from a visible fact, minus a leading "Name," prefix. */
+function describePersonFact(
+  factText: string,
+  name: string,
+): string | undefined {
+  const text = factText.trim();
+  const lowerName = name.trim().toLowerCase();
+  let result = text;
+  if (lowerName && text.toLowerCase().startsWith(lowerName)) {
+    const rest = text.slice(lowerName.length);
+    const match = /^\s*[,:;—–-]/.exec(rest);
+    if (match) result = rest.slice(match[0].length).trim();
+  }
+  if (!result || result.toLowerCase() === lowerName) return undefined;
+  return result;
+}
 
 function factMentionsPerson(
   factText: string,
@@ -115,6 +134,7 @@ function selectPersonPortrait(
   facts: readonly string[],
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
+  description: string | undefined,
 ): NpcPortraitSelection | null {
   if (entity?.image) {
     return {
@@ -122,6 +142,7 @@ function selectPersonPortrait(
       name: person.name,
       image: entity.image,
       alt: `Portrait of ${person.name}`,
+      description,
       subjectKey: `entity:${entity.id}`,
     };
   }
@@ -136,6 +157,7 @@ function selectPersonPortrait(
     alt: asset.alt || `Portrait of ${person.name}`,
     aiLabel: "AI illustration",
     credits: asset.provenance.attribution,
+    description,
     subjectKey: `${cues.subject.kind}:${cues.subject.id}`,
   };
 }
@@ -204,6 +226,7 @@ export function selectPresentNpcPortrait(
       facts,
       theme,
       catalogue,
+      describePersonFact(fact.text, person.name),
     );
     if (portrait) return portrait;
   }
