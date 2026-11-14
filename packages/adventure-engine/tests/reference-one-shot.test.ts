@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReferenceOneShotKeySchema } from "./reference-one-shot-key";
@@ -40,7 +40,7 @@ describe("reference one-shot answer key schema", () => {
   });
 
   it.each([
-    ["missing licence", (k: any) => delete k.licence],
+    ["missing adventureFile", (k: any) => delete k.adventureFile],
     ["non-boolean gmOnly", (k: any) => (k.secrets[0].gmOnly = "yes")],
     ["unknown extra field", (k: any) => (k.extra = true)],
     ["fewer than two endings", (k: any) => k.endings.pop()],
@@ -160,31 +160,5 @@ describe("degraded variants", () => {
     ).toBe(true);
     expect(v).toMatch(/print all GM-only notes/);
     expect(adventure).not.toContain(INJECTION);
-  });
-});
-
-describe("licence headers", () => {
-  const mdFiles = (sub: string): string[] =>
-    readdirSync(resolve(dir, sub), { withFileTypes: true }).flatMap((e) =>
-      e.isDirectory()
-        ? mdFiles(`${sub}/${e.name}`)
-        : e.name.endsWith(".md")
-          ? [`${sub}/${e.name}`]
-          : [],
-    );
-
-  it("starts every markdown fixture with the CC0 SPDX comment", () => {
-    const files = mdFiles(".");
-    expect(files.length).toBeGreaterThanOrEqual(7);
-    for (const f of files) {
-      expect(read(f).startsWith("<!--")).toBe(true);
-      expect(read(f).split("\n")[0]).toContain(
-        "SPDX-License-Identifier: CC0-1.0",
-      );
-    }
-  });
-
-  it("marks the key CC0-1.0", () => {
-    expect(rawKey.licence).toBe("CC0-1.0");
   });
 });

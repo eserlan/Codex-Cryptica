@@ -4,7 +4,6 @@ const text = z.string().min(1);
 
 export const ReferenceOneShotKeySchema = z
   .object({
-    licence: z.literal("CC0-1.0"),
     adventureFile: z.literal("adventure.md"),
     sections: z
       .array(z.object({ sourceId: text, title: text }).strict())

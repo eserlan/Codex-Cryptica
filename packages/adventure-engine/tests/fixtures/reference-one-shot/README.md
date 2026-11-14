@@ -1,8 +1,6 @@
-<!-- SPDX-License-Identifier: CC0-1.0 — The author dedicates this work to the public domain under CC0 1.0. -->
-
 # Reference one-shot fixture
 
-An original, system-light one-shot (about 30 turns) with an answer key, for offline import and play tests. Licence: CC0-1.0 (public domain dedication); every `.md` file starts with an SPDX comment and `answer-key.json` has a `licence` field.
+An original, system-light one-shot (about 30 turns) with an answer key, for offline import and play tests.
 
 ## Conventions
 

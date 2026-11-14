@@ -1,5 +1,4 @@
 {
-  "licence": "CC0-1.0",
   "adventureFile": "adventure.md",
   "sections": [
     { "sourceId": "ros-overview", "title": "The Last Grind" },

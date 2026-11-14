@@ -1,5 +1,3 @@
-<!-- SPDX-License-Identifier: CC0-1.0 — The author dedicates this work to the public domain under CC0 1.0. -->
-
 # The Last Grind
 
 <!-- source-id: ros-overview -->
