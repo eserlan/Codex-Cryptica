@@ -611,6 +611,41 @@ describe("reissue-code turns sharing off", () => {
     ).toBe(200);
   });
 
+  it("returns the committed owner code when device cleanup fails and retries cleanup later", async () => {
+    const fx = await shared();
+    await call(fx, "GET", "/status", {
+      key: fx.editorToken,
+      device: newDevice(),
+    });
+    const devicesKey = await sharingDevicesKey(fx);
+    expect(await fx.env.BUCKET.get(devicesKey)).not.toBe(null);
+    const bucket = fx.env.BUCKET;
+    const deleteObject = bucket.delete.bind(bucket);
+    let rejectNextDelete = true;
+    bucket.delete = async (key: string) => {
+      if (rejectNextDelete) {
+        rejectNextDelete = false;
+        throw new Error("temporary storage failure");
+      }
+      return deleteObject(key);
+    };
+
+    const first = await reissue(fx, ADMIN);
+    expect(first.status).toBe(200);
+    const { ownerCode: firstCode } = (await first.json()) as {
+      ownerCode: string;
+    };
+    expect((await readManifest(fx.env, fx.backupId))!.sharing).toBeUndefined();
+    expect(await fx.env.BUCKET.get(devicesKey)).not.toBe(null);
+    expect((await call(fx, "GET", "/status", { key: firstCode })).status).toBe(
+      200,
+    );
+
+    const second = await reissue(fx, ADMIN);
+    expect(second.status).toBe(200);
+    expect(await fx.env.BUCKET.get(devicesKey)).toBe(null);
+  });
+
   it("refuses without admin access and writes nothing", async () => {
     const fx = await shared();
     const device = newDevice();

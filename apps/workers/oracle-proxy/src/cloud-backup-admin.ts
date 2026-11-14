@@ -2,7 +2,8 @@ import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing"
 import type { CloudBackupEnv } from "./cloud-backup";
 import {
   acquireBackupMutationLock,
-  getSharingDevicesKey,
+  getBackupPrefix,
+  listKeys,
   writeManifest,
 } from "./cloud-backup-storage";
 
@@ -182,6 +183,16 @@ export async function handleCloudBackupAdminStats(
 
 type ReissueRecord = NonNullable<Awaited<ReturnType<typeof readManifest>>>;
 
+async function cleanupSharingDeviceRecords(
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<void> {
+  const prefix = `${getBackupPrefix(backupId)}sharing-devices/`;
+  for (const key of await listKeys(env, prefix)) {
+    await env.BUCKET.delete(key);
+  }
+}
+
 /** One conditional write that drops sharing; shared backups hold the mutation lock. */
 async function reissueOnce(
   env: CloudBackupEnv,
@@ -209,8 +220,14 @@ async function reissueOnce(
     await release?.();
   }
   if (!written) return "lost";
-  if (sharing) {
-    await env.BUCKET.delete(getSharingDevicesKey(backupId, sharing));
+  try {
+    // The manifest commit is the security boundary: after sharing is removed,
+    // cleanup failure must not hide the new owner code. Listing the prefix on
+    // every reissue also gives a later request a way to retry orphan cleanup.
+    await cleanupSharingDeviceRecords(env, backupId);
+  } catch {
+    // The stale records are no longer reachable while sharing is off; a later
+    // reissue will retry deleting anything still under this prefix.
   }
   return "written";
 }
