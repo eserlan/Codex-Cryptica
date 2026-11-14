@@ -10,6 +10,7 @@ import {
   readReferenced,
   writeJson,
 } from "./cloud-backup-storage";
+import { isTrashExpired } from "./cloud-backup-trash";
 
 /** The relative key a commit stages an object at, as stored in `objects`. */
 export function stagedName(tag: string, name: string): string {
@@ -105,8 +106,11 @@ export async function carryTombstones(
     backupId,
     base.index,
   );
+  const now = Date.now();
   for (const [id, tombstone] of Object.entries(index.tombstones ?? {})) {
-    if (!liveIds.has(id)) tombstones[id] = tombstone;
+    if (!liveIds.has(id) && !isTrashExpired(tombstone, now)) {
+      tombstones[id] = tombstone;
+    }
   }
   for (const [name, reference] of Object.entries(base.trash)) {
     const shard = await readReferenced<Shard>(env, backupId, reference);

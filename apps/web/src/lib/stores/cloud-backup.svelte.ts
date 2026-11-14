@@ -22,6 +22,7 @@ import type {
   MergeNotice,
 } from "./cloud-backup-types";
 import { CloudBackupRestore } from "./cloud-backup-restore";
+import { CloudBackupTrash } from "./cloud-backup-trash";
 
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 export { createInertRuntime } from "./cloud-backup-runtime";
@@ -115,6 +116,11 @@ export class CloudBackupStore {
   );
   private sharingActions = new CloudBackupSharing(this, () => this.deps);
   private restore = new CloudBackupRestore(this, () => this.deps);
+  /** The shared trash: the list, and restoring from it. */
+  trash = new CloudBackupTrash(
+    () => this.deps,
+    (vaultId, ids) => this.recordLocalChange(vaultId, { kind: "entity", ids }),
+  );
   private changes = new CloudBackupChanges(
     this,
     () => this.deps,

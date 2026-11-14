@@ -19,6 +19,13 @@ const store = vi.hoisted(() => ({
   sharing: null,
   artworkConsentVersion: 0,
   mergeNotice: null,
+  trash: {
+    items: [],
+    loadState: "unsupported",
+    restoring: new Set(),
+    load: async () => {},
+    restore: async () => 0,
+  },
 }));
 
 vi.mock("#lib/stores/cloud-backup.svelte.js", () => ({

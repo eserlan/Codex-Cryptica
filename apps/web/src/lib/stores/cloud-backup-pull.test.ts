@@ -436,3 +436,114 @@ describe("pull, merge and retry", () => {
     await push;
   });
 });
+
+describe("delete notices", () => {
+  const tomb = (id: string, title: string, deletedBy = "Mara") => ({
+    id,
+    rev: 2,
+    deletedBy,
+    deletedAt: "2026-09-01T00:00:00.000Z",
+    title,
+  });
+
+  it("tells the user about a delete the pull applied", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      { changes: [feed(2, [], [tomb("a", "Old Dock")])] },
+      {},
+      { notifyDeletes },
+    );
+    h.local.set("a", e("a", "Old Dock"));
+    await h.base.recordSent("v-1", [e("a", "Old Dock")], []);
+
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+
+    expect(h.local.has("a")).toBe(false);
+    expect(notifyDeletes).toHaveBeenCalledWith("v-1", [
+      expect.objectContaining({
+        id: "a",
+        title: "Old Dock",
+        deletedBy: "Mara",
+      }),
+    ]);
+  });
+
+  it("stays quiet for a delete of something this device no longer has", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      { changes: [feed(2, [], [tomb("gone", "Gone")])] },
+      {},
+      { notifyDeletes },
+    );
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(notifyDeletes).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet when an open editor holds the delete back", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      { changes: [feed(2, [], [tomb("a", "Old Dock")])] },
+      {},
+      { notifyDeletes },
+    );
+    h.local.set("a", e("a", "Old Dock"));
+    h.editing.add("a");
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(h.local.has("a")).toBe(true);
+    expect(notifyDeletes).not.toHaveBeenCalled();
+  });
+
+  it("stays quiet on a resync", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      {
+        changes: [ok({ status: "resync", revision: 5 })],
+        bundle: [
+          ok({
+            manifest: { ...MANIFEST, revision: 5, lastPushedAt: "t5" },
+            bundle: { entities: [] },
+          }),
+        ],
+      },
+      {},
+      { notifyDeletes },
+    );
+    h.local.set("a", e("a", "Old Dock"));
+    await h.base.recordSent("v-1", [e("a", "Old Dock")], []);
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(notifyDeletes).not.toHaveBeenCalled();
+  });
+
+  it("keeps an entity edited before the delete arrived, and does not notify", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      { changes: [feed(2, [], [tomb("a", "Old Dock")])] },
+      {},
+      { notifyDeletes },
+    );
+    h.local.set("a", e("a", "Old Dock", { content: "edited" }));
+    await h.base.recordSent("v-1", [e("a", "Old Dock")], []);
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(h.local.get("a")?.content).toBe("edited");
+    expect(notifyDeletes).not.toHaveBeenCalled();
+  });
+
+  it("keeps a restored entity (no merge base) when a stale pull carries its tombstone", async () => {
+    const notifyDeletes = vi.fn();
+    const h = await setup(
+      { changes: [feed(2, [], [tomb("a", "Old Dock")])] },
+      {},
+      { notifyDeletes },
+    );
+    h.local.set("a", e("a", "Old Dock"));
+    await h.store.hydrate("v-1");
+    await vi.advanceTimersByTimeAsync(1);
+    expect(h.local.has("a")).toBe(true);
+    expect(notifyDeletes).not.toHaveBeenCalled();
+  });
+});

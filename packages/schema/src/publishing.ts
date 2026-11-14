@@ -520,6 +520,8 @@ export const CLOUD_BACKUP_LIMITS = {
    * and only the tombstone records stay.
    */
   maxTrashBytes: 50 * 1024 * 1024,
+  /** Removed entities stay restorable this long; older tombstones are purged. */
+  trashRetentionDays: 30,
   /**
    * One asset per request, so no single upload can approach the Worker's
    * memory ceiling. Matches the publish path's per-asset cap.
@@ -616,6 +618,9 @@ export type CloudBackupTombstone = z.infer<typeof CloudBackupTombstoneSchema>;
 /** `editedBy` until backups have members: the owner is the only writer. */
 export const CLOUD_BACKUP_OWNER_EDITOR = "owner";
 
+/** `editedBy` for an editor who sent no usable name. */
+export const CLOUD_BACKUP_MEMBER_EDITOR = "member";
+
 /**
  * Storage layouts. v1 keeps every entity inside one `bundle.json`; v2 (#3354)
  * shards entities so an incremental upload rewrites only what it touched.
@@ -690,6 +695,8 @@ export const CloudBackupDeltaSchema = z.object({
   baseRevision: z.number().int().nonnegative().optional(),
   upserts: z.array(CloudBackupEntitySchema),
   deletes: z.array(z.string().min(1).max(255)),
+  /** A member's display name; the worker stamps it on an editor's commit. */
+  editorName: z.string().max(40).optional(),
   maps: z.array(z.unknown()).optional(),
   canvases: z.array(z.unknown()).optional(),
   assetManifest: z.array(z.unknown()).optional(),

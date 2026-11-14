@@ -39,6 +39,7 @@ import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path
 import { entityEditingRegistry } from "#lib/stores/entity-editing-registry.js";
 import { readOpfsBlob } from "#lib/utils/opfs.js";
 import { sharedVaultIdentity } from "#lib/stores/shared-vault-identity.js";
+import { deleteNoticeText } from "#lib/stores/cloud-backup-delete-notice.js";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 const dirty = new CloudBackupDirtyStore();
@@ -363,6 +364,7 @@ function createCloudBackupRuntime(): CloudBackupRuntime {
     storage: cloudBackupBrowserStorage(),
     fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     deviceId: () => sharedVaultIdentity.deviceId(),
+    displayName: () => sharedVaultIdentity.displayName(),
   };
 }
 
@@ -408,6 +410,15 @@ export function configureCloudBackup(): void {
     buildEditorDelta: buildMemberDelta,
     notify: (message) => notificationStore.notify(message, "info"),
     displayName: () => sharedVaultIdentity.displayName(),
+    notifyDeletes: (vaultId, tombstones) =>
+      notificationStore.notify(deleteNoticeText(tombstones), "info", false, {
+        label: "Undo",
+        run: () =>
+          void cloudBackupStore.trash.restore(
+            vaultId,
+            tombstones.map((tombstone) => tombstone.id),
+          ),
+      }),
     remote,
     listLocalEntities: () =>
       Object.values(vault.entities ?? {}).map((entity) => ({

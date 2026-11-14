@@ -38,6 +38,18 @@ You can keep editing without a connection. Your changes are saved on this device
 
 If you and someone else change the same part of an entry, Codex Cryptica keeps both. Your version becomes a copy titled **Title (Name's version)**, using the name you typed, so the group can see whose it was and decide which to keep.
 
+## Deleted entities and the trash
+
+When someone in the group deletes an entity, it disappears for everyone, but it is kept for 30 days. Any member can bring it back.
+
+- **Undo:** when another member's delete reaches you, a message such as "Mara deleted Old Dock" appears with an **Undo** button. It stays for a few seconds.
+- **Trash panel:** in **Settings → Vault → Cloud Backup**, the **Trash** section lists what was deleted, who deleted it, when, and how many days are left. Choose **Restore** to bring an entity back for the whole group.
+- **After 30 days** a deleted entity is removed for good.
+- **When the trash is full:** the group's trash has a size limit. When it fills up, the oldest items lose their content and show "Can't be restored".
+- **Edited before the delete arrived:** if you changed an entity before someone else's delete reached you, Codex Cryptica keeps your version.
+
+A restored entity keeps its own links, but entities that linked to it before it was deleted do not get those links back.
+
 ## What only the owner can do
 
 Only the owner can replace the link, turn sharing off, delete the shared copy and manage restore points. In **Settings → Vault → Cloud Backup** you see a note saying you joined as a member, and none of those controls.

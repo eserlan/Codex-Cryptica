@@ -51,6 +51,8 @@ export interface CloudBackupRuntime {
   now?: () => Date;
   /** This device's id; sent as `X-Codex-Device-Id` on editor requests. */
   deviceId?: () => string;
+  /** This member's display name; sent with an editor's pushes. */
+  displayName?: () => string | undefined;
 }
 
 /** In-memory storage, for tests and for a runtime with no IndexedDB. */

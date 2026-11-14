@@ -1,3 +1,4 @@
+import type { CloudBackupTombstone } from "schema";
 import {
   isDeviceLimit,
   type CloudBackupRuntime,
@@ -210,6 +211,11 @@ export interface CloudBackupDeps {
   storage?: StorageLike;
   /** Shows a short message to the user. */
   notify?: (message: string) => void;
+  /** Tells the user another member's deletes were applied, with an Undo. */
+  notifyDeletes?: (
+    vaultId: string,
+    tombstones: readonly CloudBackupTombstone[],
+  ) => void;
   /** The member's display name, for conflict copies in a shared vault. */
   displayName?: () => string | undefined;
   /**

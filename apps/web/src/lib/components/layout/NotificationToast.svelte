@@ -53,6 +53,15 @@
         ></span>
       </span>
     {/if}
+    {#if notification.action}
+      <button
+        type="button"
+        class="min-h-11 shrink-0 rounded border border-current/40 px-3 text-xs font-bold uppercase tracking-wider transition hover:bg-current/10 focus:outline-none focus:ring-2 focus:ring-current/40"
+        onclick={() => notificationStore.runNotificationAction()}
+      >
+        {notification.action.label}
+      </button>
+    {/if}
     <button
       type="button"
       class="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-current/20 opacity-70 transition hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-current/40"
