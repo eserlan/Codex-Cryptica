@@ -4,7 +4,7 @@
     "Stop": [
       {
         "type": "command",
-        "command": "../factory/bin/gate --hook",
+        "command": "factory/bin/gate --hook",
         "timeout": 300
       }
     ]

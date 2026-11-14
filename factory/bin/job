@@ -29,6 +29,7 @@ import os
 import re
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -684,29 +685,45 @@ def slugify(title):
     return "-".join(words) or "issue"
 
 
+@contextmanager
+def job_creation_lock():
+    """Serialize job allocation across every checkout sharing these Git refs."""
+    common_git = run(["git", "rev-parse", "--git-common-dir"]).stdout.strip()
+    common_git_path = Path(common_git)
+    if not common_git_path.is_absolute():
+        common_git_path = REPO / common_git_path
+    lock_path = common_git_path.resolve() / "factory-job-create.lock"
+    with lock_path.open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
+
+
 def other_worktree_jobs():
-    """Jobs owned by the parent checkout's factory/jobs/ when running in a separate worktree."""
-    common_git = run(["git", "rev-parse", "--git-common-dir"], check=False).stdout.strip()
-    if not common_git:
-        return {}
-    main_jobs = Path(common_git).resolve().parent / "factory" / "jobs"
-    if not main_jobs.exists() or main_jobs == JOBS:
-        return {}
+    """Jobs owned by other registered worktrees that share this repository's Git refs."""
+    worktrees = run(["git", "worktree", "list", "--porcelain"], check=False).stdout.splitlines()
+    job_dirs = []
+    for line in worktrees:
+        if line.startswith("worktree "):
+            worktree_jobs = Path(line.removeprefix("worktree ")) / "factory" / "jobs"
+            if worktree_jobs != JOBS:
+                job_dirs.append(worktree_jobs)
     by_issue = {}
-    for p in sorted(main_jobs.iterdir()):
-        jf = p / "job.json"
-        if jf.exists():
-            try:
-                data = json.loads(jf.read_text())
-                by_issue[data["issue"]] = data
-            except (OSError, ValueError, KeyError):
-                continue
+    for jobs_dir in job_dirs:
+        if not jobs_dir.exists():
+            continue
+        for p in sorted(jobs_dir.iterdir()):
+            jf = p / "job.json"
+            if jf.exists():
+                try:
+                    data = json.loads(jf.read_text())
+                    by_issue[data["issue"]] = data
+                except (OSError, ValueError, KeyError):
+                    continue
     return by_issue
 
 
 def next_job_number():
-    """Highest existing job number across this checkout, any parent worktree's
-    factory/jobs/, and local/remote factory/NNN-* git branches, plus 1."""
+    """Highest existing job number across registered worktrees and factory branches, plus 1."""
     numbers = [int(p.name.split("-")[0]) for p in JOBS.iterdir() if p.name[:3].isdigit()] if JOBS.exists() else []
     for data in other_worktree_jobs().values():
         if data["id"][:3].isdigit():
@@ -721,42 +738,43 @@ def next_job_number():
 
 
 def cmd_create(number, on=None):
-    existing = [j for j in all_jobs() if j["issue"] == int(number)]
-    if existing:
-        die(f"issue #{number} already has job {existing[0]['id']} ({existing[0]['stage']})")
-    other = other_worktree_jobs().get(int(number))
-    if other:
-        die(f"issue #{number} already has job {other['id']} ({other['stage']}) in another worktree")
-    try:
-        require_slot(None)
-    except Refused as e:
-        die(str(e))
-    parent = None
-    if on:
-        parent = resolve(on)
-        if parent["stage"] in TERMINAL:
-            die(f"can't stack on {parent['id']}: it is {parent['stage']}")
-    issue = fetch_issue(number)
-    if issue["state"] != "OPEN":
-        die(f"issue #{number} is {issue['state'].lower()}")
-    if QUEUE_LABEL not in {l["name"] for l in issue["labels"]}:
-        die(f"issue #{number} isn't labeled {QUEUE_LABEL}")
-    JOBS.mkdir(parents=True, exist_ok=True)
-    job_id = f"{next_job_number():03d}-{slugify(issue['title'])}"
-    job_dir(job_id).mkdir()
-    job = {
-        "id": job_id, "issue": issue["number"], "title": issue["title"], "issue_url": issue["url"],
-        "pr": None, "pr_url": None,
-        "branch": f"factory/{job_id}",
-        "worktree": str(REPO / ".worktrees" / job_id),
-        "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
-        "intake": None, "agents": None, "gate": None, "reviews": {},
-        "cost_usd": 0.0, "cost_by_agent": {}, "started": now(), "ended": None,
-        "stacked_on": parent["id"] if parent else None, "base": parent["branch"] if parent else BASE,
-    }
-    write_issue_md(job)
-    save(job)
-    print(job_id)
+    with job_creation_lock():
+        existing = [j for j in all_jobs() if j["issue"] == int(number)]
+        if existing:
+            die(f"issue #{number} already has job {existing[0]['id']} ({existing[0]['stage']})")
+        other = other_worktree_jobs().get(int(number))
+        if other:
+            die(f"issue #{number} already has job {other['id']} ({other['stage']}) in another worktree")
+        try:
+            require_slot(None)
+        except Refused as e:
+            die(str(e))
+        parent = None
+        if on:
+            parent = resolve(on)
+            if parent["stage"] in TERMINAL:
+                die(f"can't stack on {parent['id']}: it is {parent['stage']}")
+        issue = fetch_issue(number)
+        if issue["state"] != "OPEN":
+            die(f"issue #{number} is {issue['state'].lower()}")
+        if QUEUE_LABEL not in {l["name"] for l in issue["labels"]}:
+            die(f"issue #{number} isn't labeled {QUEUE_LABEL}")
+        JOBS.mkdir(parents=True, exist_ok=True)
+        job_id = f"{next_job_number():03d}-{slugify(issue['title'])}"
+        job_dir(job_id).mkdir()
+        job = {
+            "id": job_id, "issue": issue["number"], "title": issue["title"], "issue_url": issue["url"],
+            "pr": None, "pr_url": None,
+            "branch": f"factory/{job_id}",
+            "worktree": str(REPO / ".worktrees" / job_id),
+            "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
+            "intake": None, "agents": None, "gate": None, "reviews": {},
+            "cost_usd": 0.0, "cost_by_agent": {}, "started": now(), "ended": None,
+            "stacked_on": parent["id"] if parent else None, "base": parent["branch"] if parent else BASE,
+        }
+        write_issue_md(job)
+        save(job)
+        print(job_id)
 
 
 def cmd_queue():

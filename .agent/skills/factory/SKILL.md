@@ -53,7 +53,7 @@ automatically avoids colliding with job numbers/branches from the main checkout.
 <repo>/factory/bin/route                       risk + surfaces → the job's agents
 <repo>/factory/bin/agy_workflow.py             AGY `run_workflow` orchestrator script
 <repo>/.claude/agents/*.md                     canonical role prompts shared by Claude and AGY
-<repo>/.agent/hooks.json                       Stop hook running `factory/bin/gate --hook` for builder
+<repo>/.agents/hooks.json                      Stop hook running `factory/bin/gate --hook` for builder
 <repo>/factory/jobs/<job-id>/job.json          the job's state; the dashboard reads it
 <repo>/factory/jobs/<job-id>/issue.md          the issue, quoted as data
 <repo>/factory/jobs/<job-id>/intake.md         intake's decision, scope, risk, surfaces

@@ -89,7 +89,7 @@ def gate(job_id, merge):
 
 
 def agy_hook(event):
-    if event.get("continuationActive") or event.get("terminationReason", "NO_TOOL_CALL") != "NO_TOOL_CALL":
+    if event.get("continuationActive"):
         print(json.dumps({"decision": "allow"}))
         sys.exit(0)
     transcript = Path(event.get("transcriptPath", "")).expanduser()

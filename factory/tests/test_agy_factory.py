@@ -3,14 +3,17 @@
 
 import ast
 import asyncio
+import contextlib
 import importlib.machinery
 import importlib.util
+import io
 import json
 import os
 import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 sys.dont_write_bytecode = True
@@ -58,6 +61,25 @@ class TestAgyFactory(unittest.TestCase):
             15,
             "Expected next_job_number() in separate worktree to see existing factory branches/jobs",
         )
+
+    def test_other_worktree_jobs_includes_sibling_worktrees(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sibling_jobs = Path(tmp) / "factory" / "jobs" / "042-sibling-job"
+            sibling_jobs.mkdir(parents=True)
+            (sibling_jobs / "job.json").write_text(json.dumps({
+                "id": "042-sibling-job", "issue": 4200, "stage": "intake",
+            }))
+            output = f"worktree {WORKTREE_ROOT}\nHEAD abc\n\nworktree {tmp}\nHEAD def\n"
+            original_run = self.job_mod.run
+
+            def fake_run(cmd, **kwargs):
+                if cmd == ["git", "worktree", "list", "--porcelain"]:
+                    return type("Result", (), {"stdout": output})()
+                return original_run(cmd, **kwargs)
+
+            with patch.object(self.job_mod, "run", side_effect=fake_run):
+                self.assertEqual(self.job_mod.other_worktree_jobs()[4200]["id"], "042-sibling-job")
+                self.assertGreaterEqual(self.job_mod.next_job_number(), 43)
 
     def test_load_all_eight_role_instructions(self):
         """All 8 .claude/agents/*.md files load cleanly with frontmatter stripped and AGY contract added."""
@@ -217,6 +239,7 @@ class TestAgyFactory(unittest.TestCase):
     def test_gate_agy_stop_hook_allow_and_block(self):
         """gate --hook follows the AGY Stop hook JSON contract for non-builders, continuationActive, and builders."""
         gate_bin = str(BIN_DIR / "gate")
+        gate_mod = load_script_module("factory_gate", BIN_DIR / "gate")
 
         # 1. Non-builder conversation -> allow immediately
         with tempfile.TemporaryDirectory() as tmp:
@@ -275,6 +298,26 @@ class TestAgyFactory(unittest.TestCase):
                 check=True,
             )
             self.assertEqual(json.loads(res3.stdout), {"decision": "allow"})
+
+            # A normal documented model_stop event must run checks and resume a failing builder.
+            (job_folder / "build.md").write_text("STATUS: READY\n")
+            event = {
+                "hookEventName": "Stop",
+                "transcriptPath": str(t_path),
+                "continuationActive": False,
+                "terminationReason": "model_stop",
+            }
+            output = io.StringIO()
+            with patch.object(gate_mod, "run_checks", return_value=(1, "checks failed", 0)):
+                with contextlib.redirect_stdout(output):
+                    with self.assertRaises(SystemExit) as stop:
+                        gate_mod.agy_hook(event)
+            self.assertEqual(stop.exception.code, 0)
+            self.assertEqual(json.loads(output.getvalue()), {
+                "decision": "continue",
+                "reason": "factory/checks.sh fails in your worktree (exit 1). The gate will reject this "
+                          "build. Fix it, or write STATUS: BLOCKED in build.md if you can't.\n\nchecks failed",
+            })
 
 
 if __name__ == "__main__":
