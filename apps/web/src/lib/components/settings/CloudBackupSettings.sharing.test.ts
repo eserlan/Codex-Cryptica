@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/svelte";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("#lib/stores/cloud-backup.svelte.js", () => ({
   cloudBackupStore: {
@@ -29,18 +29,14 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
 
 import CloudBackupSettings from "./CloudBackupSettings.svelte";
 
-describe("CloudBackupSettings sharing gate", () => {
-  afterEach(() => vi.unstubAllEnvs());
-
-  it("shows no sharing text with the flag off", () => {
-    vi.stubEnv("VITE_SHARED_VAULT", "");
-    render(CloudBackupSettings);
-    expect(screen.queryByText(/Share with group/)).toBeNull();
-  });
-
-  it("shows the sharing section with the flag on", () => {
-    vi.stubEnv("VITE_SHARED_VAULT", "true");
+describe("CloudBackupSettings sharing", () => {
+  it("shows the sharing section with nothing switched on", () => {
     render(CloudBackupSettings);
     expect(screen.getByText("Share with group")).toBeTruthy();
+  });
+
+  it("shows no restore points while backup is off", () => {
+    render(CloudBackupSettings);
+    expect(screen.queryByText("Restore points")).toBeNull();
   });
 });

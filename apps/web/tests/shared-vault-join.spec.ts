@@ -2,8 +2,7 @@ import { test, expect, type Page, type Request } from "@playwright/test";
 
 /**
  * A member joins a shared vault from the group link (shared vault slice 8).
- * The flag is switched on with the development switch, and the cloud backup
- * service is mocked, so nothing here reaches a real server.
+ * The cloud backup service is mocked, so nothing here reaches a real server.
  */
 
 const BACKUP_ID = "11111111-1111-1111-1111-111111111111";
@@ -11,12 +10,7 @@ const TOKEN = "a".repeat(64);
 const GONE_MESSAGE =
   "This group link no longer works. Ask the owner for the new link.";
 
-async function openJoin(page: Page, hash: string, flagOn = true) {
-  if (flagOn) {
-    await page.addInitScript(() =>
-      localStorage.setItem("codex_shared_vault", "true"),
-    );
-  }
+async function openJoin(page: Page, hash: string) {
   const requests: Request[] = [];
   await page.route("**/api/cloud-backup/**", async (route) => {
     requests.push(route.request());
@@ -98,14 +92,13 @@ test.describe("Join a shared vault", () => {
     }
   });
 
-  test("shows the not-found page with the flag off, with the fragment still cleared", async ({
+  test("renders the join page with no switch of any kind set", async ({
     page,
   }) => {
-    const requests = await openJoin(page, `#${BACKUP_ID}:${TOKEN}`, false);
+    const keys = await openJoin(page, `#${BACKUP_ID}:${TOKEN}`);
+    expect(keys).toHaveLength(0);
     await expect(
       page.getByRole("heading", { name: "Join a shared vault" }),
-    ).toHaveCount(0, { timeout: 45000 });
-    expect(page.url()).not.toContain("#");
-    expect(requests).toHaveLength(0);
+    ).toBeVisible({ timeout: 45000 });
   });
 });

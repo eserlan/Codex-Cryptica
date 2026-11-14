@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const store = vi.hoisted(() => ({
   status: "idle",
@@ -16,9 +16,19 @@ const store = vi.hoisted(() => ({
   skippedEntities: [],
   errorMessage: null as string | null,
   recoveryKey: null,
-  sharing: null,
+  sharing: null as { linkVersion: number; enabledAt: string } | null,
+  ownerCode: "owner-code" as string | null,
   artworkConsentVersion: 0,
   mergeNotice: null,
+  rollback: {
+    points: [],
+    loadState: "unsupported",
+    loadedVaultId: null,
+    busyDate: null,
+    result: null,
+    resultVaultId: null,
+    load: async () => {},
+  },
   trash: {
     items: [],
     loadState: "unsupported",
@@ -47,7 +57,6 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
 import CloudBackupSettings from "./CloudBackupSettings.svelte";
 
 beforeEach(() => {
-  vi.stubEnv("VITE_SHARED_VAULT", "true");
   Object.assign(store, {
     role: "owner",
     linkGone: false,
@@ -55,9 +64,9 @@ beforeEach(() => {
     keptLocal: false,
     autoState: "idle",
     errorMessage: null,
+    sharing: null,
   });
 });
-afterEach(() => vi.unstubAllEnvs());
 
 describe("CloudBackupSettings for a member of a shared vault", () => {
   it("keeps every owner control for an owner", () => {
@@ -131,5 +140,36 @@ describe("CloudBackupSettings for a member of a shared vault", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "most devices it allows",
     );
+  });
+});
+
+describe("restore points section", () => {
+  const sharing = { linkVersion: 1, enabledAt: "2026-11-01T00:00:00Z" };
+
+  it("shows for an owner with sharing on", () => {
+    store.sharing = sharing;
+    store.rollback.loadState = "ready";
+    render(CloudBackupSettings);
+    expect(screen.getByText("Restore points")).toBeTruthy();
+  });
+
+  it("is hidden for an editor", () => {
+    store.role = "editor";
+    store.sharing = sharing;
+    store.rollback.loadState = "ready";
+    render(CloudBackupSettings);
+    expect(screen.queryByText("Restore points")).toBeNull();
+  });
+
+  it("is hidden with sharing off, and without the owner code", () => {
+    store.rollback.loadState = "ready";
+    render(CloudBackupSettings);
+    expect(screen.queryByText("Restore points")).toBeNull();
+    cleanup();
+    store.sharing = sharing;
+    store.ownerCode = null;
+    render(CloudBackupSettings);
+    expect(screen.queryByText("Restore points")).toBeNull();
+    store.ownerCode = "owner-code";
   });
 });
