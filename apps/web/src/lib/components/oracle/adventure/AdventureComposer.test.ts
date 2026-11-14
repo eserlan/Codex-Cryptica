@@ -326,13 +326,14 @@ describe("AdventureComposer layout and chips", () => {
     }
   });
 
-  it("lets chips use the wider dock while the input stays on the story column", () => {
+  it("keeps chips on the story column width like the input", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
-    expect(screen.getByTestId("adventure-dock-extras").className).toContain(
-      "max-w-6xl",
-    );
+    const extras = screen.getByTestId("adventure-dock-extras");
+    expect(extras.className).toContain("max-w-3xl");
+    expect(extras.className).toContain("mx-auto");
+    expect(extras.className).not.toContain("max-w-6xl");
     expect(
       screen.getByTestId("adventure-free-action").closest("form")!.className,
     ).toContain("max-w-3xl");

@@ -30,6 +30,7 @@
     AdventureLightboxController,
     setAdventureLightbox,
   } from "./artwork/adventure-artwork-lightbox.svelte.js";
+  import AdventureArtworkCueDetails from "./artwork/AdventureArtworkCueDetails.svelte";
   import ArtworkSettings from "./artwork/ArtworkSettings.svelte";
   import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
   import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
@@ -37,6 +38,7 @@
   import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
   import { createDisplayService } from "#lib/services/adventure/artwork/create-display-service.js";
   import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
+  import { summarizeArtworkCues } from "#lib/services/adventure/artwork/artwork-cue-summary.js";
   import { selectPresentNpcPortrait } from "#lib/services/adventure/artwork/npc-portrait-selection.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -196,6 +198,19 @@
       : null,
   );
 
+  const cueSummary = $derived(
+    artworkFlagEnabled
+      ? summarizeArtworkCues(
+          manager.session,
+          vault.activeVaultId,
+          vault.entities,
+          artworkEnabled,
+          themeStore.worldThemeId,
+          artworkCatalogue,
+        )
+      : null,
+  );
+
   $effect(() => {
     const selection = selectedNpcPortrait;
     const display = artworkDisplay;
@@ -306,6 +321,7 @@
 {#snippet utilities()}
   {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
     <ArtworkSettings preferences={artworkPreferences} />
+    <AdventureArtworkCueDetails summary={cueSummary} />
   {/if}
   <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
@@ -460,28 +476,32 @@
         </AdventureStateSummary>
       </aside>
     {/if}
-    <!-- fallow-ignore-next-line css-broken-reference -->
-    <main
-      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
-      bind:this={playViewport}
-      data-testid="adventure-play-viewport"
+    <div
+      class="flex min-h-0 min-w-0 flex-1 flex-col"
+      data-testid="adventure-play-column"
     >
-      <div class="mx-auto max-w-3xl space-y-4">
-        <AdventureScenarioControls {manager} />
-        <AdventurePlay {manager} showComposer={false} />
-        <AdventureRollPrompt {manager} />
-      </div>
-    </main>
+      <!-- fallow-ignore-next-line css-broken-reference -->
+      <main
+        class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
+        bind:this={playViewport}
+        data-testid="adventure-play-viewport"
+      >
+        <div class="mx-auto max-w-3xl space-y-4">
+          <AdventureScenarioControls {manager} />
+          <AdventurePlay {manager} showComposer={false} />
+          <AdventureRollPrompt {manager} />
+        </div>
+      </main>
+      <!-- The composer stays outside the story scroll, visible above the keyboard
+         and mobile safe area. Never remount it across generation/roll phases. -->
+      <AdventureComposer
+        {manager}
+        {phone}
+        keyboardOpen={keyboard.keyboardOpen}
+        suggestionChips={!phone}
+      />
+    </div>
   </div>
-
-  <!-- The composer stays outside the story scroll, visible above the keyboard
-       and mobile safe area. Never remount it across generation/roll phases. -->
-  <AdventureComposer
-    {manager}
-    {phone}
-    keyboardOpen={keyboard.keyboardOpen}
-    suggestionChips={!phone}
-  />
 
   <!-- Portaled to <body> so the fixed lightbox always covers the viewport and
        never depends on the surface (a size container) as an ancestor. -->
