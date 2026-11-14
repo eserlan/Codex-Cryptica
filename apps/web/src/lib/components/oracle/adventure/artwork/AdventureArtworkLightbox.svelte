@@ -165,6 +165,14 @@
 
     <div class="relative z-10 max-w-2xl space-y-1 text-center">
       <p class="text-sm font-semibold text-white">{current.title}</p>
+      {#if current.description}
+        <p
+          class="text-xs text-white/90"
+          data-testid="adventure-lightbox-description"
+        >
+          {current.description}
+        </p>
+      {/if}
       <p class="text-xs text-white/80">{current.alt}</p>
       {#if current.subtitle}
         <p class="text-xs text-white/60">{current.subtitle}</p>

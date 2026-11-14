@@ -61,6 +61,7 @@
       alt: sel.alt,
       aiLabel: isCat ? sel.aiLabel : undefined,
       credits: isCat ? sel.credits : undefined,
+      description: sel.description,
       load: makeLoader(sel, "preview"),
       loadFull: isCat ? makeLoader(sel, "display") : undefined,
     };
@@ -110,6 +111,7 @@
     subtitle={[props.aiLabel, props.credits]
       .filter((part) => Boolean(part))
       .join(" · ") || undefined}
+    description={props.description}
     cue={npc.reason === "entered" ? "enters" : "returns"}
     preview={props.load}
     loadFull={props.loadFull}

@@ -17,6 +17,10 @@ describe("adventure scene illustration", () => {
     expect(
       (await screen.findByAltText("A forest road")).getAttribute("src"),
     ).toBe("blob:scene");
+    const caption = screen.getByTestId("adventure-scene-artwork-caption");
+    expect(caption.className).toContain("text-theme-muted");
+    expect(caption.className).toContain("truncate");
+    expect(caption.className).not.toContain("text-theme-text");
     expect(screen.getByText(/AI illustration/).textContent).toContain(
       "Codex Cryptica",
     );

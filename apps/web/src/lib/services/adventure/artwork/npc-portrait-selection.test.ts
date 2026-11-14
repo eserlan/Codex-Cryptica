@@ -151,6 +151,7 @@ describe("selectPresentNpcPortrait", () => {
       name: "Thorin",
       image: "images/thorin.webp",
       alt: "Portrait of Thorin",
+      description: "Thorin stands watch by the gate.",
       subjectKey: "entity:ent-1",
     });
   });
@@ -303,6 +304,107 @@ describe("selectPresentNpcPortrait", () => {
     expect(result).toMatchObject({
       kind: "catalogue",
       asset: { id: "npc-human-worker" },
+    });
+  });
+
+  describe("description", () => {
+    function sessionWithFact(text: string): ArtworkNpcSession {
+      return {
+        vaultId: "v1",
+        currentPlaceId: "place-1",
+        places: [{ id: "place-1", name: "Market" }],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c1",
+              text,
+              source: "provisional",
+              placeId: "place-1",
+              cues: ["human", "worker"],
+            },
+          ],
+          knownFacts: [
+            {
+              id: "k1",
+              text: "Mira is secretly a smuggler.",
+              source: "provisional",
+              placeId: "place-1",
+            },
+          ],
+        },
+      };
+    }
+    const select = (text: string) =>
+      selectPresentNpcPortrait(
+        sessionWithFact(text),
+        "v1",
+        {},
+        true,
+        "fantasy",
+        [makeNpcAsset("npc-herbwife", ["human", "worker"])],
+      );
+
+    it("strips the leading name and separator", () => {
+      const result = select("Mira, a grey-haired herb-wife in a green apron");
+      expect(result).toMatchObject({
+        kind: "catalogue",
+        name: "Mira",
+        description: "a grey-haired herb-wife in a green apron",
+      });
+    });
+
+    it("keeps text whole when the name has no separator after it", () => {
+      const result = selectPresentNpcPortrait(
+        baseSession,
+        "v1",
+        {},
+        true,
+        "fantasy",
+        [makeNpcAsset("npc-dwarf-ranger", ["dwarf", "ranger"])],
+      );
+      expect(result).toMatchObject({
+        description: "Thorin stands watch by the gate.",
+      });
+    });
+
+    it("leaves description undefined when the text is only the name", () => {
+      const result = selectPresentNpcPortrait(
+        sessionWithFact("Mira"),
+        "v1",
+        { c: { id: "c" } },
+        true,
+        "fantasy",
+        [],
+      );
+      expect(result).toBeNull();
+      const vault = selectPresentNpcPortrait(
+        {
+          ...sessionWithFact("Mira"),
+          people: [
+            {
+              id: "p",
+              name: "Mira",
+              aliases: [],
+              linkedFactIds: ["c1"],
+              sourceRecordId: "e1",
+            },
+          ],
+        },
+        "v1",
+        { e1: { id: "e1", image: "images/mira.webp" } },
+        true,
+        "fantasy",
+      );
+      expect(vault).toMatchObject({ kind: "vault", name: "Mira" });
+      expect(vault && "description" in vault && vault.description).toBe(
+        undefined,
+      );
+    });
+
+    it("never uses a known fact as the description", () => {
+      const result = select("Mira, a grey-haired herb-wife");
+      expect(result?.description).toBe("a grey-haired herb-wife");
+      expect(result?.description).not.toContain("smuggler");
     });
   });
 });

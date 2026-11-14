@@ -147,6 +147,7 @@
     alt: string;
     aiLabel?: string;
     credits?: string;
+    description?: string;
     loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
   };
 
@@ -216,6 +217,7 @@
             name: selection.name,
             src: url,
             alt: selection.alt,
+            description: selection.description,
           };
         })
         .catch(() => {});
@@ -235,6 +237,7 @@
             alt: selection.alt,
             aiLabel: selection.aiLabel,
             credits: selection.credits,
+            description: selection.description,
             loadFull: (signal) =>
               display.load(selection.asset, signal, "display"),
           };
