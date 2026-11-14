@@ -138,6 +138,7 @@ export function applyCompletedTurn(
     proposal.moveTo,
     materialized.visiblePatch,
     createId,
+    proposal.placeCues,
   );
   if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
   if (time.value && clock.applied) {

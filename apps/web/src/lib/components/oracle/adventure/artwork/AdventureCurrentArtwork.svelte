@@ -17,6 +17,7 @@
     resolve,
     catalogue = [],
     display,
+    theme,
   }: {
     session: ArtworkPlaceSession | null;
     entities: Readonly<Record<string, ArtworkPlaceEntity>>;
@@ -25,6 +26,7 @@
     resolve: (path: string) => Promise<string | null | undefined>;
     catalogue?: readonly ArtworkAsset[];
     display?: Pick<ArtworkDisplayService, "load">;
+    theme?: string;
   } = $props();
   let enabled = $state(false);
   $effect(() => {
@@ -34,7 +36,14 @@
     });
   });
   const selected = $derived(
-    currentPlaceSelection(session, activeVaultId, entities, enabled, catalogue),
+    currentPlaceSelection(
+      session,
+      activeVaultId,
+      entities,
+      enabled,
+      catalogue,
+      theme,
+    ),
   );
 
   async function load(path: string, signal: AbortSignal) {
@@ -49,7 +58,8 @@
       subjectKey={selected.subjectKey}
       alt={selected.alt}
       credit={selected.asset.provenance.attribution}
-      load={(signal) => display.load(selected.asset, signal)}
+      load={(signal) => display.load(selected.asset, signal, "preview")}
+      loadFull={(signal) => display.load(selected.asset, signal, "display")}
     />
   {/key}
 {:else if selected && selected.kind !== "catalogue"}

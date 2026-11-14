@@ -243,6 +243,24 @@ describe("handleAssetGallery", () => {
     expect(html).toContain('<option value="date-asc">Oldest first</option>');
   });
 
+  it("renders a lightbox with arrow-key and escape navigation", async () => {
+    const response = await handleAssetGallery(
+      new Request("https://x/gallery"),
+      { BUCKET: bucket([{ key: "og/one.jpg", size: 1024 }]) },
+    );
+    const html = await response.text();
+    expect(html).toContain('id="lightbox"');
+    expect(html).toContain('id="lbPrev"');
+    expect(html).toContain('id="lbNext"');
+    expect(html).toContain("ArrowLeft");
+    expect(html).toContain("ArrowRight");
+    expect(html).toContain("Escape");
+    expect(html).toContain("if (!wasOpen) lbClose.focus()");
+    expect(html).toContain('evt.key === "Tab"');
+    expect(html).toContain("lightbox.contains(document.activeElement)");
+    expect(html).toContain("width: 44px; height: 44px");
+  });
+
   it("returns 500 when the bucket binding is missing", async () => {
     const response = await handleAssetGallery(
       new Request("https://x/gallery"),

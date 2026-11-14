@@ -4,9 +4,18 @@ import {
   readAdventureArtworkState,
   type ArtworkAssociation,
 } from "schema";
-import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
+import {
+  matchArtwork,
+  type ArtworkAsset,
+} from "@codex/adventure-artwork-engine";
+import { describeVisiblePlace } from "./artwork-resolver";
 
-type Place = { id: string; name: string; sourceRecordId?: string };
+type Place = {
+  id: string;
+  name: string;
+  sourceRecordId?: string;
+  cues?: string[];
+};
 export type ArtworkPlaceSession = {
   vaultId: string;
   currentPlaceId?: string;
@@ -19,7 +28,7 @@ export type ArtworkPlaceEntity = {
   adventureArtwork?: unknown;
 };
 
-type PlaceSelectionResult =
+export type PlaceSelectionResult =
   | {
       kind: "vault" | "snapshot";
       image: string;
@@ -38,7 +47,9 @@ function readRawAssociation(
   placeId: string,
   entity: ArtworkPlaceEntity | undefined,
 ): { ok: true; raw: unknown } | { ok: false } {
-  if (entity) return { ok: true, raw: entity.adventureArtwork };
+  if (entity?.adventureArtwork !== undefined) {
+    return { ok: true, raw: entity.adventureArtwork };
+  }
   const state = readAdventureArtworkState(session.artwork);
   if (state.kind === "opaque") return { ok: false };
   const raw =
@@ -149,14 +160,16 @@ function resolveFallbackSelection(
   place: Place,
   subjectKey: string,
   catalogue: readonly ArtworkAsset[],
+  theme: string | undefined,
 ): PlaceSelectionResult | null {
   const direct = resolveImageResult(association, entity, place, subjectKey);
   if (direct) return direct;
-  if (!association?.automatic) return null;
-  const asset = findEligibleLocationAsset(
-    catalogue,
-    association.automatic.assetId,
-  );
+  const asset = association?.automatic
+    ? findEligibleLocationAsset(catalogue, association.automatic.assetId)
+    : (() => {
+        const cues = describeVisiblePlace(place, theme);
+        return (cues ? matchArtwork(catalogue, cues) : undefined) ?? undefined;
+      })();
   return toCatalogueResult(asset, subjectKey);
 }
 
@@ -179,6 +192,7 @@ function resolveActiveArtwork(
   place: Place,
   subjectKey: string,
   catalogue: readonly ArtworkAsset[],
+  theme: string | undefined,
 ): PlaceSelectionResult | null {
   if (override?.kind === "catalogue") {
     return resolveCatalogueOverride(override, subjectKey, catalogue);
@@ -189,6 +203,7 @@ function resolveActiveArtwork(
     place,
     subjectKey,
     catalogue,
+    theme,
   );
 }
 
@@ -197,6 +212,7 @@ function selectPlaceArtwork(
   entity: ArtworkPlaceEntity | undefined,
   place: Place,
   catalogue: readonly ArtworkAsset[],
+  theme: string | undefined,
 ): PlaceSelectionResult | null {
   const override = association?.override;
   if (override?.kind === "dismissed") return null;
@@ -208,6 +224,7 @@ function selectPlaceArtwork(
     place,
     subjectKey,
     catalogue,
+    theme,
   );
 }
 
@@ -219,6 +236,7 @@ export function currentPlaceSelection(
   entities: Readonly<Record<string, ArtworkPlaceEntity>>,
   enabled: boolean,
   catalogue: readonly ArtworkAsset[] = [],
+  theme?: string,
 ): PlaceSelectionResult | null {
   const place = findCurrentPlace(session, activeVaultId, enabled);
   if (!place || !session) return null;
@@ -235,5 +253,6 @@ export function currentPlaceSelection(
     entityState.entity,
     place,
     catalogue,
+    theme,
   );
 }

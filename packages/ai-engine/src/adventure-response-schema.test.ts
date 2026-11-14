@@ -59,9 +59,26 @@ describe("adventure structured response contract", () => {
           ...base,
           personRefs: ["person-1"],
           sceneTransition: { sceneId: "scene-1", title: "Harbour" },
+          moveTo: { name: "Kettleford Mill", cues: ["river", "village"] },
+          placeCues: ["market", "busy"],
         }),
       ),
-    ).toMatchObject({ kind: "complete" });
+    ).toMatchObject({
+      kind: "complete",
+      moveTo: { name: "Kettleford Mill", cues: ["river", "village"] },
+      placeCues: ["market", "busy"],
+    });
+    const completeProps = adventureTurnResponseSchema.oneOf[0].properties;
+    expect(completeProps.placeCues).toBeDefined();
+    expect(completeProps.moveTo.properties.cues).toBeDefined();
+    expect(
+      completeProps.visiblePatch.properties.activeCharacters.properties.add
+        .items.properties.cues,
+    ).toBeDefined();
+    expect(
+      completeProps.visiblePatch.properties.activeCharacters.properties.update
+        .items.properties.cues,
+    ).toBeDefined();
     expect(() =>
       parseAdventureResponse(
         JSON.stringify({
