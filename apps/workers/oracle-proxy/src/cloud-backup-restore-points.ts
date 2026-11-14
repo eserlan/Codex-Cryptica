@@ -157,25 +157,29 @@ async function takePoint(
 }
 
 /**
- * Keeps at most one copy of an asset id that no point references: the one just
- * made. Re-uploading the same id cannot grow storage past one extra version.
+ * Deletes every asset copy no live point references, except `keepKey`. Reads
+ * the points again first, so a point taken meanwhile is respected. With this
+ * run after each overwrite (keeping the copy just made) and each prune
+ * (keeping none), unreferenced copies never total more than one asset version.
+ * Narrow gap: a point taken between the reload and a delete can lose its copy
+ * only if it references a version already overwritten without a copy.
  */
 async function dropUnreferencedCopies(
   env: CloudBackupEnv,
   backupId: string,
-  assetId: string,
-  keepKey: string,
-  points: Array<{ record: RestorePoint }>,
+  keepKey?: string,
 ): Promise<void> {
   const referenced = new Set(
-    points.flatMap(({ record }) =>
-      record.assets[assetId]
-        ? [getPreservedAssetKey(backupId, assetId, record.assets[assetId])]
-        : [],
+    (await loadPoints(env, backupId)).flatMap(({ record }) =>
+      Object.entries(record.assets).map(([id, etag]) =>
+        getPreservedAssetKey(backupId, id, etag),
+      ),
     ),
   );
-  const dir = getPreservedAssetKey(backupId, assetId, "");
-  for (const key of await listKeys(env, dir)) {
+  for (const key of await listKeys(
+    env,
+    `${getBackupPrefix(backupId)}${ASSETS_DIR}`,
+  )) {
     if (key !== keepKey && !referenced.has(key)) await env.BUCKET.delete(key);
   }
 }
@@ -210,7 +214,7 @@ async function preserveAsset(
       httpMetadata: object.httpMetadata,
     });
     if (!points.some(({ record }) => record.assets[assetId] === etag)) {
-      await dropUnreferencedCopies(env, backupId, assetId, copyKey, points);
+      await dropUnreferencedCopies(env, backupId, copyKey);
     }
     return true;
   } catch {
@@ -286,11 +290,18 @@ export async function finishCommit(
             backupId,
             key.slice(prefix.length),
             etag,
-            shared,
+            // Only a version a live point references is copied on prune;
+            // anything else is simply deleted.
+            false,
             points,
           )
         : Promise.resolve(false),
   );
+  try {
+    await dropUnreferencedCopies(env, backupId);
+  } catch {
+    // Best effort: the next prune or overwrite sweeps again.
+  }
 }
 
 /** GET /api/cloud-backup/{backupId}/restore-points — owner only. */

@@ -408,6 +408,55 @@ describe("immutability", () => {
     expect(await assetBytes(fx, point, "pic")).toEqual([1, 2, 3]);
   });
 
+  it("does not grow unreferenced copies with rounds of new ids and prunes", async () => {
+    const fx = await sharedFixture();
+    at("2026-11-14T08:00:00Z");
+    await edit(fx, "e1", "one", ["pic"]);
+    const point = await readPoint(fx, "2026-11-14");
+    const unreferencedBytes = () => {
+      const referenced = preservedKey(fx, "pic", point.assets.pic);
+      return keysUnder(fx, "restore-points/assets/")
+        .filter((key) => key !== referenced)
+        .reduce(
+          (sum, key) =>
+            sum + (fx.env.BUCKET.store.get(key)!.body as Uint8Array).length,
+          0,
+        );
+    };
+    const sizes: number[] = [];
+    for (let round = 0; round < 6; round++) {
+      for (const n of [0, 1, 2]) {
+        const id = `r${round}n${n}`;
+        await upload(fx, id, [1, 2, 3, 4, 5, 6, 7, 8]);
+        // Overwriting under a new id each round must not pile up copies.
+        await upload(fx, id, [9]);
+      }
+      expect((await edit(fx, "e2", `r${round}`, [])).status).toBe(200);
+      sizes.push(unreferencedBytes());
+    }
+    expect(sizes.every((size) => size === 0)).toBe(true);
+    expect(keysUnder(fx, "restore-points/assets/")).toEqual([
+      preservedKey(fx, "pic", point.assets.pic),
+    ]);
+    expect(await assetBytes(fx, point, "pic")).toEqual([1, 2, 3]);
+  });
+
+  it("keeps total unreferenced copies to one version across many ids", async () => {
+    const fx = await sharedFixture();
+    at("2026-11-14T08:00:00Z");
+    await edit(fx, "e1", "one", ["pic"]);
+    const point = await readPoint(fx, "2026-11-14");
+    for (let i = 0; i < 6; i++) {
+      await upload(fx, `id${i}`, [1, 2, 3, 4, 5]);
+      await upload(fx, `id${i}`, [9]);
+    }
+    expect(
+      keysUnder(fx, "restore-points/assets/").filter(
+        (key) => key !== preservedKey(fx, "pic", point.assets.pic),
+      ),
+    ).toHaveLength(1);
+  });
+
   it("answers a retryable error when the asset changed since it was checked", async () => {
     const fx = await sharedFixture();
     const bucket = fx.env.BUCKET;
