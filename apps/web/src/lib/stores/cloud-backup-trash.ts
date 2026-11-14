@@ -19,6 +19,9 @@ export class CloudBackupTrash {
   /** Ids being restored right now. Replaced, never mutated, so views update. */
   restoring = $state<ReadonlySet<string>>(new Set());
 
+  /** What the last restore did, for the panel to say. */
+  result = $state<{ outcome: Outcome; title: string } | null>(null);
+
   constructor(
     private getDeps: CloudBackupDepsProvider,
     private recordChanged: (vaultId: string, ids: string[]) => Promise<void>,
@@ -62,8 +65,11 @@ export class CloudBackupTrash {
 
   private async restoreTracked(vaultId: string, id: string): Promise<Outcome> {
     this.setRestoring(id, true);
+    const title = this.items.find((item) => item.id === id)?.title.trim();
     try {
-      return await this.restoreOne(vaultId, id);
+      const outcome = await this.restoreOne(vaultId, id);
+      this.result = { outcome, title: title || "Untitled" };
+      return outcome;
     } finally {
       this.setRestoring(id, false);
     }

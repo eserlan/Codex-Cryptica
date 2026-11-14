@@ -112,6 +112,10 @@ describe("CloudBackupTrash", () => {
     expect(h.local.get("a")).toEqual(a);
     expect(await h.base.get("v-1", "a")).toBeUndefined();
     expect(h.store.trash.restoring.size).toBe(0);
+    expect(h.store.trash.result).toEqual({
+      outcome: "restored",
+      title: "Untitled",
+    });
   });
 
   it("keeps a restored entity when a later pull carries the same tombstone, and restores the second", async () => {
@@ -134,6 +138,7 @@ describe("CloudBackupTrash", () => {
       trash: [ok({ revision: 3, items: [] })],
     });
     expect(await h.store.trash.restore("v-1", ["a"])).toBe(0);
+    expect(h.store.trash.result?.outcome).toBe("gone");
     expect(h.store.trash.loadState).toBe("ready");
     expect(h.local.size).toBe(0);
   });
@@ -144,6 +149,7 @@ describe("CloudBackupTrash", () => {
     });
     expect(await h.store.trash.restore("v-1", ["a"])).toBe(0);
     expect(h.applied).toEqual([]);
+    expect(h.store.trash.result?.outcome).toBe("failed");
   });
 
   it("does not overwrite an entity that already exists locally", async () => {

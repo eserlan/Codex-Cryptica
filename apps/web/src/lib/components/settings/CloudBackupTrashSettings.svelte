@@ -37,6 +37,15 @@
     return Math.max(0, Math.ceil((end - Date.now()) / DAY_MS));
   }
 
+  const resultText = $derived.by(() => {
+    const result = trash.result;
+    if (!result) return null;
+    if (result.outcome === "restored") return `Restored ${result.title}`;
+    return result.outcome === "gone"
+      ? `${result.title} can no longer be restored.`
+      : `Couldn't restore ${result.title}. Try again.`;
+  });
+
   const buttonClass =
     "min-h-11 border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text disabled:opacity-50";
 </script>
@@ -57,7 +66,7 @@
         {left === 1 ? "day" : "days"} left.
       </p>
       {#if !item.restorable}
-        <p class="text-xs">Can't be restored: the trash ran out of space</p>
+        <p class="text-xs">Can't be restored. The trash ran out of space.</p>
       {/if}
     </div>
     {#if item.restorable}
@@ -65,9 +74,10 @@
         type="button"
         class={buttonClass}
         disabled={trash.restoring.has(item.id)}
+        aria-label="Restore {item.title.trim() || 'Untitled'}"
         onclick={() => trash.restore(vaultId, [item.id])}
       >
-        Restore
+        {trash.restoring.has(item.id) ? "Restoring…" : "Restore"}
       </button>
     {/if}
   </li>
@@ -81,6 +91,9 @@
         type="button"
         class="{buttonClass} inline-flex items-center gap-1"
         disabled={loadState === "loading"}
+        aria-label={loadState === "loading"
+          ? "Refreshing the trash"
+          : "Refresh the trash"}
         onclick={() => trash.load(vaultId)}
       >
         <span class="icon-[lucide--refresh-cw] h-4 w-4" aria-hidden="true"
@@ -93,9 +106,11 @@
       Any member can restore them.
     </p>
 
+    <p class="mt-2 empty:hidden" role="status">{resultText ?? ""}</p>
+
     {#if loadState === "failed"}
       <p class="mt-2 text-theme-danger" role="alert">
-        Couldn't load the trash.
+        Couldn't load the trash. Check your connection and press Refresh.
       </p>
     {:else if loadState === "ready" && items.length === 0}
       <p class="mt-2">The trash is empty.</p>

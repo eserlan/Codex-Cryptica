@@ -5,6 +5,7 @@ const trash = vi.hoisted(() => ({
   items: [] as any[],
   loadState: "ready" as string,
   restoring: new Set<string>(),
+  result: null as any,
   load: vi.fn(async () => {}),
   restore: vi.fn(async () => 1),
 }));
@@ -28,7 +29,12 @@ const item = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
-  Object.assign(trash, { items: [], loadState: "ready", restoring: new Set() });
+  Object.assign(trash, {
+    items: [],
+    loadState: "ready",
+    restoring: new Set(),
+    result: null,
+  });
   trash.load.mockClear();
   trash.restore.mockClear();
 });
@@ -77,32 +83,41 @@ describe("CloudBackupTrashSettings", () => {
   it("shows no button for an item that cannot be restored", () => {
     trash.items = [item({ restorable: false })];
     render(CloudBackupTrashSettings, { vaultId: "v1" });
-    expect(screen.queryByRole("button", { name: "Restore" })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^Restore/ })).toBeNull();
     expect(
-      screen.getByText("Can't be restored: the trash ran out of space"),
+      screen.getByText("Can't be restored. The trash ran out of space."),
     ).toBeTruthy();
   });
 
   it("restores through the store, and disables the row while restoring", async () => {
     trash.items = [item()];
     const { unmount } = render(CloudBackupTrashSettings, { vaultId: "v1" });
-    await fireEvent.click(screen.getByRole("button", { name: "Restore" }));
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Restore Old Dock" }),
+    );
     expect(trash.restore).toHaveBeenCalledWith("v1", ["a"]);
     unmount();
 
     trash.restoring = new Set(["a"]);
     render(CloudBackupTrashSettings, { vaultId: "v1" });
     expect(
-      (screen.getByRole("button", { name: "Restore" }) as HTMLButtonElement)
-        .disabled,
+      (
+        screen.getByRole("button", {
+          name: "Restore Old Dock",
+        }) as HTMLButtonElement
+      ).disabled,
     ).toBe(true);
   });
 
   it("shows a failure with Refresh, which loads again", async () => {
     trash.loadState = "failed";
     render(CloudBackupTrashSettings, { vaultId: "v1" });
-    expect(screen.getByText("Couldn't load the trash.")).toBeTruthy();
-    await fireEvent.click(screen.getByRole("button", { name: /Refresh/ }));
+    expect(
+      screen.getByText(/Couldn't load the trash\. Check your connection/),
+    ).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Refresh the trash" }),
+    );
     expect(trash.load).toHaveBeenCalledTimes(2);
   });
 
@@ -110,5 +125,23 @@ describe("CloudBackupTrashSettings", () => {
     trash.loadState = "unsupported";
     const { container } = render(CloudBackupTrashSettings, { vaultId: "v1" });
     expect(container.textContent?.trim()).toBe("");
+  });
+
+  it("shows Restoring while a row restores", () => {
+    trash.items = [item()];
+    trash.restoring = new Set(["a"]);
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(screen.getByText("Restoring…")).toBeTruthy();
+  });
+
+  it.each([
+    ["restored", "Restored Old Dock"],
+    ["gone", "Old Dock can no longer be restored."],
+    ["failed", "Couldn't restore Old Dock. Try again."],
+  ])("says what a %s restore did", (outcome, text) => {
+    trash.items = [item()];
+    trash.result = { outcome, title: "Old Dock" };
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(screen.getByRole("status").textContent).toBe(text);
   });
 });
