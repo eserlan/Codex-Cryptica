@@ -460,28 +460,32 @@
         </AdventureStateSummary>
       </aside>
     {/if}
-    <!-- fallow-ignore-next-line css-broken-reference -->
-    <main
-      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
-      bind:this={playViewport}
-      data-testid="adventure-play-viewport"
+    <div
+      class="flex min-h-0 min-w-0 flex-1 flex-col"
+      data-testid="adventure-play-column"
     >
-      <div class="mx-auto max-w-3xl space-y-4">
-        <AdventureScenarioControls {manager} />
-        <AdventurePlay {manager} showComposer={false} />
-        <AdventureRollPrompt {manager} />
-      </div>
-    </main>
+      <!-- fallow-ignore-next-line css-broken-reference -->
+      <main
+        class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
+        bind:this={playViewport}
+        data-testid="adventure-play-viewport"
+      >
+        <div class="mx-auto max-w-3xl space-y-4">
+          <AdventureScenarioControls {manager} />
+          <AdventurePlay {manager} showComposer={false} />
+          <AdventureRollPrompt {manager} />
+        </div>
+      </main>
+      <!-- The composer stays outside the story scroll, visible above the keyboard
+         and mobile safe area. Never remount it across generation/roll phases. -->
+      <AdventureComposer
+        {manager}
+        {phone}
+        keyboardOpen={keyboard.keyboardOpen}
+        suggestionChips={!phone}
+      />
+    </div>
   </div>
-
-  <!-- The composer stays outside the story scroll, visible above the keyboard
-       and mobile safe area. Never remount it across generation/roll phases. -->
-  <AdventureComposer
-    {manager}
-    {phone}
-    keyboardOpen={keyboard.keyboardOpen}
-    suggestionChips={!phone}
-  />
 
   <!-- Portaled to <body> so the fixed lightbox always covers the viewport and
        never depends on the surface (a size container) as an ancestor. -->
