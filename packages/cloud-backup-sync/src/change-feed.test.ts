@@ -41,6 +41,63 @@ describe("fetchCloudBackupChanges", () => {
     expect(h.calls[0].init.headers.Authorization).toBe("Bearer code-1");
   });
 
+  it("parses maps, canvases and tombstone kinds, keeping them apart", async () => {
+    const h = await enabled({
+      ok: true,
+      status: 200,
+      body: {
+        status: "changes",
+        revision: 4,
+        entities: [],
+        maps: [
+          {
+            item: { id: "m", name: "Atlas" },
+            meta: {
+              rev: 4,
+              assets: [
+                { path: "maps/a.png", assetId: "a--1", mimeType: "image/png" },
+              ],
+            },
+          },
+        ],
+        canvases: [{ item: { id: "c", name: "Plot" } }],
+        tombstones: [
+          TOMB,
+          { ...TOMB, id: "gm", kind: "map" },
+          { ...TOMB, id: "gc", kind: "canvas" },
+        ],
+      },
+    });
+    const out = await fetchCloudBackupChanges(h.runtime, "v-1");
+    expect(out).toMatchObject({
+      kind: "changes",
+      maps: [
+        {
+          item: { id: "m", name: "Atlas" },
+          assets: [{ assetId: "a--1" }],
+        },
+      ],
+      canvases: [{ item: { id: "c" } }],
+      tombstones: [{ id: "gone" }],
+      mapTombstones: [{ id: "gm" }],
+      canvasTombstones: [{ id: "gc" }],
+    });
+  });
+
+  it("defaults maps and canvases to empty for an older worker", async () => {
+    const h = await enabled({
+      ok: true,
+      status: 200,
+      body: { status: "changes", revision: 4, entities: [], tombstones: [] },
+    });
+    expect(await fetchCloudBackupChanges(h.runtime, "v-1")).toMatchObject({
+      kind: "changes",
+      maps: [],
+      canvases: [],
+      mapTombstones: [],
+    });
+  });
+
   it("sends the stored revision as since", async () => {
     const h = await enabled();
     const record = await getLocalCloudBackupRecord(h.runtime, "v-1");

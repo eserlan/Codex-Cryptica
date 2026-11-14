@@ -3,8 +3,10 @@ import {
   CLOUD_BACKUP_SCHEMA_V2,
   CLOUD_BACKUP_SHARD_COUNT,
   cloudBackupRevisionOf,
+  hashCloudBackupEntity,
   type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
+  type CloudBackupWholeItemAsset,
 } from "../../../../packages/schema/src/publishing";
 import {
   bundleEntities,
@@ -24,6 +26,7 @@ import { type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import { lostRace } from "./cloud-backup-delta";
 import { publishCommit } from "./cloud-backup-restore-points";
+import { asItems, readWholeMeta } from "./cloud-backup-whole-items";
 import {
   carryTombstones,
   stageIndex,
@@ -90,11 +93,50 @@ async function commitSnapshot(
     const entityMeta = Object.fromEntries(
       entities.map((entity) => [entity.id, stamp]),
     );
+    const maps = asItems(rest.maps);
+    const canvases = asItems(rest.canvases);
+    const stampedItems = async (
+      items: typeof maps,
+      assetsFor?: (
+        item: (typeof maps)[number],
+      ) => CloudBackupWholeItemAsset[] | undefined,
+    ) =>
+      Object.fromEntries(
+        await Promise.all(
+          items.map(async (item) => {
+            const assets = assetsFor?.(item);
+            return [
+              item.id,
+              {
+                ...stamp,
+                hash: await hashCloudBackupEntity(item),
+                ...(assets?.length ? { assets } : {}),
+              },
+            ];
+          }),
+        ),
+      );
+    const assetManifest = Array.isArray(rest.assetManifest)
+      ? (rest.assetManifest as CloudBackupWholeItemAsset[])
+      : [];
+    const mapAssetsFor = (map: (typeof maps)[number]) => {
+      const paths = new Set(
+        [
+          map.assetPath,
+          (map.fogOfWar as { maskPath?: unknown } | undefined)?.maskPath,
+        ].filter((path): path is string => typeof path === "string"),
+      );
+      return assetManifest.filter((asset) => paths.has(asset.path));
+    };
+    const whole = readWholeMeta({
+      mapMeta: await stampedItems(maps, mapAssetsFor),
+      canvasMeta: await stampedItems(canvases),
+    });
     const carried = await carryTombstones(
       env,
       backupId,
       base,
-      new Set(entities.map((entity) => entity.id)),
+      new Set([...entities, ...maps, ...canvases].map((entity) => entity.id)),
     );
     const trash = await stageShards(env, backupId, tag, carried.trash, "trash");
     if (Object.keys(trash).length > 0) staged.trash = trash;
@@ -105,6 +147,7 @@ async function commitSnapshot(
       await hashEntities(entities),
       entityMeta,
       carried.tombstones,
+      whole,
     );
     await writeJson(env, getStagedKey(backupId, tag, "bundle.json"), rest);
     committed = {

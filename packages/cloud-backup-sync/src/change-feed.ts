@@ -3,13 +3,39 @@
  * committed since a revision, ready to merge into the local vault.
  */
 import { z } from "zod";
-import { CloudBackupTombstoneSchema, type CloudBackupTombstone } from "schema";
+import {
+  CloudBackupTombstoneSchema,
+  CloudBackupWholeItemAssetSchema,
+  type CloudBackupTombstone,
+  type CloudBackupWholeItemAsset,
+} from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord } from "./backup-records";
 import { cloudBackupHeaders } from "./request-headers";
-import type { MergeEntity, MergeInput, MergeSide } from "./merge";
+import type {
+  MergeEntity,
+  MergeInput,
+  MergeSide,
+  WholeItem,
+  WholeMergeInput,
+  WholeSide,
+} from "./merge";
 
 const FeedEntitySchema = z.object({ id: z.string(), title: z.string() });
+
+const FeedWholeItemSchema = z.object({
+  item: z.object({ id: z.string(), name: z.string() }).passthrough(),
+  meta: z
+    .object({ assets: z.array(CloudBackupWholeItemAssetSchema).optional() })
+    .passthrough()
+    .optional(),
+});
+
+/** A map or canvas the feed carries, with the files its commit recorded. */
+export interface FeedWholeItem {
+  item: WholeItem;
+  assets?: CloudBackupWholeItemAsset[];
+}
 
 const ChangesBodySchema = z.discriminatedUnion("status", [
   z.object({
@@ -21,6 +47,8 @@ const ChangesBodySchema = z.discriminatedUnion("status", [
         meta: z.unknown().optional(),
       }),
     ),
+    maps: z.array(FeedWholeItemSchema).default([]),
+    canvases: z.array(FeedWholeItemSchema).default([]),
     tombstones: z.array(CloudBackupTombstoneSchema),
   }),
   z.object({
@@ -34,7 +62,12 @@ export type ChangeFeedOutcome =
       kind: "changes";
       revision: number;
       entities: MergeEntity[];
+      maps: FeedWholeItem[];
+      canvases: FeedWholeItem[];
+      /** Removed entities only; map and canvas tombstones are kept apart. */
       tombstones: CloudBackupTombstone[];
+      mapTombstones: CloudBackupTombstone[];
+      canvasTombstones: CloudBackupTombstone[];
     }
   | { kind: "resync"; revision: number }
   /** An older worker without the feed, or a body this client cannot read. */
@@ -44,6 +77,13 @@ export type ChangeFeedOutcome =
   /** No enabled backup for the vault; nothing was requested. */
   | { kind: "off" }
   | { kind: "failed"; error: string; status?: number; code?: string };
+
+function wholeFeedItem(entry: z.infer<typeof FeedWholeItemSchema>) {
+  return {
+    item: entry.item as WholeItem,
+    ...(entry.meta?.assets ? { assets: entry.meta.assets } : {}),
+  };
+}
 
 /** Reads what changed in the backup since the revision this device last saw. */
 export async function fetchCloudBackupChanges(
@@ -92,19 +132,49 @@ export async function fetchCloudBackupChanges(
     kind: "changes",
     revision: body.revision,
     entities: body.entities.map((item) => item.entity as MergeEntity),
-    tombstones: body.tombstones,
+    maps: body.maps.map(wholeFeedItem),
+    canvases: body.canvases.map(wholeFeedItem),
+    tombstones: body.tombstones.filter((t) => !t.kind),
+    mapTombstones: body.tombstones.filter((t) => t.kind === "map"),
+    canvasTombstones: body.tombstones.filter((t) => t.kind === "canvas"),
   };
 }
+
+type Side<T> = Record<string, T | null | undefined>;
 
 /**
  * The three sides of a merge for a feed result.
  *
- * `mergeEntities` walks the union of ids, so an id missing from `theirs`
- * reads as a remote delete. A feed lists only what changed, so its sides hold
- * only the feed's ids. A resync lists every entity of the backup, so there
- * `mine` and `base` stay whole and a local entity the backup lacks merges as a
- * remote delete only when it has a base.
+ * A merge walks the union of ids, so an id missing from `theirs` reads as a
+ * remote delete. A feed lists only what changed, so its sides hold only the
+ * feed's ids. A resync lists every item of the backup, so there `mine` and
+ * `base` stay whole and a local item the backup lacks merges as a remote
+ * delete only when it has a base.
  */
+function feedSides<T extends { id: string }>(input: {
+  items: readonly T[];
+  tombstones: readonly { id: string }[];
+  mine: Side<T>;
+  base: Side<T>;
+  resync?: boolean;
+}): { base: Side<T>; mine: Side<T>; theirs: Side<T> } {
+  const theirs: Side<T> = {};
+  for (const item of input.items) theirs[item.id] = item;
+  for (const { id } of input.tombstones) theirs[id] = null;
+  if (input.resync) {
+    return { base: input.base, mine: input.mine, theirs };
+  }
+  const only = (side: Side<T>): Side<T> => {
+    const picked: Side<T> = {};
+    for (const id of Object.keys(theirs)) {
+      if (side[id]) picked[id] = side[id];
+    }
+    return picked;
+  };
+  return { base: only(input.base), mine: only(input.mine), theirs };
+}
+
+/** The sides of an entity merge for a feed result. */
 export function buildFeedMergeSides(input: {
   entities: readonly MergeEntity[];
   tombstones: readonly { id: string }[];
@@ -112,20 +182,19 @@ export function buildFeedMergeSides(input: {
   base: MergeSide;
   resync?: boolean;
 }): MergeInput {
-  const theirs: MergeSide = {};
-  for (const entity of input.entities) theirs[entity.id] = entity;
-  for (const { id } of input.tombstones) theirs[id] = null;
-  if (input.resync) {
-    return { base: input.base, mine: input.mine, theirs };
-  }
-  const only = (side: MergeSide): MergeSide => {
-    const picked: MergeSide = {};
-    for (const id of Object.keys(theirs)) {
-      if (side[id]) picked[id] = side[id];
-    }
-    return picked;
-  };
-  return { base: only(input.base), mine: only(input.mine), theirs };
+  return feedSides({ ...input, items: input.entities });
+}
+
+/** `buildFeedMergeSides` for maps or canvases, which merge as whole items. */
+export function buildWholeFeedMergeSides(input: {
+  items: readonly WholeItem[];
+  tombstones: readonly { id: string }[];
+  mine: WholeSide;
+  base: WholeSide;
+  mineDirty: ReadonlySet<string>;
+  resync?: boolean;
+}): WholeMergeInput {
+  return { ...feedSides(input), mineDirty: input.mineDirty };
 }
 
 /**

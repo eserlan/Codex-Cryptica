@@ -18,6 +18,11 @@ import {
 import { json, notFoundOrUnauthorized } from "./cloud-backup-http";
 import { authorizeStoredBackup } from "./cloud-backup-auth";
 import { type Tombstones, readAllEntities } from "./cloud-backup-shards";
+import {
+  type WholeItem,
+  type WholeMetaRecord,
+  asItems,
+} from "./cloud-backup-whole-items";
 
 /** A referenced object is gone: fail rather than return a partial backup. */
 export function incomplete(request: Request): Response {
@@ -79,6 +84,12 @@ export async function handleGetCloudBackupBundle(
     }
   }
 
+  // Journals and adventures stay on each device; a member never reads them.
+  if (auth.role === "editor") {
+    delete bundle.sessionJournals;
+    delete bundle.adventures;
+  }
+
   // A pure read: lastPushedAt is deliberately untouched.
   return json(request, { manifest: auth.manifest, bundle });
 }
@@ -115,6 +126,8 @@ interface ChangeFeedIndex {
   entityHashes: Record<string, string>;
   entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
   tombstones?: Tombstones;
+  mapMeta?: WholeMetaRecord;
+  canvasMeta?: WholeMetaRecord;
 }
 
 const byId = (a: { id: string }, b: { id: string }) =>
@@ -184,6 +197,24 @@ async function readChangedEntities(
 }
 
 /**
+ * The maps or canvases stamped after `since`. A backup from before item
+ * revisions has no meta: `since=0` gets every item, any later `since` none.
+ */
+function changedWholeItems(
+  items: WholeItem[],
+  meta: WholeMetaRecord | undefined,
+  since: number,
+): Array<{ item: WholeItem; meta?: unknown }> {
+  return items
+    .filter((item) => since === 0 || (meta?.[item.id]?.rev ?? 0) > since)
+    .sort(byId)
+    .map((item) => ({
+      item,
+      ...(meta?.[item.id] ? { meta: meta[item.id] } : {}),
+    }));
+}
+
+/**
  * GET /api/cloud-backup/{backupId}/changes?since=N — the live entities and
  * tombstones stamped after revision N, or `resync` when the feed cannot vouch
  * for every change since N. Reads only what the manifest references.
@@ -211,6 +242,8 @@ export async function handleGetCloudBackupChanges(
       status: "changes",
       revision,
       entities: [],
+      maps: [],
+      canvases: [],
       tombstones: [],
     });
   }
@@ -226,10 +259,33 @@ export async function handleGetCloudBackupChanges(
       index,
       since,
     );
+    const bundle = objects.bundle
+      ? await readJson<Record<string, unknown>>(
+          env,
+          absoluteKey(backupId, objects.bundle),
+        )
+      : null;
+    const maps = changedWholeItems(
+      asItems(bundle?.maps),
+      index?.mapMeta,
+      since,
+    );
+    const canvases = changedWholeItems(
+      asItems(bundle?.canvases),
+      index?.canvasMeta,
+      since,
+    );
     const tombstones = Object.values(index?.tombstones ?? {})
       .filter((tombstone) => since === 0 || tombstone.rev > since)
       .sort(byId);
-    return json(request, { status: "changes", revision, entities, tombstones });
+    return json(request, {
+      status: "changes",
+      revision,
+      entities,
+      maps,
+      canvases,
+      tombstones,
+    });
   } catch (error) {
     if (error instanceof MissingBackupObjectError) return incomplete(request);
     throw error;

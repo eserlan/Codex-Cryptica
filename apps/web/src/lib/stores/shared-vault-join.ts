@@ -52,9 +52,9 @@ function failureMessage(failure: { error: string; status?: number }): string {
     : failure.error;
 }
 
-const entitiesOf = (bundle: unknown): unknown[] => {
-  const entities = (bundle as { entities?: unknown })?.entities;
-  return Array.isArray(entities) ? entities : [];
+const listOf = (bundle: unknown, key: string): unknown[] => {
+  const list = (bundle as Record<string, unknown>)?.[key];
+  return Array.isArray(list) ? list : [];
 };
 
 /**
@@ -197,7 +197,10 @@ export class SharedVaultJoin {
   ): Promise<void> {
     const { runtime, base, dirty, storage, now } = this.deps;
     const { vaultId } = restored;
-    await base.replaceVault(vaultId, entitiesOf(material.bundle));
+    await base.replaceVault(vaultId, listOf(material.bundle, "entities"), {
+      maps: listOf(material.bundle, "maps"),
+      canvases: listOf(material.bundle, "canvases"),
+    });
     const media = new CloudBackupMediaCache(() => storage);
     media.hashes = restored.assetHashes ?? {};
     media.save(vaultId);

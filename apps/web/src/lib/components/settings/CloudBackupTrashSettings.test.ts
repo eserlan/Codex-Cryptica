@@ -60,6 +60,18 @@ describe("CloudBackupTrashSettings", () => {
     ).toBeTruthy();
   });
 
+  it("labels a map or canvas, and leaves an entity unlabelled", () => {
+    trash.items = [
+      item({ id: "m", title: "Atlas", kind: "map" }),
+      item({ id: "c", title: "Plot", kind: "canvas" }),
+      item({ id: "e", title: "Dock", kind: "entity" }),
+    ];
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(screen.getByText("Map")).toBeTruthy();
+    expect(screen.getByText("Canvas")).toBeTruthy();
+    expect(screen.queryByText("Entity")).toBeNull();
+  });
+
   it("does not show trash rows loaded for another vault", () => {
     trash.items = [item()];
     render(CloudBackupTrashSettings, { vaultId: "v2" });

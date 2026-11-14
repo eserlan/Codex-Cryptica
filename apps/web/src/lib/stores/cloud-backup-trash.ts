@@ -1,18 +1,25 @@
 import {
-  fetchCloudBackupAsset,
   fetchCloudBackupTrash,
   fetchCloudBackupTrashItem,
-  getLocalCloudBackupRecord,
   type CloudBackupTrashItem,
+  type CloudBackupTrashItemOutcome,
+  type WholeItem,
 } from "@codex/cloud-backup-sync";
-import type { CloudBackupDepsProvider } from "./cloud-backup-types";
+import type { DurableVaultChange } from "./vault/registry";
+import { createAssetDownloader } from "./cloud-backup-downloader";
+import type {
+  AssetDownload,
+  CloudBackupDepsProvider,
+} from "./cloud-backup-types";
 
 export type TrashLoadState =
   "idle" | "loading" | "ready" | "unsupported" | "failed";
 
 type Outcome = "restored" | "gone" | "failed";
 
-/** Lists the shared trash and restores entities from it on this device. */
+type KeptItem = Extract<CloudBackupTrashItemOutcome, { kind: "entity" }>;
+
+/** Lists the shared trash and restores entities, maps and canvases from it on this device. */
 export class CloudBackupTrash {
   items = $state<CloudBackupTrashItem[]>([]);
   loadState = $state<TrashLoadState>("idle");
@@ -27,7 +34,10 @@ export class CloudBackupTrash {
 
   constructor(
     private getDeps: CloudBackupDepsProvider,
-    private recordChanged: (vaultId: string, ids: string[]) => Promise<void>,
+    private recordChanged: (
+      vaultId: string,
+      change: DurableVaultChange,
+    ) => Promise<void>,
   ) {}
 
   async load(vaultId: string): Promise<void> {
@@ -78,7 +88,7 @@ export class CloudBackupTrash {
     }
   }
 
-  /** Brings the entities back. Returns how many were restored. */
+  /** Brings the items back. Returns how many were restored. */
   async restore(vaultId: string, ids: readonly string[]): Promise<number> {
     const deps = this.getDeps();
     if (!deps?.remote || !deps.base) return 0;
@@ -116,20 +126,22 @@ export class CloudBackupTrash {
 
   private async restoreOne(vaultId: string, id: string): Promise<Outcome> {
     const deps = this.getDeps()!;
-    const { remote, base } = deps;
     const item = await fetchCloudBackupTrashItem(deps.runtime, vaultId, id);
     if (item.kind === "gone") return "gone";
     if (item.kind === "failed") return "failed";
     try {
+      const kind = item.tombstone.kind;
+      if (kind) return await this.restoreWhole(vaultId, kind, item);
+      const { remote, base } = deps;
       const existing = await remote!.readLocal(vaultId, [id]);
       if (existing[id]) {
         // The local copy may be newer; pushing it clears the tombstone too.
-        await this.recordChanged(vaultId, [id]);
+        await this.recordChanged(vaultId, { kind: "entity", ids: [id] });
         return "restored";
       }
       await base!.recordSent(vaultId, [], [id]);
       await remote!.apply(vaultId, {
-        creates: [item.entity],
+        creates: [item.entity as never],
         updates: [],
         deletes: [],
       });
@@ -137,8 +149,53 @@ export class CloudBackupTrash {
       console.warn("[CloudBackup] Could not restore from the trash", error);
       return "failed";
     }
-    await this.fetchAssets(vaultId, item.entity);
+    await this.fetchAssets(
+      vaultId,
+      item.entity as { id: string; title: string },
+    );
     return "restored";
+  }
+
+  /** Brings a map or canvas back, with the files a map carried. */
+  private async restoreWhole(
+    vaultId: string,
+    kind: "map" | "canvas",
+    item: KeptItem,
+  ): Promise<Outcome> {
+    const { remote, base } = this.getDeps()!;
+    const id = item.entity.id;
+    const existing = await remote!.readLocalWhole(vaultId, kind, [id]);
+    const change: DurableVaultChange =
+      kind === "map"
+        ? { kind: "maps", ids: [id] }
+        : { kind: "canvas", ids: [id] };
+    if (!existing[id]) {
+      await base!.recordSentWhole(vaultId, kind, [], [id]);
+      const applied = await remote!.applyWhole(
+        vaultId,
+        kind,
+        {
+          copies: [],
+          writes: [{ item: item.entity as WholeItem, assets: item.assets }],
+          deletes: [],
+        },
+        (await this.downloader(vaultId)) ?? (async () => null),
+      );
+      if (applied.failed.length > 0) {
+        console.warn(
+          "[CloudBackup] Could not restore map files",
+          applied.failed,
+        );
+      }
+    }
+    // The next push clears the tombstone.
+    await this.recordChanged(vaultId, change);
+    return "restored";
+  }
+
+  /** Fetches one stored file with this vault's credentials; null on any failure. */
+  private downloader(vaultId: string): Promise<AssetDownload | null> {
+    return createAssetDownloader(this.getDeps()!.runtime, vaultId);
   }
 
   /** Downloads the restored entity's images; a failure never fails the restore. */
@@ -148,20 +205,9 @@ export class CloudBackupTrash {
   ): Promise<void> {
     const deps = this.getDeps()!;
     try {
-      const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
-      if (!record) return;
-      await deps.remote!.ensureAssets(vaultId, [entity], async (assetId) => {
-        try {
-          const asset = await fetchCloudBackupAsset(
-            deps.runtime,
-            record,
-            assetId,
-          );
-          return asset.ok ? asset.value : null;
-        } catch {
-          return null;
-        }
-      });
+      const download = await this.downloader(vaultId);
+      if (!download) return;
+      await deps.remote!.ensureAssets(vaultId, [entity], download);
     } catch (error) {
       console.warn("[CloudBackup] Could not fetch restored images", error);
     }

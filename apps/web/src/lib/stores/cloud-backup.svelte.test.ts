@@ -340,6 +340,7 @@ describe("attachToExistingBackup", () => {
       ]),
       expect.any(Set),
       expect.any(AbortSignal),
+      expect.any(Function),
     );
     expect(buildPayload).toHaveBeenCalledTimes(1);
     expect(h.calls.some((url) => url.endsWith("/delta"))).toBe(false);

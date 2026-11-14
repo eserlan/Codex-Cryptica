@@ -26,11 +26,13 @@ function setup(path = "maps/map_mask.png") {
     },
   };
   // The queue's implementation is irrelevant to fog IO; inject only its enqueue contract.
+  const reportChange = vi.fn(async () => {});
   const fog = new MapFog(
     state,
     vault as unknown as ConstructorParameters<typeof MapFog>[1],
+    reportChange,
   );
-  return { fog, state, vault, dir, file, getFileHandle };
+  return { fog, state, vault, dir, file, getFileHandle, reportChange };
 }
 
 describe("MapFog", () => {
@@ -108,6 +110,27 @@ describe("MapFog", () => {
       dir,
       "vault",
     );
+  });
+
+  it("reports the mask write as a change to its map", async () => {
+    const { fog, reportChange } = setup();
+    const canvas = document.createElement("canvas");
+    vi.spyOn(canvas, "toBlob").mockImplementation((cb) =>
+      cb(new Blob(["png"])),
+    );
+    await fog.saveMask(canvas);
+    expect(reportChange).toHaveBeenCalledWith("vault", {
+      kind: "maps",
+      ids: ["map"],
+    });
+  });
+
+  it("reports nothing when the mask could not be encoded", async () => {
+    const { fog, reportChange } = setup();
+    const canvas = document.createElement("canvas");
+    vi.spyOn(canvas, "toBlob").mockImplementation((cb) => cb(null));
+    await fog.saveMask(canvas);
+    expect(reportChange).not.toHaveBeenCalled();
   });
 
   it("does not write when canvas encoding fails or no map is active", async () => {

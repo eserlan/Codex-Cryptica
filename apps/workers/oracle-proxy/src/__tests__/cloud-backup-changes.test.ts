@@ -99,6 +99,8 @@ describe("cloud backup change feed", () => {
       status: "changes",
       revision: 5,
       entities: [],
+      maps: [],
+      canvases: [],
       tombstones: [],
     });
     for (const since of [2, 6]) {

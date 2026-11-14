@@ -148,18 +148,36 @@ async function setup(
         loaded: true,
         entity,
       })),
-    // The first rows go; ids in `keepIds` need media the backup lacks.
+    // Every row goes but a full one; ids in `keepIds` need media the backup lacks.
     buildEditorDelta: async (_vaultId: string, rows: readonly any[]) => {
       const sent = rows.filter(
-        (row) => row.kind === "entity" && !keepIds.includes(row.id),
+        (row) =>
+          row.kind !== "full" &&
+          !(row.kind === "entity" && keepIds.includes(row.id)),
       );
+      const of = (kind: string) => sent.filter((row) => row.kind === kind);
       return {
         delta: sent.length
           ? {
               vaultTitle: "T",
-              upserts: sent.map((row) => local.get(row.id)!),
+              upserts: of("entity").map((row) => local.get(row.id)!),
               deletes: [],
               assetIds: [],
+              ...(of("maps").length
+                ? {
+                    mapUpserts: of("maps").map((row) => ({
+                      item: { id: row.id },
+                      assets: [],
+                    })),
+                  }
+                : {}),
+              ...(of("canvas").length
+                ? {
+                    canvasUpserts: of("canvas").map((row) => ({
+                      item: { id: row.id },
+                    })),
+                  }
+                : {}),
             }
           : null,
         sent,
@@ -179,9 +197,13 @@ async function setup(
         for (const id of deletes) local.delete(id);
       },
       ensureAssets: async () => ({}),
+      readLocalWhole: async () => ({}),
+      applyWhole: async () => ({ hashes: {}, failed: [] }),
+      isWholeOpen: () => false,
       isEditing: () => false,
       onEditingReleased: () => () => {},
       newId: () => "copy-1",
+      newWholeId: () => "00000000-0000-4000-8000-000000000001",
     },
   } as never);
   const start = async () => {
@@ -231,7 +253,7 @@ describe("a member's shared vault sync", () => {
     expect(h.store.recoveryKey).toBeNull();
   });
 
-  it("keeps maps, canvases and new-image entities local while entities go", async () => {
+  it("sends maps and canvases as whole items while new-image entities stay local", async () => {
     const h = await setup({}, {}, ["b"]);
     await h.start();
     h.local.set("a", e("a", "A"));
@@ -244,14 +266,12 @@ describe("a member's shared vault sync", () => {
     expect(h.count("delta")).toBe(1);
     const sent = JSON.parse(h.calls.find((c) => c.tail === "delta")!.body!);
     expect(sent.upserts.map((u: { id: string }) => u.id)).toEqual(["a"]);
+    expect(sent.mapUpserts).toEqual([{ item: { id: "*" }, assets: [] }]);
+    expect(sent.canvasUpserts).toEqual([{ item: { id: "c" } }]);
     expect(sent.maps).toBeUndefined();
     expect(sent.canvases).toBeUndefined();
     const left = await h.dirty.snapshot("v-1");
-    expect(left.map((row) => `${row.kind}:${row.id}`).sort()).toEqual([
-      "canvas:c",
-      "entity:b",
-      "maps:*",
-    ]);
+    expect(left.map((row) => `${row.kind}:${row.id}`)).toEqual(["entity:b"]);
     expect(h.store.keptLocal).toBe(true);
     expect(h.store.autoState).toBe("saved");
     expect(h.store.status).toBe("idle");

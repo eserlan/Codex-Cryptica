@@ -80,6 +80,35 @@ describe("cloud backup restore", () => {
     });
   });
 
+  it("never imports journals or adventures for a member", async () => {
+    const restore = target();
+    await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      restore,
+      { ...credentials, role: "editor" },
+      material({
+        entities: [1],
+        maps: [2],
+        sessionJournals: [4],
+        adventures: [5],
+      }),
+    );
+    expect(restore.importEntities).toHaveBeenCalled();
+    expect(restore.importMaps).toHaveBeenCalled();
+    expect(restore.importSessionJournals).not.toHaveBeenCalled();
+    expect(restore.importAdventures).not.toHaveBeenCalled();
+
+    const owner = target();
+    await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      owner,
+      credentials,
+      material({ sessionJournals: [4], adventures: [5] }),
+    );
+    expect(owner.importSessionJournals).toHaveBeenCalled();
+    expect(owner.importAdventures).toHaveBeenCalled();
+  });
+
   it("ignores malformed collections and counts media without an importer", async () => {
     const restore = target();
     restore.importMaps = undefined;

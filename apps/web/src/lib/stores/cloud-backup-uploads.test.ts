@@ -211,6 +211,88 @@ describe("cloud backup uploads", () => {
   });
 });
 
+describe("maps and canvases in a delta", () => {
+  const deltaOk = {
+    ok: true as const,
+    value: {
+      schemaVersion: 1,
+      backupId: "backup",
+      vaultTitle: "Vault",
+      sizeBytes: 0,
+      createdAt: "previous",
+      lastPushedAt: "newer",
+    },
+  };
+  const mapDelta = {
+    vaultTitle: "Vault",
+    upserts: [],
+    deletes: [],
+    assetIds: [],
+    mapUpserts: [{ item: { id: "m1" }, assets: [] }],
+  };
+
+  it("leaves held rows pending, never sends them, and clears the rest", async () => {
+    const { deps, uploads } = harness();
+    await deps.dirty!.record("vault", { kind: "maps", ids: ["m1", "bad"] });
+    const rows = await deps.dirty!.snapshot("vault");
+    const held = rows.filter((row) => row.id === "bad");
+    deps.buildDelta = vi.fn(async () => ({ ...mapDelta, held }));
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce(deltaOk);
+
+    expect(await uploads.pushSnapshot("vault", { guarded: true })).toEqual({
+      ok: true,
+    });
+    const sent = vi.mocked(pushDeltaToCloudBackup).mock.calls[0][2];
+    expect(sent).not.toHaveProperty("held");
+    expect(sent.mapUpserts).toHaveLength(1);
+    expect((await deps.dirty!.snapshot("vault")).map((r) => r.id)).toEqual([
+      "bad",
+    ]);
+  });
+
+  it("answers null for a map's files when the vault cannot read them", async () => {
+    const { deps, uploads } = harness();
+    await deps.dirty!.record("vault", { kind: "maps", ids: ["m1"] });
+    let prepared: unknown = "unset";
+    deps.buildDelta = vi.fn(async (_v, _rows, _up, _signal, prepare) => {
+      prepared = await prepare({ id: "m1", assetPath: "maps/m1.webp" });
+      return null;
+    });
+    await uploads.pushSnapshot("vault", { guarded: true });
+    expect(prepared).toBeNull();
+  });
+
+  it("reports a missing asset as an ordinary failure and forgets its cached upload", async () => {
+    const { deps, uploads } = harness();
+    uploads.media.hashes = { "m--1": "h", other: "h" };
+    await deps.dirty!.record("vault", { kind: "maps", ids: ["m1"] });
+    deps.buildDelta = vi.fn(async () => ({
+      ...mapDelta,
+      mapUpserts: [
+        {
+          item: { id: "m1" },
+          assets: [
+            { path: "maps/m.png", assetId: "m--1", mimeType: "image/png" },
+          ],
+        },
+      ],
+    }));
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      error: "A file is missing",
+      status: 409,
+      code: "missing_asset",
+    });
+
+    const out = await uploads.pushSnapshot("vault", { guarded: true });
+
+    expect(out).toMatchObject({ ok: false, error: "A file is missing" });
+    expect(out.conflict).toBeUndefined();
+    expect(uploads.media.hashes).toEqual({ other: "h" });
+    expect(await deps.dirty!.snapshot("vault")).toHaveLength(1);
+  });
+});
+
 describe("merge base recording", () => {
   const ent = (id: string, content = "x") => ({ id, title: id, content });
   const baseIds = async (base: CloudBackupBaseStore) =>

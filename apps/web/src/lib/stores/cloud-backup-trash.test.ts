@@ -46,6 +46,11 @@ async function setup(
   const base = new CloudBackupBaseStore(memoryBaseStorage());
   const dirty = new CloudBackupDirtyStore(memoryDirtyStorage());
   const applied: unknown[] = [];
+  const whole = {
+    map: new Map<string, unknown>(),
+    canvas: new Map<string, unknown>(),
+  };
+  const wholeApplied: { kind: string; changes: any }[] = [];
   const store = new CloudBackupStore();
   let activeVaultId = "v-1";
   store.configure({
@@ -77,9 +82,24 @@ async function setup(
         for (const entity of creates) local.set(entity.id, entity);
       },
       ensureAssets: vi.fn(async () => ({})),
+      readLocalWhole: async (
+        _id: string,
+        kind: "map" | "canvas",
+        ids: readonly string[] | null,
+      ) =>
+        Object.fromEntries(
+          [...whole[kind]].filter(([id]) => !ids || ids.includes(id)),
+        ),
+      applyWhole: async (_id: string, kind: "map" | "canvas", changes: any) => {
+        wholeApplied.push({ kind, changes });
+        for (const { item } of changes.writes) whole[kind].set(item.id, item);
+        return { hashes: {}, failed: [] };
+      },
+      isWholeOpen: () => false,
       isEditing: () => false,
       onEditingReleased: () => () => {},
       newId: () => "copy",
+      newWholeId: () => "copy",
     },
   } as never);
   return {
@@ -88,6 +108,8 @@ async function setup(
     dirty,
     local,
     applied,
+    whole,
+    wholeApplied,
     setActiveVaultId: (vaultId: string) => (activeVaultId = vaultId),
   };
 }
@@ -143,6 +165,65 @@ describe("CloudBackupTrash", () => {
       outcome: "restored",
       title: "Untitled",
     });
+  });
+
+  it("restores a map with the files its trash content kept, and records it for the next push", async () => {
+    const map = { id: "m", name: "Atlas", assetPath: "maps/m.webp" };
+    const assets = [
+      {
+        path: "maps/m.webp",
+        assetId: "maps_m.webp--aa",
+        mimeType: "image/webp",
+      },
+    ];
+    const h = await setup({
+      "trash/m": [
+        ok({ tombstone: { ...tomb("m"), kind: "map" }, entity: map, assets }),
+      ],
+    });
+    await h.base.recordSentWhole("v-1", "map", [map], []);
+
+    expect(await h.store.trash.restore("v-1", ["m"])).toBe(1);
+
+    expect(h.wholeApplied).toEqual([
+      {
+        kind: "map",
+        changes: { copies: [], writes: [{ item: map, assets }], deletes: [] },
+      },
+    ]);
+    expect(h.whole.map.get("m")).toEqual(map);
+    expect(await h.base.getWhole("v-1", "map", "m")).toBeUndefined();
+    expect(h.applied).toEqual([]);
+    expect(
+      (await h.dirty.snapshot("v-1")).map((row) => `${row.kind}:${row.id}`),
+    ).toContain("maps:m");
+  });
+
+  it("restores a canvas and leaves one that already exists locally alone", async () => {
+    const canvas = { id: "c", name: "Plot" };
+    const h = await setup({
+      "trash/c": [
+        ok({ tombstone: { ...tomb("c"), kind: "canvas" }, entity: canvas }),
+      ],
+      "trash/d": [
+        ok({
+          tombstone: { ...tomb("d"), kind: "canvas" },
+          entity: { id: "d", name: "Old" },
+        }),
+      ],
+    });
+    h.whole.canvas.set("d", { id: "d", name: "Newer" });
+
+    expect(await h.store.trash.restore("v-1", ["c", "d"])).toBe(2);
+
+    expect(h.whole.canvas.get("c")).toEqual(canvas);
+    expect(h.whole.canvas.get("d")).toEqual({ id: "d", name: "Newer" });
+    expect(h.wholeApplied).toHaveLength(1);
+    expect(
+      (await h.dirty.snapshot("v-1"))
+        .map((row) => `${row.kind}:${row.id}`)
+        .sort(),
+    ).toEqual(["canvas:c", "canvas:d"]);
   });
 
   it("keeps a restored entity when a later pull carries the same tombstone, and restores the second", async () => {

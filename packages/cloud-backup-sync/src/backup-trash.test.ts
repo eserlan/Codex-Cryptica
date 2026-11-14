@@ -30,11 +30,42 @@ describe("fetchCloudBackupTrash", () => {
     expect(await fetchCloudBackupTrash(h.runtime, "v-1")).toEqual({
       kind: "items",
       revision: 4,
-      items: [ITEM],
+      // An older worker sends no kind, which reads as an entity.
+      items: [{ ...ITEM, kind: "entity" }],
     });
     expect(h.calls[0].url).toBe(
       "https://worker.test/api/cloud-backup/b-1/trash",
     );
+  });
+
+  it("reads a map's kind and the files its trash content kept", async () => {
+    const list = await enabled({
+      ok: true,
+      status: 200,
+      body: { revision: 4, items: [{ ...ITEM, kind: "map" }] },
+    });
+    expect(await fetchCloudBackupTrash(list.runtime, "v-1")).toMatchObject({
+      items: [{ kind: "map" }],
+    });
+    const assets = [
+      { path: "maps/a.png", assetId: "a--1", mimeType: "image/png" },
+    ];
+    const item = await enabled({
+      ok: true,
+      status: 200,
+      body: {
+        tombstone: { ...TOMB, kind: "map" },
+        entity: { id: "a", name: "A" },
+        assets,
+      },
+    });
+    expect(
+      await fetchCloudBackupTrashItem(item.runtime, "v-1", "a"),
+    ).toMatchObject({
+      kind: "entity",
+      entity: { id: "a", name: "A" },
+      assets,
+    });
   });
 
   it("maps 404 to unsupported and a malformed body to unsupported", async () => {

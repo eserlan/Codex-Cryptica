@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { equalContent, mergeEntities, type MergeEntity } from "./merge";
+import {
+  equalContent,
+  mergeEntities,
+  mergeWholeItems,
+  type MergeEntity,
+  type WholeItem,
+} from "./merge";
 
 const ids = () => {
   let n = 0;
@@ -199,5 +205,113 @@ describe("equalContent", () => {
       true,
     );
     expect(equalContent(a, { ...a, body: "y" })).toBe(false);
+  });
+});
+
+describe("mergeWholeItems", () => {
+  const map = (over: Record<string, unknown> = {}): WholeItem => ({
+    id: "m",
+    name: "Atlas",
+    pins: [],
+    lastModified: 1,
+    ...over,
+  });
+  const merge = (
+    sides: { base?: WholeItem; mine?: WholeItem; theirs?: WholeItem | null },
+    dirty: string[] = [],
+  ) =>
+    mergeWholeItems(
+      {
+        base: { m: sides.base },
+        mine: { m: sides.mine },
+        theirs: { m: sides.theirs },
+        mineDirty: new Set(dirty),
+      },
+      opts(),
+    );
+
+  it("takes theirs when only theirs changed", () => {
+    const theirs = map({ pins: ["p"] });
+    const r = merge({ base: map(), mine: map(), theirs });
+    expect(r.items.m).toBe(theirs);
+    expect(r.copies).toEqual([]);
+  });
+
+  it("keeps an edited item when theirs is gone", () => {
+    const mine = map({ pins: ["p"] });
+    const r = merge({ base: map(), mine, theirs: null });
+    expect(r.items.m).toBe(mine);
+    expect(r.summary.editsKeptOverDelete).toEqual(["m"]);
+  });
+
+  it("keeps theirs and a copy named for the author when both changed", () => {
+    const theirs = map({ pins: ["p2"] });
+    const r = mergeWholeItems(
+      {
+        base: { m: map() },
+        mine: { m: map({ pins: ["p1"] }) },
+        theirs: { m: theirs },
+        mineDirty: new Set(),
+      },
+      opts(),
+    );
+    expect(r.items.m).toBe(theirs);
+    expect(r.copies).toHaveLength(1);
+    expect(r.copies[0]).toMatchObject({
+      id: "copy-1",
+      name: "Atlas (Mara's version)",
+      pins: ["p1"],
+    });
+    expect(r.summary.copies).toEqual([
+      { originalId: "m", copyId: "copy-1", title: "Atlas (Mara's version)" },
+    ]);
+  });
+
+  it("does not suffix a copy twice", () => {
+    const mine = map({ name: "Atlas (Mara's version)", pins: ["p1"] });
+    const r = merge({ base: map(), mine, theirs: map({ pins: ["p2"] }) });
+    expect(r.copies[0].name).toBe("Atlas (Mara's version)");
+  });
+
+  it("clashes on a dirty id whose content looks unchanged", () => {
+    const r = merge(
+      { base: map(), mine: map(), theirs: map({ pins: ["p2"] }) },
+      ["m"],
+    );
+    expect(r.copies).toHaveLength(1);
+  });
+
+  it("ignores lastModified-only differences", () => {
+    const r = merge({
+      base: map(),
+      mine: map({ lastModified: 5 }),
+      theirs: map({ pins: ["p2"], lastModified: 9 }),
+    });
+    expect(r.copies).toEqual([]);
+    expect(r.items.m.pins).toEqual(["p2"]);
+  });
+
+  it("clashes when both added the same id with different content", () => {
+    const r = merge({
+      mine: map({ pins: ["a"] }),
+      theirs: map({ pins: ["b"] }),
+    });
+    expect(r.copies).toHaveLength(1);
+  });
+
+  it("lets an edit beat a delete in both directions", () => {
+    const edited = map({ pins: ["p"] });
+    expect(merge({ base: map(), mine: edited, theirs: null }).items.m).toBe(
+      edited,
+    );
+    expect(
+      merge({ base: map(), mine: undefined, theirs: edited }).items.m,
+    ).toBe(edited);
+  });
+
+  it("deletes an unchanged item the other side removed", () => {
+    const r = merge({ base: map(), mine: map(), theirs: null });
+    expect(r.deletes).toEqual(["m"]);
+    expect(r.summary.deleted).toEqual(["m"]);
   });
 });
