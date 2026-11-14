@@ -292,6 +292,18 @@ describe("AdventureFocusPlay", () => {
     expect(wrap?.classList.contains("@4xl:hidden")).toBe(true);
   });
 
+  it("mounts the lightbox host outside the container-type surface", () => {
+    render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    const host = [...document.body.children].find((el) =>
+      el.classList.contains("contents"),
+    );
+    expect(host).toBeTruthy();
+    expect(surface.contains(host!)).toBe(false);
+    expect(host!.closest(".\\@container")).toBeNull();
+  });
+
   it("keeps the tools panel collapsed by default and can expand it without hiding the play column", async () => {
     render(AdventureFocusPlay, { props: props() });
 

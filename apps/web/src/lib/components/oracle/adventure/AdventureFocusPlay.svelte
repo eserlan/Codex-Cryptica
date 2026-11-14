@@ -480,7 +480,11 @@
     suggestionChips={!phone}
   />
 
-  <AdventureArtworkLightbox controller={artworkLightbox} />
+  <!-- Portaled to <body> so the fixed lightbox always covers the viewport and
+       never depends on the surface (a size container) as an ancestor. -->
+  <div class="contents" use:bodyPortal={true}>
+    <AdventureArtworkLightbox controller={artworkLightbox} />
+  </div>
 
   <!-- No viewport breakpoints for side-by-side layout: this surface is often
        hosted in the app's own (already-narrow) sidebar panel, where a viewport
