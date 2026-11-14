@@ -324,8 +324,7 @@ see.
 
 ## Open questions
 
-- The device cap is proposed at 10 active devices per shared vault. Confirm
-  the number in slice 6.
+- The device cap is settled at 10 active devices in 30 days in slice 6.
 - ~~How often a device pulls.~~ Settled in slice 5: every 30 seconds while the
   app is open and visible, and at once when the app regains focus or comes back
   online. `enforcePublishRateLimit` returns early for `GET`, so `/changes` and
