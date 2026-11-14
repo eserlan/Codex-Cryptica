@@ -6,6 +6,7 @@
    * state: shown once after turn on or replace, cleared when the component
    * unmounts or the vault changes, and never stored.
    */
+  import { tick } from "svelte";
   import { focusTrap } from "#lib/actions/focusTrap.js";
 
   type Outcome = { ok: true; link?: string } | { ok: false; error: string };
@@ -39,6 +40,9 @@
   let error = $state<string | null>(null);
   let link = $state<string | null>(null);
   let copyFailed = $state(false);
+  let copied = $state(false);
+  let working = $state<string | null>(null);
+  let linkField = $state<HTMLInputElement | null>(null);
   /** Result of this session's own action, until the prop catches up. */
   let override = $state<boolean | null>(null);
 
@@ -62,29 +66,40 @@
     };
   });
 
-  async function run(action: () => Promise<Outcome>, turnsOn: boolean | null) {
+  async function run(
+    action: () => Promise<Outcome>,
+    turnsOn: boolean | null,
+    label: string,
+  ) {
     if (busy) return;
     busy = true;
+    working = label;
     error = null;
     copyFailed = false;
+    copied = false;
     try {
       const result = await action();
       if (!result.ok) {
         error = result.error;
         return;
       }
-      link = result.link ?? null;
+      link = turnsOn ? (result.link ?? null) : null;
       override = turnsOn;
+      if (link) {
+        await tick();
+        linkField?.focus();
+      }
     } catch {
       error = "Something went wrong. Please try again.";
     } finally {
       busy = false;
+      working = null;
     }
   }
 
   async function accept() {
     showConsent = false;
-    await run(enable, true);
+    await run(enable, true, "Turning on sharing…");
   }
 
   async function replaceLink() {
@@ -97,28 +112,30 @@
       cancelLabel: "Cancel",
       isDangerous: true,
     });
-    if (ok) await run(replace, true);
+    if (ok) await run(replace, true, "Replacing the link…");
   }
 
   async function turnOff() {
     if (busy) return;
     const ok = await confirm({
       title: "Turn off sharing?",
-      message: "The group link stops working. The backup itself stays intact.",
+      message:
+        "The group link stops working. The backup itself stays intact. Members keep the copy they already have.",
       confirmLabel: "Turn off sharing",
       cancelLabel: "Cancel",
       isDangerous: true,
     });
     if (!ok) return;
-    await run(disable, false);
-    if (override === false) link = null;
+    await run(disable, false, "Turning off sharing…");
   }
 
   async function copyLink() {
     if (!link) return;
     copyFailed = false;
+    copied = false;
     try {
       await navigator.clipboard.writeText(link);
+      copied = true;
     } catch {
       copyFailed = true;
     }
@@ -150,13 +167,14 @@
     {/if}
 
     {#if link}
-      <div class="mt-2 flex flex-col gap-2">
+      <div class="mt-2 flex flex-col gap-2" role="status">
         <label class="text-xs" for="share-link-field">
           Copy this link now. It will not be shown again.
         </label>
         <input
           id="share-link-field"
           readonly
+          bind:this={linkField}
           value={link}
           class="w-full border border-theme-border bg-theme-bg px-2 py-1 font-mono text-xs"
           onfocus={(event) => event.currentTarget.select()}
@@ -166,8 +184,9 @@
           class="{buttonClass} self-start"
           onclick={copyLink}>Copy link</button
         >
+        {#if copied}<p>Link copied.</p>{/if}
         {#if copyFailed}
-          <p>
+          <p role="alert">
             Could not copy automatically. Select the link and copy it by hand.
           </p>
         {/if}
@@ -198,6 +217,7 @@
       {/if}
     </div>
   {/if}
+  {#if working}<p class="mt-2" role="status">{working}</p>{/if}
   {#if error}<p class="mt-2 text-red-400" role="alert">{error}</p>{/if}
 </div>
 
@@ -274,7 +294,7 @@
           disabled={busy}
           class="bg-theme-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-theme-on-primary transition-colors hover:bg-theme-primary/90 disabled:opacity-50"
         >
-          I understand — share with group
+          I understand, share with group
         </button>
       </div>
     </div>
