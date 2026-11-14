@@ -10,7 +10,7 @@ All images are hosted on Cloudflare R2 (`codex-cryptica-statics` bucket) under `
 
 | Genre / Theme                                                 | Locations (Have / Target) | NPC Portraits (Have / Target) | Scenes (Have / Target) | Atmospheres (Have / Target) | Total (Have / Target) |
 | :------------------------------------------------------------ | :-----------------------: | :---------------------------: | :--------------------: | :-------------------------: | :-------------------: |
-| `fantasy`                                                     |          20 / 20          |            34 / 34            |         0 / 6          |            0 / 3            |      **54 / 63**      |
+| `fantasy`                                                     |          20 / 20          |            34 / 42            |         0 / 6          |            0 / 3            |      **54 / 71**      |
 | `contemporary` (`modern`)                                     |          5 / 16           |            20 / 20            |         0 / 4          |            0 / 2            |      **25 / 42**      |
 | `science-fiction` (`scifi`, `starwars`, `startrek`, `lancer`) |          5 / 14           |            0 / 10             |         0 / 4          |            0 / 2            |      **5 / 30**       |
 | `horror`                                                      |          4 / 12           |            0 / 10             |         0 / 4          |            0 / 3            |      **4 / 29**       |
@@ -23,7 +23,7 @@ All images are hosted on Cloudflare R2 (`codex-cryptica-statics` bucket) under `
 | `apocalyptic` (`fallout`)                                     |           0 / 3           |             0 / 3             |         0 / 2          |            0 / 1            |       **0 / 9**       |
 | `pirate` / `pulp-adventure`                                   |           0 / 3           |             0 / 3             |         0 / 2          |            0 / 1            |       **0 / 9**       |
 | `mythic`                                                      |           0 / 3           |             0 / 3             |         0 / 1          |            0 / 1            |       **0 / 8**       |
-| **Total**                                                     |       **38 / 101**        |         **54 / 108**          |       **0 / 36**       |         **0 / 24**          |     **92 / 269**      |
+| **Total**                                                     |       **38 / 101**        |         **54 / 116**          |       **0 / 36**       |         **0 / 24**          |     **92 / 277**      |
 
 > **Phase 1 (Immediate)**: the **24 seed locations are complete** across the 5 core `catalogue.ts` genres. **Phase 2**: first **20 NPC portraits** + **8 atmosphere/scene** cards. **Phase 3**: expand `catalogue.ts` genre enum & `cues.ts` to cover all remaining Codex Cryptica themes (`cyberpunk`, `steampunk`, `western`, `cosmic-horror`, `gothic`, `apocalyptic`, `pirate`/`pulp-adventure`, `mythic`).
 
@@ -46,7 +46,7 @@ Selection in [`matchArtwork()`](../packages/adventure-artwork-engine/src/matchin
 
 ### Current Controlled Cue Vocabulary (`ARTWORK_CUES`)
 
-Terms marked _(proposed)_ in Sections 3–5 require adding to [`cues.ts`](../packages/adventure-artwork-engine/src/cues.ts) (max 24 cues per asset, no duplicates) before registering those assets:
+The authoritative active vocabulary is in [`cues.ts`](../packages/adventure-artwork-engine/src/cues.ts); it already includes ancestry/class cues such as `noble`, `cleric`, `rogue`, `bard`, `fighter`, `wizard`, and `warlock`, beyond the six broad NPC-role buckets listed below. Terms marked _(proposed)_ in Sections 3–5 must be added to `cues.ts` and made available from structured adventure state before registering those assets (max 24 cues per asset, no duplicates):
 
 - **Places / Biomes / Structures (29)**: `forest`, `woodland`, `mountain`, `hills`, `plains`, `desert`, `swamp`, `river`, `coast`, `ocean`, `island`, `tundra`, `snow`, `cave`, `ruins`, `village`, `town`, `city`, `harbour`, `road`, `castle`, `temple`, `tavern`, `market`, `farm`, `space-station`, `starship`, `laboratory`, `industrial`
 - **Setting (5)**: `urban`, `rural`, `wilderness`, `interior`, `exterior`
@@ -229,10 +229,10 @@ All planned fantasy locations are live.
 
 ---
 
-## 3. Characters / NPC Portraits Roadmap (38 Core Portraits Needed, `type: "npc"`)
+## 3. Characters / NPC Portraits Roadmap (34 Needed: 26 Core + 8 Fantasy Narrative, `type: "npc"`)
 
 Format: `768×1024` display WebP (`<= 256 KB`), `240×320` preview WebP (`<= 32 KB`) — **3:4 portrait**.  
-US3 identity, alias continuity, and Vault promotion are wired, and **34 fantasy NPC portraits are live**. Below covers all 6 current role cues (`traveller`, `merchant`, `guard`, `scholar`, `explorer`, `worker`) plus key TTRPG archetypes _(proposed cues noted in parentheses)_.
+US3 identity, alias continuity, and Vault promotion are wired, and **34 fantasy NPC portraits are live**. The original 16 base fantasy roles and 18 ancestry × class portraits are complete, but eight high-impact **narrative/function archetypes are not**. Below covers all six broad role buckets (`traveller`, `merchant`, `guard`, `scholar`, `explorer`, `worker`) and the new fantasy gap pack _(new cues proposed until implemented)_.
 
 ### Fantasy NPCs (16 / 16 Core Complete)
 
@@ -242,9 +242,33 @@ All 16 core role portraits are listed in the live inventory above.
 
 All 18 race and class portraits are listed in the live inventory above.
 
+### Fantasy Narrative & Encounter Archetypes (8 Needed → 42 Fantasy NPCs Total)
+
+**P0: commission/generate these eight distinct 3:4 portraits.** The first eight increase the planned Fantasy NPC target from **34 to 42** and the global planned catalogue from **269 to 277**. They fill role/function gaps rather than duplicating playable class portraits. All IDs below are *planned*, not live; cues in `primaryCues` are *proposed* until registered in `cues.ts`.
+
+| Priority | Planned asset ID | Portrait brief / narrative purpose | Proposed `primaryCues` | Suggested setting · mood · time |
+| :--- | :--- | :--- | :--- | :--- |
+| P0 | `npc-fantasy-elder-01` | Weathered village reeve or elder, visibly old, grounded, trusted or burdened; rural quest-giver | `elder` | `village`, `rural` · `hopeful`, `ominous` · `day` |
+| P0 | `npc-fantasy-witch-01` | Hedge witch, bog seer or oracle with bone charms and a lantern; wilderness mentor/wildcard, not another court mage | `witch` | `swamp`, `forest`, `wilderness` · `mysterious` · `fog`, `dusk` |
+| P0 | `npc-fantasy-cultist-01` | Hooded ritual zealot, distinctive cult vestments and obsidian dagger; minor antagonist/betrayer | `cultist` | `ruins`, `cave`, `interior` · `ominous` · `night` |
+| P0 | `npc-fantasy-bandit-01` | Scarred highwayman or outlaw captain, practical worn equipment; roadside rival/threat | `bandit` | `road`, `forest`, `exterior` · `ominous` · `dusk` |
+| P0 | `npc-fantasy-official-01` | Unarmed magistrate, guildmaster or harbour master with ledger and spectacles; civic non-combat gatekeeper | `official` | `city`, `town`, `interior` · `quiet`, `busy` · `day` |
+| P0 | `npc-fantasy-urchin-01` | Ragged street urchin or alley informant; lower-ward witness/info broker, approachable rather than generic thief | `urchin` | `city`, `urban`, `exterior` · `mysterious` · `night` |
+| P0 | `npc-fantasy-goblin-01` | Expressive goblin tinker or guide with oversized pack; non-standard ally/mascot/trickster | `goblin` | `cave`, `tavern` · `busy`, `mysterious` · `day` |
+| P0 | `npc-fantasy-necromancer-01` | Pale necromancer / dark sorcerer with ritual focus; unmistakable mastermind villain, not generic wizard | `necromancer` | `castle`, `ruins`, `interior` · `ominous` · `night` |
+
+**P1 optional diversity follow-up (not counted in the 42-portrait target):**
+- `npc-fantasy-guard-03`: female town watch officer/captain, clearly not another heavily armoured male silhouette.
+- `npc-fantasy-worker-03`: female smith/craftsperson at anvil, to diversify town service roles.
+- `npc-fantasy-construct-01`: friendly animated construct/golem as companion or witness (requires `construct` cue).
+- `npc-fantasy-fey-01`: fey trickster/forest emissary with nonhuman features (requires `fey` cue).
+- If the first elder is male, consider an elderly woman reeve/wise elder variant as a subsequent identity-diversity option without assuming that all elders are interchangeable.
+
+**Metadata and production gate:** retain 3:4 portrait composition, readable silhouette at thumbnail size, varied age/gender/ancestry, descriptive non-canonical alt text, WebP budget and approved provenance/licence metadata. Register in the manifest only once the actual reviewed files exist; never count placeholders as live. Route the eight role terms through cue extraction/normalisation before expecting them to match; broad place cues (`village`, `tavern`, etc.) must not override explicit NPC roles. See [#4818](https://github.com/eserlan/Codex-Cryptica/issues/4818) for cue/metadata fixes on existing assets and matching tests.
+
 ### Contemporary NPCs (20 / 20 Complete)
 
-All 12 contemporary NPC portraits are listed in the live inventory above.
+All 20 contemporary NPC portraits are listed in the live inventory above.
 
 ### Science-Fiction NPCs (10 Needed)
 
@@ -473,7 +497,10 @@ Covers every remaining Codex Cryptica theme in [`art-direction-catalogue.ts`](..
 ## 6. Emergent Engineering & Vocabulary Needs
 
 1. **Extend `ARTWORK_CUES` ([`cues.ts`](../packages/adventure-artwork-engine/src/cues.ts))**:
-   - **Roles**: `noble`, `cleric`, `mage`, `rogue`, `captain`, `pilot`, `medic`, `hunter`, `android`, `bard`, `hacker`, `outlaw`
+   - **Already active, but audit usage on existing portraits**: `noble`, `cleric`, `rogue`, `bard` (plus ancestry/class cues); avoid mapping these only to broad `merchant`, `scholar`, or `traveller`.
+   - **New fantasy narrative roles (proposed)**: `elder`, `witch`, `cultist`, `bandit`, `official`, `urchin`, `goblin`, `necromancer`; consider `healer`, `innkeeper`, `smith`, `informant`, `construct`, and `fey` when those assets/queries are supported.
+   - **Other genre roles (proposed unless already active)**: `mage`, `captain`, `pilot`, `medic`, `hunter`, `android`, `hacker`, `outlaw`.
+   - **Matching correctness**: update existing asset `primaryCues` and structured NPC cue generation/aliases; see [#4818](https://github.com/eserlan/Codex-Cryptica/issues/4818).
    - **Places**: `dungeon`, `library`, `palace`, `manor`, `graveyard`, `alley`, `bunker`, `bridge`, `hangar`, `outpost`
 2. **Extend Genres ([`catalogue.ts`](../packages/adventure-artwork-engine/src/catalogue.ts))**:
    - Currently restricted to `neutral | fantasy | contemporary | science-fiction | horror`. Add `cyberpunk`, `steampunk`, `western`, `cosmic-horror`, `gothic`, `apocalyptic`, `pirate`, and `mythic` when curating Phase 3 packs.
