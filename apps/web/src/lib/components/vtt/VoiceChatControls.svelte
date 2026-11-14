@@ -32,6 +32,7 @@
   };
 
   let audioEl: HTMLAudioElement | null = $state(null);
+  let tooltipFocused = $state(false);
   $effect(() => {
     if (audioEl) audioEl.srcObject = voiceChat.remoteStream;
   });
@@ -97,8 +98,13 @@
       disabled={joinDisabled}
       title={voiceTitle}
       aria-label={voiceAriaLabel}
+      aria-describedby={active && vState.participants.length > 0
+        ? "voice-participants-tooltip"
+        : undefined}
       aria-pressed={active}
       aria-busy={busy}
+      onfocusin={() => (tooltipFocused = true)}
+      onfocusout={() => (tooltipFocused = false)}
       data-testid="voice-toggle"
     >
       <span
@@ -129,7 +135,10 @@
         onclick={() => voiceChat.toggleMute()}
         title={vState.muted ? "Unmute microphone" : "Mute microphone"}
         aria-label={vState.muted ? "Unmute microphone" : "Mute microphone"}
+        aria-describedby="voice-participants-tooltip"
         aria-pressed={vState.muted}
+        onfocusin={() => (tooltipFocused = true)}
+        onfocusout={() => (tooltipFocused = false)}
         data-testid="voice-mute"
       >
         <span
@@ -144,8 +153,10 @@
     <!-- Participant tooltip -->
     {#if active && vState.participants.length > 0}
       <div
-        class="pointer-events-none absolute top-full right-0 mt-2 w-52 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-chrome-border bg-chrome-surface/90 backdrop-blur-lg shadow-xl text-left"
-        aria-hidden="true"
+        class="pointer-events-none absolute top-full right-0 mt-2 w-52 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-chrome-border bg-chrome-surface/90 backdrop-blur-lg shadow-xl text-left"
+        id="voice-participants-tooltip"
+        role="tooltip"
+        aria-hidden={!tooltipFocused}
       >
         <div
           class="text-xs font-bold text-chrome-text mb-1.5 border-b border-chrome-border pb-1"
@@ -163,10 +174,14 @@
                   : ""}</span
               >
               <span
+                aria-hidden="true"
                 class="h-3 w-3 shrink-0 {participant.muted
                   ? 'icon-[lucide--mic-off] text-rose-400'
                   : 'icon-[lucide--mic] text-emerald-400'}"
               ></span>
+              <span class="sr-only"
+                >{participant.muted ? "Muted" : "Unmuted"}</span
+              >
             </li>
           {/each}
         </ul>
