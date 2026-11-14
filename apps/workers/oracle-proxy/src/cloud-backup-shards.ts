@@ -3,6 +3,7 @@ import type {
   CloudBackupTombstone,
 } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
+import type { WholeMeta } from "./cloud-backup-whole-items";
 import {
   type BackupObjects,
   type CloudBackupEnv,
@@ -24,10 +25,17 @@ export function indexRecord(
   entityHashes: Record<string, string>,
   entityMeta: Record<string, CloudBackupEntitySyncMeta>,
   tombstones: Tombstones,
+  whole?: WholeMeta,
 ) {
   return {
     entityHashes,
     entityMeta,
+    ...(whole && Object.keys(whole.mapMeta).length > 0
+      ? { mapMeta: whole.mapMeta }
+      : {}),
+    ...(whole && Object.keys(whole.canvasMeta).length > 0
+      ? { canvasMeta: whole.canvasMeta }
+      : {}),
     ...(Object.keys(tombstones).length > 0 ? { tombstones } : {}),
   };
 }
@@ -39,11 +47,12 @@ export async function stageIndex(
   entityHashes: Record<string, string>,
   entityMeta: Record<string, CloudBackupEntitySyncMeta>,
   tombstones: Tombstones = {},
+  whole?: WholeMeta,
 ): Promise<string> {
   await writeJson(
     env,
     getStagedKey(backupId, tag, "index.json"),
-    indexRecord(entityHashes, entityMeta, tombstones),
+    indexRecord(entityHashes, entityMeta, tombstones, whole),
   );
   return stagedName(tag, "index.json");
 }

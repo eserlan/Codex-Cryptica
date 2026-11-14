@@ -100,9 +100,10 @@ export async function handleListTrash(
     );
     return json(request, {
       revision: cloudBackupRevisionOf(auth.manifest),
-      items: tombstones.map(({ id, title, deletedBy, deletedAt }) => ({
+      items: tombstones.map(({ id, title, deletedBy, deletedAt, kind }) => ({
         id,
         title,
+        kind: kind ?? "entity",
         deletedBy,
         deletedAt,
         restorable: holds(shards.get(cloudBackupShardOf(id)), id),
@@ -158,7 +159,16 @@ export async function handleGetTrashItem(
     const shards = await readTrashShards(env, backupId, read.objects, [id]);
     const shard = shards.get(cloudBackupShardOf(id));
     if (!shard || !holds(shard, id)) return notRestorable(request);
-    return json(request, { tombstone, entity: shard[id] as EntityRecord });
+    const kept = shard[id] as EntityRecord;
+    if (tombstone.kind) {
+      const { item, assets } = kept as { item?: unknown; assets?: unknown };
+      return json(request, {
+        tombstone,
+        entity: item,
+        ...(assets ? { assets } : {}),
+      });
+    }
+    return json(request, { tombstone, entity: kept });
   } catch (error) {
     if (error instanceof MissingBackupObjectError) return incomplete(request);
     throw error;

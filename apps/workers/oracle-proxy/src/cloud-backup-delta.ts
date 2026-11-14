@@ -29,6 +29,19 @@ import {
   type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
+import {
+  type WholeChanges,
+  type WholeMeta,
+  type WholeMetaRecord,
+  applyWholeChanges,
+  asItems,
+  findMissingAsset,
+  keptMapAssetIds,
+  planWholeItems,
+  readWholeMeta,
+  replaceManifestEntries,
+  wholeShardNames,
+} from "./cloud-backup-whole-items";
 import { publishCommit } from "./cloud-backup-restore-points";
 import { evictOldestTrash, purgeExpiredTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
@@ -122,7 +135,7 @@ function tombstoneOf(
   };
 }
 
-interface IndexState {
+interface IndexState extends WholeMeta {
   hashes: Record<string, string>;
   meta: Record<string, CloudBackupEntitySyncMeta>;
   tombstones: Tombstones;
@@ -139,29 +152,39 @@ async function readIndexState(
         entityHashes: Record<string, string>;
         entityMeta?: Record<string, CloudBackupEntitySyncMeta>;
         tombstones?: Tombstones;
+        mapMeta?: WholeMetaRecord;
+        canvasMeta?: WholeMetaRecord;
       }>(env, backupId, base.index)
     : null;
   return {
+    ...readWholeMeta(index),
     hashes: Object.assign(Object.create(null), index?.entityHashes ?? {}),
     meta: Object.assign(Object.create(null), index?.entityMeta ?? {}),
     tombstones: Object.assign(Object.create(null), index?.tombstones ?? {}),
   };
 }
 
-/** Applies a delta's upserts and deletes to only the shards they touch. */
+/**
+ * Applies a delta's entity upserts and deletes to only the shards they touch.
+ * `trashNames` adds trash shards that map and canvas deletes will write to.
+ */
 async function applyEntityDelta(
   env: CloudBackupEnv,
   backupId: string,
   delta: CloudBackupDelta,
   base: BackupObjects,
   stamp: CloudBackupEntitySyncMeta,
-): Promise<
-  IndexState & { shards: Map<string, Shard>; trash: Map<string, Shard> }
-> {
+  state: IndexState,
+  trashNames: Set<string>,
+): Promise<{ shards: Map<string, Shard>; trash: Map<string, Shard> }> {
   const names = touchedShardNames(delta);
   const shards = await readShards(env, backupId, names, base.shards);
-  const trash = await readShards(env, backupId, names, base.trash);
-  const state = await readIndexState(env, backupId, base);
+  const trash = await readShards(
+    env,
+    backupId,
+    new Set([...names, ...trashNames]),
+    base.trash,
+  );
   const { hashes, meta, tombstones } = state;
 
   for (const id of delta.deletes) {
@@ -183,7 +206,7 @@ async function applyEntityDelta(
     delete tombstones[entity.id];
     delete trash.get(name)![entity.id];
   }
-  return { ...state, shards, trash };
+  return { shards, trash };
 }
 
 async function sizeOfReferenced(
@@ -219,43 +242,40 @@ async function indexGrowth(
   hashes: Record<string, string>,
   meta: Record<string, CloudBackupEntitySyncMeta>,
   tombstones: Tombstones,
+  whole: WholeMeta,
 ): Promise<number> {
   return (
-    jsonByteLength(indexRecord(hashes, meta, tombstones)) -
+    jsonByteLength(indexRecord(hashes, meta, tombstones, whole)) -
     (await sizeOfReferenced(env, backupId, base.index))
   );
 }
 
-async function prepareBundleSections(
+/** Whether the delta touches the bundle's maps, canvases or asset manifest. */
+const changesBundle = (delta: CloudBackupDelta) =>
+  [
+    delta.maps,
+    delta.canvases,
+    delta.assetManifest,
+    delta.mapUpserts,
+    delta.mapDeletes,
+    delta.canvasUpserts,
+    delta.canvasDeletes,
+  ].some((section) => section !== undefined);
+
+async function readBundleFor(
   env: CloudBackupEnv,
   backupId: string,
   base: BackupObjects,
   delta: CloudBackupDelta,
-): Promise<{
-  bundle: Record<string, unknown> | null;
-  growth: number;
-}> {
-  const sections = {
-    ...(delta.maps ? { maps: delta.maps } : {}),
-    ...(delta.canvases ? { canvases: delta.canvases } : {}),
-    ...(delta.assetManifest ? { assetManifest: delta.assetManifest } : {}),
-  };
-  if (Object.keys(sections).length === 0) return { bundle: null, growth: 0 };
-
+): Promise<{ bundle: Record<string, unknown> | null; existing: number }> {
+  if (!changesBundle(delta) || !base.bundle) {
+    return { bundle: null, existing: 0 };
+  }
   const [bundle, existing] = await Promise.all([
-    base.bundle
-      ? readJson<Record<string, unknown>>(
-          env,
-          absoluteKey(backupId, base.bundle),
-        )
-      : null,
+    readJson<Record<string, unknown>>(env, absoluteKey(backupId, base.bundle)),
     sizeOfReferenced(env, backupId, base.bundle),
   ]);
-  const nextBundle = { ...(bundle ?? {}), ...sections };
-  return {
-    bundle: nextBundle,
-    growth: jsonByteLength(nextBundle) - existing,
-  };
+  return { bundle, existing };
 }
 
 function validateDelta(
@@ -266,7 +286,12 @@ function validateDelta(
   const parsed = CloudBackupDeltaSchema.safeParse(body);
   if (
     !parsed.success ||
-    (parsed.data.assetIds ?? []).some((id) => !isValidAssetId(id))
+    [
+      ...(parsed.data.assetIds ?? []),
+      ...(parsed.data.mapUpserts ?? []).flatMap((upsert) =>
+        (upsert.assets ?? []).map((asset) => asset.assetId),
+      ),
+    ].some((id) => !isValidAssetId(id))
   ) {
     return {
       response: json(request, { error: { message: "Invalid delta" } }, 400),
@@ -311,8 +336,47 @@ interface PreparedDelta {
   tombstones: Tombstones;
   hashes: Record<string, string>;
   meta: Record<string, CloudBackupEntitySyncMeta>;
+  whole: WholeMeta;
   bundle: Record<string, unknown> | null;
+  /** Asset ids that live or trashed maps reference; the prune must keep them. */
+  keptAssetIds: string[];
   projectedBytes: number;
+}
+
+/** The bundle with the delta's maps, canvases and asset manifest, or null when it is unchanged. */
+function nextBundleFor(
+  delta: CloudBackupDelta,
+  bundle: Record<string, unknown> | null,
+  mapChanges: WholeChanges,
+  canvasChanges: WholeChanges,
+): Record<string, unknown> | null {
+  const sections: Record<string, unknown> = {
+    ...(mapChanges.list ? { maps: mapChanges.list } : {}),
+    ...(canvasChanges.list ? { canvases: canvasChanges.list } : {}),
+  };
+  if (delta.assetManifest || mapChanges.upserts.some((u) => u.assets)) {
+    sections.assetManifest = replaceManifestEntries(
+      delta.assetManifest ?? bundle?.assetManifest,
+      mapChanges.upserts,
+    );
+  }
+  return Object.keys(sections).length > 0
+    ? { ...(bundle ?? {}), ...sections }
+    : null;
+}
+
+/** The asset ids of live and trashed maps, which a prune must keep. */
+async function keptAssetsFor(
+  env: CloudBackupEnv,
+  backupId: string,
+  base: BackupObjects,
+  delta: CloudBackupDelta,
+  mapMeta: WholeMetaRecord,
+  tombstones: Tombstones,
+  trash: Map<string, Shard>,
+): Promise<string[]> {
+  if (!delta.assetIds) return [];
+  return keptMapAssetIds(env, backupId, base, mapMeta, tombstones, trash);
 }
 
 async function prepareDelta(
@@ -322,11 +386,42 @@ async function prepareDelta(
   base: BackupObjects,
   stamp: CloudBackupEntitySyncMeta,
 ): Promise<PreparedDelta> {
-  const { shards, trash, hashes, meta, tombstones } = await applyEntityDelta(
+  const state = await readIndexState(env, backupId, base);
+  const { bundle, existing } = await readBundleFor(env, backupId, base, delta);
+  const storedMaps = asItems(bundle?.maps);
+  const storedCanvases = asItems(bundle?.canvases);
+  const mapChanges = await planWholeItems(
+    "map",
+    delta,
+    storedMaps,
+    state.mapMeta,
+  );
+  const canvasChanges = await planWholeItems(
+    "canvas",
+    delta,
+    storedCanvases,
+    state.canvasMeta,
+  );
+  const { shards, trash } = await applyEntityDelta(
     env,
     backupId,
     delta,
     base,
+    stamp,
+    state,
+    wholeShardNames([mapChanges, canvasChanges]),
+  );
+  const { hashes, meta, tombstones } = state;
+  await applyWholeChanges(
+    "map",
+    mapChanges,
+    { meta: state.mapMeta, tombstones, trash },
+    stamp,
+  );
+  await applyWholeChanges(
+    "canvas",
+    canvasChanges,
+    { meta: state.canvasMeta, tombstones, trash },
     stamp,
   );
   const purgedRev = await purgeExpiredTrash(
@@ -337,12 +432,24 @@ async function prepareDelta(
     tombstones,
   );
   await evictOldestTrash(env, backupId, base, trash, tombstones);
-  const bundleUpdate = await prepareBundleSections(env, backupId, base, delta);
+
+  const nextBundle = nextBundleFor(delta, bundle, mapChanges, canvasChanges);
+  const bundleGrowth = nextBundle ? jsonByteLength(nextBundle) - existing : 0;
+  const keptAssetIds = await keptAssetsFor(
+    env,
+    backupId,
+    base,
+    delta,
+    state.mapMeta,
+    tombstones,
+    trash,
+  );
+
   const projected =
     (await reachableBytes(env, backupId, base)) +
     (await shardGrowth(env, backupId, base, shards)) +
-    (await indexGrowth(env, backupId, base, hashes, meta, tombstones)) +
-    bundleUpdate.growth;
+    (await indexGrowth(env, backupId, base, hashes, meta, tombstones, state)) +
+    bundleGrowth;
   return {
     purgedRev,
     shards,
@@ -350,7 +457,9 @@ async function prepareDelta(
     tombstones,
     hashes,
     meta,
-    bundle: bundleUpdate.bundle,
+    whole: state,
+    bundle: nextBundle,
+    keptAssetIds,
     projectedBytes: projected,
   };
 }
@@ -375,11 +484,19 @@ async function stageDelta(
   base: BackupObjects,
   prepared: PreparedDelta,
 ): Promise<{ staged: BackupObjects; objects: BackupObjects }> {
-  const { shards, trash, hashes, meta, tombstones } = prepared;
+  const { shards, trash, hashes, meta, tombstones, whole } = prepared;
   const stagedShards = await stageShards(env, backupId, tag, shards);
   const stagedTrash = await stageShards(env, backupId, tag, trash, "trash");
   const staged: BackupObjects = {
-    index: await stageIndex(env, backupId, tag, hashes, meta, tombstones),
+    index: await stageIndex(
+      env,
+      backupId,
+      tag,
+      hashes,
+      meta,
+      tombstones,
+      whole,
+    ),
     shards: stagedShards,
     ...(Object.keys(stagedTrash).length > 0 ? { trash: stagedTrash } : {}),
   };
@@ -458,7 +575,9 @@ async function commitDelta(
       ownerCodeHash: auth.ownerCodeHash,
       etag: auth.etag,
       sharing: auth.sharing,
-      assetIds: delta.assetIds,
+      assetIds: delta.assetIds && [
+        ...new Set([...delta.assetIds, ...prepared.keptAssetIds]),
+      ],
     },
     () => lostRace(request, env, backupId, staged, auth.manifest),
   );
@@ -498,6 +617,21 @@ export async function handleCloudBackupDelta(
   const parsed = validateDelta(request, body, auth.manifest);
   if ("response" in parsed) return parsed.response;
   const { delta } = parsed;
+
+  const missing = await findMissingAsset(env, backupId, delta);
+  if (missing) {
+    return json(
+      request,
+      {
+        error: {
+          code: "missing_asset",
+          message: "A file this change refers to is not in the backup.",
+          assetId: missing,
+        },
+      },
+      409,
+    );
+  }
 
   const base = await resolveObjects(env, backupId, auth.objects);
   const lastPushedAt = new Date().toISOString();

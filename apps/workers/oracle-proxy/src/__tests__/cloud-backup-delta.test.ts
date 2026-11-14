@@ -94,6 +94,14 @@ describe("cloud backup incremental commits", () => {
           editedAt: (await readManifest(env, backupId))!.manifest.lastPushedAt,
         },
       },
+      mapMeta: {
+        map: {
+          rev: 2,
+          editedBy: "owner",
+          editedAt: (await readManifest(env, backupId))!.manifest.lastPushedAt,
+          hash: await hashCloudBackupEntity({ id: "map" }),
+        },
+      },
       tombstones: {
         remove: {
           id: "remove",

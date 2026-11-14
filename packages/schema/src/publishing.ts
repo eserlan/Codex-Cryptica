@@ -600,6 +600,31 @@ export type CloudBackupEntitySyncMeta = z.infer<
   typeof CloudBackupEntitySyncMetaSchema
 >;
 
+/** A file a map carries: its vault path and the stored, content-addressed id. */
+export const CloudBackupWholeItemAssetSchema = z.object({
+  path: z.string().min(1),
+  assetId: z.string().min(1).max(255),
+  mimeType: z.string(),
+});
+
+export type CloudBackupWholeItemAsset = z.infer<
+  typeof CloudBackupWholeItemAssetSchema
+>;
+
+/**
+ * Sync metadata of a map or canvas, which sync as whole items: the entity
+ * stamp plus the item's content hash and, for a map, the files it carries.
+ */
+export const CloudBackupWholeItemMetaSchema =
+  CloudBackupEntitySyncMetaSchema.extend({
+    hash: z.string(),
+    assets: z.array(CloudBackupWholeItemAssetSchema).optional(),
+  });
+
+export type CloudBackupWholeItemMeta = z.infer<
+  typeof CloudBackupWholeItemMetaSchema
+>;
+
 /**
  * A removed entity: kept in the index so the change feed can report the
  * delete. The entity's last content sits in a trash object beside it.
@@ -611,6 +636,8 @@ export const CloudBackupTombstoneSchema = z.object({
   deletedBy: z.string().min(1),
   deletedAt: z.string(),
   title: z.string(),
+  /** What was removed. Absent means an entity. */
+  kind: z.enum(["map", "canvas"]).optional(),
 });
 
 export type CloudBackupTombstone = z.infer<typeof CloudBackupTombstoneSchema>;
@@ -683,28 +710,49 @@ const CloudBackupEntitySchema = z
   .object({ id: z.string().min(1).max(255) })
   .passthrough();
 
-/**
- * Body of `POST /api/cloud-backup/{backupId}/delta` (#3354): the entities
- * changed since `baseLastPushedAt`, plus whole replacements for the small
- * non-entity sections when they changed.
- */
-export const CloudBackupDeltaSchema = z.object({
-  vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
-  baseLastPushedAt: z.string().min(1),
-  /** When present, must equal the backup's current revision. */
-  baseRevision: z.number().int().nonnegative().optional(),
-  upserts: z.array(CloudBackupEntitySchema),
-  deletes: z.array(z.string().min(1).max(255)),
-  /** A member's display name; the worker stamps it on an editor's commit. */
-  editorName: z.string().max(40).optional(),
-  maps: z.array(z.unknown()).optional(),
-  canvases: z.array(z.unknown()).optional(),
-  assetManifest: z.array(z.unknown()).optional(),
-  assetIds: z
-    .array(z.string())
-    .max(CLOUD_BACKUP_LIMITS.maxAssetCount)
-    .optional(),
+const CloudBackupMapUpsertSchema = z.object({
+  item: CloudBackupEntitySchema,
+  assets: z.array(CloudBackupWholeItemAssetSchema).optional(),
 });
+
+const CloudBackupCanvasUpsertSchema = z.object({
+  item: CloudBackupEntitySchema,
+});
+
+/**
+ * Body of `POST /api/cloud-backup/{backupId}/delta` (#3354): the entities,
+ * maps and canvases changed since `baseLastPushedAt`. The whole-list `maps`
+ * and `canvases` are the form older clients send; a delta never sends both
+ * forms for one kind.
+ */
+export const CloudBackupDeltaSchema = z
+  .object({
+    vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
+    baseLastPushedAt: z.string().min(1),
+    /** When present, must equal the backup's current revision. */
+    baseRevision: z.number().int().nonnegative().optional(),
+    upserts: z.array(CloudBackupEntitySchema),
+    deletes: z.array(z.string().min(1).max(255)),
+    /** A member's display name; the worker stamps it on an editor's commit. */
+    editorName: z.string().max(40).optional(),
+    maps: z.array(z.unknown()).optional(),
+    canvases: z.array(z.unknown()).optional(),
+    mapUpserts: z.array(CloudBackupMapUpsertSchema).optional(),
+    mapDeletes: z.array(z.string().min(1).max(255)).optional(),
+    canvasUpserts: z.array(CloudBackupCanvasUpsertSchema).optional(),
+    canvasDeletes: z.array(z.string().min(1).max(255)).optional(),
+    assetManifest: z.array(z.unknown()).optional(),
+    assetIds: z
+      .array(z.string())
+      .max(CLOUD_BACKUP_LIMITS.maxAssetCount)
+      .optional(),
+  })
+  .refine(
+    (delta) =>
+      !(delta.maps && (delta.mapUpserts || delta.mapDeletes)) &&
+      !(delta.canvases && (delta.canvasUpserts || delta.canvasDeletes)),
+    { message: "A delta sends maps and canvases in one form only" },
+  );
 
 export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;
 
@@ -754,9 +802,9 @@ export const LocalCloudBackupRecordSchema = z.object({
     })
     .optional(),
   /**
-   * Set when a pull found that another device had committed. A push that
-   * replaces whole items (maps, canvases, a full snapshot) pauses while it is
-   * set, because those are not merged. An unguarded push clears it.
+   * Set when a pull found that another device had committed. A full snapshot
+   * pauses while it is set, because it is not merged; entities, maps and
+   * canvases merge. An unguarded push clears it.
    */
   foreignCommitSeen: z.boolean().optional(),
 });
