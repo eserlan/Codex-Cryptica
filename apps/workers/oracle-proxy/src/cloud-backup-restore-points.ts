@@ -385,7 +385,7 @@ export async function publishCommit(
     env,
     backupId,
     { committed, objects, base, shared: sharing !== undefined, assetIds },
-    releaseMutationLock,
+    releaseMutationLock ?? undefined,
   );
   return json(request, { manifest: committed });
 }
