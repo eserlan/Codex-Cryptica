@@ -1,4 +1,8 @@
-import type { AdventureSession, StateFact } from "@codex/adventure-engine";
+import type {
+  AdventureSession,
+  CommittedAdventureTurn,
+  StateFact,
+} from "@codex/adventure-engine";
 import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
 import {
   currentPlaceSelection,
@@ -79,6 +83,308 @@ function resolvePlaceIdForLocationName(
   return match?.id ?? session.currentPlaceId;
 }
 
+type ActiveCharEntry = {
+  fact: StateFact;
+  name: string;
+  lastShownSequence: number | null;
+};
+
+interface TurnNpcResolutionContext {
+  session: AdventureSession & ArtworkNpcSession & ArtworkPlaceSession;
+  activeVaultId: string;
+  entities: Readonly<Record<string, ArtworkNpcEntity>>;
+  enabled: boolean;
+  theme: string | undefined;
+  catalogue: readonly ArtworkAsset[];
+  assignedAssetByFactKey: Map<string, string>;
+  usedAssetIds: Set<string>;
+}
+
+function seedInitialActiveChars(
+  session: AdventureSession,
+  turns: readonly CommittedAdventureTurn[],
+): Map<string, ActiveCharEntry> {
+  const activeChars = new Map<string, ActiveCharEntry>();
+  const addedInTurns = new Set<string>();
+  for (const turn of turns) {
+    for (const char of turn.visiblePatch?.activeCharacters?.add ?? []) {
+      addedInTurns.add(char.id);
+    }
+  }
+  for (const fact of session.visibleState.activeCharacters ?? []) {
+    if (addedInTurns.has(fact.id)) continue;
+    activeChars.set(fact.id, {
+      fact,
+      name: extractFactLabel(fact),
+      lastShownSequence: null,
+    });
+  }
+  return activeChars;
+}
+
+function resolveTurnLocationName(
+  turn: CommittedAdventureTurn,
+  isFirstTurn: boolean,
+  session: AdventureSession,
+): string | undefined {
+  const patchLoc = turn.visiblePatch?.location;
+  if (patchLoc) return extractFactLabel(patchLoc);
+  if (isFirstTurn && session.visibleState.location) {
+    return extractFactLabel(session.visibleState.location);
+  }
+  return undefined;
+}
+
+function selectLocationArtwork(
+  locName: string | undefined,
+  ctx: TurnNpcResolutionContext,
+): TurnArtworkReveal["location"] | undefined {
+  const targetPlaceId = locName
+    ? resolvePlaceIdForLocationName(ctx.session, locName)
+    : ctx.session.currentPlaceId;
+  const selection = currentPlaceSelection(
+    { ...ctx.session, currentPlaceId: targetPlaceId },
+    ctx.activeVaultId,
+    ctx.entities,
+    ctx.enabled,
+    ctx.catalogue,
+    ctx.theme,
+  );
+  return selection ? { name: locName ?? "Scene", selection } : undefined;
+}
+
+function resolveLocationRevealForTurn(
+  turn: CommittedAdventureTurn,
+  isFirstTurn: boolean,
+  lastLocationKey: string | null,
+  ctx: TurnNpcResolutionContext,
+): { reveal?: TurnArtworkReveal["location"]; nextLocationKey: string | null } {
+  const patchLoc = turn.visiblePatch?.location;
+  const locName = resolveTurnLocationName(turn, isFirstTurn, ctx.session);
+  const locKey = locName?.trim().toLowerCase() ?? null;
+  if (!isFirstTurn && (!patchLoc || !locKey || locKey === lastLocationKey)) {
+    return { nextLocationKey: lastLocationKey };
+  }
+  return {
+    reveal: selectLocationArtwork(locName, ctx),
+    nextLocationKey: locKey ?? lastLocationKey,
+  };
+}
+
+function findPinnedNpcSelection(
+  npcSession: ArtworkNpcSession,
+  assignedAssetId: string | undefined,
+  ctx: TurnNpcResolutionContext,
+): NpcPortraitSelection | null {
+  if (!assignedAssetId) return null;
+  const pinnedAsset = ctx.catalogue.find(
+    (asset) => asset.id === assignedAssetId,
+  );
+  if (!pinnedAsset) return null;
+  return selectPresentNpcPortrait(
+    npcSession,
+    ctx.activeVaultId,
+    ctx.entities,
+    ctx.enabled,
+    ctx.theme,
+    [pinnedAsset],
+  );
+}
+
+function pickDiverseNpcSelection(
+  fact: StateFact,
+  overall: NpcPortraitSelection | null,
+  unused: NpcPortraitSelection | null,
+): NpcPortraitSelection | null {
+  if (unused?.kind !== "catalogue" || overall?.kind !== "catalogue") {
+    return overall ?? unused;
+  }
+  const factCues = new Set((fact.cues ?? []).map((cue) => cue.toLowerCase()));
+  if (factCues.size === 0) return unused;
+  const countOverlap = (cues: readonly string[]) =>
+    cues.filter((cue) => factCues.has(cue.toLowerCase())).length;
+  return countOverlap(unused.asset.primaryCues) >=
+    countOverlap(overall.asset.primaryCues)
+    ? unused
+    : overall;
+}
+
+function resolveNpcForTurn(
+  fact: StateFact,
+  ctx: TurnNpcResolutionContext,
+): NpcPortraitSelection | null {
+  const npcSession: ArtworkNpcSession = {
+    ...ctx.session,
+    visibleState: {
+      ...ctx.session.visibleState,
+      activeCharacters: [fact],
+    },
+  };
+  const factKey = extractFactLabel(fact).trim().toLowerCase() || fact.id;
+  const pinned = findPinnedNpcSelection(
+    npcSession,
+    ctx.assignedAssetByFactKey.get(factKey),
+    ctx,
+  );
+  if (pinned) return pinned;
+
+  const overall = selectPresentNpcPortrait(
+    npcSession,
+    ctx.activeVaultId,
+    ctx.entities,
+    ctx.enabled,
+    ctx.theme,
+    ctx.catalogue,
+  );
+  const unusedCatalogue = ctx.catalogue.filter(
+    (asset) => !ctx.usedAssetIds.has(asset.id),
+  );
+  const unused =
+    unusedCatalogue.length > 0
+      ? selectPresentNpcPortrait(
+          npcSession,
+          ctx.activeVaultId,
+          ctx.entities,
+          ctx.enabled,
+          ctx.theme,
+          unusedCatalogue,
+        )
+      : null;
+
+  const selection = pickDiverseNpcSelection(fact, overall, unused);
+  if (selection?.kind === "catalogue") {
+    ctx.assignedAssetByFactKey.set(factKey, selection.asset.id);
+    ctx.usedAssetIds.add(selection.asset.id);
+  }
+  return selection;
+}
+
+function addTurnCharacters(
+  chars: readonly StateFact[],
+  sequence: number,
+  activeChars: Map<string, ActiveCharEntry>,
+  ctx: TurnNpcResolutionContext,
+): { npcs: TurnNpcReveal[]; addedIds: Set<string> } {
+  const npcs: TurnNpcReveal[] = [];
+  const addedIds = new Set<string>();
+  for (const char of chars) {
+    addedIds.add(char.id);
+    const name = extractFactLabel(char);
+    activeChars.set(char.id, {
+      fact: char,
+      name,
+      lastShownSequence: sequence,
+    });
+    const selection = resolveNpcForTurn(char, ctx);
+    if (selection) {
+      npcs.push({
+        id: char.id,
+        name: selection.name || name,
+        reason: "entered",
+        selection,
+      });
+    }
+  }
+  return { npcs, addedIds };
+}
+
+function updateTurnCharacters(
+  chars: readonly StateFact[],
+  activeChars: Map<string, ActiveCharEntry>,
+): Set<string> {
+  const updatedIds = new Set<string>();
+  for (const char of chars) {
+    updatedIds.add(char.id);
+    const existing = activeChars.get(char.id);
+    const name = extractFactLabel(char);
+    if (existing) {
+      existing.fact = char;
+      existing.name = name;
+    } else {
+      activeChars.set(char.id, {
+        fact: char,
+        name,
+        lastShownSequence: null,
+      });
+    }
+  }
+  return updatedIds;
+}
+
+function applyTurnCharacterPatches(
+  turn: CommittedAdventureTurn,
+  activeChars: Map<string, ActiveCharEntry>,
+  ctx: TurnNpcResolutionContext,
+): {
+  npcs: TurnNpcReveal[];
+  addedIds: Set<string>;
+  updatedIds: Set<string>;
+} {
+  const charPatch = turn.visiblePatch?.activeCharacters;
+  for (const removedId of charPatch?.removeIds ?? []) {
+    activeChars.delete(removedId);
+  }
+  const { npcs, addedIds } = addTurnCharacters(
+    charPatch?.add ?? [],
+    turn.sequence,
+    activeChars,
+    ctx,
+  );
+  const updatedIds = updateTurnCharacters(charPatch?.update ?? [], activeChars);
+  return { npcs, addedIds, updatedIds };
+}
+
+function revealReasonForMentionedChar(
+  id: string,
+  entry: ActiveCharEntry,
+  turn: CommittedAdventureTurn,
+  updatedIds: Set<string>,
+  reintroduceAfterTurns: number,
+): "entered" | "reintroduced" | null {
+  const neverShown = entry.lastShownSequence === null;
+  const dueForReintro =
+    entry.lastShownSequence !== null &&
+    turn.sequence - entry.lastShownSequence >= reintroduceAfterTurns;
+  if (!neverShown && !dueForReintro) return null;
+
+  const mentioned =
+    updatedIds.has(id) ||
+    isCharacterMentionedInTurn(entry.name, turn.playerAction, turn.narration);
+  if (!mentioned) return null;
+  return neverShown ? "entered" : "reintroduced";
+}
+
+function collectMentionedNpcReveals(
+  turn: CommittedAdventureTurn,
+  activeChars: Map<string, ActiveCharEntry>,
+  addedIds: Set<string>,
+  updatedIds: Set<string>,
+  reintroduceAfterTurns: number,
+  ctx: TurnNpcResolutionContext,
+  npcs: TurnNpcReveal[],
+): void {
+  for (const [id, entry] of activeChars.entries()) {
+    if (addedIds.has(id)) continue;
+    const reason = revealReasonForMentionedChar(
+      id,
+      entry,
+      turn,
+      updatedIds,
+      reintroduceAfterTurns,
+    );
+    if (!reason) continue;
+    const selection = resolveNpcForTurn(entry.fact, ctx);
+    if (!selection) continue;
+    entry.lastShownSequence = turn.sequence;
+    npcs.push({
+      id,
+      name: selection.name || entry.name,
+      reason,
+      selection,
+    });
+  }
+}
+
 export function computeTurnArtworkReveals(
   options: ComputeTurnArtworkRevealsOptions,
 ): Map<number, TurnArtworkReveal> {
@@ -100,226 +406,49 @@ export function computeTurnArtworkReveals(
   const turns = [...(session.turns ?? [])].sort(
     (a, b) => a.sequence - b.sequence,
   );
-  if (turns.length === 0) {
-    return reveals;
-  }
+  if (turns.length === 0) return reveals;
 
   let lastLocationKey: string | null = null;
-  const assignedAssetByFactKey = new Map<string, string>();
-  const usedAssetIds = new Set<string>();
-  const activeChars = new Map<
-    string,
-    { fact: StateFact; name: string; lastShownSequence: number | null }
-  >();
-
-  const addedInTurns = new Set<string>();
-  for (const turn of turns) {
-    for (const char of turn.visiblePatch?.activeCharacters?.add ?? []) {
-      addedInTurns.add(char.id);
-    }
-  }
-  for (const fact of session.visibleState.activeCharacters ?? []) {
-    if (addedInTurns.has(fact.id)) continue;
-    activeChars.set(fact.id, {
-      fact,
-      name: extractFactLabel(fact),
-      lastShownSequence: null,
-    });
-  }
+  const activeChars = seedInitialActiveChars(session, turns);
+  const ctx: TurnNpcResolutionContext = {
+    session,
+    activeVaultId,
+    entities,
+    enabled,
+    theme,
+    catalogue,
+    assignedAssetByFactKey: new Map<string, string>(),
+    usedAssetIds: new Set<string>(),
+  };
 
   for (let i = 0; i < turns.length; i += 1) {
     const turn = turns[i]!;
-    let locationReveal: TurnArtworkReveal["location"];
+    const loc = resolveLocationRevealForTurn(
+      turn,
+      i === 0,
+      lastLocationKey,
+      ctx,
+    );
+    lastLocationKey = loc.nextLocationKey;
 
-    const patchLoc = turn.visiblePatch?.location;
-    const locName =
-      (patchLoc ? extractFactLabel(patchLoc) : undefined) ??
-      (i === 0 && session.visibleState.location
-        ? extractFactLabel(session.visibleState.location)
-        : undefined);
-    const locKey = locName?.trim().toLowerCase() ?? null;
+    const { npcs, addedIds, updatedIds } = applyTurnCharacterPatches(
+      turn,
+      activeChars,
+      ctx,
+    );
+    collectMentionedNpcReveals(
+      turn,
+      activeChars,
+      addedIds,
+      updatedIds,
+      reintroduceAfterTurns,
+      ctx,
+      npcs,
+    );
 
-    if (i === 0 || (patchLoc && locKey && locKey !== lastLocationKey)) {
-      const targetPlaceId = locName
-        ? resolvePlaceIdForLocationName(session, locName)
-        : session.currentPlaceId;
-      const placeSession: ArtworkPlaceSession = {
-        ...session,
-        currentPlaceId: targetPlaceId,
-      };
-      const selection = currentPlaceSelection(
-        placeSession,
-        activeVaultId,
-        entities,
-        enabled,
-        catalogue,
-        theme,
-      );
-      if (selection) {
-        locationReveal = {
-          name: locName ?? "Scene",
-          selection,
-        };
-      }
-      if (locKey) {
-        lastLocationKey = locKey;
-      }
-    }
-
-    const npcs: TurnNpcReveal[] = [];
-    const charPatch = turn.visiblePatch?.activeCharacters;
-    for (const removedId of charPatch?.removeIds ?? []) {
-      activeChars.delete(removedId);
-    }
-
-    const addedIds = new Set<string>();
-    const updatedIds = new Set<string>();
-
-    const resolveNpc = (fact: StateFact): NpcPortraitSelection | null => {
-      const npcSession: ArtworkNpcSession = {
-        ...session,
-        visibleState: {
-          ...session.visibleState,
-          activeCharacters: [fact],
-        },
-      };
-      const factKey = extractFactLabel(fact).trim().toLowerCase() || fact.id;
-      const assignedAssetId = assignedAssetByFactKey.get(factKey);
-      if (assignedAssetId) {
-        const pinnedAsset = catalogue.find(
-          (asset) => asset.id === assignedAssetId,
-        );
-        if (pinnedAsset) {
-          const pinnedSelection = selectPresentNpcPortrait(
-            npcSession,
-            activeVaultId,
-            entities,
-            enabled,
-            theme,
-            [pinnedAsset],
-          );
-          if (pinnedSelection) return pinnedSelection;
-        }
-      }
-
-      const overallSelection = selectPresentNpcPortrait(
-        npcSession,
-        activeVaultId,
-        entities,
-        enabled,
-        theme,
-        catalogue,
-      );
-      const unusedCatalogue = catalogue.filter(
-        (asset) => !usedAssetIds.has(asset.id),
-      );
-      const unusedSelection =
-        unusedCatalogue.length > 0
-          ? selectPresentNpcPortrait(
-              npcSession,
-              activeVaultId,
-              entities,
-              enabled,
-              theme,
-              unusedCatalogue,
-            )
-          : null;
-
-      let selection = overallSelection;
-      if (
-        unusedSelection?.kind === "catalogue" &&
-        overallSelection?.kind === "catalogue"
-      ) {
-        const factCues = new Set(
-          (fact.cues ?? []).map((cue) => cue.toLowerCase()),
-        );
-        const countOverlap = (cues: readonly string[]) =>
-          cues.filter((cue) => factCues.has(cue.toLowerCase())).length;
-        if (
-          factCues.size === 0 ||
-          countOverlap(unusedSelection.asset.primaryCues) >=
-            countOverlap(overallSelection.asset.primaryCues)
-        ) {
-          selection = unusedSelection;
-        }
-      } else if (unusedSelection && !overallSelection) {
-        selection = unusedSelection;
-      }
-
-      if (selection?.kind === "catalogue") {
-        assignedAssetByFactKey.set(factKey, selection.asset.id);
-        usedAssetIds.add(selection.asset.id);
-      }
-      return selection;
-    };
-
-    for (const char of charPatch?.add ?? []) {
-      addedIds.add(char.id);
-      const name = extractFactLabel(char);
-      activeChars.set(char.id, {
-        fact: char,
-        name,
-        lastShownSequence: turn.sequence,
-      });
-      const selection = resolveNpc(char);
-      if (selection) {
-        npcs.push({
-          id: char.id,
-          name: selection.name || name,
-          reason: "entered",
-          selection,
-        });
-      }
-    }
-
-    for (const char of charPatch?.update ?? []) {
-      updatedIds.add(char.id);
-      const existing = activeChars.get(char.id);
-      const name = extractFactLabel(char);
-      if (existing) {
-        existing.fact = char;
-        existing.name = name;
-      } else {
-        activeChars.set(char.id, {
-          fact: char,
-          name,
-          lastShownSequence: null,
-        });
-      }
-    }
-
-    for (const [id, entry] of activeChars.entries()) {
-      if (addedIds.has(id)) continue;
-      const neverShown = entry.lastShownSequence === null;
-      const dueForReintro =
-        entry.lastShownSequence !== null &&
-        turn.sequence - entry.lastShownSequence >= reintroduceAfterTurns;
-      if (!neverShown && !dueForReintro) {
-        continue;
-      }
-      const mentioned =
-        updatedIds.has(id) ||
-        isCharacterMentionedInTurn(
-          entry.name,
-          turn.playerAction,
-          turn.narration,
-        );
-      if (!mentioned) continue;
-      const selection = resolveNpc(entry.fact);
-      if (selection) {
-        entry.lastShownSequence = turn.sequence;
-        npcs.push({
-          id,
-          name: selection.name || entry.name,
-          reason: neverShown ? "entered" : "reintroduced",
-          selection,
-        });
-      }
-    }
-
-    if (locationReveal || npcs.length > 0) {
+    if (loc.reveal || npcs.length > 0) {
       reveals.set(turn.sequence, {
-        ...(locationReveal ? { location: locationReveal } : {}),
+        ...(loc.reveal ? { location: loc.reveal } : {}),
         npcs,
       });
     }

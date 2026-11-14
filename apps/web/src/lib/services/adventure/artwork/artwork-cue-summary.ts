@@ -1,4 +1,4 @@
-import { isHere, type Place, type StateFact } from "@codex/adventure-engine";
+import { type Place, type StateFact } from "@codex/adventure-engine";
 import {
   matchArtwork,
   type ArtworkAsset,
@@ -13,7 +13,10 @@ import {
   type ArtworkPlaceEntity,
   type ArtworkPlaceSession,
 } from "./current-place-selection";
-import type { ArtworkNpcSession } from "./npc-portrait-selection";
+import {
+  filterHereCharacters,
+  type ArtworkNpcSession,
+} from "./npc-portrait-selection";
 
 export interface ArtworkCueIndicator {
   genre: string;
@@ -35,6 +38,40 @@ type CueSession = ArtworkPlaceSession &
   };
 
 /** Summarize active place/NPC artwork cues and whether the catalogue matched them. */
+function resolvePlaceCueMatch(
+  placeSelected: ReturnType<typeof currentPlaceSelection>,
+  placeCues: ReturnType<typeof describeVisiblePlace>,
+  catalogue: readonly ArtworkAsset[],
+): string | null {
+  if (placeSelected?.kind === "catalogue") return placeSelected.asset.id;
+  if (placeSelected) return `${placeSelected.kind}:${placeSelected.image}`;
+  return placeCues ? (matchArtwork(catalogue, placeCues)?.id ?? null) : null;
+}
+
+function summarizeNpcFact(
+  fact: StateFact,
+  theme: string | undefined,
+  catalogue: readonly ArtworkAsset[],
+): { name: string; cues: readonly string[]; match: string | null } {
+  const name = fact.text.split(/[.,:—–-]/, 1)[0]?.trim() || fact.text;
+  const cues = describeVisiblePerson(
+    {
+      id: fact.id,
+      name,
+      aliases: [],
+      ...(fact.sourceRecordId ? { sourceRecordId: fact.sourceRecordId } : {}),
+    },
+    theme,
+    { facts: [fact.text, ...(fact.cues ?? [])] },
+  );
+  const matched = cues ? (matchArtwork(catalogue, cues)?.id ?? null) : null;
+  return {
+    name,
+    cues: cues?.primaryCues ?? [],
+    match: matched,
+  };
+}
+
 export function summarizeArtworkCues(
   session: CueSession | null,
   activeVaultId: string | null | undefined,
@@ -56,42 +93,7 @@ export function summarizeArtworkCues(
     catalogue,
     theme,
   );
-  const placeMatched =
-    placeSelected?.kind === "catalogue"
-      ? placeSelected.asset.id
-      : placeSelected
-        ? `${placeSelected.kind}:${placeSelected.image}`
-        : placeCues
-          ? (matchArtwork(catalogue, placeCues)?.id ?? null)
-          : null;
-
-  const placeScope = {
-    currentPlaceId: session.currentPlaceId,
-    places: session.places ? [...session.places] : undefined,
-  };
-  const hereCharacters: readonly StateFact[] = (
-    session.visibleState?.activeCharacters ?? []
-  ).filter((fact) => isHere(fact, placeScope));
-
-  const npcs = hereCharacters.map((fact) => {
-    const name = fact.text.split(/[.,:—–-]/, 1)[0]?.trim() || fact.text;
-    const cues = describeVisiblePerson(
-      {
-        id: fact.id,
-        name,
-        aliases: [],
-        ...(fact.sourceRecordId ? { sourceRecordId: fact.sourceRecordId } : {}),
-      },
-      theme,
-      { facts: [fact.text, ...(fact.cues ?? [])] },
-    );
-    const matched = cues ? (matchArtwork(catalogue, cues)?.id ?? null) : null;
-    return {
-      name,
-      cues: cues?.primaryCues ?? [],
-      match: matched,
-    };
-  });
+  const { hereCharacters } = filterHereCharacters(session);
 
   return {
     genre,
@@ -99,9 +101,11 @@ export function summarizeArtworkCues(
       ? {
           name: place.name,
           cues: placeCues?.primaryCues ?? [],
-          match: placeMatched,
+          match: resolvePlaceCueMatch(placeSelected, placeCues, catalogue),
         }
       : null,
-    npcs,
+    npcs: hereCharacters.map((fact) =>
+      summarizeNpcFact(fact, theme, catalogue),
+    ),
   };
 }

@@ -140,6 +140,40 @@ function selectPersonPortrait(
   };
 }
 
+export function filterHereCharacters(
+  session: Pick<
+    ArtworkNpcSession,
+    "currentPlaceId" | "places" | "visibleState"
+  >,
+): {
+  placeScope: { currentPlaceId?: string; places?: Place[] };
+  hereCharacters: readonly StateFact[];
+} {
+  const placeScope = {
+    currentPlaceId: session.currentPlaceId,
+    places: session.places ? [...session.places] : undefined,
+  };
+  const hereCharacters = (session.visibleState?.activeCharacters ?? []).filter(
+    (fact) => isHere(fact, placeScope),
+  );
+  return { placeScope, hereCharacters };
+}
+
+function toNpcPerson(
+  fact: StateFact,
+  people: readonly AdventurePerson[],
+): AdventurePerson {
+  return (
+    findMatchingPerson(fact, people) ?? {
+      id: fact.id,
+      name: fact.text.split(/[.,:—–-]/, 1)[0]?.trim() || fact.text,
+      aliases: [],
+      linkedFactIds: [fact.id],
+      ...(fact.sourceRecordId ? { sourceRecordId: fact.sourceRecordId } : {}),
+    }
+  );
+}
+
 /** Resolve a portrait for the first active, player-visible NPC in the current scene. */
 export function selectPresentNpcPortrait(
   session: ArtworkNpcSession | null,
@@ -151,27 +185,14 @@ export function selectPresentNpcPortrait(
 ): NpcPortraitSelection | null {
   if (!enabled || !session || session.vaultId !== activeVaultId) return null;
   const people = session.people ?? [];
-  const placeScope = {
-    currentPlaceId: session.currentPlaceId,
-    places: session.places ? [...session.places] : undefined,
-  };
-  const hereCharacters = (session.visibleState?.activeCharacters ?? []).filter(
-    (fact) => isHere(fact, placeScope),
-  );
+  const { placeScope, hereCharacters } = filterHereCharacters(session);
   if (hereCharacters.length === 0) return null;
   const hereFacts = (session.visibleState?.knownFacts ?? []).filter((fact) =>
     isHere(fact, placeScope),
   );
   const seen = new Set<string>();
   for (const fact of hereCharacters) {
-    const matched = findMatchingPerson(fact, people);
-    const person: AdventurePerson = matched ?? {
-      id: fact.id,
-      name: fact.text.split(/[.,:—–-]/, 1)[0]?.trim() || fact.text,
-      aliases: [],
-      linkedFactIds: [fact.id],
-      ...(fact.sourceRecordId ? { sourceRecordId: fact.sourceRecordId } : {}),
-    };
+    const person = toNpcPerson(fact, people);
     if (seen.has(person.id)) continue;
     seen.add(person.id);
     const entityState = resolvePersonEntity(person, entities);

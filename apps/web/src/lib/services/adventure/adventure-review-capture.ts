@@ -376,6 +376,17 @@ function diagnosticState(session: AdventureSession) {
   };
 }
 
+function resolveDiagnosticCutoff(
+  session: AdventureSession,
+  options: AdventureDiagnosticOptions,
+): number {
+  const recent = Math.max(
+    0,
+    options.recentTurns ?? DEFAULT_DIAGNOSTIC_RECENT_TURNS,
+  );
+  return Math.max(0, session.turns.length - recent);
+}
+
 /**
  * Compact, LLM-oriented JSON snapshot. Keeps the current state in full, the
  * latest turns in full and older turns as action, narration and time only, so
@@ -386,11 +397,7 @@ export function adventureDiagnosticJson(
   session: AdventureSession,
   options: AdventureDiagnosticOptions = {},
 ): string {
-  const recent = Math.max(
-    0,
-    options.recentTurns ?? DEFAULT_DIAGNOSTIC_RECENT_TURNS,
-  );
-  const cutoff = Math.max(0, session.turns.length - recent);
+  const cutoff = resolveDiagnosticCutoff(session, options);
   const lastTurn = session.turns.at(-1);
 
   return JSON.stringify(
@@ -463,6 +470,20 @@ function diffObjectFields(
   return Object.keys(diff).length > 0 ? diff : undefined;
 }
 
+function diffOptionalObjectField(
+  prev: unknown,
+  next: unknown,
+  idArrayKeys: Set<string>,
+): unknown {
+  if (jsonEqual(prev, next)) return undefined;
+  if (!prev || !next) return next;
+  return diffObjectFields(
+    prev as Record<string, unknown>,
+    next as Record<string, unknown>,
+    idArrayKeys,
+  );
+}
+
 function diffDiagnosticState(
   prev: ReturnType<typeof diagnosticState>,
   next: ReturnType<typeof diagnosticState>,
@@ -477,44 +498,35 @@ function diffDiagnosticState(
     if (arrayDiff) changes[key] = arrayDiff;
   }
 
-  const visibleDiff = diffObjectFields(
-    prev.visibleState as unknown as Record<string, unknown>,
-    next.visibleState as unknown as Record<string, unknown>,
-    new Set(["objectives", "activeCharacters", "knownFacts", "relationships"]),
-  );
-  if (visibleDiff) changes.visibleState = visibleDiff;
-
-  const hiddenDiff = diffObjectFields(
-    prev.hiddenState as unknown as Record<string, unknown>,
-    next.hiddenState as unknown as Record<string, unknown>,
-    new Set(["secrets", "gmThreads"]),
-  );
-  if (hiddenDiff) changes.hiddenState = hiddenDiff;
-
-  if (!jsonEqual(prev.scenarioCollection, next.scenarioCollection)) {
-    if (!prev.scenarioCollection || !next.scenarioCollection) {
-      changes.scenarioCollection = next.scenarioCollection;
-    } else {
-      const scenarioDiff = diffObjectFields(
-        prev.scenarioCollection as unknown as Record<string, unknown>,
-        next.scenarioCollection as unknown as Record<string, unknown>,
-        new Set(["items"]),
-      );
-      if (scenarioDiff) changes.scenarioCollection = scenarioDiff;
-    }
-  }
-
-  if (!jsonEqual(prev.worldTime, next.worldTime)) {
-    if (!prev.worldTime || !next.worldTime) {
-      changes.worldTime = next.worldTime;
-    } else {
-      const timeDiff = diffObjectFields(
-        prev.worldTime as unknown as Record<string, unknown>,
-        next.worldTime as unknown as Record<string, unknown>,
-        new Set(["events"]),
-      );
-      if (timeDiff) changes.worldTime = timeDiff;
-    }
+  const nestedSpecs: Array<{
+    key: "visibleState" | "hiddenState" | "scenarioCollection" | "worldTime";
+    idArrayKeys: Set<string>;
+  }> = [
+    {
+      key: "visibleState",
+      idArrayKeys: new Set([
+        "objectives",
+        "activeCharacters",
+        "knownFacts",
+        "relationships",
+      ]),
+    },
+    {
+      key: "hiddenState",
+      idArrayKeys: new Set(["secrets", "gmThreads"]),
+    },
+    {
+      key: "scenarioCollection",
+      idArrayKeys: new Set(["items"]),
+    },
+    {
+      key: "worldTime",
+      idArrayKeys: new Set(["events"]),
+    },
+  ];
+  for (const { key, idArrayKeys } of nestedSpecs) {
+    const diff = diffOptionalObjectField(prev[key], next[key], idArrayKeys);
+    if (diff !== undefined) changes[key] = diff;
   }
 
   const scalarKeys = [
@@ -554,11 +566,7 @@ export function adventureDiagnosticDeltaJson(
   baseline: DiagnosticBaseline,
   options: AdventureDiagnosticOptions = {},
 ): string {
-  const recent = Math.max(
-    0,
-    options.recentTurns ?? DEFAULT_DIAGNOSTIC_RECENT_TURNS,
-  );
-  const cutoff = Math.max(0, session.turns.length - recent);
+  const cutoff = resolveDiagnosticCutoff(session, options);
   const lastTurn = session.turns.at(-1);
   const fromTurnCount = Math.min(baseline.turnCount, session.turns.length);
   const newTurns = diagnosticTurns(session, fromTurnCount).slice(fromTurnCount);

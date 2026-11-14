@@ -140,7 +140,68 @@
 
   const buttonClass =
     "min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50";
+
+  const copyButtons = $derived([
+    { mode: "markdown" as const, label: "Copy Markdown", title: undefined },
+    { mode: "json" as const, label: "Copy JSON", title: undefined },
+    {
+      mode: "diagnostic" as const,
+      label: "Copy JSON for AI",
+      title: hasBaseline
+        ? "Delta since the last AI copy (only new turns and changed state)."
+        : "Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat.",
+    },
+    ...(hasBaseline
+      ? [
+          {
+            mode: "diagnostic-full" as const,
+            label: "Copy full JSON for AI",
+            title:
+              "Copy the full compact JSON snapshot and reset the delta baseline.",
+          },
+        ]
+      : []),
+  ]);
+  function scenarioButtons(status: "open" | "resolved" | "abandoned") {
+    if (status === "open") {
+      return [
+        { next: "resolved" as const, label: "Mark as concluded" },
+        { next: "abandoned" as const, label: "Leave it behind" },
+      ];
+    }
+    return [{ next: "open" as const, label: "Reopen" }];
+  }
 </script>
+
+{#snippet scenarioSection()}
+  {#if scenarios.length > 0}
+    <ul class="space-y-2">
+      {#each scenarios as item (item.id)}
+        <li
+          class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-theme-border p-2"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-theme-text">
+              {item.playerVisible.lead}
+            </p>
+            <p class="text-xs text-theme-text">{STATUS_LABEL[item.status]}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            {#each scenarioButtons(item.status) as act (act.next)}
+              <button
+                type="button"
+                class={buttonClass}
+                disabled={locked}
+                onclick={() => void change(item.id, act.next)}
+                >{act.label}</button
+              >
+            {/each}
+          </div>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+{/snippet}
 
 {#if manager.session}
   <section
@@ -231,82 +292,19 @@
         Copying stays on this device until you paste it elsewhere.
       </p>
       <div class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={copyBusy}
-          onclick={() => void copySession("markdown")}>Copy Markdown</button
-        >
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={copyBusy}
-          onclick={() => void copySession("json")}>Copy JSON</button
-        >
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={copyBusy}
-          title={hasBaseline
-            ? "Delta since the last AI copy (only new turns and changed state)."
-            : "Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat."}
-          onclick={() => void copySession("diagnostic")}
-          >Copy JSON for AI</button
-        >
-        {#if hasBaseline}
+        {#each copyButtons as btn (btn.mode)}
           <button
             type="button"
             class={buttonClass}
             disabled={copyBusy}
-            title="Copy the full compact JSON snapshot and reset the delta baseline."
-            onclick={() => void copySession("diagnostic-full")}
-            >Copy full JSON for AI</button
+            title={btn.title}
+            onclick={() => void copySession(btn.mode)}>{btn.label}</button
           >
-        {/if}
+        {/each}
       </div>
     </div>
 
-    {#if scenarios.length > 0}
-      <ul class="space-y-2">
-        {#each scenarios as item (item.id)}
-          <li
-            class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-theme-border p-2"
-          >
-            <div class="min-w-0">
-              <p class="text-sm font-medium text-theme-text">
-                {item.playerVisible.lead}
-              </p>
-              <p class="text-xs text-theme-text">{STATUS_LABEL[item.status]}</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              {#if item.status === "open"}
-                <button
-                  type="button"
-                  class={buttonClass}
-                  disabled={locked}
-                  onclick={() => void change(item.id, "resolved")}
-                  >Mark as concluded</button
-                >
-                <button
-                  type="button"
-                  class={buttonClass}
-                  disabled={locked}
-                  onclick={() => void change(item.id, "abandoned")}
-                  >Leave it behind</button
-                >
-              {:else}
-                <button
-                  type="button"
-                  class={buttonClass}
-                  disabled={locked}
-                  onclick={() => void change(item.id, "open")}>Reopen</button
-                >
-              {/if}
-            </div>
-          </li>
-        {/each}
-      </ul>
-    {/if}
+    {@render scenarioSection()}
     {#if error}
       <p role="alert" class="text-sm text-theme-danger">{error}</p>
     {/if}

@@ -84,13 +84,13 @@ describe("AdventureArtworkLightbox", () => {
 
     render(AdventureArtworkLightbox, { props: { controller } });
     controller.open(item);
-    await Promise.resolve();
-    await Promise.resolve();
 
-    expect(loadFull).toHaveBeenCalledTimes(1);
-    expect(
-      screen.getByAltText("Stone bridge over a river").getAttribute("src"),
-    ).toBe("blob:scene-full");
+    await vi.waitFor(() => {
+      expect(loadFull).toHaveBeenCalledTimes(1);
+      expect(
+        screen.getByAltText("Stone bridge over a river").getAttribute("src"),
+      ).toBe("blob:scene-full");
+    });
 
     await fireEvent.keyDown(window, { key: "Escape" });
     await Promise.resolve();

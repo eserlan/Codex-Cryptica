@@ -88,6 +88,28 @@
       catalogue,
     ),
   );
+
+  const cueHeaderText = $derived.by(() => {
+    if (!cueSummary) return "";
+    const parts = [`Artwork tags (${cueSummary.genre}):`];
+    if (cueSummary.place) {
+      const tags = cueSummary.place.cues.length
+        ? cueSummary.place.cues.join(", ")
+        : "no place tags";
+      parts.push(`${tags} (${cueSummary.place.match ?? "unmatched"})`);
+    }
+    if (cueSummary.npcs.length > 0) {
+      const suffix = cueSummary.npcs.length === 1 ? "" : "s";
+      parts.push(`· ${cueSummary.npcs.length} NPC${suffix}`);
+    }
+    return parts.join(" ");
+  });
+
+  function formatCueLine(cues: readonly string[], match: string | null) {
+    const tagText = cues.length ? cues.join(", ") : "none";
+    const matchText = match ?? "no matching image";
+    return `${tagText} — ${matchText}`;
+  }
 </script>
 
 <AdventureCurrentArtwork
@@ -127,20 +149,7 @@
     <summary class="flex cursor-pointer items-center gap-1.5 select-none">
       <span class="icon-[lucide--tag] h-3.5 w-3.5 shrink-0" aria-hidden="true"
       ></span>
-      <span class="truncate">
-        Artwork tags ({cueSummary.genre}):
-        {#if cueSummary.place}
-          {cueSummary.place.cues.length
-            ? cueSummary.place.cues.join(", ")
-            : "no place tags"}
-          ({cueSummary.place.match ?? "unmatched"})
-        {/if}
-        {#if cueSummary.npcs.length > 0}
-          · {cueSummary.npcs.length} NPC{cueSummary.npcs.length === 1
-            ? ""
-            : "s"}
-        {/if}
-      </span>
+      <span class="truncate">{cueHeaderText}</span>
     </summary>
     <div
       class="mt-1.5 space-y-1 border-t border-theme-border pt-1.5 text-theme-text"
@@ -148,18 +157,13 @@
       {#if cueSummary.place}
         <p>
           <span class="font-medium">Place ({cueSummary.place.name}):</span>
-          {cueSummary.place.cues.length
-            ? cueSummary.place.cues.join(", ")
-            : "none"}
-          —
-          <span>{cueSummary.place.match ?? "no matching image"}</span>
+          {formatCueLine(cueSummary.place.cues, cueSummary.place.match)}
         </p>
       {/if}
       {#each cueSummary.npcs as npc (npc.name)}
         <p>
           <span class="font-medium">NPC ({npc.name}):</span>
-          {npc.cues.length ? npc.cues.join(", ") : "none"} —
-          <span>{npc.match ?? "no matching image"}</span>
+          {formatCueLine(npc.cues, npc.match)}
         </p>
       {/each}
     </div>
