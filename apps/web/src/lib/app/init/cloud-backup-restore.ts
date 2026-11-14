@@ -89,8 +89,15 @@ export function createCloudBackupRestore(): NonNullable<
      * be destroyed by the conversion. A backup is a copy, so the bytes go
      * back byte-for-byte where they were.
      */
-    importAsset: async (path: string, bytes: Uint8Array, mimeType: string) => {
-      const root = await vault.getActiveVaultHandle();
+    importAsset: async (
+      path: string,
+      bytes: Uint8Array,
+      mimeType: string,
+      vaultId?: string,
+    ) => {
+      const root = vaultId
+        ? await vault.getSpecificVaultHandle(vaultId)
+        : await vault.getActiveVaultHandle();
       if (!root) throw new Error("No vault is open to restore into.");
       const segments = path.split("/").filter(Boolean);
       if (segments.length === 0) return;
@@ -100,7 +107,7 @@ export function createCloudBackupRestore(): NonNullable<
         segments,
         new Blob([bytes as unknown as BlobPart], { type: mimeType }),
         root,
-        vault.activeVaultId ?? undefined,
+        vaultId ?? vault.activeVaultId ?? undefined,
       );
     },
   };

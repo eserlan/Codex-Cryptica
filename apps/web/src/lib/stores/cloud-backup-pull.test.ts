@@ -15,6 +15,7 @@ import {
   memoryDirtyStorage,
 } from "./cloud-backup-dirty";
 import { CloudBackupBaseStore, memoryBaseStorage } from "./cloud-backup-base";
+import type { CloudBackupRemoteDeps } from "./cloud-backup-types";
 
 type Reply = { ok: boolean; status: number; body: unknown };
 type Entity = { id: string; title: string; [key: string]: unknown };
@@ -57,11 +58,13 @@ async function setup(
   recordOverrides: Record<string, unknown> = {},
   extraDeps: Record<string, unknown> = {},
 ) {
+  const { remote: remoteOverrides, ...dependencyOverrides } = extraDeps;
   const calls: { tail: string; method: string }[] = [];
   const local = new Map<string, Entity>();
   const editing = new Set<string>();
   const released = new Set<() => void>();
   const writes: string[] = [];
+  let activeVaultId = "v-1";
   let copies = 0;
   const storage = createMemoryStorage();
   await storage.write("v-1", {
@@ -102,7 +105,7 @@ async function setup(
       }) as never,
     },
     buildPayload: async () => ({ vaultTitle: "T", bundle: { entities: [] } }),
-    activeVaultId: () => "v-1",
+    activeVaultId: () => activeVaultId,
     dirty,
     base,
     debounceMs: 20,
@@ -116,13 +119,13 @@ async function setup(
       assetIds: [],
     }),
     remote: {
-      readLocal: async (ids: readonly string[] | null) =>
+      readLocal: async (_vaultId: string, ids: readonly string[] | null) =>
         Object.fromEntries(
           [...local]
             .filter(([id]) => !ids || ids.includes(id))
             .map(([id, entity]) => [id, structuredClone(entity)]),
         ),
-      apply: async ({ updates, creates, deletes }: any) => {
+      apply: async (_vaultId: string, { updates, creates, deletes }: any) => {
         for (const entity of [...updates, ...creates]) {
           local.set(entity.id, entity);
           writes.push(entity.id);
@@ -130,6 +133,7 @@ async function setup(
         for (const id of deletes) local.delete(id);
       },
       ensureAssets: async () => ({}),
+      ...(remoteOverrides as Partial<CloudBackupRemoteDeps> | undefined),
       isEditing: (id: string) => editing.has(id),
       onEditingReleased: (listener: () => void) => {
         released.add(listener);
@@ -137,7 +141,7 @@ async function setup(
       },
       newId: () => `copy-${++copies}`,
     },
-    ...extraDeps,
+    ...dependencyOverrides,
   } as never);
   const start = async () => {
     await store.hydrate("v-1");
@@ -159,6 +163,9 @@ async function setup(
     count,
     record,
     storage,
+    setActiveVault: (vaultId: string) => {
+      activeVaultId = vaultId;
+    },
   };
 }
 
@@ -256,6 +263,32 @@ describe("pull, merge and retry", () => {
     expect(await h.base.get("v-1", "r1")).toMatchObject({
       title: "From bundle",
     });
+  });
+
+  it("does not apply a feed when the active vault changes during asset fetch", async () => {
+    let handle: Awaited<ReturnType<typeof setup>>;
+    const h = (handle = await setup(
+      {
+        changes: [
+          feed(2, [e("remote", "Remote", { image: "images/remote.png" })]),
+        ],
+      },
+      {},
+      {
+        remote: {
+          ensureAssets: async () => {
+            handle.setActiveVault("v-2");
+            return {};
+          },
+        },
+      },
+    ));
+
+    await h.start();
+
+    expect(h.writes).toEqual([]);
+    expect(h.local.has("remote")).toBe(false);
+    expect(await h.base.get("v-1", "remote")).toBeUndefined();
   });
 
   it("makes no request while offline, and one after coming online", async () => {

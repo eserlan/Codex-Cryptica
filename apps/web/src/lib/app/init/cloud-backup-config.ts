@@ -183,8 +183,10 @@ const MIME_BY_EXTENSION: Record<string, string> = {
 
 /** Plain JSON copy of an entity in the form the delta builder uploads. */
 async function readLocalForMerge(
+  vaultId: string,
   ids: readonly string[] | null,
 ): Promise<Record<string, MergeEntity>> {
+  assertActiveVault(vaultId);
   const local: Record<string, MergeEntity> = {};
   for (const id of ids ?? Object.keys(vault.entities ?? {})) {
     const current = vault.entities?.[id];
@@ -194,12 +196,17 @@ async function readLocalForMerge(
     const full = vault.isContentLoaded(id)
       ? current
       : await vault.readFullEntity(id);
+    assertActiveVault(vaultId);
     if (!full) throw new Error(`Could not read ${id} for the merge.`);
     local[id] = JSON.parse(
       JSON.stringify(omitArtworkForBackup(full as never)),
     ) as MergeEntity;
   }
   return local;
+}
+
+function assertActiveVault(vaultId: string): void {
+  if (vault.activeVaultId !== vaultId) throw new Error("The vault changed.");
 }
 
 /** The fields to write for a merged entity; fields it lacks are removed. */
@@ -217,26 +224,32 @@ function mergedFields(merged: MergeEntity): Record<string, unknown> {
 
 const applyPulledChanges: NonNullable<
   NonNullable<CloudBackupDeps["remote"]>["apply"]
-> = async ({ updates, creates, deletes }) => {
+> = async (vaultId, { updates, creates, deletes }) => {
   for (const merged of updates) {
+    assertActiveVault(vaultId);
     const done = await vault.updateEntity(merged.id, mergedFields(merged));
+    assertActiveVault(vaultId);
     if (!done) throw new Error(`Could not update ${merged.id}.`);
   }
   if (creates.length > 0) {
+    assertActiveVault(vaultId);
     await vault.batchCreateEntities(
       creates.map(({ _path: _omitted, ...entity }) => entity as never),
     );
+    assertActiveVault(vaultId);
   }
   if (deletes.length > 0) {
+    assertActiveVault(vaultId);
     const result = await vault.bulkDelete(deletes);
+    assertActiveVault(vaultId);
     if (result.failedIds.length > 0) {
       throw new Error("Could not delete every removed entity.");
     }
   }
 };
 
-async function vaultHasFile(path: string): Promise<boolean> {
-  const root = await vault.getActiveVaultHandle();
+async function vaultHasFile(vaultId: string, path: string): Promise<boolean> {
+  const root = await vault.getSpecificVaultHandle(vaultId);
   if (!root) return false;
   try {
     await readOpfsBlob(path.split("/").filter(Boolean), root);
@@ -266,6 +279,7 @@ function pulledImagePaths(entities: readonly MergeEntity[]): string[] {
 
 /** Stores one downloaded image; returns its SHA-256 by asset id. */
 async function storePulledImage(
+  vaultId: string,
   path: string,
   bytes: Uint8Array,
 ): Promise<[string, string]> {
@@ -274,20 +288,25 @@ async function storePulledImage(
     path,
     bytes,
     MIME_BY_EXTENSION[extension] ?? "application/octet-stream",
+    vaultId,
   );
   return [assetIdForPath(path), await sha256Hex(bytes)];
 }
 
 const ensurePulledAssets: NonNullable<
   NonNullable<CloudBackupDeps["remote"]>["ensureAssets"]
-> = async (entities, download) => {
+> = async (vaultId, entities, download) => {
   const hashes: Record<string, string> = {};
   for (const path of pulledImagePaths(entities)) {
     try {
-      if (await vaultHasFile(path)) continue;
+      assertActiveVault(vaultId);
+      if (await vaultHasFile(vaultId, path)) continue;
+      assertActiveVault(vaultId);
       const bytes = await download(assetIdForPath(path));
+      assertActiveVault(vaultId);
       if (!bytes) continue;
-      const [assetId, hash] = await storePulledImage(path, bytes);
+      const [assetId, hash] = await storePulledImage(vaultId, path, bytes);
+      assertActiveVault(vaultId);
       hashes[assetId] = hash;
     } catch (error) {
       console.warn("[CloudBackup] Could not store a pulled image", error);

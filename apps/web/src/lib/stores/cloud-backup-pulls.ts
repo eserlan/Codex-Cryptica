@@ -240,7 +240,9 @@ export class CloudBackupPulls {
     resync: boolean,
   ): Promise<{ mine: MergeSide; base: MergeSide }> {
     const { remote, base } = this.deps!;
-    const mine = await remote!.readLocal(resync ? null : ids);
+    const mine = await remote!.readLocal(vaultId, resync ? null : ids);
+    if (this.deps?.activeVaultId() !== vaultId)
+      throw new Error("The vault changed.");
     const rows = resync
       ? await base!.list(vaultId)
       : await Promise.all(
@@ -288,7 +290,9 @@ export class CloudBackupPulls {
       ...plan.changes.updates,
       ...plan.changes.creates,
     ]);
-    await remote!.apply(plan.changes);
+    if (activeVaultId() !== vaultId) throw new Error("The vault changed.");
+    await remote!.apply(vaultId, plan.changes);
+    if (activeVaultId() !== vaultId) throw new Error("The vault changed.");
 
     if (resync) await base!.replaceVault(vaultId, [...entities, ...heldBase]);
     else await base!.recordSent(vaultId, entities, tombstoneIds);
@@ -306,6 +310,7 @@ export class CloudBackupPulls {
       const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
       if (!record) return;
       const hashes = await deps.remote!.ensureAssets(
+        vaultId,
         entities,
         async (assetId) => {
           try {

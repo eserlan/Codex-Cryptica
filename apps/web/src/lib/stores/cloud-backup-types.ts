@@ -72,15 +72,17 @@ export interface CloudBackupRemoteDeps {
    * entity. Ids with no local entity are left out.
    */
   readLocal: (
+    vaultId: string,
     ids: readonly string[] | null,
   ) => Promise<Record<string, MergeEntity>>;
   /** Writes the merge result. Throws when any write fails. */
-  apply: (changes: PulledChanges) => Promise<void>;
+  apply: (vaultId: string, changes: PulledChanges) => Promise<void>;
   /**
    * Downloads the local images the vault lacks for these entities. Returns
    * the SHA-256 per asset id it stored; a failed download is left out.
    */
   ensureAssets: (
+    vaultId: string,
     entities: readonly MergeEntity[],
     download: (assetId: string) => Promise<Uint8Array | null>,
   ) => Promise<Record<string, string>>;
@@ -136,6 +138,7 @@ export interface CloudBackupDeps {
       path: string,
       bytes: Uint8Array,
       mimeType: string,
+      vaultId?: string,
     ) => Promise<void>;
   };
   /**
