@@ -11,7 +11,7 @@ An original, system-light one-shot (about 30 turns) with an answer key, for offl
 ## Files
 
 - `adventure.md`: the clean adventure.
-- `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue and endings. Checked by `../../reference-one-shot.test.ts`.
+- `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue and endings. Checked by `packages/adventure-engine/tests/reference-one-shot.test.ts`.
 
 ## Variants (Prettier-ignored, one defect each)
 

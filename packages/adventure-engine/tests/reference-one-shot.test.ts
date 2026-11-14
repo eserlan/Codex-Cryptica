@@ -3,7 +3,10 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { ReferenceOneShotKeySchema } from "./reference-one-shot-key";
 
-const dir = resolve(__dirname, "./fixtures/reference-one-shot");
+const dir = resolve(
+  __dirname,
+  "../../../fixtures/adventures/reference-one-shot",
+);
 const read = (file: string) => readFileSync(resolve(dir, file), "utf8");
 
 const adventure = read("adventure.md");

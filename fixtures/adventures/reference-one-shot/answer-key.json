@@ -73,7 +73,7 @@
   "sceneConditions": [
     {
       "sourceId": "ros-scene-1-landing",
-      "condition": "If the party arrives after dark, Maren is absent and Scene 2 begins."
+      "condition": "If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open."
     },
     {
       "sourceId": "ros-scene-2-yard",

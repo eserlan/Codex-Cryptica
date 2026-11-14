@@ -16,4 +16,4 @@ pnpm-lock.yaml
 factory/
 .claude/agents/
 .claude/skills/factory/
-packages/adventure-engine/tests/fixtures/reference-one-shot/variants/
+fixtures/adventures/reference-one-shot/variants/
