@@ -712,7 +712,16 @@ export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;
 export const LocalCloudBackupRecordSchema = z.object({
   vaultId: z.string().min(1),
   backupId: z.string().min(1),
+  /**
+   * The backup's bearer credential. The owner code for an owner record; the
+   * editor token for a member who joined from a group link (`role: "editor"`).
+   * Never shown as a recovery key.
+   */
   ownerCode: z.string().min(1),
+  /** Absent means owner, so records written before sharing still parse. */
+  role: z.enum(["owner", "editor"]).optional(),
+  /** Set when an editor's group link stopped working; sync stops until a rejoin. */
+  linkGone: z.boolean().optional(),
   /** False after disable; the record is kept so re-enabling resumes. */
   enabled: z.boolean(),
   status: z.enum(["idle", "syncing", "error"]),

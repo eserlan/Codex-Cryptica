@@ -6,6 +6,7 @@ import { z } from "zod";
 import { CloudBackupTombstoneSchema, type CloudBackupTombstone } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord } from "./backup-records";
+import { cloudBackupHeaders } from "./request-headers";
 import type { MergeEntity, MergeInput, MergeSide } from "./merge";
 
 const FeedEntitySchema = z.object({ id: z.string(), title: z.string() });
@@ -38,9 +39,11 @@ export type ChangeFeedOutcome =
   | { kind: "resync"; revision: number }
   /** An older worker without the feed, or a body this client cannot read. */
   | { kind: "unsupported" }
+  /** An editor's link no longer works. */
+  | { kind: "linkGone" }
   /** No enabled backup for the vault; nothing was requested. */
   | { kind: "off" }
-  | { kind: "failed"; error: string };
+  | { kind: "failed"; error: string; status?: number; code?: string };
 
 /** Reads what changed in the backup since the revision this device last saw. */
 export async function fetchCloudBackupChanges(
@@ -54,7 +57,7 @@ export async function fetchCloudBackupChanges(
   try {
     response = await runtime.fetch(
       `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/changes?since=${record.revision ?? 0}`,
-      { headers: { Authorization: `Bearer ${record.ownerCode}` }, signal },
+      { headers: cloudBackupHeaders(runtime, record), signal },
     );
   } catch (error) {
     return {
@@ -62,9 +65,20 @@ export async function fetchCloudBackupChanges(
       error: error instanceof Error ? error.message : "Request failed.",
     };
   }
-  if (response.status === 404) return { kind: "unsupported" };
+  if (response.status === 404) {
+    return { kind: record.role === "editor" ? "linkGone" : "unsupported" };
+  }
   if (!response.ok) {
-    return { kind: "failed", error: `Request failed (${response.status})` };
+    const body = (await response.json().catch(() => null)) as {
+      error?: { code?: unknown };
+    } | null;
+    const code = body?.error?.code;
+    return {
+      kind: "failed",
+      error: `Request failed (${response.status})`,
+      status: response.status,
+      ...(typeof code === "string" ? { code } : {}),
+    };
   }
   const parsed = ChangesBodySchema.safeParse(
     await response.json().catch(() => null),

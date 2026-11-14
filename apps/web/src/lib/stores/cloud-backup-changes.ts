@@ -6,6 +6,8 @@ import { hashCloudBackupEntity } from "schema";
 import type { DurableVaultChange } from "./vault/registry";
 import {
   RECONCILE_DELAY_MS,
+  blockedFrom,
+  type Blocked,
   type CloudBackupDepsProvider,
   type CloudBackupViewState,
 } from "./cloud-backup-types";
@@ -37,10 +39,11 @@ export class CloudBackupChanges {
   private reconcileTimer: ReturnType<typeof setTimeout> | null = null;
 
   constructor(
-    private state: Pick<CloudBackupViewState, "status">,
+    private state: Pick<CloudBackupViewState, "status" | "syncStopped">,
     private getDeps: CloudBackupDepsProvider,
     private notifyLocalChange: (vaultId: string) => void,
     private enablingVaultId: () => string | null,
+    private onBlocked: (vaultId: string, blocked: Blocked) => void = () => {},
   ) {}
 
   private get deps() {
@@ -50,6 +53,7 @@ export class CloudBackupChanges {
   /** Runs the consistency check once, after the vault has settled. */
   schedule(vaultId: string): void {
     this.clearTimer();
+    if (this.state.syncStopped) return;
     if (!this.deps?.listLocalEntities || !this.deps.dirty) return;
     this.reconcileTimer = setTimeout(() => {
       this.reconcileTimer = null;
@@ -72,10 +76,26 @@ export class CloudBackupChanges {
    * Returns how many changes it recorded.
    */
   async reconcileWithRemote(vaultId: string): Promise<number> {
+    return (await this.reconcile(vaultId)).recorded;
+  }
+
+  /**
+   * The same check, saying whether the index could be read. An editor's push
+   * clears its `full` row only when this succeeded.
+   */
+  // fallow-ignore-next-line complexity -- blocked, off and recorded paths are tested in cloud-backup-editor.test.ts.
+  async reconcile(vaultId: string): Promise<{ ok: boolean; recorded: number }> {
     const deps = this.deps;
-    if (!deps?.dirty || !deps.listLocalEntities) return 0;
+    if (!deps?.dirty || !deps.listLocalEntities || this.state.syncStopped) {
+      return { ok: false, recorded: 0 };
+    }
     const index = await fetchCloudBackupIndex(deps.runtime, vaultId);
-    if (!index.ok || this.state.status === "off") return 0;
+    if (!index.ok) {
+      const blocked = blockedFrom(index);
+      if (blocked) this.onBlocked(vaultId, blocked);
+      return { ok: false, recorded: 0 };
+    }
+    if (this.state.status === "off") return { ok: false, recorded: 0 };
 
     const { upserts, deletes } = await diffAgainstRemote(
       deps.listLocalEntities(),
@@ -93,7 +113,7 @@ export class CloudBackupChanges {
     }
     const recorded = upserts.length + deletes.length;
     if (recorded > 0) this.notifyLocalChange(vaultId);
-    return recorded;
+    return { ok: true, recorded };
   }
 
   /**

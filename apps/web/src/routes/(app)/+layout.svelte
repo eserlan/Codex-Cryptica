@@ -116,6 +116,7 @@
       page.url.pathname === "/help" ||
       page.url.pathname.startsWith("/help/") ||
       page.url.pathname === "/import" ||
+      page.url.pathname === "/join" ||
       page.url.pathname === "/dice",
   );
 

@@ -1,5 +1,6 @@
 import { CloudBackupChanges } from "./cloud-backup-changes";
 import { CloudBackupUploads } from "./cloud-backup-uploads";
+import { LINK_GONE_MESSAGE } from "./shared-vault-messages";
 import {
   disableCloudBackup,
   getLocalCloudBackupRecord,
@@ -14,6 +15,7 @@ import { CloudBackupSync } from "./cloud-backup-sync";
 import { CloudBackupPulls } from "./cloud-backup-pulls";
 import type { DurableVaultChange } from "./vault/registry";
 import type {
+  Blocked,
   CloudBackupStatus,
   CloudAutoSyncState,
   CloudBackupDeps,
@@ -61,6 +63,14 @@ export class CloudBackupStore {
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
   artworkConsentVersion = $state(0);
+  /** How this device is linked to the open vault's backup; null while off. */
+  role = $state<"owner" | "editor" | null>(null);
+  /** An editor's group link no longer works; sync stays stopped until a rejoin. */
+  linkGone = $state(false);
+  /** Pulls and pushes are stopped for this session (link gone or device cap). */
+  syncStopped = $state(false);
+  /** An editor's changes that stay on this device (maps, canvases, new images). */
+  keptLocal = $state(false);
   /** Group sharing as this device last saw it; never holds the link or token. */
   sharing = $state<{ linkVersion: number; enabledAt: string } | null>(null);
   /** Ephemeral automatic-sync state (#3189); never persisted. */
@@ -79,18 +89,21 @@ export class CloudBackupStore {
     this,
     () => this.deps,
     () => this.pulls.pullForPush(),
+    { reconcile: (vaultId) => this.changes.reconcile(vaultId) },
   );
   private sync: CloudBackupSync = new CloudBackupSync(
     this,
     () => this.deps,
     this.uploads,
     () => this.pulls.running,
+    (vaultId, blocked) => this.handleBlocked(vaultId, blocked),
   );
   private pulls: CloudBackupPulls = new CloudBackupPulls(
     this,
     () => this.deps,
     this.uploads,
     () => this.sync.resumeAfterPull(),
+    (vaultId, blocked) => this.handleBlocked(vaultId, blocked),
   );
   private account = new CloudBackupAccount(
     this,
@@ -107,6 +120,7 @@ export class CloudBackupStore {
     () => this.deps,
     (vaultId) => this.notifyLocalChange(vaultId),
     () => this.account.enablingVaultId,
+    (vaultId, blocked) => this.handleBlocked(vaultId, blocked),
   );
 
   /** Wires the store up. Called once from app init with the real runtime. */
@@ -124,6 +138,7 @@ export class CloudBackupStore {
     // describing the vault the user has left.
     this.errorMessage = null;
     this.mergeNotice = null;
+    this.keptLocal = false;
     this.changes.clearTimer();
     this.pulls.stop();
     this.sync.reset();
@@ -131,12 +146,56 @@ export class CloudBackupStore {
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
     this.account.applyRecord(record);
     this.uploads.media.load(vaultId);
+    if (this.role === "editor") await this.loadKeptLocal(vaultId);
     // Catch-up: sync resumes when the user returns, guarded so a newer
-    // remote can never be overwritten by a stale return.
-    if (this.status !== "off") {
+    // remote can never be overwritten by a stale return. A gone link, or a
+    // device over the cap, stays quiet.
+    if (this.status !== "off" && !this.syncStopped) {
       this.notifyLocalChange(vaultId);
       this.changes.schedule(vaultId);
       this.pulls.start(vaultId);
+    }
+  }
+
+  /** Pending maps and canvases of an editor vault show as kept on this device. */
+  private async loadKeptLocal(vaultId: string) {
+    const rows = (await this.deps?.dirty?.snapshot(vaultId)) ?? [];
+    this.keptLocal = rows.some((row) => row.kind !== "entity");
+  }
+
+  /**
+   * An editor's sync cannot go on. A gone link is remembered on the record, so
+   * nothing is requested after a reload; a device over the cap only lasts until
+   * the next `hydrate`. Timers stop at once; a push still running ends itself.
+   */
+  // fallow-ignore-next-line complexity -- link gone and device cap are tested in cloud-backup-editor.test.ts.
+  private async handleBlocked(vaultId: string, blocked: Blocked) {
+    const deps = this.deps;
+    if (!deps) return;
+    const active = deps.activeVaultId() === vaultId;
+    if (active) {
+      if (this.syncStopped) return;
+      this.syncStopped = true;
+      this.changes.clearTimer();
+      this.pulls.stop();
+      this.sync.reset();
+    }
+    if (blocked.kind === "deviceLimit") {
+      if (active) this.errorMessage = blocked.message;
+      return;
+    }
+    if (active) this.linkGone = true;
+    deps.notify?.(LINK_GONE_MESSAGE);
+    try {
+      const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
+      if (record) {
+        await deps.runtime.storage.write(vaultId, {
+          ...record,
+          linkGone: true,
+        });
+      }
+    } catch (error) {
+      console.warn("[CloudBackup] Could not record the gone link", error);
     }
   }
 

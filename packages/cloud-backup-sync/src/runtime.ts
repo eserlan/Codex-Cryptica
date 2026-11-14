@@ -49,6 +49,8 @@ export interface CloudBackupRuntime {
   storage: CloudBackupStorage;
   /** Injectable so tests can assert timestamps without freezing global time. */
   now?: () => Date;
+  /** This device's id; sent as `X-Codex-Device-Id` on editor requests. */
+  deviceId?: () => string;
 }
 
 /** In-memory storage, for tests and for a runtime with no IndexedDB. */

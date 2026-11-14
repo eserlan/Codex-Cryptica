@@ -34,6 +34,7 @@ export const KNOWN_HELP_IDS = [
   "default-entity-templates",
   "export-and-backup",
   "cloud-backup",
+  "shared-vault",
   "offline-sync",
   "importing",
   "thread-weaver-import",

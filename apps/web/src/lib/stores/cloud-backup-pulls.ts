@@ -13,6 +13,8 @@ import {
 import { onlineStatus } from "./online.svelte";
 import {
   PULL_INTERVAL_MS,
+  blockedFrom,
+  type Blocked,
   type CloudBackupDepsProvider,
   type CloudBackupViewState,
 } from "./cloud-backup-types";
@@ -26,12 +28,26 @@ export type PullOutcome =
   /** An older worker without the change feed. */
   | { kind: "unsupported" }
   | { kind: "off" }
+  /** An editor's link is gone or its device is over the cap; sync stops. */
+  | { kind: "blocked"; blocked: Blocked }
   | { kind: "failed"; error: string };
 
 type PullState = Pick<
   CloudBackupViewState,
-  "status" | "autoState" | "lastPushedAt" | "mergeNotice"
+  "status" | "autoState" | "lastPushedAt" | "mergeNotice" | "syncStopped"
 >;
+
+function failureOutcome(failure: {
+  error: string;
+  status?: number;
+  code?: string;
+  linkGone?: true;
+}): PullOutcome {
+  const blocked = blockedFrom(failure);
+  return blocked
+    ? { kind: "blocked", blocked }
+    : { kind: "failed", error: failure.error };
+}
 
 type Fed = { entities: MergeEntity[]; tombstoneIds: string[] };
 
@@ -59,6 +75,7 @@ export class CloudBackupPulls {
     private getDeps: CloudBackupDepsProvider,
     private uploads: { pushing: boolean; media: CloudBackupMediaCache },
     private onSettled: () => void,
+    private onBlocked: (vaultId: string, blocked: Blocked) => void = () => {},
   ) {}
 
   private get deps() {
@@ -109,7 +126,8 @@ export class CloudBackupPulls {
   /** Nothing is stopping a pull: not paused, off, pushing or already pulling. */
   private idle(): boolean {
     const { status, autoState } = this.state;
-    const paused = status === "off" || autoState === "conflict";
+    const paused =
+      status === "off" || autoState === "conflict" || this.state.syncStopped;
     return (
       !paused && !this.unsupported && !this.uploads.pushing && !this.running
     );
@@ -154,6 +172,7 @@ export class CloudBackupPulls {
       this.running = false;
     }
     if (outcome.kind === "unsupported") this.unsupported = true;
+    if (outcome.kind === "blocked") this.onBlocked(vaultId, outcome.blocked);
     if (!this.uploads.pushing) this.onSettled();
     return outcome;
   }
@@ -161,13 +180,20 @@ export class CloudBackupPulls {
   private async execute(vaultId: string): Promise<PullOutcome> {
     const deps = this.deps!;
     const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
-    if (!record?.enabled || !deps.base) return { kind: "off" };
+    if (!record?.enabled || record.linkGone || !deps.base) {
+      return { kind: "off" };
+    }
     const read = await this.readFeed(record, vaultId);
     if ("outcome" in read) return read.outcome;
     const loaded = await this.loadFed(record, read.feed, read.statusAt);
-    if (!loaded.ok) return { kind: "failed", error: loaded.error };
+    if (!loaded.ok) return failureOutcome(loaded);
     const { fed, revision, lastPushedAt } = loaded;
-    const held = await this.merge(vaultId, fed, read.feed.kind === "resync");
+    const held = await this.merge(
+      vaultId,
+      fed,
+      read.feed.kind === "resync",
+      this.authorName(record),
+    );
     if (held) return { kind: "held" };
     await storePulledCloudBackupRecord(deps.runtime, vaultId, {
       revision,
@@ -190,10 +216,11 @@ export class CloudBackupPulls {
   > {
     const { runtime } = this.deps!;
     const status = await readRemoteLastPushedAt(runtime, record);
-    if (!status.ok) return { outcome: { kind: "failed", error: status.error } };
+    if (!status.ok) return { outcome: failureOutcome(status) };
     const feed = await fetchCloudBackupChanges(runtime, vaultId);
-    if (feed.kind === "failed") {
-      return { outcome: { kind: "failed", error: feed.error } };
+    if (feed.kind === "failed") return { outcome: failureOutcome(feed) };
+    if (feed.kind === "linkGone") {
+      return { outcome: { kind: "blocked", blocked: { kind: "linkGone" } } };
     }
     if (feed.kind === "changes" || feed.kind === "resync") {
       return { feed, statusAt: status.value };
@@ -208,7 +235,13 @@ export class CloudBackupPulls {
     statusAt: string | null,
   ): Promise<
     | { ok: true; fed: Fed; revision: number; lastPushedAt: string | null }
-    | { ok: false; error: string }
+    | {
+        ok: false;
+        error: string;
+        status?: number;
+        code?: string;
+        linkGone?: true;
+      }
   > {
     if (feed.kind === "changes") {
       const tombstoneIds = feed.tombstones.map((tombstone) => tombstone.id);
@@ -255,11 +288,17 @@ export class CloudBackupPulls {
     return { mine, base: baseSide };
   }
 
+  /** A member's conflict copies carry their own name, not "this device". */
+  private authorName(record: LocalCloudBackupRecord): string | undefined {
+    return record.role === "editor" ? this.deps?.displayName?.() : undefined;
+  }
+
   /** Merges and applies a feed; true when open editors held entries back. */
   private async merge(
     vaultId: string,
     fed: Fed,
     resync: boolean,
+    copyAuthorName?: string,
   ): Promise<boolean> {
     const { remote, base, activeVaultId } = this.deps!;
     const held = new Set(
@@ -284,6 +323,7 @@ export class CloudBackupPulls {
       ...sides,
       resync,
       newId: remote!.newId,
+      ...(copyAuthorName ? { copyAuthorName } : {}),
     });
     if (activeVaultId() !== vaultId) throw new Error("The vault changed.");
     await this.fetchAssets(vaultId, [

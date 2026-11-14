@@ -8,6 +8,29 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"
     />
     <script>
+      // Group link capture: a shared-vault link carries its credential in the
+      // fragment (/join#<backup>:<token>). Take it and clear it from the address
+      // bar before anything else can read location: SvelteKit's page.url, the
+      // analytics beacon and history all see only /join. The join page reads it
+      // once through __codexTakeJoinFragment. Never stored, logged or sent.
+      (function (w) {
+        try {
+          if (!/^\/join\/?$/.test(w.location.pathname)) return;
+          var fragment = w.location.hash;
+          w.history.replaceState(
+            w.history.state,
+            "",
+            w.location.pathname + w.location.search,
+          );
+          w.__codexTakeJoinFragment = function () {
+            var taken = fragment;
+            fragment = null;
+            return taken;
+          };
+        } catch (e) {}
+      })(window);
+    </script>
+    <script>
       // Stale-build recovery: an edge-cached page can outlive the deploy whose
       // /_app/immutable/ chunks it references. When one of those fails to load
       // the app never hydrates, so reload once with a cache-busting parameter.
