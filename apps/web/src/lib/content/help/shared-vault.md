@@ -66,6 +66,8 @@ Before anything changes you see a summary with three numbers:
 
 Nothing is erased. Members receive the result on their next sync and do not need to rejoin. Changes a member has made but not yet synced are kept by the usual rules. Session journals and adventures are not rolled back, because they are never shared with the group.
 
+If a rollback fails part-way, nothing in the vault changes, though a picture file that was missing may be put back.
+
 ## Maps and canvases
 
 Maps and canvases sync as whole items. A map's background image and fog-of-war mask travel with it.

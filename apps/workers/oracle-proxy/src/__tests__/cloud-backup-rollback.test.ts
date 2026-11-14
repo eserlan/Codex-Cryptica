@@ -318,6 +318,46 @@ describe("owner rollback", () => {
     ).toEqual(snapshot);
   });
 
+  it("keeps what the manifest points at when its write is saved and then throws", async () => {
+    const fx = await sharedWithPoint();
+    await dayTwo(fx);
+    const revision = await revisionOf(fx);
+    const put = fx.env.BUCKET.put.bind(fx.env.BUCKET);
+    let thrown = false;
+    vi.spyOn(fx.env.BUCKET, "put").mockImplementation((async (
+      key: string,
+      ...rest: any[]
+    ) => {
+      const result = await (put as any)(key, ...rest);
+      if (!thrown && key.endsWith("/manifest.json")) {
+        thrown = true;
+        throw new Error("timeout after the write was saved");
+      }
+      return result;
+    }) as any);
+    const response = await rollback(fx, { date: DAY1, baseRevision: revision });
+    expect(response.status).toBeGreaterThanOrEqual(500);
+
+    const { objects } = (await readManifest(fx.env, fx.backupId))!;
+    expect(await revisionOf(fx)).toBe(revision + 1);
+    for (const relative of referencedKeys(objects!)) {
+      expect(
+        await fx.env.BUCKET.head(absoluteKey(fx.backupId, relative)),
+      ).not.toBeNull();
+    }
+    const bundle = (
+      (await (
+        await call(fx, "GET", "/bundle", { key: fx.ownerCode })
+      ).json()) as any
+    ).bundle;
+    expect(bundle.entities.map((e: any) => e.id).sort()).toEqual([
+      "a",
+      "b",
+      "c",
+      "f",
+    ]);
+  });
+
   it("refuses a stale base revision and an unknown date", async () => {
     const fx = await sharedWithPoint();
     await dayTwo(fx);

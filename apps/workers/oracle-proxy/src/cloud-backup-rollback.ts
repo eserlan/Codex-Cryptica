@@ -468,7 +468,9 @@ export async function handleCloudBackupRollback(
       () => lostRace(request, env, backupId, staged, auth.manifest),
     );
   } catch {
-    await discardCommitKeys(env, backupId, tag);
+    // The manifest write may have been saved before it threw, so what it
+    // points at must stay. Leftovers are unreachable and the next winning
+    // commit cleans them up, as for a delta.
     return storageUnavailable(request);
   }
   return response.ok
