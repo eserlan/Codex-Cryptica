@@ -42,6 +42,8 @@ async function changeSharing(
     if (!releaseMutationLock) {
       return json(request, { error: { message: "Try again shortly." } }, 503);
     }
+    let response: Response | undefined;
+    let afterWrite: (() => Promise<void>) | undefined;
     try {
       const auth = await authorizeOwner(request, env, backupId);
       if ("response" in auth) return auth.response;
@@ -57,11 +59,15 @@ async function changeSharing(
         result.sharing,
       );
       if (written) {
-        await result.afterWrite?.();
-        return result.respond();
+        response = result.respond();
+        afterWrite = result.afterWrite;
       }
     } finally {
       await releaseMutationLock();
+    }
+    if (response) {
+      await afterWrite?.();
+      return response;
     }
   }
   return json(
