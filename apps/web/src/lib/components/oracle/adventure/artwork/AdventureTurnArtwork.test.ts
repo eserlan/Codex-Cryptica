@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
 import type { TurnArtworkReveal } from "#lib/services/adventure/artwork/turn-artwork-reveals.js";
 import type { AdventureLightboxController } from "./adventure-artwork-lightbox.svelte.js";
@@ -126,5 +126,57 @@ describe("adventure turn artwork presentations", () => {
     expect(
       screen.queryByRole("button", { name: "Show portrait of Mira, enters" }),
     ).toBeNull();
+  });
+});
+
+describe("compact callout lazy loading", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("starts loading only after the callout becomes visible", async () => {
+    const instances: Array<{
+      cb: IntersectionObserverCallback;
+      target?: Element;
+    }> = [];
+    class FakeObserver {
+      cb: IntersectionObserverCallback;
+      target?: Element;
+      constructor(cb: IntersectionObserverCallback) {
+        this.cb = cb;
+        instances.push(this);
+      }
+      observe(el: Element) {
+        this.target = el;
+      }
+      disconnect() {}
+      unobserve() {}
+    }
+    vi.stubGlobal("IntersectionObserver", FakeObserver);
+    const resolve = vi.fn((path: string) => `blob:${path}`);
+    setup({ location: makeReveal().location, npcs: [] }, resolve);
+    await Promise.resolve();
+    expect(instances.length).toBeGreaterThan(0);
+    expect(resolve).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: /Show illustration/ }),
+    ).toBeNull();
+
+    const compactObserver = instances.find((i) =>
+      screen
+        .getByTestId("adventure-turn-artwork-compact")
+        .contains(i.target ?? null),
+    )!;
+    expect(
+      getComputedStyle(compactObserver.target as Element).display,
+    ).not.toBe("contents");
+    compactObserver.cb(
+      [{ isIntersecting: true } as IntersectionObserverEntry],
+      compactObserver as unknown as IntersectionObserver,
+    );
+    expect(
+      await screen.findByRole("button", {
+        name: "Show illustration of Mossy Bridge",
+      }),
+    ).toBeTruthy();
+    expect(resolve).toHaveBeenCalledTimes(1);
   });
 });

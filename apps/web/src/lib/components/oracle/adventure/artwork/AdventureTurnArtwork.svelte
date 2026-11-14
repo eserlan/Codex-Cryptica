@@ -133,7 +133,7 @@
     {/if}
   </div>
   <div
-    class="hidden flex-wrap items-center gap-2 pt-1 @4xl:flex"
+    class="hidden flex-wrap items-center pt-1 @4xl:flex"
     data-testid="adventure-turn-artwork-compact"
   >
     {#if reveal.location}

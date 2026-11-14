@@ -71,11 +71,11 @@
   }
 </script>
 
-<div bind:this={container} class="contents">
+<div bind:this={container} class="inline-flex min-h-px max-w-full">
   {#if handle && lightboxItem}
     <button
       type="button"
-      class="inline-flex max-w-full cursor-zoom-in items-center gap-2 rounded-lg border border-theme-border bg-theme-surface p-1.5 pr-3 text-left text-xs text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="mr-2 mb-1 inline-flex max-w-full cursor-zoom-in items-center gap-2 rounded-lg border border-theme-border bg-theme-surface p-1.5 pr-3 text-left text-xs text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       aria-label={label}
       onclick={() => lightbox?.open(lightboxItem)}
     >
