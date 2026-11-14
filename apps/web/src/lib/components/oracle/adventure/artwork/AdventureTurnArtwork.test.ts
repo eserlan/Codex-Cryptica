@@ -165,9 +165,9 @@ describe("compact callout lazy loading", () => {
         .getByTestId("adventure-turn-artwork-compact")
         .contains(i.target ?? null),
     )!;
-    expect(
-      getComputedStyle(compactObserver.target as Element).display,
-    ).not.toBe("contents");
+    const observed = compactObserver.target as Element;
+    expect(observed.classList.contains("contents")).toBe(false);
+    expect(observed.classList.contains("inline-flex")).toBe(true);
     compactObserver.cb(
       [{ isIntersecting: true } as IntersectionObserverEntry],
       compactObserver as unknown as IntersectionObserver,
