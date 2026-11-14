@@ -10,6 +10,7 @@ import {
   CLOUD_BACKUP_SHARING_DEVICE_WINDOW_DAYS,
 } from "../cloud-backup";
 import {
+  acquireBackupMutationLock,
   getAssetKey,
   getManifestKey,
   getSharingDevicesKey,
@@ -506,7 +507,7 @@ describe("device cap", () => {
 });
 
 describe("sharing survives other writes", () => {
-  it("keeps the record through a delta, a commit and reissue-code", async () => {
+  it("keeps the record through a delta and a commit", async () => {
     const fx = await shared();
     const sharing = (await readManifest(fx.env, fx.backupId))!.sharing;
     const device = newDevice();
@@ -531,18 +532,131 @@ describe("sharing survives other writes", () => {
     expect(commit.status).toBe(200);
     expect((await readManifest(fx.env, fx.backupId))!.sharing).toEqual(sharing);
     await ok();
+  });
+});
 
-    const reissue = await handleCloudBackupReissueCode(
-      new Request("https://example.test", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${ADMIN}` },
-      }),
-      { ...fx.env, CLOUD_BACKUP_ADMIN_TOKEN: ADMIN },
-      fx.backupId,
+const reissue = (fx: Fixture, token?: string, env: any = fx.env) =>
+  handleCloudBackupReissueCode(
+    new Request("https://example.test", {
+      method: "POST",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    }),
+    { ...env, CLOUD_BACKUP_ADMIN_TOKEN: ADMIN },
+    fx.backupId,
+  );
+
+const manifestObject = (fx: Fixture) =>
+  fx.env.BUCKET.store.get(getManifestKey(fx.backupId));
+
+describe("reissue-code turns sharing off", () => {
+  it("removes the sharing record, the device file and the editor link", async () => {
+    const fx = await shared();
+    const device = newDevice();
+    expect(
+      (await call(fx, "GET", "/status", { key: fx.editorToken, device }))
+        .status,
+    ).toBe(200);
+    const devicesKey = await sharingDevicesKey(fx);
+    expect(await fx.env.BUCKET.get(devicesKey)).not.toBe(null);
+
+    expect((await reissue(fx, ADMIN)).status).toBe(200);
+    expect((await readManifest(fx.env, fx.backupId))!.sharing).toBeUndefined();
+    expect(await stored(fx)).not.toContain('"sharing"');
+    expect(await fx.env.BUCKET.get(devicesKey)).toBe(null);
+
+    const wrong = await wrongKeyBody();
+    const madeUp = "f".repeat(64);
+    for (const [method, path, body] of [
+      ["GET", "/status", undefined],
+      ["POST", "/delta", { vaultTitle: "V" }],
+    ] as const) {
+      const old = await call(fx, method, path, {
+        key: fx.editorToken,
+        device,
+        body,
+      });
+      const other = await call(fx, method, path, {
+        key: madeUp,
+        device,
+        body,
+      });
+      expect(old.status).toBe(other.status);
+      expect(await old.text()).toBe(await other.text());
+    }
+    expect(wrong.status).toBe(404);
+  });
+
+  it("gives a working new owner code that can share again", async () => {
+    const fx = await shared();
+    const res = await reissue(fx, ADMIN);
+    const { ownerCode } = (await res.json()) as { ownerCode: string };
+    expect((await call(fx, "GET", "/status", { key: ownerCode })).status).toBe(
+      200,
     );
-    expect(reissue.status).toBe(200);
-    expect((await readManifest(fx.env, fx.backupId))!.sharing).toEqual(sharing);
-    await ok();
+    expect(
+      (await call(fx, "GET", "/status", { key: fx.ownerCode })).status,
+    ).toBe(404);
+
+    const on = await call(fx, "POST", "/sharing", { key: ownerCode });
+    expect(on.status).toBe(200);
+    const { editorToken } = (await on.json()) as { editorToken: string };
+    expect(editorToken).not.toBe(fx.editorToken);
+    expect(
+      (
+        await call(fx, "GET", "/status", {
+          key: editorToken,
+          device: newDevice(),
+        })
+      ).status,
+    ).toBe(200);
+  });
+
+  it("refuses without admin access and writes nothing", async () => {
+    const fx = await shared();
+    const device = newDevice();
+    await call(fx, "GET", "/status", { key: fx.editorToken, device });
+    const devicesKey = await sharingDevicesKey(fx);
+    const before = manifestObject(fx);
+    for (const token of [undefined, "wrong-token", fx.ownerCode]) {
+      expect((await reissue(fx, token)).status).toBe(404);
+      expect(manifestObject(fx)).toBe(before);
+      expect((await readManifest(fx.env, fx.backupId))!.sharing).toBeDefined();
+      expect(await fx.env.BUCKET.get(devicesKey)).not.toBe(null);
+      expect(
+        (await call(fx, "GET", "/status", { key: fx.editorToken, device }))
+          .status,
+      ).toBe(200);
+    }
+  });
+
+  it("gives 404 for an unknown backup and creates no keys", async () => {
+    const fx = await createBackupFixture();
+    const keys = new Set(fx.env.BUCKET.store.keys());
+    const res = await reissue({ ...fx, backupId: "0".repeat(32) }, ADMIN);
+    expect(res.status).toBe(404);
+    expect(new Set(fx.env.BUCKET.store.keys())).toEqual(keys);
+  });
+
+  it("refuses with 503 while the mutation lock is held", async () => {
+    const fx = await shared();
+    const device = newDevice();
+    await call(fx, "GET", "/status", { key: fx.editorToken, device });
+    const devicesKey = await sharingDevicesKey(fx);
+    const before = manifestObject(fx);
+
+    const release = await acquireBackupMutationLock(fx.env, fx.backupId);
+    expect(release).not.toBe(null);
+    const busy = await reissue(fx, ADMIN);
+    expect(busy.status).toBe(503);
+    expect(await busy.json()).toEqual({
+      error: { message: "Try again shortly." },
+    });
+    expect(manifestObject(fx)).toBe(before);
+    expect((await readManifest(fx.env, fx.backupId))!.sharing).toBeDefined();
+    expect(await fx.env.BUCKET.get(devicesKey)).not.toBe(null);
+
+    await release!();
+    expect((await reissue(fx, ADMIN)).status).toBe(200);
   });
 });
 

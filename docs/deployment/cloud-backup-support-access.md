@@ -104,9 +104,10 @@ This **invalidates the previous code immediately**. If the user later finds
 their original, it will not work. Tell them that as part of the handover, or
 they will assume something is broken.
 
-If the backup has an active editor link (shared vault), re-issuing the code
-leaves that link working. Only the owner, with the recovery key, can replace
-the link or turn sharing off.
+Re-issuing the code also turns sharing off, and the old editor link stops
+working at once. If the owner wants to share again, they turn sharing on with
+the new recovery key. This creates a new link that they send to their group.
+Tell the user this at handover.
 
 ### 5. Give them a recovery key, not just the code
 

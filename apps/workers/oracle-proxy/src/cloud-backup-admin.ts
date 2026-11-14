@@ -1,6 +1,10 @@
 import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing";
 import type { CloudBackupEnv } from "./cloud-backup";
-import { writeManifest } from "./cloud-backup-storage";
+import {
+  acquireBackupMutationLock,
+  getSharingDevicesKey,
+  writeManifest,
+} from "./cloud-backup-storage";
 
 const REISSUE_ATTEMPTS = 3;
 import {
@@ -176,11 +180,49 @@ export async function handleCloudBackupAdminStats(
   });
 }
 
+type ReissueRecord = NonNullable<Awaited<ReturnType<typeof readManifest>>>;
+
+/** One conditional write that drops sharing; shared backups hold the mutation lock. */
+async function reissueOnce(
+  env: CloudBackupEnv,
+  backupId: string,
+  record: ReissueRecord,
+  ownerCodeHash: string,
+): Promise<"written" | "lost" | "busy"> {
+  const { sharing } = record;
+  const release = sharing
+    ? await acquireBackupMutationLock(env, backupId)
+    : undefined;
+  if (sharing && !release) return "busy";
+  let written: boolean;
+  try {
+    written = await writeManifest(
+      env,
+      backupId,
+      record.manifest,
+      ownerCodeHash,
+      record.objects,
+      record.etag,
+      undefined,
+    );
+  } finally {
+    await release?.();
+  }
+  if (!written) return "lost";
+  if (sharing) {
+    await env.BUCKET.delete(getSharingDevicesKey(backupId, sharing));
+  }
+  return "written";
+}
+
 /**
  * POST /api/cloud-backup/admin/{backupId}/reissue-code
  *
  * Mints a replacement code so a user who lost theirs can self-serve again
  * (FR-017). Only one code is ever valid, so the previous one stops working.
+ *
+ * Also turns sharing off: a leaked recovery key could otherwise have been used
+ * to mint an editor link that outlives the reissue.
  */
 export async function handleCloudBackupReissueCode(
   request: Request,
@@ -197,16 +239,11 @@ export async function handleCloudBackupReissueCode(
   for (let attempt = 0; attempt < REISSUE_ATTEMPTS; attempt++) {
     const record = await readManifest(env, backupId);
     if (!record) return json(request, { error: { message: "Not found" } }, 404);
-    const written = await writeManifest(
-      env,
-      backupId,
-      record.manifest,
-      ownerCodeHash,
-      record.objects,
-      record.etag,
-      record.sharing,
-    );
-    if (written) return json(request, { ownerCode });
+    const outcome = await reissueOnce(env, backupId, record, ownerCodeHash);
+    if (outcome === "busy") {
+      return json(request, { error: { message: "Try again shortly." } }, 503);
+    }
+    if (outcome === "written") return json(request, { ownerCode });
   }
 
   return json(

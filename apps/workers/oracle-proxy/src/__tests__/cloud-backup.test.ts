@@ -616,6 +616,27 @@ describe("support lookup", () => {
     expect(stored.vaultTitle).toBe("Kept Title");
   });
 
+  it("changes only the owner code on an unshared backup", async () => {
+    const env = makeEnv();
+    const { backupId } = await enableAndCommit(env);
+    const before = await readManifest(env, backupId);
+    const keys = [...env.BUCKET.store.keys()].sort();
+    const res = await handleCloudBackupReissueCode(
+      post({}, ADMIN_TOKEN),
+      env,
+      backupId,
+    );
+    expect(res.status).toBe(200);
+    const after = await readManifest(env, backupId);
+    expect(after!.manifest).toEqual(before!.manifest);
+    expect(after!.objects).toEqual(before!.objects);
+    expect(env.BUCKET.store.get(getManifestKey(backupId))!.body).not.toContain(
+      '"sharing"',
+    );
+    expect([...env.BUCKET.store.keys()].sort()).toEqual(keys);
+    expect(keys.some((key) => key.includes("sharing-devices/"))).toBe(false);
+  });
+
   it("keeps the stored objects through a re-issue", async () => {
     const env = makeEnv();
     const { backupId } = await enableAndCommit(env);
