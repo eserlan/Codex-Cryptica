@@ -19,6 +19,12 @@ GM notes are hidden from the play surface, but they are not encrypted from the
 vault owner. Material invented during play stays provisional and is not added to
 your canonical vault automatically.
 
+## See the current scene
+
+When the adventure has room, a **Current scene** panel sits beside the story
+with the location, situation, objectives and who is here. When it is narrow, a
+collapsible **Scene details** bar sits above the story instead.
+
 ## Choose how to start
 
 Open **Play → Let the Oracle run the game**. On mobile, **Play** is in the

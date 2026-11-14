@@ -1,6 +1,17 @@
 <script lang="ts">
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  let { manager }: { manager: AdventureManager } = $props();
+  import type { Snippet } from "svelte";
+  let {
+    manager,
+    variant = "strip",
+    media,
+  }: {
+    manager: AdventureManager;
+    variant?: "strip" | "panel";
+    media?: Snippet;
+  } = $props();
+  const uid = $props.id();
+  const headingId = `adventure-state-heading-${uid}`;
 
   const STATUS_LABELS = {
     open: "Open",
@@ -36,12 +47,41 @@
 </script>
 
 {#if manager.session && manager.recap}
-  {@const recap = manager.recap}
+  {#if variant === "panel"}
+    {@render scenePanel(manager.recap)}
+  {:else}
+    {@render sceneStrip(manager.recap)}
+  {/if}
+{/if}
+
+{#snippet scenePanel(recap: NonNullable<AdventureManager["recap"]>)}
   <section
-    aria-labelledby="adventure-state-heading"
-    data-testid="adventure-scene-strip"
+    aria-labelledby={headingId}
+    data-testid="adventure-scene-panel"
+    class="space-y-3 text-sm text-theme-text"
   >
-    <h3 id="adventure-state-heading" class="sr-only">Current situation</h3>
+    <h3 id={headingId} class="font-header text-base font-bold">
+      Current scene
+    </h3>
+    {#if recap.location}
+      <p
+        class="font-semibold break-words"
+        data-testid="adventure-scene-location"
+      >
+        {recap.location.text}
+      </p>
+    {/if}
+    {@render media?.()}
+    {#if recap.situation}
+      <p>{recap.situation.text}</p>
+    {/if}
+    {@render sceneGroups()}
+  </section>
+{/snippet}
+
+{#snippet sceneStrip(recap: NonNullable<AdventureManager["recap"]>)}
+  <section aria-labelledby={headingId} data-testid="adventure-scene-strip">
+    <h3 id={headingId} class="sr-only">Current situation</h3>
     <!-- Compact by default: the transcript is the primary play surface. -->
     <details
       class="group rounded-lg border border-theme-border bg-theme-surface/60"
@@ -71,8 +111,9 @@
           aria-hidden="true"
         ></span>
       </summary>
+      <!-- fallow-ignore-next-line css-broken-reference -->
       <div
-        class="space-y-3 border-t border-theme-border px-3 py-3 text-sm text-theme-text"
+        class="max-h-[40vh] space-y-3 overflow-y-auto border-t border-theme-border px-3 py-3 text-sm text-theme-text"
       >
         {#if recap.location}
           <!-- The summary line truncates; the full place name is always here. -->
@@ -84,17 +125,21 @@
         {#if recap.situation}
           <p>{recap.situation.text}</p>
         {/if}
-        {#each groups as group (group.label)}
-          <div>
-            <h4 class="font-semibold">{group.label}</h4>
-            <ul class="mt-1 list-disc pl-5 text-theme-text">
-              {#each group.items as item, index (index)}
-                <li>{item}</li>
-              {/each}
-            </ul>
-          </div>
-        {/each}
+        {@render sceneGroups()}
       </div>
     </details>
   </section>
-{/if}
+{/snippet}
+
+{#snippet sceneGroups()}
+  {#each groups as group (group.label)}
+    <div>
+      <h4 class="font-semibold">{group.label}</h4>
+      <ul class="mt-1 list-disc pl-5 text-theme-text">
+        {#each group.items as item, index (index)}
+          <li>{item}</li>
+        {/each}
+      </ul>
+    </div>
+  {/each}
+{/snippet}
