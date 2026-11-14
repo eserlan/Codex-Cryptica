@@ -12,10 +12,13 @@ import {
   tooLargeToRead,
   isValidAssetId,
   sizeLimitResponse,
-  storageUnavailable,
 } from "./cloud-backup-http";
 import { preserveBeforeOverwrite } from "./cloud-backup-restore-points";
 import { authorizeStoredBackup } from "./cloud-backup-auth";
+
+function retryLater(request: Request): Response {
+  return json(request, { error: { message: "Try again shortly." } }, 503);
+}
 
 /**
  * PUT /api/cloud-backup/{backupId}/assets/{assetId} — one file, raw bytes.
@@ -82,15 +85,20 @@ export async function handleCloudBackupAssetUpload(
       auth.sharing !== undefined,
     ))
   ) {
-    return storageUnavailable(request);
+    return retryLater(request);
   }
 
-  await env.BUCKET.put(key, bytes, {
+  const written = await env.BUCKET.put(key, bytes, {
     httpMetadata: {
       contentType:
         request.headers.get("Content-Type") || "application/octet-stream",
     },
+    // Only replace the version that was copied; a concurrent upload retries.
+    onlyIf: existing?.etag
+      ? { etagMatches: existing.etag }
+      : { etagDoesNotMatch: "*" },
   });
+  if (written === null) return retryLater(request);
 
   return json(request, { assetId, sizeBytes: bytes.byteLength });
 }

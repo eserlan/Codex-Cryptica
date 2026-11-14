@@ -157,6 +157,30 @@ async function takePoint(
 }
 
 /**
+ * Keeps at most one copy of an asset id that no point references: the one just
+ * made. Re-uploading the same id cannot grow storage past one extra version.
+ */
+async function dropUnreferencedCopies(
+  env: CloudBackupEnv,
+  backupId: string,
+  assetId: string,
+  keepKey: string,
+  points: Array<{ record: RestorePoint }>,
+): Promise<void> {
+  const referenced = new Set(
+    points.flatMap(({ record }) =>
+      record.assets[assetId]
+        ? [getPreservedAssetKey(backupId, assetId, record.assets[assetId])]
+        : [],
+    ),
+  );
+  const dir = getPreservedAssetKey(backupId, assetId, "");
+  for (const key of await listKeys(env, dir)) {
+    if (key !== keepKey && !referenced.has(key)) await env.BUCKET.delete(key);
+  }
+}
+
+/**
  * Copies the bytes of an asset version a point may still need, unless a copy
  * exists. Returns false when the copy failed and the version must stay put.
  */
@@ -177,11 +201,17 @@ async function preserveAsset(
     }
     const object = await env.BUCKET.get(getAssetKey(backupId, assetId));
     if (!object) return true;
-    await env.BUCKET.put(
-      getPreservedAssetKey(backupId, assetId, object.etag ?? etag),
-      object.body,
-      { httpMetadata: object.httpMetadata },
+    const copyKey = getPreservedAssetKey(
+      backupId,
+      assetId,
+      object.etag ?? etag,
     );
+    await env.BUCKET.put(copyKey, object.body, {
+      httpMetadata: object.httpMetadata,
+    });
+    if (!points.some(({ record }) => record.assets[assetId] === etag)) {
+      await dropUnreferencedCopies(env, backupId, assetId, copyKey, points);
+    }
     return true;
   } catch {
     return false;
@@ -197,7 +227,7 @@ export async function preserveBeforeOverwrite(
   shared: boolean,
 ): Promise<boolean> {
   try {
-    const points = shared ? [] : await loadPoints(env, backupId);
+    const points = await loadPoints(env, backupId);
     return await preserveAsset(env, backupId, assetId, etag, shared, points);
   } catch {
     return false;

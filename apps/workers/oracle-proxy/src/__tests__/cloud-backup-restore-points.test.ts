@@ -391,6 +391,43 @@ describe("immutability", () => {
     expect(keysUnder(fx, "restore-points/assets/pic/")).toEqual([]);
   });
 
+  it("keeps at most one unreferenced copy per asset id across re-uploads", async () => {
+    const fx = await sharedFixture();
+    at("2026-11-14T08:00:00Z");
+    await edit(fx, "e1", "one", ["pic"]);
+    const point = await readPoint(fx, "2026-11-14");
+    for (let i = 0; i < 6; i++) {
+      expect((await upload(fx, "pic", [10 + i, i])).status).toBe(200);
+    }
+    const copies = keysUnder(fx, "restore-points/assets/pic/");
+    const unreferenced = copies.filter(
+      (key) => key !== preservedKey(fx, "pic", point.assets.pic),
+    );
+    expect(copies).toContain(preservedKey(fx, "pic", point.assets.pic));
+    expect(unreferenced).toHaveLength(1);
+    expect(await assetBytes(fx, point, "pic")).toEqual([1, 2, 3]);
+  });
+
+  it("answers a retryable error when the asset changed since it was checked", async () => {
+    const fx = await sharedFixture();
+    const bucket = fx.env.BUCKET;
+    const head = bucket.head.bind(bucket);
+    bucket.head = async (key: string) => {
+      const found = await head(key);
+      if (key === getAssetKey(fx.backupId, "pic")) {
+        await bucket.put(key, new Uint8Array([4, 2]));
+      }
+      return found;
+    };
+    expect((await upload(fx, "pic", [9])).status).toBe(503);
+    bucket.head = head;
+    expect(
+      Array.from(
+        (await bucket.get(getAssetKey(fx.backupId, "pic")))!.body as Uint8Array,
+      ),
+    ).toEqual([4, 2]);
+  });
+
   it("refuses an overwrite, and skips a prune, when the copy fails", async () => {
     const fx = await sharedFixture();
     at("2026-11-14T08:00:00Z");
@@ -401,7 +438,7 @@ describe("immutability", () => {
       return (put as any)(key, ...rest);
     };
     const refused = await upload(fx, "pic", [8, 8]);
-    expect(refused.status).toBe(500);
+    expect(refused.status).toBe(503);
     expect(
       Array.from(
         (await fx.env.BUCKET.get(getAssetKey(fx.backupId, "pic")))!
