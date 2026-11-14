@@ -144,7 +144,7 @@
     <!-- Participant tooltip -->
     {#if active && vState.participants.length > 0}
       <div
-        class="pointer-events-none absolute top-full right-0 mt-2 w-52 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-chrome-border bg-chrome-surface/90 backdrop-blur-lg shadow-xl text-left"
+        class="pointer-events-none absolute top-full right-0 mt-2 w-52 origin-top-right scale-95 opacity-0 group-hover:scale-100 group-hover:opacity-100 group-focus-within:scale-100 group-focus-within:opacity-100 transition-all duration-200 z-50 p-3 rounded-lg border border-chrome-border bg-chrome-surface/90 backdrop-blur-lg shadow-xl text-left"
         aria-hidden="true"
       >
         <div
