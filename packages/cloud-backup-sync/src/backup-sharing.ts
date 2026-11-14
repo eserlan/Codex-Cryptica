@@ -71,6 +71,15 @@ async function send(
   }
 }
 
+async function updateCurrentRecord(
+  runtime: CloudBackupRuntime,
+  vaultId: string,
+  update: (record: LocalCloudBackupRecord) => LocalCloudBackupRecord,
+): Promise<void> {
+  const current = await readRecord(runtime, vaultId);
+  if (current) await runtime.storage.write(vaultId, update(current));
+}
+
 // fallow-ignore-next-line complexity — response validation and both repair paths are covered below.
 async function shareOutcome(
   runtime: CloudBackupRuntime,
@@ -85,13 +94,13 @@ async function shareOutcome(
   if (!response.ok) {
     const error = await failureMessage(response);
     if (response.status === 409 && suffix === "" && error === ALREADY_ON) {
-      await runtime.storage.write(vaultId, {
-        ...record,
-        sharing: record.sharing ?? {
+      await updateCurrentRecord(runtime, vaultId, (current) => ({
+        ...current,
+        sharing: current.sharing ?? {
           linkVersion: 1,
           enabledAt: nowIso(runtime),
         },
-      });
+      }));
       return {
         ok: false,
         status: 409,
@@ -99,8 +108,10 @@ async function shareOutcome(
       };
     }
     if (response.status === 409 && suffix !== "" && error === SHARING_OFF) {
-      const { sharing: _off, ...rest } = record;
-      await runtime.storage.write(vaultId, rest);
+      await updateCurrentRecord(runtime, vaultId, (current) => {
+        const { sharing: _off, ...rest } = current;
+        return rest;
+      });
       return { ok: false, status: 409, error: "Sharing is off." };
     }
     return { ok: false, status: response.status, error };
@@ -125,16 +136,17 @@ async function shareOutcome(
   }
 
   const linkVersion = body.linkVersion as number;
-  await runtime.storage.write(vaultId, {
-    ...record,
-    sharing: { linkVersion, enabledAt: body.enabledAt },
-  });
+  const enabledAt = body.enabledAt as string;
+  await updateCurrentRecord(runtime, vaultId, (current) => ({
+    ...current,
+    sharing: { linkVersion, enabledAt },
+  }));
   return {
     ok: true,
     value: {
       link: formatShareLink(origin, record.backupId, body.editorToken),
       linkVersion,
-      enabledAt: body.enabledAt,
+      enabledAt,
     },
   };
 }
@@ -164,7 +176,7 @@ export async function disableCloudBackupSharing(
 ): Promise<CloudBackupOutcome<null>> {
   const sent = await send(runtime, vaultId, "DELETE", "");
   if ("ok" in sent) return sent;
-  const { record, response } = sent;
+  const { response } = sent;
   if (!response.ok) {
     return {
       ok: false,
@@ -172,7 +184,9 @@ export async function disableCloudBackupSharing(
       error: await failureMessage(response),
     };
   }
-  const { sharing: _off, ...rest } = record;
-  await runtime.storage.write(vaultId, rest);
+  await updateCurrentRecord(runtime, vaultId, (current) => {
+    const { sharing: _off, ...rest } = current;
+    return rest;
+  });
   return { ok: true, value: null };
 }

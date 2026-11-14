@@ -25,6 +25,53 @@ const fail = (status: number, message?: string) => ({
   body: message ? { error: { message } } : {},
 });
 
+function holdNextResponse(
+  runtime: Awaited<ReturnType<typeof enabled>>["runtime"],
+) {
+  let resolveResponse!: (response: {
+    ok: boolean;
+    status: number;
+    json: () => Promise<unknown>;
+    arrayBuffer: () => Promise<ArrayBuffer>;
+  }) => void;
+  let markStarted!: () => void;
+  const started = new Promise<void>((resolve) => {
+    markStarted = resolve;
+  });
+  runtime.fetch = (async () => {
+    markStarted();
+    return new Promise((resolve) => {
+      resolveResponse = resolve;
+    });
+  }) as any;
+  return {
+    started,
+    respond: (response: { ok: boolean; status: number; body: unknown }) =>
+      resolveResponse({
+        ok: response.ok,
+        status: response.status,
+        json: async () => response.body,
+        arrayBuffer: async () => new ArrayBuffer(0),
+      }),
+  };
+}
+
+async function writeNewSyncMetadata(
+  runtime: Awaited<ReturnType<typeof enabled>>["runtime"],
+) {
+  const current = (await runtime.storage.read("v-1")) as Record<
+    string,
+    unknown
+  >;
+  await runtime.storage.write("v-1", {
+    ...current,
+    revision: 9,
+    lastPushedAt: "2026-09-02T00:00:00.000Z",
+    status: "idle",
+    vaultTitle: "A newer title",
+  });
+}
+
 describe("formatShareLink", () => {
   it("puts the token only in the fragment", () => {
     expect(formatShareLink("https://x.test", "b-1", "tok")).toBe(
@@ -34,6 +81,24 @@ describe("formatShareLink", () => {
 });
 
 describe("enableCloudBackupSharing", () => {
+  it("keeps sync metadata written while the sharing request is pending", async () => {
+    const { runtime } = await enabled();
+    const pendingResponse = holdNextResponse(runtime);
+    const pending = enableCloudBackupSharing(runtime, "v-1", ORIGIN);
+    await pendingResponse.started;
+    await writeNewSyncMetadata(runtime);
+    pendingResponse.respond(OK);
+
+    expect((await pending).ok).toBe(true);
+    expect(await runtime.storage.read("v-1")).toMatchObject({
+      revision: 9,
+      lastPushedAt: "2026-09-02T00:00:00.000Z",
+      status: "idle",
+      vaultTitle: "A newer title",
+      sharing: { linkVersion: 2 },
+    });
+  });
+
   it("posts with the owner bearer and stores a token-free marker", async () => {
     const { runtime, calls } = await enabled(OK);
     const result = await enableCloudBackupSharing(runtime, "v-1", ORIGIN);
