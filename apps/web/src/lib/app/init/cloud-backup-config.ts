@@ -240,7 +240,7 @@ const applyPulledChanges: NonNullable<
   }
   if (deletes.length > 0) {
     assertActiveVault(vaultId);
-    const result = await vault.bulkDelete(deletes);
+    const result = await vault.bulkDelete(deletes, vaultId);
     assertActiveVault(vaultId);
     if (result.failedIds.length > 0) {
       throw new Error("Could not delete every removed entity.");
