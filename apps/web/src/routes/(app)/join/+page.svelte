@@ -147,7 +147,7 @@
     {/if}
 
     {#if error}
-      <p class="text-sm text-red-400" role="alert">{error}</p>
+      <p class="text-sm text-theme-danger" role="alert">{error}</p>
     {/if}
 
     <div class="flex flex-wrap justify-end gap-2">

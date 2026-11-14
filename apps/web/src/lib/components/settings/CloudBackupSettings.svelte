@@ -422,9 +422,11 @@
         <p class="text-sm text-theme-text">Last synced {lastPushed}.</p>
       {/if}
       {#if cloudBackupStore.linkGone}
-        <p class="text-sm text-red-400" role="alert">{LINK_GONE_MESSAGE}</p>
+        <p class="text-sm text-theme-danger" role="alert">
+          {LINK_GONE_MESSAGE}
+        </p>
       {:else if cloudBackupStore.syncStopped && cloudBackupStore.errorMessage}
-        <p class="text-sm text-red-400" role="alert">
+        <p class="text-sm text-theme-danger" role="alert">
           {cloudBackupStore.errorMessage}
         </p>
       {/if}
@@ -445,13 +447,13 @@
       </p>
     {/if}
     {#if status === "error" && cloudBackupStore.errorMessage}
-      <p class="text-sm text-red-400" role="alert">
+      <p class="text-sm text-theme-danger" role="alert">
         {cloudBackupStore.errorMessage}
       </p>
     {/if}
     {#if !isEditor && autoState === "conflict"}
-      <div class="border border-red-400/40 p-3">
-        <p class="text-sm text-red-400" role="alert">
+      <div class="border border-theme-danger/40 p-3">
+        <p class="text-sm text-theme-danger" role="alert">
           {cloudBackupStore.errorMessage ??
             "Another device updated this backup. Automatic sync is paused so nothing is overwritten — both versions are preserved."}
         </p>
@@ -517,7 +519,7 @@
           type="button"
           onclick={deleteBackup}
           disabled={busy}
-          class="border border-red-500/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-50"
+          class="border border-theme-danger/40 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-danger transition-colors hover:bg-theme-danger/10 disabled:opacity-50"
         >
           Delete backup
         </button>
@@ -546,7 +548,7 @@
       <span
         class="shrink-0 font-mono text-micro uppercase tracking-wider {status ===
         'error'
-          ? 'text-red-400'
+          ? 'text-theme-danger'
           : 'text-theme-text'}"
         aria-live="polite"
       >
