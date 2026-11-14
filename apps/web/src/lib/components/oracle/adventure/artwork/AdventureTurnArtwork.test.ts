@@ -146,6 +146,72 @@ describe("compact callout lazy loading", () => {
     expect(resolve).toHaveBeenCalledWith("images/mira.webp");
   });
 
+  it("loads a hidden portrait after a wide-to-narrow viewport resize without observers", async () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+    vi.stubGlobal("ResizeObserver", undefined);
+    let wide = true;
+    vi.stubGlobal("getComputedStyle", (element: Element) => ({
+      display:
+        wide && element.closest('[data-testid="adventure-turn-artwork"]')
+          ? "none"
+          : "block",
+    }));
+    const resolve = vi.fn((path: string) => `blob:${path}`);
+    setup({ location: undefined, npcs: makeReveal().npcs }, resolve);
+
+    // The wide layout loads just the compact callout.
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(1));
+    wide = false;
+    window.dispatchEvent(new Event("resize"));
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole("button", { name: "Enlarge portrait of Mira" })).toBeTruthy();
+
+    // Repeated resize events must not trigger redundant loads.
+    window.dispatchEvent(new Event("resize"));
+    expect(resolve).toHaveBeenCalledTimes(2);
+  });
+
+  it("loads a hidden portrait after its container resizes without IntersectionObserver", async () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+    const observers: FakeResizeObserver[] = [];
+    class FakeResizeObserver {
+      private readonly callback: ResizeObserverCallback;
+      observed: Element[] = [];
+      disconnected = false;
+      constructor(callback: ResizeObserverCallback) {
+        this.callback = callback;
+        observers.push(this);
+      }
+      observe(element: Element) {
+        this.observed.push(element);
+      }
+      disconnect() {
+        this.disconnected = true;
+      }
+      notify() {
+        this.callback([], this as unknown as ResizeObserver);
+      }
+    }
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    let wide = true;
+    vi.stubGlobal("getComputedStyle", (element: Element) => ({
+      display:
+        wide && element.closest('[data-testid="adventure-turn-artwork"]')
+          ? "none"
+          : "block",
+    }));
+    const resolve = vi.fn((path: string) => `blob:${path}`);
+    setup({ location: undefined, npcs: makeReveal().npcs }, resolve);
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(1));
+    expect(observers).toHaveLength(1);
+    expect(observers[0].observed.length).toBeGreaterThan(0);
+
+    wide = false;
+    observers[0].notify();
+    await waitFor(() => expect(resolve).toHaveBeenCalledTimes(2));
+    expect(observers[0].disconnected).toBe(true);
+  });
+
   it("starts loading only after the callout becomes visible", async () => {
     const instances: Array<{
       cb: IntersectionObserverCallback;
