@@ -62,6 +62,7 @@ function createPlace(
   places: Place[],
   name: string,
   relation: string | undefined,
+  cues: readonly string[] | undefined,
   ids: Set<string>,
   createId: IdFactory,
 ): Resolved | { error: string } {
@@ -73,6 +74,7 @@ function createPlace(
     id,
     name: name.slice(0, MAX_PLACE_NAME),
     ...(relation ? { relation } : {}),
+    ...(cues?.length ? { cues: [...cues] } : {}),
   };
   return { places: [...places, place], currentId: id };
 }
@@ -95,7 +97,7 @@ function resolveMove(
   if (!name) return { places, currentId: previousId };
   return (
     resolveKnownName(places, name) ??
-    createPlace(places, name, move.relation, ids, createId)
+    createPlace(places, name, move.relation, move.cues, ids, createId)
   );
 }
 
@@ -150,6 +152,7 @@ export function applyPlaces(
   move: PlaceMoveProposal | undefined,
   visiblePatch: VisibleStatePatch,
   createId: IdFactory,
+  placeCues?: readonly string[],
 ): PlaceStepResult {
   const ids = existingIds(candidate);
   let places = previous.places;
@@ -167,6 +170,14 @@ export function applyPlaces(
     if ("error" in resolved) return { ok: false, message: resolved.error };
     list = resolved.places;
     currentId = resolved.currentId;
+  }
+  const activeCues = placeCues?.length ? placeCues : move?.cues;
+  if (currentId && activeCues?.length) {
+    list = list.map((place) =>
+      place.id === currentId && !place.cues?.length
+        ? { ...place, cues: [...activeCues] }
+        : place,
+    );
   }
   if (list.length > 0) candidate.places = list;
   else delete candidate.places;

@@ -288,7 +288,25 @@ describe("AdventureSituationSettings", () => {
       expect(compact._readme).toContain("GM-only");
       expect(compact.summary.turnsTotal).toBe(1);
       expect(compact.turns[0].timeAdvance).toBeNull();
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy JSON for AI" }),
+      );
+      const delta = JSON.parse(writeText.mock.calls[3]![0]);
+      expect(delta.delta).toEqual({
+        fromRevision: 2,
+        toRevision: 2,
+        fromTurnCount: 1,
+        toTurnCount: 1,
+        newTurnsCount: 0,
+      });
+      expect(delta.turns).toEqual([]);
+      expect(delta.stateChanges).toEqual({});
+      expect(
+        screen.getByRole("button", { name: "Copy full JSON for AI" }),
+      ).toBeTruthy();
     } finally {
+      window.localStorage.clear();
       if (previous) {
         Object.defineProperty(navigator, "clipboard", previous);
       } else {
@@ -312,6 +330,7 @@ describe("AdventureSituationSettings", () => {
       expect(alert.textContent).toContain("Check clipboard permissions");
       expect(alert.textContent).not.toContain("secret data");
     } finally {
+      window.localStorage.clear();
       if (previous) {
         Object.defineProperty(navigator, "clipboard", previous);
       } else {

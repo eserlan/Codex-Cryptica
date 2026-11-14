@@ -3,9 +3,10 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
   import {
-    adventureDiagnosticJson,
     adventureReviewJson,
     adventureReviewMarkdown,
+    copyDiagnosticSnapshot,
+    readDiagnosticBaseline,
   } from "#lib/services/adventure/adventure-review-capture.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
@@ -20,6 +21,23 @@
   let error = $state<string | null>(null);
   let advanceMinutes = $state(60);
   let copyBusy = $state(false);
+  let baselineRefresh = $state(0);
+
+  function diagnosticStorage(): Storage | null {
+    return typeof window !== "undefined" ? window.localStorage : null;
+  }
+
+  const hasBaseline = $derived.by(() => {
+    void baselineRefresh;
+    const session = manager.session;
+    if (!session) return false;
+    const baseline = readDiagnosticBaseline(session.id, diagnosticStorage());
+    return (
+      baseline !== null &&
+      session.turns.length >= baseline.turnCount &&
+      session.revision >= baseline.revision
+    );
+  });
 
   const scenarios = $derived(
     manager.session?.scenarioCollection?.items.filter(
@@ -81,27 +99,35 @@
     }
   }
 
-  async function copySession(format: "markdown" | "json" | "diagnostic") {
+  async function copySession(
+    format: "markdown" | "json" | "diagnostic" | "diagnostic-full",
+  ) {
     const session = manager.session;
     if (!session || copyBusy) return;
     copyBusy = true;
     error = null;
     try {
-      const text =
-        format === "markdown"
-          ? adventureReviewMarkdown(session)
-          : format === "diagnostic"
-            ? adventureDiagnosticJson(session)
-            : adventureReviewJson(session);
+      let text: string;
+      let label: string;
+      if (format === "markdown") {
+        text = adventureReviewMarkdown(session);
+        label = "Markdown";
+      } else if (format === "diagnostic" || format === "diagnostic-full") {
+        const result = copyDiagnosticSnapshot(session, diagnosticStorage(), {
+          forceFull: format === "diagnostic-full",
+        });
+        baselineRefresh += 1;
+        text = result.text;
+        label = result.isDelta
+          ? `delta JSON for AI (turns ${result.fromTurnCount}–${result.toTurnCount})`
+          : "compact JSON for AI";
+      } else {
+        text = adventureReviewJson(session);
+        label = "JSON";
+      }
       await navigator.clipboard.writeText(text);
       notificationStore.notify(
-        "GM-only adventure " +
-          (format === "markdown"
-            ? "Markdown"
-            : format === "diagnostic"
-              ? "compact JSON for AI"
-              : "JSON") +
-          " copied to clipboard.",
+        `GM-only adventure ${label} copied to clipboard.`,
         "success",
       );
     } catch {
@@ -221,10 +247,22 @@
           type="button"
           class={buttonClass}
           disabled={copyBusy}
-          title="Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat."
+          title={hasBaseline
+            ? "Delta since the last AI copy (only new turns and changed state)."
+            : "Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat."}
           onclick={() => void copySession("diagnostic")}
           >Copy JSON for AI</button
         >
+        {#if hasBaseline}
+          <button
+            type="button"
+            class={buttonClass}
+            disabled={copyBusy}
+            title="Copy the full compact JSON snapshot and reset the delta baseline."
+            onclick={() => void copySession("diagnostic-full")}
+            >Copy full JSON for AI</button
+          >
+        {/if}
       </div>
     </div>
 

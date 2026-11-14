@@ -33,6 +33,7 @@ const stateFactSchema = z.object({
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
   placeId: id.optional(),
+  cues: z.array(z.string().trim().min(1).max(40)).max(6).optional(),
 });
 const newStateFactSchema = stateFactSchema.omit({ id: true }).strict();
 
@@ -263,6 +264,8 @@ export const MAX_PLACES = 30;
 export const MAX_PLACE_ALIASES = 5;
 const MAX_PLACE_NAME_CHARS = 120;
 const placeName = z.string().trim().min(1).max(MAX_PLACE_NAME_CHARS);
+const placeCue = z.string().trim().min(1).max(32);
+const placeCuesSchema = z.array(placeCue).max(8).optional();
 
 const placeSchema = z
   .object({
@@ -271,6 +274,7 @@ const placeSchema = z
     sourceRecordId: id.optional(),
     relation: text.optional(),
     aliases: z.array(placeName).max(MAX_PLACE_ALIASES).optional(),
+    cues: placeCuesSchema,
   })
   .strict();
 
@@ -279,6 +283,7 @@ const placeMoveSchema = z
     placeId: id.optional(),
     name: placeName.optional(),
     relation: text.optional(),
+    cues: placeCuesSchema,
   })
   .strict()
   .refine((move) => Boolean(move.placeId || move.name), {
@@ -290,6 +295,7 @@ const completeProposalSchema = z.object({
   narration,
   timeAdvance: timeAdvanceSchema.optional(),
   moveTo: placeMoveSchema.optional(),
+  placeCues: placeCuesSchema,
   personRefs: z.array(id).max(8).optional(),
   sceneTransition: z
     .object({

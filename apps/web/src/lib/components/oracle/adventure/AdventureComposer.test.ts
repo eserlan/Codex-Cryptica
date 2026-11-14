@@ -148,6 +148,26 @@ describe("AdventureComposer", () => {
     expect(m.submitAction).toHaveBeenCalledWith("Cross the flooded causeway");
   });
 
+  it("submits on Ctrl+Enter and ignores plain Enter or empty/disabled drafts", async () => {
+    const m = manager("ready");
+    render(AdventureComposer, { props: { manager: m } });
+    const textarea = screen.getByLabelText("What do you do?");
+
+    await fireEvent.keyDown(textarea, { key: "Enter" });
+    expect(m.submitAction).not.toHaveBeenCalled();
+
+    await fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    expect(m.submitAction).toHaveBeenCalledTimes(1);
+    expect(m.submitAction).toHaveBeenCalledWith("Cross the flooded causeway");
+
+    const blank = manager("ready");
+    blank.draft = "   ";
+    const second = render(AdventureComposer, { props: { manager: blank } });
+    const blankTextarea = second.container.querySelector("textarea")!;
+    await fireEvent.keyDown(blankTextarea, { key: "Enter", ctrlKey: true });
+    expect(blank.submitAction).not.toHaveBeenCalled();
+  });
+
   it("renders suggested actions and submits the chosen one", async () => {
     const m = manager("ready");
     m.suggestedActions = ["Search the wreckage"];
@@ -370,6 +390,32 @@ describe("AdventureComposer layout and chips", () => {
       expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
         "hidden",
       );
+    });
+
+    it("lets the player collapse and re-expand suggestion chips", async () => {
+      const m = manager("ready");
+      m.suggestedActions = ["Search the wreckage", "Call out to the ferryman"];
+      render(AdventureComposer, {
+        props: { manager: m, suggestionChips: true },
+      });
+
+      const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(
+        screen.getByRole("button", { name: "Search the wreckage" }),
+      ).toBeTruthy();
+
+      await fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(
+        screen.queryByRole("button", { name: "Search the wreckage" }),
+      ).toBeNull();
+
+      await fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(
+        screen.getByRole("button", { name: "Search the wreckage" }),
+      ).toBeTruthy();
     });
   });
 });

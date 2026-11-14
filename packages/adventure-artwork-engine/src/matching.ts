@@ -21,7 +21,7 @@ export function matchArtwork(
     ]),
   );
   let best: ArtworkAsset | null = null;
-  let bestScore = 0;
+  let bestScore = -Infinity;
   for (const asset of assets) {
     if (
       asset.withdrawn ||
@@ -35,18 +35,17 @@ export function matchArtwork(
       (value) => all.has(value) && cues.primaryCues.includes(value),
     ).length;
     if (!primary) continue;
+    const unmatchedPrimary = asset.primaryCues.length - primary;
     const score =
       primary * 8 +
-      asset.settingCues.filter(
-        (value) => all.has(value) && cues.settingCues?.includes(value),
-      ).length *
-        4 +
+      asset.settingCues.filter((value) => all.has(value)).length * 4 +
       asset.moodCues.filter(
         (value) => all.has(value) && cues.moodCues?.includes(value),
       ).length +
       asset.timeCues.filter(
         (value) => all.has(value) && cues.timeCues?.includes(value),
-      ).length;
+      ).length -
+      unmatchedPrimary;
     if (
       score > bestScore ||
       (score === bestScore && best && asset.id < best.id)

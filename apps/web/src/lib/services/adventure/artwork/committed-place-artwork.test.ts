@@ -59,7 +59,42 @@ describe("committed place artwork", () => {
     });
     expect(next.artwork).toBeUndefined();
   });
-  it("never reranks on ordinary turns or when artwork is disabled", () => {
+  it("assigns artwork to an untagged current place even without changing places", () => {
+    const previous = session({
+      currentPlaceId: "p1",
+      turns: [],
+      revision: 0,
+    });
+    const next = session({
+      currentPlaceId: "p1",
+      places: [{ id: "p1", name: "Oslo", cues: ["forest"] }],
+    });
+    const result = assignCommittedPlaceArtwork(
+      previous,
+      next,
+      [asset],
+      "fantasy",
+      true,
+    );
+    expect(result.artwork).toEqual({
+      version: 1,
+      associations: [
+        {
+          subject: { kind: "place", id: "p1" },
+          association: {
+            version: 1,
+            automatic: {
+              assetId: "forest-1",
+              catalogueVersion: 1,
+              assignedOnTurnId: "turn1",
+            },
+          },
+        },
+      ],
+    });
+  });
+
+  it("never reranks when no new turn occurred, artwork already exists, or artwork is disabled", () => {
     const next = session();
     expect(
       assignCommittedPlaceArtwork(
@@ -70,6 +105,33 @@ describe("committed place artwork", () => {
         true,
       ),
     ).toBe(next);
+    const withExisting = session({
+      artwork: {
+        version: 1,
+        associations: [
+          {
+            subject: { kind: "place", id: "p1" },
+            association: {
+              version: 1,
+              automatic: {
+                assetId: "other-1",
+                catalogueVersion: 1,
+                assignedOnTurnId: "turn0",
+              },
+            },
+          },
+        ],
+      },
+    });
+    expect(
+      assignCommittedPlaceArtwork(
+        session({ turns: [], revision: 0 }),
+        withExisting,
+        [asset],
+        "fantasy",
+        true,
+      ),
+    ).toBe(withExisting);
     expect(
       assignCommittedPlaceArtwork(
         session({ currentPlaceId: undefined }),
@@ -100,10 +162,36 @@ describe("committed place artwork", () => {
       ).toBe(next);
     }
   });
-  it("does not assign canonical places, uncommitted turns, or unsuitable matches", () => {
-    const previous = session({ currentPlaceId: undefined, turns: [] });
-    for (const next of [
+  it("assigns canonical places when cues match, and skips uncommitted turns or unsuitable matches", () => {
+    const previous = session({
+      currentPlaceId: undefined,
+      turns: [],
+      revision: 0,
+    });
+    const canonicalMatch = assignCommittedPlaceArtwork(
+      previous,
       session({ places: [{ id: "p1", name: "Forest", sourceRecordId: "e1" }] }),
+      [asset],
+      "fantasy",
+      true,
+    );
+    expect(canonicalMatch.artwork).toEqual({
+      version: 1,
+      associations: [
+        {
+          subject: { kind: "place", id: "p1" },
+          association: {
+            version: 1,
+            automatic: {
+              assetId: "forest-1",
+              catalogueVersion: 1,
+              assignedOnTurnId: "turn1",
+            },
+          },
+        },
+      ],
+    });
+    for (const next of [
       session({ turns: [] }),
       session({ places: [{ id: "p1", name: "Castle" }] }),
     ]) {
