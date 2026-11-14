@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureArtworkLightbox from "./AdventureArtworkLightbox.svelte";
 import { AdventureLightboxController } from "./adventure-artwork-lightbox.svelte.js";
@@ -38,6 +38,10 @@ describe("AdventureArtworkLightbox", () => {
     await Promise.resolve();
 
     expect(screen.getByTestId("adventure-artwork-lightbox")).toBeTruthy();
+    const closeButton = screen.getByRole("button", {
+      name: "Close image lightbox",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(closeButton));
     expect(
       screen.getByTestId("adventure-lightbox-counter").textContent?.trim(),
     ).toBe("1 / 2");
@@ -60,6 +64,38 @@ describe("AdventureArtworkLightbox", () => {
 
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByTestId("adventure-artwork-lightbox")).toBeNull();
+  });
+
+  it("keeps Tab navigation inside the dialog when focus reaches its last control", async () => {
+    const controller = new AdventureLightboxController();
+    const item = {
+      key: "scene:1",
+      src: "blob:scene-1",
+      alt: "Bridge",
+      title: "Bridge",
+    };
+    render(AdventureArtworkLightbox, { props: { controller } });
+    controller.open(item);
+
+    const closeButton = await screen.findByRole("button", {
+      name: "Close image lightbox",
+    });
+    await waitFor(() => expect(document.activeElement).toBe(closeButton));
+    closeButton.focus();
+    await fireEvent.keyDown(closeButton, { key: "Tab" });
+
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Close lightbox backdrop" }),
+    );
+
+    const backgroundButton = document.createElement("button");
+    document.body.appendChild(backgroundButton);
+    backgroundButton.focus();
+    await fireEvent.keyDown(window, { key: "Tab" });
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Close lightbox backdrop" }),
+    );
+    backgroundButton.remove();
   });
 
   it("upgrades to loadFull on open, releases on close, and restores focus to opener", async () => {
