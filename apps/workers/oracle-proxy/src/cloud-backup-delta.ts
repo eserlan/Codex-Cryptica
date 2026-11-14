@@ -25,11 +25,10 @@ import {
   reachableBytes,
   resolveObjects,
   writeJson,
-  writeManifest,
   type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
-import { finishCommit } from "./cloud-backup-restore-points";
+import { publishCommit } from "./cloud-backup-restore-points";
 import { evictOldestTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
@@ -434,28 +433,22 @@ async function commitDelta(
     feedHorizon:
       auth.manifest.feedHorizon ?? cloudBackupRevisionOf(auth.manifest),
   };
-  const won = await writeManifest(
+  return publishCommit(
+    request,
     env,
     backupId,
-    committed,
-    auth.ownerCodeHash,
-    objects,
-    auth.etag,
-    auth.sharing,
+    {
+      committed,
+      objects,
+      staged,
+      base,
+      ownerCodeHash: auth.ownerCodeHash,
+      etag: auth.etag,
+      sharing: auth.sharing,
+      assetIds: delta.assetIds,
+    },
+    () => lostRace(request, env, backupId, staged, auth.manifest),
   );
-  if (!won) {
-    return lostRace(request, env, backupId, staged, auth.manifest);
-  }
-
-  await finishCommit(env, backupId, {
-    committed,
-    objects,
-    base,
-    shared: auth.sharing !== undefined,
-    assetIds: delta.assetIds,
-  });
-
-  return json(request, { manifest: committed });
 }
 
 /**

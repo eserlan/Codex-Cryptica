@@ -109,6 +109,44 @@ export function getBackupPrefix(backupId: string): string {
   return `${PREFIX}${backupId}/`;
 }
 
+const MUTATION_LOCK_TTL_MS = 2 * 60_000;
+
+/**
+ * Serializes the short manifest-to-restore-point window and asset mutations.
+ * R2's conditional write makes acquisition and lease renewal compare-and-swap
+ * operations across worker isolates. A crashed holder leaves a bounded lease.
+ */
+export async function acquireBackupMutationLock(
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<(() => Promise<void>) | null> {
+  const key = `${getBackupPrefix(backupId)}locks/mutations.json`;
+  const now = Date.now();
+  const expiresAt = String(now + MUTATION_LOCK_TTL_MS);
+  const existing = await env.BUCKET.head(key);
+  const options = existing?.etag
+    ? { onlyIf: { etagMatches: existing.etag } }
+    : { onlyIf: { etagDoesNotMatch: "*" } };
+
+  if (existing && Number(existing.customMetadata?.expiresAt) > now) return null;
+  const written = await env.BUCKET.put(key, "locked", {
+    customMetadata: { expiresAt },
+    ...options,
+  });
+  if (!written?.etag) return null;
+
+  return async () => {
+    try {
+      await env.BUCKET.put(key, "", {
+        customMetadata: { expiresAt: "0" },
+        onlyIf: { etagMatches: written.etag },
+      });
+    } catch {
+      // The lease expires if R2 cannot mark it free.
+    }
+  };
+}
+
 export async function readManifest(
   env: CloudBackupEnv,
   backupId: string,

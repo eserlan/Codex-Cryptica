@@ -1,6 +1,7 @@
 import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing";
 import {
   type CloudBackupEnv,
+  acquireBackupMutationLock,
   getAssetKey,
   reachableBytes,
   resolveObjects,
@@ -55,52 +56,58 @@ export async function handleCloudBackupAssetUpload(
   if (fileTooLarge) return fileTooLarge;
 
   const key = getAssetKey(backupId, assetId);
-  // Measured against what is already stored, minus whatever this upload
-  // replaces, so a re-uploaded file is not counted twice.
-  const existing = await env.BUCKET.head(key);
-  const projected =
-    (await reachableBytes(
-      env,
-      backupId,
-      await resolveObjects(env, backupId, auth.objects),
-    )) -
-    (existing?.size ?? 0) +
-    bytes.byteLength;
-  const vaultTooLarge = sizeLimitResponse(
-    request,
-    projected,
-    CLOUD_BACKUP_LIMITS.maxVaultBytes,
-    "This vault is too large to back up.",
-  );
-  if (vaultTooLarge) return vaultTooLarge;
+  const releaseLock = await acquireBackupMutationLock(env, backupId);
+  if (!releaseLock) return retryLater(request);
+  try {
+    // Measured against what is already stored, minus whatever this upload
+    // replaces, so a re-uploaded file is not counted twice.
+    const existing = await env.BUCKET.head(key);
+    const projected =
+      (await reachableBytes(
+        env,
+        backupId,
+        await resolveObjects(env, backupId, auth.objects),
+      )) -
+      (existing?.size ?? 0) +
+      bytes.byteLength;
+    const vaultTooLarge = sizeLimitResponse(
+      request,
+      projected,
+      CLOUD_BACKUP_LIMITS.maxVaultBytes,
+      "This vault is too large to back up.",
+    );
+    if (vaultTooLarge) return vaultTooLarge;
 
-  if (
-    existing &&
-    existing.etag &&
-    !(await preserveBeforeOverwrite(
-      env,
-      backupId,
-      assetId,
-      existing.etag,
-      auth.sharing !== undefined,
-    ))
-  ) {
-    return retryLater(request);
+    if (
+      existing &&
+      existing.etag &&
+      !(await preserveBeforeOverwrite(
+        env,
+        backupId,
+        assetId,
+        existing.etag,
+        auth.sharing !== undefined,
+      ))
+    ) {
+      return retryLater(request);
+    }
+
+    const written = await env.BUCKET.put(key, bytes, {
+      httpMetadata: {
+        contentType:
+          request.headers.get("Content-Type") || "application/octet-stream",
+      },
+      // Only replace the version that was copied; a concurrent upload retries.
+      onlyIf: existing?.etag
+        ? { etagMatches: existing.etag }
+        : { etagDoesNotMatch: "*" },
+    });
+    if (written === null) return retryLater(request);
+
+    return json(request, { assetId, sizeBytes: bytes.byteLength });
+  } finally {
+    await releaseLock();
   }
-
-  const written = await env.BUCKET.put(key, bytes, {
-    httpMetadata: {
-      contentType:
-        request.headers.get("Content-Type") || "application/octet-stream",
-    },
-    // Only replace the version that was copied; a concurrent upload retries.
-    onlyIf: existing?.etag
-      ? { etagMatches: existing.etag }
-      : { etagDoesNotMatch: "*" },
-  });
-  if (written === null) return retryLater(request);
-
-  return json(request, { assetId, sizeBytes: bytes.byteLength });
 }
 
 /** GET /api/cloud-backup/{backupId}/assets/{assetId} */

@@ -196,6 +196,39 @@ describe("taking restore points", () => {
     ]);
   });
 
+  it("does not accept a later same-day commit before the first point is published", async () => {
+    const fx = await sharedFixture();
+    at("2026-11-14T08:00:00Z");
+    let entered!: () => void;
+    let resume!: () => void;
+    const reachedPoint = new Promise<void>((resolve) => (entered = resolve));
+    const paused = new Promise<void>((resolve) => (resume = resolve));
+    const bucket = fx.env.BUCKET;
+    const head = bucket.head.bind(bucket);
+    let delayed = false;
+    bucket.head = async (key: string) => {
+      if (!delayed && key === pointKey(fx, "2026-11-14")) {
+        delayed = true;
+        entered();
+        await paused;
+      }
+      return head(key);
+    };
+
+    const first = edit(fx, "e1", "first");
+    await reachedPoint;
+    const second = await edit(fx, "e2", "second");
+    expect(second.status).toBe(503);
+    resume();
+    expect((await first).status).toBe(200);
+    bucket.head = head;
+
+    const point = await readPoint(fx, "2026-11-14");
+    const { manifest } = (await readManifest(fx.env, fx.backupId))!;
+    expect(point.revision).toBe(manifest.revision);
+    expect(point.revision).toBe(2);
+  });
+
   it("takes no point for a day without commits", async () => {
     const fx = await sharedFixture();
     at("2026-11-14T08:00:00Z");
@@ -352,6 +385,54 @@ describe("immutability", () => {
     const fx = await sharedFixture();
     at("2026-11-14T08:00:00Z");
     await edit(fx, "e1", "one", ["pic"]);
+    const point = await readPoint(fx, "2026-11-14");
+    await handleCloudBackupSharingOff(
+      ownerRequest(fx.ownerCode, { method: "DELETE" }),
+      fx.env,
+      fx.backupId,
+    );
+    expect((await upload(fx, "pic", [5, 5])).status).toBe(200);
+    expect(await assetBytes(fx, point, "pic")).toEqual([1, 2, 3]);
+  });
+
+  it("serializes sharing-off and asset writes until a new point is published", async () => {
+    const fx = await sharedFixture();
+    at("2026-11-14T08:00:00Z");
+    let entered!: () => void;
+    let resume!: () => void;
+    const reachedPoint = new Promise<void>((resolve) => (entered = resolve));
+    const paused = new Promise<void>((resolve) => (resume = resolve));
+    const bucket = fx.env.BUCKET;
+    const head = bucket.head.bind(bucket);
+    let delayed = false;
+    bucket.head = async (key: string) => {
+      if (!delayed && key === pointKey(fx, "2026-11-14")) {
+        delayed = true;
+        entered();
+        await paused;
+      }
+      return head(key);
+    };
+
+    const commit = edit(fx, "e1", "pointed", ["pic"]);
+    await reachedPoint;
+    const sharingOff = await handleCloudBackupSharingOff(
+      ownerRequest(fx.ownerCode, { method: "DELETE" }),
+      fx.env,
+      fx.backupId,
+    );
+    const uploadWhilePointing = await upload(fx, "pic", [5, 5]);
+    expect(sharingOff.status).toBe(503);
+    expect(uploadWhilePointing.status).toBe(503);
+    expect(
+      Array.from(
+        (await bucket.get(getAssetKey(fx.backupId, "pic")))!.body as Uint8Array,
+      ),
+    ).toEqual([1, 2, 3]);
+
+    resume();
+    expect((await commit).status).toBe(200);
+    bucket.head = head;
     const point = await readPoint(fx, "2026-11-14");
     await handleCloudBackupSharingOff(
       ownerRequest(fx.ownerCode, { method: "DELETE" }),

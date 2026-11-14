@@ -2,6 +2,7 @@ import { json } from "./cloud-backup-http";
 import {
   type CloudBackupEnv,
   type SharingRecord,
+  acquireBackupMutationLock,
   getSharingDevicesKey,
   writeManifest,
 } from "./cloud-backup-storage";
@@ -37,22 +38,30 @@ async function changeSharing(
   >,
 ): Promise<Response> {
   for (let attempt = 0; attempt < SHARING_ATTEMPTS; attempt++) {
-    const auth = await authorizeOwner(request, env, backupId);
-    if ("response" in auth) return auth.response;
-    const result = await change(auth);
-    if ("response" in result) return result.response;
-    const written = await writeManifest(
-      env,
-      backupId,
-      auth.manifest,
-      auth.ownerCodeHash,
-      auth.objects,
-      auth.etag,
-      result.sharing,
-    );
-    if (written) {
-      await result.afterWrite?.();
-      return result.respond();
+    const releaseMutationLock = await acquireBackupMutationLock(env, backupId);
+    if (!releaseMutationLock) {
+      return json(request, { error: { message: "Try again shortly." } }, 503);
+    }
+    try {
+      const auth = await authorizeOwner(request, env, backupId);
+      if ("response" in auth) return auth.response;
+      const result = await change(auth);
+      if ("response" in result) return result.response;
+      const written = await writeManifest(
+        env,
+        backupId,
+        auth.manifest,
+        auth.ownerCodeHash,
+        auth.objects,
+        auth.etag,
+        result.sharing,
+      );
+      if (written) {
+        await result.afterWrite?.();
+        return result.respond();
+      }
+    } finally {
+      await releaseMutationLock();
     }
   }
   return json(

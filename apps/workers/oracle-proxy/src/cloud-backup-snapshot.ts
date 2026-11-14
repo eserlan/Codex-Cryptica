@@ -18,13 +18,12 @@ import {
   reachableBytes,
   resolveObjects,
   writeJson,
-  writeManifest,
   type SharingRecord,
 } from "./cloud-backup-storage";
-import { json, type BackupPayload, validatePayload } from "./cloud-backup-http";
+import { type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import { lostRace } from "./cloud-backup-delta";
-import { finishCommit } from "./cloud-backup-restore-points";
+import { publishCommit } from "./cloud-backup-restore-points";
 import {
   carryTombstones,
   stageIndex,
@@ -124,25 +123,22 @@ async function commitSnapshot(
   staged.bundle = stagedName(tag, "bundle.json");
   committed.sizeBytes = await reachableBytes(env, backupId, staged);
 
-  const won = await writeManifest(
+  return publishCommit(
+    request,
     env,
     backupId,
-    committed,
-    auth.ownerCodeHash,
-    staged,
-    auth.etag,
-    auth.sharing,
+    {
+      committed,
+      objects: staged,
+      staged,
+      base,
+      ownerCodeHash: auth.ownerCodeHash,
+      etag: auth.etag,
+      sharing: auth.sharing,
+      assetIds: payload.assetIds ?? [],
+    },
+    () => lostRace(request, env, backupId, staged, auth.manifest),
   );
-  if (!won) return lostRace(request, env, backupId, staged, auth.manifest);
-
-  await finishCommit(env, backupId, {
-    committed,
-    objects: staged,
-    base,
-    shared: auth.sharing !== undefined,
-    assetIds: payload.assetIds ?? [],
-  });
-  return json(request, { manifest: committed });
 }
 
 /**

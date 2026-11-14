@@ -4,7 +4,10 @@ import {
   BackupObjectsSchema,
   type BackupObjects,
   type CloudBackupEnv,
+  type SharingRecord,
+  acquireBackupMutationLock,
   cleanupSuperseded,
+  discardStaged,
   getAssetKey,
   getBackupPrefix,
   listKeys,
@@ -12,6 +15,7 @@ import {
   pruneAssets,
   readJson,
   referencedKeys,
+  writeManifest,
 } from "./cloud-backup-storage";
 import { authorizeOwner } from "./cloud-backup-auth";
 import { json, storageUnavailable } from "./cloud-backup-http";
@@ -254,14 +258,19 @@ export async function finishCommit(
     shared: boolean;
     assetIds: string[] | undefined;
   },
+  releaseMutationLock?: () => Promise<void>,
 ): Promise<void> {
   const { committed, objects, base, shared, assetIds } = commit;
-  if (shared) {
-    try {
-      await takePoint(env, backupId, committed, objects, assetIds);
-    } catch {
-      // Best effort: the next commit today tries again.
+  try {
+    if (shared) {
+      try {
+        await takePoint(env, backupId, committed, objects, assetIds);
+      } catch {
+        // Best effort: the next commit today tries again.
+      }
     }
+  } finally {
+    await releaseMutationLock?.();
   }
   let points: Awaited<ReturnType<typeof loadPoints>>;
   try {
@@ -302,6 +311,70 @@ export async function finishCommit(
   } catch {
     // Best effort: the next prune or overwrite sweeps again.
   }
+}
+
+/** Publishes a commit while serializing its point with other backup mutations. */
+export async function publishCommit(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+  input: {
+    committed: CloudBackupManifest;
+    objects: BackupObjects;
+    staged: BackupObjects;
+    base: BackupObjects;
+    ownerCodeHash: string;
+    etag?: string;
+    sharing?: SharingRecord;
+    assetIds: string[] | undefined;
+  },
+  onLostRace: () => Promise<Response>,
+): Promise<Response> {
+  const {
+    committed,
+    objects,
+    staged,
+    base,
+    ownerCodeHash,
+    etag,
+    sharing,
+    assetIds,
+  } = input;
+  const releaseMutationLock = sharing
+    ? await acquireBackupMutationLock(env, backupId)
+    : undefined;
+  if (sharing && !releaseMutationLock) {
+    await discardStaged(env, backupId, staged);
+    return json(request, { error: { message: "Try again shortly." } }, 503);
+  }
+
+  let won: boolean;
+  try {
+    won = await writeManifest(
+      env,
+      backupId,
+      committed,
+      ownerCodeHash,
+      objects,
+      etag,
+      sharing,
+    );
+  } catch (error) {
+    await releaseMutationLock?.();
+    throw error;
+  }
+  if (!won) {
+    await releaseMutationLock?.();
+    return onLostRace();
+  }
+
+  await finishCommit(
+    env,
+    backupId,
+    { committed, objects, base, shared: sharing !== undefined, assetIds },
+    releaseMutationLock,
+  );
+  return json(request, { manifest: committed });
 }
 
 /** GET /api/cloud-backup/{backupId}/restore-points — owner only. */
