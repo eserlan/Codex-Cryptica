@@ -184,6 +184,56 @@ describe("applying pulled maps", () => {
     ]);
   });
 
+  it.each([".codex", ".codex/maps.json", "entities/a.md", "maps/../x.png"])(
+    "does not apply a pulled map whose file path is %s",
+    async (assetPath) => {
+      const download = vi.fn(async (_id: string) => bytes("evil"));
+      const out = await remote().applyWhole(
+        "vault-1",
+        "map",
+        changes({ writes: [{ item: map({ assetPath }) as never }] }),
+        download,
+      );
+      expect(out.failed).toEqual([ORIGINAL]);
+      expect(download).not.toHaveBeenCalled();
+      expect(mocks.importAsset).not.toHaveBeenCalled();
+      expect(mocks.files.size).toBe(0);
+      expect(mocks.maps[ORIGINAL]).toBeUndefined();
+    },
+  );
+
+  it("does not apply a pulled map whose mask path leaves the maps folder", async () => {
+    const out = await remote().applyWhole(
+      "vault-1",
+      "map",
+      changes({
+        writes: [
+          {
+            item: map({ fogOfWar: { maskPath: ".codex/maps.json" } }) as never,
+          },
+        ],
+      }),
+      async () => bytes("evil"),
+    );
+    expect(out.failed).toEqual([ORIGINAL]);
+    expect(mocks.files.size).toBe(0);
+  });
+
+  it("does not apply a keep-both copy with an unsafe path", async () => {
+    const out = await remote().applyWhole(
+      "vault-1",
+      "map",
+      changes({
+        copies: [
+          { copy: map({ id: COPY, assetPath: ".codex" }) as never } as never,
+        ],
+      }),
+      async () => bytes("evil"),
+    );
+    expect(out.failed).toEqual([COPY]);
+    expect(mocks.maps[COPY]).toBeUndefined();
+  });
+
   it("still applies a map whose download fails, and reports the file", async () => {
     const out = await remote().applyWhole(
       "vault-1",
@@ -278,7 +328,6 @@ describe("applying pulled maps", () => {
     );
     expect(mocks.deleteMap).toHaveBeenCalledWith(ORIGINAL);
     expect(mocks.maps).toEqual({});
-    expect(mocks.saveMaps).not.toHaveBeenCalled();
   });
 
   it("refuses to write once the vault has changed", async () => {

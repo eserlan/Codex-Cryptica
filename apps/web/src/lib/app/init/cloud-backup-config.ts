@@ -49,6 +49,10 @@ import { SharedVaultJoin } from "#lib/stores/shared-vault-join.js";
 import { isPrivateArtworkSnapshotPath } from "schema";
 import { omitArtworkForBackup } from "#lib/services/cloud-backup-artwork.js";
 import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
+import {
+  hasSafeMapPaths,
+  isMapMediaPath,
+} from "#lib/services/map-media-path.js";
 import { entityEditingRegistry } from "#lib/stores/entity-editing-registry.js";
 import { readOpfsBlob, writeOpfsFile } from "#lib/utils/opfs.js";
 import { sharedVaultIdentity } from "#lib/stores/shared-vault-identity.js";
@@ -369,6 +373,7 @@ const readLocalFile: NonNullable<CloudBackupDeps["readLocalFile"]> = async (
   vaultId,
   path,
 ) => {
+  if (!isMapMediaPath(path)) return null;
   const root = await vault.getSpecificVaultHandle(vaultId);
   if (!root) return null;
   try {
@@ -407,6 +412,7 @@ async function copyVaultFile(
   from: string,
   to: string,
 ): Promise<void> {
+  if (!isMapMediaPath(from) || !isMapMediaPath(to)) return;
   const file = await readLocalFile(vaultId, from);
   const root = await vault.getSpecificVaultHandle(vaultId);
   if (!file || !root) return;
@@ -479,8 +485,7 @@ async function storeMapFiles(
   outcome: { hashes: Record<string, string>; failed: string[] },
 ): Promise<void> {
   const paths = collectAssetPaths([], [write.item]).filter(
-    (path) =>
-      isSafeRestoredAssetPath(path) && !isPrivateArtworkSnapshotPath(path),
+    (path) => isMapMediaPath(path) && !isPrivateArtworkSnapshotPath(path),
   );
   for (const path of paths) {
     const { assetId, hash } = await storeMapFile(
@@ -494,6 +499,11 @@ async function storeMapFiles(
   }
 }
 
+/** A received map must be a valid map whose own files are map media, never other vault files. */
+const isReceivableMap = (item: WholeItem): boolean =>
+  MapSchema.safeParse(item).success &&
+  hasSafeMapPaths(item as Parameters<typeof hasSafeMapPaths>[0]);
+
 async function applyMapChanges(
   vaultId: string,
   changes: PulledWholeChanges,
@@ -506,12 +516,15 @@ async function applyMapChanges(
   const maps = { ...mapRegistry.maps } as Record<string, unknown>;
   // Copies first: they move the local files before the received ones land.
   for (const { copy } of changes.copies) {
+    if (!isReceivableMap(copy)) {
+      outcome.failed.push(copy.id);
+      continue;
+    }
     const own = await withOwnMapFiles(vaultId, copy);
     maps[own.id] = own;
   }
   for (const write of changes.writes) {
-    const parsed = MapSchema.safeParse(write.item);
-    if (!parsed.success) {
+    if (!isReceivableMap(write.item)) {
       outcome.failed.push(write.item.id);
       continue;
     }

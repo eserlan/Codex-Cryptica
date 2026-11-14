@@ -110,8 +110,8 @@ describe("MapRegistryStore", () => {
     it("should delete map and associated files", async () => {
       const mockMap = {
         id: "m1",
-        assetPath: "assets/m1.png",
-        fogOfWar: { maskPath: "masks/m1.png" },
+        assetPath: "maps/m1.png",
+        fogOfWar: { maskPath: "maps/m1_mask.png" },
       };
       mapRegistry.maps = { m1: mockMap as any };
       vi.mocked(getVaultDir).mockResolvedValue({} as any);
@@ -121,6 +121,24 @@ describe("MapRegistryStore", () => {
       expect(mapRegistry.maps["m1"]).toBeUndefined();
       expect(deleteOpfsEntry).toHaveBeenCalledTimes(2);
       expect(saveMapsToDisk).toHaveBeenCalled();
+    });
+
+    it("never deletes a file outside the maps folder", async () => {
+      mapRegistry.maps = {
+        m1: {
+          id: "m1",
+          assetPath: ".codex",
+          fogOfWar: { maskPath: ".codex/maps.json" },
+        } as any,
+        m2: { id: "m2", assetPath: "maps/../entities/a.md" } as any,
+      };
+      vi.mocked(getVaultDir).mockResolvedValue({} as any);
+
+      await mapRegistry.deleteMap("m1");
+      await mapRegistry.deleteMap("m2");
+
+      expect(mapRegistry.maps["m1"]).toBeUndefined();
+      expect(deleteOpfsEntry).not.toHaveBeenCalled();
     });
 
     it("should handle deletion in Demo Mode", async () => {
@@ -137,7 +155,7 @@ describe("MapRegistryStore", () => {
     });
 
     it("should ignore NotFoundError during file deletion", async () => {
-      const mockMap = { id: "m1", assetPath: "assets/m1.png" };
+      const mockMap = { id: "m1", assetPath: "maps/m1.png" };
       mapRegistry.maps = { m1: mockMap as any };
       vi.mocked(getVaultDir).mockResolvedValue({} as any);
       const error = new Error("Not found");
@@ -149,7 +167,7 @@ describe("MapRegistryStore", () => {
     });
 
     it("should throw non-NotFoundError during file deletion", async () => {
-      const mockMap = { id: "m1", assetPath: "assets/m1.png" };
+      const mockMap = { id: "m1", assetPath: "maps/m1.png" };
       mapRegistry.maps = { m1: mockMap as any };
       vi.mocked(deleteOpfsEntry).mockRejectedValue(
         new Error("Permission denied"),
@@ -195,8 +213,8 @@ describe("MapRegistryStore", () => {
     it("should handle error during maskPath deletion", async () => {
       const mockMap = {
         id: "m1",
-        assetPath: "assets/m1.png",
-        fogOfWar: { maskPath: "masks/m1.png" },
+        assetPath: "maps/m1.png",
+        fogOfWar: { maskPath: "maps/m1_mask.png" },
       };
       mapRegistry.maps = { m1: mockMap as any };
       vi.mocked(getVaultDir).mockResolvedValue({} as any);
@@ -216,8 +234,8 @@ describe("MapRegistryStore", () => {
     it("should ignore NotFoundError during maskPath deletion", async () => {
       const mockMap = {
         id: "m1",
-        assetPath: "assets/m1.png",
-        fogOfWar: { maskPath: "masks/m1.png" },
+        assetPath: "maps/m1.png",
+        fogOfWar: { maskPath: "maps/m1_mask.png" },
       };
       mapRegistry.maps = { m1: mockMap as any };
       vi.mocked(getVaultDir).mockResolvedValue({} as any);

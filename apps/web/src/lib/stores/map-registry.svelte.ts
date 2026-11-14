@@ -1,3 +1,4 @@
+import { isMapMediaPath } from "#lib/services/map-media-path.js";
 import type { Map } from "schema";
 import { getVaultDir, deleteOpfsEntry } from "../utils/opfs";
 import { vaultRegistry } from "./vault-registry.svelte";
@@ -108,7 +109,7 @@ class MapRegistryStore {
 
     return this.saveQueue.enqueue(`delete-map-${id}`, async () => {
       try {
-        if (map.assetPath) {
+        if (map.assetPath && isMapMediaPath(map.assetPath)) {
           const pathSegments = map.assetPath.split("/");
           await deleteOpfsEntry(vaultDir, pathSegments, activeVaultId).catch(
             (e) => {
@@ -117,7 +118,7 @@ class MapRegistryStore {
           );
         }
 
-        if (map.fogOfWar?.maskPath) {
+        if (map.fogOfWar?.maskPath && isMapMediaPath(map.fogOfWar.maskPath)) {
           const maskSegments = map.fogOfWar.maskPath.split("/");
           await deleteOpfsEntry(vaultDir, maskSegments, activeVaultId).catch(
             (e) => {
