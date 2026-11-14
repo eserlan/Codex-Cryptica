@@ -6,6 +6,10 @@ import {
   type KnownCloudBackup,
 } from "@codex/cloud-backup-sync";
 import { CloudBackupAccount } from "./cloud-backup-account";
+import {
+  CloudBackupSharing,
+  type SharingOutcome,
+} from "./cloud-backup-sharing";
 import { CloudBackupSync } from "./cloud-backup-sync";
 import type { DurableVaultChange } from "./vault/registry";
 import type {
@@ -55,6 +59,8 @@ export class CloudBackupStore {
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
   artworkConsentVersion = $state(0);
+  /** Group sharing as this device last saw it; never holds the link or token. */
+  sharing = $state<{ linkVersion: number; enabledAt: string } | null>(null);
   /** Ephemeral automatic-sync state (#3189); never persisted. */
   autoState = $state<CloudAutoSyncState>("idle");
   /**
@@ -75,6 +81,7 @@ export class CloudBackupStore {
       this.sync.resetState();
     },
   );
+  private sharingActions = new CloudBackupSharing(this, () => this.deps);
   private restore = new CloudBackupRestore(this, () => this.deps);
   private changes = new CloudBackupChanges(
     this,
@@ -194,6 +201,16 @@ export class CloudBackupStore {
     await this.deps.base?.clearVault(vaultId);
     this.status = "off";
     this.errorMessage = null;
+  }
+
+  enableSharing(vaultId: string): Promise<SharingOutcome> {
+    return this.sharingActions.enable(vaultId);
+  }
+  replaceSharingLink(vaultId: string): Promise<SharingOutcome> {
+    return this.sharingActions.replace(vaultId);
+  }
+  disableSharing(vaultId: string): Promise<SharingOutcome> {
+    return this.sharingActions.disable(vaultId);
   }
 
   deleteBackup(vaultId: string): Promise<boolean> {

@@ -146,6 +146,7 @@ export interface CloudBackupViewState {
   skippedEntities: string[];
   uploadProgress: { uploaded: number; total: number } | null;
   consented: boolean;
+  sharing: { linkVersion: number; enabledAt: string } | null;
   autoState: CloudAutoSyncState;
   autoConflictRemoteAt: string | null;
 }

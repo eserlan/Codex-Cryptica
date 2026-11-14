@@ -11,6 +11,8 @@
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
   import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
+  import CloudBackupSharingSettings from "#lib/components/settings/CloudBackupSharingSettings.svelte";
+  import { isSharedVaultEnabled } from "#lib/config/shared-vault.js";
   import { parseRecoveryKey } from "@codex/cloud-backup-sync";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
@@ -523,6 +525,18 @@
         </button>
       </div>
     </div>
+  {/if}
+
+  {#if isSharedVaultEnabled()}
+    <CloudBackupSharingSettings
+      {vaultId}
+      backupOn={isOn}
+      sharing={cloudBackupStore.sharing}
+      enable={() => cloudBackupStore.enableSharing(vaultId)}
+      replace={() => cloudBackupStore.replaceSharingLink(vaultId)}
+      disable={() => cloudBackupStore.disableSharing(vaultId)}
+      confirm={(options) => notificationStore.confirm(options)}
+    />
   {/if}
 
   {#if !isOn}
