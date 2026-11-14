@@ -130,6 +130,7 @@ export function validatePayload(
   if (candidate.assetIds !== undefined) {
     if (
       !Array.isArray(candidate.assetIds) ||
+      candidate.assetIds.length > CLOUD_BACKUP_LIMITS.maxAssetCount ||
       candidate.assetIds.some(
         (id) => typeof id !== "string" || !isValidAssetId(id),
       )

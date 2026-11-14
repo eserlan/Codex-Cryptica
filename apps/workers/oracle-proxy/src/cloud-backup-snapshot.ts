@@ -14,19 +14,16 @@ import {
 import {
   type BackupObjects,
   type CloudBackupEnv,
-  cleanupSuperseded,
-  getAssetKey,
   getStagedKey,
   reachableBytes,
   resolveObjects,
   writeJson,
-  writeManifest,
-  pruneAssets,
   type SharingRecord,
 } from "./cloud-backup-storage";
-import { json, type BackupPayload, validatePayload } from "./cloud-backup-http";
+import { type BackupPayload, validatePayload } from "./cloud-backup-http";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import { lostRace } from "./cloud-backup-delta";
+import { publishCommit } from "./cloud-backup-restore-points";
 import {
   carryTombstones,
   stageIndex,
@@ -126,23 +123,22 @@ async function commitSnapshot(
   staged.bundle = stagedName(tag, "bundle.json");
   committed.sizeBytes = await reachableBytes(env, backupId, staged);
 
-  const won = await writeManifest(
+  return publishCommit(
+    request,
     env,
     backupId,
-    committed,
-    auth.ownerCodeHash,
-    staged,
-    auth.etag,
-    auth.sharing,
+    {
+      committed,
+      objects: staged,
+      staged,
+      base,
+      ownerCodeHash: auth.ownerCodeHash,
+      etag: auth.etag,
+      sharing: auth.sharing,
+      assetIds: payload.assetIds ?? [],
+    },
+    () => lostRace(request, env, backupId, staged, auth.manifest),
   );
-  if (!won) return lostRace(request, env, backupId, staged, auth.manifest);
-
-  await cleanupSuperseded(env, backupId, revision, staged, base);
-  const keep = new Set(
-    (payload.assetIds ?? []).map((id) => getAssetKey(backupId, id)),
-  );
-  await pruneAssets(env, backupId, keep);
-  return json(request, { manifest: committed });
 }
 
 /**

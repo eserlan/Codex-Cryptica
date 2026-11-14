@@ -15,6 +15,7 @@ import {
   handleCloudBackupSharingOn,
   handleCloudBackupSharingOff,
   handleCloudBackupSharingReplace,
+  handleListRestorePoints,
 } from "./cloud-backup";
 import {
   handleCloudBackupAdminLookup,
@@ -193,6 +194,10 @@ function handleCloudBackupActionRoute(
     delta: {
       method: "POST",
       run: () => handleCloudBackupDelta(request, env, backupId),
+    },
+    "restore-points": {
+      method: "GET",
+      run: () => handleListRestorePoints(request, env, backupId),
     },
     sharing: {
       method: request.method === "DELETE" ? "DELETE" : "POST",

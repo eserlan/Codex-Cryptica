@@ -16,9 +16,7 @@ import {
   type BackupObjects,
   type CloudBackupEnv,
   absoluteKey,
-  cleanupSuperseded,
   discardStaged,
-  getAssetKey,
   getStagedKey,
   jsonByteLength,
   readJson,
@@ -27,11 +25,10 @@ import {
   reachableBytes,
   resolveObjects,
   writeJson,
-  writeManifest,
-  pruneAssets,
   type SharingRecord,
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
+import { publishCommit } from "./cloud-backup-restore-points";
 import { evictOldestTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
@@ -436,29 +433,22 @@ async function commitDelta(
     feedHorizon:
       auth.manifest.feedHorizon ?? cloudBackupRevisionOf(auth.manifest),
   };
-  const won = await writeManifest(
+  return publishCommit(
+    request,
     env,
     backupId,
-    committed,
-    auth.ownerCodeHash,
-    objects,
-    auth.etag,
-    auth.sharing,
+    {
+      committed,
+      objects,
+      staged,
+      base,
+      ownerCodeHash: auth.ownerCodeHash,
+      etag: auth.etag,
+      sharing: auth.sharing,
+      assetIds: delta.assetIds,
+    },
+    () => lostRace(request, env, backupId, staged, auth.manifest),
   );
-  if (!won) {
-    return lostRace(request, env, backupId, staged, auth.manifest);
-  }
-
-  await cleanupSuperseded(env, backupId, revision, objects, base);
-  if (delta.assetIds) {
-    await pruneAssets(
-      env,
-      backupId,
-      new Set(delta.assetIds.map((id) => getAssetKey(backupId, id))),
-    );
-  }
-
-  return json(request, { manifest: committed });
 }
 
 /**

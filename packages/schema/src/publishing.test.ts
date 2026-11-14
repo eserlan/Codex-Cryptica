@@ -489,6 +489,16 @@ describe("cloud backup incremental helpers (#3354)", () => {
       CloudBackupDeltaSchema.safeParse({ ...base, upserts: [{ title: "a" }] })
         .success,
     ).toBe(false);
+    expect(
+      CloudBackupDeltaSchema.safeParse({
+        ...base,
+        upserts: [],
+        assetIds: Array.from(
+          { length: CLOUD_BACKUP_LIMITS.maxAssetCount + 1 },
+          (_, index) => `asset-${index}`,
+        ),
+      }).success,
+    ).toBe(false);
   });
 
   it("accepts revisions on manifests, records and deltas, and rejects bad ones", () => {

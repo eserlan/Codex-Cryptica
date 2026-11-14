@@ -263,8 +263,10 @@ title }`. The server keeps the entity's last content with the tombstone for
 - Automatic sync spreads a mistake to every member within seconds. Slices 9
   and 12 are the safety net; until they ship, keep sharing behind a feature
   flag.
-- Restore points multiply storage per shared vault. Slice 11 must state the
-  cost and the limit before it is built.
+- Restore points multiply storage per shared vault. Slice 11 limits backups to
+  30 daily points and 1,000 assets, and caps each serialized point record at
+  1 MiB. The worst case is therefore at most 101 MiB per point (100 MiB of
+  referenced objects plus 1 MiB of metadata), or 3,030 MiB for 30 points.
 
 ---
 
@@ -332,4 +334,8 @@ see.
   one `POST /delta` against the write limit of 300 per minute, and a push makes
   at most four. Maps, canvases and full snapshots are not merged yet: they
   still pause once another device has committed, until slice 10.
-- The storage cost and limit for restore points. Settle in slice 11.
+- Restore points are kept for 30 UTC days, with at most one point per day.
+  Points reference committed objects; only asset versions that would otherwise
+  be overwritten are copied. Restore point data is excluded from `sizeBytes`
+  and the backup size cap, and unreferenced asset copies are capped at one
+  version per asset.
