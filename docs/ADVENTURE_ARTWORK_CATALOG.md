@@ -244,20 +244,21 @@ All 18 race and class portraits are listed in the live inventory above.
 
 ### Fantasy Narrative & Encounter Archetypes (8 Needed → 42 Fantasy NPCs Total)
 
-**P0: commission/generate these eight distinct 3:4 portraits.** The first eight increase the planned Fantasy NPC target from **34 to 42** and the global planned catalogue from **269 to 277**. They fill role/function gaps rather than duplicating playable class portraits. All IDs below are *planned*, not live; cues in `primaryCues` are *proposed* until registered in `cues.ts`.
+**P0: commission/generate these eight distinct 3:4 portraits.** The first eight increase the planned Fantasy NPC target from **34 to 42** and the global planned catalogue from **269 to 277**. They fill role/function gaps rather than duplicating playable class portraits. All IDs below are _planned_, not live; cues in `primaryCues` are _proposed_ until registered in `cues.ts`.
 
-| Priority | Planned asset ID | Portrait brief / narrative purpose | Proposed `primaryCues` | Suggested setting · mood · time |
-| :--- | :--- | :--- | :--- | :--- |
-| P0 | `npc-fantasy-elder-01` | Weathered village reeve or elder, visibly old, grounded, trusted or burdened; rural quest-giver | `elder` | `village`, `rural` · `hopeful`, `ominous` · `day` |
-| P0 | `npc-fantasy-witch-01` | Hedge witch, bog seer or oracle with bone charms and a lantern; wilderness mentor/wildcard, not another court mage | `witch` | `swamp`, `forest`, `wilderness` · `mysterious` · `fog`, `dusk` |
-| P0 | `npc-fantasy-cultist-01` | Hooded ritual zealot, distinctive cult vestments and obsidian dagger; minor antagonist/betrayer | `cultist` | `ruins`, `cave`, `interior` · `ominous` · `night` |
-| P0 | `npc-fantasy-bandit-01` | Scarred highwayman or outlaw captain, practical worn equipment; roadside rival/threat | `bandit` | `road`, `forest`, `exterior` · `ominous` · `dusk` |
-| P0 | `npc-fantasy-official-01` | Unarmed magistrate, guildmaster or harbour master with ledger and spectacles; civic non-combat gatekeeper | `official` | `city`, `town`, `interior` · `quiet`, `busy` · `day` |
-| P0 | `npc-fantasy-urchin-01` | Ragged street urchin or alley informant; lower-ward witness/info broker, approachable rather than generic thief | `urchin` | `city`, `urban`, `exterior` · `mysterious` · `night` |
-| P0 | `npc-fantasy-goblin-01` | Expressive goblin tinker or guide with oversized pack; non-standard ally/mascot/trickster | `goblin` | `cave`, `tavern` · `busy`, `mysterious` · `day` |
-| P0 | `npc-fantasy-necromancer-01` | Pale necromancer / dark sorcerer with ritual focus; unmistakable mastermind villain, not generic wizard | `necromancer` | `castle`, `ruins`, `interior` · `ominous` · `night` |
+| Priority | Planned asset ID             | Portrait brief / narrative purpose                                                                                 | Proposed `primaryCues` | Suggested setting · mood · time                                |
+| :------- | :--------------------------- | :----------------------------------------------------------------------------------------------------------------- | :--------------------- | :------------------------------------------------------------- |
+| P0       | `npc-fantasy-elder-01`       | Weathered village reeve or elder, visibly old, grounded, trusted or burdened; rural quest-giver                    | `elder`                | `village`, `rural` · `hopeful`, `ominous` · `day`              |
+| P0       | `npc-fantasy-witch-01`       | Hedge witch, bog seer or oracle with bone charms and a lantern; wilderness mentor/wildcard, not another court mage | `witch`                | `swamp`, `forest`, `wilderness` · `mysterious` · `fog`, `dusk` |
+| P0       | `npc-fantasy-cultist-01`     | Hooded ritual zealot, distinctive cult vestments and obsidian dagger; minor antagonist/betrayer                    | `cultist`              | `ruins`, `cave`, `interior` · `ominous` · `night`              |
+| P0       | `npc-fantasy-bandit-01`      | Scarred highwayman or outlaw captain, practical worn equipment; roadside rival/threat                              | `bandit`               | `road`, `forest`, `exterior` · `ominous` · `dusk`              |
+| P0       | `npc-fantasy-official-01`    | Unarmed magistrate, guildmaster or harbour master with ledger and spectacles; civic non-combat gatekeeper          | `official`             | `city`, `town`, `interior` · `quiet`, `busy` · `day`           |
+| P0       | `npc-fantasy-urchin-01`      | Ragged street urchin or alley informant; lower-ward witness/info broker, approachable rather than generic thief    | `urchin`               | `city`, `urban`, `exterior` · `mysterious` · `night`           |
+| P0       | `npc-fantasy-goblin-01`      | Expressive goblin tinker or guide with oversized pack; non-standard ally/mascot/trickster                          | `goblin`               | `cave`, `tavern` · `busy`, `mysterious` · `day`                |
+| P0       | `npc-fantasy-necromancer-01` | Pale necromancer / dark sorcerer with ritual focus; unmistakable mastermind villain, not generic wizard            | `necromancer`          | `castle`, `ruins`, `interior` · `ominous` · `night`            |
 
 **P1 optional diversity follow-up (not counted in the 42-portrait target):**
+
 - `npc-fantasy-guard-03`: female town watch officer/captain, clearly not another heavily armoured male silhouette.
 - `npc-fantasy-worker-03`: female smith/craftsperson at anvil, to diversify town service roles.
 - `npc-fantasy-construct-01`: friendly animated construct/golem as companion or witness (requires `construct` cue).
