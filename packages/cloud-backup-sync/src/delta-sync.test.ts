@@ -137,4 +137,27 @@ describe("delta sync", () => {
       revision: 4,
     });
   });
+
+  it("sends the display name for an editor, trimmed and capped", async () => {
+    const { runtime, calls } = await enabled();
+    const record = await getLocalCloudBackupRecord(runtime, "v-1");
+    await runtime.storage.write("v-1", { ...record, role: "editor" });
+    runtime.deviceId = () => "device-12345678";
+    runtime.displayName = () => `  ${"M".repeat(50)}  `;
+    await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
+    expect(JSON.parse(calls[0].init.body).editorName).toBe("M".repeat(40));
+  });
+
+  it("sends no name for an owner, or an editor without one", async () => {
+    const { runtime, calls } = await enabled();
+    runtime.displayName = () => "Mara";
+    await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
+    expect(JSON.parse(calls[0].init.body)).not.toHaveProperty("editorName");
+    const record = await getLocalCloudBackupRecord(runtime, "v-1");
+    await runtime.storage.write("v-1", { ...record, role: "editor" });
+    runtime.deviceId = () => "device-12345678";
+    runtime.displayName = () => "  ";
+    await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
+    expect(JSON.parse(calls[1].init.body)).not.toHaveProperty("editorName");
+  });
 });

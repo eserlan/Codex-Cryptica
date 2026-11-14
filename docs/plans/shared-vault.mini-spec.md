@@ -303,7 +303,7 @@ see.
 - [ ] **Slice 8: Member joins** (#4783) — the join route with a display name;
       the linked vault; help content. Attribution ("last edited by", worker
       `editedBy`) moved to a follow-up issue.
-- [ ] **Slice 9: Shared trash** (#4776) — the trash list, restore, the 30-day
+- [x] **Slice 9: Shared trash** (#4776) — the trash list, restore, the 30-day
       purge, and "an edit beats a delete".
 - [ ] **Slice 10: Maps and canvases** (#4777) — whole-item sync with a
       revision each, and "keep both" on a clash.

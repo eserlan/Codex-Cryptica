@@ -2,6 +2,7 @@ import {
   CLOUD_BACKUP_LIMITS,
   cloudBackupShardOf,
 } from "../../../../packages/schema/src/publishing";
+import type { CloudBackupTombstone } from "../../../../packages/schema/src/publishing";
 import type { Shard } from "./cloud-backup-entities";
 import type { Tombstones } from "./cloud-backup-shards";
 import {
@@ -66,4 +67,55 @@ export async function evictOldestTrash(
     total -= jsonByteLength(shard[id]);
     delete shard[id];
   }
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether a tombstone is past the retention window: strictly more than
+ * `trashRetentionDays` old. One whose time cannot be parsed never expires.
+ */
+export function isTrashExpired(
+  tombstone: CloudBackupTombstone,
+  now: number,
+): boolean {
+  const deletedAt = Date.parse(tombstone.deletedAt);
+  return (
+    Number.isFinite(deletedAt) &&
+    now - deletedAt > CLOUD_BACKUP_LIMITS.trashRetentionDays * DAY_MS
+  );
+}
+
+/**
+ * Removes every expired tombstone and its kept content. `loaded` holds the trash
+ * shards already in memory; any other shard that holds expired content is read
+ * and added to it. Returns the highest `rev` removed, or 0 when nothing was.
+ */
+export async function purgeExpiredTrash(
+  env: CloudBackupEnv,
+  backupId: string,
+  base: BackupObjects,
+  loaded: Map<string, Shard>,
+  tombstones: Tombstones,
+): Promise<number> {
+  const now = Date.now();
+  let highest = 0;
+  for (const tombstone of Object.values(tombstones)) {
+    if (!isTrashExpired(tombstone, now)) continue;
+    const { id } = tombstone;
+    const name = cloudBackupShardOf(id);
+    let shard = loaded.get(name);
+    const reference = base.trash?.[name];
+    if (!shard && reference) {
+      shard = Object.assign(
+        Object.create(null) as Shard,
+        await readReferenced<Shard>(env, backupId, reference),
+      );
+      loaded.set(name, shard);
+    }
+    if (shard) delete shard[id];
+    delete tombstones[id];
+    highest = Math.max(highest, tombstone.rev);
+  }
+  return highest;
 }

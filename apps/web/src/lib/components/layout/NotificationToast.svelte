@@ -13,7 +13,7 @@
     class:border-theme-primary={notification.type === "success"}
     class:text-theme-primary={notification.type === "success"}
     class:border-blue-500={notification.type === "info"}
-    class:text-blue-400={notification.type === "info"}
+    class:text-theme-text={notification.type === "info"}
     class:border-red-500={notification.type === "error"}
     class:text-red-500={notification.type === "error"}
     style:box-shadow="var(--theme-glow)"
@@ -27,6 +27,7 @@
     <span
       class="icon-[lucide--info] w-5 h-5"
       aria-hidden="true"
+      class:text-blue-500={notification.type === "info"}
       class:hidden={notification.type !== "info"}
     ></span>
     <span
@@ -52,6 +53,15 @@
           class:bg-red-500={notification.type === "error"}
         ></span>
       </span>
+    {/if}
+    {#if notification.action}
+      <button
+        type="button"
+        class="min-h-11 shrink-0 rounded border border-current/40 px-3 text-xs font-bold uppercase tracking-wider transition hover:bg-current/10 focus:outline-none focus:ring-2 focus:ring-current/40"
+        onclick={() => notificationStore.runNotificationAction()}
+      >
+        {notification.action.label}
+      </button>
     {/if}
     <button
       type="button"

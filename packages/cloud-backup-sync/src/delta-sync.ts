@@ -20,6 +20,16 @@ export interface VaultDeltaPayload {
   canvases?: unknown[];
 }
 
+/** An editor's display name, trimmed and capped; an owner never sends one. */
+function editorName(
+  runtime: CloudBackupRuntime,
+  record: { role?: string },
+): { editorName?: string } {
+  if (record.role !== "editor") return {};
+  const name = runtime.displayName?.()?.trim().slice(0, 40).trim();
+  return name ? { editorName: name } : {};
+}
+
 /**
  * Publishes only what changed since `baseLastPushedAt` (#3354).
  *
@@ -53,6 +63,7 @@ export async function pushDeltaToCloudBackup(
         }),
         body: JSON.stringify({
           ...delta,
+          ...editorName(runtime, record),
           baseLastPushedAt,
           ...(typeof record.revision === "number"
             ? { baseRevision: record.revision }

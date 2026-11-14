@@ -20,7 +20,7 @@ import { authorizeStoredBackup } from "./cloud-backup-auth";
 import { type Tombstones, readAllEntities } from "./cloud-backup-shards";
 
 /** A referenced object is gone: fail rather than return a partial backup. */
-function incomplete(request: Request): Response {
+export function incomplete(request: Request): Response {
   return json(request, { error: { message: "Backup is incomplete" } }, 500);
 }
 

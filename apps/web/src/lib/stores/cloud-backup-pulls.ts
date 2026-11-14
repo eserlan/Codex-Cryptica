@@ -1,4 +1,4 @@
-import type { LocalCloudBackupRecord } from "schema";
+import type { CloudBackupTombstone, LocalCloudBackupRecord } from "schema";
 import {
   fetchCloudBackupAsset,
   fetchCloudBackupChanges,
@@ -49,7 +49,7 @@ function failureOutcome(failure: {
     : { kind: "failed", error: failure.error };
 }
 
-type Fed = { entities: MergeEntity[]; tombstoneIds: string[] };
+type Fed = { entities: MergeEntity[]; tombstones: CloudBackupTombstone[] };
 
 const isEntity = (value: unknown): value is MergeEntity =>
   Boolean(value) &&
@@ -244,10 +244,9 @@ export class CloudBackupPulls {
       }
   > {
     if (feed.kind === "changes") {
-      const tombstoneIds = feed.tombstones.map((tombstone) => tombstone.id);
       return {
         ok: true,
-        fed: { entities: feed.entities, tombstoneIds },
+        fed: { entities: feed.entities, tombstones: feed.tombstones },
         revision: feed.revision,
         lastPushedAt: statusAt,
       };
@@ -260,7 +259,7 @@ export class CloudBackupPulls {
     const { manifest } = bundle.value;
     return {
       ok: true,
-      fed: { entities: bundleEntities(bundle.value.bundle), tombstoneIds: [] },
+      fed: { entities: bundleEntities(bundle.value.bundle), tombstones: [] },
       revision: manifest.revision ?? feed.revision,
       lastPushedAt: manifest.lastPushedAt,
     };
@@ -302,12 +301,16 @@ export class CloudBackupPulls {
   ): Promise<boolean> {
     const { remote, base, activeVaultId } = this.deps!;
     const held = new Set(
-      [...fed.entities.map((entity) => entity.id), ...fed.tombstoneIds].filter(
-        (id) => remote!.isEditing(id),
-      ),
+      [
+        ...fed.entities.map((entity) => entity.id),
+        ...fed.tombstones.map((tombstone) => tombstone.id),
+      ].filter((id) => remote!.isEditing(id)),
     );
     const entities = fed.entities.filter((entity) => !held.has(entity.id));
-    const tombstoneIds = fed.tombstoneIds.filter((id) => !held.has(id));
+    const tombstones = fed.tombstones.filter(
+      (tombstone) => !held.has(tombstone.id),
+    );
+    const tombstoneIds = tombstones.map((tombstone) => tombstone.id);
     const ids = [...entities.map((entity) => entity.id), ...tombstoneIds];
     const sides = await this.readSides(vaultId, ids, resync);
     // Whatever an open editor holds stays out of the merge and the base.
@@ -337,7 +340,20 @@ export class CloudBackupPulls {
     if (resync) await base!.replaceVault(vaultId, [...entities, ...heldBase]);
     else await base!.recordSent(vaultId, entities, tombstoneIds);
     if (plan.notice) this.state.mergeNotice = plan.notice;
+    if (!resync) this.notifyDeletes(vaultId, tombstones, plan.changes.deletes);
     return held.size > 0;
+  }
+
+  /** Tells the user about deletes this pull applied, which a resync never does. */
+  private notifyDeletes(
+    vaultId: string,
+    tombstones: readonly CloudBackupTombstone[],
+    deleted: readonly string[],
+  ): void {
+    const applied = tombstones.filter((tombstone) =>
+      deleted.includes(tombstone.id),
+    );
+    if (applied.length > 0) this.deps?.notifyDeletes?.(vaultId, applied);
   }
 
   /** Downloads pulled images the vault lacks; a failure never fails the pull. */

@@ -16,6 +16,8 @@ import {
   handleCloudBackupSharingOff,
   handleCloudBackupSharingReplace,
   handleListRestorePoints,
+  handleListTrash,
+  handleGetTrashItem,
 } from "./cloud-backup";
 import {
   handleCloudBackupAdminLookup,
@@ -144,6 +146,11 @@ function handleCloudBackupNestedRoute(
   if (parts[4] === "assets") {
     return handleCloudBackupAssetRoute(request, env, backupId, parts[5]);
   }
+  if (parts[4] === "trash") {
+    return request.method === "GET"
+      ? handleGetTrashItem(request, env, backupId, parts[5])
+      : cloudBackupNotFound(request, env);
+  }
   return parts[4] === "sharing" &&
     parts[5] === "replace-link" &&
     request.method === "POST"
@@ -194,6 +201,10 @@ function handleCloudBackupActionRoute(
     delta: {
       method: "POST",
       run: () => handleCloudBackupDelta(request, env, backupId),
+    },
+    trash: {
+      method: "GET",
+      run: () => handleListTrash(request, env, backupId),
     },
     "restore-points": {
       method: "GET",

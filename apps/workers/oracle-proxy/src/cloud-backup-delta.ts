@@ -1,6 +1,7 @@
 import {
   CLOUD_BACKUP_LIMITS,
   CLOUD_BACKUP_SCHEMA_V2,
+  CLOUD_BACKUP_MEMBER_EDITOR,
   CLOUD_BACKUP_OWNER_EDITOR,
   CloudBackupDeltaSchema,
   cloudBackupRevisionOf,
@@ -29,7 +30,7 @@ import {
 } from "./cloud-backup-storage";
 import { json, isValidAssetId, sizeLimitResponse } from "./cloud-backup-http";
 import { publishCommit } from "./cloud-backup-restore-points";
-import { evictOldestTrash } from "./cloud-backup-trash";
+import { evictOldestTrash, purgeExpiredTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
   type Tombstones,
@@ -303,6 +304,8 @@ function validateDelta(
 }
 
 interface PreparedDelta {
+  /** The highest `rev` of a tombstone the purge removed, or 0. */
+  purgedRev: number;
   shards: Map<string, Shard>;
   trash: Map<string, Shard>;
   tombstones: Tombstones;
@@ -326,6 +329,13 @@ async function prepareDelta(
     base,
     stamp,
   );
+  const purgedRev = await purgeExpiredTrash(
+    env,
+    backupId,
+    base,
+    trash,
+    tombstones,
+  );
   await evictOldestTrash(env, backupId, base, trash, tombstones);
   const bundleUpdate = await prepareBundleSections(env, backupId, base, delta);
   const projected =
@@ -334,6 +344,7 @@ async function prepareDelta(
     (await indexGrowth(env, backupId, base, hashes, meta, tombstones)) +
     bundleUpdate.growth;
   return {
+    purgedRev,
     shards,
     trash,
     tombstones,
@@ -430,8 +441,10 @@ async function commitDelta(
     sizeBytes: await reachableBytes(env, backupId, objects),
     lastPushedAt,
     revision,
-    feedHorizon:
+    feedHorizon: Math.max(
       auth.manifest.feedHorizon ?? cloudBackupRevisionOf(auth.manifest),
+      prepared.purgedRev,
+    ),
   };
   return publishCommit(
     request,
@@ -449,6 +462,19 @@ async function commitDelta(
     },
     () => lostRace(request, env, backupId, staged, auth.manifest),
   );
+}
+
+/**
+ * Who a commit is stamped as: the owner for the owner key, otherwise the
+ * editor's cleaned name, or "member" when it is missing or could pass as a role.
+ */
+function editedByFor(role: "owner" | "editor", editorName?: string): string {
+  if (role === "owner") return CLOUD_BACKUP_OWNER_EDITOR;
+  const name = (editorName ?? "").replace(/\p{Cc}/gu, "").trim();
+  const reserved = [CLOUD_BACKUP_OWNER_EDITOR, CLOUD_BACKUP_MEMBER_EDITOR];
+  return name && !reserved.includes(name.toLowerCase())
+    ? name
+    : CLOUD_BACKUP_MEMBER_EDITOR;
 }
 
 /**
@@ -477,7 +503,7 @@ export async function handleCloudBackupDelta(
   const lastPushedAt = new Date().toISOString();
   const prepared = await prepareDelta(env, backupId, delta, base, {
     rev: cloudBackupRevisionOf(auth.manifest) + 1,
-    editedBy: CLOUD_BACKUP_OWNER_EDITOR,
+    editedBy: editedByFor(auth.role, delta.editorName),
     editedAt: lastPushedAt,
   });
   const oversized = sizeLimitResponse(
