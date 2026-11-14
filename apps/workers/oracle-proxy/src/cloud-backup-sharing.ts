@@ -109,13 +109,16 @@ export async function handleCloudBackupSharingOff(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  return changeSharing(request, env, backupId, async (auth) => ({
-    sharing: undefined,
-    afterWrite: auth.sharing
-      ? () => env.BUCKET.delete(getSharingDevicesKey(backupId, auth.sharing))
-      : undefined,
-    respond: () => json(request, { sharing: false }),
-  }));
+  return changeSharing(request, env, backupId, async (auth) => {
+    const sharing = auth.sharing;
+    return {
+      sharing: undefined,
+      afterWrite: sharing
+        ? () => env.BUCKET.delete(getSharingDevicesKey(backupId, sharing))
+        : undefined,
+      respond: () => json(request, { sharing: false }),
+    };
+  });
 }
 
 /** POST /api/cloud-backup/{backupId}/sharing/replace-link — a new link, old one dies. */
