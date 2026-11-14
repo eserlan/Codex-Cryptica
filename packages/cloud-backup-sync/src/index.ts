@@ -9,3 +9,4 @@ export { isDeviceLimit } from "./backup-response";
 export * from "./change-feed";
 export { readRemoteLastPushedAt } from "./backup-metadata";
 export * from "./backup-trash";
+export * from "./backup-rollback";

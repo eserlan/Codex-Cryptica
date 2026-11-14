@@ -30,6 +30,8 @@ export const BackupObjectsSchema = z.object({
   shards: z.record(z.string(), OBJECT_KEY).optional(),
   /** Last content of removed entities, one object per shard; never counted in sizeBytes. */
   trash: z.record(z.string(), OBJECT_KEY).optional(),
+  /** When present, the exact immutable asset versions visible to readers. */
+  assetVersions: z.record(z.string(), z.string()).optional(),
 });
 export type BackupObjects = z.infer<typeof BackupObjectsSchema>;
 

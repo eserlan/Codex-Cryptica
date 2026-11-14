@@ -16,6 +16,7 @@ import {
   listKeys,
   listObjectPages,
   pruneAssets,
+  readManifest,
   readJson,
   referencedKeys,
   writeManifest,
@@ -39,7 +40,7 @@ const RestorePointSchema = z.object({
   objects: BackupObjectsSchema,
   assets: z.record(z.string(), z.string()),
 });
-type RestorePoint = z.infer<typeof RestorePointSchema>;
+export type RestorePoint = z.infer<typeof RestorePointSchema>;
 
 const POINTS_DIR = "restore-points/points/";
 const ASSETS_DIR = "restore-points/assets/";
@@ -48,7 +49,7 @@ function getRestorePointKey(backupId: string, date: string): string {
   return `${getBackupPrefix(backupId)}${POINTS_DIR}${date}.json`;
 }
 
-function getPreservedAssetKey(
+export function getPreservedAssetKey(
   backupId: string,
   assetId: string,
   etag: string,
@@ -57,6 +58,16 @@ function getPreservedAssetKey(
 }
 
 const utcDate = (time: number) => new Date(time).toISOString().slice(0, 10);
+
+async function currentAssetVersionKeys(
+  env: CloudBackupEnv,
+  backupId: string,
+): Promise<string[]> {
+  const current = await readManifest(env, backupId);
+  return Object.entries(current?.objects?.assetVersions ?? {}).map(
+    ([id, etag]) => getPreservedAssetKey(backupId, id, etag),
+  );
+}
 
 /** Reads every live point. Throws on any failure, so callers can fail safe. */
 async function loadPoints(
@@ -76,6 +87,19 @@ async function loadPoints(
   return points;
 }
 
+/** One point, or null when none exists for that date. Throws when unreadable. */
+export async function readRestorePoint(
+  env: CloudBackupEnv,
+  backupId: string,
+  date: string,
+): Promise<RestorePoint | null> {
+  const stored = await readJson<unknown>(
+    env,
+    getRestorePointKey(backupId, date),
+  );
+  return stored === null ? null : RestorePointSchema.parse(stored);
+}
+
 function pointKeys(
   backupId: string,
   points: Array<{ record: RestorePoint }>,
@@ -90,7 +114,9 @@ function pointKeys(
 async function listAssetEtags(
   env: CloudBackupEnv,
   backupId: string,
+  objects: BackupObjects,
 ): Promise<Record<string, string>> {
+  if (objects.assetVersions) return { ...objects.assetVersions };
   const prefix = `${getBackupPrefix(backupId)}assets/`;
   const etags: Record<string, string> = {};
   for await (const listed of listObjectPages(env, prefix)) {
@@ -115,13 +141,14 @@ async function applyRetention(
     if (point.record.date < cutoff) await env.BUCKET.delete(point.key);
     else live.push(point);
   }
-  const referenced = new Set(
-    live.flatMap(({ record }) =>
+  const referenced = new Set([
+    ...live.flatMap(({ record }) =>
       Object.entries(record.assets).map(([id, etag]) =>
         getPreservedAssetKey(backupId, id, etag),
       ),
     ),
-  );
+    ...(await currentAssetVersionKeys(env, backupId)),
+  ]);
   for (const key of await listKeys(
     env,
     `${getBackupPrefix(backupId)}${ASSETS_DIR}`,
@@ -143,7 +170,7 @@ async function takePoint(
   const key = getRestorePointKey(backupId, date);
   if (await env.BUCKET.head(key)) return;
 
-  const listed = await listAssetEtags(env, backupId);
+  const listed = await listAssetEtags(env, backupId, objects);
   const wanted = assetIds ? new Set(assetIds) : null;
   const assets = Object.fromEntries(
     Object.entries(listed).filter(([id]) => !wanted || wanted.has(id)),
@@ -186,13 +213,14 @@ async function dropUnreferencedCopies(
   backupId: string,
   keepKey?: string,
 ): Promise<void> {
-  const referenced = new Set(
-    (await loadPoints(env, backupId)).flatMap(({ record }) =>
+  const referenced = new Set([
+    ...(await loadPoints(env, backupId)).flatMap(({ record }) =>
       Object.entries(record.assets).map(([id, etag]) =>
         getPreservedAssetKey(backupId, id, etag),
       ),
     ),
-  );
+    ...(await currentAssetVersionKeys(env, backupId)),
+  ]);
   for (const key of await listKeys(
     env,
     `${getBackupPrefix(backupId)}${ASSETS_DIR}`,
