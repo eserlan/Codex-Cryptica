@@ -146,7 +146,7 @@ describe("compact callout lazy loading", () => {
     expect(resolve).toHaveBeenCalledWith("images/mira.webp");
   });
 
-  it("loads a hidden portrait after a wide-to-narrow viewport resize without observers", async () => {
+  it("loads on a wide-to-narrow viewport resize without observers", async () => {
     vi.stubGlobal("IntersectionObserver", undefined);
     vi.stubGlobal("ResizeObserver", undefined);
     let wide = true;
@@ -164,14 +164,18 @@ describe("compact callout lazy loading", () => {
     wide = false;
     window.dispatchEvent(new Event("resize"));
     await waitFor(() => expect(resolve).toHaveBeenCalledTimes(2));
-    expect(await screen.findByRole("button", { name: "Enlarge portrait of Mira" })).toBeTruthy();
+    await waitFor(() =>
+      expect(
+        screen.getByTestId("adventure-turn-artwork").querySelector("button"),
+      ).not.toBeNull(),
+    );
 
     // Repeated resize events must not trigger redundant loads.
     window.dispatchEvent(new Event("resize"));
     expect(resolve).toHaveBeenCalledTimes(2);
   });
 
-  it("loads a hidden portrait after its container resizes without IntersectionObserver", async () => {
+  it("loads after a container resize without IntersectionObserver", async () => {
     vi.stubGlobal("IntersectionObserver", undefined);
     const observers: FakeResizeObserver[] = [];
     class FakeResizeObserver {
