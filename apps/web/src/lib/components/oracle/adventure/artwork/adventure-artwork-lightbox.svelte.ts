@@ -6,6 +6,7 @@ export interface AdventureLightboxItem {
   alt: string;
   title: string;
   subtitle?: string;
+  description?: string;
   loadFull?: (
     signal: AbortSignal,
   ) => Promise<{ url: string; release: () => void } | null>;

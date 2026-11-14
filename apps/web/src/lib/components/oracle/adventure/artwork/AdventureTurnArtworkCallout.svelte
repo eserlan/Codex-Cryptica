@@ -9,6 +9,7 @@
     alt,
     title,
     subtitle,
+    description,
     cue,
     preview,
     loadFull,
@@ -18,6 +19,7 @@
     alt: string;
     title: string;
     subtitle?: string;
+    description?: string;
     cue?: string;
     preview: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
     loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
@@ -36,6 +38,7 @@
           alt,
           title,
           subtitle,
+          description,
           loadFull,
         }
       : null,

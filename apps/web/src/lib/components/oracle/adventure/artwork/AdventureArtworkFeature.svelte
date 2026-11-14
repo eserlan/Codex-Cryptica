@@ -47,6 +47,7 @@
       alt: string;
       aiLabel?: string;
       credits?: string;
+      description?: string;
       loadFull?: (
         signal: AbortSignal,
       ) => Promise<{ url: string; release: () => void } | null>;
@@ -129,6 +130,7 @@
     alt={portrait.alt}
     aiLabel={portrait.aiLabel}
     credits={portrait.credits}
+    description={portrait.description}
     loadFull={portrait.loadFull}
   />
 {/if}
