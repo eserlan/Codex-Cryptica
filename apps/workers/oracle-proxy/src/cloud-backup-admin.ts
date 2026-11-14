@@ -1,12 +1,14 @@
 import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing";
 import type { CloudBackupEnv } from "./cloud-backup";
+import { writeManifest } from "./cloud-backup-storage";
+
+const REISSUE_ATTEMPTS = 3;
 import {
   PREFIX,
   readManifest,
   eraseBackupObjects,
   generateOwnerCode,
   hashOwnerCode,
-  getManifestKey,
   isAdmin,
   json,
 } from "./cloud-backup";
@@ -188,21 +190,27 @@ export async function handleCloudBackupReissueCode(
   const authError = checkAdminAccess(request, env);
   if (authError) return authError;
 
-  const record = await readManifest(env, backupId);
-  if (!record) return json(request, { error: { message: "Not found" } }, 404);
-
   const ownerCode = generateOwnerCode();
-  await env.BUCKET.put(
-    getManifestKey(backupId),
-    JSON.stringify(record.manifest),
-    {
-      httpMetadata: { contentType: "application/json" },
-      customMetadata: {
-        ownerCodeHash: await hashOwnerCode(ownerCode),
-        vaultTitle: record.manifest.vaultTitle,
-      },
-    },
-  );
+  const ownerCodeHash = await hashOwnerCode(ownerCode);
+  // Conditional on the manifest just read, so a commit that lands in between is
+  // never rolled back; on a lost race read again and retry.
+  for (let attempt = 0; attempt < REISSUE_ATTEMPTS; attempt++) {
+    const record = await readManifest(env, backupId);
+    if (!record) return json(request, { error: { message: "Not found" } }, 404);
+    const written = await writeManifest(
+      env,
+      backupId,
+      record.manifest,
+      ownerCodeHash,
+      record.objects,
+      record.etag,
+    );
+    if (written) return json(request, { ownerCode });
+  }
 
-  return json(request, { ownerCode });
+  return json(
+    request,
+    { error: { message: "The backup changed. Try again." } },
+    409,
+  );
 }

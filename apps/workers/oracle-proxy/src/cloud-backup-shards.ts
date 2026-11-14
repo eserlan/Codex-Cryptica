@@ -1,60 +1,121 @@
+import type {
+  CloudBackupEntitySyncMeta,
+  CloudBackupTombstone,
+} from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import {
+  type BackupObjects,
   type CloudBackupEnv,
-  getIndexKey,
-  getShardKey,
-  getBackupPrefix,
-  listKeys,
-  readJson,
+  getStagedKey,
+  readReferenced,
   writeJson,
 } from "./cloud-backup-storage";
 
-export async function writeIndex(
+/** The relative key a commit stages an object at, as stored in `objects`. */
+export function stagedName(tag: string, name: string): string {
+  return `commits/${tag}/${name}`;
+}
+
+export type Tombstones = Record<string, CloudBackupTombstone>;
+
+/** The index object; `tombstones` is written only when there are any. */
+export function indexRecord(
+  entityHashes: Record<string, string>,
+  entityMeta: Record<string, CloudBackupEntitySyncMeta>,
+  tombstones: Tombstones,
+) {
+  return {
+    entityHashes,
+    entityMeta,
+    ...(Object.keys(tombstones).length > 0 ? { tombstones } : {}),
+  };
+}
+
+export async function stageIndex(
   env: CloudBackupEnv,
   backupId: string,
+  tag: string,
   entityHashes: Record<string, string>,
-): Promise<void> {
-  await writeJson(env, getIndexKey(backupId), { entityHashes });
+  entityMeta: Record<string, CloudBackupEntitySyncMeta>,
+  tombstones: Tombstones = {},
+): Promise<string> {
+  await writeJson(
+    env,
+    getStagedKey(backupId, tag, "index.json"),
+    indexRecord(entityHashes, entityMeta, tombstones),
+  );
+  return stagedName(tag, "index.json");
 }
 
 /**
- * Writes the given shards; an empty shard is deleted rather than stored. With
- * `replaceAll`, any existing shard not in the map is removed too, which is how
- * a full commit drops entities that no longer exist.
+ * Stages the non-empty shards under the commit's tag and returns their
+ * references; an empty shard is left out, so the new manifest drops it.
  */
-export async function writeShards(
+export async function stageShards(
   env: CloudBackupEnv,
   backupId: string,
+  tag: string,
   shards: Map<string, Shard>,
-  replaceAll: boolean,
-): Promise<void> {
+  directory: "entities" | "trash" = "entities",
+): Promise<Record<string, string>> {
+  const staged: Record<string, string> = {};
   for (const [name, shard] of shards) {
-    const key = getShardKey(backupId, name);
-    if (Object.keys(shard).length === 0) await env.BUCKET.delete(key);
-    else await writeJson(env, key, shard);
+    if (Object.keys(shard).length === 0) continue;
+    await writeJson(
+      env,
+      getStagedKey(backupId, tag, `${directory}/${name}.json`),
+      shard,
+    );
+    staged[name] = stagedName(tag, `${directory}/${name}.json`);
   }
-  if (!replaceAll) return;
-  const keep = new Set(
-    [...shards.keys()].map((name) => getShardKey(backupId, name)),
-  );
-  for (const key of await listKeys(
-    env,
-    `${getBackupPrefix(backupId)}entities/`,
-  )) {
-    if (!keep.has(key)) await env.BUCKET.delete(key);
-  }
+  return staged;
 }
 
-/** Every entity of a v2 backup, assembled from its shards. */
+/** Every entity of a v2 backup, assembled from the shards `objects` references. */
 export async function readAllEntities(
   env: CloudBackupEnv,
   backupId: string,
+  objects: BackupObjects,
 ): Promise<EntityRecord[]> {
   const entities: EntityRecord[] = [];
-  const keys = await listKeys(env, `${getBackupPrefix(backupId)}entities/`);
-  for (const key of keys.sort()) {
-    const shard = await readJson<Shard>(env, key);
-    if (shard) entities.push(...Object.values(shard));
+  const shards = objects.shards ?? {};
+  for (const name of Object.keys(shards).sort()) {
+    const shard = await readReferenced<Shard>(env, backupId, shards[name]);
+    entities.push(...Object.values(shard));
   }
   return entities;
+}
+
+/**
+ * The base's tombstones and trash content, minus the ids a full upload brings
+ * back as live entities. Trash is read only when the base has any.
+ */
+export async function carryTombstones(
+  env: CloudBackupEnv,
+  backupId: string,
+  base: BackupObjects,
+  liveIds: ReadonlySet<string>,
+): Promise<{ tombstones: Tombstones; trash: Map<string, Shard> }> {
+  const tombstones: Tombstones = Object.create(null);
+  const trash = new Map<string, Shard>();
+  if (!base.index || !base.trash) return { tombstones, trash };
+
+  const index = await readReferenced<{ tombstones?: Tombstones }>(
+    env,
+    backupId,
+    base.index,
+  );
+  for (const [id, tombstone] of Object.entries(index.tombstones ?? {})) {
+    if (!liveIds.has(id)) tombstones[id] = tombstone;
+  }
+  for (const [name, reference] of Object.entries(base.trash)) {
+    const shard = await readReferenced<Shard>(env, backupId, reference);
+    for (const [id, entity] of Object.entries(shard)) {
+      if (!Object.hasOwn(tombstones, id)) continue;
+      const kept = trash.get(name) ?? Object.create(null);
+      kept[id] = entity;
+      trash.set(name, kept);
+    }
+  }
+  return { tombstones, trash };
 }

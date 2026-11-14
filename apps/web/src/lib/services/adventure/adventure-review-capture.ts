@@ -624,9 +624,8 @@ export function readDiagnosticBaseline(
 }
 
 /**
- * Copy-ready diagnostic JSON: emits a delta from the last copy when a valid
- * baseline exists for the same session (unless `forceFull` is set), then
- * advances the stored baseline to the current session.
+ * Copy-ready diagnostic JSON: emits a delta from the last successful copy when
+ * a valid baseline exists for the same session (unless `forceFull` is set).
  */
 export function copyDiagnosticSnapshot(
   session: AdventureSession,
@@ -649,21 +648,26 @@ export function copyDiagnosticSnapshot(
     ? adventureDiagnosticDeltaJson(session, baseline, options)
     : adventureDiagnosticJson(session, options);
 
-  if (storage) {
-    try {
-      storage.setItem(
-        baselineKey(session.id),
-        JSON.stringify(createDiagnosticBaseline(session)),
-      );
-    } catch {
-      // Ignore storage quota / privacy-mode errors; clipboard copy still succeeds.
-    }
-  }
-
   return {
     text,
     isDelta: canDelta,
     fromTurnCount: canDelta ? baseline.turnCount : 0,
     toTurnCount: session.turns.length,
   };
+}
+
+/** Advance the local delta cursor after the diagnostic text was copied. */
+export function saveDiagnosticBaseline(
+  session: AdventureSession,
+  storage: DiagnosticStorage | null | undefined,
+): void {
+  if (!storage) return;
+  try {
+    storage.setItem(
+      baselineKey(session.id),
+      JSON.stringify(createDiagnosticBaseline(session)),
+    );
+  } catch {
+    // Ignore storage quota / privacy-mode errors; clipboard copy still succeeds.
+  }
 }

@@ -15,6 +15,7 @@ import {
   buildCloudBackupPayload,
   collectAssetPaths,
 } from "#lib/services/cloud-backup-payload.js";
+import { CloudBackupBaseStore } from "#lib/stores/cloud-backup-base.js";
 import { CloudBackupDirtyStore } from "#lib/stores/cloud-backup-dirty.js";
 import { createCloudBackupRestore } from "./cloud-backup-restore";
 import { createArtworkBackupRuntime } from "#lib/stores/cloud-backup-artwork-runtime.js";
@@ -26,6 +27,7 @@ import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import { isPrivateArtworkSnapshotPath } from "schema";
 
 const dirty = new CloudBackupDirtyStore();
+const base = new CloudBackupBaseStore();
 const artworkRuntime = createArtworkBackupRuntime({
   read: async (key) => (await getDB()).get("settings", key),
   write: async (key, value) => {
@@ -175,6 +177,7 @@ export function configureCloudBackup(): void {
       fetch: ((url: string, init?: any) => fetch(url, init)) as never,
     },
     dirty,
+    base,
     // A previously consented backup remains protected if the UI flag changes.
     artworkScope: artworkRuntime.scope,
     ...(import.meta.env.VITE_ADVENTURE_ARTWORK === "true"

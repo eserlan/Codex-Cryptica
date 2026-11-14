@@ -455,7 +455,7 @@ function renderPage(data: {
   .lightbox-media img { max-width: 100%; max-height: 76vh; width: auto; height: auto; display: block; object-fit: contain; }
   .lightbox-nav, .lightbox-close {
     appearance: none; border: 1px solid rgba(255, 255, 255, 0.22); background: rgba(24, 21, 18, 0.85);
-    color: #f6f1e7; border-radius: 999px; width: 42px; height: 42px; font-size: 22px; line-height: 1;
+    color: #f6f1e7; border-radius: 999px; width: 44px; height: 44px; font-size: 22px; line-height: 1;
     cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
     transition: border-color 120ms, background 120ms, transform 120ms;
   }
@@ -463,7 +463,7 @@ function renderPage(data: {
   .lightbox-nav:focus-visible, .lightbox-close:focus-visible {
     border-color: var(--gold); background: rgba(38, 33, 27, 0.96); outline: none;
   }
-  .lightbox-close { position: fixed; top: 16px; right: 16px; width: 38px; height: 38px; font-size: 20px; }
+  .lightbox-close { position: fixed; top: 16px; right: 16px; font-size: 20px; }
   .lightbox-caption {
     width: 100%; max-width: 780px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between;
     gap: 8px 16px; color: #ece5d8; font-size: 13px; line-height: 1.45;
@@ -664,6 +664,7 @@ function renderPage(data: {
     return Array.from(root.querySelectorAll(".tile-link")).filter((el) => el.style.display !== "none");
   }
   function showTile(link) {
+    const wasOpen = lightbox.classList.contains("open");
     const tiles = visibleTiles();
     if (!tiles.length || !link) return;
     const idx = tiles.indexOf(link);
@@ -678,6 +679,7 @@ function renderPage(data: {
     lbRawLink.href = link.href;
     lbPurpose.textContent = link.dataset.purpose || "";
     lightbox.classList.add("open");
+    if (!wasOpen) lbClose.focus();
   }
   function closeLightbox() {
     if (!lightbox.classList.contains("open")) return;
@@ -708,7 +710,23 @@ function renderPage(data: {
   });
   document.addEventListener("keydown", (evt) => {
     if (!lightbox.classList.contains("open")) return;
-    if (evt.key === "ArrowLeft") { evt.preventDefault(); stepLightbox(-1); }
+    if (evt.key === "Tab") {
+      const focusable = Array.from(lightbox.querySelectorAll(
+        'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      ));
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (!lightbox.contains(document.activeElement)) {
+        evt.preventDefault();
+        first && first.focus();
+      } else if (evt.shiftKey && document.activeElement === first) {
+        evt.preventDefault();
+        last && last.focus();
+      } else if (!evt.shiftKey && document.activeElement === last) {
+        evt.preventDefault();
+        first && first.focus();
+      }
+    } else if (evt.key === "ArrowLeft") { evt.preventDefault(); stepLightbox(-1); }
     else if (evt.key === "ArrowRight") { evt.preventDefault(); stepLightbox(1); }
     else if (evt.key === "Escape") { evt.preventDefault(); closeLightbox(); }
   });

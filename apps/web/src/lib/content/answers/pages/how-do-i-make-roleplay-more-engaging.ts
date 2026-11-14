@@ -245,6 +245,7 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
     "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
     "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
     "how-do-i-encourage-party-bonding-during-downtime",
+    "how-do-i-handle-players-discussing-plans-in-front-of-npcs",
   ],
   discovery: {
     id: "answer-make-roleplay-more-engaging",
@@ -287,6 +288,11 @@ export const howDoIMakeRoleplayMoreEngaging: AnswerConfigInput = {
         with: "answer-interviewing-npcs-investigation",
         reason:
           "The investigation interview answer separates observations, interpretations, and omissions to handle fragile clues; this answer structures negotiations around competing goals, trade-offs, and terms that change resources or relationships.",
+      },
+      {
+        with: "answer-players-discussing-plans-front-npcs",
+        reason:
+          "That answer establishes whether player discussion counts as character speech and what an NPC can perceive; this answer structures social scenes around meaningful choices, NPC wants, and boundaries.",
       },
       {
         with: "answer-run-diplomats-nobles-courtiers",

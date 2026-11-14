@@ -30,6 +30,8 @@
   import RegionProposalOverlay from "./region/RegionProposalOverlay.svelte";
   import RegionReviewBar from "./region/RegionReviewBar.svelte";
   import RegionUndoBar from "./region/RegionUndoBar.svelte";
+  import HexGeographyOverlay from "./topology/HexGeographyOverlay.svelte";
+  import GeographyReviewBar from "./topology/GeographyReviewBar.svelte";
   import type { NoticeStorage } from "./hex-discovery-notice";
   import { browserStorage } from "#lib/utils/runtime-deps.js";
 
@@ -61,11 +63,13 @@
     mapStore.gridType === "hex-flat" ? "flat" : "pointy",
   );
   const labelConfig = $derived(mapStore.hexLabelConfig);
-  const records = $derived(
+  const crawl = $derived(
     mapId && visible
-      ? normalizeHexCrawlState(vault.maps[mapId]?.hexCrawl).hexes
-      : {},
+      ? normalizeHexCrawlState(vault.maps[mapId]?.hexCrawl)
+      : null,
   );
+  const records = $derived(crawl?.hexes ?? {});
+  const topology = $derived(crawl?.topology);
   const selected = $derived(
     services.store.selectedHex && services.store.selectedHex.mapId === mapId
       ? services.store.selectedHex
@@ -166,19 +170,69 @@
       ? services.region.review
       : null,
   );
+  const geographyReview = $derived(
+    services.geography?.review && services.geography.review.mapId === mapId
+      ? services.geography.review
+      : null,
+  );
+  const hasReview = $derived(Boolean(review || geographyReview));
+  const showRegionUndo = $derived(!review && !geographyReview);
+  const showPanel = $derived(Boolean(selected && mapId && !hasReview));
+  const canAuthor = $derived(isGM && !isGuest);
+  const authorRegion = $derived(canAuthor ? services.region : undefined);
+  const authorGeography = $derived(canAuthor ? services.geography : undefined);
+  const onToggleEdge = $derived(
+    geographyReview
+      ? (key: string, kind: "river" | "road" | "coast") =>
+          services.geography.toggleEdge(key, kind)
+      : undefined,
+  );
+  const onToggleSite = $derived(
+    geographyReview
+      ? (key: string) => services.geography.toggleSite(key)
+      : undefined,
+  );
+  const regionLabelFor = (key: string) => {
+    const [q, r] = key.split(",").map(Number);
+    return hexLabelFor({ q, r }, labelConfig, orientation);
+  };
+  const pickRegionHex = (key: string) => {
+    regionPick = key;
+  };
+  const toggleTerrainIcons = (next: boolean) => {
+    mapStore.showTerrainIcons = next;
+  };
+  const dismissOffer = () => {
+    services.offer.current = null;
+  };
+  const unprojectPoint = (point: Point) => mapStore.unproject(point);
+
+  function leaveIfInactive(
+    service: { mapId?: string | null; leave: () => void } | undefined,
+    active: string | null,
+  ) {
+    if (service?.mapId && service.mapId !== active) service.leave();
+  }
+
+  function syncActiveReviewServices(active: string | null) {
+    leaveIfInactive(services.region, active);
+    if (!services.region.review) regionPick = null;
+    leaveIfInactive(services.geography, active);
+    // A tap on the map during either review must not open the hex panel behind it.
+    const reviewing = Boolean(
+      services.region.review || services.geography?.review,
+    );
+    if (reviewing && services.store.selectedHex) services.store.closeHex();
+  }
+
   $effect(() => {
     // Leaving the map or turning the mode off drops the preview, the message and the undo.
-    const active = visible ? mapId : null;
-    if (services.region.mapId && services.region.mapId !== active) {
-      services.region.leave();
-    }
-    if (!services.region.review) regionPick = null;
-    // A tap on the map during a review must not open the hex panel behind it.
-    else if (services.store.selectedHex) services.store.closeHex();
+    syncActiveReviewServices(visible ? mapId : null);
   });
   onDestroy(() => {
     services.journey.dispose();
     services.region.leave();
+    services.geography?.leave();
   });
 </script>
 
@@ -189,9 +243,22 @@
     showTerrainIcons={mapStore.showTerrainIcons}
     gridConfig={config}
     {project}
-    unproject={(point) => mapStore.unproject(point)}
+    unproject={unprojectPoint}
     viewport={viewportSize}
     {zoom}
+  />
+
+  <HexGeographyOverlay
+    {topology}
+    proposal={geographyReview?.proposal}
+    disabledEdgeFeatures={geographyReview?.disabledEdgeFeatures}
+    disabledSites={geographyReview?.disabledSites}
+    gridConfig={config}
+    {project}
+    viewport={viewportSize}
+    {zoom}
+    onToggleEdgeFeature={onToggleEdge}
+    {onToggleSite}
   />
 
   <HexJourneyOverlay
@@ -211,21 +278,22 @@
       {project}
       {zoom}
       selectedKey={regionPick}
-      onPick={(key) => (regionPick = key)}
-      labelFor={(key) => {
-        const [q, r] = key.split(",").map(Number);
-        return hexLabelFor({ q, r }, labelConfig, orientation);
-      }}
+      onPick={pickRegionHex}
+      labelFor={regionLabelFor}
     />
     <RegionReviewBar
       store={services.region}
       selectedKey={regionPick}
       {labelConfig}
       {orientation}
-      onSelect={(key) => (regionPick = key)}
+      onSelect={pickRegionHex}
     />
-  {:else}
+  {:else if showRegionUndo}
     <RegionUndoBar store={services.region} />
+  {/if}
+
+  {#if geographyReview}
+    <GeographyReviewBar store={services.geography} />
   {/if}
 
   <div
@@ -234,7 +302,7 @@
     <HexGoTo {labelConfig} {orientation} onGo={goTo} />
     <HexCrawlDisplayToggle
       checked={mapStore.showTerrainIcons}
-      onChange={(next: boolean) => (mapStore.showTerrainIcons = next)}
+      onChange={toggleTerrainIcons}
       {isGM}
       {isGuest}
       modeOn={hexMode}
@@ -251,14 +319,11 @@
     <div
       class="pointer-events-auto absolute bottom-16 left-1/2 z-20 -translate-x-1/2"
     >
-      <HexExploreOffer
-        onExplore={openOffered}
-        onDismiss={() => (services.offer.current = null)}
-      />
+      <HexExploreOffer onExplore={openOffered} onDismiss={dismissOffer} />
     </div>
   {/if}
 
-  {#if selected && mapId && !review}
+  {#if showPanel && selected && mapId}
     <HexCrawlPanel
       store={services.store}
       journey={services.journey}
@@ -274,7 +339,8 @@
       {entities}
       {discovery}
       {storage}
-      region={isGM && !isGuest ? services.region : undefined}
+      region={authorRegion}
+      geography={authorGeography}
     />
   {/if}
 {/if}

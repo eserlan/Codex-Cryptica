@@ -21,8 +21,18 @@ The vault's actual content (entities, labels, notes, media) lives in sibling key
 
 - `cloud-backup/{backupId}/bundle.json` — **v1**: entities/labels/notes, same export shape the local/Drive sync already produces. **v2**: the same shape minus `entities` (maps, canvases, asset manifest).
 - `cloud-backup/{backupId}/index.json` — **v2** _(#3354)_: `{ entityHashes: { [entityId]: sha256 } }`, SHA-256 of each entity's canonical JSON. Kept out of the manifest because every authorised request reads the manifest. Served hashes-only by `GET /index` for the idle consistency check (FR-023).
+- Index `tombstones` _(shared vault slice 3)_: when an entity has been removed, `index.json` also holds `tombstones: { [entityId]: { id, rev, deletedBy, deletedAt, title } }`. The key is written only when at least one tombstone exists, and `GET /index` never returns it. `rev` is the revision of the removing commit, `deletedBy` is `"owner"`, `deletedAt` is that commit's `lastPushedAt`, and `title` is the entity's title (`""` if it had none).
 - `cloud-backup/{backupId}/entities/{shard}.json` — **v2** _(#3354)_: `{ [entityId]: Entity }` for every entity whose id hashes to that shard (`fnv1a(id) % shardCount`, zero-padded, e.g. `07.json`). Sharded rather than one object per entity so a restore costs 64 R2 reads, not one per entity, staying inside the Worker's subrequest limit.
 - `cloud-backup/{backupId}/assets/{assetId}` — media, mirroring `published/{publishId}/assets/{assetId}`'s existing layout.
+
+**Staged commits and the `objects` field** _(shared vault slice 2)_: each commit, delta or full, writes its shards, index and bundle under `cloud-backup/{backupId}/commits/<revision>-<id>/…` (same file names as above; `<id>` is a random UUID, because two racing commits share a revision). It then switches the manifest with an **etag-conditional** write (`onlyIf: etagMatches`). The stored manifest body carries a worker-only `objects` field, `{ bundle?, index?, shards?: { [shard]: key } }`, whose values are keys relative to the backup prefix (a staged key, or a legacy key such as `bundle.json`). It is never in `packages/schema` and never returned by any API response. Every reader resolves the bundle, index and shards through it, and a referenced object that is missing fails the read.
+
+- **Trash** _(slice 3)_: the last content of a removed entity is kept in `commits/<tag>/trash/<shard>.json`, `{ [entityId]: entity }`, sharded like live entities and referenced by `objects.trash: { [shard]: key }`. A trash object holds exactly the ids that have a tombstone. A delta that deletes a live id writes its tombstone and trash content; deleting an id that is not live writes nothing; upserting a tombstoned id removes its tombstone and trash content in the same commit. A full commit carries the base's tombstones and trash forward except for ids it includes as live, and writes none of its own. Nothing is purged yet, but trash has its own cap, `CLOUD_BACKUP_LIMITS.maxTrashBytes` (50 MB), separate from the vault ceiling: when a delta would exceed it, the content of the oldest tombstones (lowest `rev`) is dropped first. The tombstone records stay, so a tombstone may have no trash content.
+- **`feedHorizon`** _(slice 3)_: optional manifest field, the oldest revision the change feed can vouch for. The first delta on a manifest without one sets it to the base revision; a delta never changes an existing value. Every full commit sets it to its own revision, because a full upload can drop entities without tombstones.
+- **Legacy fallback**: a manifest with no `objects` (written before this change, or a fresh one) reads `bundle.json`, `index.json` and the shards found by listing `entities/`. Its first commit builds its base `objects` from those keys and keeps untouched legacy shards referenced in place.
+- **Loser**: a commit that loses the switch answers 409 `diverged` with the winner's `revision` and `lastPushedAt`, deletes only what it staged, and prunes nothing.
+- **Cleanup**: after a winning switch from manifest B to revision N, the worker deletes best-effort every staged object with tag revision ≤ N and every legacy `bundle.json`/`index.json`/`entities/*` object that neither the new manifest nor B references. That is one generation of grace for in-flight readers; tags with revision > N are never touched. Errors are ignored.
+- **Size**: `sizeBytes` and the vault ceiling count only referenced objects plus `assets/`, never staged orphans or the grace generation. Trash objects are excluded, so deleting an entity never raises `sizeBytes` beyond the few bytes the tombstone adds to the index.
 
 **Validation rules**:
 
@@ -63,6 +73,22 @@ Object store `cloud_backup_dirty` (DB version 25), key `[vaultId, kind, id]`, in
 - A durable write with no change description records a `full` row rather than guessing.
 - An upload snapshots the rows before building. After a successful commit or delta, each row is deleted **only if it still holds the stamp that was sent**, so an edit made mid-upload stays pending.
 - Disabling backup clears the vault's rows. Re-enabling uploads in full, so no marker is needed.
+
+## CloudBackupBaseRow (client-side, IndexedDB) _(shared vault, slice 4)_
+
+Object store `cloud_backup_base` (DB version 27, additive, no data migration), key `[vaultId, id]`, index `by-vault`. One row per entity, holding the content it had when it was last pushed successfully. It is the base for a three-way merge; nothing reads it yet.
+
+| Field     | Type    | Notes                                                       |
+| --------- | ------- | ----------------------------------------------------------- |
+| `vaultId` | string  | Local vault id                                              |
+| `id`      | string  | Entity id                                                   |
+| `entity`  | unknown | Deep plain-JSON copy of the entity as sent in the push body |
+
+**Rules**:
+
+- Written only after a push succeeds and was not aborted. A delta push writes each upsert and drops the row for each deleted id. A full snapshot push replaces the vault's rows with exactly the entities sent.
+- Failed, conflicting, cancelled and empty pushes write nothing. If recording fails, the push still succeeds and a warning is logged.
+- Disabling backup clears the vault's rows.
 
 ## ConsentRecord
 

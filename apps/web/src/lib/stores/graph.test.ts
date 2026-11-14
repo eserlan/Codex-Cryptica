@@ -345,7 +345,7 @@ describe("GraphStore", () => {
     expect(
       resolveFocalId(
         { entities, ids: new Set(entities.map((entity) => entity.id)) },
-        (store as any).focusContext(),
+        (store as any).focus.context(),
       ),
     ).toBe(root);
     expect(store.elements.map((element: any) => element.data.id)).toEqual(
@@ -398,7 +398,7 @@ describe("GraphStore", () => {
     expect(
       resolveFocalId(
         { entities, ids: new Set(entities.map((entity) => entity.id)) },
-        (store as any).focusContext(),
+        (store as any).focus.context(),
       ),
     ).toBe("node-700");
   });

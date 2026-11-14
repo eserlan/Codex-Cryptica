@@ -7,6 +7,7 @@
     adventureReviewMarkdown,
     copyDiagnosticSnapshot,
     readDiagnosticBaseline,
+    saveDiagnosticBaseline,
   } from "#lib/services/adventure/adventure-review-capture.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
@@ -109,14 +110,15 @@
     try {
       let text: string;
       let label: string;
+      let diagnostic = false;
       if (format === "markdown") {
         text = adventureReviewMarkdown(session);
         label = "Markdown";
       } else if (format === "diagnostic" || format === "diagnostic-full") {
+        diagnostic = true;
         const result = copyDiagnosticSnapshot(session, diagnosticStorage(), {
           forceFull: format === "diagnostic-full",
         });
-        baselineRefresh += 1;
         text = result.text;
         label = result.isDelta
           ? `delta JSON for AI (turns ${result.fromTurnCount}–${result.toTurnCount})`
@@ -126,6 +128,10 @@
         label = "JSON";
       }
       await navigator.clipboard.writeText(text);
+      if (diagnostic) {
+        saveDiagnosticBaseline(session, diagnosticStorage());
+        baselineRefresh += 1;
+      }
       notificationStore.notify(
         `GM-only adventure ${label} copied to clipboard.`,
         "success",
