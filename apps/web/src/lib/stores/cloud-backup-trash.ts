@@ -16,11 +16,14 @@ type Outcome = "restored" | "gone" | "failed";
 export class CloudBackupTrash {
   items = $state<CloudBackupTrashItem[]>([]);
   loadState = $state<TrashLoadState>("idle");
+  loadedVaultId = $state<string | null>(null);
   /** Ids being restored right now. Replaced, never mutated, so views update. */
   restoring = $state<ReadonlySet<string>>(new Set());
 
   /** What the last restore did, for the panel to say. */
   result = $state<{ outcome: Outcome; title: string } | null>(null);
+  resultVaultId = $state<string | null>(null);
+  private loadRequest = 0;
 
   constructor(
     private getDeps: CloudBackupDepsProvider,
@@ -30,9 +33,37 @@ export class CloudBackupTrash {
   async load(vaultId: string): Promise<void> {
     const deps = this.getDeps();
     if (!deps) return;
+    const request = ++this.loadRequest;
+    this.prepareLoad(vaultId);
     this.loadState = "loading";
     const outcome = await fetchCloudBackupTrash(deps.runtime, vaultId);
-    if (deps.activeVaultId() !== vaultId) return;
+    if (!this.isCurrentLoad(request, vaultId, deps.activeVaultId())) return;
+    this.loadedVaultId = vaultId;
+    this.applyLoadOutcome(outcome);
+  }
+
+  private prepareLoad(vaultId: string): void {
+    if (this.loadedVaultId !== vaultId) {
+      this.items = [];
+      this.loadedVaultId = null;
+    }
+    if (this.result && this.resultVaultId !== vaultId) {
+      this.result = null;
+      this.resultVaultId = null;
+    }
+  }
+
+  private isCurrentLoad(
+    request: number,
+    vaultId: string,
+    activeVaultId: string | null,
+  ): boolean {
+    return request === this.loadRequest && activeVaultId === vaultId;
+  }
+
+  private applyLoadOutcome(
+    outcome: Awaited<ReturnType<typeof fetchCloudBackupTrash>>,
+  ): void {
     if (outcome.kind === "items") {
       this.items = outcome.items;
       this.loadState = "ready";
@@ -69,6 +100,7 @@ export class CloudBackupTrash {
     try {
       const outcome = await this.restoreOne(vaultId, id);
       this.result = { outcome, title: title || "Untitled" };
+      this.resultVaultId = vaultId;
       return outcome;
     } finally {
       this.setRestoring(id, false);

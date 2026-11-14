@@ -13,7 +13,7 @@
     class:border-theme-primary={notification.type === "success"}
     class:text-theme-primary={notification.type === "success"}
     class:border-blue-500={notification.type === "info"}
-    class:text-blue-400={notification.type === "info"}
+    class:text-theme-text={notification.type === "info"}
     class:border-red-500={notification.type === "error"}
     class:text-red-500={notification.type === "error"}
     style:box-shadow="var(--theme-glow)"
@@ -27,6 +27,7 @@
     <span
       class="icon-[lucide--info] w-5 h-5"
       aria-hidden="true"
+      class:text-blue-500={notification.type === "info"}
       class:hidden={notification.type !== "info"}
     ></span>
     <span

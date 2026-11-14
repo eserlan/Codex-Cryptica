@@ -47,6 +47,7 @@ async function setup(
   const dirty = new CloudBackupDirtyStore(memoryDirtyStorage());
   const applied: unknown[] = [];
   const store = new CloudBackupStore();
+  let activeVaultId = "v-1";
   store.configure({
     runtime: {
       baseUrl: "https://worker.test",
@@ -63,7 +64,7 @@ async function setup(
         };
       }) as never,
     },
-    activeVaultId: () => "v-1",
+    activeVaultId: () => activeVaultId,
     dirty,
     base,
     remote: {
@@ -81,7 +82,14 @@ async function setup(
       newId: () => "copy",
     },
   } as never);
-  return { store, base, dirty, local, applied };
+  return {
+    store,
+    base,
+    dirty,
+    local,
+    applied,
+    setActiveVaultId: (vaultId: string) => (activeVaultId = vaultId),
+  };
 }
 
 describe("CloudBackupTrash", () => {
@@ -100,6 +108,25 @@ describe("CloudBackupTrash", () => {
     expect(h.store.trash.loadState).toBe("unsupported");
     await h.store.trash.load("v-1");
     expect(h.store.trash.loadState).toBe("failed");
+  });
+
+  it("clears the previous vault's trash as soon as another vault loads", async () => {
+    const h = await setup({
+      trash: [ok({ revision: 2, items: [item("private-from-v-1")] })],
+    });
+    await h.store.trash.load("v-1");
+    expect(h.store.trash.items.map((entry) => entry.id)).toEqual([
+      "private-from-v-1",
+    ]);
+
+    h.setActiveVaultId("v-2");
+    const loading = h.store.trash.load("v-2");
+
+    expect(h.store.trash.loadState).toBe("loading");
+    expect(h.store.trash.items).toEqual([]);
+    expect(h.store.trash.loadedVaultId).toBeNull();
+    await loading;
+    expect(h.store.trash.items).toEqual([]);
   });
 
   it("restores an entity with its connections, drops its base and records it dirty", async () => {

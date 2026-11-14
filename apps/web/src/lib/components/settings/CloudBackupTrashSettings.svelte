@@ -14,7 +14,7 @@
   const trash = cloudBackupStore.trash;
   const ago = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
-  const items = $derived(trash.items);
+  const items = $derived(trash.loadedVaultId === vaultId ? trash.items : []);
   const loadState = $derived(trash.loadState);
 
   $effect(() => {
@@ -38,6 +38,7 @@
   }
 
   const resultText = $derived.by(() => {
+    if (trash.resultVaultId !== vaultId) return null;
     const result = trash.result;
     if (!result) return null;
     if (result.outcome === "restored") return `Restored ${result.title}`;

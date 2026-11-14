@@ -3,9 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const trash = vi.hoisted(() => ({
   items: [] as any[],
+  loadedVaultId: "v1" as string | null,
   loadState: "ready" as string,
   restoring: new Set<string>(),
   result: null as any,
+  resultVaultId: "v1" as string | null,
   load: vi.fn(async () => {}),
   restore: vi.fn(async () => 1),
 }));
@@ -31,9 +33,11 @@ beforeEach(() => {
   vi.setSystemTime(NOW);
   Object.assign(trash, {
     items: [],
+    loadedVaultId: "v1",
     loadState: "ready",
     restoring: new Set(),
     result: null,
+    resultVaultId: "v1",
   });
   trash.load.mockClear();
   trash.restore.mockClear();
@@ -54,6 +58,12 @@ describe("CloudBackupTrashSettings", () => {
     expect(
       screen.getByText(/Deleted by Mara, 2 days ago\. 28 days left\./),
     ).toBeTruthy();
+  });
+
+  it("does not show trash rows loaded for another vault", () => {
+    trash.items = [item()];
+    render(CloudBackupTrashSettings, { vaultId: "v2" });
+    expect(screen.queryByText("Old Dock")).toBeNull();
   });
 
   it("maps owner and member, and renders a name as plain text", () => {
