@@ -23,6 +23,7 @@ import type {
 } from "./cloud-backup-types";
 import { CloudBackupRestore } from "./cloud-backup-restore";
 import { CloudBackupTrash } from "./cloud-backup-trash";
+import { CloudBackupRollback } from "./cloud-backup-rollback";
 
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 export { createInertRuntime } from "./cloud-backup-runtime";
@@ -120,6 +121,11 @@ export class CloudBackupStore {
   trash = new CloudBackupTrash(
     () => this.deps,
     (vaultId, change) => this.recordLocalChange(vaultId, change),
+  );
+  /** Restore points, and the owner's rollback to one. */
+  rollback = new CloudBackupRollback(
+    () => this.deps,
+    () => this.pulls.pullNow(),
   );
   private changes = new CloudBackupChanges(
     this,
