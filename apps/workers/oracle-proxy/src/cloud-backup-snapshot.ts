@@ -6,6 +6,7 @@ import {
   hashCloudBackupEntity,
   type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
+  type CloudBackupWholeItemAsset,
 } from "../../../../packages/schema/src/publishing";
 import {
   bundleEntities,
@@ -94,17 +95,41 @@ async function commitSnapshot(
     );
     const maps = asItems(rest.maps);
     const canvases = asItems(rest.canvases);
-    const stampedItems = async (items: typeof maps) =>
+    const stampedItems = async (
+      items: typeof maps,
+      assetsFor?: (
+        item: (typeof maps)[number],
+      ) => CloudBackupWholeItemAsset[] | undefined,
+    ) =>
       Object.fromEntries(
         await Promise.all(
-          items.map(async (item) => [
-            item.id,
-            { ...stamp, hash: await hashCloudBackupEntity(item) },
-          ]),
+          items.map(async (item) => {
+            const assets = assetsFor?.(item);
+            return [
+              item.id,
+              {
+                ...stamp,
+                hash: await hashCloudBackupEntity(item),
+                ...(assets?.length ? { assets } : {}),
+              },
+            ];
+          }),
         ),
       );
+    const assetManifest = Array.isArray(rest.assetManifest)
+      ? (rest.assetManifest as CloudBackupWholeItemAsset[])
+      : [];
+    const mapAssetsFor = (map: (typeof maps)[number]) => {
+      const paths = new Set(
+        [
+          map.assetPath,
+          (map.fogOfWar as { maskPath?: unknown } | undefined)?.maskPath,
+        ].filter((path): path is string => typeof path === "string"),
+      );
+      return assetManifest.filter((asset) => paths.has(asset.path));
+    };
     const whole = readWholeMeta({
-      mapMeta: await stampedItems(maps),
+      mapMeta: await stampedItems(maps, mapAssetsFor),
       canvasMeta: await stampedItems(canvases),
     });
     const carried = await carryTombstones(

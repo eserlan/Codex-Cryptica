@@ -87,6 +87,67 @@ const feed = async (fx: Fixture, since: number) =>
   ).json();
 
 describe("maps and canvases as whole items", () => {
+  it("keeps snapshot map assets in trash after a later delete", async () => {
+    const fx = await createBackupFixture();
+    const assets = [
+      {
+        path: "maps/atlas.webp",
+        assetId: "atlas-bg--1",
+        mimeType: "image/webp",
+      },
+      {
+        path: "maps/atlas_mask.png",
+        assetId: "atlas-mask--2",
+        mimeType: "image/png",
+      },
+    ];
+    for (const asset of assets) {
+      await fx.env.BUCKET.put(getAssetKey(fx.backupId, asset.assetId), "image");
+    }
+    const snapshot = await call(fx, "POST", "/commit", {
+      key: fx.ownerCode,
+      body: {
+        vaultTitle: "V",
+        bundle: {
+          entities: [{ id: "a", title: "A" }],
+          maps: [
+            {
+              id: M1,
+              name: "Atlas",
+              assetPath: assets[0].path,
+              fogOfWar: { maskPath: assets[1].path },
+            },
+          ],
+          canvases: [],
+          assetManifest: assets,
+        },
+        assetIds: assets.map((asset) => asset.assetId),
+      },
+    });
+    expect(snapshot.status).toBe(200);
+    const index = await readCurrent(fx.env, fx.backupId, "index");
+    expect(index.mapMeta[M1].assets).toEqual(assets);
+
+    const { editorToken } = (await (
+      await call(fx, "POST", "/sharing", { key: fx.ownerCode })
+    ).json()) as { editorToken: string };
+    const deletion = await push(
+      { ...fx, editorToken },
+      { mapDeletes: [M1], assetIds: [] },
+    );
+    expect(deletion.status).toBe(200);
+
+    const trashed = (await (
+      await call(fx, "GET", `/trash/${M1}`, { key: fx.ownerCode })
+    ).json()) as { assets: unknown[] };
+    expect(trashed.assets).toEqual(assets);
+    for (const asset of assets) {
+      expect(
+        await fx.env.BUCKET.head(getAssetKey(fx.backupId, asset.assetId)),
+      ).not.toBeNull();
+    }
+  });
+
   it("stamps an upserted map and serves it only after its revision", async () => {
     const fx = await committed();
     const res = await push(fx, {
