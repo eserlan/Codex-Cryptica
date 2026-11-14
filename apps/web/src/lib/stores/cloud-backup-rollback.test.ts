@@ -6,7 +6,7 @@ const api = vi.hoisted(() => ({
 }));
 vi.mock("@codex/cloud-backup-sync", () => api);
 
-import { CloudBackupRollback } from "./cloud-backup-rollback";
+import { CloudBackupRollback } from "./cloud-backup-rollback.svelte";
 
 const POINT = { date: "2026-11-01", revision: 4, entityCount: 9 };
 const preview = (changed = 1, returning = 0, trashed = 0) => ({

@@ -22,8 +22,8 @@ import type {
   MergeNotice,
 } from "./cloud-backup-types";
 import { CloudBackupRestore } from "./cloud-backup-restore";
-import { CloudBackupTrash } from "./cloud-backup-trash";
-import { CloudBackupRollback } from "./cloud-backup-rollback";
+import { CloudBackupTrash } from "./cloud-backup-trash.svelte";
+import { CloudBackupRollback } from "./cloud-backup-rollback.svelte";
 
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 export { createInertRuntime } from "./cloud-backup-runtime";
