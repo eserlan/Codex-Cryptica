@@ -14,7 +14,6 @@ import {
   type BackupObjects,
   type CloudBackupEnv,
   absoluteKey,
-  getAssetKey,
   getBackupPrefix,
   jsonByteLength,
   listKeys,
@@ -42,7 +41,6 @@ import {
 } from "./cloud-backup-delta";
 import {
   type RestorePoint,
-  getPreservedAssetKey,
   publishCommit,
   readRestorePoint,
 } from "./cloud-backup-restore-points";
@@ -313,23 +311,6 @@ async function planRollback(
   };
 }
 
-/** Copies back asset objects the point references that no longer exist. Never overwrites. */
-async function restoreMissingAssets(
-  env: CloudBackupEnv,
-  backupId: string,
-  point: RestorePoint,
-): Promise<void> {
-  for (const [id, etag] of Object.entries(point.assets)) {
-    if (await env.BUCKET.head(getAssetKey(backupId, id))) continue;
-    const copy = await env.BUCKET.get(getPreservedAssetKey(backupId, id, etag));
-    if (!copy) continue;
-    await env.BUCKET.put(getAssetKey(backupId, id), copy.body, {
-      httpMetadata: copy.httpMetadata,
-      onlyIf: { etagDoesNotMatch: "*" },
-    });
-  }
-}
-
 /** Removes everything staged under a commit's tag, including a partial write. */
 async function discardCommitKeys(
   env: CloudBackupEnv,
@@ -432,7 +413,10 @@ export async function handleCloudBackupRollback(
       base,
       plan.prepared,
     ));
-    await restoreMissingAssets(env, backupId, point);
+    // Publish asset versions through the same manifest pointer as the content.
+    // The asset route reads these immutable copies, so a failed commit cannot
+    // expose the restore point's bytes as part of the still-current revision.
+    objects.assetVersions = point.assets;
     committed = {
       ...auth.manifest,
       entityCount: Object.keys(plan.prepared.hashes).length,

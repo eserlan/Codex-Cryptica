@@ -528,6 +528,7 @@ export async function stageDelta(
     index: staged.index,
     shards: carriedReferences(base.shards, shards, stagedShards),
     ...(Object.keys(allTrash).length > 0 ? { trash: allTrash } : {}),
+    ...(base.assetVersions ? { assetVersions: base.assetVersions } : {}),
   };
   return { staged, objects };
 }

@@ -401,15 +401,40 @@ describe("owner rollback", () => {
     expect(again.status).toBe(200);
   });
 
-  it("restores an asset pruned since the point from its preserved copy", async () => {
+  it("serves the point's preserved bytes when the same asset id was overwritten", async () => {
     const fx = await sharedWithPoint();
     await dayTwo(fx);
     expect(
       await fx.env.BUCKET.head(getAssetKey(fx.backupId, "pic")),
     ).toBeNull();
+    await call(fx, "PUT", "/assets/pic", {
+      key: fx.ownerCode,
+      raw: new Uint8Array([9, 8, 7]),
+    });
     await rollback(fx, { date: DAY1, baseRevision: await revisionOf(fx) });
-    const restored = await fx.env.BUCKET.get(getAssetKey(fx.backupId, "pic"));
-    expect(Array.from(restored!.body as Uint8Array)).toEqual([1, 2, 3]);
+    const restored = await call(fx, "GET", "/assets/pic", {
+      key: fx.ownerCode,
+    });
+    expect(Array.from(new Uint8Array(await restored.arrayBuffer()))).toEqual([
+      1, 2, 3,
+    ]);
+    expect(
+      Array.from(
+        (await fx.env.BUCKET.get(getAssetKey(fx.backupId, "pic")))!
+          .body as Uint8Array,
+      ),
+    ).toEqual([9, 8, 7]);
+
+    await call(fx, "PUT", "/assets/pic", {
+      key: fx.ownerCode,
+      raw: new Uint8Array([4, 5, 6]),
+    });
+    const uploaded = await call(fx, "GET", "/assets/pic", {
+      key: fx.ownerCode,
+    });
+    expect(Array.from(new Uint8Array(await uploaded.arrayBuffer()))).toEqual([
+      4, 5, 6,
+    ]);
   });
 
   it("leaves session journals and adventures as they are", async () => {

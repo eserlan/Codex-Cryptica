@@ -1,9 +1,15 @@
-import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing";
 import {
+  CLOUD_BACKUP_LIMITS,
+  type CloudBackupManifest,
+} from "../../../../packages/schema/src/publishing";
+import {
+  type BackupObjects,
   type CloudBackupEnv,
+  type SharingRecord,
   acquireBackupMutationLock,
   getAssetKey,
   getBackupPrefix,
+  writeManifest,
   listKeys,
   reachableBytes,
   resolveObjects,
@@ -16,11 +22,72 @@ import {
   isValidAssetId,
   sizeLimitResponse,
 } from "./cloud-backup-http";
-import { preserveBeforeOverwrite } from "./cloud-backup-restore-points";
+import {
+  getPreservedAssetKey,
+  preserveBeforeOverwrite,
+} from "./cloud-backup-restore-points";
 import { authorizeStoredBackup } from "./cloud-backup-auth";
 
 function retryLater(request: Request): Response {
   return json(request, { error: { message: "Try again shortly." } }, 503);
+}
+
+async function updatePinnedAssetVersion(
+  env: CloudBackupEnv,
+  backupId: string,
+  assetId: string,
+  bytes: Uint8Array,
+  contentType: string,
+  auth: {
+    manifest: CloudBackupManifest;
+    ownerCodeHash: string;
+    etag?: string;
+    objects?: BackupObjects;
+    sharing?: SharingRecord;
+  },
+  etag: string | undefined,
+): Promise<boolean> {
+  if (!auth.objects?.assetVersions) return true;
+  if (!etag) return false;
+  try {
+    await env.BUCKET.put(getPreservedAssetKey(backupId, assetId, etag), bytes, {
+      httpMetadata: { contentType },
+      onlyIf: { etagDoesNotMatch: "*" },
+    });
+    return await writeManifest(
+      env,
+      backupId,
+      auth.manifest,
+      auth.ownerCodeHash,
+      {
+        ...auth.objects,
+        assetVersions: { ...auth.objects.assetVersions, [assetId]: etag },
+      },
+      auth.etag,
+      auth.sharing,
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function preserveCurrentAssetBeforeUpload(
+  env: CloudBackupEnv,
+  backupId: string,
+  assetId: string,
+  existing: { etag?: string } | null,
+  shared: boolean,
+): Promise<boolean> {
+  return (
+    !existing?.etag ||
+    (await preserveBeforeOverwrite(
+      env,
+      backupId,
+      assetId,
+      existing.etag,
+      shared,
+    ))
+  );
 }
 
 /**
@@ -97,13 +164,11 @@ export async function handleCloudBackupAssetUpload(
     if (vaultTooLarge) return vaultTooLarge;
 
     if (
-      existing &&
-      existing.etag &&
-      !(await preserveBeforeOverwrite(
+      !(await preserveCurrentAssetBeforeUpload(
         env,
         backupId,
         assetId,
-        existing.etag,
+        existing,
         auth.sharing !== undefined,
       ))
     ) {
@@ -122,6 +187,25 @@ export async function handleCloudBackupAssetUpload(
     });
     if (written === null) return retryLater(request);
 
+    // A rollback may have pinned this asset to an immutable restore-point copy.
+    // Store the uploaded version immutably, then switch the manifest pointer;
+    // readers keep seeing the old version if the conditional write loses.
+    const contentType =
+      request.headers.get("Content-Type") || "application/octet-stream";
+    if (
+      !(await updatePinnedAssetVersion(
+        env,
+        backupId,
+        assetId,
+        bytes,
+        contentType,
+        auth,
+        written.etag,
+      ))
+    ) {
+      return retryLater(request);
+    }
+
     return json(request, { assetId, sizeBytes: bytes.byteLength });
   } finally {
     await releaseLock();
@@ -138,7 +222,20 @@ export async function handleGetCloudBackupAsset(
   const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
-  const object = await env.BUCKET.get(getAssetKey(backupId, assetId));
+  const etag = auth.objects?.assetVersions?.[assetId];
+  let object;
+  if (auth.objects?.assetVersions) {
+    object = etag
+      ? await env.BUCKET.get(getPreservedAssetKey(backupId, assetId, etag))
+      : null;
+    if (!object && etag) {
+      const canonicalKey = getAssetKey(backupId, assetId);
+      const canonical = await env.BUCKET.head(canonicalKey);
+      if (canonical?.etag === etag) object = await env.BUCKET.get(canonicalKey);
+    }
+  } else {
+    object = await env.BUCKET.get(getAssetKey(backupId, assetId));
+  }
   if (!object) return notFoundOrUnauthorized(request);
 
   return new Response(object.body, {
