@@ -7,6 +7,7 @@
   } from "#lib/services/adventure/artwork/turn-artwork-reveals.js";
   import AdventureInlineNpcPortrait from "./AdventureInlineNpcPortrait.svelte";
   import AdventureSceneArtwork from "./AdventureSceneArtwork.svelte";
+  import AdventureTurnArtworkCallout from "./AdventureTurnArtworkCallout.svelte";
 
   let {
     reveal,
@@ -64,28 +65,82 @@
       loadFull: isCat ? makeLoader(sel, "display") : undefined,
     };
   }
+
+  const hasArtwork = $derived(
+    Boolean(reveal.location) || reveal.npcs.length > 0,
+  );
 </script>
 
-<div class="space-y-2.5 pt-1" data-testid="adventure-turn-artwork">
-  {#if reveal.location}
-    {@const loc = reveal.location}
-    {@const scene = locationProps(loc)}
-    <div class="space-y-1">
-      <p class="text-xs font-medium text-theme-text">
-        {loc.name}
-      </p>
-      <div class="max-w-md">
-        {#key scene.subjectKey}
-          <AdventureSceneArtwork {...scene} />
-        {/key}
+{#snippet locationCard(loc: NonNullable<TurnArtworkReveal["location"]>)}
+  {@const scene = locationProps(loc)}
+  <div class="space-y-1">
+    <p class="text-xs font-medium text-theme-text">
+      {loc.name}
+    </p>
+    <div class="max-w-md">
+      {#key scene.subjectKey}
+        <AdventureSceneArtwork {...scene} />
+      {/key}
+    </div>
+  </div>
+{/snippet}
+
+{#snippet locationCallout(loc: NonNullable<TurnArtworkReveal["location"]>)}
+  {@const scene = locationProps(loc)}
+  {#key scene.subjectKey}
+    <AdventureTurnArtworkCallout
+      kind="location"
+      name={loc.name}
+      alt={scene.alt}
+      title={scene.title}
+      subtitle={`AI illustration${scene.credit ? ` · ${scene.credit}` : ""}`}
+      preview={scene.load}
+      loadFull={scene.loadFull}
+    />
+  {/key}
+{/snippet}
+
+{#snippet npcCallout(npc: TurnNpcReveal)}
+  {@const props = npcProps(npc)}
+  <AdventureTurnArtworkCallout
+    kind="npc"
+    name={props.name}
+    alt={props.alt}
+    title={props.name}
+    subtitle={[props.aiLabel, props.credits]
+      .filter((part) => Boolean(part))
+      .join(" · ") || undefined}
+    cue={npc.reason === "entered" ? "enters" : "returns"}
+    preview={props.load}
+    loadFull={props.loadFull}
+  />
+{/snippet}
+
+{#if hasArtwork}
+  <div
+    class="space-y-2.5 pt-1 @4xl:hidden"
+    data-testid="adventure-turn-artwork"
+  >
+    {#if reveal.location}
+      {@render locationCard(reveal.location)}
+    {/if}
+    {#if reveal.npcs.length > 0}
+      <div class="flex flex-wrap gap-2">
+        {#each reveal.npcs as npc (npc.id)}
+          <AdventureInlineNpcPortrait {...npcProps(npc)} />
+        {/each}
       </div>
-    </div>
-  {/if}
-  {#if reveal.npcs.length > 0}
-    <div class="flex flex-wrap gap-2">
-      {#each reveal.npcs as npc (npc.id)}
-        <AdventureInlineNpcPortrait {...npcProps(npc)} />
-      {/each}
-    </div>
-  {/if}
-</div>
+    {/if}
+  </div>
+  <div
+    class="hidden flex-wrap items-center pt-1 @4xl:flex"
+    data-testid="adventure-turn-artwork-compact"
+  >
+    {#if reveal.location}
+      {@render locationCallout(reveal.location)}
+    {/if}
+    {#each reveal.npcs as npc (npc.id)}
+      {@render npcCallout(npc)}
+    {/each}
+  </div>
+{/if}

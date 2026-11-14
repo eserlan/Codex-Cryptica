@@ -1,5 +1,6 @@
 <script lang="ts">
   import AdventureNpcPortrait from "./AdventureNpcPortrait.svelte";
+  import { loadWhenVisible } from "./lazy-artwork-load.js";
 
   let {
     name,
@@ -22,43 +23,31 @@
   } = $props();
 
   let src = $state<string | undefined>(undefined);
+  let container = $state<HTMLElement>();
 
   $effect(() => {
-    const controller = new AbortController();
-    let release: (() => void) | undefined;
-    let cancelled = false;
-
-    void load(controller.signal)
-      .then((result) => {
-        if (!result) return;
-        if (cancelled) {
-          result.release();
-          return;
-        }
-        release = result.release;
-        src = result.url;
-      })
-      .catch(() => {
-        // Inline portrait is optional; skip silently when unavailable.
-      });
-
+    const element = container;
+    if (!element) return;
+    const stop = loadWhenVisible(element, load, (result) => {
+      src = result?.url;
+    });
     return () => {
-      cancelled = true;
-      controller.abort();
-      release?.();
+      stop();
       src = undefined;
     };
   });
 </script>
 
-{#if src}
-  <AdventureNpcPortrait
-    {name}
-    {src}
-    {alt}
-    {aiLabel}
-    {credits}
-    {loadFull}
-    size="inline"
-  />
-{/if}
+<div bind:this={container}>
+  {#if src}
+    <AdventureNpcPortrait
+      {name}
+      {src}
+      {alt}
+      {aiLabel}
+      {credits}
+      {loadFull}
+      size="inline"
+    />
+  {/if}
+</div>
