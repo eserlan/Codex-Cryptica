@@ -534,6 +534,7 @@ describe("AdventureTurnGenerationService", () => {
     const moveTo =
       request.generationConfig.responseSchema.oneOf[0].properties.moveTo;
     expect(Object.keys(moveTo.properties).sort()).toEqual([
+      "cues",
       "name",
       "placeId",
       "relation",

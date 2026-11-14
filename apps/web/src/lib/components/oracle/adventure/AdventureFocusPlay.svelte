@@ -1,7 +1,7 @@
 <!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
   import { bodyPortal, containTab } from "./adventure-phone-surface";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
@@ -25,8 +25,19 @@
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
   import AdventureSituationsDialog from "./AdventureSituationsDialog.svelte";
   import AdventureArtworkFeature from "./artwork/AdventureArtworkFeature.svelte";
+  import AdventureArtworkLightbox from "./artwork/AdventureArtworkLightbox.svelte";
+  import {
+    AdventureLightboxController,
+    setAdventureLightbox,
+  } from "./artwork/adventure-artwork-lightbox.svelte.js";
   import ArtworkSettings from "./artwork/ArtworkSettings.svelte";
+  import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
+  import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
+  import type { ArtworkBlobHandle } from "#lib/services/adventure/artwork/ports.js";
   import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
+  import { createDisplayService } from "#lib/services/adventure/artwork/create-display-service.js";
+  import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
+  import { selectPresentNpcPortrait } from "#lib/services/adventure/artwork/npc-portrait-selection.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import {
@@ -109,6 +120,9 @@
     };
   });
 
+  const artworkLightbox = setAdventureLightbox(
+    new AdventureLightboxController(),
+  );
   let utilitiesOpen = $state(false);
   let toolsButton = $state<HTMLButtonElement>();
   let focusElement = $state<HTMLElement>();
@@ -126,6 +140,114 @@
   const visibleEventVersion = $derived(
     `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}`,
   );
+
+  type AdventurePortraitProp = {
+    name: string;
+    src: string | null | undefined;
+    alt: string;
+    aiLabel?: string;
+    credits?: string;
+    loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
+  };
+
+  const artworkFlagEnabled = import.meta.env.VITE_ADVENTURE_ARTWORK === "true";
+  let artworkEnabled = $state(artworkPreferences.enabled);
+  let artworkCatalogue = $state<readonly ArtworkAsset[]>([]);
+  let artworkDisplay = $state<ArtworkDisplayService>();
+  let npcPortrait = $state<AdventurePortraitProp | null>(null);
+
+  $effect(() => {
+    artworkEnabled = artworkPreferences.enabled;
+    return artworkPreferences.subscribe((value) => {
+      artworkEnabled = value;
+    });
+  });
+
+  onMount(() => {
+    if (!artworkFlagEnabled) return;
+    let active = true;
+    let resources: ReturnType<typeof createDisplayService> | undefined;
+    try {
+      resources = createDisplayService(artworkPreferences);
+      artworkDisplay = resources.display;
+    } catch {
+      /* Private Vault images still work. */
+    }
+    void defaultArtworkCatalogue.get().then((assets) => {
+      if (active && assets) artworkCatalogue = assets;
+    });
+    return () => {
+      active = false;
+      resources?.destroy();
+    };
+  });
+
+  const selectedNpcPortrait = $derived(
+    artworkFlagEnabled
+      ? selectPresentNpcPortrait(
+          manager.session,
+          vault.activeVaultId,
+          vault.entities,
+          artworkEnabled,
+          themeStore.worldThemeId,
+          artworkCatalogue,
+        )
+      : null,
+  );
+
+  $effect(() => {
+    const selection = selectedNpcPortrait;
+    const display = artworkDisplay;
+    if (!selection) {
+      npcPortrait = null;
+      return;
+    }
+    let cancelled = false;
+    const controller = new AbortController();
+    let owned: ArtworkBlobHandle | null = null;
+    npcPortrait = null;
+
+    if (selection.kind === "vault") {
+      void vault
+        .resolveImageUrl(selection.image)
+        .then((url) => {
+          if (cancelled || !url) return;
+          npcPortrait = {
+            name: selection.name,
+            src: url,
+            alt: selection.alt,
+          };
+        })
+        .catch(() => {});
+    } else if (display) {
+      void display
+        .load(selection.asset, controller.signal, "preview")
+        .then((handle) => {
+          if (cancelled || controller.signal.aborted) {
+            handle?.release();
+            return;
+          }
+          if (!handle) return;
+          owned = handle;
+          npcPortrait = {
+            name: selection.name,
+            src: handle.url,
+            alt: selection.alt,
+            aiLabel: selection.aiLabel,
+            credits: selection.credits,
+            loadFull: (signal) =>
+              display.load(selection.asset, signal, "display"),
+          };
+        })
+        .catch(() => {});
+    }
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+      owned?.release();
+    };
+  });
 
   $effect.pre(() => {
     // These are the player-visible events that can add content below the
@@ -299,15 +421,14 @@
     </div>
   </header>
 
-  <div class="flex min-h-0 flex-1 flex-col">
-    <!-- fallow-ignore-next-line css-broken-reference -->
-    <main
-      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 lg:p-6"
-      bind:this={playViewport}
-      data-testid="adventure-play-viewport"
-    >
-      <div class="mx-auto max-w-3xl space-y-4">
-        {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+  <div class="flex min-h-0 flex-1 flex-col lg:flex-row">
+    {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+      <aside
+        aria-label="Scene artwork"
+        data-testid="adventure-artwork-panel"
+        class="hidden lg:block lg:w-80 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-theme-border lg:bg-theme-surface/40 lg:p-4 xl:w-96"
+      >
+        <div class="space-y-3">
           <AdventureArtworkFeature
             session={manager.session}
             entities={vault.entities}
@@ -317,8 +438,18 @@
               (manager.phase !== "ready" && manager.phase !== "offline")}
             theme={themeStore.worldThemeId}
             mutate={(...args) => manager.mutateLocalArtwork(...args)}
+            portrait={npcPortrait}
           />
-        {/if}
+        </div>
+      </aside>
+    {/if}
+    <!-- fallow-ignore-next-line css-broken-reference -->
+    <main
+      class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 lg:p-6"
+      bind:this={playViewport}
+      data-testid="adventure-play-viewport"
+    >
+      <div class="mx-auto max-w-3xl space-y-4">
         <AdventureStateSummary {manager} />
         <AdventureScenarioControls {manager} />
         <AdventurePlay {manager} showComposer={false} />
@@ -335,6 +466,8 @@
     keyboardOpen={keyboard.keyboardOpen}
     suggestionChips={!phone}
   />
+
+  <AdventureArtworkLightbox controller={artworkLightbox} />
 
   <!-- A bottom sheet rather than a side-by-side aside: this surface is often
        hosted in the app's own (already-narrow) sidebar panel, where a lg:

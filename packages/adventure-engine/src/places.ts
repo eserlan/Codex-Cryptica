@@ -62,6 +62,7 @@ function createPlace(
   places: Place[],
   name: string,
   relation: string | undefined,
+  cues: readonly string[] | undefined,
   ids: Set<string>,
   createId: IdFactory,
 ): Resolved | { error: string } {
@@ -73,6 +74,7 @@ function createPlace(
     id,
     name: name.slice(0, MAX_PLACE_NAME),
     ...(relation ? { relation } : {}),
+    ...(cues?.length ? { cues: [...cues] } : {}),
   };
   return { places: [...places, place], currentId: id };
 }
@@ -95,7 +97,7 @@ function resolveMove(
   if (!name) return { places, currentId: previousId };
   return (
     resolveKnownName(places, name) ??
-    createPlace(places, name, move.relation, ids, createId)
+    createPlace(places, name, move.relation, move.cues, ids, createId)
   );
 }
 
@@ -144,36 +146,73 @@ function tagFact(fact: StateFact, c: TagContext): StateFact {
  * - On a move, people not mentioned this turn stay at the place left behind.
  * Mutates `candidate` (already holding the turn's new visible state).
  */
+function resolveSeededPlaces(
+  previous: AdventureSession,
+  ids: Set<string>,
+  createId: IdFactory,
+): {
+  places: Place[];
+  currentId: string | undefined;
+  previousId: string | undefined;
+} {
+  if (previous.places) {
+    return {
+      places: previous.places,
+      currentId: previous.currentPlaceId,
+      previousId: previous.currentPlaceId,
+    };
+  }
+  const seeded = seedPlaces(previous, createId);
+  if (seeded.places) {
+    for (const place of seeded.places) ids.add(place.id);
+  }
+  return {
+    places: seeded.places ?? [],
+    currentId: seeded.currentPlaceId,
+    previousId: seeded.currentPlaceId,
+  };
+}
+
+function applyActivePlaceCues(
+  list: Place[],
+  currentId: string | undefined,
+  placeCues: readonly string[] | undefined,
+  moveCues: readonly string[] | undefined,
+): Place[] {
+  const activeCues = placeCues?.length ? placeCues : moveCues;
+  if (!currentId || !activeCues?.length) return list;
+  return list.map((place) =>
+    place.id === currentId && !place.cues?.length
+      ? { ...place, cues: [...activeCues] }
+      : place,
+  );
+}
+
 export function applyPlaces(
   candidate: AdventureSession,
   previous: AdventureSession,
   move: PlaceMoveProposal | undefined,
   visiblePatch: VisibleStatePatch,
   createId: IdFactory,
+  placeCues?: readonly string[],
 ): PlaceStepResult {
   const ids = existingIds(candidate);
-  let places = previous.places;
-  let previousId = previous.currentPlaceId;
-  if (!places) {
-    const seeded = seedPlaces(previous, createId);
-    places = seeded.places;
-    previousId = seeded.currentPlaceId;
-    if (seeded.places) for (const place of seeded.places) ids.add(place.id);
-  }
-  let list = places ?? [];
-  let currentId = previousId;
+  const seeded = resolveSeededPlaces(previous, ids, createId);
+  let list = seeded.places;
+  let currentId = seeded.currentId;
   if (move) {
-    const resolved = resolveMove(list, previousId, move, ids, createId);
+    const resolved = resolveMove(list, seeded.previousId, move, ids, createId);
     if ("error" in resolved) return { ok: false, message: resolved.error };
     list = resolved.places;
     currentId = resolved.currentId;
   }
+  list = applyActivePlaceCues(list, currentId, placeCues, move?.cues);
   if (list.length > 0) candidate.places = list;
   else delete candidate.places;
   if (currentId) candidate.currentPlaceId = currentId;
   else delete candidate.currentPlaceId;
 
-  const moved = Boolean(move) && currentId !== previousId;
+  const moved = Boolean(move) && currentId !== seeded.previousId;
   const state = candidate.visibleState;
   const tag = (key: "knownFacts" | "activeCharacters", park: boolean) => {
     const context: TagContext = {
@@ -183,7 +222,7 @@ export function applyPlaces(
       ),
       moved,
       currentId,
-      previousId,
+      previousId: seeded.previousId,
       park,
     };
     state[key] = state[key].map((fact) => tagFact(fact, context));

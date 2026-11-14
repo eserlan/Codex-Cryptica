@@ -88,3 +88,19 @@ it("rejects syntactically valid cues that are not in the controlled vocabulary",
     parseCatalogue([{ ...asset, primaryCues: ["unknown-secret-trait"] }]),
   ).toThrow();
 });
+
+it("accepts fantasy race and class cues for npc assets", () => {
+  const parsed = parseCatalogue([
+    {
+      ...asset,
+      id: "npc-elf-ranger-01",
+      type: "npc",
+      primaryCues: ["elf", "ranger"],
+      variants: {
+        preview: { ...variant, width: 240, height: 320 },
+        display: { ...variant, width: 768, height: 1024 },
+      },
+    },
+  ]);
+  expect(parsed[0]?.primaryCues).toEqual(["elf", "ranger"]);
+});

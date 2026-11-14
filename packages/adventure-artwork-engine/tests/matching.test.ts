@@ -68,3 +68,54 @@ it("drops unknown and duplicate cues before applying the input limit", () => {
     })?.id,
   ).toBe("forest");
 });
+
+it("prefers exact race and class combo over partial race or class match", () => {
+  const npc = (id: string, primaryCues: string[]): ArtworkAsset => ({
+    ...asset(id),
+    type: "npc",
+    primaryCues,
+  });
+  const pool = [
+    npc("npc-dwarf-cleric", ["dwarf", "cleric"]),
+    npc("npc-elf-ranger", ["elf", "ranger"]),
+    npc("npc-elf-wizard", ["elf", "wizard"]),
+  ];
+  expect(
+    matchArtwork(pool, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["elf", "wizard"],
+    })?.id,
+  ).toBe("npc-elf-wizard");
+  expect(
+    matchArtwork(pool, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["dwarf", "wizard"],
+    })?.id,
+  ).toBe("npc-dwarf-cleric");
+});
+
+it("prefers generic worker over specialized race/class worker when only worker is requested", () => {
+  const npc = (
+    id: string,
+    primaryCues: string[],
+    excludes: string[] = [],
+  ): ArtworkAsset => ({
+    ...asset(id),
+    type: "npc",
+    primaryCues,
+    excludes,
+  });
+  const pool = [
+    npc("npc-fantasy-dwarf-cleric-01", ["dwarf", "cleric", "worker"]),
+    npc("npc-fantasy-worker-02", ["worker"]),
+  ];
+  expect(
+    matchArtwork(pool, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["worker"],
+    })?.id,
+  ).toBe("npc-fantasy-worker-02");
+});

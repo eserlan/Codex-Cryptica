@@ -11,6 +11,12 @@ const entity = { id: "e1", image: "images/forest.png" };
 const asset = {
   id: "forest-art",
   type: "location",
+  genres: ["fantasy"],
+  primaryCues: ["forest"],
+  settingCues: [],
+  moodCues: [],
+  timeCues: [],
+  excludes: [],
   withdrawn: false,
   review: { status: "approved" },
   alt: "A forest road",
@@ -160,5 +166,49 @@ describe("current place selection", () => {
     expect(
       currentPlaceSelection(session, "v1", { e1: canonical }, true, [asset]),
     ).toMatchObject({ kind: "vault", image: entity.image });
+
+    const canonicalWithoutImage = {
+      ...session,
+      artwork: local.artwork,
+    };
+    expect(
+      currentPlaceSelection(
+        canonicalWithoutImage,
+        "v1",
+        { e1: { id: "e1" } },
+        true,
+        [asset],
+      ),
+    ).toMatchObject({ kind: "catalogue", asset, subjectKey: "entity:e1" });
+    expect(
+      currentPlaceSelection(canonicalWithoutImage, "v1", { e1: entity }, true, [
+        asset,
+      ]),
+    ).toMatchObject({ kind: "vault", image: entity.image });
+  });
+
+  it("matches catalogue artwork from live place cues when no automatic assignment exists", () => {
+    const cuedSession = {
+      vaultId: "v1",
+      currentPlaceId: "p1",
+      places: [
+        {
+          id: "p1",
+          name: "Kettleford",
+          sourceRecordId: "e1",
+          cues: ["forest"],
+        },
+      ],
+    };
+    expect(
+      currentPlaceSelection(
+        cuedSession,
+        "v1",
+        { e1: { id: "e1" } },
+        true,
+        [asset],
+        "fantasy",
+      ),
+    ).toMatchObject({ kind: "catalogue", asset, subjectKey: "entity:e1" });
   });
 });

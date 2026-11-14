@@ -20,12 +20,13 @@ export class ArtworkDisplayService {
   async load(
     asset: ArtworkAsset,
     signal: AbortSignal,
+    variant: "display" | "preview" = "display",
   ): Promise<ArtworkBlobHandle | null> {
     if (signal.aborted || asset.withdrawn || asset.review.status !== "approved")
       return null;
     try {
       const blob = await this.loader.load(
-        asset.variants.display,
+        asset.variants[variant],
         signal,
         "automatic",
       );
