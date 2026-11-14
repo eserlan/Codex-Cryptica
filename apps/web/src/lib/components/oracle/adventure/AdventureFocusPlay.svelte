@@ -30,6 +30,7 @@
     AdventureLightboxController,
     setAdventureLightbox,
   } from "./artwork/adventure-artwork-lightbox.svelte.js";
+  import AdventureArtworkCueDetails from "./artwork/AdventureArtworkCueDetails.svelte";
   import ArtworkSettings from "./artwork/ArtworkSettings.svelte";
   import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
   import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
@@ -37,6 +38,7 @@
   import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
   import { createDisplayService } from "#lib/services/adventure/artwork/create-display-service.js";
   import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
+  import { summarizeArtworkCues } from "#lib/services/adventure/artwork/artwork-cue-summary.js";
   import { selectPresentNpcPortrait } from "#lib/services/adventure/artwork/npc-portrait-selection.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -196,6 +198,19 @@
       : null,
   );
 
+  const cueSummary = $derived(
+    artworkFlagEnabled
+      ? summarizeArtworkCues(
+          manager.session,
+          vault.activeVaultId,
+          vault.entities,
+          artworkEnabled,
+          themeStore.worldThemeId,
+          artworkCatalogue,
+        )
+      : null,
+  );
+
   $effect(() => {
     const selection = selectedNpcPortrait;
     const display = artworkDisplay;
@@ -306,6 +321,7 @@
 {#snippet utilities()}
   {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
     <ArtworkSettings preferences={artworkPreferences} />
+    <AdventureArtworkCueDetails summary={cueSummary} />
   {/if}
   <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
