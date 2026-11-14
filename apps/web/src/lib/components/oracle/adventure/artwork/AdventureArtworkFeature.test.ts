@@ -130,4 +130,28 @@ describe("adventure artwork assembly", () => {
     });
     expect(screen.queryByAltText("Portrait of Elara")).toBeNull();
   });
+
+  it("keeps the matching details out of the scene panel", async () => {
+    mocks.get.mockResolvedValue([]);
+    render(AdventureArtworkFeature, {
+      props: {
+        session: {
+          id: "s1",
+          revision: 1,
+          vaultId: "v1",
+          currentPlaceId: "p1",
+          places: [{ id: "p1", name: "Forest" }],
+        },
+        activeVaultId: "v1",
+        entities: {},
+        resolve: async () => "",
+        readOnly: false,
+        theme: "fantasy",
+        mutate: vi.fn(),
+      },
+    });
+    await waitFor(() => expect(mocks.get).toHaveBeenCalled());
+    expect(screen.queryByTestId("adventure-artwork-cue-indicator")).toBeNull();
+    expect(screen.queryByText(/Artwork tags/)).toBeNull();
+  });
 });

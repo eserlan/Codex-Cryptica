@@ -11,6 +11,25 @@ import type { ComponentProps } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
 
+const artworkMocks = vi.hoisted(() => ({
+  summarize: vi.fn(),
+}));
+vi.mock("#lib/services/adventure/artwork/artwork-cue-summary.js", () => ({
+  summarizeArtworkCues: artworkMocks.summarize,
+}));
+vi.mock("#lib/services/adventure/artwork/default-artwork-catalogue.js", () => ({
+  defaultArtworkCatalogue: {
+    get: vi.fn().mockResolvedValue([]),
+    peek: vi.fn().mockReturnValue([]),
+  },
+}));
+vi.mock("#lib/services/adventure/artwork/create-display-service.js", () => ({
+  createDisplayService: () => ({
+    display: { load: vi.fn() },
+    destroy: vi.fn(),
+  }),
+}));
+
 vi.mock("#lib/actions/focusTrap.js", () => ({
   focusTrap: () => ({ destroy() {} }),
 }));
@@ -699,5 +718,65 @@ describe("AdventureFocusPlay", () => {
       screen.getByRole("dialog", { name: "Situations & Rumours" }),
     ).toBeTruthy();
     expect(screen.getAllByText("The High Beacon").length).toBeGreaterThan(0);
+  });
+
+  describe("artwork matching details", () => {
+    const summary = {
+      genre: "fantasy",
+      place: { name: "Mill", cues: ["village"], match: "loc-1" },
+      npcs: [],
+    };
+    const indicator = "adventure-artwork-cue-indicator";
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      artworkMocks.summarize.mockReset();
+    });
+
+    it("lives in Adventure tools after the illustrations setting", async () => {
+      vi.stubEnv("VITE_ADVENTURE_ARTWORK", "true");
+      artworkMocks.summarize.mockReturnValue(summary);
+      render(AdventureFocusPlay, { props: props({ manager: manager() }) });
+
+      expect(screen.queryByTestId(indicator)).toBeNull();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      );
+      const drawer = screen.getByRole("complementary", {
+        name: "Adventure tools",
+      });
+      const details = within(drawer).getByTestId(indicator);
+      const checkbox = within(drawer).getByRole("checkbox", {
+        name: /Show adventure illustrations/,
+      });
+      expect(
+        checkbox.compareDocumentPosition(details) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      const panel = screen.queryByTestId("adventure-artwork-panel");
+      expect(panel?.querySelector(`[data-testid="${indicator}"]`) ?? null).toBe(
+        null,
+      );
+    });
+
+    it("shows nothing when there is no summary", async () => {
+      vi.stubEnv("VITE_ADVENTURE_ARTWORK", "true");
+      artworkMocks.summarize.mockReturnValue(null);
+      render(AdventureFocusPlay, { props: props({ manager: manager() }) });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      );
+      expect(screen.queryByTestId(indicator)).toBeNull();
+    });
+
+    it("shows nothing when the artwork flag is off", async () => {
+      vi.stubEnv("VITE_ADVENTURE_ARTWORK", "false");
+      artworkMocks.summarize.mockReturnValue(summary);
+      render(AdventureFocusPlay, { props: props({ manager: manager() }) });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      );
+      expect(screen.queryByTestId(indicator)).toBeNull();
+    });
   });
 });
