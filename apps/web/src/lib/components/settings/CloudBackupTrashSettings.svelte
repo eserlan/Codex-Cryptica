@@ -60,7 +60,7 @@
       <p class="truncate font-semibold">
         {#if item.kind === "map" || item.kind === "canvas"}
           <span
-            class="mr-1 border border-theme-border px-1 text-xs font-bold uppercase tracking-wider text-theme-muted"
+            class="mr-1 border border-theme-border px-1 text-xs font-bold uppercase tracking-wider text-theme-text"
             >{item.kind === "map" ? "Map" : "Canvas"}</span
           >
         {/if}
