@@ -1,0 +1,12 @@
+{
+  "factory-builder-gate": {
+    "enabled": true,
+    "Stop": [
+      {
+        "type": "command",
+        "command": "factory/bin/gate --hook",
+        "timeout": 300
+      }
+    ]
+  }
+}

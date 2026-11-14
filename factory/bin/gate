@@ -88,8 +88,58 @@ def gate(job_id, merge):
     sys.exit(0 if verdict == "PASS" else 1)
 
 
+def agy_hook(event):
+    if event.get("continuationActive"):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    transcript = Path(event.get("transcriptPath", "")).expanduser()
+    if not transcript.exists():
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    prompt = ""
+    try:
+        with transcript.open() as f:
+            for line in f:
+                entry = json.loads(line)
+                if entry.get("type") == "USER_INPUT":
+                    prompt = entry.get("content") or ""
+                    break
+    except (OSError, ValueError):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    if "Job: " not in prompt or ("Agent: builder." not in prompt and "Build round " not in prompt):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    job_id = prompt.split("Job: ", 1)[1].split(".", 1)[0].strip()
+    job_folder = FACTORY / "jobs" / job_id
+    if "Job folder: " in prompt:
+        folder_str = prompt.split("Job folder: ", 1)[1].split(". ", 1)[0].rstrip("/")
+        if Path(folder_str).exists():
+            job_folder = Path(folder_str)
+    job_file = job_folder / "job.json"
+    if not job_file.exists():
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    build_md = job_folder / "build.md"
+    if build_md.exists() and build_md.read_text().startswith("STATUS: BLOCKED"):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    job = json.loads(job_file.read_text())
+    code, log, _ = run_checks(job["worktree"])
+    if code != 0:
+        tail = "\n".join(log.rstrip().splitlines()[-40:])
+        reason = (f"factory/checks.sh fails in your worktree (exit {code}). The gate will reject this "
+                  f"build. Fix it, or write STATUS: BLOCKED in build.md if you can't.\n\n{tail}")
+        print(json.dumps({"decision": "continue", "reason": reason}))
+        sys.exit(0)
+    print(json.dumps({"decision": "allow"}))
+    sys.exit(0)
+
+
 def hook():
     event = json.load(sys.stdin)
+    if "transcriptPath" in event or "hookEventName" in event:
+        agy_hook(event)
     if event.get("stop_hook_active"):
         sys.exit(0)  # one nudge per stop; the gate decides
     with open(Path(event["agent_transcript_path"]).expanduser()) as f:
