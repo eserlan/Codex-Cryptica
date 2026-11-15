@@ -32,6 +32,19 @@ export function getAdventurePackagePath(documentHash: string): string {
   return `${ADVENTURE_PACKAGES_DIR}/${documentHash}.json`;
 }
 
+function parseStoredPackage(
+  raw: string,
+  expectedHash: string,
+): AdventureSourcePackage {
+  const pkg = AdventureSourcePackageSchema.parse(JSON.parse(raw));
+  if (pkg.documentHash !== expectedHash) {
+    throw new Error(
+      `Adventure package hash mismatch: expected ${expectedHash}, found ${pkg.documentHash}.`,
+    );
+  }
+  return pkg;
+}
+
 export async function loadAdventurePackage(
   io: AdventurePackageFileIO,
   documentHash: string,
@@ -41,7 +54,7 @@ export async function loadAdventurePackage(
     return null;
   }
   const raw = await io.read(path);
-  return AdventureSourcePackageSchema.parse(JSON.parse(raw));
+  return parseStoredPackage(raw, documentHash);
 }
 
 export async function listAdventurePackageHashes(
@@ -71,11 +84,10 @@ export async function saveAdventurePackage(
   const validated = AdventureSourcePackageSchema.parse(pkg);
   const path = getAdventurePackagePath(validated.documentHash);
 
+  let existingRaw: string | null = null;
   if (await io.exists(path)) {
-    const existingRaw = await io.read(path);
-    const existing = AdventureSourcePackageSchema.parse(
-      JSON.parse(existingRaw),
-    );
+    existingRaw = await io.read(path);
+    const existing = parseStoredPackage(existingRaw, validated.documentHash);
     if (existing.status === "approved") {
       throw new Error(
         `Adventure package "${validated.documentHash}" is already approved and cannot be modified.`,
@@ -90,7 +102,7 @@ export async function saveAdventurePackage(
     }
   }
 
-  if (!io.remove) {
+  if (existingRaw === null && !io.remove) {
     throw new Error(
       "Adventure package storage must support removal before a package can be written safely.",
     );
@@ -100,7 +112,7 @@ export async function saveAdventurePackage(
   try {
     await io.write(path, serialized);
     const written = await io.read(path);
-    const reparsed = AdventureSourcePackageSchema.parse(JSON.parse(written));
+    const reparsed = parseStoredPackage(written, validated.documentHash);
     return {
       status: "created",
       path,
@@ -108,7 +120,11 @@ export async function saveAdventurePackage(
     };
   } catch (error) {
     try {
-      await io.remove(path);
+      if (existingRaw !== null) {
+        await io.write(path, existingRaw);
+      } else if (io.remove) {
+        await io.remove(path);
+      }
     } catch (cleanupError) {
       throw new AggregateError(
         [error, cleanupError],

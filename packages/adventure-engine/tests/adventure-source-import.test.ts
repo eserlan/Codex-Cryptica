@@ -96,6 +96,32 @@ function assertCleanPackageMatchesKey(pkg: AdventureSourcePackage): void {
   );
 }
 
+function getRetrievalTextCharacterCount(
+  result: ReturnType<typeof retrieveAdventureContext>,
+): number {
+  return (
+    result.title.length +
+    result.readAloud.reduce((total, text) => total + text.length, 0) +
+    result.body.length +
+    result.conditions.reduce((total, text) => total + text.length, 0) +
+    result.encounters.reduce(
+      (total, encounter) =>
+        total +
+        (encounter.title?.length ?? 0) +
+        encounter.description.length +
+        (encounter.conditions?.reduce((sum, text) => sum + text.length, 0) ??
+          0) +
+        encounter.alternativeSolutions.reduce(
+          (sum, solution) =>
+            sum + solution.method.length + solution.description.length,
+          0,
+        ),
+      0,
+    ) +
+    result.secrets.reduce((total, secret) => total + secret.text.length, 0)
+  );
+}
+
 describe("AdventureSourcePackage reference one-shot and variants", () => {
   it("AC1: matches the reference one-shot answer key with source-grounded provenance and zero ambiguities", async () => {
     const result = await parseAdventureMarkdown(adventureMd, {
@@ -214,7 +240,7 @@ describe("AdventureSourcePackage reference one-shot and variants", () => {
 
   it("keeps GM-only blockquote continuations private and allocates unique section IDs", async () => {
     const gmResult = await parseAdventureMarkdown(
-      "## Scene 1: The Vault\n\n<!-- source-id: vault -->\n> **GM only:** The duke is a traitor.\n> The password is swordfish.\n> **Read aloud:** This line remains private too.\nPublic clue.",
+      "## Scene 1: The Vault\n\n<!-- source-id: vault -->\n> **GM only:** The duke is a traitor.\nThe guards already know her signal.\n2. Her signal is the west gate.\n> The password is swordfish.\n> **Read aloud:** This line remains private too.\n\nPublic clue.",
       { fileName: "private-blockquote.md" },
     );
     expect(gmResult.ok).toBe(true);
@@ -226,6 +252,8 @@ describe("AdventureSourcePackage reference one-shot and variants", () => {
     expect(scene?.body).toBe("Public clue.");
     expect(gmResult.package.secrets.map((secret) => secret.text)).toEqual([
       "The duke is a traitor.",
+      "The guards already know her signal.",
+      "2. Her signal is the west gate.",
       "The password is swordfish.",
       "**Read aloud:** This line remains private too.",
     ]);
@@ -233,8 +261,32 @@ describe("AdventureSourcePackage reference one-shot and variants", () => {
       sceneId: "vault",
       includeGmOnly: false,
     });
+    expect(publicContext.body).not.toContain("guards already know");
     expect(publicContext.formatted).not.toContain("swordfish");
     expect(publicContext.formatted).not.toContain("traitor");
+
+    const hiddenEnding = await parseAdventureMarkdown(
+      "# The Night Watch\n\n## Ending: Hidden outcome\n\n<!-- source-id: hidden-outcome -->\n> **GM only:** The queen is secretly the antagonist.\nThe guards already know her signal.",
+      { fileName: "hidden-ending.md" },
+    );
+    expect(hiddenEnding.ok).toBe(true);
+    if (!hiddenEnding.ok) return;
+
+    expect(() =>
+      AdventureSourcePackageSchema.parse(hiddenEnding.package),
+    ).not.toThrow();
+    expect(
+      hiddenEnding.package.sections[hiddenEnding.package.sections.length - 1],
+    ).toMatchObject({
+      sourceId: "hidden-outcome",
+      body: "",
+      gmOnly: true,
+    });
+    expect(hiddenEnding.package.endings).toEqual([]);
+    expect(hiddenEnding.package.secrets.map((secret) => secret.text)).toEqual([
+      "The queen is secretly the antagonist.",
+      "The guards already know her signal.",
+    ]);
 
     const idResult = await parseAdventureMarkdown(
       ["room", "room", "room-2"]
@@ -250,6 +302,34 @@ describe("AdventureSourcePackage reference one-shot and variants", () => {
     expect(
       idResult.package.sections.map((section) => section.sourceId),
     ).toEqual(["room", "room-3", "room-2"]);
+  });
+
+  it("keeps a CommonMark HTML block after a GM-only quote in public scene text", async () => {
+    const result = await parseAdventureMarkdown(
+      "## Scene 1: The Vault\n\n<!-- source-id: vault -->\n> **GM only:** The queen is an antagonist.\n<div>Public clue</div>",
+      { fileName: "gm-quote-html-block.md" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const section = result.package.sections.find(
+      (candidate) => candidate.sourceId === "vault",
+    );
+    expect(section).toMatchObject({
+      body: "<div>Public clue</div>",
+      gmOnly: false,
+    });
+    expect(result.package.secrets.map((secret) => secret.text)).toEqual([
+      "The queen is an antagonist.",
+    ]);
+
+    const publicContext = retrieveAdventureContext(result.package, {
+      sceneId: "vault",
+    });
+    expect(publicContext.body).toBe("<div>Public clue</div>");
+    expect(publicContext.formatted).toContain("<div>Public clue</div>");
+    expect(publicContext.formatted).not.toContain("antagonist");
   });
 });
 
@@ -318,6 +398,80 @@ describe("AdventureSourcePackage retrieval, persistence, and validation", () => 
     });
     expect(tight.truncated).toBe(true);
     expect(tight.formatted.length).toBeLessThanOrEqual(120);
+    expect(getRetrievalTextCharacterCount(tight)).toBeLessThanOrEqual(120);
+    expect(tight.characterCount).toBeGreaterThanOrEqual(
+      getRetrievalTextCharacterCount(tight),
+    );
+
+    const largeSceneId = "large-scene";
+    const largePackage = AdventureSourcePackageSchema.parse({
+      ...result.package,
+      sections: [
+        {
+          sourceId: largeSceneId,
+          title: "Large scene",
+          level: 2,
+          body: "B".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS * 2),
+          readAloud: ["Read the scene."],
+          gmOnly: false,
+          provenance: "source-grounded",
+        },
+      ],
+      scenes: [
+        {
+          sourceId: largeSceneId,
+          title: "Large scene",
+          conditions: ["C".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS)],
+          provenance: "source-grounded",
+        },
+      ],
+      encounters: [
+        {
+          sourceId: largeSceneId,
+          title: "Large encounter",
+          description: "D".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS),
+          conditions: ["I".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS)],
+          alternativeSolutions: [
+            {
+              method: "M".repeat(100),
+              description: "A".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS),
+            },
+          ],
+          provenance: "source-grounded",
+        },
+      ],
+      secrets: [
+        {
+          id: "large-secret",
+          text: "S".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS),
+          sourceId: largeSceneId,
+          gmOnly: true,
+          provenance: "source-grounded",
+        },
+      ],
+      endings: [],
+    });
+    const oversizedLimit = retrieveAdventureContext(largePackage, {
+      sceneId: largeSceneId,
+      includeGmOnly: true,
+      maxCharacters: MAX_ADVENTURE_RETRIEVAL_CHARS * 2,
+    });
+    expect(oversizedLimit.truncated).toBe(true);
+    expect(oversizedLimit.characterCount).toBeLessThanOrEqual(
+      MAX_ADVENTURE_RETRIEVAL_CHARS,
+    );
+    expect(oversizedLimit.formatted.length).toBeLessThanOrEqual(
+      MAX_ADVENTURE_RETRIEVAL_CHARS,
+    );
+    expect(getRetrievalTextCharacterCount(oversizedLimit)).toBeLessThanOrEqual(
+      MAX_ADVENTURE_RETRIEVAL_CHARS,
+    );
+    expect(oversizedLimit.characterCount).toBeGreaterThanOrEqual(
+      getRetrievalTextCharacterCount(oversizedLimit),
+    );
+    expect(oversizedLimit.body.length).toBeLessThan(
+      MAX_ADVENTURE_RETRIEVAL_CHARS * 2,
+    );
 
     const missing = retrieveAdventureContext(result.package, {
       sceneId: "non-existent-scene",
@@ -354,6 +508,24 @@ describe("AdventureSourcePackage retrieval, persistence, and validation", () => 
     expect(await loadAdventurePackage(io, first.package.documentHash)).toEqual(
       first.package,
     );
+
+    const mismatchedIo = createMemoryIO();
+    const requestedHash = "a".repeat(64);
+    const storedHash = "b".repeat(64);
+    mismatchedIo.files.set(
+      getAdventurePackagePath(requestedHash),
+      JSON.stringify({ ...first.package, documentHash: storedHash }),
+    );
+    await expect(
+      loadAdventurePackage(mismatchedIo, requestedHash),
+    ).rejects.toThrow("Adventure package hash mismatch");
+    await expect(
+      saveAdventurePackage(mismatchedIo, {
+        ...first.package,
+        documentHash: requestedHash,
+      }),
+    ).rejects.toThrow("Adventure package hash mismatch");
+    expect(mismatchedIo.writeCalls).toBe(0);
 
     const failingIo = createMemoryIO();
     failingIo.read = async () => {
@@ -454,5 +626,46 @@ describe("AdventureSourcePackage retrieval, persistence, and validation", () => 
         documentHash: "not-a-hash",
       }),
     ).toThrow();
+  });
+
+  it("preserves an existing draft package when approval write or verification fails", async () => {
+    const parsed = await parseAdventureMarkdown(adventureMd, {
+      fileName: "adventure.md",
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const io = createMemoryIO();
+    await saveAdventurePackage(io, parsed.package);
+    const expectedPath = getAdventurePackagePath(parsed.package.documentHash);
+
+    let removeCalled = false;
+    const origRemove = io.remove;
+    io.remove = async (path) => {
+      removeCalled = true;
+      await origRemove?.(path);
+    };
+    const origRead = io.read;
+    let readCount = 0;
+    io.read = async (path) => {
+      readCount += 1;
+      // First read inspects existing draft; second read verifies the new write.
+      if (readCount === 2) {
+        return "{corrupted json";
+      }
+      return origRead(path);
+    };
+
+    const approved = approveAdventurePackage(parsed.package);
+    await expect(saveAdventurePackage(io, approved)).rejects.toThrow();
+
+    expect(removeCalled).toBe(false);
+    readCount = 0;
+    const preserved = await loadAdventurePackage(
+      io,
+      parsed.package.documentHash,
+    );
+    expect(preserved).toEqual(parsed.package);
+    expect(io.files.has(expectedPath)).toBe(true);
   });
 });

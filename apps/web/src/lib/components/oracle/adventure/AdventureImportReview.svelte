@@ -536,13 +536,22 @@
       ></span>
       <div class="space-y-1">
         <p class="font-semibold text-theme-text">
-          Local storage and AI excerpts
+          Vault storage and AI excerpts
         </p>
         <p class="leading-relaxed text-theme-text">
-          Your adventure file and approved package stay strictly local in your
-          Vault on this device. During play, only relevant excerpts (such as
-          active scene text, read-aloud passages, and active NPC notes) are sent
-          to your chosen Oracle AI provider.
+          Your adventure file and approved package are stored in your Vault on
+          this device (and included only if you enable opt-in Vault backup or
+          sync). During play, bounded relevant excerpts (such as active scene
+          text, read-aloud passages, and active NPC notes) may be sent to your
+          selected Oracle AI provider.
+        </p>
+        <p
+          class="leading-relaxed text-theme-text"
+          data-testid="adventure-approval-scope"
+        >
+          Approving locks this reviewed baseline without claiming complete
+          analysis, resolved ambiguities, or play readiness for every scene;
+          unresolved items stay preserved for later review.
         </p>
       </div>
     </div>
@@ -565,7 +574,8 @@
       class="rounded-lg border border-theme-primary/50 bg-theme-primary/10 p-3 text-sm font-medium text-theme-text"
       data-testid="adventure-approved-confirmation"
     >
-      Adventure approved and locked as an immutable baseline in your Vault.
+      Reviewed baseline approved and locked in your Vault. Unresolved
+      ambiguities remain preserved for later review.
     </div>
   {/if}
 

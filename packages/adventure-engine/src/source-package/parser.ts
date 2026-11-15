@@ -21,6 +21,15 @@ const NO_SPACE_HEADING_RE = /^(#{1,6})([^\s#].*)$/;
 const READ_ALOUD_RE = /^>\s*\*\*Read aloud:\*\*\s*(.+)$/;
 const GM_ONLY_RE = /^>\s*\*\*GM only:\*\*\s*(.+)$/;
 const BLOCKQUOTE_RE = /^>\s?(.*)$/;
+// CommonMark HTML block types 1–6 may interrupt a paragraph; type 7 may not.
+const MARKDOWN_BLOCK_START_RE =
+  /^(?:#{1,6}(?:\s|$)|[-+*]\s+|1[.)]\s+|(?:`{3,}|~{3,})|(?:(?:\*\s*){3,}|(?:-\s*){3,}|(?:_\s*){3,})$)/;
+const COMMONMARK_HTML_BLOCK_START_RES = [
+  /^<(?:script|pre|style|textarea)(?:[ \t>]|$)/i,
+  /^(?:<!--|<\?|<!\[CDATA\[)/,
+  /^<![A-Za-z]/,
+  /^<\/?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:[ \t]|$|\/?>)/i,
+] as const;
 const SCENE_CONDITION_RE = /^-\s*\*\*Scene condition:\*\*\s*(.+)$/;
 const ALT_SOLUTION_RE = /^-\s*\*\*By ([^:*]+):\*\*\s*(.+)$/i;
 const MOTIVATION_RE = /\*\*Motivation:\*\*\s*([^\n]+)/g;
@@ -73,6 +82,14 @@ function toKebabCase(input: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   return slug || "section";
+}
+
+function startsCommonMarkHtmlBlock(line: string): boolean {
+  return COMMONMARK_HTML_BLOCK_START_RES.some((pattern) => pattern.test(line));
+}
+
+function isMarkdownBlockStart(line: string): boolean {
+  return MARKDOWN_BLOCK_START_RE.test(line) || startsCommonMarkHtmlBlock(line);
 }
 
 function hasBinaryControlChars(text: string): boolean {
@@ -346,6 +363,12 @@ function consumeGmOnlyBlockquote(
       content.gmNotes.push(blockquoteMatch[1].trim());
       return { consumed: true, active: true };
     }
+
+    const unquotedLine = line.replace(/^ {0,3}/, "");
+    if (line.trim().length > 0 && !isMarkdownBlockStart(unquotedLine)) {
+      content.gmNotes.push(line.trim());
+      return { consumed: true, active: true };
+    }
   }
 
   return { consumed: false, active: false };
@@ -598,13 +621,16 @@ function processRawSection(raw: RawSection, acc: ParseAccumulator): void {
   recordNpcIfPresent(raw, sourceId, body, provenance, acc);
 
   if (ENDING_TITLE_RE.test(raw.title)) {
-    acc.endings.push({
-      id: sourceId,
-      title: raw.title,
-      description: body || content.readAloud.join("\n"),
-      sourceId,
-      provenance,
-    });
+    const description = body || content.readAloud.join("\n");
+    if (description.length > 0) {
+      acc.endings.push({
+        id: sourceId,
+        title: raw.title,
+        description,
+        sourceId,
+        provenance,
+      });
+    }
   }
 }
 

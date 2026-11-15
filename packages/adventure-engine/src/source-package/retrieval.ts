@@ -24,6 +24,7 @@ export interface AdventureRetrievalResult {
   encounters: EncounterRecord[];
   secrets: SecretRecord[];
   formatted: string;
+  /** Largest character count among the formatted and structured text views. */
   characterCount: number;
   truncated: boolean;
 }
@@ -52,6 +53,72 @@ function truncateToLimit(
     text: `${text.slice(0, maxCharacters - 1)}…`,
     truncated: true,
   };
+}
+
+interface TextBudget {
+  remaining: number;
+  truncated: boolean;
+}
+
+function takeWithinBudget(text: string, budget: TextBudget): string {
+  const bounded = truncateToLimit(text, budget.remaining);
+  budget.remaining -= bounded.text.length;
+  budget.truncated ||= bounded.truncated;
+  return bounded.text;
+}
+
+function takeArrayWithinBudget(values: string[], budget: TextBudget): string[] {
+  return values.map((value) => takeWithinBudget(value, budget));
+}
+
+function takeEncounterWithinBudget(
+  encounter: EncounterRecord,
+  budget: TextBudget,
+): EncounterRecord {
+  return {
+    ...encounter,
+    ...(encounter.title !== undefined
+      ? { title: takeWithinBudget(encounter.title, budget) }
+      : {}),
+    description: takeWithinBudget(encounter.description, budget),
+    ...(encounter.conditions
+      ? { conditions: takeArrayWithinBudget(encounter.conditions, budget) }
+      : {}),
+    alternativeSolutions: encounter.alternativeSolutions.map((solution) => ({
+      ...solution,
+      method: takeWithinBudget(solution.method, budget),
+      description: takeWithinBudget(solution.description, budget),
+    })),
+  };
+}
+
+function countStructuredTextCharacters(
+  result: Pick<
+    AdventureRetrievalResult,
+    "title" | "readAloud" | "body" | "conditions" | "encounters" | "secrets"
+  >,
+): number {
+  return (
+    result.title.length +
+    result.readAloud.reduce((total, text) => total + text.length, 0) +
+    result.body.length +
+    result.conditions.reduce((total, text) => total + text.length, 0) +
+    result.encounters.reduce(
+      (total, encounter) =>
+        total +
+        (encounter.title?.length ?? 0) +
+        encounter.description.length +
+        (encounter.conditions?.reduce((sum, text) => sum + text.length, 0) ??
+          0) +
+        encounter.alternativeSolutions.reduce(
+          (sum, solution) =>
+            sum + solution.method.length + solution.description.length,
+          0,
+        ),
+      0,
+    ) +
+    result.secrets.reduce((total, secret) => total + secret.text.length, 0)
+  );
 }
 
 function emptyRetrievalResult(sceneId: string): AdventureRetrievalResult {
@@ -105,49 +172,71 @@ export function retrieveAdventureContext(
   options: RetrieveAdventureContextOptions,
 ): AdventureRetrievalResult {
   const includeGmOnly = options.includeGmOnly ?? false;
-  const maxCharacters = Math.max(
-    0,
-    options.maxCharacters ?? MAX_ADVENTURE_RETRIEVAL_CHARS,
-  );
+  const requestedMax = options.maxCharacters ?? MAX_ADVENTURE_RETRIEVAL_CHARS;
+  const maxCharacters = Number.isNaN(requestedMax)
+    ? 0
+    : Math.min(
+        MAX_ADVENTURE_RETRIEVAL_CHARS,
+        Math.max(0, Math.floor(requestedMax)),
+      );
 
   const section = pkg.sections.find((s) => s.sourceId === options.sceneId);
   if (!section || (section.gmOnly && !includeGmOnly)) {
     return emptyRetrievalResult(options.sceneId);
   }
 
-  const readAloud = normalizeReadAloud(section.readAloud);
-  const scene = pkg.scenes.find((s) => s.sourceId === section.sourceId);
-  const conditions = scene?.conditions ?? [];
-  const encounters = pkg.encounters.filter(
-    (e) => e.sourceId === section.sourceId,
+  const budget: TextBudget = { remaining: maxCharacters, truncated: false };
+  const title = takeWithinBudget(section.title, budget);
+  const readAloud = takeArrayWithinBudget(
+    normalizeReadAloud(section.readAloud),
+    budget,
   );
+  const body = takeWithinBudget(section.body, budget);
+  const scene = pkg.scenes.find((s) => s.sourceId === section.sourceId);
+  const conditions = takeArrayWithinBudget(scene?.conditions ?? [], budget);
+  const encounters = pkg.encounters
+    .filter((e) => e.sourceId === section.sourceId)
+    .map((encounter) => takeEncounterWithinBudget(encounter, budget));
   const secrets = includeGmOnly
-    ? pkg.secrets.filter((s) => s.sourceId === section.sourceId)
+    ? pkg.secrets
+        .filter((s) => s.sourceId === section.sourceId)
+        .map((secret): SecretRecord => ({
+          ...secret,
+          text: takeWithinBudget(secret.text, budget),
+        }))
     : [];
 
-  const rawFormatted = formatSectionContext(
-    section,
-    readAloud,
-    encounters,
-    secrets,
-  );
-  const { text: formatted, truncated } = truncateToLimit(
-    rawFormatted,
+  const titleAndBodyForFormatting = { ...section, title, body };
+  const { text: formatted, truncated: formattedTruncated } = truncateToLimit(
+    formatSectionContext(
+      titleAndBodyForFormatting,
+      readAloud,
+      encounters,
+      secrets,
+    ),
     maxCharacters,
   );
+  const structuredCharacterCount = countStructuredTextCharacters({
+    title,
+    readAloud,
+    body,
+    conditions,
+    encounters,
+    secrets,
+  });
 
   return {
     sceneId: section.sourceId,
     found: true,
     citations: [section.sourceId],
-    title: section.title,
+    title,
     readAloud,
-    body: section.body,
+    body,
     conditions,
     encounters,
     secrets,
     formatted,
-    characterCount: formatted.length,
-    truncated,
+    characterCount: Math.max(formatted.length, structuredCharacterCount),
+    truncated: budget.truncated || formattedTruncated,
   };
 }

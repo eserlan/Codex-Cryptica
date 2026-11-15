@@ -321,8 +321,13 @@ describe("AdventureImportReview", () => {
       name: "AI provider excerpt notice",
     });
     const approveButton = screen.getByTestId("adventure-approve-button");
-    expect(notice.textContent).toContain("strictly local");
-    expect(notice.textContent).toContain("Oracle AI provider");
+    expect(notice.textContent).not.toContain("strictly local");
+    expect(notice.textContent).toContain("on this device");
+    expect(notice.textContent).toContain("opt-in Vault backup or sync");
+    expect(notice.textContent).toContain("selected Oracle AI provider");
+    expect(notice.textContent).toContain(
+      "without claiming complete analysis, resolved ambiguities, or play readiness",
+    );
     expect(
       Boolean(
         notice.compareDocumentPosition(approveButton) &
