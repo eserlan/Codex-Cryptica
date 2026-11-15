@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
+import { seedArtwork } from "@codex/adventure-artwork-engine/seed";
 import {
   selectPresentNpcPortrait,
   type ArtworkNpcSession,
@@ -405,6 +406,100 @@ describe("selectPresentNpcPortrait", () => {
       const result = select("Mira, a grey-haired herb-wife");
       expect(result?.description).toBe("a grey-haired herb-wife");
       expect(result?.description).not.toContain("smuggler");
+    });
+  });
+
+  describe("role vs setting priority on seedArtwork", () => {
+    it("selects a noble portrait over innkeeper when in a tavern", () => {
+      const nobleInTavern: ArtworkNpcSession = {
+        vaultId: "v1",
+        currentPlaceId: "place-tavern",
+        places: [{ id: "place-tavern", name: "The Rusty Anchor Tavern" }],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c-noble",
+              text: "Lord Cassian, a human noble in the tavern.",
+              source: "provisional",
+              placeId: "place-tavern",
+            },
+          ],
+        },
+      };
+      const portrait = selectPresentNpcPortrait(
+        nobleInTavern,
+        "v1",
+        {},
+        true,
+        "fantasy",
+        seedArtwork,
+      );
+      expect(portrait?.kind).toBe("catalogue");
+      if (portrait?.kind === "catalogue") {
+        expect(portrait.asset.id).not.toBe("npc-fantasy-merchant-02");
+        expect(portrait.asset.primaryCues).toContain("noble");
+      }
+    });
+
+    it("selects a cleric portrait over rural worker when a priest is in a village", () => {
+      const priestInVillage: ArtworkNpcSession = {
+        vaultId: "v1",
+        currentPlaceId: "place-village",
+        places: [{ id: "place-village", name: "Oakhaven Village" }],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c-priest",
+              text: "Sister Mara, a human priest in the rural village.",
+              source: "provisional",
+              placeId: "place-village",
+            },
+          ],
+        },
+      };
+      const portrait = selectPresentNpcPortrait(
+        priestInVillage,
+        "v1",
+        {},
+        true,
+        "fantasy",
+        seedArtwork,
+      );
+      expect(portrait?.kind).toBe("catalogue");
+      if (portrait?.kind === "catalogue") {
+        expect(portrait.asset.id).not.toBe("npc-fantasy-worker-02");
+        expect(portrait.asset.primaryCues).toContain("cleric");
+      }
+    });
+
+    it("selects the bard portrait when a minstrel is in a city", () => {
+      const bardInCity: ArtworkNpcSession = {
+        vaultId: "v1",
+        currentPlaceId: "place-city",
+        places: [{ id: "place-city", name: "Capital City" }],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c-bard",
+              text: "Julian, a human minstrel performing in the city.",
+              source: "provisional",
+              placeId: "place-city",
+            },
+          ],
+        },
+      };
+      const portrait = selectPresentNpcPortrait(
+        bardInCity,
+        "v1",
+        {},
+        true,
+        "fantasy",
+        seedArtwork,
+      );
+      expect(portrait?.kind).toBe("catalogue");
+      if (portrait?.kind === "catalogue") {
+        expect(portrait.asset.id).toBe("npc-fantasy-bard-01");
+      }
     });
   });
 });

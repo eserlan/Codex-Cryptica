@@ -1,4 +1,7 @@
 import {
+  CUE_SYNONYMS,
+  isNpcPersonCue,
+  isSettingCue,
   normalizeArtworkCues,
   type ArtworkCues,
 } from "@codex/adventure-artwork-engine";
@@ -60,6 +63,33 @@ export interface DescribeVisiblePersonContext {
   facts?: readonly string[];
 }
 
+const multiWordPhrasePattern = new RegExp(
+  `\\b(?:${Object.keys(CUE_SYNONYMS)
+    .filter((key) => /[\s-]/.test(key))
+    .sort((a, b) => b.length - a.length)
+    .map((key) => key.replace(/[\s-]+/g, "[\\s-]+"))
+    .join("|")})\\b`,
+  "g",
+);
+
+function extractPersonCueTokens(
+  sources: readonly (string | undefined)[],
+): string[] {
+  const tokens: string[] = [];
+  for (const source of sources) {
+    if (!source) continue;
+    const lower = source.toLowerCase();
+    const withoutPhrases = lower.replace(multiWordPhrasePattern, (match) => {
+      const normalized = match.replace(/[\s-]+/g, " ");
+      tokens.push(CUE_SYNONYMS[match] ?? CUE_SYNONYMS[normalized] ?? match);
+      return " ";
+    });
+    const words = withoutPhrases.match(/[a-z]+/g);
+    if (words) tokens.push(...words);
+  }
+  return tokens;
+}
+
 /** Accept only an explicitly player-visible person projection, never a full session. */
 export function describeVisiblePerson(
   person:
@@ -76,7 +106,7 @@ export function describeVisiblePerson(
   | (ArtworkCues & { subject: { kind: "entity" | "person"; id: string } })
   | null {
   if (!person?.id) return null;
-  const sources = [
+  const tokens = extractPersonCueTokens([
     person.name,
     ...(person.aliases ?? []),
     context?.entity?.title,
@@ -85,19 +115,26 @@ export function describeVisiblePerson(
     ...(context?.entity?.labels ?? []),
     ...(context?.entity?.aliases ?? []),
     ...(context?.facts ?? []),
-  ];
-  const words: string[] = [];
-  for (const source of sources) {
-    if (!source) continue;
-    const matches = source.toLowerCase().match(/[a-z]+/g);
-    if (matches) words.push(...matches);
-  }
+  ]);
+  const primaryCues = normalizeArtworkCues(
+    tokens.filter((token) => {
+      const lower = token.trim().toLowerCase();
+      return isNpcPersonCue(CUE_SYNONYMS[lower] ?? lower);
+    }),
+  );
+  const settingCues = normalizeArtworkCues(
+    tokens.filter((token) => {
+      const lower = token.trim().toLowerCase();
+      return isSettingCue(CUE_SYNONYMS[lower] ?? lower);
+    }),
+  );
   return {
     subject: person.sourceRecordId
       ? { kind: "entity", id: person.sourceRecordId }
       : { kind: "person", id: person.id },
     type: "npc",
     genre: artworkGenreForTheme(theme),
-    primaryCues: normalizeArtworkCues(words),
+    primaryCues,
+    ...(settingCues.length > 0 ? { settingCues } : {}),
   };
 }
