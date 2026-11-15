@@ -73,9 +73,10 @@ automatically avoids colliding with job numbers/branches from the main checkout.
 In Antigravity, `factory/bin/agy_workflow.py` orchestrates the entire pipeline
 via the `run_workflow` tool. It runs `factory/bin/job`, `route`, and `gate`
 deterministically, keeps the `builder` agent's conversation context warm across
-rounds, runs reviewers in `parallel()`, maps models (`opus` → `"pro"`,
-`sonnet` → `"inherit"`, `haiku` → `"flash"`), and keeps your main conversation
-context clean.
+rounds (`--conversation`), runs reviewers in `parallel()`, maps models
+(`opus` → `"gemini-4-hydrogen-high"`, `sonnet` → `"gemini-4-hydrogen-medium"`,
+`haiku` → `"gemini-4-hydrogen-low"`), and keeps your main conversation context
+clean.
 
 ### `/factory run`
 Call `run_workflow`:

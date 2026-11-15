@@ -12,18 +12,22 @@ Reuses `factory/bin/{job,route,gate}`, `factory/checks.sh`, `factory/config.json
 and the canonical agent prompts in `.claude/agents/*.md`.
 """
 
+import asyncio
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
 TERMINAL_OR_WAITING = {"merged", "rejected", "needs-info", "needs-human"}
+SUBAGENT_TIERS = {"inherit", "pro", "flash", "flash_lite"}
+AGY_CLI_BIN = os.environ.get("AGY_CLI_BIN") or shutil.which("agy") or "agy"
 
 MODEL_MAP = {
-    "opus": "pro",
-    "sonnet": "inherit",
-    "haiku": "flash",
+    "opus": "gemini-4-hydrogen-high",
+    "sonnet": "gemini-4-hydrogen-medium",
+    "haiku": "gemini-4-hydrogen-low",
     "pro": "pro",
     "inherit": "inherit",
     "flash": "flash",
@@ -122,7 +126,10 @@ def load_role_instructions(role_name):
 def map_model(model_name, override=None):
     if override:
         return MODEL_MAP.get(override, override)
-    return MODEL_MAP.get(model_name or "sonnet", "inherit")
+    configured = (CONFIG.get("agy_models") or {}).get(model_name or "sonnet")
+    if configured:
+        return configured
+    return MODEL_MAP.get(model_name or "sonnet", "gemini-4-hydrogen-medium")
 
 
 def job_ports(job_id):
@@ -213,18 +220,75 @@ def build_round_instruction(job):
     return f"{prefix} Implement spec.md, run factory/checks.sh, commit, push, open the draft PR, and write build.md."
 
 
+async def run_agy_cli_turn(prompt, role_label, agy_model, conversation_id=None):
+    cmd = [
+        AGY_CLI_BIN,
+        f"--model={agy_model}",
+        "--dangerously-skip-permissions",
+        "--output-format",
+        "json",
+    ]
+    if conversation_id:
+        cmd.append(f"--conversation={conversation_id}")
+    cmd.extend(["-p", prompt])
+    proc = await asyncio.create_subprocess_exec(
+        *cmd,
+        cwd=str(REPO),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout_b, stderr_b = await proc.communicate()
+    stdout = stdout_b.decode("utf-8", errors="replace").strip()
+    stderr = stderr_b.decode("utf-8", errors="replace").strip()
+    if proc.returncode != 0:
+        raise RuntimeError(f"agy ({role_label}, {agy_model}) failed (exit {proc.returncode}): {stderr or stdout}")
+    last_json_line = next((ln for ln in reversed(stdout.splitlines()) if ln.strip().startswith("{")), "{}")
+    data = json.loads(last_json_line)
+    conv_id = data.get("conversation_id") or conversation_id or "unknown"
+    resp = (data.get("response") or "").strip()
+    first = resp.splitlines()[0].strip() if resp else ""
+    wf_log(f"[agent:{agy_model}] {role_label}: done ({conv_id}): {first!r}")
+    return resp, conv_id
+
+
+class CliBuilderSession:
+    def __init__(self, standing_prompt, role_label, agy_model):
+        self.standing_prompt = standing_prompt
+        self.role_label = role_label
+        self.agy_model = agy_model
+        self.conversation_id = None
+
+    async def __call__(self, turn_prompt):
+        if self.conversation_id is None:
+            full_prompt = f"{self.standing_prompt}\n\n{turn_prompt}"
+        else:
+            full_prompt = turn_prompt
+        resp, conv_id = await run_agy_cli_turn(
+            full_prompt,
+            self.role_label,
+            self.agy_model,
+            conversation_id=self.conversation_id,
+        )
+        self.conversation_id = conv_id
+        return resp
+
+
 async def run_single_turn_agent(role_name, job, extra_line="", claude_model="opus", model_override=None):
     agy_model = map_model(claude_model, override=model_override)
     hdr = job_header(job, role_name, agy_model)
     instructions = load_role_instructions(role_name)
     lead = f"{hdr} {extra_line}".strip()
     prompt = f"{lead}\n\n{instructions}"
-    return await agent(  # noqa: F821
-        prompt=prompt,
-        schema={"type": "string"},
-        role=f"{job['id']}: {role_name}",
-        model=agy_model,
-    )
+    role_label = f"{job['id']}: {role_name}"
+    if agy_model in SUBAGENT_TIERS and "agent" in globals():
+        return await agent(  # noqa: F821
+            prompt=prompt,
+            schema={"type": "string"},
+            role=role_label,
+            model=agy_model,
+        )
+    resp, _ = await run_agy_cli_turn(prompt, role_label, agy_model)
+    return resp
 
 
 async def drive_job(job_id, model_override=None):
@@ -271,12 +335,19 @@ async def drive_job(job_id, model_override=None):
                 round_task = build_round_instruction(job)
                 if builder_instance is None:
                     standing = f"{hdr}\n\n{load_role_instructions('builder')}"
-                    builder_instance = agent(  # noqa: F821
-                        prompt=standing,
-                        schema={"type": "string"},
-                        role=f"builder-{job_id}",
-                        model=agy_model,
-                    )
+                    if agy_model in SUBAGENT_TIERS and "agent" in globals():
+                        builder_instance = agent(  # noqa: F821
+                            prompt=standing,
+                            schema={"type": "string"},
+                            role=f"builder-{job_id}",
+                            model=agy_model,
+                        )
+                    else:
+                        builder_instance = CliBuilderSession(
+                            standing_prompt=standing,
+                            role_label=f"builder-{job_id}",
+                            agy_model=agy_model,
+                        )
                 await builder_instance(f"{hdr} {round_task}")
                 status_line = first_line(JOBS / job_id / "build.md") or ""
                 if status_line == "STATUS: BLOCKED":
