@@ -20,6 +20,7 @@ describe("adventure scene illustration", () => {
     const caption = screen.getByTestId("adventure-scene-artwork-caption");
     expect(caption.className).toContain("text-theme-muted");
     expect(caption.className).toContain("truncate");
+    expect(caption.className).toContain("text-helper");
     expect(caption.className).not.toContain("text-theme-text");
     expect(screen.getByText(/AI illustration/).textContent).toContain(
       "Codex Cryptica",
