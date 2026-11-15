@@ -13,6 +13,7 @@ and the canonical agent prompts in `.claude/agents/*.md`.
 """
 
 import asyncio
+import contextlib
 import json
 import os
 import re
@@ -57,6 +58,8 @@ ROUTE_BIN = str(BIN / "route")
 GATE_BIN = str(BIN / "gate")
 AGENTS_DIR = REPO / ".claude" / "agents"
 CONFIG = json.loads((FACTORY / "config.json").read_text())
+AGY_TURN_TIMEOUT_MINUTES = int(CONFIG.get("agy_turn_timeout_minutes", 60))
+AGY_TURN_GRACE_SECONDS = 60
 
 
 def wf_log(msg):
@@ -220,24 +223,89 @@ def build_round_instruction(job):
     return f"{prefix} Implement spec.md, run factory/checks.sh, commit, push, open the draft PR, and write build.md."
 
 
-async def run_agy_cli_turn(prompt, role_label, agy_model, conversation_id=None):
+def git_common_dir():
+    out = run_cmd(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"]).stdout.strip()
+    return Path(out)
+
+
+def agy_sandbox(cmd, job):
+    """Wrap an AGY CLI command in bubblewrap so the agent can write only to its own job.
+
+    `--dangerously-skip-permissions` approves every tool call, and the CLI's own `--sandbox`
+    does not stop writes outside the workspace, so the filesystem is mounted read-only except
+    for the job's worktree and folder, the Git directory its commits need, the AGY state
+    directory and the bun install cache. Git hooks and config stay read-only so a job cannot
+    plant code that later runs in the main checkout. Returns the wrapped command and its cwd.
+    """
+    bwrap = shutil.which("bwrap")
+    if not bwrap:
+        raise RuntimeError("bubblewrap (bwrap) is required to run AGY CLI agents; install it first")
+    home = Path.home()
+    job_dir = JOBS / job["id"]
+    job_dir.mkdir(parents=True, exist_ok=True)
+    worktree = Path(job["worktree"]) if job.get("worktree") else None
+    git_dir = git_common_dir()
+    writable = [
+        git_dir,
+        job_dir,
+        worktree,
+        home / ".gemini",
+        home / ".cache" / ".bun" / "install" / "cache",
+        home / ".bun" / "install" / "cache",
+    ]
+    read_only = [git_dir / "hooks", git_dir / "config"]
+    wrapped = [
+        bwrap, "--die-with-parent",
+        "--ro-bind", "/", "/",
+        "--dev", "/dev",
+        "--proc", "/proc",
+        "--tmpfs", "/tmp",
+    ]
+    for path in writable:
+        if path is not None and path.exists():
+            wrapped += ["--bind", str(path), str(path)]
+    for path in read_only:
+        if path.exists():
+            wrapped += ["--ro-bind", str(path), str(path)]
+    cwd = worktree if worktree is not None and worktree.exists() else job_dir
+    wrapped += ["--chdir", str(cwd), *cmd]
+    return wrapped, cwd
+
+
+async def run_agy_cli_turn(prompt, role_label, agy_model, job, conversation_id=None):
     cmd = [
         AGY_CLI_BIN,
         f"--model={agy_model}",
         "--dangerously-skip-permissions",
+        f"--print-timeout={AGY_TURN_TIMEOUT_MINUTES}m0s",
         "--output-format",
         "json",
     ]
     if conversation_id:
         cmd.append(f"--conversation={conversation_id}")
     cmd.extend(["-p", prompt])
+    wrapped, cwd = agy_sandbox(cmd, job)
     proc = await asyncio.create_subprocess_exec(
-        *cmd,
-        cwd=str(REPO),
+        *wrapped,
+        cwd=str(cwd),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
-    stdout_b, stderr_b = await proc.communicate()
+    try:
+        # A little grace past the CLI's own limit before the turn is killed.
+        stdout_b, stderr_b = await asyncio.wait_for(
+            proc.communicate(), timeout=AGY_TURN_TIMEOUT_MINUTES * 60 + AGY_TURN_GRACE_SECONDS
+        )
+    except (asyncio.TimeoutError, asyncio.CancelledError) as error:
+        with contextlib.suppress(ProcessLookupError):
+            proc.kill()
+        with contextlib.suppress(Exception):
+            await proc.wait()
+        if isinstance(error, asyncio.TimeoutError):
+            raise RuntimeError(
+                f"agy ({role_label}, {agy_model}) timed out after {AGY_TURN_TIMEOUT_MINUTES} minutes"
+            ) from error
+        raise
     stdout = stdout_b.decode("utf-8", errors="replace").strip()
     stderr = stderr_b.decode("utf-8", errors="replace").strip()
     if proc.returncode != 0:
@@ -252,10 +320,11 @@ async def run_agy_cli_turn(prompt, role_label, agy_model, conversation_id=None):
 
 
 class CliBuilderSession:
-    def __init__(self, standing_prompt, role_label, agy_model):
+    def __init__(self, standing_prompt, role_label, agy_model, job):
         self.standing_prompt = standing_prompt
         self.role_label = role_label
         self.agy_model = agy_model
+        self.job = job
         self.conversation_id = None
 
     async def __call__(self, turn_prompt):
@@ -267,6 +336,7 @@ class CliBuilderSession:
             full_prompt,
             self.role_label,
             self.agy_model,
+            self.job,
             conversation_id=self.conversation_id,
         )
         self.conversation_id = conv_id
@@ -287,7 +357,7 @@ async def run_single_turn_agent(role_name, job, extra_line="", claude_model="opu
             role=role_label,
             model=agy_model,
         )
-    resp, _ = await run_agy_cli_turn(prompt, role_label, agy_model)
+    resp, _ = await run_agy_cli_turn(prompt, role_label, agy_model, job)
     return resp
 
 
@@ -347,6 +417,7 @@ async def drive_job(job_id, model_override=None):
                             standing_prompt=standing,
                             role_label=f"builder-{job_id}",
                             agy_model=agy_model,
+                            job=job,
                         )
                 await builder_instance(f"{hdr} {round_task}")
                 status_line = first_line(JOBS / job_id / "build.md") or ""

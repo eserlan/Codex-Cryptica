@@ -78,6 +78,13 @@ rounds (`--conversation`), runs reviewers in `parallel()`, maps models
 `haiku` → `"gemini-4-hydrogen-low"`), and keeps your main conversation context
 clean.
 
+Named-model agents run through the `agy` CLI inside bubblewrap (`bwrap` must be
+installed). The filesystem is read-only except for the job's worktree and job
+folder, the Git directory, `~/.gemini` and the bun install cache. Git hooks and
+config stay read-only, so an issue's text cannot steer an agent into changing the
+main checkout. Each CLI turn is killed after `agy_turn_timeout_minutes` from
+`factory/config.json` (default 60).
+
 ### `/factory run`
 Call `run_workflow`:
 ```json
