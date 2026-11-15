@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parseCatalogue } from "../src/catalogue";
+import { isArtworkCue, normalizeArtworkCues } from "../src/cues";
 
 const variant = {
   url: "https://assets.codexcryptica.com/adventure-artwork/forest.webp",
@@ -103,4 +104,30 @@ it("accepts fantasy race and class cues for npc assets", () => {
     },
   ]);
   expect(parsed[0]?.primaryCues).toEqual(["elf", "ranger"]);
+});
+
+it("recognizes all 12 added NPC archetype and role cues", () => {
+  const addedCues = [
+    "elder",
+    "witch",
+    "cultist",
+    "bandit",
+    "official",
+    "urchin",
+    "goblin",
+    "necromancer",
+    "innkeeper",
+    "healer",
+    "smith",
+    "informant",
+  ];
+  for (const cue of addedCues) {
+    expect(isArtworkCue(cue)).toBe(true);
+  }
+  expect(isArtworkCue("priest")).toBe(false);
+  expect(normalizeArtworkCues(["priest", "reeve", "street child"])).toEqual([
+    "cleric",
+    "elder",
+    "urchin",
+  ]);
 });

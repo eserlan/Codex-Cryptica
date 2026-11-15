@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { matchArtwork } from "../src/matching";
 import type { ArtworkAsset } from "../src/catalogue";
+import { seedArtwork } from "../src/catalogue/seed";
 const asset = (
   id: string,
   overrides: Partial<ArtworkAsset> = {},
@@ -93,7 +94,7 @@ it("prefers exact race and class combo over partial race or class match", () => 
       genre: "fantasy",
       primaryCues: ["dwarf", "wizard"],
     })?.id,
-  ).toBe("npc-dwarf-cleric");
+  ).toBe("npc-elf-wizard");
 });
 
 it("prefers generic worker over specialized race/class worker when only worker is requested", () => {
@@ -118,4 +119,182 @@ it("prefers generic worker over specialized race/class worker when only worker i
       primaryCues: ["worker"],
     })?.id,
   ).toBe("npc-fantasy-worker-02");
+});
+
+describe("seedArtwork NPC role matching and collision avoidance", () => {
+  it("matches direct role queries to the distinguished fantasy portraits", () => {
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["cleric"],
+      })?.id,
+    ).toBe("npc-fantasy-cleric-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["healer"],
+      })?.id,
+    ).toBe("npc-fantasy-cleric-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["innkeeper"],
+      })?.id,
+    ).toBe("npc-fantasy-merchant-02");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["noble"],
+      })?.id,
+    ).toBe("npc-fantasy-noble-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["rogue"],
+      })?.id,
+    ).toBe("npc-fantasy-rogue-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["bard"],
+      })?.id,
+    ).toBe("npc-fantasy-bard-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["smith"],
+      })?.id,
+    ).toBe("npc-fantasy-worker-01");
+  });
+
+  it("avoids merchant/noble and bard/rogue collisions", () => {
+    const merchantMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["merchant"],
+    });
+    expect(merchantMatch?.id).toBe("npc-fantasy-merchant-01");
+    expect(merchantMatch?.id).not.toBe("npc-fantasy-noble-01");
+
+    const bardMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["bard"],
+    });
+    expect(bardMatch?.id).toBe("npc-fantasy-bard-01");
+    expect(bardMatch?.id).not.toBe("npc-fantasy-rogue-01");
+
+    const rogueMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["rogue"],
+    });
+    expect(rogueMatch?.id).toBe("npc-fantasy-rogue-01");
+    expect(rogueMatch?.id).not.toBe("npc-fantasy-bard-01");
+  });
+
+  it("selects planned archetype assets by role intent and avoids witch/wizard and cultist/cleric collisions", () => {
+    const archetypes = [
+      "elder",
+      "witch",
+      "cultist",
+      "bandit",
+      "official",
+      "urchin",
+      "goblin",
+      "necromancer",
+    ] as const;
+    const archetypeAssets = archetypes.map((role) =>
+      asset(`npc-fantasy-${role}-01`, {
+        type: "npc",
+        primaryCues: [role],
+        settingCues: [],
+        moodCues: [],
+      }),
+    );
+    const combinedPool = [...seedArtwork, ...archetypeAssets];
+    for (const role of archetypes) {
+      expect(
+        matchArtwork(combinedPool, {
+          type: "npc",
+          genre: "fantasy",
+          primaryCues: [role],
+        })?.id,
+      ).toBe(`npc-fantasy-${role}-01`);
+    }
+
+    const witchOnSeed = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["witch"],
+    });
+    expect(witchOnSeed).toBeNull();
+
+    const cultistOnSeed = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["cultist"],
+    });
+    expect(cultistOnSeed).toBeNull();
+  });
+
+  it("prioritizes explicit NPC role matches over ancestry and setting matches", () => {
+    const noble01 = seedArtwork.find((a) => a.id === "npc-fantasy-noble-01")!;
+    const merchant02 = seedArtwork.find(
+      (a) => a.id === "npc-fantasy-merchant-02",
+    )!;
+    const cleric01 = seedArtwork.find((a) => a.id === "npc-fantasy-cleric-01")!;
+    const worker02 = seedArtwork.find((a) => a.id === "npc-fantasy-worker-02")!;
+
+    expect(
+      matchArtwork([merchant02, noble01], {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["human", "noble"],
+        settingCues: ["tavern"],
+      })?.id,
+    ).toBe("npc-fantasy-noble-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["human", "noble"],
+        settingCues: ["tavern"],
+      })?.id,
+    ).not.toBe("npc-fantasy-merchant-02");
+
+    expect(
+      matchArtwork([worker02, cleric01], {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["human", "cleric"],
+        settingCues: ["village", "rural"],
+      })?.id,
+    ).toBe("npc-fantasy-cleric-01");
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["human", "cleric"],
+        settingCues: ["village", "rural"],
+      })?.id,
+    ).not.toBe("npc-fantasy-worker-02");
+
+    const bardInCity = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["human", "bard"],
+      settingCues: ["city"],
+    });
+    expect(bardInCity?.id).toBe("npc-fantasy-bard-01");
+    expect(bardInCity?.id).not.toBe("npc-fantasy-guard-01");
+    expect(bardInCity?.id).not.toBe("npc-fantasy-scholar-01");
+  });
 });
