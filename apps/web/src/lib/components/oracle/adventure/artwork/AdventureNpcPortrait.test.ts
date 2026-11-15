@@ -50,6 +50,7 @@ describe("adventure NPC portrait", () => {
     );
     expect(attributions[0].className).toContain("text-theme-muted");
     expect(attributions[0].className).toContain("truncate");
+    expect(attributions[0].className).toContain("text-helper");
   });
 
   it("omits the description element when there is no description", () => {
