@@ -37,6 +37,9 @@ const SCENE_TITLE_RE = /^(?:Scene\s+\d+:|Optional Branch:)/i;
 const OPTIONAL_BRANCH_RE = /^Optional Branch:/i;
 const ENDING_TITLE_RE = /^Ending:\s*/i;
 
+/** Maximum source size accepted for a single Markdown adventure import. */
+export const MAX_ADVENTURE_MARKDOWN_BYTES = 2 * 1024 * 1024;
+
 export interface RawSection {
   level: number;
   title: string;
@@ -109,6 +112,18 @@ function hasBinaryControlChars(text: string): boolean {
   return false;
 }
 
+function exceedsMaxUtf8Bytes(text: string): boolean {
+  if (text.length > MAX_ADVENTURE_MARKDOWN_BYTES) return true;
+  return new TextEncoder().encode(text).byteLength > MAX_ADVENTURE_MARKDOWN_BYTES;
+}
+
+function inputTooLargeError(): AdventureImportError {
+  return {
+    code: "INPUT_TOO_LARGE",
+    message: "Adventure Markdown files must be 2 MiB or smaller.",
+  };
+}
+
 export async function computeSha256Hex(bytes: Uint8Array): Promise<string> {
   const copy = new Uint8Array(bytes);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", copy);
@@ -122,6 +137,9 @@ function decodeStringInput(
 ):
   | { ok: true; text: string; bytes: Uint8Array }
   | { ok: false; error: AdventureImportError } {
+  if (exceedsMaxUtf8Bytes(rawContent)) {
+    return { ok: false, error: inputTooLargeError() };
+  }
   if (hasBinaryControlChars(rawContent)) {
     return {
       ok: false,
@@ -153,6 +171,9 @@ function decodeBinaryInput(
 ):
   | { ok: true; text: string; bytes: Uint8Array }
   | { ok: false; error: AdventureImportError } {
+  if (rawContent.byteLength > MAX_ADVENTURE_MARKDOWN_BYTES) {
+    return { ok: false, error: inputTooLargeError() };
+  }
   if (rawContent.byteLength === 0) {
     return {
       ok: false,
@@ -434,40 +455,6 @@ function scanSectionLines(lines: string[]): SectionScanContent {
   return content;
 }
 
-function initialSectionProvenance(
-  raw: RawSection,
-  explicitSourceId: string | undefined,
-): Provenance {
-  if (raw.forceUnresolvedProvenance) return "unresolved";
-  return explicitSourceId ? "source-grounded" : "suggested";
-}
-
-function disambiguateSourceId(
-  baseId: string,
-  raw: RawSection,
-  acc: ParseAccumulator,
-): { sourceId: string; duplicated: boolean } {
-  if (!acc.allocatedSourceIds.has(baseId)) {
-    return { sourceId: baseId, duplicated: false };
-  }
-  let suffix = 2;
-  while (
-    acc.allocatedSourceIds.has(`${baseId}-${suffix}`) ||
-    acc.reservedSourceIds.has(`${baseId}-${suffix}`)
-  ) {
-    suffix++;
-  }
-  const sourceId = `${baseId}-${suffix}`;
-  acc.ambiguities.push({
-    id: `amb-duplicate-source-id-${raw.lineNumber}`,
-    code: "DUPLICATE_SOURCE_ID",
-    message: `Duplicate source-id "${baseId}" at line ${raw.lineNumber}; disambiguated to "${sourceId}".`,
-    sourceId,
-    provenance: "unresolved",
-  });
-  return { sourceId, duplicated: true };
-}
-
 function resolveSectionIdentity(
   raw: RawSection,
   explicitSourceId: string | undefined,
@@ -475,21 +462,22 @@ function resolveSectionIdentity(
   emitMissingSourceIdAmbiguity: boolean,
 ): { sourceId: string; provenance: Provenance } {
   const baseId = explicitSourceId ?? toKebabCase(raw.title);
-  let provenance = initialSectionProvenance(raw, explicitSourceId);
+  let sourceId = baseId;
+  let provenance: Provenance = raw.forceUnresolvedProvenance
+    ? "unresolved"
+    : explicitSourceId
+      ? "source-grounded"
+      : "suggested";
 
   if (!explicitSourceId && emitMissingSourceIdAmbiguity) {
     acc.ambiguities.push({
       id: `amb-missing-source-id-${raw.lineNumber}`,
       code: "MISSING_SOURCE_ID",
       message: `Section "${raw.title}" at line ${raw.lineNumber} is missing a <!-- source-id: ... --> anchor comment.`,
-      sourceId: baseId,
+      sourceId,
       provenance: "unresolved",
     });
   }
-
-  const disambiguated = disambiguateSourceId(baseId, raw, acc);
-  const sourceId = disambiguated.sourceId;
-  if (disambiguated.duplicated) provenance = "unresolved";
 
   const titleKey = raw.title.toLowerCase();
   const existingWithTitle = acc.seenTitles.get(titleKey);
@@ -506,6 +494,24 @@ function resolveSectionIdentity(
     acc.seenTitles.set(titleKey, sourceId);
   }
 
+  if (acc.allocatedSourceIds.has(baseId)) {
+    let suffix = 2;
+    while (
+      acc.allocatedSourceIds.has(`${baseId}-${suffix}`) ||
+      acc.reservedSourceIds.has(`${baseId}-${suffix}`)
+    ) {
+      suffix++;
+    }
+    sourceId = `${baseId}-${suffix}`;
+    provenance = "unresolved";
+    acc.ambiguities.push({
+      id: `amb-duplicate-source-id-${raw.lineNumber}`,
+      code: "DUPLICATE_SOURCE_ID",
+      message: `Duplicate source-id "${baseId}" at line ${raw.lineNumber}; disambiguated to "${sourceId}".`,
+      sourceId,
+      provenance: "unresolved",
+    });
+  }
   acc.allocatedSourceIds.add(sourceId);
   return { sourceId, provenance };
 }

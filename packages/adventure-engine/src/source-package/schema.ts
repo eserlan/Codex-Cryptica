@@ -163,6 +163,7 @@ export type AdventureSourcePackage = z.infer<
 
 export type AdventureImportErrorCode =
   | "EMPTY_INPUT"
+  | "INPUT_TOO_LARGE"
   | "INVALID_OPTIONS"
   | "BINARY_CONTENT"
   | "INVALID_UTF8"

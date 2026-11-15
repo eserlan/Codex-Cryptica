@@ -133,7 +133,27 @@ describe("AdventureEntryChoices", () => {
     expect(screen.getByTestId("adventure-import-loading")).toBeTruthy();
     expect(
       (screen.getByTestId("adventure-import") as HTMLButtonElement).disabled,
-    ).toBe(true);
+    ).toBe(false);
+  });
+
+  it("disables the import entry when no owner Vault is ready", async () => {
+    const onImportFile = vi.fn();
+    render(AdventureEntryChoices, {
+      props: {
+        onDiscover: vi.fn(),
+        onOwnPremise: vi.fn(),
+        onImportFile,
+        canImport: false,
+      },
+    });
+
+    const importButton = screen.getByTestId(
+      "adventure-import",
+    ) as HTMLButtonElement;
+    expect(importButton.disabled).toBe(true);
+    await fireEvent.click(importButton);
+    expect(onImportFile).not.toHaveBeenCalled();
+    expect(screen.getByText(/ready owner Vault/)).toBeTruthy();
   });
 
   it("uses touch-sized cards in a single-column mobile layout", () => {

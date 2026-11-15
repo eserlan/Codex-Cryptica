@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   AdventureSourcePackageSchema,
+  MAX_ADVENTURE_MARKDOWN_BYTES,
   MAX_ADVENTURE_RETRIEVAL_CHARS,
   approveAdventurePackage,
   getAdventurePackagePath,
@@ -123,6 +124,36 @@ function getRetrievalTextCharacterCount(
 }
 
 describe("AdventureSourcePackage reference one-shot and variants", () => {
+  it("rejects invalid UTF-8 byte input instead of replacing malformed bytes", async () => {
+    const bytes = new Uint8Array([0x23, 0x20, 0xff, 0x0a]);
+    const result = await parseAdventureMarkdown(bytes, {
+      fileName: "invalid-utf8.md",
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_UTF8" },
+    });
+  });
+
+  it("rejects Markdown larger than the shared import byte limit at the parser boundary", async () => {
+    const oversizedText = "x".repeat(MAX_ADVENTURE_MARKDOWN_BYTES + 1);
+    const oversizedBytes = new Uint8Array(MAX_ADVENTURE_MARKDOWN_BYTES + 1);
+
+    await expect(
+      parseAdventureMarkdown(oversizedText, { fileName: "large.md" }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INPUT_TOO_LARGE" },
+    });
+    await expect(
+      parseAdventureMarkdown(oversizedBytes, { fileName: "large.md" }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INPUT_TOO_LARGE" },
+    });
+  });
+
   it("AC1: matches the reference one-shot answer key with source-grounded provenance and zero ambiguities", async () => {
     const result = await parseAdventureMarkdown(adventureMd, {
       fileName: "adventure.md",

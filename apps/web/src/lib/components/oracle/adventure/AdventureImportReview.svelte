@@ -139,7 +139,7 @@
     <select
       {id}
       aria-label={ariaLabel}
-      class="min-h-9 max-w-full rounded-md border border-theme-border bg-theme-surface px-2.5 py-1 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
+      class="min-h-9 max-w-full rounded-md border border-theme-text bg-theme-surface px-2.5 py-1 text-sm text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
       {value}
       disabled={isLocked}
       onchange={(event) => onSelect(event.currentTarget.value)}
@@ -555,11 +555,13 @@
           Vault storage and AI excerpts
         </p>
         <p class="leading-relaxed text-theme-text">
-          Your adventure file and approved package are stored in your Vault on
-          this device (and included only if you enable opt-in Vault backup or
-          sync). During play, bounded relevant excerpts (such as active scene
-          text, read-aloud passages, and active NPC notes) may be sent to your
-          selected Oracle AI provider.
+          Your original Markdown or PDF file stays on this device and is not
+          copied into the Vault. Only its approved package is saved there.
+          Imported packages are not currently included in Codex Cryptica Cloud
+          Backup, even when you opt in to include adventure sessions. During
+          play, bounded relevant excerpts (such as active scene text, read-aloud
+          passages, and active NPC notes) may be sent to your selected Oracle AI
+          provider.
         </p>
         <p
           class="leading-relaxed text-theme-text"

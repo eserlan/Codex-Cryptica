@@ -25,6 +25,7 @@
   import AdventureRumourConflict from "./AdventureRumourConflict.svelte";
   import {
     parseAdventureMarkdown,
+    MAX_ADVENTURE_MARKDOWN_BYTES,
     type AdventureSourcePackage,
     type ScenarioItem,
   } from "@codex/adventure-engine";
@@ -82,6 +83,9 @@
   const canDiscover = $derived(
     isVaultReadyForGenerators(vault) && !vault.isGuest,
   );
+  const canImport = $derived(
+    isVaultReadyForGenerators(vault) && !vault.isGuest,
+  );
   // The typed world-entry draft lives here so view transitions cannot erase it.
   let worldSetup = $state(emptyWorldEntrySetup("default"));
   let startApproach = $state<
@@ -93,11 +97,13 @@
   const startInFlight = $derived(oracle.adventure.starting || worldStartBusy);
   let worldStartError = $state<string | null>(null);
   let importDraft = $state<AdventureSourcePackage | null>(null);
+  let importDraftVaultId: string | null = null;
   let importError = $state<string | null>(null);
   let importInFlight = $state(false);
   let importApproving = $state(false);
   let importApproveError = $state<string | null>(null);
   let previousVaultId: string | null = null;
+  let importRequestToken = 0;
   let previouslyPrefilledScenario = $state<string | null>(null);
   let archivingForRumour = $state(false);
   let sessionConflictError = $state<string | null>(null);
@@ -133,9 +139,12 @@
       worldStartBusy = false;
       worldStartError = null;
       importDraft = null;
+      importDraftVaultId = null;
       importError = null;
+      importInFlight = false;
       importApproving = false;
       importApproveError = null;
+      importRequestToken += 1;
       worldLaunchToken += 1;
     }
     previousVaultId = currentVaultId;
@@ -150,68 +159,117 @@
     return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
   }
 
+  function activeImportVaultId(): string {
+    return oracle.vault.activeVaultId ?? "default";
+  }
+
+  function isCurrentImport(requestToken: number, sourceVaultId: string) {
+    return (
+      requestToken === importRequestToken &&
+      activeImportVaultId() === sourceVaultId &&
+      !vault.isGuest
+    );
+  }
+
   async function handleImportFile(file: File): Promise<void> {
-    if (importInFlight) return;
-    importInFlight = true;
+    const requestToken = ++importRequestToken;
+    const sourceVaultId = activeImportVaultId();
     importError = null;
     importApproveError = null;
+    if (!canImport || vault.isGuest) {
+      importInFlight = false;
+      importError = "Adventure import is only available in an owner Vault.";
+      return;
+    }
+    const isPdf = isPdfAdventureFile(file);
+    if (!isPdf && file.size > MAX_ADVENTURE_MARKDOWN_BYTES) {
+      importInFlight = false;
+      importError = "Adventure Markdown files must be 2 MiB or smaller.";
+      return;
+    }
+    importInFlight = true;
     try {
-      const result = isPdfAdventureFile(file)
+      const bytes = new Uint8Array(await file.arrayBuffer());
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
+      const result = isPdf
         ? await (async () => {
-            const bytes = new Uint8Array(await file.arrayBuffer());
             const { importAdventurePdfFile } =
               await import("#lib/services/adventure/adventure-pdf-import.js");
             return importAdventurePdfFile(bytes, file.name);
           })()
-        : await parseAdventureMarkdown(await file.text(), {
+        : await parseAdventureMarkdown(bytes, {
             fileName: file.name,
           });
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
       if (!result.ok) {
         importError = result.error.message;
         return;
       }
       importDraft = result.package;
+      importDraftVaultId = sourceVaultId;
       startApproach = "import-review";
     } catch (error) {
-      importError =
-        error instanceof Error
-          ? error.message
-          : "Unable to read the selected adventure file.";
+      if (isCurrentImport(requestToken, sourceVaultId)) {
+        importError =
+          error instanceof Error
+            ? error.message
+            : "Unable to read the selected adventure file.";
+      }
     } finally {
-      importInFlight = false;
+      if (requestToken === importRequestToken) importInFlight = false;
     }
   }
 
   async function handleApproveImport(
     approved: AdventureSourcePackage,
   ): Promise<void> {
+    const sourceVaultId = importDraftVaultId;
+    const requestToken = importRequestToken;
+    if (
+      !sourceVaultId ||
+      activeImportVaultId() !== sourceVaultId ||
+      vault.isGuest
+    ) {
+      const error = new Error(
+        "Return to the owner Vault where this adventure was imported to approve it.",
+      );
+      importApproveError = error.message;
+      throw error;
+    }
+
     importApproving = true;
     importApproveError = null;
     try {
       const saved = await adventurePackageRepository.saveApproved(
-        vaultId,
+        sourceVaultId,
         approved,
       );
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
       importDraft = saved.package;
       notificationStore.notify(
         `Approved "${saved.package.sourceIdentity.title ?? saved.package.sourceIdentity.fileName}" for local play.`,
         "success",
       );
     } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Unable to save the approved adventure package.";
-      importApproveError = message;
+      if (isCurrentImport(requestToken, sourceVaultId)) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to save the approved adventure package.";
+        importApproveError = message;
+      }
       throw error;
     } finally {
-      importApproving = false;
+      if (requestToken === importRequestToken) importApproving = false;
     }
   }
 
   function handleCancelImport(): void {
+    importRequestToken += 1;
     importDraft = null;
+    importDraftVaultId = null;
     importError = null;
+    importInFlight = false;
     importApproveError = null;
     startApproach = "choose";
   }
@@ -649,6 +707,7 @@
     {#if !selectedRumour && startApproach === "choose"}
       <AdventureEntryChoices
         {canDiscover}
+        {canImport}
         {importError}
         importing={importInFlight}
         onDiscover={discoverAdventure}
