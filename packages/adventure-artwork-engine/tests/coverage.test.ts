@@ -6,6 +6,7 @@ import {
   buildArtworkCoverageReport,
   PR_4841_ROLE_CUES,
   TRACKED_PENDING_ROLE_GAPS,
+  type ArtworkCoverageReport,
   type ArtworkAsset,
 } from "../src";
 import { seedArtwork } from "../src/catalogue/seed";
@@ -15,6 +16,33 @@ const CATALOG_DOC_PATH = resolve(
   REPO_ROOT,
   "docs/ADVENTURE_ARTWORK_CATALOG.md",
 );
+
+function buildSeedCoverageReport(): ArtworkCoverageReport {
+  return buildArtworkCoverageReport({
+    assets: seedArtwork,
+    cues: ARTWORK_CUES,
+  });
+}
+
+function getRoleCue(report: ArtworkCoverageReport, cue: string) {
+  return report.roleCues.find((entry) => entry.cue === cue);
+}
+
+function expectEligibleAssetIds(
+  report: ArtworkCoverageReport,
+  cue: string,
+  assetIds: string[],
+) {
+  expect(getRoleCue(report, cue)?.eligibleAssetIds).toEqual(assetIds);
+}
+
+function expectRoleCueMatch(
+  report: ArtworkCoverageReport,
+  cue: string,
+  expected: Record<string, unknown>,
+) {
+  expect(getRoleCue(report, cue)).toMatchObject(expected);
+}
 
 function makeAsset(overrides: Partial<ArtworkAsset> = {}): ArtworkAsset {
   return {
@@ -68,12 +96,8 @@ function makeAsset(overrides: Partial<ArtworkAsset> = {}): ArtworkAsset {
 }
 
 describe("adventure artwork coverage report", () => {
-  it("reports exact live seedArtwork counts and PR #4841 role cue eligibility", () => {
-    const report = buildArtworkCoverageReport({
-      assets: seedArtwork,
-      cues: ARTWORK_CUES,
-    });
-
+  it("reports exact live seedArtwork counts", () => {
+    const report = buildSeedCoverageReport();
     expect(report.totalAssets).toBe(133);
     expect(report.totalCues).toBe(85);
     expect(report.countsByType).toEqual({
@@ -112,50 +136,45 @@ describe("adventure artwork coverage report", () => {
       scene: 0,
       atmosphere: 6,
     });
+  });
 
-    const roleByCue = new Map(
-      report.roleCues.map((entry) => [entry.cue, entry]),
-    );
-    expect(roleByCue.get("innkeeper")?.eligibleAssetIds).toEqual([
-      "npc-fantasy-merchant-02",
-    ]);
-    expect(roleByCue.get("healer")?.eligibleAssetIds).toEqual([
+  it("reports exact PR #4841 role cue eligibility", () => {
+    const report = buildSeedCoverageReport();
+    expectEligibleAssetIds(report, "innkeeper", ["npc-fantasy-merchant-02"]);
+    expectEligibleAssetIds(report, "healer", [
       "npc-contemporary-medic-01",
       "npc-contemporary-medic-02",
       "npc-fantasy-cleric-01",
       "npc-fantasy-worker-02",
     ]);
-    expect(roleByCue.get("smith")?.eligibleAssetIds).toEqual([
-      "npc-fantasy-worker-01",
-    ]);
-    expect(roleByCue.get("elder")?.eligibleAssetIds).toEqual([
-      "npc-fantasy-elder-01",
-    ]);
-    expect(roleByCue.get("official")?.eligibleAssetIds).toEqual([
-      "npc-fantasy-official-01",
-    ]);
-    expect(roleByCue.get("urchin")?.eligibleAssetIds).toEqual([
-      "npc-fantasy-urchin-01",
-    ]);
-    expect(roleByCue.get("goblin")?.eligibleAssetIds).toEqual([
-      "npc-fantasy-goblin-01",
-    ]);
+    expectEligibleAssetIds(report, "smith", ["npc-fantasy-worker-01"]);
+    expectEligibleAssetIds(report, "elder", ["npc-fantasy-elder-01"]);
+    expectEligibleAssetIds(report, "official", ["npc-fantasy-official-01"]);
+    expectEligibleAssetIds(report, "urchin", ["npc-fantasy-urchin-01"]);
+    expectEligibleAssetIds(report, "goblin", ["npc-fantasy-goblin-01"]);
 
     for (const cue of PR_4841_ROLE_CUES) {
-      expect(roleByCue.has(cue)).toBe(true);
+      expect(getRoleCue(report, cue)).toBeDefined();
     }
+  });
 
+  it("tracks only unfulfilled role gaps", () => {
+    const report = buildSeedCoverageReport();
     for (const gapCue of TRACKED_PENDING_ROLE_GAPS) {
-      const entry = roleByCue.get(gapCue);
-      expect(entry?.state).toBe("no image produced");
-      expect(entry?.trackedPendingGap).toBe(true);
-      expect(entry?.eligibleAssetIds).toEqual([]);
+      expectRoleCueMatch(report, gapCue, {
+        state: "no image produced",
+        trackedPendingGap: true,
+        eligibleAssetIds: [],
+      });
     }
-    for (const publishedCue of ["elder", "official", "urchin", "goblin"]) {
-      expect(roleByCue.get(publishedCue)?.trackedPendingGap).toBe(false);
-    }
-
     expect(report.undocumentedRoleGaps).toEqual([]);
+  });
+
+  it("does not track published role cues as pending gaps", () => {
+    const report = buildSeedCoverageReport();
+    for (const cue of ["elder", "official", "urchin", "goblin"]) {
+      expectRoleCueMatch(report, cue, { trackedPendingGap: false });
+    }
   });
 
   it("ignores alt text and URL filenames when determining cue eligibility", () => {
