@@ -32,6 +32,19 @@ export function getAdventurePackagePath(documentHash: string): string {
   return `${ADVENTURE_PACKAGES_DIR}/${documentHash}.json`;
 }
 
+function parseStoredPackage(
+  raw: string,
+  expectedHash: string,
+): AdventureSourcePackage {
+  const pkg = AdventureSourcePackageSchema.parse(JSON.parse(raw));
+  if (pkg.documentHash !== expectedHash) {
+    throw new Error(
+      `Adventure package hash mismatch: expected ${expectedHash}, found ${pkg.documentHash}.`,
+    );
+  }
+  return pkg;
+}
+
 export async function loadAdventurePackage(
   io: AdventurePackageFileIO,
   documentHash: string,
@@ -41,7 +54,7 @@ export async function loadAdventurePackage(
     return null;
   }
   const raw = await io.read(path);
-  return AdventureSourcePackageSchema.parse(JSON.parse(raw));
+  return parseStoredPackage(raw, documentHash);
 }
 
 export async function listAdventurePackageHashes(
@@ -63,9 +76,7 @@ export async function saveAdventurePackage(
 
   if (await io.exists(path)) {
     const existingRaw = await io.read(path);
-    const existing = AdventureSourcePackageSchema.parse(
-      JSON.parse(existingRaw),
-    );
+    const existing = parseStoredPackage(existingRaw, validated.documentHash);
     return {
       status: "deduplicated",
       path,
@@ -83,7 +94,7 @@ export async function saveAdventurePackage(
   try {
     await io.write(path, serialized);
     const written = await io.read(path);
-    const reparsed = AdventureSourcePackageSchema.parse(JSON.parse(written));
+    const reparsed = parseStoredPackage(written, validated.documentHash);
     return {
       status: "created",
       path,

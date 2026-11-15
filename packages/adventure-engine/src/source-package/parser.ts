@@ -346,6 +346,17 @@ function consumeGmOnlyBlockquote(
       content.gmNotes.push(blockquoteMatch[1].trim());
       return { consumed: true, active: true };
     }
+
+    const unquotedLine = line.replace(/^ {0,3}/, "");
+    const startsMarkdownBlock =
+      /^#{1,6}(?:\s|$)/.test(unquotedLine) ||
+      /^(?:[-+*]\s+|1[.)]\s+)/.test(unquotedLine) ||
+      /^(?:\*\s*){3,}$|^(?:-\s*){3,}$|^(?:_\s*){3,}$/.test(unquotedLine) ||
+      /^(?:`{3,}|~{3,})/.test(unquotedLine);
+    if (line.trim().length > 0 && !startsMarkdownBlock) {
+      content.gmNotes.push(line.trim());
+      return { consumed: true, active: true };
+    }
   }
 
   return { consumed: false, active: false };
@@ -598,13 +609,16 @@ function processRawSection(raw: RawSection, acc: ParseAccumulator): void {
   recordNpcIfPresent(raw, sourceId, body, provenance, acc);
 
   if (ENDING_TITLE_RE.test(raw.title)) {
-    acc.endings.push({
-      id: sourceId,
-      title: raw.title,
-      description: body || content.readAloud.join("\n"),
-      sourceId,
-      provenance,
-    });
+    const description = body || content.readAloud.join("\n");
+    if (description.length > 0) {
+      acc.endings.push({
+        id: sourceId,
+        title: raw.title,
+        description,
+        sourceId,
+        provenance,
+      });
+    }
   }
 }
 
