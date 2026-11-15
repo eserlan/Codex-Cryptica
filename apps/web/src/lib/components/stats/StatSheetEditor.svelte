@@ -6,11 +6,9 @@
     type StatSheetFieldType,
   } from "schema";
   import { untrack } from "svelte";
-  import {
-    slugifyFieldKey,
-    uniqueFieldKey,
-    validateFieldKeyFormat,
-  } from "@codex/stat-sheet-engine";
+  import { StatSheetEditorState } from "./StatSheetEditorState.svelte.js";
+  import { StatSheetFieldOrder } from "./StatSheetFieldOrder.svelte.js";
+  import { slugifyFieldKey } from "@codex/stat-sheet-engine";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import {
@@ -52,139 +50,26 @@
     { value: "money", label: "Price (amount + unit)" },
   ];
 
-  let fields = $state<StatSheetField[]>(
-    untrack(() => $state.snapshot(entity.statSheet?.fields ?? [])),
+  const editor = untrack(
+    () =>
+      new StatSheetEditorState(
+        () => entity,
+        { uuid: () => idGenerator.uuid() },
+        vault,
+        notificationStore,
+      ),
   );
-
+  const order = new StatSheetFieldOrder(() => editor.fields, editor.persist);
   $effect(() => {
-    fields = $state.snapshot(entity.statSheet?.fields ?? []);
+    editor.fields = $state.snapshot(entity.statSheet?.fields ?? []);
   });
-
-  function persist(nextFields: StatSheetField[]) {
-    fields = nextFields;
-    vault.updateEntity(entity.id, {
-      statSheet: {
-        templateId: entity.statSheet?.templateId ?? null,
-        fields: nextFields,
-        presentationTemplateId:
-          entity.statSheet?.presentationTemplateId ?? null,
-      },
-    });
-  }
-
-  function addField() {
-    const id = `field-${idGenerator.uuid()}`;
-    // #3180: new fields get a readable key up front (unique within the
-    // sheet); the immutable id stays the stored identifier.
-    const key = uniqueFieldKey(
-      slugifyFieldKey("New Field"),
-      fields.flatMap((f) => (f.key ? [f.key, f.id] : [f.id])),
-    );
-    persist([
-      ...fields,
-      { id, key, label: "New Field", type: "text" as StatSheetFieldType },
-    ]);
-  }
-
-  // Per-field key validation errors, keyed by field id. Invalid keys are
-  // never persisted — the last valid key (or no key) stays stored.
-  let keyErrors = $state<Record<string, string>>({});
-
-  function handleKeyInput(field: StatSheetField, raw: string) {
-    const key = raw.trim();
-    if (key === "") {
-      const next = { ...keyErrors };
-      delete next[field.id];
-      keyErrors = next;
-      updateField(field.id, { key: undefined });
-      return;
-    }
-    const formatError = validateFieldKeyFormat(key);
-    if (formatError) {
-      keyErrors = { ...keyErrors, [field.id]: formatError };
-      return;
-    }
-    const clash = fields.some(
-      (f) => f.id !== field.id && (f.key === key || f.id === key),
-    );
-    if (clash) {
-      keyErrors = {
-        ...keyErrors,
-        [field.id]: `Key "${key}" is already used by another field.`,
-      };
-      return;
-    }
-    const next = { ...keyErrors };
-    delete next[field.id];
-    keyErrors = next;
-    updateField(field.id, { key });
-  }
-
-  function updateField(id: string, updates: Partial<StatSheetField>) {
-    persist(fields.map((f) => (f.id === id ? { ...f, ...updates } : f)));
-  }
-
-  // Once a new minimum or maximum is committed, a current value outside it
-  // moves inside, so the sheet never shows "100 / 12". Not per keystroke:
-  // typing "12" passes through "1".
-  // Also normalises contradictory bounds where min > max.
-  // fallow-ignore-next-line complexity
-  function clampCounterToBounds(id: string) {
-    const field = fields.find((f) => f.id === id);
-    if (!field) return;
-    const updates: Partial<StatSheetField> = {};
-    let min = field.min;
-    let max = field.max;
-
-    if (min !== undefined && max !== undefined && min > max) {
-      // Contradictory bounds: raise max to match min
-      max = min;
-      updates.max = max;
-    }
-
-    if (typeof field.value === "number") {
-      let value = field.value;
-      if (min !== undefined) value = Math.max(min, value);
-      if (max !== undefined) value = Math.min(max, value);
-      if (value !== field.value) updates.value = value;
-    }
-
-    if (Object.keys(updates).length > 0) {
-      updateField(id, updates);
-    }
-  }
-
-  // fallow-ignore-next-line complexity
-  function changeFieldType(field: StatSheetField, newType: StatSheetFieldType) {
-    const updates: Partial<StatSheetField> = { type: newType };
-    if (newType === "item-table" && !field.columns) {
-      updates.columns = DEFAULT_ITEM_TABLE_COLUMNS.map((c) => ({ ...c }));
-    } else if (newType === "dice-pool") {
-      const rawVal =
-        typeof field.value === "number" && !isNaN(field.value)
-          ? Math.max(0, Math.min(1000, Math.floor(field.value)))
-          : 3;
-      updates.value = rawVal;
-      updates.startValue = rawVal;
-      if (!field.formula) updates.formula = "d6";
-      if (field.min === undefined) updates.min = 0;
-      else updates.min = Math.max(0, Math.floor(field.min));
-      if (field.max !== undefined)
-        updates.max = Math.min(1000, Math.floor(field.max));
-      if (field.step === undefined) updates.step = 1;
-      else updates.step = Math.max(1, Math.floor(Math.abs(field.step)));
-      if (field.allowDieChange === undefined) updates.allowDieChange = true;
-    }
-    updateField(field.id, updates);
-  }
-
   function tableColumns(field: StatSheetField) {
     return field.columns ?? DEFAULT_ITEM_TABLE_COLUMNS;
   }
 
   function addColumn(field: StatSheetField) {
     const id = `col-${idGenerator.uuid()}`;
-    updateField(field.id, {
+    editor.updateField(field.id, {
       columns: [
         ...tableColumns(field),
         { id, label: "New Column", type: "text" },
@@ -197,7 +82,7 @@
     columnId: string,
     updates: Partial<NonNullable<StatSheetField["columns"]>[number]>,
   ) {
-    updateField(field.id, {
+    editor.updateField(field.id, {
       columns: tableColumns(field).map((c) =>
         c.id === columnId ? { ...c, ...updates } : c,
       ),
@@ -205,7 +90,7 @@
   }
 
   function removeColumn(field: StatSheetField, columnId: string) {
-    updateField(field.id, {
+    editor.updateField(field.id, {
       columns: tableColumns(field).filter((c) => c.id !== columnId),
     });
   }
@@ -216,131 +101,7 @@
     if (target < 0 || target >= cols.length) return;
     const next = [...cols];
     [next[index], next[target]] = [next[target], next[index]];
-    updateField(field.id, { columns: next });
-  }
-
-  let draggedIndex = $state<number | null>(null);
-  let dragOverIndex = $state<number | null>(null);
-  let selectedFieldId = $state<string | null>(null);
-
-  function handleDragStart(e: DragEvent, index: number) {
-    draggedIndex = index;
-    selectedFieldId = fields[index]?.id ?? null;
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = "move";
-      e.dataTransfer.setData("text/plain", String(index));
-    }
-  }
-
-  function handleDragOver(e: DragEvent, index: number) {
-    e.preventDefault();
-    if (e.dataTransfer) {
-      e.dataTransfer.dropEffect = "move";
-    }
-    if (dragOverIndex !== index) {
-      dragOverIndex = index;
-    }
-  }
-
-  function handleDrop(e: DragEvent, targetIndex: number) {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === targetIndex) {
-      draggedIndex = null;
-      dragOverIndex = null;
-      return;
-    }
-
-    const next = [...fields];
-    const [moved] = next.splice(draggedIndex, 1);
-    next.splice(targetIndex, 0, moved);
-
-    draggedIndex = null;
-    dragOverIndex = null;
-    selectedFieldId = moved.id;
-    persist(next);
-  }
-
-  function handleDragEnd() {
-    draggedIndex = null;
-    dragOverIndex = null;
-  }
-
-  function handleFieldKeyDown(e: KeyboardEvent, index: number) {
-    if ((e.altKey || e.ctrlKey) && e.key === "ArrowUp") {
-      e.preventDefault();
-      e.stopPropagation();
-      moveField(index, -1);
-    } else if ((e.altKey || e.ctrlKey) && e.key === "ArrowDown") {
-      e.preventDefault();
-      e.stopPropagation();
-      moveField(index, 1);
-    }
-  }
-
-  function handleContainerKeyDown(e: KeyboardEvent) {
-    if (
-      (e.altKey || e.ctrlKey) &&
-      (e.key === "ArrowUp" || e.key === "ArrowDown")
-    ) {
-      if (!selectedFieldId) return;
-      const index = fields.findIndex((f) => f.id === selectedFieldId);
-      if (index === -1) return;
-      e.preventDefault();
-      e.stopPropagation();
-      moveField(index, e.key === "ArrowUp" ? -1 : 1);
-    }
-  }
-
-  function moveField(index: number, direction: -1 | 1) {
-    const target = index + direction;
-    if (target < 0 || target >= fields.length) return;
-    const movedId = fields[index].id;
-    selectedFieldId = movedId;
-    const next = [...fields];
-    [next[index], next[target]] = [next[target], next[index]];
-    persist(next);
-
-    requestAnimationFrame(() => {
-      const handle = document.querySelector<HTMLElement>(
-        `[data-field-id="${movedId}"] [data-testid="stat-sheet-drag-handle"]`,
-      );
-      handle?.focus();
-    });
-  }
-
-  function hasNonDefaultValue(field: StatSheetField): boolean {
-    if (field.type === "heading") return false;
-    if (field.value === undefined) return false;
-    if (field.value === "" || field.value === 0) return false;
-    return true;
-  }
-
-  async function removeField(field: StatSheetField) {
-    if (hasNonDefaultValue(field)) {
-      const confirmed = await notificationStore.confirm({
-        title: "Delete Field",
-        message: `"${field.label}" contains a value. Delete it anyway?`,
-        confirmLabel: "Delete",
-        isDangerous: true,
-      });
-      if (!confirmed) return;
-    }
-    persist(fields.filter((f) => f.id !== field.id));
-  }
-
-  async function clearAllFields() {
-    const confirmed = await notificationStore.confirm({
-      title: "Clear Stat Sheet",
-      message: `Remove all ${fields.length} stat fields and template assignment from "${entity.title}"?`,
-      confirmLabel: "Clear All",
-      isDangerous: true,
-    });
-    if (!confirmed) return;
-
-    persist([]);
-    vault.updateEntity(entity.id, {
-      statSheet: { templateId: null, fields: [] },
-    });
+    editor.updateField(field.id, { columns: next });
   }
 </script>
 
@@ -350,32 +111,32 @@
 <div
   class="flex flex-col gap-3 outline-none"
   tabindex="0"
-  onkeydown={handleContainerKeyDown}
+  onkeydown={order.handleContainerKeyDown}
   data-testid="stat-sheet-editor"
 >
-  {#each fields as field, index (field.id)}
+  {#each editor.fields as field, index (field.id)}
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <div
-      class="flex flex-col gap-2 rounded border p-2 transition-colors {draggedIndex ===
+      class="flex flex-col gap-2 rounded border p-2 transition-colors {order.draggedIndex ===
       index
         ? 'opacity-40 border-dashed border-theme-primary'
-        : dragOverIndex === index
+        : order.dragOverIndex === index
           ? 'border-theme-primary bg-theme-primary/10 ring-1 ring-theme-primary'
-          : selectedFieldId === field.id
+          : order.selectedFieldId === field.id
             ? 'border-theme-primary bg-theme-primary/10 ring-2 ring-theme-primary/40'
             : 'border-theme-border'}"
       draggable="true"
-      ondragstart={(e) => handleDragStart(e, index)}
-      ondragover={(e) => handleDragOver(e, index)}
-      ondragleave={() => (dragOverIndex = null)}
-      ondrop={(e) => handleDrop(e, index)}
-      ondragend={handleDragEnd}
-      onkeydown={(e) => handleFieldKeyDown(e, index)}
-      onfocusin={() => (selectedFieldId = field.id)}
-      onclick={() => (selectedFieldId = field.id)}
+      ondragstart={(e) => order.handleDragStart(e, index)}
+      ondragover={(e) => order.handleDragOver(e, index)}
+      ondragleave={() => (order.dragOverIndex = null)}
+      ondrop={(e) => order.handleDrop(e, index)}
+      ondragend={order.handleDragEnd}
+      onkeydown={(e) => order.handleFieldKeyDown(e, index)}
+      onfocusin={() => (order.selectedFieldId = field.id)}
+      onclick={() => (order.selectedFieldId = field.id)}
       data-field-id={field.id}
-      data-selected={selectedFieldId === field.id ? "true" : "false"}
-      aria-selected={selectedFieldId === field.id}
+      data-selected={order.selectedFieldId === field.id ? "true" : "false"}
+      aria-selected={order.selectedFieldId === field.id}
       data-testid="stat-sheet-editor-field"
     >
       <div class="flex items-center gap-2">
@@ -395,7 +156,7 @@
           value={field.label}
           aria-label="Field label"
           oninput={(e) =>
-            updateField(field.id, {
+            editor.updateField(field.id, {
               label: (e.target as HTMLInputElement).value,
             })}
         />
@@ -404,7 +165,7 @@
           value={field.type}
           aria-label="Field type"
           onchange={(e) =>
-            changeFieldType(
+            editor.changeFieldType(
               field,
               (e.target as HTMLSelectElement).value as StatSheetFieldType,
             )}
@@ -416,7 +177,7 @@
         <button
           type="button"
           class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
-          onclick={() => moveField(index, -1)}
+          onclick={() => order.moveField(index, -1)}
           disabled={index === 0}
           aria-label={`Move ${field.label} up`}
         >
@@ -426,8 +187,8 @@
         <button
           type="button"
           class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-theme-primary hover:text-theme-primary disabled:opacity-40"
-          onclick={() => moveField(index, 1)}
-          disabled={index === fields.length - 1}
+          onclick={() => order.moveField(index, 1)}
+          disabled={index === editor.fields.length - 1}
           aria-label={`Move ${field.label} down`}
         >
           <span
@@ -438,7 +199,7 @@
         <button
           type="button"
           class="flex h-6 w-6 items-center justify-center rounded border border-theme-border text-theme-muted hover:border-red-500 hover:text-red-500"
-          onclick={() => removeField(field)}
+          onclick={() => editor.removeField(field)}
           aria-label={`Delete ${field.label}`}
           data-testid="stat-sheet-editor-delete"
         >
@@ -461,12 +222,12 @@
           value={field.key ?? ""}
           placeholder={slugifyFieldKey(field.label)}
           aria-label={`Reference key for ${field.label}`}
-          aria-invalid={keyErrors[field.id] ? "true" : undefined}
-          aria-describedby={keyErrors[field.id]
+          aria-invalid={editor.keyErrors[field.id] ? "true" : undefined}
+          aria-describedby={editor.keyErrors[field.id]
             ? `field-key-error-${field.id}`
             : undefined}
           oninput={(e) =>
-            handleKeyInput(field, (e.target as HTMLInputElement).value)}
+            editor.handleKeyInput(field, (e.target as HTMLInputElement).value)}
         />
         <span
           class="min-w-0 flex-1 truncate font-mono text-theme-muted/70"
@@ -474,13 +235,13 @@
         >
           {field.id}
         </span>
-        {#if keyErrors[field.id]}
+        {#if editor.keyErrors[field.id]}
           <span
             id={`field-key-error-${field.id}`}
             role="alert"
             class="text-red-500"
           >
-            {keyErrors[field.id]}
+            {editor.keyErrors[field.id]}
           </span>
         {/if}
       </div>
@@ -494,13 +255,13 @@
               class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.min ?? ""}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   min:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
-              onchange={() => clampCounterToBounds(field.id)}
+              onchange={() => editor.clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -510,13 +271,13 @@
               class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.max ?? ""}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   max:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
                       : Number((e.target as HTMLInputElement).value),
                 })}
-              onchange={() => clampCounterToBounds(field.id)}
+              onchange={() => editor.clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -526,7 +287,7 @@
               class="w-16 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.step ?? 1}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   step: Number((e.target as HTMLInputElement).value) || 1,
                 })}
             />
@@ -542,7 +303,7 @@
               placeholder="e.g. 50"
               value={typeof field.value === "number" ? field.value : ""}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   value:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
@@ -558,10 +319,11 @@
               placeholder="1d100"
               value={field.formula ?? ""}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   formula: (e.target as HTMLInputElement).value,
                 })}
-              onchange={() => persist(applyTypedFormula(fields, field.id))}
+              onchange={() =>
+                editor.persist(applyTypedFormula(editor.fields, field.id))}
             />
           </label>
         </div>
@@ -590,12 +352,12 @@
                   raw === ""
                     ? 0
                     : Math.max(0, Math.min(1000, Math.floor(Number(raw)) || 0));
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   value: val,
                   startValue: val,
                 });
               }}
-              onchange={() => clampCounterToBounds(field.id)}
+              onchange={() => editor.clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -605,7 +367,7 @@
               class="rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text"
               value={field.formula || "d6"}
               onchange={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   formula: (e.target as HTMLSelectElement).value,
                 })}
             >
@@ -623,7 +385,7 @@
               class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.min ?? 0}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   min:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
@@ -631,7 +393,7 @@
                           Number((e.target as HTMLInputElement).value),
                         ),
                 })}
-              onchange={() => clampCounterToBounds(field.id)}
+              onchange={() => editor.clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -643,7 +405,7 @@
               class="w-14 rounded border border-theme-border bg-theme-bg px-1 py-0.5 text-xs text-theme-text"
               value={field.max ?? ""}
               oninput={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   max:
                     (e.target as HTMLInputElement).value === ""
                       ? undefined
@@ -651,7 +413,7 @@
                           Number((e.target as HTMLInputElement).value),
                         ),
                 })}
-              onchange={() => clampCounterToBounds(field.id)}
+              onchange={() => editor.clampCounterToBounds(field.id)}
             />
           </label>
           <label class="flex items-center gap-1">
@@ -669,7 +431,7 @@
                   raw === ""
                     ? 1
                     : Math.max(1, Math.floor(Math.abs(Number(raw) || 1)));
-                updateField(field.id, { step });
+                editor.updateField(field.id, { step });
               }}
             />
           </label>
@@ -679,7 +441,7 @@
               aria-label={`Allow player to change die type for ${field.label}`}
               checked={field.allowDieChange ?? true}
               onchange={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   allowDieChange: (e.target as HTMLInputElement).checked,
                 })}
             />
@@ -693,7 +455,7 @@
               type="checkbox"
               checked={field.linkVaultItems ?? true}
               onchange={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   linkVaultItems: (e.target as HTMLInputElement).checked,
                 })}
             />
@@ -705,7 +467,7 @@
               data-testid="stock-ledger-toggle"
               checked={field.stockLedger ?? false}
               onchange={(e) =>
-                updateField(field.id, {
+                editor.updateField(field.id, {
                   stockLedger: (e.target as HTMLInputElement).checked,
                 })}
             />
@@ -860,16 +622,16 @@
       <button
         type="button"
         class="rounded border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-theme-primary hover:text-theme-primary"
-        onclick={addField}
+        onclick={editor.addField}
         data-testid="stat-sheet-editor-add"
       >
         + Add Field
       </button>
-      {#if fields.length > 0}
+      {#if editor.fields.length > 0}
         <button
           type="button"
           class="rounded border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-theme-muted hover:border-red-500 hover:text-red-500"
-          onclick={clearAllFields}
+          onclick={editor.clearAllFields}
           data-testid="stat-sheet-editor-clear-all"
         >
           Clear All
