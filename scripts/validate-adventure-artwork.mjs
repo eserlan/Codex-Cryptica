@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { parseCatalogue } from "../packages/adventure-artwork-engine/src/catalogue.ts";
+import { buildArtworkCoverageReport } from "../packages/adventure-artwork-engine/src/coverage.ts";
 
 function assertNoMissingHistoricalAssets(oldMap, currentIds) {
   for (const id of oldMap.keys()) {
@@ -149,7 +150,7 @@ function assertValidVariantResponse(response, expectedUrl, assetId) {
   }
 }
 
-async function verifySingleVariant(assetId, variant, fetcher, decode) {
+async function fetchAndDecodeVariant(assetId, variant, fetcher, decode) {
   const response = await fetcher(variant.url, {
     signal: AbortSignal.timeout(8000),
     redirect: "error",
@@ -159,6 +160,16 @@ async function verifySingleVariant(assetId, variant, fetcher, decode) {
   assertValidVariantResponse(response, variant.url, assetId);
   const bytes = await readBoundedVariantBytes(response, variant, assetId);
   const dimensions = await decode(bytes);
+  return { response, bytes, dimensions };
+}
+
+async function verifySingleVariant(assetId, variant, fetcher, decode) {
+  const { dimensions } = await fetchAndDecodeVariant(
+    assetId,
+    variant,
+    fetcher,
+    decode,
+  );
   if (
     dimensions.width !== variant.width ||
     dimensions.height !== variant.height
@@ -233,50 +244,230 @@ export async function verifyReleaseAssets(
   }
 }
 
-if (import.meta.main) {
-  const [currentPath, previousPath] = process.argv.slice(2);
-  if (
-    Boolean(currentPath) !== Boolean(previousPath) ||
-    process.argv.length > 4
-  ) {
-    console.error(
-      "Usage: bun scripts/validate-adventure-artwork.mjs <current.json> <previous.json>",
+function formatVariantDiagnostic(assetId, variant, response, bytes, dimensions) {
+  const matchesDimensions =
+    dimensions.width === variant.width &&
+    dimensions.height === variant.height;
+  const base = {
+    ok: matchesDimensions,
+    status: response.status,
+    contentType: readContentTypeMime(response),
+    redirected: hasUnexpectedRedirect(response, variant.url),
+    bytes: bytes.byteLength,
+    width: dimensions.width,
+    height: dimensions.height,
+  };
+  if (matchesDimensions) return base;
+  return {
+    ...base,
+    error: `Invalid artwork dimensions for ${assetId}: expected ${variant.width}x${variant.height}, got ${dimensions.width}x${dimensions.height}`,
+  };
+}
+
+async function diagnoseSingleVariant(assetId, variant, fetcher, decode) {
+  try {
+    const { response, bytes, dimensions } = await fetchAndDecodeVariant(
+      assetId,
+      variant,
+      fetcher,
+      decode,
     );
-    process.exitCode = 1;
-  } else {
+    return formatVariantDiagnostic(
+      assetId,
+      variant,
+      response,
+      bytes,
+      dimensions,
+    );
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+async function diagnoseAssetVariants(asset, fetcher, decode) {
+  const preview = await diagnoseSingleVariant(
+    asset.id,
+    asset.variants.preview,
+    fetcher,
+    decode,
+  );
+  const display = await diagnoseSingleVariant(
+    asset.id,
+    asset.variants.display,
+    fetcher,
+    decode,
+  );
+  const errors = [preview.error, display.error].filter(Boolean);
+  const entry = {
+    assetId: asset.id,
+    verified: preview.ok && display.ok,
+    preview,
+    display,
+  };
+  return errors.length > 0 ? { ...entry, error: errors.join("; ") } : entry;
+}
+
+/**
+ * Non-throwing remote R2 diagnostic verification for every non-withdrawn asset.
+ * Returns a Map keyed by asset ID for integration with `buildArtworkCoverageReport`.
+ */
+export async function diagnoseArtworkVariants(
+  assets,
+  { fetch: fetcher, decode },
+) {
+  assertVerificationDeps(fetcher, decode);
+  const results = new Map();
+  const activeAssets = parseCatalogue(assets).filter(
+    (asset) => !asset.withdrawn,
+  );
+  for (const asset of activeAssets) {
+    results.set(asset.id, await diagnoseAssetVariants(asset, fetcher, decode));
+  }
+  return results;
+}
+
+export async function diagnoseReleaseAssets(
+  assets,
+  { fetch: fetcher, openDecoder },
+) {
+  const decoder = await openDecoder();
+  try {
+    return await diagnoseArtworkVariants(assets, {
+      fetch: fetcher,
+      decode: decoder.decode,
+    });
+  } finally {
+    await decoder.close();
+  }
+}
+
+export async function runCoverageDiagnostics(
+  assets,
+  { verifyRemote = false, fetch: fetcher = fetch, openDecoder = openArtworkDecoder, decode } = {},
+) {
+  let remoteVerification;
+  if (verifyRemote) {
+    remoteVerification = decode
+      ? await diagnoseArtworkVariants(assets, { fetch: fetcher, decode })
+      : await diagnoseReleaseAssets(assets, { fetch: fetcher, openDecoder });
+  }
+  return buildArtworkCoverageReport({
+    assets,
+    remoteVerification,
+  });
+}
+
+function formatRoleCueLine(role) {
+  const winners = Object.entries(role.primaryWinnerByGenre)
+    .map(([g, id]) => `${g}:${id}`)
+    .join(", ");
+  const eligible = role.eligibleAssetIds.join(", ") || "none";
+  const winnerSuffix = winners ? `; winners: ${winners}` : "";
+  const tag = role.trackedPendingGap
+    ? ` [TRACKED GAP ${role.trackedIssue}]`
+    : "";
+  return `  - ${role.cue}: ${role.state} (${role.eligibleAssetIds.length} eligible: ${eligible}${winnerSuffix})${tag}`;
+}
+
+function formatCoverageReport(report) {
+  const lines = [
+    `Adventure Artwork Coverage Report (${report.totalAssets} live assets, ${report.totalCues} cues)`,
+    `Types: location=${report.countsByType.location}, npc=${report.countsByType.npc}, scene=${report.countsByType.scene}, atmosphere=${report.countsByType.atmosphere}`,
+    `States: valid=${report.stateCounts["valid image in catalogue"]}, unverified=${report.stateCounts["R2 URL missing or unverified"]}, mismatched=${report.stateCounts["image registered without matching cue"]}, no-image=${report.stateCounts["no image produced"]}`,
+    "",
+    "NPC Role Cues:",
+    ...report.roleCues.map(formatRoleCueLine),
+  ];
+  if (report.undocumentedRoleGaps.length > 0) {
+    lines.push(
+      "",
+      `Undocumented role gaps: ${report.undocumentedRoleGaps.join(", ")}`,
+    );
+  }
+  lines.push(
+    "",
+    `Tracked pending role gaps (${report.trackedPendingGaps.length}): ${report.trackedPendingGaps.join(", ")}`,
+    `Deferred genre slots (${report.deferredGenreSlots.length}): ${report.deferredGenreSlots.map((slot) => `${slot.genre}[${slot.types.join("/")}]`).join(", ")}`,
+  );
+  return lines.join("\n");
+}
+
+if (import.meta.main) {
+  const args = process.argv.slice(2);
+  if (args.includes("--coverage")) {
+    const verifyRemote = args.includes("--verify-remote");
+    const jsonOutput = args.includes("--json");
     try {
-      const current = currentPath
-        ? JSON.parse(await readFile(currentPath, "utf8"))
-        : (
-            await import("../packages/adventure-artwork-engine/src/catalogue/seed.ts")
-          ).seedArtwork;
-      const previous = JSON.parse(
-        await readFile(
-          previousPath ??
-            new URL(
-              "../packages/adventure-artwork-engine/src/catalogue/released-baseline.json",
-              import.meta.url,
-            ),
-          "utf8",
-        ),
+      const { seedArtwork } = await import(
+        "../packages/adventure-artwork-engine/src/catalogue/seed.ts"
       );
-      const assets = currentPath
-        ? validateCatalogueTransition(current, previous)
-        : validateReleaseCatalogue(current, previous);
-      if (!currentPath)
-        await verifyReleaseAssets(assets, {
-          fetch,
-          openDecoder: openArtworkDecoder,
-        });
+      const report = await runCoverageDiagnostics(seedArtwork, {
+        verifyRemote,
+      });
       console.log(
-        `Validated ${assets.length} artwork assets${currentPath ? " (metadata only)" : " and their uploaded variants"}.`,
+        jsonOutput ? JSON.stringify(report, null, 2) : formatCoverageReport(report),
       );
+      if (
+        report.undocumentedRoleGaps.length > 0 ||
+        (verifyRemote && report.stateCounts["R2 URL missing or unverified"] > 0)
+      ) {
+        process.exitCode = 1;
+      }
     } catch (error) {
       console.error(
-        "Artwork catalogue validation failed:",
+        "Adventure artwork coverage check failed:",
         error instanceof Error ? error.message : String(error),
       );
       process.exitCode = 1;
+    }
+  } else {
+    const [currentPath, previousPath] = args;
+    if (
+      Boolean(currentPath) !== Boolean(previousPath) ||
+      args.length > 2
+    ) {
+      console.error(
+        "Usage: bun scripts/validate-adventure-artwork.mjs [<current.json> <previous.json> | --coverage [--verify-remote] [--json]]",
+      );
+      process.exitCode = 1;
+    } else {
+      try {
+        const current = currentPath
+          ? JSON.parse(await readFile(currentPath, "utf8"))
+          : (
+              await import("../packages/adventure-artwork-engine/src/catalogue/seed.ts")
+            ).seedArtwork;
+        const previous = JSON.parse(
+          await readFile(
+            previousPath ??
+              new URL(
+                "../packages/adventure-artwork-engine/src/catalogue/released-baseline.json",
+                import.meta.url,
+              ),
+            "utf8",
+          ),
+        );
+        const assets = currentPath
+          ? validateCatalogueTransition(current, previous)
+          : validateReleaseCatalogue(current, previous);
+        if (!currentPath)
+          await verifyReleaseAssets(assets, {
+            fetch,
+            openDecoder: openArtworkDecoder,
+          });
+        console.log(
+          `Validated ${assets.length} artwork assets${currentPath ? " (metadata only)" : " and their uploaded variants"}.`,
+        );
+      } catch (error) {
+        console.error(
+          "Artwork catalogue validation failed:",
+          error instanceof Error ? error.message : String(error),
+        );
+        process.exitCode = 1;
+      }
     }
   }
 }

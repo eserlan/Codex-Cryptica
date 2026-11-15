@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  diagnoseArtworkVariants,
+  diagnoseReleaseAssets,
+  runCoverageDiagnostics,
   validateCatalogueTransition,
   validateReleaseCatalogue,
   verifyArtworkVariants,
@@ -189,5 +192,122 @@ describe("catalogue transition", () => {
         [],
       ),
     ).toThrow("coverage");
+  });
+});
+
+describe("remote diagnostic verification and coverage integration", () => {
+  const bytes = new TextEncoder().encode("RIFFxxxxWEBPpayload");
+  const uploaded = {
+    ...variant,
+    bytes: bytes.length,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+  };
+  const validItem = {
+    ...asset,
+    id: "npc-fantasy-valid-01",
+    type: "npc",
+    primaryCues: ["innkeeper"],
+    variants: {
+      preview: { ...uploaded, width: 240, height: 320 },
+      display: { ...uploaded, width: 240, height: 320 },
+    },
+  };
+  const corruptItem = {
+    ...validItem,
+    id: "npc-fantasy-corrupt-01",
+    primaryCues: ["smith"],
+    variants: {
+      preview: { ...uploaded, width: 240, height: 320, sha256: "b".repeat(64) },
+      display: { ...uploaded, width: 240, height: 320 },
+    },
+  };
+  const wrongDimItem = {
+    ...validItem,
+    id: "npc-fantasy-dim-01",
+    primaryCues: ["healer"],
+    variants: {
+      preview: { ...uploaded, width: 240, height: 320 },
+      display: { ...uploaded, width: 768, height: 1024 },
+    },
+  };
+  const redirectedItem = {
+    ...validItem,
+    id: "npc-fantasy-redirect-01",
+    primaryCues: ["guard"],
+    variants: {
+      preview: {
+        ...uploaded,
+        width: 240,
+        height: 320,
+        url: "https://assets.codexcryptica.com/adventure-artwork/redirect.webp",
+      },
+      display: { ...uploaded, width: 240, height: 320 },
+    },
+  };
+
+  it("classifies passing and failing remote R2 variants without throwing", async () => {
+    const fetcher = async (url) => {
+      if (String(url).includes("redirect.webp")) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "https://evil.test" },
+        });
+      }
+      return new Response(bytes, { headers: { "content-type": "image/webp" } });
+    };
+    const decode = async () => ({ width: 240, height: 320 });
+
+    const diagnostics = await diagnoseArtworkVariants(
+      [validItem, corruptItem, wrongDimItem, redirectedItem],
+      { fetch: fetcher, decode },
+    );
+
+    expect(diagnostics.get("npc-fantasy-valid-01")).toMatchObject({
+      verified: true,
+    });
+    expect(diagnostics.get("npc-fantasy-corrupt-01")).toMatchObject({
+      verified: false,
+    });
+    expect(diagnostics.get("npc-fantasy-dim-01")).toMatchObject({
+      verified: false,
+    });
+    expect(diagnostics.get("npc-fantasy-redirect-01")).toMatchObject({
+      verified: false,
+    });
+
+    const report = await runCoverageDiagnostics(
+      [validItem, corruptItem, wrongDimItem, redirectedItem],
+      { verifyRemote: true, fetch: fetcher, decode },
+    );
+    const byId = new Map(report.assets.map((entry) => [entry.id, entry]));
+    expect(byId.get("npc-fantasy-valid-01")).toMatchObject({
+      state: "valid image in catalogue",
+    });
+    expect(byId.get("npc-fantasy-corrupt-01")).toMatchObject({
+      state: "R2 URL missing or unverified",
+    });
+    expect(byId.get("npc-fantasy-dim-01")).toMatchObject({
+      state: "R2 URL missing or unverified",
+    });
+    expect(byId.get("npc-fantasy-redirect-01")).toMatchObject({
+      state: "R2 URL missing or unverified",
+    });
+  });
+
+  it("closes the browser decoder during diagnostic release verification", async () => {
+    let closed = 0;
+    const openDecoder = async () => ({
+      decode: async () => ({ width: 240, height: 320 }),
+      close: async () => {
+        closed++;
+      },
+    });
+    const diagnostics = await diagnoseReleaseAssets([validItem], {
+      fetch: async () =>
+        new Response(bytes, { headers: { "content-type": "image/webp" } }),
+      openDecoder,
+    });
+    expect(diagnostics.get("npc-fantasy-valid-01")?.verified).toBe(true);
+    expect(closed).toBe(1);
   });
 });
