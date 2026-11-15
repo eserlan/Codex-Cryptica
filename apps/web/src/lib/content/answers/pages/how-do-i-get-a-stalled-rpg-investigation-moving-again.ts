@@ -192,11 +192,22 @@ export const howDoIGetAStalledRpgInvestigationMovingAgain: AnswerConfigInput = {
         },
         {
           term: "The middle ground",
-          text: "Many home campaigns fix the central crime and improvise motives, accomplices and fallout around it. Keep track of which layer is which. A wrong theory can create a copycat, a rival investigator or a suspect with a real but separate secret, without becoming the answer to the original crime.",
+          text: "Many home campaigns fix the central crime and improvise details around it. Keep track of which layer is which, and do not let an improvised detail quietly rewrite the fixed crime.",
         },
       ],
       outro:
         "Do not substitute one model for the other in secret mid-case. If the table would rather play the emergent kind, agree that openly between sessions and adopt a game or procedure that supports it.",
+    },
+    {
+      kind: "prose",
+      heading: "If the party is about to act on a wrong theory",
+      paragraphs: [
+        "A stall is not the same problem as a party about to arrest, accuse or attack someone on a theory the evidence does not support. If the next step is irreversible, pause on that decision itself rather than on restoring a lead.",
+      ],
+      cta: {
+        text: "Read how to handle players reaching the wrong conclusion",
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+      },
     },
     {
       kind: "example",
@@ -207,11 +218,15 @@ export const howDoIGetAStalledRpgInvestigationMovingAgain: AnswerConfigInput = {
       items: [
         {
           term: "The two missed clues",
-          text: "At the mill, the party examined the body and the race but never searched the store, so they missed the split grain sack dusted with charcoal. At the toll bridge, they asked the keeper about strangers but never asked to see the toll ledger, which records Bram's cart crossing before dawn on the night Odo died. Neither clue is available to them, and neither failure was a choice: one room went unsearched and one question went unasked.",
+          text: "At the mill, the party examined the body and the race but never searched the store, so they missed the split grain sack dusted with charcoal. At the toll bridge, they asked the keeper about strangers but never asked to see the toll ledger, which records Bram's cart crossing before dawn on the night Odo died. Neither clue is available to them. The party did not recognise the store or the ledger as avenues it could pursue, so neither counts as a lead it weighed and declined.",
         },
         {
           term: "The false theory",
-          text: "The party has settled on Ivo the bell-ringer. Odo argued with him about the chapel tithe in front of witnesses, and rope fibre on Odo's coat matches the bell rope. The fibre is there because Ivo helped lift the body from the race, which the smith mentioned once, early, and nobody wrote down. The theory is fair on the evidence as received. Correcting it by announcement would teach the party to stop reasoning.",
+          text: "The party has settled on Ivo the bell-ringer. Odo argued with him about the chapel tithe in front of witnesses, and rope fibre on Odo's coat matches the bell rope. On the facts the party is actively using, that reading is fair. One established fact has fallen out of the discussion: the smith said, early in the investigation, that Ivo helped lift the body from the race. Nobody wrote it down, and for two hours nobody has tested the theory against it.",
+        },
+        {
+          term: "Start with a recap, not new evidence",
+          text: "Before adding anything, restate what the characters already know, without ranking it: Odo and Ivo argued about the tithe, fibre from a rope was found on Odo's coat, and the smith said Ivo helped lift the body from the race that morning. That last fact gives the fibre a second possible explanation, contact while recovering the body, alongside contact during an attack. It does not prove Ivo innocent: he could still have been at the mill earlier, and the argument still needs weighing. What it changes is the question the party can now test. Instead of asking only whether Ivo is guilty, they can ask where Ivo was before the body was found, who else handled Odo or his coat, and whether anyone at the mill or on the road that night connects to the store they never searched. The investigation has a next action again before any new event arrives.",
         },
         {
           term: "What not to do",
@@ -219,15 +234,15 @@ export const howDoIGetAStalledRpgInvestigationMovingAgain: AnswerConfigInput = {
         },
         {
           term: "Route one: a witness with his own errand",
-          text: "The goatherd comes down from the high pasture because two of his goats have strayed towards the charcoal camp and Bram drove them off roughly, which is unlike him. While asking the party's help, he mentions that Bram's kiln has been smoking at night, although charcoal burners in this valley burn by day so the smoke can be watched. The party now has observable things to test: the kiln, the camp, and the split sack still waiting in the mill store if they think to look. The goatherd knows nothing about a murder and will say so.",
+          text: "If the recap alone does not produce a test the party wants to run, the goatherd comes down from the high pasture because his goats strayed into the charcoal camp and Bram drove him and the flock off roughly, which is unlike him, leaving two goats unaccounted for. While asking the party to help find them, he says what he saw when he went in to fetch the flock: three sacks stamped with the mill brand stacked under a tarpaulin beside the kiln. The sacks are there because Bram has been holding grain taken from the mill store at his camp until he can move it down the valley, and fetching his goats gave the goatherd a reason to be where Bram would not expect company. The party can choose to help the goatherd and look at the camp, question him about when he first noticed the sacks, or go back and search the mill store now that sacks have been mentioned. Any of those can establish that Bram holds grain from Odo's mill. None of it yet proves Bram killed Odo, when the sacks left the mill, or whether anyone helped him. The goatherd knows nothing about a murder and will say so.",
         },
         {
           term: "Route two: the culprit's next necessary step",
-          text: "Bram still holds stolen grain and the pass will close with the next snow. He hires two porters at the inn to move sacks to the toll bridge at first light, paying in coin he should not have. The porters talk, because porters do. The party can watch the yard, follow the sacks, check the mill brand stamped on them, or question the toll keeper again, this time with a reason to ask about carts. Each option tests the Ivo theory against the world rather than replacing it: the tithe argument stays real, and the party still has to explain the rope fibre before its case holds together.",
+          text: "Bram still holds stolen grain and the pass will close with the next snow. He hires two porters at the inn to move sacks to the toll bridge at first light, paying in coin he should not have. The porters talk, because porters do. The party can watch the yard, follow the sacks, check the mill brand stamped on them, or question the toll keeper again, this time with a reason to ask about carts. Each option tests the same unresolved question the recap left open: does the grain taken from the mill connect Bram to the mill on the night Odo died, and can the ledger or the porters place that movement in time? Grain in Bram's hands shows theft. It does not on its own show murder, and the party still has to establish that link before any accusation holds.",
         },
         {
           term: "How the recovery ends",
-          text: "Either route returns a next action the party chose for itself. If the players instead decide to arrest Ivo tonight, make the cost of that plain, that he helped lift the body and has not yet been asked about that morning, and then respect the decision if they proceed. The case continues through the ledger, the sacks and Bram's movements. It does not continue through Ivo gasping a name he never knew.",
+          text: "The recap loosens the Ivo theory first, and either route then gives the party a question it can test with its own chosen action: ask the smith and Ivo about the morning the body was recovered, search the store, visit the camp or check the ledger against the porters' account. The investigation is moving again because the party has a person to question, a place to check and a record that could prove its new reading wrong. Nobody has announced a culprit, and Bram's grain, the timing in the ledger and a link to the killing still have to be established separately.",
         },
       ],
     },
