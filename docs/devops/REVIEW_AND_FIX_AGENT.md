@@ -12,6 +12,16 @@ Design principle: **automate the mechanical part, escalate the judgment part.**
 - Anything ambiguous (multiple valid fixes, depends on intent not yet specified), it does **not** guess — it stops and asks, via a PR comment (durable, actionable) plus a Discord ping with a direct link to that comment (so you notice without polling and don't have to go hunting for which comment needs a reply).
 - Nothing is ever merged or opened as a new PR by this flow. A human stays the gate on anything that ships.
 
+## Agent documentation change authority
+
+For edits to `AGENTS.md`, **escalate by semantic impact, not by filename alone**:
+
+- **Routine agent-maintainable description:** record a dependency version, note an existing implementation detail, document an already-approved local path, or correct a factual technology entry. Apply the usual PR review and checks without requesting separate content sign-off solely because `AGENTS.md` changed.
+- **Human decision required:** introduce or alter a binding architectural principle, storage/sync behaviour, privacy or security rule, agent authority, governance rule, or operational default. This includes a seemingly factual sentence that actually changes the permitted behaviour (for example, silently enabling remote sync rather than merely documenting local OPFS storage).
+- **Uncertain classification:** ask the owner and cite the exact disputed lines and behavioural implications. Do not infer permission from the section heading.
+
+This is an **approved triage policy**, not an implemented automated classifier. Existing factory escalation/labels, independent review findings, PR checks and human merge gates continue to apply until their mechanisms are explicitly changed.
+
 ## The three skills
 
 All three live under `.claude/skills/` and are manually invoked (`/review-and-fix`, `/resume-review`) — see [Known gaps](#known-gaps) for what isn't automated yet.
