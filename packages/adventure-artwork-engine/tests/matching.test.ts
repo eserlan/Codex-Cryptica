@@ -200,18 +200,30 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
     expect(rogueMatch?.id).not.toBe("npc-fantasy-bard-01");
   });
 
-  it("selects planned archetype assets by role intent and avoids witch/wizard and cultist/cleric collisions", () => {
-    const archetypes = [
-      "elder",
+  it("selects published and planned archetype assets by role intent and avoids witch/wizard and cultist/cleric collisions", () => {
+    const publishedArchetypes = [
       "witch",
       "cultist",
       "bandit",
+      "necromancer",
+    ] as const;
+    for (const role of publishedArchetypes) {
+      expect(
+        matchArtwork(seedArtwork, {
+          type: "npc",
+          genre: "fantasy",
+          primaryCues: [role],
+        })?.id,
+      ).toBe(`npc-fantasy-${role}-01`);
+    }
+
+    const plannedArchetypes = [
+      "elder",
       "official",
       "urchin",
       "goblin",
-      "necromancer",
     ] as const;
-    const archetypeAssets = archetypes.map((role) =>
+    const plannedAssets = plannedArchetypes.map((role) =>
       asset(`npc-fantasy-${role}-01`, {
         type: "npc",
         primaryCues: [role],
@@ -219,8 +231,8 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
         moodCues: [],
       }),
     );
-    const combinedPool = [...seedArtwork, ...archetypeAssets];
-    for (const role of archetypes) {
+    const combinedPool = [...seedArtwork, ...plannedAssets];
+    for (const role of plannedArchetypes) {
       expect(
         matchArtwork(combinedPool, {
           type: "npc",
@@ -230,19 +242,72 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
       ).toBe(`npc-fantasy-${role}-01`);
     }
 
-    const witchOnSeed = matchArtwork(seedArtwork, {
-      type: "npc",
-      genre: "fantasy",
-      primaryCues: ["witch"],
-    });
-    expect(witchOnSeed).toBeNull();
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["elder"],
+      }),
+    ).toBeNull();
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["clockmaker"],
+      }),
+    ).toBeNull();
+  });
 
-    const cultistOnSeed = matchArtwork(seedArtwork, {
+  it("resolves occult and outlaw synonyms to the dedicated portraits", () => {
+    for (const synonym of ["seer", "oracle"]) {
+      expect(
+        matchArtwork(seedArtwork, {
+          type: "npc",
+          genre: "fantasy",
+          primaryCues: [synonym],
+        })?.id,
+      ).toBe("npc-fantasy-witch-01");
+    }
+
+    for (const synonym of ["highwayman", "outlaw"]) {
+      expect(
+        matchArtwork(seedArtwork, {
+          type: "npc",
+          genre: "fantasy",
+          primaryCues: [synonym],
+        })?.id,
+      ).toBe("npc-fantasy-bandit-01");
+    }
+  });
+
+  it("prioritizes witch, bandit, and necromancer roles over ancestry and setting", () => {
+    const witchInTempleVillage = matchArtwork(seedArtwork, {
       type: "npc",
       genre: "fantasy",
-      primaryCues: ["cultist"],
+      primaryCues: ["human", "witch"],
+      settingCues: ["temple", "village"],
     });
-    expect(cultistOnSeed).toBeNull();
+    expect(witchInTempleVillage?.id).toBe("npc-fantasy-witch-01");
+    expect(witchInTempleVillage?.id).not.toBe("npc-fantasy-cleric-01");
+    expect(witchInTempleVillage?.id).not.toBe("npc-fantasy-scholar-02");
+
+    const banditInTownRoad = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["human", "bandit"],
+      settingCues: ["town", "road"],
+    });
+    expect(banditInTownRoad?.id).toBe("npc-fantasy-bandit-01");
+    expect(banditInTownRoad?.id).not.toBe("npc-fantasy-guard-01");
+
+    const necromancerInLabTemple = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["human", "necromancer"],
+      settingCues: ["laboratory", "temple"],
+    });
+    expect(necromancerInLabTemple?.id).toBe("npc-fantasy-necromancer-01");
+    expect(necromancerInLabTemple?.id).not.toBe("npc-fantasy-scholar-02");
   });
 
   it("prioritizes explicit NPC role matches over ancestry and setting matches", () => {
