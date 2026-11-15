@@ -138,13 +138,29 @@ function emptyRetrievalResult(sceneId: string): AdventureRetrievalResult {
   };
 }
 
+function formatSectionPageLabel(
+  section: Pick<SectionAnchor, "pageNumber" | "pageEnd">,
+): string | null {
+  if (section.pageNumber === undefined) {
+    return null;
+  }
+  if (section.pageEnd !== undefined && section.pageEnd > section.pageNumber) {
+    return `pp. ${section.pageNumber}-${section.pageEnd}`;
+  }
+  return `p. ${section.pageNumber}`;
+}
+
 function formatSectionContext(
   section: SectionAnchor,
   readAloud: string[],
   encounters: EncounterRecord[],
   secrets: SecretRecord[],
 ): string {
-  const parts: string[] = [`## ${section.title} [${section.sourceId}]`];
+  const pageLabel = formatSectionPageLabel(section);
+  const citationText = pageLabel
+    ? `${section.sourceId}, ${pageLabel}`
+    : section.sourceId;
+  const parts: string[] = [`## ${section.title} [${citationText}]`];
 
   for (const block of readAloud) {
     parts.push(`> Read aloud: ${block}`);
@@ -225,10 +241,15 @@ export function retrieveAdventureContext(
     secrets,
   });
 
+  const pageLabel = formatSectionPageLabel(section);
+  const citations = pageLabel
+    ? [section.sourceId, pageLabel]
+    : [section.sourceId];
+
   return {
     sceneId: section.sourceId,
     found: true,
-    citations: [section.sourceId],
+    citations,
     title,
     readAloud,
     body,

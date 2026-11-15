@@ -37,11 +37,14 @@ const SCENE_TITLE_RE = /^(?:Scene\s+\d+:|Optional Branch:)/i;
 const OPTIONAL_BRANCH_RE = /^Optional Branch:/i;
 const ENDING_TITLE_RE = /^Ending:\s*/i;
 
-interface RawSection {
+export interface RawSection {
   level: number;
   title: string;
   lines: string[];
   lineNumber: number;
+  pageNumber?: number;
+  pageEnd?: number;
+  forceUnresolvedProvenance?: boolean;
 }
 
 interface FenceState {
@@ -76,7 +79,7 @@ interface ParseAccumulator {
   ambiguities: AmbiguityRecord[];
 }
 
-function toKebabCase(input: string): string {
+export function toKebabCase(input: string): string {
   const slug = input
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
@@ -106,7 +109,7 @@ function hasBinaryControlChars(text: string): boolean {
   return false;
 }
 
-async function computeSha256Hex(bytes: Uint8Array): Promise<string> {
+export async function computeSha256Hex(bytes: Uint8Array): Promise<string> {
   const copy = new Uint8Array(bytes);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", copy);
   return Array.from(new Uint8Array(digest))
@@ -431,26 +434,62 @@ function scanSectionLines(lines: string[]): SectionScanContent {
   return content;
 }
 
+function initialSectionProvenance(
+  raw: RawSection,
+  explicitSourceId: string | undefined,
+): Provenance {
+  if (raw.forceUnresolvedProvenance) return "unresolved";
+  return explicitSourceId ? "source-grounded" : "suggested";
+}
+
+function disambiguateSourceId(
+  baseId: string,
+  raw: RawSection,
+  acc: ParseAccumulator,
+): { sourceId: string; duplicated: boolean } {
+  if (!acc.allocatedSourceIds.has(baseId)) {
+    return { sourceId: baseId, duplicated: false };
+  }
+  let suffix = 2;
+  while (
+    acc.allocatedSourceIds.has(`${baseId}-${suffix}`) ||
+    acc.reservedSourceIds.has(`${baseId}-${suffix}`)
+  ) {
+    suffix++;
+  }
+  const sourceId = `${baseId}-${suffix}`;
+  acc.ambiguities.push({
+    id: `amb-duplicate-source-id-${raw.lineNumber}`,
+    code: "DUPLICATE_SOURCE_ID",
+    message: `Duplicate source-id "${baseId}" at line ${raw.lineNumber}; disambiguated to "${sourceId}".`,
+    sourceId,
+    provenance: "unresolved",
+  });
+  return { sourceId, duplicated: true };
+}
+
 function resolveSectionIdentity(
   raw: RawSection,
   explicitSourceId: string | undefined,
   acc: ParseAccumulator,
+  emitMissingSourceIdAmbiguity: boolean,
 ): { sourceId: string; provenance: Provenance } {
   const baseId = explicitSourceId ?? toKebabCase(raw.title);
-  let sourceId = baseId;
-  let provenance: Provenance = explicitSourceId
-    ? "source-grounded"
-    : "suggested";
+  let provenance = initialSectionProvenance(raw, explicitSourceId);
 
-  if (!explicitSourceId) {
+  if (!explicitSourceId && emitMissingSourceIdAmbiguity) {
     acc.ambiguities.push({
       id: `amb-missing-source-id-${raw.lineNumber}`,
       code: "MISSING_SOURCE_ID",
       message: `Section "${raw.title}" at line ${raw.lineNumber} is missing a <!-- source-id: ... --> anchor comment.`,
-      sourceId,
+      sourceId: baseId,
       provenance: "unresolved",
     });
   }
+
+  const disambiguated = disambiguateSourceId(baseId, raw, acc);
+  const sourceId = disambiguated.sourceId;
+  if (disambiguated.duplicated) provenance = "unresolved";
 
   const titleKey = raw.title.toLowerCase();
   const existingWithTitle = acc.seenTitles.get(titleKey);
@@ -467,26 +506,7 @@ function resolveSectionIdentity(
     acc.seenTitles.set(titleKey, sourceId);
   }
 
-  if (acc.allocatedSourceIds.has(baseId)) {
-    let suffix = 2;
-    while (
-      acc.allocatedSourceIds.has(`${baseId}-${suffix}`) ||
-      acc.reservedSourceIds.has(`${baseId}-${suffix}`)
-    ) {
-      suffix++;
-    }
-    sourceId = `${baseId}-${suffix}`;
-    provenance = "unresolved";
-    acc.ambiguities.push({
-      id: `amb-duplicate-source-id-${raw.lineNumber}`,
-      code: "DUPLICATE_SOURCE_ID",
-      message: `Duplicate source-id "${baseId}" at line ${raw.lineNumber}; disambiguated to "${sourceId}".`,
-      sourceId,
-      provenance: "unresolved",
-    });
-  }
   acc.allocatedSourceIds.add(sourceId);
-
   return { sourceId, provenance };
 }
 
@@ -556,6 +576,12 @@ function recordSectionAndSecrets(
     body,
     ...(content.readAloud.length > 0 ? { readAloud: content.readAloud } : {}),
     gmOnly: isGmOnlySection,
+    ...(raw.pageNumber !== undefined ? { pageNumber: raw.pageNumber } : {}),
+    ...(raw.pageNumber !== undefined &&
+    raw.pageEnd !== undefined &&
+    raw.pageEnd > raw.pageNumber
+      ? { pageEnd: raw.pageEnd }
+      : {}),
     provenance,
   });
 
@@ -607,12 +633,17 @@ function recordSceneAndEncounter(
   }
 }
 
-function processRawSection(raw: RawSection, acc: ParseAccumulator): void {
+function processRawSection(
+  raw: RawSection,
+  acc: ParseAccumulator,
+  emitMissingSourceIdAmbiguity: boolean,
+): void {
   const content = scanSectionLines(raw.lines);
   const { sourceId, provenance } = resolveSectionIdentity(
     raw,
     content.explicitSourceId,
     acc,
+    emitMissingSourceIdAmbiguity,
   );
   const body = content.bodyLines.join("\n").trim();
 
@@ -667,6 +698,67 @@ function extractClues(sections: SectionAnchor[]): ClueRecord[] {
   return clues;
 }
 
+export interface BuildAdventurePackageOptions {
+  fileName: string;
+  documentHash: string;
+  importMethod: "markdown" | "pdf";
+  rawSections: RawSection[];
+  ambiguities: AmbiguityRecord[];
+  emitMissingSourceIdAmbiguity?: boolean;
+}
+
+export function buildAdventureSourcePackageFromSections(
+  options: BuildAdventurePackageOptions,
+): AdventureSourcePackage {
+  const reservedSourceIds = new Set(
+    options.rawSections.flatMap((section) => {
+      for (const line of section.lines) {
+        const markerMatch = line.trim().match(SOURCE_ID_MARKER_RE);
+        if (markerMatch) return [markerMatch[1]];
+      }
+      return [];
+    }),
+  );
+  const acc: ParseAccumulator = {
+    allocatedSourceIds: new Set(),
+    reservedSourceIds,
+    seenTitles: new Map(),
+    sections: [],
+    scenes: [],
+    npcs: [],
+    encounters: [],
+    secrets: [],
+    endings: [],
+    ambiguities: [...options.ambiguities],
+  };
+
+  const emitMissingSourceId = options.emitMissingSourceIdAmbiguity ?? true;
+  for (const raw of options.rawSections) {
+    processRawSection(raw, acc, emitMissingSourceId);
+  }
+
+  const titleSection = acc.sections.find((s) => s.level === 1);
+  return {
+    schemaVersion: ADVENTURE_SOURCE_SCHEMA_VERSION,
+    status: "draft",
+    documentHash: options.documentHash,
+    sourceIdentity: {
+      fileName: options.fileName.trim(),
+      ...(titleSection ? { title: titleSection.title } : {}),
+    },
+    importMethod: options.importMethod,
+    importVersion: ADVENTURE_IMPORT_VERSION,
+    sections: acc.sections,
+    scenes: acc.scenes,
+    npcs: acc.npcs,
+    clues: extractClues(acc.sections),
+    encounters: acc.encounters,
+    secrets: acc.secrets,
+    endings: acc.endings,
+    ambiguities: acc.ambiguities,
+  };
+}
+
 export async function parseAdventureMarkdown(
   rawContent: string | Uint8Array,
   options: { fileName: string },
@@ -715,52 +807,14 @@ export async function parseAdventureMarkdown(
   }
 
   const documentHash = await computeSha256Hex(decoded.bytes);
-  const reservedSourceIds = new Set(
-    rawSections.flatMap((section) => {
-      for (const line of section.lines) {
-        const markerMatch = line.trim().match(SOURCE_ID_MARKER_RE);
-        if (markerMatch) return [markerMatch[1]];
-      }
-      return [];
-    }),
-  );
-  const acc: ParseAccumulator = {
-    allocatedSourceIds: new Set(),
-    reservedSourceIds,
-    seenTitles: new Map(),
-    sections: [],
-    scenes: [],
-    npcs: [],
-    encounters: [],
-    secrets: [],
-    endings: [],
-    ambiguities,
-  };
-
-  for (const raw of rawSections) {
-    processRawSection(raw, acc);
-  }
-
-  const titleSection = acc.sections.find((s) => s.level === 1);
-  const pkg: AdventureSourcePackage = {
-    schemaVersion: ADVENTURE_SOURCE_SCHEMA_VERSION,
-    status: "draft",
+  const pkg = buildAdventureSourcePackageFromSections({
+    fileName: options.fileName,
     documentHash,
-    sourceIdentity: {
-      fileName: options.fileName.trim(),
-      ...(titleSection ? { title: titleSection.title } : {}),
-    },
     importMethod: "markdown",
-    importVersion: ADVENTURE_IMPORT_VERSION,
-    sections: acc.sections,
-    scenes: acc.scenes,
-    npcs: acc.npcs,
-    clues: extractClues(acc.sections),
-    encounters: acc.encounters,
-    secrets: acc.secrets,
-    endings: acc.endings,
-    ambiguities: acc.ambiguities,
-  };
+    rawSections,
+    ambiguities,
+    emitMissingSourceIdAmbiguity: true,
+  });
 
   return { ok: true, package: pkg };
 }
