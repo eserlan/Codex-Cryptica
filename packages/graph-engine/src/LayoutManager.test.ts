@@ -189,6 +189,29 @@ describe("LayoutManager", () => {
     );
   });
 
+  it("reports the worker layout duration from the injected clock", async () => {
+    const now = vi.fn().mockReturnValueOnce(100).mockReturnValueOnce(142);
+    const onLayoutComputed = vi.fn();
+    const manager = new LayoutManager(mockCy as unknown as Core, { now });
+
+    await manager.apply(
+      { reason: "Initial Load", isInitial: true, isForced: true },
+      {
+        timelineMode: false,
+        timelineAxis: "x",
+        timelineScale: 1,
+        orbitMode: false,
+        centralNodeId: null,
+        stableLayout: false,
+        isGuest: false,
+        onLayoutComputed,
+      },
+    );
+
+    expect(onLayoutComputed).toHaveBeenCalledWith(42);
+    expect(now).toHaveBeenCalledTimes(2);
+  });
+
   it("heals a degenerate slash on a non-initial pass by forcing randomize", async () => {
     // 15 nodes collapsed onto y = x (a persisted diagonal). A non-initial
     // Elements Update would normally solve incrementally (randomize=false) and
