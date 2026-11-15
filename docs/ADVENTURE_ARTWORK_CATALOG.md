@@ -10,7 +10,7 @@ All images are hosted on Cloudflare R2 (`codex-cryptica-statics` bucket) under `
 
 | Genre / Theme                                                 | Locations (Have / Target) | NPC Portraits (Have / Target) | Scenes (Have / Target) | Atmospheres (Have / Target) | Total (Have / Target) |
 | :------------------------------------------------------------ | :-----------------------: | :---------------------------: | :--------------------: | :-------------------------: | :-------------------: |
-| `fantasy`                                                     |          25 / 25          |            44 / 53            |         6 / 6          |            3 / 3            |      **78 / 87**      |
+| `fantasy`                                                     |          25 / 25          |            48 / 53            |         6 / 6          |            3 / 3            |      **82 / 87**      |
 | `contemporary` (`modern`)                                     |          5 / 16           |            20 / 20            |         0 / 4          |            2 / 2            |      **27 / 42**      |
 | `science-fiction` (`scifi`, `starwars`, `startrek`, `lancer`) |          5 / 14           |            0 / 10             |         0 / 4          |            2 / 2            |      **7 / 30**       |
 | `horror`                                                      |          4 / 12           |            0 / 10             |         0 / 4          |            3 / 3            |      **7 / 29**       |
@@ -23,9 +23,9 @@ All images are hosted on Cloudflare R2 (`codex-cryptica-statics` bucket) under `
 | `apocalyptic` (`fallout`)                                     |           0 / 3           |             0 / 3             |         0 / 2          |            0 / 1            |       **0 / 9**       |
 | `pirate` / `pulp-adventure`                                   |           0 / 3           |             0 / 3             |         0 / 2          |            0 / 1            |       **0 / 9**       |
 | `mythic`                                                      |           0 / 3           |             0 / 3             |         0 / 1          |            0 / 1            |       **0 / 8**       |
-| **Total**                                                     |       **43 / 106**        |         **64 / 127**          |       **6 / 36**       |         **16 / 24**         |     **129 / 293**     |
+| **Total**                                                     |       **43 / 106**        |         **68 / 127**          |       **6 / 36**       |         **16 / 24**         |     **133 / 293**     |
 
-> **Phase 1**: the **24 seed locations + 5 additional fantasy locations (43 locations total)** are live across the 5 core `catalogue.ts` genres. **Phase 2**: **64 NPC portraits** (44 fantasy + 20 contemporary), **6 fantasy scenes**, and **16 core atmospheres** are live; **9 planned fantasy role portraits** (#4845–#4847) plus `science-fiction`, `horror`, `neutral` NPCs/scenes and `contemporary` locations/scenes remain open. **Phase 3**: expand `catalogue.ts` genre enum & `cues.ts` to cover all remaining Codex Cryptica themes (`cyberpunk`, `steampunk`, `western`, `cosmic-horror`, `gothic`, `apocalyptic`, `pirate`/`pulp-adventure`, `mythic`).
+> **Phase 1**: the **24 seed locations + 5 additional fantasy locations (43 locations total)** are live across the 5 core `catalogue.ts` genres. **Phase 2**: **68 NPC portraits** (48 fantasy + 20 contemporary), **6 fantasy scenes**, and **16 core atmospheres** are live; **5 planned fantasy role portraits** (#4845–#4847) plus `science-fiction`, `horror`, `neutral` NPCs/scenes and `contemporary` locations/scenes remain open. **Phase 3**: expand `catalogue.ts` genre enum & `cues.ts` to cover all remaining Codex Cryptica themes (`cyberpunk`, `steampunk`, `western`, `cosmic-horror`, `gothic`, `apocalyptic`, `pirate`/`pulp-adventure`, `mythic`).
 
 ---
 
@@ -64,19 +64,19 @@ Run `bun scripts/validate-adventure-artwork.mjs --coverage` (add `--verify-remot
 | `innkeeper`   | Live               | `npc-fantasy-merchant-02`                                                                                  | PR #4841    |
 | `healer`      | Live               | `npc-fantasy-cleric-01`, `npc-fantasy-worker-02`, `npc-contemporary-medic-01`, `npc-contemporary-medic-02` | PR #4841    |
 | `smith`       | Live               | `npc-fantasy-worker-01`                                                                                    | PR #4841    |
-| `elder`       | Planned / Not live | —                                                                                                          | #4845–#4847 |
+| `elder`       | Live               | `npc-fantasy-elder-01`                                                                                     | #4865       |
 | `witch`       | Planned / Not live | —                                                                                                          | #4845–#4847 |
 | `cultist`     | Planned / Not live | —                                                                                                          | #4845–#4847 |
 | `bandit`      | Planned / Not live | —                                                                                                          | #4845–#4847 |
-| `official`    | Planned / Not live | —                                                                                                          | #4845–#4847 |
-| `urchin`      | Planned / Not live | —                                                                                                          | #4845–#4847 |
-| `goblin`      | Planned / Not live | —                                                                                                          | #4845–#4847 |
+| `official`    | Live               | `npc-fantasy-official-01`                                                                                  | #4865       |
+| `urchin`      | Live               | `npc-fantasy-urchin-01`                                                                                    | #4865       |
+| `goblin`      | Live               | `npc-fantasy-goblin-01`                                                                                    | #4865       |
 | `necromancer` | Planned / Not live | —                                                                                                          | #4845–#4847 |
 | `informant`   | Planned / Not live | —                                                                                                          | #4845–#4847 |
 
 ---
 
-## 1. Live Inventory (129 Assets: 43 Locations, 64 NPCs, 6 Scenes, 16 Atmospheres)
+## 1. Live Inventory (133 Assets: 43 Locations, 68 NPCs, 6 Scenes, 16 Atmospheres)
 
 The first 43 assets below are `type: "location"` (`1280×720` display, `320×180` preview), approved and live on R2.
 
@@ -129,7 +129,7 @@ The first 43 assets below are `type: "location"` (`1280×720` display, `320×180
 
 ---
 
-### Fantasy NPC portraits (44)
+### Fantasy NPC portraits (48)
 
 |                                                                                     Preview                                                                                     | ID                                  | Genres    | Primary Cues                               | Setting / Mood / Time                                     | Description (`alt`) & Link                                                                                                                                                                                                                  |
 | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :---------------------------------- | :-------- | :----------------------------------------- | :-------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -178,6 +178,10 @@ The first 43 assets below are `type: "location"` (`1280×720` display, `320×180
 |            <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-scholar-03-preview-c6c652c962ab.webp" width="90" alt="npc-fantasy-scholar-03" />            | `npc-fantasy-scholar-03`            | `fantasy` | `scholar`                                  | `interior`, `city` · `quiet` · `night`                    | Bespectacled middle-aged chronicler dipping a quill into an inkwell over parchment in a candlelit archive. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-scholar-03-display-834b9a203b26.webp))                 |
 |           <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-merchant-04-preview-ca9d77e0dc0f.webp" width="90" alt="npc-fantasy-merchant-04" />           | `npc-fantasy-merchant-04`           | `fantasy` | `merchant`                                 | `interior`, `town` · `hopeful`, `mysterious` · `night`    | Cheerful apothecary shopkeeper holding a stoppered amber vial up to warm candlelight behind a wooden counter. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-merchant-04-display-edd90c39a160.webp))             |
 
+|              <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-elder-01-preview-7afb438f7bf3.webp" width="90" alt="npc-fantasy-elder-01" />              | `npc-fantasy-elder-01`              | `fantasy` | `elder`                                    | `village`, `rural`, `exterior` · `hopeful`, `quiet` · `day`  | Weathered village reeve with braided silver beard leaning on a carved ashwood staff beside a stone cottage. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-elder-01-display-98e9e38b3f2a.webp))  |
+|           <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-official-01-preview-5221d2775ee2.webp" width="90" alt="npc-fantasy-official-01" />           | `npc-fantasy-official-01`           | `fantasy` | `official`                                 | `city`, `town`, `interior` · `quiet`, `busy` · `day`         | Unarmed civic magistrate in brass spectacles opening a bound ledger at a candlelit timber desk. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-official-01-display-9fba0ede9496.webp))           |
+|             <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-urchin-01-preview-451ed4ddaf17.webp" width="90" alt="npc-fantasy-urchin-01" />             | `npc-fantasy-urchin-01`             | `fantasy` | `urchin`                                   | `city`, `urban`, `exterior` · `mysterious` · `night`, `rain` | Resourceful alley child in a patched wool tunic glancing over their shoulder in a misty lantern-lit street. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-urchin-01-display-591d682f4c78.webp)) |
+|             <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-goblin-01-preview-ac141c220595.webp" width="90" alt="npc-fantasy-goblin-01" />             | `npc-fantasy-goblin-01`             | `fantasy` | `goblin`                                   | `cave`, `tavern`, `interior` · `busy`, `mysterious` · `day`  | Expressive goblin tinker adjusting brass goggles with an oversized pack of lanterns and tools. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-goblin-01-display-f2f0d42a8aae.webp))              |
 | <img src="https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-01-preview-1b3c47ab282d.webp" width="90" alt="npc-contemporary-traveller-01" /> | `npc-contemporary-traveller-01` | `contemporary` | `traveller` | `urban`, `exterior` · `quiet` · `rain` | Trench-coated investigator or courier under city streetlights in light rain. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-01-display-b25e6f647a03.webp)) |
 | <img src="https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-02-preview-eb86246373f9.webp" width="90" alt="npc-contemporary-traveller-02" /> | `npc-contemporary-traveller-02` | `contemporary` | `traveller` | `rural`, `exterior` · `hopeful` · — | Backpacker in flannel and canvas parka with compass strap on a misty trail. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-02-display-0b232644844d.webp)) |
 | <img src="https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-merchant-01-preview-b40b1e619145.webp" width="90" alt="npc-contemporary-merchant-01" /> | `npc-contemporary-merchant-01` | `contemporary` | `merchant` | `urban`, `interior` · `busy` · — | Friendly neighbourhood diner owner or shopkeeper in rolled sleeves and apron. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-merchant-01-display-70831b409b3c.webp)) |
@@ -297,10 +301,10 @@ All planned fantasy locations are live.
 
 ---
 
-## 3. Characters / NPC Portraits Roadmap (35 Needed: 26 Core + 9 Fantasy Narrative, `type: "npc"`)
+## 3. Characters / NPC Portraits Roadmap (31 Needed: 26 Core + 5 Fantasy Narrative, `type: "npc"`)
 
 Format: `768×1024` display WebP (`<= 256 KB`), `240×320` preview WebP (`<= 32 KB`) — **3:4 portrait**.  
-US3 identity, alias continuity, and Vault promotion are wired, and **44 fantasy NPC portraits are live** (the original 16 base fantasy roles, 18 ancestry × class portraits, and 10 diversity/service additions listed in Section 1), while nine high-impact **narrative/function archetypes remain planned / not live**. Below covers all six broad role buckets (`traveller`, `merchant`, `guard`, `scholar`, `explorer`, `worker`) and the new fantasy gap pack.
+US3 identity, alias continuity, and Vault promotion are wired, and **48 fantasy NPC portraits are live** (the original 16 base fantasy roles, 18 ancestry × class portraits, 10 diversity/service additions, and 4 published social/civic archetypes listed in Section 1). Five high-impact **narrative/function archetypes remain planned / not live**. Below covers all six broad role buckets (`traveller`, `merchant`, `guard`, `scholar`, `explorer`, `worker`) and the remaining fantasy gap pack.
 
 ### Fantasy NPCs (16 / 16 Core + 10 / 10 Additions Complete)
 
@@ -310,19 +314,15 @@ All 26 core and additional role portraits are listed in the live inventory above
 
 All 18 race and class portraits are listed in the live inventory above.
 
-### Fantasy Narrative & Encounter Archetypes (9 Planned / Not Live → 53 Fantasy NPCs Total)
+### Fantasy Narrative & Encounter Archetypes (5 Planned / Not Live → 53 Fantasy NPCs Total)
 
-**P0: commission/generate these nine distinct 3:4 portraits.** They increase the planned Fantasy NPC target from **44 to 53** and the global planned catalogue to **293**. They fill role/function gaps rather than duplicating playable class portraits. All IDs below are _Planned / Not live_ (tracked in #4845–#4847); all nine cues (`elder`, `witch`, `cultist`, `bandit`, `official`, `urchin`, `goblin`, `necromancer`, `informant`) are now active in `cues.ts`.
+**P0: commission/generate these five remaining distinct 3:4 portraits.** With the four social/civic portraits now published, the Fantasy NPC target remains **53** (48 live and five planned) and the global planned catalogue remains **293**. These portraits fill role/function gaps rather than duplicating playable class portraits. All IDs below are _Planned / Not live_ (tracked in #4845–#4847); their cues (`witch`, `cultist`, `bandit`, `necromancer`, `informant`) are active in `cues.ts`.
 
 | Priority | Status                           | Planned asset ID             | Portrait brief / narrative purpose                                                                                 | Proposed `primaryCues` | Suggested setting · mood · time                                |
 | :------- | :------------------------------- | :--------------------------- | :----------------------------------------------------------------------------------------------------------------- | :--------------------- | :------------------------------------------------------------- |
-| P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-elder-01`       | Weathered village reeve or elder, visibly old, grounded, trusted or burdened; rural quest-giver                    | `elder`                | `village`, `rural` · `hopeful`, `ominous` · `day`              |
 | P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-witch-01`       | Hedge witch, bog seer or oracle with bone charms and a lantern; wilderness mentor/wildcard, not another court mage | `witch`                | `swamp`, `forest`, `wilderness` · `mysterious` · `fog`, `dusk` |
 | P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-cultist-01`     | Hooded ritual zealot, distinctive cult vestments and obsidian dagger; minor antagonist/betrayer                    | `cultist`              | `ruins`, `cave`, `interior` · `ominous` · `night`              |
 | P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-bandit-01`      | Scarred highwayman or outlaw captain, practical worn equipment; roadside rival/threat                              | `bandit`               | `road`, `forest`, `exterior` · `ominous` · `dusk`              |
-| P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-official-01`    | Unarmed magistrate, guildmaster or harbour master with ledger and spectacles; civic non-combat gatekeeper          | `official`             | `city`, `town`, `interior` · `quiet`, `busy` · `day`           |
-| P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-urchin-01`      | Ragged street urchin or alley informant; lower-ward witness/info broker, approachable rather than generic thief    | `urchin`               | `city`, `urban`, `exterior` · `mysterious` · `night`           |
-| P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-goblin-01`      | Expressive goblin tinker or guide with oversized pack; non-standard ally/mascot/trickster                          | `goblin`               | `cave`, `tavern` · `busy`, `mysterious` · `day`                |
 | P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-necromancer-01` | Pale necromancer / dark sorcerer with ritual focus; unmistakable mastermind villain, not generic wizard            | `necromancer`          | `castle`, `ruins`, `interior` · `ominous` · `night`            |
 | P0       | Planned / Not live (#4845–#4847) | `npc-fantasy-informant-01`   | Hooded tavern/alley informant passing a folded note or whispered tip; urban intrigue contact, distinct from rogue  | `informant`            | `city`, `tavern`, `interior` · `mysterious` · `night`          |
 
@@ -332,7 +332,7 @@ All 18 race and class portraits are listed in the live inventory above.
 - `npc-fantasy-fey-01`: fey trickster/forest emissary with nonhuman features (requires `fey` cue).
 - If the first elder is male, consider an elderly woman reeve/wise elder variant as a subsequent identity-diversity option without assuming that all elders are interchangeable.
 
-**Metadata and production gate:** retain 3:4 portrait composition, readable silhouette at thumbnail size, varied age/gender/ancestry, descriptive non-canonical alt text, WebP budget and approved provenance/licence metadata. Register in the manifest only once the actual reviewed files exist; never count placeholders as live. Route the eight role terms through cue extraction/normalisation before expecting them to match; broad place cues (`village`, `tavern`, etc.) must not override explicit NPC roles. See [#4818](https://github.com/eserlan/Codex-Cryptica/issues/4818) for cue/metadata fixes on existing assets and matching tests.
+**Metadata and production gate:** retain 3:4 portrait composition, readable silhouette at thumbnail size, varied age/gender/ancestry, descriptive non-canonical alt text, WebP budget and approved provenance/licence metadata. Register in the manifest only once the actual reviewed files exist; never count placeholders as live. Route the five remaining role terms through cue extraction/normalisation before expecting them to match; broad place cues (`village`, `tavern`, etc.) must not override explicit NPC roles. See [#4818](https://github.com/eserlan/Codex-Cryptica/issues/4818) for cue/metadata fixes on existing assets and matching tests.
 
 ### Contemporary NPCs (20 / 20 Complete)
 

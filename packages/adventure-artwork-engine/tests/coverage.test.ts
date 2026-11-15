@@ -74,17 +74,17 @@ describe("adventure artwork coverage report", () => {
       cues: ARTWORK_CUES,
     });
 
-    expect(report.totalAssets).toBe(129);
+    expect(report.totalAssets).toBe(133);
     expect(report.totalCues).toBe(85);
     expect(report.countsByType).toEqual({
       location: 43,
-      npc: 64,
+      npc: 68,
       scene: 6,
       atmosphere: 16,
     });
     expect(report.countsByGenreAndType.fantasy).toEqual({
       location: 25,
-      npc: 44,
+      npc: 48,
       scene: 6,
       atmosphere: 3,
     });
@@ -128,6 +128,18 @@ describe("adventure artwork coverage report", () => {
     expect(roleByCue.get("smith")?.eligibleAssetIds).toEqual([
       "npc-fantasy-worker-01",
     ]);
+    expect(roleByCue.get("elder")?.eligibleAssetIds).toEqual([
+      "npc-fantasy-elder-01",
+    ]);
+    expect(roleByCue.get("official")?.eligibleAssetIds).toEqual([
+      "npc-fantasy-official-01",
+    ]);
+    expect(roleByCue.get("urchin")?.eligibleAssetIds).toEqual([
+      "npc-fantasy-urchin-01",
+    ]);
+    expect(roleByCue.get("goblin")?.eligibleAssetIds).toEqual([
+      "npc-fantasy-goblin-01",
+    ]);
 
     for (const cue of PR_4841_ROLE_CUES) {
       expect(roleByCue.has(cue)).toBe(true);
@@ -138,6 +150,9 @@ describe("adventure artwork coverage report", () => {
       expect(entry?.state).toBe("no image produced");
       expect(entry?.trackedPendingGap).toBe(true);
       expect(entry?.eligibleAssetIds).toEqual([]);
+    }
+    for (const publishedCue of ["elder", "official", "urchin", "goblin"]) {
+      expect(roleByCue.get(publishedCue)?.trackedPendingGap).toBe(false);
     }
 
     expect(report.undocumentedRoleGaps).toEqual([]);
@@ -271,7 +286,7 @@ describe("adventure artwork coverage report", () => {
     const doc = readFileSync(CATALOG_DOC_PATH, "utf8");
 
     expect(doc).toContain(
-      "## 1. Live Inventory (129 Assets: 43 Locations, 64 NPCs, 6 Scenes, 16 Atmospheres)",
+      "## 1. Live Inventory (133 Assets: 43 Locations, 68 NPCs, 6 Scenes, 16 Atmospheres)",
     );
     expect(doc).toContain(
       "([`cues.ts`](../packages/adventure-artwork-engine/src/cues.ts))",
@@ -282,12 +297,12 @@ describe("adventure artwork coverage report", () => {
     expect(doc).toContain("**Places / Biomes / Structures (29)**");
     expect(doc).toContain("| **Total**");
     expect(doc).toContain("**43 / 106**");
-    expect(doc).toContain("**64 / 127**");
+    expect(doc).toContain("**68 / 127**");
     expect(doc).toContain("**6 / 36**");
     expect(doc).toContain("**16 / 24**");
-    expect(doc).toContain("**129 / 293**");
-    expect(doc).toContain("44 / 53");
-    expect(doc).toContain("**78 / 87**");
+    expect(doc).toContain("**133 / 293**");
+    expect(doc).toContain("48 / 53");
+    expect(doc).toContain("**82 / 87**");
 
     const section1 = doc.slice(
       doc.indexOf("## 1. Live Inventory"),
@@ -309,6 +324,9 @@ describe("adventure artwork coverage report", () => {
     expect(section3).not.toContain("npc-fantasy-worker-03");
     for (const gapCue of TRACKED_PENDING_ROLE_GAPS) {
       expect(section3).toContain(`npc-fantasy-${gapCue}-01`);
+    }
+    for (const publishedCue of ["elder", "official", "urchin", "goblin"]) {
+      expect(section3).not.toContain(`npc-fantasy-${publishedCue}-01`);
     }
 
     const section4 = doc.slice(

@@ -87,13 +87,9 @@ export interface CoverageReportOptions {
 }
 
 export const TRACKED_PENDING_ROLE_GAPS = [
-  "elder",
   "witch",
   "cultist",
   "bandit",
-  "official",
-  "urchin",
-  "goblin",
   "necromancer",
   "informant",
 ] as const;
