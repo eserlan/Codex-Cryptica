@@ -129,7 +129,7 @@ export type AmbiguityRecord = z.infer<typeof AmbiguityRecordSchema>;
 export const AdventureSourcePackageSchema = z
   .object({
     schemaVersion: z.literal(ADVENTURE_SOURCE_SCHEMA_VERSION),
-    status: z.literal("draft"),
+    status: z.enum(["draft", "approved"]),
     documentHash: z.string().regex(/^[a-f0-9]{64}$/),
     sourceIdentity: SourceIdentitySchema,
     importMethod: z.literal("markdown"),
@@ -151,6 +151,7 @@ export type AdventureSourcePackage = z.infer<
 
 export type AdventureImportErrorCode =
   | "EMPTY_INPUT"
+  | "INPUT_TOO_LARGE"
   | "INVALID_OPTIONS"
   | "BINARY_CONTENT"
   | "INVALID_UTF8"
