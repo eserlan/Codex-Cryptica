@@ -272,6 +272,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-dnd-campaign-organisation",

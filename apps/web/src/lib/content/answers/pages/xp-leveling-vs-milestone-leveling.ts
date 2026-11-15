@@ -190,6 +190,7 @@ export const xpLevelingVsMilestoneLeveling: AnswerConfigInput = {
     "how-do-you-prepare-a-sandbox-rpg-campaign",
     "how-do-you-manage-a-campaign-timeline-in-an-rpg",
     "how-do-you-keep-track-of-time-in-a-tabletop-campaign",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-xp-leveling-vs-milestone-leveling",

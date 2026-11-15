@@ -169,6 +169,7 @@ export const howDoYouRunFactionsInASandboxCampaign: AnswerConfigInput = {
     "how-do-i-organise-a-dnd-campaign",
     "how-do-i-run-a-bard-or-face-without-sidelining-the-party",
     "how-would-a-realistic-adventurers-guild-work",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-run-factions-sandbox",
