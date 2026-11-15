@@ -297,4 +297,36 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
     expect(bardInCity?.id).not.toBe("npc-fantasy-guard-01");
     expect(bardInCity?.id).not.toBe("npc-fantasy-scholar-01");
   });
+
+  it("selects npc-fantasy-informant-01 for informant queries without colliding with rogue or urchin", () => {
+    const informantMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["informant"],
+    });
+    expect(informantMatch?.id).toBe("npc-fantasy-informant-01");
+
+    const rogueMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["rogue"],
+    });
+    expect(rogueMatch?.id).toBe("npc-fantasy-rogue-01");
+    expect(rogueMatch?.id).not.toBe("npc-fantasy-informant-01");
+
+    const urchinOnSeed = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["urchin"],
+    });
+    expect(urchinOnSeed).toBeNull();
+
+    const informantInTavern = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["informant"],
+      settingCues: ["urban", "tavern"],
+    });
+    expect(informantInTavern?.id).toBe("npc-fantasy-informant-01");
+  });
 });

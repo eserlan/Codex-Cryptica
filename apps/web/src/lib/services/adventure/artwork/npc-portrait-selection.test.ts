@@ -501,5 +501,36 @@ describe("selectPresentNpcPortrait", () => {
         expect(portrait.asset.id).toBe("npc-fantasy-bard-01");
       }
     });
+
+    it("selects npc-fantasy-informant-01 when an informant is in a tavern or city", () => {
+      const informantInTavern: ArtworkNpcSession = {
+        vaultId: "v1",
+        currentPlaceId: "place-tavern",
+        places: [{ id: "place-tavern", name: "The Velvet Lantern Tavern" }],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c-informant",
+              text: "Vesper, a whisper-network informant in the city tavern.",
+              source: "provisional",
+              placeId: "place-tavern",
+            },
+          ],
+        },
+      };
+      const portrait = selectPresentNpcPortrait(
+        informantInTavern,
+        "v1",
+        {},
+        true,
+        "fantasy",
+        seedArtwork,
+      );
+      expect(portrait?.kind).toBe("catalogue");
+      if (portrait?.kind === "catalogue") {
+        expect(portrait.asset.id).toBe("npc-fantasy-informant-01");
+        expect(portrait.asset.primaryCues).toContain("informant");
+      }
+    });
   });
 });
