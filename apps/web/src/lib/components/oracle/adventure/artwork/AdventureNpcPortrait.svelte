@@ -87,7 +87,7 @@
       {#if subtitle}
         <p
           class={// ui-check-ignore: The spec asks for a de-emphasised muted line; full text is in the lightbox.
-          ["truncate text-meta", "text-theme-muted"]}
+          ["truncate text-helper", "text-theme-muted"]}
           data-testid="adventure-npc-portrait-attribution"
         >
           {subtitle}
