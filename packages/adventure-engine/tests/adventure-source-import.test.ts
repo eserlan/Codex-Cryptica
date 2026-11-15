@@ -210,6 +210,46 @@ describe("AdventureSourcePackage reference one-shot and variants", () => {
     expect(codes.has("SKIPPED_HEADING_LEVEL")).toBe(true);
     expect(codes.has("MALFORMED_TABLE")).toBe(true);
   });
+
+  it("keeps GM-only blockquote continuations private and allocates unique section IDs", async () => {
+    const gmResult = await parseAdventureMarkdown(
+      "## Scene 1: The Vault\n\n<!-- source-id: vault -->\n> **GM only:** The duke is a traitor.\n> The password is swordfish.\n> **Read aloud:** This line remains private too.\nPublic clue.",
+      { fileName: "private-blockquote.md" },
+    );
+    expect(gmResult.ok).toBe(true);
+    if (!gmResult.ok) return;
+
+    const scene = gmResult.package.sections.find(
+      (section) => section.sourceId === "vault",
+    );
+    expect(scene?.body).toBe("Public clue.");
+    expect(gmResult.package.secrets.map((secret) => secret.text)).toEqual([
+      "The duke is a traitor.",
+      "The password is swordfish.",
+      "**Read aloud:** This line remains private too.",
+    ]);
+    const publicContext = retrieveAdventureContext(gmResult.package, {
+      sceneId: "vault",
+      includeGmOnly: false,
+    });
+    expect(publicContext.formatted).not.toContain("swordfish");
+    expect(publicContext.formatted).not.toContain("traitor");
+
+    const idResult = await parseAdventureMarkdown(
+      ["room", "room", "room-2"]
+        .map(
+          (id, index) =>
+            `## Area ${index + 1}\n\n<!-- source-id: ${id} -->\nDetails ${index + 1}.`,
+        )
+        .join("\n\n"),
+      { fileName: "duplicate-ids.md" },
+    );
+    expect(idResult.ok).toBe(true);
+    if (!idResult.ok) return;
+    expect(
+      idResult.package.sections.map((section) => section.sourceId),
+    ).toEqual(["room", "room-3", "room-2"]);
+  });
 });
 
 describe("AdventureSourcePackage retrieval, persistence, and validation", () => {
@@ -322,6 +362,26 @@ describe("AdventureSourcePackage retrieval, persistence, and validation", () => 
       saveAdventurePackage(failingIo, first.package),
     ).rejects.toThrow("Simulated read-back corruption");
     expect(failingIo.files.size).toBe(0);
+
+    const noRollbackIo = createMemoryIO();
+    delete noRollbackIo.remove;
+    await expect(
+      saveAdventurePackage(noRollbackIo, first.package),
+    ).rejects.toThrow("must support removal");
+    expect(noRollbackIo.writeCalls).toBe(0);
+    expect(noRollbackIo.files.size).toBe(0);
+
+    const cleanupFailureIo = createMemoryIO();
+    cleanupFailureIo.read = async () => {
+      throw new Error("Simulated read-back corruption");
+    };
+    cleanupFailureIo.remove = async () => {
+      throw new Error("Simulated cleanup failure");
+    };
+    await expect(
+      saveAdventurePackage(cleanupFailureIo, first.package),
+    ).rejects.toThrow("rollback also failed: Error: Simulated cleanup failure");
+    expect(cleanupFailureIo.files.has(expectedPath)).toBe(true);
   });
 
   it("AC9: rejects empty, binary, invalid UTF-8, and headingless files without writing to storage", async () => {

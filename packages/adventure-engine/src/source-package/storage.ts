@@ -73,6 +73,12 @@ export async function saveAdventurePackage(
     };
   }
 
+  if (!io.remove) {
+    throw new Error(
+      "Adventure package storage must support removal before a package can be written safely.",
+    );
+  }
+
   const serialized = JSON.stringify(validated, null, 2);
   try {
     await io.write(path, serialized);
@@ -84,8 +90,14 @@ export async function saveAdventurePackage(
       package: reparsed,
     };
   } catch (error) {
-    if (io.remove) {
-      await io.remove(path).catch(() => {});
+    try {
+      await io.remove(path);
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        `Adventure package write failed and rollback also failed: ${String(cleanupError)}`,
+        { cause: cleanupError },
+      );
     }
     throw error;
   }

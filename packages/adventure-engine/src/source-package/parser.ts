@@ -20,6 +20,7 @@ const ATX_HEADING_RE = /^(#{1,6})\s+(.+?)\s*#*$/;
 const NO_SPACE_HEADING_RE = /^(#{1,6})([^\s#].*)$/;
 const READ_ALOUD_RE = /^>\s*\*\*Read aloud:\*\*\s*(.+)$/;
 const GM_ONLY_RE = /^>\s*\*\*GM only:\*\*\s*(.+)$/;
+const BLOCKQUOTE_RE = /^>\s?(.*)$/;
 const SCENE_CONDITION_RE = /^-\s*\*\*Scene condition:\*\*\s*(.+)$/;
 const ALT_SOLUTION_RE = /^-\s*\*\*By ([^:*]+):\*\*\s*(.+)$/i;
 const MOTIVATION_RE = /\*\*Motivation:\*\*\s*([^\n]+)/g;
@@ -54,7 +55,8 @@ interface SectionScanContent {
 }
 
 interface ParseAccumulator {
-  seenSourceIds: Map<string, number>;
+  allocatedSourceIds: Set<string>;
+  reservedSourceIds: Set<string>;
   seenTitles: Map<string, string>;
   sections: SectionAnchor[];
   scenes: SceneRecord[];
@@ -327,6 +329,28 @@ function scanSections(
   return { preamble, rawSections };
 }
 
+function consumeGmOnlyBlockquote(
+  line: string,
+  content: SectionScanContent,
+  active: boolean,
+): { consumed: boolean; active: boolean } {
+  const gmOnlyMatch = line.trim().match(GM_ONLY_RE);
+  if (gmOnlyMatch) {
+    content.gmNotes.push(gmOnlyMatch[1].trim());
+    return { consumed: true, active: true };
+  }
+
+  if (active) {
+    const blockquoteMatch = line.match(BLOCKQUOTE_RE);
+    if (blockquoteMatch) {
+      content.gmNotes.push(blockquoteMatch[1].trim());
+      return { consumed: true, active: true };
+    }
+  }
+
+  return { consumed: false, active: false };
+}
+
 function scanSectionLines(lines: string[]): SectionScanContent {
   const content: SectionScanContent = {
     readAloud: [],
@@ -335,6 +359,7 @@ function scanSectionLines(lines: string[]): SectionScanContent {
     altSolutions: [],
     bodyLines: [],
   };
+  let inGmOnlyBlockquote = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -346,15 +371,19 @@ function scanSectionLines(lines: string[]): SectionScanContent {
       continue;
     }
 
-    const readAloudMatch = trimmed.match(READ_ALOUD_RE);
-    if (readAloudMatch) {
-      content.readAloud.push(readAloudMatch[1].trim());
+    const gmBlockquote = consumeGmOnlyBlockquote(
+      line,
+      content,
+      inGmOnlyBlockquote,
+    );
+    inGmOnlyBlockquote = gmBlockquote.active;
+    if (gmBlockquote.consumed) {
       continue;
     }
 
-    const gmOnlyMatch = trimmed.match(GM_ONLY_RE);
-    if (gmOnlyMatch) {
-      content.gmNotes.push(gmOnlyMatch[1].trim());
+    const readAloudMatch = trimmed.match(READ_ALOUD_RE);
+    if (readAloudMatch) {
+      content.readAloud.push(readAloudMatch[1].trim());
       continue;
     }
 
@@ -415,9 +444,15 @@ function resolveSectionIdentity(
     acc.seenTitles.set(titleKey, sourceId);
   }
 
-  const idCount = acc.seenSourceIds.get(baseId) ?? 0;
-  if (idCount > 0) {
-    sourceId = `${baseId}-${idCount + 1}`;
+  if (acc.allocatedSourceIds.has(baseId)) {
+    let suffix = 2;
+    while (
+      acc.allocatedSourceIds.has(`${baseId}-${suffix}`) ||
+      acc.reservedSourceIds.has(`${baseId}-${suffix}`)
+    ) {
+      suffix++;
+    }
+    sourceId = `${baseId}-${suffix}`;
     provenance = "unresolved";
     acc.ambiguities.push({
       id: `amb-duplicate-source-id-${raw.lineNumber}`,
@@ -427,7 +462,7 @@ function resolveSectionIdentity(
       provenance: "unresolved",
     });
   }
-  acc.seenSourceIds.set(baseId, idCount + 1);
+  acc.allocatedSourceIds.add(sourceId);
 
   return { sourceId, provenance };
 }
@@ -654,8 +689,18 @@ export async function parseAdventureMarkdown(
   }
 
   const documentHash = await computeSha256Hex(decoded.bytes);
+  const reservedSourceIds = new Set(
+    rawSections.flatMap((section) => {
+      for (const line of section.lines) {
+        const markerMatch = line.trim().match(SOURCE_ID_MARKER_RE);
+        if (markerMatch) return [markerMatch[1]];
+      }
+      return [];
+    }),
+  );
   const acc: ParseAccumulator = {
-    seenSourceIds: new Map(),
+    allocatedSourceIds: new Set(),
+    reservedSourceIds,
     seenTitles: new Map(),
     sections: [],
     scenes: [],
