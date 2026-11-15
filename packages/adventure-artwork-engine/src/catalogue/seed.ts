@@ -6530,4 +6530,208 @@ export const seedArtwork: readonly ArtworkAsset[] = [
         "Reviewed 16:9 fantasy market scene for public safety and quality.",
     },
   },
+  {
+    id: "npc-fantasy-witch-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["witch"],
+    settingCues: ["swamp", "forest", "wilderness"],
+    moodCues: ["mysterious"],
+    timeCues: ["fog", "dusk"],
+    excludes: [],
+    alt: "Weathered hedge witch in moss-stained shawl raising an iron lantern beside bone charms in a misty swamp at dusk.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-witch-01-preview-29c9415356f2.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 17186,
+        sha256:
+          "29c9415356f211ff7c813f82ee7b7e7374af60caaade96ae842f8d4c45f17a3b",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-witch-01-display-39b733f1998d.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 145766,
+        sha256:
+          "39b733f1998dfa7d35a6ac849dbadb9da67d637993072098cfed95e8570c7fc1",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "OpenAI image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: Weathered hedge witch in moss-stained shawl raising an iron lantern beside bone charms in a misty swamp at dusk. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy witch portrait for role clarity, silhouette, and public safety.",
+    },
+  },
+  {
+    id: "npc-fantasy-cultist-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["cultist"],
+    settingCues: ["ruins", "cave", "interior"],
+    moodCues: ["ominous"],
+    timeCues: ["night"],
+    excludes: [],
+    alt: "Hooded ritual zealot in crimson-and-black cult vestments gripping a jagged obsidian dagger inside shadowy stone ruins at night.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-cultist-01-preview-842b3bf0c0e4.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 11646,
+        sha256:
+          "842b3bf0c0e47cd51a095e6a94e1f9151009fa46c6f661810c98a2f9ebb6b5d6",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-cultist-01-display-ea0272e55923.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 88842,
+        sha256:
+          "ea0272e55923667a7cb1bfee8465a4a52ccccc4938ebf4cb91e9e3f943a2adab",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "OpenAI image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: Hooded ritual zealot in crimson-and-black cult vestments gripping a jagged obsidian dagger inside shadowy stone ruins at night. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy cultist portrait for role clarity, silhouette, and public safety.",
+    },
+  },
+  {
+    id: "npc-fantasy-bandit-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["bandit"],
+    settingCues: ["road", "forest", "exterior"],
+    moodCues: ["ominous"],
+    timeCues: ["dusk"],
+    excludes: [],
+    alt: "Scarred highwayman outlaw captain in worn leather brigandine adjusting a dark scarf beside a forest road at dusk.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-bandit-01-preview-c6fd332c85fb.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 14830,
+        sha256:
+          "c6fd332c85fb85b986ec84ffa023e217937067daf6e96568b5666afc2f21dfe0",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-bandit-01-display-fe24e0e22ef2.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 122458,
+        sha256:
+          "fe24e0e22ef2af9f7e0489d1bdcf37771c6f38e943f4d37eba436301e1d46f9a",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "OpenAI image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: Scarred highwayman outlaw captain in worn leather brigandine adjusting a dark scarf beside a forest road at dusk. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy bandit portrait for role clarity, silhouette, and public safety.",
+    },
+  },
+  {
+    id: "npc-fantasy-necromancer-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["necromancer"],
+    settingCues: ["castle", "ruins", "interior"],
+    moodCues: ["ominous"],
+    timeCues: ["night"],
+    excludes: [],
+    alt: "Pale necromancer in tattered charcoal robes cradling a skull-crowned ritual focus with sickly green wisps in dark castle ruins at night.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-necromancer-01-preview-1ef8a554c8cf.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 14354,
+        sha256:
+          "1ef8a554c8cf6e72a145926fb474e14c68ae8e7d0f8186ece4b49d9a381400b2",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-necromancer-01-display-84620d488e28.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 109512,
+        sha256:
+          "84620d488e2863ac3b6edd54815bbb55fa6bd61086e16a84a8543038575e83e2",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "OpenAI image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: Pale necromancer in tattered charcoal robes cradling a skull-crowned ritual focus with sickly green wisps in dark castle ruins at night. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy necromancer portrait for role clarity, silhouette, and public safety.",
+    },
+  },
 ];
