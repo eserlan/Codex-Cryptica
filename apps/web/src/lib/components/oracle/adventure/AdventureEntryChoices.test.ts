@@ -70,7 +70,33 @@ describe("AdventureEntryChoices", () => {
     expect(entry.tagName).toBe("BUTTON");
     await fireEvent.click(entry);
     expect(onEnterWorld).toHaveBeenCalledOnce();
-    expect(screen.getAllByRole("button")).toHaveLength(4);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+  });
+
+  it("renders Import an Adventure and triggers the file input on activation", async () => {
+    const onImportFile = vi.fn();
+    render(AdventureEntryChoices, {
+      props: {
+        onDiscover: vi.fn(),
+        onOwnPremise: vi.fn(),
+        onImportFile,
+      },
+    });
+
+    const importButton = screen.getByTestId("adventure-import");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const clickSpy = vi.spyOn(fileInput, "click");
+
+    await fireEvent.click(importButton);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    const file = new File(["# Title\n\n## Scene 1\nHello"], "module.md", {
+      type: "text/markdown",
+    });
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(onImportFile).toHaveBeenCalledWith(file);
   });
 
   it("uses touch-sized cards in a single-column mobile layout", () => {
@@ -86,6 +112,7 @@ describe("AdventureEntryChoices", () => {
       "adventure-surprise-me",
       "adventure-own-premise",
       "adventure-enter-world",
+      "adventure-import",
     ]) {
       const button = screen.getByTestId(id);
       expect(button.className).toContain("min-h-44");

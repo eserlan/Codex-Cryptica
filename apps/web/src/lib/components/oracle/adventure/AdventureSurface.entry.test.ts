@@ -21,6 +21,11 @@ const env = vi.hoisted(() => ({
   characters: [] as Array<{ id: string; name: string }>,
   pendingRumour: null as any,
   cancelRumourReturn: true,
+  saveApprovedPackage: vi.fn(async (_vaultId: string, pkg: any) => ({
+    status: "created",
+    path: `.codex/adventures/packages/${pkg.documentHash}.json`,
+    package: pkg,
+  })),
 }));
 
 vi.mock("#lib/stores/oracle.svelte.js", () => ({
@@ -65,6 +70,12 @@ vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
     list: env.list,
   },
 }));
+vi.mock("#lib/services/adventure/adventure-package-storage.js", () => ({
+  adventurePackageRepository: {
+    setRootResolver: env.setRootResolver,
+    saveApproved: env.saveApprovedPackage,
+  },
+}));
 vi.mock("#lib/services/adventure/adventure-context-service.js", () => ({
   adventureContextService: { setResolver: env.setContextResolver },
 }));
@@ -99,6 +110,7 @@ beforeEach(() => {
   env.list.mockClear();
   env.pendingRumour = null;
   env.characters = [];
+  env.saveApprovedPackage.mockClear();
 });
 
 describe("AdventureSurface entry", () => {
@@ -247,5 +259,68 @@ describe("AdventureSurface entry", () => {
 
     await fireEvent.click(cancelBtn);
     expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("adventure");
+  });
+
+  it("imports a valid Markdown file and transitions to AdventureImportReview", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const markdown = [
+      "# The Sunken Mill",
+      "",
+      "## Scene 1: The Ferry Landing",
+      "> **Read aloud:** Fog clings to the pilings.",
+      "> **GM only:** The ferryman knows the miller's secret.",
+      "- **Scene condition:** Players arrive at dusk.",
+      "",
+      "### NPCs",
+      "**Wick** — **Motivation:** Collect unpaid wages.",
+    ].join("\n");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File([markdown], "sunken-mill.md", {
+      type: "text/markdown",
+    });
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+
+    const review = await screen.findByTestId("adventure-import-review");
+    expect(review).toBeTruthy();
+    expect(review.textContent).toContain("The Sunken Mill");
+    expect(screen.getByTestId("adventure-package-hash").textContent).toMatch(
+      /^[a-f0-9]{64}$/,
+    );
+    expect(screen.getByTestId("review-sections")).toBeTruthy();
+    expect(screen.getByTestId("review-scenes")).toBeTruthy();
+    expect(screen.getByTestId("review-npcs")).toBeTruthy();
+    expect(screen.getByTestId("review-secrets")).toBeTruthy();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+    await waitFor(() => {
+      expect(env.saveApprovedPackage).toHaveBeenCalledTimes(1);
+    });
+    expect(
+      screen.getByTestId("adventure-package-status").textContent,
+    ).toContain("Approved");
+  });
+
+  it("shows an error alert on empty Markdown upload without entering review or writing to storage", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const emptyFile = new File(["   "], "empty.md", { type: "text/markdown" });
+
+    await fireEvent.change(fileInput, { target: { files: [emptyFile] } });
+
+    const alert = await screen.findByTestId("adventure-import-error");
+    expect(alert.getAttribute("role")).toBe("alert");
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 });
