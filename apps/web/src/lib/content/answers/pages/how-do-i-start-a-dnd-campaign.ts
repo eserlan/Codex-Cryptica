@@ -286,6 +286,11 @@ export const howDoIStartADndCampaign: AnswerConfigInput = {
         reason:
           "The sandbox answer teaches a 1-3-3-6 prep method for open-world regional play; this campaign-start answer covers the earlier decision of premise, rules agreement, Session 0, and a concrete level-1 opening problem before any sandbox structure is needed.",
       },
+      {
+        with: "answer-structure-dnd-campaign",
+        reason:
+          "This page helps a GM choose a premise, agree the rules and prepare the first playable situation; the D&D tier page helps plan how scope, stakes and play can change after the campaign has begun.",
+      },
     ],
   },
   seo: {

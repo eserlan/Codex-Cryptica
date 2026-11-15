@@ -257,6 +257,11 @@ export const howDoIPlanStoryArcsForAnRpgCampaign: AnswerConfigInput = {
         reason:
           "That page organises a D&D campaign by things and relationships; this page organises campaign time into arcs that connect through consequences rather than a fixed episode order.",
       },
+      {
+        with: "answer-structure-dnd-campaign",
+        reason:
+          "This page teaches how to structure a long campaign into flexible arcs with their own conflicts and resolutions, and how far ahead each horizon should be prepared; the D&D tier page teaches how scope, decisions and threats change across levels 1 to 20.",
+      },
     ],
   },
   seo: {

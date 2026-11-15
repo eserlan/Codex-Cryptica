@@ -311,6 +311,11 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         reason:
           "That page covers the physical and digital setup brought to the table. This page covers how the underlying D&D campaign information is organised across entities, relationships, canon, history and prep, and what deserves tracking in the first place.",
       },
+      {
+        with: "answer-structure-dnd-campaign",
+        reason:
+          "This page organises campaign information by entities and relationships so facts stay retrievable; the D&D tier page organises campaign time by level band, with a distinct conflict and possible ending for each tier.",
+      },
     ],
   },
   seo: {

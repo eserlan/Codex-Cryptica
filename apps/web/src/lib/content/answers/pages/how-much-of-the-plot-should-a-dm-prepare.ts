@@ -194,6 +194,13 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       "answer-turn-rpg-idea-into-adventure",
       "answer-manage-campaign-timeline",
     ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-structure-dnd-campaign",
+        reason:
+          "This page teaches how much plot to prepare without scripting player actions, using firm, conditional and open prep; the D&D tier page uses level bands to set the scale of conflicts and consequences across a campaign.",
+      },
+    ],
   },
   seo: {
     title: "How much of the plot should a DM prepare? | Codex Cryptica",
