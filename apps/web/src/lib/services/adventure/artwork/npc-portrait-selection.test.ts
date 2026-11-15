@@ -592,5 +592,146 @@ describe("selectPresentNpcPortrait", () => {
         ),
       ).toBeNull();
     });
+    it("resolves occult and outlaw role prose and synonyms in competing settings", () => {
+      const cases = [
+        {
+          phrase: "witch",
+          placeName: "Grand Temple",
+          expectedId: "npc-fantasy-witch-01",
+        },
+        {
+          phrase: "bog seer",
+          placeName: "Oakhaven Village",
+          expectedId: "npc-fantasy-witch-01",
+        },
+        {
+          phrase: "oracle",
+          placeName: "Busy Tavern",
+          expectedId: "npc-fantasy-witch-01",
+        },
+        {
+          phrase: "cultist",
+          placeName: "Sunlit Temple",
+          expectedId: "npc-fantasy-cultist-01",
+        },
+        {
+          phrase: "bandit",
+          placeName: "Market Town",
+          expectedId: "npc-fantasy-bandit-01",
+        },
+        {
+          phrase: "highwayman",
+          placeName: "Rusty Lantern Tavern",
+          expectedId: "npc-fantasy-bandit-01",
+        },
+        {
+          phrase: "outlaw",
+          placeName: "Oakhaven Village",
+          expectedId: "npc-fantasy-bandit-01",
+        },
+        {
+          phrase: "necromancer",
+          placeName: "Grand Temple",
+          expectedId: "npc-fantasy-necromancer-01",
+        },
+      ];
+
+      for (const { phrase, placeName, expectedId } of cases) {
+        const session: ArtworkNpcSession = {
+          vaultId: "v1",
+          currentPlaceId: "place-test",
+          places: [{ id: "place-test", name: placeName }],
+          visibleState: {
+            activeCharacters: [
+              {
+                id: "c-test",
+                text: `Mysterious stranger, a human ${phrase} waiting inside ${placeName}.`,
+                source: "provisional",
+                placeId: "place-test",
+              },
+            ],
+          },
+        };
+        const portrait = selectPresentNpcPortrait(
+          session,
+          "v1",
+          {},
+          true,
+          "fantasy",
+          seedArtwork,
+        );
+        expect(portrait?.kind).toBe("catalogue");
+        if (portrait?.kind === "catalogue") {
+          expect(portrait.asset.id).toBe(expectedId);
+        }
+      }
+    });
+
+    it("preserves Vault entity.image precedence and null fallback over new portraits", () => {
+      const vaultOverrideSession: ArtworkNpcSession = {
+        vaultId: "v1",
+        currentPlaceId: "place-tavern",
+        places: [{ id: "place-tavern", name: "Tavern" }],
+        people: [
+          {
+            id: "p-witch",
+            name: "Morwen",
+            aliases: [],
+            linkedFactIds: ["c-witch"],
+            sourceRecordId: "ent-witch",
+          },
+        ],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c-witch",
+              text: "Morwen, a bog seer and witch.",
+              source: "provisional",
+              placeId: "place-tavern",
+            },
+          ],
+        },
+      };
+      const vaultPortrait = selectPresentNpcPortrait(
+        vaultOverrideSession,
+        "v1",
+        {
+          "ent-witch": {
+            id: "ent-witch",
+            image: "images/morwen.webp",
+          },
+        },
+        true,
+        "fantasy",
+        seedArtwork,
+      );
+      expect(vaultPortrait?.kind).toBe("vault");
+
+      const unmatchedSession: ArtworkNpcSession = {
+        vaultId: "v1",
+        currentPlaceId: "place-village",
+        places: [{ id: "place-village", name: "Oakhaven Village" }],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "c-unknown",
+              text: "Bram, an eccentric clockmaker.",
+              source: "provisional",
+              placeId: "place-village",
+            },
+          ],
+        },
+      };
+      expect(
+        selectPresentNpcPortrait(
+          unmatchedSession,
+          "v1",
+          {},
+          true,
+          "fantasy",
+          seedArtwork,
+        ),
+      ).toBeNull();
+    });
   });
 });
