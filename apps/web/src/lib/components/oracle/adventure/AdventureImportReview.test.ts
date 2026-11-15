@@ -160,6 +160,9 @@ describe("AdventureImportReview", () => {
     expect(screen.getByTestId("adventure-package-hash").textContent).toBe(
       draft.documentHash,
     );
+    expect(screen.getByTestId("adventure-package-hash").className).toContain(
+      "break-all",
+    );
   });
 
   it("AC3: toggles secret gmOnly classification in memory and retains it on approval", async () => {

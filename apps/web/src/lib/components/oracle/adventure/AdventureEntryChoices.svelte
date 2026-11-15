@@ -203,6 +203,7 @@
     accept=".md,text/markdown,text/plain"
     data-testid="adventure-file-input"
     class="sr-only"
+    tabindex="-1"
     aria-label="Import Markdown adventure file"
     onchange={(event) => void handleFileChange(event)}
   />

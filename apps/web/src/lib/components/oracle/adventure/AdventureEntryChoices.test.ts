@@ -87,6 +87,7 @@ describe("AdventureEntryChoices", () => {
     const fileInput = screen.getByTestId(
       "adventure-file-input",
     ) as HTMLInputElement;
+    expect(fileInput.getAttribute("tabindex")).toBe("-1");
     const clickSpy = vi.spyOn(fileInput, "click");
 
     await fireEvent.click(importButton);

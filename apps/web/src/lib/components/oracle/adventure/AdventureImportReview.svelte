@@ -131,7 +131,7 @@
     <select
       {id}
       aria-label={ariaLabel}
-      class="min-h-9 rounded-md border border-theme-border bg-theme-surface px-2.5 py-1 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
+      class="min-h-9 max-w-full rounded-md border border-theme-border bg-theme-surface px-2.5 py-1 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
       {value}
       disabled={isLocked}
       onchange={(event) => onSelect(event.currentTarget.value)}
@@ -161,7 +161,7 @@
       <ul class="space-y-2">
         {#each draft.ambiguities as ambiguity (ambiguity.id)}
           <li
-            class="flex flex-col gap-1 rounded-lg border border-theme-border bg-theme-background p-3 text-sm"
+            class="flex flex-col gap-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="font-mono text-xs font-semibold text-theme-text">
@@ -198,7 +198,7 @@
       <ul class="space-y-3">
         {#each draft.sections as section (section.sourceId)}
           <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
@@ -253,7 +253,7 @@
       <ul class="space-y-3">
         {#each draft.scenes as scene, index (`${scene.sourceId}-${index}`)}
           <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="font-semibold text-theme-text">{scene.title}</span>
@@ -296,7 +296,7 @@
       <ul class="space-y-3">
         {#each draft.npcs as npc, index (`${npc.name}-${index}`)}
           <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="font-semibold text-theme-text">{npc.name}</span>
@@ -339,7 +339,7 @@
       <ul class="space-y-3">
         {#each draft.clues as clue, index (`${clue.primarySourceId}-${index}`)}
           <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="text-sm font-medium text-theme-text">
@@ -385,7 +385,7 @@
       <ul class="space-y-3">
         {#each draft.encounters as encounter, index (`${encounter.sourceId}-${index}`)}
           <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="font-semibold text-theme-text">
@@ -431,7 +431,7 @@
       <ul class="space-y-3">
         {#each draft.secrets as secret, index (secret.id)}
           <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="font-mono text-xs text-theme-text">
@@ -474,7 +474,7 @@
   <header
     class="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-theme-border bg-theme-surface p-5"
   >
-    <div class="space-y-1.5">
+    <div class="min-w-0 space-y-1.5">
       <p
         class="text-xs font-semibold uppercase tracking-widest text-theme-text"
       >
@@ -491,7 +491,7 @@
       </p>
       <p class="text-xs text-theme-text">
         SHA-256:
-        <span class="font-mono" data-testid="adventure-package-hash">
+        <span class="break-all font-mono" data-testid="adventure-package-hash">
           {draft.documentHash}
         </span>
       </p>
@@ -502,7 +502,7 @@
         data-testid="adventure-package-status"
         class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold {isApproved
           ? 'border-theme-primary/50 bg-theme-primary/15 text-theme-text'
-          : 'border-theme-border bg-theme-background text-theme-text'}"
+          : 'border-theme-border bg-theme-bg text-theme-text'}"
       >
         <span
           class={isApproved
@@ -577,7 +577,7 @@
       onclick={onCancel}
       class="min-h-11 rounded-lg border border-theme-border bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
     >
-      Cancel
+      {isApproved ? "Done" : "Cancel"}
     </button>
     <button
       type="button"
