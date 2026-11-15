@@ -101,7 +101,9 @@ class TestAgyFactory(unittest.TestCase):
     def test_single_issue_skip_row_reports_owner_without_driving_job(self):
         ns = self.wf_ns
         ns["args"] = {"mode": "single", "issue": 4200}
-        ns["JOB_BIN"] = "factory/bin/job"
+        for key in ("JOB_BIN", "ROUTE_BIN", "GATE_BIN"):
+            self.assertIn(key, ns)
+            self.assertTrue(Path(ns[key]).exists(), f"{key} should point to an existing binary: {ns[key]}")
         ns["run_cmd"] = lambda *_args, **_kwargs: type(
             "Result", (), {"stdout": "skip\t4200\t042-sibling-job\tintake\towned by another worktree"},
         )()

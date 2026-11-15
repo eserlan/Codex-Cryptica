@@ -48,6 +48,9 @@ REPO = find_repo()
 FACTORY = REPO / "factory"
 JOBS = FACTORY / "jobs"
 BIN = FACTORY / "bin"
+JOB_BIN = str(BIN / "job")
+ROUTE_BIN = str(BIN / "route")
+GATE_BIN = str(BIN / "gate")
 AGENTS_DIR = REPO / ".claude" / "agents"
 CONFIG = json.loads((FACTORY / "config.json").read_text())
 
