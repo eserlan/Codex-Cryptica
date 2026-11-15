@@ -302,6 +302,34 @@ describe("AdventureSourcePackage reference one-shot and variants", () => {
       idResult.package.sections.map((section) => section.sourceId),
     ).toEqual(["room", "room-3", "room-2"]);
   });
+
+  it("keeps a CommonMark HTML block after a GM-only quote in public scene text", async () => {
+    const result = await parseAdventureMarkdown(
+      "## Scene 1: The Vault\n\n<!-- source-id: vault -->\n> **GM only:** The queen is an antagonist.\n<div>Public clue</div>",
+      { fileName: "gm-quote-html-block.md" },
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    const section = result.package.sections.find(
+      (candidate) => candidate.sourceId === "vault",
+    );
+    expect(section).toMatchObject({
+      body: "<div>Public clue</div>",
+      gmOnly: false,
+    });
+    expect(result.package.secrets.map((secret) => secret.text)).toEqual([
+      "The queen is an antagonist.",
+    ]);
+
+    const publicContext = retrieveAdventureContext(result.package, {
+      sceneId: "vault",
+    });
+    expect(publicContext.body).toBe("<div>Public clue</div>");
+    expect(publicContext.formatted).toContain("<div>Public clue</div>");
+    expect(publicContext.formatted).not.toContain("antagonist");
+  });
 });
 
 describe("AdventureSourcePackage retrieval, persistence, and validation", () => {
