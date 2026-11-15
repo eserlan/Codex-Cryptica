@@ -19,6 +19,7 @@ import { howDoIEncouragePartyBondingDuringDowntime } from "./how-do-i-encourage-
 import { howDoIEnjoyTabletopRpgsAgain } from "./how-do-i-enjoy-tabletop-rpgs-again";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
+import { howDoIGetAStalledRpgInvestigationMovingAgain } from "./how-do-i-get-a-stalled-rpg-investigation-moving-again";
 import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-friends-interested-in-playing-dnd";
 import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
@@ -224,6 +225,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIEnjoyTabletopRpgsAgain,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
+    howDoIGetAStalledRpgInvestigationMovingAgain,
     howDoIGetMyFriendsInterestedInPlayingDnd,
     howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
