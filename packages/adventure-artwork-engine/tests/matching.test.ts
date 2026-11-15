@@ -382,7 +382,8 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
       genre: "fantasy",
       primaryCues: ["urchin"],
     });
-    expect(urchinOnSeed).toBeNull();
+    expect(urchinOnSeed?.id).toBe("npc-fantasy-urchin-01");
+    expect(urchinOnSeed?.id).not.toBe("npc-fantasy-informant-01");
 
     const informantInTavern = matchArtwork(seedArtwork, {
       type: "npc",
