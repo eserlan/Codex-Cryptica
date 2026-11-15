@@ -272,6 +272,7 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
     "what-should-i-look-for-in-an-rpg-campaign-manager",
     "what-should-a-new-dnd-player-know-before-their-first-game",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-dnd-campaign-organisation",
@@ -309,6 +310,11 @@ export const howDoIOrganiseADndCampaign: AnswerConfigInput = {
         with: "answer-in-person-gm-notes",
         reason:
           "That page covers the physical and digital setup brought to the table. This page covers how the underlying D&D campaign information is organised across entities, relationships, canon, history and prep, and what deserves tracking in the first place.",
+      },
+      {
+        with: "answer-structure-dnd-campaign",
+        reason:
+          "This page organises campaign information by entities and relationships so facts stay retrievable; the D&D tier page organises campaign time by level band, with a distinct conflict and possible ending for each tier.",
       },
     ],
   },
