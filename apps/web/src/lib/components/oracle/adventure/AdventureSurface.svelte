@@ -94,6 +94,7 @@
   let worldStartError = $state<string | null>(null);
   let importDraft = $state<AdventureSourcePackage | null>(null);
   let importError = $state<string | null>(null);
+  let importInFlight = $state(false);
   let importApproving = $state(false);
   let importApproveError = $state<string | null>(null);
   let previousVaultId: string | null = null;
@@ -145,14 +146,26 @@
     modalUIStore.openIntentGeneratorWorkflow("rumour");
   }
 
+  function isPdfAdventureFile(file: File): boolean {
+    return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  }
+
   async function handleImportFile(file: File): Promise<void> {
+    if (importInFlight) return;
+    importInFlight = true;
     importError = null;
     importApproveError = null;
     try {
-      const content = await file.text();
-      const result = await parseAdventureMarkdown(content, {
-        fileName: file.name,
-      });
+      const result = isPdfAdventureFile(file)
+        ? await (async () => {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const { importAdventurePdfFile } =
+              await import("#lib/services/adventure/adventure-pdf-import.js");
+            return importAdventurePdfFile(bytes, file.name);
+          })()
+        : await parseAdventureMarkdown(await file.text(), {
+            fileName: file.name,
+          });
       if (!result.ok) {
         importError = result.error.message;
         return;
@@ -164,6 +177,8 @@
         error instanceof Error
           ? error.message
           : "Unable to read the selected adventure file.";
+    } finally {
+      importInFlight = false;
     }
   }
 
@@ -635,6 +650,7 @@
       <AdventureEntryChoices
         {canDiscover}
         {importError}
+        importing={importInFlight}
         onDiscover={discoverAdventure}
         onSurpriseMe={() =>
           modalUIStore.openIntentGeneratorWorkflow("adventure")}

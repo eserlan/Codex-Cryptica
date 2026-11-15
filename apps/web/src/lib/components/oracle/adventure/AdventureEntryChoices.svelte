@@ -6,6 +6,7 @@
     onEnterWorld = () => {},
     onImportFile,
     importError = null,
+    importing = false,
     canDiscover = true,
   }: {
     onDiscover: () => void;
@@ -14,12 +15,14 @@
     onEnterWorld?: () => void;
     onImportFile?: (file: File) => void | Promise<void>;
     importError?: string | null;
+    importing?: boolean;
     canDiscover?: boolean;
   } = $props();
 
   let fileInput = $state<HTMLInputElement | null>(null);
 
   function triggerImport(): void {
+    if (importing) return;
     fileInput?.click();
   }
 
@@ -27,7 +30,7 @@
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
-    if (file && onImportFile) {
+    if (file && onImportFile && !importing) {
       await onImportFile(file);
     }
   }
@@ -173,8 +176,9 @@
 
     <button
       type="button"
-      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
       data-testid="adventure-import"
+      disabled={importing}
       onclick={triggerImport}
       aria-describedby="adventure-import-description"
     >
@@ -191,8 +195,8 @@
         id="adventure-import-description"
         class="text-sm leading-relaxed text-theme-text"
       >
-        Import a Markdown adventure module, review extracted scenes and GM
-        secrets, and approve it for local play.
+        Import a Markdown or PDF adventure module, review extracted scenes and
+        GM secrets, and approve it for local play.
       </span>
     </button>
   </div>
@@ -200,13 +204,24 @@
   <input
     bind:this={fileInput}
     type="file"
-    accept=".md,text/markdown,text/plain"
+    accept=".md,.pdf,text/markdown,text/plain,application/pdf"
     data-testid="adventure-file-input"
     class="sr-only"
     tabindex="-1"
-    aria-label="Import Markdown adventure file"
+    disabled={importing}
+    aria-label="Import Markdown or PDF adventure file"
     onchange={(event) => void handleFileChange(event)}
   />
+
+  {#if importing}
+    <div
+      role="status"
+      data-testid="adventure-import-loading"
+      class="rounded-lg border border-theme-border bg-theme-surface p-3 text-sm text-theme-text"
+    >
+      Importing adventure…
+    </div>
+  {/if}
 
   {#if importError}
     <div

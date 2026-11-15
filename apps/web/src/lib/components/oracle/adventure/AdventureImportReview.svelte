@@ -47,6 +47,14 @@
     return Array.isArray(readAloud) ? readAloud : [readAloud];
   }
 
+  function formatSectionPageRef(section: SectionAnchor): string | null {
+    if (section.pageNumber === undefined) return null;
+    if (section.pageEnd !== undefined && section.pageEnd > section.pageNumber) {
+      return `pp. ${section.pageNumber}–${section.pageEnd}`;
+    }
+    return `p. ${section.pageNumber}`;
+  }
+
   function toggleSecretVisibility(index: number): void {
     if (isLocked) return;
     draft = {
@@ -213,6 +221,14 @@
                 <span class="font-mono text-xs text-theme-text">
                   {section.sourceId}
                 </span>
+                {#if formatSectionPageRef(section)}
+                  <span
+                    class="rounded border border-theme-border px-1.5 py-0.5 font-mono text-xs text-theme-text"
+                    data-testid="section-page-ref"
+                  >
+                    {formatSectionPageRef(section)}
+                  </span>
+                {/if}
               </div>
               {@render provenanceBadge(section.provenance)}
             </div>
