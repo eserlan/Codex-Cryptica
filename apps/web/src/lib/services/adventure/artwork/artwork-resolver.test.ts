@@ -63,15 +63,74 @@ describe("visible artwork subject", () => {
       subject: { kind: "entity", id: "ent-1" },
       type: "npc",
       genre: "fantasy",
-      primaryCues: [
-        "elf",
-        "traveller",
-        "ranger",
-        "woodland",
-        "wizard",
-        "dwarf",
-        "guard",
-      ],
+      primaryCues: ["elf", "traveller", "ranger", "wizard", "dwarf", "guard"],
+      settingCues: ["woodland"],
+    });
+  });
+
+  it("normalizes role synonyms and partitions setting cues from person cues", () => {
+    expect(
+      describeVisiblePerson(
+        { id: "n1", name: "Brother Tomas", aliases: ["Village Priest"] },
+        "fantasy",
+      ),
+    ).toMatchObject({ primaryCues: ["cleric"], settingCues: ["village"] });
+
+    expect(
+      describeVisiblePerson(
+        { id: "n2", name: "Alden", aliases: ["Reeve of Oakhaven"] },
+        "fantasy",
+        { facts: ["Alden is the village reeve."] },
+      ),
+    ).toMatchObject({ primaryCues: ["elder"], settingCues: ["village"] });
+
+    expect(
+      describeVisiblePerson(
+        { id: "n3", name: "Vane", aliases: ["High Magistrate"] },
+        "fantasy",
+        { facts: ["Presides as city judge."] },
+      ),
+    ).toMatchObject({ primaryCues: ["official"], settingCues: ["city"] });
+
+    expect(
+      describeVisiblePerson(
+        { id: "n4", name: "Pip", aliases: ["Street Child"] },
+        "fantasy",
+        { facts: ["A ragged beggar in the market."] },
+      ),
+    ).toMatchObject({ primaryCues: ["urchin"], settingCues: ["market"] });
+
+    expect(
+      describeVisiblePerson(
+        { id: "n5", name: "Vex", aliases: ["Highwayman"] },
+        "fantasy",
+        { facts: ["An outlaw on the forest road."] },
+      ),
+    ).toMatchObject({
+      primaryCues: ["bandit"],
+      settingCues: ["forest", "road"],
+    });
+
+    expect(
+      describeVisiblePerson(
+        { id: "n6", name: "Mab", aliases: ["Swamp Seer"] },
+        "fantasy",
+        { facts: ["An oracle and fortune teller."] },
+      ),
+    ).toMatchObject({ primaryCues: ["witch"], settingCues: ["swamp"] });
+
+    expect(
+      describeVisiblePerson(
+        { id: "n7", name: "Barnaby", aliases: ["Tavern Keeper"] },
+        "fantasy",
+        {
+          facts: [
+            "Barkeep and blacksmith's friend, or minstrel thief herbalist",
+          ],
+        },
+      ),
+    ).toMatchObject({
+      primaryCues: ["innkeeper", "smith", "bard", "rogue", "healer"],
     });
   });
 
