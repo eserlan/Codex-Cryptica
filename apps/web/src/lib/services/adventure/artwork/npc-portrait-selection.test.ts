@@ -502,34 +502,117 @@ describe("selectPresentNpcPortrait", () => {
       }
     });
 
-    it("selects npc-fantasy-informant-01 when an informant is in a tavern or city", () => {
-      const informantInTavern: ArtworkNpcSession = {
-        vaultId: "v1",
-        currentPlaceId: "place-tavern",
-        places: [{ id: "place-tavern", name: "The Velvet Lantern Tavern" }],
-        visibleState: {
-          activeCharacters: [
-            {
-              id: "c-informant",
-              text: "Vesper, a whisper-network informant in the city tavern.",
-              source: "provisional",
-              placeId: "place-tavern",
-            },
-          ],
+    it("resolves social and civic archetypes and synonyms on seedArtwork", () => {
+      const cases = [
+        {
+          id: "c-reeve",
+          place: "Oakhaven Village",
+          text: "Aldous, a human reeve in the rural village.",
+          expectedId: "npc-fantasy-elder-01",
         },
-      };
-      const portrait = selectPresentNpcPortrait(
-        informantInTavern,
-        "v1",
-        {},
-        true,
-        "fantasy",
-        seedArtwork,
-      );
-      expect(portrait?.kind).toBe("catalogue");
-      if (portrait?.kind === "catalogue") {
-        expect(portrait.asset.id).toBe("npc-fantasy-informant-01");
-        expect(portrait.asset.primaryCues).toContain("informant");
+        {
+          id: "c-magistrate",
+          place: "The Gilded Tankard Tavern",
+          text: "Corvin, a human magistrate in the city tavern.",
+          expectedId: "npc-fantasy-official-01",
+        },
+        {
+          id: "c-guildmaster",
+          place: "Guildhall",
+          text: "Vesper, a guildmaster reviewing harbour ledgers.",
+          expectedId: "npc-fantasy-official-01",
+        },
+        {
+          id: "c-urchin",
+          place: "Lower Ward Alley",
+          text: "Pip, a street child watching the city alley at night.",
+          expectedId: "npc-fantasy-urchin-01",
+        },
+        {
+          id: "c-goblin",
+          place: "Mossjaw Cave",
+          text: "Skrit, a goblin tinker resting in the cave.",
+          expectedId: "npc-fantasy-goblin-01",
+        },
+      ];
+
+      for (const testCase of cases) {
+        const session: ArtworkNpcSession = {
+          vaultId: "v1",
+          currentPlaceId: "place-1",
+          places: [{ id: "place-1", name: testCase.place }],
+          visibleState: {
+            activeCharacters: [
+              {
+                id: testCase.id,
+                text: testCase.text,
+                source: "provisional",
+                placeId: "place-1",
+              },
+            ],
+          },
+        };
+        const portrait = selectPresentNpcPortrait(
+          session,
+          "v1",
+          {},
+          true,
+          "fantasy",
+          seedArtwork,
+        );
+        expect(portrait?.kind).toBe("catalogue");
+        if (portrait?.kind === "catalogue") {
+          expect(portrait.asset.id).toBe(testCase.expectedId);
+        }
+      }
+
+      const informantSessions: ArtworkNpcSession[] = [
+        {
+          vaultId: "v1",
+          currentPlaceId: "place-tavern",
+          places: [{ id: "place-tavern", name: "The Velvet Lantern Tavern" }],
+          visibleState: {
+            activeCharacters: [
+              {
+                id: "c-informant-tavern",
+                text: "Vesper, a whisper-network informant in the city tavern.",
+                source: "provisional",
+                placeId: "place-tavern",
+              },
+            ],
+          },
+        },
+        {
+          vaultId: "v1",
+          currentPlaceId: "place-city",
+          places: [{ id: "place-city", name: "Capital City" }],
+          visibleState: {
+            activeCharacters: [
+              {
+                id: "c-informant-city",
+                text: "Vane, an informant waiting in the urban city.",
+                source: "provisional",
+                placeId: "place-city",
+              },
+            ],
+          },
+        },
+      ];
+
+      for (const session of informantSessions) {
+        const portrait = selectPresentNpcPortrait(
+          session,
+          "v1",
+          {},
+          true,
+          "fantasy",
+          seedArtwork,
+        );
+        expect(portrait?.kind).toBe("catalogue");
+        if (portrait?.kind === "catalogue") {
+          expect(portrait.asset.id).toBe("npc-fantasy-informant-01");
+          expect(portrait.asset.primaryCues).toContain("informant");
+        }
       }
     });
   });

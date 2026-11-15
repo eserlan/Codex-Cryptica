@@ -5411,6 +5411,210 @@ export const seedArtwork: readonly ArtworkAsset[] = [
     },
   },
   {
+    id: "npc-fantasy-elder-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["elder"],
+    settingCues: ["village", "rural", "exterior"],
+    moodCues: ["hopeful", "quiet"],
+    timeCues: ["day"],
+    excludes: [],
+    alt: "Weathered village reeve with braided silver beard leaning on a carved ashwood staff beside a stone cottage.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-elder-01-preview-7afb438f7bf3.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 18382,
+        sha256:
+          "7afb438f7bf3305314e50822cac59171fa0fd8ba861d71c03bf4cd043d4a249e",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-elder-01-display-98e9e38b3f2a.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 124400,
+        sha256:
+          "98e9e38b3f2ac1f41749a16f5867608cf183d45dd47902c8ef1e344b8aa5df5c",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "Google Gemini image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: weathered village reeve with silver beard leaning on carved ashwood staff beside rural stone cottage. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy elder portrait for public safety, silhouette readability, and quality.",
+    },
+  },
+  {
+    id: "npc-fantasy-official-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["official"],
+    settingCues: ["city", "town", "interior"],
+    moodCues: ["quiet", "busy"],
+    timeCues: ["day"],
+    excludes: [],
+    alt: "Unarmed civic magistrate in brass spectacles opening a bound ledger at a candlelit timber desk.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-official-01-preview-5221d2775ee2.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 12608,
+        sha256:
+          "5221d2775ee2e84e2cfa30a84a14438d0a4120a619def25151e838f968ff47ad",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-official-01-display-9fba0ede9496.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 83048,
+        sha256:
+          "9fba0ede94968d715479156d58c1bbe96fb69faed62d4d4ee9ea90b03e29d41f",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "Google Gemini image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: unarmed civic magistrate in brass spectacles opening a bound ledger at a timber desk. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy official portrait for public safety, silhouette readability, and quality.",
+    },
+  },
+  {
+    id: "npc-fantasy-urchin-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["urchin"],
+    settingCues: ["city", "urban", "exterior"],
+    moodCues: ["mysterious"],
+    timeCues: ["night", "rain"],
+    excludes: [],
+    alt: "Resourceful alley child in a patched wool tunic glancing over their shoulder in a misty lantern-lit street.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-urchin-01-preview-451ed4ddaf17.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 12096,
+        sha256:
+          "451ed4ddaf174439f73b93f22019fbe7c66542dc445c3ac7a2f91f4f80ddc691",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-urchin-01-display-591d682f4c78.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 78840,
+        sha256:
+          "591d682f4c78ab8076a109ed59d32a1651f457c0b869926eea23d39e1200bc17",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "Google Gemini image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: resourceful alley child in patched wool tunic glancing over shoulder in misty city street. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy urchin portrait for public safety, silhouette readability, and quality.",
+    },
+  },
+  {
+    id: "npc-fantasy-goblin-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["goblin"],
+    settingCues: ["cave", "tavern", "interior"],
+    moodCues: ["busy", "mysterious"],
+    timeCues: ["day"],
+    excludes: [],
+    alt: "Expressive goblin tinker adjusting brass goggles with an oversized pack of lanterns and tools.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-goblin-01-preview-ac141c220595.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 19296,
+        sha256:
+          "ac141c22059569cb10864ce5b2703cfcf17c074855af028cf9ce55d3185fa71f",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-goblin-01-display-f2f0d42a8aae.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 130314,
+        sha256:
+          "f2f0d42a8aaeb571bc7b459eb489149ed02749eba62a5141c3821f67d44f8a09",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "Google Gemini image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: expressive goblin tinker adjusting brass goggles with oversized pack of lanterns and tools. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy goblin portrait for public safety, silhouette readability, and quality.",
+    },
+  },
+  {
     id: "atmo-neutral-rain-01",
     version: 1,
     type: "atmosphere",
