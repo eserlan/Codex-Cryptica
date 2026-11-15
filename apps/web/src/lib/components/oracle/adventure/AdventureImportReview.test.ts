@@ -328,7 +328,10 @@ describe("AdventureImportReview", () => {
     expect(noticeText).toContain("Only its approved package is saved");
     expect(noticeText).toContain("on this device");
     expect(noticeText).toContain(
-      "included in Vault backup or sync only if you opt in",
+      "not currently included in Codex Cryptica Cloud Backup",
+    );
+    expect(noticeText).toContain(
+      "even when you opt in to include adventure sessions",
     );
     expect(noticeText).toContain("selected Oracle AI provider");
     expect(noticeText).toContain(

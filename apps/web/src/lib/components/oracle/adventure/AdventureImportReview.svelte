@@ -540,11 +540,12 @@
         </p>
         <p class="leading-relaxed text-theme-text">
           Your original Markdown file stays on this device and is not copied
-          into the Vault. Only its approved package is saved in your Vault on
-          this device and included in Vault backup or sync only if you opt in.
-          During play, bounded relevant excerpts (such as active scene text,
-          read-aloud passages, and active NPC notes) may be sent to your
-          selected Oracle AI provider.
+          into the Vault. Only its approved package is saved in the Vault.
+          Imported packages are not currently included in Codex Cryptica Cloud
+          Backup, even when you opt in to include adventure sessions. During
+          play, bounded relevant excerpts (such as active scene text, read-aloud
+          passages, and active NPC notes) may be sent to your selected Oracle AI
+          provider.
         </p>
         <p
           class="leading-relaxed text-theme-text"
