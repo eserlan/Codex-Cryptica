@@ -43,6 +43,15 @@ navigation menu. If you have no active adventure, choose a starting approach:
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
   starting situation and character yourself. You can return to the starting
   choices without discarding an unsaved draft.
+- **Import an Adventure** is available in a ready owner Vault. Choose a
+  Markdown file up to 2 MiB, then review the extracted sections, scenes, NPCs,
+  clues and secrets. You can correct section assignments and secret visibility
+  before approving. Approval locks the reviewed package as a baseline;
+  unresolved items remain marked for later review. Canceling leaves no package
+  in the Vault. The original Markdown file stays on your device and is not
+  copied into the Vault; only the approved package is saved, and it is included
+  in backup or sync only if you opt in. During play, bounded relevant excerpts
+  may be sent to your selected Oracle AI provider.
 - **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
   Choose a Vault character or name a new provisional one, then a Vault place
   or a new **Starting place**. Optionally pick a world date from your Vault

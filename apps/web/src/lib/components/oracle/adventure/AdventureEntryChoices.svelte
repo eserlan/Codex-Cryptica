@@ -7,6 +7,7 @@
     onImportFile,
     importError = null,
     canDiscover = true,
+    canImport = true,
   }: {
     onDiscover: () => void;
     onSurpriseMe?: () => void;
@@ -15,12 +16,13 @@
     onImportFile?: (file: File) => void | Promise<void>;
     importError?: string | null;
     canDiscover?: boolean;
+    canImport?: boolean;
   } = $props();
 
   let fileInput = $state<HTMLInputElement | null>(null);
 
   function triggerImport(): void {
-    fileInput?.click();
+    if (canImport) fileInput?.click();
   }
 
   async function handleFileChange(event: Event): Promise<void> {
@@ -173,8 +175,9 @@
 
     <button
       type="button"
-      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       data-testid="adventure-import"
+      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+      disabled={!canImport}
       onclick={triggerImport}
       aria-describedby="adventure-import-description"
     >
@@ -194,6 +197,11 @@
         Import a Markdown adventure module, review extracted scenes and GM
         secrets, and approve it for local play.
       </span>
+      {#if !canImport}
+        <span class="text-xs text-theme-text">
+          Open a ready owner Vault to import an adventure.
+        </span>
+      {/if}
     </button>
   </div>
 

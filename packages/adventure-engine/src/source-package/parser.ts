@@ -37,6 +37,9 @@ const SCENE_TITLE_RE = /^(?:Scene\s+\d+:|Optional Branch:)/i;
 const OPTIONAL_BRANCH_RE = /^Optional Branch:/i;
 const ENDING_TITLE_RE = /^Ending:\s*/i;
 
+/** Maximum source size accepted for a single Markdown adventure import. */
+export const MAX_ADVENTURE_MARKDOWN_BYTES = 2 * 1024 * 1024;
+
 interface RawSection {
   level: number;
   title: string;
@@ -106,6 +109,20 @@ function hasBinaryControlChars(text: string): boolean {
   return false;
 }
 
+function exceedsMaxUtf8Bytes(text: string): boolean {
+  if (text.length > MAX_ADVENTURE_MARKDOWN_BYTES) return true;
+  return (
+    new TextEncoder().encode(text).byteLength > MAX_ADVENTURE_MARKDOWN_BYTES
+  );
+}
+
+function inputTooLargeError(): AdventureImportError {
+  return {
+    code: "INPUT_TOO_LARGE",
+    message: "Adventure Markdown files must be 2 MiB or smaller.",
+  };
+}
+
 async function computeSha256Hex(bytes: Uint8Array): Promise<string> {
   const copy = new Uint8Array(bytes);
   const digest = await globalThis.crypto.subtle.digest("SHA-256", copy);
@@ -119,6 +136,9 @@ function decodeStringInput(
 ):
   | { ok: true; text: string; bytes: Uint8Array }
   | { ok: false; error: AdventureImportError } {
+  if (exceedsMaxUtf8Bytes(rawContent)) {
+    return { ok: false, error: inputTooLargeError() };
+  }
   if (hasBinaryControlChars(rawContent)) {
     return {
       ok: false,
@@ -150,6 +170,9 @@ function decodeBinaryInput(
 ):
   | { ok: true; text: string; bytes: Uint8Array }
   | { ok: false; error: AdventureImportError } {
+  if (rawContent.byteLength > MAX_ADVENTURE_MARKDOWN_BYTES) {
+    return { ok: false, error: inputTooLargeError() };
+  }
   if (rawContent.byteLength === 0) {
     return {
       ok: false,

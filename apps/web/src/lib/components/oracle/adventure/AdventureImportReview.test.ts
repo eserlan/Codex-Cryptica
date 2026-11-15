@@ -323,8 +323,13 @@ describe("AdventureImportReview", () => {
     const approveButton = screen.getByTestId("adventure-approve-button");
     const noticeText = notice.textContent?.replace(/\s+/g, " ") ?? "";
     expect(noticeText).not.toContain("strictly local");
+    expect(noticeText).toContain("original Markdown file");
+    expect(noticeText).toContain("not copied into the Vault");
+    expect(noticeText).toContain("Only its approved package is saved");
     expect(noticeText).toContain("on this device");
-    expect(noticeText).toContain("opt-in Vault backup or sync");
+    expect(noticeText).toContain(
+      "included in Vault backup or sync only if you opt in",
+    );
     expect(noticeText).toContain("selected Oracle AI provider");
     expect(noticeText).toContain(
       "without claiming complete analysis, resolved ambiguities, or play readiness",
@@ -335,6 +340,23 @@ describe("AdventureImportReview", () => {
         Node.DOCUMENT_POSITION_FOLLOWING,
       ),
     ).toBe(true);
+  });
+
+  it("gives assignment controls a high-contrast boundary and focus indicator", () => {
+    render(AdventureImportReview, {
+      props: {
+        draft: createTestPackage(),
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const assignmentControls = screen.getAllByRole("combobox");
+    expect(assignmentControls.length).toBeGreaterThan(0);
+    for (const control of assignmentControls) {
+      expect(control.className).toContain("border-theme-text");
+      expect(control.className).toContain("focus-visible:outline-theme-text");
+    }
   });
 
   it("AC8: renders error alert for empty or binary files and writes zero files to storage", async () => {

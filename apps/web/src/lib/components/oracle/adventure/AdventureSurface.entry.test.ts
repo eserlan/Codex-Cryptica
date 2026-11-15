@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const env = vi.hoisted(() => ({
   openIntentGeneratorWorkflow: vi.fn(),
   vaultReady: true,
+  activeVaultId: "vault-1",
+  isGuest: false,
   openActive: vi.fn(async () => false),
   setWorldEntryRumourGenerator: vi.fn((callback: unknown) => {
     env.worldEntryRumourGenerator = callback;
@@ -34,7 +36,9 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
       get isInitialized() {
         return env.vaultReady;
       },
-      activeVaultId: "vault-1",
+      get activeVaultId() {
+        return env.activeVaultId;
+      },
       entities: {},
       allEntities: [],
       getSpecificVaultHandle: vi.fn(),
@@ -50,9 +54,13 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
 vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     isInitialized: true,
-    activeVaultId: "vault-1",
+    get activeVaultId() {
+      return env.activeVaultId;
+    },
     status: "ready",
-    isGuest: false,
+    get isGuest() {
+      return env.isGuest;
+    },
   },
 }));
 vi.mock("#lib/stores/calendar.svelte.js", () => ({
@@ -105,6 +113,8 @@ beforeEach(() => {
   env.openIntentGeneratorWorkflow.mockClear();
   env.openActive.mockClear();
   env.vaultReady = true;
+  env.activeVaultId = "vault-1";
+  env.isGuest = false;
   env.setWorldEntryRumourGenerator.mockClear();
   env.worldEntryRumourGenerator = null;
   env.list.mockClear();
@@ -321,6 +331,178 @@ describe("AdventureSurface entry", () => {
     const alert = await screen.findByTestId("adventure-import-error");
     expect(alert.getAttribute("role")).toBe("alert");
     expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("rejects invalid UTF-8 through the file picker without opening review or saving", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File(
+      [new Uint8Array([0x23, 0x20, 0xff, 0x0a])],
+      "invalid-utf8.md",
+      { type: "text/markdown" },
+    );
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(
+      (await screen.findByTestId("adventure-import-error")).textContent,
+    ).toContain("UTF-8");
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("rejects oversized files before reading them", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.md", {
+      type: "text/markdown",
+    });
+    const read = vi.spyOn(file, "arrayBuffer");
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(
+      (await screen.findByTestId("adventure-import-error")).textContent,
+    ).toContain("2 MiB");
+    expect(read).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("blocks guest imports in the entry UI and in the import handler", async () => {
+    env.isGuest = true;
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    expect(
+      (screen.getByTestId("adventure-import") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File(["# Guest adventure"], "guest.md", {
+      type: "text/markdown",
+    });
+    const read = vi.spyOn(file, "arrayBuffer");
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(
+      (await screen.findByTestId("adventure-import-error")).textContent,
+    ).toContain("owner Vault");
+    expect(read).not.toHaveBeenCalled();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("discards a pending import after the active Vault changes", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    let resolveArrayBuffer!: (buffer: ArrayBuffer) => void;
+    const pendingBuffer = new Promise<ArrayBuffer>((resolve) => {
+      resolveArrayBuffer = resolve;
+    });
+    const file = new File(
+      ["# The Old Vault\n\n## Scene 1\nOld content"],
+      "old-vault.md",
+      {
+        type: "text/markdown",
+      },
+    );
+    const read = vi.spyOn(file, "arrayBuffer").mockReturnValue(pendingBuffer);
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await waitFor(() => expect(read).toHaveBeenCalledOnce());
+    env.activeVaultId = "vault-2";
+    resolveArrayBuffer(
+      new TextEncoder().encode("# The Old Vault\n\n## Scene 1\nOld content")
+        .buffer,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId("adventure-entry-choices")).toBeTruthy();
+      expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    });
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("does not let a reviewed package be approved after switching Vaults", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File(
+      ["# The Mill\n\n## Scene 1\nA mill stands by the river."],
+      "mill.md",
+      { type: "text/markdown" },
+    );
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await screen.findByTestId("adventure-import-review");
+    env.activeVaultId = "vault-2";
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+
+    expect(
+      (await screen.findByTestId("adventure-approve-error")).textContent,
+    ).toContain("Return to the owner Vault");
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("keeps a newer import when an earlier file read completes later", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    let resolveArrayBuffer!: (buffer: ArrayBuffer) => void;
+    const pendingBuffer = new Promise<ArrayBuffer>((resolve) => {
+      resolveArrayBuffer = resolve;
+    });
+    const earlier = new File(
+      ["# Earlier\n\n## Scene 1\nOld content"],
+      "earlier.md",
+      {
+        type: "text/markdown",
+      },
+    );
+    const earlierRead = vi
+      .spyOn(earlier, "arrayBuffer")
+      .mockReturnValue(pendingBuffer);
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+
+    await fireEvent.change(fileInput, { target: { files: [earlier] } });
+    await waitFor(() => expect(earlierRead).toHaveBeenCalledOnce());
+
+    const newer = new File(
+      ["# The New Adventure\n\n## Scene 1\nNew content"],
+      "newer.md",
+      { type: "text/markdown" },
+    );
+    await fireEvent.change(fileInput, { target: { files: [newer] } });
+    const review = await screen.findByTestId("adventure-import-review");
+    expect(review.textContent).toContain("The New Adventure");
+
+    resolveArrayBuffer(
+      new TextEncoder().encode("# Earlier\n\n## Scene 1\nOld content").buffer,
+    );
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("adventure-import-review").textContent,
+      ).toContain("The New Adventure");
+    });
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 });
