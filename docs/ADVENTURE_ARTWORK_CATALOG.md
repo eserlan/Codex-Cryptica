@@ -41,7 +41,7 @@ Selection in [`matchArtwork()`](../packages/adventure-artwork-engine/src/matchin
 2. **Minimum Suitability**:
    - At least **1** cue in `asset.primaryCues` must match `cues.primaryCues`; otherwise the UI falls back to text-only.
 3. **Weighted Scoring & Deterministic Tie-Break**:
-   - `score = primary * 8 + setting * 4 + mood * 1 + time * 1`
+   - For locations, scenes, and atmospheres, matched primary cues score **8** each. For NPCs, each matched ancestry cue scores **8**, each generic role cue (`traveller`, `worker`) scores **64**, and each other person cue scores **128**. Unmatched primary cues subtract **1** each for every asset type. Setting matches score **4** each, mood and time matches score **1** each.
    - Equal scores break lexicographically by `asset.id`.
 
 ### Current Controlled Cue Vocabulary (`ARTWORK_CUES`)
