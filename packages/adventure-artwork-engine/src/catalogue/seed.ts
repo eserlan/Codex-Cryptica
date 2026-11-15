@@ -6530,4 +6530,55 @@ export const seedArtwork: readonly ArtworkAsset[] = [
         "Reviewed 16:9 fantasy market scene for public safety and quality.",
     },
   },
+  {
+    id: "npc-fantasy-informant-01",
+    version: 1,
+    type: "npc",
+    genres: ["fantasy"],
+    primaryCues: ["informant"],
+    settingCues: ["city", "urban"],
+    moodCues: ["mysterious"],
+    timeCues: ["night"],
+    excludes: [],
+    alt: "Sharp-eyed adult informant in wool cloak and scarf concealing a wax-sealed note in a lantern-lit night street.",
+    variants: {
+      preview: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-informant-01-preview-5c34df4fcc1a.webp",
+        mime: "image/webp",
+        width: 240,
+        height: 320,
+        bytes: 11198,
+        sha256:
+          "5c34df4fcc1acb689965ade1e90706581bf89ff5298ad0b13aae1cb46a87fac4",
+      },
+      display: {
+        url: "https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-informant-01-display-b83690743c5d.webp",
+        mime: "image/webp",
+        width: 768,
+        height: 1024,
+        bytes: 80308,
+        sha256:
+          "b83690743c5d8869307de34ec1078c86b50c45dc5fe257a36ef0d44603946d6f",
+      },
+    },
+    origin: "team-generated-ai",
+    provenance: {
+      tool: "Google Gemini image generation",
+      model: "Not disclosed by image generation tool",
+      generatedAt: "2026-11-15",
+      prompt:
+        "Painterly tabletop RPG character illustration, vertical 3:4 portrait, expressive bust or half-body: sharp-eyed adult urban fantasy informant in muted wool cloak and linen scarf leaning in to whisper, concealing a wax-sealed note in one gloved hand beneath warm lantern light on a cobbled night street. Atmospheric lighting, cohesive fantasy palette. No text, watermarks, borders or UI.",
+      creator: "Codex Cryptica Team",
+      distributionBasis: "First-party team-generated artwork",
+      referencePermissions: "None required",
+      attribution: "Codex Cryptica Team (AI-assisted)",
+    },
+    review: {
+      status: "approved",
+      reviewer: "Codex Cryptica Team",
+      date: "2026-11-15",
+      notes:
+        "Reviewed 3:4 fantasy informant portrait for silhouette distinction, public safety, and quality.",
+    },
+  },
 ];
