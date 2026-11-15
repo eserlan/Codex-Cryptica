@@ -171,7 +171,7 @@
             </div>
             <p class="text-theme-text">{ambiguity.message}</p>
             {#if ambiguity.context}
-              <p class="text-xs text-theme-text/80">{ambiguity.context}</p>
+              <p class="text-xs text-theme-text">{ambiguity.context}</p>
             {/if}
           </li>
         {/each}
@@ -193,7 +193,7 @@
       Sections ({draft.sections.length})
     </h2>
     {#if draft.sections.length === 0}
-      <p class="text-sm text-theme-text/80">No sections extracted.</p>
+      <p class="text-sm text-theme-text">No sections extracted.</p>
     {:else}
       <ul class="space-y-3">
         {#each draft.sections as section (section.sourceId)}
@@ -210,7 +210,7 @@
                 <span class="font-semibold text-theme-text">
                   {section.title}
                 </span>
-                <span class="font-mono text-xs text-theme-text/80">
+                <span class="font-mono text-xs text-theme-text">
                   {section.sourceId}
                 </span>
               </div>
@@ -224,7 +224,7 @@
               </blockquote>
             {/each}
             {#if section.body}
-              <p class="whitespace-pre-line text-sm text-theme-text/90">
+              <p class="whitespace-pre-line text-sm text-theme-text">
                 {section.body}
               </p>
             {/if}
@@ -248,7 +248,7 @@
       Scenes ({draft.scenes.length})
     </h2>
     {#if draft.scenes.length === 0}
-      <p class="text-sm text-theme-text/80">No scenes extracted.</p>
+      <p class="text-sm text-theme-text">No scenes extracted.</p>
     {:else}
       <ul class="space-y-3">
         {#each draft.scenes as scene, index (`${scene.sourceId}-${index}`)}
@@ -260,7 +260,7 @@
               {@render provenanceBadge(scene.provenance)}
             </div>
             {#if scene.conditions.length > 0}
-              <p class="text-xs text-theme-text/80">
+              <p class="text-xs text-theme-text">
                 Conditions: {scene.conditions.join("; ")}
               </p>
             {/if}
@@ -291,7 +291,7 @@
       NPCs ({draft.npcs.length})
     </h2>
     {#if draft.npcs.length === 0}
-      <p class="text-sm text-theme-text/80">No NPCs extracted.</p>
+      <p class="text-sm text-theme-text">No NPCs extracted.</p>
     {:else}
       <ul class="space-y-3">
         {#each draft.npcs as npc, index (`${npc.name}-${index}`)}
@@ -303,7 +303,7 @@
               {@render provenanceBadge(npc.provenance)}
             </div>
             {#if npc.motivation}
-              <p class="text-sm text-theme-text/90">
+              <p class="text-sm text-theme-text">
                 Motivation: {npc.motivation}
               </p>
             {/if}
@@ -334,7 +334,7 @@
       Clues ({draft.clues.length})
     </h2>
     {#if draft.clues.length === 0}
-      <p class="text-sm text-theme-text/80">No clues extracted.</p>
+      <p class="text-sm text-theme-text">No clues extracted.</p>
     {:else}
       <ul class="space-y-3">
         {#each draft.clues as clue, index (`${clue.primarySourceId}-${index}`)}
@@ -348,7 +348,7 @@
               {@render provenanceBadge(clue.provenance)}
             </div>
             {#if clue.alternativeSourceId}
-              <p class="text-xs text-theme-text/80">
+              <p class="text-xs text-theme-text">
                 Alternative anchor:
                 <span class="font-mono">{clue.alternativeSourceId}</span>
               </p>
@@ -380,7 +380,7 @@
       Encounters ({draft.encounters.length})
     </h2>
     {#if draft.encounters.length === 0}
-      <p class="text-sm text-theme-text/80">No encounters extracted.</p>
+      <p class="text-sm text-theme-text">No encounters extracted.</p>
     {:else}
       <ul class="space-y-3">
         {#each draft.encounters as encounter, index (`${encounter.sourceId}-${index}`)}
@@ -394,10 +394,10 @@
               {@render provenanceBadge(encounter.provenance)}
             </div>
             {#if encounter.description}
-              <p class="text-sm text-theme-text/90">{encounter.description}</p>
+              <p class="text-sm text-theme-text">{encounter.description}</p>
             {/if}
             {#if encounter.alternativeSolutions.length > 0}
-              <ul class="space-y-1 pl-4 text-xs text-theme-text/80">
+              <ul class="space-y-1 pl-4 text-xs text-theme-text">
                 {#each encounter.alternativeSolutions as alt}
                   <li>
                     <strong>{alt.method}:</strong>
@@ -426,7 +426,7 @@
       Secrets ({draft.secrets.length})
     </h2>
     {#if draft.secrets.length === 0}
-      <p class="text-sm text-theme-text/80">No secrets extracted.</p>
+      <p class="text-sm text-theme-text">No secrets extracted.</p>
     {:else}
       <ul class="space-y-3">
         {#each draft.secrets as secret, index (secret.id)}
@@ -434,7 +434,7 @@
             class="space-y-2 rounded-lg border border-theme-border bg-theme-background p-4"
           >
             <div class="flex flex-wrap items-center justify-between gap-2">
-              <span class="font-mono text-xs text-theme-text/80">
+              <span class="font-mono text-xs text-theme-text">
                 {secret.sourceId}
               </span>
               {@render provenanceBadge(secret.provenance)}
@@ -538,7 +538,7 @@
         <p class="font-semibold text-theme-text">
           Local storage and AI excerpts
         </p>
-        <p class="leading-relaxed text-theme-text/90">
+        <p class="leading-relaxed text-theme-text">
           Your adventure file and approved package stay strictly local in your
           Vault on this device. During play, only relevant excerpts (such as
           active scene text, read-aloud passages, and active NPC notes) are sent
