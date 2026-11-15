@@ -146,6 +146,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     "stop-players-investigating-every-detail",
     "what-are-the-classic-must-play-tabletop-rpg-adventures",
+    "how-do-i-get-a-stalled-rpg-investigation-moving-again",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
@@ -171,6 +172,11 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
         with: "answer-run-investigator-without-sidelining-party",
         reason:
           "This answer covers resilient mystery structure and clue redundancy; the investigator answer focuses on sharing clue discovery and interpretation among PCs while preserving a detective's expertise.",
+      },
+      {
+        with: "answer-stalled-investigation-recovery",
+        reason:
+          "This answer covers resilient mystery structure and clue redundancy designed before play; the stalled-investigation answer covers the in-play recovery once an investigation has already stalled at the table.",
       },
     ],
   },
