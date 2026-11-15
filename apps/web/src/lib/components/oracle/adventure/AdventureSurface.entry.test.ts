@@ -26,6 +26,7 @@ const env = vi.hoisted(() => ({
     path: `.codex/adventures/packages/${pkg.documentHash}.json`,
     package: pkg,
   })),
+  importAdventurePdfFile: vi.fn(),
 }));
 
 vi.mock("#lib/stores/oracle.svelte.js", () => ({
@@ -99,6 +100,10 @@ vi.mock("#lib/stores/oracle/rumour-adventure-handoff.svelte.js", () => ({
   },
 }));
 
+vi.mock("#lib/services/adventure/adventure-pdf-import.js", () => ({
+  importAdventurePdfFile: env.importAdventurePdfFile,
+}));
+
 import AdventureSurface from "./AdventureSurface.svelte";
 
 beforeEach(() => {
@@ -111,6 +116,7 @@ beforeEach(() => {
   env.pendingRumour = null;
   env.characters = [];
   env.saveApprovedPackage.mockClear();
+  env.importAdventurePdfFile.mockReset();
 });
 
 describe("AdventureSurface entry", () => {
@@ -322,5 +328,109 @@ describe("AdventureSurface entry", () => {
     expect(alert.getAttribute("role")).toBe("alert");
     expect(screen.queryByTestId("adventure-import-review")).toBeNull();
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+    expect(env.importAdventurePdfFile).not.toHaveBeenCalled();
+  });
+
+  it("lazy-loads the PDF importer on .pdf selection and transitions to review with page references", async () => {
+    env.importAdventurePdfFile.mockResolvedValue({
+      ok: true,
+      package: {
+        schemaVersion: 1,
+        status: "draft",
+        documentHash: "b".repeat(64),
+        sourceIdentity: {
+          fileName: "mill-adventure.pdf",
+          title: "The Last Grind",
+        },
+        importMethod: "pdf",
+        importVersion: "1.0.0",
+        sections: [
+          {
+            sourceId: "the-last-grind",
+            title: "The Last Grind",
+            level: 1,
+            body: "A mill stands silent.",
+            gmOnly: false,
+            pageNumber: 1,
+            provenance: "suggested",
+          },
+          {
+            sourceId: "scene-1-landing",
+            title: "Scene 1: The Ferry Landing",
+            level: 2,
+            body: "Fog clings to the jetty.",
+            gmOnly: false,
+            pageNumber: 2,
+            pageEnd: 3,
+            provenance: "suggested",
+          },
+        ],
+        scenes: [],
+        npcs: [],
+        clues: [],
+        encounters: [],
+        secrets: [],
+        endings: [],
+        ambiguities: [],
+      },
+    });
+
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const pdfFile = new File(["%PDF-1.4"], "mill-adventure.pdf", {
+      type: "application/pdf",
+    });
+
+    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+
+    const review = await screen.findByTestId("adventure-import-review");
+    expect(review.textContent).toContain("The Last Grind");
+    expect(env.importAdventurePdfFile).toHaveBeenCalledTimes(1);
+    expect(
+      screen
+        .getAllByTestId("section-page-ref")
+        .map((e) => e.textContent?.trim()),
+    ).toEqual(["p. 1", "pp. 2–3"]);
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("displays an error alert for image-only or encrypted PDFs without entering review or writing to storage", async () => {
+    for (const err of [
+      {
+        code: "IMAGE_ONLY_PDF",
+        message: "This PDF contains no extractable text; OCR is not available.",
+      },
+      {
+        code: "ENCRYPTED_PDF",
+        message: "Encrypted or password-protected PDFs are not supported.",
+      },
+    ]) {
+      env.importAdventurePdfFile.mockResolvedValueOnce({
+        ok: false,
+        error: err,
+      });
+
+      const { unmount } = render(AdventureSurface);
+      await screen.findByTestId("adventure-entry-choices");
+
+      const fileInput = screen.getByTestId(
+        "adventure-file-input",
+      ) as HTMLInputElement;
+      const pdfFile = new File(["%PDF-1.4"], "bad.pdf", {
+        type: "application/pdf",
+      });
+      await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+
+      const alert = await screen.findByTestId("adventure-import-error");
+      expect(alert.getAttribute("role")).toBe("alert");
+      expect(alert.textContent).toContain(err.message);
+      expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+      expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+      unmount();
+    }
   });
 });

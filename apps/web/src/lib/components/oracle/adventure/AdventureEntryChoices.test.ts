@@ -100,6 +100,42 @@ describe("AdventureEntryChoices", () => {
     expect(onImportFile).toHaveBeenCalledWith(file);
   });
 
+  it("accepts .pdf and application/pdf and shows loading state while importing", async () => {
+    const onImportFile = vi.fn();
+    const { rerender } = render(AdventureEntryChoices, {
+      props: {
+        onDiscover: vi.fn(),
+        onOwnPremise: vi.fn(),
+        onImportFile,
+        importing: false,
+      },
+    });
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    expect(fileInput.accept).toContain(".pdf");
+    expect(fileInput.accept).toContain("application/pdf");
+    expect(fileInput.getAttribute("aria-label")).toContain("PDF");
+
+    const pdfFile = new File(["%PDF-1.4"], "module.pdf", {
+      type: "application/pdf",
+    });
+    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    expect(onImportFile).toHaveBeenCalledWith(pdfFile);
+
+    await rerender({
+      onDiscover: vi.fn(),
+      onOwnPremise: vi.fn(),
+      onImportFile,
+      importing: true,
+    });
+    expect(screen.getByTestId("adventure-import-loading")).toBeTruthy();
+    expect(
+      (screen.getByTestId("adventure-import") as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
   it("uses touch-sized cards in a single-column mobile layout", () => {
     render(AdventureEntryChoices, {
       props: { onDiscover: vi.fn(), onOwnPremise: vi.fn() },
