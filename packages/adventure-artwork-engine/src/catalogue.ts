@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { isArtworkCue } from "./cues";
 
-const safeUrl = z.string().refine((value) => {
+export function isValidArtworkAssetUrl(value: string): boolean {
   try {
     const url = new URL(value);
     return (
@@ -17,7 +17,9 @@ const safeUrl = z.string().refine((value) => {
   } catch {
     return false;
   }
-});
+}
+
+const safeUrl = z.string().refine(isValidArtworkAssetUrl);
 const identifier = z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
 const cue = identifier.max(64);
 const variant = z

@@ -137,15 +137,31 @@ const NPC_ANCESTRY_CUES = new Set<string>([
   "gnome",
 ]);
 
-const NPC_GENERIC_ROLE_CUES = new Set<string>(["worker", "traveller"]);
-
-const NPC_PERSON_CUES = new Set<string>([
+export const NPC_ROLE_CUES = [
   "traveller",
   "merchant",
   "guard",
   "scholar",
   "explorer",
   "worker",
+  "elder",
+  "witch",
+  "cultist",
+  "bandit",
+  "official",
+  "urchin",
+  "goblin",
+  "necromancer",
+  "innkeeper",
+  "healer",
+  "smith",
+  "informant",
+] as const;
+
+const NPC_GENERIC_ROLE_CUES = new Set<string>(["worker", "traveller"]);
+
+const NPC_PERSON_CUES = new Set<string>([
+  ...NPC_ROLE_CUES,
   ...NPC_ANCESTRY_CUES,
   "fighter",
   "paladin",
@@ -159,18 +175,6 @@ const NPC_PERSON_CUES = new Set<string>([
   "warlock",
   "monk",
   "noble",
-  "elder",
-  "witch",
-  "cultist",
-  "bandit",
-  "official",
-  "urchin",
-  "goblin",
-  "necromancer",
-  "innkeeper",
-  "healer",
-  "smith",
-  "informant",
 ]);
 
 export const CUE_SYNONYMS: Readonly<Record<string, string>> = {

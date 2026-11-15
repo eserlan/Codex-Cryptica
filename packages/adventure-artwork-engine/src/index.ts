@@ -6,3 +6,4 @@ export * from "./associations";
 export * from "./cache-policy";
 
 export * from "./collections";
+export * from "./coverage";
