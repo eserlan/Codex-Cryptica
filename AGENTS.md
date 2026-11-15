@@ -112,6 +112,9 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 2, Bun 1.3.14 + `@codex/adventure-engine` (`AdventureSourcePackageSchema` status `"draft" | "approved"`, `approveAdventurePackage`, immutable `saveAdventurePackage`), `AdventureEntryChoices.svelte` Markdown file picker, `AdventureImportReview.svelte` interactive review screen (provenance badges, secret reclassification, scene/clue/NPC section assignment corrections, pre-approval AI provider excerpt notice), and `AdventurePackageRepository` Vault adapter. No new third-party dependency. (4833-adventure-import-review)
+- Approved `AdventureSourcePackage` JSON baselines persisted as immutable files under `.codex/adventures/packages/<documentHash>.json` with zero-write cancellation. No new IndexedDB object store or schema migration. (4833-adventure-import-review)
+
 - TypeScript 6.0.3, Bun 1.3.14 + `zod`, Web Crypto SHA-256 (`globalThis.crypto.subtle.digest`), `@codex/adventure-engine` (`src/source-package/`): `AdventureSourcePackageSchema`, deterministic offline Markdown import parser, and bounded scene retrieval (`MAX_ADVENTURE_RETRIEVAL_CHARS = 4000`). No new third-party dependency. (4832-adventure-import)
 - Draft `AdventureSourcePackage` JSON files persisted under `.codex/adventures/packages/<documentHash>.json` via dependency-injected `AdventurePackageFileIO` with SHA-256 deduplication and atomic failure rollback. No new IndexedDB object store or schema migration. (4832-adventure-import)
 

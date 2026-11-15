@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   AdventureSourcePackageSchema,
   MAX_ADVENTURE_RETRIEVAL_CHARS,
+  approveAdventurePackage,
   getAdventurePackagePath,
   importAndSaveAdventureMarkdown,
   listAdventurePackageHashes,
@@ -406,5 +407,52 @@ describe("AdventureSourcePackage retrieval, persistence, and validation", () => 
 
     expect(io.writeCalls).toBe(0);
     expect(io.files.size).toBe(0);
+  });
+
+  it("AC10: approveAdventurePackage validates and sets status to approved, and saveAdventurePackage rejects mutating an approved package", async () => {
+    const parsed = await parseAdventureMarkdown(adventureMd, {
+      fileName: "adventure.md",
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const approved = approveAdventurePackage(parsed.package);
+    expect(approved.status).toBe("approved");
+    expect(AdventureSourcePackageSchema.parse(approved).status).toBe(
+      "approved",
+    );
+
+    const io = createMemoryIO();
+    const saved = await saveAdventurePackage(io, approved);
+    expect(saved.status).toBe("created");
+    expect(saved.package.status).toBe("approved");
+
+    const loaded = await loadAdventurePackage(io, approved.documentHash);
+    expect(loaded?.status).toBe("approved");
+
+    const mutated = {
+      ...approved,
+      secrets: approved.secrets.map((secret) => ({
+        ...secret,
+        gmOnly: !secret.gmOnly,
+      })),
+    };
+    await expect(saveAdventurePackage(io, mutated)).rejects.toThrow(
+      "already approved",
+    );
+    await expect(saveAdventurePackage(io, parsed.package)).rejects.toThrow(
+      "already approved",
+    );
+    expect(io.writeCalls).toBe(1);
+    expect(await loadAdventurePackage(io, approved.documentHash)).toEqual(
+      approved,
+    );
+
+    expect(() =>
+      approveAdventurePackage({
+        ...parsed.package,
+        documentHash: "not-a-hash",
+      }),
+    ).toThrow();
   });
 });

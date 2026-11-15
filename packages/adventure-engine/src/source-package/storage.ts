@@ -54,6 +54,16 @@ export async function listAdventurePackageHashes(
     .map((name) => name.slice(0, -5));
 }
 
+export function approveAdventurePackage(
+  pkg: AdventureSourcePackage,
+): AdventureSourcePackage {
+  const validated = AdventureSourcePackageSchema.parse(pkg);
+  return AdventureSourcePackageSchema.parse({
+    ...validated,
+    status: "approved",
+  });
+}
+
 export async function saveAdventurePackage(
   io: AdventurePackageFileIO,
   pkg: AdventureSourcePackage,
@@ -66,11 +76,18 @@ export async function saveAdventurePackage(
     const existing = AdventureSourcePackageSchema.parse(
       JSON.parse(existingRaw),
     );
-    return {
-      status: "deduplicated",
-      path,
-      package: existing,
-    };
+    if (existing.status === "approved") {
+      throw new Error(
+        `Adventure package "${validated.documentHash}" is already approved and cannot be modified.`,
+      );
+    }
+    if (validated.status === "draft") {
+      return {
+        status: "deduplicated",
+        path,
+        package: existing,
+      };
+    }
   }
 
   if (!io.remove) {
