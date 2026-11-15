@@ -1,5 +1,5 @@
 import type { Core } from "cytoscape";
-import { systemClock, type Clock } from "@codex/runtime";
+import type { Clock } from "@codex/runtime";
 import type { Entity } from "schema";
 import {
   communityEdgeShape,
@@ -228,7 +228,7 @@ export class LayoutManager {
 
   constructor(
     private cy: Core,
-    private readonly clock: Clock = systemClock,
+    private readonly clock: Clock = { now: () => performance.now() },
   ) {}
 
   private getWorker(): Worker {
