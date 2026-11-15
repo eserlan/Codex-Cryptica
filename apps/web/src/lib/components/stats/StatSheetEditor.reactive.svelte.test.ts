@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import type { Entity } from "schema";
+import { tick } from "svelte";
 
 const { updateEntity } = vi.hoisted(() => ({ updateEntity: vi.fn() }));
 
@@ -44,5 +45,50 @@ describe("StatSheetEditor with a reactive ($state) entity prop", () => {
     const entity = buildReactiveEntity();
     expect(() => render(StatSheetEditor, { entity })).not.toThrow();
     expect(screen.getByTestId("stat-sheet-editor")).toBeTruthy();
+  });
+});
+
+describe("StatSheetEditor entity changes", () => {
+  it("refreshes the scratchpad when reactive fields are replaced externally", async () => {
+    const entity = buildReactiveEntity();
+    render(StatSheetEditor, { entity });
+    await tick();
+    entity.statSheet!.fields = [
+      { id: "ac", label: "Armour", type: "number", value: 12 },
+    ];
+    await tick();
+    expect(screen.queryByDisplayValue("Hit Points")).toBeNull();
+    await fireEvent.input(screen.getByLabelText("Field label"), {
+      target: { value: "AC" },
+    });
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "goblin-1",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ id: "ac", label: "AC" })],
+        }),
+      }),
+    );
+    expect(entity.statSheet!.fields[0].label).toBe("Armour");
+  });
+
+  it("persists to the replacement entity and uses an updated ID generator prop", async () => {
+    const { rerender } = render(StatSheetEditor, {
+      entity: buildReactiveEntity(),
+      idGenerator: { uuid: () => "old" },
+    });
+    const entity = buildReactiveEntity();
+    entity.id = "new-hero";
+    entity.statSheet!.fields = [];
+    await rerender({ entity, idGenerator: { uuid: () => "new" } });
+    await fireEvent.click(screen.getByTestId("stat-sheet-editor-add"));
+    expect(updateEntity).toHaveBeenLastCalledWith(
+      "new-hero",
+      expect.objectContaining({
+        statSheet: expect.objectContaining({
+          fields: [expect.objectContaining({ id: "field-new" })],
+        }),
+      }),
+    );
   });
 });
