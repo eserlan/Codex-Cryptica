@@ -200,14 +200,18 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
     expect(rogueMatch?.id).not.toBe("npc-fantasy-bard-01");
   });
 
-  it("selects published and planned archetype assets by role intent and avoids witch/wizard and cultist/cleric collisions", () => {
-    const publishedArchetypes = [
+  it("selects all eight published fantasy narrative roles and rejects unsupported roles", () => {
+    const archetypes = [
+      "elder",
       "witch",
       "cultist",
       "bandit",
+      "official",
+      "urchin",
+      "goblin",
       "necromancer",
     ] as const;
-    for (const role of publishedArchetypes) {
+    for (const role of archetypes) {
       expect(
         matchArtwork(seedArtwork, {
           type: "npc",
@@ -216,39 +220,6 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
         })?.id,
       ).toBe(`npc-fantasy-${role}-01`);
     }
-
-    const plannedArchetypes = [
-      "elder",
-      "official",
-      "urchin",
-      "goblin",
-    ] as const;
-    const plannedAssets = plannedArchetypes.map((role) =>
-      asset(`npc-fantasy-${role}-01`, {
-        type: "npc",
-        primaryCues: [role],
-        settingCues: [],
-        moodCues: [],
-      }),
-    );
-    const combinedPool = [...seedArtwork, ...plannedAssets];
-    for (const role of plannedArchetypes) {
-      expect(
-        matchArtwork(combinedPool, {
-          type: "npc",
-          genre: "fantasy",
-          primaryCues: [role],
-        })?.id,
-      ).toBe(`npc-fantasy-${role}-01`);
-    }
-
-    expect(
-      matchArtwork(seedArtwork, {
-        type: "npc",
-        genre: "fantasy",
-        primaryCues: ["elder"],
-      }),
-    ).toBeNull();
     expect(
       matchArtwork(seedArtwork, {
         type: "npc",
@@ -308,6 +279,71 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
     });
     expect(necromancerInLabTemple?.id).toBe("npc-fantasy-necromancer-01");
     expect(necromancerInLabTemple?.id).not.toBe("npc-fantasy-scholar-02");
+  });
+
+  it("separates urchin and informant cues and resolves social/civic synonyms on seedArtwork", () => {
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["informant"],
+      }),
+    ).toBeNull();
+
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["informant"],
+        settingCues: ["city", "urban"],
+      }),
+    ).toBeNull();
+
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["urchin", "informant"],
+        settingCues: ["city", "urban"],
+      })?.id,
+    ).toBe("npc-fantasy-urchin-01");
+
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["human", "elder"],
+        settingCues: ["village", "rural"],
+      })?.id,
+    ).toBe("npc-fantasy-elder-01");
+
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["human", "official"],
+        settingCues: ["city", "tavern"],
+      })?.id,
+    ).toBe("npc-fantasy-official-01");
+
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["urchin"],
+        settingCues: ["city"],
+        timeCues: ["night"],
+      })?.id,
+    ).toBe("npc-fantasy-urchin-01");
+
+    expect(
+      matchArtwork(seedArtwork, {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["goblin"],
+        settingCues: ["cave", "tavern"],
+      })?.id,
+    ).toBe("npc-fantasy-goblin-01");
   });
 
   it("prioritizes explicit NPC role matches over ancestry and setting matches", () => {
