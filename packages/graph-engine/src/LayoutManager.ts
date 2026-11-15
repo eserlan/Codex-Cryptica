@@ -1,4 +1,5 @@
 import type { Core } from "cytoscape";
+import type { Clock } from "@codex/runtime";
 import type { Entity } from "schema";
 import {
   communityEdgeShape,
@@ -225,7 +226,10 @@ export class LayoutManager {
       ) => void)
     | null = null;
 
-  constructor(private cy: Core) {}
+  constructor(
+    private cy: Core,
+    private readonly clock: Clock = { now: () => performance.now() },
+  ) {}
 
   private getWorker(): Worker {
     if (!this.worker) {
@@ -741,7 +745,7 @@ export class LayoutManager {
       60000,
       Math.max(BASE_LAYOUT_WORKER_TIMEOUT_MS, nodes.length * 30),
     );
-    const layoutStartTime = performance.now();
+    const layoutStartTime = this.clock.now();
     const positions = await this.runInWorker(
       nodes,
       edges,
@@ -777,7 +781,7 @@ export class LayoutManager {
       this.clearPendingLayout();
     });
 
-    options.onLayoutComputed?.(Math.round(performance.now() - layoutStartTime));
+    options.onLayoutComputed?.(Math.round(this.clock.now() - layoutStartTime));
 
     this.animateFitAndStop(options, "ease-out-quad");
 
