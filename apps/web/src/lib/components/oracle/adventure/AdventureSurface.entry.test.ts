@@ -499,11 +499,14 @@ describe("AdventureSurface entry", () => {
     const fileInput = screen.getByTestId(
       "adventure-file-input",
     ) as HTMLInputElement;
+    expect(fileInput.disabled).toBe(true);
     const file = new File(["# Guest adventure"], "guest.md", {
       type: "text/markdown",
     });
     const read = vi.spyOn(file, "arrayBuffer");
 
+    // Simulate a late file-input event so the surface's guest-mode guard runs.
+    fileInput.disabled = false;
     await fireEvent.change(fileInput, { target: { files: [file] } });
 
     expect(

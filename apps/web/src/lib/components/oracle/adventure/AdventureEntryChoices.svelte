@@ -31,7 +31,7 @@
     const input = event.currentTarget as HTMLInputElement;
     const file = input.files?.[0];
     input.value = "";
-    if (file && onImportFile && canImport) {
+    if (file && onImportFile) {
       await onImportFile(file);
     }
   }
