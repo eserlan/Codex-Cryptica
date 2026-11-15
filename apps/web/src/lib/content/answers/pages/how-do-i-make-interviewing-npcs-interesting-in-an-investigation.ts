@@ -340,6 +340,7 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
       "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
       "how-do-i-handle-players-discussing-plans-in-front-of-npcs",
+      "how-do-i-get-a-stalled-rpg-investigation-moving-again",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
@@ -399,6 +400,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
           with: "answer-specialist-character-spotlight",
           reason:
             "The spotlight answer gives a framework for any specialist PC to contribute without isolating the party; this answer gives a framework for shaping interview NPC behaviour and testimony regardless of which PC is present.",
+        },
+        {
+          with: "answer-stalled-investigation-recovery",
+          reason:
+            "This answer structures individual witness interviews through memory, interpretation and omission; the stalled-investigation answer uses witnesses as one of several honest routes for restoring a lead when the whole investigation has stalled.",
         },
       ],
     },

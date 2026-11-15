@@ -46,6 +46,12 @@ When adding new AI functionality:
 3. **Expose in Facade**: Add a delegation method to `OracleStore` if it needs to be part of the public API.
 4. **Update Tests**: Add unit tests in `oracle/tests/` and verify regression in `oracle.svelte.test.ts`.
 
+## Imported adventure design (future integration)
+
+The accepted [adventure source and playthrough ADR](adr/021-adventure-sources-playthrough-continuity.md) defines boundaries for the Oracle when it runs published adventures: immutable, cited source packages; separate evolving playthrough state; scoped, provenance-aware campaign facts; and per-playthrough world-specific adaptation. Established Vault canon takes precedence, while changes to plot-critical material require GM approval. Source analysis and preparation must not cause unrestricted full-adventure retrieval on every turn.
+
+This is **approved design direction**, not current Oracle Store behaviour. The deterministic Markdown import foundation in [#4832](https://github.com/eserlan/Codex-Cryptica/issues/4832) does not itself implement the Oracle runner, shared continuity, or automatic campaign-canon promotion. Keep the user-facing Adventure Mode help accurate to the deployed behaviour until those later slices ship.
+
 ## Server-Side Conversation State (Gemini Interactions API)
 
 Oracle chat can run through the Gemini **Interactions API** so prior turns and
