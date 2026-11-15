@@ -27,3 +27,4 @@ export * from "./people-types";
 export * from "./people";
 export * from "./scene-types";
 export * from "./scene-identities";
+export * from "./source-package";
