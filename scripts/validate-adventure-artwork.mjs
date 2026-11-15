@@ -244,10 +244,15 @@ export async function verifyReleaseAssets(
   }
 }
 
-function formatVariantDiagnostic(assetId, variant, response, bytes, dimensions) {
+function formatVariantDiagnostic(
+  assetId,
+  variant,
+  response,
+  bytes,
+  dimensions,
+) {
   const matchesDimensions =
-    dimensions.width === variant.width &&
-    dimensions.height === variant.height;
+    dimensions.width === variant.width && dimensions.height === variant.height;
   const base = {
     ok: matchesDimensions,
     status: response.status,
@@ -346,7 +351,12 @@ export async function diagnoseReleaseAssets(
 
 export async function runCoverageDiagnostics(
   assets,
-  { verifyRemote = false, fetch: fetcher = fetch, openDecoder = openArtworkDecoder, decode } = {},
+  {
+    verifyRemote = false,
+    fetch: fetcher = fetch,
+    openDecoder = openArtworkDecoder,
+    decode,
+  } = {},
 ) {
   let remoteVerification;
   if (verifyRemote) {
@@ -401,14 +411,15 @@ if (import.meta.main) {
     const verifyRemote = args.includes("--verify-remote");
     const jsonOutput = args.includes("--json");
     try {
-      const { seedArtwork } = await import(
-        "../packages/adventure-artwork-engine/src/catalogue/seed.ts"
-      );
+      const { seedArtwork } =
+        await import("../packages/adventure-artwork-engine/src/catalogue/seed.ts");
       const report = await runCoverageDiagnostics(seedArtwork, {
         verifyRemote,
       });
       console.log(
-        jsonOutput ? JSON.stringify(report, null, 2) : formatCoverageReport(report),
+        jsonOutput
+          ? JSON.stringify(report, null, 2)
+          : formatCoverageReport(report),
       );
       if (
         report.undocumentedRoleGaps.length > 0 ||
@@ -425,10 +436,7 @@ if (import.meta.main) {
     }
   } else {
     const [currentPath, previousPath] = args;
-    if (
-      Boolean(currentPath) !== Boolean(previousPath) ||
-      args.length > 2
-    ) {
+    if (Boolean(currentPath) !== Boolean(previousPath) || args.length > 2) {
       console.error(
         "Usage: bun scripts/validate-adventure-artwork.mjs [<current.json> <previous.json> | --coverage [--verify-remote] [--json]]",
       );
