@@ -98,12 +98,14 @@ Add the `ArtworkAsset` record to `packages/adventure-artwork-engine/src/catalogu
 
 If adding to an offline pack, update `packages/adventure-artwork-engine/src/collections.ts` as well.
 
-### Step 6 — Validate
+### Step 6 — Validate & Reconcile Documentation
 
-1. Run engine and validator tests:
+1. Reconcile `docs/ADVENTURE_ARTWORK_CATALOG.md` with `seedArtwork` and `ARTWORK_CUES` (update Coverage Summary counts, add the new live asset rows to Section 1, and move any fulfilled planned items out of Roadmap Needed/Planned tables).
+2. Run engine, validator, and offline coverage audit checks:
    ```bash
    bun run --filter @codex/adventure-artwork-engine test
    bun test scripts/validate-adventure-artwork.test.ts
+   bun scripts/validate-adventure-artwork.mjs --coverage
    ```
-2. Verify live R2 bytes/hashes/dimensions using `scripts/validate-adventure-artwork.mjs` (`verifyArtworkVariants` + `openArtworkDecoder`).
-3. Confirm the asset appears in the Asset Ledger at `https://assets.codexcryptica.com/gallery` under **Adventure Artwork** (note: `oracle-proxy` caches `/gallery` for 5 minutes).
+3. Verify live R2 bytes/hashes/dimensions using `scripts/validate-adventure-artwork.mjs --coverage --verify-remote` (or default no-arg release validation via `verifyArtworkVariants` + `openArtworkDecoder`).
+4. Confirm the asset appears in the Asset Ledger at `https://assets.codexcryptica.com/gallery` under **Adventure Artwork** (note: `oracle-proxy` caches `/gallery` for 5 minutes).
