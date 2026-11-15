@@ -135,6 +135,7 @@ export const howDoYouKeepTrackOfNpcsInALongCampaign: AnswerConfigInput = {
     "how-do-i-organise-a-dnd-campaign",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "how-do-you-keep-notes-for-a-solo-rpg-campaign",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-track-npcs-long-campaign",

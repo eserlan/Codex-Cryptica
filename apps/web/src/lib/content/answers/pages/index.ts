@@ -77,6 +77,7 @@ import { howDoISaveMyPartyFromAnOverpoweredEncounter } from "./how-do-i-save-my-
 import { howDoIStartADndCampaign } from "./how-do-i-start-a-dnd-campaign";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoIStartWorldbuildingForANovelOrShortStory } from "./how-do-i-start-worldbuilding-for-a-novel-or-short-story";
+import { howDoIStructureADndCampaign } from "./how-do-i-structure-a-dnd-campaign";
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITrackMonstersInitiativeAndHitPointsInDndCombat } from "./how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
@@ -281,6 +282,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIStartADndCampaign,
     howDoIStartGmingForTheFirstTime,
     howDoIStartWorldbuildingForANovelOrShortStory,
+    howDoIStructureADndCampaign,
     howDoITakeUsefulRpgNotesDuringPlay,
     howDoITrackMonstersInitiativeAndHitPointsInDndCombat,
     howDoITurnAnRpgIdeaIntoAnAdventure,

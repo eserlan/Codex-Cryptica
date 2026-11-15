@@ -174,6 +174,7 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
     "how-do-you-create-quest-hooks-without-railroading",
     "how-do-i-plan-story-arcs-for-an-rpg-campaign",
     "how-to-adapt-a-video-game-into-a-tabletop-rpg",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-how-much-plot-should-a-dm-prepare",
@@ -192,6 +193,13 @@ export const howMuchOfThePlotShouldADmPrepare: AnswerConfigInput = {
       "answer-session-prep",
       "answer-turn-rpg-idea-into-adventure",
       "answer-manage-campaign-timeline",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "answer-structure-dnd-campaign",
+        reason:
+          "This page teaches how much plot to prepare without scripting player actions, using firm, conditional and open prep; the D&D tier page uses level bands to set the scale of conflicts and consequences across a campaign.",
+      },
     ],
   },
   seo: {
