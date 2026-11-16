@@ -131,6 +131,12 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
     expect(AdventureJsonV1Schema.safeParse(validFixture).success).toBe(true);
     expect(validFixture.formatVersion).toBe(ADVENTURE_JSON_V1_FORMAT_VERSION);
 
+    const mixedCaseIdFixture = { ...validFixture, id: "MyAdventure" };
+    expect(AdventureJsonV1Schema.safeParse(mixedCaseIdFixture).success).toBe(
+      true,
+    );
+    expect(ajvValidate(mixedCaseIdFixture)).toBe(true);
+
     for (const testCase of negativeCases) {
       const zodOk = AdventureJsonV1Schema.safeParse(testCase).success;
       const ajvOk = Boolean(ajvValidate(testCase));

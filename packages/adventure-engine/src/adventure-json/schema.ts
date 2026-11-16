@@ -278,7 +278,7 @@ const SEMVER_RE =
 export const AdventureJsonV1Schema = z
   .object({
     formatVersion: z.literal(ADVENTURE_JSON_V1_FORMAT_VERSION),
-    id: z.string().regex(/^[a-z0-9_-]{3,64}$/i),
+    id: z.string().regex(/^[a-zA-Z0-9_-]{3,64}$/),
     title: z.string().min(1).max(200),
     version: z.string().regex(SEMVER_RE),
     description: z.string().optional(),

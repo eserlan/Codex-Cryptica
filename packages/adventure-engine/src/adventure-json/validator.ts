@@ -477,7 +477,11 @@ function validateSceneReachability(
   }
 
   scenes.forEach((scene, i) => {
-    if (i > 0 && !reachable.has(scene.id)) {
+    if (
+      i > 0 &&
+      !reachable.has(scene.id) &&
+      scene.epistemicStatus !== "ambiguous"
+    ) {
       errors.push({
         code: "UNREACHABLE_SCENE",
         message: `Scene "${scene.id}" is unreachable from entry scene "${entryId}".`,

@@ -96,14 +96,28 @@ function summarizeText(text: string, fallback: string): string {
 function mapSceneBranches(
   scene: SceneRecord,
   sceneId: string,
+  section: SectionAnchor | undefined,
   sceneIdBySourceId: Map<string, string>,
+  allocateId: IdAllocator,
+  extraUnresolved: AdventureJsonUnresolved[],
 ): SceneTransitionBranch[] {
   const mapped: SceneTransitionBranch[] = [];
   for (const branch of scene.branches ?? []) {
     const targetSceneId = branch.targetSourceId
       ? sceneIdBySourceId.get(branch.targetSourceId)
       : undefined;
-    if (!targetSceneId || targetSceneId === sceneId) continue;
+    if (!targetSceneId || targetSceneId === sceneId) {
+      extraUnresolved.push({
+        id: allocateId(`unresolved-branch-${scene.sourceId}`),
+        code: "UNRESOLVED_BRANCH_TARGET",
+        message: branch.description,
+        relatedEntityId: sceneId,
+        ...(branch.targetSourceId ? { context: branch.targetSourceId } : {}),
+        epistemicStatus: "unresolved",
+        sourceRef: buildSourceRef(section, scene.sourceId),
+      });
+      continue;
+    }
     mapped.push({
       targetSceneId,
       description: branch.description,
@@ -133,23 +147,26 @@ function collectReachableSceneIds(scenes: AdventureJsonScene[]): Set<string> {
   return reachable;
 }
 
-function ensureSceneReachability(scenes: AdventureJsonScene[]): void {
+function markUnknownSceneProgression(
+  scenes: AdventureJsonScene[],
+  allocateId: IdAllocator,
+  extraUnresolved: AdventureJsonUnresolved[],
+): void {
   if (scenes.length <= 1) return;
 
   const reachable = collectReachableSceneIds(scenes);
   for (let i = 1; i < scenes.length; i += 1) {
-    const target = scenes[i]!;
-    if (reachable.has(target.id)) continue;
-    const prev = scenes[i - 1]!;
-    prev.branches = [
-      ...(prev.branches ?? []),
-      {
-        targetSceneId: target.id,
-        description: `Continue to ${target.title}`,
-        ...(target.optional !== undefined ? { optional: target.optional } : {}),
-      },
-    ];
-    reachable.add(target.id);
+    const scene = scenes[i]!;
+    if (reachable.has(scene.id)) continue;
+    scene.epistemicStatus = "ambiguous";
+    extraUnresolved.push({
+      id: allocateId(`unresolved-progression-${scene.id}`),
+      code: "UNKNOWN_SCENE_PROGRESSION",
+      message: `Progression to scene "${scene.title}" is not established in source.`,
+      relatedEntityId: scene.id,
+      epistemicStatus: "unresolved",
+      sourceRef: scene.sourceRef,
+    });
   }
 }
 
@@ -172,8 +189,17 @@ function convertSingleScene(
   section: SectionAnchor | undefined,
   id: string,
   sceneIdBySourceId: Map<string, string>,
+  allocateId: IdAllocator,
+  extraUnresolved: AdventureJsonUnresolved[],
 ): AdventureJsonScene {
-  const branches = mapSceneBranches(scene, id, sceneIdBySourceId);
+  const branches = mapSceneBranches(
+    scene,
+    id,
+    section,
+    sceneIdBySourceId,
+    allocateId,
+    extraUnresolved,
+  );
   const result: AdventureJsonScene = {
     id,
     title: scene.title,
@@ -191,6 +217,8 @@ function convertScenes(
   sourcePkg: AdventureSourcePackage,
   sectionBySourceId: Map<string, SectionAnchor>,
   sceneIdBySourceId: Map<string, string>,
+  allocateId: IdAllocator,
+  extraUnresolved: AdventureJsonUnresolved[],
 ): AdventureJsonScene[] {
   const scenes = sourcePkg.scenes.map((scene) =>
     convertSingleScene(
@@ -198,10 +226,12 @@ function convertScenes(
       sectionBySourceId.get(scene.sourceId),
       sceneIdBySourceId.get(scene.sourceId)!,
       sceneIdBySourceId,
+      allocateId,
+      extraUnresolved,
     ),
   );
 
-  ensureSceneReachability(scenes);
+  markUnknownSceneProgression(scenes, allocateId, extraUnresolved);
   return scenes;
 }
 
@@ -374,6 +404,15 @@ export function adventureSourcePackageToAdventureJson(
     ? sectionBySourceId.get(sourcePkg.scenes[0].sourceId)
     : undefined;
 
+  const extraUnresolved: AdventureJsonUnresolved[] = [];
+  const scenes = convertScenes(
+    sourcePkg,
+    sectionBySourceId,
+    sceneIdBySourceId,
+    allocateId,
+    extraUnresolved,
+  );
+
   return {
     formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
     id: buildPackageId(sourcePkg),
@@ -395,7 +434,7 @@ export function adventureSourcePackageToAdventureJson(
     locations: [],
     actors: convertActors(sourcePkg, sectionBySourceId, allocateId),
     factions: [],
-    scenes: convertScenes(sourcePkg, sectionBySourceId, sceneIdBySourceId),
+    scenes,
     encounters: convertEncounters(
       sourcePkg,
       sectionBySourceId,
@@ -417,11 +456,14 @@ export function adventureSourcePackageToAdventureJson(
       allocateId,
     ),
     endings: convertEndings(sourcePkg, sectionBySourceId, allocateId),
-    unresolved: convertUnresolved(
-      sourcePkg,
-      sectionBySourceId,
-      sceneIdBySourceId,
-      allocateId,
-    ),
+    unresolved: [
+      ...convertUnresolved(
+        sourcePkg,
+        sectionBySourceId,
+        sceneIdBySourceId,
+        allocateId,
+      ),
+      ...extraUnresolved,
+    ],
   };
 }
