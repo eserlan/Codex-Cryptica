@@ -61,7 +61,7 @@
         Bring Your Campaign Into Codex Cryptica
       </h1>
       <p
-        class="text-base md:text-lg text-theme-text/80 leading-relaxed max-w-2xl mx-auto"
+        class="text-base md:text-lg text-theme-text/90 leading-relaxed max-w-2xl mx-auto"
       >
         Every export below is parsed and previewed entirely in your browser.
         Nothing is uploaded anywhere. Pick the tool you're migrating from.
@@ -112,7 +112,7 @@
         <h2 class="font-header text-xl font-bold text-theme-text">
           Adventure JSON Conversion Guide
         </h2>
-        <p class="text-sm md:text-base text-theme-text/80 max-w-2xl">
+        <p class="text-sm md:text-base text-theme-text/90 max-w-2xl">
           Have a PDF or text adventure you legally own? Use our public canonical
           prompt and static JSON Schema with ChatGPT, Claude, Gemini, or a local
           model to convert it into Adventure JSON v1.
