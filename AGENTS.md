@@ -112,6 +112,8 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Bun 1.3.14 + `zod`, Web Crypto SHA-256 (`globalThis.crypto.subtle.digest`), `ajv` v8 (`devDependency` for Draft 2020-12 parity tests), `@codex/adventure-engine` (`src/adventure-json/`): `AdventureJsonV1Schema`, Draft 2020-12 JSON Schema (`getAdventureJsonV1JsonSchema`, `adventure-json-v1.schema.json`), semantic validator (`validateAdventureJson`), canonical serialization & SHA-256 hashing (`canonicalizeAdventureJson`, `computeAdventureJsonHash`), and `AdventureSourcePackage` adapter (`adventureSourcePackageToAdventureJson`). (4872-adventure-json-v1)
+
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `pdfjs-dist` (local-only, lazy-loaded via dynamic `import(...)` with Vite `?url` worker asset; zero external CDN), `@codex/adventure-engine` (`parseAdventurePdf`, `SectionAnchorSchema` `pageNumber`/`pageEnd`, `importMethod: "pdf"`), `AdventureEntryChoices.svelte`, `AdventureImportReview.svelte`, `AdventureSurface.svelte`. (4834-adventure-import-text)
 - Approved PDF-derived `AdventureSourcePackage` JSON files persisted under `.codex/adventures/packages/<documentHash>.json` using the same Vault OPFS storage and SHA-256 deduplication as Markdown packages. No new IndexedDB object store or schema migration. (4834-adventure-import-text)
 
