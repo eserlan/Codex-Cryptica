@@ -12,18 +12,23 @@ Reuses `factory/bin/{job,route,gate}`, `factory/checks.sh`, `factory/config.json
 and the canonical agent prompts in `.claude/agents/*.md`.
 """
 
+import asyncio
+import contextlib
 import json
 import os
 import re
+import shutil
 import subprocess
 from pathlib import Path
 
 TERMINAL_OR_WAITING = {"merged", "rejected", "needs-info", "needs-human"}
+SUBAGENT_TIERS = {"inherit", "pro", "flash", "flash_lite"}
+AGY_CLI_BIN = os.environ.get("AGY_CLI_BIN") or shutil.which("agy") or "agy"
 
 MODEL_MAP = {
-    "opus": "pro",
-    "sonnet": "inherit",
-    "haiku": "flash",
+    "opus": "gemini-4-hydrogen-high",
+    "sonnet": "gemini-4-hydrogen-medium",
+    "haiku": "gemini-4-hydrogen-low",
     "pro": "pro",
     "inherit": "inherit",
     "flash": "flash",
@@ -53,6 +58,8 @@ ROUTE_BIN = str(BIN / "route")
 GATE_BIN = str(BIN / "gate")
 AGENTS_DIR = REPO / ".claude" / "agents"
 CONFIG = json.loads((FACTORY / "config.json").read_text())
+AGY_TURN_TIMEOUT_MINUTES = int(CONFIG.get("agy_turn_timeout_minutes", 60))
+AGY_TURN_GRACE_SECONDS = 60
 
 
 def wf_log(msg):
@@ -122,7 +129,10 @@ def load_role_instructions(role_name):
 def map_model(model_name, override=None):
     if override:
         return MODEL_MAP.get(override, override)
-    return MODEL_MAP.get(model_name or "sonnet", "inherit")
+    configured = (CONFIG.get("agy_models") or {}).get(model_name or "sonnet")
+    if configured:
+        return configured
+    return MODEL_MAP.get(model_name or "sonnet", "gemini-4-hydrogen-medium")
 
 
 def job_ports(job_id):
@@ -213,18 +223,157 @@ def build_round_instruction(job):
     return f"{prefix} Implement spec.md, run factory/checks.sh, commit, push, open the draft PR, and write build.md."
 
 
+def git_common_dir():
+    out = run_cmd(["git", "rev-parse", "--path-format=absolute", "--git-common-dir"]).stdout.strip()
+    return Path(out)
+
+
+def agy_sandbox(cmd, job):
+    """Wrap an AGY CLI command in bubblewrap so the agent can write only to its own job.
+
+    `--dangerously-skip-permissions` approves every tool call, and the CLI's own `--sandbox`
+    does not stop writes outside the workspace, so the filesystem is mounted read-only except
+    for the job's worktree and folder (with `job.json` overlaid read-only), only the current
+    worktree/branch Git metadata and shared object store needed for commits, the AGY state
+    directory, and the bun install cache. Sensitive host credential directories are masked.
+    Returns the wrapped command and its cwd.
+    """
+    bwrap = shutil.which("bwrap")
+    if not bwrap:
+        raise RuntimeError("bubblewrap (bwrap) is required to run AGY CLI agents; install it first")
+    home = Path.home()
+    job_dir = JOBS / job["id"]
+    job_dir.mkdir(parents=True, exist_ok=True)
+    worktree = Path(job["worktree"]) if job.get("worktree") else None
+    git_dir = git_common_dir()
+    writable = [
+        job_dir,
+        worktree,
+        home / ".gemini",
+        home / ".cache" / ".bun" / "install" / "cache",
+        home / ".bun" / "install" / "cache",
+    ]
+    read_only = [job_dir / "job.json", git_dir / "hooks", git_dir / "config"]
+    if worktree is not None and worktree.exists():
+        factory_refs = git_dir / "refs" / "heads" / "factory"
+        writable.extend([
+            git_dir / "objects",
+            git_dir / "worktrees" / worktree.name,
+            factory_refs,
+            git_dir / "logs" / "refs" / "heads" / "factory",
+            git_dir / "refs" / "remotes" / "origin",
+        ])
+        if factory_refs.exists():
+            read_only.extend(p for p in factory_refs.iterdir() if p.name != job["id"])
+    wrapped = [
+        bwrap, "--die-with-parent",
+        "--ro-bind", "/", "/",
+        "--dev", "/dev",
+        "--proc", "/proc",
+        "--tmpfs", "/tmp",
+    ]
+    for masked in (".ssh", ".gnupg", ".aws", ".kube", ".azure"):
+        masked_path = home / masked
+        if masked_path.is_dir():
+            wrapped += ["--tmpfs", str(masked_path)]
+    for path in writable:
+        if path is not None and path.exists():
+            wrapped += ["--bind", str(path), str(path)]
+    for path in read_only:
+        if path.exists():
+            wrapped += ["--ro-bind", str(path), str(path)]
+    cwd = worktree if worktree is not None and worktree.exists() else job_dir
+    wrapped += ["--chdir", str(cwd), *cmd]
+    return wrapped, cwd
+
+
+async def run_agy_cli_turn(prompt, role_label, agy_model, job, conversation_id=None):
+    cmd = [
+        AGY_CLI_BIN,
+        f"--model={agy_model}",
+        "--dangerously-skip-permissions",
+        f"--print-timeout={AGY_TURN_TIMEOUT_MINUTES}m0s",
+        "--output-format",
+        "json",
+    ]
+    if conversation_id:
+        cmd.append(f"--conversation={conversation_id}")
+    cmd.extend(["-p", prompt])
+    wrapped, cwd = agy_sandbox(cmd, job)
+    proc = await asyncio.create_subprocess_exec(
+        *wrapped,
+        cwd=str(cwd),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        # A little grace past the CLI's own limit before the turn is killed.
+        stdout_b, stderr_b = await asyncio.wait_for(
+            proc.communicate(), timeout=AGY_TURN_TIMEOUT_MINUTES * 60 + AGY_TURN_GRACE_SECONDS
+        )
+    except (asyncio.TimeoutError, asyncio.CancelledError) as error:
+        with contextlib.suppress(ProcessLookupError):
+            proc.kill()
+        with contextlib.suppress(Exception):
+            await proc.wait()
+        if isinstance(error, asyncio.TimeoutError):
+            raise RuntimeError(
+                f"agy ({role_label}, {agy_model}) timed out after {AGY_TURN_TIMEOUT_MINUTES} minutes"
+            ) from error
+        raise
+    stdout = stdout_b.decode("utf-8", errors="replace").strip()
+    stderr = stderr_b.decode("utf-8", errors="replace").strip()
+    if proc.returncode != 0:
+        raise RuntimeError(f"agy ({role_label}, {agy_model}) failed (exit {proc.returncode}): {stderr or stdout}")
+    last_json_line = next((ln for ln in reversed(stdout.splitlines()) if ln.strip().startswith("{")), "{}")
+    data = json.loads(last_json_line)
+    conv_id = data.get("conversation_id") or conversation_id or "unknown"
+    resp = (data.get("response") or "").strip()
+    first = resp.splitlines()[0].strip() if resp else ""
+    wf_log(f"[agent:{agy_model}] {role_label}: done ({conv_id}): {first!r}")
+    return resp, conv_id
+
+
+class CliBuilderSession:
+    def __init__(self, standing_prompt, role_label, agy_model, job):
+        self.standing_prompt = standing_prompt
+        self.role_label = role_label
+        self.agy_model = agy_model
+        self.job = job
+        self.conversation_id = None
+
+    async def __call__(self, turn_prompt):
+        if self.conversation_id is None:
+            full_prompt = f"{self.standing_prompt}\n\n{turn_prompt}"
+        else:
+            full_prompt = turn_prompt
+        resp, conv_id = await run_agy_cli_turn(
+            full_prompt,
+            self.role_label,
+            self.agy_model,
+            self.job,
+            conversation_id=self.conversation_id,
+        )
+        self.conversation_id = conv_id
+        return resp
+
+
 async def run_single_turn_agent(role_name, job, extra_line="", claude_model="opus", model_override=None):
     agy_model = map_model(claude_model, override=model_override)
     hdr = job_header(job, role_name, agy_model)
     instructions = load_role_instructions(role_name)
     lead = f"{hdr} {extra_line}".strip()
     prompt = f"{lead}\n\n{instructions}"
-    return await agent(  # noqa: F821
-        prompt=prompt,
-        schema={"type": "string"},
-        role=f"{job['id']}: {role_name}",
-        model=agy_model,
-    )
+    role_label = f"{job['id']}: {role_name}"
+    if agy_model in SUBAGENT_TIERS and "agent" in globals():
+        return await agent(  # noqa: F821
+            prompt=prompt,
+            schema={"type": "string"},
+            role=role_label,
+            model=agy_model,
+        )
+    resp, _ = await run_agy_cli_turn(prompt, role_label, agy_model, job)
+    return resp
 
 
 async def drive_job(job_id, model_override=None):
@@ -271,12 +420,20 @@ async def drive_job(job_id, model_override=None):
                 round_task = build_round_instruction(job)
                 if builder_instance is None:
                     standing = f"{hdr}\n\n{load_role_instructions('builder')}"
-                    builder_instance = agent(  # noqa: F821
-                        prompt=standing,
-                        schema={"type": "string"},
-                        role=f"builder-{job_id}",
-                        model=agy_model,
-                    )
+                    if agy_model in SUBAGENT_TIERS and "agent" in globals():
+                        builder_instance = agent(  # noqa: F821
+                            prompt=standing,
+                            schema={"type": "string"},
+                            role=f"builder-{job_id}",
+                            model=agy_model,
+                        )
+                    else:
+                        builder_instance = CliBuilderSession(
+                            standing_prompt=standing,
+                            role_label=f"builder-{job_id}",
+                            agy_model=agy_model,
+                            job=job,
+                        )
                 await builder_instance(f"{hdr} {round_task}")
                 status_line = first_line(JOBS / job_id / "build.md") or ""
                 if status_line == "STATUS: BLOCKED":

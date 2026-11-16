@@ -73,9 +73,17 @@ automatically avoids colliding with job numbers/branches from the main checkout.
 In Antigravity, `factory/bin/agy_workflow.py` orchestrates the entire pipeline
 via the `run_workflow` tool. It runs `factory/bin/job`, `route`, and `gate`
 deterministically, keeps the `builder` agent's conversation context warm across
-rounds, runs reviewers in `parallel()`, maps models (`opus` → `"pro"`,
-`sonnet` → `"inherit"`, `haiku` → `"flash"`), and keeps your main conversation
-context clean.
+rounds (`--conversation`), runs reviewers in `parallel()`, maps models
+(`opus` → `"gemini-4-hydrogen-high"`, `sonnet` → `"gemini-4-hydrogen-medium"`,
+`haiku` → `"gemini-4-hydrogen-low"`), and keeps your main conversation context
+clean.
+
+Named-model agents run through the `agy` CLI inside bubblewrap (`bwrap` must be
+installed). The filesystem is read-only except for the job's worktree and job
+folder, the Git directory, `~/.gemini` and the bun install cache. Git hooks and
+config stay read-only, so an issue's text cannot steer an agent into changing the
+main checkout. Each CLI turn is killed after `agy_turn_timeout_minutes` from
+`factory/config.json` (default 60).
 
 ### `/factory run`
 Call `run_workflow`:
