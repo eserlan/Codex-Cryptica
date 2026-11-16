@@ -43,24 +43,9 @@ navigation menu. If you have no active adventure, choose a starting approach:
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
   starting situation and character yourself. You can return to the starting
   choices without discarding an unsaved draft.
-- **Import Adventure JSON** is available in a ready owner Vault. Drop or
-  choose an Adventure JSON v1 (`.json`) file up to 10 MiB—or follow the
-  [Adventure JSON conversion guide](/adventure-import) to convert an existing
-  module off-platform—to validate it locally with zero AI calls, review its
-  locations, actors, factions, scenes, encounters, clues, rumours, items,
-  locked `gm-only` secrets, endings, and unresolved items, and approve it as
-  an immutable SHA-256 baseline. You can adjust non-secret visibility before
-  approval, while secrets stay locked to `gm-only`. Cancelling leaves no package
-  in the Vault. Once approved, you can start a new session pinned to that
-  package version and hash, or resume an existing pinned session directly.
-  Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
-  500 pages) remain available as experimental convenience inputs that
-  normalize locally into Adventure JSON before review (scanned/encrypted PDFs
-  are rejected). The original file stays on your device and is not copied into
-  the Vault; only the approved package is saved. Imported packages are not
-  currently included in Codex Cryptica Cloud Backup, even if you opt in to
-  include adventure sessions. During play, bounded relevant excerpts may be
-  sent to your selected Oracle AI provider.
+- **Import Adventure JSON** brings an adventure you own into the Vault as an
+  immutable, locally validated package you can start a session from. See
+  [Import an adventure](#import-an-adventure) below.
 - **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
   Choose a Vault character or name a new provisional one, then a Vault place
   or a new **Starting place**. Optionally pick a world date from your Vault
@@ -90,6 +75,40 @@ New world-entry rumours are introduced as
 play makes them relevant rather than presented as a scenario-selection list.
 You need an online Oracle connection for AI turns. The selected GM notes remain
 stored within the Adventure session but are not encrypted from the vault owner.
+
+## Import an adventure
+
+Import Adventure JSON is available in a ready owner Vault. It is fully
+local and deterministic: no AI calls are made to import, validate, or store
+a package, and the same file always gives the same result.
+
+1. Open **Play → Let the Oracle run the game** and choose **Import Adventure
+   JSON**.
+2. Drop or choose an Adventure JSON v1 (`.json`) file up to 10 MiB. If you
+   have a module in another form, follow the
+   [Adventure JSON conversion guide](/adventure-import) to convert it
+   off-platform first.
+3. Codex validates the file locally against the Adventure JSON schema. If
+   validation fails, you get the exact errors and nothing is written.
+4. Review its locations, actors, factions, scenes, encounters, clues,
+   rumours, items, endings, and unresolved items. Secrets stay locked to
+   `gm-only`; you can adjust visibility only for non-secret content.
+5. Approve to save the package as an immutable SHA-256 baseline, or cancel —
+   cancelling leaves no package in the Vault.
+
+Once approved, you can start a new session pinned to that package version
+and hash, or resume an existing pinned session directly. Later changes to
+the package never retarget a session that has already started.
+
+Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
+500 pages) remain available as experimental convenience inputs. They are
+normalized locally into Adventure JSON before the same review; scanned or
+encrypted PDFs are rejected. The original file stays on your device and is
+not copied into the Vault; only the approved package is saved.
+
+Imported packages are not currently included in Codex Cryptica Cloud
+Backup, even if you opt in to include adventure sessions. During play,
+bounded relevant excerpts may be sent to your selected Oracle AI provider.
 
 ## Start an adventure
 

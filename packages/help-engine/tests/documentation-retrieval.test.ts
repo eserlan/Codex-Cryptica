@@ -12,6 +12,10 @@ const context = sanitizeHelpContext({
 
 describe("help documentation workflow retrieval", () => {
   it.each([
+    ["How does adventure import work?", "adventure-mode"],
+    ["How do I import an adventure?", "adventure-mode"],
+    ["Can I import a PDF adventure?", "adventure-mode"],
+    ["Does importing an adventure use AI?", "adventure-mode"],
     ["Can I have a map inside another map?", "map-mode"],
     ["How do I revise an entity in Zen Mode?", "creating-and-editing-entities"],
     [
@@ -89,6 +93,13 @@ describe("help documentation workflow retrieval", () => {
     const result = retrieve(question, bundle, context);
     expect(result.noMatch).toBe(false);
     expect(result.chunks.map(({ chunk }) => chunk.helpId)).toContain(helpId);
+  });
+
+  it("ranks the import section first for adventure import questions", () => {
+    const result = retrieve("How does adventure import work?", bundle, context);
+    expect(result.chunks[0]?.chunk.helpId).toBe("adventure-mode");
+    expect(result.chunks[0]?.chunk.heading).toBe("Import an adventure");
+    expect(result.chunks[0]?.chunk.text).toContain("zero AI calls");
   });
 
   it.each([
