@@ -14,6 +14,10 @@ import {
   type StoredAdventurePackage,
 } from "@codex/adventure-engine";
 import type { AdventureVaultRootResolver } from "./adventure-session-repository.js";
+import {
+  withAdventurePackagePinLock,
+  type AdventurePackagePinLock,
+} from "./adventure-package-pin-lock.js";
 
 function splitPackagePath(path: string): { dirs: string[]; fileName: string } {
   const parts = path.split("/").filter((part) => part.length > 0);
@@ -63,6 +67,9 @@ async function resolveDirectory(
  */
 export class AdventurePackageRepository {
   private rootResolver?: AdventureVaultRootResolver;
+  private withPackagePinLock: AdventurePackagePinLock =
+    withAdventurePackagePinLock;
+  private readPinnedHashes?: (vaultId: string) => Promise<ReadonlySet<string>>;
 
   constructor(resolveVaultRoot?: AdventureVaultRootResolver) {
     this.rootResolver = resolveVaultRoot;
@@ -70,6 +77,14 @@ export class AdventurePackageRepository {
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
     this.rootResolver = resolveVaultRoot;
+  }
+
+  setPackagePinCoordination(
+    withLock: AdventurePackagePinLock,
+    readPinnedHashes: (vaultId: string) => Promise<ReadonlySet<string>>,
+  ): void {
+    this.withPackagePinLock = withLock;
+    this.readPinnedHashes = readPinnedHashes;
   }
 
   private async requireRoot(
@@ -187,8 +202,8 @@ export class AdventurePackageRepository {
 
   /**
    * Removes one approved version's file, refusing when any session pins its
-   * hash. `pinnedHashes` is the set of `sourcePackage.hash` values from the
-   * already-loaded session list; removal never scans session storage itself.
+   * hash. The caller's pin snapshot is a quick refusal only; the authoritative
+   * session scan and file removal run under the same cross-tab lock as pinning.
    */
   async removeApproved(
     vaultId: string,
@@ -198,22 +213,28 @@ export class AdventurePackageRepository {
     | { status: "removed"; hash: string; path: string }
     | { status: "refused"; hash: string; path: string; reason: string }
   > {
-    const path = getAdventurePackagePath(hash);
-    if (pinnedHashes.has(hash)) {
-      return {
-        status: "refused",
-        hash,
-        path,
-        reason:
-          "This version is still in use by an adventure session, so it cannot be removed. Sessions keep playing the exact version they started with.",
-      };
-    }
-    const io = this.createIO(vaultId);
-    if (!io.remove) {
-      throw new Error("Adventure package storage does not support removal.");
-    }
-    await io.remove(path);
-    return { status: "removed", hash, path };
+    return this.withPackagePinLock(vaultId, hash, async () => {
+      const path = getAdventurePackagePath(hash);
+      if (!this.readPinnedHashes) {
+        throw new Error("adventure-session-pin-scan-unavailable");
+      }
+      const currentPinnedHashes = await this.readPinnedHashes(vaultId);
+      if (pinnedHashes.has(hash) || currentPinnedHashes.has(hash)) {
+        return {
+          status: "refused",
+          hash,
+          path,
+          reason:
+            "This version is still in use by an adventure session, so it cannot be removed. Sessions keep playing the exact version they started with.",
+        };
+      }
+      const io = this.createIO(vaultId);
+      if (!io.remove) {
+        throw new Error("Adventure package storage does not support removal.");
+      }
+      await io.remove(path);
+      return { status: "removed", hash, path };
+    });
   }
 }
 

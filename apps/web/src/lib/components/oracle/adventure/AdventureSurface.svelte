@@ -354,9 +354,12 @@
     pkg: AdventureJsonV1,
     experimentalOrigin: "markdown" | "pdf" | null,
     sourceVaultId: string,
+    requestToken: number,
   ): Promise<void> {
     const stored = await storedPackagesForImport(sourceVaultId);
+    if (!isCurrentImport(requestToken, sourceVaultId)) return;
     const hash = await computeAdventureJsonHash(pkg);
+    if (!isCurrentImport(requestToken, sourceVaultId)) return;
     const duplicate = stored.find((item) => item.hash === hash);
     if (duplicate) {
       importDuplicateNotice = {
@@ -495,7 +498,7 @@
         return null;
       },
       "Unable to read the selected Adventure JSON file.",
-      async (bytes, { sourceVaultId }) => {
+      async (bytes, { sourceVaultId, requestToken }) => {
         const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
         let parsed: unknown;
         try {
@@ -521,7 +524,12 @@
           return;
         }
 
-        await enterImportReview(validation.value, null, sourceVaultId);
+        await enterImportReview(
+          validation.value,
+          null,
+          sourceVaultId,
+          requestToken,
+        );
       },
       file,
     );
@@ -571,6 +579,7 @@
           validation.value,
           isPdf ? "pdf" : "markdown",
           sourceVaultId,
+          requestToken,
         );
       },
       file,
@@ -1205,7 +1214,7 @@
           {/if}
           {#if packageRemovalError}
             <p
-              class="text-sm text-theme-danger"
+              class="text-sm text-theme-text"
               role="alert"
               data-testid="approved-package-removal-error"
             >

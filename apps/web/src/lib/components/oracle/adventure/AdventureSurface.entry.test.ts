@@ -34,6 +34,7 @@ const env = vi.hoisted(() => ({
     hash: "a".repeat(64),
     package: pkg,
   })),
+  coordinatePackagePins: vi.fn(),
   removeApprovedPackage: vi.fn(
     async (
       _vaultId: string,
@@ -60,6 +61,7 @@ const env = vi.hoisted(() => ({
     },
   ),
   approvedPackages: [] as any[],
+  listApprovedPackages: vi.fn(async () => env.approvedPackages),
   openSession: vi.fn(async () => {}),
   resumeArchived: vi.fn(async () => {}),
   importAdventurePdfFile: vi.fn(),
@@ -118,10 +120,11 @@ vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
 vi.mock("#lib/services/adventure/adventure-package-storage.js", () => ({
   adventurePackageRepository: {
     setRootResolver: env.setRootResolver,
+    setPackagePinCoordination: env.coordinatePackagePins,
     saveApproved: env.saveApprovedPackage,
     saveApprovedJson: env.saveApprovedPackage,
     removeApproved: env.removeApprovedPackage,
-    listApproved: vi.fn(async () => env.approvedPackages),
+    listApproved: env.listApprovedPackages,
   },
 }));
 vi.mock("#lib/services/adventure/adventure-context-service.js", () => ({
@@ -212,6 +215,8 @@ beforeEach(() => {
   env.openSession.mockClear();
   env.resumeArchived.mockClear();
   env.approvedPackages = [];
+  env.listApprovedPackages.mockReset();
+  env.listApprovedPackages.mockImplementation(async () => env.approvedPackages);
   env.list.mockResolvedValue({ effectiveActiveId: null, entries: [] });
   env.vaultReady = true;
   env.activeVaultId = "vault-1";
@@ -916,6 +921,49 @@ describe("AdventureSurface entry", () => {
       ).toContain("The New Adventure");
     });
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("keeps a newer import when an earlier predecessor lookup completes later", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    env.listApprovedPackages.mockClear();
+
+    let resolveEarlierLookup!: (items: any[]) => void;
+    const earlierLookup = new Promise<any[]>((resolve) => {
+      resolveEarlierLookup = resolve;
+    });
+    env.listApprovedPackages
+      .mockReturnValueOnce(earlierLookup)
+      .mockImplementation(async () => env.approvedPackages);
+    const input = screen.getByTestId(
+      "adventure-experimental-file-input",
+    ) as HTMLInputElement;
+    const earlier = new File(
+      ["# Earlier Module\n\n## Scene 1\nOld content"],
+      "earlier.md",
+      { type: "text/markdown" },
+    );
+    await fireEvent.change(input, { target: { files: [earlier] } });
+    await waitFor(() =>
+      expect(env.listApprovedPackages).toHaveBeenCalledOnce(),
+    );
+
+    const newer = new File(
+      ["# Newer Module\n\n## Scene 1\nNew content"],
+      "newer.md",
+      { type: "text/markdown" },
+    );
+    await fireEvent.change(input, { target: { files: [newer] } });
+    expect(
+      (await screen.findByTestId("adventure-import-review")).textContent,
+    ).toContain("Newer Module");
+
+    resolveEarlierLookup([]);
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("adventure-import-review").textContent,
+      ).toContain("Newer Module");
+    });
   });
 
   it("lists approved packages and lets users start a pinned session or resume an existing one", async () => {

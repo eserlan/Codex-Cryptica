@@ -533,6 +533,50 @@ describe("diffAdventureJsonVersions", () => {
     expect(conflicting.collections.scenes.changed).toHaveLength(0);
   });
 
+  it("deduplicates repeated identical correspondence edges before split or merge grouping", () => {
+    const diff = diffAdventureJsonVersions(
+      makePackage(),
+      makePackage({
+        scenes: [
+          {
+            id: "scene-renamed",
+            title: "The Mill Yard",
+            summary: "Arrival at the silent mill, revised.",
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+        extensions: {
+          "codex-cryptica.adventure-correspondence": [
+            {
+              previousId: "scene-1",
+              currentId: "scene-renamed",
+              collection: "scenes",
+            },
+            {
+              previousId: "scene-1",
+              currentId: "scene-renamed",
+              collection: "scenes",
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(diff.groups).toHaveLength(0);
+    expect(diff.collections.scenes.changed).toHaveLength(1);
+    expect(diff.collections.scenes.changed[0]).toMatchObject({
+      id: "scene-renamed",
+      previousId: "scene-1",
+      changedFields: ["conditions", "locationId", "summary"],
+    });
+    expect(
+      diff.unresolved.some(
+        (item) => item.kind === "split" || item.kind === "merge",
+      ),
+    ).toBe(false);
+  });
+
   it("never throws on malformed correspondence extensions and lists unmapped entities unresolved", () => {
     expect(() =>
       diffAdventureJsonVersions(

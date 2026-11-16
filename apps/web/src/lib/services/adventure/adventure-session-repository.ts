@@ -11,6 +11,10 @@ import {
   type AdventureSourcePackageRef,
   type AdventureStatus,
 } from "@codex/adventure-engine";
+import {
+  withAdventurePackagePinLock,
+  type AdventurePackagePinLock,
+} from "./adventure-package-pin-lock.js";
 
 export type AdventureLoadCondition =
   "normal" | "duplicate-active-conflict" | "migration-recovery" | "unreadable";
@@ -67,15 +71,22 @@ export class AdventureSessionRepository {
   private rootResolver: AdventureVaultRootResolver;
   private readonly idGenerator: IdGenerator;
   private readonly clock: Clock;
+  private readonly withPackagePinLock: AdventurePackagePinLock;
   private changeListener?: (vaultId: string) => Promise<void>;
 
   constructor(
     resolveVaultRoot: AdventureVaultRootResolver,
-    deps: { idGenerator?: IdGenerator; clock?: Clock } = {},
+    deps: {
+      idGenerator?: IdGenerator;
+      clock?: Clock;
+      withPackagePinLock?: AdventurePackagePinLock;
+    } = {},
   ) {
     this.rootResolver = resolveVaultRoot;
     this.idGenerator = deps.idGenerator ?? systemIdGenerator;
     this.clock = deps.clock ?? systemClock;
+    this.withPackagePinLock =
+      deps.withPackagePinLock ?? withAdventurePackagePinLock;
   }
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
@@ -225,6 +236,21 @@ export class AdventureSessionRepository {
     return { effectiveActiveId, entries };
   }
 
+  /** Strict pin scan used before deleting an approved package version. */
+  async listPinnedPackageHashes(vaultId: string): Promise<ReadonlySet<string>> {
+    const directory = await this.openAdventuresDirectoryForRead(vaultId);
+    if (!directory) return new Set();
+    const hashes = new Set<string>();
+    for await (const [name, handle] of (directory as any).entries()) {
+      if (!name.endsWith(".json") || handle.kind !== "file") continue;
+      const read = await this.readFile(vaultId, name.slice(0, -5));
+      if (read.session.sourcePackage?.hash) {
+        hashes.add(read.session.sourcePackage.hash);
+      }
+    }
+    return hashes;
+  }
+
   private async readArchiveEntry(
     vaultId: string,
     name: string,
@@ -259,6 +285,20 @@ export class AdventureSessionRepository {
   }
 
   async save(
+    expectedRevision: number | null,
+    session: AdventureSession,
+  ): Promise<AdventureSaveResult> {
+    if (session.sourcePackage?.hash) {
+      return this.withPackagePinLock(
+        session.vaultId,
+        session.sourcePackage.hash,
+        () => this.saveUnlocked(expectedRevision, session),
+      );
+    }
+    return this.saveUnlocked(expectedRevision, session);
+  }
+
+  private async saveUnlocked(
     expectedRevision: number | null,
     session: AdventureSession,
   ): Promise<AdventureSaveResult> {

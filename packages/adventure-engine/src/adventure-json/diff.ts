@@ -249,22 +249,12 @@ type EntryValidation =
   | { ok: true; entry: AdventureJsonCorrespondingEntry }
   | { ok: false; unresolved: AdventureJsonDiffUnresolved };
 
-function idSetOf(
-  pkg: AdventureJsonV1,
-  collection: AdventureJsonCollectionName,
-): Set<string> {
-  return new Set(entitiesOf(pkg, collection).map((e) => e["id"] as string));
-}
-
 /** Existence and same-ID-conflict checks for one well-formed entry. */
 function checkEntryEvidence(
   entry: AdventureJsonCorrespondingEntry,
-  previous: AdventureJsonV1,
-  next: AdventureJsonV1,
+  previousIds: ReadonlySet<string>,
+  currentIds: ReadonlySet<string>,
 ): AdventureJsonDiffUnresolved | null {
-  const name = entry.collection as AdventureJsonCollectionName;
-  const previousIds = idSetOf(previous, name);
-  const currentIds = idSetOf(next, name);
   const { previousId, currentId, collection } = entry;
   if (!previousIds.has(previousId) || !currentIds.has(currentId)) {
     return invalidMapping(
@@ -315,8 +305,10 @@ function parseEntryShape(raw: unknown): {
 
 function validateCorrespondenceEntry(
   raw: unknown,
-  previous: AdventureJsonV1,
-  next: AdventureJsonV1,
+  idsByCollection: ReadonlyMap<
+    AdventureJsonCollectionName,
+    { previous: ReadonlySet<string>; current: ReadonlySet<string> }
+  >,
 ): EntryValidation {
   const { entry, collection } = parseEntryShape(raw);
   if (!entry) {
@@ -339,7 +331,8 @@ function validateCorrespondenceEntry(
       ),
     };
   }
-  const evidence = checkEntryEvidence(entry, previous, next);
+  const ids = idsByCollection.get(collection as AdventureJsonCollectionName)!;
+  const evidence = checkEntryEvidence(entry, ids.previous, ids.current);
   if (evidence) return { ok: false, unresolved: evidence };
   return { ok: true, entry };
 }
@@ -500,13 +493,37 @@ function parseCorrespondence(
   }
   const validEntries: AdventureJsonCorrespondingEntry[] = [];
   const invalid: AdventureJsonDiffUnresolved[] = [];
+  const idsByCollection = new Map(
+    ADVENTURE_JSON_COLLECTIONS.map((collection) => [
+      collection,
+      {
+        previous: new Set(
+          entitiesOf(previous, collection).map(
+            (entity) => entity["id"] as string,
+          ),
+        ),
+        current: new Set(
+          entitiesOf(next, collection).map((entity) => entity["id"] as string),
+        ),
+      },
+    ]),
+  );
+  const seenEdges = new Set<string>();
   for (const rawEntry of raw) {
-    const validated = validateCorrespondenceEntry(rawEntry, previous, next);
+    const validated = validateCorrespondenceEntry(rawEntry, idsByCollection);
     if (
       validated.ok &&
       validated.entry.previousId !== validated.entry.currentId
     ) {
-      validEntries.push(validated.entry);
+      const edge = JSON.stringify([
+        validated.entry.collection,
+        validated.entry.previousId,
+        validated.entry.currentId,
+      ]);
+      if (!seenEdges.has(edge)) {
+        seenEdges.add(edge);
+        validEntries.push(validated.entry);
+      }
     } else if (!validated.ok) {
       invalid.push(validated.unresolved);
     }

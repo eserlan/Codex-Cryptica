@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { parseAdventureSession } from "@codex/adventure-engine";
 import { AdventureSessionRepository } from "./adventure-session-repository";
+import type { AdventurePackagePinLock } from "./adventure-package-pin-lock";
 import { initialSession } from "#lib/stores/oracle/adventure-session.js";
 
 const archivedSession = {
@@ -383,8 +384,13 @@ describe("AdventureSessionRepository v3 persistence", () => {
         for (const name of files.keys()) yield [name, { kind: "file" }];
       },
     };
+    const packageLock = vi.fn(
+      async <T>(_vaultId: string, _hash: string, operation: () => Promise<T>) =>
+        operation(),
+    ) as AdventurePackagePinLock;
     const repository = new AdventureSessionRepository(
       async () => directory as never,
+      { withPackagePinLock: packageLock },
     );
     const at = "2026-11-01T10:00:00.000Z";
     const session = parseAdventureSession({
@@ -410,6 +416,12 @@ describe("AdventureSessionRepository v3 persistence", () => {
       provisionalFacts: [],
       turns: [],
       pendingRoll: null,
+      sourcePackage: {
+        packageId: "source-module",
+        version: "1.0.0",
+        formatVersion: "adventure-json/v1",
+        hash: "c".repeat(64),
+      },
       dicePresets: [],
       resourceCounters: [],
       scenarioCollection: {
@@ -438,6 +450,11 @@ describe("AdventureSessionRepository v3 persistence", () => {
     await expect(repository.save(null, session)).resolves.toMatchObject({
       ok: true,
     });
+    expect(packageLock).toHaveBeenCalledWith(
+      "vault-1",
+      "c".repeat(64),
+      expect.any(Function),
+    );
     expect(changed).toHaveBeenCalledOnce();
     expect(changed).toHaveBeenCalledWith("vault-1");
     await expect(repository.save(5, session)).resolves.toMatchObject({

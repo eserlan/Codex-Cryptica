@@ -185,6 +185,10 @@ describe("AdventurePackageRepository", () => {
   it("removes only the target version and refuses removal when its hash is pinned", async () => {
     const root = createInMemoryDirectoryHandle();
     const repo = new AdventurePackageRepository(async () => root);
+    repo.setPackagePinCoordination(
+      async (_vaultId, _hash, operation) => operation(),
+      async () => new Set(),
+    );
     const base: AdventureJsonV1 = {
       formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
       id: "the-last-grind",
@@ -233,5 +237,50 @@ describe("AdventurePackageRepository", () => {
     expect(await repo.loadStored("vault-1", v2.hash)).not.toBeNull();
     const listed = await repo.listApproved("vault-1");
     expect(listed.map((item) => item.hash)).toEqual([v2.hash]);
+  });
+
+  it("rechecks persisted session pins under the package pin lock before removal", async () => {
+    const root = createInMemoryDirectoryHandle();
+    const lockEvents: string[] = [];
+    let pinnedHash = "";
+    const repo = new AdventurePackageRepository(async () => root);
+    repo.setPackagePinCoordination(
+      async (_vaultId, _hash, operation) => {
+        lockEvents.push("lock");
+        const result = await operation();
+        lockEvents.push("unlock");
+        return result;
+      },
+      async () => {
+        lockEvents.push("scan");
+        return new Set([pinnedHash]);
+      },
+    );
+    const pkg: AdventureJsonV1 = {
+      formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+      id: "the-last-grind",
+      title: "The Last Grind",
+      version: "1.0.0",
+      premise: { background: "The mill stopped.", hook: "Investigate." },
+      source: { title: "The Last Grind" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [],
+      endings: [],
+      unresolved: [],
+    };
+    const saved = await repo.saveApprovedJson("vault-1", pkg);
+    pinnedHash = saved.hash;
+
+    const result = await repo.removeApproved("vault-1", saved.hash);
+    expect(result.status).toBe("refused");
+    expect(lockEvents).toEqual(["lock", "scan", "unlock"]);
+    expect(await repo.loadStored("vault-1", saved.hash)).not.toBeNull();
   });
 });
