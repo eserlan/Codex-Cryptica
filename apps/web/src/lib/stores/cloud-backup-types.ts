@@ -1,4 +1,8 @@
-import type { CloudBackupTombstone, CloudBackupWholeItemAsset } from "schema";
+import type {
+  CloudBackupTombstone,
+  CloudBackupTrashEviction,
+  CloudBackupWholeItemAsset,
+} from "schema";
 import {
   isDeviceLimit,
   type CloudBackupRuntime,
@@ -54,6 +58,18 @@ export interface SnapshotOutcome {
   blocked?: Blocked;
   /** An editor's changes that cannot go yet stay on this device. */
   keptLocal?: boolean;
+  /** Non-silent trash eviction summary when a delta push dropped old trash content. */
+  trashEvicted?: CloudBackupTrashEviction;
+}
+
+export function trashEvictionNotice(
+  eviction: CloudBackupTrashEviction,
+): string {
+  const { evictedCount } = eviction;
+  const maxMb = Math.round(eviction.maxBytes / (1024 * 1024));
+  return evictedCount === 1
+    ? `Shared trash reached its ${maxMb} MB limit. 1 older deleted item lost its restorable content early.`
+    : `Shared trash reached its ${maxMb} MB limit. ${evictedCount} older deleted items lost their restorable content early.`;
 }
 
 /** Why an editor's sync stopped. `deviceLimit` carries the server's message. */

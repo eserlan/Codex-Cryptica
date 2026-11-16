@@ -520,7 +520,11 @@ export const CLOUD_BACKUP_LIMITS = {
    * and only the tombstone records stay.
    */
   maxTrashBytes: 50 * 1024 * 1024,
-  /** Removed entities stay restorable this long; older tombstones are purged. */
+  /**
+   * Removed entities stay restorable for up to 30 days, subject to the 50 MB
+   * trash limit (`maxTrashBytes`); older tombstones are purged, and oldest
+   * kept content may be evicted earlier if trash exceeds the size cap.
+   */
   trashRetentionDays: 30,
   /**
    * One asset per request, so no single upload can approach the Worker's
@@ -641,6 +645,17 @@ export const CloudBackupTombstoneSchema = z.object({
 });
 
 export type CloudBackupTombstone = z.infer<typeof CloudBackupTombstoneSchema>;
+
+/** Summary returned when oldest-first trash eviction drops content under `maxTrashBytes`. */
+export const CloudBackupTrashEvictionSchema = z.object({
+  evictedCount: z.number().int().positive(),
+  usedBytes: z.number().int().nonnegative(),
+  maxBytes: z.number().int().positive(),
+});
+
+export type CloudBackupTrashEviction = z.infer<
+  typeof CloudBackupTrashEvictionSchema
+>;
 
 /** `editedBy` until backups have members: the owner is the only writer. */
 export const CLOUD_BACKUP_OWNER_EDITOR = "owner";

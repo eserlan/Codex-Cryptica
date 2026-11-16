@@ -1,4 +1,5 @@
 import {
+  CLOUD_BACKUP_LIMITS,
   CLOUD_BACKUP_SCHEMA_V2,
   cloudBackupRevisionOf,
   cloudBackupShardOf,
@@ -9,6 +10,7 @@ import {
   type BackupObjects,
   type CloudBackupEnv,
   MissingBackupObjectError,
+  absoluteKey,
   readReferenced,
   resolveObjects,
 } from "./cloud-backup-storage";
@@ -98,6 +100,11 @@ export async function handleListTrash(
       objects,
       tombstones.map((tombstone) => tombstone.id),
     );
+    let usedBytes = 0;
+    for (const reference of Object.values(objects.trash ?? {})) {
+      const head = await env.BUCKET.head(absoluteKey(backupId, reference));
+      usedBytes += head?.size ?? 0;
+    }
     return json(request, {
       revision: cloudBackupRevisionOf(auth.manifest),
       items: tombstones.map(({ id, title, deletedBy, deletedAt, kind }) => ({
@@ -108,6 +115,8 @@ export async function handleListTrash(
         deletedAt,
         restorable: holds(shards.get(cloudBackupShardOf(id)), id),
       })),
+      usedBytes,
+      maxBytes: CLOUD_BACKUP_LIMITS.maxTrashBytes,
     });
   } catch (error) {
     if (error instanceof MissingBackupObjectError) return incomplete(request);

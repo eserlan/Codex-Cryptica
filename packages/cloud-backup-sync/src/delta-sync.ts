@@ -1,7 +1,8 @@
-import type {
-  CloudBackupManifest,
-  CloudBackupWholeItemAsset,
-  LocalCloudBackupRecord,
+import {
+  CloudBackupTrashEvictionSchema,
+  type CloudBackupManifest,
+  type CloudBackupWholeItemAsset,
+  type LocalCloudBackupRecord,
 } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import {
@@ -176,11 +177,11 @@ async function applyDeltaSuccess(
   response: Awaited<ReturnType<CloudBackupRuntime["fetch"]>>,
   signal?: AbortSignal,
 ): Promise<CloudBackupOutcome<CloudBackupManifest | null>> {
-  const manifest = (
-    (await response.json().catch(() => null)) as {
-      manifest?: CloudBackupManifest;
-    } | null
-  )?.manifest;
+  const payload = (await response.json().catch(() => null)) as {
+    manifest?: CloudBackupManifest;
+    trashEvicted?: unknown;
+  } | null;
+  const manifest = payload?.manifest;
   if (await restoreDeltaRecordAfterAbort(runtime, vaultId, record, signal)) {
     return { ok: true, value: null };
   }
@@ -197,5 +198,12 @@ async function applyDeltaSuccess(
     lastPushedAt: manifest.lastPushedAt,
     vaultTitle: delta.vaultTitle,
   });
-  return { ok: true, value: manifest };
+  const evicted = CloudBackupTrashEvictionSchema.safeParse(
+    payload?.trashEvicted,
+  );
+  return {
+    ok: true,
+    value: manifest,
+    ...(evicted.success ? { trashEvicted: evicted.data } : {}),
+  };
 }

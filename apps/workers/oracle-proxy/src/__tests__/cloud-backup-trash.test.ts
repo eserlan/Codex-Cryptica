@@ -1,5 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { CLOUD_BACKUP_LIMITS } from "../../../../../packages/schema/src/publishing";
+import {
+  CLOUD_BACKUP_LIMITS,
+  cloudBackupShardOf,
+  type CloudBackupTombstone,
+} from "../../../../../packages/schema/src/publishing";
+import type { Shard } from "../cloud-backup-entities";
+import { evictOldestTrash } from "../cloud-backup-trash";
+import type { BackupObjects, CloudBackupEnv } from "../cloud-backup-storage";
 import { handleCloudBackupRoutes } from "../cloud-backup-routes";
 import { readManifest } from "../cloud-backup-storage";
 import { createBackupFixture, readCurrent } from "./cloud-backup-fixtures";
@@ -77,6 +84,61 @@ const list = async (fx: Awaited<ReturnType<typeof shared>>, key?: string) =>
   call(fx, "GET", "/trash", { key: key ?? fx.ownerCode, device });
 
 afterEach(() => vi.useRealTimers());
+
+describe("loaded-shard trash eviction work", () => {
+  it("enumerates a loaded shard a constant number of times while evicting many entries", async () => {
+    const ids: string[] = [];
+    let shardName: string | undefined;
+    for (let candidate = 0; ids.length < 128; candidate++) {
+      const id = `loaded-${candidate}`;
+      const name = cloudBackupShardOf(id);
+      shardName ??= name;
+      if (name === shardName) ids.push(id);
+    }
+
+    const shard: Shard = Object.create(null);
+    const tombstones: Record<string, CloudBackupTombstone> =
+      Object.create(null);
+    for (const [rev, id] of ids.entries()) {
+      shard[id] = { id, title: "Old item" };
+      tombstones[id] = {
+        id,
+        rev,
+        deletedBy: "owner",
+        deletedAt: "2026-11-01T00:00:00.000Z",
+        title: "Old item",
+      };
+    }
+
+    let enumerations = 0;
+    const observedShard = new Proxy(shard, {
+      ownKeys(target) {
+        enumerations++;
+        return Reflect.ownKeys(target);
+      },
+    });
+    const loaded = new Map([[shardName!, observedShard]]);
+    const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+    const originalMaxBytes = limits.maxTrashBytes;
+    limits.maxTrashBytes = 1;
+
+    try {
+      const result = await evictOldestTrash(
+        {} as CloudBackupEnv,
+        "backup",
+        { trash: {} } as BackupObjects,
+        loaded,
+        tombstones,
+      );
+
+      expect(result?.evictedCount).toBe(ids.length);
+      expect(Object.keys(shard)).toHaveLength(0);
+      expect(enumerations).toBeLessThanOrEqual(3);
+    } finally {
+      limits.maxTrashBytes = originalMaxBytes;
+    }
+  });
+});
 
 describe("shared trash reads", () => {
   it("lists a deleted entity for the owner and for an editor", async () => {
@@ -295,5 +357,69 @@ describe("who deleted it", () => {
   });
   it("ignores a name sent with the owner key", async () => {
     expect(await deletedBy("Mara", "owner")).toBe("owner");
+  });
+});
+
+describe("trash storage usage reporting", () => {
+  it("reports usedBytes and maxBytes for empty, populated, and evicted trash", async () => {
+    const fx = await shared();
+    const emptyRes = await call(fx, "GET", "/trash", { key: fx.ownerCode });
+    expect(emptyRes.status).toBe(200);
+    expect(await emptyRes.json()).toMatchObject({
+      usedBytes: 0,
+      maxBytes: CLOUD_BACKUP_LIMITS.maxTrashBytes,
+      items: [],
+    });
+
+    await push(fx, { deletes: ["x"] });
+    const stored = (await readManifest(fx.env, fx.backupId))!;
+    let expectedBytes = 0;
+    for (const ref of Object.values(stored.objects!.trash ?? {})) {
+      expectedBytes +=
+        (await fx.env.BUCKET.head(`cloud-backup/${fx.backupId}/${ref}`))
+          ?.size ?? 0;
+    }
+    expect(expectedBytes).toBeGreaterThan(0);
+
+    const populatedRes = await call(fx, "GET", "/trash", {
+      key: fx.ownerCode,
+    });
+    expect(await populatedRes.json()).toMatchObject({
+      usedBytes: expectedBytes,
+      maxBytes: CLOUD_BACKUP_LIMITS.maxTrashBytes,
+    });
+
+    const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+    const original = limits.maxTrashBytes;
+    limits.maxTrashBytes = 400;
+    try {
+      await push(fx, {
+        upserts: [
+          { id: "big-1", title: "Big 1", body: "a".repeat(300) },
+          { id: "big-2", title: "Big 2", body: "b".repeat(300) },
+        ],
+      });
+      await push(fx, { deletes: ["big-1"] });
+      await push(fx, { deletes: ["big-2"] });
+
+      const afterRes = await call(fx, "GET", "/trash", { key: fx.ownerCode });
+      const afterBody = (await afterRes.json()) as {
+        usedBytes: number;
+        maxBytes: number;
+      };
+      expect(afterBody.maxBytes).toBe(400);
+      expect(afterBody.usedBytes).toBeLessThanOrEqual(400);
+
+      const afterStored = (await readManifest(fx.env, fx.backupId))!;
+      let actualAfterBytes = 0;
+      for (const ref of Object.values(afterStored.objects!.trash ?? {})) {
+        actualAfterBytes +=
+          (await fx.env.BUCKET.head(`cloud-backup/${fx.backupId}/${ref}`))
+            ?.size ?? 0;
+      }
+      expect(afterBody.usedBytes).toBe(actualAfterBytes);
+    } finally {
+      limits.maxTrashBytes = original;
+    }
   });
 });
