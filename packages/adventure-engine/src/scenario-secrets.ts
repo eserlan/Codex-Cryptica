@@ -1,4 +1,5 @@
 import type { AdventureSession, AdventureTurnProposal } from "./types";
+import { historicalAnchorSecretIds } from "./hidden-state";
 
 function immutableScenarioSecretTexts(
   session: AdventureSession,
@@ -53,15 +54,32 @@ export function applySecretReveals(
     const target = candidate.scenarioCollection?.items.find((item) =>
       scenarioSecretBindingIds(item).includes(secretId),
     );
-    if (!target) {
-      if (secret) continue;
+    if (target) {
+      target.revealedSecretIds = [
+        ...new Set([...target.revealedSecretIds, secretId]),
+      ];
+      continue;
+    }
+    if (isHistoricalAnchorSecretId(candidate, secretId)) {
+      candidate.historicalAnchor!.revealedFactIds = [
+        ...new Set([...candidate.historicalAnchor!.revealedFactIds, secretId]),
+      ];
+      continue;
+    }
+    if (!secret) {
       return `Unknown secret: ${secretId}`;
     }
-    target.revealedSecretIds = [
-      ...new Set([...target.revealedSecretIds, secretId]),
-    ];
   }
   return null;
+}
+
+function isHistoricalAnchorSecretId(
+  session: AdventureSession,
+  secretId: string,
+): boolean {
+  const anchor = session.historicalAnchor;
+  if (!anchor) return false;
+  return historicalAnchorSecretIds(session).includes(secretId);
 }
 
 function scenarioSecretBindingIds(
