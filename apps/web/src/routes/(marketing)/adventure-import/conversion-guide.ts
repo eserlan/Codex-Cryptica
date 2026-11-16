@@ -46,7 +46,7 @@ Strict output rules:
    - Every entity ID across all collections must be unique and non-empty.
    - All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference.
    - Location parentLocationId chains must not form cycles.
-   - Every non-entry scene (scenes[1..n]) must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops.
+   - Every non-entry scene with source-supported progression must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops. If progression is unknown, preserve the scene as ambiguous without inventing a branch.
 7. Provenance & copyright:
    - Add optional "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) when known.
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
@@ -206,8 +206,8 @@ export const TROUBLESHOOTING_ERRORS: Array<{
   {
     code: "UNREACHABLE_SCENE",
     cause:
-      "A scene after scenes[0] has no inbound branch path from the opening scene.",
-    fix: "Add a branch from scenes[0] or an intermediate scene so every non-entry scene is reachable.",
+      "A scene with known progression after scenes[0] has no inbound branch path from the opening scene.",
+    fix: "Add a source-supported branch from scenes[0] or an intermediate scene. If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch.",
   },
   {
     code: "HIERARCHY_CYCLE",

@@ -16,20 +16,31 @@
 
   let copyState = $state<"idle" | "copied" | "error">("idle");
   let copyTimer: ReturnType<typeof setTimeout> | undefined;
+  let copyRequestGeneration = 0;
+  let isDestroyed = false;
 
   onDestroy(() => {
+    isDestroyed = true;
     if (copyTimer) clearTimeout(copyTimer);
   });
 
   async function handleCopyPrompt() {
+    const requestGeneration = ++copyRequestGeneration;
+    if (copyTimer) {
+      clearTimeout(copyTimer);
+      copyTimer = undefined;
+    }
     const ok = await copyTextToClipboard(
       CANONICAL_CONVERSION_PROMPT,
       typeof navigator === "undefined" ? undefined : navigator.clipboard,
     );
+    if (isDestroyed || requestGeneration !== copyRequestGeneration) return;
+
     copyState = ok ? "copied" : "error";
-    if (copyTimer) clearTimeout(copyTimer);
     copyTimer = setTimeout(() => {
+      if (isDestroyed || requestGeneration !== copyRequestGeneration) return;
       copyState = "idle";
+      copyTimer = undefined;
     }, 2200);
   }
 
@@ -371,9 +382,10 @@
             </li>
             <li>Location parent chains must be acyclic.</li>
             <li>
-              Non-entry scenes must be reachable from
-              <code class="font-mono">scenes[0]</code> with no dead-end mandatory
-              transition loops.
+              Non-entry scenes with source-supported progression must be
+              reachable from <code class="font-mono">scenes[0]</code> with no dead-end
+              mandatory transition loops. If progression is unknown, preserve the
+              scene as ambiguous without inventing a branch.
             </li>
             <li>
               Attach optional <code class="font-mono">sourceRef</code>

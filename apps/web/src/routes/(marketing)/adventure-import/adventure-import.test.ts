@@ -23,6 +23,7 @@ vi.mock("#lib/utils/share-link.js", async () => {
 
 describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
   afterEach(() => {
+    vi.useRealTimers();
     document.head.innerHTML = "";
     copyMock.mockReset();
   });
@@ -104,6 +105,17 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain(rule);
     }
     expect(prompt).not.toContain('   - Use "visibility":');
+    expect(prompt).toContain(
+      "Every non-entry scene with source-supported progression must be reachable",
+    );
+    expect(prompt).toContain(
+      "If progression is unknown, preserve the scene as ambiguous without inventing a branch.",
+    );
+    expect(
+      screen.getByText(
+        /If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch\./,
+      ),
+    ).toBeTruthy();
   });
 
   it("copies the canonical conversion prompt via copyTextToClipboard and shows feedback", async () => {
@@ -137,6 +149,56 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Copy failed/i })).toBeTruthy();
     });
+  });
+
+  it("ignores stale copy feedback when a newer copy finishes first", async () => {
+    let resolveFirst!: (copied: boolean) => void;
+    let resolveSecond!: (copied: boolean) => void;
+    copyMock
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveFirst = resolve)),
+      )
+      .mockImplementationOnce(
+        () => new Promise((resolve) => (resolveSecond = resolve)),
+      );
+    render(Page);
+
+    const copyButton = screen.getByRole("button", {
+      name: /Copy conversion prompt/i,
+    });
+    await fireEvent.click(copyButton);
+    await fireEvent.click(copyButton);
+
+    resolveSecond(true);
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Copied prompt/i }),
+      ).toBeTruthy();
+    });
+
+    resolveFirst(false);
+    await Promise.resolve();
+    expect(screen.getByRole("button", { name: /Copied prompt/i })).toBeTruthy();
+  });
+
+  it("does not schedule feedback timers when a pending copy resolves after teardown", async () => {
+    let resolveCopy!: (copied: boolean) => void;
+    copyMock.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveCopy = resolve)),
+    );
+    vi.useFakeTimers();
+    const { unmount } = render(Page);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy conversion prompt/i }),
+    );
+    unmount();
+    resolveCopy(true);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
   });
 
   it("injects a breadcrumb JSON-LD schema and renders without an internal header", () => {
