@@ -240,4 +240,68 @@ describe("adventure schemas", () => {
       "fact-committed",
     );
   });
+
+  it("pins optional sourcePackage metadata while keeping sessions without it valid", () => {
+    const base = {
+      schemaVersion: 3 as const,
+      id: "session-pinned",
+      vaultId: "vault-1",
+      title: "The Last Grind",
+      status: "active" as const,
+      createdAt: "2026-08-16T12:00:00.000Z",
+      updatedAt: "2026-08-16T12:00:00.000Z",
+      lastPlayedAt: "2026-08-16T12:00:00.000Z",
+      revision: 0,
+      playerCharacter: {
+        kind: "provisional" as const,
+        name: "Mara",
+        description: "Guide",
+      },
+      premise: "Restart the mill",
+      sourceRecords: [],
+      visibleState: {
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [],
+      turns: [],
+      pendingRoll: null,
+      dicePresets: [],
+      resourceCounters: [],
+    };
+
+    const withoutPin = parseAdventureSession(base);
+    expect(withoutPin.sourcePackage).toBeUndefined();
+
+    const withPin = parseAdventureSession({
+      ...base,
+      sourcePackage: {
+        packageId: "the-last-grind",
+        version: "1.0.0",
+        formatVersion: "adventure-json/v1",
+        hash: "a".repeat(64),
+      },
+    });
+    expect(withPin.sourcePackage).toEqual({
+      packageId: "the-last-grind",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      hash: "a".repeat(64),
+    });
+
+    expect(() =>
+      parseAdventureSession({
+        ...base,
+        sourcePackage: {
+          packageId: "the-last-grind",
+          version: "1.0.0",
+          formatVersion: "adventure-json/v1",
+          hash: "not-a-sha256-hash",
+        },
+      }),
+    ).toThrow();
+  });
 });

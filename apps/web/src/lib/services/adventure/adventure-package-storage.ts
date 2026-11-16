@@ -1,10 +1,16 @@
 import {
   approveAdventurePackage,
+  listApprovedAdventurePackages,
   loadAdventurePackage,
+  loadStoredAdventurePackage,
   saveAdventurePackage,
+  saveApprovedAdventureJson,
+  type AdventureJsonV1,
   type AdventurePackageFileIO,
   type AdventureSourcePackage,
+  type SaveAdventureJsonResult,
   type SaveAdventurePackageResult,
+  type StoredAdventurePackage,
 } from "@codex/adventure-engine";
 import type { AdventureVaultRootResolver } from "./adventure-session-repository.js";
 
@@ -153,11 +159,29 @@ export class AdventurePackageRepository {
     return saveAdventurePackage(this.createIO(vaultId), approved);
   }
 
+  async saveApprovedJson(
+    vaultId: string,
+    pkg: AdventureJsonV1,
+  ): Promise<SaveAdventureJsonResult> {
+    return saveApprovedAdventureJson(this.createIO(vaultId), pkg);
+  }
+
   async load(
     vaultId: string,
     documentHash: string,
   ): Promise<AdventureSourcePackage | null> {
     return loadAdventurePackage(this.createIO(vaultId), documentHash);
+  }
+
+  async loadStored(
+    vaultId: string,
+    hash: string,
+  ): Promise<StoredAdventurePackage | null> {
+    return loadStoredAdventurePackage(this.createIO(vaultId), hash);
+  }
+
+  async listApproved(vaultId: string): Promise<StoredAdventurePackage[]> {
+    return listApprovedAdventurePackages(this.createIO(vaultId));
   }
 }
 

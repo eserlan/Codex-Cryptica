@@ -3,73 +3,86 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import {
-  parseAdventureMarkdown,
-  saveAdventurePackage,
+  ADVENTURE_JSON_V1_FORMAT_VERSION,
+  computeAdventureJsonHash,
+  saveApprovedAdventureJson,
+  validateAdventureJson,
+  type AdventureJsonV1,
   type AdventurePackageFileIO,
-  type AdventureSourcePackage,
 } from "@codex/adventure-engine";
 import AdventureEntryChoices from "./AdventureEntryChoices.svelte";
 import AdventureImportReview from "./AdventureImportReview.svelte";
 
-function createTestPackage(): AdventureSourcePackage {
+function createTestAdventureJson(): AdventureJsonV1 {
   return {
-    schemaVersion: 1,
-    status: "draft",
-    documentHash: "a".repeat(64),
-    sourceIdentity: {
-      fileName: "mill-mystery.md",
-      title: "The Mill Mystery",
+    formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+    id: "the-mill-mystery",
+    title: "The Mill Mystery",
+    version: "1.0.0",
+    description: "A short mystery at a silent river mill.",
+    premise: {
+      background: "The stone mill stopped turning three nights ago.",
+      hook: "Maren asks the party to inspect the sluice gate.",
+      theme: ["mystery"],
+      tone: "tense",
     },
-    importMethod: "markdown",
-    importVersion: "1.0.0",
-    sections: [
+    source: {
+      title: "The Mill Mystery",
+      authors: ["A. Author"],
+      license: "CC0-1.0",
+    },
+    system: {
+      name: "System-agnostic",
+    },
+    locations: [
       {
-        sourceId: "sec-landing",
-        title: "Scene 1: The Ferry Landing",
-        level: 2,
-        body: "Fog clings to the pilings.",
-        readAloud: "The ferry bell tolls twice.",
-        gmOnly: false,
-        provenance: "source-grounded",
+        id: "loc-landing",
+        name: "The Ferry Landing",
+        summary: "A rotting jetty across the reeds.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+        sourceRef: { page: 1, section: "Scene 1: The Ferry Landing" },
       },
       {
-        sourceId: "sec-wheel",
-        title: "Scene 2: The Wheel Room",
-        level: 2,
-        body: "The sluice gate is jammed.",
-        gmOnly: false,
-        provenance: "suggested",
+        id: "loc-wheel",
+        name: "The Wheel Room",
+        summary: "Dimly lit room with a jammed sluice lever.",
+        visibility: "gm-only",
+        epistemicStatus: "inferred",
+        sourceRef: { page: 2, pageEnd: 4, section: "Scene 2: The Wheel Room" },
       },
     ],
+    actors: [
+      {
+        id: "actor-wick",
+        name: "Wick",
+        summary: "An anxious millhand.",
+        motivation: "Collect unpaid wages.",
+        visibility: "player-visible",
+        epistemicStatus: "inferred",
+        sourceRef: { section: "Scene 1: The Ferry Landing" },
+      },
+    ],
+    factions: [],
     scenes: [
       {
-        sourceId: "sec-landing",
+        id: "scene-landing",
         title: "Scene 1: The Ferry Landing",
+        summary: "Arrival at the jetty.",
+        locationId: "loc-landing",
+        readAloud: "The ferry bell tolls twice.",
         conditions: ["Players arrive at dusk"],
-        provenance: "source-grounded",
-      },
-    ],
-    npcs: [
-      {
-        name: "Wick",
-        motivation: "Collect unpaid wages.",
-        sourceId: "sec-landing",
-        provenance: "suggested",
-      },
-    ],
-    clues: [
-      {
-        clue: "Muddy bootprints lead to the sluice lever.",
-        primarySourceId: "sec-landing",
-        alternativeSourceId: "sec-wheel",
-        provenance: "source-grounded",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+        sourceRef: { page: 1, section: "Scene 1: The Ferry Landing" },
       },
     ],
     encounters: [
       {
-        sourceId: "sec-wheel",
+        id: "enc-wheel",
         title: "Jammed Waterwheel",
         description: "The waterwheel is blocked by iron chains.",
+        locationId: "loc-wheel",
         alternativeSolutions: [
           {
             method: "Persuasion",
@@ -77,26 +90,39 @@ function createTestPackage(): AdventureSourcePackage {
             socialBypassOfCombat: true,
           },
         ],
-        provenance: "source-grounded",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
       },
     ],
+    clues: [
+      {
+        id: "clue-prints",
+        text: "Muddy bootprints lead to the sluice lever.",
+        placedLocationId: "loc-landing",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ],
+    rumours: [],
+    items: [],
     secrets: [
       {
         id: "secret-1",
         text: "Wick hid the ledger inside the millstone.",
-        sourceId: "sec-wheel",
-        gmOnly: true,
-        provenance: "source-grounded",
+        relatedEntityIds: ["loc-wheel"],
+        visibility: "gm-only",
+        epistemicStatus: "explicit",
+        sourceRef: { page: 3 },
       },
     ],
     endings: [],
-    ambiguities: [
+    unresolved: [
       {
         id: "amb-1",
         code: "MISSING_HEADING",
         message: "Unlabelled subsection under Scene 2.",
-        context: "Line 42",
-        provenance: "unresolved",
+        context: "Page 3",
+        epistemicStatus: "unresolved",
       },
     ],
   };
@@ -118,7 +144,7 @@ function createMemoryIO(): AdventurePackageFileIO & {
     },
     async read(path: string) {
       const value = files.get(path);
-      if (value === undefined) throw new Error(`Not found: ${path}`);
+      if (value === undefined) throw new Error(`Missing file: ${path}`);
       return value;
     },
     async write(path: string, content: string) {
@@ -136,38 +162,12 @@ function createMemoryIO(): AdventurePackageFileIO & {
   return io;
 }
 
-describe("AdventureImportReview", () => {
-  it("AC2: displays provenance badges with matching aria-labels for all extracted components", () => {
-    const draft = createTestPackage();
-    render(AdventureImportReview, {
-      props: {
-        draft,
-        onApprove: vi.fn(),
-        onCancel: vi.fn(),
-      },
-    });
-
-    expect(
-      screen.getAllByLabelText("source-grounded").length,
-    ).toBeGreaterThanOrEqual(5);
-    expect(screen.getAllByLabelText("suggested").length).toBeGreaterThanOrEqual(
-      2,
-    );
-    expect(
-      screen.getAllByLabelText("unresolved").length,
-    ).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("The Mill Mystery")).toBeTruthy();
-    expect(screen.getByTestId("adventure-package-hash").textContent).toBe(
-      draft.documentHash,
-    );
-    expect(screen.getByTestId("adventure-package-hash").className).toContain(
-      "break-all",
-    );
-  });
-
-  it("AC3: toggles secret gmOnly classification in memory and retains it on approval", async () => {
-    const draft = createTestPackage();
+describe("AdventureImportReview (AdventureJsonV1)", () => {
+  it("AC3: keeps secrets locked gm-only while toggling non-secret entity visibility and updating canonical hash", async () => {
+    const draft = createTestAdventureJson();
+    const initialHash = await computeAdventureJsonHash(draft);
     const onApprove = vi.fn();
+
     render(AdventureImportReview, {
       props: {
         draft,
@@ -176,71 +176,51 @@ describe("AdventureImportReview", () => {
       },
     });
 
-    expect(
-      screen.getByTestId("secret-classification-0").textContent?.trim(),
-    ).toBe("GM-only");
-    const toggle = screen.getByTestId("secret-toggle-0");
-    expect(toggle.getAttribute("aria-pressed")).toBe("true");
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("adventure-package-hash").textContent?.trim(),
+      ).toBe(initialHash);
+    });
 
-    await fireEvent.click(toggle);
     expect(
       screen.getByTestId("secret-classification-0").textContent?.trim(),
+    ).toContain("GM-only");
+    expect(screen.queryByTestId("secret-toggle-0")).toBeNull();
+
+    expect(
+      screen.getByTestId("locations-visibility-0").textContent?.trim(),
     ).toBe("Player-visible");
-    expect(toggle.getAttribute("aria-pressed")).toBe("false");
+    const locToggle = screen.getByTestId("locations-visibility-toggle-0");
+    await fireEvent.click(locToggle);
+    expect(
+      screen.getByTestId("locations-visibility-0").textContent?.trim(),
+    ).toBe("GM-only");
+
+    await waitFor(() => {
+      const updatedHash = screen
+        .getByTestId("adventure-package-hash")
+        .textContent?.trim();
+      expect(updatedHash).toMatch(/^[a-f0-9]{64}$/);
+      expect(updatedHash).not.toBe(initialHash);
+    });
 
     await fireEvent.click(screen.getByTestId("adventure-approve-button"));
     await waitFor(() => {
       expect(onApprove).toHaveBeenCalledTimes(1);
     });
-    const approved = onApprove.mock.calls[0][0] as AdventureSourcePackage;
-    expect(approved.secrets[0]?.gmOnly).toBe(false);
-    expect(approved.status).toBe("approved");
+    const approved = onApprove.mock.calls[0][0] as AdventureJsonV1;
+    expect(approved.locations[0]?.visibility).toBe("gm-only");
+    expect(approved.secrets[0]?.visibility).toBe("gm-only");
   });
 
-  it("AC4: reassigns scene, clue primarySourceId, and NPC sourceId before approval", async () => {
-    const draft = createTestPackage();
-    const onApprove = vi.fn();
-    render(AdventureImportReview, {
-      props: {
-        draft,
-        onApprove,
-        onCancel: vi.fn(),
-      },
-    });
-
-    const sceneSelect = screen.getByLabelText(
-      "Assign section for scene Scene 1: The Ferry Landing",
-    ) as HTMLSelectElement;
-    const npcSelect = screen.getByLabelText(
-      "Assign section for NPC Wick",
-    ) as HTMLSelectElement;
-    const clueSelect = screen.getByLabelText(
-      "Assign section for clue 1",
-    ) as HTMLSelectElement;
-
-    await fireEvent.change(sceneSelect, { target: { value: "sec-wheel" } });
-    await fireEvent.change(npcSelect, { target: { value: "sec-wheel" } });
-    await fireEvent.change(clueSelect, { target: { value: "sec-wheel" } });
-
-    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
-    await waitFor(() => {
-      expect(onApprove).toHaveBeenCalledTimes(1);
-    });
-
-    const approved = onApprove.mock.calls[0][0] as AdventureSourcePackage;
-    expect(approved.scenes[0]?.sourceId).toBe("sec-wheel");
-    expect(approved.npcs[0]?.sourceId).toBe("sec-wheel");
-    expect(approved.clues[0]?.primarySourceId).toBe("sec-wheel");
-  });
-
-  it("AC5: locks editing controls after approval and rejects mutating an approved package in storage", async () => {
-    const draft = createTestPackage();
+  it("AC4/AC5: locks editing controls after approval and rejects overwriting an approved package in storage", async () => {
+    const draft = createTestAdventureJson();
     const io = createMemoryIO();
     render(AdventureImportReview, {
       props: {
         draft,
         onApprove: async (approved) => {
-          await saveAdventurePackage(io, approved);
+          await saveApprovedAdventureJson(io, approved);
         },
         onCancel: vi.fn(),
       },
@@ -254,24 +234,7 @@ describe("AdventureImportReview", () => {
     });
 
     expect(
-      (screen.getByTestId("secret-toggle-0") as HTMLButtonElement).disabled,
-    ).toBe(true);
-    expect(
-      (
-        screen.getByLabelText(
-          "Assign section for scene Scene 1: The Ferry Landing",
-        ) as HTMLSelectElement
-      ).disabled,
-    ).toBe(true);
-    expect(
-      (
-        screen.getByLabelText(
-          "Assign section for NPC Wick",
-        ) as HTMLSelectElement
-      ).disabled,
-    ).toBe(true);
-    expect(
-      (screen.getByLabelText("Assign section for clue 1") as HTMLSelectElement)
+      (screen.getByTestId("locations-visibility-toggle-0") as HTMLButtonElement)
         .disabled,
     ).toBe(true);
     expect(
@@ -280,26 +243,26 @@ describe("AdventureImportReview", () => {
     ).toBe(true);
     expect(screen.getByTestId("adventure-approved-confirmation")).toBeTruthy();
 
-    await expect(saveAdventurePackage(io, draft)).rejects.toThrow(
+    await expect(saveApprovedAdventureJson(io, draft)).rejects.toThrow(
       "already approved",
     );
   });
 
   it("AC6: invokes onCancel and writes zero files when Cancel is clicked", async () => {
-    const draft = createTestPackage();
+    const draft = createTestAdventureJson();
     const io = createMemoryIO();
     const onCancel = vi.fn();
     render(AdventureImportReview, {
       props: {
         draft,
         onApprove: async (approved) => {
-          await saveAdventurePackage(io, approved);
+          await saveApprovedAdventureJson(io, approved);
         },
         onCancel,
       },
     });
 
-    await fireEvent.click(screen.getByTestId("secret-toggle-0"));
+    await fireEvent.click(screen.getByTestId("locations-visibility-toggle-0"));
     await fireEvent.click(screen.getByTestId("adventure-cancel-button"));
 
     expect(onCancel).toHaveBeenCalledTimes(1);
@@ -307,8 +270,8 @@ describe("AdventureImportReview", () => {
     expect(io.files.size).toBe(0);
   });
 
-  it("AC7: renders pre-approval AI provider excerpt notice before the Approve button", () => {
-    const draft = createTestPackage();
+  it("AC7: renders pre-approval AI/storage notice for Adventure JSON before the Approve button", () => {
+    const draft = createTestAdventureJson();
     render(AdventureImportReview, {
       props: {
         draft,
@@ -322,16 +285,10 @@ describe("AdventureImportReview", () => {
     });
     const approveButton = screen.getByTestId("adventure-approve-button");
     const noticeText = notice.textContent?.replace(/\s+/g, " ") ?? "";
-    expect(noticeText).not.toContain("strictly local");
-    expect(noticeText).toContain("original Markdown or PDF file");
-    expect(noticeText).toContain("not copied into the Vault");
-    expect(noticeText).toContain("Only its approved package is saved");
-    expect(noticeText).toContain("on this device");
+    expect(noticeText).toContain("Adventure JSON file");
+    expect(noticeText).toContain("validated locally with zero AI calls");
     expect(noticeText).toContain(
       "not currently included in Codex Cryptica Cloud Backup",
-    );
-    expect(noticeText).toContain(
-      "even when you opt in to include adventure sessions",
     );
     expect(noticeText).toContain("selected Oracle AI provider");
     expect(noticeText).toContain(
@@ -345,66 +302,29 @@ describe("AdventureImportReview", () => {
     ).toBe(true);
   });
 
-  it("gives assignment controls a high-contrast boundary and focus indicator", () => {
-    render(AdventureImportReview, {
-      props: {
-        draft: createTestPackage(),
-        onApprove: vi.fn(),
-        onCancel: vi.fn(),
-      },
-    });
-
-    const assignmentControls = screen.getAllByRole("combobox");
-    expect(assignmentControls.length).toBeGreaterThan(0);
-    for (const control of assignmentControls) {
-      expect(control.className).toContain("border-theme-text");
-      expect(control.className).toContain("focus-visible:outline-theme-text");
-    }
-  });
-
-  it("AC8: renders error alert for empty or binary files and writes zero files to storage", async () => {
+  it("AC8: renders validation error list in alert when Adventure JSON validation fails and writes zero files", async () => {
     const io = createMemoryIO();
-    let importError = "";
-    const { rerender } = render(AdventureEntryChoices, {
+    const result = validateAdventureJson({ formatVersion: "bad" });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+
+    render(AdventureEntryChoices, {
       props: {
         onDiscover: vi.fn(),
         onOwnPremise: vi.fn(),
-        importError: null,
-        onImportFile: async (file) => {
-          const text = await file.text();
-          const result = await parseAdventureMarkdown(text, {
-            fileName: file.name,
-          });
-          if (!result.ok) {
-            importError = result.error.message;
-          }
-        },
+        importError: "Adventure JSON validation failed.",
+        importValidationErrors: result.errors,
       },
     });
 
-    const input = screen.getByTestId(
-      "adventure-file-input",
-    ) as HTMLInputElement;
-    const binaryFile = new File(["\u0000\u0001\u0002"], "binary.md");
-    await fireEvent.change(input, { target: { files: [binaryFile] } });
-
-    await waitFor(() => {
-      expect(importError.length).toBeGreaterThan(0);
-    });
-
-    await rerender({
-      onDiscover: vi.fn(),
-      onOwnPremise: vi.fn(),
-      importError,
-    });
     const alert = screen.getByRole("alert");
-    expect(alert.textContent).toContain(importError);
+    expect(alert.textContent).toContain("INVALID_FORMAT_VERSION");
     expect(io.writeCalls).toBe(0);
     expect(io.files.size).toBe(0);
   });
 
-  it("AC9: exposes keyboard-accessible controls with WCAG labels", async () => {
-    const draft = createTestPackage();
+  it("displays sourceRef page citations (p. N / pp. N–M) on entities", () => {
+    const draft = createTestAdventureJson();
     render(AdventureImportReview, {
       props: {
         draft,
@@ -413,50 +333,11 @@ describe("AdventureImportReview", () => {
       },
     });
 
-    const toggle = screen.getByTestId("secret-toggle-0");
-    const sceneSelect = screen.getByLabelText(
-      "Assign section for scene Scene 1: The Ferry Landing",
-    ) as HTMLSelectElement;
-    const approveButton = screen.getByTestId("adventure-approve-button");
-    const cancelButton = screen.getByTestId("adventure-cancel-button");
-
-    for (const el of [toggle, sceneSelect, approveButton, cancelButton]) {
-      expect(el.getAttribute("tabindex")).not.toBe("-1");
-    }
-
-    toggle.focus();
-    expect(document.activeElement).toBe(toggle);
-    await fireEvent.keyDown(toggle, { key: "Enter" });
-    await fireEvent.click(toggle);
-    expect(toggle.getAttribute("aria-pressed")).toBe("false");
-
-    sceneSelect.focus();
-    expect(document.activeElement).toBe(sceneSelect);
-    await fireEvent.keyDown(sceneSelect, { key: "ArrowDown" });
-    await fireEvent.change(sceneSelect, { target: { value: "sec-wheel" } });
-    expect(sceneSelect.value).toBe("sec-wheel");
-  });
-
-  it("displays page references (p. N / pp. N–M) on sections that carry page numbers", () => {
-    const draft = createTestPackage();
-    draft.importMethod = "pdf";
-    draft.sections = [
-      { ...draft.sections[0], pageNumber: 1 },
-      { ...draft.sections[1], pageNumber: 2, pageEnd: 4 },
-    ];
-
-    render(AdventureImportReview, {
-      props: {
-        draft,
-        onApprove: vi.fn(),
-        onCancel: vi.fn(),
-      },
-    });
-
-    const pageRefs = screen.getAllByTestId("section-page-ref");
-    expect(pageRefs.map((el) => el.textContent?.trim())).toEqual([
-      "p. 1",
-      "pp. 2–4",
-    ]);
+    const refs = screen
+      .getAllByTestId("entity-source-ref")
+      .map((el) => el.textContent?.trim());
+    expect(refs).toContain("p. 1 · Scene 1: The Ferry Landing");
+    expect(refs).toContain("pp. 2–4 · Scene 2: The Wheel Room");
+    expect(refs).toContain("p. 3");
   });
 });

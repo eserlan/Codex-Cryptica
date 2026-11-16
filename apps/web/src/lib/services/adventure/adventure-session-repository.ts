@@ -8,6 +8,7 @@ import {
   parseAdventureSessionForRecovery,
   type AdventureSessionReadResult,
   type AdventureSession,
+  type AdventureSourcePackageRef,
   type AdventureStatus,
 } from "@codex/adventure-engine";
 
@@ -23,6 +24,8 @@ export interface AdventureArchiveEntry {
   revision?: number;
   /** Absent for unreadable entries. Included for client-side archive search (FR-003). */
   premise?: string;
+  /** Pinned Adventure JSON package reference when launched from an imported module. */
+  sourcePackage?: AdventureSourcePackageRef;
 }
 
 export interface AdventureListResult {
@@ -208,29 +211,8 @@ export class AdventureSessionRepository {
       return { effectiveActiveId: null, entries: [] };
     }
     for await (const [name, handle] of (directory as any).entries()) {
-      if (!name.endsWith(".json") || handle.kind !== "file") continue;
-      const id = name.slice(0, -5);
-      try {
-        const read = await this.readFile(vaultId, id);
-        const session = read.session;
-        entries.push({
-          id: session.id,
-          title: session.title,
-          status: session.status,
-          updatedAt: session.updatedAt,
-          revision: session.revision,
-          loadCondition:
-            read.mode === "writable" ? "normal" : "migration-recovery",
-          premise: session.premise,
-        });
-      } catch {
-        entries.push({
-          id,
-          title: "Unreadable adventure",
-          status: "unreadable",
-          loadCondition: "unreadable",
-        });
-      }
+      const entry = await this.readArchiveEntry(vaultId, name, handle);
+      if (entry) entries.push(entry);
     }
     const active = entries
       .filter((entry) => entry.status === "active" && entry.updatedAt)
@@ -241,6 +223,39 @@ export class AdventureSessionRepository {
       (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
     );
     return { effectiveActiveId, entries };
+  }
+
+  private async readArchiveEntry(
+    vaultId: string,
+    name: string,
+    handle: { kind: string },
+  ): Promise<AdventureArchiveEntry | null> {
+    if (!name.endsWith(".json") || handle.kind !== "file") return null;
+    const id = name.slice(0, -5);
+    try {
+      const read = await this.readFile(vaultId, id);
+      const session = read.session;
+      return {
+        id: session.id,
+        title: session.title,
+        status: session.status,
+        updatedAt: session.updatedAt,
+        revision: session.revision,
+        loadCondition:
+          read.mode === "writable" ? "normal" : "migration-recovery",
+        premise: session.premise,
+        ...(session.sourcePackage
+          ? { sourcePackage: session.sourcePackage }
+          : {}),
+      };
+    } catch {
+      return {
+        id,
+        title: "Unreadable adventure",
+        status: "unreadable",
+        loadCondition: "unreadable",
+      };
+    }
   }
 
   async save(

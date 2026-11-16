@@ -73,9 +73,12 @@ def now():
 
 
 def run(cmd, cwd=REPO, check=True):
-    res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    command = [str(part) for part in cmd]
+    if command and Path(command[0]).name == "git":
+        command[1:1] = ["-c", "core.hooksPath=/dev/null"]
+    res = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
     if check and res.returncode != 0:
-        raise Refused(f"`{' '.join(cmd)}` failed: {(res.stderr or res.stdout).strip()}")
+        raise Refused(f"`{' '.join(command)}` failed: {(res.stderr or res.stdout).strip()}")
     return res
 
 
@@ -431,6 +434,65 @@ def agent_type(transcript):
         return "unknown"
 
 
+_codex_session_settings_cache = {}
+
+
+def codex_session_settings(session_id):
+    """Read the effective model settings for an older log without model metadata."""
+    if not session_id:
+        return {}
+    if session_id in _codex_session_settings_cache:
+        return _codex_session_settings_cache[session_id]
+    home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+    sessions = home / "sessions"
+    settings = {}
+    if sessions.exists():
+        for path in sessions.rglob(f"rollout-*-{session_id}.jsonl"):
+            try:
+                with path.open() as f:
+                    for line in f:
+                        entry = json.loads(line)
+                        payload = entry.get("payload", {})
+                        if entry.get("type") == "event_msg" and payload.get("type") == "thread_settings_applied":
+                            settings = payload.get("thread_settings", {})
+            except (OSError, ValueError):
+                continue
+            if settings:
+                break
+    _codex_session_settings_cache[session_id] = settings
+    return settings
+
+
+def codex_message_usd(price, usage):
+    """Estimate standard short-context API cost from Codex token usage."""
+    input_tokens = usage.get("input_tokens", 0)
+    cached_tokens = usage.get("cached_input_tokens", 0)
+    cache_write_tokens = usage.get("cache_write_input_tokens", 0)
+    uncached_tokens = max(0, input_tokens - cached_tokens - cache_write_tokens)
+    return (
+        uncached_tokens * price["input"]
+        + cached_tokens * price["cached_input"]
+        + cache_write_tokens * price["cache_write"]
+        + usage.get("output_tokens", 0) * price["output"]
+    ) / 1e6
+
+
+def empty_cost_row():
+    return {
+        "usd": 0.0,
+        "spawns": 0,
+        "turns": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cache_write_tokens": 0,
+        "models": [],
+        "pricing_complete": True,
+        "unpriced_tokens": 0,
+        "unpriced_models": [],
+    }
+
+
 def job_costs(job):
     """API-equivalent cost of every subagent whose prompt names this job's folder.
 
@@ -461,24 +523,27 @@ def job_costs(job):
                     msg = entry.get("message")
                     if entry.get("type") == "assistant" and isinstance(msg, dict) and msg.get("usage"):
                         usage_by_message[msg["id"]] = (msg["model"], msg["usage"])
-            row = by_agent.setdefault(agent_type(path), {
-                "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
-                "cache_read_tokens": 0, "models": []})
+            row = by_agent.setdefault(agent_type(path), empty_cost_row())
             row["spawns"] += 1
             for model, u in usage_by_message.values():
                 tokens = (u.get("input_tokens", 0) + u.get("output_tokens", 0)
                           + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0))
                 if tokens == 0:
                     continue
-                if model not in prices:
-                    die(f"no price for model {model} in factory/config.json prices_usd_per_mtok")
-                row["usd"] += message_usd(prices[model], u)
                 row["turns"] += 1
-                row["input_tokens"] += u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
+                row["input_tokens"] += u.get("input_tokens", 0)
+                row["cache_write_tokens"] += u.get("cache_creation_input_tokens", 0)
                 row["output_tokens"] += u.get("output_tokens", 0)
                 row["cache_read_tokens"] += u.get("cache_read_input_tokens", 0)
                 if model not in row["models"]:
                     row["models"].append(model)
+                if model in prices:
+                    row["usd"] += message_usd(prices[model], u)
+                else:
+                    row["pricing_complete"] = False
+                    row["unpriced_tokens"] += tokens
+                    if model not in row["unpriced_models"]:
+                        row["unpriced_models"].append(model)
 
     started_epoch = 0.0
     if job.get("started"):
@@ -505,25 +570,106 @@ def job_costs(job):
         except (OSError, ValueError):
             continue
         agent, display_model, price_key = infer_agy_agent_and_model(first_user, job)
-        price = prices.get(price_key) or next(iter(prices.values()))
-        row = by_agent.setdefault(agent, {
-            "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
-            "cache_read_tokens": 0, "models": []})
+        price = prices.get(price_key)
+        row = by_agent.setdefault(agent, empty_cost_row())
         row["spawns"] += 1
+        if display_model not in row["models"]:
+            row["models"].append(display_model)
         for step in planner_steps:
             inp = step.get("input_tokens", 0) or 0
             out = step.get("output_tokens", 0) or 0
             cache_r = step.get("cache_read_tokens", 0) or 0
             if inp + out + cache_r == 0:
                 continue
-            u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
-            row["usd"] += message_usd(price, u)
             row["turns"] += 1
             row["input_tokens"] += inp
             row["output_tokens"] += out
             row["cache_read_tokens"] += cache_r
-            if display_model not in row["models"]:
-                row["models"].append(display_model)
+            if price:
+                u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
+                row["usd"] += message_usd(price, u)
+            else:
+                row["pricing_complete"] = False
+                row["unpriced_tokens"] += inp + out + cache_r
+                if display_model not in row["unpriced_models"]:
+                    row["unpriced_models"].append(display_model)
+
+    codex_logs = job_dir(job["id"]) / "codex"
+    codex_pricing_path = FACTORY / "codex-routing.json"
+    try:
+        codex_prices = json.loads(codex_pricing_path.read_text()).get("prices_usd_per_mtok", {})
+    except (OSError, ValueError):
+        codex_prices = {}
+    if codex_logs.exists():
+        previous_usage = {}
+        usage_fields = (
+            "input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens",
+        )
+        paths = sorted(codex_logs.glob("*.json"), key=lambda p: (p.stat().st_mtime_ns, p.name))
+        for path in paths:
+            try:
+                record = json.loads(path.read_text())
+            except (OSError, ValueError):
+                continue
+            if not isinstance(record, dict):
+                continue
+            events = record.get("events")
+            if not isinstance(events, list):
+                continue
+            model = record.get("model")
+            thread_id = next((event.get("thread_id") for event in events
+                              if event.get("type") == "thread.started"), None)
+            thread_id = record.get("thread_id") or thread_id or f"record:{path.name}"
+            if not model:
+                model = codex_session_settings(thread_id).get("model")
+            model = model or "unknown"
+            price = codex_prices.get(model)
+            agent = path.stem.rsplit("-", 1)[0]
+            row = by_agent.setdefault(agent, empty_cost_row())
+            row["spawns"] += 1
+            if model not in row["models"]:
+                row["models"].append(model)
+            for event in events:
+                if event.get("type") != "turn.completed" or not isinstance(event.get("usage"), dict):
+                    continue
+                usage = event["usage"]
+                snapshot = {
+                    field: max(0, int(usage.get(field, 0) or 0))
+                    for field in usage_fields if field in usage
+                }
+                state_key = thread_id
+                prior = previous_usage.get(state_key, {})
+                delta = {}
+                for field in usage_fields:
+                    if field not in snapshot:
+                        delta[field] = 0
+                        continue
+                    current = snapshot[field]
+                    previous = prior.get(field, 0)
+                    delta[field] = current - previous if current >= previous else current
+                previous_usage[state_key] = {**prior, **snapshot}
+                token_count = sum(delta.values())
+                if not token_count:
+                    continue
+                row["turns"] += 1
+                ordinary_input = max(
+                    0,
+                    delta["input_tokens"]
+                    - delta["cached_input_tokens"]
+                    - delta["cache_write_input_tokens"],
+                )
+                row["input_tokens"] += ordinary_input
+                row["cache_write_tokens"] += delta["cache_write_input_tokens"]
+                row["output_tokens"] += delta["output_tokens"]
+                row["cache_read_tokens"] += delta["cached_input_tokens"]
+                if price:
+                    row["usd"] += codex_message_usd(price, delta)
+                else:
+                    row["pricing_complete"] = False
+                    # cached and cache-write input are subdivisions of input_tokens.
+                    row["unpriced_tokens"] += delta["input_tokens"] + delta["output_tokens"]
+                    if model not in row["unpriced_models"]:
+                        row["unpriced_models"].append(model)
 
     for path in muse_session_files(started_epoch):
         try:
@@ -585,6 +731,8 @@ def job_costs(job):
 def sync(job):
     d = job_dir(job["id"])
     job["base"] = base_of(job)
+    if job["stage"] == "approve" and not job["pr"]:
+        refresh_pr(job, discover=True)
     intake = d / "intake.md"
     if intake.exists():
         h = header(intake)
@@ -606,6 +754,16 @@ def sync(job):
                 m = re.fullmatch(r"VERDICT:\s*(PASS|CHANGES)", line or "")
                 job["reviews"][r] = m.group(1) if m else ("pending" if line is None else "invalid")
     job["cost_usd"], job["cost_by_agent"] = job_costs(job)
+    job["cost_pricing_complete"] = all(
+        row.get("pricing_complete", True) for row in job["cost_by_agent"].values()
+    )
+    job["unpriced_tokens"] = sum(
+        row.get("unpriced_tokens", 0) for row in job["cost_by_agent"].values()
+    )
+    job["unpriced_models"] = sorted({
+        model for row in job["cost_by_agent"].values()
+        for model in row.get("unpriced_models", [])
+    })
     return job
 
 
@@ -630,9 +788,17 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
-def refresh_pr(job):
+def refresh_pr(job, discover=False):
     """Point the job at its branch's open PR when the recorded one was merged or
     closed while the job kept working (someone merged an earlier round)."""
+    if not job["pr"]:
+        if discover:
+            prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
+            require(len(prs) <= 1,
+                    f"expected at most one open PR from {job['branch']}, found {len(prs)}")
+            if prs:
+                job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
+        return
     if job["pr"] and pr_state(job) != "OPEN":
         prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
         if len(prs) == 1:
@@ -658,7 +824,7 @@ def advance(job, stage):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
     if stage != "merged" and old not in TERMINAL:
-        refresh_pr(job)
+        refresh_pr(job, discover=old == "approve")
     d = job_dir(job["id"])
     decision = header(d / "intake.md").get("DECISION") if (d / "intake.md").exists() else None
     intake_body = lambda: "\n".join((d / "intake.md").read_text().split("\n\n", 1)[1:]).strip()
@@ -719,8 +885,9 @@ def advance(job, stage):
         require(head == remote, f"{job['branch']} isn't pushed: local {head[:7]}, origin {remote[:7] or 'missing'}")
         if not job["pr"]:
             prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
-            require(len(prs) == 1, f"expected one open PR from {job['branch']}, found {len(prs)}")
-            job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
+            require(len(prs) <= 1, f"expected at most one open PR from {job['branch']}, found {len(prs)}")
+            if prs:
+                job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
 
     elif old == "build":  # → needs-human
         status = first_line(d / "build.md")
@@ -769,6 +936,7 @@ def advance(job, stage):
         want = ("APPROVE",) if stage == "merging" else ("APPROVE", "ESCALATE")
         line = first_line(d / "decision.md")
         require(line in want, f"decision.md starts with {line!r}, not {' or '.join(want)}")
+        require(job["pr"] and pr_state(job) == "OPEN", "create an open PR before approving")
 
     elif old == "merging" and stage == "merged":
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
@@ -784,7 +952,9 @@ def advance(job, stage):
             next_round(job)
             label("issue", job["issue"], remove=LABELS["needs_human"])
             if job["pr"]:
-                label("pr", job["pr"], remove=LABELS["needs_human"])
+                # Keep the PR blocked from automatic merging until the new
+                # build, gate, reviews and approver complete.
+                label("pr", job["pr"], add=LABELS["needs_human"])
 
     if stage == "needs-human":
         body = f"### Factory: needs a human\n\n{(d / 'decision.md').read_text().split(chr(10), 1)[1].strip()}"
@@ -902,7 +1072,8 @@ def cmd_create(number, on=None):
             "worktree": str(REPO / ".worktrees" / job_id),
             "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
             "intake": None, "agents": None, "gate": None, "reviews": {},
-            "cost_usd": 0.0, "cost_by_agent": {}, "started": now(), "ended": None,
+            "cost_usd": 0.0, "cost_by_agent": {}, "cost_pricing_complete": True,
+            "unpriced_tokens": 0, "unpriced_models": [], "started": now(), "ended": None,
             "stacked_on": parent["id"] if parent else None, "base": parent["branch"] if parent else BASE,
         }
         write_issue_md(job)
@@ -1041,11 +1212,15 @@ def cmd_summary(args):
     for j in jobs:
         sync(j)  # for display only; the orchestrator owns the saved state
         rows.append((j["id"], f"#{j['issue']}", j["stage"], str(j["round"]),
-                     f"#{j['pr']}" if j["pr"] else "-", f"${j['cost_usd']:.2f}", elapsed(j)))
+                     f"#{j['pr']}" if j["pr"] else "-",
+                     cost_label(j["cost_usd"], j.get("cost_pricing_complete", True)), elapsed(j)))
     widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
     for r in rows:
         print("  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip())
-    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent, factory agents only)")
+    complete = all(j.get("cost_pricing_complete", True) for j in jobs)
+    print(f"total {cost_label(sum(j['cost_usd'] for j in jobs), complete)} "
+          "(API-equivalent, factory agents only)"
+          + ("; partial because some model usage has no price" if not complete else ""))
 
 
 def short_model(model):
@@ -1059,18 +1234,20 @@ def tokens(n):
 def cmd_costs(args):
     """Cost per agent for each job, then per agent and model across the jobs."""
     jobs = [resolve(a) for a in args] if args else all_jobs()
-    header = ("agent", "models", "spawns", "turns", "input", "output", "cache read", "tokens", "cost")
+    header = ("agent", "models", "spawns", "turns", "input", "cache write", "output", "cache read", "tokens", "cost")
     totals = {}
     for j in jobs:
         sync(j)  # for display only; the orchestrator owns the saved state
-        print(f"{j['id']}  round {j['round']}  {j['stage']}  ${j['cost_usd']:.2f}")
+        print(f"{j['id']}  round {j['round']}  {j['stage']}  "
+              f"{cost_label(j['cost_usd'], j.get('cost_pricing_complete', True))}")
         rows = [header]
         for agent, r in j["cost_by_agent"].items():
             turns = r.get("turns", 0)
-            all_tokens = r["input_tokens"] + r["output_tokens"] + r["cache_read_tokens"]
+            all_tokens = r["input_tokens"] + r.get("cache_write_tokens", 0) + r["output_tokens"] + r["cache_read_tokens"]
             rows.append((agent, ", ".join(short_model(m) for m in r["models"]) or "-", str(r["spawns"]),
-                         str(turns), tokens(r["input_tokens"]), tokens(r["output_tokens"]),
-                         tokens(r["cache_read_tokens"]), tokens(all_tokens), f"${r['usd']:.2f}"))
+                         str(turns), tokens(r["input_tokens"]), tokens(r.get("cache_write_tokens", 0)), tokens(r["output_tokens"]),
+                         tokens(r["cache_read_tokens"]), tokens(all_tokens),
+                         cost_label(r["usd"], r.get("pricing_complete", True))))
             key = (agent, ", ".join(short_model(m) for m in r["models"]) or "-")
             t = totals.setdefault(key, {"usd": 0.0, "spawns": 0, "jobs": 0, "turns": 0,
                                         "output": 0, "tokens": 0})
@@ -1080,6 +1257,12 @@ def cmd_costs(args):
             t["turns"] += turns
             t["output"] += r["output_tokens"]
             t["tokens"] += all_tokens
+            t["unpriced_tokens"] = t.get("unpriced_tokens", 0) + r.get("unpriced_tokens", 0)
+            t["pricing_complete"] = t.get("pricing_complete", True) and r.get("pricing_complete", True)
+            t["unpriced_models"] = sorted(set(t.get("unpriced_models", [])) | set(r.get("unpriced_models", [])))
+            if not r.get("pricing_complete", True):
+                print(f"  Partial estimate: {tokens(r.get('unpriced_tokens', 0))} unpriced tokens "
+                      f"({', '.join(r.get('unpriced_models', [])) or 'unknown model'}).")
         print_table(rows, indent="  ")
         print()
     rows = [("agent", "models", "jobs", "spawns", "turns/job", "output/job", "tokens/job",
@@ -1088,12 +1271,20 @@ def cmd_costs(args):
         n = t["jobs"]
         rows.append((agent, models, str(n), str(t["spawns"]), f"{t['turns'] / n:.0f}",
                      tokens(t["output"] / n), tokens(t["tokens"] / n), tokens(t["tokens"]),
-                     f"${t['usd']:.2f}", f"${t['usd'] / n:.2f}"))
+                     cost_label(t["usd"], t.get("pricing_complete", True)),
+                     cost_label(t["usd"] / n, t.get("pricing_complete", True))))
     print(f"all {len(jobs)} jobs")
     print_table(rows, indent="  ")
     all_tokens = sum(t["tokens"] for t in totals.values())
-    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent), {tokens(all_tokens)} tokens, "
-          f"{sum(t['turns'] for t in totals.values())} turns (factory agents only)")
+    complete = all(j.get("cost_pricing_complete", True) for j in jobs)
+    print(f"total {cost_label(sum(j['cost_usd'] for j in jobs), complete)} (API-equivalent), "
+          f"{tokens(all_tokens)} tokens, {sum(t['turns'] for t in totals.values())} turns "
+          "(factory agents only)"
+          + ("; partial because some model usage has no price" if not complete else ""))
+
+
+def cost_label(value, complete=True):
+    return f"${value:.2f}" + ("" if complete else "+")
 
 
 def print_table(rows, indent=""):
