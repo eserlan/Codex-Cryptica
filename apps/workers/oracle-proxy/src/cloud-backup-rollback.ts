@@ -8,6 +8,7 @@ import {
   hashCloudBackupEntity,
   type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
+  type CloudBackupTrashEviction,
 } from "../../../../packages/schema/src/publishing";
 import type { Shard } from "./cloud-backup-entities";
 import {
@@ -52,7 +53,7 @@ import {
   asItems,
   wholeShardNames,
 } from "./cloud-backup-whole-items";
-import { evictOldestTrash, purgeExpiredTrash } from "./cloud-backup-trash";
+import { pruneTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 
 const RollbackBodySchema = z
@@ -271,14 +272,13 @@ async function planRollback(
     { meta: current.canvasMeta, tombstones, trash },
     stamp,
   );
-  const purgedRev = await purgeExpiredTrash(
+  const { purgedRev, trashDrops, trashEvicted } = await pruneTrash(
     env,
     backupId,
     base,
     trash,
     tombstones,
   );
-  await evictOldestTrash(env, backupId, base, trash, tombstones);
 
   const bundle = nextBundleFor(currentBundle, pointBundle);
   const projected =
@@ -300,6 +300,8 @@ async function planRollback(
       purgedRev,
       shards,
       trash,
+      trashDrops,
+      ...(trashEvicted ? { trashEvicted } : {}),
       tombstones,
       hashes,
       meta,
@@ -327,6 +329,92 @@ async function discardCommitKeys(
   } catch {
     // Leftovers are unreachable and never counted.
   }
+}
+
+async function stageAndPublishRollback(
+  request: Request,
+  env: CloudBackupEnv,
+  backupId: string,
+  input: {
+    auth: {
+      manifest: CloudBackupManifest;
+      ownerCodeHash: string;
+      etag?: string;
+      sharing?: import("./cloud-backup-storage").SharingRecord;
+    };
+    base: BackupObjects;
+    point: RestorePoint;
+    plan: { prepared: PreparedDelta; counts: RollbackCounts };
+    revision: number;
+    lastPushedAt: string;
+    tag: string;
+  },
+): Promise<Response> {
+  const { auth, base, point, plan, revision, lastPushedAt, tag } = input;
+  const trashEvicted: CloudBackupTrashEviction | undefined =
+    plan.prepared.trashEvicted;
+  let committed: CloudBackupManifest;
+  let staged: BackupObjects;
+  let objects: BackupObjects;
+  try {
+    ({ staged, objects } = await stageDelta(
+      env,
+      backupId,
+      tag,
+      base,
+      plan.prepared,
+    ));
+    // Publish asset versions through the same manifest pointer as the content.
+    // The asset route reads these immutable copies, so a failed commit cannot
+    // expose the restore point's bytes as part of the still-current revision.
+    objects.assetVersions = point.assets;
+    committed = {
+      ...auth.manifest,
+      entityCount: Object.keys(plan.prepared.hashes).length,
+      sizeBytes: await reachableBytes(env, backupId, objects),
+      lastPushedAt,
+      revision: revision + 1,
+      feedHorizon: Math.max(
+        auth.manifest.feedHorizon ?? revision,
+        plan.prepared.purgedRev,
+      ),
+    };
+  } catch {
+    await discardCommitKeys(env, backupId, tag);
+    return storageUnavailable(request);
+  }
+
+  let response: Response;
+  try {
+    response = await publishCommit(
+      request,
+      env,
+      backupId,
+      {
+        committed,
+        objects,
+        staged,
+        base,
+        ownerCodeHash: auth.ownerCodeHash,
+        etag: auth.etag,
+        sharing: auth.sharing,
+        assetIds: undefined,
+      },
+      () => lostRace(request, env, backupId, staged, auth.manifest),
+    );
+  } catch {
+    // The manifest write may have been saved before it threw, so what it
+    // points at must stay. Leftovers are unreachable and the next winning
+    // commit cleans them up, as for a delta.
+    return storageUnavailable(request);
+  }
+  return response.ok
+    ? json(request, {
+        manifest: committed,
+        rollback: plan.counts,
+        ...(trashEvicted ? { trashEvicted } : {}),
+      })
+    : response;
 }
 
 /**
@@ -382,82 +470,43 @@ export async function handleCloudBackupRollback(
 
   const lastPushedAt = new Date().toISOString();
   const tag = `${revision + 1}-${crypto.randomUUID()}`;
-  let committed: CloudBackupManifest;
-  let staged: BackupObjects;
-  let objects: BackupObjects;
   let base: BackupObjects;
-  let counts: RollbackCounts;
+  let plan: { prepared: PreparedDelta; counts: RollbackCounts };
   try {
     base = await resolveObjects(env, backupId, auth.objects);
-    const plan = await planRollback(env, backupId, base, point, {
+    plan = await planRollback(env, backupId, base, point, {
       rev: revision + 1,
       editedBy: CLOUD_BACKUP_OWNER_EDITOR,
       editedAt: lastPushedAt,
     });
-    counts = plan.counts;
-    const oversized = sizeLimitResponse(
-      request,
-      plan.prepared.projectedBytes,
-      CLOUD_BACKUP_LIMITS.maxVaultBytes,
-      "This vault is too large to back up.",
-    );
-    if (oversized) return oversized;
-    if (dryRun) {
-      return json(request, { preview: { date, revision, ...counts } });
-    }
-
-    ({ staged, objects } = await stageDelta(
-      env,
-      backupId,
-      tag,
-      base,
-      plan.prepared,
-    ));
-    // Publish asset versions through the same manifest pointer as the content.
-    // The asset route reads these immutable copies, so a failed commit cannot
-    // expose the restore point's bytes as part of the still-current revision.
-    objects.assetVersions = point.assets;
-    committed = {
-      ...auth.manifest,
-      entityCount: Object.keys(plan.prepared.hashes).length,
-      sizeBytes: await reachableBytes(env, backupId, objects),
-      lastPushedAt,
-      revision: revision + 1,
-      feedHorizon: Math.max(
-        auth.manifest.feedHorizon ?? revision,
-        plan.prepared.purgedRev,
-      ),
-    };
   } catch {
-    await discardCommitKeys(env, backupId, tag);
     return storageUnavailable(request);
   }
-
-  let response: Response;
-  try {
-    response = await publishCommit(
-      request,
-      env,
-      backupId,
-      {
-        committed,
-        objects,
-        staged,
-        base,
-        ownerCodeHash: auth.ownerCodeHash,
-        etag: auth.etag,
-        sharing: auth.sharing,
-        assetIds: undefined,
+  const oversized = sizeLimitResponse(
+    request,
+    plan.prepared.projectedBytes,
+    CLOUD_BACKUP_LIMITS.maxVaultBytes,
+    "This vault is too large to back up.",
+  );
+  if (oversized) return oversized;
+  if (dryRun) {
+    const trashEvicted = plan.prepared.trashEvicted;
+    return json(request, {
+      preview: {
+        date,
+        revision,
+        ...plan.counts,
+        ...(trashEvicted ? { trashEvicted } : {}),
       },
-      () => lostRace(request, env, backupId, staged, auth.manifest),
-    );
-  } catch {
-    // The manifest write may have been saved before it threw, so what it
-    // points at must stay. Leftovers are unreachable and the next winning
-    // commit cleans them up, as for a delta.
-    return storageUnavailable(request);
+    });
   }
-  return response.ok
-    ? json(request, { manifest: committed, rollback: counts })
-    : response;
+  return stageAndPublishRollback(request, env, backupId, {
+    auth,
+    base,
+    point,
+    plan,
+    revision,
+    lastPushedAt,
+    tag,
+  });
 }

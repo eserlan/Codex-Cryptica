@@ -125,7 +125,10 @@ export class CloudBackupStore {
   /** Restore points, and the owner's rollback to one. */
   rollback = new CloudBackupRollback(
     () => this.deps,
-    () => this.pulls.pullNow(),
+    async (vaultId) => {
+      await this.pulls.pullNow();
+      if (this.trash.loadedVaultId === vaultId) await this.trash.load(vaultId);
+    },
   );
   private changes = new CloudBackupChanges(
     this,

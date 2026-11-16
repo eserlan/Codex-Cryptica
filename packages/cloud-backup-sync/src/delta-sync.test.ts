@@ -160,4 +160,56 @@ describe("delta sync", () => {
     await pushDeltaToCloudBackup(runtime, "v-1", delta, "base");
     expect(JSON.parse(calls[1].init.body)).not.toHaveProperty("editorName");
   });
+
+  it("propagates valid trashEvicted and ignores absent or invalid trashEvicted", async () => {
+    const evicted = { evictedCount: 2, usedBytes: 4000, maxBytes: 5000 };
+    const withEviction = await enabled({
+      ok: true,
+      status: 200,
+      body: {
+        manifest: {
+          schemaVersion: 2,
+          backupId: "backup-1",
+          vaultTitle: "V",
+          sizeBytes: 10,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          lastPushedAt: "2026-01-01T00:01:00.000Z",
+          revision: 2,
+        },
+        trashEvicted: evicted,
+      },
+    });
+    const out1 = await pushDeltaToCloudBackup(
+      withEviction.runtime,
+      "v-1",
+      delta,
+      "base",
+    );
+    expect(out1).toMatchObject({ ok: true, trashEvicted: evicted });
+
+    const withInvalid = await enabled({
+      ok: true,
+      status: 200,
+      body: {
+        manifest: {
+          schemaVersion: 2,
+          backupId: "backup-1",
+          vaultTitle: "V",
+          sizeBytes: 10,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          lastPushedAt: "2026-01-01T00:01:00.000Z",
+          revision: 2,
+        },
+        trashEvicted: { evictedCount: 0 },
+      },
+    });
+    const out2 = await pushDeltaToCloudBackup(
+      withInvalid.runtime,
+      "v-1",
+      delta,
+      "base",
+    );
+    expect(out2.ok).toBe(true);
+    expect("trashEvicted" in out2).toBe(false);
+  });
 });

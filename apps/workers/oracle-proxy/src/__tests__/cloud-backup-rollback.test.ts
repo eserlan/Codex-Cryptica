@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { CLOUD_BACKUP_LIMITS } from "../../../../../packages/schema/src/publishing";
 import { handleCloudBackupRoutes } from "../cloud-backup-routes";
 import {
   absoluteKey,
@@ -444,6 +445,45 @@ describe("owner rollback", () => {
     const bundle = await readCurrent(fx.env, fx.backupId, "bundle");
     expect(bundle.sessionJournals).toEqual([{ id: "j" }]);
     expect(bundle.adventures).toEqual([{ id: "adv" }]);
+  });
+
+  it("reports trashEvicted on dryRun preview and commit when rollback exceeds maxTrashBytes, and omits it otherwise", async () => {
+    const fx = await sharedWithPoint();
+    await dayTwo(fx);
+    const revBefore = await revisionOf(fx);
+
+    const normalPreview = await rollback(fx, { date: DAY1, dryRun: true });
+    expect(normalPreview.status).toBe(200);
+    expect(
+      ((await normalPreview.json()) as any).preview.trashEvicted,
+    ).toBeUndefined();
+
+    const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+    const original = limits.maxTrashBytes;
+    limits.maxTrashBytes = 10;
+    try {
+      const previewRes = await rollback(fx, { date: DAY1, dryRun: true });
+      expect(previewRes.status).toBe(200);
+      const previewJson = (await previewRes.json()) as any;
+      expect(previewJson.preview.trashEvicted).toMatchObject({
+        evictedCount: expect.any(Number),
+        usedBytes: 0,
+        maxBytes: 10,
+      });
+      expect(
+        previewJson.preview.trashEvicted.evictedCount,
+      ).toBeGreaterThanOrEqual(1);
+
+      const commitRes = await rollback(fx, {
+        date: DAY1,
+        baseRevision: revBefore,
+      });
+      expect(commitRes.status).toBe(200);
+      const commitJson = (await commitRes.json()) as any;
+      expect(commitJson.trashEvicted).toEqual(previewJson.preview.trashEvicted);
+    } finally {
+      limits.maxTrashBytes = original;
+    }
   });
 });
 
