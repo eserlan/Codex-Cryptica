@@ -7,7 +7,7 @@ Strict output rules:
 1. Return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON).
 2. Top-level required fields:
    - "formatVersion": "adventure-json/v1"
-   - "id": slug matching /^[a-z0-9_-]{3,64}$/i
+   - "id": slug matching /^[a-zA-Z0-9_-]{3,64}$/
    - "title": 1-200 characters
    - "version": strict SemVer (e.g. "1.0.0")
    - "premise": { "background": string, "hook": string, "theme"?: string[], "tone"?: string }
@@ -46,7 +46,7 @@ export const TOP_LEVEL_RULES: GuideFieldRule[] = [
   },
   {
     field: "id",
-    requirement: "Slug (/^[a-z0-9_-]{3,64}$/i)",
+    requirement: "Slug (/^[a-zA-Z0-9_-]{3,64}$/)",
     notes: "Stable lowercase identifier for the adventure.",
   },
   {

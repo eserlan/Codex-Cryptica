@@ -103,7 +103,7 @@
     >
       <div class="space-y-1.5">
         <div
-          class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-theme-primary"
+          class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-theme-text"
         >
           <span class="icon-[lucide--sparkles] w-3.5 h-3.5" aria-hidden="true"
           ></span>
@@ -112,7 +112,7 @@
         <h2 class="font-header text-xl font-bold text-theme-text">
           Adventure JSON Conversion Guide
         </h2>
-        <p class="text-sm md:text-base text-theme-muted max-w-2xl">
+        <p class="text-sm md:text-base text-theme-text/80 max-w-2xl">
           Have a PDF or text adventure you legally own? Use our public canonical
           prompt and static JSON Schema with ChatGPT, Claude, Gemini, or a local
           model to convert it into Adventure JSON v1.
@@ -120,7 +120,7 @@
       </div>
       <a
         href="{cleanBase}/adventure-import"
-        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-theme-primary text-theme-bg font-semibold text-sm hover:opacity-90 transition-opacity shrink-0"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-theme-primary text-theme-on-primary font-semibold text-sm hover:opacity-90 transition-opacity shrink-0"
       >
         Open Conversion Guide
         <span class="icon-[lucide--arrow-right] w-4 h-4" aria-hidden="true"

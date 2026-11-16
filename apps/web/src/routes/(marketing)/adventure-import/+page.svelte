@@ -77,14 +77,14 @@
     <!-- Hero -->
     <section class="text-center space-y-5">
       <div
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-text"
       >
         <span class="icon-[lucide--file-json] w-3.5 h-3.5" aria-hidden="true"
         ></span>
         Adventure JSON v1
       </div>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-text"
       >
         Adventure JSON Conversion Guide
       </h1>
@@ -94,17 +94,17 @@
         Give your AI assistant this page and the adventure you legally have
         access to.
       </p>
-      <p class="text-base text-theme-muted leading-relaxed max-w-2xl mx-auto">
+      <p class="text-base text-theme-text/80 leading-relaxed max-w-2xl mx-auto">
         Use ChatGPT, Claude, Gemini, or a local model to turn a PDF, Markdown
         file, or module notes into a clean, validated
-        <code class="font-mono text-theme-primary">adventure-json/v1</code>
+        <code class="font-mono text-theme-text">adventure-json/v1</code>
         file that Codex Cryptica processes strictly on your device.
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
         <a
           href="{cleanBase}/schemas/adventure-json/v1.json"
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-theme-primary/40 bg-theme-primary/10 text-theme-primary text-sm font-semibold hover:bg-theme-primary/20 transition-colors"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-theme-primary/40 bg-theme-primary/10 text-theme-text text-sm font-semibold hover:bg-theme-primary/20 transition-colors"
         >
           <span class="icon-[lucide--braces] w-4 h-4" aria-hidden="true"></span>
           JSON Schema (v1.json)
@@ -133,7 +133,7 @@
       aria-labelledby="privacy-notice-heading"
       class="rounded-2xl border border-theme-primary/30 bg-theme-surface/45 p-6 space-y-2"
     >
-      <div class="flex items-center gap-2 text-theme-primary">
+      <div class="flex items-center gap-2 text-theme-text">
         <span class="icon-[lucide--shield-check] w-5 h-5" aria-hidden="true"
         ></span>
         <h2 id="privacy-notice-heading" class="font-header font-bold text-lg">
@@ -165,7 +165,7 @@
           >
             Canonical Conversion Prompt
           </h2>
-          <p class="text-sm text-theme-muted mt-1">
+          <p class="text-sm text-theme-text/80 mt-1">
             Paste this prompt into ChatGPT, Claude, Gemini, or your local model
             alongside the adventure text or PDF you want to convert.
           </p>
@@ -173,7 +173,7 @@
         <button
           type="button"
           onclick={handleCopyPrompt}
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-primary text-theme-bg font-semibold text-sm hover:opacity-90 transition-opacity cursor-pointer"
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-primary text-theme-on-primary font-semibold text-sm hover:opacity-90 transition-opacity cursor-pointer"
         >
           <span
             class="{copyState === 'copied'
@@ -195,7 +195,7 @@
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CANONICAL_CONVERSION_PROMPT}</pre>
 
       <div
-        class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-theme-muted"
+        class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-theme-text/80"
       >
         <div
           class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
@@ -241,13 +241,13 @@
       <div
         class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
       >
-        <h3 class="font-header font-bold text-lg text-theme-primary">
+        <h3 class="font-header font-bold text-lg text-theme-text">
           Top-Level Contract
         </h3>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-sm border-collapse">
             <thead>
-              <tr class="border-b border-theme-border/60 text-theme-muted">
+              <tr class="border-b border-theme-border/60 text-theme-text/80">
                 <th class="py-2 pr-4 font-mono">Field</th>
                 <th class="py-2 pr-4">Requirement</th>
                 <th class="py-2">Notes</th>
@@ -257,11 +257,11 @@
               {#each TOP_LEVEL_RULES as row (row.field)}
                 <tr>
                   <td
-                    class="py-2.5 pr-4 font-mono text-theme-primary whitespace-nowrap"
+                    class="py-2.5 pr-4 font-mono text-theme-text whitespace-nowrap"
                     >{row.field}</td
                   >
                   <td class="py-2.5 pr-4 text-theme-text">{row.requirement}</td>
-                  <td class="py-2.5 text-theme-muted">{row.notes}</td>
+                  <td class="py-2.5 text-theme-text/80">{row.notes}</td>
                 </tr>
               {/each}
             </tbody>
@@ -272,10 +272,10 @@
       <div
         class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
       >
-        <h3 class="font-header font-bold text-lg text-theme-primary">
+        <h3 class="font-header font-bold text-lg text-theme-text">
           Required Collections (11 Arrays)
         </h3>
-        <p class="text-sm text-theme-muted">
+        <p class="text-sm text-theme-text/80">
           Every Adventure JSON v1 file must include all 11 collection arrays;
           use
           <code class="font-mono text-theme-text">[]</code> when a collection has
@@ -286,10 +286,10 @@
             <div
               class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3.5"
             >
-              <dt class="font-mono text-sm font-semibold text-theme-primary">
+              <dt class="font-mono text-sm font-semibold text-theme-text">
                 {item.name}
               </dt>
-              <dd class="text-sm text-theme-muted mt-1">{item.purpose}</dd>
+              <dd class="text-sm text-theme-text/80 mt-1">{item.purpose}</dd>
             </div>
           {/each}
         </dl>
@@ -309,13 +309,13 @@
         <div
           class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
         >
-          <h3 class="font-header font-bold text-lg text-theme-primary">
+          <h3 class="font-header font-bold text-lg text-theme-text">
             Epistemic Status
           </h3>
           <p class="text-sm text-theme-text font-semibold">
             Do not invent missing facts merely to fill fields.
           </p>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-text/80 leading-relaxed">
             If the source text is silent, omit the optional field. If the source
             text is contradictory or unclear, record an item in
             <code class="font-mono">unresolved</code> instead of guessing.
@@ -323,10 +323,10 @@
           <ul class="space-y-2 pt-1 text-sm">
             {#each EPISTEMIC_STATUSES as entry (entry.status)}
               <li class="flex gap-2">
-                <code class="font-mono text-theme-primary shrink-0"
+                <code class="font-mono text-theme-text shrink-0"
                   >{entry.status}</code
                 >
-                <span class="text-theme-muted">— {entry.meaning}</span>
+                <span class="text-theme-text/80">— {entry.meaning}</span>
               </li>
             {/each}
           </ul>
@@ -335,10 +335,10 @@
         <div
           class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
         >
-          <h3 class="font-header font-bold text-lg text-theme-primary">
+          <h3 class="font-header font-bold text-lg text-theme-text">
             Visibility &amp; GM Secrets
           </h3>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-text/80 leading-relaxed">
             Entities carry <code class="font-mono">visibility</code> set to
             either <code class="font-mono">"player-visible"</code> or
             <code class="font-mono">"gm-only"</code>.
@@ -347,7 +347,7 @@
             Every entry in <code>secrets</code> must set
             <code>visibility: "gm-only"</code>.
           </p>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-text/80 leading-relaxed">
             Authored facts are canonical, whereas NPC testimony, rumours, and
             in-world handouts must not be promoted to objective truth unless
             confirmed by the authored text.
@@ -357,10 +357,10 @@
         <div
           class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
         >
-          <h3 class="font-header font-bold text-lg text-theme-primary">
+          <h3 class="font-header font-bold text-lg text-theme-text">
             Structural Integrity &amp; Provenance
           </h3>
-          <ul class="list-disc pl-5 space-y-1.5 text-sm text-theme-muted">
+          <ul class="list-disc pl-5 space-y-1.5 text-sm text-theme-text/80">
             <li>Every entity ID must be unique across all collections.</li>
             <li>
               Cross-references (<code class="font-mono">parentLocationId</code>,
@@ -390,16 +390,16 @@
         <div
           class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
         >
-          <h3 class="font-header font-bold text-lg text-theme-primary">
+          <h3 class="font-header font-bold text-lg text-theme-text">
             Separation of Concerns &amp; Copyright
           </h3>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-text/80 leading-relaxed">
             Adventure JSON represents <strong
               >authored adventure structure</strong
             >
             only — never include playthrough state, session logs, or player decisions.
           </p>
-          <p class="text-sm text-theme-muted leading-relaxed">
+          <p class="text-sm text-theme-text/80 leading-relaxed">
             Prefer concise structured summaries, key dialogue cues, and room
             briefs rather than verbatim copying of large blocks of protected
             source prose.
@@ -421,14 +421,14 @@
           <div
             class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-5 space-y-1.5"
           >
-            <h3 class="font-mono text-sm font-bold text-theme-primary">
+            <h3 class="font-mono text-sm font-bold text-theme-text">
               {err.code}
             </h3>
             <p class="text-sm text-theme-text/90">
               <strong>Cause:</strong>
               {err.cause}
             </p>
-            <p class="text-sm text-theme-muted">
+            <p class="text-sm text-theme-text/80">
               <strong>Fix:</strong>
               {err.fix}
             </p>
