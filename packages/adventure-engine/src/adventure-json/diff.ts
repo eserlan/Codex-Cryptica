@@ -106,7 +106,7 @@ function changedTopLevelFields(
 }
 
 interface ParsedVersion {
-  core: [number, number, number];
+  core: [string, string, string];
   prerelease: string[];
 }
 
@@ -117,32 +117,29 @@ function parseSemVer(version: string): ParsedVersion | null {
     );
   if (!match) return null;
   return {
-    core: [Number(match[1]), Number(match[2]), Number(match[3])],
+    core: [match[1]!, match[2]!, match[3]!],
     prerelease: match[4] ? match[4].split(".") : [],
   };
-}
-
-type PrereleaseKey = [number, number, string];
-
-function prereleaseKey(identifier: string): PrereleaseKey {
-  return /^\d+$/.test(identifier)
-    ? [0, Number(identifier), ""]
-    : [1, 0, identifier];
 }
 
 function compareNumbers(a: number, b: number): number {
   return a === b ? 0 : a < b ? -1 : 1;
 }
 
+function compareNumericStrings(a: string, b: string): number {
+  const na = a.replace(/^0+(?=\d)/, "");
+  const nb = b.replace(/^0+(?=\d)/, "");
+  if (na.length !== nb.length) return na.length < nb.length ? -1 : 1;
+  return na < nb ? -1 : na > nb ? 1 : 0;
+}
+
 function comparePrereleaseIdentifier(a: string, b: string): number {
   if (a === b) return 0;
-  const ka = prereleaseKey(a);
-  const kb = prereleaseKey(b);
-  const byKind = compareNumbers(ka[0], kb[0]);
-  if (byKind !== 0) return byKind;
-  const byNumber = compareNumbers(ka[1], kb[1]);
-  if (byNumber !== 0) return byNumber;
-  return ka[2] < kb[2] ? -1 : 1;
+  const isNumA = /^\d+$/.test(a);
+  const isNumB = /^\d+$/.test(b);
+  if (isNumA && isNumB) return compareNumericStrings(a, b);
+  if (isNumA !== isNumB) return isNumA ? -1 : 1;
+  return a < b ? -1 : 1;
 }
 
 /** SemVer precedence of prerelease identifier lists; no prerelease outranks. */
@@ -169,7 +166,7 @@ export function compareAdventureJsonVersion(a: string, b: string): number {
   const pb = parseSemVer(b);
   if (!pa || !pb) return a < b ? -1 : a > b ? 1 : 0;
   for (let i = 0; i < 3; i += 1) {
-    const byCore = compareNumbers(pa.core[i], pb.core[i]);
+    const byCore = compareNumericStrings(pa.core[i]!, pb.core[i]!);
     if (byCore !== 0) return byCore;
   }
   return comparePrerelease(pa.prerelease, pb.prerelease);

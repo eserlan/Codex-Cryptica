@@ -136,6 +136,7 @@
   let resumingPinnedId = $state<string | null>(null);
   let pinnedResumeError = $state<string | null>(null);
   let packagesLoadToken = 0;
+  let packageRemovalToken = 0;
   let previousVaultId: string | null = null;
   let importRequestToken = 0;
   let importAbortController: AbortController | null = null;
@@ -194,6 +195,7 @@
       importDuplicateNotice = null;
       packageRemovalMessage = null;
       packageRemovalError = null;
+      removingPackageHash = null;
       importError = null;
       importValidationErrors = [];
       importInFlight = false;
@@ -202,6 +204,7 @@
       approvedPackages = [];
       pinnedSessionsByHash = new Map();
       packagesLoadToken += 1;
+      packageRemovalToken += 1;
       importRequestToken += 1;
       abortActiveImport();
       worldLaunchToken += 1;
@@ -390,15 +393,20 @@
     item: StoredAdventurePackage,
   ): Promise<void> {
     if (removingPackageHash) return;
+    const initiatingVaultId = vaultId;
+    const requestToken = ++packageRemovalToken;
+    const isCurrentRequest = () =>
+      requestToken === packageRemovalToken && vaultId === initiatingVaultId;
     removingPackageHash = item.hash;
     packageRemovalMessage = null;
     packageRemovalError = null;
     try {
       const result = await adventurePackageRepository.removeApproved?.(
-        vaultId,
+        initiatingVaultId,
         item.hash,
         new Set(pinnedSessionsByHash.keys()),
       );
+      if (!isCurrentRequest()) return;
       if (!result) {
         packageRemovalError =
           "Removing approved packages is not available here.";
@@ -409,14 +417,17 @@
         return;
       }
       packageRemovalMessage = `Removed "${item.package.title}" v${item.package.version}.`;
-      void refreshApprovedPackages(vaultId);
+      void refreshApprovedPackages(initiatingVaultId);
     } catch (error) {
+      if (!isCurrentRequest()) return;
       packageRemovalError =
         error instanceof Error
           ? error.message
           : "Unable to remove this approved package version.";
     } finally {
-      removingPackageHash = null;
+      if (isCurrentRequest()) {
+        removingPackageHash = null;
+      }
     }
   }
 
@@ -1191,7 +1202,7 @@
                           .id}-{item.hash.slice(0, 8)}"
                         disabled={removingPackageHash !== null}
                         onclick={() => void handleRemoveApprovedPackage(item)}
-                        class="min-h-10 rounded-lg border border-theme-danger/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        class="min-h-10 rounded-lg border border-theme-text bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {removingPackageHash === item.hash
                           ? "Removing…"

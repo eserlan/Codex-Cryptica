@@ -484,7 +484,7 @@ export class AdventureSessionRepository {
       updatedAt: now,
       revision: 0,
     };
-    const result = await this.save(null, duplicated);
+    const result = await this.savePinned(duplicated);
     if (!result.ok) {
       return { condition: "unreadable", error: result.error };
     }

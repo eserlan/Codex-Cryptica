@@ -19,7 +19,7 @@
     {#each entry.removed as item (item.id)}
       <li>
         <span
-          class="icon-[lucide--minus] mr-1 inline h-3.5 w-3.5 align-text-bottom text-theme-danger"
+          class="icon-[lucide--minus] mr-1 inline h-3.5 w-3.5 align-text-bottom text-theme-text"
           aria-hidden="true"
         ></span>
         Removed: {item.title} <span class="font-mono text-xs">({item.id})</span>

@@ -346,12 +346,149 @@ describe("AdventureSessionRepository.duplicate", () => {
       error: expect.objectContaining({ message: "invalid-json" }),
     });
   });
+
+  it("refuses to write a pinned duplicate if the package is removed while duplicating", async () => {
+    const hash = "d".repeat(64);
+    const files = new Map<string, string>();
+    const directory = {
+      async getDirectoryHandle(name: string) {
+        if (name === ".codex" || name === "adventures") return directory;
+        throw new DOMException("NotFound", "NotFoundError");
+      },
+      async getFileHandle(name: string, options?: { create?: boolean }) {
+        if (!files.has(name) && !options?.create) {
+          throw new DOMException("NotFound", "NotFoundError");
+        }
+        return {
+          async getFile() {
+            const text = files.get(name);
+            if (text === undefined) {
+              throw new DOMException("NotFound", "NotFoundError");
+            }
+            return {
+              async text() {
+                return text;
+              },
+            };
+          },
+          async createWritable() {
+            let next = "";
+            return {
+              async write(chunk: string) {
+                next = chunk;
+              },
+              async close() {
+                files.set(name, next);
+              },
+              async abort() {},
+            };
+          },
+        };
+      },
+      async removeEntry(name: string) {
+        files.delete(name);
+      },
+      async *entries() {
+        for (const name of files.keys()) yield [name, { kind: "file" }];
+      },
+    };
+    let tail = Promise.resolve();
+    const packageLock: AdventurePackagePinLock = async (
+      _vaultId,
+      _hash,
+      operation,
+    ) => {
+      const prev = tail;
+      let release!: () => void;
+      tail = new Promise<void>((resolve) => {
+        release = resolve;
+      });
+      await prev;
+      try {
+        return await operation();
+      } finally {
+        release();
+      }
+    };
+    let packageAvailable = true;
+    const repository = new AdventureSessionRepository(
+      async () => directory as never,
+      {
+        idGenerator: { uuid: () => "session-copy" } as any,
+        withPackagePinLock: packageLock,
+        hasApprovedPackage: async () => packageAvailable,
+      },
+    );
+    const pinnedOriginal = {
+      ...initialSession({
+        vaultId: "vault-1",
+        title: "Pinned Journey",
+        premise: "Explore",
+        playerCharacter: {
+          kind: "provisional",
+          name: "Mara",
+          description: "Guide",
+        },
+        now: "2026-01-01T00:00:00.000Z",
+        idGenerator: () => "session-1",
+      }),
+      status: "archived" as const,
+      sourcePackage: {
+        packageId: "source-module",
+        version: "1.0.0",
+        formatVersion: "adventure-json/v1" as const,
+        hash,
+      },
+    };
+    files.set("session-1.json", JSON.stringify(pinnedOriginal));
+
+    const originalLoad = repository.load.bind(repository);
+    let releaseDuplicateBeforeSave!: () => void;
+    let signalDuplicateLoaded!: () => void;
+    const duplicateLoaded = new Promise<void>((resolve) => {
+      signalDuplicateLoaded = resolve;
+    });
+    const gateDuplicateBeforeSave = new Promise<void>((resolve) => {
+      releaseDuplicateBeforeSave = resolve;
+    });
+    vi.spyOn(repository, "load").mockImplementationOnce(async (vaultId, id) => {
+      const loaded = await originalLoad(vaultId, id);
+      signalDuplicateLoaded();
+      await gateDuplicateBeforeSave;
+      return loaded;
+    });
+
+    const duplicatePromise = repository.duplicate("vault-1", "session-1");
+    await duplicateLoaded;
+
+    // Delete original session and remove the now-unpinned package under the lock.
+    await repository.deleteArchived("vault-1", "session-1", 0);
+    await packageLock("vault-1", hash, async () => {
+      const pinned = await repository.listPinnedPackageHashes("vault-1");
+      expect(pinned.has(hash)).toBe(false);
+      packageAvailable = false;
+    });
+
+    releaseDuplicateBeforeSave();
+    const result = await duplicatePromise;
+    expect(result).toEqual({
+      condition: "unreadable",
+      error: expect.objectContaining({
+        message: "adventure-source-package-not-found",
+      }),
+    });
+    expect(files.has("session-copy.json")).toBe(false);
+  });
 });
 
 describe("AdventureSessionRepository v3 persistence", () => {
   it("round-trips the scenario collection through the stored session document", async () => {
     const files = new Map<string, string>();
     const directory = {
+      async getDirectoryHandle(name: string) {
+        if (name === ".codex" || name === "adventures") return directory;
+        throw new DOMException("NotFound", "NotFoundError");
+      },
       async getFileHandle(name: string, options?: { create?: boolean }) {
         if (!options?.create && !files.has(name))
           throw new Error("NotFoundError");

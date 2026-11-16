@@ -658,4 +658,32 @@ describe("selectAdventureJsonPredecessor and version comparison", () => {
       ),
     ).toBeNull();
   });
+
+  it("compares SemVer numeric identifiers above Number.MAX_SAFE_INTEGER without precision loss", () => {
+    expect(
+      compareAdventureJsonVersion(
+        "9007199254740992.0.0",
+        "9007199254740993.0.0",
+      ),
+    ).toBeLessThan(0);
+    expect(
+      compareAdventureJsonVersion(
+        "1.0.0-9007199254740993",
+        "1.0.0-9007199254740992",
+      ),
+    ).toBeGreaterThan(0);
+
+    const older = makePackage({ version: "9007199254740992.0.0" });
+    const newer = makePackage({ version: "9007199254740993.0.0" });
+    const incoming = makePackage({ version: "9007199254740994.0.0" });
+    const selected = selectAdventureJsonPredecessor(
+      [
+        { package: older, hash: "a".repeat(64) },
+        { package: newer, hash: "f".repeat(64) },
+      ],
+      incoming,
+      "b".repeat(64),
+    );
+    expect(selected?.package.version).toBe("9007199254740993.0.0");
+  });
 });
