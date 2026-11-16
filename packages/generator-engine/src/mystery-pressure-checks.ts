@@ -81,6 +81,11 @@ function checkResponses(data: Obj, cast: Obj, complexity?: string): string[] {
       hard.push(`NPC response ${index + 1} needs a trigger and response`);
     if (!hasText(response.observableEffect))
       hard.push(`NPC response ${index + 1} needs an observableEffect`);
+    if (
+      !hasText(response.testableLead) &&
+      text(response.testableLead).toLowerCase() !== "none"
+    )
+      hard.push(`NPC response ${index + 1} needs a testableLead or "None"`);
   });
   return hard;
 }

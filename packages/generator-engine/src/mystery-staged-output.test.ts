@@ -93,4 +93,18 @@ describe("staged mystery output", () => {
     expect(output.lore).not.toContain("Captive or victim");
     expect(output.lore).not.toContain("When play starts");
   });
+  it("escapes model-provided remote media in NPC table cells", () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    pressure.npcResponses[0].observableEffect =
+      '<video src="https://tracker.example/pixel.mp4" autoplay muted></video>';
+    pressure.npcResponses[1].testableLead =
+      '<audio src="https://tracker.example/pixel.mp3"></audio>';
+
+    const output = assembleOutput(foundation, cast, clues, pressure);
+
+    expect(output.lore).not.toMatch(/<(?:video|audio)\b/i);
+    expect(output.lore).toContain("&lt;video");
+    expect(output.lore).toContain("&lt;audio");
+    expect(output.lore).toContain("tracker.example");
+  });
 });

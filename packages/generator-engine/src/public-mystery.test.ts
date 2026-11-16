@@ -110,16 +110,26 @@ describe("Mystery & Investigation generator", () => {
           title: "Complete",
           summary: "Summary",
           content: "Player case",
-          lore: "GM truth",
+          lore: `GM truth\n\n## If the Investigation Stalls: Next NPC Moves\n| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |\n|---|---|---|---|---|\n| A suspect | The party waits | Keeps to routine | The routine continues | None |`,
         }),
       ),
     ).toMatchObject({
       type: "note",
       title: "Complete",
       content: "Player case",
-      lore: "GM truth",
+      lore: expect.stringContaining("GM truth"),
       status: "draft",
     });
+    expect(
+      parseMysteryResponse(
+        JSON.stringify({
+          title: "No Table",
+          summary: "Summary",
+          content: "Player case",
+          lore: "GM truth without the required table",
+        }),
+      ),
+    ).toBeNull();
   });
 
   it("strips remote Markdown and HTML images from one-pass model output", () => {
@@ -128,11 +138,15 @@ describe("Mystery & Investigation generator", () => {
         title: "Complete",
         summary: "Summary",
         playerContent: "Clue ![x](https://tracker.example/pixel)",
-        gmTruth: 'Truth <img src="https://tracker.example/pixel">',
+        gmTruth: `Truth <img src="https://tracker.example/pixel">\n\n## If the Investigation Stalls: Next NPC Moves\n| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |\n|---|---|---|---|---|\n| A suspect | The party waits | <video src="https://tracker.example/pixel.mp4" autoplay muted></video> | The routine continues | None |`,
       }),
     );
     expect(result?.content).toBe("Clue x");
-    expect(result?.lore).toBe("Truth ");
+    expect(result?.lore).toContain("Truth ");
+    expect(result?.lore).toContain("If the Investigation Stalls");
+    expect(result?.lore).not.toContain("<img");
+    expect(result?.lore).not.toContain("<video");
+    expect(result?.lore).toContain("&lt;video");
   });
 });
 

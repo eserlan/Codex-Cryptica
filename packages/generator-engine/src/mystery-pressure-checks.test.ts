@@ -131,6 +131,23 @@ describe("pressure checks", () => {
     expect(hard).toContain("NPC response 1 needs an observableEffect");
     expect(hard.some((issue) => issue.includes("clue-99"))).toBe(true);
   });
+  it.each(["", "   "])(
+    "rejects a missing or blank testableLead (%j)",
+    (lead) => {
+      const [foundation, cast, clues, pressure] = validStages();
+      pressure.npcResponses[0].testableLead = lead;
+      expect(checkPressure(pressure, cast, foundation, clues).hard).toContain(
+        'NPC response 1 needs a testableLead or "None"',
+      );
+    },
+  );
+  it('allows the explicit "None" testableLead value', () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    pressure.npcResponses[0].testableLead = "None";
+    expect(checkPressure(pressure, cast, foundation, clues).hard).not.toContain(
+      'NPC response 1 needs a testableLead or "None"',
+    );
+  });
 });
 
 describe("audit checks", () => {
