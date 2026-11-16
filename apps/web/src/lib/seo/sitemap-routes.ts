@@ -23,6 +23,7 @@ export const STATIC_SITEMAP_ROUTES: SitemapRoute[] = [
   { path: "/features", changefreq: "monthly", priority: "0.8" },
   { path: "/tools", changefreq: "weekly", priority: "0.9" },
   { path: "/migrations", changefreq: "weekly", priority: "0.9" },
+  { path: "/adventure-import", changefreq: "monthly", priority: "0.8" },
   { path: "/generators", changefreq: "weekly", priority: "0.9" },
   {
     path: "/free-rpg-campaign-manager",

@@ -50,6 +50,7 @@ const STANDALONE_PATHS = [
   "/generators",
   "/blog",
   "/migrations",
+  "/adventure-import",
   "/alternatives",
   "/free-rpg-campaign-manager",
   "/worldbuilding-tool",

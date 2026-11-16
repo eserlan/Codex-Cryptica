@@ -1,0 +1,136 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "glass-observatory-gpt",
+  "title": "The Glass Observatory",
+  "version": "1.0.0",
+  "premise": {
+    "background": "An abandoned hilltop observatory has begun projecting coloured beams onto the town square at midnight.",
+    "hook": "Watch Captain Haldor asks the party to investigate the dome before panic spreads.",
+    "theme": ["investigation", "arcane-clockwork"],
+    "tone": "curious, brisk"
+  },
+  "source": {
+    "title": "The Glass Observatory",
+    "authors": ["GPT Conversion Fixture"],
+    "license": "CC0-1.0"
+  },
+  "locations": [
+    {
+      "id": "loc-observatory-hill",
+      "name": "Observatory Hill",
+      "summary": "A windswept knoll topped by a brass-framed glass dome.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    },
+    {
+      "id": "loc-lens-gallery",
+      "name": "The Lens Gallery",
+      "summary": "Circular walkway lined with cracked prisms and a central brass orrery.",
+      "parentLocationId": "loc-observatory-hill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor-captain-haldor",
+      "name": "Captain Haldor",
+      "summary": "Pragmatic town watch captain who wants the light stopped without burning the dome.",
+      "role": "Quest giver",
+      "locationId": "loc-observatory-hill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    },
+    {
+      "id": "actor-apprentice-lin",
+      "name": "Lin",
+      "summary": "A runaway clockmaker's apprentice hiding beneath the orrery.",
+      "disposition": "nervous",
+      "locationId": "loc-lens-gallery",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "factions": [
+    {
+      "id": "faction-town-watch",
+      "name": "Hillside Watch",
+      "summary": "Local constabulary keeping curious townsfolk off the hill.",
+      "visibility": "player-visible",
+      "epistemicStatus": "inferred"
+    }
+  ],
+  "scenes": [
+    {
+      "id": "scene-hill-gate",
+      "title": "The Locked Gate",
+      "summary": "Captain Haldor hands over a spare key and warns of strange chimes from the dome.",
+      "locationId": "loc-observatory-hill",
+      "branches": [
+        {
+          "targetSceneId": "scene-orrery-chamber",
+          "description": "Enter the glass dome and climb to the lens gallery."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    },
+    {
+      "id": "scene-orrery-chamber",
+      "title": "Beneath the Spinning Lenses",
+      "summary": "The orrery turns on its own, casting amber light through a misaligned prism.",
+      "locationId": "loc-lens-gallery",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "encounters": [],
+  "clues": [
+    {
+      "id": "clue-prism-note",
+      "text": "Chalk marks on the brass rim show someone recently rotated the third prism.",
+      "leadTargetId": "actor-apprentice-lin",
+      "placedLocationId": "loc-lens-gallery",
+      "placedSceneId": "scene-orrery-chamber",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "rumours": [
+    {
+      "id": "rumour-comet-omen",
+      "text": "Bakers in the square claim the beam is a comet omen.",
+      "truth": "false",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "items": [
+    {
+      "id": "item-tuning-key",
+      "name": "Brass Tuning Key",
+      "summary": "A slotted key that disengages the orrery mainspring.",
+      "actorId": "actor-apprentice-lin",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret-lin-accident",
+      "text": "Lin wound the mainspring while searching for a lost pocket watch and could not stop it.",
+      "relatedEntityIds": ["actor-apprentice-lin", "item-tuning-key"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending-orrery-halted",
+      "title": "Mainspring Disengaged",
+      "description": "The beam fades, the dome goes quiet, and Haldor rewards the party.",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "unresolved": []
+}
