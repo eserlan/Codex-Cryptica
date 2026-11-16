@@ -317,7 +317,12 @@ export class AdventureEvaluationRunner {
 function evaluationSteps(
   testCase: AdventureEvaluationCase,
 ): AdventureEvaluationStep[] {
-  if (testCase.turns?.length) return testCase.turns;
+  if (testCase.turns?.length) {
+    return testCase.turns.map((step) => ({
+      ...step,
+      phase: step.phase ?? testCase.phase,
+    }));
+  }
   return [
     {
       playerAction: testCase.playerAction,

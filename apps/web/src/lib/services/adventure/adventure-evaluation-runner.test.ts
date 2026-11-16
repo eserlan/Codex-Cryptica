@@ -270,6 +270,68 @@ describe("AdventureEvaluationRunner", () => {
     expect(result?.passed).toBe(true);
   });
 
+  it("applies a case-level roll-resolution phase to multi-turn steps", async () => {
+    const suppliedOutcome = {
+      kind: "numeric" as const,
+      value: 17,
+      label: "success",
+    };
+    const session = parseAdventureSession({
+      ...makeSession(),
+      pendingRoll: {
+        id: "roll-1",
+        inputId: "roll-input-1",
+        playerAction: "Leap across the gap.",
+        uncertainty: "Whether Kestrel can reach the ledge.",
+        stakes: "A fall would cause injury.",
+        resolutionStatus: "ready-to-resolve",
+        suppliedOutcome,
+        createdAt: now,
+        outcomeRecordedAt: now,
+      },
+    });
+    const seenPhases: string[] = [];
+    const seenSessions: AdventureSession[] = [];
+    const runner = new AdventureEvaluationRunner(
+      {
+        generate: vi.fn(async (request) => {
+          seenPhases.push(request.phase);
+          seenSessions.push(request.session);
+          return completeProposal();
+        }),
+      },
+      ["stub-provider"],
+      { commitNow: () => now },
+    );
+
+    const [result] = await runner.run([
+      {
+        id: "multi-turn-roll-resolution-case",
+        session,
+        playerAction: "The result is 17.",
+        playerCharacterName: "Kestrel",
+        canaries: [],
+        phase: "roll-resolution",
+        turns: [
+          { playerAction: "The result is 17." },
+          { playerAction: "Cross to the ledge.", phase: "action" },
+        ],
+      },
+    ]);
+
+    expect(seenPhases).toEqual(["roll-resolution", "action"]);
+    // The recorded outcome is committed exactly once: by the second turn the
+    // pending roll is resolved and only one resolved turn exists.
+    const secondTurnSession = seenSessions[1]!;
+    expect(secondTurnSession.pendingRoll).toBeNull();
+    expect(secondTurnSession.turns).toHaveLength(1);
+    expect(secondTurnSession.turns[0]?.resolvedRoll?.outcome).toEqual(
+      suppliedOutcome,
+    );
+    expect(result?.continuity).toBe(1);
+    expect(result?.passed).toBe(true);
+  });
+
   it("fails continuity when a roll-resolution proposal cannot be committed", async () => {
     const session = parseAdventureSession({
       ...makeSession(),
