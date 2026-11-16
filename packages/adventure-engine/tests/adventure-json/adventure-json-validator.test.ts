@@ -41,9 +41,40 @@ describe("Adventure JSON v1 semantic validator", () => {
       relatedEntityId: "loc-greywater-bend",
       epistemicStatus: "unresolved",
     });
+    fixture.unresolved.push({
+      id: "unresolved-well-owner",
+      code: "CONFLICTING_ACCOUNT",
+      message: "The source gives conflicting accounts of who owns the well.",
+      epistemicStatus: "ambiguous",
+    });
 
     const result = validateAdventureJson(fixture);
     expect(result.ok).toBe(true);
+  });
+
+  it("explains the allowed source certainty for unresolved entries", () => {
+    const fixture = loadReferenceFixture();
+    const result = validateAdventureJson({
+      ...fixture,
+      unresolved: [
+        {
+          id: "unresolved-invalid-status",
+          code: "UNKNOWN_DATE",
+          message: "The source does not state the date.",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toContainEqual({
+        code: "SCHEMA_VALIDATION_ERROR",
+        message:
+          'For an unresolved item, choose "ambiguous" when the source is unclear or contradictory, or "unresolved" when the source does not answer it.',
+        path: "unresolved[0].epistemicStatus",
+      });
+    }
   });
 
   it("detects INVALID_FORMAT_VERSION when formatVersion is missing or unsupported", () => {

@@ -106,6 +106,20 @@ function mapZodIssue(
     };
   }
 
+  if (
+    issue.path.length === 3 &&
+    issue.path[0] === "unresolved" &&
+    typeof issue.path[1] === "number" &&
+    issue.path[2] === "epistemicStatus"
+  ) {
+    return {
+      code: "SCHEMA_VALIDATION_ERROR",
+      message:
+        'For an unresolved item, choose "ambiguous" when the source is unclear or contradictory, or "unresolved" when the source does not answer it.',
+      path: pathStr,
+    };
+  }
+
   return {
     code: "SCHEMA_VALIDATION_ERROR",
     message: issue.message,

@@ -28,7 +28,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     copyMock.mockReset();
   });
 
-  it("renders H1, canonical prompt, epistemic rules, privacy notice, and schema links", () => {
+  it("renders H1, canonical prompt, source certainty rules, privacy notice, and schema links", () => {
     render(Page);
 
     expect(
@@ -75,6 +75,29 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
     expect(referenceLink.getAttribute("href")).toBe(
       "/schemas/adventure-json/examples/reference-one-shot.v1.json",
+    );
+  });
+
+  it("explains the post-conversion upload and links directly to its import area", () => {
+    render(Page);
+
+    expect(
+      screen.getByText(/There is no paste box on this guide/),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("heading", {
+        name: "Next: upload your Adventure JSON",
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/For an unresolved item, use "ambiguous"/),
+    ).toBeTruthy();
+
+    const importLink = screen.getByRole("link", {
+      name: /Go to Adventure JSON import/i,
+    });
+    expect(importLink.getAttribute("href")).toBe(
+      "/adventure#import-adventure-json",
     );
   });
 
