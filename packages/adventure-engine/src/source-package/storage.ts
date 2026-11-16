@@ -67,6 +67,16 @@ export async function listAdventurePackageHashes(
     .map((name) => name.slice(0, -5));
 }
 
+export function approveAdventurePackage(
+  pkg: AdventureSourcePackage,
+): AdventureSourcePackage {
+  const validated = AdventureSourcePackageSchema.parse(pkg);
+  return AdventureSourcePackageSchema.parse({
+    ...validated,
+    status: "approved",
+  });
+}
+
 export async function saveAdventurePackage(
   io: AdventurePackageFileIO,
   pkg: AdventureSourcePackage,
@@ -74,17 +84,25 @@ export async function saveAdventurePackage(
   const validated = AdventureSourcePackageSchema.parse(pkg);
   const path = getAdventurePackagePath(validated.documentHash);
 
+  let existingRaw: string | null = null;
   if (await io.exists(path)) {
-    const existingRaw = await io.read(path);
+    existingRaw = await io.read(path);
     const existing = parseStoredPackage(existingRaw, validated.documentHash);
-    return {
-      status: "deduplicated",
-      path,
-      package: existing,
-    };
+    if (existing.status === "approved") {
+      throw new Error(
+        `Adventure package "${validated.documentHash}" is already approved and cannot be modified.`,
+      );
+    }
+    if (validated.status === "draft") {
+      return {
+        status: "deduplicated",
+        path,
+        package: existing,
+      };
+    }
   }
 
-  if (!io.remove) {
+  if (existingRaw === null && !io.remove) {
     throw new Error(
       "Adventure package storage must support removal before a package can be written safely.",
     );
@@ -102,7 +120,11 @@ export async function saveAdventurePackage(
     };
   } catch (error) {
     try {
-      await io.remove(path);
+      if (existingRaw !== null) {
+        await io.write(path, existingRaw);
+      } else if (io.remove) {
+        await io.remove(path);
+      }
     } catch (cleanupError) {
       throw new AggregateError(
         [error, cleanupError],

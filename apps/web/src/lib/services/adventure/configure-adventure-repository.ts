@@ -1,3 +1,4 @@
+import { adventurePackageRepository } from "./adventure-package-storage.js";
 import { adventureSessionRepository } from "./adventure-session-repository.js";
 
 interface VaultHandleSource {
@@ -7,15 +8,17 @@ interface VaultHandleSource {
 }
 
 /**
- * Points the shared adventure repository at the open Vault's storage. Every
+ * Points the shared adventure repositories at the open Vault's storage. Every
  * surface that reads adventures (the play screen, the Play hub) must call this
  * first: the repository has no default resolver and otherwise reports an
  * empty adventure list.
  */
 export function configureAdventureRepository(vault: VaultHandleSource): void {
-  adventureSessionRepository.setRootResolver(async (id) => {
+  const resolver = async (id: string) => {
     const handle = await vault.getSpecificVaultHandle(id);
     if (!handle) throw new Error("vault-not-open");
     return handle;
-  });
+  };
+  adventureSessionRepository.setRootResolver(resolver);
+  adventurePackageRepository.setRootResolver(resolver);
 }

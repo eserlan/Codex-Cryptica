@@ -3,7 +3,9 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   AdventureSourcePackageSchema,
+  MAX_ADVENTURE_MARKDOWN_BYTES,
   MAX_ADVENTURE_RETRIEVAL_CHARS,
+  approveAdventurePackage,
   getAdventurePackagePath,
   importAndSaveAdventureMarkdown,
   listAdventurePackageHashes,
@@ -122,6 +124,36 @@ function getRetrievalTextCharacterCount(
 }
 
 describe("AdventureSourcePackage reference one-shot and variants", () => {
+  it("rejects invalid UTF-8 byte input instead of replacing malformed bytes", async () => {
+    const bytes = new Uint8Array([0x23, 0x20, 0xff, 0x0a]);
+    const result = await parseAdventureMarkdown(bytes, {
+      fileName: "invalid-utf8.md",
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: "INVALID_UTF8" },
+    });
+  });
+
+  it("rejects Markdown larger than the shared import byte limit at the parser boundary", async () => {
+    const oversizedText = "x".repeat(MAX_ADVENTURE_MARKDOWN_BYTES + 1);
+    const oversizedBytes = new Uint8Array(MAX_ADVENTURE_MARKDOWN_BYTES + 1);
+
+    await expect(
+      parseAdventureMarkdown(oversizedText, { fileName: "large.md" }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INPUT_TOO_LARGE" },
+    });
+    await expect(
+      parseAdventureMarkdown(oversizedBytes, { fileName: "large.md" }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: { code: "INPUT_TOO_LARGE" },
+    });
+  });
+
   it("AC1: matches the reference one-shot answer key with source-grounded provenance and zero ambiguities", async () => {
     const result = await parseAdventureMarkdown(adventureMd, {
       fileName: "adventure.md",
@@ -578,5 +610,93 @@ describe("AdventureSourcePackage retrieval, persistence, and validation", () => 
 
     expect(io.writeCalls).toBe(0);
     expect(io.files.size).toBe(0);
+  });
+
+  it("AC10: approveAdventurePackage validates and sets status to approved, and saveAdventurePackage rejects mutating an approved package", async () => {
+    const parsed = await parseAdventureMarkdown(adventureMd, {
+      fileName: "adventure.md",
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const approved = approveAdventurePackage(parsed.package);
+    expect(approved.status).toBe("approved");
+    expect(AdventureSourcePackageSchema.parse(approved).status).toBe(
+      "approved",
+    );
+
+    const io = createMemoryIO();
+    const saved = await saveAdventurePackage(io, approved);
+    expect(saved.status).toBe("created");
+    expect(saved.package.status).toBe("approved");
+
+    const loaded = await loadAdventurePackage(io, approved.documentHash);
+    expect(loaded?.status).toBe("approved");
+
+    const mutated = {
+      ...approved,
+      secrets: approved.secrets.map((secret) => ({
+        ...secret,
+        gmOnly: !secret.gmOnly,
+      })),
+    };
+    await expect(saveAdventurePackage(io, mutated)).rejects.toThrow(
+      "already approved",
+    );
+    await expect(saveAdventurePackage(io, parsed.package)).rejects.toThrow(
+      "already approved",
+    );
+    expect(io.writeCalls).toBe(1);
+    expect(await loadAdventurePackage(io, approved.documentHash)).toEqual(
+      approved,
+    );
+
+    expect(() =>
+      approveAdventurePackage({
+        ...parsed.package,
+        documentHash: "not-a-hash",
+      }),
+    ).toThrow();
+  });
+
+  it("preserves an existing draft package when approval write or verification fails", async () => {
+    const parsed = await parseAdventureMarkdown(adventureMd, {
+      fileName: "adventure.md",
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+
+    const io = createMemoryIO();
+    await saveAdventurePackage(io, parsed.package);
+    const expectedPath = getAdventurePackagePath(parsed.package.documentHash);
+
+    let removeCalled = false;
+    const origRemove = io.remove;
+    io.remove = async (path) => {
+      removeCalled = true;
+      await origRemove?.(path);
+    };
+    const origRead = io.read;
+    let readCount = 0;
+    io.read = async (path) => {
+      readCount += 1;
+      // First read inspects existing draft; second read verifies the new write.
+      if (readCount === 2) {
+        return "{corrupted json";
+      }
+      return origRead(path);
+    };
+
+    const approved = approveAdventurePackage(parsed.package);
+    await expect(saveAdventurePackage(io, approved)).rejects.toThrow();
+
+    expect(removeCalled).toBe(false);
+    readCount = 0;
+    const preserved = await loadAdventurePackage(
+      io,
+      parsed.package.documentHash,
+    );
+    expect(preserved).toEqual(parsed.package);
+    expect(io.files.has(expectedPath)).toBe(true);
   });
 });

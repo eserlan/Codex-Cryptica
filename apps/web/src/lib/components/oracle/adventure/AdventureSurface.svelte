@@ -6,6 +6,7 @@
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
   import AdventureEntryChoices from "./AdventureEntryChoices.svelte";
+  import AdventureImportReview from "./AdventureImportReview.svelte";
   import WorldEntrySetup from "./WorldEntrySetup.svelte";
   import WorldEntryContextPreview from "./WorldEntryContextPreview.svelte";
   import {
@@ -22,7 +23,13 @@
   } from "#lib/services/adventure/world-entry-start.js";
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import AdventureRumourConflict from "./AdventureRumourConflict.svelte";
-  import type { ScenarioItem } from "@codex/adventure-engine";
+  import {
+    parseAdventureMarkdown,
+    MAX_ADVENTURE_MARKDOWN_BYTES,
+    type AdventureSourcePackage,
+    type ScenarioItem,
+  } from "@codex/adventure-engine";
+  import { adventurePackageRepository } from "#lib/services/adventure/adventure-package-storage.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
   import { createAdventureBackgroundRequest } from "#lib/services/adventure/adventure-background-request.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -76,17 +83,26 @@
   const canDiscover = $derived(
     isVaultReadyForGenerators(vault) && !vault.isGuest,
   );
+  const canImport = $derived(
+    isVaultReadyForGenerators(vault) && !vault.isGuest,
+  );
   // The typed world-entry draft lives here so view transitions cannot erase it.
   let worldSetup = $state(emptyWorldEntrySetup("default"));
-  let startApproach = $state<"choose" | "premise" | "world" | "preview">(
-    "choose",
-  );
+  let startApproach = $state<
+    "choose" | "premise" | "world" | "preview" | "import-review"
+  >("choose");
   let worldPreview = $state<ContextPreview | null>(null);
   let worldStartBusy = $state(false);
   // Leaving a start form mid-start would remount it with a fresh local guard.
   const startInFlight = $derived(oracle.adventure.starting || worldStartBusy);
   let worldStartError = $state<string | null>(null);
+  let importDraft = $state<AdventureSourcePackage | null>(null);
+  let importDraftVaultId: string | null = null;
+  let importError = $state<string | null>(null);
+  let importApproving = $state(false);
+  let importApproveError = $state<string | null>(null);
   let previousVaultId: string | null = null;
+  let importRequestToken = 0;
   let previouslyPrefilledScenario = $state<string | null>(null);
   let archivingForRumour = $state(false);
   let sessionConflictError = $state<string | null>(null);
@@ -121,6 +137,12 @@
       worldPreview = null;
       worldStartBusy = false;
       worldStartError = null;
+      importDraft = null;
+      importDraftVaultId = null;
+      importError = null;
+      importApproving = false;
+      importApproveError = null;
+      importRequestToken += 1;
       worldLaunchToken += 1;
     }
     previousVaultId = currentVaultId;
@@ -129,6 +151,109 @@
   function discoverAdventure(): void {
     if (!canDiscover) return;
     modalUIStore.openIntentGeneratorWorkflow("rumour");
+  }
+
+  function activeImportVaultId(): string {
+    return oracle.vault.activeVaultId ?? "default";
+  }
+
+  function isCurrentImport(requestToken: number, sourceVaultId: string) {
+    return (
+      requestToken === importRequestToken &&
+      activeImportVaultId() === sourceVaultId &&
+      !vault.isGuest
+    );
+  }
+
+  async function handleImportFile(file: File): Promise<void> {
+    const requestToken = ++importRequestToken;
+    const sourceVaultId = activeImportVaultId();
+    importError = null;
+    importApproveError = null;
+    if (vault.isGuest) {
+      importError = "Adventure import is only available in an owner Vault.";
+      return;
+    }
+    if (file.size > MAX_ADVENTURE_MARKDOWN_BYTES) {
+      importError = "Adventure Markdown files must be 2 MiB or smaller.";
+      return;
+    }
+    try {
+      const content = new Uint8Array(await file.arrayBuffer());
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
+
+      const result = await parseAdventureMarkdown(content, {
+        fileName: file.name,
+      });
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
+      if (!result.ok) {
+        importError = result.error.message;
+        return;
+      }
+      importDraft = result.package;
+      importDraftVaultId = sourceVaultId;
+      startApproach = "import-review";
+    } catch (error) {
+      if (isCurrentImport(requestToken, sourceVaultId)) {
+        importError =
+          error instanceof Error
+            ? error.message
+            : "Unable to read the selected adventure file.";
+      }
+    }
+  }
+
+  async function handleApproveImport(
+    approved: AdventureSourcePackage,
+  ): Promise<void> {
+    const sourceVaultId = importDraftVaultId;
+    const requestToken = importRequestToken;
+    if (
+      !sourceVaultId ||
+      activeImportVaultId() !== sourceVaultId ||
+      vault.isGuest
+    ) {
+      const error = new Error(
+        "Return to the owner Vault where this adventure was imported to approve it.",
+      );
+      importApproveError = error.message;
+      throw error;
+    }
+
+    importApproving = true;
+    importApproveError = null;
+    try {
+      const saved = await adventurePackageRepository.saveApproved(
+        sourceVaultId,
+        approved,
+      );
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
+      importDraft = saved.package;
+      notificationStore.notify(
+        `Approved "${saved.package.sourceIdentity.title ?? saved.package.sourceIdentity.fileName}" for local play.`,
+        "success",
+      );
+    } catch (error) {
+      if (isCurrentImport(requestToken, sourceVaultId)) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to save the approved adventure package.";
+        importApproveError = message;
+      }
+      throw error;
+    } finally {
+      if (requestToken === importRequestToken) importApproving = false;
+    }
+  }
+
+  function handleCancelImport(): void {
+    importRequestToken += 1;
+    importDraft = null;
+    importDraftVaultId = null;
+    importError = null;
+    importApproveError = null;
+    startApproach = "choose";
   }
 
   $effect(() => {
@@ -564,14 +689,25 @@
     {#if !selectedRumour && startApproach === "choose"}
       <AdventureEntryChoices
         {canDiscover}
+        {canImport}
+        {importError}
         onDiscover={discoverAdventure}
         onSurpriseMe={() =>
           modalUIStore.openIntentGeneratorWorkflow("adventure")}
         onOwnPremise={() => (startApproach = "premise")}
         onEnterWorld={() => (startApproach = "world")}
+        onImportFile={handleImportFile}
       />
     {:else}
-      {#if !selectedRumour && startApproach === "world"}
+      {#if !selectedRumour && startApproach === "import-review" && importDraft}
+        <AdventureImportReview
+          bind:draft={importDraft}
+          approving={importApproving}
+          approveError={importApproveError}
+          onApprove={handleApproveImport}
+          onCancel={handleCancelImport}
+        />
+      {:else if !selectedRumour && startApproach === "world"}
         <button
           type="button"
           data-testid="world-entry-change-approach"
