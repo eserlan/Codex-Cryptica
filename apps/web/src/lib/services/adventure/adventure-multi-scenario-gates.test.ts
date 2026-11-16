@@ -21,10 +21,8 @@ import {
   rollProposal,
   startInput,
 } from "#lib/stores/oracle/tests/adventure-fixtures.js";
-import {
-  AdventureInteractionContext,
-  AdventureSummaryService,
-} from "@codex/ai-engine";
+import { AdventureSummaryService } from "@codex/ai-engine";
+import { AdventureInteractionContext } from "../../../../../../packages/ai-engine/src/adventure-interaction-context";
 import {
   applyCompletedTurn,
   buildAdventurePrompt,
