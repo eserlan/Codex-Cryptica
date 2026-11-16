@@ -6,6 +6,7 @@ import { projectVisibleState } from "./prompt-state";
 import { sceneStallPacing } from "./scene-pacing";
 import { PROMPT_TRANSCRIPT_TURNS } from "./story-summary";
 import { candidateScenariosForLocation } from "./contextual-rumours";
+import { projectGmHistoricalAnchor } from "./historical-anchor";
 import type {
   AdventureSession,
   ResolvedSourceExcerpt,
@@ -50,6 +51,9 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Act as the adventure GM.",
     ...(worldEntry
       ? worldEntryBehavior(worldEntry, input.session, pacing)
+      : []),
+    ...(input.session.historicalAnchor
+      ? historicalAnchorBehavior(input.session.historicalAnchor)
       : []),
     phaseInstruction,
     ...worldStyleBehavior(input.worldStyle),
@@ -128,6 +132,11 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     })),
     // Includes registered scenario secrets so their IDs can be revealed.
     "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
+    ...(input.session.historicalAnchor
+      ? {
+          "GM-ONLY historicalAnchor": projectGmHistoricalAnchor(input.session),
+        }
+      : {}),
     "GM-ONLY fictional time": input.session.worldTime,
     // Turns older than the transcript window, written from player-visible text only.
     storySoFar: input.session.storySoFar?.text,
@@ -219,5 +228,22 @@ function worldEntryBehavior(
         : [
             "Begin with open exploration and routine local activity, not an obligatory plot hook. The opening may weave in one small background sign from a seed.",
           ]),
+  ];
+}
+
+function historicalAnchorBehavior(
+  anchor: NonNullable<AdventureSession["historicalAnchor"]>,
+): string[] {
+  const policyRule =
+    anchor.policy === "alternate"
+      ? 'Historical anchor policy is "alternate": documentedFacts are the known historical baseline, but committed player actions may avert, alter, or diverge from them.'
+      : anchor.policy === "discover"
+        ? 'Historical anchor policy is "discover": documentedFacts remain binding future constraints while the player uncovers how and why the event unfolds through play.'
+        : 'Historical anchor policy is "preserve": documentedFacts remain binding future constraints that committed play should respect unless an explicit canon divergence occurs.';
+  return [
+    policyRule,
+    "Distinguish fixed documentedFacts from openMechanisms in GM-ONLY historicalAnchor: never lock, narrow, or invent unspecified openMechanisms (such as cause, responsible-actor, location, exact-date, or consequences) unless established by committed play.",
+    "Do not invent missing calendar precision (month, day, or unitId) when startDate or eventInterval only specifies year or unit precision.",
+    "Never leak unrevealed documentedFacts, unrevealed baseline title, relevantEntityRefs, or unrevealed future eventInterval details in narration, suggestedActions, or player-visible state; disclose a documented fact only through justified fictional discovery by returning its id in revealSecretIds.",
   ];
 }

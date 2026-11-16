@@ -16,6 +16,10 @@ import {
   scenarioItemIdentityIds,
 } from "./scenario-schemas";
 import { migrateLegacyScenarioCollection } from "./scenario-migration";
+import {
+  historicalAnchorSchema,
+  migrateHistoricalAnchor,
+} from "./historical-anchor-schemas";
 
 export const MAX_SERIALIZED_STATE_CHARS = 32_000;
 export const MAX_GENERATION_INPUT_CHARS = 96_000;
@@ -413,6 +417,7 @@ export const adventureSessionSchema = z
     sourcePackage: sourcePackageRefSchema.optional(),
     scenarioCollection: scenarioCollectionSchema.optional(),
     worldEntry: worldEntrySchema.optional(),
+    historicalAnchor: historicalAnchorSchema.optional(),
     worldTime: worldTimeSchema.optional(),
     places: z.array(placeSchema).max(MAX_PLACES).optional(),
     currentPlaceId: id.optional(),
@@ -529,6 +534,11 @@ export function migrateAdventureSession(input: unknown): unknown {
   if (version !== CURRENT_ADVENTURE_SCHEMA_VERSION) {
     throw new Error("incompatible-version");
   }
+  if (session.historicalAnchor !== undefined) {
+    session.historicalAnchor = migrateHistoricalAnchor(
+      session.historicalAnchor,
+    );
+  }
   return session;
 }
 
@@ -542,6 +552,7 @@ export function parseAdventureSession(input: unknown): AdventureSession {
     dismissedProvisionalFactIds: parsed.dismissedProvisionalFactIds,
     scenarioCollection: parsed.scenarioCollection,
     worldEntry: parsed.worldEntry,
+    historicalAnchor: parsed.historicalAnchor,
     worldTime: parsed.worldTime,
     places: parsed.places,
     storySoFar: parsed.storySoFar,
@@ -722,6 +733,7 @@ export function validateStateBudget(session: AdventureSession): boolean {
       dismissedProvisionalFactIds: session.dismissedProvisionalFactIds,
       scenarioCollection: session.scenarioCollection,
       worldEntry: session.worldEntry,
+      historicalAnchor: session.historicalAnchor,
       worldTime: session.worldTime,
       places: session.places,
       storySoFar: session.storySoFar,
