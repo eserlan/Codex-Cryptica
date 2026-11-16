@@ -276,6 +276,23 @@ class TestAgyFactory(unittest.TestCase):
                 else:
                     os.environ["CLAUDE_CONFIG_DIR"] = old_claude
 
+    def test_agy_bare_gemini_model_ids_use_their_configured_prices(self):
+        """Bare configured Gemini IDs select their matching pricing entries."""
+        header = "Agent: builder. Model: {model}."
+        job = {"agents": {}}
+        expected_price_keys = {
+            "gemini-4-hydrogen": "gemini-4-hydrogen",
+            "gemini-4-argon": "gemini-4-argon",
+            "gemini-3.8-flash": "gemini-3.8-flash",
+        }
+
+        for model, expected_price_key in expected_price_keys.items():
+            with self.subTest(model=model):
+                _, _, price_key = self.job_mod.infer_agy_agent_and_model(
+                    header.format(model=model), job
+                )
+                self.assertEqual(price_key, expected_price_key)
+
     def test_gate_agy_stop_hook_allow_and_block(self):
         """gate --hook follows the AGY Stop hook JSON contract for non-builders, continuationActive, and builders."""
         gate_bin = str(BIN_DIR / "gate")
