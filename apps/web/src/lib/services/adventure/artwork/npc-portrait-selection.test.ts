@@ -566,31 +566,54 @@ describe("selectPresentNpcPortrait", () => {
         }
       }
 
-      const informantSession: ArtworkNpcSession = {
-        vaultId: "v1",
-        currentPlaceId: "place-1",
-        places: [{ id: "place-1", name: "Capital City" }],
-        visibleState: {
-          activeCharacters: [
-            {
-              id: "c-informant",
-              text: "Vane, an informant waiting in the urban city.",
-              source: "provisional",
-              placeId: "place-1",
-            },
-          ],
+      const informantSessions: ArtworkNpcSession[] = [
+        {
+          vaultId: "v1",
+          currentPlaceId: "place-tavern",
+          places: [{ id: "place-tavern", name: "The Velvet Lantern Tavern" }],
+          visibleState: {
+            activeCharacters: [
+              {
+                id: "c-informant-tavern",
+                text: "Vesper, a whisper-network informant in the city tavern.",
+                source: "provisional",
+                placeId: "place-tavern",
+              },
+            ],
+          },
         },
-      };
-      expect(
-        selectPresentNpcPortrait(
-          informantSession,
+        {
+          vaultId: "v1",
+          currentPlaceId: "place-city",
+          places: [{ id: "place-city", name: "Capital City" }],
+          visibleState: {
+            activeCharacters: [
+              {
+                id: "c-informant-city",
+                text: "Vane, an informant waiting in the urban city.",
+                source: "provisional",
+                placeId: "place-city",
+              },
+            ],
+          },
+        },
+      ];
+
+      for (const session of informantSessions) {
+        const portrait = selectPresentNpcPortrait(
+          session,
           "v1",
           {},
           true,
           "fantasy",
           seedArtwork,
-        ),
-      ).toBeNull();
+        );
+        expect(portrait?.kind).toBe("catalogue");
+        if (portrait?.kind === "catalogue") {
+          expect(portrait.asset.id).toBe("npc-fantasy-informant-01");
+          expect(portrait.asset.primaryCues).toContain("informant");
+        }
+      }
     });
     it("resolves occult and outlaw role prose and synonyms in competing settings", () => {
       const cases = [

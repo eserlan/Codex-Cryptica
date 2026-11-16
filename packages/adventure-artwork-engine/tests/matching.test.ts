@@ -287,8 +287,8 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
         type: "npc",
         genre: "fantasy",
         primaryCues: ["informant"],
-      }),
-    ).toBeNull();
+      })?.id,
+    ).toBe("npc-fantasy-informant-01");
 
     expect(
       matchArtwork(seedArtwork, {
@@ -296,17 +296,8 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
         genre: "fantasy",
         primaryCues: ["informant"],
         settingCues: ["city", "urban"],
-      }),
-    ).toBeNull();
-
-    expect(
-      matchArtwork(seedArtwork, {
-        type: "npc",
-        genre: "fantasy",
-        primaryCues: ["urchin", "informant"],
-        settingCues: ["city", "urban"],
       })?.id,
-    ).toBe("npc-fantasy-urchin-01");
+    ).toBe("npc-fantasy-informant-01");
 
     expect(
       matchArtwork(seedArtwork, {
@@ -397,5 +388,38 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
     expect(bardInCity?.id).toBe("npc-fantasy-bard-01");
     expect(bardInCity?.id).not.toBe("npc-fantasy-guard-01");
     expect(bardInCity?.id).not.toBe("npc-fantasy-scholar-01");
+  });
+
+  it("selects npc-fantasy-informant-01 for informant queries without colliding with rogue or urchin", () => {
+    const informantMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["informant"],
+    });
+    expect(informantMatch?.id).toBe("npc-fantasy-informant-01");
+
+    const rogueMatch = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["rogue"],
+    });
+    expect(rogueMatch?.id).toBe("npc-fantasy-rogue-01");
+    expect(rogueMatch?.id).not.toBe("npc-fantasy-informant-01");
+
+    const urchinOnSeed = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["urchin"],
+    });
+    expect(urchinOnSeed?.id).toBe("npc-fantasy-urchin-01");
+    expect(urchinOnSeed?.id).not.toBe("npc-fantasy-informant-01");
+
+    const informantInTavern = matchArtwork(seedArtwork, {
+      type: "npc",
+      genre: "fantasy",
+      primaryCues: ["informant"],
+      settingCues: ["urban", "tavern"],
+    });
+    expect(informantInTavern?.id).toBe("npc-fantasy-informant-01");
   });
 });

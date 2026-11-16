@@ -10,7 +10,7 @@ All images are hosted on Cloudflare R2 (`codex-cryptica-statics` bucket) under `
 
 | Genre / Theme                                                 | Locations (Have / Target) | NPC Portraits (Have / Target) | Scenes (Have / Target) | Atmospheres (Have / Target) | Total (Have / Target) |
 | :------------------------------------------------------------ | :-----------------------: | :---------------------------: | :--------------------: | :-------------------------: | :-------------------: |
-| `fantasy`                                                     |          20 / 20          |            42 / 42            |         0 / 6          |            0 / 3            |      **62 / 71**      |
+| `fantasy`                                                     |          20 / 20          |            43 / 43            |         0 / 6          |            0 / 3            |      **63 / 72**      |
 | `contemporary` (`modern`)                                     |          5 / 16           |            20 / 20            |         0 / 4          |            0 / 2            |      **25 / 42**      |
 | `science-fiction` (`scifi`, `starwars`, `startrek`, `lancer`) |          5 / 14           |            0 / 10             |         0 / 4          |            0 / 2            |      **5 / 30**       |
 | `horror`                                                      |          4 / 12           |            0 / 10             |         0 / 4          |            0 / 3            |      **4 / 29**       |
@@ -23,7 +23,7 @@ All images are hosted on Cloudflare R2 (`codex-cryptica-statics` bucket) under `
 | `apocalyptic` (`fallout`)                                     |           0 / 3           |             0 / 3             |         0 / 2          |            0 / 1            |       **0 / 9**       |
 | `pirate` / `pulp-adventure`                                   |           0 / 3           |             0 / 3             |         0 / 2          |            0 / 1            |       **0 / 9**       |
 | `mythic`                                                      |           0 / 3           |             0 / 3             |         0 / 1          |            0 / 1            |       **0 / 8**       |
-| **Total**                                                     |       **38 / 101**        |         **62 / 116**          |       **0 / 36**       |         **0 / 24**          |     **100 / 277**     |
+| **Total**                                                     |       **38 / 101**        |         **63 / 117**          |       **0 / 36**       |         **0 / 24**          |     **101 / 278**     |
 
 > **Phase 1 (Immediate)**: the **24 seed locations are complete** across the 5 core `catalogue.ts` genres. **Phase 2**: first **20 NPC portraits** + **8 atmosphere/scene** cards. **Phase 3**: expand `catalogue.ts` genre enum & `cues.ts` to cover all remaining Codex Cryptica themes (`cyberpunk`, `steampunk`, `western`, `cosmic-horror`, `gothic`, `apocalyptic`, `pirate`/`pulp-adventure`, `mythic`).
 
@@ -57,7 +57,7 @@ The authoritative active vocabulary is in [`cues.ts`](../packages/adventure-artw
 
 ---
 
-## 1. Live Inventory (100 Listed Assets: 38 Locations and 62 NPCs)
+## 1. Live Inventory (101 Listed Assets: 38 Locations and 63 NPCs)
 
 The first 38 assets below are `type: "location"` (`1280×720` display, `320×180` preview), approved and live on R2.
 
@@ -105,7 +105,7 @@ The first 38 assets below are `type: "location"` (`1280×720` display, `320×180
 
 ---
 
-### Fantasy NPC portraits (42)
+### Fantasy NPC portraits (43)
 
 <!-- prettier-ignore -->
 |                                                                                     Preview                                                                                     | ID                                  | Genres    | Primary Cues                               | Setting / Mood / Time                                          | Description (`alt`) & Link                                                                                                                                                                                                                                    |
@@ -152,6 +152,7 @@ The first 38 assets below are `type: "location"` (`1280×720` display, `320×180
 |            <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-cultist-01-preview-842b3bf0c0e4.webp" width="90" alt="Hooded ritual zealot in crimson-and-black cult vestments gripping a jagged obsidian dagger inside shadowy stone ruins at night." />            | `npc-fantasy-cultist-01`            | `fantasy` | `cultist`                                  | `ruins`, `cave`, `interior` · `ominous` · `night`              | Hooded ritual zealot in crimson-and-black cult vestments gripping a jagged obsidian dagger inside shadowy stone ruins at night. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-cultist-01-display-ea0272e55923.webp))              |
 |             <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-bandit-01-preview-c6fd332c85fb.webp" width="90" alt="Scarred highwayman outlaw captain in worn leather brigandine adjusting a dark scarf beside a forest road at dusk." />             | `npc-fantasy-bandit-01`             | `fantasy` | `bandit`                                   | `road`, `forest`, `exterior` · `ominous` · `dusk`              | Scarred highwayman outlaw captain in worn leather brigandine adjusting a dark scarf beside a forest road at dusk. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-bandit-01-display-fe24e0e22ef2.webp))                             |
 |        <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-necromancer-01-preview-1ef8a554c8cf.webp" width="90" alt="Pale necromancer in tattered charcoal robes cradling a skull-crowned ritual focus with sickly green wisps in dark castle ruins at night." />        | `npc-fantasy-necromancer-01`        | `fantasy` | `necromancer`                              | `castle`, `ruins`, `interior` · `ominous` · `night`            | Pale necromancer in tattered charcoal robes cradling a skull-crowned ritual focus with sickly green wisps in dark castle ruins at night. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-necromancer-01-display-84620d488e28.webp)) |
+|          <img src="https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-informant-01-preview-5c34df4fcc1a.webp" width="90" alt="npc-fantasy-informant-01" />          | `npc-fantasy-informant-01`          | `fantasy` | `informant`                                | `city`, `urban` · `mysterious` · `night`    | Sharp-eyed adult informant in wool cloak and scarf concealing a wax-sealed note in a lantern-lit night street. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-fantasy-informant-01-display-b83690743c5d.webp)) |
 
 | <img src="https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-01-preview-1b3c47ab282d.webp" width="90" alt="npc-contemporary-traveller-01" /> | `npc-contemporary-traveller-01` | `contemporary` | `traveller` | `urban`, `exterior` · `quiet` · `rain` | Trench-coated investigator or courier under city streetlights in light rain. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-01-display-b25e6f647a03.webp)) |
 | <img src="https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-02-preview-eb86246373f9.webp" width="90" alt="npc-contemporary-traveller-02" /> | `npc-contemporary-traveller-02` | `contemporary` | `traveller` | `rural`, `exterior` · `hopeful` · — | Backpacker in flannel and canvas parka with compass strap on a misty trail. ([Display](https://assets.codexcryptica.com/adventure-artwork/npc-contemporary-traveller-02-display-0b232644844d.webp)) |
@@ -242,7 +243,7 @@ All planned fantasy locations are live.
 ## 3. Characters / NPC Portraits Roadmap (26 Needed: 26 Other-Genre + 0 Fantasy Narrative, `type: "npc"`)
 
 Format: `768×1024` display WebP (`<= 256 KB`), `240×320` preview WebP (`<= 32 KB`) — **3:4 portrait**.  
-US3 identity, alias continuity, and Vault promotion are wired, and **all 42 targeted fantasy NPC portraits are live**: 16 base roles, 18 ancestry × class portraits, and 8 narrative/function archetypes (`elder`, `witch`, `cultist`, `bandit`, `official`, `urchin`, `goblin`, `necromancer`). Below covers the six broad role buckets (`traveller`, `merchant`, `guard`, `scholar`, `explorer`, `worker`) and the optional diversity follow-ups.
+US3 identity, alias continuity, and Vault promotion are wired, and **all 43 targeted fantasy NPC portraits are live**: 16 base roles, 18 ancestry × class portraits, 8 narrative/function archetypes (`elder`, `witch`, `cultist`, `bandit`, `official`, `urchin`, `goblin`, `necromancer`), and `npc-fantasy-informant-01`. Below covers the six broad role buckets (`traveller`, `merchant`, `guard`, `scholar`, `explorer`, `worker`) and the optional diversity follow-ups.
 
 ### Fantasy NPCs (16 / 16 Core Complete)
 
@@ -252,7 +253,7 @@ All 16 core role portraits are listed in the live inventory above.
 
 All 18 race and class portraits are listed in the live inventory above.
 
-### Fantasy Narrative & Encounter Archetypes (8 / 8 Complete → 42 Fantasy NPCs Total)
+### Fantasy Narrative & Encounter Archetypes (8 / 8 Complete → 43 Fantasy NPCs Total)
 
 **All eight narrative/function portraits have been published and validated.** They fill role and function gaps rather than duplicating playable class portraits, and all eight archetype cues are active in `cues.ts`.
 
