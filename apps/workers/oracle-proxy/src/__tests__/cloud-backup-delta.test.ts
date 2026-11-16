@@ -604,6 +604,24 @@ describe("cloud backup incremental commits", () => {
     });
 
     describe("non-silent eviction & exact byte accounting", () => {
+      async function measureActualTrashBytes(
+        f: Awaited<ReturnType<typeof seeded>>,
+        trashRefs: Record<string, string>,
+      ): Promise<number> {
+        let total = 0;
+        for (const key of Object.values(trashRefs)) {
+          const head = await f.env.BUCKET.head(absoluteKey(f.backupId, key));
+          expect(head).not.toBeNull();
+          total += head!.size;
+          const parsed = await readJson<Record<string, unknown>>(
+            f.env,
+            absoluteKey(f.backupId, key),
+          );
+          expect(Object.keys(parsed ?? {}).length).toBeGreaterThan(0);
+        }
+        return total;
+      }
+
       it("evicts oldest-first across multiple shards, omits emptied shards, preserves tombstones, and reports trashEvicted", async () => {
         const f = await seeded();
         const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
@@ -612,8 +630,9 @@ describe("cloud backup incremental commits", () => {
         try {
           const body = "z".repeat(250);
           const ids = ["alpha-1", "beta-2", "gamma-3", "delta-4"];
-          const shards = new Set(ids.map((id) => cloudBackupShardOf(id)));
-          expect(shards.size).toBeGreaterThanOrEqual(2);
+          expect(
+            new Set(ids.map((id) => cloudBackupShardOf(id))).size,
+          ).toBeGreaterThanOrEqual(2);
 
           let manifest = f.manifest;
           for (const id of ids) {
@@ -636,7 +655,7 @@ describe("cloud backup incremental commits", () => {
             const jsonBody = (await res.json()) as any;
             expect(res.status).toBe(200);
             manifest = jsonBody.manifest;
-            if (jsonBody.trashEvicted) lastEviction = jsonBody.trashEvicted;
+            lastEviction = jsonBody.trashEvicted ?? lastEviction;
           }
 
           expect(lastEviction).toBeDefined();
@@ -645,23 +664,14 @@ describe("cloud backup incremental commits", () => {
           expect(lastEviction.usedBytes).toBeLessThanOrEqual(700);
 
           const stored = (await readManifest(f.env, f.backupId))!;
-          let actualTrashBytes = 0;
-          for (const key of Object.values(stored.objects!.trash ?? {})) {
-            const head = await f.env.BUCKET.head(absoluteKey(f.backupId, key));
-            expect(head).not.toBeNull();
-            actualTrashBytes += head!.size;
-            const parsed = await readJson<Record<string, unknown>>(
-              f.env,
-              absoluteKey(f.backupId, key),
-            );
-            expect(Object.keys(parsed ?? {}).length).toBeGreaterThan(0);
-          }
-          expect(lastEviction.usedBytes).toBe(actualTrashBytes);
+          expect(lastEviction.usedBytes).toBe(
+            await measureActualTrashBytes(f, stored.objects!.trash ?? {}),
+          );
 
           const index = await readCurrent(f.env, f.backupId, "index");
-          for (const id of ids) {
-            expect(index.tombstones).toHaveProperty(id);
-          }
+          expect(Object.keys(index.tombstones)).toEqual(
+            expect.arrayContaining(ids),
+          );
           const kept = Object.assign(
             {},
             ...(await Promise.all(
@@ -684,9 +694,7 @@ describe("cloud backup incremental commits", () => {
           const tombstoneIds = (changesJson.tombstones ?? []).map(
             (t: { id: string }) => t.id,
           );
-          for (const id of ids) {
-            expect(tombstoneIds).toContain(id);
-          }
+          expect(tombstoneIds).toEqual(expect.arrayContaining(ids));
         } finally {
           limits.maxTrashBytes = original;
         }

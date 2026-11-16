@@ -44,12 +44,7 @@ import {
   wholeShardNames,
 } from "./cloud-backup-whole-items";
 import { publishCommit } from "./cloud-backup-restore-points";
-import {
-  type TrashDropPlan,
-  createTrashDropPlan,
-  evictOldestTrash,
-  purgeExpiredTrash,
-} from "./cloud-backup-trash";
+import { type TrashDropPlan, pruneTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
   type Tombstones,
@@ -452,22 +447,12 @@ async function prepareDelta(
     { meta: state.canvasMeta, tombstones, trash },
     stamp,
   );
-  const trashDrops = createTrashDropPlan();
-  const purgedRev = await purgeExpiredTrash(
+  const { purgedRev, trashDrops, trashEvicted } = await pruneTrash(
     env,
     backupId,
     base,
     trash,
     tombstones,
-    trashDrops,
-  );
-  const trashEvicted = await evictOldestTrash(
-    env,
-    backupId,
-    base,
-    trash,
-    tombstones,
-    trashDrops,
   );
 
   const nextBundle = nextBundleFor(delta, bundle, mapChanges, canvasChanges);

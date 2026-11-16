@@ -28,7 +28,22 @@
   const nearCapacity = $derived(
     usedBytes !== null && maxBytes !== null && usedBytes >= maxBytes * 0.8,
   );
+  const usageText = $derived(
+    usedBytes !== null && maxBytes !== null
+      ? `Trash storage: ${formatTrashBytes(usedBytes)} of ${formatTrashBytes(maxBytes)} used`
+      : null,
+  );
+  const warningText = $derived.by(() => {
+    if (hasEvictedItems) {
+      return `Some older items lost their restorable content because the shared trash reached its ${maxTrashMb} MB limit.`;
+    }
+    if (nearCapacity) {
+      return `Shared trash is nearly full. Deleting more items may remove the oldest restorable content before ${CLOUD_BACKUP_LIMITS.trashRetentionDays} days.`;
+    }
+    return null;
+  });
   const loadState = $derived(trash.loadState);
+  const isEmpty = $derived(loadState === "ready" && items.length === 0);
 
   function formatTrashBytes(bytes: number): string {
     if (bytes < 1024) return `${bytes} B`;
@@ -70,29 +85,39 @@
 
   const buttonClass =
     "min-h-11 border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-text transition-colors hover:text-theme-text disabled:opacity-50";
+
+  function kindLabel(kind: CloudBackupTrashItem["kind"]): string | null {
+    if (kind === "map") return "Map";
+    if (kind === "canvas") return "Canvas";
+    return null;
+  }
+  function rowMeta(item: CloudBackupTrashItem) {
+    const left = daysLeft(item.deletedAt);
+    return {
+      title: item.title.trim() || "Untitled",
+      badge: kindLabel(item.kind),
+      summary: `Deleted by ${deletedByLabel(item.deletedBy)}, ${deletedAgo(item.deletedAt)}. ${left} ${left === 1 ? "day" : "days"} left.`,
+      isRestoring: trash.restoring.has(item.id),
+    };
+  }
 </script>
 
 {#snippet row(item: CloudBackupTrashItem)}
-  {@const left = daysLeft(item.deletedAt)}
+  {@const meta = rowMeta(item)}
   <li
     class="flex flex-wrap items-center justify-between gap-2 border border-theme-border px-3 py-2"
   >
     <div class="min-w-0">
       <p class="truncate font-semibold">
-        {#if item.kind === "map" || item.kind === "canvas"}
+        {#if meta.badge}
           <span
             class="mr-1 border border-theme-border px-1 text-xs font-bold uppercase tracking-wider text-theme-text"
-            >{item.kind === "map" ? "Map" : "Canvas"}</span
+            >{meta.badge}</span
           >
         {/if}
-        {item.title.trim() || "Untitled"}
+        {meta.title}
       </p>
-      <p class="text-xs">
-        Deleted by {deletedByLabel(item.deletedBy)}, {deletedAgo(
-          item.deletedAt,
-        )}. {left}
-        {left === 1 ? "day" : "days"} left.
-      </p>
+      <p class="text-xs">{meta.summary}</p>
       {#if !item.restorable}
         <p class="text-xs">Can't be restored. The trash ran out of space.</p>
       {/if}
@@ -101,14 +126,31 @@
       <button
         type="button"
         class={buttonClass}
-        disabled={trash.restoring.has(item.id)}
-        aria-label="Restore {item.title.trim() || 'Untitled'}"
+        disabled={meta.isRestoring}
+        aria-label="Restore {meta.title}"
         onclick={() => trash.restore(vaultId, [item.id])}
       >
-        {trash.restoring.has(item.id) ? "Restoring…" : "Restore"}
+        {meta.isRestoring ? "Restoring…" : "Restore"}
       </button>
     {/if}
   </li>
+{/snippet}
+
+{#snippet notices()}
+  {#if usageText}
+    <p class="mt-1 text-xs">{usageText}</p>
+  {/if}
+  {#if warningText}
+    <div
+      class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
+    >
+      <span
+        class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-warning"
+        aria-hidden="true"
+      ></span>
+      <p>{warningText}</p>
+    </div>
+  {/if}
 {/snippet}
 
 {#if loadState !== "unsupported"}
@@ -134,32 +176,7 @@
       {CLOUD_BACKUP_LIMITS.trashRetentionDays} days, subject to the
       {maxTrashMb} MB trash limit. Any member can restore them.
     </p>
-    {#if usedBytes !== null && maxBytes !== null}
-      <p class="mt-1 text-xs">
-        Trash storage: {formatTrashBytes(usedBytes)} of
-        {formatTrashBytes(maxBytes)} used
-      </p>
-    {/if}
-    {#if hasEvictedItems || nearCapacity}
-      <div
-        class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
-      >
-        <span
-          class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-warning"
-          aria-hidden="true"
-        ></span>
-        <p>
-          {#if hasEvictedItems}
-            Some older items lost their restorable content because the shared
-            trash reached its {maxTrashMb} MB limit.
-          {:else}
-            Shared trash is nearly full. Deleting more items may remove the
-            oldest restorable content before
-            {CLOUD_BACKUP_LIMITS.trashRetentionDays} days.
-          {/if}
-        </p>
-      </div>
-    {/if}
+    {@render notices()}
 
     <p class="mt-2 empty:hidden" role="status">{resultText ?? ""}</p>
 
@@ -167,7 +184,7 @@
       <p class="mt-2 text-theme-danger" role="alert">
         Couldn't load the trash. Check your connection and press Refresh.
       </p>
-    {:else if loadState === "ready" && items.length === 0}
+    {:else if isEmpty}
       <p class="mt-2">The trash is empty.</p>
     {:else}
       <ul class="mt-2 flex flex-col gap-2">
