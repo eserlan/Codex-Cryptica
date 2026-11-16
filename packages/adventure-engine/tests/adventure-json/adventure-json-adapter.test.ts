@@ -94,4 +94,77 @@ describe("AdventureSourcePackage -> AdventureJsonV1 adapter", () => {
     const validation = validateAdventureJson(v1);
     expect(validation.ok).toBe(true);
   });
+
+  it("preserves unknown progression and unmappable branches in unresolved without inventing transitions", () => {
+    const pkg: AdventureSourcePackage = {
+      schemaVersion: 1,
+      status: "approved",
+      documentHash: "b".repeat(64),
+      sourceIdentity: { fileName: "disconnected.md" },
+      importMethod: "markdown",
+      importVersion: "1.0.0",
+      sections: [
+        {
+          sourceId: "scene-1",
+          title: "Dockside",
+          level: 1,
+          body: "Arrival at the foggy quay.",
+          gmOnly: false,
+          provenance: "source-grounded",
+        },
+        {
+          sourceId: "scene-2",
+          title: "Hidden Crypt",
+          level: 2,
+          body: "A disconnected crypt scene.",
+          gmOnly: false,
+          provenance: "source-grounded",
+        },
+      ],
+      scenes: [
+        {
+          sourceId: "scene-1",
+          title: "Dockside",
+          conditions: [],
+          branches: [
+            {
+              description: "Follow the courier into an unknown alley",
+            },
+            {
+              description: "Board the missing ferry",
+              targetSourceId: "missing-scene",
+            },
+          ],
+          provenance: "source-grounded",
+        },
+        {
+          sourceId: "scene-2",
+          title: "Hidden Crypt",
+          conditions: [],
+          branches: [],
+          provenance: "source-grounded",
+        },
+      ],
+      npcs: [],
+      clues: [],
+      encounters: [],
+      secrets: [],
+      endings: [],
+      ambiguities: [],
+    };
+
+    const v1 = adventureSourcePackageToAdventureJson(pkg);
+    expect(v1.scenes[0]?.branches).toBeUndefined();
+    expect(v1.scenes[1]?.epistemicStatus).toBe("ambiguous");
+    expect(v1.unresolved.map((u) => u.code)).toEqual([
+      "UNRESOLVED_BRANCH_TARGET",
+      "UNRESOLVED_BRANCH_TARGET",
+      "UNKNOWN_SCENE_PROGRESSION",
+    ]);
+    expect(v1.unresolved[0]?.message).toBe(
+      "Follow the courier into an unknown alley",
+    );
+    expect(v1.unresolved[1]?.context).toBe("missing-scene");
+    expect(validateAdventureJson(v1).ok).toBe(true);
+  });
 });
