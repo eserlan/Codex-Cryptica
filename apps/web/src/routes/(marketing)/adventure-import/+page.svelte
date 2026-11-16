@@ -252,10 +252,51 @@
           <strong class="text-theme-text block mb-1"
             >3. Save &amp; validate</strong
           >
-          Save the output as <code class="font-mono">.json</code> and verify it against
-          the v1 schema before importing locally.
+          Save the raw JSON response as a <code class="font-mono">.json</code>
+          file, then verify it against the v1 schema.
         </div>
       </div>
+    </section>
+
+    <!-- What to do with the converted file -->
+    <section
+      aria-labelledby="import-adventure-json-heading"
+      class="rounded-2xl border border-theme-primary/30 bg-theme-surface/50 p-6 space-y-4"
+      style:background-image="var(--bg-texture-overlay)"
+    >
+      <h2
+        id="import-adventure-json-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Next: upload your Adventure JSON
+      </h2>
+      <p
+        class="font-body text-sm font-light leading-relaxed text-theme-text md:text-base"
+      >
+        There is no paste box on this guide. Save the AI's JSON-only response,
+        without Markdown fences, as a <code class="font-mono">.json</code> file.
+      </p>
+      <ol
+        class="list-decimal space-y-1.5 pl-5 font-body text-sm font-light text-theme-text"
+      >
+        <li>
+          Open the Vault where you want to save it, then open Adventure Mode. If
+          another adventure is open, choose <strong>Leave adventure</strong>
+          first; it saves automatically.
+        </li>
+        <li>
+          Under <strong>Import Adventure JSON</strong>, click
+          <strong>Choose Adventure JSON</strong> or drop the file in the import area.
+        </li>
+        <li>Review the validated package and approve it to save it.</li>
+      </ol>
+      <a
+        href="{cleanBase}/adventure#import-adventure-json"
+        class="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-xl bg-theme-primary px-4 py-2 text-sm font-semibold text-theme-on-primary hover:opacity-90 transition-opacity"
+      >
+        <span class="icon-[lucide--file-up] h-4 w-4" aria-hidden="true"></span>
+        Go to Adventure JSON import
+      </a>
     </section>
 
     <!-- Top-level Contract & Collections -->
@@ -331,7 +372,7 @@
         id="rules-heading"
         class="font-header font-bold text-2xl text-theme-text"
       >
-        Epistemic Honesty, Visibility &amp; Structural Rules
+        Source Certainty, Visibility &amp; Structure
       </h2>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -339,8 +380,12 @@
           class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
         >
           <h3 class="font-header font-bold text-lg text-theme-text">
-            Epistemic Status
+            How certain is this detail?
           </h3>
+          <p class="text-sm text-theme-text/90 leading-relaxed">
+            The JSON field <code class="font-mono">epistemicStatus</code> says whether
+            the source states a detail, suggests it, is unclear, or leaves it unanswered.
+          </p>
           <p class="text-sm text-theme-text font-semibold">
             Do not invent missing facts merely to fill fields.
           </p>

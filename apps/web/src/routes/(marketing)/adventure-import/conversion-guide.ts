@@ -16,10 +16,11 @@ Strict output rules:
    - Optional "system": { "name": string, "targetParty"?: { "sizeMin"?: number, "sizeMax"?: number, "levelMin"?: number, "levelMax"?: number } }
    - targetParty sizes are integers >= 1; levels are integers >= 0.
    - All 11 collection arrays (use [] when empty): "locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved".
-3. Epistemic honesty (CRITICAL):
-   - Every entity requires "epistemicStatus": "explicit" | "inferred" | "ambiguous" | "unresolved".
+3. Source certainty (CRITICAL):
+   - Every entity requires "epistemicStatus" to show how strongly the source supports it: "explicit" | "inferred" | "ambiguous" | "unresolved".
    - Do NOT invent missing facts merely to fill fields.
    - If the source text is silent, omit optional fields. If it is contradictory or unclear, record an entry in "unresolved" with "epistemicStatus": "ambiguous" or "unresolved".
+   - For entries in "unresolved", use "ambiguous" when the source is unclear or contradictory, or "unresolved" when it does not answer the question; never use "explicit" or "inferred".
 4. Collection entry contract (notation: ? means optional; string[] means an array of strings):
    - Every collection entry requires "id" (non-empty string) and "epistemicStatus"; "sourceRef" is optional.
    - Required text fields are strings; names, titles, IDs, clue/rumour/secret text, ending descriptions, and unresolved code/message must be non-empty.
@@ -200,17 +201,15 @@ export const EPISTEMIC_STATUSES: Array<{
   },
   {
     status: "inferred",
-    meaning:
-      "Reasonably deduced from adjacent context without inventing new lore.",
+    meaning: "Follows from nearby source details, but is not stated directly.",
   },
   {
     status: "ambiguous",
-    meaning: "Source text allows multiple conflicting interpretations.",
+    meaning: "The source is unclear or supports conflicting interpretations.",
   },
   {
     status: "unresolved",
-    meaning:
-      "Source text is silent or contradictory; recorded without guessing.",
+    meaning: "The source does not answer this; record it without guessing.",
   },
 ];
 
@@ -222,8 +221,8 @@ export const TROUBLESHOOTING_ERRORS: Array<{
   {
     code: "SCHEMA_VALIDATION_ERROR",
     cause:
-      "Missing required field, unknown property (strict mode), or invalid slug/SemVer format.",
-    fix: "Ensure all 11 collection arrays are present (even if []), remove extra keys, and verify id and version formats.",
+      "A required field is missing, a property is not allowed, or a value does not match its required format or allowed options.",
+    fix: 'Ensure all 11 collection arrays are present (even if []), remove extra keys, and verify id and version formats. For an unresolved item, use "ambiguous" if the source is unclear or contradictory, or "unresolved" if it does not provide an answer.',
   },
   {
     code: "INVALID_VISIBILITY",
