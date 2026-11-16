@@ -17,6 +17,7 @@ import {
 } from "../cloud-backup-storage";
 import {
   handleGetCloudBackupBundle,
+  handleGetCloudBackupChanges,
   handleGetCloudBackupIndex,
 } from "../cloud-backup-reads";
 import { readAllEntities } from "../cloud-backup-shards";
@@ -600,6 +601,79 @@ describe("cloud backup incremental commits", () => {
           ),
         ),
       ).not.toBeNull();
+    });
+
+    it("caps tombstone titles at maxTitleLength while keeping full title in trash and change feed", async () => {
+      const f = await seeded();
+      const longTitle = "T".repeat(CLOUD_BACKUP_LIMITS.maxTitleLength + 50);
+      const upserted = await send(f, f.manifest, {
+        upserts: [{ id: "long-entity", title: longTitle, body: "details" }],
+      });
+      expect(upserted.status).toBe(200);
+      const upsertedManifest = (await upserted.json()).manifest;
+
+      const deleted = await send(f, upsertedManifest, {
+        deletes: ["long-entity"],
+      });
+      expect(deleted.status).toBe(200);
+
+      const expectedCapped = longTitle.slice(
+        0,
+        CLOUD_BACKUP_LIMITS.maxTitleLength,
+      );
+      const index = await readCurrent(f.env, f.backupId, "index");
+      expect(index.tombstones["long-entity"].title).toBe(expectedCapped);
+      expect(index.tombstones["long-entity"].title).toHaveLength(
+        CLOUD_BACKUP_LIMITS.maxTitleLength,
+      );
+
+      const changesRes = await handleGetCloudBackupChanges(
+        new Request(
+          `https://example.test/api/cloud-backup/${f.backupId}/changes?since=${upsertedManifest.revision}`,
+          { headers: { Authorization: `Bearer ${f.ownerCode}` } },
+        ),
+        f.env,
+        f.backupId,
+      );
+      expect(changesRes.status).toBe(200);
+      const changes = await changesRes.json();
+      expect(changes.tombstones).toEqual([
+        expect.objectContaining({
+          id: "long-entity",
+          title: expectedCapped,
+        }),
+      ]);
+
+      const stored = (await readManifest(f.env, f.backupId))!;
+      const trashShard = await readJson<Record<string, { title: string }>>(
+        f.env,
+        absoluteKey(
+          f.backupId,
+          stored.objects!.trash![cloudBackupShardOf("long-entity")],
+        ),
+      );
+      expect(trashShard["long-entity"].title).toBe(longTitle);
+    });
+
+    it("leaves tombstone titles at or below maxTitleLength unchanged", async () => {
+      const f = await seeded();
+      const exactTitle = "E".repeat(CLOUD_BACKUP_LIMITS.maxTitleLength);
+      const upserted = await send(f, f.manifest, {
+        upserts: [
+          { id: "exact-entity", title: exactTitle },
+          { id: "short-entity", title: "Short" },
+        ],
+      });
+      const upsertedManifest = (await upserted.json()).manifest;
+
+      const deleted = await send(f, upsertedManifest, {
+        deletes: ["exact-entity", "short-entity"],
+      });
+      expect(deleted.status).toBe(200);
+
+      const index = await readCurrent(f.env, f.backupId, "index");
+      expect(index.tombstones["exact-entity"].title).toBe(exactTitle);
+      expect(index.tombstones["short-entity"].title).toBe("Short");
     });
   });
 });

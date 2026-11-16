@@ -131,7 +131,10 @@ export function tombstoneOf(
     rev: stamp.rev,
     deletedBy: stamp.editedBy,
     deletedAt: stamp.editedAt,
-    title: typeof entity.title === "string" ? entity.title : "",
+    title: (typeof entity.title === "string" ? entity.title : "").slice(
+      0,
+      CLOUD_BACKUP_LIMITS.maxTitleLength,
+    ),
   };
 }
 
