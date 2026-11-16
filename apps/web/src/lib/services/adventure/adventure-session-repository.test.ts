@@ -388,9 +388,13 @@ describe("AdventureSessionRepository v3 persistence", () => {
       async <T>(_vaultId: string, _hash: string, operation: () => Promise<T>) =>
         operation(),
     ) as AdventurePackagePinLock;
+    let packageAvailable = true;
     const repository = new AdventureSessionRepository(
       async () => directory as never,
-      { withPackagePinLock: packageLock },
+      {
+        withPackagePinLock: packageLock,
+        hasApprovedPackage: async () => packageAvailable,
+      },
     );
     const at = "2026-11-01T10:00:00.000Z";
     const session = parseAdventureSession({
@@ -457,6 +461,14 @@ describe("AdventureSessionRepository v3 persistence", () => {
     );
     expect(changed).toHaveBeenCalledOnce();
     expect(changed).toHaveBeenCalledWith("vault-1");
+    packageAvailable = false;
+    await expect(
+      repository.savePinned({ ...session, id: "stale-session" }),
+    ).resolves.toMatchObject({
+      ok: false,
+      error: new Error("adventure-source-package-not-found"),
+    });
+    expect(files.has("stale-session.json")).toBe(false);
     await expect(repository.save(5, session)).resolves.toMatchObject({
       ok: false,
     });

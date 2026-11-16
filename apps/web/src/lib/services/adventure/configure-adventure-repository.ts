@@ -22,6 +22,10 @@ export function configureAdventureRepository(vault: VaultHandleSource): void {
   };
   adventureSessionRepository.setRootResolver(resolver);
   adventurePackageRepository.setRootResolver(resolver);
+  adventureSessionRepository.setApprovedPackageLookup(
+    async (vaultId, hash) =>
+      (await adventurePackageRepository.loadStored(vaultId, hash)) !== null,
+  );
   adventurePackageRepository.setPackagePinCoordination(
     withAdventurePackagePinLock,
     (vaultId) => adventureSessionRepository.listPinnedPackageHashes(vaultId),

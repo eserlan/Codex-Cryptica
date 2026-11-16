@@ -1,6 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-const repo = vi.hoisted(() => ({ setRootResolver: vi.fn() }));
+const repo = vi.hoisted(() => ({
+  setRootResolver: vi.fn(),
+  setApprovedPackageLookup: vi.fn(),
+}));
 vi.mock("./adventure-session-repository.js", () => ({
   adventureSessionRepository: repo,
 }));

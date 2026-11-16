@@ -14,6 +14,7 @@ const env = vi.hoisted(() => ({
   }),
   worldEntryRumourGenerator: null as unknown,
   setRootResolver: vi.fn(),
+  setApprovedPackageLookup: vi.fn(),
   setContextResolver: vi.fn(),
   list: vi.fn(
     async (): Promise<{
@@ -114,6 +115,7 @@ vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
 vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
   adventureSessionRepository: {
     setRootResolver: env.setRootResolver,
+    setApprovedPackageLookup: env.setApprovedPackageLookup,
     list: env.list,
   },
 }));

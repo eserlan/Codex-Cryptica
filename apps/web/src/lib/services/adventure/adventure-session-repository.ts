@@ -72,6 +72,10 @@ export class AdventureSessionRepository {
   private readonly idGenerator: IdGenerator;
   private readonly clock: Clock;
   private readonly withPackagePinLock: AdventurePackagePinLock;
+  private hasApprovedPackage?: (
+    vaultId: string,
+    hash: string,
+  ) => Promise<boolean>;
   private changeListener?: (vaultId: string) => Promise<void>;
 
   constructor(
@@ -80,6 +84,7 @@ export class AdventureSessionRepository {
       idGenerator?: IdGenerator;
       clock?: Clock;
       withPackagePinLock?: AdventurePackagePinLock;
+      hasApprovedPackage?: (vaultId: string, hash: string) => Promise<boolean>;
     } = {},
   ) {
     this.rootResolver = resolveVaultRoot;
@@ -87,10 +92,17 @@ export class AdventureSessionRepository {
     this.clock = deps.clock ?? systemClock;
     this.withPackagePinLock =
       deps.withPackagePinLock ?? withAdventurePackagePinLock;
+    this.hasApprovedPackage = deps.hasApprovedPackage;
   }
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
     this.rootResolver = resolveVaultRoot;
+  }
+
+  setApprovedPackageLookup(
+    hasApprovedPackage: (vaultId: string, hash: string) => Promise<boolean>,
+  ): void {
+    this.hasApprovedPackage = hasApprovedPackage;
   }
 
   setChangeListener(listener: (vaultId: string) => Promise<void>): void {
@@ -255,9 +267,21 @@ export class AdventureSessionRepository {
   async savePinned(session: AdventureSession): Promise<AdventureSaveResult> {
     const hash = session.sourcePackage?.hash;
     if (!hash) return this.save(null, session);
-    return this.withPackagePinLock(session.vaultId, hash, () =>
-      this.save(null, session),
-    );
+    return this.withPackagePinLock(session.vaultId, hash, async () => {
+      if (!this.hasApprovedPackage) {
+        return {
+          ok: false,
+          error: new Error("adventure-package-availability-check-unavailable"),
+        };
+      }
+      if (!(await this.hasApprovedPackage(session.vaultId, hash))) {
+        return {
+          ok: false,
+          error: new Error("adventure-source-package-not-found"),
+        };
+      }
+      return this.save(null, session);
+    });
   }
 
   private async readArchiveEntry(
