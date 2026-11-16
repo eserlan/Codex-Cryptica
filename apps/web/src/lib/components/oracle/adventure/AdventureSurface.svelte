@@ -363,7 +363,18 @@
     if (!isCurrentImport(requestToken, sourceVaultId)) return;
     const hash = await computeAdventureJsonHash(pkg);
     if (!isCurrentImport(requestToken, sourceVaultId)) return;
-    const duplicate = stored.find((item) => item.hash === hash);
+    let duplicate: StoredAdventurePackage | undefined;
+    for (const item of stored) {
+      const storedCanonicalHash =
+        item.originFormat === "legacy-source-package"
+          ? await computeAdventureJsonHash(item.package)
+          : item.hash;
+      if (!isCurrentImport(requestToken, sourceVaultId)) return;
+      if (storedCanonicalHash === hash) {
+        duplicate = item;
+        break;
+      }
+    }
     if (duplicate) {
       importDuplicateNotice = {
         title: duplicate.package.title,

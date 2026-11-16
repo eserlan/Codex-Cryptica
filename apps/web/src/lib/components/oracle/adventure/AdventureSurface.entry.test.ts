@@ -1060,6 +1060,36 @@ describe("AdventureSurface entry", () => {
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 
+  it("deduplicates a legacy approved package by normalized canonical content", async () => {
+    const pkg = entrySampleJson();
+    const stored = await storedApproved(pkg);
+    const legacyFileHash = "f".repeat(64);
+    env.approvedPackages = [
+      {
+        ...stored,
+        hash: legacyFileHash,
+        path: `.codex/adventures/packages/${legacyFileHash}.json`,
+        originFormat: "legacy-source-package",
+      },
+    ];
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const file = new File([JSON.stringify(pkg)], "sunken-mill.json", {
+      type: "application/json",
+    });
+    await fireEvent.change(screen.getByTestId("adventure-file-input"), {
+      target: { files: [file] },
+    });
+
+    const notice = await screen.findByTestId(
+      "adventure-import-duplicate-notice",
+    );
+    expect(notice.textContent).toContain(legacyFileHash.slice(0, 12));
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
   it("enters review with the diff for a changed package and warns when the version did not increase", async () => {
     const v1 = entrySampleJson();
     env.approvedPackages = [await storedApproved(v1)];
