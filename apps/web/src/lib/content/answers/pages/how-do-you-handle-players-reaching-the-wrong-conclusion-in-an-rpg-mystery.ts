@@ -213,7 +213,7 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
       {
         title: "NPC generator",
         description:
-          "Create witnesses, suspects, and officials with distinct motives and alibis to question during the case.",
+          "Create witnesses, suspects, and officials with distinct motives, secrets, and hooks to question during the case.",
         href: "/generators/npc",
       },
     ],
