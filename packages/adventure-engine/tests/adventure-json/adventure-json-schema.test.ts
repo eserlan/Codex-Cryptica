@@ -53,6 +53,22 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       false,
     );
 
+    const invalidExtensionNamespace = {
+      ...base,
+      extensions: { unnamespaced: { vendor: "example" } },
+    };
+    expect(
+      AdventureJsonV1Schema.safeParse(invalidExtensionNamespace).success,
+    ).toBe(false);
+
+    const executableExtensionValue = {
+      ...base,
+      extensions: { "com.example.tool": { callback: () => "code" } },
+    };
+    expect(
+      AdventureJsonV1Schema.safeParse(executableExtensionValue).success,
+    ).toBe(false);
+
     const playerVisibleSecret = {
       ...base,
       secrets: [
@@ -97,6 +113,10 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       { ...validFixture, extraUnknownProperty: 123 },
       {
         ...validFixture,
+        extensions: { unnamespaced: { vendor: "example" } },
+      },
+      {
+        ...validFixture,
         secrets: [
           {
             id: "s1",
@@ -136,6 +156,20 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       true,
     );
     expect(ajvValidate(mixedCaseIdFixture)).toBe(true);
+
+    const extensionFixture = {
+      ...validFixture,
+      extensions: {
+        "com.example.publisher-tool": {
+          tags: ["investigation", "mystery"],
+          settings: { preferredMode: "offline", enabled: true },
+        },
+      },
+    };
+    expect(AdventureJsonV1Schema.safeParse(extensionFixture).success).toBe(
+      true,
+    );
+    expect(ajvValidate(extensionFixture)).toBe(true);
 
     for (const testCase of negativeCases) {
       const zodOk = AdventureJsonV1Schema.safeParse(testCase).success;

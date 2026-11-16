@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const trash = vi.hoisted(() => ({
   items: [] as any[],
+  usedBytes: null as number | null,
+  maxBytes: null as number | null,
   loadedVaultId: "v1" as string | null,
   loadState: "ready" as string,
   restoring: new Set<string>(),
@@ -33,6 +35,8 @@ beforeEach(() => {
   vi.setSystemTime(NOW);
   Object.assign(trash, {
     items: [],
+    usedBytes: null,
+    maxBytes: null,
     loadedVaultId: "v1",
     loadState: "ready",
     restoring: new Set(),
@@ -49,6 +53,7 @@ describe("CloudBackupTrashSettings", () => {
     render(CloudBackupTrashSettings, { vaultId: "v1" });
     expect(trash.load).toHaveBeenCalledWith("v1");
     expect(screen.getByText("The trash is empty.")).toBeTruthy();
+    expect(screen.getByRole("status").getAttribute("aria-live")).toBe("polite");
   });
 
   it("shows a row with who, how long ago and the days left", () => {
@@ -164,6 +169,43 @@ describe("CloudBackupTrashSettings", () => {
     trash.items = [item()];
     trash.result = { outcome, title: "Old Dock" };
     render(CloudBackupTrashSettings, { vaultId: "v1" });
-    expect(screen.getByRole("status").textContent).toBe(text);
+    expect(screen.getByRole("status").textContent?.trim()).toBe(text);
+  });
+
+  it("qualifies retention copy, shows usage when available, and omits it when null", () => {
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(
+      screen.getByText(/up to 30 days, subject to the 50 MB trash limit/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Trash storage:/)).toBeNull();
+
+    trash.usedBytes = 10 * 1024 * 1024;
+    trash.maxBytes = 50 * 1024 * 1024;
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(screen.getByText("Trash storage: 10 MB of 50 MB used")).toBeTruthy();
+  });
+
+  it("shows a warning notice when trash is near capacity or has evicted items", () => {
+    trash.usedBytes = 40 * 1024 * 1024;
+    trash.maxBytes = 50 * 1024 * 1024;
+    const { unmount } = render(CloudBackupTrashSettings, { vaultId: "v1" });
+    const warning = screen.getByText(/Shared trash is nearly full/i);
+    expect(warning).toBeTruthy();
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-live")).toBe("polite");
+    expect(status.textContent).toContain(warning.textContent);
+    expect(
+      warning.parentElement
+        ?.querySelector('[aria-hidden="true"]')
+        ?.classList.contains("text-theme-text"),
+    ).toBe(true);
+    unmount();
+
+    trash.usedBytes = 1024;
+    trash.items = [item({ restorable: false })];
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(
+      screen.getByText(/Some older items lost their restorable content/i),
+    ).toBeTruthy();
   });
 });

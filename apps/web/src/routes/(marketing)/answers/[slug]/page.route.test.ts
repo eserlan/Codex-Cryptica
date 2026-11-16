@@ -234,12 +234,20 @@ describe("answer page widescreen aside", () => {
       aside.getAttribute("aria-labelledby") ?? "",
     );
     expect(label?.textContent?.trim()).toBe("Related");
-    expect(within(aside).getByText("NPC Generator")).toBeTruthy();
+    const toolTitle = within(aside).getByText("NPC Generator");
+    expect(toolTitle.classList.contains("text-theme-text")).toBe(true);
+    expect(toolTitle.classList.contains("group-hover:text-theme-primary")).toBe(
+      false,
+    );
     expect(within(aside).getByText("How do you run a hex crawl?")).toBeTruthy();
 
     const inline = screen.getByTestId("answer-related-inline");
     expect(inline.className).toContain("lg:hidden");
-    expect(within(inline).getByText("NPC Generator")).toBeTruthy();
+    const inlineToolTitle = within(inline).getByText("NPC Generator");
+    expect(inlineToolTitle.classList.contains("text-theme-text")).toBe(true);
+    expect(
+      inlineToolTitle.classList.contains("group-hover:text-theme-primary"),
+    ).toBe(false);
   });
 
   it("renders no aside or empty rail when there is nothing related", () => {

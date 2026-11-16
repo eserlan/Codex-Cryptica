@@ -182,4 +182,33 @@ describe("Adventure JSON v1 semantic validator", () => {
       );
     }
   });
+
+  it("validates a deep mandatory cycle without recursive traversal", () => {
+    const fixture = loadReferenceFixture();
+    const sceneCount = 5_000;
+    fixture.scenes = Array.from({ length: sceneCount }, (_, index) => ({
+      id: `scene-${index}`,
+      title: `Scene ${index}`,
+      summary: "A scene in a long mandatory cycle.",
+      branches: [
+        {
+          targetSceneId: `scene-${(index + 1) % sceneCount}`,
+          description: "Continue to the next scene.",
+        },
+      ],
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    }));
+    fixture.encounters = [];
+    fixture.clues = [];
+    fixture.secrets = [];
+
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(
+        result.errors.some((error) => error.code === "DEAD_END_CYCLE"),
+      ).toBe(true);
+    }
+  });
 });

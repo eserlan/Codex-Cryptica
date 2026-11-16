@@ -95,6 +95,155 @@ describe("AdventureSourcePackage -> AdventureJsonV1 adapter", () => {
     expect(validation.ok).toBe(true);
   });
 
+  it("does not copy GM-only section text into unclassified premise fields", () => {
+    const pkg: AdventureSourcePackage = {
+      schemaVersion: 1,
+      status: "approved",
+      documentHash: "c".repeat(64),
+      sourceIdentity: { fileName: "secrets.md" },
+      importMethod: "markdown",
+      importVersion: "1.0.0",
+      sections: [
+        {
+          sourceId: "overview-secret",
+          title: "Overview",
+          level: 1,
+          body: "GM overview secret.",
+          gmOnly: true,
+          provenance: "source-grounded",
+        },
+        {
+          sourceId: "opening-secret",
+          title: "Opening Scene",
+          level: 2,
+          body: "GM opening secret.",
+          gmOnly: true,
+          provenance: "source-grounded",
+        },
+        {
+          sourceId: "public-summary",
+          title: "Public Summary",
+          level: 1,
+          body: "A public summary.",
+          gmOnly: false,
+          provenance: "source-grounded",
+        },
+      ],
+      scenes: [
+        {
+          sourceId: "opening-secret",
+          title: "Opening Scene",
+          conditions: [],
+          branches: [],
+          provenance: "source-grounded",
+        },
+      ],
+      npcs: [],
+      clues: [],
+      encounters: [],
+      secrets: [],
+      endings: [],
+      ambiguities: [],
+    };
+
+    const v1 = adventureSourcePackageToAdventureJson(pkg);
+    expect(v1.premise.background).toBe("A public summary.");
+    expect(v1.premise.hook).toBe("A public summary.");
+    expect(JSON.stringify(v1.premise)).not.toContain("secret");
+  });
+
+  it("maps optionalBranch to scene optionality, not to every outgoing edge", () => {
+    const pkg: AdventureSourcePackage = {
+      schemaVersion: 1,
+      status: "approved",
+      documentHash: "d".repeat(64),
+      sourceIdentity: { fileName: "optional-scene.md" },
+      importMethod: "markdown",
+      importVersion: "1.0.0",
+      sections: [],
+      scenes: [
+        {
+          sourceId: "optional-scene",
+          title: "Optional Scene",
+          conditions: [],
+          branches: [
+            { targetSourceId: "next-scene", description: "Continue onward." },
+          ],
+          optionalBranch: true,
+          provenance: "source-grounded",
+        },
+        {
+          sourceId: "next-scene",
+          title: "Next Scene",
+          conditions: [],
+          branches: [],
+          provenance: "source-grounded",
+        },
+      ],
+      npcs: [],
+      clues: [],
+      encounters: [],
+      secrets: [],
+      endings: [],
+      ambiguities: [],
+    };
+
+    const v1 = adventureSourcePackageToAdventureJson(pkg);
+    expect(v1.scenes[0]?.optional).toBe(true);
+    expect(v1.scenes[0]?.branches?.[0]?.optional).toBeUndefined();
+  });
+
+  it("keeps actor IDs tied to source-local IDs when names or record order change", () => {
+    const pkg: AdventureSourcePackage = {
+      schemaVersion: 1,
+      status: "approved",
+      documentHash: "e".repeat(64),
+      sourceIdentity: { fileName: "actors.md" },
+      importMethod: "markdown",
+      importVersion: "1.0.0",
+      sections: [],
+      scenes: [],
+      npcs: [
+        {
+          sourceId: "npc-a",
+          name: "Mira",
+          motivation: "Find the key.",
+          provenance: "source-grounded",
+        },
+        {
+          sourceId: "npc-b",
+          name: "Mira",
+          motivation: "Guard the door.",
+          provenance: "source-grounded",
+        },
+      ],
+      clues: [],
+      encounters: [],
+      secrets: [],
+      endings: [],
+      ambiguities: [],
+    };
+
+    const original = adventureSourcePackageToAdventureJson(pkg);
+    const changed = adventureSourcePackageToAdventureJson({
+      ...pkg,
+      npcs: [
+        { ...pkg.npcs[1]!, name: "Mira the Keeper" },
+        { ...pkg.npcs[0]!, name: "Mira of Greywater" },
+      ],
+    });
+    const originalIds = new Map(
+      original.actors.map((actor) => [actor.sourceRef?.anchor, actor.id]),
+    );
+    const changedIds = new Map(
+      changed.actors.map((actor) => [actor.sourceRef?.anchor, actor.id]),
+    );
+
+    expect(changedIds).toEqual(originalIds);
+    expect(changedIds.get("npc-a")).toBe("actor-npc-a");
+    expect(changedIds.get("npc-b")).toBe("actor-npc-b");
+  });
+
   it("preserves unknown progression and unmappable branches in unresolved without inventing transitions", () => {
     const pkg: AdventureSourcePackage = {
       schemaVersion: 1,

@@ -461,9 +461,10 @@ function validateSceneReachability(
   const entryId = scenes[0]!.id;
   const reachable = new Set<string>([entryId]);
   const queue: string[] = [entryId];
+  let queueIndex = 0;
 
-  while (queue.length > 0) {
-    const currentId = queue.shift()!;
+  while (queueIndex < queue.length) {
+    const currentId = queue[queueIndex++]!;
     const scene = sceneMap.get(currentId);
     for (const branch of scene?.branches ?? []) {
       if (
@@ -497,8 +498,9 @@ function propagateExitReachability(
   reverseAllAdj: Map<string, string[]>,
 ): void {
   const exitQueue = [...canExit];
-  while (exitQueue.length > 0) {
-    const target = exitQueue.shift()!;
+  let queueIndex = 0;
+  while (queueIndex < exitQueue.length) {
+    const target = exitQueue[queueIndex++]!;
     for (const source of reverseAllAdj.get(target) ?? []) {
       if (!canExit.has(source)) {
         canExit.add(source);
@@ -543,6 +545,64 @@ function buildMandatorySceneGraph(
   return { mandatoryAdj, canExit };
 }
 
+function reportMandatoryCycle(
+  nextId: string,
+  stack: string[],
+  stackIndex: Map<string, number>,
+  sceneIndex: Map<string, number>,
+  errors: AdventureJsonValidationError[],
+): void {
+  const cycleStart = stackIndex.get(nextId)!;
+  const cycleIds = stack.slice(cycleStart);
+  const entryId = cycleIds[0]!;
+  errors.push({
+    code: "DEAD_END_CYCLE",
+    message: `Mandatory scene transition cycle with no exit path detected: ${[...cycleIds, entryId].join(" -> ")}.`,
+    path: `scenes[${sceneIndex.get(entryId) ?? 0}].branches`,
+    entityId: entryId,
+  });
+}
+
+function traverseMandatorySceneCycles(
+  startId: string,
+  mandatoryAdj: Map<string, string[]>,
+  canExit: Set<string>,
+  visited: Set<string>,
+  sceneIndex: Map<string, number>,
+  errors: AdventureJsonValidationError[],
+): void {
+  const onStack = new Set<string>([startId]);
+  const stack = [startId];
+  const stackIndex = new Map<string, number>([[startId, 0]]);
+  const frames: Array<{ sceneId: string; nextIndex: number }> = [];
+  visited.add(startId);
+  frames.push({ sceneId: startId, nextIndex: 0 });
+
+  while (frames.length > 0) {
+    const frame = frames[frames.length - 1]!;
+    const nextIds = mandatoryAdj.get(frame.sceneId) ?? [];
+    if (frame.nextIndex >= nextIds.length) {
+      frames.pop();
+      stack.pop();
+      onStack.delete(frame.sceneId);
+      stackIndex.delete(frame.sceneId);
+      continue;
+    }
+
+    const nextId = nextIds[frame.nextIndex++]!;
+    if (canExit.has(nextId)) continue;
+    if (!visited.has(nextId)) {
+      visited.add(nextId);
+      onStack.add(nextId);
+      stackIndex.set(nextId, stack.length);
+      stack.push(nextId);
+      frames.push({ sceneId: nextId, nextIndex: 0 });
+    } else if (onStack.has(nextId)) {
+      reportMandatoryCycle(nextId, stack, stackIndex, sceneIndex, errors);
+    }
+  }
+}
+
 function validateMandatorySceneCycles(
   scenes: AdventureJsonScene[],
   sceneMap: Map<string, AdventureJsonScene>,
@@ -551,37 +611,17 @@ function validateMandatorySceneCycles(
 ): void {
   const { mandatoryAdj, canExit } = buildMandatorySceneGraph(scenes, sceneMap);
   const visited = new Set<string>();
-  const onStack = new Set<string>();
-  const stack: string[] = [];
-
-  const dfs = (sceneId: string): void => {
-    visited.add(sceneId);
-    onStack.add(sceneId);
-    stack.push(sceneId);
-
-    for (const nextId of mandatoryAdj.get(sceneId) ?? []) {
-      if (canExit.has(nextId)) continue;
-      if (!visited.has(nextId)) {
-        dfs(nextId);
-      } else if (onStack.has(nextId)) {
-        const cycleIds = stack.slice(stack.indexOf(nextId));
-        const entryId = cycleIds[0]!;
-        errors.push({
-          code: "DEAD_END_CYCLE",
-          message: `Mandatory scene transition cycle with no exit path detected: ${[...cycleIds, entryId].join(" -> ")}.`,
-          path: `scenes[${sceneIndex.get(entryId) ?? 0}].branches`,
-          entityId: entryId,
-        });
-      }
-    }
-
-    stack.pop();
-    onStack.delete(sceneId);
-  };
 
   for (const scene of scenes) {
     if (!canExit.has(scene.id) && !visited.has(scene.id)) {
-      dfs(scene.id);
+      traverseMandatorySceneCycles(
+        scene.id,
+        mandatoryAdj,
+        canExit,
+        visited,
+        sceneIndex,
+        errors,
+      );
     }
   }
 }
