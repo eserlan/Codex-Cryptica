@@ -533,6 +533,19 @@ describe("selectAdventureJsonPredecessor and version comparison", () => {
     expect(compareAdventureJsonVersion("1.0.0", "1.0.0")).toBe(0);
     expect(compareAdventureJsonVersion("1.0.0", "2.0.0")).toBeLessThan(0);
     expect(compareAdventureJsonVersion("2.0.0", "1.9.9")).toBeGreaterThan(0);
+    expect(compareAdventureJsonVersion("1.0.0-alpha", "1.0.0")).toBeLessThan(0);
+    expect(compareAdventureJsonVersion("1.0.0", "1.0.0-alpha")).toBeGreaterThan(
+      0,
+    );
+    expect(
+      compareAdventureJsonVersion("1.0.0-alpha", "1.0.0-alpha.1"),
+    ).toBeLessThan(0);
+    expect(compareAdventureJsonVersion("1.0.0-2", "1.0.0-alpha")).toBeLessThan(
+      0,
+    );
+    expect(
+      compareAdventureJsonVersion("1.0.0-rc.1", "1.0.0-rc.2"),
+    ).toBeLessThan(0);
     expect(selectAdventureJsonPredecessor([], incoming)).toBeNull();
     expect(
       selectAdventureJsonPredecessor(

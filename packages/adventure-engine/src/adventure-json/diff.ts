@@ -122,25 +122,45 @@ function parseSemVer(version: string): ParsedVersion | null {
   };
 }
 
+type PrereleaseKey = [number, number, string];
+
+function prereleaseKey(identifier: string): PrereleaseKey {
+  return /^\d+$/.test(identifier)
+    ? [0, Number(identifier), ""]
+    : [1, 0, identifier];
+}
+
+function compareNumbers(a: number, b: number): number {
+  return a === b ? 0 : a < b ? -1 : 1;
+}
+
+function comparePrereleaseIdentifier(a: string, b: string): number {
+  if (a === b) return 0;
+  const ka = prereleaseKey(a);
+  const kb = prereleaseKey(b);
+  const byKind = compareNumbers(ka[0], kb[0]);
+  if (byKind !== 0) return byKind;
+  const byNumber = compareNumbers(ka[1], kb[1]);
+  if (byNumber !== 0) return byNumber;
+  return ka[2] < kb[2] ? -1 : 1;
+}
+
+/** SemVer precedence of prerelease identifier lists; no prerelease outranks. */
 function comparePrerelease(a: string[], b: string[]): number {
-  if (a.length === 0 && b.length === 0) return 0;
-  if (a.length === 0) return 1;
-  if (b.length === 0) return -1;
+  if (a.length === 0 || b.length === 0) {
+    return compareNumbers(b.length, a.length);
+  }
   const length = Math.max(a.length, b.length);
   for (let i = 0; i < length; i += 1) {
     const xa = a[i];
     const xb = b[i];
-    if (xa === undefined) return -1;
-    if (xb === undefined) return 1;
-    if (xa === xb) continue;
-    const na = /^\d+$/.test(xa) ? Number(xa) : null;
-    const nb = /^\d+$/.test(xb) ? Number(xb) : null;
-    if (na !== null && nb !== null) return na < nb ? -1 : 1;
-    if (na !== null) return -1;
-    if (nb !== null) return 1;
-    return xa < xb ? -1 : 1;
+    if (xa === undefined || xb === undefined) {
+      return compareNumbers(a.length, b.length);
+    }
+    const byIdentifier = comparePrereleaseIdentifier(xa, xb);
+    if (byIdentifier !== 0) return byIdentifier;
   }
-  return 0;
+  return compareNumbers(a.length, b.length);
 }
 
 /** Compares two strict SemVer strings. Returns -1, 0, or 1. */
@@ -149,7 +169,8 @@ export function compareAdventureJsonVersion(a: string, b: string): number {
   const pb = parseSemVer(b);
   if (!pa || !pb) return a < b ? -1 : a > b ? 1 : 0;
   for (let i = 0; i < 3; i += 1) {
-    if (pa.core[i] !== pb.core[i]) return pa.core[i] < pb.core[i] ? -1 : 1;
+    const byCore = compareNumbers(pa.core[i], pb.core[i]);
+    if (byCore !== 0) return byCore;
   }
   return comparePrerelease(pa.prerelease, pb.prerelease);
 }
@@ -228,11 +249,47 @@ type EntryValidation =
   | { ok: true; entry: AdventureJsonCorrespondingEntry }
   | { ok: false; unresolved: AdventureJsonDiffUnresolved };
 
-function validateCorrespondenceEntry(
-  raw: unknown,
+function idSetOf(
+  pkg: AdventureJsonV1,
+  collection: AdventureJsonCollectionName,
+): Set<string> {
+  return new Set(entitiesOf(pkg, collection).map((e) => e["id"] as string));
+}
+
+/** Existence and same-ID-conflict checks for one well-formed entry. */
+function checkEntryEvidence(
+  entry: AdventureJsonCorrespondingEntry,
   previous: AdventureJsonV1,
   next: AdventureJsonV1,
-): EntryValidation {
+): AdventureJsonDiffUnresolved | null {
+  const name = entry.collection as AdventureJsonCollectionName;
+  const previousIds = idSetOf(previous, name);
+  const currentIds = idSetOf(next, name);
+  const { previousId, currentId, collection } = entry;
+  if (!previousIds.has(previousId) || !currentIds.has(currentId)) {
+    return invalidMapping(
+      collection,
+      [previousId, currentId],
+      `Correspondence entry pairs "${previousId}" to "${currentId}" but at least one of those IDs does not exist in "${collection}".`,
+    );
+  }
+  if (
+    previousId !== currentId &&
+    (currentIds.has(previousId) || previousIds.has(currentId))
+  ) {
+    return invalidMapping(
+      collection,
+      [previousId, currentId],
+      `Correspondence entry pairing "${previousId}" to "${currentId}" conflicts with a same-ID match in "${collection}".`,
+    );
+  }
+  return null;
+}
+
+function parseEntryShape(raw: unknown): {
+  entry?: AdventureJsonCorrespondingEntry;
+  collection: string;
+} {
   if (
     !isRecord(raw) ||
     typeof raw["previousId"] !== "string" ||
@@ -240,60 +297,51 @@ function validateCorrespondenceEntry(
     typeof raw["collection"] !== "string"
   ) {
     return {
-      ok: false,
-      unresolved: invalidMapping(
+      collection:
         isRecord(raw) && typeof raw["collection"] === "string"
           ? raw["collection"]
           : "",
+    };
+  }
+  return {
+    entry: {
+      previousId: raw["previousId"],
+      currentId: raw["currentId"],
+      collection: raw["collection"],
+    },
+    collection: raw["collection"],
+  };
+}
+
+function validateCorrespondenceEntry(
+  raw: unknown,
+  previous: AdventureJsonV1,
+  next: AdventureJsonV1,
+): EntryValidation {
+  const { entry, collection } = parseEntryShape(raw);
+  if (!entry) {
+    return {
+      ok: false,
+      unresolved: invalidMapping(
+        collection,
         [],
         "Correspondence entry is malformed; it needs string previousId, currentId, and collection fields.",
       ),
     };
   }
-  const previousId = raw["previousId"];
-  const currentId = raw["currentId"];
-  const collection = raw["collection"];
   if (!KNOWN_COLLECTIONS.has(collection)) {
     return {
       ok: false,
       unresolved: invalidMapping(
         collection,
-        [previousId, currentId],
+        [entry.previousId, entry.currentId],
         `Correspondence entry names unknown collection "${collection}".`,
       ),
     };
   }
-  const name = collection as AdventureJsonCollectionName;
-  const previousIds = new Set(
-    entitiesOf(previous, name).map((e) => e["id"] as string),
-  );
-  const currentIds = new Set(
-    entitiesOf(next, name).map((e) => e["id"] as string),
-  );
-  if (!previousIds.has(previousId) || !currentIds.has(currentId)) {
-    return {
-      ok: false,
-      unresolved: invalidMapping(
-        collection,
-        [previousId, currentId],
-        `Correspondence entry pairs "${previousId}" to "${currentId}" but at least one of those IDs does not exist in "${collection}".`,
-      ),
-    };
-  }
-  if (
-    previousId !== currentId &&
-    (currentIds.has(previousId) || previousIds.has(currentId))
-  ) {
-    return {
-      ok: false,
-      unresolved: invalidMapping(
-        collection,
-        [previousId, currentId],
-        `Correspondence entry pairing "${previousId}" to "${currentId}" conflicts with a same-ID match in "${collection}".`,
-      ),
-    };
-  }
-  return { ok: true, entry: { previousId, currentId, collection } };
+  const evidence = checkEntryEvidence(entry, previous, next);
+  if (evidence) return { ok: false, unresolved: evidence };
+  return { ok: true, entry };
 }
 
 interface MappingOutcome {
@@ -338,44 +386,72 @@ function buildGroups(
   const seen = new Set<string>();
 
   for (const entry of entries) {
+    collectGroup(entry, byPrevious, byCurrent, seen, {
+      groups,
+      groupedPrevious,
+      groupedCurrent,
+    });
     const isSplit = (byPrevious.get(entry.previousId)?.length ?? 0) > 1;
     const isMerge = (byCurrent.get(entry.currentId)?.length ?? 0) > 1;
-    if (isSplit && !seen.has(`split:${entry.collection}:${entry.previousId}`)) {
-      seen.add(`split:${entry.collection}:${entry.previousId}`);
-      const currentIds = [...(byPrevious.get(entry.previousId) ?? [])].sort();
-      for (const id of currentIds) {
-        groupedCurrent.add(`${entry.collection}:${id}`);
-      }
-      groupedPrevious.add(`${entry.collection}:${entry.previousId}`);
-      groups.push({
-        kind: "split",
-        collection: entry.collection,
-        previousIds: [entry.previousId],
-        currentIds,
-        reason: `Split in "${entry.collection}": "${entry.previousId}" corresponds to ${currentIds.length} current entries and needs reviewer confirmation.`,
-      });
-    }
-    if (isMerge && !seen.has(`merge:${entry.collection}:${entry.currentId}`)) {
-      seen.add(`merge:${entry.collection}:${entry.currentId}`);
-      const previousIds = [...(byCurrent.get(entry.currentId) ?? [])].sort();
-      for (const id of previousIds) {
-        groupedPrevious.add(`${entry.collection}:${id}`);
-      }
-      groupedCurrent.add(`${entry.collection}:${entry.currentId}`);
-      groups.push({
-        kind: "merge",
-        collection: entry.collection,
-        previousIds,
-        currentIds: [entry.currentId],
-        reason: `Merge in "${entry.collection}": ${previousIds.length} previous entries correspond to "${entry.currentId}" and need reviewer confirmation.`,
-      });
-    }
     if (!isSplit && !isMerge) {
       const key = `${entry.collection}:${entry.previousId}`;
       if (!pairs.has(key)) pairs.set(key, entry.currentId);
     }
   }
   return { pairs, groups, groupedPrevious, groupedCurrent };
+}
+
+interface GroupSink {
+  groups: AdventureJsonDiffGroup[];
+  groupedPrevious: Set<string>;
+  groupedCurrent: Set<string>;
+}
+
+function collectGroup(
+  entry: AdventureJsonCorrespondingEntry,
+  byPrevious: Map<string, string[]>,
+  byCurrent: Map<string, string[]>,
+  seen: Set<string>,
+  sink: GroupSink,
+): void {
+  const splitKey = `split:${entry.collection}:${entry.previousId}`;
+  if (
+    (byPrevious.get(entry.previousId)?.length ?? 0) > 1 &&
+    !seen.has(splitKey)
+  ) {
+    seen.add(splitKey);
+    const currentIds = [...(byPrevious.get(entry.previousId) ?? [])].sort();
+    for (const id of currentIds) {
+      sink.groupedCurrent.add(`${entry.collection}:${id}`);
+    }
+    sink.groupedPrevious.add(`${entry.collection}:${entry.previousId}`);
+    sink.groups.push({
+      kind: "split",
+      collection: entry.collection,
+      previousIds: [entry.previousId],
+      currentIds,
+      reason: `Split in "${entry.collection}": "${entry.previousId}" corresponds to ${currentIds.length} current entries and needs reviewer confirmation.`,
+    });
+  }
+  const mergeKey = `merge:${entry.collection}:${entry.currentId}`;
+  if (
+    (byCurrent.get(entry.currentId)?.length ?? 0) > 1 &&
+    !seen.has(mergeKey)
+  ) {
+    seen.add(mergeKey);
+    const previousIds = [...(byCurrent.get(entry.currentId) ?? [])].sort();
+    for (const id of previousIds) {
+      sink.groupedPrevious.add(`${entry.collection}:${id}`);
+    }
+    sink.groupedCurrent.add(`${entry.collection}:${entry.currentId}`);
+    sink.groups.push({
+      kind: "merge",
+      collection: entry.collection,
+      previousIds,
+      currentIds: [entry.currentId],
+      reason: `Merge in "${entry.collection}": ${previousIds.length} previous entries correspond to "${entry.currentId}" and need reviewer confirmation.`,
+    });
+  }
 }
 
 function parseCorrespondence(
@@ -478,32 +554,52 @@ function diffCollection(
     considerPair(key.slice(separator + 1), currentId);
   }
 
-  for (const entity of previousEntities) {
-    const id = entity["id"] as string;
-    if (matchedPrevious.has(id)) continue;
-    if (mapping.groupedPrevious.has(`${collection}:${id}`)) continue;
-    removed.push({ id, title: entityTitle(entity), changedFields: [] });
-    unresolved.push({
-      kind: "removed",
-      collection,
-      ids: [id],
-      reason: `Removed "${id}" in "${collection}" has no same-ID or mapped correspondence in the new package.`,
-    });
-  }
-  for (const entity of nextEntities) {
-    const id = entity["id"] as string;
-    if (matchedCurrent.has(id)) continue;
-    if (mapping.groupedCurrent.has(`${collection}:${id}`)) continue;
-    added.push({ id, title: entityTitle(entity), changedFields: [] });
-    unresolved.push({
-      kind: "added",
-      collection,
-      ids: [id],
-      reason: `Added "${id}" in "${collection}" has no same-ID or mapped correspondence in the previous package.`,
-    });
-  }
+  collectUnmatched(
+    collection,
+    previousEntities,
+    matchedPrevious,
+    mapping.groupedPrevious,
+    "removed",
+    removed,
+    unresolved,
+  );
+  collectUnmatched(
+    collection,
+    nextEntities,
+    matchedCurrent,
+    mapping.groupedCurrent,
+    "added",
+    added,
+    unresolved,
+  );
 
   return { diff: { collection, added, removed, changed }, unresolved };
+}
+
+function collectUnmatched(
+  collection: AdventureJsonCollectionName,
+  entities: EntityRecord[],
+  matched: Set<string>,
+  grouped: Set<string>,
+  kind: "removed" | "added",
+  sink: AdventureJsonDiffEntry[],
+  unresolved: AdventureJsonDiffUnresolved[],
+): void {
+  for (const entity of entities) {
+    const id = entity["id"] as string;
+    if (matched.has(id)) continue;
+    if (grouped.has(`${collection}:${id}`)) continue;
+    sink.push({ id, title: entityTitle(entity), changedFields: [] });
+    unresolved.push({
+      kind,
+      collection,
+      ids: [id],
+      reason:
+        kind === "removed"
+          ? `Removed "${id}" in "${collection}" has no same-ID or mapped correspondence in the new package.`
+          : `Added "${id}" in "${collection}" has no same-ID or mapped correspondence in the previous package.`,
+    });
+  }
 }
 
 export function diffAdventureJsonVersions(
