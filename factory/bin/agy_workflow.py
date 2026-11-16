@@ -233,9 +233,10 @@ def agy_sandbox(cmd, job):
 
     `--dangerously-skip-permissions` approves every tool call, and the CLI's own `--sandbox`
     does not stop writes outside the workspace, so the filesystem is mounted read-only except
-    for the job's worktree and folder, the Git directory its commits need, the AGY state
-    directory and the bun install cache. Git hooks and config stay read-only so a job cannot
-    plant code that later runs in the main checkout. Returns the wrapped command and its cwd.
+    for the job's worktree and folder (with `job.json` overlaid read-only), only the current
+    worktree/branch Git metadata and shared object store needed for commits, the AGY state
+    directory, and the bun install cache. Sensitive host credential directories are masked.
+    Returns the wrapped command and its cwd.
     """
     bwrap = shutil.which("bwrap")
     if not bwrap:
@@ -246,14 +247,24 @@ def agy_sandbox(cmd, job):
     worktree = Path(job["worktree"]) if job.get("worktree") else None
     git_dir = git_common_dir()
     writable = [
-        git_dir,
         job_dir,
         worktree,
         home / ".gemini",
         home / ".cache" / ".bun" / "install" / "cache",
         home / ".bun" / "install" / "cache",
     ]
-    read_only = [git_dir / "hooks", git_dir / "config"]
+    read_only = [job_dir / "job.json", git_dir / "hooks", git_dir / "config"]
+    if worktree is not None and worktree.exists():
+        factory_refs = git_dir / "refs" / "heads" / "factory"
+        writable.extend([
+            git_dir / "objects",
+            git_dir / "worktrees" / worktree.name,
+            factory_refs,
+            git_dir / "logs" / "refs" / "heads" / "factory",
+            git_dir / "refs" / "remotes" / "origin",
+        ])
+        if factory_refs.exists():
+            read_only.extend(p for p in factory_refs.iterdir() if p.name != job["id"])
     wrapped = [
         bwrap, "--die-with-parent",
         "--ro-bind", "/", "/",
@@ -261,6 +272,10 @@ def agy_sandbox(cmd, job):
         "--proc", "/proc",
         "--tmpfs", "/tmp",
     ]
+    for masked in (".ssh", ".gnupg", ".aws", ".kube", ".azure"):
+        masked_path = home / masked
+        if masked_path.is_dir():
+            wrapped += ["--tmpfs", str(masked_path)]
     for path in writable:
         if path is not None and path.exists():
             wrapped += ["--bind", str(path), str(path)]

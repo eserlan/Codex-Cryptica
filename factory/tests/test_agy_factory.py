@@ -403,16 +403,21 @@ class TestAgyFactory(unittest.TestCase):
 
 
     def test_agy_sandbox_limits_writes_to_the_job(self):
-        """The CLI runs under bwrap: read-only root, writable job paths, read-only git hooks and config."""
+        """The CLI runs under bwrap: read-only root, writable job paths, read-only job.json and sibling refs."""
         ns = self.wf_ns
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             git_dir = root / "repo" / ".git"
-            (git_dir / "hooks").mkdir(parents=True)
+            for sub in ("hooks", "objects", "worktrees/009-x", "refs/heads/factory", "logs/refs/heads/factory"):
+                (git_dir / sub).mkdir(parents=True)
             (git_dir / "config").write_text("")
+            (git_dir / "refs/heads/factory/009-x").write_text("abc\n")
+            (git_dir / "refs/heads/factory/008-other").write_text("def\n")
             worktree = root / "repo" / ".worktrees" / "009-x"
             worktree.mkdir(parents=True)
             jobs = root / "repo" / "factory" / "jobs"
+            (jobs / "009-x").mkdir(parents=True)
+            (jobs / "009-x" / "job.json").write_text("{}")
             job = {"id": "009-x", "worktree": str(worktree)}
             with patch.object(ns["shutil"], "which", return_value="/usr/bin/bwrap"), \
                     patch.dict(ns, {"JOBS": jobs, "git_common_dir": lambda: git_dir}):
@@ -421,16 +426,35 @@ class TestAgyFactory(unittest.TestCase):
             self.assertEqual(wrapped[:2], ["/usr/bin/bwrap", "--die-with-parent"])
             self.assertIn(["--ro-bind", "/", "/"], [wrapped[i:i + 3] for i in range(len(wrapped))])
             binds = {wrapped[i + 1] for i, arg in enumerate(wrapped) if arg == "--bind"}
-            self.assertEqual(binds & {str(git_dir), str(jobs / "009-x"), str(worktree)},
-                             {str(git_dir), str(jobs / "009-x"), str(worktree)})
+            self.assertNotIn(str(git_dir), binds)
             self.assertNotIn(str(root / "repo"), binds)
+            self.assertTrue({
+                str(jobs / "009-x"),
+                str(worktree),
+                str(git_dir / "objects"),
+                str(git_dir / "worktrees" / "009-x"),
+                str(git_dir / "refs" / "heads" / "factory"),
+            }.issubset(binds))
             ro = [wrapped[i + 1] for i, arg in enumerate(wrapped) if arg == "--ro-bind"]
-            self.assertIn(str(git_dir / "hooks"), ro)
-            self.assertIn(str(git_dir / "config"), ro)
-            # Read-only overlays must come after the writable Git directory to take effect.
-            self.assertGreater(wrapped.index(str(git_dir / "hooks")), wrapped.index(str(git_dir)))
+            self.assertIn(str(jobs / "009-x" / "job.json"), ro)
+            self.assertIn(str(git_dir / "refs" / "heads" / "factory" / "008-other"), ro)
+            self.assertNotIn(str(git_dir / "refs" / "heads" / "factory" / "009-x"), ro)
+            # Read-only overlays must come after their writable parent directories to take effect.
+            self.assertGreater(wrapped.index(str(jobs / "009-x" / "job.json")), wrapped.index(str(jobs / "009-x")))
+            self.assertGreater(
+                wrapped.index(str(git_dir / "refs" / "heads" / "factory" / "008-other")),
+                wrapped.index(str(git_dir / "refs" / "heads" / "factory")),
+            )
             self.assertEqual(cwd, worktree)
             self.assertEqual(wrapped[-3:], ["agy", "-p", "hi"])
+
+            # Without a worktree (e.g. intake/spec), no Git metadata is writable.
+            with patch.object(ns["shutil"], "which", return_value="/usr/bin/bwrap"), \
+                    patch.dict(ns, {"JOBS": jobs, "git_common_dir": lambda: git_dir}):
+                intake_wrapped, intake_cwd = ns["agy_sandbox"](["agy", "-p", "hi"], {"id": "009-x"})
+            intake_binds = {intake_wrapped[i + 1] for i, arg in enumerate(intake_wrapped) if arg == "--bind"}
+            self.assertNotIn(str(git_dir / "objects"), intake_binds)
+            self.assertEqual(intake_cwd, jobs / "009-x")
 
     def test_agy_sandbox_requires_bwrap(self):
         ns = self.wf_ns
