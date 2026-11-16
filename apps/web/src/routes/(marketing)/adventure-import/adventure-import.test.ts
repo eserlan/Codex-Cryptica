@@ -77,6 +77,35 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     );
   });
 
+  it("includes the offline collection contract in the displayed and copied prompt", () => {
+    const { container } = render(Page);
+    const prompt = container.querySelector("pre")?.textContent;
+    expect(prompt).toBe(CANONICAL_CONVERSION_PROMPT);
+
+    for (const rule of [
+      'Every collection entry requires "id" (non-empty string) and "epistemicStatus"',
+      "locations: required name, summary, visibility",
+      "actors: required name, summary, visibility",
+      "factions: required name, summary, visibility",
+      "scenes: required title, summary, visibility",
+      "encounters: required description, alternativeSolutions (an array, [] if absent), visibility",
+      "clues: required text, visibility",
+      'rumours: required text, truth ("true" | "false" | "partially-true" | "unverified", all strings), visibility',
+      "items: required name, summary, visibility",
+      'secrets: required text, visibility ("gm-only" only)',
+      "endings: required description; optional title: string, conditions: string[]; visibility is not allowed",
+      'unresolved: required code, message; optional relatedEntityId: string, context: string; epistemicStatus is "ambiguous" | "unresolved" only; visibility is not allowed',
+      "SceneBranch: required targetSceneId: string, description: string",
+      "LocationConnection: required targetLocationId: string",
+      "Each alternativeSolutions entry requires method: non-empty string and description: non-empty string; optional socialBypassOfCombat: boolean",
+      "Do not emit properties absent from the strict schema",
+      "Do not add visibility to endings or unresolved",
+    ]) {
+      expect(prompt).toContain(rule);
+    }
+    expect(prompt).not.toContain('   - Use "visibility":');
+  });
+
   it("copies the canonical conversion prompt via copyTextToClipboard and shows feedback", async () => {
     copyMock.mockResolvedValue(true);
     render(Page);

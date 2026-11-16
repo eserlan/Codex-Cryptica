@@ -11,24 +11,44 @@ Strict output rules:
    - "title": 1-200 characters
    - "version": strict SemVer (e.g. "1.0.0")
    - "premise": { "background": string, "hook": string, "theme"?: string[], "tone"?: string }
-   - "source": { "title": string, "authors"?: string[], "publisher"?: string, "publishedDate"?: string, "url"?: string, "license"?: string }
+   - "source": { "title": string, "authors"?: string[], "publisher"?: string, "publishedDate"?: string, "url"?: string, "license"?: string, "documentHash"?: string (64 lowercase hexadecimal characters) }
+   - Optional "description": string.
    - Optional "system": { "name": string, "targetParty"?: { "sizeMin"?: number, "sizeMax"?: number, "levelMin"?: number, "levelMax"?: number } }
+   - targetParty sizes are integers >= 1; levels are integers >= 0.
    - All 11 collection arrays (use [] when empty): "locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved".
 3. Epistemic honesty (CRITICAL):
    - Every entity requires "epistemicStatus": "explicit" | "inferred" | "ambiguous" | "unresolved".
    - Do NOT invent missing facts merely to fill fields.
    - If the source text is silent, omit optional fields. If it is contradictory or unclear, record an entry in "unresolved" with "epistemicStatus": "ambiguous" or "unresolved".
-4. Visibility & secrets:
-   - Use "visibility": "player-visible" | "gm-only".
+4. Collection entry contract (notation: ? means optional; string[] means an array of strings):
+   - Every collection entry requires "id" (non-empty string) and "epistemicStatus"; "sourceRef" is optional.
+   - Required text fields are strings; names, titles, IDs, clue/rumour/secret text, ending descriptions, and unresolved code/message must be non-empty.
+   - locations: required name, summary, visibility; optional description: string, parentLocationId: string, connections: LocationConnection[].
+   - actors: required name, summary, visibility; optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string.
+   - factions: required name, summary, visibility; optional description: string, goals: string[], dispositionTowardsParty: string.
+   - scenes: required title, summary, visibility; optional locationId: string, readAloud: string | string[], body: string, conditions: string[], branches: SceneBranch[], optional: boolean.
+   - encounters: required description, alternativeSolutions (an array, [] if absent), visibility; optional title: string, sceneId: string, locationId: string, conditions: string[], actorIds: string[].
+   - clues: required text, visibility; optional reveals: string, leadTargetId: string, placedLocationId: string, placedActorId: string, placedSceneId: string, alternativeSourceId: string.
+   - rumours: required text, truth ("true" | "false" | "partially-true" | "unverified", all strings), visibility; optional sourceActorId: string, sourceLocationId: string, targetEntityId: string.
+   - items: required name, summary, visibility; optional description: string, locationId: string, actorId: string.
+   - secrets: required text, visibility ("gm-only" only); optional relatedEntityIds: string[].
+   - endings: required description; optional title: string, conditions: string[]; visibility is not allowed.
+   - unresolved: required code, message; optional relatedEntityId: string, context: string; epistemicStatus is "ambiguous" | "unresolved" only; visibility is not allowed.
+   - SceneBranch: required targetSceneId: string, description: string; optional condition: string, optional: boolean.
+   - LocationConnection: required targetLocationId: string; optional description: string, travelConditions: string[].
+   - Each alternativeSolutions entry requires method: non-empty string and description: non-empty string; optional socialBypassOfCombat: boolean.
+   - Do not emit properties absent from the strict schema.
+5. Visibility & secrets:
+   - Require "visibility": "player-visible" | "gm-only" on locations, actors, factions, scenes, encounters, clues, rumours, items, and secrets only. Do not add visibility to endings or unresolved.
    - Every entry in "secrets" MUST have "visibility": "gm-only".
    - Do NOT promote NPC testimony, rumours, or in-world handouts to objective truth unless the authored text confirms them.
-5. Structural integrity:
+6. Structural integrity:
    - Every entity ID across all collections must be unique and non-empty.
    - All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference.
    - Location parentLocationId chains must not form cycles.
    - Every non-entry scene (scenes[1..n]) must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops.
-6. Provenance & copyright:
-   - Add optional "sourceRef" ({ page, pageEnd, chapter, section, anchor, textQuote }) when known.
+7. Provenance & copyright:
+   - Add optional "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) when known.
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.`;
 
