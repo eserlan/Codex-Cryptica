@@ -92,6 +92,19 @@ function canonicalJson(value: unknown): string {
     .join(",")}}`;
 }
 
+function fingerprintText(value: string | undefined): string | null {
+  return value ? clampText(value, 4_000) : null;
+}
+
+function eventEndDate(event: HistoricalEventSnapshot) {
+  if (event.end_date) return event.end_date;
+  return event.start_date ? null : (event.date ?? null);
+}
+
+function fingerprintCalendarRevision(calendar?: WorldCalendar): number | null {
+  return calendar ? getCalendarRevision(calendar) : null;
+}
+
 /**
  * Deterministic synchronous digest over canonical Vault event snapshot fields.
  */
@@ -117,14 +130,14 @@ function computeHistoricalEventFingerprintWithFacts(
     type: event.type.trim(),
     title: clampText(event.title),
     startDate: event.start_date ?? event.date ?? null,
-    endDate: event.end_date ?? (event.start_date ? null : (event.date ?? null)),
+    endDate: eventEndDate(event),
     approximate: Boolean(event.approximate),
-    dateLabel: event.dateLabel ? clampText(event.dateLabel) : null,
-    content: event.content ? clampText(event.content, 4_000) : null,
-    lore: event.lore ? clampText(event.lore, 4_000) : null,
+    dateLabel: fingerprintText(event.dateLabel),
+    content: fingerprintText(event.content),
+    lore: fingerprintText(event.lore),
     documentedFacts,
     relevantEntityRefs,
-    calendarRevision: calendar ? getCalendarRevision(calendar) : null,
+    calendarRevision: fingerprintCalendarRevision(calendar),
   });
   return (
     fnv1a32(payload, 0x811c9dc5) +
@@ -173,6 +186,25 @@ function normalizeDocumentedFact(
   return { id, text };
 }
 
+function appendDocumentedFacts(
+  source: string,
+  maxChars: number,
+  facts: HistoricalAnchorDocumentedFact[],
+): { scannedChars: number; full: boolean } {
+  const boundedSource = source.slice(0, maxChars);
+  for (const line of boundedSource.matchAll(/[^\r\n]+|\r?\n+/g)) {
+    for (const segment of line[0].split(/(?<=[.!?])\s+/)) {
+      const text = clampText(segment);
+      if (!text) continue;
+      facts.push({ id: `anchor-fact-${facts.length + 1}`, text });
+      if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) {
+        return { scannedChars: boundedSource.length, full: true };
+      }
+    }
+  }
+  return { scannedChars: boundedSource.length, full: false };
+}
+
 function deriveDocumentedFacts(
   event: HistoricalEventSnapshot,
 ): HistoricalAnchorDocumentedFact[] {
@@ -180,18 +212,13 @@ function deriveDocumentedFacts(
   let scannedChars = 0;
   for (const source of [event.content, event.lore]) {
     if (!source || scannedChars >= MAX_FACT_SOURCE_CHARS) continue;
-    const boundedSource = source.slice(0, MAX_FACT_SOURCE_CHARS - scannedChars);
-    scannedChars += boundedSource.length;
-    const segments = boundedSource.matchAll(/[^\r\n]+|\r?\n+/g);
-    for (const line of segments) {
-      const sentences = line[0].split(/(?<=[.!?])\s+/);
-      for (const segment of sentences) {
-        const text = clampText(segment);
-        if (!text) continue;
-        facts.push({ id: `anchor-fact-${facts.length + 1}`, text });
-        if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) return facts;
-      }
-    }
+    const result = appendDocumentedFacts(
+      source,
+      MAX_FACT_SOURCE_CHARS - scannedChars,
+      facts,
+    );
+    scannedChars += result.scannedChars;
+    if (result.full) return facts;
   }
   if (facts.length === 0 && event.title.trim()) {
     return [{ id: "anchor-fact-1", text: clampText(event.title) }];
