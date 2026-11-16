@@ -296,6 +296,13 @@ export const AdventureJsonV1Schema = z
     secrets: z.array(SecretSchema),
     endings: z.array(EndingSchema),
     unresolved: z.array(UnresolvedSchema),
+    /** Namespaced JSON metadata reserved for forward-compatible tool extensions. */
+    extensions: z
+      .record(
+        z.string().regex(/^(?:[a-zA-Z0-9_-]+\.)+[a-zA-Z0-9_-]+$/),
+        z.json(),
+      )
+      .optional(),
   })
   .strict();
 

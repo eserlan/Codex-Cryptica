@@ -121,9 +121,6 @@ function mapSceneBranches(
     mapped.push({
       targetSceneId,
       description: branch.description,
-      ...(scene.optionalBranch !== undefined
-        ? { optional: scene.optionalBranch }
-        : {}),
     });
   }
   return mapped;
@@ -133,9 +130,10 @@ function collectReachableSceneIds(scenes: AdventureJsonScene[]): Set<string> {
   const sceneById = new Map(scenes.map((s) => [s.id, s]));
   const reachable = new Set<string>([scenes[0]!.id]);
   const queue: string[] = [scenes[0]!.id];
+  let queueIndex = 0;
 
-  while (queue.length > 0) {
-    const scene = sceneById.get(queue.shift()!);
+  while (queueIndex < queue.length) {
+    const scene = sceneById.get(queue[queueIndex++]!);
     for (const branch of scene?.branches ?? []) {
       if (!reachable.has(branch.targetSceneId)) {
         reachable.add(branch.targetSceneId);
@@ -243,7 +241,7 @@ function convertActors(
   return sourcePkg.npcs.map((npc) => {
     const section = sectionBySourceId.get(npc.sourceId);
     return {
-      id: allocateId(`actor-${toSlug(npc.name)}`),
+      id: allocateId(`actor-${npc.sourceId}`),
       name: npc.name,
       summary: summarizeText(section?.body ?? npc.motivation, npc.name),
       ...(section?.body ? { description: section.body } : {}),
@@ -399,10 +397,13 @@ export function adventureSourcePackageToAdventureJson(
   const title = (
     sourcePkg.sourceIdentity.title ?? sourcePkg.sourceIdentity.fileName
   ).slice(0, 200);
-  const overviewSection = sourcePkg.sections[0];
+  const overviewSection = sourcePkg.sections.find((section) => !section.gmOnly);
   const firstSceneSection = sourcePkg.scenes[0]
     ? sectionBySourceId.get(sourcePkg.scenes[0].sourceId)
     : undefined;
+  const visibleFirstSceneSection = firstSceneSection?.gmOnly
+    ? undefined
+    : firstSceneSection;
 
   const extraUnresolved: AdventureJsonUnresolved[] = [];
   const scenes = convertScenes(
@@ -423,7 +424,7 @@ export function adventureSourcePackageToAdventureJson(
         overviewSection?.body ||
         `Imported from ${sourcePkg.sourceIdentity.fileName}.`,
       hook:
-        firstSceneSection?.body ||
+        visibleFirstSceneSection?.body ||
         overviewSection?.body ||
         `Adventure imported from ${sourcePkg.sourceIdentity.fileName}.`,
     },
