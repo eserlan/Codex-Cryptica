@@ -71,6 +71,22 @@ describe("Mystery & Investigation generator", () => {
       "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
     );
     expect(first.lore).not.toBe(first.content);
+    const rows = first.lore
+      .split("\n")
+      .filter((line) => line.startsWith("| ") && !line.startsWith("|---"))
+      .filter((line) => !line.startsWith("| Actor |"));
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toContain("stalls or goes unopposed before the deadline");
+    expect(rows[0]).toContain("moves or conceals a corroborating record");
+    expect(rows[1]).toContain(
+      "Questioned under pressure or offered protection",
+    );
+    expect(rows[1]).toContain(
+      "Cross-check the receipt time against the courier route change",
+    );
+    expect(rows[2]).toContain("stalls without direct contact");
+    expect(rows[2]).toContain("watches quietly without escalating");
+    expect(rows[2]).toContain("| None |");
     const names = [...first.content.matchAll(/\*\*([^*]+) —/g)].map(
       (match) => match[1],
     );

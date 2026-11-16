@@ -125,6 +125,11 @@ describe("renderGeneratorMarkdown", () => {
     expect(table).not.toBeNull();
     expect(table?.parentElement?.className).toContain("overflow-x-auto");
     expect(table?.parentElement?.className).toContain("max-w-full");
+    expect(table?.parentElement?.getAttribute("tabindex")).toBe("0");
+    expect(table?.parentElement?.getAttribute("role")).toBe("region");
+    expect(table?.parentElement?.getAttribute("aria-label")).toBe(
+      "Scrollable table; use the left and right arrow keys to view all columns",
+    );
   });
 });
 

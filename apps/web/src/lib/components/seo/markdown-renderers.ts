@@ -98,7 +98,7 @@ export function renderGeneratorMarkdown(
   );
   return html.replace(
     /<table\b[^>]*>[\s\S]*?<\/table>/g,
-    '<div class="overflow-x-auto max-w-full my-3">$&</div>',
+    '<div class="markdown-table-scroll overflow-x-auto max-w-full my-3" tabindex="0" role="region" aria-label="Scrollable table; use the left and right arrow keys to view all columns">$&</div>',
   );
 }
 

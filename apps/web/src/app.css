@@ -812,6 +812,10 @@
   background: color-mix(in srgb, var(--color-theme-surface) 80%, transparent);
   white-space: nowrap;
 }
+.markdown-table-scroll:focus-visible {
+  outline: 2px solid var(--color-theme-primary);
+  outline-offset: 3px;
+}
 .seo-rail.seo-md table {
   font-size: 0.8125rem;
 }
