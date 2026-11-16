@@ -111,57 +111,66 @@ export class AdventureEvaluationRunner {
     const commitNow =
       this.options.commitNow ?? (() => new Date(now()).toISOString());
 
-    return Promise.all(
-      this.providers.map(async (provider) => {
-        const results: AdventureEvaluationCaseResult[] = [];
-        for (const testCase of cases) {
-          results.push(await this.runCase(testCase, provider, now, commitNow));
-        }
+    const runProvider = async (
+      provider: string,
+    ): Promise<AdventureEvaluationResult> => {
+      const results: AdventureEvaluationCaseResult[] = [];
+      for (const testCase of cases) {
+        results.push(await this.runCase(testCase, provider, now, commitNow));
+      }
 
-        const telemetry = results.reduce<AdventureEvaluationTelemetry>(
-          (acc, item) => ({
-            modelCalls: acc.modelCalls + item.telemetry.modelCalls,
-            retrievalHydrations:
-              acc.retrievalHydrations + item.telemetry.retrievalHydrations,
-            serializedStateChars: Math.max(
-              acc.serializedStateChars,
-              item.telemetry.serializedStateChars,
-            ),
-            generationInputChars: Math.max(
-              acc.generationInputChars,
-              item.telemetry.generationInputChars,
-            ),
-            durationMs: acc.durationMs + item.telemetry.durationMs,
-            expansionCount: acc.expansionCount + item.telemetry.expansionCount,
-          }),
-          emptyTelemetry(),
-        );
+      const telemetry = results.reduce<AdventureEvaluationTelemetry>(
+        (acc, item) => ({
+          modelCalls: acc.modelCalls + item.telemetry.modelCalls,
+          retrievalHydrations:
+            acc.retrievalHydrations + item.telemetry.retrievalHydrations,
+          serializedStateChars: Math.max(
+            acc.serializedStateChars,
+            item.telemetry.serializedStateChars,
+          ),
+          generationInputChars: Math.max(
+            acc.generationInputChars,
+            item.telemetry.generationInputChars,
+          ),
+          durationMs: acc.durationMs + item.telemetry.durationMs,
+          expansionCount: acc.expansionCount + item.telemetry.expansionCount,
+        }),
+        emptyTelemetry(),
+      );
 
-        const agency = aggregateScores(results.map((r) => r.agency));
-        const secrecy = aggregateScores(results.map((r) => r.secrecy));
-        const continuity = aggregateScores(results.map((r) => r.continuity));
-        const canonSafety = aggregateScores(results.map((r) => r.canonSafety));
-        const consequenceCredibility = aggregateScores(
-          results.map((r) => r.consequenceCredibility),
-        );
-        const unnecessaryEscalation = aggregateScores(
-          results.map((r) => r.unnecessaryEscalation),
-        );
+      const agency = aggregateScores(results.map((r) => r.agency));
+      const secrecy = aggregateScores(results.map((r) => r.secrecy));
+      const continuity = aggregateScores(results.map((r) => r.continuity));
+      const canonSafety = aggregateScores(results.map((r) => r.canonSafety));
+      const consequenceCredibility = aggregateScores(
+        results.map((r) => r.consequenceCredibility),
+      );
+      const unnecessaryEscalation = aggregateScores(
+        results.map((r) => r.unnecessaryEscalation),
+      );
 
-        return {
-          provider,
-          cases: results,
-          agency,
-          secrecy,
-          continuity,
-          canonSafety,
-          consequenceCredibility,
-          unnecessaryEscalation,
-          passed: results.every((r) => r.passed),
-          telemetry,
-        };
-      }),
-    );
+      return {
+        provider,
+        cases: results,
+        agency,
+        secrecy,
+        continuity,
+        canonSafety,
+        consequenceCredibility,
+        unnecessaryEscalation,
+        passed: results.length > 0 && results.every((r) => r.passed),
+        telemetry,
+      };
+    };
+
+    if (this.options.getRetrievalHydrations) {
+      const results: AdventureEvaluationResult[] = [];
+      for (const provider of this.providers) {
+        results.push(await runProvider(provider));
+      }
+      return results;
+    }
+    return Promise.all(this.providers.map(runProvider));
   }
 
   private async runCase(
@@ -259,7 +268,7 @@ export class AdventureEvaluationRunner {
       },
       { modelName: provider },
     );
-    const nextSession = commitProposal(
+    const commit = commitProposal(
       previousSession,
       proposal,
       testCase,
@@ -273,12 +282,13 @@ export class AdventureEvaluationRunner {
         step,
         proposal,
         previousSession,
-        nextSession,
+        commit.session,
+        commit.failed,
         anchors,
         relevant,
       ),
     );
-    state.currentSession = nextSession;
+    state.currentSession = commit.session;
   }
 
   private async resolveStepContext(
@@ -374,8 +384,8 @@ function commitProposal(
   step: AdventureEvaluationStep,
   index: number,
   commitNow: () => string,
-): AdventureSession {
-  if (proposal.kind !== "complete") return session;
+): { session: AdventureSession; failed: boolean } {
+  if (proposal.kind !== "complete") return { session, failed: false };
   const metadata = {
     turnId: `${testCase.id}-turn-${index + 1}`,
     inputId: `${testCase.id}-input-${index + 1}`,
@@ -386,7 +396,9 @@ function commitProposal(
     step.phase === "roll-resolution"
       ? resolveRecordedRoll(session, proposal, metadata)
       : applyCompletedTurn(session, proposal, metadata);
-  return committed.ok ? committed.value : session;
+  return committed.ok
+    ? { session: committed.value, failed: false }
+    : { session, failed: true };
 }
 
 function makeEvaluationTurn(
@@ -395,6 +407,7 @@ function makeEvaluationTurn(
   proposal: AdventureTurnProposal,
   previousSession: AdventureSession,
   session: AdventureSession,
+  commitFailed: boolean,
   anchors: ResolvedSourceExcerpt[],
   relevant: ResolvedSourceExcerpt[],
 ): EvaluationTurn {
@@ -406,6 +419,7 @@ function makeEvaluationTurn(
     playerCharacterName: testCase.playerCharacterName,
     playerAction: step.playerAction,
     proposal,
+    ...(commitFailed ? { commitFailed: true } : {}),
     previousSession,
     session,
     canaries: step.canaries ?? testCase.canaries,

@@ -115,6 +115,17 @@ function makeSession(): AdventureSession {
 }
 
 describe("AdventureEvaluationRunner", () => {
+  it("does not pass providers when there are no evaluation cases", async () => {
+    const runner = new AdventureEvaluationRunner({ generate: vi.fn() }, [
+      "empty-provider",
+    ]);
+
+    const [result] = await runner.run([]);
+
+    expect(result?.cases).toEqual([]);
+    expect(result?.passed).toBe(false);
+  });
+
   it("rejects when using the unconfigured default singleton", async () => {
     await expect(
       adventureEvaluationRunner.run([
@@ -268,6 +279,75 @@ describe("AdventureEvaluationRunner", () => {
 
     expect(result?.continuity).toBe(1);
     expect(result?.passed).toBe(true);
+  });
+
+  it("fails continuity when a complete proposal is rejected without a pending roll", async () => {
+    const runner = new AdventureEvaluationRunner(
+      {
+        generate: vi.fn(async () =>
+          completeProposal({ revealSecretIds: ["unknown-secret"] }),
+        ),
+      },
+      ["stub-provider"],
+      { commitNow: () => now },
+    );
+
+    const [result] = await runner.run([
+      {
+        id: "rejected-completion-case",
+        session: makeSession(),
+        playerAction: "Look around the market.",
+        playerCharacterName: "Kestrel",
+        canaries: [],
+      },
+    ]);
+
+    expect(result?.continuity).toBe(0);
+    expect(result?.passed).toBe(false);
+  });
+
+  it("attributes shared retrieval hydration counts to serialized providers", async () => {
+    let hydrations = 0;
+    const grounding = {
+      prepare: async ({ session }: { session: AdventureSession }) => {
+        await Promise.resolve();
+        hydrations += 1;
+        return {
+          vaultId: session.vaultId,
+          sessionId: session.id,
+          revision: session.revision,
+          purpose: "action" as const,
+          anchors: [],
+          relevant: [],
+          sessionKnowledge: {} as any,
+        };
+      },
+    };
+    const runner = new AdventureEvaluationRunner(
+      {
+        generate: vi.fn(async () => completeProposal()),
+      },
+      ["provider-a", "provider-b"],
+      {
+        grounding,
+        getRetrievalHydrations: () => hydrations,
+        commitNow: () => now,
+      },
+    );
+
+    const results = await runner.run([
+      {
+        id: "shared-counter-case",
+        session: makeSession(),
+        playerAction: "Look around the market.",
+        playerCharacterName: "Kestrel",
+        canaries: [],
+      },
+    ]);
+
+    expect(
+      results.map((result) => result.telemetry.retrievalHydrations),
+    ).toEqual([1, 1]);
   });
 
   it("applies a case-level roll-resolution phase to multi-turn steps", async () => {

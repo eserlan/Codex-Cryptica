@@ -12,6 +12,7 @@ export interface EvaluationTurn {
   narration: string;
   playerCharacterName?: string;
   proposal: AdventureTurnProposal;
+  commitFailed?: boolean;
   playerAction?: string;
   previousSession?: AdventureSession;
   session?: AdventureSession;
@@ -270,6 +271,7 @@ function scenarioProgressionValid(
 }
 
 export function scoreContinuity(turn: EvaluationTurn): number {
+  if (turn.commitFailed) return 0;
   const next = turn.session;
   const prev = turn.previousSession;
   if (!next) return 1;
@@ -381,12 +383,20 @@ function hasUnattributedCanonicalFacts(
 ): boolean {
   if (!next) return false;
   const visible = [
+    ...(next.visibleState.location ? [next.visibleState.location] : []),
+    ...(next.visibleState.situation ? [next.visibleState.situation] : []),
     ...next.visibleState.knownFacts,
     ...next.visibleState.activeCharacters,
     ...next.visibleState.objectives,
+    ...next.visibleState.relationships,
   ];
   return visible.some(
-    (fact) => fact.source === "canonical" && !fact.sourceRecordId,
+    (fact) =>
+      fact.source === "canonical" &&
+      (!fact.sourceRecordId ||
+        !next.sourceRecords.some(
+          (record) => record.recordId === fact.sourceRecordId,
+        )),
   );
 }
 
@@ -593,7 +603,7 @@ export function evaluateAdventureRun(
   );
   return {
     scores,
-    passed: failures.length === 0,
+    passed: evaluated.length > 0 && failures.length === 0,
     failures,
     turns: evaluated,
   };

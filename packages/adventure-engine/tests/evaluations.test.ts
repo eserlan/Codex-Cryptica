@@ -335,6 +335,42 @@ describe("adventure rubric evaluations", () => {
     ).toBe(0);
   });
 
+  it("requires canonical location and situation facts to reference a source record", () => {
+    const prev = makeSession();
+    for (const visibleState of [
+      {
+        ...prev.visibleState,
+        location: {
+          id: "location-1",
+          text: "Oakhaven",
+          source: "canonical" as const,
+        },
+      },
+      {
+        ...prev.visibleState,
+        situation: {
+          id: "situation-1",
+          text: "Market day",
+          source: "canonical" as const,
+          sourceRecordId: "missing-record",
+        },
+      },
+    ]) {
+      expect(
+        scoreCanonSafety({
+          narration: "The market is busy.",
+          proposal: completeProposal(),
+          previousSession: prev,
+          session: makeSession({ visibleState }),
+        }),
+      ).toBe(0);
+    }
+  });
+
+  it("does not pass an empty run", () => {
+    expect(evaluateAdventureRun([]).passed).toBe(false);
+  });
+
   it("detects consequence credibility failures for unknown threads, multi-stage jumps, and same-turn reveal+elaboration", () => {
     const prev = makeSession();
     const unknownThread = completeProposal({
