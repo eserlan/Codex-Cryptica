@@ -40,12 +40,12 @@ If you and someone else change the same part of an entry, Codex Cryptica keeps b
 
 ## Deleted entities and the trash
 
-When someone in the group deletes an entity, it disappears for everyone, but it is kept for 30 days. Any member can bring it back.
+When someone in the group deletes an entity, it disappears for everyone, but it is kept for up to 30 days, subject to the 50 MB trash limit. Any member can bring it back.
 
 - **Undo:** when another member's delete reaches you, a message such as "Mara deleted Old Dock" appears with an **Undo** button. It stays for a few seconds.
 - **Trash panel:** in **Settings → Vault → Cloud Backup**, the **Trash** section lists what was deleted, who deleted it, when, and how many days are left. Choose **Restore** to bring an entity back for the whole group.
 - **After 30 days** a deleted entity is removed for good.
-- **When the trash is full:** the group's trash has a size limit. When it fills up, the oldest items lose their content and show "Can't be restored".
+- **When the trash is full:** the group's trash has a 50 MB size limit. When it fills up, the oldest items lose their restorable content early and show "Can't be restored". A warning notice appears when syncing or rolling back causes older items to lose their content early.
 - **Edited before the delete arrived:** if you changed an entity before someone else's delete reached you, Codex Cryptica keeps your version.
 
 A restored entity keeps its own links, but entities that linked to it before it was deleted do not get those links back.
@@ -62,7 +62,7 @@ Before anything changes you see a summary with three numbers:
 
 - **Will change:** items that exist both then and now but differ. They go back to how they were.
 - **Will come back from the trash:** items that were deleted since that day. They return.
-- **Will go to the trash:** items that did not exist that day. They are not lost: they go to the shared trash and can be restored for 30 days.
+- **Will go to the trash:** items that did not exist that day. They are not lost: they go to the shared trash and can be restored for up to 30 days, subject to the 50 MB trash limit.
 
 Nothing is erased. Members receive the result on their next sync and do not need to rejoin. Changes a member has made but not yet synced are kept by the usual rules. Session journals and adventures are not rolled back, because they are never shared with the group.
 

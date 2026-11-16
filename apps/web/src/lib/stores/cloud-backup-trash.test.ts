@@ -275,4 +275,26 @@ describe("CloudBackupTrash", () => {
     expect(h.local.get("a")?.title).toBe("Newer");
     expect((await h.dirty.snapshot("v-1")).map((row) => row.id)).toEqual(["a"]);
   });
+
+  it("tracks usedBytes and maxBytes and resets them on vault switch or failure", async () => {
+    const h = await setup({
+      trash: [
+        ok({
+          revision: 2,
+          items: [],
+          usedBytes: 1234,
+          maxBytes: 52_428_800,
+        }),
+        { ok: false, status: 500, body: null },
+      ],
+    });
+    await h.store.trash.load("v-1");
+    expect(h.store.trash.usedBytes).toBe(1234);
+    expect(h.store.trash.maxBytes).toBe(52_428_800);
+
+    h.setActiveVaultId("v-2");
+    await h.store.trash.load("v-2");
+    expect(h.store.trash.usedBytes).toBeNull();
+    expect(h.store.trash.maxBytes).toBeNull();
+  });
 });

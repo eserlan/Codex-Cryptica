@@ -21,11 +21,12 @@ const preview = (changed = 1, returning = 0, trashed = 0) => ({
 function setup() {
   let active = "v-1";
   const afterRollback = vi.fn(async () => {});
+  const notify = vi.fn();
   const store = new CloudBackupRollback(
-    () => ({ runtime: {}, activeVaultId: () => active }) as never,
+    () => ({ runtime: {}, activeVaultId: () => active, notify }) as never,
     afterRollback,
   );
-  return { store, afterRollback, switchVault: () => (active = "v-2") };
+  return { store, afterRollback, notify, switchVault: () => (active = "v-2") };
 }
 
 beforeEach(() => {
@@ -138,5 +139,28 @@ describe("CloudBackupRollback", () => {
     });
     await other.store.load("v-1");
     expect(other.store.points).toEqual([]);
+  });
+
+  it("notifies and retains trashEvicted on result when rollback evicts trash", async () => {
+    const { store, notify } = setup();
+    const evicted = {
+      evictedCount: 4,
+      usedBytes: 49 * 1024 * 1024,
+      maxBytes: 50 * 1024 * 1024,
+    };
+    api.rollBackCloudBackup.mockResolvedValue({
+      kind: "rolledBack",
+      counts: { changed: 1, returning: 0, trashed: 5 },
+      trashEvicted: evicted,
+    });
+    await store.rollBack("v-1", POINT.date, 7);
+    expect(store.result).toEqual({
+      outcome: "rolledBack",
+      date: POINT.date,
+      trashEvicted: evicted,
+    });
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0][0]).toContain("50 MB");
+    expect(notify.mock.calls[0][0]).toContain("4 older deleted items");
   });
 });

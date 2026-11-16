@@ -13,6 +13,7 @@ import type { CloudBackupDirtyRow } from "./cloud-backup-dirty";
 import {
   BACKUP_OFF,
   blockedFrom,
+  trashEvictionNotice,
   type CloudBackupDepsProvider,
   type CloudBackupViewState,
   type MapAssetPreparer,
@@ -236,10 +237,11 @@ export class CloudBackupUploads {
     // writes, so disable can wait before persisting the off record.
     this.sentRows = sent;
     const out = await this.dispatchScopedUpload(vaultId, opts, sent, signal);
-    return this.finalizePushOperation(out, this.sentRows, signal);
+    return this.finalizePushOperation(vaultId, out, this.sentRows, signal);
   }
 
   private async finalizePushOperation(
+    vaultId: string,
     out: SnapshotOutcome,
     sent: readonly CloudBackupDirtyRow[],
     signal: AbortSignal,
@@ -249,6 +251,9 @@ export class CloudBackupUploads {
       await this.recordBase();
       await this.deps!.dirty?.clearSent(sent);
       if (this.editor) this.state.keptLocal = this.kept;
+      if (out.trashEvicted && this.deps?.activeVaultId() === vaultId) {
+        this.deps.notify?.(trashEvictionNotice(out.trashEvicted));
+      }
     }
     // An editor never has a conflict to resolve: the failure just retries.
     if (this.editor && out.conflict) return { ok: false, error: out.error };
@@ -584,7 +589,9 @@ export class CloudBackupUploads {
     }
     if (!result.value) return BACKUP_OFF;
     this.state.lastPushedAt = result.value.lastPushedAt;
-    return { ok: true };
+    return result.trashEvicted
+      ? { ok: true, trashEvicted: result.trashEvicted }
+      : { ok: true };
   }
 
   /** The backup lost a map file the cache said it held: upload it again next time. */

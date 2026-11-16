@@ -11,11 +11,30 @@
   let { vaultId }: { vaultId: string } = $props();
 
   const DAY_MS = 24 * 60 * 60 * 1000;
+  const maxTrashMb = Math.round(CLOUD_BACKUP_LIMITS.maxTrashBytes / (1024 * 1024));
   const trash = cloudBackupStore.trash;
   const ago = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 
   const items = $derived(trash.loadedVaultId === vaultId ? trash.items : []);
+  const usedBytes = $derived(
+    trash.loadedVaultId === vaultId ? trash.usedBytes : null,
+  );
+  const maxBytes = $derived(
+    trash.loadedVaultId === vaultId ? trash.maxBytes : null,
+  );
+  const hasEvictedItems = $derived(items.some((item) => !item.restorable));
+  const nearCapacity = $derived(
+    usedBytes !== null && maxBytes !== null && usedBytes >= maxBytes * 0.8,
+  );
   const loadState = $derived(trash.loadState);
+
+  function formatTrashBytes(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) {
+      return `${(bytes / 1024).toFixed(1).replace(/\.0$/, "")} KB`;
+    }
+    return `${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, "")} MB`;
+  }
 
   $effect(() => {
     if (vaultId) void trash.load(vaultId);
@@ -109,9 +128,36 @@
       </button>
     </div>
     <p class="mt-1">
-      Deleted entities stay here for {CLOUD_BACKUP_LIMITS.trashRetentionDays} days.
-      Any member can restore them.
+      Deleted items stay restorable for up to
+      {CLOUD_BACKUP_LIMITS.trashRetentionDays} days, subject to the
+      {maxTrashMb} MB trash limit. Any member can restore them.
     </p>
+    {#if usedBytes !== null && maxBytes !== null}
+      <p class="mt-1 text-xs">
+        Trash storage: {formatTrashBytes(usedBytes)} of
+        {formatTrashBytes(maxBytes)} used
+      </p>
+    {/if}
+    {#if hasEvictedItems || nearCapacity}
+      <div
+        class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
+      >
+        <span
+          class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-warning"
+          aria-hidden="true"
+        ></span>
+        <p>
+          {#if hasEvictedItems}
+            Some older items lost their restorable content because the shared
+            trash reached its {maxTrashMb} MB limit.
+          {:else}
+            Shared trash is nearly full. Deleting more items may remove the
+            oldest restorable content before
+            {CLOUD_BACKUP_LIMITS.trashRetentionDays} days.
+          {/if}
+        </p>
+      </div>
+    {/if}
 
     <p class="mt-2 empty:hidden" role="status">{resultText ?? ""}</p>
 

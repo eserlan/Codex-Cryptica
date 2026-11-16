@@ -5,6 +5,7 @@
    * the trash.
    */
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
+  import { trashEvictionNotice } from "#lib/stores/cloud-backup-types.js";
 
   let {
     vaultId,
@@ -73,15 +74,26 @@
       : null;
   });
 
+  const rollbackEvictionWarning = $derived.by(() => {
+    const result = rollback.result;
+    if (!result || rollback.resultVaultId !== vaultId) return null;
+    if (result.outcome !== "rolledBack" || !result.trashEvicted) return null;
+    return trashEvictionNotice(result.trashEvicted);
+  });
+
   async function start(date: string) {
     const counts = await rollback.preview(vaultId, date);
     if (!counts) return;
+    const evictionWarning = counts.trashEvicted
+      ? ` This will push the shared trash past its 50 MB limit and remove restorable content early from ${plural(counts.trashEvicted.evictedCount, "older trash item", "older trash items")}.`
+      : "";
     const message =
       `${plural(counts.changed, "item", "items")} will change, ` +
       `${counts.returning} will come back from the trash and ` +
       `${counts.trashed} will go to the trash. ` +
       "Everyone in the group gets these changes when they next sync. " +
-      "Anything sent to the trash can be restored for 30 days.";
+      "Anything sent to the trash can be restored for up to 30 days, subject to the 50 MB trash limit." +
+      evictionWarning;
     const accepted = await confirm({
       title: `Roll back to ${dayLabel(date)}?`,
       message,
@@ -138,6 +150,17 @@
     </p>
 
     <p class="mt-2 empty:hidden" role="status">{resultText ?? ""}</p>
+    {#if rollbackEvictionWarning}
+      <div
+        class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
+      >
+        <span
+          class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-warning"
+          aria-hidden="true"
+        ></span>
+        <p>{rollbackEvictionWarning}</p>
+      </div>
+    {/if}
     <p class="mt-2 text-theme-danger empty:hidden" role="alert">
       {errorText ?? listError ?? ""}
     </p>

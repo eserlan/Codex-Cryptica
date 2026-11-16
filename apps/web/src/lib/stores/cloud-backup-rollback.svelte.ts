@@ -1,10 +1,14 @@
+import type { CloudBackupTrashEviction } from "schema";
 import {
   fetchCloudBackupRestorePoints,
   rollBackCloudBackup,
   type CloudBackupRestorePoint,
   type CloudBackupRollbackCounts,
 } from "@codex/cloud-backup-sync";
-import type { CloudBackupDepsProvider } from "./cloud-backup-types";
+import {
+  trashEvictionNotice,
+  type CloudBackupDepsProvider,
+} from "./cloud-backup-types";
 
 export type RestorePointsLoadState =
   "idle" | "loading" | "ready" | "unsupported" | "failed";
@@ -20,7 +24,11 @@ export class CloudBackupRollback {
   busyDate = $state<string | null>(null);
 
   /** What the last attempt did, for the panel to say. */
-  result = $state<{ outcome: RollbackOutcome; date: string } | null>(null);
+  result = $state<{
+    outcome: RollbackOutcome;
+    date: string;
+    trashEvicted?: CloudBackupTrashEviction;
+  } | null>(null);
   resultVaultId = $state<string | null>(null);
   private loadRequest = 0;
 
@@ -68,7 +76,12 @@ export class CloudBackupRollback {
   async preview(
     vaultId: string,
     date: string,
-  ): Promise<({ revision: number } & CloudBackupRollbackCounts) | null> {
+  ): Promise<
+    ({
+      revision: number;
+      trashEvicted?: CloudBackupTrashEviction;
+    } & CloudBackupRollbackCounts) | null
+  > {
     const deps = this.getDeps();
     if (!deps || this.busyDate) return null;
     this.busyDate = date;
@@ -108,7 +121,10 @@ export class CloudBackupRollback {
       });
       if (deps.activeVaultId() !== vaultId) return;
       if (outcome.kind === "rolledBack") {
-        this.setResult(vaultId, "rolledBack", date);
+        this.setResult(vaultId, "rolledBack", date, outcome.trashEvicted);
+        if (outcome.trashEvicted) {
+          deps.notify?.(trashEvictionNotice(outcome.trashEvicted));
+        }
         await this.afterRollback(vaultId);
         await this.load(vaultId);
       } else {
@@ -136,8 +152,13 @@ export class CloudBackupRollback {
     vaultId: string,
     outcome: RollbackOutcome,
     date: string,
+    trashEvicted?: CloudBackupTrashEviction,
   ): void {
-    this.result = { outcome, date };
+    this.result = {
+      outcome,
+      date,
+      ...(trashEvicted ? { trashEvicted } : {}),
+    };
     this.resultVaultId = vaultId;
   }
 }

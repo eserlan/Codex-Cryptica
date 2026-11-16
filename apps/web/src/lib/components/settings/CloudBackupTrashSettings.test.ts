@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const trash = vi.hoisted(() => ({
   items: [] as any[],
+  usedBytes: null as number | null,
+  maxBytes: null as number | null,
   loadedVaultId: "v1" as string | null,
   loadState: "ready" as string,
   restoring: new Set<string>(),
@@ -33,6 +35,8 @@ beforeEach(() => {
   vi.setSystemTime(NOW);
   Object.assign(trash, {
     items: [],
+    usedBytes: null,
+    maxBytes: null,
     loadedVaultId: "v1",
     loadState: "ready",
     restoring: new Set(),
@@ -165,5 +169,33 @@ describe("CloudBackupTrashSettings", () => {
     trash.result = { outcome, title: "Old Dock" };
     render(CloudBackupTrashSettings, { vaultId: "v1" });
     expect(screen.getByRole("status").textContent).toBe(text);
+  });
+
+  it("qualifies retention copy, shows usage when available, and omits it when null", () => {
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(
+      screen.getByText(/up to 30 days, subject to the 50 MB trash limit/i),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Trash storage:/)).toBeNull();
+
+    trash.usedBytes = 10 * 1024 * 1024;
+    trash.maxBytes = 50 * 1024 * 1024;
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(screen.getByText("Trash storage: 10 MB of 50 MB used")).toBeTruthy();
+  });
+
+  it("shows a warning notice when trash is near capacity or has evicted items", () => {
+    trash.usedBytes = 40 * 1024 * 1024;
+    trash.maxBytes = 50 * 1024 * 1024;
+    const { unmount } = render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(screen.getByText(/Shared trash is nearly full/i)).toBeTruthy();
+    unmount();
+
+    trash.usedBytes = 1024;
+    trash.items = [item({ restorable: false })];
+    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    expect(
+      screen.getByText(/Some older items lost their restorable content/i),
+    ).toBeTruthy();
   });
 });
