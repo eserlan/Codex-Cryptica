@@ -58,6 +58,32 @@ class TestMuseWorkflowScript(unittest.TestCase):
         self.assertIn("model: sel.model", source)
         self.assertIn("args.repo", source)
 
+    def test_workflow_uses_configured_models_and_quotes_queue_label(self):
+        workflow_url = WORKFLOW_PATH.resolve().as_uri()
+        script = f'''import workflow from {json.dumps(workflow_url)};
+const config = JSON.parse(await (await import("node:fs/promises")).readFile({json.dumps(str(FACTORY_DIR / "config.json"))}, "utf8"));
+config.muse_models.haiku = {{ model: "muse-configured-test", effort: "xhigh" }};
+const calls = [];
+const host = {{ args: {{ mode: "run", repo: "/repo", queue_label: "factory; touch /tmp/muse-workflow-audit; #" }}, agent: async (request) => {{
+  const command = request.input.match(/:\\n\\n([\\s\\S]*?)\\n\\nReturn exitCode/)[1];
+  calls.push({{ command, model: request.model, effort: request.effort }});
+  const stdout = command === "cat /repo/factory/config.json" ? JSON.stringify(config) : "";
+  return {{ data: {{ exitCode: 0, stdout }} }};
+}} }};
+await workflow(host);
+console.log(JSON.stringify(calls));'''
+        result = subprocess.run(
+            ["node", "--input-type=module", "-e", script], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        calls = json.loads(result.stdout.strip().splitlines()[-1])
+        self.assertEqual(calls[1]["model"], "muse-configured-test")
+        self.assertEqual(calls[1]["effort"], "xhigh")
+        self.assertIn(
+            "FACTORY_QUEUE_LABEL='factory; touch /tmp/muse-workflow-audit; #' ",
+            calls[1]["command"],
+        )
+
 
 class TestMuseSkill(unittest.TestCase):
     def test_skill_frontmatter_and_entry_points(self):
@@ -152,6 +178,39 @@ class TestMuseCosts(unittest.TestCase):
         self.assertIn("muse-spark-1.3", row["models"])
         # (10000*0.50 + 1000*2.50) / 1e6 at muse-spark-1.3 prices
         self.assertAlmostEqual(row["usd"], 0.0075, places=4)
+
+    def test_unknown_muse_model_is_reported_as_unpriced(self):
+        job = {"id": "001-help-describe-enter-your", "started": "2020-01-01T00:00:00Z",
+               "agents": {"reviewers": {}}}
+        with tempfile.TemporaryDirectory() as tmp:
+            sessions = Path(tmp)
+            self._write_session(sessions, job, [
+                {"input_tokens": 10000, "output_tokens": 1000, "cached_tokens": 100},
+            ], model="muse-unlisted-model")
+            with patch.dict(os.environ, {"MUSE_SESSIONS_DIR": str(sessions)}), \
+                 patch.object(self.job_mod, "transcripts_dir", return_value=Path(tmp) / "no-claude"), \
+                 patch.object(self.job_mod, "agy_transcript_files", return_value=[]):
+                total, by_agent = self.job_mod.job_costs(job)
+        row = by_agent["builder"]
+        self.assertEqual(total, 0)
+        self.assertEqual(row["usd"], 0)
+        self.assertFalse(row["pricing_complete"])
+        self.assertEqual(row["unpriced_models"], ["muse-unlisted-model"])
+        self.assertEqual(row["unpriced_tokens"], 11000)
+
+    def test_muse_session_discovery_uses_both_time_bounds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            paths = []
+            for name, mtime in (("before", 100), ("inside", 200), ("after", 300)):
+                session_dir = Path(tmp) / "2026" / "01" / "01" / name
+                session_dir.mkdir(parents=True)
+                path = session_dir / "session.jsonl"
+                path.write_text("{}\n")
+                os.utime(path, (mtime, mtime))
+                paths.append(path)
+            with patch.dict(os.environ, {"MUSE_SESSIONS_DIR": tmp}):
+                found = self.job_mod.muse_session_files(150, 250)
+        self.assertEqual(found, [paths[1]])
 
     def test_job_costs_bills_nested_child_not_parent(self):
         job = {"id": "001-help-describe-enter-your", "started": "2020-01-01T00:00:00Z",

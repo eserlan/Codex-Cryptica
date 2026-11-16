@@ -23,7 +23,7 @@ const TERMINAL_OR_WAITING = new Set(["merged", "rejected", "needs-info", "needs-
 // Claude/AGY tier names (config.json `muse_models` + `.claude/agents`
 // frontmatter) mapped to a Muse model and reasoning effort, mirroring the
 // Claude factory's opus/sonnet/haiku model split.
-const MODEL_MAP = {
+const DEFAULT_MODEL_MAP = {
   opus: { model: "muse-wonder-1.0", effort: "high" },
   pro: { model: "muse-wonder-1.0", effort: "high" },
   sonnet: { model: "muse-ember-1.0", effort: "medium" },
@@ -59,6 +59,7 @@ export default async function workflow(host) {
   const routeBin = `${factory}/bin/route`;
   const gateBin = `${factory}/bin/gate`;
   const modelOverride = wfArgs.model || null;
+  let museModels = DEFAULT_MODEL_MAP;
 
   const wfLog = (msg) => {
     try {
@@ -80,11 +81,11 @@ export default async function workflow(host) {
   // model id pins the model at medium effort, and an effort name keeps the
   // tier's model at that effort.
   function tierBase(tier) {
-    return MODEL_MAP[tier] || MODEL_MAP.sonnet;
+    return museModels[tier] || museModels.sonnet || DEFAULT_MODEL_MAP.sonnet;
   }
 
   function overrideSelection(tier) {
-    if (MODEL_MAP[modelOverride]) return MODEL_MAP[modelOverride];
+    if (museModels[modelOverride]) return museModels[modelOverride];
     if (modelOverride.startsWith("muse-")) return { model: modelOverride, effort: "medium" };
     const base = tierBase(tier);
     return EFFORT_TIERS.has(modelOverride)
@@ -146,6 +147,16 @@ export default async function workflow(host) {
     }
     return res;
   }
+
+  function shellQuote(value) {
+    return `'${String(value).replace(/'/g, `'\\''`)}'`;
+  }
+
+  // Bootstrap the workflow with the built-in command-runner model, then use
+  // the repository's config for every subsequent child selection.
+  const configText = (await runCmdChecked(`cat ${factory}/config.json`, "factory-config")).stdout;
+  const configuredModels = JSON.parse(configText).muse_models;
+  if (configuredModels && typeof configuredModels === "object") museModels = configuredModels;
 
   async function loadJob(jobId) {
     const res = await runCmdChecked(`cat ${jobsDir}/${jobId}/job.json`, `load-${jobId}`);
@@ -414,7 +425,7 @@ export default async function workflow(host) {
   }
 
   function queueCommand() {
-    const prefix = wfArgs.queue_label ? `FACTORY_QUEUE_LABEL=${wfArgs.queue_label} ` : "";
+    const prefix = wfArgs.queue_label ? `FACTORY_QUEUE_LABEL=${shellQuote(wfArgs.queue_label)} ` : "";
     return `${prefix}${jobBin} queue`;
   }
 

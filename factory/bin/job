@@ -291,7 +291,7 @@ def muse_sessions_dir():
     return data_home / "muse" / "sessions"
 
 
-def muse_session_files(since_epoch=0.0):
+def muse_session_files(since_epoch=0.0, until_epoch=None):
     """Top-level session logs plus nested workflow/subagent child logs.
 
     A parent session's own log contains every child's prompt in its spawn
@@ -306,19 +306,22 @@ def muse_session_files(since_epoch=0.0):
         if (path.parent / "subagent").is_dir():
             continue
         try:
-            if path.stat().st_mtime >= since_epoch:
+            modified = path.stat().st_mtime
+            if modified >= since_epoch and (until_epoch is None or modified <= until_epoch):
                 files.append(path)
         except OSError:
             continue
     return files
 
 
-def muse_records(path):
+def muse_records(path, text=None):
     """Yield parsed records from a Muse session.jsonl, unwrapping retained frames."""
-    try:
-        lines = path.read_text(errors="replace").splitlines()
-    except OSError:
-        return
+    if text is None:
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            return
+    lines = text.splitlines()
     for line in lines:
         try:
             entry = json.loads(line)
@@ -340,7 +343,7 @@ def infer_muse_agent_and_model(text, job):
     m_model = re.search(r"\bModel:\s*([a-z0-9_.-]+)\.", text)
     display = m_model.group(1) if m_model else "muse-wonder-1.0"
     prices = CONFIG["prices_usd_per_mtok"]
-    price_key = display if display in prices else "muse-wonder-1.0"
+    price_key = display if display in prices else None
     return agent, display, price_key
 
 
@@ -552,6 +555,15 @@ def job_costs(job):
         except ValueError:
             started_epoch = 0.0
 
+    ended_epoch = None
+    if job.get("ended"):
+        try:
+            ended_epoch = datetime.fromisoformat(job["ended"].replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            ended_epoch = None
+    if ended_epoch is None:
+        ended_epoch = datetime.now(timezone.utc).timestamp()
+
     for path in agy_transcript_files(started_epoch):
         try:
             with path.open() as f:
@@ -671,7 +683,7 @@ def job_costs(job):
                     if model not in row["unpriced_models"]:
                         row["unpriced_models"].append(model)
 
-    for path in muse_session_files(started_epoch):
+    for path in muse_session_files(started_epoch, ended_epoch):
         try:
             raw = path.read_text(errors="replace")
         except OSError:
@@ -684,9 +696,9 @@ def job_costs(job):
         if not re.search(r"Job:\s*\S+\.\s+" + re.escape(needle), raw):
             continue
         agent, display_model, price_key = infer_muse_agent_and_model(raw, job)
-        price = prices.get(price_key) or next(iter(prices.values()))
+        price = prices.get(price_key) if price_key else None
         usages = {}
-        for record in muse_records(path):
+        for record in muse_records(path, raw):
             payload = record.get("payload") or {}
             event = payload.get("event") or {}
             if event.get("kind") != "goal_usage_attribution":
@@ -698,7 +710,8 @@ def job_costs(job):
             continue
         row = by_agent.setdefault(agent, {
             "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
-            "cache_read_tokens": 0, "models": []})
+            "cache_read_tokens": 0, "models": [], "pricing_complete": True,
+            "unpriced_tokens": 0, "unpriced_models": []})
         row["spawns"] += 1
         for quantity in usages.values():
             # Muse quantities report total input including cached tokens,
@@ -711,7 +724,13 @@ def job_costs(job):
             if total_inp + out == 0:
                 continue
             u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
-            row["usd"] += message_usd(price, u)
+            if price:
+                row["usd"] += message_usd(price, u)
+            else:
+                row["pricing_complete"] = False
+                row["unpriced_tokens"] += inp + out + cache_r
+                if display_model not in row["unpriced_models"]:
+                    row["unpriced_models"].append(display_model)
             row["turns"] += 1
             row["input_tokens"] += inp
             row["output_tokens"] += out
