@@ -13,18 +13,10 @@ export const DEFAULT_APPROACHING_THRESHOLD_DAYS = 30;
 export type HistoricalAnchorPolicy = "preserve" | "alternate" | "discover";
 
 export type HistoricalAnchorProgressStatus =
-  | "upcoming"
-  | "approaching"
-  | "reached"
-  | "diverged"
-  | "unresolved";
+  "upcoming" | "approaching" | "reached" | "diverged" | "unresolved";
 
 export type HistoricalAnchorCausalKind =
-  | "setup"
-  | "turn"
-  | "world-time"
-  | "scenario-event"
-  | "manual";
+  "setup" | "turn" | "world-time" | "scenario-event" | "manual";
 
 export interface AdventureCalendarDate {
   year: number;
@@ -141,12 +133,10 @@ export interface HistoricalAnchorCompatibilitySuccess {
 }
 
 export type HistoricalAnchorCompatibilityResult =
-  | HistoricalAnchorCompatibilitySuccess
-  | HistoricalAnchorValidationFailure;
+  HistoricalAnchorCompatibilitySuccess | HistoricalAnchorValidationFailure;
 
 export type HistoricalAnchorCreationResult =
-  | { ok: true; anchor: HistoricalAnchor }
-  | HistoricalAnchorValidationFailure;
+  { ok: true; anchor: HistoricalAnchor } | HistoricalAnchorValidationFailure;
 
 export interface HistoricalAnchorDriftReport {
   status: "clean" | "vault-modified" | "vault-missing";
@@ -194,7 +184,9 @@ export interface GmHistoricalAnchorProjection {
   titleRevealed: boolean;
   startDate: AdventureCalendarDate;
   eventInterval: HistoricalDateInterval;
-  documentedFacts: Array<HistoricalAnchorDocumentedFact & { revealed: boolean }>;
+  documentedFacts: Array<
+    HistoricalAnchorDocumentedFact & { revealed: boolean }
+  >;
   openMechanisms: string[];
   relevantEntityRefs: HistoricalAnchorEntityRef[];
   progress: HistoricalAnchorProgress;

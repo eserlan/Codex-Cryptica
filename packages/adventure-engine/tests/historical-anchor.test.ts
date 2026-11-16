@@ -34,7 +34,12 @@ import {
   type AdventureSession,
   type HistoricalEventSnapshot,
 } from "../src";
-import { meta, now, proposal, session as makeSession } from "./reducer-fixtures";
+import {
+  meta,
+  now,
+  proposal,
+  session as makeSession,
+} from "./reducer-fixtures";
 
 const zeroEraCalendar: WorldCalendar = {
   useGregorian: false,
@@ -156,9 +161,7 @@ describe("HistoricalAnchor contract", () => {
     expect(prompt.behavior).toContain(
       "Do not invent missing calendar precision",
     );
-    expect(prompt.behavior).toContain(
-      'Historical anchor policy is "preserve"',
-    );
+    expect(prompt.behavior).toContain('Historical anchor policy is "preserve"');
   });
 
   it("AC3: validates all three policies, precisions, ranges, and zero/multi-era calendars with deterministic serialization", () => {
@@ -537,7 +540,9 @@ describe("HistoricalAnchor contract", () => {
     const diverged = transitionHistoricalAnchorProgress(baseSession, {
       expectedRevision: 0,
       status: "diverged",
-      causalRefs: [{ kind: "turn", refId: "turn-2", summary: "Saved the king" }],
+      causalRefs: [
+        { kind: "turn", refId: "turn-2", summary: "Saved the king" },
+      ],
       now,
     });
     expect(diverged.ok).toBe(true);
@@ -621,9 +626,9 @@ describe("HistoricalAnchor contract", () => {
     });
     expect(kept.ok).toBe(true);
     if (!kept.ok) return;
-    expect(
-      kept.session.historicalAnchor?.drift.rebaseDecisionRequired,
-    ).toBe(false);
+    expect(kept.session.historicalAnchor?.drift.rebaseDecisionRequired).toBe(
+      false,
+    );
     expect(kept.session.historicalAnchor?.baseline.title).toBe(
       "Death of King Aldous",
     );
@@ -652,7 +657,10 @@ describe("HistoricalAnchor contract", () => {
       calendar: zeroEraCalendar,
       now,
     });
-    expect(badRebase).toMatchObject({ ok: false, reason: "incompatible-rebase" });
+    expect(badRebase).toMatchObject({
+      ok: false,
+      reason: "incompatible-rebase",
+    });
   });
 
   it("AC7: isolates unrevealed anchor facts from player projections and guards leakage", () => {

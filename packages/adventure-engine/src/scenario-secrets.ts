@@ -62,10 +62,7 @@ export function applySecretReveals(
     }
     if (isHistoricalAnchorSecretId(candidate, secretId)) {
       candidate.historicalAnchor!.revealedFactIds = [
-        ...new Set([
-          ...candidate.historicalAnchor!.revealedFactIds,
-          secretId,
-        ]),
+        ...new Set([...candidate.historicalAnchor!.revealedFactIds, secretId]),
       ];
       continue;
     }

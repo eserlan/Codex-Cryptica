@@ -104,7 +104,7 @@ export function computeHistoricalEventFingerprint(
     type: event.type.trim(),
     title: clampText(event.title),
     startDate: event.start_date ?? event.date ?? null,
-    endDate: event.end_date ?? (event.start_date ? null : event.date ?? null),
+    endDate: event.end_date ?? (event.start_date ? null : (event.date ?? null)),
     approximate: Boolean(event.approximate),
     dateLabel: event.dateLabel ? clampText(event.dateLabel) : null,
     content: event.content ? clampText(event.content, 4_000) : null,
@@ -424,8 +424,7 @@ export function validateHistoricalAnchorCompatibility(
   };
 }
 
-export interface CreateHistoricalAnchorInput
-  extends ValidateHistoricalAnchorCompatibilityInput {
+export interface CreateHistoricalAnchorInput extends ValidateHistoricalAnchorCompatibilityInput {
   policy?: HistoricalAnchorPolicy;
   now: string;
   revision?: number;
@@ -557,7 +556,8 @@ function checkSessionEditable(
     return {
       ok: false,
       reason: "pending-roll",
-      message: "Resolve the pending roll before modifying the historical anchor.",
+      message:
+        "Resolve the pending roll before modifying the historical anchor.",
     };
   }
   return null;
@@ -599,10 +599,9 @@ export function transitionHistoricalAnchorProgress(
     status: input.status,
     updatedAtRevision: nextRevision,
     updatedAt: input.now,
-    causalRefs: [
-      ...anchor.progress.causalRefs,
-      ...input.causalRefs,
-    ].slice(-MAX_HISTORICAL_CAUSAL_REFS),
+    causalRefs: [...anchor.progress.causalRefs, ...input.causalRefs].slice(
+      -MAX_HISTORICAL_CAUSAL_REFS,
+    ),
     ...(input.reason?.trim()
       ? { reason: clampText(input.reason) }
       : input.status === "diverged"
@@ -619,7 +618,8 @@ export function transitionHistoricalAnchorProgress(
     return {
       ok: false,
       reason: "state-budget-exceeded",
-      message: "Updating historical anchor progress exceeds the session state budget.",
+      message:
+        "Updating historical anchor progress exceeds the session state budget.",
     };
   }
 }
@@ -824,7 +824,8 @@ export function resolveHistoricalAnchorDrift(
     return {
       ok: false,
       reason: "state-budget-exceeded",
-      message: "Rebasing the historical anchor exceeds the session state budget.",
+      message:
+        "Rebasing the historical anchor exceeds the session state budget.",
     };
   }
 }
