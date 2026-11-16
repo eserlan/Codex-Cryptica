@@ -586,4 +586,31 @@ describe("merge base recording", () => {
     );
     warn.mockRestore();
   });
+
+  it("notifies when a delta push triggers trash eviction on the active vault", async () => {
+    const { deps, uploads } = withBase();
+    const notify = vi.fn();
+    deps.notify = notify;
+    deps.buildDelta = vi.fn(async () => ({
+      vaultTitle: "Vault",
+      upserts: [ent("a")],
+      deletes: [],
+      assetIds: [],
+    }));
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["a"] });
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce({
+      ...deltaOk,
+      trashEvicted: {
+        evictedCount: 2,
+        usedBytes: 40 * 1024 * 1024,
+        maxBytes: 50 * 1024 * 1024,
+      },
+    });
+
+    const out = await uploads.pushSnapshot("vault", { guarded: true });
+    expect(out.ok).toBe(true);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0][0]).toContain("50 MB");
+    expect(notify.mock.calls[0][0]).toContain("2 older deleted items");
+  });
 });

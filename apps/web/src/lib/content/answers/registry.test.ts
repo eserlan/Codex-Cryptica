@@ -1826,6 +1826,60 @@ describe("published answers", () => {
       )?.href,
     ).toBe("https://osesrd.opengamingnetwork.com/adventuring/");
   });
+
+  it("cross-links the Mystery and investigation generator across mystery and investigation answers", () => {
+    const noRailroading =
+      answers["how-do-you-run-a-mystery-without-railroading"];
+    expect(noRailroading.relatedTools).toHaveLength(3);
+    expect(noRailroading.relatedTools[0]).toMatchObject({
+      title: "Mystery and investigation generator",
+      href: "/generators/mystery-investigation",
+    });
+    expect(noRailroading.relatedTools[0].description).toMatch(
+      /fixed-truth.*solution/i,
+    );
+    expect(noRailroading.relatedTools[0].description).toMatch(/suspects/i);
+    expect(noRailroading.relatedTools[0].description).toMatch(/clue paths/i);
+    expect(noRailroading.relatedTools[0].description).toMatch(
+      /ticking pressure/i,
+    );
+    expect(noRailroading.relatedTools[0].description).not.toMatch(/emergent/i);
+    expect(noRailroading.relatedTools.map((tool) => tool.href)).toEqual([
+      "/generators/mystery-investigation",
+      "/generators/quest",
+      "/generators/npc",
+    ]);
+
+    const wrongConclusion =
+      answers[
+        "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery"
+      ];
+    expect(wrongConclusion.relatedTools[0]).toMatchObject({
+      title: "Mystery and investigation generator",
+      href: "/generators/mystery-investigation",
+    });
+    expect(wrongConclusion.relatedTools).toContainEqual(
+      expect.objectContaining({
+        title: "NPC generator",
+        href: "/generators/npc",
+      }),
+    );
+
+    const interviewingNpcs =
+      answers[
+        "how-do-i-make-interviewing-npcs-interesting-in-an-investigation"
+      ];
+    expect(interviewingNpcs.relatedTools[0]).toMatchObject({
+      title: "NPC generator",
+      href: "/generators/npc",
+    });
+    expect(interviewingNpcs.relatedTools).toContainEqual(
+      expect.objectContaining({
+        title: "Mystery and investigation generator",
+        href: "/generators/mystery-investigation",
+      }),
+    );
+  });
 });
 
 describe("answer structured data", () => {

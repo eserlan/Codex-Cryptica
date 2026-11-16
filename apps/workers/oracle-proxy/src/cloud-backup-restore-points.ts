@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   CLOUD_BACKUP_LIMITS,
   type CloudBackupManifest,
+  type CloudBackupTrashEviction,
 } from "../../../../packages/schema/src/publishing";
 import {
   BackupObjectsSchema,
@@ -368,6 +369,7 @@ export async function publishCommit(
     etag?: string;
     sharing?: SharingRecord;
     assetIds: string[] | undefined;
+    trashEvicted?: CloudBackupTrashEviction;
   },
   onLostRace: () => Promise<Response>,
 ): Promise<Response> {
@@ -380,6 +382,7 @@ export async function publishCommit(
     etag,
     sharing,
     assetIds,
+    trashEvicted,
   } = input;
   const releaseMutationLock = sharing
     ? await acquireBackupMutationLock(env, backupId)
@@ -415,7 +418,10 @@ export async function publishCommit(
     { committed, objects, base, shared: sharing !== undefined, assetIds },
     releaseMutationLock ?? undefined,
   );
-  return json(request, { manifest: committed });
+  return json(request, {
+    manifest: committed,
+    ...(trashEvicted ? { trashEvicted } : {}),
+  });
 }
 
 /** GET /api/cloud-backup/{backupId}/restore-points — owner only. */

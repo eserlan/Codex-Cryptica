@@ -310,6 +310,12 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         href: "/generators/npc",
       },
       {
+        title: "Mystery and investigation generator",
+        description:
+          "Ground witness testimony and alibis in a coherent investigation scenario with fixed facts, suspects, and clue paths.",
+        href: "/generators/mystery-investigation",
+      },
+      {
         title: "Quest generator",
         description:
           "Turn a witness account into the next concrete lead, with fresh locations and stakes.",

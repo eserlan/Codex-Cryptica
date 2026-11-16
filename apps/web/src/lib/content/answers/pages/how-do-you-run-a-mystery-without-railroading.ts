@@ -105,6 +105,12 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   ],
   relatedTools: [
     {
+      title: "Mystery and investigation generator",
+      description:
+        "Generate a fixed-truth GM solution with distinct suspects, independent clue paths, and ticking pressure that keeps the case moving without railroading.",
+      href: "/generators/mystery-investigation",
+    },
+    {
       title: "Quest generator",
       description:
         "Generate murder mysteries, stolen artifact leads, and conspiratorial patron hooks.",
@@ -115,12 +121,6 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
       description:
         "Produce shifty suspects, tight-lipped witnesses, and corrupt magistrates on demand.",
       href: "/generators/npc",
-    },
-    {
-      title: "Dungeon generator",
-      description:
-        "Map out sprawling manor houses, crime scenes, and underground hiding places.",
-      href: "/generators/dungeon-generator",
     },
   ],
   relatedAnswers: [
