@@ -29,3 +29,7 @@ export * from "./scene-types";
 export * from "./scene-identities";
 export * from "./source-package";
 export * from "./adventure-json";
+export * from "./historical-anchor-types";
+export * from "./historical-anchor-schemas";
+export * from "./historical-anchor-chronology";
+export * from "./historical-anchor";
