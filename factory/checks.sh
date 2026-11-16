@@ -31,18 +31,21 @@ fi
 echo "== tests (impacted)"
 bun scripts/test-changed.mjs --base "$BASE"
 
-echo "== fallow audit (new findings only)"
-# A JSON runtime error ({"error": true}) is non-blocking per AGENTS.md; only
-# a "fail" verdict blocks.
-# The report can pass 128 KB, too big for one command-line argument, so it
-# goes through a file.
-fallow_json="$(mktemp)"
-cache_root="${XDG_CACHE_HOME:-$HOME/.cache}"
-mkdir -p "$cache_root" 2>/dev/null || true
-fallow_tmp="$(mktemp -d "$cache_root/fallow-checks.XXXXXX" 2>/dev/null || mktemp -d)"
-trap 'rm -rf "$fallow_json" "$fallow_tmp"' EXIT
-TMPDIR="$fallow_tmp" bunx fallow audit --base "$BASE" --format json --quiet --explain --gate-marker agent >"$fallow_json" 2>/dev/null || true
-python3 - "$fallow_json" <<'PY'
+if [[ "${CODEX_FACTORY_FALLOW_PRECHECKED:-0}" == "1" ]]; then
+  echo "== fallow audit (already checked on the isolated branch snapshot)"
+else
+  echo "== fallow audit (new findings only)"
+  # A JSON runtime error ({"error": true}) is non-blocking per AGENTS.md; only
+  # a "fail" verdict blocks.
+  # The report can pass 128 KB, too big for one command-line argument, so it
+  # goes through a file.
+  fallow_json="$(mktemp)"
+  cache_root="${XDG_CACHE_HOME:-$HOME/.cache}"
+  mkdir -p "$cache_root" 2>/dev/null || true
+  fallow_tmp="$(mktemp -d "$cache_root/fallow-checks.XXXXXX" 2>/dev/null || mktemp -d)"
+  trap 'rm -rf "$fallow_json" "$fallow_tmp"' EXIT
+  TMPDIR="$fallow_tmp" bunx fallow audit --base "$BASE" --format json --quiet --explain --gate-marker agent >"$fallow_json" 2>/dev/null || true
+  python3 - "$fallow_json" <<'PY'
 import json, sys
 raw = open(sys.argv[1]).read()
 try:
@@ -57,5 +60,6 @@ verdict = report.get("verdict")
 print(f"fallow verdict: {verdict}; introduced: {report.get('attribution')}")
 sys.exit(1 if verdict == "fail" else 0)
 PY
+fi
 
 echo "== all checks passed"
