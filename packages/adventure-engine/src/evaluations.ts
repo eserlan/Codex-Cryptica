@@ -118,6 +118,85 @@ function collectPlayerFacingTexts(turn: EvaluationTurn): string[] {
   return texts;
 }
 
+function collectScenarioSecretSources(
+  turn: EvaluationTurn,
+  sourceSession: AdventureSession,
+  secrets: string[],
+): void {
+  const revealedSecrets = new Set(
+    turn.proposal.kind === "complete" ? turn.proposal.revealSecretIds : [],
+  );
+  const revealedScenarios = new Set(
+    turn.proposal.kind === "complete"
+      ? (turn.proposal.revealScenarioIds ?? [])
+      : [],
+  );
+  for (const item of sourceSession.scenarioCollection?.items ?? []) {
+    collectScenarioItemSecrets(
+      item,
+      revealedSecrets,
+      revealedScenarios,
+      secrets,
+    );
+  }
+}
+
+function collectScenarioItemSecrets(
+  item: ScenarioItem,
+  proposalRevealedSecrets: Set<string>,
+  proposalRevealedScenarios: Set<string>,
+  secrets: string[],
+): void {
+  const revealed = new Set([
+    ...item.revealedSecretIds,
+    ...proposalRevealedSecrets,
+  ]);
+  if (item.knowledge === "unheard" && !proposalRevealedScenarios.has(item.id)) {
+    secrets.push(item.playerVisible.rumour, item.playerVisible.lead);
+  }
+  if (!revealed.has(item.secretBindings.truth)) secrets.push(item.gmOnly.truth);
+  collectInvestigatedSecret(item, revealed, secrets);
+  collectUnrevealedEventSecrets(item, revealed, secrets);
+}
+
+function collectInvestigatedSecret(
+  item: ScenarioItem,
+  revealed: Set<string>,
+  secrets: string[],
+): void {
+  const binding = item.secretBindings.ifInvestigated;
+  if (item.gmOnly.ifInvestigated && binding && !revealed.has(binding)) {
+    secrets.push(item.gmOnly.ifInvestigated);
+  }
+}
+
+function collectUnrevealedEventSecrets(
+  item: ScenarioItem,
+  revealed: Set<string>,
+  secrets: string[],
+): void {
+  for (const event of item.events) {
+    if (event.visibility !== "gm") continue;
+    const binding = item.secretBindings.eventIds[event.id];
+    if (!binding || !revealed.has(binding)) secrets.push(event.text);
+  }
+}
+
+function collectHiddenSecretSources(
+  turn: EvaluationTurn,
+  sourceSession: AdventureSession,
+  secrets: string[],
+): void {
+  const revealedSecrets = new Set(
+    turn.proposal.kind === "complete" ? turn.proposal.revealSecretIds : [],
+  );
+  for (const secret of sourceSession.hiddenState.secrets) {
+    if (secret.status === "hidden" && !revealedSecrets.has(secret.id)) {
+      secrets.push(secret.text);
+    }
+  }
+}
+
 function collectSecretLeakageSources(
   turn: EvaluationTurn,
   canaries: string[],
@@ -128,56 +207,14 @@ function collectSecretLeakageSources(
     ...(turn.gmOnlyLore ?? []),
   ];
   const sourceSession = turn.session ?? turn.previousSession;
-  const proposalRevealedSecrets = new Set(
-    turn.proposal.kind === "complete" ? turn.proposal.revealSecretIds : [],
-  );
-  const proposalRevealedScenarios = new Set(
-    turn.proposal.kind === "complete"
-      ? (turn.proposal.revealScenarioIds ?? [])
-      : [],
-  );
   if (sourceSession) {
-    for (const item of sourceSession.scenarioCollection?.items ?? []) {
-      const revealed = new Set([
-        ...item.revealedSecretIds,
-        ...proposalRevealedSecrets,
-      ]);
-      if (
-        item.knowledge === "unheard" &&
-        !proposalRevealedScenarios.has(item.id)
-      ) {
-        secrets.push(item.playerVisible.rumour, item.playerVisible.lead);
-      }
-      if (!revealed.has(item.secretBindings.truth)) {
-        secrets.push(item.gmOnly.truth);
-      }
-      if (
-        item.gmOnly.ifInvestigated &&
-        item.secretBindings.ifInvestigated &&
-        !revealed.has(item.secretBindings.ifInvestigated)
-      ) {
-        secrets.push(item.gmOnly.ifInvestigated);
-      }
-      for (const event of item.events) {
-        if (event.visibility === "gm") {
-          const binding = item.secretBindings.eventIds[event.id];
-          if (!binding || !revealed.has(binding)) secrets.push(event.text);
-        }
-      }
-    }
-    for (const secret of sourceSession.hiddenState.secrets) {
-      if (
-        secret.status === "hidden" &&
-        !proposalRevealedSecrets.has(secret.id)
-      ) {
-        secrets.push(secret.text);
-      }
-    }
+    collectScenarioSecretSources(turn, sourceSession, secrets);
+    collectHiddenSecretSources(turn, sourceSession, secrets);
   }
   if (turn.proposal.kind === "complete" && turn.proposal.timeAdvance) {
-    for (const dev of turn.proposal.timeAdvance.developments) {
-      secrets.push(dev.text);
-    }
+    secrets.push(
+      ...turn.proposal.timeAdvance.developments.map((dev) => dev.text),
+    );
   }
   return secrets.map(normalizeText).filter((value) => value.length > 0);
 }
@@ -236,47 +273,74 @@ export function scoreContinuity(turn: EvaluationTurn): number {
   const next = turn.session;
   const prev = turn.previousSession;
   if (!next) return 1;
-
-  if (next.currentPlaceId) {
-    const hasPlace = (next.places ?? []).some(
-      (place) => place.id === next.currentPlaceId,
-    );
-    if (!hasPlace) return 0;
-  }
-  if (!uniqueIds(next.visibleState.activeCharacters)) return 0;
-  if (!uniqueIds(next.visibleState.knownFacts)) return 0;
-  if (next.people && !uniqueIds(next.people)) return 0;
-
+  if (!hasValidCurrentPlace(next) || !hasUniqueVisibleIds(next)) return 0;
   if (!prev) return 1;
+  return hasMonotonicTime(prev, next) &&
+    retainsPeople(prev, next) &&
+    progressesScenarios(prev, next) &&
+    resolvesPendingRoll(turn, prev, next)
+    ? 1
+    : 0;
+}
 
-  const prevElapsed = prev.worldTime?.elapsedMinutes ?? 0;
-  const nextElapsed = next.worldTime?.elapsedMinutes ?? 0;
-  if (nextElapsed < prevElapsed) return 0;
+function hasValidCurrentPlace(session: AdventureSession): boolean {
+  return (
+    !session.currentPlaceId ||
+    (session.places ?? []).some((place) => place.id === session.currentPlaceId)
+  );
+}
 
-  const prevPeopleIds = new Set((prev.people ?? []).map((p) => p.id));
-  const nextPeopleIds = new Set((next.people ?? []).map((p) => p.id));
-  for (const id of prevPeopleIds) {
-    if (!nextPeopleIds.has(id)) return 0;
-  }
+function hasUniqueVisibleIds(session: AdventureSession): boolean {
+  return (
+    uniqueIds(session.visibleState.activeCharacters) &&
+    uniqueIds(session.visibleState.knownFacts) &&
+    (!session.people || uniqueIds(session.people))
+  );
+}
 
-  const prevScenarios = new Map(
+function hasMonotonicTime(
+  prev: AdventureSession,
+  next: AdventureSession,
+): boolean {
+  return (
+    (next.worldTime?.elapsedMinutes ?? 0) >=
+    (prev.worldTime?.elapsedMinutes ?? 0)
+  );
+}
+
+function retainsPeople(
+  prev: AdventureSession,
+  next: AdventureSession,
+): boolean {
+  const nextIds = new Set((next.people ?? []).map((person) => person.id));
+  return (prev.people ?? []).every((person) => nextIds.has(person.id));
+}
+
+function progressesScenarios(
+  prev: AdventureSession,
+  next: AdventureSession,
+): boolean {
+  const previous = new Map(
     (prev.scenarioCollection?.items ?? []).map((item) => [item.id, item]),
   );
-  for (const item of next.scenarioCollection?.items ?? []) {
-    const before = prevScenarios.get(item.id);
-    if (before && !scenarioProgressionValid(before, item)) return 0;
-  }
+  return (next.scenarioCollection?.items ?? []).every((item) => {
+    const before = previous.get(item.id);
+    return !before || scenarioProgressionValid(before, item);
+  });
+}
 
+function resolvesPendingRoll(
+  turn: EvaluationTurn,
+  prev: AdventureSession,
+  next: AdventureSession,
+): boolean {
   if (
-    prev.pendingRoll &&
-    turn.proposal.kind === "complete" &&
-    next.turns.length > prev.turns.length
-  ) {
-    const latest = next.turns[next.turns.length - 1];
-    if (!latest?.resolvedRoll) return 0;
-  }
-
-  return 1;
+    !prev.pendingRoll ||
+    turn.proposal.kind !== "complete" ||
+    next.turns.length <= prev.turns.length
+  )
+    return true;
+  return Boolean(next.turns.at(-1)?.resolvedRoll);
 }
 
 export function scoreCanonSafety(turn: EvaluationTurn): number {
@@ -287,89 +351,123 @@ export function scoreCanonSafety(turn: EvaluationTurn): number {
     canonicalSources.map((record) => normalizeText(record.displayName)),
   );
 
-  if (turn.proposal.kind === "complete") {
-    for (const fact of turn.proposal.provisionalFacts) {
-      if (canonicalTitles.has(normalizeText(fact.name))) return 0;
-    }
-  }
+  return !hasProvisionalCanonicalFacts(turn, next, canonicalTitles) &&
+    !hasUnattributedCanonicalFacts(next) &&
+    !mutatesCanon(prev, next)
+    ? 1
+    : 0;
+}
 
-  if (next) {
-    for (const fact of next.provisionalFacts) {
-      if (canonicalTitles.has(normalizeText(fact.name))) return 0;
-    }
-    const allVisible = [
-      ...next.visibleState.knownFacts,
-      ...next.visibleState.activeCharacters,
-      ...next.visibleState.objectives,
-    ];
-    for (const fact of allVisible) {
-      if (fact.source === "canonical" && !fact.sourceRecordId) return 0;
-    }
-  }
+function hasProvisionalCanonicalFacts(
+  turn: EvaluationTurn,
+  next: AdventureSession | undefined,
+  canonicalTitles: Set<string>,
+): boolean {
+  const proposalFacts =
+    turn.proposal.kind === "complete" ? turn.proposal.provisionalFacts : [];
+  return [...proposalFacts, ...(next?.provisionalFacts ?? [])].some((fact) =>
+    canonicalTitles.has(normalizeText(fact.name)),
+  );
+}
 
-  if (prev && next) {
-    const nextById = new Map(
-      next.sourceRecords.map((record) => [record.recordId, record]),
-    );
-    for (const oldRecord of prev.sourceRecords) {
-      const current = nextById.get(oldRecord.recordId);
-      if (
+function hasUnattributedCanonicalFacts(
+  next: AdventureSession | undefined,
+): boolean {
+  if (!next) return false;
+  const visible = [
+    ...next.visibleState.knownFacts,
+    ...next.visibleState.activeCharacters,
+    ...next.visibleState.objectives,
+  ];
+  return visible.some(
+    (fact) => fact.source === "canonical" && !fact.sourceRecordId,
+  );
+}
+
+function mutatesCanon(
+  prev: AdventureSession | undefined,
+  next: AdventureSession | undefined,
+): boolean {
+  if (!prev || !next) return false;
+  const nextById = new Map(
+    next.sourceRecords.map((record) => [record.recordId, record]),
+  );
+  if (
+    prev.sourceRecords.some((old) => {
+      const current = nextById.get(old.recordId);
+      return (
         !current ||
-        current.displayName !== oldRecord.displayName ||
-        current.recordType !== oldRecord.recordType
-      ) {
-        return 0;
-      }
-    }
-    const prevCanonicalIds = new Set(
-      [...prev.visibleState.knownFacts, ...prev.visibleState.activeCharacters]
-        .filter((fact) => fact.source === "canonical")
-        .map((fact) => fact.id),
-    );
-    for (const fact of [
-      ...next.visibleState.knownFacts,
-      ...next.visibleState.activeCharacters,
-    ]) {
-      if (prevCanonicalIds.has(fact.id) && fact.source !== "canonical") {
-        return 0;
-      }
-    }
-  }
+        current.displayName !== old.displayName ||
+        current.recordType !== old.recordType
+      );
+    })
+  )
+    return true;
+  return demotesCanonicalFacts(prev, next);
+}
 
-  return 1;
+function demotesCanonicalFacts(
+  prev: AdventureSession,
+  next: AdventureSession,
+): boolean {
+  const previousIds = new Set(
+    [...prev.visibleState.knownFacts, ...prev.visibleState.activeCharacters]
+      .filter((fact) => fact.source === "canonical")
+      .map((fact) => fact.id),
+  );
+  return [
+    ...next.visibleState.knownFacts,
+    ...next.visibleState.activeCharacters,
+  ].some((fact) => previousIds.has(fact.id) && fact.source !== "canonical");
 }
 
 function validateProposalConsequences(turn: EvaluationTurn): boolean {
   if (turn.proposal.kind !== "complete") return true;
   const baseline = turn.previousSession ?? turn.session;
   if (!baseline) return true;
-
-  if (turn.proposal.timeAdvance) {
-    const validThreadIds = new Set([
-      ...baseline.hiddenState.gmThreads.map((t) => t.id),
-      ...(baseline.scenarioCollection?.items ?? [])
-        .filter((s) => s.status === "open")
-        .map((s) => s.id),
-    ]);
-    for (const dev of turn.proposal.timeAdvance.developments) {
-      if (!validThreadIds.has(dev.threadId)) return false;
-    }
-  }
-
-  const newlyRevealed = new Set(turn.proposal.revealScenarioIds ?? []);
-  const scenarioById = new Map(
-    (baseline.scenarioCollection?.items ?? []).map((s) => [s.id, s]),
+  return (
+    hasValidDevelopmentThreads(turn.proposal, baseline) &&
+    hasValidElaborations(turn.proposal, baseline)
   );
-  for (const elaboration of turn.proposal.elaborateScenarios ?? []) {
+}
+
+function hasValidDevelopmentThreads(
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  baseline: AdventureSession,
+): boolean {
+  if (!proposal.timeAdvance) return true;
+  const validIds = new Set([
+    ...baseline.hiddenState.gmThreads.map((thread) => thread.id),
+    ...(baseline.scenarioCollection?.items ?? [])
+      .filter((scenario) => scenario.status === "open")
+      .map((scenario) => scenario.id),
+  ]);
+  return proposal.timeAdvance.developments.every((item) =>
+    validIds.has(item.threadId),
+  );
+}
+
+function hasValidElaborations(
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  baseline: AdventureSession,
+): boolean {
+  const newlyRevealed = new Set(proposal.revealScenarioIds ?? []);
+  const scenarios = new Map(
+    (baseline.scenarioCollection?.items ?? []).map((scenario) => [
+      scenario.id,
+      scenario,
+    ]),
+  );
+  return (proposal.elaborateScenarios ?? []).every((elaboration) => {
     if (newlyRevealed.has(elaboration.scenarioId)) return false;
-    const item = scenarioById.get(elaboration.scenarioId);
-    if (!item || item.knowledge !== "heard" || item.status !== "open") {
-      return false;
-    }
-    const delta = STAGE_ORDER[elaboration.stage] - STAGE_ORDER[item.stage];
-    if (delta !== 1) return false;
-  }
-  return true;
+    const scenario = scenarios.get(elaboration.scenarioId);
+    return Boolean(
+      scenario &&
+      scenario.knowledge === "heard" &&
+      scenario.status === "open" &&
+      STAGE_ORDER[elaboration.stage] - STAGE_ORDER[scenario.stage] === 1,
+    );
+  });
 }
 
 function validatePropagatedEvents(
@@ -379,33 +477,41 @@ function validatePropagatedEvents(
   const byId = new Map(
     session.scenarioCollection.items.map((item) => [item.id, item]),
   );
-  for (const target of session.scenarioCollection.items) {
-    for (const event of target.events) {
-      if (!event.causedBy) continue;
-      if (event.visibility !== "player" || event.kind !== "consequence") {
-        return false;
-      }
-      const source = byId.get(event.causedBy.scenarioId);
-      if (!source || source.id === target.id) return false;
-      if (
-        !source.anchorRefs.includes(event.causedBy.anchorRef) ||
-        !target.anchorRefs.includes(event.causedBy.anchorRef)
-      ) {
-        return false;
-      }
-      const sourceEvent = source.events.find(
-        (candidate) => candidate.id === event.causedBy?.eventId,
-      );
-      if (
-        !sourceEvent ||
-        sourceEvent.visibility !== "player" ||
-        sourceEvent.causedBy !== undefined
-      ) {
-        return false;
-      }
-    }
+  return session.scenarioCollection.items.every((target) =>
+    target.events.every((event) => isValidPropagatedEvent(target, event, byId)),
+  );
+}
+
+function isValidPropagatedEvent(
+  target: ScenarioItem,
+  event: ScenarioItem["events"][number],
+  byId: Map<string, ScenarioItem>,
+): boolean {
+  if (!event.causedBy) return true;
+  if (event.visibility !== "player" || event.kind !== "consequence")
+    return false;
+  const source = byId.get(event.causedBy.scenarioId);
+  if (!source || source.id === target.id) return false;
+  if (!hasSharedPropagationAnchor(source, target, event.causedBy.anchorRef)) {
+    return false;
   }
-  return true;
+  const origin = source.events.find(
+    (candidate) => candidate.id === event.causedBy?.eventId,
+  );
+  return Boolean(
+    origin && origin.visibility === "player" && origin.causedBy === undefined,
+  );
+}
+
+function hasSharedPropagationAnchor(
+  source: ScenarioItem,
+  target: ScenarioItem,
+  anchorRef: string,
+): boolean {
+  return (
+    source.anchorRefs.includes(anchorRef) &&
+    target.anchorRefs.includes(anchorRef)
+  );
 }
 
 export function scoreConsequenceCredibility(turn: EvaluationTurn): number {

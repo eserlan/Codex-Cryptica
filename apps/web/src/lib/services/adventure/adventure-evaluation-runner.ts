@@ -84,6 +84,15 @@ function emptyTelemetry(): AdventureEvaluationTelemetry {
   };
 }
 
+interface CaseExecutionState {
+  currentSession: AdventureSession;
+  evaluatedTurns: EvaluationTurn[];
+  modelCalls: number;
+  retrievalHydrations: number;
+  serializedStateChars: number;
+  generationInputChars: number;
+}
+
 export class AdventureEvaluationRunner {
   constructor(
     private readonly generation: Pick<
@@ -162,103 +171,33 @@ export class AdventureEvaluationRunner {
   ): Promise<AdventureEvaluationCaseResult> {
     const startedAt = now();
     const initialExpansions = countExpansions(testCase.session);
-    const steps: AdventureEvaluationStep[] = testCase.turns?.length
-      ? testCase.turns
-      : [
-          {
-            playerAction: testCase.playerAction,
-            phase: testCase.phase ?? "action",
-            anchors: testCase.anchors,
-            relevant: testCase.relevant,
-            canaries: testCase.canaries,
-            gmOnlyLore: testCase.gmOnlyLore,
-          },
-        ];
-
-    let currentSession = testCase.session;
-    const evaluatedTurns: EvaluationTurn[] = [];
-    let modelCalls = 0;
-    let retrievalHydrations = 0;
-    let serializedStateChars = 0;
-    let generationInputChars = 0;
-
-    for (let index = 0; index < steps.length; index += 1) {
-      const step = steps[index]!;
-      const phase = step.phase ?? "action";
-      const { anchors, relevant, hydrations } = await this.resolveStepContext(
-        currentSession,
-        phase,
-        step,
+    const state: CaseExecutionState = {
+      currentSession: testCase.session,
+      evaluatedTurns: [],
+      modelCalls: 0,
+      retrievalHydrations: 0,
+      serializedStateChars: 0,
+      generationInputChars: 0,
+    };
+    const steps = evaluationSteps(testCase);
+    for (const [index, step] of steps.entries()) {
+      await this.runEvaluationStep(
         testCase,
+        provider,
+        step,
+        index,
+        commitNow,
+        state,
       );
-      retrievalHydrations += hydrations;
-
-      const prompt = buildAdventurePrompt({
-        session: currentSession,
-        phase,
-        playerAction: step.playerAction,
-        anchors,
-        relevant,
-      });
-      serializedStateChars = Math.max(
-        serializedStateChars,
-        JSON.stringify(prompt.state).length,
-      );
-      generationInputChars = Math.max(
-        generationInputChars,
-        JSON.stringify(prompt).length,
-      );
-
-      modelCalls += 1;
-      const proposal = await this.generation.generate(
-        {
-          session: currentSession,
-          phase,
-          playerAction: step.playerAction,
-          anchors,
-          relevant,
-        },
-        { modelName: provider },
-      );
-
-      let nextSession = currentSession;
-      if (proposal.kind === "complete") {
-        const committed = applyCompletedTurn(currentSession, proposal, {
-          turnId: `${testCase.id}-turn-${index + 1}`,
-          inputId: `${testCase.id}-input-${index + 1}`,
-          now: commitNow(),
-          playerAction: step.playerAction,
-        });
-        if (committed.ok) nextSession = committed.value;
-      }
-
-      evaluatedTurns.push({
-        narration:
-          proposal.kind === "complete"
-            ? proposal.narration
-            : (proposal.setupNarration ?? ""),
-        playerCharacterName: testCase.playerCharacterName,
-        playerAction: step.playerAction,
-        proposal,
-        previousSession: currentSession,
-        session: nextSession,
-        canaries: step.canaries ?? testCase.canaries,
-        gmOnlyLore: [
-          ...(testCase.gmOnlyLore ?? []),
-          ...(step.gmOnlyLore ?? []),
-          ...anchors.flatMap((a) => (a.lore ? [a.lore] : [])),
-          ...relevant.flatMap((r) => (r.lore ? [r.lore] : [])),
-        ],
-        recap: buildAdventureRecap(nextSession),
-        transcript: createPlayerTranscript(nextSession),
-      });
-      currentSession = nextSession;
     }
 
-    const runScore = evaluateAdventureRun(evaluatedTurns, testCase.canaries);
+    const runScore = evaluateAdventureRun(
+      state.evaluatedTurns,
+      testCase.canaries,
+    );
     const expansionCount = Math.max(
       0,
-      countExpansions(currentSession) - initialExpansions,
+      countExpansions(state.currentSession) - initialExpansions,
     );
 
     return {
@@ -266,14 +205,79 @@ export class AdventureEvaluationRunner {
       ...runScore.scores,
       passed: runScore.passed,
       telemetry: {
-        modelCalls,
-        retrievalHydrations,
-        serializedStateChars,
-        generationInputChars,
+        modelCalls: state.modelCalls,
+        retrievalHydrations: state.retrievalHydrations,
+        serializedStateChars: state.serializedStateChars,
+        generationInputChars: state.generationInputChars,
         durationMs: Math.max(0, now() - startedAt),
         expansionCount,
       },
     };
+  }
+
+  private async runEvaluationStep(
+    testCase: AdventureEvaluationCase,
+    provider: string,
+    step: AdventureEvaluationStep,
+    index: number,
+    commitNow: () => string,
+    state: CaseExecutionState,
+  ): Promise<void> {
+    const previousSession = state.currentSession;
+    const phase = step.phase ?? "action";
+    const { anchors, relevant, hydrations } = await this.resolveStepContext(
+      previousSession,
+      phase,
+      step,
+      testCase,
+    );
+    state.retrievalHydrations += hydrations;
+    const prompt = buildAdventurePrompt({
+      session: previousSession,
+      phase,
+      playerAction: step.playerAction,
+      anchors,
+      relevant,
+    });
+    state.serializedStateChars = Math.max(
+      state.serializedStateChars,
+      JSON.stringify(prompt.state).length,
+    );
+    state.generationInputChars = Math.max(
+      state.generationInputChars,
+      JSON.stringify(prompt).length,
+    );
+    state.modelCalls += 1;
+    const proposal = await this.generation.generate(
+      {
+        session: previousSession,
+        phase,
+        playerAction: step.playerAction,
+        anchors,
+        relevant,
+      },
+      { modelName: provider },
+    );
+    const nextSession = commitProposal(
+      previousSession,
+      proposal,
+      testCase,
+      step,
+      index,
+      commitNow,
+    );
+    state.evaluatedTurns.push(
+      makeEvaluationTurn(
+        testCase,
+        step,
+        proposal,
+        previousSession,
+        nextSession,
+        anchors,
+        relevant,
+      ),
+    );
+    state.currentSession = nextSession;
   }
 
   private async resolveStepContext(
@@ -286,29 +290,14 @@ export class AdventureEvaluationRunner {
     relevant: ResolvedSourceExcerpt[];
     hydrations: number;
   }> {
-    if (
-      step.anchors ||
-      step.relevant ||
-      testCase.anchors ||
-      testCase.relevant
-    ) {
-      return {
-        anchors: step.anchors ?? testCase.anchors ?? [],
-        relevant: step.relevant ?? testCase.relevant ?? [],
-        hydrations: 0,
-      };
-    }
+    const supplied = suppliedContext(step, testCase);
+    if (supplied) return supplied;
     if (!this.options.grounding) {
       return { anchors: [], relevant: [], hydrations: 0 };
     }
     const before = this.options.getRetrievalHydrations?.() ?? 0;
     const prepared = await this.options.grounding.prepare({
-      purpose:
-        phase === "opening"
-          ? "opening"
-          : phase === "roll-resolution"
-            ? "roll-resolution"
-            : "action",
+      purpose: groundingPurpose(phase),
       session,
       playerAction: step.playerAction,
     });
@@ -322,6 +311,103 @@ export class AdventureEvaluationRunner {
           : prepared.anchors.length + prepared.relevant.length,
     };
   }
+}
+
+function evaluationSteps(
+  testCase: AdventureEvaluationCase,
+): AdventureEvaluationStep[] {
+  if (testCase.turns?.length) return testCase.turns;
+  return [
+    {
+      playerAction: testCase.playerAction,
+      phase: testCase.phase ?? "action",
+      anchors: testCase.anchors,
+      relevant: testCase.relevant,
+      canaries: testCase.canaries,
+      gmOnlyLore: testCase.gmOnlyLore,
+    },
+  ];
+}
+
+function suppliedContext(
+  step: AdventureEvaluationStep,
+  testCase: AdventureEvaluationCase,
+):
+  | {
+      anchors: ResolvedSourceExcerpt[];
+      relevant: ResolvedSourceExcerpt[];
+      hydrations: number;
+    }
+  | undefined {
+  if (
+    !step.anchors &&
+    !step.relevant &&
+    !testCase.anchors &&
+    !testCase.relevant
+  )
+    return undefined;
+  return {
+    anchors: step.anchors ?? testCase.anchors ?? [],
+    relevant: step.relevant ?? testCase.relevant ?? [],
+    hydrations: 0,
+  };
+}
+
+function groundingPurpose(
+  phase: "opening" | "action" | "roll-resolution",
+): "opening" | "action" | "roll-resolution" {
+  if (phase === "opening") return "opening";
+  if (phase === "roll-resolution") return "roll-resolution";
+  return "action";
+}
+
+function commitProposal(
+  session: AdventureSession,
+  proposal: AdventureTurnProposal,
+  testCase: AdventureEvaluationCase,
+  step: AdventureEvaluationStep,
+  index: number,
+  commitNow: () => string,
+): AdventureSession {
+  if (proposal.kind !== "complete") return session;
+  const committed = applyCompletedTurn(session, proposal, {
+    turnId: `${testCase.id}-turn-${index + 1}`,
+    inputId: `${testCase.id}-input-${index + 1}`,
+    now: commitNow(),
+    playerAction: step.playerAction,
+  });
+  return committed.ok ? committed.value : session;
+}
+
+function makeEvaluationTurn(
+  testCase: AdventureEvaluationCase,
+  step: AdventureEvaluationStep,
+  proposal: AdventureTurnProposal,
+  previousSession: AdventureSession,
+  session: AdventureSession,
+  anchors: ResolvedSourceExcerpt[],
+  relevant: ResolvedSourceExcerpt[],
+): EvaluationTurn {
+  return {
+    narration:
+      proposal.kind === "complete"
+        ? proposal.narration
+        : (proposal.setupNarration ?? ""),
+    playerCharacterName: testCase.playerCharacterName,
+    playerAction: step.playerAction,
+    proposal,
+    previousSession,
+    session,
+    canaries: step.canaries ?? testCase.canaries,
+    gmOnlyLore: [
+      ...(testCase.gmOnlyLore ?? []),
+      ...(step.gmOnlyLore ?? []),
+      ...anchors.flatMap((anchor) => (anchor.lore ? [anchor.lore] : [])),
+      ...relevant.flatMap((excerpt) => (excerpt.lore ? [excerpt.lore] : [])),
+    ],
+    recap: buildAdventureRecap(session),
+    transcript: createPlayerTranscript(session),
+  };
 }
 
 export const adventureEvaluationRunner = new AdventureEvaluationRunner({

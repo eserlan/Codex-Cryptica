@@ -335,92 +335,132 @@ export function runLivingSettlementLongRun(
   for (let i = 1; i <= totalTurns; i += 1) {
     const at = stepIso(i);
     const prev = session;
-
-    // Exercise roll request + outcome + resolution on turn 12
     if (i === 12) {
-      const rollReq = {
-        kind: "roll-required" as const,
-        setupNarration:
-          "You check the loose planks along the slipway where the tide laps.",
-        uncertainty:
-          "Can you spot the fresh boot prints before the tide washes them?",
-        stakes: "You might miss which boathouse Tams entered.",
-        dice: {
-          expression: "2d6",
-          outcomeBands: [
-            { id: "high", label: "Clear tracks", minimum: 7, maximum: 12 },
-          ],
-        },
-        sourceRecordIds: ["canon-place-brackwater"],
-      };
-      const reqRes = applyRollRequest(session, rollReq, {
-        turnId: `roll-req-${i}`,
-        inputId: `input-roll-${i}`,
-        now: at,
-        playerAction: "Inspect the slipway planks for footprints.",
-      });
-      if (!reqRes.ok) throw new Error(`Roll request failed at ${i}`);
-      session = reqRes.value;
-
-      const recRes = recordPendingRollOutcome(
-        session,
-        `input-roll-${i}`,
-        { kind: "numeric", value: 9, label: "Clear tracks" },
-        { turnId: `roll-rec-${i}`, inputId: `input-roll-${i}`, now: at },
-      );
-      if (!recRes.ok) throw new Error(`Record roll failed at ${i}`);
-      session = recRes.value;
-
-      const resolveProposal = completeLivingProposal({
-        narration:
-          "Wet boot prints lead straight to the eastern boathouse beside the quay.",
-        timeAdvance: {
-          minutes: 15,
-          cause: "Searching the slipway",
-          developments: [
-            {
-              threadId: "thread-quay-tide",
-              text: "The tide rises two inches along the pilings.",
-            },
-          ],
-        },
-      });
-      const resolved = resolveRecordedRoll(session, resolveProposal, {
-        turnId: `turn-${i}`,
-        inputId: `input-${i}`,
-        now: at,
-      });
-      if (!resolved.ok) throw new Error(`Resolve roll failed at ${i}`);
-      session = resolved.value;
-      evaluationTurns.push({
-        narration: resolveProposal.narration,
-        playerCharacterName: "Mara",
-        playerAction: "Inspect the slipway planks for footprints.",
-        proposal: resolveProposal,
-        previousSession: prev,
-        session,
-      });
+      const rollOutcome = completeRollTurn(session, i, at, prev);
+      session = rollOutcome.session;
+      evaluationTurns.push(rollOutcome.evaluationTurn);
       continue;
     }
 
-    let playerAction = `Ask locals around the quay (${i}).`;
-    let proposal = completeLivingProposal({
-      narration: `Turn ${i}: Harbourmaster Venn checks a manifest while gulls circle.`,
-      timeAdvance: {
-        minutes: 15,
-        cause: "Routine harbour conversation",
-        developments: [
-          {
-            threadId: "thread-quay-tide",
-            text: `Tide mark shifts at step ${i}.`,
-          },
+    const { playerAction, proposal } = proposalForTurn(i, totalTurns);
+    session = commitLongRunTurn(session, proposal, playerAction, i, at);
+    const pressure = applyScenarioTimePressures(
+      session,
+      session.worldTime?.elapsedMinutes ?? 0,
+      `turn-${i}`,
+      at,
+    );
+    if (pressure.ok) pressureTriggerCount += pressure.events.length;
+    session = linkTowerAtTurn(session, i, at);
+    session = updateScenarioEvents(session, i, at);
+    const summary = summarizeAndArchive(session, i, at);
+    session = summary.session;
+    summariesAttached += summary.attached;
+    evaluationTurns.push({
+      narration: proposal.narration,
+      playerCharacterName: "Mara",
+      playerAction,
+      proposal,
+      previousSession: prev,
+      session,
+    });
+  }
+
+  return {
+    session,
+    evaluationTurns,
+    summariesAttached,
+    pressureTriggerCount,
+  };
+}
+
+function completeRollTurn(
+  initial: AdventureSession,
+  turn: number,
+  at: string,
+  previousSession: AdventureSession,
+): { session: AdventureSession; evaluationTurn: EvaluationTurn } {
+  const playerAction = "Inspect the slipway planks for footprints.";
+  const request = applyRollRequest(
+    initial,
+    {
+      kind: "roll-required",
+      setupNarration:
+        "You check the loose planks along the slipway where the tide laps.",
+      uncertainty:
+        "Can you spot the fresh boot prints before the tide washes them?",
+      stakes: "You might miss which boathouse Tams entered.",
+      dice: {
+        expression: "2d6",
+        outcomeBands: [
+          { id: "high", label: "Clear tracks", minimum: 7, maximum: 12 },
         ],
       },
-    });
+      sourceRecordIds: ["canon-place-brackwater"],
+    },
+    {
+      turnId: `roll-req-${turn}`,
+      inputId: `input-roll-${turn}`,
+      now: at,
+      playerAction,
+    },
+  );
+  if (!request.ok) throw new Error(`Roll request failed at ${turn}`);
+  const recorded = recordPendingRollOutcome(
+    request.value,
+    `input-roll-${turn}`,
+    {
+      kind: "numeric",
+      value: 9,
+      label: "Clear tracks",
+    },
+    { turnId: `roll-rec-${turn}`, inputId: `input-roll-${turn}`, now: at },
+  );
+  if (!recorded.ok) throw new Error(`Record roll failed at ${turn}`);
+  const proposal = completeLivingProposal({
+    narration:
+      "Wet boot prints lead straight to the eastern boathouse beside the quay.",
+    timeAdvance: {
+      minutes: 15,
+      cause: "Searching the slipway",
+      developments: [
+        {
+          threadId: "thread-quay-tide",
+          text: "The tide rises two inches along the pilings.",
+        },
+      ],
+    },
+  });
+  const resolved = resolveRecordedRoll(recorded.value, proposal, {
+    turnId: `turn-${turn}`,
+    inputId: `input-${turn}`,
+    now: at,
+  });
+  if (!resolved.ok) throw new Error(`Resolve roll failed at ${turn}`);
+  return {
+    session: resolved.value,
+    evaluationTurn: {
+      narration: proposal.narration,
+      playerCharacterName: "Mara",
+      playerAction,
+      proposal,
+      previousSession,
+      session: resolved.value,
+    },
+  };
+}
 
-    if (i === 4) {
-      playerAction = "Ask the bakery apprentice about flour prices.";
-      proposal = completeLivingProposal({
+function proposalForTurn(
+  turn: number,
+  totalTurns: number,
+): {
+  playerAction: string;
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>;
+} {
+  if (turn === 4)
+    return {
+      playerAction: "Ask the bakery apprentice about flour prices.",
+      proposal: completeLivingProposal({
         narration:
           "The baker mutters that flour sacks at the quay bakery are half-weight this week.",
         revealScenarioIds: ["scen-grain-shortage"],
@@ -429,10 +469,12 @@ export function runLivingSettlementLongRun(
           cause: "Speaking with the baker",
           developments: [],
         },
-      });
-    } else if (i === 8) {
-      playerAction = "Travel unexpectedly to the Old Bell Tower up the hill.";
-      proposal = completeLivingProposal({
+      }),
+    };
+  if (turn === 8)
+    return {
+      playerAction: "Travel unexpectedly to the Old Bell Tower up the hill.",
+      proposal: completeLivingProposal({
         narration:
           "You climb the hill path to the Old Bell Tower, where the sexton mentions a phantom tolling at noon.",
         moveTo: {
@@ -453,10 +495,12 @@ export function runLivingSettlementLongRun(
           cause: "Walking up the hill",
           developments: [],
         },
-      });
-    } else if (i === 16) {
-      playerAction = "Check the belfry rafters for birds or wind.";
-      proposal = completeLivingProposal({
+      }),
+    };
+  if (turn === 16)
+    return {
+      playerAction: "Check the belfry rafters for birds or wind.",
+      proposal: completeLivingProposal({
         narration:
           "Two jackdaws burst from the rafters, tugging the frayed bell cord as they take flight.",
         elaborateScenarios: [
@@ -471,10 +515,12 @@ export function runLivingSettlementLongRun(
           cause: "Climbing the belfry",
           developments: [],
         },
-      });
-    } else if (i === 24) {
-      playerAction = "Return to Brackwater Quay and inspect the weighhouse.";
-      proposal = completeLivingProposal({
+      }),
+    };
+  if (turn === 24)
+    return {
+      playerAction: "Return to Brackwater Quay and inspect the weighhouse.",
+      proposal: completeLivingProposal({
         narration:
           "Back at Brackwater Quay, the weighhouse scale is wedged with a brass shim.",
         moveTo: { placeId: "place-quay", name: "Brackwater Quay" },
@@ -498,12 +544,13 @@ export function runLivingSettlementLongRun(
           cause: "Returning to the quay",
           developments: [],
         },
-      });
-    } else if (i === 32) {
-      // Counterintuitive question
-      playerAction =
-        "Ask Harbourmaster Venn what kind of tea his mother prefers.";
-      proposal = completeLivingProposal({
+      }),
+    };
+  if (turn === 32)
+    return {
+      playerAction:
+        "Ask Harbourmaster Venn what kind of tea his mother prefers.",
+      proposal: completeLivingProposal({
         narration:
           "Venn blinks, taken aback, and admits he only drinks roasted barley water on shift.",
         timeAdvance: {
@@ -511,194 +558,213 @@ export function runLivingSettlementLongRun(
           cause: "Unexpected small talk",
           developments: [],
         },
-      });
-    } else if (i === 40) {
-      // Decline / ordinary activity
-      playerAction =
-        "I decline to investigate further and buy a warm loaf of bread.";
-      proposal = completeLivingProposal({
+      }),
+    };
+  if (turn === 40)
+    return {
+      playerAction:
+        "I decline to investigate further and buy a warm loaf of bread.",
+      proposal: completeLivingProposal({
         narration:
           "You pay two coppers for a warm loaf and watch the afternoon boats unload.",
-        timeAdvance: {
-          minutes: 15,
-          cause: "Buying bread",
-          developments: [],
-        },
-      });
-    } else if (i === totalTurns) {
-      // Mundane ending
-      playerAction = "Head home for supper and end the adventure quietly.";
-      proposal = completeLivingProposal({
+        timeAdvance: { minutes: 15, cause: "Buying bread", developments: [] },
+      }),
+    };
+  if (turn === totalTurns)
+    return {
+      playerAction: "Head home for supper and end the adventure quietly.",
+      proposal: completeLivingProposal({
         narration:
           "You walk home up the cobbled lane as supper smoke rises from the chimneys.",
-        timeAdvance: {
-          minutes: 20,
-          cause: "Walking home",
-          developments: [],
-        },
-      });
-    }
+        timeAdvance: { minutes: 20, cause: "Walking home", developments: [] },
+      }),
+    };
+  return {
+    playerAction: `Ask locals around the quay (${turn}).`,
+    proposal: completeLivingProposal({
+      narration: `Turn ${turn}: Harbourmaster Venn checks a manifest while gulls circle.`,
+      timeAdvance: {
+        minutes: 15,
+        cause: "Routine harbour conversation",
+        developments: [
+          {
+            threadId: "thread-quay-tide",
+            text: `Tide mark shifts at step ${turn}.`,
+          },
+        ],
+      },
+    }),
+  };
+}
 
-    const committed = applyCompletedTurn(session, proposal, {
-      turnId: `turn-${i}`,
-      inputId: `input-${i}`,
-      now: at,
-      playerAction,
-    });
-    if (!committed.ok) {
-      throw new Error(
-        `Turn ${i} failed: ${committed.errors.map((e) => e.message).join(", ")}`,
-      );
-    }
-    session = committed.value;
+function commitLongRunTurn(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  playerAction: string,
+  turn: number,
+  at: string,
+): AdventureSession {
+  const committed = applyCompletedTurn(session, proposal, {
+    turnId: `turn-${turn}`,
+    inputId: `input-${turn}`,
+    now: at,
+    playerAction,
+  });
+  if (!committed.ok) {
+    throw new Error(
+      `Turn ${turn} failed: ${committed.errors.map((error) => error.message).join(", ")}`,
+    );
+  }
+  return committed.value;
+}
 
-    // Trigger deterministic scenario time pressures on elapsed minutes
-    const pressure = applyScenarioTimePressures(
-      session,
-      session.worldTime?.elapsedMinutes ?? 0,
-      `turn-${i}`,
+function linkTowerAtTurn(
+  session: AdventureSession,
+  turn: number,
+  at: string,
+): AdventureSession {
+  if (turn !== 8) return session;
+  const linked = linkAdventurePlaceRecord(
+    session,
+    "Old Bell Tower",
+    "canon-place-old-bell",
+    session.revision,
+    at,
+  );
+  return linked.ok ? linked.session : session;
+}
+
+function updateScenarioEvents(
+  session: AdventureSession,
+  turn: number,
+  at: string,
+): AdventureSession {
+  if (turn === 18) return resolveBellScenario(session, at);
+  if (turn === 26) return closeWeighhouseAndPropagate(session, at);
+  if (turn === 42) return abandonCooperScenario(session, at);
+  return session;
+}
+
+function resolveBellScenario(
+  session: AdventureSession,
+  at: string,
+): AdventureSession {
+  const result = setScenarioStatus(
+    session,
+    "scen-bell-ghost",
+    "resolved",
+    session.revision,
+    {
+      id: "evt-bell-resolved",
+      kind: "status-change",
+      visibility: "player",
+      text: "No ghost: jackdaws were pulling the cord.",
+      at,
+    },
+    at,
+  );
+  if (!result.ok)
+    throw new Error(`Failed to resolve scen-bell-ghost: ${result.reason}`);
+  return result.session;
+}
+
+function closeWeighhouseAndPropagate(
+  session: AdventureSession,
+  at: string,
+): AdventureSession {
+  const focused = setScenarioFocus(
+    session,
+    "scen-grain-shortage",
+    session.revision,
+    at,
+  );
+  if (!focused.ok) throw new Error("Failed to focus scen-grain-shortage");
+  const consequence = appendScenarioEvent(
+    focused.session,
+    "scen-grain-shortage",
+    {
+      id: "evt-weighhouse-closure",
+      kind: "consequence",
+      visibility: "player",
+      text: "Venn closes the weighhouse early after the shim is spotted.",
+      at,
+    },
+    focused.session.revision,
+    at,
+  );
+  if (!consequence.ok) throw new Error("Failed to commit consequence event");
+  const propagated = propagateKnownConsequence(
+    consequence.session,
+    {
+      sourceScenarioId: "scen-grain-shortage",
+      sourceEventId: "evt-weighhouse-closure",
+      targetScenarioId: "scen-missing-cooper",
+      anchorRef: "canon-actor-harbourmaster",
+      eventId: "evt-cooper-prop",
+      text: "With the weighhouse closed early, Venn's clerks linger near Cooper's Yard.",
+      at,
+    },
+    consequence.session.revision,
+  );
+  if (!propagated.ok) throw new Error("Failed to propagate consequence");
+  return propagated.session;
+}
+
+function abandonCooperScenario(
+  session: AdventureSession,
+  at: string,
+): AdventureSession {
+  const result = setScenarioStatus(
+    session,
+    "scen-missing-cooper",
+    "abandoned",
+    session.revision,
+    {
+      id: "evt-cooper-abandoned",
+      kind: "status-change",
+      visibility: "player",
+      text: "Left the cooper's disappearance for the harbour watch.",
+      at,
+    },
+    at,
+  );
+  if (!result.ok)
+    throw new Error(`Failed to abandon scen-missing-cooper: ${result.reason}`);
+  return result.session;
+}
+
+function summarizeAndArchive(
+  session: AdventureSession,
+  turn: number,
+  at: string,
+): { session: AdventureSession; attached: number } {
+  let current = session;
+  let attached = 0;
+  const request = buildStorySummaryRequest(current);
+  if (request) {
+    const result = attachStorySummary(
+      current,
+      {
+        text: `Turns up to ${request.throughSequence}: Mara visited the quay and bell tower.`,
+        throughSequence: request.throughSequence,
+      },
       at,
     );
-    if (pressure.ok) pressureTriggerCount += pressure.events.length;
-
-    if (i === 8) {
-      const linked = linkAdventurePlaceRecord(
-        session,
-        "Old Bell Tower",
-        "canon-place-old-bell",
-        session.revision,
-        at,
-      );
-      if (linked.ok) session = linked.session;
-    }
-
-    // Resolve scen-bell-ghost at turn 18, commit consequence on scen-grain-shortage at turn 26 & propagate to scen-missing-cooper, abandon scen-missing-cooper at turn 42
-    if (i === 18) {
-      const resolvedBell = setScenarioStatus(
-        session,
-        "scen-bell-ghost",
-        "resolved",
-        session.revision,
-        {
-          id: "evt-bell-resolved",
-          kind: "status-change",
-          visibility: "player",
-          text: "No ghost: jackdaws were pulling the cord.",
-          at,
-        },
-        at,
-      );
-      if (!resolvedBell.ok)
-        throw new Error(
-          `Failed to resolve scen-bell-ghost: ${resolvedBell.reason}`,
-        );
-      session = resolvedBell.session;
-    } else if (i === 26) {
-      const focused = setScenarioFocus(
-        session,
-        "scen-grain-shortage",
-        session.revision,
-        at,
-      );
-      if (!focused.ok) throw new Error("Failed to focus scen-grain-shortage");
-      session = focused.session;
-
-      const ev = appendScenarioEvent(
-        session,
-        "scen-grain-shortage",
-        {
-          id: "evt-weighhouse-closure",
-          kind: "consequence",
-          visibility: "player",
-          text: "Venn closes the weighhouse early after the shim is spotted.",
-          at,
-        },
-        session.revision,
-        at,
-      );
-      if (!ev.ok) throw new Error("Failed to commit consequence event");
-      session = ev.session;
-
-      const propagated = propagateKnownConsequence(
-        session,
-        {
-          sourceScenarioId: "scen-grain-shortage",
-          sourceEventId: "evt-weighhouse-closure",
-          targetScenarioId: "scen-missing-cooper",
-          anchorRef: "canon-actor-harbourmaster",
-          eventId: "evt-cooper-prop",
-          text: "With the weighhouse closed early, Venn's clerks linger near Cooper's Yard.",
-          at,
-        },
-        session.revision,
-      );
-      if (!propagated.ok) throw new Error("Failed to propagate consequence");
-      session = propagated.session;
-    } else if (i === 42) {
-      const abandoned = setScenarioStatus(
-        session,
-        "scen-missing-cooper",
-        "abandoned",
-        session.revision,
-        {
-          id: "evt-cooper-abandoned",
-          kind: "status-change",
-          visibility: "player",
-          text: "Left the cooper's disappearance for the harbour watch.",
-          at,
-        },
-        at,
-      );
-      if (!abandoned.ok)
-        throw new Error(
-          `Failed to abandon scen-missing-cooper: ${abandoned.reason}`,
-        );
-      session = abandoned.session;
-    }
-
-    // Rolling summarisation whenever triggered
-    const summaryReq = buildStorySummaryRequest(session);
-    if (summaryReq) {
-      const attached = attachStorySummary(
-        session,
-        {
-          text: `Turns up to ${summaryReq.throughSequence}: Mara visited the quay and bell tower.`,
-          throughSequence: summaryReq.throughSequence,
-        },
-        at,
-      );
-      if (!attached.ok) throw new Error("Failed to attach story summary");
-      session = attached.value;
-      summariesAttached += 1;
-    }
-
-    // Reload roundtrip & archive/resume check at turn 30
-    if (i === 30) {
-      const archived = parseAdventureSession({
-        ...JSON.parse(JSON.stringify(session)),
-        status: "archived",
-      });
-      const resumed = parseAdventureSession({
-        ...JSON.parse(JSON.stringify(archived)),
-        status: "active",
-      });
-      session = resumed;
-    }
-
-    evaluationTurns.push({
-      narration: proposal.narration,
-      playerCharacterName: "Mara",
-      playerAction,
-      proposal,
-      previousSession: prev,
-      session,
-    });
+    if (!result.ok) throw new Error("Failed to attach story summary");
+    current = result.value;
+    attached = 1;
   }
+  if (turn === 30) current = archiveAndResume(current);
+  return { session: current, attached };
+}
 
-  return {
-    session,
-    evaluationTurns,
-    summariesAttached,
-    pressureTriggerCount,
-  };
+function archiveAndResume(session: AdventureSession): AdventureSession {
+  const archived = parseAdventureSession({
+    ...JSON.parse(JSON.stringify(session)),
+    status: "archived",
+  });
+  return parseAdventureSession({
+    ...JSON.parse(JSON.stringify(archived)),
+    status: "active",
+  });
 }

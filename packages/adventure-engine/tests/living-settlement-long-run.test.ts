@@ -118,118 +118,12 @@ describe("Living Settlement 50+ turn multi-scenario suite", () => {
       30,
     );
     const session = outcome.session;
-
-    // 1. Unknown timeAdvance threadId is dropped without advancing clock
-    const prevElapsed = session.worldTime?.elapsedMinutes ?? 0;
-    const unknownThread = applyCompletedTurn(
-      session,
-      completeLivingProposal({
-        timeAdvance: {
-          minutes: 10,
-          cause: "Wait",
-          developments: [{ threadId: "nonexistent-thread", text: "Ghost" }],
-        },
-      }),
-      {
-        turnId: "turn-drop-1",
-        inputId: "input-drop-1",
-        now: "2026-11-10T15:00:00.000Z",
-      },
-    );
-    expect(unknownThread.ok).toBe(true);
-    if (unknownThread.ok) {
-      expect(unknownThread.value.worldTime?.elapsedMinutes).toBe(prevElapsed);
-      expect(unknownThread.value.turns.at(-1)?.dropped?.length).toBeGreaterThan(
-        0,
-      );
-    }
-
-    // 2. Duplicate inputId rejected
-    const duplicateInput = applyCompletedTurn(
-      session,
-      completeLivingProposal(),
-      {
-        turnId: "turn-dup",
-        inputId: session.turns[0]!.inputId,
-        now: "2026-11-10T15:01:00.000Z",
-      },
-    );
-    expect(duplicateInput.ok).toBe(false);
-    if (!duplicateInput.ok) {
-      expect(duplicateInput.errors[0]?.code).toBe("duplicate-input");
-    }
-
-    // 3. 2-hop propagateKnownConsequence chain rejected
-    const twoHop = propagateKnownConsequence(
-      session,
-      {
-        sourceScenarioId: "scen-missing-cooper",
-        sourceEventId: "evt-cooper-prop",
-        targetScenarioId: "scen-grain-shortage",
-        anchorRef: "canon-actor-harbourmaster",
-        eventId: "evt-two-hop",
-        text: "Should be rejected",
-        at: "2026-11-10T15:02:00.000Z",
-      },
-      session.revision,
-    );
-    expect(twoHop.ok).toBe(false);
-
-    // 4. Unanchored / resolved target rejected
-    const unanchored = propagateKnownConsequence(
-      session,
-      {
-        sourceScenarioId: "scen-grain-shortage",
-        sourceEventId: "evt-weighhouse-closure",
-        targetScenarioId: "scen-bell-ghost",
-        anchorRef: "canon-actor-harbourmaster",
-        eventId: "evt-unanchored",
-        text: "Should be rejected",
-        at: "2026-11-10T15:03:00.000Z",
-      },
-      session.revision,
-    );
-    expect(unanchored.ok).toBe(false);
-
-    // 5. Stale revision rejected on scenario commands
-    const stale = setScenarioStatus(
-      session,
-      "scen-grain-shortage",
-      "resolved",
-      session.revision - 1,
-      undefined,
-      "2026-11-10T15:04:00.000Z",
-    );
-    expect(stale.ok).toBe(false);
-    if (!stale.ok) expect(stale.reason).toBe("stale-revision");
-
-    // 6. Duplicate event.id rejected/replayed without duplicating events
-    const dupEvent = appendScenarioEvent(
-      session,
-      "scen-grain-shortage",
-      {
-        id: "evt-weighhouse-closure",
-        kind: "consequence",
-        visibility: "player",
-        text: "Different text with same id",
-        at: "2026-11-10T15:05:00.000Z",
-      },
-      session.revision,
-    );
-    expect(dupEvent.ok).toBe(false);
-
-    // 7. worldTime bounds hold
-    expect(session.worldTime?.elapsedMinutes).toBeLessThanOrEqual(52_560_000);
-    const pressureAgain = applyScenarioTimePressures(
-      session,
-      (session.worldTime?.elapsedMinutes ?? 0) + 1000,
-      "turn-extra-pressure",
-      "2026-11-10T15:06:00.000Z",
-    );
-    expect(pressureAgain.ok).toBe(true);
-    if (pressureAgain.ok) {
-      expect(pressureAgain.events).toHaveLength(0);
-    }
+    expectUnknownThreadDropped(session);
+    expectDuplicateInputRejected(session);
+    expectPropagationRestrictions(session);
+    expectStaleScenarioRevisionRejected(session);
+    expectDuplicateScenarioEventRejected(session);
+    expectWorldTimeBounded(session);
   });
 
   it("rejects hidden leakage, malformed proposals, preserves interrupted roll outcomes, and migrates v2 sessions", () => {
@@ -356,3 +250,111 @@ describe("Living Settlement 50+ turn multi-scenario suite", () => {
     expect(buildStorySummaryRequest(legacyV2)).toBeUndefined();
   });
 });
+
+type LivingSession = ReturnType<typeof createLivingSettlementReadyMadeSession>;
+
+function expectUnknownThreadDropped(session: LivingSession): void {
+  const previousElapsed = session.worldTime?.elapsedMinutes ?? 0;
+  const result = applyCompletedTurn(
+    session,
+    completeLivingProposal({
+      timeAdvance: {
+        minutes: 10,
+        cause: "Wait",
+        developments: [{ threadId: "nonexistent-thread", text: "Ghost" }],
+      },
+    }),
+    {
+      turnId: "turn-drop-1",
+      inputId: "input-drop-1",
+      now: "2026-11-10T15:00:00.000Z",
+    },
+  );
+  expect(result.ok).toBe(true);
+  if (result.ok) {
+    expect(result.value.worldTime?.elapsedMinutes).toBe(previousElapsed);
+    expect(result.value.turns.at(-1)?.dropped?.length).toBeGreaterThan(0);
+  }
+}
+
+function expectDuplicateInputRejected(session: LivingSession): void {
+  const result = applyCompletedTurn(session, completeLivingProposal(), {
+    turnId: "turn-dup",
+    inputId: session.turns[0]!.inputId,
+    now: "2026-11-10T15:01:00.000Z",
+  });
+  expect(result.ok).toBe(false);
+  if (!result.ok) expect(result.errors[0]?.code).toBe("duplicate-input");
+}
+
+function expectPropagationRestrictions(session: LivingSession): void {
+  const twoHop = propagateKnownConsequence(
+    session,
+    {
+      sourceScenarioId: "scen-missing-cooper",
+      sourceEventId: "evt-cooper-prop",
+      targetScenarioId: "scen-grain-shortage",
+      anchorRef: "canon-actor-harbourmaster",
+      eventId: "evt-two-hop",
+      text: "Should be rejected",
+      at: "2026-11-10T15:02:00.000Z",
+    },
+    session.revision,
+  );
+  expect(twoHop.ok).toBe(false);
+  const unanchored = propagateKnownConsequence(
+    session,
+    {
+      sourceScenarioId: "scen-grain-shortage",
+      sourceEventId: "evt-weighhouse-closure",
+      targetScenarioId: "scen-bell-ghost",
+      anchorRef: "canon-actor-harbourmaster",
+      eventId: "evt-unanchored",
+      text: "Should be rejected",
+      at: "2026-11-10T15:03:00.000Z",
+    },
+    session.revision,
+  );
+  expect(unanchored.ok).toBe(false);
+}
+
+function expectStaleScenarioRevisionRejected(session: LivingSession): void {
+  const result = setScenarioStatus(
+    session,
+    "scen-grain-shortage",
+    "resolved",
+    session.revision - 1,
+    undefined,
+    "2026-11-10T15:04:00.000Z",
+  );
+  expect(result.ok).toBe(false);
+  if (!result.ok) expect(result.reason).toBe("stale-revision");
+}
+
+function expectDuplicateScenarioEventRejected(session: LivingSession): void {
+  const result = appendScenarioEvent(
+    session,
+    "scen-grain-shortage",
+    {
+      id: "evt-weighhouse-closure",
+      kind: "consequence",
+      visibility: "player",
+      text: "Different text with same id",
+      at: "2026-11-10T15:05:00.000Z",
+    },
+    session.revision,
+  );
+  expect(result.ok).toBe(false);
+}
+
+function expectWorldTimeBounded(session: LivingSession): void {
+  expect(session.worldTime?.elapsedMinutes).toBeLessThanOrEqual(52_560_000);
+  const result = applyScenarioTimePressures(
+    session,
+    (session.worldTime?.elapsedMinutes ?? 0) + 1000,
+    "turn-extra-pressure",
+    "2026-11-10T15:06:00.000Z",
+  );
+  expect(result.ok).toBe(true);
+  if (result.ok) expect(result.events).toHaveLength(0);
+}

@@ -51,31 +51,11 @@ function makeLargeVaultStore(recordCount: number) {
   const searchEntries: Array<{ id: string; title: string; type: string }> = [];
 
   for (let i = 0; i < recordCount; i += 1) {
-    const id = i === 0 ? "pc" : i === 1 ? "anchor-quay" : `rec-${i}`;
-    const title =
-      i === 0 ? "Mara" : i === 1 ? "Brackwater Quay" : `Harbour Record ${i}`;
-    records.set(id, {
-      id,
-      recordId: id,
-      recordType: i === 0 ? "character" : "location",
-      type: i === 0 ? "character" : "location",
-      displayName: title,
-      title,
-      text: `Public details for ${title}.`,
-      content: `Public details for ${title}.`,
-      lore: `GM-SECRET-${id}`,
-      relationships:
-        i === 1 ? [{ targetId: "rec-2", type: "near", label: "near" }] : [],
-      labels: [],
-      metadata: {},
-    });
-    searchEntries.push({
-      id,
-      title,
-      type: i === 0 ? "character" : "location",
-      text: `Public details for ${title}.`,
-      lore: `GM-SECRET-${id}`,
-    } as any);
+    const record = largeVaultRecord(i);
+    records.set(record.id, record.value);
+    searchEntries.push(
+      largeVaultSearchEntry(record.id, record.title, record.type),
+    );
   }
 
   return {
@@ -89,6 +69,59 @@ function makeLargeVaultStore(recordCount: number) {
       { id: "anchor-quay", name: "Brackwater Quay", type: "location" },
     ]),
   };
+}
+
+function largeVaultRecord(index: number): {
+  id: string;
+  title: string;
+  type: string;
+  value: any;
+} {
+  const id = largeVaultId(index);
+  const title = largeVaultTitle(index);
+  const type = index === 0 ? "character" : "location";
+  return {
+    id,
+    title,
+    type,
+    value: {
+      id,
+      recordId: id,
+      recordType: type,
+      type,
+      displayName: title,
+      title,
+      text: `Public details for ${title}.`,
+      content: `Public details for ${title}.`,
+      lore: `GM-SECRET-${id}`,
+      relationships:
+        index === 1 ? [{ targetId: "rec-2", type: "near", label: "near" }] : [],
+      labels: [],
+      metadata: {},
+    },
+  };
+}
+
+function largeVaultSearchEntry(id: string, title: string, type: string) {
+  return {
+    id,
+    title,
+    type,
+    text: `Public details for ${title}.`,
+    lore: `GM-SECRET-${id}`,
+  } as any;
+}
+
+function largeVaultId(index: number): string {
+  if (index === 0) return "pc";
+  if (index === 1) return "anchor-quay";
+  return `rec-${index}`;
+}
+
+function largeVaultTitle(index: number): string {
+  if (index === 0) return "Mara";
+  if (index === 1) return "Brackwater Quay";
+  return `Harbour Record ${index}`;
 }
 
 describe("adventure multi-scenario retrieval, continuity, and resilience gates", () => {
