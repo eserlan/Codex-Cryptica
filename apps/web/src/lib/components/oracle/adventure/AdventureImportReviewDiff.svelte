@@ -41,7 +41,8 @@
     visibleCollections.reduce((sum, entry) => sum + entry.removed.length, 0),
   );
   const totalChanged = $derived(
-    visibleCollections.reduce((sum, entry) => sum + entry.changed.length, 0),
+    visibleCollections.reduce((sum, entry) => sum + entry.changed.length, 0) +
+      (diff.entrySceneChange ? 1 : 0),
   );
 </script>
 

@@ -400,6 +400,9 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(
       screen.getByTestId("adventure-import-diff-entry-scene").textContent,
     ).toContain("scene-landing to scene-next");
+    expect(screen.getByTestId("adventure-import-diff").textContent).toContain(
+      "0 added, 0 removed, 1 changed.",
+    );
   });
 
   it("warns when the version number did not increase and shows no diff without a predecessor", () => {
