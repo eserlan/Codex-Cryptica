@@ -202,10 +202,36 @@ export class AdventureSessionRepository {
     }
   }
 
+  async list(vaultId: string): Promise<AdventureListResult> {
+    const entries: AdventureArchiveEntry[] = [];
+    let directory: FileSystemDirectoryHandle;
+    try {
+      directory = await this.adventuresDirectory(vaultId);
+    } catch {
+      return { effectiveActiveId: null, entries: [] };
+    }
+    for await (const [name, handle] of (directory as any).entries()) {
+      const entry = await this.readArchiveEntry(vaultId, name, handle);
+      if (entry) entries.push(entry);
+    }
+    const active = entries
+      .filter((entry) => entry.status === "active" && entry.updatedAt)
+      .sort((a, b) => b.updatedAt!.localeCompare(a.updatedAt!));
+    // Several adventures can be active at once; this is the most recently played.
+    const effectiveActiveId = active[0]?.id ?? null;
+    entries.sort((a, b) =>
+      (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
+    );
+    return { effectiveActiveId, entries };
+  }
+
   private async readArchiveEntry(
     vaultId: string,
-    id: string,
-  ): Promise<AdventureArchiveEntry> {
+    name: string,
+    handle: { kind: string },
+  ): Promise<AdventureArchiveEntry | null> {
+    if (!name.endsWith(".json") || handle.kind !== "file") return null;
+    const id = name.slice(0, -5);
     try {
       const read = await this.readFile(vaultId, id);
       const session = read.session;
@@ -230,29 +256,6 @@ export class AdventureSessionRepository {
         loadCondition: "unreadable",
       };
     }
-  }
-
-  async list(vaultId: string): Promise<AdventureListResult> {
-    const entries: AdventureArchiveEntry[] = [];
-    let directory: FileSystemDirectoryHandle;
-    try {
-      directory = await this.adventuresDirectory(vaultId);
-    } catch {
-      return { effectiveActiveId: null, entries: [] };
-    }
-    for await (const [name, handle] of (directory as any).entries()) {
-      if (!name.endsWith(".json") || handle.kind !== "file") continue;
-      entries.push(await this.readArchiveEntry(vaultId, name.slice(0, -5)));
-    }
-    const active = entries
-      .filter((entry) => entry.status === "active" && entry.updatedAt)
-      .sort((a, b) => b.updatedAt!.localeCompare(a.updatedAt!));
-    // Several adventures can be active at once; this is the most recently played.
-    const effectiveActiveId = active[0]?.id ?? null;
-    entries.sort((a, b) =>
-      (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
-    );
-    return { effectiveActiveId, entries };
   }
 
   async save(
