@@ -46,7 +46,7 @@
   const displayError = $derived(approveError ?? localError);
 
   $effect(() => {
-    const snapshot = $state.snapshot(draft);
+    const snapshot = $state.snapshot(draft) as AdventureJsonV1;
     const token = ++hashRequestToken;
     void computeAdventureJsonHash(snapshot)
       .then((hash) => {

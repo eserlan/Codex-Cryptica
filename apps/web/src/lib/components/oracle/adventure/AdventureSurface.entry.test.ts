@@ -15,10 +15,15 @@ const env = vi.hoisted(() => ({
   worldEntryRumourGenerator: null as unknown,
   setRootResolver: vi.fn(),
   setContextResolver: vi.fn(),
-  list: vi.fn(async () => ({
-    effectiveActiveId: null,
-    entries: [],
-  })),
+  list: vi.fn(
+    async (): Promise<{
+      effectiveActiveId: string | null;
+      entries: any[];
+    }> => ({
+      effectiveActiveId: null,
+      entries: [],
+    }),
+  ),
   notify: vi.fn(),
   characters: [] as Array<{ id: string; name: string }>,
   pendingRumour: null as any,
