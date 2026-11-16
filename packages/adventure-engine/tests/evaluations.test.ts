@@ -46,7 +46,9 @@ function completeProposal(
   };
 }
 
-function makeSession(overrides: Partial<AdventureSession> = {}): AdventureSession {
+function makeSession(
+  overrides: Partial<AdventureSession> = {},
+): AdventureSession {
   const scenario1 = {
     ...createScenarioState({
       id: "scen-1",
@@ -169,7 +171,9 @@ describe("adventure rubric evaluations", () => {
       timeAdvance: {
         minutes: 15,
         cause: "Walked around the square",
-        developments: [{ threadId: "thread-1", text: "Lanterns dim near the cistern." }],
+        developments: [
+          { threadId: "thread-1", text: "Lanterns dim near the cistern." },
+        ],
       },
     });
     const result = evaluateAdventureTurn(
@@ -225,7 +229,8 @@ describe("adventure rubric evaluations", () => {
   it("detects secret leakage across narration, recap, transcript, errors, and unheard scenarios", () => {
     const session = makeSession();
     const leakProposal = completeProposal({
-      narration: "You hear that the bailiff's ledger is short three sacks of salt.",
+      narration:
+        "You hear that the bailiff's ledger is short three sacks of salt.",
     });
     expect(
       scoreSecrecy(
@@ -362,7 +367,8 @@ describe("adventure rubric evaluations", () => {
 
   it("flags unnecessary escalation when player declines a lead or acts ordinarily", () => {
     const proposal = completeProposal({
-      narration: "Suddenly an ambush springs from the alley and you are forced to fight!",
+      narration:
+        "Suddenly an ambush springs from the alley and you are forced to fight!",
       visiblePatch: {
         ...emptyVisible,
         objectives: {

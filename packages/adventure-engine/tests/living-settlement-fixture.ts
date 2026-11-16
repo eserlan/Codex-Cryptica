@@ -118,7 +118,8 @@ export function livingSettlementScenarios(): ScenarioItem[] {
       id: "scen-bell-ghost",
       origin: { kind: "manual", manualId: "living-bell" },
       playerVisible: {
-        rumour: "A phantom tolls the cracked bell in the Old Bell Tower at noon.",
+        rumour:
+          "A phantom tolls the cracked bell in the Old Bell Tower at noon.",
         lead: "Old Bell Tower",
         source: "Sexton",
       },
@@ -277,7 +278,8 @@ function baseSession(
       current.revision,
       LIVING_SETTLEMENT_NOW,
     );
-    if (!added.ok) throw new Error(`Failed to seed scenario ${item.id}: ${added.reason}`);
+    if (!added.ok)
+      throw new Error(`Failed to seed scenario ${item.id}: ${added.reason}`);
     current = added.session;
   }
   return current;
@@ -297,7 +299,13 @@ export function createLivingSettlementWorldEntrySession(): AdventureSession {
         recordId: "canon-place-brackwater",
         name: "Brackwater Quay",
       },
-      at: { year: 412, month: 11, day: 10, precision: "day", label: "10 Frostfall" },
+      at: {
+        year: 412,
+        month: 11,
+        day: 10,
+        precision: "day",
+        label: "10 Frostfall",
+      },
       intent: "explore",
     },
   });
@@ -334,7 +342,8 @@ export function runLivingSettlementLongRun(
         kind: "roll-required" as const,
         setupNarration:
           "You check the loose planks along the slipway where the tide laps.",
-        uncertainty: "Can you spot the fresh boot prints before the tide washes them?",
+        uncertainty:
+          "Can you spot the fresh boot prints before the tide washes them?",
         stakes: "You might miss which boathouse Tams entered.",
         dice: {
           expression: "2d6",
@@ -505,7 +514,8 @@ export function runLivingSettlementLongRun(
       });
     } else if (i === 40) {
       // Decline / ordinary activity
-      playerAction = "I decline to investigate further and buy a warm loaf of bread.";
+      playerAction =
+        "I decline to investigate further and buy a warm loaf of bread.";
       proposal = completeLivingProposal({
         narration:
           "You pay two coppers for a warm loaf and watch the afternoon boats unload.",
@@ -578,7 +588,10 @@ export function runLivingSettlementLongRun(
         },
         at,
       );
-      if (!resolvedBell.ok) throw new Error(`Failed to resolve scen-bell-ghost: ${resolvedBell.reason}`);
+      if (!resolvedBell.ok)
+        throw new Error(
+          `Failed to resolve scen-bell-ghost: ${resolvedBell.reason}`,
+        );
       session = resolvedBell.session;
     } else if (i === 26) {
       const focused = setScenarioFocus(
@@ -636,7 +649,10 @@ export function runLivingSettlementLongRun(
         },
         at,
       );
-      if (!abandoned.ok) throw new Error(`Failed to abandon scen-missing-cooper: ${abandoned.reason}`);
+      if (!abandoned.ok)
+        throw new Error(
+          `Failed to abandon scen-missing-cooper: ${abandoned.reason}`,
+        );
       session = abandoned.session;
     }
 

@@ -68,7 +68,9 @@ function makeSession(): AdventureSession {
         availability: "available",
       },
     ],
-    places: [{ id: "place-1", name: "Oakhaven Market", sourceRecordId: "loc-1" }],
+    places: [
+      { id: "place-1", name: "Oakhaven Market", sourceRecordId: "loc-1" },
+    ],
     currentPlaceId: "place-1",
     scenarioCollection: {
       version: 1,
@@ -99,10 +101,10 @@ function makeSession(): AdventureSession {
       relationships: [],
     },
     hiddenState: {
-      secrets: [
-        { id: "sec-1", text: "CANARY-TOLL-COIN", status: "hidden" },
+      secrets: [{ id: "sec-1", text: "CANARY-TOLL-COIN", status: "hidden" }],
+      gmThreads: [
+        { id: "thread-1", text: "South Gate watch", status: "hidden" },
       ],
-      gmThreads: [{ id: "thread-1", text: "South Gate watch", status: "hidden" }],
     },
     provisionalFacts: [],
     turns: [],

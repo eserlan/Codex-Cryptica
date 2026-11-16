@@ -84,13 +84,20 @@ function uniqueIds(items: ReadonlyArray<{ id: string }>): boolean {
   return true;
 }
 
-function playerVisibleProposalPayload(proposal: AdventureTurnProposal): unknown {
+function playerVisibleProposalPayload(
+  proposal: AdventureTurnProposal,
+): unknown {
   if (proposal.kind === "complete") {
     const { hiddenPatch: _hidden, timeAdvance, ...visible } = proposal;
     return {
       ...visible,
       ...(timeAdvance
-        ? { timeAdvance: { minutes: timeAdvance.minutes, cause: timeAdvance.cause } }
+        ? {
+            timeAdvance: {
+              minutes: timeAdvance.minutes,
+              cause: timeAdvance.cause,
+            },
+          }
         : {}),
     };
   }
@@ -115,7 +122,11 @@ function collectSecretLeakageSources(
   turn: EvaluationTurn,
   canaries: string[],
 ): string[] {
-  const secrets = [...canaries, ...(turn.canaries ?? []), ...(turn.gmOnlyLore ?? [])];
+  const secrets = [
+    ...canaries,
+    ...(turn.canaries ?? []),
+    ...(turn.gmOnlyLore ?? []),
+  ];
   const sourceSession = turn.session ?? turn.previousSession;
   const proposalRevealedSecrets = new Set(
     turn.proposal.kind === "complete" ? turn.proposal.revealSecretIds : [],
@@ -131,7 +142,10 @@ function collectSecretLeakageSources(
         ...item.revealedSecretIds,
         ...proposalRevealedSecrets,
       ]);
-      if (item.knowledge === "unheard" && !proposalRevealedScenarios.has(item.id)) {
+      if (
+        item.knowledge === "unheard" &&
+        !proposalRevealedScenarios.has(item.id)
+      ) {
         secrets.push(item.playerVisible.rumour, item.playerVisible.lead);
       }
       if (!revealed.has(item.secretBindings.truth)) {
@@ -308,10 +322,7 @@ export function scoreCanonSafety(turn: EvaluationTurn): number {
       }
     }
     const prevCanonicalIds = new Set(
-      [
-        ...prev.visibleState.knownFacts,
-        ...prev.visibleState.activeCharacters,
-      ]
+      [...prev.visibleState.knownFacts, ...prev.visibleState.activeCharacters]
         .filter((fact) => fact.source === "canonical")
         .map((fact) => fact.id),
     );
@@ -361,7 +372,9 @@ function validateProposalConsequences(turn: EvaluationTurn): boolean {
   return true;
 }
 
-function validatePropagatedEvents(session: AdventureSession | undefined): boolean {
+function validatePropagatedEvents(
+  session: AdventureSession | undefined,
+): boolean {
   if (!session?.scenarioCollection) return true;
   const byId = new Map(
     session.scenarioCollection.items.map((item) => [item.id, item]),
@@ -450,8 +463,12 @@ export function evaluateAdventureRun(
   const scores: RubricScores = {
     agency: aggregateScores(evaluated.map((item) => item.scores.agency)),
     secrecy: aggregateScores(evaluated.map((item) => item.scores.secrecy)),
-    continuity: aggregateScores(evaluated.map((item) => item.scores.continuity)),
-    canonSafety: aggregateScores(evaluated.map((item) => item.scores.canonSafety)),
+    continuity: aggregateScores(
+      evaluated.map((item) => item.scores.continuity),
+    ),
+    canonSafety: aggregateScores(
+      evaluated.map((item) => item.scores.canonSafety),
+    ),
     consequenceCredibility: aggregateScores(
       evaluated.map((item) => item.scores.consequenceCredibility),
     ),

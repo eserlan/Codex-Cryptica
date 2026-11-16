@@ -27,16 +27,13 @@ import {
   applyCompletedTurn,
   buildAdventurePrompt,
   buildStorySummaryRequest,
-  createScenarioState,
   MAX_GENERATION_INPUT_CHARS,
   MAX_GROUNDING_RECORDS,
   MAX_SERIALIZED_STATE_CHARS,
   parseAdventureSession,
   PROMPT_TRANSCRIPT_TURNS,
   SUMMARY_TRIGGER_TURNS,
-  type AdventureSession,
   type ProvisionalFact,
-  type SourceRecordReference,
 } from "@codex/adventure-engine";
 
 const now = "2026-11-10T10:00:00.000Z";
@@ -56,11 +53,7 @@ function makeLargeVaultStore(recordCount: number) {
   for (let i = 0; i < recordCount; i += 1) {
     const id = i === 0 ? "pc" : i === 1 ? "anchor-quay" : `rec-${i}`;
     const title =
-      i === 0
-        ? "Mara"
-        : i === 1
-          ? "Brackwater Quay"
-          : `Harbour Record ${i}`;
+      i === 0 ? "Mara" : i === 1 ? "Brackwater Quay" : `Harbour Record ${i}`;
     records.set(id, {
       id,
       recordId: id,
@@ -335,10 +328,30 @@ describe("adventure multi-scenario retrieval, continuity, and resilience gates",
           aliases: [],
           status: "active",
           connections: [
-            { target: "e-past", type: "associated", strength: 1, label: "link" },
-            { target: "e-future", type: "associated", strength: 1, label: "link" },
-            { target: "e-uncertain", type: "associated", strength: 1, label: "link" },
-            { target: "e-contra", type: "associated", strength: 1, label: "link" },
+            {
+              target: "e-past",
+              type: "associated",
+              strength: 1,
+              label: "link",
+            },
+            {
+              target: "e-future",
+              type: "associated",
+              strength: 1,
+              label: "link",
+            },
+            {
+              target: "e-uncertain",
+              type: "associated",
+              strength: 1,
+              label: "link",
+            },
+            {
+              target: "e-contra",
+              type: "associated",
+              strength: 1,
+              label: "link",
+            },
           ],
         },
         {
@@ -415,7 +428,12 @@ describe("adventure multi-scenario retrieval, continuity, and resilience gates",
           aliases: [],
           status: "active",
           connections: [
-            { target: "e-day2", type: "associated", strength: 1, label: "link" },
+            {
+              target: "e-day2",
+              type: "associated",
+              strength: 1,
+              label: "link",
+            },
           ],
         },
         {
@@ -433,9 +451,8 @@ describe("adventure multi-scenario retrieval, continuity, and resilience gates",
       ],
     });
     expect(
-      [...nextDay.playerSafe, ...nextDay.gmOnly].find(
-        (e) => e.id === "e-day2",
-      )?.applicability,
+      [...nextDay.playerSafe, ...nextDay.gmOnly].find((e) => e.id === "e-day2")
+        ?.applicability,
     ).toBe("established");
 
     // Empty retrieval succeeds cleanly
@@ -486,7 +503,9 @@ describe("adventure multi-scenario retrieval, continuity, and resilience gates",
         playerAction: "Look",
       });
     } catch (err) {
-      expect((err as Error).message).not.toContain("PRIVATE-IDB-CORRUPTION-DETAIL");
+      expect((err as Error).message).not.toContain(
+        "PRIVATE-IDB-CORRUPTION-DETAIL",
+      );
     }
 
     // Cache invalidation on revision, modelName, sourceHashes, pending, and 80 turns
@@ -574,17 +593,18 @@ describe("adventure multi-scenario retrieval, continuity, and resilience gates",
       "Brackwater Quay",
       {
         isCurrent: () => current,
-      findExistingId: (title) =>
-        title === "Bram" ? "existing-bram-id" : undefined,
-      createEntity: async (_type, title) => {
-        created.push(title);
-        return `new-${title}`;
+        findExistingId: (title) =>
+          title === "Bram" ? "existing-bram-id" : undefined,
+        createEntity: async (_type, title) => {
+          created.push(title);
+          return `new-${title}`;
+        },
+        linkRecord: async (fact, recordId) => {
+          linked.push([fact.id, recordId]);
+          current = false; // Simulate interruption after first record
+        },
       },
-      linkRecord: async (fact, recordId) => {
-        linked.push([fact.id, recordId]);
-        current = false; // Simulate interruption after first record
-      },
-    });
+    );
     expect(promoted.interrupted).toBe(true);
     expect(created).toEqual([]); // Bram reused existing id without duplicate createEntity
     expect(linked).toEqual([["pf-person", "existing-bram-id"]]);

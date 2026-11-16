@@ -105,9 +105,7 @@ export class AdventureEvaluationRunner {
       this.providers.map(async (provider) => {
         const results: AdventureEvaluationCaseResult[] = [];
         for (const testCase of cases) {
-          results.push(
-            await this.runCase(testCase, provider, now, commitNow),
-          );
+          results.push(await this.runCase(testCase, provider, now, commitNow));
         }
 
         const telemetry = results.reduce<AdventureEvaluationTelemetry>(
@@ -288,7 +286,12 @@ export class AdventureEvaluationRunner {
     relevant: ResolvedSourceExcerpt[];
     hydrations: number;
   }> {
-    if (step.anchors || step.relevant || testCase.anchors || testCase.relevant) {
+    if (
+      step.anchors ||
+      step.relevant ||
+      testCase.anchors ||
+      testCase.relevant
+    ) {
       return {
         anchors: step.anchors ?? testCase.anchors ?? [],
         relevant: step.relevant ?? testCase.relevant ?? [],

@@ -327,8 +327,12 @@ describe("Living Settlement 50+ turn multi-scenario suite", () => {
         relationships: [],
       },
       hiddenState: {
-        secrets: [{ id: "sec-legacy", text: "Legacy secret", status: "hidden" }],
-        gmThreads: [{ id: "thread-legacy", text: "Harbour watch", status: "hidden" }],
+        secrets: [
+          { id: "sec-legacy", text: "Legacy secret", status: "hidden" },
+        ],
+        gmThreads: [
+          { id: "thread-legacy", text: "Harbour watch", status: "hidden" },
+        ],
       },
       provisionalFacts: [],
       turns: [],

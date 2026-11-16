@@ -4,15 +4,15 @@ Use this protocol to evaluate Solo Adventure Mode across multi-scenario play, ex
 
 ## Record the run
 
-| Item | Value |
-| ---- | ----- |
-| Tester and date | |
-| App URL and commit/build | |
-| Browser, version and operating system | |
-| Viewport / device (Desktop & Mobile) | |
-| Provider / model | |
-| Result | |
-| Failures and issue links | |
+| Item                                  | Value |
+| ------------------------------------- | ----- |
+| Tester and date                       |       |
+| App URL and commit/build              |       |
+| Browser, version and operating system |       |
+| Viewport / device (Desktop & Mobile)  |       |
+| Provider / model                      |       |
+| Result                                |       |
+| Failures and issue links              |       |
 
 For each case below, record **Pass**, **Fail**, or **Blocked**. A blocked or skipped case is not a pass.
 
@@ -29,14 +29,14 @@ cd apps/web && bunx vitest run src/lib/services/adventure/adventure-evaluation-r
 
 Every evaluated turn and run is scored `0` (fail) or `1` (pass) across six dimensions in `packages/adventure-engine/src/evaluations.ts` and `AdventureEvaluationRunner`:
 
-| Dimension | Pass Criteria (`1`) | Fail Criteria / Stop-Ship Gate (`0`) |
-| --------- | ------------------- | ------------------------------------ |
-| `agency` | Narration and roll setup leave decisions, speech, thoughts, and feelings to the player. | Narrating `<PC> decides/chooses/says/thinks/feels/does` or forcing player actions (`you must`, `you are forced to`). |
-| `secrecy` | Zero canary tokens, unrevealed `hiddenState.secrets`, unheard `scenarioCollection` truths/leads, GM-only events, `timeAdvance.developments`, or GM-only lore in player-facing surfaces. | Any secret string appears in narration, `setupNarration`, `visiblePatch`, `suggestedActions`, `buildAdventureRecap`, `createPlayerTranscript`, `buildStorySummaryRequest`, or error messages. |
-| `continuity` | `currentPlaceId`, `activeCharacters`, `knownFacts`, `people`, `scenarioCollection` (knowledge/status/stage), `pendingRoll`, and monotonic `worldTime.elapsedMinutes` remain consistent across turns, summaries, and reloads. | Clock regression, missing place/person IDs, scenario knowledge/status/stage regression, or dropped `pendingRoll` outcome. |
-| `canonSafety` | Canonical `sourceRecords` are preserved unmodified, canonical titles are not duplicated into `provisionalFacts`, and `source: "canonical"` precedence is respected. | Overwriting canonical records/facts or proposing a provisional fact with a canonical title. |
-| `consequenceCredibility` | `timeAdvance.developments` target valid `gmThreads` or open scenarios; `elaborateScenarios` advances at most 1 stage and never on the turn of first reveal; `propagateKnownConsequence` cites a single-hop player-visible `causedBy` link over a shared `anchorRef`. | Unknown thread IDs, multi-stage jumps, same-turn reveal + elaboration, or 2-hop/unanchored propagation. |
-| `unnecessaryEscalation` | Declining a lead or choosing ordinary daily activity resolves calmly without forced quests, sudden combat, or unprompted stage escalation. | Adding `objectives`, forcing combat/crisis narration, or escalating scenario stages when the player declines or acts ordinarily. |
+| Dimension                | Pass Criteria (`1`)                                                                                                                                                                                                                                                  | Fail Criteria / Stop-Ship Gate (`0`)                                                                                                                                                          |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agency`                 | Narration and roll setup leave decisions, speech, thoughts, and feelings to the player.                                                                                                                                                                              | Narrating `<PC> decides/chooses/says/thinks/feels/does` or forcing player actions (`you must`, `you are forced to`).                                                                          |
+| `secrecy`                | Zero canary tokens, unrevealed `hiddenState.secrets`, unheard `scenarioCollection` truths/leads, GM-only events, `timeAdvance.developments`, or GM-only lore in player-facing surfaces.                                                                              | Any secret string appears in narration, `setupNarration`, `visiblePatch`, `suggestedActions`, `buildAdventureRecap`, `createPlayerTranscript`, `buildStorySummaryRequest`, or error messages. |
+| `continuity`             | `currentPlaceId`, `activeCharacters`, `knownFacts`, `people`, `scenarioCollection` (knowledge/status/stage), `pendingRoll`, and monotonic `worldTime.elapsedMinutes` remain consistent across turns, summaries, and reloads.                                         | Clock regression, missing place/person IDs, scenario knowledge/status/stage regression, or dropped `pendingRoll` outcome.                                                                     |
+| `canonSafety`            | Canonical `sourceRecords` are preserved unmodified, canonical titles are not duplicated into `provisionalFacts`, and `source: "canonical"` precedence is respected.                                                                                                  | Overwriting canonical records/facts or proposing a provisional fact with a canonical title.                                                                                                   |
+| `consequenceCredibility` | `timeAdvance.developments` target valid `gmThreads` or open scenarios; `elaborateScenarios` advances at most 1 stage and never on the turn of first reveal; `propagateKnownConsequence` cites a single-hop player-visible `causedBy` link over a shared `anchorRef`. | Unknown thread IDs, multi-stage jumps, same-turn reveal + elaboration, or 2-hop/unanchored propagation.                                                                                       |
+| `unnecessaryEscalation`  | Declining a lead or choosing ordinary daily activity resolves calmly without forced quests, sudden combat, or unprompted stage escalation.                                                                                                                           | Adding `objectives`, forcing combat/crisis narration, or escalating scenario stages when the player declines or acts ordinarily.                                                              |
 
 **Stop-Ship Gate**: Any `0` on `secrecy`, `canonSafety`, or `consequenceCredibility`, or a run score `< 1.0` on `agency` / `continuity` / `unnecessaryEscalation`, blocks release until resolved.
 
@@ -53,12 +53,14 @@ Every evaluated turn and run is scored `0` (fail) or `1` (pass) across six dimen
 ## Staging Smoke Walkthrough (`AdventureSurface`)
 
 ### 1. Ready-Made Start & Existing-World Grounding
+
 1. Open `AdventureSurface` and start a **Ready-made** adventure anchored to **Mara** and **Brackwater Quay**.
 2. **Expect:** Opening narration reflects Brackwater Quay's public details without leaking GM-only `lore` or future-dated facts.
 3. Submit 3 ordinary actions (e.g., asking locals about boats, buying bread).
 4. **Expect:** No forced quest objectives or combat; `worldTime` advances monotonically.
 
 ### 2. World Entry Start & Living Settlement Multi-Scenario Play
+
 1. Start a **World Entry (`explore`)** adventure at **Brackwater Quay**.
 2. Trigger background rumour seeding and inspect the **Leads / Situations** panel.
 3. **Expect:** Heard leads appear; unheard rumours, GM-only truths, and `timeAdvance.developments` remain hidden from player projections and recap.
@@ -66,18 +68,21 @@ Every evaluated turn and run is scored `0` (fail) or `1` (pass) across six dimen
 5. **Expect:** `places` and `people` preserve stable identities across travel, reload, and archive/resume.
 
 ### 3. Automatic Entity Continuity & Selective Promotion
+
 1. Play until at least one new provisional `person`, `place`, `faction`, `item`, or `event` is introduced.
 2. Open the **Discoveries / Provisional Facts** review drawer.
 3. Promote one discovery to the Vault and dismiss another.
 4. **Expect:** Promoted fact links to a single Vault record without duplicating canonical titles; dismissed fact remains in session continuity without creating a Vault entity; GM-only facts never appear in promotion drafts.
 
 ### 4. Player-Projection, Roll, & Error Secrecy Checks
+
 1. Trigger a **Roll Required** turn, record an outcome, and reload the page before resolving.
 2. **Expect:** `pendingRoll` and its recorded outcome survive reload without rerolling dice.
 3. Inspect the **Recap**, **Transcript**, and any **Error** banners (e.g. offline toggle).
 4. **Expect:** Zero GM secrets, canary strings, or raw storage error details appear in any player-visible UI or copy.
 
 ### 5. Mobile Viewport Smoke Check (`390x844`)
+
 1. Repeat start, action submission, roll outcome entry, and discovery drawer inspection on a mobile viewport.
 2. **Expect:** Controls remain reachable without horizontal overflow or clipped modals.
 
@@ -85,7 +90,7 @@ Every evaluated turn and run is scored `0` (fail) or `1` (pass) across six dimen
 
 Record one row per evaluated provider/model during manual or live-API benchmark runs:
 
-| Date | Provider / Model | Scenario / Lane | Turns | Model Calls | Peak Context (chars) | Avg Turn Latency (ms) | Expansion Count | Rubric Scores (`A/S/C/CS/CC/UE`) | Qualitative Issues |
-| ---- | ---------------- | --------------- | ----- | ----------- | -------------------- | --------------------- | --------------- | -------------------------------- | ------------------ |
-| | | Ready-made (50+ turns) | | | | | | | |
-| | | World Entry (`explore`, 50+ turns) | | | | | | | |
+| Date | Provider / Model | Scenario / Lane                    | Turns | Model Calls | Peak Context (chars) | Avg Turn Latency (ms) | Expansion Count | Rubric Scores (`A/S/C/CS/CC/UE`) | Qualitative Issues |
+| ---- | ---------------- | ---------------------------------- | ----- | ----------- | -------------------- | --------------------- | --------------- | -------------------------------- | ------------------ |
+|      |                  | Ready-made (50+ turns)             |       |             |                      |                       |                 |                                  |                    |
+|      |                  | World Entry (`explore`, 50+ turns) |       |             |                      |                       |                 |                                  |                    |
