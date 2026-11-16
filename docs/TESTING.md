@@ -125,6 +125,14 @@ To test IndexedDB migrations and database concurrency issues in a node/vitest en
 - **Blocked Upgrade Simulation**: Simulating multi-tab scenarios where a database upgrade is requested but blocked by an open connection, validating that the connection closes gracefully and allows the upgrade to proceed.
 - **Migration Verification**: Creating an old version database, writing sample records, running the migration, and verifying that new schema indexes are successfully created and data remains uncorrupted.
 
+### 5. Multi-Scenario Adventure Evaluation & Release Gates
+
+Solo Adventure Mode is gated by deterministic long-run engine tests and provider-stubbed service integration suites, paired with a manual staging protocol:
+
+- **Engine 50+ Turn Living Settlement & Rubric Suite** (`packages/adventure-engine/tests/evaluations.test.ts`, `living-settlement-long-run.test.ts`): Verifies all six rubric dimensions (`agency`, `secrecy`, `continuity`, `canonSafety`, `consequenceCredibility`, `unnecessaryEscalation`), ready-made and World Entry (`explore`) starts, single-hop `propagateKnownConsequence`, rolling summarisation, v2 migration, and strict secrecy.
+- **Service & AI Entry-Point Gates** (`apps/web/src/lib/services/adventure/adventure-evaluation-runner.test.ts`, `adventure-multi-scenario-gates.test.ts`): Verifies `AdventureEvaluationRunner` telemetry, all five play-related AI entry points (`opening`, `action`, `roll-resolution`, `background`, `summary`), temporal applicability, cache invalidation, `<= 24` bounded hydration on 2,000+ record Vaults, entity continuity/promotion, and resilience.
+- **Manual Staging Protocol**: See [docs/adventure-evaluation-protocol.md](./adventure-evaluation-protocol.md) for the six-dimension stop-ship rubric, desktop/mobile walkthrough steps, and live-model baseline recording template.
+
 ## Best Practices
 
 1.  **Write Testable Code**: Use dependency injection and modular components to make testing easier.
