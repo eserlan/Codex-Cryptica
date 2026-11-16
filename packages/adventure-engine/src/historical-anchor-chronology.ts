@@ -179,31 +179,60 @@ export function formatAdventureDateWithEra(
 ): string {
   const eraFormatted = formatEraYear(date.year, calendar);
   const yearLabel = eraFormatted ?? `Year ${date.year}`;
-  if (date.precision === "anchor" && date.anchorId) {
-    const anchor = (calendar.anchors ?? []).find(
-      (item) => item.id === date.anchorId,
-    );
-    return anchor ? `${anchor.name}, ${yearLabel}` : yearLabel;
-  }
-  if (date.precision === "unit" || date.precision === "day") {
-    const month = calendarEngine
-      .getMonths(calendar)
-      .find((item) => item.id === date.unitId);
-    if (month && date.precision === "day" && date.day !== undefined) {
-      return `${date.day} ${month.name}, ${yearLabel}`;
-    }
-    if (month) {
-      return `${month.name}, ${yearLabel}`;
-    }
-  }
-  if (date.month !== undefined) {
-    const month = calendarEngine.getMonths(calendar)[date.month - 1];
-    if (month && date.day !== undefined) {
-      return `${date.day} ${month.name}, ${yearLabel}`;
-    }
-    if (month) {
-      return `${month.name}, ${yearLabel}`;
-    }
-  }
-  return yearLabel;
+  return (
+    formatAnchorDate(date, calendar, yearLabel) ??
+    formatUnitDate(date, calendar, yearLabel) ??
+    formatMonthDate(date, calendar, yearLabel) ??
+    yearLabel
+  );
+}
+
+function formatAnchorDate(
+  date: AdventureCalendarDate,
+  calendar: WorldCalendar,
+  yearLabel: string,
+): string | null {
+  if (date.precision !== "anchor" || !date.anchorId) return null;
+  const anchor = (calendar.anchors ?? []).find(
+    (item) => item.id === date.anchorId,
+  );
+  return anchor ? `${anchor.name}, ${yearLabel}` : yearLabel;
+}
+
+function formatUnitDate(
+  date: AdventureCalendarDate,
+  calendar: WorldCalendar,
+  yearLabel: string,
+): string | null {
+  if (date.precision !== "unit" && date.precision !== "day") return null;
+  const month = calendarEngine
+    .getMonths(calendar)
+    .find((item) => item.id === date.unitId);
+  if (!month) return null;
+  return formatMonthAndYear(
+    month.name,
+    yearLabel,
+    date.precision === "day" ? date.day : undefined,
+  );
+}
+
+function formatMonthDate(
+  date: AdventureCalendarDate,
+  calendar: WorldCalendar,
+  yearLabel: string,
+): string | null {
+  if (date.month === undefined) return null;
+  const month = calendarEngine.getMonths(calendar)[date.month - 1];
+  if (!month) return null;
+  return formatMonthAndYear(month.name, yearLabel, date.day);
+}
+
+function formatMonthAndYear(
+  monthName: string,
+  yearLabel: string,
+  day?: number,
+): string {
+  return day === undefined
+    ? `${monthName}, ${yearLabel}`
+    : `${day} ${monthName}, ${yearLabel}`;
 }

@@ -32,6 +32,7 @@ import {
   validateAndCreateHistoricalAnchor,
   validateStateBudget,
   type AdventureSession,
+  type AdventureCalendarDate,
   type HistoricalEventSnapshot,
 } from "../src";
 import {
@@ -97,6 +98,47 @@ function kingDeathEvent(
     start_date: { year: 620, precision: "year", calendarRevision: 1 },
     ...overrides,
   };
+}
+
+function createHistoricalAnchorSession(
+  event: HistoricalEventSnapshot = kingDeathEvent({
+    start_date: {
+      year: 620,
+      precision: "day",
+      unitId: "m2",
+      day: 15,
+      calendarRevision: 1,
+    },
+  }),
+  startDate: AdventureCalendarDate = {
+    year: 620,
+    precision: "day",
+    unitId: "m1",
+    day: 1,
+    calendarRevision: 1,
+  },
+): {
+  anchor: NonNullable<AdventureSession["historicalAnchor"]>;
+  session: AdventureSession;
+} {
+  const created = validateAndCreateHistoricalAnchor({
+    event,
+    startDate,
+    calendar: zeroEraCalendar,
+    policy: "preserve",
+    now,
+  });
+  if (!created.ok)
+    throw new Error(`Could not create test anchor: ${created.code}`);
+  return {
+    anchor: created.anchor,
+    session: { ...makeSession(), historicalAnchor: created.anchor },
+  };
+}
+
+function requireValue<T>(result: { ok: true; value: T } | { ok: false }): T {
+  if (!result.ok) throw new Error("Expected operation to succeed");
+  return result.value;
 }
 
 describe("HistoricalAnchor contract", () => {
@@ -401,44 +443,15 @@ describe("HistoricalAnchor contract", () => {
     });
   });
 
-  it("AC5: enforces revision-safe progress, causality, and immutable baseline across turns/rolls", () => {
-    const created = validateAndCreateHistoricalAnchor({
-      event: kingDeathEvent({
-        start_date: {
-          year: 620,
-          precision: "day",
-          unitId: "m2",
-          day: 15,
-          calendarRevision: 1,
-        },
-      }),
-      startDate: {
-        year: 620,
-        precision: "day",
-        unitId: "m1",
-        day: 1,
-        calendarRevision: 1,
-      },
-      calendar: zeroEraCalendar,
-      policy: "preserve",
-      now,
-    });
-    expect(created.ok).toBe(true);
-    if (!created.ok) return;
-
-    const baseSession: AdventureSession = {
-      ...makeSession(),
-      historicalAnchor: created.anchor,
-    };
-
-    // Derive progress from elapsed fictional minutes
-    expect(deriveHistoricalAnchorProgress(baseSession, zeroEraCalendar)).toBe(
+  it("AC5: derives progress from fictional time", () => {
+    const { session } = createHistoricalAnchorSession();
+    expect(deriveHistoricalAnchorProgress(session, zeroEraCalendar)).toBe(
       "upcoming",
     );
     expect(
       deriveHistoricalAnchorProgress(
         {
-          ...baseSession,
+          ...session,
           worldTime: { version: 1, elapsedMinutes: 20 * 1440, events: [] },
         },
         zeroEraCalendar,
@@ -447,33 +460,33 @@ describe("HistoricalAnchor contract", () => {
     expect(
       deriveHistoricalAnchorProgress(
         {
-          ...baseSession,
+          ...session,
           worldTime: { version: 1, elapsedMinutes: 44 * 1440, events: [] },
         },
         zeroEraCalendar,
       ),
     ).toBe("reached");
     expect(
-      deriveHistoricalAnchorProgress(baseSession, {
+      deriveHistoricalAnchorProgress(session, {
         ...zeroEraCalendar,
         revision: 9,
       }),
     ).toBe("unresolved");
+  });
 
-    // Reject stale revision
+  it("AC5: rejects stale, archived, pending-roll and causality-free mutations", () => {
+    const { session } = createHistoricalAnchorSession();
     expect(
-      transitionHistoricalAnchorProgress(baseSession, {
+      transitionHistoricalAnchorProgress(session, {
         expectedRevision: 99,
         status: "approaching",
         causalRefs: [{ kind: "world-time", refId: "wt-1", atMinute: 28800 }],
         now,
       }),
     ).toMatchObject({ ok: false, reason: "stale-revision" });
-
-    // Reject archived session
     expect(
       transitionHistoricalAnchorProgress(
-        { ...baseSession, status: "archived" },
+        { ...session, status: "archived" },
         {
           expectedRevision: 0,
           status: "approaching",
@@ -482,62 +495,76 @@ describe("HistoricalAnchor contract", () => {
         },
       ),
     ).toMatchObject({ ok: false, reason: "read-only-session" });
-
-    // Reject pending roll
-    const withRoll = applyRollRequest(
-      baseSession,
-      {
-        kind: "roll-required",
-        uncertainty: "Can they reach the keep?",
-        stakes: "Time lost",
-        sourceRecordIds: [],
-      },
-      meta,
+    const withRoll = requireValue(
+      applyRollRequest(
+        session,
+        {
+          kind: "roll-required",
+          uncertainty: "Can they reach the keep?",
+          stakes: "Time lost",
+          sourceRecordIds: [],
+        },
+        meta,
+      ),
     );
-    expect(withRoll.ok).toBe(true);
-    if (!withRoll.ok) return;
     expect(
-      transitionHistoricalAnchorProgress(withRoll.value, {
-        expectedRevision: withRoll.value.revision,
+      transitionHistoricalAnchorProgress(withRoll, {
+        expectedRevision: withRoll.revision,
         status: "approaching",
         causalRefs: [{ kind: "turn", refId: "turn-1" }],
         now,
       }),
     ).toMatchObject({ ok: false, reason: "pending-roll" });
-
-    // Record & resolve roll -> baseline stays immutable
-    const recordedOutcome = recordPendingRollOutcome(
-      withRoll.value,
-      meta.inputId,
-      { kind: "narrative", value: "Success" },
-      meta,
-    );
-    expect(recordedOutcome.ok).toBe(true);
-    if (!recordedOutcome.ok) return;
-
-    const resolvedRoll = resolveRecordedRoll(
-      recordedOutcome.value,
-      proposal(),
-      { turnId: "turn-roll-1", inputId: "input-roll-1", now },
-    );
-    expect(resolvedRoll.ok).toBe(true);
-    if (!resolvedRoll.ok) return;
-    expect(resolvedRoll.value.historicalAnchor?.baseline).toEqual(
-      created.anchor.baseline,
-    );
-
-    // Reject missing causalRefs
     expect(
-      transitionHistoricalAnchorProgress(baseSession, {
+      transitionHistoricalAnchorProgress(session, {
         expectedRevision: 0,
         status: "diverged",
         causalRefs: [],
         now,
       }),
     ).toMatchObject({ ok: false, reason: "missing-causal-ref" });
+  });
 
-    // Valid diverged transition
-    const diverged = transitionHistoricalAnchorProgress(baseSession, {
+  it("AC5: keeps the baseline immutable across roll resolution and turns", () => {
+    const { anchor, session } = createHistoricalAnchorSession();
+    const withRoll = requireValue(
+      applyRollRequest(
+        session,
+        {
+          kind: "roll-required",
+          uncertainty: "Can they reach the keep?",
+          stakes: "Time lost",
+          sourceRecordIds: [],
+        },
+        meta,
+      ),
+    );
+    const recordedOutcome = requireValue(
+      recordPendingRollOutcome(
+        withRoll,
+        meta.inputId,
+        { kind: "narrative", value: "Success" },
+        meta,
+      ),
+    );
+    const resolvedRoll = requireValue(
+      resolveRecordedRoll(recordedOutcome, proposal(), {
+        turnId: "turn-roll-1",
+        inputId: "input-roll-1",
+        now,
+      }),
+    );
+    expect(resolvedRoll.historicalAnchor?.baseline).toEqual(anchor.baseline);
+    const turned = requireValue(
+      applyCompletedTurn(session, proposal(), meta, now),
+    );
+    expect(turned.historicalAnchor?.baseline).toEqual(anchor.baseline);
+    expect(turned.historicalAnchor?.eventRecordId).toBe(anchor.eventRecordId);
+  });
+
+  it("AC5: accepts causally supported progress", () => {
+    const { anchor, session } = createHistoricalAnchorSession();
+    const diverged = transitionHistoricalAnchorProgress(session, {
       expectedRevision: 0,
       status: "diverged",
       causalRefs: [
@@ -545,20 +572,13 @@ describe("HistoricalAnchor contract", () => {
       ],
       now,
     });
-    expect(diverged.ok).toBe(true);
-    if (!diverged.ok) return;
+    expect(diverged).toMatchObject({ ok: true });
+    if (!diverged.ok)
+      throw new Error("Expected progress transition to succeed");
     expect(diverged.session.historicalAnchor?.progress.status).toBe("diverged");
     expect(diverged.session.revision).toBe(1);
-
-    // applyCompletedTurn never overwrites baseline
-    const turned = applyCompletedTurn(baseSession, proposal(), meta, now);
-    expect(turned.ok).toBe(true);
-    if (!turned.ok) return;
-    expect(turned.value.historicalAnchor?.baseline).toEqual(
-      created.anchor.baseline,
-    );
-    expect(turned.value.historicalAnchor?.eventRecordId).toBe(
-      created.anchor.eventRecordId,
+    expect(diverged.session.historicalAnchor?.baseline).toEqual(
+      anchor.baseline,
     );
   });
 
@@ -663,9 +683,9 @@ describe("HistoricalAnchor contract", () => {
     });
   });
 
-  it("AC7: isolates unrevealed anchor facts from player projections and guards leakage", () => {
-    const created = validateAndCreateHistoricalAnchor({
-      event: kingDeathEvent({
+  it("AC7: keeps unrevealed anchor facts out of player projections", () => {
+    const { session } = createHistoricalAnchorSession(
+      kingDeathEvent({
         relevantEntityRefs: [
           {
             recordId: "char-aldous",
@@ -675,20 +695,10 @@ describe("HistoricalAnchor contract", () => {
           },
         ],
       }),
-      startDate: { year: 617, precision: "year", calendarRevision: 1 },
-      calendar: zeroEraCalendar,
-      now,
-    });
-    expect(created.ok).toBe(true);
-    if (!created.ok) return;
-
-    const s: AdventureSession = {
-      ...makeSession(),
-      historicalAnchor: created.anchor,
-    };
-
+      { year: 617, precision: "year", calendarRevision: 1 },
+    );
     expect(projectPlayerHistoricalAnchor(makeSession())).toBeUndefined();
-    const playerView = projectPlayerHistoricalAnchor(s);
+    const playerView = projectPlayerHistoricalAnchor(session);
     expect(playerView).toBeDefined();
     expect(playerView?.title).toBeUndefined();
     expect(playerView?.revealedFacts).toEqual([]);
@@ -696,50 +706,62 @@ describe("HistoricalAnchor contract", () => {
     expect(JSON.stringify(playerView)).not.toContain("Death of King Aldous");
     expect(JSON.stringify(playerView)).not.toContain("char-aldous");
 
-    const gmView = projectGmHistoricalAnchor(s);
+    const gmView = projectGmHistoricalAnchor(session);
     expect(gmView?.title).toBe("Death of King Aldous");
     expect(gmView?.documentedFacts[0]?.revealed).toBe(false);
     expect(gmView?.relevantEntityRefs).toHaveLength(1);
+  });
 
-    // Leakage detection
+  it("AC7: detects hidden leakage and reveals only the approved fact", () => {
+    const { anchor, session } = createHistoricalAnchorSession(
+      kingDeathEvent({
+        relevantEntityRefs: [
+          {
+            recordId: "char-aldous",
+            recordType: "character",
+            displayName: "King Aldous",
+            role: "victim",
+          },
+        ],
+      }),
+      { year: 617, precision: "year", calendarRevision: 1 },
+    );
     const leakyProposal = {
       ...proposal(),
       narration: "A bard sings that the king died in 620.",
     };
-    expect(detectHiddenLeakage(s, leakyProposal)).toEqual([
+    expect(detectHiddenLeakage(session, leakyProposal)).toEqual([
       { field: "root.narration", secretId: "anchor-fact-1" },
     ]);
     expect(
-      detectHiddenTextLeakage(s, "Whispers about Death of King Aldous."),
+      detectHiddenTextLeakage(session, "Whispers about Death of King Aldous."),
     ).toEqual([{ field: "root", secretId: HISTORICAL_ANCHOR_TITLE_SECRET_ID }]);
-    expect(revealedSecretIds(s, ["anchor-fact-1", "unknown-id"])).toEqual([
-      "anchor-fact-1",
-    ]);
-
-    // Revealing in same turn succeeds and exposes only that fact
-    const revealedTurn = applyCompletedTurn(
-      s,
-      { ...leakyProposal, revealSecretIds: ["anchor-fact-1"] },
-      meta,
-      now,
+    expect(revealedSecretIds(session, ["anchor-fact-1", "unknown-id"])).toEqual(
+      ["anchor-fact-1"],
     );
-    expect(revealedTurn.ok).toBe(true);
-    if (!revealedTurn.ok) return;
 
-    const updatedPlayerView = projectPlayerHistoricalAnchor(revealedTurn.value);
+    const revealedTurn = requireValue(
+      applyCompletedTurn(
+        session,
+        { ...leakyProposal, revealSecretIds: ["anchor-fact-1"] },
+        meta,
+        now,
+      ),
+    );
+    const updatedPlayerView = projectPlayerHistoricalAnchor(revealedTurn);
     expect(updatedPlayerView?.revealedFacts).toEqual([
       { id: "anchor-fact-1", text: "The king died in 620." },
     ]);
     expect(updatedPlayerView?.title).toBeUndefined();
 
     // Recap, transcript, and requiredGroundingSources remain safe
-    const recap = buildAdventureRecap(s);
+    const recap = buildAdventureRecap(session);
     expect(JSON.stringify(recap)).not.toContain("The king died in 620");
-    const transcript = createPlayerTranscript(s);
+    const transcript = createPlayerTranscript(session);
     expect(JSON.stringify(transcript)).not.toContain("The king died in 620");
     expect(
-      requiredGroundingSources(s).some(
-        (ref) => ref.recordId === created.anchor.eventRecordId,
+      requiredGroundingSources(session).some(
+        (ref) => ref.recordId === anchor.eventRecordId,
       ),
     ).toBe(false);
   });

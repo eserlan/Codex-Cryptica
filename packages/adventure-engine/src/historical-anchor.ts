@@ -125,28 +125,44 @@ function extractDocumentedFacts(
   event: HistoricalEventSnapshot,
 ): HistoricalAnchorDocumentedFact[] {
   if (event.documentedFacts && event.documentedFacts.length > 0) {
-    const facts: HistoricalAnchorDocumentedFact[] = [];
-    const seen = new Set<string>();
-    for (let i = 0; i < event.documentedFacts.length; i++) {
-      const entry = event.documentedFacts[i];
-      const rawText = typeof entry === "string" ? entry : entry.text;
-      const text = clampText(rawText);
-      if (!text) continue;
-      const id =
-        typeof entry === "string"
-          ? `anchor-fact-${facts.length + 1}`
-          : (entry.id?.trim() || `anchor-fact-${facts.length + 1}`).slice(
-              0,
-              160,
-            );
-      if (seen.has(id)) continue;
-      seen.add(id);
-      facts.push({ id, text });
-      if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) break;
-    }
-    return facts;
+    return normalizeDocumentedFacts(event.documentedFacts);
   }
 
+  return deriveDocumentedFacts(event);
+}
+
+function normalizeDocumentedFacts(
+  entries: NonNullable<HistoricalEventSnapshot["documentedFacts"]>,
+): HistoricalAnchorDocumentedFact[] {
+  const facts: HistoricalAnchorDocumentedFact[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const fact = normalizeDocumentedFact(entry, facts.length + 1);
+    if (!fact || seen.has(fact.id)) continue;
+    seen.add(fact.id);
+    facts.push(fact);
+    if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) break;
+  }
+  return facts;
+}
+
+function normalizeDocumentedFact(
+  entry: NonNullable<HistoricalEventSnapshot["documentedFacts"]>[number],
+  fallbackIndex: number,
+): HistoricalAnchorDocumentedFact | null {
+  const text = clampText(typeof entry === "string" ? entry : entry.text);
+  if (!text) return null;
+  const fallbackId = `anchor-fact-${fallbackIndex}`;
+  const id =
+    typeof entry === "string"
+      ? fallbackId
+      : (entry.id?.trim() || fallbackId).slice(0, 160);
+  return { id, text };
+}
+
+function deriveDocumentedFacts(
+  event: HistoricalEventSnapshot,
+): HistoricalAnchorDocumentedFact[] {
   const rawSource = [event.content, event.lore]
     .filter((part): part is string => Boolean(part && part.trim()))
     .join("\n");
@@ -172,21 +188,29 @@ function normalizeEntityRefs(
   const normalized: HistoricalAnchorEntityRef[] = [];
   const seen = new Set<string>();
   for (const ref of refs) {
-    const recordId = ref.recordId.trim().slice(0, 160);
-    const displayName = clampText(ref.displayName);
-    if (!recordId || !displayName || seen.has(recordId)) continue;
-    seen.add(recordId);
-    normalized.push({
-      recordId,
-      displayName,
-      ...(ref.recordType?.trim()
-        ? { recordType: clampText(ref.recordType) }
-        : {}),
-      ...(ref.role?.trim() ? { role: clampText(ref.role) } : {}),
-    });
+    const normalizedRef = normalizeEntityRef(ref);
+    if (!normalizedRef || seen.has(normalizedRef.recordId)) continue;
+    seen.add(normalizedRef.recordId);
+    normalized.push(normalizedRef);
     if (normalized.length >= MAX_HISTORICAL_ENTITY_REFS) break;
   }
   return normalized;
+}
+
+function normalizeEntityRef(
+  ref: HistoricalAnchorEntityRef,
+): HistoricalAnchorEntityRef | null {
+  const recordId = ref.recordId.trim().slice(0, 160);
+  const displayName = clampText(ref.displayName);
+  if (!recordId || !displayName) return null;
+  return {
+    recordId,
+    displayName,
+    ...(ref.recordType?.trim()
+      ? { recordType: clampText(ref.recordType) }
+      : {}),
+    ...(ref.role?.trim() ? { role: clampText(ref.role) } : {}),
+  };
 }
 
 function isExactDayDate(date: AdventureCalendarDate): boolean {
@@ -203,15 +227,8 @@ function inferOpenMechanisms(
   documentedFacts: HistoricalAnchorDocumentedFact[],
   entityRefs: HistoricalAnchorEntityRef[],
 ): string[] {
-  if (event.openMechanisms) {
-    return [
-      ...new Set(
-        event.openMechanisms
-          .map((item) => item.trim().slice(0, 160))
-          .filter(Boolean),
-      ),
-    ].slice(0, MAX_HISTORICAL_OPEN_MECHANISMS);
-  }
+  if (event.openMechanisms)
+    return normalizeOpenMechanisms(event.openMechanisms);
 
   const combinedText = documentedFacts
     .map((fact) => fact.text.toLocaleLowerCase())
@@ -221,38 +238,61 @@ function inferOpenMechanisms(
       .map((ref) => ref.role?.toLocaleLowerCase().trim())
       .filter((role): role is string => Boolean(role)),
   );
-  const open: string[] = [];
-
-  if (!/\b(because|caused by|due to|resulted from)\b/.test(combinedText)) {
-    open.push("cause");
-  }
-  if (
-    !roles.has("responsible-actor") &&
-    !roles.has("culprit") &&
-    !roles.has("perpetrator") &&
-    !/\b(by|culprit|assassin|killer|perpetrator)\b/.test(combinedText)
-  ) {
-    open.push("responsible-actor");
-  }
-  if (
-    !roles.has("location") &&
-    !roles.has("place") &&
-    !/\b(at|in the|inside|near)\s+[a-z]{3,}/.test(combinedText)
-  ) {
-    open.push("location");
-  }
-  if (
-    eventInterval.approximate ||
-    eventInterval.end !== undefined ||
-    !isExactDayDate(eventInterval.start)
-  ) {
-    open.push("exact-date");
-  }
-  if (!/\b(aftermath|consequence|resulted in|led to)\b/.test(combinedText)) {
-    open.push("consequences");
-  }
-
+  const open = inferMechanismsFromEvidence(combinedText, roles, eventInterval);
   return open.length > 0 ? open : [...STANDARD_OPEN_MECHANISMS];
+}
+
+function normalizeOpenMechanisms(mechanisms: string[]): string[] {
+  return [
+    ...new Set(
+      mechanisms.map((item) => item.trim().slice(0, 160)).filter(Boolean),
+    ),
+  ].slice(0, MAX_HISTORICAL_OPEN_MECHANISMS);
+}
+
+function inferMechanismsFromEvidence(
+  text: string,
+  roles: Set<string>,
+  interval: HistoricalDateInterval,
+): string[] {
+  return [
+    ...(!hasCauseEvidence(text) ? ["cause"] : []),
+    ...(!hasResponsibleActorEvidence(text, roles) ? ["responsible-actor"] : []),
+    ...(!hasLocationEvidence(text, roles) ? ["location"] : []),
+    ...(needsExactDate(interval) ? ["exact-date"] : []),
+    ...(!hasConsequenceEvidence(text) ? ["consequences"] : []),
+  ];
+}
+
+function hasCauseEvidence(text: string): boolean {
+  return /\b(because|caused by|due to|resulted from)\b/.test(text);
+}
+
+function hasResponsibleActorEvidence(
+  text: string,
+  roles: Set<string>,
+): boolean {
+  const knownRole = ["responsible-actor", "culprit", "perpetrator"].some(
+    (role) => roles.has(role),
+  );
+  return knownRole || /\b(by|culprit|assassin|killer|perpetrator)\b/.test(text);
+}
+
+function hasLocationEvidence(text: string, roles: Set<string>): boolean {
+  const knownRole = ["location", "place"].some((role) => roles.has(role));
+  return knownRole || /\b(at|in the|inside|near)\s+[a-z]{3,}/.test(text);
+}
+
+function needsExactDate(interval: HistoricalDateInterval): boolean {
+  return (
+    interval.approximate === true ||
+    interval.end !== undefined ||
+    !isExactDayDate(interval.start)
+  );
+}
+
+function hasConsequenceEvidence(text: string): boolean {
+  return /\b(aftermath|consequence|resulted in|led to)\b/.test(text);
 }
 
 function extractEventRawDates(event: HistoricalEventSnapshot): {
@@ -306,19 +346,12 @@ export function validateHistoricalAnchorCompatibility(
   input: ValidateHistoricalAnchorCompatibilityInput,
 ): HistoricalAnchorCompatibilityResult {
   const { event, startDate, calendar } = input;
-  if (
-    !event ||
-    typeof event !== "object" ||
-    !event.id?.trim() ||
-    event.type !== "event"
-  ) {
-    return fail(
-      "invalid-source-id",
-      "Historical anchor requires an existing Vault event record.",
-    );
-  }
+  const sourceFailure = validateHistoricalAnchorSource(event);
+  if (sourceFailure) return sourceFailure;
 
-  const { rawStart, rawEnd } = extractEventRawDates(event);
+  // Source validation narrows the event to a valid record.
+  const validEvent = event as HistoricalEventSnapshot;
+  const { rawStart, rawEnd } = extractEventRawDates(validEvent);
   if (!rawStart) {
     return fail(
       "missing-event-date",
@@ -326,10 +359,91 @@ export function validateHistoricalAnchorCompatibility(
     );
   }
 
-  if (!startDate || typeof startDate !== "object") {
-    return fail("invalid-date", "A valid starting date is required.");
+  const startDateFailure = validateStartingDate(startDate);
+  if (startDateFailure) return startDateFailure;
+  const validStartDate = startDate as AdventureCalendarDate;
+
+  const revisionFailure = validateCalendarRevisions(
+    validStartDate,
+    rawStart,
+    rawEnd,
+    calendar,
+  );
+  if (revisionFailure) return revisionFailure;
+
+  const intervals = getCompatibilityIntervals(
+    validStartDate,
+    rawStart,
+    rawEnd,
+    calendar,
+  );
+  if (!intervals.ok) return intervals;
+  const { startInterval, eventDayInterval } = intervals;
+
+  if (startInterval.first > eventDayInterval.last) {
+    return fail(
+      "start-after-event",
+      "The chosen starting date falls after the anchored historical event.",
+    );
   }
 
+  const ambiguousFailure = validateUnambiguousComparison(
+    validEvent,
+    validStartDate,
+    rawStart,
+    rawEnd,
+    startInterval,
+    eventDayInterval,
+    calendar,
+  );
+  if (ambiguousFailure) return ambiguousFailure;
+
+  const eventInterval: HistoricalDateInterval = {
+    start: clonePreservingPrecision(rawStart),
+    ...(rawEnd ? { end: clonePreservingPrecision(rawEnd) } : {}),
+    ...(validEvent.approximate ? { approximate: true } : {}),
+    ...(validEvent.dateLabel ? { label: clampText(validEvent.dateLabel) } : {}),
+  };
+
+  return {
+    ok: true,
+    eventInterval,
+    startDate: clonePreservingPrecision(validStartDate),
+    calendarRevision: getCalendarRevision(calendar),
+  };
+}
+
+function validateHistoricalAnchorSource(
+  event: HistoricalEventSnapshot | null | undefined,
+): HistoricalAnchorValidationFailure | null {
+  if (
+    event &&
+    typeof event === "object" &&
+    event.id?.trim() &&
+    event.type === "event"
+  ) {
+    return null;
+  }
+  return fail(
+    "invalid-source-id",
+    "Historical anchor requires an existing Vault event record.",
+  );
+}
+
+function validateStartingDate(
+  date: AdventureCalendarDate | null | undefined,
+): HistoricalAnchorValidationFailure | null {
+  return date && typeof date === "object"
+    ? null
+    : fail("invalid-date", "A valid starting date is required.");
+}
+
+function validateCalendarRevisions(
+  startDate: AdventureCalendarDate,
+  rawStart: AdventureCalendarDate,
+  rawEnd: AdventureCalendarDate | undefined,
+  calendar: WorldCalendar,
+): HistoricalAnchorValidationFailure | null {
   if (
     hasCalendarRevisionMismatch(startDate, calendar) ||
     hasCalendarRevisionMismatch(rawStart, calendar) ||
@@ -340,7 +454,6 @@ export function validateHistoricalAnchorCompatibility(
       "The starting date or event date uses a stale calendar revision.",
     );
   }
-
   if (
     startDate.calendarRevision !== undefined &&
     rawStart.calendarRevision !== undefined &&
@@ -351,7 +464,17 @@ export function validateHistoricalAnchorCompatibility(
       "The starting date and event date belong to different calendar revisions.",
     );
   }
+  return null;
+}
 
+function getCompatibilityIntervals(
+  startDate: AdventureCalendarDate,
+  rawStart: AdventureCalendarDate,
+  rawEnd: AdventureCalendarDate | undefined,
+  calendar: WorldCalendar,
+):
+  | { ok: true; startInterval: DayInterval; eventDayInterval: DayInterval }
+  | HistoricalAnchorValidationFailure {
   const startInterval = dateToDayInterval(startDate, calendar);
   if (!startInterval) {
     return fail(
@@ -359,7 +482,6 @@ export function validateHistoricalAnchorCompatibility(
       "The starting date is not valid in the active calendar.",
     );
   }
-
   const eventStartInterval = dateToDayInterval(rawStart, calendar);
   if (!eventStartInterval) {
     return fail(
@@ -367,7 +489,6 @@ export function validateHistoricalAnchorCompatibility(
       "The event start date is not valid in the active calendar.",
     );
   }
-
   const eventEndInterval = rawEnd ? dateToDayInterval(rawEnd, calendar) : null;
   if (rawEnd && !eventEndInterval) {
     return fail(
@@ -375,53 +496,44 @@ export function validateHistoricalAnchorCompatibility(
       "The event end date is not valid in the active calendar.",
     );
   }
-
   if (eventEndInterval && eventStartInterval.first > eventEndInterval.last) {
     return fail(
       "invalid-date-range",
       "The event date range starts after it ends.",
     );
   }
-
-  const eventDayInterval: DayInterval = {
-    first: eventStartInterval.first,
-    last: (eventEndInterval ?? eventStartInterval).last,
-  };
-
-  if (startInterval.first > eventDayInterval.last) {
-    return fail(
-      "start-after-event",
-      "The chosen starting date falls after the anchored historical event.",
-    );
-  }
-
-  const overlaps = intervalsOverlap(startInterval, eventDayInterval);
-  if (
-    overlaps &&
-    (event.approximate ||
-      isUnplacedAnchorDate(rawStart, calendar) ||
-      (rawEnd !== undefined && isUnplacedAnchorDate(rawEnd, calendar)) ||
-      isUnplacedAnchorDate(startDate, calendar))
-  ) {
-    return fail(
-      "ambiguous-comparison",
-      "The starting date overlaps an approximate or unplaced-anchor event boundary and cannot be ordered unambiguously.",
-    );
-  }
-
-  const eventInterval: HistoricalDateInterval = {
-    start: clonePreservingPrecision(rawStart),
-    ...(rawEnd ? { end: clonePreservingPrecision(rawEnd) } : {}),
-    ...(event.approximate ? { approximate: true } : {}),
-    ...(event.dateLabel ? { label: clampText(event.dateLabel) } : {}),
-  };
-
   return {
     ok: true,
-    eventInterval,
-    startDate: clonePreservingPrecision(startDate),
-    calendarRevision: getCalendarRevision(calendar),
+    startInterval,
+    eventDayInterval: {
+      first: eventStartInterval.first,
+      last: (eventEndInterval ?? eventStartInterval).last,
+    },
   };
+}
+
+function validateUnambiguousComparison(
+  event: HistoricalEventSnapshot,
+  startDate: AdventureCalendarDate,
+  rawStart: AdventureCalendarDate,
+  rawEnd: AdventureCalendarDate | undefined,
+  startInterval: DayInterval,
+  eventDayInterval: DayInterval,
+  calendar: WorldCalendar,
+): HistoricalAnchorValidationFailure | null {
+  const overlaps = intervalsOverlap(startInterval, eventDayInterval);
+  if (!overlaps) return null;
+  const ambiguousBoundary =
+    event.approximate ||
+    isUnplacedAnchorDate(rawStart, calendar) ||
+    (rawEnd !== undefined && isUnplacedAnchorDate(rawEnd, calendar)) ||
+    isUnplacedAnchorDate(startDate, calendar);
+  return ambiguousBoundary
+    ? fail(
+        "ambiguous-comparison",
+        "The starting date overlaps an approximate or unplaced-anchor event boundary and cannot be ordered unambiguously.",
+      )
+    : null;
 }
 
 export interface CreateHistoricalAnchorInput extends ValidateHistoricalAnchorCompatibilityInput {
