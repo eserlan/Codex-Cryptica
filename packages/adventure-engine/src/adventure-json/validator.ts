@@ -3,7 +3,7 @@ import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
   AdventureJsonV1Schema,
   type AdventureJsonV1,
-  type AdventureScene,
+  type AdventureJsonScene,
 } from "./schema";
 
 export type AdventureJsonValidationErrorCode =
@@ -452,8 +452,8 @@ function validateLocationHierarchyCycles(
 }
 
 function validateSceneReachability(
-  scenes: AdventureScene[],
-  sceneMap: Map<string, AdventureScene>,
+  scenes: AdventureJsonScene[],
+  sceneMap: Map<string, AdventureJsonScene>,
   errors: AdventureJsonValidationError[],
 ): void {
   if (scenes.length <= 1) return;
@@ -505,8 +505,8 @@ function propagateExitReachability(
 }
 
 function buildMandatorySceneGraph(
-  scenes: AdventureScene[],
-  sceneMap: Map<string, AdventureScene>,
+  scenes: AdventureJsonScene[],
+  sceneMap: Map<string, AdventureJsonScene>,
 ): {
   mandatoryAdj: Map<string, string[]>;
   canExit: Set<string>;
@@ -540,8 +540,8 @@ function buildMandatorySceneGraph(
 }
 
 function validateMandatorySceneCycles(
-  scenes: AdventureScene[],
-  sceneMap: Map<string, AdventureScene>,
+  scenes: AdventureJsonScene[],
+  sceneMap: Map<string, AdventureJsonScene>,
   sceneIndex: Map<string, number>,
   errors: AdventureJsonValidationError[],
 ): void {
@@ -588,7 +588,7 @@ function validateSceneGraph(
 ): void {
   if (pkg.scenes.length === 0) return;
 
-  const sceneMap = new Map<string, AdventureScene>();
+  const sceneMap = new Map<string, AdventureJsonScene>();
   const sceneIndex = new Map<string, number>();
   pkg.scenes.forEach((scene, i) => {
     if (!sceneMap.has(scene.id)) {

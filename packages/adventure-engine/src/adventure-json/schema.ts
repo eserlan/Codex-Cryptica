@@ -97,7 +97,7 @@ export const LocationSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureLocation = z.infer<typeof LocationSchema>;
+export type AdventureJsonLocation = z.infer<typeof LocationSchema>;
 
 export const ActorSchema = z
   .object({
@@ -115,7 +115,7 @@ export const ActorSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureActor = z.infer<typeof ActorSchema>;
+export type AdventureJsonActor = z.infer<typeof ActorSchema>;
 
 export const FactionSchema = z
   .object({
@@ -130,7 +130,7 @@ export const FactionSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureFaction = z.infer<typeof FactionSchema>;
+export type AdventureJsonFaction = z.infer<typeof FactionSchema>;
 
 export const SceneTransitionBranchSchema = z
   .object({
@@ -158,7 +158,7 @@ export const SceneSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureScene = z.infer<typeof SceneSchema>;
+export type AdventureJsonScene = z.infer<typeof SceneSchema>;
 
 export const EncounterAlternativeSolutionSchema = AlternativeSolutionSchema;
 export type EncounterAlternativeSolution = AlternativeSolution;
@@ -178,7 +178,7 @@ export const EncounterSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureEncounter = z.infer<typeof EncounterSchema>;
+export type AdventureJsonEncounter = z.infer<typeof EncounterSchema>;
 
 export const ClueSchema = z
   .object({
@@ -195,7 +195,7 @@ export const ClueSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureClue = z.infer<typeof ClueSchema>;
+export type AdventureJsonClue = z.infer<typeof ClueSchema>;
 
 export const RumourTruthSchema = z.enum([
   "true",
@@ -218,7 +218,7 @@ export const RumourSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureRumour = z.infer<typeof RumourSchema>;
+export type AdventureJsonRumour = z.infer<typeof RumourSchema>;
 
 export const ItemSchema = z
   .object({
@@ -233,7 +233,7 @@ export const ItemSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureItem = z.infer<typeof ItemSchema>;
+export type AdventureJsonItem = z.infer<typeof ItemSchema>;
 
 export const SecretSchema = z
   .object({
@@ -245,7 +245,7 @@ export const SecretSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureSecret = z.infer<typeof SecretSchema>;
+export type AdventureJsonSecret = z.infer<typeof SecretSchema>;
 
 export const EndingSchema = z
   .object({
@@ -257,7 +257,7 @@ export const EndingSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureEnding = z.infer<typeof EndingSchema>;
+export type AdventureJsonEnding = z.infer<typeof EndingSchema>;
 
 export const UnresolvedSchema = z
   .object({
@@ -270,7 +270,7 @@ export const UnresolvedSchema = z
     sourceRef: SourceReferenceSchema.optional(),
   })
   .strict();
-export type AdventureUnresolved = z.infer<typeof UnresolvedSchema>;
+export type AdventureJsonUnresolved = z.infer<typeof UnresolvedSchema>;
 
 const SEMVER_RE =
   /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/;

@@ -6,14 +6,14 @@ import type {
 } from "../source-package/schema";
 import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
-  type AdventureActor,
-  type AdventureClue,
-  type AdventureEncounter,
-  type AdventureEnding,
+  type AdventureJsonActor,
+  type AdventureJsonClue,
+  type AdventureJsonEncounter,
+  type AdventureJsonEnding,
   type AdventureJsonV1,
-  type AdventureScene,
-  type AdventureSecret,
-  type AdventureUnresolved,
+  type AdventureJsonScene,
+  type AdventureJsonSecret,
+  type AdventureJsonUnresolved,
   type EpistemicStatus,
   type SceneTransitionBranch,
   type SourceReference,
@@ -115,7 +115,7 @@ function mapSceneBranches(
   return mapped;
 }
 
-function collectReachableSceneIds(scenes: AdventureScene[]): Set<string> {
+function collectReachableSceneIds(scenes: AdventureJsonScene[]): Set<string> {
   const sceneById = new Map(scenes.map((s) => [s.id, s]));
   const reachable = new Set<string>([scenes[0]!.id]);
   const queue: string[] = [scenes[0]!.id];
@@ -133,7 +133,7 @@ function collectReachableSceneIds(scenes: AdventureScene[]): Set<string> {
   return reachable;
 }
 
-function ensureSceneReachability(scenes: AdventureScene[]): void {
+function ensureSceneReachability(scenes: AdventureJsonScene[]): void {
   if (scenes.length <= 1) return;
 
   const reachable = collectReachableSceneIds(scenes);
@@ -158,9 +158,9 @@ function convertSingleScene(
   section: SectionAnchor | undefined,
   id: string,
   sceneIdBySourceId: Map<string, string>,
-): AdventureScene {
+): AdventureJsonScene {
   const branches = mapSceneBranches(scene, id, sceneIdBySourceId);
-  const result: AdventureScene = {
+  const result: AdventureJsonScene = {
     id,
     title: scene.title,
     summary: summarizeText(section?.body ?? "", scene.title),
@@ -183,7 +183,7 @@ function convertScenes(
   sourcePkg: AdventureSourcePackage,
   sectionBySourceId: Map<string, SectionAnchor>,
   sceneIdBySourceId: Map<string, string>,
-): AdventureScene[] {
+): AdventureJsonScene[] {
   const scenes = sourcePkg.scenes.map((scene) =>
     convertSingleScene(
       scene,
@@ -201,7 +201,7 @@ function convertActors(
   sourcePkg: AdventureSourcePackage,
   sectionBySourceId: Map<string, SectionAnchor>,
   allocateId: IdAllocator,
-): AdventureActor[] {
+): AdventureJsonActor[] {
   return sourcePkg.npcs.map((npc) => {
     const section = sectionBySourceId.get(npc.sourceId);
     return {
@@ -222,7 +222,7 @@ function convertEncounters(
   sectionBySourceId: Map<string, SectionAnchor>,
   sceneIdBySourceId: Map<string, string>,
   allocateId: IdAllocator,
-): AdventureEncounter[] {
+): AdventureJsonEncounter[] {
   return sourcePkg.encounters.map((enc) => {
     const section = sectionBySourceId.get(enc.sourceId);
     const sceneId = sceneIdBySourceId.get(enc.sourceId);
@@ -253,7 +253,7 @@ function convertClues(
   sectionBySourceId: Map<string, SectionAnchor>,
   sceneIdBySourceId: Map<string, string>,
   allocateId: IdAllocator,
-): AdventureClue[] {
+): AdventureJsonClue[] {
   return sourcePkg.clues.map((clue, index) => {
     const section = sectionBySourceId.get(clue.primarySourceId);
     const placedSceneId = sceneIdBySourceId.get(clue.primarySourceId);
@@ -280,7 +280,7 @@ function convertSecrets(
   sectionBySourceId: Map<string, SectionAnchor>,
   sceneIdBySourceId: Map<string, string>,
   allocateId: IdAllocator,
-): AdventureSecret[] {
+): AdventureJsonSecret[] {
   return sourcePkg.secrets.map((secret) => {
     const section = sectionBySourceId.get(secret.sourceId);
     const relatedSceneId = sceneIdBySourceId.get(secret.sourceId);
@@ -299,7 +299,7 @@ function convertEndings(
   sourcePkg: AdventureSourcePackage,
   sectionBySourceId: Map<string, SectionAnchor>,
   allocateId: IdAllocator,
-): AdventureEnding[] {
+): AdventureJsonEnding[] {
   return sourcePkg.endings.map((ending) => {
     const section = sectionBySourceId.get(ending.sourceId);
     return {
@@ -317,7 +317,7 @@ function convertUnresolved(
   sectionBySourceId: Map<string, SectionAnchor>,
   sceneIdBySourceId: Map<string, string>,
   allocateId: IdAllocator,
-): AdventureUnresolved[] {
+): AdventureJsonUnresolved[] {
   return sourcePkg.ambiguities.map((ambiguity) => {
     const section = ambiguity.sourceId
       ? sectionBySourceId.get(ambiguity.sourceId)
