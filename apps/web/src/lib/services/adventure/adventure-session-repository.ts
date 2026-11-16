@@ -251,6 +251,15 @@ export class AdventureSessionRepository {
     return hashes;
   }
 
+  /** Saves a newly created pinned session while excluding concurrent removal. */
+  async savePinned(session: AdventureSession): Promise<AdventureSaveResult> {
+    const hash = session.sourcePackage?.hash;
+    if (!hash) return this.save(null, session);
+    return this.withPackagePinLock(session.vaultId, hash, () =>
+      this.save(null, session),
+    );
+  }
+
   private async readArchiveEntry(
     vaultId: string,
     name: string,
@@ -285,20 +294,6 @@ export class AdventureSessionRepository {
   }
 
   async save(
-    expectedRevision: number | null,
-    session: AdventureSession,
-  ): Promise<AdventureSaveResult> {
-    if (session.sourcePackage?.hash) {
-      return this.withPackagePinLock(
-        session.vaultId,
-        session.sourcePackage.hash,
-        () => this.saveUnlocked(expectedRevision, session),
-      );
-    }
-    return this.saveUnlocked(expectedRevision, session);
-  }
-
-  private async saveUnlocked(
     expectedRevision: number | null,
     session: AdventureSession,
   ): Promise<AdventureSaveResult> {

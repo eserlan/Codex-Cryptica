@@ -126,7 +126,9 @@ export class AdventureOpening {
   private async persistNewAdventure(
     created: AdventureSession,
   ): Promise<AdventureSession> {
-    const saved = await this.runtime.deps.repository.save(null, created);
+    const saved = created.sourcePackage?.hash
+      ? await this.runtime.deps.repository.savePinned(created)
+      : await this.runtime.deps.repository.save(null, created);
     if (!saved.ok) {
       this.state.phase = "error";
       this.state.errorMessage = saved.error.message;

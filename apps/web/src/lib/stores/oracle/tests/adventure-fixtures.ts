@@ -54,6 +54,10 @@ export function dependencies() {
         current = session;
         return { ok: true, session };
       },
+      async savePinned(session: any) {
+        current = session;
+        return { ok: true, session };
+      },
       async load() {
         return { condition: "normal", session: current };
       },

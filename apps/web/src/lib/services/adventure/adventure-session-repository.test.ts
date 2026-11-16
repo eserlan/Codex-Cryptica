@@ -447,7 +447,7 @@ describe("AdventureSessionRepository v3 persistence", () => {
 
     const changed = vi.fn(async () => undefined);
     repository.setChangeListener(changed);
-    await expect(repository.save(null, session)).resolves.toMatchObject({
+    await expect(repository.savePinned(session)).resolves.toMatchObject({
       ok: true,
     });
     expect(packageLock).toHaveBeenCalledWith(
