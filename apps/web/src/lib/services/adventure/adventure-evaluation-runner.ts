@@ -5,6 +5,7 @@ import {
   buildAdventureRecap,
   createPlayerTranscript,
   evaluateAdventureRun,
+  resolveRecordedRoll,
   type AdventureSession,
   type AdventureTurnProposal,
   type EvaluationTurn,
@@ -370,12 +371,16 @@ function commitProposal(
   commitNow: () => string,
 ): AdventureSession {
   if (proposal.kind !== "complete") return session;
-  const committed = applyCompletedTurn(session, proposal, {
+  const metadata = {
     turnId: `${testCase.id}-turn-${index + 1}`,
     inputId: `${testCase.id}-input-${index + 1}`,
     now: commitNow(),
     playerAction: step.playerAction,
-  });
+  };
+  const committed =
+    step.phase === "roll-resolution"
+      ? resolveRecordedRoll(session, proposal, metadata)
+      : applyCompletedTurn(session, proposal, metadata);
   return committed.ok ? committed.value : session;
 }
 

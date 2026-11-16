@@ -334,13 +334,19 @@ function resolvesPendingRoll(
   prev: AdventureSession,
   next: AdventureSession,
 ): boolean {
-  if (
-    !prev.pendingRoll ||
-    turn.proposal.kind !== "complete" ||
-    next.turns.length <= prev.turns.length
-  )
-    return true;
-  return Boolean(next.turns.at(-1)?.resolvedRoll);
+  if (!prev.pendingRoll) return true;
+  if (turn.proposal.kind !== "complete") return false;
+  if (next.turns.length <= prev.turns.length) return false;
+  const resolvedTurn = next.turns.at(-1);
+  const suppliedOutcome = prev.pendingRoll.suppliedOutcome;
+  return Boolean(
+    suppliedOutcome &&
+    JSON.stringify(resolvedTurn?.resolvedRoll?.outcome) ===
+      JSON.stringify(suppliedOutcome) &&
+    JSON.stringify(resolvedTurn?.rollOutcome) ===
+      JSON.stringify(suppliedOutcome) &&
+    next.pendingRoll === null,
+  );
 }
 
 export function scoreCanonSafety(turn: EvaluationTurn): number {

@@ -229,6 +229,87 @@ describe("AdventureEvaluationRunner", () => {
     expect(generate.mock.calls[0]![0].relevant).toHaveLength(1);
   });
 
+  it("commits the supplied outcome once during roll resolution", async () => {
+    const suppliedOutcome = {
+      kind: "numeric" as const,
+      value: 17,
+      label: "success",
+    };
+    const session = parseAdventureSession({
+      ...makeSession(),
+      pendingRoll: {
+        id: "roll-1",
+        inputId: "roll-input-1",
+        playerAction: "Leap across the gap.",
+        uncertainty: "Whether Kestrel can reach the ledge.",
+        stakes: "A fall would cause injury.",
+        resolutionStatus: "ready-to-resolve",
+        suppliedOutcome,
+        createdAt: now,
+        outcomeRecordedAt: now,
+      },
+    });
+    const runner = new AdventureEvaluationRunner(
+      { generate: vi.fn(async () => completeProposal()) },
+      ["stub-provider"],
+      { commitNow: () => now },
+    );
+
+    const [result] = await runner.run([
+      {
+        id: "roll-resolution-case",
+        session,
+        playerAction: "The result is 17.",
+        playerCharacterName: "Kestrel",
+        canaries: [],
+        phase: "roll-resolution",
+      },
+    ]);
+
+    expect(result?.continuity).toBe(1);
+    expect(result?.passed).toBe(true);
+  });
+
+  it("fails continuity when a roll-resolution proposal cannot be committed", async () => {
+    const session = parseAdventureSession({
+      ...makeSession(),
+      pendingRoll: {
+        id: "roll-1",
+        inputId: "roll-input-1",
+        playerAction: "Leap across the gap.",
+        uncertainty: "Whether Kestrel can reach the ledge.",
+        stakes: "A fall would cause injury.",
+        resolutionStatus: "ready-to-resolve",
+        suppliedOutcome: { kind: "numeric", value: 17 },
+        createdAt: now,
+        outcomeRecordedAt: now,
+      },
+    });
+    const runner = new AdventureEvaluationRunner(
+      {
+        generate: vi.fn(async () =>
+          completeProposal({ narration: "CANARY-TOLL-COIN" }),
+        ),
+      },
+      ["stub-provider"],
+      { commitNow: () => now },
+    );
+
+    const [result] = await runner.run([
+      {
+        id: "rejected-roll-resolution-case",
+        session,
+        playerAction: "The result is 17.",
+        playerCharacterName: "Kestrel",
+        canaries: ["CANARY-TOLL-COIN"],
+        phase: "roll-resolution",
+      },
+    ]);
+
+    expect(result?.continuity).toBe(0);
+    expect(result?.passed).toBe(false);
+  });
+
   it("flags failures for canary/GM-lore leakage, agency override, canon duplication, and unnecessary escalation", async () => {
     const generate = vi.fn(async () =>
       completeProposal({

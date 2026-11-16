@@ -21,8 +21,8 @@ For each case below, record **Pass**, **Fail**, or **Blocked**. A blocked or ski
 Run both suites locally before any staging walkthrough:
 
 ```bash
-cd packages/adventure-engine && bun test tests/evaluations.test.ts tests/living-settlement-long-run.test.ts tests/emergent-30-turn.test.ts tests/cross-scenario-causality.test.ts
-cd apps/web && bunx vitest run src/lib/services/adventure/adventure-evaluation-runner.test.ts src/lib/services/adventure/adventure-multi-scenario-gates.test.ts src/lib/services/adventure/adventure-grounding-continuity.test.ts
+(cd packages/adventure-engine && bun test tests/evaluations.test.ts tests/living-settlement-long-run.test.ts tests/emergent-30-turn.test.ts tests/cross-scenario-causality.test.ts)
+(cd apps/web && bunx vitest run src/lib/services/adventure/adventure-evaluation-runner.test.ts src/lib/services/adventure/adventure-multi-scenario-gates.test.ts src/lib/services/adventure/adventure-grounding-continuity.test.ts)
 ```
 
 ## Six-Dimension Evaluation Rubric & Stop-Ship Gates
