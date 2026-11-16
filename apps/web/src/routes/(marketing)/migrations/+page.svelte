@@ -49,14 +49,14 @@
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full">
     <div class="text-center mb-14">
       <div
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-text mb-4"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
         Migration Hub
       </div>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary mb-4"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-text mb-4"
       >
         Bring Your Campaign Into Codex Cryptica
       </h1>
@@ -80,12 +80,12 @@
               >{importer.h1}</span
             >
 
-            <span class="block text-base text-theme-muted leading-relaxed mb-4"
+            <span class="block text-base text-theme-text leading-relaxed mb-4"
               >{importer.subheading}</span
             >
 
             <span
-              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary"
+              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text"
             >
               {importer.ctaText}
               <span
