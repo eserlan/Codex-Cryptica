@@ -305,7 +305,7 @@
       {/if}
       {#if draft.source.license}
         <div>
-          <dt class="font-semibold">License</dt>
+          <dt class="font-semibold">Licence</dt>
           <dd>{draft.source.license}</dd>
         </div>
       {/if}
@@ -878,7 +878,11 @@
       <button
         type="button"
         data-testid="adventure-review-start-button"
-        onclick={() => onStartAdventure(draft, approvedHash!)}
+        onclick={() =>
+          onStartAdventure(
+            $state.snapshot(draft) as AdventureJsonV1,
+            approvedHash!,
+          )}
         class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       >
         Start adventure

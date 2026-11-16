@@ -291,7 +291,7 @@
         </a>
 
         <label
-          class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border px-2.5 py-1 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/5 {canImport
+          class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border px-2.5 py-1 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-theme-primary {canImport
             ? ''
             : 'cursor-not-allowed opacity-60'}"
           data-testid="adventure-experimental-import-label"
@@ -307,7 +307,6 @@
             accept=".md,.pdf,text/markdown,text/plain,application/pdf"
             data-testid="adventure-experimental-file-input"
             class="sr-only"
-            tabindex="-1"
             disabled={!canImport}
             aria-label="Experimental convenience: Import Markdown or PDF adventure file"
             onchange={(event) => void handleExperimentalFileChange(event)}
@@ -363,10 +362,10 @@
               <div class="flex flex-wrap items-center gap-2 font-mono">
                 <span class="font-semibold">{err.code}</span>
                 {#if err.path}
-                  <span>path: {err.path}</span>
+                  <span class="break-all">path: {err.path}</span>
                 {/if}
                 {#if err.entityId}
-                  <span>entity: {err.entityId}</span>
+                  <span class="break-all">entity: {err.entityId}</span>
                 {/if}
               </div>
               <p class="mt-0.5 text-sm">{err.message}</p>

@@ -120,6 +120,8 @@
   let pinnedSessionsByHash = $state<Map<string, AdventureArchiveEntry[]>>(
     new Map(),
   );
+  let resumingPinnedId = $state<string | null>(null);
+  let pinnedResumeError = $state<string | null>(null);
   let packagesLoadToken = 0;
   let previousVaultId: string | null = null;
   let importRequestToken = 0;
@@ -244,10 +246,22 @@
   async function resumePinnedSession(
     entry: AdventureArchiveEntry,
   ): Promise<void> {
-    if (entry.status === "archived") {
-      await oracle.adventure.resumeArchived(vaultId, entry.id);
-    } else {
-      await oracle.adventure.open(vaultId, entry.id);
+    if (resumingPinnedId) return;
+    resumingPinnedId = entry.id;
+    pinnedResumeError = null;
+    try {
+      if (entry.status === "archived") {
+        await oracle.adventure.resumeArchived(vaultId, entry.id);
+      } else {
+        await oracle.adventure.open(vaultId, entry.id);
+      }
+    } catch (error) {
+      pinnedResumeError =
+        error instanceof Error
+          ? error.message
+          : "Unable to resume this adventure.";
+    } finally {
+      resumingPinnedId = null;
     }
   }
 
@@ -986,10 +1000,13 @@
                     <button
                       type="button"
                       data-testid="approved-package-resume-{item.package.id}"
+                      disabled={resumingPinnedId !== null}
                       onclick={() => void resumePinnedSession(latestPinned)}
-                      class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10"
+                      class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Resume ({latestPinned.title})
+                      {resumingPinnedId === latestPinned.id
+                        ? "Resuming…"
+                        : `Resume (${latestPinned.title})`}
                     </button>
                   {/if}
                   <button
@@ -1005,6 +1022,11 @@
               </li>
             {/each}
           </ul>
+          {#if pinnedResumeError}
+            <p class="text-sm text-theme-danger" role="alert">
+              {pinnedResumeError}
+            </p>
+          {/if}
         </section>
       {/if}
     {:else}

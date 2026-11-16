@@ -143,6 +143,7 @@ describe("AdventureEntryChoices", () => {
     const fileInput = screen.getByTestId(
       "adventure-experimental-file-input",
     ) as HTMLInputElement;
+    expect(fileInput.getAttribute("tabindex")).toBeNull();
     expect(fileInput.accept).toContain(".md");
     expect(fileInput.accept).toContain(".pdf");
     expect(fileInput.accept).toContain("application/pdf");

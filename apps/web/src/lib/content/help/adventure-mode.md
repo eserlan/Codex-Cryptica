@@ -50,7 +50,7 @@ navigation menu. If you have no active adventure, choose a starting approach:
   locations, actors, factions, scenes, encounters, clues, rumours, items,
   locked `gm-only` secrets, endings, and unresolved items, and approve it as
   an immutable SHA-256 baseline. You can adjust non-secret visibility before
-  approval, while secrets stay locked to `gm-only`. Canceling leaves no package
+  approval, while secrets stay locked to `gm-only`. Cancelling leaves no package
   in the Vault. Once approved, you can start a new session pinned to that
   package version and hash, or resume an existing pinned session directly.
   Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
