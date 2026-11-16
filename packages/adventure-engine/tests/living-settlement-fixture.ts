@@ -29,11 +29,15 @@ export const LIVING_SETTLEMENT_CANARIES = [
   "CANARY-SUNKEN-VAULT",
 ];
 
+function emptyPatchGroup() {
+  return { add: [], update: [], removeIds: [] };
+}
+
 const emptyVisible = {
-  objectives: { add: [], update: [], removeIds: [] },
-  activeCharacters: { add: [], update: [], removeIds: [] },
-  knownFacts: { add: [], update: [], removeIds: [] },
-  relationships: { add: [], update: [], removeIds: [] },
+  objectives: emptyPatchGroup(),
+  activeCharacters: emptyPatchGroup(),
+  knownFacts: emptyPatchGroup(),
+  relationships: emptyPatchGroup(),
 };
 
 const emptyHidden = {
