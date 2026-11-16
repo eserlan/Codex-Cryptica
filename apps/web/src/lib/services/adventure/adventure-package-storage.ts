@@ -202,13 +202,13 @@ export class AdventurePackageRepository {
 
   /**
    * Removes one approved version's file, refusing when any session pins its
-   * hash. The caller's pin snapshot is a quick refusal only; the authoritative
-   * session scan and file removal run under the same cross-tab lock as pinning.
+   * hash. The authoritative session scan and file removal run under the same
+   * cross-tab lock as pinning.
    */
   async removeApproved(
     vaultId: string,
     hash: string,
-    pinnedHashes: ReadonlySet<string> = new Set(),
+    _pinnedHashes: ReadonlySet<string> = new Set(),
   ): Promise<
     | { status: "removed"; hash: string; path: string }
     | { status: "refused"; hash: string; path: string; reason: string }
@@ -219,7 +219,7 @@ export class AdventurePackageRepository {
         throw new Error("adventure-session-pin-scan-unavailable");
       }
       const currentPinnedHashes = await this.readPinnedHashes(vaultId);
-      if (pinnedHashes.has(hash) || currentPinnedHashes.has(hash)) {
+      if (currentPinnedHashes.has(hash)) {
         return {
           status: "refused",
           hash,

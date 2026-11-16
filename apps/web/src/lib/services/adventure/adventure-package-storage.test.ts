@@ -185,9 +185,10 @@ describe("AdventurePackageRepository", () => {
   it("removes only the target version and refuses removal when its hash is pinned", async () => {
     const root = createInMemoryDirectoryHandle();
     const repo = new AdventurePackageRepository(async () => root);
+    let currentPinnedHashes = new Set<string>();
     repo.setPackagePinCoordination(
       async (_vaultId, _hash, operation) => operation(),
-      async () => new Set(),
+      async () => currentPinnedHashes,
     );
     const base: AdventureJsonV1 = {
       formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
@@ -216,6 +217,7 @@ describe("AdventurePackageRepository", () => {
     });
     expect(v1.hash).not.toBe(v2.hash);
 
+    currentPinnedHashes = new Set([v1.hash]);
     const refused = await repo.removeApproved(
       "vault-1",
       v1.hash,
@@ -227,6 +229,7 @@ describe("AdventurePackageRepository", () => {
     }
     expect(await repo.loadStored("vault-1", v1.hash)).not.toBeNull();
 
+    currentPinnedHashes = new Set();
     const removed = await repo.removeApproved(
       "vault-1",
       v1.hash,
@@ -282,5 +285,43 @@ describe("AdventurePackageRepository", () => {
     expect(result.status).toBe("refused");
     expect(lockEvents).toEqual(["lock", "scan", "unlock"]);
     expect(await repo.loadStored("vault-1", saved.hash)).not.toBeNull();
+  });
+
+  it("allows removal when a stale caller pin snapshot disagrees with the fresh scan", async () => {
+    const root = createInMemoryDirectoryHandle();
+    const repo = new AdventurePackageRepository(async () => root);
+    repo.setPackagePinCoordination(
+      async (_vaultId, _hash, operation) => operation(),
+      async () => new Set(),
+    );
+    const pkg: AdventureJsonV1 = {
+      formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+      id: "the-last-grind",
+      title: "The Last Grind",
+      version: "1.0.0",
+      premise: { background: "The mill stopped.", hook: "Investigate." },
+      source: { title: "The Last Grind" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [],
+      endings: [],
+      unresolved: [],
+    };
+    const saved = await repo.saveApprovedJson("vault-1", pkg);
+
+    const result = await repo.removeApproved(
+      "vault-1",
+      saved.hash,
+      new Set([saved.hash]),
+    );
+
+    expect(result.status).toBe("removed");
+    expect(await repo.loadStored("vault-1", saved.hash)).toBeNull();
   });
 });

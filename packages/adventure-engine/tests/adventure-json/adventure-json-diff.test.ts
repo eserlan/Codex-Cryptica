@@ -78,6 +78,15 @@ function makePackage(
 }
 
 describe("diffAdventureJsonVersions", () => {
+  it("reports package extension-only changes", () => {
+    const diff = diffAdventureJsonVersions(
+      makePackage({ extensions: { "example.tool": { setting: "old" } } }),
+      makePackage({ extensions: { "example.tool": { setting: "new" } } }),
+    );
+
+    expect(diff.packageChangedFields).toEqual(["extensions"]);
+  });
+
   it("classifies added, removed, and changed entries across scenes, actors, clues, and secrets", () => {
     const previous = makePackage();
     const next = makePackage({
@@ -569,6 +578,45 @@ describe("diffAdventureJsonVersions", () => {
       conflicting.unresolved.some((u) => u.kind === "invalid-mapping"),
     ).toBe(true);
     expect(conflicting.collections.scenes.changed).toHaveLength(0);
+  });
+
+  it("reports a correspondence rename when the ID is the only changed field", () => {
+    const diff = diffAdventureJsonVersions(
+      makePackage(),
+      makePackage({
+        scenes: [
+          {
+            id: "scene-renamed",
+            title: "The Mill Yard",
+            summary: "Arrival at the silent mill.",
+            locationId: "loc-mill",
+            conditions: ["Players arrive at dusk"],
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+        extensions: {
+          "codex-cryptica.adventure-correspondence": [
+            {
+              previousId: "scene-1",
+              currentId: "scene-renamed",
+              collection: "scenes",
+            },
+          ],
+        },
+      }),
+    );
+
+    expect(diff.collections.scenes.changed).toEqual([
+      {
+        id: "scene-renamed",
+        title: "The Mill Yard",
+        changedFields: [],
+        previousId: "scene-1",
+      },
+    ]);
+    expect(diff.collections.scenes.added).toHaveLength(0);
+    expect(diff.collections.scenes.removed).toHaveLength(0);
   });
 
   it("deduplicates repeated identical correspondence edges before split or merge grouping", () => {

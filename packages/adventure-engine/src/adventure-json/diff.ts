@@ -540,6 +540,7 @@ const PACKAGE_LEVEL_FIELDS = [
   "premise",
   "source",
   "system",
+  "extensions",
 ] as const;
 
 function diffCollection(
@@ -571,7 +572,7 @@ function diffCollection(
     matchedPrevious.add(previousId);
     matchedCurrent.add(currentId);
     const fields = changedTopLevelFields(prev, curr);
-    if (fields.length > 0) {
+    if (fields.length > 0 || previousId !== currentId) {
       changed.push({
         id: currentId,
         title: entityTitle(curr),
@@ -650,7 +651,6 @@ export function diffAdventureJsonVersions(
       canonicalStringify(previousRecord[field]) !==
       canonicalStringify(nextRecord[field]),
   );
-
   const mapping = parseCorrespondence(previous, next);
   const collections = {} as Record<
     AdventureJsonCollectionName,
