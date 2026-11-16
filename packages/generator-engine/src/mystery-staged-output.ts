@@ -191,6 +191,37 @@ function renderInvestigation(
   ].join("\n\n");
 }
 
+const tableCell = (value: string): string =>
+  value
+    .replace(/\r?\n+/g, " ")
+    .replace(/\|/g, "\\|")
+    .trim();
+
+function renderNextNpcMovesTable(
+  responses: unknown[],
+  personNames: Map<string, string>,
+): string {
+  const header =
+    "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |\n|---|---|---|---|---|";
+  const rows = responses.map((value) => {
+    const response = record(value);
+    const id = text(response.personId);
+    const actor = tableCell(personNames.get(id) ?? readableUnknownId(id));
+    const trigger = tableCell(sentence(afterIf(response.trigger)));
+    const nextMove = tableCell(
+      sentence(afterIf(response.response).replace(/^then\s+/i, "")),
+    );
+    const observable = tableCell(sentence(response.observableEffect));
+    const rawLead = trimStop(response.testableLead);
+    const lead =
+      !rawLead || rawLead.toLowerCase() === "none"
+        ? "None"
+        : tableCell(sentence(rawLead));
+    return `| ${actor} | ${trigger} | ${nextMove} | ${observable} | ${lead} |`;
+  });
+  return [header, ...rows].join("\n");
+}
+
 function renderConsequences(
   pressure: Obj,
   { personNames }: RenderContext,
@@ -205,12 +236,8 @@ function renderConsequences(
       ),
     ),
     section(
-      "NPC Responses",
-      items(
-        list(pressure.npcResponses),
-        (response) =>
-          `- **${personNames.get(text(response.personId)) ?? text(response.personId)}:** If ${afterIf(response.trigger)}, then ${afterIf(response.response).replace(/^then\s+/i, "")}.`,
-      ),
+      "If the Investigation Stalls: Next NPC Moves",
+      renderNextNpcMovesTable(list(pressure.npcResponses), personNames),
     ),
     section(
       "Objective and Approaches",

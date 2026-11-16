@@ -64,6 +64,12 @@ describe("Mystery & Investigation generator", () => {
     expect(first.content).not.toContain("GM secret");
     expect(first.content).toContain("Evidence");
     expect(first.lore).toContain("GM-Only Fixed Truth");
+    expect(first.lore).toContain(
+      "## If the Investigation Stalls: Next NPC Moves",
+    );
+    expect(first.lore).toContain(
+      "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
+    );
     expect(first.lore).not.toBe(first.content);
     const names = [...first.content.matchAll(/\*\*([^*]+) —/g)].map(
       (match) => match[1],

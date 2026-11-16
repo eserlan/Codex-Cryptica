@@ -26,12 +26,21 @@ describe("staged mystery output", () => {
       "Clue Index",
       "Routes to Each Conclusion",
       "Pressure Clock",
-      "NPC Responses",
+      "If the Investigation Stalls: Next NPC Moves",
       "Objective and Approaches",
       "Possible Outcomes",
     ]) {
       expect(output.content).toContain(`## ${heading}\n`);
     }
+    expect(output.content).toContain(
+      "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
+    );
+    expect(output.content).toContain(
+      "| Oren Pike | Asked about the key. | Oren shares the copied log. | Oren unlocks the desk drawer and hands over a ledger. | Compare the ledger ink with the archive supply. |",
+    );
+    expect(output.content).toContain(
+      "| Sella Reed | The investigation stalls before dusk. | Sella remains at the ferry post and watches quietly. | No overt change; ferry crossings proceed on schedule. | None |",
+    );
     expect(output.content).not.toContain("Responsible party");
     expect(output.lore).toContain("**Responsible party:** Mara Quill");
     expect(output.mysteryGraph?.nodes.length).toBeGreaterThan(0);
@@ -51,7 +60,9 @@ describe("staged mystery output", () => {
     expect(output.lore).toContain(
       "Hide an unlisted conclusion from an unlisted person",
     );
-    expect(output.content).toContain("If the party asks, then They explain.");
+    expect(output.content).toContain(
+      "| Oren Pike | The party asks. | They explain. |",
+    );
     expect(output.content + output.lore).not.toMatch(
       /tracker\.example|<img|\b(?:person|place|clue|rev)-\d+\b/,
     );

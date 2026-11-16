@@ -27,6 +27,7 @@ describe("pressure checks", () => {
     expect(hard).toContain("pressure step 1 has no trigger");
     expect(hard).toContain("NPC response 1 references an unknown personId");
     expect(hard).toContain("NPC response 1 needs a trigger and response");
+    expect(hard).toContain("NPC response 1 needs an observableEffect");
     expect(hard).toContain(
       "outcome unsolved needs a condition and consequence",
     );
@@ -35,15 +36,23 @@ describe("pressure checks", () => {
       true,
     );
   });
-  it("requires named reactions and checks prose for unknown IDs", () => {
+  it("requires at least two named reactions and checks prose for unknown IDs", () => {
     const [foundation, cast, clues, pressure] = validStages();
-    pressure.npcResponses = [];
+    pressure.npcResponses = [pressure.npcResponses[0]];
     pressure.approaches[0] = "Ask person-99";
     const hard = checkPressure(pressure, cast, foundation, clues).hard;
     expect(
       hard.some((issue) => issue.includes("npcResponses must describe")),
     ).toBe(true);
     expect(hard.some((issue) => issue.includes("person-99"))).toBe(true);
+  });
+  it("rejects responses missing observableEffect and flags broken IDs in enriched fields", () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    pressure.npcResponses[0].observableEffect = "";
+    pressure.npcResponses[1].testableLead = "Check clue-99";
+    const hard = checkPressure(pressure, cast, foundation, clues).hard;
+    expect(hard).toContain("NPC response 1 needs an observableEffect");
+    expect(hard.some((issue) => issue.includes("clue-99"))).toBe(true);
   });
 });
 

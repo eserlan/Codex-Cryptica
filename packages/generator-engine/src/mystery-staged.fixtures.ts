@@ -99,6 +99,17 @@ export function validStages() {
         personId: "person-2",
         trigger: "If asked about the key",
         response: "Oren shares the copied log",
+        observableEffect:
+          "Oren unlocks the desk drawer and hands over a ledger",
+        testableLead: "Compare the ledger ink with the archive supply",
+      },
+      {
+        personId: "person-3",
+        trigger: "If the investigation stalls before dusk",
+        response: "Sella remains at the ferry post and watches quietly",
+        observableEffect:
+          "No overt change; ferry crossings proceed on schedule",
+        testableLead: "None",
       },
     ],
     outcomes: Object.fromEntries(

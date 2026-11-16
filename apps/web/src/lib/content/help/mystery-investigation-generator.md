@@ -14,7 +14,9 @@ The staged run builds the truth, cast and locations, clue network, pressure and 
 
 ## Keep GM truth private
 
-The draft separates player-facing case material in **Content** from the solution, actual timeline, suspect knowledge, clue index and outcomes in **Lore**. Use **Copy Player Handout** for the spoiler-safe Content-only export and share that with players; keep Lore in your GM notes. **Copy GM Case File** includes both Content and Lore. Check the saved entity before exporting or sharing it, especially if your vault workflow includes Lore.
+The draft separates player-facing case material in **Content** from the solution, actual timeline, suspect knowledge, clue index, **If the Investigation Stalls: Next NPC Moves** table, and outcomes in **Lore**. Use **Copy Player Handout** for the spoiler-safe Content-only export and share that with players; keep Lore and all GM-only sections in your GM notes. **If the Investigation Stalls: Next NPC Moves** is automatically stripped from player handouts so actors' unopposed actions, triggers, observable consequences, and new testable leads stay hidden. **Copy GM Case File** includes both Content and Lore. Check the saved entity before exporting or sharing it, especially if your vault workflow includes Lore.
+
+When players stall or hesitate at the table, use **If the Investigation Stalls: Next NPC Moves** to advance an actor's next move based on their trigger, reveal the observable consequence in the fiction, and offer the listed testable lead without retconning the fixed truth.
 
 ## AI and offline use
 

@@ -37,15 +37,17 @@ function checkResponses(data: Obj, cast: Obj): string[] {
   const hard: string[] = [];
   const personIds = new Set(uniqueIds(list(cast.suspects)));
   const responses = list(data.npcResponses).map(record);
-  if (!responses.length)
+  if (responses.length < 2)
     hard.push(
-      "npcResponses must describe how named people react to party actions",
+      "npcResponses must describe how at least two named people react to party actions or stalled time",
     );
   responses.forEach((response, index) => {
     if (!personIds.has(text(response.personId)))
       hard.push(`NPC response ${index + 1} references an unknown personId`);
     if (!hasText(response.trigger) || !hasText(response.response))
       hard.push(`NPC response ${index + 1} needs a trigger and response`);
+    if (!hasText(response.observableEffect))
+      hard.push(`NPC response ${index + 1} needs an observableEffect`);
   });
   return hard;
 }
@@ -83,6 +85,8 @@ export function checkPressure(
         ...list(data.npcResponses).flatMap((response) => [
           text(record(response).trigger),
           text(record(response).response),
+          text(record(response).observableEffect),
+          text(record(response).testableLead),
         ]),
         ...["correct", "partial", "mistaken", "failed", "unsolved"].flatMap(
           (key) => {

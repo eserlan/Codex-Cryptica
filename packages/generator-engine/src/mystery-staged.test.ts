@@ -304,7 +304,7 @@ describe("generateMysteryStaged", () => {
 
     const content = result?.output.content ?? "";
     expect(content).toContain(
-      "If the party asks together, then Oren shares the log.",
+      "| Oren Pike | The party asks together. | Oren shares the log. |",
     );
     expect(content).toContain("**When:** Dawn on day one. **Then:**");
     expect(content).not.toMatch(/\.\.(?!\.)|\.,|If If/);
