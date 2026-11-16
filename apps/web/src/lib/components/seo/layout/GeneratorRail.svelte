@@ -44,9 +44,7 @@
         {/if}
       </div>
     {:else}
-      <div
-        class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-      >
+      <div class="flex flex-col items-center text-center text-theme-text py-8">
         <span aria-hidden="true" class="icon-[lucide--scroll] w-8 h-8 mb-3"
         ></span>
         <p class="text-sm uppercase tracking-widest font-header">

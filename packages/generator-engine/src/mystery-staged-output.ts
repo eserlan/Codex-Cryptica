@@ -222,10 +222,7 @@ function renderNextNpcMovesTable(
   return [header, ...rows].join("\n");
 }
 
-function renderConsequences(
-  pressure: Obj,
-  { personNames }: RenderContext,
-): string {
+function renderConsequences(pressure: Obj): string {
   return [
     section(
       "Pressure Clock",
@@ -234,10 +231,6 @@ function renderConsequences(
         (step, index) =>
           `${index + 1}. **When:** ${trimStop(step.trigger)}. **Then:** ${sentence(step.consequence)}`,
       ),
-    ),
-    section(
-      "If the Investigation Stalls: Next NPC Moves",
-      renderNextNpcMovesTable(list(pressure.npcResponses), personNames),
     ),
     section(
       "Objective and Approaches",
@@ -269,9 +262,13 @@ export function assembleOutput(
   const view = createRenderContext(foundation, cast, clues);
   const playerContent = renderPlayerContent(foundation, clues, pressure, view);
   const fixedTruth = renderFixedTruth(cast, view);
+  const npcMoves = section(
+    "If the Investigation Stalls: Next NPC Moves",
+    renderNextNpcMovesTable(list(pressure.npcResponses), view.personNames),
+  );
   const gmContent = [
     renderInvestigation(foundation, clues, view),
-    renderConsequences(pressure, view),
+    renderConsequences(pressure),
   ].join("\n\n");
   const { withoutIds } = view;
   return {
@@ -283,7 +280,9 @@ export function assembleOutput(
         stripMysteryMarkdownImages(`${playerContent}\n\n${gmContent}`),
       ),
     ),
-    lore: tidy(withoutIds(stripMysteryMarkdownImages(fixedTruth))),
+    lore: tidy(
+      withoutIds(stripMysteryMarkdownImages(`${fixedTruth}\n\n${npcMoves}`)),
+    ),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
     mysteryGraph: buildMysteryGraph(foundation, cast, clues),
