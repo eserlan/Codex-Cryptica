@@ -5,7 +5,9 @@
   import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureStart from "./AdventureStart.svelte";
-  import AdventureEntryChoices from "./AdventureEntryChoices.svelte";
+  import AdventureEntryChoices, {
+    type ImportValidationIssue,
+  } from "./AdventureEntryChoices.svelte";
   import AdventureImportReview from "./AdventureImportReview.svelte";
   import WorldEntrySetup from "./WorldEntrySetup.svelte";
   import WorldEntryContextPreview from "./WorldEntryContextPreview.svelte";
@@ -24,11 +26,17 @@
   import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
   import AdventureRumourConflict from "./AdventureRumourConflict.svelte";
   import {
+    adventureSourcePackageToAdventureJson,
     parseAdventureMarkdown,
+    validateAdventureJson,
+    MAX_ADVENTURE_JSON_BYTES,
     MAX_ADVENTURE_MARKDOWN_BYTES,
     MAX_ADVENTURE_PDF_BYTES,
-    type AdventureSourcePackage,
+    MAX_TEXT_CHARS,
+    type AdventureJsonV1,
+    type AdventureSourcePackageRef,
     type ScenarioItem,
+    type StoredAdventurePackage,
   } from "@codex/adventure-engine";
   import { adventurePackageRepository } from "#lib/services/adventure/adventure-package-storage.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
@@ -36,7 +44,10 @@
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
   import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
-  import { adventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
+  import {
+    adventureSessionRepository,
+    type AdventureArchiveEntry,
+  } from "#lib/services/adventure/adventure-session-repository.js";
   import { configureAdventureRepository } from "#lib/services/adventure/configure-adventure-repository.js";
   import {
     batchFilterPromotableFacts,
@@ -97,12 +108,21 @@
   // Leaving a start form mid-start would remount it with a fresh local guard.
   const startInFlight = $derived(oracle.adventure.starting || worldStartBusy);
   let worldStartError = $state<string | null>(null);
-  let importDraft = $state<AdventureSourcePackage | null>(null);
+  let importDraft = $state<AdventureJsonV1 | null>(null);
+  let importExperimentalOrigin = $state<"markdown" | "pdf" | null>(null);
   let importDraftVaultId: string | null = null;
   let importError = $state<string | null>(null);
+  let importValidationErrors = $state<ImportValidationIssue[]>([]);
   let importInFlight = $state(false);
   let importApproving = $state(false);
   let importApproveError = $state<string | null>(null);
+  let approvedPackages = $state<StoredAdventurePackage[]>([]);
+  let pinnedSessionsByHash = $state<Map<string, AdventureArchiveEntry[]>>(
+    new Map(),
+  );
+  let resumingPinnedId = $state<string | null>(null);
+  let pinnedResumeError = $state<string | null>(null);
+  let packagesLoadToken = 0;
   let previousVaultId: string | null = null;
   let importRequestToken = 0;
   let importAbortController: AbortController | null = null;
@@ -133,6 +153,9 @@
   let startCharacterId = $state("");
   let startCharacterName = $state("");
   let startCharacterDescription = $state("");
+  let startSourcePackage = $state<AdventureSourcePackageRef | undefined>(
+    undefined,
+  );
 
   // Never carry an unsaved character or premise draft between vaults.
   $effect(() => {
@@ -146,16 +169,22 @@
       startCharacterName = "";
       startCharacterId = "";
       startCharacterDescription = "";
+      startSourcePackage = undefined;
       worldSetup = emptyWorldEntrySetup(currentVaultId);
       worldPreview = null;
       worldStartBusy = false;
       worldStartError = null;
       importDraft = null;
+      importExperimentalOrigin = null;
       importDraftVaultId = null;
       importError = null;
+      importValidationErrors = [];
       importInFlight = false;
       importApproving = false;
       importApproveError = null;
+      approvedPackages = [];
+      pinnedSessionsByHash = new Map();
+      packagesLoadToken += 1;
       importRequestToken += 1;
       abortActiveImport();
       worldLaunchToken += 1;
@@ -166,6 +195,14 @@
   function discoverAdventure(): void {
     if (!canDiscover) return;
     modalUIStore.openIntentGeneratorWorkflow("rumour");
+  }
+
+  function isJsonAdventureFile(file: File): boolean {
+    return (
+      file.type === "application/json" ||
+      file.type === "text/json" ||
+      /\.json$/i.test(file.name)
+    );
   }
 
   function isPdfAdventureFile(file: File): boolean {
@@ -184,28 +221,129 @@
     );
   }
 
-  async function handleImportFile(file: File): Promise<void> {
+  function buildPackagePremise(pkg: AdventureJsonV1): string {
+    const parts = [
+      pkg.premise.hook.trim(),
+      pkg.premise.background.trim(),
+    ].filter(Boolean);
+    const combined = parts.join("\n\n") || pkg.description?.trim() || pkg.title;
+    if (combined.length <= MAX_TEXT_CHARS) return combined;
+    return `${combined.slice(0, MAX_TEXT_CHARS - 1).trimEnd()}…`;
+  }
+
+  function startFromApprovedPackage(pkg: AdventureJsonV1, hash: string): void {
+    startTitle = pkg.title.slice(0, MAX_TEXT_CHARS);
+    startPremise = buildPackagePremise(pkg);
+    startSourcePackage = {
+      packageId: pkg.id,
+      version: pkg.version,
+      formatVersion: pkg.formatVersion,
+      hash,
+    };
+    startApproach = "premise";
+  }
+
+  async function resumePinnedSession(
+    entry: AdventureArchiveEntry,
+  ): Promise<void> {
+    if (resumingPinnedId) return;
+    resumingPinnedId = entry.id;
+    pinnedResumeError = null;
+    try {
+      if (entry.status === "archived") {
+        await oracle.adventure.resumeArchived(vaultId, entry.id);
+      } else {
+        await oracle.adventure.open(vaultId, entry.id);
+      }
+    } catch (error) {
+      pinnedResumeError =
+        error instanceof Error
+          ? error.message
+          : "Unable to resume this adventure.";
+    } finally {
+      resumingPinnedId = null;
+    }
+  }
+
+  async function refreshApprovedPackages(
+    requestedVaultId = vaultId,
+  ): Promise<void> {
+    if (!oracle.vault.isInitialized || vault.isGuest) {
+      approvedPackages = [];
+      pinnedSessionsByHash = new Map();
+      return;
+    }
+    const token = ++packagesLoadToken;
+    try {
+      const [pkgs, sessions] = await Promise.all([
+        adventurePackageRepository.listApproved?.(requestedVaultId) ??
+          Promise.resolve([]),
+        adventureSessionRepository.list(requestedVaultId),
+      ]);
+      if (token !== packagesLoadToken || requestedVaultId !== vaultId) return;
+      approvedPackages = pkgs;
+      const byHash = new Map<string, AdventureArchiveEntry[]>();
+      for (const entry of sessions.entries) {
+        if (entry.loadCondition === "normal" && entry.sourcePackage?.hash) {
+          const list = byHash.get(entry.sourcePackage.hash) ?? [];
+          list.push(entry);
+          byHash.set(entry.sourcePackage.hash, list);
+        }
+      }
+      pinnedSessionsByHash = byHash;
+    } catch {
+      if (token === packagesLoadToken && requestedVaultId === vaultId) {
+        approvedPackages = [];
+        pinnedSessionsByHash = new Map();
+      }
+    }
+  }
+
+  $effect(() => {
+    const currentVaultId = vaultId;
+    const ready = oracle.vault.isInitialized;
+    const hasSession = Boolean(oracle.adventure.session);
+    if (!ready || hasSession || vault.isGuest) return;
+    void untrack(() => refreshApprovedPackages(currentVaultId));
+  });
+
+  function beginImportRequest(): {
+    abortController: AbortController;
+    requestToken: number;
+    sourceVaultId: string;
+  } | null {
     abortActiveImport();
     const abortController = new AbortController();
     importAbortController = abortController;
     const requestToken = ++importRequestToken;
     const sourceVaultId = activeImportVaultId();
     importError = null;
+    importValidationErrors = [];
     importApproveError = null;
     if (!canImport || vault.isGuest) {
       importInFlight = false;
       importError = "Adventure import is only available in an owner Vault.";
-      return;
+      return null;
     }
-    const isPdf = isPdfAdventureFile(file);
-    if (!isPdf && file.size > MAX_ADVENTURE_MARKDOWN_BYTES) {
+    return { abortController, requestToken, sourceVaultId };
+  }
+
+  async function runImportFile(
+    validateFile: () => string | null,
+    fallbackError: string,
+    processBytes: (
+      bytes: Uint8Array,
+      request: NonNullable<ReturnType<typeof beginImportRequest>>,
+    ) => Promise<void>,
+    file: File,
+  ): Promise<void> {
+    const request = beginImportRequest();
+    if (!request) return;
+    const { abortController, requestToken, sourceVaultId } = request;
+    const sizeOrTypeError = validateFile();
+    if (sizeOrTypeError) {
       importInFlight = false;
-      importError = "Adventure Markdown files must be 2 MiB or smaller.";
-      return;
-    }
-    if (isPdf && file.size > MAX_ADVENTURE_PDF_BYTES) {
-      importInFlight = false;
-      importError = "Adventure PDF files must be 20 MiB or smaller.";
+      importError = sizeOrTypeError;
       return;
     }
     importInFlight = true;
@@ -213,35 +351,11 @@
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (!isCurrentImport(requestToken, sourceVaultId)) return;
       if (abortController.signal.aborted) return;
-      const result = isPdf
-        ? await (async () => {
-            const { importAdventurePdfFile } =
-              await import("#lib/services/adventure/adventure-pdf-import.js");
-            return importAdventurePdfFile(
-              bytes,
-              file.name,
-              abortController.signal,
-            );
-          })()
-        : await parseAdventureMarkdown(bytes, {
-            fileName: file.name,
-          });
-      if (!isCurrentImport(requestToken, sourceVaultId)) return;
-      if (!result.ok) {
-        if (result.error.code === "ABORTED") return;
-        importError = result.error.message;
-        return;
-      }
-      importDraft = result.package;
-      importDraftVaultId = sourceVaultId;
-      startApproach = "import-review";
+      await processBytes(bytes, request);
     } catch (error) {
       if (abortController.signal.aborted) return;
       if (isCurrentImport(requestToken, sourceVaultId)) {
-        importError =
-          error instanceof Error
-            ? error.message
-            : "Unable to read the selected adventure file.";
+        importError = error instanceof Error ? error.message : fallbackError;
       }
     } finally {
       if (importAbortController === abortController) {
@@ -251,9 +365,103 @@
     }
   }
 
-  async function handleApproveImport(
-    approved: AdventureSourcePackage,
-  ): Promise<void> {
+  async function handleImportJsonFile(file: File): Promise<void> {
+    await runImportFile(
+      () => {
+        if (!isJsonAdventureFile(file)) {
+          return "Please choose an Adventure JSON (.json) file, or use the experimental Markdown/PDF convenience option below.";
+        }
+        if (file.size > MAX_ADVENTURE_JSON_BYTES) {
+          return "Adventure JSON files must be 10 MiB or smaller.";
+        }
+        return null;
+      },
+      "Unable to read the selected Adventure JSON file.",
+      async (bytes, { sourceVaultId }) => {
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch (parseError) {
+          importError = "Adventure JSON could not be parsed.";
+          importValidationErrors = [
+            {
+              code: "INVALID_JSON",
+              message:
+                parseError instanceof Error
+                  ? parseError.message
+                  : "Malformed JSON document.",
+            },
+          ];
+          return;
+        }
+
+        const validation = validateAdventureJson(parsed);
+        if (!validation.ok) {
+          importError = "Adventure JSON validation failed.";
+          importValidationErrors = validation.errors;
+          return;
+        }
+
+        importDraft = validation.value;
+        importExperimentalOrigin = null;
+        importDraftVaultId = sourceVaultId;
+        startApproach = "import-review";
+      },
+      file,
+    );
+  }
+
+  async function handleImportExperimentalFile(file: File): Promise<void> {
+    const isPdf = isPdfAdventureFile(file);
+    await runImportFile(
+      () => {
+        if (!isPdf && file.size > MAX_ADVENTURE_MARKDOWN_BYTES) {
+          return "Adventure Markdown files must be 2 MiB or smaller.";
+        }
+        if (isPdf && file.size > MAX_ADVENTURE_PDF_BYTES) {
+          return "Adventure PDF files must be 20 MiB or smaller.";
+        }
+        return null;
+      },
+      "Unable to read the selected adventure file.",
+      async (bytes, { abortController, requestToken, sourceVaultId }) => {
+        const result = isPdf
+          ? await (async () => {
+              const { importAdventurePdfFile } =
+                await import("#lib/services/adventure/adventure-pdf-import.js");
+              return importAdventurePdfFile(
+                bytes,
+                file.name,
+                abortController.signal,
+              );
+            })()
+          : await parseAdventureMarkdown(bytes, {
+              fileName: file.name,
+            });
+        if (!isCurrentImport(requestToken, sourceVaultId)) return;
+        if (!result.ok) {
+          if (result.error.code === "ABORTED") return;
+          importError = result.error.message;
+          return;
+        }
+        const adapted = adventureSourcePackageToAdventureJson(result.package);
+        const validation = validateAdventureJson(adapted);
+        if (!validation.ok) {
+          importError = "Converted adventure failed Adventure JSON validation.";
+          importValidationErrors = validation.errors;
+          return;
+        }
+        importDraft = validation.value;
+        importExperimentalOrigin = isPdf ? "pdf" : "markdown";
+        importDraftVaultId = sourceVaultId;
+        startApproach = "import-review";
+      },
+      file,
+    );
+  }
+
+  async function handleApproveImport(approved: AdventureJsonV1): Promise<void> {
     const sourceVaultId = importDraftVaultId;
     const requestToken = importRequestToken;
     if (
@@ -271,16 +479,17 @@
     importApproving = true;
     importApproveError = null;
     try {
-      const saved = await adventurePackageRepository.saveApproved(
+      const saved = await adventurePackageRepository.saveApprovedJson(
         sourceVaultId,
         approved,
       );
       if (!isCurrentImport(requestToken, sourceVaultId)) return;
       importDraft = saved.package;
       notificationStore.notify(
-        `Approved "${saved.package.sourceIdentity.title ?? saved.package.sourceIdentity.fileName}" for local play.`,
+        `Approved "${saved.package.title}" for local play.`,
         "success",
       );
+      void refreshApprovedPackages(sourceVaultId);
     } catch (error) {
       if (isCurrentImport(requestToken, sourceVaultId)) {
         const message =
@@ -299,8 +508,10 @@
     abortActiveImport();
     importRequestToken += 1;
     importDraft = null;
+    importExperimentalOrigin = null;
     importDraftVaultId = null;
     importError = null;
+    importValidationErrors = [];
     importInFlight = false;
     importApproveError = null;
     startApproach = "choose";
@@ -741,21 +952,94 @@
         {canDiscover}
         {canImport}
         {importError}
+        {importValidationErrors}
         importing={importInFlight}
         onDiscover={discoverAdventure}
         onSurpriseMe={() =>
           modalUIStore.openIntentGeneratorWorkflow("adventure")}
-        onOwnPremise={() => (startApproach = "premise")}
+        onOwnPremise={() => {
+          startSourcePackage = undefined;
+          startApproach = "premise";
+        }}
         onEnterWorld={() => (startApproach = "world")}
-        onImportFile={handleImportFile}
+        onImportFile={handleImportJsonFile}
+        onImportExperimentalFile={handleImportExperimentalFile}
       />
+
+      {#if approvedPackages.length > 0}
+        <section
+          class="mx-auto w-full max-w-5xl space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
+          aria-labelledby="approved-packages-heading"
+          data-testid="approved-adventure-packages"
+        >
+          <h2
+            id="approved-packages-heading"
+            class="font-header text-lg font-semibold text-theme-text"
+          >
+            Approved Adventure Packages
+          </h2>
+          <ul class="space-y-2">
+            {#each approvedPackages as item (item.hash)}
+              {@const pinned = pinnedSessionsByHash.get(item.hash) ?? []}
+              {@const latestPinned = pinned[0]}
+              <li
+                class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-theme-border bg-theme-bg p-3"
+                data-testid="approved-package-item-{item.package.id}"
+              >
+                <div class="min-w-0 space-y-0.5">
+                  <p class="font-semibold text-theme-text">
+                    {item.package.title}
+                  </p>
+                  <p class="font-mono text-xs text-theme-text">
+                    {item.package.id} v{item.package.version} · {item.hash.slice(
+                      0,
+                      12,
+                    )}
+                  </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  {#if latestPinned}
+                    <button
+                      type="button"
+                      data-testid="approved-package-resume-{item.package.id}"
+                      disabled={resumingPinnedId !== null}
+                      onclick={() => void resumePinnedSession(latestPinned)}
+                      class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {resumingPinnedId === latestPinned.id
+                        ? "Resuming…"
+                        : `Resume (${latestPinned.title})`}
+                    </button>
+                  {/if}
+                  <button
+                    type="button"
+                    data-testid="approved-package-start-{item.package.id}"
+                    onclick={() =>
+                      startFromApprovedPackage(item.package, item.hash)}
+                    class="min-h-10 rounded-lg bg-theme-primary px-3 py-1.5 text-sm font-semibold text-theme-on-primary transition hover:opacity-90"
+                  >
+                    Start new session
+                  </button>
+                </div>
+              </li>
+            {/each}
+          </ul>
+          {#if pinnedResumeError}
+            <p class="text-sm text-theme-danger" role="alert">
+              {pinnedResumeError}
+            </p>
+          {/if}
+        </section>
+      {/if}
     {:else}
       {#if !selectedRumour && startApproach === "import-review" && importDraft}
         <AdventureImportReview
           bind:draft={importDraft}
+          experimentalOrigin={importExperimentalOrigin}
           approving={importApproving}
           approveError={importApproveError}
           onApprove={handleApproveImport}
+          onStartAdventure={(pkg, hash) => startFromApprovedPackage(pkg, hash)}
           onCancel={handleCancelImport}
         />
       {:else if !selectedRumour && startApproach === "world"}
@@ -809,8 +1093,12 @@
           bind:characterDescription={startCharacterDescription}
           {characters}
           scenarioSeed={selectedRumour?.scenario}
+          sourcePackage={startSourcePackage}
           onScenarioStarted={() => rumourAdventureHandoff.clear()}
           onCancelScenario={cancelRumour}
+          onClearSourcePackage={() => {
+            startSourcePackage = undefined;
+          }}
         />
       {/if}
     {/if}

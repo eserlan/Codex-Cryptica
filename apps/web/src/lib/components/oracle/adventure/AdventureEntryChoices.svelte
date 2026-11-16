@@ -1,11 +1,23 @@
+<script module lang="ts">
+  export interface ImportValidationIssue {
+    code: string;
+    message: string;
+    path?: string;
+    entityId?: string;
+  }
+</script>
+
 <script lang="ts">
+  import AdventureImportDropzone from "./AdventureImportDropzone.svelte";
   let {
     onDiscover,
     onSurpriseMe,
     onOwnPremise,
     onEnterWorld = () => {},
     onImportFile,
+    onImportExperimentalFile,
     importError = null,
+    importValidationErrors = [],
     importing = false,
     canDiscover = true,
     canImport = true,
@@ -15,26 +27,13 @@
     onOwnPremise: () => void;
     onEnterWorld?: () => void;
     onImportFile?: (file: File) => void | Promise<void>;
+    onImportExperimentalFile?: (file: File) => void | Promise<void>;
     importError?: string | null;
+    importValidationErrors?: ImportValidationIssue[];
     importing?: boolean;
     canDiscover?: boolean;
     canImport?: boolean;
   } = $props();
-
-  let fileInput = $state<HTMLInputElement | null>(null);
-
-  function triggerImport(): void {
-    if (canImport) fileInput?.click();
-  }
-
-  async function handleFileChange(event: Event): Promise<void> {
-    const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = "";
-    if (file && onImportFile) {
-      await onImportFile(file);
-    }
-  }
 </script>
 
 <section
@@ -175,67 +174,13 @@
       </span>
     </button>
 
-    <button
-      type="button"
-      class="group flex min-h-44 flex-col items-start gap-3 rounded-xl border border-theme-border bg-theme-surface p-5 text-left transition hover:border-theme-primary hover:bg-theme-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
-      data-testid="adventure-import"
-      disabled={!canImport}
-      onclick={triggerImport}
-      aria-describedby="adventure-import-description"
-    >
-      <span
-        class="flex h-10 w-10 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text"
-        aria-hidden="true"
-      >
-        <span class="icon-[lucide--file-up] h-5 w-5"></span>
-      </span>
-      <span class="font-header text-base font-semibold text-theme-text">
-        Import an Adventure
-      </span>
-      <span
-        id="adventure-import-description"
-        class="text-sm leading-relaxed text-theme-text"
-      >
-        Import a Markdown or PDF adventure module, review extracted scenes and
-        GM secrets, and approve it for local play.
-      </span>
-      {#if !canImport}
-        <span class="text-xs text-theme-text">
-          Open a ready owner Vault to import an adventure.
-        </span>
-      {/if}
-    </button>
-  </div>
-
-  <input
-    bind:this={fileInput}
-    type="file"
-    accept=".md,.pdf,text/markdown,text/plain,application/pdf"
-    data-testid="adventure-file-input"
-    class="sr-only"
-    tabindex="-1"
-    disabled={!canImport}
-    aria-label="Import Markdown or PDF adventure file"
-    onchange={(event) => void handleFileChange(event)}
-  />
-
-  {#if importing}
-    <div
-      role="status"
-      data-testid="adventure-import-loading"
-      class="rounded-lg border border-theme-border bg-theme-surface p-3 text-sm text-theme-text"
-    >
-      Importing adventure…
-    </div>
-  {/if}
-
-  {#if importError}
-    <div
-      role="alert"
-      data-testid="adventure-import-error"
-      class="rounded-lg border border-theme-danger/50 bg-theme-danger/10 p-3 text-sm text-theme-text"
-    >
+    <AdventureImportDropzone
+      {onImportFile}
+      {onImportExperimentalFile}
       {importError}
-    </div>
-  {/if}
+      {importValidationErrors}
+      {importing}
+      {canImport}
+    />
+  </div>
 </section>

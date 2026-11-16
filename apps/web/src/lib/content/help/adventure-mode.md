@@ -43,19 +43,23 @@ navigation menu. If you have no active adventure, choose a starting approach:
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
   starting situation and character yourself. You can return to the starting
   choices without discarding an unsaved draft.
-- **Import an Adventure** is available in a ready owner Vault. Choose a
-  Markdown file up to 2 MiB or a text-based PDF file up to 20 MiB and 500
-  pages, then review the extracted sections, scenes, NPCs, clues and secrets.
-  Extraction happens locally on your device. Scanned or image-only PDFs,
-  encrypted or locked PDFs, and unreadable PDFs are rejected with
-  nothing saved. PDF imports show page references (such as `p. 3` or
-  `pp. 2–4`) in the review. You can correct section assignments and secret
-  visibility before approving. Approval locks the reviewed package as a
-  baseline; unresolved items remain marked for later review. Canceling leaves
-  no package in the Vault. The original file stays on your device and is not
-  copied into the Vault; only the approved package is saved. Imported packages
-  are not currently included in Codex Cryptica Cloud Backup, even if you opt in
-  to include adventure sessions. During play, bounded relevant excerpts may be
+- **Import Adventure JSON** is available in a ready owner Vault. Drop or
+  choose an Adventure JSON v1 (`.json`) file up to 10 MiB—or follow the
+  [Adventure JSON conversion guide](/adventure-import) to convert an existing
+  module off-platform—to validate it locally with zero AI calls, review its
+  locations, actors, factions, scenes, encounters, clues, rumours, items,
+  locked `gm-only` secrets, endings, and unresolved items, and approve it as
+  an immutable SHA-256 baseline. You can adjust non-secret visibility before
+  approval, while secrets stay locked to `gm-only`. Cancelling leaves no package
+  in the Vault. Once approved, you can start a new session pinned to that
+  package version and hash, or resume an existing pinned session directly.
+  Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
+  500 pages) remain available as experimental convenience inputs that
+  normalize locally into Adventure JSON before review (scanned/encrypted PDFs
+  are rejected). The original file stays on your device and is not copied into
+  the Vault; only the approved package is saved. Imported packages are not
+  currently included in Codex Cryptica Cloud Backup, even if you opt in to
+  include adventure sessions. During play, bounded relevant excerpts may be
   sent to your selected Oracle AI provider.
 - **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
   Choose a Vault character or name a new provisional one, then a Vault place

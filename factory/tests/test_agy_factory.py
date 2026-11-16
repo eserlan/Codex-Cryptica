@@ -81,6 +81,45 @@ class TestAgyFactory(unittest.TestCase):
                 self.assertEqual(self.job_mod.other_worktree_jobs()[4200]["id"], "042-sibling-job")
                 self.assertGreaterEqual(self.job_mod.next_job_number(), 43)
 
+    def test_host_git_helpers_disable_worktree_hooks(self):
+        gate_mod = load_script_module("factory_gate_hook_safety", BIN_DIR / "gate")
+        completed = subprocess.CompletedProcess([], 0, "", "")
+        with patch("subprocess.run", return_value=completed) as run:
+            self.job_mod.run(["git", "status", "--porcelain"])
+            self.assertEqual(run.call_args.args[0][:3], ["git", "-c", "core.hooksPath=/dev/null"])
+
+            gate_mod.git("/tmp/worktree", "status", "--porcelain")
+            self.assertEqual(run.call_args.args[0][:3], ["git", "-c", "core.hooksPath=/dev/null"])
+
+            self.wf_ns["run_cmd"](["git", "status", "--porcelain"])
+            self.assertEqual(run.call_args.args[0][:3], ["git", "-c", "core.hooksPath=/dev/null"])
+
+    def test_feedback_keeps_pr_protection_label_until_round_completes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            job_dir = Path(tmp) / "001-feedback"
+            job_dir.mkdir()
+            decision = job_dir / "decision.md"
+            decision.write_text("ESCALATE\n\n## Why\nNeeds product input.\n")
+            feedback = job_dir / "feedback-1.md"
+            feedback.write_text("# Feedback 1\n\nProceed with defaults.\n")
+            os.utime(decision, ns=(1_000_000_000, 1_000_000_000))
+            os.utime(feedback, ns=(2_000_000_000, 2_000_000_000))
+            job = {
+                "id": "001-feedback", "issue": 456, "pr": 789,
+                "branch": "factory/001-feedback", "worktree": str(Path(tmp) / "worktree"),
+                "stage": "needs-human", "round": 1, "round_limit": 3,
+            }
+            with patch.object(self.job_mod, "job_dir", return_value=job_dir), \
+                 patch.object(self.job_mod, "refresh_pr"), \
+                 patch.object(self.job_mod, "label") as label:
+                result = self.job_mod.advance(job, "build")
+
+        self.assertEqual(result["stage"], "build")
+        self.assertEqual(result["round"], 2)
+        label.assert_any_call("issue", 456, remove=self.job_mod.LABELS["needs_human"])
+        label.assert_any_call("pr", 789, add=self.job_mod.LABELS["needs_human"])
+        self.assertEqual(len(label.call_args_list), 2)
+
     def test_next_job_number_parses_complete_numeric_prefixes(self):
         with tempfile.TemporaryDirectory() as tmp:
             jobs = Path(tmp)
@@ -292,6 +331,211 @@ class TestAgyFactory(unittest.TestCase):
                     header.format(model=model), job
                 )
                 self.assertEqual(price_key, expected_price_key)
+
+    def test_codex_public_price_tracking(self):
+        """Codex usage applies OpenAI input, cached-input, cache-write and output rates."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_jobs = tmp_path / "jobs"
+            job_id = "051-codex-cost-test"
+            codex_logs = fake_jobs / job_id / "codex"
+            codex_logs.mkdir(parents=True)
+            builder_1 = codex_logs / "builder-1.json"
+            builder_1.write_text(json.dumps({
+                "model": "gpt-6-luna",
+                "thread_id": "builder-session",
+                "events": [
+                    {"type": "thread.started", "thread_id": "builder-session"},
+                    {"type": "turn.completed", "usage": {
+                    "input_tokens": 3_000_000,
+                    "cached_input_tokens": 1_000_000,
+                    "cache_write_input_tokens": 1_000_000,
+                    "output_tokens": 1_000_000,
+                    }},
+                ],
+            }))
+            builder_2 = codex_logs / "builder-2.json"
+            builder_2.write_text(json.dumps({
+                "model": "gpt-6-luna",
+                "thread_id": "builder-session",
+                "events": [
+                    {"type": "thread.started", "thread_id": "builder-session"},
+                    {"type": "turn.completed", "usage": {
+                        "input_tokens": 5_000_000,
+                        "cached_input_tokens": 2_000_000,
+                        "cache_write_input_tokens": 2_000_000,
+                        "output_tokens": 2_000_000,
+                    }},
+                ],
+            }))
+            builder_3 = codex_logs / "builder-3.json"
+            builder_3.write_text(json.dumps({
+                "model": "gpt-6.1-sol",
+                "thread_id": "builder-session",
+                "events": [
+                    {"type": "thread.started", "thread_id": "builder-session"},
+                    {"type": "turn.completed", "usage": {
+                        "input_tokens": 6_000_000,
+                        "cached_input_tokens": 2_500_000,
+                        "cache_write_input_tokens": 2_500_000,
+                        "output_tokens": 3_000_000,
+                    }},
+                ],
+            }))
+            os.utime(builder_1, ns=(1_000_000_000, 1_000_000_000))
+            os.utime(builder_2, ns=(2_000_000_000, 2_000_000_000))
+            os.utime(builder_3, ns=(3_000_000_000, 3_000_000_000))
+            (codex_logs / "approver-1.json").write_text(json.dumps({
+                "model": "gpt-6-luna-unpriced-override",
+                "thread_id": "unknown-model-session",
+                "events": [{"type": "turn.completed", "usage": {
+                    "input_tokens": 100,
+                    "cached_input_tokens": 80,
+                    "output_tokens": 10,
+                }}],
+            }))
+            legacy_session = "session-without-model-metadata"
+            (codex_logs / "reviewer-ux-1.json").write_text(json.dumps({
+                "events": [
+                    {"type": "thread.started", "thread_id": legacy_session},
+                    {"type": "turn.completed", "usage": {
+                        "input_tokens": 3_000_000,
+                        "cached_input_tokens": 1_000_000,
+                        "cache_write_input_tokens": 1_000_000,
+                        "output_tokens": 1_000_000,
+                    }},
+                ],
+            }))
+            rollout_dir = tmp_path / "codex/sessions/2026/11/16"
+            rollout_dir.mkdir(parents=True)
+            (rollout_dir / f"rollout-2026-11-16-{legacy_session}.jsonl").write_text(
+                json.dumps({"type": "event_msg", "payload": {
+                    "type": "thread_settings_applied",
+                    "thread_settings": {"model": "gpt-6-luna"},
+                }}) + "\n"
+            )
+
+            old_jobs = self.job_mod.JOBS
+            old_env = {key: os.environ.get(key) for key in (
+                "AGY_CONFIG_DIR", "CLAUDE_CONFIG_DIR", "CODEX_HOME")}
+            try:
+                self.job_mod.JOBS = fake_jobs
+                os.environ["AGY_CONFIG_DIR"] = str(tmp_path / "gemini")
+                os.environ["CLAUDE_CONFIG_DIR"] = str(tmp_path / "empty_claude")
+                os.environ["CODEX_HOME"] = str(tmp_path / "codex")
+                total, by_agent = self.job_mod.job_costs({
+                    "id": job_id, "started": "2020-01-01T00:00:00Z", "agents": {}}
+                )
+
+                row = by_agent["builder"]
+                self.assertEqual(row["models"], ["gpt-6-luna", "gpt-6.1-sol"])
+                self.assertEqual(row["turns"], 3)
+                self.assertEqual(row["input_tokens"], 1_000_000)
+                self.assertEqual(row["cache_write_tokens"], 2_500_000)
+                self.assertEqual(row["cache_read_tokens"], 2_500_000)
+                self.assertEqual(row["output_tokens"], 3_000_000)
+                self.assertEqual(row["usd"], 14.17)
+                self.assertTrue(row["pricing_complete"])
+                legacy_row = by_agent["reviewer-ux"]
+                self.assertEqual(legacy_row["models"], ["gpt-6-luna"])
+                self.assertEqual(legacy_row["input_tokens"], 1_000_000)
+                self.assertEqual(legacy_row["usd"], 0.86)
+                unknown_row = by_agent["approver"]
+                self.assertEqual(unknown_row["unpriced_tokens"], 110)
+                self.assertEqual(unknown_row["unpriced_models"], ["gpt-6-luna-unpriced-override"])
+                self.assertEqual(unknown_row["usd"], 0.0)
+                self.assertFalse(unknown_row["pricing_complete"])
+                self.assertEqual(total, 15.03)
+                job_state = {
+                    "id": job_id, "stage": "intake", "round": 0,
+                    "started": "2020-01-01T00:00:00Z", "stacked_on": None,
+                    "pr": None,
+                }
+                self.job_mod.sync(job_state)
+                self.assertFalse(job_state["cost_pricing_complete"])
+                self.assertEqual(job_state["unpriced_tokens"], 110)
+                self.assertEqual(job_state["unpriced_models"], ["gpt-6-luna-unpriced-override"])
+            finally:
+                self.job_mod.JOBS = old_jobs
+                for key, value in old_env.items():
+                    if value is None:
+                        os.environ.pop(key, None)
+                    else:
+                        os.environ[key] = value
+
+    def test_codex_gate_uses_linked_checkout_git_common_dir_and_job_cache(self):
+        gate_mod = load_script_module("factory_gate_codex_sandbox", BIN_DIR / "gate")
+        common_dir = Path("/tmp/shared-git-dir")
+        cache_dir = Path("/tmp/factory-job-cache")
+        expected = subprocess.CompletedProcess([], 0, "checks passed", "")
+        with patch.object(gate_mod, "resolve_git_common_dir", return_value=common_dir), \
+             patch.object(gate_mod, "run_sandboxed", return_value=expected) as sandbox:
+            code, log, _ = gate_mod.run_checks("/tmp/job-worktree", codex_sandbox=True,
+                                               bun_cache_dir=cache_dir, fallow_prechecked=True)
+
+        self.assertEqual((code, log), (0, "checks passed"))
+        self.assertEqual(sandbox.call_args.kwargs["git_common_dir"], common_dir)
+        self.assertEqual(sandbox.call_args.kwargs["bun_cache_dir"], cache_dir)
+        self.assertTrue(sandbox.call_args.kwargs["fallow_prechecked"])
+
+    def test_gate_uses_the_shared_checkout_cache_path(self):
+        gate_mod = load_script_module("factory_gate_cache_path", BIN_DIR / "gate")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            factory = root / "factory"
+            job_dir = factory / "jobs/001-test"
+            (job_dir / "round-1").mkdir(parents=True)
+            (job_dir / "job.json").write_text(json.dumps({
+                "worktree": str(root / ".worktrees/001-test"), "round": 1,
+            }))
+            cache = root / ".worktrees/.codex-bun-cache"
+            cache.mkdir(parents=True)
+            calls = []
+
+            def run_checks(worktree, codex_sandbox=False, bun_cache_dir=None, fallow_prechecked=False):
+                calls.append((worktree, codex_sandbox, bun_cache_dir, fallow_prechecked))
+                return 0, "checks passed", 0
+
+            def exit_with_code(code=0):
+                raise SystemExit(code)
+
+            with patch.object(gate_mod, "FACTORY", factory), \
+                 patch.object(gate_mod, "REPO", root), \
+                 patch.object(gate_mod, "CONFIG", {"base_branch": "staging", "protected_paths": []}), \
+                 patch.object(gate_mod, "git", return_value="commit-id\n"), \
+                 patch.object(gate_mod, "protected_changes", return_value=[]), \
+                 patch.object(gate_mod, "run_checks", side_effect=run_checks), \
+                 patch.object(gate_mod.sys, "exit", side_effect=exit_with_code):
+                with self.assertRaises(SystemExit) as exit_result:
+                    gate_mod.gate("001-test", merge=False, codex_sandbox=True,
+                                  fallow_prechecked=True)
+
+        self.assertEqual(exit_result.exception.code, 0)
+        self.assertEqual(calls, [(str(root / ".worktrees/001-test"), True, cache, True)])
+
+    def test_sync_discovers_pr_after_codex_creates_it(self):
+        job = {
+            "id": "052-codex-pr-test", "stage": "approve", "round": 0,
+            "base": "staging", "stacked_on": None, "pr": None,
+            "branch": "factory/052-codex-pr-test", "agents": None,
+        }
+        with patch.object(self.job_mod, "job_dir", return_value=Path("/tmp/factory-job-not-read")), \
+             patch.object(self.job_mod, "base_of", return_value="staging"), \
+             patch.object(self.job_mod, "job_costs", return_value=(0, {})), \
+             patch.object(self.job_mod, "gh_json", return_value=[]):
+            self.job_mod.sync(job)
+            self.assertIsNone(job["pr"])
+
+        with patch.object(self.job_mod, "job_dir", return_value=Path("/tmp/factory-job-not-read")), \
+             patch.object(self.job_mod, "base_of", return_value="staging"), \
+             patch.object(self.job_mod, "job_costs", return_value=(0, {})), \
+             patch.object(self.job_mod, "gh_json", return_value=[{
+                 "number": 5812, "url": "https://github.com/eserlan/Codex-Cryptica/pull/5812"
+             }]):
+            self.job_mod.sync(job)
+
+        self.assertEqual(job["pr"], 5812)
+        self.assertEqual(job["pr_url"], "https://github.com/eserlan/Codex-Cryptica/pull/5812")
 
     def test_gate_agy_stop_hook_allow_and_block(self):
         """gate --hook follows the AGY Stop hook JSON contract for non-builders, continuationActive, and builders."""

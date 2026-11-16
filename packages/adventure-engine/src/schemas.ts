@@ -391,6 +391,15 @@ const worldEntrySchema = z
   })
   .strict();
 
+const sourcePackageRefSchema = z
+  .object({
+    packageId: id,
+    version: z.string().trim().min(1).max(120),
+    formatVersion: z.string().trim().min(1).max(64),
+    hash: z.string().regex(/^[a-f0-9]{64}$/),
+  })
+  .strict();
+
 export const adventureSessionSchema = z
   .object({
     schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
@@ -405,6 +414,7 @@ export const adventureSessionSchema = z
     playerCharacter: playerCharacterSchema,
     premise: text,
     sourceRecords: z.array(sourceSchema),
+    sourcePackage: sourcePackageRefSchema.optional(),
     scenarioCollection: scenarioCollectionSchema.optional(),
     worldEntry: worldEntrySchema.optional(),
     historicalAnchor: historicalAnchorSchema.optional(),

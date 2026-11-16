@@ -3,3 +3,4 @@ export * from "./validator";
 export * from "./json-schema";
 export * from "./canonical";
 export * from "./adapter";
+export * from "./storage";

@@ -75,12 +75,15 @@ def wf_phase(name):
 
 
 def run_cmd(cmd, cwd=REPO, check=True, input_text=None):
+    command = [str(c) for c in cmd]
+    if command and Path(command[0]).name == "git":
+        command[1:1] = ["-c", "core.hooksPath=/dev/null"]
     env = dict(os.environ)
     wf_args = globals().get("args") or {}
     if wf_args.get("queue_label"):
         env["FACTORY_QUEUE_LABEL"] = str(wf_args["queue_label"])
     res = subprocess.run(
-        [str(c) for c in cmd],
+        command,
         cwd=str(cwd),
         input=input_text,
         capture_output=True,
@@ -89,7 +92,7 @@ def run_cmd(cmd, cwd=REPO, check=True, input_text=None):
     )
     if check and res.returncode != 0:
         detail = (res.stderr or res.stdout).strip()
-        raise RuntimeError(f"`{' '.join(str(c) for c in cmd)}` failed (exit {res.returncode}): {detail}")
+        raise RuntimeError(f"`{' '.join(command)}` failed (exit {res.returncode}): {detail}")
     return res
 
 

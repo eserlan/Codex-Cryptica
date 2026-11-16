@@ -73,7 +73,7 @@ describe("AdventureEntryChoices", () => {
     expect(screen.getAllByRole("button")).toHaveLength(5);
   });
 
-  it("renders Import an Adventure and triggers the file input on activation", async () => {
+  it("renders Import Adventure JSON and triggers the file input on activation, plus guide link and drag-and-drop", async () => {
     const onImportFile = vi.fn();
     render(AdventureEntryChoices, {
       props: {
@@ -88,46 +88,83 @@ describe("AdventureEntryChoices", () => {
       "adventure-file-input",
     ) as HTMLInputElement;
     expect(fileInput.getAttribute("tabindex")).toBe("-1");
+    expect(fileInput.accept).toContain(".json");
+    expect(fileInput.accept).toContain("application/json");
     const clickSpy = vi.spyOn(fileInput, "click");
 
     await fireEvent.click(importButton);
     expect(clickSpy).toHaveBeenCalledTimes(1);
 
-    const file = new File(["# Title\n\n## Scene 1\nHello"], "module.md", {
-      type: "text/markdown",
-    });
+    const file = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "module.json",
+      {
+        type: "application/json",
+      },
+    );
     await fireEvent.change(fileInput, { target: { files: [file] } });
     expect(onImportFile).toHaveBeenCalledWith(file);
+
+    const guideLink = screen.getByTestId(
+      "adventure-import-guide-link",
+    ) as HTMLAnchorElement;
+    expect(guideLink.getAttribute("href")).toContain("/adventure-import");
+
+    const dropzone = screen.getByTestId("adventure-json-dropzone");
+    const droppedFile = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "dropped.json",
+      {
+        type: "application/json",
+      },
+    );
+    await fireEvent.drop(dropzone, {
+      dataTransfer: { files: [droppedFile] },
+    });
+    expect(onImportFile).toHaveBeenCalledWith(droppedFile);
   });
 
-  it("accepts .pdf and application/pdf and shows loading state while importing", async () => {
-    const onImportFile = vi.fn();
+  it("accepts .md and .pdf on the labeled experimental convenience input and shows loading state while importing", async () => {
+    const onImportExperimentalFile = vi.fn();
     const { rerender } = render(AdventureEntryChoices, {
       props: {
         onDiscover: vi.fn(),
         onOwnPremise: vi.fn(),
-        onImportFile,
+        onImportFile: vi.fn(),
+        onImportExperimentalFile,
         importing: false,
       },
     });
 
+    expect(
+      screen.getByTestId("adventure-experimental-import-label").textContent,
+    ).toContain("Experimental convenience");
+
     const fileInput = screen.getByTestId(
-      "adventure-file-input",
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
+    expect(fileInput.getAttribute("tabindex")).toBeNull();
+    expect(fileInput.accept).toContain(".md");
     expect(fileInput.accept).toContain(".pdf");
     expect(fileInput.accept).toContain("application/pdf");
-    expect(fileInput.getAttribute("aria-label")).toContain("PDF");
+
+    const mdFile = new File(["# Title\n\n## Scene 1\nHello"], "module.md", {
+      type: "text/markdown",
+    });
+    await fireEvent.change(fileInput, { target: { files: [mdFile] } });
+    expect(onImportExperimentalFile).toHaveBeenCalledWith(mdFile);
 
     const pdfFile = new File(["%PDF-1.4"], "module.pdf", {
       type: "application/pdf",
     });
     await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
-    expect(onImportFile).toHaveBeenCalledWith(pdfFile);
+    expect(onImportExperimentalFile).toHaveBeenCalledWith(pdfFile);
 
     await rerender({
       onDiscover: vi.fn(),
       onOwnPremise: vi.fn(),
-      onImportFile,
+      onImportFile: vi.fn(),
+      onImportExperimentalFile,
       importing: true,
     });
     expect(screen.getByTestId("adventure-import-loading")).toBeTruthy();
@@ -169,11 +206,11 @@ describe("AdventureEntryChoices", () => {
       "adventure-surprise-me",
       "adventure-own-premise",
       "adventure-enter-world",
-      "adventure-import",
     ]) {
       const button = screen.getByTestId(id);
       expect(button.className).toContain("min-h-44");
       expect(button.className).toContain("text-left");
     }
+    expect(screen.getByTestId("adventure-json-dropzone")).toBeTruthy();
   });
 });
