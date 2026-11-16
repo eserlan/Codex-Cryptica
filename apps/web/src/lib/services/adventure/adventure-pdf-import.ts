@@ -7,6 +7,7 @@ import type { ParseAdventureResult } from "@codex/adventure-engine";
 export async function importAdventurePdfFile(
   bytes: Uint8Array,
   fileName: string,
+  signal?: AbortSignal,
 ): Promise<ParseAdventureResult> {
   const [{ parseAdventurePdf }, workerModule] = await Promise.all([
     import("@codex/adventure-engine"),
@@ -16,6 +17,6 @@ export async function importAdventurePdfFile(
   return parseAdventurePdf(
     bytes,
     { fileName },
-    { workerSrc: workerModule.default },
+    { workerSrc: workerModule.default, signal },
   );
 }

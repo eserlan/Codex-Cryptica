@@ -1,6 +1,6 @@
 <!-- fallow-ignore-file complexity -- Existing adventure entry and restoration view; only filtering of dismissed facts changed. -->
 <script lang="ts">
-  import { untrack } from "svelte";
+  import { onDestroy, untrack } from "svelte";
   import { oracle } from "#lib/stores/oracle.svelte.js";
   import { calendarStore } from "#lib/stores/calendar.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
@@ -26,6 +26,7 @@
   import {
     parseAdventureMarkdown,
     MAX_ADVENTURE_MARKDOWN_BYTES,
+    MAX_ADVENTURE_PDF_BYTES,
     type AdventureSourcePackage,
     type ScenarioItem,
   } from "@codex/adventure-engine";
@@ -104,6 +105,17 @@
   let importApproveError = $state<string | null>(null);
   let previousVaultId: string | null = null;
   let importRequestToken = 0;
+  let importAbortController: AbortController | null = null;
+
+  function abortActiveImport(): void {
+    importAbortController?.abort();
+    importAbortController = null;
+  }
+
+  onDestroy(() => {
+    importRequestToken += 1;
+    abortActiveImport();
+  });
   let previouslyPrefilledScenario = $state<string | null>(null);
   let archivingForRumour = $state(false);
   let sessionConflictError = $state<string | null>(null);
@@ -145,6 +157,7 @@
       importApproving = false;
       importApproveError = null;
       importRequestToken += 1;
+      abortActiveImport();
       worldLaunchToken += 1;
     }
     previousVaultId = currentVaultId;
@@ -172,6 +185,9 @@
   }
 
   async function handleImportFile(file: File): Promise<void> {
+    abortActiveImport();
+    const abortController = new AbortController();
+    importAbortController = abortController;
     const requestToken = ++importRequestToken;
     const sourceVaultId = activeImportVaultId();
     importError = null;
@@ -187,21 +203,32 @@
       importError = "Adventure Markdown files must be 2 MiB or smaller.";
       return;
     }
+    if (isPdf && file.size > MAX_ADVENTURE_PDF_BYTES) {
+      importInFlight = false;
+      importError = "Adventure PDF files must be 20 MiB or smaller.";
+      return;
+    }
     importInFlight = true;
     try {
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (!isCurrentImport(requestToken, sourceVaultId)) return;
+      if (abortController.signal.aborted) return;
       const result = isPdf
         ? await (async () => {
             const { importAdventurePdfFile } =
               await import("#lib/services/adventure/adventure-pdf-import.js");
-            return importAdventurePdfFile(bytes, file.name);
+            return importAdventurePdfFile(
+              bytes,
+              file.name,
+              abortController.signal,
+            );
           })()
         : await parseAdventureMarkdown(bytes, {
             fileName: file.name,
           });
       if (!isCurrentImport(requestToken, sourceVaultId)) return;
       if (!result.ok) {
+        if (result.error.code === "ABORTED") return;
         importError = result.error.message;
         return;
       }
@@ -209,6 +236,7 @@
       importDraftVaultId = sourceVaultId;
       startApproach = "import-review";
     } catch (error) {
+      if (abortController.signal.aborted) return;
       if (isCurrentImport(requestToken, sourceVaultId)) {
         importError =
           error instanceof Error
@@ -216,6 +244,9 @@
             : "Unable to read the selected adventure file.";
       }
     } finally {
+      if (importAbortController === abortController) {
+        importAbortController = null;
+      }
       if (requestToken === importRequestToken) importInFlight = false;
     }
   }
@@ -265,6 +296,7 @@
   }
 
   function handleCancelImport(): void {
+    abortActiveImport();
     importRequestToken += 1;
     importDraft = null;
     importDraftVaultId = null;

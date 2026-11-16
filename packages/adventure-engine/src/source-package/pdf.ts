@@ -27,11 +27,33 @@ export interface PdfDocumentLike {
   destroy?: () => Promise<void> | void;
 }
 
-export type PdfDocumentLoader = (bytes: Uint8Array) => Promise<PdfDocumentLike>;
+export type PdfDocumentLoader = (
+  bytes: Uint8Array,
+  signal?: AbortSignal,
+) => Promise<PdfDocumentLike>;
 
 export interface ParseAdventurePdfDeps {
   loadPdfDocument?: PdfDocumentLoader;
   workerSrc?: string;
+  signal?: AbortSignal;
+}
+
+/** Maximum PDF file size accepted for a single adventure import. */
+export const MAX_ADVENTURE_PDF_BYTES = 20 * 1024 * 1024;
+/** Maximum page count accepted for a single adventure PDF import. */
+export const MAX_ADVENTURE_PDF_PAGES = 500;
+/** Maximum extracted-text characters accepted for a single PDF import. */
+export const MAX_ADVENTURE_PDF_EXTRACTED_CHARS = 2_000_000;
+
+function abortedPdfError(): AdventureImportError {
+  return {
+    code: "ABORTED",
+    message: "The PDF import was cancelled before it finished.",
+  };
+}
+
+function isAborted(signal?: AbortSignal): boolean {
+  return signal?.aborted === true;
 }
 
 interface PositionedItem {
@@ -260,7 +282,6 @@ function findColumnBand(
   yGroups: PositionedItem[][],
   gutterMid: number,
 ): { minY: number; maxY: number } | null {
-  const crossingYValues: number[] = [];
   const splitYValues: number[] = [];
 
   for (const group of yGroups) {
@@ -268,10 +289,7 @@ function findColumnBand(
     const crosses = group.some(
       (item) => item.x < gutterMid - 2 && item.x + item.width > gutterMid + 2,
     );
-    if (crosses) {
-      crossingYValues.push(rowY);
-      continue;
-    }
+    if (crosses) continue;
     const hasLeft = group.some((item) => item.x + item.width <= gutterMid + 2);
     const hasRight = group.some((item) => item.x >= gutterMid - 2);
     if (hasLeft && hasRight) {
@@ -282,11 +300,58 @@ function findColumnBand(
   if (splitYValues.length < 2) return null;
   const maxY = Math.max(...splitYValues) + 4;
   const minY = Math.min(...splitYValues) - 4;
-
-  if (crossingYValues.some((y) => y >= minY && y <= maxY)) {
-    return null;
-  }
   return { minY, maxY };
+}
+
+function rowCrossesGutter(row: PositionedItem[], gutterMid: number): boolean {
+  return row.some(
+    (item) => item.x < gutterMid - 2 && item.x + item.width > gutterMid + 2,
+  );
+}
+
+function joinColumnSide(
+  row: PositionedItem[],
+  side: "left" | "right",
+  gutterMid: number,
+  pageNumber: number,
+  target: VisualLine[],
+): void {
+  const items = row.filter((item) =>
+    side === "left"
+      ? item.x + item.width <= gutterMid + 2
+      : item.x >= gutterMid - 2,
+  );
+  if (items.length === 0) return;
+  const line = joinRowItems([...items], pageNumber);
+  if (line) target.push(line);
+}
+
+function buildColumnBandLines(
+  bandItems: PositionedItem[],
+  gutterMid: number,
+  pageNumber: number,
+): VisualLine[] {
+  const out: VisualLine[] = [];
+  let leftLines: VisualLine[] = [];
+  let rightLines: VisualLine[] = [];
+  const flushColumns = (): void => {
+    out.push(...leftLines, ...rightLines);
+    leftLines = [];
+    rightLines = [];
+  };
+
+  for (const row of groupItemsByY(bandItems)) {
+    if (rowCrossesGutter(row, gutterMid)) {
+      flushColumns();
+      const line = joinRowItems([...row], pageNumber);
+      if (line) out.push(line);
+      continue;
+    }
+    joinColumnSide(row, "left", gutterMid, pageNumber, leftLines);
+    joinColumnSide(row, "right", gutterMid, pageNumber, rightLines);
+  }
+  flushColumns();
+  return out;
 }
 
 function detectTwoColumnSplit(
@@ -318,15 +383,10 @@ function detectTwoColumnSplit(
   const bandItems = items.filter(
     (item) => item.y >= band.minY && item.y <= band.maxY,
   );
-  const leftItems = bandItems.filter(
-    (item) => item.x + item.width <= gutterMid + 2,
-  );
-  const rightItems = bandItems.filter((item) => item.x >= gutterMid - 2);
 
   return [
     ...buildVisualLinesFromItems(headerItems, pageNumber),
-    ...buildVisualLinesFromItems(leftItems, pageNumber),
-    ...buildVisualLinesFromItems(rightItems, pageNumber),
+    ...buildColumnBandLines(bandItems, gutterMid, pageNumber),
     ...buildVisualLinesFromItems(footerItems, pageNumber),
   ];
 }
@@ -479,12 +539,31 @@ function shouldContinueBlock(
   return prevLine.y - line.y <= maxFont * 1.65;
 }
 
+const EMBEDDED_CUE_RE = /\b(?:Read aloud|GM only):/gi;
+
+function splitEmbeddedCueLines(line: VisualLine): VisualLine[] {
+  const markers = [...line.text.matchAll(EMBEDDED_CUE_RE)];
+  if (markers.length === 0) return [line];
+  if (markers.length === 1 && (markers[0].index ?? 0) === 0) return [line];
+  const segments: VisualLine[] = [];
+  const firstIndex = markers[0].index ?? 0;
+  const prefix = line.text.slice(0, firstIndex).trim();
+  if (prefix.length > 0) segments.push({ ...line, text: prefix });
+  markers.forEach((marker, i) => {
+    const start = marker.index ?? 0;
+    const end = markers[i + 1]?.index ?? line.text.length;
+    const text = line.text.slice(start, end).trim();
+    if (text.length > 0) segments.push({ ...line, text });
+  });
+  return segments;
+}
+
 function normalizeSectionLines(lines: VisualLine[]): string[] {
   const out: string[] = [];
   let active: ActiveCueBlock | null = null;
   let prevLine: VisualLine | null = null;
 
-  for (const line of lines) {
+  for (const line of lines.flatMap(splitEmbeddedCueLines)) {
     const text = line.text;
     if (SOURCE_ID_MARKER_RE.test(text)) {
       flushCueBlock(active, out);
@@ -544,6 +623,15 @@ function validatePdfInput(
   }
 
   const bytes = toUint8Array(rawBytes);
+  if (bytes.byteLength > MAX_ADVENTURE_PDF_BYTES) {
+    return {
+      ok: false,
+      error: {
+        code: "INPUT_TOO_LARGE",
+        message: "Adventure PDF files must be 20 MiB or smaller.",
+      },
+    };
+  }
   if (bytes.byteLength === 0) {
     return {
       ok: false,
@@ -568,29 +656,75 @@ function validatePdfInput(
   return { ok: true, bytes };
 }
 
+async function collectPageLines(
+  pdfDoc: PdfDocumentLike,
+  signal: AbortSignal | undefined,
+  allLines: VisualLine[],
+): Promise<AdventureImportError | null> {
+  if (pdfDoc.numPages > MAX_ADVENTURE_PDF_PAGES) {
+    return {
+      code: "INPUT_TOO_LARGE",
+      message: `Adventure PDF files must be ${MAX_ADVENTURE_PDF_PAGES} pages or fewer.`,
+    };
+  }
+  let extractedChars = 0;
+  for (let pageNumber = 1; pageNumber <= pdfDoc.numPages; pageNumber++) {
+    if (isAborted(signal)) return abortedPdfError();
+    const page = await pdfDoc.getPage(pageNumber);
+    const textContent = await page.getTextContent();
+    if (isAborted(signal)) return abortedPdfError();
+    const pageLines = extractPageVisualLines(textContent.items, pageNumber);
+    extractedChars += pageLines.reduce(
+      (total, line) => total + line.text.length,
+      0,
+    );
+    if (extractedChars > MAX_ADVENTURE_PDF_EXTRACTED_CHARS) {
+      return {
+        code: "INPUT_TOO_LARGE",
+        message:
+          "This PDF contains too much extractable text for a single adventure import.",
+      };
+    }
+    allLines.push(...pageLines);
+  }
+  return null;
+}
+
+async function loadPdfDocumentOrError(
+  bytes: Uint8Array,
+  deps: ParseAdventurePdfDeps,
+): Promise<
+  | { ok: true; doc: PdfDocumentLike }
+  | { ok: false; error: AdventureImportError }
+> {
+  try {
+    const doc = deps.loadPdfDocument
+      ? await deps.loadPdfDocument(bytes, deps.signal)
+      : await defaultLoadPdfDocument(bytes, deps.workerSrc);
+    return { ok: true, doc };
+  } catch (error) {
+    if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
+    return { ok: false, error: classifyPdfLoadError(error) };
+  }
+}
+
 async function extractLinesFromPdf(
   bytes: Uint8Array,
   deps: ParseAdventurePdfDeps,
 ): Promise<
   { ok: true; lines: VisualLine[] } | { ok: false; error: AdventureImportError }
 > {
-  let pdfDoc: PdfDocumentLike;
-  try {
-    pdfDoc = deps.loadPdfDocument
-      ? await deps.loadPdfDocument(bytes)
-      : await defaultLoadPdfDocument(bytes, deps.workerSrc);
-  } catch (error) {
-    return { ok: false, error: classifyPdfLoadError(error) };
-  }
+  if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
+  const loaded = await loadPdfDocumentOrError(bytes, deps);
+  if (!loaded.ok) return loaded;
+  const pdfDoc = loaded.doc;
 
   const allLines: VisualLine[] = [];
   try {
-    for (let pageNumber = 1; pageNumber <= pdfDoc.numPages; pageNumber++) {
-      const page = await pdfDoc.getPage(pageNumber);
-      const textContent = await page.getTextContent();
-      allLines.push(...extractPageVisualLines(textContent.items, pageNumber));
-    }
+    const collectError = await collectPageLines(pdfDoc, deps.signal, allLines);
+    if (collectError) return { ok: false, error: collectError };
   } catch (error) {
+    if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
     return { ok: false, error: classifyPdfLoadError(error) };
   } finally {
     await pdfDoc.destroy?.();
@@ -705,28 +839,45 @@ function buildRawSectionsFromLines(
     .map((l) => l.text)
     .join(" ")
     .trim();
+  const preambleSections: RawSection[] = [];
   if (preambleText.length > 0) {
     ambiguities.push({
       id: "amb-unanchored-preamble",
       code: "UNANCHORED_PREAMBLE",
-      message: "Document contains text before the first heading.",
+      message:
+        "Document contains text before the first heading; it was preserved in an unresolved introductory section.",
       context: preambleText.slice(0, 200),
       provenance: "unresolved",
+    });
+    const firstPage = preambleLines[0]?.pageNumber ?? 1;
+    const lastPage =
+      preambleLines[preambleLines.length - 1]?.pageNumber ?? firstPage;
+    preambleSections.push({
+      level: 1,
+      title: "Introduction",
+      lines: normalizeSectionLines(preambleLines),
+      lineNumber: 1,
+      pageNumber: firstPage,
+      ...(lastPage > firstPage ? { pageEnd: lastPage } : {}),
+      forceUnresolvedProvenance: true,
     });
   }
 
   return {
     ambiguities,
-    rawSections: grouped.map((section) => ({
-      level: section.level,
-      title: section.title,
-      lines: normalizeSectionLines(section.visualLines),
-      lineNumber: section.lineNumber,
-      pageNumber: section.pageNumber,
-      ...(section.pageEnd > section.pageNumber
-        ? { pageEnd: section.pageEnd }
-        : {}),
-    })),
+    rawSections: [
+      ...preambleSections,
+      ...grouped.map((section) => ({
+        level: section.level,
+        title: section.title,
+        lines: normalizeSectionLines(section.visualLines),
+        lineNumber: section.lineNumber,
+        pageNumber: section.pageNumber,
+        ...(section.pageEnd > section.pageNumber
+          ? { pageEnd: section.pageEnd }
+          : {}),
+      })),
+    ],
   };
 }
 
@@ -737,6 +888,7 @@ export async function parseAdventurePdf(
 ): Promise<ParseAdventureResult> {
   const validated = validatePdfInput(rawBytes, options);
   if (!validated.ok) return validated;
+  if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
 
   const documentHash = await computeSha256Hex(validated.bytes);
   const extracted = await extractLinesFromPdf(validated.bytes, deps);

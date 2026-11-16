@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   AdventureSourcePackageSchema,
+  MAX_ADVENTURE_PDF_BYTES,
+  MAX_ADVENTURE_PDF_PAGES,
   parseAdventureMarkdown,
   parseAdventurePdf,
   retrieveAdventureContext,
@@ -503,6 +505,198 @@ describe("parseAdventurePdf", () => {
       fileName: "test.md",
     });
     expect(mdRes.ok).toBe(true);
+  });
+
+  it("keeps GM-only text out of read-aloud when cues share a baseline across columns with an interior full-width row", async () => {
+    const items = [
+      {
+        str: "The Sunken Vault",
+        transform: [20, 0, 0, 20, 54, 740],
+        width: 220,
+        height: 20,
+      },
+      {
+        str: "Scene 1: Outer Gate",
+        transform: [14, 0, 0, 14, 54, 680],
+        width: 160,
+        height: 14,
+      },
+      {
+        str: "Scene 2: Inner Sanctum",
+        transform: [14, 0, 0, 14, 320, 680],
+        width: 160,
+        height: 14,
+      },
+      {
+        str: "A bell tolls across the vault.",
+        transform: [10, 0, 0, 10, 54, 665],
+        width: 460,
+        height: 10,
+      },
+      {
+        str: "Read aloud: Moss covers the iron arch.",
+        transform: [10, 0, 0, 10, 54, 650],
+        width: 170,
+        height: 10,
+      },
+      {
+        str: "GM only: The idol is a mimic.",
+        transform: [10, 0, 0, 10, 320, 650],
+        width: 150,
+        height: 10,
+      },
+    ];
+    const mockLoader = async (): Promise<PdfDocumentLike> => ({
+      numPages: 1,
+      async getPage() {
+        return {
+          async getTextContent() {
+            return { items };
+          },
+        };
+      },
+    });
+    const result = await parseAdventurePdf(
+      new TextEncoder().encode("%PDF-1.4\n"),
+      { fileName: "mixed.pdf" },
+      { loadPdfDocument: mockLoader },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.package.secrets.map((s) => s.text)).toContain(
+      "The idol is a mimic.",
+    );
+    for (const section of result.package.sections) {
+      const readAloud = Array.isArray(section.readAloud)
+        ? section.readAloud.join(" ")
+        : (section.readAloud ?? "");
+      expect(readAloud).not.toContain("mimic");
+      expect(section.body).not.toContain("mimic");
+      const ctx = retrieveAdventureContext(result.package, {
+        sceneId: section.sourceId,
+        includeGmOnly: false,
+      });
+      expect(ctx.formatted).not.toContain("mimic");
+      expect(ctx.secrets).toHaveLength(0);
+    }
+  });
+
+  it("preserves the full preamble beyond 200 characters in an unresolved section", async () => {
+    const tail = "UNIQUE-TAIL-MARKER beyond the preview window";
+    const preamble = `${"The expedition gathers at dawn. ".repeat(12)}${tail}`;
+    const items = [
+      {
+        str: preamble,
+        transform: [10, 0, 0, 10, 54, 720],
+        width: 400,
+        height: 10,
+      },
+      {
+        str: "Scene 1: The Gate",
+        transform: [16, 0, 0, 16, 54, 690],
+        width: 140,
+        height: 16,
+      },
+      {
+        str: "The gate stands open.",
+        transform: [10, 0, 0, 10, 54, 660],
+        width: 120,
+        height: 10,
+      },
+    ];
+    const mockLoader = async (): Promise<PdfDocumentLike> => ({
+      numPages: 1,
+      async getPage() {
+        return {
+          async getTextContent() {
+            return { items };
+          },
+        };
+      },
+    });
+    const result = await parseAdventurePdf(
+      new TextEncoder().encode("%PDF-1.4\n"),
+      { fileName: "preamble.pdf" },
+      { loadPdfDocument: mockLoader },
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const intro = result.package.sections[0];
+    expect(intro?.title).toBe("Introduction");
+    expect(intro?.provenance).toBe("unresolved");
+    expect(intro?.pageNumber).toBe(1);
+    expect(intro?.body).toContain(tail);
+    const ambiguity = result.package.ambiguities.find(
+      (a) => a.code === "UNANCHORED_PREAMBLE",
+    );
+    expect(ambiguity?.context?.length).toBeLessThanOrEqual(200);
+  });
+
+  it("rejects PDFs over the byte and page limits and honours abort during extraction", async () => {
+    const oversized = new Uint8Array(MAX_ADVENTURE_PDF_BYTES + 1);
+    oversized.set(new TextEncoder().encode("%PDF-1.4\n"));
+    const oversizedRes = await parseAdventurePdf(oversized, {
+      fileName: "big.pdf",
+    });
+    expect(oversizedRes.ok).toBe(false);
+    if (!oversizedRes.ok)
+      expect(oversizedRes.error.code).toBe("INPUT_TOO_LARGE");
+
+    let getPageCalls = 0;
+    const manyPagesLoader = async (): Promise<PdfDocumentLike> => ({
+      numPages: MAX_ADVENTURE_PDF_PAGES + 1,
+      async getPage() {
+        getPageCalls += 1;
+        return {
+          async getTextContent() {
+            return { items: [] };
+          },
+        };
+      },
+    });
+    const manyPagesRes = await parseAdventurePdf(
+      new TextEncoder().encode("%PDF-1.4\n"),
+      { fileName: "many.pdf" },
+      { loadPdfDocument: manyPagesLoader },
+    );
+    expect(manyPagesRes.ok).toBe(false);
+    if (!manyPagesRes.ok)
+      expect(manyPagesRes.error.code).toBe("INPUT_TOO_LARGE");
+    expect(getPageCalls).toBe(0);
+
+    const controller = new AbortController();
+    let destroyCalls = 0;
+    const abortingLoader = async (): Promise<PdfDocumentLike> => ({
+      numPages: 2,
+      async getPage() {
+        return {
+          async getTextContent() {
+            controller.abort();
+            return {
+              items: [
+                {
+                  str: "Hello",
+                  transform: [10, 0, 0, 10, 54, 720],
+                  width: 30,
+                  height: 10,
+                },
+              ],
+            };
+          },
+        };
+      },
+      destroy() {
+        destroyCalls += 1;
+      },
+    });
+    const abortedRes = await parseAdventurePdf(
+      new TextEncoder().encode("%PDF-1.4\n"),
+      { fileName: "abort.pdf" },
+      { loadPdfDocument: abortingLoader, signal: controller.signal },
+    );
+    expect(abortedRes.ok).toBe(false);
+    if (!abortedRes.ok) expect(abortedRes.error.code).toBe("ABORTED");
+    expect(destroyCalls).toBe(1);
   });
 
   it("AC1/AC8: saves and reloads a parsed PDF package with pageNumber preserved", async () => {

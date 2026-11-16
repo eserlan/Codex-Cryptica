@@ -488,6 +488,48 @@ describe("AdventureSurface entry", () => {
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 
+  it("rejects oversized PDF files before reading them", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File([new Uint8Array(20 * 1024 * 1024 + 1)], "large.pdf", {
+      type: "application/pdf",
+    });
+    const read = vi.spyOn(file, "arrayBuffer");
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(
+      (await screen.findByTestId("adventure-import-error")).textContent,
+    ).toContain("20 MiB");
+    expect(read).not.toHaveBeenCalled();
+    expect(env.importAdventurePdfFile).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+  });
+
+  it("aborts a pending PDF import when the surface unmounts", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    env.importAdventurePdfFile.mockImplementation(
+      (_bytes: unknown, _name: unknown, signal?: AbortSignal) => {
+        capturedSignal = signal;
+        return new Promise(() => {});
+      },
+    );
+    const { unmount } = render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const pdfFile = new File(["%PDF-1.4"], "pending.pdf", {
+      type: "application/pdf",
+    });
+    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    await waitFor(() => expect(env.importAdventurePdfFile).toHaveBeenCalled());
+    expect(capturedSignal?.aborted).toBe(false);
+    unmount();
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
   it("blocks guest imports in the entry UI and in the import handler", async () => {
     env.isGuest = true;
     render(AdventureSurface);

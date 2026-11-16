@@ -170,7 +170,8 @@ export type AdventureImportErrorCode =
   | "NO_SECTIONS"
   | "ENCRYPTED_PDF"
   | "IMAGE_ONLY_PDF"
-  | "INVALID_PDF";
+  | "INVALID_PDF"
+  | "ABORTED";
 
 export interface AdventureImportError {
   code: AdventureImportErrorCode;
