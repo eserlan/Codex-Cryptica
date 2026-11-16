@@ -620,7 +620,7 @@
               href: "/adventure-import",
               label: "Adventure Importer",
               summary:
-                "Convert a PDF or text adventure you own into Adventure JSON with an AI prompt and schema, then import it locally.",
+                "Import Adventure JSON locally with deterministic validation, hashing, and versioning — or convert an adventure you own with the AI guide.",
               icon: "icon-[lucide--file-json]",
             },
           ],
