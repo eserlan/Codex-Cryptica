@@ -511,9 +511,6 @@ describe("AdventureSessionRepository v3 persistence", () => {
           },
         };
       },
-      async getDirectoryHandle() {
-        return this;
-      },
       async removeEntry(name: string) {
         files.delete(name);
       },
