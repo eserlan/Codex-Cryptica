@@ -37,8 +37,11 @@ echo "== fallow audit (new findings only)"
 # The report can pass 128 KB, too big for one command-line argument, so it
 # goes through a file.
 fallow_json="$(mktemp)"
-trap 'rm -f "$fallow_json"' EXIT
-bunx fallow audit --base "$BASE" --format json --quiet --explain --gate-marker agent >"$fallow_json" 2>/dev/null || true
+cache_root="${XDG_CACHE_HOME:-$HOME/.cache}"
+mkdir -p "$cache_root" 2>/dev/null || true
+fallow_tmp="$(mktemp -d "$cache_root/fallow-checks.XXXXXX" 2>/dev/null || mktemp -d)"
+trap 'rm -rf "$fallow_json" "$fallow_tmp"' EXIT
+TMPDIR="$fallow_tmp" bunx fallow audit --base "$BASE" --format json --quiet --explain --gate-marker agent >"$fallow_json" 2>/dev/null || true
 python3 - "$fallow_json" <<'PY'
 import json, sys
 raw = open(sys.argv[1]).read()
