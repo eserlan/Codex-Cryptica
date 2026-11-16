@@ -1,5 +1,6 @@
 import {
   approveAdventurePackage,
+  getAdventurePackagePath,
   listApprovedAdventurePackages,
   loadAdventurePackage,
   loadStoredAdventurePackage,
@@ -182,6 +183,37 @@ export class AdventurePackageRepository {
 
   async listApproved(vaultId: string): Promise<StoredAdventurePackage[]> {
     return listApprovedAdventurePackages(this.createIO(vaultId));
+  }
+
+  /**
+   * Removes one approved version's file, refusing when any session pins its
+   * hash. `pinnedHashes` is the set of `sourcePackage.hash` values from the
+   * already-loaded session list; removal never scans session storage itself.
+   */
+  async removeApproved(
+    vaultId: string,
+    hash: string,
+    pinnedHashes: ReadonlySet<string> = new Set(),
+  ): Promise<
+    | { status: "removed"; hash: string; path: string }
+    | { status: "refused"; hash: string; path: string; reason: string }
+  > {
+    const path = getAdventurePackagePath(hash);
+    if (pinnedHashes.has(hash)) {
+      return {
+        status: "refused",
+        hash,
+        path,
+        reason:
+          "This version is still in use by an adventure session, so it cannot be removed. Sessions keep playing the exact version they started with.",
+      };
+    }
+    const io = this.createIO(vaultId);
+    if (!io.remove) {
+      throw new Error("Adventure package storage does not support removal.");
+    }
+    await io.remove(path);
+    return { status: "removed", hash, path };
   }
 }
 

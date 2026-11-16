@@ -34,6 +34,31 @@ const env = vi.hoisted(() => ({
     hash: "a".repeat(64),
     package: pkg,
   })),
+  removeApprovedPackage: vi.fn(
+    async (
+      _vaultId: string,
+      hash: string,
+      pinnedHashes: ReadonlySet<string> = new Set(),
+    ) => {
+      if (pinnedHashes.has(hash)) {
+        return {
+          status: "refused" as const,
+          hash,
+          path: `.codex/adventures/packages/${hash}.json`,
+          reason:
+            "This version is still in use by an adventure session, so it cannot be removed. Sessions keep playing the exact version they started with.",
+        };
+      }
+      env.approvedPackages = env.approvedPackages.filter(
+        (item) => item.hash !== hash,
+      );
+      return {
+        status: "removed" as const,
+        hash,
+        path: `.codex/adventures/packages/${hash}.json`,
+      };
+    },
+  ),
   approvedPackages: [] as any[],
   openSession: vi.fn(async () => {}),
   resumeArchived: vi.fn(async () => {}),
@@ -95,6 +120,7 @@ vi.mock("#lib/services/adventure/adventure-package-storage.js", () => ({
     setRootResolver: env.setRootResolver,
     saveApproved: env.saveApprovedPackage,
     saveApprovedJson: env.saveApprovedPackage,
+    removeApproved: env.removeApprovedPackage,
     listApproved: vi.fn(async () => env.approvedPackages),
   },
 }));
@@ -125,7 +151,60 @@ vi.mock("#lib/services/adventure/adventure-pdf-import.js", () => ({
   importAdventurePdfFile: env.importAdventurePdfFile,
 }));
 
+import { computeAdventureJsonHash } from "@codex/adventure-engine";
 import AdventureSurface from "./AdventureSurface.svelte";
+
+function entrySampleJson(overrides: any = {}) {
+  return {
+    formatVersion: "adventure-json/v1",
+    id: "the-sunken-mill",
+    title: "The Sunken Mill",
+    version: "1.0.0",
+    premise: {
+      background: "The stone mill stopped turning.",
+      hook: "Maren asks the party to inspect the sluice gate.",
+    },
+    source: { title: "The Sunken Mill", license: "CC0-1.0" },
+    locations: [
+      {
+        id: "loc-landing",
+        name: "The Ferry Landing",
+        summary: "Fog clings to the pilings.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ],
+    actors: [],
+    factions: [],
+    scenes: [
+      {
+        id: "scene-1",
+        title: "Scene 1: The Ferry Landing",
+        summary: "Arrival at dusk.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ],
+    encounters: [],
+    clues: [],
+    rumours: [],
+    items: [],
+    secrets: [],
+    endings: [],
+    unresolved: [],
+    ...overrides,
+  };
+}
+
+async function storedApproved(pkg: any) {
+  const hash = await computeAdventureJsonHash(pkg);
+  return {
+    hash,
+    path: `.codex/adventures/packages/${hash}.json`,
+    originFormat: "adventure-json/v1" as const,
+    package: pkg,
+  };
+}
 
 beforeEach(() => {
   env.openIntentGeneratorWorkflow.mockClear();
@@ -143,6 +222,7 @@ beforeEach(() => {
   env.pendingRumour = null;
   env.characters = [];
   env.saveApprovedPackage.mockClear();
+  env.removeApprovedPackage.mockClear();
   env.importAdventurePdfFile.mockReset();
 });
 
@@ -891,14 +971,241 @@ describe("AdventureSurface entry", () => {
     await screen.findByTestId("approved-adventure-packages");
 
     await fireEvent.click(
-      screen.getByTestId("approved-package-resume-the-last-grind"),
+      screen.getByTestId(
+        `approved-package-resume-the-last-grind-${hash.slice(0, 8)}`,
+      ),
     );
     expect(env.openSession).toHaveBeenCalledWith("vault-1", "session-pinned-1");
 
     await fireEvent.click(
-      screen.getByTestId("approved-package-start-the-last-grind"),
+      screen.getByTestId(
+        `approved-package-start-the-last-grind-${hash.slice(0, 8)}`,
+      ),
     );
     const pinnedBanner = await screen.findByTestId("adventure-pinned-package");
     expect(pinnedBanner.textContent).toContain("the-last-grind v1.0.0");
+  });
+
+  it("shows an already-imported notice for an identical re-import without entering review or writing", async () => {
+    const pkg = entrySampleJson();
+    env.approvedPackages = [await storedApproved(pkg)];
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const file = new File([JSON.stringify(pkg)], "sunken-mill.json", {
+      type: "application/json",
+    });
+    await fireEvent.change(screen.getByTestId("adventure-file-input"), {
+      target: { files: [file] },
+    });
+
+    const notice = await screen.findByTestId(
+      "adventure-import-duplicate-notice",
+    );
+    expect(notice.textContent).toContain("Already imported");
+    expect(notice.textContent).toContain("The Sunken Mill");
+    expect(notice.textContent).toContain("the-sunken-mill");
+    expect(notice.textContent).toContain("v1.0.0");
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("enters review with the diff for a changed package and warns when the version did not increase", async () => {
+    const v1 = entrySampleJson();
+    env.approvedPackages = [await storedApproved(v1)];
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const changed = entrySampleJson({
+      scenes: [
+        {
+          id: "scene-1",
+          title: "Scene 1: The Ferry Landing",
+          summary: "Arrival at midnight, revised.",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const file = new File([JSON.stringify(changed)], "sunken-mill-v2.json", {
+      type: "application/json",
+    });
+    await fireEvent.change(screen.getByTestId("adventure-file-input"), {
+      target: { files: [file] },
+    });
+
+    const review = await screen.findByTestId("adventure-import-review");
+    expect(review).toBeTruthy();
+    const diff = screen.getByTestId("adventure-import-diff");
+    expect(diff.textContent).toContain("the-sunken-mill");
+    expect(diff.textContent).toContain("v1.0.0");
+    expect(
+      screen.getByTestId("adventure-import-diff-version-warning").textContent,
+    ).toContain("did not increase");
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+
+    await fireEvent.click(screen.getByTestId("adventure-cancel-button"));
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("treats a deduplicated approval as already-imported success, not an approve error", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    const pkg = entrySampleJson();
+    const hash = await computeAdventureJsonHash(pkg);
+    env.saveApprovedPackage.mockResolvedValueOnce({
+      status: "deduplicated",
+      path: `.codex/adventures/packages/${hash}.json`,
+      hash,
+      package: pkg,
+    });
+
+    const file = new File([JSON.stringify(pkg)], "sunken-mill.json", {
+      type: "application/json",
+    });
+    await fireEvent.change(screen.getByTestId("adventure-file-input"), {
+      target: { files: [file] },
+    });
+    await screen.findByTestId("adventure-import-review");
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+
+    await waitFor(() => {
+      expect(
+        screen.getByTestId("adventure-package-status").textContent,
+      ).toContain("Approved");
+    });
+    expect(screen.queryByTestId("adventure-approve-error")).toBeNull();
+    expect(env.notify).toHaveBeenCalledWith(
+      expect.stringContaining("already imported"),
+      "success",
+    );
+  });
+
+  it("groups versions by id and keeps a v1 session resumable after v2 is listed", async () => {
+    const v1 = entrySampleJson();
+    const v2 = entrySampleJson({ version: "1.1.0", title: "The Sunken Mill" });
+    const storedV1 = await storedApproved(v1);
+    const storedV2 = await storedApproved(v2);
+    env.approvedPackages = [storedV2, storedV1];
+    env.list.mockResolvedValue({
+      effectiveActiveId: "session-v1",
+      entries: [
+        {
+          id: "session-v1",
+          title: "First Run",
+          status: "active",
+          loadCondition: "normal",
+          sourcePackage: {
+            packageId: "the-sunken-mill",
+            version: "1.0.0",
+            formatVersion: "adventure-json/v1",
+            hash: storedV1.hash,
+          },
+        },
+      ],
+    });
+    render(AdventureSurface);
+    await screen.findByTestId("approved-adventure-packages");
+
+    const group = screen.getByTestId("approved-package-group-the-sunken-mill");
+    expect(group.textContent).toContain("2 versions");
+    await fireEvent.click(
+      screen.getByTestId(
+        `approved-package-resume-the-sunken-mill-${storedV1.hash.slice(0, 8)}`,
+      ),
+    );
+    expect(env.openSession).toHaveBeenCalledWith("vault-1", "session-v1");
+
+    await fireEvent.click(
+      screen.getByTestId(
+        `approved-package-start-the-sunken-mill-${storedV2.hash.slice(0, 8)}`,
+      ),
+    );
+    const banner = await screen.findByTestId("adventure-pinned-package");
+    expect(banner.textContent).toContain("the-sunken-mill v1.1.0");
+  });
+
+  it("refuses removal of an in-use version (active and archived sessions) with a plain explanation", async () => {
+    const v1 = entrySampleJson();
+    const storedV1 = await storedApproved(v1);
+    env.approvedPackages = [storedV1];
+    env.list.mockResolvedValue({
+      effectiveActiveId: "session-active",
+      entries: [
+        {
+          id: "session-active",
+          title: "Active Run",
+          status: "active",
+          loadCondition: "normal",
+          sourcePackage: {
+            packageId: "the-sunken-mill",
+            version: "1.0.0",
+            formatVersion: "adventure-json/v1",
+            hash: storedV1.hash,
+          },
+        },
+        {
+          id: "session-archived",
+          title: "Archived Run",
+          status: "archived",
+          loadCondition: "normal",
+          sourcePackage: {
+            packageId: "the-sunken-mill",
+            version: "1.0.0",
+            formatVersion: "adventure-json/v1",
+            hash: storedV1.hash,
+          },
+        },
+      ],
+    });
+    render(AdventureSurface);
+    await screen.findByTestId("approved-adventure-packages");
+
+    await fireEvent.click(
+      screen.getByTestId(
+        `approved-package-remove-the-sunken-mill-${storedV1.hash.slice(0, 8)}`,
+      ),
+    );
+    const error = await screen.findByTestId("approved-package-removal-error");
+    expect(error.textContent).toContain("still in use");
+    expect(env.removeApprovedPackage).toHaveBeenCalledTimes(1);
+    expect(env.approvedPackages).toHaveLength(1);
+  });
+
+  it("removes an unused version and leaves the other version listed", async () => {
+    const v1 = entrySampleJson();
+    const v2 = entrySampleJson({ version: "1.1.0" });
+    const storedV1 = await storedApproved(v1);
+    const storedV2 = await storedApproved(v2);
+    env.approvedPackages = [storedV1, storedV2];
+    env.list.mockResolvedValue({ effectiveActiveId: null, entries: [] });
+    render(AdventureSurface);
+    await screen.findByTestId("approved-adventure-packages");
+
+    await fireEvent.click(
+      screen.getByTestId(
+        `approved-package-remove-the-sunken-mill-${storedV1.hash.slice(0, 8)}`,
+      ),
+    );
+    const message = await screen.findByTestId(
+      "approved-package-removal-message",
+    );
+    expect(message.textContent).toContain("Removed");
+    await waitFor(() => {
+      expect(env.approvedPackages.map((item) => item.hash)).toEqual([
+        storedV2.hash,
+      ]);
+    });
+    expect(
+      screen.queryByTestId(
+        `approved-package-item-the-sunken-mill-${storedV1.hash.slice(0, 8)}`,
+      ),
+    ).toBeNull();
+    expect(
+      screen.getByTestId(
+        `approved-package-item-the-sunken-mill-${storedV2.hash.slice(0, 8)}`,
+      ),
+    ).toBeTruthy();
   });
 });

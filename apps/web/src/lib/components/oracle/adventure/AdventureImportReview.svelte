@@ -13,6 +13,7 @@
   import AdventureImportReviewUnresolved from "./AdventureImportReviewUnresolved.svelte";
   import AdventureImportReviewFactions from "./AdventureImportReviewFactions.svelte";
   import AdventureImportReviewEncounter from "./AdventureImportReviewEncounter.svelte";
+  import AdventureImportReviewDiff from "./AdventureImportReviewDiff.svelte";
 
   type VisibilityCollection =
     | "locations"
@@ -27,6 +28,8 @@
   let {
     draft = $bindable(),
     experimentalOrigin = null,
+    previousPackage = null,
+    previousHash = null,
     onApprove,
     onStartAdventure,
     onCancel,
@@ -35,6 +38,8 @@
   }: {
     draft: AdventureJsonV1;
     experimentalOrigin?: "markdown" | "pdf" | null;
+    previousPackage?: AdventureJsonV1 | null;
+    previousHash?: string | null;
     onApprove: (approvedPackage: AdventureJsonV1) => void | Promise<void>;
     onStartAdventure?: (approvedPackage: AdventureJsonV1, hash: string) => void;
     onCancel: () => void;
@@ -116,6 +121,14 @@
     {canonicalHash}
     {isApproved}
   />
+
+  {#if previousPackage}
+    <AdventureImportReviewDiff
+      previous={previousPackage}
+      {previousHash}
+      current={draft}
+    />
+  {/if}
 
   <AdventureImportReviewUnresolved {draft} />
 

@@ -27,7 +27,10 @@
   import AdventureRumourConflict from "./AdventureRumourConflict.svelte";
   import {
     adventureSourcePackageToAdventureJson,
+    compareAdventureJsonVersion,
+    computeAdventureJsonHash,
     parseAdventureMarkdown,
+    selectAdventureJsonPredecessor,
     validateAdventureJson,
     MAX_ADVENTURE_JSON_BYTES,
     MAX_ADVENTURE_MARKDOWN_BYTES,
@@ -116,6 +119,16 @@
   let importInFlight = $state(false);
   let importApproving = $state(false);
   let importApproveError = $state<string | null>(null);
+  let importDuplicateNotice = $state<{
+    title: string;
+    id: string;
+    version: string;
+    hash: string;
+  } | null>(null);
+  let importPredecessor = $state<StoredAdventurePackage | null>(null);
+  let removingPackageHash = $state<string | null>(null);
+  let packageRemovalMessage = $state<string | null>(null);
+  let packageRemovalError = $state<string | null>(null);
   let approvedPackages = $state<StoredAdventurePackage[]>([]);
   let pinnedSessionsByHash = $state<Map<string, AdventureArchiveEntry[]>>(
     new Map(),
@@ -177,6 +190,10 @@
       importDraft = null;
       importExperimentalOrigin = null;
       importDraftVaultId = null;
+      importPredecessor = null;
+      importDuplicateNotice = null;
+      packageRemovalMessage = null;
+      packageRemovalError = null;
       importError = null;
       importValidationErrors = [];
       importInFlight = false;
@@ -299,6 +316,114 @@
     }
   }
 
+  const groupedApprovedPackages = $derived.by(() => {
+    const groups = new Map<
+      string,
+      { id: string; title: string; versions: StoredAdventurePackage[] }
+    >();
+    for (const item of approvedPackages) {
+      const group = groups.get(item.package.id) ?? {
+        id: item.package.id,
+        title: item.package.title,
+        versions: [],
+      };
+      group.versions.push(item);
+      groups.set(item.package.id, group);
+    }
+    for (const group of groups.values()) {
+      group.versions.sort((a, b) => {
+        const byVersion = compareAdventureJsonVersion(
+          b.package.version,
+          a.package.version,
+        );
+        if (byVersion !== 0) return byVersion;
+        return a.hash < b.hash ? -1 : a.hash > b.hash ? 1 : 0;
+      });
+    }
+    return [...groups.values()];
+  });
+
+  async function storedPackagesForImport(
+    sourceVaultId: string,
+  ): Promise<StoredAdventurePackage[]> {
+    try {
+      const fresh =
+        await adventurePackageRepository.listApproved?.(sourceVaultId);
+      if (fresh) return fresh;
+    } catch {
+      // Fall back to the already-loaded list below.
+    }
+    return approvedPackages;
+  }
+
+  /** Dedup check + predecessor lookup before a validated package enters review. */
+  async function enterImportReview(
+    pkg: AdventureJsonV1,
+    experimentalOrigin: "markdown" | "pdf" | null,
+    sourceVaultId: string,
+  ): Promise<void> {
+    const stored = await storedPackagesForImport(sourceVaultId);
+    const hash = await computeAdventureJsonHash(pkg);
+    const duplicate = stored.find((item) => item.hash === hash);
+    if (duplicate) {
+      importDuplicateNotice = {
+        title: duplicate.package.title,
+        id: duplicate.package.id,
+        version: duplicate.package.version,
+        hash: duplicate.hash,
+      };
+      return;
+    }
+    importDuplicateNotice = null;
+    const predecessor = selectAdventureJsonPredecessor(stored, pkg, hash);
+    importPredecessor = predecessor
+      ? {
+          hash: predecessor.hash,
+          path: "",
+          package: predecessor.package,
+          originFormat: "adventure-json/v1",
+        }
+      : null;
+    importDraft = pkg;
+    importExperimentalOrigin = experimentalOrigin;
+    importDraftVaultId = sourceVaultId;
+    startApproach = "import-review";
+  }
+
+  async function handleRemoveApprovedPackage(
+    item: StoredAdventurePackage,
+  ): Promise<void> {
+    if (removingPackageHash) return;
+    removingPackageHash = item.hash;
+    packageRemovalMessage = null;
+    packageRemovalError = null;
+    try {
+      const result = await adventurePackageRepository.removeApproved?.(
+        vaultId,
+        item.hash,
+        new Set(pinnedSessionsByHash.keys()),
+      );
+      if (!result) {
+        packageRemovalError =
+          "Removing approved packages is not available here.";
+        return;
+      }
+      if (result.status === "refused") {
+        packageRemovalError = result.reason;
+        return;
+      }
+      packageRemovalMessage = `Removed "${item.package.title}" v${item.package.version}.`;
+      void refreshApprovedPackages(vaultId);
+    } catch (error) {
+      packageRemovalError =
+        error instanceof Error
+          ? error.message
+          : "Unable to remove this approved package version.";
+    } finally {
+      removingPackageHash = null;
+    }
+  }
+
   $effect(() => {
     const currentVaultId = vaultId;
     const ready = oracle.vault.isInitialized;
@@ -403,10 +528,7 @@
           return;
         }
 
-        importDraft = validation.value;
-        importExperimentalOrigin = null;
-        importDraftVaultId = sourceVaultId;
-        startApproach = "import-review";
+        await enterImportReview(validation.value, null, sourceVaultId);
       },
       file,
     );
@@ -452,10 +574,11 @@
           importValidationErrors = validation.errors;
           return;
         }
-        importDraft = validation.value;
-        importExperimentalOrigin = isPdf ? "pdf" : "markdown";
-        importDraftVaultId = sourceVaultId;
-        startApproach = "import-review";
+        await enterImportReview(
+          validation.value,
+          isPdf ? "pdf" : "markdown",
+          sourceVaultId,
+        );
       },
       file,
     );
@@ -485,8 +608,11 @@
       );
       if (!isCurrentImport(requestToken, sourceVaultId)) return;
       importDraft = saved.package;
+      importPredecessor = null;
       notificationStore.notify(
-        `Approved "${saved.package.title}" for local play.`,
+        saved.status === "deduplicated"
+          ? `"${saved.package.title}" was already imported.`
+          : `Approved "${saved.package.title}" for local play.`,
         "success",
       );
       void refreshApprovedPackages(sourceVaultId);
@@ -510,6 +636,8 @@
     importDraft = null;
     importExperimentalOrigin = null;
     importDraftVaultId = null;
+    importPredecessor = null;
+    importDuplicateNotice = null;
     importError = null;
     importValidationErrors = [];
     importInFlight = false;
@@ -966,6 +1094,22 @@
         onImportExperimentalFile={handleImportExperimentalFile}
       />
 
+      {#if importDuplicateNotice}
+        <div
+          role="status"
+          aria-live="polite"
+          class="mx-auto w-full max-w-5xl rounded-lg border border-theme-primary/50 bg-theme-primary/10 p-3 text-sm text-theme-text"
+          data-testid="adventure-import-duplicate-notice"
+        >
+          Already imported: "{importDuplicateNotice.title}" ({importDuplicateNotice.id}
+          v{importDuplicateNotice.version}, {importDuplicateNotice.hash.slice(
+            0,
+            12,
+          )}). This exact version is in your Vault, so nothing was written and
+          your current review is unchanged.
+        </div>
+      {/if}
+
       {#if approvedPackages.length > 0}
         <section
           class="mx-auto w-full max-w-5xl space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
@@ -978,52 +1122,103 @@
           >
             Approved Adventure Packages
           </h2>
-          <ul class="space-y-2">
-            {#each approvedPackages as item (item.hash)}
-              {@const pinned = pinnedSessionsByHash.get(item.hash) ?? []}
-              {@const latestPinned = pinned[0]}
-              <li
-                class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-theme-border bg-theme-bg p-3"
-                data-testid="approved-package-item-{item.package.id}"
-              >
-                <div class="min-w-0 space-y-0.5">
-                  <p class="font-semibold text-theme-text">
-                    {item.package.title}
-                  </p>
-                  <p class="font-mono text-xs text-theme-text">
-                    {item.package.id} v{item.package.version} · {item.hash.slice(
-                      0,
-                      12,
-                    )}
-                  </p>
-                </div>
-                <div class="flex flex-wrap items-center gap-2">
-                  {#if latestPinned}
-                    <button
-                      type="button"
-                      data-testid="approved-package-resume-{item.package.id}"
-                      disabled={resumingPinnedId !== null}
-                      onclick={() => void resumePinnedSession(latestPinned)}
-                      class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {resumingPinnedId === latestPinned.id
-                        ? "Resuming…"
-                        : `Resume (${latestPinned.title})`}
-                    </button>
-                  {/if}
-                  <button
-                    type="button"
-                    data-testid="approved-package-start-{item.package.id}"
-                    onclick={() =>
-                      startFromApprovedPackage(item.package, item.hash)}
-                    class="min-h-10 rounded-lg bg-theme-primary px-3 py-1.5 text-sm font-semibold text-theme-on-primary transition hover:opacity-90"
+          {#each groupedApprovedPackages as group (group.id)}
+            <div
+              class="space-y-2"
+              data-testid="approved-package-group-{group.id}"
+            >
+              <h3 class="font-semibold text-theme-text">
+                {group.title}
+                <span class="font-mono text-xs font-normal text-theme-text">
+                  {group.id}
+                </span>
+                {#if group.versions.length > 1}
+                  <span class="text-xs font-normal text-theme-text">
+                    ({group.versions.length} versions)
+                  </span>
+                {/if}
+              </h3>
+              <ul class="space-y-2">
+                {#each group.versions as item (item.hash)}
+                  {@const pinned = pinnedSessionsByHash.get(item.hash) ?? []}
+                  {@const latestPinned = pinned[0]}
+                  <li
+                    class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-theme-border bg-theme-bg p-3"
+                    data-testid="approved-package-item-{item.package
+                      .id}-{item.hash.slice(0, 8)}"
                   >
-                    Start new session
-                  </button>
-                </div>
-              </li>
-            {/each}
-          </ul>
+                    <div class="min-w-0 space-y-0.5">
+                      <p class="font-semibold text-theme-text">
+                        {item.package.title}
+                      </p>
+                      <p class="font-mono text-xs text-theme-text">
+                        {item.package.id} v{item.package.version} · {item.hash.slice(
+                          0,
+                          12,
+                        )}
+                      </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      {#if latestPinned}
+                        <button
+                          type="button"
+                          data-testid="approved-package-resume-{item.package
+                            .id}-{item.hash.slice(0, 8)}"
+                          disabled={resumingPinnedId !== null}
+                          onclick={() => void resumePinnedSession(latestPinned)}
+                          class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {resumingPinnedId === latestPinned.id
+                            ? "Resuming…"
+                            : `Resume (${latestPinned.title})`}
+                        </button>
+                      {/if}
+                      <button
+                        type="button"
+                        data-testid="approved-package-start-{item.package
+                          .id}-{item.hash.slice(0, 8)}"
+                        onclick={() =>
+                          startFromApprovedPackage(item.package, item.hash)}
+                        class="min-h-10 rounded-lg bg-theme-primary px-3 py-1.5 text-sm font-semibold text-theme-on-primary transition hover:opacity-90"
+                      >
+                        Start new session
+                      </button>
+                      <button
+                        type="button"
+                        data-testid="approved-package-remove-{item.package
+                          .id}-{item.hash.slice(0, 8)}"
+                        disabled={removingPackageHash !== null}
+                        onclick={() => void handleRemoveApprovedPackage(item)}
+                        class="min-h-10 rounded-lg border border-theme-danger/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {removingPackageHash === item.hash
+                          ? "Removing…"
+                          : "Remove"}
+                      </button>
+                    </div>
+                  </li>
+                {/each}
+              </ul>
+            </div>
+          {/each}
+          {#if packageRemovalMessage}
+            <p
+              class="text-sm text-theme-text"
+              role="status"
+              data-testid="approved-package-removal-message"
+            >
+              {packageRemovalMessage}
+            </p>
+          {/if}
+          {#if packageRemovalError}
+            <p
+              class="text-sm text-theme-danger"
+              role="alert"
+              data-testid="approved-package-removal-error"
+            >
+              {packageRemovalError}
+            </p>
+          {/if}
           {#if pinnedResumeError}
             <p class="text-sm text-theme-danger" role="alert">
               {pinnedResumeError}
@@ -1036,6 +1231,8 @@
         <AdventureImportReview
           bind:draft={importDraft}
           experimentalOrigin={importExperimentalOrigin}
+          previousPackage={importPredecessor?.package ?? null}
+          previousHash={importPredecessor?.hash ?? null}
           approving={importApproving}
           approveError={importApproveError}
           onApprove={handleApproveImport}
