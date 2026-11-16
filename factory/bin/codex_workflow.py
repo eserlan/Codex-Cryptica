@@ -19,6 +19,23 @@ from codex_sandbox import git_metadata_roots, resolve_git_common_dir, run_sandbo
 
 REPO = Path(__file__).resolve().parents[2]
 WAITING = {"needs-human", "needs-info", "rejected", "merged"}
+MAX_WORKSPACE_MANIFEST_BYTES = 1024 * 1024
+MAX_WORKSPACE_MANIFEST_TOTAL_BYTES = 10 * 1024 * 1024
+
+
+def valid_review_artifact(path):
+    """Return whether a reviewer artifact starts with an accepted verdict."""
+    try:
+        first_line = Path(path).read_text().splitlines()[0]
+    except (OSError, IndexError):
+        return False
+    return re.fullmatch(r"VERDICT:\s*(PASS|CHANGES)", first_line) is not None
+
+
+def pending_reviewers(reviewers, round_dir):
+    """Select reviewers whose artifacts are missing or have no accepted verdict."""
+    return [lens for lens in reviewers
+            if not valid_review_artifact(Path(round_dir) / f"review-{lens}.md")]
 
 
 class Runner:
@@ -82,9 +99,17 @@ class Runner:
                 raise RuntimeError(f"Workspace manifest is not a regular file: {path}")
             validated_manifests.append(path)
         manifest_data = {}
+        workspace_manifest_bytes = 0
         for path in validated_manifests:
             if path.name != "package.json":
                 continue
+            if path != package_manifest:
+                size = path.stat().st_size
+                workspace_manifest_bytes += size
+                if size > MAX_WORKSPACE_MANIFEST_BYTES:
+                    raise RuntimeError(f"Workspace package manifest exceeds the factory bootstrap size limit: {path}")
+                if workspace_manifest_bytes > MAX_WORKSPACE_MANIFEST_TOTAL_BYTES:
+                    raise RuntimeError("Workspace package manifests exceed the aggregate factory bootstrap size limit")
             data = json.loads(path.read_text())
             if not isinstance(data, dict):
                 raise RuntimeError(f"Package manifest must contain a JSON object: {path}")
@@ -383,6 +408,8 @@ class Runner:
         except json.JSONDecodeError:
             payload = None
         runtime_error = isinstance(payload, dict) and payload.get("error") is True
+        if isinstance(payload, dict) and payload.get("verdict") == "fail" and not runtime_error:
+            raise RuntimeError(f"Fallow {label} audit failed; see {log_path}")
         if result.returncode != 0 and not runtime_error:
             raise RuntimeError(f"Fallow {label} audit failed; see {log_path}")
 
@@ -788,8 +815,9 @@ class Runner:
                 else:
                     raise RuntimeError(result.stderr or result.stdout)
             elif stage == "review":
-                pending = [lens for lens in job["agents"]["reviewers"]
-                           if not (folder / f"round-{job['round']}/review-{lens}.md").exists()]
+                pending = pending_reviewers(
+                    job["agents"]["reviewers"], folder / f"round-{job['round']}"
+                )
                 with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
                     futures = [pool.submit(self.role, job, f"reviewer-{lens}",
                                            f"Review round {job['round']}. Apply the codex-review specialist skill for code review.")

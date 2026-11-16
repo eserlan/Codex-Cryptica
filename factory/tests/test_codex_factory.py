@@ -102,12 +102,15 @@ class CodexFactoryTests(unittest.TestCase):
         return install_env
 
     def agent_command(self, args, cwd=None, check=True, **kwargs):
-        if Path(args[0]).name == "codex":
+        if "exec" in args and "--json" in args:
             prompt = kwargs["input"]
             output = prompt.split("Artifact output path: ", 1)[1].split(
                 ". The job folder is read-only.", 1
             )[0]
-            Path(output).write_text("STATUS: READY\n\n### Round 1\n")
+            artifact = "VERDICT: PASS\n\nNo findings.\n" if "review-" in Path(output).name else (
+                "STATUS: READY\n\n### Round 1\n"
+            )
+            Path(output).write_text(artifact)
             return self.result()
         return subprocess.CompletedProcess(args, 0, "", "")
 
@@ -249,6 +252,32 @@ class CodexFactoryTests(unittest.TestCase):
         self.assertNotIn("GITHUB_TOKEN", captured["env"])
         self.assertNotEqual(captured["env"]["BUN_INSTALL_CACHE_DIR"], "/home/user/.bun/install/cache")
 
+    def test_cache_bootstrap_bounds_workspace_manifest_bytes(self):
+        cache = self.root / ".worktrees/.codex-bun-cache"
+        cache.mkdir(parents=True)
+        package = self.worktree / "package.json"
+
+        package.write_text(json.dumps({"workspaces": ["packages/*"]}))
+        (self.worktree / "bun.lock").write_text("trusted lock\n")
+        oversized = self.worktree / "packages/oversized/package.json"
+        oversized.parent.mkdir(parents=True)
+        oversized.write_text("x" * (module.MAX_WORKSPACE_MANIFEST_BYTES + 1))
+        with patch.object(module.subprocess, "run") as run:
+            with self.assertRaisesRegex(RuntimeError, "Workspace package manifest exceeds"):
+                self.runner.bootstrap_dependency_cache(self.job, cache)
+            run.assert_not_called()
+
+        oversized.unlink()
+        for index in range(11):
+            manifest = self.worktree / f"packages/package-{index}/package.json"
+            manifest.parent.mkdir(parents=True)
+            manifest.write_text(json.dumps({"name": f"package-{index}",
+                                            "description": "x" * 970_000}))
+        with patch.object(module.subprocess, "run") as run:
+            with self.assertRaisesRegex(RuntimeError, "aggregate factory bootstrap size limit"):
+                self.runner.bootstrap_dependency_cache(self.job, cache)
+            run.assert_not_called()
+
     def test_cache_bootstrap_rejects_external_lockfile_sources(self):
         (self.worktree / "package.json").write_text(json.dumps({"workspaces": []}))
         (self.worktree / "bun.lock").write_text('{"source":"https://attacker.example/package.tgz"}\n')
@@ -361,7 +390,8 @@ class CodexFactoryTests(unittest.TestCase):
             captured["git_dir"] = (checkout / ".git").is_dir()
             captured["base"] = git_from(checkout, "rev-parse", "origin/staging")
             captured["status"] = git_from(checkout, "status", "--porcelain")
-            return subprocess.CompletedProcess(command, 0, '{"verdict":"pass"}', "")
+            report = captured.get("report", '{"verdict":"pass"}')
+            return subprocess.CompletedProcess(command, 0, report, "")
 
         def git_from(checkout, *args):
             return subprocess.run(["git", "-C", str(checkout), *args], check=True,
@@ -385,6 +415,10 @@ class CodexFactoryTests(unittest.TestCase):
         self.assertTrue(captured["kwargs"]["writable_git_metadata"])
         self.assertEqual(captured["kwargs"]["git_common_dir"], captured["checkout"] / ".git")
         self.assertEqual(captured["kwargs"]["writable_roots"], [captured["checkout"]])
+        captured["report"] = '{"verdict":"fail"}'
+        with self.assertRaisesRegex(RuntimeError, "Fallow pre-commit audit failed"):
+            self.runner.fallow_audit(job, source, [("tracked.ts", True)],
+                                     "pre-commit", self.folder / "codex")
 
     def test_audit_snapshot_handles_file_directory_replacements(self):
         source = self.root / ".worktrees/replacement-source"
@@ -620,6 +654,19 @@ class CodexFactoryTests(unittest.TestCase):
         self.assertIn(json.dumps(str(self.folder)) + "=\"read\"", filesystem)
         self.assertIn("Artifact output path:", command.call_args.kwargs["input"])
         self.assertTrue((self.folder / "round-1/review-code.md").is_file())
+
+    def test_invalid_review_artifacts_are_rerun_and_overwritten(self):
+        round_dir = self.folder / "round-1"
+        round_dir.mkdir()
+        (round_dir / "review-code.md").write_text("")
+        (round_dir / "review-ux.md").write_text("Review did not produce a verdict\n")
+        (round_dir / "review-ui.md").write_text("VERDICT: PASS\n\nNo findings.\n")
+        self.assertEqual(module.pending_reviewers(["code", "ux", "ui"], round_dir),
+                         ["code", "ux"])
+
+        with patch.object(self.runner, "command", side_effect=self.agent_command):
+            self.runner.role(self.job, "reviewer-code")
+        self.assertTrue((round_dir / "review-code.md").read_text().startswith("VERDICT: PASS"))
 
     def test_success_without_isolated_artifact_fails_closed(self):
         with patch.object(self.runner, "command", return_value=self.result()):
