@@ -202,6 +202,36 @@ export class AdventureSessionRepository {
     }
   }
 
+  private async readArchiveEntry(
+    vaultId: string,
+    id: string,
+  ): Promise<AdventureArchiveEntry> {
+    try {
+      const read = await this.readFile(vaultId, id);
+      const session = read.session;
+      return {
+        id: session.id,
+        title: session.title,
+        status: session.status,
+        updatedAt: session.updatedAt,
+        revision: session.revision,
+        loadCondition:
+          read.mode === "writable" ? "normal" : "migration-recovery",
+        premise: session.premise,
+        ...(session.sourcePackage
+          ? { sourcePackage: session.sourcePackage }
+          : {}),
+      };
+    } catch {
+      return {
+        id,
+        title: "Unreadable adventure",
+        status: "unreadable",
+        loadCondition: "unreadable",
+      };
+    }
+  }
+
   async list(vaultId: string): Promise<AdventureListResult> {
     const entries: AdventureArchiveEntry[] = [];
     let directory: FileSystemDirectoryHandle;
@@ -212,31 +242,7 @@ export class AdventureSessionRepository {
     }
     for await (const [name, handle] of (directory as any).entries()) {
       if (!name.endsWith(".json") || handle.kind !== "file") continue;
-      const id = name.slice(0, -5);
-      try {
-        const read = await this.readFile(vaultId, id);
-        const session = read.session;
-        entries.push({
-          id: session.id,
-          title: session.title,
-          status: session.status,
-          updatedAt: session.updatedAt,
-          revision: session.revision,
-          loadCondition:
-            read.mode === "writable" ? "normal" : "migration-recovery",
-          premise: session.premise,
-          ...(session.sourcePackage
-            ? { sourcePackage: session.sourcePackage }
-            : {}),
-        });
-      } catch {
-        entries.push({
-          id,
-          title: "Unreadable adventure",
-          status: "unreadable",
-          loadCondition: "unreadable",
-        });
-      }
+      entries.push(await this.readArchiveEntry(vaultId, name.slice(0, -5)));
     }
     const active = entries
       .filter((entry) => entry.status === "active" && entry.updatedAt)

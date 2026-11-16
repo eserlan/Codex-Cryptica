@@ -182,11 +182,7 @@
   </div>
 {/snippet}
 
-<section
-  class="mx-auto flex w-full max-w-5xl flex-col gap-6"
-  aria-labelledby="adventure-import-review-heading"
-  data-testid="adventure-import-review"
->
+{#snippet reviewHeader()}
   <header
     class="flex flex-wrap items-start justify-between gap-4 rounded-xl border border-theme-border bg-theme-surface p-5"
   >
@@ -243,7 +239,9 @@
       </span>
     </div>
   </header>
+{/snippet}
 
+{#snippet reviewMetadata()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-metadata-heading"
@@ -341,48 +339,50 @@
       {/if}
     </dl>
   </section>
+{/snippet}
 
-  {#if draft.unresolved.length > 0}
-    <section
-      class="space-y-3 rounded-xl border border-theme-danger/40 bg-theme-surface p-5"
-      aria-labelledby="review-unresolved-heading"
-      data-testid="review-unresolved"
+{#snippet reviewUnresolved()}
+  <section
+    class="space-y-3 rounded-xl border border-theme-danger/40 bg-theme-surface p-5"
+    aria-labelledby="review-unresolved-heading"
+    data-testid="review-unresolved"
+  >
+    <h2
+      id="review-unresolved-heading"
+      class="font-header text-lg font-semibold text-theme-text"
     >
-      <h2
-        id="review-unresolved-heading"
-        class="font-header text-lg font-semibold text-theme-text"
-      >
-        Unresolved ({draft.unresolved.length})
-      </h2>
-      <ul class="space-y-2">
-        {#each draft.unresolved as item (item.id)}
-          <li
-            class="flex flex-col gap-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-mono text-xs font-semibold text-theme-text">
-                  {item.code}
+      Unresolved ({draft.unresolved.length})
+    </h2>
+    <ul class="space-y-2">
+      {#each draft.unresolved as item (item.id)}
+        <li
+          class="flex flex-col gap-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs font-semibold text-theme-text">
+                {item.code}
+              </span>
+              {#if item.relatedEntityId}
+                <span class="font-mono text-xs text-theme-text">
+                  ({item.relatedEntityId})
                 </span>
-                {#if item.relatedEntityId}
-                  <span class="font-mono text-xs text-theme-text">
-                    ({item.relatedEntityId})
-                  </span>
-                {/if}
-                {@render sourceCitation(item.sourceRef)}
-              </div>
-              {@render epistemicBadge(item.epistemicStatus)}
+              {/if}
+              {@render sourceCitation(item.sourceRef)}
             </div>
-            <p class="text-theme-text">{item.message}</p>
-            {#if item.context}
-              <p class="text-xs text-theme-text">{item.context}</p>
-            {/if}
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
+            {@render epistemicBadge(item.epistemicStatus)}
+          </div>
+          <p class="text-theme-text">{item.message}</p>
+          {#if item.context}
+            <p class="text-xs text-theme-text">{item.context}</p>
+          {/if}
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/snippet}
 
+{#snippet reviewLocations()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-locations-heading"
@@ -422,7 +422,9 @@
       </ul>
     {/if}
   </section>
+{/snippet}
 
+{#snippet reviewActors()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-actors-heading"
@@ -469,45 +471,46 @@
       </ul>
     {/if}
   </section>
+{/snippet}
 
-  {#if draft.factions.length > 0}
-    <section
-      class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
-      aria-labelledby="review-factions-heading"
-      data-testid="review-factions"
+{#snippet reviewFactions()}
+  <section
+    class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
+    aria-labelledby="review-factions-heading"
+    data-testid="review-factions"
+  >
+    <h2
+      id="review-factions-heading"
+      class="font-header text-lg font-semibold text-theme-text"
     >
-      <h2
-        id="review-factions-heading"
-        class="font-header text-lg font-semibold text-theme-text"
-      >
-        Factions ({draft.factions.length})
-      </h2>
-      <ul class="space-y-3">
-        {#each draft.factions as faction, index (faction.id)}
-          <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-semibold text-theme-text">{faction.name}</span
-                >
-                {@render sourceCitation(faction.sourceRef)}
-              </div>
-              {@render epistemicBadge(faction.epistemicStatus)}
+      Factions ({draft.factions.length})
+    </h2>
+    <ul class="space-y-3">
+      {#each draft.factions as faction, index (faction.id)}
+        <li
+          class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold text-theme-text">{faction.name}</span>
+              {@render sourceCitation(faction.sourceRef)}
             </div>
-            <p class="text-sm text-theme-text">{faction.summary}</p>
-            {@render visibilityControls(
-              "factions",
-              index,
-              faction.visibility,
-              `faction ${faction.name}`,
-            )}
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
+            {@render epistemicBadge(faction.epistemicStatus)}
+          </div>
+          <p class="text-sm text-theme-text">{faction.summary}</p>
+          {@render visibilityControls(
+            "factions",
+            index,
+            faction.visibility,
+            `faction ${faction.name}`,
+          )}
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/snippet}
 
+{#snippet reviewScenes()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-scenes-heading"
@@ -560,7 +563,9 @@
       </ul>
     {/if}
   </section>
+{/snippet}
 
+{#snippet reviewEncounters()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-encounters-heading"
@@ -611,7 +616,9 @@
       </ul>
     {/if}
   </section>
+{/snippet}
 
+{#snippet reviewClues()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-clues-heading"
@@ -650,83 +657,85 @@
       </ul>
     {/if}
   </section>
+{/snippet}
 
-  {#if draft.rumours.length > 0}
-    <section
-      class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
-      aria-labelledby="review-rumours-heading"
-      data-testid="review-rumours"
+{#snippet reviewRumours()}
+  <section
+    class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
+    aria-labelledby="review-rumours-heading"
+    data-testid="review-rumours"
+  >
+    <h2
+      id="review-rumours-heading"
+      class="font-header text-lg font-semibold text-theme-text"
     >
-      <h2
-        id="review-rumours-heading"
-        class="font-header text-lg font-semibold text-theme-text"
-      >
-        Rumours ({draft.rumours.length})
-      </h2>
-      <ul class="space-y-3">
-        {#each draft.rumours as rumour, index (rumour.id)}
-          <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-mono text-xs text-theme-text">
-                  {rumour.truth}
-                </span>
-                {@render sourceCitation(rumour.sourceRef)}
-              </div>
-              {@render epistemicBadge(rumour.epistemicStatus)}
+      Rumours ({draft.rumours.length})
+    </h2>
+    <ul class="space-y-3">
+      {#each draft.rumours as rumour, index (rumour.id)}
+        <li
+          class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-mono text-xs text-theme-text">
+                {rumour.truth}
+              </span>
+              {@render sourceCitation(rumour.sourceRef)}
             </div>
-            <p class="text-sm text-theme-text">{rumour.text}</p>
-            {@render visibilityControls(
-              "rumours",
-              index,
-              rumour.visibility,
-              `rumour ${index + 1}`,
-            )}
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
+            {@render epistemicBadge(rumour.epistemicStatus)}
+          </div>
+          <p class="text-sm text-theme-text">{rumour.text}</p>
+          {@render visibilityControls(
+            "rumours",
+            index,
+            rumour.visibility,
+            `rumour ${index + 1}`,
+          )}
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/snippet}
 
-  {#if draft.items.length > 0}
-    <section
-      class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
-      aria-labelledby="review-items-heading"
-      data-testid="review-items"
+{#snippet reviewItems()}
+  <section
+    class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
+    aria-labelledby="review-items-heading"
+    data-testid="review-items"
+  >
+    <h2
+      id="review-items-heading"
+      class="font-header text-lg font-semibold text-theme-text"
     >
-      <h2
-        id="review-items-heading"
-        class="font-header text-lg font-semibold text-theme-text"
-      >
-        Items ({draft.items.length})
-      </h2>
-      <ul class="space-y-3">
-        {#each draft.items as item, index (item.id)}
-          <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-semibold text-theme-text">{item.name}</span>
-                {@render sourceCitation(item.sourceRef)}
-              </div>
-              {@render epistemicBadge(item.epistemicStatus)}
+      Items ({draft.items.length})
+    </h2>
+    <ul class="space-y-3">
+      {#each draft.items as item, index (item.id)}
+        <li
+          class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold text-theme-text">{item.name}</span>
+              {@render sourceCitation(item.sourceRef)}
             </div>
-            <p class="text-sm text-theme-text">{item.summary}</p>
-            {@render visibilityControls(
-              "items",
-              index,
-              item.visibility,
-              `item ${item.name}`,
-            )}
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
+            {@render epistemicBadge(item.epistemicStatus)}
+          </div>
+          <p class="text-sm text-theme-text">{item.summary}</p>
+          {@render visibilityControls(
+            "items",
+            index,
+            item.visibility,
+            `item ${item.name}`,
+          )}
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/snippet}
 
+{#snippet reviewSecrets()}
   <section
     class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
     aria-labelledby="review-secrets-heading"
@@ -771,40 +780,42 @@
       </ul>
     {/if}
   </section>
+{/snippet}
 
-  {#if draft.endings.length > 0}
-    <section
-      class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
-      aria-labelledby="review-endings-heading"
-      data-testid="review-endings"
+{#snippet reviewEndings()}
+  <section
+    class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
+    aria-labelledby="review-endings-heading"
+    data-testid="review-endings"
+  >
+    <h2
+      id="review-endings-heading"
+      class="font-header text-lg font-semibold text-theme-text"
     >
-      <h2
-        id="review-endings-heading"
-        class="font-header text-lg font-semibold text-theme-text"
-      >
-        Endings ({draft.endings.length})
-      </h2>
-      <ul class="space-y-3">
-        {#each draft.endings as ending (ending.id)}
-          <li
-            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
-          >
-            <div class="flex flex-wrap items-center justify-between gap-2">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="font-semibold text-theme-text">
-                  {ending.title ?? ending.id}
-                </span>
-                {@render sourceCitation(ending.sourceRef)}
-              </div>
-              {@render epistemicBadge(ending.epistemicStatus)}
+      Endings ({draft.endings.length})
+    </h2>
+    <ul class="space-y-3">
+      {#each draft.endings as ending (ending.id)}
+        <li
+          class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+        >
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="font-semibold text-theme-text">
+                {ending.title ?? ending.id}
+              </span>
+              {@render sourceCitation(ending.sourceRef)}
             </div>
-            <p class="text-sm text-theme-text">{ending.description}</p>
-          </li>
-        {/each}
-      </ul>
-    </section>
-  {/if}
+            {@render epistemicBadge(ending.epistemicStatus)}
+          </div>
+          <p class="text-sm text-theme-text">{ending.description}</p>
+        </li>
+      {/each}
+    </ul>
+  </section>
+{/snippet}
 
+{#snippet reviewFooter()}
   <div
     role="region"
     aria-label="AI provider excerpt notice"
@@ -903,4 +914,35 @@
       </button>
     {/if}
   </footer>
+{/snippet}
+
+<section
+  class="mx-auto flex w-full max-w-5xl flex-col gap-6"
+  aria-labelledby="adventure-import-review-heading"
+  data-testid="adventure-import-review"
+>
+  {@render reviewHeader()}
+  {@render reviewMetadata()}
+  {#if draft.unresolved.length > 0}
+    {@render reviewUnresolved()}
+  {/if}
+  {@render reviewLocations()}
+  {@render reviewActors()}
+  {#if draft.factions.length > 0}
+    {@render reviewFactions()}
+  {/if}
+  {@render reviewScenes()}
+  {@render reviewEncounters()}
+  {@render reviewClues()}
+  {#if draft.rumours.length > 0}
+    {@render reviewRumours()}
+  {/if}
+  {#if draft.items.length > 0}
+    {@render reviewItems()}
+  {/if}
+  {@render reviewSecrets()}
+  {#if draft.endings.length > 0}
+    {@render reviewEndings()}
+  {/if}
+  {@render reviewFooter()}
 </section>

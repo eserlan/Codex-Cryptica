@@ -68,6 +68,23 @@
     isManualSeed ? "Cancel prepared adventure" : "Cancel selected rumour",
   );
 
+  function buildPlayerCharacter(
+    canonical: (typeof characters)[number] | undefined,
+  ): Parameters<AdventureManager["start"]>[0]["playerCharacter"] {
+    if (canonical) {
+      return {
+        kind: "canonical",
+        name: canonical.name,
+        recordId: canonical.id,
+      };
+    }
+    return {
+      kind: "provisional",
+      name: characterName,
+      description: characterDescription || characterName,
+    };
+  }
+
   function startInput(): Parameters<AdventureManager["start"]>[0] | null {
     if (!title.trim() || !premise.trim()) return null;
     const canonical = characters.find(
@@ -78,13 +95,7 @@
       vaultId,
       title,
       premise,
-      playerCharacter: canonical
-        ? { kind: "canonical", name: canonical.name, recordId: canonical.id }
-        : {
-            kind: "provisional",
-            name: characterName,
-            description: characterDescription || characterName,
-          },
+      playerCharacter: buildPlayerCharacter(canonical),
       // The source list records explicit anchor provenance, so a
       // chosen Vault character must be listed to reach Oracle as canonical text.
       ...(canonical

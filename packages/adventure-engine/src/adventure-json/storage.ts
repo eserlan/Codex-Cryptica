@@ -9,6 +9,7 @@ import { AdventureSourcePackageSchema } from "../source-package/schema";
 import {
   getAdventurePackagePath,
   listAdventurePackageHashes,
+  writeAdventurePackageAtomically,
   type AdventurePackageFileIO,
 } from "../source-package/storage";
 
@@ -77,45 +78,29 @@ export async function saveApprovedAdventureJson(
     }
   }
 
-  if (existingRaw === null && !io.remove) {
-    throw new Error(
-      "Adventure package storage must support removal before a package can be written safely.",
-    );
-  }
-
   const serialized = JSON.stringify(validated, null, 2);
-  try {
-    await io.write(path, serialized);
-    const written = await io.read(path);
-    const reparsed = assertValidAdventureJson(JSON.parse(written));
-    const reparsedHash = await computeAdventureJsonHash(reparsed);
-    if (reparsedHash !== hash) {
-      throw new Error(
-        `Adventure package hash mismatch after write: expected ${hash}, found ${reparsedHash}.`,
-      );
-    }
-    return {
-      status: "created",
-      path,
-      hash,
-      package: reparsed,
-    };
-  } catch (error) {
-    try {
-      if (existingRaw !== null) {
-        await io.write(path, existingRaw);
-      } else if (io.remove) {
-        await io.remove(path);
+  const reparsed = await writeAdventurePackageAtomically(
+    io,
+    path,
+    existingRaw,
+    serialized,
+    async (written) => {
+      const candidate = assertValidAdventureJson(JSON.parse(written));
+      const reparsedHash = await computeAdventureJsonHash(candidate);
+      if (reparsedHash !== hash) {
+        throw new Error(
+          `Adventure package hash mismatch after write: expected ${hash}, found ${reparsedHash}.`,
+        );
       }
-    } catch (cleanupError) {
-      throw new AggregateError(
-        [error, cleanupError],
-        `Adventure package write failed and rollback also failed: ${String(cleanupError)}`,
-        { cause: cleanupError },
-      );
-    }
-    throw error;
-  }
+      return candidate;
+    },
+  );
+  return {
+    status: "created",
+    path,
+    hash,
+    package: reparsed,
+  };
 }
 
 /**

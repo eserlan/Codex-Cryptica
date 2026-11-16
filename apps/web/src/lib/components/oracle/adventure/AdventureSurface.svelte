@@ -307,7 +307,11 @@
     void untrack(() => refreshApprovedPackages(currentVaultId));
   });
 
-  async function handleImportJsonFile(file: File): Promise<void> {
+  function beginImportRequest(): {
+    abortController: AbortController;
+    requestToken: number;
+    sourceVaultId: string;
+  } | null {
     abortActiveImport();
     const abortController = new AbortController();
     importAbortController = abortController;
@@ -319,17 +323,27 @@
     if (!canImport || vault.isGuest) {
       importInFlight = false;
       importError = "Adventure import is only available in an owner Vault.";
-      return;
+      return null;
     }
-    if (!isJsonAdventureFile(file)) {
+    return { abortController, requestToken, sourceVaultId };
+  }
+
+  async function runImportFile(
+    validateFile: () => string | null,
+    fallbackError: string,
+    processBytes: (
+      bytes: Uint8Array,
+      request: NonNullable<ReturnType<typeof beginImportRequest>>,
+    ) => Promise<void>,
+    file: File,
+  ): Promise<void> {
+    const request = beginImportRequest();
+    if (!request) return;
+    const { abortController, requestToken, sourceVaultId } = request;
+    const sizeOrTypeError = validateFile();
+    if (sizeOrTypeError) {
       importInFlight = false;
-      importError =
-        "Please choose an Adventure JSON (.json) file, or use the experimental Markdown/PDF convenience option below.";
-      return;
-    }
-    if (file.size > MAX_ADVENTURE_JSON_BYTES) {
-      importInFlight = false;
-      importError = "Adventure JSON files must be 10 MiB or smaller.";
+      importError = sizeOrTypeError;
       return;
     }
     importInFlight = true;
@@ -337,43 +351,11 @@
       const bytes = new Uint8Array(await file.arrayBuffer());
       if (!isCurrentImport(requestToken, sourceVaultId)) return;
       if (abortController.signal.aborted) return;
-
-      const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch (parseError) {
-        importError = "Adventure JSON could not be parsed.";
-        importValidationErrors = [
-          {
-            code: "INVALID_JSON",
-            message:
-              parseError instanceof Error
-                ? parseError.message
-                : "Malformed JSON document.",
-          },
-        ];
-        return;
-      }
-
-      const validation = validateAdventureJson(parsed);
-      if (!validation.ok) {
-        importError = "Adventure JSON validation failed.";
-        importValidationErrors = validation.errors;
-        return;
-      }
-
-      importDraft = validation.value;
-      importExperimentalOrigin = null;
-      importDraftVaultId = sourceVaultId;
-      startApproach = "import-review";
+      await processBytes(bytes, request);
     } catch (error) {
       if (abortController.signal.aborted) return;
       if (isCurrentImport(requestToken, sourceVaultId)) {
-        importError =
-          error instanceof Error
-            ? error.message
-            : "Unable to read the selected Adventure JSON file.";
+        importError = error instanceof Error ? error.message : fallbackError;
       }
     } finally {
       if (importAbortController === abortController) {
@@ -383,80 +365,100 @@
     }
   }
 
+  async function handleImportJsonFile(file: File): Promise<void> {
+    await runImportFile(
+      () => {
+        if (!isJsonAdventureFile(file)) {
+          return "Please choose an Adventure JSON (.json) file, or use the experimental Markdown/PDF convenience option below.";
+        }
+        if (file.size > MAX_ADVENTURE_JSON_BYTES) {
+          return "Adventure JSON files must be 10 MiB or smaller.";
+        }
+        return null;
+      },
+      "Unable to read the selected Adventure JSON file.",
+      async (bytes, { sourceVaultId }) => {
+        const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch (parseError) {
+          importError = "Adventure JSON could not be parsed.";
+          importValidationErrors = [
+            {
+              code: "INVALID_JSON",
+              message:
+                parseError instanceof Error
+                  ? parseError.message
+                  : "Malformed JSON document.",
+            },
+          ];
+          return;
+        }
+
+        const validation = validateAdventureJson(parsed);
+        if (!validation.ok) {
+          importError = "Adventure JSON validation failed.";
+          importValidationErrors = validation.errors;
+          return;
+        }
+
+        importDraft = validation.value;
+        importExperimentalOrigin = null;
+        importDraftVaultId = sourceVaultId;
+        startApproach = "import-review";
+      },
+      file,
+    );
+  }
+
   async function handleImportExperimentalFile(file: File): Promise<void> {
-    abortActiveImport();
-    const abortController = new AbortController();
-    importAbortController = abortController;
-    const requestToken = ++importRequestToken;
-    const sourceVaultId = activeImportVaultId();
-    importError = null;
-    importValidationErrors = [];
-    importApproveError = null;
-    if (!canImport || vault.isGuest) {
-      importInFlight = false;
-      importError = "Adventure import is only available in an owner Vault.";
-      return;
-    }
     const isPdf = isPdfAdventureFile(file);
-    if (!isPdf && file.size > MAX_ADVENTURE_MARKDOWN_BYTES) {
-      importInFlight = false;
-      importError = "Adventure Markdown files must be 2 MiB or smaller.";
-      return;
-    }
-    if (isPdf && file.size > MAX_ADVENTURE_PDF_BYTES) {
-      importInFlight = false;
-      importError = "Adventure PDF files must be 20 MiB or smaller.";
-      return;
-    }
-    importInFlight = true;
-    try {
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      if (!isCurrentImport(requestToken, sourceVaultId)) return;
-      if (abortController.signal.aborted) return;
-      const result = isPdf
-        ? await (async () => {
-            const { importAdventurePdfFile } =
-              await import("#lib/services/adventure/adventure-pdf-import.js");
-            return importAdventurePdfFile(
-              bytes,
-              file.name,
-              abortController.signal,
-            );
-          })()
-        : await parseAdventureMarkdown(bytes, {
-            fileName: file.name,
-          });
-      if (!isCurrentImport(requestToken, sourceVaultId)) return;
-      if (!result.ok) {
-        if (result.error.code === "ABORTED") return;
-        importError = result.error.message;
-        return;
-      }
-      const adapted = adventureSourcePackageToAdventureJson(result.package);
-      const validation = validateAdventureJson(adapted);
-      if (!validation.ok) {
-        importError = "Converted adventure failed Adventure JSON validation.";
-        importValidationErrors = validation.errors;
-        return;
-      }
-      importDraft = validation.value;
-      importExperimentalOrigin = isPdf ? "pdf" : "markdown";
-      importDraftVaultId = sourceVaultId;
-      startApproach = "import-review";
-    } catch (error) {
-      if (abortController.signal.aborted) return;
-      if (isCurrentImport(requestToken, sourceVaultId)) {
-        importError =
-          error instanceof Error
-            ? error.message
-            : "Unable to read the selected adventure file.";
-      }
-    } finally {
-      if (importAbortController === abortController) {
-        importAbortController = null;
-      }
-      if (requestToken === importRequestToken) importInFlight = false;
-    }
+    await runImportFile(
+      () => {
+        if (!isPdf && file.size > MAX_ADVENTURE_MARKDOWN_BYTES) {
+          return "Adventure Markdown files must be 2 MiB or smaller.";
+        }
+        if (isPdf && file.size > MAX_ADVENTURE_PDF_BYTES) {
+          return "Adventure PDF files must be 20 MiB or smaller.";
+        }
+        return null;
+      },
+      "Unable to read the selected adventure file.",
+      async (bytes, { abortController, requestToken, sourceVaultId }) => {
+        const result = isPdf
+          ? await (async () => {
+              const { importAdventurePdfFile } =
+                await import("#lib/services/adventure/adventure-pdf-import.js");
+              return importAdventurePdfFile(
+                bytes,
+                file.name,
+                abortController.signal,
+              );
+            })()
+          : await parseAdventureMarkdown(bytes, {
+              fileName: file.name,
+            });
+        if (!isCurrentImport(requestToken, sourceVaultId)) return;
+        if (!result.ok) {
+          if (result.error.code === "ABORTED") return;
+          importError = result.error.message;
+          return;
+        }
+        const adapted = adventureSourcePackageToAdventureJson(result.package);
+        const validation = validateAdventureJson(adapted);
+        if (!validation.ok) {
+          importError = "Converted adventure failed Adventure JSON validation.";
+          importValidationErrors = validation.errors;
+          return;
+        }
+        importDraft = validation.value;
+        importExperimentalOrigin = isPdf ? "pdf" : "markdown";
+        importDraftVaultId = sourceVaultId;
+        startApproach = "import-review";
+      },
+      file,
+    );
   }
 
   async function handleApproveImport(approved: AdventureJsonV1): Promise<void> {
