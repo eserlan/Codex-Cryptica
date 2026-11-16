@@ -220,9 +220,10 @@
   }
 
   function buildPackagePremise(pkg: AdventureJsonV1): string {
-    const parts = [pkg.premise.hook.trim(), pkg.premise.background.trim()].filter(
-      Boolean,
-    );
+    const parts = [
+      pkg.premise.hook.trim(),
+      pkg.premise.background.trim(),
+    ].filter(Boolean);
     const combined = parts.join("\n\n") || pkg.description?.trim() || pkg.title;
     if (combined.length <= MAX_TEXT_CHARS) return combined;
     return `${combined.slice(0, MAX_TEXT_CHARS - 1).trimEnd()}…`;
@@ -240,7 +241,9 @@
     startApproach = "premise";
   }
 
-  async function resumePinnedSession(entry: AdventureArchiveEntry): Promise<void> {
+  async function resumePinnedSession(
+    entry: AdventureArchiveEntry,
+  ): Promise<void> {
     if (entry.status === "archived") {
       await oracle.adventure.resumeArchived(vaultId, entry.id);
     } else {
@@ -248,7 +251,9 @@
     }
   }
 
-  async function refreshApprovedPackages(requestedVaultId = vaultId): Promise<void> {
+  async function refreshApprovedPackages(
+    requestedVaultId = vaultId,
+  ): Promise<void> {
     if (!oracle.vault.isInitialized || vault.isGuest) {
       approvedPackages = [];
       pinnedSessionsByHash = new Map();
@@ -265,10 +270,7 @@
       approvedPackages = pkgs;
       const byHash = new Map<string, AdventureArchiveEntry[]>();
       for (const entry of sessions.entries) {
-        if (
-          entry.loadCondition === "normal" &&
-          entry.sourcePackage?.hash
-        ) {
+        if (entry.loadCondition === "normal" && entry.sourcePackage?.hash) {
           const list = byHash.get(entry.sourcePackage.hash) ?? [];
           list.push(entry);
           byHash.set(entry.sourcePackage.hash, list);
@@ -443,9 +445,7 @@
     }
   }
 
-  async function handleApproveImport(
-    approved: AdventureJsonV1,
-  ): Promise<void> {
+  async function handleApproveImport(approved: AdventureJsonV1): Promise<void> {
     const sourceVaultId = importDraftVaultId;
     const requestToken = importRequestToken;
     if (
@@ -987,7 +987,7 @@
                       type="button"
                       data-testid="approved-package-resume-{item.package.id}"
                       onclick={() => void resumePinnedSession(latestPinned)}
-                      class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-primary transition hover:bg-theme-primary/10"
+                      class="min-h-10 rounded-lg border border-theme-primary/50 bg-theme-surface px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10"
                     >
                       Resume ({latestPinned.title})
                     </button>

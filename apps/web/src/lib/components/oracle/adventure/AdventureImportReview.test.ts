@@ -177,9 +177,9 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByTestId("adventure-package-hash").textContent?.trim()).toBe(
-        initialHash,
-      );
+      expect(
+        screen.getByTestId("adventure-package-hash").textContent?.trim(),
+      ).toBe(initialHash);
     });
 
     expect(

@@ -89,9 +89,7 @@
     return parts.length > 0 ? parts.join(" · ") : null;
   }
 
-  function formatReadAloud(
-    readAloud: string | string[] | undefined,
-  ): string[] {
+  function formatReadAloud(readAloud: string | string[] | undefined): string[] {
     if (!readAloud) return [];
     return Array.isArray(readAloud) ? readAloud : [readAloud];
   }
@@ -261,14 +259,22 @@
       <p class="text-sm text-theme-text">{draft.description}</p>
     {/if}
     <div class="grid gap-3 sm:grid-cols-2">
-      <div class="space-y-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-theme-text">
+      <div
+        class="space-y-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm"
+      >
+        <p
+          class="text-xs font-semibold uppercase tracking-wide text-theme-text"
+        >
           Background
         </p>
         <p class="text-theme-text">{draft.premise.background || "—"}</p>
       </div>
-      <div class="space-y-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-theme-text">
+      <div
+        class="space-y-1 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm"
+      >
+        <p
+          class="text-xs font-semibold uppercase tracking-wide text-theme-text"
+        >
           Hook
         </p>
         <p class="text-theme-text">{draft.premise.hook || "—"}</p>
@@ -393,7 +399,9 @@
     {:else}
       <ul class="space-y-3">
         {#each draft.locations as loc, index (loc.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-theme-text">{loc.name}</span>
@@ -431,7 +439,9 @@
     {:else}
       <ul class="space-y-3">
         {#each draft.actors as actor, index (actor.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-theme-text">{actor.name}</span>
@@ -474,10 +484,13 @@
       </h2>
       <ul class="space-y-3">
         {#each draft.factions as faction, index (faction.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="font-semibold text-theme-text">{faction.name}</span>
+                <span class="font-semibold text-theme-text">{faction.name}</span
+                >
                 {@render sourceCitation(faction.sourceRef)}
               </div>
               {@render epistemicBadge(faction.epistemicStatus)}
@@ -511,11 +524,14 @@
     {:else}
       <ul class="space-y-3">
         {#each draft.scenes as scene, index (scene.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-theme-text">{scene.title}</span>
-                <span class="font-mono text-xs text-theme-text">{scene.id}</span>
+                <span class="font-mono text-xs text-theme-text">{scene.id}</span
+                >
                 {@render sourceCitation(scene.sourceRef)}
               </div>
               {@render epistemicBadge(scene.epistemicStatus)}
@@ -561,7 +577,9 @@
     {:else}
       <ul class="space-y-3">
         {#each draft.encounters as encounter, index (encounter.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-theme-text">
@@ -610,7 +628,9 @@
     {:else}
       <ul class="space-y-3">
         {#each draft.clues as clue, index (clue.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-mono text-xs text-theme-text">{clue.id}</span>
@@ -645,7 +665,9 @@
       </h2>
       <ul class="space-y-3">
         {#each draft.rumours as rumour, index (rumour.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-mono text-xs text-theme-text">
@@ -682,7 +704,9 @@
       </h2>
       <ul class="space-y-3">
         {#each draft.items as item, index (item.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-theme-text">{item.name}</span>
@@ -719,7 +743,9 @@
     {:else}
       <ul class="space-y-3">
         {#each draft.secrets as secret, index (secret.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-mono text-xs text-theme-text">
@@ -760,7 +786,9 @@
       </h2>
       <ul class="space-y-3">
         {#each draft.endings as ending (ending.id)}
-          <li class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4">
+          <li
+            class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
+          >
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="font-semibold text-theme-text">
@@ -863,7 +891,11 @@
         onclick={() => void handleApprove()}
         class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {approving ? "Approving…" : isApproved ? "Approved" : "Approve Adventure"}
+        {approving
+          ? "Approving…"
+          : isApproved
+            ? "Approved"
+            : "Approve Adventure"}
       </button>
     {/if}
   </footer>

@@ -95,9 +95,13 @@ describe("AdventureEntryChoices", () => {
     await fireEvent.click(importButton);
     expect(clickSpy).toHaveBeenCalledTimes(1);
 
-    const file = new File(['{"formatVersion":"adventure-json/v1"}'], "module.json", {
-      type: "application/json",
-    });
+    const file = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "module.json",
+      {
+        type: "application/json",
+      },
+    );
     await fireEvent.change(fileInput, { target: { files: [file] } });
     expect(onImportFile).toHaveBeenCalledWith(file);
 
@@ -107,9 +111,13 @@ describe("AdventureEntryChoices", () => {
     expect(guideLink.getAttribute("href")).toContain("/adventure-import");
 
     const dropzone = screen.getByTestId("adventure-json-dropzone");
-    const droppedFile = new File(['{"formatVersion":"adventure-json/v1"}'], "dropped.json", {
-      type: "application/json",
-    });
+    const droppedFile = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "dropped.json",
+      {
+        type: "application/json",
+      },
+    );
     await fireEvent.drop(dropzone, {
       dataTransfer: { files: [droppedFile] },
     });

@@ -500,7 +500,9 @@ describe("AdventureSessionRepository.list with several active adventures", () =>
   });
 
   it("surfaces optional sourcePackage on listed entries while keeping unpinned sessions valid", async () => {
-    const repository = new AdventureSessionRepository(async () => ({}) as never);
+    const repository = new AdventureSessionRepository(
+      async () => ({}) as never,
+    );
     const sessions: Record<string, any> = {
       pinned: {
         id: "pinned",

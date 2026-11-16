@@ -39,7 +39,9 @@ function createMemoryIO(): AdventurePackageFileIO & {
   };
 }
 
-function makeSampleJson(overrides: Partial<AdventureJsonV1> = {}): AdventureJsonV1 {
+function makeSampleJson(
+  overrides: Partial<AdventureJsonV1> = {},
+): AdventureJsonV1 {
   return {
     formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
     id: "the-sunken-mill",
@@ -123,7 +125,10 @@ describe("AdventureJsonV1 storage", () => {
   it("rolls back on write verification failure and rejects invalid AdventureJsonV1", async () => {
     const io = createMemoryIO();
     const pkg = makeSampleJson();
-    const badPkg = { ...pkg, formatVersion: "adventure-json/v99" } as unknown as AdventureJsonV1;
+    const badPkg = {
+      ...pkg,
+      formatVersion: "adventure-json/v99",
+    } as unknown as AdventureJsonV1;
     await expect(saveApprovedAdventureJson(io, badPkg)).rejects.toThrow();
     expect(io.files.size).toBe(0);
 

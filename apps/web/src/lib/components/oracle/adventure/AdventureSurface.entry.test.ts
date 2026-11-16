@@ -652,9 +652,13 @@ describe("AdventureSurface entry", () => {
     const expInput = screen.getByTestId(
       "adventure-experimental-file-input",
     ) as HTMLInputElement;
-    const largeMd = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.md", {
-      type: "text/markdown",
-    });
+    const largeMd = new File(
+      [new Uint8Array(2 * 1024 * 1024 + 1)],
+      "large.md",
+      {
+        type: "text/markdown",
+      },
+    );
     const mdRead = vi.spyOn(largeMd, "arrayBuffer");
     await fireEvent.change(expInput, { target: { files: [largeMd] } });
     expect(
@@ -711,9 +715,13 @@ describe("AdventureSurface entry", () => {
       "adventure-file-input",
     ) as HTMLInputElement;
     expect(fileInput.disabled).toBe(true);
-    const file = new File(['{"formatVersion":"adventure-json/v1"}'], "guest.json", {
-      type: "application/json",
-    });
+    const file = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "guest.json",
+      {
+        type: "application/json",
+      },
+    );
     const read = vi.spyOn(file, "arrayBuffer");
 
     fileInput.disabled = false;
