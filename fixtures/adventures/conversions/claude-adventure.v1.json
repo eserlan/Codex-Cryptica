@@ -1,0 +1,201 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "sunken-belfry-claude",
+  "title": "The Sunken Belfry",
+  "version": "1.0.0",
+  "description": "A short coastal mystery set in a flooded chapel tower.",
+  "premise": {
+    "background": "Low tide has exposed the upper arches of a drowned coastal belfry for the first time in forty years.",
+    "hook": "Scholarly chronicler Sera Vance pays the party to recover the brass bell clapper before the tide returns.",
+    "theme": ["exploration", "coastal-mystery"],
+    "tone": "atmospheric, cautious"
+  },
+  "source": {
+    "title": "The Sunken Belfry",
+    "authors": ["Claude Conversion Fixture"],
+    "license": "CC0-1.0"
+  },
+  "system": {
+    "name": "System-agnostic",
+    "targetParty": {
+      "sizeMin": 2,
+      "sizeMax": 4
+    }
+  },
+  "locations": [
+    {
+      "id": "loc-salt-cove",
+      "name": "Salt Cove",
+      "summary": "A rocky tidal inlet with tide-pools and weathered pilings.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "page": 1,
+        "section": "Introduction"
+      }
+    },
+    {
+      "id": "loc-belfry-nave",
+      "name": "Flooded Nave",
+      "summary": "Waist-deep brackish water inside the broken stone tower.",
+      "parentLocationId": "loc-salt-cove",
+      "connections": [
+        {
+          "targetLocationId": "loc-bell-loft",
+          "description": "A slick spiral stair climbs toward the loft.",
+          "travelConditions": ["Slippery footing"]
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "page": 2,
+        "section": "Area 1: Flooded Nave"
+      }
+    },
+    {
+      "id": "loc-bell-loft",
+      "name": "The Bell Loft",
+      "summary": "Timber beams holding a salt-crusted bronze bell above the tide line.",
+      "parentLocationId": "loc-salt-cove",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "page": 3,
+        "section": "Area 2: Bell Loft"
+      }
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor-sera-vance",
+      "name": "Sera Vance",
+      "summary": "An antiquarian who chartered a skiff to reach the cove at low tide.",
+      "role": "Patron",
+      "motivation": "Prove the belfry predates the harbour charter.",
+      "locationId": "loc-salt-cove",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "page": 1,
+        "section": "Introduction"
+      }
+    }
+  ],
+  "factions": [],
+  "scenes": [
+    {
+      "id": "scene-arrival",
+      "title": "Low Tide at Salt Cove",
+      "summary": "Sera Vance briefs the party while the water recedes from the belfry arch.",
+      "locationId": "loc-salt-cove",
+      "branches": [
+        {
+          "targetSceneId": "scene-nave-crossing",
+          "description": "Wade into the flooded nave before the tide turns."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    },
+    {
+      "id": "scene-nave-crossing",
+      "title": "Crossing the Nave",
+      "summary": "The party navigates fallen masonry and shifting silt to reach the spiral stair.",
+      "locationId": "loc-belfry-nave",
+      "branches": [
+        {
+          "targetSceneId": "scene-loft-recovery",
+          "description": "Climb to the bell loft."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    },
+    {
+      "id": "scene-loft-recovery",
+      "title": "The Bronze Bell",
+      "summary": "The clapper is wedged by barnacles and a rusted iron pin.",
+      "locationId": "loc-bell-loft",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "encounters": [
+    {
+      "id": "enc-jammed-pin",
+      "title": "The Wedged Bell Pin",
+      "sceneId": "scene-loft-recovery",
+      "locationId": "loc-bell-loft",
+      "description": "Freeing the brass clapper without dropping the cracked timber beam.",
+      "alternativeSolutions": [
+        {
+          "method": "Pry the rusted pin with a crowbar",
+          "description": "Brace the cracked beam first so the clapper comes free cleanly."
+        },
+        {
+          "method": "Cut the leather strap",
+          "description": "Sever the strap so the clapper drops into the water below and can be fished out."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "clues": [
+    {
+      "id": "clue-charter-mark",
+      "text": "A mason's mark on the bell yoke predates the town charter by a century.",
+      "placedLocationId": "loc-bell-loft",
+      "placedSceneId": "scene-loft-recovery",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "rumours": [
+    {
+      "id": "rumour-bell-curse",
+      "text": "Fishermen say ringing the bell summons a squall.",
+      "truth": "unverified",
+      "sourceLocationId": "loc-salt-cove",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "items": [
+    {
+      "id": "item-brass-clapper",
+      "name": "Engraved Brass Clapper",
+      "summary": "Heavy brass bell clapper stamped with an old guild sigil.",
+      "locationId": "loc-bell-loft",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret-smuggler-cache",
+      "text": "The parish vestry hid tax ledgers inside the hollow bell crown before the tower sank.",
+      "relatedEntityIds": ["loc-bell-loft", "item-brass-clapper"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending-clapper-recovered",
+      "title": "Recovered Before High Tide",
+      "description": "The party returns to the skiff with the clapper and Sera pays the agreed fee.",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "unresolved": [
+    {
+      "id": "unres-tide-window",
+      "code": "MISSING_DURATION",
+      "message": "The source text does not specify the exact number of minutes before high tide.",
+      "relatedEntityId": "loc-belfry-nave",
+      "epistemicStatus": "unresolved"
+    }
+  ]
+}

@@ -5474,3 +5474,13 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 
 **Overview:** In a West Marches game you are the only person who has seen the whole map. Six players went out in March and named a ruin; four different players go back in September and need to know what the first group found, who they annoyed, and which road is now watched. The world keeps moving between expeditions, and none of it is written down anywhere the next party can use.
 
+### Adventure JSON Conversion Guide
+
+**URL:** https://codexcryptica.com/adventure-import
+**JSON Schema (Draft 2020-12):** https://codexcryptica.com/schemas/adventure-json/v1.json (alias: https://codexcryptica.com/schemas/adventure/v1.json)
+**Examples:**
+- Minimal: https://codexcryptica.com/schemas/adventure-json/examples/minimal.v1.json
+- Reference One-Shot: https://codexcryptica.com/schemas/adventure-json/examples/reference-one-shot.v1.json
+
+The Adventure JSON Conversion Guide provides a copyable canonical LLM prompt, field-by-field contract rules, epistemic status conventions (`explicit`, `inferred`, `ambiguous`, `unresolved`), `gm-only` visibility rules for `secrets`, structural integrity requirements, and troubleshooting steps for validation errors. Document conversion happens externally in the user's chosen LLM interface (ChatGPT, Claude, Gemini, or a local model); Codex Cryptica never receives the source document and processes the resulting JSON strictly on-device.
+
