@@ -323,7 +323,7 @@ describe("AdventureImportReview", () => {
     const approveButton = screen.getByTestId("adventure-approve-button");
     const noticeText = notice.textContent?.replace(/\s+/g, " ") ?? "";
     expect(noticeText).not.toContain("strictly local");
-    expect(noticeText).toContain("original Markdown file");
+    expect(noticeText).toContain("original Markdown or PDF file");
     expect(noticeText).toContain("not copied into the Vault");
     expect(noticeText).toContain("Only its approved package is saved");
     expect(noticeText).toContain("on this device");
@@ -435,5 +435,28 @@ describe("AdventureImportReview", () => {
     await fireEvent.keyDown(sceneSelect, { key: "ArrowDown" });
     await fireEvent.change(sceneSelect, { target: { value: "sec-wheel" } });
     expect(sceneSelect.value).toBe("sec-wheel");
+  });
+
+  it("displays page references (p. N / pp. N–M) on sections that carry page numbers", () => {
+    const draft = createTestPackage();
+    draft.importMethod = "pdf";
+    draft.sections = [
+      { ...draft.sections[0], pageNumber: 1 },
+      { ...draft.sections[1], pageNumber: 2, pageEnd: 4 },
+    ];
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const pageRefs = screen.getAllByTestId("section-page-ref");
+    expect(pageRefs.map((el) => el.textContent?.trim())).toEqual([
+      "p. 1",
+      "pp. 2–4",
+    ]);
   });
 });

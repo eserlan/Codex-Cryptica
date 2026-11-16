@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@codex/runtime": "workspace:*",
+    "pdfjs-dist": "^6.5.438",
     "zod": "^4.4.3"
   },
   "devDependencies": {

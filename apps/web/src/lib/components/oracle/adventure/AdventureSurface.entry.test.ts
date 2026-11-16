@@ -28,6 +28,7 @@ const env = vi.hoisted(() => ({
     path: `.codex/adventures/packages/${pkg.documentHash}.json`,
     package: pkg,
   })),
+  importAdventurePdfFile: vi.fn(),
 }));
 
 vi.mock("#lib/stores/oracle.svelte.js", () => ({
@@ -107,6 +108,10 @@ vi.mock("#lib/stores/oracle/rumour-adventure-handoff.svelte.js", () => ({
   },
 }));
 
+vi.mock("#lib/services/adventure/adventure-pdf-import.js", () => ({
+  importAdventurePdfFile: env.importAdventurePdfFile,
+}));
+
 import AdventureSurface from "./AdventureSurface.svelte";
 
 beforeEach(() => {
@@ -121,6 +126,7 @@ beforeEach(() => {
   env.pendingRumour = null;
   env.characters = [];
   env.saveApprovedPackage.mockClear();
+  env.importAdventurePdfFile.mockReset();
 });
 
 describe("AdventureSurface entry", () => {
@@ -332,6 +338,110 @@ describe("AdventureSurface entry", () => {
     expect(alert.getAttribute("role")).toBe("alert");
     expect(screen.queryByTestId("adventure-import-review")).toBeNull();
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+    expect(env.importAdventurePdfFile).not.toHaveBeenCalled();
+  });
+
+  it("lazy-loads the PDF importer on .pdf selection and transitions to review with page references", async () => {
+    env.importAdventurePdfFile.mockResolvedValue({
+      ok: true,
+      package: {
+        schemaVersion: 1,
+        status: "draft",
+        documentHash: "b".repeat(64),
+        sourceIdentity: {
+          fileName: "mill-adventure.pdf",
+          title: "The Last Grind",
+        },
+        importMethod: "pdf",
+        importVersion: "1.0.0",
+        sections: [
+          {
+            sourceId: "the-last-grind",
+            title: "The Last Grind",
+            level: 1,
+            body: "A mill stands silent.",
+            gmOnly: false,
+            pageNumber: 1,
+            provenance: "suggested",
+          },
+          {
+            sourceId: "scene-1-landing",
+            title: "Scene 1: The Ferry Landing",
+            level: 2,
+            body: "Fog clings to the jetty.",
+            gmOnly: false,
+            pageNumber: 2,
+            pageEnd: 3,
+            provenance: "suggested",
+          },
+        ],
+        scenes: [],
+        npcs: [],
+        clues: [],
+        encounters: [],
+        secrets: [],
+        endings: [],
+        ambiguities: [],
+      },
+    });
+
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const pdfFile = new File(["%PDF-1.4"], "mill-adventure.pdf", {
+      type: "application/pdf",
+    });
+
+    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+
+    const review = await screen.findByTestId("adventure-import-review");
+    expect(review.textContent).toContain("The Last Grind");
+    expect(env.importAdventurePdfFile).toHaveBeenCalledTimes(1);
+    expect(
+      screen
+        .getAllByTestId("section-page-ref")
+        .map((e) => e.textContent?.trim()),
+    ).toEqual(["p. 1", "pp. 2–3"]);
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("displays an error alert for image-only or encrypted PDFs without entering review or writing to storage", async () => {
+    for (const err of [
+      {
+        code: "IMAGE_ONLY_PDF",
+        message: "This PDF contains no extractable text; OCR is not available.",
+      },
+      {
+        code: "ENCRYPTED_PDF",
+        message: "Encrypted or password-protected PDFs are not supported.",
+      },
+    ]) {
+      env.importAdventurePdfFile.mockResolvedValueOnce({
+        ok: false,
+        error: err,
+      });
+
+      const { unmount } = render(AdventureSurface);
+      await screen.findByTestId("adventure-entry-choices");
+
+      const fileInput = screen.getByTestId(
+        "adventure-file-input",
+      ) as HTMLInputElement;
+      const pdfFile = new File(["%PDF-1.4"], "bad.pdf", {
+        type: "application/pdf",
+      });
+      await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+
+      const alert = await screen.findByTestId("adventure-import-error");
+      expect(alert.getAttribute("role")).toBe("alert");
+      expect(alert.textContent).toContain(err.message);
+      expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+      expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+      unmount();
+    }
   });
 
   it("rejects invalid UTF-8 through the file picker without opening review or saving", async () => {
@@ -356,7 +466,7 @@ describe("AdventureSurface entry", () => {
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 
-  it("rejects oversized files before reading them", async () => {
+  it("rejects oversized Markdown files before reading them", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
 
@@ -378,6 +488,48 @@ describe("AdventureSurface entry", () => {
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 
+  it("rejects oversized PDF files before reading them", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File([new Uint8Array(20 * 1024 * 1024 + 1)], "large.pdf", {
+      type: "application/pdf",
+    });
+    const read = vi.spyOn(file, "arrayBuffer");
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(
+      (await screen.findByTestId("adventure-import-error")).textContent,
+    ).toContain("20 MiB");
+    expect(read).not.toHaveBeenCalled();
+    expect(env.importAdventurePdfFile).not.toHaveBeenCalled();
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+  });
+
+  it("aborts a pending PDF import when the surface unmounts", async () => {
+    let capturedSignal: AbortSignal | undefined;
+    env.importAdventurePdfFile.mockImplementation(
+      (_bytes: unknown, _name: unknown, signal?: AbortSignal) => {
+        capturedSignal = signal;
+        return new Promise(() => {});
+      },
+    );
+    const { unmount } = render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const pdfFile = new File(["%PDF-1.4"], "pending.pdf", {
+      type: "application/pdf",
+    });
+    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    await waitFor(() => expect(env.importAdventurePdfFile).toHaveBeenCalled());
+    expect(capturedSignal?.aborted).toBe(false);
+    unmount();
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
   it("blocks guest imports in the entry UI and in the import handler", async () => {
     env.isGuest = true;
     render(AdventureSurface);
@@ -389,11 +541,14 @@ describe("AdventureSurface entry", () => {
     const fileInput = screen.getByTestId(
       "adventure-file-input",
     ) as HTMLInputElement;
+    expect(fileInput.disabled).toBe(true);
     const file = new File(["# Guest adventure"], "guest.md", {
       type: "text/markdown",
     });
     const read = vi.spyOn(file, "arrayBuffer");
 
+    // Simulate a late file-input event so the surface's guest-mode guard runs.
+    fileInput.disabled = false;
     await fireEvent.change(fileInput, { target: { files: [file] } });
 
     expect(
@@ -414,9 +569,7 @@ describe("AdventureSurface entry", () => {
     const file = new File(
       ["# The Old Vault\n\n## Scene 1\nOld content"],
       "old-vault.md",
-      {
-        type: "text/markdown",
-      },
+      { type: "text/markdown" },
     );
     const read = vi.spyOn(file, "arrayBuffer").mockReturnValue(pendingBuffer);
     const fileInput = screen.getByTestId(
@@ -472,9 +625,7 @@ describe("AdventureSurface entry", () => {
     const earlier = new File(
       ["# Earlier\n\n## Scene 1\nOld content"],
       "earlier.md",
-      {
-        type: "text/markdown",
-      },
+      { type: "text/markdown" },
     );
     const earlierRead = vi
       .spyOn(earlier, "arrayBuffer")

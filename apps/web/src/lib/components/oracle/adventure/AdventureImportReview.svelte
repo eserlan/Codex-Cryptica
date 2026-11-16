@@ -47,6 +47,14 @@
     return Array.isArray(readAloud) ? readAloud : [readAloud];
   }
 
+  function formatSectionPageRef(section: SectionAnchor): string | null {
+    if (section.pageNumber === undefined) return null;
+    if (section.pageEnd !== undefined && section.pageEnd > section.pageNumber) {
+      return `pp. ${section.pageNumber}–${section.pageEnd}`;
+    }
+    return `p. ${section.pageNumber}`;
+  }
+
   function toggleSecretVisibility(index: number): void {
     if (isLocked) return;
     draft = {
@@ -213,6 +221,14 @@
                 <span class="font-mono text-xs text-theme-text">
                   {section.sourceId}
                 </span>
+                {#if formatSectionPageRef(section)}
+                  <span
+                    class="rounded border border-theme-border px-1.5 py-0.5 font-mono text-xs text-theme-text"
+                    data-testid="section-page-ref"
+                  >
+                    {formatSectionPageRef(section)}
+                  </span>
+                {/if}
               </div>
               {@render provenanceBadge(section.provenance)}
             </div>
@@ -539,8 +555,8 @@
           Vault storage and AI excerpts
         </p>
         <p class="leading-relaxed text-theme-text">
-          Your original Markdown file stays on this device and is not copied
-          into the Vault. Only its approved package is saved in the Vault.
+          Your original Markdown or PDF file stays on this device and is not
+          copied into the Vault. Only its approved package is saved there.
           Imported packages are not currently included in Codex Cryptica Cloud
           Backup, even when you opt in to include adventure sessions. During
           play, bounded relevant excerpts (such as active scene text, read-aloud

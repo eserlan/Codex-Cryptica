@@ -26,9 +26,21 @@ export const SectionAnchorSchema = z
     body: z.string(),
     readAloud: z.union([z.string(), z.array(z.string())]).optional(),
     gmOnly: z.boolean(),
+    pageNumber: z.number().int().min(1).optional(),
+    pageEnd: z.number().int().min(1).optional(),
     provenance: ProvenanceSchema,
   })
-  .strict();
+  .strict()
+  .refine(
+    (section) =>
+      section.pageEnd === undefined ||
+      section.pageNumber === undefined ||
+      section.pageEnd >= section.pageNumber,
+    {
+      message: "pageEnd must be greater than or equal to pageNumber",
+      path: ["pageEnd"],
+    },
+  );
 export type SectionAnchor = z.infer<typeof SectionAnchorSchema>;
 
 export const SceneBranchSchema = z
@@ -132,7 +144,7 @@ export const AdventureSourcePackageSchema = z
     status: z.enum(["draft", "approved"]),
     documentHash: z.string().regex(/^[a-f0-9]{64}$/),
     sourceIdentity: SourceIdentitySchema,
-    importMethod: z.literal("markdown"),
+    importMethod: z.enum(["markdown", "pdf"]),
     importVersion: z.string().min(1),
     sections: z.array(SectionAnchorSchema),
     scenes: z.array(SceneRecordSchema),
@@ -155,7 +167,11 @@ export type AdventureImportErrorCode =
   | "INVALID_OPTIONS"
   | "BINARY_CONTENT"
   | "INVALID_UTF8"
-  | "NO_SECTIONS";
+  | "NO_SECTIONS"
+  | "ENCRYPTED_PDF"
+  | "IMAGE_ONLY_PDF"
+  | "INVALID_PDF"
+  | "ABORTED";
 
 export interface AdventureImportError {
   code: AdventureImportErrorCode;
