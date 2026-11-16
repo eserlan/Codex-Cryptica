@@ -153,6 +153,20 @@ function ensureSceneReachability(scenes: AdventureJsonScene[]): void {
   }
 }
 
+function assignOptionalSceneFields(
+  result: AdventureJsonScene,
+  scene: SceneRecord,
+  section: SectionAnchor | undefined,
+  branches: SceneTransitionBranch[],
+): void {
+  if (section?.readAloud !== undefined) result.readAloud = section.readAloud;
+  if (section?.body) result.body = section.body;
+  if (scene.conditions.length > 0) result.conditions = scene.conditions;
+  if (branches.length > 0) result.branches = branches;
+  if (scene.optionalBranch !== undefined)
+    result.optional = scene.optionalBranch;
+}
+
 function convertSingleScene(
   scene: SceneRecord,
   section: SectionAnchor | undefined,
@@ -169,13 +183,7 @@ function convertSingleScene(
     sourceRef: buildSourceRef(section, scene.sourceId),
   };
 
-  if (section?.readAloud !== undefined) result.readAloud = section.readAloud;
-  if (section?.body) result.body = section.body;
-  if (scene.conditions.length > 0) result.conditions = scene.conditions;
-  if (branches.length > 0) result.branches = branches;
-  if (scene.optionalBranch !== undefined)
-    result.optional = scene.optionalBranch;
-
+  assignOptionalSceneFields(result, scene, section, branches);
   return result;
 }
 
