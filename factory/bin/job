@@ -280,6 +280,67 @@ def agy_transcript_files(since_epoch=0.0):
     return sorted(files)
 
 
+def muse_sessions_dir():
+    override = os.environ.get("MUSE_SESSIONS_DIR")
+    if override:
+        return Path(override)
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    return data_home / "muse" / "sessions"
+
+
+def muse_session_files(since_epoch=0.0):
+    """Top-level session logs plus nested workflow/subagent child logs.
+
+    A parent session's own log contains every child's prompt in its spawn
+    records, so it must never be billed directly when it has a `subagent/`
+    directory: the children are counted from their own nested logs instead.
+    """
+    root = muse_sessions_dir()
+    if not root.exists():
+        return []
+    files = []
+    for path in sorted(root.rglob("session.jsonl")):
+        if (path.parent / "subagent").is_dir():
+            continue
+        try:
+            if path.stat().st_mtime >= since_epoch:
+                files.append(path)
+        except OSError:
+            continue
+    return files
+
+
+def muse_records(path):
+    """Yield parsed records from a Muse session.jsonl, unwrapping retained frames."""
+    try:
+        lines = path.read_text(errors="replace").splitlines()
+    except OSError:
+        return
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue
+        children = entry.get("children")
+        if isinstance(children, list):
+            for child in children:
+                try:
+                    yield json.loads(child.get("record_json") or "{}")
+                except (ValueError, AttributeError):
+                    continue
+        else:
+            yield entry
+
+
+def infer_muse_agent_and_model(text, job):
+    agent, _display, _key = infer_agy_agent_and_model(text, job)
+    m_model = re.search(r"\bModel:\s*([a-z0-9_.-]+)\.", text)
+    display = m_model.group(1) if m_model else "muse-wonder-1.0"
+    prices = CONFIG["prices_usd_per_mtok"]
+    price_key = display if display in prices else "muse-wonder-1.0"
+    return agent, display, price_key
+
+
 def infer_agy_agent_and_model(text, job):
     m_agent = re.search(r"\bAgent:\s*([a-z0-9-]+)\.", text)
     agent = m_agent.group(1) if m_agent else None
@@ -373,9 +434,10 @@ def agent_type(transcript):
 def job_costs(job):
     """API-equivalent cost of every subagent whose prompt names this job's folder.
 
-    Supports both Claude Code transcripts (<config>/projects/<project>/<session>/
-    subagents/agent-<id>.jsonl) and Antigravity (AGY) transcripts
-    (~/.gemini/antigravity*/brain/<id>/.system_generated/logs/transcript.jsonl).
+    Supports Claude Code transcripts (<config>/projects/<project>/<session>/
+    subagents/agent-<id>.jsonl), Antigravity (AGY) transcripts
+    (~/.gemini/antigravity*/brain/<id>/.system_generated/logs/transcript.jsonl),
+    and Muse session logs (~/.local/share/muse/sessions/*/*/*/*/session.jsonl).
     Every factory prompt starts with `Job folder: <path>`, which ties a
     transcript to its job across sessions.
 
@@ -453,6 +515,54 @@ def job_costs(job):
             out = step.get("output_tokens", 0) or 0
             cache_r = step.get("cache_read_tokens", 0) or 0
             if inp + out + cache_r == 0:
+                continue
+            u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
+            row["usd"] += message_usd(price, u)
+            row["turns"] += 1
+            row["input_tokens"] += inp
+            row["output_tokens"] += out
+            row["cache_read_tokens"] += cache_r
+            if display_model not in row["models"]:
+                row["models"].append(display_model)
+
+    for path in muse_session_files(started_epoch):
+        try:
+            raw = path.read_text(errors="replace")
+        except OSError:
+            continue
+        if needle not in raw:
+            continue
+        # Only count sessions carrying a concrete factory prompt header, so
+        # the orchestrator's own session (which merely mentions job folders
+        # in tool calls) is not billed to the job.
+        if not re.search(r"Job:\s*\S+\.\s+" + re.escape(needle), raw):
+            continue
+        agent, display_model, price_key = infer_muse_agent_and_model(raw, job)
+        price = prices.get(price_key) or next(iter(prices.values()))
+        usages = {}
+        for record in muse_records(path):
+            payload = record.get("payload") or {}
+            event = payload.get("event") or {}
+            if event.get("kind") != "goal_usage_attribution":
+                continue
+            quantity = (event.get("record") or {}).get("quantity") or {}
+            usage_id = (event.get("record") or {}).get("usage_id") or id(quantity)
+            usages[usage_id] = quantity
+        if not usages:
+            continue
+        row = by_agent.setdefault(agent, {
+            "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
+            "cache_read_tokens": 0, "models": []})
+        row["spawns"] += 1
+        for quantity in usages.values():
+            # Muse quantities report total input including cached tokens,
+            # unlike Claude/AGY usage where the two are disjoint: bill only
+            # the non-cached part at the input rate.
+            total_inp = quantity.get("input_tokens", 0) or 0
+            out = quantity.get("output_tokens", 0) or 0
+            cache_r = quantity.get("cached_tokens", 0) or 0
+            inp = max(total_inp - cache_r, 0)
+            if total_inp + out == 0:
                 continue
             u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
             row["usd"] += message_usd(price, u)
