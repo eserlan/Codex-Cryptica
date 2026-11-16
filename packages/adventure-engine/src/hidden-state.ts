@@ -107,7 +107,12 @@ function playerFacingStrings(
   proposal: AdventureTurnProposal,
 ): Array<[string, string]> {
   if (proposal.kind === "complete") {
-    const { hiddenPatch: _hidden, timeAdvance, ...visible } = proposal;
+    const {
+      hiddenPatch: _hidden,
+      revealSecretIds: _reveals,
+      timeAdvance,
+      ...visible
+    } = proposal;
     const playerTimeAdvance = timeAdvance
       ? { minutes: timeAdvance.minutes, cause: timeAdvance.cause }
       : undefined;
@@ -140,7 +145,7 @@ export function detectHiddenTextLeakage(
   return detectHiddenTextFields(session, [["root", text]], new Set());
 }
 
-function historicalAnchorSecretSources(
+export function historicalAnchorSecretSources(
   session: AdventureSession,
 ): Array<{ id: string; text: string; revealed: boolean }> {
   const anchor = session.historicalAnchor;
@@ -149,6 +154,7 @@ function historicalAnchorSecretSources(
   const sources: Array<{ id: string; text: string; revealed: boolean }> = [
     ...anchor.baseline.relevantEntityRefs.flatMap((ref) =>
       [
+        { field: "id", text: ref.recordId },
         { field: "name", text: ref.displayName },
         ...(ref.recordType
           ? [{ field: "type", text: `Type ${ref.recordType}` }]
@@ -189,6 +195,17 @@ function historicalAnchorSecretSources(
         return { id, text, revealed: revealed.has(id) };
       });
     }),
+    ...(anchor.eventInterval.label
+      ? [
+          {
+            id: historicalAnchorDateSecretId("interval", "label"),
+            text: anchor.eventInterval.label,
+            revealed: revealed.has(
+              historicalAnchorDateSecretId("interval", "label"),
+            ),
+          },
+        ]
+      : []),
     ...anchor.baseline.documentedFacts.map((fact) => ({
       id: fact.id,
       text: fact.text,

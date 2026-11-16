@@ -6,6 +6,7 @@ import {
   MAX_HISTORICAL_DRIFT_CHANGES,
   MAX_HISTORICAL_ENTITY_REFS,
   MAX_HISTORICAL_OPEN_MECHANISMS,
+  MAX_HISTORICAL_REVEAL_IDS,
   type HistoricalAnchor,
 } from "./historical-anchor-types";
 
@@ -119,10 +120,7 @@ export const historicalAnchorSchema = z
     eventInterval: historicalDateIntervalSchema,
     startDate: adventureCalendarDateSchema,
     baseline: historicalAnchorBaselineSchema,
-    revealedFactIds: z
-      .array(id)
-      .max(MAX_HISTORICAL_DOCUMENTED_FACTS + 1)
-      .default([]),
+    revealedFactIds: z.array(id).max(MAX_HISTORICAL_REVEAL_IDS).default([]),
     progress: historicalAnchorProgressSchema,
     drift: historicalAnchorDriftSchema,
   })

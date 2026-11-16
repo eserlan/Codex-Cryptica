@@ -7,13 +7,19 @@ export const historicalAnchorEntitySecretId = (
   field = "name",
 ) => `anchor-entity-${recordId}-${field}`;
 export const historicalAnchorDateSecretId = (
-  edge: "start" | "end",
+  edge: "start" | "end" | "interval",
   field: string,
 ) => `anchor-event-${edge}-${field}`;
 
 export const MAX_HISTORICAL_DOCUMENTED_FACTS = 20;
 export const MAX_HISTORICAL_OPEN_MECHANISMS = 16;
 export const MAX_HISTORICAL_ENTITY_REFS = 20;
+export const MAX_HISTORICAL_REVEAL_IDS =
+  MAX_HISTORICAL_DOCUMENTED_FACTS +
+  1 +
+  MAX_HISTORICAL_ENTITY_REFS * 4 +
+  2 * 6 +
+  1;
 export const MAX_HISTORICAL_CAUSAL_REFS = 40;
 export const MAX_HISTORICAL_DRIFT_CHANGES = 20;
 export const DEFAULT_APPROACHING_THRESHOLD_DAYS = 30;

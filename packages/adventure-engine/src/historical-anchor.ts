@@ -9,6 +9,7 @@ import {
   projectElapsedDayInterval,
 } from "./historical-anchor-chronology";
 import { parseHistoricalAnchor } from "./historical-anchor-schemas";
+import { historicalAnchorSecretSources } from "./hidden-state";
 import {
   CURRENT_HISTORICAL_ANCHOR_VERSION,
   DEFAULT_APPROACHING_THRESHOLD_DAYS,
@@ -962,14 +963,25 @@ export function resolveHistoricalAnchorDrift(
     };
   }
 
-  const validFactIds = new Set(
-    rebased.anchor.baseline.documentedFacts.map((fact) => fact.id),
+  const previousSources = new Map(
+    historicalAnchorSecretSources(next).map((source) => [
+      source.id,
+      source.text,
+    ]),
   );
   anchor.eventInterval = rebased.anchor.eventInterval;
   anchor.startDate = rebased.anchor.startDate;
   anchor.baseline = rebased.anchor.baseline;
+  const currentSources = new Map(
+    historicalAnchorSecretSources(next).map((source) => [
+      source.id,
+      source.text,
+    ]),
+  );
   anchor.revealedFactIds = anchor.revealedFactIds.filter(
-    (id) => id === HISTORICAL_ANCHOR_TITLE_SECRET_ID || validFactIds.has(id),
+    (id) =>
+      previousSources.has(id) &&
+      previousSources.get(id) === currentSources.get(id),
   );
   anchor.drift = {
     status: "clean",

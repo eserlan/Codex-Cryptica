@@ -14,6 +14,8 @@ import {
   formatAdventureDateWithEra,
   HISTORICAL_ANCHOR_FALLBACK_ACTION,
   HISTORICAL_ANCHOR_TITLE_SECRET_ID,
+  historicalAnchorDateSecretId,
+  historicalAnchorEntitySecretId,
   intervalToDayInterval,
   migrateAdventureSession,
   migrateHistoricalAnchor,
@@ -718,6 +720,145 @@ describe("HistoricalAnchor contract", () => {
       calendarRevision: 2,
     });
     expect(rebased.session.historicalAnchor?.drift.status).toBe("clean");
+  });
+
+  it("detects unrevealed entity record IDs and interval labels", () => {
+    const { session } = createHistoricalAnchorSession(
+      kingDeathEvent({
+        relevantEntityRefs: [
+          { recordId: "char-hidden", displayName: "Aldous" },
+        ],
+      }),
+    );
+    session.historicalAnchor!.eventInterval.label = "The Long Winter";
+
+    expect(
+      detectHiddenTextLeakage(session, "char-hidden appears in the record."),
+    ).toContainEqual({
+      field: "root",
+      secretId: historicalAnchorEntitySecretId("char-hidden", "id"),
+    });
+    expect(
+      detectHiddenLeakage(session, {
+        ...proposal(),
+        sourceRecordIds: ["char-hidden"],
+      }),
+    ).toContainEqual({
+      field: "root.sourceRecordIds[0]",
+      secretId: historicalAnchorEntitySecretId("char-hidden", "id"),
+    });
+    expect(
+      detectHiddenTextLeakage(
+        session,
+        "During The Long Winter, the bells rang.",
+      ),
+    ).toContainEqual({
+      field: "root",
+      secretId: historicalAnchorDateSecretId("interval", "label"),
+    });
+  });
+
+  it("keeps unchanged entity and date reveals across rebase", () => {
+    const { session } = createHistoricalAnchorSession(
+      kingDeathEvent({
+        relevantEntityRefs: [
+          { recordId: "char-aldous", displayName: "Aldous" },
+        ],
+      }),
+      { year: 617, precision: "year", calendarRevision: 1 },
+    );
+    const entityRevealId = historicalAnchorEntitySecretId(
+      "char-aldous",
+      "name",
+    );
+    const dateRevealId = historicalAnchorDateSecretId("start", "year");
+    const disclosed = applyCompletedTurn(
+      session,
+      { ...proposal(), revealSecretIds: [entityRevealId, dateRevealId] },
+      meta,
+      now,
+    );
+    expect(disclosed.ok).toBe(true);
+    if (!disclosed.ok) return;
+
+    const rebased = resolveHistoricalAnchorDrift(disclosed.value, {
+      expectedRevision: 1,
+      decision: "rebase",
+      currentEventSnapshot: kingDeathEvent({
+        content: "The king died in 620 after a quiet illness.",
+        relevantEntityRefs: [
+          { recordId: "char-aldous", displayName: "Aldous" },
+        ],
+      }),
+      calendar: zeroEraCalendar,
+      now,
+    });
+    expect(rebased.ok).toBe(true);
+    if (!rebased.ok) return;
+    expect(rebased.session.historicalAnchor?.revealedFactIds).toContain(
+      entityRevealId,
+    );
+    expect(rebased.session.historicalAnchor?.revealedFactIds).toContain(
+      dateRevealId,
+    );
+    expect(
+      detectHiddenTextLeakage(
+        rebased.session,
+        "Aldous is remembered in Year 617.",
+      ),
+    ).toEqual([]);
+
+    const changedSourceRebase = resolveHistoricalAnchorDrift(rebased.session, {
+      expectedRevision: 2,
+      decision: "rebase",
+      currentEventSnapshot: kingDeathEvent({
+        content: "The king died in 620 after an illness.",
+        relevantEntityRefs: [
+          { recordId: "char-aldous", displayName: "Aldous II" },
+        ],
+      }),
+      calendar: zeroEraCalendar,
+      now,
+    });
+    expect(changedSourceRebase.ok).toBe(true);
+    if (!changedSourceRebase.ok) return;
+    expect(
+      changedSourceRebase.session.historicalAnchor?.revealedFactIds,
+    ).not.toContain(entityRevealId);
+    expect(
+      changedSourceRebase.session.historicalAnchor?.revealedFactIds,
+    ).toContain(dateRevealId);
+  });
+
+  it("round-trips more than 21 valid historical anchor reveal IDs", () => {
+    const relevantEntityRefs = Array.from({ length: 20 }, (_, index) => ({
+      recordId: `char-${index}`,
+      displayName: `Person ${index}`,
+    }));
+    const { session } = createHistoricalAnchorSession(
+      kingDeathEvent({ relevantEntityRefs }),
+    );
+    const revealSecretIds = [
+      HISTORICAL_ANCHOR_TITLE_SECRET_ID,
+      historicalAnchorDateSecretId("start", "year"),
+      ...relevantEntityRefs.map((ref) =>
+        historicalAnchorEntitySecretId(ref.recordId, "name"),
+      ),
+    ];
+    const completed = applyCompletedTurn(
+      session,
+      { ...proposal(), revealSecretIds },
+      meta,
+      now,
+    );
+    expect(completed.ok).toBe(true);
+    if (!completed.ok) return;
+    expect(
+      completed.value.historicalAnchor?.revealedFactIds.length,
+    ).toBeGreaterThan(21);
+    expect(
+      parseAdventureSession(completed.value).historicalAnchor?.revealedFactIds,
+    ).toHaveLength(22);
   });
 
   it("AC7: keeps unrevealed anchor facts out of player projections", () => {
