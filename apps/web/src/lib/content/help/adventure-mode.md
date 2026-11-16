@@ -61,6 +61,15 @@ navigation menu. If you have no active adventure, choose a starting approach:
   currently included in Codex Cryptica Cloud Backup, even if you opt in to
   include adventure sessions. During play, bounded relevant excerpts may be
   sent to your selected Oracle AI provider.
+
+  Re-importing an identical package is a no-op. Changed content with the same
+  package ID opens a new version review against the previous approved version;
+  check the listed changes, including any change to the entry scene, before
+  approving. Each approved version stays available to start a session. Use
+  **Remove** in the approved package list to delete a version. A version pinned
+  by an adventure session cannot be removed; resume that session or keep the
+  version in the Vault.
+
 - **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
   Choose a Vault character or name a new provisional one, then a Vault place
   or a new **Starting place**. Optionally pick a world date from your Vault

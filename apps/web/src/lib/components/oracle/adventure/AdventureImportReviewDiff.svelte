@@ -83,6 +83,19 @@
       Package fields changed: {diff.packageChangedFields.join(", ")}
     </p>
   {/if}
+  {#if diff.entrySceneChange}
+    <p
+      class="text-sm text-theme-text"
+      data-testid="adventure-import-diff-entry-scene"
+    >
+      Entry scene changed from
+      <span class="font-mono">{diff.entrySceneChange.previousId ?? "none"}</span
+      >
+      to
+      <span class="font-mono">{diff.entrySceneChange.currentId ?? "none"}</span
+      >.
+    </p>
+  {/if}
   <p class="text-sm text-theme-text">
     {totalAdded} added, {totalRemoved} removed, {totalChanged} changed.
   </p>

@@ -361,6 +361,47 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     ).toBeNull();
   });
 
+  it("shows when a scene reorder changes the entry scene", () => {
+    const previous = createTestAdventureJson();
+    previous.scenes = [
+      {
+        ...previous.scenes[0],
+        branches: [
+          { targetSceneId: "scene-next", description: "Enter the mill." },
+        ],
+      },
+      {
+        id: "scene-next",
+        title: "Inside the Mill",
+        summary: "The waterwheel is still.",
+        branches: [
+          {
+            targetSceneId: "scene-landing",
+            description: "Return outside.",
+            optional: true,
+          },
+        ],
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ];
+    const reordered = createTestAdventureJson();
+    reordered.scenes = [...previous.scenes].reverse();
+
+    render(AdventureImportReview, {
+      props: {
+        draft: reordered,
+        previousPackage: previous,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByTestId("adventure-import-diff-entry-scene").textContent,
+    ).toContain("scene-landing to scene-next");
+  });
+
   it("warns when the version number did not increase and shows no diff without a predecessor", () => {
     const previous = createTestAdventureJson();
     const sameVersionChanged = createTestAdventureJson();

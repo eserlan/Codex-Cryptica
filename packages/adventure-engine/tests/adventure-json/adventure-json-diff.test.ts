@@ -5,6 +5,7 @@ import {
   computeAdventureJsonHash,
   diffAdventureJsonVersions,
   selectAdventureJsonPredecessor,
+  validateAdventureJson,
   type AdventureJsonV1,
 } from "../../src";
 
@@ -246,6 +247,43 @@ describe("diffAdventureJsonVersions", () => {
     expect(diff.packageChangedFields).toContain("title");
     expect(diff.packageChangedFields).toContain("version");
     expect(diff.collections.scenes.changed).toHaveLength(0);
+  });
+
+  it("reports a valid scene reorder that changes the entry scene", () => {
+    const previous = makePackage({
+      scenes: [
+        {
+          id: "scene-1",
+          title: "The Mill Yard",
+          summary: "Arrival at the silent mill.",
+          branches: [{ targetSceneId: "scene-2", description: "Go inside." }],
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+        {
+          id: "scene-2",
+          title: "The Mill",
+          summary: "Inside the mill.",
+          branches: [
+            {
+              targetSceneId: "scene-1",
+              description: "Go outside.",
+              optional: true,
+            },
+          ],
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const next = makePackage({ scenes: [...previous.scenes].reverse() });
+
+    expect(validateAdventureJson(previous).ok).toBe(true);
+    expect(validateAdventureJson(next).ok).toBe(true);
+    expect(diffAdventureJsonVersions(previous, next).entrySceneChange).toEqual({
+      previousId: "scene-1",
+      currentId: "scene-2",
+    });
   });
 
   it("treats same-ID title changes as one changed entry and renamed unmatched entities as added plus removed and unresolved", () => {

@@ -62,6 +62,10 @@ export interface AdventureJsonDiffGroup {
 
 export interface AdventureJsonVersionDiff {
   packageChangedFields: string[];
+  entrySceneChange: {
+    previousId: string | null;
+    currentId: string | null;
+  } | null;
   collections: Record<AdventureJsonCollectionName, AdventureJsonCollectionDiff>;
   groups: AdventureJsonDiffGroup[];
   unresolved: AdventureJsonDiffUnresolved[];
@@ -673,8 +677,18 @@ export function diffAdventureJsonVersions(
     unresolved.push(...collectionUnresolved);
   }
 
+  const previousEntrySceneId = previous.scenes[0]?.id ?? null;
+  const currentEntrySceneId = next.scenes[0]?.id ?? null;
+
   return {
     packageChangedFields,
+    entrySceneChange:
+      previousEntrySceneId !== currentEntrySceneId
+        ? {
+            previousId: previousEntrySceneId,
+            currentId: currentEntrySceneId,
+          }
+        : null,
     collections,
     groups: mapping.groups,
     unresolved,
