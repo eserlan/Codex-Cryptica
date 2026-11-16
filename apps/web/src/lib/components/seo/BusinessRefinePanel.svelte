@@ -30,16 +30,19 @@
     token += 1;
   });
 
-  const sections = $derived<Array<{ id: BusinessSectionId; label: string }>>([
+  const sections = $derived<
+    Array<{ id: BusinessSectionId; label: string; ariaLabel?: string }>
+  >([
     { id: "identity", label: "Identity" },
     { id: "operations", label: "What it does" },
     {
       id: "leadership",
       label: `${business.leadership.name}, ${business.leadership.role}`,
     },
-    ...business.staff.map((p) => ({
+    ...business.staff.map((p, index) => ({
       id: `staff:${p.id}` as BusinessSectionId,
       label: p.name === business.leadership.name ? `${p.name} (staff)` : p.name,
+      ariaLabel: `${p.name}, key staff member ${index + 1}`,
     })),
     { id: "clientele", label: "Clientele" },
     { id: "dependencies", label: "Dependencies" },
@@ -116,17 +119,17 @@
 >
   <h2
     id="business-refine-heading"
-    class="text-meta font-bold uppercase tracking-wider text-theme-text/80"
+    class="text-meta font-bold uppercase tracking-wider text-theme-text"
   >
     Refine one part
   </h2>
-  <p class="mt-1 text-micro text-theme-muted leading-relaxed">
+  <p class="mt-1 text-micro text-theme-text leading-relaxed">
     Rewrite a single section{useAI ? ", or tell it what to change" : ""}.
     Everything else stays as it is.
   </p>
 
   {#if useAI}
-    <label class="mt-3 flex flex-col gap-1 text-micro text-theme-muted">
+    <label class="mt-3 flex flex-col gap-1 text-micro text-theme-text">
       <span>Steer (optional)</span>
       <textarea
         rows="2"
@@ -144,7 +147,7 @@
           type="button"
           class={buttonClass}
           disabled={busyId !== null}
-          aria-label={`Rewrite ${section.label}`}
+          aria-label={`Rewrite ${section.ariaLabel ?? section.label}`}
           onclick={() => rewrite(section.id, section.label)}
         >
           <span class="icon-[lucide--refresh-cw] h-3.5 w-3.5" aria-hidden="true"

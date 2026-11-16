@@ -2,6 +2,7 @@ import { AdventureGroundingError } from "#lib/services/adventure/adventure-groun
 import {
   parseAdventureSession,
   type AdventureSession,
+  type AdventureSourcePackageRef,
   type PlayerCharacter,
   type ScenarioState,
   type WorldEntryContext,
@@ -59,6 +60,7 @@ export class AdventureOpening {
     premise: string;
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
+    sourcePackage?: AdventureSourcePackageRef;
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
@@ -104,6 +106,7 @@ export class AdventureOpening {
     premise: string;
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
+    sourcePackage?: AdventureSourcePackageRef;
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
   }): AdventureSession {

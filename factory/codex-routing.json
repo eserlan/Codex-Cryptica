@@ -1,0 +1,55 @@
+{
+  "pricing_basis": {
+    "provider": "OpenAI API public list prices",
+    "tier": "standard, short context",
+    "cache_write_ttl_assumption": "12h rate, conservative when usage does not report TTL",
+    "checked": "2026-11-16"
+  },
+  "prices_usd_per_mtok": {
+    "gpt-6.1-sol": { "input": 2.0, "cached_input": 0.10, "cache_write": 5.0, "output": 10.0 },
+    "gpt-6-luna": { "input": 0.10, "cached_input": 0.01, "cache_write": 0.25, "output": 0.50 }
+  },
+  "roles": {
+    "intake": { "model": "gpt-6-luna", "reasoning_effort": "max" }
+  },
+  "roles_by_risk": {
+    "spec-writer": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    },
+    "approver": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    }
+  },
+  "builder_by_risk": {
+    "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+    "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+    "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+  },
+  "reviewers": {
+    "default": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+    "code_by_risk": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    },
+    "ux_by_risk": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    },
+    "ui_by_risk": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    },
+    "security_by_risk": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    }
+  }
+}

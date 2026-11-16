@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { parseAdventureMarkdown } from "@codex/adventure-engine";
+import {
+  ADVENTURE_JSON_V1_FORMAT_VERSION,
+  computeAdventureJsonHash,
+  parseAdventureMarkdown,
+  type AdventureJsonV1,
+} from "@codex/adventure-engine";
 import { AdventurePackageRepository } from "./adventure-package-storage";
 
 function createInMemoryDirectoryHandle(): FileSystemDirectoryHandle {
@@ -121,6 +126,59 @@ describe("AdventurePackageRepository", () => {
     await repo.saveApproved("vault-1", parsed.package);
     await expect(repo.saveApproved("vault-1", parsed.package)).rejects.toThrow(
       "already approved",
+    );
+  });
+
+  it("saves AdventureJsonV1 under canonical hash, rejects overwrite, and lists alongside legacy packages", async () => {
+    const root = createInMemoryDirectoryHandle();
+    const repo = new AdventurePackageRepository(async () => root);
+
+    const parsed = await parseAdventureMarkdown(sampleMarkdown, {
+      fileName: "sunken-mill.md",
+    });
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    await repo.saveApproved("vault-1", parsed.package);
+
+    const jsonPkg: AdventureJsonV1 = {
+      formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+      id: "the-last-grind",
+      title: "The Last Grind",
+      version: "1.0.0",
+      premise: {
+        background: "The mill stopped.",
+        hook: "Investigate the sluice.",
+      },
+      source: { title: "The Last Grind" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [],
+      endings: [],
+      unresolved: [],
+    };
+    const expectedHash = await computeAdventureJsonHash(jsonPkg);
+
+    const saved = await repo.saveApprovedJson("vault-1", jsonPkg);
+    expect(saved.hash).toBe(expectedHash);
+    expect(saved.path).toBe(`.codex/adventures/packages/${expectedHash}.json`);
+
+    await expect(repo.saveApprovedJson("vault-1", jsonPkg)).rejects.toThrow(
+      "already approved",
+    );
+
+    const loaded = await repo.loadStored("vault-1", expectedHash);
+    expect(loaded?.originFormat).toBe("adventure-json/v1");
+    expect(loaded?.package).toEqual(jsonPkg);
+
+    const listed = await repo.listApproved("vault-1");
+    expect(listed.map((item) => item.hash).sort()).toEqual(
+      [parsed.package.documentHash, expectedHash].sort(),
     );
   });
 });

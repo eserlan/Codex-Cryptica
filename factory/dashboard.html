@@ -383,9 +383,11 @@ function card(job, rounds) {
     : job.stage === 'needs-info' ? '<span class="flag wait">asked author</span>'
     : job.stage === 'rejected' ? '<span class="flag wait">rejected</span>' : ''
   const risk = job.intake?.risk
+  const cost = Number(job.cost_usd).toFixed(2)
+  const costIncomplete = job.cost_pricing_complete === false
   const meta = [
     risk ? `<span class="risk-${esc(risk)}">${esc(risk)}</span>` : '',
-    `<span>$${Number(job.cost_usd).toFixed(2)}</span>`,
+    `<span aria-label="${costIncomplete ? `At least $${cost} API-equivalent; some model usage has no price` : `$${cost} API-equivalent`}">${costIncomplete ? '≥' : ''}$${cost}${costIncomplete ? ' partial' : ''}</span>`,
     `<span>${elapsed(job)}</span>`,
   ].join('')
   return `
@@ -430,7 +432,8 @@ async function render() {
   }
   const running = jobs.filter((j) => LIVE.has(j.stage)).length
   const cost = jobs.reduce((sum, j) => sum + Number(j.cost_usd), 0)
-  $('totals').textContent = `${running} running · $${cost.toFixed(2)} API-equivalent`
+  const costIncomplete = jobs.some((j) => j.cost_pricing_complete === false)
+  $('totals').textContent = `${running} running · ${costIncomplete ? '≥' : ''}$${cost.toFixed(2)} API-equivalent${costIncomplete ? ' · partial, some model usage has no price' : ''}`
 }
 
 async function poll() {
