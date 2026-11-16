@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import AdventureImportFeedback from "./AdventureImportFeedback.svelte";
 
@@ -27,9 +28,16 @@
 
   let fileInput = $state<HTMLInputElement | null>(null);
   let experimentalFileInput = $state<HTMLInputElement | null>(null);
+  let importHeading = $state<HTMLHeadingElement | null>(null);
   let isDraggingJson = $state(false);
 
   const guideHref = $derived(`${basePath()}/adventure-import`);
+
+  onMount(() => {
+    if (window.location.hash !== "#import-adventure-json") return;
+    importHeading?.focus({ preventScroll: true });
+    importHeading?.scrollIntoView({ block: "center" });
+  });
 
   function triggerImport(): void {
     if (canImport) fileInput?.click();
@@ -97,7 +105,12 @@
           <span class="icon-[lucide--file-json] h-5 w-5"></span>
         </span>
         <div class="min-w-0 space-y-1">
-          <h2 class="font-header text-base font-semibold text-theme-text">
+          <h2
+            bind:this={importHeading}
+            id="import-adventure-json"
+            tabindex="-1"
+            class="font-header text-base font-semibold text-theme-text"
+          >
             Import Adventure JSON
           </h2>
           <p

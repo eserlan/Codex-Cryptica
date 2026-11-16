@@ -84,7 +84,7 @@ function mapZodIssue(
 ): AdventureJsonValidationError {
   const pathStr = formatPath(issue.path);
 
-  if (issue.path.length === 1 && issue.path[0] === "formatVersion") {
+  if (pathStr === "formatVersion") {
     return {
       code: "INVALID_FORMAT_VERSION",
       message: `Unsupported or missing formatVersion; expected "${ADVENTURE_JSON_V1_FORMAT_VERSION}".`,
@@ -92,17 +92,24 @@ function mapZodIssue(
     };
   }
 
-  if (
-    issue.path.length === 3 &&
-    issue.path[0] === "secrets" &&
-    typeof issue.path[1] === "number" &&
-    issue.path[2] === "visibility"
-  ) {
+  const secretVisibilityMatch = pathStr?.match(
+    /^secrets\[(\d+)\]\.visibility$/,
+  );
+  if (secretVisibilityMatch) {
     return {
       code: "INVALID_VISIBILITY",
       message: 'Secrets must have visibility set to "gm-only".',
       path: pathStr,
-      entityId: getSecretEntityId(rawData, issue.path[1]),
+      entityId: getSecretEntityId(rawData, Number(secretVisibilityMatch[1])),
+    };
+  }
+
+  if (/^unresolved\[\d+\]\.epistemicStatus$/.test(pathStr ?? "")) {
+    return {
+      code: "SCHEMA_VALIDATION_ERROR",
+      message:
+        'For an unresolved item, choose "ambiguous" when the source is unclear or contradictory, or "unresolved" when the source does not answer it.',
+      path: pathStr,
     };
   }
 

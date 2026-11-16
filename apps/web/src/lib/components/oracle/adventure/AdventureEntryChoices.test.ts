@@ -124,6 +124,45 @@ describe("AdventureEntryChoices", () => {
     expect(onImportFile).toHaveBeenCalledWith(droppedFile);
   });
 
+  it("focuses and scrolls to the importer when opened through its deep link", () => {
+    const originalUrl = window.location.href;
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    window.history.replaceState(null, "", "#import-adventure-json");
+    let unmount: (() => void) | undefined;
+
+    try {
+      ({ unmount } = render(AdventureEntryChoices, {
+        props: { onDiscover: vi.fn(), onOwnPremise: vi.fn() },
+      }));
+      const heading = screen.getByRole("heading", {
+        name: "Import Adventure JSON",
+      });
+      expect(heading.id).toBe("import-adventure-json");
+      expect(document.activeElement).toBe(heading);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+    } finally {
+      unmount?.();
+      window.history.replaceState(null, "", originalUrl);
+      if (originalScrollIntoView) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "scrollIntoView",
+          originalScrollIntoView,
+        );
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
+  });
+
   it("accepts .md and .pdf on the labeled experimental convenience input and shows loading state while importing", async () => {
     const onImportExperimentalFile = vi.fn();
     const { rerender } = render(AdventureEntryChoices, {
