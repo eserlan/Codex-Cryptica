@@ -605,7 +605,7 @@
                       }}
                     >
                       <span
-                        class="block font-header text-sm font-bold text-theme-text transition-colors group-hover:text-theme-primary"
+                        class="block font-header text-sm font-bold text-theme-text"
                         >{tool.title}</span
                       >
                       <span

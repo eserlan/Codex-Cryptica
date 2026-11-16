@@ -6,7 +6,15 @@ const rollback = vi.hoisted(() => ({
   loadState: "ready" as string,
   loadedVaultId: "v1" as string | null,
   busyDate: null as string | null,
-  result: null as { outcome: string; date: string } | null,
+  result: null as {
+    outcome: string;
+    date: string;
+    trashEvicted?: {
+      evictedCount: number;
+      usedBytes: number;
+      maxBytes: number;
+    };
+  } | null,
   resultVaultId: "v1" as string | null,
   load: vi.fn(async () => {}),
   preview: vi.fn(),
@@ -40,6 +48,7 @@ describe("CloudBackupRestorePointsSettings", () => {
   it("lists the points with their entity count", () => {
     show();
     expect(screen.getByText("9 entities")).toBeTruthy();
+    expect(screen.getByRole("status").getAttribute("aria-live")).toBe("polite");
     expect(
       screen.getByRole("button", { name: "Roll back to this day" }),
     ).toBeTruthy();
@@ -105,15 +114,15 @@ describe("CloudBackupRestorePointsSettings", () => {
   it("shows the success and matching messages as a status", () => {
     rollback.result = { outcome: "rolledBack", date: "2026-11-01" };
     show();
-    expect(screen.getByRole("status").textContent).toMatch(
-      /^Rolled back to .*2026\.$/,
-    );
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-live")).toBe("polite");
+    expect(status.textContent?.trim()).toMatch(/^Rolled back to .*2026\.$/);
   });
 
   it("shows the matching message", () => {
     rollback.result = { outcome: "matches", date: "2026-11-01" };
     show();
-    expect(screen.getByRole("status").textContent).toBe(
+    expect(screen.getByRole("status").textContent?.trim()).toBe(
       "This vault already matches that day.",
     );
   });
@@ -151,5 +160,51 @@ describe("CloudBackupRestorePointsSettings", () => {
     rollback.loadState = "unsupported";
     show();
     expect(screen.queryByText("Restore points")).toBeNull();
+  });
+
+  it("qualifies retention copy and warns before and after rollback eviction", async () => {
+    rollback.preview.mockResolvedValueOnce({
+      revision: 4,
+      changed: 1,
+      returning: 0,
+      trashed: 3,
+      trashEvicted: {
+        evictedCount: 2,
+        usedBytes: 49 * 1024 * 1024,
+        maxBytes: 50 * 1024 * 1024,
+      },
+    });
+    confirm.mockResolvedValueOnce(false);
+    show();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Roll back to this day" }),
+    );
+    await waitFor(() => expect(confirm).toHaveBeenCalled());
+    const msg = confirm.mock.calls[0][0].message as string;
+    expect(msg).toContain("up to 30 days, subject to the 50 MB trash limit");
+    expect(msg).toContain("2 older trash items");
+
+    rollback.result = {
+      outcome: "rolledBack",
+      date: "2026-11-01",
+      trashEvicted: {
+        evictedCount: 2,
+        usedBytes: 49 * 1024 * 1024,
+        maxBytes: 50 * 1024 * 1024,
+      },
+    };
+    show();
+    const warning = screen.getByText(
+      /Shared trash reached its 50 MB limit\. 2 older deleted items/,
+    );
+    expect(warning).toBeTruthy();
+    const status = warning.closest('[role="status"]');
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    expect(status?.textContent).toContain(warning.textContent);
+    expect(
+      warning.parentElement
+        ?.querySelector('[aria-hidden="true"]')
+        ?.classList.contains("text-theme-text"),
+    ).toBe(true);
   });
 });

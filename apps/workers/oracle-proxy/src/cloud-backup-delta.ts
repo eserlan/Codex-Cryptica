@@ -11,6 +11,7 @@ import {
   type CloudBackupEntitySyncMeta,
   type CloudBackupManifest,
   type CloudBackupTombstone,
+  type CloudBackupTrashEviction,
 } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import {
@@ -43,7 +44,7 @@ import {
   wholeShardNames,
 } from "./cloud-backup-whole-items";
 import { publishCommit } from "./cloud-backup-restore-points";
-import { evictOldestTrash, purgeExpiredTrash } from "./cloud-backup-trash";
+import { type TrashDropPlan, pruneTrash } from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 import {
   type Tombstones,
@@ -347,6 +348,8 @@ export interface PreparedDelta {
   purgedRev: number;
   shards: Map<string, Shard>;
   trash: Map<string, Shard>;
+  trashDrops?: TrashDropPlan;
+  trashEvicted?: CloudBackupTrashEviction;
   tombstones: Tombstones;
   hashes: Record<string, string>;
   meta: Record<string, CloudBackupEntitySyncMeta>;
@@ -388,9 +391,18 @@ async function keptAssetsFor(
   mapMeta: WholeMetaRecord,
   tombstones: Tombstones,
   trash: Map<string, Shard>,
+  droppedTrashIds?: ReadonlySet<string>,
 ): Promise<string[]> {
   if (!delta.assetIds) return [];
-  return keptMapAssetIds(env, backupId, base, mapMeta, tombstones, trash);
+  return keptMapAssetIds(
+    env,
+    backupId,
+    base,
+    mapMeta,
+    tombstones,
+    trash,
+    droppedTrashIds,
+  );
 }
 
 async function prepareDelta(
@@ -438,14 +450,13 @@ async function prepareDelta(
     { meta: state.canvasMeta, tombstones, trash },
     stamp,
   );
-  const purgedRev = await purgeExpiredTrash(
+  const { purgedRev, trashDrops, trashEvicted } = await pruneTrash(
     env,
     backupId,
     base,
     trash,
     tombstones,
   );
-  await evictOldestTrash(env, backupId, base, trash, tombstones);
 
   const nextBundle = nextBundleFor(delta, bundle, mapChanges, canvasChanges);
   const bundleGrowth = nextBundle ? jsonByteLength(nextBundle) - existing : 0;
@@ -457,6 +468,7 @@ async function prepareDelta(
     state.mapMeta,
     tombstones,
     trash,
+    trashDrops.droppedIds,
   );
 
   const projected =
@@ -468,6 +480,8 @@ async function prepareDelta(
     purgedRev,
     shards,
     trash,
+    trashDrops,
+    ...(trashEvicted ? { trashEvicted } : {}),
     tombstones,
     hashes,
     meta,
@@ -481,13 +495,43 @@ async function prepareDelta(
 /** The base's references for untouched shards, plus the freshly staged ones. */
 function carriedReferences(
   base: Record<string, string> | undefined,
-  touched: Map<string, Shard>,
+  touched: { has(name: string): boolean },
   staged: Record<string, string>,
 ): Record<string, string> {
   const untouched = Object.entries(base ?? {}).filter(
     ([name]) => !touched.has(name),
   );
   return { ...Object.fromEntries(untouched), ...staged };
+}
+
+/** Reads, filters, and stages affected unloaded trash shards one at a time. */
+async function stageDroppedTrashShards(
+  env: CloudBackupEnv,
+  backupId: string,
+  tag: string,
+  base: BackupObjects,
+  trashDrops: TrashDropPlan | undefined,
+  stagedTrash: Record<string, string>,
+): Promise<void> {
+  if (!trashDrops) return;
+  for (const [name, droppedIds] of trashDrops.droppedByShard) {
+    if (trashDrops.emptiedShards.has(name)) continue;
+    const reference = base.trash?.[name];
+    if (!reference) continue;
+    const shard = await readReferenced<Shard>(env, backupId, reference);
+    const filtered: Shard = Object.create(null);
+    for (const [id, value] of Object.entries(shard)) {
+      if (!droppedIds.has(id)) filtered[id] = value;
+    }
+    if (Object.keys(filtered).length > 0) {
+      await writeJson(
+        env,
+        getStagedKey(backupId, tag, `trash/${name}.json`),
+        filtered,
+      );
+      stagedTrash[name] = stagedName(tag, `trash/${name}.json`);
+    }
+  }
 }
 
 /** Writes the delta's objects under the commit's tag and builds the new `objects`. */
@@ -498,9 +542,18 @@ export async function stageDelta(
   base: BackupObjects,
   prepared: PreparedDelta,
 ): Promise<{ staged: BackupObjects; objects: BackupObjects }> {
-  const { shards, trash, hashes, meta, tombstones, whole } = prepared;
+  const { shards, trash, trashDrops, hashes, meta, tombstones, whole } =
+    prepared;
   const stagedShards = await stageShards(env, backupId, tag, shards);
   const stagedTrash = await stageShards(env, backupId, tag, trash, "trash");
+  await stageDroppedTrashShards(
+    env,
+    backupId,
+    tag,
+    base,
+    trashDrops,
+    stagedTrash,
+  );
   const staged: BackupObjects = {
     index: await stageIndex(
       env,
@@ -523,7 +576,12 @@ export async function stageDelta(
     staged.bundle = stagedName(tag, "bundle.json");
   }
 
-  const allTrash = carriedReferences(base.trash, trash, stagedTrash);
+  const touchedTrash = new Set<string>([
+    ...trash.keys(),
+    ...(trashDrops?.droppedByShard.keys() ?? []),
+    ...(trashDrops?.emptiedShards ?? []),
+  ]);
+  const allTrash = carriedReferences(base.trash, touchedTrash, stagedTrash);
   const objects: BackupObjects = {
     ...(staged.bundle || base.bundle
       ? { bundle: staged.bundle ?? base.bundle }
@@ -593,6 +651,7 @@ async function commitDelta(
       assetIds: delta.assetIds && [
         ...new Set([...delta.assetIds, ...prepared.keptAssetIds]),
       ],
+      trashEvicted: prepared.trashEvicted,
     },
     () => lostRace(request, env, backupId, staged, auth.manifest),
   );

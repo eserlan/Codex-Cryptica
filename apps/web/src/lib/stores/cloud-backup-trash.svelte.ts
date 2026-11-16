@@ -22,6 +22,8 @@ type KeptItem = Extract<CloudBackupTrashItemOutcome, { kind: "entity" }>;
 /** Lists the shared trash and restores entities, maps and canvases from it on this device. */
 export class CloudBackupTrash {
   items = $state<CloudBackupTrashItem[]>([]);
+  usedBytes = $state<number | null>(null);
+  maxBytes = $state<number | null>(null);
   loadState = $state<TrashLoadState>("idle");
   loadedVaultId = $state<string | null>(null);
   /** Ids being restored right now. Replaced, never mutated, so views update. */
@@ -55,6 +57,8 @@ export class CloudBackupTrash {
   private prepareLoad(vaultId: string): void {
     if (this.loadedVaultId !== vaultId) {
       this.items = [];
+      this.usedBytes = null;
+      this.maxBytes = null;
       this.loadedVaultId = null;
     }
     if (this.result && this.resultVaultId !== vaultId) {
@@ -76,9 +80,13 @@ export class CloudBackupTrash {
   ): void {
     if (outcome.kind === "items") {
       this.items = outcome.items;
+      this.usedBytes = outcome.usedBytes ?? null;
+      this.maxBytes = outcome.maxBytes ?? null;
       this.loadState = "ready";
     } else {
       this.items = [];
+      this.usedBytes = null;
+      this.maxBytes = null;
       this.loadState =
         outcome.kind === "unsupported"
           ? "unsupported"

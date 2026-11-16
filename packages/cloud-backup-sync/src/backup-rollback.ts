@@ -3,6 +3,10 @@
  * shared vault's daily points and rolls the group back to one.
  */
 import { z } from "zod";
+import {
+  CloudBackupTrashEvictionSchema,
+  type CloudBackupTrashEviction,
+} from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord } from "./backup-records";
 import { cloudBackupHeaders } from "./request-headers";
@@ -27,10 +31,14 @@ const PreviewSchema = z.object({
   preview: CountsSchema.extend({
     date: z.string(),
     revision: z.number().int().nonnegative(),
+    trashEvicted: CloudBackupTrashEvictionSchema.optional(),
   }),
 });
 
-const RolledBackSchema = z.object({ rollback: CountsSchema });
+const RolledBackSchema = z.object({
+  rollback: CountsSchema,
+  trashEvicted: CloudBackupTrashEvictionSchema.optional(),
+});
 
 export type CloudBackupRestorePoint = z.infer<typeof RestorePointSchema>;
 export type CloudBackupRollbackCounts = z.infer<typeof CountsSchema>;
@@ -47,8 +55,13 @@ export type CloudBackupRollbackOutcome =
       kind: "preview";
       date: string;
       revision: number;
+      trashEvicted?: CloudBackupTrashEviction;
     } & CloudBackupRollbackCounts)
-  | { kind: "rolledBack"; counts: CloudBackupRollbackCounts }
+  | {
+      kind: "rolledBack";
+      counts: CloudBackupRollbackCounts;
+      trashEvicted?: CloudBackupTrashEviction;
+    }
   /** The vault changed after the preview. */
   | { kind: "changed" }
   /** The restore point expired or was removed. */
@@ -133,7 +146,13 @@ export async function rollBackCloudBackup(
     }
     const done = RolledBackSchema.safeParse(body);
     return done.success
-      ? { kind: "rolledBack", counts: done.data.rollback }
+      ? {
+          kind: "rolledBack",
+          counts: done.data.rollback,
+          ...(done.data.trashEvicted
+            ? { trashEvicted: done.data.trashEvicted }
+            : {}),
+        }
       : { kind: "failed", error: UNREADABLE };
   } catch (error) {
     return failure(error);
