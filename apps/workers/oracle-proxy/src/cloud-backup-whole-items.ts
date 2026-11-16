@@ -1,4 +1,5 @@
 import {
+  CLOUD_BACKUP_LIMITS,
   canonicalJson,
   cloudBackupShardOf,
   hashCloudBackupEntity,
@@ -53,7 +54,10 @@ export const asItems = (list: unknown): WholeItem[] =>
 
 /** A stored item's name, kept as the tombstone's title. */
 const nameOf = (item: WholeItem) =>
-  typeof item.name === "string" ? item.name : "";
+  (typeof item.name === "string" ? item.name : "").slice(
+    0,
+    CLOUD_BACKUP_LIMITS.maxTitleLength,
+  );
 
 /** What a delta does to one kind of item. */
 export interface WholeChanges {

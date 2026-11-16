@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CLOUD_BACKUP_LIMITS } from "../../../../../packages/schema/src/publishing";
 import { handleCloudBackupRoutes } from "../cloud-backup-routes";
 import {
   getAssetKey,
@@ -339,5 +340,87 @@ describe("maps and canvases as whole items", () => {
     expect(res.status).toBe(409);
     const after = await readCurrent(fx.env, fx.backupId, "bundle");
     expect(after.maps).toEqual(before.maps);
+  });
+
+  it("caps tombstone titles at maxTitleLength for deleted whole items while preserving full names in trash", async () => {
+    const fx = await committed();
+    const longMapName = "M".repeat(CLOUD_BACKUP_LIMITS.maxTitleLength + 40);
+    const longCanvasName = "C".repeat(CLOUD_BACKUP_LIMITS.maxTitleLength + 40);
+
+    expect(
+      (
+        await push(fx, {
+          mapUpserts: [{ item: { id: M1, name: longMapName } }],
+          canvasUpserts: [
+            { item: { id: C1, name: longCanvasName, slug: "plot" } },
+          ],
+        })
+      ).status,
+    ).toBe(200);
+
+    expect(
+      (await push(fx, { mapDeletes: [M1], canvasDeletes: [C1] })).status,
+    ).toBe(200);
+
+    const expectedMapTitle = longMapName.slice(
+      0,
+      CLOUD_BACKUP_LIMITS.maxTitleLength,
+    );
+    const expectedCanvasTitle = longCanvasName.slice(
+      0,
+      CLOUD_BACKUP_LIMITS.maxTitleLength,
+    );
+
+    const index = await readCurrent(fx.env, fx.backupId, "index");
+    expect(index.tombstones[M1].title).toBe(expectedMapTitle);
+    expect(index.tombstones[M1].title).toHaveLength(
+      CLOUD_BACKUP_LIMITS.maxTitleLength,
+    );
+    expect(index.tombstones[C1].title).toBe(expectedCanvasTitle);
+    expect(index.tombstones[C1].title).toHaveLength(
+      CLOUD_BACKUP_LIMITS.maxTitleLength,
+    );
+
+    const changes = await feed(fx, 2);
+    expect(changes.tombstones).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: M1,
+          kind: "map",
+          title: expectedMapTitle,
+        }),
+        expect.objectContaining({
+          id: C1,
+          kind: "canvas",
+          title: expectedCanvasTitle,
+        }),
+      ]),
+    );
+
+    const trashList = await (
+      await call(fx, "GET", "/trash", { key: fx.ownerCode })
+    ).json();
+    expect(trashList.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: M1, title: expectedMapTitle }),
+        expect.objectContaining({ id: C1, title: expectedCanvasTitle }),
+      ]),
+    );
+
+    const mapTrash = await (
+      await call(fx, "GET", `/trash/${M1}`, { key: fx.ownerCode })
+    ).json();
+    expect(mapTrash.tombstone.title).toBe(expectedMapTitle);
+    expect(mapTrash.entity).toEqual({ id: M1, name: longMapName });
+
+    const canvasTrash = await (
+      await call(fx, "GET", `/trash/${C1}`, { key: fx.ownerCode })
+    ).json();
+    expect(canvasTrash.tombstone.title).toBe(expectedCanvasTitle);
+    expect(canvasTrash.entity).toEqual({
+      id: C1,
+      name: longCanvasName,
+      slug: "plot",
+    });
   });
 });

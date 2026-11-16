@@ -313,13 +313,30 @@ def infer_agy_agent_and_model(text, job):
     price_key_map = {
         "pro": "claude-opus-5-5",
         "opus": "claude-opus-5-5",
+        "gemini-4-hydrogen-high": "claude-opus-5-5",
+        "gemini-4-hydrogen-xhigh": "claude-opus-5-5",
+        "gemini-4-argon-high": "claude-opus-5-5",
+        "gemini-4-argon-medium": "claude-opus-5-5",
+        "claude-opus-5-5-high": "claude-opus-5-5",
+        "claude-opus-5-5-medium": "claude-opus-5-5",
+        "claude-opus-5-5-low": "claude-opus-5-5",
         "inherit": "claude-sonnet-5-5",
         "sonnet": "claude-sonnet-5-5",
+        "gemini-4-hydrogen-medium": "claude-sonnet-5-5",
+        "gemini-4-argon-low": "claude-sonnet-5-5",
+        "claude-sonnet-5-5-high": "claude-sonnet-5-5",
+        "claude-sonnet-5-5-medium": "claude-sonnet-5-5",
+        "claude-sonnet-5-5-low": "claude-sonnet-5-5",
         "flash": "claude-haiku-5-5",
         "flash_lite": "claude-haiku-5-5",
         "haiku": "claude-haiku-5-5",
+        "gemini-4-hydrogen-low": "claude-haiku-5-5",
+        "gemini-3.8-flash-high": "claude-haiku-5-5",
+        "gemini-3.8-flash-medium": "claude-haiku-5-5",
+        "gemini-3.8-flash-low": "claude-haiku-5-5",
     }
-    return agent, f"agy-{tier}", price_key_map.get(tier, "claude-sonnet-5-5")
+    display = tier if tier.startswith(("gemini-", "claude-", "gpt-")) else f"agy-{tier}"
+    return agent, display, price_key_map.get(tier, "claude-sonnet-5-5")
 
 
 def prompt_text(line):
