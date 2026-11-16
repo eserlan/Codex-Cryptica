@@ -616,6 +616,13 @@
                 "Bring a Thread Weaver Engine campaign export's characters, factions, and settlements into Codex.",
               icon: "icon-[lucide--network]",
             },
+            {
+              href: "/adventure-import",
+              label: "Adventure Importer",
+              summary:
+                "Convert a PDF or text adventure you own into Adventure JSON with an AI prompt and schema, then import it locally.",
+              icon: "icon-[lucide--file-json]",
+            },
           ],
         },
       ],
