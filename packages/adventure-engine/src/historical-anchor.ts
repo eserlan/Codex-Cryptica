@@ -42,6 +42,8 @@ import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
 
 const MAX_TEXT_CHARS = 600;
+// Bound synchronous sentence extraction even when Vault text is unusually large.
+const MAX_FACT_SOURCE_CHARS = 64_000;
 const STANDARD_OPEN_MECHANISMS = [
   "cause",
   "responsible-actor",
@@ -97,7 +99,18 @@ export function computeHistoricalEventFingerprint(
   event: HistoricalEventSnapshot,
   calendar?: WorldCalendar,
 ): string {
-  const documentedFacts = extractDocumentedFacts(event);
+  return computeHistoricalEventFingerprintWithFacts(
+    event,
+    calendar,
+    extractDocumentedFacts(event),
+  );
+}
+
+function computeHistoricalEventFingerprintWithFacts(
+  event: HistoricalEventSnapshot,
+  calendar: WorldCalendar | undefined,
+  documentedFacts: HistoricalAnchorDocumentedFact[],
+): string {
   const relevantEntityRefs = normalizeEntityRefs(event.relevantEntityRefs);
   const payload = canonicalJson({
     id: event.id.trim(),
@@ -163,22 +176,27 @@ function normalizeDocumentedFact(
 function deriveDocumentedFacts(
   event: HistoricalEventSnapshot,
 ): HistoricalAnchorDocumentedFact[] {
-  const rawSource = [event.content, event.lore]
-    .filter((part): part is string => Boolean(part && part.trim()))
-    .join("\n");
-  const segments = rawSource
-    .split(/\r?\n+|(?<=[.!?])\s+/)
-    .map((segment) => clampText(segment))
-    .filter((segment) => segment.length > 0);
-  if (segments.length === 0 && event.title.trim()) {
+  const facts: HistoricalAnchorDocumentedFact[] = [];
+  let scannedChars = 0;
+  for (const source of [event.content, event.lore]) {
+    if (!source || scannedChars >= MAX_FACT_SOURCE_CHARS) continue;
+    const boundedSource = source.slice(0, MAX_FACT_SOURCE_CHARS - scannedChars);
+    scannedChars += boundedSource.length;
+    const segments = boundedSource.matchAll(/[^\r\n]+|\r?\n+/g);
+    for (const line of segments) {
+      const sentences = line[0].split(/(?<=[.!?])\s+/);
+      for (const segment of sentences) {
+        const text = clampText(segment);
+        if (!text) continue;
+        facts.push({ id: `anchor-fact-${facts.length + 1}`, text });
+        if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) return facts;
+      }
+    }
+  }
+  if (facts.length === 0 && event.title.trim()) {
     return [{ id: "anchor-fact-1", text: clampText(event.title) }];
   }
-  return segments
-    .slice(0, MAX_HISTORICAL_DOCUMENTED_FACTS)
-    .map((text, index) => ({
-      id: `anchor-fact-${index + 1}`,
-      text,
-    }));
+  return facts;
 }
 
 function normalizeEntityRefs(
@@ -576,9 +594,10 @@ export function validateAndCreateHistoricalAnchor(
     startDate: compatibility.startDate,
     baseline: {
       title: clampText(event.title),
-      contentFingerprint: computeHistoricalEventFingerprint(
+      contentFingerprint: computeHistoricalEventFingerprintWithFacts(
         event,
         input.calendar,
+        documentedFacts,
       ),
       capturedAt: input.now,
       calendarRevision: compatibility.calendarRevision,
@@ -866,6 +885,7 @@ export type ResolveHistoricalAnchorDriftInput =
       expectedRevision: number;
       decision: "rebase";
       currentEventSnapshot: HistoricalEventSnapshot | null | undefined;
+      startDate?: AdventureCalendarDate;
       calendar: WorldCalendar;
       now: string;
     };
@@ -900,7 +920,7 @@ export function resolveHistoricalAnchorDrift(
 
   const rebased = validateAndCreateHistoricalAnchor({
     event: input.currentEventSnapshot,
-    startDate: anchor.startDate,
+    startDate: input.startDate ?? anchor.startDate,
     calendar: input.calendar,
     policy: anchor.policy,
     now: input.now,
@@ -919,6 +939,7 @@ export function resolveHistoricalAnchorDrift(
     rebased.anchor.baseline.documentedFacts.map((fact) => fact.id),
   );
   anchor.eventInterval = rebased.anchor.eventInterval;
+  anchor.startDate = rebased.anchor.startDate;
   anchor.baseline = rebased.anchor.baseline;
   anchor.revealedFactIds = anchor.revealedFactIds.filter(
     (id) => id === HISTORICAL_ANCHOR_TITLE_SECRET_ID || validFactIds.has(id),

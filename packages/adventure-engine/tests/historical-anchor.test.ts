@@ -683,6 +683,43 @@ describe("HistoricalAnchor contract", () => {
     });
   });
 
+  it("rebases against the current calendar revision with a confirmed start date", () => {
+    const created = validateAndCreateHistoricalAnchor({
+      event: kingDeathEvent(),
+      startDate: { year: 617, precision: "year", calendarRevision: 1 },
+      calendar: zeroEraCalendar,
+      now,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const currentCalendar = { ...zeroEraCalendar, revision: 2 };
+    const refreshedEvent = kingDeathEvent({
+      start_date: { year: 620, precision: "year", calendarRevision: 2 },
+    });
+    const session: AdventureSession = {
+      ...makeSession(),
+      historicalAnchor: created.anchor,
+    };
+    const rebased = resolveHistoricalAnchorDrift(session, {
+      expectedRevision: 0,
+      decision: "rebase",
+      currentEventSnapshot: refreshedEvent,
+      startDate: { year: 617, precision: "year", calendarRevision: 2 },
+      calendar: currentCalendar,
+      now,
+    });
+
+    expect(rebased.ok).toBe(true);
+    if (!rebased.ok) return;
+    expect(rebased.session.historicalAnchor?.startDate).toEqual({
+      year: 617,
+      precision: "year",
+      calendarRevision: 2,
+    });
+    expect(rebased.session.historicalAnchor?.drift.status).toBe("clean");
+  });
+
   it("AC7: keeps unrevealed anchor facts out of player projections", () => {
     const { session } = createHistoricalAnchorSession(
       kingDeathEvent({
@@ -735,7 +772,10 @@ describe("HistoricalAnchor contract", () => {
     ]);
     expect(
       detectHiddenTextLeakage(session, "Whispers about Death of King Aldous."),
-    ).toEqual([{ field: "root", secretId: HISTORICAL_ANCHOR_TITLE_SECRET_ID }]);
+    ).toEqual([
+      { field: "root", secretId: "anchor-entity-char-aldous-name" },
+      { field: "root", secretId: HISTORICAL_ANCHOR_TITLE_SECRET_ID },
+    ]);
     expect(revealedSecretIds(session, ["anchor-fact-1", "unknown-id"])).toEqual(
       ["anchor-fact-1"],
     );
@@ -764,6 +804,52 @@ describe("HistoricalAnchor contract", () => {
         (ref) => ref.recordId === anchor.eventRecordId,
       ),
     ).toBe(false);
+  });
+
+  it("AC7: detects unrevealed entity references and event date details", () => {
+    const { session } = createHistoricalAnchorSession(
+      kingDeathEvent({
+        relevantEntityRefs: [
+          {
+            recordId: "char-aldous",
+            recordType: "character",
+            displayName: "Aldous the Red",
+            role: "secret witness",
+          },
+          { recordId: "char-ada", displayName: "Ada" },
+        ],
+      }),
+      { year: 617, precision: "year", calendarRevision: 1 },
+    );
+    expect(
+      detectHiddenTextLeakage(session, "Aldous the Red arrives."),
+    ).toHaveLength(1);
+    expect(detectHiddenTextLeakage(session, "Ada arrives.")).toHaveLength(1);
+    expect(
+      detectHiddenTextLeakage(session, "The event occurs in Year 620."),
+    ).toHaveLength(1);
+    expect(
+      detectHiddenTextLeakage(session, "The calendar shows Month 3."),
+    ).toHaveLength(0);
+  });
+
+  it("bounds derived facts and reuses them in anchor fingerprinting", () => {
+    const content = Array.from(
+      { length: 50_000 },
+      (_, index) => `Fact ${index}.`,
+    ).join(" ");
+    const event = kingDeathEvent({ content });
+    const created = validateAndCreateHistoricalAnchor({
+      event,
+      startDate: { year: 617, precision: "year", calendarRevision: 1 },
+      calendar: zeroEraCalendar,
+      now,
+    });
+
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    expect(created.anchor.baseline.documentedFacts).toHaveLength(20);
+    expect(created.anchor.baseline.documentedFacts[0]?.text).toBe("Fact 0.");
   });
 
   it("AC8: preserves v1/v2/v3 backward compatibility and rejects future versions without mutating input", () => {

@@ -2,6 +2,14 @@ export const CURRENT_HISTORICAL_ANCHOR_VERSION = 1 as const;
 export const HISTORICAL_ANCHOR_FALLBACK_ACTION =
   "play-in-era-without-anchor" as const;
 export const HISTORICAL_ANCHOR_TITLE_SECRET_ID = "anchor-title" as const;
+export const historicalAnchorEntitySecretId = (
+  recordId: string,
+  field = "name",
+) => `anchor-entity-${recordId}-${field}`;
+export const historicalAnchorDateSecretId = (
+  edge: "start" | "end",
+  field: string,
+) => `anchor-event-${edge}-${field}`;
 
 export const MAX_HISTORICAL_DOCUMENTED_FACTS = 20;
 export const MAX_HISTORICAL_OPEN_MECHANISMS = 16;

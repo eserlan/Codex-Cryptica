@@ -1,5 +1,5 @@
 import type { AdventureSession, AdventureTurnProposal } from "./types";
-import { HISTORICAL_ANCHOR_TITLE_SECRET_ID } from "./historical-anchor-types";
+import { historicalAnchorSecretIds } from "./hidden-state";
 
 function immutableScenarioSecretTexts(
   session: AdventureSession,
@@ -79,10 +79,7 @@ function isHistoricalAnchorSecretId(
 ): boolean {
   const anchor = session.historicalAnchor;
   if (!anchor) return false;
-  return (
-    secretId === HISTORICAL_ANCHOR_TITLE_SECRET_ID ||
-    anchor.baseline.documentedFacts.some((fact) => fact.id === secretId)
-  );
+  return historicalAnchorSecretIds(session).includes(secretId);
 }
 
 function scenarioSecretBindingIds(
