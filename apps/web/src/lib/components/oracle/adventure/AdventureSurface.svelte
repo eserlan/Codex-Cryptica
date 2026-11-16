@@ -27,7 +27,7 @@
   import AdventureRumourConflict from "./AdventureRumourConflict.svelte";
   import {
     adventureSourcePackageToAdventureJson,
-    compareAdventureJsonVersion,
+    compareAdventureJsonVersionCandidates,
     computeAdventureJsonHash,
     parseAdventureMarkdown,
     selectAdventureJsonPredecessor,
@@ -331,14 +331,7 @@
       groups.set(item.package.id, group);
     }
     for (const group of groups.values()) {
-      group.versions.sort((a, b) => {
-        const byVersion = compareAdventureJsonVersion(
-          b.package.version,
-          a.package.version,
-        );
-        if (byVersion !== 0) return byVersion;
-        return a.hash < b.hash ? -1 : a.hash > b.hash ? 1 : 0;
-      });
+      group.versions.sort(compareAdventureJsonVersionCandidates);
     }
     return [...groups.values()];
   });

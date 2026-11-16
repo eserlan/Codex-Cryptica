@@ -1,6 +1,6 @@
 import type { AdventureJsonV1 } from "./schema";
 
-function sortKeysRecursively(value: unknown): unknown {
+export function sortKeysRecursively(value: unknown): unknown {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     return value;
   }
