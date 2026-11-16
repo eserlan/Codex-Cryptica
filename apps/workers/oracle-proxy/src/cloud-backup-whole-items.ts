@@ -251,6 +251,7 @@ export async function keptMapAssetIds(
   mapMeta: WholeMetaRecord,
   tombstones: Tombstones,
   trash: Map<string, Shard>,
+  droppedTrashIds?: ReadonlySet<string>,
 ): Promise<string[]> {
   const ids = new Set<string>();
   for (const meta of Object.values(mapMeta)) {
@@ -258,6 +259,7 @@ export async function keptMapAssetIds(
   }
   for (const tombstone of Object.values(tombstones)) {
     if (tombstone.kind !== "map") continue;
+    if (droppedTrashIds?.has(tombstone.id)) continue;
     const name = cloudBackupShardOf(tombstone.id);
     let shard = trash.get(name);
     const reference = base.trash?.[name];

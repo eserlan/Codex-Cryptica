@@ -1,6 +1,7 @@
-import type {
-  CloudBackupEntitySyncMeta,
-  CloudBackupTombstone,
+import {
+  cloudBackupShardOf,
+  type CloudBackupEntitySyncMeta,
+  type CloudBackupTombstone,
 } from "../../../../packages/schema/src/publishing";
 import type { EntityRecord, Shard } from "./cloud-backup-entities";
 import type { WholeMeta } from "./cloud-backup-whole-items";
@@ -98,17 +99,25 @@ export async function readAllEntities(
 
 /**
  * The base's tombstones and trash content, minus the ids a full upload brings
- * back as live entities. Trash is read only when the base has any.
+ * back as live entities. Unchanged trash shards are carried by reference
+ * without reading or rewriting them; modified shards are read, filtered, and
+ * staged one at a time.
  */
 export async function carryTombstones(
   env: CloudBackupEnv,
   backupId: string,
+  tag: string,
   base: BackupObjects,
   liveIds: ReadonlySet<string>,
-): Promise<{ tombstones: Tombstones; trash: Map<string, Shard> }> {
+): Promise<{
+  tombstones: Tombstones;
+  stagedTrash: Record<string, string>;
+  trash: Record<string, string>;
+}> {
   const tombstones: Tombstones = Object.create(null);
-  const trash = new Map<string, Shard>();
-  if (!base.index || !base.trash) return { tombstones, trash };
+  const stagedTrash: Record<string, string> = {};
+  const trash: Record<string, string> = {};
+  if (!base.index || !base.trash) return { tombstones, stagedTrash, trash };
 
   const index = await readReferenced<{ tombstones?: Tombstones }>(
     env,
@@ -116,19 +125,34 @@ export async function carryTombstones(
     base.index,
   );
   const now = Date.now();
+  const droppedShards = new Set<string>();
   for (const [id, tombstone] of Object.entries(index.tombstones ?? {})) {
     if (!liveIds.has(id) && !isTrashExpired(tombstone, now)) {
       tombstones[id] = tombstone;
+    } else {
+      droppedShards.add(cloudBackupShardOf(id));
     }
   }
   for (const [name, reference] of Object.entries(base.trash)) {
+    if (!droppedShards.has(name)) {
+      trash[name] = reference;
+      continue;
+    }
     const shard = await readReferenced<Shard>(env, backupId, reference);
+    const kept: Shard = Object.create(null);
     for (const [id, entity] of Object.entries(shard)) {
-      if (!Object.hasOwn(tombstones, id)) continue;
-      const kept = trash.get(name) ?? Object.create(null);
-      kept[id] = entity;
-      trash.set(name, kept);
+      if (Object.hasOwn(tombstones, id)) kept[id] = entity;
+    }
+    if (Object.keys(kept).length > 0) {
+      await writeJson(
+        env,
+        getStagedKey(backupId, tag, `trash/${name}.json`),
+        kept,
+      );
+      const staged = stagedName(tag, `trash/${name}.json`);
+      stagedTrash[name] = staged;
+      trash[name] = staged;
     }
   }
-  return { tombstones, trash };
+  return { tombstones, stagedTrash, trash };
 }

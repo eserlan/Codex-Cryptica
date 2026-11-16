@@ -225,4 +225,78 @@ describe("cloud backup full snapshots", () => {
     expect(stored.objects!.trash).toBeUndefined();
     expect(stored.manifest.feedHorizon).toBe(1);
   });
+
+  it("carries untouched trash shards by reference, filters modified shards, and preserves base.trash on lost race", async () => {
+    const { env, backupId, ownerCode } = await createBackupFixture();
+    const commit = async (entities: unknown[]) =>
+      handleCommitCloudBackup(
+        jsonRequest({ vaultTitle: "V", bundle: { entities } }, ownerCode),
+        env,
+        backupId,
+      );
+    // Pick ids in distinct shards
+    const first = (await (
+      await commit([
+        { id: "keep-in-trash", title: "Keep" },
+        { id: "revive-me", title: "Revive" },
+      ])
+    ).json()).manifest;
+
+    await handleCloudBackupDelta(
+      jsonRequest(
+        {
+          vaultTitle: "V",
+          baseLastPushedAt: first.lastPushedAt,
+          baseRevision: 1,
+          upserts: [],
+          deletes: ["keep-in-trash", "revive-me"],
+        },
+        ownerCode,
+      ),
+      env,
+      backupId,
+    );
+
+    const before = (await readManifest(env, backupId))!;
+    const trashRefsBefore = before.objects!.trash!;
+    const shardKeep = Object.keys(trashRefsBefore).find((k) =>
+      trashRefsBefore[k],
+    );
+    expect(shardKeep).toBeDefined();
+
+    // Bring revive-me back; keep-in-trash stays in trash.
+    const res = await commit([{ id: "revive-me", title: "Revived" }]);
+    expect(res.status).toBe(200);
+    const after = (await readManifest(env, backupId))!;
+    const keepShardName = Object.keys(after.objects!.trash ?? {})[0];
+    expect(keepShardName).toBeDefined();
+    // If keep-in-trash and revive-me were in different shards, keepShard keeps its exact base reference
+    if (Object.keys(trashRefsBefore).length > 1) {
+      expect(after.objects!.trash![keepShardName]).toBe(
+        trashRefsBefore[keepShardName],
+      );
+    }
+
+    // Simulate a lost manifest switch during a full snapshot: base.trash must remain intact
+    const put = env.BUCKET.put.bind(env.BUCKET);
+    let raced = false;
+    vi.spyOn(env.BUCKET, "put").mockImplementation((async (
+      key: string,
+      ...rest: unknown[]
+    ) => {
+      if (!raced && key === getManifestKey(backupId)) {
+        raced = true;
+        return null;
+      }
+      return (put as any)(key, ...rest);
+    }) as any);
+
+    const lost = await commit([{ id: "keep-in-trash", title: "Keep" }]);
+    expect(lost.status).toBe(409);
+    for (const ref of Object.values(after.objects!.trash ?? {})) {
+      expect(
+        await env.BUCKET.head(`cloud-backup/${backupId}/${ref}`),
+      ).not.toBeNull();
+    }
+  });
 });

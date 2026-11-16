@@ -17,6 +17,7 @@ import {
 } from "../cloud-backup-storage";
 import {
   handleGetCloudBackupBundle,
+  handleGetCloudBackupChanges,
   handleGetCloudBackupIndex,
 } from "../cloud-backup-reads";
 import { readAllEntities } from "../cloud-backup-shards";
@@ -600,6 +601,148 @@ describe("cloud backup incremental commits", () => {
           ),
         ),
       ).not.toBeNull();
+    });
+
+    describe("non-silent eviction & exact byte accounting", () => {
+      it("evicts oldest-first across multiple shards, omits emptied shards, preserves tombstones, and reports trashEvicted", async () => {
+        const f = await seeded();
+        const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+        const original = limits.maxTrashBytes;
+        limits.maxTrashBytes = 700;
+        try {
+          const body = "z".repeat(250);
+          const ids = ["alpha-1", "beta-2", "gamma-3", "delta-4"];
+          const shards = new Set(ids.map((id) => cloudBackupShardOf(id)));
+          expect(shards.size).toBeGreaterThanOrEqual(2);
+
+          let manifest = f.manifest;
+          for (const id of ids) {
+            const up = await send(f, manifest, {
+              upserts: [{ id, title: id, body }],
+            });
+            manifest = ((await up.json()) as any).manifest;
+            expect(up.status).toBe(200);
+          }
+
+          const del1 = await send(f, manifest, { deletes: [ids[0]] });
+          const body1 = (await del1.json()) as any;
+          expect(del1.status).toBe(200);
+          expect(body1.trashEvicted).toBeUndefined();
+          manifest = body1.manifest;
+
+          let lastEviction: any;
+          for (const id of ids.slice(1)) {
+            const res = await send(f, manifest, { deletes: [id] });
+            const jsonBody = (await res.json()) as any;
+            expect(res.status).toBe(200);
+            manifest = jsonBody.manifest;
+            if (jsonBody.trashEvicted) lastEviction = jsonBody.trashEvicted;
+          }
+
+          expect(lastEviction).toBeDefined();
+          expect(lastEviction.evictedCount).toBeGreaterThanOrEqual(1);
+          expect(lastEviction.maxBytes).toBe(700);
+          expect(lastEviction.usedBytes).toBeLessThanOrEqual(700);
+
+          const stored = (await readManifest(f.env, f.backupId))!;
+          let actualTrashBytes = 0;
+          for (const key of Object.values(stored.objects!.trash ?? {})) {
+            const head = await f.env.BUCKET.head(
+              absoluteKey(f.backupId, key),
+            );
+            expect(head).not.toBeNull();
+            actualTrashBytes += head!.size;
+            const parsed = await readJson<Record<string, unknown>>(
+              f.env,
+              absoluteKey(f.backupId, key),
+            );
+            expect(Object.keys(parsed ?? {}).length).toBeGreaterThan(0);
+          }
+          expect(lastEviction.usedBytes).toBe(actualTrashBytes);
+
+          const index = await readCurrent(f.env, f.backupId, "index");
+          for (const id of ids) {
+            expect(index.tombstones).toHaveProperty(id);
+          }
+          const kept = Object.assign(
+            {},
+            ...(await Promise.all(
+              Object.values(stored.objects!.trash ?? {}).map((key) =>
+                readJson<any>(f.env, absoluteKey(f.backupId, key)),
+              ),
+            )),
+          );
+          expect(kept).not.toHaveProperty(ids[0]);
+          expect(kept).toHaveProperty(ids[ids.length - 1]);
+
+          const changesRes = await handleGetCloudBackupChanges(
+            new Request("https://example.test/changes?since=1", {
+              headers: { Authorization: `Bearer ${f.ownerCode}` },
+            }),
+            f.env,
+            f.backupId,
+          );
+          const changesJson = (await changesRes.json()) as any;
+          const tombstoneIds = (changesJson.tombstones ?? []).map(
+            (t: { id: string }) => t.id,
+          );
+          for (const id of ids) {
+            expect(tombstoneIds).toContain(id);
+          }
+        } finally {
+          limits.maxTrashBytes = original;
+        }
+      });
+
+      it("does not pin assets of an evicted trashed map", async () => {
+        const f = await seeded();
+        const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+        const original = limits.maxTrashBytes;
+        limits.maxTrashBytes = 600;
+        try {
+          await f.env.BUCKET.put(
+            `cloud-backup/${f.backupId}/assets/map-asset-old`,
+            new Uint8Array([1, 2, 3]),
+          );
+          let manifest = f.manifest;
+          const upMap = await send(f, manifest, {
+            mapUpserts: [
+              {
+                item: { id: "map-old", name: "Old Map", notes: "m".repeat(350) },
+                assets: [
+                  {
+                    path: "maps/old.png",
+                    assetId: "map-asset-old",
+                    mimeType: "image/png",
+                  },
+                ],
+              },
+            ],
+          });
+          manifest = ((await upMap.json()) as any).manifest;
+          const delMap = await send(f, manifest, { mapDeletes: ["map-old"] });
+          manifest = ((await delMap.json()) as any).manifest;
+
+          const upEnt = await send(f, manifest, {
+            upserts: [{ id: "e-big", title: "Big", body: "b".repeat(450) }],
+          });
+          manifest = ((await upEnt.json()) as any).manifest;
+          const delEnt = await send(f, manifest, {
+            deletes: ["e-big"],
+            assetIds: [],
+          });
+          const delJson = (await delEnt.json()) as any;
+          expect(delEnt.status).toBe(200);
+          expect(delJson.trashEvicted).toBeDefined();
+          expect(
+            await f.env.BUCKET.head(
+              `cloud-backup/${f.backupId}/assets/map-asset-old`,
+            ),
+          ).toBeNull();
+        } finally {
+          limits.maxTrashBytes = original;
+        }
+      });
     });
   });
 });

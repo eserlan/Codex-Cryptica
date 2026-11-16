@@ -297,3 +297,73 @@ describe("who deleted it", () => {
     expect(await deletedBy("Mara", "owner")).toBe("owner");
   });
 });
+
+describe("trash storage usage reporting", () => {
+  it("reports usedBytes and maxBytes for empty, populated, and evicted trash", async () => {
+    const fx = await shared();
+    const emptyRes = await call(fx, "GET", "/trash", { key: fx.ownerCode });
+    expect(emptyRes.status).toBe(200);
+    expect(await emptyRes.json()).toMatchObject({
+      usedBytes: 0,
+      maxBytes: CLOUD_BACKUP_LIMITS.maxTrashBytes,
+      items: [],
+    });
+
+    await push(fx, { deletes: ["x"] });
+    const stored = (await readManifest(fx.env, fx.backupId))!;
+    let expectedBytes = 0;
+    for (const ref of Object.values(stored.objects!.trash ?? {})) {
+      expectedBytes +=
+        (
+          await fx.env.BUCKET.head(
+            `cloud-backup/${fx.backupId}/${ref}`,
+          )
+        )?.size ?? 0;
+    }
+    expect(expectedBytes).toBeGreaterThan(0);
+
+    const populatedRes = await call(fx, "GET", "/trash", {
+      key: fx.ownerCode,
+    });
+    expect(await populatedRes.json()).toMatchObject({
+      usedBytes: expectedBytes,
+      maxBytes: CLOUD_BACKUP_LIMITS.maxTrashBytes,
+    });
+
+    const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
+    const original = limits.maxTrashBytes;
+    limits.maxTrashBytes = 400;
+    try {
+      await push(fx, {
+        upserts: [
+          { id: "big-1", title: "Big 1", body: "a".repeat(300) },
+          { id: "big-2", title: "Big 2", body: "b".repeat(300) },
+        ],
+      });
+      await push(fx, { deletes: ["big-1"] });
+      await push(fx, { deletes: ["big-2"] });
+
+      const afterRes = await call(fx, "GET", "/trash", { key: fx.ownerCode });
+      const afterBody = (await afterRes.json()) as {
+        usedBytes: number;
+        maxBytes: number;
+      };
+      expect(afterBody.maxBytes).toBe(400);
+      expect(afterBody.usedBytes).toBeLessThanOrEqual(400);
+
+      const afterStored = (await readManifest(fx.env, fx.backupId))!;
+      let actualAfterBytes = 0;
+      for (const ref of Object.values(afterStored.objects!.trash ?? {})) {
+        actualAfterBytes +=
+          (
+            await fx.env.BUCKET.head(
+              `cloud-backup/${fx.backupId}/${ref}`,
+            )
+          )?.size ?? 0;
+      }
+      expect(afterBody.usedBytes).toBe(actualAfterBytes);
+    } finally {
+      limits.maxTrashBytes = original;
+    }
+  });
+});

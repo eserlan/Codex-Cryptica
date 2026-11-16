@@ -73,6 +73,7 @@ async function commitSnapshot(
     feedHorizon: revision,
   };
   const base = await resolveObjects(env, backupId, auth.objects);
+  let carriedTrash: Record<string, string> = {};
   if (entities) {
     // Schema v2 (#3354): shard the entities so later uploads can be deltas.
     const { entities: _entities, ...rest } = payload.bundle as Record<
@@ -135,11 +136,14 @@ async function commitSnapshot(
     const carried = await carryTombstones(
       env,
       backupId,
+      tag,
       base,
       new Set([...entities, ...maps, ...canvases].map((entity) => entity.id)),
     );
-    const trash = await stageShards(env, backupId, tag, carried.trash, "trash");
-    if (Object.keys(trash).length > 0) staged.trash = trash;
+    if (Object.keys(carried.stagedTrash).length > 0) {
+      staged.trash = carried.stagedTrash;
+    }
+    carriedTrash = carried.trash;
     staged.index = await stageIndex(
       env,
       backupId,
@@ -164,7 +168,11 @@ async function commitSnapshot(
     );
   }
   staged.bundle = stagedName(tag, "bundle.json");
-  committed.sizeBytes = await reachableBytes(env, backupId, staged);
+  const objects: BackupObjects =
+    Object.keys(carriedTrash).length > 0
+      ? { ...staged, trash: carriedTrash }
+      : staged;
+  committed.sizeBytes = await reachableBytes(env, backupId, objects);
 
   return publishCommit(
     request,
@@ -172,7 +180,7 @@ async function commitSnapshot(
     backupId,
     {
       committed,
-      objects: staged,
+      objects,
       staged,
       base,
       ownerCodeHash: auth.ownerCodeHash,

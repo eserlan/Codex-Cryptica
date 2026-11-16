@@ -52,7 +52,11 @@ import {
   asItems,
   wholeShardNames,
 } from "./cloud-backup-whole-items";
-import { evictOldestTrash, purgeExpiredTrash } from "./cloud-backup-trash";
+import {
+  createTrashDropPlan,
+  evictOldestTrash,
+  purgeExpiredTrash,
+} from "./cloud-backup-trash";
 import { readAuthorizedJsonBody } from "./cloud-backup-auth";
 
 const RollbackBodySchema = z
@@ -271,14 +275,23 @@ async function planRollback(
     { meta: current.canvasMeta, tombstones, trash },
     stamp,
   );
+  const trashDrops = createTrashDropPlan();
   const purgedRev = await purgeExpiredTrash(
     env,
     backupId,
     base,
     trash,
     tombstones,
+    trashDrops,
   );
-  await evictOldestTrash(env, backupId, base, trash, tombstones);
+  const trashEvicted = await evictOldestTrash(
+    env,
+    backupId,
+    base,
+    trash,
+    tombstones,
+    trashDrops,
+  );
 
   const bundle = nextBundleFor(currentBundle, pointBundle);
   const projected =
@@ -300,6 +313,8 @@ async function planRollback(
       purgedRev,
       shards,
       trash,
+      trashDrops,
+      ...(trashEvicted ? { trashEvicted } : {}),
       tombstones,
       hashes,
       meta,
@@ -387,6 +402,7 @@ export async function handleCloudBackupRollback(
   let objects: BackupObjects;
   let base: BackupObjects;
   let counts: RollbackCounts;
+  let trashEvicted: Awaited<ReturnType<typeof evictOldestTrash>>;
   try {
     base = await resolveObjects(env, backupId, auth.objects);
     const plan = await planRollback(env, backupId, base, point, {
@@ -395,6 +411,7 @@ export async function handleCloudBackupRollback(
       editedAt: lastPushedAt,
     });
     counts = plan.counts;
+    trashEvicted = plan.prepared.trashEvicted;
     const oversized = sizeLimitResponse(
       request,
       plan.prepared.projectedBytes,
@@ -403,7 +420,14 @@ export async function handleCloudBackupRollback(
     );
     if (oversized) return oversized;
     if (dryRun) {
-      return json(request, { preview: { date, revision, ...counts } });
+      return json(request, {
+        preview: {
+          date,
+          revision,
+          ...counts,
+          ...(trashEvicted ? { trashEvicted } : {}),
+        },
+      });
     }
 
     ({ staged, objects } = await stageDelta(
@@ -458,6 +482,10 @@ export async function handleCloudBackupRollback(
     return storageUnavailable(request);
   }
   return response.ok
-    ? json(request, { manifest: committed, rollback: counts })
+    ? json(request, {
+        manifest: committed,
+        rollback: counts,
+        ...(trashEvicted ? { trashEvicted } : {}),
+      })
     : response;
 }
