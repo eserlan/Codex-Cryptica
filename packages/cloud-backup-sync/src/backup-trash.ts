@@ -26,6 +26,8 @@ const TrashItemSchema = z.object({
 const TrashListSchema = z.object({
   revision: z.number().int().nonnegative(),
   items: z.array(TrashItemSchema),
+  usedBytes: z.number().int().nonnegative().optional(),
+  maxBytes: z.number().int().positive().optional(),
 });
 
 const TrashEntitySchema = z.object({
@@ -38,7 +40,13 @@ const TrashEntitySchema = z.object({
 export type CloudBackupTrashItem = z.infer<typeof TrashItemSchema>;
 
 export type CloudBackupTrashOutcome =
-  | { kind: "items"; revision: number; items: CloudBackupTrashItem[] }
+  | {
+      kind: "items";
+      revision: number;
+      items: CloudBackupTrashItem[];
+      usedBytes?: number;
+      maxBytes?: number;
+    }
   /** An older worker without the trash route, or a body this client cannot read. */
   | { kind: "unsupported" }
   | { kind: "off" }

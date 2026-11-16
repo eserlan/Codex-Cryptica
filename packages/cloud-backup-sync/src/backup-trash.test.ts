@@ -90,6 +90,33 @@ describe("fetchCloudBackupTrash", () => {
       status: 500,
     });
   });
+
+  it("parses usedBytes and maxBytes when present and succeeds when omitted", async () => {
+    const withUsage = await enabled({
+      ok: true,
+      status: 200,
+      body: { revision: 2, items: [], usedBytes: 1024, maxBytes: 52428800 },
+    });
+    expect(await fetchCloudBackupTrash(withUsage.runtime, "v-1")).toEqual({
+      kind: "items",
+      revision: 2,
+      items: [],
+      usedBytes: 1024,
+      maxBytes: 52428800,
+    });
+
+    const older = await enabled({
+      ok: true,
+      status: 200,
+      body: { revision: 2, items: [] },
+    });
+    const olderOut = await fetchCloudBackupTrash(older.runtime, "v-1");
+    expect(olderOut).toEqual({
+      kind: "items",
+      revision: 2,
+      items: [],
+    });
+  });
 });
 
 describe("fetchCloudBackupTrashItem", () => {

@@ -1,4 +1,6 @@
 /** Payloads, outcomes and instrumentation shared by cloud backup operations. */
+import type { CloudBackupTrashEviction } from "schema";
+
 export interface VaultBundlePayload {
   vaultTitle: string;
   bundle: unknown;
@@ -36,7 +38,7 @@ export interface CloudBackupTiming {
 }
 
 export type CloudBackupOutcome<T> =
-  | { ok: true; value: T }
+  | { ok: true; value: T; trashEvicted?: CloudBackupTrashEviction }
   | {
       ok: false;
       error: string;

@@ -131,4 +131,43 @@ describe("rollBackCloudBackup", () => {
       await rollBackCloudBackup(net.runtime, "v-1", { date: POINT.date }),
     ).toEqual({ kind: "failed", error: "offline" });
   });
+
+  it("propagates trashEvicted on preview and rolledBack when present and omits when absent", async () => {
+    const evicted = { evictedCount: 3, usedBytes: 900, maxBytes: 1000 };
+    const prev = await enabled({
+      ok: true,
+      status: 200,
+      body: {
+        preview: { date: POINT.date, revision: 7, ...COUNTS, trashEvicted: evicted },
+      },
+    });
+    expect(
+      await rollBackCloudBackup(prev.runtime, "v-1", {
+        date: POINT.date,
+        dryRun: true,
+      }),
+    ).toEqual({
+      kind: "preview",
+      date: POINT.date,
+      revision: 7,
+      ...COUNTS,
+      trashEvicted: evicted,
+    });
+
+    const done = await enabled({
+      ok: true,
+      status: 200,
+      body: { manifest: {}, rollback: COUNTS, trashEvicted: evicted },
+    });
+    expect(
+      await rollBackCloudBackup(done.runtime, "v-1", {
+        date: POINT.date,
+        baseRevision: 7,
+      }),
+    ).toEqual({
+      kind: "rolledBack",
+      counts: COUNTS,
+      trashEvicted: evicted,
+    });
+  });
 });
