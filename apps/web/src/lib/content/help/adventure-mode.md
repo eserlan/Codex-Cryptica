@@ -47,7 +47,7 @@ navigation menu. If you have no active adventure, choose a starting approach:
   Markdown file up to 2 MiB or a text-based PDF file up to 20 MiB and 500
   pages, then review the extracted sections, scenes, NPCs, clues and secrets.
   Extraction happens locally on your device. Scanned or image-only PDFs,
-  encrypted or password-protected PDFs, and unreadable PDFs are rejected with
+  encrypted or locked PDFs, and unreadable PDFs are rejected with
   nothing saved. PDF imports show page references (such as `p. 3` or
   `pp. 2–4`) in the review. You can correct section assignments and secret
   visibility before approving. Approval locks the reviewed package as a
