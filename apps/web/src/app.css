@@ -790,6 +790,36 @@
   max-width: 100%;
 }
 
+/* Generated Markdown tables use a contained scroll wrapper and theme-aware cells. */
+.seo-md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.seo-md th,
+.seo-md td {
+  border: 1px solid
+    color-mix(in srgb, var(--color-theme-border) 75%, transparent);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+.seo-md th {
+  font-family: var(--font-header);
+  font-weight: 700;
+  color: var(--color-theme-text);
+  background: color-mix(in srgb, var(--color-theme-surface) 80%, transparent);
+  white-space: nowrap;
+}
+.seo-rail.seo-md table {
+  font-size: 0.8125rem;
+}
+.seo-rail.seo-md th,
+.seo-rail.seo-md td {
+  padding: 0.375rem 0.5rem;
+}
+
 /*
  * Text-entry controls must be at least 16px on mobile (#3718). Unlayered and
  * !important so it beats per-component text-xs/text-[10px] utilities; it also

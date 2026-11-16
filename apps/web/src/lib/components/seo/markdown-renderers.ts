@@ -84,7 +84,7 @@ export function renderGeneratorMarkdown(
   variant: "default" | "names" = "default",
 ): string {
   const safeValue = escapeGeneratorHtml(value);
-  return renderMd(
+  const html = renderMd(
     safeValue
       // bold-key variant: "- **Key**: value" or "* **Key**: value"
       .replace(/^[*-] \*\*([^*\n]+?)(?::\*\*|\*\*:)[ \t]+(.*)$/gm, (_, k, v) =>
@@ -95,6 +95,10 @@ export function renderGeneratorMarkdown(
         labelValueHtml(k, v, variant),
       ),
     { allowImages: false },
+  );
+  return html.replace(
+    /<table\b[^>]*>[\s\S]*?<\/table>/g,
+    '<div class="overflow-x-auto max-w-full my-3">$&</div>',
   );
 }
 

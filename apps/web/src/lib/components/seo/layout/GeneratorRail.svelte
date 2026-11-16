@@ -26,14 +26,14 @@
 >
   GM Reference
 </p>
-<div class="sticky top-24 flex flex-col gap-6">
+<div class="sticky top-24 flex min-w-0 flex-col gap-6">
   <div
-    class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
+    class="min-w-0 p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
   >
     {#if generatedData}
       <div
         in:fade={{ duration: 250 }}
-        class="seo-rail seo-md text-base leading-relaxed text-theme-text/85 {variant ===
+        class="seo-rail seo-md min-w-0 text-base leading-relaxed text-theme-text/85 {variant ===
         'names'
           ? 'py-2'
           : ''}"

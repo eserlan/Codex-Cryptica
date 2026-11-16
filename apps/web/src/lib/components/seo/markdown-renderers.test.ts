@@ -111,6 +111,21 @@ describe("renderGeneratorMarkdown", () => {
     expect(result).not.toContain("https://tracker.example");
     expect(result).toContain("tracking pixel");
   });
+
+  it("wraps GFM tables in an overflow-x-auto container", () => {
+    const tableMd = [
+      "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
+      "|---|---|---|---|---|",
+      "| Suspect A | Investigation stalls | Burns ledger | Ash in brazier | Ledger fragment |",
+    ].join("\n");
+    const result = renderGeneratorMarkdown(tableMd);
+    const container = document.createElement("div");
+    container.innerHTML = result;
+    const table = container.querySelector("table");
+    expect(table).not.toBeNull();
+    expect(table?.parentElement?.className).toContain("overflow-x-auto");
+    expect(table?.parentElement?.className).toContain("max-w-full");
+  });
 });
 
 describe("renderGeneratorLore", () => {

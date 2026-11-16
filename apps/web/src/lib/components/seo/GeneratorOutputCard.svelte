@@ -156,7 +156,7 @@
   tabindex="-1"
   role="region"
   aria-label="Generated Output Workspace"
-  class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
+  class="relative flex-grow min-w-0 p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
 >
   {#if isBusy}
     <div
@@ -407,7 +407,7 @@
       {#snippet generatedDocument()}
         <div
           role="none"
-          class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
+          class="seo-md min-w-0 break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
           'names'
             ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
             : 'space-y-4'}"
