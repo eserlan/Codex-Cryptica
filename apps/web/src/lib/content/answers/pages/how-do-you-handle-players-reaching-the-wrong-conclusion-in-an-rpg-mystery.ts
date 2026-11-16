@@ -203,6 +203,20 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
       linkText: "Map clues and suspects in Codex Cryptica",
       href: "/solutions/rpg-knowledge-graph",
     },
+    relatedTools: [
+      {
+        title: "Mystery and investigation generator",
+        description:
+          "Prepare fixed facts, suspect timelines, and independent clue paths so wrong theories can be tested honestly against the truth.",
+        href: "/generators/mystery-investigation",
+      },
+      {
+        title: "NPC generator",
+        description:
+          "Create witnesses, suspects, and officials with distinct motives and alibis to question during the case.",
+        href: "/generators/npc",
+      },
+    ],
     relatedAnswers: [
       "how-do-you-run-a-mystery-without-railroading",
       "how-do-i-run-an-investigator-without-sidelining-the-party",
