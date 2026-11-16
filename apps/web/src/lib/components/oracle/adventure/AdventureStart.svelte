@@ -68,25 +68,29 @@
     isManualSeed ? "Cancel prepared adventure" : "Cancel selected rumour",
   );
 
-  function startInput(): Parameters<AdventureManager["start"]>[0] | null {
-    if (!title.trim() || !premise.trim()) return null;
-    const canonical = characters.find(
-      (character) => character.id === selectedCharacterId,
-    );
-    if (!canonical && !characterName.trim()) return null;
+  type AdventureStartInput = Parameters<AdventureManager["start"]>[0];
+
+  function buildPlayerCharacter(
+    canonical: { id: string; name: string } | undefined,
+  ): AdventureStartInput["playerCharacter"] | null {
+    if (canonical)
+      return {
+        kind: "canonical",
+        name: canonical.name,
+        recordId: canonical.id,
+      };
+    if (!characterName.trim()) return null;
     return {
-      vaultId,
-      title,
-      premise,
-      playerCharacter: canonical
-        ? { kind: "canonical", name: canonical.name, recordId: canonical.id }
-        : {
-            kind: "provisional",
-            name: characterName,
-            description: characterDescription || characterName,
-          },
-      // The source list records explicit anchor provenance, so a
-      // chosen Vault character must be listed to reach Oracle as canonical text.
+      kind: "provisional",
+      name: characterName,
+      description: characterDescription || characterName,
+    };
+  }
+
+  function optionalStartContext(
+    canonical: { id: string; name: string } | undefined,
+  ): Partial<AdventureStartInput> {
+    return {
       ...(canonical
         ? {
             sourceRecords: [
@@ -102,6 +106,23 @@
         : {}),
       ...(scenarioSeed ? { scenarioSeed } : {}),
       ...(sourcePackage ? { sourcePackage } : {}),
+    };
+  }
+
+  function startInput(): AdventureStartInput | null {
+    if (!title.trim() || !premise.trim()) return null;
+    const canonical = characters.find(
+      (character) => character.id === selectedCharacterId,
+    );
+    const playerCharacter = buildPlayerCharacter(canonical);
+    if (!playerCharacter) return null;
+    return {
+      vaultId,
+      title,
+      premise,
+      playerCharacter,
+      // Listing the canonical Vault character lets Oracle use it as grounded text.
+      ...optionalStartContext(canonical),
     };
   }
 
