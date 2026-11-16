@@ -407,6 +407,56 @@ interface GroupSink {
   groupedCurrent: Set<string>;
 }
 
+function collectSplit(
+  entry: AdventureJsonCorrespondingEntry,
+  byPrevious: Map<string, string[]>,
+  seen: Set<string>,
+  sink: GroupSink,
+): void {
+  const key = `split:${entry.collection}:${entry.previousId}`;
+  if ((byPrevious.get(entry.previousId)?.length ?? 0) <= 1 || seen.has(key)) {
+    return;
+  }
+  seen.add(key);
+  const currentIds = [...(byPrevious.get(entry.previousId) ?? [])].sort();
+  for (const id of currentIds) {
+    sink.groupedCurrent.add(`${entry.collection}:${id}`);
+  }
+  sink.groupedPrevious.add(`${entry.collection}:${entry.previousId}`);
+  sink.groups.push({
+    kind: "split",
+    collection: entry.collection,
+    previousIds: [entry.previousId],
+    currentIds,
+    reason: `Split in "${entry.collection}": "${entry.previousId}" corresponds to ${currentIds.length} current entries and needs reviewer confirmation.`,
+  });
+}
+
+function collectMerge(
+  entry: AdventureJsonCorrespondingEntry,
+  byCurrent: Map<string, string[]>,
+  seen: Set<string>,
+  sink: GroupSink,
+): void {
+  const key = `merge:${entry.collection}:${entry.currentId}`;
+  if ((byCurrent.get(entry.currentId)?.length ?? 0) <= 1 || seen.has(key)) {
+    return;
+  }
+  seen.add(key);
+  const previousIds = [...(byCurrent.get(entry.currentId) ?? [])].sort();
+  for (const id of previousIds) {
+    sink.groupedPrevious.add(`${entry.collection}:${id}`);
+  }
+  sink.groupedCurrent.add(`${entry.collection}:${entry.currentId}`);
+  sink.groups.push({
+    kind: "merge",
+    collection: entry.collection,
+    previousIds,
+    currentIds: [entry.currentId],
+    reason: `Merge in "${entry.collection}": ${previousIds.length} previous entries correspond to "${entry.currentId}" and need reviewer confirmation.`,
+  });
+}
+
 function collectGroup(
   entry: AdventureJsonCorrespondingEntry,
   byPrevious: Map<string, string[]>,
@@ -414,44 +464,8 @@ function collectGroup(
   seen: Set<string>,
   sink: GroupSink,
 ): void {
-  const splitKey = `split:${entry.collection}:${entry.previousId}`;
-  if (
-    (byPrevious.get(entry.previousId)?.length ?? 0) > 1 &&
-    !seen.has(splitKey)
-  ) {
-    seen.add(splitKey);
-    const currentIds = [...(byPrevious.get(entry.previousId) ?? [])].sort();
-    for (const id of currentIds) {
-      sink.groupedCurrent.add(`${entry.collection}:${id}`);
-    }
-    sink.groupedPrevious.add(`${entry.collection}:${entry.previousId}`);
-    sink.groups.push({
-      kind: "split",
-      collection: entry.collection,
-      previousIds: [entry.previousId],
-      currentIds,
-      reason: `Split in "${entry.collection}": "${entry.previousId}" corresponds to ${currentIds.length} current entries and needs reviewer confirmation.`,
-    });
-  }
-  const mergeKey = `merge:${entry.collection}:${entry.currentId}`;
-  if (
-    (byCurrent.get(entry.currentId)?.length ?? 0) > 1 &&
-    !seen.has(mergeKey)
-  ) {
-    seen.add(mergeKey);
-    const previousIds = [...(byCurrent.get(entry.currentId) ?? [])].sort();
-    for (const id of previousIds) {
-      sink.groupedPrevious.add(`${entry.collection}:${id}`);
-    }
-    sink.groupedCurrent.add(`${entry.collection}:${entry.currentId}`);
-    sink.groups.push({
-      kind: "merge",
-      collection: entry.collection,
-      previousIds,
-      currentIds: [entry.currentId],
-      reason: `Merge in "${entry.collection}": ${previousIds.length} previous entries correspond to "${entry.currentId}" and need reviewer confirmation.`,
-    });
-  }
+  collectSplit(entry, byPrevious, seen, sink);
+  collectMerge(entry, byCurrent, seen, sink);
 }
 
 function parseCorrespondence(
