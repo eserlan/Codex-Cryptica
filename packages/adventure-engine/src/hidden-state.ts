@@ -1,4 +1,5 @@
 import type { AdventureSession, AdventureTurnProposal } from "./types";
+import { HISTORICAL_ANCHOR_TITLE_SECRET_ID } from "./historical-anchor-types";
 
 export interface HiddenLeakageFinding {
   field: string;
@@ -135,12 +136,35 @@ export function detectHiddenTextLeakage(
   return detectHiddenTextFields(session, [["root", text]], new Set());
 }
 
+function historicalAnchorSecretSources(
+  session: AdventureSession,
+): Array<{ id: string; text: string; revealed: boolean }> {
+  const anchor = session.historicalAnchor;
+  if (!anchor) return [];
+  const revealed = new Set(anchor.revealedFactIds);
+  return [
+    ...anchor.baseline.documentedFacts.map((fact) => ({
+      id: fact.id,
+      text: fact.text,
+      revealed: revealed.has(fact.id),
+    })),
+    {
+      id: HISTORICAL_ANCHOR_TITLE_SECRET_ID,
+      text: anchor.baseline.title,
+      revealed: revealed.has(HISTORICAL_ANCHOR_TITLE_SECRET_ID),
+    },
+  ].filter((source) => source.text.trim().length > 0);
+}
+
 function detectHiddenTextFields(
   session: AdventureSession,
   fields: Array<[string, string]>,
   revealed: Set<string>,
 ): HiddenLeakageFinding[] {
-  const structuredSecrets = scenarioSecretSources(session).map((secret) => ({
+  const structuredSecrets = [
+    ...scenarioSecretSources(session),
+    ...historicalAnchorSecretSources(session),
+  ].map((secret) => ({
     id: secret.id,
     text: secret.text,
     status: secret.revealed ? ("revealed" as const) : ("hidden" as const),
@@ -174,6 +198,7 @@ export function revealedSecretIds(
   const known = new Set([
     ...session.hiddenState.secrets.map((secret) => secret.id),
     ...scenarioSecretSources(session).map((secret) => secret.id),
+    ...historicalAnchorSecretSources(session).map((secret) => secret.id),
   ]);
   return ids.filter((id) => known.has(id));
 }

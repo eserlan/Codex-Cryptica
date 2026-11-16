@@ -1,5 +1,6 @@
 import type { AdventurePerson } from "./people-types";
 import type { AdventureScene } from "./scene-types";
+import type { HistoricalAnchor } from "./historical-anchor-types";
 
 export type AdventureStatus = "active" | "archived";
 export type ProposalKind = "complete" | "roll-required";
@@ -416,6 +417,8 @@ export interface AdventureSession {
   scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
   worldEntry?: WorldEntryContext;
+  /** Optional anchored historical event and continuity policy; absent on ordinary adventures. */
+  historicalAnchor?: HistoricalAnchor;
   /** Optional for backwards-compatible local-first sessions. */
   worldTime?: WorldTimeState;
   /** Places visited so far. Absent on sessions from before places existed. */
