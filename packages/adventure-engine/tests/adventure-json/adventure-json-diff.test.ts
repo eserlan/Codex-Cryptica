@@ -388,6 +388,66 @@ describe("diffAdventureJsonVersions", () => {
     expect(mergeDiff.unresolved.some((u) => u.kind === "merge")).toBe(true);
   });
 
+  it("pairs the same ID string mapped in two different collections as two one-to-one correspondences", () => {
+    const previous = makePackage({
+      clues: [
+        {
+          id: "ref-1",
+          text: "Muddy bootprints lead to the lever.",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      secrets: [
+        {
+          id: "ref-1",
+          text: "The miller sabotaged the sluice.",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const next = makePackage({
+      clues: [
+        {
+          id: "clue-1",
+          text: "Muddy bootprints lead to the lever and a hatch.",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      secrets: [
+        {
+          id: "sec-1",
+          text: "The miller sabotaged the sluice and hid the ledger.",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+      extensions: {
+        "codex-cryptica.adventure-correspondence": [
+          { previousId: "ref-1", currentId: "clue-1", collection: "clues" },
+          { previousId: "ref-1", currentId: "sec-1", collection: "secrets" },
+        ],
+      },
+    });
+    const diff = diffAdventureJsonVersions(previous, next);
+    expect(diff.groups).toHaveLength(0);
+    expect(diff.collections.clues.changed).toHaveLength(1);
+    expect(diff.collections.clues.changed[0]?.previousId).toBe("ref-1");
+    expect(diff.collections.clues.changed[0]?.id).toBe("clue-1");
+    expect(diff.collections.clues.added).toHaveLength(0);
+    expect(diff.collections.clues.removed).toHaveLength(0);
+    expect(diff.collections.secrets.changed).toHaveLength(1);
+    expect(diff.collections.secrets.changed[0]?.previousId).toBe("ref-1");
+    expect(diff.collections.secrets.changed[0]?.id).toBe("sec-1");
+    expect(diff.collections.secrets.added).toHaveLength(0);
+    expect(diff.collections.secrets.removed).toHaveLength(0);
+    expect(
+      diff.unresolved.some((u) => u.kind === "split" || u.kind === "merge"),
+    ).toBe(false);
+  });
+
   it("pairs one-to-one supplied correspondence as changed and reports invalid or conflicting mappings as unresolved without throwing", () => {
     const previous = makePackage();
     const mapped = makePackage({

@@ -359,12 +359,14 @@ function indexEntries(entries: AdventureJsonCorrespondingEntry[]): {
   const byPrevious = new Map<string, string[]>();
   const byCurrent = new Map<string, string[]>();
   for (const entry of entries) {
-    const prevList = byPrevious.get(entry.previousId) ?? [];
+    const previousKey = `${entry.collection}:${entry.previousId}`;
+    const currentKey = `${entry.collection}:${entry.currentId}`;
+    const prevList = byPrevious.get(previousKey) ?? [];
     prevList.push(entry.currentId);
-    byPrevious.set(entry.previousId, prevList);
-    const currList = byCurrent.get(entry.currentId) ?? [];
+    byPrevious.set(previousKey, prevList);
+    const currList = byCurrent.get(currentKey) ?? [];
     currList.push(entry.previousId);
-    byCurrent.set(entry.currentId, currList);
+    byCurrent.set(currentKey, currList);
   }
   return { byPrevious, byCurrent };
 }
@@ -391,11 +393,12 @@ function buildGroups(
       groupedPrevious,
       groupedCurrent,
     });
-    const isSplit = (byPrevious.get(entry.previousId)?.length ?? 0) > 1;
-    const isMerge = (byCurrent.get(entry.currentId)?.length ?? 0) > 1;
+    const previousKey = `${entry.collection}:${entry.previousId}`;
+    const currentKey = `${entry.collection}:${entry.currentId}`;
+    const isSplit = (byPrevious.get(previousKey)?.length ?? 0) > 1;
+    const isMerge = (byCurrent.get(currentKey)?.length ?? 0) > 1;
     if (!isSplit && !isMerge) {
-      const key = `${entry.collection}:${entry.previousId}`;
-      if (!pairs.has(key)) pairs.set(key, entry.currentId);
+      if (!pairs.has(previousKey)) pairs.set(previousKey, entry.currentId);
     }
   }
   return { pairs, groups, groupedPrevious, groupedCurrent };
@@ -414,11 +417,12 @@ function collectSplit(
   sink: GroupSink,
 ): void {
   const key = `split:${entry.collection}:${entry.previousId}`;
-  if ((byPrevious.get(entry.previousId)?.length ?? 0) <= 1 || seen.has(key)) {
+  const entryKey = `${entry.collection}:${entry.previousId}`;
+  if ((byPrevious.get(entryKey)?.length ?? 0) <= 1 || seen.has(key)) {
     return;
   }
   seen.add(key);
-  const currentIds = [...(byPrevious.get(entry.previousId) ?? [])].sort();
+  const currentIds = [...(byPrevious.get(entryKey) ?? [])].sort();
   for (const id of currentIds) {
     sink.groupedCurrent.add(`${entry.collection}:${id}`);
   }
@@ -439,11 +443,12 @@ function collectMerge(
   sink: GroupSink,
 ): void {
   const key = `merge:${entry.collection}:${entry.currentId}`;
-  if ((byCurrent.get(entry.currentId)?.length ?? 0) <= 1 || seen.has(key)) {
+  const entryKey = `${entry.collection}:${entry.currentId}`;
+  if ((byCurrent.get(entryKey)?.length ?? 0) <= 1 || seen.has(key)) {
     return;
   }
   seen.add(key);
-  const previousIds = [...(byCurrent.get(entry.currentId) ?? [])].sort();
+  const previousIds = [...(byCurrent.get(entryKey) ?? [])].sort();
   for (const id of previousIds) {
     sink.groupedPrevious.add(`${entry.collection}:${id}`);
   }

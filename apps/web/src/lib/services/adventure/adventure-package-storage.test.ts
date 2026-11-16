@@ -129,7 +129,7 @@ describe("AdventurePackageRepository", () => {
     );
   });
 
-  it("saves AdventureJsonV1 under canonical hash, rejects overwrite, and lists alongside legacy packages", async () => {
+  it("saves AdventureJsonV1 under canonical hash, deduplicates re-save, and lists alongside legacy packages", async () => {
     const root = createInMemoryDirectoryHandle();
     const repo = new AdventurePackageRepository(async () => root);
 
