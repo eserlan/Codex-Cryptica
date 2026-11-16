@@ -7,6 +7,7 @@ import type { CommitMetadata } from "@codex/adventure-engine";
 import { diceParser } from "dice-engine";
 import type {
   AdventureSession,
+  AdventureSourcePackageRef,
   PlayerCharacter,
   ScenarioState,
   WorldEntryContext,
@@ -25,6 +26,7 @@ export function initialSession(input: {
   premise: string;
   playerCharacter: PlayerCharacter;
   sourceRecords?: AdventureSession["sourceRecords"];
+  sourcePackage?: AdventureSourcePackageRef;
   scenarioSeed?: ScenarioState;
   worldEntry?: WorldEntryContext;
   now: string;
@@ -43,6 +45,9 @@ export function initialSession(input: {
     playerCharacter: input.playerCharacter,
     premise: input.premise,
     sourceRecords: input.sourceRecords ?? [],
+    ...(input.sourcePackage
+      ? { sourcePackage: structuredClone(input.sourcePackage) }
+      : {}),
     ...(input.scenarioSeed
       ? {
           scenarioCollection: {

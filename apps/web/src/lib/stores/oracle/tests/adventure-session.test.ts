@@ -73,5 +73,23 @@ describe("adventure session setup", () => {
     const ordinary = initialSession({ ...startInput, now, idGenerator });
     expect(ordinary.places).toBeUndefined();
     expect(ordinary.currentPlaceId).toBeUndefined();
+    expect(ordinary.sourcePackage).toBeUndefined();
+  });
+
+  it("threads optional sourcePackage pinning into new sessions", () => {
+    const sourcePackage = {
+      packageId: "the-last-grind",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      hash: "b".repeat(64),
+    };
+    const session = initialSession({
+      ...startInput,
+      sourcePackage,
+      now,
+      idGenerator: () => "id-pinned",
+    });
+    expect(session.sourcePackage).toEqual(sourcePackage);
+    expect(parseAdventureSession(session).sourcePackage).toEqual(sourcePackage);
   });
 });

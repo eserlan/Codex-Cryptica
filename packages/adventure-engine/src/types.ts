@@ -399,6 +399,13 @@ export interface WorldEntryContext {
   scenePrompt?: string;
 }
 
+export interface AdventureSourcePackageRef {
+  packageId: string;
+  version: string;
+  formatVersion: string;
+  hash: string;
+}
+
 export interface AdventureSession {
   schemaVersion: 3;
   id: string;
@@ -412,6 +419,8 @@ export interface AdventureSession {
   playerCharacter: PlayerCharacter;
   premise: string;
   sourceRecords: SourceRecordReference[];
+  /** Optional pinned adventure package reference; absent on unimported or legacy sessions. */
+  sourcePackage?: AdventureSourcePackageRef;
   /** Optional structured situations; absent on ordinary adventures. */
   scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */

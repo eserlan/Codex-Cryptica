@@ -77,6 +77,41 @@ export function approveAdventurePackage(
   });
 }
 
+export async function writeAdventurePackageAtomically<T>(
+  io: AdventurePackageFileIO,
+  path: string,
+  existingRaw: string | null,
+  serialized: string,
+  verify: (written: string) => T | Promise<T>,
+): Promise<T> {
+  if (existingRaw === null && !io.remove) {
+    throw new Error(
+      "Adventure package storage must support removal before a package can be written safely.",
+    );
+  }
+
+  try {
+    await io.write(path, serialized);
+    const written = await io.read(path);
+    return await verify(written);
+  } catch (error) {
+    try {
+      if (existingRaw !== null) {
+        await io.write(path, existingRaw);
+      } else if (io.remove) {
+        await io.remove(path);
+      }
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        `Adventure package write failed and rollback also failed: ${String(cleanupError)}`,
+        { cause: cleanupError },
+      );
+    }
+    throw error;
+  }
+}
+
 export async function saveAdventurePackage(
   io: AdventurePackageFileIO,
   pkg: AdventureSourcePackage,
@@ -102,38 +137,19 @@ export async function saveAdventurePackage(
     }
   }
 
-  if (existingRaw === null && !io.remove) {
-    throw new Error(
-      "Adventure package storage must support removal before a package can be written safely.",
-    );
-  }
-
   const serialized = JSON.stringify(validated, null, 2);
-  try {
-    await io.write(path, serialized);
-    const written = await io.read(path);
-    const reparsed = parseStoredPackage(written, validated.documentHash);
-    return {
-      status: "created",
-      path,
-      package: reparsed,
-    };
-  } catch (error) {
-    try {
-      if (existingRaw !== null) {
-        await io.write(path, existingRaw);
-      } else if (io.remove) {
-        await io.remove(path);
-      }
-    } catch (cleanupError) {
-      throw new AggregateError(
-        [error, cleanupError],
-        `Adventure package write failed and rollback also failed: ${String(cleanupError)}`,
-        { cause: cleanupError },
-      );
-    }
-    throw error;
-  }
+  const reparsed = await writeAdventurePackageAtomically(
+    io,
+    path,
+    existingRaw,
+    serialized,
+    (written) => parseStoredPackage(written, validated.documentHash),
+  );
+  return {
+    status: "created",
+    path,
+    package: reparsed,
+  };
 }
 
 export async function importAndSaveAdventureMarkdown(
