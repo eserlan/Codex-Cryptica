@@ -53,6 +53,7 @@ describe("CloudBackupTrashSettings", () => {
     render(CloudBackupTrashSettings, { vaultId: "v1" });
     expect(trash.load).toHaveBeenCalledWith("v1");
     expect(screen.getByText("The trash is empty.")).toBeTruthy();
+    expect(screen.getByRole("status").getAttribute("aria-live")).toBe("polite");
   });
 
   it("shows a row with who, how long ago and the days left", () => {
@@ -168,7 +169,7 @@ describe("CloudBackupTrashSettings", () => {
     trash.items = [item()];
     trash.result = { outcome, title: "Old Dock" };
     render(CloudBackupTrashSettings, { vaultId: "v1" });
-    expect(screen.getByRole("status").textContent).toBe(text);
+    expect(screen.getByRole("status").textContent?.trim()).toBe(text);
   });
 
   it("qualifies retention copy, shows usage when available, and omits it when null", () => {
@@ -190,6 +191,9 @@ describe("CloudBackupTrashSettings", () => {
     const { unmount } = render(CloudBackupTrashSettings, { vaultId: "v1" });
     const warning = screen.getByText(/Shared trash is nearly full/i);
     expect(warning).toBeTruthy();
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-live")).toBe("polite");
+    expect(status.textContent).toContain(warning.textContent);
     expect(
       warning.parentElement
         ?.querySelector('[aria-hidden="true"]')

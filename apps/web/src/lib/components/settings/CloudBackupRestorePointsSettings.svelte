@@ -149,18 +149,20 @@
       Roll the whole group back to how the vault looked on an earlier day.
     </p>
 
-    <p class="mt-2 empty:hidden" role="status">{resultText ?? ""}</p>
-    {#if rollbackEvictionWarning}
-      <div
-        class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
-      >
-        <span
-          class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
-          aria-hidden="true"
-        ></span>
-        <p>{rollbackEvictionWarning}</p>
-      </div>
-    {/if}
+    <div class="mt-2" role="status" aria-live="polite">
+      <p class="empty:hidden">{resultText ?? ""}</p>
+      {#if rollbackEvictionWarning}
+        <div
+          class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
+        >
+          <span
+            class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
+            aria-hidden="true"
+          ></span>
+          <p>{rollbackEvictionWarning}</p>
+        </div>
+      {/if}
+    </div>
     <p class="mt-2 text-theme-danger empty:hidden" role="alert">
       {errorText ?? listError ?? ""}
     </p>

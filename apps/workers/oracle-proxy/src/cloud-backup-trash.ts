@@ -86,11 +86,22 @@ async function trashBytes(
   return total;
 }
 
-function evictLoadedEntry(shard: Shard, id: string): number {
+function evictLoadedEntry(
+  shard: Shard,
+  id: string,
+  shardName: string,
+  entryCounts: Map<string, number>,
+): number {
   if (!Object.hasOwn(shard, id)) return 0;
+  let entryCount = entryCounts.get(shardName);
+  if (entryCount === undefined) {
+    entryCount = Object.keys(shard).length;
+    entryCounts.set(shardName, entryCount);
+  }
   const entryBytes = jsonByteLength(id) + jsonByteLength(shard[id]) + 2;
-  const isLast = Object.keys(shard).length === 1;
+  const isLast = entryCount === 1;
   delete shard[id];
+  entryCounts.set(shardName, entryCount - 1);
   return entryBytes + (isLast ? 1 : 0);
 }
 
@@ -158,13 +169,14 @@ export async function evictOldestTrash(
   const oldestFirst = Object.values(tombstones).sort(
     (a, b) => a.rev - b.rev || (a.id < b.id ? -1 : 1),
   );
+  const loadedEntryCounts = new Map<string, number>();
   let evictedCount = 0;
   for (const { id } of oldestFirst) {
     if (total <= CLOUD_BACKUP_LIMITS.maxTrashBytes) break;
     const name = cloudBackupShardOf(id);
     const shard = loaded.get(name);
     const removed = shard
-      ? evictLoadedEntry(shard, id)
+      ? evictLoadedEntry(shard, id, name, loadedEntryCounts)
       : await evictUnloadedEntry(env, backupId, base, plan, name, id);
     if (removed === 0) continue;
     total -= removed;

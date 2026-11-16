@@ -48,6 +48,7 @@ describe("CloudBackupRestorePointsSettings", () => {
   it("lists the points with their entity count", () => {
     show();
     expect(screen.getByText("9 entities")).toBeTruthy();
+    expect(screen.getByRole("status").getAttribute("aria-live")).toBe("polite");
     expect(
       screen.getByRole("button", { name: "Roll back to this day" }),
     ).toBeTruthy();
@@ -113,15 +114,15 @@ describe("CloudBackupRestorePointsSettings", () => {
   it("shows the success and matching messages as a status", () => {
     rollback.result = { outcome: "rolledBack", date: "2026-11-01" };
     show();
-    expect(screen.getByRole("status").textContent).toMatch(
-      /^Rolled back to .*2026\.$/,
-    );
+    const status = screen.getByRole("status");
+    expect(status.getAttribute("aria-live")).toBe("polite");
+    expect(status.textContent?.trim()).toMatch(/^Rolled back to .*2026\.$/);
   });
 
   it("shows the matching message", () => {
     rollback.result = { outcome: "matches", date: "2026-11-01" };
     show();
-    expect(screen.getByRole("status").textContent).toBe(
+    expect(screen.getByRole("status").textContent?.trim()).toBe(
       "This vault already matches that day.",
     );
   });
@@ -197,6 +198,9 @@ describe("CloudBackupRestorePointsSettings", () => {
       /Shared trash reached its 50 MB limit\. 2 older deleted items/,
     );
     expect(warning).toBeTruthy();
+    const status = warning.closest('[role="status"]');
+    expect(status?.getAttribute("aria-live")).toBe("polite");
+    expect(status?.textContent).toContain(warning.textContent);
     expect(
       warning.parentElement
         ?.querySelector('[aria-hidden="true"]')
