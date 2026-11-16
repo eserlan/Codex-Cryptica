@@ -9,7 +9,11 @@ const rollback = vi.hoisted(() => ({
   result: null as {
     outcome: string;
     date: string;
-    trashEvicted?: { evictedCount: number; usedBytes: number; maxBytes: number };
+    trashEvicted?: {
+      evictedCount: number;
+      usedBytes: number;
+      maxBytes: number;
+    };
   } | null,
   resultVaultId: "v1" as string | null,
   load: vi.fn(async () => {}),
@@ -190,7 +194,9 @@ describe("CloudBackupRestorePointsSettings", () => {
     };
     show();
     expect(
-      screen.getByText(/Shared trash reached its 50 MB limit\. 2 older deleted items/),
+      screen.getByText(
+        /Shared trash reached its 50 MB limit\. 2 older deleted items/,
+      ),
     ).toBeTruthy();
   });
 });

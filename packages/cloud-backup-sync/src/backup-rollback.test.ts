@@ -138,7 +138,12 @@ describe("rollBackCloudBackup", () => {
       ok: true,
       status: 200,
       body: {
-        preview: { date: POINT.date, revision: 7, ...COUNTS, trashEvicted: evicted },
+        preview: {
+          date: POINT.date,
+          revision: 7,
+          ...COUNTS,
+          trashEvicted: evicted,
+        },
       },
     });
     expect(

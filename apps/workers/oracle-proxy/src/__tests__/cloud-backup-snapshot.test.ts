@@ -235,12 +235,14 @@ describe("cloud backup full snapshots", () => {
         backupId,
       );
     // Pick ids in distinct shards
-    const first = (await (
-      await commit([
-        { id: "keep-in-trash", title: "Keep" },
-        { id: "revive-me", title: "Revive" },
-      ])
-    ).json()).manifest;
+    const first = (
+      await (
+        await commit([
+          { id: "keep-in-trash", title: "Keep" },
+          { id: "revive-me", title: "Revive" },
+        ])
+      ).json()
+    ).manifest;
 
     await handleCloudBackupDelta(
       jsonRequest(
@@ -259,8 +261,8 @@ describe("cloud backup full snapshots", () => {
 
     const before = (await readManifest(env, backupId))!;
     const trashRefsBefore = before.objects!.trash!;
-    const shardKeep = Object.keys(trashRefsBefore).find((k) =>
-      trashRefsBefore[k],
+    const shardKeep = Object.keys(trashRefsBefore).find(
+      (k) => trashRefsBefore[k],
     );
     expect(shardKeep).toBeDefined();
 

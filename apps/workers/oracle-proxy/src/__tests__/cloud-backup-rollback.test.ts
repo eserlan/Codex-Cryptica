@@ -454,7 +454,9 @@ describe("owner rollback", () => {
 
     const normalPreview = await rollback(fx, { date: DAY1, dryRun: true });
     expect(normalPreview.status).toBe(200);
-    expect(((await normalPreview.json()) as any).preview.trashEvicted).toBeUndefined();
+    expect(
+      ((await normalPreview.json()) as any).preview.trashEvicted,
+    ).toBeUndefined();
 
     const limits = CLOUD_BACKUP_LIMITS as { maxTrashBytes: number };
     const original = limits.maxTrashBytes;
@@ -468,7 +470,9 @@ describe("owner rollback", () => {
         usedBytes: 0,
         maxBytes: 10,
       });
-      expect(previewJson.preview.trashEvicted.evictedCount).toBeGreaterThanOrEqual(1);
+      expect(
+        previewJson.preview.trashEvicted.evictedCount,
+      ).toBeGreaterThanOrEqual(1);
 
       const commitRes = await rollback(fx, {
         date: DAY1,

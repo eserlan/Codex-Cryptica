@@ -314,11 +314,8 @@ describe("trash storage usage reporting", () => {
     let expectedBytes = 0;
     for (const ref of Object.values(stored.objects!.trash ?? {})) {
       expectedBytes +=
-        (
-          await fx.env.BUCKET.head(
-            `cloud-backup/${fx.backupId}/${ref}`,
-          )
-        )?.size ?? 0;
+        (await fx.env.BUCKET.head(`cloud-backup/${fx.backupId}/${ref}`))
+          ?.size ?? 0;
     }
     expect(expectedBytes).toBeGreaterThan(0);
 
@@ -355,11 +352,8 @@ describe("trash storage usage reporting", () => {
       let actualAfterBytes = 0;
       for (const ref of Object.values(afterStored.objects!.trash ?? {})) {
         actualAfterBytes +=
-          (
-            await fx.env.BUCKET.head(
-              `cloud-backup/${fx.backupId}/${ref}`,
-            )
-          )?.size ?? 0;
+          (await fx.env.BUCKET.head(`cloud-backup/${fx.backupId}/${ref}`))
+            ?.size ?? 0;
       }
       expect(afterBody.usedBytes).toBe(actualAfterBytes);
     } finally {

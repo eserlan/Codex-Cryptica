@@ -11,7 +11,9 @@
   let { vaultId }: { vaultId: string } = $props();
 
   const DAY_MS = 24 * 60 * 60 * 1000;
-  const maxTrashMb = Math.round(CLOUD_BACKUP_LIMITS.maxTrashBytes / (1024 * 1024));
+  const maxTrashMb = Math.round(
+    CLOUD_BACKUP_LIMITS.maxTrashBytes / (1024 * 1024),
+  );
   const trash = cloudBackupStore.trash;
   const ago = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 

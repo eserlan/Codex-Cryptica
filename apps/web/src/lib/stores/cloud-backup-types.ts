@@ -62,7 +62,9 @@ export interface SnapshotOutcome {
   trashEvicted?: CloudBackupTrashEviction;
 }
 
-export function trashEvictionNotice(eviction: CloudBackupTrashEviction): string {
+export function trashEvictionNotice(
+  eviction: CloudBackupTrashEviction,
+): string {
   const { evictedCount } = eviction;
   const maxMb = Math.round(eviction.maxBytes / (1024 * 1024));
   return evictedCount === 1

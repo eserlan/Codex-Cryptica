@@ -647,9 +647,7 @@ describe("cloud backup incremental commits", () => {
           const stored = (await readManifest(f.env, f.backupId))!;
           let actualTrashBytes = 0;
           for (const key of Object.values(stored.objects!.trash ?? {})) {
-            const head = await f.env.BUCKET.head(
-              absoluteKey(f.backupId, key),
-            );
+            const head = await f.env.BUCKET.head(absoluteKey(f.backupId, key));
             expect(head).not.toBeNull();
             actualTrashBytes += head!.size;
             const parsed = await readJson<Record<string, unknown>>(
@@ -708,7 +706,11 @@ describe("cloud backup incremental commits", () => {
           const upMap = await send(f, manifest, {
             mapUpserts: [
               {
-                item: { id: "map-old", name: "Old Map", notes: "m".repeat(350) },
+                item: {
+                  id: "map-old",
+                  name: "Old Map",
+                  notes: "m".repeat(350),
+                },
                 assets: [
                   {
                     path: "maps/old.png",

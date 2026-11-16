@@ -77,10 +77,11 @@ export class CloudBackupRollback {
     vaultId: string,
     date: string,
   ): Promise<
-    ({
-      revision: number;
-      trashEvicted?: CloudBackupTrashEviction;
-    } & CloudBackupRollbackCounts) | null
+    | ({
+        revision: number;
+        trashEvicted?: CloudBackupTrashEviction;
+      } & CloudBackupRollbackCounts)
+    | null
   > {
     const deps = this.getDeps();
     if (!deps || this.busyDate) return null;
