@@ -26,14 +26,14 @@
 >
   GM Reference
 </p>
-<div class="sticky top-24 flex flex-col gap-6">
+<div class="sticky top-24 flex min-w-0 flex-col gap-6">
   <div
-    class="p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
+    class="min-w-0 p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
   >
     {#if generatedData}
       <div
         in:fade={{ duration: 250 }}
-        class="seo-rail seo-md text-base leading-relaxed text-theme-text/85 {variant ===
+        class="seo-rail seo-md min-w-0 text-base leading-relaxed text-theme-text/85 {variant ===
         'names'
           ? 'py-2'
           : ''}"
@@ -44,9 +44,7 @@
         {/if}
       </div>
     {:else}
-      <div
-        class="flex flex-col items-center text-center text-theme-muted/40 py-8"
-      >
+      <div class="flex flex-col items-center text-center text-theme-text py-8">
         <span aria-hidden="true" class="icon-[lucide--scroll] w-8 h-8 mb-3"
         ></span>
         <p class="text-sm uppercase tracking-widest font-header">

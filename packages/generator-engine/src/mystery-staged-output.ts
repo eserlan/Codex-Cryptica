@@ -191,10 +191,41 @@ function renderInvestigation(
   ].join("\n\n");
 }
 
-function renderConsequences(
-  pressure: Obj,
-  { personNames }: RenderContext,
+const tableCell = (value: string): string =>
+  value
+    .replace(/\r?\n+/g, " ")
+    .replace(/\|/g, "\\|")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .trim();
+
+function renderNextNpcMovesTable(
+  responses: unknown[],
+  personNames: Map<string, string>,
 ): string {
+  const header =
+    "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |\n|---|---|---|---|---|";
+  const rows = responses.map((value) => {
+    const response = record(value);
+    const id = text(response.personId);
+    const actor = tableCell(personNames.get(id) ?? readableUnknownId(id));
+    const trigger = tableCell(sentence(afterIf(response.trigger)));
+    const nextMove = tableCell(
+      sentence(afterIf(response.response).replace(/^then\s+/i, "")),
+    );
+    const observable = tableCell(sentence(response.observableEffect));
+    const rawLead = trimStop(response.testableLead);
+    const lead =
+      !rawLead || rawLead.toLowerCase() === "none"
+        ? "None"
+        : tableCell(sentence(rawLead));
+    return `| ${actor} | ${trigger} | ${nextMove} | ${observable} | ${lead} |`;
+  });
+  return [header, ...rows].join("\n");
+}
+
+function renderConsequences(pressure: Obj): string {
   return [
     section(
       "Pressure Clock",
@@ -202,14 +233,6 @@ function renderConsequences(
         list(pressure.pressureClock),
         (step, index) =>
           `${index + 1}. **When:** ${trimStop(step.trigger)}. **Then:** ${sentence(step.consequence)}`,
-      ),
-    ),
-    section(
-      "NPC Responses",
-      items(
-        list(pressure.npcResponses),
-        (response) =>
-          `- **${personNames.get(text(response.personId)) ?? text(response.personId)}:** If ${afterIf(response.trigger)}, then ${afterIf(response.response).replace(/^then\s+/i, "")}.`,
       ),
     ),
     section(
@@ -242,9 +265,13 @@ export function assembleOutput(
   const view = createRenderContext(foundation, cast, clues);
   const playerContent = renderPlayerContent(foundation, clues, pressure, view);
   const fixedTruth = renderFixedTruth(cast, view);
+  const npcMoves = section(
+    "If the Investigation Stalls: Next NPC Moves",
+    renderNextNpcMovesTable(list(pressure.npcResponses), view.personNames),
+  );
   const gmContent = [
     renderInvestigation(foundation, clues, view),
-    renderConsequences(pressure, view),
+    renderConsequences(pressure),
   ].join("\n\n");
   const { withoutIds } = view;
   return {
@@ -256,7 +283,9 @@ export function assembleOutput(
         stripMysteryMarkdownImages(`${playerContent}\n\n${gmContent}`),
       ),
     ),
-    lore: tidy(withoutIds(stripMysteryMarkdownImages(fixedTruth))),
+    lore: tidy(
+      withoutIds(stripMysteryMarkdownImages(`${fixedTruth}\n\n${npcMoves}`)),
+    ),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
     mysteryGraph: buildMysteryGraph(foundation, cast, clues),

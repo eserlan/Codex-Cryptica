@@ -306,6 +306,38 @@ function toIdList(value: unknown): unknown {
   return value;
 }
 
+function normalizeNpcResponse(item: unknown): unknown {
+  if (!isRecord(item)) return item;
+  const response: Obj = { ...item };
+  fillMissingField(response, "response", ["nextMove", "action", "move"]);
+  fillMissingField(response, "observableEffect", [
+    "observableConsequence",
+    "observable",
+    "consequence",
+    "effect",
+  ]);
+  fillMissingField(response, "testableLead", [
+    "lead",
+    "newLead",
+    "corroboration",
+  ]);
+  fillMissingField(response, "motive", ["goal", "purpose"]);
+  fillMissingField(response, "currentKnowledge", [
+    "knowledge",
+    "believes",
+    "knows",
+  ]);
+  return flattenFields(response, [
+    "personId",
+    "trigger",
+    "response",
+    "observableEffect",
+    "testableLead",
+    "motive",
+    "currentKnowledge",
+  ]);
+}
+
 function normalizePressure(data: Obj): Obj {
   const next: Obj = {
     ...data,
@@ -316,9 +348,7 @@ function normalizePressure(data: Obj): Obj {
   next.pressureClock = mapList(next.pressureClock, (item) =>
     flattenFields(item, ["trigger", "consequence"]),
   );
-  next.npcResponses = mapList(next.npcResponses, (item) =>
-    flattenFields(item, ["trigger", "response"]),
-  );
+  next.npcResponses = mapList(next.npcResponses, normalizeNpcResponse);
   if (isRecord(next.outcomes)) {
     const outcomes: Obj = {};
     for (const [key, value] of Object.entries(next.outcomes))
