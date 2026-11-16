@@ -188,7 +188,13 @@ describe("CloudBackupTrashSettings", () => {
     trash.usedBytes = 40 * 1024 * 1024;
     trash.maxBytes = 50 * 1024 * 1024;
     const { unmount } = render(CloudBackupTrashSettings, { vaultId: "v1" });
-    expect(screen.getByText(/Shared trash is nearly full/i)).toBeTruthy();
+    const warning = screen.getByText(/Shared trash is nearly full/i);
+    expect(warning).toBeTruthy();
+    expect(
+      warning.parentElement
+        ?.querySelector('[aria-hidden="true"]')
+        ?.classList.contains("text-theme-text"),
+    ).toBe(true);
     unmount();
 
     trash.usedBytes = 1024;

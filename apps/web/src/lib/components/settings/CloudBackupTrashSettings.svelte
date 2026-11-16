@@ -145,7 +145,7 @@
       class="mt-2 flex items-start gap-2 border border-theme-warning/40 bg-theme-warning/10 px-3 py-2 text-xs text-theme-text"
     >
       <span
-        class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-warning"
+        class="icon-[lucide--alert-triangle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
         aria-hidden="true"
       ></span>
       <p>{warningText}</p>

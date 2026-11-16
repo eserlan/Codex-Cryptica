@@ -193,10 +193,14 @@ describe("CloudBackupRestorePointsSettings", () => {
       },
     };
     show();
+    const warning = screen.getByText(
+      /Shared trash reached its 50 MB limit\. 2 older deleted items/,
+    );
+    expect(warning).toBeTruthy();
     expect(
-      screen.getByText(
-        /Shared trash reached its 50 MB limit\. 2 older deleted items/,
-      ),
-    ).toBeTruthy();
+      warning.parentElement
+        ?.querySelector('[aria-hidden="true"]')
+        ?.classList.contains("text-theme-text"),
+    ).toBe(true);
   });
 });
