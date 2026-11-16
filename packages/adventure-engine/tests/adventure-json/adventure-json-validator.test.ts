@@ -85,9 +85,12 @@ describe("Adventure JSON v1 semantic validator", () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(
-        result.errors.some((e) => e.code === "INVALID_FORMAT_VERSION"),
-      ).toBe(true);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: "INVALID_FORMAT_VERSION",
+          path: "formatVersion",
+        }),
+      );
     }
   });
 
@@ -104,8 +107,12 @@ describe("Adventure JSON v1 semantic validator", () => {
     });
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.errors.some((e) => e.code === "INVALID_VISIBILITY")).toBe(
-        true,
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: "INVALID_VISIBILITY",
+          path: "secrets[0].visibility",
+          entityId: fixture.secrets[0]!.id,
+        }),
       );
     }
   });
