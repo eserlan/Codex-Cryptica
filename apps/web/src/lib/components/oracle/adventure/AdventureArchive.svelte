@@ -250,8 +250,18 @@
                 type="button"
                 onclick={() => void open(entry.id)}
                 aria-label={`Open adventure ${entry.title}`}
-                ><span>{entry.title}</span><span
-                  class="text-xs text-theme-secondary"
+                ><span class="flex min-w-0 flex-col">
+                  <span>{entry.title}</span>
+                  {#if entry.sourcePackage}
+                    <span
+                      class="font-mono text-xs text-theme-secondary"
+                      data-testid="archive-entry-source-package"
+                    >
+                      {entry.sourcePackage.packageId} v{entry.sourcePackage
+                        .version} · {entry.sourcePackage.hash.slice(0, 8)}
+                    </span>
+                  {/if}
+                </span><span class="text-xs text-theme-secondary"
                   >{entry.loadCondition === "unreadable"
                     ? "Unreadable"
                     : entry.status}</span

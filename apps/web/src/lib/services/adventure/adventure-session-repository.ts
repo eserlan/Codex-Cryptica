@@ -8,6 +8,7 @@ import {
   parseAdventureSessionForRecovery,
   type AdventureSessionReadResult,
   type AdventureSession,
+  type AdventureSourcePackageRef,
   type AdventureStatus,
 } from "@codex/adventure-engine";
 
@@ -23,6 +24,8 @@ export interface AdventureArchiveEntry {
   revision?: number;
   /** Absent for unreadable entries. Included for client-side archive search (FR-003). */
   premise?: string;
+  /** Pinned Adventure JSON package reference when launched from an imported module. */
+  sourcePackage?: AdventureSourcePackageRef;
 }
 
 export interface AdventureListResult {
@@ -222,6 +225,9 @@ export class AdventureSessionRepository {
           loadCondition:
             read.mode === "writable" ? "normal" : "migration-recovery",
           premise: session.premise,
+          ...(session.sourcePackage
+            ? { sourcePackage: session.sourcePackage }
+            : {}),
         });
       } catch {
         entries.push({

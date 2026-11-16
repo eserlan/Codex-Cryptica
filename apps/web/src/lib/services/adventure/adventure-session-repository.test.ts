@@ -498,4 +498,48 @@ describe("AdventureSessionRepository.list with several active adventures", () =>
       "normal",
     ]);
   });
+
+  it("surfaces optional sourcePackage on listed entries while keeping unpinned sessions valid", async () => {
+    const repository = new AdventureSessionRepository(async () => ({}) as never);
+    const sessions: Record<string, any> = {
+      pinned: {
+        id: "pinned",
+        title: "Pinned Module",
+        status: "active",
+        updatedAt: "2026-02-01T00:00:00.000Z",
+        revision: 1,
+        premise: "p",
+        sourcePackage: {
+          packageId: "the-last-grind",
+          version: "1.0.0",
+          formatVersion: "adventure-json/v1",
+          hash: "c".repeat(64),
+        },
+      },
+      legacy: {
+        id: "legacy",
+        title: "Legacy Session",
+        status: "archived",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        revision: 1,
+        premise: "p",
+      },
+    };
+    (repository as any).adventuresDirectory = vi.fn(async () => ({
+      async *entries() {
+        for (const id of Object.keys(sessions))
+          yield [`${id}.json`, { kind: "file" }];
+      },
+    }));
+    (repository as any).readFile = vi.fn(async (_v: string, id: string) => ({
+      mode: "writable",
+      session: sessions[id],
+    }));
+
+    const result = await repository.list("vault-1");
+    expect(result.entries[0]?.sourcePackage).toEqual(
+      sessions.pinned.sourcePackage,
+    );
+    expect(result.entries[1]?.sourcePackage).toBeUndefined();
+  });
 });

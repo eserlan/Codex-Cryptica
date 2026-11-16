@@ -25,9 +25,13 @@ const env = vi.hoisted(() => ({
   cancelRumourReturn: true,
   saveApprovedPackage: vi.fn(async (_vaultId: string, pkg: any) => ({
     status: "created",
-    path: `.codex/adventures/packages/${pkg.documentHash}.json`,
+    path: `.codex/adventures/packages/${"a".repeat(64)}.json`,
+    hash: "a".repeat(64),
     package: pkg,
   })),
+  approvedPackages: [] as any[],
+  openSession: vi.fn(async () => {}),
+  resumeArchived: vi.fn(async () => {}),
   importAdventurePdfFile: vi.fn(),
 }));
 
@@ -47,6 +51,8 @@ vi.mock("#lib/stores/oracle.svelte.js", () => ({
     adventure: {
       session: null,
       openActive: env.openActive,
+      open: env.openSession,
+      resumeArchived: env.resumeArchived,
       setWorldEntryRumourGenerator: env.setWorldEntryRumourGenerator,
       readOnly: false,
     },
@@ -83,6 +89,8 @@ vi.mock("#lib/services/adventure/adventure-package-storage.js", () => ({
   adventurePackageRepository: {
     setRootResolver: env.setRootResolver,
     saveApproved: env.saveApprovedPackage,
+    saveApprovedJson: env.saveApprovedPackage,
+    listApproved: vi.fn(async () => env.approvedPackages),
   },
 }));
 vi.mock("#lib/services/adventure/adventure-context-service.js", () => ({
@@ -117,6 +125,10 @@ import AdventureSurface from "./AdventureSurface.svelte";
 beforeEach(() => {
   env.openIntentGeneratorWorkflow.mockClear();
   env.openActive.mockClear();
+  env.openSession.mockClear();
+  env.resumeArchived.mockClear();
+  env.approvedPackages = [];
+  env.list.mockResolvedValue({ effectiveActiveId: null, entries: [] });
   env.vaultReady = true;
   env.activeVaultId = "vault-1";
   env.isGuest = false;
@@ -277,7 +289,183 @@ describe("AdventureSurface entry", () => {
     expect(env.openIntentGeneratorWorkflow).toHaveBeenCalledWith("adventure");
   });
 
-  it("imports a valid Markdown file and transitions to AdventureImportReview", async () => {
+  it("imports a valid Adventure JSON file via picker or dropzone and transitions to AdventureImportReview", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const sampleJson = {
+      formatVersion: "adventure-json/v1",
+      id: "the-sunken-mill",
+      title: "The Sunken Mill",
+      version: "1.0.0",
+      premise: {
+        background: "The stone mill stopped turning.",
+        hook: "Maren asks the party to inspect the sluice gate.",
+      },
+      source: { title: "The Sunken Mill", license: "CC0-1.0" },
+      locations: [
+        {
+          id: "loc-landing",
+          name: "The Ferry Landing",
+          summary: "Fog clings to the pilings.",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      actors: [
+        {
+          id: "actor-wick",
+          name: "Wick",
+          summary: "An anxious millhand.",
+          motivation: "Collect unpaid wages.",
+          visibility: "player-visible",
+          epistemicStatus: "inferred",
+        },
+      ],
+      factions: [],
+      scenes: [
+        {
+          id: "scene-1",
+          title: "Scene 1: The Ferry Landing",
+          summary: "Arrival at dusk.",
+          locationId: "loc-landing",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [
+        {
+          id: "secret-1",
+          text: "The ferryman knows the miller's secret.",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+      endings: [],
+      unresolved: [],
+    };
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const file = new File([JSON.stringify(sampleJson)], "sunken-mill.json", {
+      type: "application/json",
+    });
+
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+
+    const review = await screen.findByTestId("adventure-import-review");
+    expect(review).toBeTruthy();
+    expect(review.textContent).toContain("The Sunken Mill");
+    await waitFor(() => {
+      expect(screen.getByTestId("adventure-package-hash").textContent).toMatch(
+        /^[a-f0-9]{64}$/,
+      );
+    });
+    expect(screen.getByTestId("review-locations")).toBeTruthy();
+    expect(screen.getByTestId("review-actors")).toBeTruthy();
+    expect(screen.getByTestId("review-scenes")).toBeTruthy();
+    expect(screen.getByTestId("review-secrets")).toBeTruthy();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+    await waitFor(() => {
+      expect(env.saveApprovedPackage).toHaveBeenCalledTimes(1);
+    });
+    expect(
+      screen.getByTestId("adventure-package-status").textContent,
+    ).toContain("Approved");
+  });
+
+  it("reports actionable validation errors for malformed JSON and semantic errors without writing", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+
+    const malformed = new File(["{bad json"], "broken.json", {
+      type: "application/json",
+    });
+    await fireEvent.change(fileInput, { target: { files: [malformed] } });
+
+    const malformedAlert = await screen.findByTestId("adventure-import-error");
+    expect(malformedAlert.getAttribute("role")).toBe("alert");
+    expect(malformedAlert.textContent).toContain("INVALID_JSON");
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+
+    const invalidDoc = {
+      formatVersion: "adventure-json/v1",
+      id: "bad-doc",
+      title: "Bad Doc",
+      version: "1.0.0",
+      premise: { background: "bg", hook: "hk" },
+      source: { title: "Bad Doc" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [
+        {
+          id: "dup-id",
+          title: "Scene 1",
+          summary: "Summary",
+          locationId: "missing-loc",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [
+        {
+          id: "dup-id",
+          text: "Secret",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      endings: [],
+      unresolved: [],
+    };
+    const invalidFile = new File([JSON.stringify(invalidDoc)], "invalid.json", {
+      type: "application/json",
+    });
+    await fireEvent.change(fileInput, { target: { files: [invalidFile] } });
+
+    const invalidAlert = await screen.findByTestId("adventure-import-error");
+    expect(invalidAlert.textContent).toContain("INVALID_VISIBILITY");
+    expect(invalidAlert.textContent).toContain("secrets[0].visibility");
+    expect(invalidAlert.textContent).toContain("dup-id");
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("rejects non-JSON files on the primary JSON import path", async () => {
+    render(AdventureSurface);
+    await screen.findByTestId("adventure-entry-choices");
+
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    const mdFile = new File(["# Title"], "module.md", {
+      type: "text/markdown",
+    });
+    await fireEvent.change(fileInput, { target: { files: [mdFile] } });
+
+    const alert = await screen.findByTestId("adventure-import-error");
+    expect(alert.textContent).toContain("Adventure JSON");
+    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+  });
+
+  it("normalizes experimental Markdown imports into AdventureJsonV1 for review", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
 
@@ -293,55 +481,24 @@ describe("AdventureSurface entry", () => {
       "**Wick** — **Motivation:** Collect unpaid wages.",
     ].join("\n");
 
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
     const file = new File([markdown], "sunken-mill.md", {
       type: "text/markdown",
     });
 
-    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await fireEvent.change(expInput, { target: { files: [file] } });
 
     const review = await screen.findByTestId("adventure-import-review");
-    expect(review).toBeTruthy();
     expect(review.textContent).toContain("The Sunken Mill");
-    expect(screen.getByTestId("adventure-package-hash").textContent).toMatch(
-      /^[a-f0-9]{64}$/,
-    );
-    expect(screen.getByTestId("review-sections")).toBeTruthy();
-    expect(screen.getByTestId("review-scenes")).toBeTruthy();
-    expect(screen.getByTestId("review-npcs")).toBeTruthy();
-    expect(screen.getByTestId("review-secrets")).toBeTruthy();
-    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
-
-    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
-    await waitFor(() => {
-      expect(env.saveApprovedPackage).toHaveBeenCalledTimes(1);
-    });
     expect(
-      screen.getByTestId("adventure-package-status").textContent,
-    ).toContain("Approved");
-  });
-
-  it("shows an error alert on empty Markdown upload without entering review or writing to storage", async () => {
-    render(AdventureSurface);
-    await screen.findByTestId("adventure-entry-choices");
-
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
-    ) as HTMLInputElement;
-    const emptyFile = new File(["   "], "empty.md", { type: "text/markdown" });
-
-    await fireEvent.change(fileInput, { target: { files: [emptyFile] } });
-
-    const alert = await screen.findByTestId("adventure-import-error");
-    expect(alert.getAttribute("role")).toBe("alert");
-    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
+      screen.getByTestId("adventure-experimental-origin").textContent,
+    ).toContain("Experimental Markdown");
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
-    expect(env.importAdventurePdfFile).not.toHaveBeenCalled();
   });
 
-  it("lazy-loads the PDF importer on .pdf selection and transitions to review with page references", async () => {
+  it("lazy-loads the PDF importer on experimental .pdf selection and preserves page citations", async () => {
     env.importAdventurePdfFile.mockResolvedValue({
       ok: true,
       package: {
@@ -375,7 +532,14 @@ describe("AdventureSurface entry", () => {
             provenance: "suggested",
           },
         ],
-        scenes: [],
+        scenes: [
+          {
+            sourceId: "scene-1-landing",
+            title: "Scene 1: The Ferry Landing",
+            conditions: [],
+            provenance: "suggested",
+          },
+        ],
         npcs: [],
         clues: [],
         encounters: [],
@@ -388,23 +552,23 @@ describe("AdventureSurface entry", () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
 
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
     const pdfFile = new File(["%PDF-1.4"], "mill-adventure.pdf", {
       type: "application/pdf",
     });
 
-    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    await fireEvent.change(expInput, { target: { files: [pdfFile] } });
 
     const review = await screen.findByTestId("adventure-import-review");
     expect(review.textContent).toContain("The Last Grind");
     expect(env.importAdventurePdfFile).toHaveBeenCalledTimes(1);
     expect(
       screen
-        .getAllByTestId("section-page-ref")
+        .getAllByTestId("entity-source-ref")
         .map((e) => e.textContent?.trim()),
-    ).toEqual(["p. 1", "pp. 2–3"]);
+    ).toContain("pp. 2–3 · Scene 1: The Ferry Landing · #scene-1-landing");
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 
@@ -427,13 +591,13 @@ describe("AdventureSurface entry", () => {
       const { unmount } = render(AdventureSurface);
       await screen.findByTestId("adventure-entry-choices");
 
-      const fileInput = screen.getByTestId(
-        "adventure-file-input",
+      const expInput = screen.getByTestId(
+        "adventure-experimental-file-input",
       ) as HTMLInputElement;
       const pdfFile = new File(["%PDF-1.4"], "bad.pdf", {
         type: "application/pdf",
       });
-      await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+      await fireEvent.change(expInput, { target: { files: [pdfFile] } });
 
       const alert = await screen.findByTestId("adventure-import-error");
       expect(alert.getAttribute("role")).toBe("alert");
@@ -444,12 +608,12 @@ describe("AdventureSurface entry", () => {
     }
   });
 
-  it("rejects invalid UTF-8 through the file picker without opening review or saving", async () => {
+  it("rejects invalid UTF-8 through the experimental Markdown picker without opening review or saving", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
 
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
     const file = new File(
       [new Uint8Array([0x23, 0x20, 0xff, 0x0a])],
@@ -457,7 +621,7 @@ describe("AdventureSurface entry", () => {
       { type: "text/markdown" },
     );
 
-    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await fireEvent.change(expInput, { target: { files: [file] } });
 
     expect(
       (await screen.findByTestId("adventure-import-error")).textContent,
@@ -466,45 +630,50 @@ describe("AdventureSurface entry", () => {
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
   });
 
-  it("rejects oversized Markdown files before reading them", async () => {
+  it("rejects oversized JSON, Markdown, and PDF files before reading them", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
 
-    const fileInput = screen.getByTestId(
+    const jsonInput = screen.getByTestId(
       "adventure-file-input",
     ) as HTMLInputElement;
-    const file = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.md", {
+    const largeJson = new File(
+      [new Uint8Array(10 * 1024 * 1024 + 1)],
+      "large.json",
+      { type: "application/json" },
+    );
+    const jsonRead = vi.spyOn(largeJson, "arrayBuffer");
+    await fireEvent.change(jsonInput, { target: { files: [largeJson] } });
+    expect(
+      (await screen.findByTestId("adventure-import-error")).textContent,
+    ).toContain("10 MiB");
+    expect(jsonRead).not.toHaveBeenCalled();
+
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
+    ) as HTMLInputElement;
+    const largeMd = new File([new Uint8Array(2 * 1024 * 1024 + 1)], "large.md", {
       type: "text/markdown",
     });
-    const read = vi.spyOn(file, "arrayBuffer");
-
-    await fireEvent.change(fileInput, { target: { files: [file] } });
-
+    const mdRead = vi.spyOn(largeMd, "arrayBuffer");
+    await fireEvent.change(expInput, { target: { files: [largeMd] } });
     expect(
       (await screen.findByTestId("adventure-import-error")).textContent,
     ).toContain("2 MiB");
-    expect(read).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
-    expect(env.saveApprovedPackage).not.toHaveBeenCalled();
-  });
+    expect(mdRead).not.toHaveBeenCalled();
 
-  it("rejects oversized PDF files before reading them", async () => {
-    render(AdventureSurface);
-    await screen.findByTestId("adventure-entry-choices");
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
-    ) as HTMLInputElement;
-    const file = new File([new Uint8Array(20 * 1024 * 1024 + 1)], "large.pdf", {
-      type: "application/pdf",
-    });
-    const read = vi.spyOn(file, "arrayBuffer");
-    await fireEvent.change(fileInput, { target: { files: [file] } });
+    const largePdf = new File(
+      [new Uint8Array(20 * 1024 * 1024 + 1)],
+      "large.pdf",
+      { type: "application/pdf" },
+    );
+    const pdfRead = vi.spyOn(largePdf, "arrayBuffer");
+    await fireEvent.change(expInput, { target: { files: [largePdf] } });
     expect(
       (await screen.findByTestId("adventure-import-error")).textContent,
     ).toContain("20 MiB");
-    expect(read).not.toHaveBeenCalled();
+    expect(pdfRead).not.toHaveBeenCalled();
     expect(env.importAdventurePdfFile).not.toHaveBeenCalled();
-    expect(screen.queryByTestId("adventure-import-review")).toBeNull();
   });
 
   it("aborts a pending PDF import when the surface unmounts", async () => {
@@ -517,13 +686,13 @@ describe("AdventureSurface entry", () => {
     );
     const { unmount } = render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
     const pdfFile = new File(["%PDF-1.4"], "pending.pdf", {
       type: "application/pdf",
     });
-    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    await fireEvent.change(expInput, { target: { files: [pdfFile] } });
     await waitFor(() => expect(env.importAdventurePdfFile).toHaveBeenCalled());
     expect(capturedSignal?.aborted).toBe(false);
     unmount();
@@ -542,12 +711,11 @@ describe("AdventureSurface entry", () => {
       "adventure-file-input",
     ) as HTMLInputElement;
     expect(fileInput.disabled).toBe(true);
-    const file = new File(["# Guest adventure"], "guest.md", {
-      type: "text/markdown",
+    const file = new File(['{"formatVersion":"adventure-json/v1"}'], "guest.json", {
+      type: "application/json",
     });
     const read = vi.spyOn(file, "arrayBuffer");
 
-    // Simulate a late file-input event so the surface's guest-mode guard runs.
     fileInput.disabled = false;
     await fireEvent.change(fileInput, { target: { files: [file] } });
 
@@ -572,11 +740,11 @@ describe("AdventureSurface entry", () => {
       { type: "text/markdown" },
     );
     const read = vi.spyOn(file, "arrayBuffer").mockReturnValue(pendingBuffer);
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
 
-    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await fireEvent.change(expInput, { target: { files: [file] } });
     await waitFor(() => expect(read).toHaveBeenCalledOnce());
     env.activeVaultId = "vault-2";
     resolveArrayBuffer(
@@ -594,8 +762,8 @@ describe("AdventureSurface entry", () => {
   it("does not let a reviewed package be approved after switching Vaults", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
     const file = new File(
       ["# The Mill\n\n## Scene 1\nA mill stands by the river."],
@@ -603,7 +771,7 @@ describe("AdventureSurface entry", () => {
       { type: "text/markdown" },
     );
 
-    await fireEvent.change(fileInput, { target: { files: [file] } });
+    await fireEvent.change(expInput, { target: { files: [file] } });
     await screen.findByTestId("adventure-import-review");
     env.activeVaultId = "vault-2";
     await fireEvent.click(screen.getByTestId("adventure-approve-button"));
@@ -630,11 +798,11 @@ describe("AdventureSurface entry", () => {
     const earlierRead = vi
       .spyOn(earlier, "arrayBuffer")
       .mockReturnValue(pendingBuffer);
-    const fileInput = screen.getByTestId(
-      "adventure-file-input",
+    const expInput = screen.getByTestId(
+      "adventure-experimental-file-input",
     ) as HTMLInputElement;
 
-    await fireEvent.change(fileInput, { target: { files: [earlier] } });
+    await fireEvent.change(expInput, { target: { files: [earlier] } });
     await waitFor(() => expect(earlierRead).toHaveBeenCalledOnce());
 
     const newer = new File(
@@ -642,7 +810,7 @@ describe("AdventureSurface entry", () => {
       "newer.md",
       { type: "text/markdown" },
     );
-    await fireEvent.change(fileInput, { target: { files: [newer] } });
+    await fireEvent.change(expInput, { target: { files: [newer] } });
     const review = await screen.findByTestId("adventure-import-review");
     expect(review.textContent).toContain("The New Adventure");
 
@@ -655,5 +823,69 @@ describe("AdventureSurface entry", () => {
       ).toContain("The New Adventure");
     });
     expect(env.saveApprovedPackage).not.toHaveBeenCalled();
+  });
+
+  it("lists approved packages and lets users start a pinned session or resume an existing one", async () => {
+    const hash = "e".repeat(64);
+    env.approvedPackages = [
+      {
+        hash,
+        path: `.codex/adventures/packages/${hash}.json`,
+        originFormat: "adventure-json/v1",
+        package: {
+          formatVersion: "adventure-json/v1",
+          id: "the-last-grind",
+          title: "The Last Grind",
+          version: "1.0.0",
+          premise: {
+            background: "The village is hungry.",
+            hook: "Maren asks for help.",
+          },
+          source: { title: "The Last Grind" },
+          locations: [],
+          actors: [],
+          factions: [],
+          scenes: [],
+          encounters: [],
+          clues: [],
+          rumours: [],
+          items: [],
+          secrets: [],
+          endings: [],
+          unresolved: [],
+        },
+      },
+    ];
+    env.list.mockResolvedValue({
+      effectiveActiveId: "session-pinned-1",
+      entries: [
+        {
+          id: "session-pinned-1",
+          title: "Pinned Run",
+          status: "active",
+          loadCondition: "normal",
+          sourcePackage: {
+            packageId: "the-last-grind",
+            version: "1.0.0",
+            formatVersion: "adventure-json/v1",
+            hash,
+          },
+        },
+      ],
+    });
+
+    render(AdventureSurface);
+    await screen.findByTestId("approved-adventure-packages");
+
+    await fireEvent.click(
+      screen.getByTestId("approved-package-resume-the-last-grind"),
+    );
+    expect(env.openSession).toHaveBeenCalledWith("vault-1", "session-pinned-1");
+
+    await fireEvent.click(
+      screen.getByTestId("approved-package-start-the-last-grind"),
+    );
+    const pinnedBanner = await screen.findByTestId("adventure-pinned-package");
+    expect(pinnedBanner.textContent).toContain("the-last-grind v1.0.0");
   });
 });

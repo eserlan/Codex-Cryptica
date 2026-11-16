@@ -9,7 +9,10 @@
     startPrecheck,
   } from "#lib/services/adventure/adventure-start-failure.js";
   import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
-  import type { ScenarioState } from "@codex/adventure-engine";
+  import type {
+    AdventureSourcePackageRef,
+    ScenarioState,
+  } from "@codex/adventure-engine";
   let {
     manager,
     vaultId,
@@ -20,8 +23,10 @@
     selectedCharacterId = $bindable(""),
     characters = [],
     scenarioSeed,
+    sourcePackage,
     onScenarioStarted,
     onCancelScenario,
+    onClearSourcePackage,
   }: {
     manager: AdventureManager;
     vaultId: string;
@@ -32,8 +37,10 @@
     selectedCharacterId?: string;
     characters?: Array<{ id: string; name: string }>;
     scenarioSeed?: ScenarioState;
+    sourcePackage?: AdventureSourcePackageRef;
     onScenarioStarted?: () => void;
     onCancelScenario?: () => void;
+    onClearSourcePackage?: () => void;
   } = $props();
   let interacted = $state(false);
   let submitting = $state(false);
@@ -94,11 +101,13 @@
           }
         : {}),
       ...(scenarioSeed ? { scenarioSeed } : {}),
+      ...(sourcePackage ? { sourcePackage } : {}),
     };
   }
 
   function clearStartedDraft() {
     if (scenarioSeed) onScenarioStarted?.();
+    if (sourcePackage) onClearSourcePackage?.();
     title = "";
     premise = "";
     characterName = "";
@@ -159,6 +168,19 @@
       Oracle will act as GM and use your campaign as grounding.
     </p>
   </div>
+  {#if sourcePackage}
+    <div
+      class="rounded-md border border-theme-primary/40 bg-theme-primary/5 p-3 text-xs text-theme-text"
+      data-testid="adventure-pinned-package"
+    >
+      <p class="font-semibold">
+        Pinned package: {sourcePackage.packageId} v{sourcePackage.version}
+      </p>
+      <p class="mt-0.5 font-mono">
+        {sourcePackage.formatVersion} · {sourcePackage.hash.slice(0, 12)}…
+      </p>
+    </div>
+  {/if}
   {#if scenarioSeed}
     <div
       class="rounded-md border border-theme-border bg-theme-surface p-3"
