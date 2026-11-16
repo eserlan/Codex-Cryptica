@@ -660,9 +660,10 @@ class CodexFactoryTests(unittest.TestCase):
         round_dir.mkdir()
         (round_dir / "review-code.md").write_text("")
         (round_dir / "review-ux.md").write_text("Review did not produce a verdict\n")
+        (round_dir / "review-lifecycle.md").write_bytes(b"\xff")
         (round_dir / "review-ui.md").write_text("VERDICT: PASS\n\nNo findings.\n")
-        self.assertEqual(module.pending_reviewers(["code", "ux", "ui"], round_dir),
-                         ["code", "ux"])
+        self.assertEqual(module.pending_reviewers(["code", "ux", "lifecycle", "ui"], round_dir),
+                         ["code", "ux", "lifecycle"])
 
         with patch.object(self.runner, "command", side_effect=self.agent_command):
             self.runner.role(self.job, "reviewer-code")

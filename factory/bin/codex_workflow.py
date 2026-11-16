@@ -27,7 +27,7 @@ def valid_review_artifact(path):
     """Return whether a reviewer artifact starts with an accepted verdict."""
     try:
         first_line = Path(path).read_text().splitlines()[0]
-    except (OSError, IndexError):
+    except (OSError, UnicodeDecodeError, IndexError):
         return False
     return re.fullmatch(r"VERDICT:\s*(PASS|CHANGES)", first_line) is not None
 
