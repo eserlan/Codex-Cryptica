@@ -28,3 +28,4 @@ export * from "./people";
 export * from "./scene-types";
 export * from "./scene-identities";
 export * from "./source-package";
+export * from "./adventure-json";
