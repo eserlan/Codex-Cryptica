@@ -350,6 +350,9 @@ test.describe("SEO and Prerendering", () => {
       await expect(
         page.getByRole("button", { name: "Surprise Me" }),
       ).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Surprise Me" }),
+      ).toHaveClass(/enabled:hover:text-theme-on-primary/);
       for (const label of urbanFantasyFields) {
         await expect(page.getByLabel(label)).not.toHaveValue("__custom__");
         await expect(page.getByLabel(`${label} (Own option)`)).toHaveCount(0);

@@ -206,15 +206,16 @@ const FACTION_NAMES = [
 ] as const;
 
 function stripUntrustedMediaMarkup(text: string): string {
-  return text
-    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
-    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, "")
-    .replace(/<style\b[^>]*\/?>/gi, "")
-    .replace(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
-    .replace(
-      /<\/?(?:img|image|picture|video|audio|source|track|iframe|embed|object|input|link)\b[^>]*>/gi,
-      "",
-    );
+  return (
+    text
+      .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+      .replace(/<(svg|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+      // The generated format uses Markdown only. Remove raw HTML regardless of
+      // tag name, then neutralise any incomplete markup before composing fields.
+      .replace(/<\/?[a-z][\w:-]*(?=\s|\/?>)(?:"[^"]*"|'[^']*'|[^"'<>])*>/gi, "")
+      .replaceAll("<", "&lt;")
+      .replaceAll("![", "&#33;[")
+  );
 }
 
 function sanitizeCustomOption(value: string | undefined): string | undefined {
@@ -396,15 +397,17 @@ export function parseUrbanFantasyFactionResponse(
       (field) => !hasCheatSheetValue(glance, field),
     ),
   ];
-  const npcBullets = notableNpcs
-    .split(/\r?\n/)
-    .filter((line) => /^\s*-\s+\*\*👤\s+[^*]+\*\*:\s*\S/.test(line));
+  const npcBullets = notableNpcs.split(/\r?\n/).filter((line) => {
+    const match = line.match(/^\s*-\s+\*\*👤\s+([^*]+)\*\*:\s*\S/);
+    return Boolean(match?.[1].trim());
+  });
   if (npcBullets.length < 2 || npcBullets.length > 3) {
     missing.push("2-3 named Notable NPC bullets");
   }
-  const hasNamedRival = rivalFaction
-    .split(/\r?\n/)
-    .some((line) => /^\s*-\s+\*\*👥\s+[^*]+\*\*:\s*\S/.test(line));
+  const hasNamedRival = rivalFaction.split(/\r?\n/).some((line) => {
+    const match = line.match(/^\s*-\s+\*\*👥\s+([^*]+)\*\*:\s*\S/);
+    return Boolean(match?.[1].trim());
+  });
   if (!hasNamedRival) missing.push("named Rival Faction");
   if (!summary) missing.unshift("summary");
   if (missing.length > 0) {

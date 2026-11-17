@@ -139,7 +139,7 @@
       onSurprise?.();
     }}
     disabled={isBusy}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-xs font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-on-primary hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-xs font-bold uppercase tracking-wider text-theme-text enabled:hover:bg-theme-primary enabled:hover:text-theme-on-primary enabled:hover:border-theme-primary transition-all cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
     title="Randomize options and generate an urban fantasy faction"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>

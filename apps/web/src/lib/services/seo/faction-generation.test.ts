@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { renderMarkdown } from "#lib/utils/markdown.js";
 import { FactionGenerationService } from "./faction-generation";
 import type { GeneratorOutput } from "./generator-helpers";
 
@@ -77,6 +78,32 @@ describe("FactionGenerationService", () => {
     expect(output.summary).toContain("occult gang");
     expect(output.content).toContain("### How to use them at the table");
     expect(output.lore).toContain("**Immediate Hook**:");
+  });
+
+  it("keeps SVG image references out of rendered local faction content", async () => {
+    const service = new FactionGenerationService({
+      runWithAIFallback: async (useAI, aiAttempt, local) =>
+        (useAI ? await aiAttempt() : local()) as unknown as GeneratorOutput,
+      runModel: vi.fn(),
+      getSessionContext: () => "",
+      recentInputs: () => [],
+      recordInputs: vi.fn(),
+      summarizeResolvedInputs: () => "",
+      formatRecentInputsNote: () => "",
+      isAIAllowed: () => true,
+    });
+    const output = await service.generateUrbanFantasyFaction({
+      campaignContext:
+        'The market keeps a quiet ward. <svg><filter><feImage href="https://tracker.example/pixel.png"></feImage></filter></svg>',
+      useAI: false,
+    });
+    const renderedContent = renderMarkdown(output.content);
+
+    expect(output.content).toContain("The market keeps a quiet ward.");
+    expect(renderedContent).not.toMatch(
+      /<svg\b|<feimage\b|<filter\b|href\s*=/i,
+    );
+    expect(renderedContent).not.toContain("tracker.example");
   });
 
   it("uses local urban fantasy generation when the global AI policy disallows AI", async () => {

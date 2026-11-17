@@ -435,6 +435,28 @@ describe("urban fantasy faction (#1137)", () => {
     ).toThrow(/missing required content/);
   });
 
+  it("rejects whitespace-only NPC and rival names", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(231));
+    const validLore = urbanFantasyAiResponse().lore;
+    const whitespaceNpcLore = validLore
+      .replace("Mara Venn", "   ")
+      .replace("Theo Barrow", " \t ");
+    const whitespaceRivalLore = validLore.replace("Northside Mutual", "   ");
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify(urbanFantasyAiResponse({ lore: whitespaceNpcLore })),
+        resolved,
+      ),
+    ).toThrow(/2-3 named Notable NPC bullets/);
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify(urbanFantasyAiResponse({ lore: whitespaceRivalLore })),
+        resolved,
+      ),
+    ).toThrow(/named Rival Faction/);
+  });
+
   it("strips Markdown images and HTML media from every model field before saving", () => {
     const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(24));
     const response = urbanFantasyAiResponse({
@@ -443,7 +465,7 @@ describe("urban fantasy faction (#1137)", () => {
         "A civic office keeps order. ![summary](https://tracker.example/summary.png) <style>@import url(https://tracker.example/summary.css);</style>",
       content: urbanFantasyAiResponse().content.replace(
         "controls access to an unlisted transit platform",
-        'controls access ![data](data:image/png;base64,AAAA) to a transit platform <span style="background-image:url(https://tracker.example/content.png)">record</span> <input type="image" src="https://tracker.example/image-input.png"><input type="image" src="data:image/png;base64,AAAA"><input type="image" src="blob:https://app.example/image-id">',
+        'controls access ![data](data:image/png;base64,AAAA) to a transit platform <span style="background-image:url(https://tracker.example/content.png)">record</span> <input type="image" src="https://tracker.example/image-input.png"><input type="image" src="data:image/png;base64,AAAA"><input type="image" src="blob:https://app.example/image-id"><svg><filter><feImage href="https://tracker.example/remote-svg.png"></feImage></filter></svg><svg><filter><feImage href="data:image/png;base64,AAAA"></feImage></filter></svg><svg><filter><feImage href="blob:https://app.example/svg-image"></feImage></filter></svg>',
       ),
       lore: urbanFantasyAiResponse()
         .lore.replace(
@@ -472,6 +494,7 @@ describe("urban fantasy faction (#1137)", () => {
     expect(savedFields).not.toMatch(/https?:\/\/tracker\.example/);
     expect(savedFields).not.toMatch(/data:image|blob:/);
     expect(savedFields).not.toMatch(/<\/?(?:img|video|input)\b/i);
+    expect(savedFields).not.toMatch(/<svg\b|<feimage\b|<filter\b|href\s*=/i);
     expect(savedFields).not.toMatch(/style\s*=|<style\b|@import|url\(/i);
     expect(output.title).toContain("title");
     expect(output.summary).toContain("summary");
@@ -482,7 +505,7 @@ describe("urban fantasy faction (#1137)", () => {
     const output = generateUrbanFantasyFactionLocal(
       {
         campaignContext:
-          'The west market district. ![map](https://tracker.example/map.png) <audio src="https://tracker.example/ambience.mp3"></audio> <span style="background-image:url(https://tracker.example/context.png)">market</span> <style>@import url(https://tracker.example/context.css);</style> <input type="image" src="https://tracker.example/context-input.png">',
+          'The west market district. ![map](https://tracker.example/map.png) <audio src="https://tracker.example/ambience.mp3"></audio> <span style="background-image:url(https://tracker.example/context.png)">market</span> <style>@import url(https://tracker.example/context.css);</style> <input type="image" src="https://tracker.example/context-input.png"> <svg><filter><feImage href="https://tracker.example/context-svg.png"></feImage></filter></svg>',
       },
       seededRng(25),
     );
@@ -491,6 +514,7 @@ describe("urban fantasy faction (#1137)", () => {
     expect(output.content).not.toContain("tracker.example");
     expect(output.content).not.toContain("<audio");
     expect(output.content).not.toContain("<input");
+    expect(output.content).not.toMatch(/<svg\b|<feimage\b|<filter\b|href\s*=/i);
     expect(output.content).not.toMatch(/style\s*=|<style\b|@import|url\(/i);
   });
 
@@ -503,8 +527,13 @@ describe("urban fantasy faction (#1137)", () => {
       '<input type="image" src="https://attacker.example/input.png">',
       '<input type="image" src="data:image/png;base64,AAAA">',
       '<input type="image" src="blob:https://attacker.example/image-id">',
+      '<svg><filter><feImage href="https://attacker.example/svg.png"></feImage></filter></svg>',
+      '<svg><filter><feImage href="data:image/png;base64,AAAA"></feImage></filter></svg>',
+      '<svg><filter><feImage href="blob:https://attacker.example/svg-image"></feImage></filter></svg>',
       '<span style="background-image:url(https://attacker.example/style.png)">custom option</span>',
       "<style>@import url(https://attacker.example/import.css);</style>custom option",
+      '<table title="a > b" background="https://attacker.example/table.png">custom option</table>',
+      '<svg><rect fill="url(https://attacker.example/paint.svg#paint)"/></svg>',
     ];
     const optionKeys = [
       "mode",
@@ -534,7 +563,7 @@ describe("urban fantasy faction (#1137)", () => {
 
         expect(resolved[optionKey].trim()).toBeTruthy();
         expect(savedContent).not.toMatch(
-          /https?:\/\/attacker\.example|data:image|blob:|<img\b|<input\b|style\s*=|<style\b|@import|url\(/i,
+          /https?:\/\/attacker\.example|data:image|blob:|<img\b|<input\b|<svg\b|<feimage\b|<filter\b|href\s*=|style\s*=|<style\b|@import|url\(/i,
         );
         seed += 1;
       }

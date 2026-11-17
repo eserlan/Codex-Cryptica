@@ -99,8 +99,12 @@ describe("UrbanFantasyFactionFormFields", () => {
     const surpriseButton = screen.getByRole("button", { name: "Surprise Me" });
     expect(surpriseButton.classList.contains("text-xs")).toBe(true);
     expect(
-      surpriseButton.classList.contains("hover:text-theme-on-primary"),
+      surpriseButton.classList.contains("enabled:hover:text-theme-on-primary"),
     ).toBe(true);
+    expect(
+      surpriseButton.classList.contains("disabled:cursor-not-allowed"),
+    ).toBe(true);
+    expect(surpriseButton.classList.contains("disabled:opacity-50")).toBe(true);
   });
 
   it("resets custom selections to presets when Surprise Me runs", async () => {
@@ -187,6 +191,10 @@ describe("UrbanFantasyFactionFormFields", () => {
       name: "Surprise Me",
     }) as HTMLButtonElement;
     expect(surpriseButton.disabled).toBe(true);
+    expect(
+      surpriseButton.classList.contains("disabled:cursor-not-allowed"),
+    ).toBe(true);
+    expect(surpriseButton.classList.contains("disabled:opacity-50")).toBe(true);
     await fireEvent.click(surpriseButton);
 
     expect(
