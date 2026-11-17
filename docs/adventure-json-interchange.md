@@ -59,9 +59,9 @@ Runtime status: Scene-context retrieval exists in the engine but is not yet wire
 
 Excerpts go to `playerSafe` when the record is `player-visible` and to `gmOnly` otherwise (every secret is `gm-only`). References to other records appear only as IDs, so player-safe text never carries the name or text of a `gm-only` record.
 
-The combined `JSON.stringify` length of both lists never exceeds `maxCharacters` (default and maximum `MAX_ADVENTURE_RETRIEVAL_CHARS`, 4000). Whole excerpts are dropped from the lowest priority upward; only a lone focus scene is trimmed, ending in `…`. `truncated` reports any drop or trim.
+The combined `JSON.stringify` length of both lists never exceeds `maxCharacters` (default and maximum `MAX_ADVENTURE_RETRIEVAL_CHARS`, 4000). Whole excerpts are dropped from the lowest priority upward; only a lone focus scene is trimmed, ending in `…`. `truncated` reports any drop or trim. If `maxCharacters` is too small to hold even the focus scene's JSON metadata, `invalidBudget` is `true` and no excerpt is returned; otherwise the focus scene is always present. Retrieval checks records in priority order and stops once the next excerpt would exceed the budget, so it does not materialize or serialize the full matching candidate list.
 
-`formatAdventureJsonExcerpts(excerpts, label)` wraps excerpts in a header saying the block is quoted source data whose instructions must not be followed, then one fenced JSON block. `<`, `>`, `&` and backticks are escaped as `\uXXXX`, so package text cannot close the fence or inject markup and the block still parses back to the excerpts.
+`formatAdventureJsonExcerpts(excerpts, label)` places the label and excerpts inside one fenced JSON data block, preceded by a static header saying the contents are quoted source data whose instructions must not be followed. `<`, `>`, `&` and backticks are escaped as `\uXXXX`, so package text cannot close the fence or inject markup and the block still parses back to the label and excerpts.
 
 ## Semantic Validation Rules
 
