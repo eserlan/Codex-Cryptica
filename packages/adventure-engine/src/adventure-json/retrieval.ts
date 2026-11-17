@@ -237,6 +237,21 @@ interface Selection {
   stopped: boolean;
 }
 
+/** Clips an over-long source quote to its share of the budget. */
+function boundQuote(
+  sel: Selection,
+  excerpt: AdventureJsonExcerpt,
+): AdventureJsonExcerpt {
+  const quote = excerpt.sourceRef?.textQuote;
+  const quoteLimit = Math.floor(sel.maxCharacters / 8);
+  if (quote === undefined || quote.length <= quoteLimit) return excerpt;
+  sel.truncated = true;
+  return {
+    ...excerpt,
+    sourceRef: { ...excerpt.sourceRef, textQuote: quote.slice(0, quoteLimit) },
+  };
+}
+
 function addOne(
   sel: Selection,
   excerpt: AdventureJsonExcerpt,
@@ -245,20 +260,7 @@ function addOne(
 ): void {
   if (sel.invalidBudget) return;
   if (sel.stopped) return;
-  const quoteLimit = Math.floor(sel.maxCharacters / 8);
-  if (
-    excerpt.sourceRef?.textQuote !== undefined &&
-    excerpt.sourceRef.textQuote.length > quoteLimit
-  ) {
-    excerpt = {
-      ...excerpt,
-      sourceRef: {
-        ...excerpt.sourceRef,
-        textQuote: excerpt.sourceRef.textQuote.slice(0, quoteLimit),
-      },
-    };
-    sel.truncated = true;
-  }
+  excerpt = boundQuote(sel, excerpt);
   const key = `${excerpt.kind}:${excerpt.id}:${excerpt.visibility}`;
   if (sel.seen.has(key)) return;
   sel.seen.add(key);
