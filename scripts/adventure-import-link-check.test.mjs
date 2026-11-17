@@ -6,6 +6,7 @@ import {
   guideProblems,
   jsonAssetProblems,
   productionLinks,
+  run,
 } from "./adventure-import-link-check.mjs";
 
 const ok = { status: 200, contentType: "application/json", body: "{}" };
@@ -48,6 +49,63 @@ describe("adventure import link check", () => {
       "https://codexcryptica.com/adventure-import",
       "https://codexcryptica.com/schemas/adventure-json/v1.json",
     ]);
+  });
+
+  it("checks versioned prompt URLs when the base is production", async () => {
+    const originalFetch = globalThis.fetch;
+    const originalLog = console.log;
+    const requested = [];
+    const html = [
+      "./schemas/adventure-json/v1.json",
+      "./schemas/adventure-json/examples/minimal.v1.json",
+      "./schemas/adventure-json/examples/reference-one-shot.v1.json",
+      CTA_HREF,
+      "https://codexcryptica.com/schemas/adventure-json/v2.json",
+    ]
+      .map((href) => `<a href="${href}">x</a>`)
+      .join("");
+
+    globalThis.fetch = async (input) => {
+      const url = String(input);
+      requested.push(url);
+      const status = url.endsWith("/schemas/adventure-json/v2.json")
+        ? 404
+        : 200;
+      const contentType = url.includes("/schemas/")
+        ? "application/json"
+        : "text/html";
+      const body = url.endsWith("/adventure-import")
+        ? html
+        : url.endsWith("/adventure")
+          ? "<html>app</html>"
+          : url.endsWith("/llms.txt")
+            ? "https://codexcryptica.com/adventure-import"
+            : url.endsWith("/llms-full.txt")
+              ? "/adventure-import"
+              : "{}";
+      return {
+        status,
+        headers: { get: () => contentType },
+        text: async () => body,
+      };
+    };
+    console.log = () => {};
+
+    try {
+      const result = await run({
+        base: "https://codexcryptica.com",
+        strictProduction: true,
+      });
+      expect(requested).toContain(
+        "https://codexcryptica.com/schemas/adventure-json/v2.json",
+      );
+      expect(result.errors).toContain(
+        "https://codexcryptica.com/schemas/adventure-json/v2.json: HTTP 404 on production; testers on https://codexcryptica.com are sent there by the guide's prompt",
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+      console.log = originalLog;
+    }
   });
 
   it("does not judge app routes by HTTP status", () => {
