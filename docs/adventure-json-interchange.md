@@ -79,6 +79,16 @@ Runtime status: Adventure collection records are not yet projected into Oracle p
 | `ambiguities`                    | `unresolved`                         | Preserves `code`, `message`, `context`, and `epistemicStatus: "unresolved"`.                                                                           |
 | `provenance`                     | `epistemicStatus`                    | `"source-grounded"` → `"explicit"`, `"suggested"` → `"inferred"`, `"unresolved"` → `"unresolved"`.                                                     |
 
+## Revisions and re-import
+
+- `formatVersion`: which contract the file follows, always `adventure-json/v1`.
+- Package `id`: the adventure's stable identity; keep it across every revision.
+- `version`: strict SemVer label for a revision; raise it when content changes.
+- Entity IDs: stable per entity across revisions; change one only for a real rename, split or merge.
+- Canonical content hash: exact content identity, computed by Codex Cryptica and never written by converters.
+
+Correspondence for renamed, split or merged entities lives only in the package's top-level `extensions` under `codex-cryptica.adventure-correspondence`, never inside an entity. See the guide section [Revising an adventure you already imported](/adventure-import#revisions-heading).
+
 ## Link smoke check
 
 `bun scripts/adventure-import-link-check.mjs [--base=<origin>] [--strict-production]`

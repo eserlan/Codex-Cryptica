@@ -23,6 +23,10 @@ describe("/adventure-import/prompt.txt", () => {
     expect(text).not.toMatch(/<\/?[a-z][^>]*>/i);
   });
 
+  it("includes the revisions and stable IDs rule", async () => {
+    expect(await GET().text()).toContain("9. Revisions and stable IDs");
+  });
+
   it("is excluded from search indexes", () => {
     expect(GET().headers.get("x-robots-tag")).toBe("noindex");
   });

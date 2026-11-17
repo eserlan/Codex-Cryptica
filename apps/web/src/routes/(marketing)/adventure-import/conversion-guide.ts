@@ -166,10 +166,16 @@ Before you reply with a successful conversion, check each of these:
 - Every id is unique, and every cross-reference points to an id that exists.
 - Every "secrets" entry is "gm-only", and no "player-visible" record reveals a hidden role, motive or detail.
 - Every entry has "epistemicStatus"; endings and unresolved have no "visibility".
-- Nothing outside the schema was added and nothing was invented.`;
+- Nothing outside the schema was added and nothing was invented.
+9. Revisions and stable IDs:
+   - If an earlier Adventure JSON for the same adventure is supplied, keep its "id" exactly, keep every unchanged entity ID exactly, and raise "version" by SemVer (patch for fixes, minor for added or changed content, major for restructuring).
+   - Add a top-level "extensions" entry "codex-cryptica.adventure-correspondence" (a list of { "previousId", "currentId", "collection" }) only for renames, splits or merges the source clearly supports. Never infer correspondence from names, titles or order. Never put "extensions" inside an entity.
+   - If no earlier package is supplied, treat this as a first conversion: use "version" "1.0.0" and omit the correspondence extension.`;
 
 /** Follow-up prompt pasted into the same chat after the JSON; its reply stays outside the JSON file. */
 export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the Adventure JSON you just gave me. Reply in plain text, not JSON. Do not change or re-output the JSON.
+
+Begin with one line, "Previous package:", naming the earlier "id" and "version" if I supplied one, or otherwise saying exactly "No previous package was provided."
 
 Use these four headed lists:
 Covered sections: each source section or page anchor that the JSON covers.
@@ -226,10 +232,165 @@ export const CORRESPONDENCE_EXTENSION_DOC = `Supplied correspondence (optional):
 - Several current IDs sharing one previous ID describe a split; several previous IDs
   sharing one current ID describe a merge. Splits and merges are shown grouped and
   stay flagged for the reviewer; they are never silently submitted.
+- The "extensions" object belongs at the top level of the package, beside "formatVersion"
+  and "id", and never inside an entity record. The schema rejects "extensions" on an entity.
 - Identity is never inferred from titles, name similarity, or ordering. An entity with
   a new ID and merely a similar title appears as removed plus added and unresolved.
 - Malformed entries, unknown collections or IDs, and entries conflicting with a
   same-ID match are ignored for matching and reported as unresolved.`;
+
+type RevisionExample = Record<string, unknown> & {
+  id: string;
+  version: string;
+};
+
+const revisionExampleBase = {
+  formatVersion: "adventure-json/v1",
+  id: "revision-watchtower",
+  title: "The Silent Watchtower",
+  premise: {
+    background:
+      "A hillside watchtower has gone dark three nights before the winter caravan arrives.",
+    hook: "The village Reeve asks the party to ride up the ridge and relight the beacon.",
+  },
+  source: { title: "The Silent Watchtower", license: "CC0-1.0" },
+  locations: [
+    {
+      id: "loc-watchtower",
+      name: "Ridge Watchtower",
+      summary: "A stone signal tower overlooking the valley road.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  actors: [
+    {
+      id: "actor-reeve-tomas",
+      name: "Reeve Tomas",
+      summary: "The worried village official who hires the party.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  factions: [],
+  encounters: [],
+  clues: [],
+  rumours: [],
+  items: [],
+  secrets: [],
+  endings: [
+    {
+      id: "ending-beacon-lit",
+      title: "Beacon Relit",
+      description: "The signal fire burns again and the caravan passes safely.",
+      epistemicStatus: "explicit",
+    },
+  ],
+  unresolved: [],
+};
+
+function revisionScene(
+  id: string,
+  title: string,
+  summary: string,
+  branches?: Array<{ targetSceneId: string; description: string }>,
+) {
+  return {
+    id,
+    title,
+    summary,
+    locationId: "loc-watchtower",
+    ...(branches ? { branches } : {}),
+    visibility: "player-visible",
+    epistemicStatus: "explicit",
+  };
+}
+
+/** Version 1.0.0 of the revision example: the stairwell scene is "scene-stairs". */
+export const REVISION_EXAMPLE_BEFORE: RevisionExample = {
+  ...revisionExampleBase,
+  version: "1.0.0",
+  scenes: [
+    revisionScene(
+      "scene-ridge-road",
+      "The Ridge Road",
+      "The party climbs toward the dark tower.",
+      [{ targetSceneId: "scene-stairs", description: "Enter the tower." }],
+    ),
+    revisionScene(
+      "scene-stairs",
+      "The Winding Stairs",
+      "A narrow stair leads up to the beacon room.",
+      [
+        {
+          targetSceneId: "scene-beacon-room",
+          description: "Climb to the top.",
+        },
+      ],
+    ),
+    revisionScene(
+      "scene-beacon-room",
+      "The Cold Beacon",
+      "The oil brazier is unlit.",
+    ),
+  ],
+};
+
+/** Version 1.1.0: "scene-stairs" is renamed "scene-spiral-stair", with correspondence at the top level. */
+export const REVISION_EXAMPLE_AFTER: RevisionExample = {
+  ...revisionExampleBase,
+  version: "1.1.0",
+  scenes: [
+    revisionScene(
+      "scene-ridge-road",
+      "The Ridge Road",
+      "The party climbs toward the dark tower.",
+      [
+        {
+          targetSceneId: "scene-spiral-stair",
+          description: "Enter the tower.",
+        },
+      ],
+    ),
+    revisionScene(
+      "scene-spiral-stair",
+      "The Winding Stairs",
+      "A narrow stair leads up to the beacon room.",
+      [
+        {
+          targetSceneId: "scene-beacon-room",
+          description: "Climb to the top.",
+        },
+      ],
+    ),
+    revisionScene(
+      "scene-beacon-room",
+      "The Cold Beacon",
+      "The oil brazier is unlit.",
+    ),
+  ],
+  extensions: {
+    [CORRESPONDENCE_EXTENSION_KEY]: [
+      {
+        previousId: "scene-stairs",
+        currentId: "scene-spiral-stair",
+        collection: "scenes",
+      },
+    ],
+  },
+};
+
+/** Top-level "extensions" showing one split and one merge; both stay flagged for review. */
+export const SPLIT_MERGE_EXAMPLE_DOC = `{
+  "extensions": {
+    "${CORRESPONDENCE_EXTENSION_KEY}": [
+      { "previousId": "scene-market", "currentId": "scene-market-day", "collection": "scenes" },
+      { "previousId": "scene-market", "currentId": "scene-market-night", "collection": "scenes" },
+      { "previousId": "scene-cellar", "currentId": "scene-vaults", "collection": "scenes" },
+      { "previousId": "scene-crypt", "currentId": "scene-vaults", "collection": "scenes" }
+    ]
+  }
+}`;
 
 export const VERSIONING_BEHAVIOUR_DOC = `Versioning on re-import:
 - Adventure identity is the package "id"; "version" labels that version; exact content
@@ -260,7 +421,8 @@ export const TOP_LEVEL_RULES: GuideFieldRule[] = [
   {
     field: "id",
     requirement: "Slug (/^[a-zA-Z0-9_-]{3,64}$/)",
-    notes: "Stable lowercase identifier for the adventure.",
+    notes:
+      "Stable lowercase identifier for the adventure. Keep it the same across revisions of the same adventure.",
   },
   {
     field: "title",
@@ -270,7 +432,8 @@ export const TOP_LEVEL_RULES: GuideFieldRule[] = [
   {
     field: "version",
     requirement: 'Strict SemVer (e.g. "1.0.0")',
-    notes: "Semantic version of the converted JSON package.",
+    notes:
+      "Semantic version of the converted JSON package. Raise it when the content changes.",
   },
   {
     field: "premise",
