@@ -37,6 +37,7 @@ function setup() {
     canImport: () => true,
     isGuest: () => false,
     saveApproved: async (_id, pkg) => ({ package: pkg }),
+    listApproved: async () => [],
     notify: vi.fn(),
     onReview: vi.fn(),
     onCancel: vi.fn(),
@@ -50,6 +51,11 @@ function setup() {
     listSessions: async () => ({ effectiveActiveId: null, entries: [] }),
     open: async () => {},
     resumeArchived: async () => {},
+    removeApproved: async (_id, hash) => ({
+      status: "removed",
+      hash,
+      path: hash,
+    }),
   });
   return {
     manager,

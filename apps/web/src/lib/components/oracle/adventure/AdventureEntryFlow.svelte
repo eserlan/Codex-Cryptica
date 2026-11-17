@@ -73,11 +73,27 @@
     onImportExperimentalFile={imports.importExperimental}
   />
 
+  {#if imports.duplicate}
+    <p
+      class="mx-auto w-full max-w-5xl rounded-lg border border-theme-primary/40 bg-theme-primary/10 p-3 text-sm text-theme-text"
+      role="status"
+      data-testid="adventure-import-duplicate-notice"
+    >
+      Already imported: “{imports.duplicate.package.title}” ({imports.duplicate
+        .package.id} v{imports.duplicate.package.version}) · {imports.duplicate.hash.slice(
+        0,
+        12,
+      )}
+    </p>
+  {/if}
+
   <ApprovedAdventurePackages {library} onStart={draft.fromPackage} />
 {:else if !selectedRumour && draft.approach === "import-review" && imports.draft}
   <AdventureImportReview
     bind:draft={imports.draft}
     experimentalOrigin={imports.experimentalOrigin}
+    previousPackage={imports.predecessor?.package ?? null}
+    previousHash={imports.predecessor?.hash ?? null}
     approving={imports.approving}
     approveError={imports.approveError}
     onApprove={imports.approve}

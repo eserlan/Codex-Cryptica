@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AdventureJsonV1 } from "@codex/adventure-engine";
+import {
+  computeAdventureJsonHash,
+  type AdventureJsonV1,
+  type StoredAdventurePackage,
+} from "@codex/adventure-engine";
 import sample from "../../../../../static/schemas/adventure-json/examples/minimal.v1.json";
 import { AdventureImportController } from "./adventure-import.svelte.js";
 
@@ -16,6 +20,7 @@ function setup() {
     saveApproved: vi.fn(async (_id: string, pkg: AdventureJsonV1) => ({
       package: pkg,
     })),
+    listApproved: vi.fn(async (): Promise<StoredAdventurePackage[]> => []),
     notify: vi.fn(),
     onReview: vi.fn(),
     onCancel: vi.fn(),
@@ -39,6 +44,28 @@ describe("adventure import controller", () => {
     );
     expect(deps.onApproved).toHaveBeenCalledWith("vault-1");
     expect(imports.approving).toBe(false);
+  });
+
+  it("recognises identical imports and selects the prior version for changed content", async () => {
+    const { imports, deps } = setup();
+    const hash = await computeAdventureJsonHash(approved);
+    const stored: StoredAdventurePackage = {
+      hash,
+      path: `.codex/adventures/packages/${hash}.json`,
+      package: approved,
+      originFormat: "adventure-json/v1",
+    };
+    deps.listApproved.mockResolvedValueOnce([stored]);
+    await imports.importJson(jsonFile());
+    expect(imports.duplicate).toEqual(stored);
+    expect(deps.onReview).not.toHaveBeenCalled();
+
+    const changed = { ...sample, version: "1.1.0" };
+    deps.listApproved.mockResolvedValueOnce([stored]);
+    await imports.importJson(jsonFile(JSON.stringify(changed)));
+    expect(imports.duplicate).toBeNull();
+    expect(imports.predecessor?.hash).toBe(hash);
+    expect(deps.onReview).toHaveBeenCalledOnce();
   });
 
   it.each([

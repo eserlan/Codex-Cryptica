@@ -9,6 +9,34 @@ import {
 } from "./adventure-fixtures";
 
 describe("AdventureManager", () => {
+  it("uses the coordinated save path when starting from an imported package", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    const manager = new AdventureManager(deps);
+
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Imported Module",
+      premise: "Follow the lantern.",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      sourcePackage: {
+        packageId: "imported-module",
+        version: "1.0.0",
+        formatVersion: "adventure-json/v1",
+        hash: "a".repeat(64),
+      },
+    });
+
+    expect(savePinned).toHaveBeenCalledOnce();
+    const pinnedSession = savePinned.mock.calls[0]?.[0] as AdventureSession;
+    expect(pinnedSession.sourcePackage?.hash).toBe("a".repeat(64));
+  });
+
   it("saves local artwork changes through adventure ownership and rejects stale revisions", async () => {
     const deps: any = dependencies();
     const manager = new AdventureManager(deps);

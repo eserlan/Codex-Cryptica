@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.37.2",
+    "title": "Adventure Package Versions",
+    "date": "2026-11-16",
+    "type": "patch",
+    "highlights": [
+      "Re-importing the Same Adventure Is Recognised: Importing an adventure package you already have tells you it is already imported instead of erroring, and writes nothing.",
+      "Changed Adventures Become New Versions With a Reviewable Diff: Importing changed content for the same adventure opens the review as a new version, showing what was added, removed, or changed since the previous approved version. Earlier versions stay untouched and startable, and sessions keep playing the exact version they began with.",
+      "Unused Versions Can Be Removed: Each approved version now has a remove option. A version still used by a session cannot be removed, and Codex Cryptica explains why."
+    ]
+  },
+  {
     "version": "0.37.1",
     "title": "The Shared Vault Update",
     "date": "2026-11-14",

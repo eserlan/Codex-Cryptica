@@ -12,6 +12,14 @@ interface LibraryDependencies {
   listSessions: (vaultId: string) => Promise<AdventureListResult>;
   open: (vaultId: string, sessionId: string) => Promise<unknown>;
   resumeArchived: (vaultId: string, sessionId: string) => Promise<unknown>;
+  removeApproved: (
+    vaultId: string,
+    hash: string,
+    pinnedHashes: ReadonlySet<string>,
+  ) => Promise<
+    | { status: "removed"; hash: string; path: string }
+    | { status: "refused"; hash: string; path: string; reason: string }
+  >;
 }
 
 function pinnedSessions(entries: AdventureArchiveEntry[]) {
@@ -32,6 +40,9 @@ export class AdventurePackageLibrary {
   pinnedByHash = $state<Map<string, AdventureArchiveEntry[]>>(new Map());
   resumingId = $state<string | null>(null);
   resumeError = $state<string | null>(null);
+  removingHash = $state<string | null>(null);
+  removalMessage = $state<string | null>(null);
+  removalError = $state<string | null>(null);
   private loadToken = 0;
 
   constructor(private readonly deps: LibraryDependencies) {}
@@ -85,6 +96,36 @@ export class AdventurePackageLibrary {
           : "Unable to resume this adventure.";
     } finally {
       this.resumingId = null;
+    }
+  };
+
+  remove = async (item: StoredAdventurePackage): Promise<void> => {
+    if (this.removingHash) return;
+    const vaultId = this.deps.getVaultId();
+    this.removingHash = item.hash;
+    this.removalMessage = null;
+    this.removalError = null;
+    try {
+      const result = await this.deps.removeApproved(
+        vaultId,
+        item.hash,
+        new Set(this.pinnedByHash.keys()),
+      );
+      if (vaultId !== this.deps.getVaultId()) return;
+      if (result.status === "refused") {
+        this.removalError = result.reason;
+        return;
+      }
+      this.removalMessage = `Removed "${item.package.title}" v${item.package.version}.`;
+      await this.refresh(vaultId);
+    } catch (error) {
+      if (vaultId === this.deps.getVaultId())
+        this.removalError =
+          error instanceof Error
+            ? error.message
+            : "Unable to remove this approved package version.";
+    } finally {
+      if (vaultId === this.deps.getVaultId()) this.removingHash = null;
     }
   };
 }

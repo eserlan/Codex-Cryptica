@@ -17,7 +17,7 @@ import {
 export const MAX_ADVENTURE_JSON_BYTES = 10 * 1024 * 1024;
 
 export interface SaveAdventureJsonResult {
-  status: "created";
+  status: "created" | "deduplicated";
   path: string;
   hash: string;
   package: AdventureJsonV1;
@@ -55,10 +55,23 @@ function isApprovedExistingRecord(raw: string): boolean {
   return false;
 }
 
+function isNativeAdventureJsonRecord(raw: string): boolean {
+  const parsed: unknown = JSON.parse(raw);
+  return (
+    !!parsed &&
+    typeof parsed === "object" &&
+    "formatVersion" in parsed &&
+    parsed.formatVersion === ADVENTURE_JSON_V1_FORMAT_VERSION
+  );
+}
+
 /**
  * Persists an approved `AdventureJsonV1` package atomically under
  * `.codex/adventures/packages/<canonicalHash>.json`.
- * Rejects overwriting any already-approved package at that hash.
+ * Re-importing content whose canonical hash already exists deduplicates:
+ * the stored file is returned untouched and nothing is written. A legacy
+ * approved record at the same hash still rejects, so legacy baselines are
+ * never silently replaced.
  */
 export async function saveApprovedAdventureJson(
   io: AdventurePackageFileIO,
@@ -71,6 +84,16 @@ export async function saveApprovedAdventureJson(
   let existingRaw: string | null = null;
   if (await io.exists(path)) {
     existingRaw = await io.read(path);
+    if (isNativeAdventureJsonRecord(existingRaw)) {
+      const stored = assertValidAdventureJson(JSON.parse(existingRaw));
+      const storedHash = await computeAdventureJsonHash(stored);
+      if (storedHash !== hash) {
+        throw new Error(
+          `Adventure package hash mismatch: expected ${hash}, found ${storedHash}.`,
+        );
+      }
+      return { status: "deduplicated", path, hash, package: stored };
+    }
     if (isApprovedExistingRecord(existingRaw)) {
       throw new Error(
         `Adventure package "${hash}" is already approved and cannot be modified.`,

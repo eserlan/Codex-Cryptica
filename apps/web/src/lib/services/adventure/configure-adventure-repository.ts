@@ -1,5 +1,6 @@
 import { adventurePackageRepository } from "./adventure-package-storage.js";
 import { adventureSessionRepository } from "./adventure-session-repository.js";
+import { withAdventurePackagePinLock } from "./adventure-package-pin-lock.js";
 
 interface VaultHandleSource {
   getSpecificVaultHandle(
@@ -21,4 +22,12 @@ export function configureAdventureRepository(vault: VaultHandleSource): void {
   };
   adventureSessionRepository.setRootResolver(resolver);
   adventurePackageRepository.setRootResolver(resolver);
+  adventureSessionRepository.setApprovedPackageLookup(
+    async (vaultId, hash) =>
+      (await adventurePackageRepository.loadStored(vaultId, hash)) !== null,
+  );
+  adventurePackageRepository.setPackagePinCoordination(
+    withAdventurePackagePinLock,
+    (vaultId) => adventureSessionRepository.listPinnedPackageHashes(vaultId),
+  );
 }

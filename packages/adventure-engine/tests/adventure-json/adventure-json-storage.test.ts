@@ -14,10 +14,15 @@ import {
 
 function createMemoryIO(): AdventurePackageFileIO & {
   files: Map<string, string>;
+  writeCalls: number;
 } {
   const files = new Map<string, string>();
-  return {
+  const io: AdventurePackageFileIO & {
+    files: Map<string, string>;
+    writeCalls: number;
+  } = {
     files,
+    writeCalls: 0,
     async exists(path) {
       return files.has(path);
     },
@@ -27,6 +32,7 @@ function createMemoryIO(): AdventurePackageFileIO & {
       return value;
     },
     async write(path, content) {
+      io.writeCalls += 1;
       files.set(path, content);
     },
     async list(dir) {
@@ -37,6 +43,7 @@ function createMemoryIO(): AdventurePackageFileIO & {
       files.delete(path);
     },
   };
+  return io;
 }
 
 function makeSampleJson(
@@ -112,14 +119,67 @@ describe("AdventureJsonV1 storage", () => {
     expect(loaded?.package).toEqual(pkg);
   });
 
-  it("rejects overwriting an already-approved package at the same canonical hash", async () => {
+  it("deduplicates a re-save of the same canonical content without a second write or byte change", async () => {
     const io = createMemoryIO();
     const pkg = makeSampleJson();
-    await saveApprovedAdventureJson(io, pkg);
+    const first = await saveApprovedAdventureJson(io, pkg);
+    const bytesBefore = io.files.get(first.path);
+    const writesBefore = io.files.size;
+    const writeCallsBefore = io.writeCalls;
 
-    await expect(saveApprovedAdventureJson(io, pkg)).rejects.toThrow(
-      /already approved/i,
+    const again = await saveApprovedAdventureJson(io, pkg);
+    expect(again.status).toBe("deduplicated");
+    expect(again.hash).toBe(first.hash);
+    expect(again.path).toBe(first.path);
+    expect(again.package).toEqual(pkg);
+    expect(io.files.get(first.path)).toBe(bytesBefore);
+    expect(io.files.size).toBe(writesBefore);
+    expect(io.writeCalls).toBe(writeCallsBefore);
+
+    // Key-reordered serialisation of the same content deduplicates as well.
+    const reordered = JSON.parse(
+      JSON.stringify(pkg, (_key, value) => {
+        if (value && typeof value === "object" && !Array.isArray(value)) {
+          return Object.fromEntries(
+            Object.entries(value as Record<string, unknown>).reverse(),
+          );
+        }
+        return value;
+      }),
+    ) as AdventureJsonV1;
+    const reorderedResult = await saveApprovedAdventureJson(io, reordered);
+    expect(reorderedResult.status).toBe("deduplicated");
+    expect(reorderedResult.hash).toBe(first.hash);
+    expect(io.files.get(first.path)).toBe(bytesBefore);
+  });
+
+  it("stores changed same-id content under a new hash without touching the earlier file", async () => {
+    const io = createMemoryIO();
+    const v1 = makeSampleJson();
+    const first = await saveApprovedAdventureJson(io, v1);
+    const bytesBefore = io.files.get(first.path);
+    const v2 = makeSampleJson({
+      version: "1.1.0",
+      scenes: [
+        {
+          id: "scene-1",
+          title: "The Mill Yard",
+          summary: "Arrival at the silent mill, revised.",
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const second = await saveApprovedAdventureJson(io, v2);
+    expect(second.status).toBe("created");
+    expect(second.hash).not.toBe(first.hash);
+    expect(io.files.get(first.path)).toBe(bytesBefore);
+    const listed = await listApprovedAdventurePackages(io);
+    expect(listed.map((entry) => entry.hash).sort()).toEqual(
+      [first.hash, second.hash].sort(),
     );
+    const reloadedV1 = await loadStoredAdventurePackage(io, first.hash);
+    expect(reloadedV1?.package).toEqual(v1);
   });
 
   it("rolls back on write verification failure and rejects invalid AdventureJsonV1", async () => {

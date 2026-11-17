@@ -1,11 +1,14 @@
 import {
   adventureSourcePackageToAdventureJson,
+  computeAdventureJsonHash,
   parseAdventureMarkdown,
+  selectAdventureJsonPredecessor,
   validateAdventureJson,
   MAX_ADVENTURE_JSON_BYTES,
   MAX_ADVENTURE_MARKDOWN_BYTES,
   MAX_ADVENTURE_PDF_BYTES,
   type AdventureJsonV1,
+  type StoredAdventurePackage,
 } from "@codex/adventure-engine";
 import type { ImportValidationIssue } from "./AdventureEntryChoices.svelte";
 
@@ -16,7 +19,11 @@ interface ImportDependencies {
   saveApproved: (
     vaultId: string,
     pkg: AdventureJsonV1,
-  ) => Promise<{ package: AdventureJsonV1 }>;
+  ) => Promise<{
+    package: AdventureJsonV1;
+    status?: "created" | "deduplicated";
+  }>;
+  listApproved: (vaultId: string) => Promise<StoredAdventurePackage[]>;
   notify: (message: string) => void;
   onReview: () => void;
   onCancel: () => void;
@@ -49,6 +56,22 @@ function experimentalFileError(file: File, isPdf: boolean): string | null {
   return null;
 }
 
+async function findDuplicatePackage(
+  stored: StoredAdventurePackage[],
+  hash: string,
+  isCurrent: () => boolean,
+): Promise<StoredAdventurePackage | null> {
+  for (const item of stored) {
+    const storedHash =
+      item.originFormat === "legacy-source-package"
+        ? await computeAdventureJsonHash(item.package)
+        : item.hash;
+    if (!isCurrent()) return null;
+    if (storedHash === hash) return item;
+  }
+  return null;
+}
+
 /** Per-surface import draft and request lifetime, independent of the visible form. */
 export class AdventureImportController {
   draft = $state<AdventureJsonV1 | null>(null);
@@ -58,6 +81,8 @@ export class AdventureImportController {
   inFlight = $state(false);
   approving = $state(false);
   approveError = $state<string | null>(null);
+  duplicate = $state<StoredAdventurePackage | null>(null);
+  predecessor = $state<StoredAdventurePackage | null>(null);
   private draftVaultId: string | null = null;
   private requestToken = 0;
   private abortController: AbortController | null = null;
@@ -93,6 +118,7 @@ export class AdventureImportController {
     this.error = null;
     this.validationErrors = [];
     this.approveError = null;
+    this.duplicate = null;
     if (!this.deps.canImport() || this.deps.isGuest()) {
       this.inFlight = false;
       this.error = "Adventure import is only available in an owner Vault.";
@@ -146,25 +172,60 @@ export class AdventureImportController {
     }
   }
 
-  private reviewValidated(
+  private async reviewValidated(
     parsed: unknown,
-    sourceVaultId: string,
+    request: ImportRequest,
     origin: "markdown" | "pdf" | null,
     validationError: string,
-  ): void {
+  ): Promise<void> {
     const validation = validateAdventureJson(parsed);
     if (!validation.ok) {
       this.error = validationError;
       this.validationErrors = validation.errors;
       return;
     }
+    let stored: StoredAdventurePackage[] = [];
+    try {
+      stored = await this.deps.listApproved(request.sourceVaultId);
+    } catch {
+      // Keep a valid local import reviewable when the package catalogue is unavailable.
+    }
+    if (!this.isCurrent(request)) return;
+    const hash = await computeAdventureJsonHash(validation.value);
+    if (!this.isCurrent(request)) return;
+    const duplicate = await findDuplicatePackage(stored, hash, () =>
+      this.isCurrent(request),
+    );
+    if (!this.isCurrent(request)) return;
+    if (duplicate) {
+      this.duplicate = duplicate;
+      this.predecessor = null;
+      return;
+    }
+    this.duplicate = null;
+    const predecessor = selectAdventureJsonPredecessor(
+      stored,
+      validation.value,
+      hash,
+    );
+    this.predecessor = predecessor
+      ? {
+          hash: predecessor.hash,
+          path: "",
+          package: predecessor.package,
+          originFormat: "adventure-json/v1",
+        }
+      : null;
     this.draft = validation.value;
     this.experimentalOrigin = origin;
-    this.draftVaultId = sourceVaultId;
+    this.draftVaultId = request.sourceVaultId;
     this.deps.onReview();
   }
 
-  private readJson(bytes: Uint8Array, request: ImportRequest): void {
+  private async readJson(
+    bytes: Uint8Array,
+    request: ImportRequest,
+  ): Promise<void> {
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     let parsed: unknown;
     try {
@@ -180,9 +241,9 @@ export class AdventureImportController {
       ];
       return;
     }
-    this.reviewValidated(
+    await this.reviewValidated(
       parsed,
-      request.sourceVaultId,
+      request,
       null,
       "Adventure JSON validation failed.",
     );
@@ -211,9 +272,9 @@ export class AdventureImportController {
       if (result.error.code !== "ABORTED") this.error = result.error.message;
       return;
     }
-    this.reviewValidated(
+    await this.reviewValidated(
       adventureSourcePackageToAdventureJson(result.package),
-      request.sourceVaultId,
+      request,
       isPdf ? "pdf" : "markdown",
       "Converted adventure failed Adventure JSON validation.",
     );
@@ -239,13 +300,14 @@ export class AdventureImportController {
     );
   };
 
-  approve = async (approved: AdventureJsonV1): Promise<void> => {
+  private beginApproval(): Pick<
+    ImportRequest,
+    "requestToken" | "sourceVaultId"
+  > {
     const sourceVaultId = this.draftVaultId;
-    const requestToken = this.requestToken;
     if (
       !sourceVaultId ||
-      this.deps.getVaultId() !== sourceVaultId ||
-      this.deps.isGuest()
+      !this.isCurrent({ sourceVaultId, requestToken: this.requestToken })
     ) {
       const error = new Error(
         "Return to the owner Vault where this adventure was imported to approve it.",
@@ -253,30 +315,58 @@ export class AdventureImportController {
       this.approveError = error.message;
       throw error;
     }
-    const request = { sourceVaultId, requestToken };
+    return { sourceVaultId, requestToken: this.requestToken };
+  }
+
+  private completeApproval(
+    saved: Awaited<ReturnType<ImportDependencies["saveApproved"]>>,
+    request: Pick<ImportRequest, "requestToken" | "sourceVaultId">,
+  ): void {
+    if (!this.isCurrent(request)) return;
+    this.draft = saved.package;
+    this.predecessor = null;
+    this.deps.notify(
+      saved.status === "deduplicated"
+        ? `"${saved.package.title}" was already imported.`
+        : `Approved "${saved.package.title}" for local play.`,
+    );
+    this.deps.onApproved(request.sourceVaultId);
+  }
+
+  private reportApprovalError(
+    error: unknown,
+    request: Pick<ImportRequest, "requestToken" | "sourceVaultId">,
+  ): void {
+    if (!this.isCurrent(request)) return;
+    this.approveError =
+      error instanceof Error
+        ? error.message
+        : "Unable to save the approved adventure package.";
+  }
+
+  approve = async (approved: AdventureJsonV1): Promise<void> => {
+    const request = this.beginApproval();
     this.approving = true;
     this.approveError = null;
     try {
-      const saved = await this.deps.saveApproved(sourceVaultId, approved);
-      if (!this.isCurrent(request)) return;
-      this.draft = saved.package;
-      this.deps.notify(`Approved "${saved.package.title}" for local play.`);
-      this.deps.onApproved(sourceVaultId);
+      const saved = await this.deps.saveApproved(
+        request.sourceVaultId,
+        approved,
+      );
+      this.completeApproval(saved, request);
     } catch (error) {
-      if (this.isCurrent(request))
-        this.approveError =
-          error instanceof Error
-            ? error.message
-            : "Unable to save the approved adventure package.";
+      this.reportApprovalError(error, request);
       throw error;
     } finally {
-      if (requestToken === this.requestToken) this.approving = false;
+      if (request.requestToken === this.requestToken) this.approving = false;
     }
   };
 
   cancel = (): void => {
     this.destroy();
     this.draft = null;
+    this.duplicate = null;
+    this.predecessor = null;
     this.experimentalOrigin = null;
     this.draftVaultId = null;
     this.error = null;

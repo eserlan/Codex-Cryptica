@@ -72,6 +72,8 @@
     isGuest: () => vault.isGuest,
     saveApproved: (id, pkg) =>
       adventurePackageRepository.saveApprovedJson(id, pkg),
+    listApproved: (id) =>
+      adventurePackageRepository.listApproved?.(id) ?? Promise.resolve([]),
     notify: (message) => notificationStore.notify(message, "success"),
     onReview: () => {
       draft.approach = "import-review";
@@ -93,6 +95,8 @@
     open: (id, sessionId) => oracle.adventure.open(id, sessionId),
     resumeArchived: (id, sessionId) =>
       oracle.adventure.resumeArchived(id, sessionId),
+    removeApproved: (id, hash, pinnedHashes) =>
+      adventurePackageRepository.removeApproved(id, hash, pinnedHashes),
   });
   let previousVaultId: string | null = null;
   onDestroy(() => imports.destroy());

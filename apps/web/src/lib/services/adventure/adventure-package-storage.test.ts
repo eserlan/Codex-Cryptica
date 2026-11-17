@@ -129,7 +129,7 @@ describe("AdventurePackageRepository", () => {
     );
   });
 
-  it("saves AdventureJsonV1 under canonical hash, rejects overwrite, and lists alongside legacy packages", async () => {
+  it("saves AdventureJsonV1 under canonical hash, deduplicates re-save, and lists alongside legacy packages", async () => {
     const root = createInMemoryDirectoryHandle();
     const repo = new AdventurePackageRepository(async () => root);
 
@@ -168,9 +168,9 @@ describe("AdventurePackageRepository", () => {
     expect(saved.hash).toBe(expectedHash);
     expect(saved.path).toBe(`.codex/adventures/packages/${expectedHash}.json`);
 
-    await expect(repo.saveApprovedJson("vault-1", jsonPkg)).rejects.toThrow(
-      "already approved",
-    );
+    const deduplicated = await repo.saveApprovedJson("vault-1", jsonPkg);
+    expect(deduplicated.status).toBe("deduplicated");
+    expect(deduplicated.hash).toBe(expectedHash);
 
     const loaded = await repo.loadStored("vault-1", expectedHash);
     expect(loaded?.originFormat).toBe("adventure-json/v1");
@@ -180,5 +180,148 @@ describe("AdventurePackageRepository", () => {
     expect(listed.map((item) => item.hash).sort()).toEqual(
       [parsed.package.documentHash, expectedHash].sort(),
     );
+  });
+
+  it("removes only the target version and refuses removal when its hash is pinned", async () => {
+    const root = createInMemoryDirectoryHandle();
+    const repo = new AdventurePackageRepository(async () => root);
+    let currentPinnedHashes = new Set<string>();
+    repo.setPackagePinCoordination(
+      async (_vaultId, _hash, operation) => operation(),
+      async () => currentPinnedHashes,
+    );
+    const base: AdventureJsonV1 = {
+      formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+      id: "the-last-grind",
+      title: "The Last Grind",
+      version: "1.0.0",
+      premise: { background: "The mill stopped.", hook: "Investigate." },
+      source: { title: "The Last Grind" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [],
+      endings: [],
+      unresolved: [],
+    };
+    const v1 = await repo.saveApprovedJson("vault-1", base);
+    const v2 = await repo.saveApprovedJson("vault-1", {
+      ...base,
+      version: "1.1.0",
+      title: "The Last Grind, revised",
+    });
+    expect(v1.hash).not.toBe(v2.hash);
+
+    currentPinnedHashes = new Set([v1.hash]);
+    const refused = await repo.removeApproved(
+      "vault-1",
+      v1.hash,
+      new Set([v1.hash]),
+    );
+    expect(refused.status).toBe("refused");
+    if (refused.status === "refused") {
+      expect(refused.reason).toContain("in use");
+    }
+    expect(await repo.loadStored("vault-1", v1.hash)).not.toBeNull();
+
+    currentPinnedHashes = new Set();
+    const removed = await repo.removeApproved(
+      "vault-1",
+      v1.hash,
+      new Set([v2.hash]),
+    );
+    expect(removed.status).toBe("removed");
+    expect(await repo.loadStored("vault-1", v1.hash)).toBeNull();
+    expect(await repo.loadStored("vault-1", v2.hash)).not.toBeNull();
+    const listed = await repo.listApproved("vault-1");
+    expect(listed.map((item) => item.hash)).toEqual([v2.hash]);
+  });
+
+  it("rechecks persisted session pins under the package pin lock before removal", async () => {
+    const root = createInMemoryDirectoryHandle();
+    const lockEvents: string[] = [];
+    let pinnedHash = "";
+    const repo = new AdventurePackageRepository(async () => root);
+    repo.setPackagePinCoordination(
+      async (_vaultId, _hash, operation) => {
+        lockEvents.push("lock");
+        const result = await operation();
+        lockEvents.push("unlock");
+        return result;
+      },
+      async () => {
+        lockEvents.push("scan");
+        return new Set([pinnedHash]);
+      },
+    );
+    const pkg: AdventureJsonV1 = {
+      formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+      id: "the-last-grind",
+      title: "The Last Grind",
+      version: "1.0.0",
+      premise: { background: "The mill stopped.", hook: "Investigate." },
+      source: { title: "The Last Grind" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [],
+      endings: [],
+      unresolved: [],
+    };
+    const saved = await repo.saveApprovedJson("vault-1", pkg);
+    pinnedHash = saved.hash;
+
+    const result = await repo.removeApproved("vault-1", saved.hash);
+    expect(result.status).toBe("refused");
+    expect(lockEvents).toEqual(["lock", "scan", "unlock"]);
+    expect(await repo.loadStored("vault-1", saved.hash)).not.toBeNull();
+  });
+
+  it("allows removal when a stale caller pin snapshot disagrees with the fresh scan", async () => {
+    const root = createInMemoryDirectoryHandle();
+    const repo = new AdventurePackageRepository(async () => root);
+    repo.setPackagePinCoordination(
+      async (_vaultId, _hash, operation) => operation(),
+      async () => new Set(),
+    );
+    const pkg: AdventureJsonV1 = {
+      formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+      id: "the-last-grind",
+      title: "The Last Grind",
+      version: "1.0.0",
+      premise: { background: "The mill stopped.", hook: "Investigate." },
+      source: { title: "The Last Grind" },
+      locations: [],
+      actors: [],
+      factions: [],
+      scenes: [],
+      encounters: [],
+      clues: [],
+      rumours: [],
+      items: [],
+      secrets: [],
+      endings: [],
+      unresolved: [],
+    };
+    const saved = await repo.saveApprovedJson("vault-1", pkg);
+
+    const result = await repo.removeApproved(
+      "vault-1",
+      saved.hash,
+      new Set([saved.hash]),
+    );
+
+    expect(result.status).toBe("removed");
+    expect(await repo.loadStored("vault-1", saved.hash)).toBeNull();
   });
 });

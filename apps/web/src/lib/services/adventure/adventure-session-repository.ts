@@ -11,6 +11,10 @@ import {
   type AdventureSourcePackageRef,
   type AdventureStatus,
 } from "@codex/adventure-engine";
+import {
+  withAdventurePackagePinLock,
+  type AdventurePackagePinLock,
+} from "./adventure-package-pin-lock.js";
 
 export type AdventureLoadCondition =
   "normal" | "duplicate-active-conflict" | "migration-recovery" | "unreadable";
@@ -67,19 +71,38 @@ export class AdventureSessionRepository {
   private rootResolver: AdventureVaultRootResolver;
   private readonly idGenerator: IdGenerator;
   private readonly clock: Clock;
+  private readonly withPackagePinLock: AdventurePackagePinLock;
+  private hasApprovedPackage?: (
+    vaultId: string,
+    hash: string,
+  ) => Promise<boolean>;
   private changeListener?: (vaultId: string) => Promise<void>;
 
   constructor(
     resolveVaultRoot: AdventureVaultRootResolver,
-    deps: { idGenerator?: IdGenerator; clock?: Clock } = {},
+    deps: {
+      idGenerator?: IdGenerator;
+      clock?: Clock;
+      withPackagePinLock?: AdventurePackagePinLock;
+      hasApprovedPackage?: (vaultId: string, hash: string) => Promise<boolean>;
+    } = {},
   ) {
     this.rootResolver = resolveVaultRoot;
     this.idGenerator = deps.idGenerator ?? systemIdGenerator;
     this.clock = deps.clock ?? systemClock;
+    this.withPackagePinLock =
+      deps.withPackagePinLock ?? withAdventurePackagePinLock;
+    this.hasApprovedPackage = deps.hasApprovedPackage;
   }
 
   setRootResolver(resolveVaultRoot: AdventureVaultRootResolver): void {
     this.rootResolver = resolveVaultRoot;
+  }
+
+  setApprovedPackageLookup(
+    hasApprovedPackage: (vaultId: string, hash: string) => Promise<boolean>,
+  ): void {
+    this.hasApprovedPackage = hasApprovedPackage;
   }
 
   setChangeListener(listener: (vaultId: string) => Promise<void>): void {
@@ -223,6 +246,42 @@ export class AdventureSessionRepository {
       (b.updatedAt ?? "").localeCompare(a.updatedAt ?? ""),
     );
     return { effectiveActiveId, entries };
+  }
+
+  /** Strict pin scan used before deleting an approved package version. */
+  async listPinnedPackageHashes(vaultId: string): Promise<ReadonlySet<string>> {
+    const directory = await this.openAdventuresDirectoryForRead(vaultId);
+    if (!directory) return new Set();
+    const hashes = new Set<string>();
+    for await (const [name, handle] of (directory as any).entries()) {
+      if (!name.endsWith(".json") || handle.kind !== "file") continue;
+      const read = await this.readFile(vaultId, name.slice(0, -5));
+      if (read.session.sourcePackage?.hash) {
+        hashes.add(read.session.sourcePackage.hash);
+      }
+    }
+    return hashes;
+  }
+
+  /** Saves a newly created pinned session while excluding concurrent removal. */
+  async savePinned(session: AdventureSession): Promise<AdventureSaveResult> {
+    const hash = session.sourcePackage?.hash;
+    if (!hash) return this.save(null, session);
+    return this.withPackagePinLock(session.vaultId, hash, async () => {
+      if (!this.hasApprovedPackage) {
+        return {
+          ok: false,
+          error: new Error("adventure-package-availability-check-unavailable"),
+        };
+      }
+      if (!(await this.hasApprovedPackage(session.vaultId, hash))) {
+        return {
+          ok: false,
+          error: new Error("adventure-source-package-not-found"),
+        };
+      }
+      return this.save(null, session);
+    });
   }
 
   private async readArchiveEntry(
@@ -425,7 +484,7 @@ export class AdventureSessionRepository {
       updatedAt: now,
       revision: 0,
     };
-    const result = await this.save(null, duplicated);
+    const result = await this.savePinned(duplicated);
     if (!result.ok) {
       return { condition: "unreadable", error: result.error };
     }
