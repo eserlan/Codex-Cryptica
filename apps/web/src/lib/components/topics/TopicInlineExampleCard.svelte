@@ -8,7 +8,10 @@
   }: { example: TopicInlineExample; highlightLabel: string } = $props();
 </script>
 
-<div class="mb-6 border border-theme-border bg-theme-surface p-6">
+<div
+  class="mb-6 rounded-xl border border-theme-border bg-theme-surface p-6 shadow-md"
+  style:background-image="var(--bg-texture-overlay)"
+>
   <p class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-text">
     {example.genre}
   </p>
