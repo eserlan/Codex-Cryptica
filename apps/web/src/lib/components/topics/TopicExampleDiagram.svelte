@@ -48,7 +48,8 @@
     viewBox="0 0 320 228"
     class="mx-auto block h-auto w-full max-w-sm select-none"
     role="img"
-    aria-labelledby="{uid}-title {uid}-desc"
+    aria-labelledby="{uid}-title"
+    aria-describedby="{uid}-desc"
   >
     <title id="{uid}-title">{diagram.title}</title>
     <desc id="{uid}-desc">{diagram.description}</desc>

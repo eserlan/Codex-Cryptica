@@ -17,10 +17,13 @@ describe("TopicExampleDiagram", () => {
     ).not.toBeNull();
     const svg = container.querySelector("svg") as SVGElement;
     expect(svg.getAttribute("role")).toBe("img");
-    const titleId = svg.getAttribute("aria-labelledby")!.split(" ")[0];
-    expect(
-      container.querySelector(`#${CSS.escape(titleId)}`)?.textContent,
-    ).toBe(diagram.title);
+    const byAttr = (attr: string) => {
+      const id = svg.getAttribute(attr)!;
+      expect(id.split(" ")).toHaveLength(1);
+      return container.querySelector(`#${CSS.escape(id)}`);
+    };
+    expect(byAttr("aria-labelledby")?.textContent).toBe(diagram.title);
+    expect(byAttr("aria-describedby")?.textContent).toBe(diagram.description);
   });
 
   it("lists one item per link and marks the flashpoint in text", () => {
