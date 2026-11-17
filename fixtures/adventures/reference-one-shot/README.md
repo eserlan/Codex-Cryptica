@@ -12,7 +12,7 @@ An original, system-light one-shot (about 30 turns) with an answer key, for offl
 
 - `adventure.md`: the clean adventure.
 - `adventure.pdf`: a multi-page text-based PDF build of `adventure.md` (licensed under the repository `LICENSE`, Polyform Noncommercial License 1.0.0), used by `packages/adventure-engine/tests/adventure-pdf-import.test.ts`.
-- `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue and endings. Checked by `packages/adventure-engine/tests/reference-one-shot.test.ts`.
+- `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue and endings. Checked by `packages/adventure-engine/tests/reference-one-shot.test.ts`. Grouping headings carry `"container": true` and are not required for scorer coverage.
 
 ## Variants (Prettier-ignored, one defect each)
 

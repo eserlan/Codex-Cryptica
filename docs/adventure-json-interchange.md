@@ -92,3 +92,10 @@ schema, alias, both examples, the import CTA href and the `llms.txt` entries.
 - The guide's prompt uses absolute production URLs. On a non-production base the
   check reports those as environment-dependent warnings; run it against
   production with `--strict-production` at release time, after promotion.
+
+## Conversion QA
+
+For scoring model conversions against an answer key (schema, secrets, coverage,
+rumours, branches, citations, truncation), see `docs/adventure-conversion-qa.md`
+and the offline scorer `scoreAdventureConversion` plus the
+`bun scripts/score-adventure-conversion.ts` CLI.

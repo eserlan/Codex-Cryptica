@@ -5,3 +5,4 @@ export * from "./canonical";
 export * from "./adapter";
 export * from "./storage";
 export * from "./diff";
+export * from "./conversion-score";
