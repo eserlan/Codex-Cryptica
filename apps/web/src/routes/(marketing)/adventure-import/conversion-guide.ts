@@ -1,7 +1,94 @@
+/**
+ * A trimmed, schema-valid answer shown inside the prompt so a model can
+ * pattern-match the shape. Exported so tests can prove it stays valid.
+ */
+export const PROMPT_EXAMPLE_OUTPUT = {
+  formatVersion: "adventure-json/v1",
+  id: "silent-watchtower",
+  title: "The Silent Watchtower",
+  version: "1.0.0",
+  premise: {
+    background: "A hillside watchtower has gone dark.",
+    hook: "The Reeve asks the party to relight the beacon.",
+  },
+  source: { title: "The Silent Watchtower" },
+  locations: [
+    {
+      id: "loc-tower",
+      name: "Ridge Watchtower",
+      summary: "A stone signal tower above the valley road.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  actors: [
+    {
+      id: "actor-tomas",
+      name: "Reeve Tomas",
+      summary: "The worried village official who hires the party.",
+      role: "Village reeve",
+      locationId: "loc-tower",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  factions: [],
+  scenes: [
+    {
+      id: "scene-beacon",
+      title: "The Cold Beacon",
+      summary: "The brazier at the top of the tower is unlit.",
+      locationId: "loc-tower",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  encounters: [],
+  clues: [],
+  rumours: [],
+  items: [],
+  secrets: [
+    {
+      id: "secret-tomas-motive",
+      text: "Tomas put the beacon out himself to hide a smuggling run.",
+      relatedEntityIds: ["actor-tomas"],
+      visibility: "gm-only",
+      epistemicStatus: "explicit",
+    },
+  ],
+  endings: [
+    {
+      id: "ending-lit",
+      description: "The beacon burns again and the caravan passes safely.",
+      epistemicStatus: "explicit",
+    },
+  ],
+  unresolved: [
+    {
+      id: "unresolved-oil",
+      code: "missing-detail",
+      message: "The source does not say where the lamp oil is kept.",
+      epistemicStatus: "unresolved",
+    },
+  ],
+};
+
+const EXAMPLE_JSON = JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2);
+
 export const CANONICAL_CONVERSION_PROMPT = `Convert the tabletop RPG adventure I provide into a valid Codex Cryptica Adventure JSON v1 document.
 
 Schema: https://codexcryptica.com/schemas/adventure-json/v1.json
 Guide: https://codexcryptica.com/adventure-import
+
+Output contract (read this first):
+- Your entire reply is ONE JSON object: it starts with "{" and ends with "}". No Markdown code fences, no text before or after it.
+- Include all 11 collection arrays, using [] when empty.
+- Use only the field names and exact values listed below. Do not add properties.
+- Never invent facts. When the source is unclear, record it in "unresolved".
+- Only if you cannot read the attached source, or it is too long to convert in one reply, answer with one plain sentence saying so (and which part to start with) instead of truncated or guessed JSON.
+
+Shape of a valid answer (trimmed: yours will have more entries and fields):
+${EXAMPLE_JSON}
 
 Strict output rules:
 1. Return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON).
@@ -54,7 +141,15 @@ Strict output rules:
 7. Provenance & copyright:
    - Add optional "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) when known.
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
-   - Include only authored adventure structure; omit playthrough state or session history.`;
+   - Include only authored adventure structure; omit playthrough state or session history.
+
+Before you reply, check each of these:
+- The reply is only the JSON object, with no code fences or commentary.
+- All 11 collection arrays are present.
+- Every id is unique, and every cross-reference points to an id that exists.
+- Every "secrets" entry is "gm-only", and no "player-visible" record reveals a hidden role, motive or detail.
+- Every entry has "epistemicStatus"; endings and unresolved have no "visibility".
+- Nothing outside the schema was added and nothing was invented.`;
 
 export const PROMPT_TXT_URL =
   "https://codexcryptica.com/adventure-import/prompt.txt";

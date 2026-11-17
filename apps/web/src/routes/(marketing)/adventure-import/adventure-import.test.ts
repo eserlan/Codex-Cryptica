@@ -1,11 +1,15 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
-import { AdventureJsonV1Schema } from "@codex/adventure-engine";
+import {
+  AdventureJsonV1Schema,
+  validateAdventureJson,
+} from "@codex/adventure-engine";
 import Page from "./+page.svelte";
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
   LINK_HANDOFF_TEXT,
+  PROMPT_EXAMPLE_OUTPUT,
 } from "./conversion-guide.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
@@ -185,6 +189,59 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     const parsed = JSON.parse(example.textContent ?? "");
     expect(parsed.formatVersion).toBe("adventure-json/v1");
     expect(AdventureJsonV1Schema.safeParse(parsed).success).toBe(true);
+  });
+
+  describe("LLM-friendly prompt structure (#4907)", () => {
+    const prompt = CANONICAL_CONVERSION_PROMPT;
+
+    it("states the output contract first, then a worked example, then the rules", () => {
+      const contract = prompt.indexOf("Output contract (read this first):");
+      const example = prompt.indexOf("Shape of a valid answer");
+      const rules = prompt.indexOf("Strict output rules:");
+
+      expect(contract).toBeGreaterThan(-1);
+      expect(contract).toBeLessThan(example);
+      expect(example).toBeLessThan(rules);
+      expect(prompt.slice(contract, example)).toContain("ONE JSON object");
+      expect(prompt.slice(contract, example)).toContain(
+        "Include all 11 collection arrays",
+      );
+    });
+
+    it("embeds an example that is schema-valid and semantically valid", () => {
+      expect(prompt).toContain(JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2));
+      expect(
+        AdventureJsonV1Schema.safeParse(PROMPT_EXAMPLE_OUTPUT).success,
+      ).toBe(true);
+      expect(validateAdventureJson(PROMPT_EXAMPLE_OUTPUT).ok).toBe(true);
+    });
+
+    it("demonstrates whole-record visibility: no hidden motive on the visible actor", () => {
+      const actor = PROMPT_EXAMPLE_OUTPUT.actors[0]!;
+      const secret = PROMPT_EXAMPLE_OUTPUT.secrets[0]!;
+
+      expect(actor.visibility).toBe("player-visible");
+      expect("motivation" in actor).toBe(false);
+      expect(secret.visibility).toBe("gm-only");
+      expect(secret.relatedEntityIds).toContain(actor.id);
+    });
+
+    it("ends with a self-check list and says what to do with unreadable or oversized sources", () => {
+      const check = prompt.lastIndexOf(
+        "Before you reply, check each of these:",
+      );
+
+      expect(check).toBeGreaterThan(prompt.indexOf("Strict output rules:"));
+      expect(prompt.slice(check)).toContain('Every "secrets" entry');
+      expect(prompt).toContain("too long to convert in one reply");
+      expect(prompt).toContain("instead of truncated or guessed JSON");
+    });
+
+    it("stays provider-neutral", () => {
+      expect(prompt).not.toMatch(
+        /\b(ChatGPT|Claude|Gemini|GPT|OpenAI|Anthropic)\b/,
+      );
+    });
   });
 
   it("copies a short link instruction for browsing assistants, separately from the prompt", async () => {
