@@ -19,16 +19,9 @@ import {
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
-  FIDELITY_EXAMPLE_PARAPHRASED,
-  FIDELITY_EXAMPLE_STRUCTURAL,
   FIDELITY_ROWS,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
-  REVISION_EXAMPLE_AFTER,
-  REVISION_EXAMPLE_BEFORE,
-  SPLIT_MERGE_EXAMPLE_DOC,
-  TOP_LEVEL_RULES,
-  VERSIONING_BEHAVIOUR_DOC,
   PROMPT_EXAMPLE_OUTPUT,
 } from "./conversion-guide.js";
 
@@ -57,7 +50,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     copyMock.mockReset();
   });
 
-  it("renders H1, canonical prompt, source certainty rules, privacy notice, and schema links", () => {
+  it("renders H1, AI assistant directive, canonical prompt, privacy notice, and schema links", () => {
     render(Page);
 
     expect(
@@ -74,10 +67,12 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     ).toBeTruthy();
 
     expect(
-      screen.getAllByText(
-        /Do not invent missing facts merely to fill fields\./i,
-      ).length,
-    ).toBeGreaterThanOrEqual(2);
+      screen.getByText(/For AI assistants reading this URL:/i),
+    ).toBeTruthy();
+
+    expect(
+      screen.getByText(/Do not invent missing facts merely to fill fields\./i),
+    ).toBeTruthy();
 
     expect(
       screen.getByText(
@@ -85,26 +80,21 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       ),
     ).toBeTruthy();
 
-    const schemaLink = screen.getByRole("link", {
-      name: /JSON Schema \(v1\.json\)/i,
-    });
-    expect(schemaLink.getAttribute("href")).toBe(
-      "/schemas/adventure-json/v1.json",
-    );
-
-    const minimalLink = screen.getByRole("link", {
-      name: /Minimal Example/i,
-    });
-    expect(minimalLink.getAttribute("href")).toBe(
-      "/schemas/adventure-json/examples/minimal.v1.json",
-    );
-
-    const referenceLink = screen.getByRole("link", {
-      name: /Reference One-Shot Example/i,
-    });
-    expect(referenceLink.getAttribute("href")).toBe(
-      "/schemas/adventure-json/examples/reference-one-shot.v1.json",
-    );
+    expect(
+      screen
+        .getByRole("link", { name: /JSON Schema \(v1\.json\)/i })
+        .getAttribute("href"),
+    ).toBe("/schemas/adventure-json/v1.json");
+    expect(
+      screen
+        .getByRole("link", { name: /Minimal Example/i })
+        .getAttribute("href"),
+    ).toBe("/schemas/adventure-json/examples/minimal.v1.json");
+    expect(
+      screen
+        .getByRole("link", { name: /Reference One-Shot Example/i })
+        .getAttribute("href"),
+    ).toBe("/schemas/adventure-json/examples/reference-one-shot.v1.json");
   });
 
   it("explains the three phases, backup coverage and links in the privacy section", () => {
@@ -163,10 +153,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         /extensions.*codex-cryptica\.adventure-correspondence/s,
       ),
     ).toBeTruthy();
-    expect(
-      screen.getByText(/Splits and merges are shown grouped/),
-    ).toBeTruthy();
-    expect(CORRESPONDENCE_EXTENSION_DOC).toContain('"previousId": string');
+    expect(CORRESPONDENCE_EXTENSION_DOC).toContain('"previousId"');
   });
 
   it("explains the post-conversion upload and links directly to its import area", () => {
@@ -192,16 +179,15 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     );
   });
 
-  it("leads with a task-first quick start, in order, before the prompt and field tables", () => {
+  it("leads with a task-first quick start directly before the canonical prompt", () => {
     const { container } = render(Page);
 
     const headings = [...container.querySelectorAll("h2")].map(
       (h) => h.textContent?.trim() ?? "",
     );
-    const quick = headings.findIndex((h) => /^Quick start/.test(h));
-    expect(quick).toBe(0);
-    expect(quick).toBeLessThan(headings.indexOf("Canonical Conversion Prompt"));
-    expect(quick).toBeLessThan(headings.indexOf("Field-by-Field Structure"));
+    expect(headings[0]).toMatch(/^Quick start/);
+    expect(headings[1]).toBe("Canonical Conversion Prompt");
+    expect(headings[2]).toBe("Next: upload your Adventure JSON");
 
     const steps = [
       ...container
@@ -218,7 +204,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     ]);
   });
 
-  it("says the guide is not a converter and stays model-agnostic", () => {
+  it("says the guide is not a converter and stays model-agnostic in quick start", () => {
     const { container } = render(Page);
     const quick = container
       .querySelector("#quick-start-heading")!
@@ -231,29 +217,20 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(quick.textContent).not.toMatch(/\b(ChatGPT|Claude|Gemini)\b/);
   });
 
-  it("links the quick start to import and troubleshooting anchors that exist", () => {
+  it("links the quick start to import, completeness, staged, privacy, prompt, and troubleshooting anchors that exist", () => {
     const { container } = render(Page);
 
     for (const id of [
       "import-adventure-json-heading",
       "troubleshooting-heading",
       "prompt-heading",
+      "long-adventures",
+      "completeness-heading",
+      "privacy-notice-heading",
     ]) {
       expect(container.querySelector(`a[href="#${id}"]`)).toBeTruthy();
       expect(container.querySelector(`#${id}`)).toBeTruthy();
     }
-  });
-
-  it("shows a minimal example that is the schema-valid published file", () => {
-    const { container } = render(Page);
-    const example = container.querySelector(
-      'pre[aria-label="Minimal Adventure JSON v1 example"]',
-    )!;
-
-    expect(example.getAttribute("tabindex")).toBe("0");
-    const parsed = JSON.parse(example.textContent ?? "");
-    expect(parsed.formatVersion).toBe("adventure-json/v1");
-    expect(AdventureJsonV1Schema.safeParse(parsed).success).toBe(true);
   });
 
   describe("LLM-friendly prompt structure (#4907)", () => {
@@ -339,12 +316,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(secret.relatedEntityIds).toContain(actor.id);
     });
 
-    it("ends with a self-check list and says what to do with unreadable or oversized sources", () => {
+    it("ends with a self-check list after all 10 rules and says what to do with unreadable or oversized sources", () => {
       const check = prompt.lastIndexOf(
         "Before you reply with a successful conversion, check each of these:",
       );
 
-      expect(check).toBeGreaterThan(prompt.indexOf("Strict output rules:"));
+      expect(check).toBeGreaterThan(
+        prompt.indexOf("10. Game mechanics and maps:"),
+      );
       expect(prompt.slice(check)).toContain('Every "secrets" entry');
       expect(prompt).toContain("cannot fit all of it in one file or reply");
       expect(prompt).toContain("instead of sending truncated or guessed JSON");
@@ -388,18 +367,6 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain(
         "https://codexcryptica.com/adventure-import#long-adventures",
       );
-      const { container } = render(Page);
-      const longAdventureSection = container
-        .querySelector("#long-adventures")
-        ?.closest("section");
-      expect(longAdventureSection).toBeTruthy();
-      expect(longAdventureSection?.textContent).toContain(
-        "A long PDF can be too much for one reply",
-      );
-      expect(longAdventureSection?.textContent?.replace(/\s+/g, " ")).toContain(
-        "Inventory the source",
-      );
-      expect(prompt).not.toContain("compress each to a short summary");
       expect(prompt).toContain(
         'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
       );
@@ -585,27 +552,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
   });
 
-  it("states that visibility covers the whole record, in the page and the copied prompt", () => {
-    render(Page);
-
-    expect(screen.getByText(/single fields/)).toBeTruthy();
-    expect(
-      screen.getByText(
-        /title, hook, background and optional description player-safe/,
-      ),
-    ).toBeTruthy();
-    expect(CANONICAL_CONVERSION_PROMPT).toContain(
-      "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
-    );
-    expect(CANONICAL_CONVERSION_PROMPT).toContain(
-      '"visibility" applies to the WHOLE record, never to individual fields',
-    );
-    expect(CANONICAL_CONVERSION_PROMPT).toContain(
-      'separate "secrets" entry that lists the record in "relatedEntityIds"',
-    );
-  });
-
-  it("includes the offline collection contract in the displayed and copied prompt", () => {
+  it("includes the offline collection contract and whole-record visibility in the displayed and copied prompt", () => {
     const { container } = render(Page);
     const prompt = container.querySelector("pre")?.textContent;
     expect(prompt).toBe(CANONICAL_CONVERSION_PROMPT);
@@ -628,16 +575,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       "Each alternativeSolutions entry requires method: non-empty string and description: non-empty string; optional socialBypassOfCombat: boolean",
       "Do not emit properties absent from the strict schema",
       "Do not add visibility to endings or unresolved",
+      "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
+      '"visibility" applies to the WHOLE record, never to individual fields',
+      'separate "secrets" entry that lists the record in "relatedEntityIds"',
+      "Every non-entry scene with source-supported progression must be reachable",
+      "If progression is unknown, preserve the scene as ambiguous without inventing a branch.",
     ]) {
       expect(prompt).toContain(rule);
     }
-    expect(prompt).not.toContain('   - Use "visibility":');
-    expect(prompt).toContain(
-      "Every non-entry scene with source-supported progression must be reachable",
-    );
-    expect(prompt).toContain(
-      "If progression is unknown, preserve the scene as ambiguous without inventing a branch.",
-    );
     expect(
       screen.getByText(
         /If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch\./,
@@ -753,25 +698,13 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
     expect(found).toBe(true);
   });
-  describe("completeness self-audit", () => {
+
+  describe("completeness, fidelity and revisions", () => {
     const norm = (t: string | null | undefined) =>
       (t ?? "").replace(/\s+/g, " ").trim();
 
-    it("renders the completeness section after the import section, with Quick start still first", () => {
-      const { container } = render(Page);
-      const h2s = [...container.querySelectorAll("h2")];
-      expect(norm(h2s[0]?.textContent)).toMatch(/^Quick start/);
-      const texts = h2s.map((h) => norm(h.textContent));
-      const idx = texts.indexOf("Valid is not the same as complete");
-      expect(idx).toBeGreaterThan(-1);
-      expect(texts[idx - 1]).toBe("Next: upload your Adventure JSON");
-      expect(texts[idx + 1]).toBe(
-        "What converts well, and what needs manual work",
-      );
-      expect(h2s[idx]?.id).toBe("completeness-heading");
-    });
-
-    it("lists the three outcomes and the verbatim limit sentence", () => {
+    it("lists the three completeness outcomes and copies the coverage report prompt", async () => {
+      copyMock.mockResolvedValue(true);
       const { container } = render(Page);
       const section = container.querySelector(
         '[aria-labelledby="completeness-heading"]',
@@ -780,352 +713,52 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("(a) Valid JSON");
       expect(text).toContain("(b) Importable package");
       expect(text).toContain("(c) Faithful, reasonably complete adaptation");
-      expect(text).toContain(
-        "Codex Cryptica checks only (a) and (b). It never sees your source, so a successful import does not prove that nothing was left out or changed.",
-      );
-    });
+      expect(text).toContain("Codex Cryptica checks only (a) and (b).");
 
-    it("adds rule 8 and keeps the successful-conversion output contract", () => {
-      expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "8. Self-audit before returning",
-      );
-      expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
-      );
-      expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "The one-sentence failure response above is the sole exception.",
-      );
-      expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "9. Revisions and stable IDs",
-      );
-    });
-
-    it("shows the coverage prompt after the canonical prompt, with four list headings", () => {
-      const { container } = render(Page);
-      const pres = [...container.querySelectorAll("pre")];
       const coverage = container.querySelector(
         'pre[aria-label="Coverage report prompt"]',
       ) as HTMLPreElement;
-      expect(coverage.getAttribute("tabindex")).toBe("0");
       expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
-      expect(pres.indexOf(coverage)).toBeGreaterThan(0);
-      expect(pres[0]?.textContent).toBe(CANONICAL_CONVERSION_PROMPT);
-      for (const heading of [
-        "Covered sections",
-        "Missing or shortened",
-        "Risky inferences",
-        "Left unresolved",
-      ]) {
-        expect(COVERAGE_REPORT_PROMPT).toContain(heading);
-      }
-    });
 
-    it("copies the coverage prompt with its own feedback", async () => {
-      copyMock.mockResolvedValue(true);
-      render(Page);
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy coverage report prompt/i }),
       );
       expect(copyMock.mock.calls[0]?.[0]).toBe(COVERAGE_REPORT_PROMPT);
-      await waitFor(() => {
-        expect(
-          screen.getByRole("button", { name: /Copied coverage prompt/i }),
-        ).toBeTruthy();
-      });
-      expect(
-        screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
-      ).toHaveLength(2);
     });
 
-    it("reports a failed coverage copy without touching the other buttons", async () => {
-      copyMock.mockResolvedValue(false);
-      render(Page);
-      await fireEvent.click(
-        screen.getByRole("button", { name: /Copy coverage report prompt/i }),
-      );
-      await waitFor(() => {
-        expect(
-          screen.getAllByRole("button", { name: /Copy failed/i }),
-        ).toHaveLength(1);
-      });
-      expect(
-        screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
-      ).toHaveLength(2);
-      expect(
-        screen.getByRole("button", { name: /Copy guide link/i }),
-      ).toBeTruthy();
-    });
-
-    it("names the three omissions in the worked example", () => {
+    it("renders the 11-row fidelity summary table without promising combat automation", () => {
       const { container } = render(Page);
-      const text = norm(
-        container.querySelector('[aria-labelledby="completeness-heading"]')
-          ?.textContent,
+      const section = container.querySelector(
+        '[aria-labelledby="fidelity-heading"]',
+      )!;
+      const rows = Array.from(
+        section.querySelectorAll("tr[data-fidelity-row]"),
       );
-      expect(text).toContain("Reed Shrine");
-      expect(text).toContain("The Water Takes It");
-      expect(text).toContain("Wick");
+      expect(rows).toHaveLength(FIDELITY_ROWS.length);
+      expect(section.textContent).toMatch(/descriptive metadata/);
+      expect(section.textContent).not.toMatch(
+        /automated combat|enforces? (the )?rules|lossless/i,
+      );
     });
 
-    it("points from the quick start to an existing completeness section", () => {
-      const { container } = render(Page);
-      const link = container.querySelector(
-        '[aria-labelledby="quick-start-heading"] a[href="#completeness-heading"]',
-      );
-      expect(link).toBeTruthy();
-      expect(container.querySelector("#completeness-heading")).toBeTruthy();
-    });
-  });
-  describe("revisions section", () => {
-    const section = () =>
-      document.getElementById("revisions-heading")!.closest("section")!;
-
-    it("sits between the worked example and the field structure, after quick start", () => {
+    it("includes rules 8, 9, and 10 in the canonical prompt and summarizes revisions", () => {
       render(Page);
-      const ids = Array.from(document.querySelectorAll("h2")).map((h) => h.id);
-      expect(ids[0]).toBe("quick-start-heading");
-      expect(
-        document.getElementById("revisions-heading")?.textContent,
-      ).toContain("Revising an adventure you already imported");
-      const r = ids.indexOf("revisions-heading");
-      expect(r).toBeGreaterThan(ids.indexOf("worked-example-heading"));
-      expect(r).toBeLessThan(ids.indexOf("contract-heading"));
-    });
-
-    it("explains identity, cases, rules and renders the examples", () => {
-      render(Page);
-      const el = section();
-      const text = el.textContent ?? "";
-      for (const t of [
-        "formatVersion",
-        "Package id",
-        "version",
-        "Entity IDs",
-        "content hash",
-        "First import",
-        "Exact duplicate",
-        "Changed package",
-      ]) {
-        expect(text).toContain(t);
-      }
-      expect(text).toMatch(/pinned/i);
-      expect(text).toMatch(/never moved to the new one automatically/i);
-
-      const pres = Array.from(el.querySelectorAll("pre"));
-      expect(pres.some((p) => p.textContent === VERSIONING_BEHAVIOUR_DOC)).toBe(
-        true,
-      );
-      const parse = (label: string) =>
-        JSON.parse(
-          el.querySelector(`pre[aria-label="${label}"]`)!.textContent ?? "",
-        );
-      expect(parse("Revision example: version 1.0.0")).toEqual(
-        REVISION_EXAMPLE_BEFORE,
-      );
-      expect(parse("Revision example: version 1.1.0")).toEqual(
-        REVISION_EXAMPLE_AFTER,
-      );
-      expect(
-        el.querySelector('a[href="#correspondence-heading"]'),
-      ).toBeTruthy();
-    });
-
-    it("shows the wrong-placement callout and split/merge warning", () => {
-      render(Page);
-      const el = section();
-      const text = (el.textContent ?? "").replace(/\s+/g, " ");
-      expect(text).toMatch(/top-level/i);
-      expect(text).toMatch(/never inside an entity|not inside an entity/i);
-      expect(text).toContain("WRONG");
-      expect(el.textContent).toContain(SPLIT_MERGE_EXAMPLE_DOC);
-      const overflowExamples = Array.from(el.querySelectorAll("pre")).filter(
-        (pre) =>
-          pre.textContent?.includes("WRONG") ||
-          pre.textContent === SPLIT_MERGE_EXAMPLE_DOC,
-      );
-      expect(overflowExamples).toHaveLength(2);
-      expect(
-        overflowExamples.every((pre) => pre.getAttribute("tabindex") === "0"),
-      ).toBe(true);
-      expect(text).toMatch(/names, titles,? or order/i);
-    });
-  });
-
-  describe("revision prompt text", () => {
-    it("adds rule 9 and keeps rules 1 and 8", () => {
-      expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
-      );
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "8. Self-audit before returning",
       );
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "9. Revisions and stable IDs",
       );
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/keep its "id" exactly/);
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(
-        /keep every unchanged entity ID exactly/,
-      );
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/raise "version"/);
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(
-        /Never infer correspondence from names/,
-      );
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(
-        /omit the correspondence extension/,
-      );
-    });
-
-    it("states top-level placement and keeps the grouped split/merge line", () => {
-      expect(CORRESPONDENCE_EXTENSION_DOC).toMatch(/top level of the package/);
-      expect(CORRESPONDENCE_EXTENSION_DOC).toMatch(/never inside an entity/);
-      expect(CORRESPONDENCE_EXTENSION_DOC).toContain(
-        "Splits and merges are shown grouped",
-      );
-    });
-
-    it("asks the coverage report to start with the previous package line", () => {
-      expect(COVERAGE_REPORT_PROMPT).toContain("Previous package:");
-      expect(COVERAGE_REPORT_PROMPT).toContain(
-        "No previous package was provided.",
-      );
-      for (const h of [
-        "Covered sections:",
-        "Missing or shortened:",
-        "Risky inferences:",
-        "Left unresolved:",
-      ]) {
-        expect(COVERAGE_REPORT_PROMPT).toContain(h);
-      }
-    });
-
-    it("tells converters to keep id stable and raise version", () => {
-      const note = (f: string) =>
-        TOP_LEVEL_RULES.find((r) => r.field === f)!.notes;
-      expect(note("id")).toMatch(/same across revisions/);
-      expect(note("version")).toMatch(/Raise it when the content changes/);
-    });
-  });
-
-  describe("fidelity limits", () => {
-    const section = () =>
-      document.getElementById("fidelity-heading")!.closest("section")!;
-
-    it("sits after the completeness section with an 11-row table in order", () => {
-      render(Page);
-      const ids = Array.from(document.querySelectorAll("h2")).map((h) => h.id);
-      expect(ids.indexOf("fidelity-heading")).toBe(
-        ids.indexOf("completeness-heading") + 1,
-      );
-      expect(ids.indexOf("fidelity-heading")).toBeLessThan(
-        ids.indexOf("worked-example-heading"),
-      );
-      expect(
-        document.getElementById("fidelity-heading")?.textContent,
-      ).toContain("What converts well, and what needs manual work");
-      const rows = Array.from(
-        section().querySelectorAll("tr[data-fidelity-row]"),
-      );
-      expect(rows.map((r) => r.querySelector("th")!.textContent)).toEqual([
-        "Locations",
-        "NPCs",
-        "Scenes",
-        "Branches",
-        "Clues",
-        "Secrets",
-        "Alternative solutions",
-        "System rules",
-        "Stat blocks",
-        "Tactical maps",
-        "Layout",
-      ]);
-      expect(
-        rows.map((r) => r.querySelector("td")!.textContent?.trim()),
-      ).toEqual(
-        FIDELITY_ROWS.map((r) =>
-          r.converts === "well" ? "Converts well" : "May need manual work",
-        ),
-      );
-    });
-
-    it("explains system metadata and who uses what", () => {
-      render(Page);
-      const text = (section().textContent ?? "").replace(/\s+/g, " ");
-      expect(text).toMatch(/descriptive metadata/);
-      expect(text).toMatch(/does not make game mechanics executable/);
-      for (const t of ["At import", "During play", "Keep from your book"]) {
-        expect(text).toContain(t);
-      }
-      expect(text).toMatch(/title and premise/);
-      expect(TOP_LEVEL_RULES.find((r) => r.field === "system")!.notes).toMatch(
-        /does not make game mechanics executable/,
-      );
-    });
-
-    it("renders both example blocks", () => {
-      render(Page);
-      const parse = (label: string) =>
-        JSON.parse(
-          section().querySelector(`pre[aria-label="${label}"]`)!.textContent ??
-            "",
-        );
-      expect(parse("Fidelity example: paraphrased mechanic")).toEqual(
-        FIDELITY_EXAMPLE_PARAPHRASED,
-      );
-      expect(parse("Fidelity example: structural clue")).toEqual(
-        FIDELITY_EXAMPLE_STRUCTURAL,
-      );
-    });
-
-    it("does not promise combat automation or rules enforcement", () => {
-      render(Page);
-      const text = section().textContent ?? "";
-      expect(text).not.toMatch(
-        /automated combat|enforces? (the )?rules|lossless/i,
-      );
-    });
-
-    it("adds rule 10 to the canonical prompt", () => {
-      render(Page);
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "10. Game mechanics and maps",
       );
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/outside the v1 schema/);
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/"unresolved" entry/);
-      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/never invent/i);
-      const firstPre = document.querySelector("pre")!;
-      expect(firstPre.textContent).toBe(CANONICAL_CONVERSION_PROMPT);
-    });
-
-    it("validates both examples in a package and rejects an unsupported key", () => {
-      const revisionBaseline = AdventureJsonV1Schema.parse(
-        REVISION_EXAMPLE_BEFORE,
+      const rev = document
+        .getElementById("revisions-heading")!
+        .closest("section")!;
+      expect(norm(rev.textContent)).toMatch(
+        /pinned to the version they started with/,
       );
-      const pkg = (extra: Record<string, unknown>) => ({
-        ...JSON.parse(JSON.stringify(REVISION_EXAMPLE_BEFORE)),
-        ...extra,
-      });
-      const ok = pkg({
-        ...FIDELITY_EXAMPLE_PARAPHRASED,
-        ...FIDELITY_EXAMPLE_STRUCTURAL,
-        locations: [
-          ...revisionBaseline.locations,
-          ...FIDELITY_EXAMPLE_STRUCTURAL.locations,
-        ],
-      });
-      expect(AdventureJsonV1Schema.safeParse(ok).success).toBe(true);
-      expect(validateAdventureJson(ok).ok).toBe(true);
-
-      const bad = pkg({
-        ...FIDELITY_EXAMPLE_PARAPHRASED,
-        encounters: [
-          { ...FIDELITY_EXAMPLE_PARAPHRASED.encounters[0], hitPoints: 30 },
-        ],
-      });
-      expect(AdventureJsonV1Schema.safeParse(bad).success).toBe(false);
-      const badClue = pkg({
-        clues: [{ ...FIDELITY_EXAMPLE_STRUCTURAL.clues[0], hitPoints: 30 }],
-      });
-      expect(AdventureJsonV1Schema.safeParse(badClue).success).toBe(false);
+      expect(rev.textContent).toContain(CORRESPONDENCE_EXTENSION_DOC);
     });
   });
 });

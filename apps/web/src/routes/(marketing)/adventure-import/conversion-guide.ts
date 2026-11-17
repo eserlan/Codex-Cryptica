@@ -46,13 +46,12 @@ export const PROMPT_EXAMPLE_OUTPUT = {
   encounters: [
     {
       id: "enc-stuck-door",
-      title: "The Jammed Door",
+      title: "The Barred Door",
       description: "The tower door is barred from the inside.",
       alternativeSolutions: [
         {
           method: "Talk",
           description: "Convince the watchman inside to lift the bar.",
-          socialBypassOfCombat: true,
         },
       ],
       locationId: "loc-tower",
@@ -228,356 +227,19 @@ export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow
 export const CORRESPONDENCE_EXTENSION_KEY =
   "codex-cryptica.adventure-correspondence";
 
-export const CORRESPONDENCE_EXTENSION_DOC = `Supplied correspondence (optional):
-- When a new version renames, splits, or merges earlier content, carry the evidence in
-  "extensions": { "${CORRESPONDENCE_EXTENSION_KEY}": [ { "previousId": string,
-  "currentId": string, "collection": string } ] }.
-- "collection" must name one of: locations, actors, factions, scenes, encounters,
-  clues, rumours, items, secrets, endings, unresolved.
-- Both IDs must exist in that collection in the previous and new packages.
-- Entries such as { "previousId": "scene-1", "currentId": "scene-1a", "collection": "scenes" }
-  pair old and new entities across a rename.
-- Several current IDs sharing one previous ID describe a split; several previous IDs
-  sharing one current ID describe a merge. Splits and merges are shown grouped and
-  stay flagged for the reviewer; they are never silently submitted.
-- The "extensions" object belongs at the top level of the package, beside "formatVersion"
-  and "id", and never inside an entity record. The schema rejects "extensions" on an entity.
-- Identity is never inferred from titles, name similarity, or ordering. An entity with
-  a new ID and merely a similar title appears as removed plus added and unresolved.
-- Malformed entries, unknown collections or IDs, and entries conflicting with a
-  same-ID match are ignored for matching and reported as unresolved.`;
-
-type RevisionExample = Record<string, unknown> & {
-  id: string;
-  version: string;
-};
-
-const revisionExampleBase = {
-  formatVersion: "adventure-json/v1",
-  id: "revision-watchtower",
-  title: "The Silent Watchtower",
-  premise: {
-    background:
-      "A hillside watchtower has gone dark three nights before the winter caravan arrives.",
-    hook: "The village Reeve asks the party to ride up the ridge and relight the beacon.",
-  },
-  source: { title: "The Silent Watchtower", license: "CC0-1.0" },
-  locations: [
-    {
-      id: "loc-watchtower",
-      name: "Ridge Watchtower",
-      summary: "A stone signal tower overlooking the valley road.",
-      visibility: "player-visible",
-      epistemicStatus: "explicit",
-    },
-  ],
-  actors: [
-    {
-      id: "actor-reeve-tomas",
-      name: "Reeve Tomas",
-      summary: "The worried village official who hires the party.",
-      visibility: "player-visible",
-      epistemicStatus: "explicit",
-    },
-  ],
-  factions: [],
-  encounters: [],
-  clues: [],
-  rumours: [],
-  items: [],
-  secrets: [],
-  endings: [
-    {
-      id: "ending-beacon-lit",
-      title: "Beacon Relit",
-      description: "The signal fire burns again and the caravan passes safely.",
-      epistemicStatus: "explicit",
-    },
-  ],
-  unresolved: [],
-};
-
-function revisionScene(
-  id: string,
-  title: string,
-  summary: string,
-  branches?: Array<{ targetSceneId: string; description: string }>,
-) {
-  return {
-    id,
-    title,
-    summary,
-    locationId: "loc-watchtower",
-    ...(branches ? { branches } : {}),
-    visibility: "player-visible",
-    epistemicStatus: "explicit",
-  };
-}
-
-/** Version 1.0.0 of the revision example: the stairwell scene is "scene-stairs". */
-export const REVISION_EXAMPLE_BEFORE: RevisionExample = {
-  ...revisionExampleBase,
-  version: "1.0.0",
-  scenes: [
-    revisionScene(
-      "scene-ridge-road",
-      "The Ridge Road",
-      "The party climbs toward the dark tower.",
-      [{ targetSceneId: "scene-stairs", description: "Enter the tower." }],
-    ),
-    revisionScene(
-      "scene-stairs",
-      "The Winding Stairs",
-      "A narrow stair leads up to the beacon room.",
-      [
-        {
-          targetSceneId: "scene-beacon-room",
-          description: "Climb to the top.",
-        },
-      ],
-    ),
-    revisionScene(
-      "scene-beacon-room",
-      "The Cold Beacon",
-      "The oil brazier is unlit.",
-    ),
-  ],
-};
-
-/** Version 1.1.0: "scene-stairs" is renamed "scene-spiral-stair", with correspondence at the top level. */
-export const REVISION_EXAMPLE_AFTER: RevisionExample = {
-  ...revisionExampleBase,
-  version: "1.1.0",
-  scenes: [
-    revisionScene(
-      "scene-ridge-road",
-      "The Ridge Road",
-      "The party climbs toward the dark tower.",
-      [
-        {
-          targetSceneId: "scene-spiral-stair",
-          description: "Enter the tower.",
-        },
-      ],
-    ),
-    revisionScene(
-      "scene-spiral-stair",
-      "The Winding Stairs",
-      "A narrow stair leads up to the beacon room.",
-      [
-        {
-          targetSceneId: "scene-beacon-room",
-          description: "Climb to the top.",
-        },
-      ],
-    ),
-    revisionScene(
-      "scene-beacon-room",
-      "The Cold Beacon",
-      "The oil brazier is unlit.",
-    ),
-  ],
-  extensions: {
-    [CORRESPONDENCE_EXTENSION_KEY]: [
-      {
-        previousId: "scene-stairs",
-        currentId: "scene-spiral-stair",
-        collection: "scenes",
-      },
-    ],
-  },
-};
-
-/** Top-level "extensions" showing one split and one merge; both stay flagged for review. */
-export const SPLIT_MERGE_EXAMPLE_DOC = `{
+export const CORRESPONDENCE_EXTENSION_DOC = `{
   "extensions": {
     "${CORRESPONDENCE_EXTENSION_KEY}": [
-      { "previousId": "scene-market", "currentId": "scene-market-day", "collection": "scenes" },
-      { "previousId": "scene-market", "currentId": "scene-market-night", "collection": "scenes" },
-      { "previousId": "scene-cellar", "currentId": "scene-vaults", "collection": "scenes" },
-      { "previousId": "scene-crypt", "currentId": "scene-vaults", "collection": "scenes" }
+      { "previousId": "scene-stairs", "currentId": "scene-spiral-stair", "collection": "scenes" }
     ]
   }
-}`;
-
-export const VERSIONING_BEHAVIOUR_DOC = `Versioning on re-import:
-- Adventure identity is the package "id"; "version" labels that version; exact content
-  identity is the canonical package hash.
-- Importing the identical canonical package again is a deduplicated no-op: Codex Cryptica
-  says it is already imported and writes nothing.
-- Importing changed content with the same "id" opens the review as a new version, diffed
-  against the previous approved version (same "version" with a different hash first, then
-  the highest SemVer). Approving stores it under its own new hash; earlier versions stay
-  byte-identical and every version stays individually startable.
-- A changed package whose "version" is not greater than its predecessor is still accepted
-  as a separate version, with a warning that the version number did not increase.
-- Sessions stay pinned to the exact package hash they started with. Removing a version in
-  use by a session is refused with a plain explanation.`;
-
-export interface GuideFieldRule {
-  field: string;
-  requirement: string;
-  notes: string;
 }
 
-export const TOP_LEVEL_RULES: GuideFieldRule[] = [
-  {
-    field: "formatVersion",
-    requirement: 'Literal "adventure-json/v1"',
-    notes: "Identifies the interchange contract version.",
-  },
-  {
-    field: "id",
-    requirement: "Slug (/^[a-zA-Z0-9_-]{3,64}$/)",
-    notes:
-      "Stable lowercase identifier for the adventure. Keep it the same across revisions of the same adventure.",
-  },
-  {
-    field: "title",
-    requirement: "String (1-200 characters)",
-    notes: "Human-readable adventure title.",
-  },
-  {
-    field: "version",
-    requirement: 'Strict SemVer (e.g. "1.0.0")',
-    notes:
-      "Semantic version of the converted JSON package. Raise it when the content changes.",
-  },
-  {
-    field: "premise",
-    requirement: "{ background, hook, theme?, tone? }",
-    notes: "Core setup and inciting hook for the adventure.",
-  },
-  {
-    field: "source",
-    requirement:
-      "{ title, authors?, publisher?, publishedDate?, url?, license?, documentHash? }",
-    notes: "Attribution metadata for the original authored adventure.",
-  },
-  {
-    field: "system",
-    requirement: "Optional { name, targetParty? }",
-    notes:
-      "System name and optional party size or level range. Descriptive metadata only: it does not make game mechanics executable or portable.",
-  },
-];
-
-export const COLLECTION_RULES: Array<{
-  name: string;
-  purpose: string;
-}> = [
-  {
-    name: "locations",
-    purpose:
-      "Places, rooms, and regions with optional parentLocationId hierarchy and connections.",
-  },
-  {
-    name: "actors",
-    purpose:
-      "NPCs, patrons, antagonists, and creatures with role, motivation, and faction/location links.",
-  },
-  {
-    name: "factions",
-    purpose:
-      "Organisations, guilds, and power blocs with goals and party disposition.",
-  },
-  {
-    name: "scenes",
-    purpose:
-      "Playable beats starting at scenes[0], linked by transition branches.",
-  },
-  {
-    name: "encounters",
-    purpose:
-      "Obstacles, social conflicts, or hazards with alternativeSolutions ({ method, description }).",
-  },
-  {
-    name: "clues",
-    purpose:
-      "Discoverable leads pointing to targets (leadTargetId) and placed in locations, actors, or scenes.",
-  },
-  {
-    name: "rumours",
-    purpose:
-      "In-world claims tagged with truth (true, false, partially-true, unverified).",
-  },
-  {
-    name: "items",
-    purpose: "Notable objects, keys, or relics tied to a location or actor.",
-  },
-  {
-    name: "secrets",
-    purpose:
-      'Hidden truths behind the curtain. Must always carry visibility: "gm-only".',
-  },
-  {
-    name: "endings",
-    purpose: "Possible resolutions and their triggering conditions.",
-  },
-  {
-    name: "unresolved",
-    purpose:
-      "Explicitly recorded gaps, ambiguities, or contradictions in the source text.",
-  },
-];
-
-export const EPISTEMIC_STATUSES: Array<{
-  status: string;
-  meaning: string;
-}> = [
-  {
-    status: "explicit",
-    meaning: "Directly stated in the source adventure text.",
-  },
-  {
-    status: "inferred",
-    meaning: "Follows from nearby source details, but is not stated directly.",
-  },
-  {
-    status: "ambiguous",
-    meaning: "The source is unclear or supports conflicting interpretations.",
-  },
-  {
-    status: "unresolved",
-    meaning: "The source does not answer this; record it without guessing.",
-  },
-];
-
-export const TROUBLESHOOTING_ERRORS: Array<{
-  code: string;
-  cause: string;
-  fix: string;
-}> = [
-  {
-    code: "SCHEMA_VALIDATION_ERROR",
-    cause:
-      "A required field is missing, a property is not allowed, or a value does not match its required format or allowed options.",
-    fix: 'Ensure all 11 collection arrays are present (even if []), remove extra keys, and verify id and version formats. For an unresolved item, use "ambiguous" if the source is unclear or contradictory, or "unresolved" if it does not provide an answer.',
-  },
-  {
-    code: "INVALID_VISIBILITY",
-    cause:
-      'An entry in secrets has visibility: "player-visible" or omits visibility.',
-    fix: 'Set visibility: "gm-only" on every item inside the secrets array.',
-  },
-  {
-    code: "UNRESOLVED_REFERENCE",
-    cause:
-      "A parentLocationId, locationId, sceneId, targetSceneId, or actorIds entry points to an ID that does not exist.",
-    fix: "Verify every referenced ID is defined in the matching collection and check for typos or self-references.",
-  },
-  {
-    code: "UNREACHABLE_SCENE",
-    cause:
-      "A scene with known progression after scenes[0] has no inbound branch path from the opening scene.",
-    fix: "Add a source-supported branch from scenes[0] or an intermediate scene. If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch.",
-  },
-  {
-    code: "HIERARCHY_CYCLE",
-    cause: "Two or more locations form a loop through parentLocationId.",
-    fix: "Break the cycle so location containment forms a strict tree pointing toward top-level regions.",
-  },
-];
+Rules for "${CORRESPONDENCE_EXTENSION_KEY}":
+- Place "extensions" at the top level of the package (beside "formatVersion" and "id"), never inside an entity.
+- "collection" must be one of the 11 collection names, and both IDs must exist in the previous and new packages.
+- Splits (one previousId -> several currentIds) and merges (several previousIds -> one currentId) are shown grouped and stay flagged for review.
+- Identity is never inferred from titles, name similarity, or ordering.`;
 
 export interface FidelityRow {
   content: string;
@@ -589,7 +251,7 @@ export const FIDELITY_ROWS: FidelityRow[] = [
   {
     content: "Locations",
     v1Handling:
-      "locations, with parentLocationId for nesting and connections for which places link to which.",
+      "locations, with parentLocationId for nesting and connections for links.",
     converts: "well",
   },
   {
@@ -630,104 +292,67 @@ export const FIDELITY_ROWS: FidelityRow[] = [
   {
     content: "System rules",
     v1Handling:
-      "No field for rules. At most a short paraphrase in description, body or conditions, with a sourceRef page. Anything else goes in unresolved.",
+      "No rules field. Use a short paraphrase in description, body or conditions with sourceRef, and record the rest in unresolved.",
     converts: "manual",
   },
   {
     content: "Stat blocks",
     v1Handling:
-      "No field for stats or hit points. The creature is an actor; the stat block stays in your book and is noted in unresolved.",
+      "No stats or HP fields. Keep the creature as an actor and note the stat block in unresolved.",
     converts: "manual",
   },
   {
     content: "Tactical maps",
     v1Handling:
-      "No field for maps or grids. Location connections say only which places connect, not how they are laid out. Note the map in unresolved.",
+      "No map or grid fields. Use location connections for topology and note the map in unresolved.",
     converts: "manual",
   },
   {
     content: "Layout",
     v1Handling:
-      "Boxed read-aloud text can go in readAloud. Page layout and art are not kept.",
+      "Boxed read-aloud text goes in readAloud. Page layout and art are not kept.",
     converts: "manual",
   },
 ];
 
-export const FIDELITY_WHO_USES_WHAT: Array<{ label: string; text: string }> = [
+export interface TroubleshootingError {
+  code: string;
+  cause: string;
+  fix: string;
+}
+
+export const TROUBLESHOOTING_ERRORS: TroubleshootingError[] = [
   {
-    label: "At import",
-    text: "Codex Cryptica validates the file, shows it for review and stores it on this device. No AI call is made.",
+    code: "SCHEMA_VALIDATION_ERROR",
+    cause:
+      'A required field is missing, a field has the wrong type, an unrecognized key was added, or an "unresolved" item used "explicit" or "inferred".',
+    fix: 'Check the field path in the error. Common slips: encounters use "description" (not "summary") and require "alternativeSolutions": []; clues use "placedLocationId" (not "locationId"); rumours use "truth" ("true" | "false" | "partially-true" | "unverified"). For an unresolved item, use "ambiguous" or "unresolved".',
   },
   {
-    label: "During play",
-    text: "The Oracle may draw on the adventure's title and premise, copied into the session, plus relevant Vault records. It does not read the module's stat blocks, DCs, maps or rules text from the package, and it does not run tactical combat.",
+    code: "DUPLICATE_ID",
+    cause: "Two or more entities share the same id string.",
+    fix: "Give every entity across all 11 collections a globally unique id (e.g. prefix with loc-, actor-, scene-, clue-).",
   },
   {
-    label: "Keep from your book",
-    text: "Keep the original material at hand for stat blocks, maps, DCs, encounter balance and rules.",
+    code: "UNRESOLVED_REFERENCE / SELF_REFERENCE",
+    cause:
+      "A reference field (such as locationId, targetSceneId, or relatedEntityIds) points to an ID that does not exist or points to the entity itself.",
+    fix: "Ensure every referenced ID exists in the matching collection and no entity references its own ID.",
+  },
+  {
+    code: "LOCATION_CYCLE",
+    cause: "Location parentLocationId links form a loop.",
+    fix: "Break the parentLocationId cycle so locations form a tree.",
+  },
+  {
+    code: "UNREACHABLE_SCENE / DEAD_END_LOOP",
+    cause:
+      "A scene with source-supported progression cannot be reached from scenes[0], or mandatory transitions form a loop with no path to an ending.",
+    fix: "Connect scenes from scenes[0] via branches[].targetSceneId. If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch.",
+  },
+  {
+    code: "SECRET_VISIBILITY_VIOLATION",
+    cause: 'An entry in "secrets" has visibility set to "player-visible".',
+    fix: 'Set visibility to "gm-only" on every entry in "secrets".',
   },
 ];
-
-/** Paraphrased mechanic plus an unresolved entry; all wording is invented for this guide. */
-export const FIDELITY_EXAMPLE_PARAPHRASED = {
-  encounters: [
-    {
-      id: "enc-bridge-troll",
-      title: "The Toll Bridge",
-      description:
-        "A hulking toll-keeper blocks the bridge. The source says a strong shove or a clever bargain gets the party across.",
-      alternativeSolutions: [
-        {
-          method: "Bargain",
-          description:
-            "Offering something the toll-keeper values makes a hard check unnecessary, per the source.",
-        },
-      ],
-      visibility: "player-visible",
-      epistemicStatus: "explicit",
-      sourceRef: { page: 12 },
-    },
-  ],
-  unresolved: [
-    {
-      id: "unresolved-toll-keeper-stats",
-      code: "MECHANICS_NOT_REPRESENTED",
-      message:
-        "The toll-keeper's full stat block stays in the source and is not represented in this package.",
-      relatedEntityId: "enc-bridge-troll",
-      epistemicStatus: "unresolved",
-      context: "Page 12, The Toll Bridge",
-    },
-  ],
-};
-
-/** Structural clue with both referenced locations defined in the example. */
-export const FIDELITY_EXAMPLE_STRUCTURAL = {
-  locations: [
-    {
-      id: "loc-lighthouse",
-      name: "Lighthouse",
-      summary: "A lighthouse overlooking the harbour.",
-      visibility: "player-visible",
-      epistemicStatus: "explicit",
-    },
-    {
-      id: "loc-docks",
-      name: "Docks",
-      summary: "The harbour's ferry docks.",
-      visibility: "player-visible",
-      epistemicStatus: "explicit",
-    },
-  ],
-  clues: [
-    {
-      id: "clue-ferry-ticket",
-      text: "A damp ferry ticket stamped with a lighthouse.",
-      reveals: "The smuggler used the night ferry.",
-      leadTargetId: "loc-lighthouse",
-      placedLocationId: "loc-docks",
-      visibility: "player-visible",
-      epistemicStatus: "explicit",
-    },
-  ],
-};
