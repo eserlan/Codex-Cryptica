@@ -56,9 +56,11 @@ Strict output rules:
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.`;
 
-/** Short instruction copied by "Copy guide link" for assistants that can browse. */
-export const LINK_HANDOFF_TEXT =
-  "Read https://codexcryptica.com/adventure-import and follow its conversion prompt exactly to convert the attached adventure into Adventure JSON v1. Reply with the JSON only.";
+export const PROMPT_TXT_URL =
+  "https://codexcryptica.com/adventure-import/prompt.txt";
+
+/** Short instruction copied by "Copy guide link" for assistants that can open URLs. */
+export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow it exactly to convert the attached adventure into Adventure JSON v1. Reply with the JSON only. If you cannot open the link, tell me instead of guessing the format.`;
 
 export const CORRESPONDENCE_EXTENSION_KEY =
   "codex-cryptica.adventure-correspondence";

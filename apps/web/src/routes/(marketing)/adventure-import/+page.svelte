@@ -261,9 +261,12 @@
         >
       </div>
       <p class="text-sm text-theme-text/90">
-        <strong>Copy guide link</strong> copies a one-line instruction pointing at
-        this page. It only works if your assistant can open web pages; local models
-        and chats without browsing need the full prompt instead.
+        <strong>Copy guide link</strong> copies a one-line instruction pointing
+        at the same prompt as plain text (<a
+          class="underline"
+          href="{cleanBase}/adventure-import/prompt.txt">prompt.txt</a
+        >). It only works if your assistant can open web pages; local models and
+        chats without browsing need the full prompt instead.
       </p>
       <p class="text-sm text-theme-text/90">
         <strong>This page is a guide, not a converter.</strong> You can't upload or

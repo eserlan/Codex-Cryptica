@@ -32,10 +32,12 @@ export const JSON_ASSETS = [
   "/schemas/adventure-json/examples/minimal.v1.json",
   "/schemas/adventure-json/examples/reference-one-shot.v1.json",
 ];
+export const PROMPT_PATH = "/adventure-import/prompt.txt";
 export const CTA_HREF = "./adventure#import-adventure-json";
 
 const isJsonType = (type) =>
   /^application\/(schema\+)?json\b/i.test(type ?? "");
+const isTextType = (type) => /^text\/plain\b/i.test(type ?? "");
 const isHtmlType = (type) => /^text\/html\b/i.test(type ?? "");
 
 const statusProblem = (path, status) =>
@@ -87,9 +89,21 @@ export function guideProblems({ status, contentType, body }) {
 /** Pure: absolute production URLs the guide/prompt sends users to. */
 export function productionLinks(body) {
   const found = body.match(
-    /https:\/\/codexcryptica\.com\/(?:adventure-import|schemas\/[a-zA-Z0-9/._-]+)/g,
+    /https:\/\/codexcryptica\.com\/(?:adventure-import(?:\/prompt\.txt)?|schemas\/[a-zA-Z0-9/._-]+)/g,
   );
   return [...new Set(found ?? [])];
+}
+
+/** Pure: judge the plain-text prompt file. */
+export function promptTxtProblems({ status, contentType, body }) {
+  return [
+    ...statusProblem(PROMPT_PATH, status),
+    ...typeProblem(PROMPT_PATH, contentType, isTextType, "text/plain"),
+    ...(body.startsWith("Convert the tabletop RPG adventure") &&
+    body.includes(`${PRODUCTION}/schemas/adventure-json/v1.json`)
+      ? []
+      : [`${PROMPT_PATH}: body is not the conversion prompt`]),
+  ];
 }
 
 /** Pure: the SPA shell check for authenticated app routes. */
@@ -148,6 +162,10 @@ export async function run({ base, strictProduction }) {
     log(`${res.status} ${res.contentType} ${path}`);
     errors.push(...jsonAssetProblems(path, res));
   }
+
+  const prompt = await get(`${base}${PROMPT_PATH}`);
+  log(`${prompt.status} ${prompt.contentType} ${PROMPT_PATH}`);
+  errors.push(...promptTxtProblems(prompt));
 
   const app = await get(`${base}/adventure`);
   log(`${app.status} /adventure (SPA shell; status not judged)`);

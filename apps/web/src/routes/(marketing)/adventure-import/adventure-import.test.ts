@@ -198,7 +198,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(copyMock).toHaveBeenCalledTimes(1);
     expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
     expect(LINK_HANDOFF_TEXT).toContain(
-      "https://codexcryptica.com/adventure-import",
+      "https://codexcryptica.com/adventure-import/prompt.txt",
     );
     expect(LINK_HANDOFF_TEXT).toContain("Reply with the JSON only");
     await waitFor(() => {
@@ -234,6 +234,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(container.textContent).toContain(
       "only works if your assistant can open web pages",
     );
+    expect(
+      container.querySelector('a[href$="/adventure-import/prompt.txt"]'),
+    ).toBeTruthy();
   });
 
   it("keeps both copy buttons in step on a failed copy", async () => {
