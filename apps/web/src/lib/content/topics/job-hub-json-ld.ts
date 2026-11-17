@@ -49,6 +49,7 @@ export function buildJobHubBreadcrumbJsonLd(config: TopicJobHubConfig): string {
     itemListElement: [
       { name: "Home", path: "/" },
       { name: "Explore", path: "/explore" },
+      { name: "Topics", path: "/topics" },
       {
         name: config.structuredData.breadcrumbLabel,
         path: config.canonicalPath,
