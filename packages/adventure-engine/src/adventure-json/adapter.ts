@@ -1,3 +1,4 @@
+import { entrySceneId } from "./entry-scene";
 import type {
   AdventureSourcePackage,
   Provenance,
@@ -128,8 +129,9 @@ function mapSceneBranches(
 
 function collectReachableSceneIds(scenes: AdventureJsonScene[]): Set<string> {
   const sceneById = new Map(scenes.map((s) => [s.id, s]));
-  const reachable = new Set<string>([scenes[0]!.id]);
-  const queue: string[] = [scenes[0]!.id];
+  const entryId = entrySceneId({ scenes })!;
+  const reachable = new Set<string>([entryId]);
+  const queue: string[] = [entryId];
   let queueIndex = 0;
 
   while (queueIndex < queue.length) {
