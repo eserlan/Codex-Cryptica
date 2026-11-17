@@ -159,6 +159,7 @@ state goes through `factory/bin/job`:
 - **What needs them**: run `factory/bin/job queue`. For each `wait` line, say
   what the job is waiting for: the question in `decision.md` for `needs-human`,
   or the question in `intake.md` for `needs-info`.
+- **Approving a `needs-human` job**: `factory/bin/job approve <n>`. It removes the factory labels from the issue and PR and moves the job to `dev-agents` (the review-and-fix loop and dev agents take over). It is done only when its PR is merged into `staging`.
 - **Feedback on a `needs-human` job**: pass their words verbatim on stdin:
   ```bash
   factory/bin/job feedback <n> <<'EOF'
