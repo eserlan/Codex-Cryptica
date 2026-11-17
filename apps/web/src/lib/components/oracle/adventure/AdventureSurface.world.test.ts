@@ -42,6 +42,7 @@ vi.mock("#lib/stores/ui/modal-ui.svelte.js", () => ({
 vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
   adventureSessionRepository: {
     setRootResolver: vi.fn(),
+    setApprovedPackageLookup: vi.fn(),
     list: vi.fn(async () => ({ effectiveActiveId: null, entries: [] })),
   },
 }));
