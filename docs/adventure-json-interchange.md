@@ -37,7 +37,7 @@ A character, place or item being known does not make its concealed role, motive 
 
 In the reference one-shot, Tobiah Reed is a `player-visible` actor with no `motivation`; his motive is the `gm-only` secret `secret-tobiah-motive`.
 
-Status: Adventure JSON content is not yet projected into Oracle prompts or player transcripts (sessions only pin the approved package by hash), so this is a contract for converters and for any future projection, which must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
+Runtime status: Adventure collection records are not yet projected into Oracle prompts or player transcripts, and sessions pin the approved package by hash. Starting an approved package does copy its `title` and premise text into the session: `premise.hook` and `premise.background` are used when present; if both are empty, `description` is used, then `title`. Those copied values enter Oracle opening generation, so converters must keep the title, hook, background and optional description player-safe and limited to source-supported facts. Future collection projections must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
 
 - `sourceRef` (optional): `{ page?, pageEnd?, chapter?, section?, anchor?, textQuote? }`.
 
