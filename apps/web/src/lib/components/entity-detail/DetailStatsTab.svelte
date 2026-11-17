@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { Entity, StatSheetField, StatSheetTemplate } from "schema";
   import { vault } from "#lib/stores/vault.svelte.js";
+  import SpeciesAuthor from "#lib/components/stats/SpeciesAuthor.svelte";
+  import SpeciesSelection from "#lib/components/stats/SpeciesSelection.svelte";
   import StatSheetView from "#lib/components/stats/StatSheetView.svelte";
   import StatSheetEditor from "#lib/components/stats/StatSheetEditor.svelte";
   import StatSheetTemplateModal from "#lib/components/stats/StatSheetTemplateModal.svelte";
@@ -33,6 +35,7 @@
   let { entity }: { entity: Entity } = $props();
 
   let isEditingLayout = $state(false);
+  let speciesSaving = $state(false);
   let showTemplateModal = $state(false);
   let showPresentationManager = $state(false);
 
@@ -171,11 +174,16 @@
   const sheetContext: PresentationRenderContext = $derived({
     ...renderContext,
     entityId: entity.id,
+    appliedSpecies: entity.appliedSpecies,
   });
 </script>
 
 <!-- fallow-ignore-next-line complexity -- This tab owns the complete stat-sheet editor; the import control adds one conditional action. -->
-<div class="flex flex-col gap-3 pb-8" data-testid="detail-stats-tab">
+<fieldset
+  disabled={speciesSaving}
+  class="flex min-w-0 flex-col gap-3 pb-8"
+  data-testid="detail-stats-tab"
+>
   <div class="flex items-center justify-between">
     <span
       class="text-micro font-bold uppercase tracking-widest text-theme-muted"
@@ -236,6 +244,32 @@
     {/if}
   </div>
 
+  {#if entity.type === "creature"}
+    {#key entity.id}
+      <SpeciesAuthor
+        {entity}
+        {readOnly}
+        onSavingChange={(saving) => {
+          speciesSaving = saving;
+        }}
+      />
+    {/key}
+  {:else if entity.type === "character" || entity.type === "npc"}
+    {#key entity.id}
+      <SpeciesSelection
+        {entity}
+        {readOnly}
+        onSavingChange={(saving) => {
+          speciesSaving = saving;
+        }}
+        candidates={vault.allEntities}
+        onOpenSource={(id) => {
+          vault.selectedEntityId = id;
+        }}
+      />
+    {/key}
+  {/if}
+
   {#if isEditingLayout}
     <StatSheetEditor {entity} onClose={() => (isEditingLayout = false)} />
   {:else}
@@ -248,7 +282,7 @@
       <StatSheetView {entity} onOpenEditor={() => (isEditingLayout = true)} />
     {/if}
   {/if}
-</div>
+</fieldset>
 
 {#if showTemplateModal}
   <StatSheetTemplateModal

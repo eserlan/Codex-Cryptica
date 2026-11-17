@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { ConnectionSchema } from "./connection";
 import { LanguageProfileV1Schema } from "./language-profile";
+import {
+  SpeciesDefinitionSchema,
+  AppliedSpeciesSchema,
+} from "./species-traits";
 import { StatSheetSchema } from "./stat-sheet";
 import { BiomeProfileSchema } from "./biome";
 import { IMAGE_FOCUS_VALUES } from "./image-focus";
@@ -247,6 +251,8 @@ export const EntitySchema = z.object({
   languageProfileVersion: z.literal(1).optional(),
   languageProfile: LanguageProfileV1Schema.optional(),
   statSheet: StatSheetSchema.optional(),
+  speciesDefinition: SpeciesDefinitionSchema.optional(),
+  appliedSpecies: AppliedSpeciesSchema.optional(),
   report: ReportProvenanceSchema.optional(),
   biome: BiomeProfileSchema.optional(),
   member_template: z.string().optional(),

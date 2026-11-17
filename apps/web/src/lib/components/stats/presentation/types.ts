@@ -1,5 +1,5 @@
 import type { SectionNode } from "@codex/stat-sheet-engine";
-import type { StatSheetField } from "schema";
+import type { AppliedSpecies, StatSheetField } from "schema";
 
 /** Shared render context threaded through every node component
  * (PresentationRenderer.svelte and apps/web/.../nodes/*). */
@@ -8,6 +8,7 @@ export interface PresentationRenderContext {
   readOnly: boolean;
   /** The entity this sheet belongs to. Needed to record a trade (#3963). */
   entityId?: string;
+  appliedSpecies?: AppliedSpecies;
   mode: "view" | "preview";
   onUpdateFieldValue: (
     fieldId: string,

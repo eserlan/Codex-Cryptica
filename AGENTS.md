@@ -268,3 +268,5 @@ For non-skill agents, treat the task map below as the local onboarding source: r
 | scope a monorepo                                                  | `--workspace <glob> / --changed-workspaces <ref>` (global flags, prefix any command)                                                                    |
 
 <!-- fallow:setup-hooks:end -->
+
+- Species/Ancestry (#4891): optional `Entity.speciesDefinition` and `Entity.appliedSpecies` frontmatter (`packages/schema/src/species-traits.ts`, `kind: "species"`, `version: 1`). Existing Creature Stats authoring and Character/NPC Stats selection use pure `previewSpecies`/`calculateSpecies` in `packages/stat-sheet-engine/src/species-traits.ts`; exact numeric keys bind stable IDs, authored bases remain unchanged and immutable applied snapshots survive sheet/template edits and Portable Backup. `packages/entity-shelf/src/species.ts` remaps co-imported local source links and clears unresolved cross-vault links while preserving provenance. No creation-time selection or source refresh workflow.

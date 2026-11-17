@@ -2,6 +2,8 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
+import { EntitySchema } from "schema";
+import { previewSpecies } from "@codex/stat-sheet-engine";
 import type { FieldReferenceNode as FieldReferenceNodeType } from "@codex/stat-sheet-engine";
 import type { PresentationRenderContext } from "../types";
 
@@ -514,5 +516,80 @@ describe("FieldReferenceNode", () => {
         screen.getByTestId("presentation-field-dice-pool-preview").textContent,
       ).toContain("4d6");
     });
+  });
+});
+
+describe("species presentation values", () => {
+  it("displays base/effective provenance and sends authored base edits", async () => {
+    const source = EntitySchema.parse({
+      id: "k",
+      title: "Kethari",
+      type: "creature",
+      speciesDefinition: {
+        kind: "species",
+        version: 1,
+        traits: [
+          {
+            id: "power",
+            name: "Powerful",
+            description: "Strong",
+            adjustments: [{ key: "strength", amount: 2 }],
+          },
+        ],
+      },
+    });
+    const entity = EntitySchema.parse({
+      id: "hero",
+      title: "Hero",
+      type: "character",
+      statSheet: {
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+    });
+    const context = {
+      ...makeContext(entity.statSheet!.fields),
+      appliedSpecies: previewSpecies(entity, source),
+    };
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "a",
+      displayMode: "prominent",
+    };
+    const view = render(FieldReferenceNode, { props: { node, context } });
+    expect(screen.getByText(/Base 10; Effective 12/)).toBeTruthy();
+    expect(screen.getByText(/\+2 Powerful \(Kethari\)/)).toBeTruthy();
+    expect(context.onUpdateFieldValue).not.toHaveBeenCalled();
+    await fireEvent.input(screen.getByRole("spinbutton", { name: "Might" }), {
+      target: { value: "13" },
+    });
+    expect(context.onUpdateFieldValue).toHaveBeenCalledWith("a", 13);
+    await view.rerender({
+      node,
+      context: {
+        ...context,
+        fields: [
+          { ...context.fields[0], key: "renamed", label: "Renamed", value: 13 },
+        ],
+        readOnly: true,
+      },
+    });
+    expect(screen.getByText(/Base 13; Effective 15/)).toBeTruthy();
+    expect(screen.getByRole("spinbutton")).toHaveProperty("disabled", true);
+    await view.rerender({
+      node,
+      context: {
+        ...context,
+        fields: [{ ...context.fields[0], id: "replacement" }],
+      },
+    });
+    expect(screen.queryByTestId("species-number")).toBeNull();
   });
 });

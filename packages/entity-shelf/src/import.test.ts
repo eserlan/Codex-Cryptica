@@ -742,3 +742,153 @@ describe("import — fresh template ids avoid the destination's own", () => {
     expect(target.schemaTemplates.size).toBe(3);
   });
 });
+
+describe("species snapshots on Shelf import", () => {
+  const species = {
+    kind: "species",
+    version: 1,
+    traits: [
+      {
+        id: "power",
+        name: "Powerful",
+        description: "Strong",
+        adjustments: [{ key: "strength", amount: 2 }],
+      },
+    ],
+  };
+  const snapshot = {
+    ...species,
+    source: { entityId: "kethari", title: "Kethari", localEntityId: "kethari" },
+    traits: [
+      {
+        ...species.traits[0],
+        adjustments: [
+          {
+            key: "strength",
+            amount: 2,
+            resolution: { status: "bound", fieldId: "a" },
+          },
+        ],
+      },
+    ],
+  };
+  it.each([
+    [false, "vault-b", false],
+    [true, "vault-b", true],
+    [false, "vault-a", true],
+    [true, "vault-a", true],
+  ])(
+    "preserves bases and traits (grouped %s, destination %s)",
+    async (grouped, targetVaultId, linked) => {
+      const source = new FakeVault({
+        entities: [
+          {
+            id: "hero",
+            title: "Hero",
+            record: codec.stringify(
+              {
+                id: "hero",
+                title: "Hero",
+                type: "character",
+                appliedSpecies: snapshot,
+                statSheet: {
+                  fields: [
+                    {
+                      id: "a",
+                      key: "strength",
+                      label: "Might",
+                      type: "number",
+                      value: 10,
+                    },
+                  ],
+                },
+              },
+              "Manual abilities",
+            ),
+          },
+          {
+            id: "kethari",
+            title: "Kethari",
+            record: codec.stringify(
+              {
+                id: "kethari",
+                title: "Kethari",
+                type: "creature",
+                speciesDefinition: species,
+              },
+              "Species lore",
+            ),
+          },
+        ],
+      });
+      const store = new InMemoryShelfStore();
+      await shelveEntities(
+        {
+          store,
+          reader: source,
+          codec,
+          clock: new FakeClock(5),
+          ids: new SeqIdFactory("entry"),
+        },
+        {
+          vaultId: "vault-a",
+          vaultName: "A",
+          entityIds: grouped ? ["hero", "kethari"] : ["hero"],
+        },
+      );
+      // Deliberate foreign ID collision: this must never acquire the source link.
+      const target =
+        targetVaultId === "vault-a"
+          ? source
+          : new FakeVault({
+              entities: [
+                {
+                  id: "kethari",
+                  title: "Unrelated",
+                  record: codec.stringify(
+                    { id: "kethari", title: "Unrelated", type: "creature" },
+                    "",
+                  ),
+                },
+              ],
+            });
+      const deps = importDeps(store, target);
+      const plan = await planImport(deps, {
+        entryIds: [...store.entries.keys()],
+        targetVaultId,
+      });
+      const result = await executeImport(deps, plan);
+      const heroId = result.created.find((entry) =>
+        entry.title.startsWith("Hero"),
+      )!.entityId;
+      const imported = codec.parse(await target.readEntityRecord(heroId));
+      const applied = imported.metadata.appliedSpecies as typeof snapshot;
+      expect(applied.source.localEntityId).toBe(
+        grouped
+          ? result.created.find((entry) => entry.title.startsWith("Kethari"))!
+              .entityId
+          : linked
+            ? "kethari"
+            : null,
+      );
+      expect(applied.source.entityId).toBe("kethari");
+      expect(applied.traits).toEqual(snapshot.traits);
+      expect(imported.metadata.statSheet).toEqual({
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      });
+      expect(imported.content).toBe("Manual abilities");
+      expect(
+        codec.parse(await source.readEntityRecord("hero")).metadata
+          .appliedSpecies,
+      ).toEqual(snapshot);
+    },
+  );
+});

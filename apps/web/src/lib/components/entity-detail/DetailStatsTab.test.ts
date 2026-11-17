@@ -1,11 +1,12 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Entity, StatSheetTemplate } from "schema";
 
 const {
   updateEntity,
+  bulkUpdate,
   schema,
   usableTemplate,
   customPresentation,
@@ -45,6 +46,7 @@ const {
   };
   return {
     updateEntity: vi.fn(),
+    bulkUpdate: vi.fn(),
     schema,
     usableTemplate,
     customPresentation,
@@ -53,7 +55,7 @@ const {
 });
 
 vi.mock("#lib/stores/vault.svelte.js", () => ({
-  vault: { isGuest: false, updateEntity },
+  vault: { isGuest: false, allEntities: [], updateEntity, bulkUpdate },
 }));
 
 vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
@@ -62,6 +64,7 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
 
 vi.mock("#lib/stores/stat-sheet-templates.svelte.js", () => ({
   statSheetTemplates: {
+    categoryDefaults: {},
     allTemplates: [schema],
     availableTemplates: [schema],
     getDefaultPresentationTemplateId: () => null,
@@ -77,6 +80,9 @@ vi.mock("#lib/stores/presentation-templates.svelte.js", () => ({
   },
 }));
 
+import { EntitySchema } from "schema";
+import { previewSpecies } from "@codex/stat-sheet-engine";
+import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import DetailStatsTab from "./DetailStatsTab.svelte";
 
 function buildEntity(overrides: Partial<Entity> = {}): Entity {
@@ -197,5 +203,137 @@ describe("DetailStatsTab presentation fallback (FR-010)", () => {
 
     expect(screen.getByTestId("presentation-renderer")).toBeTruthy();
     expect(screen.queryByTestId("stat-sheet-view")).toBeNull();
+  });
+});
+
+describe("species across sheet layouts", () => {
+  it("retains traits outside the custom presentation and sheet clearing", async () => {
+    const source = EntitySchema.parse({
+      id: "k",
+      title: "Kethari",
+      type: "creature",
+      speciesDefinition: {
+        kind: "species",
+        version: 1,
+        traits: [
+          {
+            id: "power",
+            name: "Powerful",
+            description: "Strong",
+            adjustments: [{ key: "strength", amount: 2 }],
+          },
+        ],
+      },
+    });
+    const base = buildEntity({
+      statSheet: {
+        templateId: "schema-1",
+        presentationTemplateId: "presentation-per-character",
+        fields: [
+          {
+            id: "cow_milking",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+    });
+    const entity = { ...base, appliedSpecies: previewSpecies(base, source) };
+    updateEntity.mockClear();
+    const view = render(DetailStatsTab, { entity });
+    expect(screen.getByTestId("presentation-renderer")).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Choose Species/Ancestry" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Powerful")).toBeTruthy();
+    expect(screen.getAllByText(/Base 10; Effective 12/)).toHaveLength(2);
+    expect(updateEntity).not.toHaveBeenCalled();
+    vi.mocked(notificationStore.confirm).mockResolvedValueOnce(true);
+    await fireEvent.click(screen.getByRole("button", { name: "Clear" }));
+    expect(updateEntity).toHaveBeenLastCalledWith(entity.id, {
+      statSheet: { templateId: null, fields: [], presentationTemplateId: null },
+    });
+    await view.rerender({ entity: { ...entity, statSheet: { fields: [] } } });
+    expect(screen.getByText("Powerful")).toBeTruthy();
+    expect(screen.getByText(/Bound field is unavailable/)).toBeTruthy();
+  });
+});
+
+describe("species editing boundaries", () => {
+  beforeEach(() => {
+    bulkUpdate.mockReset();
+  });
+  it("discards an authoring draft when navigating to another Creature", async () => {
+    const first = buildEntity({
+      id: "first",
+      type: "creature",
+      statSheet: { fields: [] },
+    });
+    const view = render(DetailStatsTab, { entity: first });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Designate Species/Ancestry" }),
+    );
+    await fireEvent.click(screen.getByRole("button", { name: "Add trait" }));
+    await fireEvent.input(screen.getByLabelText("Trait name 1"), {
+      target: { value: "First's trait" },
+    });
+    await view.rerender({
+      entity: { ...first, id: "second", title: "Second" },
+    });
+    expect(screen.queryByLabelText("Trait name 1")).toBeNull();
+    expect(bulkUpdate).not.toHaveBeenCalled();
+  });
+
+  it("disables base edits during staged selection persistence and restores focus", async () => {
+    const source = EntitySchema.parse({
+      id: "k",
+      title: "Kethari",
+      type: "creature",
+      speciesDefinition: { kind: "species", version: 1, traits: [] },
+    });
+    const base = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+    });
+    const entity = { ...base, appliedSpecies: previewSpecies(base, source) };
+    let finish!: (result: { succeededIds: string[] }) => void;
+    bulkUpdate.mockReturnValueOnce(
+      new Promise((resolve) => {
+        finish = resolve;
+      }),
+    );
+    render(DetailStatsTab, { entity });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Choose Species/Ancestry" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Confirm species selection" }),
+    );
+    expect(
+      screen.getByRole("spinbutton", { name: "Might" }).matches(":disabled"),
+    ).toBe(true);
+    expect(bulkUpdate).toHaveBeenCalledWith({
+      [entity.id]: { appliedSpecies: undefined },
+    });
+    expect(entity.statSheet!.fields[0].value).toBe(10);
+    finish({ succeededIds: [entity.id] });
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(
+      screen.getByRole("spinbutton", { name: "Might" }).matches(":disabled"),
+    ).toBe(false);
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Choose Species/Ancestry" }),
+    );
   });
 });

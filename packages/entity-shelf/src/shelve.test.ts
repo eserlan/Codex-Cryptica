@@ -314,3 +314,81 @@ describe("shelveEntities", () => {
     expect(seen.length).toBeGreaterThan(0);
   });
 });
+
+describe("species records", () => {
+  it("captures definitions and applied snapshots without importing dependencies or touching the source", async () => {
+    const codec = new JsonRecordCodec();
+    const definition = {
+      kind: "species",
+      version: 1,
+      traits: [
+        {
+          id: "sight",
+          name: "Night sight",
+          description: "See in darkness",
+          adjustments: [],
+        },
+      ],
+    };
+    const snapshot = {
+      ...definition,
+      source: { entityId: "k", title: "Kethari", localEntityId: "k" },
+    };
+    const record = codec.stringify(
+      {
+        id: "hero",
+        title: "Hero",
+        type: "character",
+        appliedSpecies: snapshot,
+        statSheet: {
+          fields: [
+            {
+              id: "a",
+              key: "strength",
+              label: "Might",
+              type: "number",
+              value: 10,
+            },
+          ],
+        },
+      },
+      "Manual notes",
+    );
+    const source = new FakeVault({
+      entities: [
+        { id: "hero", title: "Hero", record },
+        {
+          id: "k",
+          title: "Kethari",
+          record: codec.stringify(
+            {
+              id: "k",
+              title: "Kethari",
+              type: "creature",
+              speciesDefinition: definition,
+            },
+            "",
+          ),
+        },
+      ],
+    });
+    const store = new InMemoryShelfStore();
+    await shelveEntities(
+      {
+        store,
+        reader: source,
+        codec,
+        clock: new FakeClock(5),
+        ids: new SeqIdFactory("entry"),
+      },
+      { vaultId: "a", vaultName: "A", entityIds: ["hero", "k"] },
+    );
+    const records = [...store.entries.values()].map(
+      (entry) => codec.parse(entry.entityRecord).metadata,
+    );
+    expect(records[0].appliedSpecies).toEqual(snapshot);
+    expect(records[1].speciesDefinition).toEqual(definition);
+    expect(await source.readEntityRecord("hero")).toBe(record);
+    expect(store.entries.size).toBe(2);
+  });
+});

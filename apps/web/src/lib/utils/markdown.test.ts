@@ -511,3 +511,77 @@ describe("markdown.ts utility", () => {
     });
   });
 });
+
+describe("species frontmatter", () => {
+  it("round-trips definitions, resolved snapshots and unchanged bases through validated Markdown", () => {
+    const speciesDefinition = {
+      kind: "species" as const,
+      version: 1 as const,
+      traits: [
+        {
+          id: "power",
+          name: "Powerful",
+          description: "Strong",
+          adjustments: [{ key: "strength", amount: 2 }],
+        },
+      ],
+    };
+    const creature = EntitySchema.parse({
+      id: "k",
+      title: "Kethari",
+      type: "creature",
+      speciesDefinition,
+    });
+    const hero = EntitySchema.parse({
+      id: "hero",
+      title: "Hero",
+      type: "character",
+      appliedSpecies: {
+        ...speciesDefinition,
+        source: { entityId: "k", title: "Kethari", localEntityId: "k" },
+        traits: [
+          {
+            ...speciesDefinition.traits[0],
+            adjustments: [
+              {
+                key: "strength",
+                amount: 2,
+                resolution: { status: "bound", fieldId: "a" },
+              },
+            ],
+          },
+        ],
+      },
+      statSheet: {
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+    });
+    for (const entity of [creature, hero]) {
+      const parsed = parseMarkdown(stringifyEntity(entity));
+      expect(
+        EntitySchema.parse({ ...parsed.metadata, content: parsed.content }),
+      ).toEqual(entity);
+    }
+    expect(
+      parseMarkdown(stringifyEntity(hero)).metadata.statSheet!.fields[0].value,
+    ).toBe(10);
+    const invalid = parseMarkdown(
+      stringifyEntity({
+        ...creature,
+        speciesDefinition: { ...speciesDefinition, version: 2 },
+      } as unknown as typeof creature),
+    );
+    expect(
+      EntitySchema.safeParse({ ...invalid.metadata, content: invalid.content })
+        .success,
+    ).toBe(false);
+  });
+});

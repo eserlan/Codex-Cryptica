@@ -8,6 +8,7 @@ import type {
   VaultWriter,
 } from "./ports";
 import { resolveReference, type BatchMember } from "./connections";
+import { remapSpeciesSource } from "./species";
 import { decideTemplate } from "./templates";
 import { mintUniqueId, resolveTitle } from "./titles";
 import type {
@@ -312,6 +313,7 @@ function rebuildRecord(
   const { metadata, content } = deps.codec.parse(entry.entityRecord);
   const next: Record<string, unknown> = { ...metadata };
 
+  remapSpeciesSource(next, plan, entry);
   next.id = entityId;
   next.title =
     plan.titleAssignments.find((a) => a.entryId === entry.id)?.finalTitle ??

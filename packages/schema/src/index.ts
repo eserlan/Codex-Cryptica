@@ -35,3 +35,5 @@ export * from "./game-system";
 export * from "./biome";
 
 export * from "./adventure-artwork";
+
+export * from "./species-traits";

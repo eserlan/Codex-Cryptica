@@ -21,7 +21,7 @@ Stat Sheets give any entity — a character, NPC, ship, or settlement — a smal
 - **Dice** — a rollable expression (e.g. `1d20+5`) with a one-tap roll button.
 - **Dice Pool** — an adjustable pool of dice (e.g. `3d6`) with `-`/`+` stepper controls, an optional die-face selector (`d4` through `d100`), configurable bounds, and one-tap rolling with expandable face breakdowns. Ideal for pool-based systems like Vampire/Storyteller, Year Zero Engine, or Shadowrun.
 
-Codex Cryptica doesn't enforce any particular game system — there's no automatic modifier math or damage calculation. You decide what each field means.
+Codex Cryptica doesn't enforce a game system or calculate damage. An explicitly selected Species/Ancestry can add to plain Number fields as described below; other rules and derived values keep their existing inputs. You decide what each field means.
 
 ## Editing the layout
 
@@ -41,7 +41,7 @@ Built-in templates cover several common systems out of the box:
 - **Ship Systems** / **Settlement Overview** — for vessels and locations rather than characters.
 - **Generic Item** / **D&D Magic Item** / **Cyberpunk Gear** / **Mythras Gear** — quantity/weight/value, rarity/attunement/charges, cost/availability, or ENC/damage/reach/armor points for the Item category.
 
-None of these bake in automatic modifiers or success/failure logic — they just give you the right shape of fields to start from, with rollable dice already wired up where the system supports it.
+Templates provide fields and rollable dice rather than a complete rules engine. Species/Ancestry additions are a separate, explicit selection; they do not change dice formulas or add rules automation.
 
 ### Building your own template
 
@@ -121,3 +121,21 @@ Your pasted text is sent to the AI to be read. It isn't kept, and it isn't used 
 ## Related reading
 
 - [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.
+
+## Species/Ancestry traits
+
+Use a Creature as a reusable species definition, then select it on an existing Character or NPC.
+
+1. Open the Creature's **Stats** tab and choose **Designate Species/Ancestry**. Add named traits and descriptions. A trait can be an ability without any adjustments.
+2. For a numeric adjustment, enter an exact target key and a signed amount, such as `strength` and `2`, or `presence` and `-1`. Choose **Save species definition**. Ordinary Creatures are not choices until you designate them.
+3. On the Character or NPC, use **Stats → Edit Layout** to give the intended **Number** fields keys. Keys are case-sensitive: `strength` and `Strength` differ. A label alone does not match.
+4. Choose **Choose Species/Ancestry**, select the Creature and review its traits. With bases of strength 10 and presence 8, a +2 and −1 definition previews **Base 10; Effective 12** and **Base 8; Effective 7**. Missing, duplicate or incompatible targets show an unavailable reason. Confirming saves supported adjustments and retains skipped entries as provenance. Cancel saves nothing.
+5. Choose **Confirm species selection**. Both standard and custom layouts show base/effective numbers and the contributing trait and species. Numeric inputs always edit the base. Editing strength's base to 13 immediately shows effective 15.
+
+Only one species is selected. To replace it, choose another and confirm its preview; the preview uses the authored base without the old contribution. To remove it, choose **None — remove selection** and confirm. Notes, manual abilities, connections and current bases remain intact. Re-selecting the current species does not add bonuses again.
+
+Traits are saved snapshots. Changing the source Creature, removing its designation or deleting it does not change existing characters. **Open source Creature** is available while the designated Creature is in the current vault; otherwise the saved name and traits remain visible with an unavailable-source message. There is no refresh action. Sheet templates, layout changes and clearing a sheet retain the selection. A renamed field keeps its bound adjustment, but a removed or incompatible field is unavailable; a replacement field does not inherit that binding.
+
+Only plain Number fields with finite numeric bases qualify. Empty numbers, strings, counters, dice, dice pools, tables and formulas do not receive species additions. No fields are created, no caps are enforced and dice/formula inputs keep their existing semantics. Ability-only definitions work without a sheet. Selection is available from existing Stats tabs, not during entity creation.
+
+Definitions and snapshots stay local in entity files. Reload and **Portable Backup** (`.codex.zip`) preserve them and the authored bases. Shelf copies retain snapshots independently. Importing a character with its source links the imported pair; a character imported alone into another vault keeps its traits with an unavailable source, even if an unrelated entity has the same ID. Shelf does not automatically bring dependencies. Guest views cannot change definitions or selections.

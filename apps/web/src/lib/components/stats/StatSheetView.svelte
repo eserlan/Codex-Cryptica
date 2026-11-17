@@ -15,6 +15,7 @@
     systemIdGenerator,
   } from "#lib/utils/runtime-deps.js";
   import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
+  import SpeciesNumber from "./SpeciesNumber.svelte";
   import TovLuckControl from "./TovLuckControl.svelte";
   import TovDoomControl from "./TovDoomControl.svelte";
   import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
@@ -180,6 +181,27 @@
   }
 </script>
 
+{#snippet favoriteToggle(field: StatSheetField)}
+  <button
+    type="button"
+    class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
+      ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-text'
+      : 'border-transparent text-theme-text hover:border-theme-primary/40 hover:text-theme-text'}"
+    onclick={() => toggleFavorite(field)}
+    aria-label={field.favorite
+      ? `Unpin ${field.label} from token quick stats`
+      : `Pin ${field.label} to token quick stats`}
+    aria-pressed={!!field.favorite}
+    data-testid="stat-sheet-favorite-toggle"
+  >
+    <span
+      class="icon-[lucide--star] h-3.5 w-3.5"
+      class:fill-theme-primary={field.favorite}
+      aria-hidden="true"
+    ></span>
+  </button>
+{/snippet}
+
 <!-- fallow-ignore-next-line complexity -->
 {#if fields.length === 0}
   <div
@@ -259,24 +281,7 @@
             <span class="text-xs text-theme-text">{field.label}</span>
             <div class="ml-auto flex items-center gap-2">
               {#if !readOnly}
-                <button
-                  type="button"
-                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
-                  onclick={() => toggleFavorite(field)}
-                  aria-label={field.favorite
-                    ? `Unpin ${field.label} from token quick stats`
-                    : `Pin ${field.label} to token quick stats`}
-                  aria-pressed={!!field.favorite}
-                  data-testid="stat-sheet-favorite-toggle"
-                >
-                  <span
-                    class="icon-[lucide--star] h-3.5 w-3.5"
-                    class:fill-theme-primary={field.favorite}
-                    aria-hidden="true"
-                  ></span>
-                </button>
+                {@render favoriteToggle(field)}
                 <button
                   type="button"
                   class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.barField
@@ -328,27 +333,17 @@
           <div
             class="flex items-center justify-between gap-2 rounded border border-theme-border px-2 py-1.5"
           >
-            <span class="text-xs text-theme-text">{field.label}</span>
+            <div>
+              <span class="text-xs text-theme-text">{field.label}</span>
+              <SpeciesNumber
+                snapshot={entity.appliedSpecies}
+                {fields}
+                fieldId={field.id}
+              />
+            </div>
             <div class="flex items-center gap-2">
               {#if !readOnly}
-                <button
-                  type="button"
-                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
-                  onclick={() => toggleFavorite(field)}
-                  aria-label={field.favorite
-                    ? `Unpin ${field.label} from token quick stats`
-                    : `Pin ${field.label} to token quick stats`}
-                  aria-pressed={!!field.favorite}
-                  data-testid="stat-sheet-favorite-toggle"
-                >
-                  <span
-                    class="icon-[lucide--star] h-3.5 w-3.5"
-                    class:fill-theme-primary={field.favorite}
-                    aria-hidden="true"
-                  ></span>
-                </button>
+                {@render favoriteToggle(field)}
               {/if}
               <input
                 type="number"
@@ -371,24 +366,7 @@
             <span class="text-xs text-theme-text">{field.label}</span>
             <div class="flex items-center gap-2">
               {#if !readOnly}
-                <button
-                  type="button"
-                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
-                  onclick={() => toggleFavorite(field)}
-                  aria-label={field.favorite
-                    ? `Unpin ${field.label} from token quick stats`
-                    : `Pin ${field.label} to token quick stats`}
-                  aria-pressed={!!field.favorite}
-                  data-testid="stat-sheet-favorite-toggle"
-                >
-                  <span
-                    class="icon-[lucide--star] h-3.5 w-3.5"
-                    class:fill-theme-primary={field.favorite}
-                    aria-hidden="true"
-                  ></span>
-                </button>
+                {@render favoriteToggle(field)}
               {/if}
               <input
                 type="text"
@@ -411,24 +389,7 @@
             <div class="flex items-center justify-between gap-2">
               <span class="text-xs text-theme-text">{field.label}</span>
               {#if !readOnly}
-                <button
-                  type="button"
-                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                    : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
-                  onclick={() => toggleFavorite(field)}
-                  aria-label={field.favorite
-                    ? `Unpin ${field.label} from token quick stats`
-                    : `Pin ${field.label} to token quick stats`}
-                  aria-pressed={!!field.favorite}
-                  data-testid="stat-sheet-favorite-toggle"
-                >
-                  <span
-                    class="icon-[lucide--star] h-3.5 w-3.5"
-                    class:fill-theme-primary={field.favorite}
-                    aria-hidden="true"
-                  ></span>
-                </button>
+                {@render favoriteToggle(field)}
               {/if}
             </div>
             <textarea
@@ -475,24 +436,7 @@
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 {#if !readOnly}
-                  <button
-                    type="button"
-                    class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                      ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-primary'
-                      : 'border-transparent text-theme-muted hover:border-theme-primary/40 hover:text-theme-primary'}"
-                    onclick={() => toggleFavorite(field)}
-                    aria-label={field.favorite
-                      ? `Unpin ${field.label} from token quick stats`
-                      : `Pin ${field.label} to token quick stats`}
-                    aria-pressed={!!field.favorite}
-                    data-testid="stat-sheet-favorite-toggle"
-                  >
-                    <span
-                      class="icon-[lucide--star] h-3.5 w-3.5"
-                      class:fill-theme-primary={field.favorite}
-                      aria-hidden="true"
-                    ></span>
-                  </button>
+                  {@render favoriteToggle(field)}
                 {/if}
                 <button
                   type="button"
@@ -517,24 +461,7 @@
                 >{field.label}</span
               >
               {#if !readOnly}
-                <button
-                  type="button"
-                  class="flex h-6 w-6 items-center justify-center rounded border transition-colors {field.favorite
-                    ? 'border-theme-primary/30 bg-theme-primary/10 text-theme-text'
-                    : 'border-transparent text-theme-text hover:border-theme-primary/40 hover:text-theme-primary'}"
-                  onclick={() => toggleFavorite(field)}
-                  aria-label={field.favorite
-                    ? `Unpin ${field.label} from token quick stats`
-                    : `Pin ${field.label} to token quick stats`}
-                  aria-pressed={!!field.favorite}
-                  data-testid="stat-sheet-favorite-toggle"
-                >
-                  <span
-                    class="icon-[lucide--star] h-3.5 w-3.5"
-                    class:fill-theme-primary={field.favorite}
-                    aria-hidden="true"
-                  ></span>
-                </button>
+                {@render favoriteToggle(field)}
               {/if}
             </div>
             <div class="flex flex-wrap items-center justify-between gap-2">

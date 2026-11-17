@@ -2,7 +2,9 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import type { Entity } from "schema";
+import { previewSpecies } from "@codex/stat-sheet-engine";
+import { EntitySchema } from "schema";
+import type { Entity, StatSheetField } from "schema";
 
 const {
   updateEntity,
@@ -807,4 +809,126 @@ describe("StatSheetView", () => {
       ).toBeTruthy();
     });
   });
+});
+
+describe("species number display", () => {
+  it("shows effective provenance while editing and persisting only base values", async () => {
+    const source = EntitySchema.parse({
+      id: "k",
+      title: "Kethari",
+      type: "creature",
+      speciesDefinition: {
+        kind: "species",
+        version: 1,
+        traits: [
+          {
+            id: "power",
+            name: "Powerful",
+            description: "Strong",
+            adjustments: [{ key: "strength", amount: 2 }],
+          },
+        ],
+      },
+    });
+    const base = buildEntity({
+      statSheet: {
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+    });
+    const entity = { ...base, appliedSpecies: previewSpecies(base, source) };
+    updateEntity.mockClear();
+    const view = render(StatSheetView, { entity });
+    expect(screen.getByText(/Base 10; Effective 12/)).toBeTruthy();
+    expect(screen.getByText(/\+2 Powerful \(Kethari\)/)).toBeTruthy();
+    expect(updateEntity).not.toHaveBeenCalled();
+    await fireEvent.input(screen.getByRole("spinbutton", { name: "Might" }), {
+      target: { value: "13" },
+    });
+    expect(updateEntity).toHaveBeenLastCalledWith(entity.id, {
+      statSheet: {
+        templateId: null,
+        fields: [{ ...base.statSheet!.fields[0], value: 13 }],
+      },
+    });
+    const edited = {
+      ...entity,
+      statSheet: { fields: [{ ...base.statSheet!.fields[0], value: 13 }] },
+    };
+    await view.rerender({ entity: edited });
+    expect(screen.getByText(/Base 13; Effective 15/)).toBeTruthy();
+    expect(edited.appliedSpecies).toEqual(entity.appliedSpecies);
+    await view.rerender({ entity: { ...edited, appliedSpecies: undefined } });
+    expect(screen.queryByTestId("species-number")).toBeNull();
+    expect(screen.getByRole("spinbutton", { name: "Might" })).toHaveProperty(
+      "value",
+      "13",
+    );
+  });
+});
+
+describe("shared favourite controls", () => {
+  it.each(
+    (
+      ["counter", "number", "text", "longtext", "dice", "dice-pool"] as const
+    ).flatMap((type) => [false, true].map((favorite) => ({ type, favorite }))),
+  )(
+    "toggles only the chosen $type field from favourite=$favorite",
+    async ({ type, favorite }) => {
+      vaultState.isGuest = false;
+      updateEntity.mockClear();
+      const target: StatSheetField = {
+        id: "target",
+        label: "Target",
+        type,
+        favorite,
+        value: type === "text" || type === "longtext" ? "Sailing" : 9,
+        ...(type === "dice"
+          ? { formula: "1d20" }
+          : type === "dice-pool"
+            ? { formula: "d6" }
+            : {}),
+      };
+      const untouched = { ...target, id: "untouched", label: "Untouched" };
+      const entity = buildEntity({
+        statSheet: { fields: [untouched, target] },
+      });
+      const view = render(StatSheetView, { entity });
+      const action = favorite ? "Unpin" : "Pin";
+      const button = screen.getByRole("button", {
+        name: `${action} Target ${favorite ? "from" : "to"} token quick stats`,
+      });
+      expect(button.getAttribute("aria-pressed")).toBe(String(favorite));
+      expect(updateEntity).not.toHaveBeenCalled();
+      await fireEvent.click(button);
+      expect(updateEntity).toHaveBeenCalledExactlyOnceWith(entity.id, {
+        statSheet: {
+          templateId: null,
+          fields: [untouched, { ...target, favorite: !favorite }],
+        },
+      });
+      await view.rerender({
+        entity: {
+          ...entity,
+          statSheet: {
+            fields: [untouched, { ...target, favorite: !favorite }],
+          },
+        },
+      });
+      expect(
+        screen
+          .getByRole("button", {
+            name: `${favorite ? "Pin" : "Unpin"} Target ${favorite ? "to" : "from"} token quick stats`,
+          })
+          .getAttribute("aria-pressed"),
+      ).toBe(String(!favorite));
+    },
+  );
 });

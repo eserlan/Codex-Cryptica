@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { EntitySchema } from "schema";
+import { previewSpecies, calculateSpecies } from "@codex/stat-sheet-engine";
+import { stringifyEntity, parseMarkdown } from "./markdown";
 import { zipSync, strToU8 } from "fflate";
 import { initialSession } from "#lib/stores/oracle/adventure-session.js";
 import { parseAdventureSessionForRecovery } from "@codex/adventure-engine";
@@ -103,6 +106,67 @@ describe("vault-archive", () => {
       137, 80, 78, 71,
     ]);
     expect(store.has("restored/.codex/canvases/map.json")).toBe(true);
+  });
+
+  it("Portable Backup preserves species definitions, snapshots and authored bases", async () => {
+    const creature = EntitySchema.parse({
+      id: "k",
+      title: "Kethari",
+      type: "creature",
+      speciesDefinition: {
+        kind: "species",
+        version: 1,
+        traits: [
+          {
+            id: "power",
+            name: "Powerful",
+            description: "Strong",
+            adjustments: [{ key: "strength", amount: 2 }],
+          },
+        ],
+      },
+    });
+    const base = EntitySchema.parse({
+      id: "hero",
+      title: "Hero",
+      type: "character",
+      content: "Manual abilities",
+      statSheet: {
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+    });
+    const hero = { ...base, appliedSpecies: previewSpecies(base, creature) };
+    for (const entity of [creature, hero])
+      store.set(`source/${entity.id}.md`, strToU8(stringifyEntity(entity)));
+    await exportVaultToZip("source", "Species world");
+    await writeArchiveToVault(
+      "restored",
+      await parseVaultArchive(capturedDownload!.blob),
+    );
+    for (const entity of [creature, hero]) {
+      const parsed = parseMarkdown(
+        new TextDecoder().decode(store.get(`restored/${entity.id}.md`)!),
+      );
+      expect(
+        EntitySchema.parse({ ...parsed.metadata, content: parsed.content }),
+      ).toEqual(entity);
+    }
+    const restored = parseMarkdown(
+      new TextDecoder().decode(store.get("restored/hero.md")!),
+    ).metadata;
+    expect(restored.statSheet!.fields[0].value).toBe(10);
+    expect(
+      calculateSpecies(restored.appliedSpecies, restored.statSheet!.fields)[0]
+        .effective,
+    ).toBe(12);
   });
 
   it("restores adventure documents for the new Vault and preserves private image bytes and opaque artwork", async () => {

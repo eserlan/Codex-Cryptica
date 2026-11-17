@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { FieldReferenceNode as FieldReferenceNodeType } from "@codex/stat-sheet-engine";
   import type { PresentationRenderContext } from "../types";
+  import SpeciesNumber from "../../SpeciesNumber.svelte";
   import MissingFieldNode from "./MissingFieldNode.svelte";
   import ItemTableNode from "./ItemTableNode.svelte";
 
@@ -491,4 +492,12 @@
       >{/if}
     {field.value ?? ""}
   </span>
+{/if}
+
+{#if field?.type === "number"}
+  <SpeciesNumber
+    snapshot={context.appliedSpecies}
+    fields={context.fields}
+    fieldId={field.id}
+  />
 {/if}

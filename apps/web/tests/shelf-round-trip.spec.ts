@@ -237,3 +237,189 @@ test.describe("Shelf — carrying an entity between vaults", () => {
     expect(await snapshot()).toBe(before);
   });
 });
+
+test("species snapshots survive real Shelf storage, remap grouped sources and reject foreign ID collisions", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("codex_skip_landing", "true");
+    localStorage.setItem(
+      "codex-cryptica-help-state",
+      JSON.stringify({ completedTours: ["initial-onboarding"] }),
+    );
+  });
+  await page.goto("/");
+  await waitForVaultReady(page);
+  const source = await page.evaluate(async (modulePath) => {
+    const vault = (window as any).vault;
+    const id = await vault.createVault("Species shelf source");
+    await vault.switchVault(id);
+    const definition = {
+      kind: "species",
+      version: 1,
+      traits: [
+        {
+          id: "power",
+          name: "Powerful",
+          description: "Strong",
+          adjustments: [{ key: "strength", amount: 2 }],
+        },
+      ],
+    };
+    const creatureId = await vault.createEntity("creature", "Kethari", {
+      speciesDefinition: definition,
+    });
+    const heroId = await vault.createEntity("character", "Species traveller", {
+      content: "Manual notes",
+      statSheet: {
+        templateId: null,
+        fields: [
+          {
+            id: "a",
+            key: "strength",
+            label: "Might",
+            type: "number",
+            value: 10,
+          },
+        ],
+      },
+      appliedSpecies: {
+        ...definition,
+        source: {
+          entityId: creatureId,
+          title: "Kethari",
+          localEntityId: creatureId,
+        },
+        traits: [
+          {
+            ...definition.traits[0],
+            adjustments: [
+              {
+                key: "strength",
+                amount: 2,
+                resolution: { status: "bound", fieldId: "a" },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    const { shelf } = await import(/* @vite-ignore */ modulePath);
+    await shelf.shelve([heroId, creatureId], vault.vaultName);
+    await shelf.refresh();
+    return {
+      vaultId: id,
+      heroId,
+      creatureId,
+      snapshot: JSON.parse(
+        JSON.stringify(vault.entities[heroId].appliedSpecies),
+      ),
+      entries: shelf.entries
+        .filter((entry: any) => entry.sourceVaultId === id)
+        .map((entry: any) => ({
+          id: entry.id,
+          sourceEntityId: entry.sourceEntityId,
+        })),
+    };
+  }, SHELF_MODULE_PATH);
+
+  const duplicate = await page.evaluate(
+    async ({ modulePath, source }) => {
+      const vault = (window as any).vault;
+      const { shelf } = await import(/* @vite-ignore */ modulePath);
+      const plan = await shelf.plan(
+        source.entries.map((entry: any) => entry.id),
+      );
+      if (!(await shelf.import(plan))) throw new Error(shelf.error);
+      const hero = shelf.lastOutcome.created.find((item: any) =>
+        item.title.startsWith("Species traveller"),
+      );
+      const creature = shelf.lastOutcome.created.find((item: any) =>
+        item.title.startsWith("Kethari"),
+      );
+      const clone = JSON.parse(JSON.stringify(vault.entities[hero.entityId]));
+      const removed = await vault.bulkUpdate({
+        [hero.entityId]: { appliedSpecies: undefined },
+      });
+      return {
+        clone,
+        creatureId: creature.entityId,
+        removed: removed.succeededIds,
+        original: JSON.parse(JSON.stringify(vault.entities[source.heroId])),
+      };
+    },
+    { modulePath: SHELF_MODULE_PATH, source },
+  );
+  expect(duplicate.clone.appliedSpecies.source.localEntityId).toBe(
+    duplicate.creatureId,
+  );
+  expect(duplicate.clone.appliedSpecies.traits).toEqual(source.snapshot.traits);
+  expect(duplicate.clone.statSheet.fields[0].value).toBe(10);
+  expect(duplicate.removed).toContain(duplicate.clone.id);
+  expect(duplicate.original.appliedSpecies).toEqual(source.snapshot);
+
+  const imports = await page.evaluate(
+    async ({ modulePath, source }) => {
+      const vault = (window as any).vault;
+      const target = await vault.createVault("Species shelf destination");
+      await vault.switchVault(target);
+      await vault.createEntity("creature", "Unrelated collision", {
+        id: source.creatureId,
+        speciesDefinition: { kind: "species", version: 1, traits: [] },
+      });
+      const { shelf } = await import(/* @vite-ignore */ modulePath);
+      const heroEntry = source.entries.find(
+        (entry: any) => entry.sourceEntityId === source.heroId,
+      )!;
+      if (!(await shelf.import(await shelf.plan([heroEntry.id]))))
+        throw new Error(shelf.error);
+      const loneId = shelf.lastOutcome.created[0].entityId;
+      if (
+        !(await shelf.import(
+          await shelf.plan(source.entries.map((entry: any) => entry.id)),
+        ))
+      )
+        throw new Error(shelf.error);
+      const pair = shelf.lastOutcome.created;
+      const heroId = pair.find((item: any) =>
+        item.title.startsWith("Species traveller"),
+      ).entityId;
+      const creatureId = pair.find((item: any) =>
+        item.title.startsWith("Kethari"),
+      ).entityId;
+      await vault.flushPendingSaves();
+      return { loneId, heroId, creatureId, target };
+    },
+    { modulePath: SHELF_MODULE_PATH, source },
+  );
+  await page.reload();
+  await waitForVaultReady(page);
+  await page.waitForFunction(({ loneId, heroId, creatureId }) => {
+    const entities = (window as any).vault?.entities;
+    return entities?.[loneId] && entities[heroId] && entities[creatureId];
+  }, imports);
+  const restored = await page.evaluate(({ loneId, heroId, creatureId }) => {
+    const vault = (window as any).vault;
+    return JSON.parse(
+      JSON.stringify({
+        lone: vault.entities[loneId],
+        hero: vault.entities[heroId],
+        creature: vault.entities[creatureId],
+      }),
+    );
+  }, imports);
+  expect(restored.lone.appliedSpecies.source.localEntityId).toBeNull();
+  expect(restored.hero.appliedSpecies.source.localEntityId).toBe(
+    restored.creature.id,
+  );
+  expect(restored.creature.speciesDefinition.traits[0].name).toBe("Powerful");
+  for (const hero of [restored.lone, restored.hero]) {
+    expect(hero.appliedSpecies.traits).toEqual(source.snapshot.traits);
+    expect(hero.statSheet.fields[0].value).toBe(10);
+    expect(
+      hero.statSheet.fields[0].value +
+        hero.appliedSpecies.traits[0].adjustments[0].amount,
+    ).toBe(12);
+    expect(hero.content).toBe("Manual notes");
+  }
+});
