@@ -16,6 +16,7 @@ import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { guestVault } from "./guest-vault.svelte";
 import { updateLastInternalChange } from "./vault/registry";
 import {
+  type Clock,
   systemClock,
   type IdGenerator,
   systemIdGenerator,
@@ -50,10 +51,12 @@ export class CanvasRegistryStore {
     { id: string; position?: { x: number; y: number } }[]
   >([]);
   private saveQueue: KeyedTaskQueue | null = null;
+  private readonly clock: Clock;
   private idGenerator: IdGenerator;
 
-  constructor(idGenerator: IdGenerator = systemIdGenerator) {
-    this.idGenerator = idGenerator;
+  constructor(deps: { clock?: Clock; idGenerator?: IdGenerator } = {}) {
+    this.clock = deps.clock ?? systemClock;
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
   }
 
   allCanvases = $derived.by(() => {
@@ -139,7 +142,7 @@ export class CanvasRegistryStore {
       slug,
       nodes: [],
       edges: [],
-      lastModified: systemClock.now(),
+      lastModified: this.clock.now(),
     };
 
     await this.saveCanvas(id);
@@ -206,7 +209,7 @@ export class CanvasRegistryStore {
 
     canvas.name = newName;
     canvas.slug = this.generateSlug(newName, id);
-    canvas.lastModified = systemClock.now();
+    canvas.lastModified = this.clock.now();
 
     await this.saveCanvas(id);
     return canvas.slug;
@@ -215,7 +218,7 @@ export class CanvasRegistryStore {
   async touch(id: string) {
     const canvas = this.canvases[id];
     if (canvas) {
-      canvas.lastModified = systemClock.now();
+      canvas.lastModified = this.clock.now();
     }
   }
 
@@ -311,7 +314,7 @@ export class CanvasRegistryStore {
     }
     canvas.nodes = newNodes;
 
-    canvas.lastModified = systemClock.now();
+    canvas.lastModified = this.clock.now();
     await this.saveCanvas(canvasId);
 
     return { canvasId, added, skipped, errors };
@@ -364,7 +367,7 @@ export class CanvasRegistryStore {
       slug,
       nodes,
       edges: [],
-      lastModified: systemClock.now(),
+      lastModified: this.clock.now(),
     };
 
     await this.saveCanvas(id);
@@ -394,7 +397,7 @@ export class CanvasRegistryStore {
       nodes: doc.nodes || [],
       edges: doc.edges || [],
       metadata: doc.metadata || {},
-      lastModified: doc.lastModified || systemClock.now(),
+      lastModified: doc.lastModified || this.clock.now(),
     });
 
     this.canvases[id] = canvasData;

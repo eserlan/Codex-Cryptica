@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { canvasRegistry } from "./canvas-registry.svelte";
+import { CanvasRegistryStore, canvasRegistry } from "./canvas-registry.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 import * as vaultIO from "./vault/io";
 import { getVaultDir } from "../utils/opfs";
@@ -286,14 +286,24 @@ describe("CanvasRegistryStore", () => {
     });
 
     it("should update lastModified timestamp", async () => {
-      const canvasId = canvasRegistry.allCanvases[0].id!;
-      const before = canvasRegistry.allCanvases[0].lastModified || 0;
+      const now = vi.fn(() => 150_000);
+      const store = new CanvasRegistryStore({
+        clock: { now },
+        idGenerator: { uuid: () => "canvas-id" },
+      });
+      await store.create("Test Canvas");
 
-      vi.spyOn(Date, "now").mockReturnValue(before + 1);
-      await canvasRegistry.addEntities(canvasId, ["entity-1"]);
+      const result = await store.addEntities("canvas-id", ["entity-1"]);
 
-      const after = canvasRegistry.allCanvases[0].lastModified || 0;
-      expect(after).toBeGreaterThan(before);
+      expect(result.added).toEqual(["entity-1"]);
+      expect(store.canvases["canvas-id"].lastModified).toBe(150_000);
+      expect(now).toHaveBeenCalledTimes(2);
+
+      const missing = await store.addEntities("missing-canvas", ["entity-2"]);
+      expect(missing.errors).toEqual([
+        { entityId: "", error: "Canvas not found" },
+      ]);
+      expect(now).toHaveBeenCalledTimes(2);
     });
   });
 
