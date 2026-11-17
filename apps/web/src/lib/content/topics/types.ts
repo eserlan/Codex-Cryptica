@@ -40,6 +40,31 @@ export interface TopicWorkflowStep {
   };
 }
 
+/** A place in an example diagram, with the job it does. */
+export interface TopicDiagramNode {
+  id: string;
+  name: string;
+  role: string;
+}
+
+/** A route (travel) or flow (cargo) between two diagram nodes. */
+export interface TopicDiagramLink {
+  from: string;
+  to: string;
+  kind: "route" | "flow";
+  label: string;
+  detail: string;
+  flashpoint?: true;
+}
+
+/** A relational schematic of an inline example, with no positions or scale. */
+export interface TopicExampleDiagram {
+  title: string;
+  description: string;
+  nodes: TopicDiagramNode[];
+  links: TopicDiagramLink[];
+}
+
 /** A worked example written into the hub page itself, with no route of its own. */
 export interface TopicInlineExample {
   title: string;
@@ -47,6 +72,7 @@ export interface TopicInlineExample {
   summary: string;
   parts: { term: string; text: string }[];
   highlight: string;
+  diagram?: TopicExampleDiagram;
 }
 
 /** Editorial copy for the fixed section frame every topic hub renders. */
