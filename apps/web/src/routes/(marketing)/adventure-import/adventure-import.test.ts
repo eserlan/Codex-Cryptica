@@ -125,6 +125,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     render(Page);
 
     expect(screen.getByText(/single fields/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /title, hook, background and optional description player-safe/,
+      ),
+    ).toBeTruthy();
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
+    );
     expect(CANONICAL_CONVERSION_PROMPT).toContain(
       '"visibility" applies to the WHOLE record, never to individual fields',
     );
