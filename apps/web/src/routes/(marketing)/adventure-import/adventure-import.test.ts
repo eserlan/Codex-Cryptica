@@ -58,7 +58,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
     expect(
       screen.getByText(
-        /Codex Cryptica never receives or uploads your source document/i,
+        /It does not go to Codex Cryptica, and this page never receives it/i,
       ),
     ).toBeTruthy();
 
@@ -82,6 +82,46 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(referenceLink.getAttribute("href")).toBe(
       "/schemas/adventure-json/examples/reference-one-shot.v1.json",
     );
+  });
+
+  it("explains the three phases, backup coverage and links in the privacy section", () => {
+    const { container } = render(Page);
+
+    const heading = container.querySelector("#privacy-notice-heading");
+    expect(heading).toBeTruthy();
+    const section = heading!.closest("section")!;
+    const items = section.querySelectorAll("ol > li");
+    expect(items.length).toBe(3);
+    expect(items[0].textContent?.trim()).toMatch(/^Conversion/);
+    expect(items[1].textContent?.trim()).toMatch(/^Import/);
+    expect(items[2].textContent?.trim()).toMatch(/^AI play/);
+
+    const text = (section.textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toMatch(/not included in Codex Cryptica Cloud Backup/i);
+    expect(text).toMatch(/Portable Backup/);
+    expect(text).toMatch(/\.codex\.zip/);
+    expect(text).toMatch(/Save to Folder/);
+
+    expect(
+      section.querySelector('a[href="/help#help/cloud-backup"]'),
+    ).toBeTruthy();
+    expect(
+      section.querySelector('a[href="/help#help/export-and-backup"]'),
+    ).toBeTruthy();
+
+    const quickStart = container
+      .querySelector("#quick-start-heading")!
+      .closest("section")!;
+    expect(
+      quickStart.querySelector('a[href="#privacy-notice-heading"]'),
+    ).toBeTruthy();
+  });
+
+  it("never claims strictly on-device processing or legal ownership", () => {
+    const { container } = render(Page);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/strictly on[- ]?(your )?device/i);
+    expect(text).not.toMatch(/legally own/i);
   });
 
   it("shows the optional correspondence extension format for renamed content", () => {
@@ -465,7 +505,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       const pres = [...container.querySelectorAll("pre")];
       const coverage = container.querySelector(
         'pre[aria-label="Coverage report prompt"]',
-      ) as HTMLElement;
+      ) as HTMLPreElement;
       expect(coverage.getAttribute("tabindex")).toBe("0");
       expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
       expect(pres.indexOf(coverage)).toBeGreaterThan(0);

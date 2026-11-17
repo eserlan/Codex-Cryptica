@@ -184,7 +184,7 @@
         Use ChatGPT, Claude, Gemini, or a local model to turn a PDF, Markdown
         file, or module notes into a clean, validated
         <code class="font-mono text-theme-text">adventure-json/v1</code>
-        file that Codex Cryptica processes strictly on your device.
+        file that Codex Cryptica checks and stores on your device.
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -292,6 +292,16 @@
         paste your adventure here. The conversion happens in the assistant you choose,
         and this page never sees your source.
       </p>
+      <p class="text-sm text-theme-text/90">
+        Your source goes to the AI assistant you choose. The finished file is
+        imported and stored on this device. During AI play, parts of it go to
+        your Oracle provider.
+        <a
+          href="#privacy-notice-heading"
+          class="text-theme-text underline underline-offset-2"
+          >Where your adventure goes</a
+        >
+      </p>
     </section>
 
     <!-- Privacy & Responsibility Notice -->
@@ -303,18 +313,61 @@
         <span class="icon-[lucide--shield-check] w-5 h-5" aria-hidden="true"
         ></span>
         <h2 id="privacy-notice-heading" class="font-header font-bold text-lg">
-          Privacy &amp; External Provider Responsibility
+          Where your adventure goes
         </h2>
       </div>
+      <ol
+        class="list-decimal pl-5 space-y-2 text-sm md:text-base text-theme-text/85 leading-relaxed"
+      >
+        <li>
+          <strong>Conversion:</strong> your source text or PDF goes to the AI assistant
+          you choose, hosted or local. It does not go to Codex Cryptica, and this
+          page never receives it.
+        </li>
+        <li>
+          <strong>Import:</strong> the Adventure JSON is validated, reviewed and approved
+          in Codex Cryptica, then stored in the Vault on this device. No AI call is
+          made.
+        </li>
+        <li>
+          <strong>AI play:</strong> during Oracle turns, bounded parts of the package,
+          such as its title and premise, are sent to your selected Oracle AI provider
+          along with relevant Vault records. The whole package is not sent.
+        </li>
+      </ol>
       <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
-        Document conversion happens entirely inside your chosen external AI
-        assistant (ChatGPT, Claude, Gemini, or a local model).
-        <strong
-          >Codex Cryptica never receives or uploads your source document</strong
+        The AI provider's terms and your rights in the material decide whether
+        you may upload a published module. Codex Cryptica cannot decide that for
+        you. A local model keeps the conversion on your own machine, which can
+        offer different privacy characteristics than a hosted service.
+      </p>
+      <h3 class="font-header font-bold text-base text-theme-text pt-2">
+        Storage and backup
+      </h3>
+      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
+        Imported packages are <strong
+          >not included in Codex Cryptica Cloud Backup</strong
+        >, even when you opt in to include adventures. Opted-in adventure
+        sessions are backed up, but the packages they started from are not.
+        After restoring from Cloud Backup, or when moving to another device that
+        way, import the Adventure JSON again. Keep your
+        <code class="font-mono">.json</code> file. Importing the same file again gives
+        the same version.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
+        A Portable Backup (<code class="font-mono">.codex.zip</code>) and Save
+        to Folder do include imported packages. See
+        <a
+          href="{cleanBase}/help#help/cloud-backup"
+          class="text-theme-text underline underline-offset-2"
+          >Cloud Backup help</a
         >
-        and processes the resulting Adventure JSON strictly on-device. You are responsible
-        for ensuring you have the legal right to share any source material with your
-        chosen AI provider under that provider's terms.
+        and
+        <a
+          href="{cleanBase}/help#help/export-and-backup"
+          class="text-theme-text underline underline-offset-2"
+          >Export and Back Up help</a
+        >.
       </p>
     </section>
 
@@ -379,8 +432,8 @@
           <strong class="text-theme-text block mb-1"
             >2. Attach your source</strong
           >
-          Upload or paste the adventure you legally own into ChatGPT, Claude, Gemini,
-          or a local LLM.
+          Upload or paste the adventure you have access to into ChatGPT, Claude, Gemini,
+          or a local LLM, if the provider's terms and your rights allow it.
         </div>
         <div
           class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
