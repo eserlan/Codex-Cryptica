@@ -1,9 +1,9 @@
 /**
  * Staged conversion for long adventures (#4896).
  *
- * Everything here runs in the user's own AI assistant and machine. Codex
- * Cryptica never receives the source and adds no schema requirement: each
- * stage works inside the canonical Adventure JSON v1 rules.
+ * Conversion uses the user's chosen assistant (hosted or local). Codex
+ * Cryptica does not handle the source during conversion and adds no schema
+ * requirement: each stage follows the canonical Adventure JSON v1 rules.
  */
 
 export const STAGED_ANCHOR = "long-adventures";
@@ -28,7 +28,7 @@ Convert only this section of the source: [PASTE THE SECTION TITLE AND PAGE RANGE
 - You may refer to an id defined in another section (for example a clue placed with a character from section 1), but define an entry only if the inventory says this section defines it. Never invent an entry that belongs to another section.
 - Add "sourceRef" with the page number to every entry, using the page position in the file (the same numbering as the inventory), not any number printed on the page.
 - Never invent anything to connect this section to others. Record gaps in "unresolved".
-- Deliver the JSON as a file named after the section, such as "chunk-02.json" (or as the whole reply if you cannot create files). After it, add a short plain-text completion record: the section and pages, the number of entries per collection, the ids you referred to but did not define, and anything you could not read or left out. If you could not finish this section, say so instead of presenting it as complete.`;
+- Deliver valid JSON only in a file named after the section, such as "chunk-02.json". If you cannot create files, make the entire reply the JSON document only: no Markdown fences, commentary or completion record. After delivering the file, provide the plain-text completion record as a separate message; if you had to reply with JSON, wait until I ask "completion record" before sending that separate message. The completion record must list the section and pages, number of entries per collection, ids you referred to but did not define, and anything unreadable or omitted. If you could not finish this section, say so in the completion record instead of presenting it as complete.`;
 
 export const STAGED_COVERAGE_PROMPT = `Stage 3 of 3: check coverage. Do not convert anything new.
 
@@ -47,19 +47,30 @@ Do not assume a section is done because it is listed. If a record is missing or 
  * what users copy is what is verified. It merges chunk documents without
  * inventing anything: a conflicting duplicate id is reported, never resolved.
  */
-export const STAGED_ASSEMBLE_FUNCTION = `function assemble(chunks) {
+export const STAGED_ASSEMBLE_FUNCTION = `function stableJson(value) {
+  return JSON.stringify(value, (_key, entry) =>
+    entry !== null && typeof entry === "object" && !Array.isArray(entry)
+      ? Object.fromEntries(Object.keys(entry).sort().map((key) => [key, entry[key]]))
+      : entry,
+  );
+}
+
+function assemble(chunks) {
   const names = ["locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved"];
+  const metadataKeys = ["formatVersion", "id", "title", "version", "description", "premise", "source", "system"];
   const first = chunks[0];
   const out = {};
-  for (const key of ["formatVersion", "id", "title", "version", "description", "premise", "source", "system"]) {
+  for (const key of metadataKeys) {
     if (first[key] !== undefined) out[key] = first[key];
   }
   for (const name of names) out[name] = [];
   const errors = [];
   const seen = new Map();
   chunks.forEach((chunk, index) => {
-    for (const key of ["formatVersion", "id", "title", "version"]) {
-      if (chunk[key] !== first[key]) errors.push("chunk " + (index + 1) + ": " + key + " differs from chunk 1");
+    for (const key of metadataKeys) {
+      if (stableJson(chunk[key]) !== stableJson(first[key])) {
+        errors.push("chunk " + (index + 1) + ": " + key + " differs from chunk 1");
+      }
     }
     for (const name of names) {
       for (const entry of chunk[name] || []) {
@@ -67,7 +78,7 @@ export const STAGED_ASSEMBLE_FUNCTION = `function assemble(chunks) {
         if (!before) {
           seen.set(entry.id, entry);
           out[name].push(entry);
-        } else if (JSON.stringify(before) !== JSON.stringify(entry)) {
+        } else if (stableJson(before) !== stableJson(entry)) {
           errors.push('chunk ' + (index + 1) + ': id "' + entry.id + '" is defined differently elsewhere');
         }
       }
@@ -76,17 +87,33 @@ export const STAGED_ASSEMBLE_FUNCTION = `function assemble(chunks) {
   return { adventure: out, errors };
 }`;
 
-export const STAGED_ASSEMBLE_SCRIPT = `// assemble.js: node assemble.js chunk-01.json chunk-02.json > adventure.json
+export const STAGED_ASSEMBLE_SCRIPT = `// assemble.js: node assemble.js chunk-01.json chunk-02.json
+// Writes adventure.json only after every input and consistency check succeeds.
 ${STAGED_ASSEMBLE_FUNCTION}
 
 const fs = require("fs");
-const chunks = process.argv.slice(2).map((file) => JSON.parse(fs.readFileSync(file, "utf8")));
+const path = require("path");
+const files = process.argv.slice(2);
+if (files.length === 0) {
+  console.error("Usage: node assemble.js chunk-01.json [chunk-02.json ...]");
+  process.exit(1);
+}
+const chunks = files.map((file) => JSON.parse(fs.readFileSync(file, "utf8")));
 const { adventure, errors } = assemble(chunks);
 if (errors.length > 0) {
   console.error(errors.join("\\n"));
   process.exit(1);
 }
-console.log(JSON.stringify(adventure, null, 2));`;
+const output = path.resolve("adventure.json");
+const temporary = path.join(path.dirname(output), "." + path.basename(output) + "." + process.pid + "." + Date.now() + ".tmp");
+try {
+  fs.writeFileSync(temporary, JSON.stringify(adventure, null, 2) + "\\n", { flag: "wx" });
+  fs.renameSync(temporary, output);
+  console.log("Wrote " + output);
+} catch (error) {
+  try { fs.unlinkSync(temporary); } catch { /* Nothing to clean up. */ }
+  throw error;
+}`;
 
 export interface StagedFailureMode {
   problem: string;
