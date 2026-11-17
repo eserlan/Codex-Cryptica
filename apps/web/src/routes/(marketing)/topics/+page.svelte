@@ -40,7 +40,7 @@
       >
         {TITLE}
       </h1>
-      <p class="text-lg leading-relaxed text-theme-muted">
+      <p class="text-lg leading-relaxed text-theme-text">
         Each topic gathers guides, worked examples and generators for one kind
         of campaign.
       </p>
@@ -62,7 +62,7 @@
             class="group flex h-full flex-col gap-3 border border-theme-border bg-theme-surface p-5 transition-colors hover:border-theme-primary/50"
           >
             <span
-              class="{topic.icon} h-6 w-6 text-theme-primary"
+              class="{topic.icon} h-6 w-6 text-theme-text"
               aria-hidden="true"
             ></span>
             <h2
@@ -70,7 +70,7 @@
             >
               {topic.title}
             </h2>
-            <p class="text-base leading-relaxed text-theme-muted">
+            <p class="text-base leading-relaxed text-theme-text">
               {topic.summary}
             </p>
           </a>
