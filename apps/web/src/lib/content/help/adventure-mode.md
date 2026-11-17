@@ -100,6 +100,14 @@ Once approved, you can start a new session pinned to that package version
 and hash, or resume an existing pinned session directly. Later changes to
 the package never retarget a session that has already started.
 
+Re-importing an identical package is a no-op. Changed content with the same
+package ID opens a new version review against the previous approved version;
+check the listed changes, including any change to the entry scene, before
+approving. Each approved version stays available to start a session. Use
+**Remove** in the approved package list to delete a version. A version pinned
+by an adventure session cannot be removed; resume that session or keep the
+version in the Vault.
+
 Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
 500 pages) remain available as experimental convenience inputs. They are
 normalized locally into Adventure JSON before the same review; scanned or

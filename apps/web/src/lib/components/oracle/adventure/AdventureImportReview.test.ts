@@ -213,7 +213,7 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(approved.secrets[0]?.visibility).toBe("gm-only");
   });
 
-  it("AC4/AC5: locks editing controls after approval and rejects overwriting an approved package in storage", async () => {
+  it("AC4/AC5: locks editing controls after approval and deduplicates a re-approval of the same content in storage", async () => {
     const draft = createTestAdventureJson();
     const io = createMemoryIO();
     render(AdventureImportReview, {
@@ -243,9 +243,10 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     ).toBe(true);
     expect(screen.getByTestId("adventure-approved-confirmation")).toBeTruthy();
 
-    await expect(saveApprovedAdventureJson(io, draft)).rejects.toThrow(
-      "already approved",
-    );
+    const writesBefore = io.writeCalls;
+    const deduplicated = await saveApprovedAdventureJson(io, draft);
+    expect(deduplicated.status).toBe("deduplicated");
+    expect(io.writeCalls).toBe(writesBefore);
   });
 
   it("AC6: invokes onCancel and writes zero files when Cancel is clicked", async () => {
@@ -321,6 +322,119 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(alert.textContent).toContain("INVALID_FORMAT_VERSION");
     expect(io.writeCalls).toBe(0);
     expect(io.files.size).toBe(0);
+  });
+
+  it("shows the structural diff against a predecessor and hides it without one", async () => {
+    const previous = createTestAdventureJson();
+    const changed = createTestAdventureJson();
+    changed.version = "1.1.0";
+    changed.scenes = [
+      {
+        ...changed.scenes[0],
+        summary: "Arrival at the jetty, revised.",
+        conditions: ["Players arrive at midnight"],
+      },
+    ];
+    changed.clues = [];
+    render(AdventureImportReview, {
+      props: {
+        draft: changed,
+        previousPackage: previous,
+        previousHash: await computeAdventureJsonHash(previous),
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const diff = screen.getByTestId("adventure-import-diff");
+    expect(diff.textContent).toContain("the-mill-mystery");
+    expect(diff.textContent).toContain("v1.0.0");
+    expect(diff.textContent).toContain("Scene 1: The Ferry Landing");
+    expect(diff.textContent).toContain("summary");
+    expect(diff.textContent).toContain("conditions");
+    expect(diff.textContent).toContain("Muddy bootprints");
+    expect(
+      screen.getByTestId("adventure-import-diff-unresolved").textContent,
+    ).toContain("clue-prints");
+    expect(
+      screen.queryByTestId("adventure-import-diff-version-warning"),
+    ).toBeNull();
+  });
+
+  it("shows when a scene reorder changes the entry scene", () => {
+    const previous = createTestAdventureJson();
+    previous.scenes = [
+      {
+        ...previous.scenes[0],
+        branches: [
+          { targetSceneId: "scene-next", description: "Enter the mill." },
+        ],
+      },
+      {
+        id: "scene-next",
+        title: "Inside the Mill",
+        summary: "The waterwheel is still.",
+        branches: [
+          {
+            targetSceneId: "scene-landing",
+            description: "Return outside.",
+            optional: true,
+          },
+        ],
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ];
+    const reordered = createTestAdventureJson();
+    reordered.scenes = [...previous.scenes].reverse();
+
+    render(AdventureImportReview, {
+      props: {
+        draft: reordered,
+        previousPackage: previous,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    expect(
+      screen.getByTestId("adventure-import-diff-entry-scene").textContent,
+    ).toContain("scene-landing to scene-next");
+    expect(screen.getByTestId("adventure-import-diff").textContent).toContain(
+      "0 added, 0 removed, 1 changed.",
+    );
+  });
+
+  it("warns when the version number did not increase and shows no diff without a predecessor", () => {
+    const previous = createTestAdventureJson();
+    const sameVersionChanged = createTestAdventureJson();
+    sameVersionChanged.scenes = [
+      {
+        ...sameVersionChanged.scenes[0],
+        summary: "Arrival at the jetty, rewritten.",
+      },
+    ];
+    const { unmount } = render(AdventureImportReview, {
+      props: {
+        draft: sameVersionChanged,
+        previousPackage: previous,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+    expect(
+      screen.getByTestId("adventure-import-diff-version-warning").textContent,
+    ).toContain("did not increase");
+    unmount();
+
+    render(AdventureImportReview, {
+      props: {
+        draft: createTestAdventureJson(),
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+    expect(screen.queryByTestId("adventure-import-diff")).toBeNull();
   });
 
   it("displays sourceRef page citations (p. N / pp. N–M) on entities", () => {

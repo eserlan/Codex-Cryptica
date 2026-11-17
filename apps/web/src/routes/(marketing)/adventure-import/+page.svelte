@@ -6,6 +6,7 @@
   import {
     CANONICAL_CONVERSION_PROMPT,
     COLLECTION_RULES,
+    CORRESPONDENCE_EXTENSION_DOC,
     EPISTEMIC_STATUSES,
     TOP_LEVEL_RULES,
     TROUBLESHOOTING_ERRORS,
@@ -204,6 +205,23 @@
 
       <pre
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CANONICAL_CONVERSION_PROMPT}</pre>
+
+      <section class="space-y-3" aria-labelledby="correspondence-heading">
+        <h2
+          id="correspondence-heading"
+          class="font-header text-xl font-bold text-theme-text"
+        >
+          Correspondence for renamed content
+        </h2>
+        <p class="text-sm text-theme-text/90 leading-relaxed">
+          When a new version changes an entity ID, add the supplied
+          correspondence to its <code class="font-mono">extensions</code> field so
+          the import review can show which earlier entity it replaces. Split and merge
+          mappings remain flagged for your review.
+        </p>
+        <pre
+          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CORRESPONDENCE_EXTENSION_DOC}</pre>
+      </section>
 
       <div
         class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-theme-text/90"

@@ -53,6 +53,40 @@ Strict output rules:
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.`;
 
+export const CORRESPONDENCE_EXTENSION_KEY =
+  "codex-cryptica.adventure-correspondence";
+
+export const CORRESPONDENCE_EXTENSION_DOC = `Supplied correspondence (optional):
+- When a new version renames, splits, or merges earlier content, carry the evidence in
+  "extensions": { "${CORRESPONDENCE_EXTENSION_KEY}": [ { "previousId": string,
+  "currentId": string, "collection": string } ] }.
+- "collection" must name one of: locations, actors, factions, scenes, encounters,
+  clues, rumours, items, secrets, endings, unresolved.
+- Both IDs must exist in that collection in the previous and new packages.
+- Entries such as { "previousId": "scene-1", "currentId": "scene-1a", "collection": "scenes" }
+  pair old and new entities across a rename.
+- Several current IDs sharing one previous ID describe a split; several previous IDs
+  sharing one current ID describe a merge. Splits and merges are shown grouped and
+  stay flagged for the reviewer; they are never silently submitted.
+- Identity is never inferred from titles, name similarity, or ordering. An entity with
+  a new ID and merely a similar title appears as removed plus added and unresolved.
+- Malformed entries, unknown collections or IDs, and entries conflicting with a
+  same-ID match are ignored for matching and reported as unresolved.`;
+
+export const VERSIONING_BEHAVIOUR_DOC = `Versioning on re-import:
+- Adventure identity is the package "id"; "version" labels that version; exact content
+  identity is the canonical package hash.
+- Importing the identical canonical package again is a deduplicated no-op: Codex Cryptica
+  says it is already imported and writes nothing.
+- Importing changed content with the same "id" opens the review as a new version, diffed
+  against the previous approved version (same "version" with a different hash first, then
+  the highest SemVer). Approving stores it under its own new hash; earlier versions stay
+  byte-identical and every version stays individually startable.
+- A changed package whose "version" is not greater than its predecessor is still accepted
+  as a separate version, with a warning that the version number did not increase.
+- Sessions stay pinned to the exact package hash they started with. Removing a version in
+  use by a session is refused with a plain explanation.`;
+
 export interface GuideFieldRule {
   field: string;
   requirement: string;

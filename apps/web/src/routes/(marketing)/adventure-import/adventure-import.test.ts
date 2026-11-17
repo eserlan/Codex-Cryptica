@@ -1,7 +1,10 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
 import Page from "./+page.svelte";
-import { CANONICAL_CONVERSION_PROMPT } from "./conversion-guide.js";
+import {
+  CANONICAL_CONVERSION_PROMPT,
+  CORRESPONDENCE_EXTENSION_DOC,
+} from "./conversion-guide.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
 
@@ -76,6 +79,23 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(referenceLink.getAttribute("href")).toBe(
       "/schemas/adventure-json/examples/reference-one-shot.v1.json",
     );
+  });
+
+  it("shows the optional correspondence extension format for renamed content", () => {
+    render(Page);
+
+    expect(
+      screen.getByRole("heading", {
+        name: /Correspondence for renamed content/i,
+      }),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/extensions.*codex-cryptica\.adventure-correspondence/s),
+    ).toBeTruthy();
+    expect(
+      screen.getByText(/Splits and merges are shown grouped/),
+    ).toBeTruthy();
+    expect(CORRESPONDENCE_EXTENSION_DOC).toContain('"previousId": string');
   });
 
   it("explains the post-conversion upload and links directly to its import area", () => {
