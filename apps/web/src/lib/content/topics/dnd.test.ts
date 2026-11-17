@@ -97,6 +97,10 @@ describe("D&D topic hub config (#3856)", () => {
       listJobHubLinks(DND_TOPIC_CONFIG).length,
     );
     const crumbs = JSON.parse(buildJobHubBreadcrumbJsonLd(DND_TOPIC_CONFIG));
+    expect(crumbs.itemListElement).toHaveLength(4);
+    expect(crumbs.itemListElement[2].item).toBe(
+      "https://codexcryptica.com/topics",
+    );
     expect(crumbs.itemListElement.at(-1).item).toContain("/topics/dnd");
   });
 });

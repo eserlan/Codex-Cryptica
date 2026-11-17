@@ -14,6 +14,9 @@ Usage:
   job advance <job> <stage>      move a job to <stage>, or refuse
   job merge <job>                APPROVE → sync with the base branch, gate, merge the PR
   job feedback <job>             needs-human → build, with your feedback (stdin) as feedback-<k>.md
+  job approve <job>              needs-human → dev-agents: removes the factory labels from the issue and PR
+                                 and hands the PR to the dev agents (review-and-fix loop). The job is
+                                 done only when its PR is merged into the base branch.
   job reject <job>               needs-info or needs-human → rejected, with your reason (stdin) as rejection.md
   job agents <job> <json>        record the routed agent set (called by factory/bin/route)
   job sync <job>                 refresh reviews, gate and cost from the job's files
@@ -52,10 +55,13 @@ TRANSITIONS = {
     "review": {"approve", "build", "needs-human"},
     "approve": {"merging", "needs-human"},
     "merging": {"merged", "needs-human"},
-    "needs-human": {"build", "merged", "rejected"},
+    "needs-human": {"build", "dev-agents", "merged", "rejected"},
+    "dev-agents": {"merged"},
 }
 TERMINAL = {"merged", "rejected"}
 WAITING = {"needs-info", "needs-human"}
+# Handed to the dev agents: the factory is done with it and it holds no slot.
+HANDED_OFF = {"dev-agents"}
 CONCURRENCY = CONFIG["concurrency"]
 
 
@@ -148,8 +154,8 @@ def all_jobs():
 
 
 def running(jobs):
-    """Jobs holding a concurrency slot: every job not finished or waiting."""
-    return [j for j in jobs if j["stage"] not in TERMINAL | WAITING]
+    """Jobs holding a concurrency slot: every job not finished, waiting or handed off."""
+    return [j for j in jobs if j["stage"] not in TERMINAL | WAITING | HANDED_OFF]
 
 
 def require_slot(job_id):
@@ -354,7 +360,7 @@ def infer_agy_agent_and_model(text, job):
         if "Build round " in text:
             agent = "builder"
         elif "Review round " in text:
-            for r in ("code", "ux", "ui", "security"):
+            for r in ("code", "codex", "ux", "ui", "security"):
                 if f"review-{r}.md" in text:
                     agent = f"reviewer-{r}"
                     break
@@ -766,7 +772,7 @@ def sync(job):
         rd = round_dir(job)
         gate = header(rd / "checks.md").get("GATE") if (rd / "checks.md").exists() else None
         job["gate"] = gate
-        if job["agents"] and job["stage"] in {"review", "approve", "merging", "merged", "needs-human"}:
+        if job["agents"] and job["stage"] in {"review", "approve", "merging", "merged", "needs-human", "dev-agents"}:
             job["reviews"] = {}
             for r in reviewers(job):
                 line = first_line(rd / f"review-{r}.md")
@@ -807,6 +813,45 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
+def merged_into_base(job, pr_cache=None, merged_cache=None):
+    """True once the job's merged PR is included in the configured base branch."""
+    if pr_cache is None:
+        pr_cache = {}
+    if merged_cache is None:
+        merged_cache = {}
+    return _merged_chain_into_base(job, set(), pr_cache, merged_cache)
+
+
+def _merged_chain_into_base(job, seen, pr_cache, merged_cache):
+    job_id = job["id"]
+    if job_id in merged_cache:
+        return merged_cache[job_id]
+    if job_id in seen or not job.get("pr"):
+        return False
+    seen.add(job_id)
+    pr_num = job["pr"]
+    if pr_num not in pr_cache:
+        pr_cache[pr_num] = gh_json("pr", "view", str(pr_num), "--json", "state,baseRefName")
+    pr = pr_cache[pr_num]
+    if pr["state"] != "MERGED":
+        result = False
+    elif pr["baseRefName"] == BASE:
+        result = True
+    else:
+        parent_id = job.get("stacked_on")
+        if not parent_id:
+            result = False
+        else:
+            parent_path = job_dir(parent_id) / "job.json"
+            if not parent_path.exists():
+                result = False
+            else:
+                parent = json.loads(parent_path.read_text())
+                result = pr["baseRefName"] == parent["branch"] and _merged_chain_into_base(
+                    parent, seen, pr_cache, merged_cache
+                )
+    merged_cache[job_id] = result
+    return result
 def refresh_pr(job, discover=False):
     """Point the job at its branch's open PR when the recorded one was merged or
     closed while the job kept working (someone merged an earlier round)."""
@@ -839,7 +884,7 @@ def next_round(job):
     job["reviews"] = {}
 
 
-def advance(job, stage):
+def advance(job, stage, pr_cache=None, merged_cache=None):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
     if stage != "merged" and old not in TERMINAL:
@@ -960,9 +1005,24 @@ def advance(job, stage):
     elif old == "merging" and stage == "merged":
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
 
+    elif old == "dev-agents":
+        require(job["pr"] and merged_into_base(job, pr_cache=pr_cache, merged_cache=merged_cache),
+                f"PR #{job['pr']} isn't merged into {BASE}")
+
     elif old == "needs-human":
         if stage == "merged":
             require(job["pr"] and pr_state(job) == "MERGED", "the PR isn't merged")
+        elif stage == "dev-agents":
+            require(job["pr"], "the job needs an open PR to hand to the dev agents")
+            pr = gh_json("pr", "view", str(job["pr"]), "--json", "state,baseRefName")
+            require(pr["state"] == "OPEN", "the job needs an open PR to hand to the dev agents")
+            require(pr["baseRefName"] == BASE,
+                    f"PR #{job['pr']} must target {BASE} before it can be handed to the dev agents; "
+                    "wait until its parent merges and GitHub retargets the PR")
+            label("pr", job["pr"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
+            comment("pr", job["pr"], "### Factory: handed to the dev agents\n\n"
+                    f"A person approved this PR. The factory labels are removed, and the job is done once "
+                    f"the PR is merged into `{BASE}`.")
         else:
             feedback = sorted(d.glob("feedback-*.md"))
             require(feedback and feedback[-1].stat().st_mtime > (d / "decision.md").stat().st_mtime,
@@ -992,7 +1052,7 @@ def advance(job, stage):
         run(["git", "branch", "-D", job["branch"]], check=False)
 
     job["stage"] = stage
-    job["ended"] = now() if stage in TERMINAL | WAITING else None
+    job["ended"] = now() if stage in TERMINAL | WAITING | HANDED_OFF else None
     return job
 
 
@@ -1106,9 +1166,14 @@ def cmd_queue():
     jobs = {j["issue"]: j for j in all_jobs()}
     other_jobs = other_worktree_jobs()
     # A needs-human job is done once its PR is merged on GitHub, which also closes the issue.
+    # A dev-agents job is done once its PR is merged into the base branch.
+    pr_cache = {}
+    merged_cache = {}
     for j in jobs.values():
         if j["stage"] == "needs-human" and j["pr"] and pr_state(j) == "MERGED":
             save(advance(sync(j), "merged"))
+        elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j, pr_cache=pr_cache, merged_cache=merged_cache):
+            save(advance(sync(j), "merged", pr_cache=pr_cache, merged_cache=merged_cache))
     issues = gh_json("issue", "list", "--label", QUEUE_LABEL, "--state", "open",
                      "--limit", "200", "--json", "number,title")
     open_numbers = {i["number"] for i in issues}
@@ -1129,6 +1194,8 @@ def cmd_queue():
         elif j["stage"] == "needs-human":
             other_rows.append(("wait", n, j["id"], j["stage"], f"merge PR #{j['pr']}, or give feedback"
                                if j["pr"] else "give feedback"))
+        elif j["stage"] == "dev-agents":
+            other_rows.append(("wait", n, j["id"], j["stage"], f"dev agents: PR #{j['pr']} waiting to merge into {BASE}"))
         elif j["stage"] == "rejected":
             other_rows.append(("skip", n, j["id"], j["stage"], f"rejected; delete factory/jobs/{j['id']} to retry"))
         elif j["stage"] == "merged":
@@ -1136,7 +1203,11 @@ def cmd_queue():
         else:
             running_rows.append(("resume", n, j["id"], j["stage"], f"round {j['round']}"))
     for n, j in sorted(jobs.items()):
-        if n not in open_numbers and j["stage"] not in TERMINAL | WAITING:
+        if n in open_numbers or j["stage"] in TERMINAL | WAITING:
+            continue
+        if j["stage"] in HANDED_OFF:
+            other_rows.append(("wait", n, j["id"], j["stage"], f"dev agents: PR #{j['pr']} waiting to merge into {BASE}"))
+        else:
             other_rows.append(("skip", n, j["id"], j["stage"], f"issue is closed or no longer labeled {QUEUE_LABEL}"))
     # Jobs already in a running stage hold a slot whether or not an agent is on them.
     slots = CONCURRENCY - len(running(jobs.values()))
@@ -1199,6 +1270,14 @@ def cmd_feedback(job, text):
     (d / f"feedback-{k}.md").write_text(f"# Feedback {k}\n\nFrom @{operator()} after the job escalated.\n\n{text.strip()}\n")
     save(advance(sync(job), "build"))
     print(f"{job['id']}: feedback-{k}.md, round {job['round']}")
+
+
+def cmd_approve(job):
+    if job["stage"] != "needs-human":
+        die(f"{job['id']} is in {job['stage']}, not needs-human")
+    save(advance(sync(job), "dev-agents"))
+    label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
+    print(f"{job['id']}: dev-agents (PR #{job['pr']}); done when it merges into {BASE}")
 
 
 def cmd_reject(job, text):
@@ -1327,11 +1406,15 @@ def main(argv):
         elif cmd == "advance" and len(args) == 2:
             job = advance(sync(resolve(args[0])), args[1])
             save(sync(job))
+            if args[1] == "dev-agents":
+                label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             print(f"{job['id']}: {job['stage']} (round {job['round']})")
         elif cmd == "merge" and len(args) == 1:
             cmd_merge(resolve(args[0]))
         elif cmd == "feedback" and len(args) == 1:
             cmd_feedback(resolve(args[0]), sys.stdin.read())
+        elif cmd == "approve" and len(args) == 1:
+            cmd_approve(resolve(args[0]))
         elif cmd == "reject" and len(args) == 1:
             cmd_reject(resolve(args[0]), sys.stdin.read())
         elif cmd == "agents" and len(args) == 2:

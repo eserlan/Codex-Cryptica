@@ -4,6 +4,7 @@ import {
   REDDIT_URL,
   PATREON_URL,
 } from "#lib/config/index.js";
+import { listLiveTopics } from "#lib/content/topics/directory.js";
 
 export type ExploreLink = {
   href: string;
@@ -100,47 +101,19 @@ export const EXPLORE_SECTIONS: ExploreSection[] = [
     description:
       "Guides, worked examples, and tools for the campaign you’re running.",
     links: [
+      ...listLiveTopics().map(
+        ({ href, title, summary, icon }): ExploreLink => ({
+          href,
+          label: title,
+          summary,
+          icon,
+        }),
+      ),
       {
-        href: "/topics/heists",
-        label: "Heists",
-        summary:
-          "Frameworks, prize design checklists, worked genre examples, and tools for running tabletop heists.",
-        icon: "icon-[lucide--lock]",
-      },
-      {
-        href: "/topics/puzzles",
-        label: "Puzzles",
-        summary:
-          "Stall-proof design, hint ladders, worked examples with alternate solutions, and a puzzle generator.",
-        icon: "icon-[lucide--puzzle]",
-      },
-      {
-        href: "/topics/pirates",
-        label: "Pirates & High Seas",
-        summary:
-          "Guides to pirate systems, exploration, sea travel, ship combat, ports, rivals, and tools for building the campaign.",
-        icon: "icon-[lucide--ship]",
-      },
-      {
-        href: "/topics/solo-rpg",
-        label: "Solo RPGs",
-        summary:
-          "How to play alone: oracles, keeping play from feeling random, campaign logs, and the generators that feed the loop.",
-        icon: "icon-[lucide--user]",
-      },
-      {
-        href: "/topics/dnd",
-        label: "Running D&D",
-        summary:
-          "Start a campaign, prep the next session, run the table and keep track, with answers and tools for each job.",
-        icon: "icon-[lucide--swords]",
-      },
-      {
-        href: "/topics/dnd-beginners",
-        label: "D&D for Beginners",
-        summary:
-          "The play loop, character-sheet orientation, dice mechanics, and combat turns for new players.",
-        icon: "icon-[lucide--book-open]",
+        href: "/topics",
+        label: "All topics",
+        summary: "See every topic hub in one directory.",
+        icon: "icon-[lucide--list]",
       },
     ],
   },
