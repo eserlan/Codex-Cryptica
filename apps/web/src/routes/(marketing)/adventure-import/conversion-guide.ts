@@ -46,13 +46,12 @@ export const PROMPT_EXAMPLE_OUTPUT = {
   encounters: [
     {
       id: "enc-stuck-door",
-      title: "The Jammed Door",
+      title: "The Barred Door",
       description: "The tower door is barred from the inside.",
       alternativeSolutions: [
         {
           method: "Talk",
           description: "Convince the watchman inside to lift the bar.",
-          socialBypassOfCombat: true,
         },
       ],
       locationId: "loc-tower",

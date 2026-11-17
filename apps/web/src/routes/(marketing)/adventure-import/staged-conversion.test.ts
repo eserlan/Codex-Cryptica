@@ -269,6 +269,12 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
   it("section prompt keeps ids stable, forbids bridges and requires a completion record", () => {
     expect(STAGED_CHUNK_PROMPT).toContain("exactly the ids from the inventory");
     expect(STAGED_CHUNK_PROMPT).toContain(
+      'top-level "extensions" when present',
+    );
+    expect(STAGED_CHUNK_PROMPT).toContain(
+      "full mapping unchanged in every chunk",
+    );
+    expect(STAGED_CHUNK_PROMPT).toContain(
       "Never invent an entry that belongs to another section",
     );
     expect(STAGED_CHUNK_PROMPT).toContain("Never invent anything to connect");
