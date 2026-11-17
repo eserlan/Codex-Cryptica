@@ -245,6 +245,50 @@ describe("retrieveAdventureJsonContext", () => {
     expect(r.truncated).toBe(true);
   });
 
+  it("keeps the focus scene when optional source metadata exceeds the budget", () => {
+    const pkg = base({
+      scenes: [
+        scene("s1", {
+          body: "A short usable scene body.",
+          sourceRef: { chapter: "Chapter " + "x".repeat(5_000) },
+        }),
+      ],
+    });
+
+    const r = retrieveAdventureJsonContext(pkg, {});
+
+    expect(r.includedIds[0]).toBe("s1");
+    expect(r.playerSafe[0]!.text).toContain("A short usable scene body.");
+    expect(r.playerSafe[0]!.sourceRef).toBeUndefined();
+    expect(size(r)).toBeLessThanOrEqual(MAX_ADVENTURE_RETRIEVAL_CHARS);
+    expect(r.truncated).toBe(true);
+  });
+
+  it("stops reading nested scene branches when the output budget is full", () => {
+    let branchReads = 0;
+    const branches = new Proxy(
+      Array.from({ length: 20_000 }, (_, i) => ({
+        targetSceneId: `scene-${i}`,
+        description: `branch description ${i}`,
+      })),
+      {
+        get(target, property, receiver) {
+          if (typeof property === "string" && /^\d+$/.test(property)) {
+            branchReads++;
+          }
+          return Reflect.get(target, property, receiver);
+        },
+      },
+    );
+    const pkg = base({ scenes: [scene("s1", { branches })] });
+
+    const r = retrieveAdventureJsonContext(pkg, {});
+
+    expect(r.includedIds[0]).toBe("s1");
+    expect(size(r)).toBeLessThanOrEqual(MAX_ADVENTURE_RETRIEVAL_CHARS);
+    expect(branchReads).toBeLessThan(20_000);
+  });
+
   it("bounds an oversized source quote and keeps the focus scene", () => {
     const quote = "\u0001".repeat(5_000_000);
     const pkg = base({

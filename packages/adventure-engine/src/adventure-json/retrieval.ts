@@ -48,7 +48,7 @@ export interface AdventureJsonRetrievalResult {
   invalidBudget: boolean;
 }
 
-type Line = [label: string, value: string | string[] | undefined];
+type Line = [label: string, value: string | Iterable<string> | undefined];
 
 /**
  * Joins labelled lines, copying at most `cap + 1` characters of source text.
@@ -56,12 +56,12 @@ type Line = [label: string, value: string | string[] | undefined];
  * does not fit and to trim it, so oversized package fields (an unbounded scene
  * `body`, say) are never copied or serialised in full.
  */
-function buildText(lines: Line[], cap: number): string {
+function buildText(lines: Iterable<Line>, cap: number): string {
   const out = new BoundedText(cap + 1);
   for (const [label, value] of lines) {
     if (out.full) break;
     const parts = lineParts(value);
-    if (parts.length > 0) appendLine(out, label, parts);
+    appendLine(out, label, parts);
   }
   return out.text;
 }
@@ -80,17 +80,28 @@ class BoundedText {
   }
 }
 
-function lineParts(value: Line[1]): string[] {
+function lineParts(value: Line[1]): Iterable<string> {
   if (value === undefined) return [];
-  return Array.isArray(value) ? value : [value];
+  return typeof value === "string" ? [value] : value;
 }
 
-function appendLine(out: BoundedText, label: string, parts: string[]): void {
+function appendLine(
+  out: BoundedText,
+  label: string,
+  parts: Iterable<string>,
+): void {
+  const iterator = parts[Symbol.iterator]();
+  const firstPart = iterator.next();
+  if (firstPart.done) return;
   if (out.text.length > 0) out.append("\n");
   out.append(`${label}: `);
-  for (let i = 0; i < parts.length && !out.full; i++) {
-    if (i > 0) out.append("; ");
-    out.append(parts[i]!);
+  out.append(firstPart.value);
+  for (;;) {
+    const next = iterator.next();
+    if (next.done) break;
+    if (out.full) break;
+    out.append("; ");
+    out.append(next.value);
   }
 }
 
@@ -102,7 +113,7 @@ function recordExcerpt(
     epistemicStatus: EpistemicStatus;
     sourceRef?: SourceReference;
   },
-  lines: Line[],
+  lines: Iterable<Line>,
   cap: number,
 ): AdventureJsonExcerpt {
   // `textQuote` has no schema-level length limit. Keep it bounded before it
@@ -172,7 +183,16 @@ function trimExcerpt(
       base = withoutSourceRef;
     }
   }
+  if (
+    serialisedSize([{ ...base, text: "" }]) > max &&
+    base.sourceRef !== undefined
+  ) {
+    const { sourceRef: _sourceRef, ...withoutSourceRef } = base;
+    void _sourceRef;
+    base = withoutSourceRef;
+  }
   const withText = (length: number): AdventureJsonExcerpt => {
+    if (length >= base.text.length) return { ...base, text: base.text };
     if (length <= 0) return { ...base, text: "" };
     let kept = base.text.slice(0, length - 1);
     const last = kept.charCodeAt(kept.length - 1);
@@ -277,27 +297,29 @@ function addScene(sel: Selection): void {
     recordExcerpt(
       "scene",
       scene,
-      [
-        ["Title", scene.title],
-        ["Summary", scene.summary],
-        ["Location", scene.locationId],
-        [
+      (function* (): Iterable<Line> {
+        yield ["Title", scene.title];
+        yield ["Summary", scene.summary];
+        yield ["Location", scene.locationId];
+        yield [
           "Read aloud",
           typeof scene.readAloud === "string"
             ? [scene.readAloud]
             : scene.readAloud,
-        ],
-        ["Body", scene.body],
-        ["Conditions", scene.conditions],
-        ...(scene.branches ?? []).map((b): Line => [
-          "Branch",
-          [
-            b.targetSceneId,
-            b.description,
-            ...(b.condition ? [b.condition] : []),
-          ],
-        ]),
-      ],
+        ];
+        yield ["Body", scene.body];
+        yield ["Conditions", scene.conditions];
+        for (const b of scene.branches ?? []) {
+          yield [
+            "Branch",
+            (function* (): Iterable<string> {
+              yield b.targetSceneId;
+              yield b.description;
+              if (b.condition) yield b.condition;
+            })(),
+          ];
+        }
+      })(),
       sel.maxCharacters,
     ),
     true,
@@ -361,20 +383,22 @@ function addLocation(sel: Selection, location: AdventureJsonLocation): void {
     recordExcerpt(
       "location",
       location,
-      [
-        ["Name", location.name],
-        ["Summary", location.summary],
-        ["Description", location.description],
-        ["Parent location", location.parentLocationId],
-        ...(location.connections ?? []).map((c): Line => [
-          "Connection",
-          [
-            c.targetLocationId,
-            ...(c.description ? [c.description] : []),
-            ...(c.travelConditions ?? []),
-          ],
-        ]),
-      ],
+      (function* (): Iterable<Line> {
+        yield ["Name", location.name];
+        yield ["Summary", location.summary];
+        yield ["Description", location.description];
+        yield ["Parent location", location.parentLocationId];
+        for (const c of location.connections ?? []) {
+          yield [
+            "Connection",
+            (function* (): Iterable<string> {
+              yield c.targetLocationId;
+              if (c.description) yield c.description;
+              yield* c.travelConditions ?? [];
+            })(),
+          ];
+        }
+      })(),
       sel.maxCharacters,
     ),
     true,
@@ -396,18 +420,20 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
       recordExcerpt(
         "encounter",
         e,
-        [
-          ["Title", e.title],
-          ["Scene", e.sceneId],
-          ["Location", e.locationId],
-          ["Description", e.description],
-          ["Conditions", e.conditions],
-          ["Actors", e.actorIds],
-          ...e.alternativeSolutions.map((s): Line => [
-            "Alternative solution",
-            [s.method, s.description],
-          ]),
-        ],
+        (function* (): Iterable<Line> {
+          yield ["Title", e.title];
+          yield ["Scene", e.sceneId];
+          yield ["Location", e.locationId];
+          yield ["Description", e.description];
+          yield ["Conditions", e.conditions];
+          yield ["Actors", e.actorIds];
+          for (const solution of e.alternativeSolutions) {
+            yield [
+              "Alternative solution",
+              [solution.method, solution.description],
+            ];
+          }
+        })(),
         sel.maxCharacters,
       ),
       true,
