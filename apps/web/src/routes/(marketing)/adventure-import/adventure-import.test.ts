@@ -347,6 +347,26 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("Three different problems");
     });
 
+    it("discloses hosted processing and gives copy buttons a visible boundary", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const text = section.textContent?.replace(/\\s+/g, " ") ?? "";
+
+      expect(text).toContain("Hosted assistants may");
+      expect(text).toContain("process your source on their servers");
+      expect(text).toContain("local models can process it on your");
+      expect(text).toContain("preserving an existing file if a check fails");
+
+      const stageButtons = [...section.querySelectorAll("button")];
+      expect(stageButtons).toHaveLength(4);
+      for (const button of stageButtons) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+      for (const button of screen.getAllByRole("button", { name: /Copy guide link/i })) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+    });
+
     it("copies the right text per stage and the assemble script", async () => {
       copyMock.mockResolvedValue(true);
       render(Page);
