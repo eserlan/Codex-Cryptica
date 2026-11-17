@@ -1,0 +1,36 @@
+name: Adventure Import Link Check
+
+# Smoke check for the public Adventure JSON guide, schema, examples and
+# import CTA (#4893). Run it against staging after a deploy, and against
+# production with strict mode at release time.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base:
+        description: "Origin to check"
+        required: false
+        default: "https://staging.codexcryptica.com"
+      strict_production:
+        description: "Fail when the guide's absolute production URLs do not resolve (release time)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+      - name: Check links
+        env:
+          BASE: ${{ inputs.base }}
+          STRICT: ${{ inputs.strict_production }}
+        run: |
+          flags=""
+          if [ "$STRICT" = "true" ]; then flags="--strict-production"; fi
+          bun scripts/adventure-import-link-check.mjs --base="$BASE" $flags
