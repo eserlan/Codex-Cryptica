@@ -3,9 +3,10 @@
 
 Usage: route <job-id>
 
-Reads `risk` and `surfaces` from intake.md (through job.json), looks them up in
-config.json's `routing` and `surface_reviewers` tables, and records the result
-in job.json with `job agents`. Prints the agent set.
+Reads `risk` and `surfaces` from intake.md (through job.json), combines
+config.json's `routing` and `surface_reviewers` tables with the risk-based
+reviewer tiers in reviewer-routing.json, and records the result in job.json
+with `job agents`. Prints the agent set.
 """
 
 import json
@@ -15,6 +16,7 @@ from pathlib import Path
 
 FACTORY = Path(__file__).resolve().parents[1]
 CONFIG = json.loads((FACTORY / "config.json").read_text())
+REVIEWER_ROUTING = json.loads((FACTORY / "reviewer-routing.json").read_text())
 
 
 def die(msg):
@@ -35,6 +37,7 @@ def main(argv):
     risk = CONFIG["routing"].get(intake["risk"]) or die(
         f"risk {intake['risk']!r} isn't in config.json routing ({', '.join(CONFIG['routing'])})")
     reviewers = dict(risk)
+    reviewers.update(REVIEWER_ROUTING["reviewers_by_risk"][intake["risk"]])
     for surface in intake["surfaces"]:
         extra = CONFIG["surface_reviewers"].get(surface)
         if extra is None:

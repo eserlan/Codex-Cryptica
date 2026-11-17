@@ -25,10 +25,10 @@ The initial routing is:
 | Builder | low | `gpt-6-luna` | medium |
 | Builder | medium | `gpt-6-luna` | max |
 | Builder | high | `gpt-6.1-sol` | high |
-| Code, UX and UI reviewers | low | `gpt-6-luna` | medium |
-| Code, UX and UI reviewers | medium | `gpt-6-luna` | max |
+| Code, codex, UX and UI reviewers | low | `gpt-6-luna` | medium |
+| Code, codex, UX and UI reviewers | medium | `gpt-6-luna` | max |
 | Security reviewer | low or medium | `gpt-6-luna` | medium or max by risk |
-| Code, UX, UI and security reviewers | high | `gpt-6.1-sol` | high |
+| Code, codex, UX, UI and security reviewers | high | `gpt-6.1-sol` | high |
 
 The runner uses the shared `job`, `route` and `gate` scripts. It runs one job
 at a time, with up to three independent reviewers, then creates a ready PR
