@@ -350,7 +350,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     it("discloses hosted processing and gives copy buttons a visible boundary", () => {
       const { container } = render(Page);
       const section = container.querySelector("#long-adventures")!;
-      const text = section.textContent?.replace(/\\s+/g, " ") ?? "";
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
 
       expect(text).toContain("Hosted assistants may");
       expect(text).toContain("process your source on their servers");
