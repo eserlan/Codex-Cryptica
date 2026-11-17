@@ -360,7 +360,7 @@ def infer_agy_agent_and_model(text, job):
         if "Build round " in text:
             agent = "builder"
         elif "Review round " in text:
-            for r in ("code", "ux", "ui", "security"):
+            for r in ("code", "codex", "ux", "ui", "security"):
                 if f"review-{r}.md" in text:
                     agent = f"reviewer-{r}"
                     break
@@ -813,12 +813,45 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
-def merged_into_base(job):
-    """True once the job's PR is merged into the base branch (not a parent job's branch)."""
-    pr = gh_json("pr", "view", str(job["pr"]), "--json", "state,baseRefName")
-    return pr["state"] == "MERGED" and pr["baseRefName"] == BASE
+def merged_into_base(job, pr_cache=None, merged_cache=None):
+    """True once the job's merged PR is included in the configured base branch."""
+    if pr_cache is None:
+        pr_cache = {}
+    if merged_cache is None:
+        merged_cache = {}
+    return _merged_chain_into_base(job, set(), pr_cache, merged_cache)
 
 
+def _merged_chain_into_base(job, seen, pr_cache, merged_cache):
+    job_id = job["id"]
+    if job_id in merged_cache:
+        return merged_cache[job_id]
+    if job_id in seen or not job.get("pr"):
+        return False
+    seen.add(job_id)
+    pr_num = job["pr"]
+    if pr_num not in pr_cache:
+        pr_cache[pr_num] = gh_json("pr", "view", str(pr_num), "--json", "state,baseRefName")
+    pr = pr_cache[pr_num]
+    if pr["state"] != "MERGED":
+        result = False
+    elif pr["baseRefName"] == BASE:
+        result = True
+    else:
+        parent_id = job.get("stacked_on")
+        if not parent_id:
+            result = False
+        else:
+            parent_path = job_dir(parent_id) / "job.json"
+            if not parent_path.exists():
+                result = False
+            else:
+                parent = json.loads(parent_path.read_text())
+                result = pr["baseRefName"] == parent["branch"] and _merged_chain_into_base(
+                    parent, seen, pr_cache, merged_cache
+                )
+    merged_cache[job_id] = result
+    return result
 def refresh_pr(job, discover=False):
     """Point the job at its branch's open PR when the recorded one was merged or
     closed while the job kept working (someone merged an earlier round)."""
@@ -851,7 +884,7 @@ def next_round(job):
     job["reviews"] = {}
 
 
-def advance(job, stage):
+def advance(job, stage, pr_cache=None, merged_cache=None):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
     if stage != "merged" and old not in TERMINAL:
@@ -973,7 +1006,8 @@ def advance(job, stage):
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
 
     elif old == "dev-agents":
-        require(job["pr"] and merged_into_base(job), f"PR #{job['pr']} isn't merged into {BASE}")
+        require(job["pr"] and merged_into_base(job, pr_cache=pr_cache, merged_cache=merged_cache),
+                f"PR #{job['pr']} isn't merged into {BASE}")
 
     elif old == "needs-human":
         if stage == "merged":
@@ -985,7 +1019,6 @@ def advance(job, stage):
             require(pr["baseRefName"] == BASE,
                     f"PR #{job['pr']} must target {BASE} before it can be handed to the dev agents; "
                     "wait until its parent merges and GitHub retargets the PR")
-            label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             label("pr", job["pr"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             comment("pr", job["pr"], "### Factory: handed to the dev agents\n\n"
                     f"A person approved this PR. The factory labels are removed, and the job is done once "
@@ -1134,11 +1167,13 @@ def cmd_queue():
     other_jobs = other_worktree_jobs()
     # A needs-human job is done once its PR is merged on GitHub, which also closes the issue.
     # A dev-agents job is done once its PR is merged into the base branch.
+    pr_cache = {}
+    merged_cache = {}
     for j in jobs.values():
         if j["stage"] == "needs-human" and j["pr"] and pr_state(j) == "MERGED":
             save(advance(sync(j), "merged"))
-        elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j):
-            save(advance(sync(j), "merged"))
+        elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j, pr_cache=pr_cache, merged_cache=merged_cache):
+            save(advance(sync(j), "merged", pr_cache=pr_cache, merged_cache=merged_cache))
     issues = gh_json("issue", "list", "--label", QUEUE_LABEL, "--state", "open",
                      "--limit", "200", "--json", "number,title")
     open_numbers = {i["number"] for i in issues}
@@ -1241,6 +1276,7 @@ def cmd_approve(job):
     if job["stage"] != "needs-human":
         die(f"{job['id']} is in {job['stage']}, not needs-human")
     save(advance(sync(job), "dev-agents"))
+    label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
     print(f"{job['id']}: dev-agents (PR #{job['pr']}); done when it merges into {BASE}")
 
 
@@ -1370,6 +1406,8 @@ def main(argv):
         elif cmd == "advance" and len(args) == 2:
             job = advance(sync(resolve(args[0])), args[1])
             save(sync(job))
+            if args[1] == "dev-agents":
+                label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             print(f"{job['id']}: {job['stage']} (round {job['round']})")
         elif cmd == "merge" and len(args) == 1:
             cmd_merge(resolve(args[0]))
