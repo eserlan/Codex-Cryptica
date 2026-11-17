@@ -48,7 +48,7 @@ export function buildTopicJsonLd(config: TopicHubConfig): string {
 }
 
 /**
- * `BreadcrumbList` structured data for a topic hub: Home > Explore > hub.
+ * `BreadcrumbList` structured data for a topic hub: Home > Explore > Topics > hub.
  */
 export function buildTopicBreadcrumbJsonLd(config: TopicHubConfig): string {
   return safeJsonLd({
@@ -70,6 +70,12 @@ export function buildTopicBreadcrumbJsonLd(config: TopicHubConfig): string {
       {
         "@type": "ListItem",
         position: 3,
+        name: "Topics",
+        item: buildAbsoluteUrl("/topics"),
+      },
+      {
+        "@type": "ListItem",
+        position: 4,
         name: config.structuredData.breadcrumbLabel,
         item: buildAbsoluteUrl(config.canonicalPath),
       },

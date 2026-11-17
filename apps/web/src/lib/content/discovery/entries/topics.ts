@@ -163,4 +163,24 @@ export const topicEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "topics-index",
+    pageKind: "index",
+    canonicalPath: "/topics",
+    primaryIntent: "tabletop rpg topic hubs directory",
+    intentAliases: ["rpg topic hubs", "ttrpg campaign topics list"],
+    userJob: "navigate",
+    uniqueValue:
+      "Lists every live topic hub (heists, puzzles, pirates, solo play, D&D) in one crawlable directory so a reader can choose a campaign theme and reach its guides, examples and generators. /explore is the site-wide portal to every section; this page covers only topic hubs.",
+    relatedIntents: ["explore-index"],
+    indexable: true,
+    status: "live",
+    acknowledgedOverlap: [
+      {
+        with: "explore-index",
+        reason:
+          "explore-index is the site-wide navigation portal for every section; topics-index lists only topic hubs and is the parent that hub breadcrumbs point to.",
+      },
+    ],
+  },
 ];

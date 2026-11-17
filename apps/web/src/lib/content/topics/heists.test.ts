@@ -143,7 +143,8 @@ describe("heist topic hub JSON-LD (#3118)", () => {
     const data = JSON.parse(buildHeistTopicBreadcrumbJsonLd());
     expect(data["@type"]).toBe("BreadcrumbList");
     const trail = data.itemListElement;
-    expect(trail).toHaveLength(3);
+    expect(trail).toHaveLength(4);
+    expect(trail[2].item).toBe("https://codexcryptica.com/topics");
     expect(trail[trail.length - 1].item).toBe(
       "https://codexcryptica.com/topics/heists",
     );
