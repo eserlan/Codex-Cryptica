@@ -42,6 +42,7 @@ export const STATIC_SITEMAP_ROUTES: SitemapRoute[] = [
     changefreq: "monthly",
     priority: "0.6",
   },
+  { path: "/topics", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/heists", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/puzzles", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/pirates", changefreq: "weekly", priority: "0.8" },
