@@ -18,7 +18,7 @@
  * script never edits `job.json` itself.
  */
 
-const TERMINAL_OR_WAITING = new Set(["merged", "rejected", "needs-info", "needs-human"]);
+const TERMINAL_OR_WAITING = new Set(["merged", "rejected", "needs-info", "needs-human", "dev-agents"]);
 
 // Claude/AGY tier names (config.json `muse_models` + `.claude/agents`
 // frontmatter) mapped to a Muse model and reasoning effort, mirroring the
