@@ -654,6 +654,7 @@
           allow <code class="font-mono">extensions</code>:
         </p>
         <pre
+          tabindex="0"
           class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{WRONG_PLACEMENT}</pre>
       </div>
       <div class="space-y-2 text-sm text-theme-text/90">
@@ -667,6 +668,7 @@
           >.
         </p>
         <pre
+          tabindex="0"
           class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{SPLIT_MERGE_EXAMPLE_DOC}</pre>
       </div>
     </section>

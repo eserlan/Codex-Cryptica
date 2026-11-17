@@ -885,6 +885,15 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toMatch(/never inside an entity|not inside an entity/i);
       expect(text).toContain("WRONG");
       expect(el.textContent).toContain(SPLIT_MERGE_EXAMPLE_DOC);
+      const overflowExamples = Array.from(el.querySelectorAll("pre")).filter(
+        (pre) =>
+          pre.textContent?.includes("WRONG") ||
+          pre.textContent === SPLIT_MERGE_EXAMPLE_DOC,
+      );
+      expect(overflowExamples).toHaveLength(2);
+      expect(
+        overflowExamples.every((pre) => pre.getAttribute("tabindex") === "0"),
+      ).toBe(true);
       expect(text).toMatch(/names, titles,? or order/i);
     });
   });
