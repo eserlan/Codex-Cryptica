@@ -23,7 +23,7 @@
       id: "chunk",
       title: "2. Convert one section at a time",
       intro:
-        "In a chat that already has the canonical conversion prompt above, send this once per section from the inventory, after filling in the bracketed line. Save each file as chunk-01.json, chunk-02.json and so on, and keep each completion record.",
+        "In a chat that already has the canonical conversion prompt above, send this once per section from the inventory, after filling in the bracketed line. Save the JSON-only result as chunk-01.json, chunk-02.json and so on. Request and keep each completion record separately, never in a chunk file.",
       text: STAGED_CHUNK_PROMPT,
       button: "Copy section prompt",
       copier: createCopier(STAGED_CHUNK_PROMPT),
@@ -59,8 +59,10 @@
       cut the result short, work in bounded passes: <strong
         >inventory → convert section by section → check coverage → assemble →
         import</strong
-      >. Every step runs in your own assistant and on your own machine. This
-      page converts nothing and Codex Cryptica never sees your source.
+      >. Conversion runs in the assistant you choose. Hosted assistants may
+      process your source on their servers; local models can process it on your
+      device. This page converts nothing, and Codex Cryptica imports and checks
+      the finished JSON on your device without receiving the original source.
     </p>
     <p class="text-sm md:text-base text-theme-text font-semibold">
       Do not trust an assistant that says it processed the whole upload. Check
@@ -110,7 +112,7 @@
       <button
         type="button"
         onclick={stage.copier.copy}
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-primary/40 bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       >
         <span
           class="{stage.copier.state === 'copied'
@@ -137,11 +139,16 @@
       >, merges entries that are identical, and stops with an error if two
       sections define the same id differently. It never invents a link. If you
       do not use Node, ask a code-capable assistant to run it on your files.
+      Save the script as <code class="font-mono">assemble.js</code> and run
+      <code class="font-mono">node assemble.js chunk-01.json chunk-02.json</code>
+      (adding all your chunk files). It writes
+      <code class="font-mono">adventure.json</code> only when assembly succeeds,
+      preserving an existing file if a check fails.
     </p>
     <button
       type="button"
       onclick={scriptCopier.copy}
-      class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-primary/40 bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
     >
       <span
         class="{scriptCopier.state === 'copied'
