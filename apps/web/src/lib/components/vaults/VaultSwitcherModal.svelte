@@ -403,8 +403,8 @@
                 type="button"
                 class="p-1.5 hover:bg-theme-border rounded text-theme-muted hover:text-theme-primary opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                 onclick={() => startRename(v)}
-                title="Rename"
-                aria-label="Rename"
+                title="Rename {v.name}"
+                aria-label="Rename {v.name}"
                 disabled={isLoading || !!editingId}
               >
                 <span
@@ -418,8 +418,8 @@
                   type="button"
                   class="p-1.5 hover:bg-red-900/20 rounded text-theme-muted hover:text-red-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity"
                   onclick={() => handleDelete(v.id)}
-                  title="Delete"
-                  aria-label="Delete"
+                  title="Delete {v.name}"
+                  aria-label="Delete {v.name}"
                   disabled={isLoading || !!editingId}
                 >
                   <span
