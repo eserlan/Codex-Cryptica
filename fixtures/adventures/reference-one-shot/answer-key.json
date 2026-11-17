@@ -19,11 +19,11 @@
       "sourceId": "ros-scene-4-cellar",
       "title": "Scene 4: The Miller's Cellar"
     },
-    { "sourceId": "ros-cast", "title": "Cast" },
+    { "sourceId": "ros-cast", "title": "Cast", "container": true },
     { "sourceId": "ros-npc-maren", "title": "Maren Holt" },
     { "sourceId": "ros-npc-tobiah", "title": "Tobiah Reed" },
     { "sourceId": "ros-npc-wick", "title": "Wick" },
-    { "sourceId": "ros-ending", "title": "Ending" },
+    { "sourceId": "ros-ending", "title": "Ending", "container": true },
     { "sourceId": "ros-ending-restored", "title": "Ending: The Mill Turns" },
     { "sourceId": "ros-ending-flooded", "title": "Ending: The Water Takes It" }
   ],
