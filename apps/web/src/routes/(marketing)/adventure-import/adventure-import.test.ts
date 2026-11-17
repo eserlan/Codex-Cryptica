@@ -6,6 +6,11 @@ import {
 } from "@codex/adventure-engine";
 import Page from "./+page.svelte";
 import {
+  STAGED_ASSEMBLE_SCRIPT,
+  STAGED_CHUNK_PROMPT,
+  STAGED_INVENTORY_PROMPT,
+} from "./staged-conversion.js";
+import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
   COVERAGE_REPORT_PROMPT,
@@ -270,31 +275,29 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
 
     it("tells models how to handle long sources, sandbox modules and confidence", () => {
-      const { container } = render(Page);
-      const longAdventureUrl = prompt.match(
-        /https:\/\/codexcryptica\.com\/adventure-import#long-adventures/,
-      )?.[0];
-
       expect(prompt).toContain(
         "Never shorten the conversion by dropping or merging entries",
       );
-      expect(longAdventureUrl).toBeTruthy();
-      const longAdventureId = new URL(longAdventureUrl!).hash.slice(1);
+      expect(prompt).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+      const { container } = render(Page);
       const longAdventureSection = container
-        .querySelector(`#${longAdventureId}`)
+        .querySelector("#long-adventures")
         ?.closest("section");
       expect(longAdventureSection).toBeTruthy();
       expect(longAdventureSection?.textContent).toContain(
-        "Make a checklist of every source section in order",
+        "A long PDF can be too much for one reply",
       );
       expect(longAdventureSection?.textContent?.replace(/\s+/g, " ")).toContain(
-        "assemble those results into one Adventure JSON v1 document",
+        "Inventory the source",
       );
       expect(prompt).not.toContain("compress each to a short summary");
       expect(prompt).toContain(
         'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
       );
       expect(prompt).toContain('For a PDF, include "page"');
+      expect(prompt).toContain("not a number printed on the page");
       expect(prompt).toContain("has no authored order");
       expect(prompt).toContain("Do not invent a flow or an ending");
       expect(prompt).toContain(
@@ -309,6 +312,99 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).not.toMatch(
         /\b(ChatGPT|Claude|Gemini|GPT|OpenAI|Anthropic)\b/,
       );
+    });
+  });
+
+  describe("staged conversion section (#4896)", () => {
+    it("is reachable from the quick start and from the one-pass prompt's pointer", () => {
+      const { container } = render(Page);
+
+      expect(container.querySelector("#long-adventures")).toBeTruthy();
+      expect(
+        container.querySelector('a[href="#long-adventures"]'),
+      ).toBeTruthy();
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+    });
+
+    it("explains the stages in order and that nothing is converted here", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const titles = [...section.querySelectorAll("h3")].map((h) =>
+        h.textContent?.trim(),
+      );
+
+      expect(titles.slice(1)).toEqual([
+        "1. Inventory the source",
+        "2. Convert one section at a time",
+        "3. Check coverage against the inventory",
+        "4. Assemble the sections into one file",
+        "5. Import and fix what it reports",
+      ]);
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
+      expect(text).toContain("Do not trust an assistant that says");
+      expect(text).toContain("This page converts nothing");
+      expect(text).toContain("Three different problems");
+    });
+
+    it("discloses hosted processing and gives copy buttons a visible boundary", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
+
+      expect(text).toContain("Hosted assistants may");
+      expect(text).toContain("process your source on their servers");
+      expect(text).toContain("local models can process it on your");
+      expect(text).toContain("preserving an existing file if a check fails");
+
+      const stageButtons = [...section.querySelectorAll("button")];
+      expect(stageButtons).toHaveLength(4);
+      for (const button of stageButtons) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+      for (const button of screen.getAllByRole("button", { name: /Copy guide link/i })) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+    });
+
+    it("copies the right text per stage and the assemble script", async () => {
+      copyMock.mockResolvedValue(true);
+      render(Page);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy inventory prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy section prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy assemble script/i }),
+      );
+
+      expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
+        STAGED_INVENTORY_PROMPT,
+        STAGED_CHUNK_PROMPT,
+        STAGED_ASSEMBLE_SCRIPT,
+      ]);
+    });
+
+    it("reports a failed copy on that button only", async () => {
+      copyMock.mockResolvedValue(false);
+      render(Page);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage prompt/i }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByRole("button", { name: /Copy failed/i }),
+        ).toHaveLength(1);
+      });
+      expect(
+        screen.getByRole("button", { name: /Copy inventory prompt/i }),
+      ).toBeTruthy();
     });
   });
 

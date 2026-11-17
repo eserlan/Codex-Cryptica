@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
+  import { createCopier } from "./copy-feedback.svelte.js";
+  import StagedConversion from "./StagedConversion.svelte";
   import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
@@ -19,80 +19,31 @@
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
 
-  type CopyState = "idle" | "copied" | "error";
-
-  let isDestroyed = false;
-  const timers = new Set<ReturnType<typeof setTimeout>>();
-
-  onDestroy(() => {
-    isDestroyed = true;
-    for (const timer of timers) clearTimeout(timer);
-  });
-
-  /** One copy action with its own feedback state and stale-result guard. */
-  function createCopier(text: string) {
-    let state = $state<CopyState>("idle");
-    let generation = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    async function copy() {
-      const current = ++generation;
-      if (timer) {
-        clearTimeout(timer);
-        timers.delete(timer);
-        timer = undefined;
-      }
-      const ok = await copyTextToClipboard(
-        text,
-        typeof navigator === "undefined" ? undefined : navigator.clipboard,
-      );
-      if (isDestroyed || current !== generation) return;
-
-      state = ok ? "copied" : "error";
-      // ui-check-ignore: tracked in `timers` and cleared in onDestroy
-      timer = setTimeout(() => {
-        if (isDestroyed || current !== generation) return;
-        state = "idle";
-        timers.delete(timer!);
-        timer = undefined;
-      }, 2200);
-      timers.add(timer);
-    }
-
-    return {
-      copy,
-      get state() {
-        return state;
-      },
-    };
-  }
-
   const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
   const linkCopier = createCopier(LINK_HANDOFF_TEXT);
   const coverageCopier = createCopier(COVERAGE_REPORT_PROMPT);
 
   const copyLabel = $derived(
-    promptCopier.state === "copied"
-      ? "Copied prompt"
-      : promptCopier.state === "error"
-        ? "Copy failed — select the prompt below manually"
-        : "Copy conversion prompt",
+    promptCopier.label(
+      "Copy conversion prompt",
+      "Copied prompt",
+      "Copy failed — select the prompt below manually",
+    ),
   );
-
   const linkCopyLabel = $derived(
-    linkCopier.state === "copied"
-      ? "Copied link"
-      : linkCopier.state === "error"
-        ? "Copy failed — copy the page address instead"
-        : "Copy guide link",
+    linkCopier.label(
+      "Copy guide link",
+      "Copied link",
+      "Copy failed — copy the page address instead",
+    ),
   );
 
   const coverageCopyLabel = $derived(
-    coverageCopier.state === "copied"
-      ? "Copied coverage prompt"
-      : coverageCopier.state === "error"
-        ? "Copy failed — select the prompt below manually"
-        : "Copy coverage report prompt",
+    coverageCopier.label(
+      "Copy coverage report prompt",
+      "Copied coverage prompt",
+      "Copy failed — select the prompt below manually",
+    ),
   );
 
   const breadcrumbSchema = safeJsonLd({
@@ -125,7 +76,7 @@
     onclick={copier.copy}
     class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
       ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
-      : 'border border-theme-primary bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
+      : 'border border-theme-text bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
   >
     <span
       class="{copier.state === 'copied'
@@ -265,6 +216,10 @@
           Oracle.
         </li>
       </ol>
+      <p class="text-sm text-theme-text/90">
+        Long PDF that an assistant cannot finish in one go? Use the
+        <a class="underline" href="#long-adventures">staged method</a>.
+      </p>
       <p class="text-sm md:text-base text-theme-text/90">
         Passing the import checks does not mean nothing was left out. See
         <a class="underline" href="#completeness-heading"
@@ -294,46 +249,6 @@
         paste your adventure here. The conversion happens in the assistant you choose,
         and this page never sees your source.
       </p>
-    </section>
-
-    <!-- Long-source recovery -->
-    <section
-      aria-labelledby="long-adventures"
-      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-    >
-      <h2
-        id="long-adventures"
-        class="font-header font-bold text-2xl text-theme-text"
-      >
-        Long adventures: convert in stages
-      </h2>
-      <p class="text-sm md:text-base text-theme-text/90 leading-relaxed">
-        If the assistant cannot read the whole source or return a complete
-        result, do not accept a partial conversion. Work through the source in
-        consecutive, labelled chapters or sections:
-      </p>
-      <ol
-        class="list-decimal space-y-2 pl-5 text-sm md:text-base text-theme-text"
-      >
-        <li>
-          Make a checklist of every source section in order, then send each
-          section separately with the canonical prompt. Keep each section's JSON
-          result.
-        </li>
-        <li>
-          Ask the assistant to assemble those results into one Adventure JSON v1
-          document. Preserve every entry, keep or repair <code class="font-mono"
-            >sourceRef</code
-          >
-          values, make IDs unique, and update cross-references to those IDs.
-        </li>
-        <li>
-          Compare the assembled result with the section checklist and validate
-          the final JSON. If any section or result is missing or unreadable,
-          report the conversion as incomplete instead of filling gaps by
-          guesswork.
-        </li>
-      </ol>
     </section>
 
     <!-- Privacy & Responsibility Notice -->
@@ -569,6 +484,9 @@
         aria-label="Minimal Adventure JSON v1 example"
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
     </section>
+
+    <!-- Long adventures -->
+    <StagedConversion />
 
     <!-- Top-level Contract & Collections -->
     <section aria-labelledby="contract-heading" class="space-y-6">
