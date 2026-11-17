@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Entity, TraitSelection } from "schema";
   import SpeciesPreview from "./SpeciesPreview.svelte";
-  import SpeciesTraitList from "./SpeciesTraitList.svelte";
+  import SpeciesCurrentSelection from "./SpeciesCurrentSelection.svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import {
     isSpeciesDefinition,
@@ -92,46 +92,14 @@
   </span>
 
   {#if current && !picking}
-    <div class="flex items-center justify-between gap-2">
-      {#if sourceAvailable}
-        <button
-          type="button"
-          class="text-sm font-bold text-theme-text hover:underline"
-          onclick={() => (vault.selectedEntityId = current.sourceId)}
-          data-testid="species-source-link"
-        >
-          {current.sourceTitle}
-        </button>
-      {:else}
-        <span class="text-sm font-bold text-theme-text">
-          {current.sourceTitle}
-        </span>
-        <span class="text-xs text-theme-text" data-testid="species-unavailable">
-          Source creature unavailable
-        </span>
-      {/if}
-      {#if !readOnly}
-        <div class="flex gap-2">
-          <button
-            type="button"
-            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text hover:border-theme-primary hover:text-theme-primary"
-            onclick={startPicking}
-            data-testid="species-change"
-          >
-            Change
-          </button>
-          <button
-            type="button"
-            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text hover:border-red-500 hover:text-red-500"
-            onclick={remove}
-            data-testid="species-remove"
-          >
-            Remove
-          </button>
-        </div>
-      {/if}
-    </div>
-    <SpeciesTraitList traits={current.traits} testId="species-traits" />
+    <SpeciesCurrentSelection
+      {current}
+      {sourceAvailable}
+      {readOnly}
+      onOpenSource={() => (vault.selectedEntityId = current.sourceId)}
+      onChange={startPicking}
+      onRemove={remove}
+    />
   {:else if !readOnly}
     {#if !picking}
       <button
