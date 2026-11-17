@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import type { AdventureJsonV1 } from "@codex/adventure-engine";
+import type {
+  AdventureJsonV1,
+  StoredAdventurePackage,
+} from "@codex/adventure-engine";
 import sample from "../../../../../static/schemas/adventure-json/examples/minimal.v1.json";
 import { AdventurePackageLibrary } from "./adventure-package-library.svelte.js";
 import ApprovedAdventurePackages from "./ApprovedAdventurePackages.svelte";
@@ -11,10 +14,15 @@ function setup() {
     getVaultId: () => "vault-1",
     isReady: () => true,
     isGuest: () => false,
-    listPackages: async () => [],
+    listPackages: async (): Promise<StoredAdventurePackage[]> => [],
     listSessions: async () => ({ effectiveActiveId: null, entries: [] }),
     open,
     resumeArchived: open,
+    removeApproved: async (_vaultId, hash) => ({
+      status: "removed",
+      hash,
+      path: hash,
+    }),
   });
   const hash = "a".repeat(64);
   library.packages = [

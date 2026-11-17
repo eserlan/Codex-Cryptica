@@ -79,7 +79,11 @@
       role="status"
       data-testid="adventure-import-duplicate-notice"
     >
-      “{imports.duplicate.package.title}” ({imports.duplicate.package.id} v{imports.duplicate.package.version}) is already approved in this Vault.
+      Already imported: “{imports.duplicate.package.title}” ({imports.duplicate
+        .package.id} v{imports.duplicate.package.version}) · {imports.duplicate.hash.slice(
+        0,
+        12,
+      )}
     </p>
   {/if}
 

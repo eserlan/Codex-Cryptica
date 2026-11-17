@@ -16,6 +16,16 @@ function setup() {
     })),
     open: vi.fn(async () => {}),
     resumeArchived: vi.fn(async () => {}),
+    removeApproved: vi.fn(async (_vaultId, hash, pinnedHashes) =>
+      pinnedHashes.has(hash)
+        ? {
+            status: "refused" as const,
+            hash,
+            path: hash,
+            reason: "pinned",
+          }
+        : { status: "removed" as const, hash, path: hash },
+    ),
   };
   return { env, deps, library: new AdventurePackageLibrary(deps) };
 }

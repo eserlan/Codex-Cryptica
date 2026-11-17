@@ -20,7 +20,7 @@ function setup() {
     saveApproved: vi.fn(async (_id: string, pkg: AdventureJsonV1) => ({
       package: pkg,
     })),
-    listApproved: vi.fn(async () => []),
+    listApproved: vi.fn(async (): Promise<StoredAdventurePackage[]> => []),
     notify: vi.fn(),
     onReview: vi.fn(),
     onCancel: vi.fn(),

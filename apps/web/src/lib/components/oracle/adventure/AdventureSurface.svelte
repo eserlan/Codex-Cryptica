@@ -95,6 +95,8 @@
     open: (id, sessionId) => oracle.adventure.open(id, sessionId),
     resumeArchived: (id, sessionId) =>
       oracle.adventure.resumeArchived(id, sessionId),
+    removeApproved: (id, hash, pinnedHashes) =>
+      adventurePackageRepository.removeApproved(id, hash, pinnedHashes),
   });
   let previousVaultId: string | null = null;
   onDestroy(() => imports.destroy());
