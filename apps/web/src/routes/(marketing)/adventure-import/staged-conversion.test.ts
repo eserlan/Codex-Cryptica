@@ -155,6 +155,52 @@ describe("staged conversion: assembling chunks (#4896)", () => {
     ]);
   });
 
+  it("rejects mismatched premise, source, description and system instead of silently using chunk 1", () => {
+    const changed = {
+      ...chunkTwo,
+      premise: { ...meta.premise, hook: "Different hook." },
+      source: { title: "An unrelated publication" },
+      description: "A new description",
+      system: "other-system",
+    };
+    const { errors } = assemble([chunkOne, changed]);
+
+    expect(errors).toEqual([
+      "chunk 2: description differs from chunk 1",
+      "chunk 2: premise differs from chunk 1",
+      "chunk 2: source differs from chunk 1",
+      "chunk 2: system differs from chunk 1",
+    ]);
+  });
+
+  it("accepts nested metadata with the same values in different object-key order", () => {
+    const reordered = {
+      ...chunkTwo,
+      premise: { hook: meta.premise.hook, background: meta.premise.background },
+    };
+    const { errors } = assemble([chunkOne, reordered]);
+
+    expect(errors).toEqual([]);
+  });
+
+  it("deduplicates semantically identical entries regardless of nested object-key ordering", () => {
+    const sameActor = {
+      ...chunkOne.actors[0],
+      sourceRef: { section: "The Town", page: 3 },
+    };
+    const reorderedActor = Object.fromEntries(
+      Object.entries(sameActor).reverse(),
+    );
+    const { adventure, errors } = assemble([
+      chunkOne,
+      { ...chunkTwo, actors: [reorderedActor] },
+    ]);
+
+    expect(errors).toEqual([]);
+    expect(adventure.actors).toHaveLength(1);
+    expect(adventure.actors[0]).toEqual(chunkOne.actors[0]);
+  });
+
   it("reports chunks that do not belong to the same adventure", () => {
     const { errors } = assemble([
       chunkOne,
@@ -173,6 +219,9 @@ describe("staged conversion: assembling chunks (#4896)", () => {
   it("ships the same function the tests run in the copyable script", () => {
     expect(STAGED_ASSEMBLE_SCRIPT).toContain(STAGED_ASSEMBLE_FUNCTION);
     expect(STAGED_ASSEMBLE_SCRIPT).toContain("process.exit(1)");
+    expect(STAGED_ASSEMBLE_SCRIPT).toContain("fs.renameSync(temporary, output)");
+    expect(STAGED_ASSEMBLE_SCRIPT).toContain('flag: "wx"');
+    expect(STAGED_ASSEMBLE_SCRIPT).not.toContain("> adventure.json");
   });
 });
 
@@ -196,8 +245,10 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
     expect(STAGED_CHUNK_PROMPT).toContain("Never invent anything to connect");
     expect(STAGED_CHUNK_PROMPT).toContain('"sourceRef" with the page number');
     expect(STAGED_CHUNK_PROMPT).toContain("completion record");
+    expect(STAGED_CHUNK_PROMPT).toContain("entire reply the JSON document only");
+    expect(STAGED_CHUNK_PROMPT).toContain("as a separate message");
     expect(STAGED_CHUNK_PROMPT).toContain(
-      "say so instead of presenting it as complete",
+      "say so in the completion record instead of presenting it as complete",
     );
   });
 
