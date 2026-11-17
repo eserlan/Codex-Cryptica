@@ -88,7 +88,7 @@
           text-anchor="end"
           font-size="12"
           font-weight="700"
-          class="fill-theme-primary"
+          class="fill-theme-text"
         >
           Missing convoy
         </text>
@@ -144,7 +144,7 @@
         <span class="font-bold">{name(link.from)} to {name(link.to)}</span>
         ({link.kind === "flow" ? "flow" : "route"}: {link.label}).
         {#if link.flashpoint}
-          <strong class="text-theme-primary">Active flashpoint.</strong>
+          <strong class="font-bold">Active flashpoint.</strong>
         {/if}
         {link.detail}
       </li>
