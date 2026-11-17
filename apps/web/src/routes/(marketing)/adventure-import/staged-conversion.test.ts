@@ -183,6 +183,33 @@ describe("staged conversion: assembling chunks (#4896)", () => {
     expect(errors).toEqual([]);
   });
 
+  it("preserves matching top-level extensions across chunks and rejects mismatched extensions", () => {
+    const ext = {
+      "codex-cryptica.adventure-correspondence": [
+        {
+          previousId: "scene-old",
+          currentId: "scene-town",
+          collection: "scenes",
+        },
+      ],
+    };
+    const { adventure, errors } = assemble([
+      { ...chunkOne, extensions: ext },
+      { ...chunkTwo, extensions: ext },
+    ]);
+
+    expect(errors).toEqual([]);
+    expect(adventure.extensions).toEqual(ext);
+
+    const mismatch = assemble([
+      { ...chunkOne, extensions: ext },
+      { ...chunkTwo, extensions: {} },
+    ]);
+    expect(mismatch.errors).toEqual([
+      "chunk 2: extensions differs from chunk 1",
+    ]);
+  });
+
   it("deduplicates semantically identical entries regardless of nested object-key ordering", () => {
     const sameActor = {
       ...chunkOne.actors[0],
@@ -219,7 +246,9 @@ describe("staged conversion: assembling chunks (#4896)", () => {
   it("ships the same function the tests run in the copyable script", () => {
     expect(STAGED_ASSEMBLE_SCRIPT).toContain(STAGED_ASSEMBLE_FUNCTION);
     expect(STAGED_ASSEMBLE_SCRIPT).toContain("process.exit(1)");
-    expect(STAGED_ASSEMBLE_SCRIPT).toContain("fs.renameSync(temporary, output)");
+    expect(STAGED_ASSEMBLE_SCRIPT).toContain(
+      "fs.renameSync(temporary, output)",
+    );
     expect(STAGED_ASSEMBLE_SCRIPT).toContain('flag: "wx"');
     expect(STAGED_ASSEMBLE_SCRIPT).not.toContain("> adventure.json");
   });
@@ -245,7 +274,9 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
     expect(STAGED_CHUNK_PROMPT).toContain("Never invent anything to connect");
     expect(STAGED_CHUNK_PROMPT).toContain('"sourceRef" with the page number');
     expect(STAGED_CHUNK_PROMPT).toContain("completion record");
-    expect(STAGED_CHUNK_PROMPT).toContain("entire reply the JSON document only");
+    expect(STAGED_CHUNK_PROMPT).toContain(
+      "entire reply the JSON document only",
+    );
     expect(STAGED_CHUNK_PROMPT).toContain("as a separate message");
     expect(STAGED_CHUNK_PROMPT).toContain(
       "say so in the completion record instead of presenting it as complete",

@@ -57,7 +57,7 @@ export const STAGED_ASSEMBLE_FUNCTION = `function stableJson(value) {
 
 function assemble(chunks) {
   const names = ["locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved"];
-  const metadataKeys = ["formatVersion", "id", "title", "version", "description", "premise", "source", "system"];
+  const metadataKeys = ["formatVersion", "id", "title", "version", "description", "premise", "source", "system", "extensions"];
   const first = chunks[0];
   const out = {};
   for (const key of metadataKeys) {

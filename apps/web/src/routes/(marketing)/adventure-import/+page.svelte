@@ -155,6 +155,19 @@
         <code class="font-mono text-theme-text">adventure-json/v1</code>
         file that Codex Cryptica checks and stores on your device.
       </p>
+      <p
+        class="text-xs md:text-sm font-mono text-theme-text/90 max-w-2xl mx-auto rounded-xl border border-theme-primary/30 bg-theme-surface/50 px-4 py-2.5"
+      >
+        <strong>For AI assistants reading this URL:</strong> follow only the
+        <a class="underline" href="#prompt-heading"
+          >Canonical Conversion Prompt</a
+        >
+        (<a class="underline" href="{cleanBase}/adventure-import/prompt.txt"
+          >prompt.txt</a
+        >). The sections below it are human reference documentation — do not use
+        their partial snippets or staged-conversion templates unless the user
+        explicitly asks for a stage.
+      </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
         <a
@@ -369,57 +382,6 @@
 
       <pre
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CANONICAL_CONVERSION_PROMPT}</pre>
-
-      <section class="space-y-3" aria-labelledby="correspondence-heading">
-        <h2
-          id="correspondence-heading"
-          class="font-header text-xl font-bold text-theme-text"
-        >
-          Correspondence for renamed content
-        </h2>
-        <p class="text-sm text-theme-text/90 leading-relaxed">
-          When a new version changes an entity ID, add the supplied
-          correspondence to its <code class="font-mono">extensions</code> field so
-          the import review can show which earlier entity it replaces. Split and merge
-          mappings remain flagged for your review.
-        </p>
-        <pre
-          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CORRESPONDENCE_EXTENSION_DOC}</pre>
-      </section>
-
-      <div
-        class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-theme-text/90"
-      >
-        <div
-          class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
-        >
-          <strong class="text-theme-text block mb-1"
-            >1. Provide this guide</strong
-          >
-          Share
-          <code class="font-mono"
-            >https://codexcryptica.com/adventure-import</code
-          > or paste the prompt above.
-        </div>
-        <div
-          class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
-        >
-          <strong class="text-theme-text block mb-1"
-            >2. Attach your source</strong
-          >
-          Upload or paste the adventure you have access to into ChatGPT, Claude, Gemini,
-          or a local LLM, if the provider's terms and your rights allow it.
-        </div>
-        <div
-          class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
-        >
-          <strong class="text-theme-text block mb-1"
-            >3. Save &amp; validate</strong
-          >
-          Save the raw JSON response as a <code class="font-mono">.json</code>
-          file, then verify it against the v1 schema.
-        </div>
-      </div>
     </section>
 
     <!-- What to do with the converted file -->
@@ -767,6 +729,22 @@
           tabindex="0"
           class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{SPLIT_MERGE_EXAMPLE_DOC}</pre>
       </div>
+      <section class="space-y-3" aria-labelledby="correspondence-heading">
+        <h3
+          id="correspondence-heading"
+          class="font-header text-lg font-bold text-theme-text"
+        >
+          Correspondence for renamed content
+        </h3>
+        <p class="text-sm text-theme-text/90 leading-relaxed">
+          When a new version changes an entity ID, add the supplied
+          correspondence to the top-level <code class="font-mono"
+            >extensions</code
+          > field so the import review can show which earlier entity it replaces.
+        </p>
+        <pre
+          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CORRESPONDENCE_EXTENSION_DOC}</pre>
+      </section>
     </section>
     <!-- Long adventures -->
     <StagedConversion />

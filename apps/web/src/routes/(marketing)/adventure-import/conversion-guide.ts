@@ -126,26 +126,17 @@ ${EXAMPLE_JSON}
 
 Strict output rules:
 1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). The one-sentence failure response above is the sole exception.
-2. Top-level required fields:
-   - "formatVersion": "adventure-json/v1"
-   - "id": slug matching /^[a-zA-Z0-9_-]{3,64}$/
-   - "title": 1-200 characters
-   - "version": strict SemVer (e.g. "1.0.0")
-   - "premise": { "background": string, "hook": string, "theme"?: string[], "tone"?: string }
-   - "source": { "title": string, "authors"?: string[], "publisher"?: string, "publishedDate"?: string, "url"?: string, "license"?: string, "documentHash"?: string (64 lowercase hexadecimal characters) }
-   - Optional "description": string.
-   - Optional "system": { "name": string, "targetParty"?: { "sizeMin"?: number, "sizeMax"?: number, "levelMin"?: number, "levelMax"?: number } }
-   - targetParty sizes are integers >= 1; levels are integers >= 0.
-   - All 11 collection arrays (use [] when empty): "locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved".
+2. Top-level fields:
+   - Required: "formatVersion": "adventure-json/v1", "id" (/^[a-zA-Z0-9_-]{3,64}$/), "title" (1-200 chars), "version" (strict SemVer, e.g. "1.0.0"), "premise": { "background": string, "hook": string, "theme"?: string[], "tone"?: string }, "source": { "title": string, "authors"?: string[], "publisher"?: string, "publishedDate"?: string, "url"?: string, "license"?: string, "documentHash"?: string (64 lowercase hex chars) }.
+   - Optional: "description": string, "system": { "name": string, "targetParty"?: { "sizeMin"?: integer >= 1, "sizeMax"?: integer >= 1, "levelMin"?: integer >= 0, "levelMax"?: integer >= 0 } }.
+   - Required 11 collection arrays ([] when empty): "locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved".
 3. Source certainty (CRITICAL):
-   - Every entity requires "epistemicStatus" to show how strongly the source supports it: "explicit" | "inferred" | "ambiguous" | "unresolved".
-   - Do NOT invent missing facts merely to fill fields.
-   - Use "explicit" only for what the source states. Use "inferred" for anything you worked out yourself, such as a link between scenes, an ending, a role or a summary of unstated consequences.
-   - If the source text is silent, omit optional fields. If it is contradictory or unclear, record an entry in "unresolved" with "epistemicStatus": "ambiguous" or "unresolved".
+   - Every entity requires "epistemicStatus": "explicit" | "inferred" | "ambiguous" | "unresolved".
+   - Do not invent missing facts merely to fill fields. Omit optional fields when the source is silent.
+   - Use "explicit" only for what the source states. Use "inferred" for anything you worked out yourself (links, endings, roles, unstated consequences).
    - For entries in "unresolved", use "ambiguous" when the source is unclear or contradictory, or "unresolved" when it does not answer the question; never use "explicit" or "inferred".
-4. Collection entry contract (notation: ? means optional; string[] means an array of strings):
+4. Collection entry contract (? = optional; non-empty strings required for id, name, title, text, description, code, message):
    - Every collection entry requires "id" (non-empty string) and "epistemicStatus"; "sourceRef" is optional.
-   - Required text fields are strings; names, titles, IDs, clue/rumour/secret text, ending descriptions, and unresolved code/message must be non-empty.
    - locations: required name, summary, visibility; optional description: string, parentLocationId: string, connections: LocationConnection[].
    - actors: required name, summary, visibility; optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string.
    - factions: required name, summary, visibility; optional description: string, goals: string[], dispositionTowardsParty: string.
@@ -163,53 +154,31 @@ Strict output rules:
    - Do not emit properties absent from the strict schema. Common slips: encounters use "description" (not "summary"); clues use "placedLocationId" (not "locationId"); rumours use "truth" as a string (not a boolean such as "isTrue").
    - Record named objects the source gives importance (clue objects, handouts, treasure) in "items", and give each "unresolved" entry a specific "code" that describes its own problem.
 5. Visibility & secrets:
-   - The adventure title and premise hook/background are copied into the session and sent to Oracle opening generation. If both premise fields are empty, description is used as the premise fallback, then title. Keep the title, hook, background, and optional description player-safe and limited to source-supported facts; do not put concealed information in these fields.
-   - Require "visibility": "player-visible" | "gm-only" on locations, actors, factions, scenes, encounters, clues, rumours, items, and secrets only. Do not add visibility to endings or unresolved.
-   - Every entry in "secrets" MUST have "visibility": "gm-only".
-   - "visibility" applies to the WHOLE record, never to individual fields. Treat every field of a "player-visible" record (name, summary, description, role, motivation, disposition, body, readAloud, reveals and the rest) as safe to show players. v1 cannot hide one field of a visible record.
-   - A character, place or item being known to the players does not make its role, hidden motive, allegiance or secret details known. Put only what players can know in the "player-visible" record. Move concealed role, motive or detail into a separate "secrets" entry that lists the record in "relatedEntityIds". Copy source wording; do not invent plot facts to fill the visible record.
-   - When a record is only partly shareable and you cannot split it without losing meaning, mark the whole record "gm-only" and add an "unresolved" entry rather than guessing.
-   - Do not over-hide. Keep on the visible record whatever players can learn in play, such as a harmless goal, a stated role or a public detail. Move something into a secret only when the characters conceal it or revealing it would spoil the adventure, such as a hidden culprit, motive or allegiance.
-   - Do NOT promote NPC testimony, rumours, or in-world handouts to objective truth unless the authored text confirms them.
+   - Keep the title, hook, background, and optional description player-safe and limited to source-supported facts; do not put concealed information in these fields.
+   - Require "visibility": "player-visible" | "gm-only" on locations, actors, factions, scenes, encounters, clues, rumours, items, and secrets only. Do not add visibility to endings or unresolved. Every entry in "secrets" MUST have "visibility": "gm-only".
+   - "visibility" applies to the WHOLE record, never to individual fields. Put only what players can know in a "player-visible" record, and move any concealed role, motive or detail into a separate "secrets" entry that lists the record in "relatedEntityIds". When a record cannot be split cleanly, mark it "gm-only" and add an "unresolved" entry.
+   - Do not over-hide. Keep on the visible record whatever players can learn in play (a stated role, public detail, or harmless goal). Do NOT promote NPC testimony, rumours, or handouts to objective truth unless confirmed by the authored text.
 6. Structural integrity:
-   - Every entity ID across all collections must be unique and non-empty.
-   - All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference.
-   - Location parentLocationId chains must not form cycles.
+   - Every entity ID across all collections must be unique and non-empty. All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference. Location parentLocationId chains must not form cycles.
    - Every non-entry scene with source-supported progression must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops. If progression is unknown, preserve the scene as ambiguous without inventing a branch.
    - If the source has no authored order (a sandbox or location-based module), list scenes in source order, add branches only where the source states them, set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to, and add one "unresolved" entry saying the order is left to the GM. Do not invent a flow or an ending.
 7. Provenance & copyright:
-   - Add "sourceRef" wherever you know the origin of an entry. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry so it can be checked against the source; use the page position in the file, not a number printed on the page. Shape: ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }).
-   - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
-   - Include only authored adventure structure; omit playthrough state or session history.
+   - Add "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) wherever known. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry using the page position in the file, not a number printed on the page.
+   - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim. Omit playthrough state or session history.
 8. Self-audit before returning (do not output this check):
-   - Compare your JSON with the source and confirm that:
-     - every source section and page anchor is accounted for;
-     - named actors and locations are present;
-     - mandatory and optional scenes are present, and optional ones are marked "optional";
-     - clues and alternative routes are kept, including missable clues with their "alternativeSourceId";
-     - encounter resolution options are kept in "alternativeSolutions";
-     - all intended endings are present;
-     - contradictions and unknowns are recorded in "unresolved";
-     - rumours and NPC testimony are not stated as fact;
-     - GM-only motives, secrets and endings are kept out of player-visible records.
-   - Anything missing, cut or uncertain gets an "unresolved" entry naming the source section. Never drop it silently, and never present the package as complete when it is not.
+   - Confirm every source section/page, named actor, location, mandatory/optional scene (marked "optional"), missable clue ("alternativeSourceId"), encounter option ("alternativeSolutions"), and intended ending is accounted for, and anything missing, cut or uncertain has an "unresolved" entry naming the source section.
+9. Revisions and stable IDs:
+   - If an earlier Adventure JSON for the same adventure is supplied, keep its "id" exactly, keep every unchanged entity ID exactly, and raise "version" by SemVer.
+   - Add a top-level "extensions" entry "codex-cryptica.adventure-correspondence" (a list of { "previousId", "currentId", "collection" }) only for renames, splits or merges the source clearly supports. Never infer correspondence from names, titles or order, and never put "extensions" inside an entity. If no earlier package is supplied, use "version" "1.0.0" and omit the correspondence extension.
+10. Game mechanics and maps:
+   - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions". Keep mechanics only as a short source-grounded paraphrase with "sourceRef" inside "description", "body", "conditions" or "alternativeSolutions[].description", and record any unrepresentable mechanic, stat block or map as an "unresolved" entry naming the source section (never invent values for it).
 
 Before you reply with a successful conversion, check each of these:
 - The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
-- All 11 collection arrays are present.
-- Every id is unique, and every cross-reference points to an id that exists.
+- All 11 collection arrays are present, every id is unique, and every cross-reference points to an existing id.
 - Every "secrets" entry is "gm-only", and no "player-visible" record reveals a hidden role, motive or detail.
 - Every entry has "epistemicStatus"; endings and unresolved have no "visibility".
-- Nothing outside the schema was added and nothing was invented.
-9. Revisions and stable IDs:
-   - If an earlier Adventure JSON for the same adventure is supplied, keep its "id" exactly, keep every unchanged entity ID exactly, and raise "version" by SemVer (patch for fixes, minor for added or changed content, major for restructuring).
-   - Add a top-level "extensions" entry "codex-cryptica.adventure-correspondence" (a list of { "previousId", "currentId", "collection" }) only for renames, splits or merges the source clearly supports. Never infer correspondence from names, titles or order. Never put "extensions" inside an entity.
-   - If no earlier package is supplied, treat this as a first conversion: use "version" "1.0.0" and omit the correspondence extension.
-10. Game mechanics and maps:
-   - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions".
-   - Keep a mechanic only as a short paraphrase grounded in the source, with "sourceRef", inside a field v1 already allows ("description", "body", "conditions" or "alternativeSolutions[].description").
-   - Record any mechanic, stat block, map or rules detail that cannot be represented as an "unresolved" entry naming the source section. Never drop it silently, and never invent values for it.
-   - Treat "system" as a name and an optional party size and level range only.`;
+- Nothing outside the schema was added and nothing was invented.`;
 
 /** Follow-up prompt pasted into the same chat after the JSON; its reply stays outside the JSON file. */
 export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the Adventure JSON you just gave me. Reply in plain text, not JSON. Do not change or re-output the JSON.
