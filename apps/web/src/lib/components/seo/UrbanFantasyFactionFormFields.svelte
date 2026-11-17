@@ -21,7 +21,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-micro font-bold uppercase tracking-wider text-theme-muted";
+    "text-xs font-bold uppercase tracking-wider text-theme-muted";
 </script>
 
 <SelectWithCustomOption
@@ -99,7 +99,7 @@
   ></textarea>
   <p
     id="urban-fantasy-campaign-context-help"
-    class="text-micro text-theme-text leading-relaxed"
+    class="text-xs text-theme-text leading-relaxed"
   >
     Add a city, neighbourhood, hidden community, or current conflict to shape
     the faction.
@@ -130,7 +130,7 @@
         ];
       onSurprise?.();
     }}
-    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
+    class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-xs font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-on-primary hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize options and generate an urban fantasy faction"
   >
     <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span>

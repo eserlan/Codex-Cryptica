@@ -205,6 +205,15 @@ const FACTION_NAMES = [
   "Midcity Lantern Council",
 ] as const;
 
+function stripUntrustedMediaMarkup(text: string): string {
+  return text
+    .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+    .replace(
+      /<\/?(?:img|image|picture|video|audio|source|track|iframe|embed|object)\b[^>]*>/gi,
+      "",
+    );
+}
+
 function generateFactionName(rng: Rng): string {
   return pickFrom(FACTION_NAMES, rng);
 }
@@ -230,7 +239,9 @@ export function resolveUrbanFantasyFaction(
     goal: values.goal,
     conflict: values.conflict,
     hook: values.hook,
-    campaignContext: options.campaignContext?.trim() || undefined,
+    campaignContext:
+      stripUntrustedMediaMarkup(options.campaignContext?.trim() ?? "").trim() ||
+      undefined,
     name: generateFactionName(rng),
   };
 }
@@ -254,7 +265,7 @@ export function buildUrbanFantasyFactionPrompt(
 {
   "title": "Faction name",
   "summary": "One concise sentence describing the faction and its pressure on the city.",
-  "content": "Markdown with exactly these section headers: ### Genre Tags, ### What they control, ### What they want, ### Why they are dangerous, ### How to use them at the table.",
+  "content": "Markdown with exactly these section headers: ### Genre labels, ### What they control, ### What they want, ### Why they are dangerous, ### How to use them at the table.",
   "lore": "Markdown with exactly these sections: ### At a Glance with - **📍 Base**:, - **Resource**:, - **Symbol**:, - **Secret**:, - **Immediate Hook**:; ### Notable NPCs with 2-3 - **👤 Name**: one-line description bullets; ### Internal Conflict with one paragraph; ### Rival Faction with - **👥 Name**: one-line rivalry.",
   "labels": ["urban-fantasy", "modern-fantasy", "supernatural-faction", "hidden-world", "faction-generator", "rpg-faction", "imported-draft"]
 }
@@ -263,6 +274,7 @@ QUALITY RULES:
 - Use modern city systems such as transit, housing, records, emergency services, universities, labour, neighbourhood businesses or corporate facilities as real sources of power.
 - Make the selected faction type, mode, scope and moral posture shape the result. Include a playable pressure or choice, not just atmosphere.
 - Support street-level, investigative, diplomatic, criminal and corporate conflicts across different generations. Do not default to vampires, feeding, gothic courts or horror.
+- Give every section a substantive body, all five cheat-sheet fields a value, two or three named NPC bullets, and one named rival faction.
 - Use clear, neutral language. Do not name or imply official affiliation with a third-party game or setting.
 - Every generation should feel distinct. Avoid generic shadow councils, iron orders and gilded ledgers.
 - ${NAME_BAN_PROMPT}
@@ -284,7 +296,7 @@ ${sessionContext}
 }
 
 const REQUIRED_CONTENT_SECTIONS = [
-  "### Genre Tags",
+  "### Genre labels",
   "### What they control",
   "### What they want",
   "### Why they are dangerous",
@@ -306,30 +318,94 @@ const REQUIRED_CHEAT_SHEET_FIELDS = [
   "**Immediate Hook**:",
 ] as const;
 
+function sectionBodies(
+  markdown: string,
+  requiredSections: readonly string[],
+): Map<string, string[]> {
+  const bodies = new Map<string, string[]>();
+  const headings = [...markdown.matchAll(/^### .+$/gm)];
+
+  for (const [index, match] of headings.entries()) {
+    const heading = match[0].trim();
+    if (!requiredSections.includes(heading)) continue;
+    const bodyStart = (match.index ?? 0) + match[0].length;
+    const bodyEnd = headings[index + 1]?.index ?? markdown.length;
+    const existing = bodies.get(heading) ?? [];
+    existing.push(markdown.slice(bodyStart, bodyEnd).trim());
+    bodies.set(heading, existing);
+  }
+
+  return bodies;
+}
+
+function missingSectionBodies(
+  bodies: ReadonlyMap<string, readonly string[]>,
+  requiredSections: readonly string[],
+): string[] {
+  return requiredSections.filter((heading) => {
+    const matches = bodies.get(heading);
+    return matches?.length !== 1 || !matches[0]?.trim();
+  });
+}
+
+function hasCheatSheetValue(
+  section: string | undefined,
+  field: string,
+): boolean {
+  if (!section) return false;
+  const prefix = `- ${field}`;
+  return section.split(/\r?\n/).some((line) => {
+    const trimmed = line.trim();
+    return trimmed.startsWith(prefix) && !!trimmed.slice(prefix.length).trim();
+  });
+}
+
 export function parseUrbanFantasyFactionResponse(
   text: string,
   resolved: ResolvedUrbanFantasyFaction,
 ): PublicGeneratorOutput {
   const data = asRecord(parseFencedJson<unknown>(text));
-  const title = asString(data.title).trim() || resolved.name;
-  const summary = asString(data.summary).trim().replace(/\s+/g, " ");
-  const content = asString(data.content);
-  const lore = asString(data.lore);
+  const title =
+    stripUntrustedMediaMarkup(asString(data.title)).trim() || resolved.name;
+  const summary = stripUntrustedMediaMarkup(asString(data.summary))
+    .trim()
+    .replace(/\s+/g, " ");
+  const content = stripUntrustedMediaMarkup(asString(data.content));
+  const lore = stripUntrustedMediaMarkup(asString(data.lore));
+  const contentBodies = sectionBodies(content, REQUIRED_CONTENT_SECTIONS);
+  const loreBodies = sectionBodies(lore, REQUIRED_LORE_SECTIONS);
+  const glance = loreBodies.get("### At a Glance")?.[0];
+  const notableNpcs = loreBodies.get("### Notable NPCs")?.[0] ?? "";
+  const rivalFaction = loreBodies.get("### Rival Faction")?.[0] ?? "";
   const missing = [
-    ...REQUIRED_CONTENT_SECTIONS.filter(
-      (section) => !content.includes(section),
+    ...missingSectionBodies(contentBodies, REQUIRED_CONTENT_SECTIONS),
+    ...missingSectionBodies(loreBodies, REQUIRED_LORE_SECTIONS),
+    ...REQUIRED_CHEAT_SHEET_FIELDS.filter(
+      (field) => !hasCheatSheetValue(glance, field),
     ),
-    ...REQUIRED_LORE_SECTIONS.filter((section) => !lore.includes(section)),
-    ...REQUIRED_CHEAT_SHEET_FIELDS.filter((field) => !lore.includes(field)),
   ];
-  if (!summary || missing.length > 0) {
+  const npcBullets = notableNpcs
+    .split(/\r?\n/)
+    .filter((line) => /^\s*-\s+\*\*👤\s+[^*]+\*\*:\s*\S/.test(line));
+  if (npcBullets.length < 2 || npcBullets.length > 3) {
+    missing.push("2-3 named Notable NPC bullets");
+  }
+  const hasNamedRival = rivalFaction
+    .split(/\r?\n/)
+    .some((line) => /^\s*-\s+\*\*👥\s+[^*]+\*\*:\s*\S/.test(line));
+  if (!hasNamedRival) missing.push("named Rival Faction");
+  if (!summary) missing.unshift("summary");
+  if (missing.length > 0) {
     throw new Error(
-      `Urban fantasy faction response is missing required content${missing.length ? `: ${missing.join(", ")}` : "."}`,
+      `Urban fantasy faction response is missing required content: ${missing.join(", ")}`,
     );
   }
 
   const modelLabels = Array.isArray(data.labels)
-    ? data.labels.filter((label): label is string => typeof label === "string")
+    ? data.labels
+        .filter((label): label is string => typeof label === "string")
+        .map(stripUntrustedMediaMarkup)
+        .filter((label) => label.trim().length > 0)
     : [];
   return {
     type: "faction",
@@ -373,7 +449,7 @@ export function generateUrbanFantasyFactionLocal(
     ? ` The faction's choices are shaped by ${resolved.campaignContext}.`
     : "";
 
-  const content = `### Genre Tags
+  const content = `### Genre labels
 Urban fantasy · modern fantasy · supernatural faction · hidden-world politics
 
 ### What they control

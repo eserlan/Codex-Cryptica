@@ -81,5 +81,19 @@ describe("UrbanFantasyFactionFormFields", () => {
     expect(
       screen.getByRole("option", { name: "Street-level survivors" }),
     ).toBeTruthy();
+
+    expect(
+      screen.getByText("Urban fantasy mode").classList.contains("text-xs"),
+    ).toBe(true);
+    expect(
+      screen
+        .getByText(/Add a city, neighbourhood/)
+        .classList.contains("text-xs"),
+    ).toBe(true);
+    const surpriseButton = screen.getByRole("button", { name: "Surprise Me" });
+    expect(surpriseButton.classList.contains("text-xs")).toBe(true);
+    expect(
+      surpriseButton.classList.contains("hover:text-theme-on-primary"),
+    ).toBe(true);
   });
 });
