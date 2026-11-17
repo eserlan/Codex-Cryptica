@@ -114,7 +114,7 @@
     onclick={copier.copy}
     class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
       ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
-      : 'border border-theme-primary/40 bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
+      : 'border border-theme-primary bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
   >
     <span
       class="{copier.state === 'copied'
@@ -242,8 +242,10 @@
         </li>
         <li>
           <strong>Review, approve, then start.</strong> Codex Cryptica checks
-          the file on your device. If it is rejected, the message names the
-          field to fix; paste that message back to your assistant or see
+          the file on your device. If it is rejected, follow the validation
+          message: use its field path when one is shown, or fix the JSON syntax
+          described by a parse error. You can paste that message back to your
+          assistant or see
           <a class="underline" href="#troubleshooting-heading"
             >troubleshooting</a
           >. Once approved, start the adventure from Adventure Mode with the
