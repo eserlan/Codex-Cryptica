@@ -19,7 +19,7 @@
   } = $props();
 
   const buttonClass =
-    "rounded border border-theme-border px-2 py-1 text-helper font-bold text-theme-text";
+    "rounded border border-theme-text px-2 py-1 text-helper font-bold text-theme-text";
 </script>
 
 <div class="flex items-center justify-between gap-2">

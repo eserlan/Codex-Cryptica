@@ -153,6 +153,22 @@ describe("computeEffectiveValues", () => {
 
     expect(map.size).toBe(0);
   });
+
+  it("skips snapshots with oversized adjustment lists if input bypasses validation", () => {
+    const map = computeEffectiveValues(dndFields(), [
+      selection("Oversized adjustments", [
+        trait(
+          "T",
+          Array.from({ length: 21 }, () => ({
+            target: "str_score",
+            amount: 1,
+          })),
+        ),
+      ]),
+    ]);
+
+    expect(map.size).toBe(0);
+  });
 });
 
 describe("setTraitSelection / removeTraitSelection", () => {

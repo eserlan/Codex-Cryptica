@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const MAX_TRAITS_PER_PACKAGE = 50;
+export const MAX_ADJUSTMENTS_PER_TRAIT = 20;
 
 export const TraitAdjustmentSchema = z.object({
   /** A Stat Sheet field id or key. */
@@ -15,7 +16,10 @@ export const TraitSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(120),
   description: z.string().max(2000).default(""),
-  adjustments: z.array(TraitAdjustmentSchema).max(20).default([]),
+  adjustments: z
+    .array(TraitAdjustmentSchema)
+    .max(MAX_ADJUSTMENTS_PER_TRAIT)
+    .default([]),
 });
 
 export const TraitPackageKindSchema = z.enum(["species"]);

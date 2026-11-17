@@ -5,9 +5,18 @@
 </script>
 
 {#if traits.length > MAX_TRAITS_PER_PACKAGE}
-  <p class="text-helper text-theme-danger" data-testid="species-traits-invalid">
-    This snapshot exceeds the {MAX_TRAITS_PER_PACKAGE}-trait limit and cannot be
-    displayed.
+  <p
+    class="flex items-center gap-1 text-helper text-theme-text"
+    data-testid="species-traits-invalid"
+  >
+    <span
+      class="icon-[lucide--triangle-alert] h-4 w-4 shrink-0"
+      aria-hidden="true"
+    ></span>
+    <span>
+      This snapshot exceeds the {MAX_TRAITS_PER_PACKAGE}-trait limit and cannot
+      be displayed.
+    </span>
   </p>
 {:else}
   <ul class="flex flex-col gap-1" data-testid={testId}>

@@ -1,4 +1,4 @@
-import { MAX_TRAITS_PER_PACKAGE } from "schema";
+import { MAX_ADJUSTMENTS_PER_TRAIT, MAX_TRAITS_PER_PACKAGE } from "schema";
 import type {
   Entity,
   StatSheetField,
@@ -90,6 +90,13 @@ export function computeEffectiveValues(
     if (seenKinds.has(selection.kind)) continue;
     seenKinds.add(selection.kind);
     if (selection.traits.length > MAX_TRAITS_PER_PACKAGE) continue;
+    if (
+      selection.traits.some(
+        (trait) => trait.adjustments.length > MAX_ADJUSTMENTS_PER_TRAIT,
+      )
+    ) {
+      continue;
+    }
     applySelectionAdjustments(result, fields, selection);
   }
   return result;
