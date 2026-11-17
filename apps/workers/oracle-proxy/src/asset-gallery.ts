@@ -430,8 +430,17 @@ function renderPage(data: {
   footer.colophon { padding-block: 32px 48px; color: var(--ink-dim); font-size: 12.5px; line-height: 1.6; max-width: 66ch; }
   footer.colophon a { color: var(--gold-ink); text-decoration: underline; text-underline-offset: 2px; }
   @media (max-width: 520px) {
-    .controls { flex-direction: column; align-items: stretch; }
-    .search-field { max-width: none; }
+    header.masthead { padding-block: 24px 18px; }
+    .subtitle { margin-top: 8px; font-size: 14px; }
+    .ledger-strip { margin-top: 14px; }
+    .controls { position: static; padding-block: 8px; gap: 8px 10px; }
+    .search-field { flex: 1 1 0; min-width: 140px; max-width: none; }
+    nav.jumplist {
+      flex: 0 0 100%; flex-wrap: nowrap; overflow-x: auto; padding-block: 4px; -webkit-overflow-scrolling: touch;
+    }
+    nav.jumplist a { display: inline-flex; align-items: center; flex-shrink: 0; min-height: 32px; }
+    section.group { padding-block: 20px; scroll-margin-top: 12px; }
+    .group-note { margin-bottom: 12px; }
     .grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
   }
   .lightbox {
