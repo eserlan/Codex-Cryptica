@@ -436,7 +436,7 @@ function renderPage(data: {
     .controls { position: static; padding-block: 8px; gap: 8px 10px; }
     .search-field { flex: 1 1 0; min-width: 140px; max-width: none; }
     nav.jumplist {
-      flex: 0 0 100%; flex-wrap: nowrap; overflow-x: auto; padding-block: 4px; -webkit-overflow-scrolling: touch;
+      flex: 0 0 100%; flex-wrap: nowrap; overflow-x: auto; padding: 4px 3px;
     }
     nav.jumplist a { display: inline-flex; align-items: center; flex-shrink: 0; min-height: 32px; }
     section.group { padding-block: 20px; scroll-margin-top: 12px; }
