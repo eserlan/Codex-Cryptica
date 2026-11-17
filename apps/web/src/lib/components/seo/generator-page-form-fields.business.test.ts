@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { describe, expect, it, vi } from "vitest";
 import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
 import UrbanFantasyFactionFormFields from "./UrbanFantasyFactionFormFields.svelte";
 import { urbanFantasyFactionConfig } from "#lib/services/seo/generator-config.js";
@@ -95,5 +95,59 @@ describe("UrbanFantasyFactionFormFields", () => {
     expect(
       surpriseButton.classList.contains("hover:text-theme-on-primary"),
     ).toBe(true);
+  });
+
+  it("resets custom selections to presets when Surprise Me runs", async () => {
+    const onSurprise = vi.fn();
+    render(UrbanFantasyFactionFormFields, {
+      props: {
+        mode: urbanFantasyFactionConfig.modes[0],
+        factionType: urbanFantasyFactionConfig.types[0],
+        scope: urbanFantasyFactionConfig.scopes[0],
+        moralPosture: urbanFantasyFactionConfig.moralPostures[0],
+        campaignContext: "",
+        onSurprise,
+      },
+    });
+
+    for (const label of [
+      "Urban fantasy mode",
+      "Faction type",
+      "Operating scope",
+      "Moral posture",
+    ]) {
+      await fireEvent.change(screen.getByRole("combobox", { name: label }), {
+        target: { value: "__custom__" },
+      });
+      await fireEvent.input(
+        screen.getByRole("textbox", { name: `${label} (Own option)` }),
+        { target: { value: `Custom ${label}` } },
+      );
+    }
+
+    await fireEvent.click(screen.getByRole("button", { name: "Surprise Me" }));
+
+    const presets = [
+      urbanFantasyFactionConfig.modes,
+      urbanFantasyFactionConfig.types,
+      urbanFantasyFactionConfig.scopes,
+      urbanFantasyFactionConfig.moralPostures,
+    ];
+    const labels = [
+      "Urban fantasy mode",
+      "Faction type",
+      "Operating scope",
+      "Moral posture",
+    ];
+    for (const [index, label] of labels.entries()) {
+      const select = screen.getByRole("combobox", {
+        name: label,
+      }) as HTMLSelectElement;
+      expect(presets[index]).toContain(select.value);
+      expect(
+        screen.queryByRole("textbox", { name: `${label} (Own option)` }),
+      ).toBeNull();
+    }
+    expect(onSurprise).toHaveBeenCalledOnce();
   });
 });

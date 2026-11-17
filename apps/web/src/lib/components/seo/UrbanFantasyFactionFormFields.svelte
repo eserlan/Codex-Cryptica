@@ -18,71 +18,74 @@
     onSurprise?: () => void;
   } = $props();
 
+  let selectReset = $state(0);
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
     "text-xs font-bold uppercase tracking-wider text-theme-muted";
 </script>
 
-<SelectWithCustomOption
-  id="urban-fantasy-mode-select"
-  name="urban_fantasy_mode"
-  label="Urban fantasy mode"
-  bind:value={mode}
-  choices={urbanFantasyFactionConfig.modes.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom mode"
-/>
+{#key selectReset}
+  <SelectWithCustomOption
+    id="urban-fantasy-mode-select"
+    name="urban_fantasy_mode"
+    label="Urban fantasy mode"
+    bind:value={mode}
+    choices={urbanFantasyFactionConfig.modes.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom mode"
+  />
 
-<SelectWithCustomOption
-  id="urban-fantasy-faction-type-select"
-  name="urban_fantasy_faction_type"
-  label="Faction type"
-  bind:value={factionType}
-  choices={urbanFantasyFactionConfig.types.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom faction type"
-/>
+  <SelectWithCustomOption
+    id="urban-fantasy-faction-type-select"
+    name="urban_fantasy_faction_type"
+    label="Faction type"
+    bind:value={factionType}
+    choices={urbanFantasyFactionConfig.types.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom faction type"
+  />
 
-<SelectWithCustomOption
-  id="urban-fantasy-scope-select"
-  name="urban_fantasy_scope"
-  label="Operating scope"
-  bind:value={scope}
-  choices={urbanFantasyFactionConfig.scopes.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom scope"
-/>
+  <SelectWithCustomOption
+    id="urban-fantasy-scope-select"
+    name="urban_fantasy_scope"
+    label="Operating scope"
+    bind:value={scope}
+    choices={urbanFantasyFactionConfig.scopes.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom scope"
+  />
 
-<SelectWithCustomOption
-  id="urban-fantasy-moral-posture-select"
-  name="urban_fantasy_moral_posture"
-  label="Moral posture"
-  bind:value={moralPosture}
-  choices={urbanFantasyFactionConfig.moralPostures.map((value) => ({
-    value,
-    label: value,
-  }))}
-  className="flex flex-col gap-1.5"
-  {labelClass}
-  inputClass={selectClass}
-  customPlaceholder="Enter a custom moral posture"
-/>
+  <SelectWithCustomOption
+    id="urban-fantasy-moral-posture-select"
+    name="urban_fantasy_moral_posture"
+    label="Moral posture"
+    bind:value={moralPosture}
+    choices={urbanFantasyFactionConfig.moralPostures.map((value) => ({
+      value,
+      label: value,
+    }))}
+    className="flex flex-col gap-1.5"
+    {labelClass}
+    inputClass={selectClass}
+    customPlaceholder="Enter a custom moral posture"
+  />
+{/key}
 
 <div class="flex flex-col gap-1.5">
   <label for="urban-fantasy-campaign-context" class={labelClass}
@@ -128,6 +131,7 @@
             Math.random() * urbanFantasyFactionConfig.moralPostures.length,
           )
         ];
+      selectReset += 1;
       onSurprise?.();
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-xs font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-on-primary hover:border-theme-primary transition-all cursor-pointer"

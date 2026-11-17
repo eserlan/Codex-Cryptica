@@ -334,6 +334,24 @@ test.describe("SEO and Prerendering", () => {
 
       const aiToggle = page.locator("#ai-toggle");
       if (await aiToggle.isChecked()) await aiToggle.uncheck();
+
+      const urbanFantasyFields = [
+        "Urban fantasy mode",
+        "Faction type",
+        "Operating scope",
+        "Moral posture",
+      ];
+      for (const label of urbanFantasyFields) {
+        await page.getByLabel(label).selectOption("__custom__");
+        await page.getByLabel(`${label} (Own option)`).fill(`Custom ${label}`);
+      }
+      await page.getByRole("button", { name: "Surprise Me" }).click();
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      for (const label of urbanFantasyFields) {
+        await expect(page.getByLabel(label)).not.toHaveValue("__custom__");
+        await expect(page.getByLabel(`${label} (Own option)`)).toHaveCount(0);
+      }
+
       await page.getByLabel("Urban fantasy mode").selectOption("Occult crime");
       await page.getByLabel("Faction type").selectOption("Occult Gang");
       await page.getByLabel("Operating scope").selectOption("Neighbourhood");

@@ -208,10 +208,18 @@ const FACTION_NAMES = [
 function stripUntrustedMediaMarkup(text: string): string {
   return text
     .replace(/!\[([^\]]*)\](?:\([^)]*\)|\[[^\]]*\])?/g, "$1")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, "")
+    .replace(/<style\b[^>]*\/?>/gi, "")
+    .replace(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
     .replace(
-      /<\/?(?:img|image|picture|video|audio|source|track|iframe|embed|object)\b[^>]*>/gi,
+      /<\/?(?:img|image|picture|video|audio|source|track|iframe|embed|object|link)\b[^>]*>/gi,
       "",
     );
+}
+
+function sanitizeCustomOption(value: string | undefined): string | undefined {
+  const sanitized = stripUntrustedMediaMarkup(value?.trim() ?? "").trim();
+  return sanitized || undefined;
 }
 
 function generateFactionName(rng: Rng): string {
@@ -223,12 +231,16 @@ export function resolveUrbanFantasyFaction(
   rng: Rng = defaultRng,
 ): ResolvedUrbanFantasyFaction {
   const locked: Record<string, LockedValue> = {};
-  if (options.mode) locked.mode = { value: options.mode, source: "manual" };
-  if (options.factionType)
-    locked.factionType = { value: options.factionType, source: "manual" };
-  if (options.scope) locked.scope = { value: options.scope, source: "manual" };
-  if (options.moralPosture)
-    locked.moralPosture = { value: options.moralPosture, source: "manual" };
+  const mode = sanitizeCustomOption(options.mode);
+  const factionType = sanitizeCustomOption(options.factionType);
+  const scope = sanitizeCustomOption(options.scope);
+  const moralPosture = sanitizeCustomOption(options.moralPosture);
+  if (mode) locked.mode = { value: mode, source: "manual" };
+  if (factionType)
+    locked.factionType = { value: factionType, source: "manual" };
+  if (scope) locked.scope = { value: scope, source: "manual" };
+  if (moralPosture)
+    locked.moralPosture = { value: moralPosture, source: "manual" };
 
   const { values } = resolveSmart(urbanFantasyFactionSchema, { locked }, rng);
   return {
