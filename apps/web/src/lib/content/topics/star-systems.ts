@@ -21,6 +21,15 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
   ogImageAlt:
     "Exploration ship overlooking a gas giant, mining moon, orbital station, and busy routes through a star system",
 
+  primaryAction: {
+    label: "Generate a Star System",
+    href: "/generators/star-system",
+    secondary: {
+      label: "Or learn the method first",
+      href: "/answers/how-to-create-a-sci-fi-star-system-for-an-rpg",
+    },
+  },
+
   copy: {
     thesisHeading: "What makes a system playable",
     learnHeading: "Learn the method",
