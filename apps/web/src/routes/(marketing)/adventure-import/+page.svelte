@@ -241,8 +241,10 @@
           you prefer (a hosted chatbot or a local model), as a file or pasted text.
         </li>
         <li>
-          <strong>Save the reply as a plain <code>.json</code> file.</strong>
-          Keep only the JSON: no Markdown code fences, no commentary before or after.
+          <strong>Save the result as a plain <code>.json</code> file.</strong>
+          If your assistant offers a downloadable file, use that. Otherwise copy its
+          reply. Keep only the JSON: no Markdown code fences, no commentary before
+          or after.
         </li>
         <li>
           <strong>Import it in your Vault.</strong> Open Adventure Mode and
@@ -292,6 +294,46 @@
         paste your adventure here. The conversion happens in the assistant you choose,
         and this page never sees your source.
       </p>
+    </section>
+
+    <!-- Long-source recovery -->
+    <section
+      aria-labelledby="long-adventures"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
+    >
+      <h2
+        id="long-adventures"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Long adventures: convert in stages
+      </h2>
+      <p class="text-sm md:text-base text-theme-text/90 leading-relaxed">
+        If the assistant cannot read the whole source or return a complete
+        result, do not accept a partial conversion. Work through the source in
+        consecutive, labelled chapters or sections:
+      </p>
+      <ol
+        class="list-decimal space-y-2 pl-5 text-sm md:text-base text-theme-text"
+      >
+        <li>
+          Make a checklist of every source section in order, then send each
+          section separately with the canonical prompt. Keep each section's JSON
+          result.
+        </li>
+        <li>
+          Ask the assistant to assemble those results into one Adventure JSON v1
+          document. Preserve every entry, keep or repair <code class="font-mono"
+            >sourceRef</code
+          >
+          values, make IDs unique, and update cross-references to those IDs.
+        </li>
+        <li>
+          Compare the assembled result with the section checklist and validate
+          the final JSON. If any section or result is missing or unreadable,
+          report the conversion as incomplete instead of filling gaps by
+          guesswork.
+        </li>
+      </ol>
     </section>
 
     <!-- Privacy & Responsibility Notice -->

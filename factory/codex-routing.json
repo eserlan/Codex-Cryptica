@@ -36,6 +36,11 @@
       "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
       "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
     },
+    "codex_by_risk": {
+      "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
+      "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
+      "high": { "model": "gpt-6.1-sol", "reasoning_effort": "high" }
+    },
     "ux_by_risk": {
       "low": { "model": "gpt-6-luna", "reasoning_effort": "medium" },
       "medium": { "model": "gpt-6-luna", "reasoning_effort": "max" },
