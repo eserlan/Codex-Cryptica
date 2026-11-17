@@ -237,6 +237,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain("instead of truncated or guessed JSON");
     });
 
+    it("guards against over-hiding, copied example codes and missing items", () => {
+      expect(prompt).toContain("Do not over-hide.");
+      expect(prompt).toContain("whatever players can learn in play");
+      expect(prompt).toContain("only illustrative; use your own");
+      expect(prompt).toContain('in "items"');
+      expect(prompt).toContain('specific "code"');
+    });
+
     it("stays provider-neutral", () => {
       expect(prompt).not.toMatch(
         /\b(ChatGPT|Claude|Gemini|GPT|OpenAI|Anthropic)\b/,
