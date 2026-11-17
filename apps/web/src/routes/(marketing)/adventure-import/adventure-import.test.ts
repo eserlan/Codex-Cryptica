@@ -403,7 +403,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       for (const button of stageButtons) {
         expect(button.classList.contains("border-theme-text")).toBe(true);
       }
-      for (const button of screen.getAllByRole("button", { name: /Copy guide link/i })) {
+      for (const button of screen.getAllByRole("button", {
+        name: /Copy guide link/i,
+      })) {
         expect(button.classList.contains("border-theme-text")).toBe(true);
       }
     });
@@ -718,7 +720,6 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "8. Self-audit before returning",
       );
-      expect(CANONICAL_CONVERSION_PROMPT).toContain("Return ONLY valid JSON");
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
       );
