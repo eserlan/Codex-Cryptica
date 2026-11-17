@@ -698,8 +698,24 @@ export const FIDELITY_EXAMPLE_PARAPHRASED = {
   ],
 };
 
-/** Structural clue that points at a location and is placed in another. */
+/** Structural clue with both referenced locations defined in the example. */
 export const FIDELITY_EXAMPLE_STRUCTURAL = {
+  locations: [
+    {
+      id: "loc-lighthouse",
+      name: "Lighthouse",
+      summary: "A lighthouse overlooking the harbour.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+    {
+      id: "loc-docks",
+      name: "Docks",
+      summary: "The harbour's ferry docks.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
   clues: [
     {
       id: "clue-ferry-ticket",

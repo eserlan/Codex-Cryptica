@@ -1056,8 +1056,13 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       const ok = pkg({
         ...FIDELITY_EXAMPLE_PARAPHRASED,
         ...FIDELITY_EXAMPLE_STRUCTURAL,
+        locations: [
+          ...REVISION_EXAMPLE_BEFORE.locations,
+          ...FIDELITY_EXAMPLE_STRUCTURAL.locations,
+        ],
       });
       expect(AdventureJsonV1Schema.safeParse(ok).success).toBe(true);
+      expect(validateAdventureJson(ok).ok).toBe(true);
 
       const bad = pkg({
         ...FIDELITY_EXAMPLE_PARAPHRASED,
