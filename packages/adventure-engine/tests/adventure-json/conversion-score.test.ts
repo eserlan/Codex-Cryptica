@@ -84,6 +84,43 @@ describe("scoreAdventureConversion blocking failures", () => {
     expect(result.dimensions.coverage.status).toBe("fail");
   });
 
+  it("ending cited by section title counts as covered", () => {
+    const doc = clone(refDoc);
+    const ending = doc.endings.find(
+      (e: { id: string }) => e.id === "ending-restored",
+    );
+    delete ending.sourceRef.anchor;
+    const result = scoreAdventureConversion(doc, refKey);
+    expect(result.dimensions.coverage.status).toBe("pass");
+  });
+
+  it("ending cited by entity id equal to sourceId counts as covered", () => {
+    const doc = clone(refDoc);
+    const ending = doc.endings.find(
+      (e: { id: string }) => e.id === "ending-restored",
+    );
+    ending.id = "ros-ending-restored";
+    delete ending.sourceRef.anchor;
+    delete ending.sourceRef.section;
+    const result = scoreAdventureConversion(doc, refKey);
+    expect(result.dimensions.coverage.status).toBe("pass");
+  });
+
+  it("leaked secret in a nested branch description fails secrets", () => {
+    const doc = clone(refDoc);
+    const secret = doc.secrets.find(
+      (s: { id: string }) => s.id === "secret-filed-pin",
+    );
+    const scene = doc.scenes.find(
+      (s: { id: string }) => s.id === "ros-scene-1-landing",
+    );
+    scene.branches[0].description = secret.text;
+    const result = scoreAdventureConversion(doc, refKey);
+    expect(result.dimensions.schema.status).toBe("pass");
+    expect(result.dimensions.secrets.status).toBe("fail");
+    expect(result.dimensions.secrets.details.join("\n")).toMatch(/leak/i);
+  });
+
   it("unknown anchor fails citations and lists it", () => {
     const doc = clone(refDoc);
     doc.locations[0].sourceRef.anchor = "ros-unknown";

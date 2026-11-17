@@ -205,12 +205,15 @@ function recordStrings(
   push: (field: string, value: unknown) => void,
 ): void {
   const id = typeof rec["id"] === "string" ? rec["id"] : "?";
-  for (const [key, value] of Object.entries(rec)) {
-    if (typeof value === "string") push(`${name} ${id}.${key}`, value);
-    else if (Array.isArray(value)) {
-      value.forEach((v, i) => push(`${name} ${id}.${key}[${i}]`, v));
-    }
-  }
+  const walk = (field: string, value: unknown): void => {
+    if (typeof value === "string") push(field, value);
+    else if (Array.isArray(value))
+      value.forEach((v, i) => walk(`${field}[${i}]`, v));
+    else if (value && typeof value === "object")
+      for (const [key, v] of Object.entries(value)) walk(`${field}.${key}`, v);
+  };
+  for (const [key, value] of Object.entries(rec))
+    walk(`${name} ${id}.${key}`, value);
 }
 
 function collectionStrings(
@@ -313,10 +316,11 @@ function endingCoverage(value: DocLike, key: ConversionAnswerKey): string[] {
   const docEndings = (value.endings ?? []) as Entity[];
   const details: string[] = [];
   for (const ending of key.endings) {
+    const section = key.sections.find((s) => s.sourceId === ending.sourceId);
     const found = docEndings.some((e) => e.id === ending.id);
-    const cited = docEndings.some(
-      (e) => e.sourceRef?.anchor === ending.sourceId,
-    );
+    const cited = section
+      ? docEndings.some((e) => citesSection(e, section))
+      : docEndings.some((e) => e.sourceRef?.anchor === ending.sourceId);
     if (!found && !cited) details.push(`missing ending ${ending.id}`);
   }
   return details;
@@ -517,18 +521,18 @@ function schemaFailedDims(validation: {
           ),
         }
       : { status: "fail", details: [NOT_CHECKED] };
-  const blocked: ConversionScoreDimensionResult = {
+  const blocked = (): ConversionScoreDimensionResult => ({
     status: "fail",
     details: [NOT_CHECKED],
-  };
+  });
   return {
     references,
-    secrets: blocked,
-    coverage: blocked,
-    authoredVsRumour: blocked,
-    branches: blocked,
-    citations: blocked,
-    truncation: blocked,
+    secrets: blocked(),
+    coverage: blocked(),
+    authoredVsRumour: blocked(),
+    branches: blocked(),
+    citations: blocked(),
+    truncation: blocked(),
   };
 }
 
