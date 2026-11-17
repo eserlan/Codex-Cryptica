@@ -135,6 +135,7 @@ describe("TopicHubPage layout", () => {
       expect(link.getAttribute("tabindex")).not.toBe("-1");
       expect(link.className).toContain("min-h-[44px]");
       expect(link.className).toContain("focus-visible:outline");
+      expect(link.className).toContain("focus-visible:outline-theme-text");
 
       const header = container.querySelector("header") as HTMLElement;
       const thesis = document.getElementById("star-systems-thesis")
@@ -156,6 +157,15 @@ describe("TopicHubPage layout", () => {
           .getByRole("link", { name: /Generate a Star System/ })
           .getAttribute("href"),
       ).toBe("/codex/generators/star-system");
+    });
+
+    it("keeps the secondary link text readable on hover", () => {
+      render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+      const link = screen.getByRole("link", { name: /learn the method/i });
+      expect(link.className).toContain("text-theme-text");
+      expect(link.className).toContain("hover:decoration-theme-text");
+      expect(link.className).not.toContain("hover:text-theme-primary");
     });
 
     it("renders nothing for hubs without a primary action", () => {

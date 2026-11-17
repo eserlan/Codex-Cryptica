@@ -23,7 +23,7 @@
   >
     <a
       href="{cleanBase}{action.href}"
-      class="inline-flex min-h-[44px] items-center gap-2 border border-theme-primary bg-theme-primary px-5 py-2 font-mono text-sm font-bold uppercase tracking-wider text-theme-on-primary transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+      class="inline-flex min-h-[44px] items-center gap-2 border border-theme-primary bg-theme-primary px-5 py-2 font-mono text-sm font-bold uppercase tracking-wider text-theme-on-primary transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       use:trackDiscoveryClick={{
         sourceKind: "topic",
         sourceId: slug,
@@ -38,7 +38,7 @@
     {#if action.secondary}
       <a
         href="{cleanBase}{action.secondary.href}"
-        class="font-bold text-theme-text underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
+        class="font-bold text-theme-text underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:decoration-theme-text"
         use:trackDiscoveryClick={{
           sourceKind: "topic",
           sourceId: slug,
