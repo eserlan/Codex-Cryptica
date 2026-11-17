@@ -114,6 +114,16 @@ describe("SpeciesSelectionPanel", () => {
     expect(labels).toEqual(["Select a species…", "Aelf", "Kethari"]);
   });
 
+  it("explains an empty picker and keeps Cancel", async () => {
+    vaultState.allEntities = [plain, hero()];
+    render(SpeciesSelectionPanel, { entity: hero() });
+    await openPicker();
+    expect(screen.getByTestId("species-empty")).toBeTruthy();
+    expect(screen.queryByTestId("species-picker")).toBeNull();
+    await fireEvent.click(screen.getByTestId("species-cancel"));
+    expect(updateEntity).not.toHaveBeenCalled();
+  });
+
   it("previews applied and not-applied rows without writing", async () => {
     render(SpeciesSelectionPanel, { entity: hero() });
     await openPicker();

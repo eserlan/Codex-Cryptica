@@ -94,6 +94,33 @@ describe("SpeciesDefinitionEditor", () => {
     });
     await fireEvent.click(screen.getByTestId("species-add-adjustment"));
     expect(updateEntity).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toContain("non-zero amount");
+  });
+
+  it("resets an edited adjustment that is set to 0", async () => {
+    render(SpeciesDefinitionEditor, {
+      entity: creature({
+        traitPackage: {
+          kind: "species",
+          traits: [
+            {
+              id: "t",
+              name: "T",
+              description: "",
+              adjustments: [{ target: "str", amount: 2 }],
+            },
+          ],
+        },
+      }),
+      idGenerator,
+    });
+    const input = screen.getByLabelText(
+      "Adjustment amount",
+    ) as HTMLInputElement;
+    await fireEvent.change(input, { target: { value: "0" } });
+    expect(updateEntity).not.toHaveBeenCalled();
+    expect(input.value).toBe("2");
+    expect(screen.getByRole("alert")).toBeTruthy();
   });
 
   it("turns the definition off by removing traitPackage", async () => {

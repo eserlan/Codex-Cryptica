@@ -44,14 +44,16 @@
         type="button"
         class="{buttonClass} hover:border-theme-primary hover:text-theme-primary"
         onclick={onChange}
+        aria-label="Change species {current.sourceTitle}"
         data-testid="species-change"
       >
         Change
       </button>
       <button
         type="button"
-        class="{buttonClass} hover:border-red-500 hover:text-red-500"
+        class="{buttonClass} hover:border-theme-danger hover:text-theme-danger"
         onclick={onRemove}
+        aria-label="Remove species {current.sourceTitle}"
         data-testid="species-remove"
       >
         Remove

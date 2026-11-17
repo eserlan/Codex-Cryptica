@@ -15,6 +15,8 @@
 
   let pendingTarget = $state("");
   let pendingAmount = $state("");
+  let adjustmentError = $state("");
+  const INVALID_ADJUSTMENT = "Enter a field id or key and a non-zero amount.";
 
   const inputClass =
     "rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40";
@@ -24,7 +26,11 @@
   function addAdjustment() {
     const target = pendingTarget.trim();
     const amount = Number(pendingAmount);
-    if (!target || !Number.isFinite(amount) || amount === 0) return;
+    if (!target || !Number.isFinite(amount) || amount === 0) {
+      adjustmentError = INVALID_ADJUSTMENT;
+      return;
+    }
+    adjustmentError = "";
     onPatch({ adjustments: [...trait.adjustments, { target, amount }] });
     pendingTarget = "";
     pendingAmount = "";
@@ -33,10 +39,22 @@
   function patchAdjustment(
     index: number,
     patch: { target?: string; amount?: number },
+    input: HTMLInputElement,
   ) {
-    const merged = { ...trait.adjustments[index], ...patch };
-    if (!merged.target || !Number.isFinite(merged.amount)) return;
-    if (merged.amount === 0) return;
+    const current = trait.adjustments[index];
+    const merged = { ...current, ...patch };
+    if (
+      !merged.target ||
+      !Number.isFinite(merged.amount) ||
+      merged.amount === 0
+    ) {
+      adjustmentError = INVALID_ADJUSTMENT;
+      input.value = String(
+        patch.target !== undefined ? current.target : current.amount,
+      );
+      return;
+    }
+    adjustmentError = "";
     onPatch({
       adjustments: trait.adjustments.map((a, i) => (i === index ? merged : a)),
     });
@@ -84,16 +102,21 @@
       onPatch({ description: (e.target as HTMLTextAreaElement).value })}
   ></textarea>
   {#each trait.adjustments as adj, i (i)}
-    <div class="flex items-center gap-2" data-testid="species-adjustment">
+    <div
+      class="flex flex-wrap items-center gap-2"
+      data-testid="species-adjustment"
+    >
       <input
         class="{inputClass} w-32"
         aria-label="Adjustment target"
         value={adj.target}
         disabled={readOnly}
         onchange={(e) =>
-          patchAdjustment(i, {
-            target: (e.target as HTMLInputElement).value.trim(),
-          })}
+          patchAdjustment(
+            i,
+            { target: (e.target as HTMLInputElement).value.trim() },
+            e.target as HTMLInputElement,
+          )}
       />
       <input
         type="number"
@@ -102,9 +125,11 @@
         value={adj.amount}
         disabled={readOnly}
         onchange={(e) =>
-          patchAdjustment(i, {
-            amount: Number((e.target as HTMLInputElement).value),
-          })}
+          patchAdjustment(
+            i,
+            { amount: Number((e.target as HTMLInputElement).value) },
+            e.target as HTMLInputElement,
+          )}
       />
       {#if !readOnly}
         <button
@@ -119,7 +144,7 @@
     </div>
   {/each}
   {#if !readOnly}
-    <div class="flex items-center gap-2">
+    <div class="flex flex-wrap items-center gap-2">
       <input
         class="{inputClass} w-32"
         placeholder="Field id or key"
@@ -142,5 +167,8 @@
         Add adjustment
       </button>
     </div>
+  {/if}
+  {#if adjustmentError}
+    <p class="text-xs text-theme-danger" role="alert">{adjustmentError}</p>
   {/if}
 </div>
