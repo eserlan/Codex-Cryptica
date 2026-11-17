@@ -84,6 +84,13 @@ describe("adventure import link check", () => {
         { contentType: "application/json", body: "{}" },
       ],
       ["/schemas/adventure-json/v2.json", { status: 404, body: "{}" }],
+      [
+        "/adventure-import/prompt.txt",
+        {
+          contentType: "text/plain",
+          body: "Convert the tabletop RPG adventure I provide.",
+        },
+      ],
       ["/adventure", { contentType: "text/html", body: "<html>app</html>" }],
       [
         "/llms.txt",

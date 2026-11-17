@@ -70,7 +70,9 @@ function assertCleanPackageMatchesKey(pkg: AdventureSourcePackage): void {
   expect(pkg.ambiguities).toEqual([]);
   expect(
     pkg.sections.map((s) => ({ sourceId: s.sourceId, title: s.title })),
-  ).toEqual(answerKey.sections);
+  ).toEqual(
+    answerKey.sections.map(({ sourceId, title }) => ({ sourceId, title })),
+  );
   expect(pkg.sections.every((s) => s.provenance === "source-grounded")).toBe(
     true,
   );

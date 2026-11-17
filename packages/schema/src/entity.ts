@@ -3,6 +3,10 @@ import { ConnectionSchema } from "./connection";
 import { LanguageProfileV1Schema } from "./language-profile";
 import { StatSheetSchema } from "./stat-sheet";
 import { BiomeProfileSchema } from "./biome";
+import {
+  TraitPackageDefinitionSchema,
+  TraitSelectionsSchema,
+} from "./trait-package";
 import { IMAGE_FOCUS_VALUES } from "./image-focus";
 
 export const DEFAULT_ICON = "lucide:circle";
@@ -249,6 +253,8 @@ export const EntitySchema = z.object({
   statSheet: StatSheetSchema.optional(),
   report: ReportProvenanceSchema.optional(),
   biome: BiomeProfileSchema.optional(),
+  traitPackage: TraitPackageDefinitionSchema.optional(),
+  traitSelections: TraitSelectionsSchema.optional(),
   member_template: z.string().optional(),
   systemId: z.string().optional(),
 });
