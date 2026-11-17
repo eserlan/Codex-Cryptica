@@ -19,6 +19,9 @@ import {
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
+  FIDELITY_EXAMPLE_PARAPHRASED,
+  FIDELITY_EXAMPLE_STRUCTURAL,
+  FIDELITY_ROWS,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
   REVISION_EXAMPLE_AFTER,
@@ -714,7 +717,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       const idx = texts.indexOf("Valid is not the same as complete");
       expect(idx).toBeGreaterThan(-1);
       expect(texts[idx - 1]).toBe("Next: upload your Adventure JSON");
-      expect(texts[idx + 1]).toBe("What a valid file looks like");
+      expect(texts[idx + 1]).toBe(
+        "What converts well, and what needs manual work",
+      );
       expect(h2s[idx]?.id).toBe("completeness-heading");
     });
 
@@ -950,6 +955,129 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         TOP_LEVEL_RULES.find((r) => r.field === f)!.notes;
       expect(note("id")).toMatch(/same across revisions/);
       expect(note("version")).toMatch(/Raise it when the content changes/);
+    });
+  });
+
+  describe("fidelity limits", () => {
+    const section = () =>
+      document.getElementById("fidelity-heading")!.closest("section")!;
+
+    it("sits after the completeness section with an 11-row table in order", () => {
+      render(Page);
+      const ids = Array.from(document.querySelectorAll("h2")).map((h) => h.id);
+      expect(ids.indexOf("fidelity-heading")).toBe(
+        ids.indexOf("completeness-heading") + 1,
+      );
+      expect(ids.indexOf("fidelity-heading")).toBeLessThan(
+        ids.indexOf("worked-example-heading"),
+      );
+      expect(
+        document.getElementById("fidelity-heading")?.textContent,
+      ).toContain("What converts well, and what needs manual work");
+      const rows = Array.from(
+        section().querySelectorAll("tr[data-fidelity-row]"),
+      );
+      expect(rows.map((r) => r.querySelector("th")!.textContent)).toEqual([
+        "Locations",
+        "NPCs",
+        "Scenes",
+        "Branches",
+        "Clues",
+        "Secrets",
+        "Alternative solutions",
+        "System rules",
+        "Stat blocks",
+        "Tactical maps",
+        "Layout",
+      ]);
+      expect(
+        rows.map((r) => r.querySelector("td")!.textContent?.trim()),
+      ).toEqual(
+        FIDELITY_ROWS.map((r) =>
+          r.converts === "well" ? "Converts well" : "May need manual work",
+        ),
+      );
+    });
+
+    it("explains system metadata and who uses what", () => {
+      render(Page);
+      const text = (section().textContent ?? "").replace(/\s+/g, " ");
+      expect(text).toMatch(/descriptive metadata/);
+      expect(text).toMatch(/does not make game mechanics executable/);
+      for (const t of ["At import", "During play", "Keep from your book"]) {
+        expect(text).toContain(t);
+      }
+      expect(text).toMatch(/title and premise/);
+      expect(TOP_LEVEL_RULES.find((r) => r.field === "system")!.notes).toMatch(
+        /does not make game mechanics executable/,
+      );
+    });
+
+    it("renders both example blocks", () => {
+      render(Page);
+      const parse = (label: string) =>
+        JSON.parse(
+          section().querySelector(`pre[aria-label="${label}"]`)!.textContent ??
+            "",
+        );
+      expect(parse("Fidelity example: paraphrased mechanic")).toEqual(
+        FIDELITY_EXAMPLE_PARAPHRASED,
+      );
+      expect(parse("Fidelity example: structural clue")).toEqual(
+        FIDELITY_EXAMPLE_STRUCTURAL,
+      );
+    });
+
+    it("does not promise combat automation or rules enforcement", () => {
+      render(Page);
+      const text = section().textContent ?? "";
+      expect(text).not.toMatch(
+        /automated combat|enforces? (the )?rules|lossless/i,
+      );
+    });
+
+    it("adds rule 10 to the canonical prompt", () => {
+      render(Page);
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "10. Game mechanics and maps",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/outside the v1 schema/);
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/"unresolved" entry/);
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/never invent/i);
+      const firstPre = document.querySelector("pre")!;
+      expect(firstPre.textContent).toBe(CANONICAL_CONVERSION_PROMPT);
+    });
+
+    it("validates both examples in a package and rejects an unsupported key", () => {
+      const revisionBaseline = AdventureJsonV1Schema.parse(
+        REVISION_EXAMPLE_BEFORE,
+      );
+      const pkg = (extra: Record<string, unknown>) => ({
+        ...JSON.parse(JSON.stringify(REVISION_EXAMPLE_BEFORE)),
+        ...extra,
+      });
+      const ok = pkg({
+        ...FIDELITY_EXAMPLE_PARAPHRASED,
+        ...FIDELITY_EXAMPLE_STRUCTURAL,
+        locations: [
+          ...revisionBaseline.locations,
+          ...FIDELITY_EXAMPLE_STRUCTURAL.locations,
+        ],
+      });
+      expect(AdventureJsonV1Schema.safeParse(ok).success).toBe(true);
+      expect(validateAdventureJson(ok).ok).toBe(true);
+
+      const bad = pkg({
+        ...FIDELITY_EXAMPLE_PARAPHRASED,
+        encounters: [
+          { ...FIDELITY_EXAMPLE_PARAPHRASED.encounters[0], hitPoints: 30 },
+        ],
+      });
+      expect(AdventureJsonV1Schema.safeParse(bad).success).toBe(false);
+      const badClue = pkg({
+        clues: [{ ...FIDELITY_EXAMPLE_STRUCTURAL.clues[0], hitPoints: 30 }],
+      });
+      expect(AdventureJsonV1Schema.safeParse(badClue).success).toBe(false);
     });
   });
 });
