@@ -71,7 +71,12 @@ Strict output rules:
 9. Revisions and stable IDs:
    - If an earlier Adventure JSON for the same adventure is supplied, keep its "id" exactly, keep every unchanged entity ID exactly, and raise "version" by SemVer (patch for fixes, minor for added or changed content, major for restructuring).
    - Add a top-level "extensions" entry "codex-cryptica.adventure-correspondence" (a list of { "previousId", "currentId", "collection" }) only for renames, splits or merges the source clearly supports. Never infer correspondence from names, titles or order. Never put "extensions" inside an entity.
-   - If no earlier package is supplied, treat this as a first conversion: use "version" "1.0.0" and omit the correspondence extension.`;
+   - If no earlier package is supplied, treat this as a first conversion: use "version" "1.0.0" and omit the correspondence extension.
+10. Game mechanics and maps:
+   - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions".
+   - Keep a mechanic only as a short paraphrase grounded in the source, with "sourceRef", inside a field v1 already allows ("description", "body", "conditions" or "alternativeSolutions[].description").
+   - Record any mechanic, stat block, map or rules detail that cannot be represented as an "unresolved" entry naming the source section. Never drop it silently, and never invent values for it.
+   - Treat "system" as a name and an optional party size and level range only.`;
 
 /** Follow-up prompt pasted into the same chat after the JSON; its reply stays outside the JSON file. */
 export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the Adventure JSON you just gave me. Reply in plain text, not JSON. Do not change or re-output the JSON.
@@ -350,7 +355,8 @@ export const TOP_LEVEL_RULES: GuideFieldRule[] = [
   {
     field: "system",
     requirement: "Optional { name, targetParty? }",
-    notes: "System name and optional party size or level range.",
+    notes:
+      "System name and optional party size or level range. Descriptive metadata only: it does not make game mechanics executable or portable.",
   },
 ];
 
@@ -470,3 +476,140 @@ export const TROUBLESHOOTING_ERRORS: Array<{
     fix: "Break the cycle so location containment forms a strict tree pointing toward top-level regions.",
   },
 ];
+
+export interface FidelityRow {
+  content: string;
+  v1Handling: string;
+  converts: "well" | "manual";
+}
+
+export const FIDELITY_ROWS: FidelityRow[] = [
+  {
+    content: "Locations",
+    v1Handling:
+      "locations, with parentLocationId for nesting and connections for which places link to which.",
+    converts: "well",
+  },
+  {
+    content: "NPCs",
+    v1Handling:
+      "actors, with role, motivation, disposition and factionId or locationId.",
+    converts: "well",
+  },
+  {
+    content: "Scenes",
+    v1Handling: "scenes, with readAloud text and body for the GM.",
+    converts: "well",
+  },
+  {
+    content: "Branches",
+    v1Handling:
+      "scenes[].branches, with targetSceneId and an optional condition.",
+    converts: "well",
+  },
+  {
+    content: "Clues",
+    v1Handling:
+      "clues, with leadTargetId, placedLocationId, placedActorId or placedSceneId, and alternativeSourceId.",
+    converts: "well",
+  },
+  {
+    content: "Secrets",
+    v1Handling:
+      'secrets, always "gm-only", with relatedEntityIds pointing at what they touch.',
+    converts: "well",
+  },
+  {
+    content: "Alternative solutions",
+    v1Handling:
+      "encounters[].alternativeSolutions, each with a method and a description.",
+    converts: "well",
+  },
+  {
+    content: "System rules",
+    v1Handling:
+      "No field for rules. At most a short paraphrase in description, body or conditions, with a sourceRef page. Anything else goes in unresolved.",
+    converts: "manual",
+  },
+  {
+    content: "Stat blocks",
+    v1Handling:
+      "No field for stats or hit points. The creature is an actor; the stat block stays in your book and is noted in unresolved.",
+    converts: "manual",
+  },
+  {
+    content: "Tactical maps",
+    v1Handling:
+      "No field for maps or grids. Location connections say only which places connect, not how they are laid out. Note the map in unresolved.",
+    converts: "manual",
+  },
+  {
+    content: "Layout",
+    v1Handling:
+      "Boxed read-aloud text can go in readAloud. Page layout and art are not kept.",
+    converts: "manual",
+  },
+];
+
+export const FIDELITY_WHO_USES_WHAT: Array<{ label: string; text: string }> = [
+  {
+    label: "At import",
+    text: "Codex Cryptica validates the file, shows it for review and stores it on this device. No AI call is made.",
+  },
+  {
+    label: "During play",
+    text: "The Oracle may draw on the adventure's title and premise, copied into the session, plus relevant Vault records. It does not read the module's stat blocks, DCs, maps or rules text from the package, and it does not run tactical combat.",
+  },
+  {
+    label: "Keep from your book",
+    text: "Keep the original material at hand for stat blocks, maps, DCs, encounter balance and rules.",
+  },
+];
+
+/** Paraphrased mechanic plus an unresolved entry; all wording is invented for this guide. */
+export const FIDELITY_EXAMPLE_PARAPHRASED = {
+  encounters: [
+    {
+      id: "enc-bridge-troll",
+      title: "The Toll Bridge",
+      description:
+        "A hulking toll-keeper blocks the bridge. The source says a strong shove or a clever bargain gets the party across.",
+      alternativeSolutions: [
+        {
+          method: "Bargain",
+          description:
+            "Offering something the toll-keeper values makes a hard check unnecessary, per the source.",
+        },
+      ],
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+      sourceRef: { page: 12 },
+    },
+  ],
+  unresolved: [
+    {
+      id: "unresolved-toll-keeper-stats",
+      code: "MECHANICS_NOT_REPRESENTED",
+      message:
+        "The toll-keeper's full stat block stays in the source and is not represented in this package.",
+      relatedEntityId: "enc-bridge-troll",
+      epistemicStatus: "unresolved",
+      context: "Page 12, The Toll Bridge",
+    },
+  ],
+};
+
+/** Structural clue that points at a location and is placed in another. */
+export const FIDELITY_EXAMPLE_STRUCTURAL = {
+  clues: [
+    {
+      id: "clue-ferry-ticket",
+      text: "A damp ferry ticket stamped with a lighthouse.",
+      reveals: "The smuggler used the night ferry.",
+      leadTargetId: "loc-lighthouse",
+      placedLocationId: "loc-docks",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+};

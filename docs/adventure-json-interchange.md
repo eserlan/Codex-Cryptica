@@ -89,6 +89,10 @@ Runtime status: Adventure collection records are not yet projected into Oracle p
 
 Correspondence for renamed, split or merged entities lives only in the package's top-level `extensions` under `codex-cryptica.adventure-correspondence`, never inside an entity. See the guide section [Revising an adventure you already imported](/adventure-import#revisions-heading).
 
+## Fidelity limits
+
+v1 carries narrative structure: locations, actors, scenes, branches, clues, secrets and alternative solutions. `system` is descriptive metadata only (a name and an optional party range); it does not make mechanics executable or portable. Mechanics, stat blocks and maps have no fields: they are kept only as short source-grounded paraphrase (with `sourceRef`) in existing text fields, or recorded as `unresolved` entries. Any mechanics or map support would be a separate, versioned schema feature. See the guide section [What converts well, and what needs manual work](/adventure-import#fidelity-heading).
+
 ## Link smoke check
 
 `bun scripts/adventure-import-link-check.mjs [--base=<origin>] [--strict-production]`

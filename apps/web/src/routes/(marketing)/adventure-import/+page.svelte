@@ -10,6 +10,10 @@
     IMPORT_OUTCOMES,
     LINK_HANDOFF_TEXT,
     COLLECTION_RULES,
+    FIDELITY_EXAMPLE_PARAPHRASED,
+    FIDELITY_EXAMPLE_STRUCTURAL,
+    FIDELITY_ROWS,
+    FIDELITY_WHO_USES_WHAT,
     CORRESPONDENCE_EXTENSION_DOC,
     EPISTEMIC_STATUSES,
     REVISION_EXAMPLE_AFTER,
@@ -566,6 +570,98 @@
         None of these break the schema, so the import succeeds. Anything the
         assistant cannot restore should appear in "Left unresolved".
       </p>
+    </section>
+
+    <!-- Fidelity limits -->
+    <section
+      aria-labelledby="fidelity-heading"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
+    >
+      <h2
+        id="fidelity-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        What converts well, and what needs manual work
+      </h2>
+      <p class="text-sm md:text-base text-theme-text/90">
+        Adventure JSON v1 carries narrative structure: places, people, scenes,
+        clues and secrets. It has no fields for game mechanics or maps.
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm border-collapse">
+          <caption class="sr-only">
+            How each kind of adventure content converts to Adventure JSON v1
+          </caption>
+          <thead>
+            <tr class="border-b border-theme-border/60 text-theme-text">
+              <th scope="col" class="py-2 pr-4 font-semibold">Content</th>
+              <th scope="col" class="py-2 pr-4 font-semibold">Converts</th>
+              <th scope="col" class="py-2 font-semibold">How v1 handles it</th>
+            </tr>
+          </thead>
+          <tbody>
+            {#each FIDELITY_ROWS as row (row.content)}
+              <tr
+                class="border-b border-theme-border/30 align-top"
+                data-fidelity-row
+              >
+                <th
+                  scope="row"
+                  class="py-2 pr-4 font-semibold text-theme-text whitespace-nowrap"
+                  >{row.content}</th
+                >
+                <td class="py-2 pr-4 text-theme-text whitespace-nowrap">
+                  {row.converts === "well"
+                    ? "Converts well"
+                    : "May need manual work"}
+                </td>
+                <td class="py-2 text-theme-text/90">{row.v1Handling}</td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-sm md:text-base text-theme-text/90">
+        The optional <code class="font-mono">system</code> field (a system name plus
+        an optional target party size and level range) is descriptive metadata. It
+        is shown in the import review, and it does not make game mechanics executable
+        or portable between systems.
+      </p>
+      <h3 class="font-header font-bold text-lg text-theme-text">
+        Who uses what
+      </h3>
+      <ul class="space-y-2 text-sm md:text-base text-theme-text">
+        {#each FIDELITY_WHO_USES_WHAT as item (item.label)}
+          <li><strong>{item.label}.</strong> {item.text}</li>
+        {/each}
+      </ul>
+      <h3 class="font-header font-bold text-lg text-theme-text">
+        Example: paraphrase, not a stat block
+      </h3>
+      <p class="text-sm text-theme-text/90">
+        A mechanic can appear as a short paraphrase with a page reference. What
+        v1 cannot hold is recorded in <code class="font-mono">unresolved</code>.
+      </p>
+      <pre
+        tabindex="0"
+        aria-label="Fidelity example: paraphrased mechanic"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
+          FIDELITY_EXAMPLE_PARAPHRASED,
+          null,
+          2,
+        )}</pre>
+      <p class="text-sm text-theme-text/90">
+        Structure converts cleanly. This clue points at one place and is found
+        in another.
+      </p>
+      <pre
+        tabindex="0"
+        aria-label="Fidelity example: structural clue"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
+          FIDELITY_EXAMPLE_STRUCTURAL,
+          null,
+          2,
+        )}</pre>
     </section>
 
     <!-- Worked example -->
