@@ -1,0 +1,68 @@
+import { describe, expect, it } from "vitest";
+import { applyCompletedTurn, parseAdventureSession } from "../src";
+import type { AdventureSession } from "../src";
+import { meta, proposal, session } from "./reducer-fixtures";
+
+const sceneIds = ["ros-scene-1-landing", "ros-scene-2-yard"];
+const pin = {
+  packageId: "reference-one-shot",
+  version: "1.0.0",
+  formatVersion: "adventure-json/v1",
+  hash: "a".repeat(64),
+};
+
+function packageSession(): AdventureSession {
+  return parseAdventureSession({
+    ...session(),
+    sourcePackage: pin,
+    packageProgress: { sceneId: "ros-scene-1-landing" },
+  });
+}
+
+function movedTo(sceneId: string) {
+  const p = proposal();
+  p.visiblePatch = { ...p.visiblePatch, packageSceneId: sceneId };
+  return p;
+}
+
+function commit(
+  s: AdventureSession,
+  p = proposal(),
+  packageSceneIds: readonly string[] = sceneIds,
+) {
+  const result = applyCompletedTurn(s, p, { ...meta, packageSceneIds });
+  if (!result.ok) throw new Error(JSON.stringify(result.errors));
+  return result.value;
+}
+
+describe("package scene progress", () => {
+  it("moves to a scene that exists in the pinned package", () => {
+    const next = commit(packageSession(), movedTo("ros-scene-2-yard"));
+    expect(next.packageProgress).toEqual({ sceneId: "ros-scene-2-yard" });
+    expect(next.turns[0]!.visiblePatch).not.toHaveProperty("packageSceneId");
+    expect(() => parseAdventureSession(next)).not.toThrow();
+  });
+
+  it("commits but keeps the scene when the ID is not in the package", () => {
+    const next = commit(packageSession(), movedTo("no-such-scene"));
+    expect(next.packageProgress).toEqual({ sceneId: "ros-scene-1-landing" });
+    expect(next.turns[0]!.dropped?.[0]).toMatch(/^packageSceneId/);
+  });
+
+  it("ignores a move when no package scene IDs are supplied", () => {
+    const next = commit(packageSession(), movedTo("ros-scene-2-yard"), []);
+    expect(next.packageProgress).toEqual({ sceneId: "ros-scene-1-landing" });
+  });
+
+  it("never creates progress on a session without a package", () => {
+    const next = commit(session(), movedTo("ros-scene-2-yard"));
+    expect(next.packageProgress).toBeUndefined();
+    expect(next.turns[0]!.dropped?.[0]).toMatch(/^packageSceneId/);
+  });
+
+  it("leaves progress alone when the turn reports no scene", () => {
+    const before = packageSession();
+    const next = commit(before);
+    expect(next.packageProgress).toEqual(before.packageProgress);
+  });
+});

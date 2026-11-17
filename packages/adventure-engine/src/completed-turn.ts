@@ -92,6 +92,22 @@ function resolveClock(
   };
 }
 
+/** A reported scene move counts only when the pinned package has that scene. */
+function resolvePackageProgress(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
+  dropped: string[],
+): void {
+  const sceneId = proposal.visiblePatch.packageSceneId;
+  if (sceneId === undefined) return;
+  if (candidate.sourcePackage && meta.packageSceneIds?.includes(sceneId)) {
+    candidate.packageProgress = { sceneId };
+    return;
+  }
+  dropped.push(`packageSceneId: unknown scene ${sceneId.slice(0, 80)}`);
+}
+
 export function applyCompletedTurn(
   sessionInput: AdventureSession,
   proposalInput: AdventureTurnProposal,
@@ -130,6 +146,7 @@ export function applyCompletedTurn(
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { time, timeAdvance } = clock;
+  resolvePackageProgress(candidate, proposal, meta, dropped);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   const placeStep = applyPlaces(

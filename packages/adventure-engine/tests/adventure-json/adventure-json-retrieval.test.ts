@@ -186,10 +186,101 @@ describe("retrieveAdventureJsonContext", () => {
     ]) {
       expect(player).not.toContain(s);
     }
-    expect(player).toContain("s2");
+    expect(player).not.toContain("s2");
+    expect(r.gmOnly.find((e) => e.id === "s1")?.text).toContain("s2");
     const gm = r.gmOnly.map((e) => e.id);
     expect(gm).toContain("loc-secret");
     expect(gm).toContain("actor-spy");
+  });
+
+  describe("GM-only companion excerpts", () => {
+    function hiddenIds(pkg: AdventureJsonV1): string[] {
+      return [
+        ...pkg.locations,
+        ...pkg.actors,
+        ...pkg.factions,
+        ...pkg.scenes,
+        ...pkg.encounters,
+        ...pkg.clues,
+        ...pkg.rumours,
+        ...pkg.items,
+        ...pkg.secrets,
+      ]
+        .filter((r) => r.visibility !== "player-visible")
+        .map((r) => r.id);
+    }
+
+    const synthetic = () =>
+      base({
+        scenes: [
+          scene("s1", {
+            branches: [{ targetSceneId: "s2", description: "Go onward" }],
+          }),
+          scene("s2", { visibility: "gm-only" }),
+        ],
+        rumours: [
+          {
+            id: "r1",
+            text: "People whisper",
+            truth: "It is true",
+            sourceLocationId: undefined,
+            targetEntityId: "s1",
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+        clues: [
+          {
+            id: "c1",
+            text: "A torn page",
+            reveals: "The mayor lied",
+            placedSceneId: "s1",
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+      });
+
+    it.each([
+      ["reference", () => refPkg],
+      ["synthetic", synthetic],
+    ])(
+      "moves truths, reveals and hidden ids out of playerSafe (%s)",
+      (_n, get) => {
+        const pkg = get();
+        const hidden = hiddenIds(pkg);
+        for (const s of pkg.scenes) {
+          const r = retrieveAdventureJsonContext(pkg, { sceneId: s.id });
+          for (const e of r.playerSafe) {
+            expect(e.text).not.toMatch(/(^|\n)(Truth|Reveals): /);
+            for (const id of hidden) expect(e.text).not.toContain(id);
+          }
+          expect(r.gmOnly.every((e) => e.visibility === "gm-only")).toBe(true);
+        }
+      },
+    );
+
+    it("keeps each moved line in a GM-only companion directly after its parent", () => {
+      const r = retrieveAdventureJsonContext(synthetic(), { sceneId: "s1" });
+      const gm = (id: string) => r.gmOnly.filter((e) => e.id === id);
+      expect(gm("r1")[0]!.text).toBe("Truth: It is true");
+      expect(gm("c1")[0]!.text).toBe("Reveals: The mayor lied");
+      expect(gm("s1")[0]!.text).toContain("Branch: s2");
+      expect(r.playerSafe.map((e) => e.id)).toEqual(
+        expect.arrayContaining(["s1", "r1", "c1"]),
+      );
+      expect(r.includedIds.filter((id) => id === "s1")).toHaveLength(1);
+    });
+
+    it("keeps the size bound with companions", () => {
+      for (const maxCharacters of [300, 600, 1200]) {
+        const r = retrieveAdventureJsonContext(synthetic(), {
+          sceneId: "s1",
+          maxCharacters,
+        });
+        expect(size(r)).toBeLessThanOrEqual(maxCharacters);
+      }
+    });
   });
 
   it("bounds a large package and keeps a priority prefix", () => {

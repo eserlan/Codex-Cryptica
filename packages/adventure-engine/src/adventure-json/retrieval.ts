@@ -46,7 +46,12 @@ export interface AdventureJsonRetrievalResult {
   sceneFallback: boolean;
 }
 
-type Line = [label: string, value: string | string[] | undefined];
+/** `secret` marks a line that is always GM-only, whatever its record's visibility. */
+type Line = [
+  label: string,
+  value: string | string[] | undefined,
+  secret?: true,
+];
 
 function buildText(lines: Line[]): string {
   const out: string[] = [];
@@ -61,7 +66,22 @@ function buildText(lines: Line[]): string {
   return out.join("\n");
 }
 
-function recordExcerpt(
+function namesAny(value: Line[1], ids: string[]): boolean {
+  const parts = Array.isArray(value)
+    ? value
+    : value === undefined
+      ? []
+      : [value];
+  return parts.some((part) => ids.some((id) => part.includes(id)));
+}
+
+/**
+ * Builds a record's excerpt. In a player-visible record, secret lines and lines
+ * naming a record that is not player-visible move into a GM-only companion
+ * excerpt with the same identity, which directly follows its parent.
+ */
+function recordExcerpts(
+  hiddenIds: string[],
   kind: AdventureJsonExcerptKind,
   record: {
     id: string;
@@ -70,15 +90,29 @@ function recordExcerpt(
     sourceRef?: SourceReference;
   },
   lines: Line[],
-): AdventureJsonExcerpt {
-  return {
+): AdventureJsonExcerpt[] {
+  const excerpt = (visibility: Visibility, from: Line[]) => ({
     id: record.id,
     kind,
-    visibility: record.visibility,
+    visibility,
     epistemicStatus: record.epistemicStatus,
     ...(record.sourceRef !== undefined ? { sourceRef: record.sourceRef } : {}),
-    text: buildText(lines),
-  };
+    text: buildText(from),
+  });
+  if (record.visibility !== "player-visible") {
+    return [excerpt(record.visibility, lines)];
+  }
+  const moved = (line: Line) =>
+    line[2] === true || namesAny(line[1], hiddenIds);
+  const companion = lines.filter(moved);
+  if (companion.length === 0) return [excerpt(record.visibility, lines)];
+  return [
+    excerpt(
+      record.visibility,
+      lines.filter((line) => !moved(line)),
+    ),
+    excerpt("gm-only", companion),
+  ];
 }
 
 function clampMaxCharacters(value: number | undefined): number {
@@ -133,27 +167,47 @@ interface Selection {
   excerpts: AdventureJsonExcerpt[];
   /** Ids of selected records that later tiers and secrets match against. */
   selectedIds: Set<string>;
+  /** Ids of every package record that is not player-visible. */
+  hiddenIds: string[];
   actorIds: Set<string>;
   seen: Set<string>;
 }
 
 function add(
   sel: Selection,
-  excerpt: AdventureJsonExcerpt,
+  excerpts: AdventureJsonExcerpt | AdventureJsonExcerpt[],
   selectable: boolean,
 ): void {
-  const key = `${excerpt.kind}:${excerpt.id}`;
-  if (sel.seen.has(key)) return;
-  sel.seen.add(key);
-  sel.excerpts.push(excerpt);
-  if (selectable) sel.selectedIds.add(excerpt.id);
+  for (const excerpt of Array.isArray(excerpts) ? excerpts : [excerpts]) {
+    const key = `${excerpt.kind}:${excerpt.id}:${excerpt.visibility}`;
+    if (sel.seen.has(key)) continue;
+    sel.seen.add(key);
+    sel.excerpts.push(excerpt);
+    if (selectable) sel.selectedIds.add(excerpt.id);
+  }
+}
+
+function hiddenRecordIds(pkg: AdventureJsonV1): string[] {
+  return [
+    ...pkg.locations,
+    ...pkg.actors,
+    ...pkg.factions,
+    ...pkg.scenes,
+    ...pkg.encounters,
+    ...pkg.clues,
+    ...pkg.rumours,
+    ...pkg.items,
+    ...pkg.secrets,
+  ]
+    .filter((record) => record.visibility !== "player-visible")
+    .map((record) => record.id);
 }
 
 function addScene(sel: Selection): void {
   const scene = sel.scene;
   add(
     sel,
-    recordExcerpt("scene", scene, [
+    recordExcerpts(sel.hiddenIds, "scene", scene, [
       ["Title", scene.title],
       ["Summary", scene.summary],
       ["Location", scene.locationId],
@@ -219,7 +273,7 @@ function addPremiseAndSystem(sel: Selection): void {
 function addLocation(sel: Selection, location: AdventureJsonLocation): void {
   add(
     sel,
-    recordExcerpt("location", location, [
+    recordExcerpts(sel.hiddenIds, "location", location, [
       ["Name", location.name],
       ["Summary", location.summary],
       ["Description", location.description],
@@ -246,7 +300,7 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
   for (const e of encounters) {
     add(
       sel,
-      recordExcerpt("encounter", e, [
+      recordExcerpts(sel.hiddenIds, "encounter", e, [
         ["Title", e.title],
         ["Scene", e.sceneId],
         ["Location", e.locationId],
@@ -280,7 +334,7 @@ function addActors(
     sel.actorIds.add(a.id);
     add(
       sel,
-      recordExcerpt("actor", a, [
+      recordExcerpts(sel.hiddenIds, "actor", a, [
         ["Name", a.name],
         ["Summary", a.summary],
         ["Description", a.description],
@@ -305,9 +359,9 @@ function addClues(sel: Selection): void {
     if (!matches) continue;
     add(
       sel,
-      recordExcerpt("clue", c, [
+      recordExcerpts(sel.hiddenIds, "clue", c, [
         ["Text", c.text],
-        ["Reveals", c.reveals],
+        ["Reveals", c.reveals, true],
         ["Lead target", c.leadTargetId],
         ["Placed scene", c.placedSceneId],
         ["Placed location", c.placedLocationId],
@@ -327,7 +381,7 @@ function addItems(sel: Selection): void {
     if (!matches) continue;
     add(
       sel,
-      recordExcerpt("item", i, [
+      recordExcerpts(sel.hiddenIds, "item", i, [
         ["Name", i.name],
         ["Summary", i.summary],
         ["Description", i.description],
@@ -347,9 +401,9 @@ function addRumours(sel: Selection): void {
     if (!refs.some((id) => id !== undefined && anchors.has(id))) continue;
     add(
       sel,
-      recordExcerpt("rumour", r, [
+      recordExcerpts(sel.hiddenIds, "rumour", r, [
         ["Text", r.text],
-        ["Truth", r.truth],
+        ["Truth", r.truth, true],
         ["Source actor", r.sourceActorId],
         ["Source location", r.sourceLocationId],
         ["Target", r.targetEntityId],
@@ -366,7 +420,7 @@ function addSecrets(sel: Selection): void {
     }
     add(
       sel,
-      recordExcerpt("secret", s, [
+      recordExcerpts(sel.hiddenIds, "secret", s, [
         ["Text", s.text],
         ["Related", s.relatedEntityIds],
       ]),
@@ -390,6 +444,7 @@ function selectExcerpts(
     locationId: location?.id,
     excerpts: [],
     selectedIds: new Set(),
+    hiddenIds: hiddenRecordIds(pkg),
     actorIds: new Set(),
     seen: new Set(),
   };
@@ -464,7 +519,7 @@ export function retrieveAdventureJsonContext(
 
   return {
     ...splitByVisibility(kept),
-    includedIds: kept.map((e) => e.id),
+    includedIds: [...new Set(kept.map((e) => e.id))],
     truncated,
     sceneFallback,
   };

@@ -188,6 +188,7 @@ const collectionPatch = <TAdd extends z.ZodType, TUpdate extends z.ZodType>(
   });
 
 export const visiblePatchSchema = z.object({
+  packageSceneId: id.optional(),
   location: newStateFactSchema.nullable().optional(),
   situation: newStateFactSchema.nullable().optional(),
   objectives: collectionPatch(newStateFactSchema, stateFactSchema),
@@ -415,6 +416,7 @@ export const adventureSessionSchema = z
     premise: text,
     sourceRecords: z.array(sourceSchema),
     sourcePackage: sourcePackageRefSchema.optional(),
+    packageProgress: z.object({ sceneId: id }).strict().optional(),
     scenarioCollection: scenarioCollectionSchema.optional(),
     worldEntry: worldEntrySchema.optional(),
     historicalAnchor: historicalAnchorSchema.optional(),
