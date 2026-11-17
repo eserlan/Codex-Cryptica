@@ -510,4 +510,39 @@ describe("markdown.ts utility", () => {
       expect(metadata.report).toBeUndefined();
     });
   });
+  describe("trait packages", () => {
+    it("round-trips traitPackage and traitSelections through frontmatter", () => {
+      const trait = {
+        id: "t1",
+        name: "Brute",
+        description: "Strong",
+        adjustments: [{ target: "str_score", amount: 2 }],
+      };
+      const entity = EntitySchema.parse({
+        id: "c",
+        type: "creature",
+        title: "Kethari",
+        traitPackage: { kind: "species", traits: [trait] },
+        traitSelections: [
+          {
+            kind: "species",
+            sourceId: "s",
+            sourceTitle: "Kethari",
+            appliedAt: 5,
+            traits: [trait],
+          },
+        ],
+      });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.traitPackage).toEqual(entity.traitPackage);
+      expect(metadata.traitSelections).toEqual(entity.traitSelections);
+    });
+
+    it("adds neither field to an ordinary entity", () => {
+      const entity = EntitySchema.parse({ id: "n", type: "note", title: "N" });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.traitPackage).toBeUndefined();
+      expect(metadata.traitSelections).toBeUndefined();
+    });
+  });
 });
