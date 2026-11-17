@@ -190,6 +190,24 @@ function trimExcerpt(
   return withText(low);
 }
 
+function boundSourceRefQuote(
+  excerpt: AdventureJsonExcerpt,
+  maxCharacters: number,
+): { excerpt: AdventureJsonExcerpt; truncated: boolean } {
+  const quote = excerpt.sourceRef?.textQuote;
+  const limit = Math.floor(maxCharacters / 8);
+  if (quote === undefined || quote.length <= limit) {
+    return { excerpt, truncated: false };
+  }
+  return {
+    excerpt: {
+      ...excerpt,
+      sourceRef: { ...excerpt.sourceRef!, textQuote: quote.slice(0, limit) },
+    },
+    truncated: true,
+  };
+}
+
 interface Selection {
   pkg: AdventureJsonV1;
   scene: AdventureJsonScene;
@@ -206,6 +224,28 @@ interface Selection {
   stopped: boolean;
 }
 
+function addOversizedExcerpt(
+  sel: Selection,
+  excerpt: AdventureJsonExcerpt,
+  selectable: boolean,
+  focusScene: boolean,
+): void {
+  sel.truncated = true;
+  if (!focusScene) {
+    sel.stopped = true;
+    return;
+  }
+  const trimmed = trimExcerpt(excerpt, sel.maxCharacters);
+  if (!trimmed) {
+    sel.invalidBudget = true;
+    sel.stopped = true;
+    return;
+  }
+  sel.excerpts.push(trimmed);
+  sel.stopped = true;
+  if (selectable) sel.selectedIds.add(trimmed.id);
+}
+
 function add(
   sel: Selection,
   excerpt: AdventureJsonExcerpt,
@@ -214,41 +254,15 @@ function add(
 ): void {
   if (sel.invalidBudget) return;
   if (sel.stopped) return;
-  const quoteLimit = Math.floor(sel.maxCharacters / 8);
-  if (
-    excerpt.sourceRef?.textQuote !== undefined &&
-    excerpt.sourceRef.textQuote.length > quoteLimit
-  ) {
-    excerpt = {
-      ...excerpt,
-      sourceRef: {
-        ...excerpt.sourceRef,
-        textQuote: excerpt.sourceRef.textQuote.slice(0, quoteLimit),
-      },
-    };
-    sel.truncated = true;
-  }
+  const bounded = boundSourceRefQuote(excerpt, sel.maxCharacters);
+  excerpt = bounded.excerpt;
+  sel.truncated ||= bounded.truncated;
   const key = `${excerpt.kind}:${excerpt.id}`;
   if (sel.seen.has(key)) return;
   sel.seen.add(key);
   const candidate = [...sel.excerpts, excerpt];
   if (serialisedSize(candidate) > sel.maxCharacters) {
-    if (!focusScene) {
-      sel.truncated = true;
-      sel.stopped = true;
-      return;
-    }
-    const trimmed = trimExcerpt(excerpt, sel.maxCharacters);
-    if (!trimmed) {
-      sel.invalidBudget = true;
-      sel.truncated = true;
-      sel.stopped = true;
-      return;
-    }
-    sel.excerpts.push(trimmed);
-    sel.truncated = true;
-    sel.stopped = true;
-    if (selectable) sel.selectedIds.add(trimmed.id);
+    addOversizedExcerpt(sel, excerpt, selectable, focusScene);
     return;
   }
   sel.excerpts.push(excerpt);
