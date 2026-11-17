@@ -121,6 +121,26 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     );
   });
 
+  it("states that visibility covers the whole record, in the page and the copied prompt", () => {
+    render(Page);
+
+    expect(screen.getByText(/single fields/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /title, hook, background and optional description player-safe/,
+      ),
+    ).toBeTruthy();
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      '"visibility" applies to the WHOLE record, never to individual fields',
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      'separate "secrets" entry that lists the record in "relatedEntityIds"',
+    );
+  });
+
   it("includes the offline collection contract in the displayed and copied prompt", () => {
     const { container } = render(Page);
     const prompt = container.querySelector("pre")?.textContent;
