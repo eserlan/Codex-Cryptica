@@ -465,7 +465,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       const pres = [...container.querySelectorAll("pre")];
       const coverage = container.querySelector(
         'pre[aria-label="Coverage report prompt"]',
-      ) as HTMLElement;
+      ) as HTMLPreElement;
       expect(coverage.getAttribute("tabindex")).toBe("0");
       expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
       expect(pres.indexOf(coverage)).toBeGreaterThan(0);
