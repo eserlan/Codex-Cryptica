@@ -40,7 +40,7 @@ class TestMuseWorkflowScript(unittest.TestCase):
         source = WORKFLOW_PATH.read_text()
         for token in ("bin/job", "bin/route", "bin/gate", "host.parallel", "host.agent"):
             self.assertIn(token, source)
-        self.assertIn("advance ${jobId} needs-human", source)
+        self.assertIn('jobCmd("advance", jobId, "needs-human")', source)
         self.assertNotIn("job merge", source)
         self.assertNotIn("jobBin} merge", source)
 
@@ -67,7 +67,7 @@ const calls = [];
 const host = {{ args: {{ mode: "run", repo: "/repo", queue_label: "factory; touch /tmp/muse-workflow-audit; #" }}, agent: async (request) => {{
   const command = request.input.match(/:\\n\\n([\\s\\S]*?)\\n\\nReturn exitCode/)[1];
   calls.push({{ command, model: request.model, effort: request.effort }});
-  const stdout = command === "cat /repo/factory/config.json" ? JSON.stringify(config) : "";
+  const stdout = command.includes("config.json") ? JSON.stringify(config) : "";
   return {{ data: {{ exitCode: 0, stdout }} }};
 }} }};
 await workflow(host);
@@ -83,6 +83,30 @@ console.log(JSON.stringify(calls));'''
             "FACTORY_QUEUE_LABEL='factory; touch /tmp/muse-workflow-audit; #' ",
             calls[1]["command"],
         )
+
+    def test_workflow_rejects_malformed_stacked_job_id(self):
+        workflow_url = WORKFLOW_PATH.resolve().as_uri()
+        script = f'''import workflow from {json.dumps(workflow_url)};
+const config = JSON.parse(await (await import("node:fs/promises")).readFile({json.dumps(str(FACTORY_DIR / "config.json"))}, "utf8"));
+const calls = [];
+const host = {{ args: {{ mode: "single", issue: 4835, on: "x; touch /tmp/pwned", repo: "/repo" }}, agent: async (request) => {{
+  calls.push(request.input);
+  const stdout = request.input.includes("config.json") ? JSON.stringify(config) : "";
+  return {{ data: {{ exitCode: 0, stdout }} }};
+}} }};
+try {{ await workflow(host); console.log("NO-THROW"); }} catch (e) {{ console.log("THREW:" + e.message); }}
+console.log("CALLS:" + calls.length);'''
+        result = subprocess.run(
+            ["node", "--input-type=module", "-e", script], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("THREW:muse_workflow: invalid job id: x; touch /tmp/pwned", result.stdout)
+        self.assertFalse(any("create" in c and "pwned" in c for c in result.stdout.splitlines()))
+
+    def test_workflow_intake_requires_exact_decision(self):
+        source = WORKFLOW_PATH.read_text()
+        self.assertIn('["ACCEPT", "NEEDS-INFO", "REJECT"].includes(decision)', source)
+        self.assertNotIn("DECISION:\\\\s*(ACCEPT|NEEDS-INFO|REJECT)", source)
 
 
 class TestMuseSkill(unittest.TestCase):

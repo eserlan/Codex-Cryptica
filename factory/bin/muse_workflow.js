@@ -152,19 +152,42 @@ export default async function workflow(host) {
     return `'${String(value).replace(/'/g, `'\\''`)}'`;
   }
 
+  // Job ids and issue/PR numbers reach shell commands, so they are validated
+  // as plain tokens in addition to being shell-quoted at every call site.
+  function assertJobId(value) {
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(String(value))) {
+      throw new Error(`muse_workflow: invalid job id: ${value}`);
+    }
+    return String(value);
+  }
+
+  function assertNumber(value, what) {
+    if (!/^\d+$/.test(String(value))) {
+      throw new Error(`muse_workflow: invalid ${what}: ${value}`);
+    }
+    return String(value);
+  }
+
+  const jobCmd = (...args) =>
+    [shellQuote(jobBin), ...args.map((a) => shellQuote(a))].join(" ");
+
   // Bootstrap the workflow with the built-in command-runner model, then use
   // the repository's config for every subsequent child selection.
-  const configText = (await runCmdChecked(`cat ${factory}/config.json`, "factory-config")).stdout;
+  const configText = (await runCmdChecked(`cat ${shellQuote(`${factory}/config.json`)}`, "factory-config")).stdout;
   const configuredModels = JSON.parse(configText).muse_models;
   if (configuredModels && typeof configuredModels === "object") museModels = configuredModels;
 
   async function loadJob(jobId) {
-    const res = await runCmdChecked(`cat ${jobsDir}/${jobId}/job.json`, `load-${jobId}`);
+    assertJobId(jobId);
+    const res = await runCmdChecked(
+      `cat ${shellQuote(`${jobsDir}/${jobId}/job.json`)}`,
+      `load-${jobId}`,
+    );
     return JSON.parse(res.stdout);
   }
 
   async function firstLine(path) {
-    const res = await runCmd(`head -1 ${path} 2>/dev/null || true`, "first-line");
+    const res = await runCmd(`head -1 ${shellQuote(path)} 2>/dev/null || true`, "first-line");
     return res.stdout.split("\n", 1)[0].trim();
   }
 
@@ -254,24 +277,28 @@ export default async function workflow(host) {
         wfPhase(`${jobId}: intake`);
         await runRole("intake", job, "", "opus");
         const line = await firstLine(`${jobsDir}/${jobId}/intake.md`);
-        const match = /^DECISION:\s*(ACCEPT|NEEDS-INFO|REJECT)/.exec(line);
-        if (!match) throw new Error(`${jobId}: invalid intake.md first line: ${line}`);
-        if (match[1] === "ACCEPT") {
-          await runCmdChecked(`${routeBin} ${jobId}`, `route-${jobId}`);
-          await runCmdChecked(`${jobBin} advance ${jobId} spec`, `advance-${jobId}-spec`);
+        // The intake contract is an exact enum line; a recognised prefix
+        // followed by extra text is malformed and must stop the job.
+        const decision = line.replace(/^DECISION:\s*/, "");
+        if (!["ACCEPT", "NEEDS-INFO", "REJECT"].includes(decision)) {
+          throw new Error(`${jobId}: invalid intake.md first line: ${line}`);
+        }
+        if (decision === "ACCEPT") {
+          await runCmdChecked(`${shellQuote(routeBin)} ${shellQuote(jobId)}`, `route-${jobId}`);
+          await runCmdChecked(jobCmd("advance", jobId, "spec"), `advance-${jobId}-spec`);
           job = await loadJob(jobId);
           wfLog(`${jobId} #${job.issue}: intake ACCEPT -> spec`);
-        } else if (match[1] === "NEEDS-INFO") {
-          await runCmdChecked(`${jobBin} advance ${jobId} needs-info`, `advance-${jobId}-needs-info`);
+        } else if (decision === "NEEDS-INFO") {
+          await runCmdChecked(jobCmd("advance", jobId, "needs-info"), `advance-${jobId}-needs-info`);
           wfLog(`${jobId} #${job.issue}: intake NEEDS-INFO -> parked`);
         } else {
-          await runCmdChecked(`${jobBin} advance ${jobId} rejected`, `advance-${jobId}-rejected`);
+          await runCmdChecked(jobCmd("advance", jobId, "rejected"), `advance-${jobId}-rejected`);
           wfLog(`${jobId} #${job.issue}: intake REJECT -> rejected`);
         }
       } else if (stage === "spec") {
         wfPhase(`${jobId}: spec`);
         await runRole("spec-writer", job, "", "opus");
-        await runCmdChecked(`${jobBin} advance ${jobId} build`, `advance-${jobId}-build`);
+        await runCmdChecked(jobCmd("advance", jobId, "build"), `advance-${jobId}-build`);
         wfLog(`${jobId} #${job.issue}: spec ready -> build (round 1)`);
       } else if (stage === "build") {
         const round = job.round;
@@ -282,10 +309,10 @@ export default async function workflow(host) {
         await runRole("builder", job, buildRoundInstruction(job), "sonnet");
         const status = await firstLine(`${jobsDir}/${jobId}/build.md`);
         if (status === "STATUS: BLOCKED") {
-          await runCmdChecked(`${jobBin} advance ${jobId} needs-human`, `advance-${jobId}-blocked`);
+          await runCmdChecked(jobCmd("advance", jobId, "needs-human"), `advance-${jobId}-blocked`);
           wfLog(`${jobId} #${job.issue}: build BLOCKED -> needs-human`);
         } else if (status === "STATUS: READY") {
-          const adv = await runCmd(`${jobBin} advance ${jobId} gate`, `advance-${jobId}-gate`);
+          const adv = await runCmd(jobCmd("advance", jobId, "gate"), `advance-${jobId}-gate`);
           if (adv.exitCode !== 0) {
             const refusal = (adv.stderr || adv.stdout).trim();
             wfLog(`${jobId} #${job.issue}: advance to gate refused (${refusal}); resuming builder once`);
@@ -296,7 +323,7 @@ export default async function workflow(host) {
                 `Fix the issue (commit a clean tree, push the branch, ensure an open draft PR), update build.md, and finish.`,
               "sonnet",
             );
-            await runCmdChecked(`${jobBin} advance ${jobId} gate`, `advance-${jobId}-gate-retry`);
+            await runCmdChecked(jobCmd("advance", jobId, "gate"), `advance-${jobId}-gate-retry`);
           }
           wfLog(`${jobId} #${job.issue}: build round ${round} READY -> gate`);
         } else {
@@ -305,14 +332,14 @@ export default async function workflow(host) {
       } else if (stage === "gate") {
         const round = job.round;
         wfPhase(`${jobId}: gate (round ${round})`);
-        const gate = await runCmd(`${gateBin} ${jobId}`, `gate-${jobId}`);
+        const gate = await runCmd(`${shellQuote(gateBin)} ${shellQuote(jobId)}`, `gate-${jobId}`);
         if (gate.exitCode === 0) {
-          await runCmdChecked(`${jobBin} advance ${jobId} review`, `advance-${jobId}-review`);
+          await runCmdChecked(jobCmd("advance", jobId, "review"), `advance-${jobId}-review`);
           wfLog(`${jobId} #${job.issue}: gate PASS -> review`);
         } else {
           job = await loadJob(jobId);
           const target = job.round >= job.round_limit ? "needs-human" : "build";
-          await runCmdChecked(`${jobBin} advance ${jobId} ${target}`, `advance-${jobId}-${target}`);
+          await runCmdChecked(jobCmd("advance", jobId, target), `advance-${jobId}-${target}`);
           wfLog(`${jobId} #${job.issue}: gate FAIL (round ${round}) -> ${target}`);
         }
       } else if (stage === "review") {
@@ -323,7 +350,7 @@ export default async function workflow(host) {
         const pending = [];
         for (const lens of Object.keys(reviewers)) {
           const exists = await runCmd(
-            `test -f ${jobsDir}/${jobId}/round-${round}/review-${lens}.md && echo yes || echo no`,
+            `test -f ${shellQuote(`${jobsDir}/${jobId}/round-${round}/review-${lens}.md`)} && echo yes || echo no`,
             `review-check-${lens}`,
           );
           if (!exists.stdout.includes("yes")) pending.push(lens);
@@ -347,16 +374,16 @@ export default async function workflow(host) {
             roleResult(results[i], job, `reviewer-${pending[i]}`);
           }
         }
-        await runCmdChecked(`${jobBin} sync ${jobId}`, `sync-${jobId}`);
+        await runCmdChecked(jobCmd("sync", jobId), `sync-${jobId}`);
         job = await loadJob(jobId);
         const reviews = job.reviews || {};
         const changes = Object.keys(reviews).filter((k) => reviews[k] === "CHANGES");
         if (!changes.length) {
-          await runCmdChecked(`${jobBin} advance ${jobId} approve`, `advance-${jobId}-approve`);
+          await runCmdChecked(jobCmd("advance", jobId, "approve"), `advance-${jobId}-approve`);
           wfLog(`${jobId} #${job.issue}: all reviews PASS -> approve`);
         } else {
           const target = job.round >= job.round_limit ? "needs-human" : "build";
-          await runCmdChecked(`${jobBin} advance ${jobId} ${target}`, `advance-${jobId}-${target}`);
+          await runCmdChecked(jobCmd("advance", jobId, target), `advance-${jobId}-${target}`);
           wfLog(`${jobId} #${job.issue}: reviews CHANGES (${changes.join(", ")}) -> ${target}`);
         }
       } else if (stage === "approve") {
@@ -367,15 +394,15 @@ export default async function workflow(host) {
         const decision = await firstLine(`${jobsDir}/${jobId}/decision.md`);
         // Repo policy: the factory never merges; APPROVE and ESCALATE both
         // hand the ready PR to a human via needs-human.
-        await runCmdChecked(`${jobBin} advance ${jobId} needs-human`, `advance-${jobId}-needs-human`);
+        await runCmdChecked(jobCmd("advance", jobId, "needs-human"), `advance-${jobId}-needs-human`);
         wfLog(`${jobId} #${job.issue}: approver ${decision} -> needs-human (PR #${job.pr} ready)`);
       } else if (stage === "merging") {
         const pr = await runCmd(
-          `gh pr view ${job.pr} --json state --jq .state`,
+          `gh pr view ${shellQuote(assertNumber(job.pr, "PR number"))} --json state --jq .state`,
           `pr-state-${jobId}`,
         );
         const target = pr.stdout.trim() === "MERGED" ? "merged" : "needs-human";
-        await runCmdChecked(`${jobBin} advance ${jobId} ${target}`, `advance-${jobId}-${target}`);
+        await runCmdChecked(jobCmd("advance", jobId, target), `advance-${jobId}-${target}`);
         wfLog(`${jobId} #${job.issue}: legacy merging -> ${target}`);
       } else {
         throw new Error(`${jobId}: unknown stage ${stage}`);
@@ -405,20 +432,21 @@ export default async function workflow(host) {
   }
 
   function track(touched, batch, jobId) {
+    assertJobId(jobId);
     batch.push(jobId);
     if (!touched.includes(jobId)) touched.push(jobId);
   }
 
   async function resumeRow(row, touched, batch) {
     if (row.stage === "needs-info") {
-      await runCmdChecked(`${jobBin} advance ${row.job} intake`, `advance-${row.job}-intake`);
+      await runCmdChecked(jobCmd("advance", assertJobId(row.job), "intake"), `advance-${row.job}-intake`);
       wfLog(`${row.job} #${row.issue}: author replied -> resuming at intake`);
     }
     track(touched, batch, row.job);
   }
 
   async function newRow(row, touched, batch) {
-    const created = await runCmdChecked(`${jobBin} create ${row.issue}`, `create-${row.issue}`);
+    const created = await runCmdChecked(jobCmd("create", assertNumber(row.issue, "issue")), `create-${row.issue}`);
     const jobId = created.stdout.trim().split("\n").pop();
     wfLog(`${jobId} #${row.issue}: created new job -> intake`);
     track(touched, batch, jobId);
@@ -426,7 +454,7 @@ export default async function workflow(host) {
 
   function queueCommand() {
     const prefix = wfArgs.queue_label ? `FACTORY_QUEUE_LABEL=${shellQuote(wfArgs.queue_label)} ` : "";
-    return `${prefix}${jobBin} queue`;
+    return `${prefix}${jobCmd("queue")}`;
   }
 
   async function dispatchRow(row, touched, batch) {
@@ -448,9 +476,9 @@ export default async function workflow(host) {
     if (!target) throw new Error("mode 'single' requires args.issue or args.job");
     let jobId = null;
     if (!/^\d+$/.test(target)) {
-      jobId = target;
+      jobId = assertJobId(target);
     } else {
-      const out = await runCmdChecked(`${jobBin} queue`, "job-queue-single");
+      const out = await runCmdChecked(jobCmd("queue"), "job-queue-single");
       const row = parseQueue(out.stdout).find((r) => r.issue === parseInt(target, 10));
       if (row && !["resume", "new"].includes(row.action)) {
         return { status: "blocked", touched: [], notes: [`Issue #${target} cannot run: ${row.note}`] };
@@ -458,13 +486,13 @@ export default async function workflow(host) {
       if (row?.action === "resume") {
         jobId = row.job;
         if (row.stage === "needs-info") {
-          await runCmdChecked(`${jobBin} advance ${jobId} intake`, `advance-${jobId}-intake`);
+          await runCmdChecked(jobCmd("advance", jobId, "intake"), `advance-${jobId}-intake`);
         }
       }
       if (!jobId) {
         const cmd = wfArgs.on
-          ? `${jobBin} create ${target} --on ${wfArgs.on}`
-          : `${jobBin} create ${target}`;
+          ? jobCmd("create", assertNumber(target, "issue"), "--on", assertJobId(wfArgs.on))
+          : jobCmd("create", assertNumber(target, "issue"));
         const created = await runCmdChecked(cmd, `create-${target}`);
         jobId = created.stdout.trim().split("\n").pop();
       }
@@ -485,11 +513,11 @@ export default async function workflow(host) {
   let summary = "";
   let costs = "";
   if (touched.length) {
-    summary = (await runCmd(`${jobBin} summary ${touched.join(" ")}`, "job-summary")).stdout.trim();
-    costs = (await runCmd(`${jobBin} costs ${touched.join(" ")}`, "job-costs")).stdout.trim();
+    summary = (await runCmd(jobCmd("summary", ...touched.map(assertJobId)), "job-summary")).stdout.trim();
+    costs = (await runCmd(jobCmd("costs", ...touched.map(assertJobId)), "job-costs")).stdout.trim();
   }
   const finalQueue = parseQueue(
-    (await runCmdChecked(`${jobBin} queue`, "job-queue-final")).stdout,
+    (await runCmdChecked(jobCmd("queue"), "job-queue-final")).stdout,
   );
   const waiting = finalQueue
     .filter((r) => r.action === "wait")
