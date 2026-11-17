@@ -6,6 +6,7 @@ import {
   guideProblems,
   jsonAssetProblems,
   productionLinks,
+  run,
 } from "./adventure-import-link-check.mjs";
 
 const ok = { status: 200, contentType: "application/json", body: "{}" };
@@ -48,6 +49,85 @@ describe("adventure import link check", () => {
       "https://codexcryptica.com/adventure-import",
       "https://codexcryptica.com/schemas/adventure-json/v1.json",
     ]);
+  });
+
+  it("checks versioned prompt URLs when the base is production", async () => {
+    const originalFetch = globalThis.fetch;
+    const originalLog = console.log;
+    const requested = [];
+    const html = [
+      "./schemas/adventure-json/v1.json",
+      "./schemas/adventure-json/examples/minimal.v1.json",
+      "./schemas/adventure-json/examples/reference-one-shot.v1.json",
+      CTA_HREF,
+      "https://codexcryptica.com/schemas/adventure-json/v2.json",
+    ]
+      .map((href) => `<a href="${href}">x</a>`)
+      .join("");
+    const responses = new Map([
+      ["/adventure-import", { contentType: "text/html", body: html }],
+      [
+        "/schemas/adventure-json/v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      [
+        "/schemas/adventure/v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      [
+        "/schemas/adventure-json/examples/minimal.v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      [
+        "/schemas/adventure-json/examples/reference-one-shot.v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      ["/schemas/adventure-json/v2.json", { status: 404, body: "{}" }],
+      ["/adventure", { contentType: "text/html", body: "<html>app</html>" }],
+      [
+        "/llms.txt",
+        {
+          contentType: "text/plain",
+          body: "https://codexcryptica.com/adventure-import",
+        },
+      ],
+      [
+        "/llms-full.txt",
+        { contentType: "text/plain", body: "/adventure-import" },
+      ],
+    ]);
+
+    globalThis.fetch = async (input) => {
+      const url = new URL(String(input));
+      requested.push(url.href);
+      const {
+        status = 200,
+        contentType = "application/json",
+        body,
+      } = responses.get(url.pathname);
+      return {
+        status,
+        headers: { get: () => contentType },
+        text: async () => body,
+      };
+    };
+    console.log = () => {};
+
+    try {
+      const result = await run({
+        base: "https://codexcryptica.com",
+        strictProduction: true,
+      });
+      expect(requested).toContain(
+        "https://codexcryptica.com/schemas/adventure-json/v2.json",
+      );
+      expect(result.errors).toContain(
+        "https://codexcryptica.com/schemas/adventure-json/v2.json: HTTP 404 on production; testers on https://codexcryptica.com are sent there by the guide's prompt",
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+      console.log = originalLog;
+    }
   });
 
   it("does not judge app routes by HTTP status", () => {

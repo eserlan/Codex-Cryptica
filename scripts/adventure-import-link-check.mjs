@@ -159,7 +159,6 @@ export async function run({ base, strictProduction }) {
   ]);
   errors.push(...discoveryProblems(llms.body, llmsFull.body));
 
-  if (base === PRODUCTION) return { errors, warnings: [] };
   const prod = await checkProductionDependencies(
     base,
     guide.body,
