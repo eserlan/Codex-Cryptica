@@ -160,7 +160,8 @@ its PR is merged into the base branch (`staging`); `factory/bin/job queue` moves
 it to `merged` then. Feedback still goes through `job feedback`.
 
 A job is finished for this run when it reaches `merged`, `rejected`,
-`needs-info` or `needs-human`.
+`needs-info`, `needs-human` or `dev-agents`. A `dev-agents` job remains pending
+until its PR merges into the base branch.
 
 ## /factory run
 
