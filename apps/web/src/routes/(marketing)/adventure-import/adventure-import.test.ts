@@ -891,7 +891,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
   describe("revision prompt text", () => {
     it("adds rule 9 and keeps rules 1 and 8", () => {
-      expect(CANONICAL_CONVERSION_PROMPT).toContain("Return ONLY valid JSON");
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
+      );
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "8. Self-audit before returning",
       );
