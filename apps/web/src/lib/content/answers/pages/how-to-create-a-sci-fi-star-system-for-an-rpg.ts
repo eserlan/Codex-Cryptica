@@ -155,6 +155,14 @@ export const howToCreateASciFiStarSystemForAnRpg: AnswerConfigInput = {
       href: "/for/traveller",
     },
   ],
+  relatedTopics: [
+    {
+      title: "Star Systems & Sci-Fi Campaign Building",
+      href: "/topics/star-systems",
+      description:
+        "A learning path from destinations and routes to factions and a flashpoint, with the guides and generators for each step.",
+    },
+  ],
   relatedAnswers: [
     "how-do-you-make-an-alien-species-feel-believable",
     "how-do-you-make-travel-interesting-in-a-tabletop-rpg",

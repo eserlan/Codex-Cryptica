@@ -164,6 +164,30 @@ export const topicEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "topic-star-systems",
+    pageKind: "hub",
+    canonicalPath: "/topics/star-systems",
+    primaryIntent: "sci-fi star system campaign building hub",
+    intentAliases: [
+      "sci-fi campaign building guides",
+      "space rpg star system learning path",
+      "building a sci-fi rpg campaign setting",
+      "sci-fi star system campaign resources",
+    ],
+    userJob: "navigate",
+    uniqueValue:
+      "A navigator and learning path for building a playable sci-fi star system campaign, from destinations and routes to factions and a flashpoint. It links the guides and generators in order, distinct from /generators/star-system (creates a system), the star-system answer (one framework) and /generators/sci-fi (a list of generators).",
+    parentCluster: "cosmography",
+    relatedIntents: [
+      "generator-star-system",
+      "answer-create-sci-fi-star-system",
+      "hub-sci-fi",
+      "for-space-opera",
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "topics-index",
     pageKind: "index",
     canonicalPath: "/topics",
@@ -171,7 +195,7 @@ export const topicEntries: DiscoveryEntryInput[] = [
     intentAliases: ["rpg topic hubs", "ttrpg campaign topics list"],
     userJob: "navigate",
     uniqueValue:
-      "Lists every live topic hub (heists, puzzles, pirates, solo play, D&D) in one crawlable directory so a reader can choose a campaign theme and reach its guides, examples and generators. /explore is the site-wide portal to every section; this page covers only topic hubs.",
+      "Lists every live topic hub (heists, puzzles, pirates, solo play, D&D, star systems) in one crawlable directory so a reader can choose a campaign theme and reach its guides, examples and generators. /explore is the site-wide portal to every section; this page covers only topic hubs.",
     relatedIntents: ["explore-index"],
     indexable: true,
     status: "live",

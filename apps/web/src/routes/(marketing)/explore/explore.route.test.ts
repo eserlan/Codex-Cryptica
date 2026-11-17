@@ -111,6 +111,7 @@ describe("/explore route", () => {
       "/topics/solo-rpg",
       "/topics/dnd",
       "/topics/dnd-beginners",
+      "/topics/star-systems",
     ]);
     const allTopics = topicSection?.querySelector('a[href="/topics"]');
     expect(allTopics?.textContent).toContain("All topics");
@@ -121,6 +122,7 @@ describe("/explore route", () => {
       "/topics/solo-rpg",
       "/topics/dnd",
       "/topics/dnd-beginners",
+      "/topics/star-systems",
     ]) {
       expect(document.querySelectorAll(`a[href="${href}"]`)).toHaveLength(1);
     }
@@ -135,6 +137,7 @@ describe("/explore route", () => {
       "Solo RPGs",
       "Running D&D",
       "D&D for Beginners",
+      "Star Systems & Sci-Fi",
     ]);
 
     const learnSection = screen

@@ -85,6 +85,7 @@ const TOPIC_PATHS = [
   "/topics/solo-rpg",
   "/topics/dnd",
   "/topics/dnd-beginners",
+  "/topics/star-systems",
 ] as const;
 
 export function listGovernedPaths(): string[] {

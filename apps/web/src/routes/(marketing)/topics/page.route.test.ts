@@ -20,6 +20,7 @@ const EXPECTED = [
   ["/topics/solo-rpg", "Solo RPGs"],
   ["/topics/dnd", "Running D&D"],
   ["/topics/dnd-beginners", "D&D for Beginners"],
+  ["/topics/star-systems", "Star Systems & Sci-Fi"],
 ];
 
 describe("/topics route", () => {
@@ -30,7 +31,7 @@ describe("/topics route", () => {
   it("is prerendered and loads the six live topics", () => {
     expect(prerender).toBe(true);
     const result = (load as unknown as () => { topics: unknown[] })();
-    expect(result.topics).toHaveLength(6);
+    expect(result.topics).toHaveLength(7);
   });
 
   it("renders a link per topic in order", () => {
@@ -73,7 +74,7 @@ describe("/topics route", () => {
     const collection = docs.find((d) => d["@type"] === "CollectionPage");
     const crumbs = docs.find((d) => d["@type"] === "BreadcrumbList");
     expect(collection.mainEntity["@type"]).toBe("ItemList");
-    expect(collection.mainEntity.itemListElement).toHaveLength(6);
+    expect(collection.mainEntity.itemListElement).toHaveLength(7);
     expect(crumbs.itemListElement).toHaveLength(3);
     expect(crumbs.itemListElement[2].item).toBe(
       "https://codexcryptica.com/topics",

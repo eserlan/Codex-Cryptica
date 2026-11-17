@@ -51,6 +51,13 @@ const TOPIC_HUBS: Record<string, PublicLabelResult> = {
       "The campaign guide hub for pirate games, exploration, sea travel, ship combat, islands, ports, and factions, with a worked adventure and generators.",
     href: "/topics/pirates",
   },
+  "sci-fi": {
+    kind: "topic",
+    title: "Star Systems & Sci-Fi Campaign Building",
+    summary:
+      "The campaign guide hub for sci-fi play: destinations, routes, resource flows, competing factions and a flashpoint, with guides and generators.",
+    href: "/topics/star-systems",
+  },
 };
 
 const answerResults = (label: string, isCluster: boolean) =>
