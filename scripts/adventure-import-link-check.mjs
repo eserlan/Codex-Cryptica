@@ -73,6 +73,7 @@ const GUIDE_LINKS = [
   "./schemas/adventure-json/examples/minimal.v1.json",
   "./schemas/adventure-json/examples/reference-one-shot.v1.json",
   CTA_HREF,
+  "#long-adventures",
 ];
 
 /** Pure: judge the guide page. */

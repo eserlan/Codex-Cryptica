@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
+  import { createCopier } from "./copy-feedback.svelte.js";
+  import StagedConversion from "./StagedConversion.svelte";
   import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
@@ -17,71 +17,22 @@
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
 
-  type CopyState = "idle" | "copied" | "error";
-
-  let isDestroyed = false;
-  const timers = new Set<ReturnType<typeof setTimeout>>();
-
-  onDestroy(() => {
-    isDestroyed = true;
-    for (const timer of timers) clearTimeout(timer);
-  });
-
-  /** One copy action with its own feedback state and stale-result guard. */
-  function createCopier(text: string) {
-    let state = $state<CopyState>("idle");
-    let generation = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    async function copy() {
-      const current = ++generation;
-      if (timer) {
-        clearTimeout(timer);
-        timers.delete(timer);
-        timer = undefined;
-      }
-      const ok = await copyTextToClipboard(
-        text,
-        typeof navigator === "undefined" ? undefined : navigator.clipboard,
-      );
-      if (isDestroyed || current !== generation) return;
-
-      state = ok ? "copied" : "error";
-      // ui-check-ignore: tracked in `timers` and cleared in onDestroy
-      timer = setTimeout(() => {
-        if (isDestroyed || current !== generation) return;
-        state = "idle";
-        timers.delete(timer!);
-        timer = undefined;
-      }, 2200);
-      timers.add(timer);
-    }
-
-    return {
-      copy,
-      get state() {
-        return state;
-      },
-    };
-  }
-
   const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
   const linkCopier = createCopier(LINK_HANDOFF_TEXT);
 
   const copyLabel = $derived(
-    promptCopier.state === "copied"
-      ? "Copied prompt"
-      : promptCopier.state === "error"
-        ? "Copy failed — select the prompt below manually"
-        : "Copy conversion prompt",
+    promptCopier.label(
+      "Copy conversion prompt",
+      "Copied prompt",
+      "Copy failed — select the prompt below manually",
+    ),
   );
-
   const linkCopyLabel = $derived(
-    linkCopier.state === "copied"
-      ? "Copied link"
-      : linkCopier.state === "error"
-        ? "Copy failed — copy the page address instead"
-        : "Copy guide link",
+    linkCopier.label(
+      "Copy guide link",
+      "Copied link",
+      "Copy failed — copy the page address instead",
+    ),
   );
 
   const breadcrumbSchema = safeJsonLd({
@@ -252,6 +203,10 @@
           Oracle.
         </li>
       </ol>
+      <p class="text-sm text-theme-text/90">
+        Long PDF that an assistant cannot finish in one go? Use the
+        <a class="underline" href="#long-adventures">staged method</a>.
+      </p>
       <div class="flex flex-wrap items-center gap-3">
         {@render copyButton(promptCopier, copyLabel, true)}
         {@render copyButton(linkCopier, linkCopyLabel, false)}
@@ -444,6 +399,9 @@
         aria-label="Minimal Adventure JSON v1 example"
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
     </section>
+
+    <!-- Long adventures -->
+    <StagedConversion />
 
     <!-- Top-level Contract & Collections -->
     <section aria-labelledby="contract-heading" class="space-y-6">

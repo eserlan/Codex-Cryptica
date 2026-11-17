@@ -34,12 +34,13 @@ describe("adventure import link check", () => {
       "./schemas/adventure-json/examples/minimal.v1.json",
       "./schemas/adventure-json/examples/reference-one-shot.v1.json",
       CTA_HREF,
+      "#long-adventures",
     ]
       .map((h) => `<a href="${h}">x</a>`)
       .join("");
     const page = { status: 200, contentType: "text/html; charset=utf-8" };
     expect(guideProblems({ ...page, body: html })).toEqual([]);
-    expect(guideProblems({ ...page, body: "<p>none</p>" })).toHaveLength(4);
+    expect(guideProblems({ ...page, body: "<p>none</p>" })).toHaveLength(5);
   });
 
   it("extracts production links once and ignores unrelated URLs", () => {
