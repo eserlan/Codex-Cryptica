@@ -813,30 +813,45 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
-def merged_into_base(job):
+def merged_into_base(job, pr_cache=None, merged_cache=None):
     """True once the job's merged PR is included in the configured base branch."""
-    return _merged_chain_into_base(job, set())
+    if pr_cache is None:
+        pr_cache = {}
+    if merged_cache is None:
+        merged_cache = {}
+    return _merged_chain_into_base(job, set(), pr_cache, merged_cache)
 
 
-def _merged_chain_into_base(job, seen):
+def _merged_chain_into_base(job, seen, pr_cache, merged_cache):
     job_id = job["id"]
+    if job_id in merged_cache:
+        return merged_cache[job_id]
     if job_id in seen or not job.get("pr"):
         return False
     seen.add(job_id)
-    pr = gh_json("pr", "view", str(job["pr"]), "--json", "state,baseRefName")
+    pr_num = job["pr"]
+    if pr_num not in pr_cache:
+        pr_cache[pr_num] = gh_json("pr", "view", str(pr_num), "--json", "state,baseRefName")
+    pr = pr_cache[pr_num]
     if pr["state"] != "MERGED":
-        return False
-    if pr["baseRefName"] == BASE:
-        return True
-
-    parent_id = job.get("stacked_on")
-    if not parent_id:
-        return False
-    parent_path = job_dir(parent_id) / "job.json"
-    if not parent_path.exists():
-        return False
-    parent = json.loads(parent_path.read_text())
-    return pr["baseRefName"] == parent["branch"] and _merged_chain_into_base(parent, seen)
+        result = False
+    elif pr["baseRefName"] == BASE:
+        result = True
+    else:
+        parent_id = job.get("stacked_on")
+        if not parent_id:
+            result = False
+        else:
+            parent_path = job_dir(parent_id) / "job.json"
+            if not parent_path.exists():
+                result = False
+            else:
+                parent = json.loads(parent_path.read_text())
+                result = pr["baseRefName"] == parent["branch"] and _merged_chain_into_base(
+                    parent, seen, pr_cache, merged_cache
+                )
+    merged_cache[job_id] = result
+    return result
 
 
 def refresh_pr(job, discover=False):
@@ -1149,10 +1164,12 @@ def cmd_queue():
     other_jobs = other_worktree_jobs()
     # A needs-human job is done once its PR is merged on GitHub, which also closes the issue.
     # A dev-agents job is done once its PR is merged into the base branch.
+    pr_cache = {}
+    merged_cache = {}
     for j in jobs.values():
         if j["stage"] == "needs-human" and j["pr"] and pr_state(j) == "MERGED":
             save(advance(sync(j), "merged"))
-        elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j):
+        elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j, pr_cache=pr_cache, merged_cache=merged_cache):
             save(advance(sync(j), "merged"))
     issues = gh_json("issue", "list", "--label", QUEUE_LABEL, "--state", "open",
                      "--limit", "200", "--json", "number,title")

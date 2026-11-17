@@ -89,6 +89,44 @@ class DevAgentsTests(unittest.TestCase):
                 with self.assertRaises(job_mod.Refused):
                     job_mod.advance(child, "merged")
 
+    def test_cmd_queue_memoizes_stacked_pr_chain_queries(self):
+        chain = [
+            {"id": "001-root", "issue": 1, "pr": 101, "stage": "dev-agents",
+             "branch": "factory/001-root", "worktree": "/nonexistent", "stacked_on": None, "base": "staging"},
+            {"id": "002-mid", "issue": 2, "pr": 102, "stage": "dev-agents",
+             "branch": "factory/002-mid", "worktree": "/nonexistent", "stacked_on": "001-root", "base": "factory/001-root"},
+            {"id": "003-leaf", "issue": 3, "pr": 103, "stage": "dev-agents",
+             "branch": "factory/003-leaf", "worktree": "/nonexistent", "stacked_on": "002-mid", "base": "factory/002-mid"},
+        ]
+        pr_views = {
+            "101": {"state": "OPEN", "baseRefName": "staging"},
+            "102": {"state": "MERGED", "baseRefName": "factory/001-root"},
+            "103": {"state": "MERGED", "baseRefName": "factory/002-mid"},
+        }
+        pr_view_calls = []
+
+        def fake_gh_json(*args):
+            if args[:2] == ("pr", "view"):
+                pr_view_calls.append(args[2])
+                return pr_views[args[2]]
+            if args[:2] == ("issue", "list"):
+                return []
+            raise AssertionError(f"unexpected gh_json call: {args}")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            for item in chain:
+                d = Path(temp_dir) / item["id"]
+                d.mkdir()
+                (d / "job.json").write_text(json.dumps(item))
+            with patch.object(job_mod, "JOBS", Path(temp_dir)), \
+                 patch.object(job_mod, "all_jobs", return_value=chain), \
+                 patch.object(job_mod, "other_worktree_jobs", return_value={}), \
+                 patch.object(job_mod, "gh_json", side_effect=fake_gh_json):
+                job_mod.cmd_queue()
+
+        self.assertEqual(len(pr_view_calls), 3)
+        self.assertEqual(set(pr_view_calls), {"101", "102", "103"})
+
 
 if __name__ == "__main__":
     unittest.main()
