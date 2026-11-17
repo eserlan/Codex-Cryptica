@@ -281,6 +281,54 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(validateAdventureJson(PROMPT_EXAMPLE_OUTPUT).ok).toBe(true);
     });
 
+    it("shows an example entry in every collection models commonly get wrong", () => {
+      expect(PROMPT_EXAMPLE_OUTPUT.encounters[0]).toHaveProperty("description");
+      expect(PROMPT_EXAMPLE_OUTPUT.encounters[0]).toHaveProperty(
+        "alternativeSolutions",
+      );
+      expect(PROMPT_EXAMPLE_OUTPUT.clues[0]).toHaveProperty("placedLocationId");
+      expect(PROMPT_EXAMPLE_OUTPUT.rumours[0]?.truth).toBe("false");
+      expect(prompt).toContain('encounters use "description" (not "summary")');
+    });
+
+    it.each([
+      [
+        "encounter summary instead of description",
+        (d: Record<string, Array<Record<string, unknown>>>) => {
+          const { description, ...encounter } = d.encounters![0]!;
+          d.encounters![0] = { ...encounter, summary: description };
+        },
+        "encounters[0]",
+      ],
+      [
+        "clue locationId instead of placedLocationId",
+        (d: Record<string, Array<Record<string, unknown>>>) => {
+          const { placedLocationId, ...clue } = d.clues![0]!;
+          d.clues![0] = { ...clue, locationId: placedLocationId };
+        },
+        "clues[0]",
+      ],
+      [
+        "rumour boolean isTrue instead of truth",
+        (d: Record<string, Array<Record<string, unknown>>>) => {
+          const { truth: _truth, ...rumour } = d.rumours![0]!;
+          d.rumours![0] = { ...rumour, isTrue: false };
+        },
+        "rumours[0]",
+      ],
+    ])("rejects drifted field names: %s", (_name, drift, path) => {
+      const drifted = structuredClone(
+        PROMPT_EXAMPLE_OUTPUT,
+      ) as unknown as Record<string, Array<Record<string, unknown>>>;
+      drift(drifted);
+
+      const result = validateAdventureJson(drifted);
+      expect(result.ok).toBe(false);
+      expect(
+        !result.ok && result.errors.some((e) => e.path?.startsWith(path)),
+      ).toBe(true);
+    });
+
     it("demonstrates whole-record visibility: no hidden motive on the visible actor", () => {
       const actor = PROMPT_EXAMPLE_OUTPUT.actors[0]!;
       const secret = PROMPT_EXAMPLE_OUTPUT.secrets[0]!;

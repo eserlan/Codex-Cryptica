@@ -43,9 +43,43 @@ export const PROMPT_EXAMPLE_OUTPUT = {
       epistemicStatus: "explicit",
     },
   ],
-  encounters: [],
-  clues: [],
-  rumours: [],
+  encounters: [
+    {
+      id: "enc-stuck-door",
+      title: "The Jammed Door",
+      description: "The tower door is barred from the inside.",
+      alternativeSolutions: [
+        {
+          method: "Talk",
+          description: "Convince the watchman inside to lift the bar.",
+          socialBypassOfCombat: true,
+        },
+      ],
+      locationId: "loc-tower",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  clues: [
+    {
+      id: "clue-oil-smell",
+      text: "The brazier smells of fresh lamp oil.",
+      reveals: "Someone tended the beacon recently.",
+      placedLocationId: "loc-tower",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  rumours: [
+    {
+      id: "rumour-ghost-light",
+      text: "A ghost puts the beacon out each night.",
+      truth: "false",
+      sourceActorId: "actor-tomas",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
   items: [],
   secrets: [
     {
@@ -126,7 +160,7 @@ Strict output rules:
    - SceneBranch: required targetSceneId: string, description: string; optional condition: string, optional: boolean.
    - LocationConnection: required targetLocationId: string; optional description: string, travelConditions: string[].
    - Each alternativeSolutions entry requires method: non-empty string and description: non-empty string; optional socialBypassOfCombat: boolean.
-   - Do not emit properties absent from the strict schema.
+   - Do not emit properties absent from the strict schema. Common slips: encounters use "description" (not "summary"); clues use "placedLocationId" (not "locationId"); rumours use "truth" as a string (not a boolean such as "isTrue").
    - Record named objects the source gives importance (clue objects, handouts, treasure) in "items", and give each "unresolved" entry a specific "code" that describes its own problem.
 5. Visibility & secrets:
    - The adventure title and premise hook/background are copied into the session and sent to Oracle opening generation. If both premise fields are empty, description is used as the premise fallback, then title. Keep the title, hook, background, and optional description player-safe and limited to source-supported facts; do not put concealed information in these fields.
