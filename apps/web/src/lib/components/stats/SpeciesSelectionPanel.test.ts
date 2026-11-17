@@ -227,6 +227,26 @@ describe("SpeciesSelectionPanel", () => {
     expect(screen.queryByTestId("species-source-link")).toBeNull();
   });
 
+  it("rejects an oversized imported snapshot in the panel", () => {
+    const oversized = Array.from({ length: 51 }, (_, index) => ({
+      id: `trait-${index}`,
+      name: `Trait ${index}`,
+      description: "",
+      adjustments: [],
+    }));
+    render(SpeciesSelectionPanel, {
+      entity: hero({
+        traitSelections: [
+          { ...selectionFor("Kethari", "kethari"), traits: oversized },
+        ],
+      }),
+    });
+    expect(screen.getByTestId("species-traits-invalid").textContent).toContain(
+      "50-trait limit",
+    );
+    expect(screen.queryByTestId("species-traits")).toBeNull();
+  });
+
   it("is read-only for guests", () => {
     vaultState.isGuest = true;
     render(SpeciesSelectionPanel, {

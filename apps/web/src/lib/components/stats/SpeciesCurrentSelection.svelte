@@ -19,7 +19,7 @@
   } = $props();
 
   const buttonClass =
-    "rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text";
+    "rounded border border-theme-border px-2 py-1 text-helper font-bold text-theme-text";
 </script>
 
 <div class="flex items-center justify-between gap-2">
@@ -51,7 +51,7 @@
       </button>
       <button
         type="button"
-        class="{buttonClass} hover:border-theme-danger hover:text-theme-danger"
+        class="{buttonClass} hover:bg-theme-danger/10"
         onclick={onRemove}
         aria-label="Remove species {current.sourceTitle}"
         data-testid="species-remove"

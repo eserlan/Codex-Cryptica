@@ -5,7 +5,7 @@ import { StatSheetSchema } from "./stat-sheet";
 import { BiomeProfileSchema } from "./biome";
 import {
   TraitPackageDefinitionSchema,
-  TraitSelectionSchema,
+  TraitSelectionsSchema,
 } from "./trait-package";
 import { IMAGE_FOCUS_VALUES } from "./image-focus";
 
@@ -254,7 +254,7 @@ export const EntitySchema = z.object({
   report: ReportProvenanceSchema.optional(),
   biome: BiomeProfileSchema.optional(),
   traitPackage: TraitPackageDefinitionSchema.optional(),
-  traitSelections: z.array(TraitSelectionSchema).max(10).optional(),
+  traitSelections: TraitSelectionsSchema.optional(),
   member_template: z.string().optional(),
   systemId: z.string().optional(),
 });

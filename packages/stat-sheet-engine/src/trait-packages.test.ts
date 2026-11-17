@@ -127,6 +127,32 @@ describe("computeEffectiveValues", () => {
     ]);
     expect(map.get(fields[0].id)?.effective).toBe(7);
   });
+
+  it("uses only the first selection for a kind if input bypasses validation", () => {
+    const map = computeEffectiveValues(dndFields(), [
+      selection("First", [trait("A", [{ target: "str_score", amount: 2 }])]),
+      selection("Second", [trait("B", [{ target: "str_score", amount: 5 }])]),
+    ]);
+
+    expect(map.get("str_score")).toMatchObject({
+      base: 10,
+      effective: 12,
+      contributions: [{ sourceTitle: "First", traitName: "A", amount: 2 }],
+    });
+  });
+
+  it("skips oversized snapshots if input bypasses validation", () => {
+    const map = computeEffectiveValues(dndFields(), [
+      selection(
+        "Oversized",
+        Array.from({ length: 51 }, (_, index) =>
+          trait(`T${index}`, [{ target: "str_score", amount: 1 }]),
+        ),
+      ),
+    ]);
+
+    expect(map.size).toBe(0);
+  });
 });
 
 describe("setTraitSelection / removeTraitSelection", () => {

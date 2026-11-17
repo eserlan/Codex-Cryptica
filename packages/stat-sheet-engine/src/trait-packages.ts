@@ -1,3 +1,4 @@
+import { MAX_TRAITS_PER_PACKAGE } from "schema";
 import type {
   Entity,
   StatSheetField,
@@ -84,7 +85,11 @@ export function computeEffectiveValues(
   selections: readonly TraitSelection[],
 ): Map<string, EffectiveValue> {
   const result = new Map<string, EffectiveValue>();
+  const seenKinds = new Set<TraitPackageKind>();
   for (const selection of selections) {
+    if (seenKinds.has(selection.kind)) continue;
+    seenKinds.add(selection.kind);
+    if (selection.traits.length > MAX_TRAITS_PER_PACKAGE) continue;
     for (const trait of selection.traits) {
       for (const adj of trait.adjustments) {
         const field = resolveFieldByKeyOrId(fields, adj.target);

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { EntitySchema, TraitAdjustmentSchema, TraitSchema } from "./index";
+import {
+  EntitySchema,
+  MAX_TRAITS_PER_PACKAGE,
+  TraitAdjustmentSchema,
+  TraitSchema,
+} from "./index";
 
 const base = {
   id: "e1",
@@ -38,6 +43,33 @@ describe("trait package schema", () => {
     const parsed = EntitySchema.parse(base);
     expect(parsed.traitPackage).toBeUndefined();
     expect(parsed.traitSelections).toBeUndefined();
+  });
+
+  it("rejects duplicate selection kinds and oversized trait snapshots", () => {
+    const selection = {
+      kind: "species",
+      sourceId: "s1",
+      sourceTitle: "Kethari",
+      appliedAt: 1,
+      traits: [trait],
+    };
+    expect(
+      EntitySchema.safeParse({
+        ...base,
+        traitSelections: [selection, { ...selection, sourceId: "s2" }],
+      }).success,
+    ).toBe(false);
+    expect(
+      EntitySchema.safeParse({
+        ...base,
+        traitSelections: [
+          {
+            ...selection,
+            traits: Array(MAX_TRAITS_PER_PACKAGE + 1).fill(trait),
+          },
+        ],
+      }).success,
+    ).toBe(false);
   });
 
   it("rejects zero, non-finite and empty-target adjustments", () => {

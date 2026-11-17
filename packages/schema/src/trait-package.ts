@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const MAX_TRAITS_PER_PACKAGE = 50;
+
 export const TraitAdjustmentSchema = z.object({
   /** A Stat Sheet field id or key. */
   target: z.string().min(1).max(64),
@@ -21,7 +23,7 @@ export const TraitPackageKindSchema = z.enum(["species"]);
 /** On a Creature: the reusable definition. */
 export const TraitPackageDefinitionSchema = z.object({
   kind: TraitPackageKindSchema,
-  traits: z.array(TraitSchema).max(50).default([]),
+  traits: z.array(TraitSchema).max(MAX_TRAITS_PER_PACKAGE).default([]),
 });
 
 /** On a Character: a link to the source plus a snapshot of its traits. */
@@ -30,8 +32,25 @@ export const TraitSelectionSchema = z.object({
   sourceId: z.string().min(1),
   sourceTitle: z.string().min(1),
   appliedAt: z.number(),
-  traits: z.array(TraitSchema),
+  traits: z.array(TraitSchema).max(MAX_TRAITS_PER_PACKAGE),
 });
+
+export const TraitSelectionsSchema = z
+  .array(TraitSelectionSchema)
+  .max(10)
+  .superRefine((selections, ctx) => {
+    const kinds = new Set<TraitPackageKind>();
+    selections.forEach((selection, index) => {
+      if (kinds.has(selection.kind)) {
+        ctx.addIssue({
+          code: "custom",
+          path: [index, "kind"],
+          message: `Only one ${selection.kind} selection is allowed.`,
+        });
+      }
+      kinds.add(selection.kind);
+    });
+  });
 
 export type TraitAdjustment = z.infer<typeof TraitAdjustmentSchema>;
 export type Trait = z.infer<typeof TraitSchema>;
@@ -40,3 +59,4 @@ export type TraitPackageDefinition = z.infer<
   typeof TraitPackageDefinitionSchema
 >;
 export type TraitSelection = z.infer<typeof TraitSelectionSchema>;
+export type TraitSelections = z.infer<typeof TraitSelectionsSchema>;
