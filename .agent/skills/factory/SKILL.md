@@ -136,7 +136,7 @@ If you need to step through a single stage manually using `define_subagent`,
    exact: `factory/bin/job costs` and `factory/bin/gate --hook` match on them.
 3. **Model mapping**:
    - `intake`, `spec-writer`, `approver`, `reviewer-security` (`opus`): `Model="pro"`
-   - `builder`, `reviewer-ux`, `reviewer-ui`, medium/high `reviewer-code` (`sonnet`): `Model="inherit"`
+   - `builder`, `reviewer-ux`, `reviewer-ui`, `reviewer-codex`, medium/high `reviewer-code` (`sonnet`): `Model="inherit"`
    - low-risk `reviewer-code` (`haiku`): `Model="flash"`
 4. **Ports**: With `n` the job number (`004` → 4), `builder` gets `5300 + 10n`,
    `reviewer-ux` `5301 + 10n`, and `reviewer-ui` `5302 + 10n`.

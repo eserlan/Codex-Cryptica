@@ -157,7 +157,7 @@ instead of `muse.workflow`:
    manually spawned children inherit the parent session's model and effort —
    put the tier's model in the header anyway so costs bill correctly):
    - `intake`, `spec-writer`, `approver`, `reviewer-security` (`opus`): `muse-wonder-1.0`, `high`
-   - `builder`, `reviewer-ux`, `reviewer-ui`, medium/high `reviewer-code` (`sonnet`): `muse-ember-1.0`, `medium`
+   - `builder`, `reviewer-ux`, `reviewer-ui`, `reviewer-codex`, medium/high `reviewer-code` (`sonnet`): `muse-ember-1.0`, `medium`
    - low-risk `reviewer-code` (`haiku`): `muse-spark-1.3`, `low`
 4. **Deterministic steps**: Run `factory/bin/job`, `route`, and `gate` yourself
    with `muse.bash` from `<repo>`, in the same order `muse_workflow.js` does:

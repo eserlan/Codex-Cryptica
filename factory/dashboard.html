@@ -295,7 +295,7 @@ const COLUMNS = [
 ]
 const STAGES = new Set(COLUMNS.flatMap((c) => c.stages))
 const LIVE = new Set(['intake', 'spec', 'build', 'gate', 'review', 'approve', 'merging'])
-const SHORT = { code: 'code', ux: 'ux', ui: 'ui', security: 'sec' }
+const SHORT = { code: 'code', codex: 'cdx', ux: 'ux', ui: 'ui', security: 'sec' }
 
 const $ = (id) => document.getElementById(id)
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
@@ -478,7 +478,7 @@ async function listFiles(dir) {
 }
 
 const ORDER = ['issue.md', 'intake.md', 'spec.md', 'build.md', 'decision.md', 'rejection.md']
-const ROUND_ORDER = ['checks', 'review-code', 'review-security', 'review-ux', 'review-ui', 'merge-checks']
+const ROUND_ORDER = ['checks', 'review-code', 'review-codex', 'review-security', 'review-ux', 'review-ui', 'merge-checks']
 
 function fileRank(path) {
   if (ORDER.includes(path)) return [0, ORDER.indexOf(path), path]

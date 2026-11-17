@@ -95,7 +95,7 @@ Start every message to it with `<header>` too.
 ## Advancing a job
 
 Each step below runs when the previous agent or script finishes. Report one
-short line per transition, e.g. `004-dark-mode #12: gate PASS → reviewing (code, ux, ui)`.
+short line per transition, e.g. `004-dark-mode #12: gate PASS → reviewing (code, codex, ux, ui)`.
 
 **intake.** Spawn `intake` with `<header>`. When it returns, read its
 decision:

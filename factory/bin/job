@@ -354,7 +354,7 @@ def infer_agy_agent_and_model(text, job):
         if "Build round " in text:
             agent = "builder"
         elif "Review round " in text:
-            for r in ("code", "ux", "ui", "security"):
+            for r in ("code", "codex", "ux", "ui", "security"):
                 if f"review-{r}.md" in text:
                     agent = f"reviewer-{r}"
                     break

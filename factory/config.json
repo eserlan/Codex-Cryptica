@@ -9,9 +9,9 @@
     "needs_human": "factory:needs-human"
   },
   "routing": {
-    "low":    { "code": "haiku" },
-    "medium": { "code": "sonnet" },
-    "high":   { "code": "sonnet" }
+    "low":    { "code": "haiku", "codex": "sonnet" },
+    "medium": { "code": "sonnet", "codex": "sonnet" },
+    "high":   { "code": "sonnet", "codex": "sonnet" }
   },
   "surface_reviewers": {
     "ui": { "ux": "sonnet", "ui": "sonnet" },
