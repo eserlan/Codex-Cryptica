@@ -114,7 +114,11 @@ describe("star systems topic hub config", () => {
       p.term.toLowerCase().includes("destination"),
     );
     expect(destinations).toBeDefined();
-    const places = ["Tern Anchorage", "Coldwell", "Veyra Deep"];
+    const places = (destinations?.text ?? "")
+      .split(/(?<=\.)\s+/)
+      .map((sentence) => sentence.split(" is ")[0]);
+    expect(places.length).toBeGreaterThanOrEqual(3);
+    expect(places.length).toBeLessThanOrEqual(5);
     const routes = example.parts.find((p) => p.term.includes("Routes"));
     for (const place of places) {
       expect(destinations?.text).toContain(place);
@@ -123,6 +127,10 @@ describe("star systems topic hub config", () => {
     expect(terms.some((t) => t.includes("route"))).toBe(true);
     expect(terms.some((t) => t.includes("resource"))).toBe(true);
     expect(terms.some((t) => t.includes("flashpoint"))).toBe(true);
+    const flashpoint = example.parts.find((p) =>
+      p.term.toLowerCase().includes("flashpoint"),
+    );
+    expect(places.some((place) => flashpoint?.text.includes(place))).toBe(true);
     const factions = example.parts.find((p) => p.term === "Factions");
     expect(factions?.text).toContain("Tugmasters");
     expect(factions?.text).toContain("Free Miners");

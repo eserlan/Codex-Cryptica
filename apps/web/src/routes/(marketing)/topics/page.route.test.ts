@@ -28,7 +28,7 @@ describe("/topics route", () => {
     document.head.innerHTML = "";
   });
 
-  it("is prerendered and loads the six live topics", () => {
+  it("is prerendered and loads the seven live topics", () => {
     expect(prerender).toBe(true);
     const result = (load as unknown as () => { topics: unknown[] })();
     expect(result.topics).toHaveLength(7);
