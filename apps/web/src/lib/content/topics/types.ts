@@ -40,6 +40,15 @@ export interface TopicWorkflowStep {
   };
 }
 
+/** A worked example written into the hub page itself, with no route of its own. */
+export interface TopicInlineExample {
+  title: string;
+  genre: string;
+  summary: string;
+  parts: { term: string; text: string }[];
+  highlight: string;
+}
+
 /** Editorial copy for the fixed section frame every topic hub renders. */
 export interface TopicHubCopy {
   thesisHeading: string;
@@ -85,7 +94,7 @@ export interface TopicHubConfig {
   slug: string;
   canonicalPath: string;
   /** Public cluster label shown as the hub's chip. */
-  label: "heist" | "puzzle" | "pirate" | "solo-rpg";
+  label: "heist" | "puzzle" | "pirate" | "solo-rpg" | "sci-fi";
   title: string;
   metaTitle: string;
   description: string;
@@ -98,6 +107,7 @@ export interface TopicHubConfig {
   thesisPoints: TopicHubThesisPoint[];
   coreGuides: TopicGuideLink[];
   workedExamples: TopicExampleLink[];
+  inlineExample?: TopicInlineExample;
   generators: TopicToolLink[];
   workflow: TopicWorkflowStep[];
   relatedTopics: TopicRelatedLink[];

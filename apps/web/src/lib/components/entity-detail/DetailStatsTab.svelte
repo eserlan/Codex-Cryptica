@@ -11,11 +11,14 @@
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { FEATURE_HINTS } from "#lib/config/help-content.js";
   import { presentationTemplates } from "#lib/stores/presentation-templates.svelte.js";
+  import SpeciesDefinitionEditor from "#lib/components/stats/SpeciesDefinitionEditor.svelte";
+  import SpeciesSelectionPanel from "#lib/components/stats/SpeciesSelectionPanel.svelte";
   import PresentationRenderer from "#lib/components/stats/presentation/PresentationRenderer.svelte";
   import PresentationTemplatePicker from "#lib/components/stats/presentation/PresentationTemplatePicker.svelte";
   import PresentationTemplateManager from "#lib/components/stats/presentation/PresentationTemplateManager.svelte";
   import type { PresentationRenderContext } from "#lib/components/stats/presentation/types.js";
   import {
+    computeEffectiveValues,
     computeSectionKeys,
     TOV_MONSTER_TEMPLATE_ID,
     TOV_NPC_TEMPLATE_ID,
@@ -171,6 +174,10 @@
   const sheetContext: PresentationRenderContext = $derived({
     ...renderContext,
     entityId: entity.id,
+    effectiveValues: computeEffectiveValues(
+      entity.statSheet?.fields ?? [],
+      entity.traitSelections ?? [],
+    ),
   });
 </script>
 
@@ -235,6 +242,12 @@
       </div>
     {/if}
   </div>
+
+  {#if entity.type === "creature"}
+    <SpeciesDefinitionEditor {entity} />
+  {:else if entity.type === "character" || entity.type === "npc"}
+    <SpeciesSelectionPanel {entity} />
+  {/if}
 
   {#if isEditingLayout}
     <StatSheetEditor {entity} onClose={() => (isEditingLayout = false)} />

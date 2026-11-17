@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
+  import { createCopier } from "./copy-feedback.svelte.js";
+  import StagedConversion from "./StagedConversion.svelte";
   import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
@@ -19,80 +19,31 @@
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
 
-  type CopyState = "idle" | "copied" | "error";
-
-  let isDestroyed = false;
-  const timers = new Set<ReturnType<typeof setTimeout>>();
-
-  onDestroy(() => {
-    isDestroyed = true;
-    for (const timer of timers) clearTimeout(timer);
-  });
-
-  /** One copy action with its own feedback state and stale-result guard. */
-  function createCopier(text: string) {
-    let state = $state<CopyState>("idle");
-    let generation = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    async function copy() {
-      const current = ++generation;
-      if (timer) {
-        clearTimeout(timer);
-        timers.delete(timer);
-        timer = undefined;
-      }
-      const ok = await copyTextToClipboard(
-        text,
-        typeof navigator === "undefined" ? undefined : navigator.clipboard,
-      );
-      if (isDestroyed || current !== generation) return;
-
-      state = ok ? "copied" : "error";
-      // ui-check-ignore: tracked in `timers` and cleared in onDestroy
-      timer = setTimeout(() => {
-        if (isDestroyed || current !== generation) return;
-        state = "idle";
-        timers.delete(timer!);
-        timer = undefined;
-      }, 2200);
-      timers.add(timer);
-    }
-
-    return {
-      copy,
-      get state() {
-        return state;
-      },
-    };
-  }
-
   const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
   const linkCopier = createCopier(LINK_HANDOFF_TEXT);
   const coverageCopier = createCopier(COVERAGE_REPORT_PROMPT);
 
   const copyLabel = $derived(
-    promptCopier.state === "copied"
-      ? "Copied prompt"
-      : promptCopier.state === "error"
-        ? "Copy failed — select the prompt below manually"
-        : "Copy conversion prompt",
+    promptCopier.label(
+      "Copy conversion prompt",
+      "Copied prompt",
+      "Copy failed — select the prompt below manually",
+    ),
   );
-
   const linkCopyLabel = $derived(
-    linkCopier.state === "copied"
-      ? "Copied link"
-      : linkCopier.state === "error"
-        ? "Copy failed — copy the page address instead"
-        : "Copy guide link",
+    linkCopier.label(
+      "Copy guide link",
+      "Copied link",
+      "Copy failed — copy the page address instead",
+    ),
   );
 
   const coverageCopyLabel = $derived(
-    coverageCopier.state === "copied"
-      ? "Copied coverage prompt"
-      : coverageCopier.state === "error"
-        ? "Copy failed — select the prompt below manually"
-        : "Copy coverage report prompt",
+    coverageCopier.label(
+      "Copy coverage report prompt",
+      "Copied coverage prompt",
+      "Copy failed — select the prompt below manually",
+    ),
   );
 
   const breadcrumbSchema = safeJsonLd({
@@ -125,7 +76,7 @@
     onclick={copier.copy}
     class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
       ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
-      : 'border border-theme-primary bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
+      : 'border border-theme-text bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
   >
     <span
       class="{copier.state === 'copied'
@@ -241,8 +192,10 @@
           you prefer (a hosted chatbot or a local model), as a file or pasted text.
         </li>
         <li>
-          <strong>Save the reply as a plain <code>.json</code> file.</strong>
-          Keep only the JSON: no Markdown code fences, no commentary before or after.
+          <strong>Save the result as a plain <code>.json</code> file.</strong>
+          If your assistant offers a downloadable file, use that. Otherwise copy its
+          reply. Keep only the JSON: no Markdown code fences, no commentary before
+          or after.
         </li>
         <li>
           <strong>Import it in your Vault.</strong> Open Adventure Mode and
@@ -263,6 +216,10 @@
           Oracle.
         </li>
       </ol>
+      <p class="text-sm text-theme-text/90">
+        Long PDF that an assistant cannot finish in one go? Use the
+        <a class="underline" href="#long-adventures">staged method</a>.
+      </p>
       <p class="text-sm md:text-base text-theme-text/90">
         Passing the import checks does not mean nothing was left out. See
         <a class="underline" href="#completeness-heading"
@@ -580,6 +537,9 @@
         aria-label="Minimal Adventure JSON v1 example"
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
     </section>
+
+    <!-- Long adventures -->
+    <StagedConversion />
 
     <!-- Top-level Contract & Collections -->
     <section aria-labelledby="contract-heading" class="space-y-6">

@@ -118,9 +118,9 @@
   .round .r { font-family: var(--mono); font-size: 10px; color: var(--faint); width: 20px; }
   .chip {
     flex: 1; text-align: center; font-family: var(--mono); font-size: 10px;
-    padding: 2px 0; border-radius: 4px; border: 1px dashed var(--faint); color: var(--faint);
+    padding: 2px 0; border-radius: 4px; border: 1px dashed var(--faint); color: var(--muted);
   }
-  .chip.wait { animation: breathe 1.6s ease-in-out infinite; }
+  .chip.wait { animation: none; }
   .chip.PASS {
     border: 1px solid transparent; color: var(--pass);
     background: color-mix(in srgb, var(--pass) 14%, transparent);
@@ -296,7 +296,7 @@ const COLUMNS = [
 ]
 const STAGES = new Set(COLUMNS.flatMap((c) => c.stages))
 const LIVE = new Set(['intake', 'spec', 'build', 'gate', 'review', 'approve', 'merging'])
-const SHORT = { code: 'code', ux: 'ux', ui: 'ui', security: 'sec' }
+const SHORT = { code: 'code', codex: 'cdx', ux: 'ux', ui: 'ui', security: 'sec' }
 
 const $ = (id) => document.getElementById(id)
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
@@ -479,7 +479,7 @@ async function listFiles(dir) {
 }
 
 const ORDER = ['issue.md', 'intake.md', 'spec.md', 'build.md', 'decision.md', 'rejection.md']
-const ROUND_ORDER = ['checks', 'review-code', 'review-security', 'review-ux', 'review-ui', 'merge-checks']
+const ROUND_ORDER = ['checks', 'review-code', 'review-codex', 'review-security', 'review-ux', 'review-ui', 'merge-checks']
 
 function fileRank(path) {
   if (ORDER.includes(path)) return [0, ORDER.indexOf(path), path]

@@ -1,12 +1,21 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
-import { AdventureJsonV1Schema } from "@codex/adventure-engine";
+import {
+  AdventureJsonV1Schema,
+  validateAdventureJson,
+} from "@codex/adventure-engine";
 import Page from "./+page.svelte";
+import {
+  STAGED_ASSEMBLE_SCRIPT,
+  STAGED_CHUNK_PROMPT,
+  STAGED_INVENTORY_PROMPT,
+} from "./staged-conversion.js";
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
+  PROMPT_EXAMPLE_OUTPUT,
 } from "./conversion-guide.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
@@ -184,7 +193,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(steps).toEqual([
       "Copy the prompt.",
       "Paste it and attach your adventure",
-      "Save the reply as a plain .json file.",
+      "Save the result as a plain .json file.",
       "Import it in your Vault.",
       "Review, approve, then start.",
     ]);
@@ -228,6 +237,217 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(AdventureJsonV1Schema.safeParse(parsed).success).toBe(true);
   });
 
+  describe("LLM-friendly prompt structure (#4907)", () => {
+    const prompt = CANONICAL_CONVERSION_PROMPT;
+
+    it("states the output contract first, then a worked example, then the rules", () => {
+      const contract = prompt.indexOf("Output contract (read this first):");
+      const example = prompt.indexOf("Shape of a valid answer");
+      const rules = prompt.indexOf("Strict output rules:");
+
+      expect(contract).toBeGreaterThan(-1);
+      expect(contract).toBeLessThan(example);
+      expect(example).toBeLessThan(rules);
+      expect(prompt.slice(contract, example)).toContain("ONE JSON object");
+      expect(prompt.slice(contract, example)).toContain(
+        "Include all 11 collection arrays",
+      );
+    });
+
+    it("embeds an example that is schema-valid and semantically valid", () => {
+      expect(prompt).toContain(JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2));
+      expect(
+        AdventureJsonV1Schema.safeParse(PROMPT_EXAMPLE_OUTPUT).success,
+      ).toBe(true);
+      expect(validateAdventureJson(PROMPT_EXAMPLE_OUTPUT).ok).toBe(true);
+    });
+
+    it("demonstrates whole-record visibility: no hidden motive on the visible actor", () => {
+      const actor = PROMPT_EXAMPLE_OUTPUT.actors[0]!;
+      const secret = PROMPT_EXAMPLE_OUTPUT.secrets[0]!;
+
+      expect(actor.visibility).toBe("player-visible");
+      expect("motivation" in actor).toBe(false);
+      expect(secret.visibility).toBe("gm-only");
+      expect(secret.relatedEntityIds).toContain(actor.id);
+    });
+
+    it("ends with a self-check list and says what to do with unreadable or oversized sources", () => {
+      const check = prompt.lastIndexOf(
+        "Before you reply with a successful conversion, check each of these:",
+      );
+
+      expect(check).toBeGreaterThan(prompt.indexOf("Strict output rules:"));
+      expect(prompt.slice(check)).toContain('Every "secrets" entry');
+      expect(prompt).toContain("cannot fit all of it in one file or reply");
+      expect(prompt).toContain("instead of sending truncated or guessed JSON");
+      expect(prompt).toContain(
+        "This failure sentence is the sole exception to the JSON-only output rules below.",
+      );
+      expect(prompt).toContain(
+        "The one-sentence failure response above is the sole exception.",
+      );
+    });
+
+    it("guards against over-hiding, copied example codes and missing items", () => {
+      expect(prompt).toContain("Do not over-hide.");
+      expect(prompt).toContain("whatever players can learn in play");
+      expect(prompt).toContain("only illustrative; use your own");
+      expect(prompt).toContain('in "items"');
+      expect(prompt).toContain('specific "code"');
+    });
+
+    it("prefers a JSON file over chat output, with a JSON-only reply fallback", () => {
+      const contract = prompt.slice(
+        prompt.indexOf("Output contract"),
+        prompt.indexOf("Shape of a valid answer"),
+      );
+
+      expect(contract).toContain(
+        'as a file named after the "id", such as "the-last-grind.json"',
+      );
+      expect(contract).toContain(
+        "If you cannot create files, your entire reply is the JSON object",
+      );
+      expect(contract).toContain(
+        "Never put JSON in a chat reply when you could have attached a file",
+      );
+    });
+
+    it("tells models how to handle long sources, sandbox modules and confidence", () => {
+      expect(prompt).toContain(
+        "Never shorten the conversion by dropping or merging entries",
+      );
+      expect(prompt).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+      const { container } = render(Page);
+      const longAdventureSection = container
+        .querySelector("#long-adventures")
+        ?.closest("section");
+      expect(longAdventureSection).toBeTruthy();
+      expect(longAdventureSection?.textContent).toContain(
+        "A long PDF can be too much for one reply",
+      );
+      expect(longAdventureSection?.textContent?.replace(/\s+/g, " ")).toContain(
+        "Inventory the source",
+      );
+      expect(prompt).not.toContain("compress each to a short summary");
+      expect(prompt).toContain(
+        'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
+      );
+      expect(prompt).toContain('For a PDF, include "page"');
+      expect(prompt).toContain("not a number printed on the page");
+      expect(prompt).toContain("has no authored order");
+      expect(prompt).toContain("Do not invent a flow or an ending");
+      expect(prompt).toContain(
+        'Use "explicit" only for what the source states',
+      );
+      expect(prompt).toContain(
+        'Use "inferred" for anything you worked out yourself',
+      );
+    });
+
+    it("stays provider-neutral", () => {
+      expect(prompt).not.toMatch(
+        /\b(ChatGPT|Claude|Gemini|GPT|OpenAI|Anthropic)\b/,
+      );
+    });
+  });
+
+  describe("staged conversion section (#4896)", () => {
+    it("is reachable from the quick start and from the one-pass prompt's pointer", () => {
+      const { container } = render(Page);
+
+      expect(container.querySelector("#long-adventures")).toBeTruthy();
+      expect(
+        container.querySelector('a[href="#long-adventures"]'),
+      ).toBeTruthy();
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+    });
+
+    it("explains the stages in order and that nothing is converted here", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const titles = [...section.querySelectorAll("h3")].map((h) =>
+        h.textContent?.trim(),
+      );
+
+      expect(titles.slice(1)).toEqual([
+        "1. Inventory the source",
+        "2. Convert one section at a time",
+        "3. Check coverage against the inventory",
+        "4. Assemble the sections into one file",
+        "5. Import and fix what it reports",
+      ]);
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
+      expect(text).toContain("Do not trust an assistant that says");
+      expect(text).toContain("This page converts nothing");
+      expect(text).toContain("Three different problems");
+    });
+
+    it("discloses hosted processing and gives copy buttons a visible boundary", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
+
+      expect(text).toContain("Hosted assistants may");
+      expect(text).toContain("process your source on their servers");
+      expect(text).toContain("local models can process it on your");
+      expect(text).toContain("preserving an existing file if a check fails");
+
+      const stageButtons = [...section.querySelectorAll("button")];
+      expect(stageButtons).toHaveLength(4);
+      for (const button of stageButtons) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+      for (const button of screen.getAllByRole("button", { name: /Copy guide link/i })) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+    });
+
+    it("copies the right text per stage and the assemble script", async () => {
+      copyMock.mockResolvedValue(true);
+      render(Page);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy inventory prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy section prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy assemble script/i }),
+      );
+
+      expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
+        STAGED_INVENTORY_PROMPT,
+        STAGED_CHUNK_PROMPT,
+        STAGED_ASSEMBLE_SCRIPT,
+      ]);
+    });
+
+    it("reports a failed copy on that button only", async () => {
+      copyMock.mockResolvedValue(false);
+      render(Page);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage prompt/i }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByRole("button", { name: /Copy failed/i }),
+        ).toHaveLength(1);
+      });
+      expect(
+        screen.getByRole("button", { name: /Copy inventory prompt/i }),
+      ).toBeTruthy();
+    });
+  });
+
   it("copies a short link instruction for browsing assistants, separately from the prompt", async () => {
     copyMock.mockResolvedValue(true);
     render(Page);
@@ -241,7 +461,8 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(LINK_HANDOFF_TEXT).toContain(
       "https://codexcryptica.com/adventure-import/prompt.txt",
     );
-    expect(LINK_HANDOFF_TEXT).toContain("Reply with the JSON only");
+    expect(LINK_HANDOFF_TEXT).toContain("downloadable .json file");
+    expect(LINK_HANDOFF_TEXT).toContain("otherwise reply with the JSON only");
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Copied link/i })).toBeTruthy();
     });
@@ -493,11 +714,17 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
-    it("adds rule 8 to the canonical prompt without changing rule 1", () => {
+    it("adds rule 8 while keeping the successful-conversion output contract", () => {
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "8. Self-audit before returning",
       );
       expect(CANONICAL_CONVERSION_PROMPT).toContain("Return ONLY valid JSON");
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "The one-sentence failure response above is the sole exception.",
+      );
     });
 
     it("shows the coverage prompt after the canonical prompt, with four list headings", () => {

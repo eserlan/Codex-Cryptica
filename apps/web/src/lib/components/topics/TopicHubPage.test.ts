@@ -13,6 +13,7 @@ vi.mock("$app/environment", () => ({ browser: false }));
 import TopicHubPage from "./TopicHubPage.svelte";
 import { TOPIC_LAYOUT } from "./topic-layout.js";
 import { HEIST_TOPIC_CONFIG } from "#lib/content/topics/heists.js";
+import { STAR_SYSTEMS_TOPIC_CONFIG } from "#lib/content/topics/star-systems.js";
 
 describe("TopicHubPage layout", () => {
   it("uses the wide canvas rather than a single reading column", () => {
@@ -78,5 +79,35 @@ describe("TopicHubPage layout", () => {
       a.getAttribute("href"),
     );
     expect(hrefs).toEqual(HEIST_TOPIC_CONFIG.coreGuides.map((g) => g.href));
+  });
+
+  it("renders the inline example without an empty examples list", () => {
+    render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+    const section = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-examples`,
+    )?.parentElement as HTMLElement;
+    const example = STAR_SYSTEMS_TOPIC_CONFIG.inlineExample;
+    expect(section.querySelector("h3")?.textContent?.trim()).toBe(
+      example.title,
+    );
+    const terms = Array.from(section.querySelectorAll("dt")).map((dt) =>
+      dt.textContent?.trim(),
+    );
+    expect(terms).toEqual(example.parts.map((part) => part.term));
+    expect(section.textContent).toContain(example.highlight);
+    expect(section.querySelector("ul")).toBeNull();
+  });
+
+  it("renders no inline example card for hubs without one", () => {
+    render(TopicHubPage, { props: { config: HEIST_TOPIC_CONFIG } });
+
+    const section = document.getElementById(
+      `${HEIST_TOPIC_CONFIG.slug}-examples`,
+    )?.parentElement as HTMLElement;
+    expect(section.querySelector("dl")).toBeNull();
+    expect(section.querySelectorAll("ul > li")).toHaveLength(
+      HEIST_TOPIC_CONFIG.workedExamples.length,
+    );
   });
 });

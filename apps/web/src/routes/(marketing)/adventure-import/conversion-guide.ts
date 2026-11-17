@@ -1,10 +1,97 @@
+/**
+ * A trimmed, schema-valid answer shown inside the prompt so a model can
+ * pattern-match the shape. Exported so tests can prove it stays valid.
+ */
+export const PROMPT_EXAMPLE_OUTPUT = {
+  formatVersion: "adventure-json/v1",
+  id: "silent-watchtower",
+  title: "The Silent Watchtower",
+  version: "1.0.0",
+  premise: {
+    background: "A hillside watchtower has gone dark.",
+    hook: "The Reeve asks the party to relight the beacon.",
+  },
+  source: { title: "The Silent Watchtower" },
+  locations: [
+    {
+      id: "loc-tower",
+      name: "Ridge Watchtower",
+      summary: "A stone signal tower above the valley road.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  actors: [
+    {
+      id: "actor-tomas",
+      name: "Reeve Tomas",
+      summary: "The worried village official who hires the party.",
+      role: "Village reeve",
+      locationId: "loc-tower",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  factions: [],
+  scenes: [
+    {
+      id: "scene-beacon",
+      title: "The Cold Beacon",
+      summary: "The brazier at the top of the tower is unlit.",
+      locationId: "loc-tower",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  encounters: [],
+  clues: [],
+  rumours: [],
+  items: [],
+  secrets: [
+    {
+      id: "secret-tomas-motive",
+      text: "Tomas put the beacon out himself to hide a smuggling run.",
+      relatedEntityIds: ["actor-tomas"],
+      visibility: "gm-only",
+      epistemicStatus: "explicit",
+    },
+  ],
+  endings: [
+    {
+      id: "ending-lit",
+      description: "The beacon burns again and the caravan passes safely.",
+      epistemicStatus: "explicit",
+    },
+  ],
+  unresolved: [
+    {
+      id: "unresolved-oil",
+      code: "missing-detail",
+      message: "The source does not say where the lamp oil is kept.",
+      epistemicStatus: "unresolved",
+    },
+  ],
+};
+
+const EXAMPLE_JSON = JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2);
+
 export const CANONICAL_CONVERSION_PROMPT = `Convert the tabletop RPG adventure I provide into a valid Codex Cryptica Adventure JSON v1 document.
 
 Schema: https://codexcryptica.com/schemas/adventure-json/v1.json
 Guide: https://codexcryptica.com/adventure-import
 
+Output contract (read this first):
+- Deliver ONE JSON object. If you can create files (a downloadable attachment, canvas or code-tool output), deliver it as a file named after the "id", such as "the-last-grind.json", containing only the JSON, and say only that the file is ready. If you cannot create files, your entire reply is the JSON object: it starts with "{" and ends with "}", with no Markdown code fences and no text before or after it. Never put JSON in a chat reply when you could have attached a file.
+- Include all 11 collection arrays, using [] when empty.
+- Use only the field names and exact values listed below. Do not add properties.
+- Never invent facts. When the source is unclear, record it in "unresolved".
+- Never shorten the conversion by dropping or merging entries. If you cannot read the attached source, or cannot fit all of it in one file or reply, answer with one plain sentence saying which it is (cannot read, or too large) and point to the staged method at https://codexcryptica.com/adventure-import#long-adventures, instead of sending truncated or guessed JSON. This failure sentence is the sole exception to the JSON-only output rules below.
+
+Shape of a valid answer (trimmed: yours will have more entries and fields). Its ids, codes and wording are only illustrative; use your own, taken from the source:
+${EXAMPLE_JSON}
+
 Strict output rules:
-1. Return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON).
+1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). The one-sentence failure response above is the sole exception.
 2. Top-level required fields:
    - "formatVersion": "adventure-json/v1"
    - "id": slug matching /^[a-zA-Z0-9_-]{3,64}$/
@@ -19,6 +106,7 @@ Strict output rules:
 3. Source certainty (CRITICAL):
    - Every entity requires "epistemicStatus" to show how strongly the source supports it: "explicit" | "inferred" | "ambiguous" | "unresolved".
    - Do NOT invent missing facts merely to fill fields.
+   - Use "explicit" only for what the source states. Use "inferred" for anything you worked out yourself, such as a link between scenes, an ending, a role or a summary of unstated consequences.
    - If the source text is silent, omit optional fields. If it is contradictory or unclear, record an entry in "unresolved" with "epistemicStatus": "ambiguous" or "unresolved".
    - For entries in "unresolved", use "ambiguous" when the source is unclear or contradictory, or "unresolved" when it does not answer the question; never use "explicit" or "inferred".
 4. Collection entry contract (notation: ? means optional; string[] means an array of strings):
@@ -39,6 +127,7 @@ Strict output rules:
    - LocationConnection: required targetLocationId: string; optional description: string, travelConditions: string[].
    - Each alternativeSolutions entry requires method: non-empty string and description: non-empty string; optional socialBypassOfCombat: boolean.
    - Do not emit properties absent from the strict schema.
+   - Record named objects the source gives importance (clue objects, handouts, treasure) in "items", and give each "unresolved" entry a specific "code" that describes its own problem.
 5. Visibility & secrets:
    - The adventure title and premise hook/background are copied into the session and sent to Oracle opening generation. If both premise fields are empty, description is used as the premise fallback, then title. Keep the title, hook, background, and optional description player-safe and limited to source-supported facts; do not put concealed information in these fields.
    - Require "visibility": "player-visible" | "gm-only" on locations, actors, factions, scenes, encounters, clues, rumours, items, and secrets only. Do not add visibility to endings or unresolved.
@@ -46,14 +135,16 @@ Strict output rules:
    - "visibility" applies to the WHOLE record, never to individual fields. Treat every field of a "player-visible" record (name, summary, description, role, motivation, disposition, body, readAloud, reveals and the rest) as safe to show players. v1 cannot hide one field of a visible record.
    - A character, place or item being known to the players does not make its role, hidden motive, allegiance or secret details known. Put only what players can know in the "player-visible" record. Move concealed role, motive or detail into a separate "secrets" entry that lists the record in "relatedEntityIds". Copy source wording; do not invent plot facts to fill the visible record.
    - When a record is only partly shareable and you cannot split it without losing meaning, mark the whole record "gm-only" and add an "unresolved" entry rather than guessing.
+   - Do not over-hide. Keep on the visible record whatever players can learn in play, such as a harmless goal, a stated role or a public detail. Move something into a secret only when the characters conceal it or revealing it would spoil the adventure, such as a hidden culprit, motive or allegiance.
    - Do NOT promote NPC testimony, rumours, or in-world handouts to objective truth unless the authored text confirms them.
 6. Structural integrity:
    - Every entity ID across all collections must be unique and non-empty.
    - All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference.
    - Location parentLocationId chains must not form cycles.
    - Every non-entry scene with source-supported progression must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops. If progression is unknown, preserve the scene as ambiguous without inventing a branch.
+   - If the source has no authored order (a sandbox or location-based module), list scenes in source order, add branches only where the source states them, set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to, and add one "unresolved" entry saying the order is left to the GM. Do not invent a flow or an ending.
 7. Provenance & copyright:
-   - Add optional "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) when known.
+   - Add "sourceRef" wherever you know the origin of an entry. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry so it can be checked against the source; use the page position in the file, not a number printed on the page. Shape: ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }).
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.
 8. Self-audit before returning (do not output this check):
@@ -67,7 +158,15 @@ Strict output rules:
      - contradictions and unknowns are recorded in "unresolved";
      - rumours and NPC testimony are not stated as fact;
      - GM-only motives, secrets and endings are kept out of player-visible records.
-   - Anything missing, cut or uncertain gets an "unresolved" entry naming the source section. Never drop it silently, and never present the package as complete when it is not.`;
+   - Anything missing, cut or uncertain gets an "unresolved" entry naming the source section. Never drop it silently, and never present the package as complete when it is not.
+
+Before you reply with a successful conversion, check each of these:
+- The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
+- All 11 collection arrays are present.
+- Every id is unique, and every cross-reference points to an id that exists.
+- Every "secrets" entry is "gm-only", and no "player-visible" record reveals a hidden role, motive or detail.
+- Every entry has "epistemicStatus"; endings and unresolved have no "visibility".
+- Nothing outside the schema was added and nothing was invented.`;
 
 /** Follow-up prompt pasted into the same chat after the JSON; its reply stays outside the JSON file. */
 export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the Adventure JSON you just gave me. Reply in plain text, not JSON. Do not change or re-output the JSON.
@@ -110,7 +209,7 @@ export const PROMPT_TXT_URL =
   "https://codexcryptica.com/adventure-import/prompt.txt";
 
 /** Short instruction copied by "Copy guide link" for assistants that can open URLs. */
-export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow it exactly to convert the attached adventure into Adventure JSON v1. Reply with the JSON only. If you cannot open the link, tell me instead of guessing the format.`;
+export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow it exactly to convert the attached adventure into Adventure JSON v1. Deliver the JSON as a downloadable .json file if you can, otherwise reply with the JSON only. If you cannot open the link, tell me instead of guessing the format.`;
 
 export const CORRESPONDENCE_EXTENSION_KEY =
   "codex-cryptica.adventure-correspondence";

@@ -18,6 +18,7 @@
   import { TOPIC_LAYOUT } from "./topic-layout.js";
   import TopicHubShell from "./TopicHubShell.svelte";
   import TopicHubHeader from "./TopicHubHeader.svelte";
+  import TopicInlineExampleCard from "./TopicInlineExampleCard.svelte";
   import TopicRelatedList from "./TopicRelatedList.svelte";
 
   let { config }: { config: TopicHubConfig } = $props();
@@ -127,60 +128,68 @@
     <p class="mb-6 leading-relaxed text-theme-text {TOPIC_LAYOUT.measure}">
       {config.copy.examplesIntro}
     </p>
-    <ul class={TOPIC_LAYOUT.cards}>
-      {#each config.workedExamples as example (example.href)}
-        <li class="border border-theme-border bg-theme-surface p-6">
-          {#if example.image}
+    {#if config.inlineExample}
+      <TopicInlineExampleCard
+        example={config.inlineExample}
+        highlightLabel={config.copy.exampleHighlightLabel}
+      />
+    {/if}
+    {#if config.workedExamples.length > 0}
+      <ul class={TOPIC_LAYOUT.cards}>
+        {#each config.workedExamples as example (example.href)}
+          <li class="border border-theme-border bg-theme-surface p-6">
+            {#if example.image}
+              <a
+                href="{cleanBase}{example.href}"
+                class="mb-4 block overflow-hidden border border-theme-border"
+                use:trackDiscoveryClick={{
+                  sourceKind: "topic",
+                  sourceId: config.slug,
+                  placement: "topic_example",
+                  ...classifyDiscoveryTarget(example.href),
+                }}
+              >
+                <img
+                  src={example.image.src}
+                  alt={example.image.alt}
+                  width={example.image.width}
+                  height={example.image.height}
+                  loading="lazy"
+                  decoding="async"
+                  class="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
+                />
+              </a>
+            {/if}
+            <p
+              class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
+            >
+              {example.genre}
+            </p>
             <a
               href="{cleanBase}{example.href}"
-              class="mb-4 block overflow-hidden border border-theme-border"
+              class="font-header text-xl font-bold text-theme-text underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
               use:trackDiscoveryClick={{
                 sourceKind: "topic",
                 sourceId: config.slug,
                 placement: "topic_example",
                 ...classifyDiscoveryTarget(example.href),
-              }}
+              }}>{example.title}</a
             >
-              <img
-                src={example.image.src}
-                alt={example.image.alt}
-                width={example.image.width}
-                height={example.image.height}
-                loading="lazy"
-                decoding="async"
-                class="aspect-[16/9] w-full object-cover transition-transform duration-300 hover:scale-[1.02]"
-              />
-            </a>
-          {/if}
-          <p
-            class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
-          >
-            {example.genre}
-          </p>
-          <a
-            href="{cleanBase}{example.href}"
-            class="font-header text-xl font-bold text-theme-text underline decoration-theme-primary/40 underline-offset-4 transition-colors hover:text-theme-primary"
-            use:trackDiscoveryClick={{
-              sourceKind: "topic",
-              sourceId: config.slug,
-              placement: "topic_example",
-              ...classifyDiscoveryTarget(example.href),
-            }}>{example.title}</a
-          >
 
-          <p class="mt-2 text-base leading-relaxed text-theme-text">
-            {example.description}
-          </p>
+            <p class="mt-2 text-base leading-relaxed text-theme-text">
+              {example.description}
+            </p>
 
-          <p class="mt-2 text-base leading-relaxed text-theme-text">
-            <strong class="font-bold"
-              >{config.copy.exampleHighlightLabel}</strong
-            >
-            {example.highlight}.
-          </p>
-        </li>
-      {/each}
-    </ul>
+            <p class="mt-2 text-base leading-relaxed text-theme-text">
+              <strong class="font-bold"
+                >{config.copy.exampleHighlightLabel}</strong
+              >
+              {example.highlight}.
+            </p>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   </section>
 
   <!-- Tools: the primary generator first, supporting tools after. -->

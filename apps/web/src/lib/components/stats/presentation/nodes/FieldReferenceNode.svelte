@@ -3,6 +3,7 @@
   import type { PresentationRenderContext } from "../types";
   import MissingFieldNode from "./MissingFieldNode.svelte";
   import ItemTableNode from "./ItemTableNode.svelte";
+  import EffectiveValueNote from "#lib/components/stats/EffectiveValueNote.svelte";
 
   import {
     computeAdjustedCounterValue,
@@ -240,6 +241,9 @@
         )}
     />
   </label>
+  {#if context.effectiveValues?.get(field.id)}
+    <EffectiveValueNote effective={context.effectiveValues.get(field.id)!} />
+  {/if}
 {:else if field.type === "text"}
   <label class={rowClass} data-testid="presentation-field-text">
     {#if label}
