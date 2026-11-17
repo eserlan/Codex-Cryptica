@@ -10,6 +10,11 @@ const sectionLinks = () => [
   ...CONFIG.relatedTopics,
 ];
 
+const primaryActionHrefs = () => [
+  CONFIG.primaryAction.href,
+  CONFIG.primaryAction.secondary.href,
+];
+
 /** Returns the hrefs that point at an unpublished answer or generator. */
 function findBrokenLinks(
   hrefs: string[],
@@ -62,11 +67,15 @@ describe("star systems topic hub config", () => {
     const answers = new Set(getAllAnswerSlugs());
     expect(
       findBrokenLinks(
-        sectionLinks().map((link) => link.href),
+        [...sectionLinks().map((link) => link.href), ...primaryActionHrefs()],
         answers,
         matchGenerator_slug,
       ),
     ).toEqual([]);
+  });
+
+  it("points the primary action at the star system generator", () => {
+    expect(CONFIG.primaryAction.href).toBe("/generators/star-system");
   });
 
   it("rejects an unknown answer or generator slug", () => {
