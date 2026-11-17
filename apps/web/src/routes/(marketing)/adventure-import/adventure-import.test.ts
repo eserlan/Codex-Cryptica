@@ -1,5 +1,6 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import { AdventureJsonV1Schema } from "@codex/adventure-engine";
 import Page from "./+page.svelte";
 import {
   CANONICAL_CONVERSION_PROMPT,
@@ -121,6 +122,85 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     );
   });
 
+  it("leads with a task-first quick start, in order, before the prompt and field tables", () => {
+    const { container } = render(Page);
+
+    const headings = [...container.querySelectorAll("h2")].map(
+      (h) => h.textContent?.trim() ?? "",
+    );
+    const quick = headings.findIndex((h) => /^Quick start/.test(h));
+    expect(quick).toBe(0);
+    expect(quick).toBeLessThan(headings.indexOf("Canonical Conversion Prompt"));
+    expect(quick).toBeLessThan(headings.indexOf("Field-by-Field Structure"));
+
+    const steps = [
+      ...container
+        .querySelector("#quick-start-heading")!
+        .closest("section")!
+        .querySelectorAll("ol > li > strong:first-child"),
+    ].map((el) => el.textContent?.trim());
+    expect(steps).toEqual([
+      "Copy the prompt.",
+      "Paste it and attach your adventure",
+      "Save the reply as a plain .json file.",
+      "Import it in your Vault.",
+      "Review, approve, then start.",
+    ]);
+  });
+
+  it("says the guide is not a converter and stays model-agnostic", () => {
+    const { container } = render(Page);
+    const quick = container
+      .querySelector("#quick-start-heading")!
+      .closest("section")!;
+
+    expect(quick.textContent).toContain(
+      "This page is a guide, not a converter.",
+    );
+    expect(quick.textContent).toContain("no Markdown code fences");
+    expect(quick.textContent).not.toMatch(/\b(ChatGPT|Claude|Gemini)\b/);
+  });
+
+  it("links the quick start to import and troubleshooting anchors that exist", () => {
+    const { container } = render(Page);
+
+    for (const id of [
+      "import-adventure-json-heading",
+      "troubleshooting-heading",
+      "prompt-heading",
+    ]) {
+      expect(container.querySelector(`a[href="#${id}"]`)).toBeTruthy();
+      expect(container.querySelector(`#${id}`)).toBeTruthy();
+    }
+  });
+
+  it("shows a minimal example that is the schema-valid published file", () => {
+    const { container } = render(Page);
+    const example = container.querySelector(
+      'pre[aria-label="Minimal Adventure JSON v1 example"]',
+    )!;
+
+    expect(example.getAttribute("tabindex")).toBe("0");
+    const parsed = JSON.parse(example.textContent ?? "");
+    expect(parsed.formatVersion).toBe("adventure-json/v1");
+    expect(AdventureJsonV1Schema.safeParse(parsed).success).toBe(true);
+  });
+
+  it("keeps both copy buttons in step on a failed copy", async () => {
+    copyMock.mockResolvedValue(false);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i })[1]!,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: /Copy failed/i }),
+      ).toHaveLength(2);
+    });
+  });
+
   it("states that visibility covers the whole record, in the page and the copied prompt", () => {
     render(Page);
 
@@ -177,9 +257,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     copyMock.mockResolvedValue(true);
     render(Page);
 
-    const copyButton = screen.getByRole("button", {
+    const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
-    });
+    })[0]!;
     await fireEvent.click(copyButton);
 
     expect(copyMock).toHaveBeenCalledTimes(1);
@@ -187,7 +267,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /Copied prompt/i }),
+        screen.getAllByRole("button", { name: /Copied prompt/i })[0]!,
       ).toBeTruthy();
     });
   });
@@ -196,13 +276,15 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     copyMock.mockResolvedValue(false);
     render(Page);
 
-    const copyButton = screen.getByRole("button", {
+    const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
-    });
+    })[0]!;
     await fireEvent.click(copyButton);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Copy failed/i })).toBeTruthy();
+      expect(
+        screen.getAllByRole("button", { name: /Copy failed/i })[0]!,
+      ).toBeTruthy();
     });
   });
 
@@ -218,22 +300,24 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     render(Page);
 
-    const copyButton = screen.getByRole("button", {
+    const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
-    });
+    })[0]!;
     await fireEvent.click(copyButton);
     await fireEvent.click(copyButton);
 
     resolveSecond(true);
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /Copied prompt/i }),
+        screen.getAllByRole("button", { name: /Copied prompt/i })[0]!,
       ).toBeTruthy();
     });
 
     resolveFirst(false);
     await Promise.resolve();
-    expect(screen.getByRole("button", { name: /Copied prompt/i })).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: /Copied prompt/i })[0]!,
+    ).toBeTruthy();
   });
 
   it("does not schedule feedback timers when a pending copy resolves after teardown", async () => {
@@ -245,7 +329,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     const { unmount } = render(Page);
 
     await fireEvent.click(
-      screen.getByRole("button", { name: /Copy conversion prompt/i }),
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i })[0]!,
     );
     unmount();
     resolveCopy(true);
