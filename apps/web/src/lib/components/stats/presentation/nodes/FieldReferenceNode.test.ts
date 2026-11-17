@@ -520,8 +520,7 @@ describe("FieldReferenceNode", () => {
       type: "field-reference",
       fieldId: "str_score",
       label: "STR",
-      displayMode: "value",
-    } as FieldReferenceNodeType;
+    };
     const fields = [
       { id: "str_score", label: "STR", type: "number" as const, value: 12 },
     ];
