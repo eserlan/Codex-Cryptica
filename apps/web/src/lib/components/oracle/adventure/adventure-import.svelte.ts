@@ -56,6 +56,22 @@ function experimentalFileError(file: File, isPdf: boolean): string | null {
   return null;
 }
 
+async function findDuplicatePackage(
+  stored: StoredAdventurePackage[],
+  hash: string,
+  isCurrent: () => boolean,
+): Promise<StoredAdventurePackage | null> {
+  for (const item of stored) {
+    const storedHash =
+      item.originFormat === "legacy-source-package"
+        ? await computeAdventureJsonHash(item.package)
+        : item.hash;
+    if (!isCurrent()) return null;
+    if (storedHash === hash) return item;
+  }
+  return null;
+}
+
 /** Per-surface import draft and request lifetime, independent of the visible form. */
 export class AdventureImportController {
   draft = $state<AdventureJsonV1 | null>(null);
@@ -177,17 +193,14 @@ export class AdventureImportController {
     if (!this.isCurrent(request)) return;
     const hash = await computeAdventureJsonHash(validation.value);
     if (!this.isCurrent(request)) return;
-    for (const item of stored) {
-      const storedHash =
-        item.originFormat === "legacy-source-package"
-          ? await computeAdventureJsonHash(item.package)
-          : item.hash;
-      if (!this.isCurrent(request)) return;
-      if (storedHash === hash) {
-        this.duplicate = item;
-        this.predecessor = null;
-        return;
-      }
+    const duplicate = await findDuplicatePackage(stored, hash, () =>
+      this.isCurrent(request),
+    );
+    if (!this.isCurrent(request)) return;
+    if (duplicate) {
+      this.duplicate = duplicate;
+      this.predecessor = null;
+      return;
     }
     this.duplicate = null;
     const predecessor = selectAdventureJsonPredecessor(
@@ -287,13 +300,14 @@ export class AdventureImportController {
     );
   };
 
-  approve = async (approved: AdventureJsonV1): Promise<void> => {
+  private beginApproval(): Pick<
+    ImportRequest,
+    "requestToken" | "sourceVaultId"
+  > {
     const sourceVaultId = this.draftVaultId;
-    const requestToken = this.requestToken;
     if (
       !sourceVaultId ||
-      this.deps.getVaultId() !== sourceVaultId ||
-      this.deps.isGuest()
+      !this.isCurrent({ sourceVaultId, requestToken: this.requestToken })
     ) {
       const error = new Error(
         "Return to the owner Vault where this adventure was imported to approve it.",
@@ -301,29 +315,50 @@ export class AdventureImportController {
       this.approveError = error.message;
       throw error;
     }
-    const request = { sourceVaultId, requestToken };
+    return { sourceVaultId, requestToken: this.requestToken };
+  }
+
+  private completeApproval(
+    saved: Awaited<ReturnType<ImportDependencies["saveApproved"]>>,
+    request: Pick<ImportRequest, "requestToken" | "sourceVaultId">,
+  ): void {
+    if (!this.isCurrent(request)) return;
+    this.draft = saved.package;
+    this.predecessor = null;
+    this.deps.notify(
+      saved.status === "deduplicated"
+        ? `"${saved.package.title}" was already imported.`
+        : `Approved "${saved.package.title}" for local play.`,
+    );
+    this.deps.onApproved(request.sourceVaultId);
+  }
+
+  private reportApprovalError(
+    error: unknown,
+    request: Pick<ImportRequest, "requestToken" | "sourceVaultId">,
+  ): void {
+    if (!this.isCurrent(request)) return;
+    this.approveError =
+      error instanceof Error
+        ? error.message
+        : "Unable to save the approved adventure package.";
+  }
+
+  approve = async (approved: AdventureJsonV1): Promise<void> => {
+    const request = this.beginApproval();
     this.approving = true;
     this.approveError = null;
     try {
-      const saved = await this.deps.saveApproved(sourceVaultId, approved);
-      if (!this.isCurrent(request)) return;
-      this.draft = saved.package;
-      this.predecessor = null;
-      this.deps.notify(
-        saved.status === "deduplicated"
-          ? `"${saved.package.title}" was already imported.`
-          : `Approved "${saved.package.title}" for local play.`,
+      const saved = await this.deps.saveApproved(
+        request.sourceVaultId,
+        approved,
       );
-      this.deps.onApproved(sourceVaultId);
+      this.completeApproval(saved, request);
     } catch (error) {
-      if (this.isCurrent(request))
-        this.approveError =
-          error instanceof Error
-            ? error.message
-            : "Unable to save the approved adventure package.";
+      this.reportApprovalError(error, request);
       throw error;
     } finally {
-      if (requestToken === this.requestToken) this.approving = false;
+      if (request.requestToken === this.requestToken) this.approving = false;
     }
   };
 
