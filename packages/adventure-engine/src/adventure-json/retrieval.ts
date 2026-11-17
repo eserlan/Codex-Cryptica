@@ -55,26 +55,52 @@ type Line = [
   secret?: true,
 ];
 
-function buildText(lines: Line[]): string {
-  const out: string[] = [];
+/**
+ * Joins labelled lines, copying at most `cap + 1` characters of source text.
+ * One character over the cap is enough for admission to see that the excerpt
+ * does not fit and to trim it, so oversized package fields (an unbounded scene
+ * `body`, say) are never copied or serialised in full.
+ */
+function buildText(lines: Line[], cap: number): string {
+  const out = new BoundedText(cap + 1);
   for (const [label, value] of lines) {
-    if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      if (value.length > 0) out.push(`${label}: ${value.join("; ")}`);
-    } else {
-      out.push(`${label}: ${value}`);
-    }
+    if (out.full) break;
+    const parts = lineParts(value);
+    if (parts.length > 0) appendLine(out, label, parts);
   }
-  return out.join("\n");
+  return out.text;
+}
+
+/** A string that stops growing once it reaches `limit` characters. */
+class BoundedText {
+  text = "";
+  constructor(private readonly limit: number) {}
+
+  get full(): boolean {
+    return this.text.length >= this.limit;
+  }
+
+  append(s: string): void {
+    if (!this.full) this.text += s.slice(0, this.limit - this.text.length);
+  }
+}
+
+function lineParts(value: Line[1]): string[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function appendLine(out: BoundedText, label: string, parts: string[]): void {
+  if (out.text.length > 0) out.append("\n");
+  out.append(`${label}: `);
+  for (let i = 0; i < parts.length && !out.full; i++) {
+    if (i > 0) out.append("; ");
+    out.append(parts[i]!);
+  }
 }
 
 function namesAny(value: Line[1], ids: string[]): boolean {
-  const parts = Array.isArray(value)
-    ? value
-    : value === undefined
-      ? []
-      : [value];
-  return parts.some((part) => ids.some((id) => part.includes(id)));
+  return lineParts(value).some((part) => ids.some((id) => part.includes(id)));
 }
 
 /**
@@ -92,6 +118,7 @@ function recordExcerpts(
     sourceRef?: SourceReference;
   },
   lines: Line[],
+  cap: number,
 ): AdventureJsonExcerpt[] {
   const excerpt = (visibility: Visibility, from: Line[]) => ({
     id: record.id,
@@ -99,7 +126,7 @@ function recordExcerpts(
     visibility,
     epistemicStatus: record.epistemicStatus,
     ...(record.sourceRef !== undefined ? { sourceRef: record.sourceRef } : {}),
-    text: buildText(from),
+    text: buildText(from, cap),
   });
   if (record.visibility !== "player-visible") {
     return [excerpt(record.visibility, lines)];
@@ -244,26 +271,37 @@ function hiddenRecordIds(pkg: AdventureJsonV1): string[] {
 }
 
 function addScene(sel: Selection): void {
+  if (sel.stopped) return;
   const scene = sel.scene;
   add(
     sel,
-    recordExcerpts(sel.hiddenIds, "scene", scene, [
-      ["Title", scene.title],
-      ["Summary", scene.summary],
-      ["Location", scene.locationId],
+    recordExcerpts(
+      sel.hiddenIds,
+      "scene",
+      scene,
       [
-        "Read aloud",
-        typeof scene.readAloud === "string"
-          ? [scene.readAloud]
-          : scene.readAloud,
+        ["Title", scene.title],
+        ["Summary", scene.summary],
+        ["Location", scene.locationId],
+        [
+          "Read aloud",
+          typeof scene.readAloud === "string"
+            ? [scene.readAloud]
+            : scene.readAloud,
+        ],
+        ["Body", scene.body],
+        ["Conditions", scene.conditions],
+        ...(scene.branches ?? []).map((b): Line => [
+          "Branch",
+          [
+            b.targetSceneId,
+            b.description,
+            ...(b.condition ? [b.condition] : []),
+          ],
+        ]),
       ],
-      ["Body", scene.body],
-      ["Conditions", scene.conditions],
-      ...(scene.branches ?? []).map((b): Line => [
-        "Branch",
-        [b.targetSceneId, b.description, ...(b.condition ? [b.condition] : [])],
-      ]),
-    ]),
+      sel.maxCharacters,
+    ),
     true,
     true,
   );
@@ -275,6 +313,7 @@ function range(min?: number, max?: number): string | undefined {
 }
 
 function addPremiseAndSystem(sel: Selection): void {
+  if (sel.stopped) return;
   const { premise, system } = sel.pkg;
   add(
     sel,
@@ -283,16 +322,19 @@ function addPremiseAndSystem(sel: Selection): void {
       kind: "premise",
       visibility: "player-visible",
       epistemicStatus: "explicit",
-      text: buildText([
-        ["Background", premise.background],
-        ["Hook", premise.hook],
-        ["Theme", premise.theme],
-        ["Tone", premise.tone],
-      ]),
+      text: buildText(
+        [
+          ["Background", premise.background],
+          ["Hook", premise.hook],
+          ["Theme", premise.theme],
+          ["Tone", premise.tone],
+        ],
+        sel.maxCharacters,
+      ),
     },
     false,
   );
-  if (!system) return;
+  if (!system || sel.stopped) return;
   const target = system.targetParty;
   add(
     sel,
@@ -301,33 +343,43 @@ function addPremiseAndSystem(sel: Selection): void {
       kind: "system",
       visibility: "player-visible",
       epistemicStatus: "explicit",
-      text: buildText([
-        ["Name", system.name],
-        ["Party size", range(target?.sizeMin, target?.sizeMax)],
-        ["Party level", range(target?.levelMin, target?.levelMax)],
-      ]),
+      text: buildText(
+        [
+          ["Name", system.name],
+          ["Party size", range(target?.sizeMin, target?.sizeMax)],
+          ["Party level", range(target?.levelMin, target?.levelMax)],
+        ],
+        sel.maxCharacters,
+      ),
     },
     false,
   );
 }
 
 function addLocation(sel: Selection, location: AdventureJsonLocation): void {
+  if (sel.stopped) return;
   add(
     sel,
-    recordExcerpts(sel.hiddenIds, "location", location, [
-      ["Name", location.name],
-      ["Summary", location.summary],
-      ["Description", location.description],
-      ["Parent location", location.parentLocationId],
-      ...(location.connections ?? []).map((c): Line => [
-        "Connection",
-        [
-          c.targetLocationId,
-          ...(c.description ? [c.description] : []),
-          ...(c.travelConditions ?? []),
-        ],
-      ]),
-    ]),
+    recordExcerpts(
+      sel.hiddenIds,
+      "location",
+      location,
+      [
+        ["Name", location.name],
+        ["Summary", location.summary],
+        ["Description", location.description],
+        ["Parent location", location.parentLocationId],
+        ...(location.connections ?? []).map((c): Line => [
+          "Connection",
+          [
+            c.targetLocationId,
+            ...(c.description ? [c.description] : []),
+            ...(c.travelConditions ?? []),
+          ],
+        ]),
+      ],
+      sel.maxCharacters,
+    ),
     true,
   );
 }
@@ -344,18 +396,24 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
     const before = sel.excerpts.length;
     add(
       sel,
-      recordExcerpts(sel.hiddenIds, "encounter", e, [
-        ["Title", e.title],
-        ["Scene", e.sceneId],
-        ["Location", e.locationId],
-        ["Description", e.description],
-        ["Conditions", e.conditions],
-        ["Actors", e.actorIds],
-        ...e.alternativeSolutions.map((s): Line => [
-          "Alternative solution",
-          [s.method, s.description],
-        ]),
-      ]),
+      recordExcerpts(
+        sel.hiddenIds,
+        "encounter",
+        e,
+        [
+          ["Title", e.title],
+          ["Scene", e.sceneId],
+          ["Location", e.locationId],
+          ["Description", e.description],
+          ["Conditions", e.conditions],
+          ["Actors", e.actorIds],
+          ...e.alternativeSolutions.map((s): Line => [
+            "Alternative solution",
+            [s.method, s.description],
+          ]),
+        ],
+        sel.maxCharacters,
+      ),
       true,
     );
     if (sel.excerpts.length > before) encounters.push(e);
@@ -380,16 +438,22 @@ function addActors(
     sel.actorIds.add(a.id);
     add(
       sel,
-      recordExcerpts(sel.hiddenIds, "actor", a, [
-        ["Name", a.name],
-        ["Summary", a.summary],
-        ["Description", a.description],
-        ["Role", a.role],
-        ["Motivation", a.motivation],
-        ["Disposition", a.disposition],
-        ["Faction", a.factionId],
-        ["Location", a.locationId],
-      ]),
+      recordExcerpts(
+        sel.hiddenIds,
+        "actor",
+        a,
+        [
+          ["Name", a.name],
+          ["Summary", a.summary],
+          ["Description", a.description],
+          ["Role", a.role],
+          ["Motivation", a.motivation],
+          ["Disposition", a.disposition],
+          ["Faction", a.factionId],
+          ["Location", a.locationId],
+        ],
+        sel.maxCharacters,
+      ),
       true,
     );
   }
@@ -406,15 +470,21 @@ function addClues(sel: Selection): void {
     if (!matches) continue;
     add(
       sel,
-      recordExcerpts(sel.hiddenIds, "clue", c, [
-        ["Text", c.text],
-        ["Reveals", c.reveals, true],
-        ["Lead target", c.leadTargetId],
-        ["Placed scene", c.placedSceneId],
-        ["Placed location", c.placedLocationId],
-        ["Placed actor", c.placedActorId],
-        ["Alternative source", c.alternativeSourceId],
-      ]),
+      recordExcerpts(
+        sel.hiddenIds,
+        "clue",
+        c,
+        [
+          ["Text", c.text],
+          ["Reveals", c.reveals, true],
+          ["Lead target", c.leadTargetId],
+          ["Placed scene", c.placedSceneId],
+          ["Placed location", c.placedLocationId],
+          ["Placed actor", c.placedActorId],
+          ["Alternative source", c.alternativeSourceId],
+        ],
+        sel.maxCharacters,
+      ),
       true,
     );
   }
@@ -429,13 +499,19 @@ function addItems(sel: Selection): void {
     if (!matches) continue;
     add(
       sel,
-      recordExcerpts(sel.hiddenIds, "item", i, [
-        ["Name", i.name],
-        ["Summary", i.summary],
-        ["Description", i.description],
-        ["Location", i.locationId],
-        ["Actor", i.actorId],
-      ]),
+      recordExcerpts(
+        sel.hiddenIds,
+        "item",
+        i,
+        [
+          ["Name", i.name],
+          ["Summary", i.summary],
+          ["Description", i.description],
+          ["Location", i.locationId],
+          ["Actor", i.actorId],
+        ],
+        sel.maxCharacters,
+      ),
       true,
     );
   }
@@ -450,13 +526,19 @@ function addRumours(sel: Selection): void {
     if (!refs.some((id) => id !== undefined && anchors.has(id))) continue;
     add(
       sel,
-      recordExcerpts(sel.hiddenIds, "rumour", r, [
-        ["Text", r.text],
-        ["Truth", r.truth, true],
-        ["Source actor", r.sourceActorId],
-        ["Source location", r.sourceLocationId],
-        ["Target", r.targetEntityId],
-      ]),
+      recordExcerpts(
+        sel.hiddenIds,
+        "rumour",
+        r,
+        [
+          ["Text", r.text],
+          ["Truth", r.truth, true],
+          ["Source actor", r.sourceActorId],
+          ["Source location", r.sourceLocationId],
+          ["Target", r.targetEntityId],
+        ],
+        sel.maxCharacters,
+      ),
       true,
     );
   }
@@ -470,10 +552,16 @@ function addSecrets(sel: Selection): void {
     }
     add(
       sel,
-      recordExcerpts(sel.hiddenIds, "secret", s, [
-        ["Text", s.text],
-        ["Related", s.relatedEntityIds],
-      ]),
+      recordExcerpts(
+        sel.hiddenIds,
+        "secret",
+        s,
+        [
+          ["Text", s.text],
+          ["Related", s.relatedEntityIds],
+        ],
+        sel.maxCharacters,
+      ),
       false,
     );
   }

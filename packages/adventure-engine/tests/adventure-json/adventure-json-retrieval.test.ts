@@ -336,6 +336,44 @@ describe("retrieveAdventureJsonContext", () => {
     expect(r.truncated).toBe(true);
   });
 
+  it("never serialises an oversized field in full", () => {
+    const huge = "z".repeat(5_000_000);
+    const pkg = base({
+      scenes: [scene("s1", { body: huge, locationId: "l1" })],
+      locations: [
+        {
+          id: "l1",
+          name: "Loc",
+          summary: huge,
+          connections: Array.from({ length: 1000 }, () => ({
+            targetLocationId: "l1",
+            description: huge,
+          })),
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const original = JSON.stringify;
+    let longest = 0;
+    JSON.stringify = ((...args: Parameters<typeof JSON.stringify>) => {
+      const out = original(...args);
+      if (typeof out === "string") longest = Math.max(longest, out.length);
+      return out;
+    }) as typeof JSON.stringify;
+    let r: AdventureJsonRetrievalResult;
+    try {
+      r = retrieveAdventureJsonContext(pkg, {});
+    } finally {
+      JSON.stringify = original;
+    }
+    expect(r.includedIds).toEqual(["s1"]);
+    expect(r.playerSafe[0]!.text.endsWith("…")).toBe(true);
+    expect(r.truncated).toBe(true);
+    expect(size(r)).toBeLessThanOrEqual(MAX_ADVENTURE_RETRIEVAL_CHARS);
+    expect(longest).toBeLessThan(2 * MAX_ADVENTURE_RETRIEVAL_CHARS);
+  });
+
   it("returns empty lists when even an empty focus excerpt cannot fit", () => {
     const r = retrieveAdventureJsonContext(base({ scenes: [scene("s1")] }), {
       maxCharacters: 10,
