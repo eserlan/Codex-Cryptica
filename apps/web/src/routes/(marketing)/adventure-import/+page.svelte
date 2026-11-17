@@ -230,8 +230,10 @@
           you prefer (a hosted chatbot or a local model), as a file or pasted text.
         </li>
         <li>
-          <strong>Save the reply as a plain <code>.json</code> file.</strong>
-          Keep only the JSON: no Markdown code fences, no commentary before or after.
+          <strong>Save the result as a plain <code>.json</code> file.</strong>
+          If your assistant offers a downloadable file, use that. Otherwise copy its
+          reply. Keep only the JSON: no Markdown code fences, no commentary before
+          or after.
         </li>
         <li>
           <strong>Import it in your Vault.</strong> Open Adventure Mode and

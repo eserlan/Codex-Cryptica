@@ -81,11 +81,11 @@ Schema: https://codexcryptica.com/schemas/adventure-json/v1.json
 Guide: https://codexcryptica.com/adventure-import
 
 Output contract (read this first):
-- Your entire reply is ONE JSON object: it starts with "{" and ends with "}". No Markdown code fences, no text before or after it.
+- Deliver ONE JSON object. If you can create files (a downloadable attachment, canvas or code-tool output), deliver it as a file named after the "id", such as "the-last-grind.json", containing only the JSON, and say only that the file is ready. If you cannot create files, your entire reply is the JSON object: it starts with "{" and ends with "}", with no Markdown code fences and no text before or after it. Never put JSON in a chat reply when you could have attached a file.
 - Include all 11 collection arrays, using [] when empty.
 - Use only the field names and exact values listed below. Do not add properties.
 - Never invent facts. When the source is unclear, record it in "unresolved".
-- Only if you cannot read the attached source, or it is too long to convert in one reply, answer with one plain sentence saying so (and which part to start with) instead of truncated or guessed JSON.
+- Never shorten the conversion by dropping or merging entries. If you cannot read the attached source, or cannot fit all of it in one file or reply, answer with one plain sentence saying which it is (cannot read, or too large) and suggest the staged method at https://codexcryptica.com/adventure-import#long-adventures, instead of sending truncated or guessed JSON.
 
 Shape of a valid answer (trimmed: yours will have more entries and fields). Its ids, codes and wording are only illustrative; use your own, taken from the source:
 ${EXAMPLE_JSON}
@@ -106,6 +106,7 @@ Strict output rules:
 3. Source certainty (CRITICAL):
    - Every entity requires "epistemicStatus" to show how strongly the source supports it: "explicit" | "inferred" | "ambiguous" | "unresolved".
    - Do NOT invent missing facts merely to fill fields.
+   - Use "explicit" only for what the source states. Use "inferred" for anything you worked out yourself, such as a link between scenes, an ending, a role or a summary of unstated consequences.
    - If the source text is silent, omit optional fields. If it is contradictory or unclear, record an entry in "unresolved" with "epistemicStatus": "ambiguous" or "unresolved".
    - For entries in "unresolved", use "ambiguous" when the source is unclear or contradictory, or "unresolved" when it does not answer the question; never use "explicit" or "inferred".
 4. Collection entry contract (notation: ? means optional; string[] means an array of strings):
@@ -140,13 +141,14 @@ Strict output rules:
    - All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference.
    - Location parentLocationId chains must not form cycles.
    - Every non-entry scene with source-supported progression must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops. If progression is unknown, preserve the scene as ambiguous without inventing a branch.
+   - If the source has no authored order (a sandbox or location-based module), list scenes in source order, add branches only where the source states them, set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to, and add one "unresolved" entry saying the order is left to the GM. Do not invent a flow or an ending.
 7. Provenance & copyright:
-   - Add optional "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) when known.
+   - Add "sourceRef" wherever you know the origin of an entry. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry so it can be checked against the source. Shape: ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }).
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.
 
 Before you reply, check each of these:
-- The reply is only the JSON object, with no code fences or commentary.
+- The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
 - All 11 collection arrays are present.
 - Every id is unique, and every cross-reference points to an id that exists.
 - Every "secrets" entry is "gm-only", and no "player-visible" record reveals a hidden role, motive or detail.
@@ -157,7 +159,7 @@ export const PROMPT_TXT_URL =
   "https://codexcryptica.com/adventure-import/prompt.txt";
 
 /** Short instruction copied by "Copy guide link" for assistants that can open URLs. */
-export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow it exactly to convert the attached adventure into Adventure JSON v1. Reply with the JSON only. If you cannot open the link, tell me instead of guessing the format.`;
+export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow it exactly to convert the attached adventure into Adventure JSON v1. Deliver the JSON as a downloadable .json file if you can, otherwise reply with the JSON only. If you cannot open the link, tell me instead of guessing the format.`;
 
 export const CORRESPONDENCE_EXTENSION_KEY =
   "codex-cryptica.adventure-correspondence";

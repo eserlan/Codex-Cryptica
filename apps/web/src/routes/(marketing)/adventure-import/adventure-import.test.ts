@@ -147,7 +147,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(steps).toEqual([
       "Copy the prompt.",
       "Paste it and attach your adventure",
-      "Save the reply as a plain .json file.",
+      "Save the result as a plain .json file.",
       "Import it in your Vault.",
       "Review, approve, then start.",
     ]);
@@ -233,8 +233,8 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
       expect(check).toBeGreaterThan(prompt.indexOf("Strict output rules:"));
       expect(prompt.slice(check)).toContain('Every "secrets" entry');
-      expect(prompt).toContain("too long to convert in one reply");
-      expect(prompt).toContain("instead of truncated or guessed JSON");
+      expect(prompt).toContain("cannot fit all of it in one file or reply");
+      expect(prompt).toContain("instead of sending truncated or guessed JSON");
     });
 
     it("guards against over-hiding, copied example codes and missing items", () => {
@@ -243,6 +243,45 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain("only illustrative; use your own");
       expect(prompt).toContain('in "items"');
       expect(prompt).toContain('specific "code"');
+    });
+
+    it("prefers a JSON file over chat output, with a JSON-only reply fallback", () => {
+      const contract = prompt.slice(
+        prompt.indexOf("Output contract"),
+        prompt.indexOf("Shape of a valid answer"),
+      );
+
+      expect(contract).toContain(
+        'as a file named after the "id", such as "the-last-grind.json"',
+      );
+      expect(contract).toContain(
+        "If you cannot create files, your entire reply is the JSON object",
+      );
+      expect(contract).toContain(
+        "Never put JSON in a chat reply when you could have attached a file",
+      );
+    });
+
+    it("tells models how to handle long sources, sandbox modules and confidence", () => {
+      expect(prompt).toContain(
+        "Never shorten the conversion by dropping or merging entries",
+      );
+      expect(prompt).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+      expect(prompt).not.toContain("compress each to a short summary");
+      expect(prompt).toContain(
+        'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
+      );
+      expect(prompt).toContain('For a PDF, include "page"');
+      expect(prompt).toContain("has no authored order");
+      expect(prompt).toContain("Do not invent a flow or an ending");
+      expect(prompt).toContain(
+        'Use "explicit" only for what the source states',
+      );
+      expect(prompt).toContain(
+        'Use "inferred" for anything you worked out yourself',
+      );
     });
 
     it("stays provider-neutral", () => {
@@ -265,7 +304,8 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(LINK_HANDOFF_TEXT).toContain(
       "https://codexcryptica.com/adventure-import/prompt.txt",
     );
-    expect(LINK_HANDOFF_TEXT).toContain("Reply with the JSON only");
+    expect(LINK_HANDOFF_TEXT).toContain("downloadable .json file");
+    expect(LINK_HANDOFF_TEXT).toContain("otherwise reply with the JSON only");
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Copied link/i })).toBeTruthy();
     });
