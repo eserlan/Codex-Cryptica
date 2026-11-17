@@ -1,0 +1,174 @@
+{
+  "adventureFile": "adventure.md",
+  "sections": [
+    { "sourceId": "mys-overview", "title": "The Silent Bell of Hallowmere" },
+    {
+      "sourceId": "mys-scene-1-market",
+      "title": "Scene 1: The Harbour Market"
+    },
+    {
+      "sourceId": "mys-scene-2-tidemill",
+      "title": "Scene 2: The Old Tidemill"
+    },
+    {
+      "sourceId": "mys-scene-3-chapel",
+      "title": "Scene 3: The Chapel of Saint Vey"
+    },
+    {
+      "sourceId": "mys-branch-archive",
+      "title": "Optional Branch: The Tide Archive"
+    },
+    {
+      "sourceId": "mys-scene-4-crypt",
+      "title": "Scene 4: The Drowned Crypt"
+    },
+    { "sourceId": "mys-cast", "title": "Cast", "container": true },
+    { "sourceId": "mys-npc-rill", "title": "Rill Fenwick" },
+    { "sourceId": "mys-npc-sister", "title": "Sister Osmund" },
+    { "sourceId": "mys-npc-keeper", "title": "Keeper Dain" },
+    { "sourceId": "mys-ending", "title": "Ending", "container": true },
+    {
+      "sourceId": "mys-ending-bell",
+      "title": "Ending: The Bell Rings True"
+    },
+    {
+      "sourceId": "mys-ending-silenced",
+      "title": "Ending: The Bell Is Silenced"
+    }
+  ],
+  "npcs": [
+    {
+      "name": "Rill Fenwick",
+      "motivation": "Rill wants the harbour conservancy to stop blaming the ferrymen and will help anyone who clears them.",
+      "sourceId": "mys-npc-rill"
+    },
+    {
+      "name": "Sister Osmund",
+      "motivation": "Sister Osmund wants the bell's midnight ringing explained before the chapel's repute suffers.",
+      "sourceId": "mys-npc-sister"
+    },
+    {
+      "name": "Keeper Dain",
+      "motivation": "Keeper Dain wants the tide gate left alone and the bell mystery forgotten.",
+      "sourceId": "mys-npc-keeper"
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret-tidal-bellows",
+      "text": "A tidal bellows drives the harbour bell through a rope frame, so the bell rings whenever the tide gate opens, with no one at the tower.",
+      "gmOnly": true,
+      "sourceId": "mys-scene-2-tidemill"
+    },
+    {
+      "id": "secret-osmund-apprentice",
+      "text": "Sister Osmund sends a youthful apprentice to fetch the salt water, and the small footprints are his, pacing the tide gate schedule.",
+      "gmOnly": true,
+      "sourceId": "mys-scene-3-chapel"
+    },
+    {
+      "id": "secret-bell-frame-owner",
+      "text": "The archive copy of the tide schedule proves the bell frame was raised by the conservancy itself, and never by a hand.",
+      "gmOnly": true,
+      "sourceId": "mys-branch-archive"
+    },
+    {
+      "id": "secret-crypt-tally",
+      "text": "The crypt tally was cut by the apprentices of the conservancy to mark the bell's test strokes, one for each night.",
+      "gmOnly": true,
+      "sourceId": "mys-scene-4-crypt"
+    }
+  ],
+  "sceneConditions": [
+    {
+      "sourceId": "mys-scene-1-market",
+      "condition": "If the party asks about the bell here, Rill says the bell was struck at midnight on three nights running and points them toward the tidemill."
+    },
+    {
+      "sourceId": "mys-scene-2-tidemill",
+      "condition": "If the party examines the rope, they notice it was cut from above at head height rather than worn through."
+    },
+    {
+      "sourceId": "mys-scene-3-chapel",
+      "condition": "If the party searches the chapel, they find the sexton's old coat hanging on a nail, still smelling of fish oil."
+    },
+    {
+      "sourceId": "mys-scene-4-crypt",
+      "condition": "If the party breaks the ward by force, the bell rings once, wildly, and every ferryman in the harbour looks up at the tower."
+    }
+  ],
+  "branch": {
+    "sourceId": "mys-branch-archive",
+    "description": "A side path to the tide archive that yields the tide schedule and a hint toward the crypt door, and can be skipped without blocking the ending.",
+    "optional": true
+  },
+  "alternativeSolution": {
+    "obstacleSourceId": "mys-scene-4-crypt",
+    "description": "Name the bellows and the tide gate to the ward, or show the archive tide schedule, instead of battering the warded door down.",
+    "socialBypassOfCombat": true,
+    "sourceId": "mys-scene-4-crypt"
+  },
+  "missableClue": {
+    "clue": "The ledger records boats in the harbour at midnight, and the bell time matches the tide gate.",
+    "primarySourceId": "mys-scene-2-tidemill",
+    "alternativeSourceId": "mys-scene-1-market"
+  },
+  "conclusions": [
+    {
+      "id": "conclusion-tidal-bellows",
+      "statement": "The bell was rung by the tidal bellows, not by a person.",
+      "clues": [
+        {
+          "text": "Fresh salt spray covers the wheel chamber, though the tower stands a quarter mile away.",
+          "sourceId": "mys-scene-2-tidemill"
+        },
+        {
+          "text": "The rope hangs freshly cut above a man's head height, rather than worn through.",
+          "sourceId": "mys-scene-2-tidemill"
+        },
+        {
+          "text": "Salt water fills the bellows, though the bellows are supposed to blow air.",
+          "sourceId": "mys-scene-2-tidemill"
+        },
+        {
+          "text": "Drops of clean salt water mark small wet footprints between the chapel and the tidemill.",
+          "sourceId": "mys-scene-3-chapel"
+        },
+        {
+          "text": "The archive copy of the tide schedule shows the bell frame was raised to warn ships.",
+          "sourceId": "mys-branch-archive"
+        }
+      ]
+    }
+  ],
+  "testimonies": [
+    {
+      "id": "testimony-sexton-bell",
+      "npc": "Sister Osmund",
+      "claim": "The sexton struck the bell with his own hand at midnight.",
+      "truth": "false",
+      "canonicalFact": "The sexton died five winters ago; the bell was rung by the tidal bellows.",
+      "sourceId": "mys-scene-3-chapel"
+    },
+    {
+      "id": "testimony-keeper-gate",
+      "npc": "Keeper Dain",
+      "claim": "I closed the tide gate before midnight.",
+      "truth": "partially-true",
+      "canonicalFact": "The keeper closed the gate, but an apprentice reopened it to run the bellows.",
+      "sourceId": "mys-scene-2-tidemill"
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending-rings-true",
+      "description": "The tidal bellows are proven, the conservancy is named, and the harbour accepts the truth.",
+      "sourceId": "mys-ending-bell"
+    },
+    {
+      "id": "ending-silenced",
+      "description": "The party leaves without proof and the bellows are cut; the conservancy seals the tower and the ferrymen are blamed.",
+      "sourceId": "mys-ending-silenced"
+    }
+  ]
+}

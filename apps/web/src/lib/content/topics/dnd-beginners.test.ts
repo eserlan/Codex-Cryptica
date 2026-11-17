@@ -108,6 +108,10 @@ describe("D&D beginner topic hub config (#3896)", () => {
       buildBeginnerHubBreadcrumbJsonLd(DND_BEGINNERS_TOPIC_CONFIG),
     );
     expect(crumbs["@type"]).toBe("BreadcrumbList");
+    expect(crumbs.itemListElement).toHaveLength(4);
+    expect(crumbs.itemListElement[2].item).toBe(
+      "https://codexcryptica.com/topics",
+    );
     expect(crumbs.itemListElement.at(-1).item).toContain(
       "/topics/dnd-beginners",
     );

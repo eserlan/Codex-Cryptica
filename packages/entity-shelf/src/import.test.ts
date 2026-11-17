@@ -176,6 +176,58 @@ describe("import — the round trip", () => {
     expect(metadata.date).toMatchObject({ year: 300 });
   });
 
+  it("keeps traitSelections unchanged, sourceId included", async () => {
+    const traitSelections = [
+      {
+        kind: "species",
+        sourceId: "kethari-id",
+        sourceTitle: "Kethari",
+        appliedAt: 123,
+        traits: [
+          {
+            id: "t1",
+            name: "Brute",
+            description: "Strong",
+            adjustments: [{ target: "str_score", amount: 2 }],
+          },
+        ],
+      },
+    ];
+    const source = new FakeVault({
+      entities: [
+        {
+          id: "hero",
+          title: "Hero",
+          record: codec.stringify(
+            { id: "hero", title: "Hero", type: "character", traitSelections },
+            "Brave.",
+          ),
+        },
+      ],
+    });
+    await shelveEntities(
+      {
+        store,
+        reader: source,
+        codec,
+        clock: new FakeClock(5_000),
+        ids: new SeqIdFactory("entry"),
+      },
+      { vaultId: "vault-a", vaultName: "Vault A", entityIds: ["hero"] },
+    );
+    const deps = importDeps(store, target);
+    const plan = await planImport(deps, {
+      entryIds: [...store.entries.values()].map((e) => e.id),
+      targetVaultId: "vault-b",
+    });
+    await executeImport(deps, plan);
+
+    const created = [...target.entities.values()][0];
+    expect(codec.parse(created.record).metadata.traitSelections).toEqual(
+      traitSelections,
+    );
+  });
+
   it("writes the entry's assets into the destination and points the record at them (FR-014)", async () => {
     const entries = await shelfWith(["goblin"], store);
     const deps = importDeps(store, target);

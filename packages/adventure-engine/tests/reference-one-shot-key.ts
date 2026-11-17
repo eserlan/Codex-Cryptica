@@ -6,7 +6,15 @@ export const ReferenceOneShotKeySchema = z
   .object({
     adventureFile: z.literal("adventure.md"),
     sections: z
-      .array(z.object({ sourceId: text, title: text }).strict())
+      .array(
+        z
+          .object({
+            sourceId: text,
+            title: text,
+            container: z.boolean().optional(),
+          })
+          .strict(),
+      )
       .min(1),
     npcs: z.array(
       z.object({ name: text, motivation: text, sourceId: text }).strict(),
@@ -52,3 +60,5 @@ export const ReferenceOneShotKeySchema = z
     },
     { message: "section sourceIds, secret ids and ending ids must be unique" },
   );
+
+export type ReferenceOneShotKey = z.infer<typeof ReferenceOneShotKeySchema>;

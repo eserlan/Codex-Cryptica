@@ -1808,6 +1808,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/world", label: "Sci-Fi World Generator" },
       { href: "/generators/ship-generator", label: "Ship Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/topics/star-systems", label: "Star Systems Topic Hub" },
     ],
   },
   constellation: {

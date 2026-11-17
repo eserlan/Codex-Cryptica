@@ -17,7 +17,12 @@
   import ItemTableNode from "./presentation/nodes/ItemTableNode.svelte";
   import TovLuckControl from "./TovLuckControl.svelte";
   import TovDoomControl from "./TovDoomControl.svelte";
-  import { isTovLuckField, isTovDoomField } from "@codex/stat-sheet-engine";
+  import {
+    computeEffectiveValues,
+    isTovLuckField,
+    isTovDoomField,
+  } from "@codex/stat-sheet-engine";
+  import EffectiveValueNote from "./EffectiveValueNote.svelte";
 
   let {
     entity,
@@ -31,6 +36,9 @@
 
   const readOnly = $derived(vault.isGuest);
   const fields = $derived(entity.statSheet?.fields ?? []);
+  const effectiveValues = $derived(
+    computeEffectiveValues(fields, entity.traitSelections ?? []),
+  );
 
   // Surfaced in the empty state so entities created *before* a category
   // default was configured (or that just never got one applied) still have
@@ -363,6 +371,9 @@
                   )}
               />
             </div>
+            {#if effectiveValues.get(field.id)}
+              <EffectiveValueNote effective={effectiveValues.get(field.id)!} />
+            {/if}
           </div>
         {:else if field.type === "text"}
           <div

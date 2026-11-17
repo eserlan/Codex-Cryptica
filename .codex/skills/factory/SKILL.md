@@ -30,18 +30,17 @@ require the existing `job feedback` or author-reply flow before resuming.
 
 Codex agents see job artefacts read-only and return one requested result through
 an isolated temporary file. Only the builder edits the job worktree; linked Git
-metadata stays read-only for every role. Fallow audits and the deterministic
-gate run in credential-free, network-disabled Codex sandboxes. Fallow runs in a
+metadata stays read-only for every role. Fallow snapshot audits run in credential-free, network-disabled Codex sandboxes. Fallow runs in a
 disposable standalone clone with the job's uncommitted changes overlaid and its
 base ref fetched explicitly, so the audit can create its comparison worktree
 without writing to the shared Git metadata. The runner records the audited
 HEAD and base SHAs after publishing, and the gate skips Fallow only while that
 evidence matches the clean job worktree; resumed jobs with missing or stale
-evidence are audited again. The host runner
-seeds a checkout-local Bun cache from validated job manifests and lockfiles,
-with package lifecycle scripts disabled and npm registry sources restricted.
-The sandbox installs dependencies into the job worktree using that read-only
-cache, without network access or a user's global cache. The host runner imports
-the result, publishes builder changes with all Git hooks disabled, and runs the
-gate after the builder reports READY. PRs keep the configured `needs-human`
+evidence are audited again. The host runner seeds a checkout-local Bun cache
+from validated job manifests and lockfiles, with package lifecycle scripts
+disabled and npm registry sources restricted. The sandbox installs dependencies
+into the job worktree using that read-only cache, without network access or a
+user's global cache. The host runner imports agent results, publishes builder
+changes, and runs the gate in a credential-free, network-disabled Codex sandbox.
+PRs keep the configured `needs-human`
 label through feedback rounds and receive it again before a resumed phase runs.

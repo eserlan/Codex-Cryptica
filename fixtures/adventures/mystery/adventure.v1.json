@@ -1,0 +1,469 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "the-silent-bell-of-hallowmere",
+  "version": "1.0.0",
+  "title": "The Silent Bell of Hallowmere",
+  "description": "A non-linear mystery for a small party, playable in about 40 turns and usable with any rules.",
+  "premise": {
+    "background": "The harbour bell of Hallowmere rings at midnight though the locked tower stands empty, and the ferrymen are blamed.",
+    "hook": "The party must find who or what rang the bell, in whatever order the clues lead, and decide what happens to it.",
+    "theme": ["mystery", "investigation", "harbour-town"],
+    "tone": "quiet, damp, tense"
+  },
+  "source": {
+    "title": "The Silent Bell of Hallowmere",
+    "license": "CC0-1.0"
+  },
+  "system": {
+    "name": "System-agnostic",
+    "targetParty": { "sizeMin": 2, "sizeMax": 5 }
+  },
+  "locations": [
+    {
+      "id": "loc-hallowmere",
+      "name": "Hallowmere",
+      "summary": "A port town whose harbour bell rings at midnight from an empty tower.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "The Silent Bell of Hallowmere",
+        "anchor": "mys-overview"
+      }
+    },
+    {
+      "id": "loc-market",
+      "name": "The Harbour Market",
+      "summary": "A crowded fish market beneath the bell tower, full of gossip about the midnight ringing.",
+      "parentLocationId": "loc-hallowmere",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Harbour Market",
+        "anchor": "mys-scene-1-market"
+      }
+    },
+    {
+      "id": "loc-tidemill",
+      "name": "The Old Tidemill",
+      "summary": "A low stone mill over the water whose wheel turns on the rising tide.",
+      "parentLocationId": "loc-hallowmere",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    },
+    {
+      "id": "loc-chapel",
+      "name": "The Chapel of Saint Vey",
+      "summary": "A small grey chapel above the harbour with a candle and a bowl of salt water.",
+      "parentLocationId": "loc-hallowmere",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Chapel of Saint Vey",
+        "anchor": "mys-scene-3-chapel"
+      }
+    },
+    {
+      "id": "loc-archive",
+      "name": "The Tide Archive",
+      "summary": "A barrel-vaulted archive beneath the harbour office holding copies of the tide schedule.",
+      "parentLocationId": "loc-hallowmere",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Tide Archive",
+        "anchor": "mys-branch-archive"
+      }
+    },
+    {
+      "id": "loc-crypt",
+      "name": "The Drowned Crypt",
+      "summary": "A flooded crypt beneath the chapel, barred by a lead door.",
+      "parentLocationId": "loc-chapel",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Drowned Crypt",
+        "anchor": "mys-scene-4-crypt"
+      }
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor-rill",
+      "name": "Rill Fenwick",
+      "summary": "A harbourside clerk with ink-stained fingers, eager to clear the ferrymen.",
+      "role": "Clerk",
+      "motivation": "Rill wants the harbour conservancy to stop blaming the ferrymen and will help anyone who clears them.",
+      "locationId": "loc-market",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": { "section": "Rill Fenwick", "anchor": "mys-npc-rill" }
+    },
+    {
+      "id": "actor-osmund",
+      "name": "Sister Osmund",
+      "summary": "The chapel keeper, prim and devout, shaken by the sexton's tread she heard.",
+      "role": "Chapel keeper",
+      "motivation": "Sister Osmund wants the bell's midnight ringing explained before the chapel's repute suffers.",
+      "locationId": "loc-chapel",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": { "section": "Sister Osmund", "anchor": "mys-npc-sister" }
+    },
+    {
+      "id": "actor-dain",
+      "name": "Keeper Dain",
+      "summary": "The tidemill keeper, grizzled and suspicious of strangers.",
+      "role": "Mill keeper",
+      "motivation": "Keeper Dain wants the tide gate left alone and the bell mystery forgotten.",
+      "locationId": "loc-tidemill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": { "section": "Keeper Dain", "anchor": "mys-npc-keeper" }
+    }
+  ],
+  "factions": [],
+  "scenes": [
+    {
+      "id": "mys-scene-1-market",
+      "title": "Scene 1: The Harbour Market",
+      "summary": "Rill Fenwick meets the party and asks who rang the bell; the investigation may begin anywhere.",
+      "locationId": "loc-market",
+      "readAloud": "Gulls wheel over a crowded fish market. Stalls sag under crates of silver fish, and everyone is glancing at the harbour bell tower.",
+      "conditions": [
+        "If the party asks about the bell here, Rill says the bell was struck at midnight on three nights running and points them toward the tidemill."
+      ],
+      "branches": [
+        {
+          "targetSceneId": "mys-scene-2-tidemill",
+          "description": "Cross the harbour to the old tidemill."
+        },
+        {
+          "targetSceneId": "mys-scene-3-chapel",
+          "description": "Climb to the chapel of Saint Vey on the hill."
+        },
+        {
+          "targetSceneId": "mys-branch-archive",
+          "description": "Descend to the tide archive beneath the harbour office.",
+          "optional": true
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Harbour Market",
+        "anchor": "mys-scene-1-market"
+      }
+    },
+    {
+      "id": "mys-scene-2-tidemill",
+      "title": "Scene 2: The Old Tidemill",
+      "summary": "The party searches the wheel chamber, where salt spray, a cut rope and a ledger point at the bellows.",
+      "locationId": "loc-tidemill",
+      "readAloud": "A low stone mill leans over the harbour water. Its great paddle wheel turns slowly on the rising tide, smelling of fish oil and mildew.",
+      "conditions": [
+        "If the party examines the rope, they notice it was cut from above at head height rather than worn through."
+      ],
+      "branches": [
+        {
+          "targetSceneId": "mys-scene-3-chapel",
+          "description": "Follow the wet footprints up to the chapel."
+        },
+        {
+          "targetSceneId": "mys-scene-4-crypt",
+          "description": "Descend through the chapel crypt to the drowned door."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    },
+    {
+      "id": "mys-scene-3-chapel",
+      "title": "Scene 3: The Chapel of Saint Vey",
+      "summary": "Sister Osmund shows the empty sexton bed and the salt-water bowl; wet footprints cross the harbour.",
+      "locationId": "loc-chapel",
+      "readAloud": "A small chapel of grey stone stands among graves above the harbour. Inside, a single candle burns beside a copper bowl of salt water.",
+      "conditions": [
+        "If the party searches the chapel, they find the sexton's old coat hanging on a nail, still smelling of fish oil."
+      ],
+      "branches": [
+        {
+          "targetSceneId": "mys-scene-4-crypt",
+          "description": "Descend the stair into the flooded crypt."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Chapel of Saint Vey",
+        "anchor": "mys-scene-3-chapel"
+      }
+    },
+    {
+      "id": "mys-branch-archive",
+      "title": "Optional Branch: The Tide Archive",
+      "summary": "A quiet archive holding the tide schedule and a hint toward the crypt door; it may be skipped with no effect on the ending.",
+      "locationId": "loc-archive",
+      "readAloud": "Below the harbour office, a barrel-vaulted archive hums with dripping water. Shelves of tide tables stretch into the dark.",
+      "optional": true,
+      "branches": [
+        {
+          "targetSceneId": "mys-scene-1-market",
+          "description": "Return to the harbour market.",
+          "optional": true
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Tide Archive",
+        "anchor": "mys-branch-archive"
+      }
+    },
+    {
+      "id": "mys-scene-4-crypt",
+      "title": "Scene 4: The Drowned Crypt",
+      "summary": "A flooded crypt barred by a warded door, with a carved tally under the black water.",
+      "locationId": "loc-crypt",
+      "readAloud": "A narrow stair drops into a flooded crypt. Black water covers the floor stones, and a warded door of lead bars the far wall, humming faintly.",
+      "conditions": [
+        "If the party breaks the ward by force, the bell rings once, wildly, and every ferryman in the harbour looks up at the tower."
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Drowned Crypt",
+        "anchor": "mys-scene-4-crypt"
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "id": "enc-crypt-ward",
+      "title": "The Warded Door",
+      "sceneId": "mys-scene-4-crypt",
+      "locationId": "loc-crypt",
+      "description": "A warded door of lead bars the far wall of the flooded crypt.",
+      "conditions": [
+        "If the party breaks the ward by force, the bell rings once, wildly."
+      ],
+      "alternativeSolutions": [
+        {
+          "method": "By force",
+          "description": "Batter the ward down in minutes, but the noise carries to the market.",
+          "socialBypassOfCombat": false
+        },
+        {
+          "method": "By talk",
+          "description": "Name the bellows and the tide gate to the ward, or show the archive tide schedule, and the ward sighs open.",
+          "socialBypassOfCombat": true
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Drowned Crypt",
+        "anchor": "mys-scene-4-crypt"
+      }
+    }
+  ],
+  "clues": [
+    {
+      "id": "clue-salt-spray",
+      "text": "Fresh salt spray covers the wheel chamber, though the tower stands a quarter mile away.",
+      "placedLocationId": "loc-tidemill",
+      "placedSceneId": "mys-scene-2-tidemill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    },
+    {
+      "id": "clue-cut-rope",
+      "text": "The rope hangs freshly cut above a man's head height, rather than worn through.",
+      "placedLocationId": "loc-tidemill",
+      "placedSceneId": "mys-scene-2-tidemill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    },
+    {
+      "id": "clue-salt-bellows",
+      "text": "Salt water fills the bellows, though the bellows are supposed to blow air.",
+      "placedLocationId": "loc-tidemill",
+      "placedSceneId": "mys-scene-2-tidemill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    },
+    {
+      "id": "clue-wet-footprints",
+      "text": "Drops of clean salt water mark small wet footprints between the chapel and the tidemill.",
+      "placedLocationId": "loc-chapel",
+      "placedSceneId": "mys-scene-3-chapel",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Chapel of Saint Vey",
+        "anchor": "mys-scene-3-chapel"
+      }
+    },
+    {
+      "id": "clue-tide-schedule",
+      "text": "The archive copy of the tide schedule shows the bell frame was raised to warn ships.",
+      "placedLocationId": "loc-archive",
+      "placedSceneId": "mys-branch-archive",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Tide Archive",
+        "anchor": "mys-branch-archive"
+      }
+    },
+    {
+      "id": "clue-midnight-ledger",
+      "text": "The ledger records boats in the harbour at midnight, and the bell time matches the tide gate.",
+      "placedLocationId": "loc-tidemill",
+      "placedSceneId": "mys-scene-2-tidemill",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    }
+  ],
+  "rumours": [
+    {
+      "id": "rumour-sexton-bell",
+      "text": "The sexton struck the bell with his own hand at midnight.",
+      "truth": "false",
+      "sourceActorId": "actor-osmund",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Chapel of Saint Vey",
+        "anchor": "mys-scene-3-chapel"
+      }
+    },
+    {
+      "id": "rumour-keeper-gate",
+      "text": "I closed the tide gate before midnight.",
+      "truth": "partially-true",
+      "sourceActorId": "actor-dain",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    }
+  ],
+  "items": [
+    {
+      "id": "item-brass-key",
+      "name": "Brass Key",
+      "summary": "A brass key on the archive desk that fits neither the chapel nor the tower lock.",
+      "locationId": "loc-archive",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Tide Archive",
+        "anchor": "mys-branch-archive"
+      }
+    },
+    {
+      "id": "item-copper-bowl",
+      "name": "Copper Bowl",
+      "summary": "A copper bowl of clean salt water beside the chapel candle.",
+      "locationId": "loc-chapel",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Chapel of Saint Vey",
+        "anchor": "mys-scene-3-chapel"
+      }
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret-tidal-bellows",
+      "text": "A tidal bellows drives the harbour bell through a rope frame, so the bell rings whenever the tide gate opens, with no one at the tower.",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Old Tidemill",
+        "anchor": "mys-scene-2-tidemill"
+      }
+    },
+    {
+      "id": "secret-osmund-apprentice",
+      "text": "Sister Osmund sends a youthful apprentice to fetch the salt water, and the small footprints are his, pacing the tide gate schedule.",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Chapel of Saint Vey",
+        "anchor": "mys-scene-3-chapel"
+      }
+    },
+    {
+      "id": "secret-bell-frame-owner",
+      "text": "The archive copy of the tide schedule proves the bell frame was raised by the conservancy itself, and never by a hand.",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Tide Archive",
+        "anchor": "mys-branch-archive"
+      }
+    },
+    {
+      "id": "secret-crypt-tally",
+      "text": "The crypt tally was cut by the apprentices of the conservancy to mark the bell's test strokes, one for each night.",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Drowned Crypt",
+        "anchor": "mys-scene-4-crypt"
+      }
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending-rings-true",
+      "title": "Ending: The Bell Rings True",
+      "description": "The tidal bellows are proven, the conservancy is named, and the harbour accepts the truth.",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Ending: The Bell Rings True",
+        "anchor": "mys-ending-bell"
+      }
+    },
+    {
+      "id": "ending-silenced",
+      "title": "Ending: The Bell Is Silenced",
+      "description": "The party leaves without proof and the bellows are cut; the conservancy seals the tower and the ferrymen are blamed.",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Ending: The Bell Is Silenced",
+        "anchor": "mys-ending-silenced"
+      }
+    }
+  ],
+  "unresolved": []
+}

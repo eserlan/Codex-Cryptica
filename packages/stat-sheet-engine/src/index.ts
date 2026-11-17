@@ -21,3 +21,4 @@ export * from "./stock-suggestions";
 export * from "./market-pressure";
 export * from "./rules-sources";
 export * from "./stat-block-reader";
+export * from "./trait-packages";

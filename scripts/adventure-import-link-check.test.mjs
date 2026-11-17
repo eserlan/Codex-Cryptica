@@ -5,6 +5,7 @@ import {
   discoveryProblems,
   guideProblems,
   jsonAssetProblems,
+  promptTxtProblems,
   productionLinks,
   run,
 } from "./adventure-import-link-check.mjs";
@@ -83,6 +84,13 @@ describe("adventure import link check", () => {
         { contentType: "application/json", body: "{}" },
       ],
       ["/schemas/adventure-json/v2.json", { status: 404, body: "{}" }],
+      [
+        "/adventure-import/prompt.txt",
+        {
+          contentType: "text/plain",
+          body: "Convert the tabletop RPG adventure I provide.",
+        },
+      ],
       ["/adventure", { contentType: "text/html", body: "<html>app</html>" }],
       [
         "/llms.txt",
@@ -146,5 +154,31 @@ describe("adventure import link check", () => {
       ),
     ).toEqual([]);
     expect(discoveryProblems("", "")).toHaveLength(2);
+  });
+  it("accepts the plain-text prompt and rejects HTML or wrong content", () => {
+    const good = {
+      status: 200,
+      contentType: "text/plain; charset=utf-8",
+      body: "Convert the tabletop RPG adventure I provide.\nSchema: https://codexcryptica.com/schemas/adventure-json/v1.json",
+    };
+    expect(promptTxtProblems(good)).toEqual([]);
+    expect(
+      promptTxtProblems({ ...good, contentType: "text/html" }),
+    ).toHaveLength(1);
+    expect(
+      promptTxtProblems({
+        status: 404,
+        contentType: "text/html",
+        body: "<html>",
+      }),
+    ).toHaveLength(3);
+  });
+
+  it("includes prompt.txt among production links", () => {
+    expect(
+      productionLinks(
+        "see https://codexcryptica.com/adventure-import/prompt.txt now",
+      ),
+    ).toEqual(["https://codexcryptica.com/adventure-import/prompt.txt"]);
   });
 });

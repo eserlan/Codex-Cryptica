@@ -128,6 +128,19 @@ A merchant sheet reaches players only through one projection. Choosing the Brows
 - `marketHistory` is bounded (20 changes), is stripped when a field is saved into a template or sent to guests, and the player catalogue allowlist never carries it.
 - Signals from the Settlement Economy (#3559) and Business (#3627) generators plug in through `MarketSignal` and `draftFromSignal`, which only draft a preset and a line filter for the GM to review. Not built here: automatic restocking, NPC buying, and genre or rules adapters (these would be separate adapters over `PressureEffect`).
 
+## Trait packages
+
+A species/ancestry package lets a Creature carry reusable traits that modify a character's number fields without touching base values.
+
+- **Data** (`packages/schema/src/trait-package.ts`, optional on `EntitySchema`):
+  - `traitPackage: { kind: "species", traits }` marks a `creature` as a definition. A trait has an `id`, `name`, `description` and up to 20 `adjustments` of `{ target, amount }`. `amount` is finite and not 0.
+  - `traitSelections` (max 10) on a character holds `{ kind, sourceId, sourceTitle, appliedAt, traits }`. `traits` is a deep-copied snapshot, so later edits to the source are not pushed. There is at most one selection per `kind`.
+  - Both live at entity level, not inside `statSheet`, because `persistFields` rebuilds `statSheet` from `templateId` and `fields` only. They are written to frontmatter like any other field, so export/import and Shelf copies carry them. `sourceId` is not remapped on Shelf import, so a copy shows the source as unavailable and keeps the snapshot.
+- **Matching**: a `target` resolves through `resolveFieldByKeyOrId` (id, then key, never label). Only `number` fields take adjustments. Others are reported as `incompatible`, unresolved targets as `missing`.
+- **Engine** (`packages/stat-sheet-engine/src/trait-packages.ts`, pure): `isSpeciesDefinition`, `previewTraitSelection`, `computeEffectiveValues` (base is `0` when the stored value is not a number), `setTraitSelection` and `removeTraitSelection`. None of them modifies `fields`.
+- **UI**: `SpeciesDefinitionEditor` (Creature) and `SpeciesSelectionPanel` (character/NPC) in the Stats tab; `EffectiveValueNote` renders the effective value in `StatSheetView` and `FieldReferenceNode` (through `PresentationRenderContext.effectiveValues`).
+- Effective values are display only. `applyDerivedModifiers`, rolls, formulas and token stats keep reading the base `value`.
+
 ## Compatibility promises
 
 - Old `statSheet` frontmatter, vault templates, presentation templates and marketplace packages load unchanged. `packages/stat-sheet-engine/src/__fixtures__/legacy-sheets.ts` holds pre-#3960 data, and `entity-sheet.test.ts` asserts it parses and projects without being rewritten.
