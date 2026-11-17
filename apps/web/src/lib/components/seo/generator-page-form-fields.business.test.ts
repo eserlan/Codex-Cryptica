@@ -96,6 +96,20 @@ describe("UrbanFantasyFactionFormFields", () => {
         .getByText(/Add a city, neighbourhood/)
         .classList.contains("text-xs"),
     ).toBe(true);
+    const campaignContext = screen.getByRole("textbox", {
+      name: "Add campaign context",
+    }) as HTMLTextAreaElement;
+    expect(campaignContext.name).toBe("");
+    expect(campaignContext.className).toContain(
+      "focus-visible:outline-theme-text",
+    );
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Urban fantasy mode",
+        }) as HTMLSelectElement
+      ).className,
+    ).toContain("focus-visible:outline-theme-text");
     const surpriseButton = screen.getByRole("button", { name: "Surprise Me" });
     expect(surpriseButton.classList.contains("text-xs")).toBe(true);
     expect(

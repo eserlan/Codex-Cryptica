@@ -435,6 +435,19 @@ describe("urban fantasy faction (#1137)", () => {
     ).toThrow(/missing required content/);
   });
 
+  it("rejects required structure contained only inside Markdown code fences", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(232));
+    const valid = urbanFantasyAiResponse();
+    const response = urbanFantasyAiResponse({
+      content: `\n\`\`\`md\n${valid.content}\n\`\`\``,
+      lore: `\n~~~md\n${valid.lore}\n~~~`,
+    });
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(JSON.stringify(response), resolved),
+    ).toThrow(/missing required content/);
+  });
+
   it("rejects whitespace-only NPC and rival names", () => {
     const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(231));
     const validLore = urbanFantasyAiResponse().lore;

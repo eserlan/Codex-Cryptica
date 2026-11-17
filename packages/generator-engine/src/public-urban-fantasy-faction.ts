@@ -331,20 +331,48 @@ const REQUIRED_CHEAT_SHEET_FIELDS = [
   "**Immediate Hook**:",
 ] as const;
 
+function removeFencedCodeBlocks(markdown: string): string {
+  let openFence: { marker: string; length: number } | null = null;
+  const lines = markdown.split(/\r?\n/);
+  const visibleLines = lines.filter((line) => {
+    if (!openFence) {
+      const opening = line.match(/^ {0,3}(`{3,}|~{3,})/);
+      if (!opening) return true;
+      openFence = {
+        marker: opening[1][0],
+        length: opening[1].length,
+      };
+      return false;
+    }
+
+    const closing = line.match(/^ {0,3}(`+|~+)[ \t]*$/);
+    if (
+      closing &&
+      closing[1][0] === openFence.marker &&
+      closing[1].length >= openFence.length
+    ) {
+      openFence = null;
+    }
+    return false;
+  });
+  return visibleLines.join("\n");
+}
+
 function sectionBodies(
   markdown: string,
   requiredSections: readonly string[],
 ): Map<string, string[]> {
   const bodies = new Map<string, string[]>();
-  const headings = [...markdown.matchAll(/^### .+$/gm)];
+  const validationMarkdown = removeFencedCodeBlocks(markdown);
+  const headings = [...validationMarkdown.matchAll(/^### .+$/gm)];
 
   for (const [index, match] of headings.entries()) {
     const heading = match[0].trim();
     if (!requiredSections.includes(heading)) continue;
     const bodyStart = (match.index ?? 0) + match[0].length;
-    const bodyEnd = headings[index + 1]?.index ?? markdown.length;
+    const bodyEnd = headings[index + 1]?.index ?? validationMarkdown.length;
     const existing = bodies.get(heading) ?? [];
-    existing.push(markdown.slice(bodyStart, bodyEnd).trim());
+    existing.push(validationMarkdown.slice(bodyStart, bodyEnd).trim());
     bodies.set(heading, existing);
   }
 

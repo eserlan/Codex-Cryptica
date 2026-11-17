@@ -22,7 +22,7 @@
 
   let selectReset = $state(0);
   const selectClass =
-    "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
+    "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text";
   const labelClass =
     "text-xs font-bold uppercase tracking-wider text-theme-text";
 </script>
@@ -95,12 +95,11 @@
   >
   <textarea
     id="urban-fantasy-campaign-context"
-    name="campaign_context"
     bind:value={campaignContext}
     maxlength="4000"
     rows="4"
     aria-describedby="urban-fantasy-campaign-context-help"
-    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 resize-y"
+    class="w-full min-h-24 bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-base md:text-xs text-theme-text focus:outline-none focus:border-theme-primary/60 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text resize-y"
   ></textarea>
   <p
     id="urban-fantasy-campaign-context-help"
