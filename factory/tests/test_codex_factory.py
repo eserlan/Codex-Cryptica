@@ -581,11 +581,21 @@ class CodexFactoryTests(unittest.TestCase):
         def fake_run(args, cwd=None, env=None, **kwargs):
             captured["args"] = args
             captured["env"] = env
-            captured["configs"].append((Path(env["CODEX_HOME"]) / "config.toml").read_text())
+            config = (Path(env["CODEX_HOME"]) / "config.toml").read_text()
+            captured["configs"].append(config)
+            self.assertEqual(env["BUN_TMPDIR"], env["TMPDIR"])
+            self.assertNotEqual(env["BUN_TMPDIR"], "/inherited-private-bun-temp")
+            bun_temp = Path(env["BUN_TMPDIR"])
+            self.assertTrue(bun_temp.is_dir())
+            probe = bun_temp / "bun-temp-probe"
+            probe.write_text("writable")
+            probe.unlink()
+            self.assertIn(json.dumps(str(bun_temp)) + ' = "write"', config)
             return subprocess.CompletedProcess(args, 0, "", "")
 
         with patch.object(sandbox.shutil, "which", return_value="/usr/bin/codex"), \
-             patch.object(sandbox.subprocess, "run", side_effect=fake_run):
+             patch.object(sandbox.subprocess, "run", side_effect=fake_run), \
+             patch.dict(os.environ, {"BUN_TMPDIR": "/inherited-private-bun-temp"}):
             sandbox.run_sandboxed(
                 ["bun", "install"], cwd=self.worktree,
                 writable_roots=[self.worktree], git_common_dir=self.git_common,
