@@ -37,6 +37,14 @@ describe("TopicExampleDiagram", () => {
     expect(container.textContent).toContain("Missing convoy");
   });
 
+  it("shows each node's role as text", () => {
+    const { container } = render(TopicExampleDiagram, { props: { diagram } });
+
+    for (const node of diagram.nodes) {
+      expect(container.textContent).toContain(node.role);
+    }
+  });
+
   it("does not clip horizontally or use dl, ul or h3", () => {
     const { container } = render(TopicExampleDiagram, { props: { diagram } });
 
