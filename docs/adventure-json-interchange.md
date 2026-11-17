@@ -67,3 +67,17 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 | `endings`                        | `endings`                            | Preserves `title` and `description`.                                                                                                                   |
 | `ambiguities`                    | `unresolved`                         | Preserves `code`, `message`, `context`, and `epistemicStatus: "unresolved"`.                                                                           |
 | `provenance`                     | `epistemicStatus`                    | `"source-grounded"` → `"explicit"`, `"suggested"` → `"inferred"`, `"unresolved"` → `"unresolved"`.                                                     |
+
+## Link smoke check
+
+`bun scripts/adventure-import-link-check.mjs [--base=<origin>] [--strict-production]`
+(also the manual "Adventure Import Link Check" workflow) verifies the guide,
+schema, alias, both examples, the import CTA href and the `llms.txt` entries.
+
+- Asset checks assert status 200, a JSON content type and parseable JSON.
+- `/adventure` is an app route served from the SPA fallback, so its HTTP status
+  (often 404 for crawlers and `curl`) is not judged; only that the app shell is
+  returned. Signed-out users reach the entry flow in the browser.
+- The guide's prompt uses absolute production URLs. On a non-production base the
+  check reports those as environment-dependent warnings; run it against
+  production with `--strict-production` at release time, after promotion.
