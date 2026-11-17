@@ -105,6 +105,38 @@ describe("vault-archive", () => {
     expect(store.has("restored/.codex/canvases/map.json")).toBe(true);
   });
 
+  it("keeps traitSelections in an entity file through export and import", async () => {
+    const yaml = `---
+id: hero
+title: Hero
+type: character
+traitSelections:
+  - kind: species
+    sourceId: kethari
+    sourceTitle: Kethari
+    appliedAt: 5
+    traits:
+      - id: t1
+        name: Brute
+        description: ""
+        adjustments:
+          - target: str_score
+            amount: 2
+---
+Brave.`;
+    store.set("source/hero.md", strToU8(yaml));
+    await exportVaultToZip("source", "World");
+    await writeArchiveToVault(
+      "restored",
+      await parseVaultArchive(capturedDownload!.blob),
+    );
+    const restored = new TextDecoder().decode(store.get("restored/hero.md"));
+    expect(restored).toBe(yaml);
+    expect(restored).toContain("traitSelections:");
+    expect(restored).toContain("sourceId: kethari");
+    expect(restored).toContain("amount: 2");
+  });
+
   it("restores adventure documents for the new Vault and preserves private image bytes and opaque artwork", async () => {
     const session = initialSession({
       vaultId: "source",

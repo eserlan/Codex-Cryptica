@@ -515,4 +515,47 @@ describe("FieldReferenceNode", () => {
       ).toContain("4d6");
     });
   });
+  describe("species effective values", () => {
+    const node: FieldReferenceNodeType = {
+      type: "field-reference",
+      fieldId: "str_score",
+      label: "STR",
+      displayMode: "value",
+    } as FieldReferenceNodeType;
+    const fields = [
+      { id: "str_score", label: "STR", type: "number" as const, value: 12 },
+    ];
+
+    it("keeps the base in the input and shows the effective value", () => {
+      const context = {
+        ...makeContext(fields),
+        effectiveValues: new Map([
+          [
+            "str_score",
+            {
+              base: 12,
+              effective: 14,
+              contributions: [
+                { sourceTitle: "Kethari", traitName: "Brute", amount: 2 },
+              ],
+            },
+          ],
+        ]),
+      };
+      render(FieldReferenceNode, { props: { node, context } });
+      expect((screen.getByRole("spinbutton") as HTMLInputElement).value).toBe(
+        "12",
+      );
+      const note = screen.getByTestId("effective-value-note").textContent;
+      expect(note).toContain("Effective 14");
+      expect(note).toContain("Kethari: Brute +2");
+    });
+
+    it("shows no note when the context has no effective value for the field", () => {
+      render(FieldReferenceNode, {
+        props: { node, context: makeContext(fields) },
+      });
+      expect(screen.queryByTestId("effective-value-note")).toBeNull();
+    });
+  });
 });
