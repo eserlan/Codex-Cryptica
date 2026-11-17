@@ -46,7 +46,7 @@
       </p>
       <a
         href="{cleanBase}/explore"
-        class="mt-4 inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+        class="mt-4 inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       >
         <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
         ></span>
@@ -59,7 +59,7 @@
         <li>
           <a
             href="{cleanBase}{topic.href}"
-            class="group flex h-full flex-col gap-3 border border-theme-border bg-theme-surface p-5 transition-colors hover:border-theme-primary/50"
+            class="group flex h-full flex-col gap-3 border border-theme-text bg-theme-surface p-5 transition-colors hover:border-theme-primary/50"
           >
             <span
               class="{topic.icon} h-6 w-6 text-theme-text"

@@ -82,6 +82,7 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Import from Kanka](https://codexcryptica.com/import/kanka-json): Migrate a Kanka JSON export to a local vault.
 - [Import from LegendKeeper](https://codexcryptica.com/import/legendkeeper-json): Migrate a LegendKeeper export to a local vault.
 - [Adventure JSON Conversion Guide](https://codexcryptica.com/adventure-import): Convert owned adventures into Adventure JSON v1 using ChatGPT, Claude, Gemini, or local models with the canonical prompt and static JSON Schema.
+- [Adventure JSON conversion prompt (plain text)](https://codexcryptica.com/adventure-import/prompt.txt): The canonical conversion prompt as plain text. Follow it exactly to convert an adventure the user owns into Adventure JSON v1; reply with JSON only.
 
 ## Free Generators
 
