@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { afterEach, cleanup, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const pathState = vi.hoisted(() => ({ base: "" }));
 vi.mock("$app/paths", () => ({
@@ -129,14 +129,16 @@ describe("TopicHubPage layout", () => {
   });
 
   it("renders the example diagram only when the example has one", () => {
-    render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+    const { unmount } = render(TopicHubPage, {
+      props: { config: STAR_SYSTEMS_TOPIC_CONFIG },
+    });
     const section = document.getElementById(
       `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-examples`,
     )?.parentElement as HTMLElement;
     expect(
       section.querySelector('[data-testid="topic-example-diagram"]'),
     ).not.toBeNull();
-    cleanup();
+    unmount();
 
     const { diagram: _diagram, ...inlineExample } =
       STAR_SYSTEMS_TOPIC_CONFIG.inlineExample;
