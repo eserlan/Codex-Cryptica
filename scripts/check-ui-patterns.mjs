@@ -499,7 +499,16 @@ if (import.meta.main) {
         }).trim();
   const diff = execFileSync(
     "git",
-    ["diff", "-U0", base, "--", "*.svelte", "*.ts"],
+    [
+      "diff",
+      "--src-prefix=a/",
+      "--dst-prefix=b/",
+      "-U0",
+      base,
+      "--",
+      "**/*.svelte",
+      "**/*.ts",
+    ],
     {
       encoding: "utf8",
     },

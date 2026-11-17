@@ -210,6 +210,39 @@ describe("VaultSwitcherModal", () => {
     expect(screen.queryByTestId("vault-theme-modal")).toBeNull();
   });
 
+  it("names rename and delete actions for their vault", () => {
+    const createdAt = Date.now();
+    vaultRegistry.availableVaults = [
+      {
+        id: "active-vault",
+        name: "Active Vault",
+        createdAt,
+        lastOpenedAt: createdAt,
+        entityCount: 0,
+      },
+      {
+        id: "old-vault",
+        name: "Old Vault",
+        createdAt,
+        lastOpenedAt: createdAt,
+        entityCount: 0,
+      },
+    ];
+    vaultRegistry.activeVaultId = "active-vault";
+
+    renderModal();
+
+    expect(
+      screen.getByRole("button", { name: "Rename Active Vault" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Rename Old Vault" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Delete Old Vault" }),
+    ).toBeTruthy();
+  });
+
   it("triggers Quick Start (mounted once, globally) via the shared modalUIStore flag instead of a local duplicate", async () => {
     const { onClose } = renderModal();
 
