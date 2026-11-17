@@ -40,15 +40,12 @@
   } from "@codex/adventure-engine";
   import { adventurePackageRepository } from "#lib/services/adventure/adventure-package-storage.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
-  import { createAdventureBackgroundRequest } from "#lib/services/adventure/adventure-background-request.js";
+  import { configureAdventureSurfaceRuntime } from "./adventure-surface-runtime.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
-  import { createCampaignGeneratorService } from "#lib/components/generators/campaign-generator-service.js";
-  import { adventureContextService } from "#lib/services/adventure/adventure-context-service.js";
   import {
     adventureSessionRepository,
     type AdventureArchiveEntry,
   } from "#lib/services/adventure/adventure-session-repository.js";
-  import { configureAdventureRepository } from "#lib/services/adventure/configure-adventure-repository.js";
   import {
     batchFilterPromotableFacts,
     createAdventureEntityDraft,
@@ -58,7 +55,6 @@
   import { adventurePromotionSettings } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import type { ProvisionalFact } from "@codex/adventure-engine";
-  import type { Entity } from "schema";
   import {
     describeStartOutcome,
     startPrecheck,
@@ -70,16 +66,6 @@
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
-
-  /** Metadata restored with the body; date-aware context decides on it. */
-  function sourceMetadata(entity: Entity) {
-    return {
-      visibility: entity.visibility,
-      start_date: entity.start_date,
-      end_date: entity.end_date,
-      date: entity.date,
-    };
-  }
 
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
@@ -651,96 +637,13 @@
   let existingEntityTitles = $derived(
     oracle.vault.allEntities.map((entity) => entity.title),
   );
-  configureAdventureRepository(oracle.vault);
-  // Standard AI/Vault-grounded Rumour Generator, without the player-facing
-  // review modal or a Vault write. Its existing local fallback remains usable.
-  const rumourPolicy = () => ({
-    isEnabled: oracle.isEnabled,
-    isAvailable: !vault.isGuest,
-  });
-  const backgroundRumourService = createCampaignGeneratorService(rumourPolicy);
-  oracle.adventure.setWorldEntryRumourGenerator(
-    async (session, signal, context) => {
-      signal?.throwIfAborted();
-      const policy = rumourPolicy();
-      const request = createAdventureBackgroundRequest(
-        session,
-        context,
-        policy.isEnabled && policy.isAvailable,
-        themeStore.worldThemeId ?? "workspace",
-      );
-      const generated = await backgroundRumourService.generateDraft(
-        request,
-        signal,
-      );
-      if (!generated.content || !generated.lore)
-        throw new Error("rumour-generator-output-missing");
-      return {
-        title: generated.title,
-        content: generated.content,
-        lore: generated.lore,
-      };
-    },
-  );
-
-  adventureContextService.setResolver({
-    async getWorldSnapshot(id) {
-      if (oracle.vault.activeVaultId !== id) {
-        throw new Error("vault-not-open");
-      }
-      return {
-        entities: oracle.vault.allEntities,
-        calendar: calendarStore.getSnapshot().config,
-      };
-    },
-    async getById(vaultId, recordId) {
-      if (oracle.vault.activeVaultId !== vaultId)
-        throw new Error("vault-not-open");
-      await oracle.vault.loadEntityContent(recordId);
-      if (oracle.vault.activeVaultId !== vaultId)
-        throw new Error("vault-not-open");
-      const entity = oracle.vault.entities[recordId];
-      if (!entity) return null;
-      return {
-        id: entity.id,
-        title: entity.title,
-        type: entity.type,
-        text: entity.content,
-        lore: entity.lore || undefined,
-        connections: entity.connections,
-        ...sourceMetadata(entity),
-      };
-    },
-    async search(vaultId, query, limit) {
-      if (oracle.vault.activeVaultId !== vaultId)
-        throw new Error("vault-not-open");
-      if (!query.trim()) return [];
-      const services = await oracle.vault.serviceRegistry.ensureInitialized();
-      const matches = await services.search.search(query, { limit });
-      if (oracle.vault.activeVaultId !== vaultId)
-        throw new Error("vault-not-open");
-      const records = await Promise.all(
-        matches.map(async (match) => {
-          await oracle.vault.loadEntityContent(match.id);
-          if (oracle.vault.activeVaultId !== vaultId)
-            throw new Error("vault-not-open");
-          const entity = oracle.vault.entities[match.id];
-          if (!entity) return null;
-          return {
-            id: entity.id,
-            title: entity.title,
-            type: entity.type,
-            text: entity.content,
-            lore: entity.lore || undefined,
-            connections: entity.connections,
-            ...sourceMetadata(entity),
-          };
-        }),
-      );
-      return records.filter((record): record is NonNullable<typeof record> =>
-        Boolean(record?.text.trim()),
-      );
-    },
+  configureAdventureSurfaceRuntime(oracle.vault, oracle.adventure, {
+    getCalendar: () => calendarStore.getSnapshot().config,
+    getRumourPolicy: () => ({
+      isEnabled: oracle.isEnabled,
+      isAvailable: !vault.isGuest,
+    }),
+    getTheme: () => themeStore.worldThemeId ?? "workspace",
   });
 
   /** Best effort: a place the player saves (or finds already saved) is tied to its Vault record. */
