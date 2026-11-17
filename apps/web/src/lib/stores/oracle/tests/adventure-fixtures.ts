@@ -5,6 +5,39 @@ import {
   type AdventureManagerDependencies,
 } from "../adventure-dependencies";
 import { initialSession } from "../adventure-session";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import {
+  AdventureJsonV1Schema,
+  type AdventureJsonV1,
+} from "@codex/adventure-engine";
+import { AdventurePackageContextCache } from "#lib/services/adventure/adventure-package-context.js";
+
+export const referencePackage: AdventureJsonV1 = AdventureJsonV1Schema.parse(
+  JSON.parse(
+    readFileSync(
+      resolve(
+        process.cwd(),
+        "../../fixtures/adventures/reference-one-shot/adventure.v1.json",
+      ),
+      "utf8",
+    ),
+  ),
+);
+
+export const packageRef = {
+  packageId: "reference-one-shot",
+  version: "1.0.0",
+  formatVersion: "adventure-json/v1",
+  hash: "b".repeat(64),
+};
+
+/** A package cache whose loader returns the reference one-shot. */
+export function referencePackageCache(
+  loader = async () => ({ package: referencePackage }) as any,
+) {
+  return new AdventurePackageContextCache(loader);
+}
 
 export const now = "2026-08-16T12:00:00.000Z";
 export const completeProposal = {
@@ -134,19 +167,25 @@ export const startInput = {
 };
 
 /** A committed-state harness for testing each injected workflow directly. */
-export function createAdventureRuntime() {
+export function createAdventureRuntime(
+  overrides: Partial<AdventureManagerDependencies> = {},
+  packageProgress?: { sceneId: string },
+) {
   let id = 0;
   const deps = resolveAdventureDependencies({
     ...dependencies(),
     clearGenerationInteraction: async () => {},
     idGenerator: () => `id-${++id}`,
+    ...overrides,
   } as unknown as AdventureManagerDependencies);
   const state = new AdventureState();
   state.session = initialSession({
     ...startInput,
+    ...(packageProgress ? { sourcePackage: packageRef } : {}),
     now,
     idGenerator: deps.idGenerator,
   });
+  if (packageProgress) state.session.packageProgress = packageProgress;
   state.phase = "ready";
   state.lease = {
     vaultId: startInput.vaultId,

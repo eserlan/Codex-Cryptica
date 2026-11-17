@@ -39,7 +39,7 @@ A character, place or item being known does not make its concealed role, motive 
 
 In the reference one-shot, Tobiah Reed is a `player-visible` actor with no `motivation`; his motive is the `gm-only` secret `secret-tobiah-motive`.
 
-Runtime status: Scene-context retrieval exists in the engine but is not yet wired into Oracle prompts (#4925). Adventure collection records are not yet projected into Oracle prompts or player transcripts, and sessions pin the approved package by hash. Starting an approved package does copy its `title` and premise text into the session: `premise.hook` and `premise.background` are used when present; if both are empty, `description` is used, then `title`. Those copied values enter Oracle opening generation, so converters must keep the title, hook, background and optional description player-safe and limited to source-supported facts. Future collection projections must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
+Runtime status: Scene-context retrieval is wired into Oracle openings, action turns and roll resolutions for package sessions. A session records the package's current scene in `packageProgress` (`{ sceneId }`), set to the entry scene at start and moved only when the model reports a scene ID that exists in the pinned package; the prompt carries that scene's excerpts, and only `player-visible` text goes into the player-safe block. Other adventure collection records are not projected into player transcripts, and sessions pin the approved package by hash. Starting an approved package does copy its `title` and premise text into the session: `premise.hook` and `premise.background` are used when present; if both are empty, `description` is used, then `title`. Those copied values enter Oracle opening generation, so converters must keep the title, hook, background and optional description player-safe and limited to source-supported facts. Future collection projections must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
 
 - `sourceRef` (optional): `{ page?, pageEnd?, chapter?, section?, anchor?, textQuote? }`.
 
@@ -57,7 +57,9 @@ Runtime status: Scene-context retrieval exists in the engine but is not yet wire
 8. rumours sourced from or aimed at the scene, location or a selected actor
 9. secrets whose `relatedEntityIds` include a selected record
 
-Excerpts go to `playerSafe` when the record is `player-visible` and to `gmOnly` otherwise (every secret is `gm-only`). References to other records appear only as IDs, so player-safe text never carries the name or text of a `gm-only` record.
+Excerpts go to `playerSafe` when the record is `player-visible` and to `gmOnly` otherwise (every secret is `gm-only`).
+
+In a `player-visible` record, three kinds of line move into a companion excerpt instead of staying in the player-safe excerpt: a rumour's `Truth`, a clue's `Reveals`, and any line that names the ID of a record that is not `player-visible` (for example a `Branch` to a `gm-only` scene). The companion has the same `id`, `kind`, `epistemicStatus` and `sourceRef` as its parent, `visibility: "gm-only"`, and directly follows its parent in the priority order, so it lands in `gmOnly`. Companions count towards the size bound like any other excerpt. As a result no `playerSafe` text contains a `Truth:` or `Reveals:` line, or the ID of a record that is not `player-visible`.
 
 The combined `JSON.stringify` length of both lists never exceeds `maxCharacters` (default and maximum `MAX_ADVENTURE_RETRIEVAL_CHARS`, 4000). Whole excerpts are dropped from the lowest priority upward; only a lone focus scene is trimmed, ending in `…`. `truncated` reports any drop or trim.
 

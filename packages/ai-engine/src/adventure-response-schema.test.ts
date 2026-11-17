@@ -51,6 +51,27 @@ describe("adventure structured response contract", () => {
     ).toMatchObject({ kind: "roll-required" });
   });
 
+  it("offers an optional packageSceneId in the complete visible patch", () => {
+    const visiblePatch =
+      adventureTurnResponseSchema.oneOf[0].properties.visiblePatch;
+    expect(visiblePatch.properties.packageSceneId).toBeDefined();
+    expect(visiblePatch.required).not.toContain("packageSceneId");
+    const base = JSON.parse(completeResponse) as {
+      visiblePatch: Record<string, unknown>;
+    };
+    expect(parseAdventureResponse(completeResponse)).toMatchObject({
+      kind: "complete",
+    });
+    expect(
+      parseAdventureResponse(
+        JSON.stringify({
+          ...base,
+          visiblePatch: { ...base.visiblePatch, packageSceneId: "scene-2" },
+        }),
+      ),
+    ).toMatchObject({ visiblePatch: { packageSceneId: "scene-2" } });
+  });
+
   it("accepts optional bounded sceneTransition/personRefs and rejects oversized arrays", () => {
     const base = JSON.parse(completeResponse) as Record<string, unknown>;
     expect(

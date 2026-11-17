@@ -8,6 +8,7 @@ import { proposedSession } from "../adventure-session";
 import {
   completeProposal,
   createAdventureRuntime,
+  referencePackageCache,
   rollProposal,
   startInput,
 } from "./adventure-fixtures";
@@ -262,5 +263,66 @@ describe("AdventureRuntime scope checks", () => {
       "stale-adventure-context",
     );
     expect(state.session).toBeNull();
+  });
+});
+
+describe("package-grounded actions", () => {
+  const movedTo = (packageSceneId: string) => ({
+    ...completeProposal,
+    visiblePatch: { ...completeProposal.visiblePatch, packageSceneId },
+  });
+
+  function packageRuntime(replies: unknown[]) {
+    const generate = vi.fn(
+      async (_request?: unknown) => replies.shift() ?? completeProposal,
+    );
+    return {
+      generate,
+      ...createAdventureRuntime(
+        { generation: { generate } as any, packages: referencePackageCache() },
+        { sceneId: "ros-scene-1-landing" },
+      ),
+    };
+  }
+
+  it("retrieves the new scene on the turn after a reported scene move", async () => {
+    const { runtime, state, generate } = packageRuntime([
+      movedTo("ros-scene-2-yard"),
+    ]);
+    const actions = new AdventureActions(runtime);
+    await actions.submitAction("Walk to the yard");
+    expect(state.session?.packageProgress).toEqual({
+      sceneId: "ros-scene-2-yard",
+    });
+    await actions.submitAction("Look around");
+    const sceneOf = (call: number) =>
+      (generate.mock.calls[call] as any)[0].adventurePackage.playerSafe[0].id;
+    expect(sceneOf(0)).toBe("ros-scene-1-landing");
+    expect(sceneOf(1)).toBe("ros-scene-2-yard");
+  });
+
+  it("keeps the scene when the model reports one the package does not have", async () => {
+    const { runtime, state } = packageRuntime([movedTo("no-such-scene")]);
+    await new AdventureActions(runtime).submitAction("Wander off");
+    expect(state.session?.turns).toHaveLength(1);
+    expect(state.session?.packageProgress).toEqual({
+      sceneId: "ros-scene-1-landing",
+    });
+  });
+
+  it("sends the same package context on the automatic retry", async () => {
+    const refused = { ...completeProposal, revealSecretIds: ["unknown"] };
+    const { runtime, state, generate } = packageRuntime([
+      refused,
+      completeProposal,
+    ]);
+    await new AdventureActions(runtime).submitAction("Look around");
+    expect(generate).toHaveBeenCalledTimes(2);
+    const [first, second] = generate.mock.calls.map((call) => call[0] as any);
+    expect(first.correction).toBeUndefined();
+    expect(second.correction).toBeTruthy();
+    expect(first.adventurePackage.playerSafe.length).toBeGreaterThan(0);
+    expect(second.adventurePackage).toEqual(first.adventurePackage);
+    expect(state.session?.turns).toHaveLength(1);
   });
 });

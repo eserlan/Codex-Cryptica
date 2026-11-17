@@ -33,6 +33,7 @@ export class AdventureRuntime {
       deps.context,
       (session) => this.verifySession(session),
       () => worldStyleForTheme(themeStore.worldThemeId),
+      deps.packages,
     );
     deps.generation = grounding.wrap(deps.generation);
     this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
@@ -84,12 +85,20 @@ export class AdventureRuntime {
     };
   }
 
+  /** Scene IDs of the current session's cached package, for scene-move checks. */
+  private packageSceneIds(): Pick<CommitMetadata, "packageSceneIds"> {
+    const session = this.state.session;
+    const pkg = session && this.deps.packages.peek(session);
+    return pkg ? { packageSceneIds: pkg.scenes.map((scene) => scene.id) } : {};
+  }
+
   newTurnMetadata(playerAction: string): CommitMetadata {
     return {
       turnId: this.deps.idGenerator(),
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
+      ...this.packageSceneIds(),
     };
   }
 
@@ -98,6 +107,7 @@ export class AdventureRuntime {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
+      ...this.packageSceneIds(),
     };
   }
 

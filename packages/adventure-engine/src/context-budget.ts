@@ -75,24 +75,6 @@ function trimExcerpts(
 }
 
 /**
- * Cheap pre-cut: an excerpt renders at least as long as its text, so any
- * excerpt past this many characters of text can never fit.
- */
-function withinTextBound(
-  excerpts: AdventureJsonExcerpt[],
-  min: number,
-): AdventureJsonExcerpt[] {
-  let total = 0;
-  let count = 0;
-  for (const excerpt of excerpts) {
-    total += excerpt.text.length;
-    if (total > MAX_ADVENTURE_PACKAGE_PROMPT_CHARS && count >= min) break;
-    count += 1;
-  }
-  return excerpts.slice(0, count);
-}
-
-/**
  * Cheap pre-cut: an excerpt renders at least as long as its text, so excerpts
  * past this many characters of text can never fit.
  */
