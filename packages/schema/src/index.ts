@@ -33,5 +33,6 @@ export * from "./silhouettes";
 export * from "./entity-palette";
 export * from "./game-system";
 export * from "./biome";
+export * from "./trait-package";
 
 export * from "./adventure-artwork";

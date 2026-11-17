@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
+  import { createCopier } from "./copy-feedback.svelte.js";
+  import StagedConversion from "./StagedConversion.svelte";
   import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
+    COVERAGE_REPORT_PROMPT,
+    IMPORT_OUTCOMES,
     LINK_HANDOFF_TEXT,
     COLLECTION_RULES,
     CORRESPONDENCE_EXTENSION_DOC,
@@ -17,71 +19,31 @@
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
 
-  type CopyState = "idle" | "copied" | "error";
-
-  let isDestroyed = false;
-  const timers = new Set<ReturnType<typeof setTimeout>>();
-
-  onDestroy(() => {
-    isDestroyed = true;
-    for (const timer of timers) clearTimeout(timer);
-  });
-
-  /** One copy action with its own feedback state and stale-result guard. */
-  function createCopier(text: string) {
-    let state = $state<CopyState>("idle");
-    let generation = 0;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    async function copy() {
-      const current = ++generation;
-      if (timer) {
-        clearTimeout(timer);
-        timers.delete(timer);
-        timer = undefined;
-      }
-      const ok = await copyTextToClipboard(
-        text,
-        typeof navigator === "undefined" ? undefined : navigator.clipboard,
-      );
-      if (isDestroyed || current !== generation) return;
-
-      state = ok ? "copied" : "error";
-      // ui-check-ignore: tracked in `timers` and cleared in onDestroy
-      timer = setTimeout(() => {
-        if (isDestroyed || current !== generation) return;
-        state = "idle";
-        timers.delete(timer!);
-        timer = undefined;
-      }, 2200);
-      timers.add(timer);
-    }
-
-    return {
-      copy,
-      get state() {
-        return state;
-      },
-    };
-  }
-
   const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
   const linkCopier = createCopier(LINK_HANDOFF_TEXT);
+  const coverageCopier = createCopier(COVERAGE_REPORT_PROMPT);
 
   const copyLabel = $derived(
-    promptCopier.state === "copied"
-      ? "Copied prompt"
-      : promptCopier.state === "error"
-        ? "Copy failed — select the prompt below manually"
-        : "Copy conversion prompt",
+    promptCopier.label(
+      "Copy conversion prompt",
+      "Copied prompt",
+      "Copy failed — select the prompt below manually",
+    ),
+  );
+  const linkCopyLabel = $derived(
+    linkCopier.label(
+      "Copy guide link",
+      "Copied link",
+      "Copy failed — copy the page address instead",
+    ),
   );
 
-  const linkCopyLabel = $derived(
-    linkCopier.state === "copied"
-      ? "Copied link"
-      : linkCopier.state === "error"
-        ? "Copy failed — copy the page address instead"
-        : "Copy guide link",
+  const coverageCopyLabel = $derived(
+    coverageCopier.label(
+      "Copy coverage report prompt",
+      "Copied coverage prompt",
+      "Copy failed — select the prompt below manually",
+    ),
   );
 
   const breadcrumbSchema = safeJsonLd({
@@ -114,7 +76,7 @@
     onclick={copier.copy}
     class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
       ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
-      : 'border border-theme-primary bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
+      : 'border border-theme-text bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
   >
     <span
       class="{copier.state === 'copied'
@@ -173,7 +135,7 @@
         Use ChatGPT, Claude, Gemini, or a local model to turn a PDF, Markdown
         file, or module notes into a clean, validated
         <code class="font-mono text-theme-text">adventure-json/v1</code>
-        file that Codex Cryptica processes strictly on your device.
+        file that Codex Cryptica checks and stores on your device.
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -254,6 +216,16 @@
           Oracle.
         </li>
       </ol>
+      <p class="text-sm text-theme-text/90">
+        Long PDF that an assistant cannot finish in one go? Use the
+        <a class="underline" href="#long-adventures">staged method</a>.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/90">
+        Passing the import checks does not mean nothing was left out. See
+        <a class="underline" href="#completeness-heading"
+          >valid is not the same as complete</a
+        >.
+      </p>
       <div class="flex flex-wrap items-center gap-3">
         {@render copyButton(promptCopier, copyLabel, true)}
         {@render copyButton(linkCopier, linkCopyLabel, false)}
@@ -277,46 +249,16 @@
         paste your adventure here. The conversion happens in the assistant you choose,
         and this page never sees your source.
       </p>
-    </section>
-
-    <!-- Long-source recovery -->
-    <section
-      aria-labelledby="long-adventures"
-      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-    >
-      <h2
-        id="long-adventures"
-        class="font-header font-bold text-2xl text-theme-text"
-      >
-        Long adventures: convert in stages
-      </h2>
-      <p class="text-sm md:text-base text-theme-text/90 leading-relaxed">
-        If the assistant cannot read the whole source or return a complete
-        result, do not accept a partial conversion. Work through the source in
-        consecutive, labelled chapters or sections:
+      <p class="text-sm text-theme-text/90">
+        Your source goes to the AI assistant you choose. The finished file is
+        imported and stored on this device. During AI play, parts of it go to
+        your Oracle provider.
+        <a
+          href="#privacy-notice-heading"
+          class="text-theme-text underline underline-offset-2"
+          >Where your adventure goes</a
+        >
       </p>
-      <ol
-        class="list-decimal space-y-2 pl-5 text-sm md:text-base text-theme-text"
-      >
-        <li>
-          Make a checklist of every source section in order, then send each
-          section separately with the canonical prompt. Keep each section's JSON
-          result.
-        </li>
-        <li>
-          Ask the assistant to assemble those results into one Adventure JSON v1
-          document. Preserve every entry, keep or repair <code class="font-mono"
-            >sourceRef</code
-          >
-          values, make IDs unique, and update cross-references to those IDs.
-        </li>
-        <li>
-          Compare the assembled result with the section checklist and validate
-          the final JSON. If any section or result is missing or unreadable,
-          report the conversion as incomplete instead of filling gaps by
-          guesswork.
-        </li>
-      </ol>
     </section>
 
     <!-- Privacy & Responsibility Notice -->
@@ -328,18 +270,61 @@
         <span class="icon-[lucide--shield-check] w-5 h-5" aria-hidden="true"
         ></span>
         <h2 id="privacy-notice-heading" class="font-header font-bold text-lg">
-          Privacy &amp; External Provider Responsibility
+          Where your adventure goes
         </h2>
       </div>
+      <ol
+        class="list-decimal pl-5 space-y-2 text-sm md:text-base text-theme-text/85 leading-relaxed"
+      >
+        <li>
+          <strong>Conversion:</strong> your source text or PDF goes to the AI assistant
+          you choose, hosted or local. It does not go to Codex Cryptica, and this
+          page never receives it.
+        </li>
+        <li>
+          <strong>Import:</strong> the Adventure JSON is validated, reviewed and approved
+          in Codex Cryptica, then stored in the Vault on this device. No AI call is
+          made.
+        </li>
+        <li>
+          <strong>AI play:</strong> during Oracle turns, bounded parts of the package,
+          such as its title and premise, are sent to your selected Oracle AI provider
+          along with relevant Vault records. The whole package is not sent.
+        </li>
+      </ol>
       <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
-        Document conversion happens entirely inside your chosen external AI
-        assistant (ChatGPT, Claude, Gemini, or a local model).
-        <strong
-          >Codex Cryptica never receives or uploads your source document</strong
+        The AI provider's terms and your rights in the material decide whether
+        you may upload a published module. Codex Cryptica cannot decide that for
+        you. A local model keeps the conversion on your own machine, which can
+        offer different privacy characteristics than a hosted service.
+      </p>
+      <h3 class="font-header font-bold text-base text-theme-text pt-2">
+        Storage and backup
+      </h3>
+      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
+        Imported packages are <strong
+          >not included in Codex Cryptica Cloud Backup</strong
+        >, even when you opt in to include adventures. Opted-in adventure
+        sessions are backed up, but the packages they started from are not.
+        After restoring from Cloud Backup, or when moving to another device that
+        way, import the Adventure JSON again. Keep your
+        <code class="font-mono">.json</code> file. Importing the same file again gives
+        the same version.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
+        A Portable Backup (<code class="font-mono">.codex.zip</code>) and Save
+        to Folder do include imported packages. See
+        <a
+          href="{cleanBase}/help#help/cloud-backup"
+          class="text-theme-text underline underline-offset-2"
+          >Cloud Backup help</a
         >
-        and processes the resulting Adventure JSON strictly on-device. You are responsible
-        for ensuring you have the legal right to share any source material with your
-        chosen AI provider under that provider's terms.
+        and
+        <a
+          href="{cleanBase}/help#help/export-and-backup"
+          class="text-theme-text underline underline-offset-2"
+          >Export and Back Up help</a
+        >.
       </p>
     </section>
 
@@ -404,8 +389,8 @@
           <strong class="text-theme-text block mb-1"
             >2. Attach your source</strong
           >
-          Upload or paste the adventure you legally own into ChatGPT, Claude, Gemini,
-          or a local LLM.
+          Upload or paste the adventure you have access to into ChatGPT, Claude, Gemini,
+          or a local LLM, if the provider's terms and your rights allow it.
         </div>
         <div
           class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
@@ -460,6 +445,72 @@
       </a>
     </section>
 
+    <!-- Valid vs complete -->
+    <section
+      aria-labelledby="completeness-heading"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
+    >
+      <h2
+        id="completeness-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Valid is not the same as complete
+      </h2>
+      <p class="text-sm md:text-base text-theme-text/90">
+        A converted file can end up in three different states:
+      </p>
+      <ul class="space-y-2 text-sm md:text-base text-theme-text">
+        {#each IMPORT_OUTCOMES as outcome (outcome.label)}
+          <li>
+            <strong>{outcome.label}.</strong>
+            {outcome.meaning}
+          </li>
+        {/each}
+      </ul>
+      <p class="text-sm md:text-base text-theme-text">
+        Codex Cryptica checks only (a) and (b). It never sees your source, so a
+        successful import does not prove that nothing was left out or changed.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/90">
+        The canonical prompt asks your assistant to audit its own output. For a
+        second look, paste this follow-up into the same chat after you receive
+        the JSON. The report is plain text and stays outside the JSON file.
+      </p>
+      {@render copyButton(coverageCopier, coverageCopyLabel, true)}
+      <span role="status" class="sr-only">{coverageCopyLabel}</span>
+      <pre
+        tabindex="0"
+        aria-label="Coverage report prompt"
+        class="overflow-x-auto whitespace-pre-wrap rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{COVERAGE_REPORT_PROMPT}</pre>
+      <h3 class="font-header font-bold text-lg text-theme-text">
+        Example: valid, but incomplete
+      </h3>
+      <p class="text-sm text-theme-text/90">
+        Say a package made from the reference one-shot imports cleanly but
+        dropped three things:
+      </p>
+      <ul class="list-disc space-y-1.5 pl-5 text-sm text-theme-text/90">
+        <li>
+          The optional Reed Shrine branch is gone. The self-audit item on
+          mandatory and optional scenes, and the "Missing or shortened" list,
+          catch it.
+        </li>
+        <li>
+          The flooded ending, "The Water Takes It", is gone. The self-audit item
+          on intended endings, and the "Covered sections" list, catch it.
+        </li>
+        <li>
+          Wick's "By talk" option is cut, leaving only the fight. The self-audit
+          item on encounter resolution options, and the "Missing or shortened"
+          list, catch it.
+        </li>
+      </ul>
+      <p class="text-sm text-theme-text/90">
+        None of these break the schema, so the import succeeds. Anything the
+        assistant cannot restore should appear in "Left unresolved".
+      </p>
+    </section>
+
     <!-- Worked example -->
     <section
       aria-labelledby="worked-example-heading"
@@ -486,6 +537,9 @@
         aria-label="Minimal Adventure JSON v1 example"
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
     </section>
+
+    <!-- Long adventures -->
+    <StagedConversion />
 
     <!-- Top-level Contract & Collections -->
     <section aria-labelledby="contract-heading" class="space-y-6">
