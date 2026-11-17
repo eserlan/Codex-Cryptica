@@ -286,10 +286,10 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         ?.closest("section");
       expect(longAdventureSection).toBeTruthy();
       expect(longAdventureSection?.textContent).toContain(
-        "Make a checklist of every source section in order",
+        "A long PDF can be too much for one reply",
       );
       expect(longAdventureSection?.textContent?.replace(/\s+/g, " ")).toContain(
-        "assemble those results into one Adventure JSON v1 document",
+        "Inventory the source",
       );
       expect(prompt).not.toContain("compress each to a short summary");
       expect(prompt).toContain(
