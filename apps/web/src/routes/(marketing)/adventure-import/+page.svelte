@@ -65,7 +65,7 @@
     onclick={copier.copy}
     class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
       ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
-      : 'border border-theme-primary/40 bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
+      : 'border border-theme-text bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
   >
     <span
       class="{copier.state === 'copied'
