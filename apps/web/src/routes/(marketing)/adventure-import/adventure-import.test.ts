@@ -578,11 +578,16 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
-    it("adds rule 8 to the canonical prompt without changing rule 1", () => {
+    it("adds rule 8 while keeping the successful-conversion output contract", () => {
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
         "8. Self-audit before returning",
       );
-      expect(CANONICAL_CONVERSION_PROMPT).toContain("Return ONLY valid JSON");
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "The one-sentence failure response above is the sole exception.",
+      );
     });
 
     it("shows the coverage prompt after the canonical prompt, with four list headings", () => {

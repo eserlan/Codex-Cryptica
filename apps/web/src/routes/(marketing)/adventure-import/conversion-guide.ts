@@ -160,7 +160,7 @@ Strict output rules:
      - GM-only motives, secrets and endings are kept out of player-visible records.
    - Anything missing, cut or uncertain gets an "unresolved" entry naming the source section. Never drop it silently, and never present the package as complete when it is not.
 
-Before returning a successful conversion, also check:
+Before you reply with a successful conversion, check each of these:
 - The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
 - All 11 collection arrays are present.
 - Every id is unique, and every cross-reference points to an id that exists.
