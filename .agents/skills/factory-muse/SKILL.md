@@ -157,7 +157,7 @@ instead of `muse.workflow`:
    manually spawned children inherit the parent session's model and effort —
    put the tier's model in the header anyway so costs bill correctly):
    - `intake`, `spec-writer`, `approver`, `reviewer-security` (`opus`): `muse-wonder-1.0`, `high`
-   - `builder`, `reviewer-ux`, `reviewer-ui`, medium/high `reviewer-code` (`sonnet`): `muse-ember-1.0`, `medium`
+   - `builder`, `reviewer-ux`, `reviewer-ui`, `reviewer-codex`, medium/high `reviewer-code` (`sonnet`): `muse-ember-1.0`, `medium`
    - low-risk `reviewer-code` (`haiku`): `muse-spark-1.3`, `low`
 4. **Deterministic steps**: Run `factory/bin/job`, `route`, and `gate` yourself
    with `muse.bash` from `<repo>`, in the same order `muse_workflow.js` does:
@@ -190,6 +190,7 @@ of state goes through `factory/bin/job`:
 - **What needs them**: run `factory/bin/job queue`. For each `wait` line, say
   what the job is waiting for: the question in `decision.md` for `needs-human`,
   or the question in `intake.md` for `needs-info`.
+- **Approving a `needs-human` job**: `factory/bin/job approve <n>`. It removes the factory labels from the issue and PR and moves the job to `dev-agents` (the review-and-fix loop and dev agents take over). It is done only when its PR is merged into `staging`.
 - **Feedback on a `needs-human` job**: pass their words verbatim on stdin:
   ```bash
   factory/bin/job feedback <n> <<'EOF'

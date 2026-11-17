@@ -807,4 +807,58 @@ describe("StatSheetView", () => {
       ).toBeTruthy();
     });
   });
+  describe("species effective values", () => {
+    const strField = {
+      id: "str_score",
+      label: "STR",
+      type: "number" as const,
+      value: 12,
+    };
+    const dexField = {
+      id: "dex_score",
+      label: "DEX",
+      type: "number" as const,
+      value: 8,
+    };
+    const selection = {
+      kind: "species" as const,
+      sourceId: "k",
+      sourceTitle: "Kethari",
+      appliedAt: 1,
+      traits: [
+        {
+          id: "t",
+          name: "Brute",
+          description: "",
+          adjustments: [{ target: "str_score", amount: 2 }],
+        },
+      ],
+    };
+
+    it("keeps the base in the input and shows the effective value with its source", () => {
+      render(StatSheetView, {
+        entity: buildEntity({
+          type: "character",
+          statSheet: { fields: [strField, dexField] },
+          traitSelections: [selection],
+        }),
+      });
+      const input = screen.getByLabelText("STR") as HTMLInputElement;
+      expect(input.value).toBe("12");
+      const notes = screen.getAllByTestId("effective-value-note");
+      expect(notes).toHaveLength(1);
+      expect(notes[0].textContent).toContain("Effective 14");
+      expect(notes[0].textContent).toContain("Kethari: Brute +2");
+    });
+
+    it("shows no note without a species", () => {
+      render(StatSheetView, {
+        entity: buildEntity({
+          type: "character",
+          statSheet: { fields: [strField] },
+        }),
+      });
+      expect(screen.queryByTestId("effective-value-note")).toBeNull();
+    });
+  });
 });

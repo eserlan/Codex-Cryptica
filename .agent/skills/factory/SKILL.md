@@ -136,7 +136,7 @@ If you need to step through a single stage manually using `define_subagent`,
    exact: `factory/bin/job costs` and `factory/bin/gate --hook` match on them.
 3. **Model mapping**:
    - `intake`, `spec-writer`, `approver`, `reviewer-security` (`opus`): `Model="pro"`
-   - `builder`, `reviewer-ux`, `reviewer-ui`, medium/high `reviewer-code` (`sonnet`): `Model="inherit"`
+   - `builder`, `reviewer-ux`, `reviewer-ui`, `reviewer-codex`, medium/high `reviewer-code` (`sonnet`): `Model="inherit"`
    - low-risk `reviewer-code` (`haiku`): `Model="flash"`
 4. **Ports**: With `n` the job number (`004` → 4), `builder` gets `5300 + 10n`,
    `reviewer-ux` `5301 + 10n`, and `reviewer-ui` `5302 + 10n`.
@@ -159,6 +159,7 @@ state goes through `factory/bin/job`:
 - **What needs them**: run `factory/bin/job queue`. For each `wait` line, say
   what the job is waiting for: the question in `decision.md` for `needs-human`,
   or the question in `intake.md` for `needs-info`.
+- **Approving a `needs-human` job**: `factory/bin/job approve <n>`. It removes the factory labels from the issue and PR and moves the job to `dev-agents` (the review-and-fix loop and dev agents take over). It is done only when its PR is merged into `staging`.
 - **Feedback on a `needs-human` job**: pass their words verbatim on stdin:
   ```bash
   factory/bin/job feedback <n> <<'EOF'

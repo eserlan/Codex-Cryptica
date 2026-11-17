@@ -1,9 +1,21 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import {
+  AdventureJsonV1Schema,
+  validateAdventureJson,
+} from "@codex/adventure-engine";
 import Page from "./+page.svelte";
+import {
+  STAGED_ASSEMBLE_SCRIPT,
+  STAGED_CHUNK_PROMPT,
+  STAGED_INVENTORY_PROMPT,
+} from "./staged-conversion.js";
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
+  COVERAGE_REPORT_PROMPT,
+  LINK_HANDOFF_TEXT,
+  PROMPT_EXAMPLE_OUTPUT,
 } from "./conversion-guide.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
@@ -121,6 +133,349 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     );
   });
 
+  it("leads with a task-first quick start, in order, before the prompt and field tables", () => {
+    const { container } = render(Page);
+
+    const headings = [...container.querySelectorAll("h2")].map(
+      (h) => h.textContent?.trim() ?? "",
+    );
+    const quick = headings.findIndex((h) => /^Quick start/.test(h));
+    expect(quick).toBe(0);
+    expect(quick).toBeLessThan(headings.indexOf("Canonical Conversion Prompt"));
+    expect(quick).toBeLessThan(headings.indexOf("Field-by-Field Structure"));
+
+    const steps = [
+      ...container
+        .querySelector("#quick-start-heading")!
+        .closest("section")!
+        .querySelectorAll("ol > li > strong:first-child"),
+    ].map((el) => el.textContent?.trim());
+    expect(steps).toEqual([
+      "Copy the prompt.",
+      "Paste it and attach your adventure",
+      "Save the result as a plain .json file.",
+      "Import it in your Vault.",
+      "Review, approve, then start.",
+    ]);
+  });
+
+  it("says the guide is not a converter and stays model-agnostic", () => {
+    const { container } = render(Page);
+    const quick = container
+      .querySelector("#quick-start-heading")!
+      .closest("section")!;
+
+    expect(quick.textContent).toContain(
+      "This page is a guide, not a converter.",
+    );
+    expect(quick.textContent).toContain("no Markdown code fences");
+    expect(quick.textContent).not.toMatch(/\b(ChatGPT|Claude|Gemini)\b/);
+  });
+
+  it("links the quick start to import and troubleshooting anchors that exist", () => {
+    const { container } = render(Page);
+
+    for (const id of [
+      "import-adventure-json-heading",
+      "troubleshooting-heading",
+      "prompt-heading",
+    ]) {
+      expect(container.querySelector(`a[href="#${id}"]`)).toBeTruthy();
+      expect(container.querySelector(`#${id}`)).toBeTruthy();
+    }
+  });
+
+  it("shows a minimal example that is the schema-valid published file", () => {
+    const { container } = render(Page);
+    const example = container.querySelector(
+      'pre[aria-label="Minimal Adventure JSON v1 example"]',
+    )!;
+
+    expect(example.getAttribute("tabindex")).toBe("0");
+    const parsed = JSON.parse(example.textContent ?? "");
+    expect(parsed.formatVersion).toBe("adventure-json/v1");
+    expect(AdventureJsonV1Schema.safeParse(parsed).success).toBe(true);
+  });
+
+  describe("LLM-friendly prompt structure (#4907)", () => {
+    const prompt = CANONICAL_CONVERSION_PROMPT;
+
+    it("states the output contract first, then a worked example, then the rules", () => {
+      const contract = prompt.indexOf("Output contract (read this first):");
+      const example = prompt.indexOf("Shape of a valid answer");
+      const rules = prompt.indexOf("Strict output rules:");
+
+      expect(contract).toBeGreaterThan(-1);
+      expect(contract).toBeLessThan(example);
+      expect(example).toBeLessThan(rules);
+      expect(prompt.slice(contract, example)).toContain("ONE JSON object");
+      expect(prompt.slice(contract, example)).toContain(
+        "Include all 11 collection arrays",
+      );
+    });
+
+    it("embeds an example that is schema-valid and semantically valid", () => {
+      expect(prompt).toContain(JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2));
+      expect(
+        AdventureJsonV1Schema.safeParse(PROMPT_EXAMPLE_OUTPUT).success,
+      ).toBe(true);
+      expect(validateAdventureJson(PROMPT_EXAMPLE_OUTPUT).ok).toBe(true);
+    });
+
+    it("demonstrates whole-record visibility: no hidden motive on the visible actor", () => {
+      const actor = PROMPT_EXAMPLE_OUTPUT.actors[0]!;
+      const secret = PROMPT_EXAMPLE_OUTPUT.secrets[0]!;
+
+      expect(actor.visibility).toBe("player-visible");
+      expect("motivation" in actor).toBe(false);
+      expect(secret.visibility).toBe("gm-only");
+      expect(secret.relatedEntityIds).toContain(actor.id);
+    });
+
+    it("ends with a self-check list and says what to do with unreadable or oversized sources", () => {
+      const check = prompt.lastIndexOf(
+        "Before you reply with a successful conversion, check each of these:",
+      );
+
+      expect(check).toBeGreaterThan(prompt.indexOf("Strict output rules:"));
+      expect(prompt.slice(check)).toContain('Every "secrets" entry');
+      expect(prompt).toContain("cannot fit all of it in one file or reply");
+      expect(prompt).toContain("instead of sending truncated or guessed JSON");
+      expect(prompt).toContain(
+        "This failure sentence is the sole exception to the JSON-only output rules below.",
+      );
+      expect(prompt).toContain(
+        "The one-sentence failure response above is the sole exception.",
+      );
+    });
+
+    it("guards against over-hiding, copied example codes and missing items", () => {
+      expect(prompt).toContain("Do not over-hide.");
+      expect(prompt).toContain("whatever players can learn in play");
+      expect(prompt).toContain("only illustrative; use your own");
+      expect(prompt).toContain('in "items"');
+      expect(prompt).toContain('specific "code"');
+    });
+
+    it("prefers a JSON file over chat output, with a JSON-only reply fallback", () => {
+      const contract = prompt.slice(
+        prompt.indexOf("Output contract"),
+        prompt.indexOf("Shape of a valid answer"),
+      );
+
+      expect(contract).toContain(
+        'as a file named after the "id", such as "the-last-grind.json"',
+      );
+      expect(contract).toContain(
+        "If you cannot create files, your entire reply is the JSON object",
+      );
+      expect(contract).toContain(
+        "Never put JSON in a chat reply when you could have attached a file",
+      );
+    });
+
+    it("tells models how to handle long sources, sandbox modules and confidence", () => {
+      expect(prompt).toContain(
+        "Never shorten the conversion by dropping or merging entries",
+      );
+      expect(prompt).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+      const { container } = render(Page);
+      const longAdventureSection = container
+        .querySelector("#long-adventures")
+        ?.closest("section");
+      expect(longAdventureSection).toBeTruthy();
+      expect(longAdventureSection?.textContent).toContain(
+        "A long PDF can be too much for one reply",
+      );
+      expect(longAdventureSection?.textContent?.replace(/\s+/g, " ")).toContain(
+        "Inventory the source",
+      );
+      expect(prompt).not.toContain("compress each to a short summary");
+      expect(prompt).toContain(
+        'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
+      );
+      expect(prompt).toContain('For a PDF, include "page"');
+      expect(prompt).toContain("not a number printed on the page");
+      expect(prompt).toContain("has no authored order");
+      expect(prompt).toContain("Do not invent a flow or an ending");
+      expect(prompt).toContain(
+        'Use "explicit" only for what the source states',
+      );
+      expect(prompt).toContain(
+        'Use "inferred" for anything you worked out yourself',
+      );
+    });
+
+    it("stays provider-neutral", () => {
+      expect(prompt).not.toMatch(
+        /\b(ChatGPT|Claude|Gemini|GPT|OpenAI|Anthropic)\b/,
+      );
+    });
+  });
+
+  describe("staged conversion section (#4896)", () => {
+    it("is reachable from the quick start and from the one-pass prompt's pointer", () => {
+      const { container } = render(Page);
+
+      expect(container.querySelector("#long-adventures")).toBeTruthy();
+      expect(
+        container.querySelector('a[href="#long-adventures"]'),
+      ).toBeTruthy();
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+    });
+
+    it("explains the stages in order and that nothing is converted here", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const titles = [...section.querySelectorAll("h3")].map((h) =>
+        h.textContent?.trim(),
+      );
+
+      expect(titles.slice(1)).toEqual([
+        "1. Inventory the source",
+        "2. Convert one section at a time",
+        "3. Check coverage against the inventory",
+        "4. Assemble the sections into one file",
+        "5. Import and fix what it reports",
+      ]);
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
+      expect(text).toContain("Do not trust an assistant that says");
+      expect(text).toContain("This page converts nothing");
+      expect(text).toContain("Three different problems");
+    });
+
+    it("discloses hosted processing and gives copy buttons a visible boundary", () => {
+      const { container } = render(Page);
+      const section = container.querySelector("#long-adventures")!;
+      const text = section.textContent?.replace(/\s+/g, " ") ?? "";
+
+      expect(text).toContain("Hosted assistants may");
+      expect(text).toContain("process your source on their servers");
+      expect(text).toContain("local models can process it on your");
+      expect(text).toContain("preserving an existing file if a check fails");
+
+      const stageButtons = [...section.querySelectorAll("button")];
+      expect(stageButtons).toHaveLength(4);
+      for (const button of stageButtons) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+      for (const button of screen.getAllByRole("button", { name: /Copy guide link/i })) {
+        expect(button.classList.contains("border-theme-text")).toBe(true);
+      }
+    });
+
+    it("copies the right text per stage and the assemble script", async () => {
+      copyMock.mockResolvedValue(true);
+      render(Page);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy inventory prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy section prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy assemble script/i }),
+      );
+
+      expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
+        STAGED_INVENTORY_PROMPT,
+        STAGED_CHUNK_PROMPT,
+        STAGED_ASSEMBLE_SCRIPT,
+      ]);
+    });
+
+    it("reports a failed copy on that button only", async () => {
+      copyMock.mockResolvedValue(false);
+      render(Page);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage prompt/i }),
+      );
+
+      await waitFor(() => {
+        expect(
+          screen.getAllByRole("button", { name: /Copy failed/i }),
+        ).toHaveLength(1);
+      });
+      expect(
+        screen.getByRole("button", { name: /Copy inventory prompt/i }),
+      ).toBeTruthy();
+    });
+  });
+
+  it("copies a short link instruction for browsing assistants, separately from the prompt", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy guide link/i }),
+    );
+
+    expect(copyMock).toHaveBeenCalledTimes(1);
+    expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
+    expect(LINK_HANDOFF_TEXT).toContain(
+      "https://codexcryptica.com/adventure-import/prompt.txt",
+    );
+    expect(LINK_HANDOFF_TEXT).toContain("downloadable .json file");
+    expect(LINK_HANDOFF_TEXT).toContain("otherwise reply with the JSON only");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Copied link/i })).toBeTruthy();
+    });
+    expect(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+    ).toHaveLength(2);
+  });
+
+  it("reports a failed link copy without affecting the prompt button", async () => {
+    copyMock.mockResolvedValue(false);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy guide link/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: /Copy failed — copy the page address/i,
+        }),
+      ).toBeTruthy();
+    });
+    expect(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+    ).toHaveLength(2);
+  });
+
+  it("explains that the link shortcut needs a browsing-capable assistant", () => {
+    const { container } = render(Page);
+    expect(container.textContent).toContain(
+      "only works if your assistant can open web pages",
+    );
+    expect(
+      container.querySelector('a[href$="/adventure-import/prompt.txt"]'),
+    ).toBeTruthy();
+  });
+
+  it("keeps both copy buttons in step on a failed copy", async () => {
+    copyMock.mockResolvedValue(false);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i })[1]!,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: /Copy failed/i }),
+      ).toHaveLength(2);
+    });
+  });
+
   it("states that visibility covers the whole record, in the page and the copied prompt", () => {
     render(Page);
 
@@ -185,9 +540,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     copyMock.mockResolvedValue(true);
     render(Page);
 
-    const copyButton = screen.getByRole("button", {
+    const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
-    });
+    })[0]!;
     await fireEvent.click(copyButton);
 
     expect(copyMock).toHaveBeenCalledTimes(1);
@@ -195,7 +550,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /Copied prompt/i }),
+        screen.getAllByRole("button", { name: /Copied prompt/i })[0]!,
       ).toBeTruthy();
     });
   });
@@ -204,13 +559,15 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     copyMock.mockResolvedValue(false);
     render(Page);
 
-    const copyButton = screen.getByRole("button", {
+    const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
-    });
+    })[0]!;
     await fireEvent.click(copyButton);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: /Copy failed/i })).toBeTruthy();
+      expect(
+        screen.getAllByRole("button", { name: /Copy failed/i })[0]!,
+      ).toBeTruthy();
     });
   });
 
@@ -226,22 +583,24 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     render(Page);
 
-    const copyButton = screen.getByRole("button", {
+    const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
-    });
+    })[0]!;
     await fireEvent.click(copyButton);
     await fireEvent.click(copyButton);
 
     resolveSecond(true);
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /Copied prompt/i }),
+        screen.getAllByRole("button", { name: /Copied prompt/i })[0]!,
       ).toBeTruthy();
     });
 
     resolveFirst(false);
     await Promise.resolve();
-    expect(screen.getByRole("button", { name: /Copied prompt/i })).toBeTruthy();
+    expect(
+      screen.getAllByRole("button", { name: /Copied prompt/i })[0]!,
+    ).toBeTruthy();
   });
 
   it("does not schedule feedback timers when a pending copy resolves after teardown", async () => {
@@ -253,7 +612,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     const { unmount } = render(Page);
 
     await fireEvent.click(
-      screen.getByRole("button", { name: /Copy conversion prompt/i }),
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i })[0]!,
     );
     unmount();
     resolveCopy(true);
@@ -284,5 +643,123 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       }
     });
     expect(found).toBe(true);
+  });
+  describe("completeness self-audit", () => {
+    const norm = (t: string | null | undefined) =>
+      (t ?? "").replace(/\s+/g, " ").trim();
+
+    it("renders the completeness section after the import section, with Quick start still first", () => {
+      const { container } = render(Page);
+      const h2s = [...container.querySelectorAll("h2")];
+      expect(norm(h2s[0]?.textContent)).toMatch(/^Quick start/);
+      const texts = h2s.map((h) => norm(h.textContent));
+      const idx = texts.indexOf("Valid is not the same as complete");
+      expect(idx).toBeGreaterThan(-1);
+      expect(texts[idx - 1]).toBe("Next: upload your Adventure JSON");
+      expect(texts[idx + 1]).toBe("What a valid file looks like");
+      expect(h2s[idx]?.id).toBe("completeness-heading");
+    });
+
+    it("lists the three outcomes and the verbatim limit sentence", () => {
+      const { container } = render(Page);
+      const section = container.querySelector(
+        '[aria-labelledby="completeness-heading"]',
+      );
+      const text = norm(section?.textContent);
+      expect(text).toContain("(a) Valid JSON");
+      expect(text).toContain("(b) Importable package");
+      expect(text).toContain("(c) Faithful, reasonably complete adaptation");
+      expect(text).toContain(
+        "Codex Cryptica checks only (a) and (b). It never sees your source, so a successful import does not prove that nothing was left out or changed.",
+      );
+    });
+
+    it("adds rule 8 while keeping the successful-conversion output contract", () => {
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "8. Self-audit before returning",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "For a successful conversion, return ONLY valid JSON matching Adventure JSON v1",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "The one-sentence failure response above is the sole exception.",
+      );
+    });
+
+    it("shows the coverage prompt after the canonical prompt, with four list headings", () => {
+      const { container } = render(Page);
+      const pres = [...container.querySelectorAll("pre")];
+      const coverage = container.querySelector(
+        'pre[aria-label="Coverage report prompt"]',
+      ) as HTMLPreElement;
+      expect(coverage.getAttribute("tabindex")).toBe("0");
+      expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
+      expect(pres.indexOf(coverage)).toBeGreaterThan(0);
+      expect(pres[0]?.textContent).toBe(CANONICAL_CONVERSION_PROMPT);
+      for (const heading of [
+        "Covered sections",
+        "Missing or shortened",
+        "Risky inferences",
+        "Left unresolved",
+      ]) {
+        expect(COVERAGE_REPORT_PROMPT).toContain(heading);
+      }
+    });
+
+    it("copies the coverage prompt with its own feedback", async () => {
+      copyMock.mockResolvedValue(true);
+      render(Page);
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage report prompt/i }),
+      );
+      expect(copyMock.mock.calls[0]?.[0]).toBe(COVERAGE_REPORT_PROMPT);
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /Copied coverage prompt/i }),
+        ).toBeTruthy();
+      });
+      expect(
+        screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+      ).toHaveLength(2);
+    });
+
+    it("reports a failed coverage copy without touching the other buttons", async () => {
+      copyMock.mockResolvedValue(false);
+      render(Page);
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage report prompt/i }),
+      );
+      await waitFor(() => {
+        expect(
+          screen.getAllByRole("button", { name: /Copy failed/i }),
+        ).toHaveLength(1);
+      });
+      expect(
+        screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+      ).toHaveLength(2);
+      expect(
+        screen.getByRole("button", { name: /Copy guide link/i }),
+      ).toBeTruthy();
+    });
+
+    it("names the three omissions in the worked example", () => {
+      const { container } = render(Page);
+      const text = norm(
+        container.querySelector('[aria-labelledby="completeness-heading"]')
+          ?.textContent,
+      );
+      expect(text).toContain("Reed Shrine");
+      expect(text).toContain("The Water Takes It");
+      expect(text).toContain("Wick");
+    });
+
+    it("points from the quick start to an existing completeness section", () => {
+      const { container } = render(Page);
+      const link = container.querySelector(
+        '[aria-labelledby="quick-start-heading"] a[href="#completeness-heading"]',
+      );
+      expect(link).toBeTruthy();
+      expect(container.querySelector("#completeness-heading")).toBeTruthy();
+    });
   });
 });

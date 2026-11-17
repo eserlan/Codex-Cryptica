@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from codex_sandbox import git_metadata_roots, resolve_git_common_dir, run_sandboxed
 
 REPO = Path(__file__).resolve().parents[2]
-WAITING = {"needs-human", "needs-info", "rejected", "merged"}
+WAITING = {"needs-human", "needs-info", "rejected", "merged", "dev-agents"}
 MAX_WORKSPACE_MANIFEST_BYTES = 1024 * 1024
 MAX_WORKSPACE_MANIFEST_TOTAL_BYTES = 10 * 1024 * 1024
 

@@ -118,6 +118,22 @@ Your pasted text is sent to the AI to be read. It isn't kept, and it isn't used 
 
 **Without AI**: when AI is turned off, the import uses a simpler built-in reader. It only fills in what it can read reliably, so expect to fill in more by hand. Convert from 5e isn't available then.
 
+## Species and ancestry
+
+A species is a reusable set of traits you write once on a Creature and apply to many characters and NPCs. Applying one never changes the numbers you typed into a sheet.
+
+**Mark a Creature**: open the Creature's Stats tab, find **Species/Ancestry** and turn on **Use as a Species/Ancestry definition**. Then add traits. Each trait has a name and a description.
+
+**Add adjustments**: on a trait, add an adjustment with a target and a signed amount, such as `str_score` and `+2`. The target is the **field ID or key** of a number field on the character's sheet. Built-in templates use readable IDs like `str_score`. Templates you build yourself use the keys you set. Labels aren't matched.
+
+**Pick a species**: open a Character or NPC, go to the Stats tab and choose a species under **Species/Ancestry**. You see a preview first. Adjustments that fit show `10 → 12`. Adjustments that don't fit say **Not applied** and why: no field with that key, or the field isn't a number field. Only number fields can be adjusted. Nothing changes until you press **Apply**.
+
+**Base and effective values**: the number you typed stays in the field. Next to it the sheet shows the effective value and where it comes from, for example `Effective 12 · Kethari: Brute +2`. If you change the base, the effective value follows. Dice formulas, rolls and modifiers still use the base value.
+
+**Change or remove**: **Change** picks a different species and replaces the old one. **Remove** takes away only the species' adjustments.
+
+**Changes to the source**: the character keeps its own copy of the traits. If you edit the Creature later, characters that already have it aren't updated. Use **Change** to apply the new version. If the Creature is deleted, the character keeps its traits and shows that the source is unavailable.
+
 ## Related reading
 
 - [The Complete Guide to Custom Character Sheets](/blog/custom-stat-sheet-templates) — Build a reusable Stat Template, fill it in per entity, present it your way, and share it.

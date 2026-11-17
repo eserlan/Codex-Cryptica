@@ -1,10 +1,14 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
-  import { copyTextToClipboard } from "#lib/utils/share-link.js";
+  import { createCopier } from "./copy-feedback.svelte.js";
+  import StagedConversion from "./StagedConversion.svelte";
+  import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
+    COVERAGE_REPORT_PROMPT,
+    IMPORT_OUTCOMES,
+    LINK_HANDOFF_TEXT,
     COLLECTION_RULES,
     CORRESPONDENCE_EXTENSION_DOC,
     EPISTEMIC_STATUSES,
@@ -15,35 +19,32 @@
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
 
-  let copyState = $state<"idle" | "copied" | "error">("idle");
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
-  let copyRequestGeneration = 0;
-  let isDestroyed = false;
+  const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
+  const linkCopier = createCopier(LINK_HANDOFF_TEXT);
+  const coverageCopier = createCopier(COVERAGE_REPORT_PROMPT);
 
-  onDestroy(() => {
-    isDestroyed = true;
-    if (copyTimer) clearTimeout(copyTimer);
-  });
+  const copyLabel = $derived(
+    promptCopier.label(
+      "Copy conversion prompt",
+      "Copied prompt",
+      "Copy failed — select the prompt below manually",
+    ),
+  );
+  const linkCopyLabel = $derived(
+    linkCopier.label(
+      "Copy guide link",
+      "Copied link",
+      "Copy failed — copy the page address instead",
+    ),
+  );
 
-  async function handleCopyPrompt() {
-    const requestGeneration = ++copyRequestGeneration;
-    if (copyTimer) {
-      clearTimeout(copyTimer);
-      copyTimer = undefined;
-    }
-    const ok = await copyTextToClipboard(
-      CANONICAL_CONVERSION_PROMPT,
-      typeof navigator === "undefined" ? undefined : navigator.clipboard,
-    );
-    if (isDestroyed || requestGeneration !== copyRequestGeneration) return;
-
-    copyState = ok ? "copied" : "error";
-    copyTimer = setTimeout(() => {
-      if (isDestroyed || requestGeneration !== copyRequestGeneration) return;
-      copyState = "idle";
-      copyTimer = undefined;
-    }, 2200);
-  }
+  const coverageCopyLabel = $derived(
+    coverageCopier.label(
+      "Copy coverage report prompt",
+      "Copied coverage prompt",
+      "Copy failed — select the prompt below manually",
+    ),
+  );
 
   const breadcrumbSchema = safeJsonLd({
     "@context": "https://schema.org",
@@ -64,6 +65,30 @@
     ],
   });
 </script>
+
+{#snippet copyButton(
+  copier: { copy: () => void; state: string },
+  label: string,
+  primary: boolean,
+)}
+  <button
+    type="button"
+    onclick={copier.copy}
+    class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
+      ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
+      : 'border border-theme-text bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
+  >
+    <span
+      class="{copier.state === 'copied'
+        ? 'icon-[lucide--check]'
+        : primary
+          ? 'icon-[lucide--copy]'
+          : 'icon-[lucide--link]'} w-4 h-4"
+      aria-hidden="true"
+    ></span>
+    {label}
+  </button>
+{/snippet}
 
 <svelte:head>
   <title>Adventure JSON Conversion Guide | Codex Cryptica</title>
@@ -140,6 +165,92 @@
       </div>
     </section>
 
+    <!-- Quick start -->
+    <section
+      aria-labelledby="quick-start-heading"
+      class="rounded-2xl border border-theme-primary/40 bg-theme-surface/50 p-6 space-y-5"
+    >
+      <h2
+        id="quick-start-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Quick start: from your adventure to Codex Cryptica
+      </h2>
+      <p class="text-sm md:text-base text-theme-text/90">
+        Source adventure → AI assistant of your choice → Adventure JSON file →
+        review and import in Codex Cryptica.
+      </p>
+      <ol
+        class="list-decimal space-y-2 pl-5 text-sm md:text-base text-theme-text"
+      >
+        <li>
+          <strong>Copy the prompt.</strong> Use the button below. If your
+          assistant can open web pages, <em>Copy guide link</em> is a shorter shortcut.
+        </li>
+        <li>
+          <strong>Paste it and attach your adventure</strong> in the AI assistant
+          you prefer (a hosted chatbot or a local model), as a file or pasted text.
+        </li>
+        <li>
+          <strong>Save the result as a plain <code>.json</code> file.</strong>
+          If your assistant offers a downloadable file, use that. Otherwise copy its
+          reply. Keep only the JSON: no Markdown code fences, no commentary before
+          or after.
+        </li>
+        <li>
+          <strong>Import it in your Vault.</strong> Open Adventure Mode and
+          choose <em>Import Adventure JSON</em>
+          (<a class="underline" href="#import-adventure-json-heading"
+            >step-by-step below</a
+          >).
+        </li>
+        <li>
+          <strong>Review, approve, then start.</strong> Codex Cryptica checks
+          the file on your device. If it is rejected, follow the validation
+          message: use its field path when one is shown, or fix the JSON syntax
+          described by a parse error. You can paste that message back to your
+          assistant or see
+          <a class="underline" href="#troubleshooting-heading"
+            >troubleshooting</a
+          >. Once approved, start the adventure from Adventure Mode with the
+          Oracle.
+        </li>
+      </ol>
+      <p class="text-sm text-theme-text/90">
+        Long PDF that an assistant cannot finish in one go? Use the
+        <a class="underline" href="#long-adventures">staged method</a>.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/90">
+        Passing the import checks does not mean nothing was left out. See
+        <a class="underline" href="#completeness-heading"
+          >valid is not the same as complete</a
+        >.
+      </p>
+      <div class="flex flex-wrap items-center gap-3">
+        {@render copyButton(promptCopier, copyLabel, true)}
+        {@render copyButton(linkCopier, linkCopyLabel, false)}
+        <span role="status" class="sr-only">{copyLabel}. {linkCopyLabel}</span>
+        <a
+          href="#prompt-heading"
+          class="inline-flex min-h-11 items-center rounded-xl border border-theme-border/60 px-4 py-2 text-sm font-medium text-theme-text hover:border-theme-primary/50"
+          >Read the full prompt</a
+        >
+      </div>
+      <p class="text-sm text-theme-text/90">
+        <strong>Copy guide link</strong> copies a one-line instruction pointing
+        at the same prompt as plain text (<a
+          class="underline"
+          href="{cleanBase}/adventure-import/prompt.txt">prompt.txt</a
+        >). It only works if your assistant can open web pages; local models and
+        chats without browsing need the full prompt instead.
+      </p>
+      <p class="text-sm text-theme-text/90">
+        <strong>This page is a guide, not a converter.</strong> You can't upload or
+        paste your adventure here. The conversion happens in the assistant you choose,
+        and this page never sees your source.
+      </p>
+    </section>
+
     <!-- Privacy & Responsibility Notice -->
     <section
       aria-labelledby="privacy-notice-heading"
@@ -182,25 +293,7 @@
             alongside the adventure text or PDF you want to convert.
           </p>
         </div>
-        <button
-          type="button"
-          onclick={handleCopyPrompt}
-          class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-theme-primary text-theme-on-primary font-semibold text-sm hover:opacity-90 transition-opacity cursor-pointer"
-        >
-          <span
-            class="{copyState === 'copied'
-              ? 'icon-[lucide--check]'
-              : 'icon-[lucide--copy]'} w-4 h-4"
-            aria-hidden="true"
-          ></span>
-          {#if copyState === "copied"}
-            Copied prompt
-          {:else if copyState === "error"}
-            Copy failed — select manually
-          {:else}
-            Copy conversion prompt
-          {/if}
-        </button>
+        {@render copyButton(promptCopier, copyLabel, true)}
       </div>
 
       <pre
@@ -298,6 +391,102 @@
         Go to Adventure JSON import
       </a>
     </section>
+
+    <!-- Valid vs complete -->
+    <section
+      aria-labelledby="completeness-heading"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
+    >
+      <h2
+        id="completeness-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Valid is not the same as complete
+      </h2>
+      <p class="text-sm md:text-base text-theme-text/90">
+        A converted file can end up in three different states:
+      </p>
+      <ul class="space-y-2 text-sm md:text-base text-theme-text">
+        {#each IMPORT_OUTCOMES as outcome (outcome.label)}
+          <li>
+            <strong>{outcome.label}.</strong>
+            {outcome.meaning}
+          </li>
+        {/each}
+      </ul>
+      <p class="text-sm md:text-base text-theme-text">
+        Codex Cryptica checks only (a) and (b). It never sees your source, so a
+        successful import does not prove that nothing was left out or changed.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/90">
+        The canonical prompt asks your assistant to audit its own output. For a
+        second look, paste this follow-up into the same chat after you receive
+        the JSON. The report is plain text and stays outside the JSON file.
+      </p>
+      {@render copyButton(coverageCopier, coverageCopyLabel, true)}
+      <span role="status" class="sr-only">{coverageCopyLabel}</span>
+      <pre
+        tabindex="0"
+        aria-label="Coverage report prompt"
+        class="overflow-x-auto whitespace-pre-wrap rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{COVERAGE_REPORT_PROMPT}</pre>
+      <h3 class="font-header font-bold text-lg text-theme-text">
+        Example: valid, but incomplete
+      </h3>
+      <p class="text-sm text-theme-text/90">
+        Say a package made from the reference one-shot imports cleanly but
+        dropped three things:
+      </p>
+      <ul class="list-disc space-y-1.5 pl-5 text-sm text-theme-text/90">
+        <li>
+          The optional Reed Shrine branch is gone. The self-audit item on
+          mandatory and optional scenes, and the "Missing or shortened" list,
+          catch it.
+        </li>
+        <li>
+          The flooded ending, "The Water Takes It", is gone. The self-audit item
+          on intended endings, and the "Covered sections" list, catch it.
+        </li>
+        <li>
+          Wick's "By talk" option is cut, leaving only the fight. The self-audit
+          item on encounter resolution options, and the "Missing or shortened"
+          list, catch it.
+        </li>
+      </ul>
+      <p class="text-sm text-theme-text/90">
+        None of these break the schema, so the import succeeds. Anything the
+        assistant cannot restore should appear in "Left unresolved".
+      </p>
+    </section>
+
+    <!-- Worked example -->
+    <section
+      aria-labelledby="worked-example-heading"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
+    >
+      <h2
+        id="worked-example-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        What a valid file looks like
+      </h2>
+      <p class="text-sm text-theme-text/90">
+        A complete, minimal Adventure JSON v1 file: one location, one NPC, one
+        scene and one ending. Your assistant's output should look like this,
+        only longer. For a full adventure, open the
+        <a
+          class="underline"
+          href="{cleanBase}/schemas/adventure-json/examples/reference-one-shot.v1.json"
+          >reference one-shot</a
+        >.
+      </p>
+      <pre
+        tabindex="0"
+        aria-label="Minimal Adventure JSON v1 example"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
+    </section>
+
+    <!-- Long adventures -->
+    <StagedConversion />
 
     <!-- Top-level Contract & Collections -->
     <section aria-labelledby="contract-heading" class="space-y-6">
