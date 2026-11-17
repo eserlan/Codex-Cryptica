@@ -336,6 +336,42 @@ describe("retrieveAdventureJsonContext", () => {
     expect(r.truncated).toBe(true);
   });
 
+  it("bounds an oversized source quote and keeps the focus scene", () => {
+    const quote = "\u0001".repeat(5_000_000);
+    const pkg = base({
+      scenes: [
+        scene("s1", {
+          sourceRef: { page: 7, chapter: "Arrival", textQuote: quote },
+        }),
+      ],
+    });
+    const original = JSON.stringify;
+    let longest = 0;
+    JSON.stringify = ((...args: Parameters<typeof JSON.stringify>) => {
+      const out = original(...args);
+      if (typeof out === "string") longest = Math.max(longest, out.length);
+      return out;
+    }) as typeof JSON.stringify;
+    let r: AdventureJsonRetrievalResult;
+    try {
+      r = retrieveAdventureJsonContext(pkg, {});
+    } finally {
+      JSON.stringify = original;
+    }
+
+    expect(r.includedIds[0]).toBe("s1");
+    expect(size(r)).toBeLessThanOrEqual(MAX_ADVENTURE_RETRIEVAL_CHARS);
+    expect(r.playerSafe[0]!.sourceRef).toMatchObject({
+      page: 7,
+      chapter: "Arrival",
+    });
+    expect(r.playerSafe[0]!.sourceRef!.textQuote!.length).toBeLessThan(
+      quote.length,
+    );
+    expect(longest).toBeLessThan(2 * MAX_ADVENTURE_RETRIEVAL_CHARS);
+    expect(r.truncated).toBe(true);
+  });
+
   it("never serialises an oversized field in full", () => {
     const huge = "z".repeat(5_000_000);
     const pkg = base({

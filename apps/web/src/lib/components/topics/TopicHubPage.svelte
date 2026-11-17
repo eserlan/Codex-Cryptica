@@ -19,6 +19,7 @@
   import TopicHubShell from "./TopicHubShell.svelte";
   import TopicHubHeader from "./TopicHubHeader.svelte";
   import TopicInlineExampleCard from "./TopicInlineExampleCard.svelte";
+  import TopicPrimaryAction from "./TopicPrimaryAction.svelte";
   import TopicRelatedList from "./TopicRelatedList.svelte";
 
   let { config }: { config: TopicHubConfig } = $props();
@@ -59,6 +60,8 @@
     leadParagraph={config.leadParagraph}
     heroImage={config.heroImage}
   />
+
+  <TopicPrimaryAction slug={config.slug} action={config.primaryAction} />
 
   <!-- Standalone explanatory copy: the ideas that make this topic play differently. -->
   <section class="mb-12" aria-labelledby="{config.slug}-thesis">

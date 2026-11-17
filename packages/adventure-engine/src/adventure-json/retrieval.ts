@@ -120,12 +120,26 @@ function recordExcerpts(
   lines: Line[],
   cap: number,
 ): AdventureJsonExcerpt[] {
+  // `textQuote` has no schema-level length limit. Keep it bounded before it
+  // reaches JSON.stringify, including strings whose characters need escaping.
+  // Eight gives room for worst-case JSON escaping plus the field envelope.
+  const sourceRef = record.sourceRef;
+  const quoteLimit = Math.floor(cap / 8);
+  const boundedSourceRef =
+    sourceRef?.textQuote !== undefined
+      ? {
+          ...sourceRef,
+          // One extra character lets admission distinguish an exact-limit quote
+          // from one that was clipped without copying the full source string.
+          textQuote: sourceRef.textQuote.slice(0, quoteLimit + 1),
+        }
+      : sourceRef;
   const excerpt = (visibility: Visibility, from: Line[]) => ({
     id: record.id,
     kind,
     visibility,
     epistemicStatus: record.epistemicStatus,
-    ...(record.sourceRef !== undefined ? { sourceRef: record.sourceRef } : {}),
+    ...(boundedSourceRef !== undefined ? { sourceRef: boundedSourceRef } : {}),
     text: buildText(from, cap),
   });
   if (record.visibility !== "player-visible") {
@@ -171,15 +185,31 @@ function trimExcerpt(
   excerpt: AdventureJsonExcerpt,
   max: number,
 ): AdventureJsonExcerpt | undefined {
+  let base = excerpt;
+  if (
+    serialisedSize([{ ...excerpt, text: "" }]) > max &&
+    excerpt.sourceRef?.textQuote !== undefined
+  ) {
+    // The focus scene's optional quote must not make its required envelope
+    // impossible to admit. Keep other source-reference metadata intact.
+    const { textQuote: _textQuote, ...sourceRef } = excerpt.sourceRef;
+    void _textQuote;
+    base = { ...excerpt, sourceRef, text: "" };
+    if (Object.keys(sourceRef).length === 0) {
+      const { sourceRef: _sourceRef, ...withoutSourceRef } = base;
+      void _sourceRef;
+      base = withoutSourceRef;
+    }
+  }
   const withText = (length: number): AdventureJsonExcerpt => {
-    if (length <= 0) return { ...excerpt, text: "" };
-    let kept = excerpt.text.slice(0, length - 1);
+    if (length <= 0) return { ...base, text: "" };
+    let kept = base.text.slice(0, length - 1);
     const last = kept.charCodeAt(kept.length - 1);
     if (last >= 0xd800 && last <= 0xdbff) kept = kept.slice(0, -1);
-    return { ...excerpt, text: `${kept}…` };
+    return { ...base, text: `${kept}…` };
   };
   let low = 0;
-  let high = excerpt.text.length;
+  let high = base.text.length;
   if (serialisedSize([withText(low)]) > max) return undefined;
   while (low < high) {
     const mid = Math.ceil((low + high) / 2);
@@ -215,6 +245,20 @@ function addOne(
 ): void {
   if (sel.invalidBudget) return;
   if (sel.stopped) return;
+  const quoteLimit = Math.floor(sel.maxCharacters / 8);
+  if (
+    excerpt.sourceRef?.textQuote !== undefined &&
+    excerpt.sourceRef.textQuote.length > quoteLimit
+  ) {
+    excerpt = {
+      ...excerpt,
+      sourceRef: {
+        ...excerpt.sourceRef,
+        textQuote: excerpt.sourceRef.textQuote.slice(0, quoteLimit),
+      },
+    };
+    sel.truncated = true;
+  }
   const key = `${excerpt.kind}:${excerpt.id}:${excerpt.visibility}`;
   if (sel.seen.has(key)) return;
   sel.seen.add(key);

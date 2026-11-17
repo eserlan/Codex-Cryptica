@@ -102,6 +102,12 @@ export interface TopicHubConfig {
   ogImage: string;
   ogImageAlt: string;
   heroImage?: TopicImage;
+  /** The hub's one above-the-fold action, shown straight after the header. */
+  primaryAction?: {
+    label: string;
+    href: string;
+    secondary?: { label: string; href: string };
+  };
   copy: TopicHubCopy;
   structuredData: TopicHubStructuredData;
   thesisPoints: TopicHubThesisPoint[];
