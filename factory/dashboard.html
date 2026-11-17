@@ -291,6 +291,7 @@ const COLUMNS = [
   { label: 'Review', who: 'routed reviewers', stages: ['review'] },
   { label: 'Approve', who: 'approver · handoff', stages: ['approve', 'merging'] },
   { label: 'Needs human', who: 'you', stages: ['needs-human'], cls: 'human' },
+  { label: 'Dev agents', who: 'review-and-fix · merge to staging', stages: ['dev-agents'] },
   { label: 'Done', who: 'merged · rejected', stages: ['merged', 'rejected'], cls: 'merged-col' },
 ]
 const STAGES = new Set(COLUMNS.flatMap((c) => c.stages))
