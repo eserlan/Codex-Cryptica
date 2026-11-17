@@ -147,7 +147,6 @@ Strict output rules:
    - Add "sourceRef" wherever you know the origin of an entry. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry so it can be checked against the source; use the page position in the file, not a number printed on the page. Shape: ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }).
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.
-
 8. Self-audit before returning (do not output this check):
    - Compare your JSON with the source and confirm that:
      - every source section and page anchor is accounted for;
@@ -205,6 +204,7 @@ export const IMPORT_OUTCOMES: ImportOutcome[] = [
     checkedByCodex: false,
   },
 ];
+
 export const PROMPT_TXT_URL =
   "https://codexcryptica.com/adventure-import/prompt.txt";
 
