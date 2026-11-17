@@ -517,7 +517,10 @@ function schemaFailedDims(validation: {
           ),
         }
       : { status: "fail", details: [NOT_CHECKED] };
-  const blocked = { status: "fail", details: [NOT_CHECKED] } as const;
+  const blocked: ConversionScoreDimensionResult = {
+    status: "fail",
+    details: [NOT_CHECKED],
+  };
   return {
     references,
     secrets: blocked,
