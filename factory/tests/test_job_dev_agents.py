@@ -1,5 +1,7 @@
 import importlib.machinery
 import importlib.util
+import json
+import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -55,6 +57,37 @@ class DevAgentsTests(unittest.TestCase):
                 else:
                     with self.assertRaises(job_mod.Refused):
                         job_mod.advance(make_job("dev-agents"), "merged")
+
+    def test_stacked_job_done_when_merged_parent_chain_reaches_base(self):
+        child = make_job("dev-agents")
+        child.update({"id": "002-child", "stacked_on": "001-parent", "base": "factory/001-parent"})
+        parent = {"id": "001-parent", "pr": 8, "branch": "factory/001-parent", "stacked_on": None}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            parent_dir = Path(temp_dir) / parent["id"]
+            parent_dir.mkdir()
+            (parent_dir / "job.json").write_text(json.dumps(parent))
+            with patch.object(job_mod, "JOBS", Path(temp_dir)), \
+                 patch.object(job_mod, "gh_json", side_effect=[
+                     {"state": "MERGED", "baseRefName": "factory/001-parent"},
+                     {"state": "MERGED", "baseRefName": "staging"},
+                 ]):
+                self.assertEqual(job_mod.advance(child, "merged")["stage"], "merged")
+
+    def test_stacked_job_waits_until_parent_chain_reaches_base(self):
+        child = make_job("dev-agents")
+        child.update({"id": "002-child", "stacked_on": "001-parent", "base": "factory/001-parent"})
+        parent = {"id": "001-parent", "pr": 8, "branch": "factory/001-parent", "stacked_on": None}
+        with tempfile.TemporaryDirectory() as temp_dir:
+            parent_dir = Path(temp_dir) / parent["id"]
+            parent_dir.mkdir()
+            (parent_dir / "job.json").write_text(json.dumps(parent))
+            with patch.object(job_mod, "JOBS", Path(temp_dir)), \
+                 patch.object(job_mod, "gh_json", side_effect=[
+                     {"state": "MERGED", "baseRefName": "factory/001-parent"},
+                     {"state": "OPEN", "baseRefName": "staging"},
+                 ]):
+                with self.assertRaises(job_mod.Refused):
+                    job_mod.advance(child, "merged")
 
 
 if __name__ == "__main__":

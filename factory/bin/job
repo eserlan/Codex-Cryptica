@@ -814,9 +814,29 @@ def pr_state(job):
 
 
 def merged_into_base(job):
-    """True once the job's PR is merged into the base branch (not a parent job's branch)."""
+    """True once the job's merged PR is included in the configured base branch."""
+    return _merged_chain_into_base(job, set())
+
+
+def _merged_chain_into_base(job, seen):
+    job_id = job["id"]
+    if job_id in seen or not job.get("pr"):
+        return False
+    seen.add(job_id)
     pr = gh_json("pr", "view", str(job["pr"]), "--json", "state,baseRefName")
-    return pr["state"] == "MERGED" and pr["baseRefName"] == BASE
+    if pr["state"] != "MERGED":
+        return False
+    if pr["baseRefName"] == BASE:
+        return True
+
+    parent_id = job.get("stacked_on")
+    if not parent_id:
+        return False
+    parent_path = job_dir(parent_id) / "job.json"
+    if not parent_path.exists():
+        return False
+    parent = json.loads(parent_path.read_text())
+    return pr["baseRefName"] == parent["branch"] and _merged_chain_into_base(parent, seen)
 
 
 def refresh_pr(job, discover=False):
