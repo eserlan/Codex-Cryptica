@@ -155,8 +155,7 @@
       "id": "actor-tobiah-reed",
       "name": "Tobiah Reed",
       "summary": "The mill's accountant, polite and unhurried.",
-      "role": "Antagonist",
-      "motivation": "Wants the mill to fail so the bailiff will sell it cheaply to him.",
+      "role": "Mill accountant",
       "locationId": "loc-greywater-bend",
       "visibility": "player-visible",
       "epistemicStatus": "explicit",
@@ -390,6 +389,17 @@
       "sourceRef": {
         "section": "Scene 2: The Mill Yard",
         "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "secret-tobiah-motive",
+      "text": "Tobiah wants the mill to fail so the bailiff will sell it cheaply to him.",
+      "relatedEntityIds": ["actor-tobiah-reed"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Tobiah Reed",
+        "anchor": "ros-npc-tobiah"
       }
     },
     {

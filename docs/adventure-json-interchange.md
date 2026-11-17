@@ -28,6 +28,17 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 
 - `epistemicStatus`: `"explicit" | "inferred" | "ambiguous" | "unresolved"` — allows external converters and parsers to mark uncertain or contradictory source facts without inventing missing details.
 - `visibility`: `"player-visible" | "gm-only"` — `secrets` strictly require `"gm-only"`.
+
+### What visibility applies to
+
+`visibility` is a property of the **whole record**. Every field of a `player-visible` record (including `role`, `motivation`, `summary`, `description`, `body`, `readAloud` and `reveals`) is treated as safe to show players; v1 has no per-field visibility, and importers, the review screen and any player-facing projection must not assume a visible record has hidden parts.
+
+A character, place or item being known does not make its concealed role, motive or detail known. Converters keep the visible record to what players can know and store the concealed part in a separate `secrets` entry (`visibility: "gm-only"`) whose `relatedEntityIds` names the record. When a record cannot be split without losing meaning, mark it `gm-only` and add an `unresolved` entry. Source wording is copied, not invented.
+
+In the reference one-shot, Tobiah Reed is a `player-visible` actor with no `motivation`; his motive is the `gm-only` secret `secret-tobiah-motive`.
+
+Status: Adventure JSON content is not yet projected into Oracle prompts or player transcripts (sessions only pin the approved package by hash), so this is a contract for converters and for any future projection, which must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
+
 - `sourceRef` (optional): `{ page?, pageEnd?, chapter?, section?, anchor?, textQuote? }`.
 
 ## Semantic Validation Rules
