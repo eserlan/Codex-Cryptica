@@ -886,7 +886,7 @@ def next_round(job):
     job["reviews"] = {}
 
 
-def advance(job, stage):
+def advance(job, stage, pr_cache=None, merged_cache=None):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
     if stage != "merged" and old not in TERMINAL:
@@ -1008,14 +1008,14 @@ def advance(job, stage):
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
 
     elif old == "dev-agents":
-        require(job["pr"] and merged_into_base(job), f"PR #{job['pr']} isn't merged into {BASE}")
+        require(job["pr"] and merged_into_base(job, pr_cache=pr_cache, merged_cache=merged_cache),
+                f"PR #{job['pr']} isn't merged into {BASE}")
 
     elif old == "needs-human":
         if stage == "merged":
             require(job["pr"] and pr_state(job) == "MERGED", "the PR isn't merged")
         elif stage == "dev-agents":
             require(job["pr"] and pr_state(job) == "OPEN", "the job needs an open PR to hand to the dev agents")
-            label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             label("pr", job["pr"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             comment("pr", job["pr"], "### Factory: handed to the dev agents\n\n"
                     f"A person approved this PR. The factory labels are removed, and the job is done once "
@@ -1170,7 +1170,7 @@ def cmd_queue():
         if j["stage"] == "needs-human" and j["pr"] and pr_state(j) == "MERGED":
             save(advance(sync(j), "merged"))
         elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j, pr_cache=pr_cache, merged_cache=merged_cache):
-            save(advance(sync(j), "merged"))
+            save(advance(sync(j), "merged", pr_cache=pr_cache, merged_cache=merged_cache))
     issues = gh_json("issue", "list", "--label", QUEUE_LABEL, "--state", "open",
                      "--limit", "200", "--json", "number,title")
     open_numbers = {i["number"] for i in issues}
@@ -1273,6 +1273,7 @@ def cmd_approve(job):
     if job["stage"] != "needs-human":
         die(f"{job['id']} is in {job['stage']}, not needs-human")
     save(advance(sync(job), "dev-agents"))
+    label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
     print(f"{job['id']}: dev-agents (PR #{job['pr']}); done when it merges into {BASE}")
 
 
@@ -1402,6 +1403,8 @@ def main(argv):
         elif cmd == "advance" and len(args) == 2:
             job = advance(sync(resolve(args[0])), args[1])
             save(sync(job))
+            if args[1] == "dev-agents":
+                label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             print(f"{job['id']}: {job['stage']} (round {job['round']})")
         elif cmd == "merge" and len(args) == 1:
             cmd_merge(resolve(args[0]))
