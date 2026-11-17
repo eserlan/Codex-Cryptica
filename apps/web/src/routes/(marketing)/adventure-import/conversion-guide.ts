@@ -40,8 +40,12 @@ Strict output rules:
    - Each alternativeSolutions entry requires method: non-empty string and description: non-empty string; optional socialBypassOfCombat: boolean.
    - Do not emit properties absent from the strict schema.
 5. Visibility & secrets:
+   - The adventure title and premise hook/background are copied into the session and sent to Oracle opening generation. If both premise fields are empty, description is used as the premise fallback, then title. Keep the title, hook, background, and optional description player-safe and limited to source-supported facts; do not put concealed information in these fields.
    - Require "visibility": "player-visible" | "gm-only" on locations, actors, factions, scenes, encounters, clues, rumours, items, and secrets only. Do not add visibility to endings or unresolved.
    - Every entry in "secrets" MUST have "visibility": "gm-only".
+   - "visibility" applies to the WHOLE record, never to individual fields. Treat every field of a "player-visible" record (name, summary, description, role, motivation, disposition, body, readAloud, reveals and the rest) as safe to show players. v1 cannot hide one field of a visible record.
+   - A character, place or item being known to the players does not make its role, hidden motive, allegiance or secret details known. Put only what players can know in the "player-visible" record. Move concealed role, motive or detail into a separate "secrets" entry that lists the record in "relatedEntityIds". Copy source wording; do not invent plot facts to fill the visible record.
+   - When a record is only partly shareable and you cannot split it without losing meaning, mark the whole record "gm-only" and add an "unresolved" entry rather than guessing.
    - Do NOT promote NPC testimony, rumours, or in-world handouts to objective truth unless the authored text confirms them.
 6. Structural integrity:
    - Every entity ID across all collections must be unique and non-empty.

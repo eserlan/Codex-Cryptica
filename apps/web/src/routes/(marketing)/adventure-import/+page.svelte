@@ -422,6 +422,29 @@
             <code>visibility: "gm-only"</code>.
           </p>
           <p class="text-sm text-theme-text/90 leading-relaxed">
+            Visibility applies to the <strong>whole record</strong>, not to
+            single fields. Everything in a
+            <code>"player-visible"</code> record (its role, motivation, summary
+            and description) is treated as safe to show players. A character
+            being known does not make their hidden role or motive known: keep
+            the visible record to what players can know, and put the concealed
+            part in a separate <code>secrets</code> entry that lists the
+            character in <code>relatedEntityIds</code>.
+          </p>
+          <p class="text-sm text-theme-text/90 leading-relaxed">
+            When you start an imported adventure, its title and premise hook or
+            background are copied into the session and sent to Oracle opening
+            generation. If both premise fields are empty, the description is
+            used as the premise fallback, then the title. Keep the title, hook,
+            background and optional description player-safe and limited to
+            source-supported facts; do not put concealed information there.
+          </p>
+          <p class="text-sm text-theme-text/90 leading-relaxed">
+            Example: Tobiah Reed, the mill accountant, is a player-visible actor
+            with no motivation field. Why he wants the mill to fail is a
+            <code>gm-only</code> secret that points back to him.
+          </p>
+          <p class="text-sm text-theme-text/90 leading-relaxed">
             Authored facts are canonical, whereas NPC testimony, rumours, and
             in-world handouts must not be promoted to objective truth unless
             confirmed by the authored text.
