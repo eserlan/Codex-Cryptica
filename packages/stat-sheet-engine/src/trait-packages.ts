@@ -90,27 +90,35 @@ export function computeEffectiveValues(
     if (seenKinds.has(selection.kind)) continue;
     seenKinds.add(selection.kind);
     if (selection.traits.length > MAX_TRAITS_PER_PACKAGE) continue;
-    for (const trait of selection.traits) {
-      for (const adj of trait.adjustments) {
-        const field = resolveFieldByKeyOrId(fields, adj.target);
-        if (!field || field.type !== "number") continue;
-        const base = baseOf(field);
-        const entry = result.get(field.id) ?? {
-          base,
-          effective: base,
-          contributions: [],
-        };
-        entry.effective += adj.amount;
-        entry.contributions.push({
-          sourceTitle: selection.sourceTitle,
-          traitName: trait.name,
-          amount: adj.amount,
-        });
-        result.set(field.id, entry);
-      }
-    }
+    applySelectionAdjustments(result, fields, selection);
   }
   return result;
+}
+
+function applySelectionAdjustments(
+  result: Map<string, EffectiveValue>,
+  fields: readonly StatSheetField[],
+  selection: TraitSelection,
+): void {
+  for (const trait of selection.traits) {
+    for (const adj of trait.adjustments) {
+      const field = resolveFieldByKeyOrId(fields, adj.target);
+      if (!field || field.type !== "number") continue;
+      const base = baseOf(field);
+      const entry = result.get(field.id) ?? {
+        base,
+        effective: base,
+        contributions: [],
+      };
+      entry.effective += adj.amount;
+      entry.contributions.push({
+        sourceTitle: selection.sourceTitle,
+        traitName: trait.name,
+        amount: adj.amount,
+      });
+      result.set(field.id, entry);
+    }
+  }
 }
 
 export function setTraitSelection(
