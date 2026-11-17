@@ -23,7 +23,7 @@ export const STAGED_CHUNK_PROMPT = `Stage 2 of 3: convert one section. Use the A
 
 Convert only this section of the source: [PASTE THE SECTION TITLE AND PAGE RANGE FROM THE INVENTORY HERE]
 
-- Produce a complete Adventure JSON v1 document that contains only entries from this section. Repeat the same "formatVersion", "id", "title", "version", "premise" and "source" in every pass, and keep all 11 collection arrays (use [] when empty).
+- Produce a complete Adventure JSON v1 document that contains only entries from this section. Repeat the same "formatVersion", "id", "title", "version", "premise" and "source" in every pass, plus identical "description" and "system" when present. Keep all 11 collection arrays (use [] when empty).
 - Use exactly the ids from the inventory for recurring characters, factions and places. Give new entries ids that start with this section's id prefix. An entry that appears in several sections keeps one id everywhere.
 - You may refer to an id defined in another section (for example a clue placed with a character from section 1), but define an entry only if the inventory says this section defines it. Never invent an entry that belongs to another section.
 - Add "sourceRef" with the page number to every entry, using the page position in the file (the same numbering as the inventory), not any number printed on the page.
