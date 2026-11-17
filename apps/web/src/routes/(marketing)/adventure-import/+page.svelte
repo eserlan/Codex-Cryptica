@@ -576,6 +576,14 @@
             character in <code>relatedEntityIds</code>.
           </p>
           <p class="text-sm text-theme-text/90 leading-relaxed">
+            When you start an imported adventure, its title and premise hook or
+            background are copied into the session and sent to Oracle opening
+            generation. If both premise fields are empty, the description is
+            used as the premise fallback, then the title. Keep the title, hook,
+            background and optional description player-safe and limited to
+            source-supported facts; do not put concealed information there.
+          </p>
+          <p class="text-sm text-theme-text/90 leading-relaxed">
             Example: Tobiah Reed, the mill accountant, is a player-visible actor
             with no motivation field. Why he wants the mill to fail is a
             <code>gm-only</code> secret that points back to him.
