@@ -89,14 +89,14 @@
   const inputClass =
     "rounded border border-theme-border bg-theme-bg px-1.5 py-0.5 text-xs text-theme-text disabled:opacity-40";
   const smallButton =
-    "rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase text-theme-muted hover:border-theme-primary hover:text-theme-primary";
+    "rounded border border-theme-border px-2 py-0.5 text-micro font-bold uppercase text-theme-text hover:border-theme-primary hover:text-theme-primary";
 </script>
 
 <div
   class="flex flex-col gap-2 rounded border border-theme-border p-2"
   data-testid="species-definition-editor"
 >
-  <span class="text-micro font-bold uppercase tracking-widest text-theme-muted">
+  <span class="text-micro font-bold uppercase tracking-widest text-theme-text">
     Species/Ancestry
   </span>
   <label class="flex items-center gap-2 text-xs text-theme-text">

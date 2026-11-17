@@ -12,7 +12,7 @@
 </script>
 
 <span
-  class="text-micro text-theme-primary"
+  class="text-micro text-theme-text"
   data-testid="effective-value-note"
   title="Base value {effective.base}"
 >

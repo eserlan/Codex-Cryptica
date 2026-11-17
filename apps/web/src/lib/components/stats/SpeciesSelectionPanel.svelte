@@ -93,7 +93,7 @@
   class="flex flex-col gap-2 rounded border border-theme-border p-2"
   data-testid="species-selection-panel"
 >
-  <span class="text-micro font-bold uppercase tracking-widest text-theme-muted">
+  <span class="text-micro font-bold uppercase tracking-widest text-theme-text">
     Species/Ancestry
   </span>
 
@@ -102,7 +102,7 @@
       {#if sourceAvailable}
         <button
           type="button"
-          class="text-sm font-bold text-theme-primary hover:underline"
+          class="text-sm font-bold text-theme-text hover:underline"
           onclick={() => (vault.selectedEntityId = current.sourceId)}
           data-testid="species-source-link"
         >
@@ -112,10 +112,7 @@
         <span class="text-sm font-bold text-theme-text">
           {current.sourceTitle}
         </span>
-        <span
-          class="text-xs text-theme-muted"
-          data-testid="species-unavailable"
-        >
+        <span class="text-xs text-theme-text" data-testid="species-unavailable">
           Source creature unavailable
         </span>
       {/if}
@@ -123,7 +120,7 @@
         <div class="flex gap-2">
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text hover:border-theme-primary hover:text-theme-primary"
             onclick={startPicking}
             data-testid="species-change"
           >
@@ -131,7 +128,7 @@
           </button>
           <button
             type="button"
-            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-muted hover:border-red-500 hover:text-red-500"
+            class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text hover:border-red-500 hover:text-red-500"
             onclick={remove}
             data-testid="species-remove"
           >
@@ -145,7 +142,7 @@
         <li class="text-xs text-theme-text">
           <span class="font-bold">{trait.name}</span>
           {#if trait.description}
-            <span class="text-theme-muted"> {trait.description}</span>
+            <span class="text-theme-text"> {trait.description}</span>
           {/if}
         </li>
       {/each}
@@ -154,7 +151,7 @@
     {#if !picking}
       <button
         type="button"
-        class="self-start rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-muted hover:border-theme-primary hover:text-theme-primary"
+        class="self-start rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text hover:border-theme-primary hover:text-theme-primary"
         onclick={startPicking}
         data-testid="species-choose"
       >
@@ -179,7 +176,7 @@
             <div class="text-xs text-theme-text">
               <span class="font-bold">{trait.name}</span>
               {#if trait.description}
-                <span class="text-theme-muted"> {trait.description}</span>
+                <span class="text-theme-text"> {trait.description}</span>
               {/if}
             </div>
           {/each}
@@ -192,7 +189,7 @@
                   ({row.base} → {row.effective})
                 </span>
               {:else}
-                <span class="text-theme-muted">
+                <span class="text-theme-text">
                   {row.traitName}: {row.target}
                   {formatAmount(row.amount)} · Not applied ({reasonFor(row)})
                 </span>
@@ -205,7 +202,7 @@
       <div class="flex gap-2">
         <button
           type="button"
-          class="rounded border border-theme-primary px-2 py-1 text-micro font-bold uppercase text-theme-primary disabled:opacity-40"
+          class="rounded border border-theme-primary px-2 py-1 text-micro font-bold uppercase text-theme-text disabled:opacity-40"
           disabled={!chosen}
           onclick={apply}
           data-testid="species-apply"
@@ -214,7 +211,7 @@
         </button>
         <button
           type="button"
-          class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-muted"
+          class="rounded border border-theme-border px-2 py-1 text-micro font-bold uppercase text-theme-text"
           onclick={cancel}
           data-testid="species-cancel"
         >
@@ -223,6 +220,6 @@
       </div>
     {/if}
   {:else}
-    <span class="text-xs text-theme-muted">No species selected.</span>
+    <span class="text-xs text-theme-text">No species selected.</span>
   {/if}
 </div>
