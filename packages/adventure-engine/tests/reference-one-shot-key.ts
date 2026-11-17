@@ -52,3 +52,5 @@ export const ReferenceOneShotKeySchema = z
     },
     { message: "section sourceIds, secret ids and ending ids must be unique" },
   );
+
+export type ReferenceOneShotKey = z.infer<typeof ReferenceOneShotKeySchema>;

@@ -5,6 +5,7 @@ import Page from "./+page.svelte";
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
+  COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
 } from "./conversion-guide.js";
 
@@ -421,5 +422,118 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       }
     });
     expect(found).toBe(true);
+  });
+  describe("completeness self-audit", () => {
+    const norm = (t: string | null | undefined) =>
+      (t ?? "").replace(/\s+/g, " ").trim();
+
+    it("renders the completeness section after the import section, with Quick start still first", () => {
+      const { container } = render(Page);
+      const h2s = [...container.querySelectorAll("h2")];
+      expect(norm(h2s[0]?.textContent)).toMatch(/^Quick start/);
+      const texts = h2s.map((h) => norm(h.textContent));
+      const idx = texts.indexOf("Valid is not the same as complete");
+      expect(idx).toBeGreaterThan(-1);
+      expect(texts[idx - 1]).toBe("Next: upload your Adventure JSON");
+      expect(texts[idx + 1]).toBe("What a valid file looks like");
+      expect(h2s[idx]?.id).toBe("completeness-heading");
+    });
+
+    it("lists the three outcomes and the verbatim limit sentence", () => {
+      const { container } = render(Page);
+      const section = container.querySelector(
+        '[aria-labelledby="completeness-heading"]',
+      );
+      const text = norm(section?.textContent);
+      expect(text).toContain("(a) Valid JSON");
+      expect(text).toContain("(b) Importable package");
+      expect(text).toContain("(c) Faithful, reasonably complete adaptation");
+      expect(text).toContain(
+        "Codex Cryptica checks only (a) and (b). It never sees your source, so a successful import does not prove that nothing was left out or changed.",
+      );
+    });
+
+    it("adds rule 8 to the canonical prompt without changing rule 1", () => {
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "8. Self-audit before returning",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain("Return ONLY valid JSON");
+    });
+
+    it("shows the coverage prompt after the canonical prompt, with four list headings", () => {
+      const { container } = render(Page);
+      const pres = [...container.querySelectorAll("pre")];
+      const coverage = container.querySelector(
+        'pre[aria-label="Coverage report prompt"]',
+      ) as HTMLElement;
+      expect(coverage.getAttribute("tabindex")).toBe("0");
+      expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
+      expect(pres.indexOf(coverage)).toBeGreaterThan(0);
+      expect(pres[0]?.textContent).toBe(CANONICAL_CONVERSION_PROMPT);
+      for (const heading of [
+        "Covered sections",
+        "Missing or shortened",
+        "Risky inferences",
+        "Left unresolved",
+      ]) {
+        expect(COVERAGE_REPORT_PROMPT).toContain(heading);
+      }
+    });
+
+    it("copies the coverage prompt with its own feedback", async () => {
+      copyMock.mockResolvedValue(true);
+      render(Page);
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage report prompt/i }),
+      );
+      expect(copyMock.mock.calls[0]?.[0]).toBe(COVERAGE_REPORT_PROMPT);
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /Copied coverage prompt/i }),
+        ).toBeTruthy();
+      });
+      expect(
+        screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+      ).toHaveLength(2);
+    });
+
+    it("reports a failed coverage copy without touching the other buttons", async () => {
+      copyMock.mockResolvedValue(false);
+      render(Page);
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy coverage report prompt/i }),
+      );
+      await waitFor(() => {
+        expect(
+          screen.getAllByRole("button", { name: /Copy failed/i }),
+        ).toHaveLength(1);
+      });
+      expect(
+        screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+      ).toHaveLength(2);
+      expect(
+        screen.getByRole("button", { name: /Copy guide link/i }),
+      ).toBeTruthy();
+    });
+
+    it("names the three omissions in the worked example", () => {
+      const { container } = render(Page);
+      const text = norm(
+        container.querySelector('[aria-labelledby="completeness-heading"]')
+          ?.textContent,
+      );
+      expect(text).toContain("Reed Shrine");
+      expect(text).toContain("The Water Takes It");
+      expect(text).toContain("Wick");
+    });
+
+    it("points from the quick start to an existing completeness section", () => {
+      const { container } = render(Page);
+      const link = container.querySelector(
+        '[aria-labelledby="quick-start-heading"] a[href="#completeness-heading"]',
+      );
+      expect(link).toBeTruthy();
+      expect(container.querySelector("#completeness-heading")).toBeTruthy();
+    });
   });
 });
