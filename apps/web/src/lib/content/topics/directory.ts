@@ -69,6 +69,14 @@ export const TOPIC_LISTINGS: readonly TopicListing[] = [
     icon: "icon-[lucide--book-open]",
     order: 6,
   },
+  {
+    discoveryId: "topic-star-systems",
+    title: "Star Systems & Sci-Fi",
+    summary:
+      "Design a playable star system, from destinations and routes to factions and a flashpoint, with guides and generators for sci-fi campaigns.",
+    icon: "icon-[lucide--orbit]",
+    order: 7,
+  },
 ];
 
 /** Joins listings to live, indexable discovery entries, sorted by `order`. */
