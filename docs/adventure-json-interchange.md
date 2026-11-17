@@ -57,6 +57,10 @@ Runtime status: Adventure collection records are not yet projected into Oracle p
 | `DEAD_END_CYCLE`          | Mandatory scene transition cycle with no exit path to a terminal scene.                                                                                                                                                     |
 | `UNREACHABLE_SCENE`       | Non-entry scene (`scenes[1..]`) unreachable from `scenes[0]`.                                                                                                                                                               |
 
+### Impossible prerequisites (not checked in v1)
+
+The validator does not detect scenes, branches, encounters or endings whose prerequisites can never be met. `conditions` and the branch `condition` field are free-text prose, and no transition sets a structured flag that a check could resolve, so deciding whether a condition can be met would mean reading meaning into prose. Structured prerequisites are a candidate for a later format version.
+
 ## Canonical Serialization & Hash Pinning
 
 - `canonicalizeAdventureJson(pkg)` recursively sorts object keys at all depths (matching `canonicalJson` in `@codex/schema`), ensuring identical output regardless of input property order.
