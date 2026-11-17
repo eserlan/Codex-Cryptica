@@ -148,6 +148,19 @@ Strict output rules:
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.
 
+8. Self-audit before returning (do not output this check):
+   - Compare your JSON with the source and confirm that:
+     - every source section and page anchor is accounted for;
+     - named actors and locations are present;
+     - mandatory and optional scenes are present, and optional ones are marked "optional";
+     - clues and alternative routes are kept, including missable clues with their "alternativeSourceId";
+     - encounter resolution options are kept in "alternativeSolutions";
+     - all intended endings are present;
+     - contradictions and unknowns are recorded in "unresolved";
+     - rumours and NPC testimony are not stated as fact;
+     - GM-only motives, secrets and endings are kept out of player-visible records.
+   - Anything missing, cut or uncertain gets an "unresolved" entry naming the source section. Never drop it silently, and never present the package as complete when it is not.
+
 Before you reply with a successful conversion, check each of these:
 - The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
 - All 11 collection arrays are present.
@@ -156,6 +169,42 @@ Before you reply with a successful conversion, check each of these:
 - Every entry has "epistemicStatus"; endings and unresolved have no "visibility".
 - Nothing outside the schema was added and nothing was invented.`;
 
+/** Follow-up prompt pasted into the same chat after the JSON; its reply stays outside the JSON file. */
+export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the Adventure JSON you just gave me. Reply in plain text, not JSON. Do not change or re-output the JSON.
+
+Use these four headed lists:
+Covered sections: each source section or page anchor that the JSON covers.
+Missing or shortened: source content that is missing, cut down or merged.
+Risky inferences: anything you inferred rather than read in the source.
+Left unresolved: contradictions and unknowns, with the source section for each.
+
+If you are unsure about something, list it under "Missing or shortened" or "Left unresolved". Do not say the conversion is complete unless "Missing or shortened" and "Left unresolved" are both empty. This report stays outside the JSON file.`;
+
+export interface ImportOutcome {
+  label: string;
+  meaning: string;
+  checkedByCodex: boolean;
+}
+
+export const IMPORT_OUTCOMES: ImportOutcome[] = [
+  {
+    label: "(a) Valid JSON",
+    meaning: "The file parses as JSON.",
+    checkedByCodex: true,
+  },
+  {
+    label: "(b) Importable package",
+    meaning:
+      "It passes the Adventure JSON v1 schema and the semantic import checks.",
+    checkedByCodex: true,
+  },
+  {
+    label: "(c) Faithful, reasonably complete adaptation",
+    meaning:
+      "Nothing important was left out or changed from your source. Only you and your assistant can judge this.",
+    checkedByCodex: false,
+  },
+];
 export const PROMPT_TXT_URL =
   "https://codexcryptica.com/adventure-import/prompt.txt";
 

@@ -6,6 +6,8 @@
   import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
+    COVERAGE_REPORT_PROMPT,
+    IMPORT_OUTCOMES,
     LINK_HANDOFF_TEXT,
     COLLECTION_RULES,
     CORRESPONDENCE_EXTENSION_DOC,
@@ -19,6 +21,7 @@
 
   const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
   const linkCopier = createCopier(LINK_HANDOFF_TEXT);
+  const coverageCopier = createCopier(COVERAGE_REPORT_PROMPT);
 
   const copyLabel = $derived(
     promptCopier.label(
@@ -32,6 +35,14 @@
       "Copy guide link",
       "Copied link",
       "Copy failed — copy the page address instead",
+    ),
+  );
+
+  const coverageCopyLabel = $derived(
+    coverageCopier.label(
+      "Copy coverage report prompt",
+      "Copied coverage prompt",
+      "Copy failed — select the prompt below manually",
     ),
   );
 
@@ -209,6 +220,12 @@
         Long PDF that an assistant cannot finish in one go? Use the
         <a class="underline" href="#long-adventures">staged method</a>.
       </p>
+      <p class="text-sm md:text-base text-theme-text/90">
+        Passing the import checks does not mean nothing was left out. See
+        <a class="underline" href="#completeness-heading"
+          >valid is not the same as complete</a
+        >.
+      </p>
       <div class="flex flex-wrap items-center gap-3">
         {@render copyButton(promptCopier, copyLabel, true)}
         {@render copyButton(linkCopier, linkCopyLabel, false)}
@@ -373,6 +390,72 @@
         <span class="icon-[lucide--file-up] h-4 w-4" aria-hidden="true"></span>
         Go to Adventure JSON import
       </a>
+    </section>
+
+    <!-- Valid vs complete -->
+    <section
+      aria-labelledby="completeness-heading"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
+    >
+      <h2
+        id="completeness-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Valid is not the same as complete
+      </h2>
+      <p class="text-sm md:text-base text-theme-text/90">
+        A converted file can end up in three different states:
+      </p>
+      <ul class="space-y-2 text-sm md:text-base text-theme-text">
+        {#each IMPORT_OUTCOMES as outcome (outcome.label)}
+          <li>
+            <strong>{outcome.label}.</strong>
+            {outcome.meaning}
+          </li>
+        {/each}
+      </ul>
+      <p class="text-sm md:text-base text-theme-text">
+        Codex Cryptica checks only (a) and (b). It never sees your source, so a
+        successful import does not prove that nothing was left out or changed.
+      </p>
+      <p class="text-sm md:text-base text-theme-text/90">
+        The canonical prompt asks your assistant to audit its own output. For a
+        second look, paste this follow-up into the same chat after you receive
+        the JSON. The report is plain text and stays outside the JSON file.
+      </p>
+      {@render copyButton(coverageCopier, coverageCopyLabel, true)}
+      <span role="status" class="sr-only">{coverageCopyLabel}</span>
+      <pre
+        tabindex="0"
+        aria-label="Coverage report prompt"
+        class="overflow-x-auto whitespace-pre-wrap rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{COVERAGE_REPORT_PROMPT}</pre>
+      <h3 class="font-header font-bold text-lg text-theme-text">
+        Example: valid, but incomplete
+      </h3>
+      <p class="text-sm text-theme-text/90">
+        Say a package made from the reference one-shot imports cleanly but
+        dropped three things:
+      </p>
+      <ul class="list-disc space-y-1.5 pl-5 text-sm text-theme-text/90">
+        <li>
+          The optional Reed Shrine branch is gone. The self-audit item on
+          mandatory and optional scenes, and the "Missing or shortened" list,
+          catch it.
+        </li>
+        <li>
+          The flooded ending, "The Water Takes It", is gone. The self-audit item
+          on intended endings, and the "Covered sections" list, catch it.
+        </li>
+        <li>
+          Wick's "By talk" option is cut, leaving only the fight. The self-audit
+          item on encounter resolution options, and the "Missing or shortened"
+          list, catch it.
+        </li>
+      </ul>
+      <p class="text-sm text-theme-text/90">
+        None of these break the schema, so the import succeeds. Anything the
+        assistant cannot restore should appear in "Left unresolved".
+      </p>
     </section>
 
     <!-- Worked example -->
