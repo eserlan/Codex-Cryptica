@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Entity, TraitSelection } from "schema";
+  import SpeciesPreview from "./SpeciesPreview.svelte";
+  import SpeciesTraitList from "./SpeciesTraitList.svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import {
     isSpeciesDefinition,
@@ -79,14 +81,6 @@
       ),
     });
   }
-
-  function reasonFor(row: (typeof preview)[number]): string {
-    return row.status === "missing"
-      ? "no field with this key"
-      : "field is not a number field";
-  }
-
-  const formatAmount = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 </script>
 
 <div
@@ -137,16 +131,7 @@
         </div>
       {/if}
     </div>
-    <ul class="flex flex-col gap-1" data-testid="species-traits">
-      {#each current.traits as trait (trait.id)}
-        <li class="text-xs text-theme-text">
-          <span class="font-bold">{trait.name}</span>
-          {#if trait.description}
-            <span class="text-theme-text"> {trait.description}</span>
-          {/if}
-        </li>
-      {/each}
-    </ul>
+    <SpeciesTraitList traits={current.traits} testId="species-traits" />
   {:else if !readOnly}
     {#if !picking}
       <button
@@ -171,32 +156,10 @@
       </select>
 
       {#if chosen}
-        <div class="flex flex-col gap-1" data-testid="species-preview">
-          {#each chosen.traitPackage?.traits ?? [] as trait (trait.id)}
-            <div class="text-xs text-theme-text">
-              <span class="font-bold">{trait.name}</span>
-              {#if trait.description}
-                <span class="text-theme-text"> {trait.description}</span>
-              {/if}
-            </div>
-          {/each}
-          {#each preview as row, i (i)}
-            <div class="text-xs" data-testid="species-preview-row">
-              {#if row.status === "applied"}
-                <span class="text-theme-text">
-                  {row.traitName}: {row.fieldLabel}
-                  {formatAmount(row.amount)}
-                  ({row.base} → {row.effective})
-                </span>
-              {:else}
-                <span class="text-theme-text">
-                  {row.traitName}: {row.target}
-                  {formatAmount(row.amount)} · Not applied ({reasonFor(row)})
-                </span>
-              {/if}
-            </div>
-          {/each}
-        </div>
+        <SpeciesPreview
+          traits={chosen.traitPackage?.traits ?? []}
+          rows={preview}
+        />
       {/if}
 
       <div class="flex gap-2">

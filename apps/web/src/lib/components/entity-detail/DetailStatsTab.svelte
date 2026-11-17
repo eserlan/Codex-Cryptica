@@ -122,12 +122,6 @@
       return readOnly;
     },
     mode: "view",
-    get effectiveValues() {
-      return computeEffectiveValues(
-        entity.statSheet?.fields ?? [],
-        entity.traitSelections ?? [],
-      );
-    },
     get sectionKeys() {
       return sectionKeys;
     },
@@ -180,6 +174,10 @@
   const sheetContext: PresentationRenderContext = $derived({
     ...renderContext,
     entityId: entity.id,
+    effectiveValues: computeEffectiveValues(
+      entity.statSheet?.fields ?? [],
+      entity.traitSelections ?? [],
+    ),
   });
 </script>
 
