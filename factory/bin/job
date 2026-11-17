@@ -979,7 +979,12 @@ def advance(job, stage):
         if stage == "merged":
             require(job["pr"] and pr_state(job) == "MERGED", "the PR isn't merged")
         elif stage == "dev-agents":
-            require(job["pr"] and pr_state(job) == "OPEN", "the job needs an open PR to hand to the dev agents")
+            require(job["pr"], "the job needs an open PR to hand to the dev agents")
+            pr = gh_json("pr", "view", str(job["pr"]), "--json", "state,baseRefName")
+            require(pr["state"] == "OPEN", "the job needs an open PR to hand to the dev agents")
+            require(pr["baseRefName"] == BASE,
+                    f"PR #{job['pr']} must target {BASE} before it can be handed to the dev agents; "
+                    "wait until its parent merges and GitHub retargets the PR")
             label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             label("pr", job["pr"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             comment("pr", job["pr"], "### Factory: handed to the dev agents\n\n"

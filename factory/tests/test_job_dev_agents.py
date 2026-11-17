@@ -27,7 +27,7 @@ class DevAgentsTests(unittest.TestCase):
 
     def test_approve_removes_labels_and_hands_off(self):
         calls = []
-        with patch.object(job_mod, "refresh_pr"), patch.object(job_mod, "pr_state", return_value="OPEN"), \
+        with patch.object(job_mod, "refresh_pr"), patch.object(job_mod, "gh_json", return_value={"state": "OPEN", "baseRefName": job_mod.BASE}), \
              patch.object(job_mod, "label", side_effect=lambda *a, **k: calls.append((a, k))), \
              patch.object(job_mod, "comment"), patch.object(job_mod, "job_dir", return_value=Path("/nonexistent")), \
              patch.object(job_mod, "header", return_value={}):
@@ -39,10 +39,18 @@ class DevAgentsTests(unittest.TestCase):
             self.assertIn("factory", kw["remove"])
 
     def test_approve_refuses_a_closed_pr(self):
-        with patch.object(job_mod, "refresh_pr"), patch.object(job_mod, "pr_state", return_value="CLOSED"), \
+        with patch.object(job_mod, "refresh_pr"), patch.object(job_mod, "gh_json", return_value={"state": "CLOSED", "baseRefName": job_mod.BASE}), \
              patch.object(job_mod, "job_dir", return_value=Path("/nonexistent")), \
              patch.object(job_mod, "header", return_value={}):
             with self.assertRaises(job_mod.Refused):
+                job_mod.advance(make_job(), "dev-agents")
+
+    def test_approve_refuses_stacked_child_pr(self):
+        with patch.object(job_mod, "refresh_pr"), patch.object(
+            job_mod, "gh_json", return_value={"state": "OPEN", "baseRefName": "factory/parent"}
+        ), patch.object(job_mod, "job_dir", return_value=Path("/nonexistent")), \
+             patch.object(job_mod, "header", return_value={}):
+            with self.assertRaisesRegex(job_mod.Refused, "must target staging"):
                 job_mod.advance(make_job(), "dev-agents")
 
     def test_done_only_when_merged_into_base(self):
