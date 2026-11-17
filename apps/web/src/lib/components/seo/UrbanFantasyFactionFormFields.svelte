@@ -99,7 +99,7 @@
   ></textarea>
   <p
     id="urban-fantasy-campaign-context-help"
-    class="text-micro text-theme-text/60 leading-relaxed"
+    class="text-micro text-theme-text leading-relaxed"
   >
     Add a city, neighbourhood, hidden community, or current conflict to shape
     the faction.
