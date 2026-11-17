@@ -13,9 +13,9 @@ export const STAGED_INVENTORY_PROMPT = `Stage 1 of 3: inventory only. Do not con
 Read the adventure I attached and list its parts so I can convert it in separate passes.
 
 Reply with:
-1. The total page count you can actually see, and any pages you cannot read or that look scanned, blank or garbled (list page numbers).
-2. A numbered list of sections in source order. For each: a short title, the page range, what it holds (scenes, locations or keyed rooms, cast, items, appendix, other), and a short id prefix such as "town-", "caves-" or "cast-". Keep each part small enough to convert in one reply (about 10 pages or fewer); split big chapters.
-3. The names of the main recurring characters, factions and places that appear in more than one section, each with the single id you will use for it everywhere (for example "actor-reeve-tomas").
+1. The total page count you can actually see, and any pages you cannot read or that look scanned, blank or garbled (list page numbers). If the numbers printed on the pages differ from the position in the file, say so: every page number you give from now on is the position in the file.
+2. A numbered list of sections in source order. For each: a short title, the page range, what it holds (scenes, locations or keyed rooms, cast, items, appendix, other), and a short id prefix such as "town-", "caves-" or "cast-". Keep each part small enough to convert in one reply (about 10 pages or fewer); split big chapters. Sections must not overlap: if a page is shared, say which section owns each part of it.
+3. The names of the main recurring characters, factions and places that appear in more than one section, each with the single id you will use for it everywhere (for example "actor-reeve-tomas"), and the one section that describes each in detail and so defines it. Other sections only refer to it.
 
 Do not summarise the story, do not write any Adventure JSON, and do not claim a part is covered unless you can see its pages. If you cannot read the document at all, say so in one sentence instead of guessing from the title.`;
 
@@ -25,8 +25,8 @@ Convert only this section of the source: [PASTE THE SECTION TITLE AND PAGE RANGE
 
 - Produce a complete Adventure JSON v1 document that contains only entries from this section. Repeat the same "formatVersion", "id", "title", "version", "premise" and "source" in every pass, and keep all 11 collection arrays (use [] when empty).
 - Use exactly the ids from the inventory for recurring characters, factions and places. Give new entries ids that start with this section's id prefix. An entry that appears in several sections keeps one id everywhere.
-- You may refer to an id defined in another section (for example a clue placed with a character from section 1), but do not define or invent that entry here.
-- Add "sourceRef" with the page number to every entry.
+- You may refer to an id defined in another section (for example a clue placed with a character from section 1), but define an entry only if the inventory says this section defines it. Never invent an entry that belongs to another section.
+- Add "sourceRef" with the page number to every entry, using the page position in the file (the same numbering as the inventory), not any number printed on the page.
 - Never invent anything to connect this section to others. Record gaps in "unresolved".
 - Deliver the JSON as a file named after the section, such as "chunk-02.json" (or as the whole reply if you cannot create files). After it, add a short plain-text completion record: the section and pages, the number of entries per collection, the ids you referred to but did not define, and anything you could not read or left out. If you could not finish this section, say so instead of presenting it as complete.`;
 

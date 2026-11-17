@@ -143,7 +143,7 @@ Strict output rules:
    - Every non-entry scene with source-supported progression must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops. If progression is unknown, preserve the scene as ambiguous without inventing a branch.
    - If the source has no authored order (a sandbox or location-based module), list scenes in source order, add branches only where the source states them, set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to, and add one "unresolved" entry saying the order is left to the GM. Do not invent a flow or an ending.
 7. Provenance & copyright:
-   - Add "sourceRef" wherever you know the origin of an entry. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry so it can be checked against the source. Shape: ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }).
+   - Add "sourceRef" wherever you know the origin of an entry. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry so it can be checked against the source; use the page position in the file, not a number printed on the page. Shape: ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }).
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.
 

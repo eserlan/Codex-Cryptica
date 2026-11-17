@@ -190,12 +190,24 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
 
   it("section prompt keeps ids stable, forbids bridges and requires a completion record", () => {
     expect(STAGED_CHUNK_PROMPT).toContain("exactly the ids from the inventory");
-    expect(STAGED_CHUNK_PROMPT).toContain("do not define or invent that entry");
+    expect(STAGED_CHUNK_PROMPT).toContain(
+      "Never invent an entry that belongs to another section",
+    );
     expect(STAGED_CHUNK_PROMPT).toContain("Never invent anything to connect");
     expect(STAGED_CHUNK_PROMPT).toContain('"sourceRef" with the page number');
     expect(STAGED_CHUNK_PROMPT).toContain("completion record");
     expect(STAGED_CHUNK_PROMPT).toContain(
       "say so instead of presenting it as complete",
+    );
+  });
+
+  it("uses file page positions and one defining section per entry (from the PDF smoke test)", () => {
+    expect(STAGED_INVENTORY_PROMPT).toContain("position in the file");
+    expect(STAGED_INVENTORY_PROMPT).toContain("Sections must not overlap");
+    expect(STAGED_INVENTORY_PROMPT).toContain("so defines it");
+    expect(STAGED_CHUNK_PROMPT).toContain("not any number printed on the page");
+    expect(STAGED_CHUNK_PROMPT).toContain(
+      "define an entry only if the inventory says this section defines it",
     );
   });
 

@@ -279,6 +279,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
       );
       expect(prompt).toContain('For a PDF, include "page"');
+      expect(prompt).toContain("not a number printed on the page");
       expect(prompt).toContain("has no authored order");
       expect(prompt).toContain("Do not invent a flow or an ending");
       expect(prompt).toContain(
