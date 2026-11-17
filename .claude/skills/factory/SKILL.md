@@ -95,7 +95,7 @@ Start every message to it with `<header>` too.
 ## Advancing a job
 
 Each step below runs when the previous agent or script finishes. Report one
-short line per transition, e.g. `004-dark-mode #12: gate PASS → reviewing (code, ux, ui)`.
+short line per transition, e.g. `004-dark-mode #12: gate PASS → reviewing (code, codex, ux, ui)`.
 
 **intake.** Spawn `intake` with `<header>`. When it returns, read its
 decision:
@@ -152,8 +152,16 @@ merged it) on the PR and labels both the PR and the issue `factory:needs-human`.
 `factory/bin/job merge`. The job finishes when the PR is merged on GitHub:
 `factory/bin/job queue` notices and moves it to `merged`.
 
+**Dev agents.** When the user approves a `needs-human` job, run
+`factory/bin/job approve <id>`. It removes the factory labels from the issue
+and the PR and moves the job to `dev-agents`: the review-and-fix loop and the
+dev agents take the PR from there. The job holds no slot and is done only when
+its PR is merged into the base branch (`staging`); `factory/bin/job queue` moves
+it to `merged` then. Feedback still goes through `job feedback`.
+
 A job is finished for this run when it reaches `merged`, `rejected`,
-`needs-info` or `needs-human`.
+`needs-info`, `needs-human` or `dev-agents`. A `dev-agents` job remains pending
+until its PR merges into the base branch.
 
 ## /factory run
 
@@ -217,6 +225,7 @@ new feature, ask.
 - **What needs them**: run `factory/bin/job queue`. For each `wait` line, say
   what the job is waiting for: the question in `decision.md` for `needs-human`,
   the question in `intake.md` for `needs-info`.
+- **Approving a `needs-human` job**: `factory/bin/job approve <n>`, as in **Dev agents** above.
 - **Feedback on a `needs-human` job**: pass their words verbatim on stdin:
 
   ```bash

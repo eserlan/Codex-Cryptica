@@ -21,7 +21,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-TERMINAL_OR_WAITING = {"merged", "rejected", "needs-info", "needs-human"}
+TERMINAL_OR_WAITING = {"merged", "rejected", "needs-info", "needs-human", "dev-agents"}
 SUBAGENT_TIERS = {"inherit", "pro", "flash", "flash_lite"}
 AGY_CLI_BIN = os.environ.get("AGY_CLI_BIN") or shutil.which("agy") or "agy"
 

@@ -1,0 +1,7 @@
+{
+  "reviewers_by_risk": {
+    "low": { "codex": "sonnet" },
+    "medium": { "codex": "sonnet" },
+    "high": { "codex": "sonnet" }
+  }
+}

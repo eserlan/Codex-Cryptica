@@ -233,13 +233,19 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
     it("ends with a self-check list and says what to do with unreadable or oversized sources", () => {
       const check = prompt.lastIndexOf(
-        "Before you reply, check each of these:",
+        "Before you reply with a successful conversion, check each of these:",
       );
 
       expect(check).toBeGreaterThan(prompt.indexOf("Strict output rules:"));
       expect(prompt.slice(check)).toContain('Every "secrets" entry');
       expect(prompt).toContain("cannot fit all of it in one file or reply");
       expect(prompt).toContain("instead of sending truncated or guessed JSON");
+      expect(prompt).toContain(
+        "This failure sentence is the sole exception to the JSON-only output rules below.",
+      );
+      expect(prompt).toContain(
+        "The one-sentence failure response above is the sole exception.",
+      );
     });
 
     it("guards against over-hiding, copied example codes and missing items", () => {
@@ -273,6 +279,17 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
       expect(prompt).toContain(
         "https://codexcryptica.com/adventure-import#long-adventures",
+      );
+      const { container } = render(Page);
+      const longAdventureSection = container
+        .querySelector("#long-adventures")
+        ?.closest("section");
+      expect(longAdventureSection).toBeTruthy();
+      expect(longAdventureSection?.textContent).toContain(
+        "Make a checklist of every source section in order",
+      );
+      expect(longAdventureSection?.textContent?.replace(/\s+/g, " ")).toContain(
+        "assemble those results into one Adventure JSON v1 document",
       );
       expect(prompt).not.toContain("compress each to a short summary");
       expect(prompt).toContain(
@@ -442,6 +459,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     render(Page);
 
     expect(screen.getByText(/single fields/)).toBeTruthy();
+    expect(
+      screen.getByText(
+        /title, hook, background and optional description player-safe/,
+      ),
+    ).toBeTruthy();
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
+    );
     expect(CANONICAL_CONVERSION_PROMPT).toContain(
       '"visibility" applies to the WHOLE record, never to individual fields',
     );

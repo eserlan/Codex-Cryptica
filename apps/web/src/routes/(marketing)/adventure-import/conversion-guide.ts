@@ -85,13 +85,13 @@ Output contract (read this first):
 - Include all 11 collection arrays, using [] when empty.
 - Use only the field names and exact values listed below. Do not add properties.
 - Never invent facts. When the source is unclear, record it in "unresolved".
-- Never shorten the conversion by dropping or merging entries. If you cannot read the attached source, or cannot fit all of it in one file or reply, answer with one plain sentence saying which it is (cannot read, or too large) and suggest the staged method at https://codexcryptica.com/adventure-import#long-adventures, instead of sending truncated or guessed JSON.
+- Never shorten the conversion by dropping or merging entries. If you cannot read the attached source, or cannot fit all of it in one file or reply, answer with one plain sentence saying which it is (cannot read, or too large) and point to the staged method at https://codexcryptica.com/adventure-import#long-adventures, instead of sending truncated or guessed JSON. This failure sentence is the sole exception to the JSON-only output rules below.
 
 Shape of a valid answer (trimmed: yours will have more entries and fields). Its ids, codes and wording are only illustrative; use your own, taken from the source:
 ${EXAMPLE_JSON}
 
 Strict output rules:
-1. Return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON).
+1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). The one-sentence failure response above is the sole exception.
 2. Top-level required fields:
    - "formatVersion": "adventure-json/v1"
    - "id": slug matching /^[a-zA-Z0-9_-]{3,64}$/
@@ -129,6 +129,7 @@ Strict output rules:
    - Do not emit properties absent from the strict schema.
    - Record named objects the source gives importance (clue objects, handouts, treasure) in "items", and give each "unresolved" entry a specific "code" that describes its own problem.
 5. Visibility & secrets:
+   - The adventure title and premise hook/background are copied into the session and sent to Oracle opening generation. If both premise fields are empty, description is used as the premise fallback, then title. Keep the title, hook, background, and optional description player-safe and limited to source-supported facts; do not put concealed information in these fields.
    - Require "visibility": "player-visible" | "gm-only" on locations, actors, factions, scenes, encounters, clues, rumours, items, and secrets only. Do not add visibility to endings or unresolved.
    - Every entry in "secrets" MUST have "visibility": "gm-only".
    - "visibility" applies to the WHOLE record, never to individual fields. Treat every field of a "player-visible" record (name, summary, description, role, motivation, disposition, body, readAloud, reveals and the rest) as safe to show players. v1 cannot hide one field of a visible record.
@@ -147,7 +148,7 @@ Strict output rules:
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim.
    - Include only authored adventure structure; omit playthrough state or session history.
 
-Before you reply, check each of these:
+Before you reply with a successful conversion, check each of these:
 - The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
 - All 11 collection arrays are present.
 - Every id is unique, and every cross-reference points to an id that exists.

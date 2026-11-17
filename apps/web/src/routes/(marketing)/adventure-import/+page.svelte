@@ -195,8 +195,10 @@
         </li>
         <li>
           <strong>Review, approve, then start.</strong> Codex Cryptica checks
-          the file on your device. If it is rejected, the message names the
-          field to fix; paste that message back to your assistant or see
+          the file on your device. If it is rejected, follow the validation
+          message: use its field path when one is shown, or fix the JSON syntax
+          described by a parse error. You can paste that message back to your
+          assistant or see
           <a class="underline" href="#troubleshooting-heading"
             >troubleshooting</a
           >. Once approved, start the adventure from Adventure Mode with the
@@ -534,6 +536,14 @@
             the visible record to what players can know, and put the concealed
             part in a separate <code>secrets</code> entry that lists the
             character in <code>relatedEntityIds</code>.
+          </p>
+          <p class="text-sm text-theme-text/90 leading-relaxed">
+            When you start an imported adventure, its title and premise hook or
+            background are copied into the session and sent to Oracle opening
+            generation. If both premise fields are empty, the description is
+            used as the premise fallback, then the title. Keep the title, hook,
+            background and optional description player-safe and limited to
+            source-supported facts; do not put concealed information there.
           </p>
           <p class="text-sm text-theme-text/90 leading-relaxed">
             Example: Tobiah Reed, the mill accountant, is a player-visible actor

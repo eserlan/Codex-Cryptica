@@ -46,6 +46,7 @@ const STANDALONE_PATHS = [
   "/answers",
   "/examples",
   "/explore",
+  "/topics",
   "/tools",
   "/generators",
   "/blog",
