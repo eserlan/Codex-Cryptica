@@ -6,6 +6,7 @@
   import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
+    LINK_HANDOFF_TEXT,
     COLLECTION_RULES,
     CORRESPONDENCE_EXTENSION_DOC,
     EPISTEMIC_STATUSES,
@@ -16,42 +17,71 @@
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
 
-  let copyState = $state<"idle" | "copied" | "error">("idle");
-  let copyTimer: ReturnType<typeof setTimeout> | undefined;
-  let copyRequestGeneration = 0;
+  type CopyState = "idle" | "copied" | "error";
+
   let isDestroyed = false;
+  const timers = new Set<ReturnType<typeof setTimeout>>();
 
   onDestroy(() => {
     isDestroyed = true;
-    if (copyTimer) clearTimeout(copyTimer);
+    for (const timer of timers) clearTimeout(timer);
   });
 
-  async function handleCopyPrompt() {
-    const requestGeneration = ++copyRequestGeneration;
-    if (copyTimer) {
-      clearTimeout(copyTimer);
-      copyTimer = undefined;
-    }
-    const ok = await copyTextToClipboard(
-      CANONICAL_CONVERSION_PROMPT,
-      typeof navigator === "undefined" ? undefined : navigator.clipboard,
-    );
-    if (isDestroyed || requestGeneration !== copyRequestGeneration) return;
+  /** One copy action with its own feedback state and stale-result guard. */
+  function createCopier(text: string) {
+    let state = $state<CopyState>("idle");
+    let generation = 0;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
-    copyState = ok ? "copied" : "error";
-    copyTimer = setTimeout(() => {
-      if (isDestroyed || requestGeneration !== copyRequestGeneration) return;
-      copyState = "idle";
-      copyTimer = undefined;
-    }, 2200);
+    async function copy() {
+      const current = ++generation;
+      if (timer) {
+        clearTimeout(timer);
+        timers.delete(timer);
+        timer = undefined;
+      }
+      const ok = await copyTextToClipboard(
+        text,
+        typeof navigator === "undefined" ? undefined : navigator.clipboard,
+      );
+      if (isDestroyed || current !== generation) return;
+
+      state = ok ? "copied" : "error";
+      // ui-check-ignore: tracked in `timers` and cleared in onDestroy
+      timer = setTimeout(() => {
+        if (isDestroyed || current !== generation) return;
+        state = "idle";
+        timers.delete(timer!);
+        timer = undefined;
+      }, 2200);
+      timers.add(timer);
+    }
+
+    return {
+      copy,
+      get state() {
+        return state;
+      },
+    };
   }
 
+  const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
+  const linkCopier = createCopier(LINK_HANDOFF_TEXT);
+
   const copyLabel = $derived(
-    copyState === "copied"
+    promptCopier.state === "copied"
       ? "Copied prompt"
-      : copyState === "error"
+      : promptCopier.state === "error"
         ? "Copy failed — select the prompt below manually"
         : "Copy conversion prompt",
+  );
+
+  const linkCopyLabel = $derived(
+    linkCopier.state === "copied"
+      ? "Copied link"
+      : linkCopier.state === "error"
+        ? "Copy failed — copy the page address instead"
+        : "Copy guide link",
   );
 
   const breadcrumbSchema = safeJsonLd({
@@ -74,19 +104,27 @@
   });
 </script>
 
-{#snippet copyButton()}
+{#snippet copyButton(
+  copier: { copy: () => void; state: string },
+  label: string,
+  primary: boolean,
+)}
   <button
     type="button"
-    onclick={handleCopyPrompt}
-    class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl bg-theme-primary text-theme-on-primary font-semibold text-sm hover:opacity-90 transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    onclick={copier.copy}
+    class="inline-flex min-h-11 items-center gap-2 px-5 py-2 rounded-xl text-sm font-semibold transition-opacity cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary {primary
+      ? 'bg-theme-primary text-theme-on-primary hover:opacity-90'
+      : 'border border-theme-primary/40 bg-theme-primary/10 text-theme-text hover:bg-theme-primary/20'}"
   >
     <span
-      class="{copyState === 'copied'
+      class="{copier.state === 'copied'
         ? 'icon-[lucide--check]'
-        : 'icon-[lucide--copy]'} w-4 h-4"
+        : primary
+          ? 'icon-[lucide--copy]'
+          : 'icon-[lucide--link]'} w-4 h-4"
       aria-hidden="true"
     ></span>
-    {copyLabel}
+    {label}
   </button>
 {/snippet}
 
@@ -184,8 +222,8 @@
         class="list-decimal space-y-2 pl-5 text-sm md:text-base text-theme-text"
       >
         <li>
-          <strong>Copy the prompt.</strong> Use the button below, or share this page's
-          link with your assistant.
+          <strong>Copy the prompt.</strong> Use the button below. If your
+          assistant can open web pages, <em>Copy guide link</em> is a shorter shortcut.
         </li>
         <li>
           <strong>Paste it and attach your adventure</strong> in the AI assistant
@@ -213,14 +251,20 @@
         </li>
       </ol>
       <div class="flex flex-wrap items-center gap-3">
-        {@render copyButton()}
-        <span role="status" class="sr-only">{copyLabel}</span>
+        {@render copyButton(promptCopier, copyLabel, true)}
+        {@render copyButton(linkCopier, linkCopyLabel, false)}
+        <span role="status" class="sr-only">{copyLabel}. {linkCopyLabel}</span>
         <a
           href="#prompt-heading"
           class="inline-flex min-h-11 items-center rounded-xl border border-theme-border/60 px-4 py-2 text-sm font-medium text-theme-text hover:border-theme-primary/50"
           >Read the full prompt</a
         >
       </div>
+      <p class="text-sm text-theme-text/90">
+        <strong>Copy guide link</strong> copies a one-line instruction pointing at
+        this page. It only works if your assistant can open web pages; local models
+        and chats without browsing need the full prompt instead.
+      </p>
       <p class="text-sm text-theme-text/90">
         <strong>This page is a guide, not a converter.</strong> You can't upload or
         paste your adventure here. The conversion happens in the assistant you choose,
@@ -270,7 +314,7 @@
             alongside the adventure text or PDF you want to convert.
           </p>
         </div>
-        {@render copyButton()}
+        {@render copyButton(promptCopier, copyLabel, true)}
       </div>
 
       <pre

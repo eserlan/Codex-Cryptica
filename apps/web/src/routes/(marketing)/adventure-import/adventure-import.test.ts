@@ -5,6 +5,7 @@ import Page from "./+page.svelte";
 import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
+  LINK_HANDOFF_TEXT,
 } from "./conversion-guide.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
@@ -184,6 +185,55 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     const parsed = JSON.parse(example.textContent ?? "");
     expect(parsed.formatVersion).toBe("adventure-json/v1");
     expect(AdventureJsonV1Schema.safeParse(parsed).success).toBe(true);
+  });
+
+  it("copies a short link instruction for browsing assistants, separately from the prompt", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy guide link/i }),
+    );
+
+    expect(copyMock).toHaveBeenCalledTimes(1);
+    expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
+    expect(LINK_HANDOFF_TEXT).toContain(
+      "https://codexcryptica.com/adventure-import",
+    );
+    expect(LINK_HANDOFF_TEXT).toContain("Reply with the JSON only");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Copied link/i })).toBeTruthy();
+    });
+    expect(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+    ).toHaveLength(2);
+  });
+
+  it("reports a failed link copy without affecting the prompt button", async () => {
+    copyMock.mockResolvedValue(false);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy guide link/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", {
+          name: /Copy failed — copy the page address/i,
+        }),
+      ).toBeTruthy();
+    });
+    expect(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i }),
+    ).toHaveLength(2);
+  });
+
+  it("explains that the link shortcut needs a browsing-capable assistant", () => {
+    const { container } = render(Page);
+    expect(container.textContent).toContain(
+      "only works if your assistant can open web pages",
+    );
   });
 
   it("keeps both copy buttons in step on a failed copy", async () => {
