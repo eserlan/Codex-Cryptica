@@ -1049,6 +1049,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
 
     it("validates both examples in a package and rejects an unsupported key", () => {
+      const revisionBaseline = AdventureJsonV1Schema.parse(
+        REVISION_EXAMPLE_BEFORE,
+      );
       const pkg = (extra: Record<string, unknown>) => ({
         ...JSON.parse(JSON.stringify(REVISION_EXAMPLE_BEFORE)),
         ...extra,
@@ -1057,7 +1060,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         ...FIDELITY_EXAMPLE_PARAPHRASED,
         ...FIDELITY_EXAMPLE_STRUCTURAL,
         locations: [
-          ...REVISION_EXAMPLE_BEFORE.locations,
+          ...revisionBaseline.locations,
           ...FIDELITY_EXAMPLE_STRUCTURAL.locations,
         ],
       });
