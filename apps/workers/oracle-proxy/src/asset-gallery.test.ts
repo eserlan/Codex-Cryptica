@@ -261,6 +261,65 @@ describe("handleAssetGallery", () => {
     expect(html).toContain("width: 44px; height: 44px");
   });
 
+  describe("mobile layout CSS", () => {
+    async function renderHtml() {
+      const response = await handleAssetGallery(
+        new Request("https://x/gallery"),
+        {
+          BUCKET: bucket([{ key: "screenshots/a.jpg", size: 10 }]),
+        },
+      );
+      return response.text();
+    }
+
+    function mobileBlock(html: string) {
+      const start = html.indexOf("@media (max-width: 520px) {");
+      if (start < 0) throw new Error("Missing 520px media block");
+      const open = html.indexOf("{", start);
+      let depth = 0;
+      for (let i = open; i < html.length; i++) {
+        if (html[i] === "{") depth++;
+        else if (html[i] === "}" && --depth === 0) {
+          return html.slice(open + 1, i);
+        }
+      }
+      throw new Error("Unterminated 520px media block");
+    }
+
+    it("sizes the mobile search field to its input instead of a 260px basis", async () => {
+      const block = mobileBlock(await renderHtml());
+      expect(block).toContain("flex: 1 1 0");
+      expect(block).not.toContain("260px");
+    });
+
+    it("makes the mobile jumplist a single sideways-scrolling row", async () => {
+      const block = mobileBlock(await renderHtml());
+      expect(block).toContain("flex-wrap: nowrap");
+      expect(block).toContain("overflow-x: auto");
+      expect(block).toMatch(/nav\.jumplist a \{[^}]*min-height: 44px/);
+    });
+
+    it("makes the mobile controls bar static and lowers the group scroll margin", async () => {
+      const block = mobileBlock(await renderHtml());
+      expect(block).toContain("position: static");
+      expect(block).toMatch(/section\.group \{[^}]*scroll-margin-top: 12px/);
+    });
+
+    it("leaves the desktop base rules unchanged and uses no negative margins", async () => {
+      const html = await renderHtml();
+      const outside = html.replace(mobileBlock(html), "");
+      expect(outside).toContain(
+        ".search-field { position: relative; flex: 1 1 260px; max-width: 380px; }",
+      );
+      expect(outside).toContain("position: sticky; top: 0;");
+      expect(outside).toContain(
+        "nav.jumplist { display: flex; flex-wrap: wrap;",
+      );
+      expect(outside).toContain("scroll-margin-top: 96px");
+      expect(html).not.toMatch(/margin[^;]*:\s*-\d/);
+    });
+  });
+
   it("returns 500 when the bucket binding is missing", async () => {
     const response = await handleAssetGallery(
       new Request("https://x/gallery"),
