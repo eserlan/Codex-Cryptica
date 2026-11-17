@@ -96,6 +96,7 @@
     activeTheme = $bindable(),
     urlHubTheme,
     trigger,
+    isBusy,
     npc = $bindable(),
     settlement = $bindable(),
     magicItem = $bindable(),
@@ -157,6 +158,7 @@
     activeTheme: string;
     urlHubTheme?: string;
     trigger: () => void;
+    isBusy: boolean;
     npc: ModeState & StringState;
     settlement: StringState;
     magicItem: StringState;
@@ -556,6 +558,7 @@
       bind:scope={urbanFantasyFaction.scope}
       bind:moralPosture={urbanFantasyFaction.moralPosture}
       bind:campaignContext={urbanFantasyFaction.campaignContext}
+      {isBusy}
       onSurprise={trigger}
     />
   {/if}

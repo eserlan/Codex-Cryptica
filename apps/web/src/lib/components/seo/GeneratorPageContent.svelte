@@ -395,12 +395,13 @@
       onReplace={replaceOutput}
     />
   {/snippet}
-  {#snippet formFields(trigger)}
+  {#snippet formFields(trigger, isBusy)}
     <GeneratorPageFormFields
       {slug}
       bind:activeTheme
       {urlHubTheme}
       {trigger}
+      {isBusy}
       bind:npc={forms.npc}
       bind:settlement={forms.settlement}
       bind:magicItem={forms.magicItem}

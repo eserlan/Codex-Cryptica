@@ -13,6 +13,13 @@ const pageSource = readFileSync(
   resolve(process.cwd(), "src/lib/components/seo/GeneratorPageContent.svelte"),
   "utf8",
 );
+const formPanelSource = readFileSync(
+  resolve(
+    process.cwd(),
+    "src/lib/components/seo/layout/GeneratorFormPanel.svelte",
+  ),
+  "utf8",
+);
 
 describe("GeneratorPageFormFields extraction", () => {
   it("owns every generator slug branch", () => {
@@ -37,10 +44,15 @@ describe("GeneratorPageFormFields extraction", () => {
   });
 
   it("is rendered through the original SEO layout snippet", () => {
-    expect(pageSource).toContain("{#snippet formFields(trigger)}");
+    expect(pageSource).toContain("{#snippet formFields(trigger, isBusy)}");
     expect(pageSource).toContain("<GeneratorPageFormFields");
     expect(pageSource).toContain("{trigger}");
+    expect(pageSource).toContain("{isBusy}");
     expect(pageSource).toContain("{/snippet}");
+    expect(formPanelSource).toContain(
+      "{@render formFields(onGenerate, isBusy)}",
+    );
+    expect(rendererSource).toContain("{isBusy}");
   });
 
   it("dispatches each form group through a dedicated snippet", () => {

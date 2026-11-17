@@ -347,6 +347,9 @@ test.describe("SEO and Prerendering", () => {
       }
       await page.getByRole("button", { name: "Surprise Me" }).click();
       await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Surprise Me" }),
+      ).toBeEnabled();
       for (const label of urbanFantasyFields) {
         await expect(page.getByLabel(label)).not.toHaveValue("__custom__");
         await expect(page.getByLabel(`${label} (Own option)`)).toHaveCount(0);

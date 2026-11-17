@@ -20,6 +20,7 @@ describe("FactionGenerationService", () => {
       recordInputs,
       summarizeResolvedInputs: () => "genre: gothic",
       formatRecentInputsNote: (inputs) => ` Recent: ${inputs.join(", ")}`,
+      isAIAllowed: () => true,
     });
 
     await service.generateFaction({ theme: "fantasy", useAI: true });
@@ -40,6 +41,7 @@ describe("FactionGenerationService", () => {
       recordInputs: vi.fn(),
       summarizeResolvedInputs: () => "",
       formatRecentInputsNote: () => "",
+      isAIAllowed: () => true,
     });
 
     const output = await service.generateFaction({ useAI: false });
@@ -59,6 +61,7 @@ describe("FactionGenerationService", () => {
       recordInputs: vi.fn(),
       summarizeResolvedInputs: () => "",
       formatRecentInputsNote: () => "",
+      isAIAllowed: () => true,
     });
 
     const output = await service.generateUrbanFantasyFaction({
@@ -74,5 +77,36 @@ describe("FactionGenerationService", () => {
     expect(output.summary).toContain("occult gang");
     expect(output.content).toContain("### How to use them at the table");
     expect(output.lore).toContain("**Immediate Hook**:");
+  });
+
+  it("uses local urban fantasy generation when the global AI policy disallows AI", async () => {
+    const runModel = vi.fn();
+    const getSessionContext = vi.fn(() => "Private campaign context");
+    let requestedAI: boolean | undefined;
+    const service = new FactionGenerationService({
+      runWithAIFallback: async (useAI, aiAttempt, local) => {
+        requestedAI = useAI;
+        return (useAI === false
+          ? local()
+          : await aiAttempt()) as unknown as GeneratorOutput;
+      },
+      runModel,
+      getSessionContext,
+      recentInputs: () => [],
+      recordInputs: vi.fn(),
+      summarizeResolvedInputs: () => "",
+      formatRecentInputsNote: () => "",
+      isAIAllowed: () => false,
+    });
+
+    const output = await service.generateUrbanFantasyFaction({
+      campaignContext: "Private campaign input",
+      useAI: true,
+    });
+
+    expect(requestedAI).toBe(false);
+    expect(runModel).not.toHaveBeenCalled();
+    expect(getSessionContext).not.toHaveBeenCalled();
+    expect(output.type).toBe("faction");
   });
 });

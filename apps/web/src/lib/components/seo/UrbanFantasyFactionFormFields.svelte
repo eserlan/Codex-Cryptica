@@ -8,6 +8,7 @@
     scope = $bindable(urbanFantasyFactionConfig.scopes[0]),
     moralPosture = $bindable(urbanFantasyFactionConfig.moralPostures[0]),
     campaignContext = $bindable(""),
+    isBusy,
     onSurprise = undefined,
   }: {
     mode: string;
@@ -15,6 +16,7 @@
     scope: string;
     moralPosture: string;
     campaignContext: string;
+    isBusy: boolean;
     onSurprise?: () => void;
   } = $props();
 
@@ -22,7 +24,7 @@
   const selectClass =
     "w-full bg-theme-bg/60 border border-theme-border/60 rounded-lg px-3 py-2 text-xs text-theme-text focus:outline-none focus:border-theme-primary/60";
   const labelClass =
-    "text-xs font-bold uppercase tracking-wider text-theme-muted";
+    "text-xs font-bold uppercase tracking-wider text-theme-text";
 </script>
 
 {#key selectReset}
@@ -113,6 +115,8 @@
   <button
     type="button"
     onclick={() => {
+      if (isBusy) return;
+
       mode =
         urbanFantasyFactionConfig.modes[
           Math.floor(Math.random() * urbanFantasyFactionConfig.modes.length)
@@ -134,6 +138,7 @@
       selectReset += 1;
       onSurprise?.();
     }}
+    disabled={isBusy}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-xs font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-on-primary hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize options and generate an urban fantasy faction"
   >

@@ -212,7 +212,7 @@ function stripUntrustedMediaMarkup(text: string): string {
     .replace(/<style\b[^>]*\/?>/gi, "")
     .replace(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, "")
     .replace(
-      /<\/?(?:img|image|picture|video|audio|source|track|iframe|embed|object|link)\b[^>]*>/gi,
+      /<\/?(?:img|image|picture|video|audio|source|track|iframe|embed|object|input|link)\b[^>]*>/gi,
       "",
     );
 }

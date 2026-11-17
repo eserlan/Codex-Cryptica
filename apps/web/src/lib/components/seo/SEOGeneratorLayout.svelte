@@ -125,7 +125,7 @@
       useAI: boolean;
       onPreview?: (preview: GeneratorOutput) => void;
     }) => Promise<GeneratorOutput>;
-    formFields: Snippet<[() => void]>;
+    formFields: Snippet<[() => void, boolean]>;
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;

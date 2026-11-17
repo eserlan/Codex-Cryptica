@@ -39,6 +39,7 @@ type FactionGenerationDependencies = {
   recordInputs: (type: string, summary: string | undefined) => void;
   summarizeResolvedInputs: (resolved: object) => string;
   formatRecentInputsNote: (inputs: readonly string[]) => string;
+  isAIAllowed: () => boolean;
 };
 
 /** AI orchestration for faction-family generators. */
@@ -173,8 +174,9 @@ export class FactionGenerationService {
   ): Promise<GeneratorOutput> {
     const { useAI, ...urbanFactionOptions } = options;
     const recentInputs = this.deps.recentInputs("urban-fantasy-faction");
+    const shouldUseAI = useAI !== false && this.deps.isAIAllowed();
     return this.deps.runWithAIFallback(
-      useAI,
+      shouldUseAI,
       async () => {
         const { systemInstruction, userMessage, resolved } =
           buildUrbanFantasyFactionPrompt(

@@ -58,6 +58,7 @@ describe("UrbanFantasyFactionFormFields", () => {
         scope: urbanFantasyFactionConfig.scopes[0],
         moralPosture: urbanFantasyFactionConfig.moralPostures[0],
         campaignContext: "",
+        isBusy: false,
       },
     });
 
@@ -87,6 +88,11 @@ describe("UrbanFantasyFactionFormFields", () => {
     ).toBe(true);
     expect(
       screen
+        .getByText("Urban fantasy mode")
+        .classList.contains("text-theme-text"),
+    ).toBe(true);
+    expect(
+      screen
         .getByText(/Add a city, neighbourhood/)
         .classList.contains("text-xs"),
     ).toBe(true);
@@ -106,6 +112,7 @@ describe("UrbanFantasyFactionFormFields", () => {
         scope: urbanFantasyFactionConfig.scopes[0],
         moralPosture: urbanFantasyFactionConfig.moralPostures[0],
         campaignContext: "",
+        isBusy: false,
         onSurprise,
       },
     });
@@ -149,5 +156,47 @@ describe("UrbanFantasyFactionFormFields", () => {
       ).toBeNull();
     }
     expect(onSurprise).toHaveBeenCalledOnce();
+  });
+
+  it("keeps custom selections unchanged while generation is busy", async () => {
+    const onSurprise = vi.fn();
+    render(UrbanFantasyFactionFormFields, {
+      props: {
+        mode: urbanFantasyFactionConfig.modes[0],
+        factionType: urbanFantasyFactionConfig.types[0],
+        scope: urbanFantasyFactionConfig.scopes[0],
+        moralPosture: urbanFantasyFactionConfig.moralPostures[0],
+        campaignContext: "",
+        isBusy: true,
+        onSurprise,
+      },
+    });
+
+    await fireEvent.change(
+      screen.getByRole("combobox", { name: "Urban fantasy mode" }),
+      { target: { value: "__custom__" } },
+    );
+    const customInput = screen.getByRole("textbox", {
+      name: "Urban fantasy mode (Own option)",
+    }) as HTMLInputElement;
+    await fireEvent.input(customInput, {
+      target: { value: "Custom mode" },
+    });
+
+    const surpriseButton = screen.getByRole("button", {
+      name: "Surprise Me",
+    }) as HTMLButtonElement;
+    expect(surpriseButton.disabled).toBe(true);
+    await fireEvent.click(surpriseButton);
+
+    expect(
+      (
+        screen.getByRole("combobox", {
+          name: "Urban fantasy mode",
+        }) as HTMLSelectElement
+      ).value,
+    ).toBe("__custom__");
+    expect(customInput.value).toBe("Custom mode");
+    expect(onSurprise).not.toHaveBeenCalled();
   });
 });
