@@ -14,18 +14,29 @@ import {
   scoreAdventureConversion,
 } from "../packages/adventure-engine/src/adventure-json/conversion-score";
 
-const { values, positionals } = parseArgs({
-  allowPositionals: true,
-  options: {
-    repairs: { type: "string" },
-    json: { type: "boolean", default: false },
-  },
-});
+const usage =
+  "Usage: bun scripts/score-adventure-conversion.ts <conversion.json> <answer-key.json> [--repairs N] [--json]";
+
+let values: { repairs?: string; json: boolean };
+let positionals: string[];
+try {
+  const parsedArgs = parseArgs({
+    allowPositionals: true,
+    options: {
+      repairs: { type: "string" },
+      json: { type: "boolean", default: false },
+    },
+  });
+  values = parsedArgs.values;
+  positionals = parsedArgs.positionals;
+} catch (error) {
+  console.error(error instanceof Error ? error.message : "Invalid arguments");
+  console.error(usage);
+  process.exit(2);
+}
 
 if (positionals.length !== 2) {
-  console.error(
-    "Usage: bun scripts/score-adventure-conversion.ts <conversion.json> <answer-key.json> [--repairs N] [--json]",
-  );
+  console.error(usage);
   process.exit(2);
 }
 

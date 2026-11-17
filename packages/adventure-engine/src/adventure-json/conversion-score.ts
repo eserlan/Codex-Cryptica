@@ -291,9 +291,25 @@ function sectionCoverage(
   entities: Entity[],
   key: ConversionAnswerKey,
 ): string[] {
+  const entityIds = new Set(entities.map((entity) => entity.id));
+  const anchors = new Set(
+    entities
+      .map((entity) => entity.sourceRef?.anchor)
+      .filter((anchor): anchor is string => typeof anchor === "string"),
+  );
+  const sectionTitles = new Set(
+    entities
+      .map((entity) => entity.sourceRef?.section)
+      .filter((section): section is string => typeof section === "string")
+      .map(norm),
+  );
   const details: string[] = [];
   for (const s of key.sections.filter((s) => !s.container)) {
-    if (!entities.some((e) => citesSection(e, s))) {
+    if (
+      !entityIds.has(s.sourceId) &&
+      !anchors.has(s.sourceId) &&
+      !sectionTitles.has(norm(s.title))
+    ) {
       details.push(`missing section ${s.sourceId}`);
     }
   }

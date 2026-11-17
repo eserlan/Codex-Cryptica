@@ -46,6 +46,13 @@ describe("score-adventure-conversion CLI", () => {
     expect(result.status).toBe(2);
   });
 
+  it("exits 2 with usage for an unsupported option", () => {
+    const result = run([REF_CONV, REF_KEY, "--bogus"]);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain("Usage:");
+    expect(result.stderr).not.toContain("at parseArgs");
+  });
+
   it("--json prints parseable JSON containing overall", () => {
     const result = run([REF_CONV, REF_KEY, "--json"]);
     expect(result.status).toBe(0);
