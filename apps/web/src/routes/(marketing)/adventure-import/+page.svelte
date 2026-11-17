@@ -12,9 +12,23 @@
     COLLECTION_RULES,
     CORRESPONDENCE_EXTENSION_DOC,
     EPISTEMIC_STATUSES,
+    REVISION_EXAMPLE_AFTER,
+    REVISION_EXAMPLE_BEFORE,
+    SPLIT_MERGE_EXAMPLE_DOC,
+    VERSIONING_BEHAVIOUR_DOC,
     TOP_LEVEL_RULES,
     TROUBLESHOOTING_ERRORS,
   } from "./conversion-guide.js";
+
+  const WRONG_PLACEMENT = `// WRONG: do not do this
+{
+  "scenes": [
+    {
+      "id": "scene-spiral-stair",
+      "extensions": { "codex-cryptica.adventure-correspondence": [] }
+    }
+  ]
+}`;
 
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
@@ -579,6 +593,125 @@
         tabindex="0"
         aria-label="Minimal Adventure JSON v1 example"
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
+    </section>
+
+    <!-- Revising an adventure -->
+    <section
+      aria-labelledby="revisions-heading"
+      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
+    >
+      <h2
+        id="revisions-heading"
+        class="font-header font-bold text-2xl text-theme-text"
+      >
+        Revising an adventure you already imported
+      </h2>
+      <dl class="space-y-2 text-sm text-theme-text/90">
+        <div>
+          <dt class="font-mono inline font-bold">formatVersion</dt>
+          <dd class="inline">
+            : which contract the file follows, always
+            <code class="font-mono">adventure-json/v1</code>.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-mono inline font-bold">Package id</dt>
+          <dd class="inline">
+            : the adventure's stable identity. Keep it the same across every
+            conversion and revision of the same adventure.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-mono inline font-bold">version</dt>
+          <dd class="inline">
+            : strict SemVer label for this revision. Raise it when the content
+            changes.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-bold inline">Entity IDs</dt>
+          <dd class="inline">
+            : stable per entity across revisions. Change one only for a real
+            rename, split or merge.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-bold inline">Canonical content hash</dt>
+          <dd class="inline">
+            : exact content identity. Codex Cryptica computes it, and converters
+            never write it.
+          </dd>
+        </div>
+      </dl>
+      <ul class="list-disc pl-5 space-y-1 text-sm text-theme-text/90">
+        <li>
+          First import: no package with this <code class="font-mono">id</code>
+          yet. It is reviewed and stored.
+        </li>
+        <li>
+          Exact duplicate: the same canonical content is reported as already
+          imported and nothing is written.
+        </li>
+        <li>
+          Changed package with the same <code class="font-mono">id</code>: it is
+          reviewed as a new version, diffed against its predecessor, with a
+          warning if <code class="font-mono">version</code> did not increase.
+        </li>
+      </ul>
+      <p class="text-sm text-theme-text/90">
+        Existing sessions stay pinned to the exact version they started with and
+        are never moved to the new one automatically.
+      </p>
+      <pre
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{VERSIONING_BEHAVIOUR_DOC}</pre>
+      <p class="text-sm text-theme-text/90">
+        In this example every entity keeps its ID except one scene, renamed from
+        <code class="font-mono">scene-stairs</code> to
+        <code class="font-mono">scene-spiral-stair</code>. The correspondence
+        entry that links them lives in the package's top-level
+        <code class="font-mono">extensions</code>.
+      </p>
+      <pre
+        tabindex="0"
+        aria-label="Revision example: version 1.0.0"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
+          REVISION_EXAMPLE_BEFORE,
+          null,
+          2,
+        )}</pre>
+      <pre
+        tabindex="0"
+        aria-label="Revision example: version 1.1.0"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
+          REVISION_EXAMPLE_AFTER,
+          null,
+          2,
+        )}</pre>
+      <div
+        class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3 space-y-2 text-sm text-theme-text/90"
+      >
+        <p>
+          <strong>Wrong placement.</strong> Correspondence is read only from the
+          package's top-level <code class="font-mono">extensions</code>, never
+          inside an entity. This fails validation because entity records do not
+          allow <code class="font-mono">extensions</code>:
+        </p>
+        <pre
+          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{WRONG_PLACEMENT}</pre>
+      </div>
+      <div class="space-y-2 text-sm text-theme-text/90">
+        <h3 class="font-bold">Splits and merges</h3>
+        <p>
+          Splits and merges stay flagged for your review and are never treated
+          as automatic identity. Never guess correspondence from names, titles
+          or order. See the
+          <a class="underline" href="#correspondence-heading"
+            >correspondence reference</a
+          >.
+        </p>
+        <pre
+          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{SPLIT_MERGE_EXAMPLE_DOC}</pre>
+      </div>
     </section>
 
     <!-- Top-level Contract & Collections -->

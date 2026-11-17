@@ -1,5 +1,11 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/svelte";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/svelte";
 import { AdventureJsonV1Schema } from "@codex/adventure-engine";
 import Page from "./+page.svelte";
 import {
@@ -7,6 +13,11 @@ import {
   CORRESPONDENCE_EXTENSION_DOC,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
+  REVISION_EXAMPLE_AFTER,
+  REVISION_EXAMPLE_BEFORE,
+  SPLIT_MERGE_EXAMPLE_DOC,
+  TOP_LEVEL_RULES,
+  VERSIONING_BEHAVIOUR_DOC,
 } from "./conversion-guide.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
@@ -132,8 +143,13 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         name: /Correspondence for renamed content/i,
       }),
     ).toBeTruthy();
+    const correspondence = document
+      .getElementById("correspondence-heading")!
+      .closest("section")!;
     expect(
-      screen.getByText(/extensions.*codex-cryptica\.adventure-correspondence/s),
+      within(correspondence).getByText(
+        /extensions.*codex-cryptica\.adventure-correspondence/s,
+      ),
     ).toBeTruthy();
     expect(
       screen.getByText(/Splits and merges are shown grouped/),
@@ -574,6 +590,124 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
       expect(link).toBeTruthy();
       expect(container.querySelector("#completeness-heading")).toBeTruthy();
+    });
+  });
+  describe("revisions section", () => {
+    const section = () =>
+      document.getElementById("revisions-heading")!.closest("section")!;
+
+    it("sits between the worked example and the field structure, after quick start", () => {
+      render(Page);
+      const ids = Array.from(document.querySelectorAll("h2")).map((h) => h.id);
+      expect(ids[0]).toBe("quick-start-heading");
+      expect(
+        document.getElementById("revisions-heading")?.textContent,
+      ).toContain("Revising an adventure you already imported");
+      const r = ids.indexOf("revisions-heading");
+      expect(r).toBeGreaterThan(ids.indexOf("worked-example-heading"));
+      expect(r).toBeLessThan(ids.indexOf("contract-heading"));
+    });
+
+    it("explains identity, cases, rules and renders the examples", () => {
+      render(Page);
+      const el = section();
+      const text = el.textContent ?? "";
+      for (const t of [
+        "formatVersion",
+        "Package id",
+        "version",
+        "Entity IDs",
+        "content hash",
+        "First import",
+        "Exact duplicate",
+        "Changed package",
+      ]) {
+        expect(text).toContain(t);
+      }
+      expect(text).toMatch(/pinned/i);
+      expect(text).toMatch(/never moved to the new one automatically/i);
+
+      const pres = Array.from(el.querySelectorAll("pre"));
+      expect(pres.some((p) => p.textContent === VERSIONING_BEHAVIOUR_DOC)).toBe(
+        true,
+      );
+      const parse = (label: string) =>
+        JSON.parse(
+          el.querySelector(`pre[aria-label="${label}"]`)!.textContent ?? "",
+        );
+      expect(parse("Revision example: version 1.0.0")).toEqual(
+        REVISION_EXAMPLE_BEFORE,
+      );
+      expect(parse("Revision example: version 1.1.0")).toEqual(
+        REVISION_EXAMPLE_AFTER,
+      );
+      expect(
+        el.querySelector('a[href="#correspondence-heading"]'),
+      ).toBeTruthy();
+    });
+
+    it("shows the wrong-placement callout and split/merge warning", () => {
+      render(Page);
+      const el = section();
+      const text = (el.textContent ?? "").replace(/\s+/g, " ");
+      expect(text).toMatch(/top-level/i);
+      expect(text).toMatch(/never inside an entity|not inside an entity/i);
+      expect(text).toContain("WRONG");
+      expect(el.textContent).toContain(SPLIT_MERGE_EXAMPLE_DOC);
+      expect(text).toMatch(/names, titles,? or order/i);
+    });
+  });
+
+  describe("revision prompt text", () => {
+    it("adds rule 9 and keeps rules 1 and 8", () => {
+      expect(CANONICAL_CONVERSION_PROMPT).toContain("Return ONLY valid JSON");
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "8. Self-audit before returning",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        "9. Revisions and stable IDs",
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/keep its "id" exactly/);
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(
+        /keep every unchanged entity ID exactly/,
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(/raise "version"/);
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(
+        /Never infer correspondence from names/,
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toMatch(
+        /omit the correspondence extension/,
+      );
+    });
+
+    it("states top-level placement and keeps the grouped split/merge line", () => {
+      expect(CORRESPONDENCE_EXTENSION_DOC).toMatch(/top level of the package/);
+      expect(CORRESPONDENCE_EXTENSION_DOC).toMatch(/never inside an entity/);
+      expect(CORRESPONDENCE_EXTENSION_DOC).toContain(
+        "Splits and merges are shown grouped",
+      );
+    });
+
+    it("asks the coverage report to start with the previous package line", () => {
+      expect(COVERAGE_REPORT_PROMPT).toContain("Previous package:");
+      expect(COVERAGE_REPORT_PROMPT).toContain(
+        "No previous package was provided.",
+      );
+      for (const h of [
+        "Covered sections:",
+        "Missing or shortened:",
+        "Risky inferences:",
+        "Left unresolved:",
+      ]) {
+        expect(COVERAGE_REPORT_PROMPT).toContain(h);
+      }
+    });
+
+    it("tells converters to keep id stable and raise version", () => {
+      const note = (f: string) =>
+        TOP_LEVEL_RULES.find((r) => r.field === f)!.notes;
+      expect(note("id")).toMatch(/same across revisions/);
+      expect(note("version")).toMatch(/Raise it when the content changes/);
     });
   });
 });
