@@ -296,6 +296,7 @@ describe("handleAssetGallery", () => {
       const block = mobileBlock(await renderHtml());
       expect(block).toContain("flex-wrap: nowrap");
       expect(block).toContain("overflow-x: auto");
+      expect(block).toMatch(/nav\.jumplist a \{[^}]*min-height: 44px/);
     });
 
     it("makes the mobile controls bar static and lowers the group scroll margin", async () => {
