@@ -17,6 +17,7 @@ export type ValidSlug =
   | "vampire-clan"
   | "nomad-clan"
   | "dark-fantasy-faction"
+  | "urban-fantasy-faction"
   | "names"
   | "fantasy-names"
   | "dnd-npc"

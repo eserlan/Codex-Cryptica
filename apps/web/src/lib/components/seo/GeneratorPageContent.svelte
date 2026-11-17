@@ -424,6 +424,7 @@
       bind:vampireClan={forms.vampireClan}
       bind:nomadClan={forms.nomadClan}
       bind:darkFaction={forms.darkFaction}
+      bind:urbanFantasyFaction={forms.urbanFantasyFaction}
       bind:names={forms.names}
       bind:dndNpc={forms.dndNpc}
       bind:pantheon={forms.pantheon}

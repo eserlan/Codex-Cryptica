@@ -13,6 +13,14 @@ import {
   factionConfig,
 } from "./public-faction";
 import { NAME_BAN_PROMPT } from "./public-npc";
+import {
+  buildUrbanFantasyFactionPrompt,
+  generateUrbanFantasyFactionLocal,
+  parseUrbanFantasyFactionResponse,
+  resolveUrbanFantasyFaction,
+  urbanFantasyFactionConfig,
+  urbanFantasyFactionSchema,
+} from "./public-urban-fantasy-faction";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
@@ -197,5 +205,150 @@ describe("dark fantasy faction (#1136)", () => {
   it("throws on invalid JSON", () => {
     const { resolved } = buildDarkFactionPrompt({}, "", seededRng(16));
     expect(() => parseDarkFactionResponse("nope", resolved)).toThrow();
+  });
+});
+
+describe("urban fantasy faction (#1137)", () => {
+  it("offers each required city mode, faction type, scope and moral posture", () => {
+    expect(urbanFantasyFactionConfig.modes).toEqual(
+      expect.arrayContaining([
+        "Hidden-world city politics",
+        "Occult crime",
+        "Monster diplomacy",
+        "Magical bureaucracy",
+        "Street-level magic",
+        "Paranormal investigation",
+        "Corporate occult",
+      ]),
+    );
+    expect(urbanFantasyFactionConfig.types).toEqual(
+      expect.arrayContaining([
+        "Mage Cabal",
+        "Monster Court",
+        "Paranormal Agency",
+        "Occult Gang",
+        "Hunter Lodge",
+        "Fae Market",
+        "Supernatural Corporation",
+        "Secret Council",
+      ]),
+    );
+    expect(urbanFantasyFactionConfig.scopes).toEqual(
+      expect.arrayContaining([
+        "Neighbourhood",
+        "City District",
+        "Whole City",
+        "Transit Network",
+        "University",
+        "Corporate Campus",
+        "Hidden Market",
+        "Regional Network",
+      ]),
+    );
+    expect(urbanFantasyFactionConfig.moralPostures).toEqual(
+      expect.arrayContaining([
+        "Protective but secretive",
+        "Predatory but lawful",
+        "Pragmatic brokers",
+        "Idealistic investigators",
+        "Ancient aristocrats",
+        "Street-level survivors",
+      ]),
+    );
+    expect(urbanFantasyFactionSchema.axes.map((axis) => axis.id)).toEqual([
+      "mode",
+      "factionType",
+      "scope",
+      "moralPosture",
+      "goal",
+      "conflict",
+      "hook",
+    ]);
+    expect(
+      urbanFantasyFactionSchema.axes[0].pool({
+        genre: "",
+        values: {},
+        traits: [],
+      }),
+    ).toEqual(urbanFantasyFactionConfig.modes);
+  });
+
+  it("keeps valid selections in the local faction output and includes every section", () => {
+    const options = {
+      mode: "Paranormal investigation",
+      factionType: "Paranormal Agency",
+      scope: "Transit Network",
+      moralPosture: "Idealistic investigators",
+    };
+    const resolved = resolveUrbanFantasyFaction(options, seededRng(20));
+    const out = generateUrbanFantasyFactionLocal(options, seededRng(20));
+
+    expect(resolved).toMatchObject(options);
+    expect(out.type).toBe("faction");
+    expect(out.summary).toContain("paranormal agency");
+    expect(out.summary).toContain("transit network");
+    expect(out.summary).not.toContain("\n");
+    expect(`${out.content}\n${out.lore}`).not.toMatch(/vampire|horror/i);
+    expect(out.content).toContain("### Genre Tags");
+    expect(out.content).toContain("### What they control");
+    expect(out.content).toContain("### What they want");
+    expect(out.content).toContain("### Why they are dangerous");
+    expect(out.content).toContain("### How to use them at the table");
+    expect(out.lore).toContain("### At a Glance");
+    for (const field of [
+      "**📍 Base**:",
+      "**Resource**:",
+      "**Symbol**:",
+      "**Secret**:",
+      "**Immediate Hook**:",
+    ]) {
+      expect(out.lore).toContain(field);
+    }
+    expect(out.lore).toContain("### Notable NPCs");
+    expect(out.lore).toContain("### Internal Conflict");
+    expect(out.lore).toContain("### Rival Faction");
+    expect(out.labels).toEqual(
+      expect.arrayContaining([
+        "urban-fantasy",
+        "modern-fantasy",
+        "supernatural-faction",
+        "hidden-world",
+      ]),
+    );
+  });
+
+  it("includes the selected options in the AI prompt", () => {
+    const { systemInstruction, userMessage, resolved } =
+      buildUrbanFantasyFactionPrompt(
+        {
+          mode: "Corporate occult",
+          factionType: "Supernatural Corporation",
+          scope: "Corporate Campus",
+          moralPosture: "Pragmatic brokers",
+        },
+        "- Existing: The Night Registry (faction)",
+        seededRng(21),
+      );
+
+    expect(systemInstruction).toContain("modern institutions");
+    expect(userMessage).toContain("- Urban Fantasy Mode: Corporate occult");
+    expect(userMessage).toContain("- Faction Type: Supernatural Corporation");
+    expect(userMessage).toContain("- Operating Scope: Corporate Campus");
+    expect(userMessage).toContain("- Moral Posture: Pragmatic brokers");
+    expect(userMessage).toContain(`- Faction Name: ${resolved.name}`);
+  });
+
+  it("rejects malformed or incomplete AI faction responses", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(22));
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse("not json", resolved),
+    ).toThrow();
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify({ title: "The Permit Office", summary: "A faction." }),
+        resolved,
+      ),
+    ).toThrow(/missing required content/);
   });
 });

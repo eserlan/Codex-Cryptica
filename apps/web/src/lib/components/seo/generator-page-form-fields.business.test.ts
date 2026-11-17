@@ -2,6 +2,8 @@
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import GeneratorPageFormFields from "./GeneratorPageFormFields.svelte";
+import UrbanFantasyFactionFormFields from "./UrbanFantasyFactionFormFields.svelte";
+import { urbanFantasyFactionConfig } from "#lib/services/seo/generator-config.js";
 
 function renderFor(slug: string) {
   const business = {
@@ -44,5 +46,40 @@ describe("GeneratorPageFormFields business slug", () => {
     expect(
       screen.queryByRole("checkbox", { name: /Players own this business/i }),
     ).toBeNull();
+  });
+});
+
+describe("UrbanFantasyFactionFormFields", () => {
+  it("exposes the urban fantasy mode, faction type, scope and moral posture choices", () => {
+    render(UrbanFantasyFactionFormFields, {
+      props: {
+        mode: urbanFantasyFactionConfig.modes[0],
+        factionType: urbanFantasyFactionConfig.types[0],
+        scope: urbanFantasyFactionConfig.scopes[0],
+        moralPosture: urbanFantasyFactionConfig.moralPostures[0],
+        campaignContext: "",
+      },
+    });
+
+    expect(
+      screen.getByRole("combobox", { name: "Urban fantasy mode" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("combobox", { name: "Faction type" })).toBeTruthy();
+    expect(
+      screen.getByRole("combobox", { name: "Operating scope" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("combobox", { name: "Moral posture" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("option", { name: "Corporate occult" }),
+    ).toBeTruthy();
+    expect(screen.getByRole("option", { name: "Mage Cabal" })).toBeTruthy();
+    expect(
+      screen.getByRole("option", { name: "Transit Network" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("option", { name: "Street-level survivors" }),
+    ).toBeTruthy();
   });
 });

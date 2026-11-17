@@ -26,6 +26,7 @@ describe("GeneratorPageFormFields extraction", () => {
       'slug === "comic-book-event-generator"',
       'slug === "villain-scheme-generator"',
       'slug === "alien-race"',
+      'slug === "urban-fantasy-faction"',
     ];
 
     for (const branch of expectedBranches) {

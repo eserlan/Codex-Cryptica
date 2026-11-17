@@ -47,4 +47,32 @@ describe("FactionGenerationService", () => {
     expect(output).toHaveProperty("title");
     expect(output).toHaveProperty("content");
   });
+
+  it("uses local urban fantasy generation without calling AI when disabled", async () => {
+    const runModel = vi.fn();
+    const service = new FactionGenerationService({
+      runWithAIFallback: async (useAI, aiAttempt, local) =>
+        (useAI ? await aiAttempt() : local()) as unknown as GeneratorOutput,
+      runModel,
+      getSessionContext: () => "",
+      recentInputs: () => [],
+      recordInputs: vi.fn(),
+      summarizeResolvedInputs: () => "",
+      formatRecentInputsNote: () => "",
+    });
+
+    const output = await service.generateUrbanFantasyFaction({
+      mode: "Street-level magic",
+      factionType: "Occult Gang",
+      scope: "Neighbourhood",
+      moralPosture: "Street-level survivors",
+      useAI: false,
+    });
+
+    expect(runModel).not.toHaveBeenCalled();
+    expect(output.type).toBe("faction");
+    expect(output.summary).toContain("occult gang");
+    expect(output.content).toContain("### How to use them at the table");
+    expect(output.lore).toContain("**Immediate Hook**:");
+  });
 });
