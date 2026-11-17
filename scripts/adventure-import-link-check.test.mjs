@@ -64,25 +64,47 @@ describe("adventure import link check", () => {
     ]
       .map((href) => `<a href="${href}">x</a>`)
       .join("");
+    const responses = new Map([
+      ["/adventure-import", { contentType: "text/html", body: html }],
+      [
+        "/schemas/adventure-json/v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      [
+        "/schemas/adventure/v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      [
+        "/schemas/adventure-json/examples/minimal.v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      [
+        "/schemas/adventure-json/examples/reference-one-shot.v1.json",
+        { contentType: "application/json", body: "{}" },
+      ],
+      ["/schemas/adventure-json/v2.json", { status: 404, body: "{}" }],
+      ["/adventure", { contentType: "text/html", body: "<html>app</html>" }],
+      [
+        "/llms.txt",
+        {
+          contentType: "text/plain",
+          body: "https://codexcryptica.com/adventure-import",
+        },
+      ],
+      [
+        "/llms-full.txt",
+        { contentType: "text/plain", body: "/adventure-import" },
+      ],
+    ]);
 
     globalThis.fetch = async (input) => {
-      const url = String(input);
-      requested.push(url);
-      const status = url.endsWith("/schemas/adventure-json/v2.json")
-        ? 404
-        : 200;
-      const contentType = url.includes("/schemas/")
-        ? "application/json"
-        : "text/html";
-      const body = url.endsWith("/adventure-import")
-        ? html
-        : url.endsWith("/adventure")
-          ? "<html>app</html>"
-          : url.endsWith("/llms.txt")
-            ? "https://codexcryptica.com/adventure-import"
-            : url.endsWith("/llms-full.txt")
-              ? "/adventure-import"
-              : "{}";
+      const url = new URL(String(input));
+      requested.push(url.href);
+      const {
+        status = 200,
+        contentType = "application/json",
+        body,
+      } = responses.get(url.pathname);
       return {
         status,
         headers: { get: () => contentType },
