@@ -77,7 +77,7 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
       title: "How to Create a Sci-Fi Star System for an RPG",
       href: "/answers/how-to-create-a-sci-fi-star-system-for-an-rpg",
       description:
-        "The core framework: locations as an economic network, travel limits, competing claimants, hazards and a flashpoint that creates immediate crew decisions.",
+        "The core framework for turning a list of places into a system the crew can play in: what each place is for, how far apart they are, who fights over them and what is happening right now.",
       focus: "Core Guide: System Framework",
     },
     {

@@ -115,9 +115,9 @@ describe("star systems topic hub config", () => {
     );
     expect(destinations).toBeDefined();
     const places = ["Tern Anchorage", "Coldwell", "Veyra Deep"];
+    const routes = example.parts.find((p) => p.term.includes("Routes"));
     for (const place of places) {
       expect(destinations?.text).toContain(place);
-      const routes = example.parts.find((p) => p.term.includes("Routes"));
       expect(routes?.text).toContain(place);
     }
     expect(terms.some((t) => t.includes("route"))).toBe(true);

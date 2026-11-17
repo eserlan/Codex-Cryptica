@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { TOPIC_LAYOUT } from "./topic-layout.js";
   import type { TopicInlineExample } from "#lib/content/topics/types.js";
 
   let {
@@ -14,7 +15,9 @@
   <h3 class="font-header text-xl font-bold text-theme-text">
     {example.title}
   </h3>
-  <p class="mt-2 text-base leading-relaxed text-theme-text">
+  <p
+    class="mt-2 text-base leading-relaxed text-theme-text {TOPIC_LAYOUT.measure}"
+  >
     {example.summary}
   </p>
   <dl class="mt-4 divide-y divide-theme-border border-y border-theme-border">
@@ -29,7 +32,9 @@
       </div>
     {/each}
   </dl>
-  <p class="mt-4 text-base leading-relaxed text-theme-text">
+  <p
+    class="mt-4 text-base leading-relaxed text-theme-text {TOPIC_LAYOUT.measure}"
+  >
     <strong class="font-bold">{highlightLabel}</strong>
     {example.highlight}.
   </p>
