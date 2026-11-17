@@ -414,24 +414,19 @@ class Runner:
             raise RuntimeError(f"Fallow {label} audit failed; see {log_path}")
 
     def prepare_dependencies(self, job):
-        """Install dependencies in the worktree sandbox from the trusted cache."""
+        """Install dependencies on the host, matching the Claude factory."""
         worktree = Path(job["worktree"]).resolve()
-        cache_dir = self.dependency_cache(job)
-        self.bootstrap_dependency_cache(job, cache_dir)
-        result = run_sandboxed(
-            ["bun", "install", "--frozen-lockfile", "--ignore-scripts", "--backend", "copyfile",
-             "--registry=https://registry.npmjs.org", "--cache-dir", str(cache_dir)],
+        result = self.command(
+            ["bun", "install", "--frozen-lockfile"],
             cwd=worktree,
-            writable_roots=[worktree],
-            git_common_dir=self.git_common_dir(),
-            bun_cache_dir=cache_dir,
+            check=False,
         )
         logs = self.jobs / job["id"] / "codex"
         logs.mkdir(parents=True, exist_ok=True)
         log_path = logs / "bun-worktree-install.log"
         log_path.write_text(result.stdout + result.stderr)
         if result.returncode != 0:
-            raise RuntimeError(f"Sandboxed Bun dependency install failed; see {log_path}")
+            raise RuntimeError(f"Bun dependency install failed; see {log_path}")
 
     def load(self, job_id):
         return json.loads((self.jobs / job_id / "job.json").read_text())
@@ -805,8 +800,7 @@ class Runner:
                 self.prepare_dependencies(job)
                 self.ensure_fallow_prechecked(job, job["worktree"], folder / "codex")
                 result = self.command(
-                    [self.repo / "factory/bin/gate", job_id, "--codex-sandbox",
-                     "--fallow-prechecked"], check=False
+                    [self.repo / "factory/bin/gate", job_id], check=False
                 )
                 if result.returncode == 0:
                     self.advance(job, "review")

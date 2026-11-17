@@ -157,65 +157,17 @@ class CodexFactoryTests(unittest.TestCase):
                 self.runner.role(self.job, "builder")
             command.assert_not_called()
 
-    def test_dependency_bootstrap_handles_fresh_worktree_without_user_cache(self):
-        self.assertFalse((self.worktree / "node_modules").exists())
-        with patch.dict("os.environ", {"BUN_INSTALL_CACHE_DIR": "/home/user/.bun/install/cache"}), \
-             patch.object(self.runner, "bootstrap_dependency_cache") as bootstrap, \
-             patch.object(module, "run_sandboxed", return_value=subprocess.CompletedProcess([], 0, "", "")) as sandbox:
+    def test_dependency_install_uses_claude_execution_path(self):
+        with patch.object(self.runner, "command", return_value=subprocess.CompletedProcess([], 0, "installed", "")) as command:
             self.runner.prepare_dependencies(self.job)
+        command.assert_called_once_with(["bun", "install", "--frozen-lockfile"], cwd=self.worktree.resolve(), check=False)
+        self.assertEqual((self.folder / "codex/bun-worktree-install.log").read_text(), "installed")
 
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        bootstrap.assert_called_once_with(self.job, cache)
-        args, kwargs = sandbox.call_args.args[0], sandbox.call_args.kwargs
-        self.assertEqual(args[:3], ["bun", "install", "--frozen-lockfile"])
-        self.assertIn("--ignore-scripts", args)
-        self.assertIn("--backend", args)
-        self.assertIn("copyfile", args)
-        self.assertIn("--cache-dir", args)
-        self.assertEqual(kwargs["cwd"], self.worktree.resolve())
-        self.assertEqual(kwargs["writable_roots"], [self.worktree.resolve()])
-        self.assertEqual(kwargs["bun_cache_dir"], cache)
-        self.assertNotEqual(kwargs["bun_cache_dir"], "/home/user/.bun/install/cache")
-
-    @unittest.skipUnless(module.shutil.which("codex") and module.shutil.which("bun"),
-                         "requires local Bun and Codex sandbox CLIs")
-    def test_fresh_worktree_dependencies_install_inside_sandbox(self):
-        self.create_registry_dependency_project()
-        self.assertFalse((self.worktree / "node_modules").exists())
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        bootstrapped = {}
-        original_bootstrap = self.runner.bootstrap_dependency_cache
-
-        def bootstrap_and_snapshot(job, cache_dir):
-            original_bootstrap(job, cache_dir)
-            bootstrapped["digest"] = self.directory_digest(cache_dir)
-
-        with patch.dict("os.environ", {"BUN_INSTALL_CACHE_DIR": str(self.root / "empty-user-cache")}):
-            with patch.object(self.runner, "bootstrap_dependency_cache", side_effect=bootstrap_and_snapshot):
+    def test_dependency_install_failure_stops_before_builder(self):
+        with patch.object(self.runner, "command", return_value=subprocess.CompletedProcess([], 1, "", "install failed")):
+            with self.assertRaisesRegex(RuntimeError, "Bun dependency install failed"):
                 self.runner.prepare_dependencies(self.job)
-
-        installed = self.worktree / "node_modules/factory-fixture-package"
-        self.assertTrue(installed.exists())
-        self.assertEqual(installed.resolve(), (self.worktree / "packages/factory-fixture-package").resolve())
-        self.assertTrue((self.worktree / "node_modules/is-number/index.js").is_file())
-        self.assertEqual(self.directory_digest(cache), bootstrapped["digest"])
-        usable = module.run_sandboxed(
-            ["bun", "-e", 'const isNumber = require("is-number"); if (!isNumber("7")) process.exit(1)'],
-            cwd=self.worktree, writable_roots=[self.worktree],
-            git_common_dir=self.runner.git_common_dir(), bun_cache_dir=cache,
-        )
-        self.assertEqual(usable.returncode, 0, usable.stderr)
-
-    @unittest.skipUnless(module.shutil.which("codex") and module.shutil.which("bun"),
-                         "requires local Bun and Codex sandbox CLIs")
-    def test_missing_cached_registry_package_fails_without_network(self):
-        self.create_registry_dependency_project()
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
-        with patch.object(self.runner, "bootstrap_dependency_cache"):
-            with self.assertRaisesRegex(RuntimeError, "Sandboxed Bun dependency install failed"):
-                self.runner.prepare_dependencies(self.job)
-        self.assertFalse((self.worktree / "node_modules/is-number").exists())
+        self.assertEqual((self.folder / "codex/bun-worktree-install.log").read_text(), "install failed")
 
     def test_cache_bootstrap_uses_trusted_manifests_without_user_environment(self):
         (self.worktree / "package.json").write_text(json.dumps({"workspaces": ["packages/*"]}))
@@ -907,7 +859,7 @@ class CodexFactoryTests(unittest.TestCase):
                 self.runner.run(12)
             prechecked.assert_called_once()
             self.assertEqual(len(gate_calls), 1)
-            self.assertIn("--fallow-prechecked", gate_calls[0])
+            self.assertEqual(gate_calls[0], [self.root / "factory/bin/gate", self.job["id"]])
             advance.assert_not_called()
 
 
