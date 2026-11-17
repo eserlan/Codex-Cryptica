@@ -171,7 +171,7 @@ class CodexFactoryTests(unittest.TestCase):
         self.assertIn("--ignore-scripts", args)
         self.assertIn("--backend", args)
         self.assertIn("copyfile", args)
-        self.assertIn("--cache-dir", args)
+        self.assertIn("--registry=https://registry.npmjs.org", args)
         self.assertEqual(kwargs["cwd"], self.worktree.resolve())
         self.assertEqual(kwargs["writable_roots"], [self.worktree.resolve()])
         self.assertEqual(kwargs["bun_cache_dir"], cache)
@@ -216,6 +216,13 @@ class CodexFactoryTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Sandboxed Bun dependency install failed"):
                 self.runner.prepare_dependencies(self.job)
         self.assertFalse((self.worktree / "node_modules/is-number").exists())
+
+    def test_dependency_install_failure_stops_before_builder(self):
+        with patch.object(self.runner, "bootstrap_dependency_cache"), \
+             patch.object(module, "run_sandboxed", return_value=subprocess.CompletedProcess([], 1, "", "install failed")):
+            with self.assertRaisesRegex(RuntimeError, "Sandboxed Bun dependency install failed"):
+                self.runner.prepare_dependencies(self.job)
+        self.assertEqual((self.folder / "codex/bun-worktree-install.log").read_text(), "install failed")
 
     def test_cache_bootstrap_uses_trusted_manifests_without_user_environment(self):
         (self.worktree / "package.json").write_text(json.dumps({"workspaces": ["packages/*"]}))
@@ -907,7 +914,8 @@ class CodexFactoryTests(unittest.TestCase):
                 self.runner.run(12)
             prechecked.assert_called_once()
             self.assertEqual(len(gate_calls), 1)
-            self.assertIn("--fallow-prechecked", gate_calls[0])
+            self.assertEqual(gate_calls[0], [self.root / "factory/bin/gate", self.job["id"],
+                                             "--codex-sandbox", "--fallow-prechecked"])
             advance.assert_not_called()
 
 
