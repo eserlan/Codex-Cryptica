@@ -616,6 +616,13 @@
                 "Bring a Thread Weaver Engine campaign export's characters, factions, and settlements into Codex.",
               icon: "icon-[lucide--network]",
             },
+            {
+              href: "/adventure-import",
+              label: "Adventure Importer",
+              summary:
+                "Import Adventure JSON locally with deterministic validation, hashing, and versioning — or convert an adventure you own with the AI guide.",
+              icon: "icon-[lucide--file-json]",
+            },
           ],
         },
       ],
@@ -643,7 +650,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="max-w-3xl">
         <p
-          class="text-xs font-mono uppercase tracking-[0.24em] text-theme-primary mb-4"
+          class="text-xs font-mono uppercase tracking-[0.24em] text-theme-text mb-4"
         >
           Tools Directory
         </p>
@@ -653,7 +660,7 @@
           RPG Tools, Generators, and Comparisons
         </h1>
 
-        <p class="text-base md:text-lg text-theme-muted leading-relaxed">
+        <p class="text-base md:text-lg text-theme-text leading-relaxed">
           A central index for Codex Cryptica's public campaign tools,
           generators, solution pages, and comparison guides.
         </p>
@@ -671,7 +678,7 @@
           >
             {section.title}
           </h2>
-          <p class="text-base text-theme-muted leading-relaxed">
+          <p class="text-base text-theme-text leading-relaxed">
             {section.description}
           </p>
         </div>
@@ -693,7 +700,7 @@
                       class="group block h-full rounded-xl border border-theme-border/60 bg-theme-surface/35 p-5 hover:border-theme-primary/60 hover:bg-theme-surface/55 transition-colors"
                     >
                       <span
-                        class="{link.icon} h-5 w-5 text-theme-primary mb-4 block"
+                        class="{link.icon} h-5 w-5 text-theme-text mb-4 block"
                       ></span>
                       <span
                         class="block font-header text-sm font-bold mb-2 group-hover:text-theme-primary transition-colors"
@@ -701,7 +708,7 @@
                         {link.label}
                       </span>
                       <span
-                        class="block text-base text-theme-muted leading-relaxed"
+                        class="block text-base text-theme-text leading-relaxed"
                       >
                         {link.summary}
                       </span>

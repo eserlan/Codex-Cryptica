@@ -245,6 +245,7 @@ export const migrationEntries: DiscoveryEntryInput[] = [
     intentAliases: [
       "adventure json conversion guide",
       "convert pdf adventure for codex cryptica",
+      "adventure importer",
     ],
     userJob: "migrate",
     uniqueValue:

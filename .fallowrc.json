@@ -12,6 +12,7 @@
     "scripts/**/*.{js,mjs,ts}"
   ],
   "dynamicallyLoaded": [
+    "factory/bin/muse_workflow.js",
     "apps/web/src/lib/components/settings/*.svelte",
     "apps/web/src/lib/components/dialogs/*.svelte",
     "apps/web/src/lib/components/modals/*.svelte",

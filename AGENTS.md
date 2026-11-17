@@ -78,12 +78,14 @@ This file is the Codex-facing instruction layer for this repository.
 
 ## Software factory
 
-`/factory run` (in Claude Code via `.claude/skills/factory/SKILL.md` or in
+`/factory run` (in Claude Code via `.claude/skills/factory/SKILL.md`, in
 Antigravity (`agy`) via `.agent/skills/factory/SKILL.md` and
-`factory/bin/agy_workflow.py`) builds every open GitHub issue labeled `factory`
-through intake → spec → build → gate → review → approve, one PR per issue. State
-is in `factory/jobs/` (gitignored); `factory/bin/job` is its only writer, and
-both runtimes can resume jobs started by the other. Checks: `factory/checks.sh`.
+`factory/bin/agy_workflow.py`, or in Muse via
+`.agents/skills/factory-muse/SKILL.md` and `factory/bin/muse_workflow.js` —
+invoked there as `/factory-muse run`) builds every open GitHub issue labeled
+`factory` through intake → spec → build → gate → review → approve, one PR per
+issue. State is in `factory/jobs/` (gitignored); `factory/bin/job` is its only
+writer, and all runtimes can resume jobs started by another. Checks: `factory/checks.sh`.
 Dashboard: `cd factory && python3 -m http.server`, then open
 http://localhost:8000/dashboard.html.
 
