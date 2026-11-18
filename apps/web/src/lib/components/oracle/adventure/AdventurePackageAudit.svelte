@@ -11,11 +11,17 @@
   let mode = $state<Mode>("hidden");
   let warning = $state<HTMLElement>();
   let showButton = $state<HTMLButtonElement>();
+  let hideButton = $state<HTMLButtonElement>();
   const source = trackSourcePackage(() => manager);
+  const sessionPackageKey = $derived(
+    JSON.stringify([
+      manager.session?.id ?? null,
+      manager.session?.sourcePackage?.hash ?? null,
+    ]),
+  );
 
   $effect(() => {
-    void manager.session?.id;
-    void manager.session?.sourcePackage?.hash;
+    void sessionPackageKey;
     mode = "hidden";
   });
 
@@ -39,11 +45,17 @@
     await tick();
     showButton?.focus();
   }
+
+  async function reveal() {
+    mode = "revealed";
+    await tick();
+    hideButton?.focus();
+  }
 </script>
 
 {#if manager.session?.sourcePackage && source.current}
   <section
-    class="space-y-3 rounded-lg border border-theme-border p-4"
+    class="space-y-3 rounded-lg border border-theme-primary p-4"
     aria-labelledby="adventure-package-audit-heading"
     data-testid="adventure-package-audit"
   >
@@ -57,7 +69,7 @@
       <button
         bind:this={showButton}
         type="button"
-        class="flex min-h-10 items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="flex min-h-10 items-center gap-2 rounded border border-theme-primary px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-expanded="false"
         onclick={askToReveal}
       >
@@ -69,7 +81,7 @@
         bind:this={warning}
         role="alert"
         tabindex="-1"
-        class="space-y-3 rounded border border-theme-border p-3 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="space-y-3 rounded border border-theme-primary p-3 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
       >
         <p class="text-sm break-words text-theme-text">
           Spoiler warning: this reveals GM-only package content, including
@@ -78,14 +90,14 @@
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="min-h-10 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
-            onclick={() => (mode = "revealed")}
+            class="min-h-10 rounded border border-theme-primary px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            onclick={reveal}
           >
             Reveal GM details
           </button>
           <button
             type="button"
-            class="min-h-10 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            class="min-h-10 rounded border border-theme-primary px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
             onclick={cancel}
           >
             Cancel
@@ -94,8 +106,9 @@
       </div>
     {:else}
       <button
+        bind:this={hideButton}
         type="button"
-        class="flex min-h-10 items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="flex min-h-10 items-center gap-2 rounded border border-theme-primary px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-expanded="true"
         onclick={cancel}
       >

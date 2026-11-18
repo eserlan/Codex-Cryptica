@@ -4,10 +4,15 @@ import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svel
 /** Loads the session's pinned package, reloading when the session or hash changes. Call during component init. */
 export function trackSourcePackage(getManager: () => AdventureManager) {
   let pkg = $state<AdventureJsonV1 | null>(null);
+  const sourceKey = $derived(
+    JSON.stringify([
+      getManager().session?.id ?? null,
+      getManager().session?.sourcePackage?.hash ?? null,
+    ]),
+  );
   $effect(() => {
     const manager = getManager();
-    const hash = manager.session?.sourcePackage?.hash;
-    void manager.session?.id;
+    const [, hash] = JSON.parse(sourceKey) as [string | null, string | null];
     pkg = null;
     if (!hash) return;
     let stale = false;

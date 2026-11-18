@@ -84,6 +84,9 @@ describe("AdventurePackageAudit", () => {
     render(AdventurePackageAudit, { manager: packageManager(pkg, progress) });
     await press(await screen.findByRole("button", { name: "Show GM details" }));
     await press(screen.getByRole("button", { name: "Reveal GM details" }));
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Hide GM details" }),
+    );
     const root = screen.getByTestId("adventure-package-audit");
     expect(root.textContent).toContain("CLAIM-NOTE");
     expect(root.textContent).toContain("YARD-NOTE");
@@ -127,5 +130,23 @@ describe("AdventurePackageAudit", () => {
     expect(
       screen.getByTestId("adventure-package-audit").textContent,
     ).not.toContain("YARD-NOTE");
+  });
+
+  it("keeps the audit revealed when the same session and package are replaced", async () => {
+    const first = packageManager(pkg, progress);
+    const { rerender } = render(AdventurePackageAudit, { manager: first });
+    await press(await screen.findByRole("button", { name: "Show GM details" }));
+    await press(screen.getByRole("button", { name: "Reveal GM details" }));
+
+    const replacement = packageManager(pkg, progress);
+    replacement.session = { ...first.session! };
+    await rerender({ manager: replacement });
+
+    expect(
+      screen.getByRole("button", { name: "Hide GM details" }),
+    ).toBeTruthy();
+    expect(screen.getByTestId("adventure-package-audit").textContent).toContain(
+      "YARD-NOTE",
+    );
   });
 });
