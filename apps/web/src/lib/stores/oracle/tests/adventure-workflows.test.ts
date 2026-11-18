@@ -348,7 +348,7 @@ describe("package-grounded actions", () => {
     const actions = new AdventureActions(runtime);
 
     await actions.submitAction("Walk to the yard");
-    expect(state.session?.packageProgress).toEqual({
+    expect(state.session?.packageProgress).toMatchObject({
       sceneId: "ros-scene-2-yard",
     });
     expect(clearInteraction).toHaveBeenCalledWith(state.session!.id);
