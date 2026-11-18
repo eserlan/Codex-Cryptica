@@ -256,7 +256,7 @@ export function applyPackageProgressEvents(
       recordId: input.recordId,
       kind: input.kind,
       from: checked.current,
-      to: confirmed ? input.to : checked.current,
+      to: input.to,
       certainty: input.certainty,
       note,
       ...(input.supersedes ? { supersedes: input.supersedes } : {}),
