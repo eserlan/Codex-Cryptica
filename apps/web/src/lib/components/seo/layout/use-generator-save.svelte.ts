@@ -50,8 +50,12 @@ export function useGeneratorSave(deps: {
       generator_type: deps.getGeneratorType(),
       source: "save_confirmation",
     });
-    isSaving = false;
-    void navigate(resolve("") + redirectQuery);
+    // Stay "saving" while the page leaves; only a failed navigation resets it.
+    void Promise.resolve()
+      .then(() => navigate(resolve("") + redirectQuery))
+      .catch(() => {
+        isSaving = false;
+      });
   }
 
   function trackHeaderOpenCodex() {

@@ -105,16 +105,30 @@ describe("useGeneratorSave", () => {
       track.mock.calls.filter(([name]) => name === "save_to_codex"),
     ).toHaveLength(1);
     expect(navigate).toHaveBeenCalledTimes(1);
-    expect(save.isSaving).toBe(false);
+    // The page is leaving, so further clicks stay ignored.
+    expect(save.isSaving).toBe(true);
+    await save.handleSaveToCodex();
+    expect(saveOutput).toHaveBeenCalledTimes(1);
   });
 
-  it("navigates after saving a hub selection", () => {
+  it("re-enables saving when navigation fails", async () => {
+    saveOutput.mockResolvedValue("?q");
+    navigate.mockRejectedValue(new Error("nav failed"));
+    const { save } = setup();
+
+    await save.handleSaveToCodex();
+    await vi.waitFor(() => expect(save.isSaving).toBe(false));
+  });
+
+  it("navigates after saving a hub selection", async () => {
     saveHub.mockReturnValue("?hub");
     const { save } = setup();
 
     save.handleSaveHubToCodex([{ id: "e1" } as never]);
 
-    expect(navigate).toHaveBeenCalledWith(expect.stringContaining("?hub"));
+    await vi.waitFor(() =>
+      expect(navigate).toHaveBeenCalledWith(expect.stringContaining("?hub")),
+    );
   });
 
   it("does not save without a generated result", async () => {
