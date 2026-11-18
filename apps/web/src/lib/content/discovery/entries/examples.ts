@@ -536,6 +536,7 @@ export const exampleEntries: DiscoveryEntryInput[] = [
       "generator-one-shot-adventure-generator",
       "for-cosmic-horror",
       "for-starship-campaigns",
+      "for-mothership",
       "example-venting-helix",
     ],
     acknowledgedOverlap: [

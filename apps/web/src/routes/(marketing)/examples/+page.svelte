@@ -11,7 +11,7 @@
 
   const TITLE = "Generator examples";
   const DESCRIPTION =
-    "Curated, unedited output from the Codex Cryptica generators: settlements, factions and encounters you can read in full and take straight to the table.";
+    "Curated generator outputs and hand-written showcase scenarios from Codex Cryptica: settlements, factions, ships and adventures you can read in full and take straight to the table.";
   const SEO_IMAGE =
     "https://assets.codexcryptica.com/announcements/ship-cinder-wren.jpg";
   const SEO_IMAGE_ALT =
@@ -42,9 +42,9 @@
       >
         {TITLE}
       </h1>
-      <p class="text-lg leading-relaxed text-theme-muted">
-        {DESCRIPTION} Each page shows the full output, the settings that produced
-        it, and a short note on what makes it usable.
+      <p class="text-lg leading-relaxed text-theme-text">
+        {DESCRIPTION} Each page shows the full piece, the generator settings or scenario
+        setup behind it, and a short note on what makes it usable.
       </p>
     </div>
 
