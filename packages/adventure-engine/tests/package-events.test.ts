@@ -403,4 +403,19 @@ describe("package ledger secrecy", () => {
       errors: [{ code: "hidden-leakage" }],
     });
   });
+
+  it("allows ordinary narration containing a stored two-character note", () => {
+    const first = ok(
+      commit(packageSession(), [event(WICK, "resolved", { note: "in" })]),
+    );
+    const narration = proposal();
+    narration.narration = "The key is in the drawer.";
+    const result = applyCompletedTurn(first, narration, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(result.ok).toBe(true);
+  });
 });

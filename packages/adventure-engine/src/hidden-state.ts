@@ -169,21 +169,22 @@ function packageTextLeakage(
   secrets: readonly string[],
 ): HiddenLeakageFinding[] {
   const longSecrets: string[] = [];
-  const oneCharacterSecrets = new Set<string>();
-  const twoCharacterSecrets = new Set<string>();
+  const shortSecrets = new Set<string>();
+  const shortNumericSecrets: string[] = [];
   for (const secret of secrets) {
     const needle = normalize(secret);
     if (!needle) continue;
-    if (needle.length === 1) oneCharacterSecrets.add(needle);
-    else if (needle.length < 3) twoCharacterSecrets.add(needle);
-    else longSecrets.push(needle);
+    if (needle.length < 3) {
+      shortSecrets.add(needle);
+      if (/^\d+$/.test(needle)) shortNumericSecrets.push(needle);
+    } else longSecrets.push(needle);
   }
   const longMatcher = createBoundaryMatcher(longSecrets);
-  const shortMatcher = createBoundaryMatcher(twoCharacterSecrets);
+  const shortNumericMatcher = createBoundaryMatcher(shortNumericSecrets);
   return fields.flatMap(([field, value]) => {
     const text = normalize(value);
-    const exactSingleCharacter = oneCharacterSecrets.has(text);
-    return exactSingleCharacter || shortMatcher(text) || longMatcher(text)
+    const exactShortNote = shortSecrets.has(text);
+    return exactShortNote || shortNumericMatcher(text) || longMatcher(text)
       ? [{ field, secretId: "pinned-package-text" }]
       : [];
   });
