@@ -62,6 +62,27 @@ describe("approved adventure packages", () => {
     expect(screen.queryByRole("button", { name: /Resume/ })).toBeNull();
   });
 
+  it("offers creature entries only when encounters reference actors", async () => {
+    const none = setup();
+    const view = render(ApprovedAdventurePackages, {
+      library: none.library,
+      onStart: none.onStart,
+    });
+    expect(
+      screen.queryByRole("button", { name: "Create creature entries" }),
+    ).toBeNull();
+    view.unmount();
+    const withActors = setup(fixture("reference-one-shot"));
+    render(ApprovedAdventurePackages, {
+      library: withActors.library,
+      onStart: withActors.onStart,
+    });
+    expect(
+      screen.getByRole("button", { name: "Create creature entries" }),
+    ).toBeTruthy();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
   it("resumes the latest pinned session", async () => {
     const { library, hash, onStart, open } = setup();
     library.pinnedByHash = new Map([

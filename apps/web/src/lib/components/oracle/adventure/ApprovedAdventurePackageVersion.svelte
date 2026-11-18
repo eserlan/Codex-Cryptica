@@ -1,9 +1,11 @@
 <script lang="ts">
   import {
+    buildCreatureProposals,
     startSceneCandidates,
     type AdventureJsonV1,
     type StoredAdventurePackage,
   } from "@codex/adventure-engine";
+  import AdventureCreatureImportDialog from "./AdventureCreatureImportDialog.svelte";
   import AdventurePackageCard from "./AdventurePackageCard.svelte";
   import type { AdventurePackageLibrary } from "./adventure-package-library.svelte.js";
 
@@ -24,6 +26,10 @@
   const pinned = $derived(library.pinnedByHash.get(item.hash) ?? []);
   const latestPinned = $derived(pinned[0]);
   const candidates = $derived(startSceneCandidates(item.package));
+  const hasCreatures = $derived(
+    buildCreatureProposals(item.package).length > 0,
+  );
+  let creatureDialogOpen = $state(false);
   const hash8 = $derived(item.hash.slice(0, 8));
   const pageSize = 20;
   let selected = $state(0);
@@ -141,6 +147,16 @@
     >
       Start new session
     </button>
+    {#if hasCreatures}
+      <button
+        type="button"
+        data-testid="approved-package-creatures-{item.package.id}-{hash8}"
+        onclick={() => (creatureDialogOpen = true)}
+        class="min-h-10 rounded-lg border border-theme-border px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10"
+      >
+        Create creature entries
+      </button>
+    {/if}
     <button
       type="button"
       data-testid="approved-package-remove-{item.package.id}-{item.hash.slice(
@@ -154,4 +170,10 @@
       {library.removingHash === item.hash ? "Removing…" : "Remove version"}
     </button>
   </div>
+  {#if creatureDialogOpen}
+    <AdventureCreatureImportDialog
+      {item}
+      onClose={() => (creatureDialogOpen = false)}
+    />
+  {/if}
 </li>
