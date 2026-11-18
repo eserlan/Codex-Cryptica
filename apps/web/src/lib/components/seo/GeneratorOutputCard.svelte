@@ -530,10 +530,10 @@
       {:else if saveError}
         <div
           role="alert"
-          class="mt-6 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400"
+          class="mt-6 flex items-start gap-2 rounded-xl border border-theme-danger/40 bg-theme-danger/10 p-3 text-xs text-theme-text"
         >
           <span
-            class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0"
+            class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
             aria-hidden="true"
           ></span>
           <span>{saveError}</span>
