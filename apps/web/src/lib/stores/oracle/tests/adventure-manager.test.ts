@@ -30,9 +30,12 @@ async function startedProgress(startSceneId?: string) {
   const deps: any = dependencies();
   const savePinned = vi.fn(deps.repository.savePinned);
   deps.repository.savePinned = savePinned;
-  deps.packages = referencePackageCache(
-    async () => ({ package: multiStartPackage }) as any,
-  );
+  deps.packages = referencePackageCache(async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: multiStartPackage,
+    originFormat: "adventure-json/v1",
+  }));
   await new AdventureManager(deps).start({
     ...startInput,
     sourcePackage: packageRef,
