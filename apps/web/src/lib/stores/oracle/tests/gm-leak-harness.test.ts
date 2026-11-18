@@ -1,0 +1,212 @@
+import { describe, expect, it } from "vitest";
+import {
+  AdventureJsonV1Schema,
+  validateAdventureJson,
+} from "@codex/adventure-engine";
+import { minimalPackage } from "./adventure-fixtures";
+import { canaries, canaryReferencePackage } from "./gm-canary-fixture";
+import { assertNoGmLeak, collectGmOnlyStrings } from "./gm-leak-harness";
+
+const guarded = collectGmOnlyStrings(canaryReferencePackage);
+
+describe("canary fixture", () => {
+  it("is a valid package", () => {
+    expect(() =>
+      AdventureJsonV1Schema.parse(canaryReferencePackage),
+    ).not.toThrow();
+    const result = validateAdventureJson(canaryReferencePackage);
+    expect(result.ok).toBe(true);
+  });
+
+  it("is not targeted by any scene branch", () => {
+    const targets = canaryReferencePackage.scenes.flatMap((scene) =>
+      (scene.branches ?? []).map((branch) => branch.targetSceneId),
+    );
+    expect(targets).not.toContain("canary-scene");
+  });
+});
+
+describe("collectGmOnlyStrings", () => {
+  it("returns nothing for the minimal package", () => {
+    expect(collectGmOnlyStrings(minimalPackage)).toEqual([]);
+  });
+
+  it.each(canaries)(
+    "guards the $type canary on its record and field",
+    (canary) => {
+      expect(guarded).toContainEqual({
+        recordId: canary.recordId,
+        field: canary.field,
+        text: canary.token,
+      });
+    },
+  );
+
+  it("guards the rumour truth in both forms it can appear in", () => {
+    const truths = guarded.filter(
+      (entry) => entry.recordId === "canary-rumour" && entry.field === "truth",
+    );
+    expect(truths.map((entry) => entry.text)).toEqual([
+      "Truth: false",
+      '"truth":"false"',
+    ]);
+  });
+
+  it("guards the truth verdict true even though its label is short", () => {
+    const pkg = structuredClone(canaryReferencePackage);
+    pkg.rumours = [{ ...pkg.rumours[0]!, id: "r-true", truth: "true" }];
+    const truths = collectGmOnlyStrings(pkg)
+      .filter((entry) => entry.recordId === "r-true" && entry.field === "truth")
+      .map((entry) => entry.text);
+    expect(truths).toEqual(["Truth: true", '"truth":"true"']);
+    expect(() =>
+      assertNoGmLeak(collectGmOnlyStrings(pkg), "Truth: true", "label"),
+    ).toThrow(/r-true, field truth/);
+  });
+
+  it("guards a gm-only rumour's verdict only in its two label forms", () => {
+    const pkg = structuredClone(canaryReferencePackage);
+    pkg.rumours = [
+      {
+        ...pkg.rumours[0]!,
+        id: "r-partial",
+        text: "short",
+        truth: "partially-true",
+        visibility: "gm-only",
+      },
+    ];
+    const entries = collectGmOnlyStrings(pkg).filter(
+      (entry) => entry.recordId === "r-partial",
+    );
+    expect(entries.map((entry) => entry.text)).toEqual([
+      "Truth: partially-true",
+      '"truth":"partially-true"',
+    ]);
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "The rumour was only partially-true, they say.",
+        "bare phrase",
+      ),
+    ).not.toThrow();
+  });
+
+  it("keeps the reference secrets and drops nothing that is player-visible", () => {
+    const reference = guarded.filter(
+      (entry) => !entry.recordId.startsWith("canary-"),
+    );
+    expect(reference.length).toBeGreaterThanOrEqual(5);
+  });
+
+  it("keeps short protected values and de-duplicates", () => {
+    const pkg = structuredClone(canaryReferencePackage);
+    pkg.secrets = [
+      { ...pkg.secrets[0]!, id: "short", text: "Red key" },
+      { ...pkg.secrets[0]!, id: "dup", text: "A long enough secret." },
+      { ...pkg.secrets[0]!, id: "dup", text: "A long enough secret." },
+    ];
+    pkg.actors = [
+      {
+        ...pkg.actors[0]!,
+        id: "short-actor",
+        name: "Aldous Holt",
+        visibility: "gm-only",
+      },
+    ];
+    pkg.clues = [{ ...pkg.clues[0]!, id: "short-clue", reveals: "Red key" }];
+    const secrets = collectGmOnlyStrings(pkg).filter((e) =>
+      ["short", "dup", "short-actor", "short-clue"].includes(e.recordId),
+    );
+    expect(secrets).toContainEqual({
+      recordId: "short",
+      field: "text",
+      text: "Red key",
+    });
+    expect(secrets).toContainEqual({
+      recordId: "short-actor",
+      field: "name",
+      text: "Aldous Holt",
+    });
+    expect(secrets).toContainEqual({
+      recordId: "short-clue",
+      field: "reveals",
+      text: "Red key",
+    });
+    expect(secrets.filter((entry) => entry.recordId === "dup")).toHaveLength(1);
+    for (const token of ["Red key", "Aldous Holt"]) {
+      expect(() =>
+        assertNoGmLeak(secrets, token, "short protected value"),
+      ).toThrow();
+    }
+  });
+});
+
+describe("assertNoGmLeak", () => {
+  const first = canaries[0]!;
+
+  it("throws for a string output and names the record and field", () => {
+    expect(() =>
+      assertNoGmLeak(guarded, `She whispers ${first.token}.`, "narration"),
+    ).toThrow(
+      `GM-only leak in "narration": record ${first.recordId}, field ${first.field}`,
+    );
+  });
+
+  it("throws for a nested object output and names the record and field", () => {
+    const secret = canaries.find((c) => c.type === "secret")!;
+    expect(() =>
+      assertNoGmLeak(
+        guarded,
+        { turns: [{ narration: { text: secret.token } }] },
+        "transcript",
+      ),
+    ).toThrow(
+      `GM-only leak in "transcript": record ${secret.recordId}, field ${secret.field}`,
+    );
+  });
+
+  it("ignores case and whitespace runs", () => {
+    expect(() =>
+      assertNoGmLeak(
+        [{ recordId: "r", field: "text", text: "The vault holds a key" }],
+        "the   VAULT\n holds a key",
+        "spacing",
+      ),
+    ).toThrow(/record r, field text/);
+  });
+
+  it("catches the rumour verdict in its flattened JSON form", () => {
+    expect(() =>
+      assertNoGmLeak(guarded, { rumour: { truth: "false" } }, "json"),
+    ).toThrow(/canary-rumour, field truth/);
+  });
+
+  it("catches a pretty-printed JSON string containing a rumour verdict", () => {
+    expect(() =>
+      assertNoGmLeak(
+        guarded,
+        JSON.stringify({ rumour: { truth: "false" } }, null, 2),
+        "pretty JSON string",
+      ),
+    ).toThrow(/canary-rumour, field truth/);
+  });
+
+  it("throws for leaked nested text of a GM-only record", () => {
+    for (const type of ["branch", "solution", "connection"]) {
+      const canary = canaries.find((c) => c.type === type)!;
+      expect(() =>
+        assertNoGmLeak(guarded, { a: [canary.token] }, "nested"),
+      ).toThrow(`record ${canary.recordId}, field ${canary.field}`);
+    }
+  });
+
+  it("passes a clean output", () => {
+    expect(() =>
+      assertNoGmLeak(
+        guarded,
+        { narration: "A lantern flickers at the road's end." },
+        "clean",
+      ),
+    ).not.toThrow();
+  });
+});
