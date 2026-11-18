@@ -741,9 +741,7 @@ describe("GeneratorOutputCard", () => {
   });
 
   describe("Wave 1 continuation callout", () => {
-    function renderCard(
-      overrides: Partial<Record<string, unknown>> = {},
-    ) {
+    function renderCard(overrides: Partial<Record<string, unknown>> = {}) {
       const onSaveToCodex = vi.fn();
       const result = render(GeneratorOutputCard, {
         props: {
@@ -788,10 +786,10 @@ describe("GeneratorOutputCard", () => {
       expect(callout.textContent).toContain(
         "No account needed; stored locally in this browser.",
       );
+      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
       expect(
-        container.querySelectorAll("#save-to-codex-btn"),
-      ).toHaveLength(1);
-      expect(screen.queryByRole("button", { name: "Save to Codex" })).toBeNull();
+        screen.queryByRole("button", { name: "Save to Codex" }),
+      ).toBeNull();
 
       const addBtn = screen.getByRole("button", { name: "Add to my Codex" });
       expect(addBtn.id).toBe("save-to-codex-btn");
@@ -812,7 +810,9 @@ describe("GeneratorOutputCard", () => {
         { generatorType: "point-crawl", canFollowUp: true },
       ]) {
         const { unmount } = renderCard(overrides);
-        expect(screen.queryByTestId("generator-continuation-callout")).toBeNull();
+        expect(
+          screen.queryByTestId("generator-continuation-callout"),
+        ).toBeNull();
         expect(
           screen.getByRole("button", { name: "Save to Codex" }),
         ).toBeTruthy();

@@ -21,7 +21,7 @@
 >
   <div class="flex flex-col gap-4">
     <div class="space-y-1.5">
-      <div class="flex items-center gap-2 text-theme-primary">
+      <div class="flex items-center gap-2 text-theme-text">
         <span
           class="icon-[lucide--book-plus] h-4 w-4 shrink-0"
           aria-hidden="true"
@@ -81,10 +81,10 @@
       </button>
 
       <p
-        class="flex items-center gap-1.5 text-xs text-theme-text/75 leading-snug"
+        class="flex items-center gap-1.5 text-xs text-theme-text leading-snug"
       >
         <span
-          class="icon-[lucide--hard-drive] h-3.5 w-3.5 shrink-0 text-theme-text/60"
+          class="icon-[lucide--hard-drive] h-3.5 w-3.5 shrink-0 text-theme-text"
           aria-hidden="true"
         ></span>
         <span>{config.localFirstNotice}</span>

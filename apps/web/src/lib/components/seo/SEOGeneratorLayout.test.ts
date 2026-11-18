@@ -1210,7 +1210,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       await tick();
       expect(screen.queryByTestId("generator-continuation-callout")).toBeNull();
       expect(screen.queryByText("Add to my Codex")).toBeNull();
-      expect(screen.getByRole("button", { name: "Save to Codex" })).toBeTruthy();
+      expect(
+        screen.getByRole("button", { name: "Save to Codex" }),
+      ).toBeTruthy();
 
       // Failed explicit generation must keep the callout hidden
       await vi.waitFor(() => {
@@ -1243,7 +1245,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         screen.getByText("No account needed; stored locally in this browser."),
       ).toBeTruthy();
       expect(document.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
-      expect(screen.queryByRole("button", { name: "Save to Codex" })).toBeNull();
+      expect(
+        screen.queryByRole("button", { name: "Save to Codex" }),
+      ).toBeNull();
     });
 
     it("never shows the continuation callout for variant='names' even after explicit generation", async () => {
@@ -1306,13 +1310,17 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         });
 
         await vi.waitFor(() => {
-        expect(
-          document.querySelector("#generate-button")?.hasAttribute("disabled"),
-        ).toBe(false);
-      });
-      await fireEvent.click(document.querySelector("#generate-button")!);
+          expect(
+            document
+              .querySelector("#generate-button")
+              ?.hasAttribute("disabled"),
+          ).toBe(false);
+        });
+        await fireEvent.click(document.querySelector("#generate-button")!);
         await vi.waitFor(() => {
-          expect(screen.getByRole("button", { name: "Add to my Codex" })).toBeTruthy();
+          expect(
+            screen.getByRole("button", { name: "Add to my Codex" }),
+          ).toBeTruthy();
         });
 
         await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
@@ -1326,7 +1334,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
 
         expect(document.querySelector('[role="dialog"]')).toBeNull();
         expect(
-          document.querySelector("#copy-markdown-btn")?.hasAttribute("disabled"),
+          document
+            .querySelector("#copy-markdown-btn")
+            ?.hasAttribute("disabled"),
         ).toBe(false);
         await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
         expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
@@ -1367,11 +1377,13 @@ describe("SEOGeneratorLayout Theming Sync", () => {
         });
 
         await vi.waitFor(() => {
-        expect(
-          document.querySelector("#generate-button")?.hasAttribute("disabled"),
-        ).toBe(false);
-      });
-      await fireEvent.click(document.querySelector("#generate-button")!);
+          expect(
+            document
+              .querySelector("#generate-button")
+              ?.hasAttribute("disabled"),
+          ).toBe(false);
+        });
+        await fireEvent.click(document.querySelector("#generate-button")!);
         await vi.waitFor(() => {
           expect(screen.getByText("Keep developing this origin")).toBeTruthy();
         });
