@@ -331,6 +331,12 @@ export const theLastShift: ExampleConfigInput = {
       description: "Keep ships, crews and stations connected across sessions.",
       href: "/for/starship-campaigns",
     },
+    {
+      title: "Codex Cryptica for Mothership",
+      description:
+        "Warden prep for sci-fi horror scenarios: ships, crew, evidence and escalating threats.",
+      href: "/for/mothership",
+    },
   ],
   relatedExamples: [
     "the-venting-helix-derelict-hazard",
