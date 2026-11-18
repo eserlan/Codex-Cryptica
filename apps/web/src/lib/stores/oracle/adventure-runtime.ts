@@ -5,6 +5,7 @@ import {
 import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
 import {
+  packageProgressIndex,
   adventureJsonGmOnlyText,
   adventureJsonRecordIds,
   retrieveAdventureJsonContext,
@@ -102,10 +103,14 @@ export class AdventureRuntime {
     };
   }
 
-  /** Package guards and scene IDs for validating the model's player-facing output. */
+  /** Package guards, scene IDs and progress-ledger indexes for the cached package. */
   private packageMetadata(): Pick<
     CommitMetadata,
-    "packageSceneIds" | "packageRecordIds" | "packageGmOnlyText"
+    | "packageSceneIds"
+    | "packageRecordIds"
+    | "packageGmOnlyText"
+    | "packageRecordKinds"
+    | "packageSceneBranches"
   > {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
@@ -131,6 +136,7 @@ export class AdventureRuntime {
       ]),
     ];
     return {
+      ...packageProgressIndex(pkg),
       packageSceneIds: pkg.scenes.map((scene) => scene.id),
       packageRecordIds: adventureJsonRecordIds(pkg),
       packageGmOnlyText,
