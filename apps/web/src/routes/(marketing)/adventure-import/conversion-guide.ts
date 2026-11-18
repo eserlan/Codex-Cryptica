@@ -1,3 +1,5 @@
+import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
+
 /**
  * A trimmed, schema-valid answer shown inside the prompt so a model can
  * pattern-match the shape. Exported so tests can prove it stays valid.
@@ -118,13 +120,16 @@ Output contract (read this first):
 - Include all 11 collection arrays, using [] when empty.
 - Use only the field names and exact values listed below. Do not add properties.
 - Never invent facts. When the source is unclear, record it in "unresolved".
-- Never shorten the conversion by dropping or merging entries. If you cannot read the attached source, or cannot fit all of it in one file or reply, answer with one plain sentence saying which it is (cannot read, or too large) and point to the staged method at https://codexcryptica.com/adventure-import#long-adventures, instead of sending truncated or guessed JSON. This failure sentence is the sole exception to the JSON-only output rules below.
+- Never shorten the conversion by dropping or merging entries. If the source is unreadable or inaccessible, name the missing input or page range and ask for readable text or a smaller upload. Never guess.
+- If a faithful full conversion will not fit, start staged conversion now. Do not just tell the user to use the staged method.
+
+${AUTOMATIC_STAGING_RULES}
 
 Shape of a valid answer (trimmed: yours will have more entries and fields). Its ids, codes and wording are only illustrative; use your own, taken from the source:
 ${EXAMPLE_JSON}
 
 Strict output rules:
-1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). The one-sentence failure response above is the sole exception.
+1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). Keep staging checkpoints and unreadable-source requests separate from all JSON.
 2. Top-level fields:
    - Required: "formatVersion": "adventure-json/v1", "id" (/^[a-zA-Z0-9_-]{3,64}$/), "title" (1-200 chars), "version" (strict SemVer, e.g. "1.0.0"), "premise": { "background": string, "hook": string, "theme"?: string[], "tone"?: string }, "source": { "title": string, "authors"?: string[], "publisher"?: string, "publishedDate"?: string, "url"?: string, "license"?: string, "documentHash"?: string (64 lowercase hex chars) }.
    - Optional: "description": string, "system": { "name": string, "targetParty"?: { "sizeMin"?: integer >= 1, "sizeMax"?: integer >= 1, "levelMin"?: integer >= 0, "levelMax"?: integer >= 0 } }.

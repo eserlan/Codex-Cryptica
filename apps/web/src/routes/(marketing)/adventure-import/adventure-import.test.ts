@@ -325,14 +325,29 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         prompt.indexOf("10. Game mechanics and maps:"),
       );
       expect(prompt.slice(check)).toContain('Every "secrets" entry');
-      expect(prompt).toContain("cannot fit all of it in one file or reply");
-      expect(prompt).toContain("instead of sending truncated or guessed JSON");
+    });
+
+    it("starts staging on overflow and keeps a checkpoint out of import JSON", () => {
+      expect(prompt).toContain("start staged conversion now");
+      expect(prompt).toContain("make a numbered inventory");
+      expect(prompt).toContain("Define each entry only in its owning chunk");
+      expect(prompt).toContain("Continue with chunk 01");
+      expect(prompt).toContain("exact top-level metadata values");
+      expect(prompt).toContain("convert only the requested chunk");
       expect(prompt).toContain(
-        "This failure sentence is the sole exception to the JSON-only output rules below.",
+        "Assemble only after every planned chunk is present",
       );
+      expect(prompt).toContain("label the result unvalidated");
       expect(prompt).toContain(
-        "The one-sentence failure response above is the sole exception.",
+        "Never label an inventory, partial chunk set, or truncated reply as the final adventure",
       );
+      expect(prompt).not.toContain("the sole exception");
+    });
+
+    it("asks for missing source material without inventing a conversion", () => {
+      expect(prompt).toContain("name the missing input or page range");
+      expect(prompt).toContain("ask for readable text or a smaller upload");
+      expect(prompt).toContain("Never guess.");
     });
 
     it("guards against over-hiding, copied example codes and missing items", () => {

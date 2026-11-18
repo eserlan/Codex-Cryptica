@@ -8,6 +8,12 @@
 
 export const STAGED_ANCHOR = "long-adventures";
 
+export const AUTOMATIC_STAGING_RULES = `Automatic staging when the full conversion will not fit:
+1. Before generating JSON, inspect the source and make a numbered inventory of all visible sections and physical page ranges. Flag unreadable or unseen pages separately. Split dense sections into small, non-overlapping chunks. If a page has two sections, say which part each chunk owns. Write the exact top-level metadata values in the checkpoint, including the player-safe premise. Reuse them unchanged in every chunk. Assign one ID and defining chunk per shared entity.
+2. Convert in source order. Each chunk is a separate JSON object with the same top-level metadata and all 11 arrays. Name files chunk-01.json, chunk-02.json, and so on. Define each entry only in its owning chunk. References to other known chunk IDs may remain pending until assembly. Record every completed chunk and any omitted material. Never present an unfinished chunk as complete. If a chunk is too large, split it and retry from the start.
+3. If you can create files and keep working within the available limits, save the inventory and proceed with the chunks now. Otherwise return the inventory and checkpoint as plain text, with the next chunk's name and source range and the exact instruction "Continue with chunk 01" (use the actual next number). On continuation, use the existing checkpoint and convert only the requested chunk. Deliver one chunk as raw JSON if you cannot create files. Keep progress notes in separate messages or files, never in the JSON. Ask only for a source range or checkpoint you no longer have.
+4. Assemble only after every planned chunk is present, coverage has been checked against the source, and shared metadata and IDs agree. Resolve references against the combined package. If you can run the v1 schema and semantic validator, validate before calling the file ready. Otherwise label the result unvalidated and ask the user to check it in Codex Cryptica. If you cannot assemble reliably, list the saved chunks and point to the assembler at https://codexcryptica.com/adventure-import#long-adventures. Never label an inventory, partial chunk set, or truncated reply as the final adventure.`;
+
 export const STAGED_INVENTORY_PROMPT = `Stage 1 of 3: inventory only. Do not convert anything yet.
 
 Read the adventure I attached and list its parts so I can convert it in separate passes.
