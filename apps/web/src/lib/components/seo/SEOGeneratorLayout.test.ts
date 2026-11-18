@@ -1152,9 +1152,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       expect(gotoMock).toHaveBeenCalledTimes(1);
       expect(gotoMock.mock.calls[0][0]).toContain("utm_medium=save-to-vault");
       expect(document.querySelector('[role="dialog"]')).toBeNull();
-      expect(document.body.textContent).not.toContain(
-        "Saved to your local Codex vault",
-      );
+      expect(document.body.textContent).not.toContain("Saved to your local");
       expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
         "open_codex",
         expect.objectContaining({
