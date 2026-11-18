@@ -1591,7 +1591,7 @@ describe("Landing Page Registry", () => {
       );
 
       expect(entry).toBeDefined();
-      expect(entry?.badge).toBe("Example");
+      expect(entry?.badge).toBeUndefined();
       expect(entry?.title.endsWith("Example")).toBe(false);
       expect(entry?.description).toMatch(/original/i);
       expect(entry?.description).toMatch(/system-neutral/i);

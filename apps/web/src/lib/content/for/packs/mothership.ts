@@ -148,7 +148,6 @@ export const mothership: LandingPageConfig = {
       description:
         "An original, system-neutral salvage scenario with connected location nodes, clues and an escalation clock a Warden can run straight from notes.",
       href: "/examples/the-last-shift-sci-fi-horror-scenario",
-      badge: "Example",
     },
   ],
   cta: {
