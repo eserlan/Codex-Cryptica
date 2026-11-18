@@ -125,7 +125,7 @@
       useAI: boolean;
       onPreview?: (preview: GeneratorOutput) => void;
     }) => Promise<GeneratorOutput>;
-    formFields: Snippet<[() => void]>;
+    formFields: Snippet<[() => void, boolean]>;
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
@@ -237,6 +237,7 @@
   const save = useGeneratorSave({
     getGeneratorType: () => generatorType,
     getGeneratedData: () => session.generatedData,
+    isGenerationInProgress: () => session.isBusy,
     getDocumentLayout: () => documentLayout,
     exportDiagramImage: () =>
       diagrams?.exportDataUrl() ?? Promise.resolve(undefined),
@@ -298,6 +299,7 @@
     generatedData={session.generatedData}
     aiFallbackDismissed={session.aiFallbackDismissed}
     isBusy={session.showOutputLoading}
+    isGenerationInProgress={session.isBusy}
     isExampleDraft={session.isExampleDraft}
     {generatedSingular}
     {variant}

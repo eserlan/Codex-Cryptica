@@ -41,6 +41,7 @@
     generatedData,
     aiFallbackDismissed,
     isBusy,
+    isGenerationInProgress = isBusy,
     isExampleDraft,
     generatedSingular,
     variant,
@@ -76,6 +77,7 @@
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
     isBusy: boolean;
+    isGenerationInProgress?: boolean;
     isExampleDraft: boolean;
     generatedSingular: string;
     variant: "default" | "names";
@@ -234,6 +236,7 @@
                 <button
                   type="button"
                   onclick={onSaveToCodex}
+                  disabled={isGenerationInProgress}
                   class="px-4 py-2 bg-theme-primary text-theme-on-primary font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
                   id="save-to-codex-btn"
                   title="Import this draft into your local Codex Cryptica vault"

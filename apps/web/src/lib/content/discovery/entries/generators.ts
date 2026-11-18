@@ -900,6 +900,54 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "generator-urban-fantasy-faction",
+    pageKind: "generator",
+    canonicalPath: "/generators/urban-fantasy-faction",
+    primaryIntent: "urban fantasy faction generator",
+    intentAliases: [
+      "modern fantasy faction generator",
+      "supernatural faction generator",
+      "hidden-world faction generator",
+      "mage cabal generator",
+      "occult faction generator",
+      "supernatural city faction generator",
+    ],
+    audience: "Game masters creating modern supernatural campaigns",
+    userJob: "create",
+    uniqueValue:
+      "Builds modern city-scale supernatural institutions and factions with civic bases, urban resources, competing agendas and hooks, distinct from general factions, grimdark institutions and vampire clans.",
+    parentCluster: "faction-creation",
+    relatedIntents: [
+      "generator-faction",
+      "generator-dark-fantasy-faction",
+      "generator-vampire-clan",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "generator-faction",
+        reason:
+          "The general faction generator supports many genres; this page specifically builds modern city institutions and hidden-world supernatural politics.",
+      },
+      {
+        with: "generator-dark-fantasy-faction",
+        reason:
+          "Dark fantasy centres on grim institutions and moral compromise; this page centres on contemporary civic systems, street-level magic, investigation and diplomacy.",
+      },
+      {
+        with: "generator-vampire-clan",
+        reason:
+          "Vampire clans are one supernatural group; this generator covers many faction types and does not assume vampires or horror.",
+      },
+      {
+        with: "tools-vampire-clan-generator",
+        reason:
+          "The legacy tool is a vampire-only entry point; this page builds varied modern city institutions and supernatural factions rather than a vampire clan.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "hub-fantasy",
     pageKind: "hub",
     canonicalPath: "/generators/fantasy",

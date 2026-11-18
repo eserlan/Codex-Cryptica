@@ -180,6 +180,17 @@ export {
   type ResolvedDarkFaction,
 } from "./public-faction";
 export {
+  buildUrbanFantasyFactionPrompt,
+  parseUrbanFantasyFactionResponse,
+  generateUrbanFantasyFactionLocal,
+  resolveUrbanFantasyFaction,
+  urbanFantasyFactionConfig,
+  urbanFantasyFactionSchema,
+  type UrbanFantasyFactionGeneratorOptions,
+  type UrbanFantasyFactionPrompt,
+  type ResolvedUrbanFantasyFaction,
+} from "./public-urban-fantasy-faction";
+export {
   factionRosterConfig,
   buildFactionRosterPrompt,
   parseFactionRosterResponse,

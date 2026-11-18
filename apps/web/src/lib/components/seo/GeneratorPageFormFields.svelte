@@ -24,6 +24,7 @@
   import VampireFormFields from "#lib/components/seo/VampireFormFields.svelte";
   import NomadClanFormFields from "#lib/components/seo/NomadClanFormFields.svelte";
   import DarkFactionFormFields from "#lib/components/seo/DarkFactionFormFields.svelte";
+  import UrbanFantasyFactionFormFields from "#lib/components/seo/UrbanFantasyFactionFormFields.svelte";
   import NameFormFields from "#lib/components/seo/NameFormFields.svelte";
   import NPCFormFields from "#lib/components/seo/NPCFormFields.svelte";
   import PantheonFormFields from "#lib/components/seo/PantheonFormFields.svelte";
@@ -95,6 +96,7 @@
     activeTheme = $bindable(),
     urlHubTheme,
     trigger,
+    isBusy,
     npc = $bindable(),
     settlement = $bindable(),
     magicItem = $bindable(),
@@ -118,6 +120,7 @@
     vampireClan = $bindable(),
     nomadClan = $bindable(),
     darkFaction = $bindable(),
+    urbanFantasyFaction = $bindable(),
     names = $bindable(),
     dndNpc = $bindable(),
     pantheon = $bindable(),
@@ -155,6 +158,7 @@
     activeTheme: string;
     urlHubTheme?: string;
     trigger: () => void;
+    isBusy: boolean;
     npc: ModeState & StringState;
     settlement: StringState;
     magicItem: StringState;
@@ -178,6 +182,7 @@
     vampireClan: StringState;
     nomadClan: StringState;
     darkFaction: StringState;
+    urbanFantasyFaction: StringState;
     names: StringState;
     dndNpc: ModeState & StringState;
     pantheon: PantheonState;
@@ -544,6 +549,16 @@
       bind:scope={darkFaction.scope}
       bind:moralPosture={darkFaction.moralPosture}
       bind:campaignContext={darkFaction.campaignContext}
+      onSurprise={trigger}
+    />
+  {:else if slug === "urban-fantasy-faction"}
+    <UrbanFantasyFactionFormFields
+      bind:mode={urbanFantasyFaction.mode}
+      bind:factionType={urbanFantasyFaction.factionType}
+      bind:scope={urbanFantasyFaction.scope}
+      bind:moralPosture={urbanFantasyFaction.moralPosture}
+      bind:campaignContext={urbanFantasyFaction.campaignContext}
+      {isBusy}
       onSurprise={trigger}
     />
   {/if}

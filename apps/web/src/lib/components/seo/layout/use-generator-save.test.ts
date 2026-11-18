@@ -22,12 +22,13 @@ vi.mock("#lib/stores/session-hub.svelte.js", () => ({
 
 import { useGeneratorSave } from "./use-generator-save.svelte";
 
-function setup(options: { hasData?: boolean } = {}) {
+function setup(options: { hasData?: boolean; isGenerating?: boolean } = {}) {
   const setError = vi.fn();
   const save = useGeneratorSave({
     getGeneratorType: () => "npc",
     getGeneratedData: () =>
       (options.hasData === false ? null : { title: "Mira" }) as never,
+    isGenerationInProgress: () => options.isGenerating ?? false,
     getDocumentLayout: () => ({ content: "Body" }) as never,
     exportDiagramImage: async () => undefined,
     setError,
@@ -66,6 +67,15 @@ describe("useGeneratorSave", () => {
 
   it("does not save without a generated result", async () => {
     const { save } = setup({ hasData: false });
+
+    await save.handleSaveToCodex();
+
+    expect(saveOutput).not.toHaveBeenCalled();
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  it("does not save a streamed preview while generation is still in progress", async () => {
+    const { save } = setup({ isGenerating: true });
 
     await save.handleSaveToCodex();
 
