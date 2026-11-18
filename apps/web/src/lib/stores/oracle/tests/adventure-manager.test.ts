@@ -60,7 +60,7 @@ describe("AdventureManager", () => {
     deps.repository.savePinned = savePinned;
     deps.packages = referencePackageCache(async () => ({
       status: "approved",
-      hash: "a".repeat(64),
+      hash: packageRef.hash,
       package: { ...referencePackage, scenes: [] },
     }));
     const manager = new AdventureManager(deps);
