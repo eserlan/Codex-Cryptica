@@ -297,6 +297,28 @@ const placeMoveSchema = z
     message: "A move needs a placeId or a name.",
   });
 
+/** Package-authored IDs are kept verbatim: no trimming and no length cap. */
+const packageId = z.string().min(1);
+const packageRecordKind = z.enum(["scene", "encounter", "clue", "secret"]);
+const packageStatus = z.enum([
+  "unvisited",
+  "available",
+  "active",
+  "resolved",
+  "altered",
+  "skipped",
+]);
+const packageEventProposalSchema = z
+  .object({
+    recordId: packageId,
+    kind: packageRecordKind,
+    to: packageStatus,
+    certainty: z.enum(["claimed", "confirmed"]),
+    note: z.string().trim().min(1).max(240),
+    supersedes: packageId.optional(),
+  })
+  .strict();
+
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
@@ -321,6 +343,7 @@ const completeProposalSchema = z.object({
   provisionalFacts: z.array(newProvisionalFactSchema),
   sourceRecordIds: z.array(id),
   suggestedActions: z.array(text).length(3).optional(),
+  packageEvents: z.array(packageEventProposalSchema).max(8).optional(),
 });
 
 const rollProposalSchema = z.object({
@@ -403,17 +426,6 @@ const sourcePackageRefSchema = z
   })
   .strict();
 
-const packageRecordKind = z.enum(["scene", "encounter", "clue", "secret"]);
-const packageStatus = z.enum([
-  "unvisited",
-  "available",
-  "active",
-  "resolved",
-  "altered",
-  "skipped",
-]);
-/** Package-authored IDs are kept verbatim: no trimming and no length cap. */
-const packageId = z.string().min(1);
 const packageProgressSchema = z
   .object({
     sceneId: packageId,

@@ -72,6 +72,10 @@ describe("package-grounded prompt", () => {
       "rumour truths and clue reveals",
       "internal references and must never appear",
       "visiblePatch.packageSceneId",
+      "packageEvents",
+      '"claimed"',
+      "supersedes",
+      "GM-ONLY package progress",
     ]) {
       expect(behavior).toContain(fragment);
     }

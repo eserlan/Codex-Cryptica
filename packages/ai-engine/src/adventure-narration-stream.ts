@@ -86,7 +86,10 @@ export function publishAdventureNarration(
   buffer: string,
   signal?: AbortSignal,
 ): void {
-  if (signal?.aborted) return;
+  // Package turns may propose new GM-only event notes in the same response.
+  // Those notes are unavailable to this prefix-only guard, so do not publish
+  // any narration until the completed proposal has passed the final guard.
+  if (signal?.aborted || request.session.sourcePackage) return;
   const narration = extractAdventureNarrationPrefix(buffer);
   if (
     narration &&
