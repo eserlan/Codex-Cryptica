@@ -158,15 +158,8 @@ describe("importCreatures", () => {
   it("reuses a title match despite repeated internal whitespace", () => {
     const packageWithSpaces = {
       ...pkg,
-      actors: [
-        {
-          ...pkg.actors[0]!,
-          name: "Guard  Wolf",
-        },
-      ],
-      encounters: [
-        { ...pkg.encounters[0]!, actorIds: ["a1"] },
-      ],
+      actors: [{ ...pkg.actors[0]!, name: "Guard  Wolf" }],
+      encounters: [{ ...pkg.encounters[0]!, actorIds: ["a1"] }],
     } as AdventureJsonV1;
     const choices = initialCreatureChoices(
       packageWithSpaces,
