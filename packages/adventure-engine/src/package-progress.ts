@@ -408,28 +408,32 @@ function supersedeActorTarget(
   return events.some((e) => e.supersedes === target.id) ? null : target;
 }
 
+function effectiveActorStatus(
+  events: readonly PackageActorEvent[],
+  actorId: string,
+  current: PackageActorState,
+  target: PackageActorEvent | undefined,
+): ActorProgressStatus {
+  if (!target) return current.status;
+  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  return replayActorState(events, actorId, superseded, target.id).status;
+}
+
 function actorTransitionAllowed(
   events: readonly PackageActorEvent[],
   input: ActorProgressInput,
   current: PackageActorState,
   target: PackageActorEvent | undefined,
 ): boolean {
-  if (input.certainty !== "confirmed" || input.status === undefined) {
-    return true;
+  if (input.certainty !== "confirmed") return true;
+  const baseline = effectiveActorStatus(events, input.actorId, current, target);
+  if (input.status === undefined) {
+    return !(baseline === "dead" && input.disposition !== undefined);
   }
-  if (!target)
-    return ALLOWED_ACTOR_STATUS[current.status].includes(input.status);
-  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
-  const baseline = replayActorState(
-    events,
-    input.actorId,
-    superseded,
-    target.id,
-  );
-  return (
-    baseline.status === input.status ||
-    ALLOWED_ACTOR_STATUS[baseline.status].includes(input.status)
-  );
+  return target
+    ? baseline === input.status ||
+        ALLOWED_ACTOR_STATUS[baseline].includes(input.status)
+    : ALLOWED_ACTOR_STATUS[baseline].includes(input.status);
 }
 
 type ActorChecked =

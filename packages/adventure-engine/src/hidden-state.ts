@@ -163,6 +163,12 @@ export function detectPackageLeakage(
       ...(session?.packageProgress?.actorEvents ?? []).map(
         (event) => event.note,
       ),
+      ...(session?.packageProgress?.actorEvents ?? []).flatMap((event) =>
+        event.fact ? [event.fact] : [],
+      ),
+      ...(session?.packageProgress?.actors ?? []).flatMap(
+        (actor) => actor.facts,
+      ),
     ]),
     ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
   ];

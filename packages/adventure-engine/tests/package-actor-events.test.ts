@@ -325,6 +325,59 @@ describe("actor progress transitions and corrections", () => {
     );
   });
 
+  it("blocks confirmed disposition changes on a dead actor without supersedes", () => {
+    const died = ok(
+      commitActors(packageSession(), [
+        {
+          actorId: MAREN,
+          status: "dead",
+          disposition: "wary",
+          certainty: "confirmed",
+          note: "Maren fell into the millrace.",
+        },
+      ]),
+    );
+    const rejected = ok(
+      commitActors(
+        died,
+        [
+          {
+            actorId: MAREN,
+            disposition: "allied",
+            certainty: "confirmed",
+            note: "Trying to change disposition while dead.",
+          },
+        ],
+        { turnId: "turn-2" },
+      ),
+    );
+    expect(rejected.turns.at(-1)?.dropped).toEqual([
+      `actorEvents: transition not allowed ${MAREN}`,
+    ]);
+    expect(actorOf(rejected.packageProgress, MAREN)?.disposition).toBe("wary");
+  });
+
+  it("rejects later turns that echo a stored remembered fact", () => {
+    const saved = ok(
+      commitActors(packageSession(), [
+        {
+          actorId: MAREN,
+          fact: "Secretly keeps the brass sluice key.",
+          certainty: "confirmed",
+          note: "Maren hid the key.",
+        },
+      ]),
+    );
+    const leaked = commitActors(saved, [], {
+      turnId: "turn-2",
+      narration: "You recall that she secretly keeps the brass sluice key.",
+    });
+    expect(leaked.ok).toBe(false);
+    if (!leaked.ok) {
+      expect(leaked.errors.some((e) => e.code === "hidden-leakage")).toBe(true);
+    }
+  });
+
   it("records claimed actor events without mutating active state", () => {
     const claimed = ok(
       commitActors(packageSession(), [

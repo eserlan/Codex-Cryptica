@@ -307,9 +307,11 @@ describe("GM-only secrecy outputs: follow-ups", () => {
             },
           ],
         },
-        // Attempt to echo a stored actorEvent note in a later turn; must be rejected and retried.
+        // Attempt to echo a stored actorEvent note, then a stored fact; both must be rejected and retried.
         turn(`The ferryman whispers: ${secretNote}`),
         turn("The ferryman says nothing more."),
+        turn(`The ferryman mentions: ${secretFact}`),
+        turn("The river mist thickens."),
       );
       await play.start();
       await play.manager.submitAction("Observe Maren");
@@ -339,7 +341,14 @@ describe("GM-only secrecy outputs: follow-ups", () => {
       expect(play.session.turns.at(-1)?.narration).toBe(
         "The ferryman says nothing more.",
       );
-      assertNoGmLeak(actorGuarded, play.manager.transcript, "after retry");
+      assertNoGmLeak(actorGuarded, play.manager.transcript, "after note retry");
+
+      await play.manager.submitAction("Ask about the sluice");
+      expect(play.manager.errorMessage).toBeNull();
+      expect(play.session.turns.at(-1)?.narration).toBe(
+        "The river mist thickens.",
+      );
+      assertNoGmLeak(actorGuarded, play.manager.transcript, "after fact retry");
     } finally {
       play.stop();
     }
