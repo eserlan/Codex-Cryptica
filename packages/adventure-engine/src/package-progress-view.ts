@@ -179,10 +179,14 @@ function indexAuditRecords(
 ) {
   const statuses = new Map<string, PackageProgressStatus>();
   const recordIds = [...eventsByRecord.keys()];
+  const included = new Set(recordIds);
   for (const record of records) {
     if (!statuses.has(record.id)) statuses.set(record.id, record.status);
     if (!kinds.has(record.id)) kinds.set(record.id, record.kind);
-    if (!eventsByRecord.has(record.id)) recordIds.push(record.id);
+    if (!included.has(record.id)) {
+      recordIds.push(record.id);
+      included.add(record.id);
+    }
   }
   return { recordIds, statuses };
 }

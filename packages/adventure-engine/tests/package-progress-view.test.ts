@@ -206,6 +206,22 @@ describe("projectPackageProgressAudit", () => {
     expect(entry!.label).toBe(base.scenes.find((s) => s.id === YARD)!.title);
   });
 
+  it("lists duplicate record-only entries once and keeps the first status", () => {
+    const progress: PackageProgress = {
+      sceneId: LANDING,
+      version: 1,
+      records: [
+        { id: YARD, kind: "scene", status: "active" },
+        { id: YARD, kind: "scene", status: "resolved" },
+      ],
+      events: [],
+    };
+
+    const audit = projectPackageProgressAudit(pkg, progress);
+    expect(audit.map((entry) => entry.recordId)).toEqual([YARD]);
+    expect(audit[0]).toMatchObject({ kind: "scene", status: "active" });
+  });
+
   it("is empty for undefined and legacy progress", () => {
     expect(projectPackageProgressAudit(pkg, undefined)).toEqual([]);
     expect(projectPackageProgressAudit(pkg, { sceneId: LANDING })).toEqual([]);
