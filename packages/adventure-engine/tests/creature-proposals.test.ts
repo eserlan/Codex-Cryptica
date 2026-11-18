@@ -119,6 +119,28 @@ describe("buildCreatureProposals", () => {
     expect(proposals[0]!.concealed).toBe(false);
   });
 
+  it("deduplicates many citations, encounters and text values for one name", () => {
+    const count = 1500;
+    const actors = Array.from({ length: count }, (_, index) =>
+      actor(`actor-${index}`, "Shared name", {
+        sourceRef: { page: index + 1 },
+        summary: `Unique summary ${index}`,
+      }),
+    );
+    const largePackage = {
+      ...pkg,
+      actors,
+      encounters: [encounter("all-actors", actors.map((entry) => entry.id))],
+    } as AdventureJsonV1;
+    const result = buildCreatureProposals(largePackage);
+    expect(result).toHaveLength(1);
+    expect(result[0]!.sourceRefs).toHaveLength(count);
+    expect(result[0]!.sourceRefs[0]!.page).toBe(1);
+    expect(result[0]!.sourceRefs.at(-1)!.page).toBe(count);
+    expect(result[0]!.encounters).toHaveLength(1);
+    expect(result[0]!.summary).toHaveLength(count);
+  });
+
   it("keeps encounter order without rescanning the package for each proposal", () => {
     const actors = Array.from({ length: 2000 }, (_, index) =>
       actor(`actor-${index}`, `Creature ${index}`),
