@@ -10,23 +10,32 @@ const WORD = /[\p{L}\p{N}_-]/u;
 export function createBoundaryMatcher(
   terms: Iterable<string>,
 ): (text: string) => boolean {
+  const root = buildTrie(terms);
+  assignFailureLinks(root);
+  return (text) => hasBoundaryMatch(root, text);
+}
+
+function buildTrie(terms: Iterable<string>): Node {
   const root: Node = { next: new Map(), fail: null, lengths: [] };
+  for (const rawTerm of terms) addTerm(root, rawTerm.toLocaleLowerCase());
+  return root;
+}
 
-  for (const rawTerm of terms) {
-    const term = rawTerm.toLocaleLowerCase();
-    if (!term) continue;
-    let node = root;
-    for (const char of term) {
-      let next = node.next.get(char);
-      if (!next) {
-        next = { next: new Map(), fail: root, lengths: [] };
-        node.next.set(char, next);
-      }
-      node = next;
+function addTerm(root: Node, term: string): void {
+  if (!term) return;
+  let node = root;
+  for (const char of term) {
+    let next = node.next.get(char);
+    if (!next) {
+      next = { next: new Map(), fail: root, lengths: [] };
+      node.next.set(char, next);
     }
-    node.lengths.push(term.length);
+    node = next;
   }
+  node.lengths.push(term.length);
+}
 
+function assignFailureLinks(root: Node): void {
   const queue: Node[] = [];
   for (const child of root.next.values()) {
     child.fail = root;
@@ -42,30 +51,33 @@ export function createBoundaryMatcher(
       queue.push(child);
     }
   }
-
-  return (rawText) => {
-    const text = rawText.toLocaleLowerCase();
-    let node = root;
-    let index = 0;
-    for (const char of text) {
-      while (node !== root && !node.next.has(char)) node = node.fail ?? root;
-      node = node.next.get(char) ?? root;
-      for (const length of node.lengths) {
-        const start = index + char.length - length;
-        const end = index + char.length;
-        if (isBoundary(text, start - 1) && isBoundary(text, end)) return true;
-      }
-      index += char.length;
-    }
-    return false;
-  };
 }
 
-export function containsBoundaryTerm(
+function hasBoundaryMatch(root: Node, rawText: string): boolean {
+  const text = rawText.toLocaleLowerCase();
+  let node = root;
+  let index = 0;
+  for (const char of text) {
+    while (node !== root && !node.next.has(char)) node = node.fail ?? root;
+    node = node.next.get(char) ?? root;
+    if (hasBoundaryMatchAt(node, text, index, char.length)) return true;
+    index += char.length;
+  }
+  return false;
+}
+
+function hasBoundaryMatchAt(
+  node: Node,
   text: string,
-  terms: Iterable<string>,
+  index: number,
+  charLength: number,
 ): boolean {
-  return createBoundaryMatcher(terms)(text);
+  for (const length of node.lengths) {
+    const end = index + charLength;
+    if (isBoundary(text, end - length - 1) && isBoundary(text, end))
+      return true;
+  }
+  return false;
 }
 
 function isBoundary(text: string, index: number): boolean {

@@ -130,26 +130,34 @@ function boundSourceRef(
   // cannot stall serialisation. `textQuote` uses `cap / 8` (room for JSON
   // escaping) so it can be clipped in place; the other fields use `cap + 1`
   // so oversized values still exceed the budget and get dropped cleanly.
-  const quoteLimit = Math.floor(cap / 8);
-  const fieldLimit = cap + 1;
-  let next: SourceReference | undefined;
+  const boundedFields = boundLongSourceFields(sourceRef, cap + 1);
+  const boundedQuote = boundSourceQuote(sourceRef, Math.floor(cap / 8));
+  if (boundedQuote === undefined) return boundedFields ?? sourceRef;
+  return { ...(boundedFields ?? sourceRef), textQuote: boundedQuote };
+}
+
+function boundLongSourceFields(
+  sourceRef: SourceReference,
+  limit: number,
+): SourceReference | undefined {
+  let bounded: SourceReference | undefined;
   for (const key of ["chapter", "section", "anchor"] as const) {
     const value = sourceRef[key];
-    if (value !== undefined && value.length > fieldLimit) {
-      next ??= { ...sourceRef };
-      next[key] = value.slice(0, fieldLimit);
-    }
+    if (value === undefined || value.length <= limit) continue;
+    bounded ??= { ...sourceRef };
+    bounded[key] = value.slice(0, limit);
   }
-  if (
-    sourceRef.textQuote !== undefined &&
-    sourceRef.textQuote.length > quoteLimit + 1
-  ) {
-    next ??= { ...sourceRef };
-    // One extra character lets admission distinguish an exact-limit quote
-    // from one that was clipped without copying the full source string.
-    next.textQuote = sourceRef.textQuote.slice(0, quoteLimit + 1);
-  }
-  return next ?? sourceRef;
+  return bounded;
+}
+
+function boundSourceQuote(
+  sourceRef: SourceReference,
+  limit: number,
+): string | undefined {
+  const quote = sourceRef.textQuote;
+  return quote !== undefined && quote.length > limit + 1
+    ? quote.slice(0, limit + 1)
+    : undefined;
 }
 
 /**
@@ -213,18 +221,35 @@ function splitRecordLines(
   const companion = new SplitText();
   for (const raw of lines) {
     if (kept.length >= limit) break;
-    const structuredSecret =
-      raw[2] === true || (raw[3] ?? []).some((id) => hiddenIds.has(id));
-    if (structuredSecret && companion.length >= limit) continue;
+    if (isStructuredSecret(raw, hiddenIds) && companion.length >= limit) {
+      continue;
+    }
     const line = readLine(raw, limit);
-    const alreadyMoved =
-      structuredSecret || lineMentionsHiddenId(line, hiddenIds);
+    const alreadyMoved = shouldMoveLine(raw, line, hiddenIds);
     if (alreadyMoved && companion.length >= limit) continue;
     const moved = alreadyMoved;
     if (!moved) kept.push(line);
     else if (companion.length < limit) companion.push(line);
   }
   return { kept, companion };
+}
+
+function isStructuredSecret(
+  line: Line,
+  hiddenIds: ReadonlySet<string>,
+): boolean {
+  return line[2] === true || (line[3] ?? []).some((id) => hiddenIds.has(id));
+}
+
+function shouldMoveLine(
+  raw: Line,
+  boundedLine: Line,
+  hiddenIds: ReadonlySet<string>,
+): boolean {
+  return (
+    isStructuredSecret(raw, hiddenIds) ||
+    lineMentionsHiddenId(boundedLine, hiddenIds)
+  );
 }
 
 function lineMentionsHiddenId(
