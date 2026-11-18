@@ -139,16 +139,7 @@ describe.each(fixtures)("GM-only secrecy outputs: %s", (name, pkg) => {
       };
       const packages = referencePackageCache(
         async () => (available ? stored : null),
-        async () =>
-          otherVersion
-            ? [
-                {
-                  ...stored,
-                  hash: "d".repeat(64),
-                  package: { ...pkg, version: "2.0.0" },
-                },
-              ]
-            : [],
+        async () => otherVersion,
       );
       const manager = new AdventureManager({
         ...dependencies(),
