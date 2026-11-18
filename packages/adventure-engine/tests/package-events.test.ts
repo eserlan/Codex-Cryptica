@@ -435,6 +435,76 @@ describe("package ledger secrecy", () => {
     }
   });
 
+  it("rejects a proposed private package note echoed in the same turn", () => {
+    const note = "The ferryman secretly guards the forgotten silver crown";
+    for (const field of ["narration", "suggestedActions"] as const) {
+      const echo = proposal();
+      echo.packageEvents = [event(WICK, "resolved", { note })];
+      if (field === "narration") {
+        echo.narration = `The journal says ${note}.`;
+      } else {
+        echo.suggestedActions = [
+          `Ask whether ${note}`,
+          "Look around the room",
+          "Check the nearby doorway",
+        ];
+      }
+      const result = applyCompletedTurn(packageSession(), echo, {
+        ...meta,
+        ...index,
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        errors: [{ code: "hidden-leakage" }],
+      });
+    }
+  });
+
+  it("allows ordinary digits for a one-character note but guards an exact echo", () => {
+    const first = ok(
+      commit(packageSession(), [event(WICK, "resolved", { note: "7" })]),
+    );
+    const narration = proposal();
+    narration.narration = "There are 7 steps to the door.";
+    const normal = applyCompletedTurn(first, narration, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(normal.ok).toBe(true);
+
+    narration.narration = "7";
+    const exact = applyCompletedTurn(first, narration, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(exact).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
+  it("still blocks two-digit numeric notes as whole tokens", () => {
+    const first = ok(
+      commit(packageSession(), [event(WICK, "resolved", { note: "42" })]),
+    );
+    const narration = proposal();
+    narration.narration = "There are 42 doors in the passage.";
+    const result = applyCompletedTurn(first, narration, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
   it("allows ordinary narration containing a stored two-character note", () => {
     const first = ok(
       commit(packageSession(), [event(WICK, "resolved", { note: "in" })]),
