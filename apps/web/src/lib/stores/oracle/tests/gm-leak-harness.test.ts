@@ -374,6 +374,41 @@ describe("gap 3: companion lines", () => {
       text: prose,
     });
   });
+
+  it("catches an 8-word quote from a companion when ID punctuation changes", () => {
+    const pkg = withLeakyActor();
+    const companionLine =
+      "The keeper hid-9 records the mayor's sealed letter behind the old chapel door.";
+    pkg.actors = pkg.actors.map((actor) =>
+      actor.id === "actor-tobiah-reed"
+        ? { ...actor, description: companionLine }
+        : actor,
+    );
+    const guarded = collectGmOnlyStrings(pkg);
+
+    // Retrieval moves this source line to GM-only because it names hid-9.
+    const result = retrieveAdventureJsonContext(pkg, {
+      sceneId: "ros-scene-1-landing",
+      actorIds: ["actor-tobiah-reed"],
+    });
+    expect(
+      result.gmOnly.some(
+        (excerpt) =>
+          excerpt.id === "actor-tobiah-reed" &&
+          excerpt.text.includes(companionLine),
+      ),
+    ).toBe(true);
+
+    // The changed ID punctuation avoids a full-line substring match, so the
+    // partial-quote guard must catch the shared eight-word run.
+    expect(() =>
+      assertNoGmLeak(
+        guarded,
+        "keeper hid 9 records the mayor's sealed letter",
+        "companion quote",
+      ),
+    ).toThrow(/record actor-tobiah-reed, field description \(partial quote\)$/);
+  });
 });
 
 describe("gap 4: short names", () => {

@@ -166,8 +166,9 @@ function addCompanionLines(
   const visibleRuns = new Set<string>();
   for (const record of visible)
     for (const [field, text] of stringLeaves(record, "")) {
-      if (namesHiddenId(text)) out.add(record.id, field, text);
-      if (field !== "reveals")
+      const movedToCompanion = namesHiddenId(text);
+      if (movedToCompanion) out.add(record.id, field, text);
+      if (!movedToCompanion && field !== "reveals")
         for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
     }
   return visibleRuns;
