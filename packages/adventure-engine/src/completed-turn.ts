@@ -23,6 +23,7 @@ import {
   applyScenarioElaborations,
 } from "./scenario-turns";
 import {
+  applyPackageActorEvents,
   applyPackageProgressEvents,
   nullMap,
   planSceneProgress,
@@ -117,6 +118,7 @@ function packageIndexFromMeta(
         ([id, targets]) => [id, [...targets]] as const,
       ),
     ),
+    packageActorIds: [...(meta.packageActorIds ?? [])],
   };
 }
 
@@ -163,8 +165,9 @@ function resolvePackageProgress(
   const before = candidate.packageProgress;
   const index = packageIndexFromMeta(meta);
   const proposed = proposal.packageEvents ?? [];
+  const proposedActors = proposal.actorEvents ?? [];
   if (before && candidate.sourcePackage && index) {
-    candidate.packageProgress = applyLedgerProgress(
+    let nextProgress = applyLedgerProgress(
       before,
       index,
       moveTo,
@@ -172,10 +175,23 @@ function resolvePackageProgress(
       meta,
       dropped,
     );
+    if (proposedActors.length > 0) {
+      const actorResult = applyPackageActorEvents(
+        nextProgress,
+        proposedActors,
+        { turnId: meta.turnId, index },
+      );
+      dropped.push(...actorResult.dropped);
+      nextProgress = actorResult.progress;
+    }
+    candidate.packageProgress = nextProgress;
     return;
   }
   for (const event of proposed) {
     dropped.push(`packageEvents: no package ${event.recordId.slice(0, 80)}`);
+  }
+  for (const event of proposedActors) {
+    dropped.push(`actorEvents: no package ${event.actorId.slice(0, 80)}`);
   }
   if (moveTo !== undefined) {
     candidate.packageProgress = { ...before, sceneId: moveTo };

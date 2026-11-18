@@ -119,6 +119,7 @@ function playerFacingStrings(
       hiddenPatch: _hidden,
       revealSecretIds: _reveals,
       packageEvents: _packageEvents,
+      actorEvents: _actorEvents,
       timeAdvance,
       ...visible
     } = proposal;
@@ -159,6 +160,9 @@ export function detectPackageLeakage(
     ...packageTextLeakage(fields, [
       ...(meta.packageGmOnlyText ?? []),
       ...(session?.packageProgress?.events ?? []).map((event) => event.note),
+      ...(session?.packageProgress?.actorEvents ?? []).map(
+        (event) => event.note,
+      ),
     ]),
     ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
   ];
