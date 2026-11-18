@@ -33,7 +33,7 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
   copy: {
     thesisHeading: "What makes a system playable",
     thesisIntro:
-      "Building a star system for a tabletop campaign means designing a small set of reachable places, the routes and supplies between them, and the groups competing over them. The crew always has somewhere to go, and getting there costs something.",
+      "Building a star system for a tabletop campaign means designing a handful of destinations, the routes and supplies between them, and the groups competing over them.",
     learnHeading: "Learn the method",
     learnIntro:
       "Start with the core guide, then use the supporting guides for aliens, ships, travel, crew roles and factions.",
@@ -46,7 +46,7 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
       "The Star System Generator can start a system or fill gaps in one you have drafted. The supporting tools then develop individual worlds, peoples, ships and factions.",
     workflowHeading: "Two ways in, one system",
     workflowIntro:
-      "Start from the Star System Generator and use these five steps to check and sharpen what it rolls, or work through them by hand and use the generator at any point to fill gaps. Either way, you finish by developing one world in depth.",
+      "Start from the Star System Generator and use these five steps to check and sharpen what it rolls. Or work through them by hand and use the generator at any point to fill gaps. Either way, you finish by developing one world in depth.",
     relatedHeading: "Keep exploring",
   },
 
