@@ -163,10 +163,10 @@ function serialisedSize(excerpts: AdventureJsonExcerpt[]): number {
   return JSON.stringify(playerSafe).length + JSON.stringify(gmOnly).length;
 }
 
-function trimExcerpt(
+function trimOptionalSourceRef(
   excerpt: AdventureJsonExcerpt,
   max: number,
-): AdventureJsonExcerpt | undefined {
+): AdventureJsonExcerpt {
   let base = excerpt;
   if (
     serialisedSize([{ ...excerpt, text: "" }]) > max &&
@@ -191,16 +191,24 @@ function trimExcerpt(
     void _sourceRef;
     base = withoutSourceRef;
   }
+  return base;
+}
+
+function trimExcerptText(
+  excerpt: AdventureJsonExcerpt,
+  max: number,
+): AdventureJsonExcerpt | undefined {
   const withText = (length: number): AdventureJsonExcerpt => {
-    if (length >= base.text.length) return { ...base, text: base.text };
-    if (length <= 0) return { ...base, text: "" };
-    let kept = base.text.slice(0, length - 1);
+    if (length >= excerpt.text.length)
+      return { ...excerpt, text: excerpt.text };
+    if (length <= 0) return { ...excerpt, text: "" };
+    let kept = excerpt.text.slice(0, length - 1);
     const last = kept.charCodeAt(kept.length - 1);
     if (last >= 0xd800 && last <= 0xdbff) kept = kept.slice(0, -1);
-    return { ...base, text: `${kept}…` };
+    return { ...excerpt, text: `${kept}…` };
   };
   let low = 0;
-  let high = base.text.length;
+  let high = excerpt.text.length;
   if (serialisedSize([withText(low)]) > max) return undefined;
   while (low < high) {
     const mid = Math.ceil((low + high) / 2);
@@ -208,6 +216,13 @@ function trimExcerpt(
     else high = mid - 1;
   }
   return withText(low);
+}
+
+function trimExcerpt(
+  excerpt: AdventureJsonExcerpt,
+  max: number,
+): AdventureJsonExcerpt | undefined {
+  return trimExcerptText(trimOptionalSourceRef(excerpt, max), max);
 }
 
 function boundSourceRefQuote(
