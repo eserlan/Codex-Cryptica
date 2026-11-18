@@ -612,6 +612,27 @@ describe("retrieveAdventureJsonContext", () => {
     expect(result.gmOnly.some((excerpt) => excerpt.id === "s1")).toBe(false);
   });
 
+  it("treats a short non-word hidden ID in free-form text as a reference", () => {
+    const pkg = base({
+      scenes: [scene("s1", { body: "The key to s2 is under the mat." })],
+      actors: [
+        {
+          id: "s2",
+          name: "Hidden Keeper",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: "s1" });
+    expect(result.playerSafe.find((e) => e.id === "s1")?.text).not.toContain(
+      "s2",
+    );
+    expect(result.gmOnly.find((e) => e.id === "s1")?.text).toContain(
+      "The key to s2 is under the mat.",
+    );
+  });
+
   it("moves prose lines that name a hidden ID to the GM-only companion", () => {
     const pkg = base({
       scenes: [

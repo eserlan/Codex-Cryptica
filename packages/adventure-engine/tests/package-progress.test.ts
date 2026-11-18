@@ -127,4 +127,37 @@ describe("package scene progress", () => {
       }),
     ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
   });
+
+  it("rejects a short non-word hidden ID when it appears in free-form narration", () => {
+    const leaked = proposal();
+    leaked.narration = "You spot s2 behind the curtain.";
+    expect(
+      applyCompletedTurn(packageSession(), leaked, {
+        ...meta,
+        packageRecordIds: ["s2"],
+      }),
+    ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
+  });
+
+  it("preserves overlong and whitespace-padded package scene IDs verbatim", () => {
+    const longId = `scene-${"x".repeat(200)}`;
+    const paddedId = "  scene-padded  ";
+    for (const sceneId of [longId, paddedId]) {
+      const parsed = parseAdventureSession({
+        ...session(),
+        sourcePackage: pin,
+        packageProgress: { sceneId },
+      });
+      expect(parsed.packageProgress).toEqual({ sceneId });
+
+      const moved = applyCompletedTurn(packageSession(), movedTo(sceneId), {
+        ...meta,
+        packageSceneIds: [...sceneIds, sceneId],
+      });
+      expect(moved.ok).toBe(true);
+      if (moved.ok) {
+        expect(moved.value.packageProgress).toEqual({ sceneId });
+      }
+    }
+  });
 });
