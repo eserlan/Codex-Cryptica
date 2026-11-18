@@ -13,6 +13,7 @@ import {
 
 export interface VTTSessionServiceDeps {
   getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
+  clock?: Clock;
 }
 
 function createEmptyFogMask(): string | null {
@@ -97,7 +98,11 @@ export function summarizeEncounterSession(
 }
 
 export class VTTSessionService {
-  constructor(private deps: VTTSessionServiceDeps) {}
+  private readonly clock: Clock;
+
+  constructor(private deps: VTTSessionServiceDeps) {
+    this.clock = deps.clock ?? systemClock;
+  }
 
   async saveEncounterSnapshot(
     session: EncounterSession,
@@ -110,7 +115,7 @@ export class VTTSessionService {
 
     const payload = sanitizeEncounterSession({
       ...session,
-      savedAt: systemClock.now(),
+      savedAt: this.clock.now(),
     });
     const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",
