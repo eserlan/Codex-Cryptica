@@ -104,6 +104,9 @@ export class AdventureGroundingService {
     if (!intent.session.sourcePackage || intent.purpose === "background")
       return undefined;
     const pkg = await this.packages.load(intent.session);
+    if (pkg.scenes.length === 0) {
+      throw new Error("adventure-package-unavailable");
+    }
     const { playerSafe, gmOnly } = retrieveAdventureJsonContext(pkg, {
       sceneId: intent.session.packageProgress?.sceneId,
     });

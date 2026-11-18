@@ -78,6 +78,8 @@ export interface TopicInlineExample {
 /** Editorial copy for the fixed section frame every topic hub renders. */
 export interface TopicHubCopy {
   thesisHeading: string;
+  /** Optional short definition shown between the thesis heading and its points. */
+  thesisIntro?: string;
   learnHeading: string;
   learnIntro: string;
   examplesHeading: string;

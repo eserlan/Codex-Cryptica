@@ -24,6 +24,24 @@ function pendingSession() {
 }
 
 describe("roll transitions", () => {
+  it("rejects package secrets in player-facing roll copy", () => {
+    const result = applyRollRequest(
+      session(),
+      {
+        ...request,
+        setupNarration: "You notice the duke poisoned the well.",
+      },
+      {
+        ...meta,
+        packageGmOnlyText: ["The duke poisoned the well"],
+      },
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
   it("records and resolves exactly one outcome with its dice snapshot", () => {
     const current = session();
     const pending = applyRollRequest(current, request, meta);

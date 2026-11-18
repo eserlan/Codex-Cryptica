@@ -2,6 +2,7 @@ import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
 import {
   detectHiddenLeakage,
+  detectPackageLeakage,
   ensureScenarioSecrets,
   scenarioEventSecretId,
 } from "./hidden-state";
@@ -53,11 +54,15 @@ function completedTurnInputError(
 function completedTurnProposalError(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
 ): ReturnType<typeof error> | null {
   if (hasImmutableScenarioRewrite(session, proposal)) {
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
-  if (detectHiddenLeakage(session, proposal).length > 0) {
+  if (
+    detectHiddenLeakage(session, proposal).length > 0 ||
+    detectPackageLeakage(proposal, meta).length > 0
+  ) {
     return error(
       "hidden-leakage",
       "The response contains unrevealed GM information.",
@@ -126,7 +131,7 @@ export function applyCompletedTurn(
       "A completed turn requires a complete proposal.",
     );
   }
-  const proposalError = completedTurnProposalError(session, proposal);
+  const proposalError = completedTurnProposalError(session, proposal, meta);
   if (proposalError) return proposalError;
   const materialized = materializeTurnState(
     session,

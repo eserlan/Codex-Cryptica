@@ -325,4 +325,44 @@ describe("package-grounded actions", () => {
     expect(second.adventurePackage).toEqual(first.adventurePackage);
     expect(state.session?.turns).toHaveLength(1);
   });
+
+  it("clears retained interaction on scene change and rejects prior-scene GM-only text", async () => {
+    const { runtime, state, deps, generate } = packageRuntime([
+      movedTo("ros-scene-2-yard"),
+      {
+        ...completeProposal,
+        narration:
+          "The ferryman mentions that the shrine's keeper is long dead. Maren leaves the bread there in her father's memory.",
+      },
+      completeProposal,
+    ]);
+    const clearInteraction = vi.spyOn(deps, "clearGenerationInteraction");
+    const actions = new AdventureActions(runtime);
+
+    await actions.submitAction("Walk to the yard");
+    expect(state.session?.packageProgress).toEqual({
+      sceneId: "ros-scene-2-yard",
+    });
+    expect(clearInteraction).toHaveBeenCalledWith(state.session!.id);
+
+    await actions.submitAction("Ask about the shrine");
+    expect(generate).toHaveBeenCalledTimes(3);
+    expect((generate.mock.calls[2]![0] as any).correction).toBeTruthy();
+    expect(state.session?.turns).toHaveLength(2);
+  });
+
+  it("does not treat rumour truth enum values in GM-only excerpts as leaked prose", async () => {
+    const generate = vi.fn(async () => ({
+      ...completeProposal,
+      narration:
+        "That is true enough, the ferryman admits, though the river hides worse.",
+    }));
+    const { runtime, state } = createAdventureRuntime(
+      { generation: { generate } as any, packages: referencePackageCache() },
+      { sceneId: "ros-scene-1-landing" },
+    );
+    await new AdventureActions(runtime).submitAction("Question the ferryman");
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(state.session?.turns).toHaveLength(1);
+  });
 });

@@ -102,6 +102,23 @@ describe("AdventureManager", () => {
     expect(savePinned).not.toHaveBeenCalled();
   });
 
+  it("does not save anything when the pinned package has no scenes", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => ({
+      status: "approved",
+      hash: "a".repeat(64),
+      package: { ...referencePackage, scenes: [] },
+    }));
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-has-no-scenes");
+    expect(savePinned).not.toHaveBeenCalled();
+  });
+
   it("gives a session without a package no packageProgress", async () => {
     const deps: any = dependencies();
     const save = vi.fn(deps.repository.save);
