@@ -198,6 +198,7 @@ export const howDoIRunCharacterRolesInAnInvestigativeHorrorRpg: AnswerConfigInpu
       "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
       "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
       "does-an-rpg-party-need-balanced-roles",
+      "how-do-i-run-a-sci-fi-horror-rpg",
     ],
     discovery: {
       id: "answer-character-roles-investigative-horror",
