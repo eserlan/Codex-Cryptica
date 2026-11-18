@@ -54,6 +54,24 @@ describe("/examples/[slug] route", () => {
     ).toBeTruthy();
   });
 
+  it("labels authored scenario text rather than generated output", () => {
+    const authored = getAllExamples().find((e) => e.provenance === "authored")!;
+    render(Page, {
+      props: {
+        data: {
+          example: authored,
+          related: getRelatedExamples(authored),
+          connected: getConnectedExample(authored),
+        },
+      },
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Scenario text", hidden: true }),
+    ).toBeTruthy();
+    expect(screen.queryByText("Generated output")).toBeNull();
+  });
+
   it("renders exactly one h1 and the generator link", () => {
     render(Page, { props: { data } });
 
