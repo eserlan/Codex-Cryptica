@@ -61,8 +61,21 @@ function sortedUnique(pages: number[]): number[] {
   return [...new Set(pages)].sort((a, b) => a - b);
 }
 
-function pushDistinct(list: string[], value: string | undefined): void {
-  if (value && value.trim() && !list.includes(value)) list.push(value);
+function pushDistinct(
+  list: string[],
+  seen: Set<string>,
+  value: string | undefined,
+): void {
+  if (!value || !value.trim() || seen.has(value)) return;
+  seen.add(value);
+  list.push(value);
+}
+
+interface ProposalAccumulator {
+  proposal: CreatureProposal;
+  sourceRefKeys: Set<string>;
+  encounterIds: Set<string>;
+  textValues: Map<TextField, Set<string>>;
 }
 
 function toProposalEncounter(
@@ -90,33 +103,38 @@ export function buildCreatureProposals(
     }
   }
 
-  const proposals = new Map<string, CreatureProposal>();
+  const proposals = new Map<string, ProposalAccumulator>();
   for (const actor of pkg.actors) {
     const linked = encountersByActor.get(actor.id);
     if (!linked) continue;
     const key = normalizeName(actor.name);
-    let proposal = proposals.get(key);
-    if (!proposal) {
-      proposal = {
-        key,
-        name: actor.name,
-        actorIds: [],
-        pages: [],
-        sourceRefs: [],
-        summary: [],
-        description: [],
-        role: [],
-        motivation: [],
-        disposition: [],
-        encounters: [],
-        concealed: false,
+    let accumulator = proposals.get(key);
+    if (!accumulator) {
+      accumulator = {
+        proposal: {
+          key,
+          name: actor.name,
+          actorIds: [],
+          pages: [],
+          sourceRefs: [],
+          summary: [],
+          description: [],
+          role: [],
+          motivation: [],
+          disposition: [],
+          encounters: [],
+          concealed: false,
+        },
+        sourceRefKeys: new Set(),
+        encounterIds: new Set(),
+        textValues: new Map(TEXT_FIELDS.map((field) => [field, new Set()])),
       };
-      proposals.set(key, proposal);
+      proposals.set(key, accumulator);
     }
-    mergeActor(proposal, actor, linked);
+    mergeActor(accumulator, actor, linked);
   }
 
-  const ordered = [...proposals.values()];
+  const ordered = [...proposals.values()].map(({ proposal }) => proposal);
   const encounterOrder = new Map(
     pkg.encounters.map((encounter, index) => [encounter.id, index]),
   );
@@ -130,26 +148,27 @@ export function buildCreatureProposals(
 }
 
 function mergeActor(
-  proposal: CreatureProposal,
+  accumulator: ProposalAccumulator,
   actor: AdventureJsonActor,
   linked: AdventureJsonEncounter[],
 ): void {
+  const { proposal, sourceRefKeys, encounterIds, textValues } = accumulator;
   proposal.actorIds.push(actor.id);
   proposal.pages.push(...pagesOf(actor.sourceRef));
-  if (
-    actor.sourceRef &&
-    !proposal.sourceRefs.some(
-      (ref) =>
-        ref.page === actor.sourceRef!.page &&
-        ref.pageEnd === actor.sourceRef!.pageEnd,
-    )
-  ) {
-    proposal.sourceRefs.push(actor.sourceRef);
+  if (actor.sourceRef) {
+    const referenceKey = `${actor.sourceRef.page ?? ""}:${actor.sourceRef.pageEnd ?? ""}`;
+    if (!sourceRefKeys.has(referenceKey)) {
+      sourceRefKeys.add(referenceKey);
+      proposal.sourceRefs.push(actor.sourceRef);
+    }
   }
-  for (const field of TEXT_FIELDS) pushDistinct(proposal[field], actor[field]);
+  for (const field of TEXT_FIELDS) {
+    pushDistinct(proposal[field], textValues.get(field)!, actor[field]);
+  }
   if (actor.visibility === "gm-only") proposal.concealed = true;
   for (const encounter of linked) {
-    if (!proposal.encounters.some((item) => item.id === encounter.id)) {
+    if (!encounterIds.has(encounter.id)) {
+      encounterIds.add(encounter.id);
       proposal.encounters.push(toProposalEncounter(encounter));
     }
     if (encounter.visibility === "gm-only") proposal.concealed = true;
