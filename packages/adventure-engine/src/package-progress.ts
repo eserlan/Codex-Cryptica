@@ -377,5 +377,5 @@ export function packageProgressPromptSummary(
     if (at < 0) break;
     summary.records.splice(at, 1);
   }
-  return summary;
+  return over() ? undefined : summary;
 }

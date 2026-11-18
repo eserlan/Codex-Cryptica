@@ -245,6 +245,7 @@ export const adventureTurnResponseSchema = {
           maxItems: 8,
           items: {
             type: "object",
+            additionalProperties: false,
             properties: {
               recordId: idSchema,
               kind: {

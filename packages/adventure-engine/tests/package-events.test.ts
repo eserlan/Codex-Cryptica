@@ -336,6 +336,9 @@ describe("package progress prompt summary", () => {
     expect(summary.recentEvents.length).toBeLessThanOrEqual(12);
     expect(progress).toEqual(copy);
     expect(packageProgressPromptSummary({ sceneId: WHEEL })).toBeUndefined();
+    expect(
+      packageProgressPromptSummary({ sceneId: "s".repeat(32_001), version: 1 }),
+    ).toBeUndefined();
   });
 });
 
