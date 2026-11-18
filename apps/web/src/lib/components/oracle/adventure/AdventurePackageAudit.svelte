@@ -57,7 +57,7 @@
       <button
         bind:this={showButton}
         type="button"
-        class="flex items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="flex min-h-10 items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-expanded="false"
         onclick={askToReveal}
       >
@@ -78,14 +78,14 @@
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            class="min-h-10 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
             onclick={() => (mode = "revealed")}
           >
             Reveal GM details
           </button>
           <button
             type="button"
-            class="rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            class="min-h-10 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
             onclick={cancel}
           >
             Cancel
@@ -95,9 +95,9 @@
     {:else}
       <button
         type="button"
-        class="flex items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="flex min-h-10 items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-expanded="true"
-        onclick={() => (mode = "hidden")}
+        onclick={cancel}
       >
         <span class="icon-[lucide--eye-off] h-4 w-4" aria-hidden="true"></span>
         Hide GM details

@@ -75,9 +75,9 @@ describe("AdventurePackageAudit", () => {
     ).not.toContain("YARD-NOTE");
     await press(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("alert")).toBeNull();
-    expect(
-      screen.getByRole("button", { name: "Show GM details" }),
-    ).toBeTruthy();
+    const showAgain = screen.getByRole("button", { name: "Show GM details" });
+    expect(showAgain).toBeTruthy();
+    expect(document.activeElement).toBe(showAgain);
   });
 
   it("reveals claims and superseded events, then hides again", async () => {
@@ -93,8 +93,39 @@ describe("AdventurePackageAudit", () => {
     expect(root.textContent).toContain("Confirmed");
     await press(screen.getByRole("button", { name: "Hide GM details" }));
     expect(root.textContent).not.toContain("YARD-NOTE");
+    const showAgain = screen.getByRole("button", { name: "Show GM details" });
+    expect(showAgain).toBeTruthy();
+    expect(document.activeElement).toBe(showAgain);
+  });
+
+  it("shows an empty-ledger message when revealed with no events", async () => {
+    render(AdventurePackageAudit, {
+      manager: packageManager(pkg, { sceneId: LANDING }),
+    });
+    await press(await screen.findByRole("button", { name: "Show GM details" }));
+    await press(screen.getByRole("button", { name: "Reveal GM details" }));
     expect(
-      screen.getByRole("button", { name: "Show GM details" }),
+      screen.getByText("No package records have been touched yet."),
     ).toBeTruthy();
+  });
+
+  it("resets to hidden when the session id or package hash changes", async () => {
+    const first = packageManager(pkg, progress);
+    const { rerender } = render(AdventurePackageAudit, { manager: first });
+    await press(await screen.findByRole("button", { name: "Show GM details" }));
+    await press(screen.getByRole("button", { name: "Reveal GM details" }));
+    expect(screen.getByTestId("adventure-package-audit").textContent).toContain(
+      "YARD-NOTE",
+    );
+
+    const next = packageManager(pkg, progress);
+    next.session = { ...next.session!, id: "session-2" };
+    await rerender({ manager: next });
+    expect(
+      await screen.findByRole("button", { name: "Show GM details" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("adventure-package-audit").textContent,
+    ).not.toContain("YARD-NOTE");
   });
 });

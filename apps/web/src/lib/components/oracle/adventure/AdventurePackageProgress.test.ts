@@ -85,6 +85,23 @@ describe("AdventurePackageProgress", () => {
       expect(container.textContent).not.toMatch(/\d+\s*(of|\/)\s*\d+|%/),
     );
   });
+
+  it("ignores stale package loads when the session or hash changes", async () => {
+    let resolveFirst!: (value: typeof pkg | null) => void;
+    const first = packageManager(pkg, { sceneId: LANDING });
+    first.loadSourcePackage = () =>
+      new Promise((resolve) => {
+        resolveFirst = resolve;
+      });
+    const { rerender } = render(AdventurePackageProgress, { manager: first });
+
+    const second = packageManager(null, { sceneId: LANDING }, false);
+    await rerender({ manager: second });
+    resolveFirst(pkg);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(screen.queryByTestId("adventure-package-progress")).toBeNull();
+  });
 });
 
 function CLUEID() {
