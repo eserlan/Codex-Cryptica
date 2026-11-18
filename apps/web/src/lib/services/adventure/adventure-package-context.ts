@@ -25,6 +25,8 @@ type PackageSessionKey = Pick<AdventureSession, "id" | "vaultId"> & {
   sourcePackage?: Pick<NonNullable<AdventureSession["sourcePackage"]>, "hash">;
 };
 
+const MAX_CACHED_PACKAGE_SESSIONS = 5;
+
 /** Keeps each session's pinned package in memory so turns load it once. */
 export class AdventurePackageContextCache {
   private readonly cache = new Map<string, AdventureJsonV1>();
@@ -38,18 +40,21 @@ export class AdventurePackageContextCache {
 
   private key(session: PackageSessionKey): string | undefined {
     const hash = session.sourcePackage?.hash;
-    return hash ? `${session.id}:${hash}` : undefined;
+    return hash ? `${session.vaultId}:${session.id}:${hash}` : undefined;
   }
 
   peek(session: PackageSessionKey): AdventureJsonV1 | undefined {
     const key = this.key(session);
-    return key ? this.cache.get(key) : undefined;
+    if (!key) return undefined;
+    const cached = this.cache.get(key);
+    if (cached) this.touch(key, cached);
+    return cached;
   }
 
   async load(session: PackageSessionKey): Promise<AdventureJsonV1> {
     const key = this.key(session);
     if (!key) throw new Error("adventure-package-unavailable");
-    const cached = this.cache.get(key);
+    const cached = this.peek(session);
     if (cached) return cached;
     let stored: StoredAdventurePackage | null;
     try {
@@ -58,7 +63,7 @@ export class AdventurePackageContextCache {
       throw new Error("adventure-package-unavailable");
     }
     if (!stored) throw new Error("adventure-package-unavailable");
-    this.cache.set(key, stored.package);
+    this.touch(key, stored.package);
     return stored.package;
   }
 
@@ -79,7 +84,7 @@ export class AdventurePackageContextCache {
     }
     const check = checkAdventurePackagePin(ref, stored);
     if (!check.ok) return this.unavailable(session, key, check.reason);
-    this.cache.set(key, stored!.package);
+    this.touch(key, stored!.package);
     return { status: "available" };
   }
 
@@ -108,6 +113,16 @@ export class AdventurePackageContextCache {
       );
     } catch {
       return false;
+    }
+  }
+
+  private touch(key: string, pkg: AdventureJsonV1): void {
+    this.cache.delete(key);
+    this.cache.set(key, pkg);
+    while (this.cache.size > MAX_CACHED_PACKAGE_SESSIONS) {
+      const oldest = this.cache.keys().next().value;
+      if (oldest === undefined) break;
+      this.cache.delete(oldest);
     }
   }
 }

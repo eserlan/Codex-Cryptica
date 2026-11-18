@@ -1,3 +1,5 @@
+import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
+
 /**
  * A trimmed, schema-valid answer shown inside the prompt so a model can
  * pattern-match the shape. Exported so tests can prove it stays valid.
@@ -118,13 +120,21 @@ Output contract (read this first):
 - Include all 11 collection arrays, using [] when empty.
 - Use only the field names and exact values listed below. Do not add properties.
 - Never invent facts. When the source is unclear, record it in "unresolved".
-- Never shorten the conversion by dropping or merging entries. If you cannot read the attached source, or cannot fit all of it in one file or reply, answer with one plain sentence saying which it is (cannot read, or too large) and point to the staged method at https://codexcryptica.com/adventure-import#long-adventures, instead of sending truncated or guessed JSON. This failure sentence is the sole exception to the JSON-only output rules below.
+- Never shorten the conversion by dropping or merging entries. If the source is unreadable or inaccessible, name the missing input or page range and ask for readable text or a smaller upload. Never guess.
+- If a faithful full conversion will not fit, start staged conversion now. Do not just tell the user to use the staged method.
+
+${AUTOMATIC_STAGING_RULES}
+
+Conversion procedure (do this silently while writing JSON; return the checkpoint when staging needs another turn):
+- Inventory the source by section before writing JSON. Track keyed locations, actors, encounters and their resolutions, clues and alternate sources, rumours, important items, and authored endings. Preserve distinct entries and their source references.
+- Classify what the source states, what someone in the story claims, and what the GM decides. Use "unverified" when rumour truth is unspecified. Preserve optional routes and conditional actions without turning them into mandatory scene order. Leave unsupported fields out and record material gaps in "unresolved".
+- Audit the result against the inventory. Check each player-visible field and premise field for concealed information, and check that each reference points to the right collection and entity. For labelled PDF excerpts, use the original PDF file positions given in the source.
 
 Shape of a valid answer (trimmed: yours will have more entries and fields). Its ids, codes and wording are only illustrative; use your own, taken from the source:
 ${EXAMPLE_JSON}
 
 Strict output rules:
-1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). The one-sentence failure response above is the sole exception.
+1. For a successful conversion, return ONLY valid JSON matching Adventure JSON v1 (no Markdown fences, no prose outside the JSON). Keep staging checkpoints and unreadable-source requests separate from all JSON.
 2. Top-level fields:
    - Required: "formatVersion": "adventure-json/v1", "id" (/^[a-zA-Z0-9_-]{3,64}$/), "title" (1-200 chars), "version" (strict SemVer, e.g. "1.0.0"), "premise": { "background": string, "hook": string, "theme"?: string[], "tone"?: string }, "source": { "title": string, "authors"?: string[], "publisher"?: string, "publishedDate"?: string, "url"?: string, "license"?: string, "documentHash"?: string (64 lowercase hex chars) }.
    - Optional: "description": string, "system": { "name": string, "targetParty"?: { "sizeMin"?: integer >= 1, "sizeMax"?: integer >= 1, "levelMin"?: integer >= 0, "levelMax"?: integer >= 0 } }.
@@ -171,6 +181,12 @@ Strict output rules:
    - Add a top-level "extensions" entry "codex-cryptica.adventure-correspondence" (a list of { "previousId", "currentId", "collection" }) only for renames, splits or merges the source clearly supports. Never infer correspondence from names, titles or order, and never put "extensions" inside an entity. If no earlier package is supplied, use "version" "1.0.0" and omit the correspondence extension.
 10. Game mechanics and maps:
    - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions". Keep mechanics only as a short source-grounded paraphrase with "sourceRef" inside "description", "body", "conditions" or "alternativeSolutions[].description", and record any unrepresentable mechanic, stat block or map as an "unresolved" entry naming the source section (never invent values for it).
+
+Sandbox conversion: Put keyed rooms in "locations" and their hazards, opponents and tactical responses in "encounters" or other appropriate collections. Add "scenes" only for authored beats. If any scene outside scenes[0] is unreachable by following branches from scenes[0], give it epistemicStatus "ambiguous" rather than inventing links. A link from another unreachable scene does not make it reachable. Keys, room adjacency and conditional enemy tactics alone do not establish scene progression.
+
+Final visibility audit: Adding a fact to "secrets" is not enough. Check every copy of it across locations, actors, scenes, encounters, clues, summaries, and the premise. Before discovery, a hidden creature, trap, concealed access, or ambush plan must be absent from all player-visible names, text, IDs, and linked details. Preserve discoverable information in a GM-only record until it is revealed. Keep only sensory details or public facts in visible entries. Do not reproduce stat blocks in visible or GM fields; paraphrase the action or consequence and cite an unresolved entry for mechanics the schema cannot represent.
+
+Evidence and citations: Put each source-supported investigative observation in "clues" even when its text also appears in a room description or scene. Preserve where the evidence can be found, and add a revelation only if the source supports it. Do not turn incidental colour into a clue. For paginated sources, cite the page position and heading that describe the entry itself. For unpaginated sources, cite a supported section, anchor or other stable source range; never invent page numbers. For a keyed room, cite its key entry rather than an earlier mention, direction or cross-reference.
 
 Before you reply with a successful conversion, check each of these:
 - The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.

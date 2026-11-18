@@ -151,4 +151,15 @@ describe("AdventurePackageContextCache", () => {
       }
     });
   });
+
+  it("evicts least-recently-used sessions when the cache reaches its bound", async () => {
+    const loader = vi.fn(async () => ({ package: referencePackage }) as any);
+    const cache = new AdventurePackageContextCache(loader);
+    for (let i = 1; i <= 5; i++) await cache.load(session(`session-${i}`));
+    cache.peek(session("session-1"));
+    await cache.load(session("session-6"));
+    expect(cache.peek(session("session-1"))).toBe(referencePackage);
+    expect(cache.peek(session("session-2"))).toBeUndefined();
+    expect(cache.peek(session("session-6"))).toBe(referencePackage);
+  });
 });
