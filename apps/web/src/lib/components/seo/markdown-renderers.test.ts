@@ -31,6 +31,7 @@ describe("labelValueHtml", () => {
   it("renders default variant structure", () => {
     const result = labelValueHtml("Age", "1000");
     expect(result).toContain("seo-label");
+    expect(result).toContain("text-theme-text");
     expect(result).toContain("Age");
     expect(result).toContain("1000");
     expect(result).toContain("flex-col mb-1");

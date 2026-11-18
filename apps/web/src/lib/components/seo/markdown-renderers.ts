@@ -74,7 +74,7 @@ export function labelValueHtml(
   const iconifiedLabel = replaceEmojisWithIcons(
     renderMd(label, { inline: true, allowImages: false }),
   );
-  return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-primary mb-0.5">${iconifiedLabel}</span><span>${renderMd(value, { inline: true, allowImages: false })}</span></div>\n`;
+  return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-text mb-0.5">${iconifiedLabel}</span><span>${renderMd(value, { inline: true, allowImages: false })}</span></div>\n`;
 }
 
 // Label/value pairs ("- **Key**: value") get a bespoke stacked layout

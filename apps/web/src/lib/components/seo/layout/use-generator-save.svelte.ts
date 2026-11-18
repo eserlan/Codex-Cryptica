@@ -26,6 +26,7 @@ export function useGeneratorSave(deps: {
 }) {
   let showSaveModal = $state(false);
   let redirectQuery = $state("");
+  let saveError = $state<string | null>(null);
 
   const storage = {
     store: (key: string, value: string) => localStorage.setItem(key, value),
@@ -50,6 +51,7 @@ export function useGeneratorSave(deps: {
 
   function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
     if (entitiesToSave.length === 0) return;
+    saveError = null;
     const generatorType = deps.getGeneratorType();
     trackPublicGeneratorAction("save_to_codex", {
       generator_type: generatorType,
@@ -66,7 +68,9 @@ export function useGeneratorSave(deps: {
       );
       showSaveModal = true;
     } catch {
-      deps.setError("Storage access is blocked. Please copy drafts manually.");
+      const message = "Storage access is blocked. Please copy drafts manually.";
+      saveError = message;
+      deps.setError(message);
     }
   }
 
@@ -74,6 +78,7 @@ export function useGeneratorSave(deps: {
     if (deps.isGenerationInProgress?.()) return;
     const generatedData = deps.getGeneratedData();
     if (!generatedData) return;
+    saveError = null;
     const generatorType = deps.getGeneratorType();
     const selectedNodeIds = deps.getSelectedNodeIds?.();
     const itemCount = generatedData.pointCrawl
@@ -96,9 +101,10 @@ export function useGeneratorSave(deps: {
       );
       showSaveModal = true;
     } catch {
-      deps.setError(
-        "Storage access is blocked. Please copy the Markdown below instead.",
-      );
+      const message =
+        "Storage access is blocked. Please copy the Markdown below instead.";
+      saveError = message;
+      deps.setError(message);
     }
   }
 
@@ -107,8 +113,14 @@ export function useGeneratorSave(deps: {
     trackHeaderOpenCodex,
     handleSaveHubToCodex,
     handleSaveToCodex,
+    clearSaveError() {
+      saveError = null;
+    },
     cancelSaveModal() {
       showSaveModal = false;
+    },
+    get saveError() {
+      return saveError;
     },
     get showSaveModal() {
       return showSaveModal;
