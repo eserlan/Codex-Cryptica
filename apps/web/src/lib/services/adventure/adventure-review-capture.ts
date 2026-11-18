@@ -14,7 +14,8 @@ import {
  * deliberately; neither format is suitable for player-facing sharing.
  */
 export function adventureReviewJson(session: AdventureSession): string {
-  return JSON.stringify(session, null, 2);
+  const { packageProgress: _packageProgress, ...exportedSession } = session;
+  return JSON.stringify(exportedSession, null, 2);
 }
 
 function quote(text: string): string {

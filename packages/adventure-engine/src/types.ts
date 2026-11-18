@@ -465,6 +465,16 @@ export interface ScenarioElaborationProposal {
   discovery?: string;
 }
 
+/** A model-proposed ledger entry; the engine assigns the event ID. */
+export interface PackageEventProposal {
+  recordId: string;
+  kind: PackageRecordKind;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
@@ -483,6 +493,8 @@ export interface CompletedTurnProposal {
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
+  /** GM-only package progress; checked by the ledger reducer. */
+  packageEvents?: PackageEventProposal[];
 }
 
 export interface RollRequiredProposal {
