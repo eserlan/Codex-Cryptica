@@ -61,17 +61,12 @@
   );
   const previewPageSize = 20;
   let previewPage = $state(0);
-  const previewTotal = $derived(creating.length + reusing.length);
+  const previewChoices = $derived([...creating, ...reusing]);
+  const previewTotal = $derived(previewChoices.length);
   const previewPageStart = $derived(previewPage * previewPageSize);
   const previewPageCount = $derived(Math.ceil(previewTotal / previewPageSize));
-  const previewCreating = $derived(
-    creating.slice(previewPageStart, previewPageStart + previewPageSize),
-  );
-  const previewReusing = $derived(
-    reusing.slice(
-      Math.max(0, previewPageStart - creating.length),
-      Math.max(0, previewPageStart + previewPageSize - creating.length),
-    ),
+  const visiblePreviewChoices = $derived(
+    previewChoices.slice(previewPageStart, previewPageStart + previewPageSize),
   );
 
   async function goTo(next: "review" | "preview" | "done") {
@@ -351,15 +346,16 @@
           {reusing.length} reused.
         </p>
         <ul class="space-y-1 text-sm text-theme-text">
-          {#each previewCreating as choice (choice.proposal.key)}
-            <li>
-              Create {choice.proposal.name}:
-              {choice.hidden ? "hidden" : "visible"},
-              {choice.file ? "with an image" : "no image"}
-            </li>
-          {/each}
-          {#each previewReusing as choice (choice.proposal.key)}
-            <li>Reuse {choice.existing?.title}</li>
+          {#each visiblePreviewChoices as choice (choice.proposal.key)}
+            {#if choice.existing}
+              <li>Reuse {choice.existing.title}</li>
+            {:else}
+              <li>
+                Create {choice.proposal.name}:
+                {choice.hidden ? "hidden" : "visible"},
+                {choice.file ? "with an image" : "no image"}
+              </li>
+            {/if}
           {/each}
         </ul>
         {#if previewPageCount > 1}
