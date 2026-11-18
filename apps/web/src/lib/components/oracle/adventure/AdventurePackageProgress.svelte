@@ -39,30 +39,30 @@
   >
     <h3
       id="adventure-package-progress-heading"
-      class="font-header font-semibold text-theme-primary"
+      class="font-header font-semibold text-theme-text"
     >
       Package progress
     </h3>
     {#each groups as group (group.label)}
       <div class="space-y-1">
-        <h4 class="text-xs font-semibold text-theme-secondary uppercase">
+        <h4 class="text-xs font-semibold text-theme-text uppercase">
           {group.label}
         </h4>
         <ul class="space-y-2">
           {#each group.items as item (item.id)}
             <li class="text-sm break-words">
               {#if item.title}
-                <span class="block font-semibold text-theme-primary"
+                <span class="block font-semibold text-theme-text"
                   >{item.title}</span
                 >
               {/if}
-              <span class="block text-theme-secondary">{item.text}</span>
+              <span class="block text-theme-text">{item.text}</span>
             </li>
           {/each}
         </ul>
       </div>
     {:else}
-      <p class="text-sm text-theme-secondary">Nothing discovered yet.</p>
+      <p class="text-sm text-theme-text">Nothing discovered yet.</p>
     {/each}
   </section>
 {/if}

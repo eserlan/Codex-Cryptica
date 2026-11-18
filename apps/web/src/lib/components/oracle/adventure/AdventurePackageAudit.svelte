@@ -49,7 +49,7 @@
   >
     <h3
       id="adventure-package-audit-heading"
-      class="font-header font-semibold text-theme-primary"
+      class="font-header font-semibold text-theme-text"
     >
       GM details
     </h3>
@@ -57,7 +57,7 @@
       <button
         bind:this={showButton}
         type="button"
-        class="flex items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-primary hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="flex items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-expanded="false"
         onclick={askToReveal}
       >
@@ -71,21 +71,21 @@
         tabindex="-1"
         class="space-y-3 rounded border border-theme-border p-3 focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
       >
-        <p class="text-sm break-words text-theme-primary">
+        <p class="text-sm break-words text-theme-text">
           Spoiler warning: this reveals GM-only package content, including
           secrets and everything the ledger has recorded.
         </p>
         <div class="flex flex-wrap gap-2">
           <button
             type="button"
-            class="rounded border border-theme-border px-3 py-2 text-sm text-theme-primary hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            class="rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
             onclick={() => (mode = "revealed")}
           >
             Reveal GM details
           </button>
           <button
             type="button"
-            class="rounded border border-theme-border px-3 py-2 text-sm text-theme-secondary hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+            class="rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
             onclick={cancel}
           >
             Cancel
@@ -95,7 +95,7 @@
     {:else}
       <button
         type="button"
-        class="flex items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-primary hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
+        class="flex items-center gap-2 rounded border border-theme-border px-3 py-2 text-sm text-theme-text hover:bg-theme-surface focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:outline-none"
         aria-expanded="true"
         onclick={() => (mode = "hidden")}
       >
