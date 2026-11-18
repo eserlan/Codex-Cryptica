@@ -14,7 +14,6 @@ import {
   CURRENT_HISTORICAL_ANCHOR_VERSION,
   DEFAULT_APPROACHING_THRESHOLD_DAYS,
   HISTORICAL_ANCHOR_FALLBACK_ACTION,
-  HISTORICAL_ANCHOR_TITLE_SECRET_ID,
   MAX_HISTORICAL_CAUSAL_REFS,
   MAX_HISTORICAL_DOCUMENTED_FACTS,
   MAX_HISTORICAL_DRIFT_CHANGES,
@@ -22,7 +21,6 @@ import {
   MAX_HISTORICAL_OPEN_MECHANISMS,
   type AdventureCalendarDate,
   type DayInterval,
-  type GmHistoricalAnchorProjection,
   type HistoricalAnchor,
   type HistoricalAnchorCausalRef,
   type HistoricalAnchorCompatibilityResult,
@@ -37,7 +35,6 @@ import {
   type HistoricalAnchorValidationFailure,
   type HistoricalDateInterval,
   type HistoricalEventSnapshot,
-  type PlayerHistoricalAnchorProjection,
 } from "./historical-anchor-types";
 import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
@@ -1002,59 +999,7 @@ export function resolveHistoricalAnchorDrift(
   }
 }
 
-/**
- * Player-safe projection of the session's historical anchor.
- * Never exposes unrevealed `documentedFacts`, unrevealed `title`,
- * `relevantEntityRefs`, or unrevealed future `eventInterval` details.
- */
-export function projectPlayerHistoricalAnchor(
-  session: AdventureSession,
-): PlayerHistoricalAnchorProjection | undefined {
-  const anchor = session.historicalAnchor;
-  if (!anchor) return undefined;
-  const revealedSet = new Set(anchor.revealedFactIds);
-  return {
-    version: anchor.version,
-    policy: anchor.policy,
-    startDate: clonePreservingPrecision(anchor.startDate),
-    ...(revealedSet.has(HISTORICAL_ANCHOR_TITLE_SECRET_ID)
-      ? { title: anchor.baseline.title }
-      : {}),
-    progress: {
-      status: anchor.progress.status,
-      updatedAtRevision: anchor.progress.updatedAtRevision,
-      updatedAt: anchor.progress.updatedAt,
-    },
-    revealedFacts: anchor.baseline.documentedFacts.filter((fact) =>
-      revealedSet.has(fact.id),
-    ),
-  };
-}
-
-/**
- * Full GM/Oracle projection of the session's historical anchor.
- */
-export function projectGmHistoricalAnchor(
-  session: AdventureSession,
-): GmHistoricalAnchorProjection | undefined {
-  const anchor = session.historicalAnchor;
-  if (!anchor) return undefined;
-  const revealedSet = new Set(anchor.revealedFactIds);
-  return {
-    version: anchor.version,
-    policy: anchor.policy,
-    eventRecordId: anchor.eventRecordId,
-    title: anchor.baseline.title,
-    titleRevealed: revealedSet.has(HISTORICAL_ANCHOR_TITLE_SECRET_ID),
-    startDate: clonePreservingPrecision(anchor.startDate),
-    eventInterval: anchor.eventInterval,
-    documentedFacts: anchor.baseline.documentedFacts.map((fact) => ({
-      ...fact,
-      revealed: revealedSet.has(fact.id),
-    })),
-    openMechanisms: [...anchor.baseline.openMechanisms],
-    relevantEntityRefs: [...anchor.baseline.relevantEntityRefs],
-    progress: anchor.progress,
-    drift: anchor.drift,
-  };
-}
+export {
+  projectPlayerHistoricalAnchor,
+  projectGmHistoricalAnchor,
+} from "./historical-anchor-projections";
