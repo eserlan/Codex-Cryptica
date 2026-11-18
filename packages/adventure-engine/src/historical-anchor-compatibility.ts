@@ -78,14 +78,7 @@ export function validateHistoricalAnchorCompatibility(
   if (!intervals.ok) return intervals;
   const { startInterval, eventDayInterval } = intervals;
 
-  if (startInterval.first > eventDayInterval.last) {
-    return fail(
-      "start-after-event",
-      "The chosen starting date falls after the anchored historical event.",
-    );
-  }
-
-  const ambiguousFailure = validateUnambiguousComparison(
+  const comparisonFailure = validateDateComparison(
     validEvent,
     validStartDate,
     rawStart,
@@ -94,20 +87,26 @@ export function validateHistoricalAnchorCompatibility(
     eventDayInterval,
     calendar,
   );
-  if (ambiguousFailure) return ambiguousFailure;
-
-  const eventInterval: HistoricalDateInterval = {
-    start: clonePreservingPrecision(rawStart),
-    ...(rawEnd ? { end: clonePreservingPrecision(rawEnd) } : {}),
-    ...(validEvent.approximate ? { approximate: true } : {}),
-    ...(validEvent.dateLabel ? { label: clampText(validEvent.dateLabel) } : {}),
-  };
+  if (comparisonFailure) return comparisonFailure;
 
   return {
     ok: true,
-    eventInterval,
+    eventInterval: createHistoricalDateInterval(validEvent, rawStart, rawEnd),
     startDate: clonePreservingPrecision(validStartDate),
     calendarRevision: getCalendarRevision(calendar),
+  };
+}
+
+function createHistoricalDateInterval(
+  event: HistoricalEventSnapshot,
+  rawStart: AdventureCalendarDate,
+  rawEnd: AdventureCalendarDate | undefined,
+): HistoricalDateInterval {
+  return {
+    start: clonePreservingPrecision(rawStart),
+    ...(rawEnd ? { end: clonePreservingPrecision(rawEnd) } : {}),
+    ...(event.approximate ? { approximate: true } : {}),
+    ...(event.dateLabel ? { label: clampText(event.dateLabel) } : {}),
   };
 }
 
@@ -210,7 +209,7 @@ function getCompatibilityIntervals(
   };
 }
 
-function validateUnambiguousComparison(
+function validateDateComparison(
   event: HistoricalEventSnapshot,
   startDate: AdventureCalendarDate,
   rawStart: AdventureCalendarDate,
@@ -219,6 +218,12 @@ function validateUnambiguousComparison(
   eventDayInterval: DayInterval,
   calendar: WorldCalendar,
 ): HistoricalAnchorValidationFailure | null {
+  if (startInterval.first > eventDayInterval.last) {
+    return fail(
+      "start-after-event",
+      "The chosen starting date falls after the anchored historical event.",
+    );
+  }
   const overlaps = intervalsOverlap(startInterval, eventDayInterval);
   if (!overlaps) return null;
   const ambiguousBoundary =

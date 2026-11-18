@@ -14,6 +14,7 @@ import {
   MAX_HISTORICAL_DRIFT_CHANGES,
   type HistoricalAnchor,
   type HistoricalAnchorDriftReport,
+  type HistoricalDateInterval,
   type HistoricalEventSnapshot,
 } from "./historical-anchor-types";
 
@@ -47,36 +48,36 @@ export function detectHistoricalAnchorDrift(
     };
   }
 
+  return {
+    status: "vault-modified",
+    rebaseDecisionRequired: true,
+    currentFingerprint,
+    changes: collectHistoricalAnchorChanges(
+      anchor,
+      currentEventSnapshot,
+      calendar,
+    ),
+  };
+}
+
+function collectHistoricalAnchorChanges(
+  anchor: HistoricalAnchor,
+  event: HistoricalEventSnapshot,
+  calendar: WorldCalendar,
+): string[] {
   const changes: string[] = [];
-  if (clampText(currentEventSnapshot.title) !== anchor.baseline.title) {
+  if (clampText(event.title) !== anchor.baseline.title) {
     changes.push("title");
   }
-  const { rawStart, rawEnd } = extractEventRawDates(currentEventSnapshot);
-  const currentDates = canonicalJson({
-    start: rawStart ?? null,
-    end: rawEnd ?? null,
-    approximate: Boolean(currentEventSnapshot.approximate),
-  });
-  const baselineDates = canonicalJson({
-    start: anchor.eventInterval.start,
-    end: anchor.eventInterval.end ?? null,
-    approximate: Boolean(anchor.eventInterval.approximate),
-  });
-  if (currentDates !== baselineDates) {
+  if (hasHistoricalEventDateChanges(event, anchor.eventInterval)) {
     changes.push("dates");
   }
-  const currentFacts = canonicalJson(
-    extractDocumentedFacts(currentEventSnapshot),
-  );
-  const baselineFacts = canonicalJson(anchor.baseline.documentedFacts);
-  if (currentFacts !== baselineFacts) {
+  const currentFacts = extractDocumentedFacts(event);
+  if (hasCanonicalChange(currentFacts, anchor.baseline.documentedFacts)) {
     changes.push("documentedFacts");
   }
-  const currentRefs = canonicalJson(
-    normalizeEntityRefs(currentEventSnapshot.relevantEntityRefs),
-  );
-  const baselineRefs = canonicalJson(anchor.baseline.relevantEntityRefs);
-  if (currentRefs !== baselineRefs) {
+  const currentRefs = normalizeEntityRefs(event.relevantEntityRefs);
+  if (hasCanonicalChange(currentRefs, anchor.baseline.relevantEntityRefs)) {
     changes.push("relevantEntityRefs");
   }
   if (getCalendarRevision(calendar) !== anchor.baseline.calendarRevision) {
@@ -85,11 +86,27 @@ export function detectHistoricalAnchorDrift(
   if (changes.length === 0) {
     changes.push("content");
   }
+  return changes.slice(0, MAX_HISTORICAL_DRIFT_CHANGES);
+}
 
-  return {
-    status: "vault-modified",
-    rebaseDecisionRequired: true,
-    currentFingerprint,
-    changes: changes.slice(0, MAX_HISTORICAL_DRIFT_CHANGES),
+function hasHistoricalEventDateChanges(
+  event: HistoricalEventSnapshot,
+  interval: HistoricalDateInterval,
+): boolean {
+  const { rawStart, rawEnd } = extractEventRawDates(event);
+  const currentDates = {
+    start: rawStart ?? null,
+    end: rawEnd ?? null,
+    approximate: Boolean(event.approximate),
   };
+  const baselineDates = {
+    start: interval.start,
+    end: interval.end ?? null,
+    approximate: Boolean(interval.approximate),
+  };
+  return hasCanonicalChange(currentDates, baselineDates);
+}
+
+function hasCanonicalChange(current: unknown, baseline: unknown): boolean {
+  return canonicalJson(current) !== canonicalJson(baseline);
 }

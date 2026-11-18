@@ -4,16 +4,19 @@ import {
   projectElapsedDayInterval,
 } from "./historical-anchor-chronology";
 import { clampText } from "./historical-anchor-event";
-import { checkSessionEditable } from "./historical-anchor-mutation";
+import {
+  checkSessionEditable,
+  finalizeHistoricalAnchorMutation,
+} from "./historical-anchor-mutation";
 import {
   DEFAULT_APPROACHING_THRESHOLD_DAYS,
   MAX_HISTORICAL_CAUSAL_REFS,
   type DayInterval,
   type HistoricalAnchorCausalRef,
   type HistoricalAnchorMutationResult,
+  type HistoricalAnchorPolicy,
   type HistoricalAnchorProgressStatus,
 } from "./historical-anchor-types";
-import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
 
 export function deriveStatusFromIntervals(
@@ -80,10 +83,7 @@ export function transitionHistoricalAnchorProgress(
   const next = structuredClone(session);
   const anchor = next.historicalAnchor!;
   const nextRevision = next.revision + 1;
-  const defaultDivergedReason =
-    anchor.policy === "alternate"
-      ? "Alternate timeline: committed play diverged from the anchored event baseline."
-      : "Canon divergence: committed play contradicted a fixed baseline constraint.";
+  const reason = resolveHistoricalAnchorProgressReason(anchor.policy, input);
 
   anchor.progress = {
     status: input.status,
@@ -92,24 +92,23 @@ export function transitionHistoricalAnchorProgress(
     causalRefs: [...anchor.progress.causalRefs, ...input.causalRefs].slice(
       -MAX_HISTORICAL_CAUSAL_REFS,
     ),
-    ...(input.reason?.trim()
-      ? { reason: clampText(input.reason) }
-      : input.status === "diverged"
-        ? { reason: defaultDivergedReason }
-        : {}),
+    ...(reason ? { reason } : {}),
   };
-  next.revision = nextRevision;
-  next.updatedAt = input.now;
   next.lastPlayedAt = input.now;
+  return finalizeHistoricalAnchorMutation(
+    next,
+    input.now,
+    "Updating historical anchor progress exceeds the session state budget.",
+  );
+}
 
-  try {
-    return { ok: true, session: parseAdventureSession(next) };
-  } catch {
-    return {
-      ok: false,
-      reason: "state-budget-exceeded",
-      message:
-        "Updating historical anchor progress exceeds the session state budget.",
-    };
-  }
+function resolveHistoricalAnchorProgressReason(
+  policy: HistoricalAnchorPolicy,
+  input: TransitionHistoricalAnchorProgressInput,
+): string | undefined {
+  if (input.reason?.trim()) return clampText(input.reason);
+  if (input.status !== "diverged") return undefined;
+  return policy === "alternate"
+    ? "Alternate timeline: committed play diverged from the anchored event baseline."
+    : "Canon divergence: committed play contradicted a fixed baseline constraint.";
 }

@@ -1,6 +1,12 @@
 import { describe, expect, it } from "bun:test";
-import { checkSessionEditable } from "../src/historical-anchor-mutation";
-import { anchorSession } from "./historical-anchor-fixtures";
+import {
+  checkSessionEditable,
+  finalizeHistoricalAnchorMutation,
+} from "../src/historical-anchor-mutation";
+import {
+  anchorSession,
+  overBudgetAnchorSession,
+} from "./historical-anchor-fixtures";
 import { now, session } from "./reducer-fixtures";
 
 describe("historical anchor mutation checks", () => {
@@ -44,6 +50,53 @@ describe("historical anchor mutation checks", () => {
     };
     expect(checkSessionEditable(anchored, 0)).toMatchObject({
       reason: "pending-roll",
+    });
+  });
+
+  it("finalises a candidate with one revision increment and leaves play time to the caller", () => {
+    const candidate = anchorSession();
+    const later = "2026-11-11T12:00:00.000Z";
+    const result = finalizeHistoricalAnchorMutation(
+      candidate,
+      later,
+      "Budget failure",
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(result.message);
+    expect(result.session).toMatchObject({
+      revision: 1,
+      updatedAt: later,
+      lastPlayedAt: now,
+    });
+    result.session.historicalAnchor!.baseline.title =
+      "Independent parsed state";
+    expect(candidate.historicalAnchor?.baseline.title).toBe(
+      "Death of King Aldous",
+    );
+  });
+
+  it("returns the caller's failure message when schema or budget validation fails", () => {
+    expect(
+      finalizeHistoricalAnchorMutation(
+        overBudgetAnchorSession(),
+        now,
+        "Budget failure",
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "state-budget-exceeded",
+      message: "Budget failure",
+    });
+    expect(
+      finalizeHistoricalAnchorMutation(
+        anchorSession(),
+        "invalid timestamp",
+        "Invalid state",
+      ),
+    ).toEqual({
+      ok: false,
+      reason: "state-budget-exceeded",
+      message: "Invalid state",
     });
   });
 });

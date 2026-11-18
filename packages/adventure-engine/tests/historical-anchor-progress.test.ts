@@ -3,7 +3,11 @@ import {
   deriveHistoricalAnchorProgress,
   transitionHistoricalAnchorProgress,
 } from "../src/historical-anchor-progress";
-import { anchorSession, calendar } from "./historical-anchor-fixtures";
+import {
+  anchorSession,
+  calendar,
+  overBudgetAnchorSession,
+} from "./historical-anchor-fixtures";
 import { now, session } from "./reducer-fixtures";
 
 const later = "2026-11-11T12:00:00.000Z";
@@ -151,6 +155,25 @@ describe("historical anchor progress", () => {
         expectedRevision: 0,
         status: "reached",
         causalRefs: [{ kind: "turn", refId: " " }],
+        now,
+      }),
+    ).toEqual({
+      ok: false,
+      reason: "state-budget-exceeded",
+      message:
+        "Updating historical anchor progress exceeds the session state budget.",
+    });
+    expect(anchored).toEqual(before);
+  });
+
+  it("rejects transitions that exceed the session state budget", () => {
+    const anchored = overBudgetAnchorSession();
+    const before = structuredClone(anchored);
+    expect(
+      transitionHistoricalAnchorProgress(anchored, {
+        expectedRevision: 0,
+        status: "reached",
+        causalRefs: [{ kind: "turn", refId: "turn-1" }],
         now,
       }),
     ).toEqual({

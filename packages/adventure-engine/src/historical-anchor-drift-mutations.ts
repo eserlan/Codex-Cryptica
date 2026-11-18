@@ -1,14 +1,17 @@
 import type { WorldCalendar } from "chronology-engine";
 import { validateAndCreateHistoricalAnchor } from "./historical-anchor-creation";
 import { detectHistoricalAnchorDrift } from "./historical-anchor-drift";
-import { checkSessionEditable } from "./historical-anchor-mutation";
+import {
+  checkSessionEditable,
+  finalizeHistoricalAnchorMutation,
+} from "./historical-anchor-mutation";
 import { historicalAnchorSecretSources } from "./hidden-state";
 import type {
   AdventureCalendarDate,
+  HistoricalAnchor,
   HistoricalAnchorMutationResult,
   HistoricalEventSnapshot,
 } from "./historical-anchor-types";
-import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
 
 export interface RecordHistoricalAnchorDriftInput {
@@ -40,18 +43,11 @@ export function recordHistoricalAnchorDrift(
       : {}),
     ...(report.changes.length > 0 ? { changes: report.changes } : {}),
   };
-  next.revision += 1;
-  next.updatedAt = input.now;
-
-  try {
-    return { ok: true, session: parseAdventureSession(next) };
-  } catch {
-    return {
-      ok: false,
-      reason: "state-budget-exceeded",
-      message: "Recording anchor drift exceeds the session state budget.",
-    };
-  }
+  return finalizeHistoricalAnchorMutation(
+    next,
+    input.now,
+    "Recording anchor drift exceeds the session state budget.",
+  );
 }
 
 export type ResolveHistoricalAnchorDriftInput =
@@ -69,6 +65,11 @@ export type ResolveHistoricalAnchorDriftInput =
       now: string;
     };
 
+type RebaseHistoricalAnchorDriftInput = Extract<
+  ResolveHistoricalAnchorDriftInput,
+  { decision: "rebase" }
+>;
+
 export function resolveHistoricalAnchorDrift(
   session: AdventureSession,
   input: ResolveHistoricalAnchorDriftInput,
@@ -84,19 +85,21 @@ export function resolveHistoricalAnchorDrift(
       ...anchor.drift,
       rebaseDecisionRequired: false,
     };
-    next.revision += 1;
-    next.updatedAt = input.now;
-    try {
-      return { ok: true, session: parseAdventureSession(next) };
-    } catch {
-      return {
-        ok: false,
-        reason: "state-budget-exceeded",
-        message: "Resolving anchor drift exceeds the session state budget.",
-      };
-    }
+    return finalizeHistoricalAnchorMutation(
+      next,
+      input.now,
+      "Resolving anchor drift exceeds the session state budget.",
+    );
   }
 
+  return rebaseHistoricalAnchor(next, input);
+}
+
+function rebaseHistoricalAnchor(
+  next: AdventureSession,
+  input: RebaseHistoricalAnchorDriftInput,
+): HistoricalAnchorMutationResult<AdventureSession> {
+  const anchor = next.historicalAnchor!;
   const rebased = validateAndCreateHistoricalAnchor({
     event: input.currentEventSnapshot,
     startDate: input.startDate ?? anchor.startDate,
@@ -114,21 +117,24 @@ export function resolveHistoricalAnchorDrift(
     };
   }
 
-  const previousSources = new Map(
-    historicalAnchorSecretSources(next).map((source) => [
-      source.id,
-      source.text,
-    ]),
+  replaceHistoricalAnchorBaseline(next, rebased.anchor);
+  return finalizeHistoricalAnchorMutation(
+    next,
+    input.now,
+    "Rebasing the historical anchor exceeds the session state budget.",
   );
-  anchor.eventInterval = rebased.anchor.eventInterval;
-  anchor.startDate = rebased.anchor.startDate;
-  anchor.baseline = rebased.anchor.baseline;
-  const currentSources = new Map(
-    historicalAnchorSecretSources(next).map((source) => [
-      source.id,
-      source.text,
-    ]),
-  );
+}
+
+function replaceHistoricalAnchorBaseline(
+  session: AdventureSession,
+  rebased: HistoricalAnchor,
+): void {
+  const anchor = session.historicalAnchor!;
+  const previousSources = historicalAnchorSourceTexts(session);
+  anchor.eventInterval = rebased.eventInterval;
+  anchor.startDate = rebased.startDate;
+  anchor.baseline = rebased.baseline;
+  const currentSources = historicalAnchorSourceTexts(session);
   anchor.revealedFactIds = anchor.revealedFactIds.filter(
     (id) =>
       previousSources.has(id) &&
@@ -138,17 +144,15 @@ export function resolveHistoricalAnchorDrift(
     status: "clean",
     rebaseDecisionRequired: false,
   };
-  next.revision += 1;
-  next.updatedAt = input.now;
+}
 
-  try {
-    return { ok: true, session: parseAdventureSession(next) };
-  } catch {
-    return {
-      ok: false,
-      reason: "state-budget-exceeded",
-      message:
-        "Rebasing the historical anchor exceeds the session state budget.",
-    };
-  }
+function historicalAnchorSourceTexts(
+  session: AdventureSession,
+): Map<string, string> {
+  return new Map(
+    historicalAnchorSecretSources(session).map((source) => [
+      source.id,
+      source.text,
+    ]),
+  );
 }

@@ -1,4 +1,5 @@
 import type { HistoricalAnchorMutationResult } from "./historical-anchor-types";
+import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
 
 export function checkSessionEditable(
@@ -35,4 +36,23 @@ export function checkSessionEditable(
     };
   }
   return null;
+}
+
+/** Finalises a cloned candidate; callers control whether play time advances. */
+export function finalizeHistoricalAnchorMutation(
+  next: AdventureSession,
+  now: string,
+  budgetMessage: string,
+): HistoricalAnchorMutationResult<AdventureSession> {
+  next.revision += 1;
+  next.updatedAt = now;
+  try {
+    return { ok: true, session: parseAdventureSession(next) };
+  } catch {
+    return {
+      ok: false,
+      reason: "state-budget-exceeded",
+      message: budgetMessage,
+    };
+  }
 }
