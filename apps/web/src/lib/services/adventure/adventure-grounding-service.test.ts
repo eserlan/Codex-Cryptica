@@ -8,6 +8,7 @@ import { initialSession } from "#lib/stores/oracle/adventure-session.js";
 import { createScenarioState } from "@codex/adventure-engine";
 import {
   packageRef,
+  referencePackage,
   referencePackageCache,
 } from "#lib/stores/oracle/tests/adventure-fixtures.js";
 import { AdventureGroundingError } from "./adventure-grounding-service";
@@ -95,6 +96,29 @@ describe("AdventureGroundingService package context", () => {
       async () => {},
       () => undefined,
       referencePackageCache(async () => null as any),
+    ).wrap(transport);
+    await expect(
+      grounded.generate({
+        session: packageSession(),
+        phase: "opening",
+        anchors: [],
+        relevant: [],
+      }),
+    ).rejects.toBeInstanceOf(AdventureGroundingError);
+    expect(transport.generate).not.toHaveBeenCalled();
+  });
+
+  it("blocks dispatch with a grounding error when the package has no scenes", async () => {
+    const transport = { generate: vi.fn(async () => completeProposal) };
+    const grounded = new AdventureGroundingService(
+      context(),
+      async () => {},
+      () => undefined,
+      referencePackageCache(async () => ({
+        status: "approved",
+        hash: "a".repeat(64),
+        package: { ...referencePackage, scenes: [] },
+      })),
     ).wrap(transport);
     await expect(
       grounded.generate({

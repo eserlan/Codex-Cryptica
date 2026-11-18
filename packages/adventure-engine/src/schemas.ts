@@ -190,7 +190,7 @@ const collectionPatch = <TAdd extends z.ZodType, TUpdate extends z.ZodType>(
   });
 
 export const visiblePatchSchema = z.object({
-  packageSceneId: id.optional(),
+  packageSceneId: z.string().min(1).optional(),
   location: newStateFactSchema.nullable().optional(),
   situation: newStateFactSchema.nullable().optional(),
   objectives: collectionPatch(newStateFactSchema, stateFactSchema),

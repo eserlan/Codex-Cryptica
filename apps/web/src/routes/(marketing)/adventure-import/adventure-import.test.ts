@@ -14,6 +14,7 @@ import Page from "./+page.svelte";
 import {
   STAGED_ASSEMBLE_SCRIPT,
   STAGED_CHUNK_PROMPT,
+  STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
 } from "./staged-conversion.js";
 import {
@@ -325,14 +326,76 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         prompt.indexOf("10. Game mechanics and maps:"),
       );
       expect(prompt.slice(check)).toContain('Every "secrets" entry');
-      expect(prompt).toContain("cannot fit all of it in one file or reply");
-      expect(prompt).toContain("instead of sending truncated or guessed JSON");
+    });
+
+    it("starts staging on overflow and keeps a checkpoint out of import JSON", () => {
+      expect(prompt).toContain("start staged conversion now");
+      expect(prompt).toContain("make a numbered inventory");
+      expect(prompt).toContain("Define each entry only in its owning chunk");
       expect(prompt).toContain(
-        "This failure sentence is the sole exception to the JSON-only output rules below.",
+        "compare its actual JSON IDs and per-collection counts with the expected IDs and counts",
       );
       expect(prompt).toContain(
-        "The one-sentence failure response above is the sole exception.",
+        "each section's expected IDs and per-collection counts have been compared with its actual chunk JSON",
       );
+      expect(prompt).toContain("Continue with chunk 01");
+      expect(prompt).toContain("exact top-level metadata values");
+      expect(prompt).toContain("convert only the requested chunk");
+      expect(prompt).toContain(
+        "Assemble only after every planned chunk is present",
+      );
+      expect(prompt).toContain("label the result unvalidated");
+      expect(prompt).toContain(
+        "Never label an inventory, partial chunk set, or truncated reply as the final adventure",
+      );
+      expect(prompt).not.toContain("the sole exception");
+    });
+
+    it("applies the tested source fidelity rules during conversion", () => {
+      expect(prompt).toContain(
+        "Inventory the source by section before writing JSON",
+      );
+      expect(prompt).toContain(
+        'Use "unverified" when rumour truth is unspecified',
+      );
+      expect(prompt).toContain('Put keyed rooms in "locations"');
+      expect(prompt).toContain(
+        "A link from another unreachable scene does not make it reachable",
+      );
+      expect(prompt).toContain(
+        "absent from all player-visible names, text, IDs, and linked details",
+      );
+      expect(prompt).toContain(
+        'Put each source-supported investigative observation in "clues"',
+      );
+      expect(prompt).toContain(
+        "cite its key entry rather than an earlier mention",
+      );
+      expect(prompt).toContain(
+        "For unpaginated sources, cite a supported section, anchor or other stable source range",
+      );
+      expect(prompt).toContain(
+        "For paginated sources, cite the page position and heading",
+      );
+    });
+
+    it("requires the whole prompt before staging and can work without the external schema URL", () => {
+      expect(prompt.trimEnd().split("\n").at(-1)).toBe(
+        "END OF ADVENTURE JSON V1 CONVERSION PROMPT",
+      );
+      expect(prompt).toContain(
+        "Wait for it before making an inventory or generating any chunk",
+      );
+      expect(prompt).toContain("does not replace the missing prompt");
+      expect(prompt).toContain(
+        "use that contract without asking the user to paste the schema",
+      );
+    });
+
+    it("asks for missing source material without inventing a conversion", () => {
+      expect(prompt).toContain("name the missing input or page range");
+      expect(prompt).toContain("ask for readable text or a smaller upload");
+      expect(prompt).toContain("Never guess.");
     });
 
     it("guards against over-hiding, copied example codes and missing items", () => {
@@ -390,6 +453,43 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
   });
 
   describe("staged conversion section (#4896)", () => {
+    it("uses source ranges that work for paginated and unpaginated material", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "If it is not paginated, say that and do not invent page numbers",
+      );
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "heading/anchor/source range otherwise",
+      );
+      expect(STAGED_CHUNK_PROMPT).toContain(
+        "For unpaginated sources, use the supported section or anchor reference",
+      );
+      expect(STAGED_CHUNK_PROMPT).toContain("never invent a page number");
+    });
+
+    it("checks expected entry IDs against the actual chunk JSON", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "every expected source-supported entry",
+      );
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "grouped by Adventure JSON collection",
+      );
+      expect(STAGED_CHUNK_PROMPT).toContain(
+        "IDs actually present in each collection",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "the JSON files for every chunk",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "expected-entry checklist with the actual IDs and counts",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "not as proof that an entry exists",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "Mark a section converted only when every expected ID",
+      );
+    });
+
     it("is reachable from the quick start and from the one-pass prompt's pointer", () => {
       const { container } = render(Page);
 
@@ -497,8 +597,11 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(LINK_HANDOFF_TEXT).toContain(
       "https://codexcryptica.com/adventure-import/prompt.txt",
     );
-    expect(LINK_HANDOFF_TEXT).toContain("downloadable .json file");
-    expect(LINK_HANDOFF_TEXT).toContain("otherwise reply with the JSON only");
+    expect(LINK_HANDOFF_TEXT).toContain("the prompt is incomplete");
+    expect(LINK_HANDOFF_TEXT).toContain(
+      "paste the entire prompt into this chat",
+    );
+    expect(LINK_HANDOFF_TEXT).toContain("does not replace the missing prompt");
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Copied link/i })).toBeTruthy();
     });

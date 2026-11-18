@@ -65,4 +65,110 @@ describe("package scene progress", () => {
     const next = commit(before);
     expect(next.packageProgress).toEqual(before.packageProgress);
   });
+
+  it("rejects exact GM-only package text and hidden IDs in player output", () => {
+    const secret = "The duke poisoned the well";
+    const leakedText = proposal();
+    leakedText.narration = `You learn that ${secret}.`;
+    const textResult = applyCompletedTurn(packageSession(), leakedText, {
+      ...meta,
+      packageGmOnlyText: [secret],
+    });
+    expect(textResult).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+
+    const leakedId = proposal();
+    leakedId.narration = "A figure appears.";
+    leakedId.suggestedActions = [
+      "Ask about hidden-actor",
+      "Look around the room",
+      "Check the nearby doorway",
+    ];
+    const idResult = applyCompletedTurn(packageSession(), leakedId, {
+      ...meta,
+      packageRecordIds: ["hidden-actor"],
+    });
+    expect(idResult).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
+  it("rejects short exact package secrets without matching longer numbers", () => {
+    const leaked = proposal();
+    leaked.narration = "The code is 42.";
+    expect(
+      applyCompletedTurn(packageSession(), leaked, {
+        ...meta,
+        packageGmOnlyText: ["42"],
+      }),
+    ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
+
+    const unrelated = proposal();
+    unrelated.narration = "The code is 1420.";
+    expect(
+      applyCompletedTurn(packageSession(), unrelated, {
+        ...meta,
+        packageGmOnlyText: ["42"],
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("checks package IDs in one pass for large ID sets", () => {
+    const ids = Array.from({ length: 10_000 }, (_, index) => `record-${index}`);
+    const leaked = proposal();
+    leaked.narration = "Someone whispers record-9999.";
+    expect(
+      applyCompletedTurn(packageSession(), leaked, {
+        ...meta,
+        packageRecordIds: ids,
+      }),
+    ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
+  });
+
+  it("rejects a short non-word hidden ID when it appears in free-form narration", () => {
+    const leaked = proposal();
+    leaked.narration = "You spot s2 behind the curtain.";
+    expect(
+      applyCompletedTurn(packageSession(), leaked, {
+        ...meta,
+        packageRecordIds: ["s2"],
+      }),
+    ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
+  });
+
+  it("allows ordinary prose containing a plain-word package ID such as gate", () => {
+    const ordinary = proposal();
+    ordinary.narration = "The watchman opens the iron gate to the courtyard.";
+    expect(
+      applyCompletedTurn(packageSession(), ordinary, {
+        ...meta,
+        packageRecordIds: ["gate", "the"],
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("preserves overlong and whitespace-padded package scene IDs verbatim", () => {
+    const longId = `scene-${"x".repeat(200)}`;
+    const paddedId = "  scene-padded  ";
+    for (const sceneId of [longId, paddedId]) {
+      const parsed = parseAdventureSession({
+        ...session(),
+        sourcePackage: pin,
+        packageProgress: { sceneId },
+      });
+      expect(parsed.packageProgress).toEqual({ sceneId });
+
+      const moved = applyCompletedTurn(packageSession(), movedTo(sceneId), {
+        ...meta,
+        packageSceneIds: [...sceneIds, sceneId],
+      });
+      expect(moved.ok).toBe(true);
+      if (moved.ok) {
+        expect(moved.value.packageProgress).toEqual({ sceneId });
+      }
+    }
+  });
 });

@@ -40,9 +40,9 @@ export function referencePackageCache(
     package: referencePackage,
     originFormat: "adventure-json/v1",
   }),
-  listApproved: any = async () => [],
+  checkOtherVersion: any = async () => false,
 ) {
-  return new AdventurePackageContextCache(loader, listApproved);
+  return new AdventurePackageContextCache(loader, checkOtherVersion);
 }
 
 export const now = "2026-08-16T12:00:00.000Z";

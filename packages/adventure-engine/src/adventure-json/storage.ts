@@ -15,6 +15,8 @@ import {
 
 /** 10 MiB local guard before reading an Adventure JSON file into memory. */
 export const MAX_ADVENTURE_JSON_BYTES = 10 * 1024 * 1024;
+/** Maximum packages inspected while checking for an alternate pinned version. */
+export const MAX_ALTERNATE_ADVENTURE_VERSIONS_TO_SCAN = 8;
 
 export interface SaveAdventureJsonResult {
   status: "created" | "deduplicated";
@@ -69,9 +71,10 @@ function isNativeAdventureJsonRecord(raw: string): boolean {
  * Persists an approved `AdventureJsonV1` package atomically under
  * `.codex/adventures/packages/<canonicalHash>.json`.
  * Re-importing content whose canonical hash already exists deduplicates:
- * the stored file is returned untouched and nothing is written. A legacy
- * approved record at the same hash still rejects, so legacy baselines are
- * never silently replaced.
+ * the stored file is returned untouched and nothing is written. If a native
+ * record at that hash path has changed, re-importing the exact expected
+ * content atomically restores it. A legacy approved record at the same hash
+ * still rejects, so legacy baselines are never silently replaced.
  */
 export async function saveApprovedAdventureJson(
   io: AdventurePackageFileIO,
@@ -87,14 +90,14 @@ export async function saveApprovedAdventureJson(
     if (isNativeAdventureJsonRecord(existingRaw)) {
       const stored = assertValidAdventureJson(JSON.parse(existingRaw));
       const storedHash = await computeAdventureJsonHash(stored);
-      if (storedHash !== hash) {
-        throw new Error(
-          `Adventure package hash mismatch: expected ${hash}, found ${storedHash}.`,
-        );
+      if (storedHash === hash) {
+        return { status: "deduplicated", path, hash, package: stored };
       }
-      return { status: "deduplicated", path, hash, package: stored };
     }
-    if (isApprovedExistingRecord(existingRaw)) {
+    if (
+      !isNativeAdventureJsonRecord(existingRaw) &&
+      isApprovedExistingRecord(existingRaw)
+    ) {
       throw new Error(
         `Adventure package "${hash}" is already approved and cannot be modified.`,
       );
@@ -201,4 +204,30 @@ export async function listApprovedAdventurePackages(
     }
   }
   return results;
+}
+
+/**
+ * Checks a bounded number of packages without retaining the full approved
+ * package collection. `null` means the bound was reached before the answer
+ * could be determined.
+ */
+export async function hasOtherApprovedAdventureVersion(
+  io: AdventurePackageFileIO,
+  packageId: string,
+  excludedHash: string,
+): Promise<boolean | null> {
+  const hashes = await listAdventurePackageHashes(io);
+  let scanned = 0;
+  for (const hash of hashes) {
+    if (hash === excludedHash) continue;
+    if (scanned >= MAX_ALTERNATE_ADVENTURE_VERSIONS_TO_SCAN) return null;
+    scanned += 1;
+    try {
+      const loaded = await loadStoredAdventurePackage(io, hash);
+      if (loaded?.package.id === packageId) return true;
+    } catch {
+      // One corrupt package should not hide other available versions.
+    }
+  }
+  return false;
 }

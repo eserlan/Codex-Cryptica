@@ -1,9 +1,17 @@
-import type { AdventureSession, AdventureTurnProposal } from "./types";
+import type {
+  AdventureSession,
+  AdventureTurnProposal,
+  CommitMetadata,
+} from "./types";
 import {
   HISTORICAL_ANCHOR_TITLE_SECRET_ID,
   historicalAnchorDateSecretId,
   historicalAnchorEntitySecretId,
 } from "./historical-anchor-types";
+import {
+  createBoundaryMatcher,
+  isFreeTextMatchableId,
+} from "./adventure-json/term-matcher";
 
 export interface HiddenLeakageFinding {
   field: string;
@@ -134,6 +142,61 @@ export function detectHiddenLeakage(
     proposal.kind === "complete" ? proposal.revealSecretIds : [],
   );
   return detectHiddenTextFields(session, fields, revealed);
+}
+
+/** Checks player-facing proposal text against the current pinned package. */
+export function detectPackageLeakage(
+  proposal: AdventureTurnProposal,
+  meta: CommitMetadata,
+): HiddenLeakageFinding[] {
+  const fields = playerFacingStrings(proposal).filter(
+    ([field]) =>
+      !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
+  );
+  return [
+    ...packageTextLeakage(fields, meta.packageGmOnlyText ?? []),
+    ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
+  ];
+}
+
+function packageTextLeakage(
+  fields: Array<[string, string]>,
+  secrets: readonly string[],
+): HiddenLeakageFinding[] {
+  const longSecrets: string[] = [];
+  const oneCharacterSecrets = new Set<string>();
+  const twoCharacterSecrets = new Set<string>();
+  for (const secret of secrets) {
+    const needle = normalize(secret);
+    if (!needle) continue;
+    if (needle.length === 1) oneCharacterSecrets.add(needle);
+    else if (needle.length < 3) twoCharacterSecrets.add(needle);
+    else longSecrets.push(needle);
+  }
+  const longMatcher = createBoundaryMatcher(longSecrets);
+  const shortMatcher = createBoundaryMatcher(twoCharacterSecrets);
+  return fields.flatMap(([field, value]) => {
+    const text = normalize(value);
+    const exactSingleCharacter = oneCharacterSecrets.has(text);
+    return exactSingleCharacter || shortMatcher(text) || longMatcher(text)
+      ? [{ field, secretId: "pinned-package-text" }]
+      : [];
+  });
+}
+
+function packageIdLeakage(
+  fields: Array<[string, string]>,
+  ids: readonly string[],
+): HiddenLeakageFinding[] {
+  const normalizedPlainWordIds = new Set(
+    ids.filter((id) => !isFreeTextMatchableId(id)).map(normalize),
+  );
+  const matcher = createBoundaryMatcher(ids.filter(isFreeTextMatchableId));
+  return fields.flatMap(([field, value]) =>
+    normalizedPlainWordIds.has(normalize(value)) || matcher(value)
+      ? [{ field, secretId: "pinned-package-id" }]
+      : [],
+  );
 }
 
 /** Checks partial player-facing text against the session's unrevealed secrets. */
