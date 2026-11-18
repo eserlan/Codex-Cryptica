@@ -309,6 +309,37 @@ describe("package-grounded actions", () => {
     expect(sceneOf(1)).toBe("ros-scene-2-yard");
   });
 
+  it("commits proposed package events and drops rejected ones", async () => {
+    const proposed = (recordId: string, kind: string) => ({
+      ...completeProposal,
+      packageEvents: [
+        {
+          recordId,
+          kind,
+          to: "resolved",
+          certainty: "confirmed",
+          note: "Done.",
+        },
+      ],
+    });
+    const { runtime, state } = packageRuntime([
+      proposed("ros-scene-1-landing", "scene"),
+      proposed("no-such-record", "scene"),
+    ]);
+    const actions = new AdventureActions(runtime);
+    await actions.submitAction("Finish here");
+    expect(
+      state.session?.packageProgress?.records?.find(
+        (r) => r.id === "ros-scene-1-landing",
+      )?.status,
+    ).toBe("resolved");
+    await actions.submitAction("Try something else");
+    expect(state.session?.turns).toHaveLength(2);
+    expect(state.session?.turns.at(-1)?.dropped).toContain(
+      "packageEvents: unknown record no-such-record",
+    );
+  });
+
   it("keeps the scene when the model reports one the package does not have", async () => {
     const { runtime, state } = packageRuntime([movedTo("no-such-scene")]);
     await new AdventureActions(runtime).submitAction("Wander off");

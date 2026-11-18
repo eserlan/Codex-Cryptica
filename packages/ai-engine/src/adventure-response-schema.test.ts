@@ -72,6 +72,32 @@ describe("adventure structured response contract", () => {
     ).toMatchObject({ visiblePatch: { packageSceneId: "scene-2" } });
   });
 
+  it("offers optional bounded packageEvents", () => {
+    const complete = adventureTurnResponseSchema.oneOf[0];
+    expect(complete.properties.packageEvents.maxItems).toBe(8);
+    expect(complete.required).not.toContain("packageEvents");
+    const base = JSON.parse(completeResponse) as Record<string, unknown>;
+    const event = {
+      recordId: "enc-1",
+      kind: "encounter",
+      to: "resolved",
+      certainty: "confirmed",
+      note: "Done.",
+    };
+    const parse = (packageEvents: unknown) =>
+      parseAdventureResponse(JSON.stringify({ ...base, packageEvents }));
+    expect(parseAdventureResponse(completeResponse)).toMatchObject({
+      kind: "complete",
+    });
+    expect(parse([event])).toMatchObject({ packageEvents: [event] });
+    expect(() => parse(Array(9).fill(event))).toThrow(
+      "invalid-adventure-response",
+    );
+    expect(() => parse([{ ...event, id: "x" }])).toThrow(
+      "invalid-adventure-response",
+    );
+  });
+
   it("accepts optional bounded sceneTransition/personRefs and rejects oversized arrays", () => {
     const base = JSON.parse(completeResponse) as Record<string, unknown>;
     expect(

@@ -1,6 +1,7 @@
 import type { AdventureJsonV1 } from "./adventure-json";
 import { MAX_PACKAGE_PROGRESS_ENTRIES } from "./schemas";
 import type {
+  PackageEventProposal,
   PackageProgress,
   PackageProgressEvent,
   PackageProgressRecord,
@@ -14,14 +15,7 @@ export interface PackageProgressIndex {
   packageSceneBranches: Record<string, string[]>;
 }
 
-export interface PackageProgressInput {
-  recordId: string;
-  kind: PackageRecordKind;
-  to: PackageProgressStatus;
-  certainty: "claimed" | "confirmed";
-  note: string;
-  supersedes?: string;
-}
+export type PackageProgressInput = PackageEventProposal;
 
 export interface PackageProgressResult {
   progress: PackageProgress;
@@ -318,4 +312,68 @@ export function planSceneProgress(
     if (get(moveTo) === "active") openBranches(moveTo);
   }
   return inputs;
+}
+
+export const MAX_PACKAGE_PROGRESS_PROMPT_CHARS = 4000;
+const SUMMARY_EVENTS = 12;
+const SUMMARY_NOTE_CHARS = 120;
+
+export interface PackageProgressPromptSummary {
+  sceneId: string;
+  records: {
+    id: string;
+    kind: PackageRecordKind;
+    status: PackageProgressStatus;
+  }[];
+  recentEvents: {
+    id: string;
+    recordId: string;
+    certainty: "claimed" | "confirmed";
+    note: string;
+    to?: PackageProgressStatus;
+    supersedes?: string;
+    superseded?: true;
+  }[];
+}
+
+/** A bounded GM-only view of the ledger for the prompt; never shown to players. */
+export function packageProgressPromptSummary(
+  progress: PackageProgress | undefined,
+): PackageProgressPromptSummary | undefined {
+  if (progress?.version !== 1) return undefined;
+  const events = progress.events ?? [];
+  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  const summary: PackageProgressPromptSummary = {
+    sceneId: progress.sceneId,
+    records: (progress.records ?? [])
+      .filter((record) => record.status !== "unvisited")
+      .map(({ id, kind, status }) => ({ id, kind, status })),
+    recentEvents: events.slice(-SUMMARY_EVENTS).map((event) => ({
+      id: event.id,
+      recordId: event.recordId,
+      certainty: event.certainty,
+      note: event.note.trim().slice(0, SUMMARY_NOTE_CHARS),
+      ...(event.certainty === "confirmed" ? { to: event.to } : {}),
+      ...(event.supersedes ? { supersedes: event.supersedes } : {}),
+      ...(superseded.has(event.id) ? { superseded: true as const } : {}),
+    })),
+  };
+  const over = () =>
+    JSON.stringify(summary).length > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
+  while (over() && summary.recentEvents.length > 0) {
+    summary.recentEvents.shift();
+  }
+  while (over()) {
+    let at = -1;
+    for (let i = summary.records.length - 1; i >= 0; i--) {
+      if (summary.records[i].status === "available") {
+        at = i;
+        break;
+      }
+    }
+    if (at < 0) at = summary.records.length - 1;
+    if (at < 0) break;
+    summary.records.splice(at, 1);
+  }
+  return summary;
 }

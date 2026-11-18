@@ -240,6 +240,35 @@ export const adventureTurnResponseSchema = {
           maxItems: 8,
           items: idSchema,
         },
+        packageEvents: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            properties: {
+              recordId: idSchema,
+              kind: {
+                type: "string",
+                enum: ["scene", "encounter", "clue", "secret"],
+              },
+              to: {
+                type: "string",
+                enum: [
+                  "unvisited",
+                  "available",
+                  "active",
+                  "resolved",
+                  "altered",
+                  "skipped",
+                ],
+              },
+              certainty: { type: "string", enum: ["claimed", "confirmed"] },
+              note: { ...textSchema, maxLength: 240 },
+              supersedes: idSchema,
+            },
+            required: ["recordId", "kind", "to", "certainty", "note"],
+          },
+        },
         sceneTransition: {
           type: "object",
           properties: {

@@ -100,7 +100,7 @@ export function ensureScenarioSecrets(
 }
 
 /**
- * Fields the player can see. The GM-only `hiddenPatch` is excluded: copying a
+ * Fields the player can see. The GM-only `hiddenPatch` and `packageEvents` are excluded: copying a
  * secret into hidden state is not a leak.
  */
 function playerFacingStrings(
@@ -110,6 +110,7 @@ function playerFacingStrings(
     const {
       hiddenPatch: _hidden,
       revealSecretIds: _reveals,
+      packageEvents: _packageEvents,
       timeAdvance,
       ...visible
     } = proposal;
