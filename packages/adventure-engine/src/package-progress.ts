@@ -365,17 +365,13 @@ export function packageProgressPromptSummary(
   while (over() && summary.recentEvents.length > 0) {
     summary.recentEvents.shift();
   }
-  while (over()) {
-    let at = -1;
-    for (let i = summary.records.length - 1; i >= 0; i--) {
-      if (summary.records[i].status === "available") {
-        at = i;
-        break;
-      }
-    }
-    if (at < 0) at = summary.records.length - 1;
-    if (at < 0) break;
-    summary.records.splice(at, 1);
+  while (over() && summary.records.length > 0) {
+    const availableIndex = summary.records.findLastIndex(
+      (record) => record.status === "available",
+    );
+    const removalIndex =
+      availableIndex >= 0 ? availableIndex : summary.records.length - 1;
+    summary.records.splice(removalIndex, 1);
   }
   return over() ? undefined : summary;
 }
