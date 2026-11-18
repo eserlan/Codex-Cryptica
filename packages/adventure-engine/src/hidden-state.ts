@@ -156,21 +156,33 @@ export function detectPackageLeakage(
     ([field]) =>
       !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
   );
+  const proposedActorText =
+    proposal.kind === "complete"
+      ? (proposal.actorEvents ?? []).flatMap((event) => [
+          event.note,
+          ...(event.fact ? [event.fact] : []),
+        ])
+      : [];
+  const storedProgress = session?.packageProgress;
   return [
     ...packageTextLeakage(fields, [
       ...(meta.packageGmOnlyText ?? []),
-      ...(session?.packageProgress?.events ?? []).map((event) => event.note),
-      ...(session?.packageProgress?.actorEvents ?? []).map(
-        (event) => event.note,
-      ),
-      ...(session?.packageProgress?.actorEvents ?? []).flatMap((event) =>
+      ...(proposal.kind === "complete"
+        ? (proposal.packageEvents ?? []).map((event) => event.note)
+        : []),
+      ...proposedActorText,
+      ...(storedProgress?.events ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).flatMap((event) =>
         event.fact ? [event.fact] : [],
       ),
-      ...(session?.packageProgress?.actors ?? []).flatMap(
-        (actor) => actor.facts,
-      ),
+      ...(storedProgress?.actors ?? []).flatMap((actor) => actor.facts),
     ]),
-    ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
+    ...packageIdLeakage(fields, [
+      ...(meta.packageRecordIds ?? []),
+      ...(storedProgress?.events ?? []).map((event) => event.id),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.id),
+    ]),
   ];
 }
 
@@ -186,7 +198,8 @@ function packageTextLeakage(
     if (!needle) continue;
     if (needle.length < 3) {
       shortSecrets.add(needle);
-      if (/^\d+$/.test(needle)) shortNumericSecrets.push(needle);
+      if (needle.length >= 2 && /^\d+$/.test(needle))
+        shortNumericSecrets.push(needle);
     } else longSecrets.push(needle);
   }
   const longMatcher = createBoundaryMatcher(longSecrets);

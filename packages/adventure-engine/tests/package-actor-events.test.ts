@@ -106,6 +106,62 @@ function actorOf(
 }
 
 describe("actor progress transitions and corrections", () => {
+  it("rejects same-turn echoes of proposed actor notes and remembered facts", () => {
+    const cases = [
+      {
+        note: "Maren hid the brass key beneath the old mill.",
+        narration:
+          "The journal says Maren hid the brass key beneath the old mill.",
+      },
+      {
+        fact: "Maren secretly keeps the brass key.",
+        narration: "Maren secretly keeps the brass key.",
+      },
+    ];
+
+    for (const [index, testCase] of cases.entries()) {
+      const result = commitActors(
+        packageSession(),
+        [
+          {
+            actorId: MAREN,
+            status: "present",
+            note: testCase.note ?? "Maren commented on the weather.",
+            ...(testCase.fact ? { fact: testCase.fact } : {}),
+            certainty: "confirmed",
+          },
+        ],
+        { narration: testCase.narration, turnId: `same-turn-${index}` },
+      );
+      expect(result).toMatchObject({
+        ok: false,
+        errors: [{ code: "hidden-leakage" }],
+      });
+    }
+  });
+
+  it("rejects player-facing echoes of committed actor event IDs", () => {
+    const first = ok(
+      commitActors(packageSession(), [
+        {
+          actorId: MAREN,
+          status: "present",
+          certainty: "confirmed",
+          note: "Maren was seen beside the sluice.",
+        },
+      ]),
+    );
+    const eventId = first.packageProgress!.actorEvents![0]!.id;
+    const echoed = commitActors(first, [], {
+      turnId: "echo-actor-event-id",
+      narration: `The internal reference is ${eventId}.`,
+    });
+    expect(echoed).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
   it("tracks status, disposition, and remembered facts across turns and scene revisits", () => {
     const turn1 = ok(
       commitActors(packageSession(), [
