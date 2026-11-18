@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   AdventureJsonV1Schema,
+  MAX_ADVENTURE_RETRIEVAL_CHARS,
   retrieveAdventureJsonContext,
   validateAdventureJson,
 } from "@codex/adventure-engine";
@@ -425,6 +426,61 @@ describe("gap 3: companion lines", () => {
     expect(() =>
       assertNoGmLeak(entries, "The passage is open At low tide.", "condition"),
     ).toThrow(/field connections\[\d+\]\.travelConditions\[0\]/);
+  });
+
+  it("allows public connection prose when a hidden ID is beyond retrieval's line bound", () => {
+    const pkg = variant();
+    pkg.secrets = [
+      ...pkg.secrets,
+      { ...pkg.secrets[0]!, id: "hid-9", text: "Zzyzx quandary" },
+    ];
+    const publicDescription =
+      "The bridge stands open for weary travellers returning home from the coast.";
+    const locationId = pkg.locations[0]!.id;
+    pkg.locations = pkg.locations.map((location, index) =>
+      index === 0
+        ? {
+            ...location,
+            connections: [
+              ...(location.connections ?? []),
+              {
+                targetLocationId: pkg.locations[1]!.id,
+                description: publicDescription,
+                // Retrieval stops matching after the bounded line prefix.
+                travelConditions: [
+                  `far-off notes ${"x".repeat(MAX_ADVENTURE_RETRIEVAL_CHARS + 100)} hid-9`,
+                ],
+              },
+            ],
+          }
+        : location,
+    );
+    const entries = collectGmOnlyStrings(pkg);
+    const connectionIndex = pkg.locations[0]!.connections!.length - 1;
+    expect(entries).not.toContainEqual({
+      recordId: locationId,
+      field: `connections[${connectionIndex}].description`,
+      text: publicDescription,
+    });
+    expect(() =>
+      assertNoGmLeak(
+        entries,
+        "bridge stands open for weary travellers returning home",
+        "public connection quote",
+      ),
+    ).not.toThrow();
+
+    const result = retrieveAdventureJsonContext(pkg, {
+      sceneId: "ros-scene-1-landing",
+      locationId,
+    });
+    expect(
+      result.gmOnly.some(
+        (excerpt) =>
+          excerpt.id === locationId &&
+          excerpt.text.includes(publicDescription),
+      ),
+    ).toBe(false);
   });
 
   it("catches an 8-word quote from a companion when ID punctuation changes", () => {
