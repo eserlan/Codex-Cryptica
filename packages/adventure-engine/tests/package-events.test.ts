@@ -293,6 +293,59 @@ describe("proposed package events", () => {
     ).toHaveLength(23);
   });
 
+  it("caps turn.dropped at 24 and stays schema-valid when package-event rejections overflow", () => {
+    const branches = Array.from({ length: 30 }, (_, i) => `branch-scene-${i}`);
+    const branchKinds = {
+      "target-scene": "scene" as const,
+      ...Object.fromEntries(branches.map((id) => [id, "scene" as const])),
+    };
+    const largeIndex = {
+      ...index,
+      packageSceneIds: [...index.packageSceneIds, "target-scene"],
+      packageRecordKinds: {
+        ...index.packageRecordKinds,
+        ...branchKinds,
+      },
+      packageSceneBranches: {
+        ...index.packageSceneBranches,
+        "target-scene": branches,
+      },
+    };
+    const base = packageSession();
+    base.packageProgress = {
+      sceneId: WHEEL,
+      version: 1,
+      records: [{ id: WHEEL, kind: "scene", status: "active" }],
+      events: Array.from({ length: 398 }, (_, i) => ({
+        id: `t:pkg:${i}`,
+        turnId: `t${i}`,
+        recordId: WHEEL,
+        kind: "scene" as const,
+        from: "unvisited" as const,
+        to: "active" as const,
+        certainty: "confirmed" as const,
+        note: "Existing event.",
+      })),
+    };
+    const p = proposal();
+    p.visiblePatch.packageSceneId = "target-scene";
+    p.visiblePatch.objectives.update = [
+      { id: "missing-obj", text: "Missing", source: "canonical" },
+    ];
+
+    const next = applyCompletedTurn(base, p, {
+      ...meta,
+      ...largeIndex,
+    });
+
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    const dropped = next.value.turns.at(-1)?.dropped ?? [];
+    expect(dropped).toHaveLength(24);
+    expect(dropped.at(-1)).toMatch(/^packageEvents: \+\d+ more dropped$/);
+    expect(() => parseAdventureSession(next.value)).not.toThrow();
+  });
+
   it("reports a duplicate when a turn id is committed again", () => {
     const first = ok(commit(packageSession(), [event(WICK, "resolved")]));
     const again = ok(
@@ -365,6 +418,31 @@ describe("package progress prompt summary", () => {
     expect(
       packageProgressPromptSummary({ sceneId: "s".repeat(32_001), version: 1 }),
     ).toBeUndefined();
+  });
+
+  it("prunes 400 large-ID records in one pass and drops available records before resolved ones", () => {
+    const records = Array.from({ length: 400 }, (_, i) => ({
+      id: `rec-${i}-${"a".repeat(1_500)}`,
+      kind: "scene" as const,
+      status: i % 2 === 0 ? ("available" as const) : ("resolved" as const),
+    }));
+    const start = performance.now();
+    const summary = packageProgressPromptSummary({
+      sceneId: WHEEL,
+      version: 1,
+      records,
+      events: [],
+    });
+    const elapsedMs = performance.now() - start;
+
+    expect(summary).toBeDefined();
+    expect(JSON.stringify(summary).length).toBeLessThanOrEqual(
+      MAX_PACKAGE_PROGRESS_PROMPT_CHARS,
+    );
+    expect(
+      summary!.records.every((record) => record.status === "resolved"),
+    ).toBe(true);
+    expect(elapsedMs).toBeLessThan(250);
   });
 });
 

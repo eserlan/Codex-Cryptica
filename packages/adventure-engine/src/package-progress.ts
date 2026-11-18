@@ -336,6 +336,13 @@ export interface PackageProgressPromptSummary {
   }[];
 }
 
+function serializedArrayLength(entryLengths: number[]): number {
+  if (entryLengths.length === 0) return 0;
+  let total = entryLengths.length - 1;
+  for (const len of entryLengths) total += len;
+  return total;
+}
+
 /** A bounded GM-only view of the ledger for the prompt; never shown to players. */
 export function packageProgressPromptSummary(
   progress: PackageProgress | undefined,
@@ -343,33 +350,71 @@ export function packageProgressPromptSummary(
   if (progress?.version !== 1) return undefined;
   const events = progress.events ?? [];
   const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  const records = (progress.records ?? [])
+    .filter((record) => record.status !== "unvisited")
+    .map(({ id, kind, status }) => ({ id, kind, status }));
+  const recentEvents = events.slice(-SUMMARY_EVENTS).map((event) => ({
+    id: event.id,
+    recordId: event.recordId,
+    certainty: event.certainty,
+    note: event.note.trim().slice(0, SUMMARY_NOTE_CHARS),
+    to: event.to,
+    ...(event.supersedes ? { supersedes: event.supersedes } : {}),
+    ...(superseded.has(event.id) ? { superseded: true as const } : {}),
+  }));
+
+  const recordLengths = records.map((record) => JSON.stringify(record).length);
+  const eventLengths = recentEvents.map(
+    (event) => JSON.stringify(event).length,
+  );
+  const baseLength = JSON.stringify({
+    sceneId: progress.sceneId,
+    records: [],
+    recentEvents: [],
+  }).length;
+  let totalLength =
+    baseLength +
+    serializedArrayLength(recordLengths) +
+    serializedArrayLength(eventLengths);
+
+  let eventStart = 0;
+  while (
+    totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS &&
+    eventStart < recentEvents.length
+  ) {
+    const remainingEvents = recentEvents.length - eventStart;
+    totalLength -= eventLengths[eventStart]! + (remainingEvents > 1 ? 1 : 0);
+    eventStart += 1;
+  }
+
+  const keepRecord = new Array<boolean>(records.length).fill(true);
+  let remainingRecords = records.length;
+  const dropRecordAt = (index: number): void => {
+    keepRecord[index] = false;
+    totalLength -= recordLengths[index]! + (remainingRecords > 1 ? 1 : 0);
+    remainingRecords -= 1;
+  };
+  for (
+    let i = records.length - 1;
+    i >= 0 && totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
+    i -= 1
+  ) {
+    if (records[i]!.status === "available") dropRecordAt(i);
+  }
+  for (
+    let i = records.length - 1;
+    i >= 0 && totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
+    i -= 1
+  ) {
+    if (keepRecord[i]) dropRecordAt(i);
+  }
+
   const summary: PackageProgressPromptSummary = {
     sceneId: progress.sceneId,
-    records: (progress.records ?? [])
-      .filter((record) => record.status !== "unvisited")
-      .map(({ id, kind, status }) => ({ id, kind, status })),
-    recentEvents: events.slice(-SUMMARY_EVENTS).map((event) => ({
-      id: event.id,
-      recordId: event.recordId,
-      certainty: event.certainty,
-      note: event.note.trim().slice(0, SUMMARY_NOTE_CHARS),
-      to: event.to,
-      ...(event.supersedes ? { supersedes: event.supersedes } : {}),
-      ...(superseded.has(event.id) ? { superseded: true as const } : {}),
-    })),
+    records: records.filter((_, i) => keepRecord[i]),
+    recentEvents: recentEvents.slice(eventStart),
   };
-  const over = () =>
-    JSON.stringify(summary).length > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
-  while (over() && summary.recentEvents.length > 0) {
-    summary.recentEvents.shift();
-  }
-  while (over() && summary.records.length > 0) {
-    const availableIndex = summary.records.findLastIndex(
-      (record) => record.status === "available",
-    );
-    const removalIndex =
-      availableIndex >= 0 ? availableIndex : summary.records.length - 1;
-    summary.records.splice(removalIndex, 1);
-  }
-  return over() ? undefined : summary;
+  return JSON.stringify(summary).length > MAX_PACKAGE_PROGRESS_PROMPT_CHARS
+    ? undefined
+    : summary;
 }

@@ -280,15 +280,27 @@ export function applyCompletedTurn(
   );
   if (elaborationError) return elaborationError;
   if (dropped.length > 0) {
+    const MAX_DROPPED_REASONS = 24;
     const packageEventDrops = dropped.filter((reason) =>
       reason.startsWith("packageEvents:"),
     );
     const otherDrops = dropped.filter(
       (reason) => !reason.startsWith("packageEvents:"),
     );
+    const boundedPackageEventDrops =
+      packageEventDrops.length > MAX_DROPPED_REASONS
+        ? [
+            ...packageEventDrops.slice(0, MAX_DROPPED_REASONS - 1),
+            `packageEvents: +${packageEventDrops.length - (MAX_DROPPED_REASONS - 1)} more dropped`,
+          ]
+        : packageEventDrops;
+    const remainingSlots = Math.max(
+      0,
+      MAX_DROPPED_REASONS - boundedPackageEventDrops.length,
+    );
     turn.dropped = [
-      ...otherDrops.slice(0, 24 - packageEventDrops.length),
-      ...packageEventDrops,
+      ...otherDrops.slice(0, remainingSlots),
+      ...boundedPackageEventDrops,
     ];
   }
   const result = updatedSession(candidate, now);
