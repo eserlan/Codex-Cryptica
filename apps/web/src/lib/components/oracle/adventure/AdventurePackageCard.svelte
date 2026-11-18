@@ -12,27 +12,33 @@
     return "";
   }
 
-  const party = $derived.by(() => {
+  function formatSize(size: string): string {
+    if (!size) return "";
+    const isUpperBound = size.startsWith("Up to ");
+    const value = isUpperBound ? size.slice("Up to ".length) : size;
+    const players = value === "1" ? "player" : "players";
+    return `${isUpperBound ? "Up to " : ""}${value} ${players}`;
+  }
+
+  function formatLevel(level: string): string {
+    if (!level) return "";
+    if (level.startsWith("Up to "))
+      return `Up to Level ${level.slice("Up to ".length)}`;
+    return `${level.includes("–") ? "Levels" : "Level"} ${level}`;
+  }
+
+  function formatParty(): string {
     const target = pkg.system?.targetParty;
     if (!target) return "";
-    const parts: string[] = [];
-    const size = span(target.sizeMin, target.sizeMax);
-    if (size) {
-      const isUpperBound = size.startsWith("Up to ");
-      const value = isUpperBound ? size.slice("Up to ".length) : size;
-      const players = value === "1" ? "player" : "players";
-      parts.push(`${isUpperBound ? "Up to " : ""}${value} ${players}`);
-    }
-    const level = span(target.levelMin, target.levelMax);
-    if (level) {
-      if (level.startsWith("Up to ")) {
-        parts.push(`Up to Level ${level.slice("Up to ".length)}`);
-      } else {
-        parts.push(`${level.includes("–") ? "Levels" : "Level"} ${level}`);
-      }
-    }
-    return parts.join(" · ");
-  });
+    return [
+      formatSize(span(target.sizeMin, target.sizeMax)),
+      formatLevel(span(target.levelMin, target.levelMax)),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+  }
+
+  const party = $derived(formatParty());
 
   const details = $derived(
     [pkg.system?.name, party].filter(Boolean).join(" · "),
