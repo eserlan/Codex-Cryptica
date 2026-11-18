@@ -149,13 +149,17 @@ export function detectHiddenLeakage(
 export function detectPackageLeakage(
   proposal: AdventureTurnProposal,
   meta: CommitMetadata,
+  session?: AdventureSession,
 ): HiddenLeakageFinding[] {
   const fields = playerFacingStrings(proposal).filter(
     ([field]) =>
       !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
   );
   return [
-    ...packageTextLeakage(fields, meta.packageGmOnlyText ?? []),
+    ...packageTextLeakage(fields, [
+      ...(meta.packageGmOnlyText ?? []),
+      ...(session?.packageProgress?.events ?? []).map((event) => event.note),
+    ]),
     ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
   ];
 }

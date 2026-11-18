@@ -69,7 +69,7 @@ function completedTurnProposalError(
   }
   if (
     detectHiddenLeakage(session, proposal).length > 0 ||
-    detectPackageLeakage(proposal, meta).length > 0
+    detectPackageLeakage(proposal, meta, session).length > 0
   ) {
     return error(
       "hidden-leakage",

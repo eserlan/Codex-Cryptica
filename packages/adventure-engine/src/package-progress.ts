@@ -185,11 +185,13 @@ function checkInput(
   const current = statusOf(records, input.recordId);
   let target: PackageProgressEvent | undefined;
   if (input.supersedes) {
-    target =
-      input.certainty === "confirmed"
-        ? (supersedeTarget(events, input) ?? undefined)
-        : undefined;
-    if (!target) return { reason: "invalid supersede" };
+    target = supersedeTarget(events, input) ?? undefined;
+    if (
+      !target ||
+      (input.certainty === "claimed" && target.certainty !== "claimed")
+    ) {
+      return { reason: "invalid supersede" };
+    }
   }
   if (!transitionAllowed(events, input, current, target)) {
     return { reason: "transition not allowed" };

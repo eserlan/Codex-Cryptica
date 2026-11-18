@@ -177,6 +177,62 @@ describe("proposed package events", () => {
     expect(shown.superseded).toBe(true);
   });
 
+  it("lets claimed corrections supersede claims, but not confirmed events", () => {
+    const first = ok(
+      commit(packageSession(), [
+        event(MOTIVE, "resolved", {
+          certainty: "claimed",
+          note: "The first witness blames Tobiah.",
+        }),
+      ]),
+    );
+    const claim = first.packageProgress!.events!.at(-1)!;
+    const corrected = ok(
+      commit(
+        first,
+        [
+          event(MOTIVE, "active", {
+            certainty: "claimed",
+            note: "The witness retracts the rumour.",
+            supersedes: claim.id,
+          }),
+        ],
+        { turnId: "turn-2", inputId: "input-2" },
+      ),
+    );
+    expect(statusOf(corrected.packageProgress, MOTIVE)).toBe("unvisited");
+    const { state } = promptState(corrected);
+    expect(
+      state["GM-ONLY package progress"].recentEvents.find(
+        (entry: { id: string }) => entry.id === claim.id,
+      ).superseded,
+    ).toBe(true);
+
+    const confirmed = ok(
+      commit(corrected, [event(WICK, "active")], {
+        turnId: "turn-3",
+        inputId: "input-3",
+      }),
+    );
+    const confirmedEvent = confirmed.packageProgress!.events!.at(-1)!;
+    const rejected = ok(
+      commit(
+        confirmed,
+        [
+          event(WICK, "resolved", {
+            certainty: "claimed",
+            supersedes: confirmedEvent.id,
+          }),
+        ],
+        { turnId: "turn-4", inputId: "input-4" },
+      ),
+    );
+    expect(lastDropped(rejected)).toContain(
+      `packageEvents: invalid supersede ${WICK}`,
+    );
+    expect(statusOf(rejected.packageProgress, WICK)).toBe("active");
+  });
+
   it("drops rejected proposals with their reasons and still commits", () => {
     const resolved = ok(commit(packageSession(), [event(WICK, "resolved")]));
     const cases: [PackageEventProposal, string][] = [
@@ -326,5 +382,25 @@ describe("package ledger secrecy", () => {
     });
     const result = commit(s, [event(WICK, "resolved", { note: secretText })]);
     expect(result.ok).toBe(true);
+  });
+
+  it("rejects a later player-facing echo of a stored GM-only ledger note", () => {
+    const first = ok(
+      commit(packageSession(), [
+        event(WICK, "resolved", { note: `${MARKER} private correction` }),
+      ]),
+    );
+    const echo = proposal();
+    echo.narration = `The record says ${MARKER} private correction.`;
+    const result = applyCompletedTurn(first, echo, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
   });
 });
