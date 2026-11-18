@@ -407,6 +407,34 @@ describe("package ledger secrecy", () => {
     });
   });
 
+  it("rejects a later player-facing echo of a stored ledger event ID", () => {
+    const first = ok(commit(packageSession(), [event(WICK, "resolved")]));
+    const eventId = first.packageProgress!.events!.at(-1)!.id;
+
+    for (const field of ["narration", "suggestedActions"] as const) {
+      const echo = proposal();
+      if (field === "narration") {
+        echo.narration = `The internal reference is ${eventId}.`;
+      } else {
+        echo.suggestedActions = [
+          `Ask about ${eventId}`,
+          "Look around the room",
+          "Check the nearby doorway",
+        ];
+      }
+      const result = applyCompletedTurn(first, echo, {
+        ...meta,
+        turnId: "turn-2",
+        inputId: "input-2",
+        ...index,
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        errors: [{ code: "hidden-leakage" }],
+      });
+    }
+  });
+
   it("allows ordinary narration containing a stored two-character note", () => {
     const first = ok(
       commit(packageSession(), [event(WICK, "resolved", { note: "in" })]),

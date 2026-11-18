@@ -160,7 +160,10 @@ export function detectPackageLeakage(
       ...(meta.packageGmOnlyText ?? []),
       ...(session?.packageProgress?.events ?? []).map((event) => event.note),
     ]),
-    ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
+    ...packageIdLeakage(fields, [
+      ...(meta.packageRecordIds ?? []),
+      ...(session?.packageProgress?.events ?? []).map((event) => event.id),
+    ]),
   ];
 }
 
