@@ -151,6 +151,41 @@ describe("1 legacy sessions", () => {
       }),
     ).toThrow();
   });
+
+  it.each([
+    ["long", `branch-target-${"x".repeat(200)}`],
+    ["whitespace-bearing", " branch-target "],
+  ])("round-trips a %s branch-target ID through the ledger", (_label, id) => {
+    const branchPkg = structuredClone(pkg);
+    branchPkg.scenes[1].id = id;
+    branchPkg.scenes[0].branches![0].targetSceneId = id;
+    const branchIndex = packageProgressIndex(branchPkg);
+    const result = applyPackageProgressEvents(
+      legacy,
+      [
+        {
+          recordId: id,
+          kind: "scene",
+          to: "available",
+          certainty: "confirmed",
+          note: "Next scene.",
+        },
+      ],
+      { turnId: "branch-turn", index: branchIndex },
+    );
+
+    expect(result.dropped).toEqual([]);
+    expect(result.progress.records).toEqual([
+      { id, kind: "scene", status: "available" },
+    ]);
+    expect(result.progress.events![0].recordId).toBe(id);
+    const reloaded = parseAdventureSession(
+      JSON.parse(
+        JSON.stringify(packageSession({ packageProgress: result.progress })),
+      ),
+    );
+    expect(reloaded.packageProgress).toEqual(result.progress);
+  });
 });
 
 describe("2 opening turn", () => {
@@ -281,7 +316,7 @@ describe("7 claims", () => {
     ]);
     const event = result.progress.events![0];
     expect(event.from).toBe("unvisited");
-    expect(event.to).toBe("unvisited");
+    expect(event.to).toBe("resolved");
     expect(result.progress.records).toEqual([]);
   });
 });
