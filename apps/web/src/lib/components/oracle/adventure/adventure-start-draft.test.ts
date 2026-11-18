@@ -49,6 +49,17 @@ describe("adventure start draft", () => {
     expect(draft.premise).toBe(pkg.title);
   });
 
+  it("carries the chosen start scene and clears it on reset", () => {
+    const draft = new AdventureStartDraft();
+    draft.fromPackage(sample as AdventureJsonV1, "hash", "scene-x");
+    expect(draft.startSceneId).toBe("scene-x");
+    draft.fromPackage(sample as AdventureJsonV1, "hash");
+    expect(draft.startSceneId).toBeUndefined();
+    draft.fromPackage(sample as AdventureJsonV1, "hash", "scene-x");
+    draft.reset();
+    expect(draft.startSceneId).toBeUndefined();
+  });
+
   it("clears all unsaved fields and package selection on a Vault reset", () => {
     const draft = new AdventureStartDraft();
     draft.fromPackage(sample as AdventureJsonV1, "hash");

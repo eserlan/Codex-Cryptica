@@ -96,8 +96,11 @@ a package, and the same file always gives the same result.
 5. Approve to save the package as an immutable SHA-256 baseline, or cancel —
    cancelling leaves no package in the Vault.
 
-Once approved, you can start a new session pinned to that package version
-and hash, or resume an existing pinned session directly. Later changes to
+Once approved, each package version shows a card with its hook and source
+details, without spoilers. When a package offers more than one starting point,
+you can pick one before starting; the first scene is the default, and a hidden
+alternative is shown only as "Alternative start (details hidden)". You can
+start a new session pinned to that package version and hash, or resume an existing pinned session directly. Later changes to
 the package never retarget a session that has already started.
 
 Re-importing an identical package is a no-op. Changed content with the same
