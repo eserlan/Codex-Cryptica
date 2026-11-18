@@ -1584,6 +1584,20 @@ describe("Landing Page Registry", () => {
       );
     });
 
+    it("cross-links The Last Shift as an original, system-neutral example scenario", () => {
+      const ms = getLandingPage("mothership")!;
+      const entry = ms.recommendedTools.find(
+        (t) => t.href === "/examples/the-last-shift-sci-fi-horror-scenario",
+      );
+
+      expect(entry).toBeDefined();
+      expect(entry?.badge).toBeUndefined();
+      expect(entry?.title.endsWith("Example")).toBe(false);
+      expect(entry?.description).toMatch(/original/i);
+      expect(entry?.description).toMatch(/system-neutral/i);
+      expect(entry?.description).toMatch(/Warden/);
+    });
+
     it("maintains a hub-and-spoke derelict graph", () => {
       const graph = getLandingPage("mothership")!.exampleGraph!;
       const [hub, ...spokes] = graph.steps;

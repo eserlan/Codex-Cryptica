@@ -177,7 +177,7 @@ describe("proposed package events", () => {
     expect(shown.superseded).toBe(true);
   });
 
-  it("lets claimed corrections supersede claims, but not confirmed events", () => {
+  it("rejects claimed corrections, including claims that target earlier claims", () => {
     const first = ok(
       commit(packageSession(), [
         event(MOTIVE, "resolved", {
@@ -187,7 +187,7 @@ describe("proposed package events", () => {
       ]),
     );
     const claim = first.packageProgress!.events!.at(-1)!;
-    const corrected = ok(
+    const correction = ok(
       commit(
         first,
         [
@@ -200,16 +200,18 @@ describe("proposed package events", () => {
         { turnId: "turn-2", inputId: "input-2" },
       ),
     );
-    expect(statusOf(corrected.packageProgress, MOTIVE)).toBe("unvisited");
-    const { state } = promptState(corrected);
+    expect(lastDropped(correction)).toContain(
+      `packageEvents: invalid supersede ${MOTIVE}`,
+    );
     expect(
-      state["GM-ONLY package progress"].recentEvents.find(
-        (entry: { id: string }) => entry.id === claim.id,
-      ).superseded,
-    ).toBe(true);
+      correction.packageProgress!.events!.filter(
+        (candidate) => candidate.recordId === MOTIVE,
+      ),
+    ).toHaveLength(1);
+    expect(statusOf(correction.packageProgress, MOTIVE)).toBe("unvisited");
 
     const confirmed = ok(
-      commit(corrected, [event(WICK, "active")], {
+      commit(correction, [event(WICK, "active")], {
         turnId: "turn-3",
         inputId: "input-3",
       }),
@@ -265,6 +267,83 @@ describe("proposed package events", () => {
       expect(next.turns).toHaveLength(resolved.turns.length + 1);
       expect(lastDropped(next)).toContain(note);
     }
+  });
+
+  it("keeps package-event rejection reasons when earlier patch errors fill the drop limit", () => {
+    const p = proposal();
+    p.visiblePatch.objectives.update = Array.from({ length: 24 }, (_, i) => ({
+      id: `missing-objective-${i}`,
+      text: "Missing objective",
+      source: "canonical" as const,
+    }));
+    p.packageEvents = [event("no-such-record", "resolved")];
+
+    const next = applyCompletedTurn(packageSession(), p, {
+      ...meta,
+      ...index,
+    });
+
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    const dropped = next.value.turns.at(-1)?.dropped ?? [];
+    expect(dropped).toHaveLength(24);
+    expect(dropped).toContain("packageEvents: unknown record no-such-record");
+    expect(
+      dropped.filter((reason) => reason.startsWith("objectives:")),
+    ).toHaveLength(23);
+  });
+
+  it("caps turn.dropped at 24 and stays schema-valid when package-event rejections overflow", () => {
+    const branches = Array.from({ length: 30 }, (_, i) => `branch-scene-${i}`);
+    const branchKinds = {
+      "target-scene": "scene" as const,
+      ...Object.fromEntries(branches.map((id) => [id, "scene" as const])),
+    };
+    const largeIndex = {
+      ...index,
+      packageSceneIds: [...index.packageSceneIds, "target-scene"],
+      packageRecordKinds: {
+        ...index.packageRecordKinds,
+        ...branchKinds,
+      },
+      packageSceneBranches: {
+        ...index.packageSceneBranches,
+        "target-scene": branches,
+      },
+    };
+    const base = packageSession();
+    base.packageProgress = {
+      sceneId: WHEEL,
+      version: 1,
+      records: [{ id: WHEEL, kind: "scene", status: "active" }],
+      events: Array.from({ length: 398 }, (_, i) => ({
+        id: `t:pkg:${i}`,
+        turnId: `t${i}`,
+        recordId: WHEEL,
+        kind: "scene" as const,
+        from: "unvisited" as const,
+        to: "active" as const,
+        certainty: "confirmed" as const,
+        note: "Existing event.",
+      })),
+    };
+    const p = proposal();
+    p.visiblePatch.packageSceneId = "target-scene";
+    p.visiblePatch.objectives.update = [
+      { id: "missing-obj", text: "Missing", source: "canonical" },
+    ];
+
+    const next = applyCompletedTurn(base, p, {
+      ...meta,
+      ...largeIndex,
+    });
+
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    const dropped = next.value.turns.at(-1)?.dropped ?? [];
+    expect(dropped).toHaveLength(24);
+    expect(dropped.at(-1)).toMatch(/^packageEvents: \+\d+ more dropped$/);
+    expect(() => parseAdventureSession(next.value)).not.toThrow();
   });
 
   it("reports a duplicate when a turn id is committed again", () => {
@@ -336,6 +415,34 @@ describe("package progress prompt summary", () => {
     expect(summary.recentEvents.length).toBeLessThanOrEqual(12);
     expect(progress).toEqual(copy);
     expect(packageProgressPromptSummary({ sceneId: WHEEL })).toBeUndefined();
+    expect(
+      packageProgressPromptSummary({ sceneId: "s".repeat(32_001), version: 1 }),
+    ).toBeUndefined();
+  });
+
+  it("prunes 400 large-ID records in one pass and drops available records before resolved ones", () => {
+    const records = Array.from({ length: 400 }, (_, i) => ({
+      id: `rec-${i}-${"a".repeat(1_500)}`,
+      kind: "scene" as const,
+      status: i % 2 === 0 ? ("available" as const) : ("resolved" as const),
+    }));
+    const start = performance.now();
+    const summary = packageProgressPromptSummary({
+      sceneId: WHEEL,
+      version: 1,
+      records,
+      events: [],
+    });
+    const elapsedMs = performance.now() - start;
+
+    expect(summary).toBeDefined();
+    expect(JSON.stringify(summary).length).toBeLessThanOrEqual(
+      MAX_PACKAGE_PROGRESS_PROMPT_CHARS,
+    );
+    expect(
+      summary!.records.every((record) => record.status === "resolved"),
+    ).toBe(true);
+    expect(elapsedMs).toBeLessThan(250);
   });
 });
 
@@ -393,6 +500,104 @@ describe("package ledger secrecy", () => {
     const echo = proposal();
     echo.narration = `The record says ${MARKER} private correction.`;
     const result = applyCompletedTurn(first, echo, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
+  it("rejects a later player-facing echo of a stored ledger event ID", () => {
+    const first = ok(commit(packageSession(), [event(WICK, "resolved")]));
+    const eventId = first.packageProgress!.events!.at(-1)!.id;
+
+    for (const field of ["narration", "suggestedActions"] as const) {
+      const echo = proposal();
+      if (field === "narration") {
+        echo.narration = `The internal reference is ${eventId}.`;
+      } else {
+        echo.suggestedActions = [
+          `Ask about ${eventId}`,
+          "Look around the room",
+          "Check the nearby doorway",
+        ];
+      }
+      const result = applyCompletedTurn(first, echo, {
+        ...meta,
+        turnId: "turn-2",
+        inputId: "input-2",
+        ...index,
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        errors: [{ code: "hidden-leakage" }],
+      });
+    }
+  });
+
+  it("rejects a proposed private package note echoed in the same turn", () => {
+    const note = "The ferryman secretly guards the forgotten silver crown";
+    for (const field of ["narration", "suggestedActions"] as const) {
+      const echo = proposal();
+      echo.packageEvents = [event(WICK, "resolved", { note })];
+      if (field === "narration") {
+        echo.narration = `The journal says ${note}.`;
+      } else {
+        echo.suggestedActions = [
+          `Ask whether ${note}`,
+          "Look around the room",
+          "Check the nearby doorway",
+        ];
+      }
+      const result = applyCompletedTurn(packageSession(), echo, {
+        ...meta,
+        ...index,
+      });
+      expect(result).toMatchObject({
+        ok: false,
+        errors: [{ code: "hidden-leakage" }],
+      });
+    }
+  });
+
+  it("allows ordinary digits for a one-character note but guards an exact echo", () => {
+    const first = ok(
+      commit(packageSession(), [event(WICK, "resolved", { note: "7" })]),
+    );
+    const narration = proposal();
+    narration.narration = "There are 7 steps to the door.";
+    const normal = applyCompletedTurn(first, narration, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(normal.ok).toBe(true);
+
+    narration.narration = "7";
+    const exact = applyCompletedTurn(first, narration, {
+      ...meta,
+      turnId: "turn-2",
+      inputId: "input-2",
+      ...index,
+    });
+    expect(exact).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
+
+  it("still blocks two-digit numeric notes as whole tokens", () => {
+    const first = ok(
+      commit(packageSession(), [event(WICK, "resolved", { note: "42" })]),
+    );
+    const narration = proposal();
+    narration.narration = "There are 42 doors in the passage.";
+    const result = applyCompletedTurn(first, narration, {
       ...meta,
       turnId: "turn-2",
       inputId: "input-2",

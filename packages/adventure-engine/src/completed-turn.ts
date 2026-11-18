@@ -220,6 +220,29 @@ function resolvePackageProgress(
   }
 }
 
+const MAX_DROPPED_REASONS = 24;
+
+function boundDroppedReasons(dropped: readonly string[]): string[] {
+  const packageEventDrops = dropped.filter((reason) =>
+    reason.startsWith("packageEvents:"),
+  );
+  const otherDrops = dropped.filter(
+    (reason) => !reason.startsWith("packageEvents:"),
+  );
+  const boundedPackageEventDrops =
+    packageEventDrops.length > MAX_DROPPED_REASONS
+      ? [
+          ...packageEventDrops.slice(0, MAX_DROPPED_REASONS - 1),
+          `packageEvents: +${packageEventDrops.length - (MAX_DROPPED_REASONS - 1)} more dropped`,
+        ]
+      : packageEventDrops;
+  const remainingSlots = Math.max(
+    0,
+    MAX_DROPPED_REASONS - boundedPackageEventDrops.length,
+  );
+  return [...otherDrops.slice(0, remainingSlots), ...boundedPackageEventDrops];
+}
+
 export function applyCompletedTurn(
   sessionInput: AdventureSession,
   proposalInput: AdventureTurnProposal,
@@ -317,7 +340,9 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
-  if (dropped.length > 0) turn.dropped = dropped.slice(0, 24);
+  if (dropped.length > 0) {
+    turn.dropped = boundDroppedReasons(dropped);
+  }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
   if (!validateStateBudget(candidate)) {

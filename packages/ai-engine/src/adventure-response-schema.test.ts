@@ -75,6 +75,9 @@ describe("adventure structured response contract", () => {
   it("offers optional bounded packageEvents", () => {
     const complete = adventureTurnResponseSchema.oneOf[0];
     expect(complete.properties.packageEvents.maxItems).toBe(8);
+    expect(complete.properties.packageEvents.items.additionalProperties).toBe(
+      false,
+    );
     expect(complete.required).not.toContain("packageEvents");
     const base = JSON.parse(completeResponse) as Record<string, unknown>;
     const event = {
