@@ -421,7 +421,7 @@ describe("AdventureComposer layout and chips", () => {
   });
 
   describe("package-unavailable", () => {
-    function unavailable(otherVersionAvailable: boolean) {
+    function unavailable(otherVersionAvailable: boolean | null) {
       const m = manager("ready");
       m.phase = "package-unavailable";
       m.readOnly = true;
@@ -455,6 +455,14 @@ describe("AdventureComposer layout and chips", () => {
         screen.getByRole("button", { name: "Leave session" }),
       );
       expect(m.close).toHaveBeenCalledOnce();
+    });
+
+    it("does not hide the alternate-version notice when the check is inconclusive", async () => {
+      const m = unavailable(null);
+      render(AdventureComposer, { props: { manager: m } });
+      expect(screen.getByTestId("package-other-version").textContent).toMatch(
+        /may be in this Vault/,
+      );
     });
 
     it("shows the other-version line only when flagged", () => {

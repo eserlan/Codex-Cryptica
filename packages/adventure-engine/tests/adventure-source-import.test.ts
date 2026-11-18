@@ -59,6 +59,13 @@ function createMemoryIO(): AdventurePackageFileIO & {
       const prefix = dir.endsWith("/") ? dir : `${dir}/`;
       return [...files.keys()].filter((k) => k.startsWith(prefix));
     },
+    async listLimited(dir: string, limit: number) {
+      const entries = await io.list(dir);
+      return {
+        entries: entries.slice(0, limit),
+        truncated: entries.length > limit,
+      };
+    },
     async remove(path: string) {
       files.delete(path);
     },

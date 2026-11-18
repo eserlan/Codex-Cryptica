@@ -11,7 +11,6 @@ import {
   referencePackage,
   referencePackageCache,
 } from "#lib/stores/oracle/tests/adventure-fixtures.js";
-import { AdventureGroundingError } from "./adventure-grounding-service";
 
 const session = () =>
   initialSession({
@@ -104,7 +103,7 @@ describe("AdventureGroundingService package context", () => {
         anchors: [],
         relevant: [],
       }),
-    ).rejects.toBeInstanceOf(AdventureGroundingError);
+    ).rejects.toThrow("adventure-package-unavailable");
     expect(transport.generate).not.toHaveBeenCalled();
   });
 
@@ -127,7 +126,7 @@ describe("AdventureGroundingService package context", () => {
         anchors: [],
         relevant: [],
       }),
-    ).rejects.toBeInstanceOf(AdventureGroundingError);
+    ).rejects.toThrow("adventure-package-unavailable");
     expect(transport.generate).not.toHaveBeenCalled();
   });
 

@@ -38,7 +38,7 @@ export class AdventureRuntime {
   ) {
     const grounding = new AdventureGroundingService(
       deps.context,
-      (session) => this.verifySession(session),
+      (session) => this.verifyGenerationSession(session),
       () => worldStyleForTheme(themeStore.worldThemeId),
       deps.packages,
     );
@@ -82,6 +82,17 @@ export class AdventureRuntime {
     this.assertCurrentSession(session);
     await this.verifyControl();
     this.assertCurrentSession(session);
+  }
+
+  private async verifyGenerationSession(
+    session: AdventureSession,
+  ): Promise<void> {
+    await this.verifySession(session);
+    if (!session.sourcePackage) return;
+    const pin = await this.deps.packages.verifyPin(session);
+    if (pin.status === "available") return;
+    await this.enterPackageUnavailable(pin.otherVersionAvailable);
+    throw new Error("adventure-package-unavailable");
   }
 
   narrationPreview(sessionId: string, signal?: AbortSignal) {
@@ -236,6 +247,27 @@ export class AdventureRuntime {
           : "error";
   }
 
+  private async handleTurnGenerationFailure(
+    cause: unknown,
+    signal: AbortSignal,
+    retryPhase: "ready" | "ready-to-resolve",
+  ): Promise<void> {
+    const isCurrentGeneration =
+      !signal.aborted && this.generationController?.signal === signal;
+    if (isCurrentGeneration && this.state.session) {
+      await this.deps
+        .clearGenerationInteraction(this.state.session.id)
+        .catch(() => {});
+    }
+    if (
+      cause instanceof Error &&
+      cause.message === "adventure-package-unavailable" &&
+      this.state.phase === "package-unavailable"
+    )
+      return;
+    this.recordTurnGenerationError(cause, signal, retryPhase);
+  }
+
   /**
    * Re-checks a package session's pin. On failure, enters the recoverable
    * `package-unavailable` state (when the signal is still current) and returns
@@ -252,7 +284,9 @@ export class AdventureRuntime {
     return false;
   }
 
-  async enterPackageUnavailable(otherVersionAvailable: boolean): Promise<void> {
+  async enterPackageUnavailable(
+    otherVersionAvailable: boolean | null,
+  ): Promise<void> {
     this.state.phase = "package-unavailable";
     this.state.errorCause = "package-unavailable";
     this.state.packageUnavailable = { otherVersionAvailable };
@@ -279,16 +313,7 @@ export class AdventureRuntime {
       // cancelled generation, lost lease or failed local save.
       // An older cancelled turn may settle after a newer one has started.
       // Never clear the newer turn's provider context from that stale catch.
-      if (
-        !signal.aborted &&
-        this.generationController?.signal === signal &&
-        this.state.session
-      ) {
-        await this.deps
-          .clearGenerationInteraction(this.state.session.id)
-          .catch(() => {});
-      }
-      this.recordTurnGenerationError(cause, signal, retryPhase);
+      await this.handleTurnGenerationFailure(cause, signal, retryPhase);
     } finally {
       this.endTurnGeneration(signal);
     }
