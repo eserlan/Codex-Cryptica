@@ -344,6 +344,28 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).not.toContain("the sole exception");
     });
 
+    it("applies the tested source fidelity rules during conversion", () => {
+      expect(prompt).toContain(
+        "Inventory the source by section before writing JSON",
+      );
+      expect(prompt).toContain(
+        'Use "unverified" when rumour truth is unspecified',
+      );
+      expect(prompt).toContain('Put keyed rooms in "locations"');
+      expect(prompt).toContain(
+        "A link from another unreachable scene does not make it reachable",
+      );
+      expect(prompt).toContain(
+        "absent from all player-visible names, text, IDs, and linked details",
+      );
+      expect(prompt).toContain(
+        'Put each source-supported investigative observation in "clues"',
+      );
+      expect(prompt).toContain(
+        "cite its key entry rather than an earlier mention",
+      );
+    });
+
     it("asks for missing source material without inventing a conversion", () => {
       expect(prompt).toContain("name the missing input or page range");
       expect(prompt).toContain("ask for readable text or a smaller upload");

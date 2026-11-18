@@ -125,6 +125,11 @@ Output contract (read this first):
 
 ${AUTOMATIC_STAGING_RULES}
 
+Conversion procedure (do this silently while writing JSON; return the checkpoint when staging needs another turn):
+- Inventory the source by section before writing JSON. Track keyed locations, actors, encounters and their resolutions, clues and alternate sources, rumours, important items, and authored endings. Preserve distinct entries and their source references.
+- Classify what the source states, what someone in the story claims, and what the GM decides. Use "unverified" when rumour truth is unspecified. Preserve optional routes and conditional actions without turning them into mandatory scene order. Leave unsupported fields out and record material gaps in "unresolved".
+- Audit the result against the inventory. Check each player-visible field and premise field for concealed information, and check that each reference points to the right collection and entity. For labelled PDF excerpts, use the original PDF file positions given in the source.
+
 Shape of a valid answer (trimmed: yours will have more entries and fields). Its ids, codes and wording are only illustrative; use your own, taken from the source:
 ${EXAMPLE_JSON}
 
@@ -176,6 +181,12 @@ Strict output rules:
    - Add a top-level "extensions" entry "codex-cryptica.adventure-correspondence" (a list of { "previousId", "currentId", "collection" }) only for renames, splits or merges the source clearly supports. Never infer correspondence from names, titles or order, and never put "extensions" inside an entity. If no earlier package is supplied, use "version" "1.0.0" and omit the correspondence extension.
 10. Game mechanics and maps:
    - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions". Keep mechanics only as a short source-grounded paraphrase with "sourceRef" inside "description", "body", "conditions" or "alternativeSolutions[].description", and record any unrepresentable mechanic, stat block or map as an "unresolved" entry naming the source section (never invent values for it).
+
+Sandbox conversion: Put keyed rooms in "locations" and their hazards, opponents and tactical responses in "encounters" or other appropriate collections. Add "scenes" only for authored beats. If any scene outside scenes[0] is unreachable by following branches from scenes[0], give it epistemicStatus "ambiguous" rather than inventing links. A link from another unreachable scene does not make it reachable. Keys, room adjacency and conditional enemy tactics alone do not establish scene progression.
+
+Final visibility audit: Adding a fact to "secrets" is not enough. Check every copy of it across locations, actors, scenes, encounters, clues, summaries, and the premise. Before discovery, a hidden creature, trap, concealed access, or ambush plan must be absent from all player-visible names, text, IDs, and linked details. Preserve discoverable information in a GM-only record until it is revealed. Keep only sensory details or public facts in visible entries. Do not reproduce stat blocks in visible or GM fields; paraphrase the action or consequence and cite an unresolved entry for mechanics the schema cannot represent.
+
+Evidence and citations: Put each source-supported investigative observation in "clues" even when its text also appears in a room description or scene. Preserve where the evidence can be found, and add a revelation only if the source supports it. Do not turn incidental colour into a clue. Cite the page and heading that describe the entry itself. For a keyed room, cite its key entry rather than an earlier mention, direction or cross-reference.
 
 Before you reply with a successful conversion, check each of these:
 - The result is only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
