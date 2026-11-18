@@ -56,6 +56,14 @@ type Line = [
   referenceIds?: readonly string[],
 ];
 
+function referenceLine(label: string, id: string | undefined): Line {
+  return [label, id, undefined, id === undefined ? [] : [id]];
+}
+
+function referenceLines(label: string, ids: string[] | undefined): Line {
+  return [label, ids, undefined, ids];
+}
+
 /**
  * Joins labelled lines, copying at most `cap + 1` characters of source text.
  * One character over the cap is enough for admission to see that the excerpt
@@ -180,6 +188,21 @@ function recordExcerpts(
   if (record.visibility !== "player-visible") {
     return [excerpt(record.visibility, lines)];
   }
+  const { kept, companion } = splitRecordLines(hiddenIds, lines, cap);
+  if (companion.lines.length === 0) {
+    return [excerpt(record.visibility, kept.lines)];
+  }
+  return [
+    excerpt(record.visibility, kept.lines),
+    excerpt("gm-only", companion.lines),
+  ];
+}
+
+function splitRecordLines(
+  hiddenIds: ReadonlySet<string>,
+  lines: Iterable<Line>,
+  cap: number,
+): { kept: SplitText; companion: SplitText } {
   // One pass splits the lines. Once the player-visible text is over `cap`,
   // admission trims or drops it and skips its companion, so reading stops
   // there; oversized or lazily built fields are never read in full. A part
@@ -197,13 +220,7 @@ function recordExcerpts(
     if (!moved) kept.push(line);
     else if (companion.length < limit) companion.push(line);
   }
-  if (companion.lines.length === 0) {
-    return [excerpt(record.visibility, kept.lines)];
-  }
-  return [
-    excerpt(record.visibility, kept.lines),
-    excerpt("gm-only", companion.lines),
-  ];
+  return { kept, companion };
 }
 
 /** Lines bound for one excerpt, with the length `buildText` would give them. */
@@ -465,12 +482,7 @@ function addScene(sel: Selection): void {
       (function* (): Iterable<Line> {
         yield ["Title", scene.title];
         yield ["Summary", scene.summary];
-        yield [
-          "Location",
-          scene.locationId,
-          undefined,
-          scene.locationId ? [scene.locationId] : [],
-        ];
+        yield referenceLine("Location", scene.locationId);
         yield [
           "Read aloud",
           typeof scene.readAloud === "string"
@@ -480,12 +492,7 @@ function addScene(sel: Selection): void {
         yield ["Body", scene.body];
         yield ["Conditions", scene.conditions];
         for (const b of scene.branches ?? []) {
-          yield [
-            "Branch target",
-            b.targetSceneId,
-            undefined,
-            [b.targetSceneId],
-          ];
+          yield referenceLine("Branch target", b.targetSceneId);
           yield [
             "Branch",
             [b.description, ...(b.condition ? [b.condition] : [])],
@@ -560,19 +567,9 @@ function addLocation(sel: Selection, location: AdventureJsonLocation): void {
         yield ["Name", location.name];
         yield ["Summary", location.summary];
         yield ["Description", location.description];
-        yield [
-          "Parent location",
-          location.parentLocationId,
-          undefined,
-          location.parentLocationId ? [location.parentLocationId] : [],
-        ];
+        yield referenceLine("Parent location", location.parentLocationId);
         for (const c of location.connections ?? []) {
-          yield [
-            "Connection target",
-            c.targetLocationId,
-            undefined,
-            [c.targetLocationId],
-          ];
+          yield referenceLine("Connection target", c.targetLocationId);
           yield [
             "Connection",
             [c.description, ...(c.travelConditions ?? [])].filter(
@@ -605,16 +602,11 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
         e,
         (function* (): Iterable<Line> {
           yield ["Title", e.title];
-          yield ["Scene", e.sceneId, undefined, e.sceneId ? [e.sceneId] : []];
-          yield [
-            "Location",
-            e.locationId,
-            undefined,
-            e.locationId ? [e.locationId] : [],
-          ];
+          yield referenceLine("Scene", e.sceneId);
+          yield referenceLine("Location", e.locationId);
           yield ["Description", e.description];
           yield ["Conditions", e.conditions];
-          yield ["Actors", e.actorIds, undefined, e.actorIds];
+          yield referenceLines("Actors", e.actorIds);
           for (const solution of e.alternativeSolutions) {
             yield [
               "Alternative solution",
@@ -659,13 +651,8 @@ function addActors(
           ["Role", a.role],
           ["Motivation", a.motivation],
           ["Disposition", a.disposition],
-          ["Faction", a.factionId, undefined, a.factionId ? [a.factionId] : []],
-          [
-            "Location",
-            a.locationId,
-            undefined,
-            a.locationId ? [a.locationId] : [],
-          ],
+          referenceLine("Faction", a.factionId),
+          referenceLine("Location", a.locationId),
         ],
         sel.maxCharacters,
       ),
@@ -692,36 +679,11 @@ function addClues(sel: Selection): void {
         [
           ["Text", c.text],
           ["Reveals", c.reveals, true],
-          [
-            "Lead target",
-            c.leadTargetId,
-            undefined,
-            c.leadTargetId ? [c.leadTargetId] : [],
-          ],
-          [
-            "Placed scene",
-            c.placedSceneId,
-            undefined,
-            c.placedSceneId ? [c.placedSceneId] : [],
-          ],
-          [
-            "Placed location",
-            c.placedLocationId,
-            undefined,
-            c.placedLocationId ? [c.placedLocationId] : [],
-          ],
-          [
-            "Placed actor",
-            c.placedActorId,
-            undefined,
-            c.placedActorId ? [c.placedActorId] : [],
-          ],
-          [
-            "Alternative source",
-            c.alternativeSourceId,
-            undefined,
-            c.alternativeSourceId ? [c.alternativeSourceId] : [],
-          ],
+          referenceLine("Lead target", c.leadTargetId),
+          referenceLine("Placed scene", c.placedSceneId),
+          referenceLine("Placed location", c.placedLocationId),
+          referenceLine("Placed actor", c.placedActorId),
+          referenceLine("Alternative source", c.alternativeSourceId),
         ],
         sel.maxCharacters,
       ),
@@ -747,13 +709,8 @@ function addItems(sel: Selection): void {
           ["Name", i.name],
           ["Summary", i.summary],
           ["Description", i.description],
-          [
-            "Location",
-            i.locationId,
-            undefined,
-            i.locationId ? [i.locationId] : [],
-          ],
-          ["Actor", i.actorId, undefined, i.actorId ? [i.actorId] : []],
+          referenceLine("Location", i.locationId),
+          referenceLine("Actor", i.actorId),
         ],
         sel.maxCharacters,
       ),
@@ -778,24 +735,9 @@ function addRumours(sel: Selection): void {
         [
           ["Text", r.text],
           ["Truth", r.truth, true],
-          [
-            "Source actor",
-            r.sourceActorId,
-            undefined,
-            r.sourceActorId ? [r.sourceActorId] : [],
-          ],
-          [
-            "Source location",
-            r.sourceLocationId,
-            undefined,
-            r.sourceLocationId ? [r.sourceLocationId] : [],
-          ],
-          [
-            "Target",
-            r.targetEntityId,
-            undefined,
-            r.targetEntityId ? [r.targetEntityId] : [],
-          ],
+          referenceLine("Source actor", r.sourceActorId),
+          referenceLine("Source location", r.sourceLocationId),
+          referenceLine("Target", r.targetEntityId),
         ],
         sel.maxCharacters,
       ),
@@ -816,10 +758,7 @@ function addSecrets(sel: Selection): void {
         sel.hiddenIds,
         "secret",
         s,
-        [
-          ["Text", s.text],
-          ["Related", s.relatedEntityIds, undefined, s.relatedEntityIds],
-        ],
+        [["Text", s.text], referenceLines("Related", s.relatedEntityIds)],
         sel.maxCharacters,
       ),
       false,

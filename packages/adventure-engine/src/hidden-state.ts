@@ -149,37 +149,50 @@ export function detectPackageLeakage(
     ([field]) =>
       !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
   );
-  const findings: HiddenLeakageFinding[] = [];
-  for (const secret of meta.packageGmOnlyText ?? []) {
+  return [
+    ...packageTextLeakage(fields, meta.packageGmOnlyText ?? []),
+    ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
+  ];
+}
+
+function packageTextLeakage(
+  fields: Array<[string, string]>,
+  secrets: readonly string[],
+): HiddenLeakageFinding[] {
+  return secrets.flatMap((secret) => {
     const needle = normalize(secret);
-    if (needle.length < 3) continue;
-    for (const [field, value] of fields) {
-      if (normalize(value).includes(needle)) {
-        findings.push({ field, secretId: "pinned-package-text" });
-      }
-    }
-  }
-  for (const id of meta.packageRecordIds ?? []) {
-    // Exact field values are safe to check even for short IDs; prose checks
-    // skip short IDs because ordinary words would otherwise collide.
-    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const token =
-      id.length >= 3
-        ? new RegExp(
-            `(^|[^\\p{L}\\p{N}_-])${escaped}(?=$|[^\\p{L}\\p{N}_-])`,
-            "iu",
-          )
-        : undefined;
-    for (const [field, value] of fields) {
-      if (
-        normalize(value) === normalize(id) ||
-        (token !== undefined && token.test(value))
-      ) {
-        findings.push({ field, secretId: `pinned-package-id:${id}` });
-      }
-    }
-  }
-  return findings;
+    if (needle.length < 3) return [];
+    return fields
+      .filter(([, value]) => normalize(value).includes(needle))
+      .map(([field]) => ({ field, secretId: "pinned-package-text" }));
+  });
+}
+
+function packageIdLeakage(
+  fields: Array<[string, string]>,
+  ids: readonly string[],
+): HiddenLeakageFinding[] {
+  return ids.flatMap((id) => {
+    const token = packageIdToken(id);
+    return fields
+      .filter(
+        ([, value]) =>
+          normalize(value) === normalize(id) ||
+          (token !== undefined && token.test(value)),
+      )
+      .map(([field]) => ({ field, secretId: `pinned-package-id:${id}` }));
+  });
+}
+
+function packageIdToken(id: string): RegExp | undefined {
+  // Short IDs are checked as exact field values; prose would collide with
+  // common words, so only longer IDs get token matching.
+  if (id.length < 3) return undefined;
+  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(
+    `(^|[^\\p{L}\\p{N}_-])${escaped}(?=$|[^\\p{L}\\p{N}_-])`,
+    "iu",
+  );
 }
 
 /** Checks partial player-facing text against the session's unrevealed secrets. */
