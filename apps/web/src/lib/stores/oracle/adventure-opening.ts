@@ -1,5 +1,6 @@
 import { AdventureGroundingError } from "#lib/services/adventure/adventure-grounding-service.js";
 import {
+  entrySceneId,
   parseAdventureSession,
   type AdventureSession,
   type AdventureSourcePackageRef,
@@ -70,9 +71,10 @@ export class AdventureOpening {
     // Validate with the reader's schema before archiving anything or writing,
     // so an invalid seed can never be saved and then fail to load.
     if (this.state.starting) throw new Error("start-in-progress");
-    const created = this.validatedNewSession(input);
+    const validated = this.validatedNewSession(input);
     this.state.starting = true;
     try {
+      const created = await this.withEntryScene(validated);
       this.runtime.activeRestoreRequest += 1;
       this.state.phase = "starting";
       this.state.errorMessage = null;
@@ -98,6 +100,23 @@ export class AdventureOpening {
       return;
     this.state.errorMessage = null;
     await this.startOpeningIfOnline(session);
+  }
+
+  /** Loads the pinned package before anything is saved and starts at its entry scene. */
+  private async withEntryScene(
+    created: AdventureSession,
+  ): Promise<AdventureSession> {
+    if (!created.sourcePackage) return created;
+    const sceneId = entrySceneId(
+      await this.runtime.deps.packages.load(created),
+    );
+    if (sceneId === undefined) {
+      throw new Error("adventure-package-has-no-scenes");
+    }
+    return parseAdventureSession({
+      ...created,
+      packageProgress: { sceneId },
+    });
   }
 
   private validatedNewSession(input: {

@@ -4,7 +4,13 @@ import {
 } from "#lib/services/adventure/world-style.js";
 import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
-import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
+import {
+  adventureJsonGmOnlyText,
+  adventureJsonRecordIds,
+  retrieveAdventureJsonContext,
+  type AdventureSession,
+  type CommitMetadata,
+} from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
@@ -33,6 +39,7 @@ export class AdventureRuntime {
       deps.context,
       (session) => this.verifySession(session),
       () => worldStyleForTheme(themeStore.worldThemeId),
+      deps.packages,
     );
     deps.generation = grounding.wrap(deps.generation);
     this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
@@ -84,12 +91,48 @@ export class AdventureRuntime {
     };
   }
 
+  /** Package guards and scene IDs for validating the model's player-facing output. */
+  private packageMetadata(): Pick<
+    CommitMetadata,
+    "packageSceneIds" | "packageRecordIds" | "packageGmOnlyText"
+  > {
+    const session = this.state.session;
+    const pkg = session && this.deps.packages.peek(session);
+    if (!pkg) return {};
+    const context = retrieveAdventureJsonContext(pkg, {
+      sceneId: session.packageProgress?.sceneId,
+    });
+    const packageGmOnlyText = [
+      ...new Set([
+        ...context.gmOnly.flatMap((excerpt) => [
+          ...excerpt.text
+            .split("\n")
+            .filter((line) => !line.startsWith("Truth: "))
+            .map((line) => {
+              const separator = line.indexOf(": ");
+              return separator >= 0 ? line.slice(separator + 2) : line;
+            }),
+          ...(excerpt.sourceRef?.textQuote
+            ? [excerpt.sourceRef.textQuote]
+            : []),
+        ]),
+        ...adventureJsonGmOnlyText(pkg),
+      ]),
+    ];
+    return {
+      packageSceneIds: pkg.scenes.map((scene) => scene.id),
+      packageRecordIds: adventureJsonRecordIds(pkg),
+      packageGmOnlyText,
+    };
+  }
+
   newTurnMetadata(playerAction: string): CommitMetadata {
     return {
       turnId: this.deps.idGenerator(),
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
+      ...this.packageMetadata(),
     };
   }
 
@@ -98,6 +141,7 @@ export class AdventureRuntime {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
+      ...this.packageMetadata(),
     };
   }
 
@@ -125,15 +169,26 @@ export class AdventureRuntime {
     // A provider reply is provisional until the OPFS write has succeeded.
     // A failed acknowledgement cannot undo a saved turn; discard the remote
     // optimization and reconstruct from saved local state on the next action.
-    try {
-      await this.deps.confirmGenerationInteraction(
-        saved.session.id,
-        saved.session.revision,
-      );
-    } catch {
+    // Also discard retained provider history when the package scene changes so
+    // GM-only context from the previous scene does not persist on the provider.
+    const sceneChanged =
+      previous.packageProgress?.sceneId !==
+      saved.session.packageProgress?.sceneId;
+    if (sceneChanged) {
       await this.deps
         .clearGenerationInteraction(saved.session.id)
         .catch(() => {});
+    } else {
+      try {
+        await this.deps.confirmGenerationInteraction(
+          saved.session.id,
+          saved.session.revision,
+        );
+      } catch {
+        await this.deps
+          .clearGenerationInteraction(saved.session.id)
+          .catch(() => {});
+      }
     }
     // Fold older turns into the story notes while the player reads.
     this.summarizer.schedule(saved.session, summaryLifecycle);

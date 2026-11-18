@@ -10,6 +10,14 @@ import {
   type GroundingIntent,
 } from "@codex/adventure-engine";
 import {
+  retrieveAdventureJsonContext,
+  type PromptAdventurePackage,
+} from "@codex/adventure-engine";
+import {
+  adventurePackageContextCache,
+  type AdventurePackageContextCache,
+} from "./adventure-package-context";
+import {
   adventureContextService,
   type AdventureContextService,
 } from "./adventure-context-service";
@@ -42,12 +50,16 @@ export class AdventureGroundingService {
     ) => Promise<void> = async () => {},
     private readonly getWorldStyle: () =>
       AdventureWorldStyle | undefined = () => undefined,
+    private readonly packages: Pick<
+      AdventurePackageContextCache,
+      "load"
+    > = adventurePackageContextCache,
   ) {}
 
   async prepare(
     intent: GroundingIntent,
     signal?: AbortSignal,
-  ): Promise<GroundingContext> {
+  ): Promise<GroundingContext & { adventurePackage?: PromptAdventurePackage }> {
     checkCancellation(signal);
     await this.verifyCurrent(intent.session);
     checkCancellation(signal);
@@ -58,7 +70,9 @@ export class AdventureGroundingService {
       checkCancellation(signal);
       await this.context.verifyRequiredSources?.(intent.session);
       checkCancellation(signal);
-      const prompt = budgetSources(intent, anchors, relevant);
+      const adventurePackage = await this.packageContext(intent);
+      checkCancellation(signal);
+      const prompt = budgetSources(intent, anchors, relevant, adventurePackage);
       await this.verifyCurrent(intent.session);
       checkCancellation(signal);
       return {
@@ -69,6 +83,7 @@ export class AdventureGroundingService {
         anchors: prompt.anchors,
         relevant: prompt.relevant,
         sessionKnowledge: prompt.state,
+        ...(adventurePackage ? { adventurePackage } : {}),
       };
     } catch (cause) {
       checkCancellation(signal);
@@ -80,6 +95,22 @@ export class AdventureGroundingService {
         throw cause;
       throw safeGroundingFailure(cause);
     }
+  }
+
+  /** The current scene's excerpts for a package session; none for any other. */
+  private async packageContext(
+    intent: GroundingIntent,
+  ): Promise<PromptAdventurePackage | undefined> {
+    if (!intent.session.sourcePackage || intent.purpose === "background")
+      return undefined;
+    const pkg = await this.packages.load(intent.session);
+    if (pkg.scenes.length === 0) {
+      throw new Error("adventure-package-unavailable");
+    }
+    const { playerSafe, gmOnly } = retrieveAdventureJsonContext(pkg, {
+      sceneId: intent.session.packageProgress?.sceneId,
+    });
+    return { playerSafe, gmOnly };
   }
 
   private resolveRelevant(intent: GroundingIntent) {
@@ -108,6 +139,9 @@ export class AdventureGroundingService {
           anchors: context.anchors,
           relevant: context.relevant,
           worldStyle: this.getWorldStyle(),
+          ...(context.adventurePackage
+            ? { adventurePackage: context.adventurePackage }
+            : {}),
         };
         return options === undefined
           ? transport.generate(prepared)
@@ -122,6 +156,7 @@ function budgetSources(
   intent: GroundingIntent,
   anchors: ResolvedSourceExcerpt[],
   relevant: ResolvedSourceExcerpt[],
+  adventurePackage?: PromptAdventurePackage,
 ) {
   const ids = selectGroundingCandidates(
     anchors.map((source) => source.recordId),
@@ -141,6 +176,7 @@ function budgetSources(
     relevant: ids
       .filter((id) => !anchorIds.has(id))
       .map((id) => unique.get(id)!),
+    ...(adventurePackage ? { adventurePackage } : {}),
   });
   if (
     anchors.some((anchor) => {

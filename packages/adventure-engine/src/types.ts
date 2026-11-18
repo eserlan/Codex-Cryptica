@@ -207,6 +207,8 @@ export interface HiddenStatePatch {
 export interface VisibleStateProposalPatch {
   location?: NewStateFact | null;
   situation?: NewStateFact | null;
+  /** A package scene the player's own actions reached; never persisted on the turn. */
+  packageSceneId?: string;
   objectives: ProposalCollectionPatch<StateFact, NewStateFact>;
   activeCharacters: ProposalCollectionPatch<StateFact, NewStateFact>;
   knownFacts: ProposalCollectionPatch<StateFact, NewStateFact>;
@@ -422,6 +424,8 @@ export interface AdventureSession {
   sourceRecords: SourceRecordReference[];
   /** Optional pinned adventure package reference; absent on unimported or legacy sessions. */
   sourcePackage?: AdventureSourcePackageRef;
+  /** The pinned package's current scene; absent on sessions without a package. */
+  packageProgress?: { sceneId: string };
   /** Optional structured situations; absent on ordinary adventures. */
   scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
@@ -499,6 +503,11 @@ export interface CommitMetadata {
   inputId: string;
   now: string;
   playerAction?: string;
+  /** Scene IDs of the pinned package, so a reported scene move can be checked. */
+  packageSceneIds?: readonly string[];
+  /** Hidden package references and text used to reject accidental player leaks. */
+  packageRecordIds?: readonly string[];
+  packageGmOnlyText?: readonly string[];
 }
 
 export interface AdventureValidationError {

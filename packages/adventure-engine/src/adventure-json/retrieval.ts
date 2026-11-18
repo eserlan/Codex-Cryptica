@@ -1,5 +1,6 @@
 import { MAX_ADVENTURE_RETRIEVAL_CHARS } from "../source-package/retrieval";
 import { entrySceneId } from "./entry-scene";
+import { createBoundaryMatcher, isFreeTextMatchableId } from "./term-matcher";
 import type {
   AdventureJsonEncounter,
   AdventureJsonLocation,
@@ -48,7 +49,21 @@ export interface AdventureJsonRetrievalResult {
   invalidBudget: boolean;
 }
 
-type Line = [label: string, value: string | Iterable<string> | undefined];
+/** `secret` marks a line that is always GM-only, whatever its record's visibility. */
+type Line = [
+  label: string,
+  value: string | Iterable<string> | undefined,
+  secret?: true,
+  referenceIds?: readonly string[],
+];
+
+function referenceLine(label: string, id: string | undefined): Line {
+  return [label, id, undefined, id === undefined ? [] : [id]];
+}
+
+function referenceLines(label: string, ids: string[] | undefined): Line {
+  return [label, ids, undefined, ids];
+}
 
 /**
  * Joins labelled lines, copying at most `cap + 1` characters of source text.
@@ -115,29 +130,42 @@ function boundSourceRef(
   // cannot stall serialisation. `textQuote` uses `cap / 8` (room for JSON
   // escaping) so it can be clipped in place; the other fields use `cap + 1`
   // so oversized values still exceed the budget and get dropped cleanly.
-  const quoteLimit = Math.floor(cap / 8);
-  const fieldLimit = cap + 1;
-  let next: SourceReference | undefined;
-  for (const key of ["chapter", "section", "anchor"] as const) {
-    const value = sourceRef[key];
-    if (value !== undefined && value.length > fieldLimit) {
-      next ??= { ...sourceRef };
-      next[key] = value.slice(0, fieldLimit);
-    }
-  }
-  if (
-    sourceRef.textQuote !== undefined &&
-    sourceRef.textQuote.length > quoteLimit + 1
-  ) {
-    next ??= { ...sourceRef };
-    // One extra character lets admission distinguish an exact-limit quote
-    // from one that was clipped without copying the full source string.
-    next.textQuote = sourceRef.textQuote.slice(0, quoteLimit + 1);
-  }
-  return next ?? sourceRef;
+  const boundedFields = boundLongSourceFields(sourceRef, cap + 1);
+  const boundedQuote = boundSourceQuote(sourceRef, Math.floor(cap / 8));
+  if (boundedQuote === undefined) return boundedFields ?? sourceRef;
+  return { ...(boundedFields ?? sourceRef), textQuote: boundedQuote };
 }
 
-function recordExcerpt(
+function boundLongSourceFields(
+  sourceRef: SourceReference,
+  limit: number,
+): SourceReference | undefined {
+  let bounded: SourceReference | undefined;
+  for (const key of ["chapter", "section", "anchor"] as const) {
+    const value = sourceRef[key];
+    if (value === undefined || value.length <= limit) continue;
+    bounded ??= { ...sourceRef };
+    bounded[key] = value.slice(0, limit);
+  }
+  return bounded;
+}
+
+function boundSourceQuote(
+  sourceRef: SourceReference,
+  limit: number,
+): string | undefined {
+  const quote = sourceRef.textQuote;
+  return quote !== undefined && quote.length > limit + 1
+    ? quote.slice(0, limit + 1)
+    : undefined;
+}
+
+/**
+ * Builds a record excerpt, moving secret lines and structured references to
+ * hidden records into an immediately following GM-only companion.
+ */
+function recordExcerpts(
+  hiddenIds: ReadonlySet<string>,
   kind: AdventureJsonExcerptKind,
   record: {
     id: string;
@@ -147,16 +175,148 @@ function recordExcerpt(
   },
   lines: Iterable<Line>,
   cap: number,
-): AdventureJsonExcerpt {
+): AdventureJsonExcerpt[] {
   const boundedSourceRef = boundSourceRef(record.sourceRef, cap);
-  return {
-    id: record.id,
-    kind,
-    visibility: record.visibility,
-    epistemicStatus: record.epistemicStatus,
-    ...(boundedSourceRef !== undefined ? { sourceRef: boundedSourceRef } : {}),
-    text: buildText(lines, cap),
+  const excerpt = (visibility: Visibility, from: Iterable<Line>) => {
+    const sourceRef =
+      boundedSourceRef === undefined
+        ? undefined
+        : visibility === "player-visible"
+          ? withoutTextQuote(boundedSourceRef)
+          : boundedSourceRef;
+    return {
+      id: record.id,
+      kind,
+      visibility,
+      epistemicStatus: record.epistemicStatus,
+      ...(sourceRef !== undefined ? { sourceRef } : {}),
+      text: buildText(from, cap),
+    };
   };
+  // A record that is not player-visible is GM-only as a whole: stream it in.
+  if (record.visibility !== "player-visible") {
+    return [excerpt(record.visibility, lines)];
+  }
+  const { kept, companion } = splitRecordLines(hiddenIds, lines, cap);
+  if (companion.lines.length === 0) {
+    return [excerpt(record.visibility, kept.lines)];
+  }
+  return [
+    excerpt(record.visibility, kept.lines),
+    excerpt("gm-only", companion.lines),
+  ];
+}
+
+function splitRecordLines(
+  hiddenIds: ReadonlySet<string>,
+  lines: Iterable<Line>,
+  cap: number,
+): { kept: SplitText; companion: SplitText } {
+  // One pass splits the lines. Once the player-visible text is over `cap`,
+  // admission trims or drops it and skips its companion, so reading stops
+  // there; oversized or lazily built fields are never read in full. A part
+  // that is never read is in neither text, so it cannot leak.
+  const limit = cap + 1;
+  const kept = new SplitText();
+  const companion = new SplitText();
+  for (const raw of lines) {
+    if (kept.length >= limit) break;
+    if (isStructuredSecret(raw, hiddenIds) && companion.length >= limit) {
+      continue;
+    }
+    const line = readLine(raw, limit);
+    const alreadyMoved = shouldMoveLine(raw, line, hiddenIds);
+    if (alreadyMoved && companion.length >= limit) continue;
+    const moved = alreadyMoved;
+    if (!moved) kept.push(line);
+    else if (companion.length < limit) companion.push(line);
+  }
+  return { kept, companion };
+}
+
+function isStructuredSecret(
+  line: Line,
+  hiddenIds: ReadonlySet<string>,
+): boolean {
+  return line[2] === true || (line[3] ?? []).some((id) => hiddenIds.has(id));
+}
+
+function shouldMoveLine(
+  raw: Line,
+  boundedLine: Line,
+  hiddenIds: ReadonlySet<string>,
+): boolean {
+  return (
+    isStructuredSecret(raw, hiddenIds) ||
+    lineMentionsHiddenId(boundedLine, hiddenIds)
+  );
+}
+
+function lineMentionsHiddenId(
+  line: Line,
+  hiddenIds: ReadonlySet<string>,
+): boolean {
+  if (hiddenIds.size === 0) return false;
+  const matcher = hiddenIdMatcher(hiddenIds);
+  return matcher(buildText([line], MAX_ADVENTURE_RETRIEVAL_CHARS + 1));
+}
+
+const hiddenIdMatchers = new WeakMap<
+  ReadonlySet<string>,
+  (text: string) => boolean
+>();
+
+function hiddenIdMatcher(ids: ReadonlySet<string>): (text: string) => boolean {
+  const cached = hiddenIdMatchers.get(ids);
+  if (cached) return cached;
+  const matcher = createBoundaryMatcher([...ids].filter(isFreeTextMatchableId));
+  hiddenIdMatchers.set(ids, matcher);
+  return matcher;
+}
+
+/** Lines bound for one excerpt, with the length `buildText` would give them. */
+class SplitText {
+  lines: Line[] = [];
+  length = 0;
+
+  push(line: Line): void {
+    const parts = line[1] as string[] | string | undefined;
+    if (parts === undefined || parts.length === 0) return;
+    const list = typeof parts === "string" ? [parts] : parts;
+    if (this.length > 0) this.length += 1;
+    this.length += line[0].length + 2;
+    list.forEach((part, i) => (this.length += part.length + (i > 0 ? 2 : 0)));
+    this.lines.push(line);
+  }
+}
+
+/** Reads a line's parts into an array, stopping once they exceed `limit`. */
+function readLine(
+  [label, value, secret, referenceIds]: Line,
+  limit: number,
+): Line {
+  let parts: string | string[] | undefined;
+  if (value === undefined || typeof value === "string") {
+    parts = value;
+  } else {
+    parts = [];
+    let length = 0;
+    for (const part of value) {
+      parts.push(part);
+      length += part.length + 2;
+      if (length > limit) break;
+    }
+  }
+  return [label, parts, secret, referenceIds];
+}
+
+function withoutTextQuote(
+  sourceRef: SourceReference,
+): SourceReference | undefined {
+  if (sourceRef.textQuote === undefined) return sourceRef;
+  const { textQuote: _textQuote, ...safeSourceRef } = sourceRef;
+  void _textQuote;
+  return Object.keys(safeSourceRef).length ? safeSourceRef : undefined;
 }
 
 function clampMaxCharacters(value: number | undefined): number {
@@ -269,6 +429,8 @@ interface Selection {
   excerpts: AdventureJsonExcerpt[];
   /** Ids of selected records that later tiers and secrets match against. */
   selectedIds: Set<string>;
+  /** Ids of every package record that is not player-visible. */
+  hiddenIds: Set<string>;
   actorIds: Set<string>;
   seen: Set<string>;
   /** Caps retained excerpt objects while matching records are visited. */
@@ -300,18 +462,18 @@ function addOversizedExcerpt(
   if (selectable) sel.selectedIds.add(trimmed.id);
 }
 
-function add(
+function addOne(
   sel: Selection,
   excerpt: AdventureJsonExcerpt,
   selectable: boolean,
-  focusScene = false,
+  focusScene: boolean,
 ): void {
   if (sel.invalidBudget) return;
   if (sel.stopped) return;
   const bounded = boundSourceRefQuote(excerpt, sel.maxCharacters);
   excerpt = bounded.excerpt;
   sel.truncated ||= bounded.truncated;
-  const key = `${excerpt.kind}:${excerpt.id}`;
+  const key = `${excerpt.kind}:${excerpt.id}:${excerpt.visibility}`;
   if (sel.seen.has(key)) return;
   sel.seen.add(key);
   const candidate = [...sel.excerpts, excerpt];
@@ -323,18 +485,87 @@ function add(
   if (selectable) sel.selectedIds.add(excerpt.id);
 }
 
+/** Adds a record's excerpt and, directly after it, its GM-only companion. */
+function add(
+  sel: Selection,
+  excerpts: AdventureJsonExcerpt | AdventureJsonExcerpt[],
+  selectable: boolean,
+  focusScene = false,
+): void {
+  (Array.isArray(excerpts) ? excerpts : [excerpts]).forEach((excerpt, i) =>
+    addOne(sel, excerpt, selectable, focusScene && i === 0),
+  );
+}
+
+function adventureJsonRecords(pkg: AdventureJsonV1) {
+  return [
+    ...pkg.locations,
+    ...pkg.actors,
+    ...pkg.factions,
+    ...pkg.scenes,
+    ...pkg.encounters,
+    ...pkg.clues,
+    ...pkg.rumours,
+    ...pkg.items,
+    ...pkg.secrets,
+  ];
+}
+
+export function adventureJsonRecordIds(pkg: AdventureJsonV1): string[] {
+  return adventureJsonRecords(pkg).map((record) => record.id);
+}
+
+export function adventureJsonHiddenRecordIds(pkg: AdventureJsonV1): string[] {
+  return adventureJsonRecords(pkg)
+    .filter((record) => record.visibility !== "player-visible")
+    .map((record) => record.id);
+}
+
+/** Collects unrevealed GM-only text across the entire package for commit-time leak checks. */
+export function adventureJsonGmOnlyText(pkg: AdventureJsonV1): string[] {
+  const out = new Set<string>();
+  const addText = (value: string | string[] | undefined) => {
+    if (typeof value === "string") {
+      if (value.length > 0) out.add(value);
+    } else if (Array.isArray(value)) {
+      for (const item of value) if (item.length > 0) out.add(item);
+    }
+  };
+  for (const secret of pkg.secrets) addText(secret.text);
+  for (const clue of pkg.clues) addText(clue.reveals);
+  for (const record of adventureJsonRecords(pkg)) {
+    if (record.visibility === "player-visible") continue;
+    const fields = record as Record<string, unknown>;
+    for (const key of [
+      "name",
+      "title",
+      "summary",
+      "description",
+      "text",
+      "body",
+      "readAloud",
+    ]) {
+      const value = fields[key];
+      if (typeof value === "string" || Array.isArray(value)) addText(value);
+    }
+    if (record.sourceRef?.textQuote) addText(record.sourceRef.textQuote);
+  }
+  return [...out];
+}
+
 function addScene(sel: Selection): void {
   if (sel.stopped) return;
   const scene = sel.scene;
   add(
     sel,
-    recordExcerpt(
+    recordExcerpts(
+      sel.hiddenIds,
       "scene",
       scene,
       (function* (): Iterable<Line> {
         yield ["Title", scene.title];
         yield ["Summary", scene.summary];
-        yield ["Location", scene.locationId];
+        yield referenceLine("Location", scene.locationId);
         yield [
           "Read aloud",
           typeof scene.readAloud === "string"
@@ -344,13 +575,10 @@ function addScene(sel: Selection): void {
         yield ["Body", scene.body];
         yield ["Conditions", scene.conditions];
         for (const b of scene.branches ?? []) {
+          yield referenceLine("Branch target", b.targetSceneId);
           yield [
             "Branch",
-            (function* (): Iterable<string> {
-              yield b.targetSceneId;
-              yield b.description;
-              if (b.condition) yield b.condition;
-            })(),
+            [b.description, ...(b.condition ? [b.condition] : [])],
           ];
         }
       })(),
@@ -414,22 +642,22 @@ function addLocation(sel: Selection, location: AdventureJsonLocation): void {
   if (sel.stopped) return;
   add(
     sel,
-    recordExcerpt(
+    recordExcerpts(
+      sel.hiddenIds,
       "location",
       location,
       (function* (): Iterable<Line> {
         yield ["Name", location.name];
         yield ["Summary", location.summary];
         yield ["Description", location.description];
-        yield ["Parent location", location.parentLocationId];
+        yield referenceLine("Parent location", location.parentLocationId);
         for (const c of location.connections ?? []) {
+          yield referenceLine("Connection target", c.targetLocationId);
           yield [
             "Connection",
-            (function* (): Iterable<string> {
-              yield c.targetLocationId;
-              if (c.description) yield c.description;
-              yield* c.travelConditions ?? [];
-            })(),
+            [c.description, ...(c.travelConditions ?? [])].filter(
+              (value): value is string => value !== undefined,
+            ),
           ];
         }
       })(),
@@ -451,16 +679,17 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
     const before = sel.excerpts.length;
     add(
       sel,
-      recordExcerpt(
+      recordExcerpts(
+        sel.hiddenIds,
         "encounter",
         e,
         (function* (): Iterable<Line> {
           yield ["Title", e.title];
-          yield ["Scene", e.sceneId];
-          yield ["Location", e.locationId];
+          yield referenceLine("Scene", e.sceneId);
+          yield referenceLine("Location", e.locationId);
           yield ["Description", e.description];
           yield ["Conditions", e.conditions];
-          yield ["Actors", e.actorIds];
+          yield referenceLines("Actors", e.actorIds);
           for (const solution of e.alternativeSolutions) {
             yield [
               "Alternative solution",
@@ -494,7 +723,8 @@ function addActors(
     sel.actorIds.add(a.id);
     add(
       sel,
-      recordExcerpt(
+      recordExcerpts(
+        sel.hiddenIds,
         "actor",
         a,
         [
@@ -504,8 +734,8 @@ function addActors(
           ["Role", a.role],
           ["Motivation", a.motivation],
           ["Disposition", a.disposition],
-          ["Faction", a.factionId],
-          ["Location", a.locationId],
+          referenceLine("Faction", a.factionId),
+          referenceLine("Location", a.locationId),
         ],
         sel.maxCharacters,
       ),
@@ -525,17 +755,18 @@ function addClues(sel: Selection): void {
     if (!matches) continue;
     add(
       sel,
-      recordExcerpt(
+      recordExcerpts(
+        sel.hiddenIds,
         "clue",
         c,
         [
           ["Text", c.text],
-          ["Reveals", c.reveals],
-          ["Lead target", c.leadTargetId],
-          ["Placed scene", c.placedSceneId],
-          ["Placed location", c.placedLocationId],
-          ["Placed actor", c.placedActorId],
-          ["Alternative source", c.alternativeSourceId],
+          ["Reveals", c.reveals, true],
+          referenceLine("Lead target", c.leadTargetId),
+          referenceLine("Placed scene", c.placedSceneId),
+          referenceLine("Placed location", c.placedLocationId),
+          referenceLine("Placed actor", c.placedActorId),
+          referenceLine("Alternative source", c.alternativeSourceId),
         ],
         sel.maxCharacters,
       ),
@@ -553,15 +784,16 @@ function addItems(sel: Selection): void {
     if (!matches) continue;
     add(
       sel,
-      recordExcerpt(
+      recordExcerpts(
+        sel.hiddenIds,
         "item",
         i,
         [
           ["Name", i.name],
           ["Summary", i.summary],
           ["Description", i.description],
-          ["Location", i.locationId],
-          ["Actor", i.actorId],
+          referenceLine("Location", i.locationId),
+          referenceLine("Actor", i.actorId),
         ],
         sel.maxCharacters,
       ),
@@ -579,15 +811,16 @@ function addRumours(sel: Selection): void {
     if (!refs.some((id) => id !== undefined && anchors.has(id))) continue;
     add(
       sel,
-      recordExcerpt(
+      recordExcerpts(
+        sel.hiddenIds,
         "rumour",
         r,
         [
           ["Text", r.text],
-          ["Truth", r.truth],
-          ["Source actor", r.sourceActorId],
-          ["Source location", r.sourceLocationId],
-          ["Target", r.targetEntityId],
+          ["Truth", r.truth, true],
+          referenceLine("Source actor", r.sourceActorId),
+          referenceLine("Source location", r.sourceLocationId),
+          referenceLine("Target", r.targetEntityId),
         ],
         sel.maxCharacters,
       ),
@@ -604,13 +837,11 @@ function addSecrets(sel: Selection): void {
     }
     add(
       sel,
-      recordExcerpt(
+      recordExcerpts(
+        sel.hiddenIds,
         "secret",
         s,
-        [
-          ["Text", s.text],
-          ["Related", s.relatedEntityIds],
-        ],
+        [["Text", s.text], referenceLines("Related", s.relatedEntityIds)],
         sel.maxCharacters,
       ),
       false,
@@ -637,6 +868,7 @@ function selectExcerpts(
     locationId: location?.id,
     excerpts: [],
     selectedIds: new Set(),
+    hiddenIds: new Set(adventureJsonHiddenRecordIds(pkg)),
     actorIds: new Set(),
     seen: new Set(),
     maxCharacters,
@@ -700,7 +932,7 @@ export function retrieveAdventureJsonContext(
 
   return {
     ...splitByVisibility(kept),
-    includedIds: kept.map((e) => e.id),
+    includedIds: [...new Set(kept.map((e) => e.id))],
     truncated: selection.truncated,
     sceneFallback,
     invalidBudget: selection.invalidBudget,
