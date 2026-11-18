@@ -16,7 +16,8 @@ export function createVaultCreatureImportEnvironment(): CreatureImportEnvironmen
     importDeps: {
       getVaultId: () => vault.activeVaultId,
       createEntity: (type, title, data) =>
-        vault.createEntity(type, title, data),
+        // Import data must not inherit a user-configured Creature Stat Sheet.
+        vault.entityStore.createEntity(type, title, data),
       saveImage: (id, file, expectedVaultId) => {
         if (vault.activeVaultId !== expectedVaultId) {
           return Promise.resolve({

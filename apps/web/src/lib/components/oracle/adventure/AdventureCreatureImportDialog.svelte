@@ -1,6 +1,6 @@
 <!-- fallow-ignore-file complexity -- Review, preview and result steps of the creature import dialog. -->
 <script lang="ts">
-  import { onMount, tick, untrack } from "svelte";
+  import { onDestroy, onMount, tick, untrack } from "svelte";
   import {
     buildCreatureProposals,
     sourcePageLabels,
@@ -22,10 +22,12 @@
     item,
     environment = createVaultCreatureImportEnvironment(),
     onClose,
+    onBusyChange = () => {},
   }: {
     item: StoredAdventurePackage;
     environment?: CreatureImportEnvironment;
     onClose: () => void;
+    onBusyChange?: (busy: boolean) => void;
   } = $props();
 
   const pkg = $derived(item.package);
@@ -44,6 +46,7 @@
   let dialogPanel = $state<HTMLElement>();
   let closeButton = $state<HTMLButtonElement>();
   let heading = $state<HTMLElement>();
+  let busyStatus = $state<HTMLElement>();
 
   const creating = $derived(
     choices.filter((choice) => choice.include && !choice.existing),
@@ -69,6 +72,8 @@
   const visiblePreviewChoices = $derived(
     selectedChoices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
   );
+  const encounterPageSize = 10;
+  let encounterPages = $state<Record<string, number>>({});
 
   async function goTo(next: "review" | "preview" | "done") {
     if (next === "preview") reviewPage = 0;
@@ -81,6 +86,10 @@
     if (!busy) onClose();
   }
 
+  function changeEncounterPage(key: string, page: number) {
+    encounterPages[key] = page;
+  }
+
   onMount(() => {
     const previousFocus =
       document.activeElement instanceof HTMLElement
@@ -91,6 +100,8 @@
       if (previousFocus?.isConnected) previousFocus.focus();
     };
   });
+
+  onDestroy(() => onBusyChange(false));
 
   function pageLabel(refs: SourceReference[]): string {
     const labels = sourcePageLabels(refs);
@@ -107,6 +118,9 @@
 
   async function confirm() {
     busy = true;
+    onBusyChange(true);
+    await tick();
+    busyStatus?.focus();
     try {
       result = await importCreatures(
         pkg,
@@ -116,6 +130,7 @@
       );
     } finally {
       busy = false;
+      onBusyChange(false);
     }
     await goTo("done");
   }
@@ -188,6 +203,12 @@
           {#each visibleChoices as choice, offset (choice.proposal.key)}
             {@const index = reviewPageStart + offset}
             {@const proposal = choice.proposal}
+            {@const encounterPage = encounterPages[proposal.key] ?? 0}
+            {@const encounterStart = encounterPage * encounterPageSize}
+            {@const visibleEncounters = proposal.encounters.slice(
+              encounterStart,
+              encounterStart + encounterPageSize,
+            )}
             <li
               class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
               data-testid="creature-import-item-{index}"
@@ -198,7 +219,7 @@
               {/each}
               <p class="text-xs">{pageLabel(proposal.sourceRefs)}</p>
               <ul class="list-disc pl-5 text-xs">
-                {#each proposal.encounters as encounter (encounter.id)}
+                {#each visibleEncounters as encounter (encounter.id)}
                   <li>
                     {encounter.title}
                     ({pageLabel(
@@ -207,6 +228,35 @@
                   </li>
                 {/each}
               </ul>
+              {#if proposal.encounters.length > encounterPageSize}
+                <div class="flex items-center gap-2 text-xs">
+                  <span aria-live="polite">
+                    Encounters {encounterStart + 1}–{Math.min(
+                      encounterStart + encounterPageSize,
+                      proposal.encounters.length,
+                    )} of {proposal.encounters.length}
+                  </span>
+                  <button
+                    type="button"
+                    class="rounded border border-theme-text px-2 py-1"
+                    disabled={encounterPage === 0}
+                    onclick={() =>
+                      changeEncounterPage(proposal.key, encounterPage - 1)}
+                  >
+                    Previous encounters
+                  </button>
+                  <button
+                    type="button"
+                    class="rounded border border-theme-text px-2 py-1"
+                    disabled={encounterStart + encounterPageSize >=
+                      proposal.encounters.length}
+                    onclick={() =>
+                      changeEncounterPage(proposal.key, encounterPage + 1)}
+                  >
+                    Next encounters
+                  </button>
+                </div>
+              {/if}
               {#if choice.existing}
                 <p class="text-xs font-medium">
                   Already in your Vault: {choice.existing.title}
@@ -341,13 +391,28 @@
           </div>
         {/if}
       {:else if step === "preview"}
-        <p class="text-sm text-theme-text" role="status">
-          {creating.length}
-          {creating.length === 1 ? "entry" : "entries"} will be created, and
-          {reusing.length} reused.
-        </p>
+        {#if busy}
+          <!-- svelte-ignore a11y_no_noninteractive_tabindex -- Focus target keeps Tab inside the modal during writes. -->
+          <p
+            bind:this={busyStatus}
+            class="text-sm text-theme-text"
+            role="status"
+            tabindex="0"
+          >
+            Creating entries…
+          </p>
+        {:else}
+          <p class="text-sm text-theme-text" role="status">
+            {creating.length}
+            {creating.length === 1 ? "entry" : "entries"} will be created, and
+            {reusing.length} reused.
+          </p>
+        {/if}
         {#if batchLimitExceeded}
-          <p class="text-sm text-theme-danger" role="alert">
+          <p
+            class="border-l-2 border-theme-danger pl-2 text-sm text-theme-text"
+            role="alert"
+          >
             Create up to {maxBatchSize} new entries at a time. Skip some entries to
             continue; you can import another batch afterwards.
           </p>
@@ -402,7 +467,10 @@
           {/if}
         </p>
         {#if result.failures.length}
-          <ul class="list-disc pl-5 text-sm text-theme-danger" role="alert">
+          <ul
+            class="list-disc border-l-2 border-theme-danger pl-5 text-sm text-theme-text"
+            role="alert"
+          >
             {#each result.failures as failure (failure)}
               <li>{failure}</li>
             {/each}

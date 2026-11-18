@@ -45,22 +45,28 @@ export interface CreatureImportResult {
 
 const normalizeTitle = (title: string) => title.trim().toLocaleLowerCase();
 
-/** Matches by package and actor id first, then by trimmed case-insensitive title. */
-export function findExistingCreature(
-  proposal: CreatureProposal,
+/** Builds source-id and normalized-title indexes once for all proposals. */
+function indexExistingCreatures(
   packageId: string,
   creatures: ExistingCreature[],
-): ExistingCreature | undefined {
-  const bySource = creatures.find(
-    (creature) =>
-      creature.adventureSource?.packageId === packageId &&
-      creature.adventureSource.actorIds.some((id) =>
-        proposal.actorIds.includes(id),
-      ),
-  );
-  if (bySource) return bySource;
-  const name = normalizeTitle(proposal.name);
-  return creatures.find((creature) => normalizeTitle(creature.title) === name);
+): {
+  byActorId: Map<string, { creature: ExistingCreature; order: number }>;
+  byTitle: Map<string, ExistingCreature>;
+} {
+  const byActorId = new Map<
+    string,
+    { creature: ExistingCreature; order: number }
+  >();
+  const byTitle = new Map<string, ExistingCreature>();
+  creatures.forEach((creature, order) => {
+    const title = normalizeTitle(creature.title);
+    if (!byTitle.has(title)) byTitle.set(title, creature);
+    if (creature.adventureSource?.packageId !== packageId) return;
+    for (const actorId of creature.adventureSource.actorIds) {
+      if (!byActorId.has(actorId)) byActorId.set(actorId, { creature, order });
+    }
+  });
+  return { byActorId, byTitle };
 }
 
 export function initialCreatureChoices(
@@ -68,13 +74,25 @@ export function initialCreatureChoices(
   proposals: CreatureProposal[],
   creatures: ExistingCreature[],
 ): CreatureImportChoice[] {
-  return proposals.map((proposal) => ({
-    proposal,
-    existing: findExistingCreature(proposal, pkg.id, creatures),
-    include: true,
-    hidden: proposal.concealed,
-    artCredit: "",
-  }));
+  const indexes = indexExistingCreatures(pkg.id, creatures);
+  return proposals.map((proposal) => {
+    let sourceMatch: { creature: ExistingCreature; order: number } | undefined;
+    for (const actorId of proposal.actorIds) {
+      const candidate = indexes.byActorId.get(actorId);
+      if (candidate && (!sourceMatch || candidate.order < sourceMatch.order)) {
+        sourceMatch = candidate;
+      }
+    }
+    return {
+      proposal,
+      existing:
+        sourceMatch?.creature ??
+        indexes.byTitle.get(normalizeTitle(proposal.name)),
+      include: true,
+      hidden: proposal.concealed,
+      artCredit: "",
+    };
+  });
 }
 
 function entityData(

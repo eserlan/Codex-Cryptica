@@ -233,6 +233,91 @@ describe("creature import dialog", () => {
     expect(createEntity).not.toHaveBeenCalled();
   });
 
+  it("pages encounter references so only ten rows render at once", async () => {
+    const encounters = Array.from({ length: 25 }, (_, index) => ({
+      ...pkg.encounters[0],
+      id: `encounter-${index}`,
+      title: `Encounter ${index}`,
+      actorIds: ["a1"],
+    }));
+    const densePackage = {
+      ...pkg,
+      actors: [pkg.actors[0]],
+      encounters,
+    } as unknown as AdventureJsonV1;
+    render(AdventureCreatureImportDialog, {
+      item: { ...item, package: densePackage },
+      environment: {
+        importDeps: {
+          getVaultId: () => "v1",
+          createEntity: vi.fn(async () => "id"),
+          saveImage: vi.fn(async () => ({ ok: true as const })),
+        },
+        listCreatures: () => [],
+      },
+      onClose: vi.fn(),
+    });
+    const creature = screen.getByTestId("creature-import-item-0");
+    expect(within(creature).getAllByRole("listitem")).toHaveLength(10);
+    expect(within(creature).getByText("Encounters 1–10 of 25")).toBeTruthy();
+    await fireEvent.click(
+      within(creature).getByRole("button", { name: "Next encounters" }),
+    );
+    expect(within(creature).getAllByRole("listitem")).toHaveLength(10);
+    expect(within(creature).getByText("Encounters 11–20 of 25")).toBeTruthy();
+    expect(within(creature).getByText(/^Encounter 10/)).toBeTruthy();
+    await fireEvent.click(
+      within(creature).getByRole("button", { name: "Next encounters" }),
+    );
+    expect(within(creature).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(creature).getByText("Encounters 21–25 of 25")).toBeTruthy();
+    expect(within(creature).getByText(/^Encounter 24/)).toBeTruthy();
+  });
+
+  it("keeps keyboard focus inside the dialog while writes are pending", async () => {
+    let releaseCreate!: (id: string) => void;
+    const createEntity = vi
+      .fn()
+      .mockImplementationOnce(
+        () => new Promise<string>((resolve) => (releaseCreate = resolve)),
+      )
+      .mockResolvedValue("created-id");
+    const onBusyChange = vi.fn();
+    render(AdventureCreatureImportDialog, {
+      item,
+      environment: {
+        importDeps: {
+          getVaultId: () => "v1",
+          createEntity,
+          saveImage: vi.fn(async () => ({ ok: true as const })),
+        },
+        listCreatures: () => [],
+      },
+      onClose: vi.fn(),
+      onBusyChange,
+    });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review changes" }),
+    );
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Confirm and create" }),
+    );
+    const status = await screen.findByText("Creating entries…");
+    expect(document.activeElement).toBe(status);
+    expect(onBusyChange).toHaveBeenCalledWith(true);
+    const tab = new KeyboardEvent("keydown", {
+      key: "Tab",
+      bubbles: true,
+      cancelable: true,
+    });
+    status.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(status);
+    releaseCreate("created-id");
+    expect(await screen.findByText(/Created 3, reused 0/)).toBeTruthy();
+    expect(onBusyChange).toHaveBeenLastCalledWith(false);
+  });
+
   it("shows disjoint source pages without presenting them as a range", () => {
     const pagePackage = {
       ...pkg,

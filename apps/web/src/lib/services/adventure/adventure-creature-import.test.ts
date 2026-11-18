@@ -72,6 +72,33 @@ function setup(
 }
 
 describe("importCreatures", () => {
+  it("indexes existing creatures once before matching many proposals", () => {
+    const template = buildCreatureProposals(pkg)[0]!;
+    const creatures = Array.from({ length: 3_000 }, (_, index) => {
+      const creature = { id: `existing-${index}` } as ExistingCreature;
+      Object.defineProperty(creature, "title", {
+        get: () => {
+          titleReads += 1;
+          return `Unmatched ${creature.id}`;
+        },
+      });
+      return creature;
+    });
+    let titleReads = 0;
+    const proposals = Array.from({ length: 3_000 }, (_, index) => ({
+      ...template,
+      key: `proposal-${index}`,
+      name: `Missing ${index}`,
+      actorIds: [`missing-${index}`],
+    }));
+
+    const choices = initialCreatureChoices(pkg, proposals, creatures);
+
+    expect(choices).toHaveLength(3_000);
+    expect(choices.every((choice) => !choice.existing)).toBe(true);
+    expect(titleReads).toBe(creatures.length);
+  });
+
   it("creates creatures, hiding concealed ones and recording provenance", async () => {
     const { deps, choices, createEntity, saveImage } = setup();
     const result = await importCreatures(pkg, "h".repeat(64), choices, deps);

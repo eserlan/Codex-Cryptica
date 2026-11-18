@@ -13,6 +13,7 @@
     item,
     library,
     onStart,
+    onCreatureImportBusyChange = () => {},
   }: {
     item: StoredAdventurePackage;
     library: AdventurePackageLibrary;
@@ -21,6 +22,7 @@
       hash: string,
       startSceneId?: string,
     ) => void;
+    onCreatureImportBusyChange?: (busy: boolean) => void;
   } = $props();
 
   const pinned = $derived(library.pinnedByHash.get(item.hash) ?? []);
@@ -174,6 +176,7 @@
     <AdventureCreatureImportDialog
       {item}
       onClose={() => (creatureDialogOpen = false)}
+      onBusyChange={onCreatureImportBusyChange}
     />
   {/if}
 </li>
