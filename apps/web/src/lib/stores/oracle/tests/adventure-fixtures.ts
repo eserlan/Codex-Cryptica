@@ -25,8 +25,20 @@ export const referencePackage: AdventureJsonV1 = AdventureJsonV1Schema.parse(
   ),
 );
 
+export const minimalPackage: AdventureJsonV1 = AdventureJsonV1Schema.parse(
+  JSON.parse(
+    readFileSync(
+      resolve(
+        process.cwd(),
+        "static/schemas/adventure-json/examples/minimal.v1.json",
+      ),
+      "utf8",
+    ),
+  ),
+);
+
 export const packageRef = {
-  packageId: "reference-one-shot",
+  packageId: "the-last-grind",
   version: "1.0.0",
   formatVersion: "adventure-json/v1",
   hash: "b".repeat(64),
@@ -34,9 +46,34 @@ export const packageRef = {
 
 /** A package cache whose loader returns the reference one-shot. */
 export function referencePackageCache(
-  loader = async () => ({ package: referencePackage }) as any,
+  loader: any = async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: referencePackage,
+    originFormat: "adventure-json/v1",
+  }),
+  checkOtherVersion: any = async () => false,
 ) {
-  return new AdventurePackageContextCache(loader);
+  return new AdventurePackageContextCache(loader, checkOtherVersion);
+}
+
+/** The pin a session carries for `pkg`, with the fixture hash the loaders serve. */
+export function packageRefFor(pkg: AdventureJsonV1) {
+  return {
+    ...packageRef,
+    packageId: pkg.id,
+    version: pkg.version,
+  };
+}
+
+/** A package cache whose loader returns `pkg` for the pin from `packageRefFor`. */
+export function packageCacheFor(pkg: AdventureJsonV1) {
+  return referencePackageCache(async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: pkg,
+    originFormat: "adventure-json/v1",
+  }));
 }
 
 export const now = "2026-08-16T12:00:00.000Z";

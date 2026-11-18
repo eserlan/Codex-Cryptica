@@ -22,6 +22,12 @@ import {
   markRevealedScenarios,
   applyScenarioElaborations,
 } from "./scenario-turns";
+import {
+  applyPackageProgressEvents,
+  nullMap,
+  planSceneProgress,
+  type PackageProgressIndex,
+} from "./package-progress";
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
 import type {
@@ -30,6 +36,7 @@ import type {
   AdventureValidationError,
   CommitMetadata,
   CommittedAdventureTurn,
+  PackageProgress,
   Result,
   ScenarioItem,
   WorldTimeState,
@@ -97,20 +104,73 @@ function resolveClock(
   };
 }
 
-/** A reported scene move counts only when the pinned package has that scene. */
+function packageIndexFromMeta(
+  meta: CommitMetadata,
+): PackageProgressIndex | undefined {
+  if (!meta.packageRecordKinds) return undefined;
+  return {
+    packageSceneIds: [...(meta.packageSceneIds ?? [])],
+    packageRecordKinds: nullMap(Object.entries(meta.packageRecordKinds)),
+    packageSceneBranches: nullMap(
+      Object.entries(meta.packageSceneBranches ?? {}).map(
+        ([id, targets]) => [id, [...targets]] as const,
+      ),
+    ),
+  };
+}
+
+/** A reported scene ID counts only when the session's package has that scene. */
+function validSceneMove(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
+  dropped: string[],
+): string | undefined {
+  const sceneId = proposal.visiblePatch.packageSceneId;
+  if (sceneId === undefined) return undefined;
+  if (candidate.sourcePackage && meta.packageSceneIds?.includes(sceneId)) {
+    return sceneId;
+  }
+  dropped.push(`packageSceneId: unknown scene ${sceneId.slice(0, 80)}`);
+  return undefined;
+}
+
+/** Moves the scene and writes the confirmed ledger events a move implies. */
+function applyLedgerProgress(
+  before: PackageProgress,
+  index: PackageProgressIndex,
+  moveTo: string | undefined,
+  meta: CommitMetadata,
+  dropped: string[],
+): PackageProgress {
+  const inputs = planSceneProgress(before, index, moveTo);
+  const result = inputs.length
+    ? applyPackageProgressEvents(before, inputs, { turnId: meta.turnId, index })
+    : { progress: before, dropped: [] };
+  dropped.push(...result.dropped);
+  return { ...result.progress, sceneId: moveTo ?? before.sceneId };
+}
+
 function resolvePackageProgress(
   candidate: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
   meta: CommitMetadata,
   dropped: string[],
 ): void {
-  const sceneId = proposal.visiblePatch.packageSceneId;
-  if (sceneId === undefined) return;
-  if (candidate.sourcePackage && meta.packageSceneIds?.includes(sceneId)) {
-    candidate.packageProgress = { sceneId };
-    return;
+  const moveTo = validSceneMove(candidate, proposal, meta, dropped);
+  const before = candidate.packageProgress;
+  const index = packageIndexFromMeta(meta);
+  if (before && candidate.sourcePackage && index) {
+    candidate.packageProgress = applyLedgerProgress(
+      before,
+      index,
+      moveTo,
+      meta,
+      dropped,
+    );
+  } else if (moveTo !== undefined) {
+    candidate.packageProgress = { ...before, sceneId: moveTo };
   }
-  dropped.push(`packageSceneId: unknown scene ${sceneId.slice(0, 80)}`);
 }
 
 export function applyCompletedTurn(

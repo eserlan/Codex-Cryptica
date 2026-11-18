@@ -23,7 +23,14 @@ Run both suites locally before any staging walkthrough:
 ```bash
 (cd packages/adventure-engine && bun test tests/evaluations.test.ts tests/living-settlement-long-run.test.ts tests/emergent-30-turn.test.ts tests/cross-scenario-causality.test.ts)
 (cd apps/web && bunx vitest run src/lib/services/adventure/adventure-evaluation-runner.test.ts src/lib/services/adventure/adventure-multi-scenario-gates.test.ts src/lib/services/adventure/adventure-grounding-continuity.test.ts)
+(cd apps/web && bunx vitest run src/lib/stores/oracle/tests/gm-leak-harness.test.ts src/lib/stores/oracle/tests/gm-secrecy-outputs.test.ts src/lib/stores/oracle/tests/gm-secrecy-playthrough.test.ts)
 ```
+
+The GM-only secrecy tests use a stubbed model, no network and no OPFS:
+
+- `gm-secrecy-outputs.test.ts` collects every GM-only string from `minimal.v1.json` and from a canary copy of the reference one-shot (built in test code, with one unique `GMCANARY-…` marker per guarded record type), then checks each player-facing output: player transcript and archive view, recap, visible state, provisional facts, pending roll text, error and roll messages, streamed narration previews (including a rejected generation), summary requests and story notes, `JOURNAL:CAPTURE` payloads, promotion notices and entity drafts, the package-unavailable recovery panel, and the guest export. Short secret text, clue reveals, and hidden names/titles are guarded. Pretty-printed JSON strings are checked after canonicalization. The GM review and diagnostic copies are checked for their GM-only warning, not for leaks.
+- `gm-secrecy-playthrough.test.ts` plays the canary reference from the entry scene to the cellar and the authored ending, reloads partway through with a new manager, and checks the recap and captured streaming previews after every turn. It also asserts the canary secret really sits in hidden state.
+- The start-screen package card (#4943) must be added to this harness when it lands.
 
 ## Six-Dimension Evaluation Rubric & Stop-Ship Gates
 

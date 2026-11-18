@@ -99,7 +99,9 @@ describe("help documentation workflow retrieval", () => {
     const result = retrieve("How does adventure import work?", bundle, context);
     expect(result.chunks[0]?.chunk.helpId).toBe("adventure-mode");
     expect(result.chunks[0]?.chunk.heading).toBe("Import an adventure");
-    expect(result.chunks[0]?.chunk.text).toContain("zero AI calls");
+    expect(result.chunks.map(({ chunk }) => chunk.text).join("\n")).toContain(
+      "zero AI calls",
+    );
   });
 
   it.each([

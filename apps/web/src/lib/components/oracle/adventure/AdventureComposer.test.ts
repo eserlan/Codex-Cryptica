@@ -419,4 +419,55 @@ describe("AdventureComposer layout and chips", () => {
       ).toBeTruthy();
     });
   });
+
+  describe("package-unavailable", () => {
+    function unavailable(otherVersionAvailable: boolean | null) {
+      const m = manager("ready");
+      m.phase = "package-unavailable";
+      m.readOnly = true;
+      m.session = { status: "active", turns: [{}] };
+      m.packageUnavailable = { otherVersionAvailable };
+      m.retryPackageCheck = vi.fn(async () => false);
+      m.tryTakeControl = vi.fn();
+      m.close = vi.fn();
+      return m;
+    }
+
+    it("shows the copy, disables the composer and offers Retry and Leave", async () => {
+      const m = unavailable(false);
+      render(AdventureComposer, { props: { manager: m } });
+      expect(screen.getByText(/package isn't in this Vault/)).toBeTruthy();
+      expect(
+        (screen.getByLabelText("What do you do?") as HTMLTextAreaElement)
+          .disabled,
+      ).toBe(true);
+      expect(
+        screen.queryByRole("button", { name: "Try to take control" }),
+      ).toBeNull();
+      expect(screen.queryByTestId("package-other-version")).toBeNull();
+
+      await fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      expect(m.retryPackageCheck).toHaveBeenCalledOnce();
+      await waitFor(() =>
+        expect(screen.getByText(/still unavailable/)).toBeTruthy(),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Leave session" }),
+      );
+      expect(m.close).toHaveBeenCalledOnce();
+    });
+
+    it("does not hide the alternate-version notice when the check is inconclusive", async () => {
+      const m = unavailable(null);
+      render(AdventureComposer, { props: { manager: m } });
+      expect(screen.getByTestId("package-other-version").textContent).toMatch(
+        /may be in this Vault/,
+      );
+    });
+
+    it("shows the other-version line only when flagged", () => {
+      render(AdventureComposer, { props: { manager: unavailable(true) } });
+      expect(screen.getByTestId("package-other-version")).toBeTruthy();
+    });
+  });
 });

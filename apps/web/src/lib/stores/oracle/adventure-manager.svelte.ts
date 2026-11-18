@@ -62,6 +62,12 @@ export class AdventureManager extends AdventureState {
     return this.lifecycle.open(...args);
   }
 
+  retryPackageCheck(
+    ...args: Parameters<AdventureLifecycle["retryPackageCheck"]>
+  ): ReturnType<AdventureLifecycle["retryPackageCheck"]> {
+    return this.lifecycle.retryPackageCheck(...args);
+  }
+
   tryTakeControl(
     ...args: Parameters<AdventureLifecycle["tryTakeControl"]>
   ): ReturnType<AdventureLifecycle["tryTakeControl"]> {

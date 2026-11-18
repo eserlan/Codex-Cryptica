@@ -40,6 +40,121 @@ describe("AdventurePackageContextCache", () => {
     expect(loader).toHaveBeenCalledTimes(3);
   });
 
+  describe("verifyPin", () => {
+    const stored = (overrides: Record<string, unknown> = {}) =>
+      ({
+        hash: packageRef.hash,
+        path: "",
+        package: referencePackage,
+        originFormat: "adventure-json/v1",
+        ...overrides,
+      }) as any;
+
+    it("is available for a matching package and fills the cache", async () => {
+      const cache = new AdventurePackageContextCache(async () => stored());
+      expect(await cache.verifyPin(session())).toEqual({
+        status: "available",
+      });
+      expect(cache.peek(session())).toBe(referencePackage);
+    });
+
+    it("reads through the loader even when the package is cached", async () => {
+      const loader = vi.fn(async () => stored());
+      const cache = new AdventurePackageContextCache(loader);
+      await cache.load(session());
+      await cache.verifyPin(session());
+      expect(loader).toHaveBeenCalledTimes(2);
+    });
+
+    it.each([
+      ["missing", async () => null, "missing"],
+      [
+        "unreadable",
+        async () => {
+          throw new Error("corrupt");
+        },
+        "unreadable",
+      ],
+      [
+        "hash mismatch",
+        async () => stored({ hash: "c".repeat(64) }),
+        "mismatch",
+      ],
+      [
+        "id mismatch",
+        async () => stored({ package: { ...referencePackage, id: "other" } }),
+        "mismatch",
+      ],
+      [
+        "version mismatch",
+        async () =>
+          stored({ package: { ...referencePackage, version: "9.9.9" } }),
+        "mismatch",
+      ],
+    ])("is unavailable when %s", async (_name, loader, reason) => {
+      const cache = new AdventurePackageContextCache(
+        loader as any,
+        async () => false,
+      );
+      expect(await cache.verifyPin(session())).toEqual({
+        status: "unavailable",
+        reason,
+        otherVersionAvailable: false,
+      });
+    });
+
+    it("evicts a cached copy after a failed check", async () => {
+      const loader = vi
+        .fn()
+        .mockResolvedValueOnce(stored())
+        .mockResolvedValue(null);
+      const cache = new AdventurePackageContextCache(loader);
+      await cache.load(session());
+      expect(cache.peek(session())).toBe(referencePackage);
+      await cache.verifyPin(session());
+      expect(cache.peek(session())).toBeUndefined();
+    });
+
+    it("reports another approved version of the same package id", async () => {
+      const other = stored({
+        hash: "d".repeat(64),
+        package: { ...referencePackage, version: "2.0.0" },
+      });
+      const cache = new AdventurePackageContextCache(
+        async () => null,
+        async () => other.package.id === packageRef.packageId,
+      );
+      expect(await cache.verifyPin(session())).toMatchObject({
+        otherVersionAvailable: true,
+      });
+    });
+
+    it("ignores other ids and the pinned hash, and a failing check", async () => {
+      const unrelated = stored({
+        hash: "d".repeat(64),
+        package: { ...referencePackage, id: "unrelated" },
+      });
+      for (const [checkOtherVersion, expected] of [
+        [async () => unrelated.package.id === packageRef.packageId, false],
+        [async () => false, false],
+        [
+          async () => {
+            throw new Error("check");
+          },
+          null,
+        ],
+      ] as const) {
+        const cache = new AdventurePackageContextCache(
+          async () => null,
+          checkOtherVersion,
+        );
+        expect(await cache.verifyPin(session())).toMatchObject({
+          otherVersionAvailable: expected,
+        });
+      }
+    });
+  });
+
   it("evicts least-recently-used sessions when the cache reaches its bound", async () => {
     const loader = vi.fn(async () => ({ package: referencePackage }) as any);
     const cache = new AdventurePackageContextCache(loader);
