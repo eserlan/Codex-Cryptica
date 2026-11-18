@@ -84,6 +84,7 @@ export interface GenerationContext {
   vampireClan: Record<string, unknown>;
   nomadClan: Record<string, unknown>;
   darkFaction: Record<string, unknown>;
+  urbanFantasyFaction: Record<string, unknown>;
   names: Record<string, unknown>;
   dndNpc: Record<string, unknown>;
   pantheon: Record<string, unknown>;
@@ -269,6 +270,11 @@ export function createGeneratorHandlers(
     "dark-fantasy-faction": (useAI) =>
       engine.generateDarkFaction({
         ...(ctx.darkFaction as object),
+        useAI,
+      } as never),
+    "urban-fantasy-faction": (useAI) =>
+      engine.generateUrbanFantasyFaction({
+        ...(ctx.urbanFantasyFaction as object),
         useAI,
       } as never),
     names: (useAI) =>

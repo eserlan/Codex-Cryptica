@@ -64,6 +64,7 @@ import {
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
   type DarkFactionGeneratorOptions,
+  type UrbanFantasyFactionGeneratorOptions,
   type QuestGeneratorOptions,
   type RumourGeneratorOptions,
   type EncounterGeneratorOptions,
@@ -160,6 +161,12 @@ export class GeneratorEngineCore extends GeneratorEngineBase {
     options: DarkFactionGeneratorOptions & { useAI?: boolean } = {},
   ) {
     return this.factionGeneration.generateDarkFaction(options);
+  }
+
+  generateUrbanFantasyFaction(
+    options: UrbanFantasyFactionGeneratorOptions & { useAI?: boolean } = {},
+  ) {
+    return this.factionGeneration.generateUrbanFantasyFaction(options);
   }
 
   /** Settlement generation delegates to the generator-engine package (#1351). */

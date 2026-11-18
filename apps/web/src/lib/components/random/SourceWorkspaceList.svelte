@@ -102,6 +102,7 @@
         <button
           type="button"
           onclick={() => toggleLabel(label)}
+          aria-pressed={activeLabels.includes(label)}
           class="rounded px-2 py-0.5 font-mono text-micro tracking-wider transition-colors {activeLabels.includes(
             label,
           )

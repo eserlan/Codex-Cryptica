@@ -85,8 +85,10 @@ describe("vtt-session", () => {
 
   it("saves and loads snapshots in OPFS", async () => {
     const vaultHandle = { name: "vault" } as FileSystemDirectoryHandle;
+    const clock = { now: vi.fn(() => 150000) };
     const service = new VTTSessionService({
       getActiveVaultHandle: vi.fn().mockResolvedValue(vaultHandle),
+      clock,
     });
 
     await service.saveEncounterSnapshot(
@@ -99,6 +101,12 @@ describe("vtt-session", () => {
       vaultHandle,
       "vault",
     );
+    const savedPayload = vi.mocked(writeOpfsFile).mock.calls[0][1];
+    if (typeof savedPayload === "string") {
+      throw new Error("Expected the snapshot payload to be a Blob");
+    }
+    expect(JSON.parse(await savedPayload.text()).savedAt).toBe(150000);
+    expect(clock.now).toHaveBeenCalledOnce();
 
     (readOpfsBlob as any).mockResolvedValue(
       new Blob(
@@ -115,6 +123,20 @@ describe("vtt-session", () => {
 
     const loaded = await service.loadEncounterSnapshot("map-1", "enc-2");
     expect(loaded.id).toBe("enc-2");
+  });
+
+  it("does not write a snapshot when the vault is unavailable", async () => {
+    const service = new VTTSessionService({
+      getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+      clock: { now: () => 150000 },
+    });
+
+    await expect(
+      service.saveEncounterSnapshot(
+        createEncounterSession("map-1", "enc-1", "Goblin Ambush"),
+      ),
+    ).rejects.toThrow("Vault is not available");
+    expect(writeOpfsFile).not.toHaveBeenCalled();
   });
 
   it("deletes snapshots from OPFS", async () => {

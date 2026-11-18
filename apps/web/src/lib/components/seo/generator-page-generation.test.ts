@@ -74,6 +74,9 @@ function makeFakeEngine(): any {
     generateDarkFaction: vi
       .fn()
       .mockResolvedValue({ type: "note", title: "dark" }),
+    generateUrbanFantasyFaction: vi
+      .fn()
+      .mockResolvedValue({ type: "faction", title: "urban faction" }),
     generateNames: vi.fn().mockResolvedValue({ type: "note", title: "names" }),
     generatePantheon: vi
       .fn()
@@ -167,6 +170,7 @@ function makeBaseCtx(overrides: any) {
     vampireClan: { archetype: "Elder" },
     nomadClan: { role: "Scout" },
     darkFaction: { mode: "Cult" },
+    urbanFantasyFaction: { mode: "Hidden-world city politics" },
     names: { culture: "Elvish" },
     dndNpc: { race: "Human" },
     pantheon: { genre: "Fantasy" },
@@ -339,6 +343,7 @@ describe("generator-page-generation", () => {
         "bbeg-generator",
         "comic-book-event-generator",
         "origin-generator",
+        "urban-fantasy-faction",
       ];
       for (const slug of slugs) {
         expect(typeof handlers[slug]).toBe("function");
@@ -355,6 +360,29 @@ describe("generator-page-generation", () => {
       ).toHaveBeenCalledWith(
         expect.objectContaining({ useAI: true, theme: "x" }),
       );
+    });
+
+    it("dispatches urban fantasy faction options to its dedicated generator", async () => {
+      const ctx = makeCtx();
+      (ctx as unknown as Record<string, unknown>).urbanFantasyFaction = {
+        mode: "Corporate occult",
+        factionType: "Supernatural Corporation",
+        scope: "Corporate Campus",
+        moralPosture: "Pragmatic brokers",
+      };
+      const handlers = createGeneratorHandlers(ctx);
+      await handlers["urban-fantasy-faction"](false);
+
+      const engine = (
+        ctx as unknown as { _engine: ReturnType<typeof makeFakeEngine> }
+      )._engine;
+      expect(engine.generateUrbanFantasyFaction).toHaveBeenCalledWith({
+        mode: "Corporate occult",
+        factionType: "Supernatural Corporation",
+        scope: "Corporate Campus",
+        moralPosture: "Pragmatic brokers",
+        useAI: false,
+      });
     });
 
     it("passes one-shot progress through and resets it at the start", async () => {

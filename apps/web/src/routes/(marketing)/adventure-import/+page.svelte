@@ -3,36 +3,15 @@
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import { createCopier } from "./copy-feedback.svelte.js";
   import StagedConversion from "./StagedConversion.svelte";
-  import minimalExample from "../../../../static/schemas/adventure-json/examples/minimal.v1.json?raw";
   import {
     CANONICAL_CONVERSION_PROMPT,
     COVERAGE_REPORT_PROMPT,
     IMPORT_OUTCOMES,
     LINK_HANDOFF_TEXT,
-    COLLECTION_RULES,
-    FIDELITY_EXAMPLE_PARAPHRASED,
-    FIDELITY_EXAMPLE_STRUCTURAL,
     FIDELITY_ROWS,
-    FIDELITY_WHO_USES_WHAT,
     CORRESPONDENCE_EXTENSION_DOC,
-    EPISTEMIC_STATUSES,
-    REVISION_EXAMPLE_AFTER,
-    REVISION_EXAMPLE_BEFORE,
-    SPLIT_MERGE_EXAMPLE_DOC,
-    VERSIONING_BEHAVIOUR_DOC,
-    TOP_LEVEL_RULES,
     TROUBLESHOOTING_ERRORS,
   } from "./conversion-guide.js";
-
-  const WRONG_PLACEMENT = `// WRONG: do not do this
-{
-  "scenes": [
-    {
-      "id": "scene-spiral-stair",
-      "extensions": { "codex-cryptica.adventure-correspondence": [] }
-    }
-  ]
-}`;
 
   const cleanBase = basePath();
   const pageUrl = "https://codexcryptica.com/adventure-import";
@@ -55,7 +34,6 @@
       "Copy failed — copy the page address instead",
     ),
   );
-
   const coverageCopyLabel = $derived(
     coverageCopier.label(
       "Copy coverage report prompt",
@@ -127,10 +105,10 @@
   style:background-image="var(--bg-texture-overlay)"
 >
   <main
-    class="max-w-5xl mx-auto px-4 sm:px-6 py-14 flex-grow w-full space-y-12"
+    class="max-w-5xl mx-auto px-4 sm:px-6 py-14 flex-grow w-full space-y-10"
   >
     <!-- Hero -->
-    <section class="text-center space-y-5">
+    <section class="text-center space-y-4">
       <div
         class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-text"
       >
@@ -151,9 +129,21 @@
       </p>
       <p class="text-base text-theme-text/90 leading-relaxed max-w-2xl mx-auto">
         Use ChatGPT, Claude, Gemini, or a local model to turn a PDF, Markdown
-        file, or module notes into a clean, validated
+        file, or module notes into a validated
         <code class="font-mono text-theme-text">adventure-json/v1</code>
         file that Codex Cryptica checks and stores on your device.
+      </p>
+      <p
+        class="text-xs md:text-sm font-mono text-theme-text/90 max-w-2xl mx-auto rounded-xl border border-theme-primary/30 bg-theme-surface/50 px-4 py-2.5"
+      >
+        <strong>For AI assistants reading this URL:</strong> follow only the
+        <a class="underline" href="#prompt-heading"
+          >Canonical Conversion Prompt</a
+        >
+        (<a class="underline" href="{cleanBase}/adventure-import/prompt.txt"
+          >prompt.txt</a
+        >). The sections below it are human reference documentation — do not use
+        their templates unless the user asks for a staged conversion.
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -194,10 +184,6 @@
       >
         Quick start: from your adventure to Codex Cryptica
       </h2>
-      <p class="text-sm md:text-base text-theme-text/90">
-        Source adventure → AI assistant of your choice → Adventure JSON file →
-        review and import in Codex Cryptica.
-      </p>
       <ol
         class="list-decimal space-y-2 pl-5 text-sm md:text-base text-theme-text"
       >
@@ -211,9 +197,7 @@
         </li>
         <li>
           <strong>Save the result as a plain <code>.json</code> file.</strong>
-          If your assistant offers a downloadable file, use that. Otherwise copy its
-          reply. Keep only the JSON: no Markdown code fences, no commentary before
-          or after.
+          Keep only the JSON: no Markdown code fences, no commentary before or after.
         </li>
         <li>
           <strong>Import it in your Vault.</strong> Open Adventure Mode and
@@ -224,22 +208,17 @@
         </li>
         <li>
           <strong>Review, approve, then start.</strong> Codex Cryptica checks
-          the file on your device. If it is rejected, follow the validation
-          message: use its field path when one is shown, or fix the JSON syntax
-          described by a parse error. You can paste that message back to your
-          assistant or see
+          the file on your device. If it is rejected, paste the validation
+          message back to your assistant or see
           <a class="underline" href="#troubleshooting-heading"
             >troubleshooting</a
-          >. Once approved, start the adventure from Adventure Mode with the
-          Oracle.
+          >.
         </li>
       </ol>
       <p class="text-sm text-theme-text/90">
         Long PDF that an assistant cannot finish in one go? Use the
-        <a class="underline" href="#long-adventures">staged method</a>.
-      </p>
-      <p class="text-sm md:text-base text-theme-text/90">
-        Passing the import checks does not mean nothing was left out. See
+        <a class="underline" href="#long-adventures">staged method</a>. Passing
+        the import checks does not mean nothing was left out — see
         <a class="underline" href="#completeness-heading"
           >valid is not the same as complete</a
         >.
@@ -256,93 +235,20 @@
       </div>
       <p class="text-sm text-theme-text/90">
         <strong>Copy guide link</strong> copies a one-line instruction pointing
-        at the same prompt as plain text (<a
+        at the plain-text prompt (<a
           class="underline"
           href="{cleanBase}/adventure-import/prompt.txt">prompt.txt</a
         >). It only works if your assistant can open web pages; local models and
         chats without browsing need the full prompt instead.
       </p>
       <p class="text-sm text-theme-text/90">
-        <strong>This page is a guide, not a converter.</strong> You can't upload or
-        paste your adventure here. The conversion happens in the assistant you choose,
-        and this page never sees your source.
-      </p>
-      <p class="text-sm text-theme-text/90">
-        Your source goes to the AI assistant you choose. The finished file is
-        imported and stored on this device. During AI play, parts of it go to
-        your Oracle provider.
+        <strong>This page is a guide, not a converter.</strong> You can't upload
+        or paste your adventure here.
         <a
           href="#privacy-notice-heading"
           class="text-theme-text underline underline-offset-2"
           >Where your adventure goes</a
         >
-      </p>
-    </section>
-
-    <!-- Privacy & Responsibility Notice -->
-    <section
-      aria-labelledby="privacy-notice-heading"
-      class="rounded-2xl border border-theme-primary/30 bg-theme-surface/45 p-6 space-y-2"
-    >
-      <div class="flex items-center gap-2 text-theme-text">
-        <span class="icon-[lucide--shield-check] w-5 h-5" aria-hidden="true"
-        ></span>
-        <h2 id="privacy-notice-heading" class="font-header font-bold text-lg">
-          Where your adventure goes
-        </h2>
-      </div>
-      <ol
-        class="list-decimal pl-5 space-y-2 text-sm md:text-base text-theme-text/85 leading-relaxed"
-      >
-        <li>
-          <strong>Conversion:</strong> your source text or PDF goes to the AI assistant
-          you choose, hosted or local. It does not go to Codex Cryptica, and this
-          page never receives it.
-        </li>
-        <li>
-          <strong>Import:</strong> the Adventure JSON is validated, reviewed and approved
-          in Codex Cryptica, then stored in the Vault on this device. No AI call is
-          made.
-        </li>
-        <li>
-          <strong>AI play:</strong> during Oracle turns, bounded parts of the package,
-          such as its title and premise, are sent to your selected Oracle AI provider
-          along with relevant Vault records. The whole package is not sent.
-        </li>
-      </ol>
-      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
-        The AI provider's terms and your rights in the material decide whether
-        you may upload a published module. Codex Cryptica cannot decide that for
-        you. A local model keeps the conversion on your own machine, which can
-        offer different privacy characteristics than a hosted service.
-      </p>
-      <h3 class="font-header font-bold text-base text-theme-text pt-2">
-        Storage and backup
-      </h3>
-      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
-        Imported packages are <strong
-          >not included in Codex Cryptica Cloud Backup</strong
-        >, even when you opt in to include adventures. Opted-in adventure
-        sessions are backed up, but the packages they started from are not.
-        After restoring from Cloud Backup, or when moving to another device that
-        way, import the Adventure JSON again. Keep your
-        <code class="font-mono">.json</code> file. Importing the same file again gives
-        the same version.
-      </p>
-      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
-        A Portable Backup (<code class="font-mono">.codex.zip</code>) and Save
-        to Folder do include imported packages. See
-        <a
-          href="{cleanBase}/help#help/cloud-backup"
-          class="text-theme-text underline underline-offset-2"
-          >Cloud Backup help</a
-        >
-        and
-        <a
-          href="{cleanBase}/help#help/export-and-backup"
-          class="text-theme-text underline underline-offset-2"
-          >Export and Back Up help</a
-        >.
       </p>
     </section>
 
@@ -369,57 +275,6 @@
 
       <pre
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CANONICAL_CONVERSION_PROMPT}</pre>
-
-      <section class="space-y-3" aria-labelledby="correspondence-heading">
-        <h2
-          id="correspondence-heading"
-          class="font-header text-xl font-bold text-theme-text"
-        >
-          Correspondence for renamed content
-        </h2>
-        <p class="text-sm text-theme-text/90 leading-relaxed">
-          When a new version changes an entity ID, add the supplied
-          correspondence to its <code class="font-mono">extensions</code> field so
-          the import review can show which earlier entity it replaces. Split and merge
-          mappings remain flagged for your review.
-        </p>
-        <pre
-          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CORRESPONDENCE_EXTENSION_DOC}</pre>
-      </section>
-
-      <div
-        class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-theme-text/90"
-      >
-        <div
-          class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
-        >
-          <strong class="text-theme-text block mb-1"
-            >1. Provide this guide</strong
-          >
-          Share
-          <code class="font-mono"
-            >https://codexcryptica.com/adventure-import</code
-          > or paste the prompt above.
-        </div>
-        <div
-          class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
-        >
-          <strong class="text-theme-text block mb-1"
-            >2. Attach your source</strong
-          >
-          Upload or paste the adventure you have access to into ChatGPT, Claude, Gemini,
-          or a local LLM, if the provider's terms and your rights allow it.
-        </div>
-        <div
-          class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3"
-        >
-          <strong class="text-theme-text block mb-1"
-            >3. Save &amp; validate</strong
-          >
-          Save the raw JSON response as a <code class="font-mono">.json</code>
-          file, then verify it against the v1 schema.
-        </div>
-      </div>
     </section>
 
     <!-- What to do with the converted file -->
@@ -463,6 +318,61 @@
       </a>
     </section>
 
+    <!-- Privacy & Responsibility Notice -->
+    <section
+      aria-labelledby="privacy-notice-heading"
+      class="rounded-2xl border border-theme-primary/30 bg-theme-surface/45 p-6 space-y-2"
+    >
+      <div class="flex items-center gap-2 text-theme-text">
+        <span class="icon-[lucide--shield-check] w-5 h-5" aria-hidden="true"
+        ></span>
+        <h2 id="privacy-notice-heading" class="font-header font-bold text-lg">
+          Where your adventure goes
+        </h2>
+      </div>
+      <ol
+        class="list-decimal pl-5 space-y-2 text-sm md:text-base text-theme-text/85 leading-relaxed"
+      >
+        <li>
+          <strong>Conversion:</strong> your source text or PDF goes to the AI assistant
+          you choose, hosted or local. It does not go to Codex Cryptica, and this
+          page never receives it.
+        </li>
+        <li>
+          <strong>Import:</strong> the Adventure JSON is validated, reviewed and approved
+          in Codex Cryptica, then stored in the Vault on this device. No AI call is
+          made.
+        </li>
+        <li>
+          <strong>AI play:</strong> during Oracle turns, bounded parts of the package,
+          such as its title and premise, are sent to your selected Oracle AI provider
+          along with relevant Vault records. The whole package is not sent.
+        </li>
+      </ol>
+      <p class="text-sm md:text-base text-theme-text/85 leading-relaxed">
+        Imported packages are <strong
+          >not included in Codex Cryptica Cloud Backup</strong
+        >, even when you opt in to include adventures. Keep your
+        <code class="font-mono">.json</code> file. A Portable Backup (<code
+          class="font-mono">.codex.zip</code
+        >) and Save to Folder do include imported packages. See
+        <a
+          href="{cleanBase}/help#help/cloud-backup"
+          class="text-theme-text underline underline-offset-2"
+          >Cloud Backup help</a
+        >
+        and
+        <a
+          href="{cleanBase}/help#help/export-and-backup"
+          class="text-theme-text underline underline-offset-2"
+          >Export and Back Up help</a
+        >.
+      </p>
+    </section>
+
+    <!-- Long adventures -->
+    <StagedConversion />
+
     <!-- Valid vs complete -->
     <section
       aria-labelledby="completeness-heading"
@@ -474,10 +384,7 @@
       >
         Valid is not the same as complete
       </h2>
-      <p class="text-sm md:text-base text-theme-text/90">
-        A converted file can end up in three different states:
-      </p>
-      <ul class="space-y-2 text-sm md:text-base text-theme-text">
+      <ul class="space-y-1.5 text-sm md:text-base text-theme-text">
         {#each IMPORT_OUTCOMES as outcome (outcome.label)}
           <li>
             <strong>{outcome.label}.</strong>
@@ -488,45 +395,22 @@
       <p class="text-sm md:text-base text-theme-text">
         Codex Cryptica checks only (a) and (b). It never sees your source, so a
         successful import does not prove that nothing was left out or changed.
-      </p>
-      <p class="text-sm md:text-base text-theme-text/90">
-        The canonical prompt asks your assistant to audit its own output. For a
-        second look, paste this follow-up into the same chat after you receive
-        the JSON. The report is plain text and stays outside the JSON file.
+        For a second look, paste this follow-up into the same chat after you
+        receive the JSON:
       </p>
       {@render copyButton(coverageCopier, coverageCopyLabel, true)}
       <span role="status" class="sr-only">{coverageCopyLabel}</span>
-      <pre
-        tabindex="0"
+      <div
+        role="textbox"
         aria-label="Coverage report prompt"
-        class="overflow-x-auto whitespace-pre-wrap rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{COVERAGE_REPORT_PROMPT}</pre>
-      <h3 class="font-header font-bold text-lg text-theme-text">
-        Example: valid, but incomplete
-      </h3>
-      <p class="text-sm text-theme-text/90">
-        Say a package made from the reference one-shot imports cleanly but
-        dropped three things:
-      </p>
-      <ul class="list-disc space-y-1.5 pl-5 text-sm text-theme-text/90">
-        <li>
-          The optional Reed Shrine branch is gone. The self-audit item on
-          mandatory and optional scenes, and the "Missing or shortened" list,
-          catch it.
-        </li>
-        <li>
-          The flooded ending, "The Water Takes It", is gone. The self-audit item
-          on intended endings, and the "Covered sections" list, catch it.
-        </li>
-        <li>
-          Wick's "By talk" option is cut, leaving only the fight. The self-audit
-          item on encounter resolution options, and the "Missing or shortened"
-          list, catch it.
-        </li>
-      </ul>
-      <p class="text-sm text-theme-text/90">
-        None of these break the schema, so the import succeeds. Anything the
-        assistant cannot restore should appear in "Left unresolved".
-      </p>
+        aria-readonly="true"
+        aria-multiline="true"
+        tabindex="0"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm text-theme-text/90 leading-relaxed"
+      >
+        <pre
+          class="m-0 whitespace-pre-wrap font-mono">{COVERAGE_REPORT_PROMPT}</pre>
+      </div>
     </section>
 
     <!-- Fidelity limits -->
@@ -541,8 +425,11 @@
         What converts well, and what needs manual work
       </h2>
       <p class="text-sm md:text-base text-theme-text/90">
-        Adventure JSON v1 carries narrative structure: places, people, scenes,
-        clues and secrets. It has no fields for game mechanics or maps.
+        Adventure JSON v1 carries narrative structure (places, people, scenes,
+        clues and secrets). Keep your source book at hand for stat blocks,
+        tactical maps, DCs and system rules. The optional
+        <code class="font-mono">system</code> field is descriptive metadata only and
+        does not make game mechanics executable.
       </p>
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm border-collapse">
@@ -578,74 +465,6 @@
           </tbody>
         </table>
       </div>
-      <p class="text-sm md:text-base text-theme-text/90">
-        The optional <code class="font-mono">system</code> field (a system name plus
-        an optional target party size and level range) is descriptive metadata. It
-        is shown in the import review, and it does not make game mechanics executable
-        or portable between systems.
-      </p>
-      <h3 class="font-header font-bold text-lg text-theme-text">
-        Who uses what
-      </h3>
-      <ul class="space-y-2 text-sm md:text-base text-theme-text">
-        {#each FIDELITY_WHO_USES_WHAT as item (item.label)}
-          <li><strong>{item.label}.</strong> {item.text}</li>
-        {/each}
-      </ul>
-      <h3 class="font-header font-bold text-lg text-theme-text">
-        Example: paraphrase, not a stat block
-      </h3>
-      <p class="text-sm text-theme-text/90">
-        A mechanic can appear as a short paraphrase with a page reference. What
-        v1 cannot hold is recorded in <code class="font-mono">unresolved</code>.
-      </p>
-      <pre
-        tabindex="0"
-        aria-label="Fidelity example: paraphrased mechanic"
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
-          FIDELITY_EXAMPLE_PARAPHRASED,
-          null,
-          2,
-        )}</pre>
-      <p class="text-sm text-theme-text/90">
-        Structure converts cleanly. This clue points at one place and is found
-        in another.
-      </p>
-      <pre
-        tabindex="0"
-        aria-label="Fidelity example: structural clue"
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
-          FIDELITY_EXAMPLE_STRUCTURAL,
-          null,
-          2,
-        )}</pre>
-    </section>
-
-    <!-- Worked example -->
-    <section
-      aria-labelledby="worked-example-heading"
-      class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-    >
-      <h2
-        id="worked-example-heading"
-        class="font-header font-bold text-2xl text-theme-text"
-      >
-        What a valid file looks like
-      </h2>
-      <p class="text-sm text-theme-text/90">
-        A complete, minimal Adventure JSON v1 file: one location, one NPC, one
-        scene and one ending. Your assistant's output should look like this,
-        only longer. For a full adventure, open the
-        <a
-          class="underline"
-          href="{cleanBase}/schemas/adventure-json/examples/reference-one-shot.v1.json"
-          >reference one-shot</a
-        >.
-      </p>
-      <pre
-        tabindex="0"
-        aria-label="Minimal Adventure JSON v1 example"
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{minimalExample.trim()}</pre>
     </section>
 
     <!-- Revising an adventure -->
@@ -659,323 +478,31 @@
       >
         Revising an adventure you already imported
       </h2>
-      <dl class="space-y-2 text-sm text-theme-text/90">
-        <div>
-          <dt class="font-mono inline font-bold">formatVersion</dt>
-          <dd class="inline">
-            : which contract the file follows, always
-            <code class="font-mono">adventure-json/v1</code>.
-          </dd>
-        </div>
-        <div>
-          <dt class="font-mono inline font-bold">Package id</dt>
-          <dd class="inline">
-            : the adventure's stable identity. Keep it the same across every
-            conversion and revision of the same adventure.
-          </dd>
-        </div>
-        <div>
-          <dt class="font-mono inline font-bold">version</dt>
-          <dd class="inline">
-            : strict SemVer label for this revision. Raise it when the content
-            changes.
-          </dd>
-        </div>
-        <div>
-          <dt class="font-bold inline">Entity IDs</dt>
-          <dd class="inline">
-            : stable per entity across revisions. Change one only for a real
-            rename, split or merge.
-          </dd>
-        </div>
-        <div>
-          <dt class="font-bold inline">Canonical content hash</dt>
-          <dd class="inline">
-            : exact content identity. Codex Cryptica computes it, and converters
-            never write it.
-          </dd>
-        </div>
-      </dl>
-      <ul class="list-disc pl-5 space-y-1 text-sm text-theme-text/90">
+      <ul class="list-disc pl-5 space-y-1.5 text-sm text-theme-text/90">
         <li>
-          First import: no package with this <code class="font-mono">id</code>
-          yet. It is reviewed and stored.
+          <strong
+            >Package <code class="font-mono">id</code> and entity IDs:</strong
+          >
+          keep them stable across revisions of the same adventure, and raise
+          <code class="font-mono">version</code> (SemVer) when content changes.
         </li>
         <li>
-          Exact duplicate: the same canonical content is reported as already
-          imported and nothing is written.
-        </li>
-        <li>
-          Changed package with the same <code class="font-mono">id</code>: it is
-          reviewed as a new version, diffed against its predecessor, with a
-          warning if <code class="font-mono">version</code> did not increase.
+          <strong>Re-importing:</strong> identical content is deduplicated as a
+          no-op; changed content with the same <code class="font-mono">id</code>
+          is reviewed and diffed as a new version while existing sessions stay pinned
+          to the version they started with.
         </li>
       </ul>
-      <p class="text-sm text-theme-text/90">
-        Existing sessions stay pinned to the exact version they started with and
-        are never moved to the new one automatically.
-      </p>
-      <pre
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{VERSIONING_BEHAVIOUR_DOC}</pre>
-      <p class="text-sm text-theme-text/90">
-        In this example every entity keeps its ID except one scene, renamed from
-        <code class="font-mono">scene-stairs</code> to
-        <code class="font-mono">scene-spiral-stair</code>. The correspondence
-        entry that links them lives in the package's top-level
-        <code class="font-mono">extensions</code>.
-      </p>
-      <pre
-        tabindex="0"
-        aria-label="Revision example: version 1.0.0"
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
-          REVISION_EXAMPLE_BEFORE,
-          null,
-          2,
-        )}</pre>
-      <pre
-        tabindex="0"
-        aria-label="Revision example: version 1.1.0"
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{JSON.stringify(
-          REVISION_EXAMPLE_AFTER,
-          null,
-          2,
-        )}</pre>
-      <div
-        class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3 space-y-2 text-sm text-theme-text/90"
-      >
-        <p>
-          <strong>Wrong placement.</strong> Correspondence is read only from the
-          package's top-level <code class="font-mono">extensions</code>, never
-          inside an entity. This fails validation because entity records do not
-          allow <code class="font-mono">extensions</code>:
-        </p>
-        <pre
-          tabindex="0"
-          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{WRONG_PLACEMENT}</pre>
-      </div>
-      <div class="space-y-2 text-sm text-theme-text/90">
-        <h3 class="font-bold">Splits and merges</h3>
-        <p>
-          Splits and merges stay flagged for your review and are never treated
-          as automatic identity. Never guess correspondence from names, titles
-          or order. See the
-          <a class="underline" href="#correspondence-heading"
-            >correspondence reference</a
-          >.
-        </p>
-        <pre
-          tabindex="0"
-          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{SPLIT_MERGE_EXAMPLE_DOC}</pre>
-      </div>
-    </section>
-    <!-- Long adventures -->
-    <StagedConversion />
-
-    <!-- Top-level Contract & Collections -->
-    <section aria-labelledby="contract-heading" class="space-y-6">
-      <h2
-        id="contract-heading"
-        class="font-header font-bold text-2xl text-theme-text"
-      >
-        Field-by-Field Structure
-      </h2>
-
-      <div
-        class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
-      >
-        <h3 class="font-header font-bold text-lg text-theme-text">
-          Top-Level Contract
+      <section class="space-y-2" aria-labelledby="correspondence-heading">
+        <h3
+          id="correspondence-heading"
+          class="font-header text-lg font-bold text-theme-text"
+        >
+          Correspondence for renamed content
         </h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm border-collapse">
-            <thead>
-              <tr class="border-b border-theme-border/60 text-theme-text/90">
-                <th class="py-2 pr-4 font-mono">Field</th>
-                <th class="py-2 pr-4">Requirement</th>
-                <th class="py-2">Notes</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-theme-border/40">
-              {#each TOP_LEVEL_RULES as row (row.field)}
-                <tr>
-                  <td
-                    class="py-2.5 pr-4 font-mono text-theme-text whitespace-nowrap"
-                    >{row.field}</td
-                  >
-                  <td class="py-2.5 pr-4 text-theme-text">{row.requirement}</td>
-                  <td class="py-2.5 text-theme-text/90">{row.notes}</td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div
-        class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-4"
-      >
-        <h3 class="font-header font-bold text-lg text-theme-text">
-          Required Collections (11 Arrays)
-        </h3>
-        <p class="text-sm text-theme-text/90">
-          Every Adventure JSON v1 file must include all 11 collection arrays;
-          use
-          <code class="font-mono text-theme-text">[]</code> when a collection has
-          no entries.
-        </p>
-        <dl class="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {#each COLLECTION_RULES as item (item.name)}
-            <div
-              class="rounded-xl border border-theme-border/50 bg-theme-bg/40 p-3.5"
-            >
-              <dt class="font-mono text-sm font-semibold text-theme-text">
-                {item.name}
-              </dt>
-              <dd class="text-sm text-theme-text/90 mt-1">{item.purpose}</dd>
-            </div>
-          {/each}
-        </dl>
-      </div>
-    </section>
-
-    <!-- Epistemic Status, Visibility & Authorship Rules -->
-    <section aria-labelledby="rules-heading" class="space-y-6">
-      <h2
-        id="rules-heading"
-        class="font-header font-bold text-2xl text-theme-text"
-      >
-        Source Certainty, Visibility &amp; Structure
-      </h2>
-
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div
-          class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-        >
-          <h3 class="font-header font-bold text-lg text-theme-text">
-            How certain is this detail?
-          </h3>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            The JSON field <code class="font-mono">epistemicStatus</code> says whether
-            the source states a detail, suggests it, is unclear, or leaves it unanswered.
-          </p>
-          <p class="text-sm text-theme-text font-semibold">
-            Do not invent missing facts merely to fill fields.
-          </p>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            If the source text is silent, omit the optional field. If the source
-            text is contradictory or unclear, record an item in
-            <code class="font-mono">unresolved</code> instead of guessing.
-          </p>
-          <ul class="space-y-2 pt-1 text-sm">
-            {#each EPISTEMIC_STATUSES as entry (entry.status)}
-              <li class="flex gap-2">
-                <code class="font-mono text-theme-text shrink-0"
-                  >{entry.status}</code
-                >
-                <span class="text-theme-text/90">— {entry.meaning}</span>
-              </li>
-            {/each}
-          </ul>
-        </div>
-
-        <div
-          class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-        >
-          <h3 class="font-header font-bold text-lg text-theme-text">
-            Visibility &amp; GM Secrets
-          </h3>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            Entities carry <code class="font-mono">visibility</code> set to
-            either <code class="font-mono">"player-visible"</code> or
-            <code class="font-mono">"gm-only"</code>.
-          </p>
-          <p class="text-sm text-theme-text font-semibold">
-            Every entry in <code>secrets</code> must set
-            <code>visibility: "gm-only"</code>.
-          </p>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            Visibility applies to the <strong>whole record</strong>, not to
-            single fields. Everything in a
-            <code>"player-visible"</code> record (its role, motivation, summary
-            and description) is treated as safe to show players. A character
-            being known does not make their hidden role or motive known: keep
-            the visible record to what players can know, and put the concealed
-            part in a separate <code>secrets</code> entry that lists the
-            character in <code>relatedEntityIds</code>.
-          </p>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            When you start an imported adventure, its title and premise hook or
-            background are copied into the session and sent to Oracle opening
-            generation. If both premise fields are empty, the description is
-            used as the premise fallback, then the title. Keep the title, hook,
-            background and optional description player-safe and limited to
-            source-supported facts; do not put concealed information there.
-          </p>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            Example: Tobiah Reed, the mill accountant, is a player-visible actor
-            with no motivation field. Why he wants the mill to fail is a
-            <code>gm-only</code> secret that points back to him.
-          </p>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            Authored facts are canonical, whereas NPC testimony, rumours, and
-            in-world handouts must not be promoted to objective truth unless
-            confirmed by the authored text.
-          </p>
-        </div>
-
-        <div
-          class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-        >
-          <h3 class="font-header font-bold text-lg text-theme-text">
-            Structural Integrity &amp; Provenance
-          </h3>
-          <ul class="list-disc pl-5 space-y-1.5 text-sm text-theme-text/90">
-            <li>Every entity ID must be unique across all collections.</li>
-            <li>
-              Cross-references (<code class="font-mono">parentLocationId</code>,
-              <code class="font-mono">locationId</code>,
-              <code class="font-mono">sceneId</code>,
-              <code class="font-mono">actorIds</code>) must resolve to existing
-              IDs with no self-references.
-            </li>
-            <li>Location parent chains must be acyclic.</li>
-            <li>
-              Non-entry scenes with source-supported progression must be
-              reachable from <code class="font-mono">scenes[0]</code> with no dead-end
-              mandatory transition loops. If progression is unknown, preserve the
-              scene as ambiguous without inventing a branch.
-            </li>
-            <li>
-              Attach optional <code class="font-mono">sourceRef</code>
-              (<code class="font-mono">page</code>,
-              <code class="font-mono">pageEnd</code>,
-              <code class="font-mono">chapter</code>,
-              <code class="font-mono">section</code>,
-              <code class="font-mono">anchor</code>,
-              <code class="font-mono">textQuote</code>) for traceability.
-            </li>
-          </ul>
-        </div>
-
-        <div
-          class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-6 space-y-3"
-        >
-          <h3 class="font-header font-bold text-lg text-theme-text">
-            Separation of Concerns &amp; Copyright
-          </h3>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            Adventure JSON represents <strong
-              >authored adventure structure</strong
-            >
-            only — never include playthrough state, session logs, or player decisions.
-          </p>
-          <p class="text-sm text-theme-text/90 leading-relaxed">
-            Prefer concise structured summaries, key dialogue cues, and room
-            briefs rather than verbatim copying of large blocks of protected
-            source prose.
-          </p>
-        </div>
-      </div>
+        <pre
+          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CORRESPONDENCE_EXTENSION_DOC}</pre>
+      </section>
     </section>
 
     <!-- Troubleshooting -->

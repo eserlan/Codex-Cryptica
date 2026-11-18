@@ -170,3 +170,85 @@ describe("star systems topic hub JSON-LD", () => {
     }
   });
 });
+
+const DIAGRAM = CONFIG.inlineExample.diagram;
+const PROSE = CONFIG.inlineExample.parts.map((p) => p.text).join(" ");
+const nodeName = (id: string) => DIAGRAM.nodes.find((n) => n.id === id)?.name;
+
+/** Returns links whose endpoints are not node ids. */
+function findUnknownEndpoints(
+  nodes: { id: string }[],
+  links: { from: string; to: string }[],
+): string[] {
+  const ids = new Set(nodes.map((n) => n.id));
+  return links.flatMap((l) => [l.from, l.to]).filter((id) => !ids.has(id));
+}
+
+describe("star systems hero and diagram", () => {
+  it("reuses the OG asset as a 1600x900 hero without naming the Drift", () => {
+    expect(CONFIG.heroImage.src).toBe(CONFIG.ogImage);
+    expect(CONFIG.heroImage.width).toBe(1600);
+    expect(CONFIG.heroImage.height).toBe(900);
+    expect(CONFIG.heroImage.alt.length).toBeGreaterThan(10);
+    expect(CONFIG.heroImage.alt).not.toContain("Halden");
+  });
+
+  it("lists three named nodes, three routes and two flows", () => {
+    expect(DIAGRAM.nodes.map((n) => n.name)).toEqual([
+      "Tern Anchorage",
+      "Coldwell",
+      "Veyra Deep",
+    ]);
+    const pairs = (kind: string) =>
+      DIAGRAM.links
+        .filter((l) => l.kind === kind)
+        .map((l) => `${nodeName(l.from)}>${nodeName(l.to)}`);
+    expect(pairs("route")).toEqual([
+      "Tern Anchorage>Coldwell",
+      "Coldwell>Veyra Deep",
+      "Veyra Deep>Tern Anchorage",
+    ]);
+    expect(pairs("flow")).toEqual([
+      "Coldwell>Veyra Deep",
+      "Veyra Deep>Coldwell",
+    ]);
+    expect(findUnknownEndpoints(DIAGRAM.nodes, DIAGRAM.links)).toEqual([]);
+  });
+
+  it("flags only the Tern Anchorage to Coldwell route", () => {
+    const flagged = DIAGRAM.links.filter((l) => l.flashpoint);
+    expect(flagged).toHaveLength(1);
+    expect(flagged[0].kind).toBe("route");
+    expect([nodeName(flagged[0].from), nodeName(flagged[0].to)]).toEqual([
+      "Tern Anchorage",
+      "Coldwell",
+    ]);
+  });
+
+  it("agrees with the prose", () => {
+    const routes = CONFIG.inlineExample.parts.find(
+      (p) => p.term === "Routes and travel",
+    )!.text;
+    for (const node of DIAGRAM.nodes) expect(routes).toContain(node.name);
+    for (const fact of [
+      "two-day",
+      "four-day",
+      "short hop",
+      "customs gate",
+      "rock storms",
+      "heavy tugs",
+    ]) {
+      expect(PROSE).toContain(fact);
+    }
+  });
+
+  it("has no coordinates or orbital terms", () => {
+    expect(JSON.stringify(DIAGRAM)).not.toMatch(/orbit|\bAU\b|\bkm\b/i);
+  });
+
+  it("reports a link to an unknown node id", () => {
+    expect(
+      findUnknownEndpoints(DIAGRAM.nodes, [{ from: "tern", to: "nowhere" }]),
+    ).toEqual(["nowhere"]);
+  });
+});

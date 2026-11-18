@@ -51,7 +51,7 @@ export interface AdventureJsonRetrievalResult {
 /** `secret` marks a line that is always GM-only, whatever its record's visibility. */
 type Line = [
   label: string,
-  value: string | string[] | undefined,
+  value: string | Iterable<string> | undefined,
   secret?: true,
 ];
 
@@ -61,12 +61,12 @@ type Line = [
  * does not fit and to trim it, so oversized package fields (an unbounded scene
  * `body`, say) are never copied or serialised in full.
  */
-function buildText(lines: Line[], cap: number): string {
+function buildText(lines: Iterable<Line>, cap: number): string {
   const out = new BoundedText(cap + 1);
   for (const [label, value] of lines) {
     if (out.full) break;
     const parts = lineParts(value);
-    if (parts.length > 0) appendLine(out, label, parts);
+    appendLine(out, label, parts);
   }
   return out.text;
 }
@@ -85,22 +85,68 @@ class BoundedText {
   }
 }
 
-function lineParts(value: Line[1]): string[] {
+function lineParts(value: Line[1]): Iterable<string> {
   if (value === undefined) return [];
-  return Array.isArray(value) ? value : [value];
+  return typeof value === "string" ? [value] : value;
 }
 
-function appendLine(out: BoundedText, label: string, parts: string[]): void {
+function appendLine(
+  out: BoundedText,
+  label: string,
+  parts: Iterable<string>,
+): void {
+  const iterator = parts[Symbol.iterator]();
+  const firstPart = iterator.next();
+  if (firstPart.done) return;
   if (out.text.length > 0) out.append("\n");
   out.append(`${label}: `);
-  for (let i = 0; i < parts.length && !out.full; i++) {
-    if (i > 0) out.append("; ");
-    out.append(parts[i]!);
+  out.append(firstPart.value);
+  for (;;) {
+    const next = iterator.next();
+    if (next.done) break;
+    if (out.full) break;
+    out.append("; ");
+    out.append(next.value);
   }
 }
 
+function boundSourceRef(
+  sourceRef: SourceReference | undefined,
+  cap: number,
+): SourceReference | undefined {
+  if (sourceRef === undefined) return undefined;
+  // `chapter`, `section`, `anchor`, and `textQuote` have no schema-level
+  // length limit. Bound them before JSON.stringify so oversized metadata
+  // cannot stall serialisation. `textQuote` uses `cap / 8` (room for JSON
+  // escaping) so it can be clipped in place; the other fields use `cap + 1`
+  // so oversized values still exceed the budget and get dropped cleanly.
+  const quoteLimit = Math.floor(cap / 8);
+  const fieldLimit = cap + 1;
+  let next: SourceReference | undefined;
+  for (const key of ["chapter", "section", "anchor"] as const) {
+    const value = sourceRef[key];
+    if (value !== undefined && value.length > fieldLimit) {
+      next ??= { ...sourceRef };
+      next[key] = value.slice(0, fieldLimit);
+    }
+  }
+  if (
+    sourceRef.textQuote !== undefined &&
+    sourceRef.textQuote.length > quoteLimit + 1
+  ) {
+    next ??= { ...sourceRef };
+    // One extra character lets admission distinguish an exact-limit quote
+    // from one that was clipped without copying the full source string.
+    next.textQuote = sourceRef.textQuote.slice(0, quoteLimit + 1);
+  }
+  return next ?? sourceRef;
+}
+
+/** True when a line's value mentions any of `ids`. Expects materialised parts. */
 function namesAny(value: Line[1], ids: string[]): boolean {
-  return lineParts(value).some((part) => ids.some((id) => part.includes(id)));
+  if (ids.length === 0 || value === undefined) return false;
+  const parts = typeof value === "string" ? [value] : (value as string[]);
+  return parts.some((part) => ids.some((id) => part.includes(id)));
 }
 
 /**
@@ -117,24 +163,11 @@ function recordExcerpts(
     epistemicStatus: EpistemicStatus;
     sourceRef?: SourceReference;
   },
-  lines: Line[],
+  lines: Iterable<Line>,
   cap: number,
 ): AdventureJsonExcerpt[] {
-  // `textQuote` has no schema-level length limit. Keep it bounded before it
-  // reaches JSON.stringify, including strings whose characters need escaping.
-  // Eight gives room for worst-case JSON escaping plus the field envelope.
-  const sourceRef = record.sourceRef;
-  const quoteLimit = Math.floor(cap / 8);
-  const boundedSourceRef =
-    sourceRef?.textQuote !== undefined
-      ? {
-          ...sourceRef,
-          // One extra character lets admission distinguish an exact-limit quote
-          // from one that was clipped without copying the full source string.
-          textQuote: sourceRef.textQuote.slice(0, quoteLimit + 1),
-        }
-      : sourceRef;
-  const excerpt = (visibility: Visibility, from: Line[]) => ({
+  const boundedSourceRef = boundSourceRef(record.sourceRef, cap);
+  const excerpt = (visibility: Visibility, from: Iterable<Line>) => ({
     id: record.id,
     kind,
     visibility,
@@ -142,20 +175,64 @@ function recordExcerpts(
     ...(boundedSourceRef !== undefined ? { sourceRef: boundedSourceRef } : {}),
     text: buildText(from, cap),
   });
+  // A record that is not player-visible is GM-only as a whole: stream it in.
   if (record.visibility !== "player-visible") {
     return [excerpt(record.visibility, lines)];
   }
-  const moved = (line: Line) =>
-    line[2] === true || namesAny(line[1], hiddenIds);
-  const companion = lines.filter(moved);
-  if (companion.length === 0) return [excerpt(record.visibility, lines)];
+  // One pass splits the lines. Once the player-visible text is over `cap`,
+  // admission trims or drops it and skips its companion, so reading stops
+  // there; oversized or lazily built fields are never read in full. A part
+  // that is never read is in neither text, so it cannot leak.
+  const limit = cap + 1;
+  const kept = new SplitText();
+  const companion = new SplitText();
+  for (const raw of lines) {
+    if (kept.length >= limit) break;
+    const line = readLine(raw, limit);
+    const moved = line[2] === true || namesAny(line[1], hiddenIds);
+    if (!moved) kept.push(line);
+    else if (companion.length < limit) companion.push(line);
+  }
+  if (companion.lines.length === 0) {
+    return [excerpt(record.visibility, kept.lines)];
+  }
   return [
-    excerpt(
-      record.visibility,
-      lines.filter((line) => !moved(line)),
-    ),
-    excerpt("gm-only", companion),
+    excerpt(record.visibility, kept.lines),
+    excerpt("gm-only", companion.lines),
   ];
+}
+
+/** Lines bound for one excerpt, with the length `buildText` would give them. */
+class SplitText {
+  lines: Line[] = [];
+  length = 0;
+
+  push(line: Line): void {
+    const parts = line[1] as string[] | string | undefined;
+    if (parts === undefined || parts.length === 0) return;
+    const list = typeof parts === "string" ? [parts] : parts;
+    if (this.length > 0) this.length += 1;
+    this.length += line[0].length + 2;
+    list.forEach((part, i) => (this.length += part.length + (i > 0 ? 2 : 0)));
+    this.lines.push(line);
+  }
+}
+
+/** Reads a line's parts into an array, stopping once they exceed `limit`. */
+function readLine([label, value, secret]: Line, limit: number): Line {
+  let parts: string | string[] | undefined;
+  if (value === undefined || typeof value === "string") {
+    parts = value;
+  } else {
+    parts = [];
+    let length = 0;
+    for (const part of value) {
+      parts.push(part);
+      length += part.length + 2;
+      if (length > limit) break;
+    }
+  }
+  return secret ? [label, parts, true] : [label, parts];
 }
 
 function clampMaxCharacters(value: number | undefined): number {
@@ -181,10 +258,10 @@ function serialisedSize(excerpts: AdventureJsonExcerpt[]): number {
   return JSON.stringify(playerSafe).length + JSON.stringify(gmOnly).length;
 }
 
-function trimExcerpt(
+function trimOptionalSourceRef(
   excerpt: AdventureJsonExcerpt,
   max: number,
-): AdventureJsonExcerpt | undefined {
+): AdventureJsonExcerpt {
   let base = excerpt;
   if (
     serialisedSize([{ ...excerpt, text: "" }]) > max &&
@@ -201,15 +278,32 @@ function trimExcerpt(
       base = withoutSourceRef;
     }
   }
+  if (
+    serialisedSize([{ ...base, text: "" }]) > max &&
+    base.sourceRef !== undefined
+  ) {
+    const { sourceRef: _sourceRef, ...withoutSourceRef } = base;
+    void _sourceRef;
+    base = withoutSourceRef;
+  }
+  return base;
+}
+
+function trimExcerptText(
+  excerpt: AdventureJsonExcerpt,
+  max: number,
+): AdventureJsonExcerpt | undefined {
   const withText = (length: number): AdventureJsonExcerpt => {
-    if (length <= 0) return { ...base, text: "" };
-    let kept = base.text.slice(0, length - 1);
+    if (length >= excerpt.text.length)
+      return { ...excerpt, text: excerpt.text };
+    if (length <= 0) return { ...excerpt, text: "" };
+    let kept = excerpt.text.slice(0, length - 1);
     const last = kept.charCodeAt(kept.length - 1);
     if (last >= 0xd800 && last <= 0xdbff) kept = kept.slice(0, -1);
-    return { ...base, text: `${kept}…` };
+    return { ...excerpt, text: `${kept}…` };
   };
   let low = 0;
-  let high = base.text.length;
+  let high = excerpt.text.length;
   if (serialisedSize([withText(low)]) > max) return undefined;
   while (low < high) {
     const mid = Math.ceil((low + high) / 2);
@@ -217,6 +311,31 @@ function trimExcerpt(
     else high = mid - 1;
   }
   return withText(low);
+}
+
+function trimExcerpt(
+  excerpt: AdventureJsonExcerpt,
+  max: number,
+): AdventureJsonExcerpt | undefined {
+  return trimExcerptText(trimOptionalSourceRef(excerpt, max), max);
+}
+
+function boundSourceRefQuote(
+  excerpt: AdventureJsonExcerpt,
+  maxCharacters: number,
+): { excerpt: AdventureJsonExcerpt; truncated: boolean } {
+  const quote = excerpt.sourceRef?.textQuote;
+  const limit = Math.floor(maxCharacters / 8);
+  if (quote === undefined || quote.length <= limit) {
+    return { excerpt, truncated: false };
+  }
+  return {
+    excerpt: {
+      ...excerpt,
+      sourceRef: { ...excerpt.sourceRef!, textQuote: quote.slice(0, limit) },
+    },
+    truncated: true,
+  };
 }
 
 interface Selection {
@@ -237,19 +356,26 @@ interface Selection {
   stopped: boolean;
 }
 
-/** Clips an over-long source quote to its share of the budget. */
-function boundQuote(
+function addOversizedExcerpt(
   sel: Selection,
   excerpt: AdventureJsonExcerpt,
-): AdventureJsonExcerpt {
-  const quote = excerpt.sourceRef?.textQuote;
-  const quoteLimit = Math.floor(sel.maxCharacters / 8);
-  if (quote === undefined || quote.length <= quoteLimit) return excerpt;
+  selectable: boolean,
+  focusScene: boolean,
+): void {
   sel.truncated = true;
-  return {
-    ...excerpt,
-    sourceRef: { ...excerpt.sourceRef, textQuote: quote.slice(0, quoteLimit) },
-  };
+  if (!focusScene) {
+    sel.stopped = true;
+    return;
+  }
+  const trimmed = trimExcerpt(excerpt, sel.maxCharacters);
+  if (!trimmed) {
+    sel.invalidBudget = true;
+    sel.stopped = true;
+    return;
+  }
+  sel.excerpts.push(trimmed);
+  sel.stopped = true;
+  if (selectable) sel.selectedIds.add(trimmed.id);
 }
 
 function addOne(
@@ -260,28 +386,15 @@ function addOne(
 ): void {
   if (sel.invalidBudget) return;
   if (sel.stopped) return;
-  excerpt = boundQuote(sel, excerpt);
+  const bounded = boundSourceRefQuote(excerpt, sel.maxCharacters);
+  excerpt = bounded.excerpt;
+  sel.truncated ||= bounded.truncated;
   const key = `${excerpt.kind}:${excerpt.id}:${excerpt.visibility}`;
   if (sel.seen.has(key)) return;
   sel.seen.add(key);
   const candidate = [...sel.excerpts, excerpt];
   if (serialisedSize(candidate) > sel.maxCharacters) {
-    if (!focusScene) {
-      sel.truncated = true;
-      sel.stopped = true;
-      return;
-    }
-    const trimmed = trimExcerpt(excerpt, sel.maxCharacters);
-    if (!trimmed) {
-      sel.invalidBudget = true;
-      sel.truncated = true;
-      sel.stopped = true;
-      return;
-    }
-    sel.excerpts.push(trimmed);
-    sel.truncated = true;
-    sel.stopped = true;
-    if (selectable) sel.selectedIds.add(trimmed.id);
+    addOversizedExcerpt(sel, excerpt, selectable, focusScene);
     return;
   }
   sel.excerpts.push(excerpt);
@@ -325,27 +438,29 @@ function addScene(sel: Selection): void {
       sel.hiddenIds,
       "scene",
       scene,
-      [
-        ["Title", scene.title],
-        ["Summary", scene.summary],
-        ["Location", scene.locationId],
-        [
+      (function* (): Iterable<Line> {
+        yield ["Title", scene.title];
+        yield ["Summary", scene.summary];
+        yield ["Location", scene.locationId];
+        yield [
           "Read aloud",
           typeof scene.readAloud === "string"
             ? [scene.readAloud]
             : scene.readAloud,
-        ],
-        ["Body", scene.body],
-        ["Conditions", scene.conditions],
-        ...(scene.branches ?? []).map((b): Line => [
-          "Branch",
-          [
-            b.targetSceneId,
-            b.description,
-            ...(b.condition ? [b.condition] : []),
-          ],
-        ]),
-      ],
+        ];
+        yield ["Body", scene.body];
+        yield ["Conditions", scene.conditions];
+        for (const b of scene.branches ?? []) {
+          yield [
+            "Branch",
+            (function* (): Iterable<string> {
+              yield b.targetSceneId;
+              yield b.description;
+              if (b.condition) yield b.condition;
+            })(),
+          ];
+        }
+      })(),
       sel.maxCharacters,
     ),
     true,
@@ -410,20 +525,22 @@ function addLocation(sel: Selection, location: AdventureJsonLocation): void {
       sel.hiddenIds,
       "location",
       location,
-      [
-        ["Name", location.name],
-        ["Summary", location.summary],
-        ["Description", location.description],
-        ["Parent location", location.parentLocationId],
-        ...(location.connections ?? []).map((c): Line => [
-          "Connection",
-          [
-            c.targetLocationId,
-            ...(c.description ? [c.description] : []),
-            ...(c.travelConditions ?? []),
-          ],
-        ]),
-      ],
+      (function* (): Iterable<Line> {
+        yield ["Name", location.name];
+        yield ["Summary", location.summary];
+        yield ["Description", location.description];
+        yield ["Parent location", location.parentLocationId];
+        for (const c of location.connections ?? []) {
+          yield [
+            "Connection",
+            (function* (): Iterable<string> {
+              yield c.targetLocationId;
+              if (c.description) yield c.description;
+              yield* c.travelConditions ?? [];
+            })(),
+          ];
+        }
+      })(),
       sel.maxCharacters,
     ),
     true,
@@ -446,18 +563,20 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
         sel.hiddenIds,
         "encounter",
         e,
-        [
-          ["Title", e.title],
-          ["Scene", e.sceneId],
-          ["Location", e.locationId],
-          ["Description", e.description],
-          ["Conditions", e.conditions],
-          ["Actors", e.actorIds],
-          ...e.alternativeSolutions.map((s): Line => [
-            "Alternative solution",
-            [s.method, s.description],
-          ]),
-        ],
+        (function* (): Iterable<Line> {
+          yield ["Title", e.title];
+          yield ["Scene", e.sceneId];
+          yield ["Location", e.locationId];
+          yield ["Description", e.description];
+          yield ["Conditions", e.conditions];
+          yield ["Actors", e.actorIds];
+          for (const solution of e.alternativeSolutions) {
+            yield [
+              "Alternative solution",
+              [solution.method, solution.description],
+            ];
+          }
+        })(),
         sel.maxCharacters,
       ),
       true,

@@ -5,12 +5,7 @@ import {
   isAdventureJsonVersionGreater,
   validateAdventureJson,
 } from "@codex/adventure-engine";
-import {
-  CORRESPONDENCE_EXTENSION_KEY,
-  REVISION_EXAMPLE_AFTER,
-  REVISION_EXAMPLE_BEFORE,
-  SPLIT_MERGE_EXAMPLE_DOC,
-} from "./conversion-guide.js";
+import { CORRESPONDENCE_EXTENSION_KEY } from "./conversion-guide.js";
 
 const COLLECTIONS = [
   "locations",
@@ -26,11 +21,156 @@ const COLLECTIONS = [
   "unresolved",
 ] as const;
 
-// The diff and validator accept parsed JSON; the constants are plain data.
+type Rec = Record<string, unknown>;
+type RevisionExample = Rec & { id: string; version: string };
+
+const revisionExampleBase = {
+  formatVersion: "adventure-json/v1",
+  id: "revision-watchtower",
+  title: "The Silent Watchtower",
+  premise: {
+    background:
+      "A hillside watchtower has gone dark three nights before the winter caravan arrives.",
+    hook: "The village Reeve asks the party to ride up the ridge and relight the beacon.",
+  },
+  source: { title: "The Silent Watchtower", license: "CC0-1.0" },
+  locations: [
+    {
+      id: "loc-watchtower",
+      name: "Ridge Watchtower",
+      summary: "A stone signal tower overlooking the valley road.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  actors: [
+    {
+      id: "actor-reeve-tomas",
+      name: "Reeve Tomas",
+      summary: "The worried village official who hires the party.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+    },
+  ],
+  factions: [],
+  encounters: [],
+  clues: [],
+  rumours: [],
+  items: [],
+  secrets: [],
+  endings: [
+    {
+      id: "ending-beacon-lit",
+      title: "Beacon Relit",
+      description: "The signal fire burns again and the caravan passes safely.",
+      epistemicStatus: "explicit",
+    },
+  ],
+  unresolved: [],
+};
+
+function revisionScene(
+  id: string,
+  title: string,
+  summary: string,
+  branches?: Array<{ targetSceneId: string; description: string }>,
+) {
+  return {
+    id,
+    title,
+    summary,
+    locationId: "loc-watchtower",
+    ...(branches ? { branches } : {}),
+    visibility: "player-visible",
+    epistemicStatus: "explicit",
+  };
+}
+
+const REVISION_EXAMPLE_BEFORE: RevisionExample = {
+  ...revisionExampleBase,
+  version: "1.0.0",
+  scenes: [
+    revisionScene(
+      "scene-ridge-road",
+      "The Ridge Road",
+      "The party climbs toward the dark tower.",
+      [{ targetSceneId: "scene-stairs", description: "Enter the tower." }],
+    ),
+    revisionScene(
+      "scene-stairs",
+      "The Winding Stairs",
+      "A narrow stair leads up to the beacon room.",
+      [
+        {
+          targetSceneId: "scene-beacon-room",
+          description: "Climb to the top.",
+        },
+      ],
+    ),
+    revisionScene(
+      "scene-beacon-room",
+      "The Cold Beacon",
+      "The oil brazier is unlit.",
+    ),
+  ],
+};
+
+const REVISION_EXAMPLE_AFTER: RevisionExample = {
+  ...revisionExampleBase,
+  version: "1.1.0",
+  scenes: [
+    revisionScene(
+      "scene-ridge-road",
+      "The Ridge Road",
+      "The party climbs toward the dark tower.",
+      [
+        {
+          targetSceneId: "scene-spiral-stair",
+          description: "Enter the tower.",
+        },
+      ],
+    ),
+    revisionScene(
+      "scene-spiral-stair",
+      "The Winding Stairs",
+      "A narrow stair leads up to the beacon room.",
+      [
+        {
+          targetSceneId: "scene-beacon-room",
+          description: "Climb to the top.",
+        },
+      ],
+    ),
+    revisionScene(
+      "scene-beacon-room",
+      "The Cold Beacon",
+      "The oil brazier is unlit.",
+    ),
+  ],
+  extensions: {
+    [CORRESPONDENCE_EXTENSION_KEY]: [
+      {
+        previousId: "scene-stairs",
+        currentId: "scene-spiral-stair",
+        collection: "scenes",
+      },
+    ],
+  },
+};
+
+const SPLIT_MERGE_EXAMPLE_DOC = `{
+  "extensions": {
+    "${CORRESPONDENCE_EXTENSION_KEY}": [
+      { "previousId": "scene-market", "currentId": "scene-market-day", "collection": "scenes" },
+      { "previousId": "scene-market", "currentId": "scene-market-night", "collection": "scenes" },
+      { "previousId": "scene-cellar", "currentId": "scene-vaults", "collection": "scenes" },
+      { "previousId": "scene-crypt", "currentId": "scene-vaults", "collection": "scenes" }
+    ]
+  }
+}`;
+
 const before = REVISION_EXAMPLE_BEFORE as never;
 const after = REVISION_EXAMPLE_AFTER as never;
-
-type Rec = Record<string, unknown>;
 const clone = (v: unknown): Rec => JSON.parse(JSON.stringify(v));
 
 describe("revision example data", () => {
