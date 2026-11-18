@@ -1,6 +1,9 @@
-import { describe, it, expect } from "vitest";
+/** @vitest-environment jsdom */
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { getAllLandingPages } from "#lib/content/for/registry.js";
 import { getPositions } from "#lib/components/for/graph-preview-layout.js";
+import LandingPageGraphPreview from "./LandingPageGraphPreview.svelte";
 
 describe("LandingPageGraphPreview Layout & Positions", () => {
   const distance = (
@@ -72,5 +75,50 @@ describe("LandingPageGraphPreview Layout & Positions", () => {
         }
       }
     }
+  });
+});
+
+describe("LandingPageGraphPreview accessibility", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("exposes spoke relationships on keyboard accessible node controls", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn(() => ({
+        matches: false,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      })),
+    );
+
+    render(LandingPageGraphPreview, {
+      props: {
+        steps: [
+          {
+            label: "RV Ostrander's Rest",
+            sublabel: "Derelict",
+            category: "item",
+          },
+          {
+            label: "Tamsin Okoro",
+            sublabel: "Missing crew",
+            relation: "Last carried",
+            category: "character",
+          },
+        ],
+      },
+    });
+
+    expect(
+      screen.getByRole("group", { name: "Interactive relationship graph" }),
+    ).toBeTruthy();
+    const spoke = screen.getByRole("button", {
+      name: /RV Ostrander's Rest — Last carried — Tamsin Okoro/,
+    });
+    expect(spoke.getAttribute("aria-pressed")).toBe("false");
+
+    await fireEvent.focus(spoke);
+
+    expect(spoke.getAttribute("aria-pressed")).toBe("true");
   });
 });

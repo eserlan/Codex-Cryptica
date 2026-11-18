@@ -20,6 +20,7 @@ import { theBellBeneathBlackglass } from "./the-bell-beneath-blackglass-fantasy-
 import { theNullKeyReliquary } from "./the-null-key-reliquary-cyberpunk-puzzle";
 import { theTreasurysTippingPoint } from "./the-treasurys-tipping-point-karrow-council-vote";
 import { theRecedingTideRoad } from "./the-receding-tide-road-point-crawl";
+import { theLastShift } from "./the-last-shift-sci-fi-horror-scenario";
 
 /**
  * The published example library.
@@ -55,6 +56,7 @@ export const examples: Record<string, ExampleConfig> = Object.fromEntries(
     theNullKeyReliquary,
     theTreasurysTippingPoint,
     theRecedingTideRoad,
+    theLastShift,
   ]
     .map((example) => ExampleConfigSchema.parse(example))
     .map((example) => [example.slug, example]),
