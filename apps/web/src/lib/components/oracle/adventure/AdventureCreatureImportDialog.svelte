@@ -63,9 +63,7 @@
   let previewPage = $state(0);
   const previewTotal = $derived(creating.length + reusing.length);
   const previewPageStart = $derived(previewPage * previewPageSize);
-  const previewPageCount = $derived(
-    Math.ceil(previewTotal / previewPageSize),
-  );
+  const previewPageCount = $derived(Math.ceil(previewTotal / previewPageSize));
   const previewCreating = $derived(
     creating.slice(previewPageStart, previewPageStart + previewPageSize),
   );
@@ -386,10 +384,7 @@
                 class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
                 disabled={previewPage >= previewPageCount - 1}
                 onclick={() =>
-                  (previewPage = Math.min(
-                    previewPageCount - 1,
-                    previewPage + 1,
-                  ))}
+                  (previewPage = Math.min(previewPageCount - 1, previewPage + 1))}
               >
                 Next changes
               </button>
