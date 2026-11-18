@@ -59,8 +59,25 @@
   const visibleChoices = $derived(
     choices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
   );
+  const previewPageSize = 20;
+  let previewPage = $state(0);
+  const previewTotal = $derived(creating.length + reusing.length);
+  const previewPageStart = $derived(previewPage * previewPageSize);
+  const previewPageCount = $derived(
+    Math.ceil(previewTotal / previewPageSize),
+  );
+  const previewCreating = $derived(
+    creating.slice(previewPageStart, previewPageStart + previewPageSize),
+  );
+  const previewReusing = $derived(
+    reusing.slice(
+      Math.max(0, previewPageStart - creating.length),
+      Math.max(0, previewPageStart + previewPageSize - creating.length),
+    ),
+  );
 
   async function goTo(next: "review" | "preview" | "done") {
+    if (next === "preview") previewPage = 0;
     step = next;
     await tick();
     heading?.focus();
@@ -336,17 +353,49 @@
           {reusing.length} reused.
         </p>
         <ul class="space-y-1 text-sm text-theme-text">
-          {#each creating as choice (choice.proposal.key)}
+          {#each previewCreating as choice (choice.proposal.key)}
             <li>
               Create {choice.proposal.name}:
               {choice.hidden ? "hidden" : "visible"},
               {choice.file ? "with an image" : "no image"}
             </li>
           {/each}
-          {#each reusing as choice (choice.proposal.key)}
+          {#each previewReusing as choice (choice.proposal.key)}
             <li>Reuse {choice.existing?.title}</li>
           {/each}
         </ul>
+        {#if previewPageCount > 1}
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs text-theme-text" aria-live="polite">
+              Showing changes {previewPageStart + 1}–{Math.min(
+                previewPageStart + previewPageSize,
+                previewTotal,
+              )} of {previewTotal}
+            </p>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
+                disabled={previewPage === 0}
+                onclick={() => (previewPage = Math.max(0, previewPage - 1))}
+              >
+                Previous changes
+              </button>
+              <button
+                type="button"
+                class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
+                disabled={previewPage >= previewPageCount - 1}
+                onclick={() =>
+                  (previewPage = Math.min(
+                    previewPageCount - 1,
+                    previewPage + 1,
+                  ))}
+              >
+                Next changes
+              </button>
+            </div>
+          </div>
+        {/if}
       {:else if result}
         <p class="text-sm text-theme-text" role="status">
           Created {result.created}, reused {result.reused}.
