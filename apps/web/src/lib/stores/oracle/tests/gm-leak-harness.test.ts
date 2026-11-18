@@ -469,7 +469,6 @@ describe("gap 3: companion lines", () => {
         "public connection quote",
       ),
     ).not.toThrow();
-
   });
 
   it("catches an 8-word quote from a companion when ID punctuation changes", () => {
