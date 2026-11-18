@@ -87,14 +87,27 @@ export async function saveApprovedAdventureJson(
   let existingRaw: string | null = null;
   if (await io.exists(path)) {
     existingRaw = await io.read(path);
-    if (isNativeAdventureJsonRecord(existingRaw)) {
-      const stored = assertValidAdventureJson(JSON.parse(existingRaw));
-      const storedHash = await computeAdventureJsonHash(stored);
-      if (storedHash === hash) {
-        return { status: "deduplicated", path, hash, package: stored };
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(existingRaw);
+    } catch {
+      // An unreadable record at its expected hash path can be restored by
+      // re-importing the approved package through the atomic write below.
+      parsed = undefined;
+    }
+    if (parsed !== undefined && isNativeAdventureJsonRecord(existingRaw)) {
+      try {
+        const stored = assertValidAdventureJson(parsed);
+        const storedHash = await computeAdventureJsonHash(stored);
+        if (storedHash === hash) {
+          return { status: "deduplicated", path, hash, package: stored };
+        }
+      } catch {
+        // A damaged native record at its expected hash path is replaceable.
       }
     }
     if (
+      parsed !== undefined &&
       !isNativeAdventureJsonRecord(existingRaw) &&
       isApprovedExistingRecord(existingRaw)
     ) {
@@ -216,7 +229,14 @@ export async function hasOtherApprovedAdventureVersion(
   packageId: string,
   excludedHash: string,
 ): Promise<boolean | null> {
-  const hashes = await listAdventurePackageHashes(io);
+  const listed = await io.listLimited(
+    ".codex/adventures/packages",
+    MAX_ALTERNATE_ADVENTURE_VERSIONS_TO_SCAN + 1,
+  );
+  const hashes = listed.entries
+    .map((entry) => entry.replace(/^.*\//, ""))
+    .filter((name) => /^[a-f0-9]{64}\.json$/.test(name))
+    .map((name) => name.slice(0, -5));
   let scanned = 0;
   for (const hash of hashes) {
     if (hash === excludedHash) continue;
@@ -229,5 +249,5 @@ export async function hasOtherApprovedAdventureVersion(
       // One corrupt package should not hide other available versions.
     }
   }
-  return false;
+  return listed.truncated ? null : false;
 }

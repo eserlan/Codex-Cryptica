@@ -37,7 +37,9 @@ export class AdventureState {
   starting = $state(false);
   lastRollResult = $state<string | null>(null);
   /** Set while the pinned package is missing or changed; Retry or Leave recovers. */
-  packageUnavailable = $state<{ otherVersionAvailable: boolean } | null>(null);
+  packageUnavailable = $state<{
+    otherVersionAvailable: boolean | null;
+  } | null>(null);
   readOnly = $state(false);
   lease = $state<AdventureControlLease | null>(null);
 
