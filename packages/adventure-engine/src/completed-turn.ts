@@ -279,7 +279,18 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
-  if (dropped.length > 0) turn.dropped = dropped.slice(0, 24);
+  if (dropped.length > 0) {
+    const packageEventDrops = dropped.filter((reason) =>
+      reason.startsWith("packageEvents:"),
+    );
+    const otherDrops = dropped.filter(
+      (reason) => !reason.startsWith("packageEvents:"),
+    );
+    turn.dropped = [
+      ...otherDrops.slice(0, 24 - packageEventDrops.length),
+      ...packageEventDrops,
+    ];
+  }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
   if (!validateStateBudget(candidate)) {

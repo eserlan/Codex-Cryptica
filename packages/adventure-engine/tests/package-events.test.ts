@@ -177,7 +177,7 @@ describe("proposed package events", () => {
     expect(shown.superseded).toBe(true);
   });
 
-  it("lets claimed corrections supersede claims, but not confirmed events", () => {
+  it("rejects claimed corrections, including claims that target earlier claims", () => {
     const first = ok(
       commit(packageSession(), [
         event(MOTIVE, "resolved", {
@@ -187,7 +187,7 @@ describe("proposed package events", () => {
       ]),
     );
     const claim = first.packageProgress!.events!.at(-1)!;
-    const corrected = ok(
+    const correction = ok(
       commit(
         first,
         [
@@ -200,16 +200,18 @@ describe("proposed package events", () => {
         { turnId: "turn-2", inputId: "input-2" },
       ),
     );
-    expect(statusOf(corrected.packageProgress, MOTIVE)).toBe("unvisited");
-    const { state } = promptState(corrected);
+    expect(lastDropped(correction)).toContain(
+      `packageEvents: invalid supersede ${MOTIVE}`,
+    );
     expect(
-      state["GM-ONLY package progress"].recentEvents.find(
-        (entry: { id: string }) => entry.id === claim.id,
-      ).superseded,
-    ).toBe(true);
+      correction.packageProgress!.events!.filter(
+        (candidate) => candidate.recordId === MOTIVE,
+      ),
+    ).toHaveLength(1);
+    expect(statusOf(correction.packageProgress, MOTIVE)).toBe("unvisited");
 
     const confirmed = ok(
-      commit(corrected, [event(WICK, "active")], {
+      commit(correction, [event(WICK, "active")], {
         turnId: "turn-3",
         inputId: "input-3",
       }),
@@ -265,6 +267,30 @@ describe("proposed package events", () => {
       expect(next.turns).toHaveLength(resolved.turns.length + 1);
       expect(lastDropped(next)).toContain(note);
     }
+  });
+
+  it("keeps package-event rejection reasons when earlier patch errors fill the drop limit", () => {
+    const p = proposal();
+    p.visiblePatch.objectives.update = Array.from({ length: 24 }, (_, i) => ({
+      id: `missing-objective-${i}`,
+      text: "Missing objective",
+      source: "canonical" as const,
+    }));
+    p.packageEvents = [event("no-such-record", "resolved")];
+
+    const next = applyCompletedTurn(packageSession(), p, {
+      ...meta,
+      ...index,
+    });
+
+    expect(next.ok).toBe(true);
+    if (!next.ok) return;
+    const dropped = next.value.turns.at(-1)?.dropped ?? [];
+    expect(dropped).toHaveLength(24);
+    expect(dropped).toContain("packageEvents: unknown record no-such-record");
+    expect(
+      dropped.filter((reason) => reason.startsWith("objectives:")),
+    ).toHaveLength(23);
   });
 
   it("reports a duplicate when a turn id is committed again", () => {
