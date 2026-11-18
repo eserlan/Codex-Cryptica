@@ -12,7 +12,11 @@
     onStart,
   }: {
     library: AdventurePackageLibrary;
-    onStart: (pkg: AdventureJsonV1, hash: string) => void;
+    onStart: (
+      pkg: AdventureJsonV1,
+      hash: string,
+      startSceneId?: string,
+    ) => void;
   } = $props();
 
   const groupedPackages = $derived.by(() => {

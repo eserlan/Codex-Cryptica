@@ -19,7 +19,7 @@ exports[`package-grounded prompt matches the recorded opening prompt 1`] = `
         "section": "Scene 1: The Ferry Landing",
         "anchor": "ros-scene-1-landing"
       },
-      "text": "Title: Scene 1: The Ferry Landing\\nSummary: Maren Holt meets the party at the jetty and asks them to restart the mill.\\nLocation: loc-ferry-landing\\nRead aloud: The ferry bumps against a rotting jetty. Across the reeds a tall stone mill stands silent, its great wheel hanging still above brown water. A woman in a patched coat waits on the planks with her arms folded.\\nConditions: If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open.\\nBranch: ros-scene-2-yard; Proceed from the jetty to the mill yard.\\nBranch: ros-branch-shrine; Follow the reed path to the left of the jetty toward the shrine."
+      "text": "Title: Scene 1: The Ferry Landing\\nSummary: Maren Holt meets the party at the jetty and asks them to restart the mill.\\nLocation: loc-ferry-landing\\nRead aloud: The ferry bumps against a rotting jetty. Across the reeds a tall stone mill stands silent, its great wheel hanging still above brown water. A woman in a patched coat waits on the planks with her arms folded.\\nConditions: If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open.\\nBranch target: ros-scene-2-yard\\nBranch: Proceed from the jetty to the mill yard.\\nBranch target: ros-branch-shrine\\nBranch: Follow the reed path to the left of the jetty toward the shrine."
     },
     {
       "id": "premise",
@@ -44,7 +44,7 @@ exports[`package-grounded prompt matches the recorded opening prompt 1`] = `
         "section": "Scene 1: The Ferry Landing",
         "anchor": "ros-scene-1-landing"
       },
-      "text": "Name: The Ferry Landing\\nSummary: A rotting jetty across the reeds from the silent stone mill.\\nParent location: loc-greywater-bend\\nConnection: loc-mill-yard; Path from the jetty to the mill yard.\\nConnection: loc-reed-shrine; The reed path to the left of the jetty."
+      "text": "Name: The Ferry Landing\\nSummary: A rotting jetty across the reeds from the silent stone mill.\\nParent location: loc-greywater-bend\\nConnection target: loc-mill-yard\\nConnection: Path from the jetty to the mill yard.\\nConnection target: loc-reed-shrine\\nConnection: The reed path to the left of the jetty."
     },
     {
       "id": "actor-maren-holt",

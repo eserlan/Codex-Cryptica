@@ -265,7 +265,7 @@ describe("retrieveAdventureJsonContext", () => {
       const gm = (id: string) => r.gmOnly.filter((e) => e.id === id);
       expect(gm("r1")[0]!.text).toBe("Truth: It is true");
       expect(gm("c1")[0]!.text).toBe("Reveals: The mayor lied");
-      expect(gm("s1")[0]!.text).toContain("Branch: s2");
+      expect(gm("s1")[0]!.text).toContain("Branch target: s2");
       expect(r.playerSafe.map((e) => e.id)).toEqual(
         expect.arrayContaining(["s1", "r1", "c1"]),
       );
@@ -380,7 +380,7 @@ describe("retrieveAdventureJsonContext", () => {
     expect(branchReads).toBeLessThan(20_000);
   });
 
-  it("bounds an oversized source quote and keeps the focus scene", () => {
+  it("omits an oversized source quote and keeps the focus scene", () => {
     const quote = "\u0001".repeat(5_000_000);
     const pkg = base({
       scenes: [
@@ -405,15 +405,13 @@ describe("retrieveAdventureJsonContext", () => {
 
     expect(r.includedIds[0]).toBe("s1");
     expect(size(r)).toBeLessThanOrEqual(MAX_ADVENTURE_RETRIEVAL_CHARS);
-    expect(r.playerSafe[0]!.sourceRef).toMatchObject({
+    expect(r.playerSafe[0]!.sourceRef).toEqual({
       page: 7,
       chapter: "Arrival",
     });
-    expect(r.playerSafe[0]!.sourceRef!.textQuote!.length).toBeLessThan(
-      quote.length,
-    );
+    expect(JSON.stringify(r.playerSafe)).not.toContain(quote.slice(0, 100));
     expect(longest).toBeLessThan(2 * MAX_ADVENTURE_RETRIEVAL_CHARS);
-    expect(r.truncated).toBe(true);
+    expect(r.truncated).toBe(false);
   });
 
   it.each(["chapter", "section", "anchor"] as const)(
@@ -593,6 +591,99 @@ describe("retrieveAdventureJsonContext", () => {
     expect(byId.get("s1")!.sourceRef).toEqual({ page: 3 });
     expect(byId.get("c1")!.epistemicStatus).toBe("unresolved");
     expect(byId.get("premise")!.sourceRef).toBeUndefined();
+  });
+
+  it("does not treat a short hidden ID as a reference inside ordinary prose", () => {
+    const pkg = base({
+      scenes: [scene("s1", { body: "The watchman waits at a gate." })],
+      secrets: [
+        {
+          id: "a",
+          text: "A hidden route",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: "s1" });
+    expect(result.playerSafe[0]!.text).toContain(
+      "The watchman waits at a gate.",
+    );
+    expect(result.gmOnly.some((excerpt) => excerpt.id === "s1")).toBe(false);
+  });
+
+  it("treats a short non-word hidden ID in free-form text as a reference", () => {
+    const pkg = base({
+      scenes: [scene("s1", { body: "The key to s2 is under the mat." })],
+      actors: [
+        {
+          id: "s2",
+          name: "Hidden Keeper",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: "s1" });
+    expect(result.playerSafe.find((e) => e.id === "s1")?.text).not.toContain(
+      "s2",
+    );
+    expect(result.gmOnly.find((e) => e.id === "s1")?.text).toContain(
+      "The key to s2 is under the mat.",
+    );
+  });
+
+  it("moves prose lines that name a hidden ID to the GM-only companion", () => {
+    const pkg = base({
+      scenes: [
+        scene("s1", {
+          body: "The hidden-actor waits beside a hidden-actorish statue.",
+        }),
+      ],
+      actors: [
+        {
+          id: "hidden-actor",
+          name: "The Watcher",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: "s1" });
+    expect(
+      result.playerSafe.find((excerpt) => excerpt.id === "s1")?.text,
+    ).not.toContain("hidden-actor");
+    expect(
+      result.gmOnly.find((excerpt) => excerpt.id === "s1")?.text,
+    ).toContain("The hidden-actor waits beside a hidden-actorish statue.");
+
+    const collision = retrieveAdventureJsonContext(
+      base({
+        scenes: [
+          scene("s1", { body: "A hidden-actorish statue stands here." }),
+        ],
+        actors: pkg.actors,
+      }),
+      { sceneId: "s1" },
+    );
+    expect(
+      collision.playerSafe.find((excerpt) => excerpt.id === "s1")?.text,
+    ).toContain("A hidden-actorish statue stands here.");
+  });
+
+  it("omits unclassified source quotes from player-safe excerpts", () => {
+    const pkg = base({
+      scenes: [
+        scene("s1", {
+          sourceRef: { page: 2, textQuote: "The traitor is the captain." },
+        }),
+      ],
+    });
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: "s1" });
+    expect(result.playerSafe[0]!.sourceRef).toEqual({ page: 2 });
+    expect(JSON.stringify(result.playerSafe)).not.toContain(
+      "The traitor is the captain.",
+    );
   });
 
   it("is deterministic", () => {

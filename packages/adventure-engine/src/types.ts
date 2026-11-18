@@ -548,6 +548,9 @@ export interface CommitMetadata {
   packageRecordKinds?: Readonly<Record<string, PackageRecordKind>>;
   /** Scene ID to the target scene IDs of its branches. */
   packageSceneBranches?: Readonly<Record<string, readonly string[]>>;
+  /** Hidden package references and text used to reject accidental player leaks. */
+  packageRecordIds?: readonly string[];
+  packageGmOnlyText?: readonly string[];
 }
 
 export interface AdventureValidationError {

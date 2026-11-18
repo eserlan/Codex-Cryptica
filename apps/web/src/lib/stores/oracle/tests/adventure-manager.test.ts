@@ -7,9 +7,42 @@ import {
   rollProposal,
   dependencies,
   packageRef,
+  referencePackage,
   referencePackageCache,
   startInput,
 } from "./adventure-fixtures";
+
+const multiStartPackage = {
+  ...referencePackage,
+  scenes: [
+    ...referencePackage.scenes,
+    {
+      id: "alt-start",
+      title: "Alt",
+      summary: "Elsewhere",
+      visibility: "player-visible" as const,
+      optional: true,
+    },
+  ],
+};
+
+async function startedProgress(startSceneId?: string) {
+  const deps: any = dependencies();
+  const savePinned = vi.fn(deps.repository.savePinned);
+  deps.repository.savePinned = savePinned;
+  deps.packages = referencePackageCache(async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: multiStartPackage,
+    originFormat: "adventure-json/v1",
+  }));
+  await new AdventureManager(deps).start({
+    ...startInput,
+    sourcePackage: packageRef,
+    ...(startSceneId ? { startSceneId } : {}),
+  });
+  return savePinned.mock.calls[0]?.[0] as AdventureSession;
+}
 
 describe("AdventureManager", () => {
   it("uses the coordinated save path when starting from an imported package", async () => {
@@ -39,6 +72,21 @@ describe("AdventureManager", () => {
     });
   });
 
+  it("starts at a chosen start candidate", async () => {
+    const saved = await startedProgress("alt-start");
+    expect(saved.packageProgress).toEqual({ sceneId: "alt-start" });
+    expect("startSceneId" in saved).toBe(false);
+  });
+
+  it.each(["nope", "ros-scene-2-yard"])(
+    "falls back to the entry scene for %s",
+    async (id) => {
+      const saved = await startedProgress(id);
+      expect(saved.packageProgress).toEqual({ sceneId: "ros-scene-1-landing" });
+      expect("startSceneId" in saved).toBe(false);
+    },
+  );
+
   it("does not save anything when the pinned package cannot be loaded", async () => {
     const deps: any = dependencies();
     const savePinned = vi.fn(deps.repository.savePinned);
@@ -51,6 +99,23 @@ describe("AdventureManager", () => {
     ).rejects.toThrow("adventure-package-unavailable");
     expect(savePinned).not.toHaveBeenCalled();
     expect(manager.errorCause).toBe("package-unavailable");
+  });
+
+  it("does not save anything when the pinned package has no scenes", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => ({
+      status: "approved",
+      hash: packageRef.hash,
+      package: { ...referencePackage, scenes: [] },
+    }));
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-has-no-scenes");
+    expect(savePinned).not.toHaveBeenCalled();
   });
 
   it("gives a session without a package no packageProgress", async () => {

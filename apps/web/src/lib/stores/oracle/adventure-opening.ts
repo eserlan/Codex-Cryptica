@@ -1,6 +1,7 @@
 import { AdventureGroundingError } from "#lib/services/adventure/adventure-grounding-service.js";
 import {
   entrySceneId,
+  startSceneCandidates,
   parseAdventureSession,
   type AdventureSession,
   type AdventureSourcePackageRef,
@@ -62,6 +63,7 @@ export class AdventureOpening {
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
     sourcePackage?: AdventureSourcePackageRef;
+    startSceneId?: string;
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
@@ -71,10 +73,11 @@ export class AdventureOpening {
     // Validate with the reader's schema before archiving anything or writing,
     // so an invalid seed can never be saved and then fail to load.
     if (this.state.starting) throw new Error("start-in-progress");
-    const validated = this.validatedNewSession(input);
+    const { startSceneId, ...sessionInput } = input;
+    const validated = this.validatedNewSession(sessionInput);
     this.state.starting = true;
     try {
-      const created = await this.withEntryScene(validated);
+      const created = await this.withStartScene(validated, startSceneId);
       this.runtime.activeRestoreRequest += 1;
       this.state.phase = "starting";
       this.state.errorMessage = null;
@@ -102,9 +105,10 @@ export class AdventureOpening {
     await this.startOpeningIfOnline(session);
   }
 
-  /** Loads the pinned package before anything is saved and starts at its entry scene. */
-  private async withEntryScene(
+  /** Loads the pinned package before anything is saved and starts at the chosen start candidate, else the entry scene. */
+  private async withStartScene(
     created: AdventureSession,
+    startSceneId: string | undefined,
   ): Promise<AdventureSession> {
     if (!created.sourcePackage) return created;
     const check = await this.runtime.deps.packages.verifyPin(created);
@@ -112,10 +116,14 @@ export class AdventureOpening {
       this.state.errorCause = "package-unavailable";
       throw new Error("adventure-package-unavailable");
     }
-    const sceneId = entrySceneId(
-      await this.runtime.deps.packages.load(created),
+    const pkg = await this.runtime.deps.packages.load(created);
+    const chosen = startSceneCandidates(pkg).find(
+      (scene) => scene.id === startSceneId,
     );
-    if (sceneId === undefined) return created;
+    const sceneId = chosen?.id ?? entrySceneId(pkg);
+    if (sceneId === undefined) {
+      throw new Error("adventure-package-has-no-scenes");
+    }
     return parseAdventureSession({
       ...created,
       packageProgress: { sceneId },
