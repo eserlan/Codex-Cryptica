@@ -140,6 +140,56 @@ describe("TopicHubPage layout", () => {
     expect(section.querySelector(":scope > p")).toBeNull();
   });
 
+  it("renders the Star Systems hero from the config", () => {
+    const { container } = render(TopicHubPage, {
+      props: { config: STAR_SYSTEMS_TOPIC_CONFIG },
+    });
+
+    const hero = container.querySelector("header figure img") as HTMLElement;
+    const config = STAR_SYSTEMS_TOPIC_CONFIG.heroImage;
+    expect(hero.getAttribute("src")).toBe(config.src);
+    expect(hero.getAttribute("alt")).toBe(config.alt);
+    expect(hero.getAttribute("width")).toBe("1600");
+    expect(hero.getAttribute("height")).toBe("900");
+  });
+
+  it("renders the example diagram only when the example has one", () => {
+    const { unmount } = render(TopicHubPage, {
+      props: { config: STAR_SYSTEMS_TOPIC_CONFIG },
+    });
+    const section = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-examples`,
+    )?.parentElement as HTMLElement;
+    expect(
+      section.querySelector('[data-testid="topic-example-diagram"]'),
+    ).not.toBeNull();
+    unmount();
+
+    const { diagram: _diagram, ...inlineExample } =
+      STAR_SYSTEMS_TOPIC_CONFIG.inlineExample;
+    render(TopicHubPage, {
+      props: { config: { ...STAR_SYSTEMS_TOPIC_CONFIG, inlineExample } },
+    });
+    const bare = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-examples`,
+    )?.parentElement as HTMLElement;
+    expect(
+      bare.querySelector('[data-testid="topic-example-diagram"]'),
+    ).toBeNull();
+    expect(
+      Array.from(bare.querySelectorAll("dt")).map((d) => d.textContent?.trim()),
+    ).toEqual(inlineExample.parts.map((part) => part.term));
+  });
+
+  it("renders no diagram on the Heists hub", () => {
+    const { container } = render(TopicHubPage, {
+      props: { config: HEIST_TOPIC_CONFIG },
+    });
+    expect(
+      container.querySelector('[data-testid="topic-example-diagram"]'),
+    ).toBeNull();
+  });
+
   describe("primary action", () => {
     afterEach(() => {
       pathState.base = "";

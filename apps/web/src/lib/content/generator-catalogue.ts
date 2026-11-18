@@ -173,6 +173,14 @@ export const GENERATOR_CATALOGUE: readonly GeneratorCatalogueEntry[] = [
     category: "factions",
   },
   {
+    slug: "urban-fantasy-faction",
+    label: "Urban Fantasy Faction Generator",
+    summary:
+      "Create modern supernatural city factions with civic resources, hidden-world agendas, NPCs, rivals and playable hooks.",
+    icon: "icon-[lucide--building-2]",
+    category: "factions",
+  },
+  {
     slug: "vampire-clan",
     label: "Vampire Clan Generator",
     summary:

@@ -11,6 +11,7 @@ import {
   pantheonConfig,
   personalityConfig,
   vampireConfig,
+  urbanFantasyFactionConfig,
   villainConfig,
   villainSchemeConfig,
 } from "#lib/services/seo/generator-config.js";
@@ -80,6 +81,13 @@ export function createCharacterDefaults(
       factionType: darkFactionConfig.types[0],
       scope: darkFactionConfig.scopes[0],
       moralPosture: darkFactionConfig.moralPostures[0],
+      campaignContext: "",
+    },
+    urbanFantasyFaction: {
+      mode: urbanFantasyFactionConfig.modes[0],
+      factionType: urbanFantasyFactionConfig.types[0],
+      scope: urbanFantasyFactionConfig.scopes[0],
+      moralPosture: urbanFantasyFactionConfig.moralPostures[0],
       campaignContext: "",
     },
     names: {

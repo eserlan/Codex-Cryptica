@@ -42,7 +42,7 @@
     inputHint: string;
     backHref?: string;
     backLabel?: string;
-    formFields: Snippet<[() => void]>;
+    formFields: Snippet<[() => void, boolean]>;
     onGenerate: () => void;
     isBusy: boolean;
     isOnline: boolean;
@@ -86,7 +86,7 @@
       if (showSubmitButton) onGenerate();
     }}
   >
-    {@render formFields(onGenerate)}
+    {@render formFields(onGenerate, isBusy)}
     <GeneratorSubmitControls
       {isBusy}
       {isOnline}

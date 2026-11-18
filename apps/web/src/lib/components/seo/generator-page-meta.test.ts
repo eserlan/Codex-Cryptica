@@ -22,6 +22,7 @@ const allExpectedSlugs: ValidSlug[] = [
   "vampire-clan",
   "nomad-clan",
   "dark-fantasy-faction",
+  "urban-fantasy-faction",
   "names",
   "fantasy-names",
   "dnd-npc",
@@ -107,6 +108,33 @@ describe("generator-page-meta completeness and social preview tags", () => {
       { href: "/generators/faction", label: "Faction Generator" },
       { href: "/generators/kingdom", label: "Kingdom Generator" },
     ]);
+  });
+
+  it("gives urban fantasy factions distinct metadata and related hubs", () => {
+    const meta = slugMeta["urban-fantasy-faction"];
+    expect(meta.canonicalPath).toBe("/generators/urban-fantasy-faction");
+    expect(meta.pageTitle).toContain("Urban Fantasy Faction Generator");
+    expect(meta.metaDescription).toContain("modern supernatural");
+    expect(meta.introText).toContain("not cities");
+    expect(meta.keywords).toEqual(
+      expect.arrayContaining([
+        "urban fantasy faction generator",
+        "modern fantasy faction generator",
+        "supernatural faction generator",
+        "hidden-world faction generator",
+        "mage cabal generator",
+        "occult faction generator",
+        "modern occult RPG factions",
+      ]),
+    );
+    expect(meta.relatedLinks?.map((link) => link.href)).toEqual(
+      expect.arrayContaining([
+        "/generators/vampire",
+        "/generators/cosmic-horror",
+        "/generators/cyberpunk",
+        "/generators/modern",
+      ]),
+    );
   });
 
   it("has metadata entries for all valid generator slugs", () => {

@@ -303,6 +303,101 @@ test.describe("SEO and Prerendering", () => {
       ).toBeVisible({ timeout: 15000 });
     });
 
+    test("urban fantasy faction generator works locally and saves a faction draft", async ({
+      page,
+      request,
+    }) => {
+      const response = await request.get("/generators/urban-fantasy-faction");
+      expect(response.ok()).toBe(true);
+      const html = await response.text();
+      expect(html).toContain(
+        "Urban Fantasy Faction Generator | Modern RPG Tool",
+      );
+      expect(html).toContain("/generators/urban-fantasy-faction");
+
+      await page.goto("/generators/urban-fantasy-faction");
+      await expect(page.locator("#generator-title")).toContainText(
+        "Urban Fantasy Faction Generator",
+      );
+      await expect(page.getByLabel("Urban fantasy mode")).toBeVisible();
+      await expect(page.getByLabel("Faction type")).toBeVisible();
+      await expect(page.getByLabel("Operating scope")).toBeVisible();
+      await expect(page.getByLabel("Moral posture")).toBeVisible();
+      for (const href of [
+        "/generators/vampire",
+        "/generators/cosmic-horror",
+        "/generators/cyberpunk",
+        "/generators/modern",
+      ]) {
+        await expect(page.locator(`a[href="${href}"]`)).toBeAttached();
+      }
+
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) await aiToggle.uncheck();
+
+      const urbanFantasyFields = [
+        "Urban fantasy mode",
+        "Faction type",
+        "Operating scope",
+        "Moral posture",
+      ];
+      for (const label of urbanFantasyFields) {
+        await page.getByLabel(label).selectOption("__custom__");
+        await page.getByLabel(`${label} (Own option)`).fill(`Custom ${label}`);
+      }
+      await page.getByRole("button", { name: "Surprise Me" }).click();
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Surprise Me" }),
+      ).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Surprise Me" }),
+      ).toHaveClass(/enabled:hover:text-theme-on-primary/);
+      for (const label of urbanFantasyFields) {
+        await expect(page.getByLabel(label)).not.toHaveValue("__custom__");
+        await expect(page.getByLabel(`${label} (Own option)`)).toHaveCount(0);
+      }
+
+      await page.getByLabel("Urban fantasy mode").selectOption("Occult crime");
+      await page.getByLabel("Faction type").selectOption("Occult Gang");
+      await page.getByLabel("Operating scope").selectOption("Neighbourhood");
+      await page
+        .getByLabel("Moral posture")
+        .selectOption("Street-level survivors");
+      await page.getByLabel("Add campaign context").fill("a market district");
+      await page.click("#generate-button");
+
+      await expect(page.locator("#save-to-codex-btn")).toBeVisible();
+      for (const heading of [
+        "What they control",
+        "What they want",
+        "Why they are dangerous",
+        "How to use them at the table",
+        "Notable NPCs",
+        "Internal Conflict",
+        "Rival Faction",
+      ]) {
+        await expect(
+          page.getByRole("heading", { name: heading }),
+        ).toBeVisible();
+      }
+      await expect(
+        page.getByText("urban-fantasy", { exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(/Base:/).first()).toBeVisible();
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated");
+      const generatedName = await generatedTitle.textContent();
+      expect(generatedName).toBeTruthy();
+
+      await page.click("#save-to-codex-btn");
+      await page.getByRole("link", { name: "Open Codex" }).click();
+      await expect(page).toHaveURL(/\/$/);
+      await expect(
+        page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
+      ).toBeVisible({ timeout: 15000 });
+    });
+
     test("pantheon and god generator page funnel flows", async ({
       page,
       request,

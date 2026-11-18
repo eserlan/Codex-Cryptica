@@ -1,4 +1,5 @@
 <script lang="ts">
+  import TopicExampleDiagram from "./TopicExampleDiagram.svelte";
   import { TOPIC_LAYOUT } from "./topic-layout.js";
   import type { TopicInlineExample } from "#lib/content/topics/types.js";
 
@@ -23,6 +24,9 @@
   >
     {example.summary}
   </p>
+  {#if example.diagram}
+    <TopicExampleDiagram diagram={example.diagram} />
+  {/if}
   <dl class="mt-4 divide-y divide-theme-border border-y border-theme-border">
     {#each example.parts as part (part.term)}
       <div class="py-3">
