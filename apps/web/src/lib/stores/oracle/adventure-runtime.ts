@@ -241,6 +241,27 @@ export class AdventureRuntime {
           : "error";
   }
 
+  private async handleTurnGenerationFailure(
+    cause: unknown,
+    signal: AbortSignal,
+    retryPhase: "ready" | "ready-to-resolve",
+  ): Promise<void> {
+    const isCurrentGeneration =
+      !signal.aborted && this.generationController?.signal === signal;
+    if (isCurrentGeneration && this.state.session) {
+      await this.deps
+        .clearGenerationInteraction(this.state.session.id)
+        .catch(() => {});
+    }
+    if (
+      cause instanceof Error &&
+      cause.message === "adventure-package-unavailable" &&
+      this.state.phase === "package-unavailable"
+    )
+      return;
+    this.recordTurnGenerationError(cause, signal, retryPhase);
+  }
+
   /**
    * Re-checks a package session's pin. On failure, enters the recoverable
    * `package-unavailable` state (when the signal is still current) and returns
@@ -286,23 +307,7 @@ export class AdventureRuntime {
       // cancelled generation, lost lease or failed local save.
       // An older cancelled turn may settle after a newer one has started.
       // Never clear the newer turn's provider context from that stale catch.
-      if (
-        !signal.aborted &&
-        this.generationController?.signal === signal &&
-        this.state.session
-      ) {
-        await this.deps
-          .clearGenerationInteraction(this.state.session.id)
-          .catch(() => {});
-      }
-      if (
-        cause instanceof Error &&
-        cause.message === "adventure-package-unavailable" &&
-        this.state.phase === "package-unavailable"
-      ) {
-        return;
-      }
-      this.recordTurnGenerationError(cause, signal, retryPhase);
+      await this.handleTurnGenerationFailure(cause, signal, retryPhase);
     } finally {
       this.endTurnGeneration(signal);
     }
