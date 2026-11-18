@@ -72,6 +72,31 @@ describe("/examples route", () => {
     expect(within(gullsCard).queryByText("Hand-written")).toBeNull();
   });
 
+  it("describes both curated generator outputs and hand-written scenarios in intro and meta description", () => {
+    const { container } = render(Page, {
+      props: { data: { examples: getAllExamples() } },
+    });
+
+    const metaDescription = document
+      .querySelector('meta[name="description"]')
+      ?.getAttribute("content");
+    const introParagraph = container.querySelector("p.text-lg")?.textContent;
+
+    expect(metaDescription).toBeTruthy();
+    expect(metaDescription).not.toContain(
+      "Curated, unedited output from the Codex Cryptica generators",
+    );
+    expect(metaDescription).toMatch(/generator outputs?/i);
+    expect(metaDescription).toMatch(/hand-written/i);
+
+    expect(introParagraph).toBeTruthy();
+    expect(introParagraph).not.toContain(
+      "Curated, unedited output from the Codex Cryptica generators",
+    );
+    expect(introParagraph).toMatch(/generator outputs?/i);
+    expect(introParagraph).toMatch(/hand-written/i);
+  });
+
   it("fills the widescreen canvas and adds a column on large screens", () => {
     const { container } = render(Page, {
       props: { data: { examples: getAllExamples() } },
