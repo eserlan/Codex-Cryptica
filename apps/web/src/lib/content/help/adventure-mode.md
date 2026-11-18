@@ -115,9 +115,9 @@ If a session's package version is missing or has changed, the session pauses
 with **Retry** and **Leave session**. Your story stays readable. Re-import
 the same version, then choose Retry to continue.
 
-## Check progress in an imported adventure
+## Package progress and GM details
 
-Open **Adventure tools** during a session pinned to an imported package. The
+Open **Adventure tools** during a session pinned to a package. The
 player progress view lists confirmed, player-visible scenes you have visited,
 the current scene, and player-visible clues you have found. It leaves out
 GM-only records, unvisited scenes, and unconfirmed claims, and does not show a

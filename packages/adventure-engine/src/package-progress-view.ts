@@ -2,6 +2,7 @@ import type { AdventureJsonV1 } from "./adventure-json";
 import type {
   PackageProgress,
   PackageProgressEvent,
+  PackageProgressRecord,
   PackageProgressStatus,
   PackageRecordKind,
 } from "./types";
@@ -148,13 +149,15 @@ export function projectPlayerPackageProgress(
   };
 }
 
-/** Every touched record with its full event history, claims and superseded events included. */
-export function projectPackageProgressAudit(
-  pkg: AdventureJsonV1,
-  progress: PackageProgress | undefined,
-): PackageAuditEntry[] {
-  const events = progress?.events ?? [];
-  const packageRecords = indexPackageRecords(pkg).byKind;
+interface PackageAuditLedgerIndex {
+  recordIds: string[];
+  eventsByRecord: Map<string, PackageProgressEvent[]>;
+  kinds: Map<string, PackageRecordKind>;
+  statuses: Map<string, PackageProgressStatus>;
+  supersededBy: Map<string, string>;
+}
+
+function indexAuditEvents(events: readonly PackageProgressEvent[]) {
   const supersededBy = new Map<string, string>();
   const eventsByRecord = new Map<string, PackageProgressEvent[]>();
   const kinds = new Map<string, PackageRecordKind>();
@@ -165,17 +168,64 @@ export function projectPackageProgressAudit(
     else eventsByRecord.set(event.recordId, [event]);
     if (!kinds.has(event.recordId)) kinds.set(event.recordId, event.kind);
   }
+
+  return { supersededBy, eventsByRecord, kinds };
+}
+
+function indexAuditRecords(
+  records: readonly PackageProgressRecord[],
+  eventsByRecord: ReadonlyMap<string, PackageProgressEvent[]>,
+  kinds: Map<string, PackageRecordKind>,
+) {
   const statuses = new Map<string, PackageProgressStatus>();
-  for (const record of progress?.records ?? []) {
+  const recordIds = [...eventsByRecord.keys()];
+  for (const record of records) {
     if (!statuses.has(record.id)) statuses.set(record.id, record.status);
     if (!kinds.has(record.id)) kinds.set(record.id, record.kind);
-  }
-  const recordIds = [...eventsByRecord.keys()];
-  for (const record of progress?.records ?? []) {
     if (!eventsByRecord.has(record.id)) recordIds.push(record.id);
   }
-  return recordIds.map((recordId) => {
-    const kind = kinds.get(recordId)!;
+  return { recordIds, statuses };
+}
+
+function indexAuditLedger(
+  progress: PackageProgress | undefined,
+): PackageAuditLedgerIndex {
+  const eventIndex = indexAuditEvents(progress?.events ?? []);
+  const recordIndex = indexAuditRecords(
+    progress?.records ?? [],
+    eventIndex.eventsByRecord,
+    eventIndex.kinds,
+  );
+  return { ...eventIndex, ...recordIndex };
+}
+
+function projectAuditEvent(
+  event: PackageProgressEvent,
+  supersededBy: ReadonlyMap<string, string>,
+): PackageAuditEvent {
+  return {
+    id: event.id,
+    turnId: event.turnId,
+    from: event.from,
+    to: event.to,
+    certainty: event.certainty,
+    note: event.note,
+    ...(event.supersedes ? { supersedes: event.supersedes } : {}),
+    ...(supersededBy.has(event.id)
+      ? { supersededBy: supersededBy.get(event.id) }
+      : {}),
+  };
+}
+
+/** Every touched record with its full event history, claims and superseded events included. */
+export function projectPackageProgressAudit(
+  pkg: AdventureJsonV1,
+  progress: PackageProgress | undefined,
+): PackageAuditEntry[] {
+  const packageRecords = indexPackageRecords(pkg).byKind;
+  const ledger = indexAuditLedger(progress);
+  return ledger.recordIds.map((recordId) => {
+    const kind = ledger.kinds.get(recordId)!;
     const details = packageRecords.get(kind)?.get(recordId) ?? {
       label: recordId,
       visibility: "unknown" as const,
@@ -184,19 +234,10 @@ export function projectPackageProgressAudit(
       recordId,
       kind,
       ...details,
-      status: statuses.get(recordId) ?? "unvisited",
-      events: (eventsByRecord.get(recordId) ?? []).map((event) => ({
-        id: event.id,
-        turnId: event.turnId,
-        from: event.from,
-        to: event.to,
-        certainty: event.certainty,
-        note: event.note,
-        ...(event.supersedes ? { supersedes: event.supersedes } : {}),
-        ...(supersededBy.has(event.id)
-          ? { supersededBy: supersededBy.get(event.id) }
-          : {}),
-      })),
+      status: ledger.statuses.get(recordId) ?? "unvisited",
+      events: (ledger.eventsByRecord.get(recordId) ?? []).map((event) =>
+        projectAuditEvent(event, ledger.supersededBy),
+      ),
     };
   });
 }
