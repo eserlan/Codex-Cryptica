@@ -83,6 +83,22 @@ describe("approved adventure packages", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
+  it("omits the creature import action for unknown encounter actor IDs", () => {
+    const reference = fixture("reference-one-shot");
+    const packageWithUnknownActors = {
+      ...reference,
+      encounters: reference.encounters.map((encounter) => ({
+        ...encounter,
+        actorIds: ["missing-actor"],
+      })),
+    } as AdventureJsonV1;
+    const { library, onStart } = setup(packageWithUnknownActors);
+    render(ApprovedAdventurePackages, { library, onStart });
+    expect(
+      screen.queryByRole("button", { name: "Create creature entries" }),
+    ).toBeNull();
+  });
+
   it("resumes the latest pinned session", async () => {
     const { library, hash, onStart, open } = setup();
     library.pinnedByHash = new Map([
