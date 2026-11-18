@@ -21,6 +21,7 @@
   } = $props();
 
   const cleanBase = basePath();
+  const authored = $derived(example.provenance === "authored");
   const source = $derived({
     sourceKind: "example" as const,
     sourceId: example.slug,
@@ -41,11 +42,13 @@
         class="icon-[lucide--dices] h-3.5 w-3.5 text-theme-primary"
         aria-hidden="true"
       ></span>
-      How this was generated
+      {authored ? "How this was made" : "How this was generated"}
     </h2>
     <dl class="grid gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-1">
       <div>
-        <dt class="font-mono text-xs text-theme-text">Generator</dt>
+        <dt class="font-mono text-xs text-theme-text">
+          {authored ? "Make your own with" : "Generator"}
+        </dt>
         <dd class="text-base text-theme-text">
           <a
             href="{cleanBase}{example.generator.href}"

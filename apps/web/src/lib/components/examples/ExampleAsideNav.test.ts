@@ -27,6 +27,18 @@ describe("ExampleAsideNav", () => {
     ).toBeTruthy();
   });
 
+  it("words an authored example as hand-written, not generated", () => {
+    const authored = getAllExamples().find((e) => e.provenance === "authored")!;
+    render(ExampleAsideNav, { props: { example: authored, related: [] } });
+
+    expect(
+      screen.getByRole("heading", { name: "How this was made" }),
+    ).toBeTruthy();
+    expect(screen.getByText("Make your own with")).toBeTruthy();
+    expect(screen.getByText(authored.provenanceNote!)).toBeTruthy();
+    expect(screen.queryByText("How this was generated")).toBeNull();
+  });
+
   it("lists other examples and expands past six", async () => {
     const related = others.slice(0, 9).map((o) => ({
       slug: o.slug,

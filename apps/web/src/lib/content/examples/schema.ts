@@ -6,7 +6,8 @@ import { PublicLabelSchema } from "../labels";
 /**
  * Curated generator examples (`/examples/[slug]`), per #2565.
  *
- * These pages exist to show what Codex actually produces for a concrete prompt,
+ * These pages exist to show what Codex actually produces for a concrete prompt
+ * (or, for `authored` pages, a hand-written scenario that shows the format),
  * and to be useful to someone who never opens the app. They are **curated, not
  * an index of every generation** — publishing is a deliberate editorial act, and
  * the schema is written to make that hard to forget:
@@ -18,7 +19,8 @@ import { PublicLabelSchema } from "../labels";
  * - `sourceUrl` records where the example was first published, so its history
  *   stays traceable.
  *
- * The generated artefact is the substance of the page. Everything else is
+ * The artefact (generator output, or hand-written text for `authored` pages)
+ * is the substance of the page. Everything else is
  * framing, and the guardrails in #2565 are explicit that the framing must not
  * grow to dwarf it.
  */
@@ -62,8 +64,14 @@ export type ExampleTheme = z.infer<typeof ExampleThemeSchema>;
  *
  * `raw` means exactly what the generator emitted. Anything else must say so —
  * #2565 forbids presenting edited output as untouched generation.
+ * `authored` means original text written by hand for publication, not
+ * generator output.
  */
-export const ExampleProvenanceSchema = z.enum(["raw", "lightly-edited"]);
+export const ExampleProvenanceSchema = z.enum([
+  "raw",
+  "lightly-edited",
+  "authored",
+]);
 export type ExampleProvenance = z.infer<typeof ExampleProvenanceSchema>;
 
 /** A list item that may lead with a bolded term. */
@@ -144,7 +152,10 @@ export const ExampleConfigSchema = z
     provenance: ExampleProvenanceSchema,
     /** Note explaining any editing, required when provenance is not `raw`. */
     provenanceNote: z.string().min(10).optional(),
-    /** The generator that produced it. Must be a live route. */
+    /**
+     * The generator that produced it (for `authored` pages, the "make your
+     * own" tool). Must be a live route.
+     */
     generator: z.object({
       name: z.string().min(1),
       href: z.string().startsWith("/generators/"),

@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/svelte";
+import { render, screen, within } from "@testing-library/svelte";
 import { getAllExamples } from "#lib/content/examples/registry.js";
 
 vi.mock("$app/paths", () => ({
@@ -55,6 +55,21 @@ describe("/examples route", () => {
         .querySelector('meta[property="og:image"]')
         ?.getAttribute("content"),
     ).not.toBe("https://codexcryptica.com/og-image.png");
+  });
+
+  it("marks only authored examples as hand-written", () => {
+    render(Page, { props: { data: { examples: getAllExamples() } } });
+
+    const authored = getAllExamples().filter(
+      (e) => e.provenance === "authored",
+    );
+    expect(authored).toHaveLength(1);
+    expect(screen.getAllByText("Hand-written")).toHaveLength(authored.length);
+
+    const gullsCard = screen
+      .getByRole("heading", { name: "Gull's Roost" })
+      .closest("a")!;
+    expect(within(gullsCard).queryByText("Hand-written")).toBeNull();
   });
 
   it("fills the widescreen canvas and adds a column on large screens", () => {

@@ -1632,6 +1632,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/examples/the-last-shift-sci-fi-horror-scenario</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/blog/entity-detail-views</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
