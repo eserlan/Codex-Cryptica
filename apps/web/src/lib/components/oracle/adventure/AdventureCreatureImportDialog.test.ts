@@ -239,6 +239,20 @@ describe("creature import dialog", () => {
     );
     expect(screen.getByText("Creature 24")).toBeTruthy();
     expect(screen.getByText("Showing 21–25 of 25 creatures")).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review changes" }),
+    );
+    expect(screen.getByText("Showing changes 1–20 of 25")).toBeTruthy();
+    expect(screen.queryByText(/Create Creature 24:/)).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Next changes" }),
+    );
+    expect(screen.getByText("Showing changes 21–25 of 25")).toBeTruthy();
+    expect(screen.getByText(/Create Creature 24:/)).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Previous changes" }),
+    );
+    expect(screen.getByText("Showing changes 1–20 of 25")).toBeTruthy();
   });
 
   it("restores focus to the opener when closed", async () => {
