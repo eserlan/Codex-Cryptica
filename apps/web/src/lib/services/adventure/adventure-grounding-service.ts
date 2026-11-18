@@ -90,7 +90,8 @@ export class AdventureGroundingService {
       if (
         cause instanceof Error &&
         (cause.message === "control-lost" ||
-          cause.message === "stale-adventure-context")
+          cause.message === "stale-adventure-context" ||
+          cause.message === "adventure-package-unavailable")
       )
         throw cause;
       throw safeGroundingFailure(cause);

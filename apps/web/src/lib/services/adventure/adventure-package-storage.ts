@@ -154,6 +154,28 @@ export class AdventurePackageRepository {
         }
         return results;
       },
+      listLimited: async (
+        dirPath: string,
+        limit: number,
+      ): Promise<{ entries: string[]; truncated: boolean }> => {
+        const root = await this.requireRoot(vaultId);
+        const segments = dirPath.split("/").filter((part) => part.length > 0);
+        const dir = await resolveDirectory(root, segments, false);
+        if (!dir) return { entries: [], truncated: false };
+        const entries: string[] = [];
+        for await (const [name, handle] of (
+          dir as FileSystemDirectoryHandle & {
+            entries(): AsyncIterableIterator<[string, FileSystemHandle]>;
+          }
+        ).entries()) {
+          if (handle.kind !== "file") continue;
+          if (entries.length === limit) {
+            return { entries, truncated: true };
+          }
+          entries.push(`${dirPath}/${name}`);
+        }
+        return { entries, truncated: false };
+      },
       remove: async (path: string): Promise<void> => {
         const root = await this.requireRoot(vaultId);
         const { dirs, fileName } = splitPackagePath(path);

@@ -22,7 +22,7 @@ export type PackagePinStatus =
   | {
       status: "unavailable";
       reason: "missing" | "unreadable" | "mismatch";
-      otherVersionAvailable: boolean;
+      otherVersionAvailable: boolean | null;
     };
 
 type PackageSessionKey = Pick<AdventureSession, "id" | "vaultId"> & {
@@ -115,18 +115,16 @@ export class AdventurePackageContextCache {
 
   private async hasOtherVersion(
     session: Pick<AdventureSession, "vaultId" | "sourcePackage">,
-  ): Promise<boolean> {
+  ): Promise<boolean | null> {
     const ref = session.sourcePackage!;
     try {
-      return (
-        (await this.checkOtherVersion(
-          session.vaultId,
-          ref.packageId,
-          ref.hash,
-        )) === true
+      return await this.checkOtherVersion(
+        session.vaultId,
+        ref.packageId,
+        ref.hash,
       );
     } catch {
-      return false;
+      return null;
     }
   }
 

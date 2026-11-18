@@ -93,6 +93,28 @@ describe("package pin on open", () => {
 });
 
 describe("package pin during play", () => {
+  it("rechecks the pin before an automatic correction request", async () => {
+    const ctx = setup();
+    const session = await startPackageSession(ctx);
+    ctx.setMode("ok");
+    ctx.verifyPin.mockClear();
+    ctx.deps.generation.generate.mockClear();
+    ctx.deps.generation.generate.mockImplementationOnce(async () => {
+      ctx.setMode("missing");
+      return { kind: "complete" } as any;
+    });
+    const revision = session.revision;
+    const turns = session.turns;
+
+    await ctx.manager.submitAction("Cross the bridge");
+
+    expect(ctx.verifyPin.mock.calls.length).toBeGreaterThanOrEqual(3);
+    expect(ctx.deps.generation.generate).toHaveBeenCalledTimes(1);
+    expect(ctx.manager.phase).toBe("package-unavailable");
+    expect(ctx.manager.session?.revision).toBe(revision);
+    expect(ctx.manager.session?.turns).toEqual(turns);
+  });
+
   it("blocks an action when the package disappears and keeps the draft", async () => {
     const ctx = setup();
     const session = await startPackageSession(ctx);
