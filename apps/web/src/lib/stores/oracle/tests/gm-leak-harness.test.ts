@@ -98,17 +98,46 @@ describe("collectGmOnlyStrings", () => {
     expect(reference.length).toBeGreaterThanOrEqual(5);
   });
 
-  it("drops short strings and de-duplicates", () => {
+  it("keeps short protected values and de-duplicates", () => {
     const pkg = structuredClone(canaryReferencePackage);
     pkg.secrets = [
-      { ...pkg.secrets[0]!, id: "short", text: "too short" },
+      { ...pkg.secrets[0]!, id: "short", text: "Red key" },
       { ...pkg.secrets[0]!, id: "dup", text: "A long enough secret." },
       { ...pkg.secrets[0]!, id: "dup", text: "A long enough secret." },
     ];
+    pkg.actors = [
+      {
+        ...pkg.actors[0]!,
+        id: "short-actor",
+        name: "Aldous Holt",
+        visibility: "gm-only",
+      },
+    ];
+    pkg.clues = [{ ...pkg.clues[0]!, id: "short-clue", reveals: "Red key" }];
     const secrets = collectGmOnlyStrings(pkg).filter((e) =>
-      ["short", "dup"].includes(e.recordId),
+      ["short", "dup", "short-actor", "short-clue"].includes(e.recordId),
     );
-    expect(secrets).toHaveLength(1);
+    expect(secrets).toContainEqual({
+      recordId: "short",
+      field: "text",
+      text: "Red key",
+    });
+    expect(secrets).toContainEqual({
+      recordId: "short-actor",
+      field: "name",
+      text: "Aldous Holt",
+    });
+    expect(secrets).toContainEqual({
+      recordId: "short-clue",
+      field: "reveals",
+      text: "Red key",
+    });
+    expect(secrets.filter((entry) => entry.recordId === "dup")).toHaveLength(1);
+    for (const token of ["Red key", "Aldous Holt"]) {
+      expect(() =>
+        assertNoGmLeak(secrets, token, "short protected value"),
+      ).toThrow();
+    }
   });
 });
 
@@ -149,6 +178,16 @@ describe("assertNoGmLeak", () => {
   it("catches the rumour verdict in its flattened JSON form", () => {
     expect(() =>
       assertNoGmLeak(guarded, { rumour: { truth: "false" } }, "json"),
+    ).toThrow(/canary-rumour, field truth/);
+  });
+
+  it("catches a pretty-printed JSON string containing a rumour verdict", () => {
+    expect(() =>
+      assertNoGmLeak(
+        guarded,
+        JSON.stringify({ rumour: { truth: "false" } }, null, 2),
+        "pretty JSON string",
+      ),
     ).toThrow(/canary-rumour, field truth/);
   });
 

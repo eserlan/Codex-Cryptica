@@ -41,10 +41,14 @@ function* stringLeaves(
 export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
   const found: GuardedString[] = [];
   const add = (recordId: string, field: string, value: unknown) => {
-    if (typeof value === "string" && value.trim().length >= MIN_GUARDED_LENGTH)
+    if (typeof value === "string" && value.trim())
       found.push({ recordId, field, text: value.trim() });
   };
-  // The length rule drops generic names; a verdict form is always guarded.
+  const addAncillary = (recordId: string, field: string, value: unknown) => {
+    if (typeof value === "string" && value.trim().length >= MIN_GUARDED_LENGTH)
+      add(recordId, field, value);
+  };
+  // Rumour truth is guarded in its output labels, never as a bare word.
   const addVerdict = (recordId: string, ...forms: string[]) => {
     for (const text of forms) found.push({ recordId, field: "truth", text });
   };
@@ -60,8 +64,14 @@ export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
   ] as unknown as Loose[][];
   for (const record of records.flat()) {
     if (record.visibility !== "gm-only") continue;
-    for (const [field, text] of stringLeaves(record, ""))
-      add(record.id, field, text);
+    for (const [field, text] of stringLeaves(record, "")) {
+      const leaf = field
+        .split(".")
+        .at(-1)
+        ?.replace(/\[\d+\]$/, "");
+      if (leaf === "name" || leaf === "title") add(record.id, field, text);
+      else addAncillary(record.id, field, text);
+    }
   }
   for (const secret of pkg.secrets) add(secret.id, "text", secret.text);
   // Retrieval treats these as GM-only whatever the record's visibility.
@@ -103,6 +113,13 @@ export function assertNoGmLeak(
     typeof output === "string"
       ? [output]
       : [JSON.stringify(output) ?? "", stringsOf(output).join(" ")];
+  if (typeof output === "string") {
+    try {
+      haystacks.push(JSON.stringify(JSON.parse(output)) ?? "");
+    } catch {
+      // Non-JSON output is checked in its original form above.
+    }
+  }
   const text = haystacks.map(normalise);
   for (const entry of guarded) {
     const needle = normalise(entry.text);

@@ -67,9 +67,12 @@ export function createPlay(pkg: AdventureJsonV1) {
   const notices: string[] = [];
   const drafts: Array<{ type: string; title: string; data: unknown }> = [];
   const titles: Array<{ id: string; title: string }> = [];
+  const previews: string[] = [];
   const queue: any[] = [];
   let stored: AdventureSession | null = null;
   let turns = 0;
+  let rejectAfterPreview = false;
+  let manager: AdventureManager;
 
   const deps: any = {
     ...base,
@@ -89,11 +92,22 @@ export function createPlay(pkg: AdventureJsonV1) {
       },
     },
     generation: {
-      generate: vi.fn(async (request: { phase?: string }) => {
-        if (request.phase === "roll-resolution")
-          return turn("The span holds long enough.");
-        return queue.shift() ?? turn(`The road bends onward (${++turns}).`);
-      }),
+      generate: vi.fn(
+        async (request: {
+          phase?: string;
+          onNarration?: (text: string) => void;
+        }) => {
+          request.onNarration?.("A lantern flickers at the road's end.");
+          previews.push(manager.streamedNarration);
+          if (rejectAfterPreview) {
+            rejectAfterPreview = false;
+            throw new Error("rejected after narration preview");
+          }
+          if (request.phase === "roll-resolution")
+            return turn("The span holds long enough.");
+          return queue.shift() ?? turn(`The road bends onward (${++turns}).`);
+        },
+      ),
     },
     summary: {
       summarize: vi.fn(async (request: { throughSequence: number }) => {
@@ -108,7 +122,7 @@ export function createPlay(pkg: AdventureJsonV1) {
       }),
     },
   };
-  let manager = new AdventureManager(deps);
+  manager = new AdventureManager(deps);
   const unsubscribe = appEventBus.subscribe(JOURNAL_EVENTS.CAPTURE, (event) => {
     journal.push(event.payload);
   });
@@ -137,6 +151,10 @@ export function createPlay(pkg: AdventureJsonV1) {
     journal,
     notices,
     drafts,
+    previews,
+    rejectNextAfterPreview() {
+      rejectAfterPreview = true;
+    },
     get manager() {
       return manager;
     },
@@ -167,6 +185,9 @@ export function createPlay(pkg: AdventureJsonV1) {
       const check = (output: unknown, name: string) =>
         assertNoGmLeak(guarded, output, `${label}: ${name}`);
       check(manager.transcript, "transcript");
+      if (!manager.recap) throw new Error("Expected player recap after start");
+      check(manager.recap, "player recap");
+      check(previews, "streamed narration previews");
       check(createPlayerTranscript(session), "archive transcript");
       check(session.visibleState, "visible state");
       check(session.provisionalFacts, "provisional facts");

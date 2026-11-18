@@ -68,12 +68,28 @@ describe.each(fixtures)("GM-only secrecy outputs: %s", (name, pkg) => {
   it("output 1: player transcript and archive view", async () => {
     await playSession();
     expect(play.manager.transcript!.turns.length).toBeGreaterThan(0);
+    expect(play.manager.recap).not.toBeNull();
     assertNoGmLeak(guarded, play.manager.transcript, "transcript");
+    assertNoGmLeak(guarded, play.manager.recap, "player recap");
     assertNoGmLeak(
       guarded,
       createPlayerTranscript(play.session),
       "archive transcript",
     );
+  });
+
+  it("checks streamed previews from a rejected generation", async () => {
+    play = createPlay(pkg);
+    await play.start();
+    play.previews.length = 0;
+    play.rejectNextAfterPreview();
+
+    await play.manager.submitAction("Look around");
+
+    expect(play.manager.phase).toBe("error");
+    expect(play.previews).toEqual(["A lantern flickers at the road's end."]);
+    assertNoGmLeak(guarded, play.previews, "rejected streamed previews");
+    expect(play.manager.streamedNarration).toBe("");
   });
 
   it("output 2: visible state, facts, pending roll, error and roll result", async () => {
