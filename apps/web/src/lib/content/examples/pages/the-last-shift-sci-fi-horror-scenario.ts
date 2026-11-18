@@ -20,6 +20,10 @@ export const theLastShift: ExampleConfigInput = {
   provenance: "authored",
   provenanceNote:
     "An original scenario written by hand for this page, not produced by a generator. The generator link is for making your own one-shot, and the text below is yours to run, change or take apart.",
+  image: {
+    src: "https://assets.codexcryptica.com/announcements/the-last-shift-sci-fi-horror-scenario.jpg",
+    alt: "An abandoned orbital refinery glows with amber shift lights above a shadowed planet",
+  },
   generator: {
     name: "One-shot adventure generator",
     href: "/generators/one-shot-adventure-generator",

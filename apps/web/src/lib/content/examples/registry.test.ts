@@ -441,7 +441,6 @@ describe("the published examples", () => {
 
   it("gives every published example a hero image on Cloudflare R2", () => {
     for (const example of published) {
-      if (example.provenance === "authored" && !example.image) continue;
       expect(example.image, `${example.slug} missing image`).toBeDefined();
       expect(example.image?.src, `${example.slug} image src`).toMatch(
         /^https:\/\/assets\.codexcryptica\.com\/announcements\//,
