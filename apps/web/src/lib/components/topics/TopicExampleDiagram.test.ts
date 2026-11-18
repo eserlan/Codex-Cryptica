@@ -48,6 +48,21 @@ describe("TopicExampleDiagram", () => {
     }
   });
 
+  it("keeps every route in the three-node cycle visible around its middle node", () => {
+    const { container } = render(TopicExampleDiagram, { props: { diagram } });
+    const svg = container.querySelector("svg")!;
+    const middle = svg.querySelectorAll("rect")[1];
+    const outerRoute = Array.from(svg.querySelectorAll("line")).find(
+      (line) =>
+        line.getAttribute("x1") === "400" && line.getAttribute("x2") === "80",
+    )!;
+    const routeY = Number(outerRoute.getAttribute("y1"));
+    const middleTop = Number(middle.getAttribute("y"));
+    const middleBottom = middleTop + Number(middle.getAttribute("height"));
+
+    expect(routeY < middleTop || routeY > middleBottom).toBe(true);
+  });
+
   it("does not clip horizontally or use dl, ul or h3", () => {
     const { container } = render(TopicExampleDiagram, { props: { diagram } });
 
@@ -145,5 +160,44 @@ describe("TopicExampleDiagram", () => {
     expect(Number(label.getAttribute("x"))).toBeLessThanOrEqual(viewBox[2]);
     expect(Number(label.getAttribute("y"))).toBeGreaterThanOrEqual(viewBox[1]);
     expect(Number(label.getAttribute("y"))).toBeLessThanOrEqual(viewBox[3]);
+  });
+
+  it("renders a finite labelled loop for a flow from a node to itself", () => {
+    const selfFlow = {
+      ...diagram,
+      nodes: [diagram.nodes[0]],
+      links: [
+        {
+          from: "tern",
+          to: "tern",
+          kind: "flow" as const,
+          label: "Recirculated supplies",
+          detail: "Supplies return to the same station.",
+        },
+      ],
+    };
+    const { container } = render(TopicExampleDiagram, {
+      props: { diagram: selfFlow },
+    });
+    const svg = container.querySelector("svg")!;
+    const path = svg.querySelector("path[marker-end]")!;
+    const coordinates = path
+      .getAttribute("d")!
+      .match(/-?\d+(?:\.\d+)?/g)!
+      .map(Number);
+    const rect = svg.querySelector("rect")!;
+    const viewBox = svg.getAttribute("viewBox")!.split(" ").map(Number);
+    const label = Array.from(svg.querySelectorAll("text")).find(
+      (text) => text.textContent === "Recirculated supplies",
+    )!;
+
+    expect(coordinates.every(Number.isFinite)).toBe(true);
+    expect(coordinates[0]).toBe(
+      Number(rect.getAttribute("x")) + Number(rect.getAttribute("width")),
+    );
+    expect(coordinates[2]).toBeGreaterThan(coordinates[0]);
+    expect(label).not.toBeNull();
+    expect(Number(label.getAttribute("x"))).toBeLessThanOrEqual(viewBox[2]);
+    expect(Number(label.getAttribute("y"))).toBeGreaterThanOrEqual(viewBox[1]);
   });
 });

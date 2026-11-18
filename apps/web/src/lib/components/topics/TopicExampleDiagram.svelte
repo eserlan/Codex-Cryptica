@@ -17,12 +17,20 @@
     diagram.nodes.map((node, i) => ({
       ...node,
       x: PADDING + (i % COLUMNS) * X_GAP,
-      y: PADDING + Math.floor(i / COLUMNS) * Y_GAP,
+      y:
+        PADDING +
+        (diagram.nodes.length === 3 && i === 1
+          ? Y_GAP
+          : Math.floor(i / COLUMNS) * Y_GAP),
     })),
   );
   const viewBox = $derived.by(() => {
     const columns = Math.max(1, Math.min(COLUMNS, diagram.nodes.length));
-    const rows = Math.max(1, Math.ceil(diagram.nodes.length / COLUMNS));
+    const rows = Math.max(
+      1,
+      Math.ceil(diagram.nodes.length / COLUMNS) +
+        (diagram.nodes.length === 3 ? 1 : 0),
+    );
     return `0 0 ${PADDING * 2 + (columns - 1) * X_GAP + BOX_W} ${PADDING * 2 + (rows - 1) * Y_GAP + BOX_H}`;
   });
   const byId = $derived(new Map(placed.map((n) => [n.id, n])));
@@ -37,6 +45,16 @@
     const dx = to.x - from.x;
     const dy = to.y - from.y;
     const distance = Math.hypot(dx, dy);
+    if (distance === 0) {
+      const edgeX = from.x + BOX_W / 2;
+      const edgeOffset = BOX_H * 0.3;
+      const loopReach = 105;
+      return {
+        d: `M ${edgeX} ${from.y - edgeOffset} C ${from.x + loopReach} ${from.y - BOX_H * 1.3}, ${from.x + loopReach} ${from.y + BOX_H * 1.3}, ${edgeX} ${from.y + edgeOffset}`,
+        lx: from.x + 40,
+        ly: from.y - 45,
+      };
+    }
     const nx = -dy / distance;
     const ny = dx / distance;
     const boundaryScale =
