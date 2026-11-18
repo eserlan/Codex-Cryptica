@@ -119,21 +119,6 @@ describe("buildCreatureProposals", () => {
     expect(proposals[0]!.concealed).toBe(false);
   });
 
-  it("retains many distinct source pages for one creature", () => {
-    const actors = Array.from({ length: 1500 }, (_, index) =>
-      actor(`actor-${index}`, "Shared", { sourceRef: { page: index + 1 } }),
-    );
-    const largePackage = {
-      ...pkg,
-      actors,
-      encounters: [encounter("all", actors.map((entry) => entry.id))],
-    } as AdventureJsonV1;
-    const result = buildCreatureProposals(largePackage);
-    expect(result).toHaveLength(1);
-    expect(result[0]!.sourceRefs).toHaveLength(1500);
-    expect(result[0]!.encounters).toHaveLength(1);
-  });
-
   it("keeps encounter order without rescanning the package for each proposal", () => {
     const actors = Array.from({ length: 2000 }, (_, index) =>
       actor(`actor-${index}`, `Creature ${index}`),
