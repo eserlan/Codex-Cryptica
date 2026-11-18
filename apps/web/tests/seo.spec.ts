@@ -220,13 +220,12 @@ test.describe("SEO and Prerendering", () => {
 
       // 5. Click Save to Codex
       await page.click("#save-to-codex-btn");
-      await page
-        .getByRole("dialog")
-        .getByRole("link", { name: "Open Codex" })
-        .click();
 
-      // 6. Verify redirection to workspace app root
+      // 6. Verify redirection to workspace app root, without any dialog
       await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
+      await expect(page.getByText(/Added/).first()).toBeVisible({
+        timeout: 15000,
+      });
 
       // 7. Verify the new vault is active and the entity is loaded/selected
       await expect(
@@ -299,10 +298,6 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page
-        .getByRole("dialog")
-        .getByRole("link", { name: "Open Codex" })
-        .click();
       await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
@@ -397,10 +392,6 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page
-        .getByRole("dialog")
-        .getByRole("link", { name: "Open Codex" })
-        .click();
       await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
@@ -445,10 +436,6 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page
-        .getByRole("dialog")
-        .getByRole("link", { name: "Open Codex" })
-        .click();
       await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
@@ -480,7 +467,6 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedGodName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.click("button:has-text('Open Codex')");
       await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedGodName!.trim(), level: 2 }),
@@ -524,8 +510,7 @@ test.describe("SEO and Prerendering", () => {
       // Keyboard navigation reaches #save-to-codex-btn and triggers it via Enter
       await page.locator("#save-to-codex-btn").focus();
       await page.keyboard.press("Enter");
-      await expect(page.getByRole("dialog")).toBeVisible();
-      await page.getByRole("button", { name: "Back to Generator" }).click();
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
     });
 
     test("Origin generator passes end-to-end continuation, telemetry, and vault import audit", async ({
@@ -565,7 +550,7 @@ test.describe("SEO and Prerendering", () => {
       expect(originName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await expect(page.getByRole("dialog")).toBeVisible();
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
 
       const trackedEvents = await page.evaluate(
         () => (window as any).__capturedZarazEvents ?? [],
@@ -580,10 +565,6 @@ test.describe("SEO and Prerendering", () => {
         }),
       );
 
-      await page
-        .getByRole("dialog")
-        .getByRole("link", { name: "Open Codex" })
-        .click();
       await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: originName!, level: 2 }),

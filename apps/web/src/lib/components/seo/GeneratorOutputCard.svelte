@@ -52,6 +52,7 @@
     generatorType = undefined,
     canFollowUp = false,
     saveError = null,
+    isSaving = false,
     generatedSingular,
     variant,
     worldTheme,
@@ -91,6 +92,7 @@
     generatorType?: string;
     canFollowUp?: boolean;
     saveError?: string | null;
+    isSaving?: boolean;
     generatedSingular: string;
     variant: "default" | "names";
     worldTheme: string;
@@ -260,7 +262,8 @@
                 <button
                   type="button"
                   onclick={onSaveToCodex}
-                  disabled={isGenerationInProgress}
+                  disabled={isGenerationInProgress || isSaving}
+                  aria-busy={isSaving}
                   class="px-4 py-2 bg-theme-primary text-theme-on-primary font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
                   id="save-to-codex-btn"
                   title="Import this draft into your local Codex Cryptica vault"
@@ -524,6 +527,7 @@
         <GeneratorContinuationCallout
           config={continuationConfig}
           disabled={isGenerationInProgress}
+          {isSaving}
           {saveError}
           {onSaveToCodex}
         />

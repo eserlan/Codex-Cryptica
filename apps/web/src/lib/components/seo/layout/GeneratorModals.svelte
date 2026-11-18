@@ -1,11 +1,9 @@
 <script lang="ts">
   import type { SessionEntity } from "generator-engine";
-  import SaveToCodexModal from "../SaveToCodexModal.svelte";
   import EntityDetailModal from "../EntityDetailModal.svelte";
   import GeneratorRefinementModal from "../GeneratorRefinementModal.svelte";
   import LoreMergeModal from "#lib/components/modals/LoreMergeModal.svelte";
   import MonsterLabsSendingModal from "#lib/components/modals/MonsterLabsSendingModal.svelte";
-  import type { useGeneratorSave } from "./use-generator-save.svelte";
   import type { useGeneratorRefinement } from "./use-generator-refinement.svelte";
   import type { useGeneratorHandoffs } from "./use-generator-handoffs.svelte";
   import type { useGeneratorClipboard } from "./use-generator-clipboard.svelte";
@@ -14,7 +12,6 @@
   let {
     selectedHubEntity,
     onCloseHubEntity,
-    save,
     refinement,
     handoffs,
     clipboard,
@@ -22,7 +19,6 @@
   }: {
     selectedHubEntity: SessionEntity | null;
     onCloseHubEntity: () => void;
-    save: ReturnType<typeof useGeneratorSave>;
     refinement: ReturnType<typeof useGeneratorRefinement>;
     handoffs: ReturnType<typeof useGeneratorHandoffs>;
     clipboard: ReturnType<typeof useGeneratorClipboard>;
@@ -31,13 +27,6 @@
 
   const monsterLabsFlow = $derived(handoffs.monsterLabsFlow);
 </script>
-
-<SaveToCodexModal
-  open={save.showSaveModal}
-  redirectQuery={save.redirectQuery}
-  onConfirm={save.confirmSaveRedirect}
-  onCancel={save.cancelSaveModal}
-/>
 
 <EntityDetailModal
   entity={selectedHubEntity}

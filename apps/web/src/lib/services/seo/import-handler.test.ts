@@ -38,6 +38,7 @@ describe("SeoImportService", () => {
     };
 
     mockRegistryStore = {
+      vaultName: "Vault 1",
       availableVaults: [{ id: "v1", name: "Vault 1" }],
       init: vi.fn().mockResolvedValue(undefined),
       createVault: vi.fn().mockResolvedValue("new-v"),
@@ -59,7 +60,7 @@ describe("SeoImportService", () => {
 
   it("should return null if no pending import exists", async () => {
     const res = await service.checkAndHandlePendingImport();
-    expect(res).toBeNull();
+    expect(res).toEqual({ status: "none" });
   });
 
   it("should parse, validate and import a valid draft and select the entity", async () => {
@@ -77,7 +78,13 @@ describe("SeoImportService", () => {
 
     const res = await service.checkAndHandlePendingImport();
 
-    expect(res).toBe("e1");
+    expect(res).toEqual({
+      status: "imported",
+      rootId: "e1",
+      count: 1,
+      vaultName: "Vault 1",
+      rootTitle: "Valen Frost",
+    });
     expect(mockVaultStore.createEntity).toHaveBeenCalledWith(
       "character",
       "Valen Frost",
@@ -165,7 +172,7 @@ describe("SeoImportService", () => {
 
     const res = await linkingService.checkAndHandlePendingImport();
 
-    expect(res).toBe("e1");
+    expect(res).toMatchObject({ status: "imported", rootId: "e1" });
   });
 
   it("should create a new vault if no vault is active", async () => {
@@ -236,7 +243,7 @@ describe("SeoImportService", () => {
 
     const res = await service.checkAndHandlePendingImport();
 
-    expect(res).toBeNull();
+    expect(res).toEqual({ status: "invalid" });
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
   });
 
@@ -259,7 +266,7 @@ describe("SeoImportService", () => {
 
     const res = await service.checkAndHandlePendingImport();
 
-    expect(res).toBe("e1"); // mock createEntity resolves to e1
+    expect(res).toMatchObject({ status: "imported", rootId: "e1", count: 2 });
     expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(2);
     expect(mockVaultStore.createEntity).toHaveBeenNthCalledWith(
       1,
@@ -306,7 +313,7 @@ describe("SeoImportService", () => {
     );
 
     const res = await injectedService.checkAndHandlePendingImport();
-    expect(res).toBeNull();
+    expect(res).toEqual({ status: "none" });
     expect(replaceState).toHaveBeenCalledWith(
       {},
       "Test Page",
@@ -439,7 +446,7 @@ describe("SeoImportService", () => {
 
     const id = await injectedService.checkAndHandlePendingImport();
 
-    expect(id).toBe("e1");
+    expect(id).toMatchObject({ status: "imported", rootId: "e1" });
     expect(mockVaultStore.createEntity).toHaveBeenCalled();
     // Consumed from the injected storage, not the stubbed global.
     expect(mem.has("__codex_pending_import")).toBe(false);
@@ -532,5 +539,177 @@ describe("SeoImportService", () => {
       "id-quest",
       "harbor.png",
     );
+  });
+
+  describe("recoverable import", () => {
+    const PENDING = "__codex_pending_import";
+    const PROGRESS = "__codex_pending_import_progress";
+
+    /** createEntity that registers entities like the real store. */
+    function trackingCreate(failOn: number[] = []) {
+      let n = 0;
+      mockVaultStore.createEntity = vi
+        .fn()
+        .mockImplementation(async (type: string, title: string) => {
+          n++;
+          if (failOn.includes(n)) throw new Error("disk full");
+          const id = `id-${title}`;
+          mockVaultStore.entities[id] = { id, title, connections: [] };
+          return id;
+        });
+    }
+
+    const pair = [
+      { type: "character", title: "Alpha", content: "a" },
+      { type: "character", title: "Beta", content: "b" },
+    ];
+
+    it("keeps the payload on partial failure and retry creates only the rest", async () => {
+      trackingCreate([2]);
+      localStorage.setItem(PENDING, JSON.stringify(pair));
+
+      const first = await service.checkAndHandlePendingImport();
+
+      expect(first).toEqual({ status: "failed", message: "disk full" });
+      expect(localStorage.getItem(PENDING)).not.toBeNull();
+      expect(localStorage.getItem(PROGRESS)).not.toBeNull();
+
+      trackingCreate();
+      const second = await service.checkAndHandlePendingImport();
+
+      expect(second).toMatchObject({ status: "imported", count: 2 });
+      expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(1);
+      expect(mockVaultStore.createEntity).toHaveBeenCalledWith(
+        "character",
+        "Beta",
+        expect.anything(),
+      );
+      expect(localStorage.getItem(PENDING)).toBeNull();
+      expect(localStorage.getItem(PROGRESS)).toBeNull();
+    });
+
+    it("keeps the payload when switching or creating a vault throws", async () => {
+      mockVaultStore.activeVaultId = null;
+      mockRegistryStore.availableVaults = [{ id: "v1", name: "Vault 1" }];
+      mockVaultStore.switchVault.mockRejectedValue(new Error("nope"));
+      localStorage.setItem(PENDING, JSON.stringify(pair[0]));
+
+      expect(await service.checkAndHandlePendingImport()).toMatchObject({
+        status: "failed",
+      });
+      expect(localStorage.getItem(PENDING)).not.toBeNull();
+
+      mockRegistryStore.availableVaults = [];
+      mockRegistryStore.createVault.mockRejectedValue(new Error("nope"));
+      expect(await service.checkAndHandlePendingImport()).toMatchObject({
+        status: "failed",
+      });
+      expect(localStorage.getItem(PENDING)).not.toBeNull();
+    });
+
+    it("discardPendingImport removes the payload and progress", () => {
+      localStorage.setItem(PENDING, "x");
+      localStorage.setItem(PROGRESS, "y");
+
+      service.discardPendingImport();
+
+      expect(localStorage.getItem(PENDING)).toBeNull();
+      expect(localStorage.getItem(PROGRESS)).toBeNull();
+    });
+
+    it("removes an empty array payload and reports it invalid", async () => {
+      localStorage.setItem(PENDING, "[]");
+
+      expect(await service.checkAndHandlePendingImport()).toEqual({
+        status: "invalid",
+      });
+      expect(localStorage.getItem(PENDING)).toBeNull();
+    });
+
+    it("selects the Point Crawl master note rather than the last location", async () => {
+      trackingCreate();
+      mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+      const batch = [
+        {
+          type: "location",
+          title: "Gate",
+          relationships: [{ title: "Hall", type: "route" }],
+        },
+        {
+          type: "location",
+          title: "Hall",
+          relationships: [{ title: "Gate", type: "route" }],
+        },
+        {
+          type: "note",
+          title: "Crawl",
+          relationships: [
+            { title: "Gate", type: "contains" },
+            { title: "Hall", type: "contains" },
+          ],
+        },
+        { type: "location", title: "Vault" },
+      ];
+      localStorage.setItem(PENDING, JSON.stringify(batch));
+
+      const res = await service.checkAndHandlePendingImport();
+
+      expect(res).toMatchObject({
+        status: "imported",
+        rootId: "id-Crawl",
+        rootTitle: "Crawl",
+        count: 4,
+      });
+      expect(mockVaultStore.selectedEntityId).toBe("id-Crawl");
+    });
+
+    it("shares one in-flight run between concurrent calls", async () => {
+      trackingCreate();
+      localStorage.setItem(PENDING, JSON.stringify(pair));
+
+      const a = service.checkAndHandlePendingImport();
+      const b = service.checkAndHandlePendingImport();
+
+      expect(b).toBe(a);
+      await a;
+      expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not duplicate a connection already present on re-run", async () => {
+      trackingCreate([2]);
+      mockVaultStore.addConnection = vi.fn().mockResolvedValue(undefined);
+      const linked = [
+        { type: "character", title: "Alpha", content: "see [[Beta]]" },
+        { type: "character", title: "Beta", content: "b" },
+      ];
+      localStorage.setItem(PENDING, JSON.stringify(linked));
+      await service.checkAndHandlePendingImport();
+
+      mockVaultStore.entities["id-Alpha"].connections = [
+        { target: "id-Beta", type: "references", label: "Beta" },
+      ];
+      trackingCreate();
+      await service.checkAndHandlePendingImport();
+
+      expect(mockVaultStore.addConnection).not.toHaveBeenCalled();
+    });
+
+    it("ignores a progress record from a different payload", async () => {
+      trackingCreate();
+      mockVaultStore.entities["id-Alpha"] = { id: "id-Alpha", title: "Zed" };
+      localStorage.setItem(
+        PROGRESS,
+        JSON.stringify({
+          fingerprint: "other",
+          vaultId: "v1",
+          created: { 0: { id: "id-Alpha", title: "Alpha" } },
+        }),
+      );
+      localStorage.setItem(PENDING, JSON.stringify(pair));
+
+      await service.checkAndHandlePendingImport();
+
+      expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(2);
+    });
   });
 });

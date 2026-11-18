@@ -20,6 +20,9 @@ vi.mock("$app/paths", () => ({
   resolve: (p: string) => p,
 }));
 
+const gotoMock = vi.hoisted(() => vi.fn());
+vi.mock("$app/navigation", () => ({ goto: gotoMock }));
+
 const trackEventMock = vi.hoisted(() => vi.fn());
 const trackPublicGeneratorActionMock = vi.hoisted(() => vi.fn());
 vi.mock("#lib/services/analytics/zaraz-analytics.js", () => ({
@@ -1146,16 +1149,12 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       await tick();
       await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
 
-      const openCodexLink = document.querySelector(
-        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
+      expect(gotoMock).toHaveBeenCalledTimes(1);
+      expect(gotoMock.mock.calls[0][0]).toContain("utm_medium=save-to-vault");
+      expect(document.querySelector('[role="dialog"]')).toBeNull();
+      expect(document.body.textContent).not.toContain(
+        "Saved to your local Codex vault",
       );
-      expect(openCodexLink).not.toBeUndefined();
-      expect(openCodexLink?.getAttribute("href")).toContain(
-        "utm_medium=save-to-vault",
-      );
-
-      await fireEvent.click(openCodexLink!);
-
       expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
         "open_codex",
         expect.objectContaining({
@@ -1163,17 +1162,6 @@ describe("SEOGeneratorLayout Theming Sync", () => {
           source: "save_confirmation",
         }),
       );
-
-      await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
-      const secondOpenCodexLink = document.querySelector(
-        '[role="dialog"] a[href*="utm_medium=save-to-vault"]',
-      );
-      expect(secondOpenCodexLink).not.toBeUndefined();
-      expect(secondOpenCodexLink?.getAttribute("href")).toContain(
-        "utm_medium=save-to-vault",
-      );
-
-      await fireEvent.click(secondOpenCodexLink!);
     });
   });
 
@@ -1393,8 +1381,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
 
         await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
         await vi.waitFor(() => {
-          expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+          expect(gotoMock).toHaveBeenCalledTimes(1);
         });
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
 
         const stored = JSON.parse(
           localStorage.getItem("__codex_pending_import") ?? "null",

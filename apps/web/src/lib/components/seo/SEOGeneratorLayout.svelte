@@ -307,6 +307,7 @@
     {generatorType}
     {canFollowUp}
     saveError={save.saveError}
+    isSaving={save.isSaving}
     {generatedSingular}
     {variant}
     worldTheme={theme || worldTheme}
@@ -482,7 +483,6 @@
   <GeneratorModals
     {selectedHubEntity}
     onCloseHubEntity={() => (selectedHubEntity = null)}
-    {save}
     {refinement}
     {handoffs}
     {clipboard}
