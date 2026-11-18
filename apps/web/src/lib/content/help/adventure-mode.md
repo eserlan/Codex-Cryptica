@@ -112,7 +112,9 @@ creature's GM-only lore. For each one you can add a prepared image file or leave
 it with no image; the PDF itself is not cropped. Choose **Review changes** to
 see a preview, and nothing is saved until you confirm. If you run it again on
 the same or a newer version, creatures already in your Vault are shown as
-"Already in your Vault" and reused, never overwritten.
+"Already in your Vault" and reused, never overwritten. You can create up to
+100 new entries per confirmation; skip some entries and confirm another batch
+to import more.
 
 Re-importing an identical package is a no-op. Changed content with the same
 package ID opens a new version review against the previous approved version;

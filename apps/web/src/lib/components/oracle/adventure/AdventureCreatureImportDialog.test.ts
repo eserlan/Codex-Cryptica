@@ -174,6 +174,63 @@ describe("creature import dialog", () => {
     await vi.waitFor(() =>
       expect(document.activeElement?.id).toBe("creature-import-title"),
     );
+    const shiftTab = new KeyboardEvent("keydown", {
+      key: "Tab",
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true,
+    });
+    screen
+      .getByRole("heading", { name: "Review changes" })
+      .dispatchEvent(shiftTab);
+    expect(shiftTab.defaultPrevented).toBe(true);
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Confirm and create" }),
+    );
+  });
+
+  it("requires large imports to be confirmed in batches of at most 100 new entries", async () => {
+    const actors = Array.from({ length: 101 }, (_, index) => ({
+      id: `actor-${index}`,
+      name: `Creature ${index}`,
+      summary: "A creature",
+      visibility: "player-visible",
+      epistemicStatus: "source-stated",
+    }));
+    const largePackage = {
+      ...pkg,
+      actors,
+      encounters: [
+        { ...pkg.encounters[0], actorIds: actors.map((actor) => actor.id) },
+      ],
+    } as unknown as AdventureJsonV1;
+    const createEntity = vi.fn(async () => "id");
+    render(AdventureCreatureImportDialog, {
+      item: { ...item, package: largePackage },
+      environment: {
+        importDeps: {
+          getVaultId: () => "v1",
+          createEntity,
+          saveImage: vi.fn(async () => ({ ok: true as const })),
+        },
+        listCreatures: () => [],
+      },
+      onClose: vi.fn(),
+    });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review changes" }),
+    );
+    expect(
+      screen.getByText(/Create up to 100 new entries at a time/),
+    ).toBeTruthy();
+    expect(
+      (
+        screen.getByRole("button", {
+          name: "Confirm and create",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+    expect(createEntity).not.toHaveBeenCalled();
   });
 
   it("shows disjoint source pages without presenting them as a range", () => {

@@ -192,7 +192,31 @@ describe("importCreatures", () => {
     });
     const result = await importCreatures(pkg, "h", choices, deps);
     expect(createEntity).toHaveBeenCalledTimes(1);
-    expect(result).toMatchObject({ created: 1, interrupted: true });
+    expect(result).toMatchObject({
+      created: 0,
+      interrupted: true,
+      failures: ["Gnoll: save could not be confirmed after the Vault changed."],
+    });
+  });
+
+  it("does not count a final entry when its save resolves after the Vault changes", async () => {
+    let vaultId = "v1";
+    const { deps, choices } = setup([], {
+      getVaultId: () => vaultId,
+      createEntity: vi.fn(async () => {
+        vaultId = "v2";
+        return "id-Gnoll";
+      }),
+    });
+    choices.splice(1);
+
+    const result = await importCreatures(pkg, "h", choices, deps);
+
+    expect(result).toMatchObject({
+      created: 0,
+      interrupted: true,
+      failures: ["Gnoll: save could not be confirmed after the Vault changed."],
+    });
   });
 
   it("reports an in-flight image save interrupted when the Vault changes", async () => {

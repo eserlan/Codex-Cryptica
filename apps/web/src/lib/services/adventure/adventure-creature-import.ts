@@ -135,6 +135,13 @@ async function createOne(
     result.failures.push(`${name}: could not create the entry.`);
     return;
   }
+  if (deps.getVaultId() !== vaultId) {
+    result.interrupted = true;
+    result.failures.push(
+      `${name}: save could not be confirmed after the Vault changed.`,
+    );
+    return;
+  }
   result.created += 1;
   if (!choice.file) return;
   if (deps.getVaultId() !== vaultId) {

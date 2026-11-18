@@ -16,7 +16,7 @@
     createVaultCreatureImportEnvironment,
     type CreatureImportEnvironment,
   } from "#lib/services/adventure/adventure-creature-import-deps.js";
-  import { containTab } from "./adventure-phone-surface.js";
+  import { containTab, focusableWithin } from "./adventure-phone-surface.js";
 
   let {
     item,
@@ -53,6 +53,8 @@
   );
 
   const nothingSelected = $derived(creating.length + reusing.length === 0);
+  const maxBatchSize = 100;
+  const batchLimitExceeded = $derived(creating.length > maxBatchSize);
   const reviewPageSize = 20;
   let reviewPage = $state(0);
   const reviewPageStart = $derived(reviewPage * reviewPageSize);
@@ -140,7 +142,13 @@
     class="flex max-h-full w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-theme-border bg-theme-surface shadow-2xl"
     data-testid="creature-import-dialog"
     onkeydown={(event) => {
-      if (dialogPanel) containTab(event, dialogPanel);
+      if (!dialogPanel) return;
+      if (event.key === "Tab" && event.shiftKey && event.target === heading) {
+        event.preventDefault();
+        focusableWithin(dialogPanel).at(-1)?.focus();
+        return;
+      }
+      containTab(event, dialogPanel);
     }}
   >
     <header
@@ -338,6 +346,12 @@
           {creating.length === 1 ? "entry" : "entries"} will be created, and
           {reusing.length} reused.
         </p>
+        {#if batchLimitExceeded}
+          <p class="text-sm text-theme-danger" role="alert">
+            Create up to {maxBatchSize} new entries at a time. Skip some entries to
+            continue; you can import another batch afterwards.
+          </p>
+        {/if}
         <ul class="space-y-1 text-sm text-theme-text">
           {#each visiblePreviewChoices as choice (choice.proposal.key)}
             {#if choice.existing}
@@ -433,7 +447,7 @@
         <button
           type="button"
           class="min-h-10 rounded-lg bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary disabled:opacity-60"
-          disabled={busy || nothingSelected}
+          disabled={busy || nothingSelected || batchLimitExceeded}
           onclick={() => void confirm()}
         >
           {busy ? "Creating…" : "Confirm and create"}
