@@ -13,6 +13,8 @@
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
+  import AdventurePackageAudit from "./AdventurePackageAudit.svelte";
+  import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
   import AdventureManagementMenu from "./AdventureManagementMenu.svelte";
   import AdventurePlay from "./AdventurePlay.svelte";
   import AdventureComposer from "./AdventureComposer.svelte";
@@ -323,6 +325,8 @@
     <ArtworkSettings preferences={artworkPreferences} />
     <AdventureArtworkCueDetails summary={cueSummary} />
   {/if}
+  <AdventurePackageProgress {manager} />
+  <AdventurePackageAudit {manager} />
   <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
