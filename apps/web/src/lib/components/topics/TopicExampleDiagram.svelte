@@ -8,34 +8,52 @@
   const uid = $props.id();
   const BOX_W = 120;
   const BOX_H = 38;
-  const SLOTS = [
-    { x: 160, y: 36 },
-    { x: 62, y: 170 },
-    { x: 258, y: 170 },
-  ];
+  const COLUMNS = 3;
+  const X_GAP = 160;
+  const Y_GAP = 120;
+  const PADDING = 80;
 
   const placed = $derived(
-    diagram.nodes.map((node, i) => ({ ...node, ...SLOTS[i] })),
+    diagram.nodes.map((node, i) => ({
+      ...node,
+      x: PADDING + (i % COLUMNS) * X_GAP,
+      y: PADDING + Math.floor(i / COLUMNS) * Y_GAP,
+    })),
   );
+  const viewBox = $derived.by(() => {
+    const columns = Math.max(1, Math.min(COLUMNS, diagram.nodes.length));
+    const rows = Math.max(1, Math.ceil(diagram.nodes.length / COLUMNS));
+    return `0 0 ${PADDING * 2 + (columns - 1) * X_GAP + BOX_W} ${PADDING * 2 + (rows - 1) * Y_GAP + BOX_H}`;
+  });
   const byId = $derived(new Map(placed.map((n) => [n.id, n])));
   const name = (id: string) => byId.get(id)?.name ?? id;
 
   const routes = $derived(diagram.links.filter((l) => l.kind === "route"));
   const flows = $derived(diagram.links.filter((l) => l.kind === "flow"));
 
-  /** First flow arcs above the node row, the next below, so each reads alone. */
+  /** Offset parallel flows on opposite sides of the direct path. */
   function flowGeometry(from: Placed, to: Placed, index: number) {
     const dir = index % 2 === 0 ? -1 : 1;
-    const sign = to.x > from.x ? 1 : -1;
-    const x1 = from.x + (sign * BOX_W) / 2;
-    const x2 = to.x - (sign * BOX_W) / 2;
-    const y = from.y + dir * 10;
-    const cy = y + dir * 44;
-    const peak = y + dir * 22;
+    const dx = to.x - from.x;
+    const dy = to.y - from.y;
+    const distance = Math.hypot(dx, dy);
+    const nx = -dy / distance;
+    const ny = dx / distance;
+    const boundaryScale =
+      1 / Math.max(Math.abs(dx) / (BOX_W / 2), Math.abs(dy) / (BOX_H / 2));
+    const x1 = from.x + dx * boundaryScale;
+    const y1 = from.y + dy * boundaryScale;
+    const x2 = to.x - dx * boundaryScale;
+    const y2 = to.y - dy * boundaryScale;
+    const offset = dir * 24;
+    const cx = (x1 + x2) / 2 + nx * offset;
+    const cy = (y1 + y2) / 2 + ny * offset;
+    const labelX = (x1 + 2 * cx + x2) / 4 + nx * dir * 12;
+    const labelY = (y1 + 2 * cy + y2) / 4 + ny * dir * 12;
     return {
-      d: `M ${x1} ${y} Q ${(x1 + x2) / 2} ${cy} ${x2} ${y}`,
-      lx: (x1 + x2) / 2,
-      ly: dir < 0 ? peak - 8 : peak + 17,
+      d: `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`,
+      lx: labelX,
+      ly: labelY,
     };
   }
 </script>
@@ -45,7 +63,7 @@
   data-testid="topic-example-diagram"
 >
   <svg
-    viewBox="0 0 320 228"
+    {viewBox}
     class="mx-auto block h-auto w-full max-w-sm select-none"
     role="img"
     aria-labelledby="{uid}-title"

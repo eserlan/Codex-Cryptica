@@ -67,4 +67,83 @@ describe("TopicExampleDiagram", () => {
     });
     expect(container.textContent).not.toMatch(/flashpoint|Missing convoy/i);
   });
+
+  it("places sparse diagrams without dropping their nodes", () => {
+    const sparse = {
+      ...diagram,
+      nodes: diagram.nodes.slice(0, 2),
+      links: [],
+    };
+    const { container } = render(TopicExampleDiagram, {
+      props: { diagram: sparse },
+    });
+
+    expect(container.querySelectorAll("svg rect")).toHaveLength(2);
+    for (const node of sparse.nodes) {
+      expect(container.querySelector("svg")?.textContent).toContain(node.name);
+    }
+  });
+
+  it("connects cross-row flows to node boundaries and fits four nodes", () => {
+    const expanded = {
+      ...diagram,
+      nodes: [
+        ...diagram.nodes,
+        { id: "relay", name: "Relay", role: "Transit" },
+      ],
+      links: [
+        {
+          from: "tern",
+          to: "relay",
+          kind: "flow" as const,
+          label: "Supplies",
+          detail: "Supplies travel through the relay.",
+        },
+      ],
+    };
+    const { container } = render(TopicExampleDiagram, {
+      props: { diagram: expanded },
+    });
+    const svg = container.querySelector("svg")!;
+    const rects = Array.from(svg.querySelectorAll("rect"));
+    expect(rects).toHaveLength(4);
+
+    const path = svg.querySelector("path[marker-end]")!;
+    const [, sx, sy, cx, cy, ex, ey] = path
+      .getAttribute("d")!
+      .match(
+        /^M ([\d.-]+) ([\d.-]+) Q ([\d.-]+) ([\d.-]+) ([\d.-]+) ([\d.-]+)$/,
+      )!
+      .map(Number);
+    const isOnNodeBoundary = (x: number, y: number, rect: SVGRectElement) => {
+      const centerX =
+        Number(rect.getAttribute("x")) + Number(rect.getAttribute("width")) / 2;
+      const centerY =
+        Number(rect.getAttribute("y")) +
+        Number(rect.getAttribute("height")) / 2;
+      const halfWidth = Number(rect.getAttribute("width")) / 2;
+      const halfHeight = Number(rect.getAttribute("height")) / 2;
+      return (
+        (Math.abs(x - centerX) === halfWidth &&
+          Math.abs(y - centerY) <= halfHeight) ||
+        (Math.abs(y - centerY) === halfHeight &&
+          Math.abs(x - centerX) <= halfWidth)
+      );
+    };
+    expect(sx).not.toBeNaN();
+    expect(sy).not.toBeNaN();
+    expect(cx).not.toBeNaN();
+    expect(cy).not.toBeNaN();
+    expect(isOnNodeBoundary(sx, sy, rects[0])).toBe(true);
+    expect(isOnNodeBoundary(ex, ey, rects[3])).toBe(true);
+
+    const viewBox = svg.getAttribute("viewBox")!.split(" ").map(Number);
+    const label = Array.from(svg.querySelectorAll("text")).find(
+      (text) => text.textContent === "Supplies",
+    )!;
+    expect(Number(label.getAttribute("x"))).toBeGreaterThanOrEqual(viewBox[0]);
+    expect(Number(label.getAttribute("x"))).toBeLessThanOrEqual(viewBox[2]);
+    expect(Number(label.getAttribute("y"))).toBeGreaterThanOrEqual(viewBox[1]);
+    expect(Number(label.getAttribute("y"))).toBeLessThanOrEqual(viewBox[3]);
+  });
 });
