@@ -64,6 +64,33 @@ describe("collectGmOnlyStrings", () => {
     ).toThrow(/r-true, field truth/);
   });
 
+  it("guards a gm-only rumour's verdict only in its two label forms", () => {
+    const pkg = structuredClone(canaryReferencePackage);
+    pkg.rumours = [
+      {
+        ...pkg.rumours[0]!,
+        id: "r-partial",
+        text: "short",
+        truth: "partially-true",
+        visibility: "gm-only",
+      },
+    ];
+    const entries = collectGmOnlyStrings(pkg).filter(
+      (entry) => entry.recordId === "r-partial",
+    );
+    expect(entries.map((entry) => entry.text)).toEqual([
+      "Truth: partially-true",
+      '"truth":"partially-true"',
+    ]);
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "The rumour was only partially-true, they say.",
+        "bare phrase",
+      ),
+    ).not.toThrow();
+  });
+
   it("keeps the reference secrets and drops nothing that is player-visible", () => {
     const reference = guarded.filter(
       (entry) => !entry.recordId.startsWith("canary-"),

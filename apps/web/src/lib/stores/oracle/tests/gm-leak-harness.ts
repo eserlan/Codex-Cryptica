@@ -7,12 +7,14 @@ export interface GuardedString {
 }
 
 const MIN_GUARDED_LENGTH = 12;
-// Identifiers, enums and flags are structure, not prose.
+// Identifiers, enums and flags are structure, not prose. A rumour's `truth`
+// is guarded only in its label forms (see addVerdict), never as a bare word.
 const STRUCTURAL_KEYS = new Set([
   "id",
   "visibility",
   "epistemicStatus",
   "anchor",
+  "truth",
   "documentHash",
 ]);
 const isStructural = (key: string) =>
