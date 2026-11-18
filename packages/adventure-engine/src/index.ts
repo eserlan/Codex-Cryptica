@@ -34,3 +34,4 @@ export * from "./historical-anchor-schemas";
 export * from "./historical-anchor-chronology";
 export * from "./historical-anchor";
 export * from "./package-progress";
+export * from "./package-progress-view";

@@ -3464,6 +3464,22 @@ The result remains a draft until you choose the available save or apply action. 
 
 ---
 
+### URBAN FANTASY FACTION GENERATOR
+
+Open the [Urban Fantasy Faction Generator](/generators/urban-fantasy-faction). Choose a mode, faction type, operating scope and moral posture, then add optional campaign context. Generate a modern supernatural group with city resources, an agenda, danger, notable NPCs, internal pressure, a rival and a table-ready hook.
+
+The result is one faction operating inside a city or network, not a generated city. It is system-agnostic and does not claim official support from any third-party game.
+
+## AI and local generation
+
+AI is optional. With AI disabled or unavailable, the page creates a faction from local tables without an account or network request. AI generation uses the selected options and optional campaign context to write a more detailed draft.
+
+## Save the faction to Codex
+
+Choose **Save to Codex** to hand the faction draft to Codex Cryptica in the same browser. Open the app to review it in your local vault. The generated faction stays a draft until you choose to keep it.
+
+---
+
 ### STAT SHEETS
 
 Stat Sheets give any entity — a character, NPC, ship, or settlement — a small table of numbers and notes you can adjust during play, without leaving Codex Cryptica or wiring up a rules engine. Open an entity and click the **Stats** tab to see it.
@@ -3574,6 +3590,22 @@ Your pasted text is sent to the AI to be read. It isn't kept, and it isn't used 
 **Limits**: the import works on one creature or quick NPC at a time, and on text or Foundry JSON only. Character sheets aren't supported yet. Pastes over 12,000 characters are refused, so paste just the stat block.
 
 **Without AI**: when AI is turned off, the import uses a simpler built-in reader. It only fills in what it can read reliably, so expect to fill in more by hand. Convert from 5e isn't available then.
+
+## Species and ancestry
+
+A species is a reusable set of traits you write once on a Creature and apply to many characters and NPCs. Applying one never changes the numbers you typed into a sheet.
+
+**Mark a Creature**: open the Creature's Stats tab, find **Species/Ancestry** and turn on **Use as a Species/Ancestry definition**. Then add traits. Each trait has a name and a description.
+
+**Add adjustments**: on a trait, add an adjustment with a target and a signed amount, such as `str_score` and `+2`. The target is the **field ID or key** of a number field on the character's sheet. Built-in templates use readable IDs like `str_score`. Templates you build yourself use the keys you set. Labels aren't matched.
+
+**Pick a species**: open a Character or NPC, go to the Stats tab and choose a species under **Species/Ancestry**. You see a preview first. Adjustments that fit show `10 → 12`. Adjustments that don't fit say **Not applied** and why: no field with that key, or the field isn't a number field. Only number fields can be adjusted. Nothing changes until you press **Apply**.
+
+**Base and effective values**: the number you typed stays in the field. Next to it the sheet shows the effective value and where it comes from, for example `Effective 12 · Kethari: Brute +2`. If you change the base, the effective value follows. Dice formulas, rolls and modifiers still use the base value.
+
+**Change or remove**: **Change** picks a different species and replaces the old one. **Remove** takes away only the species' adjustments.
+
+**Changes to the source**: the character keeps its own copy of the traits. If you edit the Creature later, characters that already have it aren't updated. Use **Change** to apply the new version. If the Creature is deleted, the character keeps its traits and shows that the source is unavailable.
 
 ## Related reading
 
@@ -4127,8 +4159,11 @@ a package, and the same file always gives the same result.
 5. Approve to save the package as an immutable SHA-256 baseline, or cancel —
    cancelling leaves no package in the Vault.
 
-Once approved, you can start a new session pinned to that package version
-and hash, or resume an existing pinned session directly. Later changes to
+Once approved, each package version shows a card with its hook and source
+details, without spoilers. When a package offers more than one starting point,
+you can pick one before starting; the first scene is the default, and a hidden
+alternative is shown only as "Alternative start (details hidden)". You can
+start a new session pinned to that package version and hash, or resume an existing pinned session directly. Later changes to
 the package never retarget a session that has already started.
 
 Re-importing an identical package is a no-op. Changed content with the same
@@ -4138,6 +4173,24 @@ approving. Each approved version stays available to start a session. Use
 **Remove** in the approved package list to delete a version. A version pinned
 by an adventure session cannot be removed; resume that session or keep the
 version in the Vault.
+
+If a session's package version is missing or has changed, the session pauses
+with **Retry** and **Leave session**. Your story stays readable. Re-import
+the same version, then choose Retry to continue.
+
+## Package progress and GM details
+
+Open **Adventure tools** during a session pinned to a package. The
+player progress view lists confirmed, player-visible scenes you have visited,
+the current scene, and player-visible clues you have found. It leaves out
+GM-only records, unvisited scenes, and unconfirmed claims, and does not show a
+remaining-scene count.
+
+The optional **GM details** audit is hidden until you choose **Show GM details**
+and confirm the spoiler warning. It lists package records the ledger has
+touched, including claims and superseded events, so you can check the Oracle's
+bookkeeping. Choose **Hide GM details** to close it again. Revealing it may show
+GM-only package content.
 
 Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
 500 pages) remain available as experimental convenience inputs. They are
@@ -4435,6 +4488,10 @@ Reference answers to real RPG and worldbuilding questions, indexed at https://co
 ### [How do I run a rogue or scout without splitting the party?](https://codexcryptica.com/answers/how-do-i-run-a-rogue-or-scout-without-splitting-the-party)
 
 **Direct answer:** Characters can be apart without excluding their players. Let the scout move ahead, but keep each solo beat short: resolve its uncertainty, then return information, pressure, or a choice to the group while they can still act. The rogue earns useful information, position, or access; companions can watch exits, prepare a diversion, or change the conditions outside.
+
+### [How do I run a sci-fi horror RPG?](https://codexcryptica.com/answers/how-do-i-run-a-sci-fi-horror-rpg)
+
+**Direct answer:** Run sci-fi horror by making the situation dangerous, understandable and open-ended. Give a small, vulnerable crew ordinary work and a clear reason to stay, cut off easy help through distance, failing equipment or limited authority, and seed observable clues early enough that players can act on them. Then escalate through visible clocks, costs and changed environments rather than scripted jump scares, reveal the threat in stages, and agree tone boundaries in advance so fear comes from hard choices the players made with fair information.
 
 ### [How do I run a stealth mission in a tabletop RPG?](https://codexcryptica.com/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg)
 
@@ -5111,6 +5168,12 @@ Curated raw or lightly edited output from the Codex Cryptica generators, indexed
 
 **Summary:** An interconnected 8-location coastal fantasy point crawl across tidal causeways, sea-caves, and ruined cliff-abbeys exposed only during the king-tide, featuring branching routes, hidden crawlspaces, and a clue-gated final ascent.
 
+### [Sci-fi horror scenario example: The Last Shift](https://codexcryptica.com/examples/the-last-shift-sci-fi-horror-scenario)
+
+**Genre:** Sci-fi horror
+
+**Summary:** A salvage crew reaches an abandoned orbital refinery whose payroll still clocks in workers who died years ago, and whose systems insist that production never stopped.
+
 
 ## Live In-Browser Generators
 
@@ -5288,6 +5351,12 @@ Codex Cryptica provides specialized, tailored landing pages, knowledge graphs, a
 **Summary:** Track pilots, frames, contracts, operations, and the people caught between them.
 
 **Overview:** A tactical mecha campaign moves quickly between briefing rooms, hangars, battle maps, and the consequences left behind. When one squad changes a warzone, takes a contractor's job, or loses a frame in a bad extraction, you need more than a mission list to remember who authorised the operation, what the unit is carrying, which settlement is now exposed, and why the next deployment matters.
+
+### [Codex Cryptica for Mothership Warden Prep & Campaign Notes](https://codexcryptica.com/for/mothership)
+
+**Summary:** Keep the ship, the crew and the things they should never have found connected in one local-first workspace.
+
+**Overview:** A sci-fi horror scenario is a pile of connected secrets. The derelict's deck plan, the contractor who never made it back from the last shift, the employer who knew more than the briefing said, the log nobody has played yet, and the trouble that gets worse every time the crew stays aboard. Keep it all linked as story notes for the Warden, so you can answer "who signed that work order?" mid-session without paging through folders. These are notes for you, not rules automation.
 
 ### [Codex Cryptica for Pathfinder 2e Campaign Management](https://codexcryptica.com/for/pathfinder-2e)
 
