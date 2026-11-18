@@ -65,7 +65,7 @@ export const mothership: LandingPageConfig = {
       {
         label: "Tamsin Okoro",
         sublabel: "Missing Crew • Pump Technician",
-        relation: "Lost her crew member",
+        relation: "Last carried",
         category: "character",
       },
       {

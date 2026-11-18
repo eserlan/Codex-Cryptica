@@ -1605,6 +1605,9 @@ describe("Landing Page Registry", () => {
         spokes.find((s) => s.label === "Halvorsen Deepwater Holdings")
           ?.relation,
       ).toBe("Is owned by");
+      expect(spokes.find((s) => s.label === "Tamsin Okoro")?.relation).toBe(
+        "Last carried",
+      );
       expect(
         spokes.find((s) => s.label === "Processing Deck Nine")?.relation,
       ).toBe("Includes");
