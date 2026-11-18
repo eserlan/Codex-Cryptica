@@ -1,6 +1,7 @@
 import type {
   TopicGuideLink,
   TopicHubConfig,
+  TopicImage,
   TopicToolLink,
   TopicWorkflowStep,
 } from "./types";
@@ -20,6 +21,13 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
     "https://assets.codexcryptica.com/og/how-to-create-a-sci-fi-star-system-for-an-rpg.jpg",
   ogImageAlt:
     "Exploration ship overlooking a gas giant, mining moon, orbital station, and busy routes through a star system",
+
+  heroImage: {
+    src: "https://assets.codexcryptica.com/og/how-to-create-a-sci-fi-star-system-for-an-rpg.jpg",
+    alt: "View from a ship's cockpit of a ringed gas giant, a cratered mining asteroid with rigs, an orbital station and freighters on lit travel lanes",
+    width: 1600,
+    height: 900,
+  } satisfies TopicImage,
 
   primaryAction: {
     label: "Generate a Star System",
@@ -157,6 +165,59 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
     ],
     highlight:
       "Every place has a job, every route has a cost, and one missing convoy pulls the crew toward all three destinations",
+    diagram: {
+      title: "The Halden Drift network",
+      description:
+        "Three destinations joined by three routes. Water flows from Coldwell to Veyra Deep and food returns to Coldwell. The route between Tern Anchorage and Coldwell is the flashpoint, where a water convoy has gone missing.",
+      nodes: [
+        {
+          id: "tern",
+          name: "Tern Anchorage",
+          role: "Tug refit, customs and tolls",
+        },
+        { id: "coldwell", name: "Coldwell", role: "Ice mining, water" },
+        { id: "veyra", name: "Veyra Deep", role: "Hydroponics, food" },
+      ],
+      links: [
+        {
+          from: "tern",
+          to: "coldwell",
+          kind: "route",
+          label: "Belt route",
+          detail:
+            "A two-day burn through the belt that rock storms close for part of each week, with Tugmaster tolls. A water convoy has gone missing here.",
+          flashpoint: true,
+        },
+        {
+          from: "coldwell",
+          to: "veyra",
+          kind: "route",
+          label: "Long haul",
+          detail: "A four-day haul that only the heavy tugs can fly.",
+        },
+        {
+          from: "veyra",
+          to: "tern",
+          kind: "route",
+          label: "Customs hop",
+          detail: "A short hop that passes the customs gate.",
+        },
+        {
+          from: "coldwell",
+          to: "veyra",
+          kind: "flow",
+          label: "Water",
+          detail: "Water travels on tugs refitted at Tern Anchorage.",
+        },
+        {
+          from: "veyra",
+          to: "coldwell",
+          kind: "flow",
+          label: "Food",
+          detail: "Food is sent back on the return leg.",
+        },
+      ],
+    },
   },
 
   generators: [
