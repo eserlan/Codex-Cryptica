@@ -5,9 +5,14 @@
  * docs/local-pr-checks.md). Only lines changed against the base are reported,
  * so existing code does not block unrelated work.
  *
- *   contrast        text-theme-* colour (with any /NN opacity) against its
- *                   background in every theme template, light and dark:
- *                   4.5:1 for text, 3:1 for icons and large bold text.
+ *   contrast        text-theme-* (including danger/warning, /NN opacity, and
+ *                   hover:/focus:/disabled: states), focus ring/outline
+ *                   tokens, and interactive control border-theme-* boundaries
+ *                   against their background in every theme template, light
+ *                   and dark: 4.5:1 for text, 3:1 for icons, large bold text,
+ *                   focus indicators, and control borders.
+ *   modal-focus     raw aria-modal="true" / role="dialog" without focusTrap
+ *                   or ModalShell.
  *   remote-images   renderMarkdown(...) without `allowImages: false`.
  *   visual-order    a base order-N with a different responsive sm:/md:/lg:
  *                   order, which splits visual order from keyboard order.
@@ -59,7 +64,7 @@ export function contrastRatio(a, b) {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** Theme token behind each semantic text-theme-* / bg-theme-* name. */
+/** Theme token behind each semantic text-theme-* / bg-theme-* / border-theme-* name. */
 const TOKEN_FOR = {
   text: (t) => t.text,
   muted: (t) => t.mutedOverride ?? t.metaText ?? t.secondary,
@@ -69,14 +74,30 @@ const TOKEN_FOR = {
   "on-primary": (t) => t.onPrimaryOverride ?? t.background,
   bg: (t) => t.background,
   surface: (t) => t.surface,
+  danger: (t) => t.dangerOverride ?? "#ef4444",
+  warning: (t) => t.warningOverride ?? "#eab308",
+  border: (t) => t.border,
+  "border-interactive": (t) => t.borderInteractiveOverride ?? t.border,
 };
 
 // ---------------------------------------------------------- class parsing --
 
+/** Tag name of the opening HTML element enclosing `index`, if any. */
+function enclosingTag(source, index) {
+  const before = source.slice(Math.max(0, index - 600), index);
+  const open = before.lastIndexOf("<");
+  if (open === -1) return null;
+  const close = before.lastIndexOf(">");
+  if (close > open) return null;
+  const match = before.slice(open + 1).match(/^([a-zA-Z][\w:-]*)/);
+  return match ? match[1].toLowerCase() : null;
+}
+
 /**
  * Class combinations an element can render with. A static class attribute
  * gives one; each quoted branch of an inline {cond ? 'a' : 'b'} adds one on
- * top of the static part. Each class keeps the line it appears on.
+ * top of the static part. Each class keeps the line it appears on, and the
+ * array carries the enclosing HTML tag name as `.tag`.
  */
 export function classVariants(source) {
   const variants = [];
@@ -86,22 +107,31 @@ export function classVariants(source) {
       name: m[0],
       line: lineAt(offset + m.index),
     }));
+  const pushVariant = (list, tag) => {
+    list.tag = tag;
+    variants.push(list);
+  };
 
   for (const match of source.matchAll(/class="([^"]*)"/g)) {
+    const tag = enclosingTag(source, match.index);
     const body = match[1];
     const start = match.index + 'class="'.length;
     const staticPart = body.replace(/\{[^}]*\}/g, (m) => " ".repeat(m.length));
     const base = tokens(staticPart, start);
     const branches = [...body.matchAll(/'([^']*)'/g)];
-    if (branches.length === 0) variants.push(base);
+    if (branches.length === 0) pushVariant(base, tag);
     for (const branch of branches)
-      variants.push([...base, ...tokens(branch[1], start + branch.index + 1)]);
+      pushVariant(
+        [...base, ...tokens(branch[1], start + branch.index + 1)],
+        tag,
+      );
   }
   for (const match of source.matchAll(/class=\{([^}]*)\}/g)) {
+    const tag = enclosingTag(source, match.index);
     const start = match.index + "class={".length;
     for (const literal of match[1].matchAll(/"([^"]*)"|`([^`]*)`/g)) {
       const text = literal[1] ?? literal[2];
-      variants.push(tokens(text, start + literal.index + 1));
+      pushVariant(tokens(text, start + literal.index + 1), tag);
     }
   }
   return variants;
@@ -109,8 +139,26 @@ export function classVariants(source) {
 
 const LARGE_TEXT = /^text-(2xl|[3-9]xl)$/;
 const FG_CLASS =
-  /^text-theme-(text|muted|primary|secondary|accent|on-primary|bg)(?:\/(\d+))?$/;
-const BG_CLASS = /^bg-theme-(bg|surface|primary|accent|secondary)(?:\/(\d+))?$/;
+  /^text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
+const BG_CLASS =
+  /^bg-theme-(bg|surface|primary|accent|secondary|danger|warning)(?:\/(\d+))?$/;
+const HOVER_FG_CLASS =
+  /^hover:text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
+const HOVER_BG_CLASS =
+  /^hover:bg-theme-(bg|surface|primary|accent|secondary|danger|warning)(?:\/(\d+))?$/;
+const DISABLED_FG_CLASS =
+  /^disabled:text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
+const DISABLED_OPACITY_CLASS = /^disabled:opacity-(\d+)$/;
+const FOCUS_INDICATOR_CLASS =
+  /^(?:focus-visible|focus):(?:ring|outline)-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning|border|border-interactive)(?:\/(\d+))?$/;
+const BORDER_COLOR_CLASS =
+  /^border-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning|border|border-interactive)(?:\/(\d+))?$/;
+const INTERACTIVE_BORDER_TAGS = new Set([
+  "button",
+  "input",
+  "select",
+  "textarea",
+]);
 
 /** 3:1 for icons and large bold text, 4.5:1 for everything else. */
 function minimumRatio(names) {
@@ -122,50 +170,167 @@ function minimumRatio(names) {
   return isIcon || isLarge ? 3 : 4.5;
 }
 
-/** A theme token with the class's /NN opacity, composited over a ground. */
-function shownColour(tokens, [, name, alpha], ground) {
+/** A theme token with the class's /NN opacity (and optional extra opacity), composited over a ground. */
+function shownColour(tokens, [, name, alpha], ground, extraOpacity = 1) {
   const colour = parseColour(TOKEN_FOR[name](tokens));
   if (!colour) return null;
-  const opacity = (alpha ? +alpha / 100 : 1) * colour[3];
+  const opacity = (alpha ? +alpha / 100 : 1) * colour[3] * extraOpacity;
   return over([...colour.slice(0, 3), opacity], ground);
 }
 
 /** Lowest ratio of the text over each ground the element can sit on. */
-function themeRatio(tokens, fg, bg) {
+function themeRatio(tokens, fg, bg, extraOpacity = 1) {
   let lowest = Infinity;
   for (const value of [tokens.background, tokens.surface]) {
     const page = parseColour(value);
     const ground = page && (bg ? shownColour(tokens, bg, page) : page);
-    const text = ground && shownColour(tokens, fg, ground);
+    const text = ground && shownColour(tokens, fg, ground, extraOpacity);
     if (text) lowest = Math.min(lowest, contrastRatio(text, ground));
   }
   return lowest;
 }
 
-/** Contrast findings for one class combination across all themes. */
-export function contrastProblems(variant, themes) {
-  const fgToken = variant.find((t) => FG_CLASS.test(t.name));
-  if (!fgToken) return [];
-  const bgToken = variant.find((t) => BG_CLASS.test(t.name));
-  const fg = fgToken.name.match(FG_CLASS);
-  const bg = bgToken?.name.match(BG_CLASS);
-  const minimum = minimumRatio(variant.map((t) => t.name));
-
+function worstThemeFor(themes, fg, bg, minimum, extraOpacity = 1) {
   let worst = null;
   for (const theme of themes) {
-    const ratio = themeRatio(theme.tokens, fg, bg);
+    const ratio = themeRatio(theme.tokens, fg, bg, extraOpacity);
     if (ratio < minimum && (!worst || ratio < worst.ratio))
       worst = { ratio, theme: theme.id };
   }
-  if (!worst) return [];
-  return [
-    {
-      rule: "contrast",
-      line: fgToken.line,
-      lines: bgToken ? [fgToken.line, bgToken.line] : [fgToken.line],
-      message: `${fgToken.name}${bgToken ? ` on ${bgToken.name}` : ""} is ${worst.ratio.toFixed(2)}:1 in ${worst.theme} (needs ${minimum}:1). Use a full-strength token (e.g. text-theme-text) or text-theme-on-primary on primary fills.`,
-    },
-  ];
+  return worst;
+}
+
+/** Contrast findings for one class combination across all themes. */
+export function contrastProblems(variant, themes) {
+  const problems = [];
+  const names = variant.map((t) => t.name);
+  const minimum = minimumRatio(names);
+  const fgToken = variant.find((t) => FG_CLASS.test(t.name));
+  const bgToken = variant.find((t) => BG_CLASS.test(t.name));
+  const fg = fgToken?.name.match(FG_CLASS);
+  const bg = bgToken?.name.match(BG_CLASS);
+
+  if (fgToken && fg) {
+    const worst = worstThemeFor(themes, fg, bg, minimum);
+    if (worst) {
+      problems.push({
+        rule: "contrast",
+        line: fgToken.line,
+        lines: bgToken ? [fgToken.line, bgToken.line] : [fgToken.line],
+        message: `${fgToken.name}${bgToken ? ` on ${bgToken.name}` : ""} is ${worst.ratio.toFixed(2)}:1 in ${worst.theme} (needs ${minimum}:1). Use a full-strength token (e.g. text-theme-text) or text-theme-on-primary on primary fills.`,
+      });
+    }
+  }
+
+  // Hover state foreground/background contrast
+  const hoverFgToken = variant.find((t) => HOVER_FG_CLASS.test(t.name));
+  const hoverBgToken = variant.find((t) => HOVER_BG_CLASS.test(t.name));
+  if (hoverFgToken || (hoverBgToken && fg)) {
+    const effectiveFg = hoverFgToken
+      ? hoverFgToken.name.match(HOVER_FG_CLASS)
+      : fg;
+    const effectiveBg = hoverBgToken
+      ? hoverBgToken.name.match(HOVER_BG_CLASS)
+      : bg;
+    const anchor = hoverFgToken ?? hoverBgToken;
+    if (effectiveFg && anchor) {
+      const worst = worstThemeFor(themes, effectiveFg, effectiveBg, minimum);
+      if (worst) {
+        const lines = [
+          ...new Set(
+            [hoverFgToken?.line, hoverBgToken?.line, fgToken?.line].filter(
+              Boolean,
+            ),
+          ),
+        ];
+        problems.push({
+          rule: "state-contrast",
+          line: anchor.line,
+          lines,
+          message: `${hoverFgToken?.name ?? fgToken?.name}${hoverBgToken ? ` on ${hoverBgToken.name}` : bgToken ? ` on ${bgToken.name}` : ""} is ${worst.ratio.toFixed(2)}:1 on hover in ${worst.theme} (needs ${minimum}:1).`,
+        });
+      }
+    }
+  }
+
+  // Disabled state foreground contrast (disabled:text-theme-* or disabled:opacity-NN)
+  const disabledFgToken = variant.find((t) => DISABLED_FG_CLASS.test(t.name));
+  const disabledOpacityToken = variant.find((t) =>
+    DISABLED_OPACITY_CLASS.test(t.name),
+  );
+  if (disabledFgToken || (disabledOpacityToken && fg)) {
+    const effectiveFg = disabledFgToken
+      ? disabledFgToken.name.match(DISABLED_FG_CLASS)
+      : fg;
+    const opacity = disabledOpacityToken
+      ? +disabledOpacityToken.name.match(DISABLED_OPACITY_CLASS)[1] / 100
+      : 1;
+    const anchor = disabledFgToken ?? disabledOpacityToken;
+    if (effectiveFg && anchor) {
+      const worst = worstThemeFor(themes, effectiveFg, bg, minimum, opacity);
+      if (worst) {
+        const lines = [
+          ...new Set(
+            [
+              disabledFgToken?.line,
+              disabledOpacityToken?.line,
+              fgToken?.line,
+            ].filter(Boolean),
+          ),
+        ];
+        problems.push({
+          rule: "state-contrast",
+          line: anchor.line,
+          lines,
+          message: `${anchor.name} lowers disabled text contrast to ${worst.ratio.toFixed(2)}:1 in ${worst.theme} (needs ${minimum}:1).`,
+        });
+      }
+    }
+  }
+
+  // Focus ring / outline indicator contrast (3:1 non-text UI contrast)
+  const focusToken = variant.find((t) => FOCUS_INDICATOR_CLASS.test(t.name));
+  if (focusToken) {
+    const focusMatch = focusToken.name.match(FOCUS_INDICATOR_CLASS);
+    const worst = worstThemeFor(themes, focusMatch, null, 3);
+    if (worst) {
+      problems.push({
+        rule: "state-contrast",
+        line: focusToken.line,
+        lines: [focusToken.line],
+        message: `${focusToken.name} focus indicator is ${worst.ratio.toFixed(2)}:1 in ${worst.theme} (needs 3:1).`,
+      });
+    }
+  }
+
+  // Outlined interactive control boundary contrast (3:1 non-text UI contrast)
+  const hasVisibleBorder =
+    names.some((n) => /^border(?:-[248])?$/.test(n)) &&
+    !names.some((n) => /^border-(?:0|none|transparent)$/.test(n));
+  const hasSolidFill =
+    bgToken &&
+    /^bg-theme-(?:primary|accent|secondary|danger|warning)$/.test(bgToken.name);
+  const borderToken = variant.find((t) => BORDER_COLOR_CLASS.test(t.name));
+  if (
+    variant.tag &&
+    INTERACTIVE_BORDER_TAGS.has(variant.tag) &&
+    hasVisibleBorder &&
+    !hasSolidFill &&
+    borderToken
+  ) {
+    const borderMatch = borderToken.name.match(BORDER_COLOR_CLASS);
+    const worst = worstThemeFor(themes, borderMatch, null, 3);
+    if (worst) {
+      problems.push({
+        rule: "border-contrast",
+        line: borderToken.line,
+        lines: [borderToken.line],
+        message: `${borderToken.name} on <${variant.tag}> is ${worst.ratio.toFixed(2)}:1 in ${worst.theme} (needs 3:1 for interactive control boundaries). Use a stronger border token such as border-theme-border-interactive or border-theme-text/60.`,
+      });
+    }
+  }
+
+  return problems;
 }
 
 // ------------------------------------------------------ pattern checks ----
@@ -388,6 +553,27 @@ function hasTimerCleanup(source, timerId) {
   return teardown || effectCleanup;
 }
 
+/** Hand-rolled modal dialogs without focus trap / shared modal shell. */
+export function modalFocusProblems(source, file) {
+  if (!file.endsWith(".svelte")) return [];
+  const hasFocusTrap =
+    /\buse:focusTrap\b|\bfocusTrap\b|\bModalShell\b/.test(source) ||
+    (/\bTab\b/.test(source) && /\.focus\s*\(/.test(source));
+  if (hasFocusTrap) return [];
+  const problems = [];
+  for (const match of source.matchAll(
+    /aria-modal\s*=\s*["']true["']|role\s*=\s*["']dialog["']/g,
+  )) {
+    problems.push({
+      rule: "modal-focus",
+      line: source.slice(0, match.index).split("\n").length,
+      message:
+        'Dialog markup (`aria-modal="true"` / `role="dialog"`) without `use:focusTrap` or `ModalShell` lets keyboard focus escape behind the modal. Use `use:focusTrap` from `$lib/actions/focusTrap` or `ModalShell`.',
+    });
+  }
+  return problems;
+}
+
 export function problemTouchesChangedLines(problem, lines) {
   return (
     !lines || (problem.lines ?? [problem.line]).some((line) => lines.has(line))
@@ -417,6 +603,7 @@ export function checkSource(source, file, themes) {
     problems.push(
       ...visualOrderProblems(variants),
       ...timerProblems(source, file),
+      ...modalFocusProblems(source, file),
     );
   }
   return withoutIgnored(problems, source);
@@ -442,10 +629,17 @@ const APP_CSS = new URL("../apps/web/src/app.css", import.meta.url);
 
 /**
  * app.css overrides a few tokens per theme (`--color-theme-on-primary`,
- * `--color-text-muted`); fold them into the theme tokens the checks read.
+ * `--color-text-muted`, `--color-danger`, `--color-warning`,
+ * `--border-interactive`); fold them into the theme tokens the checks read.
  */
 export function withCssOverrides(themes, css) {
   const overrides = new Map();
+  const rootDanger = css.match(
+    /--color-danger:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/i,
+  )?.[1];
+  const rootWarning = css.match(
+    /--color-warning:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/i,
+  )?.[1];
   for (const block of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
     const ids = [...block[1].matchAll(/data-theme="([^"]+)"/g)].map(
       (m) => m[1],
@@ -454,16 +648,34 @@ export function withCssOverrides(themes, css) {
       /--color-theme-on-primary:\s*(#[0-9a-f]{3,6})/i,
     );
     const muted = block[2].match(/--color-text-muted:\s*(#[0-9a-f]{3,6})/i);
+    const danger = block[2].match(
+      /--color-(?:theme-)?danger:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/i,
+    );
+    const warning = block[2].match(
+      /--color-(?:theme-)?warning:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/i,
+    );
+    const borderInteractive = block[2].match(
+      /--border-interactive:\s*(#[0-9a-f]{3,6}|rgba?\([^)]+\))/i,
+    );
     for (const id of ids) {
       const entry = overrides.get(id) ?? {};
       if (onPrimary) entry.onPrimaryOverride = onPrimary[1];
       if (muted) entry.mutedOverride = muted[1];
+      if (danger) entry.dangerOverride = danger[1];
+      if (warning) entry.warningOverride = warning[1];
+      if (borderInteractive)
+        entry.borderInteractiveOverride = borderInteractive[1];
       overrides.set(id, entry);
     }
   }
   return themes.map((theme) => ({
     ...theme,
-    tokens: { ...theme.tokens, ...(overrides.get(theme.id) ?? {}) },
+    tokens: {
+      ...(rootDanger ? { dangerOverride: rootDanger } : {}),
+      ...(rootWarning ? { warningOverride: rootWarning } : {}),
+      ...theme.tokens,
+      ...(overrides.get(theme.id) ?? {}),
+    },
   }));
 }
 
