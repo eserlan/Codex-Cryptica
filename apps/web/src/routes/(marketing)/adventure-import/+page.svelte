@@ -8,6 +8,8 @@
     COVERAGE_REPORT_PROMPT,
     IMPORT_OUTCOMES,
     LINK_HANDOFF_TEXT,
+    INCOMPLETE_PROMPT_FALLBACK,
+    PROMPT_END_MARKER,
     FIDELITY_ROWS,
     CORRESPONDENCE_EXTENSION_DOC,
     TROUBLESHOOTING_ERRORS,
@@ -142,8 +144,9 @@
         >
         (<a class="underline" href="{cleanBase}/adventure-import/prompt.txt"
           >prompt.txt</a
-        >). The sections below it are human reference documentation — do not use
-        their templates unless the user asks for a staged conversion.
+        >). Check that the prompt ends with <code>{PROMPT_END_MARKER}</code>. If
+        the link is blocked or the prompt is incomplete, stop.
+        {INCOMPLETE_PROMPT_FALLBACK}
       </p>
 
       <div class="flex flex-wrap items-center justify-center gap-3 pt-2">

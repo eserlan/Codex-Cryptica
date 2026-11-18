@@ -379,6 +379,19 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
+    it("requires the whole prompt before staging and can work without the external schema URL", () => {
+      expect(prompt.trimEnd().split("\n").at(-1)).toBe(
+        "END OF ADVENTURE JSON V1 CONVERSION PROMPT",
+      );
+      expect(prompt).toContain(
+        "Wait for it before making an inventory or generating any chunk",
+      );
+      expect(prompt).toContain("does not replace the missing prompt");
+      expect(prompt).toContain(
+        "use that contract without asking the user to paste the schema",
+      );
+    });
+
     it("asks for missing source material without inventing a conversion", () => {
       expect(prompt).toContain("name the missing input or page range");
       expect(prompt).toContain("ask for readable text or a smaller upload");
@@ -584,8 +597,11 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(LINK_HANDOFF_TEXT).toContain(
       "https://codexcryptica.com/adventure-import/prompt.txt",
     );
-    expect(LINK_HANDOFF_TEXT).toContain("downloadable .json file");
-    expect(LINK_HANDOFF_TEXT).toContain("otherwise reply with the JSON only");
+    expect(LINK_HANDOFF_TEXT).toContain("the prompt is incomplete");
+    expect(LINK_HANDOFF_TEXT).toContain(
+      "paste the entire prompt into this chat",
+    );
+    expect(LINK_HANDOFF_TEXT).toContain("does not replace the missing prompt");
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Copied link/i })).toBeTruthy();
     });
