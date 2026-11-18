@@ -444,6 +444,31 @@ describe("gap 3: companion lines", () => {
     ).toThrow(new RegExp(`record ${scene.id}, field locationId`));
   });
 
+  it("guards structured ID arrays that refer to a short hidden record", () => {
+    const pkg = variant();
+    const encounter = pkg.encounters[0]!;
+    const hiddenActorIndex = encounter.actorIds?.length ?? 0;
+    pkg.actors = [
+      ...pkg.actors,
+      { ...pkg.actors[0]!, id: "hid-8", name: "Hidden actor", ...gmOnly },
+    ];
+    pkg.encounters = pkg.encounters.map((entry, index) =>
+      index === 0
+        ? { ...entry, actorIds: [...(entry.actorIds ?? []), "hid-8"] }
+        : entry,
+    );
+
+    const entries = collectGmOnlyStrings(pkg);
+    expect(entries).toContainEqual({
+      recordId: encounter.id,
+      field: `actorIds[${hiddenActorIndex}]`,
+      text: "hid-8",
+    });
+    expect(() =>
+      assertNoGmLeak(entries, "Actors: hid-8", "structured ID array"),
+    ).toThrow(new RegExp(`record ${encounter.id}, field actorIds\\[\\d+\\]`));
+  });
+
   it("guards sibling text in a composed connection line moved to a companion", () => {
     const pkg = variant();
     pkg.secrets = [

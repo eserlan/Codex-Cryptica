@@ -180,19 +180,35 @@ function* structuredReferenceLeaves(
   if (Array.isArray(value)) {
     for (const [index, item] of value.entries())
       yield* structuredReferenceLeaves(item, `${path}[${index}]`);
-  } else if (value && typeof value === "object") {
-    for (const [key, child] of Object.entries(value)) {
-      const childPath = path ? `${path}.${key}` : key;
-      if (/(?:Id|Ids)$/.test(key)) {
-        if (typeof child === "string") yield [childPath, child];
-        else if (Array.isArray(child))
-          for (const [index, id] of child.entries())
-            if (typeof id === "string") yield [`${childPath}[${index}]`, id];
-      } else {
-        yield* structuredReferenceLeaves(child, childPath);
-      }
-    }
+    return;
   }
+  if (!value || typeof value !== "object") return;
+  for (const [key, child] of Object.entries(value)) {
+    const childPath = path ? `${path}.${key}` : key;
+    if (key.endsWith("Id") && typeof child === "string")
+      yield [childPath, child];
+    else if (key.endsWith("Ids"))
+      yield* structuredReferenceArray(child, childPath);
+    else yield* structuredReferenceLeaves(child, childPath);
+  }
+}
+
+function* structuredReferenceArray(
+  value: unknown,
+  path: string,
+): Generator<[string, string]> {
+  if (!Array.isArray(value)) return;
+  for (const [index, id] of value.entries())
+    if (typeof id === "string") yield [`${path}[${index}]`, id];
+}
+
+function addStructuredReferences(
+  out: Collector,
+  record: Loose,
+  hiddenIds: ReadonlySet<string>,
+): void {
+  for (const [field, id] of structuredReferenceLeaves(record, ""))
+    if (hiddenIds.has(id)) out.add(record.id, field, id);
 }
 
 function guardOrAllowLeaf(
@@ -265,8 +281,7 @@ function addCompanionLines(
         );
       }
     }
-    for (const [field, id] of structuredReferenceLeaves(record, ""))
-      if (hiddenIds.has(id)) out.add(record.id, field, id);
+    addStructuredReferences(out, record, hiddenIds);
     for (const group of companionComponents) {
       guardOrAllowComponentGroup(
         out,
