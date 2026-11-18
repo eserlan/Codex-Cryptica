@@ -10,6 +10,7 @@ export interface CreatureProposalEncounter {
   id: string;
   title: string;
   pages: number[];
+  sourceRef?: SourceReference;
   visibility: Visibility;
 }
 
@@ -18,6 +19,7 @@ export interface CreatureProposal {
   name: string;
   actorIds: string[];
   pages: number[];
+  sourceRefs: SourceReference[];
   summary: string[];
   description: string[];
   role: string[];
@@ -70,6 +72,7 @@ function toProposalEncounter(
     id: encounter.id,
     title: encounter.title ?? UNTITLED_ENCOUNTER,
     pages: sortedUnique(pagesOf(encounter.sourceRef)),
+    ...(encounter.sourceRef ? { sourceRef: encounter.sourceRef } : {}),
     visibility: encounter.visibility,
   };
 }
@@ -99,6 +102,7 @@ export function buildCreatureProposals(
         name: actor.name,
         actorIds: [],
         pages: [],
+        sourceRefs: [],
         summary: [],
         description: [],
         role: [],
@@ -113,15 +117,13 @@ export function buildCreatureProposals(
   }
 
   const ordered = [...proposals.values()];
+  const encounterOrder = new Map(
+    pkg.encounters.map((encounter, index) => [encounter.id, index]),
+  );
   for (const proposal of ordered) {
     proposal.pages = sortedUnique(proposal.pages);
-    const byId = new Map(
-      pkg.encounters.map((encounter) => [encounter.id, encounter]),
-    );
     proposal.encounters.sort(
-      (a, b) =>
-        pkg.encounters.indexOf(byId.get(a.id)!) -
-        pkg.encounters.indexOf(byId.get(b.id)!),
+      (a, b) => encounterOrder.get(a.id)! - encounterOrder.get(b.id)!,
     );
   }
   return ordered;
@@ -134,6 +136,16 @@ function mergeActor(
 ): void {
   proposal.actorIds.push(actor.id);
   proposal.pages.push(...pagesOf(actor.sourceRef));
+  if (
+    actor.sourceRef &&
+    !proposal.sourceRefs.some(
+      (ref) =>
+        ref.page === actor.sourceRef!.page &&
+        ref.pageEnd === actor.sourceRef!.pageEnd,
+    )
+  ) {
+    proposal.sourceRefs.push(actor.sourceRef);
+  }
   for (const field of TEXT_FIELDS) pushDistinct(proposal[field], actor[field]);
   if (actor.visibility === "gm-only") proposal.concealed = true;
   for (const encounter of linked) {
@@ -151,19 +163,36 @@ function mergeActor(
 export function escapeEntryText(text: string): string {
   return text
     .replace(/[\\`*_[\]()!<>&|~]/g, "\\$&")
+    .replace(/(https?):\/\//gi, "$1\\://")
+    .replace(/\b(www)\./gi, "$1\\.")
     .replace(/^(\s*)([#+-])/gm, "$1\\$2")
     .replace(/^(\s*)(\d+)\./gm, "$1$2\\.");
 }
 
-function formatPages(pages: number[]): string {
-  if (pages.length === 0) return "";
-  const first = pages[0]!;
-  const last = pages[pages.length - 1]!;
-  return first === last ? `p. ${first}` : `pp. ${first}–${last}`;
+function formatPageReferences(refs: SourceReference[]): string {
+  const cited = refs
+    .filter((ref) => typeof ref.page === "number")
+    .map((ref) => ({ start: ref.page!, end: ref.pageEnd ?? ref.page! }))
+    .sort((a, b) => a.start - b.start || a.end - b.end);
+  const unique = cited.filter(
+    (ref, index) =>
+      index === 0 ||
+      ref.start !== cited[index - 1]!.start ||
+      ref.end !== cited[index - 1]!.end,
+  );
+  const labels = unique.map(({ start, end }) =>
+    start === end ? String(start) : `${start}–${end}`,
+  );
+  if (labels.length === 0) return "";
+  return labels.length === 1 && unique[0]!.start === unique[0]!.end
+    ? `p. ${labels[0]}`
+    : `pp. ${labels.join(", ")}`;
 }
 
 function encounterLine(encounter: CreatureProposalEncounter): string {
-  const pages = formatPages(encounter.pages);
+  const pages = formatPageReferences(
+    encounter.sourceRef ? [encounter.sourceRef] : [],
+  );
   return pages
     ? `- ${escapeEntryText(encounter.title)} (${pages})`
     : `- ${escapeEntryText(encounter.title)}`;

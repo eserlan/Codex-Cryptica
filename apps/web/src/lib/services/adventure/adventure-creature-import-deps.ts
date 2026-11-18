@@ -17,7 +17,17 @@ export function createVaultCreatureImportEnvironment(): CreatureImportEnvironmen
       getVaultId: () => vault.activeVaultId,
       createEntity: (type, title, data) =>
         vault.createEntity(type, title, data),
-      saveImage: (id, file) => saveEntityImageFile(id, file),
+      saveImage: (id, file, expectedVaultId) => {
+        if (vault.activeVaultId !== expectedVaultId) {
+          return Promise.resolve({
+            ok: false as const,
+            error: "The active Vault changed before the image was saved.",
+          });
+        }
+        return saveEntityImageFile(id, file, {
+          canUpdate: () => vault.activeVaultId === expectedVaultId,
+        });
+      },
     },
     listCreatures: () =>
       Object.values(vault.allEntities)

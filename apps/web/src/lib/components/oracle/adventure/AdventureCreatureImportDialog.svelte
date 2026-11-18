@@ -3,6 +3,7 @@
   import { onMount, tick, untrack } from "svelte";
   import {
     buildCreatureProposals,
+    type SourceReference,
     type StoredAdventurePackage,
   } from "@codex/adventure-engine";
   import {
@@ -51,6 +52,13 @@
   );
 
   const nothingSelected = $derived(creating.length + reusing.length === 0);
+  const reviewPageSize = 20;
+  let reviewPage = $state(0);
+  const reviewPageStart = $derived(reviewPage * reviewPageSize);
+  const reviewPageCount = $derived(Math.ceil(choices.length / reviewPageSize));
+  const visibleChoices = $derived(
+    choices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
+  );
 
   async function goTo(next: "review" | "preview" | "done") {
     step = next;
@@ -73,11 +81,18 @@
     };
   });
 
-  function pageLabel(pages: number[]): string {
-    if (pages.length === 0) return "Page not given";
-    const first = pages[0]!;
-    const last = pages[pages.length - 1]!;
-    return first === last ? `Page ${first}` : `Pages ${first}–${last}`;
+  function pageLabel(refs: SourceReference[]): string {
+    const cited = refs
+      .filter((ref) => typeof ref.page === "number")
+      .map((ref) => ({ start: ref.page!, end: ref.pageEnd ?? ref.page! }))
+      .sort((a, b) => a.start - b.start || a.end - b.end);
+    const labels = cited.map(({ start, end }) =>
+      start === end ? String(start) : `${start}–${end}`,
+    );
+    if (labels.length === 0) return "Page not given";
+    return labels.length === 1 && cited[0]!.start === cited[0]!.end
+      ? `Page ${labels[0]}`
+      : `Pages ${labels.join(", ")}`;
   }
 
   function pickFile(index: number, event: Event) {
@@ -143,7 +158,7 @@
       <button
         bind:this={closeButton}
         type="button"
-        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-text hover:bg-theme-primary/10"
+        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-text text-theme-text hover:bg-theme-primary/10"
         aria-label="Close"
         disabled={busy}
         onclick={close}
@@ -159,7 +174,8 @@
           until you confirm.
         </p>
         <ul class="space-y-3">
-          {#each choices as choice, index (choice.proposal.key)}
+          {#each visibleChoices as choice, offset (choice.proposal.key)}
+            {@const index = reviewPageStart + offset}
             {@const proposal = choice.proposal}
             <li
               class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-3 text-sm text-theme-text"
@@ -169,15 +185,14 @@
               {#each [...proposal.summary, ...proposal.description, ...proposal.role, ...proposal.motivation, ...proposal.disposition] as text, textIndex (textIndex)}
                 <p class="text-xs whitespace-pre-line">{text}</p>
               {/each}
-              <p class="text-xs">{pageLabel(proposal.pages)}</p>
+              <p class="text-xs">{pageLabel(proposal.sourceRefs)}</p>
               <ul class="list-disc pl-5 text-xs">
                 {#each proposal.encounters as encounter (encounter.id)}
                   <li>
                     {encounter.title}
-                    ({pageLabel(encounter.pages)}){encounter.visibility ===
-                    "gm-only"
-                      ? " (GM-only)"
-                      : ""}
+                    ({pageLabel(
+                      encounter.sourceRef ? [encounter.sourceRef] : [],
+                    )}){encounter.visibility === "gm-only" ? " (GM-only)" : ""}
                   </li>
                 {/each}
               </ul>
@@ -250,7 +265,7 @@
                       No image
                     </label>
                     <label
-                      class="flex cursor-pointer items-center gap-1 rounded-md border border-theme-border px-2 py-1 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-theme-primary"
+                      class="flex cursor-pointer items-center gap-1 rounded-md border border-theme-text px-2 py-1 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-theme-primary"
                     >
                       <input
                         type="file"
@@ -265,7 +280,7 @@
                       <span class="text-xs">{choice.file.name}</span>
                       <button
                         type="button"
-                        class="min-h-8 rounded-md border border-theme-border px-2 text-xs"
+                        class="min-h-8 rounded-md border border-theme-text px-2 text-xs"
                         onclick={() => (choice.file = undefined)}
                       >
                         Clear image
@@ -276,7 +291,7 @@
                     Art credit (optional)
                     <input
                       type="text"
-                      class="min-h-9 rounded-md border border-theme-border bg-theme-surface px-2 text-sm"
+                      class="min-h-9 rounded-md border border-theme-text bg-theme-surface px-2 text-sm"
                       bind:value={choice.artCredit}
                     />
                   </label>
@@ -285,6 +300,35 @@
             </li>
           {/each}
         </ul>
+        {#if reviewPageCount > 1}
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <p class="text-xs text-theme-text" aria-live="polite">
+              Showing {reviewPageStart + 1}–{Math.min(
+                reviewPageStart + reviewPageSize,
+                choices.length,
+              )} of {choices.length} creatures
+            </p>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
+                disabled={reviewPage === 0}
+                onclick={() => (reviewPage = Math.max(0, reviewPage - 1))}
+              >
+                Previous creatures
+              </button>
+              <button
+                type="button"
+                class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
+                disabled={reviewPage >= reviewPageCount - 1}
+                onclick={() =>
+                  (reviewPage = Math.min(reviewPageCount - 1, reviewPage + 1))}
+              >
+                Next creatures
+              </button>
+            </div>
+          </div>
+        {/if}
       {:else if step === "preview"}
         <p class="text-sm text-theme-text" role="status">
           {creating.length}
@@ -326,7 +370,7 @@
       {#if step === "review"}
         <button
           type="button"
-          class="min-h-10 rounded-lg border border-theme-border px-3 text-sm text-theme-text"
+          class="min-h-10 rounded-lg border border-theme-text px-3 text-sm text-theme-text"
           onclick={onClose}
         >
           Cancel
@@ -347,7 +391,7 @@
       {:else if step === "preview"}
         <button
           type="button"
-          class="min-h-10 rounded-lg border border-theme-border px-3 text-sm text-theme-text"
+          class="min-h-10 rounded-lg border border-theme-text px-3 text-sm text-theme-text"
           disabled={busy}
           onclick={() => void goTo("review")}
         >

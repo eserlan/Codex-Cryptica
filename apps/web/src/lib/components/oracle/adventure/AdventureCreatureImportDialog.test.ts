@@ -176,6 +176,71 @@ describe("creature import dialog", () => {
     );
   });
 
+  it("shows disjoint source pages without presenting them as a range", () => {
+    const pagePackage = {
+      ...pkg,
+      actors: [
+        { ...pkg.actors[0], sourceRef: { page: 2 } },
+        {
+          ...pkg.actors[0],
+          id: "a1-copy",
+          name: "Gnoll",
+          sourceRef: { page: 4 },
+        },
+      ],
+      encounters: [{ ...pkg.encounters[0], actorIds: ["a1", "a1-copy"] }],
+    } as unknown as AdventureJsonV1;
+    render(AdventureCreatureImportDialog, {
+      item: { ...item, package: pagePackage },
+      environment: {
+        importDeps: {
+          getVaultId: () => "v1",
+          createEntity: vi.fn(async () => "id"),
+          saveImage: vi.fn(async () => ({ ok: true as const })),
+        },
+        listCreatures: () => [],
+      },
+      onClose: vi.fn(),
+    });
+    expect(screen.getByText("Pages 2, 4")).toBeTruthy();
+  });
+
+  it("paginates large proposal reviews while keeping every choice available", async () => {
+    const actors = Array.from({ length: 25 }, (_, index) => ({
+      id: `actor-${index}`,
+      name: `Creature ${index}`,
+      summary: "A creature",
+      visibility: "player-visible",
+      epistemicStatus: "source-stated",
+    }));
+    const largePackage = {
+      ...pkg,
+      actors,
+      encounters: [
+        { ...pkg.encounters[0], actorIds: actors.map((actor) => actor.id) },
+      ],
+    } as unknown as AdventureJsonV1;
+    render(AdventureCreatureImportDialog, {
+      item: { ...item, package: largePackage },
+      environment: {
+        importDeps: {
+          getVaultId: () => "v1",
+          createEntity: vi.fn(async () => "id"),
+          saveImage: vi.fn(async () => ({ ok: true as const })),
+        },
+        listCreatures: () => [],
+      },
+      onClose: vi.fn(),
+    });
+    expect(screen.getByText("Showing 1–20 of 25 creatures")).toBeTruthy();
+    expect(screen.queryByText("Creature 24")).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Next creatures" }),
+    );
+    expect(screen.getByText("Creature 24")).toBeTruthy();
+    expect(screen.getByText("Showing 21–25 of 25 creatures")).toBeTruthy();
+  });
+
   it("restores focus to the opener when closed", async () => {
     const opener = document.createElement("button");
     opener.textContent = "Create creature entries";

@@ -31,6 +31,7 @@ export interface CreatureImportDeps {
   saveImage(
     entityId: string,
     file: File,
+    expectedVaultId?: string | null,
   ): Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
@@ -141,8 +142,9 @@ async function createOne(
     return;
   }
   try {
-    const saved = await deps.saveImage(id, choice.file);
+    const saved = await deps.saveImage(id, choice.file, vaultId);
     if (!saved.ok) result.failures.push(IMAGE_FAILURE(name));
+    if (deps.getVaultId() !== vaultId) result.interrupted = true;
   } catch {
     result.failures.push(IMAGE_FAILURE(name));
   }

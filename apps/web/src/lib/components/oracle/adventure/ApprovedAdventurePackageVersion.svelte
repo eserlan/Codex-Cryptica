@@ -152,7 +152,7 @@
         type="button"
         data-testid="approved-package-creatures-{item.package.id}-{hash8}"
         onclick={() => (creatureDialogOpen = true)}
-        class="min-h-10 rounded-lg border border-theme-border px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10"
+        class="min-h-10 rounded-lg border border-theme-text px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10"
       >
         Create creature entries
       </button>

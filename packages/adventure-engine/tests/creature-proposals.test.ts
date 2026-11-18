@@ -95,11 +95,18 @@ describe("buildCreatureProposals", () => {
     expect(gnoll.role).toEqual(["Raider"]);
     expect(gnoll.motivation).toEqual(["Hungry"]);
     expect(gnoll.encounters).toEqual([
-      { id: "e-gate", title: "Gate", pages: [4], visibility: "player-visible" },
+      {
+        id: "e-gate",
+        title: "Gate",
+        pages: [4],
+        sourceRef: { page: 4 },
+        visibility: "player-visible",
+      },
       {
         id: "e-den",
         title: "Untitled encounter",
         pages: [6, 7],
+        sourceRef: { page: 6, pageEnd: 7 },
         visibility: "player-visible",
       },
     ]);
@@ -110,6 +117,20 @@ describe("buildCreatureProposals", () => {
     expect(proposals[1]!.concealed).toBe(true);
     expect(proposals[2]!.concealed).toBe(false);
     expect(proposals[0]!.concealed).toBe(false);
+  });
+
+  it("keeps encounter order without rescanning the package for each proposal", () => {
+    const actors = Array.from({ length: 2000 }, (_, index) =>
+      actor(`actor-${index}`, `Creature ${index}`),
+    );
+    const encounters = actors.map((entry, index) =>
+      encounter(`encounter-${index}`, [entry.id]),
+    );
+    const largePackage = { ...pkg, actors, encounters } as AdventureJsonV1;
+    const result = buildCreatureProposals(largePackage);
+    expect(result).toHaveLength(actors.length);
+    expect(result[0]!.encounters[0]!.id).toBe("encounter-0");
+    expect(result.at(-1)!.encounters[0]!.id).toBe("encounter-1999");
   });
 });
 
@@ -174,5 +195,37 @@ describe("entry text safety", () => {
       pkg.source,
     );
     expect(text.content).toContain("Guard Wolf summary");
+  });
+
+  it("prevents bare HTTP and www URLs in imported fields from becoming links", () => {
+    const urlPackage = {
+      ...pkg,
+      source: { title: "https://tracker.example/source" },
+      actors: [
+        actor("url-actor", "URL actor", {
+          summary: "Read https://tracker.example/summary",
+          description: "More at www.example.com/path",
+        }),
+      ],
+      encounters: [encounter("url-encounter", ["url-actor"])],
+    } as AdventureJsonV1;
+    const entry = buildCreatureEntryText(
+      buildCreatureProposals(urlPackage)[0]!,
+      urlPackage.source,
+    );
+    expect(entry.content).toContain("https\\://tracker.example/source");
+    expect(entry.content).toContain("www\\.example.com/path");
+  });
+
+  it("keeps disjoint actor source pages separate", () => {
+    const pagePackage = {
+      ...pkg,
+      actors: [
+        actor("page-a", "Same name", { sourceRef: { page: 2 } }),
+        actor("page-b", " same   name ", { sourceRef: { page: 4 } }),
+      ],
+      encounters: [encounter("pages", ["page-a", "page-b"])],
+    } as AdventureJsonV1;
+    expect(buildCreatureProposals(pagePackage)[0]!.pages).toEqual([2, 4]);
   });
 });

@@ -153,7 +153,7 @@ describe("importCreatures", () => {
     choices[0]!.file = file;
     choices[0]!.artCredit = "J. Artist";
     const result = await importCreatures(pkg, "h", choices, deps);
-    expect(saveImage).toHaveBeenCalledWith("id-Gnoll", file);
+    expect(saveImage).toHaveBeenCalledWith("id-Gnoll", file, "v1");
     expect(createEntity).toHaveBeenCalledTimes(3);
     expect(result.created).toBe(3);
     expect(result.failures).toEqual(["Gnoll: created without its image."]);
@@ -191,6 +191,23 @@ describe("importCreatures", () => {
       createEntity,
     });
     const result = await importCreatures(pkg, "h", choices, deps);
+    expect(createEntity).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ created: 1, interrupted: true });
+  });
+
+  it("reports an in-flight image save interrupted when the Vault changes", async () => {
+    let vaultId = "v1";
+    const saveImage = vi.fn(async () => {
+      vaultId = "v2";
+      return { ok: false as const, error: "Vault changed" };
+    });
+    const { deps, choices, createEntity } = setup([], {
+      getVaultId: () => vaultId,
+      saveImage,
+    });
+    choices[0]!.file = new File(["x"], "a.png", { type: "image/png" });
+    const result = await importCreatures(pkg, "h", choices, deps);
+    expect(saveImage).toHaveBeenCalledWith("id-Gnoll", choices[0]!.file, "v1");
     expect(createEntity).toHaveBeenCalledTimes(1);
     expect(result).toMatchObject({ created: 1, interrupted: true });
   });
