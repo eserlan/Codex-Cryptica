@@ -71,7 +71,7 @@
         id="save-to-codex-btn"
         onclick={onSaveToCodex}
         {disabled}
-        class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-theme-primary px-5 py-2.5 font-header text-xs font-bold uppercase tracking-wider text-theme-on-primary shadow-sm transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg disabled:opacity-50"
+        class="inline-flex min-h-[44px] shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-theme-primary px-5 py-2.5 font-header text-xs font-bold text-theme-on-primary shadow-sm transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg disabled:opacity-50"
       >
         <span
           class="icon-[lucide--arrow-right] h-4 w-4 shrink-0"

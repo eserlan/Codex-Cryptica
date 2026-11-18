@@ -38,5 +38,4 @@
 .seo-md .seo-label {
   text-shadow: 0 0 10px
     color-mix(in srgb, var(--color-primary) 70%, transparent);
-  filter: brightness(1.2);
 }
