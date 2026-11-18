@@ -7,30 +7,27 @@ import {
 describe("generator-continuation", () => {
   it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
     const starSystem = getGeneratorContinuationConfig("star-system");
-    expect(starSystem).not.toBeNull();
-    expect(starSystem?.headline).toBe("Keep this system connected");
-    expect(starSystem?.ctaLabel).toBe("Add to my Codex");
-    expect(starSystem?.localFirstNotice).toBe(
-      "No account needed; stored locally in this browser.",
-    );
+    expect(starSystem).toMatchObject({
+      headline: "Keep this system connected",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
 
     const npc = getGeneratorContinuationConfig("npc");
     const rpgNpc = getGeneratorContinuationConfig("rpg-npc-generator");
-    expect(npc).not.toBeNull();
     expect(rpgNpc).toBe(npc);
-    expect(npc?.headline).toBe("Give this character a place in your world");
-    expect(npc?.ctaLabel).toBe("Add to my Codex");
-    expect(npc?.localFirstNotice).toBe(
-      "No account needed; stored locally in this browser.",
-    );
+    expect(npc).toMatchObject({
+      headline: "Give this character a place in your world",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
 
     const origin = getGeneratorContinuationConfig("origin-generator");
-    expect(origin).not.toBeNull();
-    expect(origin?.headline).toBe("Keep developing this origin");
-    expect(origin?.ctaLabel).toBe("Add to my Codex");
-    expect(origin?.localFirstNotice).toBe(
-      "No account needed; stored locally in this browser.",
-    );
+    expect(origin).toMatchObject({
+      headline: "Keep developing this origin",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
