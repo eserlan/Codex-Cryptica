@@ -14,11 +14,15 @@ import {
   buildDarkFactionPrompt,
   parseDarkFactionResponse,
   generateDarkFactionLocal,
+  buildUrbanFantasyFactionPrompt,
+  parseUrbanFantasyFactionResponse,
+  generateUrbanFantasyFactionLocal,
   type FactionGeneratorOptions,
   type FactionRosterGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
   type DarkFactionGeneratorOptions,
+  type UrbanFantasyFactionGeneratorOptions,
   type PublicGeneratorOutput,
 } from "generator-engine";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -35,6 +39,7 @@ type FactionGenerationDependencies = {
   recordInputs: (type: string, summary: string | undefined) => void;
   summarizeResolvedInputs: (resolved: object) => string;
   formatRecentInputsNote: (inputs: readonly string[]) => string;
+  isAIAllowed: () => boolean;
 };
 
 /** AI orchestration for faction-family generators. */
@@ -161,6 +166,32 @@ export class FactionGenerationService {
         return parseDarkFactionResponse(text, resolved);
       },
       () => generateDarkFactionLocal(darkFactionOptions),
+    );
+  }
+
+  async generateUrbanFantasyFaction(
+    options: UrbanFantasyFactionGeneratorOptions & { useAI?: boolean } = {},
+  ): Promise<GeneratorOutput> {
+    const { useAI, ...urbanFactionOptions } = options;
+    const recentInputs = this.deps.recentInputs("urban-fantasy-faction");
+    const shouldUseAI = useAI !== false && this.deps.isAIAllowed();
+    return this.deps.runWithAIFallback(
+      shouldUseAI,
+      async () => {
+        const { systemInstruction, userMessage, resolved } =
+          buildUrbanFantasyFactionPrompt(
+            urbanFactionOptions,
+            this.deps.getSessionContext() +
+              this.deps.formatRecentInputsNote(recentInputs),
+          );
+        this.deps.recordInputs(
+          "urban-fantasy-faction",
+          this.deps.summarizeResolvedInputs(resolved),
+        );
+        const text = await this.deps.runModel(systemInstruction, userMessage);
+        return parseUrbanFantasyFactionResponse(text, resolved);
+      },
+      () => generateUrbanFantasyFactionLocal(urbanFactionOptions),
     );
   }
 }

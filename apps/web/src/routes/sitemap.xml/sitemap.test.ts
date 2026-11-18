@@ -64,6 +64,9 @@ describe("Sitemap.xml API Endpoint", () => {
     expect(xml).toContain(
       "https://codexcryptica.com/generators/dark-fantasy-faction",
     );
+    expect(xml).toContain(
+      "https://codexcryptica.com/generators/urban-fantasy-faction",
+    );
     expect(xml).toContain("https://codexcryptica.com/generators/constellation");
     expect(xml).toContain("https://codexcryptica.com/generators/encounter");
     expect(xml).toContain(

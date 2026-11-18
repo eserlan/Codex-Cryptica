@@ -12,6 +12,7 @@ import {
 } from "./generator-ai-transport";
 import { WorldGenerationService } from "./world-generation";
 import { FactionGenerationService } from "./faction-generation";
+import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
 import type { GeneratorOutput } from "./generator-helpers";
 
@@ -40,6 +41,7 @@ export class GeneratorEngineBase {
       ),
       summarizeResolvedInputs,
       formatRecentInputsNote,
+      isAIAllowed: () => !discoveryPolicyStore.aiDisabled,
     };
   }
 

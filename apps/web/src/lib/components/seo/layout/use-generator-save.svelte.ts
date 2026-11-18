@@ -18,6 +18,7 @@ type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
 export function useGeneratorSave(deps: {
   getGeneratorType: () => string;
   getGeneratedData: () => GeneratorOutput | null;
+  isGenerationInProgress?: () => boolean;
   getDocumentLayout: () => DocumentLayout;
   exportDiagramImage: () => Promise<string | undefined>;
   getSelectedNodeIds?: () => string[] | undefined;
@@ -70,6 +71,7 @@ export function useGeneratorSave(deps: {
   }
 
   async function handleSaveToCodex() {
+    if (deps.isGenerationInProgress?.()) return;
     const generatedData = deps.getGeneratedData();
     if (!generatedData) return;
     const generatorType = deps.getGeneratorType();
