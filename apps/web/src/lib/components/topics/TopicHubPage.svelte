@@ -41,6 +41,32 @@
   });
 </script>
 
+{#snippet thesis()}
+  <section class="mb-12" aria-labelledby="{config.slug}-thesis">
+    <h2
+      id="{config.slug}-thesis"
+      class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
+    >
+      {config.copy.thesisHeading}
+    </h2>
+    {#if config.copy.thesisIntro}
+      <p class="mb-6 leading-relaxed text-theme-text {TOPIC_LAYOUT.measure}">
+        {config.copy.thesisIntro}
+      </p>
+    {/if}
+    <div class={TOPIC_LAYOUT.ruled}>
+      {#each config.thesisPoints as point (point.title)}
+        <div class="border-l border-theme-border pl-5">
+          <h3 class="font-header text-base font-bold text-theme-text">
+            {point.title}
+          </h3>
+          <p class="mt-1 leading-relaxed text-theme-text">{point.summary}</p>
+        </div>
+      {/each}
+    </div>
+  </section>
+{/snippet}
+
 <SeoHead
   title={config.metaTitle}
   description={config.description}
@@ -64,24 +90,7 @@
   <TopicPrimaryAction slug={config.slug} action={config.primaryAction} />
 
   <!-- Standalone explanatory copy: the ideas that make this topic play differently. -->
-  <section class="mb-12" aria-labelledby="{config.slug}-thesis">
-    <h2
-      id="{config.slug}-thesis"
-      class="mb-4 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
-    >
-      {config.copy.thesisHeading}
-    </h2>
-    <div class={TOPIC_LAYOUT.ruled}>
-      {#each config.thesisPoints as point (point.title)}
-        <div class="border-l border-theme-border pl-5">
-          <h3 class="font-header text-base font-bold text-theme-text">
-            {point.title}
-          </h3>
-          <p class="mt-1 leading-relaxed text-theme-text">{point.summary}</p>
-        </div>
-      {/each}
-    </div>
-  </section>
+  {@render thesis()}
 
   <!-- Learn: the strongest Answers and guides. -->
   <section class="mb-12" aria-labelledby="{config.slug}-learn">
