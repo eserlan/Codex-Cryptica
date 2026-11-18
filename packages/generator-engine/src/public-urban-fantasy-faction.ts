@@ -432,11 +432,11 @@ export function parseUrbanFantasyFactionResponse(
   if (npcBullets.length < 2 || npcBullets.length > 3) {
     missing.push("2-3 named Notable NPC bullets");
   }
-  const hasNamedRival = rivalFaction.split(/\r?\n/).some((line) => {
+  const namedRivalCount = rivalFaction.split(/\r?\n/).filter((line) => {
     const match = line.match(/^\s*-\s+\*\*👥\s+([^*]+)\*\*:\s*\S/);
     return Boolean(match?.[1].trim());
-  });
-  if (!hasNamedRival) missing.push("named Rival Faction");
+  }).length;
+  if (namedRivalCount !== 1) missing.push("exactly one named Rival Faction");
   if (!summary) missing.unshift("summary");
   if (missing.length > 0) {
     throw new Error(
@@ -444,12 +444,6 @@ export function parseUrbanFantasyFactionResponse(
     );
   }
 
-  const modelLabels = Array.isArray(data.labels)
-    ? data.labels
-        .filter((label): label is string => typeof label === "string")
-        .map(stripUntrustedMediaMarkup)
-        .filter((label) => label.trim().length > 0)
-    : [];
   return {
     type: "faction",
     title,
@@ -458,7 +452,6 @@ export function parseUrbanFantasyFactionResponse(
     lore,
     labels: [
       ...new Set([
-        ...modelLabels,
         ...URBAN_FANTASY_LABELS,
         "faction-generator",
         "rpg-faction",

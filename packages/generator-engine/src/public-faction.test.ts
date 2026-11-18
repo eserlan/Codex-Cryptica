@@ -467,7 +467,47 @@ describe("urban fantasy faction (#1137)", () => {
         JSON.stringify(urbanFantasyAiResponse({ lore: whitespaceRivalLore })),
         resolved,
       ),
-    ).toThrow(/named Rival Faction/);
+    ).toThrow(/exactly one named Rival Faction/);
+  });
+
+  it("rejects multiple named rival factions", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt(
+      {},
+      "",
+      seededRng(2321),
+    );
+    const validLore = urbanFantasyAiResponse().lore;
+    const multipleRivals = validLore.replace(
+      "- **👥 Northside Mutual**: offers residents an open deal in exchange for control of the crossing.",
+      "- **👥 Northside Mutual**: offers residents an open deal in exchange for control of the crossing.\n- **👥 The Night Registry**: a second rival.",
+    );
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify(urbanFantasyAiResponse({ lore: multipleRivals })),
+        resolved,
+      ),
+    ).toThrow(/exactly one named Rival Faction/);
+  });
+
+  it("uses only fixed labels and ignores model-provided functional labels", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt(
+      {},
+      "",
+      seededRng(2322),
+    );
+    const output = parseUrbanFantasyFactionResponse(
+      JSON.stringify(
+        urbanFantasyAiResponse({
+          labels: ["mystery-generator", "user-label", "urban-fantasy"],
+        }),
+      ),
+      resolved,
+    );
+
+    expect(output.labels).not.toContain("mystery-generator");
+    expect(output.labels).not.toContain("user-label");
+    expect(output.labels).toContain("urban-fantasy");
   });
 
   it("strips Markdown images and HTML media from every model field before saving", () => {
@@ -511,7 +551,7 @@ describe("urban fantasy faction (#1137)", () => {
     expect(savedFields).not.toMatch(/style\s*=|<style\b|@import|url\(/i);
     expect(output.title).toContain("title");
     expect(output.summary).toContain("summary");
-    expect(output.labels).toContain("label");
+    expect(output.labels).not.toContain("label");
   });
 
   it("strips media syntax from campaign context in local results", () => {
