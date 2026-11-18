@@ -72,7 +72,7 @@
                 {example.genre} · {example.kind}
                 {#if example.provenance === "authored"}
                   <span
-                    class="ml-2 rounded border border-theme-border px-1.5 py-0.5 text-theme-primary"
+                    class="ml-2 rounded border border-theme-border px-1.5 py-0.5 text-theme-text"
                     >Hand-written</span
                   >
                 {/if}
