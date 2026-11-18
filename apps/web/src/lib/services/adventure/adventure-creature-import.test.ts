@@ -155,6 +155,28 @@ describe("importCreatures", () => {
     expect(saveImage).not.toHaveBeenCalled();
   });
 
+  it("reuses a title match despite repeated internal whitespace", () => {
+    const packageWithSpaces = {
+      ...pkg,
+      actors: [
+        {
+          ...pkg.actors[0]!,
+          name: "Guard  Wolf",
+        },
+      ],
+      encounters: [
+        { ...pkg.encounters[0]!, actorIds: ["a1"] },
+      ],
+    } as AdventureJsonV1;
+    const choices = initialCreatureChoices(
+      packageWithSpaces,
+      buildCreatureProposals(packageWithSpaces),
+      [{ id: "existing-wolf", title: "Guard Wolf" }],
+    );
+    expect(choices).toHaveLength(1);
+    expect(choices[0]!.existing?.id).toBe("existing-wolf");
+  });
+
   it("does not match a same-actor id from another package", () => {
     const { choices } = setup([
       {
