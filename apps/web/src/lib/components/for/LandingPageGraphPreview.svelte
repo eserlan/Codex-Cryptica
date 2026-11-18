@@ -175,7 +175,8 @@
       viewBox="0 0 {viewBox.width} {viewBox.height}"
       class="absolute inset-0 h-full w-full"
       preserveAspectRatio="xMidYMid meet"
-      aria-hidden="true"
+      role="group"
+      aria-label="Interactive relationship graph"
     >
       <!-- Peripheral interconnect lines (dim background web) -->
       {#if steps.length > 2}
@@ -302,8 +303,12 @@
           class="cursor-pointer transition-transform hover:scale-110"
           tabindex="0"
           role="button"
-          aria-label="Select {step.label}"
+          aria-label={i === 0
+            ? `Select ${step.label}, the central node${step.sublabel ? `, ${step.sublabel}` : ""}`
+            : `Select ${step.label}${step.sublabel ? `, ${step.sublabel}` : ""}. ${steps[0]?.label ?? "Central node"} — ${step.relation ?? "connected to"} — ${step.label}`}
+          aria-pressed={isSelected}
           onclick={() => (selectedIndex = i)}
+          onfocus={() => (selectedIndex = i)}
           onkeydown={(e) =>
             (e.key === "Enter" || e.key === " ") && (selectedIndex = i)}
         >

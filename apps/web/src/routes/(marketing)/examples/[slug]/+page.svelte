@@ -239,7 +239,11 @@
 
         <!-- The generated artefact: the substance of the page. -->
         <div class="mb-12">
-          <h2 class="sr-only">Generated output</h2>
+          <h2 class="sr-only">
+            {example.provenance === "authored"
+              ? "Scenario text"
+              : "Generated output"}
+          </h2>
           {#each example.output as block, blockIndex (blockIndex)}
             <section class="mb-8">
               {#if block.kind === "prose"}
