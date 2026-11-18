@@ -95,4 +95,36 @@ describe("package scene progress", () => {
       errors: [{ code: "hidden-leakage" }],
     });
   });
+
+  it("rejects short exact package secrets without matching longer numbers", () => {
+    const leaked = proposal();
+    leaked.narration = "The code is 42.";
+    expect(
+      applyCompletedTurn(packageSession(), leaked, {
+        ...meta,
+        packageGmOnlyText: ["42"],
+      }),
+    ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
+
+    const unrelated = proposal();
+    unrelated.narration = "The code is 1420.";
+    expect(
+      applyCompletedTurn(packageSession(), unrelated, {
+        ...meta,
+        packageGmOnlyText: ["42"],
+      }).ok,
+    ).toBe(true);
+  });
+
+  it("checks package IDs in one pass for large ID sets", () => {
+    const ids = Array.from({ length: 10_000 }, (_, index) => `record-${index}`);
+    const leaked = proposal();
+    leaked.narration = "Someone whispers record-9999.";
+    expect(
+      applyCompletedTurn(packageSession(), leaked, {
+        ...meta,
+        packageRecordIds: ids,
+      }),
+    ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
+  });
 });

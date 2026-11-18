@@ -8,6 +8,7 @@ import {
   historicalAnchorDateSecretId,
   historicalAnchorEntitySecretId,
 } from "./historical-anchor-types";
+import { createBoundaryMatcher } from "./adventure-json/term-matcher";
 
 export interface HiddenLeakageFinding {
   field: string;
@@ -159,12 +160,24 @@ function packageTextLeakage(
   fields: Array<[string, string]>,
   secrets: readonly string[],
 ): HiddenLeakageFinding[] {
-  return secrets.flatMap((secret) => {
+  const longSecrets: string[] = [];
+  const oneCharacterSecrets = new Set<string>();
+  const twoCharacterSecrets = new Set<string>();
+  for (const secret of secrets) {
     const needle = normalize(secret);
-    if (needle.length < 3) return [];
-    return fields
-      .filter(([, value]) => normalize(value).includes(needle))
-      .map(([field]) => ({ field, secretId: "pinned-package-text" }));
+    if (!needle) continue;
+    if (needle.length === 1) oneCharacterSecrets.add(needle);
+    else if (needle.length < 3) twoCharacterSecrets.add(needle);
+    else longSecrets.push(needle);
+  }
+  const longMatcher = createBoundaryMatcher(longSecrets);
+  const shortMatcher = createBoundaryMatcher(twoCharacterSecrets);
+  return fields.flatMap(([field, value]) => {
+    const text = normalize(value);
+    const exactSingleCharacter = oneCharacterSecrets.has(text);
+    return exactSingleCharacter || shortMatcher(text) || longMatcher(text)
+      ? [{ field, secretId: "pinned-package-text" }]
+      : [];
   });
 }
 
@@ -172,26 +185,14 @@ function packageIdLeakage(
   fields: Array<[string, string]>,
   ids: readonly string[],
 ): HiddenLeakageFinding[] {
-  return ids.flatMap((id) => {
-    const token = packageIdToken(id);
-    return fields
-      .filter(
-        ([, value]) =>
-          normalize(value) === normalize(id) ||
-          (token !== undefined && token.test(value)),
-      )
-      .map(([field]) => ({ field, secretId: `pinned-package-id:${id}` }));
-  });
-}
-
-function packageIdToken(id: string): RegExp | undefined {
-  // Short IDs are checked as exact field values; prose would collide with
-  // common words, so only longer IDs get token matching.
-  if (id.length < 3) return undefined;
-  const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return new RegExp(
-    `(^|[^\\p{L}\\p{N}_-])${escaped}(?=$|[^\\p{L}\\p{N}_-])`,
-    "iu",
+  const normalizedShortIds = new Set(
+    ids.filter((id) => id.length < 3).map(normalize),
+  );
+  const matcher = createBoundaryMatcher(ids.filter((id) => id.length >= 3));
+  return fields.flatMap(([field, value]) =>
+    normalizedShortIds.has(normalize(value)) || matcher(value)
+      ? [{ field, secretId: "pinned-package-id" }]
+      : [],
   );
 }
 

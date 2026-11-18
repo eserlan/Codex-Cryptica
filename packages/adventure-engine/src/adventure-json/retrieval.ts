@@ -1,5 +1,6 @@
 import { MAX_ADVENTURE_RETRIEVAL_CHARS } from "../source-package/retrieval";
 import { entrySceneId } from "./entry-scene";
+import { createBoundaryMatcher } from "./term-matcher";
 import type {
   AdventureJsonEncounter,
   AdventureJsonLocation,
@@ -212,15 +213,42 @@ function splitRecordLines(
   const companion = new SplitText();
   for (const raw of lines) {
     if (kept.length >= limit) break;
-    const alreadyMoved =
+    const structuredSecret =
       raw[2] === true || (raw[3] ?? []).some((id) => hiddenIds.has(id));
-    if (alreadyMoved && companion.length >= limit) continue;
+    if (structuredSecret && companion.length >= limit) continue;
     const line = readLine(raw, limit);
+    const alreadyMoved =
+      structuredSecret || lineMentionsHiddenId(line, hiddenIds);
+    if (alreadyMoved && companion.length >= limit) continue;
     const moved = alreadyMoved;
     if (!moved) kept.push(line);
     else if (companion.length < limit) companion.push(line);
   }
   return { kept, companion };
+}
+
+function lineMentionsHiddenId(
+  line: Line,
+  hiddenIds: ReadonlySet<string>,
+): boolean {
+  if (hiddenIds.size === 0) return false;
+  const matcher = hiddenIdMatcher(hiddenIds);
+  return matcher(buildText([line], MAX_ADVENTURE_RETRIEVAL_CHARS + 1));
+}
+
+const hiddenIdMatchers = new WeakMap<
+  ReadonlySet<string>,
+  (text: string) => boolean
+>();
+
+function hiddenIdMatcher(ids: ReadonlySet<string>): (text: string) => boolean {
+  const cached = hiddenIdMatchers.get(ids);
+  if (cached) return cached;
+  const matcher = createBoundaryMatcher(
+    [...ids].filter((id) => id.length >= 3),
+  );
+  hiddenIdMatchers.set(ids, matcher);
+  return matcher;
 }
 
 /** Lines bound for one excerpt, with the length `buildText` would give them. */

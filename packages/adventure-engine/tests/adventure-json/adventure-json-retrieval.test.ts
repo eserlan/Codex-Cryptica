@@ -612,6 +612,44 @@ describe("retrieveAdventureJsonContext", () => {
     expect(result.gmOnly.some((excerpt) => excerpt.id === "s1")).toBe(false);
   });
 
+  it("moves prose lines that name a hidden ID to the GM-only companion", () => {
+    const pkg = base({
+      scenes: [
+        scene("s1", {
+          body: "The hidden-actor waits beside a hidden-actorish statue.",
+        }),
+      ],
+      actors: [
+        {
+          id: "hidden-actor",
+          name: "The Watcher",
+          visibility: "gm-only",
+          epistemicStatus: "explicit",
+        },
+      ],
+    });
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: "s1" });
+    expect(
+      result.playerSafe.find((excerpt) => excerpt.id === "s1")?.text,
+    ).not.toContain("hidden-actor");
+    expect(
+      result.gmOnly.find((excerpt) => excerpt.id === "s1")?.text,
+    ).toContain("The hidden-actor waits beside a hidden-actorish statue.");
+
+    const collision = retrieveAdventureJsonContext(
+      base({
+        scenes: [
+          scene("s1", { body: "A hidden-actorish statue stands here." }),
+        ],
+        actors: pkg.actors,
+      }),
+      { sceneId: "s1" },
+    );
+    expect(
+      collision.playerSafe.find((excerpt) => excerpt.id === "s1")?.text,
+    ).toContain("A hidden-actorish statue stands here.");
+  });
+
   it("omits unclassified source quotes from player-safe excerpts", () => {
     const pkg = base({
       scenes: [
