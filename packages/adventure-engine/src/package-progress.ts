@@ -343,6 +343,36 @@ function serializedArrayLength(entryLengths: number[]): number {
   return total;
 }
 
+function pruneRecordsForBudget(
+  records: PackageProgressPromptSummary["records"],
+  recordLengths: readonly number[],
+  initialTotalLength: number,
+): PackageProgressPromptSummary["records"] {
+  let totalLength = initialTotalLength;
+  const keepRecord = new Array<boolean>(records.length).fill(true);
+  let remainingRecords = records.length;
+  const dropRecordAt = (index: number): void => {
+    keepRecord[index] = false;
+    totalLength -= recordLengths[index]! + (remainingRecords > 1 ? 1 : 0);
+    remainingRecords -= 1;
+  };
+  for (
+    let i = records.length - 1;
+    i >= 0 && totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
+    i -= 1
+  ) {
+    if (records[i]!.status === "available") dropRecordAt(i);
+  }
+  for (
+    let i = records.length - 1;
+    i >= 0 && totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
+    i -= 1
+  ) {
+    if (keepRecord[i]) dropRecordAt(i);
+  }
+  return records.filter((_, i) => keepRecord[i]);
+}
+
 /** A bounded GM-only view of the ledger for the prompt; never shown to players. */
 export function packageProgressPromptSummary(
   progress: PackageProgress | undefined,
@@ -387,31 +417,9 @@ export function packageProgressPromptSummary(
     eventStart += 1;
   }
 
-  const keepRecord = new Array<boolean>(records.length).fill(true);
-  let remainingRecords = records.length;
-  const dropRecordAt = (index: number): void => {
-    keepRecord[index] = false;
-    totalLength -= recordLengths[index]! + (remainingRecords > 1 ? 1 : 0);
-    remainingRecords -= 1;
-  };
-  for (
-    let i = records.length - 1;
-    i >= 0 && totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
-    i -= 1
-  ) {
-    if (records[i]!.status === "available") dropRecordAt(i);
-  }
-  for (
-    let i = records.length - 1;
-    i >= 0 && totalLength > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
-    i -= 1
-  ) {
-    if (keepRecord[i]) dropRecordAt(i);
-  }
-
   const summary: PackageProgressPromptSummary = {
     sceneId: progress.sceneId,
-    records: records.filter((_, i) => keepRecord[i]),
+    records: pruneRecordsForBudget(records, recordLengths, totalLength),
     recentEvents: recentEvents.slice(eventStart),
   };
   return JSON.stringify(summary).length > MAX_PACKAGE_PROGRESS_PROMPT_CHARS
