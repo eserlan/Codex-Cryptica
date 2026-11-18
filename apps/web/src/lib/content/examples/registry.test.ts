@@ -286,6 +286,11 @@ describe("the published examples", () => {
       lastShift.summary,
     ]);
     expect(keyFields).not.toMatch(/mothership/i);
+    expect(
+      lastShift.relatedForPages.some(
+        (page) => page.href === "/for/mothership",
+      ),
+    ).toBe(true);
   });
 
   it("keys every example by its own slug", () => {

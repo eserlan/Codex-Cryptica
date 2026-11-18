@@ -110,6 +110,7 @@ export const forEntries: DiscoveryEntryInput[] = [
     uniqueValue:
       "Warden prep for sci-fi horror: ships, crew, employers, evidence and escalating threats linked as story notes.",
     parentCluster: "system-guides",
+    relatedIntents: ["example-the-last-shift"],
     indexable: true,
     status: "live",
   },
