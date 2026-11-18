@@ -153,6 +153,41 @@ function addPackageWideStrings(out: Collector, pkg: AdventureJsonV1) {
       out.found.push({ recordId: rumour.id, field: "truth", text });
 }
 
+function addVisibleRuns(visibleRuns: Set<string>, text: string): void {
+  for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
+}
+
+function guardOrAllowLeaf(
+  out: Collector,
+  visibleRuns: Set<string>,
+  recordId: string,
+  field: string,
+  text: string,
+  namesHiddenId: (text: string) => boolean,
+): void {
+  if (namesHiddenId(text)) {
+    out.add(recordId, field, text);
+  } else if (field !== "reveals") {
+    addVisibleRuns(visibleRuns, text);
+  }
+}
+
+function guardOrAllowComponentGroup(
+  out: Collector,
+  visibleRuns: Set<string>,
+  recordId: string,
+  components: Array<[string, string]>,
+  namesHiddenId: (text: string) => boolean,
+): void {
+  const movedToCompanion = namesHiddenId(
+    components.map(([, text]) => text).join("; "),
+  );
+  for (const [field, text] of components) {
+    if (movedToCompanion) out.add(recordId, field, text);
+    else addVisibleRuns(visibleRuns, text);
+  }
+}
+
 /** Guards player-visible lines that name a hidden ID and collects the runs the player side shows. */
 function addCompanionLines(
   out: Collector,
@@ -167,71 +202,98 @@ function addCompanionLines(
   for (const record of visible) {
     const companionComponents = composedCompanionComponents(record);
     const composedFields = new Set(
-      companionComponents.flatMap((components) =>
-        components.map(([field]) => field),
-      ),
+      companionComponents.flatMap((group) => group.map(([field]) => field)),
     );
     for (const [field, text] of stringLeaves(record, "")) {
-      if (composedFields.has(field)) continue;
-      const movedToCompanion = namesHiddenId(text);
-      if (movedToCompanion) out.add(record.id, field, text);
-      if (!movedToCompanion && field !== "reveals")
-        for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
-    }
-    for (const components of companionComponents) {
-      const movedToCompanion = namesHiddenId(
-        components.map(([, text]) => text).join("; "),
-      );
-      if (movedToCompanion) {
-        for (const [field, text] of components) out.add(record.id, field, text);
-      } else {
-        for (const [, text] of components)
-          for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
+      if (!composedFields.has(field)) {
+        guardOrAllowLeaf(
+          out,
+          visibleRuns,
+          record.id,
+          field,
+          text,
+          namesHiddenId,
+        );
       }
+    }
+    for (const group of companionComponents) {
+      guardOrAllowComponentGroup(
+        out,
+        visibleRuns,
+        record.id,
+        group,
+        namesHiddenId,
+      );
     }
   }
   return visibleRuns;
+}
+
+function addStringField(
+  fields: Array<[string, string]>,
+  field: string,
+  value: unknown,
+): void {
+  if (typeof value === "string") fields.push([field, value]);
+}
+
+function connectionComponentFields(
+  connection: unknown,
+  index: number,
+): Array<[string, string]> {
+  if (!connection || typeof connection !== "object") return [];
+  const entry = connection as {
+    description?: unknown;
+    travelConditions?: unknown;
+  };
+  const fields: Array<[string, string]> = [];
+  addStringField(
+    fields,
+    `connections[${index}].description`,
+    entry.description,
+  );
+  if (Array.isArray(entry.travelConditions)) {
+    entry.travelConditions.forEach((condition, conditionIndex) => {
+      addStringField(
+        fields,
+        `connections[${index}].travelConditions[${conditionIndex}]`,
+        condition,
+      );
+    });
+  }
+  return fields;
+}
+
+function branchComponentFields(
+  branch: unknown,
+  index: number,
+): Array<[string, string]> {
+  if (!branch || typeof branch !== "object") return [];
+  const entry = branch as { description?: unknown; condition?: unknown };
+  const fields: Array<[string, string]> = [];
+  addStringField(fields, `branches[${index}].description`, entry.description);
+  addStringField(fields, `branches[${index}].condition`, entry.condition);
+  return fields;
+}
+
+function extractCompanionGroups(
+  items: unknown,
+  extractFields: (item: unknown, index: number) => Array<[string, string]>,
+): Array<Array<[field: string, text: string]>> {
+  if (!Array.isArray(items)) return [];
+  return items
+    .map((item, index) => extractFields(item, index))
+    .filter((fields) => fields.length > 0);
 }
 
 /** Source fields retrieval joins into one line before applying the hidden-ID rule. */
 function composedCompanionComponents(
   record: Loose,
 ): Array<Array<[field: string, text: string]>> {
-  const components: Array<Array<[field: string, text: string]>> = [];
-  const connections = record.connections;
-  if (Array.isArray(connections))
-    for (const [index, connection] of connections.entries()) {
-      if (!connection || typeof connection !== "object") continue;
-      const fields: Array<[string, string]> = [];
-      const description = (connection as { description?: unknown }).description;
-      if (typeof description === "string")
-        fields.push([`connections[${index}].description`, description]);
-      const conditions = (connection as { travelConditions?: unknown })
-        .travelConditions;
-      if (Array.isArray(conditions))
-        conditions.forEach((condition, conditionIndex) => {
-          if (typeof condition === "string")
-            fields.push([
-              `connections[${index}].travelConditions[${conditionIndex}]`,
-              condition,
-            ]);
-        });
-      if (fields.length > 0) components.push(fields);
-    }
-  const branches = record.branches;
-  if (Array.isArray(branches))
-    for (const [index, branch] of branches.entries()) {
-      if (!branch || typeof branch !== "object") continue;
-      const fields: Array<[string, string]> = [];
-      const description = (branch as { description?: unknown }).description;
-      if (typeof description === "string")
-        fields.push([`branches[${index}].description`, description]);
-      const condition = (branch as { condition?: unknown }).condition;
-      if (typeof condition === "string")
-        fields.push([`branches[${index}].condition`, condition]);
-      if (fields.length > 0) components.push(fields);
-    }
-  return components;
+  return [
+    ...extractCompanionGroups(record.connections, connectionComponentFields),
+    ...extractCompanionGroups(record.branches, branchComponentFields),
+  ];
 }
 
 /** Every string of a package that a player must never be shown. */
