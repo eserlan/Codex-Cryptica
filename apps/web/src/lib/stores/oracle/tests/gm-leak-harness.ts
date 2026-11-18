@@ -187,9 +187,9 @@ function guardOrAllowComponentGroup(
 ): void {
   // Retrieval tests buildText([line], MAX + 1), whose limit is MAX + 2.
   // Include the label and separators, but never match an ID beyond that bound.
-  const matchableLine = `${group.label}: ${group.fields
-    .map(([, text]) => text)
-    .join("; ")}`.slice(0, MAX_ADVENTURE_RETRIEVAL_CHARS + 2);
+  const componentsText = group.fields.map(([, text]) => text).join("; ");
+  const lineText = `${group.label}: ${componentsText}`;
+  const matchableLine = lineText.slice(0, MAX_ADVENTURE_RETRIEVAL_CHARS + 2);
   const movedToCompanion = namesHiddenId(matchableLine);
   for (const [field, text] of group.fields) {
     if (movedToCompanion) out.add(recordId, field, text);
@@ -301,7 +301,11 @@ function extractCompanionGroups(
 /** Source fields retrieval joins into one line before applying the hidden-ID rule. */
 function composedCompanionComponents(record: Loose): CompanionGroup[] {
   return [
-    ...extractCompanionGroups(record.connections, "Connection", connectionComponentFields),
+    ...extractCompanionGroups(
+      record.connections,
+      "Connection",
+      connectionComponentFields,
+    ),
     ...extractCompanionGroups(record.branches, "Branch", branchComponentFields),
   ];
 }
