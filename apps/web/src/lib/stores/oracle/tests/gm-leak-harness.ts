@@ -185,11 +185,21 @@ function* structuredReferenceLeaves(
   if (!value || typeof value !== "object") return;
   for (const [key, child] of Object.entries(value)) {
     const childPath = path ? `${path}.${key}` : key;
-    if (key.endsWith("Id") && typeof child === "string")
-      yield [childPath, child];
-    else if (key.endsWith("Ids"))
-      yield* structuredReferenceArray(child, childPath);
-    else yield* structuredReferenceLeaves(child, childPath);
+    yield* structuredReferenceProperty(key, child, childPath);
+  }
+}
+
+function* structuredReferenceProperty(
+  key: string,
+  value: unknown,
+  path: string,
+): Generator<[string, string]> {
+  if (key.endsWith("Id")) {
+    if (typeof value === "string") yield [path, value];
+  } else if (key.endsWith("Ids")) {
+    yield* structuredReferenceArray(value, path);
+  } else {
+    yield* structuredReferenceLeaves(value, path);
   }
 }
 
