@@ -66,6 +66,37 @@ describe("/topics route", () => {
     expect(document.head.innerHTML).not.toContain("noindex");
   });
 
+  it("describes the topic directory without promising generators", () => {
+    render(Page, { props: { data: { topics: listLiveTopics() } } });
+    const description = document
+      .querySelector('meta[name="description"]')
+      ?.getAttribute("content");
+    const collection = [
+      ...document.querySelectorAll('script[type="application/ld+json"]'),
+    ]
+      .map((s) => JSON.parse(s.textContent ?? "{}"))
+      .find((d) => d["@type"] === "CollectionPage");
+    expect(description).toBe(
+      "Browse Codex Cryptica topic hubs for guidance on different tabletop campaign prep subjects.",
+    );
+    expect(description).not.toContain("generator");
+    expect(collection.description).toBe(description);
+    for (const topic of listLiveTopics()) {
+      expect(description).not.toContain(topic.title);
+    }
+  });
+
+  it("uses the new one-sentence intro", () => {
+    const { container } = render(Page, {
+      props: { data: { topics: listLiveTopics() } },
+    });
+    const intro = container.querySelector("h1 + p")?.textContent;
+    expect(intro).toBe(
+      "Pick a game-prep subject to explore guidance for your tabletop campaign.",
+    );
+    expect(intro).not.toContain("generator");
+  });
+
   it("emits CollectionPage and BreadcrumbList JSON-LD", () => {
     render(Page, { props: { data: { topics: listLiveTopics() } } });
     const docs = [
