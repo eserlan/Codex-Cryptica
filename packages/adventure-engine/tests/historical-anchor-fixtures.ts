@@ -60,3 +60,13 @@ export function anchorSession(
   if (!created.ok) throw new Error(created.reason);
   return { ...session(), historicalAnchor: created.anchor };
 }
+
+export function overBudgetAnchorSession(): AdventureSession {
+  const anchored = anchorSession();
+  anchored.visibleState.knownFacts = Array.from({ length: 60 }, (_, index) => ({
+    id: `fact-${index}`,
+    text: "x".repeat(600),
+    source: "canonical",
+  }));
+  return anchored;
+}
