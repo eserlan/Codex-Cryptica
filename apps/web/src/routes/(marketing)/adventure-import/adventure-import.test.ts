@@ -611,7 +611,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
   it("shows fallback feedback if clipboard copy fails", async () => {
     copyMock.mockResolvedValue(false);
-    render(Page);
+    const { container } = render(Page);
 
     const copyButton = screen.getAllByRole("button", {
       name: /Copy conversion prompt/i,
@@ -623,6 +623,13 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         screen.getAllByRole("button", { name: /Copy failed/i })[0]!,
       ).toBeTruthy();
     });
+
+    const coveragePrompt = container.querySelector(
+      '[role="textbox"][aria-label="Coverage report prompt"]',
+    ) as HTMLDivElement;
+    expect(coveragePrompt.tabIndex).toBe(0);
+    coveragePrompt.focus();
+    expect(document.activeElement).toBe(coveragePrompt);
   });
 
   it("ignores stale copy feedback when a newer copy finishes first", async () => {
@@ -716,7 +723,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("Codex Cryptica checks only (a) and (b).");
 
       const coverage = container.querySelector(
-        'pre[aria-label="Coverage report prompt"]',
+        '[aria-label="Coverage report prompt"] pre',
       ) as HTMLPreElement;
       expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
 

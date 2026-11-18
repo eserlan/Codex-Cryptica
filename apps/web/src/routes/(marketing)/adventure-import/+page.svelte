@@ -400,9 +400,17 @@
       </p>
       {@render copyButton(coverageCopier, coverageCopyLabel, true)}
       <span role="status" class="sr-only">{coverageCopyLabel}</span>
-      <pre
+      <div
+        role="textbox"
         aria-label="Coverage report prompt"
-        class="overflow-x-auto whitespace-pre-wrap rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{COVERAGE_REPORT_PROMPT}</pre>
+        aria-readonly="true"
+        aria-multiline="true"
+        tabindex="0"
+        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm text-theme-text/90 leading-relaxed"
+      >
+        <pre
+          class="m-0 whitespace-pre-wrap font-mono">{COVERAGE_REPORT_PROMPT}</pre>
+      </div>
     </section>
 
     <!-- Fidelity limits -->
