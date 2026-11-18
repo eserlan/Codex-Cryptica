@@ -1,12 +1,32 @@
-import type { AdventureJsonV1 } from "@codex/adventure-engine";
+import {
+  adventureJsonHiddenRecordIds,
+  createAdventureJsonHiddenIdMatcher,
+  type AdventureJsonV1,
+} from "@codex/adventure-engine";
 
 export interface GuardedString {
   recordId: string;
   field: string;
   text: string;
+  /** Unset means a plain substring match. */
+  match?: "word" | "id";
 }
 
 const MIN_GUARDED_LENGTH = 12;
+const MIN_QUOTE_WORDS = 8;
+/** Generic place words that collide with ordinary narration; never guarded as short names. */
+export const SHORT_NAME_ALLOWLIST: ReadonlySet<string> = new Set([
+  "door",
+  "gate",
+  "room",
+  "hall",
+  "road",
+  "path",
+  "bridge",
+  "cellar",
+  "yard",
+  "mill",
+]);
 // Identifiers, enums and flags are structure, not prose. A rumour's `truth`
 // is guarded only in its label forms (see addVerdict), never as a bare word.
 const STRUCTURAL_KEYS = new Set([
@@ -37,22 +57,126 @@ function* stringLeaves(
         yield* stringLeaves(child, path ? `${path}.${key}` : key);
 }
 
+const WORD_PATTERN = /[\p{L}\p{N}]+(?:['\u2019][\p{L}\p{N}]+)*/gu;
+const wordsOf = (text: string) => text.toLowerCase().match(WORD_PATTERN) ?? [];
+
+function* runsOf(words: readonly string[]): Generator<string> {
+  for (let i = 0; i + MIN_QUOTE_WORDS <= words.length; i++)
+    yield words.slice(i, i + MIN_QUOTE_WORDS).join(" ");
+}
+
+/** Guarded strings of 8 or more words, mapped to the runs the player side already shows. */
+const visibleRunsOf = new WeakMap<GuardedString, ReadonlySet<string>>();
+
+const escapeRegExp = (text: string) =>
+  text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const NOT_WORD_BEFORE = "(?<![\\p{L}\\p{N}])";
+const NOT_WORD_AFTER = "(?![\\p{L}\\p{N}])";
+
+const readableIdOf = (id: string) => id.replace(/[-_]+/g, " ").trim();
+const leafName = (field: string) =>
+  field
+    .split(".")
+    .at(-1)
+    ?.replace(/\[\d+\]$/, "");
+const anchorOf = (record: Loose) =>
+  (record.sourceRef as { anchor?: string } | undefined)?.anchor;
+
+/** Collects guarded strings, keeping each entry's match mode. */
+class Collector {
+  readonly found: GuardedString[] = [];
+
+  add(
+    recordId: string,
+    field: string,
+    value: unknown,
+    match?: GuardedString["match"],
+  ) {
+    if (typeof value !== "string" || !value.trim()) return;
+    const text = value.trim();
+    this.found.push(
+      match ? { recordId, field, text, match } : { recordId, field, text },
+    );
+  }
+
+  addAncillary(recordId: string, field: string, value: unknown) {
+    if (typeof value === "string" && value.trim().length >= MIN_GUARDED_LENGTH)
+      this.add(recordId, field, value);
+  }
+
+  addName(recordId: string, field: string, value: string) {
+    const name = value.trim();
+    if (name.length >= MIN_GUARDED_LENGTH) this.add(recordId, field, name);
+    else if (!SHORT_NAME_ALLOWLIST.has(name.toLowerCase()))
+      this.add(recordId, field, name, "word");
+  }
+
+  addGmOnlyRecord(record: Loose, sharedAnchors: ReadonlySet<string>) {
+    const readableId = readableIdOf(record.id);
+    if (
+      readableId.split(/\s+/).length >= 2 &&
+      readableId.length >= MIN_GUARDED_LENGTH
+    )
+      this.add(record.id, "id", readableId, "id");
+    const anchor = anchorOf(record);
+    if (anchor && !sharedAnchors.has(anchor.toLowerCase()))
+      this.addAncillary(record.id, "sourceRef.anchor", anchor);
+  }
+
+  addGmOnlyLeaves(record: Loose) {
+    for (const [field, text] of stringLeaves(record, "")) {
+      const leaf = leafName(field);
+      if (leaf === "name" || leaf === "title")
+        this.addName(record.id, field, text);
+      else this.addAncillary(record.id, field, text);
+    }
+  }
+
+  unique(): GuardedString[] {
+    const seen = new Set<string>();
+    return this.found.filter((entry) => {
+      const key = `${entry.recordId}\0${entry.field}\0${entry.text}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+}
+
+function addPackageWideStrings(out: Collector, pkg: AdventureJsonV1) {
+  for (const secret of pkg.secrets) out.add(secret.id, "text", secret.text);
+  // Retrieval treats these as GM-only whatever the record's visibility.
+  for (const clue of pkg.clues) out.add(clue.id, "reveals", clue.reveals);
+  // Rumour truth is guarded in its output labels, never as a bare word.
+  for (const rumour of pkg.rumours)
+    for (const text of [`Truth: ${rumour.truth}`, `"truth":"${rumour.truth}"`])
+      out.found.push({ recordId: rumour.id, field: "truth", text });
+}
+
+/** Guards player-visible lines that name a hidden ID and collects the runs the player side shows. */
+function addCompanionLines(
+  out: Collector,
+  pkg: AdventureJsonV1,
+  visible: readonly Loose[],
+): Set<string> {
+  // The line retrieval moves into a GM-only companion excerpt.
+  const namesHiddenId = createAdventureJsonHiddenIdMatcher(
+    adventureJsonHiddenRecordIds(pkg),
+  );
+  const visibleRuns = new Set<string>();
+  for (const record of visible)
+    for (const [field, text] of stringLeaves(record, "")) {
+      if (namesHiddenId(text)) out.add(record.id, field, text);
+      if (field !== "reveals")
+        for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
+    }
+  return visibleRuns;
+}
+
 /** Every string of a package that a player must never be shown. */
 export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
-  const found: GuardedString[] = [];
-  const add = (recordId: string, field: string, value: unknown) => {
-    if (typeof value === "string" && value.trim())
-      found.push({ recordId, field, text: value.trim() });
-  };
-  const addAncillary = (recordId: string, field: string, value: unknown) => {
-    if (typeof value === "string" && value.trim().length >= MIN_GUARDED_LENGTH)
-      add(recordId, field, value);
-  };
-  // Rumour truth is guarded in its output labels, never as a bare word.
-  const addVerdict = (recordId: string, ...forms: string[]) => {
-    for (const text of forms) found.push({ recordId, field: "truth", text });
-  };
-  const records: Loose[][] = [
+  const out = new Collector();
+  const records = [
     pkg.locations,
     pkg.actors,
     pkg.factions,
@@ -61,35 +185,29 @@ export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
     pkg.clues,
     pkg.rumours,
     pkg.items,
-  ] as unknown as Loose[][];
-  for (const record of records.flat()) {
+    pkg.secrets,
+  ].flat() as unknown as Loose[];
+  const visible = records.filter((r) => r.visibility === "player-visible");
+  // The player side already shares these, so a GM-only anchor equal to one is no spoiler.
+  const sharedAnchors = new Set(
+    visible
+      .flatMap((r) => [r.id, anchorOf(r)])
+      .flatMap((a) => (a ? [a.toLowerCase()] : [])),
+  );
+  const secretRecords = new Set<unknown>(pkg.secrets);
+  for (const record of records) {
     if (record.visibility !== "gm-only") continue;
-    for (const [field, text] of stringLeaves(record, "")) {
-      const leaf = field
-        .split(".")
-        .at(-1)
-        ?.replace(/\[\d+\]$/, "");
-      if (leaf === "name" || leaf === "title") add(record.id, field, text);
-      else addAncillary(record.id, field, text);
-    }
+    out.addGmOnlyRecord(record, sharedAnchors);
+    // A secret's own prose is added below; its other fields only repeat visible context.
+    if (!secretRecords.has(record)) out.addGmOnlyLeaves(record);
   }
-  for (const secret of pkg.secrets) add(secret.id, "text", secret.text);
-  // Retrieval treats these as GM-only whatever the record's visibility.
-  for (const clue of pkg.clues) add(clue.id, "reveals", clue.reveals);
-  for (const rumour of pkg.rumours) {
-    addVerdict(
-      rumour.id,
-      `Truth: ${rumour.truth}`,
-      `"truth":"${rumour.truth}"`,
-    );
-  }
-  const seen = new Set<string>();
-  return found.filter((entry) => {
-    const key = `${entry.recordId}\0${entry.field}\0${entry.text}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  addPackageWideStrings(out, pkg);
+  const visibleRuns = addCompanionLines(out, pkg, visible);
+  const unique = out.unique();
+  for (const entry of unique)
+    if (!entry.match && entry.field !== "truth")
+      visibleRunsOf.set(entry, visibleRuns);
+  return unique;
 }
 
 const normalise = (text: string) => text.toLowerCase().replace(/\s+/g, " ");
@@ -102,30 +220,73 @@ function stringsOf(value: unknown, into: string[] = []): string[] {
   return into;
 }
 
-/** Throws, naming the output, record and field, when `output` holds a guarded string. */
-export function assertNoGmLeak(
-  guarded: readonly GuardedString[],
-  output: unknown,
-  label: string,
-): void {
+interface OutputForms {
+  /** Normalised strings searched for substrings and word matches. */
+  text: string[];
+  /** Every 8-word run of the output's words. */
+  runs: Set<string>;
+}
+
+function outputForms(output: unknown): OutputForms {
   // Raw strings keep real line breaks that JSON.stringify would escape.
   const haystacks =
     typeof output === "string"
       ? [output]
       : [JSON.stringify(output) ?? "", stringsOf(output).join(" ")];
+  const wordTexts =
+    typeof output === "string" ? [output] : [stringsOf(output).join(" ")];
   if (typeof output === "string") {
     try {
-      haystacks.push(JSON.stringify(JSON.parse(output)) ?? "");
+      const parsed: unknown = JSON.parse(output);
+      haystacks.push(JSON.stringify(parsed) ?? "");
+      wordTexts.push(stringsOf(parsed).join(" "));
     } catch {
       // Non-JSON output is checked in its original form above.
     }
   }
-  const text = haystacks.map(normalise);
+  return {
+    text: haystacks.map(normalise),
+    runs: new Set(wordTexts.flatMap((t) => [...runsOf(wordsOf(t))])),
+  };
+}
+
+function matchesEntry(entry: GuardedString, text: readonly string[]): boolean {
+  const needle = normalise(entry.text);
+  if (!entry.match) return text.some((h) => h.includes(needle));
+  const separator = entry.match === "id" ? "[\\s_-]+" : "\\s+";
+  const body = needle.split(" ").map(escapeRegExp).join(separator);
+  const pattern = new RegExp(`${NOT_WORD_BEFORE}${body}${NOT_WORD_AFTER}`, "u");
+  return text.some((h) => pattern.test(h));
+}
+
+function quotesEntry(entry: GuardedString, outputRuns: ReadonlySet<string>) {
+  const visibleRuns = visibleRunsOf.get(entry);
+  if (!visibleRuns) return false;
+  return [...runsOf(wordsOf(entry.text))].some(
+    (run) => outputRuns.has(run) && !visibleRuns.has(run),
+  );
+}
+
+/**
+ * Throws, naming the output, record and field, when `output` holds a guarded string.
+ * Run it on player-visible outputs only: GM-only IDs, anchors and prose are
+ * guarded, so internal or GM-only state (prompts, `hiddenState`) would fail.
+ */
+export function assertNoGmLeak(
+  guarded: readonly GuardedString[],
+  output: unknown,
+  label: string,
+): void {
+  const forms = outputForms(output);
   for (const entry of guarded) {
-    const needle = normalise(entry.text);
-    if (text.some((h) => h.includes(needle)))
+    const suffix = matchesEntry(entry, forms.text)
+      ? ""
+      : quotesEntry(entry, forms.runs)
+        ? " (partial quote)"
+        : undefined;
+    if (suffix !== undefined)
       throw new Error(
-        `GM-only leak in "${label}": record ${entry.recordId}, field ${entry.field}`,
+        `GM-only leak in "${label}": record ${entry.recordId}, field ${entry.field}${suffix}`,
       );
   }
 }
