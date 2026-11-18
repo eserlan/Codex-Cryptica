@@ -372,3 +372,137 @@ describe("11 legacy meta", () => {
     expect(next.packageProgress).toEqual({ sceneId: YARD });
   });
 });
+
+describe("claims and corrections keep records equal to the events", () => {
+  const derived = (progress: PackageProgress, id: string) => {
+    const superseded = new Set(
+      progress.events!.flatMap((e) => e.supersedes ?? []),
+    );
+    const newest = progress
+      .events!.filter(
+        (e) =>
+          e.recordId === id &&
+          e.certainty === "confirmed" &&
+          !superseded.has(e.id),
+      )
+      .at(-1);
+    return newest?.to ?? "unvisited";
+  };
+
+  it("drops a claim that carries supersedes", () => {
+    const start = apply(legacy, [input(YARD, "active")], "a").progress;
+    const result = apply(
+      start,
+      [
+        input(YARD, "resolved", {
+          certainty: "claimed",
+          supersedes: start.events![0].id,
+        }),
+      ],
+      "b",
+    );
+    expect(result.dropped).toEqual([
+      `packageEvents: invalid supersede ${YARD}`,
+    ]);
+    expect(result.progress.events).toEqual(start.events);
+    expect(result.progress.records).toEqual(start.records);
+  });
+
+  it("derives the status from events after a correction with an unvisited baseline", () => {
+    const wrong = apply(legacy, [input(YARD, "resolved")], "a").progress;
+    const fixed = apply(
+      wrong,
+      [input(YARD, "skipped", { supersedes: wrong.events![0].id })],
+      "b",
+    );
+    expect(fixed.dropped).toEqual([]);
+    expect(statusOf(fixed.progress, YARD)).toBe(derived(fixed.progress, YARD));
+    const reloaded = parseAdventureSession(
+      JSON.parse(
+        JSON.stringify(packageSession({ packageProgress: fixed.progress })),
+      ),
+    );
+    expect(reloaded.packageProgress).toEqual(fixed.progress);
+  });
+
+  it("accepts a stored unvisited record on parse", () => {
+    const stored = packageSession({
+      packageProgress: {
+        sceneId: LANDING,
+        version: 1,
+        records: [{ id: YARD, kind: "scene", status: "unvisited" }],
+        events: [],
+      },
+    });
+    expect(stored.packageProgress!.records).toHaveLength(1);
+  });
+});
+
+describe("prototype-style ids", () => {
+  const hostile = ["constructor", "toString", "hasOwnProperty", "__proto__"];
+
+  it.each(hostile)(
+    "commits a saved session at scene %s without throwing",
+    (id) => {
+      const s = packageSession({ packageProgress: { sceneId: id } });
+      const next = ok(commit(s));
+      expect(next.packageProgress!.sceneId).toBe(id);
+      expect(next.packageProgress!.events ?? []).toEqual([]);
+      expect(next.turns[0].dropped).toBeUndefined();
+    },
+  );
+
+  it.each(hostile)("rejects %s as an unknown record", (id) => {
+    const result = apply(legacy, [{ ...input(YARD, "active"), recordId: id }]);
+    expect(result.dropped).toHaveLength(1);
+    expect(result.progress.events).toEqual([]);
+  });
+
+  it("rejects a non-string kind", () => {
+    const result = apply(legacy, [
+      { ...input(YARD, "active"), kind: {} as never },
+    ]);
+    expect(result.dropped).toHaveLength(1);
+  });
+
+  it("round-trips a package record id of __proto__ through save and reload", () => {
+    const hostilePkg = structuredClone(pkg);
+    hostilePkg.clues[0] = { ...hostilePkg.clues[0], id: "__proto__" };
+    const hostileIndex = packageProgressIndex(hostilePkg);
+    expect(Object.hasOwn(hostileIndex.packageRecordKinds, "__proto__")).toBe(
+      true,
+    );
+    expect(Object.hasOwn(hostileIndex.packageRecordKinds, "constructor")).toBe(
+      false,
+    );
+    const result = applyPackageProgressEvents(
+      legacy,
+      [{ ...input(YARD, "resolved"), recordId: "__proto__", kind: "clue" }],
+      { turnId: "t", index: hostileIndex },
+    );
+    expect(result.dropped).toEqual([]);
+    expect(result.progress.records![0]).toEqual({
+      id: "__proto__",
+      kind: "clue",
+      status: "resolved",
+    });
+    const reloaded = parseAdventureSession(
+      JSON.parse(
+        JSON.stringify(packageSession({ packageProgress: result.progress })),
+      ),
+    );
+    expect(reloaded.packageProgress).toEqual(result.progress);
+  });
+
+  it("commits through meta that carries a __proto__ record", () => {
+    const hostilePkg = structuredClone(pkg);
+    hostilePkg.clues[0] = { ...hostilePkg.clues[0], id: "__proto__" };
+    const next = ok(
+      applyCompletedTurn(packageSession(), proposal(), {
+        ...meta,
+        ...packageProgressIndex(hostilePkg),
+      }),
+    );
+    expect(next.packageProgress!.version).toBe(1);
+  });
+});

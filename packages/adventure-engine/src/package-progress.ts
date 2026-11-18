@@ -37,11 +37,34 @@ const ALLOWED: Record<PackageProgressStatus, PackageProgressStatus[]> = {
   altered: [],
 };
 
+/** An id-keyed map with no prototype, so ids like `__proto__` are plain keys. */
+export function nullMap<T>(
+  entries: Iterable<readonly [string, T]> = [],
+): Record<string, T> {
+  const map = Object.create(null) as Record<string, T>;
+  for (const [key, value] of entries) {
+    Object.defineProperty(map, key, {
+      value,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return map;
+}
+
+const RECORD_KINDS: readonly string[] = [
+  "scene",
+  "encounter",
+  "clue",
+  "secret",
+];
+
 /** The package's scenes, record kinds and scene branches; built from the package alone. */
 export function packageProgressIndex(
   pkg: AdventureJsonV1,
 ): PackageProgressIndex {
-  const packageRecordKinds: Record<string, PackageRecordKind> = {};
+  const packageRecordKinds = nullMap<PackageRecordKind>();
   const groups: [PackageRecordKind, { id: string }[]][] = [
     ["scene", pkg.scenes],
     ["encounter", pkg.encounters],
@@ -49,12 +72,19 @@ export function packageProgressIndex(
     ["secret", pkg.secrets],
   ];
   for (const [kind, records] of groups) {
-    for (const record of records) packageRecordKinds[record.id] = kind;
+    for (const record of records) {
+      Object.defineProperty(packageRecordKinds, record.id, {
+        value: kind,
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+    }
   }
   return {
     packageSceneIds: pkg.scenes.map((scene) => scene.id),
     packageRecordKinds,
-    packageSceneBranches: Object.fromEntries(
+    packageSceneBranches: nullMap(
       pkg.scenes.map((scene) => [
         scene.id,
         (scene.branches ?? []).map((branch) => branch.targetSceneId),
@@ -108,8 +138,9 @@ function invalidField(
   note: string,
   kinds: PackageProgressIndex["packageRecordKinds"],
 ): string | null {
+  if (!RECORD_KINDS.includes(input.kind)) return "wrong kind";
+  if (!Object.hasOwn(kinds, input.recordId)) return "unknown record";
   const known = kinds[input.recordId];
-  if (known === undefined) return "unknown record";
   if (known !== input.kind) return "wrong kind";
   if (input.to === "unvisited" || note.length === 0) {
     return "invalid status or note";
@@ -160,7 +191,10 @@ function checkInput(
   const current = statusOf(records, input.recordId);
   let target: PackageProgressEvent | undefined;
   if (input.supersedes) {
-    target = supersedeTarget(events, input) ?? undefined;
+    target =
+      input.certainty === "confirmed"
+        ? (supersedeTarget(events, input) ?? undefined)
+        : undefined;
     if (!target) return { reason: "invalid supersede" };
   }
   if (!transitionAllowed(events, input, current, target)) {
@@ -218,7 +252,7 @@ export function applyPackageProgressEvents(
     const confirmed = input.certainty === "confirmed";
     events.push({
       id: eventId,
-      turnId: context.turnId,
+      turnId: context.turnId.slice(0, 160),
       recordId: input.recordId,
       kind: input.kind,
       from: checked.current,
@@ -228,21 +262,19 @@ export function applyPackageProgressEvents(
       ...(input.supersedes ? { supersedes: input.supersedes } : {}),
     });
     written += 1;
-    if (confirmed) setRecordStatus(records, events, input, checked.target);
+    if (confirmed) setRecordStatus(records, events, input);
   }
   return { progress: next, dropped };
 }
 
+/** The record's status is always derived from its non-superseded confirmed events. */
 function setRecordStatus(
   records: PackageProgressRecord[],
   events: readonly PackageProgressEvent[],
   input: PackageProgressInput,
-  target: PackageProgressEvent | undefined,
 ): void {
   const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
-  const status = target
-    ? confirmedStatus(events, input.recordId, superseded)
-    : input.to;
+  const status = confirmedStatus(events, input.recordId, superseded);
   const existing = records.find((record) => record.id === input.recordId);
   if (existing) existing.status = status;
   else records.push({ id: input.recordId, kind: input.kind, status });
@@ -263,13 +295,15 @@ export function planSceneProgress(
   const get = (id: string) =>
     statuses.get(id) ?? statusOf(progress.records ?? [], id);
   const step = (id: string, to: PackageProgressStatus, note: string) => {
+    if (!Object.hasOwn(index.packageRecordKinds, id)) return;
     const kind = index.packageRecordKinds[id];
-    if (!kind || !canTransitionPackageStatus(get(id), to)) return;
+    if (!canTransitionPackageStatus(get(id), to)) return;
     statuses.set(id, to);
     inputs.push({ recordId: id, kind, to, certainty: "confirmed", note });
   };
   const openBranches = (sceneId: string) => {
-    for (const target of index.packageSceneBranches[sceneId] ?? []) {
+    if (!Object.hasOwn(index.packageSceneBranches, sceneId)) return;
+    for (const target of index.packageSceneBranches[sceneId]) {
       if (get(target) === "unvisited") step(target, "available", "Next scene.");
     }
   };

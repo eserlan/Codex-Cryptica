@@ -23,6 +23,7 @@ import {
 } from "./scenario-turns";
 import {
   applyPackageProgressEvents,
+  nullMap,
   planSceneProgress,
   type PackageProgressIndex,
 } from "./package-progress";
@@ -104,12 +105,11 @@ function packageIndexFromMeta(
   if (!meta.packageRecordKinds) return undefined;
   return {
     packageSceneIds: [...(meta.packageSceneIds ?? [])],
-    packageRecordKinds: { ...meta.packageRecordKinds },
-    packageSceneBranches: Object.fromEntries(
-      Object.entries(meta.packageSceneBranches ?? {}).map(([id, targets]) => [
-        id,
-        [...targets],
-      ]),
+    packageRecordKinds: nullMap(Object.entries(meta.packageRecordKinds)),
+    packageSceneBranches: nullMap(
+      Object.entries(meta.packageSceneBranches ?? {}).map(
+        ([id, targets]) => [id, [...targets]] as const,
+      ),
     ),
   };
 }
