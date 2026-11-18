@@ -1,6 +1,7 @@
 import {
   adventureJsonHiddenRecordIds,
   createAdventureJsonHiddenIdMatcher,
+  MAX_ADVENTURE_RETRIEVAL_CHARS,
   type AdventureJsonV1,
 } from "@codex/adventure-engine";
 
@@ -172,17 +173,25 @@ function guardOrAllowLeaf(
   }
 }
 
+type CompanionGroup = {
+  label: "Connection" | "Branch";
+  fields: Array<[field: string, text: string]>;
+};
+
 function guardOrAllowComponentGroup(
   out: Collector,
   visibleRuns: Set<string>,
   recordId: string,
-  components: Array<[string, string]>,
+  group: CompanionGroup,
   namesHiddenId: (text: string) => boolean,
 ): void {
-  const movedToCompanion = namesHiddenId(
-    components.map(([, text]) => text).join("; "),
-  );
-  for (const [field, text] of components) {
+  // Retrieval tests buildText([line], MAX + 1), whose limit is MAX + 2.
+  // Include the label and separators, but never match an ID beyond that bound.
+  const matchableLine = `${group.label}: ${group.fields
+    .map(([, text]) => text)
+    .join("; ")}`.slice(0, MAX_ADVENTURE_RETRIEVAL_CHARS + 2);
+  const movedToCompanion = namesHiddenId(matchableLine);
+  for (const [field, text] of group.fields) {
     if (movedToCompanion) out.add(recordId, field, text);
     else addVisibleRuns(visibleRuns, text);
   }
@@ -202,7 +211,9 @@ function addCompanionLines(
   for (const record of visible) {
     const companionComponents = composedCompanionComponents(record);
     const composedFields = new Set(
-      companionComponents.flatMap((group) => group.map(([field]) => field)),
+      companionComponents.flatMap((group) =>
+        group.fields.map(([field]) => field),
+      ),
     );
     for (const [field, text] of stringLeaves(record, "")) {
       if (!composedFields.has(field)) {
@@ -278,21 +289,20 @@ function branchComponentFields(
 
 function extractCompanionGroups(
   items: unknown,
+  label: CompanionGroup["label"],
   extractFields: (item: unknown, index: number) => Array<[string, string]>,
-): Array<Array<[field: string, text: string]>> {
+): CompanionGroup[] {
   if (!Array.isArray(items)) return [];
   return items
-    .map((item, index) => extractFields(item, index))
-    .filter((fields) => fields.length > 0);
+    .map((item, index) => ({ label, fields: extractFields(item, index) }))
+    .filter((group) => group.fields.length > 0);
 }
 
 /** Source fields retrieval joins into one line before applying the hidden-ID rule. */
-function composedCompanionComponents(
-  record: Loose,
-): Array<Array<[field: string, text: string]>> {
+function composedCompanionComponents(record: Loose): CompanionGroup[] {
   return [
-    ...extractCompanionGroups(record.connections, connectionComponentFields),
-    ...extractCompanionGroups(record.branches, branchComponentFields),
+    ...extractCompanionGroups(record.connections, "Connection", connectionComponentFields),
+    ...extractCompanionGroups(record.branches, "Branch", branchComponentFields),
   ];
 }
 
