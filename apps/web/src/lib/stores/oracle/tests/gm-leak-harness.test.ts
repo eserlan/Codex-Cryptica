@@ -225,6 +225,28 @@ function variant() {
 }
 
 describe("gap 1: source anchors", () => {
+  it("guards a GM-only secret's source quote even when its text differs", () => {
+    const pkg = variant();
+    const quote =
+      "Beyond the rusted gate the hidden heir waits beneath the old bell tower";
+    pkg.secrets = [
+      {
+        ...pkg.secrets[0]!,
+        id: "quoted-secret",
+        text: "The heir's identity remains concealed.",
+        sourceRef: { section: "notes", textQuote: quote },
+      },
+    ];
+
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "hidden heir waits beneath the old bell tower",
+        "secret source quote",
+      ),
+    ).toThrow(/record quoted-secret, field sourceRef\.textQuote/);
+  });
+
   it("guards a short GM-only spoiler anchor", () => {
     const pkg = variant();
     pkg.secrets = [
@@ -393,6 +415,33 @@ describe("gap 3: companion lines", () => {
       field: "description",
       text: prose,
     });
+  });
+
+  it("guards a structured reference line to a short hidden ID", () => {
+    const pkg = variant();
+    const scene = pkg.scenes[0]!;
+    pkg.locations = [
+      ...pkg.locations,
+      { ...pkg.locations[0]!, id: "hid-9", name: "Hidden place", ...gmOnly },
+    ];
+    pkg.scenes = pkg.scenes.map((entry, index) =>
+      index === 0 ? { ...entry, locationId: "hid-9" } : entry,
+    );
+
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: scene.id });
+    expect(
+      result.gmOnly.some(
+        (excerpt) =>
+          excerpt.id === scene.id && excerpt.text.includes("Location: hid-9"),
+      ),
+    ).toBe(true);
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "Location: hid-9",
+        "structured reference",
+      ),
+    ).toThrow(new RegExp(`record ${scene.id}, field locationId`));
   });
 
   it("guards sibling text in a composed connection line moved to a companion", () => {
@@ -666,6 +715,23 @@ describe("gap 5: partial quotes", () => {
         ),
         "the mayor quietly pays the night watch to look",
         "visible",
+      ),
+    ).not.toThrow();
+  });
+
+  it("does not throw when a quote is also in the player-visible premise", () => {
+    const pkg = variant();
+    const publicRun = "The mayor quietly pays the night watch to look away";
+    pkg.secrets = [
+      { ...pkg.secrets[0]!, id: "premise-quote", text: `${publicRun} tonight` },
+    ];
+    pkg.premise.background = `Everyone knows ${publicRun}.`;
+
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "The mayor quietly pays the night watch to look away",
+        "public premise quote",
       ),
     ).not.toThrow();
   });

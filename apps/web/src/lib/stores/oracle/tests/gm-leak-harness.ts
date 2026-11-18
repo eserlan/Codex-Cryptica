@@ -158,6 +158,43 @@ function addVisibleRuns(visibleRuns: Set<string>, text: string): void {
   for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
 }
 
+function addPackageVisibleRuns(
+  visibleRuns: Set<string>,
+  pkg: AdventureJsonV1,
+): void {
+  for (const text of [
+    pkg.premise.background,
+    pkg.premise.hook,
+    pkg.premise.tone,
+    pkg.system?.name,
+  ])
+    if (text) addVisibleRuns(visibleRuns, text);
+  for (const theme of pkg.premise.theme ?? [])
+    addVisibleRuns(visibleRuns, theme);
+}
+
+function* structuredReferenceLeaves(
+  value: unknown,
+  path: string,
+): Generator<[string, string]> {
+  if (Array.isArray(value)) {
+    for (const [index, item] of value.entries())
+      yield* structuredReferenceLeaves(item, `${path}[${index}]`);
+  } else if (value && typeof value === "object") {
+    for (const [key, child] of Object.entries(value)) {
+      const childPath = path ? `${path}.${key}` : key;
+      if (/(?:Id|Ids)$/.test(key)) {
+        if (typeof child === "string") yield [childPath, child];
+        else if (Array.isArray(child))
+          for (const [index, id] of child.entries())
+            if (typeof id === "string") yield [`${childPath}[${index}]`, id];
+      } else {
+        yield* structuredReferenceLeaves(child, childPath);
+      }
+    }
+  }
+}
+
 function guardOrAllowLeaf(
   out: Collector,
   visibleRuns: Set<string>,
@@ -204,9 +241,8 @@ function addCompanionLines(
   visible: readonly Loose[],
 ): Set<string> {
   // The line retrieval moves into a GM-only companion excerpt.
-  const namesHiddenId = createAdventureJsonHiddenIdMatcher(
-    adventureJsonHiddenRecordIds(pkg),
-  );
+  const hiddenIds = new Set(adventureJsonHiddenRecordIds(pkg));
+  const namesHiddenId = createAdventureJsonHiddenIdMatcher(hiddenIds);
   const visibleRuns = new Set<string>();
   for (const record of visible) {
     const companionComponents = composedCompanionComponents(record);
@@ -229,6 +265,8 @@ function addCompanionLines(
         );
       }
     }
+    for (const [field, id] of structuredReferenceLeaves(record, ""))
+      if (hiddenIds.has(id)) out.add(record.id, field, id);
     for (const group of companionComponents) {
       guardOrAllowComponentGroup(
         out,
@@ -358,11 +396,16 @@ export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
   for (const record of records) {
     if (record.visibility !== "gm-only") continue;
     out.addGmOnlyRecord(record, sharedAnchors);
-    // A secret's own prose is added below; its other fields only repeat visible context.
-    if (!secretRecords.has(record)) out.addGmOnlyLeaves(record);
+    if (secretRecords.has(record)) {
+      const sourceRef = record.sourceRef as { textQuote?: unknown } | undefined;
+      out.addAncillary(record.id, "sourceRef.textQuote", sourceRef?.textQuote);
+    } else {
+      out.addGmOnlyLeaves(record);
+    }
   }
   addPackageWideStrings(out, pkg);
   const visibleRuns = addCompanionLines(out, pkg, visible);
+  addPackageVisibleRuns(visibleRuns, pkg);
   const unique = out.unique();
   for (const entry of unique)
     if (!entry.match && entry.field !== "truth")
