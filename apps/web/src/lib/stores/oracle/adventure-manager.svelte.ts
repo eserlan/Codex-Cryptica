@@ -11,6 +11,7 @@ import { AdventureRolls } from "./adventure-rolls";
 import { AdventureTools } from "./adventure-tools";
 import type { AdventureScenarios } from "./adventure-scenarios";
 import type { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventure-artwork-session.js";
+import type { AdventureJsonV1 } from "@codex/adventure-engine";
 export type { AdventureManagerDependencies } from "./adventure-dependencies";
 export { hasCommittedOpening } from "./adventure-session";
 
@@ -224,6 +225,17 @@ export class AdventureManager extends AdventureState {
     ...args: Parameters<AdventureScenarios["dismissDiscoveries"]>
   ) {
     return this.scenarios.dismissDiscoveries(...args);
+  }
+
+  /** The session's pinned package, or null without one or when it cannot load. Read-only. */
+  async loadSourcePackage(): Promise<AdventureJsonV1 | null> {
+    const session = this.session;
+    if (!session?.sourcePackage) return null;
+    try {
+      return await this.runtime.deps.packages.load(session);
+    } catch {
+      return null;
+    }
   }
 
   mutateLocalArtwork(...args: Parameters<AdventureArtworkSession["mutate"]>) {

@@ -143,6 +143,12 @@ export const mothership: LandingPageConfig = {
       href: "/examples/the-venting-helix-derelict-hazard",
       badge: "Example",
     },
+    {
+      title: "The Last Shift: Sci-Fi Horror Scenario",
+      description:
+        "An original, system-neutral salvage scenario with connected location nodes, clues and an escalation clock a Warden can run straight from notes.",
+      href: "/examples/the-last-shift-sci-fi-horror-scenario",
+    },
   ],
   cta: {
     title: "Run the Scenario. Keep the Ship's Secrets.",

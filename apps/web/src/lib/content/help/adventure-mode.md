@@ -126,6 +126,20 @@ If a session's package version is missing or has changed, the session pauses
 with **Retry** and **Leave session**. Your story stays readable. Re-import
 the same version, then choose Retry to continue.
 
+## Package progress and GM details
+
+Open **Adventure tools** during a session pinned to a package. The
+player progress view lists confirmed, player-visible scenes you have visited,
+the current scene, and player-visible clues you have found. It leaves out
+GM-only records, unvisited scenes, and unconfirmed claims, and does not show a
+remaining-scene count.
+
+The optional **GM details** audit is hidden until you choose **Show GM details**
+and confirm the spoiler warning. It lists package records the ledger has
+touched, including claims and superseded events, so you can check the Oracle's
+bookkeeping. Choose **Hide GM details** to close it again. Revealing it may show
+GM-only package content.
+
 Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
 500 pages) remain available as experimental convenience inputs. They are
 normalized locally into Adventure JSON before the same review; scanned or
