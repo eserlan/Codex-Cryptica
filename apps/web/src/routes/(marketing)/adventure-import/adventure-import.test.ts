@@ -332,6 +332,12 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain("start staged conversion now");
       expect(prompt).toContain("make a numbered inventory");
       expect(prompt).toContain("Define each entry only in its owning chunk");
+      expect(prompt).toContain(
+        "compare its actual JSON IDs and per-collection counts with the expected IDs and counts",
+      );
+      expect(prompt).toContain(
+        "each section's expected IDs and per-collection counts have been compared with its actual chunk JSON",
+      );
       expect(prompt).toContain("Continue with chunk 01");
       expect(prompt).toContain("exact top-level metadata values");
       expect(prompt).toContain("convert only the requested chunk");
@@ -364,6 +370,12 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
       expect(prompt).toContain(
         "cite its key entry rather than an earlier mention",
+      );
+      expect(prompt).toContain(
+        "For unpaginated sources, cite a supported section, anchor or other stable source range",
+      );
+      expect(prompt).toContain(
+        "For paginated sources, cite the page position and heading",
       );
     });
 
