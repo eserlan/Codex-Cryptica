@@ -26,6 +26,8 @@ export const MAX_GENERATION_INPUT_CHARS = 96_000;
 export const MAX_TEXT_CHARS = 600;
 export const CURRENT_ADVENTURE_SCHEMA_VERSION = 3;
 
+export const MAX_PACKAGE_PROGRESS_ENTRIES = 400;
+
 const text = z.string().trim().min(1).max(MAX_TEXT_CHARS);
 const narration = z.string().trim().min(1).max(2_000);
 const id = z.string().trim().min(1).max(160);
@@ -401,6 +403,60 @@ const sourcePackageRefSchema = z
   })
   .strict();
 
+const packageRecordKind = z.enum(["scene", "encounter", "clue", "secret"]);
+const packageStatus = z.enum([
+  "unvisited",
+  "available",
+  "active",
+  "resolved",
+  "altered",
+  "skipped",
+]);
+/** Package-authored IDs are kept verbatim: no trimming and no length cap. */
+const packageId = z.string().min(1);
+const packageProgressSchema = z
+  .object({
+    sceneId: packageId,
+    version: z.literal(1).optional(),
+    records: z
+      .array(
+        z
+          .object({
+            id: packageId,
+            kind: packageRecordKind,
+            status: packageStatus,
+          })
+          .strict(),
+      )
+      .max(MAX_PACKAGE_PROGRESS_ENTRIES)
+      .optional(),
+    events: z
+      .array(
+        z
+          .object({
+            id: packageId,
+            turnId: id,
+            recordId: packageId,
+            kind: packageRecordKind,
+            from: packageStatus,
+            to: packageStatus,
+            certainty: z.enum(["claimed", "confirmed"]),
+            note: z.string().trim().min(1).max(240),
+            supersedes: packageId.optional(),
+          })
+          .strict(),
+      )
+      .max(MAX_PACKAGE_PROGRESS_ENTRIES)
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (value) =>
+      (value.version === undefined) === (value.records === undefined) &&
+      (value.version === undefined) === (value.events === undefined),
+    { message: "version, records and events must all be present or absent." },
+  );
+
 export const adventureSessionSchema = z
   .object({
     schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
@@ -416,10 +472,7 @@ export const adventureSessionSchema = z
     premise: text,
     sourceRecords: z.array(sourceSchema),
     sourcePackage: sourcePackageRefSchema.optional(),
-    packageProgress: z
-      .object({ sceneId: z.string().min(1) })
-      .strict()
-      .optional(),
+    packageProgress: packageProgressSchema.optional(),
     scenarioCollection: scenarioCollectionSchema.optional(),
     worldEntry: worldEntrySchema.optional(),
     historicalAnchor: historicalAnchorSchema.optional(),
