@@ -2,6 +2,7 @@
   import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureControlRetry from "./AdventureControlRetry.svelte";
+  import AdventurePackageUnavailable from "./AdventurePackageUnavailable.svelte";
   import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
 
   let {
@@ -20,6 +21,7 @@
     manager.readOnly ||
       (manager.session?.turns.length === 0 && !manager.session.pendingRoll) ||
       manager.phase === "generating" ||
+      manager.phase === "package-unavailable" ||
       manager.phase === "offline" ||
       manager.phase === "awaiting-roll" ||
       manager.phase === "ready-to-resolve",
@@ -72,7 +74,9 @@
     class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"
     data-testid="adventure-dock-extras"
   >
-    {#if manager.readOnly && manager.session?.status === "active"}
+    {#if manager.phase === "package-unavailable"}
+      <AdventurePackageUnavailable {manager} />
+    {:else if manager.readOnly && manager.session?.status === "active"}
       <AdventureControlRetry {manager} />
     {/if}
     <AdventureSuggestedActions

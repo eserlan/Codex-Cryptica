@@ -44,7 +44,7 @@ export interface AdventureManagerDependencies {
   ) => Promise<void>;
   context?: AdventureContextService;
   /** Loads and caches the pinned adventure package of a package session. */
-  packages?: Pick<AdventurePackageContextCache, "load" | "peek">;
+  packages?: Pick<AdventurePackageContextCache, "load" | "peek" | "verifyPin">;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;
   now?: () => string;

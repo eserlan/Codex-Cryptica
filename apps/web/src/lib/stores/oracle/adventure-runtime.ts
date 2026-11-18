@@ -184,12 +184,44 @@ export class AdventureRuntime {
           ? retryPhase
           : "error";
   }
+
+  /**
+   * Re-checks a package session's pin. On failure, enters the recoverable
+   * `package-unavailable` state (when the signal is still current) and returns
+   * false so the caller makes no model call.
+   */
+  async packageStillAvailable(signal: AbortSignal): Promise<boolean> {
+    const session = this.state.session;
+    if (!session?.sourcePackage) return true;
+    const check = await this.deps.packages.verifyPin(session);
+    if (check.status === "available") return true;
+    if (!signal.aborted && this.generationController?.signal === signal) {
+      await this.enterPackageUnavailable(check.otherVersionAvailable);
+    }
+    return false;
+  }
+
+  async enterPackageUnavailable(otherVersionAvailable: boolean): Promise<void> {
+    this.state.phase = "package-unavailable";
+    this.state.errorCause = "package-unavailable";
+    this.state.packageUnavailable = { otherVersionAvailable };
+    this.state.readOnly = true;
+    this.state.streamedNarration = "";
+    this.state.errorMessage = null;
+    await this.deps.coordinator.stop();
+    if (this.state.lease) {
+      await this.deps.authority.release(this.state.lease);
+      this.state.lease = null;
+    }
+  }
+
   async runTurnGeneration(
     generate: (signal: AbortSignal) => Promise<void>,
     retryPhase: "ready" | "ready-to-resolve",
   ): Promise<void> {
     const signal = this.startTurnGeneration();
     try {
+      if (!(await this.packageStillAvailable(signal))) return;
       await generate(signal);
     } catch (cause) {
       // Discard any uncommitted remote response after a rejected patch,

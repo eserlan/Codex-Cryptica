@@ -6,6 +6,7 @@ import {
   type AdventureJsonV1,
 } from "@codex/adventure-engine";
 import { AdventurePackageRepository } from "./adventure-package-storage";
+import { AdventurePackageContextCache } from "./adventure-package-context";
 
 function createInMemoryDirectoryHandle(): FileSystemDirectoryHandle {
   const dirs = new Map<
@@ -228,6 +229,22 @@ describe("AdventurePackageRepository", () => {
       expect(refused.reason).toContain("in use");
     }
     expect(await repo.loadStored("vault-1", v1.hash)).not.toBeNull();
+    const cache = new AdventurePackageContextCache(
+      (vaultId, hash) => repo.loadStored(vaultId, hash),
+      (vaultId) => repo.listApproved(vaultId),
+    );
+    await expect(
+      cache.verifyPin({
+        id: "session-1",
+        vaultId: "vault-1",
+        sourcePackage: {
+          packageId: "the-last-grind",
+          version: "1.0.0",
+          formatVersion: ADVENTURE_JSON_V1_FORMAT_VERSION,
+          hash: v1.hash,
+        },
+      }),
+    ).resolves.toEqual({ status: "available" });
 
     currentPinnedHashes = new Set();
     const removed = await repo.removeApproved(

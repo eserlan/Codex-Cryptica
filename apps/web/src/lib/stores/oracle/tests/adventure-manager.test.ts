@@ -28,17 +28,12 @@ describe("AdventureManager", () => {
         name: "Mara",
         description: "Guide",
       },
-      sourcePackage: {
-        packageId: "imported-module",
-        version: "1.0.0",
-        formatVersion: "adventure-json/v1",
-        hash: "a".repeat(64),
-      },
+      sourcePackage: packageRef,
     });
 
     expect(savePinned).toHaveBeenCalledOnce();
     const pinnedSession = savePinned.mock.calls[0]?.[0] as AdventureSession;
-    expect(pinnedSession.sourcePackage?.hash).toBe("a".repeat(64));
+    expect(pinnedSession.sourcePackage?.hash).toBe(packageRef.hash);
     expect(pinnedSession.packageProgress).toEqual({
       sceneId: "ros-scene-1-landing",
     });
@@ -55,6 +50,7 @@ describe("AdventureManager", () => {
       manager.start({ ...startInput, sourcePackage: packageRef }),
     ).rejects.toThrow("adventure-package-unavailable");
     expect(savePinned).not.toHaveBeenCalled();
+    expect(manager.errorCause).toBe("package-unavailable");
   });
 
   it("gives a session without a package no packageProgress", async () => {

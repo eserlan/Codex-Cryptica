@@ -26,7 +26,7 @@ export const referencePackage: AdventureJsonV1 = AdventureJsonV1Schema.parse(
 );
 
 export const packageRef = {
-  packageId: "reference-one-shot",
+  packageId: "the-last-grind",
   version: "1.0.0",
   formatVersion: "adventure-json/v1",
   hash: "b".repeat(64),
@@ -34,9 +34,15 @@ export const packageRef = {
 
 /** A package cache whose loader returns the reference one-shot. */
 export function referencePackageCache(
-  loader = async () => ({ package: referencePackage }) as any,
+  loader: any = async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: referencePackage,
+    originFormat: "adventure-json/v1",
+  }),
+  listApproved: any = async () => [],
 ) {
-  return new AdventurePackageContextCache(loader);
+  return new AdventurePackageContextCache(loader, listApproved);
 }
 
 export const now = "2026-08-16T12:00:00.000Z";

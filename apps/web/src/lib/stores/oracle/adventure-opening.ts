@@ -107,6 +107,11 @@ export class AdventureOpening {
     created: AdventureSession,
   ): Promise<AdventureSession> {
     if (!created.sourcePackage) return created;
+    const check = await this.runtime.deps.packages.verifyPin(created);
+    if (check.status === "unavailable") {
+      this.state.errorCause = "package-unavailable";
+      throw new Error("adventure-package-unavailable");
+    }
     const sceneId = entrySceneId(
       await this.runtime.deps.packages.load(created),
     );
@@ -186,6 +191,7 @@ export class AdventureOpening {
       return;
     const signal = this.runtime.startTurnGeneration();
     try {
+      if (!(await this.runtime.packageStillAvailable(signal))) return;
       await this.persistOpeningTurn(session, signal);
     } catch (cause) {
       if (!signal.aborted) await this.handleFailedOpening(session, cause);
