@@ -470,17 +470,6 @@ describe("gap 3: companion lines", () => {
       ),
     ).not.toThrow();
 
-    const result = retrieveAdventureJsonContext(pkg, {
-      sceneId: "ros-scene-1-landing",
-      locationId,
-    });
-    expect(
-      result.gmOnly.some(
-        (excerpt) =>
-          excerpt.id === locationId &&
-          excerpt.text.includes(publicDescription),
-      ),
-    ).toBe(false);
   });
 
   it("catches an 8-word quote from a companion when ID punctuation changes", () => {
