@@ -412,14 +412,20 @@ const packageStatus = z.enum([
   "altered",
   "skipped",
 ]);
+/** Package-authored IDs are kept verbatim: no trimming and no length cap. */
+const packageId = z.string().min(1);
 const packageProgressSchema = z
   .object({
-    sceneId: id,
+    sceneId: packageId,
     version: z.literal(1).optional(),
     records: z
       .array(
         z
-          .object({ id, kind: packageRecordKind, status: packageStatus })
+          .object({
+            id: packageId,
+            kind: packageRecordKind,
+            status: packageStatus,
+          })
           .strict(),
       )
       .max(MAX_PACKAGE_PROGRESS_ENTRIES)
@@ -428,15 +434,15 @@ const packageProgressSchema = z
       .array(
         z
           .object({
-            id,
+            id: packageId,
             turnId: id,
-            recordId: id,
+            recordId: packageId,
             kind: packageRecordKind,
             from: packageStatus,
             to: packageStatus,
             certainty: z.enum(["claimed", "confirmed"]),
             note: z.string().trim().min(1).max(240),
-            supersedes: id.optional(),
+            supersedes: packageId.optional(),
           })
           .strict(),
       )
