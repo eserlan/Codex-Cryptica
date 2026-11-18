@@ -4,6 +4,10 @@ import {
   type CreatureProposal,
 } from "@codex/adventure-engine";
 import type { Entity } from "schema";
+import {
+  runVaultScopedBatch,
+  type VaultBatchContext,
+} from "../vault-scoped-batch";
 
 export interface ExistingCreature {
   id: string;
@@ -140,7 +144,7 @@ async function createOne(
   hash: string,
   choice: CreatureImportChoice,
   deps: CreatureImportDeps,
-  vaultId: string | null,
+  ctx: VaultBatchContext,
   result: CreatureImportResult,
 ): Promise<void> {
   const name = choice.proposal.name;
@@ -155,7 +159,7 @@ async function createOne(
     result.failures.push(`${name}: could not create the entry.`);
     return;
   }
-  if (deps.getVaultId() !== vaultId) {
+  if (!ctx.isVaultCurrent()) {
     result.interrupted = true;
     result.failures.push(
       `${name}: save could not be confirmed after the Vault changed.`,
@@ -164,14 +168,14 @@ async function createOne(
   }
   result.created += 1;
   if (!choice.file) return;
-  if (deps.getVaultId() !== vaultId) {
+  if (!ctx.isVaultCurrent()) {
     result.interrupted = true;
     return;
   }
   try {
-    const saved = await deps.saveImage(id, choice.file, vaultId);
+    const saved = await deps.saveImage(id, choice.file, ctx.vaultId);
     if (!saved.ok) result.failures.push(IMAGE_FAILURE(name));
-    if (deps.getVaultId() !== vaultId) result.interrupted = true;
+    if (!ctx.isVaultCurrent()) result.interrupted = true;
   } catch {
     result.failures.push(IMAGE_FAILURE(name));
   }
@@ -184,7 +188,9 @@ export async function importCreatures(
   choices: CreatureImportChoice[],
   deps: CreatureImportDeps,
 ): Promise<CreatureImportResult> {
-  const vaultId = deps.getVaultId();
+  const toCreate = choices.filter(
+    (choice) => !choice.existing && choice.include,
+  );
   const result: CreatureImportResult = {
     created: 0,
     reused: choices.filter((choice) => choice.existing && choice.include)
@@ -192,11 +198,11 @@ export async function importCreatures(
     failures: [],
     interrupted: false,
   };
-  for (const choice of choices) {
-    if (choice.existing || !choice.include) continue;
-    if (deps.getVaultId() !== vaultId) result.interrupted = true;
-    else await createOne(pkg, hash, choice, deps, vaultId, result);
-    if (result.interrupted) break;
-  }
+  const batch = await runVaultScopedBatch(
+    toCreate,
+    (choice, ctx) => createOne(pkg, hash, choice, deps, ctx, result),
+    { getVaultId: deps.getVaultId },
+  );
+  if (batch.interrupted) result.interrupted = true;
   return result;
 }
