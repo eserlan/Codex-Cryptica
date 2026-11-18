@@ -14,6 +14,7 @@ import Page from "./+page.svelte";
 import {
   STAGED_ASSEMBLE_SCRIPT,
   STAGED_CHUNK_PROMPT,
+  STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
 } from "./staged-conversion.js";
 import {
@@ -427,6 +428,43 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
   });
 
   describe("staged conversion section (#4896)", () => {
+    it("uses source ranges that work for paginated and unpaginated material", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "If it is not paginated, say that and do not invent page numbers",
+      );
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "heading/anchor/source range otherwise",
+      );
+      expect(STAGED_CHUNK_PROMPT).toContain(
+        "For unpaginated sources, use the supported section or anchor reference",
+      );
+      expect(STAGED_CHUNK_PROMPT).toContain("never invent a page number");
+    });
+
+    it("checks expected entry IDs against the actual chunk JSON", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "every expected source-supported entry",
+      );
+      expect(STAGED_INVENTORY_PROMPT).toContain(
+        "grouped by Adventure JSON collection",
+      );
+      expect(STAGED_CHUNK_PROMPT).toContain(
+        "IDs actually present in each collection",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "the JSON files for every chunk",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "expected-entry checklist with the actual IDs and counts",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "not as proof that an entry exists",
+      );
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "Mark a section converted only when every expected ID",
+      );
+    });
+
     it("is reachable from the quick start and from the one-pass prompt's pointer", () => {
       const { container } = render(Page);
 
