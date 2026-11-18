@@ -1,5 +1,6 @@
 import type { AdventureJsonV1 } from "./schema";
 import { sortKeysRecursively } from "./canonical";
+import { entrySceneId } from "./entry-scene";
 import type { StoredAdventurePackage } from "./storage";
 
 export const ADVENTURE_CORRESPONDENCE_EXTENSION_KEY =
@@ -677,8 +678,8 @@ export function diffAdventureJsonVersions(
     unresolved.push(...collectionUnresolved);
   }
 
-  const previousEntrySceneId = previous.scenes[0]?.id ?? null;
-  const currentEntrySceneId = next.scenes[0]?.id ?? null;
+  const previousEntrySceneId = entrySceneId(previous) ?? null;
+  const currentEntrySceneId = entrySceneId(next) ?? null;
 
   return {
     packageChangedFields,
