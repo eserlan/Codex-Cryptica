@@ -32,19 +32,21 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
 
   copy: {
     thesisHeading: "What makes a system playable",
+    thesisIntro:
+      "Building a star system for a tabletop campaign means designing a small set of reachable places, the routes and supplies between them, and the groups competing over them. The crew always has somewhere to go, and getting there costs something.",
     learnHeading: "Learn the method",
     learnIntro:
-      "Start with the core star-system guide, then use the supporting guides for aliens, ships, travel, crew roles and factions.",
+      "Start with the core guide, then use the supporting guides for aliens, ships, travel, crew roles and factions.",
     examplesHeading: "See a system, start to finish",
     examplesIntro:
       "A short worked system shows how destinations, routes, cargo, factions and a flashpoint fit together, so you can copy the shape for your own table.",
     exampleHighlightLabel: "Why it works:",
     toolsHeading: "Generate the detail",
     toolsIntro:
-      "Start from a generated system, then fill in individual worlds, peoples, ships and factions with the supporting tools.",
-    workflowHeading: "Build one this week",
+      "The Star System Generator can start a system or fill gaps in one you have drafted. The supporting tools then develop individual worlds, peoples, ships and factions.",
+    workflowHeading: "Two ways in, one system",
     workflowIntro:
-      "Five steps from an empty map to a system your crew can fly around. Each step points at the resource that carries it.",
+      "Start from the Star System Generator and use these five steps to check and sharpen what it rolls, or work through them by hand and use the generator at any point to fill gaps. Either way, you finish by developing one world in depth.",
     relatedHeading: "Keep exploring",
   },
 
@@ -62,7 +64,7 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
     {
       title: "Few destinations, each with a job",
       summary:
-        "Three to five places the crew can reach beat a catalogue of twelve. Give each one a clear function, such as a place to refuel, to trade, to hide or to get hurt, so choosing where to go is already a decision.",
+        "Three to five reachable places beat a catalogue of twelve. Give each a clear function, such as a place to refuel, trade, hide or get hurt, so choosing where to go is already a decision.",
     },
     {
       title: "Distance should cost something",
@@ -86,7 +88,7 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
       title: "How to Create a Sci-Fi Star System for an RPG",
       href: "/answers/how-to-create-a-sci-fi-star-system-for-an-rpg",
       description:
-        "The core framework for turning a list of places into a system the crew can play in: what each place is for, how far apart they are, who fights over them and what is happening right now.",
+        "The core framework for turning a list of places into a playable system, covering what each place is for, how far apart they are, who fights over them and what is happening now.",
       focus: "Core Guide: System Framework",
     },
     {
@@ -202,10 +204,10 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
       step: 1,
       title: "Map 3-5 destinations",
       description:
-        "Pick a few places the crew can reach and give each one a job, then check the core framework when a place feels redundant.",
+        "Roll a system and keep the places that each do a job, or pick a few places by hand. Cut or merge any that feel redundant.",
       recommendedResource: {
-        title: "How to Create a Sci-Fi Star System for an RPG",
-        href: "/answers/how-to-create-a-sci-fi-star-system-for-an-rpg",
+        title: "Star System Generator",
+        href: "/generators/star-system",
       },
     },
     {
@@ -240,12 +242,12 @@ export const STAR_SYSTEMS_TOPIC_CONFIG = {
     },
     {
       step: 5,
-      title: "Generate the system and develop a world",
+      title: "Develop one world in depth",
       description:
-        "Roll a full system to fill gaps or spark ideas, then open a named body in the World Generator to build it out.",
+        "From a generated system, use Develop This World on a named body. From a hand-built system, take your notes to the World Generator.",
       recommendedResource: {
-        title: "Star System Generator",
-        href: "/generators/star-system",
+        title: "World Generator",
+        href: "/generators/world",
       },
     },
   ] satisfies TopicWorkflowStep[],

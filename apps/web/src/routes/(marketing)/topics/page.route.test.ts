@@ -66,6 +66,32 @@ describe("/topics route", () => {
     expect(document.head.innerHTML).not.toContain("noindex");
   });
 
+  it("uses one evergreen description that names no topic", () => {
+    render(Page, { props: { data: { topics: listLiveTopics() } } });
+    const description = document
+      .querySelector('meta[name="description"]')
+      ?.getAttribute("content");
+    const collection = [
+      ...document.querySelectorAll('script[type="application/ld+json"]'),
+    ]
+      .map((s) => JSON.parse(s.textContent ?? "{}"))
+      .find((d) => d["@type"] === "CollectionPage");
+    expect(description).toBeTruthy();
+    expect(collection.description).toBe(description);
+    for (const topic of listLiveTopics()) {
+      expect(description).not.toContain(topic.title);
+    }
+  });
+
+  it("uses the new one-sentence intro", () => {
+    const { container } = render(Page, {
+      props: { data: { topics: listLiveTopics() } },
+    });
+    expect(container.querySelector("h1 + p")?.textContent).not.toContain(
+      "one kind of campaign",
+    );
+  });
+
   it("emits CollectionPage and BreadcrumbList JSON-LD", () => {
     render(Page, { props: { data: { topics: listLiveTopics() } } });
     const docs = [

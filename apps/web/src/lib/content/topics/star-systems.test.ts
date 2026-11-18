@@ -110,9 +110,16 @@ describe("star systems topic hub config", () => {
     for (const item of CONFIG.workflow) {
       expect(allowed).toContain(item.recommendedResource.href);
     }
-    expect(CONFIG.workflow[4].recommendedResource.href).toBe(
+    expect(CONFIG.workflow[0].recommendedResource.href).toBe(
       "/generators/star-system",
     );
+    expect(CONFIG.workflow[4].recommendedResource.href).toBe(
+      "/generators/world",
+    );
+    expect(CONFIG.copy.thesisIntro).toBeTruthy();
+    for (const item of CONFIG.workflow) {
+      expect(item.title).not.toMatch(/generate the system/i);
+    }
   });
 
   it("has an inline example with destinations, factions and a flashpoint", () => {
