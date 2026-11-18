@@ -4,7 +4,12 @@ import {
 } from "#lib/services/adventure/world-style.js";
 import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
-import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
+import {
+  adventureJsonRecordIds,
+  retrieveAdventureJsonContext,
+  type AdventureSession,
+  type CommitMetadata,
+} from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
@@ -85,11 +90,29 @@ export class AdventureRuntime {
     };
   }
 
-  /** Scene IDs of the current session's cached package, for scene-move checks. */
-  private packageSceneIds(): Pick<CommitMetadata, "packageSceneIds"> {
+  /** Package guards and scene IDs for validating the model's player-facing output. */
+  private packageMetadata(): Pick<
+    CommitMetadata,
+    "packageSceneIds" | "packageRecordIds" | "packageGmOnlyText"
+  > {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
-    return pkg ? { packageSceneIds: pkg.scenes.map((scene) => scene.id) } : {};
+    if (!pkg) return {};
+    const context = retrieveAdventureJsonContext(pkg, {
+      sceneId: session.packageProgress?.sceneId,
+    });
+    const packageGmOnlyText = context.gmOnly.flatMap((excerpt) => [
+      ...excerpt.text.split("\n").map((line) => {
+        const separator = line.indexOf(": ");
+        return separator >= 0 ? line.slice(separator + 2) : line;
+      }),
+      ...(excerpt.sourceRef?.textQuote ? [excerpt.sourceRef.textQuote] : []),
+    ]);
+    return {
+      packageSceneIds: pkg.scenes.map((scene) => scene.id),
+      packageRecordIds: adventureJsonRecordIds(pkg),
+      packageGmOnlyText,
+    };
   }
 
   newTurnMetadata(playerAction: string): CommitMetadata {
@@ -98,7 +121,7 @@ export class AdventureRuntime {
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
-      ...this.packageSceneIds(),
+      ...this.packageMetadata(),
     };
   }
 
@@ -107,7 +130,7 @@ export class AdventureRuntime {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
-      ...this.packageSceneIds(),
+      ...this.packageMetadata(),
     };
   }
 

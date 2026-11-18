@@ -53,6 +53,7 @@ type Line = [
   label: string,
   value: string | Iterable<string> | undefined,
   secret?: true,
+  referenceIds?: readonly string[],
 ];
 
 /**
@@ -142,20 +143,12 @@ function boundSourceRef(
   return next ?? sourceRef;
 }
 
-/** True when a line's value mentions any of `ids`. Expects materialised parts. */
-function namesAny(value: Line[1], ids: string[]): boolean {
-  if (ids.length === 0 || value === undefined) return false;
-  const parts = typeof value === "string" ? [value] : (value as string[]);
-  return parts.some((part) => ids.some((id) => part.includes(id)));
-}
-
 /**
- * Builds a record's excerpt. In a player-visible record, secret lines and lines
- * naming a record that is not player-visible move into a GM-only companion
- * excerpt with the same identity, which directly follows its parent.
+ * Builds a record excerpt, moving secret lines and structured references to
+ * hidden records into an immediately following GM-only companion.
  */
 function recordExcerpts(
-  hiddenIds: string[],
+  hiddenIds: ReadonlySet<string>,
   kind: AdventureJsonExcerptKind,
   record: {
     id: string;
@@ -167,14 +160,22 @@ function recordExcerpts(
   cap: number,
 ): AdventureJsonExcerpt[] {
   const boundedSourceRef = boundSourceRef(record.sourceRef, cap);
-  const excerpt = (visibility: Visibility, from: Iterable<Line>) => ({
-    id: record.id,
-    kind,
-    visibility,
-    epistemicStatus: record.epistemicStatus,
-    ...(boundedSourceRef !== undefined ? { sourceRef: boundedSourceRef } : {}),
-    text: buildText(from, cap),
-  });
+  const excerpt = (visibility: Visibility, from: Iterable<Line>) => {
+    const sourceRef =
+      boundedSourceRef === undefined
+        ? undefined
+        : visibility === "player-visible"
+          ? withoutTextQuote(boundedSourceRef)
+          : boundedSourceRef;
+    return {
+      id: record.id,
+      kind,
+      visibility,
+      epistemicStatus: record.epistemicStatus,
+      ...(sourceRef !== undefined ? { sourceRef } : {}),
+      text: buildText(from, cap),
+    };
+  };
   // A record that is not player-visible is GM-only as a whole: stream it in.
   if (record.visibility !== "player-visible") {
     return [excerpt(record.visibility, lines)];
@@ -188,8 +189,11 @@ function recordExcerpts(
   const companion = new SplitText();
   for (const raw of lines) {
     if (kept.length >= limit) break;
+    const alreadyMoved =
+      raw[2] === true || (raw[3] ?? []).some((id) => hiddenIds.has(id));
+    if (alreadyMoved && companion.length >= limit) continue;
     const line = readLine(raw, limit);
-    const moved = line[2] === true || namesAny(line[1], hiddenIds);
+    const moved = alreadyMoved;
     if (!moved) kept.push(line);
     else if (companion.length < limit) companion.push(line);
   }
@@ -219,7 +223,10 @@ class SplitText {
 }
 
 /** Reads a line's parts into an array, stopping once they exceed `limit`. */
-function readLine([label, value, secret]: Line, limit: number): Line {
+function readLine(
+  [label, value, secret, referenceIds]: Line,
+  limit: number,
+): Line {
   let parts: string | string[] | undefined;
   if (value === undefined || typeof value === "string") {
     parts = value;
@@ -232,7 +239,16 @@ function readLine([label, value, secret]: Line, limit: number): Line {
       if (length > limit) break;
     }
   }
-  return secret ? [label, parts, true] : [label, parts];
+  return [label, parts, secret, referenceIds];
+}
+
+function withoutTextQuote(
+  sourceRef: SourceReference,
+): SourceReference | undefined {
+  if (sourceRef.textQuote === undefined) return sourceRef;
+  const { textQuote: _textQuote, ...safeSourceRef } = sourceRef;
+  void _textQuote;
+  return Object.keys(safeSourceRef).length ? safeSourceRef : undefined;
 }
 
 function clampMaxCharacters(value: number | undefined): number {
@@ -346,7 +362,7 @@ interface Selection {
   /** Ids of selected records that later tiers and secrets match against. */
   selectedIds: Set<string>;
   /** Ids of every package record that is not player-visible. */
-  hiddenIds: string[];
+  hiddenIds: Set<string>;
   actorIds: Set<string>;
   seen: Set<string>;
   /** Caps retained excerpt objects while matching records are visited. */
@@ -413,7 +429,7 @@ function add(
   );
 }
 
-function hiddenRecordIds(pkg: AdventureJsonV1): string[] {
+function adventureJsonRecords(pkg: AdventureJsonV1) {
   return [
     ...pkg.locations,
     ...pkg.actors,
@@ -424,7 +440,15 @@ function hiddenRecordIds(pkg: AdventureJsonV1): string[] {
     ...pkg.rumours,
     ...pkg.items,
     ...pkg.secrets,
-  ]
+  ];
+}
+
+export function adventureJsonRecordIds(pkg: AdventureJsonV1): string[] {
+  return adventureJsonRecords(pkg).map((record) => record.id);
+}
+
+export function adventureJsonHiddenRecordIds(pkg: AdventureJsonV1): string[] {
+  return adventureJsonRecords(pkg)
     .filter((record) => record.visibility !== "player-visible")
     .map((record) => record.id);
 }
@@ -441,7 +465,12 @@ function addScene(sel: Selection): void {
       (function* (): Iterable<Line> {
         yield ["Title", scene.title];
         yield ["Summary", scene.summary];
-        yield ["Location", scene.locationId];
+        yield [
+          "Location",
+          scene.locationId,
+          undefined,
+          scene.locationId ? [scene.locationId] : [],
+        ];
         yield [
           "Read aloud",
           typeof scene.readAloud === "string"
@@ -452,12 +481,14 @@ function addScene(sel: Selection): void {
         yield ["Conditions", scene.conditions];
         for (const b of scene.branches ?? []) {
           yield [
+            "Branch target",
+            b.targetSceneId,
+            undefined,
+            [b.targetSceneId],
+          ];
+          yield [
             "Branch",
-            (function* (): Iterable<string> {
-              yield b.targetSceneId;
-              yield b.description;
-              if (b.condition) yield b.condition;
-            })(),
+            [b.description, ...(b.condition ? [b.condition] : [])],
           ];
         }
       })(),
@@ -529,15 +560,24 @@ function addLocation(sel: Selection, location: AdventureJsonLocation): void {
         yield ["Name", location.name];
         yield ["Summary", location.summary];
         yield ["Description", location.description];
-        yield ["Parent location", location.parentLocationId];
+        yield [
+          "Parent location",
+          location.parentLocationId,
+          undefined,
+          location.parentLocationId ? [location.parentLocationId] : [],
+        ];
         for (const c of location.connections ?? []) {
           yield [
+            "Connection target",
+            c.targetLocationId,
+            undefined,
+            [c.targetLocationId],
+          ];
+          yield [
             "Connection",
-            (function* (): Iterable<string> {
-              yield c.targetLocationId;
-              if (c.description) yield c.description;
-              yield* c.travelConditions ?? [];
-            })(),
+            [c.description, ...(c.travelConditions ?? [])].filter(
+              (value): value is string => value !== undefined,
+            ),
           ];
         }
       })(),
@@ -565,11 +605,16 @@ function addEncounters(sel: Selection): AdventureJsonEncounter[] {
         e,
         (function* (): Iterable<Line> {
           yield ["Title", e.title];
-          yield ["Scene", e.sceneId];
-          yield ["Location", e.locationId];
+          yield ["Scene", e.sceneId, undefined, e.sceneId ? [e.sceneId] : []];
+          yield [
+            "Location",
+            e.locationId,
+            undefined,
+            e.locationId ? [e.locationId] : [],
+          ];
           yield ["Description", e.description];
           yield ["Conditions", e.conditions];
-          yield ["Actors", e.actorIds];
+          yield ["Actors", e.actorIds, undefined, e.actorIds];
           for (const solution of e.alternativeSolutions) {
             yield [
               "Alternative solution",
@@ -614,8 +659,13 @@ function addActors(
           ["Role", a.role],
           ["Motivation", a.motivation],
           ["Disposition", a.disposition],
-          ["Faction", a.factionId],
-          ["Location", a.locationId],
+          ["Faction", a.factionId, undefined, a.factionId ? [a.factionId] : []],
+          [
+            "Location",
+            a.locationId,
+            undefined,
+            a.locationId ? [a.locationId] : [],
+          ],
         ],
         sel.maxCharacters,
       ),
@@ -642,11 +692,36 @@ function addClues(sel: Selection): void {
         [
           ["Text", c.text],
           ["Reveals", c.reveals, true],
-          ["Lead target", c.leadTargetId],
-          ["Placed scene", c.placedSceneId],
-          ["Placed location", c.placedLocationId],
-          ["Placed actor", c.placedActorId],
-          ["Alternative source", c.alternativeSourceId],
+          [
+            "Lead target",
+            c.leadTargetId,
+            undefined,
+            c.leadTargetId ? [c.leadTargetId] : [],
+          ],
+          [
+            "Placed scene",
+            c.placedSceneId,
+            undefined,
+            c.placedSceneId ? [c.placedSceneId] : [],
+          ],
+          [
+            "Placed location",
+            c.placedLocationId,
+            undefined,
+            c.placedLocationId ? [c.placedLocationId] : [],
+          ],
+          [
+            "Placed actor",
+            c.placedActorId,
+            undefined,
+            c.placedActorId ? [c.placedActorId] : [],
+          ],
+          [
+            "Alternative source",
+            c.alternativeSourceId,
+            undefined,
+            c.alternativeSourceId ? [c.alternativeSourceId] : [],
+          ],
         ],
         sel.maxCharacters,
       ),
@@ -672,8 +747,13 @@ function addItems(sel: Selection): void {
           ["Name", i.name],
           ["Summary", i.summary],
           ["Description", i.description],
-          ["Location", i.locationId],
-          ["Actor", i.actorId],
+          [
+            "Location",
+            i.locationId,
+            undefined,
+            i.locationId ? [i.locationId] : [],
+          ],
+          ["Actor", i.actorId, undefined, i.actorId ? [i.actorId] : []],
         ],
         sel.maxCharacters,
       ),
@@ -698,9 +778,24 @@ function addRumours(sel: Selection): void {
         [
           ["Text", r.text],
           ["Truth", r.truth, true],
-          ["Source actor", r.sourceActorId],
-          ["Source location", r.sourceLocationId],
-          ["Target", r.targetEntityId],
+          [
+            "Source actor",
+            r.sourceActorId,
+            undefined,
+            r.sourceActorId ? [r.sourceActorId] : [],
+          ],
+          [
+            "Source location",
+            r.sourceLocationId,
+            undefined,
+            r.sourceLocationId ? [r.sourceLocationId] : [],
+          ],
+          [
+            "Target",
+            r.targetEntityId,
+            undefined,
+            r.targetEntityId ? [r.targetEntityId] : [],
+          ],
         ],
         sel.maxCharacters,
       ),
@@ -723,7 +818,7 @@ function addSecrets(sel: Selection): void {
         s,
         [
           ["Text", s.text],
-          ["Related", s.relatedEntityIds],
+          ["Related", s.relatedEntityIds, undefined, s.relatedEntityIds],
         ],
         sel.maxCharacters,
       ),
@@ -751,7 +846,7 @@ function selectExcerpts(
     locationId: location?.id,
     excerpts: [],
     selectedIds: new Set(),
-    hiddenIds: hiddenRecordIds(pkg),
+    hiddenIds: new Set(adventureJsonHiddenRecordIds(pkg)),
     actorIds: new Set(),
     seen: new Set(),
     maxCharacters,

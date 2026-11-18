@@ -1,4 +1,8 @@
-import type { AdventureSession, AdventureTurnProposal } from "./types";
+import type {
+  AdventureSession,
+  AdventureTurnProposal,
+  CommitMetadata,
+} from "./types";
 import {
   HISTORICAL_ANCHOR_TITLE_SECRET_ID,
   historicalAnchorDateSecretId,
@@ -134,6 +138,48 @@ export function detectHiddenLeakage(
     proposal.kind === "complete" ? proposal.revealSecretIds : [],
   );
   return detectHiddenTextFields(session, fields, revealed);
+}
+
+/** Checks player-facing proposal text against the current pinned package. */
+export function detectPackageLeakage(
+  proposal: AdventureTurnProposal,
+  meta: CommitMetadata,
+): HiddenLeakageFinding[] {
+  const fields = playerFacingStrings(proposal).filter(
+    ([field]) =>
+      !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
+  );
+  const findings: HiddenLeakageFinding[] = [];
+  for (const secret of meta.packageGmOnlyText ?? []) {
+    const needle = normalize(secret);
+    if (needle.length < 3) continue;
+    for (const [field, value] of fields) {
+      if (normalize(value).includes(needle)) {
+        findings.push({ field, secretId: "pinned-package-text" });
+      }
+    }
+  }
+  for (const id of meta.packageRecordIds ?? []) {
+    // Exact field values are safe to check even for short IDs; prose checks
+    // skip short IDs because ordinary words would otherwise collide.
+    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const token =
+      id.length >= 3
+        ? new RegExp(
+            `(^|[^\\p{L}\\p{N}_-])${escaped}(?=$|[^\\p{L}\\p{N}_-])`,
+            "iu",
+          )
+        : undefined;
+    for (const [field, value] of fields) {
+      if (
+        normalize(value) === normalize(id) ||
+        (token !== undefined && token.test(value))
+      ) {
+        findings.push({ field, secretId: `pinned-package-id:${id}` });
+      }
+    }
+  }
+  return findings;
 }
 
 /** Checks partial player-facing text against the session's unrevealed secrets. */

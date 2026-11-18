@@ -65,4 +65,34 @@ describe("package scene progress", () => {
     const next = commit(before);
     expect(next.packageProgress).toEqual(before.packageProgress);
   });
+
+  it("rejects exact GM-only package text and hidden IDs in player output", () => {
+    const secret = "The duke poisoned the well";
+    const leakedText = proposal();
+    leakedText.narration = `You learn that ${secret}.`;
+    const textResult = applyCompletedTurn(packageSession(), leakedText, {
+      ...meta,
+      packageGmOnlyText: [secret],
+    });
+    expect(textResult).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+
+    const leakedId = proposal();
+    leakedId.narration = "A figure appears.";
+    leakedId.suggestedActions = [
+      "Ask about hidden-actor",
+      "Look around the room",
+      "Check the nearby doorway",
+    ];
+    const idResult = applyCompletedTurn(packageSession(), leakedId, {
+      ...meta,
+      packageRecordIds: ["hidden-actor"],
+    });
+    expect(idResult).toMatchObject({
+      ok: false,
+      errors: [{ code: "hidden-leakage" }],
+    });
+  });
 });
