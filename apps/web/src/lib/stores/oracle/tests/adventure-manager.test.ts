@@ -1592,3 +1592,48 @@ it("does not dispatch when lookup is superseded by the same session ID in anothe
   expect(manager.session?.vaultId).toBe("vault-2");
   expect(manager.session?.turns).toHaveLength(1);
 });
+
+describe("AdventureManager.loadSourcePackage", () => {
+  it("returns null when the session has no sourcePackage", async () => {
+    const deps: any = dependencies();
+    const load = vi.fn(async () => referencePackage);
+    deps.packages = { load };
+    const manager = new AdventureManager(deps);
+    manager.session = { id: "s1", vaultId: "vault-1" } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("delegates to deps.packages.load when sourcePackage is set", async () => {
+    const deps: any = dependencies();
+    const load = vi.fn(async () => referencePackage);
+    deps.packages = { load };
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      sourcePackage: packageRef,
+    } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBe(referencePackage);
+    expect(load).toHaveBeenCalledWith(manager.session);
+  });
+
+  it("returns null when deps.packages.load rejects", async () => {
+    const deps: any = dependencies();
+    deps.packages = {
+      load: vi.fn(async () => {
+        throw new Error("missing package");
+      }),
+    };
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      sourcePackage: packageRef,
+    } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBeNull();
+  });
+});

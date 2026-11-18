@@ -139,6 +139,37 @@ describe("GM-only Adventure review capture", () => {
     expect(result).toContain("The merchant secretly destroyed the stock.");
   });
 
+  it("omits package progress and its private event notes from JSON exports", () => {
+    const source: AdventureSession = {
+      ...exampleSession(),
+      packageProgress: {
+        sceneId: "scene-1",
+        version: 1,
+        records: [{ id: "secret-1", kind: "secret", status: "active" }],
+        events: [
+          {
+            id: "event-1",
+            turnId: "turn-1",
+            recordId: "secret-1",
+            kind: "secret",
+            from: "unvisited",
+            to: "active",
+            certainty: "confirmed",
+            note: "PACKAGE-LEDGER-PRIVATE-MARKER",
+          },
+        ],
+      },
+    };
+
+    const result = adventureReviewJson(source);
+
+    expect(JSON.parse(result)).not.toHaveProperty("packageProgress");
+    expect(result).not.toContain("PACKAGE-LEDGER-PRIVATE-MARKER");
+    expect(source.packageProgress?.events?.[0]?.note).toBe(
+      "PACKAGE-LEDGER-PRIVATE-MARKER",
+    );
+  });
+
   it("includes every turn, hidden scenarios, event ledger and provisional entities in Markdown", () => {
     const report = adventureReviewMarkdown(exampleSession());
     expect(report).toContain("GM-only review copy");

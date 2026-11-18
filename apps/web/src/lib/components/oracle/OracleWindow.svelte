@@ -13,10 +13,12 @@
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureSurface from "./adventure/AdventureSurface.svelte";
   let adventureMode = $state(false);
+  let creatureImportBusy = $state(false);
 
   const _isPopup = $derived(page.url.pathname === resolve(`oracle`));
 
   const popOut = () => {
+    if (creatureImportBusy) return;
     window.open(
       resolve(`oracle`),
       "codex-oracle",
@@ -56,7 +58,9 @@
     class="fixed inset-0 bg-black/40 z-[89] {oracle.isModal
       ? 'block'
       : 'md:hidden'}"
-    onclick={() => oracle.toggle()}
+    onclick={() => {
+      if (!creatureImportBusy) oracle.toggle();
+    }}
     transition:fade
     aria-hidden="true"
   ></div>
@@ -93,6 +97,11 @@
         {/if}
       </div>
       <div class="flex items-center gap-1">
+        {#if creatureImportBusy}
+          <span class="px-2 text-xs text-theme-text" role="status">
+            Finishing creature entries…
+          </span>
+        {/if}
         <!-- Clear Chat -->
         {#if !adventureMode && oracle.messages.length > 0}
           <button
@@ -112,6 +121,7 @@
           type="button"
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors hidden md:flex"
           onclick={popOut}
+          disabled={creatureImportBusy}
           title="Pop out to new window"
           aria-label="Pop out to new window"
         >
@@ -137,8 +147,12 @@
         <button
           type="button"
           class="w-8 h-8 flex items-center justify-center text-theme-muted hover:text-theme-primary transition-colors"
+          disabled={creatureImportBusy}
           onclick={() => oracle.toggle()}
           aria-label="Close oracle window"
+          title={creatureImportBusy
+            ? "Wait for creature entries to finish before closing"
+            : "Close oracle window"}
         >
           <span aria-hidden="true" class="icon-[lucide--x] w-4 h-4"></span>
         </button>
@@ -157,7 +171,9 @@
     </div>
 
     {#if adventureMode}
-      <AdventureSurface />
+      <AdventureSurface
+        onCreatureImportBusyChange={(busy) => (creatureImportBusy = busy)}
+      />
     {:else}
       <OracleChat
         onOpenSettings={() => {

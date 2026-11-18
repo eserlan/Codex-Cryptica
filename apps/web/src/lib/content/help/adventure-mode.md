@@ -103,6 +103,19 @@ alternative is shown only as "Alternative start (details hidden)". You can
 start a new session pinned to that package version and hash, or resume an existing pinned session directly. Later changes to
 the package never retarget a session that has already started.
 
+Each approved package version also has **Create creature entries**. It proposes
+one Creature for each actor named in an encounter, merging actors with the same
+name and keeping variants such as "Gnoll Chieftain" apart. Nothing is guessed
+from the text and no AI is used. Creatures tied to hidden actors or encounters
+are hidden from players by default, and hidden encounters are listed only in the
+creature's GM-only lore. For each one you can add a prepared image file or leave
+it with no image; the PDF itself is not cropped. Choose **Review changes** to
+see a preview, and nothing is saved until you confirm. If you run it again on
+the same or a newer version, creatures already in your Vault are shown as
+"Already in your Vault" and reused, never overwritten. You can create up to
+100 new entries per confirmation; skip some entries and confirm another batch
+to import more.
+
 Re-importing an identical package is a no-op. Changed content with the same
 package ID opens a new version review against the previous approved version;
 check the listed changes, including any change to the entry scene, before
@@ -114,6 +127,20 @@ version in the Vault.
 If a session's package version is missing or has changed, the session pauses
 with **Retry** and **Leave session**. Your story stays readable. Re-import
 the same version, then choose Retry to continue.
+
+## Package progress and GM details
+
+Open **Adventure tools** during a session pinned to a package. The
+player progress view lists confirmed, player-visible scenes you have visited,
+the current scene, and player-visible clues you have found. It leaves out
+GM-only records, unvisited scenes, and unconfirmed claims, and does not show a
+remaining-scene count.
+
+The optional **GM details** audit is hidden until you choose **Show GM details**
+and confirm the spoiler warning. It lists package records the ledger has
+touched, including claims and superseded events, so you can check the Oracle's
+bookkeeping. Choose **Hide GM details** to close it again. Revealing it may show
+GM-only package content.
 
 Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
 500 pages) remain available as experimental convenience inputs. They are

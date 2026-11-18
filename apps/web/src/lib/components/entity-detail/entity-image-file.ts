@@ -12,6 +12,7 @@ export interface EntityImageFileDeps {
     id: string,
     patch: { image: string; thumbnail?: string },
   ) => Promise<unknown>;
+  canUpdate?: () => boolean;
   notify: (message: string, type: "error") => void;
 }
 
@@ -38,7 +39,11 @@ export async function saveEntityImageFile(
   }
   try {
     const { image, thumbnail } = await deps.saveImageToVault(file, entityId);
-    await deps.updateEntity(entityId, { image, thumbnail });
+    if (deps.canUpdate && !deps.canUpdate()) {
+      throw new Error("The active Vault changed while saving the image.");
+    }
+    const updated = await deps.updateEntity(entityId, { image, thumbnail });
+    if (updated === false) throw new Error("The entity no longer exists.");
     return { ok: true, image };
   } catch (err) {
     debugStore.error("[entity-image-file] Failed to save image:", err);

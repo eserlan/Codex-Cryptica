@@ -10,6 +10,7 @@
   let {
     library,
     onStart,
+    onCreatureImportBusyChange = () => {},
   }: {
     library: AdventurePackageLibrary;
     onStart: (
@@ -17,6 +18,7 @@
       hash: string,
       startSceneId?: string,
     ) => void;
+    onCreatureImportBusyChange?: (busy: boolean) => void;
   } = $props();
 
   const groupedPackages = $derived.by(() => {
@@ -66,7 +68,12 @@
           </div>
           <ul class="space-y-2">
             {#each group.versions as item (item.hash)}
-              <ApprovedAdventurePackageVersion {item} {library} {onStart} />
+              <ApprovedAdventurePackageVersion
+                {item}
+                {library}
+                {onStart}
+                {onCreatureImportBusyChange}
+              />
             {/each}
           </ul>
         </li>
