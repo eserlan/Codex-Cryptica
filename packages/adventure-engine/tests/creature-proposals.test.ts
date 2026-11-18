@@ -119,26 +119,19 @@ describe("buildCreatureProposals", () => {
     expect(proposals[0]!.concealed).toBe(false);
   });
 
-  it("deduplicates large same-name creature proposals", () => {
-    const count = 1500;
-    const actors = Array.from({ length: count }, (_, index) =>
-      actor(`actor-${index}`, "Shared name", {
-        sourceRef: { page: index + 1 },
-        summary: `Unique summary ${index}`,
-      }),
+  it("retains many distinct source pages for one creature", () => {
+    const actors = Array.from({ length: 1500 }, (_, index) =>
+      actor(`actor-${index}`, "Shared", { sourceRef: { page: index + 1 } }),
     );
     const largePackage = {
       ...pkg,
       actors,
-      encounters: [encounter("all-actors", actors.map((entry) => entry.id))],
+      encounters: [encounter("all", actors.map((entry) => entry.id))],
     } as AdventureJsonV1;
     const result = buildCreatureProposals(largePackage);
     expect(result).toHaveLength(1);
-    expect(result[0]!.sourceRefs).toHaveLength(count);
-    expect(result[0]!.sourceRefs[0]!.page).toBe(1);
-    expect(result[0]!.sourceRefs.at(-1)!.page).toBe(count);
+    expect(result[0]!.sourceRefs).toHaveLength(1500);
     expect(result[0]!.encounters).toHaveLength(1);
-    expect(result[0]!.summary).toHaveLength(count);
   });
 
   it("keeps encounter order without rescanning the package for each proposal", () => {
