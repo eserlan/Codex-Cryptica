@@ -269,11 +269,24 @@ describe("actor progress transitions and corrections", () => {
       `actorEvents: invalid supersede ${MAREN}`,
     ]);
     expect(actorOf(wrongTarget.packageProgress, MAREN)?.status).toBe("dead");
+  });
 
-    // Confirmed supersedes targeting the death event restores/updates status cleanly
+  it("allows a confirmed supersedes correction to update a dead actor and rejects re-superseding", () => {
+    const died = ok(
+      commitActors(packageSession(), [
+        {
+          actorId: MAREN,
+          status: "dead",
+          certainty: "confirmed",
+          note: "Maren fell into the millrace.",
+        },
+      ]),
+    );
+    const deathEvent = died.packageProgress!.actorEvents![0]!;
+
     const corrected = ok(
       commitActors(
-        wrongTarget,
+        died,
         [
           {
             actorId: MAREN,
@@ -283,13 +296,12 @@ describe("actor progress transitions and corrections", () => {
             supersedes: deathEvent.id,
           },
         ],
-        { turnId: "turn-5" },
+        { turnId: "turn-2" },
       ),
     );
     expect(corrected.turns.at(-1)?.dropped).toBeUndefined();
     expect(actorOf(corrected.packageProgress, MAREN)?.status).toBe("present");
 
-    // Already-superseded death event cannot be superseded again
     const reusedSupersede = ok(
       commitActors(
         corrected,
@@ -302,7 +314,7 @@ describe("actor progress transitions and corrections", () => {
             supersedes: deathEvent.id,
           },
         ],
-        { turnId: "turn-6" },
+        { turnId: "turn-3" },
       ),
     );
     expect(reusedSupersede.turns.at(-1)?.dropped).toEqual([

@@ -32,6 +32,7 @@ import {
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
 import type {
+  ActorEventProposal,
   AdventureSession,
   AdventureTurnProposal,
   AdventureValidationError,
@@ -155,6 +156,35 @@ function applyLedgerProgress(
   return { ...result.progress, sceneId: moveTo ?? before.sceneId };
 }
 
+function applyActorProgress(
+  progress: PackageProgress,
+  proposedActors: readonly ActorEventProposal[],
+  index: PackageProgressIndex,
+  meta: CommitMetadata,
+  dropped: string[],
+): PackageProgress {
+  if (proposedActors.length === 0) return progress;
+  const actorResult = applyPackageActorEvents(progress, proposedActors, {
+    turnId: meta.turnId,
+    index,
+  });
+  dropped.push(...actorResult.dropped);
+  return actorResult.progress;
+}
+
+function dropMissingPackageProposals(
+  proposed: readonly PackageEventProposal[],
+  proposedActors: readonly ActorEventProposal[],
+  dropped: string[],
+): void {
+  for (const event of proposed) {
+    dropped.push(`packageEvents: no package ${event.recordId.slice(0, 80)}`);
+  }
+  for (const event of proposedActors) {
+    dropped.push(`actorEvents: no package ${event.actorId.slice(0, 80)}`);
+  }
+}
+
 function resolvePackageProgress(
   candidate: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
@@ -167,7 +197,7 @@ function resolvePackageProgress(
   const proposed = proposal.packageEvents ?? [];
   const proposedActors = proposal.actorEvents ?? [];
   if (before && candidate.sourcePackage && index) {
-    let nextProgress = applyLedgerProgress(
+    const nextProgress = applyLedgerProgress(
       before,
       index,
       moveTo,
@@ -175,24 +205,16 @@ function resolvePackageProgress(
       meta,
       dropped,
     );
-    if (proposedActors.length > 0) {
-      const actorResult = applyPackageActorEvents(
-        nextProgress,
-        proposedActors,
-        { turnId: meta.turnId, index },
-      );
-      dropped.push(...actorResult.dropped);
-      nextProgress = actorResult.progress;
-    }
-    candidate.packageProgress = nextProgress;
+    candidate.packageProgress = applyActorProgress(
+      nextProgress,
+      proposedActors,
+      index,
+      meta,
+      dropped,
+    );
     return;
   }
-  for (const event of proposed) {
-    dropped.push(`packageEvents: no package ${event.recordId.slice(0, 80)}`);
-  }
-  for (const event of proposedActors) {
-    dropped.push(`actorEvents: no package ${event.actorId.slice(0, 80)}`);
-  }
+  dropMissingPackageProposals(proposed, proposedActors, dropped);
   if (moveTo !== undefined) {
     candidate.packageProgress = { ...before, sceneId: moveTo };
   }
