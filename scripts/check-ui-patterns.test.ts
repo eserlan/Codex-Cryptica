@@ -139,6 +139,16 @@ describe("contrast — cases PR review flagged", () => {
       rules('<input class="md:border border-theme-border text-theme-text" />'),
     ).toContain("border-contrast");
     expect(
+      rules(
+        '<input class="border-0 md:border border-theme-border text-theme-text" />',
+      ),
+    ).toContain("border-contrast");
+    expect(
+      rules(
+        '<input class="border-0 md:border-0 border-theme-border text-theme-text" />',
+      ),
+    ).not.toContain("border-contrast");
+    expect(
       rules('<input class="border-x-2 border-theme-border text-theme-text" />'),
     ).toContain("border-contrast");
     // Decorative container borders are not interactive control boundaries
@@ -388,6 +398,12 @@ describe("pattern rules", () => {
         "MyDialog.svelte",
       ),
     ).toEqual([]);
+    expect(
+      modalFocusProblems(
+        '<ModalShell><div role="dialog" aria-modal="true">safe</div></ModalShell>\n<div role="dialog" aria-modal="true">untrapped</div>',
+        "MyDialog.svelte",
+      ),
+    ).toHaveLength(2);
     expect(
       modalFocusProblems(
         '<div role="dialog" aria-modal="true">x</div>',

@@ -304,9 +304,28 @@ export function contrastProblems(variant, themes) {
   }
 
   // Outlined interactive control boundary contrast (3:1 non-text UI contrast)
-  const hasVisibleBorder =
-    names.some((n) => /(?:^|:)border(?:-[xysetrbl])?(?:-[248])?$/.test(n)) &&
-    !names.some((n) => /^border-(?:0|none|transparent)$/.test(n));
+  const borderUtilitiesByBreakpoint = new Map();
+  for (const name of names) {
+    const separator = name.lastIndexOf(":");
+    const breakpoint = separator === -1 ? "" : name.slice(0, separator);
+    const utility = name.slice(separator + 1);
+    if (
+      /^(?:border(?:-[xysetrbl])?(?:-[248])?|border-(?:0|none|transparent))$/.test(
+        utility,
+      )
+    ) {
+      const utilities = borderUtilitiesByBreakpoint.get(breakpoint) ?? [];
+      utilities.push(utility);
+      borderUtilitiesByBreakpoint.set(breakpoint, utilities);
+    }
+  }
+  const hasVisibleBorder = [...borderUtilitiesByBreakpoint.values()].some(
+    (utilities) =>
+      utilities.some((name) =>
+        /^(?:border(?:-[xysetrbl])?(?:-[248])?)$/.test(name),
+      ) &&
+      !utilities.some((name) => /^border-(?:0|none|transparent)$/.test(name)),
+  );
   const hasSolidFill =
     bgToken &&
     /^bg-theme-(?:primary|accent|secondary|danger|warning)$/.test(bgToken.name);
@@ -556,8 +575,6 @@ function hasTimerCleanup(source, timerId) {
 /** Hand-rolled modal dialogs without focus trap / shared modal shell. */
 export function modalFocusProblems(source, file) {
   if (!file.endsWith(".svelte")) return [];
-  const hasSharedFocusTrap =
-    /\buse:focusTrap\b|\bfocusTrap\b|\bModalShell\b/.test(source);
   const problems = [];
   for (const match of source.matchAll(
     /aria-modal\s*=\s*["']true["']|role\s*=\s*["']dialog["']/g,
@@ -566,6 +583,19 @@ export function modalFocusProblems(source, file) {
     const tagEnd = source.indexOf(">", match.index);
     const openingTag =
       tagStart >= 0 && tagEnd >= 0 ? source.slice(tagStart, tagEnd + 1) : "";
+    const isInsideModalShell = (() => {
+      const shellStart = source.lastIndexOf("<ModalShell", match.index);
+      if (shellStart === -1) return false;
+      const shellClose = source.lastIndexOf("</ModalShell", match.index);
+      const shellOpenEnd = source.indexOf(">", shellStart);
+      const shellEnd = source.indexOf("</ModalShell", shellStart);
+      return (
+        shellStart > shellClose && shellOpenEnd !== -1 && shellEnd > match.index
+      );
+    })();
+    const hasLocalFocusTrap = /\buse:focusTrap\b|\bfocusTrap\b/.test(
+      openingTag,
+    );
     const keyHandler = openingTag.match(
       /on(?::)?keydown\s*=\s*\{([^}]+)\}/,
     )?.[1];
@@ -582,7 +612,7 @@ export function modalFocusProblems(source, file) {
       /(?:\.key|\.code)\s*===?\s*["']Tab["']/.test(explicitHandler) &&
       /\.preventDefault\s*\(/.test(explicitHandler) &&
       /\.focus\s*\(/.test(explicitHandler);
-    if (hasSharedFocusTrap || hasExplicitTabTrap) continue;
+    if (isInsideModalShell || hasLocalFocusTrap || hasExplicitTabTrap) continue;
     problems.push({
       rule: "modal-focus",
       line: source.slice(0, match.index).split("\n").length,
