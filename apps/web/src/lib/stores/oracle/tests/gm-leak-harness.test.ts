@@ -428,7 +428,7 @@ describe("gap 3: companion lines", () => {
     ).toThrow(/field connections\[\d+\]\.travelConditions\[0\]/);
   });
 
-  it("allows public connection prose when a hidden ID is beyond retrieval's line bound", () => {
+  it("allows public connection prose beyond hidden-ID bound", () => {
     const pkg = variant();
     pkg.secrets = [
       ...pkg.secrets,
