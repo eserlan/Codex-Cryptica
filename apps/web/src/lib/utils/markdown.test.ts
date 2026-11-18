@@ -14,6 +14,10 @@ import {
   buildCreatureProposals,
   type AdventureJsonV1,
 } from "@codex/adventure-engine";
+import {
+  assertNoActiveLinks,
+  assertNoRemoteResourceFetches,
+} from "../test-utils/pr-guardrails";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -89,8 +93,9 @@ describe("markdown.ts utility", () => {
       } as unknown as AdventureJsonV1;
       const creature = buildCreatureProposals(pkg)[0]!;
       const entry = buildCreatureEntryText(creature, pkg.source);
-      const html = renderMarkdown(entry.content);
-      expect(html).not.toContain("<a ");
+      const html = renderMarkdown(entry.content, { allowImages: false });
+      assertNoActiveLinks(html);
+      assertNoRemoteResourceFetches(html);
       expect(html).toContain("https://tracker.example/source");
       expect(html).toContain("www.example.com/path");
     });

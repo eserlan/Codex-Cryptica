@@ -292,6 +292,9 @@
   // The shell renders the header CTA now, so this page registers its tracking
   // rather than binding it to a button it no longer owns.
   $effect(() => registerShellCtaHandler(save.trackHeaderOpenCodex));
+  $effect(() => {
+    if (session.isBusy) save.clearSaveError();
+  });
 </script>
 
 {#snippet outputCardBlock()}
@@ -301,6 +304,9 @@
     isBusy={session.showOutputLoading}
     isGenerationInProgress={session.isBusy}
     isExampleDraft={session.isExampleDraft}
+    {generatorType}
+    {canFollowUp}
+    saveError={save.saveError}
     {generatedSingular}
     {variant}
     worldTheme={theme || worldTheme}

@@ -1176,4 +1176,259 @@ describe("SEOGeneratorLayout Theming Sync", () => {
       await fireEvent.click(secondOpenCodexLink!);
     });
   });
+
+  describe("Wave 1 value-led continuation CTA", () => {
+    it("is absent on initial load and failed generation, and appears only after explicit generation succeeds", async () => {
+      const seedDraft = {
+        type: "location" as const,
+        title: "Kepler Reach",
+        summary: "A frontier system.",
+        content: "### Stars\nKepler A",
+        lore: "### Secret\nHidden gate.",
+        labels: ["star-system"],
+        status: "draft" as const,
+      };
+      const generate = vi
+        .fn()
+        .mockRejectedValueOnce(new Error("AI timeout"))
+        .mockResolvedValueOnce({
+          ...seedDraft,
+          title: "Vega Drift",
+          status: "active" as const,
+        });
+
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/star-system",
+          eyebrow: "Star System Generator",
+          generate,
+          formFields: noopSnippet,
+          initialDraft: seedDraft,
+        },
+      });
+
+      await tick();
+      expect(screen.queryByTestId("generator-continuation-callout")).toBeNull();
+      expect(screen.queryByText("Add to my Codex")).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Save to Codex" }),
+      ).toBeTruthy();
+
+      // Failed explicit generation must keep the callout hidden
+      await vi.waitFor(() => {
+        expect(
+          document.querySelector("#generate-button")?.hasAttribute("disabled"),
+        ).toBe(false);
+      });
+      await fireEvent.click(document.querySelector("#generate-button")!);
+      await vi.waitFor(() => {
+        expect(document.body.textContent).toContain("Failed to generate");
+      });
+      expect(screen.queryByTestId("generator-continuation-callout")).toBeNull();
+      expect(screen.queryByText("Add to my Codex")).toBeNull();
+
+      // Successful explicit generation reveals the continuation callout
+      await vi.waitFor(() => {
+        expect(
+          document.querySelector("#generate-button")?.hasAttribute("disabled"),
+        ).toBe(false);
+      });
+      await fireEvent.click(document.querySelector("#generate-button")!);
+      await vi.waitFor(() => {
+        expect(
+          screen.getByTestId("generator-continuation-callout"),
+        ).toBeTruthy();
+      });
+      expect(screen.getByText("Keep this system connected")).toBeTruthy();
+      expect(screen.getByText("Add to my Codex")).toBeTruthy();
+      expect(
+        screen.getByText("No account needed; stored locally in this browser."),
+      ).toBeTruthy();
+      expect(document.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+      expect(
+        screen.queryByRole("button", { name: "Save to Codex" }),
+      ).toBeNull();
+    });
+
+    it("never shows the continuation callout for variant='names' even after explicit generation", async () => {
+      const namesDraft = {
+        type: "note" as const,
+        title: "Fantasy Names",
+        summary: "A list of names.",
+        content: "Alden\nBryn",
+        lore: "",
+        labels: [],
+        status: "active" as const,
+      };
+      render(SEOGeneratorLayout, {
+        props: {
+          canonicalPath: "/generators/names",
+          eyebrow: "Name Generator",
+          variant: "names",
+          generate: vi.fn().mockResolvedValue(namesDraft),
+          formFields: noopSnippet,
+        },
+      });
+
+      await vi.waitFor(() => {
+        expect(
+          document.querySelector("#generate-button")?.hasAttribute("disabled"),
+        ).toBe(false);
+      });
+      await fireEvent.click(document.querySelector("#generate-button")!);
+      await vi.waitFor(() => {
+        expect(document.body.textContent).toContain("Alden");
+      });
+      expect(screen.queryByTestId("generator-continuation-callout")).toBeNull();
+      expect(document.querySelector("#save-to-codex-btn")).toBeNull();
+    });
+
+    it("handles blocked localStorage gracefully, surfaces role='alert', keeps modal closed, and leaves Copy working", async () => {
+      const npcDraft = {
+        type: "character" as const,
+        title: "Secret NPC Title",
+        summary: "Secret summary",
+        content: "### Who they are\nSecret NPC content",
+        lore: "### Secret\nSecret lore",
+        labels: ["npc"],
+        status: "active" as const,
+      };
+      const setItemSpy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(() => {
+          throw new DOMException("Blocked", "SecurityError");
+        });
+
+      try {
+        render(SEOGeneratorLayout, {
+          props: {
+            canonicalPath: "/tools/rpg-npc-generator",
+            eyebrow: "RPG NPC Generator",
+            generate: vi.fn().mockResolvedValue(npcDraft),
+            formFields: noopSnippet,
+          },
+        });
+
+        await vi.waitFor(() => {
+          expect(
+            document
+              .querySelector("#generate-button")
+              ?.hasAttribute("disabled"),
+          ).toBe(false);
+        });
+        await fireEvent.click(document.querySelector("#generate-button")!);
+        await vi.waitFor(() => {
+          expect(
+            screen.getByRole("button", { name: "Add to my Codex" }),
+          ).toBeTruthy();
+        });
+
+        await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+        await vi.waitFor(() => {
+          expect(
+            screen
+              .getByTestId("generator-continuation-callout")
+              .querySelector('[role="alert"]'),
+          ).toBeTruthy();
+        });
+
+        expect(document.querySelector('[role="dialog"]')).toBeNull();
+        expect(
+          document
+            .querySelector("#copy-markdown-btn")
+            ?.hasAttribute("disabled"),
+        ).toBe(false);
+        await fireEvent.click(document.querySelector("#copy-markdown-btn")!);
+        expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+          "copy",
+          expect.objectContaining({ generator_type: "rpg-npc-generator" }),
+        );
+      } finally {
+        setItemSpy.mockRestore();
+      }
+    });
+
+    it("shows the continuation CTA after offline local generation and keeps telemetry free of generated text", async () => {
+      const originalOnLine = navigator.onLine;
+      Object.defineProperty(navigator, "onLine", {
+        configurable: true,
+        value: false,
+      });
+
+      try {
+        const originDraft = {
+          type: "character" as const,
+          title: "Solaris Vane",
+          summary: "A cosmic accident origin.",
+          content: "### The Origin\nStruck by a fallen core.",
+          lore: "### The Full Truth\nThe core was a beacon.",
+          labels: ["origin-generator", "superhero"],
+          status: "active" as const,
+        };
+        const generate = vi.fn().mockResolvedValue(originDraft);
+
+        render(SEOGeneratorLayout, {
+          props: {
+            canonicalPath: "/generators/origin-generator",
+            eyebrow: "Superhero Origin Story Generator",
+            generate,
+            formFields: noopSnippet,
+          },
+        });
+
+        await vi.waitFor(() => {
+          expect(
+            document
+              .querySelector("#generate-button")
+              ?.hasAttribute("disabled"),
+          ).toBe(false);
+        });
+        await fireEvent.click(document.querySelector("#generate-button")!);
+        await vi.waitFor(() => {
+          expect(screen.getByText("Keep developing this origin")).toBeTruthy();
+        });
+        expect(generate).toHaveBeenCalledWith(
+          expect.objectContaining({ useAI: false }),
+        );
+
+        await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
+        await vi.waitFor(() => {
+          expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+        });
+
+        const stored = JSON.parse(
+          localStorage.getItem("__codex_pending_import") ?? "null",
+        );
+        expect(stored).toMatchObject({
+          type: "character",
+          title: "Solaris Vane",
+          status: "active",
+        });
+
+        expect(trackPublicGeneratorActionMock).toHaveBeenCalledWith(
+          "save_to_codex",
+          expect.objectContaining({
+            generator_type: "origin-generator",
+            is_hub_batch: false,
+            item_count: 1,
+          }),
+        );
+
+        const allTrackedPayloads = [
+          ...trackPublicGeneratorActionMock.mock.calls,
+          ...trackEventMock.mock.calls,
+        ]
+          .map((call) => JSON.stringify(call))
+          .join("\n");
+        expect(allTrackedPayloads).not.toContain("Solaris Vane");
+        expect(allTrackedPayloads).not.toContain("Struck by a fallen core");
+        expect(allTrackedPayloads).not.toContain("The core was a beacon");
+      } finally {
+        Object.defineProperty(navigator, "onLine", {
+          configurable: true,
+          value: originalOnLine,
+        });
+      }
+    });
+  });
 });

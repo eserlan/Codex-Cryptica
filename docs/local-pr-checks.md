@@ -58,3 +58,13 @@ bun scripts/check-ui-patterns.mjs                 # changed lines vs origin/stag
 bun scripts/check-ui-patterns.mjs --files a.svelte  # only these files
 bun test scripts/check-ui-patterns.test.ts
 ```
+
+## Reusable safety & test helpers
+
+- `apps/web/src/lib/services/vault-scoped-batch.ts` (`runVaultScopedBatch`):
+  reusable async per-item runner for multi-write Vault workflows. Captures the
+  active Vault ID at start, checks Vault identity and optional `AbortSignal`
+  before/after each item, and reports `{ processed, total, interrupted, cancelled }`.
+- `apps/web/src/lib/test-utils/pr-guardrails.ts`: shared Vitest assertions for
+  recurring PR review defects—`assertNoRemoteResourceFetches(html)`,
+  `assertNoActiveLinks(html)`, and `assertBoundedPerformance(label, fn, maxMs)`.

@@ -1,0 +1,111 @@
+import { describe, expect, it } from "vitest";
+import {
+  getGeneratorContinuationConfig,
+  shouldShowGeneratorContinuation,
+} from "./generator-continuation";
+
+describe("generator-continuation", () => {
+  it("returns Wave 1 configs for star-system, npc, rpg-npc-generator, and origin-generator", () => {
+    const starSystem = getGeneratorContinuationConfig("star-system");
+    expect(starSystem).toMatchObject({
+      headline: "Keep this system connected",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+
+    const npc = getGeneratorContinuationConfig("npc");
+    const rpgNpc = getGeneratorContinuationConfig("rpg-npc-generator");
+    expect(rpgNpc).toBe(npc);
+    expect(npc).toMatchObject({
+      headline: "Give this character a place in your world",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+
+    const origin = getGeneratorContinuationConfig("origin-generator");
+    expect(origin).toMatchObject({
+      headline: "Keep developing this origin",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
+  });
+
+  it("returns null for Wave 2, names, and unknown generator types", () => {
+    for (const type of [
+      "point-crawl",
+      "personality",
+      "alien-race",
+      "names",
+      "fantasy-names",
+      "dnd-npc",
+      "unknown-generator",
+      "",
+      null,
+      undefined,
+    ]) {
+      expect(getGeneratorContinuationConfig(type)).toBeNull();
+    }
+  });
+
+  it("gates visibility strictly on explicit completed generation for Wave 1 non-names generators", () => {
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "star-system",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "star-system",
+        userGenerationSucceeded: false,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "npc",
+        userGenerationSucceeded: true,
+        isExampleDraft: true,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "origin-generator",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: true,
+        variant: "default",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "npc",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "names",
+      }),
+    ).toBe(false);
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "point-crawl",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+});
