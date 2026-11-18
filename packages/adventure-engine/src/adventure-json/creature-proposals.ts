@@ -147,32 +147,44 @@ export function buildCreatureProposals(
   return ordered;
 }
 
+function addProposalSourceRef(
+  accumulator: ProposalAccumulator,
+  ref: SourceReference | undefined,
+): void {
+  if (!ref) return;
+  const key = `${ref.page ?? ""}:${ref.pageEnd ?? ""}`;
+  if (accumulator.sourceRefKeys.has(key)) return;
+  accumulator.sourceRefKeys.add(key);
+  accumulator.proposal.sourceRefs.push(ref);
+}
+
+function addProposalEncounters(
+  accumulator: ProposalAccumulator,
+  linked: AdventureJsonEncounter[],
+): void {
+  for (const encounter of linked) {
+    if (!accumulator.encounterIds.has(encounter.id)) {
+      accumulator.encounterIds.add(encounter.id);
+      accumulator.proposal.encounters.push(toProposalEncounter(encounter));
+    }
+    if (encounter.visibility === "gm-only")
+      accumulator.proposal.concealed = true;
+  }
+}
+
 function mergeActor(
   accumulator: ProposalAccumulator,
   actor: AdventureJsonActor,
   linked: AdventureJsonEncounter[],
 ): void {
-  const { proposal, sourceRefKeys, encounterIds, textValues } = accumulator;
+  const { proposal, textValues } = accumulator;
   proposal.actorIds.push(actor.id);
   proposal.pages.push(...pagesOf(actor.sourceRef));
-  if (actor.sourceRef) {
-    const referenceKey = `${actor.sourceRef.page ?? ""}:${actor.sourceRef.pageEnd ?? ""}`;
-    if (!sourceRefKeys.has(referenceKey)) {
-      sourceRefKeys.add(referenceKey);
-      proposal.sourceRefs.push(actor.sourceRef);
-    }
-  }
-  for (const field of TEXT_FIELDS) {
+  addProposalSourceRef(accumulator, actor.sourceRef);
+  for (const field of TEXT_FIELDS)
     pushDistinct(proposal[field], textValues.get(field)!, actor[field]);
-  }
   if (actor.visibility === "gm-only") proposal.concealed = true;
-  for (const encounter of linked) {
-    if (!encounterIds.has(encounter.id)) {
-      encounterIds.add(encounter.id);
-      proposal.encounters.push(toProposalEncounter(encounter));
-    }
-    if (encounter.visibility === "gm-only") proposal.concealed = true;
-  }
+  addProposalEncounters(accumulator, linked);
 }
 
 /**
@@ -188,7 +200,8 @@ export function escapeEntryText(text: string): string {
     .replace(/^(\s*)(\d+)\./gm, "$1$2\\.");
 }
 
-function formatPageReferences(refs: SourceReference[]): string {
+/** Sorted page citations shared by the creature entry and its import review. */
+export function sourcePageLabels(refs: readonly SourceReference[]): string[] {
   const cited = refs
     .filter((ref) => typeof ref.page === "number")
     .map((ref) => ({ start: ref.page!, end: ref.pageEnd ?? ref.page! }))
@@ -199,11 +212,15 @@ function formatPageReferences(refs: SourceReference[]): string {
       ref.start !== cited[index - 1]!.start ||
       ref.end !== cited[index - 1]!.end,
   );
-  const labels = unique.map(({ start, end }) =>
+  return unique.map(({ start, end }) =>
     start === end ? String(start) : `${start}–${end}`,
   );
+}
+
+function formatPageReferences(refs: SourceReference[]): string {
+  const labels = sourcePageLabels(refs);
   if (labels.length === 0) return "";
-  return labels.length === 1 && unique[0]!.start === unique[0]!.end
+  return labels.length === 1 && !labels[0]!.includes("–")
     ? `p. ${labels[0]}`
     : `pp. ${labels.join(", ")}`;
 }
