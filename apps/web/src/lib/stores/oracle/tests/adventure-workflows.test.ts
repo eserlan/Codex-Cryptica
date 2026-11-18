@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildAdventurePrompt } from "@codex/adventure-engine";
 import { AdventureOpening } from "../adventure-opening";
 import { AdventureLifecycle } from "../adventure-lifecycle";
 import { AdventureActions } from "../adventure-actions";
@@ -403,5 +404,70 @@ describe("package-grounded actions", () => {
     await new AdventureActions(runtime).submitAction("Question the ferryman");
     expect(generate).toHaveBeenCalledTimes(1);
     expect(state.session?.turns).toHaveLength(1);
+  });
+
+  it("persists NPC disposition and facts across scene revisits without mutating the package", async () => {
+    const packages = referencePackageCache();
+    const replies = [
+      {
+        ...completeProposal,
+        actorEvents: [
+          {
+            actorId: "actor-maren-holt",
+            status: "present",
+            disposition: "hostile",
+            fact: "Accused of tampering with the sluice gate.",
+            certainty: "confirmed",
+            note: "Player confronted Maren on the landing.",
+          },
+        ],
+      },
+      movedTo("ros-scene-2-yard"),
+      movedTo("ros-scene-1-landing"),
+      completeProposal,
+    ];
+    const generate = vi.fn(
+      async (_request?: unknown) => replies.shift() ?? completeProposal,
+    );
+    const { runtime, state } = createAdventureRuntime(
+      { generation: { generate } as any, packages },
+      { sceneId: "ros-scene-1-landing" },
+    );
+    const pkgBefore = structuredClone(await packages.load(state.session!));
+    const actions = new AdventureActions(runtime);
+
+    await actions.submitAction("Accuse Maren of tampering");
+    await actions.submitAction("Walk to the mill yard");
+    await actions.submitAction("Return to the ferry landing");
+    await actions.submitAction("Speak to Maren again");
+
+    const promptProgress = (callIndex: number) => {
+      const prompt = buildAdventurePrompt(
+        generate.mock.calls[callIndex]![0] as any,
+      );
+      return JSON.parse(prompt.state)["GM-ONLY package progress"];
+    };
+    // Call 0: opening action at scene 1; Call 1: move to scene 2 (scene 1 progress still active);
+    // Call 2: in scene 2 (actor-maren-holt is not featured, omitted from prompt);
+    // Call 3: back in scene 1 (actor-maren-holt disposition, status, and fact are surfaced).
+    expect(promptProgress(2)?.actors).toBeUndefined();
+    expect(promptProgress(3)?.actors).toEqual([
+      {
+        actorId: "actor-maren-holt",
+        status: "present",
+        disposition: "hostile",
+        facts: ["Accused of tampering with the sluice gate."],
+      },
+    ]);
+    expect(state.session?.packageProgress?.actors).toEqual([
+      {
+        actorId: "actor-maren-holt",
+        status: "present",
+        disposition: "hostile",
+        facts: ["Accused of tampering with the sluice gate."],
+      },
+    ]);
+    const pkgAfter = await packages.load(state.session!);
+    expect(pkgAfter).toEqual(pkgBefore);
   });
 });

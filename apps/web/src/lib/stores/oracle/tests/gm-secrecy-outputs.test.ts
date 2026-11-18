@@ -277,4 +277,80 @@ describe.each(fixtures)("GM-only secrecy outputs: %s", (name, pkg) => {
 
 describe("GM-only secrecy outputs: follow-ups", () => {
   it.todo("start-screen package card (#4943) passes the GM leak harness");
+
+  it("keeps actor ledger state, notes, and gm-only canary-actor out of player outputs and rejects echoed notes", async () => {
+    const guarded = collectGmOnlyStrings(canaryReferencePackage);
+    const play = createPlay(canaryReferencePackage);
+    try {
+      const secretNote = "Maren secretly hid the brass sluice key.";
+      const secretFact = "Carries the hidden brass sluice key.";
+      const canaryNote = "Canary actor watched from the rafters.";
+      play.queue.push(
+        turn("Mist lies over the ferry landing."),
+        {
+          ...turn("Maren eyes you warily by the jetty."),
+          actorEvents: [
+            {
+              actorId: "actor-maren-holt",
+              status: "present",
+              disposition: "wary",
+              fact: secretFact,
+              certainty: "confirmed",
+              note: secretNote,
+            },
+            {
+              actorId: "canary-actor",
+              status: "absent",
+              disposition: "hostile",
+              certainty: "confirmed",
+              note: canaryNote,
+            },
+          ],
+        },
+        // Attempt to echo a stored actorEvent note, then a stored fact; both must be rejected and retried.
+        turn(`The ferryman whispers: ${secretNote}`),
+        turn("The ferryman says nothing more."),
+        turn(`The ferryman mentions: ${secretFact}`),
+        turn("The river mist thickens."),
+      );
+      await play.start();
+      await play.manager.submitAction("Observe Maren");
+      await play.checkPlayerOutputs("after actorEvents");
+      const actorGuarded = [
+        ...guarded,
+        { recordId: "actor-maren-holt", field: "note", text: secretNote },
+        { recordId: "actor-maren-holt", field: "fact", text: secretFact },
+        { recordId: "canary-actor", field: "note", text: canaryNote },
+      ];
+      assertNoGmLeak(actorGuarded, play.manager.transcript, "transcript");
+      assertNoGmLeak(actorGuarded, play.manager.recap, "recap");
+      assertNoGmLeak(
+        actorGuarded,
+        createPlayerTranscript(play.session),
+        "archive transcript",
+      );
+      assertNoGmLeak(actorGuarded, play.session.visibleState, "visibleState");
+      assertNoGmLeak(
+        actorGuarded,
+        buildStorySummaryRequest(play.session),
+        "storySummaryRequest",
+      );
+
+      await play.manager.submitAction("Listen closely");
+      expect(play.manager.errorMessage).toBeNull();
+      expect(play.session.turns.at(-1)?.narration).toBe(
+        "The ferryman says nothing more.",
+      );
+      assertNoGmLeak(actorGuarded, play.manager.transcript, "after note retry");
+
+      await play.manager.submitAction("Ask about the sluice");
+      expect(play.manager.errorMessage).toBeNull();
+      expect(play.session.turns.at(-1)?.narration).toBe(
+        "The river mist thickens.",
+      );
+      assertNoGmLeak(actorGuarded, play.manager.transcript, "after fact retry");
+    } finally {
+      play.stop();
+    }
+  });
 });
