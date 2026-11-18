@@ -159,6 +159,11 @@ export function detectPackageLeakage(
     ...packageTextLeakage(fields, [
       ...(meta.packageGmOnlyText ?? []),
       ...(session?.packageProgress?.events ?? []).map((event) => event.note),
+      // Proposed notes are private from the same response, before they reach
+      // the ledger; packageEvents themselves are not player-facing fields.
+      ...(proposal.kind === "complete"
+        ? (proposal.packageEvents ?? []).map((event) => event.note)
+        : []),
     ]),
     ...packageIdLeakage(fields, [
       ...(meta.packageRecordIds ?? []),
@@ -179,7 +184,10 @@ function packageTextLeakage(
     if (!needle) continue;
     if (needle.length < 3) {
       shortSecrets.add(needle);
-      if (/^\d+$/.test(needle)) shortNumericSecrets.push(needle);
+      // One-digit notes match only an entire field; treating "7" as a
+      // boundary-matched secret would reject normal narration with numbers.
+      if (needle.length === 2 && /^\d+$/.test(needle))
+        shortNumericSecrets.push(needle);
     } else longSecrets.push(needle);
   }
   const longMatcher = createBoundaryMatcher(longSecrets);
