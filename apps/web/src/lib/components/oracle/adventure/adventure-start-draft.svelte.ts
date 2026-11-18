@@ -25,6 +25,7 @@ export class AdventureStartDraft {
   characterName = $state("");
   characterDescription = $state("");
   sourcePackage = $state<AdventureSourcePackageRef | undefined>(undefined);
+  startSceneId = $state<string | undefined>(undefined);
   private previouslyPrefilledScenario: string | null = null;
 
   reset(): void {
@@ -35,9 +36,14 @@ export class AdventureStartDraft {
     this.characterName = "";
     this.characterDescription = "";
     this.sourcePackage = undefined;
+    this.startSceneId = undefined;
   }
 
-  fromPackage = (pkg: AdventureJsonV1, hash: string): void => {
+  fromPackage = (
+    pkg: AdventureJsonV1,
+    hash: string,
+    startSceneId?: string,
+  ): void => {
     this.title = pkg.title.slice(0, MAX_TEXT_CHARS);
     this.premise = packagePremise(pkg);
     this.sourcePackage = {
@@ -46,6 +52,7 @@ export class AdventureStartDraft {
       formatVersion: pkg.formatVersion,
       hash,
     };
+    this.startSceneId = startSceneId;
     this.approach = "premise";
   };
 

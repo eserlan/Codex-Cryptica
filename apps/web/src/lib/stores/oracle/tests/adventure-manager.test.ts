@@ -12,6 +12,35 @@ import {
   startInput,
 } from "./adventure-fixtures";
 
+const multiStartPackage = {
+  ...referencePackage,
+  scenes: [
+    ...referencePackage.scenes,
+    {
+      id: "alt-start",
+      title: "Alt",
+      summary: "Elsewhere",
+      visibility: "player-visible" as const,
+      optional: true,
+    },
+  ],
+};
+
+async function startedProgress(startSceneId?: string) {
+  const deps: any = dependencies();
+  const savePinned = vi.fn(deps.repository.savePinned);
+  deps.repository.savePinned = savePinned;
+  deps.packages = referencePackageCache(
+    async () => ({ package: multiStartPackage }) as any,
+  );
+  await new AdventureManager(deps).start({
+    ...startInput,
+    sourcePackage: packageRef,
+    ...(startSceneId ? { startSceneId } : {}),
+  });
+  return savePinned.mock.calls[0]?.[0] as AdventureSession;
+}
+
 describe("AdventureManager", () => {
   it("uses the coordinated save path when starting from an imported package", async () => {
     const deps: any = dependencies();
@@ -39,6 +68,21 @@ describe("AdventureManager", () => {
       sceneId: "ros-scene-1-landing",
     });
   });
+
+  it("starts at a chosen start candidate", async () => {
+    const saved = await startedProgress("alt-start");
+    expect(saved.packageProgress).toEqual({ sceneId: "alt-start" });
+    expect("startSceneId" in saved).toBe(false);
+  });
+
+  it.each(["nope", "ros-scene-2-yard"])(
+    "falls back to the entry scene for %s",
+    async (id) => {
+      const saved = await startedProgress(id);
+      expect(saved.packageProgress).toEqual({ sceneId: "ros-scene-1-landing" });
+      expect("startSceneId" in saved).toBe(false);
+    },
+  );
 
   it("does not save anything when the pinned package cannot be loaded", async () => {
     const deps: any = dependencies();

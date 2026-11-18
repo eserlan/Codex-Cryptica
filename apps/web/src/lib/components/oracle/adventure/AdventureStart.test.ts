@@ -301,6 +301,43 @@ describe("AdventureStart", () => {
     );
   });
 
+  it("passes the chosen start scene only with a pinned package", async () => {
+    const ref = {
+      packageId: "p",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      hash: "a".repeat(64),
+    };
+    for (const sourcePackage of [ref, undefined]) {
+      const m = manager(async () => undefined);
+      const start = committingStart(m);
+      m.start = start;
+      const { unmount } = render(AdventureStart, {
+        props: {
+          manager: m,
+          vaultId: "vault-1",
+          title: "The Lantern Road",
+          premise: "A lantern has gone dark at the edge of town.",
+          sourcePackage,
+          startSceneId: "scene-x",
+        },
+      });
+      await fireEvent.input(screen.getByLabelText("Player character"), {
+        target: { value: "Mara" },
+      });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Start adventure" }),
+      );
+      const input = (start.mock.calls[0] as unknown[])[0] as Record<
+        string,
+        unknown
+      >;
+      if (sourcePackage) expect(input.startSceneId).toBe("scene-x");
+      else expect("startSceneId" in input).toBe(false);
+      unmount();
+    }
+  });
+
   it("does not start a second adventure while the manager is already starting", async () => {
     const m = manager(vi.fn(async () => undefined));
     m.starting = true;

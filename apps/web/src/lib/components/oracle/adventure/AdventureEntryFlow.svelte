@@ -66,6 +66,7 @@
     {onSurpriseMe}
     onOwnPremise={() => {
       draft.sourcePackage = undefined;
+      draft.startSceneId = undefined;
       draft.approach = "premise";
     }}
     onEnterWorld={() => (draft.approach = "world")}
@@ -151,10 +152,12 @@
     {characters}
     scenarioSeed={selectedRumour?.scenario}
     sourcePackage={draft.sourcePackage}
+    startSceneId={draft.startSceneId}
     {onScenarioStarted}
     onCancelScenario={rumours.cancel}
     onClearSourcePackage={() => {
       draft.sourcePackage = undefined;
+      draft.startSceneId = undefined;
     }}
   />
 {/if}
