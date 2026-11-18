@@ -198,6 +198,7 @@ export const whatKindOfShipShouldASciFiRpgPartyStartWith: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "what-should-players-be-able-to-upgrade-in-an-rpg-base",
     "how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+    "how-do-i-run-a-sci-fi-horror-rpg",
   ],
   labels: ["sci-fi"],
   discovery: {
