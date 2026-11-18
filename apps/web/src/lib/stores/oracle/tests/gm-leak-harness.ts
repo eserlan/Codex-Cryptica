@@ -237,7 +237,12 @@ function guardOrAllowLeaf(
 }
 
 type CompanionGroup = {
-  label: "Connection" | "Branch" | "Alternative solution";
+  label:
+    | "Connection"
+    | "Branch"
+    | "Alternative solution"
+    | "Read aloud"
+    | "Conditions";
   fields: Array<[field: string, text: string]>;
 };
 
@@ -379,6 +384,19 @@ function extractCompanionGroups(
     .filter((group) => group.fields.length > 0);
 }
 
+function stringArrayCompanionGroup(
+  value: unknown,
+  prefix: string,
+  label: CompanionGroup["label"],
+): CompanionGroup[] {
+  if (!Array.isArray(value)) return [];
+  const fields: Array<[string, string]> = [];
+  value.forEach((item, index) => {
+    addStringField(fields, `${prefix}[${index}]`, item);
+  });
+  return fields.length > 0 ? [{ label, fields }] : [];
+}
+
 /** Source fields retrieval joins into one line before applying the hidden-ID rule. */
 function composedCompanionComponents(record: Loose): CompanionGroup[] {
   return [
@@ -393,6 +411,8 @@ function composedCompanionComponents(record: Loose): CompanionGroup[] {
       "Alternative solution",
       alternativeSolutionComponentFields,
     ),
+    ...stringArrayCompanionGroup(record.readAloud, "readAloud", "Read aloud"),
+    ...stringArrayCompanionGroup(record.conditions, "conditions", "Conditions"),
   ];
 }
 

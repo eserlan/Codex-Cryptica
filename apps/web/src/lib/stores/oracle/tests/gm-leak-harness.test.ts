@@ -646,6 +646,88 @@ describe("gap 3: companion lines", () => {
       ),
     ).toThrow(/field alternativeSolutions\[\d+\]\.description/);
   });
+
+  it("guards sibling text in a composed scene readAloud line moved to a companion", () => {
+    const pkg = variant();
+    pkg.secrets = [
+      ...pkg.secrets,
+      { ...pkg.secrets[0]!, id: "hid-9", text: "Zzyzx quandary" },
+    ];
+    const scene = pkg.scenes[0]!;
+    const sibling =
+      "Hidden bell tower chimes beneath rusted iron rafters tonight.";
+    pkg.scenes = [
+      {
+        ...scene,
+        readAloud: ["Whispered note cites hid-9 near the door.", sibling],
+      },
+    ];
+
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: scene.id });
+    expect(
+      result.gmOnly.some(
+        (excerpt) =>
+          excerpt.id === scene.id &&
+          excerpt.text.includes("Hidden bell tower chimes"),
+      ),
+    ).toBe(true);
+    expect(
+      result.playerSafe.some(
+        (excerpt) =>
+          excerpt.id === scene.id &&
+          excerpt.text.includes("Hidden bell tower chimes"),
+      ),
+    ).toBe(false);
+
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "The hidden bell tower chimes beneath rusted iron rafters while you wait.",
+        "readAloud-sibling",
+      ),
+    ).toThrow(/field readAloud\[1\]/);
+  });
+
+  it("guards sibling text in a composed conditions line moved to a companion", () => {
+    const pkg = variant();
+    pkg.secrets = [
+      ...pkg.secrets,
+      { ...pkg.secrets[0]!, id: "hid-9", text: "Zzyzx quandary" },
+    ];
+    const scene = pkg.scenes[0]!;
+    const sibling =
+      "Silver ward dissolves when midnight frost coats bronze gate.";
+    pkg.scenes = [
+      {
+        ...scene,
+        conditions: ["Bearer reveals hid-9 to the sentry.", sibling],
+      },
+    ];
+
+    const result = retrieveAdventureJsonContext(pkg, { sceneId: scene.id });
+    expect(
+      result.gmOnly.some(
+        (excerpt) =>
+          excerpt.id === scene.id &&
+          excerpt.text.includes("Silver ward dissolves"),
+      ),
+    ).toBe(true);
+    expect(
+      result.playerSafe.some(
+        (excerpt) =>
+          excerpt.id === scene.id &&
+          excerpt.text.includes("Silver ward dissolves"),
+      ),
+    ).toBe(false);
+
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "A silver ward dissolves when midnight frost coats bronze.",
+        "conditions-sibling",
+      ),
+    ).toThrow(/field conditions\[1\]/);
+  });
 });
 
 describe("gap 4: short names", () => {
