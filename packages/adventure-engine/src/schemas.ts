@@ -297,6 +297,8 @@ const placeMoveSchema = z
     message: "A move needs a placeId or a name.",
   });
 
+/** Package-authored IDs are kept verbatim: no trimming and no length cap. */
+const packageId = z.string().min(1);
 const packageRecordKind = z.enum(["scene", "encounter", "clue", "secret"]);
 const packageStatus = z.enum([
   "unvisited",
@@ -308,12 +310,12 @@ const packageStatus = z.enum([
 ]);
 const packageEventProposalSchema = z
   .object({
-    recordId: id,
+    recordId: packageId,
     kind: packageRecordKind,
     to: packageStatus,
     certainty: z.enum(["claimed", "confirmed"]),
     note: z.string().trim().min(1).max(240),
-    supersedes: id.optional(),
+    supersedes: packageId.optional(),
   })
   .strict();
 
@@ -426,12 +428,16 @@ const sourcePackageRefSchema = z
 
 const packageProgressSchema = z
   .object({
-    sceneId: id,
+    sceneId: packageId,
     version: z.literal(1).optional(),
     records: z
       .array(
         z
-          .object({ id, kind: packageRecordKind, status: packageStatus })
+          .object({
+            id: packageId,
+            kind: packageRecordKind,
+            status: packageStatus,
+          })
           .strict(),
       )
       .max(MAX_PACKAGE_PROGRESS_ENTRIES)
@@ -440,15 +446,15 @@ const packageProgressSchema = z
       .array(
         z
           .object({
-            id,
+            id: packageId,
             turnId: id,
-            recordId: id,
+            recordId: packageId,
             kind: packageRecordKind,
             from: packageStatus,
             to: packageStatus,
             certainty: z.enum(["claimed", "confirmed"]),
             note: z.string().trim().min(1).max(240),
-            supersedes: id.optional(),
+            supersedes: packageId.optional(),
           })
           .strict(),
       )
