@@ -105,6 +105,38 @@ function appendLine(
   }
 }
 
+function boundSourceRef(
+  sourceRef: SourceReference | undefined,
+  cap: number,
+): SourceReference | undefined {
+  if (sourceRef === undefined) return undefined;
+  // `chapter`, `section`, `anchor`, and `textQuote` have no schema-level
+  // length limit. Bound them before JSON.stringify so oversized metadata
+  // cannot stall serialisation. `textQuote` uses `cap / 8` (room for JSON
+  // escaping) so it can be clipped in place; the other fields use `cap + 1`
+  // so oversized values still exceed the budget and get dropped cleanly.
+  const quoteLimit = Math.floor(cap / 8);
+  const fieldLimit = cap + 1;
+  let next: SourceReference | undefined;
+  for (const key of ["chapter", "section", "anchor"] as const) {
+    const value = sourceRef[key];
+    if (value !== undefined && value.length > fieldLimit) {
+      next ??= { ...sourceRef };
+      next[key] = value.slice(0, fieldLimit);
+    }
+  }
+  if (
+    sourceRef.textQuote !== undefined &&
+    sourceRef.textQuote.length > quoteLimit + 1
+  ) {
+    next ??= { ...sourceRef };
+    // One extra character lets admission distinguish an exact-limit quote
+    // from one that was clipped without copying the full source string.
+    next.textQuote = sourceRef.textQuote.slice(0, quoteLimit + 1);
+  }
+  return next ?? sourceRef;
+}
+
 function recordExcerpt(
   kind: AdventureJsonExcerptKind,
   record: {
@@ -116,20 +148,7 @@ function recordExcerpt(
   lines: Iterable<Line>,
   cap: number,
 ): AdventureJsonExcerpt {
-  // `textQuote` has no schema-level length limit. Keep it bounded before it
-  // reaches JSON.stringify, including strings whose characters need escaping.
-  // Eight gives room for worst-case JSON escaping plus the field envelope.
-  const sourceRef = record.sourceRef;
-  const quoteLimit = Math.floor(cap / 8);
-  const boundedSourceRef =
-    sourceRef?.textQuote !== undefined
-      ? {
-          ...sourceRef,
-          // One extra character lets admission distinguish an exact-limit quote
-          // from one that was clipped without copying the full source string.
-          textQuote: sourceRef.textQuote.slice(0, quoteLimit + 1),
-        }
-      : sourceRef;
+  const boundedSourceRef = boundSourceRef(record.sourceRef, cap);
   return {
     id: record.id,
     kind,
