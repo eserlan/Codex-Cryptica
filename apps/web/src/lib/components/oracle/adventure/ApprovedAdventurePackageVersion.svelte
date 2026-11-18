@@ -1,6 +1,5 @@
 <script lang="ts">
   import {
-    buildCreatureProposals,
     startSceneCandidates,
     type AdventureJsonV1,
     type StoredAdventurePackage,
@@ -28,9 +27,12 @@
   const pinned = $derived(library.pinnedByHash.get(item.hash) ?? []);
   const latestPinned = $derived(pinned[0]);
   const candidates = $derived(startSceneCandidates(item.package));
-  const hasCreatures = $derived(
-    buildCreatureProposals(item.package).length > 0,
-  );
+  const hasCreatures = $derived.by(() => {
+    const actorIds = new Set(item.package.actors.map((actor) => actor.id));
+    return item.package.encounters.some((encounter) =>
+      (encounter.actorIds ?? []).some((id) => actorIds.has(id)),
+    );
+  });
   let creatureDialogOpen = $state(false);
   const hash8 = $derived(item.hash.slice(0, 8));
   const pageSize = 20;
