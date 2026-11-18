@@ -111,6 +111,11 @@ export class AdventureOpening {
     startSceneId: string | undefined,
   ): Promise<AdventureSession> {
     if (!created.sourcePackage) return created;
+    const check = await this.runtime.deps.packages.verifyPin(created);
+    if (check.status === "unavailable") {
+      this.state.errorCause = "package-unavailable";
+      throw new Error("adventure-package-unavailable");
+    }
     const pkg = await this.runtime.deps.packages.load(created);
     const chosen = startSceneCandidates(pkg).find(
       (scene) => scene.id === startSceneId,
@@ -194,6 +199,7 @@ export class AdventureOpening {
       return;
     const signal = this.runtime.startTurnGeneration();
     try {
+      if (!(await this.runtime.packageStillAvailable(signal))) return;
       await this.persistOpeningTurn(session, signal);
     } catch (cause) {
       if (!signal.aborted) await this.handleFailedOpening(session, cause);

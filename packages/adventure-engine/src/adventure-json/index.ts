@@ -8,3 +8,4 @@ export * from "./diff";
 export * from "./conversion-score";
 export * from "./entry-scene";
 export * from "./retrieval";
+export * from "./pin";

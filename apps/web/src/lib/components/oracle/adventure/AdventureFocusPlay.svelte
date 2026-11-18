@@ -368,11 +368,13 @@
         <p
           class="truncate text-xs uppercase tracking-wide text-theme-text sm:text-sm sm:normal-case sm:tracking-normal"
         >
-          {manager.readOnly
-            ? "Read-only in this tab"
-            : manager.phase === "offline"
-              ? "Waiting for connection"
-              : manager.phase}
+          {manager.phase === "package-unavailable"
+            ? "Package unavailable"
+            : manager.readOnly
+              ? "Read-only in this tab"
+              : manager.phase === "offline"
+                ? "Waiting for connection"
+                : manager.phase}
           {#if elapsedLabel}
             <span
               class="ml-2 normal-case tracking-normal"

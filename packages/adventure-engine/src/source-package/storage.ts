@@ -12,6 +12,11 @@ export interface AdventurePackageFileIO {
   read(path: string): Promise<string>;
   write(path: string, content: string): Promise<void>;
   list(dir: string): Promise<string[]>;
+  /** Lists at most `limit` entries without materializing the whole directory. */
+  listLimited(
+    dir: string,
+    limit: number,
+  ): Promise<{ entries: string[]; truncated: boolean }>;
   remove?(path: string): Promise<void>;
 }
 

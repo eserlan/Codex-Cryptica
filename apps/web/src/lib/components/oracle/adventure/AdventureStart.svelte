@@ -144,6 +144,8 @@
     const message = cause instanceof Error ? cause.message : "";
     if (message === "invalid-adventure-setup")
       return "Some details are too long or invalid. Shorten them and retry. Your choices are preserved.";
+    if (message === "adventure-package-unavailable")
+      return describeAdventureStartFailure("package-unavailable");
     return "Could not start this adventure. Your choices are preserved.";
   }
 

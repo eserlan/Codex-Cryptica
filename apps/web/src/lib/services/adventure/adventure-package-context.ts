@@ -1,7 +1,8 @@
-import type {
-  AdventureJsonV1,
-  AdventureSession,
-  StoredAdventurePackage,
+import {
+  checkAdventurePackagePin,
+  type AdventureJsonV1,
+  type AdventureSession,
+  type StoredAdventurePackage,
 } from "@codex/adventure-engine";
 import { adventurePackageRepository } from "./adventure-package-storage.js";
 
@@ -9,6 +10,20 @@ type PackageLoader = (
   vaultId: string,
   hash: string,
 ) => Promise<StoredAdventurePackage | null>;
+
+type AlternateVersionChecker = (
+  vaultId: string,
+  packageId: string,
+  excludedHash: string,
+) => Promise<boolean | null>;
+
+export type PackagePinStatus =
+  | { status: "available" }
+  | {
+      status: "unavailable";
+      reason: "missing" | "unreadable" | "mismatch";
+      otherVersionAvailable: boolean | null;
+    };
 
 type PackageSessionKey = Pick<AdventureSession, "id" | "vaultId"> & {
   sourcePackage?: Pick<NonNullable<AdventureSession["sourcePackage"]>, "hash">;
@@ -23,6 +38,16 @@ export class AdventurePackageContextCache {
   constructor(
     private readonly loader: PackageLoader = (vaultId, hash) =>
       adventurePackageRepository.loadStored(vaultId, hash),
+    private readonly checkOtherVersion: AlternateVersionChecker = (
+      vaultId,
+      packageId,
+      excludedHash,
+    ) =>
+      adventurePackageRepository.hasOtherApprovedVersion(
+        vaultId,
+        packageId,
+        excludedHash,
+      ),
   ) {}
 
   private key(session: PackageSessionKey): string | undefined {
@@ -52,6 +77,55 @@ export class AdventurePackageContextCache {
     if (!stored) throw new Error("adventure-package-unavailable");
     this.touch(key, stored.package);
     return stored.package;
+  }
+
+  /**
+   * Re-reads the pinned package (never from the cache) and checks it still
+   * matches the session's pin. The session itself is never changed.
+   */
+  async verifyPin(
+    session: PackageSessionKey & Pick<AdventureSession, "sourcePackage">,
+  ): Promise<PackagePinStatus> {
+    const ref = session.sourcePackage!;
+    const key = this.key(session)!;
+    let stored: StoredAdventurePackage | null;
+    try {
+      stored = await this.loader(session.vaultId, ref.hash);
+    } catch {
+      return this.unavailable(session, key, "unreadable");
+    }
+    const check = checkAdventurePackagePin(ref, stored);
+    if (!check.ok) return this.unavailable(session, key, check.reason);
+    this.touch(key, stored!.package);
+    return { status: "available" };
+  }
+
+  private async unavailable(
+    session: PackageSessionKey & Pick<AdventureSession, "sourcePackage">,
+    key: string,
+    reason: "missing" | "unreadable" | "mismatch",
+  ): Promise<PackagePinStatus> {
+    this.cache.delete(key);
+    return {
+      status: "unavailable",
+      reason,
+      otherVersionAvailable: await this.hasOtherVersion(session),
+    };
+  }
+
+  private async hasOtherVersion(
+    session: Pick<AdventureSession, "vaultId" | "sourcePackage">,
+  ): Promise<boolean | null> {
+    const ref = session.sourcePackage!;
+    try {
+      return await this.checkOtherVersion(
+        session.vaultId,
+        ref.packageId,
+        ref.hash,
+      );
+    } catch {
+      return null;
+    }
   }
 
   private touch(key: string, pkg: AdventureJsonV1): void {

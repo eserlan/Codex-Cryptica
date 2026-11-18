@@ -111,6 +111,10 @@ approving. Each approved version stays available to start a session. Use
 by an adventure session cannot be removed; resume that session or keep the
 version in the Vault.
 
+If a session's package version is missing or has changed, the session pauses
+with **Retry** and **Leave session**. Your story stays readable. Re-import
+the same version, then choose Retry to continue.
+
 Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
 500 pages) remain available as experimental convenience inputs. They are
 normalized locally into Adventure JSON before the same review; scanned or
