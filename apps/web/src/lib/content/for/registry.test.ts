@@ -7,7 +7,13 @@ import {
 } from "./registry";
 import { HUB_THEME_SLUGS, isHubThemeSlug } from "../hub-themes";
 import { GENERATOR_SLUGS } from "../../../params/generator_slug";
-import { LandingPageKindSchema, type LandingPageConfig } from "./schema";
+import {
+  LandingPageConfigSchema,
+  LandingPageKindSchema,
+  type LandingPageConfig,
+} from "./schema";
+import { getAllAnswerSlugs } from "../answers/registry";
+import { getAllExampleSlugs } from "../examples/registry";
 
 describe("Landing Page Registry", () => {
   const mockRegistry: Record<string, LandingPageConfig> = {
@@ -1522,6 +1528,7 @@ describe("Landing Page Registry", () => {
       expect(getLandingPage("call-of-cthulhu")?.hub).toBe("cosmic-horror");
       expect(getLandingPage("cosmic-horror")?.hub).toBe("cosmic-horror");
       expect(getLandingPage("delta-green")?.hub).toBe("cosmic-horror");
+      expect(getLandingPage("mothership")?.hub).toBe("cosmic-horror");
     });
 
     it("returns the pages belonging to a hub", () => {
@@ -1535,12 +1542,98 @@ describe("Landing Page Registry", () => {
       expect(cosmic).toContain("call-of-cthulhu");
       expect(cosmic).toContain("cosmic-horror");
       expect(cosmic).toContain("delta-green");
+      expect(cosmic).toContain("mothership");
     });
 
     it("returns nothing for a hub with no landing pages", () => {
       expect(getLandingPagesForHub("lancer").length).toBeGreaterThan(0);
       expect(getLandingPagesForHub("superhero")).toEqual([]);
       expect(getLandingPagesForHub("not-a-hub")).toEqual([]);
+    });
+  });
+
+  describe("Mothership Pack", () => {
+    it("is registered as a horror system guide with a non-affiliation disclaimer", () => {
+      const ms = getLandingPage("mothership");
+      expect(ms).toBeDefined();
+      expect(ms?.slug).toBe("mothership");
+      expect(ms?.kind).toBe("system");
+      expect(ms?.theme).toBe("horror");
+      expect(ms?.hub).toBe("cosmic-horror");
+      expect(ms?.surfaceStyle).toBe("sharp");
+      expect(ms?.disclaimer).toContain("Tuesday Knight Games");
+      expect(ms?.useCases).toHaveLength(4);
+      expect(LandingPageConfigSchema.safeParse(ms).success).toBe(true);
+    });
+
+    it("uses Warden vocabulary and makes no rules claims", () => {
+      const ms = getLandingPage("mothership")!;
+      const copy = ownCopy(ms);
+
+      expect(ms.hero.eyebrow).toContain("Warden");
+      expect(copy).toContain("Warden");
+      expect(copy).toContain("crew");
+      expect(copy).toContain("derelict");
+      expect(copy).toContain("local-first");
+      expect(copy).not.toMatch(
+        /Keeper|Investigators|Handler|adventuring party/,
+      );
+      expect(copy).not.toMatch(/Mothership Month|November|20\d\d/);
+      expect(copy).not.toMatch(
+        /automat(es|ed) (stress|panic)|character sheet|rules engine/i,
+      );
+    });
+
+    it("maintains a hub-and-spoke derelict graph", () => {
+      const graph = getLandingPage("mothership")!.exampleGraph!;
+      const [hub, ...spokes] = graph.steps;
+
+      expect(graph.palette).toBe("oxblood");
+      expect(graph.surface).toBe("dark");
+      expect(hub.relation).toBeUndefined();
+      expect(hub.category).toBe("item");
+      expect(spokes.length).toBeGreaterThanOrEqual(5);
+      for (const spoke of spokes) {
+        expect(spoke.relation).toBeTruthy();
+        expect(spoke.category).toBeDefined();
+      }
+      const categories = spokes.map((s) => s.category);
+      for (const c of ["character", "faction", "event", "location"] as const) {
+        expect(categories).toContain(c);
+      }
+      expect(
+        spokes.find((s) => s.label === "Halvorsen Deepwater Holdings")
+          ?.relation,
+      ).toBe("Is owned by");
+      expect(
+        spokes.find((s) => s.label === "Processing Deck Nine")?.relation,
+      ).toBe("Includes");
+    });
+
+    it("only links to routes that exist", () => {
+      const ms = getLandingPage("mothership")!;
+      const generatorPaths = new Set([
+        ...GENERATOR_SLUGS.map((slug) => `/generators/${slug}`),
+        ...HUB_THEME_SLUGS.map((theme) => `/generators/${theme}`),
+      ]);
+      const answers = getAllAnswerSlugs();
+      const examples = getAllExampleSlugs();
+      const landing = getAllLandingPageSlugs();
+
+      for (const { href } of ms.recommendedTools) {
+        const [, section, slug] = href.split("/");
+        const ok =
+          section === "generators"
+            ? generatorPaths.has(href)
+            : section === "answers"
+              ? answers.includes(slug)
+              : section === "examples"
+                ? examples.includes(slug)
+                : section === "for"
+                  ? landing.includes(slug)
+                  : false;
+        expect(ok, `${href} is not a route`).toBe(true);
+      }
     });
   });
 

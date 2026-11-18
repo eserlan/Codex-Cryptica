@@ -77,3 +77,22 @@ it requires "expedition", "base town" and "roster", and rejects "the party" and
 
 Say in the PR description that the fan-language review was done, and list the
 terms you changed or deliberately kept.
+
+## Review log
+
+### Mothership (`/for/mothership`)
+
+- **Kept**: Warden, crew, derelict, salvage, employer/company, quarantine,
+  black box. These are how Mothership tables talk about the game.
+- **Avoided**: Keeper and Investigators (Call of Cthulhu), Handler (Delta
+  Green), generic space-opera phrasing such as "party" and "adventurers", and
+  any claim about mechanics. The copy says plainly that these are story notes
+  for the Warden, not rules automation, and never mentions character sheets,
+  stress or panic automation, dice or licensed content.
+- **Distinctness**: `/for/cosmic-horror` is about investigation and anomaly
+  webs, and `/for/starship-campaigns` is about bridge crews and fleets. This
+  page is about Warden prep for a single derelict: ships, contractors,
+  employers, evidence and escalating trouble. The graph, badge and example
+  names are original.
+- **Locked in**: the "Mothership Pack" block in
+  `apps/web/src/lib/content/for/registry.test.ts`.
