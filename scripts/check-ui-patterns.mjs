@@ -305,7 +305,7 @@ export function contrastProblems(variant, themes) {
 
   // Outlined interactive control boundary contrast (3:1 non-text UI contrast)
   const hasVisibleBorder =
-    names.some((n) => /^border(?:-[248])?$/.test(n)) &&
+    names.some((n) => /(?:^|:)border(?:-[xysetrbl])?(?:-[248])?$/.test(n)) &&
     !names.some((n) => /^border-(?:0|none|transparent)$/.test(n));
   const hasSolidFill =
     bgToken &&
@@ -556,14 +556,33 @@ function hasTimerCleanup(source, timerId) {
 /** Hand-rolled modal dialogs without focus trap / shared modal shell. */
 export function modalFocusProblems(source, file) {
   if (!file.endsWith(".svelte")) return [];
-  const hasFocusTrap =
-    /\buse:focusTrap\b|\bfocusTrap\b|\bModalShell\b/.test(source) ||
-    (/\bTab\b/.test(source) && /\.focus\s*\(/.test(source));
-  if (hasFocusTrap) return [];
+  const hasSharedFocusTrap =
+    /\buse:focusTrap\b|\bfocusTrap\b|\bModalShell\b/.test(source);
   const problems = [];
   for (const match of source.matchAll(
     /aria-modal\s*=\s*["']true["']|role\s*=\s*["']dialog["']/g,
   )) {
+    const tagStart = source.lastIndexOf("<", match.index);
+    const tagEnd = source.indexOf(">", match.index);
+    const openingTag =
+      tagStart >= 0 && tagEnd >= 0 ? source.slice(tagStart, tagEnd + 1) : "";
+    const keyHandler = openingTag.match(
+      /on(?::)?keydown\s*=\s*\{([^}]+)\}/,
+    )?.[1];
+    const explicitHandler = keyHandler?.match(/^[\w$]+$/)
+      ? new RegExp(
+          `(?:function\\s+${keyHandler}\\s*\\([^)]*\\)\\s*\\{|(?:const|let)\\s+${keyHandler}\\s*=\\s*\\([^)]*\\)\\s*=>\\s*\\{)([\\s\\S]*?)\\n?\\s*\\}`,
+        ).exec(source)?.[1]
+      : keyHandler;
+    // The explicit exception is attached to this dialog element and must
+    // actually intercept Tab and move focus. Unrelated keyboard or opener
+    // code elsewhere in the component cannot satisfy it.
+    const hasExplicitTabTrap =
+      !!explicitHandler &&
+      /(?:\.key|\.code)\s*===?\s*["']Tab["']/.test(explicitHandler) &&
+      /\.preventDefault\s*\(/.test(explicitHandler) &&
+      /\.focus\s*\(/.test(explicitHandler);
+    if (hasSharedFocusTrap || hasExplicitTabTrap) continue;
     problems.push({
       rule: "modal-focus",
       line: source.slice(0, match.index).split("\n").length,

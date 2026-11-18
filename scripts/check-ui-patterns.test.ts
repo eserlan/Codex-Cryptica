@@ -135,6 +135,12 @@ describe("contrast — cases PR review flagged", () => {
     expect(
       rules('<input class="border border-theme-border text-theme-text" />'),
     ).toContain("border-contrast");
+    expect(
+      rules('<input class="md:border border-theme-border text-theme-text" />'),
+    ).toContain("border-contrast");
+    expect(
+      rules('<input class="border-x-2 border-theme-border text-theme-text" />'),
+    ).toContain("border-contrast");
     // Decorative container borders are not interactive control boundaries
     expect(
       rules(
@@ -386,6 +392,18 @@ describe("pattern rules", () => {
       modalFocusProblems(
         '<div role="dialog" aria-modal="true">x</div>',
         "helper.ts",
+      ),
+    ).toEqual([]);
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true">x</div>\n<p>Tab order matters.</p>\n<button on:click={() => opener.focus()}>Return</button>',
+        "MyDialog.svelte",
+      ),
+    ).toHaveLength(2);
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true" onkeydown={trap}>x</div>\nfunction trap(event) { if (event.key === "Tab") { event.preventDefault(); next.focus(); } }',
+        "MyDialog.svelte",
       ),
     ).toEqual([]);
   });
