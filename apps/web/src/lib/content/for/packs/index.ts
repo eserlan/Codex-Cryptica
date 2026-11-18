@@ -15,6 +15,7 @@ import { traveller } from "./traveller";
 import { cosmicHorror } from "./cosmic-horror";
 import { conspiracy } from "./conspiracy";
 import { deltaGreen } from "./delta-green";
+import { mothership } from "./mothership";
 import { scumAndVillainy } from "./scum-and-villainy";
 import { spaceWestern } from "./space-western";
 import { soloWorldbuilding } from "./solo-worldbuilding";
@@ -38,6 +39,7 @@ export const packs: Record<string, LandingPageConfig> = {
   "gothic-horror": gothicHorror,
   "cosmic-horror": cosmicHorror,
   "delta-green": deltaGreen,
+  mothership,
   "cyberpunk-red": cyberpunkRed,
   "dystopian-sci-fi": dystopianSciFi,
   "space-opera": spaceOpera,

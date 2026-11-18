@@ -542,6 +542,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/mothership</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/cyberpunk-red</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
