@@ -1,3 +1,15 @@
+import {
+  clampText,
+  extractDocumentedFacts,
+  extractEventRawDates,
+  normalizeEntityRefs,
+} from "./historical-anchor-event";
+import {
+  canonicalJson,
+  computeHistoricalEventFingerprint,
+  computeHistoricalEventFingerprintWithFacts,
+} from "./historical-anchor-fingerprint";
+import { inferOpenMechanisms } from "./historical-anchor-mechanisms";
 import type { WorldCalendar } from "chronology-engine";
 import {
   clonePreservingPrecision,
@@ -15,19 +27,14 @@ import {
   DEFAULT_APPROACHING_THRESHOLD_DAYS,
   HISTORICAL_ANCHOR_FALLBACK_ACTION,
   MAX_HISTORICAL_CAUSAL_REFS,
-  MAX_HISTORICAL_DOCUMENTED_FACTS,
   MAX_HISTORICAL_DRIFT_CHANGES,
-  MAX_HISTORICAL_ENTITY_REFS,
-  MAX_HISTORICAL_OPEN_MECHANISMS,
   type AdventureCalendarDate,
   type DayInterval,
   type HistoricalAnchor,
   type HistoricalAnchorCausalRef,
   type HistoricalAnchorCompatibilityResult,
   type HistoricalAnchorCreationResult,
-  type HistoricalAnchorDocumentedFact,
   type HistoricalAnchorDriftReport,
-  type HistoricalAnchorEntityRef,
   type HistoricalAnchorMutationResult,
   type HistoricalAnchorPolicy,
   type HistoricalAnchorProgressStatus,
@@ -39,17 +46,6 @@ import {
 import { parseAdventureSession } from "./schemas";
 import type { AdventureSession } from "./types";
 
-const MAX_TEXT_CHARS = 600;
-// Bound synchronous sentence extraction even when Vault text is unusually large.
-const MAX_FACT_SOURCE_CHARS = 64_000;
-const STANDARD_OPEN_MECHANISMS = [
-  "cause",
-  "responsible-actor",
-  "location",
-  "exact-date",
-  "consequences",
-] as const;
-
 function fail(
   code: HistoricalAnchorValidationErrorCode,
   reason: string,
@@ -60,307 +56,6 @@ function fail(
     reason,
     fallbackAction: HISTORICAL_ANCHOR_FALLBACK_ACTION,
   };
-}
-
-function clampText(value: string, max = MAX_TEXT_CHARS): string {
-  return value.trim().slice(0, max);
-}
-
-function fnv1a32(input: string, seed: number): string {
-  let hash = seed >>> 0;
-  for (let i = 0; i < input.length; i++) {
-    hash ^= input.charCodeAt(i);
-    hash = Math.imul(hash, 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, "0");
-}
-
-function canonicalJson(value: unknown): string {
-  if (value === null || typeof value !== "object") {
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value.map((item) => canonicalJson(item)).join(",")}]`;
-  }
-  const entries = Object.entries(value as Record<string, unknown>)
-    .filter(([, entry]) => entry !== undefined)
-    .sort(([a], [b]) => a.localeCompare(b));
-  return `{${entries
-    .map(([key, entry]) => `${JSON.stringify(key)}:${canonicalJson(entry)}`)
-    .join(",")}}`;
-}
-
-function fingerprintText(value: string | undefined): string | null {
-  return value ? clampText(value, 4_000) : null;
-}
-
-function eventEndDate(event: HistoricalEventSnapshot) {
-  if (event.end_date) return event.end_date;
-  return event.start_date ? null : (event.date ?? null);
-}
-
-function fingerprintCalendarRevision(calendar?: WorldCalendar): number | null {
-  return calendar ? getCalendarRevision(calendar) : null;
-}
-
-/**
- * Deterministic synchronous digest over canonical Vault event snapshot fields.
- */
-export function computeHistoricalEventFingerprint(
-  event: HistoricalEventSnapshot,
-  calendar?: WorldCalendar,
-): string {
-  return computeHistoricalEventFingerprintWithFacts(
-    event,
-    calendar,
-    extractDocumentedFacts(event),
-  );
-}
-
-function computeHistoricalEventFingerprintWithFacts(
-  event: HistoricalEventSnapshot,
-  calendar: WorldCalendar | undefined,
-  documentedFacts: HistoricalAnchorDocumentedFact[],
-): string {
-  const relevantEntityRefs = normalizeEntityRefs(event.relevantEntityRefs);
-  const payload = canonicalJson({
-    id: event.id.trim(),
-    type: event.type.trim(),
-    title: clampText(event.title),
-    startDate: event.start_date ?? event.date ?? null,
-    endDate: eventEndDate(event),
-    approximate: Boolean(event.approximate),
-    dateLabel: fingerprintText(event.dateLabel),
-    content: fingerprintText(event.content),
-    lore: fingerprintText(event.lore),
-    documentedFacts,
-    relevantEntityRefs,
-    calendarRevision: fingerprintCalendarRevision(calendar),
-  });
-  return (
-    fnv1a32(payload, 0x811c9dc5) +
-    fnv1a32(payload, 0x9e3779b9) +
-    fnv1a32(payload, 0x85ebca6b) +
-    fnv1a32(payload, 0xc2b2ae35)
-  );
-}
-
-function extractDocumentedFacts(
-  event: HistoricalEventSnapshot,
-): HistoricalAnchorDocumentedFact[] {
-  if (event.documentedFacts && event.documentedFacts.length > 0) {
-    return normalizeDocumentedFacts(event.documentedFacts);
-  }
-
-  return deriveDocumentedFacts(event);
-}
-
-function normalizeDocumentedFacts(
-  entries: NonNullable<HistoricalEventSnapshot["documentedFacts"]>,
-): HistoricalAnchorDocumentedFact[] {
-  const facts: HistoricalAnchorDocumentedFact[] = [];
-  const seen = new Set<string>();
-  for (const entry of entries) {
-    const fact = normalizeDocumentedFact(entry, facts.length + 1);
-    if (!fact || seen.has(fact.id)) continue;
-    seen.add(fact.id);
-    facts.push(fact);
-    if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) break;
-  }
-  return facts;
-}
-
-function normalizeDocumentedFact(
-  entry: NonNullable<HistoricalEventSnapshot["documentedFacts"]>[number],
-  fallbackIndex: number,
-): HistoricalAnchorDocumentedFact | null {
-  const text = clampText(typeof entry === "string" ? entry : entry.text);
-  if (!text) return null;
-  const fallbackId = `anchor-fact-${fallbackIndex}`;
-  const id =
-    typeof entry === "string"
-      ? fallbackId
-      : (entry.id?.trim() || fallbackId).slice(0, 160);
-  return { id, text };
-}
-
-function appendDocumentedFacts(
-  source: string,
-  maxChars: number,
-  facts: HistoricalAnchorDocumentedFact[],
-): { scannedChars: number; full: boolean } {
-  const boundedSource = source.slice(0, maxChars);
-  for (const line of boundedSource.matchAll(/[^\r\n]+|\r?\n+/g)) {
-    for (const segment of line[0].split(/(?<=[.!?])\s+/)) {
-      const text = clampText(segment);
-      if (!text) continue;
-      facts.push({ id: `anchor-fact-${facts.length + 1}`, text });
-      if (facts.length >= MAX_HISTORICAL_DOCUMENTED_FACTS) {
-        return { scannedChars: boundedSource.length, full: true };
-      }
-    }
-  }
-  return { scannedChars: boundedSource.length, full: false };
-}
-
-function deriveDocumentedFacts(
-  event: HistoricalEventSnapshot,
-): HistoricalAnchorDocumentedFact[] {
-  const facts: HistoricalAnchorDocumentedFact[] = [];
-  let scannedChars = 0;
-  for (const source of [event.content, event.lore]) {
-    if (!source || scannedChars >= MAX_FACT_SOURCE_CHARS) continue;
-    const result = appendDocumentedFacts(
-      source,
-      MAX_FACT_SOURCE_CHARS - scannedChars,
-      facts,
-    );
-    scannedChars += result.scannedChars;
-    if (result.full) return facts;
-  }
-  if (facts.length === 0 && event.title.trim()) {
-    return [{ id: "anchor-fact-1", text: clampText(event.title) }];
-  }
-  return facts;
-}
-
-function normalizeEntityRefs(
-  refs: HistoricalAnchorEntityRef[] | undefined,
-): HistoricalAnchorEntityRef[] {
-  if (!refs || refs.length === 0) return [];
-  const normalized: HistoricalAnchorEntityRef[] = [];
-  const seen = new Set<string>();
-  for (const ref of refs) {
-    const normalizedRef = normalizeEntityRef(ref);
-    if (!normalizedRef || seen.has(normalizedRef.recordId)) continue;
-    seen.add(normalizedRef.recordId);
-    normalized.push(normalizedRef);
-    if (normalized.length >= MAX_HISTORICAL_ENTITY_REFS) break;
-  }
-  return normalized;
-}
-
-function normalizeEntityRef(
-  ref: HistoricalAnchorEntityRef,
-): HistoricalAnchorEntityRef | null {
-  const recordId = ref.recordId.trim().slice(0, 160);
-  const displayName = clampText(ref.displayName);
-  if (!recordId || !displayName) return null;
-  return {
-    recordId,
-    displayName,
-    ...(ref.recordType?.trim()
-      ? { recordType: clampText(ref.recordType) }
-      : {}),
-    ...(ref.role?.trim() ? { role: clampText(ref.role) } : {}),
-  };
-}
-
-function isExactDayDate(date: AdventureCalendarDate): boolean {
-  if (date.precision === "day") return true;
-  if (!date.precision && date.month !== undefined && date.day !== undefined) {
-    return true;
-  }
-  return false;
-}
-
-function inferOpenMechanisms(
-  event: HistoricalEventSnapshot,
-  eventInterval: HistoricalDateInterval,
-  documentedFacts: HistoricalAnchorDocumentedFact[],
-  entityRefs: HistoricalAnchorEntityRef[],
-): string[] {
-  if (event.openMechanisms)
-    return normalizeOpenMechanisms(event.openMechanisms);
-
-  const combinedText = documentedFacts
-    .map((fact) => fact.text.toLocaleLowerCase())
-    .join(" ");
-  const roles = new Set(
-    entityRefs
-      .map((ref) => ref.role?.toLocaleLowerCase().trim())
-      .filter((role): role is string => Boolean(role)),
-  );
-  const open = inferMechanismsFromEvidence(combinedText, roles, eventInterval);
-  return open.length > 0 ? open : [...STANDARD_OPEN_MECHANISMS];
-}
-
-function normalizeOpenMechanisms(mechanisms: string[]): string[] {
-  return [
-    ...new Set(
-      mechanisms.map((item) => item.trim().slice(0, 160)).filter(Boolean),
-    ),
-  ].slice(0, MAX_HISTORICAL_OPEN_MECHANISMS);
-}
-
-function inferMechanismsFromEvidence(
-  text: string,
-  roles: Set<string>,
-  interval: HistoricalDateInterval,
-): string[] {
-  return [
-    ...(!hasCauseEvidence(text) ? ["cause"] : []),
-    ...(!hasResponsibleActorEvidence(text, roles) ? ["responsible-actor"] : []),
-    ...(!hasLocationEvidence(text, roles) ? ["location"] : []),
-    ...(needsExactDate(interval) ? ["exact-date"] : []),
-    ...(!hasConsequenceEvidence(text) ? ["consequences"] : []),
-  ];
-}
-
-function hasCauseEvidence(text: string): boolean {
-  return /\b(because|caused by|due to|resulted from)\b/.test(text);
-}
-
-function hasResponsibleActorEvidence(
-  text: string,
-  roles: Set<string>,
-): boolean {
-  const knownRole = ["responsible-actor", "culprit", "perpetrator"].some(
-    (role) => roles.has(role),
-  );
-  return knownRole || /\b(by|culprit|assassin|killer|perpetrator)\b/.test(text);
-}
-
-function hasLocationEvidence(text: string, roles: Set<string>): boolean {
-  const knownRole = ["location", "place"].some((role) => roles.has(role));
-  return knownRole || /\b(at|in the|inside|near)\s+[a-z]{3,}/.test(text);
-}
-
-function needsExactDate(interval: HistoricalDateInterval): boolean {
-  return (
-    interval.approximate === true ||
-    interval.end !== undefined ||
-    !isExactDayDate(interval.start)
-  );
-}
-
-function hasConsequenceEvidence(text: string): boolean {
-  return /\b(aftermath|consequence|resulted in|led to)\b/.test(text);
-}
-
-function extractEventRawDates(event: HistoricalEventSnapshot): {
-  rawStart?: AdventureCalendarDate;
-  rawEnd?: AdventureCalendarDate;
-} {
-  if (event.start_date) {
-    return {
-      rawStart: event.start_date,
-      rawEnd: event.end_date,
-    };
-  }
-  if (event.date) {
-    return {
-      rawStart: event.date,
-      rawEnd: event.end_date,
-    };
-  }
-  if (event.end_date) {
-    return {
-      rawStart: event.end_date,
-      rawEnd: event.end_date,
-    };
-  }
-  return {};
 }
 
 function intervalsOverlap(a: DayInterval, b: DayInterval): boolean {
@@ -1003,3 +698,5 @@ export {
   projectPlayerHistoricalAnchor,
   projectGmHistoricalAnchor,
 } from "./historical-anchor-projections";
+
+export { computeHistoricalEventFingerprint } from "./historical-anchor-fingerprint";
