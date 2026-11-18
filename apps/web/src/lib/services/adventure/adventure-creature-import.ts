@@ -43,7 +43,9 @@ export interface CreatureImportResult {
   interrupted: boolean;
 }
 
-const normalizeTitle = (title: string) => title.trim().toLocaleLowerCase();
+// Match the proposal builder's whitespace-collapsing, locale-neutral key.
+const normalizeTitle = (title: string) =>
+  title.trim().replace(/\s+/g, " ").toLowerCase();
 
 /** Builds source-id and normalized-title indexes once for all proposals. */
 function indexExistingCreatures(
