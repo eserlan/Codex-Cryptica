@@ -105,10 +105,13 @@ export class AdventureRuntime {
     const packageGmOnlyText = [
       ...new Set([
         ...context.gmOnly.flatMap((excerpt) => [
-          ...excerpt.text.split("\n").map((line) => {
-            const separator = line.indexOf(": ");
-            return separator >= 0 ? line.slice(separator + 2) : line;
-          }),
+          ...excerpt.text
+            .split("\n")
+            .filter((line) => !line.startsWith("Truth: "))
+            .map((line) => {
+              const separator = line.indexOf(": ");
+              return separator >= 0 ? line.slice(separator + 2) : line;
+            }),
           ...(excerpt.sourceRef?.textQuote
             ? [excerpt.sourceRef.textQuote]
             : []),

@@ -110,7 +110,9 @@ export class AdventureOpening {
     const sceneId = entrySceneId(
       await this.runtime.deps.packages.load(created),
     );
-    if (sceneId === undefined) return created;
+    if (sceneId === undefined) {
+      throw new Error("adventure-package-has-no-scenes");
+    }
     return parseAdventureSession({
       ...created,
       packageProgress: { sceneId },

@@ -350,4 +350,19 @@ describe("package-grounded actions", () => {
     expect((generate.mock.calls[2]![0] as any).correction).toBeTruthy();
     expect(state.session?.turns).toHaveLength(2);
   });
+
+  it("does not treat rumour truth enum values in GM-only excerpts as leaked prose", async () => {
+    const generate = vi.fn(async () => ({
+      ...completeProposal,
+      narration:
+        "That is true enough, the ferryman admits, though the river hides worse.",
+    }));
+    const { runtime, state } = createAdventureRuntime(
+      { generation: { generate } as any, packages: referencePackageCache() },
+      { sceneId: "ros-scene-1-landing" },
+    );
+    await new AdventureActions(runtime).submitAction("Question the ferryman");
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(state.session?.turns).toHaveLength(1);
+  });
 });
