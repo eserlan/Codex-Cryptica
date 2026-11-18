@@ -174,7 +174,7 @@ function guardOrAllowLeaf(
 }
 
 type CompanionGroup = {
-  label: "Connection" | "Branch";
+  label: "Connection" | "Branch" | "Alternative solution";
   fields: Array<[field: string, text: string]>;
 };
 
@@ -216,6 +216,8 @@ function addCompanionLines(
       ),
     );
     for (const [field, text] of stringLeaves(record, "")) {
+      // Retrieval removes this provenance quote from player-visible excerpts.
+      if (field === "sourceRef.textQuote") continue;
       if (!composedFields.has(field)) {
         guardOrAllowLeaf(
           out,
@@ -287,6 +289,22 @@ function branchComponentFields(
   return fields;
 }
 
+function alternativeSolutionComponentFields(
+  solution: unknown,
+  index: number,
+): Array<[string, string]> {
+  if (!solution || typeof solution !== "object") return [];
+  const entry = solution as { method?: unknown; description?: unknown };
+  const fields: Array<[string, string]> = [];
+  addStringField(fields, `alternativeSolutions[${index}].method`, entry.method);
+  addStringField(
+    fields,
+    `alternativeSolutions[${index}].description`,
+    entry.description,
+  );
+  return fields;
+}
+
 function extractCompanionGroups(
   items: unknown,
   label: CompanionGroup["label"],
@@ -307,6 +325,11 @@ function composedCompanionComponents(record: Loose): CompanionGroup[] {
       connectionComponentFields,
     ),
     ...extractCompanionGroups(record.branches, "Branch", branchComponentFields),
+    ...extractCompanionGroups(
+      record.alternativeSolutions,
+      "Alternative solution",
+      alternativeSolutionComponentFields,
+    ),
   ];
 }
 

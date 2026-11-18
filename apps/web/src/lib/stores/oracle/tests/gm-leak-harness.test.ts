@@ -505,6 +505,73 @@ describe("gap 3: companion lines", () => {
       ),
     ).toThrow(/record actor-tobiah-reed, field description \(partial quote\)$/);
   });
+
+  it("does not exempt a GM-only quote found only in sourceRef.textQuote", () => {
+    const pkg = variant();
+    const quote =
+      "Beyond the rusted gate the hidden heir waits beneath the old bell tower";
+    pkg.secrets = [
+      ...pkg.secrets,
+      { ...pkg.secrets[0]!, id: "quote-secret", text: quote },
+    ];
+    pkg.locations = pkg.locations.map((location, index) =>
+      index === 0
+        ? { ...location, sourceRef: { section: "notes", textQuote: quote } }
+        : location,
+    );
+
+    const entries = collectGmOnlyStrings(pkg);
+    expect(() =>
+      assertNoGmLeak(
+        entries,
+        "hidden heir waits beneath the old bell tower",
+        "quote",
+      ),
+    ).toThrow(/record quote-secret, field text/);
+  });
+
+  it("guards sibling text in a composed alternative-solution line moved to a companion", () => {
+    const pkg = variant();
+    pkg.secrets = [
+      ...pkg.secrets,
+      { ...pkg.secrets[0]!, id: "hid-9", text: "Zzyzx quandary" },
+    ];
+    const encounter = pkg.encounters[0]!;
+    const description = "At dusk";
+    pkg.encounters = [
+      {
+        ...encounter,
+        alternativeSolutions: [
+          ...encounter.alternativeSolutions,
+          { method: "Find hid-9", description },
+        ],
+      },
+    ];
+
+    const result = retrieveAdventureJsonContext(pkg, {
+      sceneId: encounter.sceneId,
+    });
+    expect(
+      result.gmOnly.some(
+        (excerpt) =>
+          excerpt.id === encounter.id && excerpt.text.includes("At dusk"),
+      ),
+    ).toBe(true);
+    expect(
+      result.playerSafe.some(
+        (excerpt) =>
+          excerpt.id === encounter.id && excerpt.text.includes("At dusk"),
+      ),
+    ).toBe(false);
+
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "It happens At dusk.",
+        "solution",
+      ),
+    ).toThrow(/field alternativeSolutions\[\d+\]\.description/);
+  });
 });
 
 describe("gap 4: short names", () => {
