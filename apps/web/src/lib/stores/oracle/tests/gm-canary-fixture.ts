@@ -34,6 +34,14 @@ export const canaries: readonly Canary[] = [
   canary("rumour", "5c6d", "canary-rumour", "text"),
   canary("item", "7e8f", "canary-item", "name"),
   canary("secret", "9a0b", "canary-secret", "text"),
+  canary("branch", "2c3d", "canary-scene", "branches[0].description"),
+  canary(
+    "solution",
+    "4e5f",
+    "canary-encounter",
+    "alternativeSolutions[0].description",
+  ),
+  canary("connection", "6a7b", "canary-location", "connections[0].description"),
 ];
 
 const token = (type: string) => canaries.find((c) => c.type === type)!.token;
@@ -53,6 +61,12 @@ export const canaryReferencePackage: AdventureJsonV1 =
         id: "canary-location",
         name: token("location"),
         summary: "",
+        connections: [
+          {
+            targetLocationId: referencePackage.locations[0]!.id,
+            description: token("connection"),
+          },
+        ],
         ...hidden,
       },
     ],
@@ -72,6 +86,12 @@ export const canaryReferencePackage: AdventureJsonV1 =
         id: "canary-scene",
         title: token("scene"),
         summary: "",
+        branches: [
+          {
+            targetSceneId: "ros-scene-2-yard",
+            description: token("branch"),
+          },
+        ],
         ...hidden,
         epistemicStatus: "ambiguous",
       },
@@ -82,7 +102,9 @@ export const canaryReferencePackage: AdventureJsonV1 =
         id: "canary-encounter",
         title: token("encounter"),
         description: "",
-        alternativeSolutions: [],
+        alternativeSolutions: [
+          { method: "Slip past", description: token("solution") },
+        ],
         ...hidden,
       },
     ],

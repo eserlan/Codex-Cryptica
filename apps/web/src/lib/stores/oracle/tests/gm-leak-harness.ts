@@ -7,31 +7,44 @@ export interface GuardedString {
 }
 
 const MIN_GUARDED_LENGTH = 12;
-const TEXT_FIELDS = [
-  "name",
-  "title",
-  "summary",
-  "description",
-  "text",
-  "body",
-  "readAloud",
-  "motivation",
-  "role",
-  "disposition",
-  "goals",
-  "conditions",
-] as const;
+// Identifiers, enums and flags are structure, not prose.
+const STRUCTURAL_KEYS = new Set([
+  "id",
+  "visibility",
+  "epistemicStatus",
+  "anchor",
+  "documentHash",
+]);
+const isStructural = (key: string) =>
+  STRUCTURAL_KEYS.has(key) || /(?:Id|Ids)$/.test(key);
 
 type Loose = { id: string; visibility?: string } & Record<string, unknown>;
+
+/** Every string leaf of a record, nested objects and arrays included, with its path. */
+function* stringLeaves(
+  value: unknown,
+  path: string,
+): Generator<[string, string]> {
+  if (typeof value === "string") yield [path, value];
+  else if (Array.isArray(value))
+    for (const [i, item] of value.entries())
+      yield* stringLeaves(item, `${path}[${i}]`);
+  else if (value && typeof value === "object")
+    for (const [key, child] of Object.entries(value))
+      if (!isStructural(key))
+        yield* stringLeaves(child, path ? `${path}.${key}` : key);
+}
 
 /** Every string of a package that a player must never be shown. */
 export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
   const found: GuardedString[] = [];
   const add = (recordId: string, field: string, value: unknown) => {
-    for (const text of Array.isArray(value) ? value : [value]) {
-      if (typeof text === "string" && text.trim().length >= MIN_GUARDED_LENGTH)
-        found.push({ recordId, field, text: text.trim() });
-    }
+    if (typeof value === "string" && value.trim().length >= MIN_GUARDED_LENGTH)
+      found.push({ recordId, field, text: value.trim() });
+  };
+  // The length rule drops generic names; a verdict form is always guarded.
+  const addVerdict = (recordId: string, ...forms: string[]) => {
+    for (const text of forms) found.push({ recordId, field: "truth", text });
   };
   const records: Loose[][] = [
     pkg.locations,
@@ -45,14 +58,18 @@ export function collectGmOnlyStrings(pkg: AdventureJsonV1): GuardedString[] {
   ] as unknown as Loose[][];
   for (const record of records.flat()) {
     if (record.visibility !== "gm-only") continue;
-    for (const field of TEXT_FIELDS) add(record.id, field, record[field]);
+    for (const [field, text] of stringLeaves(record, ""))
+      add(record.id, field, text);
   }
   for (const secret of pkg.secrets) add(secret.id, "text", secret.text);
   // Retrieval treats these as GM-only whatever the record's visibility.
   for (const clue of pkg.clues) add(clue.id, "reveals", clue.reveals);
   for (const rumour of pkg.rumours) {
-    add(rumour.id, "truth", `Truth: ${rumour.truth}`);
-    add(rumour.id, "truth", `"truth":"${rumour.truth}"`);
+    addVerdict(
+      rumour.id,
+      `Truth: ${rumour.truth}`,
+      `"truth":"${rumour.truth}"`,
+    );
   }
   const seen = new Set<string>();
   return found.filter((entry) => {
