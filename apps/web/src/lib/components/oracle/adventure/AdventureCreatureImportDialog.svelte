@@ -3,6 +3,7 @@
   import { onMount, tick, untrack } from "svelte";
   import {
     buildCreatureProposals,
+    sourcePageLabels,
     type SourceReference,
     type StoredAdventurePackage,
   } from "@codex/adventure-engine";
@@ -90,15 +91,9 @@
   });
 
   function pageLabel(refs: SourceReference[]): string {
-    const cited = refs
-      .filter((ref) => typeof ref.page === "number")
-      .map((ref) => ({ start: ref.page!, end: ref.pageEnd ?? ref.page! }))
-      .sort((a, b) => a.start - b.start || a.end - b.end);
-    const labels = cited.map(({ start, end }) =>
-      start === end ? String(start) : `${start}–${end}`,
-    );
+    const labels = sourcePageLabels(refs);
     if (labels.length === 0) return "Page not given";
-    return labels.length === 1 && cited[0]!.start === cited[0]!.end
+    return labels.length === 1 && !labels[0]!.includes("–")
       ? `Page ${labels[0]}`
       : `Pages ${labels.join(", ")}`;
   }
