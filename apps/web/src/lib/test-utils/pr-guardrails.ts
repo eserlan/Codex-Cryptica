@@ -1,7 +1,7 @@
 import { expect } from "vitest";
 
 const REMOTE_MEDIA_TAG =
-  /<\s*(?:img|video|audio|iframe|object|embed|source)\b/i;
+  /<\s*(?:img|video|audio|iframe|object|embed|source|svg)\b/i;
 const REMOTE_CSS_IMPORT = /@import\b/i;
 const REMOTE_RESOURCE_ATTR =
   /\b(?:src|srcset|poster)\s*=\s*["']?\s*(?:https?:|\/\/|data:|blob:)/i;
@@ -10,7 +10,7 @@ const ACTIVE_ANCHOR = /<\s*a\b[^>]*\bhref\s*=/i;
 
 /**
  * Asserts that rendered HTML from untrusted, imported, or model-generated
- * Markdown cannot trigger remote resource fetches (Constitution IV: no tracking
+ * Markdown cannot trigger remote resource fetches (Constitution V: no tracking
  * pixels, SSRF, or IP leakage).
  */
 export function assertNoRemoteResourceFetches(html: string): void {

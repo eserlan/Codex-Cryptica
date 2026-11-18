@@ -20,6 +20,11 @@ describe("pr-guardrails test helpers", () => {
     ).toThrow();
     expect(() =>
       assertNoRemoteResourceFetches(
+        '<svg><image href="https://tracker.example/pixel.png"></image></svg>',
+      ),
+    ).toThrow();
+    expect(() =>
+      assertNoRemoteResourceFetches(
         '<div style="background: url(https://tracker.example/bg.png)"></div>',
       ),
     ).toThrow();
