@@ -14,7 +14,7 @@
 
   const TITLE = "Topics";
   const DESCRIPTION =
-    "Browse every Codex Cryptica topic hub: heists, puzzles, pirates, solo play and D&D, each with guides, worked examples and generators.";
+    "Browse Codex Cryptica topic hubs for guidance on different tabletop campaign prep subjects.";
 
   let topics = $derived(data.topics);
 </script>
@@ -41,8 +41,7 @@
         {TITLE}
       </h1>
       <p class="text-lg leading-relaxed text-theme-text">
-        Each topic gathers guides, worked examples and generators for one kind
-        of campaign.
+        Pick a game-prep subject to explore guidance for your tabletop campaign.
       </p>
       <a
         href="{cleanBase}/explore"

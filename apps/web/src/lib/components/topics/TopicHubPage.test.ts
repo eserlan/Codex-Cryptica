@@ -115,6 +115,31 @@ describe("TopicHubPage layout", () => {
     );
   });
 
+  it("renders the thesis intro before the first thesis point", () => {
+    render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+    const section = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-thesis`,
+    )?.parentElement as HTMLElement;
+    const intro = section.querySelector(":scope > p") as HTMLElement;
+    expect(intro.textContent?.trim()).toBe(
+      STAR_SYSTEMS_TOPIC_CONFIG.copy.thesisIntro,
+    );
+    const firstPoint = section.querySelector("h3") as HTMLElement;
+    expect(
+      intro.compareDocumentPosition(firstPoint) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("renders no thesis intro paragraph for hubs without one", () => {
+    render(TopicHubPage, { props: { config: HEIST_TOPIC_CONFIG } });
+
+    const section = document.getElementById(`${HEIST_TOPIC_CONFIG.slug}-thesis`)
+      ?.parentElement as HTMLElement;
+    expect(section.querySelector(":scope > p")).toBeNull();
+  });
+
   it("renders the Star Systems hero from the config", () => {
     const { container } = render(TopicHubPage, {
       props: { config: STAR_SYSTEMS_TOPIC_CONFIG },

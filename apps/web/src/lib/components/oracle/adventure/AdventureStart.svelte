@@ -24,6 +24,7 @@
     characters = [],
     scenarioSeed,
     sourcePackage,
+    startSceneId,
     onScenarioStarted,
     onCancelScenario,
     onClearSourcePackage,
@@ -38,6 +39,7 @@
     characters?: Array<{ id: string; name: string }>;
     scenarioSeed?: ScenarioState;
     sourcePackage?: AdventureSourcePackageRef;
+    startSceneId?: string;
     onScenarioStarted?: () => void;
     onCancelScenario?: () => void;
     onClearSourcePackage?: () => void;
@@ -106,6 +108,7 @@
         : {}),
       ...(scenarioSeed ? { scenarioSeed } : {}),
       ...(sourcePackage ? { sourcePackage } : {}),
+      ...(sourcePackage && startSceneId ? { startSceneId } : {}),
     };
   }
 

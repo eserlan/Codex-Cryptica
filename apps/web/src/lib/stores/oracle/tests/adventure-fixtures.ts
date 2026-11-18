@@ -52,9 +52,9 @@ export function referencePackageCache(
     package: referencePackage,
     originFormat: "adventure-json/v1",
   }),
-  listApproved: any = async () => [],
+  checkOtherVersion: any = async () => false,
 ) {
-  return new AdventurePackageContextCache(loader, listApproved);
+  return new AdventurePackageContextCache(loader, checkOtherVersion);
 }
 
 /** The pin a session carries for `pkg`, with the fixture hash the loaders serve. */

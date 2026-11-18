@@ -505,6 +505,9 @@ export interface CommitMetadata {
   playerAction?: string;
   /** Scene IDs of the pinned package, so a reported scene move can be checked. */
   packageSceneIds?: readonly string[];
+  /** Hidden package references and text used to reject accidental player leaks. */
+  packageRecordIds?: readonly string[];
+  packageGmOnlyText?: readonly string[];
 }
 
 export interface AdventureValidationError {
