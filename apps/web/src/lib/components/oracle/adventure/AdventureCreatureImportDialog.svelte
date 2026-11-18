@@ -1,6 +1,6 @@
 <!-- fallow-ignore-file complexity -- Review, preview and result steps of the creature import dialog. -->
 <script lang="ts">
-  import { onMount, untrack } from "svelte";
+  import { onMount, tick, untrack } from "svelte";
   import {
     buildCreatureProposals,
     type StoredAdventurePackage,
@@ -41,6 +41,7 @@
   let result = $state<CreatureImportResult | null>(null);
   let dialogPanel = $state<HTMLElement>();
   let closeButton = $state<HTMLButtonElement>();
+  let heading = $state<HTMLElement>();
 
   const creating = $derived(
     choices.filter((choice) => choice.include && !choice.existing),
@@ -48,6 +49,18 @@
   const reusing = $derived(
     choices.filter((choice) => choice.include && choice.existing),
   );
+
+  const nothingSelected = $derived(creating.length + reusing.length === 0);
+
+  async function goTo(next: "review" | "preview" | "done") {
+    step = next;
+    await tick();
+    heading?.focus();
+  }
+
+  function close() {
+    if (!busy) onClose();
+  }
 
   onMount(() => closeButton?.focus());
 
@@ -72,10 +85,10 @@
         choices,
         environment.importDeps,
       );
-      step = "done";
     } finally {
       busy = false;
     }
+    await goTo("done");
   }
 </script>
 
@@ -83,7 +96,7 @@
   onkeydown={(event) => {
     if (event.key === "Escape") {
       event.preventDefault();
-      onClose();
+      close();
     }
   }}
 />
@@ -108,6 +121,8 @@
     >
       <h3
         id="creature-import-title"
+        bind:this={heading}
+        tabindex="-1"
         class="font-header text-lg font-bold text-theme-text"
       >
         {step === "review"
@@ -121,7 +136,8 @@
         type="button"
         class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-text hover:bg-theme-primary/10"
         aria-label="Close"
-        onclick={onClose}
+        disabled={busy}
+        onclick={close}
       >
         <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
       </button>
@@ -225,7 +241,7 @@
                       No image
                     </label>
                     <label
-                      class="flex cursor-pointer items-center gap-1 rounded-md border border-theme-border px-2 py-1"
+                      class="flex cursor-pointer items-center gap-1 rounded-md border border-theme-border px-2 py-1 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-theme-primary"
                     >
                       <input
                         type="file"
@@ -309,23 +325,29 @@
         <button
           type="button"
           class="min-h-10 rounded-lg bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary"
-          onclick={() => (step = "preview")}
+          disabled={nothingSelected}
+          onclick={() => void goTo("preview")}
         >
           Review changes
         </button>
+        {#if nothingSelected}
+          <p class="basis-full text-right text-xs text-theme-text">
+            Include at least one creature.
+          </p>
+        {/if}
       {:else if step === "preview"}
         <button
           type="button"
           class="min-h-10 rounded-lg border border-theme-border px-3 text-sm text-theme-text"
           disabled={busy}
-          onclick={() => (step = "review")}
+          onclick={() => void goTo("review")}
         >
           Back
         </button>
         <button
           type="button"
           class="min-h-10 rounded-lg bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary disabled:opacity-60"
-          disabled={busy}
+          disabled={busy || nothingSelected}
           onclick={() => void confirm()}
         >
           {busy ? "Creating…" : "Confirm and create"}

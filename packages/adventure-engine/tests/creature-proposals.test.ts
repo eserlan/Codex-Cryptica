@@ -138,3 +138,41 @@ describe("buildCreatureEntryText", () => {
     expect(text.content).not.toContain("Art:");
   });
 });
+
+describe("entry text safety", () => {
+  const hostile = {
+    ...pkg,
+    source: { title: "![](https://t.example/s.gif)", license: "<b>x</b>" },
+    actors: [
+      actor("a-bad", "Gnoll", {
+        summary: "![](https://t.example/a.gif)",
+        description: "<img src=https://t.example/b.gif>\n# Heading",
+        role: "[x](https://t.example/c)",
+      }),
+    ],
+    encounters: [
+      encounter("e1", ["a-bad"], { title: "![](https://t.example/e.gif)" }),
+    ],
+  } as unknown as AdventureJsonV1;
+
+  it("never leaves an image, tag, link or heading token unescaped", () => {
+    const proposal = buildCreatureProposals(hostile)[0]!;
+    const { content } = buildCreatureEntryText(
+      proposal,
+      hostile.source,
+      "![](https://t.example/credit.gif)",
+    );
+    expect(content).not.toMatch(/(^|[^\\])!\[/);
+    expect(content).not.toMatch(/(^|[^\\])</);
+    expect(content).not.toMatch(/(^|[^\\])\]\(/);
+    expect(content).not.toMatch(/^\s*#/m);
+  });
+
+  it("keeps ordinary text readable", () => {
+    const text = buildCreatureEntryText(
+      buildCreatureProposals(pkg)[2]!,
+      pkg.source,
+    );
+    expect(text.content).toContain("Guard Wolf summary");
+  });
+});

@@ -144,6 +144,16 @@ function mergeActor(
   }
 }
 
+/**
+ * Escapes Markdown and HTML control characters so package or user text stays
+ * literal text in an entry: no image, link, tag or heading can be built from it.
+ */
+export function escapeEntryText(text: string): string {
+  return text
+    .replace(/[\\`*_[\]()!<>&|~]/g, "\\$&")
+    .replace(/^(\s*)([#+-]|\d+(?=\.))/gm, "$1\\$2");
+}
+
 function formatPages(pages: number[]): string {
   if (pages.length === 0) return "";
   const first = pages[0]!;
@@ -153,18 +163,21 @@ function formatPages(pages: number[]): string {
 
 function encounterLine(encounter: CreatureProposalEncounter): string {
   const pages = formatPages(encounter.pages);
-  return pages ? `- ${encounter.title} (${pages})` : `- ${encounter.title}`;
+  return pages
+    ? `- ${escapeEntryText(encounter.title)} (${pages})`
+    : `- ${escapeEntryText(encounter.title)}`;
 }
 
 function sourceLine(
   source: AdventureJsonV1["source"],
   artCredit: string | undefined,
 ): string {
-  const parts = [`Source: ${source.title}`];
-  if (source.authors?.length) parts.push(`by ${source.authors.join(", ")}`);
-  if (source.license) parts.push(`Licence: ${source.license}`);
+  const parts = [`Source: ${escapeEntryText(source.title)}`];
+  if (source.authors?.length)
+    parts.push(`by ${escapeEntryText(source.authors.join(", "))}`);
+  if (source.license) parts.push(`Licence: ${escapeEntryText(source.license)}`);
   const credit = artCredit?.trim();
-  if (credit) parts.push(`Art: ${credit}`);
+  if (credit) parts.push(`Art: ${escapeEntryText(credit)}`);
   return parts.join(". ");
 }
 
@@ -175,15 +188,16 @@ export function buildCreatureEntryText(
   artCredit?: string,
 ): CreatureEntryText {
   const blocks: string[] = [];
-  blocks.push(...proposal.summary);
-  blocks.push(...proposal.description);
+  blocks.push(...proposal.summary.map(escapeEntryText));
+  blocks.push(...proposal.description.map(escapeEntryText));
   const labelled: Array<[string, string[]]> = [
     ["Role", proposal.role],
     ["Motivation", proposal.motivation],
     ["Disposition", proposal.disposition],
   ];
   for (const [label, values] of labelled) {
-    for (const value of values) blocks.push(`**${label}:** ${value}`);
+    for (const value of values)
+      blocks.push(`**${label}:** ${escapeEntryText(value)}`);
   }
   const visible = proposal.encounters.filter(
     (encounter) => encounter.visibility === "player-visible",
