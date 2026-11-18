@@ -425,7 +425,7 @@ export interface AdventureSession {
   /** Optional pinned adventure package reference; absent on unimported or legacy sessions. */
   sourcePackage?: AdventureSourcePackageRef;
   /** The pinned package's current scene; absent on sessions without a package. */
-  packageProgress?: { sceneId: string };
+  packageProgress?: PackageProgress;
   /** Optional structured situations; absent on ordinary adventures. */
   scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
@@ -498,6 +498,33 @@ export interface RollRequiredProposal {
 export type AdventureTurnProposal =
   CompletedTurnProposal | RollRequiredProposal;
 
+export type PackageRecordKind = "scene" | "encounter" | "clue" | "secret";
+export type PackageProgressStatus =
+  "unvisited" | "available" | "active" | "resolved" | "altered" | "skipped";
+export interface PackageProgressRecord {
+  id: string;
+  kind: PackageRecordKind;
+  status: PackageProgressStatus;
+}
+export interface PackageProgressEvent {
+  id: string;
+  turnId: string;
+  recordId: string;
+  kind: PackageRecordKind;
+  from: PackageProgressStatus;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+/** `version`, `records` and `events` are all present or all absent. */
+export interface PackageProgress {
+  sceneId: string;
+  version?: 1;
+  records?: PackageProgressRecord[];
+  events?: PackageProgressEvent[];
+}
+
 export interface CommitMetadata {
   turnId: string;
   inputId: string;
@@ -505,6 +532,10 @@ export interface CommitMetadata {
   playerAction?: string;
   /** Scene IDs of the pinned package, so a reported scene move can be checked. */
   packageSceneIds?: readonly string[];
+  /** Record ID to kind for the pinned package; turns the progress ledger on. */
+  packageRecordKinds?: Readonly<Record<string, PackageRecordKind>>;
+  /** Scene ID to the target scene IDs of its branches. */
+  packageSceneBranches?: Readonly<Record<string, readonly string[]>>;
 }
 
 export interface AdventureValidationError {

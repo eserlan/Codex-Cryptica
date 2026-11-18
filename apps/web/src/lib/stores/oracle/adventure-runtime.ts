@@ -4,7 +4,11 @@ import {
 } from "#lib/services/adventure/world-style.js";
 import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
-import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
+import {
+  packageProgressIndex,
+  type AdventureSession,
+  type CommitMetadata,
+} from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
@@ -85,11 +89,14 @@ export class AdventureRuntime {
     };
   }
 
-  /** Scene IDs of the current session's cached package, for scene-move checks. */
-  private packageSceneIds(): Pick<CommitMetadata, "packageSceneIds"> {
+  /** Scene, record-kind and branch indexes of the cached package, for the progress ledger. */
+  private packageSceneIds(): Pick<
+    CommitMetadata,
+    "packageSceneIds" | "packageRecordKinds" | "packageSceneBranches"
+  > {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
-    return pkg ? { packageSceneIds: pkg.scenes.map((scene) => scene.id) } : {};
+    return pkg ? packageProgressIndex(pkg) : {};
   }
 
   newTurnMetadata(playerAction: string): CommitMetadata {

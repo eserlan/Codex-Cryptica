@@ -291,9 +291,17 @@ describe("package-grounded actions", () => {
     ]);
     const actions = new AdventureActions(runtime);
     await actions.submitAction("Walk to the yard");
-    expect(state.session?.packageProgress).toEqual({
+    expect(state.session?.packageProgress).toMatchObject({
       sceneId: "ros-scene-2-yard",
+      version: 1,
     });
+    const records = state.session?.packageProgress?.records;
+    expect(records?.find((r) => r.id === "ros-scene-2-yard")?.status).toBe(
+      "active",
+    );
+    expect(records?.find((r) => r.id === "ros-scene-1-landing")?.status).toBe(
+      "available",
+    );
     await actions.submitAction("Look around");
     const sceneOf = (call: number) =>
       (generate.mock.calls[call] as any)[0].adventurePackage.playerSafe[0].id;
@@ -305,7 +313,7 @@ describe("package-grounded actions", () => {
     const { runtime, state } = packageRuntime([movedTo("no-such-scene")]);
     await new AdventureActions(runtime).submitAction("Wander off");
     expect(state.session?.turns).toHaveLength(1);
-    expect(state.session?.packageProgress).toEqual({
+    expect(state.session?.packageProgress).toMatchObject({
       sceneId: "ros-scene-1-landing",
     });
   });

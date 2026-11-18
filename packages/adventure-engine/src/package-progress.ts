@@ -1,0 +1,287 @@
+import type { AdventureJsonV1 } from "./adventure-json";
+import { MAX_PACKAGE_PROGRESS_ENTRIES } from "./schemas";
+import type {
+  PackageProgress,
+  PackageProgressEvent,
+  PackageProgressRecord,
+  PackageProgressStatus,
+  PackageRecordKind,
+} from "./types";
+
+export interface PackageProgressIndex {
+  packageSceneIds: string[];
+  packageRecordKinds: Record<string, PackageRecordKind>;
+  packageSceneBranches: Record<string, string[]>;
+}
+
+export interface PackageProgressInput {
+  recordId: string;
+  kind: PackageRecordKind;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+
+export interface PackageProgressResult {
+  progress: PackageProgress;
+  dropped: string[];
+}
+
+const ALLOWED: Record<PackageProgressStatus, PackageProgressStatus[]> = {
+  unvisited: ["available", "active", "skipped", "resolved"],
+  available: ["active", "skipped", "resolved"],
+  active: ["resolved", "altered", "skipped", "available"],
+  skipped: ["active"],
+  resolved: ["altered"],
+  altered: [],
+};
+
+/** The package's scenes, record kinds and scene branches; built from the package alone. */
+export function packageProgressIndex(
+  pkg: AdventureJsonV1,
+): PackageProgressIndex {
+  const packageRecordKinds: Record<string, PackageRecordKind> = {};
+  const groups: [PackageRecordKind, { id: string }[]][] = [
+    ["scene", pkg.scenes],
+    ["encounter", pkg.encounters],
+    ["clue", pkg.clues],
+    ["secret", pkg.secrets],
+  ];
+  for (const [kind, records] of groups) {
+    for (const record of records) packageRecordKinds[record.id] = kind;
+  }
+  return {
+    packageSceneIds: pkg.scenes.map((scene) => scene.id),
+    packageRecordKinds,
+    packageSceneBranches: Object.fromEntries(
+      pkg.scenes.map((scene) => [
+        scene.id,
+        (scene.branches ?? []).map((branch) => branch.targetSceneId),
+      ]),
+    ),
+  };
+}
+
+export function canTransitionPackageStatus(
+  from: PackageProgressStatus,
+  to: PackageProgressStatus,
+): boolean {
+  return ALLOWED[from].includes(to);
+}
+
+function statusOf(
+  records: readonly PackageProgressRecord[],
+  recordId: string,
+): PackageProgressStatus {
+  return (
+    records.find((record) => record.id === recordId)?.status ?? "unvisited"
+  );
+}
+
+function confirmedStatus(
+  events: readonly PackageProgressEvent[],
+  recordId: string,
+  superseded: ReadonlySet<string>,
+  leaveOut?: string,
+): PackageProgressStatus {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const event = events[i];
+    if (
+      event.recordId === recordId &&
+      event.certainty === "confirmed" &&
+      !superseded.has(event.id) &&
+      event.id !== leaveOut
+    ) {
+      return event.to;
+    }
+  }
+  return "unvisited";
+}
+
+type Checked =
+  | { reason: string }
+  | { target?: PackageProgressEvent; current: PackageProgressStatus };
+
+function invalidField(
+  input: PackageProgressInput,
+  note: string,
+  kinds: PackageProgressIndex["packageRecordKinds"],
+): string | null {
+  const known = kinds[input.recordId];
+  if (known === undefined) return "unknown record";
+  if (known !== input.kind) return "wrong kind";
+  if (input.to === "unvisited" || note.length === 0) {
+    return "invalid status or note";
+  }
+  return null;
+}
+
+/** The event a correction names, or null when it cannot be corrected. */
+function supersedeTarget(
+  events: readonly PackageProgressEvent[],
+  input: PackageProgressInput,
+): PackageProgressEvent | null {
+  const target = events.find((e) => e.id === input.supersedes);
+  if (!target || target.recordId !== input.recordId) return null;
+  return events.some((e) => e.supersedes === target.id) ? null : target;
+}
+
+function transitionAllowed(
+  events: readonly PackageProgressEvent[],
+  input: PackageProgressInput,
+  current: PackageProgressStatus,
+  target: PackageProgressEvent | undefined,
+): boolean {
+  if (input.certainty !== "confirmed") return true;
+  if (!target) return canTransitionPackageStatus(current, input.to);
+  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  const baseline = confirmedStatus(
+    events,
+    input.recordId,
+    superseded,
+    target.id,
+  );
+  return (
+    baseline === input.to || canTransitionPackageStatus(baseline, input.to)
+  );
+}
+
+/** Everything about an input that does not depend on its event ID. */
+function checkInput(
+  records: readonly PackageProgressRecord[],
+  events: readonly PackageProgressEvent[],
+  input: PackageProgressInput,
+  note: string,
+  kinds: PackageProgressIndex["packageRecordKinds"],
+): Checked {
+  const invalid = invalidField(input, note, kinds);
+  if (invalid) return { reason: invalid };
+  const current = statusOf(records, input.recordId);
+  let target: PackageProgressEvent | undefined;
+  if (input.supersedes) {
+    target = supersedeTarget(events, input) ?? undefined;
+    if (!target) return { reason: "invalid supersede" };
+  }
+  if (!transitionAllowed(events, input, current, target)) {
+    return { reason: "transition not allowed" };
+  }
+  return { target, current };
+}
+
+function eventIdProblem(
+  events: readonly PackageProgressEvent[],
+  eventId: string,
+): string | null {
+  if (events.some((e) => e.id === eventId)) return "duplicate event";
+  return events.length >= MAX_PACKAGE_PROGRESS_ENTRIES ? "ledger full" : null;
+}
+
+/**
+ * Applies ledger inputs in order to a copy of `progress`. A rejected input is
+ * reported in `dropped`; accepted ones are appended and never edited later.
+ */
+export function applyPackageProgressEvents(
+  progress: PackageProgress,
+  inputs: readonly PackageProgressInput[],
+  context: {
+    turnId: string;
+    index: Pick<PackageProgressIndex, "packageRecordKinds">;
+  },
+): PackageProgressResult {
+  const next: PackageProgress = {
+    sceneId: progress.sceneId,
+    version: 1,
+    records: structuredClone(progress.records ?? []),
+    events: structuredClone(progress.events ?? []),
+  };
+  const records = next.records!;
+  const events = next.events!;
+  const dropped: string[] = [];
+  let written = 0;
+  for (const input of inputs) {
+    const note = input.note.trim().slice(0, 240);
+    const eventId = `${context.turnId.slice(0, 130)}:pkg:${written + 1}`;
+    const checked = checkInput(
+      records,
+      events,
+      input,
+      note,
+      context.index.packageRecordKinds,
+    );
+    const reason =
+      "reason" in checked ? checked.reason : eventIdProblem(events, eventId);
+    if ("reason" in checked || reason !== null) {
+      dropped.push(`packageEvents: ${reason} ${input.recordId.slice(0, 80)}`);
+      continue;
+    }
+    const confirmed = input.certainty === "confirmed";
+    events.push({
+      id: eventId,
+      turnId: context.turnId,
+      recordId: input.recordId,
+      kind: input.kind,
+      from: checked.current,
+      to: confirmed ? input.to : checked.current,
+      certainty: input.certainty,
+      note,
+      ...(input.supersedes ? { supersedes: input.supersedes } : {}),
+    });
+    written += 1;
+    if (confirmed) setRecordStatus(records, events, input, checked.target);
+  }
+  return { progress: next, dropped };
+}
+
+function setRecordStatus(
+  records: PackageProgressRecord[],
+  events: readonly PackageProgressEvent[],
+  input: PackageProgressInput,
+  target: PackageProgressEvent | undefined,
+): void {
+  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  const status = target
+    ? confirmedStatus(events, input.recordId, superseded)
+    : input.to;
+  const existing = records.find((record) => record.id === input.recordId);
+  if (existing) existing.status = status;
+  else records.push({ id: input.recordId, kind: input.kind, status });
+}
+
+/**
+ * The confirmed inputs a scene move implies: the entry scene starts, the scene
+ * left becomes available again, the new scene starts, its branches open up.
+ * Steps the transition rules do not allow are left out.
+ */
+export function planSceneProgress(
+  progress: PackageProgress,
+  index: PackageProgressIndex,
+  moveTo?: string,
+): PackageProgressInput[] {
+  const statuses = new Map<string, PackageProgressStatus>();
+  const inputs: PackageProgressInput[] = [];
+  const get = (id: string) =>
+    statuses.get(id) ?? statusOf(progress.records ?? [], id);
+  const step = (id: string, to: PackageProgressStatus, note: string) => {
+    const kind = index.packageRecordKinds[id];
+    if (!kind || !canTransitionPackageStatus(get(id), to)) return;
+    statuses.set(id, to);
+    inputs.push({ recordId: id, kind, to, certainty: "confirmed", note });
+  };
+  const openBranches = (sceneId: string) => {
+    for (const target of index.packageSceneBranches[sceneId] ?? []) {
+      if (get(target) === "unvisited") step(target, "available", "Next scene.");
+    }
+  };
+  const current = progress.sceneId;
+  if (get(current) === "unvisited") {
+    step(current, "active", "Scene entered.");
+    openBranches(current);
+  }
+  if (moveTo && moveTo !== current) {
+    step(current, "available", "Scene left.");
+    step(moveTo, "active", "Scene entered.");
+    if (get(moveTo) === "active") openBranches(moveTo);
+  }
+  return inputs;
+}
