@@ -70,6 +70,12 @@
                 class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
               >
                 {example.genre} · {example.kind}
+                {#if example.provenance === "authored"}
+                  <span
+                    class="ml-2 rounded border border-theme-border px-1.5 py-0.5 text-theme-primary"
+                    >Hand-written</span
+                  >
+                {/if}
               </p>
               <h2
                 class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary"
