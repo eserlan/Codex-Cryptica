@@ -6,3 +6,5 @@ export * from "./adapter";
 export * from "./storage";
 export * from "./diff";
 export * from "./conversion-score";
+export * from "./entry-scene";
+export * from "./retrieval";

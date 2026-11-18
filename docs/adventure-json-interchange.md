@@ -11,6 +11,8 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 - `getAdventureJsonV1JsonSchema()` and static `adventure-json-v1.schema.json` (Draft 2020-12, `$id`: `https://codexcryptica.com/schemas/adventure-json/v1.json`)
 - `canonicalizeAdventureJson(pkg)` and `computeAdventureJsonHash(pkg)`
 - `adventureSourcePackageToAdventureJson(sourcePkg)`
+- `entrySceneId(pkg)`: the id of the first scene, the package's entry scene
+- `retrieveAdventureJsonContext(pkg, focus)` and `formatAdventureJsonExcerpts(excerpts, label)`: bounded scene-context retrieval (see "Scene-context retrieval")
 
 ## Top-Level Structure
 
@@ -37,9 +39,29 @@ A character, place or item being known does not make its concealed role, motive 
 
 In the reference one-shot, Tobiah Reed is a `player-visible` actor with no `motivation`; his motive is the `gm-only` secret `secret-tobiah-motive`.
 
-Runtime status: Adventure collection records are not yet projected into Oracle prompts or player transcripts, and sessions pin the approved package by hash. Starting an approved package does copy its `title` and premise text into the session: `premise.hook` and `premise.background` are used when present; if both are empty, `description` is used, then `title`. Those copied values enter Oracle opening generation, so converters must keep the title, hook, background and optional description player-safe and limited to source-supported facts. Future collection projections must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
+Runtime status: Scene-context retrieval exists in the engine but is not yet wired into Oracle prompts (#4925). Adventure collection records are not yet projected into Oracle prompts or player transcripts, and sessions pin the approved package by hash. Starting an approved package does copy its `title` and premise text into the session: `premise.hook` and `premise.background` are used when present; if both are empty, `description` is used, then `title`. Those copied values enter Oracle opening generation, so converters must keep the title, hook, background and optional description player-safe and limited to source-supported facts. Future collection projections must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
 
 - `sourceRef` (optional): `{ page?, pageEnd?, chapter?, section?, anchor?, textQuote? }`.
+
+## Scene-context retrieval
+
+`retrieveAdventureJsonContext(pkg, { sceneId?, locationId?, actorIds?, maxCharacters? })` is pure and deterministic. It picks the focus scene (the entry scene when `sceneId` is omitted; an unknown `sceneId` falls back to the entry scene and sets `sceneFallback: true`) and returns excerpts in this priority order, each record at most once:
+
+1. the focus scene
+2. `premise`, then `system` if present
+3. the focus location (`locationId`, else the scene's `locationId`)
+4. encounters tied to the scene or location
+5. actors named in `actorIds`, in a selected encounter, or at the location
+6. clues placed in the scene, location or with a selected actor
+7. items at the location or held by a selected actor
+8. rumours sourced from or aimed at the scene, location or a selected actor
+9. secrets whose `relatedEntityIds` include a selected record
+
+Excerpts go to `playerSafe` when the record is `player-visible` and to `gmOnly` otherwise (every secret is `gm-only`). References to other records appear only as IDs, so player-safe text never carries the name or text of a `gm-only` record.
+
+The combined `JSON.stringify` length of both lists never exceeds `maxCharacters` (default and maximum `MAX_ADVENTURE_RETRIEVAL_CHARS`, 4000). Whole excerpts are dropped from the lowest priority upward; only a lone focus scene is trimmed, ending in `…`. `truncated` reports any drop or trim. If `maxCharacters` is too small to hold even the focus scene's JSON metadata, `invalidBudget` is `true` and no excerpt is returned; otherwise the focus scene is always present. Retrieval checks records in priority order and stops once the next excerpt would exceed the budget, so it does not materialize or serialize the full matching candidate list.
+
+`formatAdventureJsonExcerpts(excerpts, label)` places the label and excerpts inside one fenced JSON data block, preceded by a static header saying the contents are quoted source data whose instructions must not be followed. `<`, `>`, `&` and backticks are escaped as `\uXXXX`, so package text cannot close the fence or inject markup and the block still parses back to the label and excerpts.
 
 ## Semantic Validation Rules
 

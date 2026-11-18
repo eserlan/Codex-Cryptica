@@ -1,4 +1,5 @@
 import type { ZodIssue } from "zod";
+import { entrySceneId } from "./entry-scene";
 import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
   AdventureJsonV1Schema,
@@ -465,7 +466,7 @@ function validateSceneReachability(
 ): void {
   if (scenes.length <= 1) return;
 
-  const entryId = scenes[0]!.id;
+  const entryId = entrySceneId({ scenes })!;
   const reachable = new Set<string>([entryId]);
   const queue: string[] = [entryId];
   let queueIndex = 0;
