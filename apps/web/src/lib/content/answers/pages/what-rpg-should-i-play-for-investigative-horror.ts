@@ -195,6 +195,7 @@ export const whatRpgShouldIPlayForInvestigativeHorror: AnswerConfigInput = {
     "how-do-i-run-character-roles-in-an-investigative-horror-rpg",
     "how-do-i-make-interviewing-npcs-interesting-in-an-investigation",
     "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+    "how-do-i-run-a-sci-fi-horror-rpg",
   ],
   discovery: {
     id: "answer-investigative-horror-system-selection",

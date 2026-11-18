@@ -63,8 +63,13 @@ Run these sweeps on every review; they are where most second and third review ro
    the real persistence adapter returns on failure (it may resolve `false`), and what earlier
    steps are left if a later step fails. For abortable work, follow the `AbortSignal` all the way
    to `fetch`, and check that `pointercancel` cancels rather than completes a gesture.
+   For recovery and streaming changes, follow the actual action through the real adapter or
+   save handler using [Recovery and partial results](references/patterns.md#recovery-and-partial-results).
 6. **Worst-case budgets**: Compute per-frame work from the supported extremes (minimum zoom,
    minimum cell size, large viewport), not a typical map; caps must not silently drop items.
+   For retrieval and list changes, trace work before the output cap. Check decode, hash, sort,
+   allocation and rendered rows on both the initial path and retry. See
+   [Bounds before expensive work](references/patterns.md#bounds-before-expensive-work).
 7. **Claims**: Every capability, rule, number and privacy claim in changed content, help copy, or
    the PR description has a code path or a cited source. Evergreen blog posts go through the
    discovery registry. The PR description matches `git diff origin/staging...HEAD --stat`.
@@ -74,6 +79,11 @@ Run these sweeps on every review; they are where most second and third review ro
    for heuristics, re-run the whole counterexample table. Most second-round findings are defects
    in the first round's fix. Automated fixer commits go through the same gates (sweep 0, tests,
    type-check) before they are pushed.
+
+For applicable sweeps, record the concrete case, the code path or check used, and the
+observed result in the review notes. For a UI change, include the worst rendered contrast
+pair and state when contrast applies. For a recovery or data boundary change, include the
+failing or edge input and what reaches the real sink. Say when a check could not be run.
 
 ## Review Output Guidelines
 
