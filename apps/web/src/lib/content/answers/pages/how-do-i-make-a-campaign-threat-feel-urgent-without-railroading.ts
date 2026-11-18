@@ -306,6 +306,7 @@ export const howDoIMakeACampaignThreatFeelUrgentWithoutRailroading: AnswerConfig
       "how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies",
       "how-to-adapt-a-video-game-into-a-tabletop-rpg",
       "how-do-i-structure-a-dnd-campaign",
+      "how-do-i-run-a-sci-fi-horror-rpg",
     ],
     discovery: {
       id: "answer-campaign-threat-without-railroading",

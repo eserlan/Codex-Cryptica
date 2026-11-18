@@ -147,6 +147,7 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "stop-players-investigating-every-detail",
     "what-are-the-classic-must-play-tabletop-rpg-adventures",
     "how-do-i-get-a-stalled-rpg-investigation-moving-again",
+    "how-do-i-run-a-sci-fi-horror-rpg",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
