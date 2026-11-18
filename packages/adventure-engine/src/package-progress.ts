@@ -330,7 +330,7 @@ export interface PackageProgressPromptSummary {
     recordId: string;
     certainty: "claimed" | "confirmed";
     note: string;
-    to?: PackageProgressStatus;
+    to: PackageProgressStatus;
     supersedes?: string;
     superseded?: true;
   }[];
@@ -353,7 +353,7 @@ export function packageProgressPromptSummary(
       recordId: event.recordId,
       certainty: event.certainty,
       note: event.note.trim().slice(0, SUMMARY_NOTE_CHARS),
-      ...(event.certainty === "confirmed" ? { to: event.to } : {}),
+      to: event.to,
       ...(event.supersedes ? { supersedes: event.supersedes } : {}),
       ...(superseded.has(event.id) ? { superseded: true as const } : {}),
     })),

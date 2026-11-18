@@ -140,14 +140,14 @@ describe("proposed package events", () => {
       (e) => e.recordId === MOTIVE,
     )!;
     expect(claim.from).toBe("unvisited");
-    expect(claim.to).toBe(claim.from);
+    expect(claim.to).toBe("resolved");
     expect(statusOf(next.packageProgress, MOTIVE)).toBe("unvisited");
     const { state } = promptState(next);
     const shown = state["GM-ONLY package progress"].recentEvents.find(
       (e: { id: string }) => e.id === claim.id,
     );
     expect(shown.certainty).toBe("claimed");
-    expect("to" in shown).toBe(false);
+    expect(shown.to).toBe("resolved");
   });
 
   it("corrects an earlier event by superseding it", () => {
