@@ -90,7 +90,7 @@
             <div class="flex gap-2">
               <button
                 type="button"
-                class="min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
+                class="min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text disabled:cursor-not-allowed"
                 disabled={page === 0}
                 onclick={() => (page = Math.max(0, page - 1))}
               >
@@ -98,7 +98,7 @@
               </button>
               <button
                 type="button"
-                class="min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
+                class="min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text disabled:cursor-not-allowed"
                 disabled={page >= pageCount - 1}
                 onclick={() => (page = Math.min(pageCount - 1, page + 1))}
               >
