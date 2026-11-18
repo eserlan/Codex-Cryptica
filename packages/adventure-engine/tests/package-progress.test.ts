@@ -139,6 +139,17 @@ describe("package scene progress", () => {
     ).toMatchObject({ ok: false, errors: [{ code: "hidden-leakage" }] });
   });
 
+  it("allows ordinary prose containing a plain-word package ID such as gate", () => {
+    const ordinary = proposal();
+    ordinary.narration = "The watchman opens the iron gate to the courtyard.";
+    expect(
+      applyCompletedTurn(packageSession(), ordinary, {
+        ...meta,
+        packageRecordIds: ["gate", "the"],
+      }).ok,
+    ).toBe(true);
+  });
+
   it("preserves overlong and whitespace-padded package scene IDs verbatim", () => {
     const longId = `scene-${"x".repeat(200)}`;
     const paddedId = "  scene-padded  ";

@@ -13,12 +13,13 @@ const WORD = /[\p{L}\p{N}_-]/u;
 const MAX_TRIE_TERM_LENGTH = 256;
 
 /**
- * Short 1-2 character pure-letter IDs (such as "a" or "in") collide with
- * ordinary prose, so free-text matching skips them while still matching
- * 1-2 character codes that include digits or symbols (such as "s2" or "42").
+ * Plain-word IDs made solely of letters (such as "a", "the", or "gate") collide
+ * with ordinary prose, so free-text matching skips them while still matching
+ * structured or code IDs that include digits, hyphens, or symbols (such as
+ * "s2", "42", or "hidden-actor").
  */
-export function isFreeTextMatchableShortId(id: string): boolean {
-  return id.length >= 3 || (id.length > 0 && !/^[a-z]{1,2}$/i.test(id));
+export function isFreeTextMatchableId(id: string): boolean {
+  return id.length > 0 && !/^\p{L}+$/u.test(id);
 }
 
 function createNode(fail: Node | null): Node {

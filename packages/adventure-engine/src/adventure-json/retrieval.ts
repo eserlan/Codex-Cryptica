@@ -1,9 +1,6 @@
 import { MAX_ADVENTURE_RETRIEVAL_CHARS } from "../source-package/retrieval";
 import { entrySceneId } from "./entry-scene";
-import {
-  createBoundaryMatcher,
-  isFreeTextMatchableShortId,
-} from "./term-matcher";
+import { createBoundaryMatcher, isFreeTextMatchableId } from "./term-matcher";
 import type {
   AdventureJsonEncounter,
   AdventureJsonLocation,
@@ -272,9 +269,7 @@ const hiddenIdMatchers = new WeakMap<
 function hiddenIdMatcher(ids: ReadonlySet<string>): (text: string) => boolean {
   const cached = hiddenIdMatchers.get(ids);
   if (cached) return cached;
-  const matcher = createBoundaryMatcher(
-    [...ids].filter(isFreeTextMatchableShortId),
-  );
+  const matcher = createBoundaryMatcher([...ids].filter(isFreeTextMatchableId));
   hiddenIdMatchers.set(ids, matcher);
   return matcher;
 }

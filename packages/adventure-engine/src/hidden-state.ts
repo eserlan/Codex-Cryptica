@@ -10,7 +10,7 @@ import {
 } from "./historical-anchor-types";
 import {
   createBoundaryMatcher,
-  isFreeTextMatchableShortId,
+  isFreeTextMatchableId,
 } from "./adventure-json/term-matcher";
 
 export interface HiddenLeakageFinding {
@@ -188,12 +188,12 @@ function packageIdLeakage(
   fields: Array<[string, string]>,
   ids: readonly string[],
 ): HiddenLeakageFinding[] {
-  const normalizedShortIds = new Set(
-    ids.filter((id) => !isFreeTextMatchableShortId(id)).map(normalize),
+  const normalizedPlainWordIds = new Set(
+    ids.filter((id) => !isFreeTextMatchableId(id)).map(normalize),
   );
-  const matcher = createBoundaryMatcher(ids.filter(isFreeTextMatchableShortId));
+  const matcher = createBoundaryMatcher(ids.filter(isFreeTextMatchableId));
   return fields.flatMap(([field, value]) =>
-    normalizedShortIds.has(normalize(value)) || matcher(value)
+    normalizedPlainWordIds.has(normalize(value)) || matcher(value)
       ? [{ field, secretId: "pinned-package-id" }]
       : [],
   );
