@@ -119,7 +119,7 @@ describe("buildCreatureProposals", () => {
     expect(proposals[0]!.concealed).toBe(false);
   });
 
-  it("deduplicates many citations, encounters and text values for one name", () => {
+  it("deduplicates large same-name creature proposals", () => {
     const count = 1500;
     const actors = Array.from({ length: count }, (_, index) =>
       actor(`actor-${index}`, "Shared name", {
