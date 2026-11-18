@@ -204,6 +204,7 @@ export const howDoIPaceAnRpgOneShot: AnswerConfigInput = {
     "what-are-the-classic-must-play-tabletop-rpg-adventures",
     "how-do-i-run-a-one-shot-rpg-session",
     "how-do-i-plan-a-one-shot-rpg-session",
+    "how-do-i-run-a-sci-fi-horror-rpg",
   ],
   discovery: {
     id: "answer-pace-rpg-one-shot",
