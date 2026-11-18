@@ -144,8 +144,9 @@
         >
         (<a class="underline" href="{cleanBase}/adventure-import/prompt.txt"
           >prompt.txt</a
-        >). Check that the prompt ends with <code>{PROMPT_END_MARKER}</code>. If
-        the link is blocked or the prompt is incomplete, stop.
+        >). Check that the prompt ends with
+        <code class="text-theme-text text-xs">{PROMPT_END_MARKER}</code>. If the
+        link is blocked or the prompt is incomplete, stop.
         {INCOMPLETE_PROMPT_FALLBACK}
       </p>
 
