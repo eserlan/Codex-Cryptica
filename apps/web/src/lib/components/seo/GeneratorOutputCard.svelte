@@ -19,6 +19,11 @@
   import ShareButton from "#lib/components/ShareButton.svelte";
   import { buildMysteryPlayerHandout } from "./generator-copy";
   import { pointCrawlHeading } from "./point-crawl-heading.js";
+  import GeneratorContinuationCallout from "./GeneratorContinuationCallout.svelte";
+  import {
+    getGeneratorContinuationConfig,
+    shouldShowGeneratorContinuation,
+  } from "./generator-continuation";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -43,6 +48,9 @@
     isBusy,
     isGenerationInProgress = isBusy,
     isExampleDraft,
+    generatorType = undefined,
+    canFollowUp = false,
+    saveError = null,
     generatedSingular,
     variant,
     worldTheme,
@@ -79,6 +87,9 @@
     isBusy: boolean;
     isGenerationInProgress?: boolean;
     isExampleDraft: boolean;
+    generatorType?: string;
+    canFollowUp?: boolean;
+    saveError?: string | null;
     generatedSingular: string;
     variant: "default" | "names";
     worldTheme: string;
@@ -127,6 +138,18 @@
   let activeMessages = $derived(getThemeLoadingMessages(worldTheme));
   let isMysteryDraft = $derived(
     generatedData?.labels?.includes("mystery-generator") ?? false,
+  );
+  let continuationConfig = $derived(
+    getGeneratorContinuationConfig(generatorType),
+  );
+  let showContinuationCallout = $derived(
+    shouldShowGeneratorContinuation({
+      generatorType,
+      userGenerationSucceeded: canFollowUp,
+      isExampleDraft,
+      isBusy: isBusy || isGenerationInProgress,
+      variant,
+    }),
   );
 
   $effect(() => {
@@ -232,7 +255,7 @@
               class="flex flex-wrap items-center overflow-hidden rounded-lg border border-theme-primary/25 bg-theme-bg/35 shadow-sm"
               aria-label="Draft actions"
             >
-              {#if variant !== "names"}
+              {#if variant !== "names" && !showContinuationCallout}
                 <button
                   type="button"
                   onclick={onSaveToCodex}
@@ -496,6 +519,25 @@
         </div>
       {/snippet}
       {@render generatedDocument()}
+      {#if showContinuationCallout && continuationConfig}
+        <GeneratorContinuationCallout
+          config={continuationConfig}
+          disabled={isGenerationInProgress}
+          {saveError}
+          {onSaveToCodex}
+        />
+      {:else if saveError}
+        <div
+          role="alert"
+          class="mt-6 flex items-start gap-2 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-400"
+        >
+          <span
+            class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0"
+            aria-hidden="true"
+          ></span>
+          <span>{saveError}</span>
+        </div>
+      {/if}
     </div>
   {:else}
     <div
