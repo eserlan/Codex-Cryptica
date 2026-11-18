@@ -59,18 +59,16 @@
   const visibleChoices = $derived(
     choices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
   );
-  const previewPageSize = 20;
-  let previewPage = $state(0);
-  const previewChoices = $derived([...creating, ...reusing]);
-  const previewTotal = $derived(previewChoices.length);
-  const previewPageStart = $derived(previewPage * previewPageSize);
-  const previewPageCount = $derived(Math.ceil(previewTotal / previewPageSize));
+  const selectedChoices = $derived(choices.filter((choice) => choice.include));
+  const previewPageCount = $derived(
+    Math.ceil(selectedChoices.length / reviewPageSize),
+  );
   const visiblePreviewChoices = $derived(
-    previewChoices.slice(previewPageStart, previewPageStart + previewPageSize),
+    selectedChoices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
   );
 
   async function goTo(next: "review" | "preview" | "done") {
-    if (next === "preview") previewPage = 0;
+    if (next === "preview") reviewPage = 0;
     step = next;
     await tick();
     heading?.focus();
@@ -361,26 +359,26 @@
         {#if previewPageCount > 1}
           <div class="flex flex-wrap items-center justify-between gap-2">
             <p class="text-xs text-theme-text" aria-live="polite">
-              Showing changes {previewPageStart + 1}–{Math.min(
-                previewPageStart + previewPageSize,
-                previewTotal,
-              )} of {previewTotal}
+              Showing changes {reviewPageStart + 1}–{Math.min(
+                reviewPageStart + reviewPageSize,
+                selectedChoices.length,
+              )} of {selectedChoices.length}
             </p>
             <div class="flex gap-2">
               <button
                 type="button"
                 class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
-                disabled={previewPage === 0}
-                onclick={() => (previewPage = Math.max(0, previewPage - 1))}
+                disabled={reviewPage === 0}
+                onclick={() => (reviewPage = Math.max(0, reviewPage - 1))}
               >
                 Previous changes
               </button>
               <button
                 type="button"
                 class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
-                disabled={previewPage >= previewPageCount - 1}
+                disabled={reviewPage >= previewPageCount - 1}
                 onclick={() =>
-                  (previewPage = Math.min(previewPageCount - 1, previewPage + 1))}
+                  (reviewPage = Math.min(reviewPageCount - 1, reviewPage + 1))}
               >
                 Next changes
               </button>
