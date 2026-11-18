@@ -261,6 +261,13 @@ function lineMentionsHiddenId(
   return matcher(buildText([line], MAX_ADVENTURE_RETRIEVAL_CHARS + 1));
 }
 
+/** The rule retrieval uses to decide that a line of text names a hidden record ID. */
+export function createAdventureJsonHiddenIdMatcher(
+  hiddenIds: Iterable<string>,
+): (text: string) => boolean {
+  return createBoundaryMatcher([...hiddenIds].filter(isFreeTextMatchableId));
+}
+
 const hiddenIdMatchers = new WeakMap<
   ReadonlySet<string>,
   (text: string) => boolean
@@ -269,7 +276,7 @@ const hiddenIdMatchers = new WeakMap<
 function hiddenIdMatcher(ids: ReadonlySet<string>): (text: string) => boolean {
   const cached = hiddenIdMatchers.get(ids);
   if (cached) return cached;
-  const matcher = createBoundaryMatcher([...ids].filter(isFreeTextMatchableId));
+  const matcher = createAdventureJsonHiddenIdMatcher(ids);
   hiddenIdMatchers.set(ids, matcher);
   return matcher;
 }

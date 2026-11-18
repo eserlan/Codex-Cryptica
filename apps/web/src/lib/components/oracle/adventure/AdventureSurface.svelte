@@ -25,6 +25,12 @@
   import { vault } from "#lib/stores/vault.svelte.js";
   import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
 
+  let {
+    onCreatureImportBusyChange = () => {},
+  }: {
+    onCreatureImportBusyChange?: (busy: boolean) => void;
+  } = $props();
+
   let vaultId = $derived(oracle.vault.activeVaultId ?? "default");
   const selectedRumour = $derived(rumourAdventureHandoff.forVault(vaultId));
   const characters = $derived(characterChoices(oracle.vault.entities));
@@ -247,6 +253,7 @@
       calendar={calendarStore.config}
       {canDiscover}
       {canImport}
+      {onCreatureImportBusyChange}
       onDiscover={discoverAdventure}
       onSurpriseMe={() => modalUIStore.openIntentGeneratorWorkflow("adventure")}
       onScenarioStarted={() => rumourAdventureHandoff.clear()}
