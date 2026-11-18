@@ -475,6 +475,17 @@ export interface PackageEventProposal {
   supersedes?: string;
 }
 
+/** A model-proposed actor state update; the engine assigns the event ID. */
+export interface ActorEventProposal {
+  actorId: string;
+  status?: ActorProposalStatus;
+  disposition?: ActorDisposition;
+  fact?: string;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
@@ -495,6 +506,8 @@ export interface CompletedTurnProposal {
   suggestedActions?: string[];
   /** GM-only package progress; checked by the ledger reducer. */
   packageEvents?: PackageEventProposal[];
+  /** GM-only package actor progress; checked by the actor ledger reducer. */
+  actorEvents?: ActorEventProposal[];
 }
 
 export interface RollRequiredProposal {
@@ -529,12 +542,37 @@ export interface PackageProgressEvent {
   note: string;
   supersedes?: string;
 }
+export type ActorProposalStatus = "present" | "absent" | "dead";
+export type ActorProgressStatus = "unknown" | ActorProposalStatus;
+export type ActorDisposition =
+  "hostile" | "wary" | "neutral" | "friendly" | "allied";
+export interface PackageActorState {
+  actorId: string;
+  status: ActorProgressStatus;
+  disposition: ActorDisposition;
+  facts: string[];
+}
+export interface PackageActorEvent {
+  id: string;
+  turnId: string;
+  actorId: string;
+  fromStatus?: ActorProgressStatus;
+  status?: ActorProposalStatus;
+  fromDisposition?: ActorDisposition;
+  disposition?: ActorDisposition;
+  fact?: string;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
 /** `version`, `records` and `events` are all present or all absent. */
 export interface PackageProgress {
   sceneId: string;
   version?: 1;
   records?: PackageProgressRecord[];
   events?: PackageProgressEvent[];
+  actors?: PackageActorState[];
+  actorEvents?: PackageActorEvent[];
 }
 
 export interface CommitMetadata {
@@ -548,6 +586,8 @@ export interface CommitMetadata {
   packageRecordKinds?: Readonly<Record<string, PackageRecordKind>>;
   /** Scene ID to the target scene IDs of its branches. */
   packageSceneBranches?: Readonly<Record<string, readonly string[]>>;
+  /** Actor IDs of the pinned package; enables actor progress tracking. */
+  packageActorIds?: readonly string[];
   /** Hidden package references and text used to reject accidental player leaks. */
   packageRecordIds?: readonly string[];
   packageGmOnlyText?: readonly string[];
