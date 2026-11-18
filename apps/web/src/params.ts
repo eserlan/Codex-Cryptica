@@ -1,5 +1,6 @@
 import { defineParams } from "@sveltejs/kit/params";
 import { HUB_THEME_SLUGS } from "./lib/content/hub-themes.ts";
+import { GENERATOR_SLUGS } from "./lib/components/seo/generator-slugs.ts";
 
 /**
  * Every generator slug the route serves.
@@ -8,60 +9,7 @@ import { HUB_THEME_SLUGS } from "./lib/content/hub-themes.ts";
  * from the same source the router uses, rather than a copy that silently stops
  * matching when a generator is added.
  */
-export const GENERATOR_SLUGS = [
-  "npc",
-  "settlement",
-  "magic-item",
-  "minor-magic-item",
-  "artifact-generator",
-  "faction",
-  "faction-roster",
-  "quest",
-  "rumour",
-  "puzzle",
-  "item",
-  "tavern",
-  "social-hub",
-  "kingdom",
-  "nation",
-  "vampire-clan",
-  "nomad-clan",
-  "dark-fantasy-faction",
-  "urban-fantasy-faction",
-  "names",
-  "fantasy-names",
-  "dnd-npc",
-  "pantheon-generator",
-  "god-generator",
-  "ship-generator",
-  "language-generator",
-  "news-sheet-generator",
-  "dungeon-generator",
-  "adventure-generator",
-  "adventure-idea-generator",
-  "one-shot-adventure-generator",
-  "plot-twist-generator",
-  "bbeg-generator",
-  "comic-book-event-generator",
-  "origin-generator",
-  "villain-scheme-generator",
-  "world",
-  "council-vote",
-  "secret-society",
-  "star-system",
-  "constellation",
-  "alien-race",
-  "creature",
-  "encounter",
-  "heist",
-  "holiday",
-  "personality",
-  "tome",
-  "point-crawl",
-  "business",
-  "mystery-investigation",
-  "random",
-] as const;
+export { GENERATOR_SLUGS } from "./lib/components/seo/generator-slugs.ts";
 
 export const VALID_HUB_THEMES = new Set<string>(HUB_THEME_SLUGS);
 

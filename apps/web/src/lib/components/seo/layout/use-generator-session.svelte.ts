@@ -166,6 +166,16 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     );
   }
 
+  function generateOutput(
+    useAI: boolean,
+    onPreview: (preview: GeneratorOutput) => void,
+  ) {
+    if (useAI && inputs.getSupportsStreaming()) {
+      return inputs.generate({ useAI, onPreview });
+    }
+    return inputs.generate({ useAI });
+  }
+
   async function handleGenerate(options: { forceAI?: boolean } = {}) {
     if (isGenerating) return;
     const requestId = ++generationRunId;
@@ -192,10 +202,7 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
         isExampleDraft = false;
         hasStreamedPreview = true;
       };
-      const result =
-        useAINow && inputs.getSupportsStreaming()
-          ? await inputs.generate({ useAI: useAINow, onPreview })
-          : await inputs.generate({ useAI: useAINow });
+      const result = await generateOutput(useAINow, onPreview);
       if (!isCurrentRequest()) return;
       generatedData = result;
       userGenerationSucceeded = true;
