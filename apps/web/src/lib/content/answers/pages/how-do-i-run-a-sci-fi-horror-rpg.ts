@@ -15,8 +15,7 @@ export const howDoIRunASciFiHorrorRpg: AnswerConfigInput = {
       heading: "Run the danger, not the scare",
       paragraphs: [
         "Sci-fi horror works when players can see trouble coming, understand roughly what it will cost them, and still have more than one way to respond. A Warden in Mothership, or the Game Master (GM) in another sci-fi horror game, does not need a timetable of shocks. You need a place that can hurt the crew, systems it depends on, and a threat that changes both while the crew works.",
-        "That makes this advice system-neutral on purpose. It does not reproduce any game's rules, stress or panic procedures, or published adventure material. Use your chosen system's own checks, damage and fear procedures. What follows is the situation you build around those procedures: who is exposed, what help cannot reach them, what they can learn before the worst arrives, and what each delay changes.",
-        "It also differs from neighbouring questions. Choosing a system for investigative horror is a separate decision, and running the investigator, doctor or journalist inside an investigation is covered by the investigative horror roles answer. The sci-fi crew roles answer covers pilot, engineer, medic and similar jobs in general play. This page is about the horror situation itself: isolation, clues, pressure and consequences aboard a ship, station or remote site.",
+        "Use your chosen game's own checks, damage and fear procedures. What follows is the situation you build around those procedures: who is exposed, what help cannot reach them, what they can learn before the worst arrives, and what each delay changes.",
       ],
     },
     {
@@ -67,7 +66,7 @@ export const howDoIRunASciFiHorrorRpg: AnswerConfigInput = {
         },
       ],
       outro:
-        "Test each constraint with one question: can the players work around it by spending time, resources or standing? If not, it is a wall. If they can, it is pressure, and their workaround becomes part of the story.",
+        "Test the constraints together rather than one by one: after applying them, can the crew still make choices that change the outcome, even if every choice costs time, resources or standing? One hard limit can be fair on its own. Light delay, for example, may simply rule out timely advice while leaving navigation, repair and retreat in the crew's hands. A constraint set becomes a wall only when it leaves no meaningful response, not when a single limit cannot be bypassed.",
     },
     {
       kind: "list",
@@ -135,28 +134,29 @@ export const howDoIRunASciFiHorrorRpg: AnswerConfigInput = {
       kind: "example",
       heading: "Worked example: the cold berth",
       paragraphs: [
-        "An original one-shift scenario for any sci-fi horror system. The four-person relief crew of the ore carrier Sable Hymn must restart a frozen berthing arm and load emergency coolant before their docking window closes in six hours. Their pay includes a completion bonus, the only shuttle has a cracked seal that limits it to short hops, and the nearest patrol ship is two days away.",
+        "An original one-shift scenario for any sci-fi horror system. The four-person relief crew of the ore carrier Sable Hymn must restart a frozen berthing arm and load emergency coolant before their docking window closes in six hours. Their pay includes a completion bonus, the only shuttle has a cracked seal that limits it to short hops, and the nearest patrol ship is two days away. The cargo deck aft is unheated. A single sealable pressure door in the main corridor is the only interior route between the cargo deck and the warmer crew deck forward, where the small exterior lock sits.",
+        "What the GM holds back: the threat starts in the cold cargo deck. On camera it has the shape of a figure in a pressure suit, but the scenario never confirms who or what it is. It moves only through cold spaces and only while unobserved; a watcher in person or a fixed camera holding it in frame stops it where it stands. It senses heat through the cold and moves towards it, towards crew members and towards the warm air released when a lock cycles, but warm air itself slows it and drives it back to the nearest cold space. If it reaches a crew member who is alone and unobserved in the cold, it can grapple and injure them; use your system's normal injury procedure. It does not damage ship systems on its own, and it cannot open a sealed pressure door or cycle a lock by itself. Sealing the pressure door therefore genuinely blocks it, and venting a lock can only expel it if it has first been driven or lured into that lock and held there under observation.",
       ],
       items: [
         {
           term: "Set the ordinary job",
-          text: "The crew cycles the airlock, signs the shift log and starts the berthing arm test. Everything works except a pressure reading that dips for three seconds and recovers. They have a working ship, a known layout and a job they can finish.",
+          text: "The crew cycles the airlock, signs the shift log and starts the berthing arm test. Everything works except a pressure reading that dips for three seconds and recovers. They have a working ship, a known layout, the sealable pressure door between decks and a job they can finish.",
         },
         {
           term: "Seed clues in stages",
-          text: "The engineer finds frost inside cargo airlock two only. The pilot notices the previous crew logged the same hour twice, three nights running. The medic finds a cold berth in the sleep deck with blankets folded as if someone left in a hurry. Each fact is observable, and together they suggest something uses the cold spaces between shifts, without naming it.",
+          text: "First, effects they can check: frost forms inside the cargo airlock only, and a cold berth in the sleep deck sits empty with its blankets folded. Second, records that test how it moves: the cargo camera log shows a suited shape at the edge of the hold holding still for as long as the camera held it in frame, then gone during the short gap between camera sweeps, three nights running. The crew can repeat that test themselves by fixing a camera or keeping watch on the cold corridor. Third, a documented response to heating: the previous engineer's log notes that warming the sleep deck for a repair pushed a patch of abnormal cold aft through the pressure door and into the cargo deck, where it stayed until the deck cooled again. Players now know two usable facts before they must commit: continuous observation stops it, and warming a space drives it out of that space towards the cold. They still do not know what it is.",
         },
         {
           term: "Offer informed choices",
-          text: "The crew can seal the cargo deck and load by hand through the small lock, which costs two hours of the window. They can warm the whole ship to drive whatever it is out of the cold spaces, which strains the reactor. Or they can keep to schedule and post a watch, saving time while accepting that the cold berth may not stay empty.",
+          text: "With those facts the crew can seal the pressure door and hand-load coolant through the small lock on the crew deck, going outside the hull rather than through the cargo deck. That keeps the threat aft but costs two hours of the window and leaves the cargo itself unreachable. They can instead try to clear the ship: keep the crew deck warm, then warm the cargo deck itself while the cargo airlock stays cold and unwatched, so it retreats from the warming hold into the one cold space left to it, then hold it there on camera and vent the lock, at the cost of the air in the lock and any coolant already staged inside it. Or they can keep to schedule and post a continuous watch, saving time while tying up one crew member and accepting that any lapse in observation lets it move again.",
         },
         {
           term: "Escalate from their choice",
-          text: "Suppose they seal the cargo deck. Loading by hand advances the docking clock and tires the crew, then condensation from the warmed corridor shorts the small lock's panel. The threat has not teleported past their precaution; their workaround created a new exposed place, the cramped lock, where one person works alone in the cold. Now the watch rotation and the reactor strain matter at once.",
+          text: "Suppose they seal the cargo deck and hand-load. The precaution works as established: on the cargo camera the shape stays aft of the sealed door, still while watched and shifting only in the gaps between sweeps, and it never reaches the crew deck. What advances is the cost they chose. The two hours of outside work tire the crew and run the docking clock down, so the final coolant canister becomes the hard decision: one more slow trip in the cold, in full view of a watcher at the small lock, or leave it and lose part of the bonus. No new property of the threat appears and no reactor strain is imported from an option they did not take.",
         },
         {
           term: "Reveal and resolve",
-          text: "When a crew member works the small lock, they see plainly what the frost meant: a pale, pressure suited figure from the lost previous shift, moving only while unobserved in the cold, drawn to the warm lock each time it cycles. The crew can trap it in the sealed deck, vent the lock at the cost of the coolant already loaded, or abandon the bonus and undock early with it aboard an unknown deck. Every ending follows from clues they saw and costs they chose.",
+          text: "The plain reveal comes from the crew's own test. Watched continuously, the figure stands frozen mid-stride in the cold hold; when the watch lapses, it closes distance towards the nearest heat. That confirms the camera log in person, without settling its identity. From there the endings follow the route they secured. If they finish hand-loading and undock with the door still sealed, the danger to the crew is resolved: the threat remains sealed in the cargo deck for the patrol ship to deal with, and the cost is the abandoned cargo and any bonus tied to it. If they prefer a clear ship, warming the hold while leaving the cargo lock cold and unwatched gives them a trap they already understand, and venting that lock expels it at the price of the air and staged coolant inside. A crew that skips both precautions faces the contact they were warned about, on terms their earlier observations let them predict and prepare for.",
         },
       ],
     },
@@ -164,15 +164,15 @@ export const howDoIRunASciFiHorrorRpg: AnswerConfigInput = {
       kind: "checklist",
       heading: "A one-page Warden worksheet",
       intro:
-        "Fill this in before the session. One line per item is enough; if a line is blank, the scenario probably relies on improvisation at exactly the point where players need fair information:",
+        "Use this as an optional starting template, not a quota. One line per prompt is enough for a compact scenario, and one limit may do several jobs at once: a single light delay can isolate the crew, explain late advice and set the clock. Adapt or skip prompts your scenario does not need, but keep enough written down that key facts do not depend on improvisation in the moment:",
       items: [
         "The crew's ordinary job, and the pay, duty or promise that makes them stay when it turns strange.",
-        "Two limits that make the crew vulnerable, such as one shuttle, failing sensors or a medic's short supplies.",
-        "Two isolation constraints the players can work around at a cost, and what each workaround spends.",
-        "Three observable clues, each with a second route to the same key fact, ordered from something is wrong to what can be done about it.",
+        "The limit or limits that make the crew vulnerable, such as one shuttle, failing sensors or a medic's short supplies. Note what response each limit still leaves open.",
+        "The isolation that matters here, and what the crew can still do about their situation, at what cost in time, resources or standing.",
+        "The observable clues that carry each key fact, ordered from something is wrong to what can be done about it. Give facts the crew must act on a second route where you can.",
         "One clock the players can see or feel, what advances it, and what changes at each stage.",
         "What the threat does, what it avoids or needs, and the point at which you will show it plainly.",
-        "Two consequences that will persist after the first encounter, such as a sealed deck or a burned relay.",
+        "Any consequence that will persist after the first encounter, such as a sealed deck or a burned relay. A short scenario may need only one.",
         "Tone boundaries agreed with the group, subjects that stay off screen, and how a player can pause or redirect a scene.",
         "One way the scenario can end early, badly or well because of a crew decision, so no single planned finale has to survive contact with the players.",
       ],
