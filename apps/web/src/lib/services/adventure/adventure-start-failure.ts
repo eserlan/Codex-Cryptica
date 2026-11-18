@@ -15,6 +15,8 @@ export const PACKAGE_UNAVAILABLE_COPY =
   "This adventure's package isn't in this Vault any more (or has changed). Re-import the same package version to continue, or leave the session.";
 export const PACKAGE_OTHER_VERSION_COPY =
   "A different version of this adventure is in the Vault. This session stays on the version it started with.";
+export const PACKAGE_OTHER_VERSION_UNKNOWN_COPY =
+  "Another approved version may be in this Vault. This session stays on the version it started with.";
 
 const PRESERVED = " Your setup has been preserved.";
 

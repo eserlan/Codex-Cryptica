@@ -2,6 +2,7 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import {
     PACKAGE_OTHER_VERSION_COPY,
+    PACKAGE_OTHER_VERSION_UNKNOWN_COPY,
     PACKAGE_UNAVAILABLE_COPY,
   } from "#lib/services/adventure/adventure-start-failure.js";
 
@@ -29,9 +30,11 @@
   data-testid="package-unavailable"
 >
   <p>{PACKAGE_UNAVAILABLE_COPY}</p>
-  {#if manager.packageUnavailable?.otherVersionAvailable}
+  {#if manager.packageUnavailable?.otherVersionAvailable !== false}
     <p class="mt-2" data-testid="package-other-version">
-      {PACKAGE_OTHER_VERSION_COPY}
+      {manager.packageUnavailable?.otherVersionAvailable
+        ? PACKAGE_OTHER_VERSION_COPY
+        : PACKAGE_OTHER_VERSION_UNKNOWN_COPY}
     </p>
   {/if}
   <div class="mt-2 flex flex-wrap gap-2">

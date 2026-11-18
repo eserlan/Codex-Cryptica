@@ -37,7 +37,7 @@ export class AdventureRuntime {
   ) {
     const grounding = new AdventureGroundingService(
       deps.context,
-      (session) => this.verifySession(session),
+      (session) => this.verifyGenerationSession(session),
       () => worldStyleForTheme(themeStore.worldThemeId),
       deps.packages,
     );
@@ -81,6 +81,17 @@ export class AdventureRuntime {
     this.assertCurrentSession(session);
     await this.verifyControl();
     this.assertCurrentSession(session);
+  }
+
+  private async verifyGenerationSession(
+    session: AdventureSession,
+  ): Promise<void> {
+    await this.verifySession(session);
+    if (!session.sourcePackage) return;
+    const pin = await this.deps.packages.verifyPin(session);
+    if (pin.status === "available") return;
+    await this.enterPackageUnavailable(pin.otherVersionAvailable);
+    throw new Error("adventure-package-unavailable");
   }
 
   narrationPreview(sessionId: string, signal?: AbortSignal) {
@@ -246,7 +257,9 @@ export class AdventureRuntime {
     return false;
   }
 
-  async enterPackageUnavailable(otherVersionAvailable: boolean): Promise<void> {
+  async enterPackageUnavailable(
+    otherVersionAvailable: boolean | null,
+  ): Promise<void> {
     this.state.phase = "package-unavailable";
     this.state.errorCause = "package-unavailable";
     this.state.packageUnavailable = { otherVersionAvailable };
@@ -281,6 +294,13 @@ export class AdventureRuntime {
         await this.deps
           .clearGenerationInteraction(this.state.session.id)
           .catch(() => {});
+      }
+      if (
+        cause instanceof Error &&
+        cause.message === "adventure-package-unavailable" &&
+        this.state.phase === "package-unavailable"
+      ) {
+        return;
       }
       this.recordTurnGenerationError(cause, signal, retryPhase);
     } finally {

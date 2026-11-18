@@ -41,6 +41,13 @@ function createMemoryIO(): AdventurePackageFileIO & {
       const prefix = dir.endsWith("/") ? dir : `${dir}/`;
       return [...files.keys()].filter((key) => key.startsWith(prefix));
     },
+    async listLimited(dir, limit) {
+      const entries = await io.list(dir);
+      return {
+        entries: entries.slice(0, limit),
+        truncated: entries.length > limit,
+      };
+    },
     async remove(path) {
       files.delete(path);
     },
@@ -180,6 +187,23 @@ describe("AdventureJsonV1 storage", () => {
     );
   });
 
+  it("restores malformed bytes at the pinned hash path after re-import", async () => {
+    const io = createMemoryIO();
+    const original = makeSampleJson();
+    const { path, hash } = await saveApprovedAdventureJson(io, original);
+    io.files.set(path, "{not valid JSON");
+
+    await expect(loadStoredAdventurePackage(io, hash)).rejects.toThrow();
+    const restored = await saveApprovedAdventureJson(io, original);
+
+    expect(restored.status).toBe("created");
+    expect(restored.hash).toBe(hash);
+    expect(await loadStoredAdventurePackage(io, hash)).toMatchObject({
+      hash,
+      package: original,
+    });
+  });
+
   it("bounds alternate-version checks and does not retain an approved package list", async () => {
     const io = createMemoryIO();
     const pinned = makeSampleJson({ id: "pinned" });
@@ -197,6 +221,13 @@ describe("AdventureJsonV1 storage", () => {
 
     await expect(
       hasOtherApprovedAdventureVersion(io, "absent", pinnedSaved.hash),
+    ).resolves.toBeNull();
+    await saveApprovedAdventureJson(
+      io,
+      makeSampleJson({ id: "pinned", version: "2.0.0" }),
+    );
+    await expect(
+      hasOtherApprovedAdventureVersion(io, "pinned", pinnedSaved.hash),
     ).resolves.toBeNull();
     const matchingIO = createMemoryIO();
     const matchingPinned = await saveApprovedAdventureJson(matchingIO, pinned);

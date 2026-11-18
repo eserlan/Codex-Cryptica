@@ -134,19 +134,22 @@ describe("AdventurePackageContextCache", () => {
         hash: "d".repeat(64),
         package: { ...referencePackage, id: "unrelated" },
       });
-      for (const checkOtherVersion of [
-        async () => unrelated.package.id === packageRef.packageId,
-        async () => false,
-        async () => {
-          throw new Error("check");
-        },
-      ]) {
+      for (const [checkOtherVersion, expected] of [
+        [async () => unrelated.package.id === packageRef.packageId, false],
+        [async () => false, false],
+        [
+          async () => {
+            throw new Error("check");
+          },
+          null,
+        ],
+      ] as const) {
         const cache = new AdventurePackageContextCache(
           async () => null,
           checkOtherVersion,
         );
         expect(await cache.verifyPin(session())).toMatchObject({
-          otherVersionAvailable: false,
+          otherVersionAvailable: expected,
         });
       }
     });
