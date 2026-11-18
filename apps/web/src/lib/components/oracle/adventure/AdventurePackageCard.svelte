@@ -4,9 +4,12 @@
   let { pkg }: { pkg: AdventureJsonV1 } = $props();
 
   function span(min: number | undefined, max: number | undefined): string {
-    return min !== undefined && max !== undefined && min !== max
-      ? `${min}–${max}`
-      : String(min ?? max);
+    if (min !== undefined && max !== undefined) {
+      return min === max ? String(min) : `${min}–${max}`;
+    }
+    if (min !== undefined) return `${min}+`;
+    if (max !== undefined) return `Up to ${max}`;
+    return "";
   }
 
   const party = $derived.by(() => {
@@ -14,11 +17,20 @@
     if (!target) return "";
     const parts: string[] = [];
     const size = span(target.sizeMin, target.sizeMax);
-    if (size !== "undefined")
-      parts.push(`${size} ${size === "1" ? "player" : "players"}`);
+    if (size) {
+      const isUpperBound = size.startsWith("Up to ");
+      const value = isUpperBound ? size.slice("Up to ".length) : size;
+      const players = value === "1" ? "player" : "players";
+      parts.push(`${isUpperBound ? "Up to " : ""}${value} ${players}`);
+    }
     const level = span(target.levelMin, target.levelMax);
-    if (level !== "undefined")
-      parts.push(`${level.includes("–") ? "Levels" : "Level"} ${level}`);
+    if (level) {
+      if (level.startsWith("Up to ")) {
+        parts.push(`Up to Level ${level.slice("Up to ".length)}`);
+      } else {
+        parts.push(`${level.includes("–") ? "Levels" : "Level"} ${level}`);
+      }
+    }
     return parts.join(" · ");
   });
 

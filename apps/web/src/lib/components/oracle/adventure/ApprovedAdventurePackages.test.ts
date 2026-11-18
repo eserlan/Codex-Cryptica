@@ -140,6 +140,39 @@ describe("approved adventure packages", () => {
       },
     );
 
+    it("labels one-sided target-party bounds as minimums or maximums", () => {
+      const base = fixture("reference-one-shot");
+      const { library, onStart } = setup({
+        ...base,
+        system: {
+          name: base.system?.name ?? "Test system",
+          targetParty: { sizeMin: 4, levelMin: 2 },
+        },
+      });
+      const { container, unmount } = render(ApprovedAdventurePackages, {
+        library,
+        onStart,
+      });
+      expect(container.textContent).toContain("4+ players · Level 2+");
+      unmount();
+
+      const upperBoundPackage = {
+        ...base,
+        system: {
+          name: base.system?.name ?? "Test system",
+          targetParty: { sizeMax: 4, levelMax: 5 },
+        },
+      };
+      const upperBound = setup(upperBoundPackage);
+      const upperView = render(ApprovedAdventurePackages, {
+        library: upperBound.library,
+        onStart: upperBound.onStart,
+      });
+      expect(upperView.container.textContent).toContain(
+        "Up to 4 players · Up to Level 5",
+      );
+    });
+
     it("calls onStart with two arguments for a single start", async () => {
       const pkg = fixture("mystery");
       const { library, hash, onStart } = setup(pkg);
@@ -205,6 +238,43 @@ describe("approved adventure packages", () => {
         screen.getByRole("button", { name: "Start new session" }),
       );
       expect(onStart).toHaveBeenCalledWith(pkg, hash, "alt-visible");
+    });
+
+    it("pages through large candidate lists while keeping every start selectable", async () => {
+      const ref = fixture("reference-one-shot");
+      const base = {
+        epistemicStatus: ref.scenes[0].epistemicStatus,
+        sourceRef: ref.scenes[0].sourceRef,
+      };
+      const optionalScenes = Array.from({ length: 24 }, (_, index) => ({
+        ...base,
+        id: `alt-${index}`,
+        title: `Alternative ${index}`,
+        summary: `Summary ${index}`,
+        optional: true,
+        visibility: "player-visible" as const,
+      }));
+      const pkg = {
+        ...ref,
+        scenes: [...ref.scenes, ...optionalScenes],
+      } as AdventureJsonV1;
+      const { library, hash, onStart } = setup(pkg);
+      render(ApprovedAdventurePackages, { library, onStart });
+
+      expect(screen.getAllByRole("radio")).toHaveLength(20);
+      expect(
+        screen.getByText("Showing 1–20 of 25 starting points"),
+      ).toBeTruthy();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Next starts" }),
+      );
+      const radios = screen.getAllByRole("radio");
+      expect(radios).toHaveLength(5);
+      await fireEvent.click(radios[4]);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Start new session" }),
+      );
+      expect(onStart).toHaveBeenCalledWith(pkg, hash, "alt-23");
     });
   });
 });

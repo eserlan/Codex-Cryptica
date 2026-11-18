@@ -25,7 +25,14 @@
   const latestPinned = $derived(pinned[0]);
   const candidates = $derived(startSceneCandidates(item.package));
   const hash8 = $derived(item.hash.slice(0, 8));
+  const pageSize = 20;
   let selected = $state(0);
+  let page = $state(0);
+  const pageCount = $derived(Math.ceil(candidates.length / pageSize));
+  const pageStart = $derived(page * pageSize);
+  const visibleCandidates = $derived(
+    candidates.slice(pageStart, pageStart + pageSize),
+  );
 
   function start() {
     if (candidates.length > 1) {
@@ -47,7 +54,7 @@
         <legend class="text-sm font-medium text-theme-text">
           Starting point
         </legend>
-        {#each candidates as scene, index (index)}
+        {#each visibleCandidates as scene, offset (pageStart + offset)}
           <label
             class="flex min-h-10 cursor-pointer items-start gap-2 rounded-md border border-theme-border p-2 text-sm text-theme-text"
           >
@@ -55,11 +62,11 @@
               type="radio"
               class="mt-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
               name="approved-package-start-{item.hash}"
-              value={String(index)}
-              checked={selected === index}
-              onchange={() => (selected = index)}
+              value={String(pageStart + offset)}
+              checked={selected === pageStart + offset}
+              onchange={() => (selected = pageStart + offset)}
               data-testid="approved-package-start-option-{item.package
-                .id}-{hash8}-{index}"
+                .id}-{hash8}-{pageStart + offset}"
             />
             <span class="min-w-0 break-words">
               {#if scene.visibility === "gm-only"}
@@ -71,6 +78,35 @@
             </span>
           </label>
         {/each}
+        {#if pageCount > 1}
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+            <p class="text-xs text-theme-text" aria-live="polite">
+              Showing {pageStart + 1}–{Math.min(
+                pageStart + pageSize,
+                candidates.length,
+              )}
+              of {candidates.length} starting points
+            </p>
+            <div class="flex gap-2">
+              <button
+                type="button"
+                class="min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={page === 0}
+                onclick={() => (page = Math.max(0, page - 1))}
+              >
+                Previous starts
+              </button>
+              <button
+                type="button"
+                class="min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={page >= pageCount - 1}
+                onclick={() => (page = Math.min(pageCount - 1, page + 1))}
+              >
+                Next starts
+              </button>
+            </div>
+          </div>
+        {/if}
       </fieldset>
     {/if}
     <p class="font-mono text-xs break-all text-theme-text">
