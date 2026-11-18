@@ -67,7 +67,7 @@
             {/if}
             <div class="flex flex-1 flex-col p-5">
               <p
-                class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+                class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
               >
                 <span>{example.genre} · {example.kind}</span>
                 {#if example.provenance === "authored"}
