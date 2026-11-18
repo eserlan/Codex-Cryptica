@@ -1,3 +1,4 @@
+import { session } from "./reducer-fixtures";
 import { describe, expect, it } from "vitest";
 import {
   migrateAdventureSession,
@@ -301,6 +302,31 @@ describe("adventure schemas", () => {
           formatVersion: "adventure-json/v1",
           hash: "not-a-sha256-hash",
         },
+      }),
+    ).toThrow();
+  });
+});
+
+describe("packageProgress", () => {
+  const base = () => ({ ...session() });
+
+  it("round-trips and stays optional", () => {
+    const withProgress = parseAdventureSession({
+      ...base(),
+      packageProgress: { sceneId: "ros-scene-2-yard" },
+    });
+    expect(parseAdventureSession(withProgress)).toEqual(withProgress);
+    expect(base().packageProgress).toBeUndefined();
+  });
+
+  it("rejects an empty scene ID and extra keys", () => {
+    expect(() =>
+      parseAdventureSession({ ...base(), packageProgress: { sceneId: "" } }),
+    ).toThrow();
+    expect(() =>
+      parseAdventureSession({
+        ...base(),
+        packageProgress: { sceneId: "a", extra: 1 },
       }),
     ).toThrow();
   });

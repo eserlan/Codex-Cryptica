@@ -6,6 +6,12 @@ import {
 } from "#lib/stores/oracle/tests/adventure-fixtures.js";
 import { initialSession } from "#lib/stores/oracle/adventure-session.js";
 import { createScenarioState } from "@codex/adventure-engine";
+import {
+  packageRef,
+  referencePackage,
+  referencePackageCache,
+} from "#lib/stores/oracle/tests/adventure-fixtures.js";
+import { AdventureGroundingError } from "./adventure-grounding-service";
 
 const session = () =>
   initialSession({
@@ -28,6 +34,125 @@ function context() {
     verifyRequiredSources: vi.fn(async () => {}),
   };
 }
+
+describe("AdventureGroundingService package context", () => {
+  const packageSession = (sceneId?: string) => {
+    const current = session();
+    current.sourcePackage = packageRef;
+    if (sceneId) current.packageProgress = { sceneId };
+    return current;
+  };
+
+  it.each(["opening", "action", "roll-resolution"] as const)(
+    "attaches the current scene's excerpts for a %s request",
+    async (phase) => {
+      const transport = { generate: vi.fn(async () => completeProposal) };
+      const grounded = new AdventureGroundingService(
+        context(),
+        async () => {},
+        () => undefined,
+        referencePackageCache(),
+      ).wrap(transport);
+      await grounded.generate({
+        session: packageSession("ros-scene-2-yard"),
+        phase,
+        playerAction: "Look",
+        anchors: [],
+        relevant: [],
+      });
+      const sent = (transport.generate.mock.calls[0] as unknown[])[0] as any;
+      expect(sent.adventurePackage.playerSafe[0].id).toBe("ros-scene-2-yard");
+      expect(
+        sent.adventurePackage.gmOnly.every(
+          (e: { visibility: string }) => e.visibility === "gm-only",
+        ),
+      ).toBe(true);
+    },
+  );
+
+  it("falls back to the entry scene when there is no progress yet", async () => {
+    const transport = { generate: vi.fn(async () => completeProposal) };
+    await new AdventureGroundingService(
+      context(),
+      async () => {},
+      () => undefined,
+      referencePackageCache(),
+    )
+      .wrap(transport)
+      .generate({
+        session: packageSession(),
+        phase: "action",
+        anchors: [],
+        relevant: [],
+      });
+    const sent = (transport.generate.mock.calls[0] as unknown[])[0] as any;
+    expect(sent.adventurePackage.playerSafe[0].id).toBe("ros-scene-1-landing");
+  });
+
+  it("blocks dispatch with a grounding error when the package cannot load", async () => {
+    const transport = { generate: vi.fn(async () => completeProposal) };
+    const grounded = new AdventureGroundingService(
+      context(),
+      async () => {},
+      () => undefined,
+      referencePackageCache(async () => null as any),
+    ).wrap(transport);
+    await expect(
+      grounded.generate({
+        session: packageSession(),
+        phase: "opening",
+        anchors: [],
+        relevant: [],
+      }),
+    ).rejects.toBeInstanceOf(AdventureGroundingError);
+    expect(transport.generate).not.toHaveBeenCalled();
+  });
+
+  it("blocks dispatch with a grounding error when the package has no scenes", async () => {
+    const transport = { generate: vi.fn(async () => completeProposal) };
+    const grounded = new AdventureGroundingService(
+      context(),
+      async () => {},
+      () => undefined,
+      referencePackageCache(async () => ({
+        status: "approved",
+        hash: "a".repeat(64),
+        package: { ...referencePackage, scenes: [] },
+      })),
+    ).wrap(transport);
+    await expect(
+      grounded.generate({
+        session: packageSession(),
+        phase: "opening",
+        anchors: [],
+        relevant: [],
+      }),
+    ).rejects.toBeInstanceOf(AdventureGroundingError);
+    expect(transport.generate).not.toHaveBeenCalled();
+  });
+
+  it("sends no package key and never loads for a session without a package", async () => {
+    const loader = vi.fn(async () => null as any);
+    const transport = { generate: vi.fn(async () => completeProposal) };
+    await new AdventureGroundingService(
+      context(),
+      async () => {},
+      () => undefined,
+      referencePackageCache(loader),
+    )
+      .wrap(transport)
+      .generate({
+        session: session(),
+        phase: "opening",
+        anchors: [],
+        relevant: [],
+      });
+    expect(
+      (transport.generate.mock.calls[0] as unknown[])[0],
+    ).not.toHaveProperty("adventurePackage");
+    expect(loader).not.toHaveBeenCalled();
+  });
+});
 
 describe("AdventureGroundingService", () => {
   it("overwrites caller excerpts, freshly resolves every request and accepts empty matches", async () => {

@@ -3,6 +3,7 @@ import type {
   buildAdventurePrompt,
   AdventureSession,
   AdventureWorldStyle,
+  PromptAdventurePackage,
   ResolvedSourceExcerpt,
   SuppliedRollOutcome,
 } from "@codex/adventure-engine";
@@ -18,6 +19,8 @@ export interface AdventureTurnGenerationRequest {
   worldStyle?: AdventureWorldStyle;
   /** Why the previous reply could not be used; set only on the one automatic retry. */
   correction?: string;
+  /** Scene-context excerpts of the pinned adventure package; plain data. */
+  adventurePackage?: PromptAdventurePackage;
   signal?: AbortSignal;
   /** Ephemeral player-facing preview; never a committed or trusted turn. */
   onNarration?: (text: string) => void;

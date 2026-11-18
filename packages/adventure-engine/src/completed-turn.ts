@@ -2,6 +2,7 @@ import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
 import {
   detectHiddenLeakage,
+  detectPackageLeakage,
   ensureScenarioSecrets,
   scenarioEventSecretId,
 } from "./hidden-state";
@@ -53,11 +54,15 @@ function completedTurnInputError(
 function completedTurnProposalError(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
 ): ReturnType<typeof error> | null {
   if (hasImmutableScenarioRewrite(session, proposal)) {
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
-  if (detectHiddenLeakage(session, proposal).length > 0) {
+  if (
+    detectHiddenLeakage(session, proposal).length > 0 ||
+    detectPackageLeakage(proposal, meta).length > 0
+  ) {
     return error(
       "hidden-leakage",
       "The response contains unrevealed GM information.",
@@ -92,6 +97,22 @@ function resolveClock(
   };
 }
 
+/** A reported scene move counts only when the pinned package has that scene. */
+function resolvePackageProgress(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
+  dropped: string[],
+): void {
+  const sceneId = proposal.visiblePatch.packageSceneId;
+  if (sceneId === undefined) return;
+  if (candidate.sourcePackage && meta.packageSceneIds?.includes(sceneId)) {
+    candidate.packageProgress = { sceneId };
+    return;
+  }
+  dropped.push(`packageSceneId: unknown scene ${sceneId.slice(0, 80)}`);
+}
+
 export function applyCompletedTurn(
   sessionInput: AdventureSession,
   proposalInput: AdventureTurnProposal,
@@ -110,7 +131,7 @@ export function applyCompletedTurn(
       "A completed turn requires a complete proposal.",
     );
   }
-  const proposalError = completedTurnProposalError(session, proposal);
+  const proposalError = completedTurnProposalError(session, proposal, meta);
   if (proposalError) return proposalError;
   const materialized = materializeTurnState(
     session,
@@ -130,6 +151,7 @@ export function applyCompletedTurn(
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { time, timeAdvance } = clock;
+  resolvePackageProgress(candidate, proposal, meta, dropped);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   const placeStep = applyPlaces(

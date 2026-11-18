@@ -250,6 +250,7 @@ export const adventureTurnResponseSchema = {
         visiblePatch: {
           type: "object",
           properties: {
+            packageSceneId: idSchema,
             location: { anyOf: [newStateFactSchema, { type: "null" }] },
             situation: { anyOf: [newStateFactSchema, { type: "null" }] },
             objectives: patchSchema(newStateFactSchema, stateFactSchema),

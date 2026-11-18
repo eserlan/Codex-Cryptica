@@ -1,4 +1,4 @@
-import { detectHiddenLeakage } from "./hidden-state";
+import { detectHiddenLeakage, detectPackageLeakage } from "./hidden-state";
 import { parseTurnProposal } from "./schemas";
 import { applyCompletedTurn } from "./completed-turn";
 import { error, updatedSession } from "./reducer-result";
@@ -27,7 +27,10 @@ export function applyRollRequest(
   if (proposal.kind !== "roll-required")
     return error("invalid-schema", "A roll is required.");
   // Roll copy is shown to the player, so it gets the same secrecy guard.
-  if (detectHiddenLeakage(session, proposal).length > 0) {
+  if (
+    detectHiddenLeakage(session, proposal).length > 0 ||
+    detectPackageLeakage(proposal, meta).length > 0
+  ) {
     return error(
       "hidden-leakage",
       "The response contains unrevealed GM information.",

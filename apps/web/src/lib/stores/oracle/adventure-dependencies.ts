@@ -20,6 +20,10 @@ import {
   adventureContextService,
   type AdventureContextService,
 } from "#lib/services/adventure/adventure-context-service.js";
+import {
+  adventurePackageContextCache,
+  type AdventurePackageContextCache,
+} from "#lib/services/adventure/adventure-package-context.js";
 import { diceEngine as defaultDiceEngine } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
@@ -39,6 +43,8 @@ export interface AdventureManagerDependencies {
     revision?: number,
   ) => Promise<void>;
   context?: AdventureContextService;
+  /** Loads and caches the pinned adventure package of a package session. */
+  packages?: Pick<AdventurePackageContextCache, "load" | "peek">;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;
   now?: () => string;
@@ -55,6 +61,7 @@ export function resolveAdventureDependencies({
   clearGenerationInteraction = clearDefaultGenerationInteraction,
   confirmGenerationInteraction = confirmDefaultGenerationInteraction,
   context = adventureContextService,
+  packages = adventurePackageContextCache,
   authority = adventureControlAuthority,
   coordinator = adventureControlCoordinator,
   now = () => new Date().toISOString(),
@@ -69,6 +76,7 @@ export function resolveAdventureDependencies({
     clearGenerationInteraction,
     confirmGenerationInteraction,
     context,
+    packages,
     authority,
     coordinator,
     now,

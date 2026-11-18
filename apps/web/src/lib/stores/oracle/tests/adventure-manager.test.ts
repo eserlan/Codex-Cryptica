@@ -6,6 +6,10 @@ import {
   completeProposal,
   rollProposal,
   dependencies,
+  packageRef,
+  referencePackage,
+  referencePackageCache,
+  startInput,
 } from "./adventure-fixtures";
 
 describe("AdventureManager", () => {
@@ -13,6 +17,7 @@ describe("AdventureManager", () => {
     const deps: any = dependencies();
     const savePinned = vi.fn(deps.repository.savePinned);
     deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache();
     const manager = new AdventureManager(deps);
 
     await manager.start({
@@ -35,6 +40,50 @@ describe("AdventureManager", () => {
     expect(savePinned).toHaveBeenCalledOnce();
     const pinnedSession = savePinned.mock.calls[0]?.[0] as AdventureSession;
     expect(pinnedSession.sourcePackage?.hash).toBe("a".repeat(64));
+    expect(pinnedSession.packageProgress).toEqual({
+      sceneId: "ros-scene-1-landing",
+    });
+  });
+
+  it("does not save anything when the pinned package cannot be loaded", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => null as any);
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-unavailable");
+    expect(savePinned).not.toHaveBeenCalled();
+  });
+
+  it("does not save anything when the pinned package has no scenes", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => ({
+      status: "approved",
+      hash: "a".repeat(64),
+      package: { ...referencePackage, scenes: [] },
+    }));
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-has-no-scenes");
+    expect(savePinned).not.toHaveBeenCalled();
+  });
+
+  it("gives a session without a package no packageProgress", async () => {
+    const deps: any = dependencies();
+    const save = vi.fn(deps.repository.save);
+    deps.repository.save = save;
+    const manager = new AdventureManager(deps);
+
+    await manager.start(startInput);
+
+    expect(save.mock.calls[0]?.[1]).not.toHaveProperty("packageProgress");
   });
 
   it("saves local artwork changes through adventure ownership and rejects stale revisions", async () => {
