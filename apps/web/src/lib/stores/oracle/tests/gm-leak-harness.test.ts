@@ -224,6 +224,25 @@ function variant() {
 }
 
 describe("gap 1: source anchors", () => {
+  it("guards a short GM-only spoiler anchor", () => {
+    const pkg = variant();
+    pkg.secrets = [
+      {
+        ...pkg.secrets[0]!,
+        id: "short-anchor",
+        text: "x",
+        sourceRef: { section: "s", anchor: "The Heir" },
+      },
+    ];
+    expect(() =>
+      assertNoGmLeak(
+        collectGmOnlyStrings(pkg),
+        "The Heir has returned.",
+        "short anchor",
+      ),
+    ).toThrow(/record short-anchor, field sourceRef\.anchor/);
+  });
+
   it("guards a GM-only anchor that is a spoiler heading", () => {
     const pkg = variant();
     pkg.secrets = [
@@ -375,6 +394,39 @@ describe("gap 3: companion lines", () => {
     });
   });
 
+  it("guards sibling text in a composed connection line moved to a companion", () => {
+    const pkg = variant();
+    pkg.secrets = [
+      ...pkg.secrets,
+      { ...pkg.secrets[0]!, id: "hid-9", text: "Zzyzx quandary" },
+    ];
+    const condition = "At low tide";
+    pkg.locations = pkg.locations.map((location, index) =>
+      index === 0
+        ? {
+            ...location,
+            connections: [
+              ...(location.connections ?? []),
+              {
+                targetLocationId: pkg.locations[1]!.id,
+                description: "A chart marks hid-9 at this crossing.",
+                travelConditions: [condition],
+              },
+            ],
+          }
+        : location,
+    );
+    const entries = collectGmOnlyStrings(pkg);
+    expect(entries).toContainEqual({
+      recordId: pkg.locations[0]!.id,
+      field: `connections[${pkg.locations[0]!.connections!.length - 1}].travelConditions[0]`,
+      text: condition,
+    });
+    expect(() =>
+      assertNoGmLeak(entries, "The passage is open At low tide.", "condition"),
+    ).toThrow(/field connections\[\d+\]\.travelConditions\[0\]/);
+  });
+
   it("catches an 8-word quote from a companion when ID punctuation changes", () => {
     const pkg = withLeakyActor();
     const companionLine =
@@ -438,6 +490,16 @@ describe("gap 4: short names", () => {
     expect(() =>
       assertNoGmLeak(withName("actors", "Ash"), "Ash is nearby.", "word"),
     ).toThrow(/record short-name/);
+  });
+
+  it("matches punctuation between name words without matching a longer token", () => {
+    const entries = withName("actors", "Mara Voss");
+    expect(() =>
+      assertNoGmLeak(entries, "Mara-Voss was seen.", "hyphenated name"),
+    ).toThrow(/record short-name, field name/);
+    expect(() =>
+      assertNoGmLeak(entries, "Mara-Vossley was seen.", "longer token"),
+    ).not.toThrow();
   });
 
   it("does not guard an allowlisted short name", () => {

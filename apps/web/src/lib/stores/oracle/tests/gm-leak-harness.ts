@@ -120,7 +120,7 @@ class Collector {
       this.add(record.id, "id", readableId, "id");
     const anchor = anchorOf(record);
     if (anchor && !sharedAnchors.has(anchor.toLowerCase()))
-      this.addAncillary(record.id, "sourceRef.anchor", anchor);
+      this.add(record.id, "sourceRef.anchor", anchor);
   }
 
   addGmOnlyLeaves(record: Loose) {
@@ -164,14 +164,74 @@ function addCompanionLines(
     adventureJsonHiddenRecordIds(pkg),
   );
   const visibleRuns = new Set<string>();
-  for (const record of visible)
+  for (const record of visible) {
+    const companionComponents = composedCompanionComponents(record);
+    const composedFields = new Set(
+      companionComponents.flatMap((components) =>
+        components.map(([field]) => field),
+      ),
+    );
     for (const [field, text] of stringLeaves(record, "")) {
+      if (composedFields.has(field)) continue;
       const movedToCompanion = namesHiddenId(text);
       if (movedToCompanion) out.add(record.id, field, text);
       if (!movedToCompanion && field !== "reveals")
         for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
     }
+    for (const components of companionComponents) {
+      const movedToCompanion = namesHiddenId(
+        components.map(([, text]) => text).join("; "),
+      );
+      if (movedToCompanion) {
+        for (const [field, text] of components) out.add(record.id, field, text);
+      } else {
+        for (const [, text] of components)
+          for (const run of runsOf(wordsOf(text))) visibleRuns.add(run);
+      }
+    }
+  }
   return visibleRuns;
+}
+
+/** Source fields retrieval joins into one line before applying the hidden-ID rule. */
+function composedCompanionComponents(
+  record: Loose,
+): Array<Array<[field: string, text: string]>> {
+  const components: Array<Array<[field: string, text: string]>> = [];
+  const connections = record.connections;
+  if (Array.isArray(connections))
+    for (const [index, connection] of connections.entries()) {
+      if (!connection || typeof connection !== "object") continue;
+      const fields: Array<[string, string]> = [];
+      const description = (connection as { description?: unknown }).description;
+      if (typeof description === "string")
+        fields.push([`connections[${index}].description`, description]);
+      const conditions = (connection as { travelConditions?: unknown })
+        .travelConditions;
+      if (Array.isArray(conditions))
+        conditions.forEach((condition, conditionIndex) => {
+          if (typeof condition === "string")
+            fields.push([
+              `connections[${index}].travelConditions[${conditionIndex}]`,
+              condition,
+            ]);
+        });
+      if (fields.length > 0) components.push(fields);
+    }
+  const branches = record.branches;
+  if (Array.isArray(branches))
+    for (const [index, branch] of branches.entries()) {
+      if (!branch || typeof branch !== "object") continue;
+      const fields: Array<[string, string]> = [];
+      const description = (branch as { description?: unknown }).description;
+      if (typeof description === "string")
+        fields.push([`branches[${index}].description`, description]);
+      const condition = (branch as { condition?: unknown }).condition;
+      if (typeof condition === "string")
+        fields.push([`branches[${index}].condition`, condition]);
+      if (fields.length > 0) components.push(fields);
+    }
+  return components;
 }
 
 /** Every string of a package that a player must never be shown. */
@@ -254,7 +314,7 @@ function outputForms(output: unknown): OutputForms {
 function matchesEntry(entry: GuardedString, text: readonly string[]): boolean {
   const needle = normalise(entry.text);
   if (!entry.match) return text.some((h) => h.includes(needle));
-  const separator = entry.match === "id" ? "[\\s_-]+" : "\\s+";
+  const separator = entry.match === "id" ? "[\\s_-]+" : "[^\\p{L}\\p{N}]+";
   const body = needle.split(" ").map(escapeRegExp).join(separator);
   const pattern = new RegExp(`${NOT_WORD_BEFORE}${body}${NOT_WORD_AFTER}`, "u");
   return text.some((h) => pattern.test(h));
