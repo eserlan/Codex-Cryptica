@@ -151,7 +151,8 @@ function mergeActor(
 export function escapeEntryText(text: string): string {
   return text
     .replace(/[\\`*_[\]()!<>&|~]/g, "\\$&")
-    .replace(/^(\s*)([#+-]|\d+(?=\.))/gm, "$1\\$2");
+    .replace(/^(\s*)([#+-])/gm, "$1\\$2")
+    .replace(/^(\s*)(\d+)\./gm, "$1$2\\.");
 }
 
 function formatPages(pages: number[]): string {

@@ -175,4 +175,28 @@ describe("creature import dialog", () => {
       expect(document.activeElement?.id).toBe("creature-import-title"),
     );
   });
+
+  it("restores focus to the opener when closed", async () => {
+    const opener = document.createElement("button");
+    opener.textContent = "Create creature entries";
+    document.body.appendChild(opener);
+    opener.focus();
+    const environment = {
+      importDeps: {
+        getVaultId: () => "v1",
+        createEntity: vi.fn(async () => "id"),
+        saveImage: vi.fn(async () => ({ ok: true as const })),
+      },
+      listCreatures: () => [],
+    };
+    const { unmount } = render(AdventureCreatureImportDialog, {
+      item,
+      environment,
+      onClose: () => unmount(),
+    });
+    expect(document.activeElement).not.toBe(opener);
+    await fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(document.activeElement).toBe(opener);
+    opener.remove();
+  });
 });

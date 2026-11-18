@@ -165,6 +165,19 @@ describe("importCreatures", () => {
     expect(data.adventureSource.artCredit).toBe("J. Artist");
   });
 
+  it("reports a failed image save when saveImage resolves ok: false", async () => {
+    const file = new File(["x"], "a.png", { type: "image/png" });
+    const saveImage = vi.fn().mockResolvedValue({
+      ok: false as const,
+      error: "Failed to save image.",
+    });
+    const { deps, choices } = setup([], { saveImage });
+    choices[0]!.file = file;
+    const result = await importCreatures(pkg, "h", choices, deps);
+    expect(result.created).toBe(3);
+    expect(result.failures).toEqual(["Gnoll: created without its image."]);
+  });
+
   it("stops writing when the Vault changes", async () => {
     let vaultId = "v1";
     const createEntity = vi.fn(

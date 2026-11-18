@@ -62,7 +62,16 @@
     if (!busy) onClose();
   }
 
-  onMount(() => closeButton?.focus());
+  onMount(() => {
+    const previousFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    closeButton?.focus();
+    return () => {
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
+  });
 
   function pageLabel(pages: number[]): string {
     if (pages.length === 0) return "Page not given";
@@ -324,7 +333,7 @@
         </button>
         <button
           type="button"
-          class="min-h-10 rounded-lg bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary"
+          class="min-h-10 rounded-lg bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary disabled:opacity-60"
           disabled={nothingSelected}
           onclick={() => void goTo("preview")}
         >
