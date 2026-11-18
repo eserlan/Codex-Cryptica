@@ -43,8 +43,8 @@
         {TITLE}
       </h1>
       <p class="text-lg leading-relaxed text-theme-muted">
-        {DESCRIPTION} Each page shows the full piece, the generator settings or
-        scenario setup behind it, and a short note on what makes it usable.
+        {DESCRIPTION} Each page shows the full piece, the generator settings or scenario
+        setup behind it, and a short note on what makes it usable.
       </p>
     </div>
 

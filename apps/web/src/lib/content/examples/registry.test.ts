@@ -287,9 +287,7 @@ describe("the published examples", () => {
     ]);
     expect(keyFields).not.toMatch(/mothership/i);
     expect(
-      lastShift.relatedForPages.some(
-        (page) => page.href === "/for/mothership",
-      ),
+      lastShift.relatedForPages.some((page) => page.href === "/for/mothership"),
     ).toBe(true);
   });
 
