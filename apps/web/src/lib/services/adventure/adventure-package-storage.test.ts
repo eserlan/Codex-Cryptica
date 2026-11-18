@@ -231,7 +231,8 @@ describe("AdventurePackageRepository", () => {
     expect(await repo.loadStored("vault-1", v1.hash)).not.toBeNull();
     const cache = new AdventurePackageContextCache(
       (vaultId, hash) => repo.loadStored(vaultId, hash),
-      (vaultId) => repo.listApproved(vaultId),
+      (vaultId, packageId, hash) =>
+        repo.hasOtherApprovedVersion(vaultId, packageId, hash),
     );
     await expect(
       cache.verifyPin({

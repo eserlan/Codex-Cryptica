@@ -1,6 +1,7 @@
 import {
   approveAdventurePackage,
   getAdventurePackagePath,
+  hasOtherApprovedAdventureVersion,
   listApprovedAdventurePackages,
   loadAdventurePackage,
   loadStoredAdventurePackage,
@@ -198,6 +199,18 @@ export class AdventurePackageRepository {
 
   async listApproved(vaultId: string): Promise<StoredAdventurePackage[]> {
     return listApprovedAdventurePackages(this.createIO(vaultId));
+  }
+
+  async hasOtherApprovedVersion(
+    vaultId: string,
+    packageId: string,
+    excludedHash: string,
+  ): Promise<boolean | null> {
+    return hasOtherApprovedAdventureVersion(
+      this.createIO(vaultId),
+      packageId,
+      excludedHash,
+    );
   }
 
   /**

@@ -94,7 +94,7 @@ describe("AdventurePackageContextCache", () => {
     ])("is unavailable when %s", async (_name, loader, reason) => {
       const cache = new AdventurePackageContextCache(
         loader as any,
-        async () => [],
+        async () => false,
       );
       expect(await cache.verifyPin(session())).toEqual({
         status: "unavailable",
@@ -108,7 +108,7 @@ describe("AdventurePackageContextCache", () => {
         .fn()
         .mockResolvedValueOnce(stored())
         .mockResolvedValue(null);
-      const cache = new AdventurePackageContextCache(loader, async () => []);
+      const cache = new AdventurePackageContextCache(loader);
       await cache.load(session());
       expect(cache.peek(session())).toBe(referencePackage);
       await cache.verifyPin(session());
@@ -122,28 +122,28 @@ describe("AdventurePackageContextCache", () => {
       });
       const cache = new AdventurePackageContextCache(
         async () => null,
-        async () => [other],
+        async () => other.package.id === packageRef.packageId,
       );
       expect(await cache.verifyPin(session())).toMatchObject({
         otherVersionAvailable: true,
       });
     });
 
-    it("ignores other ids and the pinned hash, and a failing listing", async () => {
+    it("ignores other ids and the pinned hash, and a failing check", async () => {
       const unrelated = stored({
         hash: "d".repeat(64),
         package: { ...referencePackage, id: "unrelated" },
       });
-      for (const listApproved of [
-        async () => [unrelated],
-        async () => [stored()],
+      for (const checkOtherVersion of [
+        async () => unrelated.package.id === packageRef.packageId,
+        async () => false,
         async () => {
-          throw new Error("list");
+          throw new Error("check");
         },
       ]) {
         const cache = new AdventurePackageContextCache(
           async () => null,
-          listApproved,
+          checkOtherVersion,
         );
         expect(await cache.verifyPin(session())).toMatchObject({
           otherVersionAvailable: false,

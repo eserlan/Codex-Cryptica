@@ -37,7 +37,7 @@
   <div class="mt-2 flex flex-wrap gap-2">
     <button
       type="button"
-      class="min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
+      class="min-h-11 rounded-lg border border-theme-primary px-3 py-2 font-medium transition hover:bg-theme-primary/10 disabled:opacity-50"
       disabled={retrying}
       onclick={() => void retry()}
     >
@@ -45,7 +45,7 @@
     </button>
     <button
       type="button"
-      class="min-h-11 rounded-lg border border-theme-border px-3 py-2 font-medium transition hover:bg-theme-primary/10"
+      class="min-h-11 rounded-lg border border-theme-primary px-3 py-2 font-medium transition hover:bg-theme-primary/10"
       onclick={() => void manager.close()}
     >
       Leave session

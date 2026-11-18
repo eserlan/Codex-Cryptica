@@ -11,7 +11,11 @@ type PackageLoader = (
   hash: string,
 ) => Promise<StoredAdventurePackage | null>;
 
-type ApprovedLister = (vaultId: string) => Promise<StoredAdventurePackage[]>;
+type AlternateVersionChecker = (
+  vaultId: string,
+  packageId: string,
+  excludedHash: string,
+) => Promise<boolean | null>;
 
 export type PackagePinStatus =
   | { status: "available" }
@@ -34,8 +38,16 @@ export class AdventurePackageContextCache {
   constructor(
     private readonly loader: PackageLoader = (vaultId, hash) =>
       adventurePackageRepository.loadStored(vaultId, hash),
-    private readonly listApproved: ApprovedLister = (vaultId) =>
-      adventurePackageRepository.listApproved(vaultId),
+    private readonly checkOtherVersion: AlternateVersionChecker = (
+      vaultId,
+      packageId,
+      excludedHash,
+    ) =>
+      adventurePackageRepository.hasOtherApprovedVersion(
+        vaultId,
+        packageId,
+        excludedHash,
+      ),
   ) {}
 
   private key(session: PackageSessionKey): string | undefined {
@@ -106,10 +118,12 @@ export class AdventurePackageContextCache {
   ): Promise<boolean> {
     const ref = session.sourcePackage!;
     try {
-      const approved = await this.listApproved(session.vaultId);
-      return approved.some(
-        (entry) =>
-          entry.package.id === ref.packageId && entry.hash !== ref.hash,
+      return (
+        (await this.checkOtherVersion(
+          session.vaultId,
+          ref.packageId,
+          ref.hash,
+        )) === true
       );
     } catch {
       return false;

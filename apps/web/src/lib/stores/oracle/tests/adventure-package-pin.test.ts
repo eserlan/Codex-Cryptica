@@ -35,18 +35,8 @@ function setup(initial: Mode = "ok") {
         return stored();
     }
   };
-  const listApproved = async () =>
-    mode === "other-version"
-      ? [
-          {
-            hash: "d".repeat(64),
-            path: "",
-            originFormat: "adventure-json/v1",
-            package: { ...referencePackage, version: "2.0.0" },
-          },
-        ]
-      : [];
-  const packages = referencePackageCache(loader, listApproved);
+  const checkOtherVersion = async () => mode === "other-version";
+  const packages = referencePackageCache(loader, checkOtherVersion);
   const verifyPin = vi.spyOn(packages, "verifyPin");
   const deps: any = { ...dependencies(), packages };
   deps.generation = { generate: vi.fn(deps.generation.generate) };
