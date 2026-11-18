@@ -110,10 +110,17 @@ export const PROMPT_EXAMPLE_OUTPUT = {
 
 const EXAMPLE_JSON = JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2);
 
+export const PROMPT_END_MARKER = "END OF ADVENTURE JSON V1 CONVERSION PROMPT";
+
+export const INCOMPLETE_PROMPT_FALLBACK =
+  "Ask the user to select “Copy conversion prompt” on the guide and paste the entire prompt into this chat. Wait for it before making an inventory or generating any chunk. A “Continue” request does not replace the missing prompt.";
+
 export const CANONICAL_CONVERSION_PROMPT = `Convert the tabletop RPG adventure I provide into a valid Codex Cryptica Adventure JSON v1 document.
 
 Schema: https://codexcryptica.com/schemas/adventure-json/v1.json
 Guide: https://codexcryptica.com/adventure-import
+
+Before converting, confirm you have this whole prompt, from the opening conversion instruction through the standalone line “${PROMPT_END_MARKER}” after the final checklist. If it is missing or cut off, stop. ${INCOMPLETE_PROMPT_FALLBACK} The complete prompt includes the field contract. If the separate schema URL is unavailable, use that contract without asking the user to paste the schema.
 
 Output contract (read this first):
 - Deliver ONE JSON object. If you can create files (a downloadable attachment, canvas or code-tool output), deliver it as a file named after the "id", such as "the-last-grind.json", containing only the JSON, and say only that the file is ready. If you cannot create files, your entire reply is the JSON object: it starts with "{" and ends with "}", with no Markdown code fences and no text before or after it. Never put JSON in a chat reply when you could have attached a file.
@@ -193,7 +200,9 @@ Before you reply with a successful conversion, check each of these:
 - All 11 collection arrays are present, every id is unique, and every cross-reference points to an existing id.
 - Every "secrets" entry is "gm-only", and no "player-visible" record reveals a hidden role, motive or detail.
 - Every entry has "epistemicStatus"; endings and unresolved have no "visibility".
-- Nothing outside the schema was added and nothing was invented.`;
+- Nothing outside the schema was added and nothing was invented.
+
+${PROMPT_END_MARKER}`;
 
 /** Follow-up prompt pasted into the same chat after the JSON; its reply stays outside the JSON file. */
 export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the Adventure JSON you just gave me. Reply in plain text, not JSON. Do not change or re-output the JSON.
@@ -238,7 +247,7 @@ export const PROMPT_TXT_URL =
   "https://codexcryptica.com/adventure-import/prompt.txt";
 
 /** Short instruction copied by "Copy guide link" for assistants that can open URLs. */
-export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow it exactly to convert the attached adventure into Adventure JSON v1. Deliver the JSON as a downloadable .json file if you can, otherwise reply with the JSON only. If you cannot open the link, tell me instead of guessing the format.`;
+export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow the full prompt to convert the attached adventure into Adventure JSON v1. Check that the fetched prompt ends with the standalone line “${PROMPT_END_MARKER}”. If the link is blocked or the prompt is incomplete, stop. ${INCOMPLETE_PROMPT_FALLBACK}`;
 
 export const CORRESPONDENCE_EXTENSION_KEY =
   "codex-cryptica.adventure-correspondence";
