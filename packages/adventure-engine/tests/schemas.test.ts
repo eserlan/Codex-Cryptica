@@ -330,4 +330,70 @@ describe("packageProgress", () => {
       }),
     ).toThrow();
   });
+
+  it("supports optional actor state when version === 1 and rejects it on legacy { sceneId }", () => {
+    const preActor = parseAdventureSession({
+      ...base(),
+      packageProgress: { sceneId: "a", version: 1, records: [], events: [] },
+    });
+    expect(preActor.packageProgress).toEqual({
+      sceneId: "a",
+      version: 1,
+      records: [],
+      events: [],
+    });
+
+    const withActors = parseAdventureSession({
+      ...base(),
+      packageProgress: {
+        sceneId: "a",
+        version: 1,
+        records: [],
+        events: [],
+        actors: [
+          {
+            actorId: "actor-maren",
+            status: "present",
+            disposition: "friendly",
+            facts: ["Knows the ferryman."],
+          },
+        ],
+        actorEvents: [
+          {
+            id: "t1:actor:1",
+            turnId: "t1",
+            actorId: "actor-maren",
+            fromStatus: "unknown",
+            status: "present",
+            fromDisposition: "neutral",
+            disposition: "friendly",
+            fact: "Knows the ferryman.",
+            certainty: "confirmed",
+            note: "Maren greeted the party.",
+          },
+        ],
+      },
+    });
+    expect(parseAdventureSession(withActors)).toEqual(withActors);
+
+    expect(() =>
+      parseAdventureSession({
+        ...base(),
+        packageProgress: {
+          sceneId: "a",
+          actors: [],
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      parseAdventureSession({
+        ...base(),
+        packageProgress: {
+          sceneId: "a",
+          actorEvents: [],
+        },
+      }),
+    ).toThrow();
+  });
 });

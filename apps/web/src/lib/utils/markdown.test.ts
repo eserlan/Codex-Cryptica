@@ -9,6 +9,11 @@ import {
 } from "./markdown";
 import { EntitySchema } from "schema";
 import { validateMarkdownFrontmatter } from "@codex/vault-engine";
+import {
+  buildCreatureEntryText,
+  buildCreatureProposals,
+  type AdventureJsonV1,
+} from "@codex/adventure-engine";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -53,6 +58,41 @@ describe("markdown.ts utility", () => {
     it("turns a single newline into a <br> when breaks is requested (#3481)", () => {
       const html = renderMarkdown("Line one\nLine two", { breaks: true });
       expect(html).toContain("<br");
+    });
+
+    it("does not autolink bare URLs in generated adventure creature text", () => {
+      const pkg = {
+        id: "urls",
+        version: "1",
+        source: { title: "https://tracker.example/source" },
+        actors: [
+          {
+            id: "actor",
+            name: "Scout",
+            summary: "See https://tracker.example/summary",
+            description: "More at www.example.com/path",
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+        encounters: [
+          {
+            id: "encounter",
+            title: "Road",
+            description: "",
+            actorIds: ["actor"],
+            alternativeSolutions: [],
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+      } as unknown as AdventureJsonV1;
+      const creature = buildCreatureProposals(pkg)[0]!;
+      const entry = buildCreatureEntryText(creature, pkg.source);
+      const html = renderMarkdown(entry.content);
+      expect(html).not.toContain("<a ");
+      expect(html).toContain("https://tracker.example/source");
+      expect(html).toContain("www.example.com/path");
     });
 
     it("should handle marked.parse errors and return sanitized fallback", async () => {

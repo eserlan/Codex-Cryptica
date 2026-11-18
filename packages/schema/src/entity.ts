@@ -198,6 +198,21 @@ export const ReportProvenanceSchema = z.object({
 
 export type ReportProvenance = z.infer<typeof ReportProvenanceSchema>;
 
+/** Where a Creature entry came from in an approved adventure package. */
+export const AdventureSourceSchema = z.object({
+  packageId: z.string(),
+  packageVersion: z.string(),
+  packageHash: z.string(),
+  actorIds: z.array(z.string()),
+  encounterIds: z.array(z.string()),
+  sourceTitle: z.string(),
+  sourceAuthors: z.array(z.string()).optional(),
+  sourceLicense: z.string().optional(),
+  artCredit: z.string().optional(),
+});
+
+export type AdventureSource = z.infer<typeof AdventureSourceSchema>;
+
 export const EntitySchema = z.object({
   id: z.string().min(1),
   type: EntityTypeSchema,
@@ -211,6 +226,8 @@ export const EntitySchema = z.object({
   artDirection: z.string().optional(),
   /** Opaque owner-only extension; validate before use and retain for recovery. */
   adventureArtwork: z.unknown().optional(),
+  /** Owner-only provenance for entries created from an approved adventure package. */
+  adventureSource: AdventureSourceSchema.optional(),
   image: z.string().optional(),
   silhouette: z.string().optional(),
   thumbnail: z.string().optional(),

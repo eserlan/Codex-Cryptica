@@ -29,6 +29,7 @@
     calendar,
     canDiscover,
     canImport,
+    onCreatureImportBusyChange = () => {},
     onDiscover,
     onSurpriseMe,
     onScenarioStarted,
@@ -46,6 +47,7 @@
     calendar: WorldCalendar;
     canDiscover: boolean;
     canImport: boolean;
+    onCreatureImportBusyChange?: (busy: boolean) => void;
     onDiscover: () => void;
     onSurpriseMe: () => void;
     onScenarioStarted: () => void;
@@ -88,7 +90,11 @@
     </p>
   {/if}
 
-  <ApprovedAdventurePackages {library} onStart={draft.fromPackage} />
+  <ApprovedAdventurePackages
+    {library}
+    onStart={draft.fromPackage}
+    {onCreatureImportBusyChange}
+  />
 {:else if !selectedRumour && draft.approach === "import-review" && imports.draft}
   <AdventureImportReview
     bind:draft={imports.draft}

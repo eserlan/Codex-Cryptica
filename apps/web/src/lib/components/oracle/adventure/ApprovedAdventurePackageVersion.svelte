@@ -4,6 +4,7 @@
     type AdventureJsonV1,
     type StoredAdventurePackage,
   } from "@codex/adventure-engine";
+  import AdventureCreatureImportDialog from "./AdventureCreatureImportDialog.svelte";
   import AdventurePackageCard from "./AdventurePackageCard.svelte";
   import type { AdventurePackageLibrary } from "./adventure-package-library.svelte.js";
 
@@ -11,6 +12,7 @@
     item,
     library,
     onStart,
+    onCreatureImportBusyChange = () => {},
   }: {
     item: StoredAdventurePackage;
     library: AdventurePackageLibrary;
@@ -19,11 +21,19 @@
       hash: string,
       startSceneId?: string,
     ) => void;
+    onCreatureImportBusyChange?: (busy: boolean) => void;
   } = $props();
 
   const pinned = $derived(library.pinnedByHash.get(item.hash) ?? []);
   const latestPinned = $derived(pinned[0]);
   const candidates = $derived(startSceneCandidates(item.package));
+  const hasCreatures = $derived.by(() => {
+    const actorIds = new Set(item.package.actors.map((actor) => actor.id));
+    return item.package.encounters.some((encounter) =>
+      (encounter.actorIds ?? []).some((id) => actorIds.has(id)),
+    );
+  });
+  let creatureDialogOpen = $state(false);
   const hash8 = $derived(item.hash.slice(0, 8));
   const pageSize = 20;
   let selected = $state(0);
@@ -141,6 +151,16 @@
     >
       Start new session
     </button>
+    {#if hasCreatures}
+      <button
+        type="button"
+        data-testid="approved-package-creatures-{item.package.id}-{hash8}"
+        onclick={() => (creatureDialogOpen = true)}
+        class="min-h-10 rounded-lg border border-theme-text px-3 py-1.5 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10"
+      >
+        Create creature entries
+      </button>
+    {/if}
     <button
       type="button"
       data-testid="approved-package-remove-{item.package.id}-{item.hash.slice(
@@ -154,4 +174,11 @@
       {library.removingHash === item.hash ? "Removing…" : "Remove version"}
     </button>
   </div>
+  {#if creatureDialogOpen}
+    <AdventureCreatureImportDialog
+      {item}
+      onClose={() => (creatureDialogOpen = false)}
+      onBusyChange={onCreatureImportBusyChange}
+    />
+  {/if}
 </li>

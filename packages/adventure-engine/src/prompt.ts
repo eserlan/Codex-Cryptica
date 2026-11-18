@@ -139,7 +139,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     })),
     // Includes registered scenario secrets so their IDs can be revealed.
     "GM-ONLY state": ensureScenarioSecrets(input.session).hiddenState,
-    ...packageProgressState(input.session),
+    ...packageProgressState(input.session, input.adventurePackage),
     ...(input.session.historicalAnchor
       ? {
           "GM-ONLY historicalAnchor": projectGmHistoricalAnchor(input.session),
@@ -186,10 +186,29 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   });
 }
 
+function featuredPackageActorIds(
+  pkg?: PromptAdventurePackage,
+): string[] | undefined {
+  if (!pkg) return undefined;
+  return [
+    ...new Set(
+      [...pkg.playerSafe, ...pkg.gmOnly]
+        .filter((excerpt) => excerpt.kind === "actor")
+        .map((excerpt) => excerpt.id),
+    ),
+  ];
+}
+
 /** The GM-only ledger summary, for package sessions that keep a ledger. */
-function packageProgressState(session: AdventureSession) {
+function packageProgressState(
+  session: AdventureSession,
+  adventurePackage?: PromptAdventurePackage,
+) {
   const summary = session.sourcePackage
-    ? packageProgressPromptSummary(session.packageProgress)
+    ? packageProgressPromptSummary(
+        session.packageProgress,
+        featuredPackageActorIds(adventurePackage),
+      )
     : undefined;
   return summary ? { "GM-ONLY package progress": summary } : {};
 }
@@ -206,7 +225,8 @@ function packageBehavior(pkg?: PromptAdventurePackage): string[] {
     "To record package progress, add packageEvents entries whose recordId and kind are copied from the package blocks and never invented; omit event IDs, which are assigned on commit.",
     'Rumours, testimony that may be false, and package facts marked "ambiguous" or "unresolved" are proposed with certainty "claimed"; only events the player has actually caused or witnessed are "confirmed".',
     "To correct an earlier event, propose a new packageEvents entry whose supersedes is that event's ID from the GM-ONLY package progress block.",
-    "The GM-ONLY package progress block, its record IDs and notes are secret and must never appear in narration, suggestedActions, roll copy or player-visible state.",
+    "To track package NPC status (present, absent, dead), disposition (hostile, wary, neutral, friendly, allied), or remembered facts, add actorEvents entries whose actorId is copied from the package blocks and omit event IDs. A dead actor cannot return to present or absent without a confirmed actorEvents entry that supersedes the death event.",
+    "The GM-ONLY package progress block, its record IDs, actor states, remembered facts and notes are secret and must never appear in narration, suggestedActions, roll copy or player-visible state.",
   ];
 }
 

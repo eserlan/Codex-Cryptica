@@ -111,6 +111,7 @@ export class AdventureRuntime {
     | "packageGmOnlyText"
     | "packageRecordKinds"
     | "packageSceneBranches"
+    | "packageActorIds"
   > {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
