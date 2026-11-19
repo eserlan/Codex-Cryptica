@@ -9,3 +9,6 @@ have mistaken a bucket for a bell. The adventure gives no confirmation.
 
 If the party lights the watchtower lamp, the ferryman offers passage.
 Otherwise, the GM may have him wait or leave the landing.
+
+**Possible ending:** If the party escorts the ferryman safely across, the watch
+reopens the crossing.

@@ -62,20 +62,33 @@ describe("canonical prompt source authority", () => {
 
   it("requires designated corrections and keeps unsupported conflicts unresolved", () => {
     expect(sourcePdfText).toContain("Official erratum for PDF page 2");
-    expect(sourcePdfText).toContain("the bridge is made of stone");
+    expect(sourcePdfText).toContain(
+      "PDF page 6\nAppendix (dated later): the bridge is made of stone.",
+    );
     expect(sourcePdfText).toContain("The bridge is made of timber");
     expect(CANONICAL_CONVERSION_PROMPT).toContain(
       "supersedes earlier text only if the source clearly designates it",
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      'Cite the correction with "sourceRef"',
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "Position, date, appendix placement and metadata alone do not establish precedence",
     );
     expect(CANONICAL_CONVERSION_PROMPT).toContain(
       'mark the claim "ambiguous" or "unresolved" and add an "unresolved" entry',
     );
   });
 
-  it("preserves unreliable testimony and GM options as possibilities", () => {
+  it("preserves unreliable testimony, GM options and contingent endings as possibilities", () => {
     expect(sourceMarkdown).toContain("The adventure gives no confirmation.");
     expect(sourceMarkdown).toContain("the GM may have him wait or leave");
-    expect(CANONICAL_CONVERSION_PROMPT).toContain("as claims or possibilities");
+    expect(sourceMarkdown).toContain(
+      "**Possible ending:** If the party escorts the ferryman safely across, the watch\nreopens the crossing.",
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "mutually exclusive GM options and contingent endings as claims or possibilities",
+    );
     expect(CANONICAL_CONVERSION_PROMPT).toContain(
       'Use "unverified" when rumour truth is unspecified',
     );
