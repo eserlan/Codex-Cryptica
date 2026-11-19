@@ -54,7 +54,7 @@ This is **intent, not persistence**:
 
 ## Dashboard definitions
 
-Build these in Amplitude. The existing [Point Crawl Acquisition Funnel dashboard](https://app.amplitude.com/analytics/young-bonus-566313/dashboard/upcme9n5) is the current saved-chart reference; it covers Point Crawl only and does not yet contain the all-generator charts below. Apply the QA exclusion from the linked runbook before using its counts.
+Build these five charts manually in Amplitude (there is no automated chart-creation step in this repo). As a separate Point Crawl-only reference, see the existing [Point Crawl Acquisition Funnel dashboard](https://app.amplitude.com/analytics/young-bonus-566313/dashboard/upcme9n5); it does not cover Star System, Origin, NPC, or the all-generator error/cancellation charts below. Apply the QA exclusion from the linked runbook before using any counts.
 
 - **(a) Organic same-session funnel**, ordered, counted by session: `seo_entry` (`acquisition_channel = organic_search`; add `acquisition_search_engine = google` for the Google view) -> `generator_started` -> `generator_completed` -> `public_generator_action_clicked` (`action = save_to_codex`) -> `entity_saved`.
 - **(b) Post-generation funnel** for direct landings: starts at `generator_completed`, then `save_to_codex`, then `entity_saved`. No Answer or discovery step is needed.
