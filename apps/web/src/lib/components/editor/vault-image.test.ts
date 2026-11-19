@@ -18,12 +18,24 @@ describe("protectVaultImageSource", () => {
     });
   });
 
-  it("leaves browser-safe image sources unchanged", () => {
+  it("blocks remote image sources to prevent passive network requests", () => {
     const attributes = {
       src: "https://example.com/layout.webp",
       alt: "Delve layout",
     };
 
-    expect(protectVaultImageSource(attributes)).toBe(attributes);
+    expect(protectVaultImageSource(attributes)).toEqual({
+      ...attributes,
+      src: VAULT_IMAGE_PLACEHOLDER,
+    });
   });
+
+  it.each(["data:image/png;base64,AAAA", "blob:https://example.com/id"])(
+    "blocks unapproved image source %s",
+    (src) => {
+      expect(protectVaultImageSource({ src }).src).toBe(
+        VAULT_IMAGE_PLACEHOLDER,
+      );
+    },
+  );
 });

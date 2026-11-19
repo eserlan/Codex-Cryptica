@@ -1,3 +1,5 @@
+import { goto } from "$app/navigation";
+import { resolve } from "$app/paths";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { SessionEntity } from "generator-engine";
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
@@ -14,6 +16,14 @@ import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-d
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
 
+function countSavedItems(
+  data: GeneratorOutput,
+  selectedNodeIds: string[] | undefined,
+): number {
+  if (!data.pointCrawl) return 1;
+  return (selectedNodeIds?.length ?? data.pointCrawl.nodes.length) + 1;
+}
+
 /** Hands generated drafts to the Codex app through localStorage. */
 export function useGeneratorSave(deps: {
   getGeneratorType: () => string;
@@ -23,9 +33,10 @@ export function useGeneratorSave(deps: {
   exportDiagramImage: () => Promise<string | undefined>;
   getSelectedNodeIds?: () => string[] | undefined;
   setError: (message: string) => void;
+  navigate?: (href: string) => unknown;
 }) {
-  let showSaveModal = $state(false);
-  let redirectQuery = $state("");
+  const navigate = deps.navigate ?? ((href: string) => goto(href));
+  let isSaving = $state(false);
   let saveError = $state<string | null>(null);
 
   const storage = {
@@ -34,12 +45,17 @@ export function useGeneratorSave(deps: {
     countRelatedEntities,
   };
 
-  function confirmSaveRedirect() {
+  function continueToCodex(redirectQuery: string) {
     trackPublicGeneratorAction("open_codex", {
       generator_type: deps.getGeneratorType(),
       source: "save_confirmation",
     });
-    showSaveModal = false;
+    // Stay "saving" while the page leaves; only a failed navigation resets it.
+    void Promise.resolve()
+      .then(() => navigate(resolve("") + redirectQuery))
+      .catch(() => {
+        isSaving = false;
+      });
   }
 
   function trackHeaderOpenCodex() {
@@ -50,7 +66,8 @@ export function useGeneratorSave(deps: {
   }
 
   function handleSaveHubToCodex(entitiesToSave: SessionEntity[]) {
-    if (entitiesToSave.length === 0) return;
+    if (isSaving || entitiesToSave.length === 0) return;
+    isSaving = true;
     saveError = null;
     const generatorType = deps.getGeneratorType();
     trackPublicGeneratorAction("save_to_codex", {
@@ -59,15 +76,16 @@ export function useGeneratorSave(deps: {
       item_count: entitiesToSave.length,
     });
     try {
-      redirectQuery = saveSessionHubEntities(
+      const redirectQuery = saveSessionHubEntities(
         entitiesToSave,
         sessionHubStore.provenance,
         sessionHubStore.entities,
         generatorType,
         storage,
       );
-      showSaveModal = true;
+      continueToCodex(redirectQuery);
     } catch {
+      isSaving = false;
       const message = "Storage access is blocked. Please copy drafts manually.";
       saveError = message;
       deps.setError(message);
@@ -75,15 +93,14 @@ export function useGeneratorSave(deps: {
   }
 
   async function handleSaveToCodex() {
-    if (deps.isGenerationInProgress?.()) return;
+    if (isSaving || deps.isGenerationInProgress?.()) return;
     const generatedData = deps.getGeneratedData();
     if (!generatedData) return;
+    isSaving = true;
     saveError = null;
     const generatorType = deps.getGeneratorType();
     const selectedNodeIds = deps.getSelectedNodeIds?.();
-    const itemCount = generatedData.pointCrawl
-      ? (selectedNodeIds?.length ?? generatedData.pointCrawl.nodes.length) + 1
-      : 1;
+    const itemCount = countSavedItems(generatedData, selectedNodeIds);
     trackPublicGeneratorAction("save_to_codex", {
       generator_type: generatorType,
       is_hub_batch: Boolean(generatedData.pointCrawl),
@@ -91,7 +108,7 @@ export function useGeneratorSave(deps: {
     });
 
     try {
-      redirectQuery = await saveGeneratorOutput(
+      const redirectQuery = await saveGeneratorOutput(
         generatedData,
         deps.getDocumentLayout(),
         generatorType,
@@ -99,8 +116,9 @@ export function useGeneratorSave(deps: {
         deps.exportDiagramImage,
         selectedNodeIds,
       );
-      showSaveModal = true;
+      continueToCodex(redirectQuery);
     } catch {
+      isSaving = false;
       const message =
         "Storage access is blocked. Please copy the Markdown below instead.";
       saveError = message;
@@ -109,24 +127,17 @@ export function useGeneratorSave(deps: {
   }
 
   return {
-    confirmSaveRedirect,
     trackHeaderOpenCodex,
     handleSaveHubToCodex,
     handleSaveToCodex,
     clearSaveError() {
       saveError = null;
     },
-    cancelSaveModal() {
-      showSaveModal = false;
-    },
     get saveError() {
       return saveError;
     },
-    get showSaveModal() {
-      return showSaveModal;
-    },
-    get redirectQuery() {
-      return redirectQuery;
+    get isSaving() {
+      return isSaving;
     },
   };
 }

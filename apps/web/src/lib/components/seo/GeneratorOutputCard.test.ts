@@ -841,4 +841,41 @@ describe("GeneratorOutputCard", () => {
       expect(alert.textContent).toContain("Storage access is blocked");
     });
   });
+
+  it("disables the save button and marks it busy while saving", () => {
+    const base = {
+      generatedData: sampleData,
+      aiFallbackDismissed: false,
+      isBusy: false,
+      isExampleDraft: false,
+      generatedSingular: "Faction",
+      variant: "default" as const,
+      worldTheme: "Classic Fantasy",
+      documentContent: sampleData.content,
+      documentSections: sampleSections,
+      copied: false,
+      copiedSectionId: null,
+      contextTrimmed: false,
+      onDismissAiFallback: vi.fn(),
+      onSaveToCodex: vi.fn(),
+      onCopyMarkdown: vi.fn(),
+      onCopySection: vi.fn(),
+      onContainerClick: vi.fn(),
+      onContainerKeydown: vi.fn(),
+      onSelectHubEntity: vi.fn(),
+      onSaveHubToCodex: vi.fn(),
+    };
+    const saving = render(GeneratorOutputCard, {
+      props: { ...base, isSaving: true },
+    });
+    const busy = saving.container.querySelector("#save-to-codex-btn")!;
+    expect(busy.hasAttribute("disabled")).toBe(true);
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    saving.unmount();
+
+    const idle = render(GeneratorOutputCard, { props: base });
+    const button = idle.container.querySelector("#save-to-codex-btn")!;
+    expect(button.hasAttribute("disabled")).toBe(false);
+    expect(button.getAttribute("aria-busy")).toBe("false");
+  });
 });
