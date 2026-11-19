@@ -10,6 +10,7 @@
    * provider — and how to get rid of it.
    */
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
+  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import CloudBackupAttach from "#lib/components/settings/CloudBackupAttach.svelte";
   import AdventureBackupSettings from "#lib/components/settings/AdventureBackupSettings.svelte";
   import CloudBackupSharingSettings from "#lib/components/settings/CloudBackupSharingSettings.svelte";
@@ -473,7 +474,7 @@
       </div>
     {/if}
 
-    {#if !isEditor && import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+    {#if !isEditor && featureFlags.isEnabled("adventureArtwork")}
       <AdventureBackupSettings
         {vaultId}
         refreshKey={cloudBackupStore.artworkConsentVersion}

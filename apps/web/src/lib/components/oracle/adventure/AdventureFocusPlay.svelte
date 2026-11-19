@@ -1,7 +1,8 @@
 <!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { tick } from "svelte";
+  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
   import { bodyPortal, containTab } from "./adventure-phone-surface";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
@@ -155,7 +156,9 @@
     loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
   };
 
-  const artworkFlagEnabled = import.meta.env.VITE_ADVENTURE_ARTWORK === "true";
+  const artworkFlagEnabled = $derived(
+    featureFlags.isEnabled("adventureArtwork"),
+  );
   let artworkEnabled = $state(artworkPreferences.enabled);
   let artworkCatalogue = $state<readonly ArtworkAsset[]>([]);
   let artworkDisplay = $state<ArtworkDisplayService>();
@@ -168,8 +171,12 @@
     });
   });
 
-  onMount(() => {
-    if (!artworkFlagEnabled) return;
+  $effect(() => {
+    if (!artworkFlagEnabled) {
+      artworkDisplay = undefined;
+      artworkCatalogue = [];
+      return;
+    }
     let active = true;
     let resources: ReturnType<typeof createDisplayService> | undefined;
     try {
@@ -321,7 +328,7 @@
 />
 
 {#snippet utilities()}
-  {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+  {#if artworkFlagEnabled}
     <ArtworkSettings preferences={artworkPreferences} />
     <AdventureArtworkCueDetails summary={cueSummary} />
   {/if}
@@ -465,7 +472,7 @@
       >
         <AdventureStateSummary {manager} variant="panel">
           {#snippet media()}
-            {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+            {#if artworkFlagEnabled}
               <AdventureArtworkFeature
                 session={manager.session}
                 entities={vault.entities}

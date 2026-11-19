@@ -94,6 +94,7 @@ describe("cloud backup configuration", () => {
   it("keeps the consent scope wired even when the artwork UI is disabled", () => {
     const deps = configured();
     expect(deps.artworkScope).toBeDefined();
+    expect(deps.artworkConsent).toBeDefined();
     expect(mocks.setChangeListener).toHaveBeenCalledOnce();
   });
   it("does not request adventure documents unless the upload scope has consent", async () => {

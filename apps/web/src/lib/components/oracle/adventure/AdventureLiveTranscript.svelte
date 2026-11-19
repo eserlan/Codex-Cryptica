@@ -8,6 +8,7 @@
   import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
   import { computeTurnArtworkReveals } from "#lib/services/adventure/artwork/turn-artwork-reveals.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import AdventureTurnArtwork from "./artwork/AdventureTurnArtwork.svelte";
   import AdventureNarrativeTurn from "./AdventureNarrativeTurn.svelte";
@@ -23,7 +24,7 @@
   });
 
   const artworkEnabled = $derived(
-    import.meta.env.VITE_ADVENTURE_ARTWORK === "true" && preferencesEnabled,
+    featureFlags.isEnabled("adventureArtwork") && preferencesEnabled,
   );
   let artworkDisplay = $state.raw<ArtworkDisplayService | null>(null);
   $effect(() => {
