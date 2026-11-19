@@ -729,9 +729,10 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       const anchors = [
         ...promptExampleSource.matchAll(/<!-- source-id: (\S+) -->/g),
       ].map((m) => m[1]);
-      const entries = Object.values(PROMPT_EXAMPLE_OUTPUT).flatMap((value) =>
-        Array.isArray(value) ? value : [],
-      ) as Array<{ sourceRef?: Record<string, unknown> }>;
+      const entries = Object.values(PROMPT_EXAMPLE_OUTPUT).flatMap(
+        (value): Array<{ sourceRef?: Record<string, unknown> }> =>
+          Array.isArray(value) ? (value as never[]) : [],
+      );
 
       it("has a pageless fixture with a source-id after every heading", () => {
         expect(headings.length).toBeGreaterThan(3);
@@ -751,12 +752,12 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       });
 
       it("shows a branch, a connection, an unrepresentable mechanic and a defined watchman", () => {
-        const [first] = PROMPT_EXAMPLE_OUTPUT.scenes;
+        const first = PROMPT_EXAMPLE_OUTPUT.scenes[0]!;
         const actorIds = PROMPT_EXAMPLE_OUTPUT.actors.map((a) => a.id);
         const encounter = PROMPT_EXAMPLE_OUTPUT.encounters[0]!;
 
         expect(PROMPT_EXAMPLE_OUTPUT.scenes.length).toBeGreaterThanOrEqual(2);
-        expect(first!.branches.length).toBeGreaterThanOrEqual(1);
+        expect(first.branches.length).toBeGreaterThanOrEqual(1);
         expect(
           PROMPT_EXAMPLE_OUTPUT.locations.some(
             (l) => (l.connections?.length ?? 0) >= 1,
