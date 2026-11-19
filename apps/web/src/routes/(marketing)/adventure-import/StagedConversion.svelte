@@ -108,6 +108,33 @@
   </div>
 {/snippet}
 
+{#snippet stageContent(stage: (typeof stages)[number])}
+  {#if stage.id === "chunk"}
+    {#each sectionOptions as option (option.id)}
+      {@render sectionOption(option)}
+    {/each}
+  {:else if stage.copier && stage.button && stage.text}
+    {@render copyBlock(stage.copier, stage.button, stage.text)}
+  {/if}
+  {#if stage.id === "coverage"}
+    <button
+      type="button"
+      onclick={checkCopier.copy}
+      class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    >
+      <span
+        class="{checkCopier.state === 'copied'
+          ? 'icon-[lucide--check]'
+          : 'icon-[lucide--copy]'} h-4 w-4"
+        aria-hidden="true"
+      ></span>
+      {checkCopier.label("Copy check script", "Copied")}
+    </button>
+    <pre
+      class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{STAGED_CHECK_SCRIPT}</pre>
+  {/if}
+{/snippet}
+
 <section
   id={STAGED_ANCHOR}
   aria-labelledby="long-adventures-heading"
@@ -229,30 +256,7 @@
         {stage.title}
       </h3>
       <p class="text-sm text-theme-text/90">{stage.intro}</p>
-      {#if stage.id === "chunk"}
-        {#each sectionOptions as option (option.id)}
-          {@render sectionOption(option)}
-        {/each}
-      {:else if stage.copier && stage.button && stage.text}
-        {@render copyBlock(stage.copier, stage.button, stage.text)}
-      {/if}
-      {#if stage.id === "coverage"}
-        <button
-          type="button"
-          onclick={checkCopier.copy}
-          class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-        >
-          <span
-            class="{checkCopier.state === 'copied'
-              ? 'icon-[lucide--check]'
-              : 'icon-[lucide--copy]'} h-4 w-4"
-            aria-hidden="true"
-          ></span>
-          {checkCopier.label("Copy check script", "Copied")}
-        </button>
-        <pre
-          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{STAGED_CHECK_SCRIPT}</pre>
-      {/if}
+      {@render stageContent(stage)}
     </div>
   {/each}
 
