@@ -135,10 +135,18 @@ describe("useGeneratorSession", () => {
     expect(ctx.session.userGenerationSucceeded).toBe(false);
     expect(ctx.session.isBusy).toBe(false);
     expect(hub.addEntity).not.toHaveBeenCalled();
+    expect(track).toHaveBeenCalledWith("generator_failed", {
+      generator_type: "npc",
+    });
     expect(track).not.toHaveBeenCalledWith(
       "generator_completed",
       expect.anything(),
     );
+    expect(
+      track.mock.calls.filter(
+        ([eventName]) => eventName === "generator_failed",
+      ),
+    ).toEqual([["generator_failed", { generator_type: "npc" }]]);
   });
 
   it("shows streamed previews as they arrive", async () => {

@@ -216,6 +216,9 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
       await scrollToOutputIfStacked();
     } catch (err: any) {
       if (isCurrentRequest()) {
+        // Keep analytics content-free; the displayed error can contain
+        // provider or user-specific details and must never be sent.
+        trackEvent("generator_failed", { generator_type: generatorType });
         errorMessage = "Failed to generate: " + (err.message || err);
       }
     } finally {
