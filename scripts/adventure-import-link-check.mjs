@@ -182,6 +182,12 @@ export function canonicalEquivalence(path, baseRes, prodRes) {
     return {
       problem: `${path}: production returned HTTP ${prodRes.status}, cannot verify canonical equivalent`,
     };
+  const contentTypeProblems =
+    path === PROMPT_PATH
+      ? promptContentTypeProblems(prodRes)
+      : typeProblem(path, prodRes.contentType, isJsonType, "application/json");
+  if (contentTypeProblems.length)
+    return { problem: `production ${contentTypeProblems.join("; ")}` };
   const same =
     path === PROMPT_PATH
       ? baseRes.body === prodRes.body
@@ -242,11 +248,14 @@ async function fetchChecked(ctx, path) {
   return res;
 }
 
-async function checkProductionDependencies(ctx, guideBody) {
+export async function checkProductionDependencies(ctx, guideBody) {
   for (const url of productionLinks(guideBody)) {
     const res = await tryGet(url, ctx.prodSink);
     if (!res) continue;
-    ctx.log(`${res.status} ${res.contentType} ${url} (production dependency)`);
+    ctx.log(
+      `${res.status} ${res.contentType} ${res.url} (production dependency)`,
+    );
+    ctx.warnings.push(...redirectNotes(url, url, res.url));
     if (res.status !== 200)
       ctx.prodSink.push(
         `${url}: HTTP ${res.status} on production; testers on ${ctx.base} are sent there by the guide's prompt`,
@@ -271,8 +280,13 @@ async function checkPrompt(ctx, prompt, guide) {
 }
 
 async function checkEquivalentToProduction(ctx, path, baseRes) {
-  const prodRes = await tryGet(`${PRODUCTION}${path}`, ctx.prodSink);
+  const requestedUrl = `${PRODUCTION}${path}`;
+  const prodRes = await tryGet(requestedUrl, ctx.prodSink);
   if (!prodRes) return;
+  ctx.log(
+    `${prodRes.status} ${prodRes.contentType} ${prodRes.url} (production equivalent)`,
+  );
+  ctx.warnings.push(...redirectNotes(path, requestedUrl, prodRes.url));
   const { note, problem } = canonicalEquivalence(path, baseRes, prodRes);
   ctx.notes.push(...(note ? [note] : []));
   ctx.prodSink.push(...(problem ? [problem] : []));

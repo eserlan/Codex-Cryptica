@@ -3,7 +3,10 @@
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import { onMount } from "svelte";
   import { IS_STAGING } from "#lib/config/index.js";
-  import { CANONICAL_ORIGIN } from "./canonical-origin.js";
+  import {
+    CANONICAL_ORIGIN,
+    isCanonicalProductionHost,
+  } from "./canonical-origin.js";
   import { createCopier } from "./copy-feedback.svelte.js";
   import StagedConversion from "./StagedConversion.svelte";
   import {
@@ -21,7 +24,8 @@
   const cleanBase = basePath();
   let showNonProductionNote = $state(false);
   onMount(() => {
-    showNonProductionNote = IS_STAGING;
+    showNonProductionNote =
+      IS_STAGING || !isCanonicalProductionHost(window.location.hostname);
   });
   const pageUrl = `${CANONICAL_ORIGIN}/adventure-import`;
 
@@ -262,6 +266,7 @@
         >
           <span
             class="icon-[lucide--info] mr-1 inline-block h-4 w-4 align-text-bottom"
+            aria-hidden="true"
           ></span>
           This is not production. The copied prompt and guide link point at the production
           ({CANONICAL_ORIGIN}) schema and guide. To compare, open this

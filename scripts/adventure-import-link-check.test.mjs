@@ -3,6 +3,7 @@ import { PROMPT_END_MARKER as GUIDE_END_MARKER } from "../apps/web/src/routes/(m
 import {
   appShellProblems,
   canonicalEquivalence,
+  checkProductionDependencies,
   CTA_HREF,
   discoveryProblems,
   guideProblems,
@@ -235,26 +236,67 @@ describe("adventure import link check", () => {
   });
 
   it("verifies equivalent JSON, ignoring formatting, and exact prompt text", () => {
-    const a = { status: 200, body: '{"a":1,"b":[2]}' };
-    const b = { status: 200, body: '{ "b": [2], "a": 1 }' };
+    const a = {
+      status: 200,
+      contentType: "application/json",
+      body: '{"a":1,"b":[2]}',
+    };
+    const b = {
+      status: 200,
+      contentType: "application/json; charset=utf-8",
+      body: '{ "b": [2], "a": 1 }',
+    };
     expect(canonicalEquivalence("/s.json", a, b)).toEqual({
       note: "verified canonical equivalent: /s.json",
     });
-    const t = { status: 200, body: "text\n" };
+    const t = { status: 200, contentType: "text/plain", body: "text\n" };
     expect(
       canonicalEquivalence("/adventure-import/prompt.txt", t, t).note,
     ).toContain("verified canonical equivalent");
   });
 
-  it("reports different content and a production 404 as problems", () => {
-    const base = { status: 200, body: '{"a":1}' };
+  it("rejects production equivalence when its content type is wrong", () => {
+    const baseJson = {
+      status: 200,
+      contentType: "application/json",
+      body: '{"a":1}',
+    };
+    const basePrompt = {
+      status: 200,
+      contentType: "text/plain",
+      body: "prompt",
+    };
     expect(
-      canonicalEquivalence("/s.json", base, { status: 200, body: '{"a":2}' })
-        .problem,
+      canonicalEquivalence("/s.json", baseJson, {
+        ...baseJson,
+        contentType: "text/html",
+      }).problem,
+    ).toContain("content-type");
+    expect(
+      canonicalEquivalence("/adventure-import/prompt.txt", basePrompt, {
+        ...basePrompt,
+        contentType: "text/html",
+      }).problem,
+    ).toContain("content-type");
+  });
+
+  it("reports different content and a production 404 as problems", () => {
+    const base = {
+      status: 200,
+      contentType: "application/json",
+      body: '{"a":1}',
+    };
+    expect(
+      canonicalEquivalence("/s.json", base, {
+        status: 200,
+        contentType: "application/json",
+        body: '{"a":2}',
+      }).problem,
     ).toContain("differs from production");
     expect(
       canonicalEquivalence("/adventure-import/prompt.txt", base, {
         status: 200,
+        contentType: "text/plain",
         body: '{"a":1}\n',
       }).problem,
     ).toContain("differs");
@@ -343,6 +385,61 @@ describe("adventure import link check", () => {
       expect(result.notes).toContain(
         "verified canonical equivalent: /schemas/adventure-json/v1.json",
       );
+    });
+
+    it("reports redirects for production equivalence and dependencies", async () => {
+      expect(productionLinks(guideHtml)).toContain(
+        "https://codexcryptica.com/schemas/adventure-json/v1.json",
+      );
+      const redirectingFetch = (input) => {
+        const url = new URL(String(input));
+        const entry = routes()[url.pathname] ?? { status: 404 };
+        return {
+          status: entry.status ?? 200,
+          url:
+            url.origin === "https://codexcryptica.com"
+              ? `${url.href}?redirected=1`
+              : url.href,
+          headers: { get: () => entry.contentType ?? "text/plain" },
+          text: async () => entry.body ?? "",
+        };
+      };
+      const result = await withFetch(redirectingFetch, {
+        base: STAGING,
+        strictProduction: false,
+      });
+      expect(
+        result.warnings.some((warning) =>
+          warning.startsWith(
+            "/schemas/adventure-json/v1.json: redirected from",
+          ),
+        ),
+      ).toBe(true);
+      const originalFetch = globalThis.fetch;
+      const warnings = [];
+      const logs = [];
+      globalThis.fetch = async () => ({
+        status: 200,
+        url: "https://codexcryptica.com/schemas/adventure-json/v1.json?redirected=1",
+        headers: { get: () => "application/json" },
+        text: async () => "{}",
+      });
+      try {
+        await checkProductionDependencies(
+          {
+            prodSink: warnings,
+            warnings,
+            log: (message) => logs.push(message),
+          },
+          "https://codexcryptica.com/schemas/adventure-json/v1.json",
+        );
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+      expect(warnings[0]).toContain(
+        "redirected from https://codexcryptica.com",
+      );
+      expect(logs[0]).toContain("?redirected=1");
     });
 
     it("reports a text/html prompt.txt as a content-type problem only", async () => {

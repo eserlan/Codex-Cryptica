@@ -1,5 +1,4 @@
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { tick } from "svelte";
 import {
   render,
   screen,
@@ -28,7 +27,10 @@ import {
   PROMPT_EXAMPLE_OUTPUT,
   PROMPT_TXT_URL,
 } from "./conversion-guide.js";
-import { CANONICAL_ORIGIN } from "./canonical-origin.js";
+import {
+  CANONICAL_ORIGIN,
+  isCanonicalProductionHost,
+} from "./canonical-origin.js";
 import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
@@ -90,11 +92,21 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     );
   });
 
-  it("shows no non-production note when IS_STAGING is false", async () => {
+  it("recognises only the canonical production host", () => {
+    expect(isCanonicalProductionHost("codexcryptica.com")).toBe(true);
+    expect(
+      isCanonicalProductionHost(
+        "factory-065-adventure-import.codex-cryptica.pages.dev",
+      ),
+    ).toBe(false);
+  });
+
+  it("shows the note on non-production hosts when IS_STAGING is false", async () => {
     config.isStaging = false;
     render(Page);
-    await tick();
-    expect(screen.queryByTestId("non-production-canonical-note")).toBeNull();
+    expect(
+      await screen.findByTestId("non-production-canonical-note"),
+    ).toBeTruthy();
   });
 
   it("shows the non-production note with local schema and prompt.txt links when IS_STAGING is true", async () => {
