@@ -96,7 +96,10 @@
       ? 'border-theme-primary bg-theme-primary/10'
       : 'border-theme-primary/40 bg-theme-surface hover:border-theme-primary'}"
   >
-    <div class="flex flex-wrap items-start justify-between gap-3">
+    <div
+      data-testid="adventure-import-header"
+      class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+    >
       <div class="flex min-w-0 flex-1 items-start gap-3">
         <span
           class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-theme-primary/10 text-theme-text"
@@ -104,7 +107,7 @@
         >
           <span class="icon-[lucide--file-json] h-5 w-5"></span>
         </span>
-        <div class="min-w-0 space-y-1">
+        <div class="min-w-0 flex-1 space-y-1">
           <h2
             bind:this={importHeading}
             id="import-adventure-json"
@@ -126,45 +129,53 @@
 
       <button
         type="button"
-        class="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+        class="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-theme-primary px-4 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed sm:w-auto sm:shrink-0"
         data-testid="adventure-import"
         disabled={!canImport}
         onclick={triggerImport}
         aria-describedby="adventure-import-description"
       >
-        <span class="icon-[lucide--file-up] h-4 w-4" aria-hidden="true"></span>
+        <span class="icon-[lucide--file-up] h-4 w-4 shrink-0" aria-hidden="true"
+        ></span>
         Choose Adventure JSON
       </button>
     </div>
 
     <div
-      class="flex flex-wrap items-center justify-between gap-3 border-t border-theme-border/60 pt-3 text-xs text-theme-text"
+      data-testid="adventure-import-footer"
+      class="flex flex-col items-start gap-2.5 border-t border-theme-border/60 pt-3 text-xs text-theme-text sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
     >
       <a
         href={guideHref}
         target="_blank"
         rel="noopener noreferrer"
         data-testid="adventure-import-guide-link"
-        class="inline-flex items-center gap-1.5 font-medium text-theme-text underline underline-offset-4 hover:opacity-80"
+        class="inline-flex max-w-full items-center gap-1.5 font-medium text-theme-text underline underline-offset-4 hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       >
-        <span class="icon-[lucide--book-open] h-3.5 w-3.5" aria-hidden="true"
+        <span
+          class="icon-[lucide--book-open] h-3.5 w-3.5 shrink-0"
+          aria-hidden="true"
         ></span>
-        How to convert a module to Adventure JSON
-        <span class="icon-[lucide--external-link] h-3 w-3" aria-hidden="true"
+        <span class="min-w-0">How to convert a module to Adventure JSON</span>
+        <span
+          class="icon-[lucide--external-link] h-3 w-3 shrink-0"
+          aria-hidden="true"
         ></span>
       </a>
 
       <label
-        class="inline-flex cursor-pointer items-center gap-1.5 rounded-md border border-theme-border px-2.5 py-1 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-theme-primary {canImport
+        class="inline-flex max-w-full cursor-pointer items-center gap-1.5 rounded-md border border-theme-border px-2.5 py-1.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/5 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-theme-text {canImport
           ? ''
-          : 'cursor-not-allowed opacity-60'}"
+          : 'cursor-not-allowed'}"
         data-testid="adventure-experimental-import-label"
       >
         <span
-          class="icon-[lucide--flask-conical] h-3.5 w-3.5"
+          class="icon-[lucide--flask-conical] h-3.5 w-3.5 shrink-0"
           aria-hidden="true"
         ></span>
-        <span>Experimental convenience: Import Markdown or PDF</span>
+        <span class="min-w-0"
+          >Experimental convenience: Import Markdown or PDF</span
+        >
         <input
           bind:this={experimentalFileInput}
           type="file"
