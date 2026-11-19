@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   type AdventureJsonV1,
@@ -6,10 +8,13 @@ import {
 import {
   STAGED_ASSEMBLE_FUNCTION,
   STAGED_ASSEMBLE_SCRIPT,
+  STAGED_CHECK_FUNCTION,
+  STAGED_CHECK_SCRIPT,
   STAGED_CHUNK_PROMPT,
   STAGED_COVERAGE_PROMPT,
   STAGED_FAILURE_MODES,
   STAGED_INVENTORY_PROMPT,
+  STAGED_MANIFEST_EXAMPLE,
 } from "./staged-conversion.js";
 
 type Assemble = (chunks: unknown[]) => {
@@ -255,7 +260,7 @@ describe("staged conversion: assembling chunks (#4896)", () => {
 });
 
 describe("staged conversion: prompts and failure modes (#4896)", () => {
-  it("inventory prompt converts nothing and reports unreadable pages honestly", () => {
+  it("inventory prompt converts nothing, asks for the manifest and reports unreadable pages honestly", () => {
     expect(STAGED_INVENTORY_PROMPT).toContain("inventory only");
     expect(STAGED_INVENTORY_PROMPT).toContain(
       "do not write any Adventure JSON",
@@ -264,49 +269,62 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
     expect(STAGED_INVENTORY_PROMPT).toContain(
       "instead of guessing from the title",
     );
+    expect(STAGED_INVENTORY_PROMPT).toContain("adventure-checkpoint/v1.json");
+    expect(STAGED_INVENTORY_PROMPT).toContain('"status" to "partial"');
+    expect(STAGED_INVENTORY_PROMPT).toContain('"metadata"');
+    expect(STAGED_INVENTORY_PROMPT).toContain('"page"');
+    expect(STAGED_INVENTORY_PROMPT).toContain(
+      "Every owned id must carry its page or anchor",
+    );
   });
 
-  it("section prompt keeps ids stable, forbids bridges and requires a completion record", () => {
-    expect(STAGED_CHUNK_PROMPT).toContain("exactly the ids from the inventory");
+  it("section prompt is a self-contained handoff with a separate completion delta", () => {
+    expect(STAGED_CHUNK_PROMPT).not.toMatch(/earlier/i);
     expect(STAGED_CHUNK_PROMPT).toContain(
-      'top-level "extensions" when present',
+      "complete Adventure JSON v1 conversion prompt",
     );
+    expect(STAGED_CHUNK_PROMPT).toContain("checkpoint manifest JSON");
+    expect(STAGED_CHUNK_PROMPT).toContain("one section key");
+    expect(STAGED_CHUNK_PROMPT).toContain("unchanged");
+    expect(STAGED_CHUNK_PROMPT).toContain("Never reconstruct or rephrase it");
     expect(STAGED_CHUNK_PROMPT).toContain(
-      "full mapping unchanged in every chunk",
+      'Define only the ids listed in this section\'s "owns"',
     );
-    expect(STAGED_CHUNK_PROMPT).toContain(
-      "Never invent an entry that belongs to another section",
-    );
-    expect(STAGED_CHUNK_PROMPT).toContain("Never invent anything to connect");
-    expect(STAGED_CHUNK_PROMPT).toContain('"sourceRef" with the page number');
-    expect(STAGED_CHUNK_PROMPT).toContain("completion record");
+    expect(STAGED_CHUNK_PROMPT).toContain("Use the manifest's ids");
+    expect(STAGED_CHUNK_PROMPT).toContain("never invent anything to connect");
+    expect(STAGED_CHUNK_PROMPT).toContain('"unresolved"');
+    expect(STAGED_CHUNK_PROMPT).toContain("do not start a new inventory");
     expect(STAGED_CHUNK_PROMPT).toContain(
       "entire reply the JSON document only",
     );
     expect(STAGED_CHUNK_PROMPT).toContain("as a separate message");
-    expect(STAGED_CHUNK_PROMPT).toContain(
-      "say so in the completion record instead of presenting it as complete",
-    );
+    expect(STAGED_CHUNK_PROMPT).toContain("completion delta");
+    expect(STAGED_CHUNK_PROMPT).toContain('"status": "complete" or "failed"');
+    expect(STAGED_CHUNK_PROMPT).toContain("never a regenerated manifest");
   });
 
   it("uses file page positions and one defining section per entry (from the PDF smoke test)", () => {
     expect(STAGED_INVENTORY_PROMPT).toContain("position in the file");
     expect(STAGED_INVENTORY_PROMPT).toContain("Sections must not overlap");
-    expect(STAGED_INVENTORY_PROMPT).toContain("so defines it");
-    expect(STAGED_CHUNK_PROMPT).toContain("not any number printed on the page");
-    expect(STAGED_CHUNK_PROMPT).toContain(
-      "define an entry only if the inventory says this section defines it",
+    expect(STAGED_INVENTORY_PROMPT).toContain(
+      "Each entry has one defining section",
     );
+    expect(STAGED_INVENTORY_PROMPT).toContain("do not invent page numbers");
+    expect(STAGED_CHUNK_PROMPT).toContain("not any number printed on the page");
+    expect(STAGED_CHUNK_PROMPT).toContain("never invent a page number");
   });
 
-  it("coverage prompt refuses to assume a section is done", () => {
+  it("coverage prompt relies on the chunk JSON, points at the check script and refuses to assume a section is done", () => {
     expect(STAGED_COVERAGE_PROMPT).toContain("Do not assume a section is done");
     expect(STAGED_COVERAGE_PROMPT).toContain(
       'mark that section "not converted"',
     );
+    expect(STAGED_COVERAGE_PROMPT).toContain("the JSON file for every chunk");
     expect(STAGED_COVERAGE_PROMPT).toContain(
-      "referred to but no section defined",
+      "Do not rely on completion deltas",
     );
+    expect(STAGED_COVERAGE_PROMPT).toContain("node check.js");
+    expect(STAGED_COVERAGE_PROMPT).toContain("no chunk defines");
   });
 
   it("keeps every prompt provider-neutral", () => {
@@ -331,5 +349,195 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
       expect(mode.signs.length).toBeGreaterThan(20);
       expect(mode.fix.length).toBeGreaterThan(20);
     }
+  });
+
+  it("tells a too-large input to start a fresh chat with the prompt, manifest and section key", () => {
+    const fix = STAGED_FAILURE_MODES[1]!.fix;
+    expect(fix).toContain("fresh chat");
+    expect(fix).toContain("manifest");
+    expect(fix).toContain("section key");
+  });
+});
+
+type Problem = { kind: string; message: string };
+type Check = (
+  manifest: unknown,
+  chunks: { file: string; json: unknown }[],
+) => { ok: boolean; problems: Problem[] };
+
+const check = new Function(
+  `${STAGED_CHECK_FUNCTION}; return checkStagedChunks;`,
+)() as Check;
+
+const FIXTURE_DIR = resolve(
+  import.meta.dirname,
+  "../../../../../../fixtures/adventures/staged-manifest",
+);
+const readFixture = (name: string) =>
+  JSON.parse(readFileSync(resolve(FIXTURE_DIR, name), "utf8"));
+const chunkFiles = ["chunk-01.json", "chunk-02.json", "chunk-03.json"];
+const fresh = () => ({
+  manifest: readFixture("manifest.json"),
+  chunks: chunkFiles.map((file) => ({ file, json: readFixture(file) })),
+});
+const kinds = (manifest: unknown, chunks: { file: string; json: unknown }[]) =>
+  check(manifest, chunks).problems.map((p) => p.kind);
+
+describe("staged conversion: checkpoint manifest check (#5003)", () => {
+  it("passes the full fixture and assembles into valid Adventure JSON v1", () => {
+    const { manifest, chunks } = fresh();
+
+    expect(check(manifest, chunks)).toEqual({ ok: true, problems: [] });
+    const { adventure, errors } = assemble(chunks.map((c) => c.json));
+    expect(errors).toEqual([]);
+    expect(validateAdventureJson(adventure).ok).toBe(true);
+  });
+
+  it("keeps metadata identical to the manifest and ids equal to each section's owns", () => {
+    const { manifest, chunks } = fresh();
+
+    for (const index of [0, 2]) {
+      const json = chunks[index]!.json as Record<string, unknown>;
+      for (const key of Object.keys(manifest.metadata)) {
+        expect(json[key]).toEqual(manifest.metadata[key]);
+      }
+    }
+    manifest.sections.forEach(
+      (section: { owns: { id: string }[] }, index: number) => {
+        const json = chunks[index]!.json as Record<string, { id: string }[]>;
+        const ids = Object.values(json)
+          .filter(Array.isArray)
+          .flatMap((entries) => entries.map((entry) => entry.id));
+        expect(ids.sort()).toEqual(section.owns.map((o) => o.id).sort());
+      },
+    );
+  });
+
+  it("matches the published example and keeps the script and function identical", () => {
+    const example = readFileSync(
+      resolve(
+        FIXTURE_DIR,
+        "../../../apps/web/static/schemas/adventure-checkpoint/examples/staged-manifest.v1.json",
+      ),
+      "utf8",
+    );
+
+    expect(STAGED_MANIFEST_EXAMPLE).toBe(example.trimEnd());
+    expect(STAGED_CHECK_SCRIPT).toContain(STAGED_CHECK_FUNCTION);
+    expect(STAGED_CHECK_SCRIPT).toContain("process.exit(1)");
+    expect(STAGED_CHECK_SCRIPT).not.toContain("writeFileSync");
+  });
+
+  it("reports invalid-manifest and stops", () => {
+    const { manifest, chunks } = fresh();
+
+    expect(check({ ...manifest, manifestVersion: 2 }, chunks)).toEqual({
+      ok: false,
+      problems: [{ kind: "invalid-manifest", message: expect.any(String) }],
+    });
+    expect(kinds({ ...manifest, kind: undefined }, chunks)).toEqual([
+      "invalid-manifest",
+    ]);
+  });
+
+  it("reports metadata-missing from the manifest and from a chunk", () => {
+    const { manifest, chunks } = fresh();
+    const noPremise = { ...manifest, metadata: { ...manifest.metadata } };
+    delete noPremise.metadata.premise;
+    expect(kinds(noPremise, chunks)).toContain("metadata-missing");
+
+    const stripped = structuredClone(chunks);
+    delete (stripped[1]!.json as Record<string, unknown>).title;
+    expect(kinds(manifest, stripped)).toEqual(["metadata-missing"]);
+  });
+
+  it("reports metadata-mismatch for a changed value, but not for key order", () => {
+    const { manifest, chunks } = fresh();
+    const changed = structuredClone(chunks);
+    (changed[0]!.json as Record<string, unknown>).premise = {
+      hook: "Different.",
+      background: "Different.",
+    };
+    expect(kinds(manifest, changed)).toEqual(["metadata-mismatch"]);
+
+    const reordered = structuredClone(chunks);
+    const premise = manifest.metadata.premise;
+    (reordered[0]!.json as Record<string, unknown>).premise = {
+      hook: premise.hook,
+      background: premise.background,
+    };
+    expect(check(manifest, reordered).ok).toBe(true);
+
+    const extra = structuredClone(chunks);
+    (extra[0]!.json as Record<string, unknown>).system = "other";
+    expect(kinds(manifest, extra)).toEqual(["metadata-mismatch"]);
+  });
+
+  it("reports duplicate-owner for a repeated id and a disagreeing shared owner", () => {
+    const { manifest, chunks } = fresh();
+    const duplicated = structuredClone(manifest);
+    duplicated.sections[0].owns.push(duplicated.sections[1].owns[0]);
+    expect(kinds(duplicated, chunks)).toContain("duplicate-owner");
+
+    const shared = structuredClone(manifest);
+    shared.sharedIds[0].owner = "s01";
+    expect(kinds(shared, chunks)).toEqual(["duplicate-owner"]);
+  });
+
+  it("reports unowned-definition, missing-id and count-mismatch", () => {
+    const { manifest, chunks } = fresh();
+    const stray = structuredClone(chunks);
+    const json = stray[0]!.json as Record<string, unknown[]>;
+    json.locations!.push({
+      ...(json.locations![0] as object),
+      id: "town-extra",
+    });
+    expect(kinds(manifest, stray)).toEqual([
+      "unowned-definition",
+      "count-mismatch",
+    ]);
+
+    const dropped = structuredClone(chunks);
+    (dropped[0]!.json as Record<string, unknown[]>).scenes = [];
+    expect(kinds(manifest, dropped)).toEqual(["count-mismatch", "missing-id"]);
+  });
+
+  it("reports missing-chunk and pending-reference when a chunk is dropped", () => {
+    const { manifest, chunks } = fresh();
+    const result = check(manifest, chunks.slice(0, 2));
+
+    expect(result.problems.map((p) => p.kind)).toEqual([
+      "missing-chunk",
+      "pending-reference",
+    ]);
+    expect(result.problems[0]!.message).toContain("s03");
+    expect(result.problems[1]!.message).toContain("deep-actor-warden");
+  });
+
+  it("reports unknown-chunk and manifest-in-chunk", () => {
+    const { manifest, chunks } = fresh();
+    const extra = [...chunks, { file: "chunk-09.json", json: {} }];
+    expect(kinds(manifest, extra)).toEqual(["unknown-chunk"]);
+
+    const pasted = structuredClone(chunks);
+    (pasted[2]!.json as Record<string, unknown>).kind = manifest.kind;
+    expect(kinds(manifest, pasted)).toEqual(["manifest-in-chunk"]);
+  });
+
+  it("reports uncovered pages as merged ranges, and skips unpaginated sources", () => {
+    const { manifest, chunks } = fresh();
+    const gap = structuredClone(manifest);
+    gap.sections[1].pages = { from: 51, to: 80 };
+    gap.source.unreadable = [{ from: 116, to: 120 }];
+    const problems = check(gap, chunks).problems.filter(
+      (p) => p.kind === "uncovered-range",
+    );
+    expect(problems.map((p) => p.message)).toEqual([
+      expect.stringContaining("pages 41-50"),
+      expect.stringContaining("pages 111-115"),
+    ]);
+
+    gap.source.pageCount = null;
+    expect(kinds(gap, chunks)).not.toContain("uncovered-range");
   });
 });
