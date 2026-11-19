@@ -28,7 +28,8 @@
     <button
       type="button"
       onclick={onDiscard}
-      class="rounded-lg border border-theme-text px-3 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-theme-surface/60"
+      disabled={isRetrying}
+      class="rounded-lg border border-theme-text px-3 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-theme-surface/60 disabled:cursor-not-allowed disabled:opacity-100"
     >
       Discard
     </button>
@@ -36,7 +37,7 @@
       type="button"
       onclick={onRetry}
       disabled={isRetrying}
-      class="rounded-lg bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-100"
+      class="rounded-lg bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary disabled:cursor-not-allowed disabled:opacity-100"
     >
       Retry
     </button>

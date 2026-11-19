@@ -91,7 +91,10 @@ describe("SeoImportService", () => {
       {
         content: "A brave elven warrior.",
         lore: "Strength: 18",
-        labels: ["custom-label"],
+        labels: expect.arrayContaining([
+          "custom-label",
+          expect.stringMatching(/^__codex_pending_import:/),
+        ]),
         status: "active",
         discoverySource: "kanka:character:101",
         systemId: "tales-of-the-valiant",
@@ -100,6 +103,109 @@ describe("SeoImportService", () => {
     );
     expect(mockVaultStore.selectedEntityId).toBe("e1");
     expect(localStorage.getItem("__codex_pending_import")).toBeNull();
+  });
+
+  it("does not reuse progress for distinct payloads with a colliding 32-bit hash", async () => {
+    let calls = 0;
+    mockVaultStore.createEntity = vi
+      .fn()
+      .mockImplementation(async (_type, title, options) => {
+        calls++;
+        if (calls === 2) throw new Error("disk full");
+        const id = `id-${title}-${calls}`;
+        mockVaultStore.entities[id] = { id, title, labels: options.labels };
+        return id;
+      });
+    localStorage.setItem(
+      "__codex_pending_import",
+      JSON.stringify([
+        { type: "note", title: "Ad", content: "same" },
+        { type: "note", title: "Tail", content: "tail" },
+      ]),
+    );
+    await service.checkAndHandlePendingImport();
+
+    mockVaultStore.createEntity.mockImplementation(
+      async (_type: string, title: string, options: { labels: string[] }) => {
+        const id = `id-${title}-${++calls}`;
+        mockVaultStore.entities[id] = { id, title, labels: options.labels };
+        return id;
+      },
+    );
+    localStorage.setItem(
+      "__codex_pending_import",
+      JSON.stringify([
+        { type: "note", title: "BC", content: "same" },
+        { type: "note", title: "Tail", content: "tail" },
+      ]),
+    );
+
+    const result = await service.checkAndHandlePendingImport();
+
+    expect(result).toMatchObject({ status: "imported", rootTitle: "BC" });
+    expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(4);
+    expect(mockVaultStore.entities["id-BC-3"]).toBeDefined();
+  });
+
+  it("recovers created entries without growing the stored progress record", async () => {
+    const drafts = Array.from({ length: 26 }, (_, index) => ({
+      type: "note",
+      title: `Entry ${index}`,
+      content: `Content ${index}`,
+    }));
+    let calls = 0;
+    mockVaultStore.createEntity = vi
+      .fn()
+      .mockImplementation(async (_type, title, options) => {
+        calls++;
+        if (calls === 26) throw new Error("disk full");
+        const id = `id-${title}`;
+        mockVaultStore.entities[id] = { id, title, labels: options.labels };
+        return id;
+      });
+    const originalSetItem = localStorage.setItem;
+    localStorage.setItem = (key, value) => {
+      if (key !== "__codex_pending_import_progress" || value.length < 200) {
+        originalSetItem(key, value);
+      }
+    };
+    localStorage.setItem("__codex_pending_import", JSON.stringify(drafts));
+    await service.checkAndHandlePendingImport();
+
+    expect(Object.keys(mockVaultStore.entities)).toHaveLength(25);
+    localStorage.setItem = originalSetItem;
+    mockVaultStore.createEntity.mockImplementation(
+      async (_type: string, title: string, options: { labels: string[] }) => {
+        const id = `id-${title}`;
+        mockVaultStore.entities[id] = { id, title, labels: options.labels };
+        return id;
+      },
+    );
+
+    const result = await service.checkAndHandlePendingImport();
+
+    expect(result).toMatchObject({ status: "imported", count: 26 });
+    expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(27);
+    expect(Object.keys(mockVaultStore.entities)).toHaveLength(26);
+  });
+
+  it("removes remote Markdown images before saving imported content", async () => {
+    localStorage.setItem(
+      "__codex_pending_import",
+      JSON.stringify({
+        type: "note",
+        title: "Remote image",
+        content: "Before ![tracking pixel](https://example.test/pixel) after",
+      }),
+    );
+
+    await service.checkAndHandlePendingImport();
+
+    expect(mockVaultStore.createEntity).toHaveBeenCalledWith(
+      "note",
+      "Remote image",
+      expect.objectContaining({ content: "Before tracking pixel after" }),
+    );
   });
 
   it("should link a rasterized diagram image to the created entity when present", async () => {
@@ -550,13 +656,24 @@ describe("SeoImportService", () => {
       let n = 0;
       mockVaultStore.createEntity = vi
         .fn()
-        .mockImplementation(async (type: string, title: string) => {
-          n++;
-          if (failOn.includes(n)) throw new Error("disk full");
-          const id = `id-${title}`;
-          mockVaultStore.entities[id] = { id, title, connections: [] };
-          return id;
-        });
+        .mockImplementation(
+          async (
+            type: string,
+            title: string,
+            options: { labels: string[] },
+          ) => {
+            n++;
+            if (failOn.includes(n)) throw new Error("disk full");
+            const id = `id-${title}`;
+            mockVaultStore.entities[id] = {
+              id,
+              title,
+              labels: options.labels,
+              connections: [],
+            };
+            return id;
+          },
+        );
     }
 
     const pair = [

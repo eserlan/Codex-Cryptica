@@ -19,12 +19,16 @@ describe("PendingImportNotice", () => {
     expect(onDiscard).toHaveBeenCalledTimes(1);
   });
 
-  it("disables Retry while a run is in flight", () => {
+  it("disables retry and discard while a run is in flight", () => {
+    const onDiscard = vi.fn();
     render(PendingImportNotice, {
-      props: { isRetrying: true, onRetry: vi.fn(), onDiscard: vi.fn() },
+      props: { isRetrying: true, onRetry: vi.fn(), onDiscard },
     });
 
     const retry = screen.getByRole("button", { name: "Retry" });
+    const discard = screen.getByRole("button", { name: "Discard" });
     expect(retry.hasAttribute("disabled")).toBe(true);
+    expect(discard.hasAttribute("disabled")).toBe(true);
+    expect(onDiscard).not.toHaveBeenCalled();
   });
 });

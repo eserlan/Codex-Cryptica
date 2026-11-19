@@ -82,14 +82,17 @@ interface ImportProgress {
   created: Record<number, { id: string; title: string }>;
 }
 
-/** Cheap deterministic string hash (djb2) so the payload is not copied. */
-function fingerprintOf(payload: string): string {
-  let hash = 5381;
-  for (let i = 0; i < payload.length; i++) {
-    hash = ((hash << 5) + hash + payload.charCodeAt(i)) | 0;
-  }
-  return `${payload.length}:${hash}`;
+/** Collision-resistant identity without copying the payload into progress. */
+async function fingerprintOf(payload: string): Promise<string> {
+  const bytes = new TextEncoder().encode(payload);
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", bytes);
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
 }
+
+const importMarker = (fingerprint: string, index: number) =>
+  `__codex_pending_import:${fingerprint}:${index}`;
 
 /**
  * Picks the batch root: the draft without a `parentReference` that links to
@@ -231,8 +234,8 @@ export class SeoImportService {
     }
   }
 
-  private loadProgress(payload: string): ImportProgress {
-    const fingerprint = fingerprintOf(payload);
+  private async loadProgress(payload: string): Promise<ImportProgress> {
+    const fingerprint = await fingerprintOf(payload);
     const vaultId = this.vaultStore.activeVaultId ?? "";
     const saved = this.readProgress();
     return saved?.fingerprint === fingerprint && saved.vaultId === vaultId
@@ -244,9 +247,30 @@ export class SeoImportService {
     drafts: ImportDraft[],
     payload: string,
   ): Promise<PendingImportResult> {
-    const progress = this.loadProgress(payload);
+    const progress = await this.loadProgress(payload);
     // title → entityId map for wiring [[wiki links]] after creation
     const titleToId = new Map<string, string>();
+    const allEntities = this.vaultStore.allEntities;
+    const titles = new Set(
+      allEntities.map((entity) => entity.title.toLowerCase()),
+    );
+    const entitiesByImportMarker = new Map<
+      string,
+      (typeof allEntities)[number]
+    >();
+    for (const entity of allEntities) {
+      for (const label of entity.labels ?? []) {
+        if (
+          label.startsWith(`__codex_pending_import:${progress.fingerprint}:`)
+        ) {
+          entitiesByImportMarker.set(label, entity);
+        }
+      }
+    }
+
+    // Keep only batch identity in localStorage. Entity markers are the durable
+    // per-entry journal, so checkpoints never rewrite a growing progress blob.
+    this.saveProgress(progress);
 
     for (const [index, draft] of drafts.entries()) {
       const resumed = progress.created[index];
@@ -254,9 +278,13 @@ export class SeoImportService {
       if (resumed && this.vaultStore.entities?.[resumed.id]) {
         created = resumed;
       } else {
-        created = await this.createDraft(draft);
+        const marker = importMarker(progress.fingerprint, index);
+        const recovered = entitiesByImportMarker.get(marker);
+        created = recovered
+          ? { id: recovered.id, title: recovered.title }
+          : await this.createDraft(draft, marker, titles);
         progress.created[index] = created;
-        this.storage.setItem(PROGRESS_KEY, JSON.stringify(progress));
+        titles.add(created.title.toLowerCase());
         await this.linkAttachments(draft, created.title, created.id);
       }
       titleToId.set(created.title.toLowerCase(), created.id);
@@ -267,6 +295,7 @@ export class SeoImportService {
     await this.wireDrafts(drafts, titleToId);
 
     const root = progress.created[pickRootIndex(drafts)];
+    await this.removeImportMarkers(progress);
     this.vaultStore.selectedEntityId = root.id;
     this.discardPendingImport();
 
@@ -308,11 +337,19 @@ export class SeoImportService {
     }
   }
 
-  private uniqueTitle(base: string): string {
-    const taken = (t: string) =>
-      this.vaultStore.allEntities.some(
-        (e) => e.title.toLowerCase() === t.toLowerCase(),
-      );
+  private saveProgress(progress: ImportProgress): void {
+    const serialized = JSON.stringify({
+      fingerprint: progress.fingerprint,
+      vaultId: progress.vaultId,
+    });
+    this.storage.setItem(PROGRESS_KEY, serialized);
+    if (this.storage.getItem(PROGRESS_KEY) !== serialized) {
+      throw new Error("Import progress could not be saved. Please retry.");
+    }
+  }
+
+  private uniqueTitle(base: string, titles: Set<string>): string {
+    const taken = (title: string) => titles.has(title.toLowerCase());
     let title = base;
     let counter = 1;
     while (taken(title)) {
@@ -324,12 +361,17 @@ export class SeoImportService {
 
   private async createDraft(
     draft: ImportDraft,
+    marker: string,
+    titles: Set<string>,
   ): Promise<{ id: string; title: string }> {
-    const title = this.uniqueTitle(draft.title);
+    const title = this.uniqueTitle(draft.title, titles);
     const id = await this.vaultStore.createEntity(draft.type, title, {
-      content: draft.content,
+      content: draft.content.replace(
+        /!\[([^\]]*)\]\(\s*(?:https?:)?\/\/[^)]+\)/gi,
+        "$1",
+      ),
       lore: draft.lore || "",
-      labels: draft.labels,
+      labels: [...draft.labels, marker],
       status: draft.status,
       ...(draft.kind ? { kind: draft.kind } : {}),
       ...(draft.discoverySource
@@ -339,6 +381,18 @@ export class SeoImportService {
       ...(draft.metadata ? { metadata: draft.metadata } : {}),
     });
     return { id, title };
+  }
+
+  private async removeImportMarkers(progress: ImportProgress): Promise<void> {
+    if (typeof this.vaultStore.updateEntity !== "function") return;
+    for (const [index, created] of Object.entries(progress.created)) {
+      const entity = this.vaultStore.entities?.[created.id];
+      const marker = importMarker(progress.fingerprint, Number(index));
+      if (!entity?.labels?.includes(marker)) continue;
+      await this.vaultStore.updateEntity(created.id, {
+        labels: entity.labels.filter((label: string) => label !== marker),
+      });
+    }
   }
 
   /** Best-effort: the entity itself already imported successfully. */
