@@ -172,6 +172,18 @@ function sameJson(a, b) {
   }
 }
 
+function sameAssetBody(path, baseRes, prodRes) {
+  return path === PROMPT_PATH
+    ? baseRes.body === prodRes.body
+    : sameJson(baseRes.body, prodRes.body);
+}
+
+function productionContentTypeProblems(path, response) {
+  return path === PROMPT_PATH
+    ? promptContentTypeProblems(response)
+    : typeProblem(path, response.contentType, isJsonType, "application/json");
+}
+
 /**
  * Pure: compare a base asset with production's. Returns `{ note }` when they
  * match and `{ problem }` when they differ or production cannot be read.
@@ -182,17 +194,10 @@ export function canonicalEquivalence(path, baseRes, prodRes) {
     return {
       problem: `${path}: production returned HTTP ${prodRes.status}, cannot verify canonical equivalent`,
     };
-  const contentTypeProblems =
-    path === PROMPT_PATH
-      ? promptContentTypeProblems(prodRes)
-      : typeProblem(path, prodRes.contentType, isJsonType, "application/json");
+  const contentTypeProblems = productionContentTypeProblems(path, prodRes);
   if (contentTypeProblems.length)
     return { problem: `production ${contentTypeProblems.join("; ")}` };
-  const same =
-    path === PROMPT_PATH
-      ? baseRes.body === prodRes.body
-      : sameJson(baseRes.body, prodRes.body);
-  return same
+  return sameAssetBody(path, baseRes, prodRes)
     ? { note: `verified canonical equivalent: ${path}` }
     : { problem: `${path}: differs from production` };
 }
