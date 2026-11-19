@@ -87,6 +87,23 @@
     class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{text}</pre>
 {/snippet}
 
+{#snippet sectionOption(option: (typeof sectionOptions)[number])}
+  <div class="space-y-3" data-testid="option-{option.id}">
+    <h4 class="font-header font-bold text-base text-theme-text">
+      {option.title}
+    </h4>
+    <p class="text-sm text-theme-text/90">{option.help}</p>
+    {#if option.steps}
+      <ol class="list-decimal pl-6 space-y-1 text-sm text-theme-text/90">
+        {#each option.steps as step (step)}
+          <li>{step}</li>
+        {/each}
+      </ol>
+    {/if}
+    {@render copyBlock(option.copier, option.button, option.text)}
+  </div>
+{/snippet}
+
 <section
   id={STAGED_ANCHOR}
   aria-labelledby="long-adventures-heading"
@@ -156,22 +173,7 @@
       <p class="text-sm text-theme-text/90">{stage.intro}</p>
       {#if stage.id === "chunk"}
         {#each sectionOptions as option (option.id)}
-          <div class="space-y-3" data-testid="option-{option.id}">
-            <h4 class="font-header font-bold text-base text-theme-text">
-              {option.title}
-            </h4>
-            <p class="text-sm text-theme-text/90">{option.help}</p>
-            {#if option.steps}
-              <ol
-                class="list-decimal pl-6 space-y-1 text-sm text-theme-text/90"
-              >
-                {#each option.steps as step (step)}
-                  <li>{step}</li>
-                {/each}
-              </ol>
-            {/if}
-            {@render copyBlock(option.copier, option.button, option.text)}
-          </div>
+          {@render sectionOption(option)}
         {/each}
       {:else if stage.copier}
         {@render copyBlock(stage.copier, stage.button, stage.text)}
