@@ -4,14 +4,45 @@
     STAGED_ANCHOR,
     STAGED_ASSEMBLE_SCRIPT,
     STAGED_CHECK_SCRIPT,
-    STAGED_CHUNK_PROMPT,
     STAGED_COVERAGE_PROMPT,
     STAGED_FAILURE_MODES,
     STAGED_INVENTORY_PROMPT,
     STAGED_MANIFEST_EXAMPLE,
+    STAGED_NEW_CHAT_PROMPT,
+    STAGED_SAME_CHAT_PROMPT,
   } from "./staged-conversion.js";
 
-  const stages = [
+  type Stage =
+    | { id: "chunk"; title: string; intro: string }
+    | {
+        id: "inventory" | "coverage";
+        title: string;
+        intro: string;
+        text: string;
+        button: string;
+        copier: ReturnType<typeof createCopier>;
+      };
+
+  type SectionOption =
+    | {
+        id: "same-chat";
+        title: string;
+        help: string;
+        text: string;
+        button: string;
+        copier: ReturnType<typeof createCopier>;
+      }
+    | {
+        id: "new-chat";
+        title: string;
+        help: string;
+        steps: string[];
+        text: string;
+        button: string;
+        copier: ReturnType<typeof createCopier>;
+      };
+
+  const stages: Stage[] = [
     {
       id: "inventory",
       title: "1. Inventory the source",
@@ -25,10 +56,7 @@
       id: "chunk",
       title: "2. Convert one section at a time",
       intro:
-        "Start a fresh chat for each section, in any assistant, and attach the adventure again. Paste the full canonical conversion prompt above, then the manifest JSON, then one section key such as s02, filling in the bracketed lines. Save the JSON result as the section's chunk file, such as chunk-02.json. The assistant also sends a small completion delta as a separate message: keep it out of the chunk file and merge it into your saved manifest by hand.",
-      text: STAGED_CHUNK_PROMPT,
-      button: "Copy section prompt",
-      copier: createCopier(STAGED_CHUNK_PROMPT),
+        "Use the same chat if it still has the complete conversion prompt, manifest and source. For a fresh chat, attach the section and provide all four items in the new-chat handoff. Save the JSON result as the manifest's chunk file; keep the completion delta separate and merge it into your saved manifest.",
     },
     {
       id: "coverage",
@@ -41,10 +69,101 @@
     },
   ];
 
+  const sectionOptions: SectionOption[] = [
+    {
+      id: "same-chat",
+      title: "Same chat",
+      help: "Use this only when the chat still contains the complete canonical conversion prompt, the checkpoint manifest and the source for this section. Fill in its section key.",
+      text: STAGED_SAME_CHAT_PROMPT,
+      button: "Copy same-chat section prompt",
+      copier: createCopier(STAGED_SAME_CHAT_PROMPT),
+    },
+    {
+      id: "new-chat",
+      title: "New chat",
+      help: "Do not assume the assistant remembers another chat. In a fresh chat, provide these four things in order:",
+      steps: [
+        "The complete canonical conversion prompt (or its prompt.txt link)",
+        "The checkpoint manifest JSON",
+        "The source pages or text for this section",
+        "This prompt, with the section key filled in",
+      ],
+      text: STAGED_NEW_CHAT_PROMPT,
+      button: "Copy new-chat section prompt",
+      copier: createCopier(STAGED_NEW_CHAT_PROMPT),
+    },
+  ];
+
   const scriptCopier = createCopier(STAGED_ASSEMBLE_SCRIPT);
   const manifestCopier = createCopier(STAGED_MANIFEST_EXAMPLE);
   const checkCopier = createCopier(STAGED_CHECK_SCRIPT);
 </script>
+
+{#snippet copyBlock(
+  copier: ReturnType<typeof createCopier>,
+  button: string,
+  text: string,
+)}
+  <button
+    type="button"
+    onclick={copier.copy}
+    class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+  >
+    <span
+      class="{copier.state === 'copied'
+        ? 'icon-[lucide--check]'
+        : 'icon-[lucide--copy]'} h-4 w-4"
+      aria-hidden="true"
+    ></span>
+    {copier.label(button, "Copied")}
+  </button>
+  <pre
+    class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{text}</pre>
+{/snippet}
+
+{#snippet sectionOption(option: SectionOption)}
+  <div class="space-y-3" data-testid="option-{option.id}">
+    <h4 class="font-header font-bold text-base text-theme-text">
+      {option.title}
+    </h4>
+    <p class="text-sm text-theme-text/90">{option.help}</p>
+    {#if "steps" in option}
+      <ol class="list-decimal pl-6 space-y-1 text-sm text-theme-text/90">
+        {#each option.steps as step (step)}
+          <li>{step}</li>
+        {/each}
+      </ol>
+    {/if}
+    {@render copyBlock(option.copier, option.button, option.text)}
+  </div>
+{/snippet}
+
+{#snippet stageContent(stage: Stage)}
+  {#if stage.id === "chunk"}
+    {#each sectionOptions as option (option.id)}
+      {@render sectionOption(option)}
+    {/each}
+  {:else if stage.copier && stage.button && stage.text}
+    {@render copyBlock(stage.copier, stage.button, stage.text)}
+  {/if}
+  {#if stage.id === "coverage"}
+    <button
+      type="button"
+      onclick={checkCopier.copy}
+      class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    >
+      <span
+        class="{checkCopier.state === 'copied'
+          ? 'icon-[lucide--check]'
+          : 'icon-[lucide--copy]'} h-4 w-4"
+        aria-hidden="true"
+      ></span>
+      {checkCopier.label("Copy check script", "Copied")}
+    </button>
+    <pre
+      class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{STAGED_CHECK_SCRIPT}</pre>
+  {/if}
+{/snippet}
 
 <section
   id={STAGED_ANCHOR}
@@ -167,38 +286,7 @@
         {stage.title}
       </h3>
       <p class="text-sm text-theme-text/90">{stage.intro}</p>
-      <button
-        type="button"
-        onclick={stage.copier.copy}
-        class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-      >
-        <span
-          class="{stage.copier.state === 'copied'
-            ? 'icon-[lucide--check]'
-            : 'icon-[lucide--copy]'} h-4 w-4"
-          aria-hidden="true"
-        ></span>
-        {stage.copier.label(stage.button, "Copied")}
-      </button>
-      <pre
-        class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{stage.text}</pre>
-      {#if stage.id === "coverage"}
-        <button
-          type="button"
-          onclick={checkCopier.copy}
-          class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-        >
-          <span
-            class="{checkCopier.state === 'copied'
-              ? 'icon-[lucide--check]'
-              : 'icon-[lucide--copy]'} h-4 w-4"
-            aria-hidden="true"
-          ></span>
-          {checkCopier.label("Copy check script", "Copied")}
-        </button>
-        <pre
-          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{STAGED_CHECK_SCRIPT}</pre>
-      {/if}
+      {@render stageContent(stage)}
     </div>
   {/each}
 

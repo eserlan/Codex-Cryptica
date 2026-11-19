@@ -28,6 +28,17 @@ Read the adventure I attached and list its parts so I can convert it in separate
 
 Do not summarise the story, do not write any Adventure JSON, and do not claim a part is covered unless you can see its source material. If you cannot read the source at all, say so in one sentence instead of guessing from the title.`;
 
+const STAGED_COMPLETION_DELTA_INSTRUCTIONS = `Then, as a separate message, send a completion delta as JSON:
+{
+  "section": "[SECTION KEY]",
+  "file": "[CHUNK FILE]",
+  "counts": { "<collection>": <number of entries> },
+  "pending": [{ "id": "<referenced id>", "referencedBy": "<id containing the reference>", "expectedIn": "<owning section key>" }],
+  "gaps": [{ "section": "<section key>", "anchor": "<source range>", "note": "<what is missing>" }],
+  "status": "complete" or "failed"
+}
+The counts are the entries actually in the chunk. In "pending", list every id referenced by this chunk but defined in a different section, using the manifest's owning section for "expectedIn". Do not list ids defined in this chunk. Each pending item must include "id", "referencedBy" and "expectedIn". Report unreadable, omitted or unclear source material in "gaps", using "pages" instead of "anchor" for a paginated source, and set status to "failed" if the section is incomplete. The delta is never a regenerated manifest: do not repeat the manifest's metadata, sections or sharedIds.`;
+
 export const STAGED_CHUNK_PROMPT = `Stage 2 of 3: convert one section. Everything you need is in this message, in this order: the complete Adventure JSON v1 conversion prompt (ending with its end-marker line), then the checkpoint manifest JSON, then one section key.
 
 Follow all of the conversion prompt's rules, with these changes for this pass only.
@@ -46,7 +57,31 @@ Section key: [PASTE ONE SECTION KEY, SUCH AS s02]
 - Record anything unreadable, omitted or unclear in "unresolved".
 - This pass overrides any automatic staging rule in the conversion prompt. If this section does not fit in one reply, do not start a new inventory: report "failed" in the completion delta below.
 - Deliver the chunk as a file named after the manifest's "chunkFile", such as "chunk-02.json". If you cannot create files, make the entire reply the JSON document only: no Markdown fences or commentary.
-- Then, as a separate message, send a small completion delta as JSON: { "section": "s02", "file": "chunk-02.json", "counts": { "<collection>": <number of entries> }, "pending": [{ "id", "referencedBy", "expectedIn" }], "gaps": [{ "section", "pages" or "anchor", "note" }], "status": "complete" or "failed" }. The "counts" are the entries actually in the chunk. "pending" lists ids you referred to but did not define. If you wait for me, I will ask "completion delta". The delta is never a regenerated manifest: do not repeat the manifest's metadata, sections or sharedIds.`;
+${STAGED_COMPLETION_DELTA_INSTRUCTIONS}`;
+
+/** Stage 2 instructions for a chat that already has the prompt, manifest and source. */
+export const STAGED_SAME_CHAT_PROMPT = `Stage 2 of 3: convert one section in this chat.
+
+Before converting, check that this chat contains the complete canonical Adventure JSON v1 conversion prompt (ending with its standalone end-marker line), the checkpoint manifest from Stage 1, and the source pages or text for this section. If any is missing, do not convert; list what is missing and ask me to provide it. "Continue" alone does not count as having that context.
+
+Convert only the manifest section with this key: [PASTE ONE SECTION KEY, SUCH AS s02]. Follow the complete conversion prompt and the Stage 2 rules below. The source adventure is attached; say so if it is missing. Copy the manifest metadata unchanged, define only ids listed in that section's "owns", and keep all 11 collection arrays. Add sourceRef wherever known. Record unreadable, omitted or unclear material in "unresolved". If the section will not fit in one reply, do not start another inventory: report "failed" in the completion delta. Deliver the chunk as the manifest's chunkFile, as JSON only, never putting the delta in the chunk file.
+
+${STAGED_COMPLETION_DELTA_INSTRUCTIONS}`;
+
+/** A complete handoff for a new chat; no earlier conversation is assumed. */
+export const STAGED_NEW_CHAT_PROMPT = `Stage 2 of 3: convert one section in a new chat. This chat has no earlier context. I will provide these four things in order:
+1. The complete Adventure JSON v1 conversion prompt (or ${CANONICAL_ORIGIN}/adventure-import/prompt.txt if you can open it). It must end with its standalone end-marker line.
+2. The checkpoint manifest JSON from Stage 1. It is a separate checkpoint file, not Adventure JSON.
+3. The source pages or text for this one section.
+4. This Stage 2 prompt with the section key below filled in.
+
+Section key: [PASTE ONE SECTION KEY, SUCH AS s02]
+
+Before converting, check that all four items are present and that the complete conversion prompt has its end-marker line. If anything is missing, do not convert; list what is missing and ask me to provide it. "Continue" alone does not count as having that context.
+
+Follow all rules in the complete conversion prompt. Convert only the manifest section with the key above. Copy its metadata unchanged, define only ids listed in that section's "owns", and keep all 11 collection arrays. Add sourceRef wherever known. Record unreadable, omitted or unclear material in "unresolved". If the section will not fit in one reply, do not start another inventory: report "failed" in the completion delta. Deliver the chunk as the manifest's chunkFile, as JSON only, never putting the delta in the chunk file.
+
+${STAGED_COMPLETION_DELTA_INSTRUCTIONS}`;
 
 export const STAGED_COVERAGE_PROMPT = `Stage 3 of 3: check coverage. Do not convert anything new.
 

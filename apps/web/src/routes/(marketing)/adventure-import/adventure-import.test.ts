@@ -17,6 +17,8 @@ import {
   STAGED_CHUNK_PROMPT,
   STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
+  STAGED_NEW_CHAT_PROMPT,
+  STAGED_SAME_CHAT_PROMPT,
   STAGED_MANIFEST_EXAMPLE,
 } from "./staged-conversion.js";
 import {
@@ -668,6 +670,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(container.textContent).not.toContain(
         "In a chat that already has the canonical conversion prompt",
       );
+      expect(
+        [...container.querySelectorAll("h4")].map((heading) =>
+          heading.textContent?.trim(),
+        ),
+      ).toEqual(["Same chat", "New chat"]);
+      expect(
+        container.querySelectorAll('[data-testid="option-new-chat"] li'),
+      ).toHaveLength(4);
     });
 
     it("discloses hosted processing and gives copy buttons a visible boundary", () => {
@@ -681,7 +691,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("preserving an existing file if a check fails");
 
       const stageButtons = [...section.querySelectorAll("button")];
-      expect(stageButtons).toHaveLength(6);
+      expect(stageButtons).toHaveLength(7);
       for (const button of stageButtons) {
         expect(button.classList.contains("border-theme-text")).toBe(true);
       }
@@ -700,7 +710,10 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         screen.getByRole("button", { name: /Copy inventory prompt/i }),
       );
       await fireEvent.click(
-        screen.getByRole("button", { name: /Copy section prompt/i }),
+        screen.getByRole("button", { name: /Copy same-chat section prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy new-chat section prompt/i }),
       );
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy assemble script/i }),
@@ -714,7 +727,8 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
       expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
         STAGED_INVENTORY_PROMPT,
-        STAGED_CHUNK_PROMPT,
+        STAGED_SAME_CHAT_PROMPT,
+        STAGED_NEW_CHAT_PROMPT,
         STAGED_ASSEMBLE_SCRIPT,
         STAGED_MANIFEST_EXAMPLE,
         STAGED_CHECK_SCRIPT,

@@ -15,6 +15,8 @@ import {
   STAGED_FAILURE_MODES,
   STAGED_INVENTORY_PROMPT,
   STAGED_MANIFEST_EXAMPLE,
+  STAGED_NEW_CHAT_PROMPT,
+  STAGED_SAME_CHAT_PROMPT,
 } from "./staged-conversion.js";
 
 type Assemble = (chunks: unknown[]) => {
@@ -303,6 +305,22 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
     expect(STAGED_CHUNK_PROMPT).toContain("never a regenerated manifest");
   });
 
+  it("same-chat and new-chat prompts preserve the structured pending-reference delta", () => {
+    for (const prompt of [STAGED_SAME_CHAT_PROMPT, STAGED_NEW_CHAT_PROMPT]) {
+      expect(prompt).toContain('"pending": [{ "id": "<referenced id>"');
+      expect(prompt).toContain(
+        '"referencedBy": "<id containing the reference>"',
+      );
+      expect(prompt).toContain('"expectedIn": "<owning section key>"');
+      expect(prompt).toContain(
+        "list every id referenced by this chunk but defined in a different section",
+      );
+      expect(prompt).toContain(
+        'Each pending item must include "id", "referencedBy" and "expectedIn"',
+      );
+    }
+  });
+
   it("uses file page positions and one defining section per entry (from the PDF smoke test)", () => {
     expect(STAGED_INVENTORY_PROMPT).toContain("position in the file");
     expect(STAGED_INVENTORY_PROMPT).toContain("Sections must not overlap");
@@ -527,6 +545,32 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
   it("tells the section pass the source is attached", () => {
     expect(STAGED_CHUNK_PROMPT).toContain(
       "The source adventure is attached; convert only from it, and say so if it is missing.",
+    );
+  });
+
+  it("provides distinct same-chat and self-contained new-chat handoffs", () => {
+    expect(STAGED_SAME_CHAT_PROMPT).toContain("check that this chat contains");
+    expect(STAGED_SAME_CHAT_PROMPT).toContain(
+      "checkpoint manifest from Stage 1",
+    );
+    expect(STAGED_SAME_CHAT_PROMPT).toContain(
+      "If any is missing, do not convert",
+    );
+
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "This chat has no earlier context",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "checkpoint manifest JSON from Stage 1",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "source pages or text for this one section",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "If anything is missing, do not convert",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "[PASTE ONE SECTION KEY, SUCH AS s02]",
     );
   });
 
