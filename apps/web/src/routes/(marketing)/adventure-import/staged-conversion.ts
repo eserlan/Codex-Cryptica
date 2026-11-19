@@ -151,6 +151,7 @@ function checkStagedChunks(manifest, chunks) {
   const optional = ["description", "system", "extensions"];
   const problems = [];
   const add = (kind, message) => problems.push({ kind, message });
+  const quoted = (value) => JSON.stringify(String(value));
   const result = () => ({ ok: problems.length === 0, problems });
   if (!manifest || manifest.kind !== "codex-cryptica.adventure-checkpoint" || manifest.manifestVersion !== 1) {
     add("invalid-manifest", 'The manifest needs kind "codex-cryptica.adventure-checkpoint" and manifestVersion 1.');
@@ -166,7 +167,7 @@ function checkStagedChunks(manifest, chunks) {
   for (const section of sections) {
     for (const entry of section.owns || []) {
       if (owner.has(entry.id) && owner.get(entry.id) !== section.key) {
-        add("duplicate-owner", 'id "' + entry.id + '" is owned by both ' + owner.get(entry.id) + " and " + section.key);
+        add("duplicate-owner", "id " + quoted(entry.id) + " is owned by both " + quoted(owner.get(entry.id)) + " and " + quoted(section.key));
       } else {
         owner.set(entry.id, section.key);
       }
@@ -174,17 +175,17 @@ function checkStagedChunks(manifest, chunks) {
   }
   for (const shared of manifest.sharedIds || []) {
     if (owner.get(shared.id) !== shared.owner) {
-      add("duplicate-owner", 'shared id "' + shared.id + '" says owner ' + shared.owner + " but sections own it as " + (owner.get(shared.id) || "nobody"));
+      add("duplicate-owner", "shared id " + quoted(shared.id) + " says owner " + quoted(shared.owner) + " but sections own it as " + quoted(owner.get(shared.id) || "nobody"));
     }
   }
 
   const known = new Set(sections.map((section) => section.chunkFile));
   const byFile = new Map();
   for (const chunk of chunks) {
-    if (!known.has(chunk.file)) add("unknown-chunk", chunk.file + " matches no section in the manifest");
+    if (!known.has(chunk.file)) add("unknown-chunk", quoted(chunk.file) + " matches no section in the manifest");
     else byFile.set(chunk.file, chunk.json);
     if (chunk.json && ("kind" in chunk.json || "manifestVersion" in chunk.json)) {
-      add("manifest-in-chunk", chunk.file + " has a kind or manifestVersion property; it looks like a manifest");
+      add("manifest-in-chunk", quoted(chunk.file) + " has a kind or manifestVersion property; it looks like a manifest");
     }
   }
 
@@ -192,18 +193,18 @@ function checkStagedChunks(manifest, chunks) {
   for (const section of sections) {
     const json = byFile.get(section.chunkFile);
     if (!json) {
-      add("missing-chunk", section.key + ": " + section.chunkFile + " was not supplied");
+      add("missing-chunk", quoted(section.key) + ": " + quoted(section.chunkFile) + " was not supplied");
       continue;
     }
     for (const key of required.concat(optional)) {
       if (metadata[key] === undefined) {
         if (optional.includes(key) && json[key] !== undefined) {
-          add("metadata-mismatch", section.chunkFile + ": " + key + " is not in the manifest metadata");
+          add("metadata-mismatch", quoted(section.chunkFile) + ": " + key + " is not in the manifest metadata");
         }
       } else if (json[key] === undefined) {
-        add("metadata-missing", section.chunkFile + ": " + key + " is missing");
+        add("metadata-missing", quoted(section.chunkFile) + ": " + key + " is missing");
       } else if (stableJson(json[key]) !== stableJson(metadata[key])) {
-        add("metadata-mismatch", section.chunkFile + ": " + key + " differs from the manifest");
+        add("metadata-mismatch", quoted(section.chunkFile) + ": " + key + " differs from the manifest");
       }
     }
     const owned = new Set((section.owns || []).map((entry) => entry.id));
@@ -214,38 +215,57 @@ function checkStagedChunks(manifest, chunks) {
       for (const entry of entries) {
         present.add(entry.id);
         defined.add(entry.id);
-        if (!owned.has(entry.id)) add("unowned-definition", section.chunkFile + ' defines "' + entry.id + '", which ' + section.key + " does not own");
+        if (!owned.has(entry.id)) add("unowned-definition", quoted(section.chunkFile) + " defines " + quoted(entry.id) + ", which " + quoted(section.key) + " does not own");
       }
       const expected = (section.expectedCounts || {})[name] || 0;
       if (entries.length !== expected) {
-        add("count-mismatch", section.chunkFile + ": " + name + " has " + entries.length + ", expected " + expected);
+        add("count-mismatch", quoted(section.chunkFile) + ": " + name + " has " + entries.length + ", expected " + expected);
       }
     }
     for (const id of owned) {
-      if (!present.has(id)) add("missing-id", section.chunkFile + ' is missing owned id "' + id + '"');
+      if (!present.has(id)) add("missing-id", quoted(section.chunkFile) + " is missing owned id " + quoted(id));
+    }
+
+    if (section.pages) {
+      const sectionRange = section.pages;
+      for (const entry of section.owns || []) {
+        if (!Number.isInteger(entry.page) || entry.page < sectionRange.from || entry.page > sectionRange.to) {
+          add("owned-page-out-of-section", "owned id " + quoted(entry.id) + " has page " + quoted(entry.page) + " outside " + quoted(section.key) + "'s section range");
+        }
+      }
     }
   }
 
   if (typeof (manifest.source || {}).pageCount === "number") {
-    const covered = new Set();
-    const mark = (range) => {
-      for (let page = range.from; page <= range.to; page++) covered.add(page);
-    };
-    for (const section of sections) if (section.pages) mark(section.pages);
-    for (const range of manifest.source.unreadable || []) if (range.from !== undefined) mark(range);
-    let start = 0;
-    for (let page = 1; page <= manifest.source.pageCount + 1; page++) {
-      const missing = page <= manifest.source.pageCount && !covered.has(page);
-      if (missing && !start) start = page;
-      if (!missing && start) {
-        add("uncovered-range", "pages " + start + (page - 1 > start ? "-" + (page - 1) : "") + " are in no section and not listed as unreadable");
-        start = 0;
+    const pageCount = manifest.source.pageCount;
+    const ranges = [];
+    const addRange = (range, label) => {
+      if (!Number.isInteger(range.from) || !Number.isInteger(range.to) || range.from < 1 || range.to < range.from || range.to > pageCount) {
+        add("invalid-page-range", label + " has a range outside 1..pageCount (" + pageCount + ") or with reversed endpoints");
+        return;
       }
+      ranges.push({ from: range.from, to: range.to });
+    };
+    for (const section of sections) if (section.pages) addRange(section.pages, "section " + quoted(section.key));
+    for (const [index, range] of (manifest.source.unreadable || []).entries()) {
+      if (range.from !== undefined) addRange(range, "unreadable range " + (index + 1));
+    }
+    ranges.sort((a, b) => a.from - b.from || a.to - b.to);
+    let nextPage = 1;
+    for (const range of ranges) {
+      if (range.from > nextPage) {
+        const end = range.from - 1;
+        add("uncovered-range", "pages " + nextPage + (end > nextPage ? "-" + end : "") + " are in no section and not listed as unreadable");
+      }
+      nextPage = Math.max(nextPage, range.to + 1);
+    }
+    if (nextPage <= pageCount) {
+      add("uncovered-range", "pages " + nextPage + (pageCount > nextPage ? "-" + pageCount : "") + " are in no section and not listed as unreadable");
     }
   }
 
   for (const entry of manifest.pending || []) {
-    if (!defined.has(entry.id)) add("pending-reference", 'pending id "' + entry.id + '" (from ' + entry.referencedBy + ", expected in " + entry.expectedIn + ") is not defined by any supplied chunk");
+    if (!defined.has(entry.id)) add("pending-reference", "pending id " + quoted(entry.id) + " (from " + quoted(entry.referencedBy) + ", expected in " + quoted(entry.expectedIn) + ") is not defined by any supplied chunk");
   }
   return result();
 }`;

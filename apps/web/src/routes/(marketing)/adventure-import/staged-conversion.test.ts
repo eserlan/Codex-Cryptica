@@ -568,4 +568,45 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
     gap.source.pageCount = null;
     expect(kinds(gap, chunks)).not.toContain("uncovered-range");
   });
+
+  it("rejects section and unreadable ranges outside the source and reversed ranges", () => {
+    const { manifest, chunks } = fresh();
+    const impossible = structuredClone(manifest);
+    impossible.sections[0].pages = { from: 1, to: 100 };
+    impossible.source.unreadable = [{ from: 90, to: 80 }];
+
+    expect(kinds(impossible, chunks)).toContain("invalid-page-range");
+  });
+
+  it("requires each owned entry page to fall inside its defining section", () => {
+    const { manifest, chunks } = fresh();
+    const wrongPage = structuredClone(manifest);
+    wrongPage.sections[0].owns[0].page = 41;
+
+    expect(kinds(wrongPage, chunks)).toContain("owned-page-out-of-section");
+  });
+
+  it("checks very large sources using ranges rather than per-page work", () => {
+    const { manifest, chunks } = fresh();
+    const large = structuredClone(manifest);
+    large.source.pageCount = 100_000_000;
+    large.sections[0].pages = { from: 1, to: 100_000_000 };
+
+    expect(check(large, chunks)).toEqual({ ok: true, problems: [] });
+  });
+
+  it("JSON-quotes model-generated IDs in diagnostics so terminal controls stay escaped", () => {
+    const { manifest, chunks } = fresh();
+    const controlId = "stray-\u001b[2J-id";
+    const altered = structuredClone(chunks);
+    (altered[0]!.json as Record<string, { id: string }[]>).locations.push({
+      id: controlId,
+    });
+
+    const problem = check(manifest, altered).problems.find(
+      (entry) => entry.kind === "unowned-definition",
+    );
+    expect(problem?.message).toContain(JSON.stringify(controlId));
+    expect(problem?.message).not.toContain("\u001b");
+  });
 });
