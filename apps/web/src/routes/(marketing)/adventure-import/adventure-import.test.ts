@@ -757,7 +757,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         const encounter = PROMPT_EXAMPLE_OUTPUT.encounters[0]!;
 
         expect(PROMPT_EXAMPLE_OUTPUT.scenes.length).toBeGreaterThanOrEqual(2);
-        expect(first.branches.length).toBeGreaterThanOrEqual(1);
+        expect(first.branches?.length ?? 0).toBeGreaterThanOrEqual(1);
         expect(
           PROMPT_EXAMPLE_OUTPUT.locations.some(
             (l) => (l.connections?.length ?? 0) >= 1,
