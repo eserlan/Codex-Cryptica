@@ -443,6 +443,7 @@ describe("EntityNode card variants", () => {
     const hoverTitle = await screen.findByTestId("image-only-hover-title");
     expect(hoverTitle.textContent).toContain("Portrait Hero");
     expect(hoverTitle.className).toContain("opacity-0");
+    expect(hoverTitle.className).toContain("group-focus-visible:opacity-100");
   });
 
   it("keeps info overlay visible with opacity-100 when showImageLabels is true", async () => {

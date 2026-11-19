@@ -360,7 +360,7 @@
           <div
             class="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity flex items-center justify-between pointer-events-none {showImageLabels
               ? 'opacity-100'
-              : 'opacity-0 group-hover:opacity-100'}"
+              : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'}"
             data-testid="image-only-hover-title"
           >
             <div class="flex items-center gap-1.5 min-w-0">
