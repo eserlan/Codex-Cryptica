@@ -1,15 +1,15 @@
 {
-  "updated_at": 1795072088,
+  "updated_at": 1795073623,
   "candidates": [
     {
-      "id": "reddit-44466817164-add-referenced-creatures-from-an-adventu",
-      "title": "Add referenced creatures from an adventure package",
-      "body": "When an adventure refers to creatures that aren\u2019t in my vault, I\u2019ve had to enter them again by hand. I added a review step for creature entries referenced by an approved adventure package.\n\n- Review the referenced creatures\n- Choose which entries to add\n- Avoid re-entering those creatures by hand\n\nWould you rather add creature entries during import, or wait until they first appear in play?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/creature-void-siphon.jpg)",
+      "id": "reddit-44466817164-check-hex-crawl-connections-on-the-map",
+      "title": "Check hex-crawl connections on the map",
+      "body": "Markers show where crawl sites are, but they don\u2019t always make the routes between them clear. I added a map overlay for reviewing hex-crawl sites and their connections.\n\n- See crawl sites on the map\n- Review connections between sites\n- Use the geography controls while checking the layout\n\nDo you usually plan routes before placing locations, or work them out afterwards?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/map.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/creature-void-siphon.jpg",
+      "image_url": "https://assets.codexcryptica.com/images/help-blog/map.png",
       "source_id": "44466817164",
       "status": "approved",
-      "created_at": 1795072088
+      "created_at": 1795073622
     }
   ]
 }
