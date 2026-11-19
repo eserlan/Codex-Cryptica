@@ -198,10 +198,7 @@ function checkInput(
   let target: PackageProgressEvent | undefined;
   if (input.supersedes) {
     target = supersedeTarget(events, input) ?? undefined;
-    if (
-      !target ||
-      (input.certainty === "claimed" && target.certainty !== "claimed")
-    ) {
+    if (!target || input.certainty === "claimed") {
       return { reason: "invalid supersede" };
     }
   }
@@ -775,5 +772,5 @@ export function packageProgressPromptSummary(
     // Evict oldest actor facts, then excess actors.
   }
   evictSummaryRecords(summary, over);
-  return summary;
+  return over() ? undefined : summary;
 }
