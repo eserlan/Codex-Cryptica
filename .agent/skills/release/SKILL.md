@@ -30,6 +30,9 @@ Check:
     promote directly.
   - **Minor release** (new user-facing features): run Step 3
     (`write-release-entry`) before promoting.
+  - **Major release** (breaking changes): run Step 3 (`write-release-entry`)
+    before promoting, using the `major` label and a matching `X.0.0`
+    changelog version.
 
 ## 2. Worker Release (`oracle-proxy`, when needed)
 
@@ -62,9 +65,9 @@ Return to the repo root afterwards and record the staging commit, `Current Versi
 > **When only the worker needs updating**: if no web app changes need promotion,
 > stop here after reporting the worker deploy.
 
-## 3. Webapp Changelog & Version Prep (Minor Releases Only)
+## 3. Webapp Changelog & Version Prep (Major and Minor Releases)
 
-For a **minor** release, follow
+For a **major** or **minor** release, follow
 [`write-release-entry`](../../../.agents/skills/write-release-entry/SKILL.md):
 
 1. Prepend the user-focused entry to
@@ -74,9 +77,10 @@ For a **minor** release, follow
 3. Never bump `apps/web/package.json`, `config/index.ts`, or `CACHE_VERSION`
    manually — `merge-staging-to-main.yml` owns all three via
    `scripts/bump-web-version.mjs`.
-4. Ensure the **most recently merged PR into `staging` carries the `minor`
-   label** before promoting.
-5. Push the `🔖 release: vX.Y.0 — <Title>` commit to `staging` (with user
+4. Ensure the **most recently merged PR into `staging` carries the matching
+   `major` or `minor` label** before promoting.
+5. Push the `🔖 release: vX.Y.0 — <Title>` commit for a minor release or
+   `🔖 release: vX.0.0 — <Title>` commit for a major release to `staging` (with user
    confirmation) and wait for `Deploy to Cloudflare Pages` on `staging` to
    finish `success`.
 
@@ -86,12 +90,23 @@ Confirm with the user if they have not already asked to promote, then trigger
 `promote-to-prod.yml` (which promotes the latest successful `staging` build):
 
 ```bash
-gh workflow run promote-to-prod.yml
-sleep 3
-gh run list --workflow promote-to-prod.yml --limit 1 --json databaseId,status,url,createdAt,headBranch
+DISPATCH_ID="$(date -u +%Y%m%dT%H%M%SZ)-$(openssl rand -hex 8)"
+gh workflow run promote-to-prod.yml --ref staging -f dispatch_id="$DISPATCH_ID"
+
+# Poll for the run whose display title contains this invocation's unique ID.
+for attempt in {1..30}; do
+  RUN_ID=$(gh run list --workflow promote-to-prod.yml --event workflow_dispatch \
+    --branch staging --limit 100 --json databaseId,displayTitle |
+    jq -r --arg id "$DISPATCH_ID" \
+      '.[] | select(.displayTitle == ("Promote Staging to Production (" + $id + ")")) | .databaseId' |
+    head -n 1)
+  if [ -n "$RUN_ID" ]; then break; fi
+  sleep 2
+done
+test -n "$RUN_ID" || { echo "Could not find promotion run for dispatch $DISPATCH_ID" >&2; exit 1; }
 ```
 
-Wait for completion and verify:
+Watch the exact run found by the dispatch ID and verify:
 
 ```bash
 gh run watch <run-id> --exit-status
@@ -101,5 +116,5 @@ Report:
 
 - Promotion run URL and conclusion (`success` / `failure`)
 - Worker `Current Version ID` and routes (if deployed in Step 2)
-- Whether it was a `patch` or `minor` release (and release tag / changelog
-  version if `minor`)
+- Whether it was a `patch`, `minor`, or `major` release (and the release tag /
+  changelog version for `minor` or `major`)
