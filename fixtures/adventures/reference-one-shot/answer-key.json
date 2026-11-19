@@ -214,7 +214,7 @@
     {
       "sourceId": "ros-branch-shrine",
       "category": "consequence",
-      "detail": "The clay lamp grants a calm blessing worth one re-roll."
+      "detail": "The clay lamp gives a calm blessing: the next roll can be repeated once."
     },
     {
       "sourceId": "ros-branch-shrine",

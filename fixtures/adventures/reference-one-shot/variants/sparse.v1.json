@@ -433,6 +433,62 @@
         "section": "Scene 4: The Miller's Cellar",
         "anchor": "ros-scene-4-cellar"
       }
+    },
+    {
+      "id": "secret-aldous-cellar",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["actor-aldous-holt", "loc-miller-cellar", "ros-scene-4-cellar"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Scene 4: The Miller's Cellar", "anchor": "ros-scene-4-cellar"}
+    },
+    {
+      "id": "secret-cellar-flood",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["ros-scene-3-wheel-room", "loc-miller-cellar"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Scene 3: The Wheel Room", "anchor": "ros-scene-3-wheel-room"}
+    },
+    {
+      "id": "secret-after-dark",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["ros-scene-1-landing"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Scene 1: The Ferry Landing", "anchor": "ros-scene-1-landing"}
+    },
+    {
+      "id": "secret-yard-noise",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["ros-scene-2-yard", "actor-wick"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Scene 2: The Mill Yard", "anchor": "ros-scene-2-yard"}
+    },
+    {
+      "id": "secret-wick-motivation",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["actor-wick"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Wick", "anchor": "ros-npc-wick"}
+    },
+    {
+      "id": "secret-shrine-blessing",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["ros-branch-shrine", "item-clay-lamp"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Optional Branch: The Reed Shrine", "anchor": "ros-branch-shrine"}
+    },
+    {
+      "id": "secret-ledger-lock",
+      "text": "A hidden fact.",
+      "relatedEntityIds": ["item-mill-ledger", "clue-sluice-sabotage"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {"section": "Scene 2: The Mill Yard", "anchor": "ros-scene-2-yard"}
     }
   ],
   "endings": [

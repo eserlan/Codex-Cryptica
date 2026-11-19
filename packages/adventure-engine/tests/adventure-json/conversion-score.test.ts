@@ -251,6 +251,9 @@ describe("scoreAdventureConversion fidelity", () => {
       (s: { id: string }) => s.id === "ros-scene-3-wheel-room",
     );
     delete scene.conditions;
+    doc.secrets = doc.secrets.filter(
+      (s: { id: string }) => s.id !== "secret-cellar-flood",
+    );
     const result = scoreAdventureConversion(doc, refKey);
     expect(result.dimensions.coverage.status).toBe("pass");
     expect(result.dimensions.fidelity.status).toBe("fail");
@@ -286,6 +289,9 @@ describe("scoreAdventureConversion fidelity", () => {
       (s: { id: string }) => s.id === "ros-scene-3-wheel-room",
     );
     delete scene.conditions;
+    doc.secrets = doc.secrets.filter(
+      (s: { id: string }) => s.id !== "secret-cellar-flood",
+    );
     doc.unresolved.push({
       id: "unresolved-lever",
       code: "dropped-detail",
