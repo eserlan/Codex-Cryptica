@@ -115,6 +115,8 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- TypeScript 6.0.3, Bun 1.3.14 + Staged-conversion checkpoint manifest (`kind: "codex-cryptica.adventure-checkpoint"`, `manifestVersion: 1`): Draft 2020-12 schema `apps/web/static/schemas/adventure-checkpoint/v1.json`, pure `checkStagedChunks` in `apps/web/src/routes/(marketing)/adventure-import/staged-conversion.ts` (with a copyable check script), and fixture `fixtures/adventures/staged-manifest/`. It is a separate checkpoint file, never part of Adventure JSON v1. No storage change. (5003-staged-checkpoint-manifest)
+
 - TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `@codex/adventure-engine` (`buildCreatureProposals`, `buildCreatureEntryText` in `src/adventure-json/creature-proposals.ts`), `schema` (one optional `adventureSource` provenance field on `EntitySchema`), `vault.createEntity`, `saveEntityImageFile`, and the `AdventureCreatureImportDialog` opened from approved package versions. Proposes Creature entries from actors referenced by encounters, with a review and preview before anything is written. No new third-party dependency. (059-adventure-import-create-encounter)
 - Created Creature entries carry optional `adventureSource` (package id/version/hash, actor and encounter ids, source credit), stripped from guest exports by `GuestExporter`; GM-only encounter links go in `lore`; hidden entries get the `hidden` label and `visibility: "hidden"`. Existing entries are reused, never modified. No IndexedDB, OPFS or migration change. (059-adventure-import-create-encounter)
 

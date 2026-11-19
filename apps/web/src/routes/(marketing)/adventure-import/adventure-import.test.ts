@@ -13,9 +13,11 @@ import {
 import Page from "./+page.svelte";
 import {
   STAGED_ASSEMBLE_SCRIPT,
+  STAGED_CHECK_SCRIPT,
   STAGED_CHUNK_PROMPT,
   STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
+  STAGED_MANIFEST_EXAMPLE,
 } from "./staged-conversion.js";
 import {
   CANONICAL_CONVERSION_PROMPT,
@@ -574,11 +576,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
   describe("staged conversion section (#4896)", () => {
     it("uses source ranges that work for paginated and unpaginated material", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain("do not invent page numbers");
       expect(STAGED_INVENTORY_PROMPT).toContain(
-        "If it is not paginated, say that and do not invent page numbers",
-      );
-      expect(STAGED_INVENTORY_PROMPT).toContain(
-        "heading/anchor/source range otherwise",
+        'or an "anchor" (heading or source range) otherwise',
       );
       expect(STAGED_CHUNK_PROMPT).toContain(
         "For unpaginated sources, use the supported section or anchor reference",
@@ -591,22 +591,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         "every expected source-supported entry",
       );
       expect(STAGED_INVENTORY_PROMPT).toContain(
-        "grouped by Adventure JSON collection",
+        'as { "id", "collection", "page" } (or "anchor"',
       );
-      expect(STAGED_CHUNK_PROMPT).toContain(
-        "IDs actually present in each collection",
+      expect(STAGED_COVERAGE_PROMPT).toContain("the JSON file for every chunk");
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "Do not rely on completion deltas",
       );
       expect(STAGED_COVERAGE_PROMPT).toContain(
-        "the JSON files for every chunk",
-      );
-      expect(STAGED_COVERAGE_PROMPT).toContain(
-        "expected-entry checklist with the actual IDs and counts",
-      );
-      expect(STAGED_COVERAGE_PROMPT).toContain(
-        "not as proof that an entry exists",
-      );
-      expect(STAGED_COVERAGE_PROMPT).toContain(
-        "Mark a section converted only when every expected ID",
+        "Mark a section converted only when every id in its",
       );
     });
 
@@ -639,6 +631,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
 
       expect(titles.slice(1)).toEqual([
+        "The checkpoint manifest",
         "1. Inventory the source",
         "2. Convert one section at a time",
         "3. Check coverage against the inventory",
@@ -649,6 +642,32 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("Do not trust an assistant that says");
       expect(text).toContain("This page converts nothing");
       expect(text).toContain("Three different problems");
+    });
+
+    it("explains the manifest, its statuses and links its schema before stage 1", () => {
+      const { container } = render(Page);
+      const manifest = container.querySelector(
+        '[data-testid="stage-manifest"]',
+      )!;
+      const text = manifest.textContent?.replace(/\s+/g, " ") ?? "";
+
+      expect(
+        manifest.compareDocumentPosition(
+          container.querySelector('[data-testid="stage-inventory"]')!,
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        manifest.querySelector(
+          'a[href="/schemas/adventure-checkpoint/v1.json"]',
+        ),
+      ).toBeTruthy();
+      expect(text).toContain("never paste it into, or import it as");
+      expect(text).toContain("fine to resume");
+      expect(text).toContain("only after the check script passes");
+      expect(text).toContain("The rest of the manifest is never regenerated");
+      expect(container.textContent).not.toContain(
+        "In a chat that already has the canonical conversion prompt",
+      );
     });
 
     it("discloses hosted processing and gives copy buttons a visible boundary", () => {
@@ -662,7 +681,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("preserving an existing file if a check fails");
 
       const stageButtons = [...section.querySelectorAll("button")];
-      expect(stageButtons).toHaveLength(4);
+      expect(stageButtons).toHaveLength(6);
       for (const button of stageButtons) {
         expect(button.classList.contains("border-theme-text")).toBe(true);
       }
@@ -686,11 +705,19 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy assemble script/i }),
       );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy example manifest/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy check script/i }),
+      );
 
       expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
         STAGED_INVENTORY_PROMPT,
         STAGED_CHUNK_PROMPT,
         STAGED_ASSEMBLE_SCRIPT,
+        STAGED_MANIFEST_EXAMPLE,
+        STAGED_CHECK_SCRIPT,
       ]);
     });
 
