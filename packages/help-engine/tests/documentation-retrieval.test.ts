@@ -41,6 +41,12 @@ describe("help documentation workflow retrieval", () => {
     ["Is there an auto-layout for Canvas?", "spatial-canvas"],
     ["Does my Canvas layout get saved?", "spatial-canvas"],
     ["Where do I manage stat sheet templates?", "stat-sheets"],
+    ["How do I create reusable species or ancestry traits?", "stat-sheets"],
+    [
+      "Does applying a species or ancestry trait package change base stats?",
+      "stat-sheets",
+    ],
+    ["How do I switch a character's species or ancestry?", "stat-sheets"],
     ["How do I keep a generator draft in the editor?", "in-app-generators"],
     ["How do I pin entities to the front page?", "front-page"],
     ["How do I find entries that have no labels?", "entity-table"],
