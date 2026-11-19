@@ -11,6 +11,7 @@ import {
   type WholeItem,
 } from "@codex/cloud-backup-sync";
 import { resolveOracleProxyUrl } from "../../config/oracle-proxy";
+import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { mapRegistry } from "#lib/stores/map-registry.svelte.js";
 import { mapStore } from "#lib/stores/map.svelte.js";
@@ -677,7 +678,7 @@ export function configureCloudBackup(): void {
     base,
     // A previously consented backup remains protected if the UI flag changes.
     artworkScope: artworkRuntime.scope,
-    ...(import.meta.env.VITE_ADVENTURE_ARTWORK === "true"
+    ...(featureFlags.isEnabled("adventureArtwork")
       ? {
           artworkConsent: artworkRuntime.consent,
         }
