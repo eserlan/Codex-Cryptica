@@ -213,10 +213,12 @@ export const COVERAGE_REPORT_PROMPT = `Now write a short coverage report for the
 Begin with one line, "Previous package:", naming the earlier "id" and "version" if I supplied one, or otherwise saying exactly "No previous package was provided."
 
 Use these four headed lists:
-Covered sections: each source section or page anchor that the JSON covers.
-Missing or shortened: source content that is missing, cut down or merged.
+Covered sections: for each source section or page range, the actual JSON entity IDs that cover it and their "sourceRef" anchors (or page and section).
+Missing or shortened: the operational details you dropped or cut down, such as triggers and timing, clues, alternate outcomes and consequences, listed under the source section each came from. Section names alone are not enough.
 Risky inferences: anything you inferred rather than read in the source.
 Left unresolved: contradictions and unknowns, with the source section for each.
+
+A package can pass the schema and import cleanly and still be missing playable detail.
 
 If you are unsure about something, list it under "Missing or shortened" or "Left unresolved". Do not say the conversion is complete unless "Missing or shortened" and "Left unresolved" are both empty. This report stays outside the JSON file.`;
 
@@ -241,7 +243,7 @@ export const IMPORT_OUTCOMES: ImportOutcome[] = [
   {
     label: "(c) Faithful, reasonably complete adaptation",
     meaning:
-      "Nothing important was left out or changed from your source. Only you and your assistant can judge this.",
+      "Nothing important was left out or changed from your source, and the scenes still carry its triggers, clues, outcomes and consequences, not just every section. Only you and your assistant can judge this.",
     checkedByCodex: false,
   },
 ];

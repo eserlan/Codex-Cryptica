@@ -980,11 +980,23 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("(b) Importable package");
       expect(text).toContain("(c) Faithful, reasonably complete adaptation");
       expect(text).toContain("Codex Cryptica checks only (a) and (b).");
+      expect(text).toContain("triggers, clues, outcomes and consequences");
 
       const coverage = container.querySelector(
         '[aria-label="Coverage report prompt"] pre',
       ) as HTMLPreElement;
       expect(coverage.textContent).toBe(COVERAGE_REPORT_PROMPT);
+      expect(COVERAGE_REPORT_PROMPT).toContain("entity IDs");
+      expect(COVERAGE_REPORT_PROMPT).toContain("sourceRef");
+      expect(COVERAGE_REPORT_PROMPT).toContain(
+        "triggers and timing, clues, alternate outcomes and consequences",
+      );
+      expect(COVERAGE_REPORT_PROMPT).toContain(
+        "pass the schema and import cleanly and still be missing playable detail",
+      );
+      expect(COVERAGE_REPORT_PROMPT).toContain(
+        "Do not say the conversion is complete unless",
+      );
 
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy coverage report prompt/i }),

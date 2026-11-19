@@ -8,6 +8,34 @@ function idGroupsAreUnique(groups: string[][]): boolean {
   return groups.every((ids) => new Set(ids).size === ids.length);
 }
 
+export const ACTIONABLE_DETAIL_CATEGORIES = [
+  "read-aloud",
+  "situation",
+  "interaction",
+  "trigger",
+  "actor-reaction",
+  "clue",
+  "alternate-outcome",
+  "consequence",
+  "gm-only",
+] as const;
+
+/**
+ * A short paraphrase of a fact the source states in one section. Details are
+ * never invented mechanics, transitions or fields outside adventure-json/v1.
+ * A converter should record unsupported inferences in the coverage report or in
+ * `unresolved`; a detail recorded only in `unresolved` still counts as missing.
+ */
+export const ActionableDetailSchema = z
+  .object({
+    sourceId: text,
+    category: z.enum(ACTIONABLE_DETAIL_CATEGORIES),
+    detail: text,
+  })
+  .strict();
+
+export type ActionableDetail = z.infer<typeof ActionableDetailSchema>;
+
 export const ConversionAnswerKeySchema = z
   .object({
     adventureFile: text,
@@ -78,6 +106,7 @@ export const ConversionAnswerKeySchema = z
     endings: z
       .array(z.object({ id: text, description: text, sourceId: text }).strict())
       .min(2),
+    actionableDetails: z.array(ActionableDetailSchema).optional(),
   })
   .strict()
   .refine(
@@ -93,6 +122,15 @@ export const ConversionAnswerKeySchema = z
       message:
         "section sourceIds, secret ids, ending ids, conclusion ids and testimony ids must be unique",
     },
+  )
+  .refine(
+    (k) => {
+      const sourceIds = new Set(k.sections.map((s) => s.sourceId));
+      return (k.actionableDetails ?? []).every((d) =>
+        sourceIds.has(d.sourceId),
+      );
+    },
+    { message: "actionableDetails sourceId must be a sections sourceId" },
   );
 
 export type ConversionAnswerKey = z.infer<typeof ConversionAnswerKeySchema>;
@@ -106,6 +144,7 @@ export const CONVERSION_SCORE_DIMENSIONS = [
   "branches",
   "citations",
   "truncation",
+  "fidelity",
 ] as const;
 
 export type ConversionScoreDimension =
@@ -513,6 +552,45 @@ function scoreTruncation(
   return fail(trailing);
 }
 
+function recordHasText(rec: Entity, detail: string): boolean {
+  let found = false;
+  recordStrings("", rec, (_field, value) => {
+    if (typeof value === "string" && textFoundIn(detail, value)) found = true;
+  });
+  return found;
+}
+
+/**
+ * Each key detail must appear in at least one string field of a record that
+ * cites its section. `unresolved` records never count, so a note that a detail
+ * was dropped cannot hide the omission.
+ */
+function scoreFidelity(
+  value: DocLike,
+  key: ConversionAnswerKey,
+): ConversionScoreDimensionResult {
+  const details = key.actionableDetails ?? [];
+  if (details.length === 0) return { status: "n/a", details: [] };
+  const records = ENTITY_COLLECTIONS.filter(
+    (name) => name !== "unresolved",
+  ).flatMap((name) => value[name] ?? []);
+  const findings: string[] = [];
+  for (const d of details) {
+    const section = key.sections.find((s) => s.sourceId === d.sourceId);
+    if (!section) continue;
+    const citing = records.filter((r) => citesSection(r, section));
+    if (citing.some((r) => recordHasText(r, d.detail))) continue;
+    const cited =
+      citing.length > 0
+        ? `cited by: ${citing.map((r) => r.id).join(", ")}`
+        : "no record cites this section";
+    findings.push(
+      `missing ${d.category} detail in ${section.sourceId} "${section.title}" (${cited}): ${d.detail}`,
+    );
+  }
+  return fail(findings);
+}
+
 function schemaFailedDims(validation: {
   errors: Array<{ code: string; path?: string }>;
 }): Pick<
@@ -524,6 +602,7 @@ function schemaFailedDims(validation: {
   | "branches"
   | "citations"
   | "truncation"
+  | "fidelity"
 > {
   const refErrors = validation.errors.filter(
     (e) => e.code === "UNRESOLVED_REFERENCE" || e.code === "SELF_REFERENCE",
@@ -549,6 +628,7 @@ function schemaFailedDims(validation: {
     branches: blocked(),
     citations: blocked(),
     truncation: blocked(),
+    fidelity: blocked(),
   };
 }
 
@@ -586,6 +666,7 @@ export function scoreAdventureConversion(
       branches: scoreBranches(value, key),
       citations: scoreCitations(entities, key),
       truncation: scoreTruncation(entities, key),
+      fidelity: scoreFidelity(value, key),
     },
     repairIterations,
   );

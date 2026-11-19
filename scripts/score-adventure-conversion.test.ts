@@ -16,6 +16,7 @@ const run = (args: string[]) =>
 
 const REF_CONV = "fixtures/adventures/reference-one-shot/adventure.v1.json";
 const REF_KEY = "fixtures/adventures/reference-one-shot/answer-key.json";
+const SPARSE = "fixtures/adventures/reference-one-shot/variants/sparse.v1.json";
 const CLAUDE = "fixtures/adventures/conversions/claude-adventure.v1.json";
 
 describe("score-adventure-conversion CLI", () => {
@@ -31,9 +32,16 @@ describe("score-adventure-conversion CLI", () => {
       "branches",
       "citations",
       "truncation",
+      "fidelity",
     ]) {
       expect(result.stdout).toContain(dim);
     }
+  });
+
+  it("exits 1 and prints fidelity: fail for the sparse variant", () => {
+    const result = run([SPARSE, REF_KEY]);
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain("fidelity: fail");
   });
 
   it("exits 1 for the existing claude fixture", () => {

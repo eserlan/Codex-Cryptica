@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ActionableDetailSchema } from "../src/adventure-json/conversion-score";
 
 const text = z.string().min(1);
 
@@ -47,6 +48,7 @@ export const ReferenceOneShotKeySchema = z
     endings: z
       .array(z.object({ id: text, description: text, sourceId: text }).strict())
       .min(2),
+    actionableDetails: z.array(ActionableDetailSchema).optional(),
   })
   .strict()
   .refine(
