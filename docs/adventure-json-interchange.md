@@ -79,7 +79,13 @@ The combined `JSON.stringify` length of both lists never exceeds `maxCharacters`
 | `UNRESOLVED_REFERENCE`    | A cross-reference (`parentLocationId`, `targetLocationId`, `factionId`, `locationId`, `sceneId`, `actorIds`, `placedLocationId`, `placedActorId`, `placedSceneId`, `targetEntityId`, `targetSceneId`, etc.) does not exist. |
 | `HIERARCHY_CYCLE`         | Circular `parentLocationId` chain among locations.                                                                                                                                                                          |
 | `DEAD_END_CYCLE`          | Mandatory scene transition cycle with no exit path to a terminal scene.                                                                                                                                                     |
-| `UNREACHABLE_SCENE`       | Non-entry scene (`scenes[1..]`) unreachable from `scenes[0]`.                                                                                                                                                               |
+| `UNREACHABLE_SCENE`       | Non-entry scene (`scenes[1..]`) not reached by a breadth-first walk from `scenes[0]` along `branches[].targetSceneId`, unless an `UNKNOWN_SCENE_PROGRESSION` unresolved entry names it in `relatedEntityId`.                |
+
+### Scene reachability and links
+
+A non-entry scene is reachable when a breadth-first walk from `scenes[0]` that follows only `branches[].targetSceneId` reaches it; a branch from an unreachable scene does not make its target reachable. A scene keeps its real `epistemicStatus` (`"explicit"` for stated scenes) and, when the source leaves its place in the order of play open, takes one `unresolved` entry with `code: "UNKNOWN_SCENE_PROGRESSION"` and `relatedEntityId` set to the scene id. The older exemption for scenes marked `"ambiguous"` is still accepted for backward compatibility but is deprecated.
+
+There are four kinds of link: authored scene transitions go in `branches`; geographic or room adjacency goes in `locations[].connections`, not `branches`; transitions found during play are not part of the package; links the source does not support are never added.
 
 ### Impossible prerequisites (not checked in v1)
 
@@ -94,18 +100,18 @@ The validator does not detect scenes, branches, encounters or endings whose prer
 
 `adventureSourcePackageToAdventureJson(sourcePkg)` converts internal `AdventureSourcePackage` records (`schemaVersion: 1`) into `AdventureJsonV1`:
 
-| `AdventureSourcePackage`         | `AdventureJsonV1`                    | Notes                                                                                                                                                  |
-| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sourceIdentity`, `documentHash` | `id`, `title`, `source`              | `version` defaults to `"1.0.0"`.                                                                                                                       |
-| `sections`                       | `premise`, `sourceRef`, `visibility` | GM-only section bodies are excluded from unclassified premise fields; `pageNumber`/`pageEnd` map to `sourceRef`.                                       |
-| `scenes`                         | `scenes`                             | Preserves `conditions`, `branches`, scene-level `optionalBranch`, and `readAloud`; unknown progression is marked ambiguous and recorded as unresolved. |
-| `npcs`                           | `actors`                             | Allocates unique IDs from stable source IDs and preserves `motivation`.                                                                                |
-| `encounters`                     | `encounters`                         | Maps `alternativeSolutions` and links `sceneId` when present.                                                                                          |
-| `clues`                          | `clues`                              | Maps `primarySourceId` to `placedSceneId` and preserves `alternativeSourceId`.                                                                         |
-| `secrets`                        | `secrets`                            | Always enforces `visibility: "gm-only"`.                                                                                                               |
-| `endings`                        | `endings`                            | Preserves `title` and `description`.                                                                                                                   |
-| `ambiguities`                    | `unresolved`                         | Preserves `code`, `message`, `context`, and `epistemicStatus: "unresolved"`.                                                                           |
-| `provenance`                     | `epistemicStatus`                    | `"source-grounded"` → `"explicit"`, `"suggested"` → `"inferred"`, `"unresolved"` → `"unresolved"`.                                                     |
+| `AdventureSourcePackage`         | `AdventureJsonV1`                    | Notes                                                                                                                                                                            |
+| -------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sourceIdentity`, `documentHash` | `id`, `title`, `source`              | `version` defaults to `"1.0.0"`.                                                                                                                                                 |
+| `sections`                       | `premise`, `sourceRef`, `visibility` | GM-only section bodies are excluded from unclassified premise fields; `pageNumber`/`pageEnd` map to `sourceRef`.                                                                 |
+| `scenes`                         | `scenes`                             | Preserves `conditions`, `branches`, scene-level `optionalBranch`, and `readAloud`; scene status is kept and unknown progression is recorded only as `UNKNOWN_SCENE_PROGRESSION`. |
+| `npcs`                           | `actors`                             | Allocates unique IDs from stable source IDs and preserves `motivation`.                                                                                                          |
+| `encounters`                     | `encounters`                         | Maps `alternativeSolutions` and links `sceneId` when present.                                                                                                                    |
+| `clues`                          | `clues`                              | Maps `primarySourceId` to `placedSceneId` and preserves `alternativeSourceId`.                                                                                                   |
+| `secrets`                        | `secrets`                            | Always enforces `visibility: "gm-only"`.                                                                                                                                         |
+| `endings`                        | `endings`                            | Preserves `title` and `description`.                                                                                                                                             |
+| `ambiguities`                    | `unresolved`                         | Preserves `code`, `message`, `context`, and `epistemicStatus: "unresolved"`.                                                                                                     |
+| `provenance`                     | `epistemicStatus`                    | `"source-grounded"` → `"explicit"`, `"suggested"` → `"inferred"`, `"unresolved"` → `"unresolved"`.                                                                               |
 
 ## Revisions and re-import
 

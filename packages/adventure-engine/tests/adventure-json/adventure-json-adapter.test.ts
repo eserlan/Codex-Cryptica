@@ -304,7 +304,8 @@ describe("AdventureSourcePackage -> AdventureJsonV1 adapter", () => {
 
     const v1 = adventureSourcePackageToAdventureJson(pkg);
     expect(v1.scenes[0]?.branches).toBeUndefined();
-    expect(v1.scenes[1]?.epistemicStatus).toBe("ambiguous");
+    expect(v1.scenes[1]?.epistemicStatus).not.toBe("ambiguous");
+    expect(v1.scenes[1]?.epistemicStatus).toBe("explicit");
     expect(v1.unresolved.map((u) => u.code)).toEqual([
       "UNRESOLVED_BRANCH_TARGET",
       "UNRESOLVED_BRANCH_TARGET",
