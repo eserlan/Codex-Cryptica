@@ -305,6 +305,22 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
     expect(STAGED_CHUNK_PROMPT).toContain("never a regenerated manifest");
   });
 
+  it("same-chat and new-chat prompts preserve the structured pending-reference delta", () => {
+    for (const prompt of [STAGED_SAME_CHAT_PROMPT, STAGED_NEW_CHAT_PROMPT]) {
+      expect(prompt).toContain('"pending": [{ "id": "<referenced id>"');
+      expect(prompt).toContain(
+        '"referencedBy": "<id containing the reference>"',
+      );
+      expect(prompt).toContain('"expectedIn": "<owning section key>"');
+      expect(prompt).toContain(
+        "list every id referenced by this chunk but defined in a different section",
+      );
+      expect(prompt).toContain(
+        'Each pending item must include "id", "referencedBy" and "expectedIn"',
+      );
+    }
+  });
+
   it("uses file page positions and one defining section per entry (from the PDF smoke test)", () => {
     expect(STAGED_INVENTORY_PROMPT).toContain("position in the file");
     expect(STAGED_INVENTORY_PROMPT).toContain("Sections must not overlap");

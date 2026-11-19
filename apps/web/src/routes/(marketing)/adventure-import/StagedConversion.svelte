@@ -12,7 +12,37 @@
     STAGED_SAME_CHAT_PROMPT,
   } from "./staged-conversion.js";
 
-  const stages = [
+  type Stage =
+    | { id: "chunk"; title: string; intro: string }
+    | {
+        id: "inventory" | "coverage";
+        title: string;
+        intro: string;
+        text: string;
+        button: string;
+        copier: ReturnType<typeof createCopier>;
+      };
+
+  type SectionOption =
+    | {
+        id: "same-chat";
+        title: string;
+        help: string;
+        text: string;
+        button: string;
+        copier: ReturnType<typeof createCopier>;
+      }
+    | {
+        id: "new-chat";
+        title: string;
+        help: string;
+        steps: string[];
+        text: string;
+        button: string;
+        copier: ReturnType<typeof createCopier>;
+      };
+
+  const stages: Stage[] = [
     {
       id: "inventory",
       title: "1. Inventory the source",
@@ -39,7 +69,7 @@
     },
   ];
 
-  const sectionOptions = [
+  const sectionOptions: SectionOption[] = [
     {
       id: "same-chat",
       title: "Same chat",
@@ -91,13 +121,13 @@
     class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{text}</pre>
 {/snippet}
 
-{#snippet sectionOption(option: (typeof sectionOptions)[number])}
+{#snippet sectionOption(option: SectionOption)}
   <div class="space-y-3" data-testid="option-{option.id}">
     <h4 class="font-header font-bold text-base text-theme-text">
       {option.title}
     </h4>
     <p class="text-sm text-theme-text/90">{option.help}</p>
-    {#if option.steps}
+    {#if "steps" in option}
       <ol class="list-decimal pl-6 space-y-1 text-sm text-theme-text/90">
         {#each option.steps as step (step)}
           <li>{step}</li>
@@ -108,7 +138,7 @@
   </div>
 {/snippet}
 
-{#snippet stageContent(stage: (typeof stages)[number])}
+{#snippet stageContent(stage: Stage)}
   {#if stage.id === "chunk"}
     {#each sectionOptions as option (option.id)}
       {@render sectionOption(option)}
