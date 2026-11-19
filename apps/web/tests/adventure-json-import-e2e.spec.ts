@@ -28,18 +28,19 @@ function mockTurnResponse(turnIndex: number) {
       ? "Rain lashes the ferry landing by the mill stream. A lantern swings near the gate."
       : "You step into the muddy mill yard as the waterwheel groans overhead.",
     visiblePatch: {
-      placeName: isOpening ? "Ferry Landing" : "Mill Yard",
       ...(isOpening ? {} : { packageSceneId: "ros-scene-2-yard" }),
-      objectives: { add: [], update: [], complete: [] },
-      activeCharacters: { add: [], update: [], remove: [] },
-      knownFacts: { add: [], update: [] },
-      relationships: { add: [], update: [] },
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: { add: [], update: [], removeIds: [] },
+      relationships: { add: [], update: [], removeIds: [] },
     },
     hiddenPatch: {
-      secrets: { add: [], update: [], reveal: [] },
-      gmThreads: { add: [], update: [], resolve: [] },
+      secrets: { add: [], update: [], removeIds: [] },
+      gmThreads: { add: [], update: [], removeIds: [] },
     },
-    provisionalFacts: { add: [] },
+    revealSecretIds: [],
+    provisionalFacts: [],
+    sourceRecordIds: [],
     revealScenarioIds: [],
     elaborateScenarios: [],
     suggestedActions: [
