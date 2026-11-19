@@ -25,7 +25,7 @@
       id: "chunk",
       title: "2. Convert one section at a time",
       intro:
-        "Start a fresh chat for each section, in any assistant. Paste the full canonical conversion prompt above, then the manifest JSON, then one section key such as s02, filling in the bracketed lines. Save the JSON result as the section's chunk file, such as chunk-02.json. The assistant also sends a small completion delta as a separate message: keep it out of the chunk file and merge it into your saved manifest by hand.",
+        "Start a fresh chat for each section, in any assistant, and attach the adventure again. Paste the full canonical conversion prompt above, then the manifest JSON, then one section key such as s02, filling in the bracketed lines. Save the JSON result as the section's chunk file, such as chunk-02.json. The assistant also sends a small completion delta as a separate message: keep it out of the chunk file and merge it into your saved manifest by hand.",
       text: STAGED_CHUNK_PROMPT,
       button: "Copy section prompt",
       copier: createCopier(STAGED_CHUNK_PROMPT),

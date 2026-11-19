@@ -502,6 +502,34 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
     expect(kinds(manifest, dropped)).toEqual(["count-mismatch", "missing-id"]);
   });
 
+  it("ignores unresolved records for ownership and counts, and they never satisfy a pending id", () => {
+    const { manifest, chunks } = fresh();
+    const gap = structuredClone(chunks);
+    (gap[0]!.json as Record<string, unknown[]>).unresolved = [
+      {
+        id: "town-gap",
+        code: "UNREADABLE",
+        message: "A page was unreadable.",
+        epistemicStatus: "unresolved",
+      },
+    ];
+    expect(check(manifest, gap)).toEqual({ ok: true, problems: [] });
+
+    const pending = structuredClone(manifest);
+    pending.pending.push({
+      id: "town-gap",
+      referencedBy: "ridge-clue-oil",
+      expectedIn: "s01",
+    });
+    expect(kinds(pending, gap)).toEqual(["pending-reference"]);
+  });
+
+  it("tells the section pass the source is attached", () => {
+    expect(STAGED_CHUNK_PROMPT).toContain(
+      "The source adventure is attached; convert only from it, and say so if it is missing.",
+    );
+  });
+
   it("reports missing-chunk and pending-reference when a chunk is dropped", () => {
     const { manifest, chunks } = fresh();
     const result = check(manifest, chunks.slice(0, 2));

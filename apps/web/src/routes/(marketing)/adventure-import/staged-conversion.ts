@@ -36,6 +36,7 @@ Follow all of the conversion prompt's rules, with these changes for this pass on
 
 Section key: [PASTE ONE SECTION KEY, SUCH AS s02]
 
+- The source adventure is attached; convert only from it, and say so if it is missing.
 - Convert only the manifest section with that key, using its pages or anchor. Produce a complete Adventure JSON v1 document that contains only entries from this section, and keep all 11 collection arrays (use [] when empty).
 - Copy "metadata" from the manifest unchanged into the top level of the document. Never reconstruct or rephrase it. If the manifest metadata has "extensions", copy them unchanged too.
 - Define only the ids listed in this section's "owns". Use the manifest's ids for every reference, including references to ids another section owns. Never invent an entry that belongs to another section, and never invent anything to connect this section to others.
@@ -208,6 +209,7 @@ function checkStagedChunks(manifest, chunks) {
     const owned = new Set((section.owns || []).map((entry) => entry.id));
     const present = new Set();
     for (const name of names) {
+      if (name === "unresolved") continue;
       const entries = json[name] || [];
       for (const entry of entries) {
         present.add(entry.id);
