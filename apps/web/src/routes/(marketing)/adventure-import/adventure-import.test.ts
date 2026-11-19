@@ -828,6 +828,16 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
   });
 
+  it("shows the horizontal scroll hint before the reference table", () => {
+    render(Page);
+    const tableRegion = screen.getByRole("region", {
+      name: "Reference fields table",
+    });
+    expect(tableRegion.previousElementSibling?.textContent?.trim()).toBe(
+      "Scroll across to see the allowed targets, cardinality and meanings.",
+    );
+  });
+
   it("renders every typed reference and matching prompt guidance", () => {
     render(Page);
     const section = screen.getByRole("region", {

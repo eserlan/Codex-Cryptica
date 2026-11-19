@@ -12,6 +12,9 @@
   >
     Adventure JSON reference fields
   </h2>
+  <p class="text-sm text-theme-text md:hidden">
+    Scroll across to see the allowed targets, cardinality and meanings.
+  </p>
   <!-- svelte-ignore a11y_no_noninteractive_tabindex -- Keyboard users need to scroll the table. -->
   <div
     role="region"
