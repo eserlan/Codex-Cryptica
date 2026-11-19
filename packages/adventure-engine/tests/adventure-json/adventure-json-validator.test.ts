@@ -254,6 +254,29 @@ describe("Adventure JSON v1 semantic validator", () => {
     }
   });
 
+  it("rejects duplicate progression entries for the same unreachable scene", () => {
+    const fixture = loadKeyedSandboxFixture();
+    const target = fixture.scenes[3]!;
+    const progressionEntry = fixture.unresolved.find(
+      (item) => item.relatedEntityId === target.id,
+    )!;
+    fixture.unresolved.push({
+      ...progressionEntry,
+      id: "duplicate-unknown-progression",
+    });
+
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toContainEqual({
+        code: "DUPLICATE_SCENE_PROGRESSION",
+        message: `More than one UNKNOWN_SCENE_PROGRESSION entry names scene "${target.id}".`,
+        path: `unresolved[${fixture.unresolved.length - 1}]`,
+        entityId: "duplicate-unknown-progression",
+      });
+    }
+  });
+
   it("still accepts an unreachable ambiguous scene without a progression entry", () => {
     const fixture = loadKeyedSandboxFixture();
     fixture.scenes[3]!.epistemicStatus = "ambiguous";

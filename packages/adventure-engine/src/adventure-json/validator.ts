@@ -17,7 +17,8 @@ export type AdventureJsonValidationErrorCode =
   | "SELF_REFERENCE"
   | "HIERARCHY_CYCLE"
   | "DEAD_END_CYCLE"
-  | "UNREACHABLE_SCENE";
+  | "UNREACHABLE_SCENE"
+  | "DUPLICATE_SCENE_PROGRESSION";
 
 export interface AdventureJsonValidationError {
   code: AdventureJsonValidationErrorCode;
@@ -468,11 +469,24 @@ function validateSceneReachability(
 ): void {
   if (scenes.length <= 1) return;
 
-  const progressionUnknown = new Set(
-    unresolved
-      .filter((u) => u.code === UNKNOWN_SCENE_PROGRESSION)
-      .map((u) => u.relatedEntityId),
-  );
+  const progressionUnknown = new Set<string>();
+  unresolved.forEach((item, index) => {
+    if (item.code !== UNKNOWN_SCENE_PROGRESSION || !item.relatedEntityId) {
+      return;
+    }
+
+    if (progressionUnknown.has(item.relatedEntityId)) {
+      errors.push({
+        code: "DUPLICATE_SCENE_PROGRESSION",
+        message: `More than one UNKNOWN_SCENE_PROGRESSION entry names scene "${item.relatedEntityId}".`,
+        path: `unresolved[${index}]`,
+        entityId: item.id,
+      });
+      return;
+    }
+
+    progressionUnknown.add(item.relatedEntityId);
+  });
   const entryId = entrySceneId({ scenes })!;
   const reachable = new Set<string>([entryId]);
   const queue: string[] = [entryId];
