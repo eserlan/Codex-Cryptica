@@ -82,8 +82,6 @@ not run. A first-time save / import / review walkthrough has not been recorded.
 
 None found in this work.
 
-- Known mismatch left unfixed by scope: `docs/adventure-json-interchange.md` says Tobiah's motive is the `secret-tobiah-motive` secret, while `reference-one-shot/adventure.v1.json` stores it as a player-visible `motivation`. Fixing it is out of scope here; recorded as a defect.
-
 ## Schema / runtime defects
 
 None found in this work.

@@ -1,0 +1,48 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "long-sample",
+  "title": "Long Sample",
+  "version": "1.0.0",
+  "premise": {
+    "background": "A border town and a ridge tower.",
+    "hook": "Find out why the beacon went dark."
+  },
+  "source": {
+    "title": "Long Sample",
+    "license": "CC0-1.0"
+  },
+  "locations": [
+    {
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "id": "ridge-loc-tower",
+      "name": "Ridge Watchtower",
+      "summary": "A stone signal tower.",
+      "sourceRef": {
+        "page": 45
+      }
+    }
+  ],
+  "actors": [],
+  "factions": [],
+  "scenes": [],
+  "encounters": [],
+  "clues": [
+    {
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "id": "ridge-clue-oil",
+      "text": "The lamp oil is gone.",
+      "placedLocationId": "ridge-loc-tower",
+      "placedActorId": "deep-actor-warden",
+      "sourceRef": {
+        "page": 50
+      }
+    }
+  ],
+  "rumours": [],
+  "items": [],
+  "secrets": [],
+  "endings": [],
+  "unresolved": []
+}
