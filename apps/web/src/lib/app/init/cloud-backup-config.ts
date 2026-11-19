@@ -11,7 +11,6 @@ import {
   type WholeItem,
 } from "@codex/cloud-backup-sync";
 import { resolveOracleProxyUrl } from "../../config/oracle-proxy";
-import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { mapRegistry } from "#lib/stores/map-registry.svelte.js";
 import { mapStore } from "#lib/stores/map.svelte.js";
@@ -678,11 +677,9 @@ export function configureCloudBackup(): void {
     base,
     // A previously consented backup remains protected if the UI flag changes.
     artworkScope: artworkRuntime.scope,
-    ...(featureFlags.isEnabled("adventureArtwork")
-      ? {
-          artworkConsent: artworkRuntime.consent,
-        }
-      : {}),
+    // Keep the service dependency wired for the session. The runtime flag
+    // controls whether the settings are shown, and may turn on after boot.
+    artworkConsent: artworkRuntime.consent,
     timing: timeCloudBackupSave,
     // Everything the consent screen promises: entities, maps, canvases,
     // session journals, and the media the first three reference.

@@ -22,7 +22,7 @@ const KNOWN_FLAG_KEYS = Object.keys(DEFAULT_FEATURE_FLAGS) as FeatureFlagName[];
 function parseEnvironment(
   raw: string | null,
 ): FeatureFlagEnvironment | undefined {
-  if (!raw) return "prod";
+  if (raw === null) return "prod";
   return ALLOWED_ENVIRONMENTS.has(raw as FeatureFlagEnvironment)
     ? (raw as FeatureFlagEnvironment)
     : undefined;

@@ -148,6 +148,12 @@ describe("feature flags worker endpoint (/api/flags)", () => {
     );
     expect(badEnv.status).toBe(400);
 
+    const emptyEnv = await handleFeatureFlagsRequest(
+      new Request("https://oracle-proxy.test/api/flags?env="),
+      makeEnv(),
+    );
+    expect(emptyEnv.status).toBe(400);
+
     const badMethod = await handleFeatureFlagsRequest(
       new Request("https://oracle-proxy.test/api/flags", { method: "POST" }),
       makeEnv(),
