@@ -233,7 +233,7 @@
         {#each sectionOptions as option (option.id)}
           {@render sectionOption(option)}
         {/each}
-      {:else}
+      {:else if stage.copier && stage.button && stage.text}
         {@render copyBlock(stage.copier, stage.button, stage.text)}
       {/if}
       {#if stage.id === "coverage"}

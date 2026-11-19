@@ -670,11 +670,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(container.textContent).not.toContain(
         "In a chat that already has the canonical conversion prompt",
       );
-      expect([...container.querySelectorAll("h4")].map((heading) => heading.textContent?.trim())).toEqual([
-        "Same chat",
-        "New chat",
-      ]);
-      expect(container.querySelectorAll('[data-testid="option-new-chat"] li')).toHaveLength(4);
+      expect(
+        [...container.querySelectorAll("h4")].map((heading) =>
+          heading.textContent?.trim(),
+        ),
+      ).toEqual(["Same chat", "New chat"]);
+      expect(
+        container.querySelectorAll('[data-testid="option-new-chat"] li'),
+      ).toHaveLength(4);
     });
 
     it("discloses hosted processing and gives copy buttons a visible boundary", () => {
@@ -706,8 +709,12 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy inventory prompt/i }),
       );
-      await fireEvent.click(screen.getByRole("button", { name: /Copy same-chat section prompt/i }));
-      await fireEvent.click(screen.getByRole("button", { name: /Copy new-chat section prompt/i }));
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy same-chat section prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy new-chat section prompt/i }),
+      );
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy assemble script/i }),
       );

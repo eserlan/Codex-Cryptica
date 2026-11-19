@@ -533,15 +533,29 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
   });
 
   it("provides distinct same-chat and self-contained new-chat handoffs", () => {
-    expect(STAGED_SAME_CHAT_PROMPT).toContain("in this chat contains");
-    expect(STAGED_SAME_CHAT_PROMPT).toContain("checkpoint manifest from Stage 1");
-    expect(STAGED_SAME_CHAT_PROMPT).toContain("If any is missing, do not convert");
+    expect(STAGED_SAME_CHAT_PROMPT).toContain("check that this chat contains");
+    expect(STAGED_SAME_CHAT_PROMPT).toContain(
+      "checkpoint manifest from Stage 1",
+    );
+    expect(STAGED_SAME_CHAT_PROMPT).toContain(
+      "If any is missing, do not convert",
+    );
 
-    expect(STAGED_NEW_CHAT_PROMPT).toContain("This chat has no earlier context");
-    expect(STAGED_NEW_CHAT_PROMPT).toContain("checkpoint manifest JSON from Stage 1");
-    expect(STAGED_NEW_CHAT_PROMPT).toContain("source pages or text for this one section");
-    expect(STAGED_NEW_CHAT_PROMPT).toContain("If anything is missing, do not convert");
-    expect(STAGED_NEW_CHAT_PROMPT).toContain("[PASTE ONE SECTION KEY, SUCH AS s02]");
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "This chat has no earlier context",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "checkpoint manifest JSON from Stage 1",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "source pages or text for this one section",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "If anything is missing, do not convert",
+    );
+    expect(STAGED_NEW_CHAT_PROMPT).toContain(
+      "[PASTE ONE SECTION KEY, SUCH AS s02]",
+    );
   });
 
   it("reports missing-chunk and pending-reference when a chunk is dropped", () => {
