@@ -1,15 +1,15 @@
 {
-  "updated_at": 1795067505,
+  "updated_at": 1795068965,
   "candidates": [
     {
-      "id": "reddit-44466817164-the-oracle-can-remember-where-an-adventu",
-      "title": "The Oracle can remember where an adventure left off",
-      "body": "When I return to a solo adventure, I can lose track of the current scene or what an NPC thinks of my character. I added progress tracking to Codex Cryptica\u2019s Adventure Oracle so it carries adventure state between turns.\n\n- Scene progress\n- NPC dispositions\n- Character state\n- A spoiler-safe player view\n- An optional GM audit for hidden details\n\nWhen you resume a session, which detail do you most need your notes to preserve?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png)",
+      "id": "reddit-44466817164-send-generator-results-straight-to-a-loc",
+      "title": "Send generator results straight to a local vault",
+      "body": "Copying a useful generator result into campaign notes is one more step where details can get lost. I added a direct handoff from public generators into a local Codex Cryptica vault.\n\n- Send a result into the vault\n- Get a report on what happened during the handoff\n- Follow a recovery path if the transfer is interrupted\n\nIf a handoff stops halfway through, what would you most want to recover first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/entity-shelf/shelf-import-outcome.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png",
+      "image_url": "https://assets.codexcryptica.com/images/blog/entity-shelf/shelf-import-outcome.png",
       "source_id": "44466817164",
       "status": "approved",
-      "created_at": 1795067505
+      "created_at": 1795068965
     }
   ]
 }
