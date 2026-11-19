@@ -1,0 +1,11 @@
+PDF page 2
+The watch opens at dawn. Present the inventory in alphabetical order.
+
+PDF page 4
+Official erratum for PDF page 2: replace “opens at dawn” with “opens at noon”.
+
+PDF page 5
+The bridge is made of timber.
+
+PDF page 6
+Appendix (dated later): the bridge is made of stone.
