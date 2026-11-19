@@ -6,31 +6,31 @@
 
 Prompt version = git commit SHA of `apps/web/src/routes/(marketing)/adventure-import/conversion-guide.ts`.
 
-| Source class | Model name and version | Provider | Date | Input mode | Prompt version | Schema version | Manual interventions | Repair iterations | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| ---------------------- | ---------------------- | -------- | ------- | ---------- | ------------------------------------------ | ----------------- | -------------------- | ----------------- | ------- | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | ------------------------------- |
-| Linear one-shot | not run | not run | not run | not run | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run |
-| Linear one-shot | not run | not run | not run | not run | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run |
-| Non-linear mystery | not run | not run | not run | not run | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run |
-| Non-linear mystery | not run | not run | not run | not run | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run |
-| Long structured module | not run | not run | not run | not run | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | blocked: no fixture (follow-up) |
-| Long structured module | not run | not run | not run | not run | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | not run | blocked: no fixture (follow-up) |
+| Source class           | Model name and version | Provider | Date    | Input mode | Prompt version                             | Schema version    | Manual interventions | Repair iterations | Schema  | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall                         |
+| ---------------------- | ---------------------- | -------- | ------- | ---------- | ------------------------------------------ | ----------------- | -------------------- | ----------------- | ------- | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------------------------------- |
+| Linear one-shot        | not run                | not run  | not run | not run    | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Linear one-shot        | not run                | not run  | not run | not run    | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Non-linear mystery     | not run                | not run  | not run | not run    | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Non-linear mystery     | not run                | not run  | not run | not run    | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Long structured module | not run                | not run  | not run | not run    | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | blocked: no fixture (follow-up) |
+| Long structured module | not run                | not run  | not run | not run    | `0645b7a83f7e44f761025aec482079bb6122022d` | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | blocked: no fixture (follow-up) |
 
 ## Existing fixtures (baseline)
 
 Scored on 2026-11-17 with `bun scripts/score-adventure-conversion.ts <conversion> <answer-key>`. Both existing fixtures fail, as expected: they are conversions of other adventures (The Sunken Belfry, The Glass Observatory), not of The Last Grind, so they do not count as linear-row evidence.
 
-| Fixture | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| ------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | ------- |
-| `claude-adventure.v1.json` vs reference key | pass | pass | fail | fail | n/a | fail | fail | fail | fail | fail |
-| `gpt-adventure.v1.json` vs reference key | pass | pass | fail | fail | n/a | fail | fail | fail | fail | fail |
+| Fixture                                     | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| ------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| `claude-adventure.v1.json` vs reference key | pass   | pass       | fail    | fail     | n/a              | fail     | fail      | fail       | fail     | fail    |
+| `gpt-adventure.v1.json` vs reference key    | pass   | pass       | fail    | fail     | n/a              | fail     | fail      | fail       | fail     | fail    |
 
 Positive controls (hand-written correct conversions):
 
-| Fixture | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| -------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | ------- |
-| Reference one-shot `adventure.v1.json` | pass | pass | pass | pass | n/a | pass | pass | pass | pass | pass |
-| Mystery `adventure.v1.json` | pass | pass | pass | pass | pass | pass | pass | pass | n/a | pass |
-| Reference one-shot `variants/sparse.v1.json` | pass | pass | pass | fail | n/a | pass | pass | pass | fail | fail |
+| Fixture                                      | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `adventure.v1.json`       | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
+| Mystery `adventure.v1.json`                  | pass   | pass       | pass    | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
+| Reference one-shot `variants/sparse.v1.json` | pass   | pass       | pass    | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
 
 ## Reproduction
 
