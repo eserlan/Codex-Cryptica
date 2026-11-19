@@ -88,9 +88,25 @@ Every evaluated turn and run is scored `0` (fail) or `1` (pass) across six dimen
 3. Inspect the **Recap**, **Transcript**, and any **Error** banners (e.g. offline toggle).
 4. **Expect:** Zero GM secrets, canary strings, or raw storage error details appear in any player-visible UI or copy.
 
-### 5. Mobile Viewport Smoke Check (`390x844`)
+### 5. Imported Adventure JSON (`adventure-json/v1`) End-to-End Walkthrough
 
-1. Repeat start, action submission, roll outcome entry, and discovery drawer inspection on a mobile viewport.
+Use `fixtures/adventures/reference-one-shot/adventure.v1.json` (or a converted package scored via [adventure-conversion-qa.md](./adventure-conversion-qa.md) and `bun scripts/score-adventure-conversion.ts`):
+
+1. On **Play → Oracle AI GM**, open **Import Adventure JSON** (`Choose Adventure JSON`) and select the `.json` file.
+   - **Expect:** Local validation succeeds with zero AI calls; the GM review screen shows title, scenes, counts, and `GM-only (locked)` visibility markers, and once approved the package list card never exposes `gm-only` secrets, clues, or hidden notes.
+2. Approve the package, then:
+   - Re-import the exact same file. **Expect:** Recognised as already imported (deduplicated, no duplicate version written).
+   - Import a modified file with the same `id` and a new `version`. **Expect:** Opens a reviewable diff against the predecessor; both versions remain startable and an unused version can be removed, while an in-use version refuses removal with a clear reason.
+3. _(Optional)_ Open **Create Creatures** on the approved package version, review the preview, and confirm.
+   - **Expect:** Created Creature entries match the preview, never overwrite existing Vault entries, and keep encounter links GM-only.
+4. Press **Start** on the approved package, pick a starting scene (if available) and character, and press **Start adventure**.
+   - **Expect:** Session starts cleanly (no `invalid-adventure-setup` / `DataCloneError`), pins `sourcePackage` (`packageId`, `version`, `formatVersion`, `hash`), and opens on the chosen starting scene.
+5. Play 3+ turns including a scene transition and an action that advances package progress, then reload the page.
+   - **Expect:** Scene progress and ledger events survive reload; the spoiler-safe progress view hides `gm-only` secrets/notes unless the GM audit disclosure is explicitly opened; zero `gm-only` text or internal ledger IDs appear in narration, recap, transcript, or guest export.
+
+### 6. Mobile Viewport Smoke Check (`390x844` and `320x844`)
+
+1. Repeat **Import Adventure JSON** (dropzone copy spans readable lines above a full-width upload CTA, no horizontal overflow), start, action submission, roll outcome entry, and discovery drawer inspection on a mobile viewport.
 2. **Expect:** Controls remain reachable without horizontal overflow or clipped modals.
 
 ## Live-Model Baseline Recording Template
@@ -101,3 +117,4 @@ Record one row per evaluated provider/model during manual or live-API benchmark 
 | ---- | ---------------- | ---------------------------------- | ----- | ----------- | -------------------- | --------------------- | --------------- | -------------------------------- | ------------------ |
 |      |                  | Ready-made (50+ turns)             |       |             |                      |                       |                 |                                  |                    |
 |      |                  | World Entry (`explore`, 50+ turns) |       |             |                      |                       |                 |                                  |                    |
+|      |                  | Imported Adventure JSON (`v1`)     |       |             |                      |                       |                 |                                  |                    |
