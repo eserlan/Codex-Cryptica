@@ -1,4 +1,15 @@
 {
-  "updated_at": 1794839896,
-  "candidates": []
+  "updated_at": 1795067505,
+  "candidates": [
+    {
+      "id": "reddit-44466817164-the-oracle-can-remember-where-an-adventu",
+      "title": "The Oracle can remember where an adventure left off",
+      "body": "When I return to a solo adventure, I can lose track of the current scene or what an NPC thinks of my character. I added progress tracking to Codex Cryptica\u2019s Adventure Oracle so it carries adventure state between turns.\n\n- Scene progress\n- NPC dispositions\n- Character state\n- A spoiler-safe player view\n- An optional GM audit for hidden details\n\nWhen you resume a session, which detail do you most need your notes to preserve?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-capabilities-hero.png",
+      "source_id": "44466817164",
+      "status": "approved",
+      "created_at": 1795067505
+    }
+  ]
 }
