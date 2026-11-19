@@ -13,6 +13,32 @@ import type {
   WorldEntryContext,
 } from "@codex/adventure-engine";
 
+function copySourcePackageRef(
+  ref: AdventureSourcePackageRef,
+): AdventureSourcePackageRef {
+  return {
+    packageId: ref.packageId,
+    version: ref.version,
+    formatVersion: ref.formatVersion,
+    hash: ref.hash,
+  };
+}
+
+/** Deep-copies plain JSON-compatible data while stripping Svelte reactive Proxies. */
+function plainClone<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => plainClone(item)) as unknown as T;
+  }
+  if (value !== null && typeof value === "object") {
+    const copy: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      if (entry !== undefined) copy[key] = plainClone(entry);
+    }
+    return copy as T;
+  }
+  return value;
+}
+
 /** An opening is committed once it has a turn or a pending opening roll. */
 export function hasCommittedOpening(
   session: AdventureSession | null | undefined,
@@ -46,7 +72,7 @@ export function initialSession(input: {
     premise: input.premise,
     sourceRecords: input.sourceRecords ?? [],
     ...(input.sourcePackage
-      ? { sourcePackage: structuredClone(input.sourcePackage) }
+      ? { sourcePackage: copySourcePackageRef(input.sourcePackage) }
       : {}),
     ...(input.scenarioSeed
       ? {
@@ -54,7 +80,7 @@ export function initialSession(input: {
             version: 1 as const,
             items: [
               {
-                ...structuredClone(input.scenarioSeed),
+                ...plainClone(input.scenarioSeed),
                 knowledge: "heard" as const,
                 anchorRefs: [],
                 revealedSecretIds: [],
@@ -71,9 +97,7 @@ export function initialSession(input: {
           },
         }
       : {}),
-    ...(input.worldEntry
-      ? { worldEntry: structuredClone(input.worldEntry) }
-      : {}),
+    ...(input.worldEntry ? { worldEntry: plainClone(input.worldEntry) } : {}),
     visibleState: initialVisibleState(input.worldEntry, input.idGenerator),
     hiddenState: initialHiddenState(input.scenarioSeed, input.idGenerator),
     provisionalFacts: [],

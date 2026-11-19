@@ -50,6 +50,21 @@ function classifyOpeningFailure(cause: unknown): AdventureStartFailure {
   return storageFailure(cause) ?? "opening-failed";
 }
 
+function hasSourcePackageValidationIssue(cause: unknown): boolean {
+  if (!cause || typeof cause !== "object" || !("issues" in cause)) return false;
+  const issues = (cause as { issues?: unknown }).issues;
+  return (
+    Array.isArray(issues) &&
+    issues.some(
+      (issue) =>
+        issue &&
+        typeof issue === "object" &&
+        Array.isArray((issue as { path?: unknown }).path) &&
+        (issue as { path: unknown[] }).path[0] === "sourcePackage",
+    )
+  );
+}
+
 export class AdventureOpening {
   private readonly state;
   constructor(private readonly runtime: AdventureRuntime) {
@@ -140,16 +155,20 @@ export class AdventureOpening {
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
   }): AdventureSession {
+    const candidate = initialSession({
+      ...input,
+      now: this.runtime.deps.now(),
+      idGenerator: this.runtime.deps.idGenerator,
+    });
     try {
-      return parseAdventureSession(
-        initialSession({
-          ...input,
-          now: this.runtime.deps.now(),
-          idGenerator: this.runtime.deps.idGenerator,
-        }),
+      return parseAdventureSession(candidate);
+    } catch (cause) {
+      throw new Error(
+        hasSourcePackageValidationIssue(cause)
+          ? "invalid-adventure-package"
+          : "invalid-adventure-setup",
+        { cause },
       );
-    } catch {
-      throw new Error("invalid-adventure-setup");
     }
   }
 
