@@ -370,7 +370,7 @@
       class="{GENERATOR_CANVAS_CLASS} 2xl:max-w-[96rem] py-4 flex items-center justify-between gap-4"
     >
       <p
-        class="text-xs font-bold text-theme-text uppercase tracking-widest font-header"
+        class="text-sm md:text-xs font-bold text-theme-text uppercase tracking-widest font-header"
       >
         {explainerText ??
           `Generate campaign-ready ${generatedNoun} in seconds — no account required.`}
