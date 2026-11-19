@@ -2,6 +2,9 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
+import { AdventureStartDraft } from "./adventure-start-draft.svelte.js";
+import { initialSession } from "#lib/stores/oracle/adventure-session.js";
+import type { AdventureJsonV1 } from "@codex/adventure-engine";
 import AdventureStart from "./AdventureStart.svelte";
 import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
 
@@ -386,5 +389,108 @@ describe("AdventureStart", () => {
     expect(cancelButton.textContent?.trim()).toBe("Cancel prepared adventure");
     await fireEvent.click(cancelButton);
     expect(onCancelScenario).toHaveBeenCalledTimes(1);
+  });
+
+  it("starts a converted package from reactive AdventureStartDraft $state without DataCloneError (#4983)", async () => {
+    const draft = new AdventureStartDraft();
+    const pkg = {
+      id: "starliner-cook",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      title: "Starliner Cook",
+      premise: {
+        hook: "The galley reactor hums.",
+        background: "A freighter drifting off-course.",
+      },
+    } as unknown as AdventureJsonV1;
+    const hash = "a".repeat(64);
+    draft.fromPackage(pkg, hash, "scene-galley");
+
+    let createdSession: ReturnType<typeof initialSession> | null = null;
+    const start = vi.fn(async (input: unknown) => {
+      createdSession = initialSession({
+        ...(input as Parameters<typeof initialSession>[0]),
+        now: "2026-11-19T08:00:00.000Z",
+        idGenerator: () => "id-1",
+      });
+      m.session = { ...createdSession, turns: [{} as never] };
+      return createdSession;
+    });
+    const m = manager(start);
+
+    render(AdventureStart, {
+      props: {
+        manager: m,
+        vaultId: "vault-1",
+        title: draft.title,
+        premise: draft.premise,
+        sourcePackage: draft.sourcePackage,
+        startSceneId: draft.startSceneId,
+      },
+    });
+
+    await fireEvent.input(screen.getByLabelText("Player character"), {
+      target: { value: "Starliner Cook" },
+    });
+    await fireEvent.input(screen.getByLabelText(/Character description/i), {
+      target: { value: "Space man engineer" },
+    });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(createdSession).not.toBeNull();
+    expect(createdSession!.sourcePackage).toEqual({
+      packageId: "starliner-cook",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      hash,
+    });
+    // Verify the passed ref can also be natively structuredClone'd (no Svelte Proxy).
+    const passedInput = (start.mock.calls[0] as unknown[])[0] as {
+      sourcePackage: unknown;
+      startSceneId: string;
+    };
+    expect(() => structuredClone(passedInput.sourcePackage)).not.toThrow();
+    expect(passedInput.startSceneId).toBe("scene-galley");
+  });
+
+  it("shows a privacy-safe package error and preserves choices when package validation fails", async () => {
+    const start = vi.fn(async () => {
+      throw new Error("invalid-adventure-package");
+    });
+    const m = manager(start);
+    render(AdventureStart, {
+      props: {
+        manager: m,
+        vaultId: "vault-1",
+        title: "Starliner Cook",
+        premise: "The galley reactor hums.",
+        sourcePackage: {
+          packageId: "secret-pkg-id",
+          version: "1.0.0",
+          formatVersion: "adventure-json/v1",
+          hash: "bad-hash",
+        },
+      },
+    });
+
+    await fireEvent.input(screen.getByLabelText("Player character"), {
+      target: { value: "Starliner Cook" },
+    });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Start adventure" }),
+    );
+
+    const alert = await screen.findByRole("alert");
+    expect(alert.textContent).toMatch(/package reference is invalid/i);
+    expect(alert.textContent).not.toContain("secret-pkg-id");
+    expect(alert.textContent).not.toContain("bad-hash");
+    expect(alert.textContent).not.toMatch(/too long/i);
+    expect(
+      (screen.getByLabelText("Player character") as HTMLInputElement).value,
+    ).toBe("Starliner Cook");
   });
 });
