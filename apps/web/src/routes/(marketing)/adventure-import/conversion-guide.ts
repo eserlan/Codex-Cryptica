@@ -1,3 +1,4 @@
+import { CANONICAL_ORIGIN } from "./canonical-origin.js";
 import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
 
 /**
@@ -117,8 +118,8 @@ export const INCOMPLETE_PROMPT_FALLBACK =
 
 export const CANONICAL_CONVERSION_PROMPT = `Convert the tabletop RPG adventure I provide into a valid Codex Cryptica Adventure JSON v1 document.
 
-Schema: https://codexcryptica.com/schemas/adventure-json/v1.json
-Guide: https://codexcryptica.com/adventure-import
+Schema: ${CANONICAL_ORIGIN}/schemas/adventure-json/v1.json
+Guide: ${CANONICAL_ORIGIN}/adventure-import
 
 Before converting, confirm you have this whole prompt, from the opening conversion instruction through the standalone line “${PROMPT_END_MARKER}” after the final checklist. If it is missing or cut off, stop. ${INCOMPLETE_PROMPT_FALLBACK} The complete prompt includes the field contract. If the separate schema URL is unavailable, use that contract without asking the user to paste the schema.
 
@@ -243,8 +244,7 @@ export const IMPORT_OUTCOMES: ImportOutcome[] = [
   },
 ];
 
-export const PROMPT_TXT_URL =
-  "https://codexcryptica.com/adventure-import/prompt.txt";
+export const PROMPT_TXT_URL = `${CANONICAL_ORIGIN}/adventure-import/prompt.txt`;
 
 /** Short instruction copied by "Copy guide link" for assistants that can open URLs. */
 export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow the full prompt to convert the attached adventure into Adventure JSON v1. Check that the fetched prompt ends with the standalone line “${PROMPT_END_MARKER}”. If the link is blocked or the prompt is incomplete, stop. ${INCOMPLETE_PROMPT_FALLBACK}`;
