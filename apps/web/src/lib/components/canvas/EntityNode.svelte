@@ -363,35 +363,39 @@
               : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'}"
             data-testid="image-only-hover-title"
           >
-            <div class="flex items-center gap-1.5 min-w-0">
-              <span
-                class="{getIconClass(
-                  category?.icon,
-                )} w-3 h-3 shrink-0 text-white/80"
-                aria-hidden="true"
-              ></span>
-              <span
-                class="text-xs font-bold text-white truncate font-header drop-shadow-sm"
-              >
-                {entity?.title || "Missing Entity"}
-              </span>
+            <div
+              class="flex w-full items-center justify-between gap-2 rounded-md bg-black/90 px-2 py-1"
+            >
+              <div class="flex min-w-0 items-center gap-1.5">
+                <span
+                  class="{getIconClass(
+                    category?.icon,
+                  )} w-3 h-3 shrink-0 text-white/80"
+                  aria-hidden="true"
+                ></span>
+                <span
+                  class="text-xs font-bold text-white truncate font-header drop-shadow-sm"
+                >
+                  {entity?.title || "Missing Entity"}
+                </span>
+              </div>
+              {#if primaryStance.badgeText}
+                <span
+                  class="text-nano font-semibold tracking-wider drop-shadow-sm {primaryStance.stance ===
+                  'ally'
+                    ? 'text-emerald-400'
+                    : primaryStance.stance === 'enemy'
+                      ? 'text-rose-400'
+                      : primaryStance.stance === 'friend'
+                        ? 'text-sky-400'
+                        : primaryStance.stance === 'faction'
+                          ? 'text-amber-400'
+                          : 'text-white/70'}"
+                >
+                  ({primaryStance.badgeText})
+                </span>
+              {/if}
             </div>
-            {#if primaryStance.badgeText}
-              <span
-                class="text-nano font-semibold tracking-wider drop-shadow-sm {primaryStance.stance ===
-                'ally'
-                  ? 'text-emerald-400'
-                  : primaryStance.stance === 'enemy'
-                    ? 'text-rose-400'
-                    : primaryStance.stance === 'friend'
-                      ? 'text-sky-400'
-                      : primaryStance.stance === 'faction'
-                        ? 'text-amber-400'
-                        : 'text-white/70'}"
-              >
-                ({primaryStance.badgeText})
-              </span>
-            {/if}
           </div>
         {:else}
           <div

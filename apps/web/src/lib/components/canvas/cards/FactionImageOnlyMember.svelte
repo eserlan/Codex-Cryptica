@@ -77,7 +77,7 @@
   <div
     class="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/85 via-black/40 to-transparent transition-opacity flex items-center justify-between pointer-events-none {showLabel
       ? 'opacity-100'
-      : 'opacity-0 group-hover/member:opacity-100'}"
+      : 'opacity-0 group-hover/member:opacity-100 group-focus-visible/member:opacity-100'}"
   >
     <span
       class="text-xs font-bold text-white truncate font-header drop-shadow-sm"
