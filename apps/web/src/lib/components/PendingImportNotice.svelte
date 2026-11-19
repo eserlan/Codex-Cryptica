@@ -16,7 +16,7 @@
 >
   <div class="flex items-start gap-2">
     <span
-      class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0 text-theme-danger"
+      class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
       aria-hidden="true"
     ></span>
     <span
@@ -28,7 +28,7 @@
     <button
       type="button"
       onclick={onDiscard}
-      class="rounded-lg border border-theme-border px-3 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-theme-surface/60"
+      class="rounded-lg border border-theme-text px-3 py-1.5 text-xs font-bold uppercase tracking-wider hover:bg-theme-surface/60"
     >
       Discard
     </button>
@@ -36,7 +36,7 @@
       type="button"
       onclick={onRetry}
       disabled={isRetrying}
-      class="rounded-lg bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary hover:brightness-110 disabled:opacity-50"
+      class="rounded-lg bg-theme-primary px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-theme-on-primary hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-100"
     >
       Retry
     </button>

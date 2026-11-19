@@ -1335,6 +1335,7 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     });
 
     it("shows the continuation CTA after offline local generation and keeps telemetry free of generated text", async () => {
+      gotoMock.mockClear();
       const originalOnLine = navigator.onLine;
       Object.defineProperty(navigator, "onLine", {
         configurable: true,
@@ -1635,7 +1636,9 @@ describe("SEOGeneratorLayout Theming Sync", () => {
 
         await fireEvent.click(document.querySelector("#save-to-codex-btn")!);
         await vi.waitFor(() => {
-          expect(document.querySelector('[role="dialog"]')).toBeTruthy();
+          expect(gotoMock).toHaveBeenCalledWith(
+            expect.stringContaining("utm_medium=save-to-vault"),
+          );
         });
 
         const stored = JSON.parse(
