@@ -337,13 +337,17 @@
 
 <svelte:window onkeydown={handleFrontPageOverlayKeydown} />
 
-{#if importFailed}
-  <PendingImportNotice
-    isRetrying={isRetryingImport}
-    onRetry={retryImport}
-    onDiscard={discardImport}
-  />
-{/if}
+{#snippet pendingImportNotice()}
+  {#if importFailed}
+    <PendingImportNotice
+      isRetrying={isRetryingImport}
+      onRetry={retryImport}
+      onDiscard={discardImport}
+    />
+  {/if}
+{/snippet}
+
+{@render pendingImportNotice()}
 
 <div
   class="flex h-full min-h-0 bg-chrome-bg text-chrome-text overflow-hidden relative"

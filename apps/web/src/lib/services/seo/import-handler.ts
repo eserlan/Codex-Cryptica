@@ -82,6 +82,8 @@ interface ImportProgress {
   created: Record<number, { id: string; title: string }>;
 }
 
+type VaultEntity = (typeof vault.allEntities)[number];
+
 /** Collision-resistant identity without copying the payload into progress. */
 async function fingerprintOf(payload: string): Promise<string> {
   const bytes = new TextEncoder().encode(payload);
@@ -254,39 +256,23 @@ export class SeoImportService {
     const titles = new Set(
       allEntities.map((entity) => entity.title.toLowerCase()),
     );
-    const entitiesByImportMarker = new Map<
-      string,
-      (typeof allEntities)[number]
-    >();
-    for (const entity of allEntities) {
-      for (const label of entity.labels ?? []) {
-        if (
-          label.startsWith(`__codex_pending_import:${progress.fingerprint}:`)
-        ) {
-          entitiesByImportMarker.set(label, entity);
-        }
-      }
-    }
+    const entitiesByImportMarker = this.findImportedEntities(
+      allEntities,
+      progress.fingerprint,
+    );
 
     // Keep only batch identity in localStorage. Entity markers are the durable
     // per-entry journal, so checkpoints never rewrite a growing progress blob.
     this.saveProgress(progress);
 
     for (const [index, draft] of drafts.entries()) {
-      const resumed = progress.created[index];
-      let created: { id: string; title: string };
-      if (resumed && this.vaultStore.entities?.[resumed.id]) {
-        created = resumed;
-      } else {
-        const marker = importMarker(progress.fingerprint, index);
-        const recovered = entitiesByImportMarker.get(marker);
-        created = recovered
-          ? { id: recovered.id, title: recovered.title }
-          : await this.createDraft(draft, marker, titles);
-        progress.created[index] = created;
-        titles.add(created.title.toLowerCase());
-        await this.linkAttachments(draft, created.title, created.id);
-      }
+      const created = await this.importDraft(
+        draft,
+        index,
+        progress,
+        titles,
+        entitiesByImportMarker,
+      );
       titleToId.set(created.title.toLowerCase(), created.id);
       // Also index by original draft title in case it was de-duped
       titleToId.set(draft.title.toLowerCase(), created.id);
@@ -306,6 +292,42 @@ export class SeoImportService {
       vaultName: this.registryStore.vaultName,
       rootTitle: root.title,
     };
+  }
+
+  private findImportedEntities(
+    entities: VaultEntity[],
+    fingerprint: string,
+  ): Map<string, VaultEntity> {
+    const prefix = `__codex_pending_import:${fingerprint}:`;
+    const imported = new Map<string, VaultEntity>();
+    for (const entity of entities) {
+      for (const label of entity.labels ?? []) {
+        if (label.startsWith(prefix)) imported.set(label, entity);
+      }
+    }
+    return imported;
+  }
+
+  private async importDraft(
+    draft: ImportDraft,
+    index: number,
+    progress: ImportProgress,
+    titles: Set<string>,
+    entitiesByImportMarker: Map<string, VaultEntity>,
+  ): Promise<{ id: string; title: string }> {
+    const resumed = progress.created[index];
+    if (resumed && this.vaultStore.entities?.[resumed.id]) return resumed;
+
+    const marker = importMarker(progress.fingerprint, index);
+    const recovered = entitiesByImportMarker.get(marker);
+    const created = recovered
+      ? { id: recovered.id, title: recovered.title }
+      : await this.createDraft(draft, marker, titles);
+
+    progress.created[index] = created;
+    titles.add(created.title.toLowerCase());
+    await this.linkAttachments(draft, created.title, created.id);
+    return created;
   }
 
   private parseDrafts(payload: string): ImportDraft[] | null {
