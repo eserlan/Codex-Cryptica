@@ -1,4 +1,5 @@
 import { entrySceneId } from "./entry-scene";
+import { UNKNOWN_SCENE_PROGRESSION } from "./unresolved-codes";
 import type {
   AdventureSourcePackage,
   Provenance,
@@ -158,10 +159,9 @@ function markUnknownSceneProgression(
   for (let i = 1; i < scenes.length; i += 1) {
     const scene = scenes[i]!;
     if (reachable.has(scene.id)) continue;
-    scene.epistemicStatus = "ambiguous";
     extraUnresolved.push({
       id: allocateId(`unresolved-progression-${scene.id}`),
-      code: "UNKNOWN_SCENE_PROGRESSION",
+      code: UNKNOWN_SCENE_PROGRESSION,
       message: `Progression to scene "${scene.title}" is not established in source.`,
       relatedEntityId: scene.id,
       epistemicStatus: "unresolved",

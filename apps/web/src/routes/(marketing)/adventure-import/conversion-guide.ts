@@ -176,8 +176,9 @@ Strict output rules:
    - Do not over-hide. Keep on the visible record whatever players can learn in play (a stated role, public detail, or harmless goal). Do NOT promote NPC testimony, rumours, or handouts to objective truth unless confirmed by the authored text.
 6. Structural integrity:
    - Every entity ID across all collections must be unique and non-empty. All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference. Location parentLocationId chains must not form cycles.
-   - Every non-entry scene with source-supported progression must be reachable via scene branches from scenes[0], with no inescapable mandatory dead-end loops. If progression is unknown, preserve the scene as ambiguous without inventing a branch.
-   - If the source has no authored order (a sandbox or location-based module), list scenes in source order, add branches only where the source states them, set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to, and add one "unresolved" entry saying the order is left to the GM. Do not invent a flow or an ending.
+   - A non-entry scene (scenes[1..]) is reachable when a breadth-first walk that starts at scenes[0] and follows only branches[].targetSceneId reaches it. A branch from an unreachable scene does not make its target reachable. Make every scene with source-supported progression reachable, with no inescapable mandatory dead-end loops.
+   - If the source has no authored order (a sandbox or location-based module), list scenes in source order. An authored scene keeps the "epistemicStatus" its source supports ("explicit" for stated scenes), even when the order of play is left to the players. Add only the branches the source states. For each unreachable non-entry scene, add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION" and "relatedEntityId" set to that scene's id. Never mark a scene "ambiguous" only to pass the reachability check. Do not invent a flow or an ending.
+   - Four kinds of link: authored scene transitions go in "branches"; geographic or room adjacency goes in "locations[].connections", not "branches"; transitions found during play are not part of the package; links the source does not support are never added.
 7. Provenance & copyright:
    - Add "sourceRef" ({ page?: integer >= 1, pageEnd?: integer >= 1, chapter?: non-empty string, section?: non-empty string, anchor?: non-empty string, textQuote?: non-empty string }) wherever known. For a PDF, include "page" (and "pageEnd" when it spans pages) on every entry using the page position in the file, not a number printed on the page.
    - Write concise structured summaries, key dialogue, and room briefs rather than copying large blocks of prose verbatim. Omit playthrough state or session history.
@@ -189,7 +190,7 @@ Strict output rules:
 10. Game mechanics and maps:
    - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions". Keep mechanics only as a short source-grounded paraphrase with "sourceRef" inside "description", "body", "conditions" or "alternativeSolutions[].description", and record any unrepresentable mechanic, stat block or map as an "unresolved" entry naming the source section (never invent values for it).
 
-Sandbox conversion: Put keyed rooms in "locations" and their hazards, opponents and tactical responses in "encounters" or other appropriate collections. Add "scenes" only for authored beats. If any scene outside scenes[0] is unreachable by following branches from scenes[0], give it epistemicStatus "ambiguous" rather than inventing links. A link from another unreachable scene does not make it reachable. Keys, room adjacency and conditional enemy tactics alone do not establish scene progression.
+Sandbox conversion: Put keyed rooms in "locations" and their hazards, opponents and tactical responses in "encounters" or other appropriate collections. Add "scenes" only for authored beats. If any scene outside scenes[0] is unreachable by following branches from scenes[0], keep its source-supported epistemicStatus ("explicit" for authored scenes) and add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION" and "relatedEntityId" set to the scene id, rather than inventing links or marking it "ambiguous". A link from another unreachable scene does not make it reachable. Keys, room adjacency and conditional enemy tactics alone do not establish scene progression.
 
 Final visibility audit: Adding a fact to "secrets" is not enough. Check every copy of it across locations, actors, scenes, encounters, clues, summaries, and the premise. Before discovery, a hidden creature, trap, concealed access, or ambush plan must be absent from all player-visible names, text, IDs, and linked details. Preserve discoverable information in a GM-only record until it is revealed. Keep only sensory details or public facts in visible entries. Do not reproduce stat blocks in visible or GM fields; paraphrase the action or consequence and cite an unresolved entry for mechanics the schema cannot represent.
 
@@ -372,8 +373,8 @@ export const TROUBLESHOOTING_ERRORS: TroubleshootingError[] = [
   {
     code: "UNREACHABLE_SCENE / DEAD_END_LOOP",
     cause:
-      "A scene with source-supported progression cannot be reached from scenes[0], or mandatory transitions form a loop with no path to an ending.",
-    fix: "Connect scenes from scenes[0] via branches[].targetSceneId. If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch.",
+      "A non-entry scene cannot be reached by following branches from scenes[0] and has no UNKNOWN_SCENE_PROGRESSION unresolved entry, or mandatory transitions form a loop with no path to an ending.",
+    fix: 'Connect scenes from scenes[0] via branches[].targetSceneId. Add a branch only when the source states it. When the source leaves progression open, add an unresolved entry with code "UNKNOWN_SCENE_PROGRESSION" and relatedEntityId set to that scene, and do not invent a branch.',
   },
   {
     code: "SECRET_VISIBILITY_VIOLATION",

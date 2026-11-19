@@ -12,6 +12,17 @@ const REFERENCE_FIXTURE_PATH = resolve(
   "fixtures/adventures/reference-one-shot/adventure.v1.json",
 );
 
+const KEYED_SANDBOX_FIXTURE_PATH = resolve(
+  REPO_ROOT,
+  "fixtures/adventures/keyed-sandbox/adventure.v1.json",
+);
+
+function loadKeyedSandboxFixture(): AdventureJsonV1 {
+  return JSON.parse(
+    readFileSync(KEYED_SANDBOX_FIXTURE_PATH, "utf8"),
+  ) as AdventureJsonV1;
+}
+
 function loadReferenceFixture(): AdventureJsonV1 {
   return JSON.parse(
     readFileSync(REFERENCE_FIXTURE_PATH, "utf8"),
@@ -218,6 +229,54 @@ describe("Adventure JSON v1 semantic validator", () => {
       expect(result.errors.some((e) => e.code === "UNREACHABLE_SCENE")).toBe(
         true,
       );
+    }
+  });
+
+  it("validates the keyed sandbox fixture with unreachable explicit scenes", () => {
+    expect(validateAdventureJson(loadKeyedSandboxFixture()).ok).toBe(true);
+  });
+
+  it("raises UNREACHABLE_SCENE once when a progression entry is removed", () => {
+    const fixture = loadKeyedSandboxFixture();
+    const target = fixture.scenes[3]!;
+    fixture.unresolved = fixture.unresolved.filter(
+      (u) => u.relatedEntityId !== target.id,
+    );
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      const errors = result.errors.filter(
+        (e) => e.code === "UNREACHABLE_SCENE",
+      );
+      expect(result.errors).toHaveLength(1);
+      expect(errors[0]?.path).toBe("scenes[3]");
+      expect(errors[0]?.entityId).toBe(target.id);
+    }
+  });
+
+  it("still accepts an unreachable ambiguous scene without a progression entry", () => {
+    const fixture = loadKeyedSandboxFixture();
+    fixture.scenes[3]!.epistemicStatus = "ambiguous";
+    fixture.unresolved = fixture.unresolved.filter(
+      (u) => u.relatedEntityId !== fixture.scenes[3]!.id,
+    );
+    expect(validateAdventureJson(fixture).ok).toBe(true);
+  });
+
+  it("does not exempt a scene because a progression entry names another scene", () => {
+    const fixture = loadKeyedSandboxFixture();
+    const entry = fixture.unresolved.find(
+      (u) => u.relatedEntityId === fixture.scenes[3]!.id,
+    )!;
+    entry.relatedEntityId = fixture.scenes[2]!.id;
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(
+        result.errors
+          .filter((e) => e.code === "UNREACHABLE_SCENE")
+          .map((e) => e.path),
+      ).toEqual(["scenes[3]"]);
     }
   });
 

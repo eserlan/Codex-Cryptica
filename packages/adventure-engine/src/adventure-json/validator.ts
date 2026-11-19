@@ -1,5 +1,6 @@
 import type { ZodIssue } from "zod";
 import { entrySceneId } from "./entry-scene";
+import { UNKNOWN_SCENE_PROGRESSION } from "./unresolved-codes";
 import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
   AdventureJsonV1Schema,
@@ -462,10 +463,16 @@ function validateLocationHierarchyCycles(
 function validateSceneReachability(
   scenes: AdventureJsonScene[],
   sceneMap: Map<string, AdventureJsonScene>,
+  unresolved: AdventureJsonV1["unresolved"],
   errors: AdventureJsonValidationError[],
 ): void {
   if (scenes.length <= 1) return;
 
+  const progressionUnknown = new Set(
+    unresolved
+      .filter((u) => u.code === UNKNOWN_SCENE_PROGRESSION)
+      .map((u) => u.relatedEntityId),
+  );
   const entryId = entrySceneId({ scenes })!;
   const reachable = new Set<string>([entryId]);
   const queue: string[] = [entryId];
@@ -489,6 +496,8 @@ function validateSceneReachability(
     if (
       i > 0 &&
       !reachable.has(scene.id) &&
+      !progressionUnknown.has(scene.id) &&
+      // Deprecated legacy exemption, kept so existing v1 packages stay valid.
       scene.epistemicStatus !== "ambiguous"
     ) {
       errors.push({
@@ -649,7 +658,7 @@ function validateSceneGraph(
     }
   });
 
-  validateSceneReachability(pkg.scenes, sceneMap, errors);
+  validateSceneReachability(pkg.scenes, sceneMap, pkg.unresolved, errors);
   validateMandatorySceneCycles(pkg.scenes, sceneMap, sceneIndex, errors);
 }
 

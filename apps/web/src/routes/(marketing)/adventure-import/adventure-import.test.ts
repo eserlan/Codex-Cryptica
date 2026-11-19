@@ -431,8 +431,16 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         "https://codexcryptica.com/adventure-import#long-adventures",
       );
       expect(prompt).toContain(
-        'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
+        'An authored scene keeps the "epistemicStatus" its source supports',
       );
+      expect(prompt).toContain(
+        'add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION"',
+      );
+      expect(prompt).toContain(
+        'Never mark a scene "ambiguous" only to pass the reachability check',
+      );
+      expect(prompt).toContain("Four kinds of link:");
+      expect(prompt).not.toContain("no earlier scene links to");
       expect(prompt).toContain('For a PDF, include "page"');
       expect(prompt).toContain("not a number printed on the page");
       expect(prompt).toContain("has no authored order");
@@ -681,14 +689,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
       '"visibility" applies to the WHOLE record, never to individual fields',
       'separate "secrets" entry that lists the record in "relatedEntityIds"',
-      "Every non-entry scene with source-supported progression must be reachable",
-      "If progression is unknown, preserve the scene as ambiguous without inventing a branch.",
+      "A non-entry scene (scenes[1..]) is reachable when a breadth-first walk that starts at scenes[0]",
+      'For each unreachable non-entry scene, add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION"',
     ]) {
       expect(prompt).toContain(rule);
     }
     expect(
       screen.getByText(
-        /If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch\./,
+        /When the source leaves progression open, add an unresolved entry with code "UNKNOWN_SCENE_PROGRESSION"/,
       ),
     ).toBeTruthy();
   });
