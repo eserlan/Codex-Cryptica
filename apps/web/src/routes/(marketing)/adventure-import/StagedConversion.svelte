@@ -3,11 +3,13 @@
   import {
     STAGED_ANCHOR,
     STAGED_ASSEMBLE_SCRIPT,
-    STAGED_CHUNK_PROMPT,
+    STAGED_CHECK_SCRIPT,
     STAGED_COVERAGE_PROMPT,
     STAGED_FAILURE_MODES,
     STAGED_INVENTORY_PROMPT,
+    STAGED_MANIFEST_EXAMPLE,
     STAGED_NEW_CHAT_PROMPT,
+    STAGED_SAME_CHAT_PROMPT,
   } from "./staged-conversion.js";
 
   const stages = [
@@ -15,7 +17,7 @@
       id: "inventory",
       title: "1. Inventory the source",
       intro:
-        "Start a chat, attach the adventure and send this. You get a list of sections with page ranges and one id for each recurring character, faction and place. Check the page count it reports against the real one.",
+        "Start a chat, attach the adventure and send this. You get the checkpoint manifest as JSON: the locked metadata, the sections with page ranges, the ids each section owns and one id for each recurring character, faction and place. Save it as manifest.json. Check the page count it reports against the real one.",
       text: STAGED_INVENTORY_PROMPT,
       button: "Copy inventory prompt",
       copier: createCopier(STAGED_INVENTORY_PROMPT),
@@ -24,13 +26,13 @@
       id: "chunk",
       title: "2. Convert one section at a time",
       intro:
-        "Send one prompt per section from the inventory. Pick the option that matches where you are working.",
+        "Use the same chat if it still has the complete conversion prompt, manifest and source. For a fresh chat, attach the section and provide all four items in the new-chat handoff. Save the JSON result as the manifest's chunk file; keep the completion delta separate and merge it into your saved manifest.",
     },
     {
       id: "coverage",
       title: "3. Check coverage against the inventory",
       intro:
-        "Paste the inventory and every completion record. This finds missing sections, ids that were referred to but never defined, and duplicate ids for the same character.",
+        "Paste the manifest and every chunk JSON file. The check works from the real chunk files, never from completion deltas. This finds missing sections, ids that were referred to but never defined, and duplicate ids for the same character. For the exact check, run the check script below.",
       text: STAGED_COVERAGE_PROMPT,
       button: "Copy coverage prompt",
       copier: createCopier(STAGED_COVERAGE_PROMPT),
@@ -41,20 +43,20 @@
     {
       id: "same-chat",
       title: "Same chat",
-      help: "Use this only in a chat that already holds the canonical conversion prompt and the inventory. Fill in the bracketed line, send it once per section, and save each JSON-only result as chunk-01.json, chunk-02.json and so on. Request and keep each completion record separately, never in a chunk file.",
-      text: STAGED_CHUNK_PROMPT,
+      help: "Use this only when the chat still contains the complete canonical conversion prompt, the checkpoint manifest and the source for this section. Fill in its section key.",
+      text: STAGED_SAME_CHAT_PROMPT,
       button: "Copy same-chat section prompt",
-      copier: createCopier(STAGED_CHUNK_PROMPT),
+      copier: createCopier(STAGED_SAME_CHAT_PROMPT),
     },
     {
       id: "new-chat",
       title: "New chat",
-      help: "Do not assume the assistant remembers other chats. In a fresh chat, paste these four things in order:",
+      help: "Do not assume the assistant remembers another chat. In a fresh chat, provide these four things in order:",
       steps: [
-        "The full canonical conversion prompt (or the prompt.txt link)",
-        "The inventory with its locked package metadata",
-        "The source pages or text for this one section",
-        "This prompt, with the bracketed line filled in",
+        "The complete canonical conversion prompt (or its prompt.txt link)",
+        "The checkpoint manifest JSON",
+        "The source pages or text for this section",
+        "This prompt, with the section key filled in",
       ],
       text: STAGED_NEW_CHAT_PROMPT,
       button: "Copy new-chat section prompt",
@@ -63,6 +65,8 @@
   ];
 
   const scriptCopier = createCopier(STAGED_ASSEMBLE_SCRIPT);
+  const manifestCopier = createCopier(STAGED_MANIFEST_EXAMPLE);
+  const checkCopier = createCopier(STAGED_CHECK_SCRIPT);
 </script>
 
 {#snippet copyBlock(
@@ -165,6 +169,60 @@
     </p>
   </div>
 
+  <div class="space-y-3" data-testid="stage-manifest">
+    <h3 class="font-header font-bold text-lg text-theme-text">
+      The checkpoint manifest
+    </h3>
+    <p class="text-sm text-theme-text/90">
+      Stage 1 produces one small checkpoint file, the manifest. It holds the
+      locked metadata, the sections, which section owns each id, the expected
+      counts, the completed chunks, pending references and gaps. It is a
+      separate file: never paste it into, or import it as, the adventure JSON.
+      Its format is published as a
+      <a
+        href="/schemas/adventure-checkpoint/v1.json"
+        class="underline font-semibold">JSON Schema</a
+      >. Because the manifest carries everything, each later pass works in a
+      fresh chat or a different assistant.
+    </p>
+    <ul class="list-disc pl-5 text-sm text-theme-text/90 space-y-1">
+      <li>
+        <code class="font-mono">partial</code>: some sections are not done yet.
+        This is honest, and fine to resume.
+      </li>
+      <li>
+        <code class="font-mono">failed</code>: a pass could not convert its
+        section. Name the section and redo it in smaller pieces.
+      </li>
+      <li>
+        <code class="font-mono">complete</code>: only after the check script
+        passes with no problems.
+      </li>
+    </ul>
+    <p class="text-sm text-theme-text/90">
+      After each pass, merge its completion delta into your saved manifest's
+      <code class="font-mono">completed</code>,
+      <code class="font-mono">pending</code> and
+      <code class="font-mono">gaps</code>. The rest of the manifest is never
+      regenerated.
+    </p>
+    <button
+      type="button"
+      onclick={manifestCopier.copy}
+      class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    >
+      <span
+        class="{manifestCopier.state === 'copied'
+          ? 'icon-[lucide--check]'
+          : 'icon-[lucide--copy]'} h-4 w-4"
+        aria-hidden="true"
+      ></span>
+      {manifestCopier.label("Copy example manifest", "Copied")}
+    </button>
+    <pre
+      class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{STAGED_MANIFEST_EXAMPLE}</pre>
+  </div>
+
   {#each stages as stage (stage.id)}
     <div class="space-y-3" data-testid="stage-{stage.id}">
       <h3 class="font-header font-bold text-lg text-theme-text">
@@ -175,8 +233,25 @@
         {#each sectionOptions as option (option.id)}
           {@render sectionOption(option)}
         {/each}
-      {:else if stage.copier}
+      {:else}
         {@render copyBlock(stage.copier, stage.button, stage.text)}
+      {/if}
+      {#if stage.id === "coverage"}
+        <button
+          type="button"
+          onclick={checkCopier.copy}
+          class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-theme-text bg-theme-primary/10 px-5 py-2 text-sm font-semibold text-theme-text hover:bg-theme-primary/20 cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        >
+          <span
+            class="{checkCopier.state === 'copied'
+              ? 'icon-[lucide--check]'
+              : 'icon-[lucide--copy]'} h-4 w-4"
+            aria-hidden="true"
+          ></span>
+          {checkCopier.label("Copy check script", "Copied")}
+        </button>
+        <pre
+          class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 leading-relaxed">{STAGED_CHECK_SCRIPT}</pre>
       {/if}
     </div>
   {/each}

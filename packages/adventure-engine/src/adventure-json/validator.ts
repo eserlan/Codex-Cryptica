@@ -1,5 +1,6 @@
 import type { ZodIssue } from "zod";
 import { entrySceneId } from "./entry-scene";
+import { UNKNOWN_SCENE_PROGRESSION } from "./unresolved-codes";
 import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
   AdventureJsonV1Schema,
@@ -16,7 +17,8 @@ export type AdventureJsonValidationErrorCode =
   | "SELF_REFERENCE"
   | "HIERARCHY_CYCLE"
   | "DEAD_END_CYCLE"
-  | "UNREACHABLE_SCENE";
+  | "UNREACHABLE_SCENE"
+  | "DUPLICATE_SCENE_PROGRESSION";
 
 export interface AdventureJsonValidationError {
   code: AdventureJsonValidationErrorCode;
@@ -462,10 +464,29 @@ function validateLocationHierarchyCycles(
 function validateSceneReachability(
   scenes: AdventureJsonScene[],
   sceneMap: Map<string, AdventureJsonScene>,
+  unresolved: AdventureJsonV1["unresolved"],
   errors: AdventureJsonValidationError[],
 ): void {
   if (scenes.length <= 1) return;
 
+  const progressionUnknown = new Set<string>();
+  unresolved.forEach((item, index) => {
+    if (item.code !== UNKNOWN_SCENE_PROGRESSION || !item.relatedEntityId) {
+      return;
+    }
+
+    if (progressionUnknown.has(item.relatedEntityId)) {
+      errors.push({
+        code: "DUPLICATE_SCENE_PROGRESSION",
+        message: `More than one UNKNOWN_SCENE_PROGRESSION entry names scene "${item.relatedEntityId}".`,
+        path: `unresolved[${index}]`,
+        entityId: item.id,
+      });
+      return;
+    }
+
+    progressionUnknown.add(item.relatedEntityId);
+  });
   const entryId = entrySceneId({ scenes })!;
   const reachable = new Set<string>([entryId]);
   const queue: string[] = [entryId];
@@ -489,6 +510,8 @@ function validateSceneReachability(
     if (
       i > 0 &&
       !reachable.has(scene.id) &&
+      !progressionUnknown.has(scene.id) &&
+      // Deprecated legacy exemption, kept so existing v1 packages stay valid.
       scene.epistemicStatus !== "ambiguous"
     ) {
       errors.push({
@@ -649,7 +672,7 @@ function validateSceneGraph(
     }
   });
 
-  validateSceneReachability(pkg.scenes, sceneMap, errors);
+  validateSceneReachability(pkg.scenes, sceneMap, pkg.unresolved, errors);
   validateMandatorySceneCycles(pkg.scenes, sceneMap, sceneIndex, errors);
 }
 

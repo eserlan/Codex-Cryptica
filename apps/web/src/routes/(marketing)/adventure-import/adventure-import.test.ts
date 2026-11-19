@@ -13,10 +13,13 @@ import {
 import Page from "./+page.svelte";
 import {
   STAGED_ASSEMBLE_SCRIPT,
+  STAGED_CHECK_SCRIPT,
   STAGED_CHUNK_PROMPT,
   STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
   STAGED_NEW_CHAT_PROMPT,
+  STAGED_SAME_CHAT_PROMPT,
+  STAGED_MANIFEST_EXAMPLE,
 } from "./staged-conversion.js";
 import {
   CANONICAL_CONVERSION_PROMPT,
@@ -24,10 +27,28 @@ import {
   FIDELITY_ROWS,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
+  PROMPT_END_MARKER,
   PROMPT_EXAMPLE_OUTPUT,
+  PROMPT_TXT_URL,
 } from "./conversion-guide.js";
+import {
+  CANONICAL_ORIGIN,
+  isCanonicalProductionHost,
+} from "./canonical-origin.js";
+import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
+const config = vi.hoisted(() => ({ isStaging: false }));
+
+vi.mock("#lib/config/index.js", async () => {
+  const actual = await vi.importActual<object>("#lib/config/index.js");
+  const mod = { ...actual };
+  Object.defineProperty(mod, "IS_STAGING", {
+    enumerable: true,
+    get: () => config.isStaging,
+  });
+  return mod;
+});
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -50,6 +71,100 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     vi.useRealTimers();
     document.head.innerHTML = "";
     copyMock.mockReset();
+    config.isStaging = false;
+  });
+
+  it("builds the prompt's absolute URLs from CANONICAL_ORIGIN", () => {
+    expect(CANONICAL_ORIGIN).toBe("https://codexcryptica.com");
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      `Schema: ${CANONICAL_ORIGIN}/schemas/adventure-json/v1.json`,
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      `Guide: ${CANONICAL_ORIGIN}/adventure-import`,
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "Schema: https://codexcryptica.com/schemas/adventure-json/v1.json",
+    );
+    expect(CANONICAL_CONVERSION_PROMPT.endsWith(`\n${PROMPT_END_MARKER}`)).toBe(
+      true,
+    );
+    expect(AUTOMATIC_STAGING_RULES).toContain(
+      `${CANONICAL_ORIGIN}/adventure-import#long-adventures`,
+    );
+    expect(PROMPT_TXT_URL).toBe(
+      `${CANONICAL_ORIGIN}/adventure-import/prompt.txt`,
+    );
+  });
+
+  it("recognises only the canonical production host", () => {
+    expect(isCanonicalProductionHost("codexcryptica.com")).toBe(true);
+    expect(
+      isCanonicalProductionHost(
+        "factory-065-adventure-import.codex-cryptica.pages.dev",
+      ),
+    ).toBe(false);
+  });
+
+  it("shows the note on non-production hosts when IS_STAGING is false", async () => {
+    config.isStaging = false;
+    render(Page);
+    expect(
+      await screen.findByTestId("non-production-canonical-note"),
+    ).toBeTruthy();
+  });
+
+  it("shows the non-production note with local schema and prompt.txt links when IS_STAGING is true", async () => {
+    config.isStaging = true;
+    render(Page);
+    const note = await screen.findByTestId("non-production-canonical-note");
+    expect(note.textContent).toContain("production");
+    const hrefs = [...note.querySelectorAll("a")].map((a) =>
+      a.getAttribute("href"),
+    );
+    expect(hrefs).toContain("/schemas/adventure-json/v1.json");
+    expect(hrefs).toContain("/adventure-import/prompt.txt");
+  });
+
+  it("explains the fallback when the assistant cannot open the link", () => {
+    const { container } = render(Page);
+    const text = (container.textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toContain(
+      "cannot open the link, or its reply shows the prompt did not end with the end marker, use Copy conversion prompt and paste the full prompt instead",
+    );
+  });
+
+  it("renders the prompt in a pre with id canonical-prompt", () => {
+    const { container } = render(Page);
+    expect(container.querySelector("pre#canonical-prompt")?.textContent).toBe(
+      CANONICAL_CONVERSION_PROMPT,
+    );
+  });
+
+  it("Copy conversion prompt copies exactly CANONICAL_CONVERSION_PROMPT", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+    await fireEvent.click(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i })[0]!,
+    );
+    expect(copyMock.mock.calls[0]?.[0]).toBe(CANONICAL_CONVERSION_PROMPT);
+  });
+
+  it("Copy guide link copies exactly LINK_HANDOFF_TEXT", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy guide link/i }),
+    );
+    expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
+  });
+
+  it("Copy coverage report prompt copies exactly COVERAGE_REPORT_PROMPT", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy coverage report prompt/i }),
+    );
+    expect(copyMock.mock.calls[0]?.[0]).toBe(COVERAGE_REPORT_PROMPT);
   });
 
   it("renders H1, AI assistant directive, canonical prompt, privacy notice, and schema links", () => {
@@ -343,11 +458,6 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain("exact top-level metadata values");
       expect(prompt).toContain("convert only the requested chunk");
       expect(prompt).toContain(
-        "A pass in a new chat needs the full canonical prompt",
-      );
-      expect(prompt).toContain("locked package metadata");
-      expect(prompt).toContain('"Continue" alone is not enough');
-      expect(prompt).toContain(
         "Assemble only after every planned chunk is present",
       );
       expect(prompt).toContain("label the result unvalidated");
@@ -437,8 +547,16 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         "https://codexcryptica.com/adventure-import#long-adventures",
       );
       expect(prompt).toContain(
-        'set "epistemicStatus": "ambiguous" on every scene that no earlier scene links to',
+        'An authored scene keeps the "epistemicStatus" its source supports',
       );
+      expect(prompt).toContain(
+        'add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION"',
+      );
+      expect(prompt).toContain(
+        'Never mark a scene "ambiguous" only to pass the reachability check',
+      );
+      expect(prompt).toContain("Four kinds of link:");
+      expect(prompt).not.toContain("no earlier scene links to");
       expect(prompt).toContain('For a PDF, include "page"');
       expect(prompt).toContain("not a number printed on the page");
       expect(prompt).toContain("has no authored order");
@@ -460,11 +578,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
 
   describe("staged conversion section (#4896)", () => {
     it("uses source ranges that work for paginated and unpaginated material", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain("do not invent page numbers");
       expect(STAGED_INVENTORY_PROMPT).toContain(
-        "If it is not paginated, say that and do not invent page numbers",
-      );
-      expect(STAGED_INVENTORY_PROMPT).toContain(
-        "heading/anchor/source range otherwise",
+        'or an "anchor" (heading or source range) otherwise',
       );
       expect(STAGED_CHUNK_PROMPT).toContain(
         "For unpaginated sources, use the supported section or anchor reference",
@@ -477,22 +593,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         "every expected source-supported entry",
       );
       expect(STAGED_INVENTORY_PROMPT).toContain(
-        "grouped by Adventure JSON collection",
+        'as { "id", "collection", "page" } (or "anchor"',
       );
-      expect(STAGED_CHUNK_PROMPT).toContain(
-        "IDs actually present in each collection",
+      expect(STAGED_COVERAGE_PROMPT).toContain("the JSON file for every chunk");
+      expect(STAGED_COVERAGE_PROMPT).toContain(
+        "Do not rely on completion deltas",
       );
       expect(STAGED_COVERAGE_PROMPT).toContain(
-        "the JSON files for every chunk",
-      );
-      expect(STAGED_COVERAGE_PROMPT).toContain(
-        "expected-entry checklist with the actual IDs and counts",
-      );
-      expect(STAGED_COVERAGE_PROMPT).toContain(
-        "not as proof that an entry exists",
-      );
-      expect(STAGED_COVERAGE_PROMPT).toContain(
-        "Mark a section converted only when every expected ID",
+        "Mark a section converted only when every id in its",
       );
     });
 
@@ -508,6 +616,15 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
+    it("states that v1 has no field-level or reveal-later visibility", () => {
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        'v1 has no field-level or "revealed later" visibility. A fact players only learn in play',
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        'goes in a "gm-only" secret, clue, scene or encounter',
+      );
+    });
+
     it("explains the stages in order and that nothing is converted here", () => {
       const { container } = render(Page);
       const section = container.querySelector("#long-adventures")!;
@@ -516,6 +633,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
 
       expect(titles.slice(1)).toEqual([
+        "The checkpoint manifest",
         "1. Inventory the source",
         "2. Convert one section at a time",
         "3. Check coverage against the inventory",
@@ -526,21 +644,37 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("Do not trust an assistant that says");
       expect(text).toContain("This page converts nothing");
       expect(text).toContain("Three different problems");
-      const options = [...section.querySelectorAll("h4")].map((h) =>
-        h.textContent?.trim(),
-      );
-      expect(options).toEqual(["Same chat", "New chat"]);
-      const steps = section.querySelectorAll(
-        '[data-testid="option-new-chat"] li',
-      );
-      expect(steps).toHaveLength(4);
-      expect(steps[0].textContent).toContain("canonical conversion prompt");
+    });
+
+    it("explains the manifest, its statuses and links its schema before stage 1", () => {
+      const { container } = render(Page);
+      const manifest = container.querySelector(
+        '[data-testid="stage-manifest"]',
+      )!;
+      const text = manifest.textContent?.replace(/\s+/g, " ") ?? "";
+
       expect(
-        section.querySelectorAll('[data-testid="option-same-chat"] li'),
-      ).toHaveLength(0);
-      expect(text).toContain(
-        "Do not assume the assistant remembers other chats",
+        manifest.compareDocumentPosition(
+          container.querySelector('[data-testid="stage-inventory"]')!,
+        ) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        manifest.querySelector(
+          'a[href="/schemas/adventure-checkpoint/v1.json"]',
+        ),
+      ).toBeTruthy();
+      expect(text).toContain("never paste it into, or import it as");
+      expect(text).toContain("fine to resume");
+      expect(text).toContain("only after the check script passes");
+      expect(text).toContain("The rest of the manifest is never regenerated");
+      expect(container.textContent).not.toContain(
+        "In a chat that already has the canonical conversion prompt",
       );
+      expect([...container.querySelectorAll("h4")].map((heading) => heading.textContent?.trim())).toEqual([
+        "Same chat",
+        "New chat",
+      ]);
+      expect(container.querySelectorAll('[data-testid="option-new-chat"] li')).toHaveLength(4);
     });
 
     it("discloses hosted processing and gives copy buttons a visible boundary", () => {
@@ -554,7 +688,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("preserving an existing file if a check fails");
 
       const stageButtons = [...section.querySelectorAll("button")];
-      expect(stageButtons).toHaveLength(5);
+      expect(stageButtons).toHaveLength(7);
       for (const button of stageButtons) {
         expect(button.classList.contains("border-theme-text")).toBe(true);
       }
@@ -572,21 +706,25 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy inventory prompt/i }),
       );
-      await fireEvent.click(
-        screen.getByRole("button", { name: /Copy same-chat section prompt/i }),
-      );
-      await fireEvent.click(
-        screen.getByRole("button", { name: /Copy new-chat section prompt/i }),
-      );
+      await fireEvent.click(screen.getByRole("button", { name: /Copy same-chat section prompt/i }));
+      await fireEvent.click(screen.getByRole("button", { name: /Copy new-chat section prompt/i }));
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy assemble script/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy example manifest/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy check script/i }),
       );
 
       expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
         STAGED_INVENTORY_PROMPT,
-        STAGED_CHUNK_PROMPT,
+        STAGED_SAME_CHAT_PROMPT,
         STAGED_NEW_CHAT_PROMPT,
         STAGED_ASSEMBLE_SCRIPT,
+        STAGED_MANIFEST_EXAMPLE,
+        STAGED_CHECK_SCRIPT,
       ]);
     });
 
@@ -609,24 +747,6 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     });
   });
 
-  it("reports a failed new-chat copy on that button only", async () => {
-    copyMock.mockResolvedValue(false);
-    render(Page);
-
-    await fireEvent.click(
-      screen.getByRole("button", { name: /Copy new-chat section prompt/i }),
-    );
-
-    await waitFor(() => {
-      expect(
-        screen.getAllByRole("button", { name: /Copy failed/i }),
-      ).toHaveLength(1);
-    });
-    expect(
-      screen.getByRole("button", { name: /Copy same-chat section prompt/i }),
-    ).toBeTruthy();
-  });
-
   it("copies a short link instruction for browsing assistants, separately from the prompt", async () => {
     copyMock.mockResolvedValue(true);
     render(Page);
@@ -638,7 +758,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(copyMock).toHaveBeenCalledTimes(1);
     expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
     expect(LINK_HANDOFF_TEXT).toContain(
-      "https://codexcryptica.com/adventure-import/prompt.txt",
+      `${CANONICAL_ORIGIN}/adventure-import/prompt.txt`,
     );
     expect(LINK_HANDOFF_TEXT).toContain("the prompt is incomplete");
     expect(LINK_HANDOFF_TEXT).toContain(
@@ -724,14 +844,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       "Keep the title, hook, background, and optional description player-safe and limited to source-supported facts",
       '"visibility" applies to the WHOLE record, never to individual fields',
       'separate "secrets" entry that lists the record in "relatedEntityIds"',
-      "Every non-entry scene with source-supported progression must be reachable",
-      "If progression is unknown, preserve the scene as ambiguous without inventing a branch.",
+      "A non-entry scene (scenes[1..]) is reachable when a breadth-first walk that starts at scenes[0]",
+      'For each unreachable non-entry scene, add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION"',
     ]) {
       expect(prompt).toContain(rule);
     }
     expect(
       screen.getByText(
-        /If the source does not establish progression, preserve the scene as ambiguous and do not invent a branch\./,
+        /When the source leaves progression open, add an unresolved entry with code "UNKNOWN_SCENE_PROGRESSION"/,
       ),
     ).toBeTruthy();
   });

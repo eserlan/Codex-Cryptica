@@ -15,6 +15,10 @@ An original, system-light one-shot (about 30 turns) with an answer key, for offl
 - `adventure.v1.json`: the converted Adventure JSON v1 package, audited against the answer key by `packages/adventure-engine/tests/reference-one-shot-coverage.test.ts`.
 - `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue and endings. Checked by `packages/adventure-engine/tests/reference-one-shot.test.ts`. Grouping headings carry `"container": true` and are not required for scorer coverage.
 
+## Visibility
+
+`visibility` covers a whole record in v1, so a fact players only learn in play must not sit in a `player-visible` record. The cellar, Aldous, Wick and scenes 1 to 3 are trimmed to what players know, and their hidden facts are `gm-only` secrets. The cellar scene (`ros-scene-4-cellar`), the Wick encounter (`enc-wheel-room-wick`) and the sabotage clue (`clue-sluice-sabotage`) are `gm-only` as whole records, because they are GM logic and cannot be trimmed without rewriting the source. The three JSON copies (`adventure.v1.json` and the two static examples under `apps/web/static/schemas/`) must stay byte-identical. The spoiler audit lives in `packages/adventure-engine/tests/adventure-json/adventure-json-visibility.test.ts`. Field-level or reveal-later visibility is tracked in #4946.
+
 ## Variants (Prettier-ignored, one defect each)
 
 - `variants/missing-headings.md`: two sections lose their headings and markers.

@@ -1,0 +1,212 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codexcryptica.com/schemas/adventure-checkpoint/v1.json",
+  "title": "Codex Cryptica staged-conversion checkpoint manifest v1",
+  "description": "A checkpoint file for converting a long adventure in stages. It is not Adventure JSON v1 and is never imported.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "kind",
+    "manifestVersion",
+    "status",
+    "metadata",
+    "source",
+    "sections",
+    "sharedIds",
+    "completed",
+    "pending",
+    "gaps"
+  ],
+  "properties": {
+    "kind": { "const": "codex-cryptica.adventure-checkpoint" },
+    "manifestVersion": { "const": 1 },
+    "status": { "enum": ["partial", "failed", "complete"] },
+    "metadata": {
+      "type": "object",
+      "required": [
+        "formatVersion",
+        "id",
+        "title",
+        "version",
+        "premise",
+        "source"
+      ],
+      "properties": {
+        "formatVersion": { "type": "string" },
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "version": { "type": "string" },
+        "premise": { "type": "object" },
+        "source": { "type": "object" },
+        "description": { "type": "string" },
+        "system": {},
+        "extensions": { "type": "object" }
+      },
+      "additionalProperties": false
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fileName", "pageCount", "unreadable"],
+      "properties": {
+        "fileName": { "type": "string" },
+        "pageCount": { "type": ["integer", "null"], "minimum": 1 },
+        "unreadable": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/$defs/pageRangeNote" },
+              { "$ref": "#/$defs/anchorNote" }
+            ]
+          }
+        }
+      }
+    },
+    "sections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "title",
+          "idPrefix",
+          "chunkFile",
+          "owns",
+          "expectedCounts"
+        ],
+        "oneOf": [{ "required": ["pages"] }, { "required": ["anchor"] }],
+        "properties": {
+          "key": { "type": "string", "minLength": 1 },
+          "title": { "type": "string" },
+          "pages": { "$ref": "#/$defs/pageRange" },
+          "anchor": { "type": "string", "minLength": 1 },
+          "idPrefix": { "type": "string" },
+          "chunkFile": { "type": "string", "minLength": 1 },
+          "owns": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["id", "collection"],
+              "oneOf": [{ "required": ["page"] }, { "required": ["anchor"] }],
+              "properties": {
+                "id": { "type": "string", "minLength": 1 },
+                "collection": { "$ref": "#/$defs/collection" },
+                "page": { "type": "integer", "minimum": 1 },
+                "anchor": { "type": "string", "minLength": 1 }
+              }
+            }
+          },
+          "expectedCounts": {
+            "type": "object",
+            "propertyNames": { "$ref": "#/$defs/collection" },
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "sharedIds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "collection", "owner"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "collection": { "$ref": "#/$defs/collection" },
+          "owner": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "completed": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["section", "file", "counts"],
+        "properties": {
+          "section": { "type": "string", "minLength": 1 },
+          "file": { "type": "string", "minLength": 1 },
+          "counts": {
+            "type": "object",
+            "propertyNames": { "$ref": "#/$defs/collection" },
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          }
+        }
+      }
+    },
+    "pending": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "referencedBy", "expectedIn"],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "referencedBy": { "type": "string", "minLength": 1 },
+          "expectedIn": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["note"],
+        "properties": {
+          "section": { "type": "string", "minLength": 1 },
+          "pages": { "$ref": "#/$defs/pageRange" },
+          "anchor": { "type": "string", "minLength": 1 },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "collection": {
+      "enum": [
+        "locations",
+        "actors",
+        "factions",
+        "scenes",
+        "encounters",
+        "clues",
+        "rumours",
+        "items",
+        "secrets",
+        "endings",
+        "unresolved"
+      ]
+    },
+    "pageRange": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "integer", "minimum": 1 },
+        "to": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "pageRangeNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from", "to"],
+      "properties": {
+        "from": { "type": "integer", "minimum": 1 },
+        "to": { "type": "integer", "minimum": 1 },
+        "note": { "type": "string" }
+      }
+    },
+    "anchorNote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["anchor"],
+      "properties": {
+        "anchor": { "type": "string", "minLength": 1 },
+        "note": { "type": "string" }
+      }
+    }
+  }
+}
