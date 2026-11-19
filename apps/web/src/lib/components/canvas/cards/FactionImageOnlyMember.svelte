@@ -79,17 +79,21 @@
       ? 'opacity-100'
       : 'opacity-0 group-hover/member:opacity-100 group-focus-visible/member:opacity-100'}"
   >
-    <span
-      class="text-xs font-bold text-white truncate font-header drop-shadow-sm"
+    <div
+      class="flex w-full items-center justify-between gap-2 rounded-md bg-black/90 px-2 py-1"
     >
-      {member.title}
-    </span>
-    {#if member.isLeader}
       <span
-        class="text-nano font-semibold text-amber-300 uppercase tracking-wider ml-1 shrink-0"
+        class="text-xs font-bold text-white truncate font-header drop-shadow-sm"
       >
-        Leader
+        {member.title}
       </span>
-    {/if}
+      {#if member.isLeader}
+        <span
+          class="text-nano font-semibold text-amber-300 uppercase tracking-wider ml-1 shrink-0"
+        >
+          Leader
+        </span>
+      {/if}
+    </div>
   </div>
 </div>

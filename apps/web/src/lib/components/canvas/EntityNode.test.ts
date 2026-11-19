@@ -463,6 +463,9 @@ describe("EntityNode card variants", () => {
     expect(member.querySelector("div.absolute")?.className).toContain(
       "group-focus-visible/member:opacity-100",
     );
+    expect(member.querySelector("div.absolute > div")?.className).toContain(
+      "bg-black/90",
+    );
   });
 
   it("keeps info overlay visible with opacity-100 when showImageLabels is true", async () => {
