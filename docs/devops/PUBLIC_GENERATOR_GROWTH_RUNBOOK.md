@@ -116,6 +116,5 @@ Annotations: #4624 / #4625 release date: `TBD`. This change (`generator_handoff_
 ## Follow-ups
 
 - CTA impression and `placement` / `variant` on `save_to_codex` once #4624 / #4625 land.
-- Add `generator_handoff_failed` to [ZARAZ_ANALYTICS.md](./ZARAZ_ANALYTICS.md) once job 063 merges.
 - Save the all-generator charts listed above and add their direct chart links here. The connected Amplitude tools currently expose chart search/read access but not chart creation or dashboard editing; the existing Point Crawl dashboard is linked above until those charts can be saved.
 - Fill in the post-release table.
