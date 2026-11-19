@@ -16,6 +16,7 @@
     createVaultCreatureImportEnvironment,
     type CreatureImportEnvironment,
   } from "#lib/services/adventure/adventure-creature-import-deps.js";
+  import PaginatedList from "#lib/components/ui/PaginatedList.svelte";
   import { containTab, focusableWithin } from "./adventure-phone-surface.js";
 
   let {
@@ -66,12 +67,6 @@
     choices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
   );
   const selectedChoices = $derived(choices.filter((choice) => choice.include));
-  const previewPageCount = $derived(
-    Math.ceil(selectedChoices.length / reviewPageSize),
-  );
-  const visiblePreviewChoices = $derived(
-    selectedChoices.slice(reviewPageStart, reviewPageStart + reviewPageSize),
-  );
   const encounterPageSize = 10;
   let encounterPages = $state<Record<string, number>>({});
 
@@ -417,8 +412,17 @@
             continue; you can import another batch afterwards.
           </p>
         {/if}
-        <ul class="space-y-1 text-sm text-theme-text">
-          {#each visiblePreviewChoices as choice (choice.proposal.key)}
+        <PaginatedList
+          items={selectedChoices}
+          pageSize={reviewPageSize}
+          bind:page={reviewPage}
+          itemLabel="changes"
+          listClass="space-y-1 text-sm text-theme-text"
+          getKey={(choice) => choice.proposal.key}
+          summaryText={(start, end, total) =>
+            `Showing changes ${start}–${end} of ${total}`}
+        >
+          {#snippet row(choice)}
             {#if choice.existing}
               <li>Reuse {choice.existing.title}</li>
             {:else}
@@ -428,37 +432,8 @@
                 {choice.file ? "with an image" : "no image"}
               </li>
             {/if}
-          {/each}
-        </ul>
-        {#if previewPageCount > 1}
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <p class="text-xs text-theme-text" aria-live="polite">
-              Showing changes {reviewPageStart + 1}–{Math.min(
-                reviewPageStart + reviewPageSize,
-                selectedChoices.length,
-              )} of {selectedChoices.length}
-            </p>
-            <div class="flex gap-2">
-              <button
-                type="button"
-                class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
-                disabled={reviewPage === 0}
-                onclick={() => (reviewPage = Math.max(0, reviewPage - 1))}
-              >
-                Previous changes
-              </button>
-              <button
-                type="button"
-                class="min-h-10 rounded-md border border-theme-text px-3 text-sm text-theme-text disabled:cursor-not-allowed"
-                disabled={reviewPage >= previewPageCount - 1}
-                onclick={() =>
-                  (reviewPage = Math.min(reviewPageCount - 1, reviewPage + 1))}
-              >
-                Next changes
-              </button>
-            </div>
-          </div>
-        {/if}
+          {/snippet}
+        </PaginatedList>
       {:else if result}
         <p class="text-sm text-theme-text" role="status">
           Created {result.created}, reused {result.reused}.
