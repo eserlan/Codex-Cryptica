@@ -1637,3 +1637,76 @@ describe("AdventureManager.loadSourcePackage", () => {
     expect(await manager.loadSourcePackage()).toBeNull();
   });
 });
+
+describe("AdventureManager.start proxy and package validation (#4983)", () => {
+  it("starts cleanly when sourcePackage and worldEntry are JS Proxies and preserves pin + start scene", async () => {
+    const deps: any = dependencies();
+    deps.packages = {
+      verifyPin: vi.fn(async () => ({ status: "ok" })),
+      load: vi.fn(async () => referencePackage),
+    };
+    const manager = new AdventureManager(deps);
+    const proxiedPackage = new Proxy({ ...packageRef }, {});
+    const proxiedWorldEntry = new Proxy(
+      {
+        version: 1 as const,
+        location: new Proxy(
+          { kind: "provisional" as const, name: "Harbor Pier" },
+          {},
+        ),
+        intent: "explore" as const,
+      },
+      {},
+    );
+
+    const started = await manager.start({
+      vaultId: "vault-1",
+      title: "Starliner Cook",
+      premise: "The galley reactor hums.",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Starliner Cook",
+        description: "Space man engineer",
+      },
+      sourcePackage: proxiedPackage,
+      worldEntry: proxiedWorldEntry,
+    });
+
+    expect(started.sourcePackage).toEqual(packageRef);
+    expect(() => structuredClone(started.sourcePackage)).not.toThrow();
+    expect(started.packageProgress?.sceneId).toBe(
+      referencePackage.scenes[0]?.id,
+    );
+    expect(started.worldEntry?.location.name).toBe("Harbor Pier");
+  });
+
+  it("rejects an invalid package reference with invalid-adventure-package before persisting", async () => {
+    const deps: any = dependencies();
+    const save = vi.spyOn(deps.repository, "save");
+    const savePinned = vi.spyOn(deps.repository, "savePinned");
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({
+        vaultId: "vault-1",
+        title: "Starliner Cook",
+        premise: "The galley reactor hums.",
+        playerCharacter: {
+          kind: "provisional",
+          name: "Starliner Cook",
+          description: "Space man engineer",
+        },
+        sourcePackage: {
+          packageId: "starliner-cook",
+          version: "1.0.0",
+          formatVersion: "adventure-json/v1",
+          hash: "not-a-valid-sha256",
+        },
+      }),
+    ).rejects.toThrow("invalid-adventure-package");
+
+    expect(save).not.toHaveBeenCalled();
+    expect(savePinned).not.toHaveBeenCalled();
+    expect(manager.session).toBeNull();
+  });
+});
