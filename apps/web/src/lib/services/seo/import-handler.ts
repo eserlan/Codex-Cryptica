@@ -281,9 +281,18 @@ export class SeoImportService {
     await this.wireDrafts(drafts, titleToId);
 
     const root = progress.created[pickRootIndex(drafts)];
-    await this.removeImportMarkers(progress);
-    this.vaultStore.selectedEntityId = root.id;
+    // Consume the retry payload before removing its per-entity recovery
+    // markers. A marker update can mutate memory and then fail to persist; if
+    // the payload remained, a same-tab retry could no longer find that entry.
     this.discardPendingImport();
+    try {
+      await this.removeImportMarkers(progress);
+    } catch (err) {
+      // The import is complete. Marker cleanup is best-effort and must not
+      // make the consumed batch replayable.
+      console.error("Failed to clean up imported entity markers:", err);
+    }
+    this.vaultStore.selectedEntityId = root.id;
 
     return {
       status: "imported",
@@ -326,7 +335,9 @@ export class SeoImportService {
 
     progress.created[index] = created;
     titles.add(created.title.toLowerCase());
-    await this.linkAttachments(draft, created.title, created.id);
+    if (!recovered) {
+      await this.linkAttachments(draft, created.title, created.id);
+    }
     return created;
   }
 

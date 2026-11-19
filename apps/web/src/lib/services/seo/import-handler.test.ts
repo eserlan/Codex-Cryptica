@@ -705,6 +705,66 @@ describe("SeoImportService", () => {
       expect(localStorage.getItem(PROGRESS)).toBeNull();
     });
 
+    it("consumes the payload before a marker cleanup persistence failure", async () => {
+      trackingCreate();
+      mockVaultStore.updateEntity = vi
+        .fn()
+        .mockImplementation(async (id, patch) => {
+          // Match the real store: memory changes before persistence can reject.
+          mockVaultStore.entities[id].labels = patch.labels;
+          throw new Error("disk full while removing marker");
+        });
+      localStorage.setItem(PENDING, JSON.stringify(pair[0]));
+
+      const first = await service.checkAndHandlePendingImport();
+
+      expect(first).toMatchObject({ status: "imported", count: 1 });
+      expect(localStorage.getItem(PENDING)).toBeNull();
+      expect(await service.checkAndHandlePendingImport()).toEqual({
+        status: "none",
+      });
+      expect(mockVaultStore.createEntity).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not relink attachments for an entity recovered after partial failure", async () => {
+      trackingCreate([2]);
+      const mockMapLinker = {
+        linkImageToEntity: vi.fn().mockResolvedValue("map1"),
+      };
+      const recoverableService = new SeoImportService(
+        mockVaultStore,
+        mockRegistryStore,
+        undefined,
+        mockMapLinker as any,
+        {},
+      );
+      const batch = [
+        {
+          ...pair[0],
+          mapImageDataUrl:
+            "data:image/png;base64," + btoa("fake-png-bytes-for-test"),
+        },
+        pair[1],
+      ];
+      localStorage.setItem(PENDING, JSON.stringify(batch));
+
+      expect(
+        await recoverableService.checkAndHandlePendingImport(),
+      ).toMatchObject({
+        status: "failed",
+      });
+      expect(mockMapLinker.linkImageToEntity).toHaveBeenCalledOnce();
+
+      trackingCreate();
+      expect(
+        await recoverableService.checkAndHandlePendingImport(),
+      ).toMatchObject({
+        status: "imported",
+        count: 2,
+      });
+      expect(mockMapLinker.linkImageToEntity).toHaveBeenCalledOnce();
+    });
+
     it("keeps the payload when switching or creating a vault throws", async () => {
       mockVaultStore.activeVaultId = null;
       mockRegistryStore.availableVaults = [{ id: "v1", name: "Vault 1" }];
