@@ -9,6 +9,7 @@
   } from "./canonical-origin.js";
   import { createCopier } from "./copy-feedback.svelte.js";
   import StagedConversion from "./StagedConversion.svelte";
+  import ReferenceFields from "./ReferenceFields.svelte";
   import {
     CANONICAL_CONVERSION_PROMPT,
     COVERAGE_REPORT_PROMPT,
@@ -452,6 +453,8 @@
           class="m-0 whitespace-pre-wrap font-mono">{COVERAGE_REPORT_PROMPT}</pre>
       </div>
     </section>
+
+    <ReferenceFields />
 
     <!-- Fidelity limits -->
     <section
