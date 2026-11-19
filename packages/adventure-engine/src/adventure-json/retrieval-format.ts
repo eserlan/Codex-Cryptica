@@ -26,3 +26,13 @@ export function formatAdventureJsonExcerpts(
     "```",
   ].join("\n");
 }
+
+export function splitByVisibility(excerpts: AdventureJsonExcerpt[]): {
+  playerSafe: AdventureJsonExcerpt[];
+  gmOnly: AdventureJsonExcerpt[];
+} {
+  return {
+    playerSafe: excerpts.filter((e) => e.visibility === "player-visible"),
+    gmOnly: excerpts.filter((e) => e.visibility !== "player-visible"),
+  };
+}
