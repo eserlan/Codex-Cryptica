@@ -49,7 +49,13 @@
     {
       id: "new-chat",
       title: "New chat",
-      help: "Do not assume the assistant remembers other chats. In a fresh chat, paste these four things in order: 1. the full canonical conversion prompt (or the prompt.txt link); 2. the inventory with its locked package metadata; 3. the source pages or text for this one section; 4. this prompt, with the bracketed line filled in.",
+      help: "Do not assume the assistant remembers other chats. In a fresh chat, paste these four things in order:",
+      steps: [
+        "The full canonical conversion prompt (or the prompt.txt link)",
+        "The inventory with its locked package metadata",
+        "The source pages or text for this one section",
+        "This prompt, with the bracketed line filled in",
+      ],
       text: STAGED_NEW_CHAT_PROMPT,
       button: "Copy new-chat section prompt",
       copier: createCopier(STAGED_NEW_CHAT_PROMPT),
@@ -155,6 +161,15 @@
               {option.title}
             </h4>
             <p class="text-sm text-theme-text/90">{option.help}</p>
+            {#if option.steps}
+              <ol
+                class="list-decimal pl-6 space-y-1 text-sm text-theme-text/90"
+              >
+                {#each option.steps as step (step)}
+                  <li>{step}</li>
+                {/each}
+              </ol>
+            {/if}
             {@render copyBlock(option.copier, option.button, option.text)}
           </div>
         {/each}

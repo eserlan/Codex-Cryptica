@@ -377,6 +377,7 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
       "source",
       "description",
       "system",
+      "extensions",
     ]) {
       expect(STAGED_INVENTORY_PROMPT).toContain(`"${field}"`);
     }

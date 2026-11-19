@@ -530,6 +530,14 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         h.textContent?.trim(),
       );
       expect(options).toEqual(["Same chat", "New chat"]);
+      const steps = section.querySelectorAll(
+        '[data-testid="option-new-chat"] li',
+      );
+      expect(steps).toHaveLength(4);
+      expect(steps[0].textContent).toContain("canonical conversion prompt");
+      expect(
+        section.querySelectorAll('[data-testid="option-same-chat"] li'),
+      ).toHaveLength(0);
       expect(text).toContain(
         "Do not assume the assistant remembers other chats",
       );
