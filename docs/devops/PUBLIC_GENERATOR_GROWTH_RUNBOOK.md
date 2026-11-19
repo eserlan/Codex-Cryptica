@@ -40,7 +40,7 @@ Counting unit: **funnels count unique user-session pairs; action click counts ar
 | `related_entity_created`                                                                                                       | Same moment, when the content has links or references                                           | `generator_type`, `is_hub_batch`, `item_count`, `related_entity_count` (bucketed)                                    | user-session pair              |
 | `generator_handoff_failed`                                                                                                     | Writing the pending draft to `localStorage` threw (for example blocked storage)                 | `generator_type`, `is_hub_batch`, `item_count_bucket` (`0`, `1`, `2-5`, `6+`). No text, titles, IDs or error message | user-session pair              |
 
-Every event also carries the `acquisition_*` flat properties and `first_touch` / `latest_touch` when attribution was captured in the tab session.
+Every event carries `first_touch` / `latest_touch` objects when attribution was captured. Flat `acquisition_*` properties are emitted only for recognised AI-referral and organic-search classifications; an arbitrary UTM campaign can be captured in a touch object without those flat fields.
 
 ## Intent, not persistence
 
@@ -64,7 +64,7 @@ Build these five charts manually in Amplitude (there is no automated chart-creat
 
 Break each chart down by `generator_type`, `acquisition_channel`, `acquisition_search_engine`, device type and entry path (`acquisition_landing_path` / `entry_page_type`).
 
-Attribution rule: an unset `acquisition_*` property is labelled **Unattributed**. Non-Google engines (Bing, DuckDuckGo, Yahoo, Ecosia, Brave) and AI referrals are **never counted as Google**.
+Attribution rule: use `first_touch` or `latest_touch` to analyse captured UTM campaigns that have no recognised AI-referral or organic-search classification. Label an unset `acquisition_*` property **Unattributed** only for flat-property reporting; it does not mean the touch objects contain no attribution. Non-Google engines (Bing, DuckDuckGo, Yahoo, Ecosia, Brave) and AI referrals are **never counted as Google**.
 
 ## QA / synthetic exclusion
 

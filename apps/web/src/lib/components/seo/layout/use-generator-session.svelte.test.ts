@@ -149,6 +149,30 @@ describe("useGeneratorSession", () => {
     ).toEqual([["generator_failed", { generator_type: "npc" }]]);
   });
 
+  it("does not report a generation failure when hub provenance recording throws", async () => {
+    const ctx = setup();
+    cleanup = ctx.cleanup;
+    hub.addProvenance.mockImplementationOnce(() => {
+      throw new Error("invalid session hub entity");
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await ctx.session.handleGenerate();
+
+    expect(ctx.session.generatedData).toEqual(output);
+    expect(ctx.session.userGenerationSucceeded).toBe(true);
+    expect(ctx.session.errorMessage).toBeNull();
+    expect(track).toHaveBeenCalledWith("generator_completed", {
+      generator_type: "npc",
+    });
+    expect(track).not.toHaveBeenCalledWith(
+      "generator_failed",
+      expect.anything(),
+    );
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
+
   it("shows streamed previews as they arrive", async () => {
     let seenDuringRun: unknown;
     const generate = vi.fn(
