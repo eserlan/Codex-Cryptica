@@ -1,15 +1,15 @@
 {
-  "updated_at": 1795070496,
+  "updated_at": 1795072088,
   "candidates": [
     {
-      "id": "reddit-44466817164-convert-a-long-adventure-in-stages",
-      "title": "Convert a long adventure in stages",
-      "body": "A long adventure can be difficult to convert and review all at once. I added staged conversion and updated the import guide to explain what carries over and what may need another look.\n\n- Work through a long adventure in stages\n- Check what carries over between stages\n- Find material the guide says may need review\n\nWhen you bring a long adventure into your campaign, what do you check first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/how-import-works/import-processing.png)",
+      "id": "reddit-44466817164-add-referenced-creatures-from-an-adventu",
+      "title": "Add referenced creatures from an adventure package",
+      "body": "When an adventure refers to creatures that aren\u2019t in my vault, I\u2019ve had to enter them again by hand. I added a review step for creature entries referenced by an approved adventure package.\n\n- Review the referenced creatures\n- Choose which entries to add\n- Avoid re-entering those creatures by hand\n\nWould you rather add creature entries during import, or wait until they first appear in play?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/creature-void-siphon.jpg)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/blog/how-import-works/import-processing.png",
+      "image_url": "https://assets.codexcryptica.com/announcements/creature-void-siphon.jpg",
       "source_id": "44466817164",
       "status": "approved",
-      "created_at": 1795070496
+      "created_at": 1795072088
     }
   ]
 }
