@@ -40,6 +40,7 @@ import {
 } from "./canonical-origin.js";
 import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
 
+import promptExampleSource from "../../../../../../fixtures/adventures/prompt-example/source.md?raw";
 import sourceMarkdown from "../../../../../../fixtures/adventures/reference-one-shot/variants/source-authority.md?raw";
 import sourcePdfText from "../../../../../../fixtures/adventures/reference-one-shot/variants/source-authority-pdf.txt?raw";
 import sourceMetadata from "../../../../../../fixtures/adventures/reference-one-shot/variants/source-authority-metadata.json";
@@ -422,7 +423,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(contract).toBeGreaterThan(-1);
       expect(contract).toBeLessThan(example);
       expect(example).toBeLessThan(rules);
-      expect(prompt.slice(contract, example)).toContain("ONE JSON object");
+      expect(prompt.slice(contract, example)).toContain("Output modes:");
       expect(prompt.slice(contract, example)).toContain(
         "Include all 11 collection arrays",
       );
@@ -494,14 +495,13 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(secret.relatedEntityIds).toContain(actor.id);
     });
 
-    it("ends with a self-check list after all 10 rules and says what to do with unreadable or oversized sources", () => {
-      const check = prompt.lastIndexOf(
-        "Before you reply with a successful conversion, check each of these:",
-      );
+    it("ends with a self-check list after all 9 rules and says what to do with unreadable or oversized sources", () => {
+      const check = prompt.lastIndexOf("Final verification checklist");
 
       expect(check).toBeGreaterThan(
-        prompt.indexOf("10. Game mechanics and maps:"),
+        prompt.indexOf("9. Game mechanics and maps:"),
       );
+      expect(check).toBeLessThan(prompt.lastIndexOf(PROMPT_END_MARKER));
       expect(prompt.slice(check)).toContain('Every "secrets" entry');
     });
 
@@ -592,8 +592,8 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(contract).toContain(
         'as a file named after the "id", such as "the-last-grind.json"',
       );
-      expect(contract).toContain(
-        "If you cannot create files, your entire reply is the JSON object",
+      expect(prompt).toContain(
+        "If you cannot create files, the whole reply is the JSON object",
       );
       expect(contract).toContain(
         "Never put JSON in a chat reply when you could have attached a file",
@@ -630,6 +630,163 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
+    it("names five output modes in order, before the example", () => {
+      const modes = prompt.indexOf("Output modes:");
+      const example = prompt.indexOf("Shape of a valid answer");
+      const positions = [
+        "- Inspect:",
+        "- Inventory:",
+        "- Convert:",
+        "- Verify:",
+        "- Deliver:",
+      ].map((label) => prompt.indexOf(label, modes));
+
+      expect(modes).toBeGreaterThan(-1);
+      expect(positions.every((p) => p > modes)).toBe(true);
+      expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+      expect(positions.at(-1)).toBeLessThan(example);
+      expect(prompt.indexOf("Output modes:", modes + 1)).toBe(-1);
+      expect(prompt).toContain(
+        "A plain-text checkpoint, inventory or report is never a final Adventure JSON.",
+      );
+    });
+
+    it("scopes JSON-only rules to Convert and Deliver, with no blanket rule", () => {
+      const modes = prompt.slice(
+        prompt.indexOf("Output modes:"),
+        prompt.indexOf("Outcome examples"),
+      );
+      const rule = modes
+        .split("\n")
+        .find((line) => line.includes("no Markdown code fences"))!;
+
+      expect(rule).toContain("Convert and Deliver");
+      expect(rule).toContain("no text before or after");
+      expect(prompt).not.toContain("your entire reply is the JSON object");
+      expect(prompt).not.toContain("the sole exception");
+      expect(prompt.split("no Markdown code fences")).toHaveLength(2);
+      expect(prompt).toContain(
+        "1. Convert and Deliver produce ONLY valid JSON",
+      );
+    });
+
+    it("gives a labelled example for each outcome", () => {
+      const examples = prompt.slice(
+        prompt.indexOf("Outcome examples"),
+        prompt.indexOf("Source authority:"),
+      );
+      const line = (label: string) =>
+        examples.split("\n").find((l) => l.startsWith(`- ${label}:`))!;
+
+      for (const label of ["Complete", "Partial", "Failed", "Unvalidated"]) {
+        expect(line(label)).toBeTruthy();
+      }
+      expect(line("Partial")).toContain("unresolved");
+      expect(line("Failed")).toContain("#long-adventures");
+      expect(line("Failed")).not.toContain("{");
+      expect(line("Unvalidated")).toContain("not checked");
+    });
+
+    it("keeps one-pass as the default with a soft staging heuristic", () => {
+      expect(prompt).toContain("stage sooner rather than truncate");
+      expect(prompt).toContain("roughly 15 or more pages");
+      expect(prompt).toContain("roughly 60 or more entries");
+      expect(prompt).toContain("not a hard limit");
+      expect(prompt).toContain("start staged conversion now");
+      expect(prompt).toContain(
+        "Never shorten the conversion by dropping or merging entries",
+      );
+    });
+
+    it("warns about secret-leaking IDs before any ID is planned", () => {
+      const bad = prompt.indexOf("actor-tomas-smuggler");
+
+      expect(bad).toBeGreaterThan(-1);
+      expect(bad).toBeLessThan(prompt.indexOf("Shape of a valid answer"));
+      expect(bad).toBeLessThan(prompt.indexOf("Automatic staging when"));
+      expect(prompt.split("actor-tomas-smuggler")).toHaveLength(2);
+      expect(JSON.stringify(PROMPT_EXAMPLE_OUTPUT)).not.toContain('smuggler"');
+    });
+
+    it("has exactly one final checklist and no trailing patch paragraphs", () => {
+      expect(prompt.split("Final verification checklist")).toHaveLength(2);
+      expect(prompt).not.toContain("Before you reply with a successful");
+      expect(prompt).not.toContain("Self-audit before returning");
+      for (const label of [
+        "Sandbox conversion:",
+        "Final visibility audit:",
+        "Evidence and citations:",
+      ]) {
+        expect(prompt).not.toContain(label);
+      }
+      expect(prompt.split('UNKNOWN_SCENE_PROGRESSION" and')).toHaveLength(2);
+    });
+
+    describe("example built from the synthetic source fixture", () => {
+      const headings = [...promptExampleSource.matchAll(/^## (.+)$/gm)].map(
+        (m) => m[1],
+      );
+      const anchors = [
+        ...promptExampleSource.matchAll(/<!-- source-id: (\S+) -->/g),
+      ].map((m) => m[1]);
+      const entries = Object.values(PROMPT_EXAMPLE_OUTPUT).flatMap((value) =>
+        Array.isArray(value) ? value : [],
+      ) as Array<{ sourceRef?: Record<string, unknown> }>;
+
+      it("has a pageless fixture with a source-id after every heading", () => {
+        expect(headings.length).toBeGreaterThan(3);
+        expect(anchors.length).toBeGreaterThan(headings.length - 1);
+        expect(promptExampleSource).not.toMatch(/\bpages?\b|\bp\.\s*\d/i);
+      });
+
+      it("cites a real heading and source-id on every entry, with no pages", () => {
+        expect(entries.length).toBeGreaterThan(10);
+        for (const entry of entries) {
+          expect(entry.sourceRef).toBeDefined();
+          expect(headings).toContain(entry.sourceRef!.section);
+          expect(anchors).toContain(entry.sourceRef!.anchor);
+          expect(entry.sourceRef).not.toHaveProperty("page");
+          expect(entry.sourceRef).not.toHaveProperty("pageEnd");
+        }
+      });
+
+      it("shows a branch, a connection, an unrepresentable mechanic and a defined watchman", () => {
+        const [first] = PROMPT_EXAMPLE_OUTPUT.scenes;
+        const actorIds = PROMPT_EXAMPLE_OUTPUT.actors.map((a) => a.id);
+        const encounter = PROMPT_EXAMPLE_OUTPUT.encounters[0]!;
+
+        expect(PROMPT_EXAMPLE_OUTPUT.scenes.length).toBeGreaterThanOrEqual(2);
+        expect(first!.branches.length).toBeGreaterThanOrEqual(1);
+        expect(
+          PROMPT_EXAMPLE_OUTPUT.locations.some(
+            (l) => (l.connections?.length ?? 0) >= 1,
+          ),
+        ).toBe(true);
+        const mechanic = PROMPT_EXAMPLE_OUTPUT.unresolved.find(
+          (u) => u.code === "unrepresentable-mechanic",
+        )!;
+        expect(mechanic.message).toContain("Strength check");
+        expect(promptExampleSource).toContain("Strength check");
+        expect(JSON.stringify(encounter)).toContain("watchman");
+        expect(encounter.actorIds.every((id) => actorIds.includes(id))).toBe(
+          true,
+        );
+        expect(encounter.actorIds.length).toBeGreaterThan(0);
+      });
+
+      it("fails validation when the branch target scene is removed", () => {
+        const broken = structuredClone(PROMPT_EXAMPLE_OUTPUT);
+        broken.scenes = broken.scenes.slice(0, 1);
+
+        const result = validateAdventureJson(broken);
+        expect(result.ok).toBe(false);
+        expect(
+          !result.ok &&
+            result.errors.some((e) => e.path?.startsWith("scenes[0]")),
+        ).toBe(true);
+      });
+    });
+
     it("stays provider-neutral", () => {
       expect(prompt).not.toMatch(
         /\b(ChatGPT|Claude|Gemini|GPT|OpenAI|Anthropic)\b/,
@@ -638,6 +795,21 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
   });
 
   describe("staged conversion section (#4896)", () => {
+    it("names the matching output mode in each staged prompt", () => {
+      expect(STAGED_INVENTORY_PROMPT).toContain("Inventory");
+      for (const p of [
+        STAGED_CHUNK_PROMPT,
+        STAGED_SAME_CHAT_PROMPT,
+        STAGED_NEW_CHAT_PROMPT,
+      ]) {
+        expect(p).toContain("Convert mode");
+        expect(p).not.toContain("Verify mode");
+      }
+      expect(STAGED_COVERAGE_PROMPT).toContain("Verify mode");
+      expect(COVERAGE_REPORT_PROMPT).toContain("Verify");
+      expect(AUTOMATIC_STAGING_RULES).toContain("Deliver mode");
+    });
+
     it("uses source ranges that work for paginated and unpaginated material", () => {
       expect(STAGED_INVENTORY_PROMPT).toContain("do not invent page numbers");
       expect(STAGED_INVENTORY_PROMPT).toContain(
@@ -1142,16 +1314,16 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
-    it("includes rules 8, 9, and 10 in the canonical prompt and summarizes revisions", () => {
+    it("includes rules 8 and 9 in the canonical prompt and summarizes revisions", () => {
       render(Page);
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "8. Self-audit before returning",
+        "8. Revisions and stable IDs",
       );
       expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "9. Revisions and stable IDs",
+        "9. Game mechanics and maps",
       );
-      expect(CANONICAL_CONVERSION_PROMPT).toContain(
-        "10. Game mechanics and maps",
+      expect(CANONICAL_CONVERSION_PROMPT).not.toContain(
+        "Self-audit before returning",
       );
       const rev = document
         .getElementById("revisions-heading")!

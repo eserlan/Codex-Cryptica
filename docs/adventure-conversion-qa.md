@@ -80,7 +80,7 @@ not run. A first-time save / import / review walkthrough has not been recorded.
 
 ## Prompt / guide defects
 
-None found in this work.
+- #5007: the canonical prompt contradicted itself. It said the entire reply is the JSON object, while staging, source-access and coverage steps asked for plain text. It now has five named modes (Inspect, Inventory, Convert, Verify, Deliver) with JSON-only rules scoped to Convert and Deliver, four short outcome examples (Complete, Partial, Failed, Unvalidated), a soft staging heuristic, the ID secrecy rule before any ID is planned, one merged final checklist, and an example built from `fixtures/adventures/prompt-example/source.md`. Prompt length: 23,963 characters on `origin/staging`, 28,398 after (the examples and mode text add length; no safeguard was removed). The before/after first-attempt success and truncation comparison across model families is **blocked: not run**, because no live model runs were made in this work.
 
 ## Schema / runtime defects
 

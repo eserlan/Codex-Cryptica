@@ -40,11 +40,11 @@ describe("/adventure-import/prompt.txt", () => {
   });
 
   it("includes the revisions and stable IDs rule", async () => {
-    expect(await GET().text()).toContain("9. Revisions and stable IDs");
+    expect(await GET().text()).toContain("8. Revisions and stable IDs");
   });
 
   it("includes the game mechanics and maps rule", async () => {
-    expect(await GET().text()).toContain("10. Game mechanics and maps");
+    expect(await GET().text()).toContain("9. Game mechanics and maps");
   });
 
   it("is excluded from search indexes", () => {
