@@ -1,15 +1,15 @@
 {
-  "updated_at": 1795073623,
+  "updated_at": 1795075424,
   "candidates": [
     {
-      "id": "reddit-44466817164-check-hex-crawl-connections-on-the-map",
-      "title": "Check hex-crawl connections on the map",
-      "body": "Markers show where crawl sites are, but they don\u2019t always make the routes between them clear. I added a map overlay for reviewing hex-crawl sites and their connections.\n\n- See crawl sites on the map\n- Review connections between sites\n- Use the geography controls while checking the layout\n\nDo you usually plan routes before placing locations, or work them out afterwards?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/help-blog/map.png)",
+      "id": "reddit-44466817164-apply-ancestry-traits-without-rewriting-",
+      "title": "Apply ancestry traits without rewriting base stats",
+      "body": "Writing species adjustments into a character\u2019s base stats makes it harder to see where the numbers came from. I added reusable trait packages that apply effective adjustments while leaving base stats intact.\n\n- Define reusable species or ancestry traits\n- Apply a trait package to a character\n- Keep the character\u2019s base stats unchanged\n- Account for the package in effective stat adjustments\n\nHow do you keep ancestry adjustments clear when a character has several bonuses?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/help-blog/map.png",
+      "image_url": "https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg",
       "source_id": "44466817164",
       "status": "approved",
-      "created_at": 1795073622
+      "created_at": 1795075424
     }
   ]
 }
