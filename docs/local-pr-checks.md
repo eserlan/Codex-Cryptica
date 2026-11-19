@@ -61,6 +61,13 @@ bun test scripts/check-ui-patterns.test.ts
 
 ## Reusable safety & test helpers
 
+- `apps/web/src/lib/components/ui/PaginatedList.svelte`: reusable, accessible
+  paginated list with theme-compliant contrast and bounded DOM rendering for
+  imported or user-supplied collections.
+- `packages/adventure-engine/src/adventure-json/creature-proposals.ts`
+  (`escapeEntryText`, exported from `@codex/adventure-engine`): escapes
+  Markdown/HTML control characters, `https?://`, and `www.` so imported or
+  user text stays literal prose without remote images or autolinked URLs.
 - `apps/web/src/lib/services/vault-scoped-batch.ts` (`runVaultScopedBatch`):
   reusable async per-item runner for multi-write Vault workflows. Captures the
   active Vault ID at start, checks Vault identity and optional `AbortSignal`
