@@ -1,5 +1,13 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { spawnSync } from "node:child_process";
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   type AdventureJsonV1,
@@ -19,9 +27,13 @@ import {
   STAGED_SAME_CHAT_PROMPT,
 } from "./staged-conversion.js";
 
-type Assemble = (chunks: unknown[]) => {
+type Assemble = (
+  chunks: unknown[],
+  labels?: string[],
+) => {
   adventure: AdventureJsonV1;
   errors: string[];
+  notices: string[];
 };
 
 const assemble = new Function(
@@ -141,13 +153,82 @@ describe("staged conversion: assembling chunks (#4896)", () => {
   });
 
   it("merges an identical entry that appears in two chunks only once", () => {
-    const { adventure, errors } = assemble([
+    const { adventure, errors, notices } = assemble([
       chunkOne,
       { ...chunkTwo, actors: chunkOne.actors },
     ]);
 
     expect(errors).toEqual([]);
     expect(adventure.actors).toHaveLength(1);
+    expect(notices).toHaveLength(1);
+    expect(notices[0]).toContain("actors");
+    expect(notices[0]).toContain('"actor-reeve"');
+    expect(notices[0]).toContain("chunk 1");
+    expect(notices[0]).toContain("chunk 2");
+  });
+
+  it("fails when an identical record reuses an id in another collection", () => {
+    const { scenes } = chunkOne;
+    const { errors } = assemble([
+      chunkOne,
+      { ...chunkTwo, locations: [...chunkTwo.locations, scenes[0]] },
+    ]);
+
+    expect(errors).toEqual([
+      'chunk 2: locations id "scene-town" is already used by scenes in chunk 1; each id must be unique across all collections',
+    ]);
+  });
+
+  it("fails when different records share an id across collections", () => {
+    const { errors } = assemble([
+      chunkOne,
+      {
+        ...chunkTwo,
+        locations: [{ ...chunkTwo.locations[0], id: "actor-reeve" }],
+      },
+    ]);
+
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain("locations");
+    expect(errors[0]).toContain("actors");
+    expect(errors[0]).toContain('"actor-reeve"');
+  });
+
+  it("names chunk files in messages when labels are given", () => {
+    const { errors } = assemble(
+      [
+        chunkOne,
+        {
+          ...chunkTwo,
+          locations: [{ ...chunkTwo.locations[0], id: "actor-reeve" }],
+        },
+      ],
+      ["chunk-01.json", "chunk-02.json"],
+    );
+
+    expect(errors[0]).toBe(
+      'chunk 2 (chunk-02.json): locations id "actor-reeve" is already used by actors in chunk 1 (chunk-01.json); each id must be unique across all collections',
+    );
+  });
+
+  it("reports errors in a deterministic order", () => {
+    const chunks = [
+      chunkOne,
+      {
+        ...chunkTwo,
+        premise: { ...meta.premise, hook: "Other." },
+        locations: [{ ...chunkTwo.locations[0], id: "actor-reeve" }],
+        clues: [{ ...chunkOne.scenes[0], id: "scene-town" }],
+      },
+    ];
+    const expected = [
+      "chunk 2: premise differs from chunk 1",
+      'chunk 2: locations id "actor-reeve" is already used by actors in chunk 1; each id must be unique across all collections',
+      'chunk 2: clues id "scene-town" is already used by scenes in chunk 1; each id must be unique across all collections',
+    ];
+
+    expect(assemble(chunks).errors).toEqual(expected);
+    expect(assemble(chunks).errors).toEqual(expected);
   });
 
   it("reports, and does not resolve, a conflicting duplicate id", () => {
@@ -158,7 +239,7 @@ describe("staged conversion: assembling chunks (#4896)", () => {
     const { errors } = assemble([chunkOne, conflicting]);
 
     expect(errors).toEqual([
-      'chunk 2: id "actor-reeve" is defined differently elsewhere',
+      'chunk 2: actors id "actor-reeve" is defined differently from chunk 1; the same id must not have two different definitions',
     ]);
   });
 
@@ -670,5 +751,73 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
     );
     expect(problem?.message).toContain(JSON.stringify(controlId));
     expect(problem?.message).not.toContain("\u001b");
+  });
+});
+
+describe("staged conversion: assemble script and fixture (#5004)", () => {
+  it("keeps every entry and sourceRef of the reference fixture", () => {
+    const chunks = chunkFiles.map((file) => readFixture(file));
+    const { adventure, errors } = assemble(chunks);
+
+    expect(errors).toEqual([]);
+    expect(validateAdventureJson(adventure).ok).toBe(true);
+    for (const name of Object.keys(empty)) {
+      expect((adventure as unknown as Record<string, unknown>)[name]).toEqual(
+        chunks.flatMap((c) => c[name] ?? []),
+      );
+    }
+  });
+
+  const runScript = (files: Record<string, unknown>) => {
+    const dir = mkdtempSync(join(tmpdir(), "assemble-"));
+    writeFileSync(join(dir, "assemble.js"), STAGED_ASSEMBLE_SCRIPT);
+    writeFileSync(join(dir, "adventure.json"), "KNOWN");
+    for (const [name, json] of Object.entries(files)) {
+      writeFileSync(join(dir, name), JSON.stringify(json));
+    }
+    const result = spawnSync(
+      process.execPath,
+      ["assemble.js", ...Object.keys(files)],
+      { cwd: dir, encoding: "utf8" },
+    );
+    return { dir, result };
+  };
+
+  it("leaves an existing adventure.json untouched when chunks collide", () => {
+    const { dir, result } = runScript({
+      "chunk-01.json": chunkOne,
+      "chunk-02.json": {
+        ...chunkTwo,
+        locations: [{ ...chunkOne.scenes[0] }],
+      },
+    });
+    try {
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain("chunk-02.json");
+      expect(result.stderr).toContain("locations");
+      expect(result.stderr).toContain('"scene-town"');
+      expect(readFileSync(join(dir, "adventure.json"), "utf8")).toBe("KNOWN");
+      expect(readdirSync(dir).filter((f) => f.endsWith(".tmp"))).toEqual([]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("prints that completeness was not verified on success", () => {
+    const { dir, result } = runScript({
+      "chunk-01.json": chunkOne,
+      "chunk-02.json": chunkTwo,
+    });
+    try {
+      expect(result.status).toBe(0);
+      expect(result.stdout).toContain("not verified");
+      expect(result.stdout).toContain("check.js");
+      const written = JSON.parse(
+        readFileSync(join(dir, "adventure.json"), "utf8"),
+      );
+      expect(validateAdventureJson(written).ok).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

@@ -110,7 +110,7 @@ export const STAGED_ASSEMBLE_FUNCTION = `function stableJson(value) {
   );
 }
 
-function assemble(chunks) {
+function assemble(chunks, labels) {
   const names = ["locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved"];
   const metadataKeys = ["formatVersion", "id", "title", "version", "description", "premise", "source", "system", "extensions"];
   const first = chunks[0];
@@ -120,26 +120,33 @@ function assemble(chunks) {
   }
   for (const name of names) out[name] = [];
   const errors = [];
+  const notices = [];
   const seen = new Map();
+  const where = (index) => "chunk " + (index + 1) + (labels && labels[index] ? " (" + labels[index] + ")" : "");
   chunks.forEach((chunk, index) => {
     for (const key of metadataKeys) {
       if (stableJson(chunk[key]) !== stableJson(first[key])) {
-        errors.push("chunk " + (index + 1) + ": " + key + " differs from chunk 1");
+        errors.push(where(index) + ": " + key + " differs from " + where(0));
       }
     }
     for (const name of names) {
       for (const entry of chunk[name] || []) {
         const before = seen.get(entry.id);
+        const id = JSON.stringify(entry.id);
         if (!before) {
-          seen.set(entry.id, entry);
+          seen.set(entry.id, { entry, name, index });
           out[name].push(entry);
-        } else if (stableJson(before) !== stableJson(entry)) {
-          errors.push('chunk ' + (index + 1) + ': id "' + entry.id + '" is defined differently elsewhere');
+        } else if (before.name !== name) {
+          errors.push(where(index) + ": " + name + " id " + id + " is already used by " + before.name + " in " + where(before.index) + "; each id must be unique across all collections");
+        } else if (stableJson(before.entry) !== stableJson(entry)) {
+          errors.push(where(index) + ": " + name + " id " + id + " is defined differently from " + where(before.index) + "; the same id must not have two different definitions");
+        } else {
+          notices.push(where(index) + ": " + name + " id " + id + " is identical to the one in " + where(before.index) + "; merged into one entry");
         }
       }
     }
   });
-  return { adventure: out, errors };
+  return { adventure: out, errors, notices };
 }`;
 
 export const STAGED_ASSEMBLE_SCRIPT = `// assemble.js: node assemble.js chunk-01.json chunk-02.json
@@ -154,7 +161,7 @@ if (files.length === 0) {
   process.exit(1);
 }
 const chunks = files.map((file) => JSON.parse(fs.readFileSync(file, "utf8")));
-const { adventure, errors } = assemble(chunks);
+const { adventure, errors, notices } = assemble(chunks, files.map((f) => path.basename(f)));
 if (errors.length > 0) {
   console.error(errors.join("\\n"));
   process.exit(1);
@@ -164,7 +171,9 @@ const temporary = path.join(path.dirname(output), "." + path.basename(output) + 
 try {
   fs.writeFileSync(temporary, JSON.stringify(adventure, null, 2) + "\\n", { flag: "wx" });
   fs.renameSync(temporary, output);
+  for (const notice of notices) console.log("Notice: " + notice);
   console.log("Wrote " + output);
+  console.log("Source completeness was not verified. Run check.js with your manifest (Stage 3), and use the import review in Codex Cryptica, which validates references and the schema.");
 } catch (error) {
   try { fs.unlinkSync(temporary); } catch { /* Nothing to clean up. */ }
   throw error;
