@@ -1,15 +1,15 @@
 {
-  "updated_at": 1795068965,
+  "updated_at": 1795070496,
   "candidates": [
     {
-      "id": "reddit-44466817164-send-generator-results-straight-to-a-loc",
-      "title": "Send generator results straight to a local vault",
-      "body": "Copying a useful generator result into campaign notes is one more step where details can get lost. I added a direct handoff from public generators into a local Codex Cryptica vault.\n\n- Send a result into the vault\n- Get a report on what happened during the handoff\n- Follow a recovery path if the transfer is interrupted\n\nIf a handoff stops halfway through, what would you most want to recover first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/entity-shelf/shelf-import-outcome.png)",
+      "id": "reddit-44466817164-convert-a-long-adventure-in-stages",
+      "title": "Convert a long adventure in stages",
+      "body": "A long adventure can be difficult to convert and review all at once. I added staged conversion and updated the import guide to explain what carries over and what may need another look.\n\n- Work through a long adventure in stages\n- Check what carries over between stages\n- Find material the guide says may need review\n\nWhen you bring a long adventure into your campaign, what do you check first?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/how-import-works/import-processing.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/blog/entity-shelf/shelf-import-outcome.png",
+      "image_url": "https://assets.codexcryptica.com/images/blog/how-import-works/import-processing.png",
       "source_id": "44466817164",
       "status": "approved",
-      "created_at": 1795068965
+      "created_at": 1795070496
     }
   ]
 }
