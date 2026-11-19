@@ -4,23 +4,15 @@ Step-by-step tester script for manually verifying Solo Adventure Mode (AI GM) an
 
 ---
 
-## Pre-flight (before opening the browser)
+## Pre-flight
 
-1. **Run the automated release gates** (all must pass):
-
-   ```bash
-   (cd packages/adventure-engine && bun test tests/evaluations.test.ts tests/living-settlement-long-run.test.ts tests/emergent-30-turn.test.ts tests/cross-scenario-causality.test.ts)
-   (cd apps/web && bunx vitest run src/lib/services/adventure/adventure-evaluation-runner.test.ts src/lib/services/adventure/adventure-multi-scenario-gates.test.ts src/lib/services/adventure/adventure-grounding-continuity.test.ts)
-   (cd apps/web && bunx vitest run src/lib/stores/oracle/tests/gm-leak-harness.test.ts src/lib/stores/oracle/tests/gm-secrecy-outputs.test.ts src/lib/stores/oracle/tests/gm-secrecy-playthrough.test.ts)
-   ```
-
-2. **Prepare a disposable Vault** on staging (or local dev) with:
+1. **Open the staging app** in a desktop browser (`>= 1280px` viewport) and prepare a **disposable Vault** with:
    - Character: **Mara** (your PC)
    - Location: **Brackwater Quay** (with both public description and GM-only `lore`)
    - Character: **Harbourmaster Venn** (linked to Brackwater Quay)
    - Location: **Old Bell Tower** (with GM-only `lore`)
    - One future-dated entity (`startDate` in a future year) and one historical entity (`endDate` in the past)
-3. **Have ready**:
+2. **Have ready**:
    - `fixtures/adventures/reference-one-shot/adventure.v1.json`
    - A second copy of that file edited with `"version": "1.1.0"` and a changed `"description"` (keep the same `"id"`).
    - Desktop (`>= 1280px`) and Mobile (`390x844` and `320x844`) viewports.
