@@ -221,7 +221,12 @@ describe("assertNoGmLeak", () => {
 const gmOnly = { visibility: "gm-only", epistemicStatus: "explicit" } as const;
 
 function variant() {
-  return structuredClone(canaryReferencePackage);
+  const pkg = structuredClone(canaryReferencePackage);
+  // The reference Wick encounter is now gm-only; these cases need a visible one.
+  pkg.encounters = pkg.encounters.map((encounter, index) =>
+    index === 0 ? { ...encounter, visibility: "player-visible" } : encounter,
+  );
+  return pkg;
 }
 
 describe("gap 1: source anchors", () => {

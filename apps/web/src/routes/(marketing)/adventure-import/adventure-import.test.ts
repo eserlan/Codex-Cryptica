@@ -502,6 +502,15 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       );
     });
 
+    it("states that v1 has no field-level or reveal-later visibility", () => {
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        'v1 has no field-level or "revealed later" visibility. A fact players only learn in play',
+      );
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        'goes in a "gm-only" secret, clue, scene or encounter',
+      );
+    });
+
     it("explains the stages in order and that nothing is converted here", () => {
       const { container } = render(Page);
       const section = container.querySelector("#long-adventures")!;
