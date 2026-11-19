@@ -217,14 +217,24 @@ describe("staged conversion: assembling chunks (#4896)", () => {
       {
         ...chunkTwo,
         premise: { ...meta.premise, hook: "Other." },
-        locations: [{ ...chunkTwo.locations[0], id: "actor-reeve" }],
+        locations: [
+          { ...chunkTwo.locations[0], id: "scene-town" },
+          { ...chunkTwo.locations[0], id: "actor-reeve" },
+        ],
         clues: [{ ...chunkOne.scenes[0], id: "scene-town" }],
+      },
+      {
+        ...meta,
+        ...empty,
+        factions: [{ ...chunkOne.scenes[0], id: "actor-reeve" }],
       },
     ];
     const expected = [
       "chunk 2: premise differs from chunk 1",
+      'chunk 2: locations id "scene-town" is already used by scenes in chunk 1; each id must be unique across all collections',
       'chunk 2: locations id "actor-reeve" is already used by actors in chunk 1; each id must be unique across all collections',
       'chunk 2: clues id "scene-town" is already used by scenes in chunk 1; each id must be unique across all collections',
+      'chunk 3: factions id "actor-reeve" is already used by actors in chunk 1; each id must be unique across all collections',
     ];
 
     expect(assemble(chunks).errors).toEqual(expected);
