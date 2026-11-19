@@ -782,6 +782,10 @@ describe("GeneratorOutputCard", () => {
       });
 
       const callout = screen.getByTestId("generator-continuation-callout");
+      // The mobile callout must not revert to 12–14px body text.
+      expect(callout.querySelector("h3")?.classList.contains("text-lg")).toBe(true);
+      expect(callout.querySelector("p")?.classList.contains("text-lg")).toBe(true);
+      expect(callout.querySelector("ul")?.classList.contains("text-lg")).toBe(true);
       expect(callout.textContent).toContain("Keep this system connected");
       expect(callout.textContent).toContain(
         "No account needed; stored locally in this browser.",
