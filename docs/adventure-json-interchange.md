@@ -134,6 +134,26 @@ schema, alias, both examples, the import CTA href and the `llms.txt` entries.
 - The guide's prompt uses absolute production URLs. On a non-production base the
   check reports those as environment-dependent warnings; run it against
   production with `--strict-production` at release time, after promotion.
+- Results are reported separately so a body problem never looks like a route
+  failure: HTTP status, content type (`prompt.txt` must be `text/plain`), the
+  end marker (the last non-empty line of `prompt.txt`), whether the prompt in
+  the guide's `<pre id="canonical-prompt">` matches `prompt.txt`, and redirects.
+  Every guide, asset and `prompt.txt` line shows the final URL, and a redirect
+  to a different URL is a warning naming both.
+- On a non-production base the script also fetches the same assets from
+  production and compares them (JSON as parsed values, `prompt.txt` as exact
+  text). A match prints `OK    verified canonical equivalent: <path>`. A
+  difference, or a production fetch that is not 200, is a warning.
+- `--strict-production` turns those canonical-equivalence warnings and failed
+  production dependencies into errors. Errors exit 1; warnings and `OK` notes
+  do not.
+- A fetch that throws (network or timeout) is recorded as
+  `<url>: fetch failed (<message>)` and the other checks still run.
+- Crawler or `curl` failures alone do not prove a user-facing route is broken;
+  check in a browser before treating one as an outage.
+- Manual step: paste the exact "Copy guide link" text into a browsing-capable
+  assistant and confirm that it quotes the end marker. If it cannot, record
+  whether it reports blocked access, truncation or an extraction problem.
 
 ## Conversion QA
 

@@ -19,10 +19,17 @@
  * - On a non-production base, the guide's canonical prompt still points at
  *   production. If production does not serve those URLs yet, that is reported
  *   as an environment-dependent warning, not an error (unless --strict-production).
+ * - Crawler or curl failures alone do not prove a user-facing route is broken.
+ *
+ * HTTP status, content type and body are reported as separate results, and a
+ * fetch that throws is recorded for that URL without stopping the other checks.
  */
+import { isDeepStrictEqual } from "node:util";
 import { fileURLToPath } from "node:url";
 
 const PRODUCTION = "https://codexcryptica.com";
+/** The last line of the canonical prompt; a test pins it to conversion-guide.ts. */
+export const PROMPT_END_MARKER = "END OF ADVENTURE JSON V1 CONVERSION PROMPT";
 const TIMEOUT_MS = 20_000;
 
 export const GUIDE_PATH = "/adventure-import";
@@ -94,16 +101,94 @@ export function productionLinks(body) {
   return [...new Set(found ?? [])];
 }
 
-/** Pure: judge the plain-text prompt file. */
-export function promptTxtProblems({ status, contentType, body }) {
+/** Pure: judge the plain-text prompt file's status and body. */
+export function promptTxtProblems({ status, body }) {
   return [
     ...statusProblem(PROMPT_PATH, status),
-    ...typeProblem(PROMPT_PATH, contentType, isTextType, "text/plain"),
     ...(body.startsWith("Convert the tabletop RPG adventure") &&
     body.includes(`${PRODUCTION}/schemas/adventure-json/v1.json`)
       ? []
       : [`${PROMPT_PATH}: body is not the conversion prompt`]),
   ];
+}
+
+/** Pure: judge the plain-text prompt file's content type. */
+export function promptContentTypeProblems({ contentType }) {
+  return typeProblem(PROMPT_PATH, contentType, isTextType, "text/plain");
+}
+
+/** Pure: the last non-empty line of the prompt must be the end marker. */
+export function promptEndMarkerProblems(body) {
+  const last = body
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => line.trim())
+    .at(-1);
+  return last === PROMPT_END_MARKER
+    ? []
+    : [
+        `${PROMPT_PATH}: last line is ${JSON.stringify(last ?? "")}, expected end marker "${PROMPT_END_MARKER}"`,
+      ];
+}
+
+const NAMED_ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"' };
+
+function decodeEntities(text) {
+  return text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot);/gi, (m, code) => {
+    const lower = code.toLowerCase();
+    if (lower.startsWith("#x"))
+      return String.fromCodePoint(parseInt(lower.slice(2), 16));
+    if (lower.startsWith("#"))
+      return String.fromCodePoint(parseInt(lower.slice(1), 10));
+    return NAMED_ENTITIES[lower] ?? m;
+  });
+}
+
+/** Pure: the prompt shown on the guide page must equal prompt.txt. */
+export function promptPageMatchProblems(promptBody, guideHtml) {
+  const match = guideHtml.match(
+    /<pre\b[^>]*\bid="canonical-prompt"[^>]*>([\s\S]*?)<\/pre>/,
+  );
+  if (!match) return [`${GUIDE_PATH}: no <pre id="canonical-prompt"> found`];
+  const onPage = decodeEntities(match[1]);
+  const expected = promptBody.replace(/\r?\n$/, "");
+  return onPage === expected
+    ? []
+    : [`${GUIDE_PATH}: prompt on the page differs from ${PROMPT_PATH}`];
+}
+
+/** Pure: a warning when a request ended at a different URL. */
+export function redirectNotes(path, requestedUrl, finalUrl) {
+  return finalUrl === requestedUrl
+    ? []
+    : [`${path}: redirected from ${requestedUrl} to ${finalUrl}`];
+}
+
+function sameJson(a, b) {
+  try {
+    return isDeepStrictEqual(JSON.parse(a), JSON.parse(b));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Pure: compare a base asset with production's. Returns `{ note }` when they
+ * match and `{ problem }` when they differ or production cannot be read.
+ * JSON is compared as parsed values, prompt.txt as exact text.
+ */
+export function canonicalEquivalence(path, baseRes, prodRes) {
+  if (prodRes.status !== 200)
+    return {
+      problem: `${path}: production returned HTTP ${prodRes.status}, cannot verify canonical equivalent`,
+    };
+  const same =
+    path === PROMPT_PATH
+      ? baseRes.body === prodRes.body
+      : sameJson(baseRes.body, prodRes.body);
+  return same
+    ? { note: `verified canonical equivalent: ${path}` }
+    : { problem: `${path}: differs from production` };
 }
 
 /** Pure: the SPA shell check for authenticated app routes. */
@@ -133,70 +218,133 @@ async function get(url) {
     status: res.status,
     contentType: res.headers.get("content-type") ?? "",
     body: await res.text(),
+    url: res.url || url,
   };
 }
 
-async function checkProductionDependencies(base, guideBody, strict, log) {
-  const errors = [];
-  const warnings = [];
-  for (const url of productionLinks(guideBody)) {
-    const res = await get(url);
-    log(`${res.status} ${res.contentType} ${url} (production dependency)`);
-    if (res.status === 200) continue;
-    const msg = `${url}: HTTP ${res.status} on production; testers on ${base} are sent there by the guide's prompt`;
-    (strict ? errors : warnings).push(msg);
+/** Fetch one URL; a thrown error is recorded in `sink` and returns null. */
+async function tryGet(url, sink) {
+  try {
+    return await get(url);
+  } catch (err) {
+    sink.push(`${url}: fetch failed (${err?.message ?? err})`);
+    return null;
   }
-  return { errors, warnings };
+}
+
+/** Fetch a base path, log its final URL and warn about redirects. */
+async function fetchChecked(ctx, path) {
+  const url = `${ctx.base}${path}`;
+  const res = await tryGet(url, ctx.errors);
+  if (!res) return null;
+  ctx.log(`${res.status} ${res.contentType} ${res.url}`);
+  ctx.warnings.push(...redirectNotes(path, url, res.url));
+  return res;
+}
+
+async function checkProductionDependencies(ctx, guideBody) {
+  for (const url of productionLinks(guideBody)) {
+    const res = await tryGet(url, ctx.prodSink);
+    if (!res) continue;
+    ctx.log(`${res.status} ${res.contentType} ${url} (production dependency)`);
+    if (res.status !== 200)
+      ctx.prodSink.push(
+        `${url}: HTTP ${res.status} on production; testers on ${ctx.base} are sent there by the guide's prompt`,
+      );
+  }
+}
+
+async function checkPrompt(ctx, prompt, guide) {
+  const found = [
+    ...promptTxtProblems(prompt),
+    ...promptContentTypeProblems(prompt),
+  ];
+  const marker = promptEndMarkerProblems(prompt.body);
+  if (!marker.length)
+    ctx.notes.push(`${PROMPT_PATH}: ends with the end marker`);
+  ctx.errors.push(...found, ...marker);
+  if (!guide) return;
+  const match = promptPageMatchProblems(prompt.body, guide.body);
+  if (!match.length)
+    ctx.notes.push(`${GUIDE_PATH}: prompt on the page matches ${PROMPT_PATH}`);
+  ctx.errors.push(...match);
+}
+
+async function checkEquivalentToProduction(ctx, path, baseRes) {
+  const prodRes = await tryGet(`${PRODUCTION}${path}`, ctx.prodSink);
+  if (!prodRes) return;
+  const { note, problem } = canonicalEquivalence(path, baseRes, prodRes);
+  ctx.notes.push(...(note ? [note] : []));
+  ctx.prodSink.push(...(problem ? [problem] : []));
+}
+
+async function checkEquivalence(ctx, assets) {
+  if (ctx.base === PRODUCTION) return;
+  for (const [path, baseRes] of assets)
+    await checkEquivalentToProduction(ctx, path, baseRes);
+}
+
+async function checkAssets(ctx) {
+  const assets = new Map();
+  for (const path of JSON_ASSETS) {
+    const res = await fetchChecked(ctx, path);
+    if (!res) continue;
+    assets.set(path, res);
+    ctx.errors.push(...jsonAssetProblems(path, res));
+  }
+  return assets;
+}
+
+async function checkAppAndDiscovery(ctx) {
+  const app = await tryGet(`${ctx.base}/adventure`, ctx.errors);
+  if (app) {
+    ctx.log(`${app.status} /adventure (SPA shell; status not judged)`);
+    ctx.errors.push(...appShellProblems("/adventure", app));
+  }
+  const llms = await tryGet(`${ctx.base}/llms.txt`, ctx.errors);
+  const llmsFull = await tryGet(`${ctx.base}/llms-full.txt`, ctx.errors);
+  if (llms && llmsFull)
+    ctx.errors.push(...discoveryProblems(llms.body, llmsFull.body));
+}
+
+async function checkGuide(ctx) {
+  const guide = await fetchChecked(ctx, GUIDE_PATH);
+  if (guide) ctx.errors.push(...guideProblems(guide));
+  return guide;
+}
+
+async function checkPromptFile(ctx, assets, guide) {
+  const prompt = await fetchChecked(ctx, PROMPT_PATH);
+  if (!prompt) return;
+  assets.set(PROMPT_PATH, prompt);
+  await checkPrompt(ctx, prompt, guide);
 }
 
 export async function run({ base, strictProduction }) {
-  const log = (line) => console.log(line);
   const errors = [];
+  const warnings = [];
+  const notes = [];
+  const prodSink = strictProduction ? errors : warnings;
+  const ctx = { base, errors, warnings, notes, prodSink, log: console.log };
 
-  const guide = await get(`${base}${GUIDE_PATH}`);
-  log(`${guide.status} ${guide.contentType} ${GUIDE_PATH}`);
-  errors.push(...guideProblems(guide));
-
-  for (const path of JSON_ASSETS) {
-    const res = await get(`${base}${path}`);
-    log(`${res.status} ${res.contentType} ${path}`);
-    errors.push(...jsonAssetProblems(path, res));
-  }
-
-  const prompt = await get(`${base}${PROMPT_PATH}`);
-  log(`${prompt.status} ${prompt.contentType} ${PROMPT_PATH}`);
-  errors.push(...promptTxtProblems(prompt));
-
-  const app = await get(`${base}/adventure`);
-  log(`${app.status} /adventure (SPA shell; status not judged)`);
-  errors.push(...appShellProblems("/adventure", app));
-
-  const [llms, llmsFull] = await Promise.all([
-    get(`${base}/llms.txt`),
-    get(`${base}/llms-full.txt`),
-  ]);
-  errors.push(...discoveryProblems(llms.body, llmsFull.body));
-
-  const prod = await checkProductionDependencies(
-    base,
-    guide.body,
-    strictProduction,
-    log,
-  );
-  return {
-    errors: [...errors, ...prod.errors],
-    warnings: prod.warnings,
-  };
+  const guide = await checkGuide(ctx);
+  const assets = await checkAssets(ctx);
+  await checkPromptFile(ctx, assets, guide);
+  await checkAppAndDiscovery(ctx);
+  await checkEquivalence(ctx, assets);
+  await checkProductionDependencies(ctx, guide?.body ?? "");
+  return { errors, warnings, notes };
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const arg = (name) =>
     process.argv.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
   const base = (arg("base") ?? PRODUCTION).replace(/\/$/, "");
-  const { errors, warnings } = await run({
+  const { errors, warnings, notes } = await run({
     base,
     strictProduction: process.argv.includes("--strict-production"),
   });
+  for (const n of notes) console.log(`OK    ${n}`);
   for (const w of warnings) console.warn(`WARN  ${w}`);
   for (const e of errors) console.error(`FAIL  ${e}`);
   console.log(
