@@ -1,6 +1,17 @@
 import type { AdventureJsonV1 } from "./adventure-json";
-import { MAX_PACKAGE_PROGRESS_ENTRIES } from "./schemas";
+import {
+  MAX_ACTOR_FACT_CHARS,
+  MAX_ACTOR_REMEMBERED_FACTS,
+  MAX_PACKAGE_PROGRESS_ENTRIES,
+} from "./schemas";
 import type {
+  ActorDisposition,
+  ActorEventProposal,
+  ActorProgressStatus,
+  ActorProposalStatus,
+  PackageActorEvent,
+  PackageActorState,
+  PackageEventProposal,
   PackageProgress,
   PackageProgressEvent,
   PackageProgressRecord,
@@ -12,16 +23,10 @@ export interface PackageProgressIndex {
   packageSceneIds: string[];
   packageRecordKinds: Record<string, PackageRecordKind>;
   packageSceneBranches: Record<string, string[]>;
+  packageActorIds: string[];
 }
 
-export interface PackageProgressInput {
-  recordId: string;
-  kind: PackageRecordKind;
-  to: PackageProgressStatus;
-  certainty: "claimed" | "confirmed";
-  note: string;
-  supersedes?: string;
-}
+export type PackageProgressInput = PackageEventProposal;
 
 export interface PackageProgressResult {
   progress: PackageProgress;
@@ -90,6 +95,7 @@ export function packageProgressIndex(
         (scene.branches ?? []).map((branch) => branch.targetSceneId),
       ]),
     ),
+    packageActorIds: pkg.actors.map((actor) => actor.id),
   };
 }
 
@@ -191,11 +197,10 @@ function checkInput(
   const current = statusOf(records, input.recordId);
   let target: PackageProgressEvent | undefined;
   if (input.supersedes) {
-    target =
-      input.certainty === "confirmed"
-        ? (supersedeTarget(events, input) ?? undefined)
-        : undefined;
-    if (!target) return { reason: "invalid supersede" };
+    target = supersedeTarget(events, input) ?? undefined;
+    if (!target || input.certainty === "claimed") {
+      return { reason: "invalid supersede" };
+    }
   }
   if (!transitionAllowed(events, input, current, target)) {
     return { reason: "transition not allowed" };
@@ -211,6 +216,24 @@ function eventIdProblem(
   return events.length >= MAX_PACKAGE_PROGRESS_ENTRIES ? "ledger full" : null;
 }
 
+function clonePackageProgress(
+  progress: PackageProgress,
+  includeActors = false,
+): PackageProgress {
+  return {
+    sceneId: progress.sceneId,
+    version: 1,
+    records: structuredClone(progress.records ?? []),
+    events: structuredClone(progress.events ?? []),
+    ...(includeActors || progress.actors !== undefined
+      ? { actors: structuredClone(progress.actors ?? []) }
+      : {}),
+    ...(includeActors || progress.actorEvents !== undefined
+      ? { actorEvents: structuredClone(progress.actorEvents ?? []) }
+      : {}),
+  };
+}
+
 /**
  * Applies ledger inputs in order to a copy of `progress`. A rejected input is
  * reported in `dropped`; accepted ones are appended and never edited later.
@@ -223,12 +246,7 @@ export function applyPackageProgressEvents(
     index: Pick<PackageProgressIndex, "packageRecordKinds">;
   },
 ): PackageProgressResult {
-  const next: PackageProgress = {
-    sceneId: progress.sceneId,
-    version: 1,
-    records: structuredClone(progress.records ?? []),
-    events: structuredClone(progress.events ?? []),
-  };
+  const next = clonePackageProgress(progress);
   const records = next.records!;
   const events = next.events!;
   const dropped: string[] = [];
@@ -318,4 +336,441 @@ export function planSceneProgress(
     if (get(moveTo) === "active") openBranches(moveTo);
   }
   return inputs;
+}
+
+export type ActorProgressInput = ActorEventProposal;
+
+const ALLOWED_ACTOR_STATUS: Record<
+  ActorProgressStatus,
+  readonly ActorProposalStatus[]
+> = {
+  unknown: ["present", "absent", "dead"],
+  present: ["present", "absent", "dead"],
+  absent: ["present", "absent", "dead"],
+  dead: [],
+};
+
+function actorStateOf(
+  actors: readonly PackageActorState[],
+  actorId: string,
+): PackageActorState {
+  return (
+    actors.find((actor) => actor.actorId === actorId) ?? {
+      actorId,
+      status: "unknown",
+      disposition: "neutral",
+      facts: [],
+    }
+  );
+}
+
+function appendRememberedFact(facts: string[], fact: string): void {
+  const existingIdx = facts.indexOf(fact);
+  if (existingIdx >= 0) facts.splice(existingIdx, 1);
+  facts.push(fact);
+  if (facts.length > MAX_ACTOR_REMEMBERED_FACTS) {
+    facts.shift();
+  }
+}
+
+function replayActorState(
+  events: readonly PackageActorEvent[],
+  actorId: string,
+  superseded: ReadonlySet<string>,
+  leaveOut?: string,
+): PackageActorState {
+  let status: ActorProgressStatus = "unknown";
+  let disposition: ActorDisposition = "neutral";
+  const facts: string[] = [];
+  for (const event of events) {
+    const skip =
+      event.actorId !== actorId ||
+      event.certainty !== "confirmed" ||
+      superseded.has(event.id) ||
+      event.id === leaveOut;
+    if (skip) continue;
+    status = event.status ?? status;
+    disposition = event.disposition ?? disposition;
+    if (event.fact !== undefined) appendRememberedFact(facts, event.fact);
+  }
+  return { actorId, status, disposition, facts };
+}
+
+function supersedeActorTarget(
+  events: readonly PackageActorEvent[],
+  input: ActorProgressInput,
+): PackageActorEvent | null {
+  const target = events.find((e) => e.id === input.supersedes);
+  if (!target || target.actorId !== input.actorId) return null;
+  return events.some((e) => e.supersedes === target.id) ? null : target;
+}
+
+function effectiveActorStatus(
+  events: readonly PackageActorEvent[],
+  actorId: string,
+  current: PackageActorState,
+  target: PackageActorEvent | undefined,
+): ActorProgressStatus {
+  if (!target) return current.status;
+  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  return replayActorState(events, actorId, superseded, target.id).status;
+}
+
+function actorTransitionAllowed(
+  events: readonly PackageActorEvent[],
+  input: ActorProgressInput,
+  current: PackageActorState,
+  target: PackageActorEvent | undefined,
+): boolean {
+  if (input.certainty !== "confirmed") return true;
+  const baseline = effectiveActorStatus(events, input.actorId, current, target);
+  if (input.status === undefined) {
+    return !(baseline === "dead" && input.disposition !== undefined);
+  }
+  return target
+    ? baseline === input.status ||
+        ALLOWED_ACTOR_STATUS[baseline].includes(input.status)
+    : ALLOWED_ACTOR_STATUS[baseline].includes(input.status);
+}
+
+type ActorChecked =
+  { reason: string } | { current: PackageActorState; fact?: string };
+
+function validateActorFields(
+  input: ActorProgressInput,
+  note: string,
+  knownActors: ReadonlySet<string>,
+): { reason: string } | { fact?: string } {
+  if (!knownActors.has(input.actorId)) return { reason: "unknown actor" };
+  if (note.length === 0) return { reason: "invalid note" };
+  const fact = input.fact?.trim().slice(0, MAX_ACTOR_FACT_CHARS);
+  if (input.fact !== undefined && !fact) return { reason: "invalid fact" };
+  const hasChange =
+    input.status !== undefined ||
+    input.disposition !== undefined ||
+    fact !== undefined;
+  return hasChange ? { fact } : { reason: "empty change" };
+}
+
+function checkActorInput(
+  actors: readonly PackageActorState[],
+  events: readonly PackageActorEvent[],
+  input: ActorProgressInput,
+  note: string,
+  knownActors: ReadonlySet<string>,
+): ActorChecked {
+  const fields = validateActorFields(input, note, knownActors);
+  if ("reason" in fields) return fields;
+  const current = actorStateOf(actors, input.actorId);
+  let target: PackageActorEvent | undefined;
+  if (input.supersedes) {
+    target = supersedeActorTarget(events, input) ?? undefined;
+    const claimedOnConfirmed =
+      input.certainty === "claimed" && target?.certainty !== "claimed";
+    if (!target || claimedOnConfirmed) return { reason: "invalid supersede" };
+  }
+  if (!actorTransitionAllowed(events, input, current, target)) {
+    return { reason: "transition not allowed" };
+  }
+  return { current, fact: fields.fact };
+}
+
+function actorEventCapacityProblem(
+  actors: readonly PackageActorState[],
+  events: readonly PackageActorEvent[],
+  input: ActorProgressInput,
+  eventId: string,
+): string | null {
+  if (events.some((e) => e.id === eventId)) return "duplicate event";
+  if (events.length >= MAX_PACKAGE_PROGRESS_ENTRIES) return "ledger full";
+  const needsNewActorSlot =
+    input.certainty === "confirmed" &&
+    !actors.some((a) => a.actorId === input.actorId) &&
+    actors.length >= MAX_PACKAGE_PROGRESS_ENTRIES;
+  return needsNewActorSlot ? "ledger full" : null;
+}
+
+function buildActorEvent(
+  input: ActorProgressInput,
+  eventId: string,
+  turnId: string,
+  note: string,
+  checked: { current: PackageActorState; fact?: string },
+): PackageActorEvent {
+  return {
+    id: eventId,
+    turnId: turnId.slice(0, 160),
+    actorId: input.actorId,
+    ...(input.status !== undefined
+      ? { fromStatus: checked.current.status, status: input.status }
+      : {}),
+    ...(input.disposition !== undefined
+      ? {
+          fromDisposition: checked.current.disposition,
+          disposition: input.disposition,
+        }
+      : {}),
+    ...(checked.fact !== undefined ? { fact: checked.fact } : {}),
+    certainty: input.certainty,
+    note,
+    ...(input.supersedes ? { supersedes: input.supersedes } : {}),
+  };
+}
+
+function syncConfirmedActorState(
+  actors: PackageActorState[],
+  actorEvents: readonly PackageActorEvent[],
+  actorId: string,
+): void {
+  const superseded = new Set(actorEvents.flatMap((e) => e.supersedes ?? []));
+  const updated = replayActorState(actorEvents, actorId, superseded);
+  const existing = actors.find((a) => a.actorId === actorId);
+  if (existing) {
+    existing.status = updated.status;
+    existing.disposition = updated.disposition;
+    existing.facts = updated.facts;
+  } else {
+    actors.push(updated);
+  }
+}
+
+function tryApplyActorEvent(
+  actors: PackageActorState[],
+  actorEvents: PackageActorEvent[],
+  input: ActorProgressInput,
+  context: {
+    turnId: string;
+    eventId: string;
+    knownActors: ReadonlySet<string>;
+  },
+): string | null {
+  const note = input.note.trim().slice(0, 240);
+  const checked = checkActorInput(
+    actors,
+    actorEvents,
+    input,
+    note,
+    context.knownActors,
+  );
+  const reason =
+    "reason" in checked
+      ? checked.reason
+      : actorEventCapacityProblem(actors, actorEvents, input, context.eventId);
+  if ("reason" in checked || reason !== null) {
+    return `actorEvents: ${reason} ${input.actorId.slice(0, 80)}`;
+  }
+  actorEvents.push(
+    buildActorEvent(input, context.eventId, context.turnId, note, checked),
+  );
+  if (input.certainty === "confirmed") {
+    syncConfirmedActorState(actors, actorEvents, input.actorId);
+  }
+  return null;
+}
+
+/**
+ * Applies actor ledger inputs in order to a copy of `progress`. Rejected
+ * inputs are reported in `dropped`; accepted ones are appended and never edited later.
+ */
+export function applyPackageActorEvents(
+  progress: PackageProgress,
+  inputs: readonly ActorProgressInput[],
+  context: {
+    turnId: string;
+    index: Pick<PackageProgressIndex, "packageActorIds">;
+  },
+): PackageProgressResult {
+  const next = clonePackageProgress(progress, true);
+  const actors = next.actors!;
+  const actorEvents = next.actorEvents!;
+  const knownActors = new Set(context.index.packageActorIds);
+  const dropped: string[] = [];
+  let written = 0;
+  for (const input of inputs) {
+    const eventId = `${context.turnId.slice(0, 130)}:actor:${written + 1}`;
+    const problem = tryApplyActorEvent(actors, actorEvents, input, {
+      turnId: context.turnId,
+      eventId,
+      knownActors,
+    });
+    if (problem) dropped.push(problem);
+    else written += 1;
+  }
+  return { progress: next, dropped };
+}
+
+export const MAX_PACKAGE_PROGRESS_PROMPT_CHARS = 4000;
+const SUMMARY_EVENTS = 12;
+const SUMMARY_NOTE_CHARS = 120;
+
+export interface PackageProgressPromptSummary {
+  sceneId: string;
+  records: {
+    id: string;
+    kind: PackageRecordKind;
+    status: PackageProgressStatus;
+  }[];
+  recentEvents: {
+    id: string;
+    recordId: string;
+    certainty: "claimed" | "confirmed";
+    note: string;
+    to: PackageProgressStatus;
+    supersedes?: string;
+    superseded?: true;
+  }[];
+  actors?: PackageActorState[];
+  recentActorEvents?: {
+    id: string;
+    actorId: string;
+    certainty: "claimed" | "confirmed";
+    note: string;
+    status?: ActorProposalStatus;
+    disposition?: ActorDisposition;
+    fact?: string;
+    supersedes?: string;
+    superseded?: true;
+  }[];
+}
+
+function evictExcessActorSummary(
+  summary: PackageProgressPromptSummary,
+): boolean {
+  const actors = summary.actors;
+  if (!actors || actors.length === 0) return false;
+  let maxFactsIdx = -1;
+  let maxFactsLen = 0;
+  for (let i = 0; i < actors.length; i++) {
+    if (actors[i].facts.length > maxFactsLen) {
+      maxFactsLen = actors[i].facts.length;
+      maxFactsIdx = i;
+    }
+  }
+  if (maxFactsIdx >= 0) {
+    actors[maxFactsIdx].facts.shift();
+    return true;
+  }
+  actors.pop();
+  if (actors.length === 0) delete summary.actors;
+  return true;
+}
+
+function summarizeActors(
+  progress: PackageProgress,
+  featured: ReadonlySet<string> | undefined,
+): PackageActorState[] {
+  return (progress.actors ?? [])
+    .filter((actor) => !featured || featured.has(actor.actorId))
+    .map((actor) => ({
+      actorId: actor.actorId,
+      status: actor.status,
+      disposition: actor.disposition,
+      facts: [...actor.facts],
+    }));
+}
+
+function summarizeRecentActorEvents(
+  progress: PackageProgress,
+  featured: ReadonlySet<string> | undefined,
+): NonNullable<PackageProgressPromptSummary["recentActorEvents"]> {
+  const all = progress.actorEvents ?? [];
+  const superseded = new Set(all.flatMap((e) => e.supersedes ?? []));
+  return all
+    .filter((event) => !featured || featured.has(event.actorId))
+    .slice(-SUMMARY_EVENTS)
+    .map((event) => ({
+      id: event.id,
+      actorId: event.actorId,
+      certainty: event.certainty,
+      note: event.note.trim().slice(0, SUMMARY_NOTE_CHARS),
+      ...(event.status !== undefined ? { status: event.status } : {}),
+      ...(event.disposition !== undefined
+        ? { disposition: event.disposition }
+        : {}),
+      ...(event.fact !== undefined ? { fact: event.fact } : {}),
+      ...(event.supersedes ? { supersedes: event.supersedes } : {}),
+      ...(superseded.has(event.id) ? { superseded: true as const } : {}),
+    }));
+}
+
+function summarizeRecentEvents(
+  events: readonly PackageProgressEvent[],
+): PackageProgressPromptSummary["recentEvents"] {
+  const superseded = new Set(events.flatMap((e) => e.supersedes ?? []));
+  return events.slice(-SUMMARY_EVENTS).map((event) => ({
+    id: event.id,
+    recordId: event.recordId,
+    certainty: event.certainty,
+    note: event.note.trim().slice(0, SUMMARY_NOTE_CHARS),
+    to: event.to,
+    ...(event.supersedes ? { supersedes: event.supersedes } : {}),
+    ...(superseded.has(event.id) ? { superseded: true as const } : {}),
+  }));
+}
+
+function shiftOneSummaryEvent(summary: PackageProgressPromptSummary): boolean {
+  if (summary.recentActorEvents?.length) {
+    summary.recentActorEvents.shift();
+    if (summary.recentActorEvents.length === 0)
+      delete summary.recentActorEvents;
+    return true;
+  }
+  if (summary.recentEvents.length > 0) {
+    summary.recentEvents.shift();
+    return true;
+  }
+  return false;
+}
+
+function evictSummaryEvents(
+  summary: PackageProgressPromptSummary,
+  over: () => boolean,
+): void {
+  while (over() && shiftOneSummaryEvent(summary)) {
+    // Evict oldest actor events before older package events.
+  }
+}
+
+function evictSummaryRecords(
+  summary: PackageProgressPromptSummary,
+  over: () => boolean,
+): void {
+  while (over() && summary.records.length > 0) {
+    const availIdx = summary.records.findLastIndex(
+      (r) => r.status === "available",
+    );
+    summary.records.splice(
+      availIdx >= 0 ? availIdx : summary.records.length - 1,
+      1,
+    );
+  }
+}
+
+/** A bounded GM-only view of the ledger for the prompt; never shown to players. */
+export function packageProgressPromptSummary(
+  progress: PackageProgress | undefined,
+  featuredActorIds?: readonly string[],
+): PackageProgressPromptSummary | undefined {
+  if (progress?.version !== 1) return undefined;
+  const featured =
+    featuredActorIds !== undefined ? new Set(featuredActorIds) : undefined;
+  const actors = summarizeActors(progress, featured);
+  const recentActorEvents = summarizeRecentActorEvents(progress, featured);
+  const summary: PackageProgressPromptSummary = {
+    sceneId: progress.sceneId,
+    records: (progress.records ?? [])
+      .filter((record) => record.status !== "unvisited")
+      .map(({ id, kind, status }) => ({ id, kind, status })),
+    recentEvents: summarizeRecentEvents(progress.events ?? []),
+    ...(actors.length > 0 ? { actors } : {}),
+    ...(recentActorEvents.length > 0 ? { recentActorEvents } : {}),
+  };
+  const over = () =>
+    JSON.stringify(summary).length > MAX_PACKAGE_PROGRESS_PROMPT_CHARS;
+  evictSummaryEvents(summary, over);
+  while (over() && evictExcessActorSummary(summary)) {
+    // Evict oldest actor facts, then excess actors.
+  }
+  evictSummaryRecords(summary, over);
+  return over() ? undefined : summary;
 }

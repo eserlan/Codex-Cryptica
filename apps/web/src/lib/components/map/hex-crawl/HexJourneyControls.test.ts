@@ -101,7 +101,7 @@ describe("HexJourneyControls", () => {
     expect(APP_CSS).toContain(
       "--color-theme-on-primary: var(--color-bg-primary)",
     );
-    expect(horrorLightRule).not.toContain("--color-theme-on-primary:");
+    expect(horrorLightRule).toContain("--color-theme-on-primary: #fff");
   });
 
   it("maps the primary action foreground for Space Western Light", () => {

@@ -335,6 +335,10 @@
   html[data-app-appearance="neutral-light"] [data-world-theme="horror"] {
     --color-text-muted: #5c5652;
     --color-text-dim: #4a4543;
+    --color-theme-on-primary: #fff;
+  }
+  [data-theme="pirate"] {
+    --color-danger: #991b1b;
   }
   [data-theme="cosmic_horror"] {
     --color-text-muted: #9adbd2;

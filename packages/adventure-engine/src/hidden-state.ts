@@ -108,7 +108,7 @@ export function ensureScenarioSecrets(
 }
 
 /**
- * Fields the player can see. The GM-only `hiddenPatch` is excluded: copying a
+ * Fields the player can see. The GM-only `hiddenPatch` and `packageEvents` are excluded: copying a
  * secret into hidden state is not a leak.
  */
 function playerFacingStrings(
@@ -118,6 +118,8 @@ function playerFacingStrings(
     const {
       hiddenPatch: _hidden,
       revealSecretIds: _reveals,
+      packageEvents: _packageEvents,
+      actorEvents: _actorEvents,
       timeAdvance,
       ...visible
     } = proposal;
@@ -148,14 +150,39 @@ export function detectHiddenLeakage(
 export function detectPackageLeakage(
   proposal: AdventureTurnProposal,
   meta: CommitMetadata,
+  session?: AdventureSession,
 ): HiddenLeakageFinding[] {
   const fields = playerFacingStrings(proposal).filter(
     ([field]) =>
       !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
   );
+  const proposedActorText =
+    proposal.kind === "complete"
+      ? (proposal.actorEvents ?? []).flatMap((event) => [
+          event.note,
+          ...(event.fact ? [event.fact] : []),
+        ])
+      : [];
+  const storedProgress = session?.packageProgress;
   return [
-    ...packageTextLeakage(fields, meta.packageGmOnlyText ?? []),
-    ...packageIdLeakage(fields, meta.packageRecordIds ?? []),
+    ...packageTextLeakage(fields, [
+      ...(meta.packageGmOnlyText ?? []),
+      ...(proposal.kind === "complete"
+        ? (proposal.packageEvents ?? []).map((event) => event.note)
+        : []),
+      ...proposedActorText,
+      ...(storedProgress?.events ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).flatMap((event) =>
+        event.fact ? [event.fact] : [],
+      ),
+      ...(storedProgress?.actors ?? []).flatMap((actor) => actor.facts),
+    ]),
+    ...packageIdLeakage(fields, [
+      ...(meta.packageRecordIds ?? []),
+      ...(storedProgress?.events ?? []).map((event) => event.id),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.id),
+    ]),
   ];
 }
 
@@ -164,21 +191,23 @@ function packageTextLeakage(
   secrets: readonly string[],
 ): HiddenLeakageFinding[] {
   const longSecrets: string[] = [];
-  const oneCharacterSecrets = new Set<string>();
-  const twoCharacterSecrets = new Set<string>();
+  const shortSecrets = new Set<string>();
+  const shortNumericSecrets: string[] = [];
   for (const secret of secrets) {
     const needle = normalize(secret);
     if (!needle) continue;
-    if (needle.length === 1) oneCharacterSecrets.add(needle);
-    else if (needle.length < 3) twoCharacterSecrets.add(needle);
-    else longSecrets.push(needle);
+    if (needle.length < 3) {
+      shortSecrets.add(needle);
+      if (needle.length >= 2 && /^\d+$/.test(needle))
+        shortNumericSecrets.push(needle);
+    } else longSecrets.push(needle);
   }
   const longMatcher = createBoundaryMatcher(longSecrets);
-  const shortMatcher = createBoundaryMatcher(twoCharacterSecrets);
+  const shortNumericMatcher = createBoundaryMatcher(shortNumericSecrets);
   return fields.flatMap(([field, value]) => {
     const text = normalize(value);
-    const exactSingleCharacter = oneCharacterSecrets.has(text);
-    return exactSingleCharacter || shortMatcher(text) || longMatcher(text)
+    const exactShortNote = shortSecrets.has(text);
+    return exactShortNote || shortNumericMatcher(text) || longMatcher(text)
       ? [{ field, secretId: "pinned-package-text" }]
       : [];
   });

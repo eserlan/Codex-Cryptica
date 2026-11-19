@@ -23,6 +23,7 @@ import {
   applyScenarioElaborations,
 } from "./scenario-turns";
 import {
+  applyPackageActorEvents,
   applyPackageProgressEvents,
   nullMap,
   planSceneProgress,
@@ -31,11 +32,13 @@ import {
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
 import type {
+  ActorEventProposal,
   AdventureSession,
   AdventureTurnProposal,
   AdventureValidationError,
   CommitMetadata,
   CommittedAdventureTurn,
+  PackageEventProposal,
   PackageProgress,
   Result,
   ScenarioItem,
@@ -68,7 +71,7 @@ function completedTurnProposalError(
   }
   if (
     detectHiddenLeakage(session, proposal).length > 0 ||
-    detectPackageLeakage(proposal, meta).length > 0
+    detectPackageLeakage(proposal, meta, session).length > 0
   ) {
     return error(
       "hidden-leakage",
@@ -116,6 +119,7 @@ function packageIndexFromMeta(
         ([id, targets]) => [id, [...targets]] as const,
       ),
     ),
+    packageActorIds: [...(meta.packageActorIds ?? [])],
   };
 }
 
@@ -135,20 +139,50 @@ function validSceneMove(
   return undefined;
 }
 
-/** Moves the scene and writes the confirmed ledger events a move implies. */
+/** Moves the scene and writes the scene-move events, then the proposed ones, in one pass. */
 function applyLedgerProgress(
   before: PackageProgress,
   index: PackageProgressIndex,
   moveTo: string | undefined,
+  proposed: readonly PackageEventProposal[],
   meta: CommitMetadata,
   dropped: string[],
 ): PackageProgress {
-  const inputs = planSceneProgress(before, index, moveTo);
+  const inputs = [...planSceneProgress(before, index, moveTo), ...proposed];
   const result = inputs.length
     ? applyPackageProgressEvents(before, inputs, { turnId: meta.turnId, index })
     : { progress: before, dropped: [] };
   dropped.push(...result.dropped);
   return { ...result.progress, sceneId: moveTo ?? before.sceneId };
+}
+
+function applyActorProgress(
+  progress: PackageProgress,
+  proposedActors: readonly ActorEventProposal[],
+  index: PackageProgressIndex,
+  meta: CommitMetadata,
+  dropped: string[],
+): PackageProgress {
+  if (proposedActors.length === 0) return progress;
+  const actorResult = applyPackageActorEvents(progress, proposedActors, {
+    turnId: meta.turnId,
+    index,
+  });
+  dropped.push(...actorResult.dropped);
+  return actorResult.progress;
+}
+
+function dropMissingPackageProposals(
+  proposed: readonly PackageEventProposal[],
+  proposedActors: readonly ActorEventProposal[],
+  dropped: string[],
+): void {
+  for (const event of proposed) {
+    dropped.push(`packageEvents: no package ${event.recordId.slice(0, 80)}`);
+  }
+  for (const event of proposedActors) {
+    dropped.push(`actorEvents: no package ${event.actorId.slice(0, 80)}`);
+  }
 }
 
 function resolvePackageProgress(
@@ -160,17 +194,53 @@ function resolvePackageProgress(
   const moveTo = validSceneMove(candidate, proposal, meta, dropped);
   const before = candidate.packageProgress;
   const index = packageIndexFromMeta(meta);
+  const proposed = proposal.packageEvents ?? [];
+  const proposedActors = proposal.actorEvents ?? [];
   if (before && candidate.sourcePackage && index) {
-    candidate.packageProgress = applyLedgerProgress(
+    const nextProgress = applyLedgerProgress(
       before,
       index,
       moveTo,
+      proposed,
       meta,
       dropped,
     );
-  } else if (moveTo !== undefined) {
+    candidate.packageProgress = applyActorProgress(
+      nextProgress,
+      proposedActors,
+      index,
+      meta,
+      dropped,
+    );
+    return;
+  }
+  dropMissingPackageProposals(proposed, proposedActors, dropped);
+  if (moveTo !== undefined) {
     candidate.packageProgress = { ...before, sceneId: moveTo };
   }
+}
+
+const MAX_DROPPED_REASONS = 24;
+
+function boundDroppedReasons(dropped: readonly string[]): string[] {
+  const packageEventDrops = dropped.filter((reason) =>
+    reason.startsWith("packageEvents:"),
+  );
+  const otherDrops = dropped.filter(
+    (reason) => !reason.startsWith("packageEvents:"),
+  );
+  const boundedPackageEventDrops =
+    packageEventDrops.length > MAX_DROPPED_REASONS
+      ? [
+          ...packageEventDrops.slice(0, MAX_DROPPED_REASONS - 1),
+          `packageEvents: +${packageEventDrops.length - (MAX_DROPPED_REASONS - 1)} more dropped`,
+        ]
+      : packageEventDrops;
+  const remainingSlots = Math.max(
+    0,
+    MAX_DROPPED_REASONS - boundedPackageEventDrops.length,
+  );
+  return [...otherDrops.slice(0, remainingSlots), ...boundedPackageEventDrops];
 }
 
 export function applyCompletedTurn(
@@ -270,7 +340,9 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
-  if (dropped.length > 0) turn.dropped = dropped.slice(0, 24);
+  if (dropped.length > 0) {
+    turn.dropped = boundDroppedReasons(dropped);
+  }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
   if (!validateStateBudget(candidate)) {

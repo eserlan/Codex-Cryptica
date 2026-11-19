@@ -29,7 +29,7 @@ export function applyRollRequest(
   // Roll copy is shown to the player, so it gets the same secrecy guard.
   if (
     detectHiddenLeakage(session, proposal).length > 0 ||
-    detectPackageLeakage(proposal, meta).length > 0
+    detectPackageLeakage(proposal, meta, session).length > 0
   ) {
     return error(
       "hidden-leakage",

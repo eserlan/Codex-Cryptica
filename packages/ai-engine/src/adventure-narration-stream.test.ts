@@ -64,6 +64,32 @@ describe("adventure narration streaming", () => {
     expect(previews).toEqual(["A road"]);
   });
 
+  it("withholds package-session previews until package event notes are checked", () => {
+    const previews: string[] = [];
+    const request = {
+      session: {
+        ...session,
+        sourcePackage: {
+          packageId: "adventure-1",
+          version: "1",
+          formatVersion: "1",
+          hash: "a".repeat(64),
+        },
+      },
+      phase: "action" as const,
+      anchors: [],
+      relevant: [],
+      onNarration: (text: string) => previews.push(text),
+    };
+
+    publishAdventureNarration(
+      request,
+      '{"kind":"complete","narration":"The hidden note: the duke is dead."',
+    );
+
+    expect(previews).toEqual([]);
+  });
+
   it("collects event deltas and uses the completed response when supplied", async () => {
     const previews: string[] = [];
     async function* events() {

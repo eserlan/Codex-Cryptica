@@ -184,6 +184,7 @@ export class GuestExporter {
     delete sanitized.lore;
     delete sanitized.artDirection;
     delete sanitized.adventureArtwork;
+    delete sanitized.adventureSource;
     if (isPrivateArtworkSnapshotPath(sanitized.image)) delete sanitized.image;
     if (isPrivateArtworkSnapshotPath(sanitized.thumbnail)) {
       delete sanitized.thumbnail;
