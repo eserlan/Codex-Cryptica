@@ -83,9 +83,12 @@ Follow all rules in the complete conversion prompt. Convert only the manifest se
 
 ${STAGED_COMPLETION_DELTA_INSTRUCTIONS}`;
 
+export const STAGED_COVERAGE_INTRO =
+  "Paste the checkpoint manifest with every completion delta merged in, then every chunk JSON file. A completion delta (or a pass saying it is done) does not prove an entry was included: only the chunk JSON does. The check works from the real chunk files. This finds missing sections, ids that were referred to but never defined, and duplicate ids for the same character. For the exact check, run the check script below.";
+
 export const STAGED_COVERAGE_PROMPT = `Stage 3 of 3: check coverage. Do not convert anything new. This is Verify mode.
 
-Below are my checkpoint manifest and the JSON file for every chunk. Compare the manifest with the actual JSON in each chunk file. Do not rely on completion deltas or any record of what a pass says it did: they are not proof that an entry exists. For the exact, repeatable check, run the check script on this page: node check.js manifest.json chunk-01.json chunk-02.json (adding all your chunk files). Reply with:
+Below are my checkpoint manifest, with every completion delta merged in, and the JSON file for every chunk. Compare the manifest with the actual JSON in each chunk file. Do not rely on completion deltas or any record of what a pass says it did: they are not proof that an entry exists. For the exact, repeatable check, run the check script on this page: node check.js manifest.json chunk-01.json chunk-02.json (adding all your chunk files). Reply with:
 1. A table with one row per manifest section: "converted", "partly converted" (name missing owned ids) or "not converted". Mark a section converted only when every id in its "owns" appears in its chunk JSON and its per-collection counts match "expectedCounts".
 2. Every owned id missing from the chunk JSON, every id a chunk defines that its section does not own, and any collection count mismatch.
 3. Every id in "pending" that no chunk defines, and which section it is expected in.
@@ -110,7 +113,7 @@ export const STAGED_ASSEMBLE_FUNCTION = `function stableJson(value) {
   );
 }
 
-function assemble(chunks) {
+function assemble(chunks, labels) {
   const names = ["locations", "actors", "factions", "scenes", "encounters", "clues", "rumours", "items", "secrets", "endings", "unresolved"];
   const metadataKeys = ["formatVersion", "id", "title", "version", "description", "premise", "source", "system", "extensions"];
   const first = chunks[0];
@@ -120,26 +123,33 @@ function assemble(chunks) {
   }
   for (const name of names) out[name] = [];
   const errors = [];
+  const notices = [];
   const seen = new Map();
+  const where = (index) => "chunk " + (index + 1) + (labels && labels[index] ? " (" + labels[index] + ")" : "");
   chunks.forEach((chunk, index) => {
     for (const key of metadataKeys) {
       if (stableJson(chunk[key]) !== stableJson(first[key])) {
-        errors.push("chunk " + (index + 1) + ": " + key + " differs from chunk 1");
+        errors.push(where(index) + ": " + key + " differs from " + where(0));
       }
     }
     for (const name of names) {
       for (const entry of chunk[name] || []) {
         const before = seen.get(entry.id);
+        const id = JSON.stringify(entry.id);
         if (!before) {
-          seen.set(entry.id, entry);
+          seen.set(entry.id, { entry, name, index });
           out[name].push(entry);
-        } else if (stableJson(before) !== stableJson(entry)) {
-          errors.push('chunk ' + (index + 1) + ': id "' + entry.id + '" is defined differently elsewhere');
+        } else if (before.name !== name) {
+          errors.push(where(index) + ": " + name + " id " + id + " is already used by " + before.name + " in " + where(before.index) + "; each id must be unique across all collections");
+        } else if (stableJson(before.entry) !== stableJson(entry)) {
+          errors.push(where(index) + ": " + name + " id " + id + " is defined differently from " + where(before.index) + "; the same id must not have two different definitions");
+        } else {
+          notices.push(where(index) + ": " + name + " id " + id + " is identical to the one in " + where(before.index) + "; merged into one entry");
         }
       }
     }
   });
-  return { adventure: out, errors };
+  return { adventure: out, errors, notices };
 }`;
 
 export const STAGED_ASSEMBLE_SCRIPT = `// assemble.js: node assemble.js chunk-01.json chunk-02.json
@@ -154,7 +164,7 @@ if (files.length === 0) {
   process.exit(1);
 }
 const chunks = files.map((file) => JSON.parse(fs.readFileSync(file, "utf8")));
-const { adventure, errors } = assemble(chunks);
+const { adventure, errors, notices } = assemble(chunks, files.map((f) => path.basename(f)));
 if (errors.length > 0) {
   console.error(errors.join("\\n"));
   process.exit(1);
@@ -164,7 +174,9 @@ const temporary = path.join(path.dirname(output), "." + path.basename(output) + 
 try {
   fs.writeFileSync(temporary, JSON.stringify(adventure, null, 2) + "\\n", { flag: "wx" });
   fs.renameSync(temporary, output);
+  for (const notice of notices) console.log("Notice: " + notice);
   console.log("Wrote " + output);
+  console.log("Source completeness was not verified. Run check.js with your manifest (Stage 3), and use the import review in Codex Cryptica, which validates references and the schema.");
 } catch (error) {
   try { fs.unlinkSync(temporary); } catch { /* Nothing to clean up. */ }
   throw error;

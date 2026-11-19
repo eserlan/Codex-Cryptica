@@ -1,6 +1,8 @@
 import {
   ADVENTURE_JSON_REFERENCES,
+  ADVENTURE_JSON_V1_FORMAT_VERSION,
   ENTITY_COLLECTIONS,
+  type AdventureJsonValidationErrorCode,
 } from "@codex/adventure-engine";
 import { CANONICAL_ORIGIN } from "./canonical-origin.js";
 import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
@@ -444,43 +446,61 @@ export const FIDELITY_ROWS: FidelityRow[] = [
 ];
 
 export interface TroubleshootingError {
-  code: string;
+  codes: readonly AdventureJsonValidationErrorCode[];
   cause: string;
   fix: string;
 }
 
 export const TROUBLESHOOTING_ERRORS: TroubleshootingError[] = [
   {
-    code: "SCHEMA_VALIDATION_ERROR",
+    codes: ["SCHEMA_VALIDATION_ERROR"],
     cause:
       'A required field is missing, a field has the wrong type, an unrecognized key was added, or an "unresolved" item used "explicit" or "inferred".',
     fix: 'Check the field path in the error. Common slips: encounters use "description" (not "summary") and require "alternativeSolutions": []; clues use "placedLocationId" (not "locationId"); rumours use "truth" ("true" | "false" | "partially-true" | "unverified"). For an unresolved item, use "ambiguous" or "unresolved".',
   },
   {
-    code: "DUPLICATE_ID",
+    codes: ["DUPLICATE_ID"],
     cause: "Two or more entities share the same id string.",
     fix: "Give every entity across all 11 collections a globally unique id (e.g. prefix with loc-, actor-, scene-, clue-).",
   },
   {
-    code: "UNRESOLVED_REFERENCE / SELF_REFERENCE",
+    codes: ["UNRESOLVED_REFERENCE", "SELF_REFERENCE"],
     cause:
       "A reference field (such as locationId, targetSceneId, or relatedEntityIds) points to an ID that does not exist or points to the entity itself.",
     fix: "Ensure every referenced ID exists in the matching collection and no entity references its own ID.",
   },
   {
-    code: "LOCATION_CYCLE",
-    cause: "Location parentLocationId links form a loop.",
-    fix: "Break the parentLocationId cycle so locations form a tree.",
+    codes: ["INVALID_FORMAT_VERSION"],
+    cause:
+      'The "formatVersion" field is missing or is not a supported version.',
+    fix: `Set "formatVersion" to "${ADVENTURE_JSON_V1_FORMAT_VERSION}".`,
   },
   {
-    code: "UNREACHABLE_SCENE / DEAD_END_LOOP",
+    codes: ["HIERARCHY_CYCLE"],
+    cause: "Location parentLocationId links form a loop.",
+    fix: "Look at the locations[i].parentLocationId path in the error and break the loop so locations form a tree.",
+  },
+  {
+    codes: ["UNREACHABLE_SCENE"],
     cause:
-      "A non-entry scene cannot be reached by following branches from scenes[0] and has no UNKNOWN_SCENE_PROGRESSION unresolved entry, or mandatory transitions form a loop with no path to an ending.",
+      "A non-entry scene cannot be reached by following branches from scenes[0] and has no UNKNOWN_SCENE_PROGRESSION unresolved entry.",
     fix: 'Connect scenes from scenes[0] via branches[].targetSceneId. Add a branch only when the source states it. When the source leaves progression open, add an unresolved entry with code "UNKNOWN_SCENE_PROGRESSION" and relatedEntityId set to that scene, and do not invent a branch.',
   },
   {
-    code: "SECRET_VISIBILITY_VIOLATION",
-    cause: 'An entry in "secrets" has visibility set to "player-visible".',
-    fix: 'Set visibility to "gm-only" on every entry in "secrets".',
+    codes: ["DEAD_END_CYCLE"],
+    cause:
+      "Mandatory scene branches form a loop with no path to an exit or ending.",
+    fix: "Look at the scenes[i].branches path in the error, then add the exit branch the source states. If the source states none, record the gap as an unresolved entry and do not invent a branch.",
+  },
+  {
+    codes: ["DUPLICATE_SCENE_PROGRESSION"],
+    cause:
+      'More than one "UNKNOWN_SCENE_PROGRESSION" unresolved entry names the same scene.',
+    fix: "Keep one entry per scene and remove the extra at the reported unresolved[i] path.",
+  },
+  {
+    codes: ["INVALID_VISIBILITY"],
+    cause: 'An entry in "secrets" has a visibility other than "gm-only".',
+    fix: 'Look at the secrets[i].visibility path in the error and set it to "gm-only".',
   },
 ];

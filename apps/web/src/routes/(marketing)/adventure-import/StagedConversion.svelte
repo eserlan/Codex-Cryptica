@@ -4,6 +4,7 @@
     STAGED_ANCHOR,
     STAGED_ASSEMBLE_SCRIPT,
     STAGED_CHECK_SCRIPT,
+    STAGED_COVERAGE_INTRO,
     STAGED_COVERAGE_PROMPT,
     STAGED_FAILURE_MODES,
     STAGED_INVENTORY_PROMPT,
@@ -61,8 +62,7 @@
     {
       id: "coverage",
       title: "3. Check coverage against the inventory",
-      intro:
-        "Paste the manifest and every chunk JSON file. The check works from the real chunk files, never from completion deltas. This finds missing sections, ids that were referred to but never defined, and duplicate ids for the same character. For the exact check, run the check script below.",
+      intro: STAGED_COVERAGE_INTRO,
       text: STAGED_COVERAGE_PROMPT,
       button: "Copy coverage prompt",
       copier: createCopier(STAGED_COVERAGE_PROMPT),
@@ -299,10 +299,14 @@
       be too large and may quietly drop entries. This small script does it
       exactly. It keeps every entry and its <code class="font-mono"
         >sourceRef</code
-      >, merges entries that are identical, and stops with an error if two
-      sections define the same id differently. It never invents a link. If you
-      do not use Node, ask a code-capable assistant to run it on your files.
-      Save the script as <code class="font-mono">assemble.js</code> and run
+      >. Each id must be unique across all collections. Identical repeats in the
+      same collection are merged and reported. The script stops with an error if
+      an id is reused in another collection or defined differently. It never
+      invents a link, and it does not check completeness: use the Stage 3 check
+      for that. If you do not use Node, ask a code-capable assistant to run it
+      on your files. Save the script as
+      <code class="font-mono">assemble.js</code>
+      and run
       <code class="font-mono">node assemble.js chunk-01.json chunk-02.json</code
       >
       (adding all your chunk files). It writes

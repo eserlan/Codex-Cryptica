@@ -17,6 +17,7 @@ import {
   STAGED_ASSEMBLE_SCRIPT,
   STAGED_CHECK_SCRIPT,
   STAGED_CHUNK_PROMPT,
+  STAGED_COVERAGE_INTRO,
   STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
   STAGED_NEW_CHAT_PROMPT,
@@ -830,6 +831,10 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         'as { "id", "collection", "page" } (or "anchor"',
       );
       expect(STAGED_COVERAGE_PROMPT).toContain("the JSON file for every chunk");
+      render(Page);
+      expect(screen.getByTestId("stage-coverage").textContent).toContain(
+        STAGED_COVERAGE_INTRO,
+      );
       expect(STAGED_COVERAGE_PROMPT).toContain(
         "Do not rely on completion deltas",
       );

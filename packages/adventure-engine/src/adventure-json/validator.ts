@@ -12,17 +12,21 @@ import {
   type AdventureJsonScene,
 } from "./schema";
 
+export const ADVENTURE_JSON_VALIDATION_ERROR_CODES = [
+  "INVALID_FORMAT_VERSION",
+  "INVALID_VISIBILITY",
+  "SCHEMA_VALIDATION_ERROR",
+  "DUPLICATE_ID",
+  "UNRESOLVED_REFERENCE",
+  "SELF_REFERENCE",
+  "HIERARCHY_CYCLE",
+  "DEAD_END_CYCLE",
+  "UNREACHABLE_SCENE",
+  "DUPLICATE_SCENE_PROGRESSION",
+] as const;
+
 export type AdventureJsonValidationErrorCode =
-  | "INVALID_FORMAT_VERSION"
-  | "INVALID_VISIBILITY"
-  | "SCHEMA_VALIDATION_ERROR"
-  | "DUPLICATE_ID"
-  | "UNRESOLVED_REFERENCE"
-  | "SELF_REFERENCE"
-  | "HIERARCHY_CYCLE"
-  | "DEAD_END_CYCLE"
-  | "UNREACHABLE_SCENE"
-  | "DUPLICATE_SCENE_PROGRESSION";
+  (typeof ADVENTURE_JSON_VALIDATION_ERROR_CODES)[number];
 
 export interface AdventureJsonValidationError {
   code: AdventureJsonValidationErrorCode;
