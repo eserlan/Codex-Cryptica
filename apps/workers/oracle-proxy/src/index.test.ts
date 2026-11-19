@@ -114,6 +114,28 @@ describe("Oracle Proxy Worker CORS", () => {
     );
   });
 
+  it("allows the device id header during cloud backup preflight", async () => {
+    const response = await worker.fetch(
+      new Request(
+        "https://oracle-proxy.espen-erlandsen.workers.dev/api/cloud-backup/x/status",
+        {
+          method: "OPTIONS",
+          headers: {
+            Origin: "https://staging.codexcryptica.com",
+            "Access-Control-Request-Headers": "x-codex-device-id",
+          },
+        },
+      ),
+      emptyEnv,
+      {} as ExecutionContext,
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("Access-Control-Allow-Headers")).toContain(
+      "X-Codex-Device-Id",
+    );
+  });
+
   it("treats ALLOWED_ORIGINS as an exact allowlist", () => {
     expect(
       isOriginAllowed("http://localhost:4173", {

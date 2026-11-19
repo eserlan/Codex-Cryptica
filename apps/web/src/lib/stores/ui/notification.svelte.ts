@@ -1,8 +1,14 @@
+export interface NotificationAction {
+  label: string;
+  run: () => void;
+}
+
 export class NotificationStore {
   notification = $state<{
     message: string;
     type: "success" | "info" | "error";
     persistent: boolean;
+    action?: NotificationAction;
   } | null>(null);
 
   private notificationTimeoutId: number | null = null;
@@ -27,23 +33,42 @@ export class NotificationStore {
     message: string,
     type: "success" | "info" | "error" = "success",
     persistent = false,
+    action?: NotificationAction,
   ) {
     if (this.notificationTimeoutId !== null) {
       clearTimeout(this.notificationTimeoutId);
       this.notificationTimeoutId = null;
     }
 
-    this.notification = { message, type, persistent };
+    this.notification = {
+      message,
+      type,
+      persistent,
+      ...(action ? { action } : {}),
+    };
     if (!persistent) {
-      this.notificationTimeoutId = setTimeout(() => {
-        this.notification = null;
-        this.notificationTimeoutId = null;
-      }, this.getDisplayDuration(type)) as unknown as number;
+      this.notificationTimeoutId = setTimeout(
+        () => {
+          this.notification = null;
+          this.notificationTimeoutId = null;
+        },
+        this.getDisplayDuration(type, action),
+      ) as unknown as number;
     }
   }
 
-  private getDisplayDuration(type: "success" | "info" | "error"): number {
-    return type === "error" ? 12000 : 5000;
+  private getDisplayDuration(
+    type: "success" | "info" | "error",
+    action?: NotificationAction,
+  ): number {
+    return type === "error" || action ? 12000 : 5000;
+  }
+
+  /** Runs the toast's action once and clears the toast. */
+  runNotificationAction() {
+    const action = this.notification?.action;
+    this.clearNotification();
+    action?.run();
   }
 
   clearNotification() {

@@ -23,6 +23,7 @@ export const STATIC_SITEMAP_ROUTES: SitemapRoute[] = [
   { path: "/features", changefreq: "monthly", priority: "0.8" },
   { path: "/tools", changefreq: "weekly", priority: "0.9" },
   { path: "/migrations", changefreq: "weekly", priority: "0.9" },
+  { path: "/adventure-import", changefreq: "monthly", priority: "0.8" },
   { path: "/generators", changefreq: "weekly", priority: "0.9" },
   {
     path: "/free-rpg-campaign-manager",
@@ -41,12 +42,14 @@ export const STATIC_SITEMAP_ROUTES: SitemapRoute[] = [
     changefreq: "monthly",
     priority: "0.6",
   },
+  { path: "/topics", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/heists", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/puzzles", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/pirates", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/solo-rpg", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/dnd", changefreq: "weekly", priority: "0.8" },
   { path: "/topics/dnd-beginners", changefreq: "weekly", priority: "0.8" },
+  { path: "/topics/star-systems", changefreq: "weekly", priority: "0.8" },
   // /tools/dnd-npc-generator and /tools/faction-generator are 301 stubs to
   // /generators/npc and /generators/faction. Static hosting prerenders them as
   // empty meta-refresh pages, so listing them handed discovery crawlers two

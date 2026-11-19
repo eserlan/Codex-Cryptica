@@ -9,6 +9,15 @@ import {
 } from "./markdown";
 import { EntitySchema } from "schema";
 import { validateMarkdownFrontmatter } from "@codex/vault-engine";
+import {
+  buildCreatureEntryText,
+  buildCreatureProposals,
+  type AdventureJsonV1,
+} from "@codex/adventure-engine";
+import {
+  assertNoActiveLinks,
+  assertNoRemoteResourceFetches,
+} from "../test-utils/pr-guardrails";
 
 describe("markdown.ts utility", () => {
   describe("renderMarkdown", () => {
@@ -53,6 +62,42 @@ describe("markdown.ts utility", () => {
     it("turns a single newline into a <br> when breaks is requested (#3481)", () => {
       const html = renderMarkdown("Line one\nLine two", { breaks: true });
       expect(html).toContain("<br");
+    });
+
+    it("does not autolink bare URLs in generated adventure creature text", () => {
+      const pkg = {
+        id: "urls",
+        version: "1",
+        source: { title: "https://tracker.example/source" },
+        actors: [
+          {
+            id: "actor",
+            name: "Scout",
+            summary: "See https://tracker.example/summary",
+            description: "More at www.example.com/path",
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+        encounters: [
+          {
+            id: "encounter",
+            title: "Road",
+            description: "",
+            actorIds: ["actor"],
+            alternativeSolutions: [],
+            visibility: "player-visible",
+            epistemicStatus: "explicit",
+          },
+        ],
+      } as unknown as AdventureJsonV1;
+      const creature = buildCreatureProposals(pkg)[0]!;
+      const entry = buildCreatureEntryText(creature, pkg.source);
+      const html = renderMarkdown(entry.content, { allowImages: false });
+      assertNoActiveLinks(html);
+      assertNoRemoteResourceFetches(html);
+      expect(html).toContain("https://tracker.example/source");
+      expect(html).toContain("www.example.com/path");
     });
 
     it("should handle marked.parse errors and return sanitized fallback", async () => {
@@ -508,6 +553,41 @@ describe("markdown.ts utility", () => {
       const entity = EntitySchema.parse({ id: "n", type: "note", title: "N" });
       const { metadata } = parseMarkdown(stringifyEntity(entity));
       expect(metadata.report).toBeUndefined();
+    });
+  });
+  describe("trait packages", () => {
+    it("round-trips traitPackage and traitSelections through frontmatter", () => {
+      const trait = {
+        id: "t1",
+        name: "Brute",
+        description: "Strong",
+        adjustments: [{ target: "str_score", amount: 2 }],
+      };
+      const entity = EntitySchema.parse({
+        id: "c",
+        type: "creature",
+        title: "Kethari",
+        traitPackage: { kind: "species", traits: [trait] },
+        traitSelections: [
+          {
+            kind: "species",
+            sourceId: "s",
+            sourceTitle: "Kethari",
+            appliedAt: 5,
+            traits: [trait],
+          },
+        ],
+      });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.traitPackage).toEqual(entity.traitPackage);
+      expect(metadata.traitSelections).toEqual(entity.traitSelections);
+    });
+
+    it("adds neither field to an ordinary entity", () => {
+      const entity = EntitySchema.parse({ id: "n", type: "note", title: "N" });
+      const { metadata } = parseMarkdown(stringifyEntity(entity));
+      expect(metadata.traitPackage).toBeUndefined();
+      expect(metadata.traitSelections).toBeUndefined();
     });
   });
 });

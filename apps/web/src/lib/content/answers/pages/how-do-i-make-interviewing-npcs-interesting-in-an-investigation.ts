@@ -310,6 +310,12 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
         href: "/generators/npc",
       },
       {
+        title: "Mystery and investigation generator",
+        description:
+          "Ground witness testimony and alibis in a coherent investigation scenario with fixed facts, suspects, and clue paths.",
+        href: "/generators/mystery-investigation",
+      },
+      {
         title: "Quest generator",
         description:
           "Turn a witness account into the next concrete lead, with fresh locations and stakes.",
@@ -339,6 +345,8 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
       "how-do-i-make-roleplay-more-engaging",
       "how-do-i-roleplay-npcs-if-im-not-good-at-acting",
       "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+      "how-do-i-handle-players-discussing-plans-in-front-of-npcs",
+      "how-do-i-get-a-stalled-rpg-investigation-moving-again",
     ],
     discovery: {
       id: "answer-interviewing-npcs-investigation",
@@ -375,6 +383,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
             "This answer covers overall witness texture, social stakes, and separating facts from interpretations; the companion answer resolves the specific table dilemma of players asking an NPC to tell them everything they know.",
         },
         {
+          with: "answer-players-discussing-plans-front-npcs",
+          reason:
+            "That answer sets the table convention for whether player conferences are audible to an NPC; this answer structures witness knowledge and how targeted questions draw it out.",
+        },
+        {
           with: "answer-run-mystery-without-railroading",
           reason:
             "The mystery answer covers resilient scenario structure and clue redundancy across an investigation; this answer covers the distinct skill of running individual witness interviews through personal perspective, social stakes, and follow-up questions.",
@@ -393,6 +406,11 @@ export const howDoIMakeInterviewingNpcsInterestingInAnInvestigation: AnswerConfi
           with: "answer-specialist-character-spotlight",
           reason:
             "The spotlight answer gives a framework for any specialist PC to contribute without isolating the party; this answer gives a framework for shaping interview NPC behaviour and testimony regardless of which PC is present.",
+        },
+        {
+          with: "answer-stalled-investigation-recovery",
+          reason:
+            "This answer structures individual witness interviews through memory, interpretation and omission; the stalled-investigation answer uses witnesses as one of several honest routes for restoring a lead when the whole investigation has stalled.",
         },
       ],
     },

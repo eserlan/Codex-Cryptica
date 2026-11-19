@@ -1,13 +1,174 @@
 import { describe, expect, it, vi } from "vitest";
 import { AdventureManager } from "../adventure-manager.svelte";
+import type { AdventureSession } from "@codex/adventure-engine";
 
 import {
   completeProposal,
   rollProposal,
   dependencies,
+  packageRef,
+  referencePackage,
+  referencePackageCache,
+  startInput,
 } from "./adventure-fixtures";
 
+const multiStartPackage = {
+  ...referencePackage,
+  scenes: [
+    ...referencePackage.scenes,
+    {
+      id: "alt-start",
+      title: "Alt",
+      summary: "Elsewhere",
+      visibility: "player-visible" as const,
+      optional: true,
+    },
+  ],
+};
+
+async function startedProgress(startSceneId?: string) {
+  const deps: any = dependencies();
+  const savePinned = vi.fn(deps.repository.savePinned);
+  deps.repository.savePinned = savePinned;
+  deps.packages = referencePackageCache(async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: multiStartPackage,
+    originFormat: "adventure-json/v1",
+  }));
+  await new AdventureManager(deps).start({
+    ...startInput,
+    sourcePackage: packageRef,
+    ...(startSceneId ? { startSceneId } : {}),
+  });
+  return savePinned.mock.calls[0]?.[0] as AdventureSession;
+}
+
 describe("AdventureManager", () => {
+  it("uses the coordinated save path when starting from an imported package", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache();
+    const manager = new AdventureManager(deps);
+
+    await manager.start({
+      vaultId: "vault-1",
+      title: "Imported Module",
+      premise: "Follow the lantern.",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Mara",
+        description: "Guide",
+      },
+      sourcePackage: packageRef,
+    });
+
+    expect(savePinned).toHaveBeenCalledOnce();
+    const pinnedSession = savePinned.mock.calls[0]?.[0] as AdventureSession;
+    expect(pinnedSession.sourcePackage?.hash).toBe(packageRef.hash);
+    expect(pinnedSession.packageProgress).toEqual({
+      sceneId: "ros-scene-1-landing",
+    });
+  });
+
+  it("starts at a chosen start candidate", async () => {
+    const saved = await startedProgress("alt-start");
+    expect(saved.packageProgress).toEqual({ sceneId: "alt-start" });
+    expect("startSceneId" in saved).toBe(false);
+  });
+
+  it.each(["nope", "ros-scene-2-yard"])(
+    "falls back to the entry scene for %s",
+    async (id) => {
+      const saved = await startedProgress(id);
+      expect(saved.packageProgress).toEqual({ sceneId: "ros-scene-1-landing" });
+      expect("startSceneId" in saved).toBe(false);
+    },
+  );
+
+  it("does not save anything when the pinned package cannot be loaded", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => null as any);
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-unavailable");
+    expect(savePinned).not.toHaveBeenCalled();
+    expect(manager.errorCause).toBe("package-unavailable");
+  });
+
+  it("does not save anything when the pinned package has no scenes", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => ({
+      status: "approved",
+      hash: packageRef.hash,
+      package: { ...referencePackage, scenes: [] },
+    }));
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-has-no-scenes");
+    expect(savePinned).not.toHaveBeenCalled();
+  });
+
+  it("gives a session without a package no packageProgress", async () => {
+    const deps: any = dependencies();
+    const save = vi.fn(deps.repository.save);
+    deps.repository.save = save;
+    const manager = new AdventureManager(deps);
+
+    await manager.start(startInput);
+
+    expect(save.mock.calls[0]?.[1]).not.toHaveProperty("packageProgress");
+  });
+
+  it("saves local artwork changes through adventure ownership and rejects stale revisions", async () => {
+    const deps: any = dependencies();
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      revision: 3,
+      places: [{ id: "p1", name: "Forest" }],
+    } as unknown as AdventureSession;
+    manager.phase = "ready";
+    manager.lease = {
+      vaultId: "vault-1",
+      sessionId: "s1",
+      ownerId: "owner",
+      fencingToken: 1,
+      expiresAt: Date.now() + 10000,
+    };
+    const context = {
+      vaultId: "vault-1",
+      sessionId: "s1",
+      expectedRevision: 3,
+    };
+    expect(
+      (
+        await manager.mutateLocalArtwork(
+          { kind: "place", id: "p1" },
+          { kind: "dismiss" },
+          context,
+        )
+      ).ok,
+    ).toBe(true);
+    expect(manager.session?.revision).toBe(4);
+    expect(
+      await manager.mutateLocalArtwork(
+        { kind: "place", id: "p1" },
+        { kind: "restore" },
+        context,
+      ),
+    ).toEqual({ ok: false, reason: "stale-adventure" });
+  });
   it("uses the paired output of the normal Rumour Generator", async () => {
     const { generateRumourLocal } = await import("generator-engine");
     const deps: any = dependencies();
@@ -1430,4 +1591,49 @@ it("does not dispatch when lookup is superseded by the same session ID in anothe
   expect(generate).toHaveBeenCalledTimes(calls);
   expect(manager.session?.vaultId).toBe("vault-2");
   expect(manager.session?.turns).toHaveLength(1);
+});
+
+describe("AdventureManager.loadSourcePackage", () => {
+  it("returns null when the session has no sourcePackage", async () => {
+    const deps: any = dependencies();
+    const load = vi.fn(async () => referencePackage);
+    deps.packages = { load };
+    const manager = new AdventureManager(deps);
+    manager.session = { id: "s1", vaultId: "vault-1" } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("delegates to deps.packages.load when sourcePackage is set", async () => {
+    const deps: any = dependencies();
+    const load = vi.fn(async () => referencePackage);
+    deps.packages = { load };
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      sourcePackage: packageRef,
+    } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBe(referencePackage);
+    expect(load).toHaveBeenCalledWith(manager.session);
+  });
+
+  it("returns null when deps.packages.load rejects", async () => {
+    const deps: any = dependencies();
+    deps.packages = {
+      load: vi.fn(async () => {
+        throw new Error("missing package");
+      }),
+    };
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      sourcePackage: packageRef,
+    } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBeNull();
+  });
 });

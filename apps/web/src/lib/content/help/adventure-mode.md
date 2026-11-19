@@ -19,6 +19,12 @@ GM notes are hidden from the play surface, but they are not encrypted from the
 vault owner. Material invented during play stays provisional and is not added to
 your canonical vault automatically.
 
+## See the current scene
+
+When the adventure has room, a **Current scene** panel sits beside the story
+with the location, situation, objectives and who is here. When it is narrow, a
+collapsible **Scene details** bar sits above the story instead.
+
 ## Choose how to start
 
 Open **Play → Let the Oracle run the game**. On mobile, **Play** is in the
@@ -37,6 +43,9 @@ navigation menu. If you have no active adventure, choose a starting approach:
 - **Create Your Own Premise** opens the usual adventure form. Enter a title,
   starting situation and character yourself. You can return to the starting
   choices without discarding an unsaved draft.
+- **Import Adventure JSON** brings an adventure you own into the Vault as an
+  immutable, locally validated package you can start a session from. See
+  [Import an adventure](#import-an-adventure) below.
 - **Enter Your World** opens **Set the Stage**, with no prepared quest needed.
   Choose a Vault character or name a new provisional one, then a Vault place
   or a new **Starting place**. Optionally pick a world date from your Vault
@@ -67,6 +76,96 @@ play makes them relevant rather than presented as a scenario-selection list.
 You need an online Oracle connection for AI turns. The selected GM notes remain
 stored within the Adventure session but are not encrypted from the vault owner.
 
+## Import an adventure
+
+Import Adventure JSON is available in a ready owner Vault. It is fully
+local and deterministic: no AI calls are made to import, validate, or store
+a package, and the same file always gives the same result.
+
+1. Open **Play → Let the Oracle run the game** and choose **Import Adventure
+   JSON**.
+2. Drop or choose an Adventure JSON v1 (`.json`) file up to 10 MiB. If you
+   have a module in another form, follow the
+   [Adventure JSON conversion guide](/adventure-import) to convert it
+   off-platform first.
+3. Codex validates the file locally against the Adventure JSON schema. If
+   validation fails, you get the exact errors and nothing is written.
+4. Review its locations, actors, factions, scenes, encounters, clues,
+   rumours, items, endings, and unresolved items. Secrets stay locked to
+   `gm-only`; you can adjust visibility only for non-secret content.
+5. Approve to save the package as an immutable SHA-256 baseline, or cancel —
+   cancelling leaves no package in the Vault.
+
+Once approved, each package version shows a card with its hook and source
+details, without spoilers. When a package offers more than one starting point,
+you can pick one before starting; the first scene is the default, and a hidden
+alternative is shown only as "Alternative start (details hidden)". You can
+start a new session pinned to that package version and hash, or resume an existing pinned session directly. Later changes to
+the package never retarget a session that has already started.
+
+Each approved package version also has **Create creature entries**. It proposes
+one Creature for each actor named in an encounter, merging actors with the same
+name and keeping variants such as "Gnoll Chieftain" apart. Nothing is guessed
+from the text and no AI is used. Creatures tied to hidden actors or encounters
+are hidden from players by default, and hidden encounters are listed only in the
+creature's GM-only lore. For each one you can add a prepared image file or leave
+it with no image; the PDF itself is not cropped. Choose **Review changes** to
+see a preview, and nothing is saved until you confirm. If you run it again on
+the same or a newer version, creatures already in your Vault are shown as
+"Already in your Vault" and reused, never overwritten. You can create up to
+100 new entries per confirmation; skip some entries and confirm another batch
+to import more.
+
+Re-importing an identical package is a no-op. Changed content with the same
+package ID opens a new version review against the previous approved version;
+check the listed changes, including any change to the entry scene, before
+approving. Each approved version stays available to start a session. Use
+**Remove** in the approved package list to delete a version. A version pinned
+by an adventure session cannot be removed; resume that session or keep the
+version in the Vault.
+
+If a session's package version is missing or has changed, the session pauses
+with **Retry** and **Leave session**. Your story stays readable. Re-import
+the same version, then choose Retry to continue.
+
+## Package progress and GM details
+
+Open **Adventure tools** during a session pinned to a package. The
+player progress view lists confirmed, player-visible scenes you have visited,
+the current scene, and player-visible clues you have found. It leaves out
+GM-only records, unvisited scenes, and unconfirmed claims, and does not show a
+remaining-scene count.
+
+The optional **GM details** audit is hidden until you choose **Show GM details**
+and confirm the spoiler warning. It lists package records the ledger has
+touched, including claims and superseded events, so you can check the Oracle's
+bookkeeping. Choose **Hide GM details** to close it again. Revealing it may show
+GM-only package content.
+
+Markdown (`.md`, up to 2 MiB) and text-based PDF (`.pdf`, up to 20 MiB and
+500 pages) remain available as experimental convenience inputs. They are
+normalized locally into Adventure JSON before the same review; scanned or
+encrypted PDFs are rejected. The original file stays on your device and is
+not copied into the Vault; only the approved package is saved.
+
+Where an imported adventure goes, in three phases:
+
+1. **Conversion:** your source goes to the AI assistant you choose, not to
+   Codex Cryptica.
+2. **Import:** the Adventure JSON is checked and stored in the Vault on this
+   device. This step is fully local and deterministic: no AI calls.
+3. **AI play:** during Oracle turns, bounded parts of the package, such as its
+   title and premise, go to your selected Oracle AI provider with relevant
+   Vault records. The whole package is not sent.
+
+Imported packages are not included in Cloud Backup, even if you opt in to
+include adventures. They are included in a vault export (`.codex.zip`) and in
+a folder save. After a Cloud Backup restore, keep your `.json` file and import
+it again; the same file gives the same version. See
+[Where your adventure goes](/adventure-import#privacy-notice-heading),
+[Cloud Backup](/help#help/cloud-backup) and
+[Export and Back Up](/help#help/export-and-backup).
+
 ## Start an adventure
 
 1. Open **Play → Let the Oracle run the game**.
@@ -80,7 +179,7 @@ session remains readable offline; a pending action can be retried after reconnec
 Opening Play checks for an active adventure in the current vault so you can continue
 that world’s session.
 
-Adventure Mode is now chosen from the Play page. Starting a solo session does not need it. See [Solo Sessions](/help#help/solo-session).
+Adventure Mode is now chosen from the Play page. Starting a solo session does not need it. See [Solo Sessions](/help#help/solo-session) and [Adventure Artwork](/help#help/adventure-artwork).
 
 ## Playing in your existing world
 

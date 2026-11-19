@@ -41,6 +41,7 @@ it("preserves the original module's runtime exports through the package entrypoi
       "pushDeltaToCloudBackup",
       "pushVaultToCloudBackup",
       "restoreVaultFromCloudBackup",
+      "uploadSnapshotAssets",
     ].sort(),
   );
   for (const key of Object.keys(legacy) as (keyof typeof legacy)[]) {

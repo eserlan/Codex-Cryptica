@@ -35,6 +35,28 @@ const newStateFactSchema = {
   },
 } as const;
 
+const npcCuesSchema = {
+  type: "array",
+  maxItems: 4,
+  items: { type: "string", maxLength: 40 },
+} as const;
+
+const activeCharacterSchema = {
+  ...stateFactSchema,
+  properties: {
+    ...stateFactSchema.properties,
+    cues: npcCuesSchema,
+  },
+} as const;
+
+const newActiveCharacterSchema = {
+  ...newStateFactSchema,
+  properties: {
+    ...newStateFactSchema.properties,
+    cues: npcCuesSchema,
+  },
+} as const;
+
 const relationshipSchema = {
   ...stateFactSchema,
   required: [...stateFactSchema.required, "subjectId", "disposition"],
@@ -164,6 +186,12 @@ const bandSchema = {
   },
 } as const;
 
+const placeCuesSchema = {
+  type: "array",
+  maxItems: 8,
+  items: { type: "string", minLength: 1, maxLength: 32 },
+} as const;
+
 export const adventureTurnResponseSchema = {
   oneOf: [
     {
@@ -203,15 +231,86 @@ export const adventureTurnResponseSchema = {
             placeId: idSchema,
             name: { ...textSchema, maxLength: 120 },
             relation: textSchema,
+            cues: placeCuesSchema,
+          },
+        },
+        placeCues: placeCuesSchema,
+        personRefs: {
+          type: "array",
+          maxItems: 8,
+          items: idSchema,
+        },
+        packageEvents: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              recordId: idSchema,
+              kind: {
+                type: "string",
+                enum: ["scene", "encounter", "clue", "secret"],
+              },
+              to: {
+                type: "string",
+                enum: [
+                  "unvisited",
+                  "available",
+                  "active",
+                  "resolved",
+                  "altered",
+                  "skipped",
+                ],
+              },
+              certainty: { type: "string", enum: ["claimed", "confirmed"] },
+              note: { ...textSchema, maxLength: 240 },
+              supersedes: idSchema,
+            },
+            required: ["recordId", "kind", "to", "certainty", "note"],
+          },
+        },
+        actorEvents: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            properties: {
+              actorId: idSchema,
+              status: {
+                type: "string",
+                enum: ["present", "absent", "dead"],
+              },
+              disposition: {
+                type: "string",
+                enum: ["hostile", "wary", "neutral", "friendly", "allied"],
+              },
+              fact: { ...textSchema, maxLength: 160 },
+              certainty: { type: "string", enum: ["claimed", "confirmed"] },
+              note: { ...textSchema, maxLength: 240 },
+              supersedes: idSchema,
+            },
+            required: ["actorId", "certainty", "note"],
+          },
+        },
+        sceneTransition: {
+          type: "object",
+          properties: {
+            sceneId: idSchema,
+            title: { ...textSchema, maxLength: 120 },
           },
         },
         visiblePatch: {
           type: "object",
           properties: {
+            packageSceneId: idSchema,
             location: { anyOf: [newStateFactSchema, { type: "null" }] },
             situation: { anyOf: [newStateFactSchema, { type: "null" }] },
             objectives: patchSchema(newStateFactSchema, stateFactSchema),
-            activeCharacters: patchSchema(newStateFactSchema, stateFactSchema),
+            activeCharacters: patchSchema(
+              newActiveCharacterSchema,
+              activeCharacterSchema,
+            ),
             knownFacts: patchSchema(newStateFactSchema, stateFactSchema),
             relationships: patchSchema(
               newRelationshipSchema,

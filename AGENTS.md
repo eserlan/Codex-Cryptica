@@ -60,6 +60,9 @@ This file is the Codex-facing instruction layer for this repository.
   3. If it does not, add an entry with a canonical path, primary intent, user job and unique-value rationale **before** building the page.
   4. Run `bun scripts/discovery-audit.mjs`. Deterministic findings are errors; overlap warnings need a judgement call, recorded via `acknowledgedOverlap` with a reason if the overlap is intentional.
   - The registry constrains the public surface; it is never a source for generating pages from keywords. See [docs/discovery-intent-registry.md](./docs/discovery-intent-registry.md).
+- **Semantic approval for `AGENTS.md` edits**: Agents may maintain _factual/descriptive_ technology notes, dependency listings and implementation descriptions through ordinary reviewed PRs without a separate content-approval escalation. Human approval is required when an edit changes architectural principles, storage or sync contracts, security/privacy rules, agent permissions, governance, or behavioural defaults, even if presented as documentation. Escalate ambiguous cases. This policy does **not** bypass the existing PR quality gate, factory workflow or human merge/review process. See [Review-and-Fix escalation guidance](./docs/devops/REVIEW_AND_FIX_AGENT.md#agent-documentation-change-authority).
+- **Imported adventure architecture**: Follow [ADR 021](./docs/adr/021-adventure-sources-playthrough-continuity.md) for immutable source packages, independent playthrough state, layered canon, source fidelity and per-playthrough adaptation. This is target architecture; do not claim future capabilities are shipped.
+- **Adventure evaluation & release gates**: Run `packages/adventure-engine/tests/evaluations.test.ts` and `living-settlement-long-run.test.ts` (`bun test`) plus `apps/web/src/lib/services/adventure/adventure-evaluation-runner.test.ts` and `adventure-multi-scenario-gates.test.ts` (`vitest`) for multi-scenario rubric scoring and AI entry-point gates; see [docs/adventure-evaluation-protocol.md](./docs/adventure-evaluation-protocol.md) for the manual staging walkthrough and live-model baseline template. Conversion QA is scored offline with `packages/adventure-engine/tests/adventure-json/conversion-score.test.ts`, `bun scripts/score-adventure-conversion.ts`, and the report in [docs/adventure-conversion-qa.md](./docs/adventure-conversion-qa.md). GM-only secrecy across recaps, streamed narration previews, and other player-facing outputs is checked with a stubbed model by `apps/web/src/lib/stores/oracle/tests/gm-secrecy-outputs.test.ts` and `gm-secrecy-playthrough.test.ts` (`vitest`; the shared leak harness is `gm-leak-harness.ts`).
 - **PR Quality Gate**: Never create or open a Pull Request unless:
   1. Type-checking for affected workspaces passes with 0 errors (e.g., `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` or affected workspaces via `bun scripts/affected-workspaces.mjs`).
   2. Changed-file lint passes with 0 errors (`bun run lint:changed` or `bun scripts/lint-changed.mjs`).
@@ -75,11 +78,16 @@ This file is the Codex-facing instruction layer for this repository.
 
 ## Software factory
 
-`/factory run` builds every open GitHub issue labeled `factory` through
-intake → spec → build → gate → review → approve, one PR per issue. State is in
-`factory/jobs/` (gitignored); `factory/bin/job` is its only writer. Checks:
-`factory/checks.sh`. Dashboard: `cd factory && python3 -m http.server`, then
-open http://localhost:8000/dashboard.html.
+`/factory run` (in Claude Code via `.claude/skills/factory/SKILL.md`, in
+Antigravity (`agy`) via `.agent/skills/factory/SKILL.md` and
+`factory/bin/agy_workflow.py`, or in Muse via
+`.agents/skills/factory-muse/SKILL.md` and `factory/bin/muse_workflow.js` —
+invoked there as `/factory-muse run`) builds every open GitHub issue labeled
+`factory` through intake → spec → build → gate → review → approve, one PR per
+issue. State is in `factory/jobs/` (gitignored); `factory/bin/job` is its only
+writer, and all runtimes can resume jobs started by another. Checks: `factory/checks.sh`.
+Dashboard: `cd factory && python3 -m http.server`, then open
+http://localhost:8000/dashboard.html.
 
 The factory never merges. After review the approver's decision is posted on the
 PR, the PR is marked ready and both the PR and the issue are labeled
@@ -101,11 +109,33 @@ read `.gitignore` sees those copies too; exclude `.worktrees/` in its config
 <!-- SPECKIT START -->
 
 For additional context about technologies to be used, project structure,
-shell commands, and other important information, read the [current plan](./specs/178-hex-crawl-mode/plan.md).
+shell commands, and other important information, read the [current plan](./specs/181-adventure-artwork/plan.md).
 
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `@codex/adventure-engine` (`buildCreatureProposals`, `buildCreatureEntryText` in `src/adventure-json/creature-proposals.ts`), `schema` (one optional `adventureSource` provenance field on `EntitySchema`), `vault.createEntity`, `saveEntityImageFile`, and the `AdventureCreatureImportDialog` opened from approved package versions. Proposes Creature entries from actors referenced by encounters, with a review and preview before anything is written. No new third-party dependency. (059-adventure-import-create-encounter)
+- Created Creature entries carry optional `adventureSource` (package id/version/hash, actor and encounter ids, source credit), stripped from guest exports by `GuestExporter`; GM-only encounter links go in `lore`; hidden entries get the `hidden` label and `visibility: "hidden"`. Existing entries are reused, never modified. No IndexedDB, OPFS or migration change. (059-adventure-import-create-encounter)
+
+- TypeScript 6.0.3, Bun 1.3.14 + `zod`, `chronology-engine` (`workspace:*`), `@codex/adventure-engine` (`src/historical-anchor*.ts`): versioned `HistoricalAnchor` (`version: 1`, `preserve` | `alternate` | `discover` policies), precision-preserving chronology alignment & era formatting, revision-checked progress/drift transitions, GM-only vs. player-safe projections, and additive `AdventureSession.historicalAnchor` persistence (keeping `CURRENT_ADVENTURE_SCHEMA_VERSION = 3`). (4556-adventure-engine-historical)
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `AdventureJsonV1` primary import UX (`AdventureEntryChoices.svelte`, `AdventureImportReview.svelte`, `AdventureSurface.svelte`, `/adventure-import` link, drag-and-drop `.json`, experimental `.md`/`.pdf` convenience normalization via `adventureSourcePackageToAdventureJson`), immutable SHA-256 hash-addressed Vault storage (`.codex/adventures/packages/<hash>.json` via `saveApprovedAdventureJson` / `loadStoredAdventurePackage` / `listApprovedAdventurePackages` with legacy `AdventureSourcePackage` read compatibility), and optional backward-compatible `AdventureSession.sourcePackage` (`packageId`, `version`, `formatVersion`, `hash`) pinning and start/resume flow. (4873-adventure-import-ux)
+
+- TypeScript 6.0.3, Bun 1.3.14 + `zod`, Web Crypto SHA-256 (`globalThis.crypto.subtle.digest`), `ajv` v8 (`devDependency` for Draft 2020-12 parity tests), `@codex/adventure-engine` (`src/adventure-json/`): `AdventureJsonV1Schema`, Draft 2020-12 JSON Schema (`getAdventureJsonV1JsonSchema`, `adventure-json-v1.schema.json`), semantic validator (`validateAdventureJson`), canonical serialization & SHA-256 hashing (`canonicalizeAdventureJson`, `computeAdventureJsonHash`), and `AdventureSourcePackage` adapter (`adventureSourcePackageToAdventureJson`). (4872-adventure-json-v1)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `pdfjs-dist` (local-only, lazy-loaded via dynamic `import(...)` with Vite `?url` worker asset; zero external CDN), `@codex/adventure-engine` (`parseAdventurePdf`, `SectionAnchorSchema` `pageNumber`/`pageEnd`, `importMethod: "pdf"`), `AdventureEntryChoices.svelte`, `AdventureImportReview.svelte`, `AdventureSurface.svelte`. (4834-adventure-import-text)
+- Approved PDF-derived `AdventureSourcePackage` JSON files persisted under `.codex/adventures/packages/<documentHash>.json` using the same Vault OPFS storage and SHA-256 deduplication as Markdown packages. No new IndexedDB object store or schema migration. (4834-adventure-import-text)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `@codex/adventure-engine` (`AdventureSourcePackageSchema` status `"draft" | "approved"`, `approveAdventurePackage`), `AdventureImportReview.svelte`, Tailwind 4 semantic tokens, Iconify utilities. No new third-party dependency. (4833-adventure-import-review)
+- Approved `AdventureSourcePackage` JSON files persisted as immutable baselines under `.codex/adventures/packages/<documentHash>.json` via `AdventurePackageFileIO` (on-device Vault storage; imported packages are not currently included in Codex Cryptica Cloud Backup). No new IndexedDB object store or schema migration. (4833-adventure-import-review)
+
+- TypeScript 6.0.3, Bun 1.3.14 + `zod`, Web Crypto SHA-256 (`globalThis.crypto.subtle.digest`), `@codex/adventure-engine` (`src/source-package/`): `AdventureSourcePackageSchema`, deterministic offline Markdown import parser, and bounded scene retrieval (`MAX_ADVENTURE_RETRIEVAL_CHARS = 4000`). No new third-party dependency. (4832-adventure-import)
+- Draft `AdventureSourcePackage` JSON files persisted under `.codex/adventures/packages/<documentHash>.json` via dependency-injected `AdventurePackageFileIO` with SHA-256 deduplication and atomic failure rollback. No new IndexedDB object store or schema migration. (4832-adventure-import)
+- TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 3, Bun 1.3.14 + Existing `schema` (`trait-package.ts`; optional `traitPackage` and `traitSelections` on `EntitySchema`), `@codex/stat-sheet-engine` (`trait-packages.ts`, `resolveFieldByKeyOrId`), `vault.updateEntity`, Tailwind 4 semantic tokens, Iconify utilities. No new third-party dependency. (038-reusable-trait-packages-species)
+- Species/Ancestry definitions on Creature entities and per-character selections (a source link plus a trait snapshot) live in entity frontmatter, so they travel with vault save, export/import and Shelf copies. Effective stat values are computed at display time; `statSheet` base values are never rewritten. No IndexedDB, OPFS layout or migration change. (038-reusable-trait-packages-species)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3 (current repository), Bun 1.3.14. + Existing `zod`, `schema`, `@codex/adventure-engine`, `@codex/vault-engine`, `@codex/runtime`, browser CacheStorage/fetch/Web Crypto, existing modal/DI patterns, Tailwind 4 semantic tokens and Iconify utilities. New internal package `packages/adventure-artwork-engine`; no new third-party dependency. (181-adventure-artwork)
+- Optional `adventureArtwork` on existing entity records; optional artwork/people/scene fields in existing `.codex/adventures/<id>.json`; private immutable snapshots under existing Vault `images/`; disposable `codex-adventure-artwork-v1` CacheStorage and device-local preference/cache index via injected storage. Cloud backup gains optional `adventures` collection behind explicit inclusion consent. No new database/object-store migration. (181-adventure-artwork)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `hex-crawl-engine` (extended with `region/`), `map-engine` (`getHexNeighbors`, `getHexRange`, `hexDistance`, `hexToPoint`, `getHexCorners`), `zod`, the existing `HexCrawlStore`, `HexTerrainPicker`, Tailwind 4 semantic tokens, Iconify classes. No new third-party dependency. (4659-hex-region-generation)
 - One optional additive field, `generated`, on existing hex records in `.codex/maps.json` (synced, backed up and exported with maps; removed from guest exports with the rest of `hexCrawl`). One device-local `localStorage` key, `codex-hex-region:<mapId>`. No IndexedDB, OPFS layout or migration change. (4659-hex-region-generation)
@@ -114,6 +144,12 @@ shell commands, and other important information, read the [current plan](./specs
 - Profiles are Note entities (`kind: "biome"`) carrying an optional structured `biome` field plus generated Markdown `content`; the catalogue is bundled data and images are hosted on R2. Device-local: `codex-biome-explorer-view` and one AI-notice hint key. No IndexedDB, OPFS layout or migration change. (180-biome-explorer)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14; Cloudflare Workers runtime for `apps/workers/oracle-proxy` (179-in-app-feedback)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + Public Adventure JSON conversion guide route `/adventure-import` (`apps/web/src/routes/(marketing)/adventure-import/+page.svelte` and `conversion-guide.ts`), static Draft 2020-12 JSON Schema at `apps/web/static/schemas/adventure-json/v1.json` (aliased at `apps/web/static/schemas/adventure/v1.json`), static example fixtures (`minimal.v1.json`, `reference-one-shot.v1.json`), multi-model conversion fixtures under `fixtures/adventures/conversions/`, Discovery Intent Governance entry in `entries/migration.ts`, and `llms.txt` / `llms-full.txt` indexing. (4874-adventure-json-docs)
+- Conversion conventions: external LLMs convert user-owned adventures into `adventure-json/v1` off-platform using the canonical prompt; Codex Cryptica processes the resulting JSON strictly on-device, never invents missing facts (`epistemicStatus`), and requires `visibility: "gm-only"` on all `secrets`. (4874-adventure-json-docs)
+
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3, Bun 1.3.14 + `@codex/adventure-engine` (`diffAdventureJsonVersions`, `selectAdventureJsonPredecessor`, `compareAdventureJsonVersion`, `isAdventureJsonVersionGreater`, `ADVENTURE_CORRESPONDENCE_EXTENSION_KEY` in `src/adventure-json/diff.ts`; `SaveAdventureJsonResult.status: "created" | "deduplicated"`), `AdventureImportReviewDiff.svelte`, `AdventureSurface.svelte` grouped approved-package versions and per-version `AdventurePackageRepository.removeApproved`, conversion-guide correspondence/versioning docs. No new third-party dependency. (4835-adventure-json-versioning)
+- Versioning: logical identity is package `id`, `version` is its label, canonical SHA-256 hash is exact content identity; identical re-imports deduplicate without a write, changed same-`id` content becomes a new reviewed version diffed against the predecessor, correspondence comes only from stable IDs or the `codex-cryptica.adventure-correspondence` extension (splits/merges/unmapped stay unresolved), sessions stay pinned to their starting hash, and in-use removal is refused. No new IndexedDB store, lineage record, format/schema, or migration. (4835-adventure-json-versioning)
 
 - TypeScript 6.0.3, Svelte 5 (Runes), SvelteKit 2, Bun 1.3.14 + Existing `map-engine` (hex maths; + `parseHexLabel`), `random-source-engine` (offline rolling), `session-journal-engine` (+ `formatHexExplored`), `schema` (`MapSchema` + optional `grid`, `hexCrawl`), `vault-engine` `GuestExporter` (strips `hexCrawl`), `@codex/ai-engine` (`aiClientManager`), `generator-engine` `formatCampaignContextBlock`, the exported `extractJsonObject`, `@codex/events` (`JOURNAL:CAPTURE`), Floating UI, `zod`, Tailwind 4 semantic tokens, Iconify classes. New internal package `packages/hex-crawl-engine`. No new third-party dependency. (178-hex-crawl-mode)
 - Optional additive fields on the existing map records in `.codex/maps.json`: `grid` and `hexCrawl`. They are synced, backed up, exported and restored with maps. One new device-local display preference, `showTerrainIcons`, joins the existing per-map display settings. One device-local "AI notice dismissed" hint key. No IndexedDB, OPFS layout or migration change. (178-hex-crawl-mode)
@@ -190,6 +226,7 @@ shell commands, and other important information, read the [current plan](./specs
 
 - TypeScript 6.0.3 + Svelte 5 (Runes), SvelteKit, `@google/generative-ai` (Gemini SDK via `aiClientManager`), `@codex/vault-engine` (129-seo-landing-pages)
 - `localStorage` (transient transfer), OPFS & IndexedDB (via vault stores) (129-seo-landing-pages)
+- TypeScript 6.0.3, Svelte 5 Runes, SvelteKit 3 + `/generators/urban-fantasy-faction` uses the framework-free `generator-engine` for validated urban-fantasy options, local or optional AI faction generation, and the shared browser-local Save to Codex conversion flow. (1137-urban-fantasy-faction)
 
 - TypeScript 6.0.3 + Svelte 5 Runes, SvelteKit, `@google/generative-ai` (127-context-aware-entity-generator)
 - OPFS (Vault Files), IndexedDB (via existing stores/vault.svelte.ts) (127-context-aware-entity-generator)

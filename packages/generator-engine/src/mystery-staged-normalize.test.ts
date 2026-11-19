@@ -144,3 +144,38 @@ describe("normalizeMysteryStage.repair", () => {
     });
   });
 });
+
+describe("normalizeMysteryStage.pressure", () => {
+  it("maps npcResponses aliases into canonical fields and flattens values", () => {
+    const out = normalizeMysteryStage.pressure({
+      escalation: "Dawn approaches.",
+      npcResponses: [
+        {
+          personId: "person-2",
+          trigger: "If the investigation stalls",
+          nextMove: "Burns the receipt",
+          observableConsequence: "Ash drifts from the chimney",
+          lead: "Inspect the stove grate",
+          goal: "Hide the debt",
+          knowledge: "Knows the ledger was forged",
+        },
+      ],
+    });
+    expect(out.npcResponses).toEqual([
+      {
+        personId: "person-2",
+        trigger: "If the investigation stalls",
+        nextMove: "Burns the receipt",
+        observableConsequence: "Ash drifts from the chimney",
+        lead: "Inspect the stove grate",
+        goal: "Hide the debt",
+        knowledge: "Knows the ledger was forged",
+        response: "Burns the receipt",
+        observableEffect: "Ash drifts from the chimney",
+        testableLead: "Inspect the stove grate",
+        motive: "Hide the debt",
+        currentKnowledge: "Knows the ledger was forged",
+      },
+    ]);
+  });
+});

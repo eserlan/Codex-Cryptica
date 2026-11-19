@@ -23,6 +23,7 @@ import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
 import { SOLO_RPG_TOPIC_CONFIG } from "../topics/solo-rpg";
 import { DND_TOPIC_CONFIG } from "../topics/dnd";
 import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
+import { STAR_SYSTEMS_TOPIC_CONFIG } from "../topics/star-systems";
 import { solutions } from "#lib/config/seo-pages.js";
 import { featuresConfig } from "#lib/config/seo-features.js";
 import { match as isGeneratorSlug } from "../../../params/generator_slug";
@@ -1160,6 +1161,7 @@ describe("published answers", () => {
       PIRATE_TOPIC_CONFIG.canonicalPath,
       DND_TOPIC_CONFIG.canonicalPath,
       DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
+      STAR_SYSTEMS_TOPIC_CONFIG.canonicalPath,
       SOLO_RPG_TOPIC_CONFIG.canonicalPath,
     ]);
     const toolPages = new Set([
@@ -1825,6 +1827,60 @@ describe("published answers", () => {
         (reference) => reference.system === "Old-School Essentials",
       )?.href,
     ).toBe("https://osesrd.opengamingnetwork.com/adventuring/");
+  });
+
+  it("cross-links the Mystery and investigation generator across mystery and investigation answers", () => {
+    const noRailroading =
+      answers["how-do-you-run-a-mystery-without-railroading"];
+    expect(noRailroading.relatedTools).toHaveLength(3);
+    expect(noRailroading.relatedTools[0]).toMatchObject({
+      title: "Mystery and investigation generator",
+      href: "/generators/mystery-investigation",
+    });
+    expect(noRailroading.relatedTools[0].description).toMatch(
+      /fixed-truth.*solution/i,
+    );
+    expect(noRailroading.relatedTools[0].description).toMatch(/suspects/i);
+    expect(noRailroading.relatedTools[0].description).toMatch(/clue paths/i);
+    expect(noRailroading.relatedTools[0].description).toMatch(
+      /ticking pressure/i,
+    );
+    expect(noRailroading.relatedTools[0].description).not.toMatch(/emergent/i);
+    expect(noRailroading.relatedTools.map((tool) => tool.href)).toEqual([
+      "/generators/mystery-investigation",
+      "/generators/quest",
+      "/generators/npc",
+    ]);
+
+    const wrongConclusion =
+      answers[
+        "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery"
+      ];
+    expect(wrongConclusion.relatedTools[0]).toMatchObject({
+      title: "Mystery and investigation generator",
+      href: "/generators/mystery-investigation",
+    });
+    expect(wrongConclusion.relatedTools).toContainEqual(
+      expect.objectContaining({
+        title: "NPC generator",
+        href: "/generators/npc",
+      }),
+    );
+
+    const interviewingNpcs =
+      answers[
+        "how-do-i-make-interviewing-npcs-interesting-in-an-investigation"
+      ];
+    expect(interviewingNpcs.relatedTools[0]).toMatchObject({
+      title: "NPC generator",
+      href: "/generators/npc",
+    });
+    expect(interviewingNpcs.relatedTools).toContainEqual(
+      expect.objectContaining({
+        title: "Mystery and investigation generator",
+        href: "/generators/mystery-investigation",
+      }),
+    );
   });
 });
 

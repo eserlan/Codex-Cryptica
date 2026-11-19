@@ -1,14 +1,25 @@
 import type {
-  CloudBackupRuntime,
-  CloudBackupTiming,
-  VaultBundlePayload,
-  VaultDeltaPayload,
+  CloudBackupTombstone,
+  CloudBackupTrashEviction,
+  CloudBackupWholeItemAsset,
+} from "schema";
+import {
+  isDeviceLimit,
+  type CloudBackupRuntime,
+  type MergeEntity,
+  type WholeItem,
+  type CloudBackupTiming,
+  type VaultBundlePayload,
+  type VaultDeltaPayload,
 } from "@codex/cloud-backup-sync";
 import type {
   CloudBackupDirtyRow,
   CloudBackupDirtyStore,
 } from "./cloud-backup-dirty";
+import type { CloudBackupBaseStore, WholeKind } from "./cloud-backup-base";
 import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { ArtworkBackupScope } from "./cloud-backup-artwork-scope";
+import type { CloudBackupArtworkConsent } from "./cloud-backup-artwork-consent";
 
 export type CloudBackupStatus = "off" | "idle" | "syncing" | "error";
 
@@ -26,6 +37,9 @@ export const AUTO_SYNC_DEBOUNCE_MS = 5000;
 /** Wait before retrying a failed auto-push (default 30s). */
 export const AUTO_SYNC_RETRY_MS = 30000;
 
+/** Background pull interval while the app is open and visible. */
+export const PULL_INTERVAL_MS = 30_000;
+
 /** Wait after a vault opens before the once-per-session consistency check. */
 export const RECONCILE_DELAY_MS = 60_000;
 
@@ -35,6 +49,45 @@ export interface SnapshotOutcome {
   conflict?: boolean;
   remoteAt?: string | null;
   error?: string;
+  /**
+   * Set when a pull was held back by an open editor: not a failure, so the
+   * push is retried later and nothing is cleared.
+   */
+  held?: boolean;
+  /** An editor's link is gone, or its device is over the cap: stop syncing. */
+  blocked?: Blocked;
+  /** An editor's changes that cannot go yet stay on this device. */
+  keptLocal?: boolean;
+  /** Non-silent trash eviction summary when a delta push dropped old trash content. */
+  trashEvicted?: CloudBackupTrashEviction;
+}
+
+export function trashEvictionNotice(
+  eviction: CloudBackupTrashEviction,
+): string {
+  const { evictedCount } = eviction;
+  const maxMb = Math.round(eviction.maxBytes / (1024 * 1024));
+  return evictedCount === 1
+    ? `Shared trash reached its ${maxMb} MB limit. 1 older deleted item lost its restorable content early.`
+    : `Shared trash reached its ${maxMb} MB limit. ${evictedCount} older deleted items lost their restorable content early.`;
+}
+
+/** Why an editor's sync stopped. `deviceLimit` carries the server's message. */
+export type Blocked =
+  { kind: "linkGone" } | { kind: "deviceLimit"; message: string };
+
+/** The stop an editor's failed request calls for, or null for an ordinary failure. */
+export function blockedFrom(failure: {
+  error: string;
+  status?: number;
+  code?: string;
+  linkGone?: true;
+}): Blocked | null {
+  if (failure.linkGone) return { kind: "linkGone" };
+  if (isDeviceLimit(failure)) {
+    return { kind: "deviceLimit", message: failure.error };
+  }
+  return null;
 }
 
 export const BACKUP_OFF: SnapshotOutcome = {
@@ -42,6 +95,89 @@ export const BACKUP_OFF: SnapshotOutcome = {
   notEnabled: true,
   error: "Cloud backup is off.",
 };
+
+/** What a pull writes into the local vault. */
+export interface PulledChanges {
+  updates: MergeEntity[];
+  creates: MergeEntity[];
+  deletes: string[];
+}
+
+/** What a pull writes for the maps or canvases it merged. */
+export interface PulledWholeChanges {
+  /** Keep-both copies of this device's version, made before anything is written. */
+  copies: { copy: WholeItem; fromId: string }[];
+  /** Items to create or replace, with the files a map carries. */
+  writes: { item: WholeItem; assets?: CloudBackupWholeItemAsset[] }[];
+  deletes: string[];
+}
+
+/** Downloads one stored file; null when it cannot be had. */
+export type AssetDownload = (assetId: string) => Promise<Uint8Array | null>;
+
+/** Stores a map's files in the backup, giving each a content-addressed id. */
+export type MapAssetPreparer = (
+  map: unknown,
+) => Promise<CloudBackupWholeItemAsset[] | null>;
+
+/** A delta, with the pending rows that were left out of it. */
+export type BuiltDelta = VaultDeltaPayload & {
+  held?: readonly CloudBackupDirtyRow[];
+};
+
+/**
+ * The vault side of pulling other devices' changes. Injected so the stores
+ * stay vault-agnostic; without it sync never pulls and a conflict pauses.
+ */
+export interface CloudBackupRemoteDeps {
+  /**
+   * Local entities as the delta builder would upload them. `null` reads every
+   * entity. Ids with no local entity are left out.
+   */
+  readLocal: (
+    vaultId: string,
+    ids: readonly string[] | null,
+  ) => Promise<Record<string, MergeEntity>>;
+  /** Writes the merge result. Throws when any write fails. */
+  apply: (vaultId: string, changes: PulledChanges) => Promise<void>;
+  /**
+   * Downloads the local images the vault lacks for these entities. Returns
+   * the SHA-256 per asset id it stored; a failed download is left out.
+   */
+  ensureAssets: (
+    vaultId: string,
+    entities: readonly MergeEntity[],
+    download: (assetId: string) => Promise<Uint8Array | null>,
+  ) => Promise<Record<string, string>>;
+  /** The local maps or canvases as the delta builder would upload them; `null` reads all. */
+  readLocalWhole: (
+    vaultId: string,
+    kind: WholeKind,
+    ids: readonly string[] | null,
+  ) => Promise<Record<string, WholeItem>>;
+  /**
+   * Writes the merged maps or canvases: copies first, then the items (a map's
+   * files are downloaded and written over the local ones), then deletes.
+   * Returns the SHA-256 per asset id it stored and the ids it could not
+   * download; a map whose file failed is still written.
+   */
+  applyWhole: (
+    vaultId: string,
+    kind: WholeKind,
+    changes: PulledWholeChanges,
+    download: AssetDownload,
+  ) => Promise<{ hashes: Record<string, string>; failed: string[] }>;
+  /** True while the entity is open in an editor. */
+  isEditing: (id: string) => boolean;
+  /** True while the map or canvas is open on this device. */
+  isWholeOpen: (kind: WholeKind, id: string) => boolean;
+  /** Calls back when the last open editor closes; returns the unsubscribe. */
+  onEditingReleased: (listener: () => void) => () => void;
+  /** An id for a "keep both" copy, unique in the vault. */
+  newId: () => string;
+  /** A uuid for a "keep both" copy of a map or canvas, unique in the vault. */
+  newWholeId: () => string;
+}
 
 export interface CloudBackupDeps {
   runtime: CloudBackupRuntime;
@@ -54,7 +190,11 @@ export interface CloudBackupDeps {
   buildPayload: (
     vaultId: string,
     signal?: AbortSignal,
+    artwork?: { includeAdventures: boolean },
   ) => Promise<VaultBundlePayload>;
+  /** Optional until expanded adventure inclusion is configured. */
+  artworkScope?: ArtworkBackupScope;
+  artworkConsent?: CloudBackupArtworkConsent;
   activeVaultId: () => string | null;
   /**
    * Vault-writing side of restore. Injected rather than imported so this store
@@ -73,11 +213,17 @@ export interface CloudBackupDeps {
       vaultId: string,
       journals: unknown[],
     ) => Promise<void>;
+    /** Restores adventure documents into the newly created Vault. */
+    importAdventures?: (
+      vaultId: string,
+      adventures: unknown[],
+    ) => Promise<void>;
     /** Writes one restored media file back into the vault. */
     importAsset?: (
       path: string,
       bytes: Uint8Array,
       mimeType: string,
+      vaultId?: string,
     ) => Promise<void>;
   };
   /**
@@ -86,6 +232,11 @@ export interface CloudBackupDeps {
    * exactly the changes it carried.
    */
   dirty?: CloudBackupDirtyStore;
+  /**
+   * Keeps what each entity held when last pushed, the base for a later
+   * three-way merge. Optional; written only after a successful push.
+   */
+  base?: CloudBackupBaseStore;
   /**
    * Builds an incremental upload from recorded changes, or `null` when they
    * call for a full upload (#3354). `uploadedAssetIds` are the media the
@@ -96,7 +247,13 @@ export interface CloudBackupDeps {
     changes: readonly CloudBackupDirtyRow[],
     uploadedAssetIds: ReadonlySet<string>,
     signal: AbortSignal,
-  ) => Promise<VaultDeltaPayload | null>;
+    prepareMapAssets: MapAssetPreparer,
+  ) => Promise<BuiltDelta | null>;
+  /** Reads one vault-owned file's bytes, or null when it is missing. */
+  readLocalFile?: (
+    vaultId: string,
+    path: string,
+  ) => Promise<{ bytes: Uint8Array; mimeType: string } | null>;
   /**
    * Local entities for the idle consistency check (#3354). `entity` is the
    * full record when `loaded`; unloaded bodies are never read for the check.
@@ -113,8 +270,35 @@ export interface CloudBackupDeps {
   debounceMs?: number;
   /** Wait before retrying a failed auto-push; overridable in tests. */
   retryMs?: number;
+  /** Pulls and merges other devices' changes; absent means no pulling. */
+  remote?: CloudBackupRemoteDeps;
+  /** Background pull interval; overridable in tests. */
+  pullIntervalMs?: number;
   /** Local storage for persisting caches across sessions. */
   storage?: StorageLike;
+  /** Shows a short message to the user. */
+  notify?: (message: string) => void;
+  /** Tells the user another member's deletes were applied, with an Undo. */
+  notifyDeletes?: (
+    vaultId: string,
+    tombstones: readonly CloudBackupTombstone[],
+  ) => void;
+  /** The member's display name, for conflict copies in a shared vault. */
+  displayName?: () => string | undefined;
+  /**
+   * Builds the delta an editor may send: entity, map and canvas rows, minus
+   * entities that need media the backup lacks. Rows left out stay pending.
+   */
+  buildEditorDelta?: (
+    vaultId: string,
+    changes: readonly CloudBackupDirtyRow[],
+    uploadedAssetIds: ReadonlySet<string>,
+    signal: AbortSignal,
+    prepareMapAssets: MapAssetPreparer,
+  ) => Promise<{
+    delta: VaultDeltaPayload | null;
+    sent: readonly CloudBackupDirtyRow[];
+  }>;
 }
 
 /** Reactive values shared by the app-side backup workflows. */
@@ -129,8 +313,25 @@ export interface CloudBackupViewState {
   skippedEntities: string[];
   uploadProgress: { uploaded: number; total: number } | null;
   consented: boolean;
+  sharing: { linkVersion: number; enabledAt: string } | null;
+  /** How this device is linked to the backup; null while backup is off. */
+  role: "owner" | "editor" | null;
+  /** An editor's group link no longer works. */
+  linkGone: boolean;
+  /** Pulls and pushes are stopped for this session (link gone or device cap). */
+  syncStopped: boolean;
+  /** Changes an editor holds back (new images on entries). */
+  keptLocal: boolean;
   autoState: CloudAutoSyncState;
   autoConflictRemoteAt: string | null;
+  /** The last merge that changed something locally. */
+  mergeNotice: MergeNotice | null;
+}
+
+export interface MergeNotice {
+  merged: number;
+  /** Titles or names of the items whose local version was kept as a copy. */
+  copies: string[];
 }
 
 export type CloudBackupDepsProvider = () => CloudBackupDeps | null;

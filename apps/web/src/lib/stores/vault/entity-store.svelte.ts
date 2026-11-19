@@ -362,8 +362,11 @@ export class EntityStore {
     return this.mutations.deleteEntity(id);
   }
 
-  async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
-    return this.mutations.bulkDelete(ids);
+  async bulkDelete(
+    ids: string[],
+    expectedVaultId?: string,
+  ): Promise<BulkMutationResult> {
+    return this.mutations.bulkDelete(ids, expectedVaultId);
   }
 
   async addConnection(

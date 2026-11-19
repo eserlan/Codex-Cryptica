@@ -122,4 +122,5 @@ packages/help-engine/dist/
 
 # Software factory runtime state and per-job worktrees
 /factory/jobs/
+/factory/archived-jobs/
 /.worktrees/

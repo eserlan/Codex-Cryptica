@@ -1,9 +1,34 @@
 /** @vitest-environment jsdom */
 
-import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/svelte";
 import type { ComponentProps } from "svelte";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import AdventureFocusPlay from "./AdventureFocusPlay.svelte";
+
+const artworkMocks = vi.hoisted(() => ({
+  summarize: vi.fn(),
+}));
+vi.mock("#lib/services/adventure/artwork/artwork-cue-summary.js", () => ({
+  summarizeArtworkCues: artworkMocks.summarize,
+}));
+vi.mock("#lib/services/adventure/artwork/default-artwork-catalogue.js", () => ({
+  defaultArtworkCatalogue: {
+    get: vi.fn().mockResolvedValue([]),
+    peek: vi.fn().mockReturnValue([]),
+  },
+}));
+vi.mock("#lib/services/adventure/artwork/create-display-service.js", () => ({
+  createDisplayService: () => ({
+    display: { load: vi.fn() },
+    destroy: vi.fn(),
+  }),
+}));
 
 vi.mock("#lib/actions/focusTrap.js", () => ({
   focusTrap: () => ({ destroy() {} }),
@@ -108,6 +133,26 @@ afterEach(() => {
 });
 
 describe("AdventureFocusPlay", () => {
+  it("places the dock after the story viewport in a shared play column", () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    const column = screen.getByTestId("adventure-play-column");
+    const viewport = screen.getByTestId("adventure-play-viewport");
+    const dock = screen.getByTestId("adventure-action-dock");
+    const panel = screen.queryByTestId("adventure-artwork-panel");
+
+    expect(surface.contains(dock)).toBe(true);
+    expect(column.contains(dock)).toBe(true);
+    expect(column.contains(viewport)).toBe(true);
+    expect(viewport.contains(dock)).toBe(false);
+    expect(panel?.contains(dock) ?? false).toBe(false);
+    expect(panel ? column.contains(panel) : false).toBe(false);
+    expect(
+      viewport.compareDocumentPosition(dock) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("uses a compact mobile shell with the action dock outside the narrative scroll", () => {
     render(AdventureFocusPlay, { props: props() });
 
@@ -187,7 +232,115 @@ describe("AdventureFocusPlay", () => {
     render(AdventureFocusPlay, { props: props() });
 
     expect(screen.getAllByText("The lantern road").length).toBeGreaterThan(0);
-    expect(screen.getByText("The ward is failing")).toBeTruthy();
+    expect(
+      within(screen.getByTestId("adventure-artwork-panel")).getByText(
+        "The ward is failing",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByTestId("adventure-scene-strip")).getByText(
+        "The ward is failing",
+      ),
+    ).toBeTruthy();
+  });
+
+  function sceneManager() {
+    const m = manager();
+    m.recap = {
+      ...m.recap,
+      objectives: [{ id: "obj-1", text: "Reach the bell-stone" }],
+      activeCharacters: [{ id: "char-1", text: "Father Gideon" }],
+    };
+    return m;
+  }
+
+  it("shows a Current scene panel beside the story, outside the transcript", () => {
+    render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+
+    const panel = screen.getByTestId("adventure-artwork-panel");
+    expect(panel.getAttribute("aria-label")).toBe("Current scene");
+    expect(screen.getByRole("complementary", { name: "Current scene" })).toBe(
+      panel,
+    );
+    expect(screen.getByTestId("adventure-play-viewport").contains(panel)).toBe(
+      false,
+    );
+    const inside = within(panel);
+    expect(inside.getByText("The lantern road")).toBeTruthy();
+    expect(inside.getByText("The ward is failing")).toBeTruthy();
+    expect(inside.getByText("Reach the bell-stone")).toBeTruthy();
+    expect(inside.getByText("Who's here")).toBeTruthy();
+    expect(inside.getByText("Father Gideon")).toBeTruthy();
+  });
+
+  it("keeps the panel text without the artwork flag", () => {
+    vi.stubEnv("VITE_ADVENTURE_ARTWORK", "false");
+    try {
+      render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+      const panel = screen.getByTestId("adventure-artwork-panel");
+      expect(within(panel).getByText("The lantern road")).toBeTruthy();
+      expect(within(panel).getByText("The ward is failing")).toBeTruthy();
+      expect(panel.querySelector("img, canvas, [data-testid*='artwork']")).toBe(
+        null,
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("pins a collapsed Scene details strip above the transcript", () => {
+    render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+
+    const strip = screen.getByTestId("adventure-scene-strip");
+    const viewport = screen.getByTestId("adventure-play-viewport");
+    expect(viewport.contains(strip)).toBe(false);
+    expect(
+      strip.compareDocumentPosition(viewport) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(screen.getByTestId("adventure-scene-details")).toHaveProperty(
+      "open",
+      false,
+    );
+  });
+
+  it("renders no scene panel or strip without a session", () => {
+    const m = manager();
+    m.session = null;
+    m.recap = null;
+    render(AdventureFocusPlay, { props: props({ manager: m }) });
+
+    expect(screen.queryByTestId("adventure-artwork-panel")).toBeNull();
+    expect(screen.queryByTestId("adventure-scene-strip")).toBeNull();
+  });
+
+  it("switches layout on the surface's own width, not the viewport", () => {
+    render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    expect(surface.classList.contains("@container")).toBe(true);
+    for (const el of [surface, ...surface.querySelectorAll("[class]")]) {
+      for (const token of Array.from(el.classList)) {
+        expect(token.startsWith("lg:") || token.startsWith("xl:")).toBe(false);
+      }
+    }
+    const panel = screen.getByTestId("adventure-artwork-panel");
+    expect(panel.classList.contains("hidden")).toBe(true);
+    expect(panel.classList.contains("@4xl:block")).toBe(true);
+    const wrap = screen.getByTestId("adventure-scene-strip").parentElement;
+    expect(wrap?.classList.contains("@4xl:hidden")).toBe(true);
+  });
+
+  it("mounts the lightbox host outside the container-type surface", () => {
+    render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+
+    const surface = screen.getByTestId("adventure-play-surface");
+    const host = [...document.body.children].find((el) =>
+      el.classList.contains("contents"),
+    );
+    expect(host).toBeTruthy();
+    expect(surface.contains(host!)).toBe(false);
+    expect(host!.closest(".\\@container")).toBeNull();
   });
 
   it("keeps the tools panel collapsed by default and can expand it without hiding the play column", async () => {
@@ -216,9 +369,8 @@ describe("AdventureFocusPlay", () => {
 
     // The tools sheet is a bottom sheet mounted only while open, not a
     // side-by-side panel hidden via class — see the component comment for
-    // why: a lg: viewport breakpoint still fires even when this surface is
-    // hosted in the app's own narrow sidebar, so it can never rely on an
-    // actual side-by-side split reading as usable.
+    // why: no viewport breakpoints for side-by-side layout; the scene panel
+    // uses a container query on the surface's own width.
     expect(
       screen.queryByRole("complementary", { name: "Adventure tools" }),
     ).toBeNull();
@@ -566,5 +718,65 @@ describe("AdventureFocusPlay", () => {
       screen.getByRole("dialog", { name: "Situations & Rumours" }),
     ).toBeTruthy();
     expect(screen.getAllByText("The High Beacon").length).toBeGreaterThan(0);
+  });
+
+  describe("artwork matching details", () => {
+    const summary = {
+      genre: "fantasy",
+      place: { name: "Mill", cues: ["village"], match: "loc-1" },
+      npcs: [],
+    };
+    const indicator = "adventure-artwork-cue-indicator";
+
+    afterEach(() => {
+      vi.unstubAllEnvs();
+      artworkMocks.summarize.mockReset();
+    });
+
+    it("lives in Adventure tools after the illustrations setting", async () => {
+      vi.stubEnv("VITE_ADVENTURE_ARTWORK", "true");
+      artworkMocks.summarize.mockReturnValue(summary);
+      render(AdventureFocusPlay, { props: props({ manager: manager() }) });
+
+      expect(screen.queryByTestId(indicator)).toBeNull();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      );
+      const drawer = screen.getByRole("complementary", {
+        name: "Adventure tools",
+      });
+      const details = within(drawer).getByTestId(indicator);
+      const checkbox = within(drawer).getByRole("checkbox", {
+        name: /Show adventure illustrations/,
+      });
+      expect(
+        checkbox.compareDocumentPosition(details) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      const panel = screen.queryByTestId("adventure-artwork-panel");
+      expect(panel?.querySelector(`[data-testid="${indicator}"]`) ?? null).toBe(
+        null,
+      );
+    });
+
+    it("shows nothing when there is no summary", async () => {
+      vi.stubEnv("VITE_ADVENTURE_ARTWORK", "true");
+      artworkMocks.summarize.mockReturnValue(null);
+      render(AdventureFocusPlay, { props: props({ manager: manager() }) });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      );
+      expect(screen.queryByTestId(indicator)).toBeNull();
+    });
+
+    it("shows nothing when the artwork flag is off", async () => {
+      vi.stubEnv("VITE_ADVENTURE_ARTWORK", "false");
+      artworkMocks.summarize.mockReturnValue(summary);
+      render(AdventureFocusPlay, { props: props({ manager: manager() }) });
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      );
+      expect(screen.queryByTestId(indicator)).toBeNull();
+    });
   });
 });

@@ -39,13 +39,17 @@ describe("workspace source browser", () => {
   it("combines search and label filters and restores the list when cleared", async () => {
     const callbacks = props();
     render(SourceWorkspaceList, callbacks);
-    await fireEvent.click(screen.getByRole("button", { name: "travel" }));
+    const travelFilter = screen.getByRole("button", { name: "travel" });
+    expect(travelFilter.getAttribute("aria-pressed")).toBe("false");
+    await fireEvent.click(travelFilter);
+    expect(travelFilter.getAttribute("aria-pressed")).toBe("true");
     expect(screen.getAllByTestId("table-list-item")).toHaveLength(1);
     await fireEvent.input(screen.getByTestId("table-search"), {
       target: { value: "Dungeon" },
     });
     expect(screen.queryByTestId("table-list-item")).toBeNull();
-    await fireEvent.click(screen.getByRole("button", { name: "travel" }));
+    await fireEvent.click(travelFilter);
+    expect(travelFilter.getAttribute("aria-pressed")).toBe("false");
     await fireEvent.click(screen.getByTestId("table-list-item"));
     expect(callbacks.onSelect).toHaveBeenCalledWith(all[1]);
     await fireEvent.input(screen.getByTestId("table-search"), {

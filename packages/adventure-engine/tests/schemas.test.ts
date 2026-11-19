@@ -1,3 +1,4 @@
+import { session } from "./reducer-fixtures";
 import { describe, expect, it } from "vitest";
 import {
   migrateAdventureSession,
@@ -239,5 +240,160 @@ describe("adventure schemas", () => {
     expect(session.turns[0]?.visiblePatch.knownFacts.add[0]?.id).toBe(
       "fact-committed",
     );
+  });
+
+  it("pins optional sourcePackage metadata while keeping sessions without it valid", () => {
+    const base = {
+      schemaVersion: 3 as const,
+      id: "session-pinned",
+      vaultId: "vault-1",
+      title: "The Last Grind",
+      status: "active" as const,
+      createdAt: "2026-08-16T12:00:00.000Z",
+      updatedAt: "2026-08-16T12:00:00.000Z",
+      lastPlayedAt: "2026-08-16T12:00:00.000Z",
+      revision: 0,
+      playerCharacter: {
+        kind: "provisional" as const,
+        name: "Mara",
+        description: "Guide",
+      },
+      premise: "Restart the mill",
+      sourceRecords: [],
+      visibleState: {
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        relationships: [],
+      },
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [],
+      turns: [],
+      pendingRoll: null,
+      dicePresets: [],
+      resourceCounters: [],
+    };
+
+    const withoutPin = parseAdventureSession(base);
+    expect(withoutPin.sourcePackage).toBeUndefined();
+
+    const withPin = parseAdventureSession({
+      ...base,
+      sourcePackage: {
+        packageId: "the-last-grind",
+        version: "1.0.0",
+        formatVersion: "adventure-json/v1",
+        hash: "a".repeat(64),
+      },
+    });
+    expect(withPin.sourcePackage).toEqual({
+      packageId: "the-last-grind",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      hash: "a".repeat(64),
+    });
+
+    expect(() =>
+      parseAdventureSession({
+        ...base,
+        sourcePackage: {
+          packageId: "the-last-grind",
+          version: "1.0.0",
+          formatVersion: "adventure-json/v1",
+          hash: "not-a-sha256-hash",
+        },
+      }),
+    ).toThrow();
+  });
+});
+
+describe("packageProgress", () => {
+  const base = () => ({ ...session() });
+
+  it("round-trips and stays optional", () => {
+    const withProgress = parseAdventureSession({
+      ...base(),
+      packageProgress: { sceneId: "ros-scene-2-yard" },
+    });
+    expect(parseAdventureSession(withProgress)).toEqual(withProgress);
+    expect(base().packageProgress).toBeUndefined();
+  });
+
+  it("rejects an empty scene ID and extra keys", () => {
+    expect(() =>
+      parseAdventureSession({ ...base(), packageProgress: { sceneId: "" } }),
+    ).toThrow();
+    expect(() =>
+      parseAdventureSession({
+        ...base(),
+        packageProgress: { sceneId: "a", extra: 1 },
+      }),
+    ).toThrow();
+  });
+
+  it("supports optional actor state when version === 1 and rejects it on legacy { sceneId }", () => {
+    const preActor = parseAdventureSession({
+      ...base(),
+      packageProgress: { sceneId: "a", version: 1, records: [], events: [] },
+    });
+    expect(preActor.packageProgress).toEqual({
+      sceneId: "a",
+      version: 1,
+      records: [],
+      events: [],
+    });
+
+    const withActors = parseAdventureSession({
+      ...base(),
+      packageProgress: {
+        sceneId: "a",
+        version: 1,
+        records: [],
+        events: [],
+        actors: [
+          {
+            actorId: "actor-maren",
+            status: "present",
+            disposition: "friendly",
+            facts: ["Knows the ferryman."],
+          },
+        ],
+        actorEvents: [
+          {
+            id: "t1:actor:1",
+            turnId: "t1",
+            actorId: "actor-maren",
+            fromStatus: "unknown",
+            status: "present",
+            fromDisposition: "neutral",
+            disposition: "friendly",
+            fact: "Knows the ferryman.",
+            certainty: "confirmed",
+            note: "Maren greeted the party.",
+          },
+        ],
+      },
+    });
+    expect(parseAdventureSession(withActors)).toEqual(withActors);
+
+    expect(() =>
+      parseAdventureSession({
+        ...base(),
+        packageProgress: {
+          sceneId: "a",
+          actors: [],
+        },
+      }),
+    ).toThrow();
+
+    expect(() =>
+      parseAdventureSession({
+        ...base(),
+        packageProgress: {
+          sceneId: "a",
+          actorEvents: [],
+        },
+      }),
+    ).toThrow();
   });
 });

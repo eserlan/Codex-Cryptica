@@ -151,6 +151,7 @@ export class Bucket {
         .map((key) => ({
           key,
           size: this.sizeOf(key),
+          etag: this.store.get(key)?.etag,
           customMetadata: this.store.get(key)?.customMetadata,
         })),
       delimitedPrefixes: capped.filter(isFolder),

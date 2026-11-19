@@ -2,6 +2,7 @@ import type { LocalCloudBackupRecord } from "schema";
 import type { CloudBackupRuntime } from "./runtime";
 import { getLocalCloudBackupRecord as readRecord } from "./backup-records";
 import { responseFailure } from "./backup-response";
+import { cloudBackupHeaders } from "./request-headers";
 import type { CloudBackupOutcome } from "./types";
 
 /**
@@ -16,10 +17,10 @@ export async function fetchCloudBackupIndex(
   if (!record?.enabled) return { ok: false, error: "Cloud backup is off." };
   const response = await runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/index`,
-    { headers: { Authorization: `Bearer ${record.ownerCode}` } },
+    { headers: cloudBackupHeaders(runtime, record) },
   );
   if (!response.ok) {
-    return responseFailure(response);
+    return responseFailure(response, record);
   }
   const body = (await response.json().catch(() => null)) as {
     entityHashes?: unknown;
@@ -44,23 +45,23 @@ export async function fetchCloudBackupIndex(
  */
 async function fetchBackupStatus(
   runtime: CloudBackupRuntime,
-  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode" | "role">,
   signal?: AbortSignal,
 ): Promise<Awaited<ReturnType<CloudBackupRuntime["fetch"]>>> {
   return runtime.fetch(
     `${runtime.baseUrl}/api/cloud-backup/${record.backupId}/status`,
-    { headers: { Authorization: `Bearer ${record.ownerCode}` }, signal },
+    { headers: cloudBackupHeaders(runtime, record), signal },
   );
 }
 
 export async function readRemoteLastPushedAt(
   runtime: CloudBackupRuntime,
-  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode">,
+  record: Pick<LocalCloudBackupRecord, "backupId" | "ownerCode" | "role">,
   signal?: AbortSignal,
 ): Promise<CloudBackupOutcome<string | null>> {
   const response = await fetchBackupStatus(runtime, record, signal);
   if (!response.ok) {
-    return responseFailure(response);
+    return responseFailure(response, record);
   }
   const body = (await response.json().catch(() => null)) as {
     lastPushedAt?: unknown;
@@ -91,7 +92,7 @@ export async function getCloudBackupStatus(
 
   const response = await fetchBackupStatus(runtime, record);
   if (!response.ok) {
-    return responseFailure(response);
+    return responseFailure(response, record);
   }
   return {
     ok: true,

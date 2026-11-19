@@ -335,6 +335,10 @@
   html[data-app-appearance="neutral-light"] [data-world-theme="horror"] {
     --color-text-muted: #5c5652;
     --color-text-dim: #4a4543;
+    --color-theme-on-primary: #fff;
+  }
+  [data-theme="pirate"] {
+    --color-danger: #991b1b;
   }
   [data-theme="cosmic_horror"] {
     --color-text-muted: #9adbd2;
@@ -788,6 +792,40 @@
   display: block;
   overflow-x: auto;
   max-width: 100%;
+}
+
+/* Generated Markdown tables use a contained scroll wrapper and theme-aware cells. */
+.seo-md table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+.seo-md th,
+.seo-md td {
+  border: 1px solid
+    color-mix(in srgb, var(--color-theme-border) 75%, transparent);
+  padding: 0.45rem 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+.seo-md th {
+  font-family: var(--font-header);
+  font-weight: 700;
+  color: var(--color-theme-text);
+  background: color-mix(in srgb, var(--color-theme-surface) 80%, transparent);
+  white-space: nowrap;
+}
+.markdown-table-scroll:focus-visible {
+  outline: 2px solid var(--color-theme-primary);
+  outline-offset: 3px;
+}
+.seo-rail.seo-md table {
+  font-size: 0.8125rem;
+}
+.seo-rail.seo-md th,
+.seo-rail.seo-md td {
+  padding: 0.375rem 0.5rem;
 }
 
 /*

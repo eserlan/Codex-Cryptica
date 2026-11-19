@@ -1,8 +1,18 @@
-import { CLOUD_BACKUP_LIMITS } from "../../../../packages/schema/src/publishing";
 import {
+  CLOUD_BACKUP_LIMITS,
+  type CloudBackupManifest,
+} from "../../../../packages/schema/src/publishing";
+import {
+  type BackupObjects,
   type CloudBackupEnv,
+  type SharingRecord,
+  acquireBackupMutationLock,
   getAssetKey,
-  storedBytes,
+  getBackupPrefix,
+  writeManifest,
+  listKeys,
+  reachableBytes,
+  resolveObjects,
 } from "./cloud-backup-storage";
 import {
   cors,
@@ -12,7 +22,73 @@ import {
   isValidAssetId,
   sizeLimitResponse,
 } from "./cloud-backup-http";
+import {
+  getPreservedAssetKey,
+  preserveBeforeOverwrite,
+} from "./cloud-backup-restore-points";
 import { authorizeStoredBackup } from "./cloud-backup-auth";
+
+function retryLater(request: Request): Response {
+  return json(request, { error: { message: "Try again shortly." } }, 503);
+}
+
+async function updatePinnedAssetVersion(
+  env: CloudBackupEnv,
+  backupId: string,
+  assetId: string,
+  bytes: Uint8Array,
+  contentType: string,
+  auth: {
+    manifest: CloudBackupManifest;
+    ownerCodeHash: string;
+    etag?: string;
+    objects?: BackupObjects;
+    sharing?: SharingRecord;
+  },
+  etag: string | undefined,
+): Promise<boolean> {
+  if (!auth.objects?.assetVersions) return true;
+  if (!etag) return false;
+  try {
+    await env.BUCKET.put(getPreservedAssetKey(backupId, assetId, etag), bytes, {
+      httpMetadata: { contentType },
+      onlyIf: { etagDoesNotMatch: "*" },
+    });
+    return await writeManifest(
+      env,
+      backupId,
+      auth.manifest,
+      auth.ownerCodeHash,
+      {
+        ...auth.objects,
+        assetVersions: { ...auth.objects.assetVersions, [assetId]: etag },
+      },
+      auth.etag,
+      auth.sharing,
+    );
+  } catch {
+    return false;
+  }
+}
+
+async function preserveCurrentAssetBeforeUpload(
+  env: CloudBackupEnv,
+  backupId: string,
+  assetId: string,
+  existing: { etag?: string } | null,
+  shared: boolean,
+): Promise<boolean> {
+  return (
+    !existing?.etag ||
+    (await preserveBeforeOverwrite(
+      env,
+      backupId,
+      assetId,
+      existing.etag,
+      shared,
+    ))
+  );
+}
 
 /**
  * PUT /api/cloud-backup/{backupId}/assets/{assetId} — one file, raw bytes.
@@ -49,29 +125,91 @@ export async function handleCloudBackupAssetUpload(
   if (fileTooLarge) return fileTooLarge;
 
   const key = getAssetKey(backupId, assetId);
-  // Measured against what is already stored, minus whatever this upload
-  // replaces, so a re-uploaded file is not counted twice.
-  const existing = await env.BUCKET.head(key);
-  const projected =
-    (await storedBytes(env, backupId)) -
-    (existing?.size ?? 0) +
-    bytes.byteLength;
-  const vaultTooLarge = sizeLimitResponse(
-    request,
-    projected,
-    CLOUD_BACKUP_LIMITS.maxVaultBytes,
-    "This vault is too large to back up.",
-  );
-  if (vaultTooLarge) return vaultTooLarge;
+  const releaseLock = await acquireBackupMutationLock(env, backupId);
+  if (!releaseLock) return retryLater(request);
+  try {
+    // Measured against what is already stored, minus whatever this upload
+    // replaces, so a re-uploaded file is not counted twice.
+    const existing = await env.BUCKET.head(key);
+    if (
+      !existing &&
+      (await listKeys(env, `${getBackupPrefix(backupId)}assets/`)).length >=
+        CLOUD_BACKUP_LIMITS.maxAssetCount
+    ) {
+      return json(
+        request,
+        {
+          error: {
+            message: "This backup contains too many assets.",
+            limit: CLOUD_BACKUP_LIMITS.maxAssetCount,
+          },
+        },
+        413,
+      );
+    }
+    const projected =
+      (await reachableBytes(
+        env,
+        backupId,
+        await resolveObjects(env, backupId, auth.objects),
+      )) -
+      (existing?.size ?? 0) +
+      bytes.byteLength;
+    const vaultTooLarge = sizeLimitResponse(
+      request,
+      projected,
+      CLOUD_BACKUP_LIMITS.maxVaultBytes,
+      "This vault is too large to back up.",
+    );
+    if (vaultTooLarge) return vaultTooLarge;
 
-  await env.BUCKET.put(key, bytes, {
-    httpMetadata: {
-      contentType:
-        request.headers.get("Content-Type") || "application/octet-stream",
-    },
-  });
+    if (
+      !(await preserveCurrentAssetBeforeUpload(
+        env,
+        backupId,
+        assetId,
+        existing,
+        auth.sharing !== undefined,
+      ))
+    ) {
+      return retryLater(request);
+    }
 
-  return json(request, { assetId, sizeBytes: bytes.byteLength });
+    const written = await env.BUCKET.put(key, bytes, {
+      httpMetadata: {
+        contentType:
+          request.headers.get("Content-Type") || "application/octet-stream",
+      },
+      // Only replace the version that was copied; a concurrent upload retries.
+      onlyIf: existing?.etag
+        ? { etagMatches: existing.etag }
+        : { etagDoesNotMatch: "*" },
+    });
+    if (written === null) return retryLater(request);
+
+    // A rollback may have pinned this asset to an immutable restore-point copy.
+    // Store the uploaded version immutably, then switch the manifest pointer;
+    // readers keep seeing the old version if the conditional write loses.
+    const contentType =
+      request.headers.get("Content-Type") || "application/octet-stream";
+    if (
+      !(await updatePinnedAssetVersion(
+        env,
+        backupId,
+        assetId,
+        bytes,
+        contentType,
+        auth,
+        written.etag,
+      ))
+    ) {
+      return retryLater(request);
+    }
+
+    return json(request, { assetId, sizeBytes: bytes.byteLength });
+  } finally {
+    await releaseLock();
+  }
 }
 
 /** GET /api/cloud-backup/{backupId}/assets/{assetId} */
@@ -84,7 +222,20 @@ export async function handleGetCloudBackupAsset(
   const auth = await authorizeStoredBackup(request, env, backupId);
   if ("response" in auth) return auth.response;
 
-  const object = await env.BUCKET.get(getAssetKey(backupId, assetId));
+  const etag = auth.objects?.assetVersions?.[assetId];
+  let object;
+  if (auth.objects?.assetVersions) {
+    object = etag
+      ? await env.BUCKET.get(getPreservedAssetKey(backupId, assetId, etag))
+      : null;
+    if (!object && etag) {
+      const canonicalKey = getAssetKey(backupId, assetId);
+      const canonical = await env.BUCKET.head(canonicalKey);
+      if (canonical?.etag === etag) object = await env.BUCKET.get(canonicalKey);
+    }
+  } else {
+    object = await env.BUCKET.get(getAssetKey(backupId, assetId));
+  }
   if (!object) return notFoundOrUnauthorized(request);
 
   return new Response(object.body, {

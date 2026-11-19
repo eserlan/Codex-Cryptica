@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
+import { createHash } from "node:crypto";
 import {
   buildCloudBackupPayload,
   hydrateEntityContent,
   buildCloudBackupDelta,
+  buildCloudBackupEditorDelta,
   DELTA_MAX_ENTITIES,
   collectAssetPaths,
   isLocalAssetPath,
@@ -119,6 +121,131 @@ describe("collectAssetPaths", () => {
 });
 
 describe("buildCloudBackupPayload", () => {
+  it("includes adventures and their referenced snapshot bytes only after explicit inclusion", async () => {
+    const choice = {
+      version: 1,
+      override: {
+        kind: "snapshot",
+        path: "images/artwork_keep.png",
+        mime: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        sha256:
+          "039058c6f2c0cb492c533b0a4d14ef77cc0f78abccced5287d84a1a2011cfb81",
+      },
+    };
+    const source = { id: "e1", title: "Place", adventureArtwork: choice };
+    const adventure = {
+      id: "a1",
+      artwork: {
+        version: 1,
+        associations: [
+          { subject: { kind: "place", id: "p1" }, association: choice },
+        ],
+      },
+    };
+    const readAdventures = vi.fn(async () => [adventure]);
+    const result = await buildCloudBackupPayload("V", [source], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+      digestSnapshot: async (bytes) =>
+        createHash("sha256").update(bytes).digest("hex"),
+      adventureInclusion: { consented: true, readAdventures },
+    });
+    expect(readAdventures).toHaveBeenCalledOnce();
+    expect(result.bundle.adventures).toEqual([adventure]);
+    expect(result.bundle.entities[0].adventureArtwork).toEqual(choice);
+    expect(result.bundle.assetManifest.map((asset) => asset.path)).toEqual([
+      "images/artwork_keep.png",
+    ]);
+  });
+  it("fails the full snapshot if a required private snapshot cannot be read", async () => {
+    const choice = {
+      version: 1,
+      override: {
+        kind: "snapshot",
+        path: "images/artwork_keep.png",
+        mime: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        sha256: "a".repeat(64),
+      },
+    };
+    await expect(
+      buildCloudBackupPayload("V", [{ id: "e1", adventureArtwork: choice }], {
+        resolveImageUrl: async () => null,
+        adventureInclusion: { consented: true, readAdventures: async () => [] },
+      }),
+    ).rejects.toThrow("snapshot");
+  });
+  it("rejects a private snapshot whose bytes do not match its saved digest", async () => {
+    const choice = {
+      version: 1,
+      override: {
+        kind: "snapshot",
+        path: "images/artwork_keep.png",
+        mime: "image/png",
+        bytes: 3,
+        width: 1,
+        height: 1,
+        sha256: "a".repeat(64),
+      },
+    };
+    await expect(
+      buildCloudBackupPayload("V", [{ id: "e1", adventureArtwork: choice }], {
+        resolveImageUrl: async () => "blob:x",
+        fetch: okFetch,
+        digestSnapshot: async (bytes) =>
+          createHash("sha256").update(bytes).digest("hex"),
+        adventureInclusion: { consented: true, readAdventures: async () => [] },
+      }),
+    ).rejects.toThrow("snapshot");
+  });
+  it("omits private adventure artwork before consent without mutating local records", async () => {
+    const record = {
+      id: "e1",
+      title: "Place",
+      image: "images/ordinary.png",
+      adventureArtwork: {
+        version: 1,
+        override: { kind: "snapshot", path: "images/artwork_private.png" },
+      },
+    };
+    const result = await buildCloudBackupPayload("V", [record], {
+      resolveImageUrl: async () => "blob:x",
+      fetch: okFetch,
+    });
+    expect(result.bundle.entities[0]).not.toHaveProperty("adventureArtwork");
+    expect(result.bundle.assetManifest.map((entry) => entry.path)).toEqual([
+      "images/ordinary.png",
+    ]);
+    expect(record.adventureArtwork.override.path).toBe(
+      "images/artwork_private.png",
+    );
+  });
+  it("never uploads private snapshots referenced as ordinary entity images before consent", async () => {
+    const path = "images/artwork_private.png";
+    const resolveImageUrl = vi.fn(async () => "blob:x");
+    const result = await buildCloudBackupPayload(
+      "V",
+      [{ id: "e1", image: path } as never],
+      { resolveImageUrl, fetch: okFetch },
+    );
+    expect(result.bundle.entities[0]).not.toHaveProperty("image");
+    expect(result.bundle.assetManifest).toEqual([]);
+    expect(resolveImageUrl).not.toHaveBeenCalled();
+    await expect(
+      buildCloudBackupPayload(
+        "V",
+        [],
+        { resolveImageUrl, fetch: okFetch },
+        { maps: [{ id: "m1", fogOfWar: { maskPath: path } }] },
+      ),
+    ).rejects.toThrow("private adventure artwork");
+    expect(resolveImageUrl).not.toHaveBeenCalled();
+  });
   it("includes the entities and every readable asset", async () => {
     // The consent screen promises media, so entities alone is not enough.
     const result = await buildCloudBackupPayload(
@@ -583,6 +710,23 @@ describe("buildCloudBackupDelta (#3354)", () => {
     deleted,
   });
 
+  it("omits artwork metadata from entity deltas while retaining local fields", async () => {
+    const artwork = {
+      version: 1,
+      override: { kind: "snapshot", path: "images/artwork_private.png" },
+    };
+    const vault = vaultOf(0, {
+      loaded: { id: "loaded", title: "L", adventureArtwork: artwork },
+    });
+    const delta = await buildCloudBackupDelta(
+      "V",
+      [change("loaded")],
+      vault.deps as never,
+    );
+    expect(delta?.upserts[0]).not.toHaveProperty("adventureArtwork");
+    expect(vault.records.loaded.adventureArtwork).toBe(artwork);
+  });
+
   it("reads only the changed entities of a large vault", async () => {
     const vault = vaultOf(1600);
 
@@ -600,8 +744,8 @@ describe("buildCloudBackupDelta (#3354)", () => {
     ]);
     expect(delta?.deletes).toEqual([]);
     expect(delta?.assetIds).toEqual(["known.png"]);
-    expect(delta).not.toHaveProperty("maps");
-    expect(delta).not.toHaveProperty("canvases");
+    expect(delta).not.toHaveProperty("mapUpserts");
+    expect(delta).not.toHaveProperty("canvasUpserts");
   });
 
   it("uses an already-loaded body without reading it again", async () => {
@@ -647,21 +791,116 @@ describe("buildCloudBackupDelta (#3354)", () => {
     expect(delta?.assetIds).toEqual(["still-used.png"]);
   });
 
-  it("includes maps and canvases whole only when they changed", async () => {
+  it("sends only the changed maps and canvases, as whole items by id", async () => {
     const vault = vaultOf(0);
+    const m1 = { id: "m1", name: "One", pins: [] };
+    const m2 = { id: "m2", name: "Two", pins: [] };
+    const c1 = { id: "c1", name: "Plot", nodes: [], lastModified: 9 };
+    const c2 = { id: "c2", name: "Cast", nodes: [], lastModified: 1 };
 
     const delta = await buildCloudBackupDelta(
       "Vault",
       [
         { kind: "maps", id: "*", deleted: false },
         { kind: "canvas", id: "c1", deleted: false },
+        { kind: "canvas", id: "c2", deleted: false },
       ],
       vault.deps as never,
-      { maps: [{ id: "m1" }], canvases: [{ id: "c1" }, { id: "c2" }] },
+      {
+        maps: [m1, { ...m2, pins: ["p"] }],
+        canvases: [c1, c2],
+        // m1 matches its base, so it is an echo; m2 changed; m3 has no map left.
+        mapBases: { m1, m2, m3: { id: "m3", name: "Gone" } },
+        canvasBases: {
+          c1: { ...c1, lastModified: 1 },
+          c2: { ...c2, name: "Old" },
+        },
+      },
     );
 
-    expect(delta?.maps).toEqual([{ id: "m1" }]);
-    expect(delta?.canvases).toEqual([{ id: "c1" }, { id: "c2" }]);
+    expect(delta?.mapUpserts).toEqual([
+      { item: { ...m2, pins: ["p"] }, assets: [] },
+    ]);
+    expect(delta?.mapDeletes).toEqual(["m3"]);
+    expect(delta?.canvasUpserts).toEqual([{ item: c2 }]);
+    expect(delta).not.toHaveProperty("maps");
+    expect(delta).not.toHaveProperty("canvases");
+  });
+
+  it("sends a map with no base and a canvas that was deleted", async () => {
+    const vault = vaultOf(0);
+    const fresh = { id: "new", name: "New", pins: [] };
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [
+        { kind: "maps", id: "*", deleted: false },
+        { kind: "canvas", id: "c9", deleted: true },
+      ],
+      vault.deps as never,
+      { maps: [fresh], canvases: [] },
+    );
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["new"]);
+    expect(delta?.canvasDeletes).toEqual(["c9"]);
+  });
+
+  it("forces a map named by its own row even when it matches its base", async () => {
+    const vault = vaultOf(0);
+    const map = { id: "m1", name: "One" };
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [{ kind: "maps", id: "m1", deleted: false }],
+      vault.deps as never,
+      { maps: [map], mapBases: { m1: map } },
+    );
+    expect(delta?.mapUpserts).toEqual([{ item: map, assets: [] }]);
+  });
+
+  it("lists a map's file ids in the delta and in assetIds", async () => {
+    const vault = vaultOf(0);
+    const assets = [
+      {
+        path: "maps/m1.webp",
+        assetId: "maps_m1.webp--abc",
+        mimeType: "image/webp",
+      },
+    ];
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      [{ kind: "maps", id: "m1", deleted: false }],
+      vault.deps as never,
+      {
+        maps: [{ id: "m1", name: "One" }],
+        prepareMapAssets: async () => assets,
+      },
+    );
+    expect(delta?.mapUpserts?.[0].assets).toEqual(assets);
+    expect(delta?.assetIds).toEqual(["known.png", "maps_m1.webp--abc"]);
+  });
+
+  it("leaves out a map whose files cannot be sent and keeps its row pending", async () => {
+    const vault = vaultOf(0);
+    const rows = [
+      { kind: "maps" as const, id: "bad", deleted: false },
+      { kind: "maps" as const, id: "good", deleted: false },
+      { kind: "canvas" as const, id: "c1", deleted: false },
+    ];
+    const delta = await buildCloudBackupDelta(
+      "Vault",
+      rows,
+      vault.deps as never,
+      {
+        maps: [
+          { id: "bad", name: "Bad" },
+          { id: "good", name: "Good" },
+        ],
+        canvases: [{ id: "c1", name: "Plot" }],
+        prepareMapAssets: async (map) =>
+          (map as { id: string }).id === "bad" ? null : [],
+      },
+    );
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["good"]);
+    expect(delta?.canvasUpserts?.map((u) => u.item.id)).toEqual(["c1"]);
+    expect(delta?.held).toEqual([rows[0]]);
   });
 
   it("asks for a full upload when it cannot send a faithful delta", async () => {
@@ -697,5 +936,109 @@ describe("buildCloudBackupDelta (#3354)", () => {
     expect(
       await buildCloudBackupDelta("Vault", [change("known")], deps),
     ).not.toBeNull();
+  });
+});
+
+describe("buildCloudBackupEditorDelta (shared vault member)", () => {
+  const records: Record<string, any> = {
+    a: { id: "a", title: "A", content: "x" },
+    pic: { id: "pic", title: "Pic", content: "x", image: "images/new.png" },
+    old: { id: "old", title: "Old", content: "x", image: "images/known.png" },
+    bad: { id: "bad", title: "Bad", content: "x" },
+  };
+  const deps = (signal?: AbortSignal) => ({
+    getEntity: (id: string) => records[id],
+    hydrateEntities: {
+      isContentLoaded: (id: string) => id !== "bad",
+      readFullEntity: async () => {
+        throw new Error("unreadable");
+      },
+    },
+    uploadedAssetIds: new Set<string>(["images_known.png"]),
+    referencedAssetIds: ["images_known.png"],
+    signal,
+  });
+  const entity = (id: string, deleted = false) => ({
+    kind: "entity" as const,
+    id,
+    deleted,
+  });
+
+  it("sends entities that need no new media, with maps and canvases", async () => {
+    const rows = [
+      entity("a"),
+      entity("pic"),
+      entity("old"),
+      entity("bad"),
+      entity("gone", true),
+      { kind: "maps" as const, id: "*", deleted: false },
+      { kind: "canvas" as const, id: "c", deleted: false },
+    ];
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      rows,
+      deps() as never,
+      { maps: [{ id: "m1", name: "One" }], canvases: [{ id: "c", name: "C" }] },
+    );
+    expect(sent.map((row) => row.id)).toEqual(["a", "old", "gone", "*", "c"]);
+    expect(delta?.upserts.map((u) => u.id)).toEqual(["a", "old"]);
+    expect(delta?.deletes).toEqual(["gone"]);
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["m1"]);
+    expect(delta?.canvasUpserts?.map((u) => u.item.id)).toEqual(["c"]);
+    expect(delta).not.toHaveProperty("maps");
+    expect(delta).not.toHaveProperty("canvases");
+  });
+
+  it("sends maps and canvases when only they are pending", async () => {
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      [{ kind: "maps", id: "*", deleted: false }],
+      deps() as never,
+      { maps: [{ id: "m1", name: "One" }] },
+    );
+    expect(delta?.mapUpserts?.map((u) => u.item.id)).toEqual(["m1"]);
+    expect(sent).toHaveLength(1);
+  });
+
+  it("keeps a map whose files fail pending while the rest goes", async () => {
+    const rows = [
+      { kind: "maps" as const, id: "m1", deleted: false },
+      entity("a"),
+    ];
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      rows,
+      deps() as never,
+      { maps: [{ id: "m1", name: "One" }], prepareMapAssets: async () => null },
+    );
+    expect(delta?.upserts.map((u) => u.id)).toEqual(["a"]);
+    expect(delta).not.toHaveProperty("mapUpserts");
+    expect(sent).toEqual([rows[1]]);
+  });
+
+  it("caps the delta and keeps the extra rows pending", async () => {
+    const many = Array.from({ length: 205 }, (_, i) => {
+      records[`m${i}`] = { id: `m${i}`, title: "M", content: "x" };
+      return entity(`m${i}`);
+    });
+    const { delta, sent } = await buildCloudBackupEditorDelta(
+      "V",
+      many,
+      deps() as never,
+    );
+    expect(sent).toHaveLength(200);
+    expect(delta?.upserts).toHaveLength(200);
+  });
+
+  it("sends nothing when aborted", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    expect(
+      await buildCloudBackupEditorDelta(
+        "V",
+        [entity("a")],
+        deps(controller.signal) as never,
+      ),
+    ).toEqual({ delta: null, sent: [] });
   });
 });

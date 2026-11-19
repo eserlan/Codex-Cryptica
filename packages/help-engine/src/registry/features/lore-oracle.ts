@@ -51,7 +51,12 @@ export const loreOracle: FeatureEntry = {
       actionIds: ["lore-oracle.open-settings"],
     },
   ],
-  helpIds: ["oracle-guide", "mention-entities", "chat-commands"],
+  helpIds: [
+    "oracle-guide",
+    "mention-entities",
+    "chat-commands",
+    "adventure-artwork",
+  ],
   related: ["entity-editing", "related-entity-generation"],
   actions: [
     {

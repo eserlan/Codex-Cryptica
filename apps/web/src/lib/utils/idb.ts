@@ -178,6 +178,22 @@ interface CodexDB extends DBSchema {
       "by-vault": string;
     };
   };
+  // What each entity held when it was last pushed successfully: the base for
+  // a three-way merge (shared vault, slice 4).
+  cloud_backup_base: {
+    key: [string, string]; // [vaultId, id]
+    value: CloudBackupBaseRow;
+    indexes: {
+      "by-vault": string;
+    };
+  };
+}
+
+/** One entity's content as last pushed to Cloud Backup. */
+export interface CloudBackupBaseRow {
+  vaultId: string;
+  id: string;
+  entity: unknown;
 }
 
 /**
@@ -203,7 +219,7 @@ export const DB_NAME = "CodexCryptica";
 // Bumped to 24 to add a by-speaker index on guest_chat_transcripts, so a
 // character's chat history can be queried both as the AI-voiced participant
 // and as the human's speaker character (#2302).
-export const DB_VERSION = 26;
+export const DB_VERSION = 27;
 
 // Cached on `globalThis` (not a plain module-level `let`) so that a Vite HMR
 // update to this file can't leave two separate connection-promise slots
@@ -387,6 +403,13 @@ export function getDB(): Promise<IDBPDatabase<CodexDB>> {
           if (!db.objectStoreNames.contains("cloud_backup_dirty")) {
             const store = db.createObjectStore("cloud_backup_dirty", {
               keyPath: ["vaultId", "kind", "id"],
+            });
+            store.createIndex("by-vault", "vaultId");
+          }
+
+          if (!db.objectStoreNames.contains("cloud_backup_base")) {
+            const store = db.createObjectStore("cloud_backup_base", {
+              keyPath: ["vaultId", "id"],
             });
             store.createIndex("by-vault", "vaultId");
           }

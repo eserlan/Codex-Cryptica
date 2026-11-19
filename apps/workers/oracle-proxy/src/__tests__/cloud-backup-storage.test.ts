@@ -12,7 +12,8 @@ import {
   pruneAssets,
   readJson,
   readManifest,
-  storedBytes,
+  getStagedKey,
+  reachableBytes,
   writeJson,
   writeManifest,
 } from "../cloud-backup-storage";
@@ -26,6 +27,9 @@ describe("cloud backup storage", () => {
     expect(getIndexKey("b")).toBe("cloud-backup/b/index.json");
     expect(getShardKey("b", "0a")).toBe("cloud-backup/b/entities/0a.json");
     expect(getAssetKey("b", "map.png")).toBe("cloud-backup/b/assets/map.png");
+    expect(getStagedKey("b", "3-abc", "entities/0a.json")).toBe(
+      "cloud-backup/b/commits/3-abc/entities/0a.json",
+    );
   });
 
   it("round trips JSON and preserves manifest metadata", async () => {
@@ -36,7 +40,10 @@ describe("cloud backup storage", () => {
     expect(jsonByteLength(value)).toBe(
       new TextEncoder().encode(JSON.stringify(value)).length,
     );
-    expect(await storedBytes(env, "b")).toBe(jsonByteLength(value));
+    expect(await reachableBytes(env, "b", { bundle: "bundle.json" })).toBe(
+      jsonByteLength(value),
+    );
+    expect(await reachableBytes(env, "b", {})).toBe(0);
     expect(await readJson(env, "missing")).toBeNull();
     const manifest = {
       schemaVersion: 1 as const,
@@ -46,10 +53,32 @@ describe("cloud backup storage", () => {
       createdAt: "2026-01-01T00:00:00.000Z",
       lastPushedAt: "2026-01-01T00:00:00.000Z",
     };
-    await writeManifest(env, "b", manifest, "hash");
+    await writeManifest(env, "b", manifest, "hash", undefined);
     expect(await readManifest(env, "b")).toEqual({
       manifest,
       ownerCodeHash: "hash",
+      etag: expect.any(String),
+    });
+    // Create-only: a second blind write loses, as does a stale etag.
+    expect(await writeManifest(env, "b", manifest, "hash", undefined)).toBe(
+      false,
+    );
+    expect(
+      await writeManifest(env, "b", manifest, "hash", undefined, "stale"),
+    ).toBe(false);
+    const stored = await readManifest(env, "b");
+    expect(
+      await writeManifest(
+        env,
+        "b",
+        manifest,
+        "hash",
+        { bundle: "bundle.json" },
+        stored?.etag,
+      ),
+    ).toBe(true);
+    expect((await readManifest(env, "b"))?.objects).toEqual({
+      bundle: "bundle.json",
     });
     expect(env.BUCKET.store.get(getManifestKey("b"))?.customMetadata).toEqual({
       ownerCodeHash: "hash",
@@ -73,25 +102,34 @@ describe("cloud backup storage", () => {
     const list = vi
       .fn()
       .mockResolvedValueOnce({
-        objects: [{ key: "a", size: 2 }],
+        objects: [{ key: "cloud-backup/b/assets/a", size: 2 }],
         truncated: true,
         cursor: "next",
       })
       .mockResolvedValueOnce({ objects: [], truncated: true, cursor: "last" })
       .mockResolvedValueOnce({ objects: [{ key: "b" }], truncated: false });
-    expect(await listKeys({ BUCKET: { list } }, "prefix/")).toEqual(["a", "b"]);
+    expect(await listKeys({ BUCKET: { list } }, "prefix/")).toEqual([
+      "cloud-backup/b/assets/a",
+      "b",
+    ]);
     expect(list).toHaveBeenNthCalledWith(2, {
       prefix: "prefix/",
       cursor: "next",
     });
     list
       .mockResolvedValueOnce({
-        objects: [{ size: 2 }],
+        objects: [{ key: "cloud-backup/b/assets/x", size: 2 }],
         truncated: true,
         cursor: "next",
       })
-      .mockResolvedValueOnce({ objects: [{ size: 3 }, {}], truncated: false });
-    expect(await storedBytes({ BUCKET: { list } }, "b")).toBe(5);
+      .mockResolvedValueOnce({
+        objects: [
+          { key: "cloud-backup/b/assets/y", size: 3 },
+          { key: "cloud-backup/b/assets/z" },
+        ],
+        truncated: false,
+      });
+    expect(await reachableBytes({ BUCKET: { list } }, "b", {})).toBe(5);
   });
 
   it("prunes only unreferenced assets and erases only the selected backup", async () => {

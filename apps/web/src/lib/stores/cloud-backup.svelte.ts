@@ -1,19 +1,29 @@
 import { CloudBackupChanges } from "./cloud-backup-changes";
 import { CloudBackupUploads } from "./cloud-backup-uploads";
+import { LINK_GONE_MESSAGE } from "./shared-vault-messages";
 import {
   disableCloudBackup,
   getLocalCloudBackupRecord,
   type KnownCloudBackup,
 } from "@codex/cloud-backup-sync";
 import { CloudBackupAccount } from "./cloud-backup-account";
+import {
+  CloudBackupSharing,
+  type SharingOutcome,
+} from "./cloud-backup-sharing";
 import { CloudBackupSync } from "./cloud-backup-sync";
+import { CloudBackupPulls } from "./cloud-backup-pulls";
 import type { DurableVaultChange } from "./vault/registry";
 import type {
+  Blocked,
   CloudBackupStatus,
   CloudAutoSyncState,
   CloudBackupDeps,
+  MergeNotice,
 } from "./cloud-backup-types";
 import { CloudBackupRestore } from "./cloud-backup-restore";
+import { CloudBackupTrash } from "./cloud-backup-trash.svelte";
+import { CloudBackupRollback } from "./cloud-backup-rollback.svelte";
 
 export { cloudBackupBrowserStorage } from "./cloud-backup-browser-storage";
 export { createInertRuntime } from "./cloud-backup-runtime";
@@ -54,6 +64,17 @@ export class CloudBackupStore {
   uploadProgress = $state<{ uploaded: number; total: number } | null>(null);
   /** True once a consent decision exists for this vault, in either direction. */
   consented = $state(false);
+  artworkConsentVersion = $state(0);
+  /** How this device is linked to the open vault's backup; null while off. */
+  role = $state<"owner" | "editor" | null>(null);
+  /** An editor's group link no longer works; sync stays stopped until a rejoin. */
+  linkGone = $state(false);
+  /** Pulls and pushes are stopped for this session (link gone or device cap). */
+  syncStopped = $state(false);
+  /** An editor's changes that stay on this device (maps, canvases, new images). */
+  keptLocal = $state(false);
+  /** Group sharing as this device last saw it; never holds the link or token. */
+  sharing = $state<{ linkVersion: number; enabledAt: string } | null>(null);
   /** Ephemeral automatic-sync state (#3189); never persisted. */
   autoState = $state<CloudAutoSyncState>("idle");
   /**
@@ -62,10 +83,30 @@ export class CloudBackupStore {
    * both versions are preserved (local untouched, remote untouched).
    */
   autoConflictRemoteAt = $state<string | null>(null);
+  /** What the last merge that changed something locally did; cleared on reset. */
+  mergeNotice = $state<MergeNotice | null>(null);
 
   private deps: CloudBackupDeps | null = null;
-  private uploads = new CloudBackupUploads(this, () => this.deps);
-  private sync = new CloudBackupSync(this, () => this.deps, this.uploads);
+  private uploads: CloudBackupUploads = new CloudBackupUploads(
+    this,
+    () => this.deps,
+    () => this.pulls.pullForPush(),
+    { reconcile: (vaultId) => this.changes.reconcile(vaultId) },
+  );
+  private sync: CloudBackupSync = new CloudBackupSync(
+    this,
+    () => this.deps,
+    this.uploads,
+    () => this.pulls.running,
+    (vaultId, blocked) => this.handleBlocked(vaultId, blocked),
+  );
+  private pulls: CloudBackupPulls = new CloudBackupPulls(
+    this,
+    () => this.deps,
+    this.uploads,
+    () => this.sync.resumeAfterPull(),
+    (vaultId, blocked) => this.handleBlocked(vaultId, blocked),
+  );
   private account = new CloudBackupAccount(
     this,
     () => this.deps,
@@ -74,12 +115,27 @@ export class CloudBackupStore {
       this.sync.resetState();
     },
   );
+  private sharingActions = new CloudBackupSharing(this, () => this.deps);
   private restore = new CloudBackupRestore(this, () => this.deps);
+  /** The shared trash: the list, and restoring from it. */
+  trash = new CloudBackupTrash(
+    () => this.deps,
+    (vaultId, change) => this.recordLocalChange(vaultId, change),
+  );
+  /** Restore points, and the owner's rollback to one. */
+  rollback = new CloudBackupRollback(
+    () => this.deps,
+    async (vaultId) => {
+      await this.pulls.pullNow();
+      if (this.trash.loadedVaultId === vaultId) await this.trash.load(vaultId);
+    },
+  );
   private changes = new CloudBackupChanges(
     this,
     () => this.deps,
     (vaultId) => this.notifyLocalChange(vaultId),
     () => this.account.enablingVaultId,
+    (vaultId, blocked) => this.handleBlocked(vaultId, blocked),
   );
 
   /** Wires the store up. Called once from app init with the real runtime. */
@@ -96,22 +152,125 @@ export class CloudBackupStore {
     // Clear the previous vault's state, so the status on screen never keeps
     // describing the vault the user has left.
     this.errorMessage = null;
+    this.mergeNotice = null;
+    this.keptLocal = false;
     this.changes.clearTimer();
+    this.pulls.stop();
     this.sync.reset();
 
     const record = await getLocalCloudBackupRecord(this.deps.runtime, vaultId);
     this.account.applyRecord(record);
     this.uploads.media.load(vaultId);
+    if (this.role === "editor") await this.loadKeptLocal(vaultId);
     // Catch-up: sync resumes when the user returns, guarded so a newer
-    // remote can never be overwritten by a stale return.
-    if (this.status !== "off") {
+    // remote can never be overwritten by a stale return. A gone link, or a
+    // device over the cap, stays quiet.
+    if (this.status !== "off" && !this.syncStopped) {
       this.notifyLocalChange(vaultId);
       this.changes.schedule(vaultId);
+      this.pulls.start(vaultId);
     }
   }
 
-  enable(vaultId: string): Promise<boolean> {
-    return this.account.enable(vaultId);
+  /** Pending maps and canvases of an editor vault show as kept on this device. */
+  private async loadKeptLocal(vaultId: string) {
+    const rows = (await this.deps?.dirty?.snapshot(vaultId)) ?? [];
+    this.keptLocal = rows.some((row) => row.kind !== "entity");
+  }
+
+  /**
+   * An editor's sync cannot go on. A gone link is remembered on the record, so
+   * nothing is requested after a reload; a device over the cap only lasts until
+   * the next `hydrate`. Timers stop at once; a push still running ends itself.
+   */
+  // fallow-ignore-next-line complexity -- link gone and device cap are tested in cloud-backup-editor.test.ts.
+  private async handleBlocked(vaultId: string, blocked: Blocked) {
+    const deps = this.deps;
+    if (!deps) return;
+    const active = deps.activeVaultId() === vaultId;
+    if (active) {
+      if (this.syncStopped) return;
+      this.syncStopped = true;
+      this.changes.clearTimer();
+      this.pulls.stop();
+      this.sync.reset();
+    }
+    if (blocked.kind === "deviceLimit") {
+      if (active) this.errorMessage = blocked.message;
+      return;
+    }
+    if (active) this.linkGone = true;
+    deps.notify?.(LINK_GONE_MESSAGE);
+    try {
+      const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
+      if (record) {
+        await deps.runtime.storage.write(vaultId, {
+          ...record,
+          linkGone: true,
+        });
+      }
+    } catch (error) {
+      console.warn("[CloudBackup] Could not record the gone link", error);
+    }
+  }
+
+  async enable(vaultId: string): Promise<boolean> {
+    const enabled = await this.account.enable(vaultId);
+    if (enabled && this.deps?.activeVaultId() === vaultId) {
+      this.pulls.start(vaultId);
+    }
+    return enabled;
+  }
+  async readAdventureBackup(vaultId: string) {
+    if (!this.deps?.artworkConsent || this.deps.activeVaultId() !== vaultId)
+      return null;
+    try {
+      return await this.deps.artworkConsent.read(vaultId);
+    } catch {
+      return null;
+    }
+  }
+  private hasAdventureBackupDeps(): boolean {
+    return Boolean(this.deps?.artworkConsent && this.deps.artworkScope);
+  }
+
+  private canUpdateAdventureBackup(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): boolean {
+    if (!this.hasAdventureBackupDeps()) return false;
+    if (this.status === "off") return false;
+    if (this.deps!.activeVaultId() !== vaultId) return false;
+    return !enabled || confirmed;
+  }
+
+  private async persistAdventureConsent(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): Promise<boolean> {
+    if (!enabled) await this.uploads.cancel();
+    const consent = this.deps!.artworkConsent!;
+    return enabled
+      ? consent.enable(vaultId, confirmed)
+      : consent.disable(vaultId);
+  }
+
+  async setAdventureBackup(
+    vaultId: string,
+    enabled: boolean,
+    confirmed: boolean,
+  ): Promise<boolean> {
+    if (!this.canUpdateAdventureBackup(vaultId, enabled, confirmed)) {
+      return false;
+    }
+    const ok = await this.persistAdventureConsent(vaultId, enabled, confirmed);
+    if (ok && this.deps?.activeVaultId() === vaultId) {
+      this.notifyLocalChange(vaultId);
+      this.changes.schedule(vaultId);
+    }
+    return ok;
   }
   attachToExistingBackup(
     vaultId: string,
@@ -133,14 +292,27 @@ export class CloudBackupStore {
     // "off" would stop meaning "nothing leaves the device".
     await this.uploads.cancel();
     this.changes.clearTimer();
+    this.pulls.stop();
     this.sync.reset();
+    this.mergeNotice = null;
     if (!this.deps) return;
     await disableCloudBackup(this.deps.runtime, vaultId);
     // Changes made while off are never recorded, so the pending set would be
     // incomplete by the time backup is re-enabled — which re-uploads in full.
     await this.deps.dirty?.clearVault(vaultId);
+    await this.deps.base?.clearVault(vaultId);
     this.status = "off";
     this.errorMessage = null;
+  }
+
+  enableSharing(vaultId: string): Promise<SharingOutcome> {
+    return this.sharingActions.enable(vaultId);
+  }
+  replaceSharingLink(vaultId: string): Promise<SharingOutcome> {
+    return this.sharingActions.replace(vaultId);
+  }
+  disableSharing(vaultId: string): Promise<SharingOutcome> {
+    return this.sharingActions.disable(vaultId);
   }
 
   deleteBackup(vaultId: string): Promise<boolean> {
@@ -171,6 +343,7 @@ export class CloudBackupStore {
   /** Releases the injected dependencies; used on teardown and in tests. */
   destroy() {
     this.stopAutoSyncListeners();
+    this.pulls.stop();
     this.sync.clearTimer();
     this.changes.clearTimer();
     this.deps = null;
@@ -200,6 +373,7 @@ export class CloudBackupStore {
     this.sync.startAutoSyncListeners();
   }
   stopAutoSyncListeners(): void {
+    this.pulls.stop();
     this.sync.stopAutoSyncListeners();
   }
 }

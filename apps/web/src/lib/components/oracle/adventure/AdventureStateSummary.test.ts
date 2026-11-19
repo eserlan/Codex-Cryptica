@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import { createRawSnippet } from "svelte";
 import { render, screen } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import AdventureStateSummary from "./AdventureStateSummary.svelte";
@@ -148,5 +149,75 @@ describe("AdventureStateSummary", () => {
       ),
     ).toBeTruthy();
     expect(screen.getByText("The miller's debt (Resolved)")).toBeTruthy();
+  });
+
+  describe("panel variant", () => {
+    const recap = {
+      location: { id: "loc-1", text: "The lantern road" },
+      situation: { id: "sit-1", text: "The ward is failing" },
+      objectives: [{ id: "obj-1", text: "Reach the bell-stone" }],
+      activeCharacters: [],
+      knownFacts: [],
+      recentTurnSummaries: [],
+    };
+
+    it("renders everything expanded without a details element", () => {
+      const { container } = render(AdventureStateSummary, {
+        manager: manager(recap),
+        variant: "panel",
+      });
+      expect(screen.getByTestId("adventure-scene-panel")).toBeTruthy();
+      expect(
+        screen.getByRole("heading", { name: "Current scene" }),
+      ).toBeTruthy();
+      expect(screen.getByText("The lantern road")).toBeTruthy();
+      expect(screen.getByText("The ward is failing")).toBeTruthy();
+      expect(screen.getByText("Reach the bell-stone")).toBeTruthy();
+      expect(container.querySelector("details")).toBeNull();
+      expect(screen.queryByText("Who's here")).toBeNull();
+    });
+
+    it("renders the media snippet between location and situation", () => {
+      const media = createRawSnippet(() => ({
+        render: () => '<div data-testid="media">art</div>',
+      }));
+      render(AdventureStateSummary, {
+        manager: manager(recap),
+        variant: "panel",
+        media,
+      });
+      const location = screen.getByText("The lantern road");
+      const art = screen.getByTestId("media");
+      const situation = screen.getByText("The ward is failing");
+      expect(
+        location.compareDocumentPosition(art) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        art.compareDocumentPosition(situation) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it("renders nothing without a session", () => {
+      render(AdventureStateSummary, {
+        manager: { session: null, recap: null } as any,
+        variant: "panel",
+      });
+      expect(screen.queryByTestId("adventure-scene-panel")).toBeNull();
+    });
+
+    it("gives two instances distinct heading ids", () => {
+      render(AdventureStateSummary, { manager: manager(recap) });
+      render(AdventureStateSummary, {
+        manager: manager(recap),
+        variant: "panel",
+      });
+      const ids = screen
+        .getAllByRole("heading", { level: 3, hidden: true })
+        .map((h) => h.id);
+      expect(ids).toHaveLength(2);
+      expect(new Set(ids).size).toBe(2);
+    });
   });
 });

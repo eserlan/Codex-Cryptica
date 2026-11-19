@@ -8,9 +8,17 @@ import {
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
   handleGetCloudBackupIndex,
+  handleGetCloudBackupChanges,
   handleCloudBackupDelta,
   handleGetCloudBackupAsset,
   handleDeleteCloudBackup,
+  handleCloudBackupSharingOn,
+  handleCloudBackupSharingOff,
+  handleCloudBackupSharingReplace,
+  handleListRestorePoints,
+  handleCloudBackupRollback,
+  handleListTrash,
+  handleGetTrashItem,
 } from "./cloud-backup";
 import {
   handleCloudBackupAdminLookup,
@@ -125,10 +133,30 @@ async function handleCloudBackupResourceRoutes(
     return handleCloudBackupRecordRoute(request, env, backupId);
   if (parts.length === 5)
     return handleCloudBackupActionRoute(request, env, backupId, parts[4]);
-  if (parts.length === 6 && parts[4] === "assets") {
+  if (parts.length === 6)
+    return handleCloudBackupNestedRoute(request, env, backupId, parts);
+  return cloudBackupNotFound(request, env);
+}
+
+function handleCloudBackupNestedRoute(
+  request: Request,
+  env: Env,
+  backupId: string,
+  parts: string[],
+) {
+  if (parts[4] === "assets") {
     return handleCloudBackupAssetRoute(request, env, backupId, parts[5]);
   }
-  return cloudBackupNotFound(request, env);
+  if (parts[4] === "trash") {
+    return request.method === "GET"
+      ? handleGetTrashItem(request, env, backupId, parts[5])
+      : cloudBackupNotFound(request, env);
+  }
+  return parts[4] === "sharing" &&
+    parts[5] === "replace-link" &&
+    request.method === "POST"
+    ? handleCloudBackupSharingReplace(request, env, backupId)
+    : cloudBackupNotFound(request, env);
 }
 
 function handleCloudBackupRecordRoute(
@@ -167,9 +195,32 @@ function handleCloudBackupActionRoute(
       method: "GET",
       run: () => handleGetCloudBackupIndex(request, env, backupId),
     },
+    changes: {
+      method: "GET",
+      run: () => handleGetCloudBackupChanges(request, env, backupId),
+    },
     delta: {
       method: "POST",
       run: () => handleCloudBackupDelta(request, env, backupId),
+    },
+    trash: {
+      method: "GET",
+      run: () => handleListTrash(request, env, backupId),
+    },
+    "restore-points": {
+      method: "GET",
+      run: () => handleListRestorePoints(request, env, backupId),
+    },
+    rollback: {
+      method: "POST",
+      run: () => handleCloudBackupRollback(request, env, backupId),
+    },
+    sharing: {
+      method: request.method === "DELETE" ? "DELETE" : "POST",
+      run: () =>
+        request.method === "DELETE"
+          ? handleCloudBackupSharingOff(request, env, backupId)
+          : handleCloudBackupSharingOn(request, env, backupId),
     },
   };
   const route = handlers[action];

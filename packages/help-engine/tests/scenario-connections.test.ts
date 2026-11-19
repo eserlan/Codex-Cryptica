@@ -150,6 +150,11 @@ const bundle = buildBundle({
       "## cloud-backup\nAbout cloud-backup.",
     ),
     article(
+      "shared-vault",
+      "shared-vault",
+      "## shared-vault\nAbout shared-vault.",
+    ),
+    article(
       "offline-sync",
       "offline-sync",
       "## offline-sync\nAbout offline-sync.",
@@ -187,6 +192,11 @@ const bundle = buildBundle({
       "adventure-mode",
       "adventure-mode",
       "## adventure-mode\nAbout adventure-mode.",
+    ),
+    article(
+      "adventure-artwork",
+      "adventure-artwork",
+      "## adventure-artwork\nAbout adventure-artwork.",
     ),
     article(
       "entity-explorer",

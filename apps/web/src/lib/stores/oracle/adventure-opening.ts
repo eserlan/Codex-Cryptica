@@ -1,7 +1,10 @@
 import { AdventureGroundingError } from "#lib/services/adventure/adventure-grounding-service.js";
 import {
+  entrySceneId,
+  startSceneCandidates,
   parseAdventureSession,
   type AdventureSession,
+  type AdventureSourcePackageRef,
   type PlayerCharacter,
   type ScenarioState,
   type WorldEntryContext,
@@ -59,6 +62,8 @@ export class AdventureOpening {
     premise: string;
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
+    sourcePackage?: AdventureSourcePackageRef;
+    startSceneId?: string;
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
   }): Promise<AdventureSession> {
@@ -68,9 +73,11 @@ export class AdventureOpening {
     // Validate with the reader's schema before archiving anything or writing,
     // so an invalid seed can never be saved and then fail to load.
     if (this.state.starting) throw new Error("start-in-progress");
-    const created = this.validatedNewSession(input);
+    const { startSceneId, ...sessionInput } = input;
+    const validated = this.validatedNewSession(sessionInput);
     this.state.starting = true;
     try {
+      const created = await this.withStartScene(validated, startSceneId);
       this.runtime.activeRestoreRequest += 1;
       this.state.phase = "starting";
       this.state.errorMessage = null;
@@ -98,12 +105,38 @@ export class AdventureOpening {
     await this.startOpeningIfOnline(session);
   }
 
+  /** Loads the pinned package before anything is saved and starts at the chosen start candidate, else the entry scene. */
+  private async withStartScene(
+    created: AdventureSession,
+    startSceneId: string | undefined,
+  ): Promise<AdventureSession> {
+    if (!created.sourcePackage) return created;
+    const check = await this.runtime.deps.packages.verifyPin(created);
+    if (check.status === "unavailable") {
+      this.state.errorCause = "package-unavailable";
+      throw new Error("adventure-package-unavailable");
+    }
+    const pkg = await this.runtime.deps.packages.load(created);
+    const chosen = startSceneCandidates(pkg).find(
+      (scene) => scene.id === startSceneId,
+    );
+    const sceneId = chosen?.id ?? entrySceneId(pkg);
+    if (sceneId === undefined) {
+      throw new Error("adventure-package-has-no-scenes");
+    }
+    return parseAdventureSession({
+      ...created,
+      packageProgress: { sceneId },
+    });
+  }
+
   private validatedNewSession(input: {
     vaultId: string;
     title: string;
     premise: string;
     playerCharacter: PlayerCharacter;
     sourceRecords?: AdventureSession["sourceRecords"];
+    sourcePackage?: AdventureSourcePackageRef;
     scenarioSeed?: ScenarioState;
     worldEntry?: WorldEntryContext;
   }): AdventureSession {
@@ -123,7 +156,9 @@ export class AdventureOpening {
   private async persistNewAdventure(
     created: AdventureSession,
   ): Promise<AdventureSession> {
-    const saved = await this.runtime.deps.repository.save(null, created);
+    const saved = created.sourcePackage?.hash
+      ? await this.runtime.deps.repository.savePinned(created)
+      : await this.runtime.deps.repository.save(null, created);
     if (!saved.ok) {
       this.state.phase = "error";
       this.state.errorMessage = saved.error.message;
@@ -164,6 +199,7 @@ export class AdventureOpening {
       return;
     const signal = this.runtime.startTurnGeneration();
     try {
+      if (!(await this.runtime.packageStillAvailable(signal))) return;
       await this.persistOpeningTurn(session, signal);
     } catch (cause) {
       if (!signal.aborted) await this.handleFailedOpening(session, cause);

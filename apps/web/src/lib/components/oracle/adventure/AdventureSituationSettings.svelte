@@ -3,9 +3,11 @@
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
   import {
-    adventureDiagnosticJson,
     adventureReviewJson,
     adventureReviewMarkdown,
+    copyDiagnosticSnapshot,
+    readDiagnosticBaseline,
+    saveDiagnosticBaseline,
   } from "#lib/services/adventure/adventure-review-capture.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
@@ -20,6 +22,23 @@
   let error = $state<string | null>(null);
   let advanceMinutes = $state(60);
   let copyBusy = $state(false);
+  let baselineRefresh = $state(0);
+
+  function diagnosticStorage(): Storage | null {
+    return typeof window !== "undefined" ? window.localStorage : null;
+  }
+
+  const hasBaseline = $derived.by(() => {
+    void baselineRefresh;
+    const session = manager.session;
+    if (!session) return false;
+    const baseline = readDiagnosticBaseline(session.id, diagnosticStorage());
+    return (
+      baseline !== null &&
+      session.turns.length >= baseline.turnCount &&
+      session.revision >= baseline.revision
+    );
+  });
 
   const scenarios = $derived(
     manager.session?.scenarioCollection?.items.filter(
@@ -81,27 +100,40 @@
     }
   }
 
-  async function copySession(format: "markdown" | "json" | "diagnostic") {
+  async function copySession(
+    format: "markdown" | "json" | "diagnostic" | "diagnostic-full",
+  ) {
     const session = manager.session;
     if (!session || copyBusy) return;
     copyBusy = true;
     error = null;
     try {
-      const text =
-        format === "markdown"
-          ? adventureReviewMarkdown(session)
-          : format === "diagnostic"
-            ? adventureDiagnosticJson(session)
-            : adventureReviewJson(session);
+      let text: string;
+      let label: string;
+      let diagnostic = false;
+      if (format === "markdown") {
+        text = adventureReviewMarkdown(session);
+        label = "Markdown";
+      } else if (format === "diagnostic" || format === "diagnostic-full") {
+        diagnostic = true;
+        const result = copyDiagnosticSnapshot(session, diagnosticStorage(), {
+          forceFull: format === "diagnostic-full",
+        });
+        text = result.text;
+        label = result.isDelta
+          ? `delta JSON for AI (turns ${result.fromTurnCount}–${result.toTurnCount})`
+          : "compact JSON for AI";
+      } else {
+        text = adventureReviewJson(session);
+        label = "JSON";
+      }
       await navigator.clipboard.writeText(text);
+      if (diagnostic) {
+        saveDiagnosticBaseline(session, diagnosticStorage());
+        baselineRefresh += 1;
+      }
       notificationStore.notify(
-        "GM-only adventure " +
-          (format === "markdown"
-            ? "Markdown"
-            : format === "diagnostic"
-              ? "compact JSON for AI"
-              : "JSON") +
-          " copied to clipboard.",
+        `GM-only adventure ${label} copied to clipboard.`,
         "success",
       );
     } catch {
@@ -114,7 +146,68 @@
 
   const buttonClass =
     "min-h-10 rounded-md border border-theme-border px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50";
+
+  const copyButtons = $derived([
+    { mode: "markdown" as const, label: "Copy Markdown", title: undefined },
+    { mode: "json" as const, label: "Copy JSON", title: undefined },
+    {
+      mode: "diagnostic" as const,
+      label: "Copy JSON for AI",
+      title: hasBaseline
+        ? "Delta since the last AI copy (only new turns and changed state)."
+        : "Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat.",
+    },
+    ...(hasBaseline
+      ? [
+          {
+            mode: "diagnostic-full" as const,
+            label: "Copy full JSON for AI",
+            title:
+              "Copy the full compact JSON snapshot and reset the delta baseline.",
+          },
+        ]
+      : []),
+  ]);
+  function scenarioButtons(status: "open" | "resolved" | "abandoned") {
+    if (status === "open") {
+      return [
+        { next: "resolved" as const, label: "Mark as concluded" },
+        { next: "abandoned" as const, label: "Leave it behind" },
+      ];
+    }
+    return [{ next: "open" as const, label: "Reopen" }];
+  }
 </script>
+
+{#snippet scenarioSection()}
+  {#if scenarios.length > 0}
+    <ul class="space-y-2">
+      {#each scenarios as item (item.id)}
+        <li
+          class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-theme-border p-2"
+        >
+          <div class="min-w-0">
+            <p class="text-sm font-medium text-theme-text">
+              {item.playerVisible.lead}
+            </p>
+            <p class="text-xs text-theme-text">{STATUS_LABEL[item.status]}</p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            {#each scenarioButtons(item.status) as act (act.next)}
+              <button
+                type="button"
+                class={buttonClass}
+                disabled={locked}
+                onclick={() => void change(item.id, act.next)}
+                >{act.label}</button
+              >
+            {/each}
+          </div>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+{/snippet}
 
 {#if manager.session}
   <section
@@ -205,70 +298,19 @@
         Copying stays on this device until you paste it elsewhere.
       </p>
       <div class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={copyBusy}
-          onclick={() => void copySession("markdown")}>Copy Markdown</button
-        >
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={copyBusy}
-          onclick={() => void copySession("json")}>Copy JSON</button
-        >
-        <button
-          type="button"
-          class={buttonClass}
-          disabled={copyBusy}
-          title="Current state plus the latest 20 turns in full; older turns condensed. Sized to fit an AI chat."
-          onclick={() => void copySession("diagnostic")}
-          >Copy JSON for AI</button
-        >
+        {#each copyButtons as btn (btn.mode)}
+          <button
+            type="button"
+            class={buttonClass}
+            disabled={copyBusy}
+            title={btn.title}
+            onclick={() => void copySession(btn.mode)}>{btn.label}</button
+          >
+        {/each}
       </div>
     </div>
 
-    {#if scenarios.length > 0}
-      <ul class="space-y-2">
-        {#each scenarios as item (item.id)}
-          <li
-            class="flex flex-wrap items-center justify-between gap-2 rounded-md border border-theme-border p-2"
-          >
-            <div class="min-w-0">
-              <p class="text-sm font-medium text-theme-text">
-                {item.playerVisible.lead}
-              </p>
-              <p class="text-xs text-theme-text">{STATUS_LABEL[item.status]}</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              {#if item.status === "open"}
-                <button
-                  type="button"
-                  class={buttonClass}
-                  disabled={locked}
-                  onclick={() => void change(item.id, "resolved")}
-                  >Mark as concluded</button
-                >
-                <button
-                  type="button"
-                  class={buttonClass}
-                  disabled={locked}
-                  onclick={() => void change(item.id, "abandoned")}
-                  >Leave it behind</button
-                >
-              {:else}
-                <button
-                  type="button"
-                  class={buttonClass}
-                  disabled={locked}
-                  onclick={() => void change(item.id, "open")}>Reopen</button
-                >
-              {/if}
-            </div>
-          </li>
-        {/each}
-      </ul>
-    {/if}
+    {@render scenarioSection()}
     {#if error}
       <p role="alert" class="text-sm text-theme-danger">{error}</p>
     {/if}

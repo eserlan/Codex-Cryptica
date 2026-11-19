@@ -1,6 +1,6 @@
 import { GuestExporter, type ExporterOptions } from "@codex/vault-engine";
 import { sanitizeSheetForGuests } from "@codex/stat-sheet-engine";
-import type { PublishRegistry } from "schema";
+import { isPrivateArtworkSnapshotPath, type PublishRegistry } from "schema";
 import { getPublishTurnstileToken } from "./turnstile";
 import { retryWithBackoff } from "#lib/utils/retry.js";
 import { worldStore } from "#lib/stores/world.svelte.js";
@@ -149,7 +149,8 @@ export class PublishingService {
   ): Set<string> {
     const paths = new Set<string>();
     const add = (path?: string) => {
-      if (path && this.isLocalPath(path)) paths.add(path);
+      if (path && this.isLocalPath(path) && !isPrivateArtworkSnapshotPath(path))
+        paths.add(path);
     };
     for (const e of bundle.entities) {
       add(e.image);

@@ -2,6 +2,8 @@ import type {
   AdventureSummaryService,
   AdventureTurnGenerationService,
 } from "@codex/ai-engine";
+import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
+import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
 import {
   adventureControlAuthority,
   type AdventureControlAuthority,
@@ -18,6 +20,10 @@ import {
   adventureContextService,
   type AdventureContextService,
 } from "#lib/services/adventure/adventure-context-service.js";
+import {
+  adventurePackageContextCache,
+  type AdventurePackageContextCache,
+} from "#lib/services/adventure/adventure-package-context.js";
 import { diceEngine as defaultDiceEngine } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
@@ -37,11 +43,15 @@ export interface AdventureManagerDependencies {
     revision?: number,
   ) => Promise<void>;
   context?: AdventureContextService;
+  /** Loads and caches the pinned adventure package of a package session. */
+  packages?: Pick<AdventurePackageContextCache, "load" | "peek" | "verifyPin">;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;
   now?: () => string;
   dice?: Pick<typeof defaultDiceEngine, "evaluate">;
   idGenerator?: () => string;
+  /** Already-loaded public metadata; turn commits never wait for a catalogue fetch. */
+  artworkCatalogue?: () => readonly ArtworkAsset[];
 }
 
 export function resolveAdventureDependencies({
@@ -51,11 +61,13 @@ export function resolveAdventureDependencies({
   clearGenerationInteraction = clearDefaultGenerationInteraction,
   confirmGenerationInteraction = confirmDefaultGenerationInteraction,
   context = adventureContextService,
+  packages = adventurePackageContextCache,
   authority = adventureControlAuthority,
   coordinator = adventureControlCoordinator,
   now = () => new Date().toISOString(),
   dice = defaultDiceEngine,
   idGenerator = systemIdGenerator.uuid,
+  artworkCatalogue = () => defaultArtworkCatalogue.peek() ?? [],
 }: AdventureManagerDependencies = {}): Required<AdventureManagerDependencies> {
   return {
     repository,
@@ -64,10 +76,12 @@ export function resolveAdventureDependencies({
     clearGenerationInteraction,
     confirmGenerationInteraction,
     context,
+    packages,
     authority,
     coordinator,
     now,
     dice,
     idGenerator,
+    artworkCatalogue,
   };
 }

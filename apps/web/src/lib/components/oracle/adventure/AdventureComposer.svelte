@@ -2,6 +2,7 @@
   import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureControlRetry from "./AdventureControlRetry.svelte";
+  import AdventurePackageUnavailable from "./AdventurePackageUnavailable.svelte";
   import AdventureSuggestedActions from "./AdventureSuggestedActions.svelte";
 
   let {
@@ -20,12 +21,18 @@
     manager.readOnly ||
       (manager.session?.turns.length === 0 && !manager.session.pendingRoll) ||
       manager.phase === "generating" ||
+      manager.phase === "package-unavailable" ||
       manager.phase === "offline" ||
       manager.phase === "awaiting-roll" ||
       manager.phase === "ready-to-resolve",
   );
   let textarea = $state<HTMLTextAreaElement>();
   let typing = $state(false);
+
+  function submitDraft() {
+    if (disabled || !manager.draft.trim()) return;
+    void manager.submitAction(action);
+  }
 
   // Keep the action field compact for one line, then grow as the player types.
   // Long prose scrolls inside the field so it never pushes the dock offscreen.
@@ -64,12 +71,12 @@
   <!-- Only optional controls scroll. Never put the textarea/Send row in this
        container: it must remain fixed at the bottom when the keyboard opens. -->
   <div
-    class={suggestionChips
-      ? "mx-auto min-h-0 w-full max-w-6xl overflow-y-auto"
-      : "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"}
+    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"
     data-testid="adventure-dock-extras"
   >
-    {#if manager.readOnly && manager.session?.status === "active"}
+    {#if manager.phase === "package-unavailable"}
+      <AdventurePackageUnavailable {manager} />
+    {:else if manager.readOnly && manager.session?.status === "active"}
       <AdventureControlRetry {manager} />
     {/if}
     <AdventureSuggestedActions
@@ -96,7 +103,7 @@
     class="mx-auto w-full max-w-3xl shrink-0 space-y-2"
     onsubmit={(event) => {
       event.preventDefault();
-      void manager.submitAction(action);
+      submitDraft();
     }}
   >
     <div
@@ -137,6 +144,12 @@
         bind:value={manager.draft}
         onfocus={() => (typing = true)}
         onblur={() => (typing = false)}
+        onkeydown={(event) => {
+          if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+            event.preventDefault();
+            submitDraft();
+          }
+        }}
         {disabled}
         placeholder="What do you do?"
       ></textarea>

@@ -74,7 +74,7 @@ export function labelValueHtml(
   const iconifiedLabel = replaceEmojisWithIcons(
     renderMd(label, { inline: true, allowImages: false }),
   );
-  return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-primary mb-0.5">${iconifiedLabel}</span><span>${renderMd(value, { inline: true, allowImages: false })}</span></div>\n`;
+  return `<div class="flex flex-col mb-1"><span class="seo-label font-header font-bold uppercase tracking-widest text-xs text-theme-text mb-0.5">${iconifiedLabel}</span><span>${renderMd(value, { inline: true, allowImages: false })}</span></div>\n`;
 }
 
 // Label/value pairs ("- **Key**: value") get a bespoke stacked layout
@@ -84,7 +84,7 @@ export function renderGeneratorMarkdown(
   variant: "default" | "names" = "default",
 ): string {
   const safeValue = escapeGeneratorHtml(value);
-  return renderMd(
+  const html = renderMd(
     safeValue
       // bold-key variant: "- **Key**: value" or "* **Key**: value"
       .replace(/^[*-] \*\*([^*\n]+?)(?::\*\*|\*\*:)[ \t]+(.*)$/gm, (_, k, v) =>
@@ -95,6 +95,10 @@ export function renderGeneratorMarkdown(
         labelValueHtml(k, v, variant),
       ),
     { allowImages: false },
+  );
+  return html.replace(
+    /<table\b[^>]*>[\s\S]*?<\/table>/g,
+    '<div class="markdown-table-scroll overflow-x-auto max-w-full my-3" tabindex="0" role="region" aria-label="Scrollable table; use the left and right arrow keys to view all columns">$&</div>',
   );
 }
 

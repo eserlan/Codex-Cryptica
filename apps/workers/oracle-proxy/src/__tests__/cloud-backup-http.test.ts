@@ -81,4 +81,23 @@ describe("cloud backup HTTP boundary", () => {
     for (const id of ["", ".", "..", "a/b", "a\\b", "a".repeat(256)])
       expect(isValidAssetId(id)).toBe(false);
   });
+
+  it("caps asset ids to keep restore-point metadata bounded", () => {
+    const payload = {
+      vaultTitle: "Vault",
+      bundle: null,
+      assetIds: Array.from(
+        { length: CLOUD_BACKUP_LIMITS.maxAssetCount },
+        (_, index) => `asset-${index}`,
+      ),
+    };
+    expect(validatePayload(request(""), payload)).toEqual({ payload });
+    expect(
+      "response" in
+        validatePayload(request(""), {
+          ...payload,
+          assetIds: [...payload.assetIds, "overflow"],
+        }),
+    ).toBe(true);
+  });
 });

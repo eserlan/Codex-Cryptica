@@ -8,6 +8,11 @@ import { CloudBackupUploads } from "./cloud-backup-uploads";
 import { createInertRuntime } from "./cloud-backup-runtime";
 import type { CloudBackupDeps } from "./cloud-backup-types";
 import {
+  CloudBackupBaseStore,
+  memoryBaseStorage,
+  type CloudBackupBaseStorage,
+} from "./cloud-backup-base";
+import {
   CloudBackupDirtyStore,
   memoryDirtyStorage,
 } from "./cloud-backup-dirty";
@@ -28,6 +33,7 @@ function harness() {
     skippedAssets: [],
     skippedEntities: [],
     uploadProgress: null,
+    artworkConsentVersion: 0,
   };
   const deps: CloudBackupDeps = {
     runtime: createInertRuntime(),
@@ -60,6 +66,59 @@ beforeEach(() => {
 });
 
 describe("cloud backup uploads", () => {
+  it("uses consent scope for full adventure uploads and confirms removal only on success", async () => {
+    const { deps, uploads, state } = harness();
+    const confirmRemoval = vi.fn(async () => true);
+    deps.artworkScope = {
+      lock: async (_key, action) => action(),
+      readConsent: async () => ({
+        enabled: false,
+        remoteRemovalPending: true,
+        removalId: "r1",
+      }),
+      confirmRemoval,
+    };
+    expect(await uploads.pushSnapshot("vault", { guarded: true })).toEqual({
+      ok: true,
+    });
+    expect(deps.buildPayload).toHaveBeenCalledWith(
+      "vault",
+      expect.any(AbortSignal),
+      { includeAdventures: false },
+    );
+    expect(confirmRemoval).toHaveBeenCalledWith("vault", "r1");
+    expect(state.artworkConsentVersion).toBe(1);
+  });
+  it("includes adventures only for an accepted scope and retains failed removal", async () => {
+    const { deps, uploads } = harness();
+    const confirmRemoval = vi.fn(async () => true);
+    deps.artworkScope = {
+      lock: async (_key, action) => action(),
+      readConsent: async () => ({ enabled: true, remoteRemovalPending: false }),
+      confirmRemoval,
+    };
+    expect(await uploads.pushSnapshot("vault", { guarded: false })).toEqual({
+      ok: true,
+    });
+    expect(deps.buildPayload).toHaveBeenCalledWith(
+      "vault",
+      expect.any(AbortSignal),
+      { includeAdventures: true },
+    );
+    deps.artworkScope.readConsent = async () => ({
+      enabled: false,
+      remoteRemovalPending: true,
+      removalId: "r1",
+    });
+    vi.mocked(pushVaultToCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      error: "offline",
+    });
+    expect((await uploads.pushSnapshot("vault", { guarded: false })).ok).toBe(
+      false,
+    );
+    expect(confirmRemoval).not.toHaveBeenCalled();
+  });
   it("updates full-upload state and clears only versions sent", async () => {
     const { deps, uploads, state } = harness();
     await deps.dirty!.record("vault", { kind: "entity", ids: ["edited"] });
@@ -149,5 +208,409 @@ describe("cloud backup uploads", () => {
       error: "Newer copy",
     });
     expect(await deps.dirty!.snapshot("vault")).toHaveLength(1);
+  });
+});
+
+describe("maps and canvases in a delta", () => {
+  const deltaOk = {
+    ok: true as const,
+    value: {
+      schemaVersion: 1,
+      backupId: "backup",
+      vaultTitle: "Vault",
+      sizeBytes: 0,
+      createdAt: "previous",
+      lastPushedAt: "newer",
+    },
+  };
+  const mapDelta = {
+    vaultTitle: "Vault",
+    upserts: [],
+    deletes: [],
+    assetIds: [],
+    mapUpserts: [{ item: { id: "m1" }, assets: [] }],
+  };
+
+  it("leaves held rows pending, never sends them, and clears the rest", async () => {
+    const { deps, uploads } = harness();
+    await deps.dirty!.record("vault", { kind: "maps", ids: ["m1", "bad"] });
+    const rows = await deps.dirty!.snapshot("vault");
+    const held = rows.filter((row) => row.id === "bad");
+    deps.buildDelta = vi.fn(async () => ({ ...mapDelta, held }));
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce(deltaOk);
+
+    expect(await uploads.pushSnapshot("vault", { guarded: true })).toEqual({
+      ok: true,
+    });
+    const sent = vi.mocked(pushDeltaToCloudBackup).mock.calls[0][2];
+    expect(sent).not.toHaveProperty("held");
+    expect(sent.mapUpserts).toHaveLength(1);
+    expect((await deps.dirty!.snapshot("vault")).map((r) => r.id)).toEqual([
+      "bad",
+    ]);
+  });
+
+  it("answers null for a map's files when the vault cannot read them", async () => {
+    const { deps, uploads } = harness();
+    await deps.dirty!.record("vault", { kind: "maps", ids: ["m1"] });
+    let prepared: unknown = "unset";
+    deps.buildDelta = vi.fn(async (_v, _rows, _up, _signal, prepare) => {
+      prepared = await prepare({ id: "m1", assetPath: "maps/m1.webp" });
+      return null;
+    });
+    await uploads.pushSnapshot("vault", { guarded: true });
+    expect(prepared).toBeNull();
+  });
+
+  it("reports a missing asset as an ordinary failure and forgets its cached upload", async () => {
+    const { deps, uploads } = harness();
+    uploads.media.hashes = { "m--1": "h", other: "h" };
+    await deps.dirty!.record("vault", { kind: "maps", ids: ["m1"] });
+    deps.buildDelta = vi.fn(async () => ({
+      ...mapDelta,
+      mapUpserts: [
+        {
+          item: { id: "m1" },
+          assets: [
+            { path: "maps/m.png", assetId: "m--1", mimeType: "image/png" },
+          ],
+        },
+      ],
+    }));
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      error: "A file is missing",
+      status: 409,
+      code: "missing_asset",
+    });
+
+    const out = await uploads.pushSnapshot("vault", { guarded: true });
+
+    expect(out).toMatchObject({ ok: false, error: "A file is missing" });
+    expect(out.conflict).toBeUndefined();
+    expect(uploads.media.hashes).toEqual({ other: "h" });
+    expect(await deps.dirty!.snapshot("vault")).toHaveLength(1);
+  });
+});
+
+describe("merge base recording", () => {
+  const ent = (id: string, content = "x") => ({ id, title: id, content });
+  const baseIds = async (base: CloudBackupBaseStore) =>
+    (await base.list("vault")).map((row) => row.id).sort();
+  const withBase = (storage: CloudBackupBaseStorage = memoryBaseStorage()) => {
+    const h = harness();
+    const base = new CloudBackupBaseStore(storage);
+    h.deps.base = base;
+    return { ...h, base };
+  };
+  const deltaOk = {
+    ok: true as const,
+    value: {
+      schemaVersion: 1,
+      backupId: "backup",
+      vaultTitle: "Vault",
+      sizeBytes: 0,
+      createdAt: "previous",
+      lastPushedAt: "newer",
+    },
+  };
+
+  it("records a delta's upserts and drops its deletes", async () => {
+    const { deps, uploads, base } = withBase();
+    await base.recordSent("vault", [ent("gone")], []);
+    deps.buildDelta = vi.fn(async () => ({
+      vaultTitle: "Vault",
+      upserts: [ent("a")],
+      deletes: ["gone"],
+      assetIds: [],
+    }));
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["a"] });
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce(deltaOk);
+    expect(await uploads.pushSnapshot("vault", { guarded: true })).toEqual({
+      ok: true,
+    });
+    expect(await baseIds(base)).toEqual(["a"]);
+  });
+
+  it("replaces the vault's bases after a full snapshot", async () => {
+    const { deps, uploads, base } = withBase();
+    await base.recordSent("vault", [ent("e0")], []);
+    vi.mocked(deps.buildPayload).mockResolvedValueOnce({
+      vaultTitle: "Vault",
+      bundle: { entities: [ent("e1")] },
+    });
+    await uploads.pushSnapshot("vault", { guarded: false });
+    expect(await baseIds(base)).toEqual(["e1"]);
+  });
+
+  it("records what was sent even if the entity changes mid-push", async () => {
+    const { deps, uploads, base } = withBase();
+    const e1 = ent("e1");
+    vi.mocked(deps.buildPayload).mockResolvedValueOnce({
+      vaultTitle: "Vault",
+      bundle: { entities: [e1] },
+    });
+    vi.mocked(pushVaultToCloudBackup).mockImplementationOnce(async () => {
+      e1.content = "edited";
+      return {
+        ok: true,
+        value: {
+          schemaVersion: 1,
+          backupId: "backup",
+          vaultTitle: "Vault",
+          sizeBytes: 0,
+          createdAt: "previous",
+          lastPushedAt: "new",
+        },
+      };
+    });
+    await uploads.pushSnapshot("vault", { guarded: false });
+    expect(await base.get("vault", "e1")).toEqual(ent("e1"));
+  });
+
+  it("serialises the same detached snapshot that it records as the base", async () => {
+    const { deps, uploads, base } = withBase();
+    const { pushVaultToCloudBackup: realPush } = await vi.importActual<
+      typeof import("@codex/cloud-backup-sync")
+    >("@codex/cloud-backup-sync");
+    const entity = ent("e1", "old");
+    const assetStarted = Promise.withResolvers<void>();
+    const assetRelease = Promise.withResolvers<void>();
+    await deps.runtime.storage.write("vault", {
+      vaultId: "vault",
+      backupId: "backup",
+      ownerCode: "owner",
+      enabled: true,
+      status: "idle",
+      lastPushedAt: "previous",
+      consentedAt: "now",
+    });
+    deps.runtime.fetch = vi.fn(async (url: string, init: any) => {
+      if (url.endsWith("/assets/portrait.png")) {
+        assetStarted.resolve();
+        await assetRelease.promise;
+        return { ok: true, status: 200, json: async () => ({}) } as any;
+      }
+      expect(url.endsWith("/commit")).toBe(true);
+      const body = JSON.parse(init.body);
+      expect(body.bundle.entities).toEqual([ent("e1", "old")]);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          manifest: {
+            schemaVersion: 1,
+            backupId: "backup",
+            vaultTitle: "Vault",
+            sizeBytes: 0,
+            createdAt: "previous",
+            lastPushedAt: "new",
+          },
+        }),
+      } as any;
+    }) as any;
+    vi.mocked(deps.buildPayload).mockResolvedValueOnce({
+      vaultTitle: "Vault",
+      bundle: { entities: [entity] },
+      assets: [
+        {
+          assetId: "portrait.png",
+          bytes: new Uint8Array([1]),
+          mimeType: "image/png",
+        },
+      ],
+    });
+    vi.mocked(pushVaultToCloudBackup).mockImplementationOnce((...args) =>
+      realPush(...args),
+    );
+
+    const pushing = uploads.pushSnapshot("vault", { guarded: false });
+    await assetStarted.promise;
+    entity.content = "new";
+    assetRelease.resolve();
+    expect(await pushing).toEqual({ ok: true });
+    expect(await base.get("vault", "e1")).toEqual(ent("e1", "old"));
+  });
+
+  it("serialises the same detached delta that it records as the base", async () => {
+    const { deps, uploads, base } = withBase();
+    const { pushDeltaToCloudBackup: realPush } = await vi.importActual<
+      typeof import("@codex/cloud-backup-sync")
+    >("@codex/cloud-backup-sync");
+    const entity = ent("e1", "old");
+    const syncing = Promise.withResolvers<void>();
+    const releaseWrite = Promise.withResolvers<void>();
+    const storage = deps.runtime.storage;
+    const write = storage.write.bind(storage);
+    storage.write = async (vaultId, record) => {
+      if ((record as { status?: string } | undefined)?.status === "syncing") {
+        syncing.resolve();
+        await releaseWrite.promise;
+      }
+      await write(vaultId, record);
+    };
+    await write("vault", {
+      vaultId: "vault",
+      backupId: "backup",
+      ownerCode: "owner",
+      enabled: true,
+      status: "idle",
+      lastPushedAt: "previous",
+      consentedAt: "now",
+    });
+    deps.runtime.fetch = vi.fn(async (_url: string, init: any) => {
+      const body = JSON.parse(init.body);
+      expect(body.upserts).toEqual([ent("e1", "old")]);
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          manifest: {
+            schemaVersion: 1,
+            backupId: "backup",
+            vaultTitle: "Vault",
+            sizeBytes: 0,
+            createdAt: "previous",
+            lastPushedAt: "newer",
+          },
+        }),
+      } as any;
+    }) as any;
+    deps.buildDelta = vi.fn(async () => ({
+      vaultTitle: "Vault",
+      upserts: [entity],
+      deletes: [],
+      assetIds: [],
+    }));
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["e1"] });
+    vi.mocked(pushDeltaToCloudBackup).mockImplementationOnce((...args) =>
+      realPush(...args),
+    );
+
+    const pushing = uploads.pushSnapshot("vault", { guarded: true });
+    await syncing.promise;
+    entity.content = "new";
+    releaseWrite.resolve();
+    expect(await pushing).toEqual({ ok: true });
+    expect(await base.get("vault", "e1")).toEqual(ent("e1", "old"));
+  });
+
+  it("records nothing when a bundle has no entities", async () => {
+    const { uploads, base } = withBase();
+    await base.recordSent("vault", [ent("keep")], []);
+    await uploads.pushSnapshot("vault", { guarded: false });
+    expect(await baseIds(base)).toEqual(["keep"]);
+  });
+
+  it("records nothing when a push fails", async () => {
+    const { deps, uploads, base } = withBase();
+    await base.recordSent("vault", [ent("old")], []);
+    vi.mocked(deps.buildPayload).mockResolvedValue({
+      vaultTitle: "Vault",
+      bundle: { entities: [ent("new")] },
+    });
+    vi.mocked(pushVaultToCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      error: "offline",
+    });
+    await uploads.pushSnapshot("vault", { guarded: false });
+    deps.buildDelta = vi.fn(async () => ({
+      vaultTitle: "Vault",
+      upserts: [ent("new")],
+      deletes: ["old"],
+      assetIds: [],
+    }));
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["new"] });
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce({
+      ok: false,
+      conflict: true,
+      error: "Newer copy",
+    });
+    await uploads.pushSnapshot("vault", { guarded: true });
+    expect(await baseIds(base)).toEqual(["old"]);
+  });
+
+  it("records nothing when the push is cancelled", async () => {
+    const { deps, uploads, base } = withBase();
+    const pushing = Promise.withResolvers<void>();
+    vi.mocked(deps.buildPayload).mockResolvedValueOnce({
+      vaultTitle: "Vault",
+      bundle: { entities: [ent("e1")] },
+    });
+    let release!: () => void;
+    vi.mocked(pushVaultToCloudBackup).mockImplementationOnce(async () => {
+      pushing.resolve();
+      await new Promise<void>((r) => (release = r));
+      return {
+        ok: true,
+        value: {
+          schemaVersion: 1,
+          backupId: "backup",
+          vaultTitle: "Vault",
+          sizeBytes: 0,
+          createdAt: "previous",
+          lastPushedAt: "new",
+        },
+      };
+    });
+    const saving = uploads.pushSnapshot("vault", { guarded: false });
+    await pushing.promise;
+    const cancelling = uploads.cancel();
+    release();
+    await cancelling;
+    await saving;
+    expect(await baseIds(base)).toEqual([]);
+  });
+
+  it("still succeeds and clears dirty rows when recording fails", async () => {
+    const failing: CloudBackupBaseStorage = {
+      ...memoryBaseStorage(),
+      put: async () => {
+        throw new Error("disk full");
+      },
+    };
+    const { deps, uploads } = withBase(failing);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    vi.mocked(deps.buildPayload).mockResolvedValueOnce({
+      vaultTitle: "Vault",
+      bundle: { entities: [ent("e1")] },
+    });
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["e1"] });
+    expect(await uploads.pushSnapshot("vault", { guarded: false })).toEqual({
+      ok: true,
+    });
+    expect(await deps.dirty!.snapshot("vault")).toEqual([]);
+    expect(warn).toHaveBeenCalledWith(
+      "[CloudBackup] Could not record the merge base",
+      expect.any(Error),
+    );
+    warn.mockRestore();
+  });
+
+  it("notifies when a delta push triggers trash eviction on the active vault", async () => {
+    const { deps, uploads } = withBase();
+    const notify = vi.fn();
+    deps.notify = notify;
+    deps.buildDelta = vi.fn(async () => ({
+      vaultTitle: "Vault",
+      upserts: [ent("a")],
+      deletes: [],
+      assetIds: [],
+    }));
+    await deps.dirty!.record("vault", { kind: "entity", ids: ["a"] });
+    vi.mocked(pushDeltaToCloudBackup).mockResolvedValueOnce({
+      ...deltaOk,
+      trashEvicted: {
+        evictedCount: 2,
+        usedBytes: 40 * 1024 * 1024,
+        maxBytes: 50 * 1024 * 1024,
+      },
+    });
+
+    const out = await uploads.pushSnapshot("vault", { guarded: true });
+    expect(out.ok).toBe(true);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0][0]).toContain("50 MB");
+    expect(notify.mock.calls[0][0]).toContain("2 older deleted items");
   });
 });

@@ -47,7 +47,7 @@
             }}
           >
             <span
-              class="block font-header text-base font-bold leading-snug text-theme-text transition-colors group-hover:text-theme-primary"
+              class="block font-header text-base font-bold leading-snug text-theme-text"
               >{link.title}</span
             >
             <span class="line-clamp-2 block text-sm text-theme-text"

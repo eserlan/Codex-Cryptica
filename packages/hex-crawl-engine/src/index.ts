@@ -20,3 +20,5 @@ export * from "./region/targets";
 export * from "./region/generate";
 export * from "./region/apply";
 export * from "./region/repair";
+export * from "./topology";
+export * from "./geography";

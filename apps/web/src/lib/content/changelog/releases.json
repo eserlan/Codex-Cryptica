@@ -1,5 +1,28 @@
 [
   {
+    "version": "0.37.2",
+    "title": "Adventure Package Versions",
+    "date": "2026-11-16",
+    "type": "patch",
+    "highlights": [
+      "Re-importing the Same Adventure Is Recognised: Importing an adventure package you already have tells you it is already imported instead of erroring, and writes nothing.",
+      "Changed Adventures Become New Versions With a Reviewable Diff: Importing changed content for the same adventure opens the review as a new version, showing what was added, removed, or changed since the previous approved version. Earlier versions stay untouched and startable, and sessions keep playing the exact version they began with.",
+      "Unused Versions Can Be Removed: Each approved version now has a remove option. A version still used by a session cannot be removed, and Codex Cryptica explains why."
+    ]
+  },
+  {
+    "version": "0.37.1",
+    "title": "The Shared Vault Update",
+    "date": "2026-11-14",
+    "type": "patch",
+    "highlights": [
+      "Share a Vault with Your Group: Turn on sharing in Cloud Backup settings and send one link. Everyone who joins works on the same vault from their own device.",
+      "Changes Merge Automatically: Edits from different people combine on their own. When two people change the same thing, both versions are kept so nothing is lost.",
+      "A Shared Trash: Anything deleted in the group stays in a shared trash for 30 days, and any member can restore it.",
+      "Roll the Group Back to an Earlier Day: The owner can pick a daily restore point and roll the whole vault back to it. Anything the earlier day did not have goes to the trash instead of being lost, and members catch up on their next sync."
+    ]
+  },
+  {
     "version": "0.37.0",
     "title": "The Living World & AI GM Update",
     "date": "2026-11-13",

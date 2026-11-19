@@ -70,6 +70,7 @@ function checkRepair(
     nextCast,
     foundation,
     nextClues,
+    resolved.complexity,
   );
   return {
     hard: [
@@ -167,7 +168,14 @@ async function buildCase(
   const pressure = await run(
     "mystery-pressure",
     mysteryStagePrompts.pressure(foundation.data, cast.data, clues.data),
-    (data) => checkPressure(data, cast.data, foundation.data, clues.data),
+    (data) =>
+      checkPressure(
+        data,
+        cast.data,
+        foundation.data,
+        clues.data,
+        resolved.complexity,
+      ),
     normalizeMysteryStage.pressure,
   );
   if (!pressure) return { stoppedAt: "pressure" };

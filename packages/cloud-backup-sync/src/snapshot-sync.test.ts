@@ -75,4 +75,64 @@ describe("snapshot sync", () => {
       pushVaultToCloudBackup(runtime, "v-1", PAYLOAD),
     ).rejects.toThrow("Offline");
   });
+
+  it("stores the revision of a full commit", async () => {
+    const { runtime } = await enabled({
+      ok: true,
+      status: 200,
+      body: { manifest: { ...MANIFEST, revision: 3 } },
+    });
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
+    expect((await getLocalCloudBackupRecord(runtime, "v-1"))?.revision).toBe(3);
+  });
+
+  it("drops a stale revision when the worker returns none", async () => {
+    const { runtime } = await enabled();
+    const record = (await getLocalCloudBackupRecord(runtime, "v-1"))!;
+    await runtime.storage.write("v-1", { ...record, revision: 2 });
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
+    expect(await getLocalCloudBackupRecord(runtime, "v-1")).not.toHaveProperty(
+      "revision",
+    );
+  });
+});
+
+describe("foreignCommitSeen", () => {
+  async function flagged(guarded: boolean) {
+    const h = await enabled(
+      ...(guarded
+        ? [
+            {
+              ok: true,
+              status: 200,
+              body: { lastPushedAt: MANIFEST.lastPushedAt },
+            },
+          ]
+        : []),
+    );
+    const record = await getLocalCloudBackupRecord(h.runtime, "v-1");
+    await h.runtime.storage.write("v-1", {
+      ...record,
+      foreignCommitSeen: true,
+    });
+    return h;
+  }
+
+  it("is kept by a guarded push", async () => {
+    const { runtime } = await flagged(true);
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD, undefined, {
+      expectLastPushedAt: MANIFEST.lastPushedAt,
+    });
+    expect(
+      (await getLocalCloudBackupRecord(runtime, "v-1"))?.foreignCommitSeen,
+    ).toBe(true);
+  });
+
+  it("is cleared by an unguarded push", async () => {
+    const { runtime } = await flagged(false);
+    await pushVaultToCloudBackup(runtime, "v-1", PAYLOAD);
+    expect(
+      (await getLocalCloudBackupRecord(runtime, "v-1"))?.foreignCommitSeen,
+    ).toBeUndefined();
+  });
 });

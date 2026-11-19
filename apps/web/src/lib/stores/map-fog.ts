@@ -1,6 +1,7 @@
 import type { Map } from "schema";
 import { vault as defaultVault } from "./vault.svelte";
 import { writeOpfsFile } from "../utils/opfs";
+import { updateLastInternalChange } from "./vault/registry";
 
 type FogState = {
   fogRevision: number;
@@ -16,6 +17,7 @@ export class MapFog {
       typeof defaultVault,
       "getActiveVaultHandle" | "saveQueue"
     > = defaultVault,
+    private readonly reportChange: typeof updateLastInternalChange = updateLastInternalChange,
   ) {}
 
   async saveMask(canvas: HTMLCanvasElement) {
@@ -24,30 +26,30 @@ export class MapFog {
     const vaultDir = await this.vault.getActiveVaultHandle();
     if (!vaultDir) return;
 
-    return this.vault.saveQueue.enqueue(
-      `mask-${this.state.activeMapId}`,
-      async () => {
-        try {
-          const blob = await new Promise<Blob>((resolve, reject) => {
-            canvas.toBlob(
-              (b) =>
-                b
-                  ? resolve(b)
-                  : reject(new Error("Failed to create blob from canvas")),
-              "image/png",
-            );
-          });
-          await writeOpfsFile(
-            ["maps", `${this.state.activeMapId}_mask.png`],
-            blob,
-            vaultDir,
-            vaultDir.name,
+    const mapId = this.state.activeMapId;
+    return this.vault.saveQueue.enqueue(`mask-${mapId}`, async () => {
+      try {
+        const blob = await new Promise<Blob>((resolve, reject) => {
+          canvas.toBlob(
+            (b) =>
+              b
+                ? resolve(b)
+                : reject(new Error("Failed to create blob from canvas")),
+            "image/png",
           );
-        } catch (err) {
-          console.error("[MapStore] Failed to save mask", err);
-        }
-      },
-    );
+        });
+        await writeOpfsFile(
+          ["maps", `${this.state.activeMapId}_mask.png`],
+          blob,
+          vaultDir,
+          vaultDir.name,
+        );
+        // A mask edit leaves the map record alone, so name the map for sync.
+        await this.reportChange(vaultDir.name, { kind: "maps", ids: [mapId] });
+      } catch (err) {
+        console.error("[MapStore] Failed to save mask", err);
+      }
+    });
   }
 
   async loadMask(width: number, height: number): Promise<HTMLCanvasElement> {

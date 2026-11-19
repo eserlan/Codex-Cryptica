@@ -1,0 +1,162 @@
+import type {
+  AdventurePerson,
+  PersonResolutionInput,
+  PersonResolutionResult,
+} from "./people-types";
+
+export const MAX_ADVENTURE_PEOPLE = 200;
+export const MAX_PERSON_ALIASES = 8;
+export const MAX_PERSON_NAME_LENGTH = 120;
+export const MAX_PERSON_LINKED_FACTS = 32;
+
+function trimName(value: string | undefined): string {
+  return (value ?? "").trim().slice(0, MAX_PERSON_NAME_LENGTH);
+}
+
+function findPersonByAlias(
+  people: readonly AdventurePerson[],
+  alias: string | undefined,
+): { person: AdventurePerson | null; reason?: "ambiguous" | "missing" } {
+  if (!alias) return { person: null };
+  const aliasTrimmed = trimName(alias);
+  const matches = people.filter((p) => p.aliases.includes(aliasTrimmed));
+  if (matches.length === 1) return { person: matches[0] };
+  if (matches.length > 1) return { person: null, reason: "ambiguous" };
+  return { person: null };
+}
+
+function findExistingPerson(
+  people: readonly AdventurePerson[],
+  input: PersonResolutionInput,
+): { person: AdventurePerson | null; reason?: "ambiguous" | "missing" } {
+  const matchers: Array<() => AdventurePerson | undefined> = [
+    () =>
+      input.sourceRecordId
+        ? people.find((p) => p.sourceRecordId === input.sourceRecordId)
+        : undefined,
+    () => (input.id ? people.find((p) => p.id === input.id) : undefined),
+    () =>
+      input.factId
+        ? people.find((p) => p.linkedFactIds.includes(input.factId!))
+        : undefined,
+  ];
+  for (const match of matchers) {
+    const person = match();
+    if (person) return { person };
+  }
+  return findPersonByAlias(people, input.alias);
+}
+
+function attachFactLink(
+  people: AdventurePerson[],
+  person: AdventurePerson,
+  factId: string | undefined,
+): PersonResolutionResult {
+  if (
+    !factId ||
+    person.linkedFactIds.includes(factId) ||
+    person.linkedFactIds.length >= MAX_PERSON_LINKED_FACTS
+  ) {
+    return { people, person };
+  }
+  const updated = {
+    ...person,
+    linkedFactIds: [...person.linkedFactIds, factId],
+  };
+  return {
+    people: people.map((p) => (p.id === person.id ? updated : p)),
+    person: updated,
+  };
+}
+
+export function registerOrResolvePerson(
+  existing: readonly AdventurePerson[],
+  input: PersonResolutionInput,
+): PersonResolutionResult {
+  const people = [...existing];
+  if (input.kind !== "person" || input.visibility !== "player-visible") {
+    return { people, person: null, reason: "hidden" };
+  }
+
+  const found = findExistingPerson(people, input);
+  if (found.person) {
+    return attachFactLink(people, found.person, input.factId);
+  }
+  if (found.reason) {
+    return { people, person: null, reason: found.reason };
+  }
+
+  const nameTrimmed = trimName(input.name);
+  if (!input.id) {
+    const matches = nameTrimmed
+      ? people.filter((p) => p.name === nameTrimmed)
+      : [];
+    return {
+      people,
+      person: null,
+      reason: matches.length > 1 ? "ambiguous" : "missing",
+    };
+  }
+
+  if (!nameTrimmed) {
+    return { people, person: null, reason: "invalid" };
+  }
+
+  if (people.length >= MAX_ADVENTURE_PEOPLE) {
+    return { people, person: null, reason: "capacity" };
+  }
+
+  const created: AdventurePerson = {
+    id: input.id,
+    name: nameTrimmed,
+    aliases: [],
+    linkedFactIds: input.factId ? [input.factId] : [],
+    ...(input.sourceRecordId ? { sourceRecordId: input.sourceRecordId } : {}),
+  };
+  people.push(created);
+  return { people, person: created };
+}
+
+export function addPersonAlias(
+  people: readonly AdventurePerson[],
+  personId: string,
+  alias: string,
+): AdventurePerson[] {
+  const trimmed = trimName(alias);
+  if (!trimmed) return [...people];
+  return people.map((person) => {
+    if (person.id !== personId) return person;
+    if (
+      person.aliases.includes(trimmed) ||
+      person.aliases.length >= MAX_PERSON_ALIASES
+    ) {
+      return person;
+    }
+    return { ...person, aliases: [...person.aliases, trimmed] };
+  });
+}
+
+export function removePersonFactLink(
+  people: readonly AdventurePerson[],
+  factId: string,
+): AdventurePerson[] {
+  return people.map((person) =>
+    person.linkedFactIds.includes(factId)
+      ? {
+          ...person,
+          linkedFactIds: person.linkedFactIds.filter((id) => id !== factId),
+        }
+      : person,
+  );
+}
+
+export function linkPersonToCanonical(
+  people: readonly AdventurePerson[],
+  personId: string,
+  sourceRecordId: string,
+): AdventurePerson[] {
+  if (!sourceRecordId.trim()) return [...people];
+  return people.map((person) =>
+    person.id === personId ? { ...person, sourceRecordId } : person,
+  );
+}

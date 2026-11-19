@@ -26,12 +26,26 @@ describe("staged mystery output", () => {
       "Clue Index",
       "Routes to Each Conclusion",
       "Pressure Clock",
-      "NPC Responses",
       "Objective and Approaches",
       "Possible Outcomes",
     ]) {
       expect(output.content).toContain(`## ${heading}\n`);
     }
+    expect(output.content).not.toContain(
+      "## If the Investigation Stalls: Next NPC Moves\n",
+    );
+    expect(output.lore).toContain(
+      "## If the Investigation Stalls: Next NPC Moves\n",
+    );
+    expect(output.lore).toContain(
+      "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
+    );
+    expect(output.lore).toContain(
+      "| Oren Pike | Asked about the key. | Oren shares the copied log. | Oren unlocks the desk drawer and hands over a ledger. | Compare the ledger ink with the archive supply. |",
+    );
+    expect(output.lore).toContain(
+      "| Sella Reed | The investigation stalls before dusk. | Sella remains at the ferry post and watches quietly. | No overt change; ferry crossings proceed on schedule. | None |",
+    );
     expect(output.content).not.toContain("Responsible party");
     expect(output.lore).toContain("**Responsible party:** Mara Quill");
     expect(output.mysteryGraph?.nodes.length).toBeGreaterThan(0);
@@ -51,7 +65,9 @@ describe("staged mystery output", () => {
     expect(output.lore).toContain(
       "Hide an unlisted conclusion from an unlisted person",
     );
-    expect(output.content).toContain("If the party asks, then They explain.");
+    expect(output.lore).toContain(
+      "| Oren Pike | The party asks. | They explain. |",
+    );
     expect(output.content + output.lore).not.toMatch(
       /tracker\.example|<img|\b(?:person|place|clue|rev)-\d+\b/,
     );
@@ -76,5 +92,19 @@ describe("staged mystery output", () => {
     );
     expect(output.lore).not.toContain("Captive or victim");
     expect(output.lore).not.toContain("When play starts");
+  });
+  it("escapes model-provided remote media in NPC table cells", () => {
+    const [foundation, cast, clues, pressure] = validStages();
+    pressure.npcResponses[0].observableEffect =
+      '<video src="https://tracker.example/pixel.mp4" autoplay muted></video>';
+    pressure.npcResponses[1].testableLead =
+      '<audio src="https://tracker.example/pixel.mp3"></audio>';
+
+    const output = assembleOutput(foundation, cast, clues, pressure);
+
+    expect(output.lore).not.toMatch(/<(?:video|audio)\b/i);
+    expect(output.lore).toContain("&lt;video");
+    expect(output.lore).toContain("&lt;audio");
+    expect(output.lore).toContain("tracker.example");
   });
 });

@@ -30,6 +30,7 @@ function target(): NonNullable<CloudBackupDeps["restore"]> {
     importMaps: vi.fn(async () => {}),
     importCanvases: vi.fn(async () => {}),
     importSessionJournals: vi.fn(async () => {}),
+    importAdventures: vi.fn(async () => {}),
   };
 }
 
@@ -79,6 +80,35 @@ describe("cloud backup restore", () => {
     });
   });
 
+  it("never imports journals or adventures for a member", async () => {
+    const restore = target();
+    await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      restore,
+      { ...credentials, role: "editor" },
+      material({
+        entities: [1],
+        maps: [2],
+        sessionJournals: [4],
+        adventures: [5],
+      }),
+    );
+    expect(restore.importEntities).toHaveBeenCalled();
+    expect(restore.importMaps).toHaveBeenCalled();
+    expect(restore.importSessionJournals).not.toHaveBeenCalled();
+    expect(restore.importAdventures).not.toHaveBeenCalled();
+
+    const owner = target();
+    await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      owner,
+      credentials,
+      material({ sessionJournals: [4], adventures: [5] }),
+    );
+    expect(owner.importSessionJournals).toHaveBeenCalled();
+    expect(owner.importAdventures).toHaveBeenCalled();
+  });
+
   it("ignores malformed collections and counts media without an importer", async () => {
     const restore = target();
     restore.importMaps = undefined;
@@ -89,6 +119,33 @@ describe("cloud backup restore", () => {
       material({ entities: {}, maps: [1], assetManifest: [{ assetId: "a" }] }),
     );
     expect(restore.importEntities).not.toHaveBeenCalled();
+    expect(result.missingAssets).toBe(1);
+  });
+  it("restores adventure documents into the newly created Vault", async () => {
+    const restore = target();
+    const doc = { id: "adventure-1", vaultId: "old-vault" };
+    await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      restore,
+      credentials,
+      material({ adventures: [doc] }),
+    );
+    expect(restore.importAdventures).toHaveBeenCalledWith("new-vault", [doc]);
+  });
+  it("never imports unsafe paths from the remote asset manifest", async () => {
+    const restore = target();
+    restore.importAsset = vi.fn();
+    const result = await restoreCloudBackupIntoNewVault(
+      createInertRuntime(),
+      restore,
+      credentials,
+      material({
+        assetManifest: [
+          { assetId: "escape", path: "../outside.png", mimeType: "image/png" },
+        ],
+      }),
+    );
+    expect(restore.importAsset).not.toHaveBeenCalled();
     expect(result.missingAssets).toBe(1);
   });
 

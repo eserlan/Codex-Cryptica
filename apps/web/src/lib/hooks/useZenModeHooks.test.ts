@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createEditState } from "./useEditState.svelte";
 import { createZenModeActions } from "./useZenModeActions.svelte";
+import { entityEditingRegistry } from "../stores/entity-editing-registry";
 import type { Entity } from "schema";
 
 describe("ZenMode Hooks", () => {
@@ -34,6 +35,18 @@ describe("ZenMode Hooks", () => {
       state.start(mockEntity);
       state.cancel();
       expect(state.isEditing).toBe(false);
+    });
+
+    it("marks the entity as being edited until canceled or disposed", () => {
+      const tracked = { ...mockEntity, id: "tracked-id" };
+      const state = createEditState(null);
+      state.start(tracked);
+      expect(entityEditingRegistry.isEditing(tracked.id)).toBe(true);
+      state.cancel();
+      expect(entityEditingRegistry.isEditing(tracked.id)).toBe(false);
+      state.start(tracked);
+      state.dispose();
+      expect(entityEditingRegistry.isEditing(tracked.id)).toBe(false);
     });
 
     it("hydrates content for the active edit session even without a selected entity", async () => {

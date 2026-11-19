@@ -34,6 +34,7 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Running and Designing RPG Heists](https://codexcryptica.com/topics/heists): Complete resource cluster for tabletop heists: four-phase running framework, target design checklist, worked genre examples, and heist generation tools.
 - [Designing and Running RPG Puzzles](https://codexcryptica.com/topics/puzzles): RPG puzzle design, hint ladders, worked examples with alternate solutions, and a table-ready puzzle generator.
 - [Solo RPGs: Tools, Oracles, Generators & Guides for Playing Alone](https://codexcryptica.com/topics/solo-rpg): How to play a tabletop RPG alone: starting out, oracles and question-asking, avoiding random-feeling play, keeping a campaign log, and the generators that feed the solo loop.
+- [Star Systems & Sci-Fi Campaign Building](https://codexcryptica.com/topics/star-systems): Learning path for designing and running a playable sci-fi star system: destinations, routes, resource flows, competing factions, a flashpoint, and the generators that fill in the detail.
 
 ## Solution Pages
 
@@ -80,6 +81,8 @@ Codex Cryptica is local-first: vault data is stored locally by default and does 
 - [Import from Obsidian](https://codexcryptica.com/import/obsidian-vault): Bring your Obsidian markdown vault into Codex Cryptica.
 - [Import from Kanka](https://codexcryptica.com/import/kanka-json): Migrate a Kanka JSON export to a local vault.
 - [Import from LegendKeeper](https://codexcryptica.com/import/legendkeeper-json): Migrate a LegendKeeper export to a local vault.
+- [Adventure JSON Conversion Guide](https://codexcryptica.com/adventure-import): Convert owned adventures into Adventure JSON v1 using ChatGPT, Claude, Gemini, or local models with the canonical prompt and static JSON Schema.
+- [Adventure JSON conversion prompt (plain text)](https://codexcryptica.com/adventure-import/prompt.txt): The canonical conversion prompt as plain text. Follow it exactly to convert an adventure the user owns into Adventure JSON v1; reply with JSON only.
 
 ## Free Generators
 
@@ -147,6 +150,7 @@ The pages above are informational landing pages; these are the canonical, no-log
 - [Vampire Clan Generator](https://codexcryptica.com/generators/vampire-clan): Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.
 - [Cyberpunk Nomad Clan Generator](https://codexcryptica.com/generators/nomad-clan): Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.
 - [Dark Fantasy Faction Generator](https://codexcryptica.com/generators/dark-fantasy-faction): Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.
+- [Urban Fantasy Faction Generator](https://codexcryptica.com/generators/urban-fantasy-faction): Build supernatural city factions, not cities: mage cabals, monster courts, paranormal agencies, occult crews and modern institutions with agendas, NPCs and playable conflicts. Generate locally without an account, then save a faction draft to your browser-local Codex.
 <!-- LLMS-GENERATORS:END -->
 
 ## Answer Pages

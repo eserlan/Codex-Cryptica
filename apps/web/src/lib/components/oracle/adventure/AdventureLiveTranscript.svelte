@@ -1,9 +1,78 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
+  import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
+  import { createDisplayService } from "#lib/services/adventure/artwork/create-display-service.js";
+  import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
+  import { computeTurnArtworkReveals } from "#lib/services/adventure/artwork/turn-artwork-reveals.js";
+  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { vault } from "#lib/stores/vault.svelte.js";
+  import AdventureTurnArtwork from "./artwork/AdventureTurnArtwork.svelte";
   import AdventureNarrativeTurn from "./AdventureNarrativeTurn.svelte";
 
   let { manager }: { manager: AdventureManager } = $props();
+
+  let preferencesEnabled = $state(artworkPreferences.enabled);
+  $effect(() => {
+    preferencesEnabled = artworkPreferences.enabled;
+    return artworkPreferences.subscribe((value) => {
+      preferencesEnabled = value;
+    });
+  });
+
+  const artworkEnabled = $derived(
+    import.meta.env.VITE_ADVENTURE_ARTWORK === "true" && preferencesEnabled,
+  );
+  let artworkDisplay = $state.raw<ArtworkDisplayService | null>(null);
+  $effect(() => {
+    if (!artworkEnabled) {
+      artworkDisplay = null;
+      return;
+    }
+    let resources: ReturnType<typeof createDisplayService> | undefined;
+    try {
+      resources = createDisplayService(artworkPreferences);
+      artworkDisplay = resources.display;
+    } catch {
+      artworkDisplay = null;
+    }
+    return () => {
+      resources?.destroy();
+      artworkDisplay = null;
+    };
+  });
+  let catalogue = $state<readonly ArtworkAsset[]>(
+    defaultArtworkCatalogue.peek() ?? [],
+  );
+  $effect(() => {
+    if (!artworkEnabled || catalogue.length > 0) return;
+    let cancelled = false;
+    void defaultArtworkCatalogue
+      .get()
+      .then((assets) => {
+        if (!cancelled && assets) catalogue = assets;
+      })
+      .catch(() => {
+        // Optional artwork catalogue; skip silently if unavailable.
+      });
+    return () => {
+      cancelled = true;
+    };
+  });
+  const turnReveals = $derived(
+    artworkEnabled
+      ? computeTurnArtworkReveals({
+          session: manager.session,
+          activeVaultId: vault.activeVaultId,
+          entities: vault.entities,
+          enabled: artworkEnabled,
+          theme: themeStore.worldThemeId,
+          catalogue,
+        })
+      : new Map(),
+  );
 
   const generationMessages = [
     "The Oracle traces the threads of consequence…",
@@ -37,7 +106,17 @@
 >
   {#if manager.transcript}
     {#each manager.transcript.turns as turn (turn.sequence)}
-      <AdventureNarrativeTurn {turn} roll={rollFor(turn.sequence)} />
+      {@const reveal = turnReveals.get(turn.sequence)}
+      <div class="space-y-3">
+        <AdventureNarrativeTurn {turn} roll={rollFor(turn.sequence)} />
+        {#if reveal && artworkDisplay}
+          <AdventureTurnArtwork
+            {reveal}
+            display={artworkDisplay}
+            resolve={(path) => vault.resolveImageUrl(path)}
+          />
+        {/if}
+      </div>
     {/each}
   {/if}
   {#if manager.phase === "generating" && manager.streamedNarration}

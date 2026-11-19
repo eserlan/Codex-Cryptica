@@ -18,13 +18,22 @@ Only lines changed against the base (`merge-base HEAD origin/staging`, or
 `--base <ref>`) are reported, so existing code never blocks unrelated work. New,
 untracked files are checked in full.
 
-- **contrast**: each `text-theme-*` class, including `/NN` opacity and ternary
-  branches, is measured against its `bg-theme-*` class on the same element (or
-  against the page background and surface when there is none) in every theme
-  template, light and dark, with the `app.css` per-theme overrides applied. The
-  threshold is 4.5:1 for text and 3:1 for icons and large bold text. Prefixed
-  classes (`hover:`, `dark:`) are skipped. The checker cannot see a parent
-  element's background, so a tinted parent can still hide a failure.
+- **contrast**: each `text-theme-*` class (including `danger`/`warning`, `/NN`
+  opacity, and ternary branches) is measured against its `bg-theme-*` class on
+  the same element (or against the page background and surface when there is
+  none) in every theme template, light and dark, with the `app.css` per-theme
+  overrides applied. The threshold is 4.5:1 for text and 3:1 for icons and large
+  bold text. The checker cannot see a parent element's background, so a tinted
+  parent can still hide a failure.
+- **state-contrast**: checks interactive state contrast for `hover:text-theme-*`
+  / `hover:bg-theme-*`, `disabled:text-theme-*` / `disabled:opacity-NN`, and 3:1
+  non-text contrast on `focus:` / `focus-visible:` ring and outline tokens.
+- **border-contrast**: checks 3:1 non-text contrast on outlined interactive
+  controls (`<button>`, `<input>`, `<select>`, `<textarea>`) using
+  `border-theme-*` without a solid primary/accent fill.
+- **modal-focus**: flags raw `aria-modal="true"` or `role="dialog"` in `.svelte`
+  files that do not use `use:focusTrap` or `ModalShell` (or explicit `Tab`
+  trapping with focus restoration).
 - **remote-images**: `renderMarkdown(...)` without `allowImages: false`. Model
   output and imported content must not fetch remote images (Constitution IV).
 - **visual-order**: a base `order-N` with a different `sm:`/`md:`/`lg:`/`xl:`
@@ -49,3 +58,20 @@ bun scripts/check-ui-patterns.mjs                 # changed lines vs origin/stag
 bun scripts/check-ui-patterns.mjs --files a.svelte  # only these files
 bun test scripts/check-ui-patterns.test.ts
 ```
+
+## Reusable safety & test helpers
+
+- `apps/web/src/lib/components/ui/PaginatedList.svelte`: reusable, accessible
+  paginated list with theme-compliant contrast and bounded DOM rendering for
+  imported or user-supplied collections.
+- `packages/adventure-engine/src/adventure-json/creature-proposals.ts`
+  (`escapeEntryText`, exported from `@codex/adventure-engine`): escapes
+  Markdown/HTML control characters, `https?://`, and `www.` so imported or
+  user text stays literal prose without remote images or autolinked URLs.
+- `apps/web/src/lib/services/vault-scoped-batch.ts` (`runVaultScopedBatch`):
+  reusable async per-item runner for multi-write Vault workflows. Captures the
+  active Vault ID at start, checks Vault identity and optional `AbortSignal`
+  before/after each item, and reports `{ processed, total, interrupted, cancelled }`.
+- `apps/web/src/lib/test-utils/pr-guardrails.ts`: shared Vitest assertions for
+  recurring PR review defects—`assertNoRemoteResourceFetches(html)`,
+  `assertNoActiveLinks(html)`, and `assertBoundedPerformance(label, fn, maxMs)`.

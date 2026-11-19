@@ -408,6 +408,10 @@ describe("what the model and the player see", () => {
     expect(prompt.behavior).toContain("set moveTo");
     expect(prompt.behavior).toContain("copied from knownPlaces");
     expect(prompt.behavior).toContain("marked canonical");
+    expect(prompt.behavior).toContain(
+      "playerCharacter's personality, traits, and situation",
+    );
+    expect(prompt.behavior).toContain("Present NPCs:");
   });
 
   it("limits the player's who-is-here list to the current place", () => {
@@ -426,5 +430,56 @@ describe("what the model and the player see", () => {
     const unplaced = placedSession();
     delete unplaced.currentPlaceId;
     expect(isHere({ placeId: "p-high" }, unplaced)).toBe(false);
+  });
+
+  it("persists moveTo.cues and placeCues onto Place.cues without overwriting existing cues", () => {
+    const start = placedSession();
+    const moved = commit(
+      start,
+      turn({
+        moveTo: {
+          name: "Oslo Docks",
+          cues: ["harbour", "city"],
+        },
+      }),
+    );
+    const created = moved.places?.find((p) => p.name === "Oslo Docks");
+    expect(created?.cues).toEqual(["harbour", "city"]);
+
+    const withoutOverwriteResult = applyCompletedTurn(
+      moved,
+      turn({ placeCues: ["ruins", "forest"] }),
+      { turnId: "turn-2", inputId: "input-2", now: meta.now },
+      meta.now,
+      nextId,
+    );
+    expect(withoutOverwriteResult.ok).toBe(true);
+    if (!withoutOverwriteResult.ok) return;
+    expect(
+      withoutOverwriteResult.value.places?.find((p) => p.id === created?.id)
+        ?.cues,
+    ).toEqual(["harbour", "city"]);
+
+    const untaggedCurrent = commit(
+      start,
+      turn({ placeCues: ["village", "valley"] }),
+    );
+    expect(untaggedCurrent.places?.find((p) => p.id === "p-low")?.cues).toEqual(
+      ["village", "valley"],
+    );
+  });
+
+  it("rejects invalid placeCues or moveTo.cues in turn proposals", () => {
+    const base = JSON.parse(JSON.stringify(proposal()));
+    expect(() => parseTurnProposal({ ...base, placeCues: ["   "] })).toThrow();
+    expect(() =>
+      parseTurnProposal({
+        ...base,
+        moveTo: {
+          name: "Too Many Cues",
+          cues: ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+        },
+      }),
+    ).toThrow();
   });
 });

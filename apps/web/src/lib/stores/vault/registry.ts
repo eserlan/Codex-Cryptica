@@ -119,12 +119,13 @@ const triggerRefresh = debounce(async () => {
 
 /**
  * What a durable write touched (#3354), so incremental cloud backup can upload
- * only that. Maps are persisted as one metadata file, so they carry no ids.
+ * only that. Maps are persisted as one metadata file, so a change may carry no
+ * ids; a mask write names its map.
  */
 export type DurableVaultChange =
   | { kind: "entity"; ids: string[]; deleted?: boolean }
   | { kind: "canvas"; ids: string[]; deleted?: boolean }
-  | { kind: "maps" };
+  | { kind: "maps"; ids?: string[] };
 
 /**
  * Records a durable write. Callers pass `change` describing what they wrote; a

@@ -49,19 +49,19 @@
   <div class="max-w-6xl mx-auto px-4 sm:px-6 py-16 flex-grow w-full">
     <div class="text-center mb-14">
       <div
-        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-primary mb-4"
+        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-micro font-mono font-medium bg-theme-primary/10 border border-theme-primary/20 text-theme-text mb-4"
       >
         <span class="icon-[lucide--folder-input] w-3.5 h-3.5" aria-hidden="true"
         ></span>
         Migration Hub
       </div>
       <h1
-        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-primary mb-4"
+        class="font-header font-extrabold text-3xl md:text-5xl tracking-wide text-theme-text mb-4"
       >
         Bring Your Campaign Into Codex Cryptica
       </h1>
       <p
-        class="text-base md:text-lg text-theme-text/80 leading-relaxed max-w-2xl mx-auto"
+        class="text-base md:text-lg text-theme-text/90 leading-relaxed max-w-2xl mx-auto"
       >
         Every export below is parsed and previewed entirely in your browser.
         Nothing is uploaded anywhere. Pick the tool you're migrating from.
@@ -80,12 +80,12 @@
               >{importer.h1}</span
             >
 
-            <span class="block text-base text-theme-muted leading-relaxed mb-4"
+            <span class="block text-base text-theme-text leading-relaxed mb-4"
               >{importer.subheading}</span
             >
 
             <span
-              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-primary"
+              class="inline-flex items-center gap-1.5 text-xs font-bold text-theme-text"
             >
               {importer.ctaText}
               <span
@@ -97,5 +97,35 @@
         </li>
       {/each}
     </ul>
+
+    <div
+      class="mt-10 rounded-2xl border border-theme-primary/35 bg-theme-surface/45 p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+    >
+      <div class="space-y-1.5">
+        <div
+          class="inline-flex items-center gap-1.5 text-xs font-mono font-semibold text-theme-text"
+        >
+          <span class="icon-[lucide--sparkles] w-3.5 h-3.5" aria-hidden="true"
+          ></span>
+          AI-Assisted Adventure Conversion
+        </div>
+        <h2 class="font-header text-xl font-bold text-theme-text">
+          Adventure JSON Conversion Guide
+        </h2>
+        <p class="text-sm md:text-base text-theme-text/90 max-w-2xl">
+          Have a PDF or text adventure you legally own? Use our public canonical
+          prompt and static JSON Schema with ChatGPT, Claude, Gemini, or a local
+          model to convert it into Adventure JSON v1.
+        </p>
+      </div>
+      <a
+        href="{cleanBase}/adventure-import"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-theme-primary text-theme-on-primary font-semibold text-sm hover:opacity-90 transition-opacity shrink-0"
+      >
+        Open Conversion Guide
+        <span class="icon-[lucide--arrow-right] w-4 h-4" aria-hidden="true"
+        ></span>
+      </a>
+    </div>
   </div>
 </div>

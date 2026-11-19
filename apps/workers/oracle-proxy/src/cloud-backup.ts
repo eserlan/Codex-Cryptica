@@ -31,9 +31,25 @@ export {
   handleGetCloudBackupStatus,
   handleGetCloudBackupBundle,
   handleGetCloudBackupIndex,
+  handleGetCloudBackupChanges,
 } from "./cloud-backup-reads";
 export {
   handleCloudBackupAssetUpload,
   handleGetCloudBackupAsset,
 } from "./cloud-backup-assets";
 export { handleCloudBackupDelta } from "./cloud-backup-delta";
+export {
+  handleCloudBackupSharingOn,
+  handleCloudBackupSharingOff,
+  handleCloudBackupSharingReplace,
+} from "./cloud-backup-sharing";
+export {
+  CLOUD_BACKUP_SHARING_DEVICE_CAP,
+  CLOUD_BACKUP_SHARING_DEVICE_WINDOW_DAYS,
+} from "./cloud-backup-sharing-devices";
+export { handleListRestorePoints } from "./cloud-backup-restore-points";
+export { handleCloudBackupRollback } from "./cloud-backup-rollback";
+export {
+  handleListTrash,
+  handleGetTrashItem,
+} from "./cloud-backup-trash-reads";

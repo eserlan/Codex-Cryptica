@@ -1,5 +1,6 @@
 import {
   fetchCloudBackupAsset,
+  sha256Hex,
   type CloudBackupRuntime,
   restoreVaultFromCloudBackup,
 } from "@codex/cloud-backup-sync";
@@ -8,13 +9,18 @@ import type {
   CloudBackupViewState,
   CloudBackupDeps,
 } from "./cloud-backup-types";
+import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
 
 type RestoreTarget = NonNullable<CloudBackupDeps["restore"]>;
 type RestoreMaterial = Extract<
   Awaited<ReturnType<typeof restoreVaultFromCloudBackup>>,
   { ok: true }
 >["value"];
-type RestoreCredentials = { backupId: string; ownerCode: string };
+type RestoreCredentials = {
+  backupId: string;
+  ownerCode: string;
+  role?: "owner" | "editor";
+};
 type RestoreAsset = { assetId: string; path: string; mimeType: string };
 
 function listFrom(bundle: unknown, key: string): unknown[] {
@@ -28,6 +34,7 @@ function readCollections(bundle: unknown) {
     maps: listFrom(bundle, "maps"),
     canvases: listFrom(bundle, "canvases"),
     sessionJournals: listFrom(bundle, "sessionJournals"),
+    adventures: listFrom(bundle, "adventures"),
   };
 }
 
@@ -51,6 +58,11 @@ async function importCollections(
       await restore[method](vaultId, items);
     }
   }
+  if (collections.adventures.length) {
+    if (!restore.importAdventures)
+      throw new Error("Adventure restore is not available.");
+    await restore.importAdventures(vaultId, collections.adventures);
+  }
 }
 
 async function restoreAsset(
@@ -58,7 +70,15 @@ async function restoreAsset(
   credentials: RestoreCredentials,
   asset: RestoreAsset,
   importAsset: NonNullable<RestoreTarget["importAsset"]>,
+  hashes?: Record<string, string>,
 ): Promise<boolean> {
+  if (
+    !asset ||
+    !isSafeRestoredAssetPath(asset.path) ||
+    typeof asset.assetId !== "string" ||
+    !asset.assetId
+  )
+    return false;
   const bytes = await fetchCloudBackupAsset(
     runtime,
     credentials,
@@ -67,6 +87,7 @@ async function restoreAsset(
   if (!bytes.ok) return false;
   try {
     await importAsset(asset.path, bytes.value, asset.mimeType);
+    if (hashes) hashes[asset.assetId] = await sha256Hex(bytes.value);
     return true;
   } catch {
     return false;
@@ -79,12 +100,13 @@ async function importAssets(
   credentials: RestoreCredentials,
   bundle: unknown,
   importAsset: RestoreTarget["importAsset"],
+  hashes?: Record<string, string>,
 ): Promise<number> {
   const manifest = listFrom(bundle, "assetManifest") as RestoreAsset[];
   if (!importAsset) return manifest.length;
   let missing = 0;
   for (const asset of manifest) {
-    if (!(await restoreAsset(runtime, credentials, asset, importAsset)))
+    if (!(await restoreAsset(runtime, credentials, asset, importAsset, hashes)))
       missing++;
   }
   return missing;
@@ -96,18 +118,37 @@ export async function restoreCloudBackupIntoNewVault(
   restore: RestoreTarget,
   credentials: RestoreCredentials,
   material: RestoreMaterial,
-): Promise<{ vaultId: string; vaultTitle: string; missingAssets: number }> {
+  opts: { hashAssets?: boolean } = {},
+): Promise<{
+  vaultId: string;
+  vaultTitle: string;
+  missingAssets: number;
+  /** SHA-256 per restored asset id; present only when `hashAssets` is set. */
+  assetHashes?: Record<string, string>;
+}> {
   const collections = readCollections(material.bundle);
+  // A member never takes the owner's play logs, whatever the bundle holds.
+  if (credentials.role === "editor") {
+    collections.sessionJournals = [];
+    collections.adventures = [];
+  }
   const vaultTitle = material.manifest.vaultTitle;
   const vaultId = await restore.createVault(vaultTitle);
   await importCollections(restore, vaultId, collections);
+  const assetHashes: Record<string, string> = {};
   const missingAssets = await importAssets(
     runtime,
     credentials,
     material.bundle,
     restore.importAsset,
+    opts.hashAssets ? assetHashes : undefined,
   );
-  return { vaultId, vaultTitle, missingAssets };
+  return {
+    vaultId,
+    vaultTitle,
+    missingAssets,
+    ...(opts.hashAssets ? { assetHashes } : {}),
+  };
 }
 
 /** Stages downloads before creating a vault and reports failures to Settings. */

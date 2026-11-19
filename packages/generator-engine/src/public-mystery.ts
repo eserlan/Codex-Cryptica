@@ -62,6 +62,10 @@ export interface ResolvedMysteryOptions {
   avoidNames: string[];
 }
 
+const NEXT_NPC_MOVES_HEADING = "## If the Investigation Stalls: Next NPC Moves";
+const NEXT_NPC_MOVES_HEADER =
+  "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |";
+
 export function resolveMystery(
   options: MysteryGeneratorOptions = {},
 ): ResolvedMysteryOptions {
@@ -121,6 +125,8 @@ ${NAME_BAN_PROMPT}
 
 Return a JSON object with title, summary, centralQuestion, openingHook, truth (perpetratorName, motive, means, opportunity, constraints), timeline (ordered events), suspects (exactly ${resolved.suspectCount}, each with id, name, role, motive, secret, alibi, knows, believes, and approach), locations (at least 3, each with id, name, activity, evidence), revelations (at least 3, each with id and fact), clues (at least 6, each with id, observation, sourceId, supports revelation ids, doesNotProve, and leadsTo ids), independentPaths (at least 2 distinct source routes to every essential revelation), pressureClock (at least 3 steps with triggers and consequences), and outcomes (correct, partial, mistaken, failed, and unsolved).
 
+In gmTruth, include a GM-only section titled "If the Investigation Stalls: Next NPC Moves" with a Markdown table headed exactly "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |" and two to four rows for known suspects. Each row gives a trigger, the suspect's next unopposed action or quiet/no-change response, an observable consequence, and a new testable lead; use "None" for a quiet/no-change row with no new lead. Keep this section out of playerContent.
+
 All IDs must be stable and cross-references valid. Every essential revelation needs two independent paths from distinct evidence sources. Clues state what is observed, what they support, what they do not prove, and where to investigate next. Red herrings must be true observations with testable alternative explanations. The unsolved outcome is allowed only when evidence was legitimately lost or made irrecoverable; provide consequences and a continuation hook. Keep all solution details in a separate GM-only section. Never put the perpetrator, solution, or hidden facts in player-facing text. Check names, chronology, knowledge, alibis, source IDs, revelation coverage, and player/GM spoiler separation before returning. Return only JSON.`;
   return {
     systemInstruction:
@@ -148,6 +154,34 @@ function object(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function hasNextNpcMovesTable(lore: string): boolean {
+  const sectionStart = lore.indexOf(NEXT_NPC_MOVES_HEADING);
+  if (sectionStart < 0) return false;
+  const section = lore.slice(sectionStart);
+  const headerIndex = section.indexOf(NEXT_NPC_MOVES_HEADER);
+  if (headerIndex < 0) return false;
+  const rows = section
+    .slice(headerIndex + NEXT_NPC_MOVES_HEADER.length)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+  return (
+    rows[0]?.startsWith("|---") === true && rows[1]?.startsWith("|") === true
+  );
+}
+
+function escapeNpcMovesSectionMarkup(lore: string): string {
+  const sectionStart = lore.indexOf(NEXT_NPC_MOVES_HEADING);
+  if (sectionStart < 0) return lore;
+  const before = lore.slice(0, sectionStart);
+  const section = lore
+    .slice(sectionStart)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return `${before}${section}`;
+}
+
 export function parseMysteryResponse(
   text: string,
 ): PublicGeneratorOutput | null {
@@ -162,13 +196,20 @@ export function parseMysteryResponse(
   const summary = string(root.summary);
   const playerContent = string(root.playerContent, string(root.content));
   const gmTruth = string(root.gmTruth, string(root.lore));
-  if (!title || !summary || !playerContent || !gmTruth) return null;
+  if (
+    !title ||
+    !summary ||
+    !playerContent ||
+    !gmTruth ||
+    !hasNextNpcMovesTable(gmTruth)
+  )
+    return null;
   return {
     type: "note",
     title,
     summary,
     content: stripMysteryMarkdownImages(playerContent),
-    lore: stripMysteryMarkdownImages(gmTruth),
+    lore: escapeNpcMovesSectionMarkup(stripMysteryMarkdownImages(gmTruth)),
     labels: ["mystery", "investigation", "mystery-generator"],
     status: "draft",
   };
@@ -293,7 +334,14 @@ export function generateMysteryLocal(
     "A damp footprint ends at a dry threshold, supporting a staged trail, but not proving who staged it; compare the tread with the storehouse floor.",
   ];
   const playerContent = `## Opening Hook\n${resolved.mysteryType} at ${pickFrom(locations, rng)} has left a question the authorities cannot answer. The party is asked to establish what happened before the next public deadline.\n\n## Central Question\nWhat happened, and which account survives the evidence?\n\n## People to Question\n${suspects.map((person) => `- **${person.name} — ${person.role}:** ${person.motive} Their account can be tested: ${person.alibi}`).join("\n")}\n\n## Places to Investigate\n${locations.map((location) => `- **${location}:** Search for activity records, overlooked traces, and people whose accounts can be checked.`).join("\n")}\n\n## Evidence\n${clueLines.map((clue, index) => `- **Lead ${index + 1}:** ${clue}`).join("\n")}\n\n## Pressure and Outcomes\nEach delay changes who controls the evidence and who is willing to speak. The case can end with a supported accusation, a partial account, a mistaken conclusion the party can test, or a legitimately unsolved mystery with lasting consequences.`;
-  const lore = `## GM-Only Fixed Truth\n${culprit} is responsible. Their motive is to conceal an earlier act that would expose their role in the ${resolved.mysteryType.toLowerCase()}. They used routine access and a manipulated timeline; the physical traces above are genuine and independently testable.\n\n## Timeline\n1. The evidence was moved before the public account was given.\n2. The culprit created a plausible access window.\n3. The party discovers conflicting but testable accounts.\n\n## Running the Case\nKeep the truth fixed. Do not make a clue false to force suspense. If the party loses a critical lead, use the unsolved outcome and its consequences rather than adding an unearned rescue.`;
+  const nextNpcMoves = [
+    "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
+    "|---|---|---|---|---|",
+    `| ${culprit} | Investigation stalls or goes unopposed before the deadline | Quietly moves or conceals a corroborating record | A clerk notices a recently disturbed shelf and fresh ink near the archive | Compare the ink and shelf dust against the storehouse delivery log |`,
+    `| ${suspects[1].name} | Questioned under pressure or offered protection | Shares a guarded detail about the altered schedule | Witnesses see them speaking with the watch or handing over a receipt | Cross-check the receipt time against the courier route change |`,
+    `| ${suspects[2].name} | Investigation stalls without direct contact | Keeps to their routine and watches quietly without escalating | No overt change; their daily rounds continue on schedule | None |`,
+  ].join("\n");
+  const lore = `## GM-Only Fixed Truth\n${culprit} is responsible. Their motive is to conceal an earlier act that would expose their role in the ${resolved.mysteryType.toLowerCase()}. They used routine access and a manipulated timeline; the physical traces above are genuine and independently testable.\n\n## Timeline\n1. The evidence was moved before the public account was given.\n2. The culprit created a plausible access window.\n3. The party discovers conflicting but testable accounts.\n\n## If the Investigation Stalls: Next NPC Moves\n${nextNpcMoves}\n\n## Running the Case\nKeep the truth fixed. Do not make a clue false to force suspense. If the party loses a critical lead, use the unsolved outcome and its consequences rather than adding an unearned rescue.`;
   return {
     type: "note",
     title: `${pickFrom(["The Last Witness", "Twelve Minutes Late", "The Locked Pantry", "Smoke Over the Yard"], rng)}`,

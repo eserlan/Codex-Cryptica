@@ -15,10 +15,13 @@
   },
   "dependencies": {
     "@codex/runtime": "workspace:*",
+    "chronology-engine": "workspace:*",
+    "pdfjs-dist": "^6.5.438",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^5.0.0",
+    "ajv": "^8.17.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.0"
   }

@@ -1,4 +1,17 @@
-import type { AdventureSession, AdventureTurnProposal } from "./types";
+import type {
+  AdventureSession,
+  AdventureTurnProposal,
+  CommitMetadata,
+} from "./types";
+import {
+  HISTORICAL_ANCHOR_TITLE_SECRET_ID,
+  historicalAnchorDateSecretId,
+  historicalAnchorEntitySecretId,
+} from "./historical-anchor-types";
+import {
+  createBoundaryMatcher,
+  isFreeTextMatchableId,
+} from "./adventure-json/term-matcher";
 
 export interface HiddenLeakageFinding {
   field: string;
@@ -95,14 +108,21 @@ export function ensureScenarioSecrets(
 }
 
 /**
- * Fields the player can see. The GM-only `hiddenPatch` is excluded: copying a
+ * Fields the player can see. The GM-only `hiddenPatch` and `packageEvents` are excluded: copying a
  * secret into hidden state is not a leak.
  */
 function playerFacingStrings(
   proposal: AdventureTurnProposal,
 ): Array<[string, string]> {
   if (proposal.kind === "complete") {
-    const { hiddenPatch: _hidden, timeAdvance, ...visible } = proposal;
+    const {
+      hiddenPatch: _hidden,
+      revealSecretIds: _reveals,
+      packageEvents: _packageEvents,
+      actorEvents: _actorEvents,
+      timeAdvance,
+      ...visible
+    } = proposal;
     const playerTimeAdvance = timeAdvance
       ? { minutes: timeAdvance.minutes, cause: timeAdvance.cause }
       : undefined;
@@ -126,6 +146,88 @@ export function detectHiddenLeakage(
   return detectHiddenTextFields(session, fields, revealed);
 }
 
+/** Checks player-facing proposal text against the current pinned package. */
+export function detectPackageLeakage(
+  proposal: AdventureTurnProposal,
+  meta: CommitMetadata,
+  session?: AdventureSession,
+): HiddenLeakageFinding[] {
+  const fields = playerFacingStrings(proposal).filter(
+    ([field]) =>
+      !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
+  );
+  const proposedActorText =
+    proposal.kind === "complete"
+      ? (proposal.actorEvents ?? []).flatMap((event) => [
+          event.note,
+          ...(event.fact ? [event.fact] : []),
+        ])
+      : [];
+  const storedProgress = session?.packageProgress;
+  return [
+    ...packageTextLeakage(fields, [
+      ...(meta.packageGmOnlyText ?? []),
+      ...(proposal.kind === "complete"
+        ? (proposal.packageEvents ?? []).map((event) => event.note)
+        : []),
+      ...proposedActorText,
+      ...(storedProgress?.events ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).flatMap((event) =>
+        event.fact ? [event.fact] : [],
+      ),
+      ...(storedProgress?.actors ?? []).flatMap((actor) => actor.facts),
+    ]),
+    ...packageIdLeakage(fields, [
+      ...(meta.packageRecordIds ?? []),
+      ...(storedProgress?.events ?? []).map((event) => event.id),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.id),
+    ]),
+  ];
+}
+
+function packageTextLeakage(
+  fields: Array<[string, string]>,
+  secrets: readonly string[],
+): HiddenLeakageFinding[] {
+  const longSecrets: string[] = [];
+  const shortSecrets = new Set<string>();
+  const shortNumericSecrets: string[] = [];
+  for (const secret of secrets) {
+    const needle = normalize(secret);
+    if (!needle) continue;
+    if (needle.length < 3) {
+      shortSecrets.add(needle);
+      if (needle.length >= 2 && /^\d+$/.test(needle))
+        shortNumericSecrets.push(needle);
+    } else longSecrets.push(needle);
+  }
+  const longMatcher = createBoundaryMatcher(longSecrets);
+  const shortNumericMatcher = createBoundaryMatcher(shortNumericSecrets);
+  return fields.flatMap(([field, value]) => {
+    const text = normalize(value);
+    const exactShortNote = shortSecrets.has(text);
+    return exactShortNote || shortNumericMatcher(text) || longMatcher(text)
+      ? [{ field, secretId: "pinned-package-text" }]
+      : [];
+  });
+}
+
+function packageIdLeakage(
+  fields: Array<[string, string]>,
+  ids: readonly string[],
+): HiddenLeakageFinding[] {
+  const normalizedPlainWordIds = new Set(
+    ids.filter((id) => !isFreeTextMatchableId(id)).map(normalize),
+  );
+  const matcher = createBoundaryMatcher(ids.filter(isFreeTextMatchableId));
+  return fields.flatMap(([field, value]) =>
+    normalizedPlainWordIds.has(normalize(value)) || matcher(value)
+      ? [{ field, secretId: "pinned-package-id" }]
+      : [],
+  );
+}
+
 /** Checks partial player-facing text against the session's unrevealed secrets. */
 export function detectHiddenTextLeakage(
   sessionInput: AdventureSession,
@@ -135,12 +237,94 @@ export function detectHiddenTextLeakage(
   return detectHiddenTextFields(session, [["root", text]], new Set());
 }
 
+export function historicalAnchorSecretSources(
+  session: AdventureSession,
+): Array<{ id: string; text: string; revealed: boolean }> {
+  const anchor = session.historicalAnchor;
+  if (!anchor) return [];
+  const revealed = new Set(anchor.revealedFactIds);
+  const sources: Array<{ id: string; text: string; revealed: boolean }> = [
+    ...anchor.baseline.relevantEntityRefs.flatMap((ref) =>
+      [
+        { field: "id", text: ref.recordId },
+        { field: "name", text: ref.displayName },
+        ...(ref.recordType
+          ? [{ field: "type", text: `Type ${ref.recordType}` }]
+          : []),
+        ...(ref.role ? [{ field: "role", text: `Role ${ref.role}` }] : []),
+      ].map(({ field, text }) => ({
+        id: historicalAnchorEntitySecretId(ref.recordId, field),
+        text,
+        revealed: revealed.has(
+          historicalAnchorEntitySecretId(ref.recordId, field),
+        ),
+      })),
+    ),
+    ...(["start", "end"] as const).flatMap((edge) => {
+      const date =
+        edge === "start"
+          ? anchor.eventInterval.start
+          : anchor.eventInterval.end;
+      if (!date) return [];
+      const fields = [
+        { field: "year", text: `Year ${date.year}` },
+        ...(date.month !== undefined
+          ? [{ field: "month", text: `Month ${date.month}` }]
+          : []),
+        ...(date.day !== undefined
+          ? [{ field: "day", text: `Day ${date.day}` }]
+          : []),
+        ...(date.unitId
+          ? [{ field: "unit", text: `Unit ${date.unitId}` }]
+          : []),
+        ...(date.anchorId
+          ? [{ field: "anchor", text: `Anchor ${date.anchorId}` }]
+          : []),
+        ...(date.label ? [{ field: "label", text: date.label }] : []),
+      ];
+      return fields.map(({ field, text }) => {
+        const id = historicalAnchorDateSecretId(edge, field);
+        return { id, text, revealed: revealed.has(id) };
+      });
+    }),
+    ...(anchor.eventInterval.label
+      ? [
+          {
+            id: historicalAnchorDateSecretId("interval", "label"),
+            text: anchor.eventInterval.label,
+            revealed: revealed.has(
+              historicalAnchorDateSecretId("interval", "label"),
+            ),
+          },
+        ]
+      : []),
+    ...anchor.baseline.documentedFacts.map((fact) => ({
+      id: fact.id,
+      text: fact.text,
+      revealed: revealed.has(fact.id),
+    })),
+    {
+      id: HISTORICAL_ANCHOR_TITLE_SECRET_ID,
+      text: anchor.baseline.title,
+      revealed: revealed.has(HISTORICAL_ANCHOR_TITLE_SECRET_ID),
+    },
+  ];
+  return sources.filter((source) => source.text.trim().length > 0);
+}
+
+export function historicalAnchorSecretIds(session: AdventureSession): string[] {
+  return historicalAnchorSecretSources(session).map((secret) => secret.id);
+}
+
 function detectHiddenTextFields(
   session: AdventureSession,
   fields: Array<[string, string]>,
   revealed: Set<string>,
 ): HiddenLeakageFinding[] {
-  const structuredSecrets = scenarioSecretSources(session).map((secret) => ({
+  const structuredSecrets = [
+    ...scenarioSecretSources(session),
+    ...historicalAnchorSecretSources(session),
+  ].map((secret) => ({
     id: secret.id,
     text: secret.text,
     status: secret.revealed ? ("revealed" as const) : ("hidden" as const),
@@ -157,7 +341,7 @@ function detectHiddenTextFields(
   const findings: HiddenLeakageFinding[] = [];
   for (const secret of hidden) {
     const needle = normalize(secret.text);
-    if (needle.length < 4) continue;
+    if (needle.length < 3) continue;
     for (const [field, value] of fields) {
       if (normalize(value).includes(needle)) {
         findings.push({ field, secretId: secret.id });
@@ -174,6 +358,7 @@ export function revealedSecretIds(
   const known = new Set([
     ...session.hiddenState.secrets.map((secret) => secret.id),
     ...scenarioSecretSources(session).map((secret) => secret.id),
+    ...historicalAnchorSecretSources(session).map((secret) => secret.id),
   ]);
   return ids.filter((id) => known.has(id));
 }

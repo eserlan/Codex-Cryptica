@@ -1,34 +1,147 @@
 import {
+  equalContent,
   getLocalCloudBackupRecord,
   pushDeltaToCloudBackup,
   pushVaultToCloudBackup,
+  uploadSnapshotAssets,
+  type MergeEntity,
   type VaultDeltaPayload,
 } from "@codex/cloud-backup-sync";
 import { browserStorage } from "#lib/utils/runtime-deps.js";
+import type { CloudBackupBaseStore } from "./cloud-backup-base";
 import type { CloudBackupDirtyRow } from "./cloud-backup-dirty";
 import {
   BACKUP_OFF,
+  blockedFrom,
+  trashEvictionNotice,
   type CloudBackupDepsProvider,
   type CloudBackupViewState,
+  type MapAssetPreparer,
   type SnapshotOutcome,
 } from "./cloud-backup-types";
+import { createMapAssetPreparer } from "#lib/services/cloud-backup-map-assets.js";
 import { CloudBackupMediaCache } from "./cloud-backup-media-cache";
+import { runArtworkBackup } from "./cloud-backup-artwork-scope";
+import type { PullOutcome } from "./cloud-backup-pulls";
+
+/** Pull-merge-push rounds after a first push is rejected. */
+const REBASE_ROUNDS = 3;
+
+const FOREIGN_COMMIT_MESSAGE =
+  "Another device updated this backup. Automatic sync paused so nothing is overwritten.";
 
 type UploadState = Pick<
   CloudBackupViewState,
   "lastPushedAt" | "skippedAssets" | "skippedEntities" | "uploadProgress"
->;
+> & { artworkConsentVersion?: number; keptLocal?: boolean };
+
+/** What an editor's push needs from the rest of the store. */
+export interface EditorHooks {
+  /** The consistency check; `ok` is false when the index could not be read. */
+  reconcile: (vaultId: string) => Promise<{ ok: boolean; recorded: number }>;
+}
 
 function uploadFailure(result: {
   error: string;
+  status?: number;
+  code?: string;
+  linkGone?: true;
   conflict?: boolean;
   remoteLastPushedAt?: string | null;
 }): SnapshotOutcome {
+  const blocked = blockedFrom(result);
   return {
     ok: false,
     conflict: result.conflict,
     remoteAt: result.remoteLastPushedAt,
     error: result.error,
+    ...(blocked ? { blocked } : {}),
+  };
+}
+
+/** An editor's push that sent nothing the backup cannot take: changes stay here. */
+const KEPT_LOCAL: SnapshotOutcome = { ok: true, keptLocal: true };
+
+/** Plain JSON copy, so later edits and reactive proxies cannot change it. */
+const deepCopy = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+
+/** Records a full snapshot's entities, maps and canvases as the new bases. */
+function fullSnapshotBase(vaultId: string, bundle: unknown) {
+  const sent = bundle as {
+    entities?: unknown;
+    maps?: unknown;
+    canvases?: unknown;
+  };
+  if (!Array.isArray(sent?.entities)) return null;
+  const entities = deepCopy(sent.entities);
+  const maps = deepCopy(Array.isArray(sent.maps) ? sent.maps : []);
+  const canvases = deepCopy(Array.isArray(sent.canvases) ? sent.canvases : []);
+  return (base: CloudBackupBaseStore) =>
+    base.replaceVault(vaultId, entities, { maps, canvases });
+}
+
+/** Entities, maps and canvases merge on a clash; a full snapshot does not. */
+const isMergeable = (rows: readonly CloudBackupDirtyRow[]) =>
+  rows.every((row) => row.kind !== "full");
+
+/** The outcome that ends a rebase because a pull did not complete; null to go on. */
+function pullStop(
+  pulled: PullOutcome,
+  rejected: SnapshotOutcome,
+): SnapshotOutcome | null {
+  if (pulled.kind === "done") return null;
+  if (pulled.kind === "unsupported") return rejected;
+  if (pulled.kind === "held") {
+    return { ok: false, held: true, error: "An entity is open for editing." };
+  }
+  if (pulled.kind === "blocked") {
+    return {
+      ok: false,
+      blocked: pulled.blocked,
+      error: "Sync has stopped for this shared vault.",
+    };
+  }
+  const error =
+    pulled.kind === "failed" ? pulled.error : "Cloud backup is off.";
+  return { ok: false, error };
+}
+
+/** The rows less the ones the builder held back. */
+function withoutHeld(
+  rows: readonly CloudBackupDirtyRow[],
+  held: readonly CloudBackupDirtyRow[] | undefined,
+): CloudBackupDirtyRow[] {
+  if (!held?.length) return [...rows];
+  const left = new Set(held.map((row) => `${row.kind}:${row.id}`));
+  return rows.filter((row) => !left.has(`${row.kind}:${row.id}`));
+}
+
+const isEmptyDelta = (delta: VaultDeltaPayload) =>
+  [
+    delta.upserts,
+    delta.deletes,
+    delta.mapUpserts,
+    delta.mapDeletes,
+    delta.canvasUpserts,
+    delta.canvasDeletes,
+  ].every((list) => !list?.length);
+
+/** What a delta sent, as the merge base for the next one. */
+function recordDeltaBase(vaultId: string, delta: VaultDeltaPayload) {
+  return async (base: CloudBackupBaseStore) => {
+    await base.recordSent(vaultId, delta.upserts, delta.deletes);
+    await base.recordSentWhole(
+      vaultId,
+      "map",
+      (delta.mapUpserts ?? []).map((upsert) => upsert.item),
+      delta.mapDeletes ?? [],
+    );
+    await base.recordSentWhole(
+      vaultId,
+      "canvas",
+      (delta.canvasUpserts ?? []).map((upsert) => upsert.item),
+      delta.canvasDeletes ?? [],
+    );
   };
 }
 
@@ -37,11 +150,22 @@ export class CloudBackupUploads {
   pushing = false;
   private activeBuild: AbortController | null = null;
   private activePush: Promise<SnapshotOutcome> | null = null;
+  /** What the running push sends, copied before the request, to become the merge base. */
+  private sentBase: ((base: CloudBackupBaseStore) => Promise<void>) | null =
+    null;
+  /** The dirty rows the running push clears on success; a rebase refreshes them. */
+  private sentRows: readonly CloudBackupDirtyRow[] = [];
+  /** True while the running push is for an editor, who never sends a full snapshot. */
+  private editor = false;
+  /** Whether the running editor push left some changes pending. */
+  private kept = false;
   readonly media: CloudBackupMediaCache;
 
   constructor(
     private state: UploadState,
     private getDeps: CloudBackupDepsProvider,
+    private runPull?: () => Promise<PullOutcome>,
+    private editorHooks?: EditorHooks,
   ) {
     this.media = new CloudBackupMediaCache(
       () => this.deps?.storage ?? browserStorage,
@@ -71,27 +195,7 @@ export class CloudBackupUploads {
   ): Promise<SnapshotOutcome> {
     const push = new AbortController();
     this.activeBuild = push;
-    const operation = (async () => {
-      // Check before building: the snapshot reads every entity, so learning
-      // that backup is off only at upload time costs a whole-vault read.
-      const record = await getLocalCloudBackupRecord(
-        this.deps!.runtime,
-        vaultId,
-      );
-      if (push.signal.aborted || !record?.enabled) return BACKUP_OFF;
-
-      // Taken before building, so anything changed after this point stays
-      // pending even though the snapshot may happen to include it.
-      const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
-      if (push.signal.aborted) return BACKUP_OFF;
-
-      // Keep the cancellation guard live through upload, including delta
-      // writes, so disable can wait before persisting the off record.
-      const out = await this.uploadChanges(vaultId, opts, sent, push.signal);
-      if (push.signal.aborted) return BACKUP_OFF;
-      if (out.ok) await this.deps!.dirty?.clearSent(sent);
-      return out;
-    })();
+    const operation = this.executePushOperation(vaultId, opts, push.signal);
     this.activePush = operation;
     try {
       const out = await operation;
@@ -102,6 +206,278 @@ export class CloudBackupUploads {
         this.activePush = null;
       }
     }
+  }
+
+  private async isBackupEnabled(
+    vaultId: string,
+    signal: AbortSignal,
+  ): Promise<boolean> {
+    const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
+    // A gone link makes no request until a rejoin clears it.
+    this.editor = record?.role === "editor";
+    return !signal.aborted && Boolean(record?.enabled) && !record?.linkGone;
+  }
+
+  private async executePushOperation(
+    vaultId: string,
+    opts: { guarded: boolean },
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    // Check before building: the snapshot reads every entity, so learning
+    // that backup is off only at upload time costs a whole-vault read.
+    if (!(await this.isBackupEnabled(vaultId, signal))) return BACKUP_OFF;
+    this.sentBase = null;
+
+    // Taken before building, so anything changed after this point stays
+    // pending even though the snapshot may happen to include it.
+    const sent = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+    if (signal.aborted) return BACKUP_OFF;
+
+    // Keep the cancellation guard live through upload, including delta
+    // writes, so disable can wait before persisting the off record.
+    this.sentRows = sent;
+    const out = await this.dispatchScopedUpload(vaultId, opts, sent, signal);
+    return this.finalizePushOperation(vaultId, out, this.sentRows, signal);
+  }
+
+  private async finalizePushOperation(
+    vaultId: string,
+    out: SnapshotOutcome,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    if (signal.aborted) return BACKUP_OFF;
+    if (out.ok) {
+      await this.recordBase();
+      await this.deps!.dirty?.clearSent(sent);
+      if (this.editor) this.state.keptLocal = this.kept;
+      if (out.trashEvicted && this.deps?.activeVaultId() === vaultId) {
+        this.deps.notify?.(trashEvictionNotice(out.trashEvicted));
+      }
+    }
+    // An editor never has a conflict to resolve: the failure just retries.
+    if (this.editor && out.conflict) return { ok: false, error: out.error };
+    return out;
+  }
+
+  /** A failure to record the base never fails a push that went through. */
+  private async recordBase(): Promise<void> {
+    const record = this.sentBase;
+    const base = this.deps!.base;
+    this.sentBase = null;
+    if (!record || !base) return;
+    try {
+      await record(base);
+    } catch (error) {
+      console.warn("[CloudBackup] Could not record the merge base", error);
+    }
+  }
+
+  private async dispatchScopedUpload(
+    vaultId: string,
+    opts: { guarded: boolean },
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    const scope = this.deps!.artworkScope;
+    if (!scope || this.editor)
+      return this.uploadChanges(vaultId, opts, sent, signal);
+    const out = await runArtworkBackup(vaultId, {
+      ...scope,
+      upload: (artwork) =>
+        this.uploadChanges(vaultId, opts, sent, signal, artwork),
+    });
+    this.state.artworkConsentVersion =
+      (this.state.artworkConsentVersion ?? 0) + 1;
+    return out;
+  }
+
+  private canUseDelta(
+    opts: { guarded: boolean },
+    artwork?: { forceFull: boolean },
+  ): boolean {
+    if (artwork?.forceFull) return false;
+    if (!opts.guarded) return false;
+    const deps = this.deps!;
+    return Boolean(deps.dirty && deps.buildDelta && this.state.lastPushedAt);
+  }
+
+  private async trySendDelta(
+    vaultId: string,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome | null> {
+    const delta = await this.buildDelta(vaultId, sent, signal);
+    if (signal.aborted) return BACKUP_OFF;
+    if (!delta) return this.editor ? KEPT_LOCAL : null;
+    const outboundDelta = await this.dropEchoes(vaultId, deepCopy(delta));
+    // A delta that held nothing but echoes of pulled changes has nothing to say,
+    // and neither has map or canvas rows that matched their bases.
+    const echoed =
+      outboundDelta.upserts.length < delta.upserts.length ||
+      this.sentRows.some((row) => row.kind === "maps" || row.kind === "canvas");
+    if (echoed && isEmptyDelta(outboundDelta)) {
+      this.sentBase = null;
+      return { ok: true };
+    }
+    this.sentBase = recordDeltaBase(vaultId, outboundDelta);
+    return this.sendDelta(
+      vaultId,
+      outboundDelta,
+      this.state.lastPushedAt!,
+      signal,
+    );
+  }
+
+  /**
+   * The delta for these rows. Rows it leaves out (an editor's entities that
+   * need new media, maps whose files could not be sent) are dropped from
+   * `sentRows`, so they stay pending.
+   */
+  private async buildDelta(
+    vaultId: string,
+    rows: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<VaultDeltaPayload | null> {
+    const deps = this.deps!;
+    const uploaded = new Set(Object.keys(this.media.hashes));
+    const prepare = this.mapAssetPreparer(vaultId, signal);
+    if (!this.editor) {
+      const built = await deps.buildDelta!(
+        vaultId,
+        rows,
+        uploaded,
+        signal,
+        prepare,
+      );
+      if (!built) return null;
+      const { held, ...delta } = built;
+      this.sentRows = withoutHeld(rows, held);
+      return delta;
+    }
+    const built = await deps.buildEditorDelta?.(
+      vaultId,
+      rows,
+      uploaded,
+      signal,
+      prepare,
+    );
+    this.sentRows = built?.sent ?? [];
+    this.kept = this.kept || rows.length > this.sentRows.length;
+    return built?.delta ?? null;
+  }
+
+  /** Gets a map's files into the backup under content-addressed ids. */
+  private mapAssetPreparer(
+    vaultId: string,
+    signal: AbortSignal,
+  ): MapAssetPreparer {
+    const deps = this.deps!;
+    return createMapAssetPreparer({
+      readFile: async (path) => deps.readLocalFile?.(vaultId, path) ?? null,
+      isStored: (assetId) => assetId in this.media.hashes,
+      upload: async (files) => {
+        const record = await getLocalCloudBackupRecord(deps.runtime, vaultId);
+        if (!record) return false;
+        try {
+          const done = await uploadSnapshotAssets(
+            deps.runtime,
+            record,
+            files,
+            undefined,
+            { skip: new Set(), signal },
+          );
+          return done.ok;
+        } catch {
+          return false;
+        }
+      },
+      remember: (hashes) => {
+        Object.assign(this.media.hashes, hashes);
+        this.media.save(vaultId);
+      },
+    });
+  }
+
+  /** Upserts equal to their merge base are pulled changes echoing back. */
+  private async dropEchoes(
+    vaultId: string,
+    delta: VaultDeltaPayload,
+  ): Promise<VaultDeltaPayload> {
+    const base = this.deps!.base;
+    if (!base) return delta;
+    const upserts: { id: string }[] = [];
+    for (const upsert of delta.upserts) {
+      const stored = (await base.get(vaultId, upsert.id)) as
+        MergeEntity | undefined;
+      if (!stored || !equalContent(stored, upsert as MergeEntity)) {
+        upserts.push(upsert);
+      }
+    }
+    return { ...delta, upserts };
+  }
+
+  /** A pause outcome when another device committed and a full snapshot would replace it. */
+  private async foreignCommitPause(
+    vaultId: string,
+  ): Promise<SnapshotOutcome | null> {
+    const record = await getLocalCloudBackupRecord(this.deps!.runtime, vaultId);
+    if (!record?.foreignCommitSeen) return null;
+    return {
+      ok: false,
+      conflict: true,
+      remoteAt: this.state.lastPushedAt,
+      error: FOREIGN_COMMIT_MESSAGE,
+    };
+  }
+
+  /** A guarded full snapshot, unless a whole-item push would overwrite another device. */
+  private async uploadWhole(
+    vaultId: string,
+    opts: { guarded: boolean },
+    signal: AbortSignal,
+    artwork?: { includeAdventures: boolean },
+  ): Promise<SnapshotOutcome> {
+    if (this.editor) return KEPT_LOCAL;
+    if (opts.guarded) {
+      const paused = await this.foreignCommitPause(vaultId);
+      if (paused) return paused;
+    }
+    return this.uploadSnapshot(vaultId, opts, signal, artwork);
+  }
+
+  /**
+   * After a rejected entity delta: pull, merge, push again. Gives up after
+   * three rounds, or when a pull fails, and leaves every dirty row in place.
+   */
+  private async rebase(
+    vaultId: string,
+    signal: AbortSignal,
+    rejected: SnapshotOutcome,
+  ): Promise<SnapshotOutcome | null> {
+    for (let round = 0; round < REBASE_ROUNDS; round++) {
+      const step = await this.rebaseRound(vaultId, signal, rejected);
+      if (step !== "again") return step;
+    }
+    return { ok: false, error: "Another device keeps changing this backup." };
+  }
+
+  /** One pull-merge-push; "again" when the push was rejected once more. */
+  private async rebaseRound(
+    vaultId: string,
+    signal: AbortSignal,
+    rejected: SnapshotOutcome,
+  ): Promise<SnapshotOutcome | null | "again"> {
+    const stopped = pullStop(await this.runPull!(), rejected);
+    if (stopped) return stopped;
+    const rows = (await this.deps!.dirty?.snapshot(vaultId)) ?? [];
+    // Edits made during the pull are in these rows, and clear with them.
+    this.sentRows = rows;
+    let toSend = rows;
+    if (this.editor) toSend = this.editorRows(rows);
+    else if (!isMergeable(rows)) return rejected;
+    const out = await this.trySendDelta(vaultId, toSend, signal);
+    return out?.conflict ? "again" : out;
   }
 
   /**
@@ -115,25 +491,81 @@ export class CloudBackupUploads {
     opts: { guarded: boolean },
     sent: readonly CloudBackupDirtyRow[],
     signal: AbortSignal,
+    artwork?: { includeAdventures: boolean; forceFull: boolean },
   ): Promise<SnapshotOutcome> {
-    const deps = this.deps!;
-    const base = this.state.lastPushedAt;
-    if (!opts.guarded || !deps.dirty || !deps.buildDelta || !base) {
-      return this.uploadSnapshot(vaultId, opts, signal);
+    if (this.editor) return this.uploadEditorChanges(vaultId, sent, signal);
+    if (!this.canUseDelta(opts, artwork)) {
+      return this.uploadWhole(vaultId, opts, signal, artwork);
     }
     if (sent.length === 0) return { ok: true };
+    const out = await this.sendRecorded(vaultId, sent, signal);
+    return out ?? this.uploadWhole(vaultId, opts, signal, artwork);
+  }
 
-    const delta = await deps.buildDelta(
-      vaultId,
-      sent,
-      new Set(Object.keys(this.media.hashes)),
-      signal,
-    );
+  /**
+   * An editor's upload: the recorded entity, map and canvas changes as one
+   * delta. Entities that need new media stay pending. A `full` row
+   * means the change set cannot be trusted; the consistency check replaces it
+   * with specific entity rows, and the row is cleared only once that worked.
+   */
+  private async uploadEditorChanges(
+    vaultId: string,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    this.kept = false;
+    const deps = this.deps!;
+    const fullRows = sent.filter((row) => row.kind === "full");
+    if (fullRows.length === 0)
+      return this.sendEditorRows(vaultId, sent, signal);
+    const checked = await this.editorHooks?.reconcile(vaultId);
     if (signal.aborted) return BACKUP_OFF;
-    const out = delta
-      ? await this.sendDelta(vaultId, delta, base, signal)
-      : null;
-    return out ?? this.uploadSnapshot(vaultId, opts, signal);
+    if (!checked?.ok) {
+      return {
+        ok: false,
+        error: "Could not check this vault against the group.",
+      };
+    }
+    await deps.dirty?.clearSent(fullRows);
+    const rows = (await deps.dirty?.snapshot(vaultId)) ?? [];
+    this.sentRows = rows;
+    return this.sendEditorRows(vaultId, rows, signal);
+  }
+
+  /** The rows an editor may send; a `full` row stays pending. */
+  private editorRows(
+    rows: readonly CloudBackupDirtyRow[],
+  ): CloudBackupDirtyRow[] {
+    const mergeable = rows.filter((row) => row.kind !== "full");
+    this.kept = rows.length > mergeable.length;
+    this.sentRows = mergeable;
+    return mergeable;
+  }
+
+  /** Sends the rows an editor may send, rebasing like an owner's. */
+  private async sendEditorRows(
+    vaultId: string,
+    rows: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome> {
+    const out = await this.trySendDelta(vaultId, this.editorRows(rows), signal);
+    if (!out?.conflict) return out ?? KEPT_LOCAL;
+    return this.runPull && this.deps!.remote
+      ? ((await this.rebase(vaultId, signal, out)) ?? KEPT_LOCAL)
+      : out;
+  }
+
+  /** The delta for the recorded rows, rebased when another device got there first. */
+  private async sendRecorded(
+    vaultId: string,
+    sent: readonly CloudBackupDirtyRow[],
+    signal: AbortSignal,
+  ): Promise<SnapshotOutcome | null> {
+    const out = await this.trySendDelta(vaultId, sent, signal);
+    if (!out?.conflict) return out;
+    return this.runPull && this.deps!.remote
+      ? this.rebase(vaultId, signal, out)
+      : out;
   }
 
   /** Publishes a delta; `null` means the backup needs a full upload instead. */
@@ -151,22 +583,52 @@ export class CloudBackupUploads {
       signal,
     );
     if (!result.ok) {
-      if ("fullPushRequired" in result) return null;
+      if ("fullPushRequired" in result) return this.keepLocal();
+      if (result.code === "missing_asset") this.forgetMapAssets(vaultId, delta);
       return uploadFailure(result);
     }
     if (!result.value) return BACKUP_OFF;
     this.state.lastPushedAt = result.value.lastPushedAt;
-    return { ok: true };
+    return result.trashEvicted
+      ? { ok: true, trashEvicted: result.trashEvicted }
+      : { ok: true };
+  }
+
+  /** The backup lost a map file the cache said it held: upload it again next time. */
+  private forgetMapAssets(vaultId: string, delta: VaultDeltaPayload): void {
+    for (const upsert of delta.mapUpserts ?? []) {
+      for (const { assetId } of upsert.assets ?? []) {
+        delete this.media.hashes[assetId];
+      }
+    }
+    this.media.save(vaultId);
+  }
+
+  /** A full upload was asked for; an editor keeps everything and sends nothing. */
+  private keepLocal(): SnapshotOutcome | null {
+    if (!this.editor) return null;
+    this.sentRows = [];
+    this.kept = true;
+    return KEPT_LOCAL;
   }
 
   private async uploadSnapshot(
     vaultId: string,
     opts: { guarded: boolean },
     signal: AbortSignal,
+    artwork?: { includeAdventures: boolean },
   ): Promise<SnapshotOutcome> {
     const deps = this.deps!;
-    const payload = await deps.buildPayload(vaultId, signal);
+    const payload = artwork
+      ? await deps.buildPayload(vaultId, signal, {
+          includeAdventures: artwork.includeAdventures,
+        })
+      : await deps.buildPayload(vaultId, signal);
     if (signal.aborted) return BACKUP_OFF;
+    // Snapshot construction returns live entity objects. Detach the bundle
+    // before hashing or uploading assets, both of which await before the
+    // request body is serialised.
+    const outboundPayload = { ...payload, bundle: deepCopy(payload.bundle) };
     this.state.skippedAssets =
       (payload as { skippedAssets?: string[] }).skippedAssets ?? [];
     this.state.skippedEntities =
@@ -175,10 +637,11 @@ export class CloudBackupUploads {
       payload.assets ?? [],
       deps.timing,
     );
+    this.sentBase = fullSnapshotBase(vaultId, outboundPayload.bundle);
     const result = await pushVaultToCloudBackup(
       deps.runtime,
       vaultId,
-      payload,
+      outboundPayload,
       (progress) => {
         this.state.uploadProgress = progress;
       },

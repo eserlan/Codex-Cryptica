@@ -56,6 +56,55 @@ describe("adventure dependency defaults", () => {
 });
 
 describe("AdventureRuntime", () => {
+  it("saves an artwork assignment with a committed location transition", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    const asset = {
+      id: "forest-1",
+      version: 1,
+      type: "location",
+      genres: ["neutral", "fantasy"],
+      primaryCues: ["forest"],
+      settingCues: [],
+      moodCues: [],
+      timeCues: [],
+      excludes: [],
+      review: { status: "approved" },
+    } as never;
+    deps.artworkCatalogue = () => [asset];
+    const original = state.session!;
+    const next = {
+      ...original,
+      revision: original.revision + 1,
+      currentPlaceId: "place-1",
+      places: [{ id: "place-1", name: "Forest" }],
+      turns: [{ id: "turn-1" }],
+    } as typeof original;
+    const save = vi.spyOn(deps.repository, "save");
+    const saved = await runtime.saveTurn(original, next);
+    expect(saved.artwork).toMatchObject({
+      associations: [
+        {
+          subject: { id: "place-1" },
+          association: {
+            automatic: { assetId: "forest-1", assignedOnTurnId: "turn-1" },
+          },
+        },
+      ],
+    });
+    expect(save).toHaveBeenCalledWith(original.revision, saved);
+    expect(next.artwork).toBeUndefined();
+  });
+
+  it("continues saving narration if catalogue access fails", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    deps.artworkCatalogue = () => {
+      throw new Error("catalogue unavailable");
+    };
+    const previous = state.session!;
+    const next = { ...previous, revision: previous.revision + 1 };
+    await expect(runtime.saveTurn(previous, next)).resolves.toBe(next);
+  });
+
   it("saves against the prior revision after verifying control", async () => {
     const { runtime, state, deps } = createAdventureRuntime();
     const verify = vi.spyOn(deps.authority, "verify");

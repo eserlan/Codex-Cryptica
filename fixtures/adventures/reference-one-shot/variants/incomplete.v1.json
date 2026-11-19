@@ -1,0 +1,387 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "the-last-grind",
+  "title": "The Last Grind",
+  "version": "1.0.0",
+  "description": "A one-shot for a small party, playable in about 30 turns and usable with any rules.",
+  "premise": {
+    "background": "The flour mill at Greywater Bend has stopped, the village is hungry, and the miller has vanished.",
+    "hook": "Maren Holt meets the party at the ferry landing and asks them to restart the mill before the village runs out of bread.",
+    "theme": ["mystery", "investigation", "rural-intrigue"],
+    "tone": "tense, grounded"
+  },
+  "source": {
+    "title": "The Last Grind",
+    "license": "CC0-1.0"
+  },
+  "system": {
+    "name": "System-agnostic",
+    "targetParty": {
+      "sizeMin": 2,
+      "sizeMax": 5
+    }
+  },
+  "locations": [
+    {
+      "id": "loc-greywater-bend",
+      "name": "Greywater Bend",
+      "summary": "A hungry riverside village whose stone flour mill has stopped turning.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "The Last Grind",
+        "anchor": "ros-overview"
+      }
+    },
+    {
+      "id": "loc-ferry-landing",
+      "name": "The Ferry Landing",
+      "summary": "A rotting jetty across the reeds from the silent stone mill.",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-mill-yard",
+          "description": "Path from the jetty to the mill yard."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Ferry Landing",
+        "anchor": "ros-scene-1-landing"
+      }
+    },
+    {
+      "id": "loc-mill-yard",
+      "name": "The Mill Yard",
+      "summary": "Muddy yard outside the mill door with split sacks and a damp ledger on a nail.",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-ferry-landing",
+          "description": "Back toward the ferry jetty."
+        },
+        {
+          "targetLocationId": "loc-wheel-room",
+          "description": "Through the mill door into the wheel room."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "loc-wheel-room",
+      "name": "The Wheel Room",
+      "summary": "Dimly lit room housing the jammed wheel shaft and the sluice lever.",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-mill-yard",
+          "description": "Out to the mill yard."
+        },
+        {
+          "targetLocationId": "loc-miller-cellar",
+          "description": "A narrow stair dropping into the cellar."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "loc-miller-cellar",
+      "name": "The Miller's Cellar",
+      "summary": "Cold stone cellar below the mill that floods once the sluice lever is pulled.",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-wheel-room",
+          "description": "Up the narrow stair to the wheel room."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor-maren-holt",
+      "name": "Maren Holt",
+      "summary": "The miller's daughter, tired and quick to anger.",
+      "role": "Quest giver",
+      "motivation": "Wants the mill running again to pay off her late mother's debt before the bailiff comes.",
+      "locationId": "loc-ferry-landing",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Maren Holt",
+        "anchor": "ros-npc-maren"
+      }
+    },
+    {
+      "id": "actor-tobiah-reed",
+      "name": "Tobiah Reed",
+      "summary": "The mill's accountant, polite and unhurried.",
+      "role": "Mill accountant",
+      "locationId": "loc-greywater-bend",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Tobiah Reed",
+        "anchor": "ros-npc-tobiah"
+      }
+    },
+    {
+      "id": "actor-wick",
+      "name": "Wick",
+      "summary": "A dog-handler and hired guard, blunt and loyal to whoever pays.",
+      "role": "Guard",
+      "motivation": "Wants his unpaid wages and a safe road out of the valley.",
+      "locationId": "loc-wheel-room",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Wick",
+        "anchor": "ros-npc-wick"
+      }
+    },
+    {
+      "id": "actor-aldous-holt",
+      "name": "Aldous Holt",
+      "summary": "The missing miller, found bound and gagged in the cellar.",
+      "role": "Missing miller",
+      "locationId": "loc-miller-cellar",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "factions": [],
+  "scenes": [
+    {
+      "id": "ros-scene-1-landing",
+      "title": "Scene 1: The Ferry Landing",
+      "summary": "Maren Holt meets the party at the jetty and asks them to restart the mill.",
+      "locationId": "loc-ferry-landing",
+      "readAloud": "The ferry bumps against a rotting jetty. Across the reeds a tall stone mill stands silent, its great wheel hanging still above brown water. A woman in a patched coat waits on the planks with her arms folded.",
+      "conditions": [
+        "If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open."
+      ],
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-2-yard",
+          "description": "Proceed from the jetty to the mill yard."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Ferry Landing",
+        "anchor": "ros-scene-1-landing"
+      }
+    },
+    {
+      "id": "ros-scene-2-yard",
+      "title": "Scene 2: The Mill Yard",
+      "summary": "The party examines the abandoned cart, split flour sacks, and damp ledger.",
+      "locationId": "loc-mill-yard",
+      "readAloud": "Sacks lie split open across the yard, spilling grey powder. A cart has been dragged through the mud and abandoned. Beside the mill door hangs a ledger on a nail, its pages swollen with damp.",
+      "conditions": [
+        "If the party makes noise in the yard, Wick the dog-handler arrives from the wheel room within a few turns and the encounter in Scene 3 begins on alert."
+      ],
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-3-wheel-room",
+          "description": "Enter the wheel room through the mill door."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "ros-scene-3-wheel-room",
+      "title": "Scene 3: The Wheel Room",
+      "summary": "Wick and his wolfhound guard the sluice lever beside the jammed gear.",
+      "locationId": "loc-wheel-room",
+      "readAloud": "Inside, the wheel shaft groans against a jammed gear. Two lanterns burn low. A broad man stands beside the sluice lever with a heavy cudgel, and a wolfhound growls at his heel.",
+      "conditions": [
+        "Once the lever is pulled, the wheel turns and the water in the cellar starts to rise. The party has about five turns to finish the cellar."
+      ],
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-4-cellar",
+          "description": "Descend the narrow stair into the miller's cellar."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "ros-scene-4-cellar",
+      "title": "Scene 4: The Miller's Cellar",
+      "summary": "Aldous Holt sits bound in the rising water, carrying a copy of the sluice lock receipt.",
+      "locationId": "loc-miller-cellar",
+      "readAloud": "A narrow stair drops into a cold cellar. Water laps at the bottom step. A chair is bolted to the floor, and a thin man sits in it, bound and gagged, blinking at the lantern light.",
+      "conditions": [
+        "If the party stays more than five turns, the water reaches the ceiling and the party must leave without the miller or swim out at a cost.",
+        "If the party arrives with Wick as an ally, Aldous speaks freely."
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "id": "enc-wheel-room-wick",
+      "title": "Wick at the Sluice Lever",
+      "sceneId": "ros-scene-3-wheel-room",
+      "locationId": "loc-wheel-room",
+      "description": "Wick and his wolfhound guard the sluice lever that frees the jammed gear.",
+      "conditions": [
+        "Begins on alert if the party made noise in the mill yard."
+      ],
+      "actorIds": ["actor-wick"],
+      "alternativeSolutions": [
+        {
+          "method": "By force",
+          "description": "Wick and his hound fight until one of them is down or the party retreats. Wick yields if his hound is hurt.",
+          "socialBypassOfCombat": false
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    }
+  ],
+  "clues": [
+    {
+      "id": "clue-sluice-sabotage",
+      "text": "The sluice pin was sabotaged: a lock was fitted to it the week before the miller vanished.",
+      "reveals": "The mill stoppage was deliberate sabotage rather than an accident.",
+      "leadTargetId": "actor-tobiah-reed",
+      "placedLocationId": "loc-mill-yard",
+      "placedSceneId": "ros-scene-2-yard",
+      "alternativeSourceId": "ros-scene-4-cellar",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    }
+  ],
+  "rumours": [],
+  "items": [
+    {
+      "id": "item-mill-ledger",
+      "name": "Damp Mill Ledger",
+      "summary": "A water-swollen ledger hanging beside the mill door recording a lock fitted to the sluice pin.",
+      "locationId": "loc-mill-yard",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret-filed-pin",
+      "text": "The sluice pin was filed through from the inside by Tobiah Reed, so that the wheel would jam and the mill would stop.",
+      "relatedEntityIds": ["actor-tobiah-reed", "ros-scene-2-yard"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "secret-tobiah-motive",
+      "text": "Tobiah wants the mill to fail so the bailiff will sell it cheaply to him.",
+      "relatedEntityIds": ["actor-tobiah-reed"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Tobiah Reed",
+        "anchor": "ros-npc-tobiah"
+      }
+    },
+    {
+      "id": "secret-wick-wages",
+      "text": "Wick is owed three months of pay by Tobiah and will switch sides if he hears that Tobiah never meant to pay him.",
+      "relatedEntityIds": [
+        "actor-wick",
+        "actor-tobiah-reed",
+        "ros-scene-3-wheel-room"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "secret-miller-hid",
+      "text": "Aldous hid in the cellar himself. Tobiah did not take him, and he is bound by his own hand to protect his daughter from a charge of theft.",
+      "relatedEntityIds": [
+        "actor-aldous-holt",
+        "actor-maren-holt",
+        "ros-scene-4-cellar"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending-restored",
+      "title": "Ending: The Mill Turns",
+      "description": "The sluice pin was exposed and Tobiah is named. The bailiff cannot sell the mill. Maren keeps her home and the village eats.",
+      "conditions": [
+        "The sluice pin sabotage is exposed and Tobiah Reed is named."
+      ],
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Ending: The Mill Turns",
+        "anchor": "ros-ending-restored"
+      }
+    }
+  ],
+  "unresolved": []
+}

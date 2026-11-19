@@ -1,7 +1,24 @@
 import { describe, it, expect } from "vitest";
 import { FEATURE_HINTS, HINT_KEYS } from "./help-content";
+import type { CoachMark, FeatureHint, HelpArticle } from "./help-content";
 import { loadHelpArticles } from "#lib/content/loader.js";
 import { loadLocalBlogArticles } from "#lib/content/blog-content.js";
+
+it("keeps the public help content types available", () => {
+  const publicTypes: [HelpArticle, CoachMark, FeatureHint] = [
+    { id: "article", title: "Article", labels: [], content: "Content" },
+    {
+      id: "coach-mark",
+      icon: "help",
+      title: "Coach mark",
+      body: "Content",
+      targetSelector: "body",
+    },
+    { id: "hint", title: "Hint", content: "Content" },
+  ];
+
+  expect(publicTypes).toHaveLength(3);
+});
 
 // T061: in-app generators feature hint is registered (US5)
 describe("help-content feature hints", () => {

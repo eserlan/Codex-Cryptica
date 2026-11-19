@@ -7,7 +7,16 @@ export type AdventureStartFailure =
   | "storage-full"
   | "storage-permission"
   | "control-lost"
-  | "cleanup-failed";
+  | "cleanup-failed"
+  | "package-unavailable";
+
+/** Fixed copy: never interpolates anything from the package itself. */
+export const PACKAGE_UNAVAILABLE_COPY =
+  "This adventure's package isn't in this Vault any more (or has changed). Re-import the same package version to continue, or leave the session.";
+export const PACKAGE_OTHER_VERSION_COPY =
+  "A different version of this adventure is in the Vault. This session stays on the version it started with.";
+export const PACKAGE_OTHER_VERSION_UNKNOWN_COPY =
+  "Another approved version may be in this Vault. This session stays on the version it started with.";
 
 const PRESERVED = " Your setup has been preserved.";
 
@@ -46,6 +55,8 @@ export function describeAdventureStartFailure(
       return "Another tab controls this adventure. Use that tab and retry.";
     case "cleanup-failed":
       return "The opening failed and the unfinished adventure could not be removed. Archive it from the adventure menu, then retry.";
+    case "package-unavailable":
+      return PACKAGE_UNAVAILABLE_COPY;
   }
 }
 

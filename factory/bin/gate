@@ -4,6 +4,8 @@
 Usage:
   gate <job-id>            write round-N/checks.md; exit 0 on PASS, 1 on FAIL
   gate <job-id> --merge    same, as round-N/merge-checks.md (job merge runs it)
+  gate <job-id> --codex-sandbox  run checks with credentials and network isolated
+  gate <job-id> --codex-sandbox --fallow-prechecked  skip Fallow after runner audit
   gate --hook              builder SubagentStop hook: run the checks once, exit 2 on failure
 
 The gate runs the main checkout's factory/checks.sh inside the job's worktree,
@@ -19,6 +21,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from codex_sandbox import resolve_git_common_dir, run_sandboxed
+
 REPO = Path(__file__).resolve().parents[2]
 FACTORY = REPO / "factory"
 CONFIG = json.loads((FACTORY / "config.json").read_text())
@@ -32,7 +37,8 @@ def die(msg):
 
 
 def git(worktree, *args):
-    res = subprocess.run(["git", *args], cwd=worktree, capture_output=True, text=True)
+    res = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", *args], cwd=worktree,
+                         capture_output=True, text=True)
     if res.returncode != 0:
         die(f"`git {' '.join(args)}` failed: {res.stderr.strip()}")
     return res.stdout
@@ -40,7 +46,8 @@ def git(worktree, *args):
 
 def protected_changes(worktree):
     """Existing files under protected_paths that the branch modified or deleted."""
-    diff = git(worktree, "diff", "--name-status", f"origin/{CONFIG['base_branch']}...HEAD")
+    diff = git(worktree, "diff", "--no-ext-diff", "--no-textconv", "--name-status",
+               f"origin/{CONFIG['base_branch']}...HEAD")
     hits = []
     for line in diff.splitlines():
         status, *paths = line.split("\t")
@@ -52,13 +59,24 @@ def protected_changes(worktree):
     return hits
 
 
-def run_checks(worktree):
+def run_checks(worktree, codex_sandbox=False, bun_cache_dir=None, fallow_prechecked=False):
     start = time.monotonic()
-    res = subprocess.run(["bash", str(CHECKS)], cwd=worktree, capture_output=True, text=True)
+    if codex_sandbox:
+        res = run_sandboxed(
+            ["bash", str(CHECKS)],
+            cwd=worktree,
+            writable_roots=[worktree],
+            readable_roots=[CHECKS, FACTORY / "config.json"],
+            git_common_dir=resolve_git_common_dir(REPO),
+            bun_cache_dir=bun_cache_dir,
+            fallow_prechecked=fallow_prechecked,
+        )
+    else:
+        res = subprocess.run(["bash", str(CHECKS)], cwd=worktree, capture_output=True, text=True)
     return res.returncode, res.stdout + res.stderr, int(time.monotonic() - start)
 
 
-def gate(job_id, merge):
+def gate(job_id, merge, codex_sandbox=False, fallow_prechecked=False):
     job = json.loads((FACTORY / "jobs" / job_id / "job.json").read_text())
     worktree = job["worktree"]
     if job["round"] < 1:
@@ -66,7 +84,13 @@ def gate(job_id, merge):
     round_dir = FACTORY / "jobs" / job_id / f"round-{job['round']}"
     commit = git(worktree, "rev-parse", "HEAD").strip()
     protected = protected_changes(worktree)
-    code, log, seconds = run_checks(worktree)
+    bun_cache_dir = REPO / ".worktrees/.codex-bun-cache"
+    code, log, seconds = run_checks(
+        worktree,
+        codex_sandbox=codex_sandbox,
+        bun_cache_dir=bun_cache_dir if bun_cache_dir.is_dir() else None,
+        fallow_prechecked=fallow_prechecked,
+    )
     verdict = "PASS" if code == 0 and not protected else "FAIL"
     name = "merge-checks" if merge else "checks"
     (round_dir / f"{name}.log").write_text(log)
@@ -88,8 +112,58 @@ def gate(job_id, merge):
     sys.exit(0 if verdict == "PASS" else 1)
 
 
+def agy_hook(event):
+    if event.get("continuationActive"):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    transcript = Path(event.get("transcriptPath", "")).expanduser()
+    if not transcript.exists():
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    prompt = ""
+    try:
+        with transcript.open() as f:
+            for line in f:
+                entry = json.loads(line)
+                if entry.get("type") == "USER_INPUT":
+                    prompt = entry.get("content") or ""
+                    break
+    except (OSError, ValueError):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    if "Job: " not in prompt or ("Agent: builder." not in prompt and "Build round " not in prompt):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    job_id = prompt.split("Job: ", 1)[1].split(".", 1)[0].strip()
+    job_folder = FACTORY / "jobs" / job_id
+    if "Job folder: " in prompt:
+        folder_str = prompt.split("Job folder: ", 1)[1].split(". ", 1)[0].rstrip("/")
+        if Path(folder_str).exists():
+            job_folder = Path(folder_str)
+    job_file = job_folder / "job.json"
+    if not job_file.exists():
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    build_md = job_folder / "build.md"
+    if build_md.exists() and build_md.read_text().startswith("STATUS: BLOCKED"):
+        print(json.dumps({"decision": "allow"}))
+        sys.exit(0)
+    job = json.loads(job_file.read_text())
+    code, log, _ = run_checks(job["worktree"])
+    if code != 0:
+        tail = "\n".join(log.rstrip().splitlines()[-40:])
+        reason = (f"factory/checks.sh fails in your worktree (exit {code}). The gate will reject this "
+                  f"build. Fix it, or write STATUS: BLOCKED in build.md if you can't.\n\n{tail}")
+        print(json.dumps({"decision": "continue", "reason": reason}))
+        sys.exit(0)
+    print(json.dumps({"decision": "allow"}))
+    sys.exit(0)
+
+
 def hook():
     event = json.load(sys.stdin)
+    if "transcriptPath" in event or "hookEventName" in event:
+        agy_hook(event)
     if event.get("stop_hook_active"):
         sys.exit(0)  # one nudge per stop; the gate decides
     with open(Path(event["agent_transcript_path"]).expanduser()) as f:
@@ -111,8 +185,16 @@ def main(argv):
         hook()
     elif len(argv) == 1 and not argv[0].startswith("-"):
         gate(argv[0], merge=False)
-    elif len(argv) == 2 and argv[1] == "--merge":
-        gate(argv[0], merge=True)
+    elif 1 <= len(argv) <= 4 and not argv[0].startswith("-"):
+        options = argv[1:]
+        allowed = {"--merge", "--codex-sandbox", "--fallow-prechecked"}
+        if len(options) != len(set(options)) or set(options) - allowed:
+            die(f"invalid gate option(s): {' '.join(options)}")
+        codex_sandbox = "--codex-sandbox" in options
+        fallow_prechecked = "--fallow-prechecked" in options
+        if fallow_prechecked and not codex_sandbox:
+            die("--fallow-prechecked requires --codex-sandbox")
+        gate(argv[0], "--merge" in options, codex_sandbox, fallow_prechecked)
     else:
         die(__doc__.strip())
 

@@ -302,12 +302,19 @@ describe("generateMysteryStaged", () => {
       complete: async () => JSON.stringify(replies.shift()),
     });
 
-    const content = result?.output.content ?? "";
-    expect(content).toContain(
-      "If the party asks together, then Oren shares the log.",
+    const lore = result?.output.lore ?? "";
+    expect(lore).toContain(
+      "| Oren Pike | The party asks together. | Oren shares the log. |",
     );
-    expect(content).toContain("**When:** Dawn on day one. **Then:**");
-    expect(content).not.toMatch(/\.\.(?!\.)|\.,|If If/);
+    expect(result?.output.content).not.toContain(
+      "If the Investigation Stalls: Next NPC Moves",
+    );
+    expect(result?.output.content).toContain(
+      "**When:** Dawn on day one. **Then:**",
+    );
+    expect(`${result?.output.content ?? ""}\n${lore}`).not.toMatch(
+      /\.\.(?!\.)|\.,|If If/,
+    );
   });
 
   it("asks both audits for causal consistency, evidence sufficiency and solution flexibility", async () => {

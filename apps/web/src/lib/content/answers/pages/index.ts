@@ -19,6 +19,7 @@ import { howDoIEncouragePartyBondingDuringDowntime } from "./how-do-i-encourage-
 import { howDoIEnjoyTabletopRpgsAgain } from "./how-do-i-enjoy-tabletop-rpgs-again";
 import { howDoIExpandASimpleRpgCampaignIdea } from "./how-do-i-expand-a-simple-rpg-campaign-idea";
 import { howDoIFindATabletopRpgGroupToPlayWith } from "./how-do-i-find-a-tabletop-rpg-group-to-play-with";
+import { howDoIGetAStalledRpgInvestigationMovingAgain } from "./how-do-i-get-a-stalled-rpg-investigation-moving-again";
 import { howDoIGetMyFriendsInterestedInPlayingDnd } from "./how-do-i-get-my-friends-interested-in-playing-dnd";
 import { howDoIGetMyRpgPartyToWorkTogether } from "./how-do-i-get-my-rpg-party-to-work-together";
 import { howDoIGetPlayersToEngageWithMyCampaignWorld } from "./how-do-i-get-players-to-engage-with-my-campaign-world";
@@ -27,6 +28,7 @@ import { howDoIGivePlayersImmersiveHandoutsInAnOnlineRpg } from "./how-do-i-give
 import { howDoIGiveSpecialistCharactersSpotlight } from "./how-do-i-give-specialist-characters-spotlight";
 import { howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery } from "./how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery";
 import { howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow } from "./how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know";
+import { howDoIHandlePlayersDiscussingPlansInFrontOfNpcs } from "./how-do-i-handle-players-discussing-plans-in-front-of-npcs";
 import { howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies } from "./how-do-i-handle-players-who-keep-trying-to-recruit-defeated-enemies";
 import { howDoIImproviseNpcsInDnd } from "./how-do-i-improvise-npcs-in-dnd";
 import { howDoIIntroduceChildrenToDndWithoutOverwhelmingThem } from "./how-do-i-introduce-children-to-dnd-without-overwhelming-them";
@@ -58,6 +60,7 @@ import { howDoIRunALargeBattleWhenThePlayerCharactersArePartOfAnArmy } from "./h
 import { howDoIRunAOneShotRpgSession } from "./how-do-i-run-a-one-shot-rpg-session";
 import { howDoIRunAPirateCampaignFocusedOnExploration } from "./how-do-i-run-a-pirate-campaign-focused-on-exploration";
 import { howDoIRunARogueOrScoutWithoutSplittingTheParty } from "./how-do-i-run-a-rogue-or-scout-without-splitting-the-party";
+import { howDoIRunASciFiHorrorRpg } from "./how-do-i-run-a-sci-fi-horror-rpg";
 import { howDoIRunAStealthMissionInATabletopRpg } from "./how-do-i-run-a-stealth-mission-in-a-tabletop-rpg";
 import { howDoIRunASuccessfulSessionZero } from "./how-do-i-run-a-successful-session-0";
 import { howDoIRunAnInvestigatorWithoutSideliningTheParty } from "./how-do-i-run-an-investigator-without-sidelining-the-party";
@@ -76,6 +79,7 @@ import { howDoISaveMyPartyFromAnOverpoweredEncounter } from "./how-do-i-save-my-
 import { howDoIStartADndCampaign } from "./how-do-i-start-a-dnd-campaign";
 import { howDoIStartGmingForTheFirstTime } from "./how-do-i-start-gming-for-the-first-time";
 import { howDoIStartWorldbuildingForANovelOrShortStory } from "./how-do-i-start-worldbuilding-for-a-novel-or-short-story";
+import { howDoIStructureADndCampaign } from "./how-do-i-structure-a-dnd-campaign";
 import { howDoITakeUsefulRpgNotesDuringPlay } from "./how-do-i-take-useful-rpg-notes-during-play";
 import { howDoITrackMonstersInitiativeAndHitPointsInDndCombat } from "./how-do-i-track-monsters-initiative-and-hit-points-in-dnd-combat";
 import { howDoITurnAnRpgIdeaIntoAnAdventure } from "./how-do-i-turn-an-rpg-idea-into-an-adventure";
@@ -222,6 +226,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIEnjoyTabletopRpgsAgain,
     howDoIExpandASimpleRpgCampaignIdea,
     howDoIFindATabletopRpgGroupToPlayWith,
+    howDoIGetAStalledRpgInvestigationMovingAgain,
     howDoIGetMyFriendsInterestedInPlayingDnd,
     howDoIGetMyRpgPartyToWorkTogether,
     howDoIGetPlayersToEngageWithMyCampaignWorld,
@@ -230,6 +235,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIGiveSpecialistCharactersSpotlight,
     howDoIHandleDivinationMagicWithoutLettingOneCharacterSolveEveryMystery,
     howDoIHandlePlayersAskingAnNpcToTellUsEverythingYouKnow,
+    howDoIHandlePlayersDiscussingPlansInFrontOfNpcs,
     howDoIHandlePlayersWhoKeepTryingToRecruitDefeatedEnemies,
     howDoIImproviseNpcsInDnd,
     howDoIIntroduceChildrenToDndWithoutOverwhelmingThem,
@@ -261,6 +267,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIRunAOneShotRpgSession,
     howDoIRunAPirateCampaignFocusedOnExploration,
     howDoIRunARogueOrScoutWithoutSplittingTheParty,
+    howDoIRunASciFiHorrorRpg,
     howDoIRunAStealthMissionInATabletopRpg,
     howDoIRunASuccessfulSessionZero,
     howDoIRunAnInvestigatorWithoutSideliningTheParty,
@@ -279,6 +286,7 @@ export const answers: Record<string, AnswerConfig> = Object.fromEntries(
     howDoIStartADndCampaign,
     howDoIStartGmingForTheFirstTime,
     howDoIStartWorldbuildingForANovelOrShortStory,
+    howDoIStructureADndCampaign,
     howDoITakeUsefulRpgNotesDuringPlay,
     howDoITrackMonstersInitiativeAndHitPointsInDndCombat,
     howDoITurnAnRpgIdeaIntoAnAdventure,

@@ -1,3 +1,7 @@
+import type { AdventurePerson } from "./people-types";
+import type { AdventureScene } from "./scene-types";
+import type { HistoricalAnchor } from "./historical-anchor-types";
+
 export type AdventureStatus = "active" | "archived";
 export type ProposalKind = "complete" | "roll-required";
 export type RollResolutionStatus = "awaiting-outcome" | "ready-to-resolve";
@@ -25,6 +29,8 @@ export interface StateFact {
   sourceRecordId?: string;
   /** Where this fact belongs. Absent means it applies everywhere (legacy and unplaced facts). */
   placeId?: string;
+  /** Optional visual artwork cues emitted by the GM (used for activeCharacters). */
+  cues?: string[];
 }
 
 /** A named place the player has been to, kept so facts and people can be tied to it. */
@@ -37,6 +43,8 @@ export interface Place {
   relation?: string;
   /** Other names the story has used for it, so a variant resolves to the same place. */
   aliases?: string[];
+  /** Optional visual artwork cues emitted by the GM or player. */
+  cues?: string[];
 }
 
 /** The model's declaration that the player has changed place. Never needed for scene changes inside one place. */
@@ -46,6 +54,7 @@ export interface PlaceMoveProposal {
   /** A place name, for a place not yet recorded or to match one by name. */
   name?: string;
   relation?: string;
+  cues?: string[];
 }
 
 /** Notes written from player-visible text only (the player's actions and the GM's narration). */
@@ -198,6 +207,8 @@ export interface HiddenStatePatch {
 export interface VisibleStateProposalPatch {
   location?: NewStateFact | null;
   situation?: NewStateFact | null;
+  /** A package scene the player's own actions reached; never persisted on the turn. */
+  packageSceneId?: string;
   objectives: ProposalCollectionPatch<StateFact, NewStateFact>;
   activeCharacters: ProposalCollectionPatch<StateFact, NewStateFact>;
   knownFacts: ProposalCollectionPatch<StateFact, NewStateFact>;
@@ -391,6 +402,13 @@ export interface WorldEntryContext {
   scenePrompt?: string;
 }
 
+export interface AdventureSourcePackageRef {
+  packageId: string;
+  version: string;
+  formatVersion: string;
+  hash: string;
+}
+
 export interface AdventureSession {
   schemaVersion: 3;
   id: string;
@@ -404,16 +422,28 @@ export interface AdventureSession {
   playerCharacter: PlayerCharacter;
   premise: string;
   sourceRecords: SourceRecordReference[];
+  /** Optional pinned adventure package reference; absent on unimported or legacy sessions. */
+  sourcePackage?: AdventureSourcePackageRef;
+  /** The pinned package's current scene; absent on sessions without a package. */
+  packageProgress?: PackageProgress;
   /** Optional structured situations; absent on ordinary adventures. */
   scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
   worldEntry?: WorldEntryContext;
+  /** Optional anchored historical event and continuity policy; absent on ordinary adventures. */
+  historicalAnchor?: HistoricalAnchor;
   /** Optional for backwards-compatible local-first sessions. */
   worldTime?: WorldTimeState;
   /** Places visited so far. Absent on sessions from before places existed. */
   places?: Place[];
   /** Where the player is now. Absent when unknown; unplaced facts then apply everywhere. */
   currentPlaceId?: string;
+  /** Opaque artwork extension; validate before display or mutation. */
+  artwork?: unknown;
+  /** Persistent player-visible people identities; absent on older sessions. */
+  people?: AdventurePerson[];
+  /** Explicit within-place scene identities; absent on older sessions. */
+  scenes?: AdventureScene[];
   /** Rolling notes on turns that have left the prompt's transcript window. Absent until the first summary. */
   storySoFar?: StorySoFar;
   visibleState: VisibleAdventureState;
@@ -435,12 +465,35 @@ export interface ScenarioElaborationProposal {
   discovery?: string;
 }
 
+/** A model-proposed ledger entry; the engine assigns the event ID. */
+export interface PackageEventProposal {
+  recordId: string;
+  kind: PackageRecordKind;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+
+/** A model-proposed actor state update; the engine assigns the event ID. */
+export interface ActorEventProposal {
+  actorId: string;
+  status?: ActorProposalStatus;
+  disposition?: ActorDisposition;
+  fact?: string;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+
 export interface CompletedTurnProposal {
   kind: "complete";
   narration: string;
   timeAdvance?: TimeAdvanceProposal;
   /** Set only when the player changes place in this turn. */
   moveTo?: PlaceMoveProposal;
+  /** Optional artwork cues to attach to the current place if untagged. */
+  placeCues?: string[];
   visiblePatch: VisibleStateProposalPatch;
   hiddenPatch: HiddenStateProposalPatch;
   revealSecretIds: string[];
@@ -451,6 +504,10 @@ export interface CompletedTurnProposal {
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
+  /** GM-only package progress; checked by the ledger reducer. */
+  packageEvents?: PackageEventProposal[];
+  /** GM-only package actor progress; checked by the actor ledger reducer. */
+  actorEvents?: ActorEventProposal[];
 }
 
 export interface RollRequiredProposal {
@@ -466,11 +523,74 @@ export interface RollRequiredProposal {
 export type AdventureTurnProposal =
   CompletedTurnProposal | RollRequiredProposal;
 
+export type PackageRecordKind = "scene" | "encounter" | "clue" | "secret";
+export type PackageProgressStatus =
+  "unvisited" | "available" | "active" | "resolved" | "altered" | "skipped";
+export interface PackageProgressRecord {
+  id: string;
+  kind: PackageRecordKind;
+  status: PackageProgressStatus;
+}
+export interface PackageProgressEvent {
+  id: string;
+  turnId: string;
+  recordId: string;
+  kind: PackageRecordKind;
+  from: PackageProgressStatus;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+export type ActorProposalStatus = "present" | "absent" | "dead";
+export type ActorProgressStatus = "unknown" | ActorProposalStatus;
+export type ActorDisposition =
+  "hostile" | "wary" | "neutral" | "friendly" | "allied";
+export interface PackageActorState {
+  actorId: string;
+  status: ActorProgressStatus;
+  disposition: ActorDisposition;
+  facts: string[];
+}
+export interface PackageActorEvent {
+  id: string;
+  turnId: string;
+  actorId: string;
+  fromStatus?: ActorProgressStatus;
+  status?: ActorProposalStatus;
+  fromDisposition?: ActorDisposition;
+  disposition?: ActorDisposition;
+  fact?: string;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+/** `version`, `records` and `events` are all present or all absent. */
+export interface PackageProgress {
+  sceneId: string;
+  version?: 1;
+  records?: PackageProgressRecord[];
+  events?: PackageProgressEvent[];
+  actors?: PackageActorState[];
+  actorEvents?: PackageActorEvent[];
+}
+
 export interface CommitMetadata {
   turnId: string;
   inputId: string;
   now: string;
   playerAction?: string;
+  /** Scene IDs of the pinned package, so a reported scene move can be checked. */
+  packageSceneIds?: readonly string[];
+  /** Record ID to kind for the pinned package; turns the progress ledger on. */
+  packageRecordKinds?: Readonly<Record<string, PackageRecordKind>>;
+  /** Scene ID to the target scene IDs of its branches. */
+  packageSceneBranches?: Readonly<Record<string, readonly string[]>>;
+  /** Actor IDs of the pinned package; enables actor progress tracking. */
+  packageActorIds?: readonly string[];
+  /** Hidden package references and text used to reject accidental player leaks. */
+  packageRecordIds?: readonly string[];
+  packageGmOnlyText?: readonly string[];
 }
 
 export interface AdventureValidationError {

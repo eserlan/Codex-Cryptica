@@ -148,6 +148,26 @@ describe("AdventureComposer", () => {
     expect(m.submitAction).toHaveBeenCalledWith("Cross the flooded causeway");
   });
 
+  it("submits on Ctrl+Enter and ignores plain Enter or empty/disabled drafts", async () => {
+    const m = manager("ready");
+    render(AdventureComposer, { props: { manager: m } });
+    const textarea = screen.getByLabelText("What do you do?");
+
+    await fireEvent.keyDown(textarea, { key: "Enter" });
+    expect(m.submitAction).not.toHaveBeenCalled();
+
+    await fireEvent.keyDown(textarea, { key: "Enter", ctrlKey: true });
+    expect(m.submitAction).toHaveBeenCalledTimes(1);
+    expect(m.submitAction).toHaveBeenCalledWith("Cross the flooded causeway");
+
+    const blank = manager("ready");
+    blank.draft = "   ";
+    const second = render(AdventureComposer, { props: { manager: blank } });
+    const blankTextarea = second.container.querySelector("textarea")!;
+    await fireEvent.keyDown(blankTextarea, { key: "Enter", ctrlKey: true });
+    expect(blank.submitAction).not.toHaveBeenCalled();
+  });
+
   it("renders suggested actions and submits the chosen one", async () => {
     const m = manager("ready");
     m.suggestedActions = ["Search the wreckage"];
@@ -306,13 +326,14 @@ describe("AdventureComposer layout and chips", () => {
     }
   });
 
-  it("lets chips use the wider dock while the input stays on the story column", () => {
+  it("keeps chips on the story column width like the input", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
-    expect(screen.getByTestId("adventure-dock-extras").className).toContain(
-      "max-w-6xl",
-    );
+    const extras = screen.getByTestId("adventure-dock-extras");
+    expect(extras.className).toContain("max-w-3xl");
+    expect(extras.className).toContain("mx-auto");
+    expect(extras.className).not.toContain("max-w-6xl");
     expect(
       screen.getByTestId("adventure-free-action").closest("form")!.className,
     ).toContain("max-w-3xl");
@@ -370,6 +391,83 @@ describe("AdventureComposer layout and chips", () => {
       expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
         "hidden",
       );
+    });
+
+    it("lets the player collapse and re-expand suggestion chips", async () => {
+      const m = manager("ready");
+      m.suggestedActions = ["Search the wreckage", "Call out to the ferryman"];
+      render(AdventureComposer, {
+        props: { manager: m, suggestionChips: true },
+      });
+
+      const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(
+        screen.getByRole("button", { name: "Search the wreckage" }),
+      ).toBeTruthy();
+
+      await fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
+      expect(
+        screen.queryByRole("button", { name: "Search the wreckage" }),
+      ).toBeNull();
+
+      await fireEvent.click(toggle);
+      expect(toggle.getAttribute("aria-expanded")).toBe("true");
+      expect(
+        screen.getByRole("button", { name: "Search the wreckage" }),
+      ).toBeTruthy();
+    });
+  });
+
+  describe("package-unavailable", () => {
+    function unavailable(otherVersionAvailable: boolean | null) {
+      const m = manager("ready");
+      m.phase = "package-unavailable";
+      m.readOnly = true;
+      m.session = { status: "active", turns: [{}] };
+      m.packageUnavailable = { otherVersionAvailable };
+      m.retryPackageCheck = vi.fn(async () => false);
+      m.tryTakeControl = vi.fn();
+      m.close = vi.fn();
+      return m;
+    }
+
+    it("shows the copy, disables the composer and offers Retry and Leave", async () => {
+      const m = unavailable(false);
+      render(AdventureComposer, { props: { manager: m } });
+      expect(screen.getByText(/package isn't in this Vault/)).toBeTruthy();
+      expect(
+        (screen.getByLabelText("What do you do?") as HTMLTextAreaElement)
+          .disabled,
+      ).toBe(true);
+      expect(
+        screen.queryByRole("button", { name: "Try to take control" }),
+      ).toBeNull();
+      expect(screen.queryByTestId("package-other-version")).toBeNull();
+
+      await fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+      expect(m.retryPackageCheck).toHaveBeenCalledOnce();
+      await waitFor(() =>
+        expect(screen.getByText(/still unavailable/)).toBeTruthy(),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Leave session" }),
+      );
+      expect(m.close).toHaveBeenCalledOnce();
+    });
+
+    it("does not hide the alternate-version notice when the check is inconclusive", async () => {
+      const m = unavailable(null);
+      render(AdventureComposer, { props: { manager: m } });
+      expect(screen.getByTestId("package-other-version").textContent).toMatch(
+        /may be in this Vault/,
+      );
+    });
+
+    it("shows the other-version line only when flagged", () => {
+      render(AdventureComposer, { props: { manager: unavailable(true) } });
+      expect(screen.getByTestId("package-other-version")).toBeTruthy();
     });
   });
 });

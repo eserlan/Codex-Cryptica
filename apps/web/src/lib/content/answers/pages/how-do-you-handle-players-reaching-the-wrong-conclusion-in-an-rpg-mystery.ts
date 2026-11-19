@@ -203,6 +203,20 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
       linkText: "Map clues and suspects in Codex Cryptica",
       href: "/solutions/rpg-knowledge-graph",
     },
+    relatedTools: [
+      {
+        title: "Mystery and investigation generator",
+        description:
+          "Prepare fixed facts, suspect timelines, and independent clue paths so wrong theories can be tested honestly against the truth.",
+        href: "/generators/mystery-investigation",
+      },
+      {
+        title: "NPC generator",
+        description:
+          "Create witnesses, suspects, and officials with distinct motives, secrets, and hooks to question during the case.",
+        href: "/generators/npc",
+      },
+    ],
     relatedAnswers: [
       "how-do-you-run-a-mystery-without-railroading",
       "how-do-i-run-an-investigator-without-sidelining-the-party",
@@ -212,6 +226,7 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
       "how-do-i-handle-divination-magic-without-letting-one-character-solve-every-mystery",
       "how-do-you-handle-players-going-off-script-as-a-gm",
       "how-do-i-handle-players-asking-an-npc-to-tell-us-everything-you-know",
+      "how-do-i-get-a-stalled-rpg-investigation-moving-again",
     ],
     discovery: {
       id: "answer-players-wrong-conclusion-mystery",
@@ -252,6 +267,11 @@ export const howDoYouHandlePlayersReachingTheWrongConclusionInAnRpgMystery: Answ
           with: "answer-interviewing-npcs-investigation",
           reason:
             "That answer structures witness interviews and separates memory from interpretation; this answer uses interviews as one possible fair test before an irreversible act and focuses on diagnosing and answering a wrong party conclusion.",
+        },
+        {
+          with: "answer-stalled-investigation-recovery",
+          reason:
+            "This answer covers the decision after a party has formed a plausible but wrong conclusion and may act irreversibly on it; the stalled-investigation answer covers the wider stall, including missed and forgotten clues and the absence of any visible next action.",
         },
       ],
     },

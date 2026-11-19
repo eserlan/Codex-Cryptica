@@ -32,6 +32,17 @@ describe("CloudBackupDirtyStore", () => {
     expect(ids(await store.snapshot("v2"))).toEqual(["entity:other"]);
   });
 
+  it("records a map change per map when it names ids, and as one row when it does not", async () => {
+    await store.record("v1", { kind: "maps", ids: ["m1", "m2"] });
+    expect(ids(await store.snapshot("v1"))).toEqual(["maps:m1", "maps:m2"]);
+    await store.record("v1", { kind: "maps" });
+    expect(ids(await store.snapshot("v1"))).toEqual([
+      "maps:*",
+      "maps:m1",
+      "maps:m2",
+    ]);
+  });
+
   it("keeps a deletion as a tombstone, and a later save replaces it", async () => {
     await store.record("v1", { kind: "entity", ids: ["a"], deleted: true });
     expect(ids(await store.snapshot("v1"))).toEqual(["entity:a:deleted"]);

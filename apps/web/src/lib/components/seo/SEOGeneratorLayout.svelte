@@ -125,7 +125,7 @@
       useAI: boolean;
       onPreview?: (preview: GeneratorOutput) => void;
     }) => Promise<GeneratorOutput>;
-    formFields: Snippet<[() => void]>;
+    formFields: Snippet<[() => void, boolean]>;
     outputExtras?: Snippet<
       [GeneratorOutput, (output: GeneratorOutput) => void, boolean]
     >;
@@ -237,6 +237,7 @@
   const save = useGeneratorSave({
     getGeneratorType: () => generatorType,
     getGeneratedData: () => session.generatedData,
+    isGenerationInProgress: () => session.isBusy,
     getDocumentLayout: () => documentLayout,
     exportDiagramImage: () =>
       diagrams?.exportDataUrl() ?? Promise.resolve(undefined),
@@ -291,6 +292,9 @@
   // The shell renders the header CTA now, so this page registers its tracking
   // rather than binding it to a button it no longer owns.
   $effect(() => registerShellCtaHandler(save.trackHeaderOpenCodex));
+  $effect(() => {
+    if (session.isBusy) save.clearSaveError();
+  });
 </script>
 
 {#snippet outputCardBlock()}
@@ -298,7 +302,12 @@
     generatedData={session.generatedData}
     aiFallbackDismissed={session.aiFallbackDismissed}
     isBusy={session.showOutputLoading}
+    isGenerationInProgress={session.isBusy}
     isExampleDraft={session.isExampleDraft}
+    {generatorType}
+    {canFollowUp}
+    saveError={save.saveError}
+    isSaving={save.isSaving}
     {generatedSingular}
     {variant}
     worldTheme={theme || worldTheme}
@@ -474,7 +483,6 @@
   <GeneratorModals
     {selectedHubEntity}
     onCloseHubEntity={() => (selectedHubEntity = null)}
-    {save}
     {refinement}
     {handoffs}
     {clipboard}

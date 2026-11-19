@@ -32,7 +32,12 @@ export const backupAndRestore: FeatureEntry = {
       actionIds: ["backup.open-settings"],
     },
   ],
-  helpIds: ["export-and-backup", "cloud-backup", "offline-sync"],
+  helpIds: [
+    "export-and-backup",
+    "cloud-backup",
+    "shared-vault",
+    "offline-sync",
+  ],
   related: ["archive-import", "publishing"],
   actions: [
     {

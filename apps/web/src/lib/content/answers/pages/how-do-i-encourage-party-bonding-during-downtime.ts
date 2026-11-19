@@ -220,6 +220,7 @@ export const howDoIEncouragePartyBondingDuringDowntime: AnswerConfigInput = {
     "how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
     "how-do-i-make-roleplay-more-engaging",
     "how-do-i-run-a-campaign-where-the-players-own-a-business",
+    "how-do-i-structure-a-dnd-campaign",
   ],
   discovery: {
     id: "answer-encourage-party-bonding-downtime",

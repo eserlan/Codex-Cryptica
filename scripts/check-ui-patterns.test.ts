@@ -8,6 +8,7 @@ import {
   contrastProblems,
   contrastRatio,
   loadThemes,
+  modalFocusProblems,
   parseColour,
   problemTouchesChangedLines,
   remoteImageProblems,
@@ -82,6 +83,14 @@ describe("contrast — cases PR review flagged", () => {
       "background-coloured text on a primary fill",
       '<button class="bg-theme-primary text-theme-bg">x</button>',
     ],
+    [
+      "danger text in light themes (#4968)",
+      '<p class="text-sm text-theme-danger">Image failed to save.</p>',
+    ],
+    [
+      "warning text in light themes (#4968)",
+      '<p class="text-sm text-theme-warning">Partial import.</p>',
+    ],
   ])("flags %s", (_label, source) => {
     expect(rules(source)).toContain("contrast");
   });
@@ -92,12 +101,74 @@ describe("contrast — cases PR review flagged", () => {
       "on-primary text on a primary fill",
       '<button class="bg-theme-primary text-theme-on-primary">x</button>',
     ],
-    [
-      "hover-only colour",
-      '<a class="text-theme-text hover:text-theme-primary/40">x</a>',
-    ],
   ])("passes %s", (_label, source) => {
     expect(rules(source)).not.toContain("contrast");
+  });
+
+  it("flags low-contrast hover, disabled, and focus indicators (state-contrast)", () => {
+    expect(
+      rules('<a class="text-theme-text hover:text-theme-primary/40">x</a>'),
+    ).toContain("state-contrast");
+    expect(
+      rules(
+        '<button class="text-theme-text disabled:opacity-35">Next</button>',
+      ),
+    ).toContain("state-contrast");
+    expect(
+      rules(
+        '<button class="text-theme-text focus-visible:ring-theme-border">Save</button>',
+      ),
+    ).toContain("state-contrast");
+    expect(
+      rules(
+        '<button class="text-theme-text hover:text-theme-text focus-visible:ring-theme-text">Save</button>',
+      ),
+    ).not.toContain("state-contrast");
+  });
+
+  it("flags low-contrast outlined interactive control borders (border-contrast)", () => {
+    expect(
+      rules(
+        '<button class="border border-theme-border text-theme-text">Cancel</button>',
+      ),
+    ).toContain("border-contrast");
+    expect(
+      rules('<input class="border border-theme-border text-theme-text" />'),
+    ).toContain("border-contrast");
+    expect(
+      rules('<input class="md:border border-theme-border text-theme-text" />'),
+    ).toContain("border-contrast");
+    expect(
+      rules(
+        '<input class="border-0 md:border border-theme-border text-theme-text" />',
+      ),
+    ).toContain("border-contrast");
+    expect(
+      rules(
+        '<input class="border-0 md:border-0 border-theme-border text-theme-text" />',
+      ),
+    ).not.toContain("border-contrast");
+    expect(
+      rules('<input class="border-x-2 border-theme-border text-theme-text" />'),
+    ).toContain("border-contrast");
+    // Decorative container borders are not interactive control boundaries
+    expect(
+      rules(
+        '<div class="border border-theme-border text-theme-text">Card</div>',
+      ),
+    ).not.toContain("border-contrast");
+    // Solid-fill primary buttons do not rely on their border for boundary contrast
+    expect(
+      rules(
+        '<button class="bg-theme-primary text-theme-on-primary border border-theme-border">Save</button>',
+      ),
+    ).not.toContain("border-contrast");
+    // Full-strength border passes
+    expect(
+      rules(
+        '<button class="border border-theme-text text-theme-text">Cancel</button>',
+      ),
+    ).not.toContain("border-contrast");
   });
 
   it("holds icons to 3:1 rather than 4.5:1", () => {
@@ -306,6 +377,51 @@ describe("pattern rules", () => {
       'const tables = resolve("tables");',
     ])
       expect(resolveConcatProblems(source)).toEqual([]);
+  });
+
+  it("flags hand-rolled dialog markup without focusTrap or ModalShell (#4968)", () => {
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true"><button>Close</button></div>',
+        "MyDialog.svelte",
+      ),
+    ).toHaveLength(2);
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true" use:focusTrap><button>Close</button></div>',
+        "MyDialog.svelte",
+      ),
+    ).toEqual([]);
+    expect(
+      modalFocusProblems(
+        '<ModalShell><div role="dialog" aria-modal="true">x</div></ModalShell>',
+        "MyDialog.svelte",
+      ),
+    ).toEqual([]);
+    expect(
+      modalFocusProblems(
+        '<ModalShell><div role="dialog" aria-modal="true">safe</div></ModalShell>\n<div role="dialog" aria-modal="true">untrapped</div>',
+        "MyDialog.svelte",
+      ),
+    ).toHaveLength(2);
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true">x</div>',
+        "helper.ts",
+      ),
+    ).toEqual([]);
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true">x</div>\n<p>Tab order matters.</p>\n<button on:click={() => opener.focus()}>Return</button>',
+        "MyDialog.svelte",
+      ),
+    ).toHaveLength(2);
+    expect(
+      modalFocusProblems(
+        '<div role="dialog" aria-modal="true" onkeydown={trap}>x</div>\nfunction trap(event) { if (event.key === "Tab") { event.preventDefault(); next.focus(); } }',
+        "MyDialog.svelte",
+      ),
+    ).toEqual([]);
   });
 
   it("respects a ui-check-ignore comment on or above the line", () => {

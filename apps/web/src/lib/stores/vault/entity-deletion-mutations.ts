@@ -92,7 +92,33 @@ export class EntityDeletionMutations {
     }
   }
 
-  async bulkDelete(ids: string[]): Promise<BulkMutationResult> {
+  private async captureBulkDeleteVault(expectedVaultId?: string) {
+    if (
+      expectedVaultId !== undefined &&
+      expectedVaultId !== this.context.deps.activeVaultId()
+    ) {
+      return undefined;
+    }
+    const vaultHandle = await this.context.deps.getActiveVaultHandle();
+    if (
+      expectedVaultId !== undefined &&
+      expectedVaultId !== this.context.deps.activeVaultId()
+    ) {
+      return undefined;
+    }
+    const localHandle = await this.context.deps.getActiveFolderHandle();
+    const vaultId = this.context.deps.activeVaultId();
+    if (expectedVaultId !== undefined && expectedVaultId !== vaultId) {
+      return undefined;
+    }
+    if (!vaultHandle || !vaultId) return null;
+    return { vaultHandle, localHandle, vaultId };
+  }
+
+  async bulkDelete(
+    ids: string[],
+    expectedVaultId?: string,
+  ): Promise<BulkMutationResult> {
     this.assertWritable();
     const requestedIds = [...new Set(ids)];
     const span = this.recorder.start("vault_bulk_mutation");
@@ -101,16 +127,22 @@ export class EntityDeletionMutations {
       span.complete(() => ({ changedEntityCount: result.succeededIds.length }));
       return result;
     }
-    const vaultHandle = await this.context.deps.getActiveVaultHandle();
-    const localHandle = await this.context.deps.getActiveFolderHandle();
-    const vaultId = this.context.deps.activeVaultId();
-    if (!vaultHandle || !vaultId) {
+    const capturedVault = await this.captureBulkDeleteVault(expectedVaultId);
+    if (capturedVault === undefined) {
+      span.cancel(() => ({ changedEntityCount: 0 }));
+      return summarizeBulkMutation(
+        requestedIds,
+        requestedIds.map((id) => ({ id, status: "cancelled" })),
+      );
+    }
+    if (capturedVault === null) {
       span.fail("unexpected", () => ({ changedEntityCount: 0 }));
       return summarizeBulkMutation(
         requestedIds,
         requestedIds.map((id) => ({ id, status: "failed" })),
       );
     }
+    const { vaultHandle, localHandle, vaultId } = capturedVault;
     const validIds = requestedIds.filter((id) => this.context.entities[id]);
     const deletedPaths = new Map(
       validIds.map((id) => [
@@ -144,7 +176,21 @@ export class EntityDeletionMutations {
       items.push(this.fileDeletionItem(result));
     }
     if (deletedIds.length > 0) {
-      await this.commitBulkDeletion(deletedIds);
+      if (vaultId !== this.context.deps.activeVaultId()) {
+        span.cancel(() => ({ changedEntityCount: 0 }));
+        return summarizeBulkMutation(
+          requestedIds,
+          items.map((item) => ({ ...item, status: "cancelled" })),
+        );
+      }
+      const committed = await this.commitBulkDeletion(deletedIds, vaultId);
+      if (!committed) {
+        span.cancel(() => ({ changedEntityCount: 0 }));
+        return summarizeBulkMutation(
+          requestedIds,
+          items.map((item) => ({ ...item, status: "cancelled" })),
+        );
+      }
       await this.publishBulkDeletion(
         deletedIds,
         vaultId,
@@ -197,7 +243,11 @@ export class EntityDeletionMutations {
     };
   }
 
-  private async commitBulkDeletion(deletedIds: string[]): Promise<void> {
+  private async commitBulkDeletion(
+    deletedIds: string[],
+    vaultId: string,
+  ): Promise<boolean> {
+    if (vaultId !== this.context.deps.activeVaultId()) return false;
     const applied = vaultEntities.applyBatchDelete(
       this.context.entities,
       deletedIds,
@@ -208,6 +258,7 @@ export class EntityDeletionMutations {
       await this.context.deps.persistence.persistImmediately(
         Object.values(applied.modified).map((entity) => ({ entity })),
       );
+    if (vaultId !== this.context.deps.activeVaultId()) return false;
     const survivorSuccess = new Set(
       survivorResults.filter((result) => result.ok).map((result) => result.id),
     );
@@ -222,6 +273,7 @@ export class EntityDeletionMutations {
         void this.context.deps.persistence.scheduleSave(applied.modified[id]);
     }
     this.context.entities = committed;
+    return true;
   }
 
   private async publishBulkDeletion(

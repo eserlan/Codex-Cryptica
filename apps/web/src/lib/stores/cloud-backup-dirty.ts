@@ -49,7 +49,10 @@ export class CloudBackupDirtyStore {
   async record(vaultId: string, change?: DurableVaultChange): Promise<void> {
     if (!change) return this.requireFullPush(vaultId);
     if (change.kind === "maps") {
-      return this.put(vaultId, "maps", FULL_PUSH_ID, false);
+      for (const id of change.ids ?? [FULL_PUSH_ID]) {
+        await this.put(vaultId, "maps", id, false);
+      }
+      return;
     }
     for (const id of change.ids) {
       await this.put(vaultId, change.kind, id, change.deleted === true);

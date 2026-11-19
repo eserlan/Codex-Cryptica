@@ -515,10 +515,26 @@ export const CLOUD_BACKUP_LIMITS = {
    */
   maxVaultBytes: 50 * 1024 * 1024,
   /**
+   * Removed entities' content kept for restore. Not part of `maxVaultBytes`,
+   * so a delete never fails an upload; past this the oldest content is dropped
+   * and only the tombstone records stay.
+   */
+  maxTrashBytes: 50 * 1024 * 1024,
+  /**
+   * Removed entities stay restorable for up to 30 days, subject to the 50 MB
+   * trash limit (`maxTrashBytes`); older tombstones are purged, and oldest
+   * kept content may be evicted earlier if trash exceeds the size cap.
+   */
+  trashRetentionDays: 30,
+  /**
    * One asset per request, so no single upload can approach the Worker's
    * memory ceiling. Matches the publish path's per-asset cap.
    */
   maxAssetBytes: 5 * 1024 * 1024,
+  /** Bounds restore-point asset metadata independently of the byte ceiling. */
+  maxAssetCount: 1_000,
+  /** Hard cap for the complete serialized restore-point record. */
+  maxRestorePointMetadataBytes: 1024 * 1024,
   /**
    * Ceiling on a JSON body (enable and commit). The bundle is text only —
    * entities, maps and canvases — so this is generous for it while keeping any
@@ -552,9 +568,100 @@ export const CloudBackupManifestSchema = z.object({
    * a later change to the default can never misread existing shards.
    */
   shardCount: z.number().int().positive().optional(),
+  /**
+   * Raised by exactly one on every accepted commit. A backup written before
+   * revisions existed has none and counts as 0 (`cloudBackupRevisionOf`).
+   */
+  revision: z.number().int().nonnegative().optional(),
+  /**
+   * The oldest revision the change feed can vouch for. Deletes before it were
+   * never recorded as tombstones, and a full upload can drop entities without
+   * one, so a device older than this must reload the whole backup.
+   */
+  feedHorizon: z.number().int().nonnegative().optional(),
 });
 
 export type CloudBackupManifest = z.infer<typeof CloudBackupManifestSchema>;
+
+/** The manifest's revision, where a missing one means 0. */
+export function cloudBackupRevisionOf(
+  manifest: Pick<CloudBackupManifest, "revision">,
+): number {
+  return manifest.revision ?? 0;
+}
+
+/**
+ * Who last wrote an entity and in which commit. Stored in the backup's
+ * `index.json` beside the hashes, never inside the entity itself.
+ */
+export const CloudBackupEntitySyncMetaSchema = z.object({
+  rev: z.number().int().nonnegative(),
+  editedBy: z.string().min(1),
+  editedAt: z.string(),
+});
+
+export type CloudBackupEntitySyncMeta = z.infer<
+  typeof CloudBackupEntitySyncMetaSchema
+>;
+
+/** A file a map carries: its vault path and the stored, content-addressed id. */
+export const CloudBackupWholeItemAssetSchema = z.object({
+  path: z.string().min(1),
+  assetId: z.string().min(1).max(255),
+  mimeType: z.string(),
+});
+
+export type CloudBackupWholeItemAsset = z.infer<
+  typeof CloudBackupWholeItemAssetSchema
+>;
+
+/**
+ * Sync metadata of a map or canvas, which sync as whole items: the entity
+ * stamp plus the item's content hash and, for a map, the files it carries.
+ */
+export const CloudBackupWholeItemMetaSchema =
+  CloudBackupEntitySyncMetaSchema.extend({
+    hash: z.string(),
+    assets: z.array(CloudBackupWholeItemAssetSchema).optional(),
+  });
+
+export type CloudBackupWholeItemMeta = z.infer<
+  typeof CloudBackupWholeItemMetaSchema
+>;
+
+/**
+ * A removed entity: kept in the index so the change feed can report the
+ * delete. The entity's last content sits in a trash object beside it.
+ */
+export const CloudBackupTombstoneSchema = z.object({
+  id: z.string().min(1).max(255),
+  /** The revision of the commit that removed it. */
+  rev: z.number().int().nonnegative(),
+  deletedBy: z.string().min(1),
+  deletedAt: z.string(),
+  title: z.string(),
+  /** What was removed. Absent means an entity. */
+  kind: z.enum(["map", "canvas"]).optional(),
+});
+
+export type CloudBackupTombstone = z.infer<typeof CloudBackupTombstoneSchema>;
+
+/** Summary returned when oldest-first trash eviction drops content under `maxTrashBytes`. */
+export const CloudBackupTrashEvictionSchema = z.object({
+  evictedCount: z.number().int().positive(),
+  usedBytes: z.number().int().nonnegative(),
+  maxBytes: z.number().int().positive(),
+});
+
+export type CloudBackupTrashEviction = z.infer<
+  typeof CloudBackupTrashEvictionSchema
+>;
+
+/** `editedBy` until backups have members: the owner is the only writer. */
+export const CLOUD_BACKUP_OWNER_EDITOR = "owner";
+
+/** `editedBy` for an editor who sent no usable name. */
+export const CLOUD_BACKUP_MEMBER_EDITOR = "member";
 
 /**
  * Storage layouts. v1 keeps every entity inside one `bundle.json`; v2 (#3354)
@@ -618,21 +725,49 @@ const CloudBackupEntitySchema = z
   .object({ id: z.string().min(1).max(255) })
   .passthrough();
 
-/**
- * Body of `POST /api/cloud-backup/{backupId}/delta` (#3354): the entities
- * changed since `baseLastPushedAt`, plus whole replacements for the small
- * non-entity sections when they changed.
- */
-export const CloudBackupDeltaSchema = z.object({
-  vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
-  baseLastPushedAt: z.string().min(1),
-  upserts: z.array(CloudBackupEntitySchema),
-  deletes: z.array(z.string().min(1).max(255)),
-  maps: z.array(z.unknown()).optional(),
-  canvases: z.array(z.unknown()).optional(),
-  assetManifest: z.array(z.unknown()).optional(),
-  assetIds: z.array(z.string()).optional(),
+const CloudBackupMapUpsertSchema = z.object({
+  item: CloudBackupEntitySchema,
+  assets: z.array(CloudBackupWholeItemAssetSchema).optional(),
 });
+
+const CloudBackupCanvasUpsertSchema = z.object({
+  item: CloudBackupEntitySchema,
+});
+
+/**
+ * Body of `POST /api/cloud-backup/{backupId}/delta` (#3354): the entities,
+ * maps and canvases changed since `baseLastPushedAt`. The whole-list `maps`
+ * and `canvases` are the form older clients send; a delta never sends both
+ * forms for one kind.
+ */
+export const CloudBackupDeltaSchema = z
+  .object({
+    vaultTitle: z.string().min(1).max(CLOUD_BACKUP_LIMITS.maxTitleLength),
+    baseLastPushedAt: z.string().min(1),
+    /** When present, must equal the backup's current revision. */
+    baseRevision: z.number().int().nonnegative().optional(),
+    upserts: z.array(CloudBackupEntitySchema),
+    deletes: z.array(z.string().min(1).max(255)),
+    /** A member's display name; the worker stamps it on an editor's commit. */
+    editorName: z.string().max(40).optional(),
+    maps: z.array(z.unknown()).optional(),
+    canvases: z.array(z.unknown()).optional(),
+    mapUpserts: z.array(CloudBackupMapUpsertSchema).optional(),
+    mapDeletes: z.array(z.string().min(1).max(255)).optional(),
+    canvasUpserts: z.array(CloudBackupCanvasUpsertSchema).optional(),
+    canvasDeletes: z.array(z.string().min(1).max(255)).optional(),
+    assetManifest: z.array(z.unknown()).optional(),
+    assetIds: z
+      .array(z.string())
+      .max(CLOUD_BACKUP_LIMITS.maxAssetCount)
+      .optional(),
+  })
+  .refine(
+    (delta) =>
+      !(delta.maps && (delta.mapUpserts || delta.mapDeletes)) &&
+      !(delta.canvases && (delta.canvasUpserts || delta.canvasDeletes)),
+    { message: "A delta sends maps and canvases in one form only" },
+  );
 
 export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;
 
@@ -647,7 +782,16 @@ export type CloudBackupDelta = z.infer<typeof CloudBackupDeltaSchema>;
 export const LocalCloudBackupRecordSchema = z.object({
   vaultId: z.string().min(1),
   backupId: z.string().min(1),
+  /**
+   * The backup's bearer credential. The owner code for an owner record; the
+   * editor token for a member who joined from a group link (`role: "editor"`).
+   * Never shown as a recovery key.
+   */
   ownerCode: z.string().min(1),
+  /** Absent means owner, so records written before sharing still parse. */
+  role: z.enum(["owner", "editor"]).optional(),
+  /** Set when an editor's group link stopped working; sync stops until a rejoin. */
+  linkGone: z.boolean().optional(),
   /** False after disable; the record is kept so re-enabling resumes. */
   enabled: z.boolean(),
   status: z.enum(["idle", "syncing", "error"]),
@@ -660,6 +804,24 @@ export const LocalCloudBackupRecordSchema = z.object({
    * this existed must still load.
    */
   vaultTitle: z.string().optional(),
+  /** Revision returned by the last commit; absent when the worker sent none. */
+  revision: z.number().int().nonnegative().optional(),
+  /**
+   * Group sharing state this device last saw. Absent when sharing is off or
+   * unknown. Never holds the editor token: that is shown once and not kept.
+   */
+  sharing: z
+    .object({
+      linkVersion: z.number().int().min(1),
+      enabledAt: z.string(),
+    })
+    .optional(),
+  /**
+   * Set when a pull found that another device had committed. A full snapshot
+   * pauses while it is set, because it is not merged; entities, maps and
+   * canvases merge. An unguarded push clears it.
+   */
+  foreignCommitSeen: z.boolean().optional(),
 });
 
 export type LocalCloudBackupRecord = z.infer<

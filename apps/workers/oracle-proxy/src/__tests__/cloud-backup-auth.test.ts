@@ -56,10 +56,13 @@ describe("cloud backup credentials", () => {
       lastPushedAt: "2026-01-01T00:00:00.000Z",
     };
     const ownerCodeHash = await hashOwnerCode("code");
-    await writeManifest(env, "b", manifest, ownerCodeHash);
+    await writeManifest(env, "b", manifest, ownerCodeHash, undefined);
     expect(await authorizeStoredBackup(request("code"), env, "b")).toEqual({
       manifest,
       ownerCodeHash,
+      etag: expect.any(String),
+      role: "owner",
+      sharing: undefined,
     });
     const failures = await Promise.all([
       authorize(request("wrong"), env, "b"),
@@ -75,6 +78,39 @@ describe("cloud backup credentials", () => {
         });
       }
     }
+  });
+
+  it("gives an editor token the editor role and nothing else", async () => {
+    const env = { BUCKET: new Bucket() };
+    const manifest = {
+      schemaVersion: 1 as const,
+      backupId: "b",
+      vaultTitle: "Vault",
+      sizeBytes: 0,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      lastPushedAt: "2026-01-01T00:00:00.000Z",
+    };
+    const sharing = {
+      editorTokenHash: await hashOwnerCode("editor"),
+      linkVersion: 1,
+      enabledAt: "2026-01-01T00:00:00.000Z",
+    };
+    await writeManifest(
+      env,
+      "b",
+      manifest,
+      await hashOwnerCode("code"),
+      undefined,
+      undefined,
+      sharing,
+    );
+    const owner = await authorize(request("code"), env, "b");
+    const editor = await authorize(request("editor"), env, "b");
+    expect("role" in owner && owner.role).toBe("owner");
+    expect("role" in editor && editor.role).toBe("editor");
+    expect("response" in (await authorize(request("other"), env, "b"))).toBe(
+      true,
+    );
   });
 
   it("reports unavailable storage before attempting owner authorization", async () => {
@@ -102,7 +138,12 @@ describe("cloud backup credentials", () => {
       backupId,
     );
     expect(accepted).toEqual({
-      auth: { manifest, ownerCodeHash: await hashOwnerCode(ownerCode) },
+      auth: {
+        manifest,
+        ownerCodeHash: await hashOwnerCode(ownerCode),
+        etag: expect.any(String),
+        role: "owner",
+      },
       body: { value: true },
     });
     const invalid = await readAuthorizedJsonBody(

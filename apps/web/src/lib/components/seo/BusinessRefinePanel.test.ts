@@ -32,12 +32,10 @@ describe("BusinessRefinePanel", () => {
     expect(
       screen.getByRole("button", { name: /Rewrite current pressure/i }),
     ).toBeTruthy();
-    for (const person of d.staff) {
+    for (const [index, person] of d.staff.entries()) {
       expect(
         screen.getByRole("button", {
-          name: new RegExp(
-            `Rewrite ${person.name === d.leadership.name ? `${person.name} \\(staff\\)` : person.name}`,
-          ),
+          name: `Rewrite ${person.name}, key staff member ${index + 1}`,
         }),
       ).toBeTruthy();
     }
@@ -124,7 +122,7 @@ describe("BusinessRefinePanel", () => {
     });
     await fireEvent.click(
       screen.getByRole("button", {
-        name: new RegExp(`Rewrite ${d.leadership.name}`),
+        name: `Rewrite ${d.leadership.name}, ${d.leadership.role}`,
       }),
     );
     await waitFor(() =>

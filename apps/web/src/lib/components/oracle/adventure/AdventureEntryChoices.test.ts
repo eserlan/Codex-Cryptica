@@ -70,7 +70,166 @@ describe("AdventureEntryChoices", () => {
     expect(entry.tagName).toBe("BUTTON");
     await fireEvent.click(entry);
     expect(onEnterWorld).toHaveBeenCalledOnce();
-    expect(screen.getAllByRole("button")).toHaveLength(4);
+    expect(screen.getAllByRole("button")).toHaveLength(5);
+  });
+
+  it("renders Import Adventure JSON and triggers the file input on activation, plus guide link and drag-and-drop", async () => {
+    const onImportFile = vi.fn();
+    render(AdventureEntryChoices, {
+      props: {
+        onDiscover: vi.fn(),
+        onOwnPremise: vi.fn(),
+        onImportFile,
+      },
+    });
+
+    const importButton = screen.getByTestId("adventure-import");
+    const fileInput = screen.getByTestId(
+      "adventure-file-input",
+    ) as HTMLInputElement;
+    expect(fileInput.getAttribute("tabindex")).toBe("-1");
+    expect(fileInput.accept).toContain(".json");
+    expect(fileInput.accept).toContain("application/json");
+    const clickSpy = vi.spyOn(fileInput, "click");
+
+    await fireEvent.click(importButton);
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+
+    const file = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "module.json",
+      {
+        type: "application/json",
+      },
+    );
+    await fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(onImportFile).toHaveBeenCalledWith(file);
+
+    const guideLink = screen.getByTestId(
+      "adventure-import-guide-link",
+    ) as HTMLAnchorElement;
+    expect(guideLink.getAttribute("href")).toContain("/adventure-import");
+
+    const dropzone = screen.getByTestId("adventure-json-dropzone");
+    const droppedFile = new File(
+      ['{"formatVersion":"adventure-json/v1"}'],
+      "dropped.json",
+      {
+        type: "application/json",
+      },
+    );
+    await fireEvent.drop(dropzone, {
+      dataTransfer: { files: [droppedFile] },
+    });
+    expect(onImportFile).toHaveBeenCalledWith(droppedFile);
+  });
+
+  it("focuses and scrolls to the importer when opened through its deep link", () => {
+    const originalUrl = window.location.href;
+    const originalScrollIntoView = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "scrollIntoView",
+    );
+    const scrollIntoView = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+      configurable: true,
+      value: scrollIntoView,
+    });
+    window.history.replaceState(null, "", "#import-adventure-json");
+    let unmount: (() => void) | undefined;
+
+    try {
+      ({ unmount } = render(AdventureEntryChoices, {
+        props: { onDiscover: vi.fn(), onOwnPremise: vi.fn() },
+      }));
+      const heading = screen.getByRole("heading", {
+        name: "Import Adventure JSON",
+      });
+      expect(heading.id).toBe("import-adventure-json");
+      expect(document.activeElement).toBe(heading);
+      expect(scrollIntoView).toHaveBeenCalledWith({ block: "center" });
+    } finally {
+      unmount?.();
+      window.history.replaceState(null, "", originalUrl);
+      if (originalScrollIntoView) {
+        Object.defineProperty(
+          HTMLElement.prototype,
+          "scrollIntoView",
+          originalScrollIntoView,
+        );
+      } else {
+        Reflect.deleteProperty(HTMLElement.prototype, "scrollIntoView");
+      }
+    }
+  });
+
+  it("accepts .md and .pdf on the labeled experimental convenience input and shows loading state while importing", async () => {
+    const onImportExperimentalFile = vi.fn();
+    const { rerender } = render(AdventureEntryChoices, {
+      props: {
+        onDiscover: vi.fn(),
+        onOwnPremise: vi.fn(),
+        onImportFile: vi.fn(),
+        onImportExperimentalFile,
+        importing: false,
+      },
+    });
+
+    expect(
+      screen.getByTestId("adventure-experimental-import-label").textContent,
+    ).toContain("Experimental convenience");
+
+    const fileInput = screen.getByTestId(
+      "adventure-experimental-file-input",
+    ) as HTMLInputElement;
+    expect(fileInput.getAttribute("tabindex")).toBeNull();
+    expect(fileInput.accept).toContain(".md");
+    expect(fileInput.accept).toContain(".pdf");
+    expect(fileInput.accept).toContain("application/pdf");
+
+    const mdFile = new File(["# Title\n\n## Scene 1\nHello"], "module.md", {
+      type: "text/markdown",
+    });
+    await fireEvent.change(fileInput, { target: { files: [mdFile] } });
+    expect(onImportExperimentalFile).toHaveBeenCalledWith(mdFile);
+
+    const pdfFile = new File(["%PDF-1.4"], "module.pdf", {
+      type: "application/pdf",
+    });
+    await fireEvent.change(fileInput, { target: { files: [pdfFile] } });
+    expect(onImportExperimentalFile).toHaveBeenCalledWith(pdfFile);
+
+    await rerender({
+      onDiscover: vi.fn(),
+      onOwnPremise: vi.fn(),
+      onImportFile: vi.fn(),
+      onImportExperimentalFile,
+      importing: true,
+    });
+    expect(screen.getByTestId("adventure-import-loading")).toBeTruthy();
+    expect(
+      (screen.getByTestId("adventure-import") as HTMLButtonElement).disabled,
+    ).toBe(false);
+  });
+
+  it("disables the import entry when no owner Vault is ready", async () => {
+    const onImportFile = vi.fn();
+    render(AdventureEntryChoices, {
+      props: {
+        onDiscover: vi.fn(),
+        onOwnPremise: vi.fn(),
+        onImportFile,
+        canImport: false,
+      },
+    });
+
+    const importButton = screen.getByTestId(
+      "adventure-import",
+    ) as HTMLButtonElement;
+    expect(importButton.disabled).toBe(true);
+    await fireEvent.click(importButton);
+    expect(onImportFile).not.toHaveBeenCalled();
+    expect(screen.getByText(/ready owner Vault/)).toBeTruthy();
   });
 
   it("uses touch-sized cards in a single-column mobile layout", () => {
@@ -91,5 +250,6 @@ describe("AdventureEntryChoices", () => {
       expect(button.className).toContain("min-h-44");
       expect(button.className).toContain("text-left");
     }
+    expect(screen.getByTestId("adventure-json-dropzone")).toBeTruthy();
   });
 });

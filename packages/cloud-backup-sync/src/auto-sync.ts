@@ -13,7 +13,8 @@
  * - The commit endpoint is last-write-wins with no server revision, so
  *   `expectLastPushedAt` is a best-effort optimistic-concurrency guard, not
  *   a true transaction: it closes the common two-device case but cannot
- *   close a genuine race. That needs server revisions (follow-up).
+ *   close a genuine race. Server revisions now exist; the race-safe commit
+ *   is shared vault slice 2.
  */
 
 /** SHA-256 of bytes as lowercase hex. */

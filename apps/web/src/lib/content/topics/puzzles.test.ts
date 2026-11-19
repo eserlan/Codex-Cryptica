@@ -113,7 +113,8 @@ describe("puzzle topic hub JSON-LD (#3119)", () => {
   it("emits a BreadcrumbList ending at the hub", () => {
     const data = JSON.parse(buildTopicBreadcrumbJsonLd(PUZZLE_TOPIC_CONFIG));
     const trail = data.itemListElement;
-    expect(trail).toHaveLength(3);
+    expect(trail).toHaveLength(4);
+    expect(trail[2].item).toBe("https://codexcryptica.com/topics");
     expect(trail[trail.length - 1].item).toBe(
       "https://codexcryptica.com/topics/puzzles",
     );

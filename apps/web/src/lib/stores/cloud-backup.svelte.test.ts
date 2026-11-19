@@ -31,6 +31,7 @@ import {
   CloudBackupDirtyStore,
   memoryDirtyStorage,
 } from "./cloud-backup-dirty";
+import { CloudBackupBaseStore, memoryBaseStorage } from "./cloud-backup-base";
 
 const MANIFEST = {
   schemaVersion: 1,
@@ -123,6 +124,44 @@ afterEach(() => {
 });
 
 describe("privacy gates", () => {
+  it("requires active backup and explicit consent before enabling adventure inclusion", async () => {
+    const consent = {
+      read: vi.fn(async () => ({
+        enabled: false,
+        remoteRemovalPending: false,
+      })),
+      enable: vi.fn(async () => true),
+      disable: vi.fn(async () => true),
+    };
+    const { store } = harness([], {
+      artworkConsent: consent,
+      artworkScope: {},
+    });
+    expect(await store.setAdventureBackup("v-1", true, true)).toBe(false);
+    expect(consent.enable).not.toHaveBeenCalled();
+    store.status = "idle";
+    expect(await store.setAdventureBackup("v-1", true, false)).toBe(false);
+    expect(consent.enable).not.toHaveBeenCalled();
+    expect(await store.setAdventureBackup("wrong-vault", true, true)).toBe(
+      false,
+    );
+    expect(await store.setAdventureBackup("v-1", true, true)).toBe(true);
+    expect(consent.enable).toHaveBeenCalledWith("v-1", true);
+  });
+  it("does not claim an expanded backup change succeeded on storage failure", async () => {
+    const consent = {
+      read: vi.fn(),
+      enable: vi.fn(async () => false),
+      disable: vi.fn(async () => false),
+    };
+    const { store } = harness([], {
+      artworkConsent: consent,
+      artworkScope: {},
+    });
+    store.status = "idle";
+    expect(await store.setAdventureBackup("v-1", false, true)).toBe(false);
+    expect(consent.disable).toHaveBeenCalledOnce();
+  });
   it("stays off and silent for a vault that never consented", async () => {
     // FR-001, FR-003, SC-002: the machinery must be off, not just the UI.
     const { store, calls } = harness();
@@ -301,6 +340,7 @@ describe("attachToExistingBackup", () => {
       ]),
       expect.any(Set),
       expect.any(AbortSignal),
+      expect.any(Function),
     );
     expect(buildPayload).toHaveBeenCalledTimes(1);
     expect(h.calls.some((url) => url.endsWith("/delta"))).toBe(false);
@@ -453,6 +493,19 @@ describe("saving is explicit", () => {
 });
 
 describe("disable, delete and restore", () => {
+  it("drops the merge base when backup is turned off", async () => {
+    const base = new CloudBackupBaseStore(memoryBaseStorage());
+    const { store } = harness([ENABLE], { base });
+    await store.enable("v-1");
+    await base.recordSent("v-1", [{ id: "a", title: "A" }], []);
+    await base.recordSent("v-2", [{ id: "b", title: "B" }], []);
+
+    await store.disable("v-1");
+
+    expect(await base.list("v-1")).toEqual([]);
+    expect(await base.list("v-2")).toHaveLength(1);
+  });
+
   it("disables locally without contacting the server", async () => {
     const { store, calls } = harness([ENABLE]);
     await store.enable("v-1");

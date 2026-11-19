@@ -779,6 +779,57 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/cosmic-horror", label: "Cosmic Horror generators" },
     ],
   },
+  "urban-fantasy-faction": {
+    pageTitle:
+      "Urban Fantasy Faction Generator | Modern RPG Tool | Codex Cryptica",
+    metaDescription:
+      "Create urban fantasy factions for modern supernatural RPGs — mage cabals, paranormal agencies, occult crews and hidden-world institutions with agendas, NPCs and city-scale hooks.",
+    introTitle: "Urban Fantasy Faction Generator",
+    eyebrow: "Urban Fantasy Faction Generator",
+    introText:
+      "Build supernatural city factions, not cities: mage cabals, monster courts, paranormal agencies, occult crews and modern institutions with agendas, NPCs and playable conflicts. Generate locally without an account, then save a faction draft to your browser-local Codex.",
+    canonicalPath: "/generators/urban-fantasy-faction",
+    keywords: [
+      "urban fantasy faction generator",
+      "modern fantasy faction generator",
+      "supernatural faction generator",
+      "hidden-world faction generator",
+      "mage cabal generator",
+      "occult faction generator",
+      "modern occult RPG factions",
+    ],
+    faqs: [
+      {
+        question: "What does the urban fantasy faction generator create?",
+        answer:
+          "It creates a faction for a modern supernatural city — such as a mage cabal, monster court, paranormal agency, occult gang, fae market or secret council — with city resources, NPCs, internal pressure and a table-ready hook.",
+      },
+      {
+        question: "Does this generator create a city?",
+        answer:
+          "No. It creates one supernatural faction operating inside a modern city or network, not a city or settlement.",
+      },
+      {
+        question: "Can I use it without AI or an account?",
+        answer:
+          "Yes. Local generation works with AI disabled or unavailable. You can generate and copy the result without an account, then save a draft to a browser-local Codex vault.",
+      },
+      {
+        question: "Which RPG systems does it support?",
+        answer:
+          "The output is system-agnostic for modern fantasy, urban fantasy and occult campaigns. It does not claim official affiliation with any third-party game.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/vampire", label: "Vampire generators" },
+      {
+        href: "/generators/cosmic-horror",
+        label: "Horror and occult generators",
+      },
+      { href: "/generators/cyberpunk", label: "Cyberpunk generators" },
+      { href: "/generators/modern", label: "Modern generators" },
+    ],
+  },
   names: {
     pageTitle:
       "RPG Name Generator | Fantasy, Cyberpunk, Gothic & Sci-Fi Names | Codex Cryptica",
@@ -1757,6 +1808,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       { href: "/generators/world", label: "Sci-Fi World Generator" },
       { href: "/generators/ship-generator", label: "Ship Generator" },
       { href: "/generators/faction", label: "Faction Generator" },
+      { href: "/topics/star-systems", label: "Star Systems Topic Hub" },
     ],
   },
   constellation: {

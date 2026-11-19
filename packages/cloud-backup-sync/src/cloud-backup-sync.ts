@@ -29,7 +29,7 @@ export {
   type KnownCloudBackup,
 } from "./backup-records";
 
-export { ASSET_UPLOAD_CONCURRENCY } from "./asset-upload";
+export { ASSET_UPLOAD_CONCURRENCY, uploadSnapshotAssets } from "./asset-upload";
 export { pushVaultToCloudBackup, type PushVaultOptions } from "./snapshot-sync";
 
 export {

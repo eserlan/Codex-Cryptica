@@ -31,6 +31,7 @@ describe("labelValueHtml", () => {
   it("renders default variant structure", () => {
     const result = labelValueHtml("Age", "1000");
     expect(result).toContain("seo-label");
+    expect(result).toContain("text-theme-text");
     expect(result).toContain("Age");
     expect(result).toContain("1000");
     expect(result).toContain("flex-col mb-1");
@@ -110,6 +111,26 @@ describe("renderGeneratorMarkdown", () => {
     expect(result).not.toContain("<img");
     expect(result).not.toContain("https://tracker.example");
     expect(result).toContain("tracking pixel");
+  });
+
+  it("wraps GFM tables in an overflow-x-auto container", () => {
+    const tableMd = [
+      "| Actor | Trigger | Next Move | Observable Consequence | Testable Lead |",
+      "|---|---|---|---|---|",
+      "| Suspect A | Investigation stalls | Burns ledger | Ash in brazier | Ledger fragment |",
+    ].join("\n");
+    const result = renderGeneratorMarkdown(tableMd);
+    const container = document.createElement("div");
+    container.innerHTML = result;
+    const table = container.querySelector("table");
+    expect(table).not.toBeNull();
+    expect(table?.parentElement?.className).toContain("overflow-x-auto");
+    expect(table?.parentElement?.className).toContain("max-w-full");
+    expect(table?.parentElement?.getAttribute("tabindex")).toBe("0");
+    expect(table?.parentElement?.getAttribute("role")).toBe("region");
+    expect(table?.parentElement?.getAttribute("aria-label")).toBe(
+      "Scrollable table; use the left and right arrow keys to view all columns",
+    );
   });
 });
 

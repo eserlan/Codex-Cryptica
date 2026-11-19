@@ -28,6 +28,7 @@ vi.mock("#lib/hooks/useEditState.svelte.js", () => ({
     isEditing: false,
     cancel: vi.fn(),
     start: vi.fn(),
+    dispose: vi.fn(),
   })),
 }));
 

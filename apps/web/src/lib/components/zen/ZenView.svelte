@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { clipboardService } from "#lib/services/ClipboardService.js";
   import { createEditState } from "#lib/hooks/useEditState.svelte.js";
@@ -50,6 +51,11 @@
 
   // Logic & State Hooks
   let editState = $state(createEditState(null));
+  let copyResetTimeout: ReturnType<typeof setTimeout> | undefined;
+  onDestroy(() => {
+    editState.dispose();
+    if (copyResetTimeout !== undefined) clearTimeout(copyResetTimeout);
+  });
   const actions = createZenModeActions(() => editState);
 
   let isEditing = $derived(editState.isEditing);
@@ -111,7 +117,8 @@
     const success = await clipboardService.copyEntity(entity, resolvedImageUrl);
     if (success) {
       isCopied = true;
-      setTimeout(() => (isCopied = false), 2000);
+      if (copyResetTimeout !== undefined) clearTimeout(copyResetTimeout);
+      copyResetTimeout = setTimeout(() => (isCopied = false), 2000);
     }
   };
 
@@ -388,8 +395,8 @@
         tabindex={activeTab === "overview" ? 0 : -1}
         class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
         'overview'
-          ? 'text-theme-primary border-theme-primary'
-          : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          ? 'text-theme-text border-theme-primary'
+          : 'text-theme-text border-transparent'}"
         onclick={() => (modalUIStore.zenModeActiveTab = "overview")}
         onkeydown={handleTabKeydown}
       >
@@ -405,8 +412,8 @@
         tabindex={activeTab === "connections" ? 0 : -1}
         class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
         'connections'
-          ? 'text-theme-primary border-theme-primary'
-          : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          ? 'text-theme-text border-theme-primary'
+          : 'text-theme-text border-transparent'}"
         onclick={() => (modalUIStore.zenModeActiveTab = "connections")}
         onkeydown={handleTabKeydown}
       >
@@ -422,8 +429,8 @@
           tabindex={activeTab === "map" ? 0 : -1}
           class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'map'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+            ? 'text-theme-text border-theme-primary'
+            : 'text-theme-text border-transparent'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "map")}
           onkeydown={handleTabKeydown}
         >
@@ -440,8 +447,8 @@
           tabindex={activeTab === "chats" ? 0 : -1}
           class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'chats'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+            ? 'text-theme-text border-theme-primary'
+            : 'text-theme-text border-transparent'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "chats")}
           onkeydown={handleTabKeydown}
         >
@@ -458,8 +465,8 @@
           tabindex={activeTab === "family" ? 0 : -1}
           class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'family'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+            ? 'text-theme-text border-theme-primary'
+            : 'text-theme-text border-transparent'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "family")}
           onkeydown={handleTabKeydown}
         >
@@ -476,8 +483,8 @@
           tabindex={activeTab === "stats" ? 0 : -1}
           class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
           'stats'
-            ? 'text-theme-primary border-theme-primary'
-            : 'text-theme-muted border-transparent hover:text-theme-text'}"
+            ? 'text-theme-text border-theme-primary'
+            : 'text-theme-text border-transparent'}"
           onclick={() => (modalUIStore.zenModeActiveTab = "stats")}
           onkeydown={handleTabKeydown}
         >
@@ -494,8 +501,8 @@
         tabindex={activeTab === "timeline" ? 0 : -1}
         class="py-2 text-sm font-bold transition-colors border-b-2 font-body {activeTab ===
         'timeline'
-          ? 'text-theme-primary border-theme-primary'
-          : 'text-theme-muted border-transparent hover:text-theme-text'}"
+          ? 'text-theme-text border-theme-primary'
+          : 'text-theme-text border-transparent'}"
         onclick={() => (modalUIStore.zenModeActiveTab = "timeline")}
         onkeydown={handleTabKeydown}
       >
@@ -534,7 +541,7 @@
               />
               <button
                 type="button"
-                class="hidden md:flex absolute top-3 right-px z-10 h-7 w-5 items-center justify-center rounded-l border border-r-0 border-theme-border bg-theme-surface text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
+                class="hidden md:flex absolute top-3 right-px z-10 h-7 w-5 items-center justify-center rounded-l border border-r-0 border-theme-border bg-theme-surface text-theme-text hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
                 onclick={toggleSidebar}
                 aria-label="Hide sidebar"
                 title="Hide sidebar"
@@ -549,7 +556,7 @@
           {:else}
             <button
               type="button"
-              class="hidden md:flex w-6 shrink-0 items-start justify-center pt-3 border-r border-theme-border bg-theme-surface text-theme-muted hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
+              class="hidden md:flex w-6 shrink-0 items-start justify-center pt-3 border-r border-theme-border bg-theme-surface text-theme-text hover:text-theme-primary hover:bg-theme-primary/10 transition-colors cursor-pointer"
               onclick={toggleSidebar}
               aria-label="Show sidebar"
               title="Show sidebar"
@@ -664,7 +671,7 @@
         >
           Entry Not Found
         </h3>
-        <p class="text-theme-muted font-body text-sm">
+        <p class="text-theme-text font-body text-sm">
           The requested record could not be localized within the current
           archive.
         </p>

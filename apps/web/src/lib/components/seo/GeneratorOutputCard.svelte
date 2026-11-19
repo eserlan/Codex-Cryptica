@@ -19,6 +19,12 @@
   import ShareButton from "#lib/components/ShareButton.svelte";
   import { buildMysteryPlayerHandout } from "./generator-copy";
   import { pointCrawlHeading } from "./point-crawl-heading.js";
+  import GeneratorContinuationCallout from "./GeneratorContinuationCallout.svelte";
+  import "./seo-markdown.css";
+  import {
+    getGeneratorContinuationConfig,
+    shouldShowGeneratorContinuation,
+  } from "./generator-continuation";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -41,7 +47,12 @@
     generatedData,
     aiFallbackDismissed,
     isBusy,
+    isGenerationInProgress = isBusy,
     isExampleDraft,
+    generatorType = undefined,
+    canFollowUp = false,
+    saveError = null,
+    isSaving = false,
     generatedSingular,
     variant,
     worldTheme,
@@ -76,7 +87,12 @@
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
     isBusy: boolean;
+    isGenerationInProgress?: boolean;
     isExampleDraft: boolean;
+    generatorType?: string;
+    canFollowUp?: boolean;
+    saveError?: string | null;
+    isSaving?: boolean;
     generatedSingular: string;
     variant: "default" | "names";
     worldTheme: string;
@@ -126,6 +142,18 @@
   let isMysteryDraft = $derived(
     generatedData?.labels?.includes("mystery-generator") ?? false,
   );
+  let continuationConfig = $derived(
+    getGeneratorContinuationConfig(generatorType),
+  );
+  let showContinuationCallout = $derived(
+    shouldShowGeneratorContinuation({
+      generatorType,
+      userGenerationSucceeded: canFollowUp,
+      isExampleDraft,
+      isBusy: isBusy || isGenerationInProgress,
+      variant,
+    }),
+  );
 
   $effect(() => {
     if (!isBusy) {
@@ -156,7 +184,7 @@
   tabindex="-1"
   role="region"
   aria-label="Generated Output Workspace"
-  class="relative flex-grow p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
+  class="relative flex-grow min-w-0 p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
 >
   {#if isBusy}
     <div
@@ -171,14 +199,14 @@
       ></span>
       {#if progressSteps?.length}
         <p
-          class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary text-center px-6"
+          class="font-header font-bold uppercase tracking-widest text-xs text-theme-text text-center px-6"
         >
           Building your {generatedSingular.toLowerCase()}
         </p>
         <GenerationProgressList steps={progressSteps} />
       {:else}
         <p
-          class="font-header font-bold uppercase tracking-widest text-xs text-theme-primary animate-pulse transition-all duration-300 text-center px-6 max-w-md"
+          class="font-header font-bold uppercase tracking-widest text-xs text-theme-text animate-pulse transition-all duration-300 text-center px-6 max-w-md"
         >
           {activeMessages[loadingIndex] ?? `Forging ${generatedSingular}...`}
         </p>
@@ -201,14 +229,14 @@
           </h2>
           {#if isExampleDraft}
             <span
-              class="mt-1.5 px-2 py-0.5 rounded-full border border-theme-border/70 text-theme-text/60 text-nano font-mono uppercase tracking-wider flex-shrink-0"
+              class="mt-1.5 px-2 py-0.5 rounded-full border border-theme-border/70 text-theme-text text-nano font-mono uppercase tracking-wider flex-shrink-0"
             >
               Example
             </span>
           {/if}
         </div>
         {#if generatedData.summary}
-          <p class="text-base text-theme-text/80 leading-relaxed mt-2 italic">
+          <p class="text-base text-theme-text leading-relaxed mt-2 italic">
             {generatedData.summary}
           </p>
         {/if}
@@ -230,11 +258,13 @@
               class="flex flex-wrap items-center overflow-hidden rounded-lg border border-theme-primary/25 bg-theme-bg/35 shadow-sm"
               aria-label="Draft actions"
             >
-              {#if variant !== "names"}
+              {#if variant !== "names" && !showContinuationCallout}
                 <button
                   type="button"
                   onclick={onSaveToCodex}
-                  class="px-4 py-2 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
+                  disabled={isGenerationInProgress || isSaving}
+                  aria-busy={isSaving}
+                  class="px-4 py-2 bg-theme-primary text-theme-on-primary font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
                   id="save-to-codex-btn"
                   title="Import this draft into your local Codex Cryptica vault"
                 >
@@ -245,7 +275,7 @@
                 <button
                   type="button"
                   onclick={() => onRefine(generatedData!)}
-                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase font-header tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase font-header tracking-wider text-theme-text transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
                   id="refine-draft-btn"
                   title="Refine this draft with an instruction"
                 >
@@ -260,7 +290,7 @@
                 <button
                   type="button"
                   onclick={() => onBuildDelveCanvas(generatedData!)}
-                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-text font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
                   id="build-delve-canvas-btn"
                   title="Build and open an interactive Delve Canvas for this dungeon"
                 >
@@ -275,7 +305,7 @@
                 <button
                   type="button"
                   onclick={() => onBuildAdventureCanvas(generatedData!)}
-                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-text font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5"
                   id="build-adventure-canvas-btn"
                   title="Build and open an interactive Adventure Canvas for this scenario"
                 >
@@ -290,7 +320,7 @@
                 <button
                   type="button"
                   onclick={() => onGeneratePlotTwist(generatedData!)}
-                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20"
+                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-text transition-all hover:bg-theme-primary/20"
                   id="generate-plot-twist-btn"
                   title="Generate a Plot Twist from this draft"
                 >
@@ -305,7 +335,7 @@
                 <button
                   type="button"
                   onclick={() => onGenerateRoster(generatedData!)}
-                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-primary transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
+                  class="border-l border-theme-primary/25 bg-theme-primary/10 px-4 py-2 text-micro font-bold uppercase tracking-wider text-theme-text transition-all hover:bg-theme-primary/20 flex items-center gap-1.5"
                   id="generate-roster-btn"
                   title="Generate notable members of this faction"
                 >
@@ -325,7 +355,7 @@
                   onclick={() => onSendToMonsterLabs(generatedData!)}
                   disabled={isSendingToMonsterLabs}
                   aria-busy={isSendingToMonsterLabs}
-                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-primary font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  class="px-4 py-2 border-l border-theme-primary/25 bg-theme-primary/10 text-theme-text font-bold uppercase font-header tracking-wider text-micro hover:bg-theme-primary/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
                   id="send-to-monsterlabs-btn"
                   title="Create a D&D {isItem
                     ? 'magic item'
@@ -407,7 +437,7 @@
       {#snippet generatedDocument()}
         <div
           role="none"
-          class="seo-md break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
+          class="seo-md min-w-0 break-words text-lg leading-relaxed text-theme-text/90 flex-grow [&_pre]:overflow-x-auto [&_pre]:max-w-full {variant ===
           'names'
             ? 'md:columns-2 md:gap-x-8 [&_div]:break-inside-avoid [&_div]:mb-4'
             : 'space-y-4'}"
@@ -454,7 +484,7 @@
                           type="button"
                           onclick={() =>
                             onOpenMemberAsCharacter(section, generatedData!)}
-                          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-primary opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                          class="inline-flex items-center gap-1.5 rounded-full border border-theme-primary/50 bg-theme-primary/10 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text opacity-100 transition-all hover:bg-theme-primary/20 md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
                           aria-label="Open {section.heading} as a Character"
                           title="Continue this member in the NPC generator"
                         >
@@ -469,7 +499,7 @@
                         type="button"
                         onclick={() =>
                           onCopySection(section.id, section.markdown)}
-                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text/65 opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
+                        class="inline-flex items-center gap-1.5 rounded-full border border-theme-border/60 bg-theme-surface/45 px-2.5 py-1 text-nano font-bold uppercase tracking-wider text-theme-text opacity-100 transition-all hover:border-theme-primary/60 hover:text-theme-primary md:opacity-0 md:group-hover/section:opacity-100 md:focus-visible:opacity-100"
                         aria-label="Copy {section.heading} as Markdown"
                         title="Copy this section as Markdown"
                       >
@@ -493,15 +523,35 @@
         </div>
       {/snippet}
       {@render generatedDocument()}
+      {#if showContinuationCallout && continuationConfig}
+        <GeneratorContinuationCallout
+          config={continuationConfig}
+          disabled={isGenerationInProgress}
+          {isSaving}
+          {saveError}
+          {onSaveToCodex}
+        />
+      {:else if saveError}
+        <div
+          role="alert"
+          class="mt-6 flex items-start gap-2 rounded-xl border border-theme-danger/40 bg-theme-danger/10 p-3 text-xs text-theme-text"
+        >
+          <span
+            class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
+            aria-hidden="true"
+          ></span>
+          <span>{saveError}</span>
+        </div>
+      {/if}
     </div>
   {:else}
     <div
       in:fade={{ duration: 150 }}
-      class="flex flex-col items-center justify-center flex-grow text-center text-theme-muted max-w-sm mx-auto"
+      class="flex flex-col items-center justify-center flex-grow text-center text-theme-text max-w-sm mx-auto"
     >
       <span
         aria-hidden="true"
-        class="icon-[lucide--swords] text-theme-muted/30 w-16 h-16 mb-4"
+        class="icon-[lucide--swords] text-theme-text w-16 h-16 mb-4"
       ></span>
       <h3 class="font-header font-bold text-sm uppercase tracking-widest mb-2">
         No Draft Generated
@@ -534,43 +584,3 @@
     {/if}
   </div>
 {/if}
-
-<style>
-  .seo-md :global(h2) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.25rem;
-    margin: 1.5rem 0 0.75rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 40%, transparent);
-    padding-bottom: 0.25rem;
-  }
-  /* Desaturated heading — primary actions keep saturated red (#1272) */
-  .seo-md :global(h3) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
-  }
-  /* Nested body/planet subheading inside a section (e.g. Major Bodies), one level under h3 */
-  .seo-md :global(h4) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin: 0.85rem 0 0.35rem;
-    color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
-  }
-  .seo-md :global(ul) {
-    list-style: disc;
-    margin-left: 1rem;
-  }
-  .seo-md :global(p) {
-    margin-bottom: 0.75rem;
-  }
-  .seo-md :global(.seo-label) {
-    text-shadow: 0 0 10px
-      color-mix(in srgb, var(--color-primary) 70%, transparent);
-    filter: brightness(1.2);
-  }
-</style>

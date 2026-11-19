@@ -9,6 +9,7 @@ import {
 } from "./opfs";
 import { systemClock } from "#lib/utils/runtime-deps.js";
 import { downloadBlob } from "./download";
+import { parseAdventureSessionForRecovery } from "@codex/adventure-engine";
 
 /**
  * Portable vault backup: bundles an entire OPFS vault into a single `.zip`
@@ -189,9 +190,26 @@ export async function writeArchiveToVault(
   const root = await getOpfsRoot();
   let written = 0;
   for (const { path, bytes } of archive.files) {
+    let content = bytes;
+    if (
+      path.length === 3 &&
+      path[0] === ".codex" &&
+      path[1] === "adventures" &&
+      /^[a-zA-Z0-9_-]{1,160}\.json$/.test(path[2])
+    ) {
+      try {
+        const raw: unknown = JSON.parse(strFromU8(bytes));
+        const parsed = parseAdventureSessionForRecovery(raw);
+        if (parsed.session.id === path[2].slice(0, -5)) {
+          content = strToU8(JSON.stringify({ ...(raw as object), vaultId }));
+        }
+      } catch {
+        // Keep unreadable documents byte-for-byte so recovery remains possible.
+      }
+    }
     await writeOpfsFile(
       [VAULTS_DIR, vaultId, ...path],
-      new Blob([bytes as BlobPart]),
+      new Blob([content as BlobPart]),
       root,
       vaultId,
     );

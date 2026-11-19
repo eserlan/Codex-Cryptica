@@ -298,8 +298,11 @@ export class VaultStore {
   deleteEntity(id: string) {
     return this.entityStore.deleteEntity(id);
   }
-  bulkDelete(ids: string[]): Promise<BulkMutationResult> {
-    return this.entityStore.bulkDelete(ids);
+  bulkDelete(
+    ids: string[],
+    expectedVaultId?: string,
+  ): Promise<BulkMutationResult> {
+    return this.entityStore.bulkDelete(ids, expectedVaultId);
   }
   /** Redirect character family phrases to reciprocal, cycle-checked links. */
   async addConnection(

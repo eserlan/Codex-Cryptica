@@ -19,6 +19,7 @@ export class AdventureState {
     | "ready-to-resolve"
     | "offline"
     | "error"
+    | "package-unavailable"
   >("idle");
   draft = $state("");
   /** Uncommitted player-visible narration, cleared on failure or cancellation. */
@@ -35,6 +36,10 @@ export class AdventureState {
    */
   starting = $state(false);
   lastRollResult = $state<string | null>(null);
+  /** Set while the pinned package is missing or changed; Retry or Leave recovers. */
+  packageUnavailable = $state<{
+    otherVersionAvailable: boolean | null;
+  } | null>(null);
   readOnly = $state(false);
   lease = $state<AdventureControlLease | null>(null);
 

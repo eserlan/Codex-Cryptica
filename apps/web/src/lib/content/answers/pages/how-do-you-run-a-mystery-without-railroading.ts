@@ -105,6 +105,12 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
   ],
   relatedTools: [
     {
+      title: "Mystery and investigation generator",
+      description:
+        "Generate a fixed-truth GM solution with distinct suspects, independent clue paths, and ticking pressure that keeps the case moving without railroading.",
+      href: "/generators/mystery-investigation",
+    },
+    {
       title: "Quest generator",
       description:
         "Generate murder mysteries, stolen artifact leads, and conspiratorial patron hooks.",
@@ -115,12 +121,6 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
       description:
         "Produce shifty suspects, tight-lipped witnesses, and corrupt magistrates on demand.",
       href: "/generators/npc",
-    },
-    {
-      title: "Dungeon generator",
-      description:
-        "Map out sprawling manor houses, crime scenes, and underground hiding places.",
-      href: "/generators/dungeon-generator",
     },
   ],
   relatedAnswers: [
@@ -146,6 +146,8 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
     "how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
     "stop-players-investigating-every-detail",
     "what-are-the-classic-must-play-tabletop-rpg-adventures",
+    "how-do-i-get-a-stalled-rpg-investigation-moving-again",
+    "how-do-i-run-a-sci-fi-horror-rpg",
   ],
   discovery: {
     id: "answer-run-mystery-without-railroading",
@@ -171,6 +173,11 @@ export const howDoYouRunAMysteryWithoutRailroading: AnswerConfigInput = {
         with: "answer-run-investigator-without-sidelining-party",
         reason:
           "This answer covers resilient mystery structure and clue redundancy; the investigator answer focuses on sharing clue discovery and interpretation among PCs while preserving a detective's expertise.",
+      },
+      {
+        with: "answer-stalled-investigation-recovery",
+        reason:
+          "This answer covers resilient mystery structure and clue redundancy designed before play; the stalled-investigation answer covers the in-play recovery once an investigation has already stalled at the table.",
       },
     ],
   },

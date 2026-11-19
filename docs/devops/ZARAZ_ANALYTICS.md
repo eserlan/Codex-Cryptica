@@ -210,6 +210,9 @@ Generator events carry `generator_type: "point-crawl"` (the last segment of
   funnel starting at step 3 for direct generator traffic.
 - Show `action = copy` and `action = open_codex` as separate series. Copy is
   valid product utility, not a failed save.
+- `open_codex` with `source = save_confirmation` now fires automatically when
+  the staged draft hands off to the app. There is no confirmation click any
+  more.
 - `entity_saved` and `vault_created` are **pre-import intent signals**, fired
   on the outbound click. They do not confirm the entity was persisted or
   retained in a vault, and no report should claim downstream retention.

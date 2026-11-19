@@ -107,6 +107,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/topics/star-systems</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/tools/vampire-clan-generator</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
@@ -533,6 +538,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/for/delta-green</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/for/mothership</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -1618,6 +1628,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-treasurys-tipping-point-karrow-council-vote</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-last-shift-sci-fi-horror-scenario</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

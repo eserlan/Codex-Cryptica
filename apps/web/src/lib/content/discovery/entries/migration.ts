@@ -237,4 +237,28 @@ export const migrationEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "adventure-import",
+    pageKind: "import",
+    canonicalPath: "/adventure-import",
+    primaryIntent: "convert an adventure into adventure json with ai",
+    intentAliases: [
+      "adventure json conversion guide",
+      "convert pdf adventure for codex cryptica",
+      "adventure importer",
+    ],
+    userJob: "migrate",
+    uniqueValue:
+      "Public guide, copyable canonical LLM prompt, and static JSON Schema for converting owned TTRPG adventures into Adventure JSON v1 using ChatGPT, Claude, Gemini, or local models.",
+    parentCluster: "migration",
+    acknowledgedOverlap: [
+      {
+        with: "import-obsidian-vault",
+        reason:
+          "Different source formats and workflows: /import/obsidian-vault covers importing an existing Obsidian Markdown folder, whereas /adventure-import covers converting a prose/PDF adventure into Adventure JSON v1 via an external LLM.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

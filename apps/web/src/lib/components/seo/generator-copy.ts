@@ -65,6 +65,9 @@ const MYSTERY_GM_HEADINGS = new Set([
   "objective and approaches",
   "pressure clock",
   "npc responses",
+  "if the investigation stalls: next npc moves",
+  "next npc moves",
+  "if the investigation stalls",
   "possible outcomes",
 ]);
 

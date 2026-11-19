@@ -11,7 +11,7 @@ import { json, readJsonBody, storageUnavailable } from "./cloud-backup-http";
 import {
   hashOwnerCode,
   generateOwnerCode,
-  authorizeStoredBackup,
+  authorizeOwner,
 } from "./cloud-backup-auth";
 const SCHEMA_VERSION = 1;
 
@@ -59,7 +59,20 @@ export async function handleEnableCloudBackup(
     lastPushedAt: now,
   };
 
-  await writeManifest(env, backupId, manifest, await hashOwnerCode(ownerCode));
+  const created = await writeManifest(
+    env,
+    backupId,
+    manifest,
+    await hashOwnerCode(ownerCode),
+    undefined,
+  );
+  if (!created) {
+    return json(
+      request,
+      { error: { message: "Could not open the backup. Try again." } },
+      409,
+    );
+  }
 
   // The only time the raw code is ever transmitted.
   return json(request, { backupId, ownerCode, manifest }, 201);
@@ -71,7 +84,7 @@ export async function handleDeleteCloudBackup(
   env: CloudBackupEnv,
   backupId: string,
 ): Promise<Response> {
-  const auth = await authorizeStoredBackup(request, env, backupId);
+  const auth = await authorizeOwner(request, env, backupId);
   if ("response" in auth) return auth.response;
 
   await eraseBackupObjects(env, backupId);

@@ -46,10 +46,12 @@ const STANDALONE_PATHS = [
   "/answers",
   "/examples",
   "/explore",
+  "/topics",
   "/tools",
   "/generators",
   "/blog",
   "/migrations",
+  "/adventure-import",
   "/alternatives",
   "/free-rpg-campaign-manager",
   "/worldbuilding-tool",
@@ -83,6 +85,7 @@ const TOPIC_PATHS = [
   "/topics/solo-rpg",
   "/topics/dnd",
   "/topics/dnd-beginners",
+  "/topics/star-systems",
 ] as const;
 
 export function listGovernedPaths(): string[] {

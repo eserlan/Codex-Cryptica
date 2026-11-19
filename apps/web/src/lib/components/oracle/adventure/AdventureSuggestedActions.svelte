@@ -10,40 +10,80 @@
     manager: AdventureManager;
     disabled: boolean;
     visible: boolean;
-    /** Show suggestions as always-visible chips instead of a collapsed list. */
+    /** Show suggestions as collapsible chips instead of a collapsed list. */
     chips?: boolean;
   } = $props();
+
+  let chipsCollapsed = $state(false);
+  const toggleLabel = $derived(
+    chipsCollapsed
+      ? `Suggested actions (${manager.suggestedActions.length})`
+      : "Hide suggestions",
+  );
+  const chevronClass = $derived(
+    `icon-[lucide--chevron-up] h-3.5 w-3.5 shrink-0 transition-transform ${chipsCollapsed ? "rotate-180" : ""}`,
+  );
+  const chipContainerClass = $derived(
+    visible ? "flex flex-col gap-1.5 pb-1" : "hidden",
+  );
+  const detailsContainerClass = $derived(
+    visible
+      ? "group rounded-lg border border-theme-border bg-theme-bg"
+      : "hidden",
+  );
 </script>
 
+{#snippet actionList(btnClass: string)}
+  {#each manager.suggestedActions as suggestion (suggestion)}
+    <button
+      class={btnClass}
+      type="button"
+      {disabled}
+      onclick={() => void manager.submitSuggestedAction(suggestion)}
+    >
+      {suggestion}
+    </button>
+  {/each}
+{/snippet}
+
 {#if manager.suggestedActions.length > 0 && chips}
-  <!-- Roomy screens: show the options up front. Phones keep the compact
+  <!-- Roomy screens: show the options up front with a compact collapse toggle
+       so the player can reclaim transcript space. Phones keep the compact
        disclosure below so the free-action composer stays reachable. -->
-  <div
-    class={visible
-      ? "flex max-h-36 flex-wrap justify-center gap-2 overflow-y-auto overscroll-contain pb-2"
-      : "hidden"}
-    role="group"
-    aria-label="Suggested actions"
-    data-testid="adventure-suggested-actions"
-  >
-    {#each manager.suggestedActions as suggestion (suggestion)}
+  <div class={chipContainerClass} data-testid="adventure-suggested-actions">
+    <div class="flex justify-center">
       <button
-        class="min-h-10 max-w-full rounded-2xl border border-theme-border bg-theme-bg px-3 py-1.5 text-left text-sm leading-snug whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
         type="button"
-        {disabled}
-        onclick={() => void manager.submitSuggestedAction(suggestion)}
+        class="inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-bg px-3 py-1 text-xs font-medium text-theme-text transition hover:bg-theme-primary/10 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        aria-expanded={!chipsCollapsed}
+        data-testid="adventure-suggested-actions-toggle"
+        onclick={() => (chipsCollapsed = !chipsCollapsed)}
       >
-        {suggestion}
+        <span
+          class="icon-[lucide--list-checks] h-3.5 w-3.5 shrink-0"
+          aria-hidden="true"
+        ></span>
+        {toggleLabel}
+        <span class={chevronClass} aria-hidden="true"></span>
       </button>
-    {/each}
+    </div>
+    {#if !chipsCollapsed}
+      <div
+        class="flex max-h-36 flex-wrap justify-center gap-2 overflow-y-auto overscroll-contain pb-1"
+        role="group"
+        aria-label="Suggested actions"
+      >
+        {@render actionList(
+          "min-h-10 max-w-full rounded-2xl border border-theme-border bg-theme-bg px-3 py-1.5 text-left text-sm leading-snug whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50",
+        )}
+      </div>
+    {/if}
   </div>
 {:else if manager.suggestedActions.length > 0}
   <!-- Compact by default so the free-action composer stays reachable on phones.
        Native details/summary supports keyboard and screen-reader disclosure. -->
   <details
-    class={visible
-      ? "group rounded-lg border border-theme-border bg-theme-bg"
-      : "hidden"}
+    class={detailsContainerClass}
     data-testid="adventure-suggested-actions"
   >
     <summary
@@ -64,16 +104,9 @@
     <div
       class="flex max-h-36 flex-col gap-2 overflow-y-auto overscroll-contain border-t border-theme-border p-2"
     >
-      {#each manager.suggestedActions as suggestion (suggestion)}
-        <button
-          class="min-h-11 w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-left text-sm leading-relaxed whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50"
-          type="button"
-          {disabled}
-          onclick={() => void manager.submitSuggestedAction(suggestion)}
-        >
-          {suggestion}
-        </button>
-      {/each}
+      {@render actionList(
+        "min-h-11 w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-left text-sm leading-relaxed whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50",
+      )}
     </div>
   </details>
 {/if}

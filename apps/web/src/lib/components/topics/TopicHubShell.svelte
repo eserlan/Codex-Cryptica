@@ -18,12 +18,12 @@
   >
     <nav aria-label="Breadcrumb" class="mb-8">
       <a
-        href="{cleanBase}/explore"
+        href="{cleanBase}/topics"
         class="inline-flex min-h-[24px] items-center gap-2 py-1 font-mono text-xs text-theme-text transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
       >
         <span class="icon-[lucide--arrow-left] h-3.5 w-3.5" aria-hidden="true"
         ></span>
-        Explore all topics
+        All topics
       </a>
     </nav>
 

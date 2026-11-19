@@ -126,4 +126,35 @@ describe("NotificationStore", () => {
     const result = await promise;
     expect(result).toBe(false);
   });
+
+  it("runs a toast's action once and clears the toast", () => {
+    const store = new NotificationStore();
+    const run = vi.fn();
+    store.notify("Mara deleted Dock", "info", false, { label: "Undo", run });
+    expect(store.notification?.action?.label).toBe("Undo");
+
+    store.runNotificationAction();
+    store.runNotificationAction();
+    expect(run).toHaveBeenCalledTimes(1);
+    expect(store.notification).toBeNull();
+  });
+
+  it("keeps a toast with an action for 12 seconds", () => {
+    const store = new NotificationStore();
+    store.notify("Mara deleted Dock", "info", false, {
+      label: "Undo",
+      run: vi.fn(),
+    });
+    vi.advanceTimersByTime(11_999);
+    expect(store.notification).not.toBeNull();
+    vi.advanceTimersByTime(1);
+    expect(store.notification).toBeNull();
+  });
+
+  it("does nothing when the toast has no action", () => {
+    const store = new NotificationStore();
+    store.notify("Hello");
+    store.runNotificationAction();
+    expect(store.notification).toBeNull();
+  });
 });

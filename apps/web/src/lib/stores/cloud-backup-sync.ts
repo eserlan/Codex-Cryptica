@@ -2,6 +2,7 @@ import { onlineStatus } from "./online.svelte";
 import {
   AUTO_SYNC_DEBOUNCE_MS,
   AUTO_SYNC_RETRY_MS,
+  type Blocked,
   type CloudBackupDepsProvider,
   type CloudBackupViewState,
   type SnapshotOutcome,
@@ -15,6 +16,7 @@ type SyncState = Pick<
   | "autoState"
   | "autoConflictRemoteAt"
   | "uploadProgress"
+  | "syncStopped"
 >;
 
 /** Manual, automatic and conflict-resolution save orchestration and lifecycle triggers. */
@@ -27,6 +29,8 @@ export class CloudBackupSync {
     private state: SyncState,
     private getDeps: CloudBackupDepsProvider,
     private uploads: Pick<CloudBackupUploads, "pushing" | "pushSnapshot">,
+    private pullRunning: () => boolean = () => false,
+    private onBlocked: (vaultId: string, blocked: Blocked) => void = () => {},
   ) {}
   private get deps() {
     return this.getDeps();
@@ -106,7 +110,8 @@ export class CloudBackupSync {
   notifyLocalChange(vaultId?: string): void {
     if (!this.deps) return;
     const active = vaultId ?? this.deps.activeVaultId();
-    if (!active || this.state.status === "off") return;
+    if (!active || this.state.status === "off" || this.state.syncStopped)
+      return;
     // A conflict pauses automation until the user reconciles — further edits
     // must not silently queue an overwrite.
     if (this.state.autoState === "conflict") return;
@@ -126,7 +131,7 @@ export class CloudBackupSync {
     if (!onlineStatus.current) {
       return this.deferAutoSyncOffline();
     }
-    if (this.uploads.pushing) {
+    if (this.uploads.pushing || this.pullRunning()) {
       return this.deferAutoSyncWhilePushing();
     }
     this.clearTimer();
@@ -140,7 +145,13 @@ export class CloudBackupSync {
   }
 
   private autoSyncVaultId(): string | null {
-    if (!this.deps || this.state.autoState === "conflict") return null;
+    if (
+      !this.deps ||
+      this.state.autoState === "conflict" ||
+      this.state.syncStopped
+    ) {
+      return null;
+    }
     const vaultId = this.deps.activeVaultId();
     return vaultId && this.state.status !== "off" ? vaultId : null;
   }
@@ -157,14 +168,17 @@ export class CloudBackupSync {
     return false;
   }
 
+  // fallow-ignore-next-line complexity -- each outcome is tested in cloud-backup-sync.test.ts and cloud-backup-editor.test.ts.
   private async completeAutoSync(vaultId: string): Promise<boolean> {
     const out = await this.uploads.pushSnapshot(vaultId, { guarded: true });
     if (out.notEnabled) return this.stopAutoSyncBackupOff();
+    if (out.blocked) return this.stopAutoSyncBlocked(vaultId, out.blocked);
     if (out.ok) {
       this.state.autoState = "saved";
       return this.completeSave();
     }
     if (out.conflict) return this.pauseAutoSyncOnConflict(out);
+    if (out.held) return this.deferHeldPush();
     // Ordinary failure: local data is untouched; stay pending and retry
     // with backoff. Offline flips to the offline state instead.
     this.pending = true;
@@ -185,12 +199,42 @@ export class CloudBackupSync {
     return false;
   }
 
+  /** An editor's link is gone or its device is over the cap: nothing retries. */
+  private stopAutoSyncBlocked(vaultId: string, blocked: Blocked): false {
+    this.pending = false;
+    this.clearTimer();
+    this.state.autoState = "idle";
+    this.onBlocked(vaultId, blocked);
+    return false;
+  }
+
   private pauseAutoSyncOnConflict(out: SnapshotOutcome): false {
     this.pending = false;
     this.state.autoState = "conflict";
     this.state.autoConflictRemoteAt = out.remoteAt ?? null;
     this.state.errorMessage = out.error ?? "Cloud backup failed.";
     return false;
+  }
+
+  /** An open editor held a pull back: keep everything and try again later. */
+  private deferHeldPush(): false {
+    this.pending = true;
+    this.state.autoState = "pending";
+    this.scheduleAutoPush(this.deps?.retryMs ?? AUTO_SYNC_RETRY_MS);
+    return false;
+  }
+
+  /** Runs a push that fell due while a pull was running. */
+  resumeAfterPull(): void {
+    if (
+      this.pending &&
+      !this.autoTimer &&
+      this.state.autoState !== "conflict" &&
+      this.state.status !== "off" &&
+      !this.state.syncStopped
+    ) {
+      this.scheduleAutoPush();
+    }
   }
 
   private deferConflictRetry(error?: string): void {

@@ -46,7 +46,14 @@ describe("cloud backup restore reads", () => {
       shardCount: 256,
       entityCount: 1,
     };
-    await writeManifest(env, backupId, manifest, stored.ownerCodeHash!);
+    await writeManifest(
+      env,
+      backupId,
+      manifest,
+      stored.ownerCodeHash!,
+      undefined,
+      stored.etag,
+    );
     await writeJson(env, getBundleKey(backupId), { maps: [] });
     await writeJson(env, getShardKey(backupId, "01"), {
       a: { id: "a", content: "private" },

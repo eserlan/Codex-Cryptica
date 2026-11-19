@@ -2,6 +2,7 @@ import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
 import {
   detectHiddenLeakage,
+  detectPackageLeakage,
   ensureScenarioSecrets,
   scenarioEventSecretId,
 } from "./hidden-state";
@@ -21,14 +22,24 @@ import {
   markRevealedScenarios,
   applyScenarioElaborations,
 } from "./scenario-turns";
+import {
+  applyPackageActorEvents,
+  applyPackageProgressEvents,
+  nullMap,
+  planSceneProgress,
+  type PackageProgressIndex,
+} from "./package-progress";
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
 import type {
+  ActorEventProposal,
   AdventureSession,
   AdventureTurnProposal,
   AdventureValidationError,
   CommitMetadata,
   CommittedAdventureTurn,
+  PackageEventProposal,
+  PackageProgress,
   Result,
   ScenarioItem,
   WorldTimeState,
@@ -53,11 +64,15 @@ function completedTurnInputError(
 function completedTurnProposalError(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
 ): ReturnType<typeof error> | null {
   if (hasImmutableScenarioRewrite(session, proposal)) {
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
-  if (detectHiddenLeakage(session, proposal).length > 0) {
+  if (
+    detectHiddenLeakage(session, proposal).length > 0 ||
+    detectPackageLeakage(proposal, meta, session).length > 0
+  ) {
     return error(
       "hidden-leakage",
       "The response contains unrevealed GM information.",
@@ -92,6 +107,142 @@ function resolveClock(
   };
 }
 
+function packageIndexFromMeta(
+  meta: CommitMetadata,
+): PackageProgressIndex | undefined {
+  if (!meta.packageRecordKinds) return undefined;
+  return {
+    packageSceneIds: [...(meta.packageSceneIds ?? [])],
+    packageRecordKinds: nullMap(Object.entries(meta.packageRecordKinds)),
+    packageSceneBranches: nullMap(
+      Object.entries(meta.packageSceneBranches ?? {}).map(
+        ([id, targets]) => [id, [...targets]] as const,
+      ),
+    ),
+    packageActorIds: [...(meta.packageActorIds ?? [])],
+  };
+}
+
+/** A reported scene ID counts only when the session's package has that scene. */
+function validSceneMove(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
+  dropped: string[],
+): string | undefined {
+  const sceneId = proposal.visiblePatch.packageSceneId;
+  if (sceneId === undefined) return undefined;
+  if (candidate.sourcePackage && meta.packageSceneIds?.includes(sceneId)) {
+    return sceneId;
+  }
+  dropped.push(`packageSceneId: unknown scene ${sceneId.slice(0, 80)}`);
+  return undefined;
+}
+
+/** Moves the scene and writes the scene-move events, then the proposed ones, in one pass. */
+function applyLedgerProgress(
+  before: PackageProgress,
+  index: PackageProgressIndex,
+  moveTo: string | undefined,
+  proposed: readonly PackageEventProposal[],
+  meta: CommitMetadata,
+  dropped: string[],
+): PackageProgress {
+  const inputs = [...planSceneProgress(before, index, moveTo), ...proposed];
+  const result = inputs.length
+    ? applyPackageProgressEvents(before, inputs, { turnId: meta.turnId, index })
+    : { progress: before, dropped: [] };
+  dropped.push(...result.dropped);
+  return { ...result.progress, sceneId: moveTo ?? before.sceneId };
+}
+
+function applyActorProgress(
+  progress: PackageProgress,
+  proposedActors: readonly ActorEventProposal[],
+  index: PackageProgressIndex,
+  meta: CommitMetadata,
+  dropped: string[],
+): PackageProgress {
+  if (proposedActors.length === 0) return progress;
+  const actorResult = applyPackageActorEvents(progress, proposedActors, {
+    turnId: meta.turnId,
+    index,
+  });
+  dropped.push(...actorResult.dropped);
+  return actorResult.progress;
+}
+
+function dropMissingPackageProposals(
+  proposed: readonly PackageEventProposal[],
+  proposedActors: readonly ActorEventProposal[],
+  dropped: string[],
+): void {
+  for (const event of proposed) {
+    dropped.push(`packageEvents: no package ${event.recordId.slice(0, 80)}`);
+  }
+  for (const event of proposedActors) {
+    dropped.push(`actorEvents: no package ${event.actorId.slice(0, 80)}`);
+  }
+}
+
+function resolvePackageProgress(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  meta: CommitMetadata,
+  dropped: string[],
+): void {
+  const moveTo = validSceneMove(candidate, proposal, meta, dropped);
+  const before = candidate.packageProgress;
+  const index = packageIndexFromMeta(meta);
+  const proposed = proposal.packageEvents ?? [];
+  const proposedActors = proposal.actorEvents ?? [];
+  if (before && candidate.sourcePackage && index) {
+    const nextProgress = applyLedgerProgress(
+      before,
+      index,
+      moveTo,
+      proposed,
+      meta,
+      dropped,
+    );
+    candidate.packageProgress = applyActorProgress(
+      nextProgress,
+      proposedActors,
+      index,
+      meta,
+      dropped,
+    );
+    return;
+  }
+  dropMissingPackageProposals(proposed, proposedActors, dropped);
+  if (moveTo !== undefined) {
+    candidate.packageProgress = { ...before, sceneId: moveTo };
+  }
+}
+
+const MAX_DROPPED_REASONS = 24;
+
+function boundDroppedReasons(dropped: readonly string[]): string[] {
+  const packageEventDrops = dropped.filter((reason) =>
+    reason.startsWith("packageEvents:"),
+  );
+  const otherDrops = dropped.filter(
+    (reason) => !reason.startsWith("packageEvents:"),
+  );
+  const boundedPackageEventDrops =
+    packageEventDrops.length > MAX_DROPPED_REASONS
+      ? [
+          ...packageEventDrops.slice(0, MAX_DROPPED_REASONS - 1),
+          `packageEvents: +${packageEventDrops.length - (MAX_DROPPED_REASONS - 1)} more dropped`,
+        ]
+      : packageEventDrops;
+  const remainingSlots = Math.max(
+    0,
+    MAX_DROPPED_REASONS - boundedPackageEventDrops.length,
+  );
+  return [...otherDrops.slice(0, remainingSlots), ...boundedPackageEventDrops];
+}
+
 export function applyCompletedTurn(
   sessionInput: AdventureSession,
   proposalInput: AdventureTurnProposal,
@@ -110,7 +261,7 @@ export function applyCompletedTurn(
       "A completed turn requires a complete proposal.",
     );
   }
-  const proposalError = completedTurnProposalError(session, proposal);
+  const proposalError = completedTurnProposalError(session, proposal, meta);
   if (proposalError) return proposalError;
   const materialized = materializeTurnState(
     session,
@@ -130,6 +281,7 @@ export function applyCompletedTurn(
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { time, timeAdvance } = clock;
+  resolvePackageProgress(candidate, proposal, meta, dropped);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   const placeStep = applyPlaces(
@@ -138,6 +290,7 @@ export function applyCompletedTurn(
     proposal.moveTo,
     materialized.visiblePatch,
     createId,
+    proposal.placeCues,
   );
   if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
   if (time.value && clock.applied) {
@@ -187,7 +340,9 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
-  if (dropped.length > 0) turn.dropped = dropped.slice(0, 24);
+  if (dropped.length > 0) {
+    turn.dropped = boundDroppedReasons(dropped);
+  }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
   if (!validateStateBudget(candidate)) {

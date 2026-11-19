@@ -1,16 +1,38 @@
+<script module lang="ts">
+  export interface ImportValidationIssue {
+    code: string;
+    message: string;
+    path?: string;
+    entityId?: string;
+  }
+</script>
+
 <script lang="ts">
+  import AdventureImportDropzone from "./AdventureImportDropzone.svelte";
   let {
     onDiscover,
     onSurpriseMe,
     onOwnPremise,
     onEnterWorld = () => {},
+    onImportFile,
+    onImportExperimentalFile,
+    importError = null,
+    importValidationErrors = [],
+    importing = false,
     canDiscover = true,
+    canImport = true,
   }: {
     onDiscover: () => void;
     onSurpriseMe?: () => void;
     onOwnPremise: () => void;
     onEnterWorld?: () => void;
+    onImportFile?: (file: File) => void | Promise<void>;
+    onImportExperimentalFile?: (file: File) => void | Promise<void>;
+    importError?: string | null;
+    importValidationErrors?: ImportValidationIssue[];
+    importing?: boolean;
     canDiscover?: boolean;
+    canImport?: boolean;
   } = $props();
 </script>
 
@@ -151,5 +173,14 @@
         without a prepared quest.
       </span>
     </button>
+
+    <AdventureImportDropzone
+      {onImportFile}
+      {onImportExperimentalFile}
+      {importError}
+      {importValidationErrors}
+      {importing}
+      {canImport}
+    />
   </div>
 </section>

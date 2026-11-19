@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeHexTopology, type HexTopology } from "./topology";
 import { TerrainSchema, type Terrain } from "./terrain";
 import {
   HexDiscoveryDraftSchema,
@@ -43,6 +44,8 @@ export interface GeneratedTerrain {
 export interface HexCrawlState {
   enabled: boolean;
   hexes: Record<HexKey, HexRecord>;
+  /** Optional, versioned shared-edge geography; legacy maps need no migration. */
+  topology?: HexTopology;
 }
 
 const HEX_KEY = /^(-?\d+),(-?\d+)$/;
@@ -97,6 +100,8 @@ export function normalizeHexCrawlState(raw: unknown): HexCrawlState {
     enabled: input.enabled === true,
     hexes: {},
   };
+  const topology = normalizeHexTopology(input.topology);
+  if (topology) state.topology = topology;
   if (!rawHexes || typeof rawHexes !== "object" || Array.isArray(rawHexes)) {
     return state;
   }

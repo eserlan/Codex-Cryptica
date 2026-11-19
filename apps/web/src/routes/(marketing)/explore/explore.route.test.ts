@@ -10,6 +10,8 @@ vi.mock("$app/paths", () => ({
 }));
 
 import Page from "./+page.svelte";
+import { EXPLORE_SECTIONS } from "#lib/components/explore/explore-sections.js";
+import { listLiveTopics } from "#lib/content/topics/directory.js";
 
 const emptyData = { label: "", results: [] };
 
@@ -109,7 +111,10 @@ describe("/explore route", () => {
       "/topics/solo-rpg",
       "/topics/dnd",
       "/topics/dnd-beginners",
+      "/topics/star-systems",
     ]);
+    const allTopics = topicSection?.querySelector('a[href="/topics"]');
+    expect(allTopics?.textContent).toContain("All topics");
     for (const href of [
       "/topics/heists",
       "/topics/puzzles",
@@ -117,6 +122,7 @@ describe("/explore route", () => {
       "/topics/solo-rpg",
       "/topics/dnd",
       "/topics/dnd-beginners",
+      "/topics/star-systems",
     ]) {
       expect(document.querySelectorAll(`a[href="${href}"]`)).toHaveLength(1);
     }
@@ -131,6 +137,7 @@ describe("/explore route", () => {
       "Solo RPGs",
       "Running D&D",
       "D&D for Beginners",
+      "Star Systems & Sci-Fi",
     ]);
 
     const learnSection = screen
@@ -175,5 +182,17 @@ describe("/explore route", () => {
     expect(
       screen.queryByRole("heading", { name: "Browse by Topic", level: 2 }),
     ).toBeNull();
+  });
+});
+
+describe("Browse by Topic registry parity", () => {
+  it("builds every topic link from the listing helper", () => {
+    const section = EXPLORE_SECTIONS.find((s) => s.title === "Browse by Topic");
+    const topicLinks = (section?.links ?? []).filter((l) =>
+      l.href.startsWith("/topics/"),
+    );
+    expect(topicLinks.map((l) => [l.href, l.label])).toEqual(
+      listLiveTopics().map((t) => [t.href, t.title]),
+    );
   });
 });

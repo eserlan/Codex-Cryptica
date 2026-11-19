@@ -14,6 +14,9 @@ Usage:
   job advance <job> <stage>      move a job to <stage>, or refuse
   job merge <job>                APPROVE → sync with the base branch, gate, merge the PR
   job feedback <job>             needs-human → build, with your feedback (stdin) as feedback-<k>.md
+  job approve <job>              needs-human → dev-agents: removes the factory labels from the issue and PR
+                                 and hands the PR to the dev agents (review-and-fix loop). The job is
+                                 done only when its PR is merged into the base branch.
   job reject <job>               needs-info or needs-human → rejected, with your reason (stdin) as rejection.md
   job agents <job> <json>        record the routed agent set (called by factory/bin/route)
   job sync <job>                 refresh reviews, gate and cost from the job's files
@@ -29,6 +32,7 @@ import os
 import re
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -38,6 +42,7 @@ JOBS = FACTORY / "jobs"
 BIN = FACTORY / "bin"
 CONFIG = json.loads((FACTORY / "config.json").read_text())
 LABELS = CONFIG["labels"]
+QUEUE_LABEL = os.environ.get("FACTORY_QUEUE_LABEL", LABELS["queue"])
 BASE = CONFIG["base_branch"]
 MARKER = "<!-- factory -->"
 
@@ -50,10 +55,13 @@ TRANSITIONS = {
     "review": {"approve", "build", "needs-human"},
     "approve": {"merging", "needs-human"},
     "merging": {"merged", "needs-human"},
-    "needs-human": {"build", "merged", "rejected"},
+    "needs-human": {"build", "dev-agents", "merged", "rejected"},
+    "dev-agents": {"merged"},
 }
 TERMINAL = {"merged", "rejected"}
 WAITING = {"needs-info", "needs-human"}
+# Handed to the dev agents: the factory is done with it and it holds no slot.
+HANDED_OFF = {"dev-agents"}
 CONCURRENCY = CONFIG["concurrency"]
 
 
@@ -71,9 +79,12 @@ def now():
 
 
 def run(cmd, cwd=REPO, check=True):
-    res = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True)
+    command = [str(part) for part in cmd]
+    if command and Path(command[0]).name == "git":
+        command[1:1] = ["-c", "core.hooksPath=/dev/null"]
+    res = subprocess.run(command, cwd=cwd, capture_output=True, text=True)
     if check and res.returncode != 0:
-        raise Refused(f"`{' '.join(cmd)}` failed: {(res.stderr or res.stdout).strip()}")
+        raise Refused(f"`{' '.join(command)}` failed: {(res.stderr or res.stdout).strip()}")
     return res
 
 
@@ -143,8 +154,8 @@ def all_jobs():
 
 
 def running(jobs):
-    """Jobs holding a concurrency slot: every job not finished or waiting."""
-    return [j for j in jobs if j["stage"] not in TERMINAL | WAITING]
+    """Jobs holding a concurrency slot: every job not finished, waiting or handed off."""
+    return [j for j in jobs if j["stage"] not in TERMINAL | WAITING | HANDED_OFF]
 
 
 def require_slot(job_id):
@@ -256,12 +267,152 @@ def label(kind, number, add=None, remove=None):
     gh(*args)
 
 
-# ---- Cost from Claude Code transcripts -------------------------------------
+# ---- Cost from Claude Code & Antigravity (AGY) transcripts -----------------
 
 
 def transcripts_dir():
     config = Path(os.environ.get("CLAUDE_CONFIG_DIR", Path.home() / ".claude"))
     return config / "projects" / re.sub(r"[^A-Za-z0-9]", "-", str(REPO))
+
+
+def agy_transcript_files(since_epoch=0.0):
+    gemini_dir = Path(os.environ.get("AGY_CONFIG_DIR", Path.home() / ".gemini"))
+    if not gemini_dir.exists():
+        return []
+    files = []
+    for path in gemini_dir.glob("antigravity*/brain/*/.system_generated/logs/transcript.jsonl"):
+        try:
+            if path.stat().st_mtime >= since_epoch:
+                files.append(path)
+        except OSError:
+            continue
+    return sorted(files)
+
+
+def muse_sessions_dir():
+    override = os.environ.get("MUSE_SESSIONS_DIR")
+    if override:
+        return Path(override)
+    data_home = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share"))
+    return data_home / "muse" / "sessions"
+
+
+def muse_session_files(since_epoch=0.0, until_epoch=None):
+    """Top-level session logs plus nested workflow/subagent child logs.
+
+    A parent session's own log contains every child's prompt in its spawn
+    records, so it must never be billed directly when it has a `subagent/`
+    directory: the children are counted from their own nested logs instead.
+    """
+    root = muse_sessions_dir()
+    if not root.exists():
+        return []
+    files = []
+    for path in sorted(root.rglob("session.jsonl")):
+        if (path.parent / "subagent").is_dir():
+            continue
+        try:
+            modified = path.stat().st_mtime
+            if modified >= since_epoch and (until_epoch is None or modified <= until_epoch):
+                files.append(path)
+        except OSError:
+            continue
+    return files
+
+
+def muse_records(path, text=None):
+    """Yield parsed records from a Muse session.jsonl, unwrapping retained frames."""
+    if text is None:
+        try:
+            text = path.read_text(errors="replace")
+        except OSError:
+            return
+    lines = text.splitlines()
+    for line in lines:
+        try:
+            entry = json.loads(line)
+        except ValueError:
+            continue
+        children = entry.get("children")
+        if isinstance(children, list):
+            for child in children:
+                try:
+                    yield json.loads(child.get("record_json") or "{}")
+                except (ValueError, AttributeError):
+                    continue
+        else:
+            yield entry
+
+
+def infer_muse_agent_and_model(text, job):
+    agent, _display, _key = infer_agy_agent_and_model(text, job)
+    m_model = re.search(r"\bModel:\s*([a-z0-9_.-]+)\.", text)
+    display = m_model.group(1) if m_model else "muse-wonder-1.0"
+    prices = CONFIG["prices_usd_per_mtok"]
+    price_key = display if display in prices else None
+    return agent, display, price_key
+
+
+def infer_agy_agent_and_model(text, job):
+    m_agent = re.search(r"\bAgent:\s*([a-z0-9-]+)\.", text)
+    agent = m_agent.group(1) if m_agent else None
+    if not agent:
+        if "Build round " in text:
+            agent = "builder"
+        elif "Review round " in text:
+            for r in ("code", "codex", "ux", "ui", "security"):
+                if f"review-{r}.md" in text:
+                    agent = f"reviewer-{r}"
+                    break
+            agent = agent or "reviewer-code"
+        elif "Final round:" in text or "decision.md" in text:
+            agent = "approver"
+        elif "spec.md" in text:
+            agent = "spec-writer"
+        elif "intake.md" in text:
+            agent = "intake"
+        else:
+            agent = "unknown"
+    m_model = re.search(r"\bModel:\s*([a-z0-9_.-]+)\.", text)
+    tier = m_model.group(1) if m_model else None
+    if not tier:
+        if agent.startswith("reviewer-"):
+            lens = agent.removeprefix("reviewer-")
+            tier = ((job.get("agents") or {}).get("reviewers") or {}).get(lens, "sonnet")
+        elif agent in {"intake", "spec-writer", "approver"}:
+            tier = "pro"
+        else:
+            tier = "inherit"
+    price_key_map = {
+        "pro": "gemini-4-hydrogen",
+        "inherit": "gemini-4-hydrogen",
+        "gemini-4-hydrogen": "gemini-4-hydrogen",
+        "gemini-4-hydrogen-high": "gemini-4-hydrogen",
+        "gemini-4-hydrogen-xhigh": "gemini-4-hydrogen",
+        "gemini-4-hydrogen-medium": "gemini-4-hydrogen",
+        "gemini-4-hydrogen-low": "gemini-4-hydrogen",
+        "gemini-4-argon": "gemini-4-argon",
+        "gemini-4-argon-high": "gemini-4-argon",
+        "gemini-4-argon-medium": "gemini-4-argon",
+        "gemini-4-argon-low": "gemini-4-argon",
+        "flash": "gemini-3.8-flash",
+        "flash_lite": "gemini-3.8-flash",
+        "gemini-3.8-flash": "gemini-3.8-flash",
+        "gemini-3.8-flash-high": "gemini-3.8-flash",
+        "gemini-3.8-flash-medium": "gemini-3.8-flash",
+        "gemini-3.8-flash-low": "gemini-3.8-flash",
+        "opus": "claude-opus-5-5",
+        "claude-opus-5-5-high": "claude-opus-5-5",
+        "claude-opus-5-5-medium": "claude-opus-5-5",
+        "claude-opus-5-5-low": "claude-opus-5-5",
+        "sonnet": "claude-sonnet-5-5",
+        "claude-sonnet-5-5-high": "claude-sonnet-5-5",
+        "claude-sonnet-5-5-medium": "claude-sonnet-5-5",
+        "claude-sonnet-5-5-low": "claude-sonnet-5-5",
+        "haiku": "claude-haiku-5-5",
+    }
+    display = tier if tier.startswith(("gemini-", "claude-", "gpt-")) else f"agy-{tier}"
+    return agent, display, price_key_map.get(tier, "claude-sonnet-5-5")
 
 
 def prompt_text(line):
@@ -292,13 +443,74 @@ def agent_type(transcript):
         return "unknown"
 
 
+_codex_session_settings_cache = {}
+
+
+def codex_session_settings(session_id):
+    """Read the effective model settings for an older log without model metadata."""
+    if not session_id:
+        return {}
+    if session_id in _codex_session_settings_cache:
+        return _codex_session_settings_cache[session_id]
+    home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
+    sessions = home / "sessions"
+    settings = {}
+    if sessions.exists():
+        for path in sessions.rglob(f"rollout-*-{session_id}.jsonl"):
+            try:
+                with path.open() as f:
+                    for line in f:
+                        entry = json.loads(line)
+                        payload = entry.get("payload", {})
+                        if entry.get("type") == "event_msg" and payload.get("type") == "thread_settings_applied":
+                            settings = payload.get("thread_settings", {})
+            except (OSError, ValueError):
+                continue
+            if settings:
+                break
+    _codex_session_settings_cache[session_id] = settings
+    return settings
+
+
+def codex_message_usd(price, usage):
+    """Estimate standard short-context API cost from Codex token usage."""
+    input_tokens = usage.get("input_tokens", 0)
+    cached_tokens = usage.get("cached_input_tokens", 0)
+    cache_write_tokens = usage.get("cache_write_input_tokens", 0)
+    uncached_tokens = max(0, input_tokens - cached_tokens - cache_write_tokens)
+    return (
+        uncached_tokens * price["input"]
+        + cached_tokens * price["cached_input"]
+        + cache_write_tokens * price["cache_write"]
+        + usage.get("output_tokens", 0) * price["output"]
+    ) / 1e6
+
+
+def empty_cost_row():
+    return {
+        "usd": 0.0,
+        "spawns": 0,
+        "turns": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_read_tokens": 0,
+        "cache_write_tokens": 0,
+        "models": [],
+        "pricing_complete": True,
+        "unpriced_tokens": 0,
+        "unpriced_models": [],
+    }
+
+
 def job_costs(job):
     """API-equivalent cost of every subagent whose prompt names this job's folder.
 
-    Claude Code writes each subagent's messages, with model and token usage, to
-    <config>/projects/<project>/<session>/subagents/agent-<id>.jsonl, and its
-    type to agent-<id>.meta.json. Every factory prompt starts with
-    `Job folder: <path>`, which ties a transcript to its job across sessions.
+    Supports Claude Code transcripts (<config>/projects/<project>/<session>/
+    subagents/agent-<id>.jsonl), Antigravity (AGY) transcripts
+    (~/.gemini/antigravity*/brain/<id>/.system_generated/logs/transcript.jsonl),
+    and Muse session logs (~/.local/share/muse/sessions/*/*/*/*/session.jsonl).
+    Every factory prompt starts with `Job folder: <path>`, which ties a
+    transcript to its job across sessions.
 
     Returns (total, by_agent). by_agent maps each agent type to its cost, the
     number of transcripts (spawns), model turns (assistant messages, which is
@@ -307,35 +519,231 @@ def job_costs(job):
     needle = f"Job folder: {job_dir(job['id'])}/"
     prices = CONFIG["prices_usd_per_mtok"]
     by_agent = {}
-    for path in sorted(transcripts_dir().glob("*/subagents/agent-*.jsonl")):
-        with path.open() as f:
-            first = f.readline()
-            if not first or needle not in prompt_text(first):
-                continue
-            usage_by_message = {}
-            for line in f:
-                entry = json.loads(line)
-                msg = entry.get("message")
-                if entry.get("type") == "assistant" and isinstance(msg, dict) and msg.get("usage"):
-                    usage_by_message[msg["id"]] = (msg["model"], msg["usage"])
-        row = by_agent.setdefault(agent_type(path), {
-            "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
-            "cache_read_tokens": 0, "models": []})
+    t_dir = transcripts_dir()
+    if t_dir.exists():
+        for path in sorted(t_dir.glob("*/subagents/agent-*.jsonl")):
+            with path.open() as f:
+                first = f.readline()
+                if not first or needle not in prompt_text(first):
+                    continue
+                usage_by_message = {}
+                for line in f:
+                    entry = json.loads(line)
+                    msg = entry.get("message")
+                    if entry.get("type") == "assistant" and isinstance(msg, dict) and msg.get("usage"):
+                        usage_by_message[msg["id"]] = (msg["model"], msg["usage"])
+            row = by_agent.setdefault(agent_type(path), empty_cost_row())
+            row["spawns"] += 1
+            for model, u in usage_by_message.values():
+                tokens = (u.get("input_tokens", 0) + u.get("output_tokens", 0)
+                          + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0))
+                if tokens == 0:
+                    continue
+                row["turns"] += 1
+                row["input_tokens"] += u.get("input_tokens", 0)
+                row["cache_write_tokens"] += u.get("cache_creation_input_tokens", 0)
+                row["output_tokens"] += u.get("output_tokens", 0)
+                row["cache_read_tokens"] += u.get("cache_read_input_tokens", 0)
+                if model not in row["models"]:
+                    row["models"].append(model)
+                if model in prices:
+                    row["usd"] += message_usd(prices[model], u)
+                else:
+                    row["pricing_complete"] = False
+                    row["unpriced_tokens"] += tokens
+                    if model not in row["unpriced_models"]:
+                        row["unpriced_models"].append(model)
+
+    started_epoch = 0.0
+    if job.get("started"):
+        try:
+            started_epoch = datetime.fromisoformat(job["started"].replace("Z", "+00:00")).timestamp() - 60.0
+        except ValueError:
+            started_epoch = 0.0
+
+    ended_epoch = None
+    if job.get("ended"):
+        try:
+            ended_epoch = datetime.fromisoformat(job["ended"].replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            ended_epoch = None
+    if ended_epoch is None:
+        ended_epoch = datetime.now(timezone.utc).timestamp()
+
+    for path in agy_transcript_files(started_epoch):
+        try:
+            with path.open() as f:
+                first_user = None
+                planner_steps = []
+                for line in f:
+                    entry = json.loads(line)
+                    if first_user is None and entry.get("type") == "USER_INPUT":
+                        first_user = entry.get("content") or ""
+                        if needle not in first_user:
+                            break
+                    elif entry.get("type") == "PLANNER_RESPONSE":
+                        planner_steps.append(entry)
+                if not first_user or needle not in first_user:
+                    continue
+        except (OSError, ValueError):
+            continue
+        agent, display_model, price_key = infer_agy_agent_and_model(first_user, job)
+        price = prices.get(price_key)
+        row = by_agent.setdefault(agent, empty_cost_row())
         row["spawns"] += 1
-        for model, u in usage_by_message.values():
-            tokens = (u.get("input_tokens", 0) + u.get("output_tokens", 0)
-                      + u.get("cache_creation_input_tokens", 0) + u.get("cache_read_input_tokens", 0))
-            if tokens == 0:
+        if display_model not in row["models"]:
+            row["models"].append(display_model)
+        for step in planner_steps:
+            inp = step.get("input_tokens", 0) or 0
+            out = step.get("output_tokens", 0) or 0
+            cache_r = step.get("cache_read_tokens", 0) or 0
+            if inp + out + cache_r == 0:
                 continue
-            if model not in prices:
-                die(f"no price for model {model} in factory/config.json prices_usd_per_mtok")
-            row["usd"] += message_usd(prices[model], u)
             row["turns"] += 1
-            row["input_tokens"] += u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
-            row["output_tokens"] += u.get("output_tokens", 0)
-            row["cache_read_tokens"] += u.get("cache_read_input_tokens", 0)
+            row["input_tokens"] += inp
+            row["output_tokens"] += out
+            row["cache_read_tokens"] += cache_r
+            if price:
+                u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
+                row["usd"] += message_usd(price, u)
+            else:
+                row["pricing_complete"] = False
+                row["unpriced_tokens"] += inp + out + cache_r
+                if display_model not in row["unpriced_models"]:
+                    row["unpriced_models"].append(display_model)
+
+    codex_logs = job_dir(job["id"]) / "codex"
+    codex_pricing_path = FACTORY / "codex-routing.json"
+    try:
+        codex_prices = json.loads(codex_pricing_path.read_text()).get("prices_usd_per_mtok", {})
+    except (OSError, ValueError):
+        codex_prices = {}
+    if codex_logs.exists():
+        previous_usage = {}
+        usage_fields = (
+            "input_tokens", "cached_input_tokens", "cache_write_input_tokens", "output_tokens",
+        )
+        paths = sorted(codex_logs.glob("*.json"), key=lambda p: (p.stat().st_mtime_ns, p.name))
+        for path in paths:
+            try:
+                record = json.loads(path.read_text())
+            except (OSError, ValueError):
+                continue
+            if not isinstance(record, dict):
+                continue
+            events = record.get("events")
+            if not isinstance(events, list):
+                continue
+            model = record.get("model")
+            thread_id = next((event.get("thread_id") for event in events
+                              if event.get("type") == "thread.started"), None)
+            thread_id = record.get("thread_id") or thread_id or f"record:{path.name}"
+            if not model:
+                model = codex_session_settings(thread_id).get("model")
+            model = model or "unknown"
+            price = codex_prices.get(model)
+            agent = path.stem.rsplit("-", 1)[0]
+            row = by_agent.setdefault(agent, empty_cost_row())
+            row["spawns"] += 1
             if model not in row["models"]:
                 row["models"].append(model)
+            for event in events:
+                if event.get("type") != "turn.completed" or not isinstance(event.get("usage"), dict):
+                    continue
+                usage = event["usage"]
+                snapshot = {
+                    field: max(0, int(usage.get(field, 0) or 0))
+                    for field in usage_fields if field in usage
+                }
+                state_key = thread_id
+                prior = previous_usage.get(state_key, {})
+                delta = {}
+                for field in usage_fields:
+                    if field not in snapshot:
+                        delta[field] = 0
+                        continue
+                    current = snapshot[field]
+                    previous = prior.get(field, 0)
+                    delta[field] = current - previous if current >= previous else current
+                previous_usage[state_key] = {**prior, **snapshot}
+                token_count = sum(delta.values())
+                if not token_count:
+                    continue
+                row["turns"] += 1
+                ordinary_input = max(
+                    0,
+                    delta["input_tokens"]
+                    - delta["cached_input_tokens"]
+                    - delta["cache_write_input_tokens"],
+                )
+                row["input_tokens"] += ordinary_input
+                row["cache_write_tokens"] += delta["cache_write_input_tokens"]
+                row["output_tokens"] += delta["output_tokens"]
+                row["cache_read_tokens"] += delta["cached_input_tokens"]
+                if price:
+                    row["usd"] += codex_message_usd(price, delta)
+                else:
+                    row["pricing_complete"] = False
+                    # cached and cache-write input are subdivisions of input_tokens.
+                    row["unpriced_tokens"] += delta["input_tokens"] + delta["output_tokens"]
+                    if model not in row["unpriced_models"]:
+                        row["unpriced_models"].append(model)
+
+    for path in muse_session_files(started_epoch, ended_epoch):
+        try:
+            raw = path.read_text(errors="replace")
+        except OSError:
+            continue
+        if needle not in raw:
+            continue
+        # Only count sessions carrying a concrete factory prompt header, so
+        # the orchestrator's own session (which merely mentions job folders
+        # in tool calls) is not billed to the job.
+        if not re.search(r"Job:\s*\S+\.\s+" + re.escape(needle), raw):
+            continue
+        agent, display_model, price_key = infer_muse_agent_and_model(raw, job)
+        price = prices.get(price_key) if price_key else None
+        usages = {}
+        for record in muse_records(path, raw):
+            payload = record.get("payload") or {}
+            event = payload.get("event") or {}
+            if event.get("kind") != "goal_usage_attribution":
+                continue
+            quantity = (event.get("record") or {}).get("quantity") or {}
+            usage_id = (event.get("record") or {}).get("usage_id") or id(quantity)
+            usages[usage_id] = quantity
+        if not usages:
+            continue
+        row = by_agent.setdefault(agent, {
+            "usd": 0.0, "spawns": 0, "turns": 0, "input_tokens": 0, "output_tokens": 0,
+            "cache_read_tokens": 0, "models": [], "pricing_complete": True,
+            "unpriced_tokens": 0, "unpriced_models": []})
+        row["spawns"] += 1
+        for quantity in usages.values():
+            # Muse quantities report total input including cached tokens,
+            # unlike Claude/AGY usage where the two are disjoint: bill only
+            # the non-cached part at the input rate.
+            total_inp = quantity.get("input_tokens", 0) or 0
+            out = quantity.get("output_tokens", 0) or 0
+            cache_r = quantity.get("cached_tokens", 0) or 0
+            inp = max(total_inp - cache_r, 0)
+            if total_inp + out == 0:
+                continue
+            u = {"input_tokens": inp, "output_tokens": out, "cache_read_input_tokens": cache_r}
+            if price:
+                row["usd"] += message_usd(price, u)
+            else:
+                row["pricing_complete"] = False
+                row["unpriced_tokens"] += inp + out + cache_r
+                if display_model not in row["unpriced_models"]:
+                    row["unpriced_models"].append(display_model)
+            row["turns"] += 1
+            row["input_tokens"] += inp
+            row["output_tokens"] += out
+            row["cache_read_tokens"] += cache_r
+            if display_model not in row["models"]:
+                row["models"].append(display_model)
+
     total = round(sum(row["usd"] for row in by_agent.values()), 2)
     for row in by_agent.values():
         row["usd"] = round(row["usd"], 4)
@@ -348,6 +756,8 @@ def job_costs(job):
 def sync(job):
     d = job_dir(job["id"])
     job["base"] = base_of(job)
+    if job["stage"] == "approve" and not job["pr"]:
+        refresh_pr(job, discover=True)
     intake = d / "intake.md"
     if intake.exists():
         h = header(intake)
@@ -362,13 +772,23 @@ def sync(job):
         rd = round_dir(job)
         gate = header(rd / "checks.md").get("GATE") if (rd / "checks.md").exists() else None
         job["gate"] = gate
-        if job["agents"] and job["stage"] in {"review", "approve", "merging", "merged", "needs-human"}:
+        if job["agents"] and job["stage"] in {"review", "approve", "merging", "merged", "needs-human", "dev-agents"}:
             job["reviews"] = {}
             for r in reviewers(job):
                 line = first_line(rd / f"review-{r}.md")
                 m = re.fullmatch(r"VERDICT:\s*(PASS|CHANGES)", line or "")
                 job["reviews"][r] = m.group(1) if m else ("pending" if line is None else "invalid")
     job["cost_usd"], job["cost_by_agent"] = job_costs(job)
+    job["cost_pricing_complete"] = all(
+        row.get("pricing_complete", True) for row in job["cost_by_agent"].values()
+    )
+    job["unpriced_tokens"] = sum(
+        row.get("unpriced_tokens", 0) for row in job["cost_by_agent"].values()
+    )
+    job["unpriced_models"] = sorted({
+        model for row in job["cost_by_agent"].values()
+        for model in row.get("unpriced_models", [])
+    })
     return job
 
 
@@ -393,9 +813,56 @@ def pr_state(job):
     return gh_json("pr", "view", str(job["pr"]), "--json", "state")["state"]
 
 
-def refresh_pr(job):
+def merged_into_base(job, pr_cache=None, merged_cache=None):
+    """True once the job's merged PR is included in the configured base branch."""
+    if pr_cache is None:
+        pr_cache = {}
+    if merged_cache is None:
+        merged_cache = {}
+    return _merged_chain_into_base(job, set(), pr_cache, merged_cache)
+
+
+def _merged_chain_into_base(job, seen, pr_cache, merged_cache):
+    job_id = job["id"]
+    if job_id in merged_cache:
+        return merged_cache[job_id]
+    if job_id in seen or not job.get("pr"):
+        return False
+    seen.add(job_id)
+    pr_num = job["pr"]
+    if pr_num not in pr_cache:
+        pr_cache[pr_num] = gh_json("pr", "view", str(pr_num), "--json", "state,baseRefName")
+    pr = pr_cache[pr_num]
+    if pr["state"] != "MERGED":
+        result = False
+    elif pr["baseRefName"] == BASE:
+        result = True
+    else:
+        parent_id = job.get("stacked_on")
+        if not parent_id:
+            result = False
+        else:
+            parent_path = job_dir(parent_id) / "job.json"
+            if not parent_path.exists():
+                result = False
+            else:
+                parent = json.loads(parent_path.read_text())
+                result = pr["baseRefName"] == parent["branch"] and _merged_chain_into_base(
+                    parent, seen, pr_cache, merged_cache
+                )
+    merged_cache[job_id] = result
+    return result
+def refresh_pr(job, discover=False):
     """Point the job at its branch's open PR when the recorded one was merged or
     closed while the job kept working (someone merged an earlier round)."""
+    if not job["pr"]:
+        if discover:
+            prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
+            require(len(prs) <= 1,
+                    f"expected at most one open PR from {job['branch']}, found {len(prs)}")
+            if prs:
+                job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
+        return
     if job["pr"] and pr_state(job) != "OPEN":
         prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
         if len(prs) == 1:
@@ -417,11 +884,11 @@ def next_round(job):
     job["reviews"] = {}
 
 
-def advance(job, stage):
+def advance(job, stage, pr_cache=None, merged_cache=None):
     old = job["stage"]
     require(stage in TRANSITIONS.get(old, set()), f"{job['id']}: {old} → {stage} is not a legal transition")
     if stage != "merged" and old not in TERMINAL:
-        refresh_pr(job)
+        refresh_pr(job, discover=old == "approve")
     d = job_dir(job["id"])
     decision = header(d / "intake.md").get("DECISION") if (d / "intake.md").exists() else None
     intake_body = lambda: "\n".join((d / "intake.md").read_text().split("\n\n", 1)[1:]).strip()
@@ -431,7 +898,7 @@ def advance(job, stage):
         reason = (d / "rejection.md").read_text().split("\n", 1)[1].strip()
         comment("issue", job["issue"], f"### Factory: rejected\n\n{reason}")
         waiting = LABELS["needs_info"] if old == "needs-info" else LABELS["needs_human"]
-        label("issue", job["issue"], remove=f"{LABELS['queue']},{waiting}")
+        label("issue", job["issue"], remove=f"{QUEUE_LABEL},{waiting}")
         if job["pr"]:
             gh("pr", "close", str(job["pr"]))
             run(["git", "push", "origin", "--delete", job["branch"]], check=False)
@@ -448,7 +915,7 @@ def advance(job, stage):
         if stage == "needs-info":
             label("issue", job["issue"], add=LABELS["needs_info"])
         elif stage == "rejected":
-            label("issue", job["issue"], remove=LABELS["queue"])
+            label("issue", job["issue"], remove=QUEUE_LABEL)
         else:
             base = base_of(job)
             run(["git", "fetch", "origin", base])
@@ -482,8 +949,9 @@ def advance(job, stage):
         require(head == remote, f"{job['branch']} isn't pushed: local {head[:7]}, origin {remote[:7] or 'missing'}")
         if not job["pr"]:
             prs = gh_json("pr", "list", "--head", job["branch"], "--state", "open", "--json", "number,url")
-            require(len(prs) == 1, f"expected one open PR from {job['branch']}, found {len(prs)}")
-            job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
+            require(len(prs) <= 1, f"expected at most one open PR from {job['branch']}, found {len(prs)}")
+            if prs:
+                job["pr"], job["pr_url"] = prs[0]["number"], prs[0]["url"]
 
     elif old == "build":  # → needs-human
         status = first_line(d / "build.md")
@@ -532,13 +1000,29 @@ def advance(job, stage):
         want = ("APPROVE",) if stage == "merging" else ("APPROVE", "ESCALATE")
         line = first_line(d / "decision.md")
         require(line in want, f"decision.md starts with {line!r}, not {' or '.join(want)}")
+        require(job["pr"] and pr_state(job) == "OPEN", "create an open PR before approving")
 
     elif old == "merging" and stage == "merged":
         require(pr_state(job) == "MERGED", f"PR #{job['pr']} isn't merged")
 
+    elif old == "dev-agents":
+        require(job["pr"] and merged_into_base(job, pr_cache=pr_cache, merged_cache=merged_cache),
+                f"PR #{job['pr']} isn't merged into {BASE}")
+
     elif old == "needs-human":
         if stage == "merged":
             require(job["pr"] and pr_state(job) == "MERGED", "the PR isn't merged")
+        elif stage == "dev-agents":
+            require(job["pr"], "the job needs an open PR to hand to the dev agents")
+            pr = gh_json("pr", "view", str(job["pr"]), "--json", "state,baseRefName")
+            require(pr["state"] == "OPEN", "the job needs an open PR to hand to the dev agents")
+            require(pr["baseRefName"] == BASE,
+                    f"PR #{job['pr']} must target {BASE} before it can be handed to the dev agents; "
+                    "wait until its parent merges and GitHub retargets the PR")
+            label("pr", job["pr"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
+            comment("pr", job["pr"], "### Factory: handed to the dev agents\n\n"
+                    f"A person approved this PR. The factory labels are removed, and the job is done once "
+                    f"the PR is merged into `{BASE}`.")
         else:
             feedback = sorted(d.glob("feedback-*.md"))
             require(feedback and feedback[-1].stat().st_mtime > (d / "decision.md").stat().st_mtime,
@@ -547,7 +1031,9 @@ def advance(job, stage):
             next_round(job)
             label("issue", job["issue"], remove=LABELS["needs_human"])
             if job["pr"]:
-                label("pr", job["pr"], remove=LABELS["needs_human"])
+                # Keep the PR blocked from automatic merging until the new
+                # build, gate, reviews and approver complete.
+                label("pr", job["pr"], add=LABELS["needs_human"])
 
     if stage == "needs-human":
         body = f"### Factory: needs a human\n\n{(d / 'decision.md').read_text().split(chr(10), 1)[1].strip()}"
@@ -566,7 +1052,7 @@ def advance(job, stage):
         run(["git", "branch", "-D", job["branch"]], check=False)
 
     job["stage"] = stage
-    job["ended"] = now() if stage in TERMINAL | WAITING else None
+    job["ended"] = now() if stage in TERMINAL | WAITING | HANDED_OFF else None
     return job
 
 
@@ -578,59 +1064,127 @@ def slugify(title):
     return "-".join(words) or "issue"
 
 
+@contextmanager
+def job_creation_lock():
+    """Serialize job allocation across every checkout sharing these Git refs."""
+    common_git = run(["git", "rev-parse", "--git-common-dir"]).stdout.strip()
+    common_git_path = Path(common_git)
+    if not common_git_path.is_absolute():
+        common_git_path = REPO / common_git_path
+    lock_path = common_git_path.resolve() / "factory-job-create.lock"
+    with lock_path.open("w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
+
+
+def other_worktree_jobs():
+    """Jobs owned by other registered worktrees that share this repository's Git refs."""
+    worktrees = run(["git", "worktree", "list", "--porcelain"], check=False).stdout.splitlines()
+    job_dirs = []
+    for line in worktrees:
+        if line.startswith("worktree "):
+            worktree_jobs = Path(line.removeprefix("worktree ")) / "factory" / "jobs"
+            if worktree_jobs != JOBS:
+                job_dirs.append(worktree_jobs)
+    by_issue = {}
+    for jobs_dir in job_dirs:
+        if not jobs_dir.exists():
+            continue
+        for p in sorted(jobs_dir.iterdir()):
+            jf = p / "job.json"
+            if jf.exists():
+                try:
+                    data = json.loads(jf.read_text())
+                    by_issue[data["issue"]] = data
+                except (OSError, ValueError, KeyError):
+                    continue
+    return by_issue
+
+
+def next_job_number():
+    """Highest existing job number across registered worktrees and factory branches, plus 1."""
+    numbers = [int(p.name.split("-", 1)[0]) for p in JOBS.iterdir()
+               if p.name.split("-", 1)[0].isdigit()] if JOBS.exists() else []
+    for data in other_worktree_jobs().values():
+        prefix = data["id"].split("-", 1)[0]
+        if prefix.isdigit():
+            numbers.append(int(prefix))
+    refs = run(["git", "for-each-ref", "--format=%(refname:short)",
+                "refs/heads/factory/", "refs/remotes/origin/factory/"], check=False).stdout.splitlines()
+    for ref in refs:
+        slug = ref.rsplit("factory/", 1)[-1]
+        prefix = slug.split("-", 1)[0]
+        if prefix.isdigit():
+            numbers.append(int(prefix))
+    return max(numbers, default=0) + 1
+
+
 def cmd_create(number, on=None):
-    existing = [j for j in all_jobs() if j["issue"] == int(number)]
-    if existing:
-        die(f"issue #{number} already has job {existing[0]['id']} ({existing[0]['stage']})")
-    try:
-        require_slot(None)
-    except Refused as e:
-        die(str(e))
-    parent = None
-    if on:
-        parent = resolve(on)
-        if parent["stage"] in TERMINAL:
-            die(f"can't stack on {parent['id']}: it is {parent['stage']}")
-    issue = fetch_issue(number)
-    if issue["state"] != "OPEN":
-        die(f"issue #{number} is {issue['state'].lower()}")
-    if LABELS["queue"] not in {l["name"] for l in issue["labels"]}:
-        die(f"issue #{number} isn't labeled {LABELS['queue']}")
-    JOBS.mkdir(parents=True, exist_ok=True)
-    numbers = [int(p.name.split("-")[0]) for p in JOBS.iterdir() if p.name[:3].isdigit()]
-    job_id = f"{max(numbers, default=0) + 1:03d}-{slugify(issue['title'])}"
-    job_dir(job_id).mkdir()
-    job = {
-        "id": job_id, "issue": issue["number"], "title": issue["title"], "issue_url": issue["url"],
-        "pr": None, "pr_url": None,
-        "branch": f"factory/{job_id}",
-        "worktree": str(REPO / ".worktrees" / job_id),
-        "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
-        "intake": None, "agents": None, "gate": None, "reviews": {},
-        "cost_usd": 0.0, "cost_by_agent": {}, "started": now(), "ended": None,
-        "stacked_on": parent["id"] if parent else None, "base": parent["branch"] if parent else BASE,
-    }
-    write_issue_md(job)
-    save(job)
-    print(job_id)
+    with job_creation_lock():
+        existing = [j for j in all_jobs() if j["issue"] == int(number)]
+        if existing:
+            die(f"issue #{number} already has job {existing[0]['id']} ({existing[0]['stage']})")
+        other = other_worktree_jobs().get(int(number))
+        if other:
+            die(f"issue #{number} already has job {other['id']} ({other['stage']}) in another worktree")
+        try:
+            require_slot(None)
+        except Refused as e:
+            die(str(e))
+        parent = None
+        if on:
+            parent = resolve(on)
+            if parent["stage"] in TERMINAL:
+                die(f"can't stack on {parent['id']}: it is {parent['stage']}")
+        issue = fetch_issue(number)
+        if issue["state"] != "OPEN":
+            die(f"issue #{number} is {issue['state'].lower()}")
+        if QUEUE_LABEL not in {l["name"] for l in issue["labels"]}:
+            die(f"issue #{number} isn't labeled {QUEUE_LABEL}")
+        JOBS.mkdir(parents=True, exist_ok=True)
+        job_id = f"{next_job_number():03d}-{slugify(issue['title'])}"
+        job_dir(job_id).mkdir()
+        job = {
+            "id": job_id, "issue": issue["number"], "title": issue["title"], "issue_url": issue["url"],
+            "pr": None, "pr_url": None,
+            "branch": f"factory/{job_id}",
+            "worktree": str(REPO / ".worktrees" / job_id),
+            "stage": "intake", "round": 0, "round_limit": CONFIG["max_rounds"],
+            "intake": None, "agents": None, "gate": None, "reviews": {},
+            "cost_usd": 0.0, "cost_by_agent": {}, "cost_pricing_complete": True,
+            "unpriced_tokens": 0, "unpriced_models": [], "started": now(), "ended": None,
+            "stacked_on": parent["id"] if parent else None, "base": parent["branch"] if parent else BASE,
+        }
+        write_issue_md(job)
+        save(job)
+        print(job_id)
 
 
 def cmd_queue():
     """Rows in the order to start them. `resume` and `new` rows fit in the
     concurrency slots; the rest show as `hold` until a running job finishes."""
     jobs = {j["issue"]: j for j in all_jobs()}
+    other_jobs = other_worktree_jobs()
     # A needs-human job is done once its PR is merged on GitHub, which also closes the issue.
+    # A dev-agents job is done once its PR is merged into the base branch.
+    pr_cache = {}
+    merged_cache = {}
     for j in jobs.values():
         if j["stage"] == "needs-human" and j["pr"] and pr_state(j) == "MERGED":
             save(advance(sync(j), "merged"))
-    issues = gh_json("issue", "list", "--label", LABELS["queue"], "--state", "open",
+        elif j["stage"] == "dev-agents" and j["pr"] and merged_into_base(j, pr_cache=pr_cache, merged_cache=merged_cache):
+            save(advance(sync(j), "merged", pr_cache=pr_cache, merged_cache=merged_cache))
+    issues = gh_json("issue", "list", "--label", QUEUE_LABEL, "--state", "open",
                      "--limit", "200", "--json", "number,title")
     open_numbers = {i["number"] for i in issues}
     running_rows, replied_rows, new_rows, other_rows = [], [], [], []
     for issue in sorted(issues, key=lambda i: i["number"]):
         n = issue["number"]
         j = jobs.get(n)
-        if not j:
+        if not j and n in other_jobs:
+            oj = other_jobs[n]
+            other_rows.append(("skip", n, oj["id"], oj["stage"], "owned by another worktree"))
+        elif not j:
             new_rows.append(("new", n, "-", "-", issue["title"]))
         elif j["stage"] == "needs-info":
             if replied_since_question(fetch_issue(n)):
@@ -640,6 +1194,8 @@ def cmd_queue():
         elif j["stage"] == "needs-human":
             other_rows.append(("wait", n, j["id"], j["stage"], f"merge PR #{j['pr']}, or give feedback"
                                if j["pr"] else "give feedback"))
+        elif j["stage"] == "dev-agents":
+            other_rows.append(("wait", n, j["id"], j["stage"], f"dev agents: PR #{j['pr']} waiting to merge into {BASE}"))
         elif j["stage"] == "rejected":
             other_rows.append(("skip", n, j["id"], j["stage"], f"rejected; delete factory/jobs/{j['id']} to retry"))
         elif j["stage"] == "merged":
@@ -647,8 +1203,12 @@ def cmd_queue():
         else:
             running_rows.append(("resume", n, j["id"], j["stage"], f"round {j['round']}"))
     for n, j in sorted(jobs.items()):
-        if n not in open_numbers and j["stage"] not in TERMINAL | WAITING:
-            other_rows.append(("skip", n, j["id"], j["stage"], f"issue is closed or no longer labeled {LABELS['queue']}"))
+        if n in open_numbers or j["stage"] in TERMINAL | WAITING:
+            continue
+        if j["stage"] in HANDED_OFF:
+            other_rows.append(("wait", n, j["id"], j["stage"], f"dev agents: PR #{j['pr']} waiting to merge into {BASE}"))
+        else:
+            other_rows.append(("skip", n, j["id"], j["stage"], f"issue is closed or no longer labeled {QUEUE_LABEL}"))
     # Jobs already in a running stage hold a slot whether or not an agent is on them.
     slots = CONCURRENCY - len(running(jobs.values()))
     rows = list(running_rows)
@@ -712,6 +1272,14 @@ def cmd_feedback(job, text):
     print(f"{job['id']}: feedback-{k}.md, round {job['round']}")
 
 
+def cmd_approve(job):
+    if job["stage"] != "needs-human":
+        die(f"{job['id']} is in {job['stage']}, not needs-human")
+    save(advance(sync(job), "dev-agents"))
+    label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
+    print(f"{job['id']}: dev-agents (PR #{job['pr']}); done when it merges into {BASE}")
+
+
 def cmd_reject(job, text):
     if job["stage"] not in WAITING:
         die(f"{job['id']} is in {job['stage']}, not needs-info or needs-human")
@@ -742,11 +1310,15 @@ def cmd_summary(args):
     for j in jobs:
         sync(j)  # for display only; the orchestrator owns the saved state
         rows.append((j["id"], f"#{j['issue']}", j["stage"], str(j["round"]),
-                     f"#{j['pr']}" if j["pr"] else "-", f"${j['cost_usd']:.2f}", elapsed(j)))
+                     f"#{j['pr']}" if j["pr"] else "-",
+                     cost_label(j["cost_usd"], j.get("cost_pricing_complete", True)), elapsed(j)))
     widths = [max(len(r[i]) for r in rows) for i in range(len(rows[0]))]
     for r in rows:
         print("  ".join(c.ljust(w) for c, w in zip(r, widths)).rstrip())
-    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent, factory agents only)")
+    complete = all(j.get("cost_pricing_complete", True) for j in jobs)
+    print(f"total {cost_label(sum(j['cost_usd'] for j in jobs), complete)} "
+          "(API-equivalent, factory agents only)"
+          + ("; partial because some model usage has no price" if not complete else ""))
 
 
 def short_model(model):
@@ -760,18 +1332,20 @@ def tokens(n):
 def cmd_costs(args):
     """Cost per agent for each job, then per agent and model across the jobs."""
     jobs = [resolve(a) for a in args] if args else all_jobs()
-    header = ("agent", "models", "spawns", "turns", "input", "output", "cache read", "tokens", "cost")
+    header = ("agent", "models", "spawns", "turns", "input", "cache write", "output", "cache read", "tokens", "cost")
     totals = {}
     for j in jobs:
         sync(j)  # for display only; the orchestrator owns the saved state
-        print(f"{j['id']}  round {j['round']}  {j['stage']}  ${j['cost_usd']:.2f}")
+        print(f"{j['id']}  round {j['round']}  {j['stage']}  "
+              f"{cost_label(j['cost_usd'], j.get('cost_pricing_complete', True))}")
         rows = [header]
         for agent, r in j["cost_by_agent"].items():
             turns = r.get("turns", 0)
-            all_tokens = r["input_tokens"] + r["output_tokens"] + r["cache_read_tokens"]
+            all_tokens = r["input_tokens"] + r.get("cache_write_tokens", 0) + r["output_tokens"] + r["cache_read_tokens"]
             rows.append((agent, ", ".join(short_model(m) for m in r["models"]) or "-", str(r["spawns"]),
-                         str(turns), tokens(r["input_tokens"]), tokens(r["output_tokens"]),
-                         tokens(r["cache_read_tokens"]), tokens(all_tokens), f"${r['usd']:.2f}"))
+                         str(turns), tokens(r["input_tokens"]), tokens(r.get("cache_write_tokens", 0)), tokens(r["output_tokens"]),
+                         tokens(r["cache_read_tokens"]), tokens(all_tokens),
+                         cost_label(r["usd"], r.get("pricing_complete", True))))
             key = (agent, ", ".join(short_model(m) for m in r["models"]) or "-")
             t = totals.setdefault(key, {"usd": 0.0, "spawns": 0, "jobs": 0, "turns": 0,
                                         "output": 0, "tokens": 0})
@@ -781,6 +1355,12 @@ def cmd_costs(args):
             t["turns"] += turns
             t["output"] += r["output_tokens"]
             t["tokens"] += all_tokens
+            t["unpriced_tokens"] = t.get("unpriced_tokens", 0) + r.get("unpriced_tokens", 0)
+            t["pricing_complete"] = t.get("pricing_complete", True) and r.get("pricing_complete", True)
+            t["unpriced_models"] = sorted(set(t.get("unpriced_models", [])) | set(r.get("unpriced_models", [])))
+            if not r.get("pricing_complete", True):
+                print(f"  Partial estimate: {tokens(r.get('unpriced_tokens', 0))} unpriced tokens "
+                      f"({', '.join(r.get('unpriced_models', [])) or 'unknown model'}).")
         print_table(rows, indent="  ")
         print()
     rows = [("agent", "models", "jobs", "spawns", "turns/job", "output/job", "tokens/job",
@@ -789,12 +1369,20 @@ def cmd_costs(args):
         n = t["jobs"]
         rows.append((agent, models, str(n), str(t["spawns"]), f"{t['turns'] / n:.0f}",
                      tokens(t["output"] / n), tokens(t["tokens"] / n), tokens(t["tokens"]),
-                     f"${t['usd']:.2f}", f"${t['usd'] / n:.2f}"))
+                     cost_label(t["usd"], t.get("pricing_complete", True)),
+                     cost_label(t["usd"] / n, t.get("pricing_complete", True))))
     print(f"all {len(jobs)} jobs")
     print_table(rows, indent="  ")
     all_tokens = sum(t["tokens"] for t in totals.values())
-    print(f"total ${sum(j['cost_usd'] for j in jobs):.2f} (API-equivalent), {tokens(all_tokens)} tokens, "
-          f"{sum(t['turns'] for t in totals.values())} turns (factory agents only)")
+    complete = all(j.get("cost_pricing_complete", True) for j in jobs)
+    print(f"total {cost_label(sum(j['cost_usd'] for j in jobs), complete)} (API-equivalent), "
+          f"{tokens(all_tokens)} tokens, {sum(t['turns'] for t in totals.values())} turns "
+          "(factory agents only)"
+          + ("; partial because some model usage has no price" if not complete else ""))
+
+
+def cost_label(value, complete=True):
+    return f"${value:.2f}" + ("" if complete else "+")
 
 
 def print_table(rows, indent=""):
@@ -818,11 +1406,15 @@ def main(argv):
         elif cmd == "advance" and len(args) == 2:
             job = advance(sync(resolve(args[0])), args[1])
             save(sync(job))
+            if args[1] == "dev-agents":
+                label("issue", job["issue"], remove=f"{QUEUE_LABEL},{LABELS['needs_human']}")
             print(f"{job['id']}: {job['stage']} (round {job['round']})")
         elif cmd == "merge" and len(args) == 1:
             cmd_merge(resolve(args[0]))
         elif cmd == "feedback" and len(args) == 1:
             cmd_feedback(resolve(args[0]), sys.stdin.read())
+        elif cmd == "approve" and len(args) == 1:
+            cmd_approve(resolve(args[0]))
         elif cmd == "reject" and len(args) == 1:
             cmd_reject(resolve(args[0]), sys.stdin.read())
         elif cmd == "agents" and len(args) == 2:
