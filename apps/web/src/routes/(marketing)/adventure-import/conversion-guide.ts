@@ -1,5 +1,25 @@
+import {
+  ADVENTURE_JSON_REFERENCES,
+  ENTITY_COLLECTIONS,
+} from "@codex/adventure-engine";
 import { CANONICAL_ORIGIN } from "./canonical-origin.js";
 import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
+
+export const REFERENCE_ROWS = ADVENTURE_JSON_REFERENCES.map((field) => ({
+  path: field.path,
+  target:
+    field.target === "any" ? "Any entity" : field.allowedTargets.join(", "),
+  cardinality: field.cardinality,
+  meaning: field.meaning,
+}));
+
+export const REFERENCE_RULES = [
+  `Any entity means an ID in ${ENTITY_COLLECTIONS.join(", ")}. The package ID is excluded.`,
+  "Omit optional links when unsupported. Each item in a repeated field requires a target ID. No link can point to its own record.",
+  "alternativeSourceId identifies an alternate source for a clue. leadTargetId is a navigable link; reveals is the proposition the clue supports. For example, leadTargetId can point to the harbour office while reveals says the ledger was altered. If a witness can also supply the clue, alternativeSourceId can identify that witness.",
+  "Use summary for concise orientation, description for fuller detail, and scene body for extended scene text. These conventions do not change validation or whole-record visibility.",
+  "Use ambiguous for unclear or contradictory source material and unresolved when the source does not answer the question. unresolved.code is an open string. Examples include contradiction, unrepresentable-mechanic, unrepresentable-map, unreadable-pages, and scene-order-unknown. Keep UNKNOWN_SCENE_PROGRESSION for the recognized scene reachability exception.",
+] as const;
 
 /**
  * A trimmed, schema-valid answer shown inside the prompt so a model can
@@ -177,7 +197,9 @@ Strict output rules:
    - v1 has no field-level or "revealed later" visibility. A fact players only learn in play (where someone is, what a trigger does, a countdown, how an obstacle can be passed) goes in a "gm-only" secret, clue, scene or encounter, and the GM reveals it during play. Never put such facts in a "player-visible" summary, "conditions" or "alternativeSolutions".
    - Do not over-hide. Keep on the visible record whatever players can learn in play (a stated role, public detail, or harmless goal). Do NOT promote NPC testimony, rumours, or handouts to objective truth unless confirmed by the authored text.
 6. Structural integrity:
-   - Every entity ID across all collections must be unique and non-empty. All cross-references (parentLocationId, locationId, factionId, sceneId, targetSceneId, actorIds, placedLocationId, placedActorId, placedSceneId, leadTargetId, relatedEntityIds, relatedEntityId) must point to existing IDs and never self-reference. Location parentLocationId chains must not form cycles.
+   - Every entity ID across all collections must be unique and non-empty. Location parentLocationId chains must not form cycles.
+${REFERENCE_ROWS.map((row) => `   - ${row.path} → ${row.target} (${row.cardinality}). ${row.meaning}`).join("\n")}
+${REFERENCE_RULES.map((rule) => `   - ${rule}`).join("\n")}
    - A non-entry scene (scenes[1..]) is reachable when a breadth-first walk that starts at scenes[0] and follows only branches[].targetSceneId reaches it. A branch from an unreachable scene does not make its target reachable. Make every scene with source-supported progression reachable, with no inescapable mandatory dead-end loops.
    - If the source has no authored order (a sandbox or location-based module), list scenes in source order. An authored scene keeps the "epistemicStatus" its source supports ("explicit" for stated scenes), even when the order of play is left to the players. Add only the branches the source states. For each unreachable non-entry scene, add one "unresolved" entry with "code": "UNKNOWN_SCENE_PROGRESSION" and "relatedEntityId" set to that scene's id. Never mark a scene "ambiguous" only to pass the reachability check. Do not invent a flow or an ending.
    - Four kinds of link: authored scene transitions go in "branches"; geographic or room adjacency goes in "locations[].connections", not "branches"; transitions found during play are not part of the package; links the source does not support are never added.

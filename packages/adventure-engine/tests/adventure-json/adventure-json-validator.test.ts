@@ -2,6 +2,9 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  ADVENTURE_JSON_REFERENCES,
+  AdventureJsonV1Schema,
+  ENTITY_COLLECTIONS,
   validateAdventureJson,
   type AdventureJsonV1,
 } from "../../src/adventure-json";
@@ -28,6 +31,114 @@ function loadReferenceFixture(): AdventureJsonV1 {
     readFileSync(REFERENCE_FIXTURE_PATH, "utf8"),
   ) as AdventureJsonV1;
 }
+
+function referenceFixture() {
+  const fixture = loadReferenceFixture();
+  fixture.factions.push({
+    id: "test-faction",
+    name: "Test faction",
+    summary: "",
+    epistemicStatus: "explicit",
+    visibility: "gm-only",
+  });
+  fixture.rumours.push({
+    id: "test-rumour",
+    text: "An unverified report.",
+    truth: "unverified",
+    epistemicStatus: "explicit",
+    visibility: "gm-only",
+  });
+  fixture.clues.push({ ...fixture.clues[0]!, id: "another-clue" });
+  fixture.rumours.push({ ...fixture.rumours[0]!, id: "another-rumour" });
+  for (const id of ["test-unresolved", "another-unresolved"]) {
+    fixture.unresolved.push({
+      id,
+      code: "example-code",
+      message: "The source omits this.",
+      epistemicStatus: "unresolved",
+    });
+  }
+  return fixture;
+}
+
+type ReferenceField = (typeof ADVENTURE_JSON_REFERENCES)[number];
+
+function setReference(
+  fixture: AdventureJsonV1,
+  field: ReferenceField,
+  targetId: string,
+) {
+  const ownerIndex = field.source === "locations" ? 1 : 0;
+  const owner = fixture[field.source][ownerIndex]!;
+  const properties = owner as unknown as Record<string, unknown>;
+  const [key, repeat, child] = field.segments;
+  const prefix = `${field.source}[${ownerIndex}].${key}`;
+  if (!repeat) {
+    properties[key] = targetId;
+    return prefix;
+  }
+  const items = properties[key];
+  const existing = Array.isArray(items) ? items : [];
+  const item = child
+    ? {
+        [child]: targetId,
+        description: "Test link",
+        ...(field.source === "scenes" ? { optional: true } : {}),
+      }
+    : targetId;
+  properties[key] = [...existing, item];
+  return `${prefix}[${existing.length}]${child ? `.${child}` : ""}`;
+}
+
+describe("Adventure JSON v1 reference contract", () => {
+  it("covers the checked fields and eleven entity collections", () => {
+    expect(
+      new Set(ADVENTURE_JSON_REFERENCES.map(({ path }) => path)).size,
+    ).toBe(21);
+    expect(ENTITY_COLLECTIONS).toHaveLength(11);
+  });
+
+  it.each(ADVENTURE_JSON_REFERENCES)("enforces $path", (field) => {
+    for (const collection of field.allowedTargets) {
+      const fixture = referenceFixture();
+      const ownerIndex = field.source === "locations" ? 1 : 0;
+      const owner = fixture[field.source][ownerIndex]!;
+      const target = fixture[collection].find(({ id }) => id !== owner.id)!;
+      setReference(fixture, field, target.id);
+      expect(AdventureJsonV1Schema.safeParse(fixture).success).toBe(true);
+      expect(validateAdventureJson(fixture).ok).toBe(true);
+    }
+
+    const fixture = referenceFixture();
+    const owner = fixture[field.source][field.source === "locations" ? 1 : 0]!;
+    const wrongCollection = ENTITY_COLLECTIONS.find(
+      (collection) =>
+        collection !== field.source &&
+        !field.allowedTargets.includes(collection),
+    );
+    const cases = [
+      [fixture.id, field.diagnostics.missingOrWrongTarget],
+      [owner.id, field.diagnostics.selfReference],
+      ...(wrongCollection
+        ? [
+            [
+              fixture[wrongCollection][0]!.id,
+              field.diagnostics.missingOrWrongTarget,
+            ],
+          ]
+        : []),
+    ];
+    for (const [id, code] of cases) {
+      const invalid = referenceFixture();
+      const path = setReference(invalid, field, id!);
+      expect(path.replaceAll(/\[\d+\]/g, "[index]")).toBe(field.diagnosticPath);
+      const result = validateAdventureJson(invalid);
+      expect(result.ok ? [] : result.errors).toContainEqual(
+        expect.objectContaining({ code, path, entityId: owner.id }),
+      );
+    }
+  });
+});
 
 describe("Adventure JSON v1 semantic validator", () => {
   it("validates the shipped CC0 reference one-shot fixture with zero errors", () => {

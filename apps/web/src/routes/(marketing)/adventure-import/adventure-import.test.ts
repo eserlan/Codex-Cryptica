@@ -7,6 +7,8 @@ import {
   within,
 } from "@testing-library/svelte";
 import {
+  ADVENTURE_JSON_REFERENCES,
+  ENTITY_COLLECTIONS,
   AdventureJsonV1Schema,
   validateAdventureJson,
 } from "@codex/adventure-engine";
@@ -25,6 +27,7 @@ import {
   CANONICAL_CONVERSION_PROMPT,
   CORRESPONDENCE_EXTENSION_DOC,
   FIDELITY_ROWS,
+  REFERENCE_RULES,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
   PROMPT_END_MARKER,
@@ -823,6 +826,54 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         screen.getAllByRole("button", { name: /Copy failed/i }),
       ).toHaveLength(2);
     });
+  });
+
+  it("shows the horizontal scroll hint before the reference table", () => {
+    render(Page);
+    const tableRegion = screen.getByRole("region", {
+      name: "Reference fields table",
+    });
+    expect(tableRegion.previousElementSibling?.textContent?.trim()).toBe(
+      "Scroll across to see the allowed targets, cardinality and meanings.",
+    );
+  });
+
+  it("renders every typed reference and matching prompt guidance", () => {
+    render(Page);
+    const section = screen.getByRole("region", {
+      name: "Adventure JSON reference fields",
+    });
+    const rows = within(within(section).getByRole("table"))
+      .getAllByRole("row")
+      .slice(1);
+    expect(rows).toHaveLength(ADVENTURE_JSON_REFERENCES.length);
+    for (const [index, field] of ADVENTURE_JSON_REFERENCES.entries()) {
+      const target =
+        field.target === "any" ? "Any entity" : field.allowedTargets.join(", ");
+      const row = within(rows[index]!);
+      expect(row.getByRole("rowheader").textContent).toBe(field.path);
+      expect(row.getAllByRole("cell").map((cell) => cell.textContent)).toEqual([
+        target,
+        field.cardinality,
+        field.meaning,
+      ]);
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(
+        `${field.path} → ${target} (${field.cardinality}). ${field.meaning}`,
+      );
+    }
+    for (const rule of REFERENCE_RULES) {
+      expect(within(section).getByText(rule)).toBeTruthy();
+      expect(CANONICAL_CONVERSION_PROMPT).toContain(rule);
+    }
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      ENTITY_COLLECTIONS.join(", "),
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toMatch(
+      /leadTargetId can point to the harbour office while reveals says the ledger was altered/,
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "unresolved.code is an open string",
+    );
   });
 
   it("includes the offline collection contract and whole-record visibility in the displayed and copied prompt", () => {
