@@ -25,10 +25,28 @@ import {
   FIDELITY_ROWS,
   COVERAGE_REPORT_PROMPT,
   LINK_HANDOFF_TEXT,
+  PROMPT_END_MARKER,
   PROMPT_EXAMPLE_OUTPUT,
+  PROMPT_TXT_URL,
 } from "./conversion-guide.js";
+import {
+  CANONICAL_ORIGIN,
+  isCanonicalProductionHost,
+} from "./canonical-origin.js";
+import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
 
 const copyMock = vi.fn<(...args: unknown[]) => Promise<boolean>>();
+const config = vi.hoisted(() => ({ isStaging: false }));
+
+vi.mock("#lib/config/index.js", async () => {
+  const actual = await vi.importActual<object>("#lib/config/index.js");
+  const mod = { ...actual };
+  Object.defineProperty(mod, "IS_STAGING", {
+    enumerable: true,
+    get: () => config.isStaging,
+  });
+  return mod;
+});
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -51,6 +69,100 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     vi.useRealTimers();
     document.head.innerHTML = "";
     copyMock.mockReset();
+    config.isStaging = false;
+  });
+
+  it("builds the prompt's absolute URLs from CANONICAL_ORIGIN", () => {
+    expect(CANONICAL_ORIGIN).toBe("https://codexcryptica.com");
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      `Schema: ${CANONICAL_ORIGIN}/schemas/adventure-json/v1.json`,
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      `Guide: ${CANONICAL_ORIGIN}/adventure-import`,
+    );
+    expect(CANONICAL_CONVERSION_PROMPT).toContain(
+      "Schema: https://codexcryptica.com/schemas/adventure-json/v1.json",
+    );
+    expect(CANONICAL_CONVERSION_PROMPT.endsWith(`\n${PROMPT_END_MARKER}`)).toBe(
+      true,
+    );
+    expect(AUTOMATIC_STAGING_RULES).toContain(
+      `${CANONICAL_ORIGIN}/adventure-import#long-adventures`,
+    );
+    expect(PROMPT_TXT_URL).toBe(
+      `${CANONICAL_ORIGIN}/adventure-import/prompt.txt`,
+    );
+  });
+
+  it("recognises only the canonical production host", () => {
+    expect(isCanonicalProductionHost("codexcryptica.com")).toBe(true);
+    expect(
+      isCanonicalProductionHost(
+        "factory-065-adventure-import.codex-cryptica.pages.dev",
+      ),
+    ).toBe(false);
+  });
+
+  it("shows the note on non-production hosts when IS_STAGING is false", async () => {
+    config.isStaging = false;
+    render(Page);
+    expect(
+      await screen.findByTestId("non-production-canonical-note"),
+    ).toBeTruthy();
+  });
+
+  it("shows the non-production note with local schema and prompt.txt links when IS_STAGING is true", async () => {
+    config.isStaging = true;
+    render(Page);
+    const note = await screen.findByTestId("non-production-canonical-note");
+    expect(note.textContent).toContain("production");
+    const hrefs = [...note.querySelectorAll("a")].map((a) =>
+      a.getAttribute("href"),
+    );
+    expect(hrefs).toContain("/schemas/adventure-json/v1.json");
+    expect(hrefs).toContain("/adventure-import/prompt.txt");
+  });
+
+  it("explains the fallback when the assistant cannot open the link", () => {
+    const { container } = render(Page);
+    const text = (container.textContent ?? "").replace(/\s+/g, " ");
+    expect(text).toContain(
+      "cannot open the link, or its reply shows the prompt did not end with the end marker, use Copy conversion prompt and paste the full prompt instead",
+    );
+  });
+
+  it("renders the prompt in a pre with id canonical-prompt", () => {
+    const { container } = render(Page);
+    expect(container.querySelector("pre#canonical-prompt")?.textContent).toBe(
+      CANONICAL_CONVERSION_PROMPT,
+    );
+  });
+
+  it("Copy conversion prompt copies exactly CANONICAL_CONVERSION_PROMPT", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+    await fireEvent.click(
+      screen.getAllByRole("button", { name: /Copy conversion prompt/i })[0]!,
+    );
+    expect(copyMock.mock.calls[0]?.[0]).toBe(CANONICAL_CONVERSION_PROMPT);
+  });
+
+  it("Copy guide link copies exactly LINK_HANDOFF_TEXT", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy guide link/i }),
+    );
+    expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
+  });
+
+  it("Copy coverage report prompt copies exactly COVERAGE_REPORT_PROMPT", async () => {
+    copyMock.mockResolvedValue(true);
+    render(Page);
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy coverage report prompt/i }),
+    );
+    expect(copyMock.mock.calls[0]?.[0]).toBe(COVERAGE_REPORT_PROMPT);
   });
 
   it("renders H1, AI assistant directive, canonical prompt, privacy notice, and schema links", () => {
@@ -622,7 +734,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
     expect(copyMock).toHaveBeenCalledTimes(1);
     expect(copyMock.mock.calls[0]?.[0]).toBe(LINK_HANDOFF_TEXT);
     expect(LINK_HANDOFF_TEXT).toContain(
-      "https://codexcryptica.com/adventure-import/prompt.txt",
+      `${CANONICAL_ORIGIN}/adventure-import/prompt.txt`,
     );
     expect(LINK_HANDOFF_TEXT).toContain("the prompt is incomplete");
     expect(LINK_HANDOFF_TEXT).toContain(
