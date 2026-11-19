@@ -557,12 +557,12 @@
         Common Validation Errors &amp; Troubleshooting
       </h2>
       <div class="space-y-3">
-        {#each TROUBLESHOOTING_ERRORS as err (err.code)}
+        {#each TROUBLESHOOTING_ERRORS as err (err.codes.join(" / "))}
           <div
             class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-5 space-y-1.5"
           >
             <h3 class="font-mono text-sm font-bold text-theme-text">
-              {err.code}
+              {err.codes.join(" / ")}
             </h3>
             <p class="text-sm text-theme-text/90">
               <strong>Cause:</strong>

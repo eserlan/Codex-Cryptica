@@ -4,6 +4,7 @@
     STAGED_ANCHOR,
     STAGED_ASSEMBLE_SCRIPT,
     STAGED_CHECK_SCRIPT,
+    STAGED_COVERAGE_INTRO,
     STAGED_COVERAGE_PROMPT,
     STAGED_FAILURE_MODES,
     STAGED_INVENTORY_PROMPT,
@@ -61,8 +62,7 @@
     {
       id: "coverage",
       title: "3. Check coverage against the inventory",
-      intro:
-        "Paste the manifest and every chunk JSON file. The check works from the real chunk files, never from completion deltas. This finds missing sections, ids that were referred to but never defined, and duplicate ids for the same character. For the exact check, run the check script below.",
+      intro: STAGED_COVERAGE_INTRO,
       text: STAGED_COVERAGE_PROMPT,
       button: "Copy coverage prompt",
       copier: createCopier(STAGED_COVERAGE_PROMPT),

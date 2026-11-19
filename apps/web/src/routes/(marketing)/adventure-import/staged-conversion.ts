@@ -83,9 +83,12 @@ Follow all rules in the complete conversion prompt. Convert only the manifest se
 
 ${STAGED_COMPLETION_DELTA_INSTRUCTIONS}`;
 
+export const STAGED_COVERAGE_INTRO =
+  "Paste the checkpoint manifest with every completion delta merged in, then every chunk JSON file. A completion delta (or a pass saying it is done) does not prove an entry was included: only the chunk JSON does. The check works from the real chunk files. This finds missing sections, ids that were referred to but never defined, and duplicate ids for the same character. For the exact check, run the check script below.";
+
 export const STAGED_COVERAGE_PROMPT = `Stage 3 of 3: check coverage. Do not convert anything new.
 
-Below are my checkpoint manifest and the JSON file for every chunk. Compare the manifest with the actual JSON in each chunk file. Do not rely on completion deltas or any record of what a pass says it did: they are not proof that an entry exists. For the exact, repeatable check, run the check script on this page: node check.js manifest.json chunk-01.json chunk-02.json (adding all your chunk files). Reply with:
+Below are my checkpoint manifest, with every completion delta merged in, and the JSON file for every chunk. Compare the manifest with the actual JSON in each chunk file. Do not rely on completion deltas or any record of what a pass says it did: they are not proof that an entry exists. For the exact, repeatable check, run the check script on this page: node check.js manifest.json chunk-01.json chunk-02.json (adding all your chunk files). Reply with:
 1. A table with one row per manifest section: "converted", "partly converted" (name missing owned ids) or "not converted". Mark a section converted only when every id in its "owns" appears in its chunk JSON and its per-collection counts match "expectedCounts".
 2. Every owned id missing from the chunk JSON, every id a chunk defines that its section does not own, and any collection count mismatch.
 3. Every id in "pending" that no chunk defines, and which section it is expected in.
