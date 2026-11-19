@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import type { IdGenerator } from "#lib/utils/runtime-deps.js";
 import type { PendingAdventureHandoff } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
 import type { AdventureSession, ScenarioItem } from "@codex/adventure-engine";
 import { AdventureStartDraft } from "./adventure-start-draft.svelte.js";
@@ -34,7 +35,7 @@ const pending: PendingAdventureHandoff = {
   },
 };
 
-function setup() {
+function setup(options: { idGenerator?: IdGenerator } = {}) {
   const draft = new AdventureStartDraft();
   draft.prefillRumour(pending);
   const manager = {
@@ -56,13 +57,20 @@ function setup() {
     draft,
     getVaultId: () => "vault-1",
     openGenerator,
+    ...options,
   });
   return { draft, manager, handoff, openGenerator, actions };
 }
 
 describe("adventure rumour actions", () => {
   it("adds a cloned scenario with fresh secret bindings before clearing the handoff", async () => {
-    const { actions, manager, handoff } = setup();
+    const idGenerator = {
+      uuid: vi
+        .fn()
+        .mockReturnValueOnce("truth-secret-id")
+        .mockReturnValueOnce("investigation-secret-id"),
+    };
+    const { actions, manager, handoff } = setup({ idGenerator });
     await actions.add();
     const item = manager.addScenario.mock.calls[0][0];
     expect(item).toMatchObject({
@@ -72,9 +80,12 @@ describe("adventure rumour actions", () => {
       revealedSecretIds: [],
     });
     expect(item).not.toBe(pending.scenario);
-    expect(item.secretBindings.truth).not.toBe(
-      item.secretBindings.ifInvestigated,
-    );
+    expect(item.secretBindings).toEqual({
+      truth: "truth-secret-id",
+      ifInvestigated: "investigation-secret-id",
+      eventIds: {},
+    });
+    expect(idGenerator.uuid).toHaveBeenCalledTimes(2);
     expect(handoff.clear).toHaveBeenCalledOnce();
     expect(actions.error).toBeNull();
   });

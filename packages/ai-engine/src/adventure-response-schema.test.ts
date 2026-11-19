@@ -101,6 +101,36 @@ describe("adventure structured response contract", () => {
     );
   });
 
+  it("offers optional bounded actorEvents", () => {
+    const complete = adventureTurnResponseSchema.oneOf[0];
+    expect(complete.properties.actorEvents.maxItems).toBe(8);
+    expect(complete.required).not.toContain("actorEvents");
+    const base = JSON.parse(completeResponse) as Record<string, unknown>;
+    const event = {
+      actorId: "actor-maren-holt",
+      status: "present",
+      disposition: "hostile",
+      fact: "Refused to talk.",
+      certainty: "confirmed",
+      note: "Maren turned hostile.",
+    };
+    const parse = (actorEvents: unknown) =>
+      parseAdventureResponse(JSON.stringify({ ...base, actorEvents }));
+    expect(parse([event])).toMatchObject({ actorEvents: [event] });
+    expect(() => parse(Array(9).fill(event))).toThrow(
+      "invalid-adventure-response",
+    );
+    expect(() => parse([{ ...event, id: "x" }])).toThrow(
+      "invalid-adventure-response",
+    );
+    expect(() => parse([{ ...event, disposition: "angry" }])).toThrow(
+      "invalid-adventure-response",
+    );
+    expect(() => parse([{ ...event, status: "unknown" }])).toThrow(
+      "invalid-adventure-response",
+    );
+  });
+
   it("accepts optional bounded sceneTransition/personRefs and rejects oversized arrays", () => {
     const base = JSON.parse(completeResponse) as Record<string, unknown>;
     expect(

@@ -3,6 +3,10 @@ import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svel
 import type { RumourAdventureHandoff } from "#lib/stores/oracle/rumour-adventure-handoff.svelte.js";
 import { describeScenarioMutationError } from "#lib/stores/oracle/adventure-scenarios.js";
 import type { AdventureStartDraft } from "./adventure-start-draft.svelte.js";
+import {
+  type IdGenerator,
+  systemIdGenerator,
+} from "#lib/utils/runtime-deps.js";
 
 interface RumourDependencies {
   manager: Pick<AdventureManager, "session" | "readOnly" | "end" | "close"> & {
@@ -12,14 +16,18 @@ interface RumourDependencies {
   draft: AdventureStartDraft;
   getVaultId: () => string;
   openGenerator: (generatorId: "rumour" | "adventure") => void;
+  idGenerator?: IdGenerator;
 }
 
 /** Resolve a prepared scenario's handoff to an existing or new adventure. */
 export class AdventureRumourActions {
   archiving = $state(false);
   error = $state<string | null>(null);
+  private readonly idGenerator: IdGenerator;
 
-  constructor(private readonly deps: RumourDependencies) {}
+  constructor(private readonly deps: RumourDependencies) {
+    this.idGenerator = deps.idGenerator ?? systemIdGenerator;
+  }
 
   archive = async (): Promise<void> => {
     if (this.archiving || this.deps.manager.readOnly) return;
@@ -47,8 +55,8 @@ export class AdventureRumourActions {
       anchorRefs: [],
       revealedSecretIds: [],
       secretBindings: {
-        truth: crypto.randomUUID(),
-        ifInvestigated: crypto.randomUUID(),
+        truth: this.idGenerator.uuid(),
+        ifInvestigated: this.idGenerator.uuid(),
         eventIds: {},
       },
     };

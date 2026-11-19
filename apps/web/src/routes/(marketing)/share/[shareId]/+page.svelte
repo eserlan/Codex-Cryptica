@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "#lib/components/seo/seo-markdown.css";
   import { onMount } from "svelte";
   import { basePath } from "#lib/utils/base-path.js";
   import SeoHead from "#lib/components/seo/SeoHead.svelte";
@@ -296,29 +297,3 @@
     </p>
   </article>
 </main>
-
-<style>
-  .seo-md :global(h2) {
-    margin: 1.5rem 0 0.75rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 40%, transparent);
-    padding-bottom: 0.25rem;
-    font-family: var(--font-header);
-    font-size: 1.25rem;
-    font-weight: 700;
-  }
-  .seo-md :global(h3) {
-    margin: 1rem 0 0.5rem;
-    font-family: var(--font-header);
-    font-size: 1.125rem;
-    font-weight: 700;
-    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
-  }
-  .seo-md :global(ul) {
-    margin-left: 1rem;
-    list-style: disc;
-  }
-  .seo-md :global(p) {
-    margin-bottom: 0.75rem;
-  }
-</style>

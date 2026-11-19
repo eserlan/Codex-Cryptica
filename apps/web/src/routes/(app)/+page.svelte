@@ -13,7 +13,12 @@
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
   import { focusEntity } from "#lib/stores/ui/navigation.js";
-  import { seoImportService } from "#lib/services/seo/import-handler.js";
+  import {
+    seoImportService,
+    type PendingImportResult,
+  } from "#lib/services/seo/import-handler.js";
+  import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
+  import PendingImportNotice from "#lib/components/PendingImportNotice.svelte";
   import WelcomeGraphPreview from "#lib/components/welcome/WelcomeGraphPreview.svelte";
   import {
     trackWelcomeFirstClick,
@@ -183,6 +188,42 @@
   );
   const isGuestMode = $derived(!!shareId);
 
+  let importFailed = $state(false);
+  let isRetryingImport = $state(false);
+
+  function handleImportResult(result: PendingImportResult) {
+    importFailed = result.status === "failed";
+    if (result.status === "imported") {
+      onboardingStore.dismissLandingPage();
+      onboardingStore.dismissWorldPage();
+      notificationStore.notify(
+        result.count > 1
+          ? `Added ${result.count} entries to ${result.vaultName}`
+          : `Added "${result.rootTitle}" to ${result.vaultName}`,
+        "success",
+      );
+    } else if (result.status === "invalid") {
+      notificationStore.notify(
+        "The generated draft couldn't be read, so nothing was added. Go back to the generator and try again.",
+        "error",
+      );
+    }
+  }
+
+  async function retryImport() {
+    isRetryingImport = true;
+    try {
+      handleImportResult(await seoImportService.checkAndHandlePendingImport());
+    } finally {
+      isRetryingImport = false;
+    }
+  }
+
+  function discardImport() {
+    seoImportService.discardPendingImport();
+    importFailed = false;
+  }
+
   onMount(() => {
     // Funnel: the welcome/marketing layer is the top of the onboarding funnel.
     if (!isGuestMode && onboardingStore.isLandingPageVisible) {
@@ -200,12 +241,9 @@
     }
 
     // Check for pending import from generator onboarding funnel
-    void seoImportService.checkAndHandlePendingImport().then((importedId) => {
-      if (importedId) {
-        onboardingStore.dismissLandingPage();
-        onboardingStore.dismissWorldPage();
-      }
-    });
+    void seoImportService
+      .checkAndHandlePendingImport()
+      .then(handleImportResult);
 
     // Eagerly prefetch the heavy components in the background a second after boot
     // to eliminate the 10-15s dev-mode lag when clicking an entity for the first time.
@@ -298,6 +336,18 @@
 </svelte:head>
 
 <svelte:window onkeydown={handleFrontPageOverlayKeydown} />
+
+{#snippet pendingImportNotice()}
+  {#if importFailed}
+    <PendingImportNotice
+      isRetrying={isRetryingImport}
+      onRetry={retryImport}
+      onDiscard={discardImport}
+    />
+  {/if}
+{/snippet}
+
+{@render pendingImportNotice()}
 
 <div
   class="flex h-full min-h-0 bg-chrome-bg text-chrome-text overflow-hidden relative"

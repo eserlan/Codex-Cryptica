@@ -119,6 +119,7 @@ function playerFacingStrings(
       hiddenPatch: _hidden,
       revealSecretIds: _reveals,
       packageEvents: _packageEvents,
+      actorEvents: _actorEvents,
       timeAdvance,
       ...visible
     } = proposal;
@@ -155,19 +156,32 @@ export function detectPackageLeakage(
     ([field]) =>
       !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
   );
+  const proposedActorText =
+    proposal.kind === "complete"
+      ? (proposal.actorEvents ?? []).flatMap((event) => [
+          event.note,
+          ...(event.fact ? [event.fact] : []),
+        ])
+      : [];
+  const storedProgress = session?.packageProgress;
   return [
     ...packageTextLeakage(fields, [
       ...(meta.packageGmOnlyText ?? []),
-      ...(session?.packageProgress?.events ?? []).map((event) => event.note),
-      // Proposed notes are private from the same response, before they reach
-      // the ledger; packageEvents themselves are not player-facing fields.
       ...(proposal.kind === "complete"
         ? (proposal.packageEvents ?? []).map((event) => event.note)
         : []),
+      ...proposedActorText,
+      ...(storedProgress?.events ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.note),
+      ...(storedProgress?.actorEvents ?? []).flatMap((event) =>
+        event.fact ? [event.fact] : [],
+      ),
+      ...(storedProgress?.actors ?? []).flatMap((actor) => actor.facts),
     ]),
     ...packageIdLeakage(fields, [
       ...(meta.packageRecordIds ?? []),
-      ...(session?.packageProgress?.events ?? []).map((event) => event.id),
+      ...(storedProgress?.events ?? []).map((event) => event.id),
+      ...(storedProgress?.actorEvents ?? []).map((event) => event.id),
     ]),
   ];
 }
@@ -184,9 +198,7 @@ function packageTextLeakage(
     if (!needle) continue;
     if (needle.length < 3) {
       shortSecrets.add(needle);
-      // One-digit notes match only an entire field; treating "7" as a
-      // boundary-matched secret would reject normal narration with numbers.
-      if (needle.length === 2 && /^\d+$/.test(needle))
+      if (needle.length >= 2 && /^\d+$/.test(needle))
         shortNumericSecrets.push(needle);
     } else longSecrets.push(needle);
   }

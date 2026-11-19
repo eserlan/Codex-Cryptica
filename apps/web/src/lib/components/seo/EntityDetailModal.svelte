@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "./seo-markdown.css";
   import { fade } from "svelte/transition";
   import type { SessionEntity } from "generator-engine";
   import {
@@ -169,41 +170,3 @@
     </div>
   </div>
 {/if}
-
-<style>
-  .seo-md :global(h2) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.25rem;
-    margin: 1.5rem 0 0.75rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 40%, transparent);
-    padding-bottom: 0.25rem;
-  }
-  .seo-md :global(h3) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
-  }
-  .seo-md :global(h4) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin: 0.85rem 0 0.35rem;
-    color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
-  }
-  .seo-md :global(ul) {
-    list-style: disc;
-    margin-left: 1rem;
-  }
-  .seo-md :global(p) {
-    margin-bottom: 0.75rem;
-  }
-  .seo-md :global(.seo-label) {
-    text-shadow: 0 0 10px
-      color-mix(in srgb, var(--color-primary) 70%, transparent);
-    filter: brightness(1.2);
-  }
-</style>

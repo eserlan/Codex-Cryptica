@@ -220,10 +220,12 @@ test.describe("SEO and Prerendering", () => {
 
       // 5. Click Save to Codex
       await page.click("#save-to-codex-btn");
-      await page.getByRole("link", { name: "Open Codex" }).click();
 
-      // 6. Verify redirection to workspace app root
-      await expect(page).toHaveURL(/\/$/);
+      // 6. Verify redirection to workspace app root, without any dialog
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
+      await expect(page.getByText(/Added/).first()).toBeVisible({
+        timeout: 15000,
+      });
 
       // 7. Verify the new vault is active and the entity is loaded/selected
       await expect(
@@ -296,8 +298,7 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.getByRole("link", { name: "Open Codex" }).click();
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
       ).toBeVisible({ timeout: 15000 });
@@ -391,8 +392,7 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.getByRole("link", { name: "Open Codex" }).click();
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
       ).toBeVisible({ timeout: 15000 });
@@ -436,8 +436,7 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.getByRole("link", { name: "Open Codex" }).click();
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedName!.trim(), level: 2 }),
       ).toBeVisible({ timeout: 15000 });
@@ -468,11 +467,108 @@ test.describe("SEO and Prerendering", () => {
       expect(generatedGodName).toBeTruthy();
 
       await page.click("#save-to-codex-btn");
-      await page.click("button:has-text('Open Codex')");
-      await expect(page).toHaveURL(/\/$/);
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
       await expect(
         page.getByRole("heading", { name: generatedGodName!.trim(), level: 2 }),
       ).toBeVisible({ timeout: 20000 });
+    });
+
+    test("Wave 1 continuation CTA gates on explicit generation and renders cleanly on mobile", async ({
+      page,
+    }) => {
+      // Star System on mobile viewport: hidden on seed draft, visible after explicit generate, no horizontal overflow
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto("/generators/star-system");
+      await expect(
+        page.getByRole("button", { name: "Save to Codex" }),
+      ).toBeVisible({ timeout: 15000 });
+      await expect(
+        page.getByTestId("generator-continuation-callout"),
+      ).toHaveCount(0);
+
+      const aiToggle = page.locator("#ai-toggle");
+      if (await aiToggle.isChecked()) await aiToggle.uncheck();
+      await page.click("#generate-button");
+
+      const callout = page.getByTestId("generator-continuation-callout");
+      await expect(callout).toBeVisible();
+      await expect(callout).toContainText("Keep this system connected");
+      await expect(callout).toContainText(
+        "No account needed; stored locally in this browser.",
+      );
+      await expect(page.locator("#save-to-codex-btn")).toHaveCount(1);
+      await expect(page.locator("#save-to-codex-btn")).toHaveText(
+        /Add to my Codex/,
+      );
+      await expect(page.locator("#copy-markdown-btn")).toBeVisible();
+
+      const hasHorizontalOverflow = await page.evaluate(
+        () => document.documentElement.scrollWidth > window.innerWidth,
+      );
+      expect(hasHorizontalOverflow).toBe(false);
+
+      // Keyboard navigation reaches #save-to-codex-btn and triggers it via Enter
+      await page.locator("#save-to-codex-btn").focus();
+      await page.keyboard.press("Enter");
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
+    });
+
+    test("Origin generator passes end-to-end continuation, telemetry, and vault import audit", async ({
+      page,
+    }) => {
+      test.setTimeout(60000);
+      await page.addInitScript(() => {
+        const events: Array<{ name: string; props: unknown }> = [];
+        (window as any).__capturedZarazEvents = events;
+        (window as any).zaraz = {
+          track: (name: string, props: unknown) => {
+            events.push({ name, props });
+          },
+        };
+      });
+
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto("/generators/origin-generator");
+      await expect(
+        page.getByRole("button", { name: "Save to Codex" }),
+      ).toBeVisible({ timeout: 15000 });
+      await expect(
+        page.getByTestId("generator-continuation-callout"),
+      ).toHaveCount(0);
+
+      const originAiToggle = page.locator("#ai-toggle");
+      if (await originAiToggle.isChecked()) await originAiToggle.uncheck();
+      await page.click("#generate-button");
+
+      const originCallout = page.getByTestId("generator-continuation-callout");
+      await expect(originCallout).toBeVisible();
+      await expect(originCallout).toContainText("Keep developing this origin");
+
+      const generatedTitle = page.locator("h2").first();
+      await expect(generatedTitle).not.toContainText("No Draft Generated");
+      const originName = (await generatedTitle.textContent())?.trim();
+      expect(originName).toBeTruthy();
+
+      await page.click("#save-to-codex-btn");
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
+
+      const trackedEvents = await page.evaluate(
+        () => (window as any).__capturedZarazEvents ?? [],
+      );
+      expect(trackedEvents).toContainEqual(
+        expect.objectContaining({
+          name: "public_generator_action_clicked",
+          props: expect.objectContaining({
+            action: "save_to_codex",
+            generator_type: "origin-generator",
+          }),
+        }),
+      );
+
+      await expect(page).toHaveURL(/\/$/, { timeout: 15000 });
+      await expect(
+        page.getByRole("heading", { name: originName!, level: 2 }),
+      ).toBeVisible({ timeout: 15000 });
     });
   });
 });
