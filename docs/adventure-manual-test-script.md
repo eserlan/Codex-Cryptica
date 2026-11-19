@@ -6,12 +6,7 @@ Step-by-step tester script for manually verifying Solo Adventure Mode (AI GM) an
 
 ## Pre-flight
 
-1. **Open the staging app** in a desktop browser (`>= 1280px` viewport) and prepare a **disposable Vault** with:
-   - Character: **Mara** (your PC)
-   - Location: **Brackwater Quay** (with both public description and GM-only `lore`)
-   - Character: **Harbourmaster Venn** (linked to Brackwater Quay)
-   - Location: **Old Bell Tower** (with GM-only `lore`)
-   - One future-dated entity (`startDate` in a future year) and one historical entity (`endDate` in the past)
+1. **Open the staging app** in a desktop browser (`>= 1280px` viewport), create a **disposable Vault**, and import `fixtures/adventures/qa-staging-campaign.cif.json` via **Import** (this seeds **Mara**, **Brackwater Quay** with GM-only `lore`, **Harbourmaster Venn** linked to Brackwater Quay, **Old Bell Tower** with GM-only `lore`, a future-dated entity `2125`, and a historical entity `1020` in one step).
 2. **Have ready**:
    - `fixtures/adventures/reference-one-shot/adventure.v1.json`
    - A second copy of that file edited with `"version": "1.1.0"` and a changed `"description"` (keep the same `"id"`).

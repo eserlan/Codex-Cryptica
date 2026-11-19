@@ -1,0 +1,97 @@
+{
+  "format": "codex-world-interchange",
+  "version": "1.0",
+  "source": {
+    "system": "codex-cryptica-qa",
+    "worldKey": "brackwater-qa-campaign"
+  },
+  "world": {
+    "title": "Brackwater QA Campaign",
+    "description": "Disposable campaign fixture for Solo Adventure Mode manual QA on staging."
+  },
+  "entities": [
+    {
+      "key": "characters/mara",
+      "kind": "character",
+      "title": "Mara",
+      "summary": "A river courier who knows the backwaters and ferries parcels between fogbound landings.",
+      "content": {
+        "format": "markdown",
+        "body": ""
+      }
+    },
+    {
+      "key": "locations/brackwater-quay",
+      "kind": "location",
+      "title": "Brackwater Quay",
+      "summary": "A timber river landing lined with tarred pilings, fishmonger stalls, and a stone customs house.",
+      "content": {
+        "format": "markdown",
+        "body": "GM-SECRET-QUAY: Smugglers move unmarked crates through the flooded culvert beneath Pier 4 at low tide."
+      }
+    },
+    {
+      "key": "characters/harbourmaster-venn",
+      "kind": "character",
+      "title": "Harbourmaster Venn",
+      "summary": "A meticulous dock official who logs every barge and collects quay tolls in a battered ledger.",
+      "content": {
+        "format": "markdown",
+        "body": "GM-SECRET-VENN: Venn is quietly blackmailed by the River Guild to look the other way on midnight landings."
+      }
+    },
+    {
+      "key": "locations/old-bell-tower",
+      "kind": "location",
+      "title": "Old Bell Tower",
+      "summary": "A moss-covered stone watchtower overlooking the bend above the town, its iron gate chained shut.",
+      "content": {
+        "format": "markdown",
+        "body": "GM-SECRET-TOWER: A waterproof brass tube with forged toll seals is hidden inside the cracked bronze bell."
+      }
+    },
+    {
+      "key": "events/charter-of-tides",
+      "kind": "event",
+      "title": "Charter of the High Tides",
+      "summary": "A future harbour compact scheduled to redraw toll rights along the estuary.",
+      "content": {
+        "format": "markdown",
+        "body": "GM-SECRET-FUTURE: The charter has not yet been signed and must not be referenced as past or present fact."
+      },
+      "dates": {
+        "start": {
+          "value": "2125",
+          "precision": "year"
+        }
+      }
+    },
+    {
+      "key": "events/great-silt-flood",
+      "kind": "event",
+      "title": "The Great Silt Flood",
+      "summary": "An old river surge that buried the lower stone wharves decades ago.",
+      "content": {
+        "format": "markdown",
+        "body": ""
+      },
+      "dates": {
+        "end": {
+          "value": "1020",
+          "precision": "year"
+        }
+      }
+    }
+  ],
+  "relationships": [
+    {
+      "key": "rel-venn-quay",
+      "from": "characters/harbourmaster-venn",
+      "to": "locations/brackwater-quay",
+      "kind": "located-at",
+      "label": "stationed at",
+      "directed": true
+    }
+  ],
+  "assets": []
+}
