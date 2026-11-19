@@ -586,6 +586,24 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
     expect(kinds(wrongPage, chunks)).toContain("owned-page-out-of-section");
   });
 
+  it("rejects page ownership in an anchor section of a paginated source", () => {
+    const { manifest, chunks } = fresh();
+    const misplaced = structuredClone(manifest);
+    misplaced.source.pageCount = 80;
+    misplaced.source.unreadable = [];
+    misplaced.sections[2].anchor = "The Deep";
+    delete misplaced.sections[2].pages;
+    misplaced.sections[2].owns[0].page = 81;
+
+    expect(kinds(misplaced, chunks)).toEqual(
+      expect.arrayContaining([
+        "missing-section-pages",
+        "owned-page-out-of-section",
+      ]),
+    );
+    expect(kinds(misplaced, chunks)).not.toContain("uncovered-range");
+  });
+
   it("checks very large sources using ranges rather than per-page work", () => {
     const { manifest, chunks } = fresh();
     const large = structuredClone(manifest);

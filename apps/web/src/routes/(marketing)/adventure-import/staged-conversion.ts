@@ -228,10 +228,13 @@ function checkStagedChunks(manifest, chunks) {
       if (!present.has(id)) add("missing-id", quoted(section.chunkFile) + " is missing owned id " + quoted(id));
     }
 
-    if (section.pages) {
+    if (typeof (manifest.source || {}).pageCount === "number") {
       const sectionRange = section.pages;
+      if (!sectionRange) {
+        add("missing-section-pages", "section " + quoted(section.key) + " has no page range for a paginated source");
+      }
       for (const entry of section.owns || []) {
-        if (!Number.isInteger(entry.page) || entry.page < sectionRange.from || entry.page > sectionRange.to) {
+        if (!sectionRange || !Number.isInteger(entry.page) || entry.page < sectionRange.from || entry.page > sectionRange.to) {
           add("owned-page-out-of-section", "owned id " + quoted(entry.id) + " has page " + quoted(entry.page) + " outside " + quoted(section.key) + "'s section range");
         }
       }
