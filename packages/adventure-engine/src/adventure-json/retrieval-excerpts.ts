@@ -6,7 +6,12 @@ import type {
   AdventureJsonExcerpt,
   AdventureJsonExcerptKind,
 } from "./retrieval-types";
-import type { EpistemicStatus, SourceReference, Visibility } from "./schema";
+import type { Visibility } from "./schema";
+
+export type ExcerptRecord = Pick<
+  AdventureJsonExcerpt,
+  "id" | "visibility" | "epistemicStatus" | "sourceRef"
+>;
 
 /**
  * Builds a record excerpt, moving secret lines and structured references to
@@ -15,12 +20,7 @@ import type { EpistemicStatus, SourceReference, Visibility } from "./schema";
 export function recordExcerpts(
   hiddenIds: ReadonlySet<string>,
   kind: AdventureJsonExcerptKind,
-  record: {
-    id: string;
-    visibility: Visibility;
-    epistemicStatus: EpistemicStatus;
-    sourceRef?: SourceReference;
-  },
+  record: ExcerptRecord,
   lines: Iterable<Line>,
   cap: number,
 ): AdventureJsonExcerpt[] {
