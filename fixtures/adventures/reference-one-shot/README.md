@@ -13,7 +13,7 @@ An original, system-light one-shot (about 30 turns) with an answer key, for offl
 - `adventure.md`: the clean adventure.
 - `adventure.pdf`: a multi-page text-based PDF build of `adventure.md` (licensed under the repository `LICENSE`, Polyform Noncommercial License 1.0.0), used by `packages/adventure-engine/tests/adventure-pdf-import.test.ts`.
 - `adventure.v1.json`: the converted Adventure JSON v1 package, audited against the answer key by `packages/adventure-engine/tests/reference-one-shot-coverage.test.ts`.
-- `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue and endings. Checked by `packages/adventure-engine/tests/reference-one-shot.test.ts`. Grouping headings carry `"container": true` and are not required for scorer coverage.
+- `answer-key.json`: expected sections, NPCs, secrets, conditions, branch, alternative solution, clue, endings and per-section `actionableDetails` (paraphrased playable facts, used by the `fidelity` dimension). Checked by `packages/adventure-engine/tests/reference-one-shot.test.ts`. Grouping headings carry `"container": true` and are not required for scorer coverage.
 
 ## Variants (Prettier-ignored, one defect each)
 
@@ -24,3 +24,4 @@ An original, system-light one-shot (about 30 turns) with an answer key, for offl
 - `variants/adversarial.md`: embedded instructions to an AI reader, inert data only.
 - `variants/adversarial.v1.json`: schema-valid JSON package with embedded instructions to an AI reader, kept as inert data; checked by `packages/adventure-engine/tests/adventure-json/adventure-json-adversarial.test.ts`.
 - `variants/incomplete.v1.json`: schema-valid package missing the shrine branch, flooded ending and Wick's talk option; must fail the coverage audit.
+- `variants/sparse.v1.json`: schema-valid package with exactly the same entity IDs and anchors as `adventure.v1.json` but text cut to bare names, so triggers, clues, alternate outcomes and consequences are gone; must fail the scorer's `fidelity` dimension.
