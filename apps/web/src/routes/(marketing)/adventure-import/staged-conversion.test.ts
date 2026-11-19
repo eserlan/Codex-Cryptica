@@ -11,6 +11,7 @@ import {
   STAGED_CHECK_FUNCTION,
   STAGED_CHECK_SCRIPT,
   STAGED_CHUNK_PROMPT,
+  STAGED_COVERAGE_INTRO,
   STAGED_COVERAGE_PROMPT,
   STAGED_FAILURE_MODES,
   STAGED_INVENTORY_PROMPT,
@@ -671,4 +672,29 @@ describe("staged conversion: checkpoint manifest check (#5003)", () => {
     expect(problem?.message).toContain(JSON.stringify(controlId));
     expect(problem?.message).not.toContain("\u001b");
   });
+});
+
+describe("Stage 3 coverage inputs", () => {
+  const requiredPhrases: (string | string[])[] = [
+    "manifest",
+    "every completion delta merged in",
+    ["chunk JSON", "JSON file for every chunk"],
+    "completion delta",
+  ];
+
+  for (const [name, text] of [
+    ["intro", STAGED_COVERAGE_INTRO],
+    ["prompt", STAGED_COVERAGE_PROMPT],
+  ] as const) {
+    it(`the ${name} names the same inputs`, () => {
+      for (const phrase of requiredPhrases) {
+        const options = Array.isArray(phrase) ? phrase : [phrase];
+        expect(options.some((option) => text.includes(option))).toBe(true);
+      }
+    });
+
+    it(`the ${name} says a completion delta is not proof`, () => {
+      expect(/not proof|does not prove/.test(text)).toBe(true);
+    });
+  }
 });
