@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   ADVENTURE_JSON_REFERENCES,
+  ADVENTURE_JSON_VALIDATION_ERROR_CODES,
   AdventureJsonV1Schema,
   ENTITY_COLLECTIONS,
   validateAdventureJson,
@@ -196,6 +197,20 @@ describe("Adventure JSON v1 semantic validator", () => {
           'For an unresolved item, choose "ambiguous" when the source is unclear or contradictory, or "unresolved" when the source does not answer it.',
         path: "unresolved[0].epistemicStatus",
       });
+    }
+  });
+
+  it("exports 10 unique validation codes including the ones tested here", () => {
+    expect(ADVENTURE_JSON_VALIDATION_ERROR_CODES).toHaveLength(10);
+    expect(new Set(ADVENTURE_JSON_VALIDATION_ERROR_CODES).size).toBe(10);
+    for (const code of [
+      "INVALID_FORMAT_VERSION",
+      "INVALID_VISIBILITY",
+      "HIERARCHY_CYCLE",
+      "DEAD_END_CYCLE",
+      "UNRESOLVED_REFERENCE",
+    ] as const) {
+      expect(ADVENTURE_JSON_VALIDATION_ERROR_CODES).toContain(code);
     }
   });
 
