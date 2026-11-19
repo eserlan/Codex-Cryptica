@@ -297,7 +297,7 @@ describe("adventure import link check", () => {
       ...over,
     });
 
-    async function withFetch(table, options, handler) {
+    async function withFetch(table, options) {
       const originalFetch = globalThis.fetch;
       const originalLog = console.log;
       globalThis.fetch = async (input) => {
