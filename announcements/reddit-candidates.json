@@ -1,15 +1,15 @@
 {
-  "updated_at": 1795075424,
+  "updated_at": 1795077044,
   "candidates": [
     {
-      "id": "reddit-44466817164-apply-ancestry-traits-without-rewriting-",
-      "title": "Apply ancestry traits without rewriting base stats",
-      "body": "Writing species adjustments into a character\u2019s base stats makes it harder to see where the numbers came from. I added reusable trait packages that apply effective adjustments while leaving base stats intact.\n\n- Define reusable species or ancestry traits\n- Apply a trait package to a character\n- Keep the character\u2019s base stats unchanged\n- Account for the package in effective stat adjustments\n\nHow do you keep ancestry adjustments clear when a character has several bonuses?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg)",
+      "id": "reddit-44466817164-a-faction-generator-for-urban-fantasy-ca",
+      "title": "A faction generator for urban fantasy campaigns",
+      "body": "Starting a city campaign can leave me staring at a blank page where its factions should be. I added an urban fantasy faction generator to Codex Cryptica for making faction starting points.\n\n- Generate faction concepts for an urban fantasy game\n- Get material to adapt to your city\n- Start a faction draft instead of an empty note\n\nWhat kind of group does every urban fantasy city need, even if it isn\u2019t an official faction?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/character-nkiru-okafor.jpg",
+      "image_url": "https://assets.codexcryptica.com/announcements/faction-generator-iron-syndicate-v1.png",
       "source_id": "44466817164",
       "status": "approved",
-      "created_at": 1795075424
+      "created_at": 1795077044
     }
   ]
 }
