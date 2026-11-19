@@ -10,6 +10,9 @@ import {
   STAGED_COVERAGE_PROMPT,
   STAGED_FAILURE_MODES,
   STAGED_INVENTORY_PROMPT,
+  STAGED_NEW_CHAT_PROMPT,
+  PROMPT_END_MARKER,
+  PROMPT_TXT_URL,
 } from "./staged-conversion.js";
 
 type Assemble = (chunks: unknown[]) => {
@@ -313,6 +316,7 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
     for (const text of [
       STAGED_INVENTORY_PROMPT,
       STAGED_CHUNK_PROMPT,
+      STAGED_NEW_CHAT_PROMPT,
       STAGED_COVERAGE_PROMPT,
     ]) {
       expect(text).not.toMatch(
@@ -331,5 +335,62 @@ describe("staged conversion: prompts and failure modes (#4896)", () => {
       expect(mode.signs.length).toBeGreaterThan(20);
       expect(mode.fix.length).toBeGreaterThan(20);
     }
+  });
+
+  it("gives the new-chat prompt four artefacts in order, with no chat memory", () => {
+    const text = STAGED_NEW_CHAT_PROMPT;
+    expect(text).toContain(PROMPT_TXT_URL);
+    expect(text).toContain(PROMPT_END_MARKER);
+    const positions = [
+      "full Adventure JSON v1 conversion prompt",
+      "Stage 1 inventory, including the locked package metadata",
+      "source pages or text for this one section",
+      "Stage 2 instructions",
+    ].map((part) => text.indexOf(part));
+    expect(positions.every((p) => p >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    expect(text).not.toContain("gave you earlier");
+    expect(text).not.toMatch(/earlier/i);
+    expect(text).toContain("word for word");
+    expect(text).toContain('"chunk-02.json"');
+    expect(text).toContain("never invent a page number");
+  });
+
+  it("stops on missing prerequisites in both section prompts", () => {
+    for (const text of [STAGED_CHUNK_PROMPT, STAGED_NEW_CHAT_PROMPT]) {
+      expect(text).toContain("do not convert");
+      expect(text).toContain("short plain list naming each missing item");
+      expect(text).toContain('A "continue" request does not count');
+      expect(text).toContain("must not invent entries or ids");
+      expect(text).toContain("locked package metadata");
+    }
+  });
+
+  it("asks Stage 1 for a locked metadata block", () => {
+    expect(STAGED_INVENTORY_PROMPT).toContain('"Locked package metadata"');
+    for (const field of [
+      "formatVersion",
+      "id",
+      "title",
+      "version",
+      "premise",
+      "source",
+      "description",
+      "system",
+    ]) {
+      expect(STAGED_INVENTORY_PROMPT).toContain(`"${field}"`);
+    }
+    expect(STAGED_INVENTORY_PROMPT).toContain("word for word");
+    expect(STAGED_CHUNK_PROMPT).toContain('"Locked package metadata"');
+  });
+
+  it("points the too-large fix at the new-chat handoff", () => {
+    const fix = STAGED_FAILURE_MODES.find(
+      (m) => m.problem === "The input is too large",
+    )!.fix;
+    expect(fix).toContain("new-chat handoff");
+    expect(fix).toContain("canonical prompt");
+    expect(fix).toContain("inventory");
+    expect(fix).toContain("source");
   });
 });

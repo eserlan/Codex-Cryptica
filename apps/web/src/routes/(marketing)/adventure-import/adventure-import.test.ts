@@ -16,6 +16,7 @@ import {
   STAGED_CHUNK_PROMPT,
   STAGED_COVERAGE_PROMPT,
   STAGED_INVENTORY_PROMPT,
+  STAGED_NEW_CHAT_PROMPT,
 } from "./staged-conversion.js";
 import {
   CANONICAL_CONVERSION_PROMPT,
@@ -342,6 +343,11 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt).toContain("exact top-level metadata values");
       expect(prompt).toContain("convert only the requested chunk");
       expect(prompt).toContain(
+        "A pass in a new chat needs the full canonical prompt",
+      );
+      expect(prompt).toContain("locked package metadata");
+      expect(prompt).toContain('"Continue" alone is not enough');
+      expect(prompt).toContain(
         "Assemble only after every planned chunk is present",
       );
       expect(prompt).toContain("label the result unvalidated");
@@ -520,6 +526,13 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("Do not trust an assistant that says");
       expect(text).toContain("This page converts nothing");
       expect(text).toContain("Three different problems");
+      const options = [...section.querySelectorAll("h4")].map((h) =>
+        h.textContent?.trim(),
+      );
+      expect(options).toEqual(["Same chat", "New chat"]);
+      expect(text).toContain(
+        "Do not assume the assistant remembers other chats",
+      );
     });
 
     it("discloses hosted processing and gives copy buttons a visible boundary", () => {
@@ -533,7 +546,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(text).toContain("preserving an existing file if a check fails");
 
       const stageButtons = [...section.querySelectorAll("button")];
-      expect(stageButtons).toHaveLength(4);
+      expect(stageButtons).toHaveLength(5);
       for (const button of stageButtons) {
         expect(button.classList.contains("border-theme-text")).toBe(true);
       }
@@ -552,7 +565,10 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         screen.getByRole("button", { name: /Copy inventory prompt/i }),
       );
       await fireEvent.click(
-        screen.getByRole("button", { name: /Copy section prompt/i }),
+        screen.getByRole("button", { name: /Copy same-chat section prompt/i }),
+      );
+      await fireEvent.click(
+        screen.getByRole("button", { name: /Copy new-chat section prompt/i }),
       );
       await fireEvent.click(
         screen.getByRole("button", { name: /Copy assemble script/i }),
@@ -561,6 +577,7 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(copyMock.mock.calls.map((c) => c[0])).toEqual([
         STAGED_INVENTORY_PROMPT,
         STAGED_CHUNK_PROMPT,
+        STAGED_NEW_CHAT_PROMPT,
         STAGED_ASSEMBLE_SCRIPT,
       ]);
     });
@@ -582,6 +599,24 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
         screen.getByRole("button", { name: /Copy inventory prompt/i }),
       ).toBeTruthy();
     });
+  });
+
+  it("reports a failed new-chat copy on that button only", async () => {
+    copyMock.mockResolvedValue(false);
+    render(Page);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /Copy new-chat section prompt/i }),
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getAllByRole("button", { name: /Copy failed/i }),
+      ).toHaveLength(1);
+    });
+    expect(
+      screen.getByRole("button", { name: /Copy same-chat section prompt/i }),
+    ).toBeTruthy();
   });
 
   it("copies a short link instruction for browsing assistants, separately from the prompt", async () => {

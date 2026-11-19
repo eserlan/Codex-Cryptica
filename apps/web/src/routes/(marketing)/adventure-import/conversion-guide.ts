@@ -1,4 +1,10 @@
-import { AUTOMATIC_STAGING_RULES } from "./staged-conversion.js";
+import {
+  AUTOMATIC_STAGING_RULES,
+  PROMPT_END_MARKER,
+  PROMPT_TXT_URL,
+} from "./staged-conversion.js";
+
+export { PROMPT_END_MARKER, PROMPT_TXT_URL };
 
 /**
  * A trimmed, schema-valid answer shown inside the prompt so a model can
@@ -109,8 +115,6 @@ export const PROMPT_EXAMPLE_OUTPUT = {
 };
 
 const EXAMPLE_JSON = JSON.stringify(PROMPT_EXAMPLE_OUTPUT, null, 2);
-
-export const PROMPT_END_MARKER = "END OF ADVENTURE JSON V1 CONVERSION PROMPT";
 
 export const INCOMPLETE_PROMPT_FALLBACK =
   "Ask the user to select “Copy conversion prompt” on the guide and paste the entire prompt into this chat. Wait for it before making an inventory or generating any chunk. A “Continue” request does not replace the missing prompt.";
@@ -242,9 +246,6 @@ export const IMPORT_OUTCOMES: ImportOutcome[] = [
     checkedByCodex: false,
   },
 ];
-
-export const PROMPT_TXT_URL =
-  "https://codexcryptica.com/adventure-import/prompt.txt";
 
 /** Short instruction copied by "Copy guide link" for assistants that can open URLs. */
 export const LINK_HANDOFF_TEXT = `Open ${PROMPT_TXT_URL} (plain text) and follow the full prompt to convert the attached adventure into Adventure JSON v1. Check that the fetched prompt ends with the standalone line “${PROMPT_END_MARKER}”. If the link is blocked or the prompt is incomplete, stop. ${INCOMPLETE_PROMPT_FALLBACK}`;
