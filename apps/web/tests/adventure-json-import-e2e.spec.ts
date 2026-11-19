@@ -28,20 +28,19 @@ function mockTurnResponse(turnIndex: number) {
       ? "Rain lashes the ferry landing by the mill stream. A lantern swings near the gate."
       : "You step into the muddy mill yard as the waterwheel groans overhead.",
     visiblePatch: {
-      placeName: isOpening ? "Ferry Landing" : "Mill Yard",
       ...(isOpening ? {} : { packageSceneId: "ros-scene-2-yard" }),
-      objectives: { add: [], update: [], complete: [] },
-      activeCharacters: { add: [], update: [], remove: [] },
-      knownFacts: { add: [], update: [] },
-      relationships: { add: [], update: [] },
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: { add: [], update: [], removeIds: [] },
+      relationships: { add: [], update: [], removeIds: [] },
     },
     hiddenPatch: {
-      secrets: { add: [], update: [], reveal: [] },
-      gmThreads: { add: [], update: [], resolve: [] },
+      secrets: { add: [], update: [], removeIds: [] },
+      gmThreads: { add: [], update: [], removeIds: [] },
     },
-    provisionalFacts: { add: [] },
-    revealScenarioIds: [],
-    elaborateScenarios: [],
+    revealSecretIds: [],
+    provisionalFacts: [],
+    sourceRecordIds: [],
     suggestedActions: [
       "Inspect the ferry mooring",
       "Cross into the mill yard",
@@ -58,7 +57,36 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
     test.setTimeout(60_000);
     let callCount = 0;
     const fulfillTurn = async (route: import("@playwright/test").Route) => {
-      const proposal = mockTurnResponse(callCount++);
+      const idx = callCount++;
+      const text = JSON.stringify(mockTurnResponse(idx));
+      let postData: Record<string, unknown> | null;
+      try {
+        postData = route.request().postDataJSON() as Record<string, unknown>;
+      } catch {
+        postData = null;
+      }
+
+      if (postData?.stream === true) {
+        const sseBody =
+          `data: ${JSON.stringify({ type: "started" })}\n\n` +
+          `data: ${JSON.stringify({ type: "complete", id: `int-${idx}`, text })}\n\n`;
+        await route.fulfill({
+          status: 200,
+          contentType: "text/event-stream; charset=utf-8",
+          body: sseBody,
+        });
+        return;
+      }
+
+      if (postData && "input" in postData) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ id: `int-${idx}`, text }),
+        });
+        return;
+      }
+
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -66,7 +94,7 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
           candidates: [
             {
               content: {
-                parts: [{ text: JSON.stringify(proposal) }],
+                parts: [{ text }],
               },
             },
           ],
@@ -106,6 +134,21 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
     });
 
     await setupVaultPage(page);
+    await page.evaluate(async () => {
+      const oracle = (
+        window as unknown as {
+          oracle?: {
+            settingsManager?: {
+              updateSettings?: (s: Record<string, unknown>) => Promise<void>;
+            };
+          };
+        }
+      ).oracle;
+      await oracle?.settingsManager?.updateSettings?.({
+        apiKey: "mock-api-key",
+        connectionMode: "personal-key",
+      });
+    });
     await page.goto("/adventure#import-adventure-json");
     await page.getByTestId("adventure-json-dropzone").waitFor({
       state: "visible",
@@ -186,10 +229,13 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
     await page.getByLabel(/Character description/i).fill("River courier");
     await page.getByRole("button", { name: "Start adventure" }).click();
 
+    const narrative = page.getByTestId("adventure-narrative");
     await expect(
-      page.getByText("Rain lashes the ferry landing by the mill stream."),
+      narrative.getByText("Rain lashes the ferry landing by the mill stream."),
     ).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: "Adventure tools" }).click();
     await expect(page.getByTestId("adventure-package-progress")).toBeVisible();
+    await page.keyboard.press("Escape");
 
     // 5. Submit an action that moves scenes, then reload and verify persistence + secrecy
     const actionInput = page.getByRole("textbox", {
@@ -198,16 +244,17 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
     await actionInput.fill("Cross into the mill yard");
     await page.getByRole("button", { name: /send|act|submit/i }).click();
     await expect(
-      page.getByText("You step into the muddy mill yard"),
+      narrative.getByText("You step into the muddy mill yard"),
     ).toBeVisible({ timeout: 15_000 });
 
     await page.reload();
     await expect(
-      page.getByText("You step into the muddy mill yard"),
+      narrative.getByText("You step into the muddy mill yard"),
     ).toBeVisible({ timeout: 15_000 });
+    await page.getByRole("button", { name: "Adventure tools" }).click();
     await expect(page.getByTestId("adventure-package-progress")).toBeVisible();
 
-    const bodyText = await page.locator("main").innerText();
+    const bodyText = await page.locator("main").first().innerText();
     for (const secret of SECRET_SNIPPETS) {
       expect(bodyText).not.toContain(secret);
     }
