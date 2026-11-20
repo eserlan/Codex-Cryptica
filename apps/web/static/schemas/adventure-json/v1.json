@@ -221,6 +221,10 @@
             "type": "string",
             "minLength": 1
           },
+          "kind": {
+            "type": "string",
+            "enum": ["character", "creature"]
+          },
           "summary": {
             "type": "string"
           },
