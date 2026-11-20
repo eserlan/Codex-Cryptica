@@ -214,7 +214,10 @@
       />
     {/if}
 
-    <AdventureImportReviewUnresolved {draft} />
+    <AdventureImportReviewUnresolved
+      {draft}
+      validationErrors={liveValidation.ok ? [] : liveValidation.errors}
+    />
 
     <AdventureImportReviewWorldSections
       {draft}
