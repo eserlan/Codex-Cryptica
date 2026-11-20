@@ -143,7 +143,7 @@ describe("world entry session and GM contract", () => {
       expect(behavior).toContain("Record consequential new public details");
       expect(behavior).toContain("or unrevealed decisions in GM-only hidden state");
       expect(behavior).toContain("Canonical source records outrank provisional session material");
-      expect(behavior).toContain("Only reveal scenario secrets through justified fictional discovery");
+      expect(behavior).toContain("reveal scenario secrets only through justified fictional discovery");
     }
   });
 
