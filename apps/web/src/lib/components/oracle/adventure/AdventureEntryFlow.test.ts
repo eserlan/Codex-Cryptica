@@ -130,4 +130,47 @@ describe("adventure entry flow", () => {
       (screen.getByTestId("adventure-discover") as HTMLButtonElement).disabled,
     ).toBe(true);
   });
+
+  it("forwards the controller repair prompt for an invalid import and copies it", async () => {
+    const props = setup();
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const previousClipboard = Object.getOwnPropertyDescriptor(
+      navigator,
+      "clipboard",
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+
+    try {
+      render(AdventureEntryFlow, props);
+      await fireEvent.change(screen.getByTestId("adventure-file-input"), {
+        target: {
+          files: [
+            new File(['{"formatVersion":"bad"}'], "invalid.json", {
+              type: "application/json",
+            }),
+          ],
+        },
+      });
+
+      const repairButton = await screen.findByRole("button", {
+        name: "Copy repair prompt",
+      });
+      const repairPrompt = props.imports.repairPrompt;
+      expect(repairPrompt).toBeTruthy();
+
+      await fireEvent.click(repairButton);
+
+      expect(writeText).toHaveBeenCalledWith(repairPrompt);
+      expect(screen.getByRole("status").textContent).toContain("copied");
+    } finally {
+      if (previousClipboard) {
+        Object.defineProperty(navigator, "clipboard", previousClipboard);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+    }
+  });
 });
