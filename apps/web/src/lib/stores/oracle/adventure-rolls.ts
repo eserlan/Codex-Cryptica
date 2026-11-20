@@ -140,6 +140,13 @@ export class AdventureRolls {
   }
 
   cancel(): void {
+    if (this.state.oocGenerating) {
+      this.runtime.oocController?.abort();
+      this.runtime.oocController = null;
+      this.state.oocGenerating = false;
+      this.state.oocErrorMessage = null;
+      return;
+    }
     if (this.state.phase !== "generating") return;
     this.runtime.generationController?.abort();
     this.state.streamedNarration = "";

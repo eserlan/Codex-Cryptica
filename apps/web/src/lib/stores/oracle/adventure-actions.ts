@@ -1,4 +1,11 @@
-import type { AdventureSession } from "@codex/adventure-engine";
+import {
+  guardAdventureOocAnswer,
+  isInWorldActionQuestion,
+  OOC_REDIRECT_TO_PLAY_REPLY,
+  upsertAdventureOocExchange,
+  type AdventureOocExchange,
+  type AdventureSession,
+} from "@codex/adventure-engine";
 import { proposedSession, validateRollExpression } from "./adventure-session";
 import { generateAcceptedTurn } from "./adventure-turn-retry";
 import { abortReason } from "./adventure-generation.svelte";
@@ -11,12 +18,28 @@ export class AdventureActions {
     this.state = runtime.state;
   }
 
+  setComposerMode(mode: "play" | "ooc"): void {
+    this.state.composerMode = mode;
+    this.state.oocErrorMessage = null;
+  }
+
   private canSubmitAction(action: string): boolean {
     return Boolean(
       this.state.session &&
       !this.state.readOnly &&
       action.trim() &&
-      this.state.phase !== "generating",
+      this.state.phase !== "generating" &&
+      !this.state.oocGenerating,
+    );
+  }
+
+  private canSubmitOoc(question: string): boolean {
+    return Boolean(
+      this.state.session &&
+      !this.state.readOnly &&
+      question.trim() &&
+      this.state.phase !== "generating" &&
+      !this.state.oocGenerating,
     );
   }
 
@@ -101,6 +124,185 @@ export class AdventureActions {
     // Treat a suggestion like a typed action. Keep the selected choice in the
     // composer until it commits so offline errors, cancellations and provider
     // failures leave the player with an editable, retryable action.
+    this.state.composerMode = "play";
     await this.submitAction(action);
+  }
+
+  async submitOocQuestion(
+    question = this.state.oocDraft,
+    preserveDraft = true,
+  ): Promise<void> {
+    if (!this.canSubmitOoc(question)) return;
+    const trimmed = question.trim();
+    if (preserveDraft) this.state.oocDraft = question;
+    await this.runOocExchange({
+      id: this.runtime.deps.idGenerator(),
+      question: trimmed,
+      afterTurnCount: this.state.session!.turns.length,
+      createdAt: this.runtime.deps.now(),
+      clearDraftOnSuccess: true,
+    });
+  }
+
+  async retryOocQuestion(exchangeId: string): Promise<void> {
+    const session = this.state.session;
+    if (
+      !session ||
+      this.state.readOnly ||
+      this.state.phase === "generating" ||
+      this.state.oocGenerating
+    ) {
+      return;
+    }
+    const existing = session.oocExchanges?.find(
+      (item) => item.id === exchangeId,
+    );
+    if (!existing) return;
+    await this.runOocExchange({
+      id: existing.id,
+      question: existing.question,
+      afterTurnCount: existing.afterTurnCount,
+      createdAt: existing.createdAt,
+      clearDraftOnSuccess: false,
+    });
+  }
+
+  private async runOocExchange(params: {
+    id: string;
+    question: string;
+    afterTurnCount: number;
+    createdAt: string;
+    clearDraftOnSuccess: boolean;
+  }): Promise<void> {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      this.state.oocErrorMessage = "offline";
+      return;
+    }
+    const initialSession = this.state.session!;
+    this.runtime.oocController?.abort();
+    const controller = new AbortController();
+    this.runtime.oocController = controller;
+    const signal = controller.signal;
+    this.state.oocGenerating = true;
+    this.state.oocErrorMessage = null;
+
+    try {
+      await this.executeOocExchange(initialSession, params, signal);
+    } catch (cause) {
+      await this.recordFailedOocExchange(initialSession, params, cause, signal);
+    } finally {
+      if (this.runtime.oocController === controller) {
+        this.runtime.oocController = null;
+      }
+      this.state.oocGenerating = false;
+    }
+  }
+
+  private async executeOocExchange(
+    initialSession: AdventureSession,
+    params: {
+      id: string;
+      question: string;
+      afterTurnCount: number;
+      createdAt: string;
+      clearDraftOnSuccess: boolean;
+    },
+    signal: AbortSignal,
+  ): Promise<void> {
+    if (!(await this.runtime.packageStillAvailable(signal))) return;
+    const now = this.runtime.deps.now();
+    const pendingExchange: AdventureOocExchange = {
+      id: params.id,
+      kind: "ooc",
+      question: params.question,
+      status: "pending",
+      afterTurnCount: params.afterTurnCount,
+      createdAt: params.createdAt,
+      updatedAt: now,
+    };
+    const withPending = await this.runtime.saveOocExchange(
+      initialSession,
+      upsertAdventureOocExchange(initialSession, pendingExchange, now),
+    );
+    const finalAnswer = await this.resolveOocAnswer(
+      withPending,
+      params.question,
+      signal,
+    );
+    const answeredAt = this.runtime.deps.now();
+    const answeredExchange: AdventureOocExchange = {
+      ...pendingExchange,
+      answer: finalAnswer,
+      status: "answered",
+      updatedAt: answeredAt,
+    };
+    await this.runtime.saveOocExchange(
+      withPending,
+      upsertAdventureOocExchange(withPending, answeredExchange, answeredAt),
+    );
+    if (params.clearDraftOnSuccess) {
+      this.state.oocDraft = "";
+    }
+  }
+
+  private async resolveOocAnswer(
+    session: AdventureSession,
+    question: string,
+    signal: AbortSignal,
+  ): Promise<string> {
+    if (signal.aborted) throw abortReason(signal);
+    if (isInWorldActionQuestion(question)) {
+      return OOC_REDIRECT_TO_PLAY_REPLY;
+    }
+    const request = await this.runtime.grounding.prepareOoc(
+      session,
+      question,
+      signal,
+    );
+    if (signal.aborted) throw abortReason(signal);
+    const response = await this.runtime.deps.ooc.ask(request, { signal });
+    if (signal.aborted) throw abortReason(signal);
+    return guardAdventureOocAnswer(
+      response.answer,
+      session,
+      this.runtime.packageMetadata(),
+    ).answer;
+  }
+
+  private async recordFailedOocExchange(
+    initialSession: AdventureSession,
+    params: {
+      id: string;
+      question: string;
+      afterTurnCount: number;
+      createdAt: string;
+    },
+    cause: unknown,
+    signal: AbortSignal,
+  ): Promise<void> {
+    if (signal.aborted) return;
+    const message = cause instanceof Error ? cause.message : String(cause);
+    this.state.oocErrorMessage = message;
+    const current = this.state.session;
+    if (!current || current.id !== initialSession.id || this.state.readOnly) {
+      return;
+    }
+    const failedAt = this.runtime.deps.now();
+    const failedExchange: AdventureOocExchange = {
+      id: params.id,
+      kind: "ooc",
+      question: params.question,
+      status: "failed",
+      errorMessage: message.slice(0, 600),
+      afterTurnCount: params.afterTurnCount,
+      createdAt: params.createdAt,
+      updatedAt: failedAt,
+    };
+    await this.runtime
+      .saveOocExchange(
+        current,
+        upsertAdventureOocExchange(current, failedExchange, failedAt),
+      )
+      .catch(() => {});
   }
 }

@@ -409,6 +409,25 @@ export interface AdventureSourcePackageRef {
   hash: string;
 }
 
+export type AdventureOocExchangeStatus = "pending" | "answered" | "failed";
+
+/**
+ * Out-of-character (OOC) clarification exchange. Kept separate from committed
+ * narrative turns so OOC questions never advance world time, triggers, or story state.
+ */
+export interface AdventureOocExchange {
+  id: string;
+  kind: "ooc";
+  question: string;
+  answer?: string;
+  status: AdventureOocExchangeStatus;
+  errorMessage?: string;
+  /** Number of committed narrative turns (`session.turns.length`) when first asked. */
+  afterTurnCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AdventureSession {
   schemaVersion: 3;
   id: string;
@@ -452,6 +471,8 @@ export interface AdventureSession {
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
+  /** Optional bounded OOC clarification exchanges; separate from canonical gameplay turns. */
+  oocExchanges?: AdventureOocExchange[];
   pendingRoll: PendingRoll | null;
   /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
   dicePresets: DicePreset[];

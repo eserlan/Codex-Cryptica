@@ -142,8 +142,13 @@
       : null,
   );
   const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
+  const oocEventVersion = $derived(
+    (manager.oocExchanges ?? manager.session?.oocExchanges ?? [])
+      .map((item) => `${item.id}:${item.status}`)
+      .join(","),
+  );
   const visibleEventVersion = $derived(
-    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}`,
+    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}:${oocEventVersion}:${manager.oocGenerating ? "1" : "0"}`,
   );
 
   type AdventurePortraitProp = {
