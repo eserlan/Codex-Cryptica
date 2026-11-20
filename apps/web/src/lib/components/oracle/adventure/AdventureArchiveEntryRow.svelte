@@ -49,7 +49,7 @@
       <div class="flex gap-2">
         <button
           type="button"
-          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text sm:min-h-12 sm:flex-none"
+          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text sm:min-h-12 sm:flex-none"
           onclick={onSave}
         >
           Save

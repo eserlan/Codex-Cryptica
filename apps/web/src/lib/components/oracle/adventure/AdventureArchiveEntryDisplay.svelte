@@ -53,6 +53,9 @@
     type="button"
     onclick={onOpen}
     aria-label={`Open adventure ${entry.title}`}
+    aria-describedby={entry.sourcePackage
+      ? `archive-entry-package-${entry.id}`
+      : undefined}
   >
     <span class="flex w-full min-w-0 items-start justify-between gap-2">
       <span
@@ -70,11 +73,14 @@
     </span>
     {#if entry.sourcePackage}
       {@const fullPackageLabel = `${entry.sourcePackage.packageId} v${entry.sourcePackage.version} · ${entry.sourcePackage.hash}`}
+      <span id={`archive-entry-package-${entry.id}`} class="sr-only">
+        Package {entry.sourcePackage.packageId} version {entry.sourcePackage
+          .version} hash {entry.sourcePackage.hash}
+      </span>
       <span
         class="block w-full min-w-0 truncate font-mono text-xs text-theme-text"
         data-testid="archive-entry-source-package"
         title={fullPackageLabel}
-        aria-label={`Package ${entry.sourcePackage.packageId} version ${entry.sourcePackage.version} hash ${entry.sourcePackage.hash.slice(0, 8)}`}
       >
         {entry.sourcePackage.packageId} v{entry.sourcePackage.version} · {entry.sourcePackage.hash.slice(
           0,
@@ -91,7 +97,7 @@
     >
       {#if entry.status === "active" && isReadable && onResume}
         <button
-          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text sm:min-h-12 sm:flex-none"
+          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text sm:min-h-12 sm:flex-none"
           type="button"
           onclick={onResume}
           aria-label="Resume active adventure {entry.title}"
@@ -102,7 +108,7 @@
 
       {#if entry.status === "archived" && isReadable && onResumeArchived}
         <button
-          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed sm:min-h-12 sm:flex-none"
+          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed sm:min-h-12 sm:flex-none"
           type="button"
           onclick={onResumeArchived}
           disabled={resuming}
@@ -161,3 +167,16 @@
     </div>
   {/if}
 </div>
+{#if entry.sourcePackage}
+  <details class="min-w-0 text-xs text-theme-text">
+    <summary
+      class="min-h-11 cursor-pointer content-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+    >
+      Show full package metadata
+    </summary>
+    <p class="break-all font-mono">
+      {entry.sourcePackage.packageId} v{entry.sourcePackage.version} · {entry
+        .sourcePackage.hash}
+    </p>
+  </details>
+{/if}

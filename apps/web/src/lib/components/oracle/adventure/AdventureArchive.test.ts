@@ -373,7 +373,7 @@ describe("AdventureArchive", () => {
         expect(statusEl.textContent?.trim()).toBe("active");
         expect(statusEl.className).toContain("shrink-0");
 
-        // Secondary package metadata line is truncated cleanly while exposing full metadata via title and aria-label.
+        // Secondary metadata stays compact while the card description and disclosure expose the full identity.
         expect(pkgEl.textContent?.trim()).toBe(
           `${longSlug} v1.0.0 · ${longHash.slice(0, 8)}`,
         );
@@ -382,8 +382,18 @@ describe("AdventureArchive", () => {
         expect(pkgEl.getAttribute("title")).toBe(
           `${longSlug} v1.0.0 · ${longHash}`,
         );
-        expect(pkgEl.getAttribute("aria-label")).toContain(longSlug);
-        expect(pkgEl.getAttribute("aria-label")).toContain("version 1.0.0");
+        const packageDescriptionId = openBtn.getAttribute("aria-describedby");
+        expect(packageDescriptionId).toBeTruthy();
+        const packageDescription = document.getElementById(
+          packageDescriptionId!,
+        );
+        expect(packageDescription?.textContent).toContain(longSlug);
+        expect(packageDescription?.textContent).toContain("version 1.0.0");
+        expect(packageDescription?.textContent).toContain(longHash);
+        expect(
+          screen.getByText("Show full package metadata").parentElement
+            ?.textContent,
+        ).toContain(longHash);
 
         // Actions sit in a dedicated compact bottom row with >=44px targets (min-h-11 / min-h-12), distinct screen-reader names, and keyboard focus rings.
         expect(actionsRow.className).toContain("flex-wrap");
