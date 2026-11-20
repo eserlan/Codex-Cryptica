@@ -1,6 +1,7 @@
 import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
 import {
+  classifyHiddenLeakageFinding,
   detectHiddenLeakage,
   detectPackageLeakage,
   ensureScenarioSecrets,
@@ -69,13 +70,14 @@ function completedTurnProposalError(
   if (hasImmutableScenarioRewrite(session, proposal)) {
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
-  if (
-    detectHiddenLeakage(session, proposal).length > 0 ||
-    detectPackageLeakage(proposal, meta, session).length > 0
-  ) {
+  const leakage =
+    detectHiddenLeakage(session, proposal)[0] ??
+    detectPackageLeakage(proposal, meta, session)[0];
+  if (leakage) {
     return error(
       "hidden-leakage",
       "The response contains unrevealed GM information.",
+      classifyHiddenLeakageFinding(leakage),
     );
   }
   return null;

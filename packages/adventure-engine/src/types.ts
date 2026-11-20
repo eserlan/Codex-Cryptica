@@ -593,6 +593,16 @@ export interface CommitMetadata {
   packageGmOnlyText?: readonly string[];
 }
 
+export type HiddenLeakageGuard =
+  "scenario-secret" | "package-text" | "package-id";
+
+/** Leak-safe classification of a commit-time secrecy rejection (never contains secret text or raw hidden IDs). */
+export interface HiddenLeakageDiagnostic {
+  guard: HiddenLeakageGuard;
+  field: string;
+  sourceRef: string;
+}
+
 export interface AdventureValidationError {
   code:
     | "invalid-schema"
@@ -608,6 +618,7 @@ export interface AdventureValidationError {
     | "id-allocation-failed"
     | "incompatible-version";
   message: string;
+  diagnostic?: HiddenLeakageDiagnostic;
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; errors: E };

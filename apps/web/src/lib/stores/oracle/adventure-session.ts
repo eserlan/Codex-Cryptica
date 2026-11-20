@@ -3,7 +3,10 @@ import {
   applyRollRequest,
   seedPlaces,
 } from "@codex/adventure-engine";
-import type { CommitMetadata } from "@codex/adventure-engine";
+import type {
+  CommitMetadata,
+  HiddenLeakageDiagnostic,
+} from "@codex/adventure-engine";
 import { diceParser } from "dice-engine";
 import type {
   AdventureSession,
@@ -120,17 +123,32 @@ export function validateRollExpression(proposal: {
   }
 }
 
+/** Proposal validation rejection carrying optional opaque leakage diagnostics. */
+export class AdventureProposalError extends Error {
+  constructor(
+    message: string,
+    readonly diagnostic?: HiddenLeakageDiagnostic,
+  ) {
+    super(message);
+    this.name = "AdventureProposalError";
+  }
+}
+
 /** All reducers share this discriminated success/error contract. */
 export function acceptedSession(
   result: {
     ok: boolean;
     value?: AdventureSession;
-    errors?: { message: string }[];
+    errors?: { message: string; diagnostic?: HiddenLeakageDiagnostic }[];
   },
   fallback: string,
 ): AdventureSession {
   if (result.ok && result.value) return result.value;
-  throw new Error(result.errors?.[0]?.message ?? fallback);
+  const first = result.errors?.[0];
+  throw new AdventureProposalError(
+    first?.message ?? fallback,
+    first?.diagnostic,
+  );
 }
 
 export function proposedSession(
