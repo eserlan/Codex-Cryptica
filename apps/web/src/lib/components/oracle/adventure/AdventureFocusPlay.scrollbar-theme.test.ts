@@ -1,9 +1,13 @@
 import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { FANTASY_DARK, SCIFI_LIGHT, THEMES } from "schema";
 
-const playSurface = new URL("./AdventureFocusPlay.svelte", import.meta.url);
-const themeStore = new URL("../../../stores/theme.svelte.ts", import.meta.url);
+const playSurface = resolve(
+  process.cwd(),
+  "src/lib/components/oracle/adventure/AdventureFocusPlay.svelte",
+);
+const themeStore = resolve(process.cwd(), "src/lib/stores/theme.svelte.ts");
 
 describe("Adventure Mode scrollbar theme contract (#5069)", () => {
   it("uses live world-theme tokens, not a fixed sci-fi scrollbar palette", async () => {
