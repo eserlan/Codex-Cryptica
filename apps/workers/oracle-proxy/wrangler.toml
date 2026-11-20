@@ -98,16 +98,12 @@ database_name = "codex-answer-aggregates"
 database_id = "a21162a9-2f74-4e19-a529-98f6d257675e"
 migrations_dir = "migrations"
 
-# Runtime feature flags (issue #5029). Create once with:
-#   bunx wrangler kv namespace create FEATURE_FLAGS
-# then uncomment and fill in the returned id. Flip flags live without
-# rebuilding using:
-#   bunx wrangler kv key put --binding=FEATURE_FLAGS "flags:staging" '{"adventureArtwork":true}'
-#   bunx wrangler kv key put --binding=FEATURE_FLAGS "flags:prod" '{"adventureArtwork":true}'
-# Until bound, GET /api/flags fails open to safe in-code defaults.
-# [[kv_namespaces]]
-# binding = "FEATURE_FLAGS"
-# id = "<kv-namespace-id>"
+# Runtime feature flags (issue #5029). Flip flags live without rebuilding using:
+#   env -u CF_API_TOKEN -u CLOUDFLARE_API_TOKEN bunx wrangler kv key put --remote --binding=FEATURE_FLAGS "flags:staging" '{"adventureArtwork":true}'
+#   env -u CF_API_TOKEN -u CLOUDFLARE_API_TOKEN bunx wrangler kv key put --remote --binding=FEATURE_FLAGS "flags:prod" '{"adventureArtwork":true}'
+[[kv_namespaces]]
+binding = "FEATURE_FLAGS"
+id = "19a6bf911969462cbf7f74385c1019fd"
 
 [[ratelimits]]
 name = "PUBLISH_CREATE_RATE_LIMITER"
