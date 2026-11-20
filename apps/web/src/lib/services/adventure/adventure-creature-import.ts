@@ -101,41 +101,57 @@ export function initialCreatureChoices(
   });
 }
 
+function adventureSourceData(
+  pkg: AdventureJsonV1,
+  hash: string,
+  choice: CreatureImportChoice,
+): NonNullable<Entity["adventureSource"]> {
+  const { proposal } = choice;
+  const credit = choice.artCredit.trim();
+  return {
+    packageId: pkg.id,
+    packageVersion: pkg.version,
+    packageHash: hash,
+    actorIds: proposal.actorIds,
+    encounterIds: proposal.encounters.map((encounter) => encounter.id),
+    sourceTitle: pkg.source.title,
+    ...(pkg.source.authors?.length
+      ? { sourceAuthors: pkg.source.authors }
+      : {}),
+    ...(pkg.source.license ? { sourceLicense: pkg.source.license } : {}),
+    ...(choice.file && credit ? { artCredit: credit } : {}),
+  };
+}
+
+function applyCreatureMetadata(
+  data: Partial<Entity>,
+  proposal: CreatureProposal,
+  hidden: boolean,
+): void {
+  if (proposal.aliases.length) data.aliases = proposal.aliases;
+  if (proposal.labels.length) data.labels = [...proposal.labels];
+  if (hidden) {
+    data.labels = [...new Set([...(data.labels ?? []), "hidden"])];
+    data.visibility = "hidden";
+  }
+}
+
 function entityData(
   pkg: AdventureJsonV1,
   hash: string,
   choice: CreatureImportChoice,
 ): Partial<Entity> {
-  const { proposal } = choice;
-  const credit = choice.artCredit.trim();
   const { content, lore } = buildCreatureEntryText(
-    proposal,
+    choice.proposal,
     pkg.source,
-    choice.file ? credit : undefined,
+    choice.file ? choice.artCredit.trim() : undefined,
   );
   const data: Partial<Entity> = {
     content,
-    adventureSource: {
-      packageId: pkg.id,
-      packageVersion: pkg.version,
-      packageHash: hash,
-      actorIds: proposal.actorIds,
-      encounterIds: proposal.encounters.map((encounter) => encounter.id),
-      sourceTitle: pkg.source.title,
-      ...(pkg.source.authors?.length
-        ? { sourceAuthors: pkg.source.authors }
-        : {}),
-      ...(pkg.source.license ? { sourceLicense: pkg.source.license } : {}),
-      ...(choice.file && credit ? { artCredit: credit } : {}),
-    },
+    adventureSource: adventureSourceData(pkg, hash, choice),
   };
-  if (proposal.aliases.length) data.aliases = proposal.aliases;
-  if (proposal.labels.length) data.labels = [...proposal.labels];
   if (lore) data.lore = lore;
-  if (choice.hidden) {
-    data.labels = [...new Set([...(data.labels ?? []), "hidden"])];
-    data.visibility = "hidden";
-  }
+  applyCreatureMetadata(data, choice.proposal, choice.hidden);
   return data;
 }
 
