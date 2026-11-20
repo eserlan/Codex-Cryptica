@@ -48,7 +48,7 @@ function sceneRecoveryBehavior(
 ): string[] {
   if (dialogue?.recoveryDue) {
     return [
-      `DIALOGUE LOOP RECOVERY: The last ${dialogueRecovery.repeatedTurns} exchanges repeated a related question without a substantive answer. Address the CURRENT player question rather than rephrasing an NPC's ignorance or recycling the same options. Clarify a mistaken explanation or decide a compatible, previously unspecified world detail and commit consequential facts. If this NPC genuinely cannot know, preserve that limit and offer a specific, independently useful avenue of inquiry where credible. Do not force a quest, invent an unrelated clue or crisis, reveal hidden truths without discovery, or choose for the player.`,
+      `DIALOGUE LOOP RECOVERY: The last ${dialogue.repeatedTurns} exchanges repeated a related question without a substantive answer. Address the CURRENT player question rather than rephrasing an NPC's ignorance or recycling the same options. Clarify a mistaken explanation or decide a compatible, previously unspecified world detail and commit consequential facts. If this NPC genuinely cannot know, preserve that limit and offer a specific, independently useful avenue of inquiry where credible. Do not force a quest, invent an unrelated clue or crisis, reveal hidden truths without discovery, or choose for the player.`,
     ];
   }
   if (stalled?.stalled && !dialogue) {
