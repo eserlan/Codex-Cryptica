@@ -211,7 +211,7 @@
       bind:value={searchQuery}
       placeholder="Search by title or premise…"
       aria-label="Search adventure archive"
-      class="min-h-12 w-full rounded-md border border-theme-border bg-theme-surface px-3 text-sm text-theme-text"
+      class="min-h-12 w-full rounded-md border border-theme-text/75 bg-theme-surface px-3 text-sm text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
     />
   {/if}
   <AdventureArchiveEmptyState
@@ -242,13 +242,13 @@
       {/each}
     </ul>
   {/if}
-  {#if deleteError}<p class="text-sm text-theme-danger" role="alert">
+  {#if deleteError}<p class="text-sm text-theme-text" role="alert">
       {deleteError}
     </p>{/if}
-  {#if duplicateError}<p class="text-sm text-theme-danger" role="alert">
+  {#if duplicateError}<p class="text-sm text-theme-text" role="alert">
       {duplicateError}
     </p>{/if}
-  {#if resumeError}<p class="text-sm text-theme-danger" role="alert">
+  {#if resumeError}<p class="text-sm text-theme-text" role="alert">
       {resumeError}
     </p>{/if}
   {#if selected}<p class="text-sm text-theme-text">
