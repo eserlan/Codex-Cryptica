@@ -377,7 +377,7 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     ).toBe(true);
     expect(
       Boolean(
-        unresolved.compareDocumentPosition(diff) &
+        diff.compareDocumentPosition(unresolved) &
         Node.DOCUMENT_POSITION_FOLLOWING,
       ),
     ).toBe(true);
