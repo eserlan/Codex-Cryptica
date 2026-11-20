@@ -273,8 +273,11 @@ export function guardAdventureOocAnswer(
     .trim()
     .replace(/^```[a-z]*\s*/i, "")
     .replace(/\s*```$/, "")
-    .trim()
-    .slice(0, MAX_OOC_ANSWER_CHARS);
+    .trim();
+
+  if (cleaned.length > MAX_OOC_ANSWER_CHARS) {
+    throw new Error("ooc-answer-too-long");
+  }
 
   if (!cleaned) {
     return {

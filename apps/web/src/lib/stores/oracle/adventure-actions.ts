@@ -39,6 +39,7 @@ export class AdventureActions {
       this.state.session &&
       !this.state.readOnly &&
       question.trim() &&
+      !this.state.rollMutationPending &&
       this.state.phase !== "generating" &&
       !this.state.oocGenerating,
     );
@@ -290,11 +291,17 @@ export class AdventureActions {
       : cause instanceof Error
         ? cause.message
         : String(cause);
-    this.state.oocErrorMessage = message;
     const current = this.state.session;
-    if (!current || current.id !== initialSession.id || this.state.readOnly) {
+    if (
+      !current ||
+      current.id !== initialSession.id ||
+      current.vaultId !== initialSession.vaultId ||
+      this.state.readOnly ||
+      this.runtime.oocController?.signal !== signal
+    ) {
       return;
     }
+    this.state.oocErrorMessage = message;
     if (
       signal.aborted &&
       !current.oocExchanges?.some(

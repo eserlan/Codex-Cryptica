@@ -28,6 +28,8 @@ export class AdventureState {
   oocDraft = $state("");
   /** True while an out-of-character Ask GM clarification request is in flight. */
   oocGenerating = $state(false);
+  /** True while a pending roll outcome is being persisted. */
+  rollMutationPending = $state(false);
   /** Error message for the most recent OOC clarification attempt, if any. */
   oocErrorMessage = $state<string | null>(null);
   /** Uncommitted player-visible narration, cleared on failure or cancellation. */

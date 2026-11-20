@@ -24,7 +24,9 @@
     isOocMode ? (manager.oocDraft ?? "") : (manager.draft ?? ""),
   );
   let busy = $derived(
-    manager.phase === "generating" || Boolean(manager.oocGenerating),
+    manager.phase === "generating" ||
+      Boolean(manager.oocGenerating) ||
+      Boolean(manager.rollMutationPending),
   );
   let playBlockedByRoll = $derived(
     manager.phase === "awaiting-roll" || manager.phase === "ready-to-resolve",
@@ -158,9 +160,11 @@
           class="icon-[lucide--sparkles] h-4 w-4 shrink-0 motion-safe:animate-pulse"
           aria-hidden="true"
         ></span>
-        {manager.oocGenerating
-          ? "GM is answering (out of character)…"
-          : "Oracle is responding…"}
+        {manager.rollMutationPending
+          ? "Recording roll outcome…"
+          : manager.oocGenerating
+            ? "GM is answering (out of character)…"
+            : "Oracle is responding…"}
       </p>
       {#if manager.oocGenerating && manager.oocDraft?.trim()}
         <p class="truncate text-xs text-theme-text" title={manager.oocDraft}>
@@ -172,11 +176,13 @@
         </p>
       {/if}
     </div>
-    <button
-      class="min-h-11 rounded-md border border-theme-text/75 px-3 text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-      type="button"
-      onclick={() => manager.cancel()}>Cancel</button
-    >
+    {#if !manager.rollMutationPending}
+      <button
+        class="min-h-11 rounded-md border border-theme-text/75 px-3 text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        type="button"
+        onclick={() => manager.cancel()}>Cancel</button
+      >
+    {/if}
   </div>
 {/snippet}
 

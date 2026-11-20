@@ -159,12 +159,21 @@ describe("AdventurePlay", () => {
           createdAt: "2026-11-20T12:02:00.000Z",
           updatedAt: "2026-11-20T12:02:01.000Z",
         },
+        {
+          id: "ooc-3",
+          kind: "ooc",
+          question: "Where did the patrol go?",
+          status: "pending",
+          afterTurnCount: 1,
+          createdAt: "2026-11-20T12:03:00.000Z",
+          updatedAt: "2026-11-20T12:03:01.000Z",
+        },
       ],
     });
     render(AdventurePlay, { props: { manager: mgr } });
 
     const cards = screen.getAllByTestId("adventure-ooc-exchange");
-    expect(cards).toHaveLength(2);
+    expect(cards).toHaveLength(3);
     expect(cards[0]?.textContent).toContain("Ask GM · Out of character");
     expect(cards[0]?.textContent).toContain(
       "No game time elapsed · No story changes",
@@ -174,9 +183,15 @@ describe("AdventurePlay", () => {
       "The salvage contract pays 60kcr per survivor.",
     );
 
-    const retryBtn = screen.getByTestId("adventure-ooc-retry");
-    await fireEvent.click(retryBtn);
-    expect(mgr.retryOocQuestion).toHaveBeenCalledWith("ooc-2");
+    const retryButtons = screen.getAllByTestId("adventure-ooc-retry");
+    expect(retryButtons).toHaveLength(2);
+    expect(cards[2]?.textContent).toContain(
+      "This question was interrupted. Retry to continue.",
+    );
+    await fireEvent.click(retryButtons[0]!);
+    await fireEvent.click(retryButtons[1]!);
+    expect(mgr.retryOocQuestion).toHaveBeenNthCalledWith(1, "ooc-2");
+    expect(mgr.retryOocQuestion).toHaveBeenNthCalledWith(2, "ooc-3");
     expect(mgr.submitAction).not.toHaveBeenCalled();
   });
 });

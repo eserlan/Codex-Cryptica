@@ -11,7 +11,7 @@
   } = $props();
 
   let canRetry = $derived(
-    exchange.status === "failed" &&
+    (exchange.status === "failed" || exchange.status === "pending") &&
       !manager.readOnly &&
       manager.phase !== "generating" &&
       !manager.oocGenerating,
@@ -66,7 +66,7 @@
     </div>
   {:else if exchange.status === "pending"}
     <div
-      class="flex items-center gap-2 text-sm text-theme-text"
+      class="flex flex-wrap items-center justify-between gap-2 text-sm text-theme-text"
       role="status"
       data-testid="adventure-ooc-pending"
     >
@@ -74,7 +74,23 @@
         aria-hidden="true"
         class="icon-[lucide--sparkles] h-4 w-4 motion-safe:animate-pulse"
       ></span>
-      <span>GM is checking current player-visible context…</span>
+      <span>
+        {manager.oocGenerating
+          ? "GM is checking current player-visible context…"
+          : "This question was interrupted. Retry to continue."}
+      </span>
+      {#if canRetry}
+        <button
+          type="button"
+          class="inline-flex min-h-8 items-center gap-1 rounded-md border border-theme-text/75 bg-theme-surface px-2.5 py-1 text-xs font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+          data-testid="adventure-ooc-retry"
+          onclick={() => void manager.retryOocQuestion(exchange.id)}
+        >
+          <span aria-hidden="true" class="icon-[lucide--rotate-ccw] h-3.5 w-3.5"
+          ></span>
+          <span>Retry OOC question</span>
+        </button>
+      {/if}
     </div>
   {:else if exchange.status === "failed"}
     <div

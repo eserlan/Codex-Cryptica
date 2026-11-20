@@ -14,9 +14,11 @@ function stripCodeFence(text: string): string {
     .trim();
 }
 
-function truncateOocReply(answer: string): string {
-  if (answer.length <= MAX_OOC_ANSWER_CHARS) return answer;
-  return answer.slice(0, MAX_OOC_ANSWER_CHARS).trimEnd();
+function validateOocReplyLength(answer: string): string {
+  if (answer.length > MAX_OOC_ANSWER_CHARS) {
+    throw new Error("ooc-answer-too-long");
+  }
+  return answer;
 }
 
 function buildOocGeneratePayload(request: AdventureOocRequest) {
@@ -63,7 +65,7 @@ export class AdventureOocService {
     );
     const raw = result.response.text();
     signal?.throwIfAborted();
-    const answer = truncateOocReply(stripCodeFence(raw));
+    const answer = validateOocReplyLength(stripCodeFence(raw));
     if (!answer) throw new Error("empty-ooc-answer");
     return { kind: "ooc", answer };
   }

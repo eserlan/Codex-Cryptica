@@ -55,6 +55,129 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
     });
     expect(manager.oocGenerating).toBe(false);
   });
+
+  it("aborts OOC work on destroy without publishing a stale failure", async () => {
+    const base = dependencies();
+    let started!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const ask = vi.fn(
+      (_request: unknown, { signal }: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          started();
+          signal.addEventListener("abort", () => reject(new Error("aborted")));
+        }),
+    );
+    const manager = new AdventureManager({ ...base, ooc: { ask } } as any);
+    await manager.start(startInput);
+
+    const request = manager.submitOocQuestion("What happened?");
+    await ready;
+    await manager.destroy();
+    await request;
+
+    expect(ask.mock.calls[0]?.[1].signal.aborted).toBe(true);
+    expect(manager.oocErrorMessage).toBeNull();
+    expect(manager.oocGenerating).toBe(false);
+  });
+
+  it("allows retrying a persisted pending question after reopening", async () => {
+    const base = dependencies();
+    let storedSession: any = null;
+    const askOoc = vi.fn(async (request: AdventureOocRequest) => ({
+      kind: "ooc" as const,
+      answer: `Clarified: ${request.question}`,
+    }));
+    const deps = {
+      ...base,
+      repository: {
+        ...base.repository,
+        async save(_rev: number | null, session: any) {
+          storedSession = parseAdventureSession(
+            JSON.parse(JSON.stringify(session)),
+          );
+          return { ok: true, session: storedSession };
+        },
+        async load() {
+          return { condition: "normal" as const, session: storedSession };
+        },
+      },
+      ooc: { ask: askOoc },
+    };
+    const first = new AdventureManager(deps as any);
+    await first.start(startInput);
+    const pending = {
+      id: "ooc-interrupted",
+      kind: "ooc",
+      question: "Where is the exit?",
+      status: "pending",
+      afterTurnCount: first.session!.turns.length,
+      createdAt: "2026-11-20T12:00:00.000Z",
+      updatedAt: "2026-11-20T12:00:00.000Z",
+    };
+    storedSession = parseAdventureSession({
+      ...storedSession,
+      revision: storedSession.revision + 1,
+      oocExchanges: [pending],
+    });
+
+    const reopened = new AdventureManager(deps as any);
+    await reopened.open(startInput.vaultId, first.session!.id);
+    expect(reopened.oocExchanges[0]?.status).toBe("pending");
+
+    await reopened.retryOocQuestion("ooc-interrupted");
+
+    expect(reopened.oocExchanges[0]).toMatchObject({
+      status: "answered",
+      answer: "Clarified: Where is the exit?",
+    });
+  });
+
+  it("prevents OOC and roll persistence from overlapping", async () => {
+    const base = dependencies();
+    let releaseAsk!: () => void;
+    let askStarted!: () => void;
+    const askReady = new Promise<void>((resolve) => {
+      askStarted = resolve;
+    });
+    const ask = vi.fn(
+      () =>
+        new Promise<{ kind: "ooc"; answer: string }>((resolve) => {
+          releaseAsk = () =>
+            resolve({ kind: "ooc", answer: "The exit is east." });
+          askStarted();
+        }),
+    );
+    const manager = new AdventureManager({ ...base, ooc: { ask } } as any);
+    await manager.start(startInput);
+    manager.rollMutationPending = true;
+    await manager.submitOocQuestion("A concurrent question");
+    expect(ask).not.toHaveBeenCalled();
+    manager.rollMutationPending = false;
+    manager.session!.pendingRoll = {
+      id: "roll-ooc-overlap",
+      inputId: "input-roll-ooc-overlap",
+      playerAction: "Cross the bridge",
+      uncertainty: "Will it hold?",
+      stakes: "The crossing could collapse.",
+      resolutionStatus: "awaiting-outcome",
+      createdAt: "2026-11-20T12:00:00.000Z",
+    };
+
+    const oocRequest = manager.submitOocQuestion("What is the bridge made of?");
+    await askReady;
+    const revisionDuringOoc = manager.session!.revision;
+    await manager.recordRollOutcome({ kind: "numeric", value: 12 });
+    expect(manager.session!.revision).toBe(revisionDuringOoc);
+    expect(manager.session!.pendingRoll?.suppliedOutcome).toBeUndefined();
+
+    releaseAsk();
+    await oocRequest;
+    expect(manager.oocExchanges[0]?.status).toBe("answered");
+    expect(manager.session!.pendingRoll?.suppliedOutcome).toBeUndefined();
+  });
+
   it("answers OOC questions without advancing turns, world time, rolls, discoveries, or provider turn interactions", async () => {
     const base = dependencies();
     const oocRequests: AdventureOocRequest[] = [];

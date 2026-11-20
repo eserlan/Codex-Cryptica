@@ -381,6 +381,12 @@ describe("Adventure OOC clarification engine", () => {
     expect(leakedPackageSecret.answer).toBe(OOC_SAFE_SECRET_REPLY);
   });
 
+  it("rejects over-limit answers instead of returning a clipped success", () => {
+    expect(() =>
+      guardAdventureOocAnswer("x".repeat(2_001), makeSession()),
+    ).toThrow("ooc-answer-too-long");
+  });
+
   it("persists OOC exchanges without mutating turns, time, recap, story summary, or canonical transcript", () => {
     const session = makeSession();
     const updated = upsertAdventureOocExchange(

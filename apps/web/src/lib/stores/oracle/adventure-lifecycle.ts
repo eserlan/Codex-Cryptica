@@ -208,6 +208,7 @@ export class AdventureLifecycle {
     this.state.composerMode = "play";
     this.state.oocDraft = "";
     this.state.oocGenerating = false;
+    this.state.rollMutationPending = false;
     this.state.oocErrorMessage = null;
     this.state.packageUnavailable = null;
     if (this.state.errorCause === "package-unavailable")
@@ -421,6 +422,9 @@ export class AdventureLifecycle {
     this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
+    this.runtime.oocController?.abort();
+    this.runtime.oocController = null;
+    this.state.oocGenerating = false;
     await this.runtime.deps.coordinator.stop();
     this.state.lease = null;
   }

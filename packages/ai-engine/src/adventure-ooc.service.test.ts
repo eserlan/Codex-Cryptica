@@ -51,4 +51,17 @@ describe("AdventureOocService", () => {
       service.ask({ ...sampleRequest, kind: "play" as "ooc" }),
     ).rejects.toThrow("invalid-ooc-request");
   });
+
+  it("rejects over-limit replies instead of saving a clipped answer", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: { text: () => "x".repeat(2_001) },
+    });
+    const service = new AdventureOocService({
+      getModel: vi.fn().mockResolvedValue({ generateContent }),
+    });
+
+    await expect(service.ask(sampleRequest)).rejects.toThrow(
+      "ooc-answer-too-long",
+    );
+  });
 });

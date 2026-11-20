@@ -6,6 +6,9 @@
     Boolean(manager.session?.pendingRoll?.suppliedOutcome),
   );
   let outcomeBands = $derived(manager.session?.pendingRoll?.dice?.bands ?? []);
+  let actionsDisabled = $derived(
+    recorded || manager.oocGenerating || manager.rollMutationPending,
+  );
   async function report() {
     if (outcome.trim())
       await manager.recordRollOutcome({ kind: "narrative", value: outcome });
@@ -29,6 +32,15 @@
     <p class="text-sm text-theme-primary">
       {manager.session.pendingRoll.uncertainty}
     </p>
+    {#if manager.oocGenerating}
+      <p class="text-sm text-theme-text" role="status">
+        Finish or cancel the GM clarification before recording this roll.
+      </p>
+    {:else if manager.rollMutationPending}
+      <p class="text-sm text-theme-text" role="status">
+        Recording the roll outcome…
+      </p>
+    {/if}
     <p class="text-sm text-theme-secondary">
       <strong>At stake:</strong>
       {manager.session.pendingRoll.stakes}
@@ -91,6 +103,7 @@
         <button
           class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary"
           type="button"
+          disabled={manager.oocGenerating || manager.rollMutationPending}
           onclick={() => void manager.resolveRoll()}>Retry resolution</button
         >
       {:else}
@@ -107,24 +120,24 @@
         id="roll-outcome"
         class="w-full rounded-md border border-theme-border bg-theme-surface px-3 py-2 text-theme-primary"
         bind:value={outcome}
-        disabled={recorded}
+        disabled={actionsDisabled}
       />
       <div class="flex flex-wrap gap-2">
         <button
           class="min-h-12 rounded-md bg-theme-primary px-4 py-2 text-theme-on-primary"
           type="button"
-          disabled={recorded}
+          disabled={actionsDisabled}
           onclick={() => void report()}>Report outcome</button
         >{#if manager.session.pendingRoll.dice}<button
             class="min-h-12 rounded-md border border-theme-border px-4 py-2 text-theme-primary"
             type="button"
-            disabled={recorded}
+            disabled={actionsDisabled}
             onclick={() => void manager.rollCodexDice()}
             >Roll {manager.session.pendingRoll.dice.expression}</button
           >{/if}<button
           class="min-h-12 rounded-md border border-theme-border px-4 py-2 text-theme-primary"
           type="button"
-          disabled={recorded}
+          disabled={actionsDisabled}
           onclick={() => void manager.dismissRoll()}>Change approach</button
         >
       </div>
