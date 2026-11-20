@@ -62,6 +62,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       ? historicalAnchorBehavior(input.session.historicalAnchor)
       : []),
     phaseInstruction,
+    "Treat a described action or question as the character doing it, even when the player paraphrases instead of writing dialogue. Answer the substance in the same turn: for example, questioning a witness about an attack means asking what they saw, not waiting for the player to repeat the question verbatim. Follow the current action's intended target when the player switches people or activities; an earlier conversation does not prevent that switch. A present witness may respond even if absent from activeCharacters. Ask for clarification only when a material detail is genuinely ambiguous; do not invent an unfinished question. Respect established knowledge and uncertainty: a witness can say what they know, do not know, or offer a credible lead without inventing hidden facts.",
     ...worldStyleBehavior(input.worldStyle),
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
     'You are the world, so speak in the fiction. Never say what has or has not been "established", never refer to your own knowledge or to being an AI, and never refuse a harmless question about the scene.',

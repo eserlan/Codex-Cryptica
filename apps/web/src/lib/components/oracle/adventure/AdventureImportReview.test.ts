@@ -377,7 +377,7 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     ).toBe(true);
     expect(
       Boolean(
-        unresolved.compareDocumentPosition(diff) &
+        diff.compareDocumentPosition(unresolved) &
         Node.DOCUMENT_POSITION_FOLLOWING,
       ),
     ).toBe(true);
@@ -1022,5 +1022,81 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
         screen.getByTestId(`entity-unresolved-marker-${entityId}`).textContent,
       ).toContain("1 unresolved");
     }
+  });
+
+  it("keeps Cancel, Approve, and Start adventure accessible in a sticky footer without silent auto-start (#5063)", async () => {
+    const draft = createTestAdventureJson();
+    const onApprove = vi.fn().mockResolvedValue(undefined);
+    const onStartAdventure = vi.fn();
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove,
+        onStartAdventure,
+        onCancel: vi.fn(),
+      },
+    });
+
+    const footer = screen.getByTestId("adventure-review-footer");
+    const review = screen.getByTestId("adventure-import-review");
+    const content = screen.getByTestId("adventure-review-content");
+    expect(review.className).toContain("grid-rows-[minmax(0,1fr)_auto]");
+    expect(content.className).toContain("overflow-y-auto");
+    expect(review.lastElementChild).toBe(footer);
+    const footerText = footer.textContent?.replace(/\s+/g, " ");
+    expect(footerText).toContain("Validation stays on this device");
+    expect(footerText).toContain(
+      "Imported packages are not included in Cloud Backup",
+    );
+    expect(footerText).toContain(
+      "relevant excerpts may be sent to your selected Oracle AI provider",
+    );
+    const noticeLink = footer.querySelector('a[href="#adventure-ai-notice"]');
+    expect(noticeLink).toBeTruthy();
+
+    // Approve does not silently auto-start
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+    await waitFor(() => {
+      expect(onApprove).toHaveBeenCalledTimes(1);
+    });
+    expect(onStartAdventure).not.toHaveBeenCalled();
+
+    const startButton = await screen.findByTestId(
+      "adventure-review-start-button",
+    );
+    await fireEvent.click(startButton);
+    expect(onStartAdventure).toHaveBeenCalledTimes(1);
+    expect(onStartAdventure.mock.calls[0]![1]).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("shows blocking feedback in the sticky footer and never approves invalid drafts (#5063)", async () => {
+    const invalidDraft = createTestAdventureJson();
+    invalidDraft.scenes = [
+      {
+        ...invalidDraft.scenes[0]!,
+        locationId: "missing-loc-for-footer-test",
+      },
+    ];
+    const onApprove = vi.fn();
+
+    render(AdventureImportReview, {
+      props: {
+        draft: invalidDraft,
+        onApprove,
+        onCancel: vi.fn(),
+      },
+    });
+
+    const footer = screen.getByTestId("adventure-review-footer");
+    expect(footer.textContent?.replace(/\s+/g, " ")).toContain(
+      "Blocked: 1 validation error",
+    );
+
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+    expect(onApprove).not.toHaveBeenCalled();
+    expect(screen.getByTestId("adventure-approve-error").textContent).toContain(
+      "missing-loc-for-footer-test",
+    );
   });
 });
