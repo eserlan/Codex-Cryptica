@@ -70,6 +70,45 @@ function setup() {
 }
 
 describe("creature import dialog", () => {
+  it("describes creature actors without encounter links", () => {
+    const unlinkedPackage = {
+      ...pkg,
+      actors: [
+        {
+          id: "unlinked-creature",
+          name: "Unlinked Creature",
+          kind: "creature",
+          visibility: "player-visible",
+          epistemicStatus: "source-stated",
+        },
+      ],
+      encounters: [],
+    } as unknown as AdventureJsonV1;
+    render(AdventureCreatureImportDialog, {
+      item: { ...item, package: unlinkedPackage },
+      environment: {
+        importDeps: {
+          getVaultId: () => "v1",
+          createEntity: vi.fn(async () => "id"),
+          saveImage: vi.fn(async () => ({ ok: true as const })),
+        },
+        listCreatures: () => [],
+      },
+      onClose: vi.fn(),
+    });
+
+    expect(
+      screen.getByText(
+        "Creature actors from this adventure. Encounter links are shown when available. Nothing is saved until you confirm.",
+      ),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByTestId("creature-import-item-0")).queryAllByRole(
+        "listitem",
+      ),
+    ).toHaveLength(0);
+  });
+
   it("reviews, previews and writes only on confirm", async () => {
     const { createEntity } = setup();
     expect(screen.getByRole("dialog", { name: "Create creature entries" }));
