@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   buildCreatureEntryText,
@@ -227,5 +229,67 @@ describe("entry text safety", () => {
       encounters: [encounter("pages", ["page-a", "page-b"])],
     } as AdventureJsonV1;
     expect(buildCreatureProposals(pagePackage)[0]!.pages).toEqual([2, 4]);
+  });
+});
+
+describe("buildCreatureProposals actor kind", () => {
+  const base = { ...pkg, source: pkg.source } as AdventureJsonV1;
+  const build = (actors: unknown[], encounters: unknown[]) =>
+    buildCreatureProposals({
+      ...base,
+      actors,
+      encounters,
+    } as unknown as AdventureJsonV1);
+
+  it("proposes a creature actor that no encounter references", () => {
+    const result = build([actor("a-1", "Dire Rat", { kind: "creature" })], []);
+    expect(result.map((p) => p.name)).toEqual(["Dire Rat"]);
+    expect(result[0]!.encounters).toEqual([]);
+  });
+
+  it("lists the encounters that do reference a creature actor", () => {
+    const result = build(
+      [actor("a-1", "Dire Rat", { kind: "creature" })],
+      [encounter("e-1", ["a-1"], { title: "Cellar" })],
+    );
+    expect(result[0]!.encounters.map((e) => e.id)).toEqual(["e-1"]);
+  });
+
+  it("never proposes a character actor, even in an encounter", () => {
+    const result = build(
+      [actor("a-1", "Wick", { kind: "character" })],
+      [encounter("e-1", ["a-1"])],
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("decides each actor on its own in a mixed package", () => {
+    const result = build(
+      [
+        actor("a-c", "Hero", { kind: "character" }),
+        actor("a-m", "Ogre", { kind: "creature" }),
+        actor("a-linked", "Bandit"),
+        actor("a-free", "Hermit"),
+        actor("a-char-linked", "Mayor", { kind: "character" }),
+      ],
+      [encounter("e-1", ["a-linked", "a-char-linked"])],
+    );
+    expect(result.map((p) => p.name)).toEqual(["Ogre", "Bandit"]);
+  });
+
+  it("proposes nothing for the reference one-shot, but Wick for the sparse variant", () => {
+    const root = resolve(import.meta.dir, "../../..");
+    const load = (path: string) =>
+      JSON.parse(readFileSync(resolve(root, path), "utf8")) as AdventureJsonV1;
+    expect(
+      buildCreatureProposals(
+        load("fixtures/adventures/reference-one-shot/adventure.v1.json"),
+      ),
+    ).toEqual([]);
+    expect(
+      buildCreatureProposals(
+        load("fixtures/adventures/reference-one-shot/variants/sparse.v1.json"),
+      ).map((p) => p.name),
+    ).toContain("Wick");
   });
 });

@@ -35,6 +35,7 @@
     {
       "id": "actor-captain-haldor",
       "name": "Captain Haldor",
+      "kind": "character",
       "summary": "Pragmatic town watch captain who wants the light stopped without burning the dome.",
       "role": "Quest giver",
       "locationId": "loc-observatory-hill",
@@ -44,6 +45,7 @@
     {
       "id": "actor-apprentice-lin",
       "name": "Lin",
+      "kind": "character",
       "summary": "A runaway clockmaker's apprentice hiding beneath the orrery.",
       "disposition": "nervous",
       "locationId": "loc-lens-gallery",
