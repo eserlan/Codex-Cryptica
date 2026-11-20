@@ -565,12 +565,12 @@
     --adventure-scrollbar-track: var(--color-bg-primary);
     --adventure-scrollbar-thumb: color-mix(
       in srgb,
-      var(--color-accent-primary) 55%,
+      var(--color-accent-primary) 80%,
       var(--color-bg-surface)
     );
     --adventure-scrollbar-thumb-hover: color-mix(
       in srgb,
-      var(--color-accent-primary) 75%,
+      var(--color-accent-primary) 90%,
       var(--color-bg-surface)
     );
 
@@ -601,6 +601,13 @@
     .adventure-scrollbar {
       scrollbar-color: auto;
       scrollbar-width: auto;
+    }
+
+    .adventure-scrollbar::-webkit-scrollbar,
+    .adventure-scrollbar::-webkit-scrollbar-track,
+    .adventure-scrollbar::-webkit-scrollbar-thumb,
+    .adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+      all: revert;
     }
   }
 </style>

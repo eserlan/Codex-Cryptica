@@ -1,6 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import * as schema from "schema";
 import { FANTASY_DARK, SCIFI_LIGHT, THEMES } from "schema";
 
 const playSurface = resolve(
@@ -8,6 +9,70 @@ const playSurface = resolve(
   "src/lib/components/oracle/adventure/AdventureFocusPlay.svelte",
 );
 const themeStore = resolve(process.cwd(), "src/lib/stores/theme.svelte.ts");
+const BASE_THUMB_ACCENT_SHARE = 0.8;
+const HOVER_THUMB_ACCENT_SHARE = 0.9;
+
+interface Palette {
+  id: string;
+  tokens: { primary: string; surface: string; background: string };
+}
+
+function parseHexColor(value: string): [number, number, number] {
+  const match = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(value);
+  if (!match) throw new Error(`Expected a six-digit hex color, got ${value}`);
+  return [
+    Number.parseInt(match[1]!, 16),
+    Number.parseInt(match[2]!, 16),
+    Number.parseInt(match[3]!, 16),
+  ];
+}
+
+function mixSrgb(
+  foreground: string,
+  background: string,
+  foregroundShare: number,
+): [number, number, number] {
+  const foregroundRgb = parseHexColor(foreground);
+  const backgroundRgb = parseHexColor(background);
+  return foregroundRgb.map((channel, index) =>
+    Math.round(
+      channel * foregroundShare + backgroundRgb[index]! * (1 - foregroundShare),
+    ),
+  ) as [number, number, number];
+}
+
+function relativeLuminance([red, green, blue]: [number, number, number]) {
+  const linear = (channel: number) => {
+    const normalized = channel / 255;
+    return normalized <= 0.04045
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * linear(red) + 0.7152 * linear(green) + 0.0722 * linear(blue);
+}
+
+function contrastRatio(
+  first: [number, number, number],
+  second: [number, number, number],
+): number {
+  const firstLuminance = relativeLuminance(first);
+  const secondLuminance = relativeLuminance(second);
+  return (
+    (Math.max(firstLuminance, secondLuminance) + 0.05) /
+    (Math.min(firstLuminance, secondLuminance) + 0.05)
+  );
+}
+
+const allPalettes = [
+  ...Object.values(THEMES),
+  ...Object.values(schema).filter(
+    (value): value is Palette =>
+      typeof value === "object" && value !== null && "tokens" in value,
+  ),
+].filter(
+  (palette, index, palettes) =>
+    palettes.findIndex((candidate) => candidate.id === palette.id) === index,
+);
 
 describe("Adventure Mode scrollbar theme contract (#5069)", () => {
   it("uses live world-theme tokens, not a fixed sci-fi scrollbar palette", async () => {
@@ -48,5 +113,61 @@ describe("Adventure Mode scrollbar theme contract (#5069)", () => {
     );
     expect(FANTASY_DARK.tokens.primary).not.toBe(THEMES.fantasy.tokens.primary);
     expect(SCIFI_LIGHT.tokens.primary).not.toBe(THEMES.scifi.tokens.primary);
+  });
+
+  it("keeps base and hover scrollbar thumbs visible across every theme palette", async () => {
+    const component = await readFile(playSurface, "utf8");
+    const stylesheet = component.slice(component.lastIndexOf("<style>"));
+
+    expect(stylesheet).toContain("var(--color-accent-primary) 80%");
+    expect(stylesheet).toContain("var(--color-accent-primary) 90%");
+    expect(allPalettes.length).toBeGreaterThan(30);
+
+    for (const palette of allPalettes) {
+      const track = parseHexColor(palette.tokens.background);
+      const baseThumb = mixSrgb(
+        palette.tokens.primary,
+        palette.tokens.surface,
+        BASE_THUMB_ACCENT_SHARE,
+      );
+      const hoverThumb = mixSrgb(
+        palette.tokens.primary,
+        palette.tokens.surface,
+        HOVER_THUMB_ACCENT_SHARE,
+      );
+      const baseContrast = contrastRatio(baseThumb, track);
+      const hoverContrast = contrastRatio(hoverThumb, track);
+
+      expect(baseContrast, `${palette.id} base thumb`).toBeGreaterThanOrEqual(
+        3,
+      );
+      expect(hoverContrast, `${palette.id} hover thumb`).toBeGreaterThanOrEqual(
+        3,
+      );
+      expect(hoverContrast, `${palette.id} hover strength`).toBeGreaterThan(
+        baseContrast,
+      );
+    }
+  });
+
+  it("reverts custom scrollbar styling in forced-colours mode", async () => {
+    const component = await readFile(playSurface, "utf8");
+    const stylesheet = component.slice(component.lastIndexOf("<style>"));
+    const forcedColours = stylesheet.match(
+      /@media \(forced-colors:\s+active\)\s*\{([\s\S]*?)\n\s{2}\}/,
+    )?.[1];
+
+    expect(forcedColours).toBeDefined();
+    expect(forcedColours).toContain("scrollbar-color: auto");
+    expect(forcedColours).toContain("scrollbar-width: auto");
+    for (const pseudoElement of [
+      "::-webkit-scrollbar",
+      "::-webkit-scrollbar-track",
+      "::-webkit-scrollbar-thumb",
+      "::-webkit-scrollbar-thumb:hover",
+    ]) {
+      expect(forcedColours).toContain(`.adventure-scrollbar${pseudoElement}`);
+    }
+    expect(forcedColours).toContain("all: revert");
   });
 });
