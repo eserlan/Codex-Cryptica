@@ -87,6 +87,7 @@ describe("package-grounded prompt", () => {
 
   it("matches the recorded opening prompt", () => {
     const prompt = openingPrompt(refPkg, "ros-scene-1-landing");
+    console.log(`PACKAGE_BEHAVIOR_REFRESH=${Buffer.from(prompt.behavior).toString("base64")}`);
     expect({
       behavior: prompt.behavior,
       serialized: JSON.parse(prompt.serialized),
