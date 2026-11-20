@@ -37,7 +37,9 @@
   class="flex min-w-0 flex-col gap-2 md:flex-row"
   data-testid="archive-entry-display"
 >
-  <div class="flex min-w-0 flex-1 flex-col justify-center gap-1 rounded-md border border-theme-border px-3 py-2 text-theme-text">
+  <div
+    class="flex min-w-0 flex-1 flex-col justify-center gap-1 rounded-md border border-theme-border px-3 py-2 text-theme-text"
+  >
     <div class="flex min-w-0 items-center justify-between gap-3">
       <button
         class="min-w-0 break-words [overflow-wrap:anywhere] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
@@ -47,20 +49,25 @@
       >
         {entry.title}
       </button>
-      <span class="shrink-0 rounded-full border border-theme-border px-2 py-1 text-xs text-theme-text">
+      <span
+        class="shrink-0 rounded-full border border-theme-border px-2 py-1 text-xs text-theme-text"
+      >
         {entry.loadCondition === "unreadable" ? "Unreadable" : entry.status}
       </span>
     </div>
     {#if entry.sourcePackage}
-      <details class="min-w-0 max-w-full font-mono text-xs text-theme-muted">
+      <details class="min-w-0 max-w-full font-mono text-xs text-theme-text">
         <summary
           class="w-fit max-w-full cursor-pointer break-all rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           data-testid="archive-entry-source-package"
         >
-          v{entry.sourcePackage.version} · {entry.sourcePackage.packageId.slice(0, 24)}{entry
-            .sourcePackage.packageId.length > 24
-            ? "…"
-            : ""} · {entry.sourcePackage.hash.slice(0, 8)}
+          v{entry.sourcePackage.version} · {entry.sourcePackage.packageId.slice(
+            0,
+            24,
+          )}{entry.sourcePackage.packageId.length > 24 ? "…" : ""} · {entry.sourcePackage.hash.slice(
+            0,
+            8,
+          )}
         </summary>
         <span class="mt-1 block break-all text-theme-text">
           Package ID: {entry.sourcePackage.packageId}<br />
@@ -74,7 +81,7 @@
   <div class="flex min-w-0 flex-wrap items-center gap-2 md:flex-nowrap">
     {#if canEdit}
       <button
-        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         type="button"
         onclick={onStartRename}
         aria-label="Rename adventure {entry.title}"
@@ -83,7 +90,7 @@
         <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
       </button>
       <button
-        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-primary/10 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         type="button"
         onclick={onDuplicate}
         disabled={duplicating}
@@ -96,7 +103,7 @@
 
     {#if entry.status === "active" && isReadable && onResume}
       <button
-        class="order-first flex min-h-11 items-center justify-center rounded-md bg-theme-primary px-4 text-sm font-semibold text-theme-bg transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:order-last"
+        class="order-first flex min-h-11 items-center justify-center rounded-md bg-theme-primary px-4 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:order-last"
         type="button"
         onclick={onResume}
         aria-label="Resume active adventure {entry.title}"
@@ -107,7 +114,7 @@
 
     {#if entry.status === "archived" && isReadable && onResumeArchived}
       <button
-        class="order-first flex min-h-11 items-center justify-center rounded-md bg-theme-primary px-4 text-sm font-semibold text-theme-bg transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:order-last"
+        class="order-first flex min-h-11 items-center justify-center rounded-md bg-theme-primary px-4 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:order-last"
         type="button"
         onclick={onResumeArchived}
         disabled={resuming}
@@ -119,7 +126,7 @@
 
     {#if canDelete}
       <button
-        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-danger/50 text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-danger"
+        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-danger/10 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
         type="button"
         onclick={onDelete}
         disabled={deleting}

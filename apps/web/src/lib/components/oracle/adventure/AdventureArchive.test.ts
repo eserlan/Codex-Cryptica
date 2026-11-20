@@ -160,7 +160,7 @@ describe("AdventureArchive", () => {
       onResume: vi.fn(async () => undefined),
     });
 
-    const openButton = await screen.findByRole("button", {
+    await screen.findByRole("button", {
       name: "Open adventure Electric Razor and the Extremely Long Adventure Title",
     });
     const card = screen.getByTestId("archive-entry-display");
