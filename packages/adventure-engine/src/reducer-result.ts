@@ -1,7 +1,14 @@
 import type { AdventureSession, AdventureValidationError } from "./types";
 
-export function error(code: AdventureValidationError["code"], message: string) {
-  return { ok: false as const, errors: [{ code, message }] };
+export function error(
+  code: AdventureValidationError["code"],
+  message: string,
+  diagnostic?: AdventureValidationError["diagnostic"],
+) {
+  return {
+    ok: false as const,
+    errors: [diagnostic ? { code, message, diagnostic } : { code, message }],
+  };
 }
 
 export function idAllocationError() {

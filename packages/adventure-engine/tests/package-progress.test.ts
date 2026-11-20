@@ -76,8 +76,18 @@ describe("package scene progress", () => {
     });
     expect(textResult).toMatchObject({
       ok: false,
-      errors: [{ code: "hidden-leakage" }],
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-text",
+            field: "root.narration",
+            sourceRef: "pinned-package-text",
+          },
+        },
+      ],
     });
+    expect(JSON.stringify(textResult)).not.toContain(secret);
 
     const leakedId = proposal();
     leakedId.narration = "A figure appears.";
@@ -92,8 +102,53 @@ describe("package scene progress", () => {
     });
     expect(idResult).toMatchObject({
       ok: false,
-      errors: [{ code: "hidden-leakage" }],
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-id",
+            field: "root.suggestedActions[0]",
+            sourceRef: "pinned-package-id",
+          },
+        },
+      ],
     });
+    expect(JSON.stringify(idResult)).not.toContain("hidden-actor");
+  });
+
+  it("classifies session secret leakage with opaque diagnostic metadata", () => {
+    const secretText = "The mayor forged the harbor charter";
+    const withSecret = {
+      ...packageSession(),
+      hiddenState: {
+        ...packageSession().hiddenState,
+        secrets: [
+          {
+            id: "secret-harbor-forged",
+            text: secretText,
+            status: "hidden" as const,
+          },
+        ],
+      },
+    };
+    const leaked = proposal();
+    leaked.narration = `Word spreads that ${secretText}.`;
+    const result = applyCompletedTurn(withSecret, leaked, meta);
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "scenario-secret",
+            field: "root.narration",
+            sourceRef: "session-secret",
+          },
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain(secretText);
+    expect(JSON.stringify(result)).not.toContain("secret-harbor-forged");
   });
 
   it("rejects short exact package secrets without matching longer numbers", () => {
