@@ -133,68 +133,102 @@ export class SearchIndexPipeline {
     const api = await this.getApi();
     const batchSpan = this.performanceRecorder.start("search_index_batch");
 
-    const queued = this.indexQueue.then(async () => {
-      try {
-        for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
-          const chunkEntries: any[] = [];
-          const end = Math.min(i + INDEX_BATCH_SIZE, entities.length);
-          for (let j = i; j < end; j++) {
-            chunkEntries.push(this.mapToSearchEntry(entities[j]));
-          }
-          const cleanChunkEntries = snapshotValue(chunkEntries);
-
-          if (context) {
-            if (!this.coordinator.isActiveRun(context.vaultId, context.runId)) {
-              batchSpan.stale(() => ({ indexedInputCount: entities.length }));
-              return;
-            }
-            const result: ProgressiveBatchResult =
-              await api.addBatchProgressive(cleanChunkEntries, {
-                runId: context.runId,
-                vaultId: context.vaultId,
-                batchIndex: Math.floor(i / INDEX_BATCH_SIZE),
-                indexedBefore: this.coordinator.getIndexProgress().indexedCount,
-                totalCount: context.totalCount,
-              });
-            if (this.coordinator.isActiveRun(result.vaultId, result.runId)) {
-              const indexedCount =
-                this.coordinator.getIndexProgress().indexedCount +
-                result.acceptedCount;
-              this.coordinator.emitProgress({
-                status: "partial",
-                vaultId: result.vaultId,
-                runId: result.runId,
-                indexedCount,
-                totalCount: context.totalCount,
-                isPartial: true,
-                canRetry: false,
-                message:
-                  context.totalCount === null
-                    ? "Search is still indexing."
-                    : `Search is still indexing (${indexedCount}/${context.totalCount}).`,
-                error:
-                  result.failedIds.length > 0
-                    ? `Failed to index ${result.failedIds.length} records.`
-                    : null,
-              });
-            }
-          } else {
-            await api.addBatch(cleanChunkEntries);
-          }
-          await this.delay(0);
-        }
-        batchSpan.complete(() => ({ indexedInputCount: entities.length }));
-      } catch (error) {
-        batchSpan.fail("unexpected");
-        throw error;
-      }
-    });
+    const queued = this.indexQueue.then(() =>
+      this.runQueuedBatch(api, entities, context, batchSpan),
+    );
 
     this.indexQueue = queued.catch((err) => {
       this.debug.warn("Index batch error", err);
     });
 
     return context ? queued : this.indexQueue;
+  }
+
+  private async runQueuedBatch(
+    api: Comlink.Remote<PipelineApi> | PipelineApi,
+    entities: any[],
+    context:
+      { runId: string; vaultId: string; totalCount: number | null } | undefined,
+    batchSpan: ReturnType<PerformanceRecorder["start"]>,
+  ): Promise<void> {
+    try {
+      for (let i = 0; i < entities.length; i += INDEX_BATCH_SIZE) {
+        const chunk = entities
+          .slice(i, i + INDEX_BATCH_SIZE)
+          .map((entity) => this.mapToSearchEntry(entity));
+        const cleanChunk = snapshotValue(chunk);
+        const isStale = await this.processIndexChunk(
+          api,
+          cleanChunk,
+          Math.floor(i / INDEX_BATCH_SIZE),
+          context,
+        );
+        if (isStale) {
+          batchSpan.stale(() => ({ indexedInputCount: entities.length }));
+          return;
+        }
+        await this.delay(0);
+      }
+      batchSpan.complete(() => ({ indexedInputCount: entities.length }));
+    } catch (error) {
+      batchSpan.fail("unexpected");
+      throw error;
+    }
+  }
+
+  private async processIndexChunk(
+    api: Comlink.Remote<PipelineApi> | PipelineApi,
+    entries: SearchEntry[],
+    batchIndex: number,
+    context:
+      { runId: string; vaultId: string; totalCount: number | null } | undefined,
+  ): Promise<boolean> {
+    if (!context) {
+      await api.addBatch(entries);
+      return false;
+    }
+    if (!this.coordinator.isActiveRun(context.vaultId, context.runId))
+      return true;
+
+    const result: ProgressiveBatchResult = await api.addBatchProgressive(
+      entries,
+      {
+        runId: context.runId,
+        vaultId: context.vaultId,
+        batchIndex,
+        indexedBefore: this.coordinator.getIndexProgress().indexedCount,
+        totalCount: context.totalCount,
+      },
+    );
+    if (this.coordinator.isActiveRun(result.vaultId, result.runId)) {
+      this.emitProgressForIndexedChunk(result, context.totalCount);
+    }
+    return false;
+  }
+
+  private emitProgressForIndexedChunk(
+    result: ProgressiveBatchResult,
+    totalCount: number | null,
+  ): void {
+    const indexedCount =
+      this.coordinator.getIndexProgress().indexedCount + result.acceptedCount;
+    this.coordinator.emitProgress({
+      status: "partial",
+      vaultId: result.vaultId,
+      runId: result.runId,
+      indexedCount,
+      totalCount,
+      isPartial: true,
+      canRetry: false,
+      message:
+        totalCount === null
+          ? "Search is still indexing."
+          : `Search is still indexing (${indexedCount}/${totalCount}).`,
+      error:
+        result.failedIds.length > 0
+          ? `Failed to index ${result.failedIds.length} records.`
+          : null,
+    });
   }
 
   async rebuildFromEntities(
@@ -269,10 +303,8 @@ export class SearchIndexPipeline {
 
     this.debug.log(`[SearchIndexPipeline] Starting background content sync...`);
     const start = this.measureClock.now();
-    let indexedCount = 0;
     const runId =
       this.coordinator.activeRunId ?? this.coordinator.createRunId(vaultId);
-    let totalCount: number | null;
 
     try {
       // Give user input and pending search queries a turn before the first
@@ -281,93 +313,137 @@ export class SearchIndexPipeline {
       if (this.coordinator.activeVaultId !== vaultId) return;
 
       const db = this.getDb();
-      const contentQuery = db.entityContent.where("vaultId").equals(vaultId);
-      totalCount =
-        typeof contentQuery.count === "function"
-          ? await contentQuery.count()
-          : null;
-
-      this.coordinator.emitProgress({
-        ...this.coordinator.getIndexProgress(),
-        status: "partial",
-        indexedCount: 0,
+      const totalCount = await this.countContentRecords(db, vaultId);
+      this.emitContentIndexingProgress(totalCount);
+      const metadata = await this.loadContentMetadata(db, vaultId);
+      const indexedContent = await this.indexBackgroundContentRecords(
+        db,
+        vaultId,
+        runId,
         totalCount,
-        message: "Search is indexing note content.",
-      });
-
-      const metadatas = await db.graphEntities
-        .where("vaultId")
-        .equals(vaultId)
-        .toArray();
-
-      const metaMap = new Map(metadatas.map((m: any) => [m.id, m]));
-      let lastSeenId = "";
-
-      while (true) {
-        if (this.coordinator.activeVaultId !== vaultId) {
-          this.debug.log(
-            `[SearchIndexPipeline] Background sync aborted (vault switched).`,
-          );
-          return;
-        }
-
-        const records = await db.entityContent
-          .where("[vaultId+entityId]")
-          .between([vaultId, lastSeenId], [vaultId, Dexie.maxKey], false, true)
-          .limit(INDEX_BATCH_SIZE)
-          .toArray();
-
-        if (records.length === 0) break;
-
-        const currentBatch = [];
-        for (const record of records) {
-          const metadata = metaMap.get(record.entityId);
-          if (metadata) {
-            currentBatch.push({
-              ...metadata,
-              content: record.content,
-              lore: record.lore,
-            });
-          }
-        }
-
-        if (currentBatch.length > 0) {
-          await this.indexBatch(currentBatch, { runId, vaultId, totalCount });
-          indexedCount += currentBatch.length;
-        }
-
-        if (records.length < INDEX_BATCH_SIZE) break;
-        lastSeenId = records[records.length - 1].entityId;
-
-        // Stagger batches to let the main thread and IndexedDB breathe.
-        await this.yieldToIdle();
-      }
+        metadata,
+      );
+      if (indexedContent === null) return;
+      const indexedCount = indexedContent;
 
       this.debug.log(
         `[SearchIndexPipeline] Background sync complete. Indexed ${indexedCount} content records in ${(this.measureClock.now() - start).toFixed(2)}ms`,
       );
-      if (this.coordinator.isActiveRun(vaultId, runId)) {
-        this.coordinator.emitProgress({
-          status: "ready",
-          vaultId,
-          runId,
-          indexedCount,
-          totalCount,
-          isPartial: false,
-          canRetry: false,
-          message: "Search is ready.",
-          error: null,
-        });
-        await this.onSaveRequired(vaultId);
-      }
-    } catch (err) {
-      this.debug.warn(
-        `[SearchIndexPipeline] Background content sync failed`,
-        err,
+      await this.completeBackgroundContentSync(
+        vaultId,
+        runId,
+        indexedCount,
+        totalCount,
       );
-      this.coordinator.retryNeedsContentSweep = true;
-      this.coordinator.failIndexing(vaultId, runId, err);
+    } catch (err) {
+      this.failBackgroundContentSync(vaultId, runId, err);
     }
+  }
+
+  private async countContentRecords(
+    db: any,
+    vaultId: string,
+  ): Promise<number | null> {
+    const query = db.entityContent.where("vaultId").equals(vaultId);
+    return typeof query.count === "function" ? query.count() : null;
+  }
+
+  private async loadContentMetadata(
+    db: any,
+    vaultId: string,
+  ): Promise<Map<string, any>> {
+    const metadata = await db.graphEntities
+      .where("vaultId")
+      .equals(vaultId)
+      .toArray();
+    return new Map(metadata.map((entry: any) => [entry.id, entry]));
+  }
+
+  private emitContentIndexingProgress(totalCount: number | null): void {
+    this.coordinator.emitProgress({
+      ...this.coordinator.getIndexProgress(),
+      status: "partial",
+      indexedCount: 0,
+      totalCount,
+      message: "Search is indexing note content.",
+    });
+  }
+
+  private async indexBackgroundContentRecords(
+    db: any,
+    vaultId: string,
+    runId: string,
+    totalCount: number | null,
+    metadata: Map<string, any>,
+  ): Promise<number | null> {
+    let indexedCount = 0;
+    let lastSeenId = "";
+
+    while (true) {
+      if (this.coordinator.activeVaultId !== vaultId) {
+        this.debug.log(
+          `[SearchIndexPipeline] Background sync aborted (vault switched).`,
+        );
+        return null;
+      }
+
+      const records = await db.entityContent
+        .where("[vaultId+entityId]")
+        .between([vaultId, lastSeenId], [vaultId, Dexie.maxKey], false, true)
+        .limit(INDEX_BATCH_SIZE)
+        .toArray();
+      if (records.length === 0) return indexedCount;
+
+      const currentBatch = records.flatMap((record: any) => {
+        const entry = metadata.get(record.entityId);
+        return entry
+          ? [{ ...entry, content: record.content, lore: record.lore }]
+          : [];
+      });
+      if (currentBatch.length > 0) {
+        await this.indexBatch(currentBatch, { runId, vaultId, totalCount });
+        indexedCount += currentBatch.length;
+      }
+
+      if (records.length < INDEX_BATCH_SIZE) return indexedCount;
+      lastSeenId = records[records.length - 1].entityId;
+      // Stagger batches to let the main thread and IndexedDB breathe.
+      await this.yieldToIdle();
+    }
+  }
+
+  private async completeBackgroundContentSync(
+    vaultId: string,
+    runId: string,
+    indexedCount: number,
+    totalCount: number | null,
+  ): Promise<void> {
+    if (!this.coordinator.isActiveRun(vaultId, runId)) return;
+    this.coordinator.emitProgress({
+      status: "ready",
+      vaultId,
+      runId,
+      indexedCount,
+      totalCount,
+      isPartial: false,
+      canRetry: false,
+      message: "Search is ready.",
+      error: null,
+    });
+    await this.onSaveRequired(vaultId);
+  }
+
+  private failBackgroundContentSync(
+    vaultId: string,
+    runId: string,
+    error: unknown,
+  ): void {
+    this.debug.warn(
+      `[SearchIndexPipeline] Background content sync failed`,
+      error,
+    );
+    this.coordinator.retryNeedsContentSweep = true;
+    this.coordinator.failIndexing(vaultId, runId, error);
   }
 
   async retryIndexing(): Promise<void> {
