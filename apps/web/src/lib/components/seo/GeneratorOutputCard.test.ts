@@ -803,6 +803,9 @@ describe("GeneratorOutputCard", () => {
 
       const addBtn = screen.getByRole("button", { name: "Add to my Codex" });
       expect(addBtn.id).toBe("save-to-codex-btn");
+      expect(addBtn.classList.contains("whitespace-normal")).toBe(true);
+      expect(addBtn.classList.contains("min-w-0")).toBe(true);
+      expect(addBtn.classList.contains("max-w-full")).toBe(true);
       await fireEvent.click(addBtn);
       expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     });
