@@ -123,7 +123,7 @@ describe("world entry session and GM contract", () => {
     }
   });
 
-  it("permits coherent improvisation without overruling canon or exposing authored secrets", () => {
+  it("lets the Oracle improvise without breaking canon or secrecy", () => {
     const session = parseAdventureSession(rawSession());
     for (const phase of ["opening", "action", "roll-resolution"] as const) {
       const { behavior } = buildAdventurePrompt({
@@ -134,16 +134,26 @@ describe("world entry session and GM contract", () => {
         relevant: [],
       });
       expect(behavior).toContain("GM IMPROVISATIONAL AUTHORITY:");
-      expect(behavior).toContain("Invent credible institutions, customs, debts");
+      expect(behavior).toContain(
+        "Invent credible institutions, customs, debts",
+      );
       expect(behavior).toContain("CHALLENGED EXPLANATIONS:");
       expect(behavior).toContain("Clarify or repair the world's explanation");
       expect(behavior).toContain("Never conflate an NPC's limited knowledge");
       expect(behavior).toContain("Repeated paraphrases of the same question");
-      expect(behavior).toContain("do not settle source facts explicitly marked ambiguous or unresolved");
+      expect(behavior).toContain(
+        "do not settle source facts explicitly marked ambiguous or unresolved",
+      );
       expect(behavior).toContain("Record consequential new public details");
-      expect(behavior).toContain("or unrevealed decisions in GM-only hidden state");
-      expect(behavior).toContain("Canonical source records outrank provisional session material");
-      expect(behavior).toContain("reveal scenario secrets only through justified fictional discovery");
+      expect(behavior).toContain(
+        "or unrevealed decisions in GM-only hidden state",
+      );
+      expect(behavior).toContain(
+        "Canonical source records outrank provisional session material",
+      );
+      expect(behavior).toContain(
+        "reveal scenario secrets only through justified fictional discovery",
+      );
     }
   });
 
