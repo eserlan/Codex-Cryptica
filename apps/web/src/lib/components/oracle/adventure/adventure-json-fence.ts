@@ -9,9 +9,11 @@ const isFenceLine = (text: string, start: number, end: number) => {
   while (start < end && /\s/.test(text[start])) start += 1;
   return text.startsWith(FENCE, start);
 };
+const rejectionMessage = (reason: string) =>
+  `${reason} ${ADVENTURE_JSON_FENCE_HINT}`;
 const reject = (reason: string): AdventureJsonFenceResult => ({
   ok: false,
-  message: `${reason} ${ADVENTURE_JSON_FENCE_HINT}`,
+  message: rejectionMessage(reason),
 });
 
 function hasFenceLine(text: string, start: number, end: number): boolean {
@@ -26,6 +28,90 @@ function hasFenceLine(text: string, start: number, end: number): boolean {
   return false;
 }
 
+type FenceOpening =
+  { ok: true; bodyStart: number } | { ok: false; message: string };
+
+function readFenceOpening(trimmed: string): FenceOpening {
+  const firstNewline = trimmed.indexOf("\n");
+  const openingEnd =
+    firstNewline > 0 && trimmed[firstNewline - 1] === "\r"
+      ? firstNewline - 1
+      : firstNewline;
+  const label = trimmed
+    .slice(FENCE.length, openingEnd < 0 ? undefined : openingEnd)
+    .trim();
+  if (label !== "" && label.toLowerCase() !== "json") {
+    return {
+      ok: false,
+      message: rejectionMessage("The code block has an unsupported label."),
+    };
+  }
+  return {
+    ok: true,
+    bodyStart: firstNewline < 0 ? trimmed.length : firstNewline + 1,
+  };
+}
+
+type FenceBounds = {
+  closed: boolean;
+  bodyStart: number;
+  bodyEnd: number;
+  closingLineStart: number;
+  lastLineStart: number;
+};
+
+function findFenceBounds(trimmed: string, bodyStart: number): FenceBounds {
+  const lastNewline = trimmed.lastIndexOf("\n");
+  const lastLineStart = lastNewline + 1;
+  const closingLineStart =
+    lastNewline > 0 && trimmed[lastNewline - 1] === "\r"
+      ? lastNewline - 1
+      : lastNewline;
+  const closed = lastLineStart > 0 && trimmed.slice(lastLineStart) === FENCE;
+  const bodyEnd = lastLineStart > bodyStart ? closingLineStart : bodyStart;
+  return { closed, bodyStart, bodyEnd, closingLineStart, lastLineStart };
+}
+
+function hasUnclosedFenceLine(
+  trimmed: string,
+  bounds: FenceBounds,
+  innerFenceLine: boolean,
+): boolean {
+  const lastLine = trimmed.slice(bounds.lastLineStart);
+  return !bounds.closed && /^`{3,}$/.test(lastLine.trim()) && !innerFenceLine;
+}
+
+function hasUnexpectedFenceLine(
+  trimmed: string,
+  bounds: FenceBounds,
+  innerFenceLine: boolean,
+): boolean {
+  return (
+    innerFenceLine ||
+    (!bounds.closed &&
+      isFenceLine(trimmed, bounds.lastLineStart, trimmed.length))
+  );
+}
+
+function fenceProblem(trimmed: string, bounds: FenceBounds): string | null {
+  const innerFenceLine = hasFenceLine(
+    trimmed,
+    bounds.bodyStart,
+    bounds.closed
+      ? Math.max(bounds.bodyStart, bounds.bodyEnd)
+      : bounds.closingLineStart,
+  );
+  if (hasUnclosedFenceLine(trimmed, bounds, innerFenceLine)) {
+    return "The code block is not closed.";
+  }
+  if (hasUnexpectedFenceLine(trimmed, bounds, innerFenceLine)) {
+    return bounds.closed
+      ? "The file has more than one code block."
+      : "The file has text after the closing code fence.";
+  }
+  return bounds.closed ? null : "The code block is not closed.";
+}
+
 /**
  * Returns the text to parse. Plain text passes through unchanged; a file that
  * is exactly one ``` or ```json fenced block yields its body. Nothing else is
@@ -37,51 +123,13 @@ export function unwrapAdventureJsonFence(
   const trimmed = text.trim();
   if (!trimmed.startsWith(FENCE)) return { ok: true, text };
 
-  const firstNewline = trimmed.indexOf("\n");
-  const openingEnd =
-    firstNewline > 0 && trimmed[firstNewline - 1] === "\r"
-      ? firstNewline - 1
-      : firstNewline;
-  const label = trimmed
-    .slice(FENCE.length, openingEnd < 0 ? undefined : openingEnd)
-    .trim();
-  if (label !== "" && label.toLowerCase() !== "json") {
-    return reject("The code block has an unsupported label.");
-  }
-
-  const lastNewline = trimmed.lastIndexOf("\n");
-  const lastLineStart = lastNewline + 1;
-  const closed = lastLineStart > 0 && trimmed.slice(lastLineStart) === FENCE;
-  const bodyStart = firstNewline < 0 ? trimmed.length : firstNewline + 1;
-  const precedingLineEnd = lastNewline < 0 ? trimmed.length : lastNewline;
-  const closingSeparatorLength =
-    lastNewline > 0 && trimmed[lastNewline - 1] === "\r" ? 2 : 1;
-  const bodyInteriorEnd =
-    lastLineStart > bodyStart
-      ? lastLineStart - closingSeparatorLength
-      : bodyStart;
-  const innerFenceLine = hasFenceLine(
-    trimmed,
-    bodyStart,
-    closed ? Math.max(bodyStart, bodyInteriorEnd) : precedingLineEnd,
-  );
-  const lastLine = trimmed.slice(lastLineStart);
-  if (!closed && /^`{3,}$/.test(lastLine.trim()) && !innerFenceLine) {
-    return reject("The code block is not closed.");
-  }
-  if (
-    innerFenceLine ||
-    (!closed && isFenceLine(trimmed, lastLineStart, trimmed.length))
-  ) {
-    return reject(
-      closed
-        ? "The file has more than one code block."
-        : "The file has text after the closing code fence.",
-    );
-  }
-  if (!closed) return reject("The code block is not closed.");
+  const opening = readFenceOpening(trimmed);
+  if (!opening.ok) return opening;
+  const bounds = findFenceBounds(trimmed, opening.bodyStart);
+  const problem = fenceProblem(trimmed, bounds);
+  if (problem) return reject(problem);
   return {
     ok: true,
-    text: trimmed.slice(bodyStart, Math.max(bodyStart, bodyInteriorEnd)),
+    text: trimmed.slice(bounds.bodyStart, bounds.bodyEnd),
   };
 }
