@@ -70,6 +70,7 @@
     {
       "id": "actor-sera-vance",
       "name": "Sera Vance",
+      "kind": "character",
       "summary": "An antiquarian who chartered a skiff to reach the cove at low tide.",
       "role": "Patron",
       "motivation": "Prove the belfry predates the harbour charter.",

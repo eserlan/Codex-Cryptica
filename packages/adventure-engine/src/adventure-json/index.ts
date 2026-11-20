@@ -11,3 +11,4 @@ export * from "./retrieval";
 export * from "./pin";
 export * from "./creature-proposals";
 export * from "./reference-contract";
+export * from "./preflight";

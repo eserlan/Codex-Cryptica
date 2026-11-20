@@ -6,31 +6,58 @@
 
 Prompt version = git commit SHA of `apps/web/src/routes/(marketing)/adventure-import/conversion-guide.ts`.
 
-| Source class           | Model name and version | Provider | Date    | Input mode | Prompt version | Schema version    | Manual interventions | Repair iterations | Schema  | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall                         |
-| ---------------------- | ---------------------- | -------- | ------- | ---------- | -------------- | ----------------- | -------------------- | ----------------- | ------- | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------------------------------- |
-| Linear one-shot        | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
-| Linear one-shot        | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
-| Non-linear mystery     | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
-| Non-linear mystery     | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
-| Long structured module | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | blocked: no fixture (follow-up) |
-| Long structured module | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run  | not run          | not run  | not run   | not run    | not run  | blocked: no fixture (follow-up) |
+| Source class           | Model name and version | Provider | Date    | Input mode | Prompt version | Schema version    | Manual interventions | Repair iterations | Schema  | References | Secrets | Source authority | Conflicts | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall                         |
+| ---------------------- | ---------------------- | -------- | ------- | ---------- | -------------- | ----------------- | -------------------- | ----------------- | ------- | ---------- | ------- | ---------------- | --------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------------------------------- |
+| Linear one-shot        | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run          | not run   | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Linear one-shot        | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run          | not run   | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Non-linear mystery     | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run          | not run   | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Non-linear mystery     | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run          | not run   | not run  | not run          | not run  | not run   | not run    | not run  | not run                         |
+| Long structured module | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run          | not run   | not run  | not run          | not run  | not run   | not run    | not run  | blocked: no fixture (follow-up) |
+| Long structured module | not run                | not run  | not run | not run    | not run        | adventure-json/v1 | not run              | not run           | not run | not run    | not run | not run          | not run   | not run  | not run          | not run  | not run   | not run    | not run  | blocked: no fixture (follow-up) |
 
 ## Existing fixtures (baseline)
 
 Scored on 2026-11-17 with `bun scripts/score-adventure-conversion.ts <conversion> <answer-key>`. Both existing fixtures fail, as expected: they are conversions of other adventures (The Sunken Belfry, The Glass Observatory), not of The Last Grind, so they do not count as linear-row evidence.
 
-| Fixture                                     | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| ------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
-| `claude-adventure.v1.json` vs reference key | pass   | pass       | fail    | fail     | n/a              | fail     | fail      | fail       | fail     | fail    |
-| `gpt-adventure.v1.json` vs reference key    | pass   | pass       | fail    | fail     | n/a              | fail     | fail      | fail       | fail     | fail    |
+| Fixture                                     | Schema | References | Secrets | Source authority | Conflicts | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| ------------------------------------------- | ------ | ---------- | ------- | ---------------- | --------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| `claude-adventure.v1.json` vs reference key | pass   | pass       | fail    | n/a              | n/a       | fail     | n/a              | fail     | fail      | fail       | fail     | fail    |
+| `gpt-adventure.v1.json` vs reference key    | pass   | pass       | fail    | n/a              | n/a       | fail     | n/a              | fail     | fail      | fail       | fail     | fail    |
 
 Positive controls (hand-written correct conversions):
 
-| Fixture                                      | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| -------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
-| Reference one-shot `adventure.v1.json`       | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
-| Mystery `adventure.v1.json`                  | pass   | pass       | pass    | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
-| Reference one-shot `variants/sparse.v1.json` | pass   | pass       | pass    | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
+| Fixture                                | Schema | References | Secrets | Source authority | Conflicts | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------- | ------ | ---------- | ------- | ---------------- | --------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `adventure.v1.json` | pass   | pass       | pass    | n/a              | n/a       | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
+| Mystery `adventure.v1.json`            | pass   | pass       | pass    | n/a              | n/a       | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
+
+Negative controls (hand-written conversions that must fail):
+
+| Fixture                                            | Schema | References | Secrets | Source authority | Conflicts | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------------------- | ------ | ---------- | ------- | ---------------- | --------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `variants/sparse.v1.json`       | pass   | pass       | pass    | n/a              | n/a       | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
+| Reference one-shot `variants/content-thin.v1.json` | pass   | pass       | pass    | n/a              | n/a       | pass     | n/a              | pass     | pass      | pass       | fail     | fail    |
+
+`variants/content-thin.v1.json` is the regression for the "correct IDs but missing triggers" false green: it keeps every ID, anchor and structural text, so it passes every dimension except `fidelity`.
+
+## Family 5 offline controls
+
+These deterministic controls cover the source-authority, contradictory and adversarial variants. Their answer-key extensions are under `fixtures/adventures/reference-one-shot/variants/` and are combined with the existing one-shot key in the tests.
+
+| Fixture                                                                             | Expected offline outcome                                                                                                                                                                                                               |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source-authority.md`, `source-authority-pdf.txt`, `source-authority-metadata.json` | The official erratum changes the opening to noon and is cited to PDF page 4. The superseded dawn value cannot remain explicit. The title stays `The Reed Watch`, and no inventory is invented or formatted from the embedded commands. |
+| `source-authority-pdf.txt` pages 5–6                                                | Both the timber and stone claims remain ambiguous or unresolved, each cites its own page, and an unresolved entry records the contradiction. Neither claim may be selected as explicit.                                                |
+| `contradictory.md`                                                                  | Both of Maren's stated motivations remain ambiguous or unresolved with the `ros-npc-maren` source reference. Neither is selected as an explicit canonical motivation.                                                                  |
+| `adversarial.md`, `adversarial.v1.json`                                             | Embedded instructions remain inert. Keeping them as source text is allowed; copying the keyed GM-only pin secret into a player-visible field fails `secrets` and `overall`.                                                            |
+
+Run the focused offline controls and CLI output checks with:
+
+```sh
+bun test packages/adventure-engine/tests/adventure-json/conversion-score.test.ts scripts/score-adventure-conversion.test.ts
+```
+
+The CLI test composes the source-authority key extension with the existing answer key and checks both human-readable and `--json` output. No live or paid model call is made.
 
 ## Reproduction
 
@@ -47,6 +74,7 @@ Model calls and manual judgements stay outside paid CI.
 The scorer is deterministic and pure (no fs, network or model access). `overall` is `pass` only when every dimension is `pass` or `n/a`.
 
 - **Text match**: key text A is "found" in string B when at least 60% of A's distinct lowercase alphanumeric tokens of length ≥ 4 appear among B's tokens.
+- **Discriminator terms**: `sourceAuthority` and `conflicts` match every normalized alphanumeric word in the keyed term, including words shorter than four characters.
 - **Citation**: an entity "cites" key section S when `entity.id === S.sourceId`, or `entity.sourceRef.anchor === S.sourceId`, or the normalised `entity.sourceRef.section` (trimmed, lower-case) equals the normalised `S.title`.
 - **Player-visible text**: every string in `title`, `description`, `premise`, and every string field of a record whose `visibility` is `"player-visible"`. Each field is checked on its own and never concatenated.
 
@@ -60,7 +88,9 @@ Dimensions:
 6. `branches`: the key `branch.sourceId` cited by an optional scene (or the target of an optional branch); an encounter citing `alternativeSolution.obstacleSourceId` (or whose `sceneId` scene cites it) with a `socialBypassOfCombat: true` solution when required, or at least two solutions otherwise.
 7. `citations`: at least one `sourceRef.anchor` exists and every anchor equals a key section `sourceId`; unknown anchors listed.
 8. `truncation`: fails when the last non-container key section in key order is not cited; details list the uncited trailing run.
-9. `fidelity`: `n/a` when the key has no `actionableDetails` or the list is empty. Otherwise, for each detail, take the records in every collection except `unresolved` that cite the detail's section. The detail is present when the text match holds for at least one string in any field of those records, each string checked on its own. A missing detail is one finding: `missing <category> detail in <sourceId> "<title>" (cited by: <id>, <id>): <detail>`, or `(no record cites this section)` when nothing cites it. Records in `unresolved` are excluded, so a note that a detail was dropped never hides the omission.
+9. `fidelity` (the "record content fidelity" check from #5009; `sceneConditions` are scored through their matching `trigger` details, which the test in `conversion-score.test.ts` keeps consistent): `n/a` when the key has no `actionableDetails` or the list is empty. Otherwise, for each detail, take the records in every collection except `unresolved` that cite the detail's section. The detail is present when the text match holds for at least one string in any field of those records, each string checked on its own. A missing detail is one finding: `missing <category> detail in <sourceId> "<title>" (cited by: <id>, <id>): <detail>`, or `(no record cites this section)` when nothing cites it. Records in `unresolved` are excluded, so a note that a detail was dropped never hides the omission.
+10. `sourceAuthority`: `n/a` when the key has no authority cases. Otherwise, the corrected text must be explicit on the keyed target entity (matched by its ID or source anchor) and cite every correction-source field in the key. Superseded text is checked on that same target. The adventure title must match the source title, and any keyed item count must match. The family 5 fixture uses this to reject the metadata rename and the command to format a nonexistent inventory.
+11. `conflicts`: `n/a` when the key has no conflicts. Otherwise, every claim must be present with ambiguous or unresolved status at its known source reference, and an ambiguous or unresolved entry must describe all claims. Any explicit selection fails.
 
 When the schema fails, every other dimension is `fail` with the detail `not checked: schema invalid`.
 
@@ -70,9 +100,32 @@ The optional top-level `actionableDetails` array holds `{ sourceId, category, de
 
 Passing the schema is not the same as a playable, source-faithful conversion: an ID-complete package can still lack the triggers, clues, outcomes and consequences a table needs.
 
+## Gate types
+
+- **Mechanical gates**: `schema`, `references`, `citations`, `truncation`.
+- **Structural gates**: `branches` checks optional-path and alternative-solution fields.
+- **Mixed structural and text-match gates**: `secrets` checks secret visibility and text matching; `coverage` checks section and ending references, NPC presence, and text-matched clues; `sourceAuthority` checks a cited explicit correction and rejects superseded values; `conflicts` checks that claims remain ambiguous or unresolved at their source locations.
+- **Heuristic text-match gates** (deterministic and run in CI, but approximate): `authoredVsRumour`, `fidelity`.
+- **Human or model judgement**: subjective fidelity, invented facts and playability. These stay outside CI and are recorded in the Results table with model, version and date.
+
 ## Promotion rule
 
 A missing or leaked secret, or a major coverage omission (including any failing `fidelity` detail), blocks promotion even when schema validation passes.
+
+## Preflight validation
+
+Before import or scoring, check a file's structure offline:
+
+```
+bun scripts/preflight-adventure-json.ts <adventure.json> [--json] [--repair-prompt]
+```
+
+- Default prints a readable report. `--json` prints only the JSON report (with a `repairPrompt` field when combined with `--repair-prompt` on an invalid file). `--repair-prompt` without `--json` prints the report, then a model-agnostic repair prompt between start and end marker lines; a valid file gets no prompt.
+- Exit codes: 0 valid, 1 invalid (including unparseable JSON), 2 bad arguments, unreadable file or oversized file. The command never writes files.
+- Adventure JSON files must be 10 MiB or smaller, matching the import size limit; larger files are rejected before being read.
+- Each finding has a category and the validator's code. `parse`: `JSON_PARSE_ERROR`. `schema`: `SCHEMA_VALIDATION_ERROR`, `INVALID_FORMAT_VERSION`, `INVALID_VISIBILITY`. `integrity`: `DUPLICATE_ID`, `UNRESOLVED_REFERENCE`, `SELF_REFERENCE`, `HIERARCHY_CYCLE`, `DEAD_END_CYCLE`, `UNREACHABLE_SCENE`, `DUPLICATE_SCENE_PROGRESSION`.
+- It uses the same decoding, parsing and `validateAdventureJson` as import, with no separate rule set. No hosted AI or network is involved.
+- Source fidelity is not checked. A pass means only that the file passed structural and reference validation. Use the scorer above for coverage and fidelity.
 
 ## Human walkthrough
 

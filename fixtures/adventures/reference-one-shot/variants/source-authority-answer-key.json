@@ -1,0 +1,17 @@
+{
+  "sourceAuthority": [
+    {
+      "id": "reed-watch-opening",
+      "targetSourceId": "reed-watch-opening",
+      "expectedText": "The watch opens at noon.",
+      "expectedTerm": "noon",
+      "supersededText": "The watch opens at dawn.",
+      "supersededTerm": "dawn",
+      "correctionSource": {
+        "page": 4
+      },
+      "expectedTitle": "The Reed Watch",
+      "expectedItemCount": 0
+    }
+  ]
+}

@@ -1127,6 +1127,8 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       'Every collection entry requires "id" (non-empty string) and "epistemicStatus"',
       "locations: required name, summary, visibility",
       "actors: required name, summary, visibility",
+      'optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string, kind: "character" | "creature"',
+      'Actor kind: use "character" for named or individual NPCs and "creature" for monsters, beasts and generic stat-block foes. Leave "kind" out when the source does not make the choice clear',
       "factions: required name, summary, visibility",
       "scenes: required title, summary, visibility",
       "encounters: required description, alternativeSolutions (an array, [] if absent), visibility",

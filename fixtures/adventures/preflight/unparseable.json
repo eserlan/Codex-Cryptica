@@ -1,0 +1,19 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "minimal-watchtower",
+  "title": "The Silent Watchtower",
+  "version": "1.0.0",
+  "premise": {
+    "background": "A hillside watchtower has gone dark three nights before the winter caravan arrives.",
+    "hook": "The village Reeve asks the party to ride up the ridge and relight the beacon."
+  },
+  "source": {
+    "title": "The Silent Watchtower",
+    "license": "CC0-1.0"
+  },
+  "locations": [
+    {
+      "id": "loc-watchtower",
+      "name": "Ridge Watchtower",
+      "summary": "A stone signal tower overlooking the valley road.",
+      "visibil
