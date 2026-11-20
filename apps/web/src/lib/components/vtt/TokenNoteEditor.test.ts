@@ -86,3 +86,27 @@ describe("TokenNoteEditor formatting toolbar", () => {
     expect(screen.queryByTestId("token-note-format-toolbar")).toBeNull();
   });
 });
+
+describe("TokenNoteEditor encounter generation feedback", () => {
+  it("announces when encounter generation is in progress", () => {
+    renderEditor("", { onGenerateEncounter: vi.fn(), generating: true });
+
+    const button = screen.getByTestId(
+      "token-note-generate-encounter",
+    ) as HTMLButtonElement;
+
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    expect(button.disabled).toBe(true);
+  });
+
+  it("announces when encounter generation is idle", () => {
+    renderEditor("", { onGenerateEncounter: vi.fn() });
+
+    const button = screen.getByTestId(
+      "token-note-generate-encounter",
+    ) as HTMLButtonElement;
+
+    expect(button.getAttribute("aria-busy")).toBe("false");
+    expect(button.disabled).toBe(false);
+  });
+});
