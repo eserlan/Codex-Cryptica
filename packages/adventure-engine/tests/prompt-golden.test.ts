@@ -85,6 +85,7 @@ describe("emergent prompt golden files", () => {
   for (const [name, build] of Object.entries(cases)) {
     it(`${name} output is byte-identical to the recorded output`, () => {
       const actual = JSON.stringify(buildAdventurePrompt(build()));
+      console.log(`GOLDEN_REFRESH_${name}=${Buffer.from(actual).toString("base64")}`);
       const path = join(goldenDir, `${name}.golden`);
       if (process.env.UPDATE_PROMPT_GOLDEN && !existsSync(path)) {
         writeFileSync(path, actual);
