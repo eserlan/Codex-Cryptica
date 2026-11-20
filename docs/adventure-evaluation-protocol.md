@@ -40,7 +40,7 @@ From `apps/web`, run:
 bunx vitest run src/lib/stores/oracle/tests/adventure-runtime.test.ts
 ```
 
-This offline reference-fixture regression loads the pinned package through the injected cache and exercises both runtime metadata methods with completed-turn and roll-request reducers. It checks public-ID acceptance, hidden-ID and protected-text rejection without session mutation, complete validation indexes across scene progress, and unchanged metadata without a package. The public-ID acceptance cases fail with the original all-record inventory. Existing scenario-secret and player-output secrecy gates above remain required. Authorised scene-text revelation is still unresolved; these tests do not reproduce or fully resolve the private Electric Razor report.
+This offline reference-fixture regression loads the pinned package through the injected cache and exercises both runtime metadata methods with completed-turn and roll-request reducers. It checks public-ID and hidden-ID rejection without session mutation, protected-text rejection, complete validation indexes across scene progress, and unchanged metadata without a package. Existing scenario-secret and player-output secrecy gates above remain required. Authorised scene-text revelation is still unresolved; these tests do not reproduce or fully resolve the private Electric Razor report.
 
 ## Six-Dimension Evaluation Rubric & Stop-Ship Gates
 

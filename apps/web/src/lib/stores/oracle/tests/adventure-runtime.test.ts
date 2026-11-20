@@ -257,7 +257,7 @@ describe.each(["newTurnMetadata", "rollMetadata"] as const)(
       return harness;
     }
 
-    it("protects only hidden IDs while retaining complete validation indexes across scene progress", async () => {
+    it("protects all record IDs while retaining complete validation indexes across scene progress", async () => {
       const { runtime, state } = await cachedRuntime();
       const records = [
         ...referencePackage.locations,
@@ -270,9 +270,7 @@ describe.each(["newTurnMetadata", "rollMetadata"] as const)(
         ...referencePackage.items,
         ...referencePackage.secrets,
       ];
-      const hiddenIds = records
-        .filter((record) => record.visibility !== "player-visible")
-        .map((record) => record.id);
+      const recordIds = records.map((record) => record.id);
       const recordKinds = Object.fromEntries(
         (["scenes", "encounters", "clues", "secrets"] as const).flatMap(
           (collection) =>
@@ -295,9 +293,9 @@ describe.each(["newTurnMetadata", "rollMetadata"] as const)(
           events: [],
         };
         const meta = runtime[metadataMethod]("Look");
-        expect(new Set(meta.packageRecordIds)).toEqual(new Set(hiddenIds));
-        expect(meta.packageRecordIds).not.toContain("loc-ferry-landing");
-        expect(meta.packageRecordIds).not.toContain("actor-maren-holt");
+        expect(new Set(meta.packageRecordIds)).toEqual(new Set(recordIds));
+        expect(meta.packageRecordIds).toContain("loc-ferry-landing");
+        expect(meta.packageRecordIds).toContain("actor-maren-holt");
         expect(meta.packageSceneIds).toEqual(
           referencePackage.scenes.map((scene) => scene.id),
         );
@@ -317,39 +315,25 @@ describe.each(["newTurnMetadata", "rollMetadata"] as const)(
     });
 
     it.each(["loc-ferry-landing", "actor-maren-holt"])(
-      "accepts otherwise safe completed narration and roll setup containing public ID %s",
+      "atomically rejects public ID %s for completed turns and roll requests",
       async (id) => {
         const { runtime, state } = await cachedRuntime();
         const session = state.session!;
+        const before = structuredClone(session);
         const narration = `A sign reads (${id}).`;
         const meta = runtime[metadataMethod]("Look");
-        const completed = applyCompletedTurn(
-          session,
-          { ...completeProposal, narration },
-          meta,
-        );
-        expect(completed.ok).toBe(true);
-        if (!completed.ok) throw new Error(JSON.stringify(completed.errors));
-        expect(completed.value.revision).toBe(session.revision + 1);
-        expect(completed.value.turns.at(-1)?.narration).toBe(narration);
-        const roll = applyRollRequest(
-          session,
-          { ...rollProposal, setupNarration: narration },
-          meta,
-        );
-        expect(roll.ok).toBe(true);
-        if (!roll.ok) throw new Error(JSON.stringify(roll.errors));
-        expect(roll.value.revision).toBe(session.revision + 1);
-        expect(roll.value.pendingRoll).toMatchObject({
-          id: meta.turnId,
-          inputId: meta.inputId,
-          setupNarration: narration,
-          resolutionStatus: "awaiting-outcome",
-          dice: {
-            expression: rollProposal.dice.expression,
-            bands: rollProposal.dice.outcomeBands,
-          },
-        });
+        expect(
+          applyCompletedTurn(session, { ...completeProposal, narration }, meta)
+            .ok,
+        ).toBe(false);
+        expect(
+          applyRollRequest(
+            session,
+            { ...rollProposal, setupNarration: narration },
+            meta,
+          ).ok,
+        ).toBe(false);
+        expect(session).toEqual(before);
       },
     );
 
