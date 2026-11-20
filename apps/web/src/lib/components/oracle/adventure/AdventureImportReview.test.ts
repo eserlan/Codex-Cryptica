@@ -539,9 +539,25 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
       "review-source-details",
     ) as HTMLDetailsElement;
     expect(sourceDetails.open).toBe(false);
+    expect(
+      screen
+        .getByTestId("review-source-details-summary")
+        .textContent?.replace(/\s+/g, " ")
+        .trim(),
+    ).toBe("Source details");
+    expect(
+      screen
+        .getByRole("heading", { level: 2, name: "Premise and Source" })
+        .parentElement?.textContent?.replace(/\s+/g, " ")
+        .trim(),
+    ).toBe("Premise and Source");
     await fireEvent.click(screen.getByTestId("review-source-details-summary"));
     sourceDetails.open = true;
     expect(sourceDetails.open).toBe(true);
+    expect(sourceDetails.querySelector("dl")?.textContent).toContain(draft.id);
+    expect(sourceDetails.querySelector("dl")?.textContent).toContain(
+      draft.version,
+    );
     expect(sourceDetails.textContent).toContain("Riverstone Press");
     expect(sourceDetails.textContent).toContain("CC0-1.0");
     expect(sourceDetails.textContent).toContain("a".repeat(64));
