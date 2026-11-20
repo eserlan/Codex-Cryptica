@@ -74,6 +74,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 - **Fresh checkout**: `bun install --frozen-lockfile` at the repo root (this also runs `svelte-kit sync`). No env file is required; `apps/web/.env.example` lists only optional keys.
 - **Dev server on a given port**: `cd apps/web && bunx vite dev --port <port> --strictPort`.
+- **Entry graph check**: `node scripts/check-entry-graph.mjs` (run in `apps/web` after a build; it also runs inside `bun run build`) lists what `/` loads up front and fails if a denylisted module or worker is on it. Add new entries for things to keep off `/` to its `ENTRY_GRAPH_DENYLIST`.
 - **Validation** (what `factory/checks.sh` runs, against `origin/staging`): `bun scripts/lint-changed.mjs --base origin/staging`; `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` when `web` is affected (`bun scripts/affected-workspaces.mjs --base origin/staging`); `bun scripts/test-changed.mjs --base origin/staging`; and the Fallow audit gate.
 
 ## Software factory
