@@ -203,6 +203,9 @@ describe("HistoricalAnchor contract", () => {
     expect(prompt.state).toContain("The king died in 620.");
     expect(prompt.behavior).toContain("openMechanisms");
     expect(prompt.behavior).toContain(
+      "never invent or narrow those mechanisms until committed play establishes them",
+    );
+    expect(prompt.behavior).toContain(
       "Do not invent missing calendar precision",
     );
     expect(prompt.behavior).toContain('Historical anchor policy is "preserve"');
