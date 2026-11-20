@@ -39,27 +39,29 @@
 
 <li class="flex flex-col gap-2 rounded-md border border-theme-border p-2">
   {#if renaming}
-    <div class="flex gap-2">
+    <div class="flex flex-col gap-2 sm:flex-row">
       <input
         type="text"
         bind:value={renameDraft}
         aria-label="Rename adventure {entry.title}"
-        class="min-h-12 min-w-0 flex-1 rounded-md border border-theme-border bg-theme-surface px-3 text-theme-text"
+        class="min-h-12 min-w-0 flex-1 rounded-md border border-theme-text/75 bg-theme-surface px-3 text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       />
-      <button
-        type="button"
-        class="flex min-h-12 items-center justify-center rounded-md border border-theme-primary/50 px-3 text-sm text-theme-text transition hover:bg-theme-primary/10"
-        onclick={onSave}
-      >
-        Save
-      </button>
-      <button
-        type="button"
-        class="flex min-h-12 items-center justify-center rounded-md border border-theme-border px-3 text-sm text-theme-text"
-        onclick={onCancelRename}
-      >
-        Cancel
-      </button>
+      <div class="flex gap-2">
+        <button
+          type="button"
+          class="flex min-h-11 flex-1 items-center justify-center rounded-md bg-theme-primary px-3 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text sm:min-h-12 sm:flex-none"
+          onclick={onSave}
+        >
+          Save
+        </button>
+        <button
+          type="button"
+          class="flex min-h-11 flex-1 items-center justify-center rounded-md border border-theme-text/75 px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text sm:min-h-12 sm:flex-none"
+          onclick={onCancelRename}
+        >
+          Cancel
+        </button>
+      </div>
     </div>
   {:else}
     <AdventureArchiveEntryDisplay
@@ -76,6 +78,6 @@
     />
   {/if}
   {#if renaming && renameError}
-    <p class="text-sm text-theme-danger" role="alert">{renameError}</p>
+    <p class="text-sm text-theme-text" role="alert">{renameError}</p>
   {/if}
 </li>
