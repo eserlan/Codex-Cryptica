@@ -81,7 +81,9 @@ Passing the schema is not the same as a playable, source-faithful conversion: an
 ## Gate types
 
 - **Mechanical gates**: `schema`, `references`, `citations`, `truncation`.
-- **Heuristic text-match gates** (deterministic and run in CI, but approximate): `secrets`, `coverage`, `authoredVsRumour`, `branches`, `fidelity`.
+- **Structural gates**: `branches` checks optional-path and alternative-solution fields.
+- **Mixed structural and text-match gates**: `secrets` checks secret visibility and text matching; `coverage` checks section and ending references, NPC presence, and text-matched clues.
+- **Heuristic text-match gates** (deterministic and run in CI, but approximate): `authoredVsRumour`, `fidelity`.
 - **Human or model judgement**: subjective fidelity, invented facts and playability. These stay outside CI and are recorded in the Results table with model, version and date.
 
 ## Promotion rule
