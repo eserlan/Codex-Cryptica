@@ -82,6 +82,23 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
     expect(manager.oocGenerating).toBe(false);
   });
 
+  it("keeps non-Error provider failures visible and retryable", async () => {
+    const base = dependencies();
+    const manager = new AdventureManager({
+      ...base,
+      ooc: { ask: vi.fn(async () => Promise.reject("provider unavailable")) },
+    } as any);
+    await manager.start(startInput);
+
+    await manager.submitOocQuestion("What happened?");
+
+    expect(manager.oocErrorMessage).toBe("provider unavailable");
+    expect(manager.oocExchanges[0]).toMatchObject({
+      status: "failed",
+      errorMessage: "provider unavailable",
+    });
+  });
+
   it("allows retrying a persisted pending question after reopening", async () => {
     const base = dependencies();
     let storedSession: any = null;

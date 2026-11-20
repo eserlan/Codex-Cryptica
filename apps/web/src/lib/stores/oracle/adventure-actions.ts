@@ -13,6 +13,39 @@ import { abortReason } from "./adventure-generation.svelte";
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
+function getOocFailureMessage(cause: unknown, signal: AbortSignal): string {
+  if (signal.aborted) return "Question cancelled.";
+  if (cause instanceof Error) return cause.message;
+  return String(cause);
+}
+
+function isCurrentOocRequest(
+  current: AdventureSession | null,
+  initialSession: AdventureSession,
+  readOnly: boolean,
+  activeSignal: AbortSignal | undefined,
+  signal: AbortSignal,
+): current is AdventureSession {
+  return Boolean(
+    current &&
+    current.id === initialSession.id &&
+    current.vaultId === initialSession.vaultId &&
+    !readOnly &&
+    activeSignal === signal,
+  );
+}
+
+function hasPendingOocExchange(
+  session: AdventureSession,
+  exchangeId: string,
+): boolean {
+  return Boolean(
+    session.oocExchanges?.some(
+      (item) => item.id === exchangeId && item.status === "pending",
+    ),
+  );
+}
+
 export class AdventureActions {
   private readonly state;
   constructor(private readonly runtime: AdventureRuntime) {
@@ -286,29 +319,21 @@ export class AdventureActions {
     cause: unknown,
     signal: AbortSignal,
   ): Promise<void> {
-    const message = signal.aborted
-      ? "Question cancelled."
-      : cause instanceof Error
-        ? cause.message
-        : String(cause);
+    const message = getOocFailureMessage(cause, signal);
     const current = this.state.session;
     if (
-      !current ||
-      current.id !== initialSession.id ||
-      current.vaultId !== initialSession.vaultId ||
-      this.state.readOnly ||
-      this.runtime.oocController?.signal !== signal
+      !isCurrentOocRequest(
+        current,
+        initialSession,
+        this.state.readOnly,
+        this.runtime.oocController?.signal,
+        signal,
+      )
     ) {
       return;
     }
     this.state.oocErrorMessage = message;
-    if (
-      signal.aborted &&
-      !current.oocExchanges?.some(
-        (item) => item.id === params.id && item.status === "pending",
-      )
-    )
-      return;
+    if (signal.aborted && !hasPendingOocExchange(current, params.id)) return;
     const failedAt = this.runtime.deps.now();
     const failedExchange: AdventureOocExchange = {
       id: params.id,
