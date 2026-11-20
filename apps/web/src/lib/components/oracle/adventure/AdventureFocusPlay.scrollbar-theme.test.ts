@@ -14,7 +14,7 @@ describe("Adventure Mode scrollbar theme contract (#5069)", () => {
     expect(stylesheet).toContain("var(--color-bg-primary)");
     expect(stylesheet).toContain("var(--color-bg-surface)");
     expect(stylesheet).toContain("scrollbar-color:");
-    expect(stylesheet).not.toMatch(/#[a-f0-9]{3,8}\\b/i);
+    expect(stylesheet).not.toMatch(/#[a-f0-9]{3,8}\b/i);
   });
 
   it("inherits genre and appearance variants from ThemeStore", async () => {
