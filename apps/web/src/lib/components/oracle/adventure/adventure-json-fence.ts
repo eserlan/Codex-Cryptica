@@ -28,6 +28,9 @@ export function unwrapAdventureJsonFence(
   }
   const closed = lines.length > 1 && lines[lines.length - 1] === FENCE;
   const body = lines.slice(1, closed ? -1 : undefined);
+  if (!closed && lines[lines.length - 1].trim() === FENCE) {
+    return reject("The code block is not closed.");
+  }
   if (body.some((line) => line.trimStart().startsWith(FENCE))) {
     return reject(
       closed

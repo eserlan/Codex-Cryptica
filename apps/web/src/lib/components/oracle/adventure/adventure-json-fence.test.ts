@@ -28,6 +28,7 @@ describe("unwrapAdventureJsonFence", () => {
     ["prose after", "```json\n{}\n```\nEnjoy!", "text after"],
     ["two blocks", "```json\n{}\n```\n\n```json\n{}\n```", "more than one"],
     ["nested fence line", "```json\n{}\n  ```\n{}\n```", "more than one"],
+    ["indented closing fence", "```json\n{}\n  ```", "not closed"],
     ["unclosed", "```json\n{}\n", "not closed"],
     ["only an opening fence", "```", "not closed"],
     ["other label", "```javascript\n{}\n```", "unsupported label"],

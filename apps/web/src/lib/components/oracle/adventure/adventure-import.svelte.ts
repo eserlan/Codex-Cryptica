@@ -244,7 +244,7 @@ export class AdventureImportController {
         {
           code: "INVALID_JSON",
           message:
-            unwrapped.ok && text.includes("```")
+            unwrapped.ok && unwrapped.text === text && text.includes("```")
               ? `${message} ${ADVENTURE_JSON_FENCE_HINT}`
               : message,
         },

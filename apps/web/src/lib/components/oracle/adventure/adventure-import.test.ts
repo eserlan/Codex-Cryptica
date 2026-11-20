@@ -139,7 +139,7 @@ describe("adventure import controller", () => {
           type: "application/json",
         }),
       );
-      expect(imports.error).not.toBe("");
+      expect(imports.error).not.toBeNull();
       expect(deps.onReview).not.toHaveBeenCalled();
     });
 
@@ -157,6 +157,15 @@ describe("adventure import controller", () => {
       expect(imports.validationErrors[0].code).toBe("INVALID_JSON");
       expect(deps.onReview).not.toHaveBeenCalled();
       expect(deps.saveApproved).not.toHaveBeenCalled();
+    });
+
+    it("keeps the parser message for malformed JSON inside a valid fence", async () => {
+      const { imports } = setup();
+      await imports.importJson(jsonFile("```json\n{bad\n```"));
+      expect(imports.validationErrors[0].code).toBe("INVALID_JSON");
+      expect(imports.validationErrors[0].message).not.toContain(
+        "single fenced JSON block",
+      );
     });
 
     it("explains the accepted forms for prose around a fence", async () => {
