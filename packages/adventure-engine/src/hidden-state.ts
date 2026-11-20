@@ -2,6 +2,7 @@ import type {
   AdventureSession,
   AdventureTurnProposal,
   CommitMetadata,
+  HiddenLeakageDiagnostic,
 } from "./types";
 import {
   HISTORICAL_ANCHOR_TITLE_SECRET_ID,
@@ -16,6 +17,36 @@ import {
 export interface HiddenLeakageFinding {
   field: string;
   secretId: string;
+}
+
+/** Converts an internal leakage finding into an opaque, leak-safe diagnostic. */
+export function classifyHiddenLeakageFinding(
+  finding: HiddenLeakageFinding,
+): HiddenLeakageDiagnostic {
+  if (finding.secretId === "pinned-package-text") {
+    return {
+      guard: "package-text",
+      field: finding.field,
+      sourceRef: "pinned-package-text",
+    };
+  }
+  if (finding.secretId === "pinned-package-id") {
+    return {
+      guard: "package-id",
+      field: finding.field,
+      sourceRef: "pinned-package-id",
+    };
+  }
+  const sourceRef = finding.secretId.startsWith("historical-anchor-")
+    ? "historical-anchor-secret"
+    : finding.secretId.startsWith("scenario-")
+      ? "scenario-secret"
+      : "session-secret";
+  return {
+    guard: "scenario-secret",
+    field: finding.field,
+    sourceRef,
+  };
 }
 
 function normalize(value: string): string {

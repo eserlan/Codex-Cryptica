@@ -38,8 +38,46 @@ describe("roll transitions", () => {
     );
     expect(result).toMatchObject({
       ok: false,
-      errors: [{ code: "hidden-leakage" }],
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-text",
+            field: "root.setupNarration",
+            sourceRef: "pinned-package-text",
+          },
+        },
+      ],
     });
+    expect(JSON.stringify(result)).not.toContain("The duke poisoned the well");
+  });
+
+  it("rejects hidden package IDs in roll copy with opaque package-id diagnostics", () => {
+    const result = applyRollRequest(
+      session(),
+      {
+        ...request,
+        stakes: "Alert hidden-actor-7 in the vault",
+      },
+      {
+        ...meta,
+        packageRecordIds: ["hidden-actor-7"],
+      },
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-id",
+            field: "root.stakes",
+            sourceRef: "pinned-package-id",
+          },
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain("hidden-actor-7");
   });
 
   it("records and resolves exactly one outcome with its dice snapshot", () => {
@@ -113,6 +151,11 @@ describe("roll transitions", () => {
         {
           code: "hidden-leakage",
           message: "The response contains unrevealed GM information.",
+          diagnostic: {
+            guard: "scenario-secret",
+            field: "root.uncertainty",
+            sourceRef: "session-secret",
+          },
         },
       ],
     });

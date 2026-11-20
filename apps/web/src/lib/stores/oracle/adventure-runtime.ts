@@ -7,8 +7,7 @@ import { AdventureGroundingService } from "#lib/services/adventure/adventure-gro
 import {
   packageProgressIndex,
   adventureJsonGmOnlyText,
-  adventureJsonRecordIds,
-  retrieveAdventureJsonContext,
+  adventureJsonHiddenRecordIds,
   type AdventureSession,
   type CommitMetadata,
 } from "@codex/adventure-engine";
@@ -116,31 +115,11 @@ export class AdventureRuntime {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
     if (!pkg) return {};
-    const context = retrieveAdventureJsonContext(pkg, {
-      sceneId: session.packageProgress?.sceneId,
-    });
-    const packageGmOnlyText = [
-      ...new Set([
-        ...context.gmOnly.flatMap((excerpt) => [
-          ...excerpt.text
-            .split("\n")
-            .filter((line) => !line.startsWith("Truth: "))
-            .map((line) => {
-              const separator = line.indexOf(": ");
-              return separator >= 0 ? line.slice(separator + 2) : line;
-            }),
-          ...(excerpt.sourceRef?.textQuote
-            ? [excerpt.sourceRef.textQuote]
-            : []),
-        ]),
-        ...adventureJsonGmOnlyText(pkg),
-      ]),
-    ];
     return {
       ...packageProgressIndex(pkg),
       packageSceneIds: pkg.scenes.map((scene) => scene.id),
-      packageRecordIds: adventureJsonRecordIds(pkg),
-      packageGmOnlyText,
+      packageRecordIds: adventureJsonHiddenRecordIds(pkg),
+      packageGmOnlyText: adventureJsonGmOnlyText(pkg),
     };
   }
 

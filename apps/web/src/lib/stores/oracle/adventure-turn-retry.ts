@@ -1,10 +1,16 @@
+import type { HiddenLeakageDiagnostic } from "@codex/adventure-engine";
+import { AdventureProposalError } from "./adventure-session";
+
 /** Plain copy for a turn the engine refused twice. The internal reason stays out of the player's sight. */
 export const TURN_REJECTED_COPY =
   "The GM lost the thread on that one. Your action is still in the box; try again.";
 
 /** The engine refused both the GM's reply and the one automatic retry. */
 export class AdventureTurnRejectedError extends Error {
-  constructor(readonly reason: string) {
+  constructor(
+    readonly reason: string,
+    readonly diagnostic?: HiddenLeakageDiagnostic,
+  ) {
     super("turn-rejected");
     this.name = "AdventureTurnRejectedError";
   }
@@ -13,15 +19,24 @@ export class AdventureTurnRejectedError extends Error {
 const reasonOf = (cause: unknown) =>
   cause instanceof Error ? cause.message : String(cause);
 
+const diagnosticOf = (cause: unknown): HiddenLeakageDiagnostic | undefined =>
+  cause instanceof AdventureProposalError ? cause.diagnostic : undefined;
+
 /** The result of applying a reply, or why the engine refused it. */
 function tryApply<Generated, Accepted>(
   apply: (generated: Generated) => Accepted,
   generated: Generated,
-): { ok: true; value: Accepted } | { ok: false; reason: string } {
+):
+  | { ok: true; value: Accepted }
+  | { ok: false; reason: string; diagnostic?: HiddenLeakageDiagnostic } {
   try {
     return { ok: true, value: apply(generated) };
   } catch (cause) {
-    return { ok: false, reason: reasonOf(cause) };
+    return {
+      ok: false,
+      reason: reasonOf(cause),
+      diagnostic: diagnosticOf(cause),
+    };
   }
 }
 
@@ -47,13 +62,17 @@ export async function generateAcceptedTurn<Generated, Accepted>(options: {
   await Promise.resolve(options.resetProviderContext()).catch(() => {});
   const second = tryApply(apply, await generate(first.reason));
   if (second.ok) return second.value;
-  throw new AdventureTurnRejectedError(second.reason);
+  throw new AdventureTurnRejectedError(second.reason, second.diagnostic);
 }
 
 /** What the player sees for a failed turn: plain copy for a refusal, the message otherwise. */
 export function turnErrorCopy(cause: unknown, message: string): string {
   if (!(cause instanceof AdventureTurnRejectedError)) return message;
-  // The engine's reason is for the console only.
-  console.warn("Adventure turn refused:", cause.reason);
+  // The engine's reason and opaque guard diagnostic are for the console only.
+  if (cause.diagnostic) {
+    console.warn("Adventure turn refused:", cause.reason, cause.diagnostic);
+  } else {
+    console.warn("Adventure turn refused:", cause.reason);
+  }
   return TURN_REJECTED_COPY;
 }
