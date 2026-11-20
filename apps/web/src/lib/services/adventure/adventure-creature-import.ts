@@ -95,7 +95,9 @@ export function initialCreatureChoices(
         sourceMatch?.creature ??
         indexes.byTitle.get(normalizeTitle(proposal.name)),
       include: true,
-      hidden: proposal.concealed,
+      hidden:
+        proposal.concealed ||
+        proposal.labels.some((label) => label.toLowerCase() === "hidden"),
       artCredit: "",
     };
   });
@@ -129,11 +131,14 @@ function applyCreatureMetadata(
   hidden: boolean,
 ): void {
   if (proposal.aliases.length) data.aliases = proposal.aliases;
-  if (proposal.labels.length) data.labels = [...proposal.labels];
+  const labels = proposal.labels.filter(
+    (label) => label.toLowerCase() !== "hidden",
+  );
   if (hidden) {
-    data.labels = [...new Set([...(data.labels ?? []), "hidden"])];
+    labels.push("hidden");
     data.visibility = "hidden";
   }
+  if (proposal.labels.length || hidden) data.labels = [...new Set(labels)];
 }
 
 function entityData(

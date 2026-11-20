@@ -139,6 +139,12 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       { ...validFixture, id: "!" },
       { ...validFixture, version: "1.0" },
       { ...validFixture, title: "" },
+      {
+        ...validFixture,
+        locations: validFixture.locations.map((location, index) =>
+          index === 0 ? { ...location, aliases: [" "] } : location,
+        ),
+      },
       { ...validFixture, extraUnknownProperty: 123 },
       {
         ...validFixture,

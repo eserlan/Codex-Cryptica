@@ -85,7 +85,7 @@ export const LocationConnectionSchema = z
 export type LocationConnection = z.infer<typeof LocationConnectionSchema>;
 
 const AdventureEntityMetadataSchema = z.object({
-  aliases: z.array(z.string().trim().min(1)).optional(),
+  aliases: z.array(z.string().trim().min(1).regex(/\S/)).optional(),
   labels: z.array(z.string()).optional(),
 });
 
