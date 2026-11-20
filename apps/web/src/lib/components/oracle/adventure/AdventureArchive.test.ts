@@ -132,6 +132,76 @@ describe("AdventureArchive", () => {
     expect(onResume).toHaveBeenCalledWith("active-1");
   });
 
+  it("keeps long active package metadata readable in the mobile card layout", async () => {
+    const repo = repository();
+    const packageId = "electric-razor-adventure-package-with-a-very-long-slug";
+    const hash = "a".repeat(64);
+    repo.list.mockResolvedValue({
+      effectiveActiveId: "active-1",
+      entries: [
+        {
+          id: "active-1",
+          title: "Electric Razor and the Extremely Long Adventure Title",
+          status: "active",
+          revision: 1,
+          loadCondition: "normal",
+          sourcePackage: {
+            packageId,
+            version: "2026.11.20-preview",
+            formatVersion: "1",
+            hash,
+          },
+        },
+      ],
+    });
+    render(AdventureArchive, {
+      repository: repo as any,
+      vaultId: "vault-1",
+      onResume: vi.fn(async () => undefined),
+    });
+
+    const openButton = await screen.findByRole("button", {
+      name: "Open adventure Electric Razor and the Extremely Long Adventure Title",
+    });
+    const card = screen.getByTestId("archive-entry-display");
+    expect(card?.className).toContain("flex-col");
+    expect(card?.className).toContain("md:flex-row");
+    expect(screen.getByText("active")).toBeTruthy();
+
+    const summary = screen.getByTestId("archive-entry-source-package");
+    expect(summary.textContent).toContain("2026.11.20-preview");
+    expect(summary.textContent).toContain("electric-razor-adventure");
+    await fireEvent.click(summary);
+    const fullMetadata = summary.closest("details")?.textContent ?? "";
+    expect(fullMetadata).toContain(`Package ID: ${packageId}`);
+    expect(fullMetadata).toContain("Version: 2026.11.20-preview");
+    expect(fullMetadata).toContain(`Hash: ${hash}`);
+
+    const resume = screen.getByRole("button", {
+      name: "Resume active adventure Electric Razor and the Extremely Long Adventure Title",
+    });
+    const rename = screen.getByRole("button", {
+      name: "Rename adventure Electric Razor and the Extremely Long Adventure Title",
+    });
+    const duplicate = screen.getByRole("button", {
+      name: "Duplicate adventure Electric Razor and the Extremely Long Adventure Title",
+    });
+    expect(resume.className).toContain("bg-theme-primary");
+    expect(rename.className).toContain("min-h-11");
+    expect(rename.className).toContain("min-w-11");
+    expect(duplicate.className).toContain("min-h-11");
+    expect(duplicate.className).toContain("min-w-11");
+
+    for (const width of [320, 360, 390, 430]) {
+      window.innerWidth = width;
+      expect(card?.className).toContain("flex-col");
+      expect(summary.textContent).toContain("2026.11.20-preview");
+      expect(resume).toBeTruthy();
+      expect(rename).toBeTruthy();
+      expect(duplicate).toBeTruthy();
+    }
+  });
+
   it("reloads entries and clears the selected transcript when the vault changes", async () => {
     const repo = repository();
     repo.list.mockImplementation(async (vaultId: string) => ({

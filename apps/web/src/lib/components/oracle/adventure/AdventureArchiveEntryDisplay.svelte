@@ -33,89 +33,103 @@
   );
 </script>
 
-<div class="flex gap-2">
-  <button
-    class="flex min-h-12 min-w-0 flex-1 items-center justify-between rounded-md border border-theme-border px-3 text-left text-theme-text"
-    type="button"
-    onclick={onOpen}
-    aria-label={`Open adventure ${entry.title}`}
-  >
-    <span class="flex min-w-0 flex-col">
-      <span>{entry.title}</span>
-      {#if entry.sourcePackage}
-        <span
-          class="font-mono text-xs text-theme-text"
+<div
+  class="flex min-w-0 flex-col gap-2 md:flex-row"
+  data-testid="archive-entry-display"
+>
+  <div class="flex min-w-0 flex-1 flex-col justify-center gap-1 rounded-md border border-theme-border px-3 py-2 text-theme-text">
+    <div class="flex min-w-0 items-center justify-between gap-3">
+      <button
+        class="min-w-0 break-words [overflow-wrap:anywhere] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        type="button"
+        onclick={onOpen}
+        aria-label={`Open adventure ${entry.title}`}
+      >
+        {entry.title}
+      </button>
+      <span class="shrink-0 rounded-full border border-theme-border px-2 py-1 text-xs text-theme-text">
+        {entry.loadCondition === "unreadable" ? "Unreadable" : entry.status}
+      </span>
+    </div>
+    {#if entry.sourcePackage}
+      <details class="min-w-0 max-w-full font-mono text-xs text-theme-muted">
+        <summary
+          class="w-fit max-w-full cursor-pointer break-all rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           data-testid="archive-entry-source-package"
         >
-          {entry.sourcePackage.packageId} v{entry.sourcePackage.version} · {entry.sourcePackage.hash.slice(
-            0,
-            8,
-          )}
+          v{entry.sourcePackage.version} · {entry.sourcePackage.packageId.slice(0, 24)}{entry
+            .sourcePackage.packageId.length > 24
+            ? "…"
+            : ""} · {entry.sourcePackage.hash.slice(0, 8)}
+        </summary>
+        <span class="mt-1 block break-all text-theme-text">
+          Package ID: {entry.sourcePackage.packageId}<br />
+          Version: {entry.sourcePackage.version}<br />
+          Hash: {entry.sourcePackage.hash}
         </span>
-      {/if}
-    </span>
-    <span class="text-xs text-theme-text">
-      {entry.loadCondition === "unreadable" ? "Unreadable" : entry.status}
-    </span>
-  </button>
+      </details>
+    {/if}
+  </div>
 
-  {#if canEdit}
-    <button
-      class="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10"
-      type="button"
-      onclick={onStartRename}
-      aria-label="Rename adventure {entry.title}"
-      title="Rename"
-    >
-      <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
-    </button>
-    <button
-      class="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 disabled:opacity-50"
-      type="button"
-      onclick={onDuplicate}
-      disabled={duplicating}
-      aria-label="Duplicate adventure {entry.title}"
-      title="Duplicate"
-    >
-      <span class="icon-[lucide--copy] h-4 w-4" aria-hidden="true"></span>
-    </button>
-  {/if}
+  <div class="flex min-w-0 flex-wrap items-center gap-2 md:flex-nowrap">
+    {#if canEdit}
+      <button
+        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        type="button"
+        onclick={onStartRename}
+        aria-label="Rename adventure {entry.title}"
+        title="Rename"
+      >
+        <span class="icon-[lucide--pencil] h-4 w-4" aria-hidden="true"></span>
+      </button>
+      <button
+        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        type="button"
+        onclick={onDuplicate}
+        disabled={duplicating}
+        aria-label="Duplicate adventure {entry.title}"
+        title="Duplicate"
+      >
+        <span class="icon-[lucide--copy] h-4 w-4" aria-hidden="true"></span>
+      </button>
+    {/if}
 
-  {#if entry.status === "active" && isReadable && onResume}
-    <button
-      class="flex min-h-12 items-center justify-center rounded-md border border-theme-primary/50 px-3 text-sm text-theme-text transition hover:bg-theme-primary/10"
-      type="button"
-      onclick={onResume}
-      aria-label="Resume active adventure {entry.title}"
-    >
-      Resume
-    </button>
-  {/if}
+    {#if entry.status === "active" && isReadable && onResume}
+      <button
+        class="order-first flex min-h-11 items-center justify-center rounded-md bg-theme-primary px-4 text-sm font-semibold text-theme-bg transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:order-last"
+        type="button"
+        onclick={onResume}
+        aria-label="Resume active adventure {entry.title}"
+      >
+        Resume
+      </button>
+    {/if}
 
-  {#if entry.status === "archived" && isReadable && onResumeArchived}
-    <button
-      class="flex min-h-12 items-center justify-center rounded-md border border-theme-primary/50 px-3 text-sm text-theme-text transition hover:bg-theme-primary/10 disabled:opacity-50"
-      type="button"
-      onclick={onResumeArchived}
-      disabled={resuming}
-      aria-label="Resume archived adventure {entry.title}"
-    >
-      Resume
-    </button>
-  {/if}
+    {#if entry.status === "archived" && isReadable && onResumeArchived}
+      <button
+        class="order-first flex min-h-11 items-center justify-center rounded-md bg-theme-primary px-4 text-sm font-semibold text-theme-bg transition hover:opacity-90 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary md:order-last"
+        type="button"
+        onclick={onResumeArchived}
+        disabled={resuming}
+        aria-label="Resume archived adventure {entry.title}"
+      >
+        Resume
+      </button>
+    {/if}
 
-  {#if canDelete}
-    <button
-      class="flex min-h-12 min-w-12 items-center justify-center rounded-md border border-theme-danger/50 px-3 text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50"
-      type="button"
-      onclick={onDelete}
-      disabled={deleting}
-      aria-label="Delete {entry.loadCondition === 'unreadable'
-        ? 'unreadable'
-        : 'archived'} adventure {entry.title}"
-      title="Delete adventure"
-    >
-      <span class="icon-[lucide--trash-2] h-4 w-4" aria-hidden="true"></span>
-    </button>
-  {/if}
+    {#if canDelete}
+      <button
+        class="flex min-h-11 min-w-11 items-center justify-center rounded-md border border-theme-danger/50 text-theme-danger transition hover:bg-theme-danger/10 disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-danger"
+        type="button"
+        onclick={onDelete}
+        disabled={deleting}
+        aria-label="Delete {entry.loadCondition === 'unreadable'
+          ? 'unreadable'
+          : 'archived'} adventure {entry.title}"
+        title="Delete adventure"
+      >
+        <span class="icon-[lucide--trash-2] h-4 w-4" aria-hidden="true"></span>
+      </button>
+    {/if}
+  </div>
 </div>
