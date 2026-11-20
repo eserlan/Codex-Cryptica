@@ -8,6 +8,9 @@ import {
   packageProgressIndex,
   adventureJsonGmOnlyText,
   adventureJsonHiddenRecordIds,
+  authorisedPackageRevelationScope,
+  detectHiddenTextLeakage,
+  detectPackageTextLeakage,
   type AdventureSession,
   type CommitMetadata,
 } from "@codex/adventure-engine";
@@ -95,9 +98,21 @@ export class AdventureRuntime {
   }
 
   narrationPreview(sessionId: string, signal?: AbortSignal) {
+    const session = this.state.session;
+    const guardMeta = session?.id === sessionId ? this.packageMetadata() : {};
+    let suppressed = false;
     return (text: string) => {
       if (signal?.aborted || this.state.session?.id !== sessionId) return;
-      if (this.state.phase !== "generating") return;
+      if (this.state.phase !== "generating" || suppressed) return;
+      const currentSession = this.state.session;
+      if (
+        detectHiddenTextLeakage(currentSession, text).length > 0 ||
+        detectPackageTextLeakage(text, guardMeta, currentSession).length > 0
+      ) {
+        suppressed = true;
+        this.state.streamedNarration = "";
+        return;
+      }
       this.state.streamedNarration = text;
     };
   }
@@ -115,11 +130,12 @@ export class AdventureRuntime {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
     if (!pkg) return {};
+    const scope = authorisedPackageRevelationScope(session.packageProgress);
     return {
       ...packageProgressIndex(pkg),
       packageSceneIds: pkg.scenes.map((scene) => scene.id),
       packageRecordIds: adventureJsonHiddenRecordIds(pkg),
-      packageGmOnlyText: adventureJsonGmOnlyText(pkg),
+      packageGmOnlyText: adventureJsonGmOnlyText(pkg, scope),
     };
   }
 

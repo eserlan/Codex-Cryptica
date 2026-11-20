@@ -286,4 +286,101 @@ describe("Adventure package leakage guards, diagnostics & opening retry (#5052)"
     expect(ctx.manager.streamedNarration).toBe("");
     expect(ctx.manager.session?.turns).toHaveLength(0);
   });
+
+  it("authorises readAloud on a reached gm-only entry scene while blocking its body and unreached readAloud", async () => {
+    const pkg = structuredClone(referencePackage);
+    const entryReadAloud =
+      "Salt spray stings your cheeks as the jetty lanterns sway.";
+    const entryBody = "GM-only: three smugglers wait behind the barrels.";
+    const unreachedReadAloud =
+      "Deep beneath the lighthouse, a brass hatch stands ajar.";
+    pkg.scenes = [
+      {
+        id: "scene-gm-entry",
+        title: "Smuggler Jetty",
+        summary: "GM summary for jetty",
+        readAloud: entryReadAloud,
+        body: entryBody,
+        visibility: "gm-only",
+        epistemicStatus: "explicit",
+      },
+      {
+        id: "scene-gm-deep",
+        title: "Lighthouse Vault",
+        summary: "GM summary for vault",
+        readAloud: unreachedReadAloud,
+        visibility: "gm-only",
+        epistemicStatus: "explicit",
+      },
+    ];
+
+    let mode: "ok-readaloud" | "leak-body" | "leak-unreached" = "ok-readaloud";
+    const ctx = setupManager(pkg, async () => {
+      if (mode === "ok-readaloud") {
+        return {
+          ...completeProposal,
+          narration: entryReadAloud,
+        };
+      }
+      if (mode === "leak-body") {
+        return {
+          ...completeProposal,
+          narration: entryBody,
+        };
+      }
+      return {
+        ...completeProposal,
+        narration: unreachedReadAloud,
+      };
+    });
+
+    await ctx.start();
+    expect(ctx.manager.phase).toBe("ready");
+    expect(ctx.manager.session?.turns).toHaveLength(1);
+    expect(ctx.manager.session?.turns[0]?.narration).toBe(entryReadAloud);
+
+    mode = "leak-body";
+    await ctx.manager.submitAction("Peek behind the barrels");
+    expect(ctx.manager.phase).toBe("error");
+    expect(ctx.manager.session?.turns).toHaveLength(1);
+
+    mode = "leak-unreached";
+    await ctx.manager.submitAction("Check the lighthouse");
+    expect(ctx.manager.phase).toBe("error");
+    expect(ctx.manager.session?.turns).toHaveLength(1);
+  });
+
+  it("suppresses and clears streamedNarration if a preview chunk leaks hidden package text or IDs", async () => {
+    const { pkg, hiddenActorId, secretText } = makeFixtureWithGmMetadata();
+    const seenPreviews: string[] = [];
+    let phase: "open" | "leak-preview-text" | "leak-preview-id" = "open";
+
+    const ctx = setupManager(pkg, async (request) => {
+      if (phase === "open") return completeProposal;
+      request.onNarration?.("A lantern flickers in the fog.");
+      seenPreviews.push(ctx.manager.streamedNarration);
+      if (phase === "leak-preview-text") {
+        request.onNarration?.(`A lantern flickers; ${secretText}.`);
+      } else {
+        request.onNarration?.(`A lantern flickers near ${hiddenActorId}.`);
+      }
+      seenPreviews.push(ctx.manager.streamedNarration);
+      // Even a subsequent clean chunk stays suppressed for this turn.
+      request.onNarration?.("A clean follow-up chunk.");
+      seenPreviews.push(ctx.manager.streamedNarration);
+      return completeProposal;
+    });
+
+    await ctx.start();
+    expect(ctx.manager.phase).toBe("ready");
+
+    phase = "leak-preview-text";
+    await ctx.manager.submitAction("Listen at the pier");
+    expect(seenPreviews).toEqual(["A lantern flickers in the fog.", "", ""]);
+
+    seenPreviews.length = 0;
+    phase = "leak-preview-id";
+    await ctx.manager.submitAction("Peer into the fog");
+    expect(seenPreviews).toEqual(["A lantern flickers in the fog.", "", ""]);
+  });
 });

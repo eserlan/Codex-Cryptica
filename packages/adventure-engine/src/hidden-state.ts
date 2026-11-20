@@ -187,33 +187,84 @@ export function detectPackageLeakage(
     ([field]) =>
       !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
   );
-  const proposedActorText =
-    proposal.kind === "complete"
-      ? (proposal.actorEvents ?? []).flatMap((event) => [
-          event.note,
-          ...(event.fact ? [event.fact] : []),
-        ])
-      : [];
-  const storedProgress = session?.packageProgress;
+  return detectPackageFieldsLeakage(fields, meta, session, proposal);
+}
+
+/** Checks partial player-facing text (such as a streamed preview) against pinned package guards. */
+export function detectPackageTextLeakage(
+  text: string,
+  meta: Pick<CommitMetadata, "packageGmOnlyText" | "packageRecordIds">,
+  session?: AdventureSession,
+): HiddenLeakageFinding[] {
+  return detectPackageFieldsLeakage([["root", text]], meta, session);
+}
+
+function actorEventSecretTexts(
+  events: readonly { note: string; fact?: string }[] | undefined,
+): string[] {
+  if (!events) return [];
+  return events.flatMap((event) =>
+    event.fact ? [event.note, event.fact] : [event.note],
+  );
+}
+
+function proposedPackageSecretTexts(
+  proposal?: AdventureTurnProposal,
+): string[] {
+  if (proposal?.kind !== "complete") return [];
   return [
-    ...packageTextLeakage(fields, [
-      ...(meta.packageGmOnlyText ?? []),
-      ...(proposal.kind === "complete"
-        ? (proposal.packageEvents ?? []).map((event) => event.note)
-        : []),
-      ...proposedActorText,
-      ...(storedProgress?.events ?? []).map((event) => event.note),
-      ...(storedProgress?.actorEvents ?? []).map((event) => event.note),
-      ...(storedProgress?.actorEvents ?? []).flatMap((event) =>
-        event.fact ? [event.fact] : [],
-      ),
-      ...(storedProgress?.actors ?? []).flatMap((actor) => actor.facts),
-    ]),
-    ...packageIdLeakage(fields, [
-      ...(meta.packageRecordIds ?? []),
-      ...(storedProgress?.events ?? []).map((event) => event.id),
-      ...(storedProgress?.actorEvents ?? []).map((event) => event.id),
-    ]),
+    ...(proposal.packageEvents ?? []).map((event) => event.note),
+    ...actorEventSecretTexts(proposal.actorEvents),
+  ];
+}
+
+function storedPackageSecretTexts(
+  progress?: AdventureSession["packageProgress"],
+): string[] {
+  if (!progress) return [];
+  return [
+    ...(progress.events ?? []).map((event) => event.note),
+    ...actorEventSecretTexts(progress.actorEvents),
+    ...(progress.actors ?? []).flatMap((actor) => actor.facts),
+  ];
+}
+
+function collectPackageSecretTexts(
+  meta: Pick<CommitMetadata, "packageGmOnlyText">,
+  session?: AdventureSession,
+  proposal?: AdventureTurnProposal,
+): string[] {
+  return [
+    ...(meta.packageGmOnlyText ?? []),
+    ...proposedPackageSecretTexts(proposal),
+    ...storedPackageSecretTexts(session?.packageProgress),
+  ];
+}
+
+function collectPackageSecretIds(
+  meta: Pick<CommitMetadata, "packageRecordIds">,
+  session?: AdventureSession,
+): string[] {
+  const stored = session?.packageProgress;
+  return [
+    ...(meta.packageRecordIds ?? []),
+    ...(stored?.events ?? []).map((event) => event.id),
+    ...(stored?.actorEvents ?? []).map((event) => event.id),
+  ];
+}
+
+function detectPackageFieldsLeakage(
+  fields: Array<[string, string]>,
+  meta: Pick<CommitMetadata, "packageGmOnlyText" | "packageRecordIds">,
+  session?: AdventureSession,
+  proposal?: AdventureTurnProposal,
+): HiddenLeakageFinding[] {
+  return [
+    ...packageTextLeakage(
+      fields,
+      collectPackageSecretTexts(meta, session, proposal),
+    ),
+    ...packageIdLeakage(fields, collectPackageSecretIds(meta, session)),
   ];
 }
 
