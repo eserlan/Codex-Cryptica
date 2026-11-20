@@ -354,6 +354,20 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     });
 
     const diff = screen.getByTestId("adventure-import-diff");
+    const summary = screen.getByTestId("review-import-summary");
+    const unresolved = screen.getByTestId("review-unresolved");
+    expect(
+      Boolean(
+        summary.compareDocumentPosition(unresolved) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
+    expect(
+      Boolean(
+        unresolved.compareDocumentPosition(diff) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
     expect(diff.textContent).toContain("the-mill-mystery");
     expect(diff.textContent).toContain("v1.0.0");
     expect(diff.textContent).toContain("Scene 1: The Ferry Landing");
