@@ -1,4 +1,8 @@
 import {
+  ADVENTURE_JSON_FENCE_HINT,
+  unwrapAdventureJsonFence,
+} from "./adventure-json-fence.js";
+import {
   adventureSourcePackageToAdventureJson,
   computeAdventureJsonHash,
   parseAdventureMarkdown,
@@ -227,16 +231,22 @@ export class AdventureImportController {
     request: ImportRequest,
   ): Promise<void> {
     const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    const unwrapped = unwrapAdventureJsonFence(text);
     let parsed: unknown;
     try {
-      parsed = JSON.parse(text);
+      if (!unwrapped.ok) throw new Error(unwrapped.message);
+      parsed = JSON.parse(unwrapped.text);
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Malformed JSON document.";
       this.error = "Adventure JSON could not be parsed.";
       this.validationErrors = [
         {
           code: "INVALID_JSON",
           message:
-            error instanceof Error ? error.message : "Malformed JSON document.",
+            unwrapped.ok && text.includes("```")
+              ? `${message} ${ADVENTURE_JSON_FENCE_HINT}`
+              : message,
         },
       ];
       return;

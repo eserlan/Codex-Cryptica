@@ -84,6 +84,105 @@ describe("adventure import controller", () => {
     },
   );
 
+  describe("Markdown JSON fences", () => {
+    const pretty = JSON.stringify(sample, null, 2);
+    const bytes = (text: string, bom = false) =>
+      new File(
+        [bom ? new Uint8Array([0xef, 0xbb, 0xbf]) : "", text],
+        "adventure.json",
+        { type: "application/json" },
+      );
+
+    it.each([
+      ["plain", pretty],
+      ["json fence", "```json\n" + pretty + "\n```\n"],
+      ["unlabelled fence", "```\n" + pretty + "\n```"],
+      ["JSON label", "```JSON\n" + pretty + "\n```"],
+      ["CRLF", "```json\r\n" + pretty.replace(/\n/g, "\r\n") + "\r\n```\r\n"],
+      ["blank lines", "\n\n  ```json\n" + pretty + "\n```\n\n"],
+      [
+        "raw JSON containing a fence in a string",
+        JSON.stringify({ ...sample, title: "A ``` B" }),
+      ],
+    ])("imports %s", async (_name, text) => {
+      const { imports, deps } = setup();
+      await imports.importJson(jsonFile(text));
+      expect(imports.error).toBeNull();
+      expect(imports.draft?.title).toBe(
+        _name.startsWith("raw") ? "A ``` B" : sample.title,
+      );
+      expect(deps.onReview).toHaveBeenCalledOnce();
+    });
+
+    it("produces the same draft from fenced and plain input", async () => {
+      const plain = setup();
+      await plain.imports.importJson(jsonFile(pretty));
+      const fenced = setup();
+      await fenced.imports.importJson(jsonFile("```json\n" + pretty + "\n```"));
+      expect(fenced.imports.draft).toEqual(plain.imports.draft);
+    });
+
+    it.each([
+      ["plain JSON", pretty],
+      ["a fence", "```json\n" + pretty + "\n```"],
+    ])("imports a UTF-8 BOM before %s", async (_name, text) => {
+      const { imports, deps } = setup();
+      await imports.importJson(bytes(text, true));
+      expect(imports.draft?.title).toBe(sample.title);
+      expect(deps.onReview).toHaveBeenCalledOnce();
+    });
+
+    it("rejects invalid UTF-8 without review", async () => {
+      const { imports, deps } = setup();
+      await imports.importJson(
+        new File([new Uint8Array([0x7b, 0xff, 0xfe])], "a.json", {
+          type: "application/json",
+        }),
+      );
+      expect(imports.error).not.toBe("");
+      expect(deps.onReview).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["prose before", "Here is your adventure:\n```json\n" + pretty + "\n```"],
+      ["prose after", "```json\n" + pretty + "\n```\nEnjoy!"],
+      ["two blocks", "```json\n" + pretty + "\n```\n\n```json\n{}\n```"],
+      ["unclosed fence", "```json\n" + pretty],
+      ["other label", "```javascript\n" + pretty + "\n```"],
+      ["malformed JSON in fence", "```json\n{bad\n```"],
+    ])("rejects %s", async (_name, text) => {
+      const { imports, deps } = setup();
+      await imports.importJson(jsonFile(text));
+      expect(imports.error).toBe("Adventure JSON could not be parsed.");
+      expect(imports.validationErrors[0].code).toBe("INVALID_JSON");
+      expect(deps.onReview).not.toHaveBeenCalled();
+      expect(deps.saveApproved).not.toHaveBeenCalled();
+    });
+
+    it("explains the accepted forms for prose around a fence", async () => {
+      const { imports } = setup();
+      await imports.importJson(jsonFile("Here:\n```json\n{}\n```"));
+      expect(imports.validationErrors[0].message).toContain(
+        "single fenced JSON block",
+      );
+    });
+
+    it("treats a fenced copy of a stored plain document as a duplicate", async () => {
+      const { imports, deps } = setup();
+      const hash = await computeAdventureJsonHash(approved);
+      const stored: StoredAdventurePackage = {
+        hash,
+        path: `.codex/adventures/packages/${hash}.json`,
+        package: approved,
+        originFormat: "adventure-json/v1",
+      };
+      deps.listApproved.mockResolvedValueOnce([stored]);
+      await imports.importJson(jsonFile("```json\n" + pretty + "\n```"));
+      expect(imports.duplicate).toEqual(stored);
+      expect(deps.onReview).not.toHaveBeenCalled();
+    });
+  });
+
   it.each([
     ["file.txt", "text/plain", 1, "Adventure JSON"],
     ["file.json", "application/json", 10 * 1024 * 1024 + 1, "10 MiB"],
