@@ -133,6 +133,12 @@ describe("buildAdventureRepairPrompt", () => {
       expect(prompt).toContain("sourceRefs");
       expect(prompt).toContain("Do not bump version");
       expect(prompt).toContain("Do not invent");
+      const lower = prompt.toLowerCase();
+      expect(lower).toContain("fix only the listed errors");
+      expect(lower).toContain(
+        "return the complete corrected adventure json object",
+      );
+      expect(lower).toContain("run validation again");
       expect(prompt).toContain("Source fidelity was not checked");
     }
     expect(multi.findings.length).toBeGreaterThanOrEqual(2);

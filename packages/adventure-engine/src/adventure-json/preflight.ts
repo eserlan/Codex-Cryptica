@@ -41,11 +41,11 @@ export const ADVENTURE_PREFLIGHT_HINTS: Record<AdventurePreflightCode, string> =
     SELF_REFERENCE: "Remove the reference from this record to itself.",
     HIERARCHY_CYCLE: "Break the parent chain so no record is its own ancestor.",
     DEAD_END_CYCLE:
-      "Add a way out of this group of scenes so play can reach an ending.",
+      "Add the exit branch the source states; if it states none, record the gap as an unresolved entry and do not invent a branch.",
     UNREACHABLE_SCENE:
-      "Link this scene from an entry point or another reachable scene.",
+      "Connect the scene by a branch only if the source states it; otherwise add an UNKNOWN_SCENE_PROGRESSION unresolved entry for it and do not invent a branch.",
     DUPLICATE_SCENE_PROGRESSION:
-      "Remove the repeated progression between the same pair of scenes.",
+      "Keep one UNKNOWN_SCENE_PROGRESSION unresolved entry per scene and remove the extra.",
   };
 
 const SCHEMA_CODES: ReadonlySet<AdventurePreflightCode> = new Set([
@@ -142,10 +142,11 @@ export function buildAdventureRepairPrompt(
 ): string | null {
   if (report.status === "valid") return null;
   const lines = [
-    "The Adventure JSON (adventure-json/v1) file below failed validation. Fix only the errors listed here.",
+    "The Adventure JSON (adventure-json/v1) file you were given failed validation. Fix only the errors listed here.",
     "",
     "Rules:",
-    "- Keep the package id, every entity ID, version, source facts, sourceRefs and all unaffected fields exactly as they are. Do not bump version.",
+    "- Fix only the listed errors.",
+    "- Keep the package id, version, source facts, sourceRefs, every entity ID and all unaffected fields exactly as they are, except where a listed error names one that must change. Do not bump version.",
     "- Do not invent replacement content.",
     "- Return the complete corrected Adventure JSON object.",
     "- Run validation again after the fix.",
