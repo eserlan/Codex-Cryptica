@@ -173,6 +173,15 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     });
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
 
+    const dispositionOnly = ledgerTurns();
+    dispositionOnly[2]!.visiblePatch.relationships.add.push({
+      subjectId: "miller-family",
+      text: "Miller family",
+      disposition: "The debt is owed to the Miller family.",
+      source: "provisional",
+    });
+    expect(dialogueLoopPacing(session(dispositionOnly))).toBeUndefined();
+
     const unrelated = ledgerTurns();
     unrelated[2]!.visiblePatch.relationships.add.push({
       subjectId: "baker",

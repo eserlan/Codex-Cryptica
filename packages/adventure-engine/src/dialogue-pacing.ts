@@ -126,12 +126,23 @@ function progressedOnTopic(
     ...patch.knownFacts.update,
     ...patch.objectives.add,
     ...patch.objectives.update,
-    ...patch.relationships.add,
-    ...patch.relationships.update,
     ...patch.activeCharacters.add,
     ...patch.activeCharacters.update,
   ];
   if (changes.some((entry) => relevantText(entry.text, topic))) return true;
+  const relationshipChanges = [
+    ...patch.relationships.add,
+    ...patch.relationships.update,
+  ];
+  if (
+    relationshipChanges.some(
+      (entry) =>
+        relevantText(entry.text, topic) ||
+        relevantText(entry.disposition, topic),
+    )
+  ) {
+    return true;
+  }
   const newFacts = session.provisionalFacts.filter((fact) =>
     turn.provisionalFactIds.includes(fact.id),
   );
