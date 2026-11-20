@@ -114,6 +114,24 @@ describe("buildCreatureProposals", () => {
     ]);
   });
 
+  it("merges actor aliases and labels into same-name creature proposals", () => {
+    const metadataPackage = {
+      ...pkg,
+      actors: pkg.actors.map((entry, index) =>
+        index < 2
+          ? {
+              ...entry,
+              aliases: [index === 0 ? "The Gnoll" : "Gnoll Raider"],
+              labels: [index === 0 ? "raider" : "hostile"],
+            }
+          : entry,
+      ),
+    } as AdventureJsonV1;
+    const gnoll = buildCreatureProposals(metadataPackage)[0]!;
+    expect(gnoll.aliases).toEqual(["The Gnoll", "Gnoll Raider"]);
+    expect(gnoll.labels).toEqual(["raider", "hostile"]);
+  });
+
   it("conceals gm-only actors and encounters only", () => {
     expect(proposals[3]!.concealed).toBe(true);
     expect(proposals[1]!.concealed).toBe(true);

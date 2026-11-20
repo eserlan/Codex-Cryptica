@@ -33,6 +33,34 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts aliases and labels on locations, actors, factions and items", () => {
+    const fixture = loadReferenceFixture();
+    const withMetadata = {
+      ...fixture,
+      locations: fixture.locations.map((entry) => ({
+        ...entry,
+        aliases: ["The old road"],
+        labels: ["north"],
+      })),
+      actors: fixture.actors.map((entry) => ({
+        ...entry,
+        aliases: ["The keeper"],
+        labels: ["important"],
+      })),
+      factions: fixture.factions.map((entry) => ({
+        ...entry,
+        aliases: ["The society"],
+        labels: ["secret"],
+      })),
+      items: fixture.items.map((entry) => ({
+        ...entry,
+        aliases: ["The key"],
+        labels: ["clue"],
+      })),
+    };
+    expect(AdventureJsonV1Schema.safeParse(withMetadata).success).toBe(true);
+  });
+
   it("rejects invalid types, missing required fields, and unsupported formatVersion", () => {
     const base = loadReferenceFixture();
 
@@ -111,6 +139,12 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       { ...validFixture, id: "!" },
       { ...validFixture, version: "1.0" },
       { ...validFixture, title: "" },
+      {
+        ...validFixture,
+        locations: validFixture.locations.map((location, index) =>
+          index === 0 ? { ...location, aliases: [" "] } : location,
+        ),
+      },
       { ...validFixture, extraUnknownProperty: 123 },
       {
         ...validFixture,
