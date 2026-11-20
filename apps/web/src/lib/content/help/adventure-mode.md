@@ -87,7 +87,8 @@ a package, and the same file always gives the same result.
 2. Drop or choose an Adventure JSON v1 (`.json`) file up to 10 MiB. If you
    have a module in another form, follow the
    [Adventure JSON conversion guide](/adventure-import) to convert it
-   off-platform first.
+   off-platform first. A file whose whole content is a single ` ```json `
+   code block is also accepted; anything else around the JSON is rejected.
 3. Codex validates the file locally against the Adventure JSON schema. If
    validation fails, you get the exact errors and nothing is written.
 4. Review its locations, actors, factions, scenes, encounters, clues,
