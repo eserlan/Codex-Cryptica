@@ -1,0 +1,57 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "minimal-watchtower",
+  "title": "The Silent Watchtower",
+  "version": "1.0.0",
+  "premise": {
+    "background": "A hillside watchtower has gone dark three nights before the winter caravan arrives.",
+    "hook": "The village Reeve asks the party to ride up the ridge and relight the beacon."
+  },
+  "source": {
+    "title": "The Silent Watchtower",
+    "license": "CC0-1.0"
+  },
+  "locations": [
+    {
+      "id": "loc-watchtower",
+      "name": "Ridge Watchtower",
+      "summary": "A stone signal tower overlooking the valley road.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "actors": [
+    {
+      "id": "loc-watchtower",
+      "name": "Reeve Tomas",
+      "summary": "The worried village official who hires the party.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "factions": [],
+  "scenes": [
+    {
+      "id": "scene-beacon-room",
+      "title": "The Cold Beacon",
+      "summary": "The party reaches the top of the tower and finds the oil brazier unlit.",
+      "locationId": "loc-watchtower",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "encounters": [],
+  "clues": [],
+  "rumours": [],
+  "items": [],
+  "secrets": [],
+  "endings": [
+    {
+      "id": "ending-beacon-lit",
+      "title": "Beacon Relit",
+      "description": "The signal fire burns again and the winter caravan safely navigates the pass.",
+      "epistemicStatus": "explicit"
+    }
+  ],
+  "unresolved": []
+}

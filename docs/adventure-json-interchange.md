@@ -169,3 +169,4 @@ For scoring model conversions against an answer key (schema, secrets, coverage,
 rumours, branches, citations, truncation), see `docs/adventure-conversion-qa.md`
 and the offline scorer `scoreAdventureConversion` plus the
 `bun scripts/score-adventure-conversion.ts` CLI.
+To check a file's structure and references offline before import, see "Preflight validation" in that document and `bun scripts/preflight-adventure-json.ts`.
