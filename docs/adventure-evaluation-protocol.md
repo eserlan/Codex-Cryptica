@@ -121,7 +121,6 @@ Treat repeated dialogue without new substance, or a world inconsistency repeated
 
 For **#5083 live-model verification**, run the repeated ledger questioning twice on staging, once with four variations of the same question and once followed by a deliberate change of topic. Record the provider/model, four narrations, and the GM-only diagnostic `dialogueLoopTurns` / `dialogueRecoveryDue` values in the test record. The fourth same-topic turn should receive a useful clarification, correction, or credible alternative; the unrelated action must remain unrelated. Repeat with a knowledgeable NPC who legitimately lacks a secret: recovery must never make them omniscient or reveal the secret. Automated prompt assertions alone are not proof of behavioural success.
 
-
 ## Live-Model Baseline Recording Template
 
 Record one row per evaluated provider/model during manual or live-API benchmark runs:
