@@ -28,6 +28,7 @@ export class PeerJSConnectionManager {
   private peer: any = null;
   private activeConn: any = null;
   private readonly peerFactory: PeerFactory;
+  private readonly peerJsLoader: () => Promise<void>;
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
   private readonly reconnectDelays: number[];
@@ -54,17 +55,21 @@ export class PeerJSConnectionManager {
   private isAwaitingPong = false;
   private pendingConnectResolve: (() => void) | null = null;
   private pendingConnectReject: ((err: any) => void) | null = null;
+  private pendingPeerLoadReject: ((error: Error) => void) | null = null;
+  private peerLoadEpoch = 0;
 
   constructor(
     peerFactory: PeerFactory = createPeer,
     heartbeatIntervalMs = 10000,
     heartbeatTimeoutMs = 15000,
     reconnectDelays = [2000, 4000, 8000],
+    peerJsLoader: () => Promise<void> = loadPeerJs,
   ) {
     this.peerFactory = peerFactory;
     this.heartbeatIntervalMs = heartbeatIntervalMs;
     this.heartbeatTimeoutMs = heartbeatTimeoutMs;
     this.reconnectDelays = reconnectDelays;
+    this.peerJsLoader = peerJsLoader;
   }
 
   private statusListeners = new Set<
@@ -105,9 +110,27 @@ export class PeerJSConnectionManager {
    */
   async startHost(hostPeerId?: string): Promise<string> {
     this.disconnect();
+    const attempt = ++this.peerLoadEpoch;
     this.isHost = true;
     this.setStatus("connecting");
-    if (this.peerFactory === createPeer) await loadPeerJs();
+    let rejectLoad!: (error: Error) => void;
+    const cancelled = new Promise<never>((_, reject) => {
+      rejectLoad = reject;
+    });
+    this.pendingPeerLoadReject = rejectLoad;
+    try {
+      if (this.peerFactory === createPeer) {
+        await Promise.race([this.peerJsLoader(), cancelled]);
+      }
+    } catch (error) {
+      if (attempt === this.peerLoadEpoch) this.setStatus("failed");
+      throw error;
+    } finally {
+      if (this.pendingPeerLoadReject === rejectLoad) {
+        this.pendingPeerLoadReject = null;
+      }
+    }
+    if (attempt !== this.peerLoadEpoch) throw new Error("Connection aborted");
 
     return new Promise((resolve, reject) => {
       try {
@@ -157,10 +180,28 @@ export class PeerJSConnectionManager {
    */
   async connect(hostId: string): Promise<void> {
     this.disconnect();
+    const attempt = ++this.peerLoadEpoch;
     this.isHost = false;
     this.expectedRemoteId = hostId;
     this.setStatus("connecting");
-    if (this.peerFactory === createPeer) await loadPeerJs();
+    let rejectLoad!: (error: Error) => void;
+    const cancelled = new Promise<never>((_, reject) => {
+      rejectLoad = reject;
+    });
+    this.pendingPeerLoadReject = rejectLoad;
+    try {
+      if (this.peerFactory === createPeer) {
+        await Promise.race([this.peerJsLoader(), cancelled]);
+      }
+    } catch (error) {
+      if (attempt === this.peerLoadEpoch) this.setStatus("failed");
+      throw error;
+    } finally {
+      if (this.pendingPeerLoadReject === rejectLoad) {
+        this.pendingPeerLoadReject = null;
+      }
+    }
+    if (attempt !== this.peerLoadEpoch) throw new Error("Connection aborted");
 
     return new Promise((resolve, reject) => {
       this.pendingConnectResolve = resolve;
@@ -203,6 +244,9 @@ export class PeerJSConnectionManager {
    * Disconnect cleanly, destroy any active sockets, clear heartbeats and listeners
    */
   disconnect(): void {
+    this.peerLoadEpoch++;
+    this.pendingPeerLoadReject?.(new Error("Connection aborted"));
+    this.pendingPeerLoadReject = null;
     this.stopHeartbeat();
     this.clearTimeouts();
 
