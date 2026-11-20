@@ -83,7 +83,9 @@
         {config.ctaLabel}
       </button>
 
-      <p class="flex items-center gap-1.5 text-base md:text-sm text-theme-text leading-snug">
+      <p
+        class="flex items-center gap-1.5 text-base md:text-sm text-theme-text leading-snug"
+      >
         <span
           class="icon-[lucide--hard-drive] h-4 w-4 shrink-0 text-theme-text"
           aria-hidden="true"
