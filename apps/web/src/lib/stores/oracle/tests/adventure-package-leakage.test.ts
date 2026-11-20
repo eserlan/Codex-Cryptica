@@ -179,6 +179,42 @@ describe("Adventure package leakage guards, diagnostics & opening retry (#5052)"
     expect(JSON.stringify(warn.mock.calls)).not.toContain(secretText);
   });
 
+  it("blocks GM-only encounter conditions and alternative solutions in turns", async () => {
+    const { pkg } = makeFixtureWithGmMetadata();
+    const hiddenCondition =
+      "The ward collapses only when three brass bells ring beneath the chapel";
+    const hiddenSolution =
+      "Convince the ferryman to carry the silver key through the flooded tunnel";
+    pkg.encounters.push({
+      id: "encounter-hidden-ward",
+      title: "The chapel ward",
+      description: "A ward seals the chapel entrance.",
+      conditions: [hiddenCondition],
+      alternativeSolutions: [
+        { method: "negotiation", description: hiddenSolution },
+      ],
+      visibility: "gm-only",
+      epistemicStatus: "explicit",
+    });
+
+    for (const hiddenText of [hiddenCondition, hiddenSolution]) {
+      let attempts = 0;
+      const ctx = setupManager(pkg, async () => {
+        attempts += 1;
+        return attempts === 1
+          ? completeProposal
+          : { ...completeProposal, narration: `You learn: ${hiddenText}.` };
+      });
+
+      await ctx.start();
+      await ctx.manager.submitAction("Search the chapel");
+
+      expect(ctx.manager.phase).toBe("error");
+      expect(ctx.manager.errorMessage).toBe(TURN_REJECTED_COPY);
+      expect(ctx.manager.session?.turns).toHaveLength(1);
+    }
+  });
+
   it("automatically retries a leaked opening once after clearing provider interaction", async () => {
     const { pkg, secretText } = makeFixtureWithGmMetadata();
     let attempts = 0;

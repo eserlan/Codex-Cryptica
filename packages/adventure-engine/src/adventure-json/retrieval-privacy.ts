@@ -48,9 +48,19 @@ export function adventureJsonGmOnlyText(pkg: AdventureJsonV1): string[] {
       "text",
       "body",
       "readAloud",
+      "conditions",
     ]) {
       const value = fields[key];
       if (typeof value === "string" || Array.isArray(value)) addText(value);
+    }
+    if (Array.isArray(fields.alternativeSolutions)) {
+      for (const solution of fields.alternativeSolutions) {
+        if (solution && typeof solution === "object") {
+          const { method, description } = solution as Record<string, unknown>;
+          addText(typeof method === "string" ? method : undefined);
+          addText(typeof description === "string" ? description : undefined);
+        }
+      }
     }
     if (record.sourceRef?.textQuote) addText(record.sourceRef.textQuote);
   }
