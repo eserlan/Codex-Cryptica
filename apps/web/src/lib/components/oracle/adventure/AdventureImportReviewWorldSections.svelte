@@ -8,6 +8,7 @@
     type ReviewCollectionItem,
   } from "./AdventureImportReviewCollectionSection.svelte";
   import { countUnresolvedByEntityId } from "./adventure-review-collection-helpers.js";
+  import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
   import AdventureReviewVisibilityControl from "./AdventureReviewVisibilityControl.svelte";
@@ -53,18 +54,6 @@
   );
 </script>
 
-{#snippet unresolvedBadge(entityId: string)}
-  {@const count = unresolvedByEntityId.get(entityId) ?? 0}
-  {#if count > 0}
-    <span
-      class="rounded-full border border-theme-danger/50 bg-theme-danger/10 px-2 py-0.5 text-xs font-medium text-theme-text"
-      data-testid="entity-unresolved-marker-{entityId}"
-    >
-      {count} unresolved
-    </span>
-  {/if}
-{/snippet}
-
 <AdventureImportReviewCollectionSection
   collectionKey="locations"
   title="Locations"
@@ -74,7 +63,10 @@
   {#snippet recordHeaderBadges(entry)}
     {@const loc = entry.item as AdventureJsonLocation}
     <AdventureReviewSourceCitation sourceRef={loc.sourceRef} />
-    {@render unresolvedBadge(loc.id)}
+    <AdventureReviewUnresolvedMarker
+      entityId={loc.id}
+      count={unresolvedByEntityId.get(loc.id) ?? 0}
+    />
     <span
       class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
     >
@@ -108,7 +100,10 @@
   {#snippet recordHeaderBadges(entry)}
     {@const actor = entry.item as AdventureJsonActor}
     <AdventureReviewSourceCitation sourceRef={actor.sourceRef} />
-    {@render unresolvedBadge(actor.id)}
+    <AdventureReviewUnresolvedMarker
+      entityId={actor.id}
+      count={unresolvedByEntityId.get(actor.id) ?? 0}
+    />
     <span
       class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
     >

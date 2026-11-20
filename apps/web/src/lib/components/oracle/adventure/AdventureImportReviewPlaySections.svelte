@@ -7,6 +7,7 @@
     type ReviewCollectionItem,
   } from "./AdventureImportReviewCollectionSection.svelte";
   import { countUnresolvedByEntityId } from "./adventure-review-collection-helpers.js";
+  import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
   import AdventureReviewVisibilityControl from "./AdventureReviewVisibilityControl.svelte";
@@ -52,16 +53,11 @@
 >
   {#snippet recordHeaderBadges(entry)}
     {@const scene = entry.item as AdventureJsonScene}
-    {@const unresolvedCount = unresolvedByEntityId.get(scene.id) ?? 0}
     <AdventureReviewSourceCitation sourceRef={scene.sourceRef} />
-    {#if unresolvedCount > 0}
-      <span
-        class="rounded-full border border-theme-danger/50 bg-theme-danger/10 px-2 py-0.5 text-xs font-medium text-theme-text"
-        data-testid="entity-unresolved-marker-{scene.id}"
-      >
-        {unresolvedCount} unresolved
-      </span>
-    {/if}
+    <AdventureReviewUnresolvedMarker
+      entityId={scene.id}
+      count={unresolvedByEntityId.get(scene.id) ?? 0}
+    />
     <span
       class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
     >

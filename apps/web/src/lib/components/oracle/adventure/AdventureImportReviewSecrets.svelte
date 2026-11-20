@@ -7,11 +7,19 @@
   import AdventureImportReviewCollectionSection, {
     type ReviewCollectionItem,
   } from "./AdventureImportReviewCollectionSection.svelte";
-  import { snippetTitle } from "./adventure-review-collection-helpers.js";
+  import {
+    countUnresolvedByEntityId,
+    snippetTitle,
+  } from "./adventure-review-collection-helpers.js";
+  import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
 
   let { draft }: { draft: AdventureJsonV1 } = $props();
+
+  const unresolvedByEntityId = $derived(
+    countUnresolvedByEntityId(draft.unresolved),
+  );
 
   const secretEntries = $derived<ReviewCollectionItem<AdventureJsonSecret>[]>(
     draft.secrets.map((secret, index) => ({
@@ -43,6 +51,10 @@
   {#snippet recordHeaderBadges(entry)}
     {@const secret = entry.item as AdventureJsonSecret}
     <AdventureReviewSourceCitation sourceRef={secret.sourceRef} />
+    <AdventureReviewUnresolvedMarker
+      entityId={secret.id}
+      count={unresolvedByEntityId.get(secret.id) ?? 0}
+    />
     <span
       class="inline-flex items-center gap-1 rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
       data-testid="secret-classification-{entry.index}"
@@ -73,6 +85,10 @@
     {#snippet recordHeaderBadges(entry)}
       {@const ending = entry.item as AdventureJsonEnding}
       <AdventureReviewSourceCitation sourceRef={ending.sourceRef} />
+      <AdventureReviewUnresolvedMarker
+        entityId={ending.id}
+        count={unresolvedByEntityId.get(ending.id) ?? 0}
+      />
       <AdventureReviewEpistemicBadge status={ending.epistemicStatus} />
     {/snippet}
     {#snippet recordBody(entry)}

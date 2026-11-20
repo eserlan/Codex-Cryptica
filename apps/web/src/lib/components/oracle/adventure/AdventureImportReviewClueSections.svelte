@@ -8,7 +8,11 @@
   import AdventureImportReviewCollectionSection, {
     type ReviewCollectionItem,
   } from "./AdventureImportReviewCollectionSection.svelte";
-  import { snippetTitle } from "./adventure-review-collection-helpers.js";
+  import {
+    countUnresolvedByEntityId,
+    snippetTitle,
+  } from "./adventure-review-collection-helpers.js";
+  import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
   import AdventureReviewVisibilityControl from "./AdventureReviewVisibilityControl.svelte";
@@ -25,6 +29,10 @@
       index: number,
     ) => void;
   } = $props();
+
+  const unresolvedByEntityId = $derived(
+    countUnresolvedByEntityId(draft.unresolved),
+  );
 
   const clueEntries = $derived<ReviewCollectionItem<AdventureJsonClue>[]>(
     draft.clues.map((clue, index) => ({
@@ -67,6 +75,10 @@
   {#snippet recordHeaderBadges(entry)}
     {@const clue = entry.item as AdventureJsonClue}
     <AdventureReviewSourceCitation sourceRef={clue.sourceRef} />
+    <AdventureReviewUnresolvedMarker
+      entityId={clue.id}
+      count={unresolvedByEntityId.get(clue.id) ?? 0}
+    />
     <span
       class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
     >
@@ -101,6 +113,10 @@
     {#snippet recordHeaderBadges(entry)}
       {@const rumour = entry.item as AdventureJsonRumour}
       <AdventureReviewSourceCitation sourceRef={rumour.sourceRef} />
+      <AdventureReviewUnresolvedMarker
+        entityId={rumour.id}
+        count={unresolvedByEntityId.get(rumour.id) ?? 0}
+      />
       <span
         class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
       >
@@ -133,6 +149,10 @@
     {#snippet recordHeaderBadges(entry)}
       {@const item = entry.item as AdventureJsonItem}
       <AdventureReviewSourceCitation sourceRef={item.sourceRef} />
+      <AdventureReviewUnresolvedMarker
+        entityId={item.id}
+        count={unresolvedByEntityId.get(item.id) ?? 0}
+      />
       <span
         class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
       >

@@ -40,7 +40,10 @@
 
   function toggleRecord(event: MouseEvent, id: string): void {
     event.preventDefault();
-    expandedIds = { ...expandedIds, [id]: !expandedIds[id] };
+    const isOpen = Object.prototype.hasOwnProperty.call(expandedIds, id)
+      ? expandedIds[id]
+      : false;
+    expandedIds = { ...expandedIds, [id]: !isOpen };
   }
 
   const normalizedQuery = $derived(searchQuery.trim().toLowerCase());
@@ -60,7 +63,9 @@
   );
 
   function isRecordOpen(id: string): boolean {
-    return Boolean(expandedIds[id]);
+    return Object.prototype.hasOwnProperty.call(expandedIds, id)
+      ? Boolean(expandedIds[id])
+      : false;
   }
 
   function handleQueryInput(value: string): void {
@@ -84,7 +89,7 @@
             handleQueryInput((event.currentTarget as HTMLInputElement).value)}
           placeholder="Filter {title.toLowerCase()} by name or ID…"
           data-testid="review-{collectionKey}-filter"
-          class="min-h-10 w-full rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-1.5 text-xs text-theme-text placeholder:text-theme-text/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+          class="min-h-10 w-full rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-1.5 text-xs text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
         />
       </div>
       {#if normalizedQuery}
@@ -94,7 +99,8 @@
           aria-live="polite"
           data-testid="review-{collectionKey}-filter-count"
         >
-          Showing {filteredEntries.length} of {entries.length}
+          {filteredEntries.length}
+          {filteredEntries.length === 1 ? "match" : "matches"} of {entries.length}
         </span>
       {/if}
     </div>

@@ -668,6 +668,7 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
       epistemicStatus: idx % 3 === 0 ? "explicit" : "inferred",
       sourceRef: { page: (idx % 20) + 1, section: `Sector ${idx + 1}` },
     }));
+    draft.locations[0]!.id = "constructor";
     draft.unresolved = [
       {
         id: "amb-loc-245",
@@ -698,6 +699,9 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(list.querySelectorAll("li").length).toBe(50);
     expect(screen.queryByTestId("review-locations-record-body-0")).toBeNull();
     expect(
+      screen.getByTestId("review-locations-record-summary-0").textContent,
+    ).toContain("constructor");
+    expect(
       screen.getByTestId("review-locations-window-status").textContent?.trim(),
     ).toBe("Showing 50 of 250");
 
@@ -714,8 +718,11 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     ) as HTMLInputElement;
     await fireEvent.input(filterInput, { target: { value: "loc-room-245" } });
     expect(
-      screen.getByTestId("review-locations-filter-count").textContent?.trim(),
-    ).toBe("Showing 1 of 250");
+      screen
+        .getByTestId("review-locations-filter-count")
+        .textContent?.replace(/\s+/g, " ")
+        .trim(),
+    ).toBe("1 match of 250");
     expect(list.querySelectorAll("li").length).toBe(1);
 
     const summary245 = screen.getByTestId(
@@ -751,5 +758,88 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     await fireEvent.click(screen.getByTestId("review-locations-summary"));
     expect(JSON.stringify(draft)).toBe(snapshotBefore);
     expect(screen.queryByTestId("review-secrets-record-body-0")).toBeNull();
+  });
+
+  it("shows unresolved markers on every matching collection record", async () => {
+    const draft = createTestAdventureJson();
+    draft.factions = [
+      {
+        id: "faction-mill",
+        name: "Mill Workers",
+        summary: "The mill workers.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ];
+    draft.rumours = [
+      {
+        id: "rumour-mill",
+        text: "The wheel turns by itself.",
+        truth: "unverified",
+        visibility: "player-visible",
+        epistemicStatus: "ambiguous",
+      },
+    ];
+    draft.items = [
+      {
+        id: "item-key",
+        name: "Winch Key",
+        summary: "A brass key.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ];
+    draft.endings = [
+      {
+        id: "ending-open",
+        title: "Open the sluice",
+        description: "The river runs free.",
+        epistemicStatus: "inferred",
+      },
+    ];
+    const relatedEntityIds = [
+      "loc-landing",
+      "actor-wick",
+      "scene-landing",
+      "enc-wheel",
+      "clue-prints",
+      "rumour-mill",
+      "item-key",
+      "secret-1",
+      "ending-open",
+      "faction-mill",
+    ];
+    draft.unresolved = relatedEntityIds.map((relatedEntityId, index) => ({
+      id: `unresolved-${index}`,
+      code: "UNRESOLVED_REFERENCE",
+      message: "This reference needs review.",
+      relatedEntityId,
+      epistemicStatus: "unresolved" as const,
+    }));
+
+    render(AdventureImportReview, {
+      props: { draft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+
+    for (const collection of [
+      "locations",
+      "actors",
+      "scenes",
+      "encounters",
+      "clues",
+      "rumours",
+      "items",
+      "secrets",
+      "endings",
+      "factions",
+    ]) {
+      await fireEvent.click(screen.getByTestId(`review-${collection}-summary`));
+    }
+
+    for (const entityId of relatedEntityIds) {
+      expect(
+        screen.getByTestId(`entity-unresolved-marker-${entityId}`).textContent,
+      ).toContain("1 unresolved");
+    }
   });
 });

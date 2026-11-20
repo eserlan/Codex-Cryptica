@@ -9,6 +9,8 @@
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
   import AdventureReviewVisibilityControl from "./AdventureReviewVisibilityControl.svelte";
+  import { countUnresolvedByEntityId } from "./adventure-review-collection-helpers.js";
+  import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
 
   let {
     draft,
@@ -19,6 +21,10 @@
     isLocked: boolean;
     onToggleVisibility: (collection: "encounters", index: number) => void;
   } = $props();
+
+  const unresolvedByEntityId = $derived(
+    countUnresolvedByEntityId(draft.unresolved),
+  );
 
   const encounterEntries = $derived<
     ReviewCollectionItem<AdventureJsonEncounter>[]
@@ -42,6 +48,10 @@
   {#snippet recordHeaderBadges(entry)}
     {@const encounter = entry.item as AdventureJsonEncounter}
     <AdventureReviewSourceCitation sourceRef={encounter.sourceRef} />
+    <AdventureReviewUnresolvedMarker
+      entityId={encounter.id}
+      count={unresolvedByEntityId.get(encounter.id) ?? 0}
+    />
     <span
       class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
     >
