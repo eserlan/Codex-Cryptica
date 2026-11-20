@@ -656,6 +656,7 @@ describe("AdventureSurface entry", () => {
     const review = await screen.findByTestId("adventure-import-review");
     expect(review.textContent).toContain("The Last Grind");
     expect(env.importAdventurePdfFile).toHaveBeenCalledTimes(1);
+    await fireEvent.click(screen.getByTestId("review-scenes-summary"));
     expect(
       screen
         .getAllByTestId("entity-source-ref")
