@@ -48,7 +48,10 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   const pacing = worldEntry ? worldEntryPacing(input.session) : undefined;
   const stalled = sceneStallPacing(input.session);
   const stallDue = stalled?.stalled ? stalled : undefined;
-  const dialogueRecovery = dialogueLoopPacing(input.session, input.playerAction);
+  const dialogueRecovery = dialogueLoopPacing(
+    input.session,
+    input.playerAction,
+  );
   const phaseInstruction =
     input.phase === "opening"
       ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
