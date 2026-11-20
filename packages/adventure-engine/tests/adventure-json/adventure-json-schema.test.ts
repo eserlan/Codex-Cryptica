@@ -84,6 +84,114 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
     );
   });
 
+  it("accepts aliases and labels on supported collections and rejects other uses", () => {
+    const base = loadReferenceFixture();
+    const withMetadata = {
+      ...base,
+      locations: [
+        ...base.locations,
+        {
+          id: "metadata-location",
+          name: "Metadata Location",
+          summary: "A location used by the schema test.",
+          aliases: [" The Test Place "],
+          labels: ["public", "warded"],
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      actors: [
+        ...base.actors,
+        {
+          id: "metadata-actor",
+          name: "Metadata Actor",
+          summary: "An actor used by the schema test.",
+          aliases: ["The Test Figure"],
+          labels: ["friendly"],
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      factions: [
+        ...base.factions,
+        {
+          id: "metadata-faction",
+          name: "Metadata Faction",
+          summary: "A faction used by the schema test.",
+          aliases: ["The Test Group"],
+          labels: ["local"],
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+      items: [
+        ...base.items,
+        {
+          id: "metadata-item",
+          name: "Metadata Item",
+          summary: "An item used by the schema test.",
+          aliases: ["The Test Object"],
+          labels: ["clue"],
+          visibility: "player-visible",
+          epistemicStatus: "explicit",
+        },
+      ],
+    };
+    const ajvValidate = new Ajv2020({ strict: false, allErrors: true }).compile(
+      getAdventureJsonV1JsonSchema(),
+    );
+
+    const parsed = AdventureJsonV1Schema.safeParse(withMetadata);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.locations.at(-1)!.aliases).toEqual(["The Test Place"]);
+    }
+    expect(ajvValidate(withMetadata)).toBe(true);
+
+    const invalidAlias = {
+      ...withMetadata,
+      actors: withMetadata.actors.map((entry, index) =>
+        index === withMetadata.actors.length - 1
+          ? { ...entry, aliases: ["  "] }
+          : entry,
+      ),
+    };
+    const invalidAliasType = {
+      ...withMetadata,
+      actors: withMetadata.actors.map((entry, index) =>
+        index === withMetadata.actors.length - 1
+          ? { ...entry, aliases: [42] }
+          : entry,
+      ),
+    };
+    const invalidLabels = {
+      ...withMetadata,
+      factions: withMetadata.factions.map((entry, index) =>
+        index === withMetadata.factions.length - 1
+          ? { ...entry, labels: [42] }
+          : entry,
+      ),
+    };
+    const unsupportedCollection = {
+      ...withMetadata,
+      scenes: withMetadata.scenes.map((entry, index) =>
+        index === 0
+          ? { ...entry, aliases: ["Not supported here"], labels: ["invalid"] }
+          : entry,
+      ),
+    };
+
+    for (const candidate of [
+      invalidAlias,
+      invalidAliasType,
+      invalidLabels,
+      unsupportedCollection,
+    ]) {
+      expect(AdventureJsonV1Schema.safeParse(candidate).success).toBe(false);
+      expect(ajvValidate(candidate)).toBe(false);
+    }
+  });
+
   it("generates a valid Draft 2020-12 JSON Schema matching the committed static file", () => {
     const generated = getAdventureJsonV1JsonSchema();
     expect(generated.$schema).toBe(

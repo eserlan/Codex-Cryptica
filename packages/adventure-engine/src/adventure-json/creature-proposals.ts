@@ -18,6 +18,8 @@ export interface CreatureProposal {
   key: string;
   name: string;
   actorIds: string[];
+  aliases: string[];
+  labels: string[];
   pages: number[];
   sourceRefs: SourceReference[];
   summary: string[];
@@ -38,6 +40,7 @@ export const UNTITLED_ENCOUNTER = "Untitled encounter";
 
 type TextField =
   "summary" | "description" | "role" | "motivation" | "disposition";
+type MetadataField = "aliases" | "labels";
 const TEXT_FIELDS: TextField[] = [
   "summary",
   "description",
@@ -45,6 +48,7 @@ const TEXT_FIELDS: TextField[] = [
   "motivation",
   "disposition",
 ];
+const METADATA_FIELDS: MetadataField[] = ["aliases", "labels"];
 
 function normalizeName(name: string): string {
   return name.trim().replace(/\s+/g, " ").toLowerCase();
@@ -76,6 +80,7 @@ interface ProposalAccumulator {
   sourceRefKeys: Set<string>;
   encounterIds: Set<string>;
   textValues: Map<TextField, Set<string>>;
+  metadataValues: Record<MetadataField, Set<string>>;
 }
 
 function toProposalEncounter(
@@ -120,6 +125,8 @@ export function buildCreatureProposals(
           key,
           name: actor.name,
           actorIds: [],
+          aliases: [],
+          labels: [],
           pages: [],
           sourceRefs: [],
           summary: [],
@@ -133,6 +140,10 @@ export function buildCreatureProposals(
         sourceRefKeys: new Set(),
         encounterIds: new Set(),
         textValues: new Map(TEXT_FIELDS.map((field) => [field, new Set()])),
+        metadataValues: {
+          aliases: new Set(),
+          labels: new Set(),
+        },
       };
       proposals.set(key, accumulator);
     }
@@ -163,6 +174,18 @@ function addProposalSourceRef(
   accumulator.proposal.sourceRefs.push(ref);
 }
 
+function pushDistinctMetadata(
+  list: string[],
+  seen: Set<string>,
+  values: string[] | undefined,
+): void {
+  for (const value of values ?? []) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    list.push(value);
+  }
+}
+
 function addProposalEncounters(
   accumulator: ProposalAccumulator,
   linked: AdventureJsonEncounter[],
@@ -186,6 +209,12 @@ function mergeActor(
   proposal.actorIds.push(actor.id);
   proposal.pages.push(...pagesOf(actor.sourceRef));
   addProposalSourceRef(accumulator, actor.sourceRef);
+  for (const field of METADATA_FIELDS)
+    pushDistinctMetadata(
+      proposal[field],
+      accumulator.metadataValues[field],
+      actor[field],
+    );
   for (const field of TEXT_FIELDS)
     pushDistinct(proposal[field], textValues.get(field)!, actor[field]);
   if (actor.visibility === "gm-only") proposal.concealed = true;

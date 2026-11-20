@@ -46,11 +46,15 @@ const pkg = {
     actor("a-gnoll-1", "Gnoll", {
       description: "Hyena-headed raider.",
       role: "Raider",
+      aliases: ["The Gnoll", "Hyena Folk"],
+      labels: ["raider", "enemy"],
       sourceRef: { page: 4 },
     }),
     actor("a-gnoll-2", "  gnoll ", {
       description: "Hyena-headed raider.",
       motivation: "Hungry",
+      aliases: ["Hyena Folk", "Gnoll warrior"],
+      labels: ["enemy", "pack"],
       sourceRef: { page: 2, pageEnd: 3 },
     }),
     actor("a-chief", "Gnoll Chieftain", { disposition: "Cruel" }),
@@ -112,6 +116,12 @@ describe("buildCreatureProposals", () => {
         visibility: "player-visible",
       },
     ]);
+  });
+
+  it("merges aliases and labels in actor order without exact duplicates", () => {
+    const gnoll = proposals[0]!;
+    expect(gnoll.aliases).toEqual(["The Gnoll", "Hyena Folk", "Gnoll warrior"]);
+    expect(gnoll.labels).toEqual(["raider", "enemy", "pack"]);
   });
 
   it("conceals gm-only actors and encounters only", () => {

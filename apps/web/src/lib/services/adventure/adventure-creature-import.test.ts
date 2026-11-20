@@ -121,6 +121,56 @@ describe("importCreatures", () => {
     expect(saveImage).not.toHaveBeenCalled();
   });
 
+  it("copies actor metadata to new entries and keeps concealed labels unique", async () => {
+    const { deps, createEntity } = setup();
+    const packageWithMetadata = {
+      ...pkg,
+      actors: pkg.actors.map((entry) => {
+        if (entry.id === "a1")
+          return { ...entry, aliases: ["The Gnoll"], labels: ["raider"] };
+        if (entry.id === "a2")
+          return {
+            ...entry,
+            aliases: ["Web Queen"],
+            labels: ["danger", "hidden"],
+          };
+        return { ...entry, labels: ["beast"] };
+      }),
+    } as AdventureJsonV1;
+    const choices = initialCreatureChoices(
+      packageWithMetadata,
+      buildCreatureProposals(packageWithMetadata),
+      [],
+    );
+
+    const result = await importCreatures(
+      packageWithMetadata,
+      "h".repeat(64),
+      choices,
+      deps,
+    );
+
+    expect(result.created).toBe(3);
+    const gnoll = createEntity.mock.calls[0]![2] as Record<string, unknown>;
+    expect(gnoll).toMatchObject({ aliases: ["The Gnoll"], labels: ["raider"] });
+    expect(gnoll).not.toHaveProperty("visibility");
+    const gnollText = `${String(gnoll.content)} ${String(gnoll.lore ?? "")}`;
+    expect(gnollText).not.toContain("The Gnoll");
+    expect(gnollText).not.toContain("raider");
+
+    const spider = createEntity.mock.calls[1]![2] as Record<string, unknown>;
+    expect(spider).toMatchObject({
+      aliases: ["Web Queen"],
+      labels: ["danger", "hidden"],
+      visibility: "hidden",
+    });
+    expect(spider.labels).toEqual(["danger", "hidden"]);
+
+    const wolf = createEntity.mock.calls[2]![2] as Record<string, unknown>;
+    expect(wolf).toMatchObject({ labels: ["beast"] });
+    expect(wolf).not.toHaveProperty("visibility");
+  });
+
   it("skips excluded choices without writing", async () => {
     const { deps, choices, createEntity } = setup();
     for (const choice of choices) choice.include = false;
@@ -130,7 +180,7 @@ describe("importCreatures", () => {
   });
 
   it("reuses matches by source actor id or title and writes nothing for them", async () => {
-    const { deps, choices, createEntity, saveImage } = setup([
+    const creatures: ExistingCreature[] = [
       {
         id: "x",
         title: "Other name",
@@ -144,11 +194,30 @@ describe("importCreatures", () => {
         },
       },
       { id: "y", title: "  wolf " },
-    ]);
+    ];
+    const { deps, createEntity, saveImage } = setup();
+    const packageWithMetadata = {
+      ...pkg,
+      actors: pkg.actors.map((entry) =>
+        entry.id === "a1"
+          ? { ...entry, aliases: ["The Gnoll"], labels: ["raider"] }
+          : entry,
+      ),
+    } as AdventureJsonV1;
+    const choices = initialCreatureChoices(
+      packageWithMetadata,
+      buildCreatureProposals(packageWithMetadata),
+      creatures,
+    );
     expect(choices[0]!.existing?.id).toBe("x");
     expect(choices[2]!.existing?.id).toBe("y");
     choices[0]!.file = new File(["x"], "a.png", { type: "image/png" });
-    const result = await importCreatures(pkg, "h", choices, deps);
+    const result = await importCreatures(
+      packageWithMetadata,
+      "h",
+      choices,
+      deps,
+    );
     expect(result).toMatchObject({ created: 1, reused: 2 });
     expect(createEntity).toHaveBeenCalledTimes(1);
     expect(createEntity.mock.calls[0]![1]).toBe("Spider");

@@ -130,6 +130,20 @@
             "type": "string",
             "minLength": 1
           },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
           "summary": {
             "type": "string"
           },
@@ -221,15 +235,29 @@
             "type": "string",
             "minLength": 1
           },
-          "kind": {
-            "type": "string",
-            "enum": ["character", "creature"]
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "summary": {
             "type": "string"
           },
           "description": {
             "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["character", "creature"]
           },
           "role": {
             "type": "string"
@@ -305,6 +333,20 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "summary": {
             "type": "string"
@@ -756,6 +798,20 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "summary": {
             "type": "string"

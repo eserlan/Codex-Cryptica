@@ -37,6 +37,10 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 
 Creature proposals use `kind` first: a `"creature"` actor is always proposed (even if no encounter references it), a `"character"` actor is never proposed, and an actor with no `kind` is proposed only when an encounter references it.
 
+### Aliases and labels
+
+`locations`, `actors`, `factions` and `items` may include optional `aliases: string[]` and `labels: string[]` fields. Alias strings must be non-empty after trimming; label values are strings. Include only aliases and labels supported by the source, and omit either field when it is absent. These fields are not accepted on the other collections.
+
 ### What visibility applies to
 
 `visibility` is a property of the **whole record**. Every field of a `player-visible` record (including `role`, `motivation`, `summary`, `description`, `body`, `readAloud` and `reveals`) is treated as safe to show players; v1 has no per-field visibility, and importers, the review screen and any player-facing projection must not assume a visible record has hidden parts.

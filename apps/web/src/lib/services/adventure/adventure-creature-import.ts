@@ -115,6 +115,7 @@ function entityData(
   );
   const data: Partial<Entity> = {
     content,
+    ...entityMetadata(proposal, choice.hidden),
     adventureSource: {
       packageId: pkg.id,
       packageVersion: pkg.version,
@@ -130,11 +131,23 @@ function entityData(
     },
   };
   if (lore) data.lore = lore;
-  if (choice.hidden) {
-    data.labels = ["hidden"];
-    data.visibility = "hidden";
-  }
   return data;
+}
+
+function entityMetadata(
+  proposal: CreatureProposal,
+  hidden: boolean,
+): Partial<Pick<Entity, "aliases" | "labels" | "visibility">> {
+  const aliases =
+    proposal.aliases.length > 0 ? [...proposal.aliases] : undefined;
+  const labels = [
+    ...new Set([...proposal.labels, ...(hidden ? ["hidden"] : [])]),
+  ];
+  return {
+    ...(aliases ? { aliases } : {}),
+    ...(labels.length > 0 ? { labels } : {}),
+    ...(hidden ? { visibility: "hidden" } : {}),
+  };
 }
 
 const IMAGE_FAILURE = (name: string) => `${name}: created without its image.`;

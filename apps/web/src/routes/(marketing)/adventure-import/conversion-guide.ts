@@ -254,19 +254,21 @@ Strict output rules:
 3. Source certainty (CRITICAL):
    - Every entity requires "epistemicStatus": "explicit" | "inferred" | "ambiguous" | "unresolved".
    - Do not invent missing facts merely to fill fields. Omit optional fields when the source is silent.
+   - Include "aliases" and "labels" only when the source supports those values; omit either field when the source has no such metadata.
+   - Aliases must be non-empty strings after trimming; each label must be a string.
    - Use "explicit" only for what the source states. Use "inferred" for anything you worked out yourself (links, endings, roles, unstated consequences).
    - For entries in "unresolved", use "ambiguous" when the source is unclear or contradictory, or "unresolved" when it does not answer the question; never use "explicit" or "inferred".
 4. Collection entry contract (? = optional; non-empty strings required for id, name, title, text, description, code, message):
    - Every collection entry requires "id" (non-empty string) and "epistemicStatus"; "sourceRef" is optional.
-   - locations: required name, summary, visibility; optional description: string, parentLocationId: string, connections: LocationConnection[].
-   - actors: required name, summary, visibility; optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string, kind: "character" | "creature".
+   - locations: required name, summary, visibility; optional description: string, parentLocationId: string, connections: LocationConnection[], aliases: string[], labels: string[].
+   - actors: required name, summary, visibility; optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string, kind: "character" | "creature", aliases: string[], labels: string[].
    - Actor kind: use "character" for named or individual NPCs and "creature" for monsters, beasts and generic stat-block foes. Leave "kind" out when the source does not make the choice clear; never guess.
-   - factions: required name, summary, visibility; optional description: string, goals: string[], dispositionTowardsParty: string.
+   - factions: required name, summary, visibility; optional description: string, goals: string[], dispositionTowardsParty: string, aliases: string[], labels: string[].
    - scenes: required title, summary, visibility; optional locationId: string, readAloud: string | string[], body: string, conditions: string[], branches: SceneBranch[], optional: boolean.
    - encounters: required description, alternativeSolutions (an array, [] if absent), visibility; optional title: string, sceneId: string, locationId: string, conditions: string[], actorIds: string[].
    - clues: required text, visibility; optional reveals: string, leadTargetId: string, placedLocationId: string, placedActorId: string, placedSceneId: string, alternativeSourceId: string.
    - rumours: required text, truth ("true" | "false" | "partially-true" | "unverified", all strings), visibility; optional sourceActorId: string, sourceLocationId: string, targetEntityId: string.
-   - items: required name, summary, visibility; optional description: string, locationId: string, actorId: string.
+   - items: required name, summary, visibility; optional description: string, locationId: string, actorId: string, aliases: string[], labels: string[].
    - secrets: required text, visibility ("gm-only" only); optional relatedEntityIds: string[].
    - endings: required description; optional title: string, conditions: string[]; visibility is not allowed.
    - unresolved: required code, message; optional relatedEntityId: string, context: string; epistemicStatus is "ambiguous" | "unresolved" only; visibility is not allowed.

@@ -109,8 +109,9 @@ one Creature for each actor named in an encounter, merging actors with the same
 name and keeping variants such as "Gnoll Chieftain" apart. Nothing is guessed
 from the text and no AI is used. Creatures tied to hidden actors or encounters
 are hidden from players by default, and hidden encounters are listed only in the
-creature's GM-only lore. For each one you can add a prepared image file or leave
-it with no image; the PDF itself is not cropped. Choose **Review changes** to
+creature's GM-only lore. Source-supported actor aliases and labels are copied
+only to newly created Creature entries. For each one you can add a prepared
+image file or leave it with no image; the PDF itself is not cropped. Choose **Review changes** to
 see a preview, and nothing is saved until you confirm. If you run it again on
 the same or a newer version, creatures already in your Vault are shown as
 "Already in your Vault" and reused, never overwritten. You can create up to

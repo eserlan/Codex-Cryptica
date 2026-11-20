@@ -84,12 +84,20 @@ export const LocationConnectionSchema = z
   .strict();
 export type LocationConnection = z.infer<typeof LocationConnectionSchema>;
 
+const AliasesSchema = z.array(z.string().trim().min(1).regex(/\S/)).optional();
+const LabelsSchema = z.array(z.string()).optional();
+const NamedAdventureRecordShape = {
+  id: z.string().min(1),
+  name: z.string().min(1),
+  aliases: AliasesSchema,
+  labels: LabelsSchema,
+  summary: z.string(),
+  description: z.string().optional(),
+};
+
 export const LocationSchema = z
   .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    summary: z.string(),
-    description: z.string().optional(),
+    ...NamedAdventureRecordShape,
     parentLocationId: z.string().min(1).optional(),
     connections: z.array(LocationConnectionSchema).optional(),
     visibility: VisibilitySchema,
@@ -101,11 +109,8 @@ export type AdventureJsonLocation = z.infer<typeof LocationSchema>;
 
 export const ActorSchema = z
   .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
+    ...NamedAdventureRecordShape,
     kind: z.enum(["character", "creature"]).optional(),
-    summary: z.string(),
-    description: z.string().optional(),
     role: z.string().optional(),
     motivation: z.string().optional(),
     disposition: z.string().optional(),
@@ -120,10 +125,7 @@ export type AdventureJsonActor = z.infer<typeof ActorSchema>;
 
 export const FactionSchema = z
   .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    summary: z.string(),
-    description: z.string().optional(),
+    ...NamedAdventureRecordShape,
     goals: z.array(z.string()).optional(),
     dispositionTowardsParty: z.string().optional(),
     visibility: VisibilitySchema,
@@ -223,10 +225,7 @@ export type AdventureJsonRumour = z.infer<typeof RumourSchema>;
 
 export const ItemSchema = z
   .object({
-    id: z.string().min(1),
-    name: z.string().min(1),
-    summary: z.string(),
-    description: z.string().optional(),
+    ...NamedAdventureRecordShape,
     locationId: z.string().min(1).optional(),
     actorId: z.string().min(1).optional(),
     visibility: VisibilitySchema,
