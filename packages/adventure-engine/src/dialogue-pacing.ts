@@ -126,6 +126,8 @@ function progressedOnTopic(
     ...patch.knownFacts.update,
     ...patch.objectives.add,
     ...patch.objectives.update,
+    ...patch.relationships.add,
+    ...patch.relationships.update,
     ...patch.activeCharacters.add,
     ...patch.activeCharacters.update,
   ];

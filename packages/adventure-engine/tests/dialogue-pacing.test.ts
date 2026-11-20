@@ -163,6 +163,26 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
   });
 
+  it("counts only topic-relevant relationship changes", () => {
+    const turns = ledgerTurns();
+    turns[2]!.visiblePatch.relationships.add.push({
+      subjectId: "miller-family",
+      text: "The debt is owed to the Miller family.",
+      disposition: "The village records their claim.",
+      source: "provisional",
+    });
+    expect(dialogueLoopPacing(session(turns))).toBeUndefined();
+
+    const unrelated = ledgerTurns();
+    unrelated[2]!.visiblePatch.relationships.add.push({
+      subjectId: "baker",
+      text: "The baker is a friend of the keeper.",
+      disposition: "They exchange gossip each morning.",
+      source: "provisional",
+    });
+    expect(dialogueLoopPacing(session(unrelated))?.recoveryDue).toBe(true);
+  });
+
   it("counts only topic-relevant discoveries", () => {
     const turns = ledgerTurns();
     turns[2]!.provisionalFactIds = ["new-fact"];
