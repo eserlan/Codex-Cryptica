@@ -1,8 +1,24 @@
 import { z } from "zod";
-import { RumourTruthSchema } from "./schema";
+import {
+  RumourTruthSchema,
+  SourceReferenceSchema,
+  type SourceReference,
+} from "./schema";
 import { validateAdventureJson } from "./validator";
 
 const text = z.string().min(1);
+const citedSourceReference = SourceReferenceSchema.refine(
+  (sourceRef) => Object.keys(sourceRef).length > 0,
+  { message: "sourceRef must identify a known source location" },
+);
+
+const ConflictingClaimSchema = z
+  .object({
+    text,
+    distinguishingTerm: text,
+    sourceRef: citedSourceReference,
+  })
+  .strict();
 
 function idGroupsAreUnique(groups: string[][]): boolean {
   return groups.every((ids) => new Set(ids).size === ids.length);
@@ -103,6 +119,33 @@ export const ConversionAnswerKeySchema = z
           .strict(),
       )
       .optional(),
+    sourceAuthority: z
+      .array(
+        z
+          .object({
+            id: text,
+            targetSourceId: text,
+            expectedText: text,
+            expectedTerm: text,
+            supersededText: text,
+            supersededTerm: text,
+            correctionSource: citedSourceReference,
+            expectedTitle: text,
+            expectedItemCount: z.number().int().min(0).optional(),
+          })
+          .strict(),
+      )
+      .optional(),
+    conflicts: z
+      .array(
+        z
+          .object({
+            id: text,
+            claims: z.array(ConflictingClaimSchema).min(2),
+          })
+          .strict(),
+      )
+      .optional(),
     endings: z
       .array(z.object({ id: text, description: text, sourceId: text }).strict())
       .min(2),
@@ -139,6 +182,8 @@ export const CONVERSION_SCORE_DIMENSIONS = [
   "schema",
   "references",
   "secrets",
+  "sourceAuthority",
+  "conflicts",
   "coverage",
   "authoredVsRumour",
   "branches",
@@ -163,7 +208,8 @@ export interface ConversionScoreResult {
 
 type Entity = {
   id: string;
-  sourceRef?: { anchor?: string; section?: string } | undefined;
+  epistemicStatus?: string | undefined;
+  sourceRef?: SourceReference | undefined;
   [key: string]: unknown;
 };
 
@@ -185,9 +231,13 @@ const ENTITY_COLLECTIONS = [
   "unresolved",
 ] as const;
 
-function tokens(s: string): Set<string> {
+function words(s: string): Set<string> {
   const normalized = s.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-  return new Set(normalized.split(" ").filter((t) => t.length >= 4));
+  return new Set(normalized.split(" ").filter(Boolean));
+}
+
+function tokens(s: string): Set<string> {
+  return new Set([...words(s)].filter((token) => token.length >= 4));
 }
 
 /** Key text A is "found" in B when ≥60% of A's distinct tokens appear in B. */
@@ -322,6 +372,207 @@ function scoreSecrets(
   for (const s of keySecrets) {
     const leak = pvStrings.find((p) => textFoundIn(s.text, p.value));
     if (leak) details.push(`leaked secret ${s.id} in ${leak.field}`);
+  }
+  return fail(details);
+}
+
+function containsTokens(value: string, expected: string): boolean {
+  const expectedTokens = words(expected);
+  if (expectedTokens.size === 0) return false;
+  const valueTokens = words(value);
+  return [...expectedTokens].every((token) => valueTokens.has(token));
+}
+
+function entityTextStrings(entity: Entity): string[] {
+  const strings: string[] = [];
+  const walk = (value: unknown): void => {
+    if (typeof value === "string") strings.push(value);
+    else if (Array.isArray(value)) value.forEach(walk);
+    else if (value && typeof value === "object")
+      Object.values(value).forEach(walk);
+  };
+  for (const [field, value] of Object.entries(entity)) {
+    if (
+      field !== "id" &&
+      field !== "sourceRef" &&
+      field !== "epistemicStatus"
+    ) {
+      walk(value);
+    }
+  }
+  return strings;
+}
+
+function sourceReferenceMatches(
+  actual: SourceReference | undefined,
+  expected: SourceReference,
+): boolean {
+  if (!actual) return false;
+  return Object.entries(expected).every(
+    ([field, value]) => actual[field as keyof SourceReference] === value,
+  );
+}
+
+function hasScoredText(
+  entity: Entity,
+  expectedText: string,
+  distinguishingTerm: string,
+): boolean {
+  return entityTextStrings(entity).some(
+    (value) =>
+      textFoundIn(expectedText, value) &&
+      containsTokens(value, distinguishingTerm),
+  );
+}
+
+type SourceAuthorityCase = NonNullable<
+  ConversionAnswerKey["sourceAuthority"]
+>[number];
+
+function isAuthorityTarget(entity: Entity, targetSourceId: string): boolean {
+  return (
+    entity.id === targetSourceId || entity.sourceRef?.anchor === targetSourceId
+  );
+}
+
+function authorityTitleDetails(
+  value: DocLike,
+  authority: SourceAuthorityCase,
+): string[] {
+  return value["title"] === authority.expectedTitle
+    ? []
+    : [
+        `${authority.id}: expected adventure title "${authority.expectedTitle}"`,
+      ];
+}
+
+function authorityItemCountDetails(
+  value: DocLike,
+  authority: SourceAuthorityCase,
+): string[] {
+  if (authority.expectedItemCount === undefined) return [];
+  const itemCount = (value["items"] ?? []).length;
+  return itemCount === authority.expectedItemCount
+    ? []
+    : [
+        `${authority.id}: expected ${authority.expectedItemCount} item entries, found ${itemCount}`,
+      ];
+}
+
+function hasExplicitAuthorityClaim(
+  entity: Entity,
+  expectedText: string,
+  expectedTerm: string,
+): boolean {
+  return (
+    entity.epistemicStatus === "explicit" &&
+    hasScoredText(entity, expectedText, expectedTerm)
+  );
+}
+
+function correctedClaimDetails(
+  targetEntities: Entity[],
+  authority: SourceAuthorityCase,
+): string[] {
+  const correctedClaims = targetEntities.filter((entity) =>
+    hasExplicitAuthorityClaim(
+      entity,
+      authority.expectedText,
+      authority.expectedTerm,
+    ),
+  );
+  if (correctedClaims.length === 0) {
+    return [`${authority.id}: missing explicit corrected claim`];
+  }
+  const citesCorrection = correctedClaims.some((entity) =>
+    sourceReferenceMatches(entity.sourceRef, authority.correctionSource),
+  );
+  return citesCorrection
+    ? []
+    : [`${authority.id}: corrected claim does not cite the correction source`];
+}
+
+function supersededClaimDetails(
+  targetEntities: Entity[],
+  authority: SourceAuthorityCase,
+): string[] {
+  const remainsExplicit = targetEntities.some((entity) =>
+    hasExplicitAuthorityClaim(
+      entity,
+      authority.supersededText,
+      authority.supersededTerm,
+    ),
+  );
+  return remainsExplicit
+    ? [`${authority.id}: superseded claim remains explicit`]
+    : [];
+}
+
+function scoreSourceAuthority(
+  value: DocLike,
+  key: ConversionAnswerKey,
+): ConversionScoreDimensionResult {
+  const cases = key.sourceAuthority ?? [];
+  if (cases.length === 0) return { status: "n/a", details: [] };
+
+  const details: string[] = [];
+  const entities = allEntities(value);
+  for (const authority of cases) {
+    const targetEntities = entities.filter((entity) =>
+      isAuthorityTarget(entity, authority.targetSourceId),
+    );
+    details.push(
+      ...authorityTitleDetails(value, authority),
+      ...authorityItemCountDetails(value, authority),
+      ...correctedClaimDetails(targetEntities, authority),
+      ...supersededClaimDetails(targetEntities, authority),
+    );
+  }
+  return fail(details);
+}
+
+function scoreConflicts(
+  value: DocLike,
+  key: ConversionAnswerKey,
+): ConversionScoreDimensionResult {
+  const conflicts = key.conflicts ?? [];
+  if (conflicts.length === 0) return { status: "n/a", details: [] };
+
+  const details: string[] = [];
+  const entities = allEntities(value);
+  const unresolved = value.unresolved ?? [];
+  for (const conflict of conflicts) {
+    const recordedConflict = unresolved.some(
+      (entry) =>
+        (entry.epistemicStatus === "ambiguous" ||
+          entry.epistemicStatus === "unresolved") &&
+        conflict.claims.every((claim) =>
+          hasScoredText(entry, claim.text, claim.distinguishingTerm),
+        ),
+    );
+    if (!recordedConflict) {
+      details.push(`${conflict.id}: missing unresolved record of the conflict`);
+    }
+
+    for (const claim of conflict.claims) {
+      const matching = entities.filter((entity) =>
+        hasScoredText(entity, claim.text, claim.distinguishingTerm),
+      );
+      if (matching.some((entity) => entity.epistemicStatus === "explicit")) {
+        details.push(`${conflict.id}: claim is selected as explicit`);
+      }
+      const preserved = matching.some(
+        (entity) =>
+          (entity.epistemicStatus === "ambiguous" ||
+            entity.epistemicStatus === "unresolved") &&
+          sourceReferenceMatches(entity.sourceRef, claim.sourceRef),
+      );
+      if (!preserved) {
+        details.push(
+          `${conflict.id}: missing ambiguous or unresolved claim at its source location (${claim.distinguishingTerm})`,
+        );
+      }
+    }
   }
   return fail(details);
 }
@@ -597,6 +848,8 @@ function schemaFailedDims(validation: {
   Record<ConversionScoreDimension, ConversionScoreDimensionResult>,
   | "references"
   | "secrets"
+  | "sourceAuthority"
+  | "conflicts"
   | "coverage"
   | "authoredVsRumour"
   | "branches"
@@ -623,6 +876,8 @@ function schemaFailedDims(validation: {
   return {
     references,
     secrets: blocked(),
+    sourceAuthority: blocked(),
+    conflicts: blocked(),
     coverage: blocked(),
     authoredVsRumour: blocked(),
     branches: blocked(),
@@ -661,6 +916,8 @@ export function scoreAdventureConversion(
       // references: a fully valid document has no reference errors
       references: pass(),
       secrets: scoreSecrets(value, key),
+      sourceAuthority: scoreSourceAuthority(value, key),
+      conflicts: scoreConflicts(value, key),
       coverage: scoreCoverage(value, entities, key),
       authoredVsRumour: scoreAuthoredVsRumour(value, key),
       branches: scoreBranches(value, key),
