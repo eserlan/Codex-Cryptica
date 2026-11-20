@@ -760,6 +760,53 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(screen.queryByTestId("review-secrets-record-body-0")).toBeNull();
   });
 
+  it("keeps GM-only secrets, clues, and rumours out of collapsed record summaries", async () => {
+    const draft = createTestAdventureJson();
+    const secretText = "Wick hid the ledger inside the millstone.";
+    const clueText = "The millhand forged the ferry log.";
+    const rumourText = "The bell rings when the ledger is moved.";
+    draft.secrets[0]!.text = secretText;
+    draft.clues[0]!.text = clueText;
+    draft.clues[0]!.visibility = "gm-only";
+    draft.rumours = [
+      {
+        id: "rumour-ledger",
+        text: rumourText,
+        truth: "unverified",
+        visibility: "gm-only",
+        epistemicStatus: "inferred",
+      },
+    ];
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    for (const { collection, text } of [
+      { collection: "secrets", text: secretText },
+      { collection: "clues", text: clueText },
+      { collection: "rumours", text: rumourText },
+    ]) {
+      await fireEvent.click(screen.getByTestId(`review-${collection}-summary`));
+      const recordSummary = screen.getByTestId(
+        `review-${collection}-record-summary-0`,
+      );
+      expect(recordSummary.textContent).not.toContain(text);
+      expect(
+        screen.queryByTestId(`review-${collection}-record-body-0`),
+      ).toBeNull();
+
+      await fireEvent.click(recordSummary);
+      expect(
+        screen.getByTestId(`review-${collection}-record-body-0`).textContent,
+      ).toContain(text);
+    }
+  });
+
   it("shows unresolved markers on every matching collection record", async () => {
     const draft = createTestAdventureJson();
     draft.factions = [

@@ -39,7 +39,10 @@
       item: clue,
       index,
       id: clue.id,
-      title: snippetTitle(clue.text, clue.id),
+      title:
+        clue.visibility === "gm-only"
+          ? "GM-only clue"
+          : snippetTitle(clue.text, clue.id),
       searchText: `${clue.text} ${clue.reveals ?? ""}`,
     })),
   );
@@ -49,7 +52,10 @@
       item: rumour,
       index,
       id: rumour.id,
-      title: snippetTitle(rumour.text, rumour.id),
+      title:
+        rumour.visibility === "gm-only"
+          ? "GM-only rumour"
+          : snippetTitle(rumour.text, rumour.id),
       subtitle: rumour.truth,
       searchText: rumour.text,
     })),

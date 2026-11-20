@@ -7,10 +7,7 @@
   import AdventureImportReviewCollectionSection, {
     type ReviewCollectionItem,
   } from "./AdventureImportReviewCollectionSection.svelte";
-  import {
-    countUnresolvedByEntityId,
-    snippetTitle,
-  } from "./adventure-review-collection-helpers.js";
+  import { countUnresolvedByEntityId } from "./adventure-review-collection-helpers.js";
   import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
@@ -26,7 +23,7 @@
       item: secret,
       index,
       id: secret.id,
-      title: snippetTitle(secret.text, secret.id),
+      title: secret.id,
       searchText: secret.text,
     })),
   );
