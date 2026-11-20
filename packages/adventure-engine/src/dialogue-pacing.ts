@@ -42,7 +42,6 @@ const TOPIC_ALIASES: Record<string, string> = {
   proprietors: "own",
   missing: "disappear",
   vanished: "disappear",
-  vanisheds: "disappear",
   disappearance: "disappear",
   disappearances: "disappear",
   lost: "disappear",
@@ -76,7 +75,11 @@ function sharedTopic(actions: string[]): Set<string> {
 
 function isInquiry(action: string): boolean {
   const cleaned = action.trim().toLowerCase();
-  if (/^(repeat|keep asking|ask again|continue repeating|insist again)\b/.test(cleaned)) {
+  if (
+    /^(repeat|keep asking|ask again|continue repeating|insist again)\b/.test(
+      cleaned,
+    )
+  ) {
     return false;
   }
   return (
@@ -94,10 +97,7 @@ function isNonAnswer(narration: string): boolean {
   );
 }
 
-function relevantText(
-  text: string | undefined,
-  topic: ReadonlySet<string>,
-): boolean {
+function relevantText(text: string | undefined, topic: ReadonlySet<string>): boolean {
   return text != null && intersects(topicWords(text), topic);
 }
 
@@ -130,9 +130,7 @@ function progressedOnTopic(
   );
   if (
     newFacts.some(
-      (fact) =>
-        relevantText(fact.name, topic) ||
-        relevantText(fact.summary, topic),
+      (fact) => relevantText(fact.name, topic) || relevantText(fact.summary, topic),
     )
   ) {
     return true;
@@ -165,11 +163,7 @@ export function dialogueLoopPacing(
   let repeatedTurns = 0;
   let topic = new Set<string>();
 
-  for (
-    let count = DIALOGUE_LOOP_TURN_LIMIT;
-    count <= recent.length;
-    count += 1
-  ) {
+  for (let count = DIALOGUE_LOOP_TURN_LIMIT; count <= recent.length; count += 1) {
     const tail = recent.slice(-count);
     const shared = sharedTopic(tail.map((turn) => turn.playerAction));
     if (
