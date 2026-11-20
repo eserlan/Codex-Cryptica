@@ -24,6 +24,14 @@ describe("unwrapAdventureJsonFence", () => {
     if (result.ok) expect(JSON.parse(result.text)).toEqual({ a: 1 });
   });
 
+  it("unwraps a fence with many blank lines without building a line array", () => {
+    const text = `\`\`\`json\n${"\n".repeat(100_000)}{}\n\`\`\``;
+    const result = unwrapAdventureJsonFence(text);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(JSON.parse(result.text)).toEqual({});
+  });
+
   it.each([
     ["prose before", "Here is your adventure:\n```json\n{}\n```", null],
     ["prose after", "```json\n{}\n```\nEnjoy!", "text after"],
