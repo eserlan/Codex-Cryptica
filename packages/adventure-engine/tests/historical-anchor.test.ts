@@ -211,6 +211,57 @@ describe("HistoricalAnchor contract", () => {
     expect(prompt.behavior).toContain('Historical anchor policy is "preserve"');
   });
 
+  it("keeps scenario improvisation from deciding an open historical mechanism", () => {
+    const created = validateAndCreateHistoricalAnchor({
+      event: kingDeathEvent(),
+      startDate: { year: 617, precision: "year", calendarRevision: 1 },
+      calendar: zeroEraCalendar,
+      now,
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const s: AdventureSession = {
+      ...makeSession(),
+      historicalAnchor: created.anchor,
+      scenarioCollection: {
+        version: 1,
+        focusedScenarioId: "king-death",
+        items: [
+          {
+            version: 1,
+            id: "king-death",
+            origin: { kind: "manual", manualId: "king-death" },
+            playerVisible: {
+              rumour: "The king's death was no accident.",
+              lead: "Ask who was responsible.",
+            },
+            gmOnly: { truth: "The king was killed." },
+            knowledge: "heard",
+            stage: "hearsay",
+            status: "open",
+            events: [],
+            anchorRefs: [],
+            revealedSecretIds: [],
+            secretBindings: { truth: "king-death-truth", eventIds: {} },
+          },
+        ],
+      },
+    };
+    const prompt = buildAdventurePrompt({
+      session: s,
+      phase: "action",
+      playerAction: "Ask who killed the king.",
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(prompt.behavior).toContain("For an active scenario");
+    expect(prompt.behavior).toContain(
+      "except for any mechanism listed in GM-ONLY historicalAnchor.openMechanisms, which must remain undecided until committed play establishes it",
+    );
+  });
+
   it("AC3: validates all three policies, precisions, ranges, and zero/multi-era calendars with deterministic serialization", () => {
     const policies = ["preserve", "alternate", "discover"] as const;
     for (const policy of policies) {
