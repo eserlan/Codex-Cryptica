@@ -424,8 +424,8 @@ function proposedHiddenSources(
       text: secret.text,
       status: secret.status,
     })),
-    ...proposal.hiddenPatch.secrets.update.map((secret, index) => ({
-      id: `proposed-secret-update-${index}`,
+    ...proposal.hiddenPatch.secrets.update.map((secret) => ({
+      id: secret.id,
       text: secret.text,
       status: secret.status,
     })),
@@ -434,8 +434,8 @@ function proposedHiddenSources(
       text: thread.text,
       status: thread.status,
     })),
-    ...proposal.hiddenPatch.gmThreads.update.map((thread, index) => ({
-      id: `proposed-thread-update-${index}`,
+    ...proposal.hiddenPatch.gmThreads.update.map((thread) => ({
+      id: thread.id,
       text: thread.text,
       status: thread.status,
     })),
