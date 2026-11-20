@@ -1044,7 +1044,14 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(review.className).toContain("grid-rows-[minmax(0,1fr)_auto]");
     expect(content.className).toContain("overflow-y-auto");
     expect(review.lastElementChild).toBe(footer);
-    expect(footer.textContent).toContain("Local-only validation");
+    const footerText = footer.textContent?.replace(/\s+/g, " ");
+    expect(footerText).toContain("Validation stays on this device");
+    expect(footerText).toContain(
+      "Imported packages are not included in Cloud Backup",
+    );
+    expect(footerText).toContain(
+      "relevant excerpts may be sent to your selected Oracle AI provider",
+    );
     const noticeLink = footer.querySelector('a[href="#adventure-ai-notice"]');
     expect(noticeLink).toBeTruthy();
 

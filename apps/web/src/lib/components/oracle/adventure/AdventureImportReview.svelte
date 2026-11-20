@@ -130,15 +130,19 @@
           Approved &amp; locked in Vault
         </span>
       {:else}
-        <span>
-          Local-only validation ·
+        <div class="space-y-1">
+          <p>
+            Validation stays on this device. Imported packages are not included
+            in Cloud Backup. During play, relevant excerpts may be sent to your
+            selected Oracle AI provider.
+          </p>
           <a
             href="#adventure-ai-notice"
             class="underline decoration-theme-text/60 underline-offset-2 hover:decoration-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
           >
             Vault &amp; AI notice
           </a>
-        </span>
+        </div>
       {/if}
     </div>
 
