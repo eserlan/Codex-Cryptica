@@ -1,7 +1,17 @@
 import { spawnSync } from "node:child_process";
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { resolve } from "node:path";
+import {
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  truncateSync,
+  writeFileSync,
+} from "node:fs";
+import { join, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { describe, expect, it } from "vitest";
+import { MAX_ADVENTURE_JSON_BYTES } from "../packages/adventure-engine/src/adventure-json/storage";
 
 const root = resolve(__dirname, "..");
 
@@ -38,6 +48,22 @@ describe("preflight-adventure-json CLI", () => {
       const result = run(args);
       expect(result.status).toBe(2);
       expect(result.stderr.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("rejects files above the import size limit before parsing", () => {
+    const directory = mkdtempSync(join(tmpdir(), "adventure-preflight-"));
+    const file = join(directory, "oversized.json");
+    try {
+      writeFileSync(file, "");
+      truncateSync(file, MAX_ADVENTURE_JSON_BYTES + 1);
+      const result = run([file]);
+      expect(result.status).toBe(2);
+      expect(result.stderr).toContain(
+        "Adventure JSON files must be 10 MiB or smaller.",
+      );
+    } finally {
+      rmSync(directory, { recursive: true, force: true });
     }
   });
 
