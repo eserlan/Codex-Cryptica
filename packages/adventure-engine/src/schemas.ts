@@ -41,7 +41,7 @@ const stateFactSchema = z.object({
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
   placeId: id.optional(),
-  cues: z.array(z.string().trim().min(1).max(40)).max(6).optional(),
+  cues: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
 });
 const newStateFactSchema = stateFactSchema.omit({ id: true }).strict();
 
