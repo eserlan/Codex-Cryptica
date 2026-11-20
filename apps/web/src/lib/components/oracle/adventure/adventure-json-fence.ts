@@ -5,6 +5,7 @@ export const ADVENTURE_JSON_FENCE_HINT =
   "Only plain JSON or a single fenced JSON block filling the whole file is accepted.";
 
 const FENCE = "```";
+const isFenceLine = (line: string) => line.trimStart().startsWith(FENCE);
 const reject = (reason: string): AdventureJsonFenceResult => ({
   ok: false,
   message: `${reason} ${ADVENTURE_JSON_FENCE_HINT}`,
@@ -28,10 +29,14 @@ export function unwrapAdventureJsonFence(
   }
   const closed = lines.length > 1 && lines[lines.length - 1] === FENCE;
   const body = lines.slice(1, closed ? -1 : undefined);
-  if (!closed && /^`{3,}$/.test(lines[lines.length - 1].trim())) {
+  if (
+    !closed &&
+    /^`{3,}$/.test(lines[lines.length - 1].trim()) &&
+    !lines.slice(1, -1).some(isFenceLine)
+  ) {
     return reject("The code block is not closed.");
   }
-  if (body.some((line) => line.trimStart().startsWith(FENCE))) {
+  if (body.some(isFenceLine)) {
     return reject(
       closed
         ? "The file has more than one code block."
