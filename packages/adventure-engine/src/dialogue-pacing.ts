@@ -15,7 +15,9 @@ export interface DialogueLoopPacing {
 }
 
 const STOP_WORDS = new Set(
-  "a an the and or but to of in on at for from with is are was were be been being has have had do does did can could would should will shall i me my we our you your he she they them their it its this that these those there here not no yes who whom what which where when why how as about into by so if then still just tell ask asking know knowing explain mean meaning something someone anyone people person thing things again really please".split(" "),
+  "a an the and or but to of in on at for from with is are was were be been being has have had do does did can could would should will shall i me my we our you your he she they them their it its this that these those there here not no yes who whom what which where when why how as about into by so if then still just tell ask asking know knowing explain mean meaning something someone anyone people person thing things again really please".split(
+    " ",
+  ),
 );
 
 // Small, general synonym families; never use the GM's hidden information to
@@ -68,7 +70,9 @@ function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
 function sharedTopic(actions: string[]): Set<string> {
   const [first, ...rest] = actions.map(topicWords);
   if (!first) return new Set();
-  return new Set([...first].filter((word) => rest.every((set) => set.has(word))));
+  return new Set(
+    [...first].filter((word) => rest.every((set) => set.has(word))),
+  );
 }
 
 function isInquiry(action: string): boolean {
