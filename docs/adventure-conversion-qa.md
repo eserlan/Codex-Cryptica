@@ -26,11 +26,19 @@ Scored on 2026-11-17 with `bun scripts/score-adventure-conversion.ts <conversion
 
 Positive controls (hand-written correct conversions):
 
-| Fixture                                      | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| -------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
-| Reference one-shot `adventure.v1.json`       | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
-| Mystery `adventure.v1.json`                  | pass   | pass       | pass    | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
-| Reference one-shot `variants/sparse.v1.json` | pass   | pass       | pass    | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
+| Fixture                                | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `adventure.v1.json` | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
+| Mystery `adventure.v1.json`            | pass   | pass       | pass    | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
+
+Negative controls (hand-written conversions that must fail):
+
+| Fixture                                            | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `variants/sparse.v1.json`       | pass   | pass       | pass    | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
+| Reference one-shot `variants/content-thin.v1.json` | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | fail     | fail    |
+
+`variants/content-thin.v1.json` is the regression for the "correct IDs but missing triggers" false green: it keeps every ID, anchor and structural text, so it passes every dimension except `fidelity`.
 
 ## Reproduction
 
@@ -60,7 +68,7 @@ Dimensions:
 6. `branches`: the key `branch.sourceId` cited by an optional scene (or the target of an optional branch); an encounter citing `alternativeSolution.obstacleSourceId` (or whose `sceneId` scene cites it) with a `socialBypassOfCombat: true` solution when required, or at least two solutions otherwise.
 7. `citations`: at least one `sourceRef.anchor` exists and every anchor equals a key section `sourceId`; unknown anchors listed.
 8. `truncation`: fails when the last non-container key section in key order is not cited; details list the uncited trailing run.
-9. `fidelity`: `n/a` when the key has no `actionableDetails` or the list is empty. Otherwise, for each detail, take the records in every collection except `unresolved` that cite the detail's section. The detail is present when the text match holds for at least one string in any field of those records, each string checked on its own. A missing detail is one finding: `missing <category> detail in <sourceId> "<title>" (cited by: <id>, <id>): <detail>`, or `(no record cites this section)` when nothing cites it. Records in `unresolved` are excluded, so a note that a detail was dropped never hides the omission.
+9. `fidelity` (the "record content fidelity" check from #5009; `sceneConditions` are scored through their matching `trigger` details, which the test in `conversion-score.test.ts` keeps consistent): `n/a` when the key has no `actionableDetails` or the list is empty. Otherwise, for each detail, take the records in every collection except `unresolved` that cite the detail's section. The detail is present when the text match holds for at least one string in any field of those records, each string checked on its own. A missing detail is one finding: `missing <category> detail in <sourceId> "<title>" (cited by: <id>, <id>): <detail>`, or `(no record cites this section)` when nothing cites it. Records in `unresolved` are excluded, so a note that a detail was dropped never hides the omission.
 
 When the schema fails, every other dimension is `fail` with the detail `not checked: schema invalid`.
 
@@ -69,6 +77,12 @@ When the schema fails, every other dimension is `fail` with the detail `not chec
 The optional top-level `actionableDetails` array holds `{ sourceId, category, detail }` entries. `sourceId` must be a key section. `category` is one of `read-aloud`, `situation`, `interaction`, `trigger`, `actor-reaction`, `clue`, `alternate-outcome`, `consequence` or `gm-only`. `detail` is a short paraphrase of a fact the source states in that section. The rubric never rewards added mechanics, transitions or fields outside adventure-json/v1. A converter should record unsupported inferences in the coverage report or in `unresolved` instead of inventing them; a detail recorded only in `unresolved` still counts as missing.
 
 Passing the schema is not the same as a playable, source-faithful conversion: an ID-complete package can still lack the triggers, clues, outcomes and consequences a table needs.
+
+## Gate types
+
+- **Mechanical gates**: `schema`, `references`, `citations`, `truncation`.
+- **Heuristic text-match gates** (deterministic and run in CI, but approximate): `secrets`, `coverage`, `authoredVsRumour`, `branches`, `fidelity`.
+- **Human or model judgement**: subjective fidelity, invented facts and playability. These stay outside CI and are recorded in the Results table with model, version and date.
 
 ## Promotion rule
 
