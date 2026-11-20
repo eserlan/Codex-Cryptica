@@ -167,6 +167,8 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
     const review = page.getByTestId("adventure-import-review");
     await expect(review).toBeVisible();
     await expect(review).toContainText(REFERENCE_PKG.title);
+    await expect(page.getByTestId("review-import-summary")).toBeVisible();
+    await page.getByTestId("review-secrets-summary").click();
     await expect(review).toContainText("GM-only (locked)");
 
     await page.getByTestId("adventure-approve-button").click();

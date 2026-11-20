@@ -461,4 +461,184 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(refs).toContain("pp. 2–4 · Scene 2: The Wheel Room");
     expect(refs).toContain("p. 3");
   });
+
+  it("renders a compact above-the-fold review receipt with identity, hook, validation status, accurate collection counts, and collapsed disclosures by default (#5060)", async () => {
+    const draft = createTestAdventureJson();
+    draft.source.publisher = "Riverstone Press";
+    draft.source.publishedDate = "2026-04-01";
+    draft.source.url = "https://example.com/mill-mystery";
+    draft.source.documentHash = "a".repeat(64);
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    // Above-the-fold identity & hook
+    expect(
+      screen.getByRole("heading", { level: 1, name: "The Mill Mystery" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("adventure-header-system").textContent?.trim(),
+    ).toBe("System-agnostic");
+    expect(
+      screen.getByTestId("adventure-header-authors").textContent?.trim(),
+    ).toBe("By A. Author");
+    expect(
+      screen.getByTestId("adventure-header-tone-genre").textContent?.trim(),
+    ).toBe("tense · mystery");
+    expect(
+      screen.getByTestId("adventure-header-hook").textContent?.trim(),
+    ).toBe("Maren asks the party to inspect the sluice gate.");
+
+    // Validation status & exact counts derived from parsed package
+    const validationStatus = screen.getByTestId("review-validation-status");
+    expect(validationStatus.getAttribute("role")).toBe("status");
+    expect(validationStatus.textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "Validated · 1 unresolved item",
+    );
+    expect(
+      screen
+        .getByTestId("review-import-total-count")
+        .textContent?.replace(/\s+/g, " ")
+        .trim(),
+    ).toBe("8 imported records across 7 collections");
+
+    expect(screen.getByTestId("review-count-locations").textContent).toContain(
+      "2",
+    );
+    expect(screen.getByTestId("review-count-actors").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-scenes").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-encounters").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-clues").textContent).toContain("1");
+    expect(screen.getByTestId("review-count-secrets").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-unresolved").textContent).toContain(
+      "1",
+    );
+
+    // Zero-count optional collections are reported as 0
+    const emptyLine = screen.getByTestId("review-empty-collections");
+    expect(emptyLine.textContent).toContain("Factions (0)");
+    expect(emptyLine.textContent).toContain("Rumours (0)");
+    expect(emptyLine.textContent).toContain("Items (0)");
+    expect(emptyLine.textContent).toContain("Endings (0)");
+
+    // Source details disclosure is collapsed by default, but reachable on demand
+    const sourceDetails = screen.getByTestId(
+      "review-source-details",
+    ) as HTMLDetailsElement;
+    expect(sourceDetails.open).toBe(false);
+    await fireEvent.click(screen.getByTestId("review-source-details-summary"));
+    sourceDetails.open = true;
+    expect(sourceDetails.open).toBe(true);
+    expect(sourceDetails.textContent).toContain("Riverstone Press");
+    expect(sourceDetails.textContent).toContain("CC0-1.0");
+    expect(sourceDetails.textContent).toContain("a".repeat(64));
+
+    // Detailed import sections default to collapsed while unresolved summary remains visible
+    expect(screen.getByTestId("review-unresolved").textContent).toContain(
+      "Unresolved (1)",
+    );
+    for (const disclosureId of [
+      "review-locations-disclosure",
+      "review-actors-disclosure",
+      "review-scenes-disclosure",
+      "review-encounters-disclosure",
+      "review-clues-disclosure",
+      "review-secrets-disclosure",
+    ]) {
+      const details = screen.getByTestId(disclosureId) as HTMLDetailsElement;
+      expect(details.open).toBe(false);
+    }
+  });
+
+  it("visually caps long hook, description, and background prose with keyboard-accessible Read more / Show less controls (#5060)", async () => {
+    const draft = createTestAdventureJson();
+    const longHook = `${"A signal flare arcs above the flooded transformer yard while the backup generator coughs black smoke. ".repeat(4)}Final hook sentence.`;
+    const longDescription = `${"An industrial horror scenario aboard a decaying orbital power relay with eleven interconnected maintenance rooms. ".repeat(4)}Final description sentence.`;
+    const longBackground = `${"Three shifts ago the coolant pumps seized and the night crew sealed the lower conduit bulkhead from the inside. ".repeat(4)}Final background sentence.`;
+
+    draft.premise.hook = longHook;
+    draft.description = longDescription;
+    draft.premise.background = longBackground;
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    // Header hook is truncated initially
+    const headerHook = screen.getByTestId("adventure-header-hook");
+    expect(headerHook.textContent).not.toContain("Final hook sentence.");
+    const headerToggle = screen.getByTestId("adventure-header-hook-toggle");
+    expect(headerToggle.getAttribute("aria-expanded")).toBe("false");
+    await fireEvent.click(headerToggle);
+    expect(headerToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(headerHook.textContent).toContain("Final hook sentence.");
+    await fireEvent.click(headerToggle);
+    expect(headerToggle.getAttribute("aria-expanded")).toBe("false");
+
+    // Premise and Source description, background, and hook toggles work independently
+    const metaDesc = screen.getByTestId("review-metadata-description");
+    expect(metaDesc.textContent).not.toContain("Final description sentence.");
+    const descToggle = screen.getByTestId("review-description-read-more");
+    await fireEvent.click(descToggle);
+    expect(metaDesc.textContent).toContain("Final description sentence.");
+
+    const metaBg = screen.getByTestId("review-metadata-background");
+    expect(metaBg.textContent).not.toContain("Final background sentence.");
+    const bgToggle = screen.getByTestId("review-background-read-more");
+    await fireEvent.click(bgToggle);
+    expect(metaBg.textContent).toContain("Final background sentence.");
+
+    const metaHook = screen.getByTestId("review-metadata-hook");
+    expect(metaHook.textContent).not.toContain("Final hook sentence.");
+    const hookToggle = screen.getByTestId("review-hook-read-more");
+    await fireEvent.click(hookToggle);
+    expect(metaHook.textContent).toContain("Final hook sentence.");
+  });
+
+  it("announces validation failure in the import summary when draft checks fail and never implies validated (#5060)", () => {
+    const invalidDraft = createTestAdventureJson();
+    // Introduce an unresolved reference so validator fails
+    invalidDraft.scenes = [
+      {
+        ...invalidDraft.scenes[0]!,
+        locationId: "non-existent-location",
+      },
+    ];
+
+    render(AdventureImportReview, {
+      props: {
+        draft: invalidDraft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const status = screen.getByTestId("review-validation-status");
+    expect(status.getAttribute("role")).toBe("alert");
+    expect(status.textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "Validation failed (1 error)",
+    );
+    expect(status.textContent).not.toContain("Validated");
+
+    const errorBox = screen.getByTestId("review-validation-errors");
+    expect(errorBox.textContent).toContain("UNRESOLVED_REFERENCE");
+    expect(errorBox.textContent).toContain("non-existent-location");
+  });
 });

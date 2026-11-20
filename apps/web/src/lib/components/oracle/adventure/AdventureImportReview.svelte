@@ -10,6 +10,7 @@
   import AdventureImportReviewClueSections from "./AdventureImportReviewClueSections.svelte";
   import AdventureImportReviewSecrets from "./AdventureImportReviewSecrets.svelte";
   import AdventureImportReviewHeader from "./AdventureImportReviewHeader.svelte";
+  import AdventureImportReviewSummary from "./AdventureImportReviewSummary.svelte";
   import AdventureImportReviewUnresolved from "./AdventureImportReviewUnresolved.svelte";
   import AdventureImportReviewFactions from "./AdventureImportReviewFactions.svelte";
   import AdventureImportReviewEncounter from "./AdventureImportReviewEncounter.svelte";
@@ -55,6 +56,9 @@
   const isApproved = $derived(approvedHash !== null);
   const isLocked = $derived(isApproved || approving);
   const displayError = $derived(approveError ?? localError);
+  const liveValidation = $derived(
+    validateAdventureJson($state.snapshot(draft)),
+  );
 
   $effect(() => {
     const snapshot = $state.snapshot(draft) as AdventureJsonV1;
@@ -120,6 +124,12 @@
     {experimentalOrigin}
     {canonicalHash}
     {isApproved}
+  />
+
+  <AdventureImportReviewSummary
+    {draft}
+    validationOk={liveValidation.ok}
+    validationErrors={liveValidation.ok ? [] : liveValidation.errors}
   />
 
   {#if previousPackage}
@@ -224,7 +234,7 @@
       data-testid="adventure-cancel-button"
       disabled={approving}
       onclick={onCancel}
-      class="min-h-11 rounded-lg border border-theme-border bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+      class="min-h-11 rounded-lg border border-theme-text/75 bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
     >
       {isApproved ? "Done" : "Cancel"}
     </button>
@@ -237,7 +247,7 @@
             $state.snapshot(draft) as AdventureJsonV1,
             approvedHash!,
           )}
-        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       >
         Start adventure
       </button>
@@ -247,7 +257,7 @@
         data-testid="adventure-approve-button"
         disabled={isLocked}
         onclick={() => void handleApprove()}
-        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:cursor-not-allowed disabled:opacity-60"
+        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
       >
         {approving
           ? "Approving…"
