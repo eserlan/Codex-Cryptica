@@ -37,6 +37,8 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 
 Creature proposals use `kind` first: a `"creature"` actor is always proposed (even if no encounter references it), a `"character"` actor is never proposed, and an actor with no `kind` is proposed only when an encounter references it.
 
+Locations, actors, factions and items may include optional `aliases` and `labels` string arrays. The approved-package review flow copies aliases and labels from proposed actors into newly created Creature entries. When a proposal is hidden, the importer keeps its `hidden` label alongside any source labels. Matched Vault entries are reused without modification; this flow does not create Vault entities for other collections or character actors.
+
 ### What visibility applies to
 
 `visibility` is a property of the **whole record**. Every field of a `player-visible` record (including `role`, `motivation`, `summary`, `description`, `body`, `readAloud` and `reveals`) is treated as safe to show players; v1 has no per-field visibility, and importers, the review screen and any player-facing projection must not assume a visible record has hidden parts.

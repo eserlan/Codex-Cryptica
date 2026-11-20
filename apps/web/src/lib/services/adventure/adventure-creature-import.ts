@@ -129,9 +129,11 @@ function entityData(
       ...(choice.file && credit ? { artCredit: credit } : {}),
     },
   };
+  if (proposal.aliases.length) data.aliases = proposal.aliases;
+  if (proposal.labels.length) data.labels = [...proposal.labels];
   if (lore) data.lore = lore;
   if (choice.hidden) {
-    data.labels = ["hidden"];
+    data.labels = [...new Set([...(data.labels ?? []), "hidden"])];
     data.visibility = "hidden";
   }
   return data;

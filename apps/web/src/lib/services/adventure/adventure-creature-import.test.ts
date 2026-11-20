@@ -121,6 +121,29 @@ describe("importCreatures", () => {
     expect(saveImage).not.toHaveBeenCalled();
   });
 
+  it("copies actor metadata and preserves the hidden label on new creatures", async () => {
+    const metadataPackage = {
+      ...pkg,
+      actors: pkg.actors.map((actor, index) =>
+        index === 1
+          ? { ...actor, aliases: ["The Spider"], labels: ["venomous"] }
+          : actor,
+      ),
+    } as AdventureJsonV1;
+    const choices = initialCreatureChoices(
+      metadataPackage,
+      buildCreatureProposals(metadataPackage),
+      [],
+    );
+    const { deps, createEntity } = setup();
+    await importCreatures(metadataPackage, "h".repeat(64), choices, deps);
+    expect(createEntity.mock.calls[1]![2]).toMatchObject({
+      aliases: ["The Spider"],
+      labels: ["venomous", "hidden"],
+      visibility: "hidden",
+    });
+  });
+
   it("skips excluded choices without writing", async () => {
     const { deps, choices, createEntity } = setup();
     for (const choice of choices) choice.include = false;
