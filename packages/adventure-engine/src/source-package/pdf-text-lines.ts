@@ -94,22 +94,12 @@ export function groupItemsByY(items: PositionedItem[]): PositionedItem[][] {
   return rows;
 }
 
-function joinRowItems(
-  row: PositionedItem[],
-  pageNumber: number,
-): VisualLine | null {
-  row.sort((a, b) => a.x - b.x);
+function joinRowText(row: PositionedItem[]): string {
   let text = row[0].str.replace(/^\s+/, "");
   let prevEndX = row[0].x + row[0].width;
-  let weightedFontSum = row[0].fontSize * row[0].str.trim().length;
-  let totalChars = row[0].str.trim().length;
 
   for (let i = 1; i < row.length; i++) {
     const part = row[i];
-    const trimmedLen = part.str.trim().length;
-    weightedFontSum += part.fontSize * trimmedLen;
-    totalChars += trimmedLen;
-
     const gap = part.x - prevEndX;
     const spaceThreshold = Math.max(1.5, part.fontSize * 0.18);
     const needsSpace =
@@ -118,16 +108,35 @@ function joinRowItems(
     prevEndX = Math.max(prevEndX, part.x + part.width);
   }
 
-  const normalized = text
+  return text
     .replace(/[\u2018\u2019]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
     .replace(/\s+/g, " ")
     .trim();
-  if (normalized.length === 0) return null;
+}
+
+function computeRowFontSize(row: PositionedItem[]): number {
+  let weightedFontSum = row[0].fontSize * row[0].str.trim().length;
+  let totalChars = row[0].str.trim().length;
+  for (let i = 1; i < row.length; i++) {
+    const trimmedLen = row[i].str.trim().length;
+    weightedFontSum += row[i].fontSize * trimmedLen;
+    totalChars += trimmedLen;
+  }
+  return totalChars > 0 ? weightedFontSum / totalChars : row[0].fontSize;
+}
+
+function joinRowItems(
+  row: PositionedItem[],
+  pageNumber: number,
+): VisualLine | null {
+  row.sort((a, b) => a.x - b.x);
+  const text = joinRowText(row);
+  if (text.length === 0) return null;
 
   return {
-    text: normalized,
-    fontSize: totalChars > 0 ? weightedFontSum / totalChars : row[0].fontSize,
+    text,
+    fontSize: computeRowFontSize(row),
     pageNumber,
     y: row[0].y,
     x: row[0].x,

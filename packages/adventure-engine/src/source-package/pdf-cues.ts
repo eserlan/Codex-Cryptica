@@ -15,12 +15,7 @@ export function isSourceIdMarker(text: string): boolean {
 }
 
 export function isCueLine(text: string): boolean {
-  return (
-    READ_ALOUD_CUE_RE.test(text) ||
-    GM_ONLY_CUE_RE.test(text) ||
-    SCENE_CONDITION_CUE_RE.test(text) ||
-    ALT_SOLUTION_CUE_RE.test(text)
-  );
+  return matchCueBlock(text) !== null;
 }
 
 type ActiveCueBlock =
@@ -108,35 +103,40 @@ function splitEmbeddedCueLines(line: VisualLine): VisualLine[] {
   return segments;
 }
 
+function consumeSectionLine(
+  line: VisualLine,
+  prevLine: VisualLine | null,
+  active: ActiveCueBlock | null,
+  out: string[],
+): ActiveCueBlock | null {
+  const text = line.text;
+  if (isSourceIdMarker(text)) {
+    flushCueBlock(active, out);
+    out.push(text);
+    return null;
+  }
+
+  const cue = matchCueBlock(text);
+  if (cue) {
+    flushCueBlock(active, out);
+    return cue;
+  }
+
+  if (active && shouldContinueBlock(prevLine, line)) {
+    active.text = `${active.text} ${text}`.trim();
+    return active;
+  }
+  flushCueBlock(active, out);
+  return { kind: "prose", text };
+}
+
 export function normalizeSectionLines(lines: VisualLine[]): string[] {
   const out: string[] = [];
   let active: ActiveCueBlock | null = null;
   let prevLine: VisualLine | null = null;
 
   for (const line of lines.flatMap(splitEmbeddedCueLines)) {
-    const text = line.text;
-    if (isSourceIdMarker(text)) {
-      flushCueBlock(active, out);
-      active = null;
-      out.push(text);
-      prevLine = line;
-      continue;
-    }
-
-    const cue = matchCueBlock(text);
-    if (cue) {
-      flushCueBlock(active, out);
-      active = cue;
-      prevLine = line;
-      continue;
-    }
-
-    if (active && shouldContinueBlock(prevLine, line)) {
-      active.text = `${active.text} ${text}`.trim();
-    } else {
-      flushCueBlock(active, out);
-      active = { kind: "prose", text };
-    }
+    active = consumeSectionLine(line, prevLine, active, out);
     prevLine = line;
   }
 

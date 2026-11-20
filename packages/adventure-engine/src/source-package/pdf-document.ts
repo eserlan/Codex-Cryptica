@@ -38,11 +38,18 @@ export function isAborted(signal?: AbortSignal): boolean {
   return signal?.aborted === true;
 }
 
-function classifyPdfLoadError(error: unknown): AdventureImportError {
-  const name =
-    error && typeof error === "object" && "name" in error
-      ? String((error as { name?: unknown }).name)
-      : "";
+function pdfErrorName(error: unknown): string {
+  return error && typeof error === "object" && "name" in error
+    ? String((error as { name?: unknown }).name)
+    : "";
+}
+
+function classifyPdfLoadError(
+  error: unknown,
+  signal?: AbortSignal,
+): AdventureImportError {
+  if (isAborted(signal)) return abortedPdfError();
+  const name = pdfErrorName(error);
   const message = error instanceof Error ? error.message : String(error ?? "");
 
   if (name === "PasswordException" || /password|encrypt/i.test(message)) {
@@ -125,8 +132,7 @@ async function loadPdfDocumentOrError(
       : await defaultLoadPdfDocument(bytes, deps.workerSrc);
     return { ok: true, doc };
   } catch (error) {
-    if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
-    return { ok: false, error: classifyPdfLoadError(error) };
+    return { ok: false, error: classifyPdfLoadError(error, deps.signal) };
   }
 }
 
@@ -146,8 +152,7 @@ export async function extractLinesFromPdf(
     const collectError = await collectPageLines(pdfDoc, deps.signal, allLines);
     if (collectError) return { ok: false, error: collectError };
   } catch (error) {
-    if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
-    return { ok: false, error: classifyPdfLoadError(error) };
+    return { ok: false, error: classifyPdfLoadError(error, deps.signal) };
   } finally {
     await pdfDoc.destroy?.();
   }

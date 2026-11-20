@@ -8,23 +8,38 @@ import {
   type VisualLine,
 } from "./pdf-text-lines";
 
+interface ColumnLayout {
+  gutterMid: number;
+  minY: number;
+  maxY: number;
+}
+
+function findRowGutters(
+  row: PositionedItem[],
+  searchLeft: number,
+  searchRight: number,
+): number[] {
+  const candidateMidpoints: number[] = [];
+  const sorted = [...row].sort((a, b) => a.x - b.x);
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const gapStart = sorted[i].x + sorted[i].width;
+    const gapEnd = sorted[i + 1].x;
+    const mid = (gapStart + gapEnd) / 2;
+    if (gapEnd - gapStart >= 12 && mid >= searchLeft && mid <= searchRight) {
+      candidateMidpoints.push(mid);
+    }
+  }
+  return candidateMidpoints;
+}
+
 function findGutterMidpoint(
   yGroups: PositionedItem[][],
   searchLeft: number,
   searchRight: number,
 ): number | null {
-  const candidateMidpoints: number[] = [];
-  for (const group of yGroups) {
-    const sorted = [...group].sort((a, b) => a.x - b.x);
-    for (let i = 0; i < sorted.length - 1; i++) {
-      const gapStart = sorted[i].x + sorted[i].width;
-      const gapEnd = sorted[i + 1].x;
-      const mid = (gapStart + gapEnd) / 2;
-      if (gapEnd - gapStart >= 12 && mid >= searchLeft && mid <= searchRight) {
-        candidateMidpoints.push(mid);
-      }
-    }
-  }
+  const candidateMidpoints = yGroups.flatMap((row) =>
+    findRowGutters(row, searchLeft, searchRight),
+  );
   if (candidateMidpoints.length < 2) return null;
   candidateMidpoints.sort((a, b) => a - b);
   return candidateMidpoints[Math.floor(candidateMidpoints.length / 2)];
@@ -38,12 +53,13 @@ function findColumnBand(
 
   for (const group of yGroups) {
     const rowY = group[0].y;
-    const crosses = group.some(
-      (item) => item.x < gutterMid - 2 && item.x + item.width > gutterMid + 2,
+    if (rowCrossesGutter(group, gutterMid)) continue;
+    const hasLeft = group.some((item) =>
+      isOnColumnSide(item, "left", gutterMid),
     );
-    if (crosses) continue;
-    const hasLeft = group.some((item) => item.x + item.width <= gutterMid + 2);
-    const hasRight = group.some((item) => item.x >= gutterMid - 2);
+    const hasRight = group.some((item) =>
+      isOnColumnSide(item, "right", gutterMid),
+    );
     if (hasLeft && hasRight) {
       splitYValues.push(rowY);
     }
@@ -61,6 +77,16 @@ function rowCrossesGutter(row: PositionedItem[], gutterMid: number): boolean {
   );
 }
 
+function isOnColumnSide(
+  item: PositionedItem,
+  side: "left" | "right",
+  gutterMid: number,
+): boolean {
+  return side === "left"
+    ? item.x + item.width <= gutterMid + 2
+    : item.x >= gutterMid - 2;
+}
+
 function joinColumnSide(
   row: PositionedItem[],
   side: "left" | "right",
@@ -68,11 +94,7 @@ function joinColumnSide(
   pageNumber: number,
   target: VisualLine[],
 ): void {
-  const items = row.filter((item) =>
-    side === "left"
-      ? item.x + item.width <= gutterMid + 2
-      : item.x >= gutterMid - 2,
-  );
+  const items = row.filter((item) => isOnColumnSide(item, side, gutterMid));
   if (items.length === 0) return;
   appendRowLine(items, pageNumber, target);
 }
@@ -104,10 +126,7 @@ function buildColumnBandLines(
   return out;
 }
 
-function detectTwoColumnSplit(
-  items: PositionedItem[],
-  pageNumber: number,
-): VisualLine[] | null {
+function findColumnLayout(items: PositionedItem[]): ColumnLayout | null {
   if (items.length < 4) return null;
 
   const minX = Math.min(...items.map((i) => i.x));
@@ -127,16 +146,23 @@ function detectTwoColumnSplit(
 
   const band = findColumnBand(yGroups, gutterMid);
   if (!band) return null;
+  return { gutterMid, ...band };
+}
 
-  const headerItems = items.filter((item) => item.y > band.maxY);
-  const footerItems = items.filter((item) => item.y < band.minY);
+function buildTwoColumnLines(
+  items: PositionedItem[],
+  layout: ColumnLayout,
+  pageNumber: number,
+): VisualLine[] {
+  const headerItems = items.filter((item) => item.y > layout.maxY);
+  const footerItems = items.filter((item) => item.y < layout.minY);
   const bandItems = items.filter(
-    (item) => item.y >= band.minY && item.y <= band.maxY,
+    (item) => item.y >= layout.minY && item.y <= layout.maxY,
   );
 
   return [
     ...buildVisualLinesFromItems(headerItems, pageNumber),
-    ...buildColumnBandLines(bandItems, gutterMid, pageNumber),
+    ...buildColumnBandLines(bandItems, layout.gutterMid, pageNumber),
     ...buildVisualLinesFromItems(footerItems, pageNumber),
   ];
 }
@@ -147,8 +173,8 @@ export function extractPageVisualLines(
 ): VisualLine[] {
   const positioned = extractPositionedItems(items);
   if (positioned.length === 0) return [];
-  return (
-    detectTwoColumnSplit(positioned, pageNumber) ??
-    buildVisualLinesFromItems(positioned, pageNumber)
-  );
+  const layout = findColumnLayout(positioned);
+  return layout
+    ? buildTwoColumnLines(positioned, layout, pageNumber)
+    : buildVisualLinesFromItems(positioned, pageNumber);
 }

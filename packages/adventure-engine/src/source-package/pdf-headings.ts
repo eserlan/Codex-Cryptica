@@ -2,10 +2,15 @@ import { isCueLine, isSourceIdMarker } from "./pdf-cues";
 import type { VisualLine } from "./pdf-text-lines";
 
 const ATX_HEADING_RE = /^(#{1,6})\s+(.+?)\s*#*$/;
+
+function roundFontSize(fontSize: number): number {
+  return Math.round(fontSize * 2) / 2;
+}
+
 export function computeBodyFontSize(lines: VisualLine[]): number {
   const counts = new Map<number, number>();
   for (const line of lines) {
-    const rounded = Math.round(line.fontSize * 2) / 2;
+    const rounded = roundFontSize(line.fontSize);
     counts.set(rounded, (counts.get(rounded) ?? 0) + line.text.length);
   }
   let bestSize = 10;
@@ -27,7 +32,7 @@ export function detectHeadingLevelMap(
   for (const line of lines) {
     if (ATX_HEADING_RE.test(line.text)) continue;
     if (isCueLine(line.text) || isSourceIdMarker(line.text)) continue;
-    const rounded = Math.round(line.fontSize * 2) / 2;
+    const rounded = roundFontSize(line.fontSize);
     if (
       (rounded >= bodyFontSize * 1.15 || rounded - bodyFontSize >= 1.5) &&
       line.text.length <= 120
@@ -55,7 +60,7 @@ export function classifyHeading(
   if (isCueLine(line.text) || isSourceIdMarker(line.text)) {
     return null;
   }
-  const rounded = Math.round(line.fontSize * 2) / 2;
+  const rounded = roundFontSize(line.fontSize);
   const inferredLevel = levelMap.get(rounded);
   if (inferredLevel !== undefined && line.text.length <= 120) {
     return { level: inferredLevel, title: line.text };

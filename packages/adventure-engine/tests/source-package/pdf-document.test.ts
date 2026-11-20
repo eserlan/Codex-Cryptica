@@ -73,6 +73,7 @@ describe("PDF document extraction", () => {
       Object.assign(new Error("locked"), { name: "PasswordException" }),
       "ENCRYPTED_PDF",
     ],
+    [{ name: "PasswordException" }, "ENCRYPTED_PDF"],
     [new Error("Encrypted document"), "ENCRYPTED_PDF"],
     [new Error("Corrupt cross-reference"), "INVALID_PDF"],
     ["unreadable", "INVALID_PDF"],
@@ -214,6 +215,22 @@ describe("PDF document extraction", () => {
       }),
     ).toMatchObject({ ok: false, error: { code: "ABORTED" } });
     expect(doc.getPage).toHaveBeenCalledTimes(1);
+    expect(doc.destroy).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives cancellation precedence over a page extraction failure", async () => {
+    const controller = new AbortController();
+    const doc = documentWithPages([[]]);
+    doc.getPage = async () => {
+      controller.abort();
+      throw new Error("Page unavailable");
+    };
+    doc.destroy = mock(() => {});
+    const result = await extractLinesFromPdf(bytes, {
+      loadPdfDocument: async () => doc,
+      signal: controller.signal,
+    });
+    expect(result).toMatchObject({ ok: false, error: { code: "ABORTED" } });
     expect(doc.destroy).toHaveBeenCalledTimes(1);
   });
 

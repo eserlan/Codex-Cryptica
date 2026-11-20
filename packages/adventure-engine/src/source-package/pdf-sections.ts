@@ -26,6 +26,11 @@ interface GroupedPdfSection {
   pageEnd: number;
 }
 
+interface PdfSectionResult {
+  rawSections: RawSection[];
+  ambiguities: AmbiguityRecord[];
+}
+
 function groupLinesByHeading(
   allLines: VisualLine[],
   headingLevelMap: Map<number, number>,
@@ -60,13 +65,34 @@ function groupLinesByHeading(
   return { preambleLines, grouped };
 }
 
+function sectionPageRange(
+  pageNumber: number,
+  pageEnd: number,
+): { pageNumber: number; pageEnd?: number } {
+  return { pageNumber, ...(pageEnd > pageNumber ? { pageEnd } : {}) };
+}
+
+function buildUnresolvedRawSection(
+  lines: VisualLine[],
+  title: string,
+): RawSection {
+  const firstPage = lines[0]?.pageNumber ?? 1;
+  const lastPage = lines[lines.length - 1]?.pageNumber ?? firstPage;
+  return {
+    level: 1,
+    title,
+    lines: normalizeSectionLines(lines),
+    lineNumber: 1,
+    ...sectionPageRange(firstPage, lastPage),
+    forceUnresolvedProvenance: true,
+  };
+}
+
 function buildFallbackRawSection(
   allLines: VisualLine[],
   fileName: string,
-): { rawSections: RawSection[]; ambiguities: AmbiguityRecord[] } {
+): PdfSectionResult {
   const fallbackTitle = deriveFallbackTitle(fileName);
-  const firstPage = allLines[0]?.pageNumber ?? 1;
-  const lastPage = allLines[allLines.length - 1]?.pageNumber ?? firstPage;
   return {
     ambiguities: [
       {
@@ -78,24 +104,46 @@ function buildFallbackRawSection(
         provenance: "unresolved",
       },
     ],
-    rawSections: [
+    rawSections: [buildUnresolvedRawSection(allLines, fallbackTitle)],
+  };
+}
+
+function buildPreambleSection(preambleLines: VisualLine[]): PdfSectionResult {
+  const preambleText = preambleLines
+    .map((l) => l.text)
+    .join(" ")
+    .trim();
+  if (preambleText.length === 0) return { rawSections: [], ambiguities: [] };
+
+  return {
+    ambiguities: [
       {
-        level: 1,
-        title: fallbackTitle,
-        lines: normalizeSectionLines(allLines),
-        lineNumber: 1,
-        pageNumber: firstPage,
-        ...(lastPage > firstPage ? { pageEnd: lastPage } : {}),
-        forceUnresolvedProvenance: true,
+        id: "amb-unanchored-preamble",
+        code: "UNANCHORED_PREAMBLE",
+        message:
+          "Document contains text before the first heading; it was preserved in an unresolved introductory section.",
+        context: preambleText.slice(0, 200),
+        provenance: "unresolved",
       },
     ],
+    rawSections: [buildUnresolvedRawSection(preambleLines, "Introduction")],
+  };
+}
+
+function toRawSection(section: GroupedPdfSection): RawSection {
+  return {
+    level: section.level,
+    title: section.title,
+    lines: normalizeSectionLines(section.visualLines),
+    lineNumber: section.lineNumber,
+    ...sectionPageRange(section.pageNumber, section.pageEnd),
   };
 }
 
 export function buildRawSectionsFromLines(
   allLines: VisualLine[],
   fileName: string,
-): { rawSections: RawSection[]; ambiguities: AmbiguityRecord[] } {
+): PdfSectionResult {
   const bodyFontSize = computeBodyFontSize(allLines);
   const headingLevelMap = detectHeadingLevelMap(allLines, bodyFontSize);
   const { preambleLines, grouped } = groupLinesByHeading(
@@ -107,49 +155,9 @@ export function buildRawSectionsFromLines(
     return buildFallbackRawSection(allLines, fileName);
   }
 
-  const ambiguities: AmbiguityRecord[] = [];
-  const preambleText = preambleLines
-    .map((l) => l.text)
-    .join(" ")
-    .trim();
-  const preambleSections: RawSection[] = [];
-  if (preambleText.length > 0) {
-    ambiguities.push({
-      id: "amb-unanchored-preamble",
-      code: "UNANCHORED_PREAMBLE",
-      message:
-        "Document contains text before the first heading; it was preserved in an unresolved introductory section.",
-      context: preambleText.slice(0, 200),
-      provenance: "unresolved",
-    });
-    const firstPage = preambleLines[0]?.pageNumber ?? 1;
-    const lastPage =
-      preambleLines[preambleLines.length - 1]?.pageNumber ?? firstPage;
-    preambleSections.push({
-      level: 1,
-      title: "Introduction",
-      lines: normalizeSectionLines(preambleLines),
-      lineNumber: 1,
-      pageNumber: firstPage,
-      ...(lastPage > firstPage ? { pageEnd: lastPage } : {}),
-      forceUnresolvedProvenance: true,
-    });
-  }
-
+  const preamble = buildPreambleSection(preambleLines);
   return {
-    ambiguities,
-    rawSections: [
-      ...preambleSections,
-      ...grouped.map((section) => ({
-        level: section.level,
-        title: section.title,
-        lines: normalizeSectionLines(section.visualLines),
-        lineNumber: section.lineNumber,
-        pageNumber: section.pageNumber,
-        ...(section.pageEnd > section.pageNumber
-          ? { pageEnd: section.pageEnd }
-          : {}),
-      })),
-    ],
+    ambiguities: preamble.ambiguities,
+    rawSections: [...preamble.rawSections, ...grouped.map(toRawSection)],
   };
 }
