@@ -17,6 +17,20 @@ interface Palette {
   tokens: { primary: string; surface: string; background: string };
 }
 
+function isPalette(value: unknown): value is Palette {
+  if (typeof value !== "object" || value === null || !("tokens" in value)) {
+    return false;
+  }
+
+  const { id, tokens } = value as Partial<Palette>;
+  return (
+    typeof id === "string" &&
+    typeof tokens?.primary === "string" &&
+    typeof tokens.surface === "string" &&
+    typeof tokens.background === "string"
+  );
+}
+
 function parseHexColor(value: string): [number, number, number] {
   const match = /^#([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(value);
   if (!match) throw new Error(`Expected a six-digit hex color, got ${value}`);
@@ -63,12 +77,16 @@ function contrastRatio(
   );
 }
 
+const schemaPalettes = Object.values(schema).reduce<Palette[]>(
+  (palettes, value) => {
+    if (isPalette(value)) palettes.push(value);
+    return palettes;
+  },
+  [],
+);
 const allPalettes = [
-  ...Object.values(THEMES),
-  ...Object.values(schema).filter(
-    (value): value is Palette =>
-      typeof value === "object" && value !== null && "tokens" in value,
-  ),
+  ...(Object.values(THEMES) as Palette[]),
+  ...schemaPalettes,
 ].filter(
   (palette, index, palettes) =>
     palettes.findIndex((candidate) => candidate.id === palette.id) === index,
