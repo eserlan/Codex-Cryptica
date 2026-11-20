@@ -43,9 +43,9 @@ const questions = [
 
 const nonAnswers = [
   "The keeper says: \"This ledger doesn't name the lender, so I can't tell you.\"",
-  "A gust rattles the shutter. \"I cannot name the creditors from this page.\"",
-  "The ledger is closed. \"It doesn't say who lent the coin or goods.\"",
-  "A villager crosses the market. \"I won't guess who is owed; ask the households.\"",
+  'A gust rattles the shutter. "I cannot name the creditors from this page."',
+  'The ledger is closed. "It doesn\'t say who lent the coin or goods."',
+  'A villager crosses the market. "I won\'t guess who is owed; ask the households."',
 ];
 
 function ledgerTurns(): CommittedAdventureTurn[] {
@@ -124,7 +124,11 @@ describe("circular NPC dialogue pacing (#5083)", () => {
 
   it("does not mistake different questions to one NPC for a dialogue loop", () => {
     const turns = [
-      turn(0, "Where is the healer?", "I don't know where the healer has gone."),
+      turn(
+        0,
+        "Where is the healer?",
+        "I don't know where the healer has gone.",
+      ),
       turn(1, "Who built the belfry?", "I can't recall its builder."),
       turn(2, "Why is the cart broken?", "I have no idea about the cart."),
       turn(3, "What happened to the bell?", "I can't say what happened."),
