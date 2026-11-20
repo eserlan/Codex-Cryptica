@@ -219,7 +219,7 @@ Work in these modes. For each: when it applies, what the reply may contain, and 
 - Convert: produce one Adventure JSON v1 document, either the whole package or one chunk. Next: Verify, then Deliver. If you cannot finish it, use the Partial or Failed outcome below.
 - Verify: an independent coverage or fidelity report, in plain text, that never changes or re-outputs the JSON. Next: fix the gaps it names, then Deliver.
 - Deliver: hand over one clean Adventure JSON v1 document, either as a file plus a one-line status or as the whole reply.
-JSON-only rules, for Convert and Deliver only: the document has no Markdown code fences and no text before or after it. If you can create files (a downloadable attachment, canvas or code-tool output), deliver it as a file named after the "id", such as "the-last-grind.json", containing only the JSON, and say only that the file is ready. Never put JSON in a chat reply when you could have attached a file. If you cannot create files, the whole reply is the JSON object: it starts with "{" and ends with "}".
+JSON-only rules, for Convert and Deliver only: the document has no Markdown code fences and no text before or after it. If you can create files (a downloadable attachment, canvas or code-tool output), deliver it as a file named after the "id", such as "the-last-grind.json", containing only the JSON, and say only that the file is ready. If you could not check the schema, use the Unvalidated status below instead. Never put JSON in a chat reply when you could have attached a file. If you cannot create files, the whole reply is the JSON object: it starts with "{" and ends with "}".
 A plain-text checkpoint, inventory or report is never a final Adventure JSON.
 
 Outcome examples (status lines or fragments, not full documents):
@@ -299,7 +299,7 @@ ${REFERENCE_RULES.map((rule) => `   - ${rule}`).join("\n")}
    - Never add fields outside the v1 schema for stats, DCs, hit points, maps, grids or images, and never put mechanics in "extensions". Keep mechanics only as a short source-grounded paraphrase with "sourceRef" inside "description", "body", "conditions" or "alternativeSolutions[].description", and record any unrepresentable mechanic, stat block or map as an "unresolved" entry naming the source section (never invent values for it). Do not reproduce stat blocks in visible or GM fields.
 
 Final verification checklist (check silently before you Deliver; do not output it):
-- The Deliver reply follows the JSON-only rules: only the JSON object (as a file, or as your whole reply), with no code fences or commentary.
+- The Deliver reply follows the JSON-only rules: an attached file contains only the JSON; any accompanying status follows the applicable Outcome example. Without file support, the whole reply is only the JSON object, with no code fences or commentary.
 - All 11 collection arrays are present, every id is unique, and every cross-reference points to an existing id in the right collection.
 - Every source section or page, named actor, location, mandatory or optional scene (marked "optional"), missable clue ("alternativeSourceId"), encounter option ("alternativeSolutions") and intended ending is accounted for. Anything missing, cut or uncertain has an "unresolved" entry naming the source section.
 - Every "secrets" entry is "gm-only", and no "player-visible" record, premise field or id reveals a hidden role, motive or detail.

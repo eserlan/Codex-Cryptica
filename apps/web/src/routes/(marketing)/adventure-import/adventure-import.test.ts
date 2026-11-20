@@ -599,6 +599,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(contract).toContain(
         "Never put JSON in a chat reply when you could have attached a file",
       );
+      expect(contract).toContain(
+        "If you could not check the schema, use the Unvalidated status below instead",
+      );
     });
 
     it("tells models how to handle long sources, sandbox modules and confidence", () => {
@@ -668,6 +671,9 @@ describe("Adventure JSON Conversion Guide (/adventure-import)", () => {
       expect(prompt.split("no Markdown code fences")).toHaveLength(2);
       expect(prompt).toContain(
         "1. Convert and Deliver produce ONLY valid JSON",
+      );
+      expect(prompt).toContain(
+        "an attached file contains only the JSON; any accompanying status follows the applicable Outcome example",
       );
     });
 
