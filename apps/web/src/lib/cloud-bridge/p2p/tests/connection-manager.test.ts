@@ -45,6 +45,36 @@ describe("PeerJSConnectionManager", () => {
     expect(manager.state.retryCount).toBe(0);
   });
 
+  it.each(["host", "guest"] as const)(
+    "does not create a %s peer after disconnect while PeerJS is loading",
+    async (role) => {
+      let finishLoading!: () => void;
+      const loader = vi.fn(
+        () =>
+          new Promise<void>((resolve) => {
+            finishLoading = resolve;
+          }),
+      );
+      const lazyManager = new PeerJSConnectionManager(
+        undefined,
+        1000,
+        1500,
+        [100, 200, 300],
+        loader,
+      );
+
+      const attempt =
+        role === "host"
+          ? lazyManager.startHost("host-peer-id")
+          : lazyManager.connect("host-peer-id");
+      lazyManager.disconnect();
+      await expect(attempt).rejects.toThrow("Connection aborted");
+      finishLoading();
+      expect(loader).toHaveBeenCalledOnce();
+      expect(lazyManager.state.status).toBe("disconnected");
+    },
+  );
+
   it("should start host and accept incoming peer connection", async () => {
     const hostPromise = manager.startHost("host-peer-id");
 

@@ -2,7 +2,7 @@
   import type { Entity } from "schema";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { isEntityVisible } from "schema";
-  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
+  import MarkdownEditor from "#lib/components/LazyMarkdownEditor.svelte";
   import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
   import TemporalEditor from "#lib/components/timeline/TemporalEditor.svelte";
   import ConnectionEditor from "#lib/components/connections/ConnectionEditor.svelte";

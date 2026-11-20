@@ -77,7 +77,7 @@ describe("EntityGmNotes", () => {
     const toggle = screen.getByRole("button", { name: /GM notes/ });
     await fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText("The duke is a vampire.")).toBeTruthy();
+    expect(await screen.findByText("The duke is a vampire.")).toBeTruthy();
     expect(data.get("codex-entity-gm-notes-open")).toBe("1");
   });
 
@@ -86,17 +86,17 @@ describe("EntityGmNotes", () => {
     renderNotes({ storage });
     const toggle = screen.getByRole("button", { name: /GM notes/ });
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
-    expect(screen.getByText("The duke is a vampire.")).toBeTruthy();
+    expect(await screen.findByText("The duke is a vampire.")).toBeTruthy();
     await fireEvent.click(toggle);
     expect(toggle.getAttribute("aria-expanded")).toBe("false");
     expect(screen.queryByText("The duke is a vampire.")).toBeNull();
     expect(data.get("codex-entity-gm-notes-open")).toBe("0");
   });
 
-  it("shows the editor with no toggle while editing and leaves the choice alone", () => {
+  it("shows the editor with no toggle while editing and leaves the choice alone", async () => {
     const { storage, data } = fakeStorage("0");
     renderNotes({ storage, isEditing: true });
-    expect(screen.getByTestId("mock-editor-editable")).toBeTruthy();
+    expect(await screen.findByTestId("mock-editor-editable")).toBeTruthy();
     expect(screen.queryByRole("button")).toBeNull();
     expect(data.get("codex-entity-gm-notes-open")).toBe("0");
     expect(storage.setItem).not.toHaveBeenCalled();
@@ -112,11 +112,11 @@ describe("EntityGmNotes", () => {
     expect(subtitle.getAttribute("aria-hidden")).toBe("true");
   });
 
-  it("shows the proposed lore from a pending draft when open", () => {
+  it("shows the proposed lore from a pending draft when open", async () => {
     mocks.revisionService.pendingDraft = { entityId: "e1", lore: "New lore" };
     renderNotes({ storage: fakeStorage("1").storage });
     expect(screen.getByText("Proposed")).toBeTruthy();
-    expect(screen.getByText("New lore")).toBeTruthy();
+    expect(await screen.findByText("New lore")).toBeTruthy();
   });
 
   it("is absent for an owner with no lore, not editing and no draft", () => {

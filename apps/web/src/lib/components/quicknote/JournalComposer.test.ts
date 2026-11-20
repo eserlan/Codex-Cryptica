@@ -28,7 +28,7 @@ describe("JournalComposer, note input", () => {
     const store = storeStub();
     render(JournalComposer, { props: { store, journal } });
 
-    await fireEvent.input(screen.getByTestId("journal-note-input"), {
+    await fireEvent.input(await screen.findByTestId("journal-note-input"), {
       target: { value: "Line one\nLine two" },
     });
     await fireEvent.click(screen.getByTestId("journal-note-submit"));
@@ -42,7 +42,7 @@ describe("JournalComposer, note input", () => {
     const store = storeStub();
     render(JournalComposer, { props: { store, journal } });
 
-    const input = screen.getByTestId("journal-note-input");
+    const input = await screen.findByTestId("journal-note-input");
     await fireEvent.input(input, { target: { value: "Ready" } });
     await fireEvent.keyDown(input, { key: "Enter", ctrlKey: true });
 
@@ -55,7 +55,7 @@ describe("JournalComposer, note input", () => {
     const store = storeStub();
     render(JournalComposer, { props: { store, journal } });
 
-    await fireEvent.input(screen.getByTestId("journal-note-input"), {
+    await fireEvent.input(await screen.findByTestId("journal-note-input"), {
       target: { value: "   " },
     });
     await fireEvent.click(screen.getByTestId("journal-note-submit"));
