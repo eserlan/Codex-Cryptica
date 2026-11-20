@@ -1,36 +1,87 @@
 import * as Comlink from "comlink";
-import OracleWorker from "#lib/workers/oracle.worker?worker";
 import { browser } from "$app/env";
 import type { TextGenerationService } from "schema";
 import type { CachedToken } from "@codex/ai-engine";
 
+const NOT_INITIALIZED = "[OracleBridge] Worker not initialized";
+
+const defaultLoadWorker = (): Promise<Worker> =>
+  import("#lib/workers/oracle.worker?worker").then((m) => new m.default());
+
 /**
  * OracleBridge manages the lifecycle of the Oracle Web Worker
- * and provides a Comlink-wrapped proxy to its services.
+ * and provides a Comlink-wrapped proxy to its services. The worker is loaded
+ * on the first real request, not at module load.
  */
 export class OracleBridge {
   private worker: Worker | null = null;
   private api: Comlink.Remote<any> | null = null;
+  private available = browser;
+  private starting: Promise<Comlink.Remote<any>> | null = null;
+  private readonly loadWorker: () => Promise<Worker>;
+  private tokenProvider:
+    ((forceRefresh: boolean) => Promise<CachedToken | null>) | null = null;
+  private pendingToken: { value: CachedToken | null } | null = null;
 
-  constructor() {
-    if (browser) {
-      this.initWorker();
+  constructor(deps: { loadWorker?: () => Promise<Worker> } = {}) {
+    this.loadWorker = deps.loadWorker ?? defaultLoadWorker;
+  }
+
+  /**
+   * Starts the worker if needed. Concurrent callers share one load. Setup
+   * calls made before start are applied before the first request is forwarded.
+   */
+  private ensureApi(): Promise<Comlink.Remote<any>> {
+    if (this.api) return Promise.resolve(this.api);
+    if (!this.available) return Promise.reject(new Error(NOT_INITIALIZED));
+    this.starting ??= this.start();
+    return this.starting;
+  }
+
+  private async start(): Promise<Comlink.Remote<any>> {
+    let worker: Worker | null = null;
+    try {
+      worker = await this.loadWorker();
+      if (!this.available) {
+        throw new Error("OracleBridge terminated while loading");
+      }
+      const api = Comlink.wrap<any>(worker);
+      this.worker = worker;
+      this.api = api;
+      if (this.tokenProvider) {
+        api.setSessionTokenProvider(Comlink.proxy(this.tokenProvider));
+      }
+      if (this.pendingToken) {
+        api.setSessionToken(this.pendingToken.value);
+      }
+      this.pendingToken = null;
+      return api;
+    } catch (err) {
+      console.error("[OracleBridge] Failed to initialize OracleWorker:", err);
+      worker?.terminate();
+      this.worker = null;
+      this.api = null;
+      this.available = false;
+      throw new Error(`${NOT_INITIALIZED}: ${String(err)}`, { cause: err });
     }
   }
 
-  private initWorker() {
-    try {
-      this.worker = new OracleWorker();
-      this.api = Comlink.wrap<any>(this.worker);
-    } catch (err) {
-      console.error("[OracleBridge] Failed to initialize OracleWorker:", err);
-      this.worker = null;
-      this.api = null;
-    }
+  /** A stand-in whose methods start the worker, then forward the call. */
+  private lazyService(): any {
+    return new Proxy(
+      {},
+      {
+        get: (_target, prop) => {
+          if (typeof prop === "symbol" || prop === "then") return undefined;
+          return (...args: unknown[]) =>
+            this.ensureApi().then((api) => api[prop](...args));
+        },
+      },
+    );
   }
 
   public get isReady(): boolean {
-    return this.api !== null;
+    return this.available;
   }
 
   /**
@@ -40,7 +91,11 @@ export class OracleBridge {
    * and can't mint its own token).
    */
   public setSessionToken(token: CachedToken | null): void {
-    this.api?.setSessionToken(token);
+    if (this.api) {
+      this.api.setSessionToken(token);
+    } else {
+      this.pendingToken = { value: token };
+    }
   }
 
   /**
@@ -52,6 +107,7 @@ export class OracleBridge {
   public setTokenProvider(
     provider: (forceRefresh: boolean) => Promise<CachedToken | null>,
   ): void {
+    this.tokenProvider = provider;
     this.api?.setSessionTokenProvider(Comlink.proxy(provider));
   }
 
@@ -59,20 +115,16 @@ export class OracleBridge {
    * Proxies all TextGenerationService methods to the worker.
    */
   public get textGeneration(): TextGenerationService {
-    if (!this.api) {
-      throw new Error("[OracleBridge] Worker not initialized");
-    }
-    return this.api as unknown as TextGenerationService;
+    if (!this.available) throw new Error(NOT_INITIALIZED);
+    return this.lazyService() as TextGenerationService;
   }
 
   /**
    * Proxies DraftingEngine methods to the worker.
    */
   public get draftingEngine(): any {
-    if (!this.api) {
-      throw new Error("[OracleBridge] Worker not initialized");
-    }
-    return this.api;
+    if (!this.available) throw new Error(NOT_INITIALIZED);
+    return this.lazyService();
   }
 
   public generateAdventureTurn(
@@ -81,14 +133,15 @@ export class OracleBridge {
     options?: { apiKey?: string; modelName?: string },
     onNarration?: (text: string) => void,
   ): Promise<unknown> {
-    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
     // Proxy callbacks must be top-level Comlink arguments. If nested in the
     // request, postMessage attempts to clone the function and throws.
-    return this.api.generateAdventureTurn(
-      request,
-      requestId,
-      options,
-      onNarration ? Comlink.proxy(onNarration) : undefined,
+    return this.ensureApi().then((api) =>
+      api.generateAdventureTurn(
+        request,
+        requestId,
+        options,
+        onNarration ? Comlink.proxy(onNarration) : undefined,
+      ),
     );
   }
 
@@ -97,26 +150,28 @@ export class OracleBridge {
     requestId: string,
     options?: { apiKey?: string; modelName?: string },
   ): Promise<unknown> {
-    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
-    return this.api.summarizeAdventure(request, requestId, options);
+    return this.ensureApi().then((api) =>
+      api.summarizeAdventure(request, requestId, options),
+    );
   }
 
   public cancelAdventureTurn(requestId: string): Promise<void> {
-    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
-    return this.api.cancelAdventureTurn(requestId);
+    return this.ensureApi().then((api) => api.cancelAdventureTurn(requestId));
   }
 
   public clearAdventureInteraction(sessionId: string): Promise<void> {
-    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
-    return this.api.clearAdventureInteraction(sessionId);
+    return this.ensureApi().then((api) =>
+      api.clearAdventureInteraction(sessionId),
+    );
   }
 
   public confirmAdventureInteraction(
     sessionId: string,
     revision?: number,
   ): Promise<void> {
-    if (!this.api) throw new Error("[OracleBridge] Worker not initialized");
-    return this.api.confirmAdventureInteraction(sessionId, revision);
+    return this.ensureApi().then((api) =>
+      api.confirmAdventureInteraction(sessionId, revision),
+    );
   }
 
   public terminate() {
@@ -126,6 +181,7 @@ export class OracleBridge {
     this.worker?.terminate();
     this.worker = null;
     this.api = null;
+    this.available = false;
   }
 }
 

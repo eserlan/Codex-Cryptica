@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import * as Comlink from "comlink";
 
-// Mock environment and worker
+// Mock environment
 vi.mock("$app/environment", () => ({
   browser: true,
 }));
@@ -11,111 +11,141 @@ const { releaseProxySymbol } = vi.hoisted(() => ({
 }));
 
 const {
+  apiMock,
   setSessionTokenMock,
   setSessionTokenProviderMock,
   proxyMock,
+  generateResponseMock,
   generateAdventureTurnMock,
   cancelAdventureTurnMock,
-} = vi.hoisted(() => ({
-  setSessionTokenMock: vi.fn(),
-  setSessionTokenProviderMock: vi.fn(),
-  proxyMock: vi.fn((fn: unknown) => fn),
-  generateAdventureTurnMock: vi.fn().mockResolvedValue({ kind: "complete" }),
-  cancelAdventureTurnMock: vi.fn().mockResolvedValue(undefined),
-}));
-
-vi.mock("comlink", () => ({
-  wrap: vi.fn().mockReturnValue({
-    generateResponse: vi.fn(),
-    expandQuery: vi.fn(),
-    generateAdventureTurn: generateAdventureTurnMock,
-    cancelAdventureTurn: cancelAdventureTurnMock,
-    setSessionToken: setSessionTokenMock,
-    setSessionTokenProvider: setSessionTokenProviderMock,
-    [releaseProxySymbol]: vi.fn(),
-  }),
-  releaseProxy: releaseProxySymbol,
-  proxy: proxyMock,
-}));
-
-// Mock worker import
-vi.mock("#lib/workers/oracle.worker?worker", () => {
+} = vi.hoisted(() => {
+  const setSessionTokenMock = vi.fn();
+  const setSessionTokenProviderMock = vi.fn();
+  const generateResponseMock = vi.fn().mockResolvedValue("response");
+  const generateAdventureTurnMock = vi
+    .fn()
+    .mockResolvedValue({ kind: "complete" });
+  const cancelAdventureTurnMock = vi.fn().mockResolvedValue(undefined);
   return {
-    default: class MockWorker {
-      terminate = vi.fn();
+    setSessionTokenMock,
+    setSessionTokenProviderMock,
+    generateResponseMock,
+    generateAdventureTurnMock,
+    cancelAdventureTurnMock,
+    proxyMock: vi.fn((fn: unknown) => fn),
+    apiMock: {
+      generateResponse: generateResponseMock,
+      expandQuery: vi.fn(),
+      generateAdventureTurn: generateAdventureTurnMock,
+      cancelAdventureTurn: cancelAdventureTurnMock,
+      setSessionToken: setSessionTokenMock,
+      setSessionTokenProvider: setSessionTokenProviderMock,
+      [releaseProxySymbol]: vi.fn(),
     },
   };
 });
+
+vi.mock("comlink", () => ({
+  wrap: vi.fn(() => apiMock),
+  releaseProxy: releaseProxySymbol,
+  proxy: proxyMock,
+}));
 
 import { OracleBridge } from "./oracle-bridge";
 
 describe("OracleBridge", () => {
   let bridge: OracleBridge;
+  let loadWorker: Mock<() => Promise<Worker>>;
+  let worker: { terminate: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    bridge = new OracleBridge();
+    worker = { terminate: vi.fn() };
+    loadWorker = vi
+      .fn<() => Promise<Worker>>()
+      .mockResolvedValue(worker as unknown as Worker);
+    bridge = new OracleBridge({ loadWorker });
   });
 
-  it("should initialize worker in browser", () => {
+  it("does not start a worker on construction", () => {
+    expect(loadWorker).not.toHaveBeenCalled();
+    expect(Comlink.wrap).not.toHaveBeenCalled();
     expect(bridge.isReady).toBe(true);
-    expect(Comlink.wrap).toHaveBeenCalled();
   });
 
-  it("should provide textGeneration service", () => {
+  it("starts the worker only when a service method is called", async () => {
     const service = bridge.textGeneration;
     expect(service).toBeDefined();
-    expect(service.generateResponse).toBeDefined();
+    expect(loadWorker).not.toHaveBeenCalled();
+
+    const result = await (service as any).generateResponse("a", "b");
+
+    expect(loadWorker).toHaveBeenCalledTimes(1);
+    expect(generateResponseMock).toHaveBeenCalledWith("a", "b");
+    expect(result).toBe("response");
   });
 
-  it("should provide draftingEngine service", () => {
-    const engine = bridge.draftingEngine;
-    expect(engine).toBeDefined();
+  it("starts the worker for draftingEngine calls too", async () => {
+    await bridge.draftingEngine.expandQuery("q");
+    expect(loadWorker).toHaveBeenCalledTimes(1);
+    expect(apiMock.expandQuery).toHaveBeenCalledWith("q");
   });
 
-  it("should terminate worker and release proxy", () => {
-    bridge.terminate();
-    expect(bridge.isReady).toBe(false);
+  it("shares one load between simultaneous calls and then calls the worker directly", async () => {
+    await Promise.all([
+      (bridge.textGeneration as any).generateResponse("1"),
+      (bridge.textGeneration as any).generateResponse("2"),
+      bridge.cancelAdventureTurn("t"),
+    ]);
+    expect(loadWorker).toHaveBeenCalledTimes(1);
+    expect(Comlink.wrap).toHaveBeenCalledTimes(1);
+
+    await (bridge.textGeneration as any).generateResponse("3");
+    expect(loadWorker).toHaveBeenCalledTimes(1);
   });
 
-  it("should throw error if textGeneration is accessed before init", () => {
-    (bridge as any).api = null;
-    expect(() => bridge.textGeneration).toThrow(
-      "[OracleBridge] Worker not initialized",
+  it("applies setup calls made before start before the first request", async () => {
+    const provider = vi.fn();
+    bridge.setTokenProvider(provider);
+    bridge.setSessionToken({ token: "old", expiresAt: 1 });
+    bridge.setSessionToken({ token: "new", expiresAt: 2 });
+    expect(setSessionTokenMock).not.toHaveBeenCalled();
+
+    await (bridge.textGeneration as any).generateResponse("x");
+
+    expect(proxyMock).toHaveBeenCalledWith(provider);
+    expect(setSessionTokenProviderMock).toHaveBeenCalledWith(provider);
+    expect(setSessionTokenMock).toHaveBeenCalledTimes(1);
+    expect(setSessionTokenMock).toHaveBeenCalledWith({
+      token: "new",
+      expiresAt: 2,
+    });
+    const order = (m: ReturnType<typeof vi.fn>) =>
+      m.mock.invocationCallOrder[0];
+    expect(order(setSessionTokenProviderMock)).toBeLessThan(
+      order(generateResponseMock),
+    );
+    expect(order(setSessionTokenMock)).toBeLessThan(
+      order(generateResponseMock),
     );
   });
 
-  it("should throw error if draftingEngine is accessed before init", () => {
-    (bridge as any).api = null;
-    expect(() => bridge.draftingEngine).toThrow(
-      "[OracleBridge] Worker not initialized",
-    );
+  it("keeps a null session token set before start", async () => {
+    bridge.setSessionToken(null);
+    await bridge.cancelAdventureTurn("t");
+    expect(setSessionTokenMock).toHaveBeenCalledWith(null);
   });
 
-  it("should relay a session token to the worker via Comlink", () => {
+  it("forwards setup calls right away once started", async () => {
+    await bridge.cancelAdventureTurn("t");
+    const provider = vi.fn();
+    bridge.setTokenProvider(provider);
     bridge.setSessionToken({ token: "abc", expiresAt: 123 });
+    expect(setSessionTokenProviderMock).toHaveBeenCalledWith(provider);
     expect(setSessionTokenMock).toHaveBeenCalledWith({
       token: "abc",
       expiresAt: 123,
     });
-  });
-
-  it("should not throw when relaying a session token before the worker is ready", () => {
-    (bridge as any).api = null;
-    expect(() => bridge.setSessionToken(null)).not.toThrow();
-  });
-
-  it("should wire a Comlink-proxied token provider into the worker", () => {
-    const provider = vi.fn().mockResolvedValue({ token: "t", expiresAt: 1 });
-    bridge.setTokenProvider(provider);
-
-    expect(proxyMock).toHaveBeenCalledWith(provider);
-    expect(setSessionTokenProviderMock).toHaveBeenCalledWith(provider);
-  });
-
-  it("should not throw when wiring a token provider before the worker is ready", () => {
-    (bridge as any).api = null;
-    expect(() => bridge.setTokenProvider(vi.fn())).not.toThrow();
   });
 
   it("passes adventure narration as a separate proxied worker argument", async () => {
@@ -168,19 +198,63 @@ describe("OracleBridge", () => {
     expect(cancelAdventureTurnMock).toHaveBeenCalledWith("turn-1");
   });
 
-  it("should handle worker initialization failure", () => {
-    vi.mocked(Comlink.wrap).mockImplementationOnce(() => {
-      throw new Error("Init fail");
-    });
-
+  it("rejects the triggering call and disables the bridge when the load fails", async () => {
+    loadWorker.mockRejectedValue(new Error("Init fail"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const failBridge = new OracleBridge();
 
-    expect(failBridge.isReady).toBe(false);
+    await expect(
+      (bridge.textGeneration as any).generateResponse("x"),
+    ).rejects.toThrow("[OracleBridge] Worker not initialized");
+
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to initialize OracleWorker"),
       expect.any(Error),
     );
+    expect(bridge.isReady).toBe(false);
+    expect(() => bridge.textGeneration).toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
+    expect(() => bridge.draftingEngine).toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
     consoleSpy.mockRestore();
+  });
+
+  it("treats a failing Comlink.wrap as a load failure", async () => {
+    vi.mocked(Comlink.wrap).mockImplementationOnce(() => {
+      throw new Error("wrap fail");
+    });
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    await expect(bridge.cancelAdventureTurn("t")).rejects.toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
+    expect(worker.terminate).toHaveBeenCalled();
+    expect(bridge.isReady).toBe(false);
+    consoleSpy.mockRestore();
+  });
+
+  it("terminates the worker, releases the proxy and never restarts", async () => {
+    await bridge.cancelAdventureTurn("t");
+    bridge.terminate();
+
+    expect(worker.terminate).toHaveBeenCalled();
+    expect(bridge.isReady).toBe(false);
+    expect(() => bridge.textGeneration).toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
+    expect(() => bridge.draftingEngine).toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
+    await expect(bridge.cancelAdventureTurn("t")).rejects.toThrow(
+      "[OracleBridge] Worker not initialized",
+    );
+    expect(loadWorker).toHaveBeenCalledTimes(1);
+  });
+
+  it("terminate before any start leaves the bridge unready", () => {
+    bridge.terminate();
+    expect(bridge.isReady).toBe(false);
+    expect(loadWorker).not.toHaveBeenCalled();
   });
 });
