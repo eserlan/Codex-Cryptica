@@ -116,6 +116,8 @@ shell commands, and other important information, read the [current plan](./specs
 
 ## Active Technologies
 
+- Adventure runtime commit metadata reuses `@codex/adventure-engine` `adventureJsonHiddenRecordIds` in shared `AdventureRuntime.packageMetadata()` for both `newTurnMetadata()` and `rollMetadata()`. Only the protected ID inventory is filtered; package-text guards and complete scene/progress/actor indexes are unchanged. Authorised scene-text revelation remains unresolved; reference-fixture coverage does not reproduce the private Electric Razor rejection. (#5052)
+
 - TypeScript 6.0.3, Bun 1.3.14 + `@codex/adventure-engine` `preflightAdventureJson` (`src/adventure-json/preflight.ts`) and `scripts/preflight-adventure-json.ts`: an offline, read-only wrapper around `validateAdventureJson` that tags findings as parse, schema or integrity. No new dependency, storage or schema change. (074-adventure-import-qa-19)
 
 - TypeScript 6.0.3, Bun 1.3.14 + Staged-conversion checkpoint manifest (`kind: "codex-cryptica.adventure-checkpoint"`, `manifestVersion: 1`): Draft 2020-12 schema `apps/web/static/schemas/adventure-checkpoint/v1.json`, pure `checkStagedChunks` in `apps/web/src/routes/(marketing)/adventure-import/staged-conversion.ts` (with a copyable check script), and fixture `fixtures/adventures/staged-manifest/`. It is a separate checkpoint file, never part of Adventure JSON v1. No storage change. (5003-staged-checkpoint-manifest)

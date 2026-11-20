@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { applyCompletedTurn, applyRollRequest } from "@codex/adventure-engine";
 import { AdventureState } from "../adventure-state.svelte";
 import { resolveAdventureDependencies } from "../adventure-dependencies";
 import { acceptedSession, proposedSession } from "../adventure-session";
@@ -6,6 +7,9 @@ import {
   completeProposal,
   createAdventureRuntime,
   now,
+  referencePackage,
+  referencePackageCache,
+  rollProposal,
 } from "./adventure-fixtures";
 
 describe("AdventureState", () => {
@@ -237,3 +241,205 @@ describe("adventure reducer acceptance", () => {
     );
   });
 });
+
+describe.each(["newTurnMetadata", "rollMetadata"] as const)(
+  "AdventureRuntime %s package guards",
+  (metadataMethod) => {
+    async function cachedRuntime() {
+      const packages = referencePackageCache();
+      const harness = createAdventureRuntime(
+        { packages },
+        { sceneId: referencePackage.scenes[0].id },
+      );
+      expect(await packages.verifyPin(harness.state.session!)).toEqual({
+        status: "available",
+      });
+      return harness;
+    }
+
+    it("protects only hidden IDs while retaining complete validation indexes across scene progress", async () => {
+      const { runtime, state } = await cachedRuntime();
+      const records = [
+        ...referencePackage.locations,
+        ...referencePackage.actors,
+        ...referencePackage.factions,
+        ...referencePackage.scenes,
+        ...referencePackage.encounters,
+        ...referencePackage.clues,
+        ...referencePackage.rumours,
+        ...referencePackage.items,
+        ...referencePackage.secrets,
+      ];
+      const hiddenIds = records
+        .filter((record) => record.visibility !== "player-visible")
+        .map((record) => record.id);
+      const recordKinds = Object.fromEntries(
+        (["scenes", "encounters", "clues", "secrets"] as const).flatMap(
+          (collection) =>
+            referencePackage[collection].map((record) => [
+              record.id,
+              collection.slice(0, -1),
+            ]),
+        ),
+      );
+      for (const sceneId of [
+        referencePackage.scenes[0].id,
+        "ros-scene-4-cellar",
+      ]) {
+        state.session!.packageProgress = {
+          sceneId,
+          version: 1,
+          records: [
+            { id: "secret-tobiah-motive", kind: "secret", status: "resolved" },
+          ],
+          events: [],
+        };
+        const meta = runtime[metadataMethod]("Look");
+        expect(new Set(meta.packageRecordIds)).toEqual(new Set(hiddenIds));
+        expect(meta.packageRecordIds).not.toContain("loc-ferry-landing");
+        expect(meta.packageRecordIds).not.toContain("actor-maren-holt");
+        expect(meta.packageSceneIds).toEqual(
+          referencePackage.scenes.map((scene) => scene.id),
+        );
+        expect(meta.packageRecordKinds).toEqual(recordKinds);
+        expect(meta.packageSceneBranches).toEqual(
+          Object.fromEntries(
+            referencePackage.scenes.map((scene) => [
+              scene.id,
+              (scene.branches ?? []).map((branch) => branch.targetSceneId),
+            ]),
+          ),
+        );
+        expect(meta.packageActorIds).toEqual(
+          referencePackage.actors.map((actor) => actor.id),
+        );
+      }
+    });
+
+    it.each(["loc-ferry-landing", "actor-maren-holt"])(
+      "accepts otherwise safe completed narration and roll setup containing public ID %s",
+      async (id) => {
+        const { runtime, state } = await cachedRuntime();
+        const session = state.session!;
+        const narration = `A sign reads (${id}).`;
+        const meta = runtime[metadataMethod]("Look");
+        const completed = applyCompletedTurn(
+          session,
+          { ...completeProposal, narration },
+          meta,
+        );
+        expect(completed.ok).toBe(true);
+        if (!completed.ok) throw new Error(JSON.stringify(completed.errors));
+        expect(completed.value.revision).toBe(session.revision + 1);
+        expect(completed.value.turns.at(-1)?.narration).toBe(narration);
+        const roll = applyRollRequest(
+          session,
+          { ...rollProposal, setupNarration: narration },
+          meta,
+        );
+        expect(roll.ok).toBe(true);
+        if (!roll.ok) throw new Error(JSON.stringify(roll.errors));
+        expect(roll.value.revision).toBe(session.revision + 1);
+        expect(roll.value.pendingRoll).toMatchObject({
+          id: meta.turnId,
+          inputId: meta.inputId,
+          setupNarration: narration,
+          resolutionStatus: "awaiting-outcome",
+          dice: {
+            expression: rollProposal.dice.expression,
+            bands: rollProposal.dice.outcomeBands,
+          },
+        });
+      },
+    );
+
+    it.each([
+      "ros-scene-4-cellar",
+      "enc-wheel-room-wick",
+      "clue-sluice-sabotage",
+      "secret-tobiah-motive",
+    ])(
+      "atomically rejects hidden ID %s for completed turns and roll requests",
+      async (id) => {
+        const { runtime, state } = await cachedRuntime();
+        const session = state.session!;
+        const before = structuredClone(session);
+        const narration = `A sign reads (${id}).`;
+        const meta = runtime[metadataMethod]("Look");
+        expect(
+          applyCompletedTurn(session, { ...completeProposal, narration }, meta),
+        ).toMatchObject({
+          ok: false,
+          errors: [{ code: "hidden-leakage" }],
+        });
+        expect(session).toEqual(before);
+        expect(
+          applyRollRequest(
+            session,
+            { ...rollProposal, setupNarration: narration },
+            meta,
+          ),
+        ).toMatchObject({
+          ok: false,
+          errors: [{ code: "hidden-leakage" }],
+        });
+        expect(session).toEqual(before);
+      },
+    );
+
+    it.each([
+      [
+        "secret text",
+        referencePackage.secrets.find(
+          (record) => record.id === "secret-tobiah-motive",
+        )!.text,
+      ],
+      ...[
+        referencePackage.scenes.find(
+          (record) => record.id === "ros-scene-4-cellar",
+        )!.readAloud!,
+      ]
+        .flat()
+        .map((text) => ["cellar readAloud", text]),
+    ])(
+      "still atomically rejects protected %s in completed turns and roll requests",
+      async (_label, narration) => {
+        const { runtime, state } = await cachedRuntime();
+        const session = state.session!;
+        const before = structuredClone(session);
+        const meta = runtime[metadataMethod]("Look");
+        expect(meta.packageGmOnlyText).toContain(narration);
+        expect(
+          applyCompletedTurn(session, { ...completeProposal, narration }, meta),
+        ).toMatchObject({
+          ok: false,
+          errors: [{ code: "hidden-leakage" }],
+        });
+        expect(session).toEqual(before);
+        expect(
+          applyRollRequest(
+            session,
+            { ...rollProposal, setupNarration: narration },
+            meta,
+          ),
+        ).toMatchObject({
+          ok: false,
+          errors: [{ code: "hidden-leakage" }],
+        });
+        expect(session).toEqual(before);
+      },
+    );
+
+    it("omits package metadata without a pinned package", () => {
+      const { runtime } = createAdventureRuntime();
+      expect(runtime[metadataMethod]("Look")).toEqual({
+        turnId: expect.any(String),
+        inputId: expect.any(String),
+        now,
+        ...(metadataMethod === "newTurnMetadata"
+          ? { playerAction: "Look" }
+          : {}),
+      });
+    });
+  },
+);
