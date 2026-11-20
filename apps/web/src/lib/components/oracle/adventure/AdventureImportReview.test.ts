@@ -367,6 +367,20 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     });
 
     const diff = screen.getByTestId("adventure-import-diff");
+    const summary = screen.getByTestId("review-import-summary");
+    const unresolved = screen.getByTestId("review-unresolved");
+    expect(
+      Boolean(
+        summary.compareDocumentPosition(unresolved) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
+    expect(
+      Boolean(
+        unresolved.compareDocumentPosition(diff) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
     expect(diff.textContent).toContain("the-mill-mystery");
     expect(diff.textContent).toContain("v1.0.0");
     expect(diff.textContent).toContain("Scene 1: The Ferry Landing");
@@ -656,6 +670,126 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     const errorBox = screen.getByTestId("review-validation-errors");
     expect(errorBox.textContent).toContain("UNRESOLVED_REFERENCE");
     expect(errorBox.textContent).toContain("non-existent-location");
+  });
+
+  it("handles zero unresolved items, seven unresolved items, large 120-item sets, and mixed blocking/unclassified triage (#5062)", async () => {
+    // 1. Zero unresolved items and valid draft -> unresolved section omitted
+    const zeroDraft = createTestAdventureJson();
+    zeroDraft.unresolved = [];
+    const { unmount: unmountZero } = render(AdventureImportReview, {
+      props: { draft: zeroDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    expect(screen.queryByTestId("review-unresolved")).toBeNull();
+    unmountZero();
+
+    // 2. Seven unresolved items (Electric Razor scale): collapsed by default, unclassified label, approval allowed
+    const sevenDraft = createTestAdventureJson();
+    sevenDraft.unresolved = Array.from({ length: 7 }, (_, i) => ({
+      id: `amb-${i + 1}`,
+      code: "MISSING_HEADING",
+      message: `Unlabelled subsection ${i + 1} needs GM review before play.`,
+      context: `Page ${i + 1}`,
+      epistemicStatus: i % 2 === 0 ? "unresolved" : "ambiguous",
+    }));
+    const { unmount: unmountSeven } = render(AdventureImportReview, {
+      props: { draft: sevenDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    const unresolvedSection = screen.getByTestId("review-unresolved");
+    expect(unresolvedSection.textContent).toContain("Unresolved (7)");
+    expect(
+      screen.getByTestId("review-unresolved-policy").textContent,
+    ).toContain("Approval is allowed under current validation rules");
+    expect(
+      (
+        screen.getByTestId(
+          "review-unresolved-disclosure-0",
+        ) as HTMLDetailsElement
+      ).open,
+    ).toBe(false);
+    expect(screen.queryByTestId("review-unresolved-body-0")).toBeNull();
+    expect(
+      screen
+        .getByTestId("review-unresolved-classification-0")
+        .textContent?.trim(),
+    ).toBe("Unclassified / needs review");
+
+    await fireEvent.click(screen.getByTestId("review-unresolved-summary-0"));
+    expect(
+      screen.getByTestId("review-unresolved-body-0").textContent,
+    ).toContain("Unlabelled subsection 1 needs GM review before play.");
+    unmountSeven();
+
+    // 3. Large 120-item unresolved set: bounded 50-item window, all collapsed by default
+    const largeDraft = createTestAdventureJson();
+    largeDraft.unresolved = Array.from({ length: 120 }, (_, i) => ({
+      id: `amb-large-${i + 1}`,
+      code: "AMBIGUOUS_DETAIL",
+      message: `Ambiguous detail ${i + 1}`,
+      epistemicStatus: "ambiguous",
+    }));
+    const { unmount: unmountLarge } = render(AdventureImportReview, {
+      props: { draft: largeDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(50);
+    expect(
+      screen.getByTestId("review-unresolved-window-status").textContent?.trim(),
+    ).toBe("Showing 50 of 120");
+    await fireEvent.click(screen.getByTestId("review-unresolved-show-more"));
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(100);
+    unmountLarge();
+
+    // 4. Mixed blocking validator error + unclassified unresolved items with classification filter
+    const mixedDraft = createTestAdventureJson();
+    mixedDraft.scenes = [
+      {
+        ...mixedDraft.scenes[0]!,
+        locationId: "missing-loc-id",
+      },
+    ];
+    render(AdventureImportReview, {
+      props: { draft: mixedDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    expect(
+      screen
+        .getByTestId("review-unresolved-policy")
+        .textContent?.replace(/\s+/g, " "),
+    ).toContain("Approval is blocked by 1 validator error");
+    expect(
+      screen
+        .getByTestId("review-unresolved-classification-0")
+        .textContent?.trim(),
+    ).toBe("Blocking");
+    expect(
+      screen
+        .getByTestId("review-unresolved-classification-1")
+        .textContent?.trim(),
+    ).toBe("Unclassified / needs review");
+
+    await fireEvent.click(
+      screen.getByTestId("review-unresolved-filter-blocking"),
+    );
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(1);
+    await fireEvent.click(
+      screen.getByTestId("review-unresolved-filter-unclassified"),
+    );
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(1);
+    await fireEvent.click(screen.getByTestId("review-unresolved-filter-all"));
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(2);
   });
 
   it("supports progressive disclosure, search/filtering, and windowed rendering for large 250-location packages without mutating package data or leaking secrets (#5061)", async () => {
