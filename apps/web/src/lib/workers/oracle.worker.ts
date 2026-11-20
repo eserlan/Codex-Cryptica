@@ -3,11 +3,15 @@
 import * as Comlink from "comlink";
 import {
   aiClientManager,
+  AdventureOocService,
   AdventureSummaryService,
   AdventureTurnGenerationService,
   type AdventureTurnGenerationRequest,
 } from "@codex/ai-engine";
-import type { StorySummaryRequest } from "@codex/adventure-engine";
+import type {
+  AdventureOocRequest,
+  StorySummaryRequest,
+} from "@codex/adventure-engine";
 import { DefaultTextGenerationService } from "@codex/ai-engine";
 import { RelayedSessionToken, type CachedToken } from "@codex/ai-engine";
 import { draftingEngine } from "../../../../../packages/oracle-engine/src/drafting-engine";
@@ -27,6 +31,7 @@ class OracleWorker {
   private sessionToken: RelayedSessionToken;
   private adventureGeneration: AdventureTurnGenerationService;
   private adventureSummary: AdventureSummaryService;
+  private adventureOoc: AdventureOocService;
   private adventureTurnControllers = new Map<string, AbortController>();
 
   constructor() {
@@ -35,6 +40,7 @@ class OracleWorker {
       aiClientManager,
     );
     this.adventureSummary = new AdventureSummaryService(aiClientManager);
+    this.adventureOoc = new AdventureOocService(aiClientManager);
     this.eventBus = new BroadcastChannel("codex-oracle-events");
 
     // This worker has its own isolated aiClientManager instance (Workers
@@ -338,6 +344,26 @@ class OracleWorker {
     this.adventureTurnControllers.set(requestId, controller);
     try {
       return await this.adventureSummary.summarize(request, {
+        ...options,
+        signal: controller.signal,
+      });
+    } finally {
+      if (this.adventureTurnControllers.get(requestId) === controller) {
+        this.adventureTurnControllers.delete(requestId);
+      }
+    }
+  }
+
+  /** One-shot read-only OOC clarification call; never touches interaction context. */
+  async askAdventureOoc(
+    request: AdventureOocRequest,
+    requestId: string,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<any> {
+    const controller = new AbortController();
+    this.adventureTurnControllers.set(requestId, controller);
+    try {
+      return await this.adventureOoc.ask(request, {
         ...options,
         signal: controller.signal,
       });

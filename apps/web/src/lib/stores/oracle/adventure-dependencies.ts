@@ -1,4 +1,5 @@
 import type {
+  AdventureOocService,
   AdventureSummaryService,
   AdventureTurnGenerationService,
 } from "@codex/ai-engine";
@@ -28,6 +29,7 @@ import { diceEngine as defaultDiceEngine } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
   defaultGenerationService,
+  defaultOocService,
   defaultSummaryService,
   clearDefaultGenerationInteraction,
   confirmDefaultGenerationInteraction,
@@ -37,6 +39,8 @@ export interface AdventureManagerDependencies {
   generation?: Pick<AdventureTurnGenerationService, "generate">;
   /** Folds older turns into the rolling story notes. */
   summary?: Pick<AdventureSummaryService, "summarize">;
+  /** Stateless read-only OOC clarification service. */
+  ooc?: Pick<AdventureOocService, "ask">;
   clearGenerationInteraction?: (sessionId: string) => Promise<void>;
   confirmGenerationInteraction?: (
     sessionId: string,
@@ -58,6 +62,7 @@ export function resolveAdventureDependencies({
   repository = adventureSessionRepository,
   generation = defaultGenerationService(),
   summary = defaultSummaryService(),
+  ooc = defaultOocService(),
   clearGenerationInteraction = clearDefaultGenerationInteraction,
   confirmGenerationInteraction = confirmDefaultGenerationInteraction,
   context = adventureContextService,
@@ -73,6 +78,7 @@ export function resolveAdventureDependencies({
     repository,
     generation,
     summary,
+    ooc,
     clearGenerationInteraction,
     confirmGenerationInteraction,
     context,

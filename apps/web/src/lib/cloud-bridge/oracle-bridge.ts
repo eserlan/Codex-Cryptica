@@ -178,6 +178,16 @@ export class OracleBridge {
     );
   }
 
+  public askAdventureOoc(
+    request: unknown,
+    requestId: string,
+    options?: { apiKey?: string; modelName?: string },
+  ): Promise<unknown> {
+    return this.ensureApi().then((api) =>
+      api.askAdventureOoc(request, requestId, options),
+    );
+  }
+
   public cancelAdventureTurn(requestId: string): Promise<void> {
     return this.ensureApi().then((api) => api.cancelAdventureTurn(requestId));
   }

@@ -129,6 +129,24 @@ export class AdventureManager extends AdventureState {
     return this.actions.submitSuggestedAction(...args);
   }
 
+  setComposerMode(
+    ...args: Parameters<AdventureActions["setComposerMode"]>
+  ): ReturnType<AdventureActions["setComposerMode"]> {
+    return this.actions.setComposerMode(...args);
+  }
+
+  submitOocQuestion(
+    ...args: Parameters<AdventureActions["submitOocQuestion"]>
+  ): ReturnType<AdventureActions["submitOocQuestion"]> {
+    return this.actions.submitOocQuestion(...args);
+  }
+
+  retryOocQuestion(
+    ...args: Parameters<AdventureActions["retryOocQuestion"]>
+  ): ReturnType<AdventureActions["retryOocQuestion"]> {
+    return this.actions.retryOocQuestion(...args);
+  }
+
   recordRollOutcome(
     ...args: Parameters<AdventureRolls["recordRollOutcome"]>
   ): ReturnType<AdventureRolls["recordRollOutcome"]> {

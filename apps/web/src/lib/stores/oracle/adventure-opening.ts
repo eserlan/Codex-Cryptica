@@ -99,6 +99,10 @@ export class AdventureOpening {
     try {
       const created = await this.withStartScene(validated, startSceneId);
       this.runtime.activeRestoreRequest += 1;
+      this.state.composerMode = "play";
+      this.state.oocDraft = "";
+      this.state.oocGenerating = false;
+      this.state.oocErrorMessage = null;
       this.state.phase = "starting";
       this.state.errorMessage = null;
       this.state.errorCause = null;
