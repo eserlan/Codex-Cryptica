@@ -28,7 +28,9 @@ describe("retry correction in the GM prompt", () => {
     );
     expect(prompt.behavior).toContain("do not invent an unfinished question");
     expect(prompt.serialized).toContain("Question the wounded driver");
-    expect(prompt.behavior).toContain("Do not give a witness knowledge they could not have");
+    expect(prompt.behavior).toContain(
+      "Do not give a witness knowledge they could not have",
+    );
   });
   it("tells the GM why the previous reply could not be used", () => {
     expect(behavior("it named a GM-only secret")).toContain(
