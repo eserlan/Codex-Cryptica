@@ -2,6 +2,7 @@ import { describe, expect, it } from "bun:test";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
+  ADVENTURE_PREFLIGHT_HINTS,
   buildAdventureRepairPrompt,
   formatAdventurePreflightText,
   preflightAdventureJson,
@@ -108,6 +109,14 @@ describe("preflightAdventureJson", () => {
       .toLowerCase();
     expect(claims).not.toMatch(/faithful|complete/);
     expect(buildAdventureRepairPrompt(report)).toBeNull();
+  });
+});
+
+describe("ADVENTURE_PREFLIGHT_HINTS", () => {
+  it("DEAD_END_CYCLE hint names the real fixes", () => {
+    const hint = ADVENTURE_PREFLIGHT_HINTS.DEAD_END_CYCLE;
+    expect(hint).toContain("optional");
+    expect(hint).toContain("an unresolved entry does not clear this error");
   });
 });
 

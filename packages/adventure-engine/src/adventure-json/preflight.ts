@@ -41,7 +41,7 @@ export const ADVENTURE_PREFLIGHT_HINTS: Record<AdventurePreflightCode, string> =
     SELF_REFERENCE: "Remove the reference from this record to itself.",
     HIERARCHY_CYCLE: "Break the parent chain so no record is its own ancestor.",
     DEAD_END_CYCLE:
-      "Add the exit branch the source states; if it states none, record the gap as an unresolved entry and do not invent a branch.",
+      "Add the exit branch the source states, or mark a branch optional only if the source says it can be skipped; an unresolved entry does not clear this error.",
     UNREACHABLE_SCENE:
       "Connect the scene by a branch only if the source states it; otherwise add an UNKNOWN_SCENE_PROGRESSION unresolved entry for it and do not invent a branch.",
     DUPLICATE_SCENE_PROGRESSION:
