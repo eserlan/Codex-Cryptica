@@ -36,7 +36,11 @@ describe("GM-only improv secrecy at the commit boundary", () => {
       text: hiddenCreditor,
       status: "hidden",
     });
-    draft.suggestedActions = [`Accuse ${hiddenCreditor}.`];
+    draft.suggestedActions = [
+      `Accuse ${hiddenCreditor}.`,
+      "Ask the clerk to show the ledger.",
+      "Leave the market.",
+    ];
 
     expect(detectHiddenLeakage(session(), draft)).toContainEqual({
       field: "root.suggestedActions[0]",
