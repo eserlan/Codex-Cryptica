@@ -1,6 +1,7 @@
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
   import { tick } from "svelte";
+  import { MAX_TEXT_CHARS } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureControlRetry from "./AdventureControlRetry.svelte";
   import AdventurePackageUnavailable from "./AdventurePackageUnavailable.svelte";
@@ -226,10 +227,11 @@
         : "What do you do?"}
     </label>
     <textarea
+      maxlength={isOocMode ? MAX_TEXT_CHARS : undefined}
       bind:this={textarea}
       id="adventure-action"
       rows="1"
-      class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+      class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       value={activeDraft}
       oninput={(event) => updateDraft(event.currentTarget.value)}
       onfocus={() => (typing = true)}

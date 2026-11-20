@@ -1,5 +1,6 @@
 import {
   guardAdventureOocAnswer,
+  MAX_TEXT_CHARS,
   isInWorldActionQuestion,
   OOC_REDIRECT_TO_PLAY_REPLY,
   upsertAdventureOocExchange,
@@ -135,6 +136,10 @@ export class AdventureActions {
     if (!this.canSubmitOoc(question)) return;
     const trimmed = question.trim();
     if (preserveDraft) this.state.oocDraft = question;
+    if (trimmed.length > MAX_TEXT_CHARS) {
+      this.state.oocErrorMessage = `Question must be ${MAX_TEXT_CHARS} characters or fewer.`;
+      return;
+    }
     await this.runOocExchange({
       id: this.runtime.deps.idGenerator(),
       question: trimmed,
@@ -193,8 +198,8 @@ export class AdventureActions {
     } finally {
       if (this.runtime.oocController === controller) {
         this.runtime.oocController = null;
+        this.state.oocGenerating = false;
       }
-      this.state.oocGenerating = false;
     }
   }
 
@@ -280,13 +285,23 @@ export class AdventureActions {
     cause: unknown,
     signal: AbortSignal,
   ): Promise<void> {
-    if (signal.aborted) return;
-    const message = cause instanceof Error ? cause.message : String(cause);
+    const message = signal.aborted
+      ? "Question cancelled."
+      : cause instanceof Error
+        ? cause.message
+        : String(cause);
     this.state.oocErrorMessage = message;
     const current = this.state.session;
     if (!current || current.id !== initialSession.id || this.state.readOnly) {
       return;
     }
+    if (
+      signal.aborted &&
+      !current.oocExchanges?.some(
+        (item) => item.id === params.id && item.status === "pending",
+      )
+    )
+      return;
     const failedAt = this.runtime.deps.now();
     const failedExchange: AdventureOocExchange = {
       id: params.id,

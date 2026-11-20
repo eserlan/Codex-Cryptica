@@ -7,6 +7,10 @@ tags: [adventure, oracle, solo, campaign]
 
 # Solo Adventure Mode
 
+## Ask the GM
+
+Switch from **Play** to **Ask GM** in the composer to ask an out-of-character question about the adventure, such as a clarification about a contract or a scene. Answers do not advance time or change the story. Switch back to **Play** to take an action; questions that attempt an in-world action are redirected there. You can retry a failed or cancelled question from the transcript.
+
 Adventure Mode gives you a persistent, system-light solo session grounded in the
 records in your current vault. You control one character; Oracle presents the
 situation, portrays the world, and responds to your choices.

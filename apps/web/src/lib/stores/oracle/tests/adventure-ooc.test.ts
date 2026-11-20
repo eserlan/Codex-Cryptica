@@ -19,6 +19,42 @@ import { canaryReferencePackage, canarySecretText } from "./gm-canary-fixture";
 import { assertNoGmLeak, collectGmOnlyStrings } from "./gm-leak-harness";
 
 describe("AdventureManager Ask GM (OOC) clarifications", () => {
+  it("rejects oversized questions without saving or calling the model", async () => {
+    const base = dependencies();
+    const ask = vi.fn();
+    const manager = new AdventureManager({ ...base, ooc: { ask } } as any);
+    await manager.start(startInput);
+    await manager.submitOocQuestion("x".repeat(601));
+    expect(manager.oocErrorMessage).toContain("600");
+    expect(manager.oocExchanges).toHaveLength(0);
+    expect(ask).not.toHaveBeenCalled();
+  });
+
+  it("marks a cancelled pending question as failed", async () => {
+    const base = dependencies();
+    let started!: () => void;
+    const ready = new Promise<void>((resolve) => {
+      started = resolve;
+    });
+    const ask = vi.fn(
+      (_request: unknown, { signal }: { signal: AbortSignal }) =>
+        new Promise((_resolve, reject) => {
+          started();
+          signal.addEventListener("abort", () => reject(new Error("aborted")));
+        }),
+    );
+    const manager = new AdventureManager({ ...base, ooc: { ask } } as any);
+    await manager.start(startInput);
+    const request = manager.submitOocQuestion("What happened?");
+    await ready;
+    manager.cancel();
+    await request;
+    expect(manager.oocExchanges[0]).toMatchObject({
+      status: "failed",
+      errorMessage: "Question cancelled.",
+    });
+    expect(manager.oocGenerating).toBe(false);
+  });
   it("answers OOC questions without advancing turns, world time, rolls, discoveries, or provider turn interactions", async () => {
     const base = dependencies();
     const oocRequests: AdventureOocRequest[] = [];
