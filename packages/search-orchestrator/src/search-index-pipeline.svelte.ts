@@ -16,7 +16,7 @@ import type {
   TimerApi,
 } from "./search-progress-coordinator";
 import { buildSearchAliases, buildSearchKeywords } from "./search-entry-fields";
-import { systemClock } from "./runtime";
+import { systemClock, type Clock } from "./runtime";
 import {
   performanceRecorder,
   type PerformanceRecorder,
@@ -67,6 +67,7 @@ export interface SearchIndexPipelineDeps {
   isApiReady: () => boolean;
   onSaveRequired: (vaultId: string) => Promise<void>;
   performanceRecorder?: PerformanceRecorder;
+  measureClock?: Clock;
 }
 
 export class SearchIndexPipeline {
@@ -78,6 +79,7 @@ export class SearchIndexPipeline {
   private isApiReady: () => boolean;
   private onSaveRequired: (vaultId: string) => Promise<void>;
   private performanceRecorder: PerformanceRecorder;
+  private measureClock: Clock;
   private indexQueue: Promise<void> = Promise.resolve();
   needsFullContentSweep = false;
 
@@ -90,6 +92,7 @@ export class SearchIndexPipeline {
     this.isApiReady = deps.isApiReady;
     this.onSaveRequired = deps.onSaveRequired;
     this.performanceRecorder = deps.performanceRecorder ?? performanceRecorder;
+    this.measureClock = deps.measureClock ?? { now: () => performance.now() };
   }
 
   setPerformanceRecorder(performance: PerformanceRecorder): void {
@@ -265,7 +268,7 @@ export class SearchIndexPipeline {
       return;
 
     this.debug.log(`[SearchIndexPipeline] Starting background content sync...`);
-    const start = performance.now();
+    const start = this.measureClock.now();
     let indexedCount = 0;
     const runId =
       this.coordinator.activeRunId ?? this.coordinator.createRunId(vaultId);
@@ -341,7 +344,7 @@ export class SearchIndexPipeline {
       }
 
       this.debug.log(
-        `[SearchIndexPipeline] Background sync complete. Indexed ${indexedCount} content records in ${(performance.now() - start).toFixed(2)}ms`,
+        `[SearchIndexPipeline] Background sync complete. Indexed ${indexedCount} content records in ${(this.measureClock.now() - start).toFixed(2)}ms`,
       );
       if (this.coordinator.isActiveRun(vaultId, runId)) {
         this.coordinator.emitProgress({
