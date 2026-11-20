@@ -16,6 +16,7 @@ describe("unwrapAdventureJsonFence", () => {
     ["upper-case label", "```JSON\n" + body + "\n```"],
     ["CRLF", "```json\r\n" + body.replace(/\n/g, "\r\n") + "\r\n```\r\n"],
     ["blank lines around", "\n\n```json\n" + body + "\n```\n\n\n"],
+    ["space before label", "``` json\n" + body + "\n```"],
     ["trailing spaces on opening line", "```json \t\n" + body + "\n```"],
   ])("unwraps a single fence with %s", (_name, text) => {
     const result = unwrapAdventureJsonFence(text);
@@ -29,6 +30,12 @@ describe("unwrapAdventureJsonFence", () => {
     ["two blocks", "```json\n{}\n```\n\n```json\n{}\n```", "more than one"],
     ["nested fence line", "```json\n{}\n  ```\n{}\n```", "more than one"],
     ["indented closing fence", "```json\n{}\n  ```", "not closed"],
+    ["four-backtick closing line", "```json\n{}\n````", "not closed"],
+    [
+      "indented four-backtick closing line",
+      "```json\n{}\n  ````",
+      "not closed",
+    ],
     ["unclosed", "```json\n{}\n", "not closed"],
     ["only an opening fence", "```", "not closed"],
     ["other label", "```javascript\n{}\n```", "unsupported label"],

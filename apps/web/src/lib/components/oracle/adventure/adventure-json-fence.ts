@@ -22,13 +22,13 @@ export function unwrapAdventureJsonFence(
   if (!trimmed.startsWith(FENCE)) return { ok: true, text };
 
   const lines = trimmed.split(/\r?\n/);
-  const label = lines[0].slice(FENCE.length).replace(/[ \t]+$/, "");
+  const label = lines[0].slice(FENCE.length).trim();
   if (label !== "" && label.toLowerCase() !== "json") {
     return reject("The code block has an unsupported label.");
   }
   const closed = lines.length > 1 && lines[lines.length - 1] === FENCE;
   const body = lines.slice(1, closed ? -1 : undefined);
-  if (!closed && lines[lines.length - 1].trim() === FENCE) {
+  if (!closed && /^`{3,}$/.test(lines[lines.length - 1].trim())) {
     return reject("The code block is not closed.");
   }
   if (body.some((line) => line.trimStart().startsWith(FENCE))) {
