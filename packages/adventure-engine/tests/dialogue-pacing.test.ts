@@ -86,7 +86,7 @@ function behaviorFor(s: AdventureSession, playerAction: string): string {
 }
 
 describe("circular NPC dialogue pacing (#5083)", () => {
-  it("detects rephrased ledger questions despite changing scenery and refusal wording", () => {
+  it("detects rephrased ledger questions despite changed narration", () => {
     const current = session(ledgerTurns());
     expect(DIALOGUE_LOOP_TURN_LIMIT).toBe(3);
     expect(dialogueLoopPacing(current)).toEqual({
@@ -101,7 +101,7 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     ).toContain("Clarify a mistaken explanation");
   });
 
-  it("flags recovery on the fourth turn, before another repetitive answer is committed", () => {
+  it("nudges before the fourth non-answer is committed", () => {
     const current = session(ledgerTurns().slice(0, 3));
     expect(dialogueLoopPacing(current)?.repeatedTurns).toBe(3);
     expect(behaviorFor(current, questions[3]!)).toContain(
@@ -109,9 +109,11 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     );
   });
 
-  it("follows a new player topic instead of forcing the previous investigation", () => {
+  it("does not force recovery after a topic switch", () => {
     const current = session(ledgerTurns());
-    expect(dialogueLoopPacing(current, "Walk to the mill and look at its wheel")).toEqual({
+    expect(
+      dialogueLoopPacing(current, "Walk to the mill and look at its wheel"),
+    ).toEqual({
       repeatedTurns: 4,
       recoveryDue: false,
     });
@@ -130,13 +132,17 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
   });
 
-  it("does not manufacture a response when the player is deliberately repeating words", () => {
+  it("does not force deliberate repetitions", () => {
     const turns = ledgerTurns();
-    turns[3] = turn(3, "Repeat the same question in the same words.", nonAnswers[3]!);
+    turns[3] = turn(
+      3,
+      "Repeat the same question in the same words.",
+      nonAnswers[3]!,
+    );
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
   });
 
-  it("ignores unrelated facts but respects a newly learned answer to this question", () => {
+  it("unrelated facts cannot mask the loop", () => {
     const turns = ledgerTurns();
     turns[2]!.visiblePatch.knownFacts.add.push({
       id: "market-news",
@@ -153,7 +159,7 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
   });
 
-  it("uses discoverable provisional and scenario facts as progress only when topical", () => {
+  it("counts only topic-relevant discoveries", () => {
     const turns = ledgerTurns();
     turns[2]!.provisionalFactIds = ["new-fact"];
     const recorded = session(turns, {
@@ -204,11 +210,13 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     };
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
     expect(
-      dialogueLoopPacing(session(ledgerTurns(), { pendingRoll: { id: "roll-1" } as never })),
+      dialogueLoopPacing(
+        session(ledgerTurns(), { pendingRoll: { id: "roll-1" } as never }),
+      ),
     ).toBeUndefined();
   });
 
-  it("does not mistake quiet ordinary interactions for repeated unknown answers", () => {
+  it("does not mistake ordinary chat for a loop", () => {
     const turns = [
       turn(0, "Ask for bread.", "The baker offers you a crusty loaf."),
       turn(1, "Ask for a seat.", "The keeper points out the bench."),
@@ -218,7 +226,7 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     expect(dialogueLoopPacing(session(turns))).toBeUndefined();
   });
 
-  it("keeps secret knowledge, canon and player agency protected when recovering", () => {
+  it("protects secrets, canon and player agency", () => {
     const behavior = behaviorFor(session(ledgerTurns()), questions[3]!);
     expect(behavior).toContain("If this NPC genuinely cannot know");
     expect(behavior).toContain("Do not force a quest");
@@ -226,6 +234,8 @@ describe("circular NPC dialogue pacing (#5083)", () => {
     expect(behavior).toContain(
       "Canonical source records outrank provisional session material",
     );
-    expect(behavior).toContain("Never choose the player character's voluntary actions");
+    expect(behavior).toContain(
+      "Never choose the player character's voluntary actions",
+    );
   });
 });
