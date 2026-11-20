@@ -174,7 +174,19 @@ export function detectHiddenLeakage(
   const revealed = new Set(
     proposal.kind === "complete" ? proposal.revealSecretIds : [],
   );
-  return detectHiddenTextFields(session, fields, revealed);
+  // GM threads have no revealSecretIds lifecycle: an explicit transition to
+  // "revealed" in this proposal is their same-turn disclosure.
+  if (proposal.kind === "complete") {
+    for (const thread of proposal.hiddenPatch.gmThreads.update) {
+      if (thread.status === "revealed") revealed.add(thread.id);
+    }
+  }
+  return detectHiddenTextFields(
+    session,
+    fields,
+    revealed,
+    proposal.kind === "complete" ? proposedHiddenSources(proposal) : [],
+  );
 }
 
 /** Checks player-facing proposal text against the current pinned package. */
@@ -398,10 +410,47 @@ export function historicalAnchorSecretIds(session: AdventureSession): string[] {
   return historicalAnchorSecretSources(session).map((secret) => secret.id);
 }
 
+/**
+ * Materialization assigns new IDs after the leakage gate. Give proposed
+ * hidden additions and updates opaque diagnostic IDs so the same-turn
+ * narration cannot copy a newly improvised GM-only identity.
+ */
+function proposedHiddenSources(
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  return [
+    ...proposal.hiddenPatch.secrets.add.map((secret, index) => ({
+      id: `proposed-secret-${index}`,
+      text: secret.text,
+      status: secret.status,
+    })),
+    ...proposal.hiddenPatch.secrets.update.map((secret, index) => ({
+      id: `proposed-secret-update-${index}`,
+      text: secret.text,
+      status: secret.status,
+    })),
+    ...proposal.hiddenPatch.gmThreads.add.map((thread, index) => ({
+      id: `proposed-thread-${index}`,
+      text: thread.text,
+      status: thread.status,
+    })),
+    ...proposal.hiddenPatch.gmThreads.update.map((thread, index) => ({
+      id: `proposed-thread-update-${index}`,
+      text: thread.text,
+      status: thread.status,
+    })),
+  ];
+}
+
 function detectHiddenTextFields(
   session: AdventureSession,
   fields: Array<[string, string]>,
   revealed: Set<string>,
+  proposed: Array<{
+    id: string;
+    text: string;
+    status: "hidden" | "revealed";
+  }> = [],
 ): HiddenLeakageFinding[] {
   const structuredSecrets = [
     ...scenarioSecretSources(session),
@@ -412,12 +461,13 @@ function detectHiddenTextFields(
     status: secret.revealed ? ("revealed" as const) : ("hidden" as const),
   }));
   const hiddenById = new Map(
-    [...session.hiddenState.secrets, ...structuredSecrets].map((secret) => [
-      secret.id,
-      secret,
-    ]),
+    [
+      ...session.hiddenState.secrets,
+      ...session.hiddenState.gmThreads,
+      ...structuredSecrets,
+    ].map((secret) => [secret.id, secret]),
   );
-  const hidden = [...hiddenById.values()].filter(
+  const hidden = [...hiddenById.values(), ...proposed].filter(
     (secret) => secret.status === "hidden" && !revealed.has(secret.id),
   );
   const findings: HiddenLeakageFinding[] = [];
