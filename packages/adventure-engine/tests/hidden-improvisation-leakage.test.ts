@@ -1,0 +1,151 @@
+import { describe, expect, it } from "vitest";
+import {
+  applyCompletedTurn,
+  detectHiddenLeakage,
+  detectHiddenTextLeakage,
+} from "../src";
+import { meta, proposal, session } from "./reducer-fixtures";
+
+const hiddenCreditor = "Dorje secretly holds the village debts";
+const hiddenRinger = "The missing ringer lives beneath the shrine";
+
+describe("GM-only improv secrecy at the commit boundary", () => {
+  it("rejects a same-turn leak of a newly proposed secret", () => {
+    const draft = proposal();
+    draft.narration = hiddenCreditor;
+    draft.hiddenPatch.secrets.add.push({
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+
+    expect(detectHiddenLeakage(session(), draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "proposed-secret-0",
+    });
+    const committed = applyCompletedTurn(session(), draft, meta);
+    expect(committed.ok).toBe(false);
+    if (!committed.ok) {
+      expect(committed.errors[0]?.code).toBe("hidden-leakage");
+      expect(JSON.stringify(committed.errors)).not.toContain(hiddenCreditor);
+    }
+  });
+
+  it("rejects copied text from a newly proposed GM-only thread", () => {
+    const draft = proposal();
+    draft.hiddenPatch.gmThreads.add.push({
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+    draft.suggestedActions = [`Accuse ${hiddenCreditor}.`];
+
+    expect(detectHiddenLeakage(session(), draft)).toContainEqual({
+      field: "root.suggestedActions[0]",
+      secretId: "proposed-thread-0",
+    });
+    const committed = applyCompletedTurn(session(), draft, meta);
+    expect(committed.ok).toBe(false);
+    if (!committed.ok) expect(committed.errors[0]?.code).toBe("hidden-leakage");
+  });
+
+  it("guards already committed hidden threads in narration and streaming text", () => {
+    const current = session();
+    current.hiddenState.gmThreads.push({
+      id: "thread-1",
+      text: hiddenRinger,
+      status: "hidden",
+    });
+
+    const draft = proposal();
+    draft.narration = hiddenRinger;
+    expect(detectHiddenLeakage(current, draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "thread-1",
+    });
+    expect(detectHiddenTextLeakage(current, hiddenRinger)).toContainEqual({
+      field: "root",
+      secretId: "thread-1",
+    });
+  });
+
+  it("does not guard already-revealed threads or an explicitly revealed update", () => {
+    const current = session();
+    current.hiddenState.gmThreads.push({
+      id: "thread-1",
+      text: hiddenRinger,
+      status: "revealed",
+    });
+    const draft = proposal();
+    draft.narration = hiddenRinger;
+    expect(detectHiddenLeakage(current, draft)).toEqual([]);
+
+    current.hiddenState.gmThreads[0]!.status = "hidden";
+    draft.hiddenPatch.gmThreads.update.push({
+      id: "thread-1",
+      text: hiddenRinger,
+      status: "revealed",
+    });
+    expect(detectHiddenLeakage(current, draft)).toEqual([]);
+  });
+
+  it("guards updated hidden text as well as the earlier committed value", () => {
+    const current = session();
+    current.hiddenState.secrets.push({
+      id: "secret-1",
+      text: hiddenRinger,
+      status: "hidden",
+    });
+    const draft = proposal();
+    draft.hiddenPatch.secrets.update.push({
+      id: "secret-1",
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+
+    draft.narration = hiddenRinger;
+    expect(detectHiddenLeakage(current, draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "secret-1",
+    });
+    draft.narration = hiddenCreditor;
+    expect(detectHiddenLeakage(current, draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "proposed-secret-update-0",
+    });
+  });
+
+  it("allows hidden-only inventions, public narration and genuine secret reveals", () => {
+    const current = session();
+    current.hiddenState.secrets.push({
+      id: "known-secret",
+      text: hiddenRinger,
+      status: "hidden",
+    });
+    const draft = proposal();
+    draft.narration = "The tally-keeper points to the public account rolls.";
+    draft.hiddenPatch.gmThreads.add.push({
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+    expect(detectHiddenLeakage(current, draft)).toEqual([]);
+    expect(applyCompletedTurn(current, draft, meta).ok).toBe(true);
+
+    const discovered = proposal();
+    discovered.narration = hiddenRinger;
+    discovered.revealSecretIds = ["known-secret"];
+    expect(detectHiddenLeakage(current, discovered)).toEqual([]);
+  });
+
+  it("does not make newly proposed secrets revealable by arbitrary IDs", () => {
+    const draft = proposal();
+    draft.narration = hiddenCreditor;
+    draft.hiddenPatch.secrets.add.push({
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+    draft.revealSecretIds = ["proposed-secret-0"];
+    expect(detectHiddenLeakage(session(), draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "proposed-secret-0",
+    });
+  });
+});
