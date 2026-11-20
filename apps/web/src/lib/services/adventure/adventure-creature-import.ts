@@ -115,7 +115,7 @@ function entityData(
   );
   const data: Partial<Entity> = {
     content,
-    ...entityMetadata(proposal, choice.hidden),
+    ...creatureImportMetadata(proposal, choice.hidden),
     adventureSource: {
       packageId: pkg.id,
       packageVersion: pkg.version,
@@ -134,14 +134,21 @@ function entityData(
   return data;
 }
 
-function entityMetadata(
+const VISIBILITY_LABELS = new Set(["hidden", "revealed", "visible"]);
+
+export function creatureImportMetadata(
   proposal: CreatureProposal,
   hidden: boolean,
 ): Partial<Pick<Entity, "aliases" | "labels" | "visibility">> {
   const aliases =
     proposal.aliases.length > 0 ? [...proposal.aliases] : undefined;
   const labels = [
-    ...new Set([...proposal.labels, ...(hidden ? ["hidden"] : [])]),
+    ...new Set([
+      ...proposal.labels.filter(
+        (label) => !VISIBILITY_LABELS.has(label.trim().toLowerCase()),
+      ),
+      ...(hidden ? ["hidden"] : []),
+    ]),
   ];
   return {
     ...(aliases ? { aliases } : {}),

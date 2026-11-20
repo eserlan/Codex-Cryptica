@@ -15,6 +15,8 @@ const pkg = {
       id: "a1",
       name: "Gnoll",
       summary: "A raider",
+      aliases: ["The Gnoll"],
+      labels: ["raider"],
       visibility: "player-visible",
       epistemicStatus: "source-stated",
     },
@@ -22,6 +24,8 @@ const pkg = {
       id: "a2",
       name: "Spider",
       summary: "Hoards treasure",
+      aliases: ["Web Queen"],
+      labels: ["danger", "hidden"],
       visibility: "gm-only",
       epistemicStatus: "source-stated",
     },
@@ -29,6 +33,8 @@ const pkg = {
       id: "a3",
       name: "Wolf",
       summary: "A guard",
+      aliases: ["The Wolf"],
+      labels: ["beast"],
       visibility: "player-visible",
       epistemicStatus: "source-stated",
     },
@@ -114,6 +120,14 @@ describe("creature import dialog", () => {
     expect(screen.getByRole("dialog", { name: "Create creature entries" }));
     expect(screen.getByText(/Already in your Vault: wolf/)).toBeTruthy();
     expect(screen.getAllByText(/Gate\s+\(Page not given\)/).length).toBe(3);
+    const gnollReview = within(screen.getByTestId("creature-import-item-0"));
+    expect(gnollReview.getByText("Aliases: The Gnoll")).toBeTruthy();
+    expect(gnollReview.getByText("Labels: raider")).toBeTruthy();
+    const spiderReview = within(screen.getByTestId("creature-import-item-1"));
+    expect(spiderReview.getByText("Aliases: Web Queen")).toBeTruthy();
+    expect(spiderReview.getByText("Labels: danger, hidden")).toBeTruthy();
+    const wolfReview = within(screen.getByTestId("creature-import-item-2"));
+    expect(wolfReview.queryByText(/Aliases:|Labels:/)).toBeNull();
     await fireEvent.click(
       screen.getByRole("button", { name: "Review changes" }),
     );
@@ -121,6 +135,11 @@ describe("creature import dialog", () => {
       screen.getByText(/2 entries will be created, and 1 reused/),
     ).toBeTruthy();
     expect(screen.getByText(/Create Spider: hidden, no image/)).toBeTruthy();
+    expect(screen.getByText("Aliases: The Gnoll")).toBeTruthy();
+    expect(screen.getByText("Labels: raider")).toBeTruthy();
+    expect(screen.getByText("Aliases: Web Queen")).toBeTruthy();
+    expect(screen.getByText("Labels: danger, hidden")).toBeTruthy();
+    expect(screen.getByText("Reuse wolf")).toBeTruthy();
     expect(createEntity).not.toHaveBeenCalled();
     await fireEvent.click(
       screen.getByRole("button", { name: "Confirm and create" }),

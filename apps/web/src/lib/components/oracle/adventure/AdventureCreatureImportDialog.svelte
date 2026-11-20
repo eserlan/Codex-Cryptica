@@ -4,10 +4,12 @@
   import {
     buildCreatureProposals,
     sourcePageLabels,
+    type CreatureProposal,
     type SourceReference,
     type StoredAdventurePackage,
   } from "@codex/adventure-engine";
   import {
+    creatureImportMetadata,
     importCreatures,
     initialCreatureChoices,
     type CreatureImportResult,
@@ -106,6 +108,21 @@
       : `Pages ${labels.join(", ")}`;
   }
 
+  function metadataLines(
+    proposal: CreatureProposal,
+    hidden: boolean,
+  ): string[] {
+    const metadata = creatureImportMetadata(proposal, hidden);
+    return [
+      ...(metadata.aliases?.length
+        ? [`Aliases: ${metadata.aliases.join(", ")}`]
+        : []),
+      ...(metadata.labels?.length
+        ? [`Labels: ${metadata.labels.join(", ")}`]
+        : []),
+    ];
+  }
+
   function pickFile(index: number, event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (file) choices[index]!.file = file;
@@ -130,6 +147,12 @@
     await goTo("done");
   }
 </script>
+
+{#snippet importMetadataLines(lines: string[])}
+  {#each lines as line (line)}
+    <p class="break-words text-xs">{line}</p>
+  {/each}
+{/snippet}
 
 <svelte:window
   onkeydown={(event) => {
@@ -209,6 +232,11 @@
               data-testid="creature-import-item-{index}"
             >
               <p class="font-semibold">{proposal.name}</p>
+              {#if !choice.existing && choice.include}
+                {@render importMetadataLines(
+                  metadataLines(proposal, choice.hidden),
+                )}
+              {/if}
               {#each [...proposal.summary, ...proposal.description, ...proposal.role, ...proposal.motivation, ...proposal.disposition] as text, textIndex (textIndex)}
                 <p class="text-xs whitespace-pre-line">{text}</p>
               {/each}
@@ -426,10 +454,15 @@
             {#if choice.existing}
               <li>Reuse {choice.existing.title}</li>
             {:else}
-              <li>
-                Create {choice.proposal.name}:
-                {choice.hidden ? "hidden" : "visible"},
-                {choice.file ? "with an image" : "no image"}
+              <li class="space-y-1">
+                <p>
+                  Create {choice.proposal.name}:
+                  {choice.hidden ? "hidden" : "visible"},
+                  {choice.file ? "with an image" : "no image"}
+                </p>
+                {@render importMetadataLines(
+                  metadataLines(choice.proposal, choice.hidden),
+                )}
               </li>
             {/if}
           {/snippet}

@@ -127,14 +127,21 @@ describe("importCreatures", () => {
       ...pkg,
       actors: pkg.actors.map((entry) => {
         if (entry.id === "a1")
-          return { ...entry, aliases: ["The Gnoll"], labels: ["raider"] };
+          return {
+            ...entry,
+            aliases: ["The Gnoll"],
+            labels: ["raider", " Hidden ", "revealed", "VISIBLE"],
+          };
         if (entry.id === "a2")
           return {
             ...entry,
             aliases: ["Web Queen"],
-            labels: ["danger", "hidden"],
+            labels: ["danger", "hidden", "HIDDEN", "revealed", " VISIBLE "],
           };
-        return { ...entry, labels: ["beast"] };
+        return {
+          ...entry,
+          labels: ["beast", " Revealed ", "visible", " hidden "],
+        };
       }),
     } as AdventureJsonV1;
     const choices = initialCreatureChoices(
