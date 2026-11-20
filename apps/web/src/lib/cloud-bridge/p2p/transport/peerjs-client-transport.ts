@@ -1,4 +1,4 @@
-import { createPeer, type PeerFactory } from "../peer-factory";
+import { createPeer, loadPeerJs, type PeerFactory } from "../peer-factory";
 import { debugStore } from "../../../stores/debug.svelte";
 import { isValidP2PMessage } from "../p2p-protocol";
 import type {
@@ -46,6 +46,7 @@ export class PeerJsClientTransport implements P2PClientTransport {
     const epoch = ++this.activeEpoch;
 
     if (!this.peer) {
+      if (this.peerFactory === createPeer) await loadPeerJs();
       this.peer = this.peerFactory(undefined, { debug: 1 });
     }
 

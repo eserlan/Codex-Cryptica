@@ -27,7 +27,15 @@ import { fileURLToPath } from "url";
  * Patterns (substrings) that must not appear in the entry graph of `/`, as a
  * module path or a worker file. To keep something else off `/`, add it here.
  */
-export const ENTRY_GRAPH_DENYLIST = ["oracle.worker", "proposer.worker"];
+export const ENTRY_GRAPH_DENYLIST = [
+  "oracle.worker",
+  "proposer.worker",
+  "@tiptap/",
+  "prosemirror-",
+  "flexsearch",
+  "node_modules/peerjs/",
+  "campaign-generator-registry",
+];
 
 const MANIFEST_PATH = ".svelte-kit/output/client/.vite/manifest.json";
 const WORKER_REF = /workers\/[\w.-]+-[\w-]+\.js/g;

@@ -1,4 +1,4 @@
-import { createPeer, type PeerFactory } from "./peer-factory";
+import { createPeer, loadPeerJs, type PeerFactory } from "./peer-factory";
 import { debugStore } from "../../stores/debug.svelte";
 import { systemClock } from "#lib/utils/runtime-deps.js";
 
@@ -107,6 +107,7 @@ export class PeerJSConnectionManager {
     this.disconnect();
     this.isHost = true;
     this.setStatus("connecting");
+    if (this.peerFactory === createPeer) await loadPeerJs();
 
     return new Promise((resolve, reject) => {
       try {
@@ -159,6 +160,7 @@ export class PeerJSConnectionManager {
     this.isHost = false;
     this.expectedRemoteId = hostId;
     this.setStatus("connecting");
+    if (this.peerFactory === createPeer) await loadPeerJs();
 
     return new Promise((resolve, reject) => {
       this.pendingConnectResolve = resolve;

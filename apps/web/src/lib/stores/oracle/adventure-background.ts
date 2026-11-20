@@ -1,12 +1,9 @@
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
-import type {
-  AdventureSession,
-  GroundingContext,
-} from "@codex/adventure-engine";
 import {
-  needsWorldEntryBackground,
-  seedWorldEntryBackground,
-} from "#lib/services/adventure/world-entry-background.js";
+  needsContextualRumours,
+  type AdventureSession,
+  type GroundingContext,
+} from "@codex/adventure-engine";
 import type { RumourSelectionInput } from "generator-engine";
 import { abortReason, isAbort } from "./adventure-generation.svelte";
 
@@ -39,7 +36,9 @@ export class AdventureBackground {
     session: AdventureSession,
     signal?: AbortSignal,
   ): Promise<AdventureSession> {
-    if (!needsWorldEntryBackground(session)) return session;
+    if (!needsContextualRumours(session)) return session;
+    const { seedWorldEntryBackground } =
+      await import("#lib/services/adventure/world-entry-background.js");
     const batch = await this.generateWorldEntryRumourBatch(session, signal);
     if (signal?.aborted) throw abortReason(signal);
     try {

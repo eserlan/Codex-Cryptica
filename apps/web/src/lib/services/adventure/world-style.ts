@@ -1,6 +1,9 @@
 import { THEMES } from "schema";
-import { themeIdToLabel } from "generator-engine";
 import type { AdventureWorldStyle } from "@codex/adventure-engine";
+
+const GENRE_LABEL_OVERRIDES: Record<string, string> = {
+  cyberpunk: "Cyberpunk / Corporate",
+};
 
 /**
  * The Vault's world theme as a genre hint for the GM. The neutral workspace
@@ -23,8 +26,8 @@ export function genreForTheme(
 ): string | undefined {
   if (!themeId) return undefined;
   const id = themeId.replace(/_(light|dark)$/, "");
-  if (id === "workspace" || !Object.hasOwn(themeIdToLabel, id)) {
+  if (id === "workspace" || !Object.hasOwn(THEMES, id)) {
     return undefined;
   }
-  return themeIdToLabel[id];
+  return GENRE_LABEL_OVERRIDES[id] ?? THEMES[id as keyof typeof THEMES].name;
 }
