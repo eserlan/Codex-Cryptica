@@ -114,160 +114,205 @@
   }
 </script>
 
+{#snippet reviewFooter()}
+  <footer
+    class="-mx-1 flex flex-col gap-2 border-t border-theme-border bg-theme-surface px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:flex-row sm:items-center sm:justify-between"
+    data-testid="adventure-review-footer"
+  >
+    <div class="min-w-0 text-xs text-theme-text">
+      {#if !liveValidation.ok}
+        <span class="font-semibold text-theme-text" role="status">
+          Blocked: {liveValidation.errors.length} validation
+          {liveValidation.errors.length === 1 ? "error" : "errors"}
+        </span>
+      {:else if isApproved}
+        <span class="font-medium text-theme-text">
+          Approved &amp; locked in Vault
+        </span>
+      {:else}
+        <div class="space-y-1">
+          <p>
+            Validation stays on this device. Imported packages are not included
+            in Cloud Backup. During play, relevant excerpts may be sent to your
+            selected Oracle AI provider.
+          </p>
+          <a
+            href="#adventure-ai-notice"
+            class="underline decoration-theme-text/60 underline-offset-2 hover:decoration-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+          >
+            Vault &amp; AI notice
+          </a>
+        </div>
+      {/if}
+    </div>
+
+    <div class="flex flex-wrap items-center justify-end gap-3">
+      <button
+        type="button"
+        data-testid="adventure-cancel-button"
+        disabled={approving}
+        onclick={onCancel}
+        class="min-h-11 rounded-lg border border-theme-text/75 bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
+      >
+        {isApproved ? "Done" : "Cancel"}
+      </button>
+      {#if isApproved && onStartAdventure && approvedHash}
+        <button
+          type="button"
+          data-testid="adventure-review-start-button"
+          onclick={() =>
+            onStartAdventure(
+              $state.snapshot(draft) as AdventureJsonV1,
+              approvedHash!,
+            )}
+          class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        >
+          Start adventure
+        </button>
+      {:else}
+        <button
+          type="button"
+          data-testid="adventure-approve-button"
+          disabled={isLocked}
+          onclick={() => void handleApprove()}
+          class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
+        >
+          {approving
+            ? "Approving…"
+            : isApproved
+              ? "Approved"
+              : "Approve Adventure"}
+        </button>
+      {/if}
+    </div>
+  </footer>
+{/snippet}
+
 <section
-  class="mx-auto flex w-full max-w-5xl flex-col gap-6"
+  class="mx-auto grid max-h-[calc(100dvh-8rem)] w-full max-w-5xl min-h-0 grid-rows-[minmax(0,1fr)_auto] overflow-hidden"
   aria-labelledby="adventure-import-review-heading"
   data-testid="adventure-import-review"
 >
-  <AdventureImportReviewHeader
-    {draft}
-    {experimentalOrigin}
-    {canonicalHash}
-    {isApproved}
-  />
-
-  <AdventureImportReviewSummary
-    {draft}
-    validationOk={liveValidation.ok}
-    validationErrors={liveValidation.ok ? [] : liveValidation.errors}
-  />
-
-  <AdventureImportReviewUnresolved
-    {draft}
-    validationErrors={liveValidation.ok ? [] : liveValidation.errors}
-  />
-
-  {#if previousPackage}
-    <AdventureImportReviewDiff
-      previous={previousPackage}
-      {previousHash}
-      current={draft}
-    />
-  {/if}
-
-  <AdventureImportReviewWorldSections
-    {draft}
-    {isLocked}
-    onToggleVisibility={toggleVisibility}
-  />
-  <AdventureImportReviewFactions
-    {draft}
-    {isLocked}
-    onToggleVisibility={toggleVisibility}
-  />
-  <AdventureImportReviewPlaySections
-    {draft}
-    {isLocked}
-    onToggleVisibility={toggleVisibility}
-  />
-  <AdventureImportReviewEncounter
-    {draft}
-    {isLocked}
-    onToggleVisibility={toggleVisibility}
-  />
-  <AdventureImportReviewClueSections
-    {draft}
-    {isLocked}
-    onToggleVisibility={toggleVisibility}
-  />
-  <AdventureImportReviewSecrets {draft} />
-
   <div
-    role="region"
-    aria-label="AI provider excerpt notice"
-    class="rounded-xl border border-theme-primary/40 bg-theme-surface p-4 text-sm text-theme-text"
-    data-testid="adventure-ai-notice"
+    class="flex min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain pr-1"
+    data-testid="adventure-review-content"
   >
-    <div class="flex items-start gap-3">
-      <span
-        class="icon-[lucide--shield-check] mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
-        aria-hidden="true"
-      ></span>
-      <div class="space-y-1">
-        <p class="font-semibold text-theme-text">
-          Vault storage and AI excerpts
-        </p>
-        <p class="leading-relaxed text-theme-text">
-          Your original Adventure JSON file (or experimental Markdown/PDF
-          source) stays on this device and is validated locally with zero AI
-          calls. Only the approved Adventure JSON baseline is saved in your
-          Vault. Imported packages are not currently included in Codex Cryptica
-          Cloud Backup, even when you opt in to include adventure sessions.
-          During play, bounded relevant excerpts (such as active scene text,
-          read-aloud passages, and active NPC notes) may be sent to your
-          selected Oracle AI provider.
-        </p>
-        <p
-          class="leading-relaxed text-theme-text"
-          data-testid="adventure-approval-scope"
-        >
-          Approving locks this reviewed baseline without claiming complete
-          analysis, resolved ambiguities, or play readiness for every scene;
-          unresolved items stay preserved for later review.
-        </p>
+    <AdventureImportReviewHeader
+      {draft}
+      {experimentalOrigin}
+      {canonicalHash}
+      {isApproved}
+    />
+
+    <AdventureImportReviewSummary
+      {draft}
+      validationOk={liveValidation.ok}
+      validationErrors={liveValidation.ok ? [] : liveValidation.errors}
+    />
+
+    {#if previousPackage}
+      <AdventureImportReviewDiff
+        previous={previousPackage}
+        {previousHash}
+        current={draft}
+      />
+    {/if}
+
+    <AdventureImportReviewUnresolved
+      {draft}
+      validationErrors={liveValidation.ok ? [] : liveValidation.errors}
+    />
+
+    <AdventureImportReviewWorldSections
+      {draft}
+      {isLocked}
+      onToggleVisibility={toggleVisibility}
+    />
+    <AdventureImportReviewFactions
+      {draft}
+      {isLocked}
+      onToggleVisibility={toggleVisibility}
+    />
+    <AdventureImportReviewPlaySections
+      {draft}
+      {isLocked}
+      onToggleVisibility={toggleVisibility}
+    />
+    <AdventureImportReviewEncounter
+      {draft}
+      {isLocked}
+      onToggleVisibility={toggleVisibility}
+    />
+    <AdventureImportReviewClueSections
+      {draft}
+      {isLocked}
+      onToggleVisibility={toggleVisibility}
+    />
+    <AdventureImportReviewSecrets {draft} />
+
+    <div
+      role="region"
+      aria-label="AI provider excerpt notice"
+      id="adventure-ai-notice"
+      class="rounded-xl border border-theme-primary/40 bg-theme-surface p-4 text-sm text-theme-text"
+      data-testid="adventure-ai-notice"
+    >
+      <div class="flex items-start gap-3">
+        <span
+          class="icon-[lucide--shield-check] mt-0.5 h-5 w-5 shrink-0 text-theme-primary"
+          aria-hidden="true"
+        ></span>
+        <div class="space-y-1">
+          <p
+            id="adventure-ai-notice-heading"
+            class="font-semibold text-theme-text"
+          >
+            Vault storage and AI excerpts
+          </p>
+          <p class="leading-relaxed text-theme-text">
+            Your original Adventure JSON file (or experimental Markdown/PDF
+            source) stays on this device and is validated locally with zero AI
+            calls. Only the approved Adventure JSON baseline is saved in your
+            Vault. Imported packages are not currently included in Codex
+            Cryptica Cloud Backup, even when you opt in to include adventure
+            sessions. During play, bounded relevant excerpts (such as active
+            scene text, read-aloud passages, and active NPC notes) may be sent
+            to your selected Oracle AI provider.
+          </p>
+          <p
+            class="leading-relaxed text-theme-text"
+            data-testid="adventure-approval-scope"
+          >
+            Approving locks this reviewed baseline without claiming complete
+            analysis, resolved ambiguities, or play readiness for every scene;
+            unresolved items stay preserved for later review.
+          </p>
+        </div>
       </div>
     </div>
+
+    {#if displayError}
+      <div
+        role="alert"
+        class="rounded-lg border border-theme-danger/50 bg-theme-danger/10 p-3 text-sm text-theme-text"
+        data-testid="adventure-approve-error"
+      >
+        {displayError}
+      </div>
+    {/if}
+
+    {#if isApproved}
+      <div
+        role="status"
+        aria-live="polite"
+        class="rounded-lg border border-theme-primary/50 bg-theme-primary/10 p-3 text-sm font-medium text-theme-text"
+        data-testid="adventure-approved-confirmation"
+      >
+        Reviewed baseline approved and locked in your Vault. Unresolved items
+        remain preserved for later review.
+      </div>
+    {/if}
   </div>
 
-  {#if displayError}
-    <div
-      role="alert"
-      class="rounded-lg border border-theme-danger/50 bg-theme-danger/10 p-3 text-sm text-theme-text"
-      data-testid="adventure-approve-error"
-    >
-      {displayError}
-    </div>
-  {/if}
-
-  {#if isApproved}
-    <div
-      role="status"
-      aria-live="polite"
-      class="rounded-lg border border-theme-primary/50 bg-theme-primary/10 p-3 text-sm font-medium text-theme-text"
-      data-testid="adventure-approved-confirmation"
-    >
-      Reviewed baseline approved and locked in your Vault. Unresolved items
-      remain preserved for later review.
-    </div>
-  {/if}
-
-  <footer class="flex flex-wrap items-center justify-end gap-3 pb-4">
-    <button
-      type="button"
-      data-testid="adventure-cancel-button"
-      disabled={approving}
-      onclick={onCancel}
-      class="min-h-11 rounded-lg border border-theme-text/75 bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
-    >
-      {isApproved ? "Done" : "Cancel"}
-    </button>
-    {#if isApproved && onStartAdventure && approvedHash}
-      <button
-        type="button"
-        data-testid="adventure-review-start-button"
-        onclick={() =>
-          onStartAdventure(
-            $state.snapshot(draft) as AdventureJsonV1,
-            approvedHash!,
-          )}
-        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-      >
-        Start adventure
-      </button>
-    {:else}
-      <button
-        type="button"
-        data-testid="adventure-approve-button"
-        disabled={isLocked}
-        onclick={() => void handleApprove()}
-        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
-      >
-        {approving
-          ? "Approving…"
-          : isApproved
-            ? "Approved"
-            : "Approve Adventure"}
-      </button>
-    {/if}
-  </footer>
+  {@render reviewFooter()}
 </section>
