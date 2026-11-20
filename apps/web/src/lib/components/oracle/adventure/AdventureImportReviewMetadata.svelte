@@ -160,10 +160,15 @@
         ></span>
         <span>Source details</span>
       </span>
-      <span
-        class="icon-[lucide--chevron-down] h-4 w-4 shrink-0 text-theme-text transition-transform group-open:rotate-180"
-        aria-hidden="true"
-      ></span>
+      <span class="flex items-center gap-2 font-normal text-theme-text">
+        <span class="hidden font-mono sm:inline">
+          {draft.id} · v{draft.version}
+        </span>
+        <span
+          class="icon-[lucide--chevron-down] h-4 w-4 shrink-0 text-theme-text transition-transform group-open:rotate-180"
+          aria-hidden="true"
+        ></span>
+      </span>
     </summary>
 
     <div class="border-t border-theme-border px-3 py-3">
@@ -206,13 +211,16 @@
   aria-labelledby="review-metadata-heading"
   data-testid="review-metadata"
 >
-  <div>
+  <div class="flex flex-wrap items-center justify-between gap-2">
     <h2
       id="review-metadata-heading"
       class="font-header text-lg font-semibold text-theme-text"
     >
       Premise and Source
     </h2>
+    <span class="font-mono text-xs text-theme-text">
+      {draft.id} · v{draft.version}
+    </span>
   </div>
 
   {@render descriptionBlock()}
