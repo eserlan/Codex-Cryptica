@@ -103,6 +103,7 @@ export const ActorSchema = z
   .object({
     id: z.string().min(1),
     name: z.string().min(1),
+    kind: z.enum(["character", "creature"]).optional(),
     summary: z.string(),
     description: z.string().optional(),
     role: z.string().optional(),

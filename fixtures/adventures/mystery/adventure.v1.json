@@ -95,6 +95,7 @@
     {
       "id": "actor-rill",
       "name": "Rill Fenwick",
+      "kind": "character",
       "summary": "A harbourside clerk with ink-stained fingers, eager to clear the ferrymen.",
       "role": "Clerk",
       "motivation": "Rill wants the harbour conservancy to stop blaming the ferrymen and will help anyone who clears them.",
@@ -106,6 +107,7 @@
     {
       "id": "actor-osmund",
       "name": "Sister Osmund",
+      "kind": "character",
       "summary": "The chapel keeper, prim and devout, shaken by the sexton's tread she heard.",
       "role": "Chapel keeper",
       "motivation": "Sister Osmund wants the bell's midnight ringing explained before the chapel's repute suffers.",
@@ -117,6 +119,7 @@
     {
       "id": "actor-dain",
       "name": "Keeper Dain",
+      "kind": "character",
       "summary": "The tidemill keeper, grizzled and suspicious of strangers.",
       "role": "Mill keeper",
       "motivation": "Keeper Dain wants the tide gate left alone and the bell mystery forgotten.",
