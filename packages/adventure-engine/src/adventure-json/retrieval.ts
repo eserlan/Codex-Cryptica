@@ -18,7 +18,9 @@ export {
   adventureJsonRecordIds,
   adventureJsonHiddenRecordIds,
   adventureJsonGmOnlyText,
+  authorisedPackageRevelationScope,
   createAdventureJsonHiddenIdMatcher,
+  type AdventureJsonRevelationScope,
 } from "./retrieval-privacy";
 export { formatAdventureJsonExcerpts } from "./retrieval-format";
 
