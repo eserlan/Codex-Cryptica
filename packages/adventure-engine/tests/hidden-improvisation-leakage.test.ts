@@ -109,7 +109,7 @@ describe("GM-only improv secrecy at the commit boundary", () => {
     draft.narration = hiddenCreditor;
     expect(detectHiddenLeakage(current, draft)).toContainEqual({
       field: "root.narration",
-      secretId: "proposed-secret-update-0",
+      secretId: "secret-1",
     });
   });
 
