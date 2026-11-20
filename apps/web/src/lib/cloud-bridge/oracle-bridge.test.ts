@@ -57,6 +57,7 @@ describe("OracleBridge", () => {
   let bridge: OracleBridge;
   let loadWorker: Mock<() => Promise<Worker>>;
   let worker: { terminate: ReturnType<typeof vi.fn> };
+  let fallbackTextGeneration: { generateResponse: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -64,7 +65,13 @@ describe("OracleBridge", () => {
     loadWorker = vi
       .fn<() => Promise<Worker>>()
       .mockResolvedValue(worker as unknown as Worker);
-    bridge = new OracleBridge({ loadWorker });
+    fallbackTextGeneration = {
+      generateResponse: vi.fn().mockResolvedValue("fallback response"),
+    };
+    bridge = new OracleBridge({
+      loadWorker,
+      fallbackTextGeneration: fallbackTextGeneration as any,
+    });
   });
 
   it("does not start a worker on construction", () => {
@@ -198,19 +205,20 @@ describe("OracleBridge", () => {
     expect(cancelAdventureTurnMock).toHaveBeenCalledWith("turn-1");
   });
 
-  it("rejects the triggering call and disables the bridge when the load fails", async () => {
+  it("falls back for the triggering call and disables the bridge when the load fails", async () => {
     loadWorker.mockRejectedValue(new Error("Init fail"));
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     await expect(
       (bridge.textGeneration as any).generateResponse("x"),
-    ).rejects.toThrow("[OracleBridge] Worker not initialized");
+    ).resolves.toBe("fallback response");
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("Failed to initialize OracleWorker"),
       expect.any(Error),
     );
     expect(bridge.isReady).toBe(false);
+    expect(fallbackTextGeneration.generateResponse).toHaveBeenCalledWith("x");
     expect(() => bridge.textGeneration).toThrow(
       "[OracleBridge] Worker not initialized",
     );

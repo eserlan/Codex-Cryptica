@@ -2,6 +2,7 @@ import * as Comlink from "comlink";
 import { browser } from "$app/env";
 import type { TextGenerationService } from "schema";
 import type { CachedToken } from "@codex/ai-engine";
+import { textGenerationService as defaultTextGeneration } from "@codex/ai-engine";
 
 const NOT_INITIALIZED = "[OracleBridge] Worker not initialized";
 
@@ -19,12 +20,19 @@ export class OracleBridge {
   private available = browser;
   private starting: Promise<Comlink.Remote<any>> | null = null;
   private readonly loadWorker: () => Promise<Worker>;
+  private readonly fallbackTextGeneration?: TextGenerationService;
   private tokenProvider:
     ((forceRefresh: boolean) => Promise<CachedToken | null>) | null = null;
   private pendingToken: { value: CachedToken | null } | null = null;
 
-  constructor(deps: { loadWorker?: () => Promise<Worker> } = {}) {
+  constructor(
+    deps: {
+      loadWorker?: () => Promise<Worker>;
+      fallbackTextGeneration?: TextGenerationService;
+    } = {},
+  ) {
     this.loadWorker = deps.loadWorker ?? defaultLoadWorker;
+    this.fallbackTextGeneration = deps.fallbackTextGeneration;
   }
 
   /**
@@ -67,14 +75,27 @@ export class OracleBridge {
   }
 
   /** A stand-in whose methods start the worker, then forward the call. */
-  private lazyService(): any {
+  private lazyService(fallback?: TextGenerationService): any {
     return new Proxy(
       {},
       {
         get: (_target, prop) => {
           if (typeof prop === "symbol" || prop === "then") return undefined;
           return (...args: unknown[]) =>
-            this.ensureApi().then((api) => api[prop](...args));
+            this.ensureApi()
+              .then((api) => api[prop](...args))
+              .catch((error) => {
+                const fallbackMethod =
+                  fallback?.[prop as keyof TextGenerationService];
+                if (this.available || typeof fallbackMethod !== "function") {
+                  throw error;
+                }
+                return Reflect.apply(
+                  fallbackMethod as unknown as (...args: unknown[]) => unknown,
+                  fallback,
+                  args,
+                );
+              });
         },
       },
     );
@@ -116,7 +137,9 @@ export class OracleBridge {
    */
   public get textGeneration(): TextGenerationService {
     if (!this.available) throw new Error(NOT_INITIALIZED);
-    return this.lazyService() as TextGenerationService;
+    return this.lazyService(
+      this.fallbackTextGeneration,
+    ) as TextGenerationService;
   }
 
   /**
@@ -185,4 +208,6 @@ export class OracleBridge {
   }
 }
 
-export const oracleBridge = new OracleBridge();
+export const oracleBridge = new OracleBridge({
+  fallbackTextGeneration: defaultTextGeneration,
+});
