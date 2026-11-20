@@ -905,8 +905,11 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     });
 
     const footer = screen.getByTestId("adventure-review-footer");
-    expect(footer.className).toContain("sticky");
-    expect(footer.className).toContain("bottom-0");
+    const review = screen.getByTestId("adventure-import-review");
+    const content = screen.getByTestId("adventure-review-content");
+    expect(review.className).toContain("grid-rows-[minmax(0,1fr)_auto]");
+    expect(content.className).toContain("overflow-y-auto");
+    expect(review.lastElementChild).toBe(footer);
     expect(footer.textContent).toContain("Local-only validation");
     const noticeLink = footer.querySelector('a[href="#adventure-ai-notice"]');
     expect(noticeLink).toBeTruthy();
