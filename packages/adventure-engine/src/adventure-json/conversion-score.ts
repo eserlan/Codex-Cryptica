@@ -231,9 +231,13 @@ const ENTITY_COLLECTIONS = [
   "unresolved",
 ] as const;
 
-function tokens(s: string): Set<string> {
+function words(s: string): Set<string> {
   const normalized = s.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-  return new Set(normalized.split(" ").filter((t) => t.length >= 4));
+  return new Set(normalized.split(" ").filter(Boolean));
+}
+
+function tokens(s: string): Set<string> {
+  return new Set([...words(s)].filter((token) => token.length >= 4));
 }
 
 /** Key text A is "found" in B when ≥60% of A's distinct tokens appear in B. */
@@ -373,9 +377,9 @@ function scoreSecrets(
 }
 
 function containsTokens(value: string, expected: string): boolean {
-  const expectedTokens = tokens(expected);
+  const expectedTokens = words(expected);
   if (expectedTokens.size === 0) return false;
-  const valueTokens = tokens(value);
+  const valueTokens = words(value);
   return [...expectedTokens].every((token) => valueTokens.has(token));
 }
 

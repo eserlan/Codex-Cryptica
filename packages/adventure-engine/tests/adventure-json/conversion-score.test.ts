@@ -186,6 +186,32 @@ describe("scoreAdventureConversion source authority and conflicts", () => {
     expect(result.overall).toBe("pass");
   });
 
+  it("matches a three-character source-authority term", () => {
+    const key = clone(sourceAuthorityKey);
+    key.sourceAuthority![0].expectedTerm = "oak";
+    const doc = makeSourceAuthorityDoc();
+    const opening = doc.scenes.find(
+      (scene: { id: string }) => scene.id === "ros-scene-1-landing",
+    );
+    opening.body += " Oak is carved above the gate.";
+
+    expect(ConversionAnswerKeySchema.safeParse(key).success).toBe(true);
+    const result = scoreAdventureConversion(doc, key);
+    expect(result.dimensions.sourceAuthority.status).toBe("pass");
+  });
+
+  it("matches a three-character conflict term", () => {
+    const key = clone(bridgeConflictKey);
+    key.conflicts![0].claims[0].distinguishingTerm = "oak";
+    const doc = makeBridgeConflictDoc();
+    doc.locations[0].summary += " Oak.";
+    doc.unresolved[0].message += " Oak.";
+
+    expect(ConversionAnswerKeySchema.safeParse(key).success).toBe(true);
+    const result = scoreAdventureConversion(doc, key);
+    expect(result.dimensions.conflicts.status).toBe("pass");
+  });
+
   it("rejects a correction recorded on an unrelated entity", () => {
     const doc = makeSourceAuthorityDoc();
     const opening = doc.scenes.find(

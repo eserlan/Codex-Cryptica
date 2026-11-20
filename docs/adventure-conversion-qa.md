@@ -74,6 +74,7 @@ Model calls and manual judgements stay outside paid CI.
 The scorer is deterministic and pure (no fs, network or model access). `overall` is `pass` only when every dimension is `pass` or `n/a`.
 
 - **Text match**: key text A is "found" in string B when at least 60% of A's distinct lowercase alphanumeric tokens of length ≥ 4 appear among B's tokens.
+- **Discriminator terms**: `sourceAuthority` and `conflicts` match every normalized alphanumeric word in the keyed term, including words shorter than four characters.
 - **Citation**: an entity "cites" key section S when `entity.id === S.sourceId`, or `entity.sourceRef.anchor === S.sourceId`, or the normalised `entity.sourceRef.section` (trimmed, lower-case) equals the normalised `S.title`.
 - **Player-visible text**: every string in `title`, `description`, `premise`, and every string field of a record whose `visibility` is `"player-visible"`. Each field is checked on its own and never concatenated.
 
