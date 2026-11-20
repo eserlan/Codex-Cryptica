@@ -109,6 +109,16 @@ Use `fixtures/adventures/reference-one-shot/adventure.v1.json` (or a converted p
 1. Repeat **Import Adventure JSON** (dropzone copy spans readable lines above a full-width upload CTA, no horizontal overflow), start, action submission, roll outcome entry, and discovery drawer inspection on a mobile viewport.
 2. **Expect:** Controls remain reachable without horizontal overflow or clipped modals.
 
+### 7. Improvisation, World Coherence, and Repeated-Question Recovery
+
+1. In a disposable **World Entry** settlement, ask an NPC with an administrative role about a plausible local practice (for example, a public debt ledger that lists debtors but not creditors). Ask who the money is owed to, why the system works this way, and challenge an implausible explanation.
+2. **Expect:** The Oracle invents a coherent, setting-appropriate explanation for details not fixed by the Vault or scenario. The NPC can acknowledge an earlier misleading explanation, distinguish their personal knowledge from the GM's knowledge, and offer a meaningful way to verify or investigate the answer. The Oracle does not insist an unspecified answer cannot exist.
+3. Ask the same underlying question again using different wording for three turns. **Expect:** The dialogue does not cycle through paraphrases of "I don't know" and the same three suggestions. The GM either supplies a substantive clarification, an actionable discovery or a credible reason to seek a different source. The player remains free to abandon the conversation.
+4. Follow an investigative scenario whose core truth is authored but a supporting identity or mechanism is unspecified. **Expect:** The GM can decide compatible supporting details and keep consequential choices consistent across subsequent turns and a reload, without changing the authored truth, resolving explicitly ambiguous/unresolved package facts, or exposing an unrevealed secret.
+5. Inspect the player-visible state, discoveries, transcript, and GM-only diagnostic copy. **Expect:** Public inventions are recorded as needed, new secret choices are not accidentally exposed, and no arbitrary twist or forced quest has been introduced solely to end the conversation.
+
+Treat repeated dialogue without new substance, or a world inconsistency repeatedly defended instead of repaired, as a **Fail** even if the turn JSON validates and the ordinary quiet-turn counter resets.
+
 ## Live-Model Baseline Recording Template
 
 Record one row per evaluated provider/model during manual or live-API benchmark runs:
