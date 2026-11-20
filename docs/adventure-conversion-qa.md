@@ -74,6 +74,20 @@ Passing the schema is not the same as a playable, source-faithful conversion: an
 
 A missing or leaked secret, or a major coverage omission (including any failing `fidelity` detail), blocks promotion even when schema validation passes.
 
+## Preflight validation
+
+Before import or scoring, check a file's structure offline:
+
+```
+bun scripts/preflight-adventure-json.ts <adventure.json> [--json] [--repair-prompt]
+```
+
+- Default prints a readable report. `--json` prints only the JSON report (with a `repairPrompt` field when combined with `--repair-prompt` on an invalid file). `--repair-prompt` without `--json` prints the report, then a model-agnostic repair prompt between start and end marker lines; a valid file gets no prompt.
+- Exit codes: 0 valid, 1 invalid (including unparseable JSON), 2 bad arguments or unreadable file. The command never writes files.
+- Each finding has a category and the validator's code. `parse`: `JSON_PARSE_ERROR`. `schema`: `SCHEMA_VALIDATION_ERROR`, `INVALID_FORMAT_VERSION`, `INVALID_VISIBILITY`. `integrity`: `DUPLICATE_ID`, `UNRESOLVED_REFERENCE`, `SELF_REFERENCE`, `HIERARCHY_CYCLE`, `DEAD_END_CYCLE`, `UNREACHABLE_SCENE`, `DUPLICATE_SCENE_PROGRESSION`.
+- It uses the same decoding, parsing and `validateAdventureJson` as import, with no separate rule set. No hosted AI or network is involved.
+- Source fidelity is not checked. A pass means only that the file passed structural and reference validation. Use the scorer above for coverage and fidelity.
+
 ## Human walkthrough
 
 not run. A first-time save / import / review walkthrough has not been recorded.
