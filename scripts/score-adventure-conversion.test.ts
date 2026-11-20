@@ -1,4 +1,6 @@
 import { spawnSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -14,6 +16,42 @@ const run = (args: string[]) =>
     },
   );
 
+const readJson = (rel: string) =>
+  JSON.parse(readFileSync(resolve(root, rel), "utf8"));
+
+const createAuthorityCase = () => {
+  const directory = mkdtempSync(resolve(tmpdir(), "conversion-score-"));
+  const doc = readJson(
+    "fixtures/adventures/reference-one-shot/adventure.v1.json",
+  );
+  const key = {
+    ...readJson("fixtures/adventures/reference-one-shot/answer-key.json"),
+    ...readJson(
+      "fixtures/adventures/reference-one-shot/variants/source-authority-answer-key.json",
+    ),
+  };
+  const opening = doc.scenes.find(
+    (scene: { id: string }) => scene.id === "ros-scene-1-landing",
+  );
+  doc.title = "The Reed Watch";
+  doc.source.title = "The Reed Watch";
+  doc.items = [];
+  for (const secret of doc.secrets) {
+    secret.relatedEntityIds = secret.relatedEntityIds.filter(
+      (id: string) => !id.startsWith("item-"),
+    );
+  }
+  opening.body = "The watch opens at noon.";
+  opening.sourceRef.page = 4;
+  opening.sourceRef.section = "PDF page 4";
+
+  const conversionPath = resolve(directory, "conversion.json");
+  const keyPath = resolve(directory, "answer-key.json");
+  writeFileSync(conversionPath, JSON.stringify(doc));
+  writeFileSync(keyPath, JSON.stringify(key));
+  return { directory, conversionPath, keyPath };
+};
+
 const REF_CONV = "fixtures/adventures/reference-one-shot/adventure.v1.json";
 const REF_KEY = "fixtures/adventures/reference-one-shot/answer-key.json";
 const SPARSE = "fixtures/adventures/reference-one-shot/variants/sparse.v1.json";
@@ -27,6 +65,8 @@ describe("score-adventure-conversion CLI", () => {
       "schema",
       "references",
       "secrets",
+      "sourceAuthority",
+      "conflicts",
       "coverage",
       "authoredVsRumour",
       "branches",
@@ -66,5 +106,26 @@ describe("score-adventure-conversion CLI", () => {
     expect(result.status).toBe(0);
     const parsed = JSON.parse(result.stdout);
     expect(parsed).toHaveProperty("overall", "pass");
+  });
+
+  it("prints the source-authority score in human-readable and JSON output", () => {
+    const authorityCase = createAuthorityCase();
+    try {
+      const human = run([authorityCase.conversionPath, authorityCase.keyPath]);
+      expect(human.status).toBe(0);
+      expect(human.stdout).toContain("sourceAuthority: pass");
+
+      const json = run([
+        authorityCase.conversionPath,
+        authorityCase.keyPath,
+        "--json",
+      ]);
+      expect(json.status).toBe(0);
+      expect(JSON.parse(json.stdout).dimensions.sourceAuthority.status).toBe(
+        "pass",
+      );
+    } finally {
+      rmSync(authorityCase.directory, { recursive: true, force: true });
+    }
   });
 });
