@@ -301,4 +301,145 @@ describe("AdventureArchive", () => {
       expect(screen.getByRole("alert").textContent).toContain("resume-failed");
     });
   });
+
+  it.each([320, 360, 390, 430])(
+    "renders a stacked mobile archive card with distinct status, truncated package summary, full metadata tooltip, and accessible actions at %ipx (#5053)",
+    async (width) => {
+      const originalInnerWidth = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", {
+        configurable: true,
+        writable: true,
+        value: width,
+      });
+
+      try {
+        const longHash =
+          "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08";
+        const longSlug =
+          "electric-razor-downtown-substation-blackout-chronicle";
+        const repo = repository();
+        repo.list.mockResolvedValue({
+          effectiveActiveId: "electric-1",
+          entries: [
+            {
+              id: "electric-1",
+              title: "Electric Razor",
+              status: "active",
+              revision: 2,
+              loadCondition: "normal",
+              sourcePackage: {
+                packageId: longSlug,
+                version: "1.0.0",
+                formatVersion: "adventure-json/v1",
+                hash: longHash,
+              },
+            },
+          ],
+        });
+        const onResume = vi.fn(async () => undefined);
+        render(AdventureArchive, {
+          repository: repo as any,
+          vaultId: "vault-1",
+          onResume,
+        });
+
+        const openBtn = await screen.findByRole("button", {
+          name: "Open adventure Electric Razor",
+        });
+        const card = screen.getByTestId("archive-entry-card");
+        const titleEl = screen.getByTestId("archive-entry-title");
+        const statusEl = screen.getByTestId("archive-entry-status");
+        const pkgEl = screen.getByTestId("archive-entry-source-package");
+        const actionsRow = screen.getByTestId("archive-entry-actions");
+        const resumeBtn = screen.getByRole("button", {
+          name: "Resume active adventure Electric Razor",
+        });
+        const renameBtn = screen.getByRole("button", {
+          name: "Rename adventure Electric Razor",
+        });
+        const duplicateBtn = screen.getByRole("button", {
+          name: "Duplicate adventure Electric Razor",
+        });
+
+        // Stacked mobile card layout transitioning to horizontal row on sm+ breakpoints.
+        expect(card.className).toContain("flex-col");
+        expect(card.className).toContain("sm:flex-row");
+        expect(card.className).toContain("min-w-0");
+
+        // Title and status stay distinct in the top row without overlapping.
+        expect(titleEl.textContent?.trim()).toBe("Electric Razor");
+        expect(titleEl.className).toContain("min-w-0");
+        expect(titleEl.className).toContain("break-words");
+        expect(statusEl.textContent?.trim()).toBe("active");
+        expect(statusEl.className).toContain("shrink-0");
+
+        // Secondary metadata stays compact while the card description and disclosure expose the full identity.
+        expect(pkgEl.textContent?.trim()).toBe(
+          `${longSlug} v1.0.0 · ${longHash.slice(0, 8)}`,
+        );
+        expect(pkgEl.className).toContain("truncate");
+        expect(pkgEl.className).toContain("min-w-0");
+        expect(pkgEl.getAttribute("title")).toBe(
+          `${longSlug} v1.0.0 · ${longHash}`,
+        );
+        const packageDescriptionId = openBtn.getAttribute("aria-describedby");
+        expect(packageDescriptionId).toBeTruthy();
+        const packageDescription = document.getElementById(
+          packageDescriptionId!,
+        );
+        expect(packageDescription?.textContent).toContain(longSlug);
+        expect(packageDescription?.textContent).toContain("version 1.0.0");
+        expect(packageDescription?.textContent).toContain(longHash);
+        expect(
+          screen.getByText("Show full package metadata").parentElement
+            ?.textContent,
+        ).toContain(longHash);
+
+        // Actions sit in a dedicated compact bottom row with >=44px targets (min-h-11 / min-h-12), distinct screen-reader names, and keyboard focus rings.
+        expect(actionsRow.className).toContain("flex-wrap");
+        for (const btn of [openBtn, resumeBtn, renameBtn, duplicateBtn]) {
+          expect(btn.className).toMatch(/min-h-1[12]/);
+          expect(btn.className).toContain("focus-visible:outline-2");
+        }
+        expect(renameBtn.className).toContain("min-w-11");
+        expect(duplicateBtn.className).toContain("min-w-11");
+        expect(renameBtn.textContent).toContain("Rename");
+        expect(duplicateBtn.textContent).toContain("Duplicate");
+
+        await fireEvent.click(resumeBtn);
+        expect(onResume).toHaveBeenCalledWith("electric-1");
+      } finally {
+        Object.defineProperty(window, "innerWidth", {
+          configurable: true,
+          writable: true,
+          value: originalInnerWidth,
+        });
+      }
+    },
+  );
+
+  it("omits the actions row when a read-only entry has no available actions", async () => {
+    const repo = repository();
+    repo.list.mockResolvedValue({
+      effectiveActiveId: "readonly-1",
+      entries: [
+        {
+          id: "readonly-1",
+          title: "Legacy Recovery Run",
+          status: "active",
+          loadCondition: "migration-recovery",
+        },
+      ],
+    });
+    render(AdventureArchive, {
+      repository: repo as any,
+      vaultId: "vault-1",
+    });
+
+    await screen.findByRole("button", {
+      name: "Open adventure Legacy Recovery Run",
+    });
+    expect(screen.queryByTestId("archive-entry-actions")).toBeNull();
+    expect(screen.queryByTestId("archive-entry-source-package")).toBeNull();
+  });
 });
