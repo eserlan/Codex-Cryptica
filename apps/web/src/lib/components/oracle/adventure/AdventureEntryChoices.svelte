@@ -18,6 +18,7 @@
     onImportExperimentalFile,
     importError = null,
     importValidationErrors = [],
+    importRepairPrompt = null,
     importing = false,
     canDiscover = true,
     canImport = true,
@@ -30,6 +31,7 @@
     onImportExperimentalFile?: (file: File) => void | Promise<void>;
     importError?: string | null;
     importValidationErrors?: ImportValidationIssue[];
+    importRepairPrompt?: string | null;
     importing?: boolean;
     canDiscover?: boolean;
     canImport?: boolean;
@@ -179,6 +181,7 @@
       {onImportExperimentalFile}
       {importError}
       {importValidationErrors}
+      {importRepairPrompt}
       {importing}
       {canImport}
     />

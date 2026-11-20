@@ -63,6 +63,7 @@
     {canImport}
     importError={imports.error}
     importValidationErrors={imports.validationErrors}
+    importRepairPrompt={imports.repairPrompt}
     importing={imports.inFlight}
     {onDiscover}
     {onSurpriseMe}

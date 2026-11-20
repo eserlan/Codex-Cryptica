@@ -3,9 +3,11 @@ import {
   unwrapAdventureJsonFence,
 } from "./adventure-json-fence.js";
 import {
+  buildAdventureRepairPrompt,
   adventureSourcePackageToAdventureJson,
   computeAdventureJsonHash,
   parseAdventureMarkdown,
+  preflightAdventureJson,
   selectAdventureJsonPredecessor,
   validateAdventureJson,
   MAX_ADVENTURE_JSON_BYTES,
@@ -82,6 +84,7 @@ export class AdventureImportController {
   experimentalOrigin = $state<"markdown" | "pdf" | null>(null);
   error = $state<string | null>(null);
   validationErrors = $state<ImportValidationIssue[]>([]);
+  repairPrompt = $state<string | null>(null);
   inFlight = $state(false);
   approving = $state(false);
   approveError = $state<string | null>(null);
@@ -121,6 +124,7 @@ export class AdventureImportController {
     const sourceVaultId = this.deps.getVaultId();
     this.error = null;
     this.validationErrors = [];
+    this.repairPrompt = null;
     this.approveError = null;
     this.duplicate = null;
     if (!this.deps.canImport() || this.deps.isGuest()) {
@@ -181,11 +185,15 @@ export class AdventureImportController {
     request: ImportRequest,
     origin: "markdown" | "pdf" | null,
     validationError: string,
+    preflightInput: string,
   ): Promise<void> {
     const validation = validateAdventureJson(parsed);
     if (!validation.ok) {
       this.error = validationError;
       this.validationErrors = validation.errors;
+      this.repairPrompt = buildAdventureRepairPrompt(
+        preflightAdventureJson(preflightInput),
+      );
       return;
     }
     let stored: StoredAdventurePackage[] = [];
@@ -249,6 +257,9 @@ export class AdventureImportController {
               : message,
         },
       ];
+      this.repairPrompt = buildAdventureRepairPrompt(
+        preflightAdventureJson(unwrapped.ok ? unwrapped.text : text),
+      );
       return;
     }
     await this.reviewValidated(
@@ -256,6 +267,7 @@ export class AdventureImportController {
       request,
       null,
       "Adventure JSON validation failed.",
+      unwrapped.text,
     );
   }
 
@@ -282,11 +294,13 @@ export class AdventureImportController {
       if (result.error.code !== "ABORTED") this.error = result.error.message;
       return;
     }
+    const adventureJson = adventureSourcePackageToAdventureJson(result.package);
     await this.reviewValidated(
-      adventureSourcePackageToAdventureJson(result.package),
+      adventureJson,
       request,
       isPdf ? "pdf" : "markdown",
       "Converted adventure failed Adventure JSON validation.",
+      JSON.stringify(adventureJson),
     );
   }
 
@@ -381,6 +395,7 @@ export class AdventureImportController {
     this.draftVaultId = null;
     this.error = null;
     this.validationErrors = [];
+    this.repairPrompt = null;
     this.inFlight = false;
     this.approveError = null;
     this.deps.onCancel();

@@ -91,6 +91,9 @@ a package, and the same file always gives the same result.
    code block is also accepted; anything else around the JSON is rejected.
 3. Codex validates the file locally against the Adventure JSON schema. If
    validation fails, you get the exact errors and nothing is written.
+   Choose **Copy repair prompt** beside the errors to copy the local repair
+   guidance and diagnostics. Copying happens only when you choose it; Codex
+   does not send the prompt anywhere. You choose where to paste it.
 4. Review its locations, actors, factions, scenes, encounters, clues,
    rumours, items, endings, and unresolved items. Secrets stay locked to
    `gm-only`; you can adjust visibility only for non-secret content.

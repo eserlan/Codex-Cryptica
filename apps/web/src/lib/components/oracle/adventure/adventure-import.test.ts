@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  buildAdventureRepairPrompt,
   computeAdventureJsonHash,
+  preflightAdventureJson,
   type AdventureJsonV1,
   type StoredAdventurePackage,
 } from "@codex/adventure-engine";
@@ -83,6 +85,23 @@ describe("adventure import controller", () => {
       expect(imports.inFlight).toBe(false);
     },
   );
+
+  it("builds repair guidance from local preflight diagnostics without the source document", async () => {
+    const source = JSON.stringify({
+      formatVersion: "not-adventure-json",
+      sourceMarker: "SOURCE_SECRET_SENTINEL",
+    });
+    const { imports } = setup();
+
+    await imports.importJson(jsonFile(source));
+
+    expect(imports.repairPrompt).toBe(
+      buildAdventureRepairPrompt(preflightAdventureJson(source)),
+    );
+    expect(imports.repairPrompt).toContain("INVALID_FORMAT_VERSION");
+    expect(imports.repairPrompt).not.toContain(source);
+    expect(imports.repairPrompt).not.toContain("SOURCE_SECRET_SENTINEL");
+  });
 
   describe("Markdown JSON fences", () => {
     const pretty = JSON.stringify(sample, null, 2);

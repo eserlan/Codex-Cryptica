@@ -12,10 +12,12 @@
     importing,
     importError,
     importValidationErrors,
+    importRepairPrompt = null,
   }: {
     importing: boolean;
     importError: string | null;
     importValidationErrors: ImportValidationIssue[];
+    importRepairPrompt?: string | null;
   } = $props();
 </script>
 
@@ -38,6 +40,9 @@
     {#if importError}
       <p class="font-medium">{importError}</p>
     {/if}
-    <AdventureImportValidationErrors errors={importValidationErrors} />
+    <AdventureImportValidationErrors
+      errors={importValidationErrors}
+      repairPrompt={importRepairPrompt}
+    />
   </div>
 {/if}

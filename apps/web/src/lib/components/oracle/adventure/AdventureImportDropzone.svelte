@@ -15,6 +15,7 @@
     onImportExperimentalFile,
     importError = null,
     importValidationErrors = [],
+    importRepairPrompt = null,
     importing = false,
     canImport = true,
   }: {
@@ -22,6 +23,7 @@
     onImportExperimentalFile?: (file: File) => void | Promise<void>;
     importError?: string | null;
     importValidationErrors?: ImportValidationIssue[];
+    importRepairPrompt?: string | null;
     importing?: boolean;
     canImport?: boolean;
   } = $props();
@@ -208,5 +210,10 @@
     onchange={(event) => void handleFileChange(event)}
   />
 
-  <AdventureImportFeedback {importing} {importError} {importValidationErrors} />
+  <AdventureImportFeedback
+    {importing}
+    {importError}
+    {importValidationErrors}
+    {importRepairPrompt}
+  />
 </div>

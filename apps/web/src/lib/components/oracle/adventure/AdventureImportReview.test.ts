@@ -4,7 +4,9 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
+  buildAdventureRepairPrompt,
   computeAdventureJsonHash,
+  preflightAdventureJson,
   saveApprovedAdventureJson,
   validateAdventureJson,
   type AdventureJsonV1,
@@ -310,25 +312,75 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     ).toBe(true);
   });
 
-  it("AC8: renders validation error list in alert when Adventure JSON validation fails and writes zero files", async () => {
+  it("AC8: copies the local repair prompt and diagnostics for Adventure JSON validation errors", async () => {
     const io = createMemoryIO();
-    const result = validateAdventureJson({ formatVersion: "bad" });
+    const source = JSON.stringify({
+      formatVersion: "bad",
+      title: "SOURCE_SECRET_SENTINEL",
+    });
+    const result = validateAdventureJson(JSON.parse(source));
     expect(result.ok).toBe(false);
     if (result.ok) return;
 
-    render(AdventureEntryChoices, {
-      props: {
-        onDiscover: vi.fn(),
-        onOwnPremise: vi.fn(),
-        importError: "Adventure JSON validation failed.",
-        importValidationErrors: result.errors,
-      },
-    });
+    const repairPrompt = buildAdventureRepairPrompt(
+      preflightAdventureJson(source),
+    );
+    expect(repairPrompt).not.toBeNull();
+    if (!repairPrompt) return;
 
-    const alert = screen.getByRole("alert");
-    expect(alert.textContent).toContain("INVALID_FORMAT_VERSION");
-    expect(io.writeCalls).toBe(0);
-    expect(io.files.size).toBe(0);
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    const previousClipboard = Object.getOwnPropertyDescriptor(
+      navigator,
+      "clipboard",
+    );
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: { writeText },
+    });
+    const networkRequest = vi.fn();
+    vi.stubGlobal("fetch", networkRequest);
+
+    try {
+      render(AdventureEntryChoices, {
+        props: {
+          onDiscover: vi.fn(),
+          onOwnPremise: vi.fn(),
+          importError: "Adventure JSON validation failed.",
+          importValidationErrors: result.errors,
+          importRepairPrompt: repairPrompt,
+        },
+      });
+
+      const alert = screen.getByRole("alert");
+      expect(alert.textContent).toContain("INVALID_FORMAT_VERSION");
+      expect(repairPrompt).toContain("INVALID_FORMAT_VERSION");
+      expect(repairPrompt).toContain("Set formatVersion to");
+      const formatVersionError = result.errors.find(
+        (error) => error.code === "INVALID_FORMAT_VERSION",
+      );
+      expect(formatVersionError).toBeTruthy();
+      expect(repairPrompt).toContain(
+        JSON.stringify(formatVersionError?.message).slice(1, -1),
+      );
+      expect(repairPrompt).not.toContain(source);
+      expect(repairPrompt).not.toContain("SOURCE_SECRET_SENTINEL");
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Copy repair prompt" }),
+      );
+      await waitFor(() => expect(writeText).toHaveBeenCalledWith(repairPrompt));
+      expect(screen.getByRole("status").textContent).toContain("copied");
+      expect(networkRequest).not.toHaveBeenCalled();
+      expect(io.writeCalls).toBe(0);
+      expect(io.files.size).toBe(0);
+    } finally {
+      if (previousClipboard) {
+        Object.defineProperty(navigator, "clipboard", previousClipboard);
+      } else {
+        Reflect.deleteProperty(navigator, "clipboard");
+      }
+      vi.unstubAllGlobals();
+    }
   });
 
   it("shows the structural diff against a predecessor and hides it without one", async () => {

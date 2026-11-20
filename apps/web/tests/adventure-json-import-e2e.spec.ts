@@ -157,6 +157,60 @@ test.describe("Imported Adventure JSON (v1) E2E (#4983, protocol §5)", () => {
     });
   });
 
+  test("copies validation repair guidance locally without contacting an AI provider", async ({
+    page,
+  }) => {
+    await page.evaluate(() => {
+      const browserWindow = window as unknown as {
+        __copiedRepairPrompt?: string;
+      };
+      Object.defineProperty(navigator, "clipboard", {
+        configurable: true,
+        value: {
+          writeText: async (text: string) => {
+            browserWindow.__copiedRepairPrompt = text;
+          },
+        },
+      });
+    });
+
+    let providerRequests = 0;
+    page.on("request", (request) => {
+      if (
+        ORACLE_PROXY.test(request.url()) ||
+        request.url().includes("generateContent")
+      ) {
+        providerRequests += 1;
+      }
+    });
+
+    const source = JSON.stringify({
+      formatVersion: "bad",
+      title: "SOURCE_SECRET_SENTINEL",
+    });
+    await page.getByTestId("adventure-file-input").setInputFiles({
+      name: "invalid-adventure.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(source, "utf8"),
+    });
+
+    await page.getByRole("button", { name: "Copy repair prompt" }).click();
+    await expect(
+      page.getByTestId("adventure-repair-copy-success"),
+    ).toBeVisible();
+
+    const copied = await page.evaluate(
+      () =>
+        (window as unknown as { __copiedRepairPrompt?: string })
+          .__copiedRepairPrompt ?? "",
+    );
+    expect(copied).toContain("INVALID_FORMAT_VERSION");
+    expect(copied).toContain("Set formatVersion to");
+    expect(copied).not.toContain(source);
+    expect(copied).not.toContain("SOURCE_SECRET_SENTINEL");
+    expect(providerRequests).toBe(0);
+  });
+
   test("imports, deduplicates, diffs versions, starts from reactive state, survives reload, and guards GM secrets", async ({
     page,
   }) => {
