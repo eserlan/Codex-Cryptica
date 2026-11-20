@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   ConversionAnswerKeySchema,
   scoreAdventureConversion,
+  textFoundIn,
 } from "../../src/adventure-json/conversion-score";
 
 const root = resolve(__dirname, "../../../..");
@@ -23,6 +24,10 @@ const mysteryDoc = readJson("fixtures/adventures/mystery/adventure.v1.json");
 
 const sparseDoc = readJson(
   "fixtures/adventures/reference-one-shot/variants/sparse.v1.json",
+);
+
+const contentThinDoc = readJson(
+  "fixtures/adventures/reference-one-shot/variants/content-thin.v1.json",
 );
 
 const COLLECTIONS = [
@@ -243,6 +248,75 @@ describe("scoreAdventureConversion fidelity", () => {
           d.includes("Wick yields if his hound is hurt"),
       ),
     ).toBe(true);
+  });
+
+  it("fails the content-thin variant on fidelity only, with every structural check green", () => {
+    const result = scoreAdventureConversion(contentThinDoc, refKey);
+    expect(idsByCollection(contentThinDoc)).toEqual(idsByCollection(refDoc));
+    for (const collection of COLLECTIONS) {
+      const refRecords: { id: string; sourceRef?: { anchor: string } }[] =
+        refDoc[collection] ?? [];
+      const thinRecords: { id: string; sourceRef?: { anchor: string } }[] =
+        contentThinDoc[collection] ?? [];
+      for (const record of thinRecords) {
+        const counterpart = refRecords.find((r) => r.id === record.id);
+        expect(record.sourceRef?.anchor).toBe(counterpart?.sourceRef?.anchor);
+      }
+    }
+    for (const name of [
+      "schema",
+      "references",
+      "secrets",
+      "coverage",
+      "branches",
+      "citations",
+      "truncation",
+    ] as const) {
+      expect(result.dimensions[name].status).toBe("pass");
+    }
+    expect(result.dimensions.authoredVsRumour.status).toBe("n/a");
+    expect(result.dimensions.fidelity.status).toBe("fail");
+    expect(result.overall).toBe("fail");
+    const lines = result.dimensions.fidelity.details.join("\n");
+    for (const category of [
+      "trigger",
+      "consequence",
+      "clue",
+      "alternate-outcome",
+    ]) {
+      expect(lines).toContain(`missing ${category} detail`);
+    }
+    expect(
+      result.dimensions.fidelity.details.some(
+        (d) =>
+          d.includes("ros-scene-3-wheel-room") &&
+          d.includes("missing trigger detail"),
+      ),
+    ).toBe(true);
+  });
+
+  const sceneConditionsMirrored = (key: typeof refKey) =>
+    (key.sceneConditions ?? []).every((entry) =>
+      (key.actionableDetails ?? []).some(
+        (d) =>
+          d.sourceId === entry.sourceId &&
+          d.category === "trigger" &&
+          textFoundIn(entry.condition, d.detail),
+      ),
+    );
+
+  it("keeps every sceneCondition mirrored by a trigger detail in the key", () => {
+    expect(refKey.sceneConditions?.length).toBeGreaterThan(0);
+    expect(sceneConditionsMirrored(refKey)).toBe(true);
+  });
+
+  it("detects a sceneCondition whose trigger detail was removed", () => {
+    const key = clone(refKey);
+    key.actionableDetails = key.actionableDetails?.filter(
+      (d) =>
+        !(d.sourceId === "ros-scene-3-wheel-room" && d.category === "trigger"),
+    );
+    expect(sceneConditionsMirrored(key)).toBe(false);
   });
 
   it("a single record that lost the lever and flood trigger fails fidelity only", () => {

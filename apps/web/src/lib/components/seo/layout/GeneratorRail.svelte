@@ -22,18 +22,18 @@
 
 <!-- Mobile label — hidden on lg where the sticky card makes the context clear -->
 <p
-  class="lg:hidden text-sm font-bold uppercase tracking-widest font-header text-theme-text mb-2"
+  class="lg:hidden text-base font-bold uppercase tracking-widest font-header text-theme-text mb-2"
 >
   GM Reference
 </p>
 <div class="sticky top-24 flex min-w-0 flex-col gap-6">
   <div
-    class="min-w-0 p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
+    class="min-w-0 p-4 md:p-5 bg-theme-surface/50 border border-theme-border/50 rounded-2xl shadow-sm backdrop-blur-sm"
   >
     {#if generatedData}
       <div
         in:fade={{ duration: 250 }}
-        class="seo-rail seo-md min-w-0 text-base leading-relaxed text-theme-text/85 {variant ===
+        class="seo-rail seo-md min-w-0 text-lg lg:text-base leading-relaxed text-theme-text/85 {variant ===
         'names'
           ? 'py-2'
           : ''}"
@@ -112,5 +112,17 @@
   }
   .seo-rail.seo-md :global(strong) {
     color: color-mix(in srgb, var(--color-text) 92%, transparent);
+  }
+  /* Match the long-form reading size on phones, without enlarging the desktop rail. */
+  @media (max-width: 1023px) {
+    .seo-rail.seo-md :global(.seo-label) {
+      font-size: 1rem;
+    }
+    .seo-rail.seo-md :global(h3) {
+      font-size: 1.125rem;
+    }
+    .seo-rail.seo-md :global(h2) {
+      font-size: 1.25rem;
+    }
   }
 </style>

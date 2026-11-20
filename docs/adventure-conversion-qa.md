@@ -26,11 +26,19 @@ Scored on 2026-11-17 with `bun scripts/score-adventure-conversion.ts <conversion
 
 Positive controls (hand-written correct conversions):
 
-| Fixture                                      | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
-| -------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
-| Reference one-shot `adventure.v1.json`       | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
-| Mystery `adventure.v1.json`                  | pass   | pass       | pass    | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
-| Reference one-shot `variants/sparse.v1.json` | pass   | pass       | pass    | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
+| Fixture                                | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `adventure.v1.json` | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | pass     | pass    |
+| Mystery `adventure.v1.json`            | pass   | pass       | pass    | pass     | pass             | pass     | pass      | pass       | n/a      | pass    |
+
+Negative controls (hand-written conversions that must fail):
+
+| Fixture                                            | Schema | References | Secrets | Coverage | AuthoredVsRumour | Branches | Citations | Truncation | Fidelity | Overall |
+| -------------------------------------------------- | ------ | ---------- | ------- | -------- | ---------------- | -------- | --------- | ---------- | -------- | ------- |
+| Reference one-shot `variants/sparse.v1.json`       | pass   | pass       | pass    | fail     | n/a              | pass     | pass      | pass       | fail     | fail    |
+| Reference one-shot `variants/content-thin.v1.json` | pass   | pass       | pass    | pass     | n/a              | pass     | pass      | pass       | fail     | fail    |
+
+`variants/content-thin.v1.json` is the regression for the "correct IDs but missing triggers" false green: it keeps every ID, anchor and structural text, so it passes every dimension except `fidelity`.
 
 ## Reproduction
 
@@ -60,7 +68,7 @@ Dimensions:
 6. `branches`: the key `branch.sourceId` cited by an optional scene (or the target of an optional branch); an encounter citing `alternativeSolution.obstacleSourceId` (or whose `sceneId` scene cites it) with a `socialBypassOfCombat: true` solution when required, or at least two solutions otherwise.
 7. `citations`: at least one `sourceRef.anchor` exists and every anchor equals a key section `sourceId`; unknown anchors listed.
 8. `truncation`: fails when the last non-container key section in key order is not cited; details list the uncited trailing run.
-9. `fidelity`: `n/a` when the key has no `actionableDetails` or the list is empty. Otherwise, for each detail, take the records in every collection except `unresolved` that cite the detail's section. The detail is present when the text match holds for at least one string in any field of those records, each string checked on its own. A missing detail is one finding: `missing <category> detail in <sourceId> "<title>" (cited by: <id>, <id>): <detail>`, or `(no record cites this section)` when nothing cites it. Records in `unresolved` are excluded, so a note that a detail was dropped never hides the omission.
+9. `fidelity` (the "record content fidelity" check from #5009; `sceneConditions` are scored through their matching `trigger` details, which the test in `conversion-score.test.ts` keeps consistent): `n/a` when the key has no `actionableDetails` or the list is empty. Otherwise, for each detail, take the records in every collection except `unresolved` that cite the detail's section. The detail is present when the text match holds for at least one string in any field of those records, each string checked on its own. A missing detail is one finding: `missing <category> detail in <sourceId> "<title>" (cited by: <id>, <id>): <detail>`, or `(no record cites this section)` when nothing cites it. Records in `unresolved` are excluded, so a note that a detail was dropped never hides the omission.
 
 When the schema fails, every other dimension is `fail` with the detail `not checked: schema invalid`.
 
@@ -70,9 +78,32 @@ The optional top-level `actionableDetails` array holds `{ sourceId, category, de
 
 Passing the schema is not the same as a playable, source-faithful conversion: an ID-complete package can still lack the triggers, clues, outcomes and consequences a table needs.
 
+## Gate types
+
+- **Mechanical gates**: `schema`, `references`, `citations`, `truncation`.
+- **Structural gates**: `branches` checks optional-path and alternative-solution fields.
+- **Mixed structural and text-match gates**: `secrets` checks secret visibility and text matching; `coverage` checks section and ending references, NPC presence, and text-matched clues.
+- **Heuristic text-match gates** (deterministic and run in CI, but approximate): `authoredVsRumour`, `fidelity`.
+- **Human or model judgement**: subjective fidelity, invented facts and playability. These stay outside CI and are recorded in the Results table with model, version and date.
+
 ## Promotion rule
 
 A missing or leaked secret, or a major coverage omission (including any failing `fidelity` detail), blocks promotion even when schema validation passes.
+
+## Preflight validation
+
+Before import or scoring, check a file's structure offline:
+
+```
+bun scripts/preflight-adventure-json.ts <adventure.json> [--json] [--repair-prompt]
+```
+
+- Default prints a readable report. `--json` prints only the JSON report (with a `repairPrompt` field when combined with `--repair-prompt` on an invalid file). `--repair-prompt` without `--json` prints the report, then a model-agnostic repair prompt between start and end marker lines; a valid file gets no prompt.
+- Exit codes: 0 valid, 1 invalid (including unparseable JSON), 2 bad arguments, unreadable file or oversized file. The command never writes files.
+- Adventure JSON files must be 10 MiB or smaller, matching the import size limit; larger files are rejected before being read.
+- Each finding has a category and the validator's code. `parse`: `JSON_PARSE_ERROR`. `schema`: `SCHEMA_VALIDATION_ERROR`, `INVALID_FORMAT_VERSION`, `INVALID_VISIBILITY`. `integrity`: `DUPLICATE_ID`, `UNRESOLVED_REFERENCE`, `SELF_REFERENCE`, `HIERARCHY_CYCLE`, `DEAD_END_CYCLE`, `UNREACHABLE_SCENE`, `DUPLICATE_SCENE_PROGRESSION`.
+- It uses the same decoding, parsing and `validateAdventureJson` as import, with no separate rule set. No hosted AI or network is involved.
+- Source fidelity is not checked. A pass means only that the file passed structural and reference validation. Use the scorer above for coverage and fidelity.
 
 ## Human walkthrough
 

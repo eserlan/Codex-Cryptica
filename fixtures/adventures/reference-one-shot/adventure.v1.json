@@ -140,6 +140,7 @@
     {
       "id": "actor-maren-holt",
       "name": "Maren Holt",
+      "kind": "character",
       "summary": "The miller's daughter, tired and quick to anger.",
       "role": "Quest giver",
       "motivation": "Wants the mill running again to pay off her late mother's debt before the bailiff comes.",
@@ -154,6 +155,7 @@
     {
       "id": "actor-tobiah-reed",
       "name": "Tobiah Reed",
+      "kind": "character",
       "summary": "The mill's accountant, polite and unhurried.",
       "role": "Mill accountant",
       "locationId": "loc-greywater-bend",
@@ -167,6 +169,7 @@
     {
       "id": "actor-wick",
       "name": "Wick",
+      "kind": "character",
       "summary": "A dog-handler and hired guard, blunt and loyal to whoever pays.",
       "role": "Guard",
       "locationId": "loc-wheel-room",
@@ -180,6 +183,7 @@
     {
       "id": "actor-aldous-holt",
       "name": "Aldous Holt",
+      "kind": "character",
       "summary": "The missing miller and Maren's father.",
       "role": "Missing miller",
       "visibility": "player-visible",
