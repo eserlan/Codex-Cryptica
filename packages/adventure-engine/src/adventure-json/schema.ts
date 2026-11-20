@@ -84,12 +84,18 @@ export const LocationConnectionSchema = z
   .strict();
 export type LocationConnection = z.infer<typeof LocationConnectionSchema>;
 
+const AdventureEntityMetadataSchema = z.object({
+  aliases: z.array(z.string().trim().min(1).regex(/\S/)).optional(),
+  labels: z.array(z.string()).optional(),
+});
+
 export const LocationSchema = z
   .object({
     id: z.string().min(1),
     name: z.string().min(1),
     summary: z.string(),
     description: z.string().optional(),
+    ...AdventureEntityMetadataSchema.shape,
     parentLocationId: z.string().min(1).optional(),
     connections: z.array(LocationConnectionSchema).optional(),
     visibility: VisibilitySchema,
@@ -109,6 +115,7 @@ export const ActorSchema = z
     role: z.string().optional(),
     motivation: z.string().optional(),
     disposition: z.string().optional(),
+    ...AdventureEntityMetadataSchema.shape,
     factionId: z.string().min(1).optional(),
     locationId: z.string().min(1).optional(),
     visibility: VisibilitySchema,
@@ -126,6 +133,7 @@ export const FactionSchema = z
     description: z.string().optional(),
     goals: z.array(z.string()).optional(),
     dispositionTowardsParty: z.string().optional(),
+    ...AdventureEntityMetadataSchema.shape,
     visibility: VisibilitySchema,
     epistemicStatus: EpistemicStatusSchema,
     sourceRef: SourceReferenceSchema.optional(),
@@ -229,6 +237,7 @@ export const ItemSchema = z
     description: z.string().optional(),
     locationId: z.string().min(1).optional(),
     actorId: z.string().min(1).optional(),
+    ...AdventureEntityMetadataSchema.shape,
     visibility: VisibilitySchema,
     epistemicStatus: EpistemicStatusSchema,
     sourceRef: SourceReferenceSchema.optional(),
