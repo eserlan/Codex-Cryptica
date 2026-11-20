@@ -468,7 +468,9 @@ function detectHiddenTextFields(
     ].map((secret) => [secret.id, secret]),
   );
   const hidden = [...hiddenById.values(), ...proposed].filter(
-    (secret) => secret.status === "hidden" && !revealed.has(secret.id),
+    (secret) =>
+      secret.status === "hidden" &&
+      (secret.id.startsWith("proposed-") || !revealed.has(secret.id)),
   );
   const findings: HiddenLeakageFinding[] = [];
   for (const secret of hidden) {
