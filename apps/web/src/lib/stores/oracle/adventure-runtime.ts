@@ -7,7 +7,7 @@ import { AdventureGroundingService } from "#lib/services/adventure/adventure-gro
 import {
   packageProgressIndex,
   adventureJsonGmOnlyText,
-  adventureJsonHiddenRecordIds,
+  adventureJsonRecordIds,
   type AdventureSession,
   type CommitMetadata,
 } from "@codex/adventure-engine";
@@ -118,7 +118,7 @@ export class AdventureRuntime {
     return {
       ...packageProgressIndex(pkg),
       packageSceneIds: pkg.scenes.map((scene) => scene.id),
-      packageRecordIds: adventureJsonHiddenRecordIds(pkg),
+      packageRecordIds: adventureJsonRecordIds(pkg),
       packageGmOnlyText: adventureJsonGmOnlyText(pkg),
     };
   }
