@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AdventureArchiveEntry } from "#lib/services/adventure/adventure-session-repository.js";
+  import AdventureArchivePackageDisclosure from "./AdventureArchivePackageDisclosure.svelte";
 
   let {
     entry,
@@ -34,6 +35,9 @@
   const statusLabel = $derived(
     entry.loadCondition === "unreadable" ? "Unreadable" : entry.status,
   );
+  const packageDescriptionId = $derived(
+    entry.sourcePackage ? `archive-entry-package-${entry.id}` : undefined,
+  );
   const hasActions = $derived(
     canEdit ||
       (entry.status === "active" && isReadable && Boolean(onResume)) ||
@@ -53,9 +57,7 @@
     type="button"
     onclick={onOpen}
     aria-label={`Open adventure ${entry.title}`}
-    aria-describedby={entry.sourcePackage
-      ? `archive-entry-package-${entry.id}`
-      : undefined}
+    aria-describedby={packageDescriptionId}
   >
     <span class="flex w-full min-w-0 items-start justify-between gap-2">
       <span
@@ -167,16 +169,4 @@
     </div>
   {/if}
 </div>
-{#if entry.sourcePackage}
-  <details class="min-w-0 text-xs text-theme-text">
-    <summary
-      class="min-h-11 cursor-pointer content-center underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-    >
-      Show full package metadata
-    </summary>
-    <p class="break-all font-mono">
-      {entry.sourcePackage.packageId} v{entry.sourcePackage.version} · {entry
-        .sourcePackage.hash}
-    </p>
-  </details>
-{/if}
+<AdventureArchivePackageDisclosure sourcePackage={entry.sourcePackage} />
