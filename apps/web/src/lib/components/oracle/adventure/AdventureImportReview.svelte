@@ -114,6 +114,76 @@
   }
 </script>
 
+{#snippet reviewFooter()}
+  <footer
+    class="sticky bottom-0 z-10 -mx-1 flex flex-col gap-2 rounded-t-xl border-t border-theme-border bg-theme-surface/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-lg backdrop-blur sm:flex-row sm:items-center sm:justify-between"
+    data-testid="adventure-review-footer"
+  >
+    <div class="min-w-0 text-xs text-theme-text">
+      {#if !liveValidation.ok}
+        <span class="font-semibold text-theme-text" role="status">
+          Blocked: {liveValidation.errors.length} validation
+          {liveValidation.errors.length === 1 ? "error" : "errors"}
+        </span>
+      {:else if isApproved}
+        <span class="font-medium text-theme-text">
+          Approved &amp; locked in Vault
+        </span>
+      {:else}
+        <span>
+          Local-only validation ·
+          <a
+            href="#adventure-ai-notice"
+            class="underline decoration-theme-text/60 underline-offset-2 hover:decoration-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+          >
+            Vault &amp; AI notice
+          </a>
+        </span>
+      {/if}
+    </div>
+
+    <div class="flex flex-wrap items-center justify-end gap-3">
+      <button
+        type="button"
+        data-testid="adventure-cancel-button"
+        disabled={approving}
+        onclick={onCancel}
+        class="min-h-11 rounded-lg border border-theme-text/75 bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
+      >
+        {isApproved ? "Done" : "Cancel"}
+      </button>
+      {#if isApproved && onStartAdventure && approvedHash}
+        <button
+          type="button"
+          data-testid="adventure-review-start-button"
+          onclick={() =>
+            onStartAdventure(
+              $state.snapshot(draft) as AdventureJsonV1,
+              approvedHash!,
+            )}
+          class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        >
+          Start adventure
+        </button>
+      {:else}
+        <button
+          type="button"
+          data-testid="adventure-approve-button"
+          disabled={isLocked}
+          onclick={() => void handleApprove()}
+          class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
+        >
+          {approving
+            ? "Approving…"
+            : isApproved
+              ? "Approved"
+              : "Approve Adventure"}
+        </button>
+      {/if}
+    </div>
+  </footer>
+{/snippet}
+
 <section
   class="mx-auto flex w-full max-w-5xl flex-col gap-6"
   aria-labelledby="adventure-import-review-heading"
@@ -172,6 +242,7 @@
   <div
     role="region"
     aria-label="AI provider excerpt notice"
+    id="adventure-ai-notice"
     class="rounded-xl border border-theme-primary/40 bg-theme-surface p-4 text-sm text-theme-text"
     data-testid="adventure-ai-notice"
   >
@@ -181,7 +252,10 @@
         aria-hidden="true"
       ></span>
       <div class="space-y-1">
-        <p class="font-semibold text-theme-text">
+        <p
+          id="adventure-ai-notice-heading"
+          class="font-semibold text-theme-text"
+        >
           Vault storage and AI excerpts
         </p>
         <p class="leading-relaxed text-theme-text">
@@ -228,43 +302,5 @@
     </div>
   {/if}
 
-  <footer class="flex flex-wrap items-center justify-end gap-3 pb-4">
-    <button
-      type="button"
-      data-testid="adventure-cancel-button"
-      disabled={approving}
-      onclick={onCancel}
-      class="min-h-11 rounded-lg border border-theme-text/75 bg-theme-surface px-4 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
-    >
-      {isApproved ? "Done" : "Cancel"}
-    </button>
-    {#if isApproved && onStartAdventure && approvedHash}
-      <button
-        type="button"
-        data-testid="adventure-review-start-button"
-        onclick={() =>
-          onStartAdventure(
-            $state.snapshot(draft) as AdventureJsonV1,
-            approvedHash!,
-          )}
-        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-      >
-        Start adventure
-      </button>
-    {:else}
-      <button
-        type="button"
-        data-testid="adventure-approve-button"
-        disabled={isLocked}
-        onclick={() => void handleApprove()}
-        class="min-h-11 rounded-lg bg-theme-primary px-5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed"
-      >
-        {approving
-          ? "Approving…"
-          : isApproved
-            ? "Approved"
-            : "Approve Adventure"}
-      </button>
-    {/if}
-  </footer>
+  {@render reviewFooter()}
 </section>
