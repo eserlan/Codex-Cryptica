@@ -30,11 +30,12 @@ const CELLAR = "ros-scene-4-cellar";
 const CLUE = "clue-sluice-sabotage";
 const SECRET = "secret-filed-pin";
 
-// The cellar is made GM-only so a GM-only visited scene can be tested.
+// The reference cellar scene and sabotage clue are already GM-only. The clue is
+// made player-visible here so a found clue can be projected.
 const pkg = AdventureJsonV1Schema.parse({
   ...structuredClone(base),
-  scenes: base.scenes.map((scene) =>
-    scene.id === CELLAR ? { ...scene, visibility: "gm-only" } : scene,
+  clues: base.clues.map((clue) =>
+    clue.id === CLUE ? { ...clue, visibility: "player-visible" } : clue,
   ),
 });
 const index = packageProgressIndex(pkg);
@@ -111,6 +112,18 @@ describe("projectPlayerPackageProgress", () => {
       ],
       foundClues: [{ id: CLUE, text: clue.text }],
     });
+  });
+
+  it("never shows a gm-only clue even when it is confirmed found", () => {
+    const progress = ledger([
+      [
+        { recordId: LANDING, to: "active" },
+        { recordId: CLUE, to: "resolved" },
+      ],
+    ]);
+    const view = projectPlayerPackageProgress(base, progress);
+    expect(view.foundClues).toEqual([]);
+    expect(JSON.stringify(view)).not.toContain("sabotaged");
   });
 
   it("has no current scene until the current scene is confirmed visited", () => {

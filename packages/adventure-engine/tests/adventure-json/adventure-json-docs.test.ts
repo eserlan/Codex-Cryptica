@@ -90,3 +90,40 @@ describe("Public Adventure JSON v1 static schemas, examples, and conversion fixt
     }
   });
 });
+
+describe("Staged-conversion checkpoint manifest schema (#5003)", () => {
+  const schemaPath = "apps/web/static/schemas/adventure-checkpoint/v1.json";
+  const examplePath =
+    "apps/web/static/schemas/adventure-checkpoint/examples/staged-manifest.v1.json";
+  const fixturePath = "fixtures/adventures/staged-manifest/manifest.json";
+
+  const compile = () => {
+    const schema = readJson(schemaPath) as Record<string, unknown>;
+    expect(schema.$id).toBe(
+      "https://codexcryptica.com/schemas/adventure-checkpoint/v1.json",
+    );
+    return new Ajv2020({ strict: false, allErrors: true }).compile(schema);
+  };
+
+  it("compiles under Draft 2020-12", () => {
+    expect(compile()).toBeTypeOf("function");
+  });
+
+  it.each([examplePath, fixturePath])("accepts %s", (relPath) => {
+    const validate = compile();
+    expect(validate(readJson(relPath))).toBe(true);
+  });
+
+  it("rejects a wrong kind or manifestVersion", () => {
+    const validate = compile();
+    const manifest = readJson(examplePath) as Record<string, unknown>;
+    expect(validate({ ...manifest, kind: "other" })).toBe(false);
+    expect(validate({ ...manifest, manifestVersion: 2 })).toBe(false);
+  });
+
+  it("is rejected as Adventure JSON v1 by both the schema and the validator", () => {
+    const manifest = readJson(examplePath);
+    expect(AdventureJsonV1Schema.safeParse(manifest).success).toBe(false);
+    expect(validateAdventureJson(manifest).ok).toBe(false);
+  });
+});

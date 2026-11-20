@@ -120,7 +120,7 @@
     {
       "id": "loc-miller-cellar",
       "name": "The Miller's Cellar",
-      "summary": "Cold stone cellar below the mill that floods once the sluice lever is pulled.",
+      "summary": "Cold stone cellar below the mill.",
       "parentLocationId": "loc-greywater-bend",
       "connections": [
         {
@@ -169,7 +169,6 @@
       "name": "Wick",
       "summary": "A dog-handler and hired guard, blunt and loyal to whoever pays.",
       "role": "Guard",
-      "motivation": "Wants his unpaid wages and a safe road out of the valley.",
       "locationId": "loc-wheel-room",
       "visibility": "player-visible",
       "epistemicStatus": "explicit",
@@ -181,9 +180,8 @@
     {
       "id": "actor-aldous-holt",
       "name": "Aldous Holt",
-      "summary": "The missing miller, found bound and gagged in the cellar.",
+      "summary": "The missing miller and Maren's father.",
       "role": "Missing miller",
-      "locationId": "loc-miller-cellar",
       "visibility": "player-visible",
       "epistemicStatus": "explicit",
       "sourceRef": {
@@ -200,9 +198,6 @@
       "summary": "Maren Holt meets the party at the jetty and asks them to restart the mill.",
       "locationId": "loc-ferry-landing",
       "readAloud": "The ferry bumps against a rotting jetty. Across the reeds a tall stone mill stands silent, its great wheel hanging still above brown water. A woman in a patched coat waits on the planks with her arms folded.",
-      "conditions": [
-        "If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open."
-      ],
       "branches": [
         {
           "targetSceneId": "ros-scene-2-yard",
@@ -227,9 +222,6 @@
       "summary": "The party examines the abandoned cart, split flour sacks, and damp ledger.",
       "locationId": "loc-mill-yard",
       "readAloud": "Sacks lie split open across the yard, spilling grey powder. A cart has been dragged through the mud and abandoned. Beside the mill door hangs a ledger on a nail, its pages swollen with damp.",
-      "conditions": [
-        "If the party makes noise in the yard, Wick the dog-handler arrives from the wheel room within a few turns and the encounter in Scene 3 begins on alert."
-      ],
       "branches": [
         {
           "targetSceneId": "ros-scene-3-wheel-room",
@@ -246,7 +238,7 @@
     {
       "id": "ros-branch-shrine",
       "title": "Optional Branch: The Reed Shrine",
-      "summary": "A quiet side path offering a calm blessing and a hint toward the cellar.",
+      "summary": "A quiet optional side path through the reeds.",
       "locationId": "loc-reed-shrine",
       "readAloud": "A ring of leaning stones stands in the reeds, a clay lamp set in the centre. Fresh bread has been left beside it.",
       "optional": true,
@@ -270,9 +262,6 @@
       "summary": "Wick and his wolfhound guard the sluice lever beside the jammed gear.",
       "locationId": "loc-wheel-room",
       "readAloud": "Inside, the wheel shaft groans against a jammed gear. Two lanterns burn low. A broad man stands beside the sluice lever with a heavy cudgel, and a wolfhound growls at his heel.",
-      "conditions": [
-        "Once the lever is pulled, the wheel turns and the water in the cellar starts to rise. The party has about five turns to finish the cellar."
-      ],
       "branches": [
         {
           "targetSceneId": "ros-scene-4-cellar",
@@ -296,7 +285,7 @@
         "If the party stays more than five turns, the water reaches the ceiling and the party must leave without the miller or swim out at a cost.",
         "If the party arrives with Wick as an ally, Aldous speaks freely."
       ],
-      "visibility": "player-visible",
+      "visibility": "gm-only",
       "epistemicStatus": "explicit",
       "sourceRef": {
         "section": "Scene 4: The Miller's Cellar",
@@ -327,7 +316,7 @@
           "socialBypassOfCombat": true
         }
       ],
-      "visibility": "player-visible",
+      "visibility": "gm-only",
       "epistemicStatus": "explicit",
       "sourceRef": {
         "section": "Scene 3: The Wheel Room",
@@ -344,7 +333,7 @@
       "placedLocationId": "loc-mill-yard",
       "placedSceneId": "ros-scene-2-yard",
       "alternativeSourceId": "ros-scene-4-cellar",
-      "visibility": "player-visible",
+      "visibility": "gm-only",
       "epistemicStatus": "explicit",
       "sourceRef": {
         "section": "Scene 2: The Mill Yard",
@@ -357,7 +346,7 @@
     {
       "id": "item-mill-ledger",
       "name": "Damp Mill Ledger",
-      "summary": "A water-swollen ledger hanging beside the mill door recording a lock fitted to the sluice pin.",
+      "summary": "A water-swollen ledger hanging on a nail beside the mill door.",
       "locationId": "loc-mill-yard",
       "visibility": "player-visible",
       "epistemicStatus": "explicit",
@@ -369,7 +358,7 @@
     {
       "id": "item-clay-lamp",
       "name": "Clay Lamp",
-      "summary": "A clay lamp in the reed shrine that grants a calm blessing for one re-roll.",
+      "summary": "A clay lamp set in the centre of the reed shrine.",
       "locationId": "loc-reed-shrine",
       "visibility": "player-visible",
       "epistemicStatus": "explicit",
@@ -441,6 +430,87 @@
       "sourceRef": {
         "section": "Scene 4: The Miller's Cellar",
         "anchor": "ros-scene-4-cellar"
+      }
+    },
+    {
+      "id": "secret-aldous-cellar",
+      "text": "The miller, Aldous Holt, is found in the cellar, alive, bound and gagged in a chair. If the party did not read the ledger, they find a second copy of the same record in his coat: the receipt for the lock on the sluice pin.",
+      "relatedEntityIds": [
+        "actor-aldous-holt",
+        "loc-miller-cellar",
+        "ros-scene-4-cellar"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    },
+    {
+      "id": "secret-cellar-flood",
+      "text": "The cellar floods once the sluice lever is pulled. Once the lever is pulled, the wheel turns and the water in the cellar starts to rise. The party has about five turns to finish the cellar.",
+      "relatedEntityIds": ["ros-scene-3-wheel-room", "loc-miller-cellar"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "secret-after-dark",
+      "text": "If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open.",
+      "relatedEntityIds": ["ros-scene-1-landing"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Ferry Landing",
+        "anchor": "ros-scene-1-landing"
+      }
+    },
+    {
+      "id": "secret-yard-noise",
+      "text": "If the party makes noise in the yard, Wick the dog-handler arrives from the wheel room within a few turns and the encounter in Scene 3 begins on alert.",
+      "relatedEntityIds": ["ros-scene-2-yard", "actor-wick"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "secret-wick-motivation",
+      "text": "Wick wants his unpaid wages and a safe road out of the valley.",
+      "relatedEntityIds": ["actor-wick"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Wick",
+        "anchor": "ros-npc-wick"
+      }
+    },
+    {
+      "id": "secret-shrine-blessing",
+      "text": "If the party visits, the lamp gives a calm blessing: the next roll to calm someone, to persuade someone or to resist fear in this adventure may be repeated once. The shrine also holds a hint toward the cellar.",
+      "relatedEntityIds": ["ros-branch-shrine", "item-clay-lamp"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Reed Shrine",
+        "anchor": "ros-branch-shrine"
+      }
+    },
+    {
+      "id": "secret-ledger-lock",
+      "text": "The damp ledger records a lock fitted to the sluice pin.",
+      "relatedEntityIds": ["item-mill-ledger", "clue-sluice-sabotage"],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
       }
     }
   ],

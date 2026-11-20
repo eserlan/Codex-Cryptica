@@ -202,7 +202,19 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
         isExampleDraft = false;
         hasStreamedPreview = true;
       };
-      const result = await generateOutput(useAINow, onPreview);
+      let result: GeneratorOutput;
+      try {
+        result = await generateOutput(useAINow, onPreview);
+      } catch (err: any) {
+        if (isCurrentRequest()) {
+          // Keep analytics content-free; the displayed error can contain
+          // provider or user-specific details and must never be sent.
+          trackEvent("generator_failed", { generator_type: generatorType });
+          errorMessage = "Failed to generate: " + (err.message || err);
+        }
+        return;
+      }
+
       if (!isCurrentRequest()) return;
       generatedData = result;
       userGenerationSucceeded = true;
@@ -211,12 +223,13 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
       // generation did not complete, so it must not count as one.
       trackEvent("generator_completed", { generator_type: generatorType });
 
-      if (result) recordCurrentOutputInHub(result);
-
-      await scrollToOutputIfStacked();
-    } catch (err: any) {
-      if (isCurrentRequest()) {
-        errorMessage = "Failed to generate: " + (err.message || err);
+      try {
+        if (result) recordCurrentOutputInHub(result);
+        await scrollToOutputIfStacked();
+      } catch (err) {
+        // Generation has already succeeded. Hub bookkeeping or scrolling
+        // failures must not turn that run into a generation failure.
+        console.warn("Failed to finish generated-result bookkeeping:", err);
       }
     } finally {
       if (isCurrentRequest()) isGenerating = false;

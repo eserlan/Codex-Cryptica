@@ -98,6 +98,13 @@ database_name = "codex-answer-aggregates"
 database_id = "a21162a9-2f74-4e19-a529-98f6d257675e"
 migrations_dir = "migrations"
 
+# Runtime feature flags (issue #5029). Flip flags live without rebuilding using:
+#   env -u CF_API_TOKEN -u CLOUDFLARE_API_TOKEN bunx wrangler kv key put --remote --binding=FEATURE_FLAGS "flags:staging" '{"adventureArtwork":true}'
+#   env -u CF_API_TOKEN -u CLOUDFLARE_API_TOKEN bunx wrangler kv key put --remote --binding=FEATURE_FLAGS "flags:prod" '{"adventureArtwork":true}'
+[[kv_namespaces]]
+binding = "FEATURE_FLAGS"
+id = "19a6bf911969462cbf7f74385c1019fd"
+
 [[ratelimits]]
 name = "PUBLISH_CREATE_RATE_LIMITER"
 namespace_id = "1351"
