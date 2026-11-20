@@ -4,7 +4,7 @@ import type {
   P2PConnection,
 } from "./transport-interface";
 import type { TransportErrorPayload } from "./transport-events";
-import { createPeer, type PeerFactory } from "../peer-factory";
+import { createPeer, loadPeerJs, type PeerFactory } from "../peer-factory";
 import {
   type IdGenerator,
   systemIdGenerator,
@@ -40,6 +40,7 @@ export class PeerJSTransport implements P2PTransport {
 
   async start(peerId: string = this.idGenerator.uuid()): Promise<string> {
     if (this.peer) return this._id!;
+    if (this.peerFactory === createPeer) await loadPeerJs();
 
     return new Promise((resolve, reject) => {
       this.peer = this.peerFactory(peerId, { debug: 1 });

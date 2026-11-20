@@ -132,6 +132,11 @@
     validationErrors={liveValidation.ok ? [] : liveValidation.errors}
   />
 
+  <AdventureImportReviewUnresolved
+    {draft}
+    validationErrors={liveValidation.ok ? [] : liveValidation.errors}
+  />
+
   {#if previousPackage}
     <AdventureImportReviewDiff
       previous={previousPackage}
@@ -139,8 +144,6 @@
       current={draft}
     />
   {/if}
-
-  <AdventureImportReviewUnresolved {draft} />
 
   <AdventureImportReviewWorldSections
     {draft}

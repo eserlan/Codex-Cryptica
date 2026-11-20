@@ -35,6 +35,11 @@ describe("genreForTheme", () => {
     expect(genreForTheme("cyberpunk_dark")).toBe("Cyberpunk / Corporate");
   });
 
+  it("keeps semantic genre labels separate from theme display names", () => {
+    expect(genreForTheme("fantasy")).toBe("Classic Fantasy");
+    expect(genreForTheme("starwars")).toBe("Sci-Fi / Space Opera");
+  });
+
   it.each([undefined, null, "", "workspace", "nope", "constructor"])(
     "returns no genre for %s",
     (id) => {
