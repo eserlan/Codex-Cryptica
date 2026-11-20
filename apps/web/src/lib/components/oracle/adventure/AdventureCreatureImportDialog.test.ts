@@ -15,8 +15,8 @@ const pkg = {
       id: "a1",
       name: "Gnoll",
       summary: "A raider",
-      aliases: ["The Gnoll"],
-      labels: ["raider"],
+      aliases: ["The Gnoll, Raider", "Gnoll Captain"],
+      labels: ["raider, border guard", "patrol"],
       visibility: "player-visible",
       epistemicStatus: "source-stated",
     },
@@ -121,11 +121,25 @@ describe("creature import dialog", () => {
     expect(screen.getByText(/Already in your Vault: wolf/)).toBeTruthy();
     expect(screen.getAllByText(/Gate\s+\(Page not given\)/).length).toBe(3);
     const gnollReview = within(screen.getByTestId("creature-import-item-0"));
-    expect(gnollReview.getByText("Aliases: The Gnoll")).toBeTruthy();
-    expect(gnollReview.getByText("Labels: raider")).toBeTruthy();
+    expect(gnollReview.getByText("Aliases", { exact: true })).toBeTruthy();
+    expect(
+      gnollReview.getByText("The Gnoll, Raider", { exact: true }),
+    ).toBeTruthy();
+    expect(
+      gnollReview.getByText("Gnoll Captain", { exact: true }),
+    ).toBeTruthy();
+    expect(gnollReview.getByText("Labels", { exact: true })).toBeTruthy();
+    expect(
+      gnollReview.getByText("raider, border guard", { exact: true }),
+    ).toBeTruthy();
+    expect(gnollReview.getByText("patrol", { exact: true })).toBeTruthy();
+    expect(
+      gnollReview.queryByText("Aliases: The Gnoll, Raider, Gnoll Captain"),
+    ).toBeNull();
     const spiderReview = within(screen.getByTestId("creature-import-item-1"));
-    expect(spiderReview.getByText("Aliases: Web Queen")).toBeTruthy();
-    expect(spiderReview.getByText("Labels: danger, hidden")).toBeTruthy();
+    expect(spiderReview.getByText("Web Queen", { exact: true })).toBeTruthy();
+    expect(spiderReview.getByText("danger", { exact: true })).toBeTruthy();
+    expect(spiderReview.getByText("hidden", { exact: true })).toBeTruthy();
     const wolfReview = within(screen.getByTestId("creature-import-item-2"));
     expect(wolfReview.queryByText(/Aliases:|Labels:/)).toBeNull();
     await fireEvent.click(
@@ -135,10 +149,18 @@ describe("creature import dialog", () => {
       screen.getByText(/2 entries will be created, and 1 reused/),
     ).toBeTruthy();
     expect(screen.getByText(/Create Spider: hidden, no image/)).toBeTruthy();
-    expect(screen.getByText("Aliases: The Gnoll")).toBeTruthy();
-    expect(screen.getByText("Labels: raider")).toBeTruthy();
-    expect(screen.getByText("Aliases: Web Queen")).toBeTruthy();
-    expect(screen.getByText("Labels: danger, hidden")).toBeTruthy();
+    expect(screen.getByText("The Gnoll, Raider", { exact: true })).toBeTruthy();
+    expect(screen.getByText("Gnoll Captain", { exact: true })).toBeTruthy();
+    expect(
+      screen.getByText("raider, border guard", { exact: true }),
+    ).toBeTruthy();
+    expect(screen.getByText("patrol", { exact: true })).toBeTruthy();
+    expect(screen.getByText("Web Queen", { exact: true })).toBeTruthy();
+    expect(screen.getByText("danger", { exact: true })).toBeTruthy();
+    expect(screen.getByText("hidden", { exact: true })).toBeTruthy();
+    expect(
+      screen.queryByText("Aliases: The Gnoll, Raider, Gnoll Captain"),
+    ).toBeNull();
     expect(screen.getByText("Reuse wolf")).toBeTruthy();
     expect(createEntity).not.toHaveBeenCalled();
     await fireEvent.click(
@@ -316,18 +338,25 @@ describe("creature import dialog", () => {
       onClose: vi.fn(),
     });
     const creature = screen.getByTestId("creature-import-item-0");
-    expect(within(creature).getAllByRole("listitem")).toHaveLength(10);
+    const encounterRows = () => {
+      const firstEncounter =
+        within(creature).getAllByText(/^Encounter \d+/)[0]!;
+      const encounterList = firstEncounter.closest("ul");
+      expect(encounterList).not.toBeNull();
+      return within(encounterList!).getAllByRole("listitem");
+    };
+    expect(encounterRows()).toHaveLength(10);
     expect(within(creature).getByText("Encounters 1–10 of 25")).toBeTruthy();
     await fireEvent.click(
       within(creature).getByRole("button", { name: "Next encounters" }),
     );
-    expect(within(creature).getAllByRole("listitem")).toHaveLength(10);
+    expect(encounterRows()).toHaveLength(10);
     expect(within(creature).getByText("Encounters 11–20 of 25")).toBeTruthy();
     expect(within(creature).getByText(/^Encounter 10/)).toBeTruthy();
     await fireEvent.click(
       within(creature).getByRole("button", { name: "Next encounters" }),
     );
-    expect(within(creature).getAllByRole("listitem")).toHaveLength(5);
+    expect(encounterRows()).toHaveLength(5);
     expect(within(creature).getByText("Encounters 21–25 of 25")).toBeTruthy();
     expect(within(creature).getByText(/^Encounter 24/)).toBeTruthy();
   });

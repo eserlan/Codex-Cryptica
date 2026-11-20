@@ -4,7 +4,6 @@
   import {
     buildCreatureProposals,
     sourcePageLabels,
-    type CreatureProposal,
     type SourceReference,
     type StoredAdventurePackage,
   } from "@codex/adventure-engine";
@@ -108,21 +107,6 @@
       : `Pages ${labels.join(", ")}`;
   }
 
-  function metadataLines(
-    proposal: CreatureProposal,
-    hidden: boolean,
-  ): string[] {
-    const metadata = creatureImportMetadata(proposal, hidden);
-    return [
-      ...(metadata.aliases?.length
-        ? [`Aliases: ${metadata.aliases.join(", ")}`]
-        : []),
-      ...(metadata.labels?.length
-        ? [`Labels: ${metadata.labels.join(", ")}`]
-        : []),
-    ];
-  }
-
   function pickFile(index: number, event: Event) {
     const file = (event.currentTarget as HTMLInputElement).files?.[0];
     if (file) choices[index]!.file = file;
@@ -148,10 +132,29 @@
   }
 </script>
 
-{#snippet importMetadataLines(lines: string[])}
-  {#each lines as line (line)}
-    <p class="break-words text-xs">{line}</p>
-  {/each}
+{#snippet importMetadataLines(
+  metadata: ReturnType<typeof creatureImportMetadata>,
+)}
+  {#if metadata.aliases?.length}
+    <div class="space-y-1">
+      <p class="text-xs font-medium">Aliases</p>
+      <ul class="list-disc pl-5 text-xs">
+        {#each metadata.aliases as alias (alias)}
+          <li class="break-words">{alias}</li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
+  {#if metadata.labels?.length}
+    <div class="space-y-1">
+      <p class="text-xs font-medium">Labels</p>
+      <ul class="list-disc pl-5 text-xs">
+        {#each metadata.labels as label (label)}
+          <li class="break-words">{label}</li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 {/snippet}
 
 <svelte:window
@@ -234,7 +237,7 @@
               <p class="font-semibold">{proposal.name}</p>
               {#if !choice.existing && choice.include}
                 {@render importMetadataLines(
-                  metadataLines(proposal, choice.hidden),
+                  creatureImportMetadata(proposal, choice.hidden),
                 )}
               {/if}
               {#each [...proposal.summary, ...proposal.description, ...proposal.role, ...proposal.motivation, ...proposal.disposition] as text, textIndex (textIndex)}
@@ -461,7 +464,7 @@
                   {choice.file ? "with an image" : "no image"}
                 </p>
                 {@render importMetadataLines(
-                  metadataLines(choice.proposal, choice.hidden),
+                  creatureImportMetadata(choice.proposal, choice.hidden),
                 )}
               </li>
             {/if}
