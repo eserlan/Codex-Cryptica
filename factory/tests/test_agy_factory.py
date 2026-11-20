@@ -478,7 +478,7 @@ class TestAgyFactory(unittest.TestCase):
         self.assertEqual(sandbox.call_args.kwargs["bun_cache_dir"], cache_dir)
         self.assertTrue(sandbox.call_args.kwargs["fallow_prechecked"])
 
-    def test_gate_uses_the_shared_checkout_cache_path(self):
+    def test_gate_uses_the_job_cache_path(self):
         gate_mod = load_script_module("factory_gate_cache_path", BIN_DIR / "gate")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -488,7 +488,7 @@ class TestAgyFactory(unittest.TestCase):
             (job_dir / "job.json").write_text(json.dumps({
                 "worktree": str(root / ".worktrees/001-test"), "round": 1,
             }))
-            cache = root / ".worktrees/.codex-bun-cache"
+            cache = job_dir / "codex/bun-cache"
             cache.mkdir(parents=True)
             calls = []
 

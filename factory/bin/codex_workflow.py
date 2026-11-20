@@ -2,6 +2,7 @@
 """Run one explicitly selected factory issue using Codex CLI."""
 import argparse
 import concurrent.futures
+from contextlib import ExitStack, contextmanager
 import fcntl
 import hashlib
 import json
@@ -60,7 +61,7 @@ class Runner:
         return resolve_git_common_dir(self.repo)
 
     def dependency_cache(self, job):
-        cache_dir = self.repo / ".worktrees/.codex-bun-cache"
+        cache_dir = self.jobs / job["id"] / "codex" / "bun-cache"
         cache_dir.mkdir(parents=True, exist_ok=True)
         return cache_dir.resolve()
 
@@ -138,7 +139,7 @@ class Runner:
             digest.update(b"\0")
             digest.update(path.read_bytes())
         manifest_hash = digest.hexdigest()
-        state_path = self.repo / ".worktrees/.codex-bun-cache-state.json"
+        state_path = cache_dir.with_name("bun-cache-state.json")
         try:
             if (json.loads(state_path.read_text()).get("manifest_hash") == manifest_hash
                     and any(cache_dir.iterdir())):
@@ -420,11 +421,12 @@ class Runner:
         self.bootstrap_dependency_cache(job, cache_dir)
         result = run_sandboxed(
             ["bun", "install", "--frozen-lockfile", "--ignore-scripts", "--backend", "copyfile",
-             "--registry=https://registry.npmjs.org", "--cache-dir", str(cache_dir)],
+             "--registry=https://registry.npmjs.org"],
             cwd=worktree,
             writable_roots=[worktree],
             git_common_dir=self.git_common_dir(),
             bun_cache_dir=cache_dir,
+            copy_bun_cache=True,
         )
         logs = self.jobs / job["id"] / "codex"
         logs.mkdir(parents=True, exist_ok=True)
@@ -848,6 +850,38 @@ class Runner:
                 raise RuntimeError(f"Unsupported stage {stage}; inspect the job manually")
 
 
+class RunnerBusy(Exception):
+    """An issue or runner slot is already occupied."""
+
+
+@contextmanager
+def runner_slot(runner, issue):
+    """Reserve one issue and one configured slot across linked worktrees."""
+    lock_dir = runner.git_common_dir() / "codex-factory-locks"
+    lock_dir.mkdir(exist_ok=True)
+    capacity = json.loads((runner.repo / "factory/config.json").read_text())["concurrency"]
+    with ExitStack() as leases:
+        def try_lock(path, mode=fcntl.LOCK_EX):
+            handle = path.open("a")
+            try:
+                fcntl.flock(handle, mode | fcntl.LOCK_NB)
+            except BlockingIOError:
+                handle.close()
+                return False
+            leases.enter_context(handle)
+            return True
+
+        if not try_lock(runner.jobs / "codex-runner.lock", fcntl.LOCK_SH):
+            raise RunnerBusy("An older Codex factory runner is active in this checkout")
+        if not try_lock(lock_dir / f"issue-{issue}.lock"):
+            raise RunnerBusy(f"Issue #{issue} already has an active Codex factory runner")
+        for slot in range(capacity):
+            if try_lock(lock_dir / f"slot-{slot}.lock"):
+                yield
+                return
+        raise RunnerBusy(f"All {capacity} Codex factory runner slots are occupied")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("issue", type=int)
@@ -857,12 +891,11 @@ def main():
     args = parser.parse_args()
     runner = Runner(REPO, args.model, args.effort)
     runner.jobs.mkdir(parents=True, exist_ok=True)
-    with (runner.jobs / "codex-runner.lock").open("w") as lock:
-        try:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except BlockingIOError as error:
-            raise SystemExit("Another Codex factory runner is active in this checkout") from error
-        print(runner.job_command("summary", runner.run(args.issue)))
+    try:
+        with runner_slot(runner, args.issue):
+            print(runner.job_command("summary", runner.run(args.issue)))
+    except RunnerBusy as error:
+        raise SystemExit(str(error)) from error
 
 
 if __name__ == "__main__":
