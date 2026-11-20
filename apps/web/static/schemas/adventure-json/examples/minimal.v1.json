@@ -24,6 +24,7 @@
     {
       "id": "actor-reeve-tomas",
       "name": "Reeve Tomas",
+      "kind": "character",
       "summary": "The worried village official who hires the party.",
       "visibility": "player-visible",
       "epistemicStatus": "explicit"

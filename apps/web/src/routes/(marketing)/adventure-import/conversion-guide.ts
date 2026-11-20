@@ -67,6 +67,7 @@ export const PROMPT_EXAMPLE_OUTPUT = {
     {
       id: "actor-tomas",
       name: "Reeve Tomas",
+      kind: "character",
       summary: "The worried village official who hires the party.",
       role: "Village reeve",
       visibility: "player-visible",
@@ -76,6 +77,7 @@ export const PROMPT_EXAMPLE_OUTPUT = {
     {
       id: "actor-watchman",
       name: "Old Hob",
+      kind: "character",
       summary: "The watchman who huddles beside the cold stove inside.",
       role: "Watchman",
       locationId: "loc-tower",
@@ -257,7 +259,8 @@ Strict output rules:
 4. Collection entry contract (? = optional; non-empty strings required for id, name, title, text, description, code, message):
    - Every collection entry requires "id" (non-empty string) and "epistemicStatus"; "sourceRef" is optional.
    - locations: required name, summary, visibility; optional description: string, parentLocationId: string, connections: LocationConnection[].
-   - actors: required name, summary, visibility; optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string.
+   - actors: required name, summary, visibility; optional description: string, role: string, motivation: string, disposition: string, factionId: string, locationId: string, kind: "character" | "creature".
+   - Actor kind: use "character" for named or individual NPCs and "creature" for monsters, beasts and generic stat-block foes. Leave "kind" out when the source does not make the choice clear; never guess.
    - factions: required name, summary, visibility; optional description: string, goals: string[], dispositionTowardsParty: string.
    - scenes: required title, summary, visibility; optional locationId: string, readAloud: string | string[], body: string, conditions: string[], branches: SceneBranch[], optional: boolean.
    - encounters: required description, alternativeSolutions (an array, [] if absent), visibility; optional title: string, sceneId: string, locationId: string, conditions: string[], actorIds: string[].
@@ -387,7 +390,7 @@ export const FIDELITY_ROWS: FidelityRow[] = [
   {
     content: "NPCs",
     v1Handling:
-      "actors, with role, motivation, disposition and factionId or locationId.",
+      'actors with kind "character", with role, motivation, disposition and factionId or locationId.',
     converts: "well",
   },
   {
@@ -428,7 +431,7 @@ export const FIDELITY_ROWS: FidelityRow[] = [
   {
     content: "Stat blocks",
     v1Handling:
-      "No stats or HP fields. Keep the creature as an actor and note the stat block in unresolved.",
+      'No stats or HP fields. Keep the creature as an actor with kind "creature" and note the stat block in unresolved.',
     converts: "manual",
   },
   {

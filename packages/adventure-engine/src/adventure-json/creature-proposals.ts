@@ -90,7 +90,11 @@ function toProposalEncounter(
   };
 }
 
-/** Proposes one Creature per distinct actor name that an encounter references. */
+/**
+ * Proposes one Creature per distinct actor name. Actors with `kind: "creature"`
+ * are always proposed, `kind: "character"` never, and actors without a `kind`
+ * only when an encounter references them.
+ */
 export function buildCreatureProposals(
   pkg: AdventureJsonV1,
 ): CreatureProposal[] {
@@ -105,8 +109,9 @@ export function buildCreatureProposals(
 
   const proposals = new Map<string, ProposalAccumulator>();
   for (const actor of pkg.actors) {
-    const linked = encountersByActor.get(actor.id);
-    if (!linked) continue;
+    if (actor.kind === "character") continue;
+    const linked = encountersByActor.get(actor.id) ?? [];
+    if (actor.kind !== "creature" && linked.length === 0) continue;
     const key = normalizeName(actor.name);
     let accumulator = proposals.get(key);
     if (!accumulator) {

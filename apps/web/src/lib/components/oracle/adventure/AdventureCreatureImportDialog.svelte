@@ -191,8 +191,8 @@
     <div class="min-h-0 flex-1 space-y-3 overflow-y-auto p-4">
       {#if step === "review"}
         <p class="text-sm text-theme-text">
-          Creatures that appear in this adventure's encounters. Nothing is saved
-          until you confirm.
+          Creature actors from this adventure. Encounter links are shown when
+          available. Nothing is saved until you confirm.
         </p>
         <ul class="space-y-3">
           {#each visibleChoices as choice, offset (choice.proposal.key)}

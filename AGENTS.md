@@ -74,6 +74,7 @@ This file is the Codex-facing instruction layer for this repository.
 
 - **Fresh checkout**: `bun install --frozen-lockfile` at the repo root (this also runs `svelte-kit sync`). No env file is required; `apps/web/.env.example` lists only optional keys.
 - **Dev server on a given port**: `cd apps/web && bunx vite dev --port <port> --strictPort`.
+- **Entry graph check**: `bun scripts/check-entry-graph.mjs` (run in `apps/web` after a build; it also runs inside `bun run build`) lists what `/` loads up front and fails if a denylisted module or worker is on it. Add new entries for things to keep off `/` to its `ENTRY_GRAPH_DENYLIST`.
 - **Validation** (what `factory/checks.sh` runs, against `origin/staging`): `bun scripts/lint-changed.mjs --base origin/staging`; `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` when `web` is affected (`bun scripts/affected-workspaces.mjs --base origin/staging`); `bun scripts/test-changed.mjs --base origin/staging`; and the Fallow audit gate.
 
 ## Software factory
@@ -114,6 +115,8 @@ shell commands, and other important information, read the [current plan](./specs
 <!-- SPECKIT END -->
 
 ## Active Technologies
+
+- TypeScript 6.0.3, Bun 1.3.14 + `@codex/adventure-engine` `preflightAdventureJson` (`src/adventure-json/preflight.ts`) and `scripts/preflight-adventure-json.ts`: an offline, read-only wrapper around `validateAdventureJson` that tags findings as parse, schema or integrity. No new dependency, storage or schema change. (074-adventure-import-qa-19)
 
 - TypeScript 6.0.3, Bun 1.3.14 + Staged-conversion checkpoint manifest (`kind: "codex-cryptica.adventure-checkpoint"`, `manifestVersion: 1`): Draft 2020-12 schema `apps/web/static/schemas/adventure-checkpoint/v1.json`, pure `checkStagedChunks` in `apps/web/src/routes/(marketing)/adventure-import/staged-conversion.ts` (with a copyable check script), and fixture `fixtures/adventures/staged-manifest/`. It is a separate checkpoint file, never part of Adventure JSON v1. No storage change. (5003-staged-checkpoint-manifest)
 

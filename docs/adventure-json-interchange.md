@@ -31,6 +31,12 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 - `epistemicStatus`: `"explicit" | "inferred" | "ambiguous" | "unresolved"` — allows external converters and parsers to mark uncertain or contradictory source facts without inventing missing details.
 - `visibility`: `"player-visible" | "gm-only"` — `secrets` strictly require `"gm-only"`.
 
+### Actor kind
+
+`actors[].kind` is optional: `"character"` or `"creature"`. It tells importers which Vault entity type an actor maps to (`character` or `creature`) without guessing. Converters use `"character"` for named or individual NPCs and `"creature"` for monsters, beasts and generic stat-block foes, and leave `kind` out when the source does not make the choice clear. Leaving it out is valid, so packages written before `kind` existed still validate, and `kind` is never added to a package on import, so hashes of approved packages do not change.
+
+Creature proposals use `kind` first: a `"creature"` actor is always proposed (even if no encounter references it), a `"character"` actor is never proposed, and an actor with no `kind` is proposed only when an encounter references it.
+
 ### What visibility applies to
 
 `visibility` is a property of the **whole record**. Every field of a `player-visible` record (including `role`, `motivation`, `summary`, `description`, `body`, `readAloud` and `reveals`) is treated as safe to show players; v1 has no per-field visibility, and importers, the review screen and any player-facing projection must not assume a visible record has hidden parts.
@@ -169,3 +175,4 @@ For scoring model conversions against an answer key (schema, secrets, coverage,
 rumours, branches, citations, truncation), see `docs/adventure-conversion-qa.md`
 and the offline scorer `scoreAdventureConversion` plus the
 `bun scripts/score-adventure-conversion.ts` CLI.
+To check a file's structure and references offline before import, see "Preflight validation" in that document and `bun scripts/preflight-adventure-json.ts`.

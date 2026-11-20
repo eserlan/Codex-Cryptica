@@ -56,6 +56,7 @@ const GM_ONLY_TEXT_KEYS = [
   "text",
   "body",
   "readAloud",
+  "conditions",
 ] as const;
 
 function appendTextValues(out: Set<string>, value: unknown): void {
@@ -65,6 +66,16 @@ function appendTextValues(out: Set<string>, value: unknown): void {
     for (const item of value) {
       if (typeof item === "string" && item.length > 0) out.add(item);
     }
+  }
+}
+
+function appendAlternativeSolutionText(out: Set<string>, value: unknown): void {
+  if (!Array.isArray(value)) return;
+  for (const solution of value) {
+    if (!solution || typeof solution !== "object") continue;
+    const { method, description } = solution as Record<string, unknown>;
+    appendTextValues(out, method);
+    appendTextValues(out, description);
   }
 }
 
@@ -78,6 +89,7 @@ function collectGmRecordText(
     if (key === "readAloud" && allowReadAloud) continue;
     appendTextValues(out, fields[key]);
   }
+  appendAlternativeSolutionText(out, fields.alternativeSolutions);
   appendTextValues(out, record.sourceRef?.textQuote);
 }
 

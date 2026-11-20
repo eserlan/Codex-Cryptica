@@ -1,4 +1,3 @@
-import ProposerWorker from "#lib/workers/proposer.worker?worker";
 import { browser } from "$app/env";
 import type { Proposal } from "@codex/proposer";
 import {
@@ -6,6 +5,9 @@ import {
   systemIdGenerator,
 } from "#lib/utils/runtime-deps.js";
 import type { CachedToken } from "@codex/ai-engine";
+
+const defaultLoadWorker = (): Promise<Worker> =>
+  import("#lib/workers/proposer.worker?worker").then((m) => new m.default());
 
 export class ProposerBridge {
   private worker: Worker | null = null;
@@ -17,17 +19,27 @@ export class ProposerBridge {
   private tokenProvider:
     ((forceRefresh: boolean) => Promise<CachedToken | null>) | null = null;
 
+  private readonly loadWorker: () => Promise<Worker>;
+  private canStart = false;
+  private starting: Promise<Worker | null> | null = null;
+  private pendingToken: { value: CachedToken | null } | null = null;
+
   constructor(
-    deps: { idGenerator?: IdGenerator; worker?: Worker | null } = {},
+    deps: {
+      idGenerator?: IdGenerator;
+      worker?: Worker | null;
+      loadWorker?: () => Promise<Worker>;
+    } = {},
   ) {
     this.idGenerator = deps.idGenerator ?? systemIdGenerator;
+    this.loadWorker = deps.loadWorker ?? defaultLoadWorker;
     if (deps.worker !== undefined) {
       this.worker = deps.worker;
       if (this.worker) {
         this.attachWorkerHandler(this.worker);
       }
-    } else if (browser) {
-      this.initWorker();
+    } else {
+      this.canStart = browser;
     }
   }
 
@@ -90,9 +102,34 @@ export class ProposerBridge {
     this.tokenProvider = provider;
   }
 
-  private initWorker() {
-    this.worker = new ProposerWorker();
-    this.attachWorkerHandler(this.worker);
+  /** Loads the worker once. Resolves null if the load fails. */
+  private ensureWorker(): Promise<Worker | null> {
+    this.starting ??= this.start();
+    return this.starting;
+  }
+
+  private async start(): Promise<Worker | null> {
+    try {
+      const worker = await this.loadWorker();
+      if (!this.canStart) {
+        worker.terminate();
+        return null;
+      }
+      this.worker = worker;
+      this.attachWorkerHandler(worker);
+      if (this.pendingToken) {
+        worker.postMessage({
+          type: "SESSION_TOKEN",
+          payload: this.pendingToken.value,
+        });
+        this.pendingToken = null;
+      }
+      return worker;
+    } catch (err) {
+      console.error("[ProposerBridge] Failed to initialize worker:", err);
+      this.canStart = false;
+      return null;
+    }
   }
 
   /**
@@ -102,7 +139,11 @@ export class ProposerBridge {
    * token). Fire-and-forget: no response expected.
    */
   public setSessionToken(token: CachedToken | null): void {
-    this.worker?.postMessage({ type: "SESSION_TOKEN", payload: token });
+    if (this.worker) {
+      this.worker.postMessage({ type: "SESSION_TOKEN", payload: token });
+    } else if (this.canStart) {
+      this.pendingToken = { value: token };
+    }
   }
 
   public async analyzeEntity(
@@ -113,12 +154,17 @@ export class ProposerBridge {
     content: string,
     availableTargets: { id: string; name: string }[],
   ): Promise<Proposal[]> {
-    if (!this.worker) return [];
+    let worker = this.worker;
+    if (!worker) {
+      if (!this.canStart) return [];
+      worker = await this.ensureWorker();
+      if (!worker) return [];
+    }
 
     const id = this.idGenerator.uuid();
     return new Promise((resolve, reject) => {
       this.pendingRequests.set(id, { resolve, reject });
-      this.worker!.postMessage({
+      worker.postMessage({
         type: "ANALYZE",
         id,
         payload: {
@@ -144,6 +190,7 @@ export class ProposerBridge {
 
     this.worker?.terminate();
     this.worker = null;
+    this.canStart = false;
   }
 }
 
