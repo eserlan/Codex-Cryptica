@@ -32,11 +32,16 @@ const contentThinDoc = readJson(
 const adversarialDoc = readJson(
   "fixtures/adventures/reference-one-shot/variants/adversarial.v1.json",
 );
+const SOURCE_AUTHORITY_TARGET_ID = "reed-watch-opening";
 const sourceAuthorityKey = ConversionAnswerKeySchema.parse({
   ...refKey,
   ...readJson(
     "fixtures/adventures/reference-one-shot/variants/source-authority-answer-key.json",
   ),
+});
+sourceAuthorityKey.sections.push({
+  sourceId: SOURCE_AUTHORITY_TARGET_ID,
+  title: "The Reed Watch opening",
 });
 const bridgeConflictKey = ConversionAnswerKeySchema.parse({
   ...refKey,
@@ -85,6 +90,7 @@ const makeSourceAuthorityDoc = () => {
     );
   }
   opening.body = "The watch opens at noon.";
+  opening.sourceRef.anchor = SOURCE_AUTHORITY_TARGET_ID;
   opening.sourceRef.page = 4;
   opening.sourceRef.section = "PDF page 4";
   return doc;
@@ -178,6 +184,29 @@ describe("scoreAdventureConversion source authority and conflicts", () => {
     );
     expect(result.dimensions.sourceAuthority.status).toBe("pass");
     expect(result.overall).toBe("pass");
+  });
+
+  it("rejects a correction recorded on an unrelated entity", () => {
+    const doc = makeSourceAuthorityDoc();
+    const opening = doc.scenes.find(
+      (scene: { id: string }) => scene.id === "ros-scene-1-landing",
+    );
+    opening.body = "The watch opens.";
+    doc.locations.push({
+      id: "location-unrelated-watch-opening",
+      name: "Roadside marker",
+      summary: "The watch opens at noon.",
+      visibility: "player-visible",
+      epistemicStatus: "explicit",
+      sourceRef: { page: 4, section: "PDF page 4" },
+    });
+
+    const result = scoreAdventureConversion(doc, sourceAuthorityKey);
+    expect(result.dimensions.schema.status).toBe("pass");
+    expect(result.dimensions.sourceAuthority.status).toBe("fail");
+    expect(result.dimensions.sourceAuthority.details.join("\n")).toContain(
+      "missing explicit corrected claim",
+    );
   });
 
   it("rejects the superseded dawn opening", () => {

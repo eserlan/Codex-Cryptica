@@ -30,6 +30,11 @@ const createAuthorityCase = () => {
       "fixtures/adventures/reference-one-shot/variants/source-authority-answer-key.json",
     ),
   };
+  const targetSourceId = key.sourceAuthority[0].targetSourceId;
+  key.sections.push({
+    sourceId: targetSourceId,
+    title: "The Reed Watch opening",
+  });
   const opening = doc.scenes.find(
     (scene: { id: string }) => scene.id === "ros-scene-1-landing",
   );
@@ -42,6 +47,7 @@ const createAuthorityCase = () => {
     );
   }
   opening.body = "The watch opens at noon.";
+  opening.sourceRef.anchor = targetSourceId;
   opening.sourceRef.page = 4;
   opening.sourceRef.section = "PDF page 4";
 

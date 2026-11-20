@@ -124,6 +124,7 @@ export const ConversionAnswerKeySchema = z
         z
           .object({
             id: text,
+            targetSourceId: text,
             expectedText: text,
             expectedTerm: text,
             supersededText: text,
@@ -424,6 +425,12 @@ type SourceAuthorityCase = NonNullable<
   ConversionAnswerKey["sourceAuthority"]
 >[number];
 
+function isAuthorityTarget(entity: Entity, targetSourceId: string): boolean {
+  return (
+    entity.id === targetSourceId || entity.sourceRef?.anchor === targetSourceId
+  );
+}
+
 function authorityTitleDetails(
   value: DocLike,
   authority: SourceAuthorityCase,
@@ -460,10 +467,10 @@ function hasExplicitAuthorityClaim(
 }
 
 function correctedClaimDetails(
-  entities: Entity[],
+  targetEntities: Entity[],
   authority: SourceAuthorityCase,
 ): string[] {
-  const correctedClaims = entities.filter((entity) =>
+  const correctedClaims = targetEntities.filter((entity) =>
     hasExplicitAuthorityClaim(
       entity,
       authority.expectedText,
@@ -482,10 +489,10 @@ function correctedClaimDetails(
 }
 
 function supersededClaimDetails(
-  entities: Entity[],
+  targetEntities: Entity[],
   authority: SourceAuthorityCase,
 ): string[] {
-  const remainsExplicit = entities.some((entity) =>
+  const remainsExplicit = targetEntities.some((entity) =>
     hasExplicitAuthorityClaim(
       entity,
       authority.supersededText,
@@ -507,11 +514,14 @@ function scoreSourceAuthority(
   const details: string[] = [];
   const entities = allEntities(value);
   for (const authority of cases) {
+    const targetEntities = entities.filter((entity) =>
+      isAuthorityTarget(entity, authority.targetSourceId),
+    );
     details.push(
       ...authorityTitleDetails(value, authority),
       ...authorityItemCountDetails(value, authority),
-      ...correctedClaimDetails(entities, authority),
-      ...supersededClaimDetails(entities, authority),
+      ...correctedClaimDetails(targetEntities, authority),
+      ...supersededClaimDetails(targetEntities, authority),
     );
   }
   return fail(details);
