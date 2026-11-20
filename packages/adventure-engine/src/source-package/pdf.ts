@@ -1,5 +1,22 @@
-import { extractPageVisualLines } from "./pdf-layout";
-import type { PdfTextItemLike, VisualLine } from "./pdf-text-lines";
+import {
+  abortedPdfError,
+  isAborted,
+  extractLinesFromPdf,
+  type ParseAdventurePdfDeps,
+} from "./pdf-document";
+import { validatePdfInput } from "./pdf-input";
+export type {
+  PdfPageLike,
+  PdfDocumentLike,
+  PdfDocumentLoader,
+  ParseAdventurePdfDeps,
+} from "./pdf-document";
+export {
+  MAX_ADVENTURE_PDF_BYTES,
+  MAX_ADVENTURE_PDF_PAGES,
+  MAX_ADVENTURE_PDF_EXTRACTED_CHARS,
+} from "./pdf-input";
+import type { VisualLine } from "./pdf-text-lines";
 export type { PdfTextItemLike } from "./pdf-text-lines";
 import {
   buildAdventureSourcePackageFromSections,
@@ -7,50 +24,7 @@ import {
   toKebabCase,
   type RawSection,
 } from "./parser";
-import type {
-  AdventureImportError,
-  AmbiguityRecord,
-  ParseAdventureResult,
-} from "./schema";
-
-export interface PdfPageLike {
-  getTextContent(): Promise<{ items: PdfTextItemLike[] }>;
-}
-
-export interface PdfDocumentLike {
-  numPages: number;
-  getPage(pageNumber: number): Promise<PdfPageLike>;
-  destroy?: () => Promise<void> | void;
-}
-
-export type PdfDocumentLoader = (
-  bytes: Uint8Array,
-  signal?: AbortSignal,
-) => Promise<PdfDocumentLike>;
-
-export interface ParseAdventurePdfDeps {
-  loadPdfDocument?: PdfDocumentLoader;
-  workerSrc?: string;
-  signal?: AbortSignal;
-}
-
-/** Maximum PDF file size accepted for a single adventure import. */
-export const MAX_ADVENTURE_PDF_BYTES = 20 * 1024 * 1024;
-/** Maximum page count accepted for a single adventure PDF import. */
-export const MAX_ADVENTURE_PDF_PAGES = 500;
-/** Maximum extracted-text characters accepted for a single PDF import. */
-export const MAX_ADVENTURE_PDF_EXTRACTED_CHARS = 2_000_000;
-
-function abortedPdfError(): AdventureImportError {
-  return {
-    code: "ABORTED",
-    message: "The PDF import was cancelled before it finished.",
-  };
-}
-
-function isAborted(signal?: AbortSignal): boolean {
-  return signal?.aborted === true;
-}
+import type { AmbiguityRecord, ParseAdventureResult } from "./schema";
 
 const ATX_HEADING_RE = /^(#{1,6})\s+(.+?)\s*#*$/;
 const READ_ALOUD_CUE_RE = /^(?:>\s*)?(?:\*\*)?Read aloud:(?:\*\*)?\s*(.*)$/i;
@@ -62,55 +36,6 @@ const ALT_SOLUTION_CUE_RE =
 const MOTIVATION_INLINE_RE = /(?:\*\*)?Motivation:(?:\*\*)?\s*/gi;
 const BULLET_LINE_RE = /^(?:[-*•]|\d+[.)])\s+/;
 const SOURCE_ID_MARKER_RE = /^<!--\s*source-id:\s*([a-z0-9-]+)\s*-->$/;
-
-function toUint8Array(rawBytes: Uint8Array | ArrayBuffer): Uint8Array {
-  return rawBytes instanceof Uint8Array ? rawBytes : new Uint8Array(rawBytes);
-}
-
-function hasPdfHeader(bytes: Uint8Array): boolean {
-  const headerSlice = bytes.subarray(0, Math.min(bytes.byteLength, 1024));
-  return new TextDecoder("latin1").decode(headerSlice).includes("%PDF-");
-}
-
-function classifyPdfLoadError(error: unknown): AdventureImportError {
-  const name =
-    error && typeof error === "object" && "name" in error
-      ? String((error as { name?: unknown }).name)
-      : "";
-  const message = error instanceof Error ? error.message : String(error ?? "");
-
-  if (name === "PasswordException" || /password|encrypt/i.test(message)) {
-    return {
-      code: "ENCRYPTED_PDF",
-      message:
-        "Encrypted or password-protected PDFs are not supported. No decryption or bypass is attempted; please export an unencrypted PDF.",
-    };
-  }
-
-  return {
-    code: "INVALID_PDF",
-    message: "The selected file is not a valid, readable PDF document.",
-    details: message || undefined,
-  };
-}
-
-async function defaultLoadPdfDocument(
-  bytes: Uint8Array,
-  workerSrc?: string,
-): Promise<PdfDocumentLike> {
-  const isBrowser = typeof window !== "undefined";
-  const pdfjs = isBrowser
-    ? await import("pdfjs-dist")
-    : await import("pdfjs-dist/legacy/build/pdf.mjs");
-  if (workerSrc && pdfjs.GlobalWorkerOptions) {
-    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-  }
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(bytes),
-    verbosity: 0,
-  });
-  return (await loadingTask.promise) as unknown as PdfDocumentLike;
-}
 
 function computeBodyFontSize(lines: VisualLine[]): number {
   const counts = new Map<number, number>();
@@ -310,147 +235,6 @@ function deriveFallbackTitle(fileName: string): string {
     .replace(/\.pdf$/i, "")
     .trim();
   return base || "Imported Adventure";
-}
-
-function validatePdfInput(
-  rawBytes: Uint8Array | ArrayBuffer,
-  options: { fileName: string },
-):
-  { ok: true; bytes: Uint8Array } | { ok: false; error: AdventureImportError } {
-  if (
-    !options ||
-    typeof options.fileName !== "string" ||
-    options.fileName.trim().length === 0
-  ) {
-    return {
-      ok: false,
-      error: {
-        code: "INVALID_OPTIONS",
-        message: "A non-empty options.fileName is required.",
-      },
-    };
-  }
-
-  const bytes = toUint8Array(rawBytes);
-  if (bytes.byteLength > MAX_ADVENTURE_PDF_BYTES) {
-    return {
-      ok: false,
-      error: {
-        code: "INPUT_TOO_LARGE",
-        message: "Adventure PDF files must be 20 MiB or smaller.",
-      },
-    };
-  }
-  if (bytes.byteLength === 0) {
-    return {
-      ok: false,
-      error: {
-        code: "EMPTY_INPUT",
-        message: "Input PDF file buffer is empty.",
-      },
-    };
-  }
-
-  if (!hasPdfHeader(bytes)) {
-    return {
-      ok: false,
-      error: {
-        code: "INVALID_PDF",
-        message:
-          "The selected file is not a valid PDF document (missing %PDF- header).",
-      },
-    };
-  }
-
-  return { ok: true, bytes };
-}
-
-async function collectPageLines(
-  pdfDoc: PdfDocumentLike,
-  signal: AbortSignal | undefined,
-  allLines: VisualLine[],
-): Promise<AdventureImportError | null> {
-  if (pdfDoc.numPages > MAX_ADVENTURE_PDF_PAGES) {
-    return {
-      code: "INPUT_TOO_LARGE",
-      message: `Adventure PDF files must be ${MAX_ADVENTURE_PDF_PAGES} pages or fewer.`,
-    };
-  }
-  let extractedChars = 0;
-  for (let pageNumber = 1; pageNumber <= pdfDoc.numPages; pageNumber++) {
-    if (isAborted(signal)) return abortedPdfError();
-    const page = await pdfDoc.getPage(pageNumber);
-    const textContent = await page.getTextContent();
-    if (isAborted(signal)) return abortedPdfError();
-    const pageLines = extractPageVisualLines(textContent.items, pageNumber);
-    extractedChars += pageLines.reduce(
-      (total, line) => total + line.text.length,
-      0,
-    );
-    if (extractedChars > MAX_ADVENTURE_PDF_EXTRACTED_CHARS) {
-      return {
-        code: "INPUT_TOO_LARGE",
-        message:
-          "This PDF contains too much extractable text for a single adventure import.",
-      };
-    }
-    allLines.push(...pageLines);
-  }
-  return null;
-}
-
-async function loadPdfDocumentOrError(
-  bytes: Uint8Array,
-  deps: ParseAdventurePdfDeps,
-): Promise<
-  | { ok: true; doc: PdfDocumentLike }
-  | { ok: false; error: AdventureImportError }
-> {
-  try {
-    const doc = deps.loadPdfDocument
-      ? await deps.loadPdfDocument(bytes, deps.signal)
-      : await defaultLoadPdfDocument(bytes, deps.workerSrc);
-    return { ok: true, doc };
-  } catch (error) {
-    if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
-    return { ok: false, error: classifyPdfLoadError(error) };
-  }
-}
-
-async function extractLinesFromPdf(
-  bytes: Uint8Array,
-  deps: ParseAdventurePdfDeps,
-): Promise<
-  { ok: true; lines: VisualLine[] } | { ok: false; error: AdventureImportError }
-> {
-  if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
-  const loaded = await loadPdfDocumentOrError(bytes, deps);
-  if (!loaded.ok) return loaded;
-  const pdfDoc = loaded.doc;
-
-  const allLines: VisualLine[] = [];
-  try {
-    const collectError = await collectPageLines(pdfDoc, deps.signal, allLines);
-    if (collectError) return { ok: false, error: collectError };
-  } catch (error) {
-    if (isAborted(deps.signal)) return { ok: false, error: abortedPdfError() };
-    return { ok: false, error: classifyPdfLoadError(error) };
-  } finally {
-    await pdfDoc.destroy?.();
-  }
-
-  if (allLines.length === 0) {
-    return {
-      ok: false,
-      error: {
-        code: "IMAGE_ONLY_PDF",
-        message:
-          "This PDF contains no extractable text (it appears to be scanned or image-only). OCR is not available; please import a text-based PDF or Markdown file.",
-      },
-    };
-  }
-
-  return { ok: true, lines: allLines };
 }
 
 interface GroupedPdfSection {
