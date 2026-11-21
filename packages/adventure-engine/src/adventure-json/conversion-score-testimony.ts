@@ -1,11 +1,11 @@
 import type { ConversionAnswerKey } from "./conversion-answer-key";
 import {
   fail,
+  notApplicable,
   type ConversionScoreDimensionResult,
 } from "./conversion-score-result";
 import type { DocLike } from "./conversion-score-document";
 import { textFoundIn } from "./conversion-score-text";
-import { notApplicable } from "./conversion-score-result";
 
 export function scoreAuthoredVsRumour(
   value: DocLike,

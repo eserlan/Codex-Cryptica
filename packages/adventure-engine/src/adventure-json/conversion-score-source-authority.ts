@@ -1,6 +1,7 @@
 import type { ConversionAnswerKey } from "./conversion-answer-key";
 import {
   fail,
+  notApplicable,
   type ConversionScoreDimensionResult,
 } from "./conversion-score-result";
 import {
@@ -11,7 +12,6 @@ import {
   type DocLike,
   type Entity,
 } from "./conversion-score-document";
-import { notApplicable } from "./conversion-score-result";
 
 type SourceAuthorityCase = NonNullable<
   ConversionAnswerKey["sourceAuthority"]

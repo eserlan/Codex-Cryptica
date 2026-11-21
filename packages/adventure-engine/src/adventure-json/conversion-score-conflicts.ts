@@ -1,9 +1,9 @@
 import type { ConversionAnswerKey } from "./conversion-answer-key";
 import {
   fail,
+  notApplicable,
   type ConversionScoreDimensionResult,
 } from "./conversion-score-result";
-import { notApplicable } from "./conversion-score-result";
 import {
   allEntities,
   hasScoredText,
