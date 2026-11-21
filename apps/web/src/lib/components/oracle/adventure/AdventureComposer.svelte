@@ -23,6 +23,15 @@
   let activeDraft = $derived(
     isOocMode ? (manager.oocDraft ?? "") : (manager.draft ?? ""),
   );
+  let inputPlaceholder = $derived(
+    isOocMode
+      ? phone
+        ? "Ask a question…"
+        : "Ask the GM a question (out of character)…"
+      : phone
+        ? "Your action…"
+        : "What do you do?",
+  );
   let busy = $derived(
     manager.phase === "generating" ||
       Boolean(manager.oocGenerating) ||
@@ -297,13 +306,7 @@
         }
       }}
       {disabled}
-      placeholder={isOocMode
-        ? phone
-          ? "Ask a question…"
-          : "Ask the GM a question (out of character)…"
-        : phone
-          ? "Your action…"
-          : "What do you do?"}
+      placeholder={inputPlaceholder}
     ></textarea>
     <button
       class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
