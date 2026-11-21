@@ -97,9 +97,7 @@ describe("AdventureComposer", () => {
     expect(actionButtons).toHaveLength(3);
     expect(actionButtons[0].className).toContain("w-full");
     expect(actionButtons[0].className).not.toContain("line-clamp");
-    expect(actionButtons[0].parentElement?.className).not.toContain(
-      "max-h-36",
-    );
+    expect(actionButtons[0].parentElement?.className).not.toContain("max-h-36");
     expect(actionButtons[0].parentElement?.className).not.toContain(
       "overflow-y-auto",
     );
