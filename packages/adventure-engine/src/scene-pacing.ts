@@ -7,6 +7,8 @@ export const SCENE_STALL_TURN_LIMIT = 4;
 export interface SceneStallPacing {
   /** Trailing committed turns in which nothing in the world changed. */
   quietTurns: number;
+  /** Total fictional minutes elapsed across the trailing quiet turns (0 when none). */
+  quietElapsedMinutes: number;
   /** The scene has stood still long enough that the GM should change something. */
   stalled: boolean;
 }
@@ -25,10 +27,10 @@ function patchHasChange(patch: {
 
 /**
  * A turn is quiet when it changed no visible or hidden state, revealed nothing,
- * added no provisional fact, moved no time and resolved no roll. Talk and
- * scenery alone are quiet. `scenarioTurnIds` holds the turns that logged a
- * scenario event (a lead surfacing or a stage advancing), which can happen with
- * empty patches.
+ * added no provisional fact, logged no scenario event, and resolved no roll.
+ * Talk, scenery, and bare fictional time passage alone are quiet.
+ * `scenarioTurnIds` holds the turns that logged a scenario event (a lead
+ * surfacing or a stage advancing), which can happen with empty patches.
  */
 export function isQuietTurn(
   turn: CommittedAdventureTurn,
@@ -47,8 +49,7 @@ export function isQuietTurn(
     patchHasChange(turn.hiddenPatch.secrets) ||
     patchHasChange(turn.hiddenPatch.gmThreads) ||
     turn.revealedSecretIds.length > 0 ||
-    turn.provisionalFactIds.length > 0 ||
-    turn.timeAdvance
+    turn.provisionalFactIds.length > 0
   );
 }
 
@@ -65,12 +66,16 @@ export function sceneStallPacing(
     return undefined;
   const scenarioTurnIds = scenarioEventTurnIds(session);
   let quietTurns = 0;
+  let quietElapsedMinutes = 0;
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
-    if (!isQuietTurn(session.turns[i]!, scenarioTurnIds)) break;
+    const turn = session.turns[i]!;
+    if (!isQuietTurn(turn, scenarioTurnIds)) break;
     quietTurns += 1;
+    quietElapsedMinutes += turn.timeAdvance?.minutes ?? 0;
   }
   return {
     quietTurns,
+    quietElapsedMinutes,
     stalled: quietTurns > 0 && quietTurns % SCENE_STALL_TURN_LIMIT === 0,
   };
 }
