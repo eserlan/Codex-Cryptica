@@ -71,8 +71,8 @@ function completedTurnProposalError(
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
   const leakage =
-    detectHiddenLeakage(session, proposal)[0] ??
-    detectPackageLeakage(proposal, meta, session)[0];
+    detectPackageLeakage(proposal, meta, session)[0] ??
+    detectHiddenLeakage(session, proposal)[0];
   if (leakage) {
     return error(
       "hidden-leakage",

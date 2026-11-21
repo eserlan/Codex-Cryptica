@@ -32,8 +32,8 @@ export function applyRollRequest(
     return error("invalid-schema", "A roll is required.");
   // Roll copy is shown to the player, so it gets the same secrecy guard.
   const leakage =
-    detectHiddenLeakage(session, proposal)[0] ??
-    detectPackageLeakage(proposal, meta, session)[0];
+    detectPackageLeakage(proposal, meta, session)[0] ??
+    detectHiddenLeakage(session, proposal)[0];
   if (leakage) {
     return error(
       "hidden-leakage",

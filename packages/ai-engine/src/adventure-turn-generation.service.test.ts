@@ -107,6 +107,35 @@ describe("AdventureTurnGenerationService", () => {
     expect(getModel).not.toHaveBeenCalled();
   });
 
+  it("attempts generation when the runtime does not report online status", async () => {
+    const providerError = new Error("provider-attempted");
+    const getModel = vi.fn(async () => ({
+      async generateContent() {
+        throw providerError;
+      },
+    }));
+    const service = new AdventureTurnGenerationService({ getModel });
+    const request = {
+      session,
+      phase: "opening" as const,
+      anchors: [],
+      relevant: [],
+    };
+    Object.defineProperty(navigator, "onLine", {
+      value: undefined,
+      writable: true,
+    });
+    try {
+      await expect(service.generate(request)).rejects.toBe(providerError);
+      expect(getModel).toHaveBeenCalledOnce();
+    } finally {
+      Object.defineProperty(navigator, "onLine", {
+        value: true,
+        writable: true,
+      });
+    }
+  });
+
   it("emits only the first top-level player narration from partial JSON", () => {
     expect(
       extractAdventureNarrationPrefix(

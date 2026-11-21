@@ -591,6 +591,8 @@ export interface CommitMetadata {
   /** Hidden package references and text used to reject accidental player leaks. */
   packageRecordIds?: readonly string[];
   packageGmOnlyText?: readonly string[];
+  /** Map of package secret IDs to text so explicitly revealed secrets are exempted from package-text guards. */
+  packageSecretTexts?: Readonly<Record<string, string>>;
 }
 
 export type HiddenLeakageGuard =

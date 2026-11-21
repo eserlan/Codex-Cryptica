@@ -726,7 +726,11 @@ describe("Oracle Proxy Worker Interactions API", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(
-      expect.objectContaining({ id: "resp_abc", text: "The crone speaks." }),
+      expect.objectContaining({
+        id: "resp_abc",
+        text: "The crone speaks.",
+        modelKey: "luna-fast",
+      }),
     );
 
     const [calledUrl, init] = fetchMock.mock.calls[0] as unknown as [
@@ -822,6 +826,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
       expect.objectContaining({
         id: "v1_gemini_fallback",
         text: "Gemini fallback response.",
+        modelKey: "gemini-flash-lite",
       }),
     );
 
@@ -861,6 +866,7 @@ describe("Oracle Proxy Worker Interactions API", () => {
     expect(await response.json()).toEqual({
       id: "v1_gemini_fallback",
       text: "Continued via Gemini.",
+      modelKey: "gemini-flash-lite",
     });
     expect(fetchMock).toHaveBeenCalledOnce();
     expect(String(fetchMock.mock.calls[0][0])).toContain(
@@ -956,6 +962,130 @@ describe("Oracle Proxy Worker Interactions API", () => {
       error: { message: "missing-openai-api-key" },
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("includes reasoningTokens in usage when present for OpenAI and Gemini, and omits it when absent", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "resp_with_reasoning",
+            output: [
+              {
+                type: "message",
+                role: "assistant",
+                content: [{ type: "output_text", text: "OpenAI reasoned" }],
+              },
+            ],
+            usage: {
+              input_tokens: 120,
+              output_tokens: 45,
+              output_tokens_details: { reasoning_tokens: 30 },
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "resp_no_reasoning",
+            output: [
+              {
+                type: "message",
+                role: "assistant",
+                content: [{ type: "output_text", text: "OpenAI plain" }],
+              },
+            ],
+            usage: {
+              input_tokens: 80,
+              output_tokens: 20,
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "v1_with_reasoning",
+            steps: [{ content: [{ text: "Gemini reasoned" }] }],
+            usageMetadata: {
+              promptTokenCount: 100,
+              candidatesTokenCount: 40,
+              thoughtsTokenCount: 25,
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            id: "v1_no_reasoning",
+            steps: [{ content: [{ text: "Gemini plain" }] }],
+            usageMetadata: {
+              promptTokenCount: 60,
+              candidatesTokenCount: 15,
+            },
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    globalThis.fetch = fetchMock as typeof fetch;
+
+    const openaiWithReasoning = await worker.fetch(
+      request({ input: "hi", model: "luna-fast" }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+    expect(openaiWithReasoning.status).toBe(200);
+    expect(await openaiWithReasoning.json()).toEqual({
+      id: "resp_with_reasoning",
+      text: "OpenAI reasoned",
+      modelKey: "luna-fast",
+      usage: { inputTokens: 120, outputTokens: 45, reasoningTokens: 30 },
+    });
+
+    const openaiWithoutReasoning = await worker.fetch(
+      request({ input: "hi", model: "luna-fast" }),
+      { ...env, OPENAI_API_KEY: "test-openai-key" },
+      {} as ExecutionContext,
+    );
+    expect(openaiWithoutReasoning.status).toBe(200);
+    const openaiPlainJson = (await openaiWithoutReasoning.json()) as any;
+    expect(openaiPlainJson.usage).toEqual({
+      inputTokens: 80,
+      outputTokens: 20,
+    });
+    expect("reasoningTokens" in openaiPlainJson.usage).toBe(false);
+
+    const geminiWithReasoning = await worker.fetch(
+      request({ input: "hi", model: "gemini-flash-lite" }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(geminiWithReasoning.status).toBe(200);
+    expect(await geminiWithReasoning.json()).toEqual({
+      id: "v1_with_reasoning",
+      text: "Gemini reasoned",
+      modelKey: "gemini-flash-lite",
+      usage: { inputTokens: 100, outputTokens: 40, reasoningTokens: 25 },
+    });
+
+    const geminiWithoutReasoning = await worker.fetch(
+      request({ input: "hi", model: "gemini-flash-lite" }),
+      env,
+      {} as ExecutionContext,
+    );
+    expect(geminiWithoutReasoning.status).toBe(200);
+    const geminiPlainJson = (await geminiWithoutReasoning.json()) as any;
+    expect(geminiPlainJson.usage).toEqual({
+      inputTokens: 60,
+      outputTokens: 15,
+    });
+    expect("reasoningTokens" in geminiPlainJson.usage).toBe(false);
   });
 });
 
@@ -1061,6 +1191,7 @@ describe("Oracle Proxy Worker: operation-field discriminator (US1 regression)", 
     expect(await interactionsResponse.json()).toEqual({
       id: "v1_a",
       text: "reply",
+      modelKey: "gemini-flash-lite",
     });
 
     // generateContent shape

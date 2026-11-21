@@ -204,24 +204,34 @@ export function buildGeminiInteractionPayload(
   if (systemInstruction) {
     payload.system_instruction = systemInstruction;
   }
-  if (body.generation_config || body.generationConfig) {
-    const rawConfig = {
-      ...(body.generation_config || body.generationConfig || {}),
-    } as Record<string, unknown>;
-    const generationConfig = mapGenerationConfig(rawConfig);
-    // Gemini Interactions API removed response_mime_type from generation_config
-    // in its June 2026 schema revision. Keep JSON mode in response_format.
-    const mimeType = generationConfig.response_mime_type;
-    delete generationConfig.response_mime_type;
-    if (mimeType === "application/json") {
-      payload.response_format = {
-        type: "text",
-        mime_type: "application/json",
-      };
-    }
-    if (Object.keys(generationConfig).length > 0) {
-      payload.generation_config = generationConfig;
-    }
+  const generationConfig: Record<string, unknown> =
+    body.generation_config || body.generationConfig
+      ? mapGenerationConfig({
+          ...(body.generation_config || body.generationConfig || {}),
+        } as Record<string, unknown>)
+      : {};
+  // Gemini Interactions API removed response_mime_type from generation_config
+  // in its June 2026 schema revision. Keep JSON mode in response_format.
+  const mimeType = generationConfig.response_mime_type;
+  delete generationConfig.response_mime_type;
+  if (mimeType === "application/json") {
+    payload.response_format = {
+      type: "text",
+      mime_type: "application/json",
+    };
+  }
+  if (
+    body.reasoning_effort === "minimal" ||
+    body.reasoning_effort === "low" ||
+    body.reasoning_effort === "medium" ||
+    body.reasoning_effort === "high" ||
+    body.reasoning_effort === "xhigh"
+  ) {
+    generationConfig.thinking_level =
+      body.reasoning_effort === "xhigh" ? "high" : body.reasoning_effort;
+  }
+  if (Object.keys(generationConfig).length > 0) {
+    payload.generation_config = generationConfig;
   }
 
   return payload;

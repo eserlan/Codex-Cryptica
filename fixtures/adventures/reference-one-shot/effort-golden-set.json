@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "id": "the-last-grind-effort-golden-set",
+  "adventureId": "the-last-grind",
+  "title": "The Last Grind: Luna effort comparison",
+  "purpose": "Replay the same player actions through Adventure Mode at different OpenAI reasoning effort levels. Score expected beats and hard safety constraints; do not require verbatim prose.",
+  "source": "adventure.v1.json",
+  "answerKey": "answer-key.json",
+  "effortLevels": ["low", "medium", "high", "xhigh"],
+  "playerCharacter": {
+    "name": "Rowan",
+    "description": "A practical traveller who prefers questions and negotiation before violence."
+  },
+  "rollOutcome": {
+    "kind": "numeric",
+    "value": 18,
+    "label": "Golden comparison roll: 18"
+  },
+  "globalConstraints": {
+    "mustPreservePlayerAgency": true,
+    "mustNotInventRuleset": true,
+    "mustHonorPlayerChoices": true,
+    "forbiddenUntilRevealed": [
+      "secret-filed-pin",
+      "secret-tobiah-motive",
+      "secret-wick-wages",
+      "secret-shrine-bread",
+      "secret-miller-hid",
+      "secret-aldous-cellar",
+      "secret-cellar-flood",
+      "secret-after-dark",
+      "secret-yard-noise",
+      "secret-wick-motivation",
+      "secret-shrine-blessing",
+      "secret-ledger-lock"
+    ]
+  },
+  "secretLeakPhrases": {
+    "secret-filed-pin": [
+      "filed through from the inside",
+      "tobiah reed filed",
+      "tobiah filed the pin",
+      "filed the sluice pin"
+    ],
+    "secret-tobiah-motive": [
+      "buy it cheaply",
+      "sell it cheaply",
+      "buy the mill cheaply",
+      "sell the mill to tobiah"
+    ],
+    "secret-wick-wages": [
+      "three months' pay",
+      "three months of pay",
+      "owed three months",
+      "never meant to pay him"
+    ],
+    "secret-shrine-bread": [
+      "keeper is long dead",
+      "leaves the bread there",
+      "maren leaves the bread",
+      "in her father's memory"
+    ],
+    "secret-miller-hid": [
+      "hid in the cellar himself",
+      "bound by his own hand",
+      "charge of theft",
+      "tobiah did not take him",
+      "hid himself"
+    ],
+    "secret-aldous-cellar": [
+      "bound and gagged",
+      "second copy of the same record",
+      "receipt for the lock",
+      "sluice lock receipt"
+    ],
+    "secret-cellar-flood": [
+      "cellar floods",
+      "cellar starts to flood",
+      "water in the cellar starts to rise",
+      "about five turns"
+    ],
+    "secret-after-dark": [
+      "arrives after dark",
+      "maren is absent",
+      "gate already open"
+    ],
+    "secret-yard-noise": [
+      "makes noise in the yard",
+      "arrives from the wheel room",
+      "begins on alert"
+    ],
+    "secret-wick-motivation": ["unpaid wages", "safe road out of the valley"],
+    "secret-shrine-blessing": [
+      "calm blessing",
+      "repeated once",
+      "hint toward the cellar"
+    ],
+    "secret-ledger-lock": [
+      "lock fitted to the sluice pin",
+      "sluice pin was sabotaged"
+    ]
+  },
+  "runs": [
+    {
+      "id": "opening-at-landing",
+      "playerAction": "I ask Maren what happened to the miller and why the mill has to be restarted today.",
+      "sourceRefs": ["ros-scene-1-landing", "ros-npc-maren"],
+      "expectedBeats": [
+        "Maren asks for help restarting the mill.",
+        "The mill has stopped and the village needs flour or bread.",
+        "Maren's urgency is connected to the bailiff and her mother's debt, without inventing a precise deadline."
+      ],
+      "forbiddenFacts": ["secret-after-dark", "secret-tobiah-motive"]
+    },
+    {
+      "id": "inspect-yard-ledger",
+      "playerAction": "At the mill yard, I inspect the damp ledger carefully. What useful evidence can I read?",
+      "sourceRefs": ["ros-scene-2-yard"],
+      "expectedBeats": [
+        "The ledger can reveal that a lock was fitted to the sluice pin the week before the miller vanished.",
+        "The evidence suggests deliberate interference but does not by itself prove who filed the pin."
+      ],
+      "revealOnSuccess": ["secret-ledger-lock"],
+      "forbiddenFacts": [
+        "secret-filed-pin",
+        "secret-tobiah-motive",
+        "secret-yard-noise"
+      ]
+    },
+    {
+      "id": "optional-reed-shrine",
+      "playerAction": "Before entering the mill, I take the reed path and examine the shrine. Is there anything here that can help us?",
+      "sourceRefs": ["ros-branch-shrine"],
+      "expectedBeats": [
+        "The shrine is optional and can be left without blocking the main adventure.",
+        "A visit may grant one repeat of a later roll to calm, persuade, or resist fear, plus a hint toward the cellar."
+      ],
+      "revealOnSuccess": ["secret-shrine-blessing"],
+      "forbiddenFacts": ["secret-shrine-bread"]
+    },
+    {
+      "id": "negotiate-with-wick",
+      "playerAction": "I return to the mill and enter the wheel room, where Wick blocks the sluice lever. I show him the ledger evidence and ask why he is helping Tobiah.",
+      "sourceRefs": ["ros-scene-3-wheel-room", "ros-npc-wick"],
+      "expectedBeats": [
+        "Wick can be approached through conversation; combat is not mandatory.",
+        "Naming Tobiah's debt or showing the filed-pin evidence can make Wick lower his cudgel and step aside.",
+        "Do not reveal Wick's unpaid wages or private motive until the conversation earns that disclosure."
+      ],
+      "forbiddenFacts": ["secret-wick-wages", "secret-wick-motivation"]
+    },
+    {
+      "id": "pull-the-lever",
+      "playerAction": "Once we are ready, I pull the sluice lever and immediately head down the cellar stairs.",
+      "sourceRefs": ["ros-scene-3-wheel-room", "ros-scene-4-cellar"],
+      "expectedBeats": [
+        "The wheel starts turning and water begins rising in the cellar.",
+        "The party has about five turns to act in the cellar.",
+        "The GM makes the time pressure clear while leaving Rowan's next action to the player."
+      ],
+      "revealOnSuccess": ["secret-cellar-flood", "secret-aldous-cellar"],
+      "forbiddenFacts": ["secret-miller-hid"]
+    },
+    {
+      "id": "free-aldous-and-find-receipt",
+      "playerAction": "I get Aldous out of the chair, ask what happened, and check whether he has anything that can corroborate the ledger.",
+      "sourceRefs": ["ros-scene-4-cellar", "ros-ending-restored"],
+      "expectedBeats": [
+        "Aldous is alive, bound, and in immediate danger from the rising water.",
+        "A second copy of the sluice-lock receipt can corroborate the ledger.",
+        "The GM may reveal that Aldous hid himself, rather than being abducted by Tobiah, through Aldous's answer or evidence."
+      ],
+      "revealOnSuccess": ["secret-aldous-cellar", "secret-miller-hid"],
+      "forbiddenFacts": ["secret-tobiah-motive"]
+    },
+    {
+      "id": "confront-tobiah",
+      "playerAction": "With the receipt and ledger as evidence, I confront Tobiah and give him a chance to answer before deciding what to do.",
+      "sourceRefs": ["ros-npc-tobiah", "ros-ending-restored"],
+      "expectedBeats": [
+        "The evidence supports exposing Tobiah's sabotage.",
+        "Tobiah wanted the mill to fail so he could buy it cheaply.",
+        "The GM presents consequences and leaves the final response or decision to Rowan."
+      ],
+      "revealOnSuccess": ["secret-filed-pin", "secret-tobiah-motive"],
+      "endingIfResolved": "ending-restored"
+    }
+  ],
+  "scoringGuidance": {
+    "expectedBeats": "Score each beat as present, partial, or absent. Accept paraphrase and reasonable pacing; do not reward verbatim matching.",
+    "hardFailures": [
+      "Any forbidden fact is exposed before its reveal condition.",
+      "The GM dictates Rowan's speech, thoughts, feelings, or consequential action.",
+      "The GM ignores an explicit player action or invents a contradictory source fact.",
+      "The GM removes the optional branch or makes negotiation with Wick impossible."
+    ],
+    "recordPerTurn": [
+      "requestedEffort",
+      "actualModelKey",
+      "latencyMs",
+      "inputTokens",
+      "outputTokens",
+      "repairCount",
+      "expectedBeatScores",
+      "hardFailures",
+      "reviewNotes"
+    ]
+  }
+}

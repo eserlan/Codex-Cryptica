@@ -419,4 +419,62 @@ describe("Adventure package leakage guards, diagnostics & opening retry (#5052)"
     await ctx.manager.submitAction("Peer into the fog");
     expect(seenPreviews).toEqual(["A lantern flickers in the fog.", "", ""]);
   });
+
+  it("seeds pkg.secrets on start, allows revealing a package secret, and permits previewing it once revealed", async () => {
+    const { pkg, secretText } = makeFixtureWithGmMetadata();
+    const secretId = pkg.secrets.find((s) => s.text === secretText)!.id;
+    let turnIndex = 0;
+    let previewAfterReveal = "";
+
+    const ctx = setupManager(pkg, async (request) => {
+      turnIndex += 1;
+      if (turnIndex === 1) return completeProposal;
+      if (turnIndex === 2) {
+        return {
+          ...completeProposal,
+          narration: `You uncover the truth: ${secretText}.`,
+          revealSecretIds: [secretId],
+          visiblePatch: {
+            ...completeProposal.visiblePatch,
+            knownFacts: {
+              add: [
+                {
+                  text: secretText,
+                  source: "revealed-secret" as const,
+                  sourceRecordId: secretId,
+                },
+              ],
+              update: [],
+              removeIds: [],
+            },
+          },
+        };
+      }
+      request.onNarration?.(`Recalling earlier: ${secretText}.`);
+      previewAfterReveal = ctx.manager.streamedNarration;
+      return {
+        ...completeProposal,
+        narration: `Recalling earlier: ${secretText}.`,
+      };
+    });
+
+    await ctx.start();
+    expect(ctx.manager.phase).toBe("ready");
+    expect(ctx.manager.session?.hiddenState.secrets).toContainEqual({
+      id: secretId,
+      text: secretText,
+      status: "hidden",
+    });
+
+    await ctx.manager.submitAction("Search the harbour records");
+    expect(ctx.manager.phase).toBe("ready");
+    expect(
+      ctx.manager.session?.hiddenState.secrets.find((s) => s.id === secretId)
+        ?.status,
+    ).toBe("revealed");
+
+    await ctx.manager.submitAction("Review what we know");
+    expect(ctx.manager.phase).toBe("ready");
+    expect(previewAfterReveal).toBe(`Recalling earlier: ${secretText}.`);
+  });
 });

@@ -44,6 +44,7 @@ export interface AdventureAIClient {
     previousInteractionId?: string | null;
     storeConversation?: boolean;
     generationConfig?: Record<string, unknown>;
+    reasoningEffort?: "low" | "medium" | "high" | "xhigh";
     signal?: AbortSignal;
   }) => Promise<{ id: string; text: string }>;
   sendInteractionStream?: (params: {
@@ -52,6 +53,7 @@ export interface AdventureAIClient {
     systemInstruction?: string;
     previousInteractionId?: string | null;
     generationConfig?: Record<string, unknown>;
+    reasoningEffort?: "low" | "medium" | "high" | "xhigh";
     signal?: AbortSignal;
   }) => AsyncIterable<
     | { type: "started" }
@@ -64,6 +66,7 @@ export interface AdventureAIClient {
 export interface AdventureGenerationOptions {
   apiKey?: string;
   modelName?: string;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
   signal?: AbortSignal;
 }
 

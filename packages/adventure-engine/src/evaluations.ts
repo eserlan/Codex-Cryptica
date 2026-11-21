@@ -21,6 +21,7 @@ export interface EvaluationTurn {
   errorMessages?: string[];
   recap?: AdventureRecap;
   transcript?: PlayerTranscript;
+  packageRecordIds?: ReadonlyArray<string>;
 }
 
 export type RubricDimension =
@@ -247,9 +248,27 @@ export function scoreSecrecy(
   }
 
   const playerTexts = collectPlayerFacingTexts(turn).map(normalizeText);
-  if (session) {
+  const revealedOnTurn = new Set(
+    turn.proposal.kind === "complete" ? turn.proposal.revealSecretIds : [],
+  );
+  const postRevealSession =
+    turn.session ??
+    (session && revealedOnTurn.size > 0
+      ? {
+          ...session,
+          hiddenState: {
+            ...session.hiddenState,
+            secrets: session.hiddenState.secrets.map((secret) =>
+              revealedOnTurn.has(secret.id)
+                ? { ...secret, status: "revealed" as const }
+                : secret,
+            ),
+          },
+        }
+      : session);
+  if (postRevealSession) {
     for (const text of playerTexts) {
-      if (detectHiddenTextLeakage(session, text).length > 0) return 0;
+      if (detectHiddenTextLeakage(postRevealSession, text).length > 0) return 0;
     }
   }
 
@@ -360,7 +379,7 @@ export function scoreCanonSafety(turn: EvaluationTurn): number {
   );
 
   return !hasProvisionalCanonicalFacts(turn, next, canonicalTitles) &&
-    !hasUnattributedCanonicalFacts(next) &&
+    !hasUnattributedCanonicalFacts(next, turn.packageRecordIds) &&
     !mutatesCanon(prev, next)
     ? 1
     : 0;
@@ -380,6 +399,7 @@ function hasProvisionalCanonicalFacts(
 
 function hasUnattributedCanonicalFacts(
   next: AdventureSession | undefined,
+  packageRecordIds?: ReadonlyArray<string>,
 ): boolean {
   if (!next) return false;
   const visible = [
@@ -390,13 +410,19 @@ function hasUnattributedCanonicalFacts(
     ...next.visibleState.objectives,
     ...next.visibleState.relationships,
   ];
+  const validSourceIds = new Set(
+    next.sourceRecords.map((record) => record.recordId),
+  );
+  if (packageRecordIds && packageRecordIds.length > 0) {
+    for (const id of packageRecordIds) {
+      validSourceIds.add(id);
+    }
+    validSourceIds.add("premise");
+  }
   return visible.some(
     (fact) =>
       fact.source === "canonical" &&
-      (!fact.sourceRecordId ||
-        !next.sourceRecords.some(
-          (record) => record.recordId === fact.sourceRecordId,
-        )),
+      (!fact.sourceRecordId || !validSourceIds.has(fact.sourceRecordId)),
   );
 }
 

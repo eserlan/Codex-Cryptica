@@ -148,6 +148,14 @@ export class AdventureOpening {
     return parseAdventureSession({
       ...created,
       packageProgress: { sceneId },
+      hiddenState: {
+        ...created.hiddenState,
+        secrets: pkg.secrets.map((secret) => ({
+          id: secret.id,
+          text: secret.text,
+          status: "hidden" as const,
+        })),
+      },
     });
   }
 
