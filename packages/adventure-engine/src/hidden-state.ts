@@ -275,6 +275,21 @@ function storedPackageSecretTexts(
   ];
 }
 
+function collectRevealedSecretTexts(
+  revealedIds: Set<string>,
+  session?: AdventureSession,
+  packageSecretTexts?: Record<string, string>,
+): Set<string> {
+  const revealedTexts = new Set<string>();
+  for (const secret of session?.hiddenState.secrets ?? []) {
+    if (revealedIds.has(secret.id)) revealedTexts.add(normalize(secret.text));
+  }
+  for (const [id, text] of Object.entries(packageSecretTexts ?? {})) {
+    if (revealedIds.has(id)) revealedTexts.add(normalize(text));
+  }
+  return revealedTexts;
+}
+
 function collectPackageSecretTexts(
   meta: Pick<CommitMetadata, "packageGmOnlyText" | "packageSecretTexts">,
   session?: AdventureSession,
@@ -285,21 +300,18 @@ function collectPackageSecretTexts(
     proposal,
     meta.packageSecretTexts,
   );
-  const revealedTexts = new Set<string>();
-  for (const secret of session?.hiddenState.secrets ?? []) {
-    if (revealedIds.has(secret.id)) revealedTexts.add(normalize(secret.text));
-  }
-  if (meta.packageSecretTexts) {
-    for (const [id, text] of Object.entries(meta.packageSecretTexts)) {
-      if (revealedIds.has(id)) revealedTexts.add(normalize(text));
-    }
-  }
+  const revealedTexts = collectRevealedSecretTexts(
+    revealedIds,
+    session,
+    meta.packageSecretTexts,
+  );
+  const rawPackageGmOnlyText = meta.packageGmOnlyText ?? [];
   const packageGmOnlyText =
     revealedTexts.size > 0
-      ? (meta.packageGmOnlyText ?? []).filter(
+      ? rawPackageGmOnlyText.filter(
           (text) => !revealedTexts.has(normalize(text)),
         )
-      : (meta.packageGmOnlyText ?? []);
+      : rawPackageGmOnlyText;
   return [
     ...packageGmOnlyText,
     ...proposedPackageSecretTexts(proposal),

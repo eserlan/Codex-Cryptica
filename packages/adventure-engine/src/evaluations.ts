@@ -238,6 +238,27 @@ export function scorePlayerAgency(turn: EvaluationTurn): number {
   return pattern.test(combined) ? 0 : 1;
 }
 
+function buildPostRevealSession(
+  turn: EvaluationTurn,
+  session?: AdventureSession,
+): AdventureSession | undefined {
+  if (turn.session) return turn.session;
+  if (!session || turn.proposal.kind !== "complete") return session;
+  const revealedOnTurn = new Set(turn.proposal.revealSecretIds);
+  if (revealedOnTurn.size === 0) return session;
+  return {
+    ...session,
+    hiddenState: {
+      ...session.hiddenState,
+      secrets: session.hiddenState.secrets.map((secret) =>
+        revealedOnTurn.has(secret.id)
+          ? { ...secret, status: "revealed" as const }
+          : secret,
+      ),
+    },
+  };
+}
+
 export function scoreSecrecy(
   turn: EvaluationTurn,
   canaries: string[] = [],
@@ -248,36 +269,22 @@ export function scoreSecrecy(
   }
 
   const playerTexts = collectPlayerFacingTexts(turn).map(normalizeText);
-  const revealedOnTurn = new Set(
-    turn.proposal.kind === "complete" ? turn.proposal.revealSecretIds : [],
-  );
-  const postRevealSession =
-    turn.session ??
-    (session && revealedOnTurn.size > 0
-      ? {
-          ...session,
-          hiddenState: {
-            ...session.hiddenState,
-            secrets: session.hiddenState.secrets.map((secret) =>
-              revealedOnTurn.has(secret.id)
-                ? { ...secret, status: "revealed" as const }
-                : secret,
-            ),
-          },
-        }
-      : session);
-  if (postRevealSession) {
-    for (const text of playerTexts) {
-      if (detectHiddenTextLeakage(postRevealSession, text).length > 0) return 0;
-    }
+  const postRevealSession = buildPostRevealSession(turn, session);
+  if (
+    postRevealSession &&
+    playerTexts.some(
+      (text) => detectHiddenTextLeakage(postRevealSession, text).length > 0,
+    )
+  ) {
+    return 0;
   }
 
   const secrets = collectSecretLeakageSources(turn, canaries);
-  for (const secret of secrets) {
-    if (playerTexts.some((text) => text.includes(secret))) return 0;
-  }
-
-  return 1;
+  return secrets.some((secret) =>
+    playerTexts.some((text) => text.includes(secret)),
+  )
+    ? 0
+    : 1;
 }
 
 function scenarioProgressionValid(
