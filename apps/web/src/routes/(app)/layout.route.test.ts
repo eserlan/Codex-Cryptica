@@ -3,6 +3,8 @@
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import * as sessionBootstrap from "#lib/services/ai/session-bootstrap.js";
+import * as turnstileService from "#lib/services/publishing/turnstile.js";
 
 const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
   () => ({
@@ -618,5 +620,25 @@ describe("+layout.svelte", () => {
     await tick();
 
     expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
+  });
+
+  it("does not trigger Turnstile or AI session bootstrap on mount at /", async () => {
+    const turnstileSpy = vi.spyOn(turnstileService, "getSessionTurnstileToken");
+    const sessionTokenSpy = vi.spyOn(sessionBootstrap, "getAiSessionToken");
+
+    try {
+      render(LayoutTestHost);
+      await tick();
+      await Promise.resolve();
+
+      expect(turnstileSpy).not.toHaveBeenCalled();
+      expect(sessionTokenSpy).not.toHaveBeenCalled();
+      expect(
+        document.head.querySelectorAll("#codex-turnstile-script"),
+      ).toHaveLength(0);
+    } finally {
+      turnstileSpy.mockRestore();
+      sessionTokenSpy.mockRestore();
+    }
   });
 });
