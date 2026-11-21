@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { AdventureSession } from "@codex/adventure-engine";
+import {
+  parseAdventureSession,
+  type AdventureSession,
+} from "@codex/adventure-engine";
 import {
   adventureDiagnosticDeltaJson,
   adventureDiagnosticJson,
@@ -423,6 +426,45 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(checks.turnsRevealingUnknownSecrets).toEqual(["turn-1"]);
     expect(checks.nonContiguousTurnSequences).toEqual(["turn-1"]);
     expect(checks.secretsMarkedRevealedWithoutTurn).toEqual(["secret-1"]);
+  });
+
+  it("recognizes scenario reveals after reload and still flags unknown IDs on condensed turns", () => {
+    const source = exampleSession();
+    source.playerCharacter = {
+      kind: "provisional",
+      name: "Mara",
+      description: "Traveler",
+    };
+    source.hiddenState.secrets = [];
+    const scenario = source.scenarioCollection!.items[0]!;
+    scenario.origin = { kind: "manual", manualId: "manual-1" };
+    scenario.secretBindings.truth = "scenario-truth-1";
+    scenario.secretBindings.eventIds = { "event-1": "scenario-event-1" };
+    scenario.revealedSecretIds = ["scenario-truth-1"];
+    source.turns[0]!.revealedSecretIds = ["scenario-truth-1"];
+
+    const reloaded = parseAdventureSession(JSON.parse(JSON.stringify(source)));
+    const beforeDiagnostics = structuredClone(reloaded);
+    const diagnostic = JSON.parse(
+      adventureDiagnosticJson(reloaded, { recentTurns: 0 }),
+    );
+
+    expect(diagnostic.integrityChecks.turnsRevealingUnknownSecrets).toEqual([]);
+    expect(diagnostic.turns[0].detail).toBe("condensed");
+    expect(reloaded).toEqual(beforeDiagnostics);
+
+    const withUnknownReveal = structuredClone(reloaded);
+    withUnknownReveal.turns[0]!.revealedSecretIds.push("unknown-secret");
+    const beforeUnknownDiagnostics = structuredClone(withUnknownReveal);
+    const unknownDiagnostic = JSON.parse(
+      adventureDiagnosticJson(withUnknownReveal, { recentTurns: 0 }),
+    );
+
+    expect(
+      unknownDiagnostic.integrityChecks.turnsRevealingUnknownSecrets,
+    ).toEqual(["turn-1"]);
+    expect(unknownDiagnostic.turns[0].detail).toBe("condensed");
+    expect(withUnknownReveal).toEqual(beforeUnknownDiagnostics);
   });
 
   it("handles a session with no turns", () => {

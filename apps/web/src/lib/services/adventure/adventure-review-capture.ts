@@ -3,6 +3,7 @@ import {
   dialogueLoopPacing,
   formatWorldElapsedMinutes,
   isQuietTurn,
+  revealedSecretIds as knownRevealedSecretIds,
   SCENE_STALL_TURN_LIMIT,
   scenarioEventTurnIds,
   sceneStallPacing,
@@ -186,7 +187,10 @@ export interface DiagnosticBaseline {
 function integrityChecks(session: AdventureSession) {
   const turnIds = new Set(session.turns.map((turn) => turn.id));
   const factIds = new Set(session.provisionalFacts.map((fact) => fact.id));
-  const secretIds = new Set(session.hiddenState.secrets.map((s) => s.id));
+  const turnRevealIds = session.turns.flatMap(
+    (turn) => turn.revealedSecretIds ?? [],
+  );
+  const secretIds = new Set(knownRevealedSecretIds(session, turnRevealIds));
   return {
     nonContiguousTurnSequences: session.turns
       .filter((turn, index) => turn.sequence !== index)

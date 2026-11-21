@@ -38,10 +38,47 @@ describe("createWorldEntryStart", () => {
       "pc-1",
       "place-1",
     ]);
-    expect(start.worldEntry.at).toEqual(setup.at);
+    expect(start.worldEntry.at).toEqual({ ...setup.at, label: "618" });
     expect(start.worldEntry.intent).toBe("explore");
     expect(start.premise).toContain("explore freely");
     expect(start.premise).not.toContain("defeat");
+  });
+
+  it("uses the structured calendar date instead of a stale display label", () => {
+    const setup = {
+      ...emptyWorldEntrySetup("vault-1"),
+      characterId: "pc-1",
+      locationId: "place-1",
+      at: {
+        year: 101,
+        precision: "year" as const,
+        calendarRevision: 1,
+        label: "1 AQ",
+      },
+    };
+    const calendar = {
+      ...DEFAULT_CALENDAR,
+      eras: [
+        {
+          id: "after-quiet",
+          name: "After Quiet",
+          label: "AQ",
+          startYear: 100,
+          yearAtStart: 1,
+        },
+      ],
+    };
+
+    const start = createWorldEntryStart(setup, characters, locations, calendar);
+
+    expect(start.premise).toContain("World date: 2 AQ.");
+    expect(start.premise).not.toContain("World date: 1 AQ.");
+    expect(start.worldEntry.at).toEqual({
+      year: 101,
+      precision: "year",
+      calendarRevision: 1,
+      label: "2 AQ",
+    });
   });
 
   it("supports an unscripted provisional start and optional specific scene", () => {
@@ -87,6 +124,7 @@ describe("createWorldEntryStart", () => {
       year: 618,
       precision: "year",
       calendarRevision: 1,
+      label: "618",
     });
     expect(structuredClone(start.worldEntry)).toEqual(start.worldEntry);
   });
