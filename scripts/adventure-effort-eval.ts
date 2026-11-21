@@ -1132,7 +1132,11 @@ function sumCallField(
 
 function summarizeModels(calls: CallRecord[]): string {
   const models = [
-    ...new Set(calls.map((call) => call.actualModelKey ?? "unknown")),
+    ...new Set(
+      calls.map((call) =>
+        escapeMarkdownOutput(call.actualModelKey ?? "unknown"),
+      ),
+    ),
   ];
   return models.join(", ") || "none";
 }
@@ -1173,7 +1177,7 @@ function formatTurnRollLines(rollSetup?: RollSetupRecord): string[] {
 function formatTurnCallLines(calls: CallRecord[]): string[] {
   if (calls.length === 0) return [];
   const models = calls
-    .map((call) => call.actualModelKey ?? "unknown")
+    .map((call) => escapeMarkdownOutput(call.actualModelKey ?? "unknown"))
     .join(", ");
   const latency = calls.reduce((sum, call) => sum + call.elapsedMs, 0);
   return [`_Model: ${models} · Latency: ${latency} ms_`, ""];
@@ -1190,8 +1194,9 @@ function formatTurnBeatLines(
   ];
 }
 
-function escapeMarkdownOutput(text: string): string {
+export function escapeMarkdownOutput(text: string): string {
   return text
+    .replace(/\\/g, "\\\\")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/!\[/g, "\\![");
@@ -1220,12 +1225,14 @@ function formatTurnMarkdown(turn: TurnRecord): string[] {
   ];
 }
 
-function formatHardFailuresBlock(hardFailures: string[]): string[] {
+export function formatHardFailuresBlock(hardFailures: string[]): string[] {
   if (hardFailures.length === 0) return [];
   return [
     "### Hard failures",
     "",
-    ...hardFailures.map((failure) => `- ${failure}`),
+    ...hardFailures.map(
+      (failure) => `- ${escapeMarkdownOutput(failure.replace(/\r?\n/g, " "))}`,
+    ),
     "",
   ];
 }
@@ -1403,7 +1410,11 @@ async function main() {
   await runLiveComparison(cli, fixture, adventure);
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : error);
-  process.exit(1);
-});
+export { collectUnexpectedReveals, reportMarkdown };
+
+if (import.meta.main) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : error);
+    process.exit(1);
+  });
+}
