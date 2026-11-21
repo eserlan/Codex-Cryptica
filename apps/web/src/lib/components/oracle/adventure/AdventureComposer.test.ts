@@ -20,6 +20,177 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
+  it("puts both compact phone mode buttons beside the composer, not above it", () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+
+    const row = screen.getByTestId("adventure-free-action");
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    const play = screen.getByTestId("adventure-mobile-mode-play");
+    const ask = screen.getByTestId("adventure-mobile-mode-ooc");
+    const field = screen.getByLabelText("What do you do?");
+
+    expect(row.contains(modes)).toBe(true);
+    expect(modes.className).not.toBe("hidden");
+    expect(screen.getByTestId("adventure-composer-mode-bar").className).toBe(
+      "hidden",
+    );
+    expect(modes.getAttribute("aria-label")).toBe("Composer mode");
+    expect(play.getAttribute("aria-label")).toBe("Play (in character)");
+    expect(ask.getAttribute("aria-label")).toBe("Ask GM (out of character)");
+    expect(play.getAttribute("aria-pressed")).toBe("true");
+    expect(ask.getAttribute("aria-pressed")).toBe("false");
+    expect(play.className).toContain("min-h-11");
+    expect(ask.className).toContain("min-w-11");
+    expect(modes.querySelector("select")).toBeNull();
+    expect(row.contains(field)).toBe(true);
+    expect(row.contains(screen.getByTestId("adventure-submit-button"))).toBe(
+      true,
+    );
+  });
+
+  it("keeps phone Play and Ask GM drafts separate when switching and submitting", async () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    m.draft = "Open the old journal";
+    m.oocDraft = "How does the village levy work?";
+    m.setComposerMode = vi.fn();
+    m.submitOocQuestion = vi.fn();
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: m, phone: true },
+    });
+
+    const playField = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+    expect(playField.value).toBe("Open the old journal");
+    await fireEvent.input(playField, {
+      target: { value: "Inspect the ledger first" },
+    });
+    expect(m.draft).toBe("Inspect the ledger first");
+
+    await fireEvent.click(screen.getByTestId("adventure-mobile-mode-ooc"));
+    expect(m.setComposerMode).toHaveBeenCalledWith("ooc");
+    const oocManager = { ...m, composerMode: "ooc" };
+    await rerender({ manager: oocManager, phone: true });
+
+    const oocField = screen.getByLabelText(
+      "Ask the GM a question (out of character)…",
+    ) as HTMLTextAreaElement;
+    expect(oocField.value).toBe("How does the village levy work?");
+    expect(screen.getByTestId("adventure-mobile-mode-ooc").getAttribute("aria-pressed")).toBe(
+      "true",
+    );
+    await fireEvent.input(oocField, {
+      target: { value: "Is that account board public knowledge?" },
+    });
+    expect(oocManager.oocDraft).toBe(
+      "Is that account board public knowledge?",
+    );
+    expect(oocManager.draft).toBe("Inspect the ledger first");
+
+    await fireEvent.click(screen.getByRole("button", { name: "Submit question to GM" }));
+    expect(m.submitOocQuestion).toHaveBeenCalledWith(
+      "Is that account board public knowledge?",
+    );
+    expect(m.submitAction).not.toHaveBeenCalled();
+
+    await fireEvent.click(screen.getByTestId("adventure-mobile-mode-play"));
+    expect(m.setComposerMode).toHaveBeenCalledWith("play");
+    await rerender({
+      manager: { ...oocManager, composerMode: "play" },
+      phone: true,
+    });
+    expect(
+      (screen.getByLabelText("What do you do?") as HTMLTextAreaElement).value,
+    ).toBe("Inspect the ledger first");
+    expect(oocManager.oocDraft).toBe(
+      "Is that account board public knowledge?",
+    );
+  });
+
+  it("keeps the phone mode switch available above the keyboard, with suggestions hidden", async () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    m.suggestedActions = ["Look around"];
+    render(AdventureComposer, {
+      props: { manager: m, phone: true, keyboardOpen: true },
+    });
+
+    expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
+      "hidden",
+    );
+    expect(screen.getByTestId("adventure-mobile-mode-switch").className).not.toBe(
+      "hidden",
+    );
+    expect(screen.getByTestId("adventure-action-dock").className).toContain(
+      "max-h-[55%]",
+    );
+    const field = screen.getByLabelText("What do you do?");
+    await fireEvent.focus(field);
+    expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
+      "hidden",
+    );
+    expect(screen.getByTestId("adventure-mobile-mode-ooc")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+  });
+
+  it("keeps the desktop mode bar and hides the phone switch", () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    render(AdventureComposer, { props: { manager: m, phone: false } });
+
+    expect(screen.getByTestId("adventure-composer-mode-bar").className).not.toBe(
+      "hidden",
+    );
+    expect(screen.getByTestId("adventure-mobile-mode-switch").className).toBe(
+      "hidden",
+    );
+    expect(screen.getByTestId("adventure-mode-play")).toBeTruthy();
+    expect(screen.getByTestId("adventure-mode-ooc")).toBeTruthy();
+  });
+
+  it("allows Ask GM during a pending roll but hides mode switching when read-only", async () => {
+    const m = manager("awaiting-roll");
+    m.composerMode = "play";
+    m.oocDraft = "What does this saving throw represent?";
+    m.setComposerMode = vi.fn();
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: m, phone: true },
+    });
+
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    expect(modes.className).not.toBe("hidden");
+    expect(screen.getByTestId("adventure-free-action").className).not.toBe(
+      "hidden",
+    );
+    expect(
+      (screen.getByLabelText("What do you do?") as HTMLTextAreaElement).disabled,
+    ).toBe(true);
+    await fireEvent.click(screen.getByTestId("adventure-mobile-mode-ooc"));
+    const oocManager = { ...m, composerMode: "ooc" };
+    await rerender({ manager: oocManager, phone: true });
+    expect(
+      (screen.getByLabelText(
+        "Ask the GM a question (out of character)…",
+      ) as HTMLTextAreaElement).disabled,
+    ).toBe(false);
+
+    await rerender({
+      manager: { ...oocManager, readOnly: true },
+      phone: true,
+    });
+    expect(screen.getByTestId("adventure-mobile-mode-switch").className).toBe(
+      "hidden",
+    );
+    expect(
+      (screen.getByLabelText(
+        "Ask the GM a question (out of character)…",
+      ) as HTMLTextAreaElement).disabled,
+    ).toBe(true);
+  });
+
   it("starts at one line and expands the composer without native resize", async () => {
     render(AdventureComposer, { props: { manager: manager("ready") } });
     const textarea = screen.getByLabelText(
