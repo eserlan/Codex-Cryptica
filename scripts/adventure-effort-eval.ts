@@ -637,6 +637,24 @@ function collectPhraseLeaks(
   );
 }
 
+/** Add global unrevealed secrets to the explicit per-step prohibitions. */
+function forbiddenSecretIds(
+  step: StepConfig,
+  fixture: Fixture,
+  previouslyRevealedIds: readonly string[],
+): string[] {
+  const previouslyRevealed = new Set(previouslyRevealedIds);
+  const revealableNow = new Set(step.revealOnSuccess ?? []);
+  return [
+    ...new Set([
+      ...(step.forbiddenFacts ?? []),
+      ...(fixture.globalConstraints?.forbiddenUntilRevealed ?? []).filter(
+        (id) => !previouslyRevealed.has(id) && !revealableNow.has(id),
+      ),
+    ]),
+  ];
+}
+
 function collectForbiddenLeaks(
   step: StepConfig,
   fixture: Fixture,
@@ -645,18 +663,11 @@ function collectForbiddenLeaks(
   hardFailures: string[],
   previouslyRevealedIds: readonly string[],
 ): { forbiddenTexts: string[]; forbiddenFactLeaks: string[] } {
-  // Per-step checks supplement the global safety constraints. In particular,
-  // the synthetic opening step must still guard every unrevealed package secret.
-  const previouslyRevealed = new Set(previouslyRevealedIds);
-  const revealableNow = new Set(step.revealOnSuccess ?? []);
-  const forbiddenIds = [
-    ...new Set([
-      ...(step.forbiddenFacts ?? []),
-      ...(fixture.globalConstraints?.forbiddenUntilRevealed ?? []).filter(
-        (id) => !previouslyRevealed.has(id) && !revealableNow.has(id),
-      ),
-    ]),
-  ];
+  const forbiddenIds = forbiddenSecretIds(
+    step,
+    fixture,
+    previouslyRevealedIds,
+  );
   const forbiddenTexts = forbiddenIds
     .map((id) => adventure.secrets.find((secret) => secret.id === id)?.text)
     .filter((value): value is string => typeof value === "string");
