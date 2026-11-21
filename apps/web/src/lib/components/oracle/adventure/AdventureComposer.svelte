@@ -229,39 +229,47 @@
       : "hidden"}
     data-testid="adventure-free-action"
   >
-    <!-- Phone: use the platform's accessible two-choice picker inside the
-         input row. A separate segmented-control row consumed valuable story
-         height, especially with a mobile keyboard. The native picker is
-         keyboard/touch accessible and cannot be clipped by the dock. -->
+    <!-- Phone: two always-visible mode choices share the input row,
+         instead of consuming a separate line of story space. -->
     <div
       class={phone && modeSwitchVisible
-        ? "relative h-11 w-28 shrink-0"
+        ? "inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
         : "hidden"}
+      role="group"
+      aria-label="Composer mode"
       data-testid="adventure-mobile-mode-switch"
     >
-      <label class="sr-only" for="adventure-mobile-mode">
-        Composer mode
-      </label>
-      <span
-        aria-hidden="true"
+      <button
+        type="button"
         class={isOocMode
-          ? "icon-[lucide--message-circle-question] pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-theme-text"
-          : "icon-[lucide--swords] pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-theme-text"}
-      ></span>
-      <select
-        id="adventure-mobile-mode"
-        class="h-11 w-full appearance-none rounded-lg border border-theme-text/75 bg-theme-bg pr-6 pl-8 text-sm font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-        value={isOocMode ? "ooc" : "play"}
-        onchange={(event) =>
-          selectMode(event.currentTarget.value as "play" | "ooc")}
+          ? "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+          : "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md bg-theme-primary text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
+        aria-label="Play (in character)"
+        title="Play (in character)"
+        aria-pressed={!isOocMode}
+        data-testid="adventure-mobile-mode-play"
+        onclick={() => selectMode("play")}
       >
-        <option value="play">Play</option>
-        <option value="ooc">Ask GM</option>
-      </select>
-      <span
-        aria-hidden="true"
-        class="icon-[lucide--chevron-down] pointer-events-none absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-theme-text"
-      ></span>
+        <span aria-hidden="true" class="icon-[lucide--swords] h-4 w-4"></span>
+        <span class="text-[10px] leading-none">Play</span>
+      </button>
+      <button
+        type="button"
+        class={isOocMode
+          ? "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md bg-theme-primary text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+          : "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
+        aria-label="Ask GM (out of character)"
+        title="Ask GM (out of character)"
+        aria-pressed={isOocMode}
+        data-testid="adventure-mobile-mode-ooc"
+        onclick={() => selectMode("ooc")}
+      >
+        <span
+          aria-hidden="true"
+          class="icon-[lucide--message-circle-question] h-4 w-4"
+        ></span>
+        <span class="text-[10px] leading-none">Ask GM</span>
+      </button>
     </div>
     <label class="sr-only" for="adventure-action">
       {isOocMode
