@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   collectAdventureStream,
   extractAdventureNarrationPrefix,
-  publishAdventureNarration,
   streamAborted,
 } from "./adventure-narration-stream";
 import { session } from "./adventure-generation.test-fixtures";
@@ -25,69 +24,6 @@ describe("adventure narration streaming", () => {
     ]) {
       expect(extractAdventureNarrationPrefix(prefix)).toBe("");
     }
-  });
-
-  it("publishes safe text and suppresses unrevealed secrets and cancelled previews", () => {
-    const previews: string[] = [];
-    const request = {
-      session: {
-        ...session,
-        hiddenState: {
-          secrets: [
-            {
-              id: "secret",
-              text: "The miller hid the grain beneath the waterwheel.",
-              status: "hidden" as const,
-            },
-          ],
-          gmThreads: [],
-        },
-      },
-      phase: "action" as const,
-      anchors: [],
-      relevant: [],
-      onNarration: (text: string) => previews.push(text),
-    };
-    publishAdventureNarration(
-      request,
-      '{"kind":"complete","narration":"A road',
-    );
-    publishAdventureNarration(
-      request,
-      '{"kind":"complete","narration":"The miller hid the grain beneath the waterwheel.',
-    );
-    publishAdventureNarration(
-      request,
-      '{"kind":"complete","narration":"Cancelled',
-      AbortSignal.abort(),
-    );
-    expect(previews).toEqual(["A road"]);
-  });
-
-  it("withholds package-session previews until package event notes are checked", () => {
-    const previews: string[] = [];
-    const request = {
-      session: {
-        ...session,
-        sourcePackage: {
-          packageId: "adventure-1",
-          version: "1",
-          formatVersion: "1",
-          hash: "a".repeat(64),
-        },
-      },
-      phase: "action" as const,
-      anchors: [],
-      relevant: [],
-      onNarration: (text: string) => previews.push(text),
-    };
-
-    publishAdventureNarration(
-      request,
-      '{"kind":"complete","narration":"The hidden note: the duke is dead."',
-    );
-
-    expect(previews).toEqual([]);
   });
 
   it("collects event deltas and uses the completed response when supplied", async () => {

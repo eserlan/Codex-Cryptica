@@ -2,10 +2,7 @@ import type {
   AdventureAIClient,
   AdventureTurnGenerationRequest,
 } from "./adventure-generation.types";
-import {
-  publishAdventureNarration,
-  streamAborted,
-} from "./adventure-narration-stream";
+import { streamAborted } from "./adventure-narration-stream";
 
 type InteractionParams = Parameters<
   NonNullable<AdventureAIClient["sendInteraction"]>
@@ -82,7 +79,8 @@ export class AdventureInteractionTransport {
         finalId = event.id;
         completed = true;
       }
-      publishAdventureNarration(request, buffer);
+      // Buffer provider deltas. The complete response may add new GM-only
+      // facts that cannot be screened while narration is still arriving.
     }
     streamAborted(params.signal);
     if (!completed || !finalId)

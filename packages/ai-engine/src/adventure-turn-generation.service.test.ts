@@ -123,7 +123,7 @@ describe("AdventureTurnGenerationService", () => {
     expect(extractAdventureNarrationPrefix(rolling)).toBe("A shadow");
   });
 
-  it("streams the player's narration while keeping structured state private", async () => {
+  it("withholds player narration previews until the entire turn is checked", async () => {
     const previews: string[] = [];
     const chunks = [
       '{"kind":"complete","narration":"The gate',
@@ -158,9 +158,43 @@ describe("AdventureTurnGenerationService", () => {
       { apiKey: "direct-test-key" },
     );
     expect(result.kind).toBe("complete");
-    expect(previews).toContain("The gate");
-    expect(previews.at(-1)).toBe("The road opens.");
-    expect(previews.join(" ")).not.toContain("hiddenPatch");
+    expect(previews).toEqual([]);
+  });
+
+  it("never previews a new hidden fact introduced by the same non-package turn", async () => {
+    const secret = "Lady Mirella secretly holds the village debt.";
+    const proposal = JSON.parse(completeResponse);
+    proposal.narration = secret;
+    proposal.hiddenPatch.secrets.add = [
+      { text: secret, status: "hidden" },
+    ];
+    const response = JSON.stringify(proposal);
+    const seen: string[] = [];
+    const service = new AdventureTurnGenerationService({
+      async getModel() {
+        return {
+          async generateContent() {
+            throw new Error("unexpected buffered request");
+          },
+          async *generateContentStream() {
+            yield {
+              type: "delta" as const,
+              text: '{"kind":"complete","narration":"' + secret,
+            };
+            yield { type: "complete" as const, text: response };
+          },
+        };
+      },
+    });
+    const result = await service.generate({
+      session,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+      onNarration: (text) => seen.push(text),
+    });
+    expect(result.kind).toBe("complete");
+    expect(seen).toEqual([]);
   });
 
   it("does not publish a partial narration containing an unrevealed secret", async () => {
@@ -234,7 +268,7 @@ describe("AdventureTurnGenerationService", () => {
         { signal: controller.signal },
       ),
     ).rejects.toThrow("Cancelled");
-    expect(seen).toEqual(["A storm"]);
+    expect(seen).toEqual([]);
   });
 
   it("repairs a malformed stream in a long adventure with a fresh schema-constrained response", async () => {
@@ -301,8 +335,7 @@ describe("AdventureTurnGenerationService", () => {
     });
     expect(streamedCalls).toBe(1);
     expect(bufferedInputs).toHaveLength(1);
-    expect(previews).toContain("Unreliable");
-    expect(previews.at(-1)).toBe("");
+    expect(previews).toEqual([""]);
     const input = bufferedInputs[0];
     expect(input.generationConfig.responseSchema.oneOf).toHaveLength(2);
     expect(input.contents[0].parts[0].text).toContain("Choice 24");
@@ -780,7 +813,7 @@ describe("AdventureTurnGenerationService", () => {
     expect(JSON.parse(calls[1].input)).not.toHaveProperty("transcript");
   });
 
-  it("streams only player-facing narration while retaining provider history", async () => {
+  it("keeps streaming transport and provider history without publishing unchecked narration", async () => {
     const previews: string[] = [];
     const calls: any[] = [];
     const service = new AdventureTurnGenerationService({
@@ -817,8 +850,7 @@ describe("AdventureTurnGenerationService", () => {
       onNarration: (text) => previews.push(text),
     });
     expect(calls[1].previousInteractionId).toBe("stream-1");
-    expect(previews).toContain("The road");
-    expect(previews.at(-1)).toBe("The road opens.");
+    expect(previews).toEqual([]);
   });
 
   it("recovers a stream that ended early with one buffered request on the same conversation", async () => {
