@@ -78,10 +78,16 @@ export function optionPatch(
   columnId: string,
   optionId: string,
 ): Partial<DateSelection> {
-  if (columnId === "year") return { year: Number(optionId), label: undefined };
-  if (columnId === "unit") return { unitId: optionId, label: undefined };
-  if (columnId === "day") return { day: Number(optionId), label: undefined };
-  return columnId === "anchor" ? { anchorId: optionId, label: undefined } : {};
+  if (columnId === "year") return dateChangePatch({ year: Number(optionId) });
+  if (columnId === "unit") return dateChangePatch({ unitId: optionId });
+  if (columnId === "day") return dateChangePatch({ day: Number(optionId) });
+  return columnId === "anchor" ? dateChangePatch({ anchorId: optionId }) : {};
+}
+
+export function dateChangePatch(
+  patch: Partial<DateSelection>,
+): Partial<DateSelection> {
+  return { ...patch, label: undefined };
 }
 
 export function precisionPatch(
@@ -89,7 +95,7 @@ export function precisionPatch(
   selection: DateSelection,
   config: WorldCalendar,
 ): Partial<DateSelection> {
-  const patch: Partial<DateSelection> = { precision, label: undefined };
+  const patch = dateChangePatch({ precision });
   if ((precision === "unit" || precision === "day") && !selection.unitId) {
     patch.unitId = calendarEngine.getMonths(config)[0]?.id;
   }

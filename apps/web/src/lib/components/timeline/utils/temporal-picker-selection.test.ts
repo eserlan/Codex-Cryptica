@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  dateChangePatch,
   formatDirectDateInput,
   normalizedSelectionForSave,
   optionPatch,
@@ -112,6 +113,22 @@ describe("temporal picker selection helpers", () => {
     expect(optionPatch("day", "3")).toEqual({ day: 3, label: undefined });
     expect(optionPatch("anchor", "solstice")).toEqual({
       anchorId: "solstice",
+      label: undefined,
+    });
+  });
+
+  it("clears a saved label for direct date changes", () => {
+    const changed = {
+      precision: "year" as const,
+      year: 12,
+      calendarRevision: 4,
+      label: "stale label",
+      ...dateChangePatch({ year: 42 }),
+    };
+    expect(normalizedSelectionForSave(changed)).toEqual({
+      precision: "year",
+      year: 42,
+      calendarRevision: 4,
       label: undefined,
     });
   });
