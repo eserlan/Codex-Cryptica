@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const trash = vi.hoisted(() => ({
   items: [] as any[],
@@ -31,8 +31,6 @@ const item = (over: Record<string, unknown> = {}) => ({
 });
 
 beforeEach(() => {
-  vi.useFakeTimers({ toFake: ["Date"] });
-  vi.setSystemTime(NOW);
   Object.assign(trash, {
     items: [],
     usedBytes: null,
@@ -46,7 +44,8 @@ beforeEach(() => {
   trash.load.mockClear();
   trash.restore.mockClear();
 });
-afterEach(() => vi.useRealTimers());
+
+const clock = { now: () => NOW };
 
 describe("CloudBackupTrashSettings", () => {
   it("loads on mount and shows the empty state", () => {
@@ -58,7 +57,7 @@ describe("CloudBackupTrashSettings", () => {
 
   it("shows a row with who, how long ago and the days left", () => {
     trash.items = [item()];
-    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    render(CloudBackupTrashSettings, { vaultId: "v1", clock });
     expect(screen.getByText("Old Dock")).toBeTruthy();
     expect(
       screen.getByText(/Deleted by Mara, 2 days ago\. 28 days left\./),
@@ -102,7 +101,7 @@ describe("CloudBackupTrashSettings", () => {
       item({ id: "1", deletedAt: new Date(NOW - 29.5 * DAY).toISOString() }),
       item({ id: "2", deletedAt: new Date(NOW - 40 * DAY).toISOString() }),
     ];
-    render(CloudBackupTrashSettings, { vaultId: "v1" });
+    render(CloudBackupTrashSettings, { vaultId: "v1", clock });
     expect(screen.getByText(/1 day left/)).toBeTruthy();
     expect(screen.getByText(/0 days left/)).toBeTruthy();
   });
