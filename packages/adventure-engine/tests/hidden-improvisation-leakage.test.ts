@@ -71,7 +71,7 @@ describe("GM-only improv secrecy at the commit boundary", () => {
     });
   });
 
-  it("does not guard already-revealed threads or an explicitly revealed update", () => {
+  it("allows signs from newly revealed threads without exposing their GM text", () => {
     const current = session();
     current.hiddenState.gmThreads.push({
       id: "thread-1",
@@ -85,10 +85,20 @@ describe("GM-only improv secrecy at the commit boundary", () => {
     current.hiddenState.gmThreads[0]!.status = "hidden";
     draft.hiddenPatch.gmThreads.update.push({
       id: "thread-1",
-      text: hiddenRinger,
+      text: hiddenRinger + ". The bell rings once after midnight.",
       status: "revealed",
     });
+    draft.narration = "A bell rings once after midnight, then falls silent.";
     expect(detectHiddenLeakage(current, draft)).toEqual([]);
+
+    draft.narration = hiddenRinger + ". The bell rings once after midnight.";
+    expect(detectHiddenLeakage(current, draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "thread-1",
+    });
+    const committed = applyCompletedTurn(current, draft, meta);
+    expect(committed.ok).toBe(false);
+    if (!committed.ok) expect(committed.errors[0]?.code).toBe("hidden-leakage");
   });
 
   it("guards updated hidden text as well as the earlier committed value", () => {

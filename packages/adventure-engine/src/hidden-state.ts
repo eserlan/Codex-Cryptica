@@ -174,18 +174,13 @@ export function detectHiddenLeakage(
   const revealed = new Set(
     proposal.kind === "complete" ? proposal.revealSecretIds : [],
   );
-  // GM threads have no revealSecretIds lifecycle: an explicit transition to
-  // "revealed" in this proposal is their same-turn disclosure.
-  if (proposal.kind === "complete") {
-    for (const thread of proposal.hiddenPatch.gmThreads.update) {
-      if (thread.status === "revealed") revealed.add(thread.id);
-    }
-  }
   return detectHiddenTextFields(
     session,
     fields,
     revealed,
-    proposal.kind === "complete" ? proposedHiddenSources(proposal) : [],
+    proposal.kind === "complete"
+      ? proposedHiddenSources(session, proposal)
+      : [],
   );
 }
 
@@ -416,6 +411,7 @@ export function historicalAnchorSecretIds(session: AdventureSession): string[] {
  * narration cannot copy a newly improvised GM-only identity.
  */
 function proposedHiddenSources(
+  session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
 ): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
   return [
@@ -434,11 +430,21 @@ function proposedHiddenSources(
       text: thread.text,
       status: thread.status,
     })),
-    ...proposal.hiddenPatch.gmThreads.update.map((thread) => ({
-      id: thread.id,
-      text: thread.text,
-      status: thread.status,
-    })),
+    ...proposal.hiddenPatch.gmThreads.update.map((thread) => {
+      const previous = session.hiddenState.gmThreads.find(
+        (candidate) => candidate.id === thread.id,
+      );
+      const status: "hidden" | "revealed" =
+        previous?.status === "revealed" ? "revealed" : "hidden";
+      return {
+        id: thread.id,
+        text: thread.text,
+        // Revealing a legacy thread surfaces a sign, not its full GM truth.
+        // Preserve prior revealed knowledge, but keep a newly surfaced thread
+        // guarded for this turn.
+        status,
+      };
+    }),
   ];
 }
 
