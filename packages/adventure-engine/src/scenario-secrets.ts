@@ -39,11 +39,31 @@ export function hasImmutableScenarioRewrite(
   );
 }
 
+function recordPackageSecretReveal(
+  candidate: AdventureSession,
+  secretId: string,
+  packageSecretTexts?: Readonly<Record<string, string>>,
+): boolean {
+  if (!packageSecretTexts || !Object.hasOwn(packageSecretTexts, secretId)) {
+    return false;
+  }
+  if (candidate.packageProgress) {
+    candidate.packageProgress.revealedSecretIds = [
+      ...new Set([
+        ...(candidate.packageProgress.revealedSecretIds ?? []),
+        secretId,
+      ]),
+    ];
+  }
+  return true;
+}
+
 export function applySecretReveals(
   candidate: AdventureSession,
   secrets: AdventureSession["hiddenState"]["secrets"],
   revealIds: string[],
   turnId: string,
+  packageSecretTexts?: Readonly<Record<string, string>>,
 ): string | null {
   for (const secretId of new Set(revealIds)) {
     const secret = secrets.find((entry) => entry.id === secretId);
@@ -64,6 +84,9 @@ export function applySecretReveals(
       candidate.historicalAnchor!.revealedFactIds = [
         ...new Set([...candidate.historicalAnchor!.revealedFactIds, secretId]),
       ];
+      continue;
+    }
+    if (recordPackageSecretReveal(candidate, secretId, packageSecretTexts)) {
       continue;
     }
     if (!secret) {

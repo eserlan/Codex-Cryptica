@@ -350,4 +350,32 @@ describe("package scene progress", () => {
       }
     }
   });
+
+  it("tracks revealed package secrets in packageProgress even for overlong IDs and long texts without seeding hiddenState", () => {
+    const longSecretId = `secret-${"s".repeat(180)}`;
+    const longSecretText =
+      "The watch captain forged the harbour manifest to hide three smuggling barges. ".repeat(
+        10,
+      );
+    const revealed = proposal();
+    revealed.narration = `You uncover the truth: ${longSecretText}`;
+    revealed.revealSecretIds = [longSecretId];
+
+    const result = applyCompletedTurn(packageSession(), revealed, {
+      ...meta,
+      packageGmOnlyText: [longSecretText],
+      packageSecretTexts: { [longSecretId]: longSecretText },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.hiddenState.secrets).toEqual([]);
+      expect(result.value.packageProgress?.revealedSecretIds).toEqual([
+        longSecretId,
+      ]);
+      const reparsed = parseAdventureSession(result.value);
+      expect(reparsed.packageProgress?.revealedSecretIds).toEqual([
+        longSecretId,
+      ]);
+    }
+  });
 });

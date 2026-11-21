@@ -190,6 +190,36 @@ export function detectHiddenLeakage(
   );
 }
 
+function addKnownSecretIds(
+  ids: readonly string[] | undefined,
+  knownSecretIds: Set<string>,
+  revealed: Set<string>,
+): void {
+  for (const id of ids ?? []) {
+    if (knownSecretIds.has(id)) revealed.add(id);
+  }
+}
+
+function collectRevealedFromSession(
+  session: AdventureSession | undefined,
+  knownSecretIds: Set<string>,
+  revealed: Set<string>,
+): void {
+  if (!session) return;
+  for (const secret of session.hiddenState.secrets) {
+    knownSecretIds.add(secret.id);
+    if (secret.status === "revealed") revealed.add(secret.id);
+  }
+  addKnownSecretIds(
+    session.packageProgress?.revealedSecretIds,
+    knownSecretIds,
+    revealed,
+  );
+  for (const turn of session.turns) {
+    addKnownSecretIds(turn.revealedSecretIds, knownSecretIds, revealed);
+  }
+}
+
 function authorisedRevealedSecretIds(
   session?: AdventureSession,
   proposal?: AdventureTurnProposal,
@@ -197,14 +227,9 @@ function authorisedRevealedSecretIds(
 ): Set<string> {
   const revealed = new Set<string>();
   const knownSecretIds = new Set<string>(Object.keys(packageSecretTexts ?? {}));
-  for (const secret of session?.hiddenState.secrets ?? []) {
-    knownSecretIds.add(secret.id);
-    if (secret.status === "revealed") revealed.add(secret.id);
-  }
+  collectRevealedFromSession(session, knownSecretIds, revealed);
   if (proposal?.kind === "complete") {
-    for (const id of proposal.revealSecretIds) {
-      if (knownSecretIds.has(id)) revealed.add(id);
-    }
+    addKnownSecretIds(proposal.revealSecretIds, knownSecretIds, revealed);
   }
   return revealed;
 }
@@ -612,6 +637,7 @@ export function revealedSecretIds(
 ): string[] {
   const known = new Set([
     ...session.hiddenState.secrets.map((secret) => secret.id),
+    ...(session.packageProgress?.revealedSecretIds ?? []),
     ...scenarioSecretSources(session).map((secret) => secret.id),
     ...historicalAnchorSecretSources(session).map((secret) => secret.id),
   ]);

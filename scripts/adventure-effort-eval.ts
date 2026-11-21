@@ -183,11 +183,6 @@ async function makeSession(
     idGenerator,
   });
   session.packageProgress = { sceneId: adventure.scenes[0]!.id };
-  session.hiddenState.secrets = adventure.secrets.map((secret) => ({
-    id: secret.id,
-    text: secret.text,
-    status: "hidden" as const,
-  }));
   return parseAdventureSession(session);
 }
 
@@ -1123,7 +1118,9 @@ async function executeEffort(
 function computeMedianLatency(calls: CallRecord[]): number {
   if (calls.length === 0) return 0;
   const latencies = calls.map((call) => call.elapsedMs).sort((a, b) => a - b);
-  return latencies[Math.floor(latencies.length / 2)] ?? 0;
+  const mid = Math.floor(latencies.length / 2);
+  if (latencies.length % 2 === 1) return latencies[mid]!;
+  return Math.round((latencies[mid - 1]! + latencies[mid]!) / 2);
 }
 
 function sumCallField(
@@ -1166,9 +1163,9 @@ function summarizeRunRow(result: any): string {
 function formatTurnRollLines(rollSetup?: RollSetupRecord): string[] {
   if (!rollSetup) return [];
   return [
-    `**Roll:** ${rollSetup.uncertainty}`,
-    `**Stakes:** ${rollSetup.stakes}`,
-    `**Recorded outcome:** ${rollSetup.outcome.label ?? rollSetup.outcome.value}`,
+    `**Roll:** ${escapeMarkdownOutput(rollSetup.uncertainty)}`,
+    `**Stakes:** ${escapeMarkdownOutput(rollSetup.stakes)}`,
+    `**Recorded outcome:** ${escapeMarkdownOutput(String(rollSetup.outcome.label ?? rollSetup.outcome.value))}`,
     "",
   ];
 }
@@ -1193,16 +1190,28 @@ function formatTurnBeatLines(
   ];
 }
 
+function escapeMarkdownOutput(text: string): string {
+  return text
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/!\[/g, "\\![");
+}
+
 function formatTurnMarkdown(turn: TurnRecord): string[] {
+  const narration = turn.narration
+    ? escapeMarkdownOutput(turn.narration)
+    : "_(no narration)_";
   const lines = [
     `### ${turn.id}`,
     "",
-    `**Player:** ${turn.playerAction}`,
+    `**Player:** ${escapeMarkdownOutput(turn.playerAction)}`,
     "",
-    `**GM:** ${turn.narration || "_(no narration)_"}`,
+    `**GM:** ${narration}`,
     "",
   ];
-  if (turn.error) lines.push(`> Run note: ${turn.error}`, "");
+  if (turn.error) {
+    lines.push(`> Run note: ${escapeMarkdownOutput(turn.error)}`, "");
+  }
   return [
     ...lines,
     ...formatTurnRollLines(turn.rollSetup),

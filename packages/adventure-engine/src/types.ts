@@ -594,6 +594,7 @@ export interface PackageProgress {
   events?: PackageProgressEvent[];
   actors?: PackageActorState[];
   actorEvents?: PackageActorEvent[];
+  revealedSecretIds?: string[];
 }
 
 export interface CommitMetadata {

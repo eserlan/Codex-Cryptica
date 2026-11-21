@@ -280,6 +280,7 @@ export function applyCompletedTurn(
     materialized.hiddenState.secrets,
     proposal.revealSecretIds,
     meta.turnId,
+    meta.packageSecretTexts,
   );
   if (revealError) return error("unknown-secret", revealError);
   const dropped = [...materialized.dropped];
