@@ -282,7 +282,7 @@ export function applyCompletedTurn(
     meta.turnId,
     meta.packageSecretTexts,
   );
-  if (revealError) return error("unknown-secret", revealError);
+  if (revealError) return error(revealError.code, revealError.message);
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { time, timeAdvance } = clock;
