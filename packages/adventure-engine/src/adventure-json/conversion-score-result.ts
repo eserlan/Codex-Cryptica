@@ -32,6 +32,10 @@ export function pass(): ConversionScoreDimensionResult {
   return { status: "pass", details: [] };
 }
 
+export function notApplicable(): ConversionScoreDimensionResult {
+  return { status: "n/a", details: [] };
+}
+
 export function fail(details: string[]): ConversionScoreDimensionResult {
   return { status: details.length === 0 ? "pass" : "fail", details };
 }

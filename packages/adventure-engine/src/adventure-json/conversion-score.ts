@@ -1,11 +1,12 @@
+import { scoreSecrets } from "./conversion-score-secrets";
+import { scoreSourceAuthority } from "./conversion-score-source-authority";
+import { scoreConflicts } from "./conversion-score-conflicts";
+import { scoreAuthoredVsRumour } from "./conversion-score-testimony";
 import {
   allEntities,
   citesSection,
   ENTITY_COLLECTIONS,
-  hasScoredText,
-  playerVisibleStrings,
   recordStrings,
-  sourceReferenceMatches,
   type DocLike,
   type Entity,
 } from "./conversion-score-document";
@@ -38,179 +39,6 @@ export {
   type ActionableDetail,
   type ConversionAnswerKey,
 } from "./conversion-answer-key";
-
-function scoreSecrets(
-  value: DocLike,
-  key: ConversionAnswerKey,
-): ConversionScoreDimensionResult {
-  const details: string[] = [];
-  const keySecrets = key.secrets.filter((s) => s.gmOnly);
-  const docSecrets = (value.secrets ?? []) as Entity[];
-  for (const s of keySecrets) {
-    const matched = docSecrets.some(
-      (d) => d.id === s.id || textFoundIn(s.text, String(d["text"] ?? "")),
-    );
-    if (!matched) details.push(`missing secret ${s.id}`);
-  }
-  const pvStrings = playerVisibleStrings(value);
-  for (const s of keySecrets) {
-    const leak = pvStrings.find((p) => textFoundIn(s.text, p.value));
-    if (leak) details.push(`leaked secret ${s.id} in ${leak.field}`);
-  }
-  return fail(details);
-}
-
-type SourceAuthorityCase = NonNullable<
-  ConversionAnswerKey["sourceAuthority"]
->[number];
-
-function isAuthorityTarget(entity: Entity, targetSourceId: string): boolean {
-  return (
-    entity.id === targetSourceId || entity.sourceRef?.anchor === targetSourceId
-  );
-}
-
-function authorityTitleDetails(
-  value: DocLike,
-  authority: SourceAuthorityCase,
-): string[] {
-  return value["title"] === authority.expectedTitle
-    ? []
-    : [
-        `${authority.id}: expected adventure title "${authority.expectedTitle}"`,
-      ];
-}
-
-function authorityItemCountDetails(
-  value: DocLike,
-  authority: SourceAuthorityCase,
-): string[] {
-  if (authority.expectedItemCount === undefined) return [];
-  const itemCount = (value["items"] ?? []).length;
-  return itemCount === authority.expectedItemCount
-    ? []
-    : [
-        `${authority.id}: expected ${authority.expectedItemCount} item entries, found ${itemCount}`,
-      ];
-}
-
-function hasExplicitAuthorityClaim(
-  entity: Entity,
-  expectedText: string,
-  expectedTerm: string,
-): boolean {
-  return (
-    entity.epistemicStatus === "explicit" &&
-    hasScoredText(entity, expectedText, expectedTerm)
-  );
-}
-
-function correctedClaimDetails(
-  targetEntities: Entity[],
-  authority: SourceAuthorityCase,
-): string[] {
-  const correctedClaims = targetEntities.filter((entity) =>
-    hasExplicitAuthorityClaim(
-      entity,
-      authority.expectedText,
-      authority.expectedTerm,
-    ),
-  );
-  if (correctedClaims.length === 0) {
-    return [`${authority.id}: missing explicit corrected claim`];
-  }
-  const citesCorrection = correctedClaims.some((entity) =>
-    sourceReferenceMatches(entity.sourceRef, authority.correctionSource),
-  );
-  return citesCorrection
-    ? []
-    : [`${authority.id}: corrected claim does not cite the correction source`];
-}
-
-function supersededClaimDetails(
-  targetEntities: Entity[],
-  authority: SourceAuthorityCase,
-): string[] {
-  const remainsExplicit = targetEntities.some((entity) =>
-    hasExplicitAuthorityClaim(
-      entity,
-      authority.supersededText,
-      authority.supersededTerm,
-    ),
-  );
-  return remainsExplicit
-    ? [`${authority.id}: superseded claim remains explicit`]
-    : [];
-}
-
-function scoreSourceAuthority(
-  value: DocLike,
-  key: ConversionAnswerKey,
-): ConversionScoreDimensionResult {
-  const cases = key.sourceAuthority ?? [];
-  if (cases.length === 0) return { status: "n/a", details: [] };
-
-  const details: string[] = [];
-  const entities = allEntities(value);
-  for (const authority of cases) {
-    const targetEntities = entities.filter((entity) =>
-      isAuthorityTarget(entity, authority.targetSourceId),
-    );
-    details.push(
-      ...authorityTitleDetails(value, authority),
-      ...authorityItemCountDetails(value, authority),
-      ...correctedClaimDetails(targetEntities, authority),
-      ...supersededClaimDetails(targetEntities, authority),
-    );
-  }
-  return fail(details);
-}
-
-function scoreConflicts(
-  value: DocLike,
-  key: ConversionAnswerKey,
-): ConversionScoreDimensionResult {
-  const conflicts = key.conflicts ?? [];
-  if (conflicts.length === 0) return { status: "n/a", details: [] };
-
-  const details: string[] = [];
-  const entities = allEntities(value);
-  const unresolved = value.unresolved ?? [];
-  for (const conflict of conflicts) {
-    const recordedConflict = unresolved.some(
-      (entry) =>
-        (entry.epistemicStatus === "ambiguous" ||
-          entry.epistemicStatus === "unresolved") &&
-        conflict.claims.every((claim) =>
-          hasScoredText(entry, claim.text, claim.distinguishingTerm),
-        ),
-    );
-    if (!recordedConflict) {
-      details.push(`${conflict.id}: missing unresolved record of the conflict`);
-    }
-
-    for (const claim of conflict.claims) {
-      const matching = entities.filter((entity) =>
-        hasScoredText(entity, claim.text, claim.distinguishingTerm),
-      );
-      if (matching.some((entity) => entity.epistemicStatus === "explicit")) {
-        details.push(`${conflict.id}: claim is selected as explicit`);
-      }
-      const preserved = matching.some(
-        (entity) =>
-          (entity.epistemicStatus === "ambiguous" ||
-            entity.epistemicStatus === "unresolved") &&
-          sourceReferenceMatches(entity.sourceRef, claim.sourceRef),
-      );
-      if (!preserved) {
-        details.push(
-          `${conflict.id}: missing ambiguous or unresolved claim at its source location (${claim.distinguishingTerm})`,
-        );
-      }
-    }
-  }
-  return fail(details);
-}
 
 function sectionCoverage(
   entities: Entity[],
@@ -294,34 +122,6 @@ function scoreCoverage(
     ...endingCoverage(value, key),
     ...clueCoverage(value, key),
   ]);
-}
-
-function scoreAuthoredVsRumour(
-  value: DocLike,
-  key: ConversionAnswerKey,
-): ConversionScoreDimensionResult {
-  const testimonies = key.testimonies ?? [];
-  if (testimonies.length === 0) return { status: "n/a", details: [] };
-  const details: string[] = [];
-  const rumours = (value.rumours ?? []) as Array<{
-    text?: string;
-    truth?: string;
-  }>;
-  const docSecrets = (value.secrets ?? []) as Array<{ text?: string }>;
-  for (const t of testimonies) {
-    const found = rumours.some(
-      (r) =>
-        typeof r.text === "string" &&
-        r.truth === t.truth &&
-        textFoundIn(t.claim, r.text),
-    );
-    if (!found) details.push(`missing testimony ${t.id}`);
-    const inSecret = docSecrets.some(
-      (s) => typeof s.text === "string" && textFoundIn(t.claim, s.text),
-    );
-    if (inSecret) details.push(`testimony ${t.id} found in secret`);
-  }
-  return fail(details);
 }
 
 type SceneLike = {

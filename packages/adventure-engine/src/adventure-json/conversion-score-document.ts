@@ -30,12 +30,15 @@ export const ENTITY_COLLECTIONS = [
   "unresolved",
 ] as const;
 
+export function citesSourceId(entity: Entity, sourceId: string): boolean {
+  return entity.id === sourceId || entity.sourceRef?.anchor === sourceId;
+}
+
 export function citesSection(
   entity: Entity,
   section: { sourceId: string; title: string },
 ): boolean {
-  if (entity.id === section.sourceId) return true;
-  if (entity.sourceRef?.anchor === section.sourceId) return true;
+  if (citesSourceId(entity, section.sourceId)) return true;
   const refSection = entity.sourceRef?.section;
   return (
     typeof refSection === "string" &&

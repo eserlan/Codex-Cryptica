@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   allEntities,
   citesSection,
+  citesSourceId,
   entityTextStrings,
   hasScoredText,
   playerVisibleStrings,
@@ -45,6 +46,13 @@ describe("conversion score document traversal", () => {
       ),
     ).toBe(false);
     expect(citesSection({ id: "room" }, section)).toBe(false);
+    expect(citesSourceId({ id: "mill" }, "mill")).toBe(true);
+    expect(
+      citesSourceId({ id: "room", sourceRef: { anchor: "mill" } }, "mill"),
+    ).toBe(true);
+    expect(
+      citesSourceId({ id: "room", sourceRef: { section: "mill" } }, "mill"),
+    ).toBe(false);
   });
 
   it("preserves recursive field paths and skips non-string leaves", () => {

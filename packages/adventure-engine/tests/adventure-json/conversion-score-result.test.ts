@@ -4,6 +4,7 @@ import {
   fail,
   finish,
   pass,
+  notApplicable,
   schemaFailedDims,
   validationDetails,
   type ConversionScoreResult,
@@ -17,6 +18,7 @@ const passingDimensions = () =>
 describe("conversion score results", () => {
   it("passes with no findings and fails while preserving finding order", () => {
     expect(pass()).toEqual({ status: "pass", details: [] });
+    expect(notApplicable()).toEqual({ status: "n/a", details: [] });
     expect(fail([])).toEqual(pass());
     expect(fail(["first", "second"])).toEqual({
       status: "fail",
