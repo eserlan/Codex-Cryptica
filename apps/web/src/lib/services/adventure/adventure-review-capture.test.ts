@@ -373,6 +373,36 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(Object.values(out.integrityChecks).flat()).toEqual([]);
   });
 
+  it("reports only safe dialogue-loop counts and recovery status", () => {
+    const source = manyTurns(4);
+    const actions = [
+      "Who is owed the debt?",
+      "Who is the lender for this debt?",
+      "Why does the ledger omit the debt's creditor?",
+      "Who does this debt belong to?",
+    ];
+    const replies = [
+      "I cannot name the creditor from this record.",
+      "I don't know who the lender is.",
+      "The clerk can't say who holds the debt.",
+      "I won't guess at the creditor's identity.",
+    ];
+    source.turns = source.turns.map((turn, index) => ({
+      ...turn,
+      playerAction: actions[index]!,
+      narration: replies[index]!,
+      timeAdvance: undefined,
+      provisionalFactIds: [],
+    }));
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.dialogueLoopTurns).toBe(4);
+    expect(out.summary.dialogueRecoveryDue).toBe(true);
+    expect(out._readme).toContain("dialogueLoopTurns");
+    const fresh = JSON.parse(adventureDiagnosticJson(exampleSession()));
+    expect(fresh.summary.dialogueLoopTurns).toBe(0);
+    expect(fresh.summary.dialogueRecoveryDue).toBe(false);
+  });
+
   it("is smaller than the full copy for long sessions", () => {
     const source = manyTurns(60);
     expect(adventureDiagnosticJson(source).length).toBeLessThan(

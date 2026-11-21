@@ -8,6 +8,7 @@ import { packageProgressPromptSummary } from "./package-progress";
 import { worldEntryPacing } from "./world-entry-pacing";
 import { projectVisibleState } from "./prompt-state";
 import { sceneStallPacing } from "./scene-pacing";
+import { dialogueLoopPacing } from "./dialogue-pacing";
 import { PROMPT_TRANSCRIPT_TURNS } from "./story-summary";
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import { projectGmHistoricalAnchor } from "./historical-anchor";
@@ -40,13 +41,34 @@ export interface AdventurePromptInput {
   adventurePackage?: PromptAdventurePackage;
 }
 
+/** Choose one targeted pacing nudge, keeping generic stall logic out of the GM. */
+function sceneRecoveryBehavior(
+  stalled: ReturnType<typeof sceneStallPacing>,
+  dialogue: ReturnType<typeof dialogueLoopPacing>,
+): string[] {
+  if (dialogue?.recoveryDue) {
+    return [
+      `DIALOGUE LOOP RECOVERY: The last ${dialogue.repeatedTurns} exchanges repeated a related question without a substantive answer. Address the CURRENT player question rather than rephrasing an NPC's ignorance or recycling the same options. Clarify a mistaken explanation or decide a compatible, previously unspecified world detail and commit consequential facts. If this NPC genuinely cannot know, preserve that limit and offer a specific, independently useful avenue of inquiry where credible. Do not force a quest, invent an unrelated clue or crisis, reveal hidden truths without discovery, or choose for the player.`,
+    ];
+  }
+  if (stalled?.stalled && !dialogue) {
+    return [
+      `STALLED SCENE: the last ${stalled.quietTurns} turns changed nothing in the world: no new fact, character, place or consequence. In this turn, change something concrete: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Do not repeat any detail from the previous turns, and still never decide the player's response.`,
+    ];
+  }
+  return [];
+}
+
 export function buildAdventurePrompt(input: AdventurePromptInput) {
   const scenarios = candidateScenariosForLocation(input.session);
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
   const pacing = worldEntry ? worldEntryPacing(input.session) : undefined;
   const stalled = sceneStallPacing(input.session);
-  const stallDue = stalled?.stalled ? stalled : undefined;
+  const dialogueRecovery = dialogueLoopPacing(
+    input.session,
+    input.playerAction,
+  );
   const phaseInstruction =
     input.phase === "opening"
       ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
@@ -62,22 +84,20 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       ? historicalAnchorBehavior(input.session.historicalAnchor)
       : []),
     phaseInstruction,
-    "Treat a described action or question as the character doing it, even when the player paraphrases instead of writing dialogue. Answer the substance in the same turn: for example, questioning a witness about an attack means asking what they saw, not waiting for the player to repeat the question verbatim. Follow the current action's intended target when the player switches people or activities; an earlier conversation does not prevent that switch. A present witness may respond even if absent from activeCharacters. Ask for clarification only when a material detail is genuinely ambiguous; do not invent an unfinished question. Respect established knowledge and uncertainty: a witness can say what they know, do not know, or offer a credible lead without inventing hidden facts.",
+    "Treat a described action or question as the character doing it, even when the player paraphrases instead of writing dialogue. Answer the substance in the same turn: for example, questioning a witness about an attack means asking what they saw, not waiting for the player to repeat the question verbatim. Follow the current action's intended target when the player switches people or activities; an earlier conversation does not prevent that switch. A present witness may respond even if absent from activeCharacters. Ask for clarification only when a material detail is genuinely ambiguous; do not invent an unfinished question. Respect established knowledge and uncertainty: a witness can say what they know, do not know, or offer a credible lead. Do not give a witness knowledge they could not have; that is different from the GM deciding a new, compatible hidden fact.",
     ...worldStyleBehavior(input.worldStyle),
     "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
     'You are the world, so speak in the fiction. Never say what has or has not been "established", never refer to your own knowledge or to being an AI, and never refuse a harmless question about the scene.',
     "Scene details are yours to decide: when the player asks about, or hands you, a detail nobody has fixed yet (time of day, weather, light, a minor NPC's name, a price, a distance), choose a fitting answer in character and commit it. If the player says you decide, decide. The ban on inventing precise calendar dates does not apply to scene details; keep a detail consistent once chosen.",
+    "GM IMPROVISATIONAL AUTHORITY: You are responsible for the parts of the world not yet specified. Invent credible institutions, customs, debts, procedures, NPC motives and relationships, identities and causal links when needed for a coherent, playable answer. Preserve canonical records, already committed facts and explicit scenario truths; do not settle source facts explicitly marked ambiguous or unresolved. An unspecified detail is not an established mystery or a prohibition on deciding. Record consequential new public details in visible state/provisionalFacts, or unrevealed decisions in GM-only hidden state, then keep them consistent.",
+    "CHALLENGED EXPLANATIONS: When the player notices a contradiction or an implausible premise, take the objection seriously. Clarify or repair the world's explanation with the smallest plausible addition consistent with binding facts. Let a knowledgeable NPC explain how their own institution actually works; acknowledge a mistaken earlier account rather than defending it. Never conflate an NPC's limited knowledge with the GM having no answer. Repeated paraphrases of the same question require a materially new explanation, discovery, or clear next step, not another version of the same refusal.",
     "A character may not know something, but a reply must never be a dead end. Let the NPC offer a name, point to someone or somewhere that knows more, or let the player notice a visible clue. When the player repeats a question about the same unknown, someone present offers a concrete observable clue or safe lead; do not disclose GM-only truths, and reveal scenario secrets only through justified fictional discovery.",
     "Do not repeat the ambient detail (sounds, hearth, cups, weather) used in the previous turn; vary the sensory colour or leave it out. If the last few turns stayed in one scene without new information, change something: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Never decide the player's response.",
     "Places: currentPlace is where the player is now and knownPlaces lists the places they have been to; people and facts listed under elsewhere are not here unless the story brings them back. When the player travels to a different place, set moveTo: use placeId for a known place, copied from knownPlaces and never made up, or name (with a short relation such as \"below Tiny village\") for a new one. Never set moveTo for movement inside the same place, and keep a place's recorded name instead of inventing a variant. A place marked canonical is a Vault location: its source record outranks anything you would invent about it. A place may be known by more than one name; use a recorded name rather than a variant. People who should travel with the player must appear in this turn's activeCharacters patch.",
     "Visual cues: when creating a place via moveTo.cues, or when the current place lacks visual tags (placeCues), include 1 to 4 lowercase cues from: forest, woodland, mountain, hills, plains, desert, swamp, river, coast, ocean, island, tundra, snow, cave, ruins, village, town, city, harbour, road, castle, temple, tavern, market, farm, space-station, starship, laboratory, industrial, urban, rural, wilderness, interior, exterior, quiet, busy, ominous, hopeful, mysterious, day, night, dawn, dusk, rain, fog, winter, summer.",
     "Present NPCs: keep named NPCs currently in the scene in visiblePatch.activeCharacters (add when they join, remove when they leave). Whenever adding or updating an NPC, include up to 8 concise lowercase cues that help illustrate them. Aim for 5 when supported, choosing useful details from ancestry or species, role, setting, clothing, physical appearance, and distinguishing features. For catalogue matching, include a fitting familiar ancestry and role when known, such as human, elf, worker, official, guard, merchant, scholar, or explorer. Other cues are not limited to these examples: choose specific descriptions that fit the character and setting, such as space-station, uniform, or silver hair. Use only details the player can perceive or already knows; use fewer cues rather than inventing unsupported details. Keep established appearance consistent and never expose hidden information.",
     'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
-    ...(stallDue
-      ? [
-          `STALLED SCENE: the last ${stallDue.quietTurns} turns changed nothing in the world: no new fact, character, place or consequence. In this turn, change something concrete: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Do not repeat any detail from the previous turns, and still never decide the player's response.`,
-        ]
-      : []),
+    ...sceneRecoveryBehavior(stalled, dialogueRecovery),
     "Canonical source records outrank provisional session material.",
     ...(input.correction
       ? [
@@ -92,6 +112,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           "Peaceful/off-script: if the player ignores or declines a lead, or pursues ordinary daily life, allow peaceful exploration without forced villains, artificial deadlines, or mandatory combat.",
           "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
           "Never rewrite the original GM-only scenario truth merely to manufacture a twist or prolong play.",
+          "When a scenario specifies the core truth but leaves supporting identities, motives, or mechanisms open, you may invent compatible answers as investigation makes them relevant. Commit material choices to GM-only state before relying on them, and reveal only what the character can discover; do not keep a solvable mystery permanently vague merely because the scenario did not name every detail.",
           "Present actors with credible motives and reactions; new developments must follow established facts or player actions.",
           "Respect the player's right to ignore, abandon, revisit or resolve a situation without forcing escalation.",
           "Distinguish hearsay, observation and interpretation. Only reveal scenario secrets through justified fictional discovery.",
