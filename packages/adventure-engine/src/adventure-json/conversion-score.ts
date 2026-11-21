@@ -1,4 +1,33 @@
-import type { SourceReference } from "./schema";
+import {
+  allEntities,
+  citesSection,
+  ENTITY_COLLECTIONS,
+  hasScoredText,
+  playerVisibleStrings,
+  recordStrings,
+  sourceReferenceMatches,
+  type DocLike,
+  type Entity,
+} from "./conversion-score-document";
+import { normaliseText, textFoundIn } from "./conversion-score-text";
+import {
+  fail,
+  finish,
+  pass,
+  schemaFailedDims,
+  validationDetails,
+  type ConversionScoreDimensionResult,
+  type ConversionScoreResult,
+} from "./conversion-score-result";
+
+export { textFoundIn } from "./conversion-score-text";
+export {
+  CONVERSION_SCORE_DIMENSIONS,
+  type ConversionScoreDimension,
+  type ConversionScoreDimensionResult,
+  type ConversionScoreResult,
+} from "./conversion-score-result";
+
 import { validateAdventureJson } from "./validator";
 import type { ConversionAnswerKey } from "./conversion-answer-key";
 
@@ -9,183 +38,6 @@ export {
   type ActionableDetail,
   type ConversionAnswerKey,
 } from "./conversion-answer-key";
-
-export const CONVERSION_SCORE_DIMENSIONS = [
-  "schema",
-  "references",
-  "secrets",
-  "sourceAuthority",
-  "conflicts",
-  "coverage",
-  "authoredVsRumour",
-  "branches",
-  "citations",
-  "truncation",
-  "fidelity",
-] as const;
-
-export type ConversionScoreDimension =
-  (typeof CONVERSION_SCORE_DIMENSIONS)[number];
-
-export interface ConversionScoreDimensionResult {
-  status: "pass" | "fail" | "n/a";
-  details: string[];
-}
-
-export interface ConversionScoreResult {
-  overall: "pass" | "fail";
-  repairIterations: number | null;
-  dimensions: Record<ConversionScoreDimension, ConversionScoreDimensionResult>;
-}
-
-type Entity = {
-  id: string;
-  epistemicStatus?: string | undefined;
-  sourceRef?: SourceReference | undefined;
-  [key: string]: unknown;
-};
-
-type DocLike = Record<string, unknown> & {
-  [K in (typeof ENTITY_COLLECTIONS)[number]]: Entity[];
-};
-
-const ENTITY_COLLECTIONS = [
-  "locations",
-  "actors",
-  "factions",
-  "scenes",
-  "encounters",
-  "clues",
-  "rumours",
-  "items",
-  "secrets",
-  "endings",
-  "unresolved",
-] as const;
-
-function words(s: string): Set<string> {
-  const normalized = s.toLowerCase().replace(/[^a-z0-9]+/g, " ");
-  return new Set(normalized.split(" ").filter(Boolean));
-}
-
-function tokens(s: string): Set<string> {
-  return new Set([...words(s)].filter((token) => token.length >= 4));
-}
-
-/** Key text A is "found" in B when ≥60% of A's distinct tokens appear in B. */
-export function textFoundIn(a: string, b: string): boolean {
-  const aTokens = tokens(a);
-  if (aTokens.size === 0) return false;
-  const bTokens = tokens(b);
-  let found = 0;
-  for (const t of aTokens) {
-    if (bTokens.has(t)) found += 1;
-  }
-  return found / aTokens.size >= 0.6;
-}
-
-function norm(s: string): string {
-  return s.trim().toLowerCase();
-}
-
-function citesSection(
-  entity: Entity,
-  section: { sourceId: string; title: string },
-): boolean {
-  if (entity.id === section.sourceId) return true;
-  if (entity.sourceRef?.anchor === section.sourceId) return true;
-  const refSection = entity.sourceRef?.section;
-  return (
-    typeof refSection === "string" && norm(refSection) === norm(section.title)
-  );
-}
-
-function allEntities(doc: DocLike): Entity[] {
-  return ENTITY_COLLECTIONS.flatMap((name) => doc[name] ?? []);
-}
-
-function premiseStrings(
-  doc: Record<string, unknown>,
-  push: (field: string, value: unknown) => void,
-): void {
-  push("title", doc["title"]);
-  push("description", doc["description"]);
-  const premise = doc["premise"] as Record<string, unknown> | undefined;
-  if (!premise || typeof premise !== "object") return;
-  push("premise.background", premise["background"]);
-  push("premise.hook", premise["hook"]);
-  push("premise.tone", premise["tone"]);
-  const theme = premise["theme"];
-  if (Array.isArray(theme))
-    theme.forEach((t, i) => push(`premise.theme[${i}]`, t));
-}
-
-function recordStrings(
-  name: string,
-  rec: Record<string, unknown>,
-  push: (field: string, value: unknown) => void,
-): void {
-  const id = typeof rec["id"] === "string" ? rec["id"] : "?";
-  const walk = (field: string, value: unknown): void => {
-    if (typeof value === "string") push(field, value);
-    else if (Array.isArray(value))
-      value.forEach((v, i) => walk(`${field}[${i}]`, v));
-    else if (value && typeof value === "object")
-      for (const [key, v] of Object.entries(value)) walk(`${field}.${key}`, v);
-  };
-  for (const [key, value] of Object.entries(rec))
-    walk(`${name} ${id}.${key}`, value);
-}
-
-function collectionStrings(
-  doc: Record<string, unknown>,
-  push: (field: string, value: unknown) => void,
-): void {
-  for (const name of ENTITY_COLLECTIONS) {
-    const items = doc[name];
-    if (!Array.isArray(items)) continue;
-    for (const item of items) {
-      if (!item || typeof item !== "object") continue;
-      const rec = item as Record<string, unknown>;
-      if (rec["visibility"] === "player-visible")
-        recordStrings(name, rec, push);
-    }
-  }
-}
-
-function playerVisibleStrings(
-  doc: Record<string, unknown>,
-): Array<{ field: string; value: string }> {
-  const out: Array<{ field: string; value: string }> = [];
-  const push = (field: string, value: unknown): void => {
-    if (typeof value === "string") out.push({ field, value });
-  };
-  premiseStrings(doc, push);
-  collectionStrings(doc, push);
-  return out;
-}
-
-const NOT_CHECKED = "not checked: schema invalid";
-
-function pass(): ConversionScoreDimensionResult {
-  return { status: "pass", details: [] };
-}
-
-function fail(details: string[]): ConversionScoreDimensionResult {
-  return { status: details.length === 0 ? "pass" : "fail", details };
-}
-
-function finish(
-  dims: Record<ConversionScoreDimension, ConversionScoreDimensionResult>,
-  repairIterations: number | null,
-): ConversionScoreResult {
-  const overall = CONVERSION_SCORE_DIMENSIONS.every(
-    (name) => dims[name]!.status === "pass" || dims[name]!.status === "n/a",
-  )
-    ? "pass"
-    : "fail";
-  return { overall, repairIterations, dimensions: dims };
-}
 
 function scoreSecrets(
   value: DocLike,
@@ -206,55 +58,6 @@ function scoreSecrets(
     if (leak) details.push(`leaked secret ${s.id} in ${leak.field}`);
   }
   return fail(details);
-}
-
-function containsTokens(value: string, expected: string): boolean {
-  const expectedTokens = words(expected);
-  if (expectedTokens.size === 0) return false;
-  const valueTokens = words(value);
-  return [...expectedTokens].every((token) => valueTokens.has(token));
-}
-
-function entityTextStrings(entity: Entity): string[] {
-  const strings: string[] = [];
-  const walk = (value: unknown): void => {
-    if (typeof value === "string") strings.push(value);
-    else if (Array.isArray(value)) value.forEach(walk);
-    else if (value && typeof value === "object")
-      Object.values(value).forEach(walk);
-  };
-  for (const [field, value] of Object.entries(entity)) {
-    if (
-      field !== "id" &&
-      field !== "sourceRef" &&
-      field !== "epistemicStatus"
-    ) {
-      walk(value);
-    }
-  }
-  return strings;
-}
-
-function sourceReferenceMatches(
-  actual: SourceReference | undefined,
-  expected: SourceReference,
-): boolean {
-  if (!actual) return false;
-  return Object.entries(expected).every(
-    ([field, value]) => actual[field as keyof SourceReference] === value,
-  );
-}
-
-function hasScoredText(
-  entity: Entity,
-  expectedText: string,
-  distinguishingTerm: string,
-): boolean {
-  return entityTextStrings(entity).some(
-    (value) =>
-      textFoundIn(expectedText, value) &&
-      containsTokens(value, distinguishingTerm),
-  );
 }
 
 type SourceAuthorityCase = NonNullable<
@@ -423,14 +226,14 @@ function sectionCoverage(
     entities
       .map((entity) => entity.sourceRef?.section)
       .filter((section): section is string => typeof section === "string")
-      .map(norm),
+      .map(normaliseText),
   );
   const details: string[] = [];
   for (const s of key.sections.filter((s) => !s.container)) {
     if (
       !entityIds.has(s.sourceId) &&
       !anchors.has(s.sourceId) &&
-      !sectionTitles.has(norm(s.title))
+      !sectionTitles.has(normaliseText(s.title))
     ) {
       details.push(`missing section ${s.sourceId}`);
     }
@@ -674,51 +477,6 @@ function scoreFidelity(
   return fail(findings);
 }
 
-function schemaFailedDims(validation: {
-  errors: Array<{ code: string; path?: string }>;
-}): Pick<
-  Record<ConversionScoreDimension, ConversionScoreDimensionResult>,
-  | "references"
-  | "secrets"
-  | "sourceAuthority"
-  | "conflicts"
-  | "coverage"
-  | "authoredVsRumour"
-  | "branches"
-  | "citations"
-  | "truncation"
-  | "fidelity"
-> {
-  const refErrors = validation.errors.filter(
-    (e) => e.code === "UNRESOLVED_REFERENCE" || e.code === "SELF_REFERENCE",
-  );
-  const references: ConversionScoreDimensionResult =
-    refErrors.length > 0
-      ? {
-          status: "fail",
-          details: refErrors.map((e) =>
-            e.path ? `${e.code} at ${e.path}` : e.code,
-          ),
-        }
-      : { status: "fail", details: [NOT_CHECKED] };
-  const blocked = (): ConversionScoreDimensionResult => ({
-    status: "fail",
-    details: [NOT_CHECKED],
-  });
-  return {
-    references,
-    secrets: blocked(),
-    sourceAuthority: blocked(),
-    conflicts: blocked(),
-    coverage: blocked(),
-    authoredVsRumour: blocked(),
-    branches: blocked(),
-    citations: blocked(),
-    truncation: blocked(),
-    fidelity: blocked(),
-  };
-}
-
 export function scoreAdventureConversion(
   doc: unknown,
   key: ConversionAnswerKey,
@@ -730,9 +488,7 @@ export function scoreAdventureConversion(
     ? pass()
     : {
         status: "fail",
-        details: validation.errors.map((e) =>
-          e.path ? `${e.code} at ${e.path}` : e.code,
-        ),
+        details: validationDetails(validation.errors),
       };
   if (!validation.ok) {
     return finish(
