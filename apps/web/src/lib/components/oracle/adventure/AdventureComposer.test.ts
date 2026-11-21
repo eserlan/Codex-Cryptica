@@ -142,7 +142,8 @@ describe("AdventureComposer", () => {
       m.suggestedActions[2],
     );
     // Actions can scroll while the free-text input remains outside the pane.
-    expect(extras.contains(screen.getByLabelText("What do you do?"))).toBe(false);
+    const freeAction = screen.getByLabelText("What do you do?");
+    expect(extras.contains(freeAction)).toBe(false);
   });
 
   it("shows a Cancel affordance and the selected action while generating", () => {
