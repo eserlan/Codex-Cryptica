@@ -190,15 +190,70 @@ export function detectHiddenLeakage(
   );
 }
 
+function addKnownSecretIds(
+  ids: readonly string[] | undefined,
+  knownSecretIds: Set<string>,
+  revealed: Set<string>,
+): void {
+  for (const id of ids ?? []) {
+    if (knownSecretIds.has(id)) revealed.add(id);
+  }
+}
+
+function collectRevealedFromSession(
+  session: AdventureSession | undefined,
+  knownSecretIds: Set<string>,
+  revealed: Set<string>,
+): void {
+  if (!session) return;
+  for (const secret of session.hiddenState.secrets) {
+    knownSecretIds.add(secret.id);
+    if (secret.status === "revealed") revealed.add(secret.id);
+  }
+  addKnownSecretIds(
+    session.packageProgress?.revealedSecretIds,
+    knownSecretIds,
+    revealed,
+  );
+  for (const turn of session.turns) {
+    addKnownSecretIds(turn.revealedSecretIds, knownSecretIds, revealed);
+  }
+}
+
+function authorisedRevealedSecretIds(
+  session?: AdventureSession,
+  proposal?: AdventureTurnProposal,
+  packageSecretTexts?: Readonly<Record<string, string>>,
+): Set<string> {
+  const revealed = new Set<string>();
+  const knownSecretIds = new Set<string>(Object.keys(packageSecretTexts ?? {}));
+  collectRevealedFromSession(session, knownSecretIds, revealed);
+  if (proposal?.kind === "complete") {
+    addKnownSecretIds(proposal.revealSecretIds, knownSecretIds, revealed);
+  }
+  return revealed;
+}
+
 /** Checks player-facing proposal text against the current pinned package. */
 export function detectPackageLeakage(
   proposal: AdventureTurnProposal,
   meta: CommitMetadata,
   session?: AdventureSession,
 ): HiddenLeakageFinding[] {
+  const revealedIds = authorisedRevealedSecretIds(
+    session,
+    proposal,
+    meta.packageSecretTexts,
+  );
   const fields = playerFacingStrings(proposal).filter(
-    ([field]) =>
-      !field.endsWith(".packageSceneId") && !field.includes(".sourceRecordIds"),
+    ([field, value]) =>
+      !field.endsWith(".packageSceneId") &&
+      !(
+        field === "root.sceneTransition.sceneId" &&
+        meta.packageSceneIds?.includes(value)
+      ) &&
+      !field.includes(".sourceRecordIds") &&
+      !(field.endsWith(".sourceRecordId") && revealedIds.has(value)),
   );
   return detectPackageFieldsLeakage(fields, meta, session, proposal);
 }
@@ -206,7 +261,10 @@ export function detectPackageLeakage(
 /** Checks partial player-facing text (such as a streamed preview) against pinned package guards. */
 export function detectPackageTextLeakage(
   text: string,
-  meta: Pick<CommitMetadata, "packageGmOnlyText" | "packageRecordIds">,
+  meta: Pick<
+    CommitMetadata,
+    "packageGmOnlyText" | "packageRecordIds" | "packageSecretTexts"
+  >,
   session?: AdventureSession,
 ): HiddenLeakageFinding[] {
   return detectPackageFieldsLeakage([["root", text]], meta, session);
@@ -242,13 +300,45 @@ function storedPackageSecretTexts(
   ];
 }
 
+function collectRevealedSecretTexts(
+  revealedIds: Set<string>,
+  session?: AdventureSession,
+  packageSecretTexts?: Record<string, string>,
+): Set<string> {
+  const revealedTexts = new Set<string>();
+  for (const secret of session?.hiddenState.secrets ?? []) {
+    if (revealedIds.has(secret.id)) revealedTexts.add(normalize(secret.text));
+  }
+  for (const [id, text] of Object.entries(packageSecretTexts ?? {})) {
+    if (revealedIds.has(id)) revealedTexts.add(normalize(text));
+  }
+  return revealedTexts;
+}
+
 function collectPackageSecretTexts(
-  meta: Pick<CommitMetadata, "packageGmOnlyText">,
+  meta: Pick<CommitMetadata, "packageGmOnlyText" | "packageSecretTexts">,
   session?: AdventureSession,
   proposal?: AdventureTurnProposal,
 ): string[] {
+  const revealedIds = authorisedRevealedSecretIds(
+    session,
+    proposal,
+    meta.packageSecretTexts,
+  );
+  const revealedTexts = collectRevealedSecretTexts(
+    revealedIds,
+    session,
+    meta.packageSecretTexts,
+  );
+  const rawPackageGmOnlyText = meta.packageGmOnlyText ?? [];
+  const packageGmOnlyText =
+    revealedTexts.size > 0
+      ? rawPackageGmOnlyText.filter(
+          (text) => !revealedTexts.has(normalize(text)),
+        )
+      : rawPackageGmOnlyText;
   return [
-    ...(meta.packageGmOnlyText ?? []),
+    ...packageGmOnlyText,
     ...proposedPackageSecretTexts(proposal),
     ...storedPackageSecretTexts(session?.packageProgress),
   ];
@@ -268,7 +358,10 @@ function collectPackageSecretIds(
 
 function detectPackageFieldsLeakage(
   fields: Array<[string, string]>,
-  meta: Pick<CommitMetadata, "packageGmOnlyText" | "packageRecordIds">,
+  meta: Pick<
+    CommitMetadata,
+    "packageGmOnlyText" | "packageRecordIds" | "packageSecretTexts"
+  >,
   session?: AdventureSession,
   proposal?: AdventureTurnProposal,
 ): HiddenLeakageFinding[] {
@@ -420,6 +513,10 @@ function proposedHiddenSources(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
 ): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  if (!proposal.hiddenPatch?.secrets || !proposal.hiddenPatch.gmThreads) {
+    return [];
+  }
+
   return [
     ...proposal.hiddenPatch.secrets.add.map((secret, index) => ({
       id: `proposed-secret-${index}`,
@@ -463,6 +560,8 @@ export function constrainHiddenSecretVisibility(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
 ): Extract<AdventureTurnProposal, { kind: "complete" }> {
+  if (!proposal.hiddenPatch?.secrets) return proposal;
+
   const secrets = proposal.hiddenPatch.secrets;
   const revealIds = new Set(proposal.revealSecretIds);
   const storedById = new Map(
@@ -538,6 +637,7 @@ export function revealedSecretIds(
 ): string[] {
   const known = new Set([
     ...session.hiddenState.secrets.map((secret) => secret.id),
+    ...(session.packageProgress?.revealedSecretIds ?? []),
     ...scenarioSecretSources(session).map((secret) => secret.id),
     ...historicalAnchorSecretSources(session).map((secret) => secret.id),
   ]);

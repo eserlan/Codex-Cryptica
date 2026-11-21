@@ -419,4 +419,100 @@ describe("Adventure package leakage guards, diagnostics & opening retry (#5052)"
     await ctx.manager.submitAction("Peer into the fog");
     expect(seenPreviews).toEqual(["A lantern flickers in the fog.", "", ""]);
   });
+
+  it("tracks revealed package secrets without copying pkg.secrets into hiddenState, and permits previewing once revealed", async () => {
+    const { pkg, secretText } = makeFixtureWithGmMetadata();
+    const secretId = pkg.secrets.find((s) => s.text === secretText)!.id;
+    let turnIndex = 0;
+    let previewAfterReveal = "";
+
+    const ctx = setupManager(pkg, async (request) => {
+      turnIndex += 1;
+      if (turnIndex === 1) return completeProposal;
+      if (turnIndex === 2) {
+        return {
+          ...completeProposal,
+          narration: `You uncover the truth: ${secretText}.`,
+          revealSecretIds: [secretId],
+          visiblePatch: {
+            ...completeProposal.visiblePatch,
+            knownFacts: {
+              add: [
+                {
+                  text: secretText,
+                  source: "revealed-secret" as const,
+                  sourceRecordId: secretId,
+                },
+              ],
+              update: [],
+              removeIds: [],
+            },
+          },
+        };
+      }
+      request.onNarration?.(`Recalling earlier: ${secretText}.`);
+      previewAfterReveal = ctx.manager.streamedNarration;
+      return {
+        ...completeProposal,
+        narration: `Recalling earlier: ${secretText}.`,
+      };
+    });
+
+    await ctx.start();
+    expect(ctx.manager.phase).toBe("ready");
+    expect(ctx.manager.session?.hiddenState.secrets).toEqual([]);
+
+    await ctx.manager.submitAction("Search the harbour records");
+    expect(ctx.manager.phase).toBe("ready");
+    expect(ctx.manager.session?.packageProgress?.revealedSecretIds).toContain(
+      secretId,
+    );
+
+    await ctx.manager.submitAction("Review what we know");
+    expect(ctx.manager.phase).toBe("ready");
+    expect(previewAfterReveal).toBe(`Recalling earlier: ${secretText}.`);
+  });
+
+  it("starts packages with more than 60 secrets and long secret texts without exceeding session limits", async () => {
+    const base = makeFixtureWithGmMetadata().pkg;
+    const longSecret = {
+      id: "secret-long-text",
+      text: "The guild vault ledger carries a hidden watermark showing seventy-three counterfeit seals. ".repeat(
+        9,
+      ),
+      visibility: "gm-only" as const,
+      epistemicStatus: "explicit" as const,
+    };
+    const extraSecrets = Array.from({ length: 65 }, (_, index) => ({
+      id: `secret-extra-${index + 1}`,
+      text: `Hidden guild secret number ${index + 1}.`,
+      visibility: "gm-only" as const,
+      epistemicStatus: "explicit" as const,
+    }));
+    const largePkg = {
+      ...base,
+      secrets: [...base.secrets, longSecret, ...extraSecrets],
+    };
+
+    let turn = 0;
+    const ctx = setupManager(largePkg, async () => {
+      turn += 1;
+      if (turn === 1) return completeProposal;
+      return {
+        ...completeProposal,
+        narration: `You spot the watermark: ${longSecret.text}`,
+        revealSecretIds: [longSecret.id],
+      };
+    });
+
+    await ctx.start();
+    expect(ctx.manager.phase).toBe("ready");
+    expect(ctx.manager.session?.hiddenState.secrets).toEqual([]);
+
+    await ctx.manager.submitAction("Inspect the guild vault ledger");
+    expect(ctx.manager.phase).toBe("ready");
+    expect(ctx.manager.session?.packageProgress?.revealedSecretIds).toContain(
+      longSecret.id,
+    );
+  });
 });

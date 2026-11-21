@@ -90,7 +90,7 @@ export class AdventureTurnGenerationService {
     request: AdventureTurnGenerationRequest,
     options: AdventureGenerationOptions = {},
   ): Promise<AdventureTurnProposal> {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
       throw new Error("offline");
     }
     const signal = options.signal ?? request.signal;

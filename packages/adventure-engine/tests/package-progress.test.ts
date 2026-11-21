@@ -151,6 +151,130 @@ describe("package scene progress", () => {
     expect(JSON.stringify(result)).not.toContain("secret-harbor-forged");
   });
 
+  it("allows revealed package secret attribution, revealed secret text, and sceneTransition.sceneId while still blocking unrevealed IDs and raw IDs in prose", () => {
+    const secretText =
+      "The damp ledger records a lock fitted to the sluice pin.";
+    const sessionWithSecrets = {
+      ...packageSession(),
+      hiddenState: {
+        ...packageSession().hiddenState,
+        secrets: [
+          {
+            id: "secret-ledger-lock",
+            text: secretText,
+            status: "hidden" as const,
+          },
+          {
+            id: "secret-unrevealed",
+            text: "Tobiah filed the pin.",
+            status: "hidden" as const,
+          },
+        ],
+      },
+    };
+    const baseMeta = {
+      ...meta,
+      packageSceneIds: ["scene-entry", "scene-secret-cellar"],
+      packageRecordIds: [
+        "secret-ledger-lock",
+        "secret-unrevealed",
+        "scene-secret-cellar",
+      ],
+      packageGmOnlyText: [secretText, "Tobiah filed the pin."],
+      packageSecretTexts: {
+        "secret-ledger-lock": secretText,
+        "secret-unrevealed": "Tobiah filed the pin.",
+      },
+    };
+
+    // Success path: revealed secret ID in sourceRecordId, revealed secret text in visiblePatch, and gm-only sceneId in sceneTransition.
+    const validReveal = proposal();
+    validReveal.revealSecretIds = ["secret-ledger-lock"];
+    validReveal.sceneTransition = {
+      sceneId: "scene-secret-cellar",
+      title: "The Cellar",
+    };
+    validReveal.visiblePatch.situation = {
+      text: `You read the entry: ${secretText}`,
+      source: "revealed-secret",
+      sourceRecordId: "secret-ledger-lock",
+    };
+    validReveal.visiblePatch.knownFacts.add = [
+      {
+        text: secretText,
+        source: "revealed-secret",
+        sourceRecordId: "secret-ledger-lock",
+      },
+    ];
+    expect(
+      applyCompletedTurn(sessionWithSecrets, validReveal, baseMeta).ok,
+    ).toBe(true);
+
+    // Negative path 1: unrevealed secret ID in sourceRecordId is still rejected.
+    const unrevealedAttribution = proposal();
+    unrevealedAttribution.visiblePatch.knownFacts.add = [
+      {
+        text: "A rumour about the pin.",
+        source: "revealed-secret",
+        sourceRecordId: "secret-unrevealed",
+      },
+    ];
+    expect(
+      applyCompletedTurn(sessionWithSecrets, unrevealedAttribution, baseMeta),
+    ).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-id",
+            field: "root.visiblePatch.knownFacts.add[0].sourceRecordId",
+          },
+        },
+      ],
+    });
+
+    // Negative path 2: raw revealed secret ID leaked into narration prose is still rejected.
+    const rawIdInProse = proposal();
+    rawIdInProse.revealSecretIds = ["secret-ledger-lock"];
+    rawIdInProse.narration = "You uncover secret-ledger-lock on the page.";
+    expect(
+      applyCompletedTurn(sessionWithSecrets, rawIdInProse, baseMeta),
+    ).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-id",
+            field: "root.narration",
+          },
+        },
+      ],
+    });
+
+    // Negative path 3: non-scene hidden ID stuffed into sceneTransition.sceneId is still rejected.
+    const nonSceneTransition = proposal();
+    nonSceneTransition.sceneTransition = {
+      sceneId: "secret-unrevealed",
+      title: "Bogus",
+    };
+    expect(
+      applyCompletedTurn(sessionWithSecrets, nonSceneTransition, baseMeta),
+    ).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-id",
+            field: "root.sceneTransition.sceneId",
+          },
+        },
+      ],
+    });
+  });
+
   it("rejects short exact package secrets without matching longer numbers", () => {
     const leaked = proposal();
     leaked.narration = "The code is 42.";
@@ -224,6 +348,34 @@ describe("package scene progress", () => {
       if (moved.ok) {
         expect(moved.value.packageProgress).toEqual({ sceneId });
       }
+    }
+  });
+
+  it("tracks revealed package secrets in packageProgress even for overlong IDs and long texts without seeding hiddenState", () => {
+    const longSecretId = `secret-${"s".repeat(180)}`;
+    const longSecretText =
+      "The watch captain forged the harbour manifest to hide three smuggling barges. ".repeat(
+        10,
+      );
+    const revealed = proposal();
+    revealed.narration = `You uncover the truth: ${longSecretText}`;
+    revealed.revealSecretIds = [longSecretId];
+
+    const result = applyCompletedTurn(packageSession(), revealed, {
+      ...meta,
+      packageGmOnlyText: [longSecretText],
+      packageSecretTexts: { [longSecretId]: longSecretText },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.value.hiddenState.secrets).toEqual([]);
+      expect(result.value.packageProgress?.revealedSecretIds).toEqual([
+        longSecretId,
+      ]);
+      const reparsed = parseAdventureSession(result.value);
+      expect(reparsed.packageProgress?.revealedSecretIds).toEqual([
+        longSecretId,
+      ]);
     }
   });
 });

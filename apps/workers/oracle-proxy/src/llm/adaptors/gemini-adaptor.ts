@@ -29,6 +29,7 @@ import {
   wantsStructuredOutput,
 } from "../schema-validation";
 import { readSseData } from "../sse";
+import { getModel } from "../registry";
 
 /**
  * Longest a buffered (non-streaming) provider call may take. A long structured
@@ -180,18 +181,32 @@ export interface GeminiInteractionResult {
  * `index.ts`'s `handleInteraction` did inline before extraction. No
  * behavior change (FR-007).
  */
+const GEMINI_THINKING_LEVELS: Record<string, string> = {
+  minimal: "minimal",
+  low: "low",
+  medium: "medium",
+  high: "high",
+  xhigh: "high", // Gemini 3.x does not offer an xhigh thinking level.
+};
+
+function extractInteractionSystemInstruction(
+  body: Record<string, any>,
+): string | undefined {
+  if (typeof body.system_instruction === "string") {
+    return body.system_instruction;
+  }
+  if (typeof body.systemInstruction === "string") {
+    return body.systemInstruction;
+  }
+  return body.system_instruction?.parts?.[0]?.text;
+}
+
 /** Shared buffered/streaming Interactions payload mapping. */
 export function buildGeminiInteractionPayload(
   body: Record<string, any>,
 ): Record<string, unknown> {
   const targetModel = body.model || "gemini-3.5-flash-lite";
-
-  const systemInstruction: string | undefined =
-    typeof body.system_instruction === "string"
-      ? body.system_instruction
-      : typeof body.systemInstruction === "string"
-        ? body.systemInstruction
-        : body.system_instruction?.parts?.[0]?.text;
+  const systemInstruction = extractInteractionSystemInstruction(body);
 
   const payload: Record<string, unknown> = {
     model: targetModel,
@@ -204,24 +219,32 @@ export function buildGeminiInteractionPayload(
   if (systemInstruction) {
     payload.system_instruction = systemInstruction;
   }
-  if (body.generation_config || body.generationConfig) {
-    const rawConfig = {
-      ...(body.generation_config || body.generationConfig || {}),
-    } as Record<string, unknown>;
-    const generationConfig = mapGenerationConfig(rawConfig);
-    // Gemini Interactions API removed response_mime_type from generation_config
-    // in its June 2026 schema revision. Keep JSON mode in response_format.
-    const mimeType = generationConfig.response_mime_type;
-    delete generationConfig.response_mime_type;
-    if (mimeType === "application/json") {
-      payload.response_format = {
-        type: "text",
-        mime_type: "application/json",
-      };
-    }
-    if (Object.keys(generationConfig).length > 0) {
-      payload.generation_config = generationConfig;
-    }
+  const rawGenerationConfig = body.generation_config || body.generationConfig;
+  const generationConfig: Record<string, unknown> = rawGenerationConfig
+    ? mapGenerationConfig({ ...rawGenerationConfig } as Record<string, unknown>)
+    : {};
+  // Gemini Interactions API removed response_mime_type from generation_config
+  // in its June 2026 schema revision. Keep JSON mode in response_format.
+  const mimeType = generationConfig.response_mime_type;
+  delete generationConfig.response_mime_type;
+  if (mimeType === "application/json") {
+    payload.response_format = {
+      type: "text",
+      mime_type: "application/json",
+    };
+  }
+  const thinkingLevel =
+    body.reasoning_effort === "xhigh" &&
+    targetModel === getModel("gemini-4-hydrogen")?.modelId
+      ? "xhigh"
+      : typeof body.reasoning_effort === "string"
+        ? GEMINI_THINKING_LEVELS[body.reasoning_effort]
+        : undefined;
+  if (thinkingLevel) {
+    generationConfig.thinking_level = thinkingLevel;
+  }
+  if (Object.keys(generationConfig).length > 0) {
+    payload.generation_config = generationConfig;
   }
 
   return payload;

@@ -344,6 +344,8 @@ const actorEventProposalSchema = z
   })
   .strict();
 
+// Package-authored secret IDs are opaque keys, including leading/trailing spaces.
+const secretIdSchema = z.string().min(1);
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
@@ -359,7 +361,7 @@ const completeProposalSchema = z.object({
     .optional(),
   visiblePatch: visiblePatchSchema,
   hiddenPatch: hiddenPatchSchema,
-  revealSecretIds: z.array(id),
+  revealSecretIds: z.array(secretIdSchema),
   revealScenarioIds: z.array(id).max(8).optional(),
   elaborateScenarios: z
     .array(scenarioElaborationProposalSchema)
@@ -519,6 +521,10 @@ const packageProgressSchema = z
       )
       .max(MAX_PACKAGE_PROGRESS_ENTRIES)
       .optional(),
+    revealedSecretIds: z
+      .array(packageId)
+      .max(MAX_PACKAGE_PROGRESS_ENTRIES)
+      .optional(),
   })
   .strict()
   .refine(
@@ -595,7 +601,7 @@ export const adventureSessionSchema = z
         narration,
         visiblePatch: persistedVisiblePatchSchema,
         hiddenPatch: persistedHiddenPatchSchema,
-        revealedSecretIds: z.array(id),
+        revealedSecretIds: z.array(secretIdSchema),
         sourceRecordIds: z.array(id),
         provisionalFactIds: z.array(id),
         committedAt: timestamp,

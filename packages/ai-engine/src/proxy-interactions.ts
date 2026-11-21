@@ -38,6 +38,7 @@ export interface InteractionRequest {
   previousInteractionId?: string | null;
   storeConversation?: boolean;
   generationConfig?: Record<string, unknown>;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
   signal?: AbortSignal;
 }
 
@@ -60,6 +61,7 @@ function interactionBody(params: InteractionRequest): Record<string, unknown> {
   if (params.previousInteractionId)
     body.previous_interaction_id = params.previousInteractionId;
   if (params.generationConfig) body.generationConfig = params.generationConfig;
+  if (params.reasoningEffort) body.reasoning_effort = params.reasoningEffort;
   return body;
 }
 
@@ -112,10 +114,17 @@ export class ProxyInteractions {
   ) {}
 
   /** Expired continuations must be replayed by the caller with full history. */
-  async send(
-    params: InteractionRequest,
-  ): Promise<{ id: string; text: string }> {
-    if (typeof navigator !== "undefined" && !navigator.onLine) {
+  async send(params: InteractionRequest): Promise<{
+    id: string;
+    text: string;
+    modelKey?: string;
+    usage?: {
+      inputTokens?: number;
+      outputTokens?: number;
+      reasoningTokens?: number;
+    };
+  }> {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
       throw new Error("You appear to be offline. Generation is unavailable.");
     }
     const response = await postProxyJson(
@@ -126,7 +135,14 @@ export class ProxyInteractions {
     );
     const data = await response.json().catch(() => ({}) as any);
     if (!response.ok) throwInteractionFailure(response, data);
-    return { id: data.id as string, text: (data.text as string) || "" };
+    return {
+      id: data.id as string,
+      text: (data.text as string) || "",
+      ...(typeof data.modelKey === "string" ? { modelKey: data.modelKey } : {}),
+      ...(data.usage && typeof data.usage === "object"
+        ? { usage: data.usage }
+        : {}),
+    };
   }
 
   /** A complete event is not an acknowledgement that adventure state is saved. */

@@ -72,8 +72,8 @@ function completedTurnProposalError(
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
   const leakage =
-    detectHiddenLeakage(session, proposal)[0] ??
-    detectPackageLeakage(proposal, meta, session)[0];
+    detectPackageLeakage(proposal, meta, session)[0] ??
+    detectHiddenLeakage(session, proposal)[0];
   if (leakage) {
     return error(
       "hidden-leakage",
@@ -280,8 +280,9 @@ export function applyCompletedTurn(
     materialized.hiddenState.secrets,
     proposal.revealSecretIds,
     meta.turnId,
+    meta.packageSecretTexts,
   );
-  if (revealError) return error("unknown-secret", revealError);
+  if (revealError) return error(revealError.code, revealError.message);
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { time, timeAdvance } = clock;

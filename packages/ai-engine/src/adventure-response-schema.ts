@@ -373,11 +373,49 @@ export const adventureTurnResponseSchema = {
   ],
 } as const;
 
+export interface InvalidAdventureResponseError extends Error {
+  validationHint?: string;
+}
+
+function summarizeValidationError(cause: unknown): string {
+  if (cause instanceof SyntaxError) return "Response was not valid JSON.";
+  if (
+    cause &&
+    typeof cause === "object" &&
+    "issues" in cause &&
+    Array.isArray((cause as { issues?: unknown[] }).issues)
+  ) {
+    const issues = (
+      cause as {
+        issues: Array<{ path?: Array<string | number>; message?: string }>;
+      }
+    ).issues
+      .slice(0, 4)
+      .map((issue) => {
+        const path =
+          issue.path && issue.path.length > 0 ? issue.path.join(".") : "root";
+        return `${path}: ${issue.message ?? "invalid"}`;
+      });
+    if (issues.length > 0) return issues.join("; ").slice(0, 300);
+  }
+  return "Schema validation failed.";
+}
+
+function stripSingleJsonFence(text: string): string {
+  const trimmed = text.trim();
+  const match = /^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i.exec(trimmed);
+  return match ? match[1]!.trim() : trimmed;
+}
+
 export function parseAdventureResponse(text: string): AdventureTurnProposal {
   try {
-    return parseTurnProposal(JSON.parse(text));
-  } catch {
-    throw new Error("invalid-adventure-response");
+    return parseTurnProposal(JSON.parse(stripSingleJsonFence(text)));
+  } catch (cause) {
+    const error = new Error(
+      "invalid-adventure-response",
+    ) as InvalidAdventureResponseError;
+    error.validationHint = summarizeValidationError(cause);
+    throw error;
   }
 }
 
@@ -391,7 +429,9 @@ export function buildAdventureContentInput(serialized: string) {
   };
 }
 
-export function isInvalidAdventureResponse(error: unknown): error is Error {
+export function isInvalidAdventureResponse(
+  error: unknown,
+): error is InvalidAdventureResponseError {
   return (
     error instanceof Error && error.message === "invalid-adventure-response"
   );

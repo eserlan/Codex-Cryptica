@@ -67,8 +67,9 @@ This file is the Codex-facing instruction layer for this repository.
   1. Type-checking for affected workspaces passes with 0 errors (e.g., `bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web` or affected workspaces via `bun scripts/affected-workspaces.mjs`).
   2. Changed-file lint passes with 0 errors (`bun run lint:changed` or `bun scripts/lint-changed.mjs`).
   3. Impacted tests pass with 0 errors (`bun run test:changed` or `bun scripts/test-changed.mjs`).
-  4. The changes pass the `codex-review` specialist review.
-  5. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
+  4. Fallow audit passes with 0 introduced findings (`bun run fallow:audit`).
+  5. The changes pass the `codex-review` specialist review.
+  6. `bun scripts/discovery-audit.mjs` passes, if the PR touches a public discovery page.
 
 ## Setup, Dev Server and Validation
 

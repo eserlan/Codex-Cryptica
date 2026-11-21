@@ -126,6 +126,7 @@ export class AdventureRuntime {
     | "packageSceneIds"
     | "packageRecordIds"
     | "packageGmOnlyText"
+    | "packageSecretTexts"
     | "packageRecordKinds"
     | "packageSceneBranches"
     | "packageActorIds"
@@ -139,6 +140,9 @@ export class AdventureRuntime {
       packageSceneIds: pkg.scenes.map((scene) => scene.id),
       packageRecordIds: adventureJsonHiddenRecordIds(pkg),
       packageGmOnlyText: adventureJsonGmOnlyText(pkg, scope),
+      packageSecretTexts: Object.fromEntries(
+        pkg.secrets.map((secret) => [secret.id, secret.text]),
+      ),
     };
   }
 

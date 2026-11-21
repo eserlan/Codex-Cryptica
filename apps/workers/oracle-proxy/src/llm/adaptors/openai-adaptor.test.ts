@@ -562,24 +562,49 @@ describe("forwardInteractionToOpenAi", () => {
     expect(sent.store).toBe(true);
   });
 
-  it("sends a low reasoning effort (no per-operation registry hook on this path)", async () => {
+  it.each(["low", "medium", "high", "xhigh"] as const)(
+    "forwards requested %s reasoning effort on the interaction path",
+    async (reasoningEffort) => {
+      const fetcher = vi.fn(
+        async () =>
+          new Response(JSON.stringify({ id: "resp_1", output: [] }), {
+            status: 200,
+          }),
+      );
+
+      await forwardInteractionToOpenAi(
+        { input: "hi", reasoning_effort: reasoningEffort },
+        "gpt-5.6-luna",
+        env,
+        fetcher as unknown as typeof fetch,
+      );
+
+      const [, init] = fetcher.mock.calls[0] as unknown as [
+        string,
+        RequestInit,
+      ];
+      const sent = JSON.parse(init.body as string);
+      expect(sent.reasoning).toEqual({ effort: reasoningEffort });
+    },
+  );
+
+  it("defaults an omitted interaction effort to low", async () => {
     const fetcher = vi.fn(
       async () =>
         new Response(JSON.stringify({ id: "resp_1", output: [] }), {
           status: 200,
         }),
     );
-
     await forwardInteractionToOpenAi(
       { input: "hi" },
-      "gpt-5.6-luna",
+      "gpt-6-luna",
       env,
       fetcher as unknown as typeof fetch,
     );
-
     const [, init] = fetcher.mock.calls[0] as unknown as [string, RequestInit];
-    const sent = JSON.parse(init.body as string);
-    expect(sent.reasoning).toEqual({ effort: "low" });
+    expect(JSON.parse(init.body as string).reasoning).toEqual({
+      effort: "low",
+    });
   });
 
   it("fails clearly when the API key is missing rather than sending an unauthenticated request", async () => {
