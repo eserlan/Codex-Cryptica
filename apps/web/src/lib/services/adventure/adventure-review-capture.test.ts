@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { AdventureSession } from "@codex/adventure-engine";
+import {
+  parseAdventureSession,
+  type AdventureSession,
+} from "@codex/adventure-engine";
 import {
   adventureDiagnosticDeltaJson,
   adventureDiagnosticJson,
@@ -373,6 +376,36 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(Object.values(out.integrityChecks).flat()).toEqual([]);
   });
 
+  it("reports only safe dialogue-loop counts and recovery status", () => {
+    const source = manyTurns(4);
+    const actions = [
+      "Who is owed the debt?",
+      "Who is the lender for this debt?",
+      "Why does the ledger omit the debt's creditor?",
+      "Who does this debt belong to?",
+    ];
+    const replies = [
+      "I cannot name the creditor from this record.",
+      "I don't know who the lender is.",
+      "The clerk can't say who holds the debt.",
+      "I won't guess at the creditor's identity.",
+    ];
+    source.turns = source.turns.map((turn, index) => ({
+      ...turn,
+      playerAction: actions[index]!,
+      narration: replies[index]!,
+      timeAdvance: undefined,
+      provisionalFactIds: [],
+    }));
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.dialogueLoopTurns).toBe(4);
+    expect(out.summary.dialogueRecoveryDue).toBe(true);
+    expect(out._readme).toContain("dialogueLoopTurns");
+    const fresh = JSON.parse(adventureDiagnosticJson(exampleSession()));
+    expect(fresh.summary.dialogueLoopTurns).toBe(0);
+    expect(fresh.summary.dialogueRecoveryDue).toBe(false);
+  });
+
   it("is smaller than the full copy for long sessions", () => {
     const source = manyTurns(60);
     expect(adventureDiagnosticJson(source).length).toBeLessThan(
@@ -393,6 +426,45 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(checks.turnsRevealingUnknownSecrets).toEqual(["turn-1"]);
     expect(checks.nonContiguousTurnSequences).toEqual(["turn-1"]);
     expect(checks.secretsMarkedRevealedWithoutTurn).toEqual(["secret-1"]);
+  });
+
+  it("recognizes scenario reveals after reload and still flags unknown IDs on condensed turns", () => {
+    const source = exampleSession();
+    source.playerCharacter = {
+      kind: "provisional",
+      name: "Mara",
+      description: "Traveler",
+    };
+    source.hiddenState.secrets = [];
+    const scenario = source.scenarioCollection!.items[0]!;
+    scenario.origin = { kind: "manual", manualId: "manual-1" };
+    scenario.secretBindings.truth = "scenario-truth-1";
+    scenario.secretBindings.eventIds = { "event-1": "scenario-event-1" };
+    scenario.revealedSecretIds = ["scenario-truth-1"];
+    source.turns[0]!.revealedSecretIds = ["scenario-truth-1"];
+
+    const reloaded = parseAdventureSession(JSON.parse(JSON.stringify(source)));
+    const beforeDiagnostics = structuredClone(reloaded);
+    const diagnostic = JSON.parse(
+      adventureDiagnosticJson(reloaded, { recentTurns: 0 }),
+    );
+
+    expect(diagnostic.integrityChecks.turnsRevealingUnknownSecrets).toEqual([]);
+    expect(diagnostic.turns[0].detail).toBe("condensed");
+    expect(reloaded).toEqual(beforeDiagnostics);
+
+    const withUnknownReveal = structuredClone(reloaded);
+    withUnknownReveal.turns[0]!.revealedSecretIds.push("unknown-secret");
+    const beforeUnknownDiagnostics = structuredClone(withUnknownReveal);
+    const unknownDiagnostic = JSON.parse(
+      adventureDiagnosticJson(withUnknownReveal, { recentTurns: 0 }),
+    );
+
+    expect(
+      unknownDiagnostic.integrityChecks.turnsRevealingUnknownSecrets,
+    ).toEqual(["turn-1"]);
+    expect(unknownDiagnostic.turns[0].detail).toBe("condensed");
+    expect(withUnknownReveal).toEqual(beforeUnknownDiagnostics);
   });
 
   it("handles a session with no turns", () => {

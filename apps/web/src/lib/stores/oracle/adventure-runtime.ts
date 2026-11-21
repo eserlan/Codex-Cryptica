@@ -29,6 +29,8 @@ import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-pref
 export class AdventureRuntime {
   activeRestoreRequest = 0;
   generationController: AbortController | null = null;
+  oocController: AbortController | null = null;
+  readonly grounding: AdventureGroundingService;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
   readonly summarizer: AdventureSummarizer;
@@ -44,6 +46,7 @@ export class AdventureRuntime {
       () => worldStyleForTheme(themeStore.worldThemeId),
       deps.packages,
     );
+    this.grounding = grounding;
     deps.generation = grounding.wrap(deps.generation);
     this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
       genreForTheme(themeStore.worldThemeId),
@@ -118,7 +121,7 @@ export class AdventureRuntime {
   }
 
   /** Package guards, scene IDs and progress-ledger indexes for the cached package. */
-  private packageMetadata(): Pick<
+  packageMetadata(): Pick<
     CommitMetadata,
     | "packageSceneIds"
     | "packageRecordIds"
@@ -141,6 +144,22 @@ export class AdventureRuntime {
         pkg.secrets.map((secret) => [secret.id, secret.text]),
       ),
     };
+  }
+
+  /**
+   * Persists an OOC exchange update without touching provider interaction
+   * history, artwork reveals, or rolling story-so-far summarization.
+   */
+  async saveOocExchange(
+    previous: AdventureSession,
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    await this.verifySession(previous);
+    const saved = await this.deps.repository.save(previous.revision, next);
+    if (!saved.ok) throw saved.error;
+    this.assertCurrentSession(previous);
+    this.state.session = saved.session;
+    return saved.session;
   }
 
   newTurnMetadata(playerAction: string): CommitMetadata {

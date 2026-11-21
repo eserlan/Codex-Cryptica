@@ -121,6 +121,51 @@ describe("importCreatures", () => {
     expect(saveImage).not.toHaveBeenCalled();
   });
 
+  it("copies actor metadata and preserves the hidden label on new creatures", async () => {
+    const metadataPackage = {
+      ...pkg,
+      actors: pkg.actors.map((actor, index) =>
+        index === 1
+          ? { ...actor, aliases: ["The Spider"], labels: ["venomous"] }
+          : actor,
+      ),
+    } as AdventureJsonV1;
+    const choices = initialCreatureChoices(
+      metadataPackage,
+      buildCreatureProposals(metadataPackage),
+      [],
+    );
+    const { deps, createEntity } = setup();
+    await importCreatures(metadataPackage, "h".repeat(64), choices, deps);
+    expect(createEntity.mock.calls[1]![2]).toMatchObject({
+      aliases: ["The Spider"],
+      labels: ["venomous", "hidden"],
+      visibility: "hidden",
+    });
+  });
+
+  it("uses the source hidden label as the default and follows a visible choice", async () => {
+    const labeledPackage = {
+      ...pkg,
+      actors: pkg.actors.map((actor, index) =>
+        index === 0 ? { ...actor, labels: ["hidden", "beast"] } : actor,
+      ),
+    } as AdventureJsonV1;
+    const choices = initialCreatureChoices(
+      labeledPackage,
+      buildCreatureProposals(labeledPackage),
+      [],
+    );
+    expect(choices[0]!.hidden).toBe(true);
+
+    choices[0]!.hidden = false;
+    const { deps, createEntity } = setup();
+    await importCreatures(labeledPackage, "h".repeat(64), choices, deps);
+
+    expect(createEntity.mock.calls[0]![2]).toMatchObject({ labels: ["beast"] });
+    expect(createEntity.mock.calls[0]![2]).not.toHaveProperty("visibility");
+  });
+
   it("skips excluded choices without writing", async () => {
     const { deps, choices, createEntity } = setup();
     for (const choice of choices) choice.include = false;

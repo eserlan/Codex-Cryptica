@@ -29,6 +29,7 @@ export const CURRENT_ADVENTURE_SCHEMA_VERSION = 3;
 export const MAX_PACKAGE_PROGRESS_ENTRIES = 400;
 export const MAX_ACTOR_REMEMBERED_FACTS = 5;
 export const MAX_ACTOR_FACT_CHARS = 160;
+export const MAX_OOC_EXCHANGES = 50;
 
 const text = z.string().trim().min(1).max(MAX_TEXT_CHARS);
 const narration = z.string().trim().min(1).max(2_000);
@@ -41,7 +42,7 @@ const stateFactSchema = z.object({
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
   placeId: id.optional(),
-  cues: z.array(z.string().trim().min(1).max(40)).max(6).optional(),
+  cues: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
 });
 const newStateFactSchema = stateFactSchema.omit({ id: true }).strict();
 
@@ -605,6 +606,24 @@ export const adventureSessionSchema = z
         dropped: z.array(z.string().max(240)).max(24).optional(),
       }),
     ),
+    oocExchanges: z
+      .array(
+        z
+          .object({
+            id,
+            kind: z.literal("ooc"),
+            question: text,
+            answer: narration.optional(),
+            status: z.enum(["pending", "answered", "failed"]),
+            errorMessage: text.optional(),
+            afterTurnCount: z.number().int().nonnegative(),
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          })
+          .strict(),
+      )
+      .max(MAX_OOC_EXCHANGES)
+      .optional(),
     pendingRoll: pendingRollSchema.nullable(),
     // Phase 2, additive: absent on a schemaVersion 1 document, defaulted to [] on load.
     dicePresets: z.array(dicePresetSchema).max(20).optional().default([]),
@@ -713,6 +732,7 @@ function validateScenarioIdentitySpace(session: AdventureSession): void {
     ...session.hiddenState.gmThreads.map((entry) => entry.id),
     ...session.provisionalFacts.map((entry) => entry.id),
     ...session.turns.map((entry) => entry.id),
+    ...(session.oocExchanges?.map((entry) => entry.id) ?? []),
     ...(session.pendingRoll ? [session.pendingRoll.id] : []),
     ...session.dicePresets.map((entry) => entry.id),
     ...session.resourceCounters.map((entry) => entry.id),

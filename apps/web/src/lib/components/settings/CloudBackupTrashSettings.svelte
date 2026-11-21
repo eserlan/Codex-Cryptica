@@ -7,8 +7,10 @@
   import type { CloudBackupTrashItem } from "@codex/cloud-backup-sync";
   import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
   import { deletedByLabel } from "#lib/stores/cloud-backup-delete-notice.js";
+  import { type Clock, systemClock } from "#lib/utils/runtime-deps.js";
 
-  let { vaultId }: { vaultId: string } = $props();
+  let { vaultId, clock = systemClock }: { vaultId: string; clock?: Clock } =
+    $props();
 
   const DAY_MS = 24 * 60 * 60 * 1000;
   const maxTrashMb = Math.round(
@@ -58,7 +60,7 @@
   });
 
   function deletedAgo(deletedAt: string): string {
-    const minutes = Math.round((Date.parse(deletedAt) - Date.now()) / 60_000);
+    const minutes = Math.round((Date.parse(deletedAt) - clock.now()) / 60_000);
     if (!Number.isFinite(minutes)) return "";
     if (Math.abs(minutes) < 60)
       return ago.format(Math.min(minutes, 0), "minute");
@@ -70,7 +72,7 @@
   function daysLeft(deletedAt: string): number {
     const end =
       Date.parse(deletedAt) + CLOUD_BACKUP_LIMITS.trashRetentionDays * DAY_MS;
-    return Math.max(0, Math.ceil((end - Date.now()) / DAY_MS));
+    return Math.max(0, Math.ceil((end - clock.now()) / DAY_MS));
   }
 
   const resultText = $derived.by(() => {

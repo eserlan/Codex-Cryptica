@@ -205,6 +205,11 @@ export class AdventureLifecycle {
   ) {
     this.state.session = session;
     this.state.readOnly = readOnly;
+    this.state.composerMode = "play";
+    this.state.oocDraft = "";
+    this.state.oocGenerating = false;
+    this.state.rollMutationPending = false;
+    this.state.oocErrorMessage = null;
     this.state.packageUnavailable = null;
     if (this.state.errorCause === "package-unavailable")
       this.state.errorCause = null;
@@ -234,6 +239,10 @@ export class AdventureLifecycle {
     this.state.session = null;
     this.state.readOnly = false;
     this.state.draft = "";
+    this.state.composerMode = "play";
+    this.state.oocDraft = "";
+    this.state.oocGenerating = false;
+    this.state.oocErrorMessage = null;
     this.state.streamedNarration = "";
     this.state.errorMessage = null;
     this.state.lastRollResult = null;
@@ -318,6 +327,8 @@ export class AdventureLifecycle {
     this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
+    this.runtime.oocController?.abort();
+    this.runtime.oocController = null;
     if (this.state.session) {
       void this.runtime.deps.clearGenerationInteraction(this.state.session.id);
     }
@@ -326,15 +337,10 @@ export class AdventureLifecycle {
       await this.runtime.deps.authority.release(this.state.lease);
       this.state.lease = null;
     }
-    this.state.session = null;
-    this.state.readOnly = false;
-    this.state.draft = "";
-    this.state.errorMessage = null;
+    this.resetAdventureView();
     this.state.packageUnavailable = null;
     if (this.state.errorCause === "package-unavailable")
       this.state.errorCause = null;
-    this.state.lastRollResult = null;
-    this.state.phase = "idle";
   }
 
   /**
@@ -416,6 +422,9 @@ export class AdventureLifecycle {
     this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
+    this.runtime.oocController?.abort();
+    this.runtime.oocController = null;
+    this.state.oocGenerating = false;
     await this.runtime.deps.coordinator.stop();
     this.state.lease = null;
   }

@@ -158,8 +158,16 @@ describe("analyzeEntryGraph / findViolations", () => {
     expect(findViolations(graph, ["src/a.js"])).toHaveLength(1);
   });
 
-  it("starts the denylist with the two Oracle/Proposer workers", () => {
-    expect(ENTRY_GRAPH_DENYLIST).toEqual(["oracle.worker", "proposer.worker"]);
+  it("includes the denylisted workers, editor, search, P2P, and generator registry patterns (#5013)", () => {
+    expect(ENTRY_GRAPH_DENYLIST).toEqual([
+      "oracle.worker",
+      "proposer.worker",
+      "@tiptap/",
+      "prosemirror-",
+      "flexsearch",
+      "node_modules/peerjs/",
+      "campaign-generator-registry",
+    ]);
   });
 });
 

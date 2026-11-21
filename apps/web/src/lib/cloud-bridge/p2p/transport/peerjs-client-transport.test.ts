@@ -147,6 +147,37 @@ describe("PeerJsClientTransport", () => {
     expect(lastPeer!.destroyed).toBe(true);
   });
 
+  it("does not create a peer when disconnected while PeerJS is loading", async () => {
+    let finishLoading!: () => void;
+    const loader = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishLoading = resolve;
+        }),
+    );
+    const transport = new PeerJsClientTransport(undefined, loader);
+
+    const connectPromise = transport.connect("host-1");
+    transport.disconnect();
+    await expect(connectPromise).rejects.toThrow("Connection aborted");
+    finishLoading();
+    expect(loader).toHaveBeenCalledOnce();
+    expect(transport.id).toBeNull();
+  });
+
+  it("clears the connecting state when PeerJS loading fails", async () => {
+    const loader = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error("chunk failed"));
+    const transport = new PeerJsClientTransport(undefined, loader);
+
+    await expect(transport.connect("host-1")).rejects.toThrow("chunk failed");
+    expect(await transport.connect("host-1").catch(() => undefined)).toBe(
+      undefined,
+    );
+    expect(loader).toHaveBeenCalledTimes(2);
+  });
+
   it("filters callbacks from stale connections via epoch", async () => {
     const transport = new PeerJsClientTransport(peerFactory as any);
     const dataSpy = vi.fn();

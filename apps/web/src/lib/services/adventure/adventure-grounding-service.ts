@@ -1,7 +1,9 @@
 import type { AdventureTurnGenerationService } from "@codex/ai-engine";
 import {
+  buildAdventureOocPrompt,
   buildAdventurePrompt,
   selectGroundingCandidates,
+  type AdventureOocRequest,
   type AdventureSession,
   type AdventureWorldStyle,
   type ResolvedSourceExcerpt,
@@ -114,6 +116,59 @@ export class AdventureGroundingService {
     return { playerSafe, gmOnly };
   }
 
+  /**
+   * Builds a strictly player-safe OOC clarification request. Never includes
+   * `gmOnly` package excerpts, Vault `lore`, or hidden session state.
+   */
+  async prepareOoc(
+    session: AdventureSession,
+    question: string,
+    signal?: AbortSignal,
+  ): Promise<AdventureOocRequest> {
+    checkCancellation(signal);
+    await this.verifyCurrent(session);
+    checkCancellation(signal);
+    try {
+      const anchors = await this.context.resolveAnchors(session);
+      checkCancellation(signal);
+      const relevant = await this.context.resolveActionRelevant(
+        session,
+        question,
+      );
+      checkCancellation(signal);
+      await this.context.verifyRequiredSources?.(session);
+      checkCancellation(signal);
+      const adventurePackage = await this.packageContext({
+        session,
+        purpose: "action",
+        playerAction: question,
+      });
+      checkCancellation(signal);
+      const selected = selectPartitionedExcerpts(anchors, relevant);
+      const request = buildAdventureOocPrompt({
+        worldStyle: this.getWorldStyle(),
+        session,
+        question,
+        anchors: selected.anchors,
+        relevant: selected.relevant,
+        playerSafePackageExcerpts: adventurePackage?.playerSafe,
+      });
+      await this.verifyCurrent(session);
+      checkCancellation(signal);
+      return request;
+    } catch (cause) {
+      checkCancellation(signal);
+      if (
+        cause instanceof Error &&
+        (cause.message === "control-lost" ||
+          cause.message === "stale-adventure-context" ||
+          cause.message === "adventure-package-unavailable")
+      )
+        throw cause;
+      throw safeGroundingFailure(cause);
+    }
+  }
+
   private resolveRelevant(intent: GroundingIntent) {
     if (intent.purpose === "opening" || intent.purpose === "background")
       return this.context.resolveOpeningRelevant(intent.session);
@@ -153,12 +208,13 @@ export class AdventureGroundingService {
 }
 export const adventureGroundingService = new AdventureGroundingService();
 
-function budgetSources(
-  intent: GroundingIntent,
+function selectPartitionedExcerpts(
   anchors: ResolvedSourceExcerpt[],
   relevant: ResolvedSourceExcerpt[],
-  adventurePackage?: PromptAdventurePackage,
-) {
+): {
+  anchors: ResolvedSourceExcerpt[];
+  relevant: ResolvedSourceExcerpt[];
+} {
   const ids = selectGroundingCandidates(
     anchors.map((source) => source.recordId),
     relevant.map((source) => source.recordId),
@@ -169,14 +225,27 @@ function budgetSources(
   );
   // Required records always retain their canonical anchor excerpt.
   for (const anchor of anchors) unique.set(anchor.recordId, anchor);
-  const prompt = buildAdventurePrompt({
-    session: intent.session,
-    phase: intent.purpose === "background" ? "opening" : intent.purpose,
-    playerAction: intent.playerAction,
+  return {
     anchors: ids.filter((id) => anchorIds.has(id)).map((id) => unique.get(id)!),
     relevant: ids
       .filter((id) => !anchorIds.has(id))
       .map((id) => unique.get(id)!),
+  };
+}
+
+function budgetSources(
+  intent: GroundingIntent,
+  anchors: ResolvedSourceExcerpt[],
+  relevant: ResolvedSourceExcerpt[],
+  adventurePackage?: PromptAdventurePackage,
+) {
+  const selected = selectPartitionedExcerpts(anchors, relevant);
+  const prompt = buildAdventurePrompt({
+    session: intent.session,
+    phase: intent.purpose === "background" ? "opening" : intent.purpose,
+    playerAction: intent.playerAction,
+    anchors: selected.anchors,
+    relevant: selected.relevant,
     ...(adventurePackage ? { adventurePackage } : {}),
   });
   if (

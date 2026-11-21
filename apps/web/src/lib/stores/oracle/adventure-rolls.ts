@@ -37,7 +37,14 @@ export class AdventureRolls {
   }
 
   async recordRollOutcome(outcome: SuppliedRollOutcome): Promise<void> {
-    if (!this.state.session?.pendingRoll || this.state.readOnly) return;
+    if (
+      !this.state.session?.pendingRoll ||
+      this.state.readOnly ||
+      this.state.oocGenerating ||
+      this.state.rollMutationPending
+    )
+      return;
+    this.state.rollMutationPending = true;
     try {
       await this.persistRecordedOutcome(this.state.session, outcome);
     } catch (cause) {
@@ -45,10 +52,13 @@ export class AdventureRolls {
         cause instanceof Error
           ? cause.message
           : "Unable to record the roll outcome.";
+    } finally {
+      this.state.rollMutationPending = false;
     }
   }
 
   async rollCodexDice(): Promise<void> {
+    if (this.state.oocGenerating || this.state.rollMutationPending) return;
     const expression = this.state.session?.pendingRoll?.dice?.expression;
     if (!expression || this.state.session?.pendingRoll?.suppliedOutcome) return;
     let result: ReturnType<typeof this.runtime.deps.dice.evaluate>;
@@ -128,7 +138,8 @@ export class AdventureRolls {
     if (
       !this.state.session?.pendingRoll?.suppliedOutcome ||
       this.state.readOnly ||
-      this.state.phase === "generating"
+      this.state.phase === "generating" ||
+      this.state.oocGenerating
     ) {
       return;
     }
@@ -140,6 +151,11 @@ export class AdventureRolls {
   }
 
   cancel(): void {
+    if (this.state.oocGenerating) {
+      this.runtime.oocController?.abort();
+      this.state.oocErrorMessage = null;
+      return;
+    }
     if (this.state.phase !== "generating") return;
     this.runtime.generationController?.abort();
     this.state.streamedNarration = "";
@@ -153,16 +169,27 @@ export class AdventureRolls {
   }
 
   async dismissRoll(): Promise<void> {
-    if (!this.state.session?.pendingRoll || this.state.readOnly) return;
-    const session = this.state.session;
-    const pendingRoll = session.pendingRoll!;
-    const result = dismissPendingRoll(
-      session,
-      pendingRoll.inputId,
-      this.runtime.rollMetadata(pendingRoll.inputId),
-    );
-    const next = acceptedSession(result, "invalid-roll");
-    this.state.session = await this.runtime.saveTurn(session, next);
-    this.state.phase = "ready";
+    if (
+      !this.state.session?.pendingRoll ||
+      this.state.readOnly ||
+      this.state.oocGenerating ||
+      this.state.rollMutationPending
+    )
+      return;
+    this.state.rollMutationPending = true;
+    try {
+      const session = this.state.session;
+      const pendingRoll = session.pendingRoll!;
+      const result = dismissPendingRoll(
+        session,
+        pendingRoll.inputId,
+        this.runtime.rollMetadata(pendingRoll.inputId),
+      );
+      const next = acceptedSession(result, "invalid-roll");
+      this.state.session = await this.runtime.saveTurn(session, next);
+      this.state.phase = "ready";
+    } finally {
+      this.state.rollMutationPending = false;
+    }
   }
 }
