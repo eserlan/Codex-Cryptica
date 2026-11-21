@@ -1,5 +1,7 @@
 import { describe, expect, it } from "bun:test";
+import { readFileSync } from "node:fs";
 import {
+  collectForbiddenLeaks,
   collectUnexpectedReveals,
   escapeMarkdownOutput,
   formatHardFailuresBlock,
@@ -95,5 +97,76 @@ describe("adventure-effort-eval markdown escaping", () => {
     );
     expect(markdown).not.toMatch(/(^|[^\\])!\[leak\]/);
     expect(markdown).not.toContain("<img");
+  });
+});
+
+
+describe("adventure-effort-eval global secrecy constraints", () => {
+  const fixture = JSON.parse(
+    readFileSync(
+      new URL("../fixtures/adventures/reference-one-shot/effort-golden-set.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Parameters<typeof collectForbiddenLeaks>[1];
+  const adventure = JSON.parse(
+    readFileSync(
+      new URL("../fixtures/adventures/reference-one-shot/adventure.v1.json", import.meta.url),
+      "utf8",
+    ),
+  ) as Parameters<typeof collectForbiddenLeaks>[2];
+
+  it("catches the golden opening secret phrase without step-specific forbiddenFacts", () => {
+    const failures: string[] = [];
+    const { forbiddenFactLeaks } = collectForbiddenLeaks(
+      { id: "opening", sourceRefs: [], expectedBeats: [], revealOnSuccess: [] },
+      fixture,
+      adventure,
+      ["Someone filed through from the inside to sabotage the mill."],
+      failures,
+      [],
+    );
+    expect(forbiddenFactLeaks).toContain(
+      'secret-filed-pin: "filed through from the inside"',
+    );
+    expect(failures).toEqual([
+      expect.stringContaining("opening: forbidden secret phrase leaked"),
+    ]);
+  });
+
+  it("allows a reveal on its earned step while still checking other global secrets", () => {
+    const step = {
+      id: "inspect-yard-ledger",
+      sourceRefs: [],
+      expectedBeats: [],
+      revealOnSuccess: ["secret-ledger-lock"],
+    };
+    const failures: string[] = [];
+    const allowed = collectForbiddenLeaks(
+      step, fixture, adventure, ["The sluice pin was sabotaged."], failures, [],
+    );
+    expect(allowed.forbiddenFactLeaks).toEqual([]);
+    expect(failures).toEqual([]);
+
+    const blocked = collectForbiddenLeaks(
+      step, fixture, adventure,
+      ["Someone filed through from the inside."], failures, [],
+    );
+    expect(blocked.forbiddenFactLeaks).toContain(
+      'secret-filed-pin: "filed through from the inside"',
+    );
+    expect(failures).toHaveLength(1);
+  });
+
+  it("does not penalise information disclosed on an earlier turn", () => {
+    const failures: string[] = [];
+    const result = collectForbiddenLeaks(
+      { id: "later", sourceRefs: [], expectedBeats: [] },
+      fixture, adventure,
+      ["Someone filed through from the inside."],
+      failures,
+      ["secret-filed-pin"],
+    );
+    expect(result.forbiddenFactLeaks).toEqual([]);
+    expect(failures).toEqual([]);
   });
 });
