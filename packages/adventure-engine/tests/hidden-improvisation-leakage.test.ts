@@ -10,6 +10,23 @@ const hiddenCreditor = "Dorje secretly holds the village debts";
 const hiddenRinger = "The missing ringer lives beneath the shrine";
 
 describe("GM-only improv secrecy at the commit boundary", () => {
+  it("checks narration from a partial proposal without requiring a hidden patch", () => {
+    const current = session();
+    current.hiddenState.secrets.push({
+      id: "secret-1",
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+
+    expect(
+      detectHiddenLeakage(current, {
+        kind: "complete",
+        narration: hiddenCreditor,
+        revealSecretIds: [],
+      } as never),
+    ).toContainEqual({ field: "root.narration", secretId: "secret-1" });
+  });
+
   it("rejects a same-turn leak of a newly proposed secret", () => {
     const draft = proposal();
     draft.narration = hiddenCreditor;

@@ -488,6 +488,10 @@ function proposedHiddenSources(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
 ): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  if (!proposal.hiddenPatch?.secrets || !proposal.hiddenPatch.gmThreads) {
+    return [];
+  }
+
   return [
     ...proposal.hiddenPatch.secrets.add.map((secret, index) => ({
       id: `proposed-secret-${index}`,
@@ -531,6 +535,8 @@ export function constrainHiddenSecretVisibility(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
 ): Extract<AdventureTurnProposal, { kind: "complete" }> {
+  if (!proposal.hiddenPatch?.secrets) return proposal;
+
   const secrets = proposal.hiddenPatch.secrets;
   const revealIds = new Set(proposal.revealSecretIds);
   const storedById = new Map(

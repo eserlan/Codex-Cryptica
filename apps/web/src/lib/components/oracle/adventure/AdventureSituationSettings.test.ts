@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { fireEvent, render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import AdventureSituationSettings from "./AdventureSituationSettings.svelte";
 
@@ -230,6 +230,8 @@ describe("AdventureSituationSettings", () => {
               ...lead("unheard-1", "open", "unheard"),
               stage: "hearsay",
               gmOnly: { truth: "The reeve stole the grain" },
+              secretBindings: { truth: "secret-1" },
+              revealedSecretIds: [],
             },
           ],
           focusedScenarioId: null,
@@ -264,6 +266,16 @@ describe("AdventureSituationSettings", () => {
       expect(screen.getByTestId("adventure-review-copy").textContent).toContain(
         "GM-only",
       );
+      const waitForCopyAvailable = () =>
+        waitFor(() =>
+          expect(
+            (
+              screen.getByRole("button", {
+                name: "Copy JSON for AI",
+              }) as HTMLButtonElement
+            ).disabled,
+          ).toBe(false),
+        );
       await fireEvent.click(
         screen.getByRole("button", { name: "Copy Markdown" }),
       );
@@ -271,6 +283,7 @@ describe("AdventureSituationSettings", () => {
       const markdown = writeText.mock.calls[0]![0];
       expect(markdown).toContain("Buy a loaf of bread.");
       expect(markdown).toContain("The reeve stole the grain");
+      await waitForCopyAvailable();
 
       await fireEvent.click(screen.getByRole("button", { name: "Copy JSON" }));
       const json = writeText.mock.calls[1]![0];
@@ -280,25 +293,29 @@ describe("AdventureSituationSettings", () => {
       expect(JSON.parse(json).turns[0].playerAction).toBe(
         "Buy a loaf of bread.",
       );
+      await waitForCopyAvailable();
 
       writeText.mockRejectedValueOnce(new Error("clipboard denied"));
       await fireEvent.click(
         screen.getByRole("button", { name: "Copy JSON for AI" }),
       );
       expect(await screen.findByRole("alert")).toBeTruthy();
-
+      await waitForCopyAvailable();
       await fireEvent.click(
         screen.getByRole("button", { name: "Copy JSON for AI" }),
       );
+      await waitFor(() => expect(writeText).toHaveBeenCalledTimes(4));
       const compact = JSON.parse(writeText.mock.calls[3]![0]);
       expect(compact._readme).toContain("GM-only");
       expect(compact.summary.turnsTotal).toBe(1);
       expect(compact.turns[0].timeAdvance).toBeNull();
       expect(compact.delta).toBeUndefined();
+      await waitForCopyAvailable();
 
       await fireEvent.click(
         screen.getByRole("button", { name: "Copy JSON for AI" }),
       );
+      await waitFor(() => expect(writeText).toHaveBeenCalledTimes(5));
       const delta = JSON.parse(writeText.mock.calls[4]![0]);
       expect(delta.delta).toEqual({
         fromRevision: 2,

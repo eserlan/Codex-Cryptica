@@ -143,6 +143,7 @@ describe("AdventureSurface world entry launch", () => {
       year: 618,
       precision: "year",
       calendarRevision: 1,
+      label: "618",
     });
     expect(input.sourceRecords).toEqual(
       expect.arrayContaining([
