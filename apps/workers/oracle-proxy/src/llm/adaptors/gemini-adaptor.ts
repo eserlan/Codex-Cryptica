@@ -185,7 +185,7 @@ const GEMINI_THINKING_LEVELS: Record<string, string> = {
   low: "low",
   medium: "medium",
   high: "high",
-  xhigh: "high",
+  xhigh: "high", // Gemini 3.x does not offer an xhigh thinking level.
 };
 
 function extractInteractionSystemInstruction(
@@ -233,9 +233,11 @@ export function buildGeminiInteractionPayload(
     };
   }
   const thinkingLevel =
-    typeof body.reasoning_effort === "string"
-      ? GEMINI_THINKING_LEVELS[body.reasoning_effort]
-      : undefined;
+    body.reasoning_effort === "xhigh" && targetModel === "gemini-4-hydrogen"
+      ? "xhigh"
+      : typeof body.reasoning_effort === "string"
+        ? GEMINI_THINKING_LEVELS[body.reasoning_effort]
+        : undefined;
   if (thinkingLevel) {
     generationConfig.thinking_level = thinkingLevel;
   }
