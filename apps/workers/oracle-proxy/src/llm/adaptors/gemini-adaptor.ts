@@ -29,6 +29,7 @@ import {
   wantsStructuredOutput,
 } from "../schema-validation";
 import { readSseData } from "../sse";
+import { getModel } from "../registry";
 
 /**
  * Longest a buffered (non-streaming) provider call may take. A long structured
@@ -233,7 +234,8 @@ export function buildGeminiInteractionPayload(
     };
   }
   const thinkingLevel =
-    body.reasoning_effort === "xhigh" && targetModel === "gemini-4-hydrogen"
+    body.reasoning_effort === "xhigh" &&
+    targetModel === getModel("gemini-4-hydrogen")?.modelId
       ? "xhigh"
       : typeof body.reasoning_effort === "string"
         ? GEMINI_THINKING_LEVELS[body.reasoning_effort]
