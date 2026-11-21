@@ -1,9 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_PACKAGE_PROGRESS_ENTRIES,
+  parseAdventureSession,
+} from "../src/schemas";
+import { applyCompletedTurn } from "../src/completed-turn";
+import {
   applySecretReveals,
   hasImmutableScenarioRewrite,
 } from "../src/scenario-secrets";
-import { now, proposal, scenario, session } from "./reducer-fixtures";
+import { meta, now, proposal, scenario, session } from "./reducer-fixtures";
 
 describe("scenario secret transitions", () => {
   it("guards truth, investigation text and bound GM events, while allowing identical updates", () => {
@@ -67,8 +72,89 @@ describe("scenario secret transitions", () => {
     expect(candidate.scenarioCollection.items[0]?.revealedSecretIds).toEqual([
       "truth-1",
     ]);
-    expect(applySecretReveals(candidate, secrets, ["missing"], "turn-2")).toBe(
-      "Unknown secret: missing",
+    expect(applySecretReveals(candidate, secrets, ["missing"], "turn-2")).toEqual({
+      code: "unknown-secret",
+      message: "Unknown secret: missing",
+    });
+  });
+  it("rejects a 401st package reveal without persisting an unreadable session", () => {
+    const previousIds = Array.from(
+      { length: MAX_PACKAGE_PROGRESS_ENTRIES },
+      (_, index) => `package-secret-${index}`,
+    );
+    const previous = parseAdventureSession({
+      ...session(),
+      sourcePackage: {
+        packageId: "package-test",
+        version: "1",
+        formatVersion: "1",
+        hash: "a".repeat(64),
+      },
+      packageProgress: {
+        sceneId: "scene-start",
+        revealedSecretIds: previousIds,
+      },
+    });
+    const additionalSecret = "package-secret-400";
+    const packageSecretTexts = { [additionalSecret]: "The next secret." };
+
+    // Re-revealing an existing ID must remain idempotent at the limit.
+    const duplicate = structuredClone(previous);
+    expect(
+      applySecretReveals(
+        duplicate,
+        [],
+        [previousIds[0]!],
+        "turn-duplicate",
+        { [previousIds[0]!]: "Previously revealed." },
+      ),
+    ).toBeNull();
+    expect(duplicate.packageProgress?.revealedSecretIds).toEqual(previousIds);
+
+    const next = proposal();
+    next.revealSecretIds = [additionalSecret];
+    const rejected = applyCompletedTurn(previous, next, {
+      ...meta,
+      packageSecretTexts,
+    });
+    expect(rejected).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "state-budget-exceeded",
+          message: expect.stringContaining("This turn was not saved"),
+        },
+      ],
+    });
+    expect(previous.packageProgress?.revealedSecretIds).toEqual(previousIds);
+    expect(previous.turns).toHaveLength(0);
+    expect(parseAdventureSession(previous).packageProgress?.revealedSecretIds).toEqual(
+      previousIds,
     );
   });
+
+  it("accepts the 400th package reveal and keeps the session parseable", () => {
+    const previousIds = Array.from(
+      { length: MAX_PACKAGE_PROGRESS_ENTRIES - 1 },
+      (_, index) => `package-secret-${index}`,
+    );
+    const candidate = session();
+    candidate.packageProgress = {
+      sceneId: "scene-start",
+      revealedSecretIds: previousIds,
+    };
+    const id = "package-secret-399";
+    expect(
+      applySecretReveals(candidate, [], [id], "turn-last", {
+        [id]: "The last secret.",
+      }),
+    ).toBeNull();
+    expect(candidate.packageProgress.revealedSecretIds).toHaveLength(
+      MAX_PACKAGE_PROGRESS_ENTRIES,
+    );
+    expect(parseAdventureSession(candidate).packageProgress?.revealedSecretIds).toHaveLength(
+      MAX_PACKAGE_PROGRESS_ENTRIES,
+    );
+  });
+
 });
