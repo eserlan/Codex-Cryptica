@@ -637,20 +637,30 @@ function collectPhraseLeaks(
   );
 }
 
+function unrevealedGlobalSecretIds(
+  step: StepConfig,
+  fixture: Fixture,
+  previouslyRevealedIds: readonly string[],
+): string[] {
+  const exempt = new Set([
+    ...previouslyRevealedIds,
+    ...(step.revealOnSuccess ?? []),
+  ]);
+  return (fixture.globalConstraints?.forbiddenUntilRevealed ?? []).filter(
+    (id) => !exempt.has(id),
+  );
+}
+
 /** Add global unrevealed secrets to the explicit per-step prohibitions. */
 function forbiddenSecretIds(
   step: StepConfig,
   fixture: Fixture,
   previouslyRevealedIds: readonly string[],
 ): string[] {
-  const previouslyRevealed = new Set(previouslyRevealedIds);
-  const revealableNow = new Set(step.revealOnSuccess ?? []);
   return [
     ...new Set([
       ...(step.forbiddenFacts ?? []),
-      ...(fixture.globalConstraints?.forbiddenUntilRevealed ?? []).filter(
-        (id) => !previouslyRevealed.has(id) && !revealableNow.has(id),
-      ),
+      ...unrevealedGlobalSecretIds(step, fixture, previouslyRevealedIds),
     ]),
   ];
 }
@@ -892,6 +902,31 @@ function buildSuccessTurnRecord(params: {
   );
 }
 
+function buildSuccessEvaluationTurn(params: {
+  step: StepConfig;
+  fixture: Fixture;
+  before: AdventureSession;
+  outcome: StepOutcome;
+  forbiddenTexts: string[];
+  allPackageRecordIds: string[];
+}): EvaluationTurn {
+  const { step, fixture, before, outcome, forbiddenTexts } = params;
+  const evalSession = outcome.committed ? outcome.session : before;
+  return {
+    narration: outcome.narration,
+    playerCharacterName: fixture.playerCharacter.name,
+    proposal: outcome.proposal,
+    playerAction: step.playerAction,
+    previousSession: before,
+    session: evalSession,
+    gmOnlyLore: forbiddenTexts,
+    recap: buildAdventureRecap(evalSession),
+    transcript: createPlayerTranscript(evalSession),
+    packageRecordIds: params.allPackageRecordIds,
+    commitFailed: Boolean(outcome.error),
+  } as EvaluationTurn;
+}
+
 function buildSuccessStepResult(params: {
   step: StepConfig;
   fixture: Fixture;
@@ -930,23 +965,17 @@ function buildSuccessStepResult(params: {
     unexpectedRevealIds,
     turnCalls: params.turnCalls,
   });
-  const evalSession = outcome.committed ? outcome.session : params.before;
   return {
     nextSession: outcome.session,
     record,
-    evalTurn: {
-      narration: outcome.narration,
-      playerCharacterName: params.fixture.playerCharacter.name,
-      proposal: outcome.proposal,
-      playerAction: step.playerAction,
-      previousSession: params.before,
-      session: evalSession,
-      gmOnlyLore: forbiddenTexts,
-      recap: buildAdventureRecap(evalSession),
-      transcript: createPlayerTranscript(evalSession),
-      packageRecordIds: params.allPackageRecordIds,
-      commitFailed: Boolean(outcome.error),
-    } as EvaluationTurn,
+    evalTurn: buildSuccessEvaluationTurn({
+      step,
+      fixture: params.fixture,
+      before: params.before,
+      outcome,
+      forbiddenTexts,
+      allPackageRecordIds: params.allPackageRecordIds,
+    }),
   };
 }
 
