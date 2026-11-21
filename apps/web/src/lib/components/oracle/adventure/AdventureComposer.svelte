@@ -104,7 +104,7 @@
 
 {#snippet modeSwitchBar()}
   <div
-    class={modeSwitchVisible
+    class={!phone && modeSwitchVisible
       ? "flex flex-wrap items-center justify-between gap-2"
       : "hidden"}
     data-testid="adventure-composer-mode-bar"
@@ -224,9 +224,45 @@
 
 {#snippet freeActionInputRow()}
   <div
-    class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
+    class={actionControlsVisible || (phone && modeSwitchVisible)
+      ? "flex min-w-0 items-end gap-2"
+      : "hidden"}
     data-testid="adventure-free-action"
   >
+    <!-- Phone: use the platform's accessible two-choice picker inside the
+         input row. A separate segmented-control row consumed valuable story
+         height, especially with a mobile keyboard. The native picker is
+         keyboard/touch accessible and cannot be clipped by the dock. -->
+    <div
+      class={phone && modeSwitchVisible
+        ? "relative h-11 w-28 shrink-0"
+        : "hidden"}
+      data-testid="adventure-mobile-mode-switch"
+    >
+      <label class="sr-only" for="adventure-mobile-mode">
+        Composer mode
+      </label>
+      <span
+        aria-hidden="true"
+        class={isOocMode
+          ? "icon-[lucide--message-circle-question] pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-theme-text"
+          : "icon-[lucide--swords] pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-theme-text"}
+      ></span>
+      <select
+        id="adventure-mobile-mode"
+        class="h-11 w-full appearance-none rounded-lg border border-theme-text/75 bg-theme-bg pr-6 pl-8 text-sm font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        value={isOocMode ? "ooc" : "play"}
+        onchange={(event) =>
+          selectMode(event.currentTarget.value as "play" | "ooc")}
+      >
+        <option value="play">Play</option>
+        <option value="ooc">Ask GM</option>
+      </select>
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--chevron-down] pointer-events-none absolute top-1/2 right-2 h-3.5 w-3.5 -translate-y-1/2 text-theme-text"
+      ></span>
+    </div>
     <label class="sr-only" for="adventure-action">
       {isOocMode
         ? "Ask the GM a question (out of character)…"
@@ -250,8 +286,12 @@
       }}
       {disabled}
       placeholder={isOocMode
-        ? "Ask the GM a question (out of character)…"
-        : "What do you do?"}
+        ? phone
+          ? "Ask a question…"
+          : "Ask the GM a question (out of character)…"
+        : phone
+          ? "Your action…"
+          : "What do you do?"}
     ></textarea>
     <button
       class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
