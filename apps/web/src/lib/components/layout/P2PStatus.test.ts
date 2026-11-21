@@ -58,6 +58,14 @@ describe("P2PStatus", () => {
     mocks.sessionModeStore.isGuestMode = false;
   });
 
+  it("keeps an empty status region mounted before a session starts", () => {
+    render(P2PStatus);
+
+    expect(
+      screen.getByRole("status", { name: "P2P Connection Status" }).textContent,
+    ).toBe("");
+  });
+
   it("announces a connected host status to screen readers", () => {
     mocks.p2pHost.isHosting = true;
     mocks.p2pHost.state = {
@@ -73,7 +81,8 @@ describe("P2PStatus", () => {
     const status = screen.getByRole("status", {
       name: "P2P Connection Status",
     });
-    expect(status.textContent).toContain("P2P Connected as Host (42ms)");
+    expect(status.textContent).toContain("P2P Connected as Host");
+    expect(status.textContent).not.toContain("42ms");
   });
 
   it("announces a failed guest connection", () => {

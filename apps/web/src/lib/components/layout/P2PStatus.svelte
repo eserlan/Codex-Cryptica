@@ -47,7 +47,24 @@
     if (activeState.latencyMs < 0) return "Measuring...";
     return `${activeState.latencyMs}ms`;
   };
+
+  const getAnnouncementLabel = () => {
+    if (!activeState || activeState.status === "idle") return "";
+    const role = isHost ? "Host" : "Guest";
+    const status = activeState.status;
+
+    if (status === "connected") return `P2P Connected as ${role}`;
+    if (status === "connecting") return `P2P Connecting as ${role}...`;
+    if (status === "handshaking") return "P2P Negotiating Handshake...";
+    if (status === "reconnecting") return `P2P Reconnecting as ${role}...`;
+    if (status === "failed") return "P2P Connection Failed";
+    return `P2P Status: ${status}`;
+  };
 </script>
+
+<span class="sr-only" role="status" aria-label="P2P Connection Status">
+  {getAnnouncementLabel()}
+</span>
 
 {#if isHost || isGuest}
   <div
@@ -58,10 +75,6 @@
       aria-hidden="true"
       class="icon-[lucide--wifi] h-4 w-4 {getStatusColor()} transition-all duration-300"
     ></span>
-    <span class="sr-only" role="status" aria-label="P2P Connection Status">
-      {getStatusLabel()}
-    </span>
-
     {#if activeState?.status === "connected" && activeState.latencyMs >= 0}
       <span
         aria-hidden="true"
