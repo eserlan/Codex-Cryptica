@@ -288,6 +288,66 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(out.summary.stalledScenes).toBe(0);
   });
 
+  it("flags repeated empty timeAdvance waits as quiet and breaks the run when a timed turn changes visible state", () => {
+    const source = manyTurns(5);
+    const emptyWait = (i: number) => ({
+      ...source.turns[i]!,
+      timeAdvance: { minutes: 1440, cause: "Waiting another day" },
+      revealedSecretIds: [],
+      provisionalFactIds: [],
+      visiblePatch: {
+        objectives: { add: [], update: [], removeIds: [] },
+        activeCharacters: { add: [], update: [], removeIds: [] },
+        knownFacts: { add: [], update: [], removeIds: [] },
+        relationships: { add: [], update: [], removeIds: [] },
+      },
+      hiddenPatch: {
+        secrets: { add: [], update: [], removeIds: [] },
+        gmThreads: { add: [], update: [], removeIds: [] },
+      },
+    });
+    source.turns = source.turns.map((_, i) => emptyWait(i));
+
+    const stalledOut = JSON.parse(
+      adventureDiagnosticJson(source, { recentTurns: 5 }),
+    );
+    expect(
+      stalledOut.turns.every(
+        (t: { signals: { quiet?: boolean } }) => t.signals.quiet === true,
+      ),
+    ).toBe(true);
+    expect(stalledOut.summary.quietTurns).toBe(5);
+    expect(stalledOut.summary.longestQuietRun).toBe(5);
+    expect(stalledOut.summary.stalledScenes).toBe(1);
+
+    // A timed turn with an observable change breaks the quiet run
+    source.turns[4] = {
+      ...emptyWait(4),
+      visiblePatch: {
+        ...emptyWait(4).visiblePatch,
+        knownFacts: {
+          add: [
+            {
+              id: "f-wait",
+              text: "The permit arrived.",
+              source: "provisional",
+            },
+          ],
+          update: [],
+          removeIds: [],
+        },
+      },
+    } as never;
+
+    const recoveredOut = JSON.parse(
+      adventureDiagnosticJson(source, { recentTurns: 5 }),
+    );
+    expect(recoveredOut.turns[4].signals).toEqual({ stateChanges: 1 });
+    expect(recoveredOut.summary.quietTurns).toBe(0);
+    expect(recoveredOut.summary.longestQuietRun).toBe(4);
+    expect(recoveredOut.summary.stalledScenes).toBe(1);
+  });
+
   it("reports what the engine dropped from a turn, condensed or full, and totals it", () => {
     const source = manyTurns(6);
     source.turns[0] = {
