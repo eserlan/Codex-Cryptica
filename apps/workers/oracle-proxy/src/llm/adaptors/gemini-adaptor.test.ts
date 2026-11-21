@@ -183,7 +183,7 @@ describe("forwardInteractionToGemini (legacy Interactions API parity)", () => {
     expect(sent.system_instruction).toBe("Be terse.");
   });
 
-  it("maps reasoning_effort to generation_config.thinking_level and clamps xhigh to high", async () => {
+  it("passes xhigh to Gemini 4 Hydrogen and caps older Gemini models at high", async () => {
     const fetcher = vi.fn(
       async () =>
         new Response(JSON.stringify({ id: "v1_x", steps: [] }), {
@@ -202,6 +202,11 @@ describe("forwardInteractionToGemini (legacy Interactions API parity)", () => {
       fetcher as unknown as typeof fetch,
     );
     await forwardInteractionToGemini(
+      { model: "gemini-3.5-flash-lite", input: "hi", reasoning_effort: "xhigh" },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+    await forwardInteractionToGemini(
       { model: "gemini-4-hydrogen", input: "hi" },
       env,
       fetcher as unknown as typeof fetch,
@@ -215,13 +220,18 @@ describe("forwardInteractionToGemini (legacy Interactions API parity)", () => {
       (fetcher.mock.calls[1] as unknown as [string, RequestInit])[1]
         .body as string,
     );
-    const omittedBody = JSON.parse(
+    const olderBody = JSON.parse(
       (fetcher.mock.calls[2] as unknown as [string, RequestInit])[1]
+        .body as string,
+    );
+    const omittedBody = JSON.parse(
+      (fetcher.mock.calls[3] as unknown as [string, RequestInit])[1]
         .body as string,
     );
 
     expect(lowBody.generation_config).toEqual({ thinking_level: "low" });
-    expect(xhighBody.generation_config).toEqual({ thinking_level: "high" });
+    expect(xhighBody.generation_config).toEqual({ thinking_level: "xhigh" });
+    expect(olderBody.generation_config).toEqual({ thinking_level: "high" });
     expect(omittedBody.generation_config).toBeUndefined();
   });
 
