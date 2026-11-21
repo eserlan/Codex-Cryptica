@@ -53,20 +53,25 @@
   <div
     class="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-chrome-border/50 bg-chrome-surface/30 backdrop-blur-md transition-all duration-300 hover:border-chrome-accent/40 hover:bg-chrome-surface/50 group relative cursor-help"
     title={getStatusLabel()}
-    aria-label="P2P Connection Status"
   >
     <span
+      aria-hidden="true"
       class="icon-[lucide--wifi] h-4 w-4 {getStatusColor()} transition-all duration-300"
     ></span>
+    <span class="sr-only" role="status" aria-label="P2P Connection Status">
+      {getStatusLabel()}
+    </span>
 
     {#if activeState?.status === "connected" && activeState.latencyMs >= 0}
       <span
+        aria-hidden="true"
         class="text-micro font-mono font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors"
       >
         {getLatencyLabel()}
       </span>
     {:else}
       <span
+        aria-hidden="true"
         class="text-micro font-sans font-medium text-chrome-muted group-hover:text-chrome-accent transition-colors uppercase tracking-wider"
       >
         {activeState?.status || "offline"}
