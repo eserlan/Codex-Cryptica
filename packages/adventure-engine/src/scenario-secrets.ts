@@ -1,5 +1,11 @@
 import type { AdventureSession, AdventureTurnProposal } from "./types";
 import { historicalAnchorSecretIds } from "./hidden-state";
+import { MAX_PACKAGE_PROGRESS_ENTRIES } from "./schemas";
+
+type SecretRevealError = {
+  code: "unknown-secret" | "state-budget-exceeded";
+  message: string;
+};
 
 function immutableScenarioSecretTexts(
   session: AdventureSession,
@@ -43,19 +49,20 @@ function recordPackageSecretReveal(
   candidate: AdventureSession,
   secretId: string,
   packageSecretTexts?: Readonly<Record<string, string>>,
-): boolean {
+): "unknown" | "recorded" | "limit-exceeded" {
   if (!packageSecretTexts || !Object.hasOwn(packageSecretTexts, secretId)) {
-    return false;
+    return "unknown";
   }
   if (candidate.packageProgress) {
-    candidate.packageProgress.revealedSecretIds = [
-      ...new Set([
-        ...(candidate.packageProgress.revealedSecretIds ?? []),
-        secretId,
-      ]),
-    ];
+    const revealed = new Set(candidate.packageProgress.revealedSecretIds ?? []);
+    if (!revealed.has(secretId) && revealed.size >= MAX_PACKAGE_PROGRESS_ENTRIES) {
+      // Never persist a package reveal list that the session reader rejects.
+      return "limit-exceeded";
+    }
+    revealed.add(secretId);
+    candidate.packageProgress.revealedSecretIds = [...revealed];
   }
-  return true;
+  return "recorded";
 }
 
 export function applySecretReveals(
@@ -64,7 +71,7 @@ export function applySecretReveals(
   revealIds: string[],
   turnId: string,
   packageSecretTexts?: Readonly<Record<string, string>>,
-): string | null {
+): SecretRevealError | null {
   for (const secretId of new Set(revealIds)) {
     const secret = secrets.find((entry) => entry.id === secretId);
     if (secret) {
@@ -86,11 +93,20 @@ export function applySecretReveals(
       ];
       continue;
     }
-    if (recordPackageSecretReveal(candidate, secretId, packageSecretTexts)) {
-      continue;
+    const packageReveal = recordPackageSecretReveal(
+      candidate,
+      secretId,
+      packageSecretTexts,
+    );
+    if (packageReveal === "recorded") continue;
+    if (packageReveal === "limit-exceeded") {
+      return {
+        code: "state-budget-exceeded",
+        message: `The adventure has reached its limit of ${MAX_PACKAGE_PROGRESS_ENTRIES} revealed package secrets. This turn was not saved.`,
+      };
     }
     if (!secret) {
-      return `Unknown secret: ${secretId}`;
+      return { code: "unknown-secret", message: `Unknown secret: ${secretId}` };
     }
   }
   return null;
