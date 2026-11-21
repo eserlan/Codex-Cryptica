@@ -18,36 +18,73 @@ declare global {
 const TURNSTILE_SCRIPT_URL =
   "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const SCRIPT_ID = "codex-turnstile-script";
+const SCRIPT_LOAD_TIMEOUT_MS = 15_000;
+
+let loadPromise: Promise<NonNullable<Window["turnstile"]>> | null = null;
 
 function loadTurnstile(): Promise<NonNullable<Window["turnstile"]>> {
-  if (!browser)
+  if (!browser) {
     return Promise.reject(
-      new Error("Publishing is only available in the browser."),
+      new Error("Verification is only available in the browser."),
     );
+  }
   if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (loadPromise) return loadPromise;
 
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById(
-      SCRIPT_ID,
-    ) as HTMLScriptElement | null;
-    const script = existing || document.createElement("script");
-    const onLoad = () =>
-      window.turnstile
-        ? resolve(window.turnstile)
-        : reject(new Error("Verification failed to load."));
-    const onError = () =>
-      reject(new Error("Verification service is unavailable."));
+  loadPromise = new Promise<NonNullable<Window["turnstile"]>>(
+    (resolve, reject) => {
+      document.getElementById(SCRIPT_ID)?.remove();
 
-    script.addEventListener("load", onLoad, { once: true });
-    script.addEventListener("error", onError, { once: true });
-    if (!existing) {
+      const script = document.createElement("script");
       script.id = SCRIPT_ID;
       script.src = TURNSTILE_SCRIPT_URL;
       script.async = true;
       script.defer = true;
+
+      let settled = false;
+      const cleanup = () => {
+        window.clearTimeout(timer);
+        script.removeEventListener("load", onLoad);
+        script.removeEventListener("error", onError);
+      };
+
+      const onLoad = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        if (window.turnstile) {
+          resolve(window.turnstile);
+        } else {
+          script.remove();
+          reject(new Error("Verification failed to load."));
+        }
+      };
+
+      const onError = () => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        script.remove();
+        reject(new Error("Verification failed to load."));
+      };
+
+      const timer = window.setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        script.remove();
+        reject(new Error("Verification timed out while loading."));
+      }, SCRIPT_LOAD_TIMEOUT_MS);
+
+      script.addEventListener("load", onLoad);
+      script.addEventListener("error", onError);
       document.head.appendChild(script);
-    }
+    },
+  ).finally(() => {
+    loadPromise = null;
   });
+
+  return loadPromise;
 }
 
 /**
@@ -104,26 +141,30 @@ async function solveInvisibleChallenge(
     };
     const timeout = window.setTimeout(fail("timed out"), 30_000);
 
-    widgetId = turnstile.render(container, {
-      sitekey: VITE_TURNSTILE_SITE_KEY,
-      execution: "execute",
-      action,
-      callback: (token: string) => {
-        window.clearTimeout(timeout);
-        cleanup();
-        resolve(token);
-      },
-      "error-callback": (err: unknown) => {
-        // Challenge failures can recover through Turnstile's automatic retry.
-        // Rejecting/removing on the first failure prevents that recovery and
-        // leaves subsequent AI calls without a capability token.
-        if (/^(300|600)/.test(String(err))) return false;
-        fail("failed")(err);
-        return true;
-      },
-      "expired-callback": () => fail("expired")(),
-    });
-    turnstile.execute(widgetId);
+    try {
+      widgetId = turnstile.render(container, {
+        sitekey: VITE_TURNSTILE_SITE_KEY,
+        execution: "execute",
+        action,
+        callback: (token: string) => {
+          window.clearTimeout(timeout);
+          cleanup();
+          resolve(token);
+        },
+        "error-callback": (err: unknown) => {
+          // Challenge failures can recover through Turnstile's automatic retry.
+          // Rejecting/removing on the first failure prevents that recovery and
+          // leaves subsequent AI calls without a capability token.
+          if (/^(300|600)/.test(String(err))) return false;
+          fail("failed")(err);
+          return true;
+        },
+        "expired-callback": () => fail("expired")(),
+      });
+      turnstile.execute(widgetId);
+    } catch (err) {
+      fail("failed")(err);
+    }
   });
 }
 
@@ -148,8 +189,9 @@ export async function getCopyrightReportTurnstileToken(): Promise<string> {
 /**
  * Runs the invisible challenge that backs the LLM session capability token.
  *
- * Unlike the other two this fires on app start rather than on a user action,
- * so the token is already in hand by the time someone generates anything.
+ * Loads Turnstile lazily on first AI/proxy session demand rather than on app
+ * start, so visitors who never trigger an AI or proxy action incur zero
+ * Turnstile script download or challenge solve.
  */
 export async function getSessionTurnstileToken(): Promise<string> {
   return solveInvisibleChallenge(

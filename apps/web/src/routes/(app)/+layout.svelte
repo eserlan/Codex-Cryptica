@@ -19,7 +19,6 @@
   import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "#lib/services/demo.js";
-  import { initAiSessionEager } from "#lib/services/ai/session-bootstrap.js";
   import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
   import { getDB, DB_NAME, DB_VERSION } from "#lib/utils/idb.js";
   import { HELP_ARTICLES } from "#lib/config/help-content.js";
@@ -204,15 +203,6 @@
     if (!browser) return;
     if (!layoutUIStore.autoFullscreen) return;
     return initFullscreenOnFirstInteraction();
-  });
-
-  // Pre-solve the LLM capability token, so the first generation isn't waiting
-  // on a Turnstile handshake. Only the eager warm is scoped here — the wiring
-  // itself happens in the root layout, because the public generators under
-  // (marketing) share the same client singleton and generate without ever
-  // mounting this layout.
-  onMount(() => {
-    initAiSessionEager();
   });
 
   // The Shelf is shared by every vault in this browser, so it starts listening
