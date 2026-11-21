@@ -4,7 +4,6 @@ import {
   extractAdventureNarrationPrefix,
   streamAborted,
 } from "./adventure-narration-stream";
-import { session } from "./adventure-generation.test-fixtures";
 
 describe("adventure narration streaming", () => {
   it("decodes escapes, bounds previews, and refuses private or nested JSON", () => {

@@ -1,4 +1,3 @@
-
 /**
  * Decode a top-level narration prefix for diagnostics only. It is NOT a safe
  * player-facing preview: the remainder of the proposal may introduce hidden

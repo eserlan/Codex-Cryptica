@@ -165,9 +165,7 @@ describe("AdventureTurnGenerationService", () => {
     const secret = "Lady Mirella secretly holds the village debt.";
     const proposal = JSON.parse(completeResponse);
     proposal.narration = secret;
-    proposal.hiddenPatch.secrets.add = [
-      { text: secret, status: "hidden" },
-    ];
+    proposal.hiddenPatch.secrets.add = [{ text: secret, status: "hidden" }];
     const response = JSON.stringify(proposal);
     const seen: string[] = [];
     const service = new AdventureTurnGenerationService({
