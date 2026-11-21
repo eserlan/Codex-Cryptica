@@ -23,6 +23,15 @@
   let activeDraft = $derived(
     isOocMode ? (manager.oocDraft ?? "") : (manager.draft ?? ""),
   );
+  let inputPlaceholder = $derived(
+    isOocMode
+      ? phone
+        ? "Ask a question…"
+        : "Ask the GM a question (out of character)…"
+      : phone
+        ? "Your action…"
+        : "What do you do?",
+  );
   let busy = $derived(
     manager.phase === "generating" ||
       Boolean(manager.oocGenerating) ||
@@ -104,7 +113,7 @@
 
 {#snippet modeSwitchBar()}
   <div
-    class={modeSwitchVisible
+    class={!phone && modeSwitchVisible
       ? "flex flex-wrap items-center justify-between gap-2"
       : "hidden"}
     data-testid="adventure-composer-mode-bar"
@@ -222,11 +231,59 @@
   {/if}
 {/snippet}
 
+{#snippet mobileModeSwitch()}
+  <!-- Phone: two always-visible mode choices share the input row,
+       instead of consuming a separate line of story space. -->
+  <div
+    class={phone && modeSwitchVisible
+      ? "inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
+      : "hidden"}
+    role="group"
+    aria-label="Composer mode"
+    data-testid="adventure-mobile-mode-switch"
+  >
+    <button
+      type="button"
+      class={isOocMode
+        ? "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        : "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md bg-theme-primary text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
+      aria-label="Play (in character)"
+      title="Play (in character)"
+      aria-pressed={!isOocMode}
+      data-testid="adventure-mobile-mode-play"
+      onclick={() => selectMode("play")}
+    >
+      <span aria-hidden="true" class="icon-[lucide--swords] h-4 w-4"></span>
+      <span class="text-xs leading-none">Play</span>
+    </button>
+    <button
+      type="button"
+      class={isOocMode
+        ? "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md bg-theme-primary text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        : "flex min-h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-md text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
+      aria-label="Ask GM (out of character)"
+      title="Ask GM (out of character)"
+      aria-pressed={isOocMode}
+      data-testid="adventure-mobile-mode-ooc"
+      onclick={() => selectMode("ooc")}
+    >
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--message-circle-question] h-4 w-4"
+      ></span>
+      <span class="text-xs leading-none">Ask GM</span>
+    </button>
+  </div>
+{/snippet}
+
 {#snippet freeActionInputRow()}
   <div
-    class={actionControlsVisible ? "flex items-end gap-2" : "hidden"}
+    class={actionControlsVisible || (phone && modeSwitchVisible)
+      ? "flex min-w-0 items-end gap-2"
+      : "hidden"}
     data-testid="adventure-free-action"
   >
+    {@render mobileModeSwitch()}
     <label class="sr-only" for="adventure-action">
       {isOocMode
         ? "Ask the GM a question (out of character)…"
@@ -249,9 +306,7 @@
         }
       }}
       {disabled}
-      placeholder={isOocMode
-        ? "Ask the GM a question (out of character)…"
-        : "What do you do?"}
+      placeholder={inputPlaceholder}
     ></textarea>
     <button
       class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"

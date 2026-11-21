@@ -20,6 +20,157 @@ function manager(
 }
 
 describe("AdventureComposer", () => {
+  it("shows two 44px phone modes in the input row, not another row", () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+
+    const row = screen.getByTestId("adventure-free-action");
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    const play = screen.getByTestId("adventure-mobile-mode-play");
+    const ask = screen.getByTestId("adventure-mobile-mode-ooc");
+
+    expect(row.contains(modes)).toBe(true);
+    expect(modes.className).not.toBe("hidden");
+    expect(screen.getByTestId("adventure-composer-mode-bar").className).toBe(
+      "hidden",
+    );
+    expect(modes.getAttribute("aria-label")).toBe("Composer mode");
+    expect(play.getAttribute("aria-label")).toBe("Play (in character)");
+    expect(ask.getAttribute("aria-label")).toBe("Ask GM (out of character)");
+    expect(play.getAttribute("aria-pressed")).toBe("true");
+    expect(ask.getAttribute("aria-pressed")).toBe("false");
+    expect(play.className).toContain("min-h-11");
+    expect(ask.className).toContain("min-w-11");
+    expect(modes.querySelector("select")).toBeNull();
+    expect(row.contains(screen.getByLabelText("What do you do?"))).toBe(true);
+    const send = screen.getByTestId("adventure-submit-button");
+    expect(row.contains(send)).toBe(true);
+  });
+
+  it("preserves phone drafts and routes Ask GM submissions", async () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    m.oocDraft = "What do the marks mean?";
+    m.setComposerMode = vi.fn();
+    m.submitOocQuestion = vi.fn();
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: m, phone: true },
+    });
+
+    const playField = screen.getByLabelText("What do you do?");
+    await fireEvent.input(playField, {
+      target: { value: "Inspect the grain ledger" },
+    });
+    expect(m.draft).toBe("Inspect the grain ledger");
+
+    await fireEvent.click(screen.getByTestId("adventure-mobile-mode-ooc"));
+    expect(m.setComposerMode).toHaveBeenCalledWith("ooc");
+    const oocManager = { ...m, composerMode: "ooc" };
+    await rerender({ manager: oocManager, phone: true });
+
+    const oocField = screen.getByLabelText(
+      "Ask the GM a question (out of character)…",
+    ) as HTMLTextAreaElement;
+    expect(oocField.value).toBe("What do the marks mean?");
+    const ask = screen.getByTestId("adventure-mobile-mode-ooc");
+    expect(ask.getAttribute("aria-pressed")).toBe("true");
+
+    await fireEvent.input(oocField, {
+      target: { value: "Is that board public knowledge?" },
+    });
+    expect(oocManager.oocDraft).toBe("Is that board public knowledge?");
+    expect(oocManager.draft).toBe("Inspect the grain ledger");
+
+    // A plain-object test double needs a prop refresh after a draft mutation.
+    const updated = { ...oocManager };
+    await rerender({ manager: updated, phone: true });
+    const submit = screen.getByRole("button", {
+      name: "Submit question to GM",
+    });
+    await fireEvent.click(submit);
+    expect(m.submitOocQuestion).toHaveBeenCalledWith(
+      "Is that board public knowledge?",
+    );
+    expect(m.submitAction).not.toHaveBeenCalled();
+
+    await fireEvent.click(screen.getByTestId("adventure-mobile-mode-play"));
+    expect(m.setComposerMode).toHaveBeenCalledWith("play");
+    await rerender({
+      manager: { ...updated, composerMode: "play" },
+      phone: true,
+    });
+    const restored = screen.getByLabelText("What do you do?");
+    expect((restored as HTMLTextAreaElement).value).toBe(
+      "Inspect the grain ledger",
+    );
+    expect(updated.oocDraft).toBe("Is that board public knowledge?");
+  });
+
+  it("keeps modes available with the keyboard while hiding suggestions", async () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    m.suggestedActions = ["Look around"];
+    render(AdventureComposer, {
+      props: { manager: m, phone: true, keyboardOpen: true },
+    });
+
+    const suggestions = screen.getByTestId("adventure-suggested-actions");
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    expect(suggestions.className).toBe("hidden");
+    expect(modes.className).not.toBe("hidden");
+    const field = screen.getByLabelText("What do you do?");
+    await fireEvent.focus(field);
+    expect(suggestions.className).toBe("hidden");
+    expect(screen.getByTestId("adventure-mobile-mode-ooc")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
+  });
+
+  it("preserves desktop mode controls without showing the phone switch", () => {
+    const m = manager("ready");
+    m.composerMode = "play";
+    render(AdventureComposer, { props: { manager: m, phone: false } });
+
+    const desktop = screen.getByTestId("adventure-composer-mode-bar");
+    const phone = screen.getByTestId("adventure-mobile-mode-switch");
+    expect(desktop.className).not.toBe("hidden");
+    expect(phone.className).toBe("hidden");
+    expect(screen.getByTestId("adventure-mode-play")).toBeTruthy();
+    expect(screen.getByTestId("adventure-mode-ooc")).toBeTruthy();
+  });
+
+  it("allows Ask GM during a roll and blocks the switch when read-only", async () => {
+    const m = manager("awaiting-roll");
+    m.composerMode = "play";
+    m.oocDraft = "What does this saving throw represent?";
+    m.setComposerMode = vi.fn();
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: m, phone: true },
+    });
+
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    expect(modes.className).not.toBe("hidden");
+    const playField = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+    expect(playField.disabled).toBe(true);
+
+    await fireEvent.click(screen.getByTestId("adventure-mobile-mode-ooc"));
+    const oocManager = { ...m, composerMode: "ooc" };
+    await rerender({ manager: oocManager, phone: true });
+    const askField = screen.getByLabelText(
+      "Ask the GM a question (out of character)…",
+    ) as HTMLTextAreaElement;
+    expect(askField.disabled).toBe(false);
+
+    await rerender({
+      manager: { ...oocManager, readOnly: true },
+      phone: true,
+    });
+    expect(modes.className).toBe("hidden");
+    expect(askField.disabled).toBe(true);
+  });
+
   it("starts at one line and expands the composer without native resize", async () => {
     render(AdventureComposer, { props: { manager: manager("ready") } });
     const textarea = screen.getByLabelText(
