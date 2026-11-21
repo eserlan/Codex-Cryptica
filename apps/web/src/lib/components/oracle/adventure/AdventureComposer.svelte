@@ -275,10 +275,11 @@
   class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
   data-testid="adventure-action-dock"
 >
-  <!-- Only optional controls scroll. Never put the textarea/Send row in this
-       container: it must remain fixed at the bottom when the keyboard opens. -->
+  <!-- Only optional controls scroll, including all expanded suggested actions.
+       Keep a single touch-scroll container so long choices remain reachable.
+       The textarea/Send row stays fixed at the bottom when the keyboard opens. -->
   <div
-    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto"
+    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain pb-2"
     data-testid="adventure-dock-extras"
   >
     {@render dockExtrasContent()}

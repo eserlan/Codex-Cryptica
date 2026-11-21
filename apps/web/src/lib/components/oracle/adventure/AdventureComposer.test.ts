@@ -97,13 +97,53 @@ describe("AdventureComposer", () => {
     expect(actionButtons).toHaveLength(3);
     expect(actionButtons[0].className).toContain("w-full");
     expect(actionButtons[0].className).not.toContain("line-clamp");
-    expect(actionButtons[0].parentElement?.className).toContain("max-h-36");
-    expect(actionButtons[0].parentElement?.className).toContain(
+    expect(actionButtons[0].parentElement?.className).not.toContain("max-h-36");
+    expect(actionButtons[0].parentElement?.className).not.toContain(
       "overflow-y-auto",
     );
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
     expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();
+  });
+
+  it("scrolls phone suggestions in the dock rather than clipping nested options", async () => {
+    const m = manager("ready");
+    m.suggestedActions = [
+      "Look over the storehouse account board and compare the grain tallies.",
+      "Ask the people weighing grain about ordinary village business and recent visitors.",
+      "Follow the path past the storehouse to see who is arriving at the village.",
+    ];
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+
+    const suggestions = screen.getByTestId(
+      "adventure-suggested-actions",
+    ) as HTMLDetailsElement;
+    await fireEvent.click(suggestions.querySelector("summary")!);
+    expect(suggestions.open).toBe(true);
+
+    const extras = screen.getByTestId("adventure-dock-extras");
+    const list = screen.getByTestId("adventure-suggested-actions-list");
+    expect(extras.contains(list)).toBe(true);
+    expect(extras.className).toContain("overflow-y-auto");
+    expect(list.className).not.toContain("overflow-y-auto");
+    expect(list.className).not.toContain("max-h-36");
+    expect(list.className).toContain("pb-3");
+
+    const actions = list.querySelectorAll("button");
+    expect(actions).toHaveLength(3);
+    for (const action of actions) {
+      expect(action.className).toContain("whitespace-normal");
+      expect(action.className).not.toContain("truncate");
+      expect(action.className).not.toContain("line-clamp");
+    }
+
+    await fireEvent.click(actions[2]);
+    expect(m.submitSuggestedAction).toHaveBeenCalledExactlyOnceWith(
+      m.suggestedActions[2],
+    );
+    // Actions can scroll while the free-text input remains outside the pane.
+    const freeAction = screen.getByLabelText("What do you do?");
+    expect(extras.contains(freeAction)).toBe(false);
   });
 
   it("shows a Cancel affordance and the selected action while generating", () => {
