@@ -16,6 +16,7 @@ export * from "./world-time";
 export * from "./manual-world-time";
 export * from "./world-entry-pacing";
 export * from "./scene-pacing";
+export * from "./dialogue-pacing";
 export * from "./contextual-rumours";
 
 export * from "./grounding";
