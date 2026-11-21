@@ -47,6 +47,7 @@ type Fixture = {
   playerCharacter: { name: string; description: string };
   rollOutcome: SuppliedRollOutcome;
   secretLeakPhrases?: Record<string, string[]>;
+  globalConstraints?: { forbiddenUntilRevealed?: string[] };
   runs: StepConfig[];
   scoringGuidance: { hardFailures: string[] };
 };
@@ -625,11 +626,11 @@ async function resolveRollStep(params: {
 }
 
 function collectPhraseLeaks(
-  step: StepConfig,
+  forbiddenIds: readonly string[],
   fixture: Fixture,
   forbiddenSurface: string,
 ): string[] {
-  return (step.forbiddenFacts ?? []).flatMap((id) =>
+  return forbiddenIds.flatMap((id) =>
     (fixture.secretLeakPhrases?.[id] ?? [])
       .filter((phrase) => forbiddenSurface.includes(phrase.toLocaleLowerCase()))
       .map((phrase) => `${id}: "${phrase}"`),
@@ -642,8 +643,21 @@ function collectForbiddenLeaks(
   adventure: AdventureJsonV1,
   surfaceParts: Array<string | undefined>,
   hardFailures: string[],
+  previouslyRevealedIds: readonly string[],
 ): { forbiddenTexts: string[]; forbiddenFactLeaks: string[] } {
-  const forbiddenTexts = (step.forbiddenFacts ?? [])
+  // Per-step checks supplement the global safety constraints. In particular,
+  // the synthetic opening step must still guard every unrevealed package secret.
+  const previouslyRevealed = new Set(previouslyRevealedIds);
+  const revealableNow = new Set(step.revealOnSuccess ?? []);
+  const forbiddenIds = [
+    ...new Set([
+      ...(step.forbiddenFacts ?? []),
+      ...(fixture.globalConstraints?.forbiddenUntilRevealed ?? []).filter(
+        (id) => !previouslyRevealed.has(id) && !revealableNow.has(id),
+      ),
+    ]),
+  ];
+  const forbiddenTexts = forbiddenIds
     .map((id) => adventure.secrets.find((secret) => secret.id === id)?.text)
     .filter((value): value is string => typeof value === "string");
   const forbiddenSurface = surfaceParts
@@ -653,7 +667,7 @@ function collectForbiddenLeaks(
   const exactLeaks = forbiddenTexts.filter((text) =>
     forbiddenSurface.includes(text.toLocaleLowerCase()),
   );
-  const phraseLeaks = collectPhraseLeaks(step, fixture, forbiddenSurface);
+  const phraseLeaks = collectPhraseLeaks(forbiddenIds, fixture, forbiddenSurface);
   if (exactLeaks.length) {
     hardFailures.push(`${step.id}: exact forbidden source text leaked`);
   }
@@ -895,6 +909,7 @@ function buildSuccessStepResult(params: {
     params.adventure,
     [outcome.rollSetup?.narration, outcome.narration],
     params.hardFailures,
+    params.before.packageProgress?.revealedSecretIds ?? [],
   );
   const record = buildSuccessTurnRecord({
     step,
@@ -1410,7 +1425,7 @@ async function main() {
   await runLiveComparison(cli, fixture, adventure);
 }
 
-export { collectUnexpectedReveals, reportMarkdown };
+export { collectForbiddenLeaks, collectUnexpectedReveals, reportMarkdown };
 
 if (import.meta.main) {
   main().catch((error) => {
