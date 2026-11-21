@@ -344,7 +344,8 @@ const actorEventProposalSchema = z
   })
   .strict();
 
-const secretIdSchema = z.string().trim().min(1);
+// Package-authored secret IDs are opaque keys, including leading/trailing spaces.
+const secretIdSchema = z.string().min(1);
 const completeProposalSchema = z.object({
   kind: z.literal("complete"),
   narration,
