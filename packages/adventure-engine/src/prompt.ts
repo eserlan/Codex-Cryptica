@@ -176,7 +176,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     worldEntry: worldEntry
       ? {
           location: worldEntry.location,
-          at: worldEntry.at,
+          at: worldEntryPromptDate(worldEntry.at),
           intent: worldEntry.intent,
           scenePrompt: worldEntry.scenePrompt,
           ...(pacing ? { pacing } : {}),
@@ -206,6 +206,14 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
       })),
     ),
   });
+}
+
+function worldEntryPromptDate(
+  at: NonNullable<AdventureSession["worldEntry"]>["at"],
+) {
+  if (!at) return undefined;
+  const { label: _label, ...date } = at;
+  return date;
 }
 
 function featuredPackageActorIds(
@@ -275,6 +283,7 @@ function worldEntryBehavior(
     "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
     "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
     "GM-only world-entry scenarios are situations already unfolding in the world, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed unnoticed rather than contradicting canon.",
+    "The structured worldEntry.at date is authoritative. If premise text contains a conflicting date, treat that wording as stale and follow worldEntry.at without changing the saved session or in-world date.",
     "A seed can surface in many ways, not only through conversation: physical traces, locals behaving differently, objects or notices, consequences such as closures, shortages, price changes or extra guards, people affected by it, or overheard talk. Choose whatever fits the current scene and the seed's hidden truth.",
     "Signs are small, observable and deniable: show what can be seen or heard, never the GM truth, and never frame a sign as a quest, objective or obligation. The player may ignore it.",
     "For scenarioCollection seeds, knowledge=unheard means unnoticed. When a player-visible sign or hearsay surfaces, include its scenario ID in revealScenarioIds; this atomically marks it heard and records a discovery event. This reveals only the lead, never its GM truth. Advance at most one stage per turn. Legacy gmThreads alone use hiddenPatch.gmThreads for visibility updates.",

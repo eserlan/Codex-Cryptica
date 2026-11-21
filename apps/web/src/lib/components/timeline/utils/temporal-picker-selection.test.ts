@@ -63,13 +63,22 @@ describe("temporal picker selection helpers", () => {
   });
 
   it("adds required defaults when changing to day precision", () => {
-    expect(
-      precisionPatch(
-        "day",
-        { precision: "year", year: 12, calendarRevision: 4 },
-        config,
-      ),
-    ).toEqual({ precision: "day", unitId: "alpha", day: 1 });
+    const patch = precisionPatch(
+      "day",
+      {
+        precision: "year",
+        year: 12,
+        calendarRevision: 4,
+        label: "stale label",
+      },
+      config,
+    );
+    expect(patch).toEqual({
+      precision: "day",
+      unitId: "alpha",
+      day: 1,
+      label: undefined,
+    });
   });
 
   it("uses Gregorian months when adding a precision default", () => {
@@ -95,11 +104,15 @@ describe("temporal picker selection helpers", () => {
         config,
       ),
     ).toBe("0502120");
-    expect(optionPatch("year", "42")).toEqual({ year: 42 });
-    expect(optionPatch("unit", "alpha")).toEqual({ unitId: "alpha" });
-    expect(optionPatch("day", "3")).toEqual({ day: 3 });
+    expect(optionPatch("year", "42")).toEqual({ year: 42, label: undefined });
+    expect(optionPatch("unit", "alpha")).toEqual({
+      unitId: "alpha",
+      label: undefined,
+    });
+    expect(optionPatch("day", "3")).toEqual({ day: 3, label: undefined });
     expect(optionPatch("anchor", "solstice")).toEqual({
       anchorId: "solstice",
+      label: undefined,
     });
   });
 

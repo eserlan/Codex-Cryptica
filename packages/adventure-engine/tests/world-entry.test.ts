@@ -206,6 +206,33 @@ describe("world entry session and GM contract", () => {
     expect(JSON.parse(prompt.state).worldEntry.at.year).toBe(618);
   });
 
+  it("uses the structured date over stale premise labels without mutating the session", () => {
+    const raw = rawSession();
+    raw.premise = "Place: Northbrook. World date: 1 AQ. Explore freely.";
+    raw.worldEntry.at = {
+      year: 101,
+      precision: "year",
+      calendarRevision: 1,
+      label: "1 AQ",
+    };
+    const session = parseAdventureSession(raw);
+    const beforePrompt = structuredClone(session);
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+    });
+    const promptDate = JSON.parse(prompt.state).worldEntry.at;
+
+    expect(prompt.behavior).toContain(
+      "The structured worldEntry.at date is authoritative.",
+    );
+    expect(promptDate.year).toBe(101);
+    expect(promptDate).not.toHaveProperty("label");
+    expect(session).toEqual(beforePrompt);
+  });
+
   it("accepts custom-calendar dates beyond Gregorian month and day bounds", () => {
     const raw = rawSession();
     raw.worldEntry.at = {
