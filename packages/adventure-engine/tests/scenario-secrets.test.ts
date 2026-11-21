@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   MAX_PACKAGE_PROGRESS_ENTRIES,
   parseAdventureSession,
+  parseTurnProposal,
 } from "../src/schemas";
 import { applyCompletedTurn } from "../src/completed-turn";
 import {
@@ -155,6 +156,29 @@ describe("scenario secret transitions", () => {
     expect(parseAdventureSession(candidate).packageProgress?.revealedSecretIds).toHaveLength(
       MAX_PACKAGE_PROGRESS_ENTRIES,
     );
+  });
+
+  it("preserves whitespace in package-authored secret IDs through proposal parsing and persistence", () => {
+    const secretId = "  package-secret with spaces  ";
+    const next = proposal();
+    next.revealSecretIds = [secretId];
+    const parsed = parseTurnProposal(next);
+    expect(parsed.kind).toBe("complete");
+    if (parsed.kind !== "complete") throw new Error("Expected a complete turn.");
+    expect(parsed.revealSecretIds).toEqual([secretId]);
+
+    const before = session();
+    before.packageProgress = { sceneId: "scene-start" };
+    const applied = applyCompletedTurn(before, parsed, {
+      ...meta,
+      packageSecretTexts: { [secretId]: "A hidden package truth." },
+    });
+    expect(applied.ok).toBe(true);
+    if (!applied.ok) return;
+    expect(applied.value.packageProgress?.revealedSecretIds).toEqual([secretId]);
+    expect(applied.value.turns[0]?.revealedSecretIds).toEqual([secretId]);
+    const reloaded = parseAdventureSession(applied.value);
+    expect(reloaded.packageProgress?.revealedSecretIds).toEqual([secretId]);
   });
 
 });
