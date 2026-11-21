@@ -254,7 +254,7 @@
       onclick={() => selectMode("play")}
     >
       <span aria-hidden="true" class="icon-[lucide--swords] h-4 w-4"></span>
-      <span class="text-[10px] leading-none">Play</span>
+      <span class="text-xs leading-none">Play</span>
     </button>
     <button
       type="button"
@@ -271,7 +271,7 @@
         aria-hidden="true"
         class="icon-[lucide--message-circle-question] h-4 w-4"
       ></span>
-      <span class="text-[10px] leading-none">Ask GM</span>
+      <span class="text-xs leading-none">Ask GM</span>
     </button>
   </div>
 {/snippet}
