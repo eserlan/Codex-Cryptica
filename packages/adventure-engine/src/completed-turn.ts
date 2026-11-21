@@ -2,6 +2,7 @@ import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
 import {
   classifyHiddenLeakageFinding,
+  constrainHiddenSecretVisibility,
   detectHiddenLeakage,
   detectPackageLeakage,
   ensureScenarioSecrets,
@@ -256,13 +257,14 @@ export function applyCompletedTurn(
   const session = ensureScenarioSecrets(sessionInput);
   const inputError = completedTurnInputError(session, meta.inputId);
   if (inputError) return inputError;
-  const proposal = parseTurnProposal(proposalInput);
-  if (proposal.kind !== "complete") {
+  const parsedProposal = parseTurnProposal(proposalInput);
+  if (parsedProposal.kind !== "complete") {
     return error(
       "invalid-schema",
       "A completed turn requires a complete proposal.",
     );
   }
+  const proposal = constrainHiddenSecretVisibility(session, parsedProposal);
   const proposalError = completedTurnProposalError(session, proposal, meta);
   if (proposalError) return proposalError;
   const materialized = materializeTurnState(

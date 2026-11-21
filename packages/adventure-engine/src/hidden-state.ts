@@ -170,16 +170,22 @@ export function detectHiddenLeakage(
   proposal: AdventureTurnProposal,
 ): HiddenLeakageFinding[] {
   const session = ensureScenarioSecrets(sessionInput);
-  const fields = playerFacingStrings(proposal);
+  const constrainedProposal =
+    proposal.kind === "complete"
+      ? constrainHiddenSecretVisibility(session, proposal)
+      : proposal;
+  const fields = playerFacingStrings(constrainedProposal);
   const revealed = new Set(
-    proposal.kind === "complete" ? proposal.revealSecretIds : [],
+    constrainedProposal.kind === "complete"
+      ? constrainedProposal.revealSecretIds
+      : [],
   );
   return detectHiddenTextFields(
     session,
     fields,
     revealed,
-    proposal.kind === "complete"
-      ? proposedHiddenSources(session, proposal)
+    constrainedProposal.kind === "complete"
+      ? proposedHiddenSources(session, constrainedProposal)
       : [],
   );
 }
@@ -446,6 +452,41 @@ function proposedHiddenSources(
       };
     }),
   ];
+}
+
+/**
+ * Secret visibility is a persisted-state transition, not model-authored data.
+ * New secrets start hidden; existing secrets keep their state unless an
+ * existing ID is explicitly revealed in this turn.
+ */
+export function constrainHiddenSecretVisibility(
+  session: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+): Extract<AdventureTurnProposal, { kind: "complete" }> {
+  const secrets = proposal.hiddenPatch.secrets;
+  const revealIds = new Set(proposal.revealSecretIds);
+  const storedById = new Map(
+    session.hiddenState.secrets.map((secret) => [secret.id, secret]),
+  );
+
+  return {
+    ...proposal,
+    hiddenPatch: {
+      ...proposal.hiddenPatch,
+      secrets: {
+        ...secrets,
+        add: secrets.add.map((secret) => ({ ...secret, status: "hidden" })),
+        update: secrets.update.map((secret) => ({
+          ...secret,
+          status:
+            storedById.get(secret.id)?.status === "revealed" ||
+            revealIds.has(secret.id)
+              ? "revealed"
+              : "hidden",
+        })),
+      },
+    },
+  };
 }
 
 function detectHiddenTextFields(

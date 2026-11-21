@@ -30,6 +30,23 @@ describe("GM-only improv secrecy at the commit boundary", () => {
     }
   });
 
+  it("rejects a new secret marked revealed without an existing reveal ID", () => {
+    const draft = proposal();
+    draft.narration = hiddenCreditor;
+    draft.hiddenPatch.secrets.add.push({
+      text: hiddenCreditor,
+      status: "revealed",
+    });
+
+    expect(detectHiddenLeakage(session(), draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "proposed-secret-0",
+    });
+    const committed = applyCompletedTurn(session(), draft, meta);
+    expect(committed.ok).toBe(false);
+    if (!committed.ok) expect(committed.errors[0]?.code).toBe("hidden-leakage");
+  });
+
   it("rejects copied text from a newly proposed GM-only thread", () => {
     const draft = proposal();
     draft.hiddenPatch.gmThreads.add.push({
@@ -127,6 +144,57 @@ describe("GM-only improv secrecy at the commit boundary", () => {
     });
   });
 
+  it("does not let an update mark a hidden secret revealed without its ID", () => {
+    const current = session();
+    current.hiddenState.secrets.push({
+      id: "secret-1",
+      text: hiddenRinger,
+      status: "hidden",
+    });
+    const draft = proposal();
+    draft.hiddenPatch.secrets.update.push({
+      id: "secret-1",
+      text: hiddenCreditor,
+      status: "revealed",
+    });
+    draft.narration = hiddenCreditor;
+
+    expect(detectHiddenLeakage(current, draft)).toContainEqual({
+      field: "root.narration",
+      secretId: "secret-1",
+    });
+    const committed = applyCompletedTurn(current, draft, meta);
+    expect(committed.ok).toBe(false);
+    if (!committed.ok) expect(committed.errors[0]?.code).toBe("hidden-leakage");
+  });
+
+  it("reveals an updated secret only when its existing ID is explicit", () => {
+    const current = session();
+    current.hiddenState.secrets.push({
+      id: "secret-1",
+      text: hiddenRinger,
+      status: "hidden",
+    });
+    const draft = proposal();
+    draft.hiddenPatch.secrets.update.push({
+      id: "secret-1",
+      text: hiddenCreditor,
+      status: "hidden",
+    });
+    draft.revealSecretIds = ["secret-1"];
+    draft.narration = hiddenCreditor;
+
+    const committed = applyCompletedTurn(current, draft, meta);
+    expect(committed.ok).toBe(true);
+    if (committed.ok) {
+      expect(
+        committed.value.hiddenState.secrets.find(
+          (secret) => secret.id === "secret-1",
+        )?.status,
+      ).toBe("revealed");
+    }
+  });
+
   it("allows hidden-only inventions, public narration and genuine secret reveals", () => {
     const current = session();
     current.hiddenState.secrets.push({
@@ -140,8 +208,21 @@ describe("GM-only improv secrecy at the commit boundary", () => {
       text: hiddenCreditor,
       status: "hidden",
     });
+    draft.hiddenPatch.secrets.add.push({
+      text: "The clerk has kept a second set of books.",
+      status: "revealed",
+    });
     expect(detectHiddenLeakage(current, draft)).toEqual([]);
-    expect(applyCompletedTurn(current, draft, meta).ok).toBe(true);
+    const committed = applyCompletedTurn(current, draft, meta);
+    expect(committed.ok).toBe(true);
+    if (committed.ok) {
+      expect(
+        committed.value.hiddenState.secrets.find(
+          (secret) =>
+            secret.text === "The clerk has kept a second set of books.",
+        )?.status,
+      ).toBe("hidden");
+    }
 
     const discovered = proposal();
     discovered.narration = hiddenRinger;
