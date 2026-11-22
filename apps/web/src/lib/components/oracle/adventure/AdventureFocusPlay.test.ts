@@ -238,16 +238,53 @@ describe("AdventureFocusPlay", () => {
 
   it("can end the adventure from the management menu", async () => {
     const m = manager();
-    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    const repo = {
+      list: vi
+        .fn()
+        .mockResolvedValueOnce({
+          entries: [
+            {
+              id: "adventure-2",
+              title: "Salt Marsh",
+              status: "active",
+              loadCondition: "normal",
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          entries: [
+            {
+              id: "adventure-1",
+              title: "The Drowned March",
+              status: "archived",
+              revision: 2,
+              loadCondition: "normal",
+            },
+          ],
+        }),
+    } as any;
+    render(AdventureFocusPlay, {
+      props: props({ manager: m, repository: repo }),
+    });
 
     await fireEvent.click(
       screen.getByTestId("adventure-management-menu-button"),
     );
+    await waitFor(() => expect(repo.list).toHaveBeenCalledOnce());
     await fireEvent.click(
       screen.getByRole("menuitem", { name: /end adventure/i }),
     );
 
     expect(m.end).toHaveBeenCalledOnce();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(
+      await screen.findByRole("button", {
+        name: "Delete archived adventure The Drowned March",
+      }),
+    ).toBeTruthy();
+    expect(repo.list).toHaveBeenCalledTimes(2);
   });
 
   it("shows the current situation without opening the tools panel", () => {

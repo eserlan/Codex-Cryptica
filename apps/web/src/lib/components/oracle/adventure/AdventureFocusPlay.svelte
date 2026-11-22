@@ -94,6 +94,10 @@
     return promise;
   }
 
+  function invalidateAdventureSessions(): void {
+    archiveListRequest = null;
+  }
+
   // Matches the surface's own `sm:` breakpoint for full-screen phone play.
   let phone = $state(false);
   $effect(() => {
@@ -607,6 +611,7 @@
             {vaultId}
             listEntries={listAdventureSessions}
             onSwitch={onResume}
+            onAction={invalidateAdventureSessions}
           />
         </div>
       {/if}
