@@ -11,6 +11,7 @@
     visible,
     chips = false,
     overlayHost,
+    onSubmitStart,
   }: {
     manager: AdventureManager;
     disabled: boolean;
@@ -18,6 +19,7 @@
     /** Show suggestions as collapsible chips instead of a collapsed list. */
     chips?: boolean;
     overlayHost?: HTMLElement;
+    onSubmitStart?: () => void | Promise<void>;
   } = $props();
 
   const uid = $props.id();
@@ -76,7 +78,9 @@
       closeSheet();
     }
     try {
-      await manager.submitSuggestedAction(suggestion);
+      const submission = manager.submitSuggestedAction(suggestion);
+      if (closeAfter) await onSubmitStart?.();
+      await submission;
     } finally {
       submitting = false;
     }

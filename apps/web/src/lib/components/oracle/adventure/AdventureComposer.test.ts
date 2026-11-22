@@ -499,25 +499,27 @@ describe("AdventureComposer", () => {
       props: { manager: m, phone: true },
     });
 
+    const generating = manager("generating");
+    generating.suggestedActions = ["Search the wreckage"];
+    m.submitSuggestedAction = vi.fn(() => {
+      void rerender({ manager: generating, phone: true });
+    });
+
     const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
     await fireEvent.click(toggle);
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
     );
-    expect(document.activeElement).toBe(toggle);
-
-    // Simulate the phase flipping to "generating" right after the click, as
-    // the real manager does once submitSuggestedAction resolves — the real
-    // manager's suggestedActions getter still reflects the prior turn until
-    // the new one commits, so it stays populated during generating too.
-    const generating = manager("generating");
-    generating.suggestedActions = ["Search the wreckage"];
-    await rerender({ manager: generating, phone: true });
 
     // The trigger must stay mounted in the DOM (merely hidden), not torn out.
     expect(document.body.contains(toggle)).toBe(true);
     expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
       "hidden",
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Cancel" }),
+      ),
     );
     unmount();
 

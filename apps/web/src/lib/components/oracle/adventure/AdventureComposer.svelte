@@ -51,7 +51,15 @@
       (!isOocMode && playBlockedByRoll),
   );
   let textarea = $state<HTMLTextAreaElement>();
+  let cancelButton = $state<HTMLButtonElement>();
   let typing = $state(false);
+
+  async function focusCancelAfterSuggestion(): Promise<void> {
+    await tick();
+    if (busy && !manager.rollMutationPending) {
+      cancelButton?.focus();
+    }
+  }
 
   function selectMode(mode: "play" | "ooc") {
     if (manager.setComposerMode) {
@@ -190,6 +198,7 @@
     </div>
     {#if !manager.rollMutationPending}
       <button
+        bind:this={cancelButton}
         class="min-h-11 rounded-md border border-theme-text/75 px-3 text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
         type="button"
         onclick={() => manager.cancel()}>Cancel</button
@@ -210,6 +219,7 @@
     visible={suggestionsVisible}
     chips={suggestionChips}
     {overlayHost}
+    onSubmitStart={focusCancelAfterSuggestion}
   />
   {#if manager.errorMessage}
     <p class="text-sm text-theme-text" role="alert">
