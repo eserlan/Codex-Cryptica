@@ -68,7 +68,7 @@ describe("ChangelogModal", () => {
     });
 
     expect(acknowledgeButton.className).toContain("bg-theme-primary");
-    expect(acknowledgeButton.className).toContain("text-theme-bg");
+    expect(acknowledgeButton.className).toContain("text-theme-on-primary");
     expect(acknowledgeButton.className).toContain("border-theme-primary");
     expect(acknowledgeButton.className).not.toContain("text-black");
   });
