@@ -13,6 +13,7 @@ class VaultRegistryStore {
   isLoading = $state(false);
 
   #opfsRoot: FileSystemDirectoryHandle | undefined = undefined;
+  #initPromise: Promise<void> | null = null;
 
   activeVaultRecord = $derived(
     this.availableVaults.find((v) => v.id === this.activeVaultId),
@@ -30,6 +31,27 @@ class VaultRegistryStore {
     return this.#opfsRoot;
   }
 
+  private async ensureDefaultVault(
+    db: Awaited<ReturnType<typeof getDB>>,
+  ): Promise<void> {
+    if (!this.#opfsRoot) return;
+    const existing = await registry.getVault("default");
+    if (!existing) {
+      await createVaultDir(this.#opfsRoot, "default");
+      await db.put("vaults", {
+        id: "default",
+        name: "Default Vault",
+        createdAt: systemClock.now(),
+        lastOpenedAt: systemClock.now(),
+        entityCount: 0,
+        lastInternalChange: systemClock.now(),
+        lastSavedToFolder: 0,
+      });
+    }
+    this.activeVaultId = "default";
+    await db.put("settings", "default", "activeVaultId");
+  }
+
   /**
    * Load the registry. With no active vault, a "Default Vault" is created and
    * opened, unless `createDefault` is false: a caller about to create and open
@@ -37,58 +59,51 @@ class VaultRegistryStore {
    */
   async init({ createDefault = true }: { createDefault?: boolean } = {}) {
     if (this.isInitialized) return;
-    this.isLoading = true;
+    if (this.#initPromise) return this.#initPromise;
 
-    try {
-      this.#opfsRoot = await getOpfsRoot();
-      const db = await getDB();
+    this.#initPromise = (async () => {
+      this.isLoading = true;
 
-      this.activeVaultId = (await db.get("settings", "activeVaultId")) || null;
+      try {
+        this.#opfsRoot = await getOpfsRoot();
+        const db = await getDB();
 
-      if (!this.activeVaultId && this.#opfsRoot && createDefault) {
-        // Initialize default vault if none active
-        const existing = await registry.getVault("default");
-        if (!existing) {
-          await createVaultDir(this.#opfsRoot, "default");
-          await db.put("vaults", {
-            id: "default",
-            name: "Default Vault",
-            createdAt: systemClock.now(),
-            lastOpenedAt: systemClock.now(),
-            entityCount: 0,
-            lastInternalChange: systemClock.now(),
-            lastSavedToFolder: 0,
-          });
+        this.activeVaultId =
+          (await db.get("settings", "activeVaultId")) || null;
+
+        if (!this.activeVaultId && createDefault) {
+          await this.ensureDefaultVault(db);
         }
-        this.activeVaultId = "default";
-        await db.put("settings", "default", "activeVaultId");
+
+        const vaultRecord = this.activeVaultId
+          ? await registry.getVault(this.activeVaultId)
+          : null;
+        this.vaultName = vaultRecord?.name || "Local Vault";
+
+        // Startup restores the active vault straight from settings rather than
+        // through `setActiveVault`, so this was the one open path that never
+        // stamped the field. "Last opened" therefore showed the last explicit
+        // switch, which read as "the app has not opened this vault since then"
+        // and sent a user chasing a data-loss bug in the wrong direction
+        // (#2619). It is a diagnostic; it has to be true.
+        if (this.activeVaultId) {
+          await registry.updateLastOpened(this.activeVaultId);
+        }
+
+        await this.listVaults();
+        this.isInitialized = true;
+      } catch (err) {
+        console.error("[VaultRegistry] Init failed", err);
+        debugStore.error("Vault Registry initialization failed", err);
+        this.isInitialized = false;
+        throw err;
+      } finally {
+        this.isLoading = false;
+        this.#initPromise = null;
       }
+    })();
 
-      const vaultRecord = this.activeVaultId
-        ? await registry.getVault(this.activeVaultId)
-        : null;
-      this.vaultName = vaultRecord?.name || "Local Vault";
-
-      // Startup restores the active vault straight from settings rather than
-      // through `setActiveVault`, so this was the one open path that never
-      // stamped the field. "Last opened" therefore showed the last explicit
-      // switch, which read as "the app has not opened this vault since then"
-      // and sent a user chasing a data-loss bug in the wrong direction
-      // (#2619). It is a diagnostic; it has to be true.
-      if (this.activeVaultId) {
-        await registry.updateLastOpened(this.activeVaultId);
-      }
-
-      await this.listVaults();
-      this.isInitialized = true;
-    } catch (err) {
-      console.error("[VaultRegistry] Init failed", err);
-      debugStore.error("Vault Registry initialization failed", err);
-      this.isInitialized = true; // Mark initialized even on failure to avoid hangs
-      throw err;
-    } finally {
-      this.isLoading = false;
-    }
+    return this.#initPromise;
   }
 
   async listVaults(): Promise<VaultRecord[]> {
