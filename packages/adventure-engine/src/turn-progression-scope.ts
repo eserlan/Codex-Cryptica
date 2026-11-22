@@ -347,34 +347,132 @@ export function resolvePriorProgressionState(
  * Prompt-time pacing uses this to avoid rebuilding each candidate state from
  * the entire committed history.
  */
-export function buildPriorProgressionStateIndex(
+interface LastTouchedSequenceIndex {
+  locIds: Map<string, number>;
+  sitIds: Map<string, number>;
+  relIds: Map<string, number>;
+  factIds: Map<string, number>;
+}
+
+function buildLastTouchedSequenceIndex(
   session: AdventureSession,
-  targetTurnIds: ReadonlySet<string>,
-): Map<string, PriorProgressionState> {
-  const lastTouched = {
-    locIds: new Map<string, number>(),
-    sitIds: new Map<string, number>(),
-    relIds: new Map<string, number>(),
-    factIds: new Map<string, number>(),
+): LastTouchedSequenceIndex {
+  const index: LastTouchedSequenceIndex = {
+    locIds: new Map(),
+    sitIds: new Map(),
+    relIds: new Map(),
+    factIds: new Map(),
   };
+  const record = (map: Map<string, number>, id: string, sequence: number) =>
+    map.set(id, Math.max(map.get(id) ?? Number.NEGATIVE_INFINITY, sequence));
   for (const turn of session.turns) {
     const sequence = turn.sequence;
-    const record = (map: Map<string, number>, id: string) =>
-      map.set(id, Math.max(map.get(id) ?? Number.NEGATIVE_INFINITY, sequence));
     if (turn.visiblePatch.location?.id)
-      record(lastTouched.locIds, turn.visiblePatch.location.id);
+      record(index.locIds, turn.visiblePatch.location.id, sequence);
     if (turn.visiblePatch.situation?.id)
-      record(lastTouched.sitIds, turn.visiblePatch.situation.id);
+      record(index.sitIds, turn.visiblePatch.situation.id, sequence);
     for (const fact of turn.visiblePatch.knownFacts.add)
-      record(lastTouched.factIds, fact.id);
+      record(index.factIds, fact.id, sequence);
     for (const rel of [
       ...turn.visiblePatch.relationships.add,
       ...turn.visiblePatch.relationships.update,
     ]) {
-      record(lastTouched.relIds, rel.id);
+      record(index.relIds, rel.id, sequence);
     }
   }
+  return index;
+}
 
+function isUntouchedBefore(
+  index: Map<string, number>,
+  id: string,
+  sequence: number,
+): boolean {
+  return (index.get(id) ?? -1) < sequence;
+}
+
+function initialPriorFacts(
+  session: AdventureSession,
+  turn: CommittedAdventureTurn,
+  lastTouched: LastTouchedSequenceIndex,
+): string[] {
+  return session.visibleState.knownFacts
+    .filter((fact) =>
+      isUntouchedBefore(lastTouched.factIds, fact.id, turn.sequence),
+    )
+    .map((fact) => fact.text);
+}
+
+function initialPriorDispositions(
+  session: AdventureSession,
+  turn: CommittedAdventureTurn,
+  lastTouched: LastTouchedSequenceIndex,
+): Map<string, string> {
+  return new Map(
+    session.visibleState.relationships
+      .filter((rel) =>
+        isUntouchedBefore(lastTouched.relIds, rel.id, turn.sequence),
+      )
+      .map((rel) => [rel.subjectId, normalizeText(rel.disposition)] as const),
+  );
+}
+
+function initialPriorSituation(
+  session: AdventureSession,
+  turn: CommittedAdventureTurn,
+  lastTouched: LastTouchedSequenceIndex,
+): string | undefined {
+  const situation = session.visibleState.situation;
+  return situation &&
+    isUntouchedBefore(lastTouched.sitIds, situation.id, turn.sequence)
+    ? normalizeText(situation.text)
+    : undefined;
+}
+
+function snapshotPriorProgressionState(
+  session: AdventureSession,
+  turn: CommittedAdventureTurn,
+  lastTouched: LastTouchedSequenceIndex,
+  priorFacts: readonly string[],
+  priorLocations: ReadonlySet<string>,
+  priorSituation: string | null | undefined,
+  hasPriorSituation: boolean,
+  priorDispositions: ReadonlyMap<string, string>,
+): PriorProgressionState {
+  const facts = [
+    ...initialPriorFacts(session, turn, lastTouched),
+    ...priorFacts,
+  ];
+  const locations = new Set(priorLocations);
+  if (session.worldEntry?.location.name) {
+    locations.add(normalizeText(session.worldEntry.location.name));
+  }
+  const currentLocation = session.visibleState.location;
+  if (
+    currentLocation &&
+    isUntouchedBefore(lastTouched.locIds, currentLocation.id, turn.sequence)
+  ) {
+    locations.add(normalizeText(currentLocation.text));
+  }
+  return {
+    priorKnownFacts: facts,
+    priorNormalizedFacts: new Set(facts.map(normalizeText)),
+    priorVisitedLocations: locations,
+    priorSituation: hasPriorSituation
+      ? priorSituation
+      : initialPriorSituation(session, turn, lastTouched),
+    priorDispositions: new Map([
+      ...initialPriorDispositions(session, turn, lastTouched),
+      ...priorDispositions,
+    ]),
+  };
+}
+
+export function buildPriorProgressionStateIndex(
+  session: AdventureSession,
+  targetTurnIds: ReadonlySet<string>,
+): Map<string, PriorProgressionState> {
+  const lastTouched = buildLastTouchedSequenceIndex(session);
   const results = new Map<string, PriorProgressionState>();
   const priorFacts: string[] = [];
   const priorLocations = new Set<string>();
@@ -383,46 +481,19 @@ export function buildPriorProgressionStateIndex(
   let hasPriorSituation = false;
   for (const turn of session.turns) {
     if (targetTurnIds.has(turn.id)) {
-      const initialFacts = session.visibleState.knownFacts
-        .filter(
-          (fact) => (lastTouched.factIds.get(fact.id) ?? -1) < turn.sequence,
-        )
-        .map((fact) => fact.text);
-      const facts = [...initialFacts, ...priorFacts];
-      const initialLocations = session.visibleState.location;
-      const locations = new Set(priorLocations);
-      if (session.worldEntry?.location.name) {
-        locations.add(normalizeText(session.worldEntry.location.name));
-      }
-      if (
-        initialLocations &&
-        (lastTouched.locIds.get(initialLocations.id) ?? -1) < turn.sequence
-      ) {
-        locations.add(normalizeText(initialLocations.text));
-      }
-      const initialSituation = session.visibleState.situation;
-      results.set(turn.id, {
-        priorKnownFacts: facts,
-        priorNormalizedFacts: new Set(facts.map(normalizeText)),
-        priorVisitedLocations: locations,
-        priorSituation: hasPriorSituation
-          ? priorSituation
-          : initialSituation &&
-              (lastTouched.sitIds.get(initialSituation.id) ?? -1) <
-                turn.sequence
-            ? normalizeText(initialSituation.text)
-            : undefined,
-        priorDispositions: new Map([
-          ...session.visibleState.relationships
-            .filter(
-              (rel) => (lastTouched.relIds.get(rel.id) ?? -1) < turn.sequence,
-            )
-            .map(
-              (rel) => [rel.subjectId, normalizeText(rel.disposition)] as const,
-            ),
-          ...priorDispositions,
-        ]),
-      });
+      results.set(
+        turn.id,
+        snapshotPriorProgressionState(
+          session,
+          turn,
+          lastTouched,
+          priorFacts,
+          priorLocations,
+          priorSituation,
+          hasPriorSituation,
+          priorDispositions,
+        ),
+      );
     }
 
     priorFacts.push(

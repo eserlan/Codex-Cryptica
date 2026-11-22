@@ -325,6 +325,75 @@ function isNonAdvancingThreadTurn(
   return { stop: advances, classification };
 }
 
+function extendSharedThreadTopic(
+  existingTopic: ReadonlySet<string>,
+  action: string,
+): Set<string> | undefined {
+  const topic = threadTopicWords(action);
+  if (topic.size === 0) return undefined;
+  if (existingTopic.size === 0) return topic;
+  const shared = new Set([...existingTopic].filter((word) => topic.has(word)));
+  return shared.size > 0 ? shared : undefined;
+}
+
+function isNonAnswerInquiry(
+  turn: CommittedAdventureTurn,
+  classification: TurnProgressClassification,
+): boolean {
+  return (
+    isInvestigativeInquiry(turn.playerAction) &&
+    (classification.kind === "repeated-non-answer" || classification.nonAnswer)
+  );
+}
+
+interface MutableStallCounts {
+  turnsWithoutAdvancement: number;
+  repeatedNonAnswerTurns: number;
+  lastTurnKind: TurnProgressKind | undefined;
+  threadTopic: Set<string>;
+}
+
+function processTrailingTurn(
+  turn: CommittedAdventureTurn,
+  session: AdventureSession,
+  pursuedScenario: ScenarioItem | undefined,
+  scope: PursuedThreadScope | undefined,
+  scenarioTurnIds: ReadonlySet<string>,
+  priorState: PriorProgressionState | undefined,
+  counts: MutableStallCounts,
+): boolean {
+  if (isBareWaitTurn(turn, scenarioTurnIds)) return false;
+  const { stop, classification } = isNonAdvancingThreadTurn(
+    turn,
+    session,
+    pursuedScenario,
+    scope,
+    scenarioTurnIds,
+    priorState,
+  );
+  if (stop) return true;
+  if (
+    !classification ||
+    !turnEngagesThread(turn, session, pursuedScenario, scope, classification)
+  ) {
+    return false;
+  }
+  if (!scope) {
+    const sharedTopic = extendSharedThreadTopic(
+      counts.threadTopic,
+      turn.playerAction,
+    );
+    if (!sharedTopic) return true;
+    counts.threadTopic = sharedTopic;
+  }
+  counts.turnsWithoutAdvancement += 1;
+  if (isNonAnswerInquiry(turn, classification)) {
+    counts.repeatedNonAnswerTurns += 1;
+  }
+  counts.lastTurnKind ??= classification.kind;
+  return false;
+}
+
 function scanTrailingStall(
   session: AdventureSession,
   pursuedScenario: ScenarioItem | undefined,
@@ -335,10 +404,12 @@ function scanTrailingStall(
     0,
     session.turns.length - MAX_PROGRESSION_LOOKBACK_TURNS,
   );
-  let turnsWithoutAdvancement = 0;
-  let repeatedNonAnswerTurns = 0;
-  let lastTurnKind: TurnProgressKind | undefined;
-  let threadTopic = new Set<string>();
+  const counts: MutableStallCounts = {
+    turnsWithoutAdvancement: 0,
+    repeatedNonAnswerTurns: 0,
+    lastTurnKind: undefined,
+    threadTopic: new Set(),
+  };
   const priorStates = buildPriorProgressionStateIndex(
     session,
     new Set(session.turns.slice(lookbackStart).map((turn) => turn.id)),
@@ -346,51 +417,25 @@ function scanTrailingStall(
 
   for (let i = session.turns.length - 1; i >= lookbackStart; i -= 1) {
     const turn = session.turns[i]!;
-    if (isBareWaitTurn(turn, scenarioTurnIds)) continue;
-    const { stop, classification } = isNonAdvancingThreadTurn(
-      turn,
-      session,
-      pursuedScenario,
-      scope,
-      scenarioTurnIds,
-      priorStates.get(turn.id),
-    );
-    if (stop) break;
     if (
-      !classification ||
-      !turnEngagesThread(turn, session, pursuedScenario, scope, classification)
-    ) {
-      continue;
-    }
-    if (!scope) {
-      const topic = threadTopicWords(turn.playerAction);
-      if (topic.size === 0) break;
-      if (turnsWithoutAdvancement > 0) {
-        const shared = new Set(
-          [...threadTopic].filter((word) => topic.has(word)),
-        );
-        if (shared.size === 0) break;
-        threadTopic = shared;
-      } else {
-        threadTopic = topic;
-      }
-    }
-    turnsWithoutAdvancement += 1;
-    if (
-      isInvestigativeInquiry(turn.playerAction) &&
-      (classification.kind === "repeated-non-answer" ||
-        classification.nonAnswer)
-    ) {
-      repeatedNonAnswerTurns += 1;
-    }
-    lastTurnKind ??= classification.kind;
+      processTrailingTurn(
+        turn,
+        session,
+        pursuedScenario,
+        scope,
+        scenarioTurnIds,
+        priorStates.get(turn.id),
+        counts,
+      )
+    )
+      break;
   }
 
   return {
-    turnsWithoutAdvancement,
-    repeatedNonAnswerTurns,
-    lastTurnKind,
-    threadTopic,
+    turnsWithoutAdvancement: counts.turnsWithoutAdvancement,
+    repeatedNonAnswerTurns: counts.repeatedNonAnswerTurns,
+    lastTurnKind: counts.lastTurnKind,
+    threadTopic: counts.threadTopic,
   };
 }
 
@@ -425,6 +470,17 @@ function isInvestigativeActive(
   ) {
     return true;
   }
+  return isUnscopedInvestigativeActive(nextAction, counts);
+}
+
+function isUnscopedInvestigativeActive(
+  nextAction: string | undefined,
+  counts: {
+    turnsWithoutAdvancement: number;
+    repeatedNonAnswerTurns: number;
+    threadTopic: ReadonlySet<string>;
+  },
+): boolean {
   if (nextAction && counts.threadTopic.size > 0) {
     const actionTopics = threadTopicWords(nextAction);
     if (![...counts.threadTopic].some((word) => actionTopics.has(word))) {

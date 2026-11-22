@@ -504,6 +504,20 @@ function collectTurnScenarioEvents(
   return out;
 }
 
+function resolveTurnPriorState(
+  turn: CommittedAdventureTurn,
+  session: AdventureSession,
+  options: ClassifyTurnProgressOptions | undefined,
+): PriorProgressionState {
+  if (options?.priorState) return options.priorState;
+  return resolvePriorProgressionState(
+    turn,
+    session,
+    options?.priorTurns,
+    options?.priorFacts,
+  );
+}
+
 function buildTurnContext(
   turn: CommittedAdventureTurn,
   session: AdventureSession,
@@ -516,14 +530,7 @@ function buildTurnContext(
     turn,
     session,
     scope,
-    prior:
-      options?.priorState ??
-      resolvePriorProgressionState(
-        turn,
-        session,
-        options?.priorTurns,
-        options?.priorFacts,
-      ),
+    prior: resolveTurnPriorState(turn, session, options),
     scenarioEvents: collectTurnScenarioEvents(session, turn.id),
     pkgEvents: (session.packageProgress?.events ?? []).filter(
       (e) => e.turnId === turn.id && e.certainty === "confirmed",
