@@ -19,9 +19,9 @@ export interface PursuedThreadScope {
 export interface PriorProgressionState {
   priorKnownFacts: Iterable<string>;
   priorNormalizedFacts: Pick<ReadonlySet<string>, "has">;
-  priorVisitedLocations: Set<string>;
+  priorVisitedLocations: Pick<ReadonlySet<string>, "has">;
   priorSituation: string | null | undefined;
-  priorDispositions: Map<string, string>;
+  priorDispositions: Pick<ReadonlyMap<string, string>, "get">;
 }
 
 export const normalizeText = (value: string): string =>
@@ -403,18 +403,68 @@ function initialPriorFacts(
     .map((fact) => fact.text);
 }
 
-function initialPriorDispositions(
+interface DispositionHistoryEntry {
+  turnIndex: number;
+  disposition: string;
+}
+
+interface InitialDispositionEntry {
+  id: string;
+  disposition: string;
+}
+
+function indexInitialDispositionsBySubject(
   session: AdventureSession,
-  turn: CommittedAdventureTurn,
-  lastTouched: LastTouchedSequenceIndex,
-): Map<string, string> {
-  return new Map(
-    session.visibleState.relationships
-      .filter((rel) =>
-        isUntouchedBefore(lastTouched.relIds, rel.id, turn.sequence),
-      )
-      .map((rel) => [rel.subjectId, normalizeText(rel.disposition)] as const),
-  );
+): Map<string, InitialDispositionEntry[]> {
+  const bySubject = new Map<string, InitialDispositionEntry[]>();
+  for (const rel of session.visibleState.relationships) {
+    let entries = bySubject.get(rel.subjectId);
+    if (!entries) {
+      entries = [];
+      bySubject.set(rel.subjectId, entries);
+    }
+    entries.push({
+      id: rel.id,
+      disposition: normalizeText(rel.disposition),
+    });
+  }
+  return bySubject;
+}
+
+function lookupInitialDisposition(
+  entries: readonly InitialDispositionEntry[] | undefined,
+  relLastTouched: Map<string, number>,
+  sequence: number,
+): string | undefined {
+  if (!entries) return undefined;
+  for (let i = entries.length - 1; i >= 0; i -= 1) {
+    const entry = entries[i]!;
+    if (isUntouchedBefore(relLastTouched, entry.id, sequence)) {
+      return entry.disposition;
+    }
+  }
+  return undefined;
+}
+
+function lookupPriorDisposition(
+  history: readonly DispositionHistoryEntry[] | undefined,
+  beforeTurnIndex: number,
+): string | undefined {
+  if (!history || history.length === 0) return undefined;
+  let lo = 0;
+  let hi = history.length - 1;
+  let result: string | undefined;
+  while (lo <= hi) {
+    const mid = (lo + hi) >>> 1;
+    const entry = history[mid]!;
+    if (entry.turnIndex < beforeTurnIndex) {
+      result = entry.disposition;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return result;
 }
 
 function initialPriorSituation(
@@ -429,57 +479,90 @@ function initialPriorSituation(
     : undefined;
 }
 
+interface PriorProgressionHistory {
+  priorFacts: readonly string[];
+  priorFactFirstIndex: ReadonlyMap<string, number>;
+  priorLocationFirstTurnIndex: ReadonlyMap<string, number>;
+  dispositionHistoryBySubject: ReadonlyMap<
+    string,
+    readonly DispositionHistoryEntry[]
+  >;
+  initialDispositionsBySubject: ReadonlyMap<
+    string,
+    readonly InitialDispositionEntry[]
+  >;
+}
+
 function snapshotPriorProgressionState(
   session: AdventureSession,
   turn: CommittedAdventureTurn,
+  turnIndex: number,
   lastTouched: LastTouchedSequenceIndex,
-  priorFacts: readonly string[],
+  history: PriorProgressionHistory,
   priorFactCount: number,
-  priorFactFirstIndex: ReadonlyMap<string, number>,
-  priorLocations: ReadonlySet<string>,
   priorSituation: string | null | undefined,
   hasPriorSituation: boolean,
-  priorDispositions: ReadonlyMap<string, string>,
 ): PriorProgressionState {
   const initialFacts = initialPriorFacts(session, turn, lastTouched);
   const initialNormalizedFacts = new Set(initialFacts.map(normalizeText));
-  const locations = new Set(priorLocations);
-  if (session.worldEntry?.location.name) {
-    locations.add(normalizeText(session.worldEntry.location.name));
-  }
+  const worldEntryLocation = session.worldEntry?.location.name
+    ? normalizeText(session.worldEntry.location.name)
+    : undefined;
   const currentLocation = session.visibleState.location;
-  if (
+  const initialLocation =
     currentLocation &&
     isUntouchedBefore(lastTouched.locIds, currentLocation.id, turn.sequence)
-  ) {
-    locations.add(normalizeText(currentLocation.text));
-  }
+      ? normalizeText(currentLocation.text)
+      : undefined;
+
   return {
     priorKnownFacts: {
       *[Symbol.iterator]() {
         yield* initialFacts;
         for (let index = 0; index < priorFactCount; index += 1) {
-          yield priorFacts[index]!;
+          yield history.priorFacts[index]!;
         }
       },
     },
     priorNormalizedFacts: {
       has(value) {
-        const firstIndex = priorFactFirstIndex.get(value);
+        const firstIndex = history.priorFactFirstIndex.get(value);
         return (
           initialNormalizedFacts.has(value) ||
           (firstIndex !== undefined && firstIndex < priorFactCount)
         );
       },
     },
-    priorVisitedLocations: locations,
+    priorVisitedLocations: {
+      has(value) {
+        if (
+          (worldEntryLocation !== undefined && value === worldEntryLocation) ||
+          (initialLocation !== undefined && value === initialLocation)
+        ) {
+          return true;
+        }
+        const firstTurnIndex = history.priorLocationFirstTurnIndex.get(value);
+        return firstTurnIndex !== undefined && firstTurnIndex < turnIndex;
+      },
+    },
     priorSituation: hasPriorSituation
       ? priorSituation
       : initialPriorSituation(session, turn, lastTouched),
-    priorDispositions: new Map([
-      ...initialPriorDispositions(session, turn, lastTouched),
-      ...priorDispositions,
-    ]),
+    priorDispositions: {
+      get(subjectId) {
+        return (
+          lookupPriorDisposition(
+            history.dispositionHistoryBySubject.get(subjectId),
+            turnIndex,
+          ) ??
+          lookupInitialDisposition(
+            history.initialDispositionsBySubject.get(subjectId),
+            lastTouched.relIds,
+            turn.sequence,
+          )
+        );
+      },
+    },
   };
 }
 
@@ -497,6 +580,30 @@ function appendPriorFactHistory(
   }
 }
 
+function appendPriorDispositionHistory(
+  turn: CommittedAdventureTurn,
+  turnIndex: number,
+  dispositionHistoryBySubject: Map<string, DispositionHistoryEntry[]>,
+): void {
+  for (const rel of [
+    ...turn.visiblePatch.relationships.add,
+    ...turn.visiblePatch.relationships.update,
+  ]) {
+    const disposition = normalizeText(rel.disposition);
+    let entries = dispositionHistoryBySubject.get(rel.subjectId);
+    if (!entries) {
+      entries = [];
+      dispositionHistoryBySubject.set(rel.subjectId, entries);
+    }
+    const last = entries[entries.length - 1];
+    if (last && last.turnIndex === turnIndex) {
+      last.disposition = disposition;
+    } else {
+      entries.push({ turnIndex, disposition });
+    }
+  }
+}
+
 export function buildPriorProgressionStateIndex(
   session: AdventureSession,
   targetTurnIds: ReadonlySet<string>,
@@ -505,44 +612,52 @@ export function buildPriorProgressionStateIndex(
   const results = new Map<string, PriorProgressionState>();
   const priorFacts: string[] = [];
   const priorFactFirstIndex = new Map<string, number>();
-  const priorLocations = new Set<string>();
-  const priorDispositions = new Map<string, string>();
+  const priorLocationFirstTurnIndex = new Map<string, number>();
+  const dispositionHistoryBySubject = new Map<
+    string,
+    DispositionHistoryEntry[]
+  >();
+  const history: PriorProgressionHistory = {
+    priorFacts,
+    priorFactFirstIndex,
+    priorLocationFirstTurnIndex,
+    dispositionHistoryBySubject,
+    initialDispositionsBySubject: indexInitialDispositionsBySubject(session),
+  };
   let priorSituation: string | null | undefined;
   let hasPriorSituation = false;
-  for (const turn of session.turns) {
+  for (let turnIndex = 0; turnIndex < session.turns.length; turnIndex += 1) {
+    const turn = session.turns[turnIndex]!;
     if (targetTurnIds.has(turn.id)) {
       results.set(
         turn.id,
         snapshotPriorProgressionState(
           session,
           turn,
+          turnIndex,
           lastTouched,
-          priorFacts,
+          history,
           priorFacts.length,
-          priorFactFirstIndex,
-          priorLocations,
           priorSituation,
           hasPriorSituation,
-          priorDispositions,
         ),
       );
     }
 
     appendPriorFactHistory(turn, priorFacts, priorFactFirstIndex);
-    if (turn.visiblePatch.location?.text)
-      priorLocations.add(normalizeText(turn.visiblePatch.location.text));
+    if (turn.visiblePatch.location?.text) {
+      const loc = normalizeText(turn.visiblePatch.location.text);
+      if (!priorLocationFirstTurnIndex.has(loc)) {
+        priorLocationFirstTurnIndex.set(loc, turnIndex);
+      }
+    }
     if (turn.visiblePatch.situation !== undefined) {
       hasPriorSituation = true;
       priorSituation = turn.visiblePatch.situation
         ? normalizeText(turn.visiblePatch.situation.text)
         : null;
     }
-    for (const rel of [
-      ...turn.visiblePatch.relationships.add,
-      ...turn.visiblePatch.relationships.update,
-    ]) {
-      priorDispositions.set(rel.subjectId, normalizeText(rel.disposition));
-    }
+    appendPriorDispositionHistory(turn, turnIndex, dispositionHistoryBySubject);
   }
   return results;
 }

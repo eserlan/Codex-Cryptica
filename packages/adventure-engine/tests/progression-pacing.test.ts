@@ -126,6 +126,85 @@ describe("Turn progression classifier (#5110)", () => {
     ).toBe(false);
   });
 
+  it("exposes prefix-bounded prior locations and dispositions without leaking later turns", () => {
+    const withLocationAndDisposition = (
+      sequence: number,
+      locationText: string,
+      subjectId: string,
+      disposition: string,
+    ) => {
+      const turn = makeTurn(sequence, "Move", "You move.");
+      return {
+        ...turn,
+        visiblePatch: {
+          ...turn.visiblePatch,
+          location: {
+            id: `loc-${sequence}`,
+            text: locationText,
+            source: "canonical",
+          },
+          relationships: {
+            add: [
+              {
+                id: `rel-${sequence}`,
+                subjectId,
+                text: `${subjectId}: ${disposition}`,
+                disposition,
+                source: "canonical",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      };
+    };
+
+    const turns = [
+      withLocationAndDisposition(0, "West Pier", "npc-venn", "Wary"),
+      withLocationAndDisposition(1, "Salt Cellar", "npc-venn", "Hostile"),
+      withLocationAndDisposition(2, "Bell Tower", "npc-mira", "Helpful"),
+    ];
+    const base = baseSession();
+    const session = parseAdventureSession({
+      ...base,
+      visibleState: {
+        ...base.visibleState,
+        relationships: [
+          {
+            id: "rel-init",
+            subjectId: "npc-init",
+            text: "npc-init: Friendly",
+            disposition: "Friendly",
+            source: "canonical",
+          },
+        ],
+      },
+      turns,
+    });
+    const priorStates = buildPriorProgressionStateIndex(
+      session,
+      new Set(["turn-0", "turn-1", "turn-2"]),
+    );
+
+    const s0 = priorStates.get("turn-0")!;
+    expect(s0.priorVisitedLocations.has("west pier")).toBe(false);
+    expect(s0.priorDispositions.get("npc-venn")).toBeUndefined();
+    expect(s0.priorDispositions.get("npc-init")).toBe("friendly");
+
+    const s1 = priorStates.get("turn-1")!;
+    expect(s1.priorVisitedLocations.has("west pier")).toBe(true);
+    expect(s1.priorVisitedLocations.has("salt cellar")).toBe(false);
+    expect(s1.priorDispositions.get("npc-venn")).toBe("wary");
+
+    const s2 = priorStates.get("turn-2")!;
+    expect(s2.priorVisitedLocations.has("west pier")).toBe(true);
+    expect(s2.priorVisitedLocations.has("salt cellar")).toBe(true);
+    expect(s2.priorVisitedLocations.has("bell tower")).toBe(false);
+    expect(s2.priorDispositions.get("npc-venn")).toBe("hostile");
+    expect(s2.priorDispositions.get("npc-mira")).toBeUndefined();
+  });
+
   it("classifies all 9 TurnProgressKind categories accurately with negative guards", () => {
     // 1. scenario-stage-or-status-change
     const stageTurn = makeTurn(
