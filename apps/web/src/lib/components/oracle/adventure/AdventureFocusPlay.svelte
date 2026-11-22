@@ -389,6 +389,28 @@
 <svelte:document bind:fullscreenElement />
 <svelte:window onkeydown={handleWindowKeydown} />
 
+{#snippet adventureControls(inToolsSheet: boolean)}
+  <AdventureProvisionalFacts
+    variant={inToolsSheet ? "sheet" : "header"}
+    overlayHost={inToolsSheet ? focusElement : undefined}
+    facts={manager.session?.provisionalFacts ?? []}
+    dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+    onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+    canDismiss={!manager.readOnly &&
+      manager.phase !== "generating" &&
+      !manager.session?.pendingRoll}
+    {existingTitles}
+    onAdd={onAddProvisionalFact}
+    onAddAll={onAddAllProvisionalFacts}
+  />
+  <AdventureSituationsDialog
+    variant={inToolsSheet ? "sheet" : "header"}
+    overlayHost={inToolsSheet ? focusElement : undefined}
+    {manager}
+    onAction={inToolsSheet ? closeTools : undefined}
+  />
+{/snippet}
+
 {#snippet utilities()}
   {#if artworkFlagEnabled}
     <ArtworkSettings preferences={artworkPreferences} />
@@ -488,18 +510,7 @@
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       {#if !phone}
         <div class="hidden sm:contents">
-          <AdventureProvisionalFacts
-            facts={manager.session?.provisionalFacts ?? []}
-            dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
-            onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
-            canDismiss={!manager.readOnly &&
-              manager.phase !== "generating" &&
-              !manager.session?.pendingRoll}
-            {existingTitles}
-            onAdd={onAddProvisionalFact}
-            onAddAll={onAddAllProvisionalFacts}
-          />
-          <AdventureSituationsDialog {manager} />
+          {@render adventureControls(false)}
         </div>
       {/if}
       <button
@@ -707,25 +718,7 @@
           class="mb-4 space-y-2 border-b border-theme-border pb-4"
           data-testid="adventure-tools-mobile-controls"
         >
-          <AdventureProvisionalFacts
-            variant="sheet"
-            overlayHost={focusElement}
-            facts={manager.session?.provisionalFacts ?? []}
-            dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
-            onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
-            canDismiss={!manager.readOnly &&
-              manager.phase !== "generating" &&
-              !manager.session?.pendingRoll}
-            {existingTitles}
-            onAdd={onAddProvisionalFact}
-            onAddAll={onAddAllProvisionalFacts}
-          />
-          <AdventureSituationsDialog
-            variant="sheet"
-            overlayHost={focusElement}
-            {manager}
-            onAction={closeTools}
-          />
+          {@render adventureControls(true)}
           <button
             class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-text px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
             type="button"

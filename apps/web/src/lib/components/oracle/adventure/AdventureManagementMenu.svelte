@@ -97,6 +97,7 @@
 
   const open = async (position?: "first" | "last") => {
     isOpen = true;
+    // fallow-ignore-next-line code-duplication -- Matching menu entry focus keeps keyboard navigation consistent with VaultActionsMenu.
     void loadOthers();
     if (!position) return;
     await tick();
@@ -140,6 +141,7 @@
   };
 </script>
 
+<!-- fallow-ignore-next-line complexity -- Inline and menu variants intentionally share this focused adventure control surface. -->
 {#if manager.session}
   {#if variant === "inline"}
     <section

@@ -135,6 +135,43 @@ function normalizeCount(count: number): number {
   return Math.floor(count);
 }
 
+function countLabels(discoveries: number, situations: number): string[] {
+  const labels: string[] = [];
+  if (discoveries > 0) {
+    labels.push(
+      discoveries + (discoveries === 1 ? " discovery" : " discoveries"),
+    );
+  }
+  if (situations > 0) {
+    labels.push(
+      situations +
+        (situations === 1 ? " active situation" : " active situations"),
+    );
+  }
+  return labels;
+}
+
+function toolsAriaLabel(countParts: string[], readOnly: boolean): string {
+  const labels = readOnly
+    ? [...countParts, "read-only recovery available"]
+    : countParts;
+  return labels.length > 0
+    ? "Adventure tools (" + labels.join(", ") + ")"
+    : "Adventure tools";
+}
+
+function liveAnnouncement(countParts: string[], readOnly: boolean): string {
+  if (countParts.length === 0) {
+    return readOnly
+      ? "Read-only in this tab. Recovery options in Adventure tools."
+      : "";
+  }
+  return readOnly
+    ? countParts.join(", ") +
+        "; read-only recovery available in Adventure tools."
+    : countParts.join(", ") + " in Adventure tools.";
+}
+
 /**
  * Summarizes hidden phone-sheet counts and urgent recovery availability for
  * the compact header tools button and polite live region.
@@ -155,43 +192,13 @@ export function derivePhoneToolsSummary({
       ? "primary"
       : "neutral";
 
-  const countParts: string[] = [];
-  if (discoveries > 0) {
-    countParts.push(
-      `${discoveries} ${discoveries === 1 ? "discovery" : "discoveries"}`,
-    );
-  }
-  if (situations > 0) {
-    countParts.push(
-      `${situations} active ${situations === 1 ? "situation" : "situations"}`,
-    );
-  }
-
-  const labelParts = [...countParts];
-  if (readOnly) {
-    labelParts.push("read-only recovery available");
-  }
-
-  const ariaLabel =
-    labelParts.length > 0
-      ? `Adventure tools (${labelParts.join(", ")})`
-      : "Adventure tools";
-
-  let liveAnnouncement = "";
-  if (countParts.length > 0 && readOnly) {
-    liveAnnouncement = `${countParts.join(", ")}; read-only recovery available in Adventure tools.`;
-  } else if (countParts.length > 0) {
-    liveAnnouncement = `${countParts.join(", ")} in Adventure tools.`;
-  } else if (readOnly) {
-    liveAnnouncement =
-      "Read-only in this tab. Recovery options in Adventure tools.";
-  }
+  const countParts = countLabels(discoveries, situations);
 
   return {
-    ariaLabel,
+    ariaLabel: toolsAriaLabel(countParts, readOnly),
     badgeCount,
     badgeText,
     badgeTone,
-    liveAnnouncement,
+    liveAnnouncement: liveAnnouncement(countParts, readOnly),
   };
 }
