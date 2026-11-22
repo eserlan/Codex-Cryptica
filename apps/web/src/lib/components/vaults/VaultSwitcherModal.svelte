@@ -79,7 +79,15 @@
     vaultName?: string;
     targetVault?: VaultRecord;
   }) => {
-    const picked = await pickFolderFilesFallback();
+    const picked = await pickFolderFilesFallback(() =>
+      notificationStore.confirm({
+        title: "Empty Folder Selection",
+        message:
+          "The browser returned no files. If you selected an empty folder, confirm to continue; otherwise cancel.",
+        confirmLabel: "Continue",
+        cancelLabel: "Cancel",
+      }),
+    );
     if (!picked) return;
     const { vaultId, name } = await ensureFallbackTarget(
       picked.folderName,

@@ -101,7 +101,9 @@ export function parseWebkitDirectoryFiles(
  * for browsers without `window.showDirectoryPicker` (Firefox, Safari, Brave
  * with the File System Access flag off). Returns null if the user cancels.
  */
-export function pickFolderFilesFallback(): Promise<PickedFolderFiles | null> {
+export function pickFolderFilesFallback(
+  confirmEmptySelection?: () => boolean | Promise<boolean>,
+): Promise<PickedFolderFiles | null> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
     input.type = "file";
@@ -112,6 +114,7 @@ export function pickFolderFilesFallback(): Promise<PickedFolderFiles | null> {
     input.style.opacity = "0";
 
     let settled = false;
+    let resolvingAmbiguousEmpty = false;
     let focusTimer: ReturnType<typeof setTimeout> | undefined;
 
     const finish = (result: PickedFolderFiles | null) => {
@@ -127,17 +130,36 @@ export function pickFolderFilesFallback(): Promise<PickedFolderFiles | null> {
       // Fallback for browsers that don't fire `cancel` on file inputs.
       focusTimer = setTimeout(() => {
         if (!settled) {
-          finish(
-            input.files?.length ? parseWebkitDirectoryFiles(input.files) : null,
-          );
+          if (input.files?.length) {
+            finish(parseWebkitDirectoryFiles(input.files));
+          } else {
+            void resolveAmbiguousEmptySelection();
+          }
         }
       }, 400);
+    };
+
+    const resolveAmbiguousEmptySelection = async () => {
+      if (settled || resolvingAmbiguousEmpty) return;
+      resolvingAmbiguousEmpty = true;
+      try {
+        const confirmed = await confirmEmptySelection?.();
+        finish(confirmed ? parseWebkitDirectoryFiles([]) : null);
+      } catch {
+        finish(null);
+      }
     };
 
     input.addEventListener("change", () => {
       finish(input.files ? parseWebkitDirectoryFiles(input.files) : null);
     });
-    input.addEventListener("cancel", () => finish(null));
+    input.addEventListener("cancel", () => {
+      if (input.files?.length) {
+        finish(parseWebkitDirectoryFiles(input.files));
+      } else {
+        void resolveAmbiguousEmptySelection();
+      }
+    });
     window.addEventListener("focus", onWindowFocus, { once: true });
 
     document.body.appendChild(input);

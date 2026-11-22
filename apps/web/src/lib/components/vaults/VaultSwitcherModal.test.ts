@@ -19,7 +19,7 @@ const {
   importFromFolderMock: vi.fn(async () => true),
   loadFilesMock: vi.fn(async () => undefined),
   pickFolderFilesFallbackMock: vi.fn<
-    () => Promise<{
+    (confirmEmptySelection?: () => boolean | Promise<boolean>) => Promise<{
       folderName: string;
       files: Array<{ path: string[]; file: File }>;
     } | null>
@@ -338,15 +338,23 @@ describe("VaultSwitcherModal", () => {
   });
 
   it("creates an empty vault when the fallback picker selects an empty folder", async () => {
-    pickFolderFilesFallbackMock.mockResolvedValueOnce({
-      folderName: "Imported Vault",
-      files: [],
-    });
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    vi.mocked(notificationStore.confirm).mockResolvedValueOnce(true);
+    pickFolderFilesFallbackMock.mockImplementationOnce(async (confirm) =>
+      (await confirm?.()) ? { folderName: "Imported Vault", files: [] } : null,
+    );
     const { onClose } = renderModal();
 
     await fireEvent.click(screen.getByRole("button", { name: /open folder/i }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(notificationStore.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Empty Folder Selection",
+        confirmLabel: "Continue",
+      }),
+    );
     expect(createVaultMock).toHaveBeenCalledWith("Imported Vault");
     expect(writeFolderFilesToVaultMock).toHaveBeenCalledWith("vault-1", []);
   });

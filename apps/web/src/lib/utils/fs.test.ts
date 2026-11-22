@@ -201,4 +201,45 @@ describe("pickFolderFilesFallback", () => {
     expect(clickSpy).toHaveBeenCalledOnce();
     clickSpy.mockRestore();
   });
+
+  it("confirms an ambiguous empty result after focus returns", async () => {
+    vi.useFakeTimers();
+    const confirmEmptySelection = vi.fn(() => true);
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    try {
+      const result = pickFolderFilesFallback(confirmEmptySelection);
+      window.dispatchEvent(new Event("focus"));
+      await vi.advanceTimersByTimeAsync(400);
+
+      await expect(result).resolves.toEqual({
+        folderName: "Imported Vault",
+        files: [],
+      });
+      expect(confirmEmptySelection).toHaveBeenCalledOnce();
+    } finally {
+      clickSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps an ambiguous empty result cancelled when confirmation is declined", async () => {
+    const confirmEmptySelection = vi.fn(() => false);
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(function (this: HTMLInputElement) {
+        this.dispatchEvent(new Event("cancel"));
+      });
+
+    try {
+      await expect(
+        pickFolderFilesFallback(confirmEmptySelection),
+      ).resolves.toBeNull();
+      expect(confirmEmptySelection).toHaveBeenCalledOnce();
+    } finally {
+      clickSpy.mockRestore();
+    }
+  });
 });
