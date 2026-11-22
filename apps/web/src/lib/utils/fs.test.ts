@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   walkDirectory,
   pickDirectory,
+  pickFolderFilesFallback,
   parseWebkitDirectoryFiles,
   isFileSystemAccessSupported,
   detectFileSystemAccessBrowser,
@@ -170,8 +171,11 @@ describe("parseWebkitDirectoryFiles", () => {
     ]);
   });
 
-  it("returns null for an empty file list and falls back to Imported Vault when no folder prefix exists", () => {
-    expect(parseWebkitDirectoryFiles([])).toBeNull();
+  it("represents an empty selected directory and falls back when no folder prefix exists", () => {
+    expect(parseWebkitDirectoryFiles([])).toEqual({
+      folderName: "Imported Vault",
+      files: [],
+    });
 
     const loose = new File(["hi"], "note.md");
     const result = parseWebkitDirectoryFiles([loose]);
@@ -179,5 +183,22 @@ describe("parseWebkitDirectoryFiles", () => {
       folderName: "Imported Vault",
       files: [{ path: ["note.md"], file: loose }],
     });
+  });
+});
+
+describe("pickFolderFilesFallback", () => {
+  it("returns a folder selection when the selected folder has no files", async () => {
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(function () {
+        this.dispatchEvent(new Event("change"));
+      });
+
+    await expect(pickFolderFilesFallback()).resolves.toEqual({
+      folderName: "Imported Vault",
+      files: [],
+    });
+    expect(clickSpy).toHaveBeenCalledOnce();
+    clickSpy.mockRestore();
   });
 });

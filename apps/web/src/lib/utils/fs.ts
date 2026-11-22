@@ -67,13 +67,14 @@ export interface PickedFolderFiles {
 /**
  * Normalizes a FileList from `<input type="file" webkitdirectory>` into a
  * vault folder name and vault-root-relative path segments (stripping the
- * selected top-level folder prefix). Returns null when no files are present.
+ * selected top-level folder prefix). An empty list represents an empty
+ * selected folder; callers use null only for cancellation.
  */
 export function parseWebkitDirectoryFiles(
   fileList: FileList | readonly File[],
 ): PickedFolderFiles | null {
   const list = Array.from(fileList);
-  if (list.length === 0) return null;
+  if (list.length === 0) return { folderName: "Imported Vault", files: [] };
 
   let folderName = "";
   const files: Array<{ path: string[]; file: File }> = [];
@@ -91,7 +92,7 @@ export function parseWebkitDirectoryFiles(
     }
   }
 
-  if (files.length === 0) return null;
+  if (files.length === 0) return { folderName: "Imported Vault", files: [] };
   return { folderName: folderName || "Imported Vault", files };
 }
 
@@ -126,7 +127,9 @@ export function pickFolderFilesFallback(): Promise<PickedFolderFiles | null> {
       // Fallback for browsers that don't fire `cancel` on file inputs.
       focusTimer = setTimeout(() => {
         if (!settled) {
-          finish(input.files ? parseWebkitDirectoryFiles(input.files) : null);
+          finish(
+            input.files?.length ? parseWebkitDirectoryFiles(input.files) : null,
+          );
         }
       }, 400);
     };

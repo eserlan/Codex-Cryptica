@@ -336,4 +336,77 @@ describe("VaultSwitcherModal", () => {
     expect(notificationStore.notify).not.toHaveBeenCalled();
     expect(onClose).not.toHaveBeenCalled();
   });
+
+  it("creates an empty vault when the fallback picker selects an empty folder", async () => {
+    pickFolderFilesFallbackMock.mockResolvedValueOnce({
+      folderName: "Imported Vault",
+      files: [],
+    });
+    const { onClose } = renderModal();
+
+    await fireEvent.click(screen.getByRole("button", { name: /open folder/i }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createVaultMock).toHaveBeenCalledWith("Imported Vault");
+    expect(writeFolderFilesToVaultMock).toHaveBeenCalledWith("vault-1", []);
+  });
+
+  it("reports a possibly partial failure when importing a folder into a new vault", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    pickFolderFilesFallbackMock.mockResolvedValueOnce({
+      folderName: "Imported Vault",
+      files: [{ path: ["note.md"], file: new File(["note"], "note.md") }],
+    });
+    writeFolderFilesToVaultMock.mockRejectedValueOnce(
+      new Error("Quota exceeded"),
+    );
+    renderModal();
+
+    await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
+    await fireEvent.input(screen.getByLabelText("New Vault Name"), {
+      target: { value: "Imported Vault" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /import/i }));
+
+    await waitFor(() =>
+      expect(notificationStore.notify).toHaveBeenCalledWith(
+        expect.stringContaining("import may be partial"),
+        "error",
+        true,
+      ),
+    );
+  });
+
+  it("reports a possibly partial failure when restoring a folder into an existing vault", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    vaultRegistry.availableVaults = [
+      {
+        id: "vault-existing",
+        name: "Existing Vault",
+        createdAt: Date.now(),
+        lastOpenedAt: Date.now(),
+        entityCount: 0,
+      },
+    ];
+    pickFolderFilesFallbackMock.mockResolvedValueOnce({
+      folderName: "Backup",
+      files: [{ path: ["note.md"], file: new File(["note"], "note.md") }],
+    });
+    writeFolderFilesToVaultMock.mockRejectedValueOnce(
+      new Error("Quota exceeded"),
+    );
+    renderModal();
+
+    await fireEvent.click(screen.getByTitle("Restore from Folder"));
+
+    await waitFor(() =>
+      expect(notificationStore.notify).toHaveBeenCalledWith(
+        expect.stringContaining("import may be partial"),
+        "error",
+        true,
+      ),
+    );
+  });
 });

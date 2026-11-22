@@ -52,7 +52,10 @@
     }
     console.error(e);
     if (fallbackMessage) {
-      const msg = e instanceof Error && e.message ? e.message : fallbackMessage;
+      const msg =
+        e instanceof Error && e.message
+          ? `${fallbackMessage} ${e.message}`
+          : fallbackMessage;
       notificationStore.notify(msg, "error", true);
     }
   };
@@ -211,7 +214,10 @@
         onClose();
       }
     } catch (e) {
-      handleFolderError(e);
+      handleFolderError(
+        e,
+        "Failed to import the selected folder. The import may be partial; retry it to continue.",
+      );
     } finally {
       isLoading = false;
     }
@@ -230,7 +236,10 @@
       }
       await vault.importFromFolder(handle);
     } catch (e) {
-      handleFolderError(e);
+      handleFolderError(
+        e,
+        "Failed to restore from the selected folder. The import may be partial; retry it to continue.",
+      );
     } finally {
       isLoading = false;
     }
