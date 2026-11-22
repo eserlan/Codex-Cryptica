@@ -2,6 +2,11 @@ import {
   allocatePromptBudget,
   type PromptAdventurePackage,
 } from "./context-budget";
+import {
+  buildGMDirectorBrief,
+  MAX_DIRECTOR_BRIEF_CHARS,
+} from "./gm-director-brief";
+import { MAX_SERIALIZED_STATE_CHARS } from "./schemas";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
 import { packageProgressPromptSummary } from "./package-progress";
@@ -135,17 +140,18 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
     "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
     "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
+    "GM-ONLY director brief is an advisory synthesis of active focus, established facts vs. potential developments, and scene posture; follow unexpected player actions over it and never treat potential items as already established. Never leak gmTruthRef, pressure, or internal IDs, and never populate visiblePatch.situation solely to manufacture an objective in open-world or calm scenes.",
     "Source excerpts are world knowledge, not proof of character knowledge. Preserve period applicability and uncertainty labels; retrieved secrets or hidden identities are never revealed merely because they were retrieved.",
     "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
     "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry so the player may choose to save it to Codex. Set provisionalFacts[].scenarioId only to an existing scenario ID from playerScenarios or GM-ONLY scenarios—never to a package record ID (such as a clue, encounter, secret, or scene ID). Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
     "For every newly created fact (including add entries, location, situation, hidden state, and provisionalFacts), omit id. IDs are assigned when the turn is committed. Include an id only to update, remove, or reveal existing state.",
     "Omit optional fields when they have no value; never use empty strings as placeholder IDs.",
     "Narration may be up to 2,000 characters; all other text fields must be 600 characters or fewer.",
-    "Include exactly three concise suggestedActions tailored to the playerCharacter's personality, traits, and situation, offering distinct approaches. They are optional player choices, never actions you have decided for the character.",
+    "Include exactly three concise suggestedActions tailored to the playerCharacter's personality, traits, and situation, representing genuinely distinct supported approaches (such as investigate, intervene, travel, converse, wait, or walk away) rather than three rephrasings of the same question. They are optional player choices, never actions you have decided for the character.",
     ...packageBehavior(input.adventurePackage),
     "Return only the requested structured schema.",
   ].join(" ");
-  const state = JSON.stringify({
+  const baseState = {
     playerVisibleState: projectVisibleState(input.session),
     playerScenarios: playerScenarioCollectionProjection(input.session),
     "GM-ONLY scenarios": scenarios.map((scenario) => ({
@@ -190,6 +196,19 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
           ...(pacing ? { pacing } : {}),
         }
       : undefined,
+  };
+  const headroom =
+    MAX_SERIALIZED_STATE_CHARS - JSON.stringify(baseState).length - 40;
+  const directorBrief = buildGMDirectorBrief({
+    session: input.session,
+    phase: input.phase,
+    playerAction: input.playerAction,
+    adventurePackage: input.adventurePackage,
+    maxChars: Math.min(MAX_DIRECTOR_BRIEF_CHARS, Math.max(0, headroom)),
+  });
+  const state = JSON.stringify({
+    ...baseState,
+    ...(directorBrief ? { "GM-ONLY director brief": directorBrief } : {}),
   });
   return allocatePromptBudget({
     behavior,
