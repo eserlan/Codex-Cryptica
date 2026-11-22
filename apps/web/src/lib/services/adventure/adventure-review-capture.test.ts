@@ -464,6 +464,49 @@ describe("Adventure diagnostic JSON for AI", () => {
     const fresh = JSON.parse(adventureDiagnosticJson(exampleSession()));
     expect(fresh.summary.dialogueLoopTurns).toBe(0);
     expect(fresh.summary.dialogueRecoveryDue).toBe(false);
+    expect(fresh.summary.investigativeStallTurns).toBe(0);
+    expect(fresh.summary.investigativeRecoveryDue).toBe(false);
+    expect(fresh.summary.repeatedNonAnswerTurns).toBe(0);
+  });
+
+  it("reports investigative stall and repeated non-answer metrics in diagnostic summary (#5110)", () => {
+    const source = manyTurns(3);
+    source.worldTime = undefined;
+    source.scenarioCollection!.items[0]!.knowledge = "heard";
+    source.scenarioCollection!.focusedScenarioId = "scenario-1";
+    source.turns = [
+      {
+        ...source.turns[0]!,
+        id: "turn-0",
+        sequence: 0,
+        playerAction: "Ask the ferryman about the mill?",
+        narration: "I don't know what happened at the mill.",
+        provisionalFactIds: [],
+      },
+      {
+        ...source.turns[1]!,
+        id: "turn-1",
+        sequence: 1,
+        playerAction: "Ask the baker about the mill?",
+        narration: "I cannot say anything about the mill.",
+        provisionalFactIds: [],
+      },
+      {
+        ...source.turns[2]!,
+        id: "turn-2",
+        sequence: 2,
+        playerAction: "Ask the watchman about the mill?",
+        narration: "I have no idea about the mill.",
+        provisionalFactIds: [],
+      },
+    ];
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.investigativeStallTurns).toBe(3);
+    expect(out.summary.repeatedNonAnswerTurns).toBe(3);
+    expect(out.summary.investigativeRecoveryDue).toBe(true);
+    expect(out._readme).toContain("investigativeStallTurns");
+    expect(out._readme).toContain("repeatedNonAnswerTurns");
+    expect(out._readme).toContain("investigativeRecoveryDue");
   });
 
   it("is smaller than the full copy for long sessions", () => {

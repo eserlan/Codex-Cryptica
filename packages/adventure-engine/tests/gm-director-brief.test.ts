@@ -1281,4 +1281,91 @@ describe("GMDirectorBrief (#5109)", () => {
     const parsedState = JSON.parse(prompt.state) as Record<string, unknown>;
     expect(parsedState["GM-ONLY director brief"]).toBeUndefined();
   });
+
+  it("surfaces investigative stall posture, suppresses converse in suggestedActionKinds, and sheds progression under tight maxChars (#5110)", () => {
+    const s = createLivingSettlementWorldEntrySession();
+    s.scenarioCollection!.focusedScenarioId = "scen-missing-cooper";
+    s.turns = [
+      makeTurn(
+        1,
+        "Ask the ferryman about the shuttered workshop?",
+        'The ferryman says: "I don\'t know why the workshop is shut."',
+      ),
+      makeTurn(
+        2,
+        "Question the baker about Tams's morning bread?",
+        'The baker shakes his head: "I cannot say where Tams went."',
+      ),
+      makeTurn(
+        3,
+        "Speak with the dockhand about the missing cooper?",
+        'The dockhand shrugs: "I have no idea about the cooper."',
+      ),
+    ];
+
+    const brief = buildGMDirectorBrief({
+      session: s,
+      phase: "action",
+      playerAction: "Ask the watchman about Cooper Tams",
+    })!;
+    expect(brief.scenePosture).toBe("stalled-investigation");
+    expect(brief.progression).toEqual({
+      turnsWithoutAdvancement: 3,
+      repeatedNonAnswerTurns: 3,
+      recommendedAngle: "alternate-route",
+    });
+    expect(brief.suggestedActionKinds).toEqual([
+      "investigate",
+      "travel",
+      "walk-away",
+    ]);
+    expect(brief.suggestedActionKinds).not.toContain("converse");
+    expect(JSON.stringify(brief.progression)).not.toContain(
+      "CANARY-COOPER-LEDGER",
+    );
+    expect(JSON.stringify(brief)).not.toContain("CANARY-SALT-SMUGGLERS");
+    expect(JSON.stringify(brief)).not.toContain("CANARY-JACKDAW-NEST");
+    expect(JSON.stringify(playerScenarioCollectionProjection(s))).not.toContain(
+      "CANARY-COOPER-LEDGER",
+    );
+
+    // On-site revelation-crisis uses intervene instead of travel when stalled.
+    const crisis = s.scenarioCollection!.items.find(
+      (item) => item.id === "scen-missing-cooper",
+    )!;
+    crisis.stage = "revelation-crisis";
+    const crisisBrief = buildGMDirectorBrief({
+      session: s,
+      phase: "action",
+      playerAction: "Ask the watchman about Cooper Tams",
+    })!;
+    expect(crisisBrief.suggestedActionKinds).toEqual([
+      "investigate",
+      "intervene",
+      "walk-away",
+    ]);
+
+    // Tight maxChars sheds progression cleanly before dropping primary scenario.
+    const fullLength = JSON.stringify(brief).length;
+    const shedBrief = buildGMDirectorBrief({
+      session: s,
+      phase: "action",
+      playerAction: "Ask the watchman about Cooper Tams",
+      maxChars: fullLength - 10,
+    })!;
+    expect(shedBrief).toBeDefined();
+    expect(shedBrief.progression).toBeUndefined();
+    expect(shedBrief.pursuedScenarios).toHaveLength(1);
+
+    // Switching from a stalled scenario to calm open-world play omits progression and keeps "converse".
+    const calmSwitch = buildGMDirectorBrief({
+      session: s,
+      phase: "action",
+      playerAction: "Order a loaf of warm bread and chat about the weather",
+    })!;
+    expect(calmSwitch.mode).toBe("open-world");
+    expect(calmSwitch.scenePosture).toBe("calm-conversation");
+    expect(calmSwitch.progression).toBeUndefined();
+    expect(calmSwitch.suggestedActionKinds).toContain("converse");
+  });
 });
