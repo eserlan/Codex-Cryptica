@@ -32,7 +32,7 @@ export function containTab(
   event: KeyboardEvent,
   container: HTMLElement,
 ): boolean {
-  if (event.key !== "Tab") return false;
+  if (event.defaultPrevented || event.key !== "Tab") return false;
   const active = container.ownerDocument.activeElement;
   if (!(active instanceof HTMLElement) || !container.contains(active)) {
     return false;
@@ -79,6 +79,41 @@ export function bodyPortal(node: HTMLElement, enabled: boolean) {
     update: apply,
     destroy() {
       if (moved) {
+        placeholder.remove();
+        node.remove();
+      }
+    },
+  };
+}
+
+/**
+ * Svelte action: while `target` is defined, moves `node` into `target` so
+ * modal overlays are not clipped inside scrollable bottom sheets.
+ */
+export function portalTo(node: HTMLElement, target: HTMLElement | undefined) {
+  const placeholder = node.ownerDocument.createComment("adventure-portal");
+  let mountedTarget: HTMLElement | undefined;
+
+  function apply(next: HTMLElement | undefined) {
+    if (next === mountedTarget) return;
+    if (next) {
+      if (!mountedTarget) {
+        node.before(placeholder);
+      }
+      next.appendChild(node);
+      mountedTarget = next;
+    } else if (mountedTarget) {
+      placeholder.after(node);
+      placeholder.remove();
+      mountedTarget = undefined;
+    }
+  }
+
+  apply(target);
+  return {
+    update: apply,
+    destroy() {
+      if (mountedTarget) {
         placeholder.remove();
         node.remove();
       }

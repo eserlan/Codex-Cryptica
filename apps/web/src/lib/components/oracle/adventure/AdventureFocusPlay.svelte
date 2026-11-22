@@ -4,6 +4,12 @@
   import { onMount, tick } from "svelte";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
   import { bodyPortal, containTab } from "./adventure-phone-surface";
+  import {
+    deriveAdventureHeaderStatus,
+    derivePhoneToolsSummary,
+  } from "./adventure-header-state.js";
+  import { batchFilterPromotableFacts } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
+  import { extractActiveHeardScenarios } from "#lib/stores/oracle/adventure-scenarios.js";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
   import {
@@ -127,6 +133,8 @@
   );
   let utilitiesOpen = $state(false);
   let toolsButton = $state<HTMLButtonElement>();
+  let toolsCloseButton = $state<HTMLButtonElement>();
+  let utilitiesSheet = $state<HTMLElement>();
   let focusElement = $state<HTMLElement>();
   let fullscreenElement = $state<Element | null>(null);
   let fullscreenTransitioning = $state(false);
@@ -137,6 +145,32 @@
     manager.session?.worldTime
       ? formatWorldElapsedMinutes(manager.session.worldTime.elapsedMinutes)
       : null,
+  );
+  const adventureTitle = $derived(manager.session?.title ?? "Adventure");
+  const pendingDiscoveriesCount = $derived(
+    batchFilterPromotableFacts(
+      manager.session?.provisionalFacts ?? [],
+      existingTitles,
+      manager.session?.dismissedProvisionalFactIds ?? [],
+    ).length,
+  );
+  const activeSituationsCount = $derived(
+    extractActiveHeardScenarios(manager.session).length,
+  );
+  const headerStatus = $derived(
+    deriveAdventureHeaderStatus({
+      readOnly: manager.readOnly,
+      phase: manager.phase,
+      pendingRoll: manager.session?.pendingRoll,
+      elapsedLabel,
+    }),
+  );
+  const phoneToolsSummary = $derived(
+    derivePhoneToolsSummary({
+      discoveriesCount: pendingDiscoveriesCount,
+      situationsCount: activeSituationsCount,
+      readOnly: manager.readOnly,
+    }),
   );
   const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
   const visibleEventVersion = $derived(
@@ -282,9 +316,33 @@
     });
   });
 
+  function openTools(): void {
+    utilitiesOpen = true;
+    void tick().then(() => toolsCloseButton?.focus());
+  }
+
   function closeTools(): void {
     utilitiesOpen = false;
     toolsButton?.focus();
+  }
+
+  function toggleTools(): void {
+    if (utilitiesOpen) {
+      closeTools();
+    } else {
+      openTools();
+    }
+  }
+
+  function handleWindowKeydown(event: KeyboardEvent): void {
+    if (!utilitiesOpen || event.key !== "Escape" || event.defaultPrevented) {
+      return;
+    }
+    if (focusElement?.querySelector('[role="dialog"][aria-modal="true"]')) {
+      return;
+    }
+    event.preventDefault();
+    closeTools();
   }
 
   async function enterFullscreen(): Promise<void> {
@@ -314,9 +372,7 @@
 </script>
 
 <svelte:document bind:fullscreenElement />
-<svelte:window
-  onkeydown={(event) => utilitiesOpen && event.key === "Escape" && closeTools()}
-/>
+<svelte:window onkeydown={handleWindowKeydown} />
 
 {#snippet utilities()}
   {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
@@ -344,12 +400,12 @@
   }}
 >
   <header
-    class="flex shrink-0 items-center gap-2 border-b border-theme-border bg-theme-surface px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:flex-wrap sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
+    class="flex shrink-0 flex-nowrap items-center justify-between gap-2 border-b border-theme-border bg-theme-surface px-3 py-2 pt-[calc(0.5rem+env(safe-area-inset-top))] sm:flex-wrap sm:gap-3 sm:px-4 sm:py-3"
   >
     <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       <button
         type="button"
-        class="flex min-h-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-10 sm:min-w-10"
         onclick={() => void manager.close()}
         title="Leave adventure (saves automatically)"
         aria-label="Leave adventure"
@@ -361,83 +417,156 @@
         <h2
           id="adventure-heading"
           class="font-header truncate text-base font-bold leading-tight text-theme-text sm:text-lg"
-          title={manager.session?.title ?? "Adventure"}
+          title={adventureTitle}
+          aria-label={adventureTitle}
         >
-          {manager.session?.title ?? "Adventure"}
+          {adventureTitle}
         </h2>
         <p
-          class="truncate text-xs uppercase tracking-wide text-theme-text sm:text-sm sm:normal-case sm:tracking-normal"
+          class={[
+            "flex items-center gap-1.5 truncate text-xs font-medium sm:block sm:text-sm sm:font-normal",
+            phone && headerStatus.tone === "danger"
+              ? "text-theme-danger"
+              : "text-theme-text",
+          ]}
+          data-testid="adventure-header-status"
         >
-          {manager.readOnly
-            ? "Read-only in this tab"
-            : manager.phase === "offline"
-              ? "Waiting for connection"
-              : manager.phase}
-          {#if elapsedLabel}
+          {#if phone}
             <span
-              class="ml-2 normal-case tracking-normal"
-              title="Elapsed fictional time since the adventure began"
+              class={[
+                "inline-flex min-w-0 items-center gap-1.5 truncate",
+                headerStatus.tone === "primary"
+                  ? "rounded bg-theme-primary/15 px-1.5 py-0.5 font-semibold"
+                  : "",
+              ]}
             >
-              · {elapsedLabel} elapsed
+              {#if headerStatus.icon}
+                <span
+                  aria-hidden="true"
+                  class={[
+                    headerStatus.icon,
+                    "h-3.5 w-3.5 shrink-0",
+                    headerStatus.busy
+                      ? "animate-spin motion-reduce:animate-none"
+                      : "",
+                  ]}
+                ></span>
+              {/if}
+              <span class="min-w-0 truncate">{headerStatus.phoneLabel}</span>
             </span>
+          {:else}
+            {headerStatus.desktopLabel}
+            {#if elapsedLabel}
+              <span
+                class="ml-2 normal-case tracking-normal"
+                title="Elapsed fictional time since the adventure began"
+              >
+                · {elapsedLabel} elapsed
+              </span>
+            {/if}
           {/if}
         </p>
       </div>
     </div>
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
-      <AdventureProvisionalFacts
-        facts={manager.session?.provisionalFacts ?? []}
-        dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
-        onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
-        canDismiss={!manager.readOnly &&
-          manager.phase !== "generating" &&
-          !manager.session?.pendingRoll}
-        {existingTitles}
-        onAdd={onAddProvisionalFact}
-        onAddAll={onAddAllProvisionalFacts}
-      />
-      <AdventureSituationsDialog {manager} />
+      {#if !phone}
+        <div class="hidden sm:contents">
+          <AdventureProvisionalFacts
+            facts={manager.session?.provisionalFacts ?? []}
+            dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+            onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+            canDismiss={!manager.readOnly &&
+              manager.phase !== "generating" &&
+              !manager.session?.pendingRoll}
+            {existingTitles}
+            onAdd={onAddProvisionalFact}
+            onAddAll={onAddAllProvisionalFacts}
+          />
+          <AdventureSituationsDialog {manager} />
+        </div>
+      {/if}
       <button
         bind:this={toolsButton}
-        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition sm:min-h-12 sm:px-3 hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-12 sm:px-3"
         type="button"
-        aria-label="Adventure tools"
-        title="Adventure tools"
+        aria-label={phone ? phoneToolsSummary.ariaLabel : "Adventure tools"}
+        title={phone ? phoneToolsSummary.ariaLabel : "Adventure tools"}
         aria-controls="adventure-utilities"
         aria-expanded={utilitiesOpen}
-        onclick={() => (utilitiesOpen = !utilitiesOpen)}
-      >
-        <span class="inline-flex items-center gap-2">
-          <span aria-hidden="true" class="icon-[lucide--panel-right] h-4 w-4"
-          ></span>
-          <span class="hidden sm:inline">Adventure tools</span>
-        </span>
-      </button>
-      <button
-        class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
-        type="button"
-        aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
-        aria-pressed={isFullscreen}
-        disabled={fullscreenTransitioning}
-        onclick={() => void toggleFullscreen()}
+        onclick={toggleTools}
       >
         <span class="inline-flex items-center gap-2">
           <span
             aria-hidden="true"
-            class={isFullscreen
-              ? "icon-[lucide--minimize-2] h-4 w-4"
-              : "icon-[lucide--maximize-2] h-4 w-4"}
+            class={[
+              phone
+                ? "icon-[lucide--more-vertical]"
+                : "icon-[lucide--panel-right]",
+              "h-4 w-4",
+            ]}
           ></span>
-          {isFullscreen ? "Fullscreen active" : "Fullscreen"}
+          <span class="hidden sm:inline">Adventure tools</span>
         </span>
+        {#if phone && phoneToolsSummary.badgeText}
+          <span
+            aria-hidden="true"
+            data-testid="adventure-tools-badge"
+            class={[
+              "pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none tabular-nums",
+              phoneToolsSummary.badgeTone === "danger"
+                ? "border border-theme-danger bg-theme-surface text-theme-danger"
+                : "bg-theme-primary text-theme-on-primary",
+            ]}
+          >
+            {phoneToolsSummary.badgeText}
+          </span>
+        {:else if phone && phoneToolsSummary.badgeTone === "danger"}
+          <span
+            aria-hidden="true"
+            data-testid="adventure-tools-urgent-dot"
+            class="pointer-events-none absolute right-1 top-1 h-2 w-2 rounded-full bg-theme-danger"
+          ></span>
+        {/if}
       </button>
-      <AdventureManagementMenu
-        {manager}
-        {repository}
-        {vaultId}
-        onSwitch={onResume}
-      />
+      {#if !phone}
+        <div class="hidden sm:contents">
+          <button
+            class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
+            type="button"
+            aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
+            aria-pressed={isFullscreen}
+            disabled={fullscreenTransitioning}
+            onclick={() => void toggleFullscreen()}
+          >
+            <span class="inline-flex items-center gap-2">
+              <span
+                aria-hidden="true"
+                class={isFullscreen
+                  ? "icon-[lucide--minimize-2] h-4 w-4"
+                  : "icon-[lucide--maximize-2] h-4 w-4"}
+              ></span>
+              {isFullscreen ? "Fullscreen active" : "Fullscreen"}
+            </span>
+          </button>
+          <AdventureManagementMenu
+            {manager}
+            {repository}
+            {vaultId}
+            onSwitch={onResume}
+          />
+        </div>
+      {/if}
     </div>
+    {#if phone}
+      <div
+        class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="adventure-phone-live-status"
+      >
+        {phoneToolsSummary.liveAnnouncement}
+      </div>
+    {/if}
   </header>
 
   {#if manager.session && manager.recap}
@@ -522,24 +651,95 @@
       onclick={closeTools}
     ></button>
     <!-- fallow-ignore-next-line css-broken-reference -->
+    <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <aside
+      bind:this={utilitiesSheet}
       class="absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
       id="adventure-utilities"
       aria-label="Adventure tools"
+      onkeydown={(event) => {
+        if (phone && utilitiesSheet) containTab(event, utilitiesSheet);
+      }}
     >
-      <div class="mb-3 flex items-center justify-between gap-3">
-        <h3 class="font-header text-base font-bold text-theme-text">
-          Adventure tools
-        </h3>
+      <div class="mb-3 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <h3 class="font-header text-base font-bold text-theme-text">
+            Adventure tools
+          </h3>
+          {#if phone}
+            <p
+              class="mt-0.5 break-words text-xs text-theme-text"
+              data-testid="adventure-tools-full-title"
+            >
+              {adventureTitle}
+            </p>
+          {/if}
+        </div>
         <button
+          bind:this={toolsCloseButton}
           type="button"
-          class="flex min-h-10 min-w-10 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10"
+          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           aria-label="Close adventure tools"
           onclick={closeTools}
         >
           <span aria-hidden="true" class="icon-[lucide--x] h-4 w-4"></span>
         </button>
       </div>
+      {#if phone}
+        <div
+          class="mb-4 space-y-2 border-b border-theme-border pb-4"
+          data-testid="adventure-tools-mobile-controls"
+        >
+          <AdventureProvisionalFacts
+            variant="sheet"
+            overlayHost={focusElement}
+            facts={manager.session?.provisionalFacts ?? []}
+            dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+            onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+            canDismiss={!manager.readOnly &&
+              manager.phase !== "generating" &&
+              !manager.session?.pendingRoll}
+            {existingTitles}
+            onAdd={onAddProvisionalFact}
+            onAddAll={onAddAllProvisionalFacts}
+          />
+          <AdventureSituationsDialog
+            variant="sheet"
+            overlayHost={focusElement}
+            {manager}
+            onAction={closeTools}
+          />
+          <button
+            class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            type="button"
+            aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
+            aria-pressed={isFullscreen}
+            disabled={fullscreenTransitioning}
+            onclick={() => void toggleFullscreen()}
+          >
+            <span class="flex items-center gap-2.5">
+              <span
+                aria-hidden="true"
+                class={[
+                  isFullscreen
+                    ? "icon-[lucide--minimize-2]"
+                    : "icon-[lucide--maximize-2]",
+                  "h-4 w-4 shrink-0",
+                ]}
+              ></span>
+              <span>{isFullscreen ? "Fullscreen active" : "Fullscreen"}</span>
+            </span>
+          </button>
+          <AdventureManagementMenu
+            variant="inline"
+            {manager}
+            {repository}
+            {vaultId}
+            onSwitch={onResume}
+            onAction={closeTools}
+          />
+        </div>
+      {/if}
       <div class="space-y-4">{@render utilities()}</div>
     </aside>
   {/if}

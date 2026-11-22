@@ -7,7 +7,7 @@
     AdventurePromotionSettings,
     adventurePromotionSettings as defaultSettings,
   } from "#lib/stores/ui/adventure-promotion-settings.svelte.js";
-  import { containTab } from "./adventure-phone-surface.js";
+  import { containTab, portalTo } from "./adventure-phone-surface.js";
 
   let {
     facts,
@@ -18,6 +18,8 @@
     dismissedIds = [],
     canDismiss = true,
     settings = defaultSettings,
+    variant = "header",
+    overlayHost,
   }: {
     facts: ProvisionalFact[];
     existingTitles: string[];
@@ -28,6 +30,8 @@
     dismissedIds?: string[];
     canDismiss?: boolean;
     settings?: AdventurePromotionSettings;
+    variant?: "header" | "sheet";
+    overlayHost?: HTMLElement;
   } = $props();
 
   let savedIds = $state<string[]>([]);
@@ -188,12 +192,41 @@
   onkeydown={(event) => {
     if (expanded && event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       closeReview();
     }
   }}
 />
 
-{#if visibleFacts.length > 0}
+{#if variant === "sheet"}
+  <button
+    bind:this={triggerButton}
+    type="button"
+    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    aria-label={visibleFacts.length > 0
+      ? `Review ${visibleFacts.length} adventure ${visibleFacts.length === 1 ? "discovery" : "discoveries"}`
+      : "Adventure discoveries (0 awaiting review)"}
+    aria-expanded={expanded}
+    aria-controls="adventure-discoveries-review"
+    onclick={openReview}
+  >
+    <span class="flex items-center gap-2.5">
+      <span class="icon-[lucide--sparkles] h-4 w-4 shrink-0" aria-hidden="true"
+      ></span>
+      <span>Discoveries</span>
+    </span>
+    <span
+      class={[
+        "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+        visibleFacts.length > 0
+          ? "bg-theme-primary text-theme-on-primary"
+          : "bg-theme-border/40 text-theme-text",
+      ]}
+    >
+      {visibleFacts.length}
+    </span>
+  </button>
+{:else if visibleFacts.length > 0}
   <button
     bind:this={triggerButton}
     type="button"
@@ -212,7 +245,11 @@
 {/if}
 
 {#if expanded}
-  <div class="absolute inset-0 z-40" data-testid="adventure-discovery-overlay">
+  <div
+    class="absolute inset-0 z-40"
+    data-testid="adventure-discovery-overlay"
+    use:portalTo={overlayHost}
+  >
     <button
       type="button"
       class="absolute inset-0 w-full bg-theme-bg/75"

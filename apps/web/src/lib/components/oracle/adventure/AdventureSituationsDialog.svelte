@@ -7,10 +7,20 @@
     extractActiveHeardScenarios,
     extractHeardScenarios,
   } from "#lib/stores/oracle/adventure-scenarios.js";
-  import { containTab } from "./adventure-phone-surface.js";
+  import { containTab, portalTo } from "./adventure-phone-surface.js";
   import AdventureScenarioControls from "./AdventureScenarioControls.svelte";
 
-  let { manager }: { manager: AdventureManager } = $props();
+  let {
+    manager,
+    variant = "header",
+    overlayHost,
+    onAction,
+  }: {
+    manager: AdventureManager;
+    variant?: "header" | "sheet";
+    overlayHost?: HTMLElement;
+    onAction?: () => void;
+  } = $props();
 
   let expanded = $state(false);
   let busy = $state(false);
@@ -62,6 +72,7 @@
       );
       if (manager.phase === "generating") {
         closeDialog();
+        onAction?.();
       }
       await submission;
     } catch (cause) {
@@ -76,35 +87,68 @@
   onkeydown={(event) => {
     if (expanded && event.key === "Escape") {
       event.preventDefault();
+      event.stopPropagation();
       closeDialog();
     }
   }}
 />
 
-<button
-  bind:this={triggerButton}
-  type="button"
-  class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md border border-theme-border px-2.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:gap-2 sm:px-3 sm:text-sm"
-  aria-label={activeScenarios.length > 0
-    ? `Adventure situations (${activeScenarios.length} active)`
-    : "Adventure situations"}
-  aria-expanded={expanded}
-  aria-controls="adventure-situations-dialog"
-  onclick={openDialog}
->
-  <span class="icon-[lucide--compass] h-4 w-4" aria-hidden="true"></span>
-  {#if activeScenarios.length > 0}
+{#if variant === "sheet"}
+  <button
+    bind:this={triggerButton}
+    type="button"
+    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    aria-label={`Adventure situations (${activeScenarios.length} active)`}
+    aria-expanded={expanded}
+    aria-controls="adventure-situations-dialog"
+    onclick={openDialog}
+  >
+    <span class="flex items-center gap-2.5">
+      <span class="icon-[lucide--compass] h-4 w-4 shrink-0" aria-hidden="true"
+      ></span>
+      <span>Situations</span>
+    </span>
     <span
-      class="rounded-full bg-theme-primary/10 px-1.5 py-0.5 tabular-nums font-semibold"
+      class={[
+        "rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums",
+        activeScenarios.length > 0
+          ? "bg-theme-primary text-theme-on-primary"
+          : "bg-theme-border/40 text-theme-text",
+      ]}
     >
       {activeScenarios.length}
     </span>
-  {/if}
-  <span class="hidden sm:inline">Situations</span>
-</button>
+  </button>
+{:else}
+  <button
+    bind:this={triggerButton}
+    type="button"
+    class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md border border-theme-border px-2.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:gap-2 sm:px-3 sm:text-sm"
+    aria-label={activeScenarios.length > 0
+      ? `Adventure situations (${activeScenarios.length} active)`
+      : "Adventure situations"}
+    aria-expanded={expanded}
+    aria-controls="adventure-situations-dialog"
+    onclick={openDialog}
+  >
+    <span class="icon-[lucide--compass] h-4 w-4" aria-hidden="true"></span>
+    {#if activeScenarios.length > 0}
+      <span
+        class="rounded-full bg-theme-primary/10 px-1.5 py-0.5 tabular-nums font-semibold"
+      >
+        {activeScenarios.length}
+      </span>
+    {/if}
+    <span class="hidden sm:inline">Situations</span>
+  </button>
+{/if}
 
 {#if expanded}
-  <div class="absolute inset-0 z-40" data-testid="adventure-situations-overlay">
+  <div
+    class="absolute inset-0 z-40"
+    data-testid="adventure-situations-overlay"
+    use:portalTo={overlayHost}
+  >
     <button
       type="button"
       class="absolute inset-0 w-full bg-theme-bg/75"
