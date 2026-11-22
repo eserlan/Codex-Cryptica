@@ -152,7 +152,8 @@ export const topicEntries: DiscoveryEntryInput[] = [
       "first time gm session checklist",
       "beginner game master resources",
     ],
-    audience: "People preparing to run their first tabletop roleplaying game, regardless of ruleset",
+    audience:
+      "People preparing to run their first tabletop roleplaying game, regardless of ruleset",
     userJob: "navigate",
     uniqueValue:
       "A five-step, system-neutral first-session journey from choosing a starter adventure through Session 0, preparation, improvisation and recap. It curates existing Answers and a practical prep tool rather than replacing the first-time GM how-to Answer or competing with the D&D-specific DM hub.",

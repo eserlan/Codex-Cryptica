@@ -9,19 +9,20 @@ export const NEW_GM_TOPIC_CONFIG = {
   canonicalPath: "/topics/new-gm",
   label: "getting started",
   title: "New Game Master? Run Your First Tabletop RPG Session",
-  metaTitle: "New Game Master Guide: Run Your First RPG Session | Codex Cryptica",
+  metaTitle:
+    "New Game Master Guide: Run Your First RPG Session | Codex Cryptica",
   description:
     "First time running a tabletop RPG? Learn what a GM actually does, choose a small adventure, prepare Session 0, run your first game and keep useful notes. Works beyond D&D.",
   leadParagraph:
     "You do not need to memorise a rulebook, invent an entire world or perform character voices to become a Game Master. Start with one manageable session. These steps cover what to do before the game, what to say when the players surprise you, and what to keep afterwards. They work for D&D, Pathfinder, horror games and other tabletop RPGs.",
-  ogImage: "https://assets.codexcryptica.com/og/how-do-i-start-gming-for-the-first-time.jpg",
+  ogImage:
+    "https://assets.codexcryptica.com/og/how-do-i-start-gming-for-the-first-time.jpg",
   ogImageAlt:
     "A tabletop Game Master's screen with dice, notes and a map ready for a first session",
 
   primaryCta: {
     heading: "Start here: what does a first-time GM actually need?",
-    body:
-      "Your first job is to put the players in an interesting situation, ask what they do and describe how the world responds. Begin with the short first-time GM guide, then use the steps below as your checklist.",
+    body: "Your first job is to put the players in an interesting situation, ask what they do and describe how the world responds. Begin with the short first-time GM guide, then use the steps below as your checklist.",
     action: {
       label: "Read the first-time GM guide",
       href: "/answers/how-do-i-start-gming-for-the-first-time",
@@ -30,13 +31,15 @@ export const NEW_GM_TOPIC_CONFIG = {
       {
         title: "How can I practise DMing without a group?",
         href: "/answers/how-can-i-practise-being-a-dungeon-master-without-a-group",
-        description: "Rehearse an opening scene before running for other people.",
+        description:
+          "Rehearse an opening scene before running for other people.",
         badge: "Answer",
       },
       {
         title: "What are the pros and cons of becoming a Dungeon Master?",
         href: "/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
-        description: "Know what the role involves before committing to a campaign.",
+        description:
+          "Know what the role involves before committing to a campaign.",
         badge: "Answer",
       },
     ],
@@ -53,13 +56,15 @@ export const NEW_GM_TOPIC_CONFIG = {
         {
           title: "How do you write a one-shot adventure?",
           href: "/answers/how-do-you-write-a-one-shot-adventure",
-          description: "Build one satisfying evening instead of a sprawling campaign.",
+          description:
+            "Build one satisfying evening instead of a sprawling campaign.",
           badge: "Answer",
         },
         {
           title: "How do I expand a simple RPG campaign idea?",
           href: "/answers/how-do-i-expand-a-simple-rpg-campaign-idea",
-          description: "Grow a single premise into a usable starting situation.",
+          description:
+            "Grow a single premise into a usable starting situation.",
           badge: "Answer",
         },
         {
@@ -80,13 +85,15 @@ export const NEW_GM_TOPIC_CONFIG = {
         {
           title: "How do I run a successful Session 0?",
           href: "/answers/how-do-i-run-a-successful-session-0",
-          description: "A useful agenda for expectations, safety and character connections.",
+          description:
+            "A useful agenda for expectations, safety and character connections.",
           badge: "Answer",
         },
         {
           title: "What do I need to bring to my first D&D game?",
           href: "/answers/what-do-i-need-to-bring-to-my-first-dnd-game",
-          description: "A D&D-specific checklist you can share with new players.",
+          description:
+            "A D&D-specific checklist you can share with new players.",
           badge: "D&D example",
         },
       ],
@@ -101,7 +108,8 @@ export const NEW_GM_TOPIC_CONFIG = {
         {
           title: "How do I prepare an RPG session, step by step?",
           href: "/answers/how-do-i-prepare-an-rpg-session-step-by-step",
-          description: "Follow a practical preparation order without overbuilding.",
+          description:
+            "Follow a practical preparation order without overbuilding.",
           badge: "Answer",
         },
         {
@@ -128,19 +136,22 @@ export const NEW_GM_TOPIC_CONFIG = {
         {
           title: "How do you handle players going off script as a GM?",
           href: "/answers/how-do-you-handle-players-going-off-script-as-a-gm",
-          description: "Keep the session moving when the players invent a new plan.",
+          description:
+            "Keep the session moving when the players invent a new plan.",
           badge: "Answer",
         },
         {
           title: "How do you improvise NPCs on the spot?",
           href: "/answers/how-do-you-improvise-npcs-on-the-spot",
-          description: "Create a believable person without a long character sheet.",
+          description:
+            "Create a believable person without a long character sheet.",
           badge: "Answer",
         },
         {
           title: "How do I pace an RPG one-shot?",
           href: "/answers/how-do-i-pace-an-rpg-one-shot",
-          description: "Give scenes enough room while still reaching an ending.",
+          description:
+            "Give scenes enough room while still reaching an ending.",
           badge: "Answer",
         },
       ],
@@ -155,13 +166,15 @@ export const NEW_GM_TOPIC_CONFIG = {
         {
           title: "How do you recap a TTRPG session?",
           href: "/answers/how-do-you-recap-a-ttrpg-session",
-          description: "Capture decisions, consequences and leads without rewriting the session.",
+          description:
+            "Capture decisions, consequences and leads without rewriting the session.",
           badge: "Answer",
         },
         {
           title: "How do you organise RPG campaign notes?",
           href: "/answers/how-do-you-organise-rpg-campaign-notes",
-          description: "Keep your growing collection of people and places findable.",
+          description:
+            "Keep your growing collection of people and places findable.",
           badge: "Answer",
         },
         {
@@ -185,11 +198,13 @@ export const NEW_GM_TOPIC_CONFIG = {
       },
       {
         title: "Agree on the table",
-        description: "Align tone, expectations and boundaries with your players.",
+        description:
+          "Align tone, expectations and boundaries with your players.",
       },
       {
         title: "Run one session",
-        description: "Present choices, listen, adjudicate and allow consequences.",
+        description:
+          "Present choices, listen, adjudicate and allow consequences.",
       },
       {
         title: "Save what became true",
@@ -203,12 +218,14 @@ export const NEW_GM_TOPIC_CONFIG = {
     {
       title: "Running D&D",
       href: "/topics/dnd",
-      description: "A D&D-specific hub for session prep, adventures, table challenges and campaign tracking.",
+      description:
+        "A D&D-specific hub for session prep, adventures, table challenges and campaign tracking.",
     },
     {
       title: "D&D for Beginners",
       href: "/topics/dnd-beginners",
-      description: "A player-facing introduction to character sheets, dice and combat turns.",
+      description:
+        "A player-facing introduction to character sheets, dice and combat turns.",
     },
     {
       title: "Explore all RPG topics",
