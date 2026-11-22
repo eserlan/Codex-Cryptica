@@ -86,8 +86,9 @@
       if (!textarea) return;
       textarea.style.height = "auto";
       const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
-      const maxHeight = Math.max(44, Math.min(192, visibleHeight * 0.3));
-      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+      const minHeight = phone ? 50 : 44;
+      const maxHeight = Math.max(minHeight, Math.min(192, visibleHeight * 0.3));
+      textarea.style.height = `${Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight))}px`;
       textarea.style.overflowY =
         textarea.scrollHeight > maxHeight ? "auto" : "hidden";
     });
@@ -236,7 +237,7 @@
        instead of consuming a separate line of story space. -->
   <div
     class={phone && modeSwitchVisible
-      ? "inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
+      ? "inline-flex min-h-[50px] shrink-0 items-center gap-0.5 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
       : "hidden"}
     role="group"
     aria-label="Composer mode"
@@ -294,7 +295,7 @@
       bind:this={textarea}
       id="adventure-action"
       rows="1"
-      class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+      class="min-h-[50px] sm:min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       value={activeDraft}
       oninput={(event) => updateDraft(event.currentTarget.value)}
       onfocus={() => (typing = true)}
@@ -309,7 +310,7 @@
       placeholder={inputPlaceholder}
     ></textarea>
     <button
-      class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+      class="flex min-h-[50px] min-w-[50px] sm:min-h-11 sm:min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       type="submit"
       aria-label={isOocMode ? "Submit question to GM" : "Submit action"}
       data-testid="adventure-submit-button"
