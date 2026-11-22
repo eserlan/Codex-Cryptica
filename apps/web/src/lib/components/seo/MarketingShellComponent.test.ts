@@ -1,9 +1,10 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import MarketingShell from "./MarketingShell.svelte";
 import { PUBLIC_LAYOUT } from "./marketing-shell";
+import { lightboxStore } from "#lib/stores/ui/lightbox.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -25,6 +26,25 @@ vi.mock("#lib/config/index.js", () => ({
 }));
 
 describe("MarketingShell component", () => {
+  beforeAll(() => {
+    if (!Element.prototype.animate) {
+      Element.prototype.animate = vi.fn().mockReturnValue({
+        cancel: vi.fn(),
+        finish: vi.fn(),
+        finished: Promise.resolve(),
+        pause: vi.fn(),
+        play: vi.fn(),
+        reverse: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }) as unknown as typeof Element.prototype.animate;
+    }
+  });
+
+  beforeEach(() => {
+    lightboxStore.close();
+  });
+
   it("renders header with community icon links and CTA", () => {
     render(MarketingShell);
 
@@ -79,5 +99,27 @@ describe("MarketingShell component", () => {
     expect(inner.className).not.toContain("max-w-6xl");
     // Gutters live on the inner box only; the header must not add its own.
     expect(inner.closest("header")?.className).not.toMatch(/\bpx-/);
+  });
+
+  it("lazily renders ImageLightboxBase when lightboxStore opens and syncs close state", async () => {
+    render(MarketingShell);
+    expect(screen.queryByRole("dialog", { name: "Image View" })).toBeNull();
+
+    lightboxStore.open(
+      "https://assets.codexcryptica.com/example.webp",
+      "Example Visual",
+    );
+
+    const dialog = await waitFor(() =>
+      screen.getByRole("dialog", { name: "Image View" }),
+    );
+    expect(dialog).toBeTruthy();
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Close image view" }),
+    );
+    await waitFor(() => {
+      expect(lightboxStore.state.show).toBe(false);
+    });
   });
 });

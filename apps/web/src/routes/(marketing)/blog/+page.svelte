@@ -1,6 +1,10 @@
 <script lang="ts">
   import { basePath } from "#lib/utils/base-path.js";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
+  import {
+    readStoredWorldThemeId,
+    resolveThemeJargon,
+  } from "#lib/theme/theme-dom.js";
   import { SITE_AUTHOR } from "#lib/config/index.js";
   import PublicPageContainer from "#lib/components/seo/PublicPageContainer.svelte";
   import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
@@ -151,7 +155,12 @@
           <div
             class="mt-6 pt-4 border-t border-theme-border/40 flex items-center justify-between text-theme-text font-bold uppercase text-xs tracking-[0.16em] group-hover:text-theme-primary transition-colors"
           >
-            <span>{themeStore.resolveJargon("blog_action")}</span>
+            <span
+              >{resolveThemeJargon(
+                publicThemeStore.themeId ?? readStoredWorldThemeId(),
+                "blog_action",
+              )}</span
+            >
             <span
               aria-hidden="true"
               class="icon-[lucide--arrow-right] w-4 h-4 text-theme-primary group-hover:translate-x-1 transition-transform"

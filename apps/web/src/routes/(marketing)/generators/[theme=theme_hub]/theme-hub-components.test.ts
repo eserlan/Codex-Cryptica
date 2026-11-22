@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import { themeStore } from "#lib/stores/theme.svelte.js";
+import { appearanceStore } from "#lib/stores/appearance.svelte.js";
+import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
 import { getLandingPagesForHub } from "#lib/content/for/registry.js";
 import { themeConfig } from "./theme-config";
 import CampaignGuides from "./CampaignGuides.svelte";
@@ -69,26 +70,27 @@ describe("GeneratorCardGrid", () => {
 
 describe("HubAppearanceToggle", () => {
   it("switches both modes and reflects the active appearance accessibly", async () => {
-    themeStore.setAppAppearance("neutral-dark");
+    appearanceStore.setAppAppearance("neutral-dark");
     render(HubAppearanceToggle);
     const light = screen.getByRole("button", { name: "Light mode" });
     const dark = screen.getByRole("button", { name: "Dark mode" });
     expect(light.getAttribute("aria-pressed")).toBe("false");
     expect(dark.getAttribute("aria-pressed")).toBe("true");
     await fireEvent.click(light);
-    expect(themeStore.resolvedAppAppearanceId).toBe("neutral-light");
+    expect(appearanceStore.resolvedAppAppearanceId).toBe("neutral-light");
     expect(light.getAttribute("aria-pressed")).toBe("true");
     expect(dark.getAttribute("aria-pressed")).toBe("false");
     await fireEvent.click(dark);
-    expect(themeStore.resolvedAppAppearanceId).toBe("neutral-dark");
+    expect(appearanceStore.resolvedAppAppearanceId).toBe("neutral-dark");
   });
 
-  it("keeps the world theme when changing the app appearance", async () => {
-    themeStore.setTheme("pirate");
-    const setTheme = vi.spyOn(themeStore, "setTheme");
+  it("keeps the public world theme when changing the app appearance", async () => {
+    publicThemeStore.setTheme("pirate");
+    const setTheme = vi.spyOn(publicThemeStore, "setTheme");
     render(HubAppearanceToggle);
     await fireEvent.click(screen.getByRole("button", { name: "Light mode" }));
     expect(setTheme).not.toHaveBeenCalled();
+    expect(publicThemeStore.themeId).toBe("pirate");
     setTheme.mockRestore();
   });
 });

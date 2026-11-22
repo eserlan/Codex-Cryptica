@@ -8,7 +8,7 @@ const playSurface = resolve(
   process.cwd(),
   "src/lib/components/oracle/adventure/AdventureFocusPlay.svelte",
 );
-const themeStore = resolve(process.cwd(), "src/lib/stores/theme.svelte.ts");
+const themeStore = resolve(process.cwd(), "src/lib/theme/theme-dom.ts");
 const BASE_THUMB_ACCENT_SHARE = 0.8;
 const HOVER_THUMB_ACCENT_SHARE = 0.9;
 

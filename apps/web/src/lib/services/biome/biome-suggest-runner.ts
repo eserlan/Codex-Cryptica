@@ -29,6 +29,7 @@ const MAX_OUTPUT_TOKENS = 800;
 export function createBiomeSuggestRunner(deps: {
   aiClient: BiomeSuggestAiClient;
   settings: BiomeSuggestSettings;
+  ensureSession?: () => Promise<void> | void;
 }): SuggestRunner {
   return async ({ system, user, signal }) => {
     if (signal?.aborted) {
@@ -36,8 +37,17 @@ export function createBiomeSuggestRunner(deps: {
       error.name = "AbortError";
       throw error;
     }
+    const apiKey = deps.settings.effectiveApiKey ?? "";
+    if (apiKey === "" && deps.ensureSession) {
+      await deps.ensureSession();
+      if (signal?.aborted) {
+        const error = new Error("Cancelled");
+        error.name = "AbortError";
+        throw error;
+      }
+    }
     const model = await deps.aiClient.getModel(
-      deps.settings.effectiveApiKey ?? "",
+      apiKey,
       deps.settings.modelName || DEFAULT_MODEL,
       system,
     );

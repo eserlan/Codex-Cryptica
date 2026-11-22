@@ -6,6 +6,12 @@ import {
 import { sessionModeStore } from "./session-mode.svelte";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { isVaultReadyForGenerators } from "#lib/stores/vault/readiness.js";
+import {
+  LightboxStore,
+  lightboxStore,
+  type LightboxOriginRect,
+  type LightboxState,
+} from "./lightbox.svelte";
 
 export type SettingsTab =
   | "vault"
@@ -22,6 +28,10 @@ export type ImagePromptReviewTarget =
   | { kind: "message"; id: string; title: string; entityId?: string };
 
 export class ModalUIStore {
+  constructor(
+    private readonly lightboxState: LightboxStore = new LightboxStore(),
+  ) {}
+
   private canOpenGenerators() {
     return !sessionModeStore.isGuestMode && isVaultReadyForGenerators(vault);
   }
@@ -83,18 +93,13 @@ export class ModalUIStore {
     entityIds: [],
   });
 
-  lightbox = $state<{
-    show: boolean;
-    imageUrl: string;
-    title?: string;
-    originRect?: { x: number; y: number; width: number; height: number } | null;
-    imagePath?: string;
-  }>({
-    show: false,
-    imageUrl: "",
-    originRect: null,
-    imagePath: "",
-  });
+  get lightbox(): LightboxState {
+    return this.lightboxState.state;
+  }
+
+  set lightbox(value: LightboxState) {
+    this.lightboxState.state = value;
+  }
 
   soundBite = $state<{
     show: boolean;
@@ -200,22 +205,14 @@ export class ModalUIStore {
   openLightbox(
     imageUrl: string,
     title?: string,
-    originRect?: { x: number; y: number; width: number; height: number } | null,
+    originRect?: LightboxOriginRect | null,
     imagePath?: string,
   ) {
-    this.lightbox = {
-      show: true,
-      imageUrl,
-      title,
-      originRect: originRect ?? null,
-      imagePath: imagePath ?? "",
-    };
+    this.lightboxState.open(imageUrl, title, originRect, imagePath);
   }
 
   closeLightbox() {
-    this.lightbox.show = false;
-    this.lightbox.originRect = null;
-    this.lightbox.imagePath = "";
+    this.lightboxState.close();
   }
 
   openSoundBite(entityId: string) {
@@ -566,6 +563,7 @@ export class ModalUIStore {
 // cached instance that predates the current class definition — which would
 // cause new properties to be undefined and their reactive assignments to be
 // silently dropped.
-const KEY = "__codex_modal_ui_store__v13__";
+const KEY = "__codex_modal_ui_store__v14__";
 export const modalUIStore: ModalUIStore =
-  (globalThis as any)[KEY] ?? ((globalThis as any)[KEY] = new ModalUIStore());
+  (globalThis as any)[KEY] ??
+  ((globalThis as any)[KEY] = new ModalUIStore(lightboxStore));
