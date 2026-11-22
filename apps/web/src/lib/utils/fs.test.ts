@@ -2,6 +2,8 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   walkDirectory,
   pickDirectory,
+  pickFolderFilesFallback,
+  parseWebkitDirectoryFiles,
   isFileSystemAccessSupported,
   detectFileSystemAccessBrowser,
   getFileSystemAccessUnsupportedMessage,
@@ -146,5 +148,98 @@ describe("walkDirectory", () => {
     expect(entries[0].path).toEqual(["good.md"]);
     // The subdir walk failed, so it should trigger onError
     expect(onError).toHaveBeenCalledWith(expect.any(Error), ["sub"]);
+  });
+});
+
+describe("parseWebkitDirectoryFiles", () => {
+  it("strips the top-level folder prefix into folderName and vault-relative paths", () => {
+    const f1 = new File(["# NPC"], "npc.md", { type: "text/markdown" });
+    Object.defineProperty(f1, "webkitRelativePath", {
+      value: "MyCampaign/entities/npc.md",
+    });
+    const f2 = new File(["{}"], "maps.json", { type: "application/json" });
+    Object.defineProperty(f2, "webkitRelativePath", {
+      value: "MyCampaign/.codex/maps.json",
+    });
+
+    const result = parseWebkitDirectoryFiles([f1, f2]);
+    expect(result).not.toBeNull();
+    expect(result!.folderName).toBe("MyCampaign");
+    expect(result!.files).toEqual([
+      { path: ["entities", "npc.md"], file: f1 },
+      { path: [".codex", "maps.json"], file: f2 },
+    ]);
+  });
+
+  it("represents an empty selected directory and falls back when no folder prefix exists", () => {
+    expect(parseWebkitDirectoryFiles([])).toEqual({
+      folderName: "Imported Vault",
+      files: [],
+    });
+
+    const loose = new File(["hi"], "note.md");
+    const result = parseWebkitDirectoryFiles([loose]);
+    expect(result).toEqual({
+      folderName: "Imported Vault",
+      files: [{ path: ["note.md"], file: loose }],
+    });
+  });
+});
+
+describe("pickFolderFilesFallback", () => {
+  it("returns a folder selection when the selected folder has no files", async () => {
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(function (this: HTMLInputElement) {
+        this.dispatchEvent(new Event("change"));
+      });
+
+    await expect(pickFolderFilesFallback()).resolves.toEqual({
+      folderName: "Imported Vault",
+      files: [],
+    });
+    expect(clickSpy).toHaveBeenCalledOnce();
+    clickSpy.mockRestore();
+  });
+
+  it("confirms an ambiguous empty result after focus returns", async () => {
+    vi.useFakeTimers();
+    const confirmEmptySelection = vi.fn(() => true);
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(() => undefined);
+
+    try {
+      const result = pickFolderFilesFallback(confirmEmptySelection);
+      window.dispatchEvent(new Event("focus"));
+      await vi.advanceTimersByTimeAsync(400);
+
+      await expect(result).resolves.toEqual({
+        folderName: "Imported Vault",
+        files: [],
+      });
+      expect(confirmEmptySelection).toHaveBeenCalledOnce();
+    } finally {
+      clickSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+
+  it("keeps an ambiguous empty result cancelled when confirmation is declined", async () => {
+    const confirmEmptySelection = vi.fn(() => false);
+    const clickSpy = vi
+      .spyOn(HTMLInputElement.prototype, "click")
+      .mockImplementation(function (this: HTMLInputElement) {
+        this.dispatchEvent(new Event("cancel"));
+      });
+
+    try {
+      await expect(
+        pickFolderFilesFallback(confirmEmptySelection),
+      ).resolves.toBeNull();
+      expect(confirmEmptySelection).toHaveBeenCalledOnce();
+    } finally {
+      clickSpy.mockRestore();
+    }
   });
 });
