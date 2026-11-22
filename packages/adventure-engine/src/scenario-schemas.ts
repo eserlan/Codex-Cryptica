@@ -1,7 +1,6 @@
 import { z } from "zod";
+import { id, text, timestamp } from "./schema-primitives";
 
-const id = z.string().trim().min(1).max(160);
-const text = z.string().trim().min(1).max(600);
 const eventSecretBindings = z.unknown().transform((value, context) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     context.addIssue({
@@ -91,7 +90,7 @@ const origin = z
       });
   });
 
-const event = z
+export const scenarioEventSchema = z
   .object({
     id,
     kind: z.enum([
@@ -103,14 +102,10 @@ const event = z
     ]),
     visibility: z.enum(["player", "gm"]),
     text,
-    at: z.string().datetime({ offset: true }),
+    at: timestamp,
     turnId: id.optional(),
     causedBy: z
-      .object({
-        scenarioId: id,
-        eventId: id,
-        anchorRef: id,
-      })
+      .object({ scenarioId: id, eventId: id, anchorRef: id })
       .strict()
       .optional(),
   })
@@ -144,7 +139,7 @@ export const scenarioItemSchema = z
       .enum(["hearsay", "actionable-clue", "revelation-crisis"])
       .default("hearsay"),
     status: z.enum(["open", "resolved", "abandoned"]),
-    events: z.array(event).max(100),
+    events: z.array(scenarioEventSchema).max(100),
     anchorRefs: z.array(id).max(12),
     revealedSecretIds: z.array(id).max(102).default([]),
     secretBindings: z

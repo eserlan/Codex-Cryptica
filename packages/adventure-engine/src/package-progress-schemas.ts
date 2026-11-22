@@ -1,9 +1,11 @@
 import { z } from "zod";
 import { id } from "./schema-primitives";
+import type { PackageProgress } from "./types";
 
 export const MAX_PACKAGE_PROGRESS_ENTRIES = 400;
 export const MAX_ACTOR_REMEMBERED_FACTS = 5;
 export const MAX_ACTOR_FACT_CHARS = 160;
+
 /** Package-authored IDs are kept verbatim: no trimming and no length cap. */
 const packageId = z.string().min(1);
 const packageRecordKind = z.enum(["scene", "encounter", "clue", "secret"]);
@@ -15,14 +17,18 @@ const packageStatus = z.enum([
   "altered",
   "skipped",
 ]);
+const eventEvidence = {
+  certainty: z.enum(["claimed", "confirmed"]),
+  note: z.string().trim().min(1).max(240),
+  supersedes: packageId.optional(),
+};
+
 export const packageEventProposalSchema = z
   .object({
     recordId: packageId,
     kind: packageRecordKind,
     to: packageStatus,
-    certainty: z.enum(["claimed", "confirmed"]),
-    note: z.string().trim().min(1).max(240),
-    supersedes: packageId.optional(),
+    ...eventEvidence,
   })
   .strict();
 
@@ -42,9 +48,7 @@ export const actorEventProposalSchema = z
     status: actorProposalStatus.optional(),
     disposition: actorDisposition.optional(),
     fact: actorFact.optional(),
-    certainty: z.enum(["claimed", "confirmed"]),
-    note: z.string().trim().min(1).max(240),
-    supersedes: packageId.optional(),
+    ...eventEvidence,
   })
   .strict();
 
@@ -83,9 +87,7 @@ export const packageProgressSchema = z
             kind: packageRecordKind,
             from: packageStatus,
             to: packageStatus,
-            certainty: z.enum(["claimed", "confirmed"]),
-            note: z.string().trim().min(1).max(240),
-            supersedes: packageId.optional(),
+            ...eventEvidence,
           })
           .strict(),
       )
@@ -116,9 +118,7 @@ export const packageProgressSchema = z
             fromDisposition: actorDisposition.optional(),
             disposition: actorDisposition.optional(),
             fact: actorFact.optional(),
-            certainty: z.enum(["claimed", "confirmed"]),
-            note: z.string().trim().min(1).max(240),
-            supersedes: packageId.optional(),
+            ...eventEvidence,
           })
           .strict(),
       )
@@ -130,11 +130,21 @@ export const packageProgressSchema = z
       .optional(),
   })
   .strict()
-  .refine(
-    (value) =>
-      (value.version === undefined) === (value.records === undefined) &&
-      (value.version === undefined) === (value.events === undefined) &&
-      (value.version !== undefined ||
-        (value.actors === undefined && value.actorEvents === undefined)),
-    { message: "version, records and events must all be present or absent." },
+  .refine(hasCompleteProgressMetadata, {
+    message: "version, records and events must all be present or absent.",
+  });
+
+function hasCompleteProgressMetadata(value: PackageProgress): boolean {
+  return value.version === undefined
+    ? hasLegacyProgressShape(value)
+    : value.records !== undefined && value.events !== undefined;
+}
+
+function hasLegacyProgressShape(value: PackageProgress): boolean {
+  return (
+    value.records === undefined &&
+    value.events === undefined &&
+    value.actors === undefined &&
+    value.actorEvents === undefined
   );
+}

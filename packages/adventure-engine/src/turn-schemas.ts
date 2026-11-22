@@ -101,6 +101,7 @@ export const persistedTurnSchema = z.object({
   suggestedActions: z.array(text).length(3).optional(),
   dropped: z.array(z.string().max(240)).max(24).optional(),
 });
+
 export function parseTurnProposal(input: unknown): AdventureTurnProposal {
   return turnProposalSchema.parse(input) as AdventureTurnProposal;
 }

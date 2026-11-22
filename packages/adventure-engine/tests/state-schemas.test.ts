@@ -10,8 +10,14 @@ import { emptyHiddenPatch, emptyVisiblePatch } from "./reducer-fixtures";
 
 describe("state schemas", () => {
   it("accepts model additions without IDs and durable additions with IDs", () => {
-    const patch = emptyVisiblePatch();
-    patch.knownFacts.add.push({ text: "A clue", source: "provisional" });
+    const patch = {
+      ...emptyVisiblePatch(),
+      knownFacts: {
+        add: [{ text: "A clue", source: "provisional" }],
+        update: [],
+        removeIds: [],
+      },
+    };
     expect(visiblePatchSchema.parse(patch)).toEqual(patch);
     const persisted = {
       ...patch,
@@ -26,8 +32,14 @@ describe("state schemas", () => {
   });
 
   it("keeps secret reveal metadata on durable patches and rejects it on proposals", () => {
-    const patch = emptyHiddenPatch();
-    patch.secrets.add.push({ text: "A secret", status: "hidden" });
+    const patch = {
+      ...emptyHiddenPatch(),
+      secrets: {
+        add: [{ text: "A secret", status: "hidden" }],
+        update: [],
+        removeIds: [],
+      },
+    };
     expect(hiddenPatchSchema.parse(patch)).toEqual(patch);
     const persisted = {
       ...patch,
