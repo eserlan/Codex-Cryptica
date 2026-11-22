@@ -611,7 +611,15 @@ export class ThemeStore {
     if (tokens.borderRadius) radius = tokens.borderRadius;
     root.style.setProperty("--theme-border-radius", radius);
 
-    if (tokens.texture) {
+    if (tokens.texture === "workspace_grain.svg") {
+      const workspaceWash = `radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, ${tokens.accent} 5%, transparent), transparent 70%)`;
+      root.style.setProperty("--bg-texture", "none");
+      root.style.setProperty("--bg-texture-overlay", workspaceWash);
+      root.style.setProperty(
+        "--theme-card-backdrop",
+        tokens.textureCardBlur ? `blur(${tokens.textureCardBlur})` : "none",
+      );
+    } else if (tokens.texture) {
       const alpha = tokens.textureOverlayAlpha ?? "80";
       root.style.setProperty(
         "--bg-texture",

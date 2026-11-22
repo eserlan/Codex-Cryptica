@@ -524,7 +524,6 @@
   {#if !isGuestMode && onboardingStore.isLandingPageVisible && (building || !page.url.searchParams.has("demo"))}
     <div
       class="marketing-layer absolute inset-0 z-30 bg-theme-bg backdrop-blur-sm overflow-y-auto"
-      style:background-image="var(--bg-texture-overlay)"
       transition:fade
     >
       <div

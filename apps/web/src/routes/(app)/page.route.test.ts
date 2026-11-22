@@ -183,6 +183,42 @@ describe("root +page.svelte — front page overlay keydown", () => {
     expect(screen.queryByRole("link", { name: /^terms$/i })).toBeNull();
   });
 
+  it("renders .marketing-layer without inline --bg-texture-overlay or url() background-image so the hero headline is the LCP candidate", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    const { container } = render(RoutePage);
+
+    const marketingLayer = container.querySelector(".marketing-layer");
+    expect(marketingLayer).toBeTruthy();
+    expect(marketingLayer?.className).toContain("bg-theme-bg");
+    const inlineBg =
+      (marketingLayer as HTMLElement)?.style.backgroundImage ?? "";
+    expect(inlineBg).not.toContain("--bg-texture-overlay");
+    expect(inlineBg).not.toContain("url(");
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /private rpg lore vault/i,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("omits .marketing-layer and preserves --bg-texture-overlay on front-page-overlay when landing is dismissed", async () => {
+    onboardingStore.skipWelcomeScreen = true;
+    onboardingStore.dismissedLandingPage = true;
+
+    const { container } = render(RoutePage);
+
+    expect(container.querySelector(".marketing-layer")).toBeNull();
+    const overlay = await waitFor(() =>
+      screen.getByTestId("front-page-overlay"),
+    );
+    expect(overlay.style.backgroundImage).toContain(
+      "var(--bg-texture-overlay)",
+    );
+  });
+
   it("renders complete Open Graph and Twitter Card tags in head", () => {
     onboardingStore.skipWelcomeScreen = false;
     onboardingStore.dismissedLandingPage = false;
