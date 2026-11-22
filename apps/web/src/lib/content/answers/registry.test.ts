@@ -22,6 +22,7 @@ import { PUZZLE_TOPIC_CONFIG } from "../topics/puzzles";
 import { PIRATE_TOPIC_CONFIG } from "../topics/pirates";
 import { SOLO_RPG_TOPIC_CONFIG } from "../topics/solo-rpg";
 import { DND_TOPIC_CONFIG } from "../topics/dnd";
+import { NEW_GM_TOPIC_CONFIG } from "../topics/new-gm";
 import { DND_BEGINNERS_TOPIC_CONFIG } from "../topics/dnd-beginners";
 import { STAR_SYSTEMS_TOPIC_CONFIG } from "../topics/star-systems";
 import { solutions } from "#lib/config/seo-pages.js";
@@ -1160,6 +1161,7 @@ describe("published answers", () => {
       PUZZLE_TOPIC_CONFIG.canonicalPath,
       PIRATE_TOPIC_CONFIG.canonicalPath,
       DND_TOPIC_CONFIG.canonicalPath,
+      NEW_GM_TOPIC_CONFIG.canonicalPath,
       DND_BEGINNERS_TOPIC_CONFIG.canonicalPath,
       STAR_SYSTEMS_TOPIC_CONFIG.canonicalPath,
       SOLO_RPG_TOPIC_CONFIG.canonicalPath,

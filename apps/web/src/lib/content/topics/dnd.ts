@@ -4,6 +4,7 @@ export const DND_TOPIC_CONFIG = {
   slug: "dnd",
   canonicalPath: "/topics/dnd",
   label: "fantasy",
+  jobsNavLabel: "DM jobs",
   title: "Running D&D: Help for Your Next Session",
   metaTitle: "D&D Dungeon Master Help: Prep, Run and Track | Codex Cryptica",
   description:
@@ -47,6 +48,13 @@ export const DND_TOPIC_CONFIG = {
       intro:
         "Settle what the table wants, have the Session 0 conversation, then give the party a place to begin.",
       links: [
+        {
+          title: "New Game Master: your first tabletop RPG session",
+          href: "/topics/new-gm",
+          description:
+            "A first-time GM learning path from choosing an adventure through running the table, across systems.",
+          badge: "Topic Hub",
+        },
         {
           title: "What should a new D&D player learn first?",
           href: "/answers/what-should-a-new-dnd-player-learn-first",
@@ -383,6 +391,12 @@ export const DND_TOPIC_CONFIG = {
 
   relatedHeading: "More about D&D and Codex Cryptica",
   relatedTopics: [
+    {
+      title: "New Game Master",
+      href: "/topics/new-gm",
+      description:
+        "Running your first tabletop RPG? Follow a focused, system-neutral first-session pathway.",
+    },
     {
       title: "D&D for Beginners",
       href: "/topics/dnd-beginners",
