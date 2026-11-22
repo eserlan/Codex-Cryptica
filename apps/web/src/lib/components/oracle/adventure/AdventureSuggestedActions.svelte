@@ -1,24 +1,41 @@
+<!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
+  import { tick } from "svelte";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
+  import { focusTrap } from "#lib/actions/focusTrap.js";
+  import { portalTo } from "./adventure-phone-surface.js";
 
   let {
     manager,
     disabled,
     visible,
     chips = false,
+    overlayHost,
   }: {
     manager: AdventureManager;
     disabled: boolean;
     visible: boolean;
     /** Show suggestions as collapsible chips instead of a collapsed list. */
     chips?: boolean;
+    overlayHost?: HTMLElement;
   } = $props();
 
+  const uid = $props.id();
+  const sheetId = `adventure-suggested-actions-sheet-${uid}`;
+  const sheetTitleId = `adventure-suggested-actions-title-${uid}`;
+
   let chipsCollapsed = $state(false);
+  let sheetOpen = $state(false);
+  let submitting = $state(false);
+  let triggerButton = $state<HTMLButtonElement>();
+  let closeButton = $state<HTMLButtonElement>();
+
+  const count = $derived(manager.suggestedActions.length);
+  const triggerLabel = $derived(
+    `${count} suggested ${count === 1 ? "action" : "actions"}`,
+  );
   const toggleLabel = $derived(
-    chipsCollapsed
-      ? `Suggested actions (${manager.suggestedActions.length})`
-      : "Hide suggestions",
+    chipsCollapsed ? `Suggested actions (${count})` : "Hide suggestions",
   );
   const chevronClass = $derived(
     `icon-[lucide--chevron-up] h-3.5 w-3.5 shrink-0 transition-transform ${chipsCollapsed ? "rotate-180" : ""}`,
@@ -26,27 +43,70 @@
   const chipContainerClass = $derived(
     visible ? "flex flex-col gap-1.5 pb-1" : "hidden",
   );
-  const detailsContainerClass = $derived(
-    visible
-      ? "group rounded-lg border border-theme-border bg-theme-bg"
-      : "hidden",
+  const phoneContainerClass = $derived(
+    visible ? "flex items-center" : "hidden",
   );
+
+  $effect(() => {
+    if (sheetOpen && (!visible || chips || count === 0)) {
+      sheetOpen = false;
+    }
+  });
+
+  function openSheet(): void {
+    triggerButton?.focus();
+    sheetOpen = true;
+    void tick().then(() => closeButton?.focus());
+  }
+
+  function closeSheet(): void {
+    if (visible && triggerButton?.isConnected) {
+      triggerButton.focus();
+    }
+    sheetOpen = false;
+  }
+
+  async function selectSuggestion(
+    suggestion: string,
+    closeAfter: boolean,
+  ): Promise<void> {
+    if (disabled || submitting) return;
+    submitting = true;
+    if (closeAfter) {
+      closeSheet();
+    }
+    try {
+      await manager.submitSuggestedAction(suggestion);
+    } finally {
+      submitting = false;
+    }
+  }
 </script>
 
-{#snippet actionList(btnClass: string)}
+<svelte:window
+  onkeydown={(event) => {
+    if (sheetOpen && event.key === "Escape" && !event.defaultPrevented) {
+      event.preventDefault();
+      event.stopPropagation();
+      closeSheet();
+    }
+  }}
+/>
+
+{#snippet actionList(btnClass: string, closeAfter = false)}
   {#each manager.suggestedActions as suggestion (suggestion)}
     <button
       class={btnClass}
       type="button"
-      {disabled}
-      onclick={() => void manager.submitSuggestedAction(suggestion)}
+      disabled={disabled || submitting}
+      onclick={() => void selectSuggestion(suggestion, closeAfter)}
     >
       {suggestion}
     </button>
   {/each}
 {/snippet}
 
-{#if manager.suggestedActions.length > 0 && chips}
+{#if count > 0 && chips}
   <!-- Roomy screens: show the options up front with a compact collapse toggle
        so the player can reclaim transcript space. Phones keep the compact
        disclosure below so the free-action composer stays reachable. -->
@@ -79,40 +139,92 @@
       </div>
     {/if}
   </div>
-{:else if manager.suggestedActions.length > 0}
-  <!-- Compact by default so the free-action composer stays reachable on phones.
-       Native details/summary supports keyboard and screen-reader disclosure. -->
-  <details
-    class={detailsContainerClass}
-    data-testid="adventure-suggested-actions"
-  >
-    <summary
-      class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary [&::-webkit-details-marker]:hidden"
+{:else if count > 0}
+  <!-- Compact pill disclosure keeps portrait-phone reading space open while
+       letting the player summon full choices in a bounded bottom sheet. -->
+  <div class={phoneContainerClass} data-testid="adventure-suggested-actions">
+    <button
+      bind:this={triggerButton}
+      type="button"
+      class="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-full border border-theme-text/75 bg-theme-bg px-3 py-1 text-xs font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+      data-testid="adventure-suggested-actions-toggle"
+      aria-expanded={sheetOpen}
+      aria-haspopup="dialog"
+      aria-controls={sheetId}
+      onclick={openSheet}
     >
-      <span class="flex min-w-0 items-center gap-2">
-        <span
-          class="icon-[lucide--list-checks] h-4 w-4 shrink-0"
-          aria-hidden="true"
-        ></span>
-        Suggested actions ({manager.suggestedActions.length})
-      </span>
       <span
-        class="icon-[lucide--chevron-down] h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
+        class="icon-[lucide--list-checks] h-3.5 w-3.5 shrink-0"
         aria-hidden="true"
       ></span>
-    </summary>
-    <!-- The composer extras pane is the only scroll container for this list.
-         A second, height-limited scroller traps touch gestures on phones and
-         can leave later, multi-line actions hidden behind the input dock. -->
+      <span>{triggerLabel}</span>
+      <span
+        class="icon-[lucide--chevron-up] h-3.5 w-3.5 shrink-0"
+        aria-hidden="true"
+      ></span>
+    </button>
+  </div>
+  {#if sheetOpen}
     <div
-      class="flex flex-col gap-2 border-t border-theme-border px-2 pt-2 pb-3"
-      role="group"
-      aria-label="Suggested actions"
-      data-testid="adventure-suggested-actions-list"
+      class={overlayHost ? "absolute inset-0 z-40" : "fixed inset-0 z-50"}
+      data-testid="adventure-suggested-actions-overlay"
+      use:portalTo={overlayHost}
     >
-      {@render actionList(
-        "min-h-11 w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-left text-sm leading-relaxed whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50",
-      )}
+      <button
+        type="button"
+        class="absolute inset-0 w-full bg-theme-bg/75"
+        aria-label="Close suggested actions"
+        data-testid="adventure-suggested-actions-backdrop"
+        onclick={closeSheet}
+      ></button>
+      <div
+        id={sheetId}
+        tabindex="-1"
+        use:focusTrap
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={sheetTitleId}
+        data-testid="adventure-suggested-actions-sheet"
+        class="absolute inset-x-0 bottom-0 z-10 flex max-h-[65%] flex-col overflow-hidden rounded-t-xl border-t border-theme-border bg-theme-surface shadow-2xl"
+      >
+        <div
+          class="flex items-center justify-between gap-3 border-b border-theme-border px-4 py-3"
+        >
+          <div class="flex min-w-0 items-center gap-2">
+            <span
+              class="icon-[lucide--list-checks] h-4 w-4 shrink-0 text-theme-text"
+              aria-hidden="true"
+            ></span>
+            <h3
+              id={sheetTitleId}
+              class="font-header truncate text-sm font-bold text-theme-text"
+            >
+              Suggested actions ({count})
+            </h3>
+          </div>
+          <button
+            bind:this={closeButton}
+            type="button"
+            class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text/75 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+            aria-label="Close suggested actions"
+            data-testid="adventure-suggested-actions-close"
+            onclick={closeSheet}
+          >
+            <span class="icon-[lucide--x] h-4 w-4" aria-hidden="true"></span>
+          </button>
+        </div>
+        <div
+          class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
+          role="group"
+          aria-label="Suggested actions"
+          data-testid="adventure-suggested-actions-list"
+        >
+          {@render actionList(
+            "min-h-11 w-full rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2.5 text-left text-sm leading-snug whitespace-normal break-words text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text disabled:cursor-not-allowed disabled:bg-theme-surface",
+            true,
+          )}
+        </div>
+      </div>
     </div>
-  </details>
+  {/if}
 {/if}
