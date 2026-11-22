@@ -19,6 +19,7 @@ const EXPECTED = [
   ["/topics/pirates", "Pirates & High Seas"],
   ["/topics/solo-rpg", "Solo RPGs"],
   ["/topics/dnd", "Running D&D"],
+  ["/topics/new-gm", "New Game Master"],
   ["/topics/dnd-beginners", "D&D for Beginners"],
   ["/topics/star-systems", "Star Systems & Sci-Fi"],
 ];
@@ -28,10 +29,10 @@ describe("/topics route", () => {
     document.head.innerHTML = "";
   });
 
-  it("is prerendered and loads the seven live topics", () => {
+  it("is prerendered and loads the eight live topics", () => {
     expect(prerender).toBe(true);
     const result = (load as unknown as () => { topics: unknown[] })();
-    expect(result.topics).toHaveLength(7);
+    expect(result.topics).toHaveLength(8);
   });
 
   it("renders a link per topic in order", () => {
