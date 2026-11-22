@@ -34,6 +34,23 @@ export const MODEL_REGISTRY: LlmModelDefinition[] = [
     defaultParameters: { temperature: 0.85, maxOutputTokens: 4096 },
   },
   {
+    key: "gemini-4-hydrogen",
+    provider: "gemini",
+    modelId: "gemini-4-hydrogen",
+    displayName: "Gemini 4 Hydrogen",
+    capabilities: {
+      structuredOutput: true,
+      freeformGeneration: true,
+      revision: true,
+      longContext: true,
+    },
+    costTier: "medium",
+    // $1.50 / 1M input tokens, $7.50 / 1M output tokens (standard paid tier).
+    pricing: { inputPer1kTokens: 0.0015, outputPer1kTokens: 0.0075 },
+    availability: { public: true, authenticated: true, admin: true },
+    enabled: true,
+  },
+  {
     key: "luna-fast",
     provider: "openai",
     // GPT-6 Luna replaces gpt-5.6-luna. OpenAI's API takes the bare

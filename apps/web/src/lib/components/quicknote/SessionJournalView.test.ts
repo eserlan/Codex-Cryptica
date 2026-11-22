@@ -9,7 +9,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
-vi.mock("#lib/components/MarkdownEditor.svelte", async () => ({
+vi.mock("#lib/components/LazyMarkdownEditor.svelte", async () => ({
   default: (await import("./test-support/markdown-editor-stub"))
     .markdownEditorStub,
 }));

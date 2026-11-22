@@ -1,6 +1,8 @@
 import { mergeProvisionalFacts } from "./provisional-facts";
 import { systemIdGenerator } from "@codex/runtime";
 import {
+  classifyHiddenLeakageFinding,
+  constrainHiddenSecretVisibility,
   detectHiddenLeakage,
   detectPackageLeakage,
   ensureScenarioSecrets,
@@ -69,13 +71,14 @@ function completedTurnProposalError(
   if (hasImmutableScenarioRewrite(session, proposal)) {
     return error("conflicting-patch", "Scenario baseline truth is immutable.");
   }
-  if (
-    detectHiddenLeakage(session, proposal).length > 0 ||
-    detectPackageLeakage(proposal, meta, session).length > 0
-  ) {
+  const leakage =
+    detectPackageLeakage(proposal, meta, session)[0] ??
+    detectHiddenLeakage(session, proposal)[0];
+  if (leakage) {
     return error(
       "hidden-leakage",
       "The response contains unrevealed GM information.",
+      classifyHiddenLeakageFinding(leakage),
     );
   }
   return null;
@@ -254,13 +257,14 @@ export function applyCompletedTurn(
   const session = ensureScenarioSecrets(sessionInput);
   const inputError = completedTurnInputError(session, meta.inputId);
   if (inputError) return inputError;
-  const proposal = parseTurnProposal(proposalInput);
-  if (proposal.kind !== "complete") {
+  const parsedProposal = parseTurnProposal(proposalInput);
+  if (parsedProposal.kind !== "complete") {
     return error(
       "invalid-schema",
       "A completed turn requires a complete proposal.",
     );
   }
+  const proposal = constrainHiddenSecretVisibility(session, parsedProposal);
   const proposalError = completedTurnProposalError(session, proposal, meta);
   if (proposalError) return proposalError;
   const materialized = materializeTurnState(
@@ -276,8 +280,9 @@ export function applyCompletedTurn(
     materialized.hiddenState.secrets,
     proposal.revealSecretIds,
     meta.turnId,
+    meta.packageSecretTexts,
   );
-  if (revealError) return error("unknown-secret", revealError);
+  if (revealError) return error(revealError.code, revealError.message);
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { time, timeAdvance } = clock;

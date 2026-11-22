@@ -1,11 +1,7 @@
-import { detectHiddenTextLeakage } from "@codex/adventure-engine";
-import type { AdventureTurnGenerationRequest } from "./adventure-generation.types";
-
 /**
- * Preview only the first top-level narration string in a structured JSON
- * response. This intentionally refuses nested fields and GM-only JSON.
- * Final JSON validation and the turn guard still run at commit; this also
- * checks each preview against the session's unrevealed secrets.
+ * Decode a top-level narration prefix for diagnostics only. It is NOT a safe
+ * player-facing preview: the remainder of the proposal may introduce hidden
+ * facts not yet present in the session, so the guard cannot check this prefix.
  */
 export function extractAdventureNarrationPrefix(buffer: string): string {
   // Require the first top-level fields to be kind and narration. Never show
@@ -79,22 +75,4 @@ export function collectAdventureStream(
   return Symbol.asyncIterator in source
     ? collectEventStream(source, publish, signal)
     : collectSdkStream(source, publish, signal);
-}
-
-export function publishAdventureNarration(
-  request: AdventureTurnGenerationRequest,
-  buffer: string,
-  signal?: AbortSignal,
-): void {
-  // Package turns may propose new GM-only event notes in the same response.
-  // Those notes are unavailable to this prefix-only guard, so do not publish
-  // any narration until the completed proposal has passed the final guard.
-  if (signal?.aborted || request.session.sourcePackage) return;
-  const narration = extractAdventureNarrationPrefix(buffer);
-  if (
-    narration &&
-    detectHiddenTextLeakage(request.session, narration).length === 0
-  ) {
-    request.onNarration?.(narration);
-  }
 }

@@ -202,6 +202,20 @@
               }
             },
             "additionalProperties": false
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "name", "summary", "visibility", "epistemicStatus"],
@@ -220,6 +234,10 @@
           "name": {
             "type": "string",
             "minLength": 1
+          },
+          "kind": {
+            "type": "string",
+            "enum": ["character", "creature"]
           },
           "summary": {
             "type": "string"
@@ -283,6 +301,20 @@
               }
             },
             "additionalProperties": false
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "name", "summary", "visibility", "epistemicStatus"],
@@ -356,6 +388,20 @@
               }
             },
             "additionalProperties": false
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "name", "summary", "visibility", "epistemicStatus"],
@@ -806,6 +852,20 @@
               }
             },
             "additionalProperties": false
+          },
+          "aliases": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            }
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "name", "summary", "visibility", "epistemicStatus"],

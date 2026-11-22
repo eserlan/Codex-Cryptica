@@ -226,6 +226,52 @@ describe("adventure rubric evaluations", () => {
     ).toBe(0);
   });
 
+  it("allows secret text on the turn it is explicitly revealed via revealSecretIds while rejecting unrevealed text", () => {
+    const secretText =
+      "The damp ledger records a lock fitted to the sluice pin.";
+    const before = makeSession({
+      hiddenState: {
+        secrets: [
+          { id: "secret-ledger-lock", text: secretText, status: "hidden" },
+        ],
+        gmThreads: [],
+      },
+    });
+    const after = makeSession({
+      hiddenState: {
+        secrets: [
+          { id: "secret-ledger-lock", text: secretText, status: "revealed" },
+        ],
+        gmThreads: [],
+      },
+    });
+    const revealedProposal = completeProposal({
+      narration: `You read the page: ${secretText}`,
+      revealSecretIds: ["secret-ledger-lock"],
+    });
+    expect(
+      scoreSecrecy({
+        narration: revealedProposal.narration,
+        proposal: revealedProposal,
+        previousSession: before,
+        session: after,
+      }),
+    ).toBe(1);
+
+    const leakedProposal = completeProposal({
+      narration: `You read the page: ${secretText}`,
+      revealSecretIds: [],
+    });
+    expect(
+      scoreSecrecy({
+        narration: leakedProposal.narration,
+        proposal: leakedProposal,
+        previousSession: before,
+        session: before,
+      }),
+    ).toBe(0);
+  });
+
   it("detects secret leakage across narration, recap, transcript, errors, and unheard scenarios", () => {
     const session = makeSession();
     const leakProposal = completeProposal({
@@ -365,6 +411,93 @@ describe("adventure rubric evaluations", () => {
         }),
       ).toBe(0);
     }
+  });
+
+  it("accepts packageRecordIds and premise for canonical facts in package-backed sessions while rejecting unknown IDs", () => {
+    const prev = makeSession({ sourceRecords: [] });
+    const packageSession = makeSession({
+      sourceRecords: [],
+      visibleState: {
+        location: {
+          id: "location-pkg-1",
+          text: "Sunken Priory",
+          source: "canonical",
+          sourceRecordId: "pkg-loc-1",
+        },
+        situation: {
+          id: "situation-pkg-1",
+          text: "Floodwaters rise at dusk.",
+          source: "canonical",
+          sourceRecordId: "premise",
+        },
+        knownFacts: [
+          {
+            id: "fact-pkg-1",
+            text: "Sister Vael guards the dry bell tower.",
+            source: "canonical",
+            sourceRecordId: "pkg-actor-1",
+          },
+        ],
+        activeCharacters: [],
+        objectives: [],
+        relationships: [],
+      },
+    });
+
+    expect(
+      scoreCanonSafety({
+        narration: "Lanternlight glints off the priory steps.",
+        proposal: completeProposal(),
+        previousSession: prev,
+        session: packageSession,
+        packageRecordIds: ["pkg-loc-1", "pkg-actor-1"],
+      }),
+    ).toBe(1);
+
+    const fabricatedSession = makeSession({
+      sourceRecords: [],
+      visibleState: {
+        ...packageSession.visibleState,
+        knownFacts: [
+          {
+            id: "fact-pkg-bad",
+            text: "A secret tunnel leads to the duke's vault.",
+            source: "canonical",
+            sourceRecordId: "fabricated-record-id",
+          },
+        ],
+      },
+    });
+
+    expect(
+      scoreCanonSafety({
+        narration: "You spot a concealed doorway.",
+        proposal: completeProposal(),
+        previousSession: prev,
+        session: fabricatedSession,
+        packageRecordIds: ["pkg-loc-1", "pkg-actor-1"],
+      }),
+    ).toBe(0);
+
+    expect(
+      scoreCanonSafety({
+        narration: "Premise without packageRecordIds is still rejected.",
+        proposal: completeProposal(),
+        previousSession: prev,
+        session: makeSession({
+          sourceRecords: [],
+          visibleState: {
+            ...prev.visibleState,
+            situation: {
+              id: "situation-premise",
+              text: "Floodwaters rise at dusk.",
+              source: "canonical",
+              sourceRecordId: "premise",
+            },
+          },
+        }),
+      }),
+    ).toBe(0);
   });
 
   it("does not pass an empty run", () => {

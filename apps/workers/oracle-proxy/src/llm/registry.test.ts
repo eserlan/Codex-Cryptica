@@ -24,6 +24,18 @@ describe("registry invariants", () => {
     ).toEqual([]);
   });
 
+  it("serves Gemini 4 Hydrogen for Adventure Mode by its Gemini id", () => {
+    expect(getModel("gemini-4-hydrogen")).toMatchObject({
+      provider: "gemini",
+      modelId: "gemini-4-hydrogen",
+      enabled: true,
+      capabilities: {
+        structuredOutput: true,
+        freeformGeneration: true,
+      },
+    });
+  });
+
   it("has no dangling defaultModelKey/fallbackModelKey references", () => {
     for (const entry of OPERATION_DEFAULTS) {
       expect(getModel(entry.defaultModelKey)).toBeDefined();

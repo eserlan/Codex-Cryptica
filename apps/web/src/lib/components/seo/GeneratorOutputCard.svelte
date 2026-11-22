@@ -184,7 +184,7 @@
   tabindex="-1"
   role="region"
   aria-label="Generated Output Workspace"
-  class="relative flex-grow min-w-0 p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
+  class="relative flex-grow min-w-0 p-4 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
 >
   {#if isBusy}
     <div

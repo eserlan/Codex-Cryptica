@@ -1,4 +1,4 @@
-import { createPeer, type PeerFactory } from "../peer-factory";
+import { createPeer, loadPeerJs, type PeerFactory } from "../peer-factory";
 import { debugStore } from "../../../stores/debug.svelte";
 import { isValidP2PMessage } from "../p2p-protocol";
 import type {
@@ -20,9 +20,15 @@ export class PeerJsClientTransport implements P2PClientTransport {
   private isConnecting = false;
   private listeners: Record<string, ((payload?: any) => void)[]> = {};
   private readonly peerFactory: PeerFactory;
+  private readonly peerJsLoader: () => Promise<void>;
+  private pendingPeerLoadReject: ((error: Error) => void) | null = null;
 
-  constructor(peerFactory: PeerFactory = createPeer) {
+  constructor(
+    peerFactory: PeerFactory = createPeer,
+    peerJsLoader: () => Promise<void> = loadPeerJs,
+  ) {
     this.peerFactory = peerFactory;
+    this.peerJsLoader = peerJsLoader;
   }
 
   get id(): string | null {
@@ -45,9 +51,8 @@ export class PeerJsClientTransport implements P2PClientTransport {
     this.isConnecting = true;
     const epoch = ++this.activeEpoch;
 
-    if (!this.peer) {
-      this.peer = this.peerFactory(undefined, { debug: 1 });
-    }
+    const peerSetup = this.ensurePeer(epoch);
+    if (peerSetup) await peerSetup;
 
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
@@ -129,6 +134,38 @@ export class PeerJsClientTransport implements P2PClientTransport {
     return Promise.race([connectionPromise, timeoutPromise]);
   }
 
+  private ensurePeer(epoch: number): Promise<void> | void {
+    if (this.peer) return;
+    if (this.peerFactory !== createPeer) {
+      this.peer = this.peerFactory(undefined, { debug: 1 });
+      return;
+    }
+
+    return this.loadPeerJs(epoch);
+  }
+
+  private async loadPeerJs(epoch: number): Promise<void> {
+    let rejectLoad!: (error: Error) => void;
+    const cancelled = new Promise<never>((_, reject) => {
+      rejectLoad = reject;
+    });
+    this.pendingPeerLoadReject = rejectLoad;
+    try {
+      await Promise.race([this.peerJsLoader(), cancelled]);
+      if (epoch !== this.activeEpoch) {
+        throw new Error("Connection aborted");
+      }
+      this.peer = this.peerFactory(undefined, { debug: 1 });
+    } catch (error) {
+      if (epoch === this.activeEpoch) this.isConnecting = false;
+      throw error;
+    } finally {
+      if (this.pendingPeerLoadReject === rejectLoad) {
+        this.pendingPeerLoadReject = null;
+      }
+    }
+  }
+
   send(message: any): void {
     const connection = this.connection;
     if (!connection?.open) return;
@@ -143,6 +180,8 @@ export class PeerJsClientTransport implements P2PClientTransport {
     const wasConnected = this.connection !== null;
     this.activeEpoch++;
     this.isConnecting = false;
+    this.pendingPeerLoadReject?.(new Error("Connection aborted"));
+    this.pendingPeerLoadReject = null;
     if (this.connection) {
       try {
         this.connection.close();

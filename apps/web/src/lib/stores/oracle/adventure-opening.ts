@@ -17,6 +17,11 @@ import {
   proposedSession,
   validateRollExpression,
 } from "./adventure-session";
+import {
+  AdventureTurnRejectedError,
+  generateAcceptedTurn,
+  turnErrorCopy,
+} from "./adventure-turn-retry";
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
@@ -94,6 +99,10 @@ export class AdventureOpening {
     try {
       const created = await this.withStartScene(validated, startSceneId);
       this.runtime.activeRestoreRequest += 1;
+      this.state.composerMode = "play";
+      this.state.oocDraft = "";
+      this.state.oocGenerating = false;
+      this.state.oocErrorMessage = null;
       this.state.phase = "starting";
       this.state.errorMessage = null;
       this.state.errorCause = null;
@@ -117,6 +126,7 @@ export class AdventureOpening {
     )
       return;
     this.state.errorMessage = null;
+    this.state.errorCause = null;
     await this.startOpeningIfOnline(session);
   }
 
@@ -221,7 +231,8 @@ export class AdventureOpening {
       if (!(await this.runtime.packageStillAvailable(signal))) return;
       await this.persistOpeningTurn(session, signal);
     } catch (cause) {
-      if (!signal.aborted) await this.handleFailedOpening(session, cause);
+      if (!signal.aborted)
+        await this.handleFailedOpening(session, cause, signal);
     } finally {
       this.runtime.endTurnGeneration(signal);
     }
@@ -231,25 +242,45 @@ export class AdventureOpening {
     session: AdventureSession,
     signal: AbortSignal,
   ): Promise<void> {
-    const { prepared, proposal } = await this.generateOpeningProposal(
-      session,
-      signal,
-    );
+    const next = await this.generateAcceptedOpening(session, signal);
     signal.throwIfAborted();
     if (this.state.session?.id !== session.id) return;
-    const saved = await this.saveOpening(
-      session,
-      this.openingSession(prepared, proposal),
-    );
+    const saved = await this.saveOpening(session, next);
     if (this.state.session?.id !== session.id) return;
     this.state.session = saved;
     this.state.streamedNarration = "";
+    this.state.errorCause = null;
     this.state.phase = saved.pendingRoll ? "awaiting-roll" : "ready";
+  }
+
+  private async generateAcceptedOpening(
+    session: AdventureSession,
+    signal: AbortSignal,
+  ): Promise<AdventureSession> {
+    try {
+      return await generateAcceptedTurn({
+        generate: (correction) =>
+          this.generateOpeningProposal(session, signal, correction),
+        apply: ({ prepared, proposal }) => {
+          if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
+          return this.openingSession(prepared, proposal);
+        },
+        signal,
+        resetProviderContext: () =>
+          this.runtime.deps.clearGenerationInteraction(session.id),
+      });
+    } catch (cause) {
+      if (cause instanceof AdventureTurnRejectedError) {
+        throw new OpeningStageError("opening-rejected", cause);
+      }
+      throw cause;
+    }
   }
 
   private async generateOpeningProposal(
     session: AdventureSession,
     signal: AbortSignal,
+    correction?: string,
   ) {
     // Commit the background together with the opening turn, not as a
     // half-created separate save if Oracle fails.
@@ -259,30 +290,27 @@ export class AdventureOpening {
       phase: "opening",
       anchors: [],
       relevant: [],
+      ...(correction ? { correction } : {}),
       signal,
       onNarration: this.runtime.narrationPreview(session.id, signal),
     });
     return { prepared, proposal };
   }
 
-  /** Applies the opening proposal; any rejection is an `opening-rejected`. */
+  /** Applies the opening proposal; validation errors trigger retry via generateAcceptedTurn. */
   private openingSession(
     session: AdventureSession,
     proposal:
       | Parameters<typeof applyCompletedTurn>[1]
       | Parameters<typeof applyRollRequest>[1],
   ): AdventureSession {
-    try {
-      validateRollExpression(proposal);
-      return proposedSession(
-        session,
-        proposal,
-        this.runtime.newTurnMetadata(""),
-        "opening-rejected",
-      );
-    } catch (cause) {
-      throw new OpeningStageError("opening-rejected", cause);
-    }
+    validateRollExpression(proposal);
+    return proposedSession(
+      session,
+      proposal,
+      this.runtime.newTurnMetadata(""),
+      "opening-rejected",
+    );
   }
 
   /** Saves the opening, classifying lease loss and storage failures. */
@@ -306,9 +334,25 @@ export class AdventureOpening {
   private async handleFailedOpening(
     session: AdventureSession,
     cause: unknown,
+    signal: AbortSignal,
   ): Promise<void> {
     if (cause instanceof AdventureGroundingError) {
-      this.retainIncompleteOpening(session, cause);
+      this.retainIncompleteOpening(session, cause.message, "opening-failed");
+      return;
+    }
+    if (
+      cause instanceof OpeningStageError &&
+      cause.failure === "opening-rejected"
+    ) {
+      await this.runtime.deps
+        .clearGenerationInteraction(session.id)
+        .catch(() => {});
+      if (signal.aborted) return;
+      this.retainIncompleteOpening(
+        session,
+        turnErrorCopy(cause.original, cause.message),
+        "opening-rejected",
+      );
       return;
     }
     await this.archiveFailedOpening(session, cause);
@@ -316,12 +360,13 @@ export class AdventureOpening {
 
   private retainIncompleteOpening(
     session: AdventureSession,
-    cause: AdventureGroundingError,
+    message: string,
+    errorCause: AdventureStartFailure,
   ): void {
     if (this.state.session?.id !== session.id) return;
-    this.state.errorMessage = cause.message;
+    this.state.errorMessage = message;
     this.state.streamedNarration = "";
-    this.state.errorCause = "opening-failed";
+    this.state.errorCause = errorCause;
     this.state.phase = "error";
   }
 

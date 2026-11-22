@@ -167,4 +167,82 @@ describe("AdventureManagementMenu", () => {
       expect(screen.queryByRole("menuitem", { name: /switch to/i })).toBeNull();
     });
   });
+
+  describe("inline variant", () => {
+    it("renders inline buttons, loads switch targets on mount, and invokes onAction", async () => {
+      const list = vi.fn(async () => ({
+        effectiveActiveId: "a",
+        entries: [
+          {
+            id: "a",
+            title: "The Drowned March",
+            status: "active",
+            loadCondition: "normal",
+          },
+          {
+            id: "b",
+            title: "The Salt Road",
+            status: "active",
+            loadCondition: "normal",
+          },
+        ],
+      }));
+      const onAction = vi.fn();
+      const onSwitch = vi.fn(async () => {});
+      const m = manager({
+        session: { id: "a", title: "The Drowned March" },
+      });
+
+      render(AdventureManagementMenu, {
+        props: {
+          manager: m,
+          repository: { list } as any,
+          vaultId: "vault-1",
+          onSwitch,
+          variant: "inline",
+          onAction,
+        },
+      });
+
+      expect(
+        screen.queryByTestId("adventure-management-menu-button"),
+      ).toBeNull();
+      expect(screen.getByTestId("adventure-management-inline")).toBeTruthy();
+
+      const switchBtn = await screen.findByRole("button", {
+        name: /switch to the salt road/i,
+      });
+      await fireEvent.click(switchBtn);
+      expect(onAction).toHaveBeenCalledOnce();
+      expect(onSwitch).toHaveBeenCalledWith("b");
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /end adventure/i }),
+      );
+      expect(m.end).toHaveBeenCalledOnce();
+      expect(onAction).toHaveBeenCalledTimes(2);
+    });
+
+    it("renders Force end recovery in inline variant when readOnly", async () => {
+      const m = manager({ readOnly: true, session: { id: "a", title: "T" } });
+      const onAction = vi.fn();
+
+      render(AdventureManagementMenu, {
+        props: {
+          manager: m,
+          variant: "inline",
+          onAction,
+        },
+      });
+
+      expect(
+        screen.queryByRole("button", { name: /^end adventure$/i }),
+      ).toBeNull();
+      await fireEvent.click(
+        screen.getByRole("button", { name: /force end stuck adventure/i }),
+      );
+      expect(onAction).toHaveBeenCalledOnce();
+      expect(m.forceEnd).toHaveBeenCalledOnce();
+    });
+  });
 });

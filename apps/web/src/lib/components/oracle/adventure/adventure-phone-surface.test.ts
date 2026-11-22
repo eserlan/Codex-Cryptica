@@ -5,6 +5,7 @@ import {
   bodyPortal,
   containTab,
   focusableWithin,
+  portalTo,
 } from "./adventure-phone-surface";
 
 function tab(shiftKey = false) {
@@ -77,5 +78,45 @@ describe("adventure phone surface", () => {
     const surface = document.getElementById("surface")!;
     bodyPortal(surface, false);
     expect(surface.parentElement?.id).toBe("host");
+  });
+
+  it("ignores Tab events that were already handled by a nested dialog", () => {
+    document.body.innerHTML = `
+      <section id="surface">
+        <button id="first">First</button>
+        <button id="last">Last</button>
+      </section>`;
+    const surface = document.getElementById("surface")!;
+    const last = document.getElementById("last")!;
+    last.focus();
+    const event = tab();
+    event.preventDefault();
+    expect(containTab(event, surface)).toBe(false);
+    expect(document.activeElement).toBe(last);
+  });
+
+  it("portals an overlay into target when defined, restores on undefined, and removes on destroy", () => {
+    document.body.innerHTML = `
+      <div id="host"></div>
+      <div id="sheet"><div id="overlay">Modal</div></div>`;
+    const host = document.getElementById("host")!;
+    const sheet = document.getElementById("sheet")!;
+    const overlay = document.getElementById("overlay")!;
+
+    const action = portalTo(overlay, undefined);
+    expect(overlay.parentElement).toBe(sheet);
+
+    action.update(host);
+    expect(overlay.parentElement).toBe(host);
+    expect(sheet.contains(overlay)).toBe(false);
+
+    action.update(undefined);
+    expect(overlay.parentElement).toBe(sheet);
+
+    action.update(host);
+    action.destroy();
+    expect(overlay.isConnected).toBe(false);
+    expect(host.childNodes.length).toBe(0);
+    expect(sheet.childNodes.length).toBe(0);
   });
 });

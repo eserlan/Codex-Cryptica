@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createMockOpfs } from "../../../tests/mocks/storage";
 import { cacheService } from "../../services/cache.svelte";
-import { SyncStore } from "./sync-store.svelte";
+import { SyncStore, VaultSyncError } from "./sync-store.svelte";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import { appEventBus } from "@codex/events";
 import { vaultEventBus } from "./events.svelte";
@@ -1130,5 +1130,306 @@ describe("SyncStore warm-cache reconcile (#2619)", () => {
     await store.reloadFromDisk();
 
     expect(cacheService.clearVault).toHaveBeenCalledWith("vault-1");
+  });
+});
+
+describe("SyncStore deferAuxiliary and throwOnError startup options", () => {
+  const opfsHandle = createMockOpfs();
+
+  const makeStore = (overrides: Record<string, any> = {}) =>
+    new SyncStore({
+      activeVaultId: () => "vault-1",
+      activeVaultRecord: () =>
+        ({ lastInternalChange: 0, lastSavedToFolder: 0 }) as any,
+      repository: {
+        entities: {},
+        loadFiles: vi.fn().mockResolvedValue(undefined),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      } as any,
+      getSyncCoordinator: vi.fn().mockResolvedValue(null),
+      getActiveVaultHandle: vi.fn().mockResolvedValue(opfsHandle),
+      getActiveFolderHandle: vi.fn().mockResolvedValue(null),
+      ensureServicesInitialized: vi.fn().mockResolvedValue(undefined),
+      loadMaps: vi.fn().mockResolvedValue(undefined),
+      loadCanvases: vi.fn().mockResolvedValue(undefined),
+      updateEntityCount: vi.fn().mockResolvedValue(undefined),
+      flushPendingSaves: vi.fn().mockResolvedValue(undefined),
+      ...overrides,
+    });
+
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    const { fileIOAdapter } = await import("./adapters.svelte");
+    vi.mocked(fileIOAdapter.walkDirectory).mockResolvedValue([]);
+  });
+
+  it("does not block warm-cache entity readiness on hanging or failing auxiliary tasks", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(
+      new Map([
+        [
+          "hero-1",
+          {
+            lastModified: 1,
+            entity: { id: "hero-1", title: "Warm Hero" } as any,
+          },
+        ],
+      ]),
+    );
+    const { fileIOAdapter } = await import("./adapters.svelte");
+    vi.mocked(fileIOAdapter.walkDirectory).mockImplementation(
+      () => new Promise(() => {}),
+    );
+    const degraded: string[] = [];
+    const cacheReady = vi.fn();
+
+    const store = makeStore({
+      loadMaps: vi.fn().mockImplementation(() => new Promise(() => {})),
+      loadCanvases: vi.fn().mockRejectedValue(new Error("canvases failed")),
+      updateEntityCount: vi.fn().mockRejectedValue(new Error("idb failed")),
+    });
+
+    await store.loadFiles(true, {
+      deferAuxiliary: true,
+      throwOnError: true,
+      onCacheReady: cacheReady,
+      onAuxiliaryDegraded: (src) => degraded.push(src),
+    });
+
+    expect(cacheReady).toHaveBeenCalledWith({ cacheState: "warm", count: 1 });
+    expect((store as any).deps.repository.entities["hero-1"]).toBeDefined();
+
+    await new Promise((r) => setTimeout(r, 0));
+    expect(degraded).toEqual(
+      expect.arrayContaining(["canvases", "entity_count"]),
+    );
+  });
+
+  it("does not block cold loadFiles on hanging auxiliary tasks or slow local-folder sync", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+    const syncWithLocalFolder = vi
+      .fn()
+      .mockImplementation(() => new Promise(() => {}));
+    const repository = {
+      entities: {} as Record<string, any>,
+      loadFiles: vi.fn().mockImplementation(async () => {
+        repository.entities = { "e-1": { id: "e-1", title: "Cold Hero" } };
+      }),
+      waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+    };
+    const degraded: string[] = [];
+
+    const store = makeStore({
+      repository,
+      getActiveFolderHandle: vi.fn().mockResolvedValue({
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      }),
+      getSyncCoordinator: vi.fn().mockResolvedValue({ syncWithLocalFolder }),
+      loadMaps: vi.fn().mockRejectedValue(new Error("maps failed")),
+      loadCanvases: vi.fn().mockImplementation(() => new Promise(() => {})),
+      loadPublishRegistry: vi.fn().mockRejectedValue(new Error("pub failed")),
+      updateEntityCount: vi
+        .fn()
+        .mockImplementation(() => new Promise(() => {})),
+    });
+
+    await store.loadFiles(true, {
+      deferAuxiliary: true,
+      throwOnError: true,
+      onAuxiliaryDegraded: (src) => degraded.push(src),
+    });
+
+    expect(repository.entities["e-1"]).toBeDefined();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(degraded).toEqual(
+      expect.arrayContaining(["maps", "publish_registry"]),
+    );
+  });
+
+  it("throws typed VaultSyncError when throwOnError is true on missing handle or repository failure", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+    const missingHandleStore = makeStore({
+      getActiveVaultHandle: vi.fn().mockResolvedValue(undefined),
+    });
+
+    await expect(
+      missingHandleStore.loadFiles(true, { throwOnError: true }),
+    ).rejects.toThrowError(VaultSyncError);
+
+    const failingRepoStore = makeStore({
+      repository: {
+        entities: {},
+        loadFiles: vi.fn().mockRejectedValue(new Error("corrupt vault")),
+        waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+      },
+    });
+
+    await expect(
+      failingRepoStore.loadFiles(true, { throwOnError: true }),
+    ).rejects.toThrowError(VaultSyncError);
+  });
+
+  it("clears cache and reloads OPFS into memory when deferred cold local sync pulls changes", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+    const repository = {
+      entities: {} as Record<string, any>,
+      loadFiles: vi
+        .fn()
+        .mockImplementationOnce(async () => {
+          repository.entities = {};
+        })
+        .mockImplementationOnce(async () => {
+          repository.entities = {
+            "pulled-1": { id: "pulled-1", title: "Pulled Entity" },
+          };
+        }),
+      waitForAllSaves: vi.fn().mockResolvedValue(undefined),
+    };
+    const syncWithLocalFolder = vi
+      .fn()
+      .mockImplementation(
+        async (_id, _dir, _dirMode, _entities, _wait, onStateChange) => {
+          onStateChange({ status: "loading", syncType: "local" });
+          onStateChange({ status: "idle", syncType: null });
+        },
+      );
+
+    const store = makeStore({
+      repository,
+      getActiveFolderHandle: vi.fn().mockResolvedValue({
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      }),
+      getSyncCoordinator: vi.fn().mockResolvedValue({ syncWithLocalFolder }),
+    });
+
+    await store.loadFiles(true, { deferAuxiliary: true, throwOnError: true });
+    await vi.waitFor(() => {
+      expect(repository.entities["pulled-1"]).toBeDefined();
+    });
+
+    expect(cacheService.clearVault).toHaveBeenCalledWith("vault-1");
+    expect(repository.loadFiles).toHaveBeenCalledTimes(2);
+    expect(store.status).toBe("idle");
+  });
+
+  it("routes deferred local-sync errors and rejections to onAuxiliaryDegraded without setting vault error status", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+
+    const degradedFromCallback: string[] = [];
+    const callbackErrorStore = makeStore({
+      getActiveFolderHandle: vi.fn().mockResolvedValue({
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      }),
+      getSyncCoordinator: vi.fn().mockResolvedValue({
+        syncWithLocalFolder: vi
+          .fn()
+          .mockImplementation(
+            async (_id, _dir, _dirMode, _entities, _wait, onStateChange) => {
+              onStateChange({ status: "loading", syncType: "local" });
+              onStateChange({
+                status: "error",
+                syncType: null,
+                errorMessage: "Folder link lost",
+              });
+            },
+          ),
+      }),
+    });
+
+    await callbackErrorStore.loadFiles(true, {
+      deferAuxiliary: true,
+      throwOnError: true,
+      onAuxiliaryDegraded: (src) => degradedFromCallback.push(src),
+    });
+
+    await vi.waitFor(() => {
+      expect(degradedFromCallback).toContain("local_sync");
+    });
+    expect(callbackErrorStore.status).toBe("idle");
+    expect(cacheService.clearVault).not.toHaveBeenCalled();
+
+    const degradedFromReject: string[] = [];
+    const rejectingStore = makeStore({
+      getActiveFolderHandle: vi.fn().mockResolvedValue({
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      }),
+      getSyncCoordinator: vi.fn().mockResolvedValue({
+        syncWithLocalFolder: vi
+          .fn()
+          .mockImplementation(
+            async (_id, _dir, _dirMode, _entities, _wait, onStateChange) => {
+              onStateChange({ status: "loading", syncType: "local" });
+              throw new Error("Local folder unreadable");
+            },
+          ),
+      }),
+    });
+
+    await rejectingStore.loadFiles(true, {
+      deferAuxiliary: true,
+      throwOnError: true,
+      onAuxiliaryDegraded: (src) => degradedFromReject.push(src),
+    });
+
+    await vi.waitFor(() => {
+      expect(degradedFromReject).toContain("local_sync");
+    });
+    expect(rejectingStore.status).toBe("idle");
+  });
+
+  it("never sets vault status to loading during a hanging deferred local sync and ignores stale catch degradation", async () => {
+    vi.mocked(cacheService.preloadVault).mockResolvedValue(new Map());
+
+    let rejectSync!: (err: Error) => void;
+    let capturedSignal: AbortSignal | undefined;
+    const degraded: string[] = [];
+
+    const store = makeStore({
+      getActiveFolderHandle: vi.fn().mockResolvedValue({
+        queryPermission: vi.fn().mockResolvedValue("granted"),
+      }),
+      getSyncCoordinator: vi.fn().mockResolvedValue({
+        syncWithLocalFolder: vi
+          .fn()
+          .mockImplementation(
+            async (
+              _id,
+              _dir,
+              _dirMode,
+              _entities,
+              _wait,
+              onStateChange,
+              _conflicts,
+              opts,
+            ) => {
+              capturedSignal = opts?.signal;
+              onStateChange({ status: "loading", syncType: "local" });
+              await new Promise<void>((_resolve, reject) => {
+                rejectSync = reject;
+              });
+            },
+          ),
+      }),
+    });
+
+    await store.loadFiles(true, {
+      deferAuxiliary: true,
+      throwOnError: true,
+      onAuxiliaryDegraded: (src) => degraded.push(src),
+    });
+
+    await vi.waitFor(() => {
+      expect(capturedSignal).toBeDefined();
+    });
+    // Hanging deferred local sync must never hold vault.status in "loading".
+    expect(store.status).toBe("idle");
+
+    // Superseding loadFiles aborts the previous deferred sync; a subsequent
+    // rejection from the stale sync must not report degradation.
+    const nextLoad = store.loadFiles(false, { deferAuxiliary: true });
+    rejectSync(new Error("aborted stale sync"));
+    await nextLoad;
+
+    expect(degraded).not.toContain("local_sync");
+    expect(store.status).toBe("idle");
   });
 });

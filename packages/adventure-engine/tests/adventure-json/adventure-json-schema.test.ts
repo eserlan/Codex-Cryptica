@@ -6,6 +6,7 @@ import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
   AdventureJsonV1Schema,
   getAdventureJsonV1JsonSchema,
+  validateAdventureJson,
   type AdventureJsonV1,
 } from "../../src/adventure-json";
 
@@ -30,6 +31,34 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
     const fixture = loadReferenceFixture();
     const result = AdventureJsonV1Schema.safeParse(fixture);
     expect(result.success).toBe(true);
+  });
+
+  it("accepts aliases and labels on locations, actors, factions and items", () => {
+    const fixture = loadReferenceFixture();
+    const withMetadata = {
+      ...fixture,
+      locations: fixture.locations.map((entry) => ({
+        ...entry,
+        aliases: ["The old road"],
+        labels: ["north"],
+      })),
+      actors: fixture.actors.map((entry) => ({
+        ...entry,
+        aliases: ["The keeper"],
+        labels: ["important"],
+      })),
+      factions: fixture.factions.map((entry) => ({
+        ...entry,
+        aliases: ["The society"],
+        labels: ["secret"],
+      })),
+      items: fixture.items.map((entry) => ({
+        ...entry,
+        aliases: ["The key"],
+        labels: ["clue"],
+      })),
+    };
+    expect(AdventureJsonV1Schema.safeParse(withMetadata).success).toBe(true);
   });
 
   it("rejects invalid types, missing required fields, and unsupported formatVersion", () => {
@@ -110,6 +139,12 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       { ...validFixture, id: "!" },
       { ...validFixture, version: "1.0" },
       { ...validFixture, title: "" },
+      {
+        ...validFixture,
+        locations: validFixture.locations.map((location, index) =>
+          index === 0 ? { ...location, aliases: [" "] } : location,
+        ),
+      },
       { ...validFixture, extraUnknownProperty: 123 },
       {
         ...validFixture,
@@ -177,5 +212,55 @@ describe("Adventure JSON v1 schema & JSON Schema parity", () => {
       expect(zodOk).toBe(false);
       expect(ajvOk).toBe(zodOk);
     }
+  });
+
+  describe("optional actor kind", () => {
+    const SPARSE_PATH = resolve(
+      REPO_ROOT,
+      "fixtures/adventures/reference-one-shot/variants/sparse.v1.json",
+    );
+    const withKind = (kind: unknown): AdventureJsonV1 => {
+      const base = loadReferenceFixture();
+      return {
+        ...base,
+        actors: base.actors.map((a, i) => (i === 0 ? { ...a, kind } : a)),
+      } as AdventureJsonV1;
+    };
+    const ajvValidate = new Ajv2020({
+      strict: false,
+      allErrors: true,
+    }).compile(getAdventureJsonV1JsonSchema());
+
+    it.each([
+      ["character", true],
+      ["creature", true],
+      ["monster", false],
+      [42, false],
+    ])("Zod and Ajv agree on kind %j", (kind, expected) => {
+      const candidate = withKind(kind);
+      expect(AdventureJsonV1Schema.safeParse(candidate).success).toBe(expected);
+      expect(Boolean(ajvValidate(candidate))).toBe(expected);
+    });
+
+    it("keeps a missing kind missing after parsing", () => {
+      const sparse = JSON.parse(readFileSync(SPARSE_PATH, "utf8"));
+      expect(Boolean(ajvValidate(sparse))).toBe(true);
+      const parsed = AdventureJsonV1Schema.parse(sparse);
+      expect(parsed.actors.length).toBeGreaterThan(0);
+      for (const actor of parsed.actors) expect("kind" in actor).toBe(false);
+    });
+
+    it("reports an invalid kind at the actor kind path", () => {
+      const result = validateAdventureJson(withKind("monster"));
+      expect(result.ok).toBe(false);
+      if (result.ok) return;
+      expect(
+        result.errors.some(
+          (e) =>
+            e.code === "SCHEMA_VALIDATION_ERROR" &&
+            JSON.stringify(e.path ?? "").includes("kind"),
+        ),
+      ).toBe(true);
+    });
   });
 });

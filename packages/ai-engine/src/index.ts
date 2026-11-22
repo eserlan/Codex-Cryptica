@@ -9,5 +9,6 @@ export * from "./resolve-pronouns";
 export * from "./context-retrieval.service";
 export * from "./adventure-turn-generation.service";
 export * from "./adventure-summary.service";
+export * from "./adventure-ooc.service";
 export * from "./text-generation.service.svelte";
 export * from "./image-generation.service";

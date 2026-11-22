@@ -124,7 +124,10 @@ describe("retrieveAdventureJsonContext", () => {
     expect(secrets.length).toBeGreaterThan(0);
     for (const s of pkg.scenes) {
       const r = retrieveAdventureJsonContext(pkg, { sceneId: s.id });
-      const player = JSON.stringify(r.playerSafe);
+      // sourceRef section names are source headings, not record text.
+      const player = JSON.stringify(r.playerSafe, (key, value) =>
+        key === "sourceRef" ? undefined : value,
+      );
       for (const text of secrets) {
         expect(player).not.toContain(JSON.stringify(text).slice(1, -1));
       }

@@ -1,5 +1,6 @@
 import type { GuestHistory } from "schema";
 import {
+  type Clock,
   systemClock,
   browserStorage,
   type StorageLike,
@@ -12,6 +13,7 @@ const STORAGE_KEY = "guest_history";
  */
 export function getGuestHistory(
   storage: StorageLike = browserStorage,
+  clock: Clock = systemClock,
 ): GuestHistory[] {
   try {
     const raw = storage.getItem(STORAGE_KEY);
@@ -24,7 +26,7 @@ export function getGuestHistory(
         publishId: String(entry.publishId || ""),
         vaultTitle: String(entry.vaultTitle || "Untitled World"),
         lastAccessed: String(
-          entry.lastAccessed || new Date(systemClock.now()).toISOString(),
+          entry.lastAccessed || new Date(clock.now()).toISOString(),
         ),
       }))
       .filter((entry) => entry.publishId)
@@ -47,14 +49,15 @@ export function addGuestHistory(
   publishId: string,
   vaultTitle: string,
   storage: StorageLike = browserStorage,
+  clock: Clock = systemClock,
 ): void {
-  const history = getGuestHistory(storage);
+  const history = getGuestHistory(storage, clock);
   const index = history.findIndex((h) => h.publishId === publishId);
 
   const entry: GuestHistory = {
     publishId,
     vaultTitle: vaultTitle || "Untitled World",
-    lastAccessed: new Date(systemClock.now()).toISOString(),
+    lastAccessed: new Date(clock.now()).toISOString(),
   };
 
   if (index !== -1) {
@@ -84,8 +87,9 @@ export function addGuestHistory(
 export function removeGuestHistory(
   publishId: string,
   storage: StorageLike = browserStorage,
+  clock: Clock = systemClock,
 ): void {
-  const history = getGuestHistory(storage);
+  const history = getGuestHistory(storage, clock);
   const updated = history.filter((h) => h.publishId !== publishId);
   try {
     storage.setItem(STORAGE_KEY, JSON.stringify(updated));

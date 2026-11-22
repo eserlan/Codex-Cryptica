@@ -31,6 +31,14 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 - `epistemicStatus`: `"explicit" | "inferred" | "ambiguous" | "unresolved"` — allows external converters and parsers to mark uncertain or contradictory source facts without inventing missing details.
 - `visibility`: `"player-visible" | "gm-only"` — `secrets` strictly require `"gm-only"`.
 
+### Actor kind
+
+`actors[].kind` is optional: `"character"` or `"creature"`. It tells importers which Vault entity type an actor maps to (`character` or `creature`) without guessing. Converters use `"character"` for named or individual NPCs and `"creature"` for monsters, beasts and generic stat-block foes, and leave `kind` out when the source does not make the choice clear. Leaving it out is valid, so packages written before `kind` existed still validate, and `kind` is never added to a package on import, so hashes of approved packages do not change.
+
+Creature proposals use `kind` first: a `"creature"` actor is always proposed (even if no encounter references it), a `"character"` actor is never proposed, and an actor with no `kind` is proposed only when an encounter references it.
+
+Locations, actors, factions and items may include optional `aliases` and `labels` string arrays. The approved-package review flow copies aliases and labels from proposed actors into newly created Creature entries. A source `hidden` label selects the hidden choice by default; if the reviewer selects visible, the importer removes that reserved label so the saved entry matches the preview. When a proposal is hidden, the importer keeps its `hidden` label alongside any source labels. Matched Vault entries are reused without modification; this flow does not create Vault entities for other collections or character actors.
+
 ### What visibility applies to
 
 `visibility` is a property of the **whole record**. Every field of a `player-visible` record (including `role`, `motivation`, `summary`, `description`, `body`, `readAloud` and `reveals`) is treated as safe to show players; v1 has no per-field visibility, and importers, the review screen and any player-facing projection must not assume a visible record has hidden parts.
@@ -38,6 +46,8 @@ All schemas, validators, JSON Schema generators, canonical hashing utilities, an
 A character, place or item being known does not make its concealed role, motive or detail known. Converters keep the visible record to what players can know and store the concealed part in a separate `secrets` entry (`visibility: "gm-only"`) whose `relatedEntityIds` names the record. When a record cannot be split without losing meaning, mark it `gm-only` and add an `unresolved` entry. Source wording is copied, not invented.
 
 In the reference one-shot, Tobiah Reed is a `player-visible` actor with no `motivation`; his motive is the `gm-only` secret `secret-tobiah-motive`.
+
+v1 also has no field-level or "revealed later" visibility. A fact players only learn in play (where someone is, what a trigger does, a countdown, how an obstacle can be passed) belongs in a `gm-only` secret, clue, scene or encounter and is revealed by the GM during play. It must never appear in a `player-visible` summary, `conditions` or `alternativeSolutions`. In the reference one-shot, the cellar, Aldous, Wick and scenes 1 to 3 are trimmed to what players know, with the hidden facts in `gm-only` secrets, and the cellar scene, the Wick encounter and the sabotage clue are `gm-only` as whole records. Any field-level or reveal-later visibility is a runtime or schema decision tracked in #4946.
 
 Runtime status: Scene-context retrieval is wired into Oracle openings, action turns and roll resolutions for package sessions. A session records the package's current scene in `packageProgress`, set to the entry scene at start and moved only when the model reports a scene ID that exists in the pinned package. `packageProgress` is also a versioned, append-only ledger (`version: 1`, `records`, `events`, plus optional `actors` and `actorEvents`, at most 400 of each) with a status (`unvisited`, `available`, `active`, `resolved`, `altered` or `skipped`) for each scene, encounter, clue and secret that play has touched. Legacy `{ sceneId }` sessions stay valid (and reject `actors` or `actorEvents` when `version` is absent). A scene move writes confirmed events automatically: the entry scene becomes `active` on the first turn, the scene left becomes `available`, the new scene becomes `active` and its branch targets become `available`; free-text `conditions` are never evaluated. Events are `confirmed` (they change a status, and only allowed transitions are accepted) or `claimed` (a report such as a rumour that is recorded but never changes a status). Corrections are made only by a new event that `supersedes` an earlier one; no event is edited or removed, and the ledger never reveals secrets. The model may propose `packageEvents`, checked by the same rules, and rejected events are recorded in the turn's dropped list; it uses `claimed` for rumours, testimony and ambiguous facts. The model may also propose `actorEvents` (up to 8 per turn) keyed by package actor ID to track per-actor `status` (`unknown`, `present`, `absent`, `dead`; proposals use `present`, `absent`, `dead`), fixed-scale `disposition` (`hostile`, `wary`, `neutral`, `friendly`, `allied`; untouched baseline `neutral`), and up to 5 deduplicated remembered `facts` (at most 160 characters each, FIFO-bounded); `dead` actors cannot transition to `present` or `absent` (or re-assert `dead`, or change `disposition`) without a `confirmed` `supersedes` correction targeting the death event. Package sessions also give the model a bounded GM-only progress summary (`"GM-ONLY package progress"`, capped at 4000 characters) that never reaches player-visible output, scoping `actors` and `recentActorEvents` to actors featured on the active scene when scene excerpts are supplied. The prompt carries that scene's excerpts, and only `player-visible` text goes into the player-safe block. Other adventure collection records are not projected into player transcripts, and sessions pin the approved package by hash. Sessions verify the pinned hash, ID, version and format version on open, resume, start and before each generation, enter `package-unavailable` on failure, and are never retargeted. Starting an approved package does copy its `title` and premise text into the session: `premise.hook` and `premise.background` are used when present; if both are empty, `description` is used, then `title`. Those copied values enter Oracle opening generation, so converters must keep the title, hook, background and optional description player-safe and limited to source-supported facts. Future collection projections must drop `gm-only` records and never render secrets. If a future runtime needs per-field visibility, that is a schema v2 change (#4815, #4864), not a reinterpretation of v1.
 
@@ -69,17 +79,23 @@ The combined `JSON.stringify` length of both lists never exceeds `maxCharacters`
 
 `validateAdventureJson` runs strict Zod schema validation followed by graph and integrity checks, returning `{ ok: true, value }` or `{ ok: false, errors }`:
 
-| Error Code                | Meaning                                                                                                                                                                                                                     |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `INVALID_FORMAT_VERSION`  | Missing or unsupported `formatVersion` (expected `"adventure-json/v1"`).                                                                                                                                                    |
-| `INVALID_VISIBILITY`      | A secret in `secrets` is not marked `"gm-only"`.                                                                                                                                                                            |
-| `SCHEMA_VALIDATION_ERROR` | Structural or type mismatch against `AdventureJsonV1Schema`.                                                                                                                                                                |
-| `DUPLICATE_ID`            | Two or more entities across any collection share the same `id`.                                                                                                                                                             |
-| `SELF_REFERENCE`          | An entity references its own `id` as parent or target.                                                                                                                                                                      |
-| `UNRESOLVED_REFERENCE`    | A cross-reference (`parentLocationId`, `targetLocationId`, `factionId`, `locationId`, `sceneId`, `actorIds`, `placedLocationId`, `placedActorId`, `placedSceneId`, `targetEntityId`, `targetSceneId`, etc.) does not exist. |
-| `HIERARCHY_CYCLE`         | Circular `parentLocationId` chain among locations.                                                                                                                                                                          |
-| `DEAD_END_CYCLE`          | Mandatory scene transition cycle with no exit path to a terminal scene.                                                                                                                                                     |
-| `UNREACHABLE_SCENE`       | Non-entry scene (`scenes[1..]`) unreachable from `scenes[0]`.                                                                                                                                                               |
+| Error Code                | Meaning                                                                                                                                                                                                               |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `INVALID_FORMAT_VERSION`  | Missing or unsupported `formatVersion` (expected `"adventure-json/v1"`).                                                                                                                                              |
+| `INVALID_VISIBILITY`      | A secret in `secrets` is not marked `"gm-only"`.                                                                                                                                                                      |
+| `SCHEMA_VALIDATION_ERROR` | Structural or type mismatch against `AdventureJsonV1Schema`.                                                                                                                                                          |
+| `DUPLICATE_ID`            | Two or more entities across any collection share the same `id`.                                                                                                                                                       |
+| `SELF_REFERENCE`          | An entity references its own `id` as parent or target.                                                                                                                                                                |
+| `UNRESOLVED_REFERENCE`    | A supplied target is missing or belongs to a disallowed collection. See the [reference contract](../packages/adventure-engine/src/adventure-json/reference-contract.ts) for every checked field and permitted target. |
+| `HIERARCHY_CYCLE`         | Circular `parentLocationId` chain among locations.                                                                                                                                                                    |
+| `DEAD_END_CYCLE`          | Mandatory scene transition cycle with no exit path to a terminal scene.                                                                                                                                               |
+| `UNREACHABLE_SCENE`       | Non-entry scene (`scenes[1..]`) not reached by a breadth-first walk from `scenes[0]` along `branches[].targetSceneId`, unless an `UNKNOWN_SCENE_PROGRESSION` unresolved entry names it in `relatedEntityId`.          |
+
+### Scene reachability and links
+
+A non-entry scene is reachable when a breadth-first walk from `scenes[0]` that follows only `branches[].targetSceneId` reaches it; a branch from an unreachable scene does not make its target reachable. A scene keeps its real `epistemicStatus` (`"explicit"` for stated scenes) and, when the source leaves its place in the order of play open, takes one `unresolved` entry with `code: "UNKNOWN_SCENE_PROGRESSION"` and `relatedEntityId` set to the scene id. The older exemption for scenes marked `"ambiguous"` is still accepted for backward compatibility but is deprecated.
+
+There are four kinds of link: authored scene transitions go in `branches`; geographic or room adjacency goes in `locations[].connections`, not `branches`; transitions found during play are not part of the package; links the source does not support are never added.
 
 ### Impossible prerequisites (not checked in v1)
 
@@ -94,18 +110,18 @@ The validator does not detect scenes, branches, encounters or endings whose prer
 
 `adventureSourcePackageToAdventureJson(sourcePkg)` converts internal `AdventureSourcePackage` records (`schemaVersion: 1`) into `AdventureJsonV1`:
 
-| `AdventureSourcePackage`         | `AdventureJsonV1`                    | Notes                                                                                                                                                  |
-| -------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sourceIdentity`, `documentHash` | `id`, `title`, `source`              | `version` defaults to `"1.0.0"`.                                                                                                                       |
-| `sections`                       | `premise`, `sourceRef`, `visibility` | GM-only section bodies are excluded from unclassified premise fields; `pageNumber`/`pageEnd` map to `sourceRef`.                                       |
-| `scenes`                         | `scenes`                             | Preserves `conditions`, `branches`, scene-level `optionalBranch`, and `readAloud`; unknown progression is marked ambiguous and recorded as unresolved. |
-| `npcs`                           | `actors`                             | Allocates unique IDs from stable source IDs and preserves `motivation`.                                                                                |
-| `encounters`                     | `encounters`                         | Maps `alternativeSolutions` and links `sceneId` when present.                                                                                          |
-| `clues`                          | `clues`                              | Maps `primarySourceId` to `placedSceneId` and preserves `alternativeSourceId`.                                                                         |
-| `secrets`                        | `secrets`                            | Always enforces `visibility: "gm-only"`.                                                                                                               |
-| `endings`                        | `endings`                            | Preserves `title` and `description`.                                                                                                                   |
-| `ambiguities`                    | `unresolved`                         | Preserves `code`, `message`, `context`, and `epistemicStatus: "unresolved"`.                                                                           |
-| `provenance`                     | `epistemicStatus`                    | `"source-grounded"` → `"explicit"`, `"suggested"` → `"inferred"`, `"unresolved"` → `"unresolved"`.                                                     |
+| `AdventureSourcePackage`         | `AdventureJsonV1`                    | Notes                                                                                                                                                                            |
+| -------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sourceIdentity`, `documentHash` | `id`, `title`, `source`              | `version` defaults to `"1.0.0"`.                                                                                                                                                 |
+| `sections`                       | `premise`, `sourceRef`, `visibility` | GM-only section bodies are excluded from unclassified premise fields; `pageNumber`/`pageEnd` map to `sourceRef`.                                                                 |
+| `scenes`                         | `scenes`                             | Preserves `conditions`, `branches`, scene-level `optionalBranch`, and `readAloud`; scene status is kept and unknown progression is recorded only as `UNKNOWN_SCENE_PROGRESSION`. |
+| `npcs`                           | `actors`                             | Allocates unique IDs from stable source IDs and preserves `motivation`.                                                                                                          |
+| `encounters`                     | `encounters`                         | Maps `alternativeSolutions` and links `sceneId` when present.                                                                                                                    |
+| `clues`                          | `clues`                              | Maps `primarySourceId` to `placedSceneId` and preserves `alternativeSourceId`.                                                                                                   |
+| `secrets`                        | `secrets`                            | Always enforces `visibility: "gm-only"`.                                                                                                                                         |
+| `endings`                        | `endings`                            | Preserves `title` and `description`.                                                                                                                                             |
+| `ambiguities`                    | `unresolved`                         | Preserves `code`, `message`, `context`, and `epistemicStatus: "unresolved"`.                                                                                                     |
+| `provenance`                     | `epistemicStatus`                    | `"source-grounded"` → `"explicit"`, `"suggested"` → `"inferred"`, `"unresolved"` → `"unresolved"`.                                                                               |
 
 ## Revisions and re-import
 
@@ -134,6 +150,26 @@ schema, alias, both examples, the import CTA href and the `llms.txt` entries.
 - The guide's prompt uses absolute production URLs. On a non-production base the
   check reports those as environment-dependent warnings; run it against
   production with `--strict-production` at release time, after promotion.
+- Results are reported separately so a body problem never looks like a route
+  failure: HTTP status, content type (`prompt.txt` must be `text/plain`), the
+  end marker (the last non-empty line of `prompt.txt`), whether the prompt in
+  the guide's `<pre id="canonical-prompt">` matches `prompt.txt`, and redirects.
+  Every guide, asset and `prompt.txt` line shows the final URL, and a redirect
+  to a different URL is a warning naming both.
+- On a non-production base the script also fetches the same assets from
+  production and compares them (JSON as parsed values, `prompt.txt` as exact
+  text). A match prints `OK    verified canonical equivalent: <path>`. A
+  difference, or a production fetch that is not 200, is a warning.
+- `--strict-production` turns those canonical-equivalence warnings and failed
+  production dependencies into errors. Errors exit 1; warnings and `OK` notes
+  do not.
+- A fetch that throws (network or timeout) is recorded as
+  `<url>: fetch failed (<message>)` and the other checks still run.
+- Crawler or `curl` failures alone do not prove a user-facing route is broken;
+  check in a browser before treating one as an outage.
+- Manual step: paste the exact "Copy guide link" text into a browsing-capable
+  assistant and confirm that it quotes the end marker. If it cannot, record
+  whether it reports blocked access, truncation or an extraction problem.
 
 ## Conversion QA
 
@@ -141,3 +177,4 @@ For scoring model conversions against an answer key (schema, secrets, coverage,
 rumours, branches, citations, truncation), see `docs/adventure-conversion-qa.md`
 and the offline scorer `scoreAdventureConversion` plus the
 `bun scripts/score-adventure-conversion.ts` CLI.
+To check a file's structure and references offline before import, see "Preflight validation" in that document and `bun scripts/preflight-adventure-json.ts`.

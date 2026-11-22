@@ -1,0 +1,230 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "the-keyed-ruin-of-emberfall",
+  "version": "1.0.0",
+  "title": "The Keyed Ruin of Emberfall",
+  "description": "A small keyed-location module whose rooms may be explored in any order.",
+  "premise": {
+    "background": "The keep of Emberfall fell long ago and its rooms still hold what the garrison left.",
+    "hook": "The party explores the ruin room by room, in whatever order they choose.",
+    "theme": ["exploration", "ruin"],
+    "tone": "quiet, dusty"
+  },
+  "source": {
+    "title": "The Keyed Ruin of Emberfall",
+    "license": "CC0-1.0"
+  },
+  "system": {
+    "name": "System-agnostic"
+  },
+  "locations": [
+    {
+      "id": "loc-gate",
+      "name": "Gatehouse of Emberfall",
+      "summary": "The ruined gatehouse where the party enters the keep.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "loc-gate",
+        "anchor": "loc-gate"
+      },
+      "connections": [
+        {
+          "targetLocationId": "loc-hall",
+          "description": "A broken stair leads up to the hall."
+        }
+      ]
+    },
+    {
+      "id": "loc-hall",
+      "name": "Ash Hall",
+      "summary": "A long hall with a cold hearth.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "loc-hall",
+        "anchor": "loc-hall"
+      },
+      "connections": [
+        {
+          "targetLocationId": "loc-gate",
+          "description": "The stair leads back down."
+        },
+        {
+          "targetLocationId": "loc-cistern",
+          "description": "A trapdoor opens to the cistern."
+        },
+        {
+          "targetLocationId": "loc-armoury",
+          "description": "A narrow door leads to the armoury."
+        }
+      ]
+    },
+    {
+      "id": "loc-cistern",
+      "name": "Flooded Cistern",
+      "summary": "A dark cistern with a green pool.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "loc-cistern",
+        "anchor": "loc-cistern"
+      },
+      "connections": [
+        {
+          "targetLocationId": "loc-hall",
+          "description": "The trapdoor leads up."
+        }
+      ]
+    },
+    {
+      "id": "loc-armoury",
+      "name": "Rusted Armoury",
+      "summary": "Racks of corroded weapons.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "loc-armoury",
+        "anchor": "loc-armoury"
+      },
+      "connections": [
+        {
+          "targetLocationId": "loc-hall",
+          "description": "The narrow door leads back."
+        },
+        {
+          "targetLocationId": "loc-watchtower",
+          "description": "A spiral stair climbs to the tower."
+        }
+      ]
+    },
+    {
+      "id": "loc-watchtower",
+      "name": "Watchtower",
+      "summary": "A roofless tower overlooking the valley.",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "loc-watchtower",
+        "anchor": "loc-watchtower"
+      },
+      "connections": [
+        {
+          "targetLocationId": "loc-armoury",
+          "description": "The spiral stair leads down."
+        }
+      ]
+    }
+  ],
+  "actors": [],
+  "factions": [],
+  "scenes": [
+    {
+      "id": "scene-1-gate",
+      "title": "Area 1: The Gatehouse",
+      "summary": "The party reaches the gatehouse and finds the stair to the hall.",
+      "locationId": "loc-gate",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "scene-1-gate",
+        "anchor": "scene-1-gate"
+      },
+      "branches": [
+        {
+          "targetSceneId": "scene-2-hall",
+          "description": "Climb the broken stair to the hall."
+        }
+      ]
+    },
+    {
+      "id": "scene-2-hall",
+      "title": "Area 2: Ash Hall",
+      "summary": "The hall holds a cold hearth and two side doors.",
+      "locationId": "loc-hall",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "scene-2-hall",
+        "anchor": "scene-2-hall"
+      }
+    },
+    {
+      "id": "scene-3-cistern",
+      "title": "Area 3: The Flooded Cistern",
+      "summary": "A green pool hides a sunken chest.",
+      "locationId": "loc-cistern",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "scene-3-cistern",
+        "anchor": "scene-3-cistern"
+      }
+    },
+    {
+      "id": "scene-4-armoury",
+      "title": "Area 4: The Rusted Armoury",
+      "summary": "Corroded weapons line the racks.",
+      "locationId": "loc-armoury",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "scene-4-armoury",
+        "anchor": "scene-4-armoury"
+      }
+    },
+    {
+      "id": "scene-5-watchtower",
+      "title": "Area 5: The Watchtower",
+      "summary": "From the roofless tower the keep's ruin is visible.",
+      "locationId": "loc-watchtower",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "scene-5-watchtower",
+        "anchor": "scene-5-watchtower"
+      }
+    }
+  ],
+  "encounters": [],
+  "clues": [],
+  "rumours": [],
+  "items": [],
+  "secrets": [],
+  "endings": [],
+  "unresolved": [
+    {
+      "id": "unresolved-progression-scene-3-cistern",
+      "code": "UNKNOWN_SCENE_PROGRESSION",
+      "message": "Progression to scene \"Area 3: The Flooded Cistern\" is not established in source.",
+      "relatedEntityId": "scene-3-cistern",
+      "epistemicStatus": "unresolved",
+      "sourceRef": {
+        "section": "scene-3-cistern",
+        "anchor": "scene-3-cistern"
+      }
+    },
+    {
+      "id": "unresolved-progression-scene-4-armoury",
+      "code": "UNKNOWN_SCENE_PROGRESSION",
+      "message": "Progression to scene \"Area 4: The Rusted Armoury\" is not established in source.",
+      "relatedEntityId": "scene-4-armoury",
+      "epistemicStatus": "unresolved",
+      "sourceRef": {
+        "section": "scene-4-armoury",
+        "anchor": "scene-4-armoury"
+      }
+    },
+    {
+      "id": "unresolved-progression-scene-5-watchtower",
+      "code": "UNKNOWN_SCENE_PROGRESSION",
+      "message": "Progression to scene \"Area 5: The Watchtower\" is not established in source.",
+      "relatedEntityId": "scene-5-watchtower",
+      "epistemicStatus": "unresolved",
+      "sourceRef": {
+        "section": "scene-5-watchtower",
+        "anchor": "scene-5-watchtower"
+      }
+    }
+  ]
+}

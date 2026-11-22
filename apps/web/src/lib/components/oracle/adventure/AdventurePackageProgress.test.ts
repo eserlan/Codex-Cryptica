@@ -10,7 +10,7 @@ import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
 const pkg = referencePackage;
 const sceneTitle = (id: string) =>
   pkg.scenes.find((s: { id: string }) => s.id === id)!.title;
-const clueText = pkg.clues[0]!.text;
+const gmOnlyClue = pkg.clues[0]!;
 const LANDING = "ros-scene-1-landing";
 const YARD = "ros-scene-2-yard";
 const SHRINE = "ros-branch-shrine";
@@ -32,7 +32,7 @@ describe("AdventurePackageProgress", () => {
     expect(await screen.findByText("Nothing discovered yet.")).toBeTruthy();
   });
 
-  it("shows confirmed records and hides claimed, superseded and unvisited ones", async () => {
+  it("shows confirmed player-visible records and hides hidden, claimed, superseded and unvisited ones", async () => {
     const progress = buildLedger(
       pkg,
       [
@@ -55,7 +55,7 @@ describe("AdventurePackageProgress", () => {
     const text = root.textContent ?? "";
     expect(text).toContain(sceneTitle(LANDING));
     expect(text).toContain("Current scene");
-    expect(text).toContain(clueText);
+    expect(text).not.toContain(gmOnlyClue.text);
     expect(text).not.toContain(sceneTitle(YARD));
     expect(text).not.toContain(sceneTitle(WHEEL));
     expect(text).not.toContain(sceneTitle(SHRINE));

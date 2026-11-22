@@ -409,6 +409,25 @@ export interface AdventureSourcePackageRef {
   hash: string;
 }
 
+export type AdventureOocExchangeStatus = "pending" | "answered" | "failed";
+
+/**
+ * Out-of-character (OOC) clarification exchange. Kept separate from committed
+ * narrative turns so OOC questions never advance world time, triggers, or story state.
+ */
+export interface AdventureOocExchange {
+  id: string;
+  kind: "ooc";
+  question: string;
+  answer?: string;
+  status: AdventureOocExchangeStatus;
+  errorMessage?: string;
+  /** Number of committed narrative turns (`session.turns.length`) when first asked. */
+  afterTurnCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AdventureSession {
   schemaVersion: 3;
   id: string;
@@ -452,6 +471,8 @@ export interface AdventureSession {
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
+  /** Optional bounded OOC clarification exchanges; separate from canonical gameplay turns. */
+  oocExchanges?: AdventureOocExchange[];
   pendingRoll: PendingRoll | null;
   /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
   dicePresets: DicePreset[];
@@ -573,6 +594,7 @@ export interface PackageProgress {
   events?: PackageProgressEvent[];
   actors?: PackageActorState[];
   actorEvents?: PackageActorEvent[];
+  revealedSecretIds?: string[];
 }
 
 export interface CommitMetadata {
@@ -591,6 +613,18 @@ export interface CommitMetadata {
   /** Hidden package references and text used to reject accidental player leaks. */
   packageRecordIds?: readonly string[];
   packageGmOnlyText?: readonly string[];
+  /** Map of package secret IDs to text so explicitly revealed secrets are exempted from package-text guards. */
+  packageSecretTexts?: Readonly<Record<string, string>>;
+}
+
+export type HiddenLeakageGuard =
+  "scenario-secret" | "package-text" | "package-id";
+
+/** Leak-safe classification of a commit-time secrecy rejection (never contains secret text or raw hidden IDs). */
+export interface HiddenLeakageDiagnostic {
+  guard: HiddenLeakageGuard;
+  field: string;
+  sourceRef: string;
 }
 
 export interface AdventureValidationError {
@@ -608,6 +642,7 @@ export interface AdventureValidationError {
     | "id-allocation-failed"
     | "incompatible-version";
   message: string;
+  diagnostic?: HiddenLeakageDiagnostic;
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; errors: E };

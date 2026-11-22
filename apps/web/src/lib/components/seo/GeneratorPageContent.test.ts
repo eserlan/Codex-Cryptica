@@ -2,6 +2,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import * as sessionBootstrap from "#lib/services/ai/session-bootstrap.js";
+import * as turnstileService from "#lib/services/publishing/turnstile.js";
 import { UIPersistence } from "#lib/stores/ui/persistence.js";
 import { hubContext } from "#lib/stores/hub-context.svelte.js";
 import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
@@ -194,5 +196,25 @@ describe("generator page composition", () => {
     expect(screen.getByTestId("generate-label").textContent).toBe("");
 
     expect(screen.queryByRole("heading", { name: "Quick names" })).toBeNull();
+  });
+
+  it("does not trigger Turnstile or AI session bootstrap on mount", async () => {
+    const turnstileSpy = vi.spyOn(turnstileService, "getSessionTurnstileToken");
+    const sessionTokenSpy = vi.spyOn(sessionBootstrap, "getAiSessionToken");
+
+    try {
+      renderBusiness();
+      await Promise.resolve();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(turnstileSpy).not.toHaveBeenCalled();
+      expect(sessionTokenSpy).not.toHaveBeenCalled();
+      expect(
+        document.head.querySelectorAll("#codex-turnstile-script"),
+      ).toHaveLength(0);
+    } finally {
+      turnstileSpy.mockRestore();
+      sessionTokenSpy.mockRestore();
+    }
   });
 });

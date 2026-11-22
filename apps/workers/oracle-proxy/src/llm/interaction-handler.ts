@@ -48,8 +48,9 @@ export async function handleInteraction(
     outgoingBody.model = registryModel.modelId;
   }
 
+  const GEMINI_FALLBACK_KEY = "gemini-flash-lite";
   const geminiFallbackModel =
-    getModel("gemini-flash-lite")?.modelId ?? "gemini-3.5-flash-lite";
+    getModel(GEMINI_FALLBACK_KEY)?.modelId ?? "gemini-3.5-flash-lite";
   const isGeminiContinuation =
     typeof body?.previous_interaction_id === "string" &&
     /^(?:v1_|interactions\/)/.test(body.previous_interaction_id);
@@ -154,5 +155,44 @@ export async function handleInteraction(
         .join("")
     : extractOpenAiResponseText(data);
 
-  return json({ id: data.id, text: extractedText }, 200);
+  const modelKey = isGeminiResult
+    ? registryModel?.provider === "gemini"
+      ? registryModel.key
+      : !wantsOpenAi && rawModel
+        ? rawModel
+        : GEMINI_FALLBACK_KEY
+    : (registryModel?.key ?? rawModel ?? "unresolved");
+  const usage = isGeminiResult
+    ? data.usageMetadata
+      ? {
+          inputTokens: data.usageMetadata.promptTokenCount,
+          outputTokens: data.usageMetadata.candidatesTokenCount,
+          ...(typeof data.usageMetadata.thoughtsTokenCount === "number"
+            ? { reasoningTokens: data.usageMetadata.thoughtsTokenCount }
+            : {}),
+        }
+      : data.usage
+        ? {
+            inputTokens: data.usage.total_input_tokens,
+            outputTokens: data.usage.total_output_tokens,
+            ...(typeof data.usage.total_thought_tokens === "number"
+              ? { reasoningTokens: data.usage.total_thought_tokens }
+              : {}),
+          }
+        : undefined
+    : data.usage
+      ? {
+          inputTokens: data.usage.input_tokens,
+          outputTokens: data.usage.output_tokens,
+          ...(typeof data.usage.output_tokens_details?.reasoning_tokens ===
+          "number"
+            ? {
+                reasoningTokens:
+                  data.usage.output_tokens_details.reasoning_tokens,
+              }
+            : {}),
+        }
+      : undefined;
+
+  return json({ id: data.id, text: extractedText, modelKey, usage }, 200);
 }

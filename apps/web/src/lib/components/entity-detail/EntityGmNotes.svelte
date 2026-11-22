@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Entity } from "schema";
-  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
+  import MarkdownEditor from "#lib/components/LazyMarkdownEditor.svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";

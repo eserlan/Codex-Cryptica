@@ -238,4 +238,47 @@ describe("AdventureSituationsDialog", () => {
     });
     expect(focusSelect.hasAttribute("disabled")).toBe(true);
   });
+
+  it("announces 0 active in sheet variant, portals to overlayHost, and invokes onAction when rumour starts", async () => {
+    const overlayHost = document.createElement("div");
+    document.body.appendChild(overlayHost);
+    const onAction = vi.fn();
+
+    try {
+      const manager = createMockManager([]);
+      manager.submitAction.mockImplementation(() => {
+        manager.phase = "generating";
+        return Promise.resolve();
+      });
+
+      render(AdventureSituationsDialog, {
+        props: {
+          manager,
+          variant: "sheet",
+          overlayHost,
+          onAction,
+        },
+      });
+
+      const trigger = screen.getByRole("button", {
+        name: "Adventure situations (0 active)",
+      });
+      expect(trigger.textContent).toContain("Situations");
+      expect(trigger.textContent).toContain("0");
+
+      await fireEvent.click(trigger);
+
+      const overlay = screen.getByTestId("adventure-situations-overlay");
+      expect(overlay.parentElement).toBe(overlayHost);
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: /look for local rumours/i }),
+      );
+
+      expect(onAction).toHaveBeenCalledOnce();
+      expect(screen.queryByRole("dialog")).toBeNull();
+    } finally {
+      overlayHost.remove();
+    }
+  });
 });

@@ -1,0 +1,557 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "the-last-grind",
+  "title": "The Last Grind",
+  "version": "1.0.0",
+  "description": "A one-shot for a small party, playable in about 30 turns and usable with any rules.",
+  "premise": {
+    "background": "The flour mill at Greywater Bend has stopped, the village is hungry, and the miller has vanished.",
+    "hook": "Maren Holt meets the party at the ferry landing and asks them to restart the mill before the village runs out of bread.",
+    "theme": [
+      "mystery",
+      "investigation",
+      "rural-intrigue"
+    ],
+    "tone": "tense, grounded"
+  },
+  "source": {
+    "title": "The Last Grind",
+    "license": "CC0-1.0"
+  },
+  "system": {
+    "name": "System-agnostic",
+    "targetParty": {
+      "sizeMin": 2,
+      "sizeMax": 5
+    }
+  },
+  "locations": [
+    {
+      "id": "loc-greywater-bend",
+      "name": "Greywater Bend",
+      "summary": "Greywater Bend",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "The Last Grind",
+        "anchor": "ros-overview"
+      }
+    },
+    {
+      "id": "loc-ferry-landing",
+      "name": "The Ferry Landing",
+      "summary": "The Ferry Landing",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-mill-yard",
+          "description": "Connection."
+        },
+        {
+          "targetLocationId": "loc-reed-shrine",
+          "description": "Connection."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Ferry Landing",
+        "anchor": "ros-scene-1-landing"
+      }
+    },
+    {
+      "id": "loc-mill-yard",
+      "name": "The Mill Yard",
+      "summary": "The Mill Yard",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-ferry-landing",
+          "description": "Connection."
+        },
+        {
+          "targetLocationId": "loc-wheel-room",
+          "description": "Connection."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "loc-wheel-room",
+      "name": "The Wheel Room",
+      "summary": "The Wheel Room",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-mill-yard",
+          "description": "Connection."
+        },
+        {
+          "targetLocationId": "loc-miller-cellar",
+          "description": "Connection."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "loc-reed-shrine",
+      "name": "The Reed Shrine",
+      "summary": "The Reed Shrine",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-ferry-landing",
+          "description": "Connection."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Reed Shrine",
+        "anchor": "ros-branch-shrine"
+      }
+    },
+    {
+      "id": "loc-miller-cellar",
+      "name": "The Miller's Cellar",
+      "summary": "The Miller's Cellar",
+      "parentLocationId": "loc-greywater-bend",
+      "connections": [
+        {
+          "targetLocationId": "loc-wheel-room",
+          "description": "Connection."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "actors": [
+    {
+      "id": "actor-maren-holt",
+      "name": "Maren Holt",
+      "summary": "Maren Holt",
+      "role": "Quest giver",
+      "locationId": "loc-ferry-landing",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Maren Holt",
+        "anchor": "ros-npc-maren"
+      }
+    },
+    {
+      "id": "actor-tobiah-reed",
+      "name": "Tobiah Reed",
+      "summary": "Tobiah Reed",
+      "role": "Mill accountant",
+      "locationId": "loc-greywater-bend",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Tobiah Reed",
+        "anchor": "ros-npc-tobiah"
+      }
+    },
+    {
+      "id": "actor-wick",
+      "name": "Wick",
+      "summary": "Wick",
+      "role": "Guard",
+      "locationId": "loc-wheel-room",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Wick",
+        "anchor": "ros-npc-wick"
+      }
+    },
+    {
+      "id": "actor-aldous-holt",
+      "name": "Aldous Holt",
+      "summary": "Aldous Holt",
+      "role": "Missing miller",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "factions": [],
+  "scenes": [
+    {
+      "id": "ros-scene-1-landing",
+      "title": "Scene 1: The Ferry Landing",
+      "summary": "Scene 1: The Ferry Landing",
+      "locationId": "loc-ferry-landing",
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-2-yard",
+          "description": "Branch."
+        },
+        {
+          "targetSceneId": "ros-branch-shrine",
+          "description": "Branch.",
+          "optional": true
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Ferry Landing",
+        "anchor": "ros-scene-1-landing"
+      }
+    },
+    {
+      "id": "ros-scene-2-yard",
+      "title": "Scene 2: The Mill Yard",
+      "summary": "Scene 2: The Mill Yard",
+      "locationId": "loc-mill-yard",
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-3-wheel-room",
+          "description": "Branch."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "ros-branch-shrine",
+      "title": "Optional Branch: The Reed Shrine",
+      "summary": "Optional Branch: The Reed Shrine",
+      "locationId": "loc-reed-shrine",
+      "optional": true,
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-2-yard",
+          "description": "Branch.",
+          "optional": true
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Reed Shrine",
+        "anchor": "ros-branch-shrine"
+      }
+    },
+    {
+      "id": "ros-scene-3-wheel-room",
+      "title": "Scene 3: The Wheel Room",
+      "summary": "Scene 3: The Wheel Room",
+      "locationId": "loc-wheel-room",
+      "branches": [
+        {
+          "targetSceneId": "ros-scene-4-cellar",
+          "description": "Branch."
+        }
+      ],
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "ros-scene-4-cellar",
+      "title": "Scene 4: The Miller's Cellar",
+      "summary": "Scene 4: The Miller's Cellar",
+      "locationId": "loc-miller-cellar",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    }
+  ],
+  "encounters": [
+    {
+      "id": "enc-wheel-room-wick",
+      "title": "Wick at the Sluice Lever",
+      "sceneId": "ros-scene-3-wheel-room",
+      "locationId": "loc-wheel-room",
+      "description": "Wick at the Sluice Lever",
+      "actorIds": [
+        "actor-wick"
+      ],
+      "alternativeSolutions": [
+        {
+          "method": "By force",
+          "description": "By force",
+          "socialBypassOfCombat": false
+        },
+        {
+          "method": "By talk",
+          "description": "By talk",
+          "socialBypassOfCombat": true
+        }
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    }
+  ],
+  "clues": [
+    {
+      "id": "clue-sluice-sabotage",
+      "text": "The sluice pin was sabotaged: a lock was fitted to it the week before the miller vanished.",
+      "reveals": "A clue.",
+      "leadTargetId": "actor-tobiah-reed",
+      "placedLocationId": "loc-mill-yard",
+      "placedSceneId": "ros-scene-2-yard",
+      "alternativeSourceId": "ros-scene-4-cellar",
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    }
+  ],
+  "rumours": [],
+  "items": [
+    {
+      "id": "item-mill-ledger",
+      "name": "Damp Mill Ledger",
+      "summary": "Damp Mill Ledger",
+      "locationId": "loc-mill-yard",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "item-clay-lamp",
+      "name": "Clay Lamp",
+      "summary": "Clay Lamp",
+      "locationId": "loc-reed-shrine",
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Reed Shrine",
+        "anchor": "ros-branch-shrine"
+      }
+    }
+  ],
+  "secrets": [
+    {
+      "id": "secret-filed-pin",
+      "text": "The sluice pin was filed through from the inside by Tobiah Reed, so that the wheel would jam and the mill would stop.",
+      "relatedEntityIds": [
+        "actor-tobiah-reed",
+        "ros-scene-2-yard"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "secret-tobiah-motive",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "actor-tobiah-reed"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Tobiah Reed",
+        "anchor": "ros-npc-tobiah"
+      }
+    },
+    {
+      "id": "secret-wick-wages",
+      "text": "Wick is owed three months of pay by Tobiah and will switch sides if he hears that Tobiah never meant to pay him.",
+      "relatedEntityIds": [
+        "actor-wick",
+        "actor-tobiah-reed",
+        "ros-scene-3-wheel-room"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "secret-shrine-bread",
+      "text": "The shrine's keeper is long dead. Maren leaves the bread there in her father's memory.",
+      "relatedEntityIds": [
+        "actor-maren-holt",
+        "ros-branch-shrine"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Reed Shrine",
+        "anchor": "ros-branch-shrine"
+      }
+    },
+    {
+      "id": "secret-miller-hid",
+      "text": "Aldous hid in the cellar himself. Tobiah did not take him, and he is bound by his own hand to protect his daughter from a charge of theft.",
+      "relatedEntityIds": [
+        "actor-aldous-holt",
+        "actor-maren-holt",
+        "ros-scene-4-cellar"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    },
+    {
+      "id": "secret-aldous-cellar",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "actor-aldous-holt",
+        "loc-miller-cellar",
+        "ros-scene-4-cellar"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 4: The Miller's Cellar",
+        "anchor": "ros-scene-4-cellar"
+      }
+    },
+    {
+      "id": "secret-cellar-flood",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "ros-scene-3-wheel-room",
+        "loc-miller-cellar"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 3: The Wheel Room",
+        "anchor": "ros-scene-3-wheel-room"
+      }
+    },
+    {
+      "id": "secret-after-dark",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "ros-scene-1-landing"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 1: The Ferry Landing",
+        "anchor": "ros-scene-1-landing"
+      }
+    },
+    {
+      "id": "secret-yard-noise",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "ros-scene-2-yard",
+        "actor-wick"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    },
+    {
+      "id": "secret-wick-motivation",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "actor-wick"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Wick",
+        "anchor": "ros-npc-wick"
+      }
+    },
+    {
+      "id": "secret-shrine-blessing",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "ros-branch-shrine",
+        "item-clay-lamp"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Optional Branch: The Reed Shrine",
+        "anchor": "ros-branch-shrine"
+      }
+    },
+    {
+      "id": "secret-ledger-lock",
+      "text": "A GM secret.",
+      "relatedEntityIds": [
+        "item-mill-ledger",
+        "clue-sluice-sabotage"
+      ],
+      "visibility": "gm-only",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Scene 2: The Mill Yard",
+        "anchor": "ros-scene-2-yard"
+      }
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending-restored",
+      "title": "Ending: The Mill Turns",
+      "description": "Ending: The Mill Turns",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Ending: The Mill Turns",
+        "anchor": "ros-ending-restored"
+      }
+    },
+    {
+      "id": "ending-flooded",
+      "title": "Ending: The Water Takes It",
+      "description": "Ending: The Water Takes It",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "section": "Ending: The Water Takes It",
+        "anchor": "ros-ending-flooded"
+      }
+    }
+  ],
+  "unresolved": []
+}

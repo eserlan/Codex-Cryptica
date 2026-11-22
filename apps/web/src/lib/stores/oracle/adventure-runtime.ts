@@ -7,8 +7,10 @@ import { AdventureGroundingService } from "#lib/services/adventure/adventure-gro
 import {
   packageProgressIndex,
   adventureJsonGmOnlyText,
-  adventureJsonRecordIds,
-  retrieveAdventureJsonContext,
+  adventureJsonHiddenRecordIds,
+  authorisedPackageRevelationScope,
+  detectHiddenTextLeakage,
+  detectPackageTextLeakage,
   type AdventureSession,
   type CommitMetadata,
 } from "@codex/adventure-engine";
@@ -27,6 +29,8 @@ import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-pref
 export class AdventureRuntime {
   activeRestoreRequest = 0;
   generationController: AbortController | null = null;
+  oocController: AbortController | null = null;
+  readonly grounding: AdventureGroundingService;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
   readonly summarizer: AdventureSummarizer;
@@ -42,6 +46,7 @@ export class AdventureRuntime {
       () => worldStyleForTheme(themeStore.worldThemeId),
       deps.packages,
     );
+    this.grounding = grounding;
     deps.generation = grounding.wrap(deps.generation);
     this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
       genreForTheme(themeStore.worldThemeId),
@@ -96,19 +101,32 @@ export class AdventureRuntime {
   }
 
   narrationPreview(sessionId: string, signal?: AbortSignal) {
+    const session = this.state.session;
+    const guardMeta = session?.id === sessionId ? this.packageMetadata() : {};
+    let suppressed = false;
     return (text: string) => {
       if (signal?.aborted || this.state.session?.id !== sessionId) return;
-      if (this.state.phase !== "generating") return;
+      if (this.state.phase !== "generating" || suppressed) return;
+      const currentSession = this.state.session;
+      if (
+        detectHiddenTextLeakage(currentSession, text).length > 0 ||
+        detectPackageTextLeakage(text, guardMeta, currentSession).length > 0
+      ) {
+        suppressed = true;
+        this.state.streamedNarration = "";
+        return;
+      }
       this.state.streamedNarration = text;
     };
   }
 
   /** Package guards, scene IDs and progress-ledger indexes for the cached package. */
-  private packageMetadata(): Pick<
+  packageMetadata(): Pick<
     CommitMetadata,
     | "packageSceneIds"
     | "packageRecordIds"
     | "packageGmOnlyText"
+    | "packageSecretTexts"
     | "packageRecordKinds"
     | "packageSceneBranches"
     | "packageActorIds"
@@ -116,32 +134,32 @@ export class AdventureRuntime {
     const session = this.state.session;
     const pkg = session && this.deps.packages.peek(session);
     if (!pkg) return {};
-    const context = retrieveAdventureJsonContext(pkg, {
-      sceneId: session.packageProgress?.sceneId,
-    });
-    const packageGmOnlyText = [
-      ...new Set([
-        ...context.gmOnly.flatMap((excerpt) => [
-          ...excerpt.text
-            .split("\n")
-            .filter((line) => !line.startsWith("Truth: "))
-            .map((line) => {
-              const separator = line.indexOf(": ");
-              return separator >= 0 ? line.slice(separator + 2) : line;
-            }),
-          ...(excerpt.sourceRef?.textQuote
-            ? [excerpt.sourceRef.textQuote]
-            : []),
-        ]),
-        ...adventureJsonGmOnlyText(pkg),
-      ]),
-    ];
+    const scope = authorisedPackageRevelationScope(session.packageProgress);
     return {
       ...packageProgressIndex(pkg),
       packageSceneIds: pkg.scenes.map((scene) => scene.id),
-      packageRecordIds: adventureJsonRecordIds(pkg),
-      packageGmOnlyText,
+      packageRecordIds: adventureJsonHiddenRecordIds(pkg),
+      packageGmOnlyText: adventureJsonGmOnlyText(pkg, scope),
+      packageSecretTexts: Object.fromEntries(
+        pkg.secrets.map((secret) => [secret.id, secret.text]),
+      ),
     };
+  }
+
+  /**
+   * Persists an OOC exchange update without touching provider interaction
+   * history, artwork reveals, or rolling story-so-far summarization.
+   */
+  async saveOocExchange(
+    previous: AdventureSession,
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    await this.verifySession(previous);
+    const saved = await this.deps.repository.save(previous.revision, next);
+    if (!saved.ok) throw saved.error;
+    this.assertCurrentSession(previous);
+    this.state.session = saved.session;
+    return saved.session;
   }
 
   newTurnMetadata(playerAction: string): CommitMetadata {

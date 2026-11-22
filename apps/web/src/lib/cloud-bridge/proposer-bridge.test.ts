@@ -184,4 +184,73 @@ describe("ProposerBridge", () => {
       "Proposer worker terminated while request req-term was pending",
     );
   });
+
+  describe("lazy start", () => {
+    const analyze = (bridge: ProposerBridge) =>
+      bridge.analyzeEntity("key", "model", "v", "e", "content", []);
+
+    it("does not load a worker on construction", () => {
+      const loadWorker = vi.fn().mockResolvedValue(mockWorker);
+      new ProposerBridge({ loadWorker });
+      expect(loadWorker).not.toHaveBeenCalled();
+    });
+
+    it("loads once on first analyzeEntity and posts ANALYZE", async () => {
+      const loadWorker = vi.fn().mockResolvedValue(mockWorker);
+      let n = 0;
+      const bridge = new ProposerBridge({
+        idGenerator: { uuid: () => `id-${++n}` },
+        loadWorker,
+      });
+      const first = analyze(bridge);
+      const second = analyze(bridge);
+      await vi.waitFor(() =>
+        expect(mockWorker.postMessage).toHaveBeenCalledTimes(2),
+      );
+      expect(loadWorker).toHaveBeenCalledTimes(1);
+      expect(mockWorker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "ANALYZE", id: "id-1" }),
+      );
+      expect(mockWorker.onmessage).toBeTypeOf("function");
+      mockWorker.onmessage({
+        data: { type: "RESULT", id: "id-1", payload: [] },
+      });
+      mockWorker.onmessage({
+        data: { type: "RESULT", id: "id-2", payload: [] },
+      });
+      await expect(first).resolves.toEqual([]);
+      await expect(second).resolves.toEqual([]);
+    });
+
+    it("posts a token set before start as SESSION_TOKEN before ANALYZE", async () => {
+      const loadWorker = vi.fn().mockResolvedValue(mockWorker);
+      const bridge = new ProposerBridge({ loadWorker });
+      bridge.setSessionToken({ token: "old", expiresAt: 1 });
+      bridge.setSessionToken({ token: "new", expiresAt: 2 });
+      void analyze(bridge);
+      await vi.waitFor(() =>
+        expect(mockWorker.postMessage).toHaveBeenCalledTimes(2),
+      );
+      expect(mockWorker.postMessage.mock.calls[0][0]).toEqual({
+        type: "SESSION_TOKEN",
+        payload: { token: "new", expiresAt: 2 },
+      });
+      expect(mockWorker.postMessage.mock.calls[1][0].type).toBe("ANALYZE");
+    });
+
+    it("resolves [] and does not retry when the load fails", async () => {
+      const loadWorker = vi.fn().mockRejectedValue(new Error("nope"));
+      const consoleSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => {});
+      const bridge = new ProposerBridge({ loadWorker });
+
+      await expect(analyze(bridge)).resolves.toEqual([]);
+      await expect(analyze(bridge)).resolves.toEqual([]);
+
+      expect(loadWorker).toHaveBeenCalledTimes(1);
+      expect(consoleSpy).toHaveBeenCalled();
+      consoleSpy.mockRestore();
+    });
+  });
 });

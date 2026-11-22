@@ -8,6 +8,7 @@ import {
   browserPerformanceRecorder,
 } from "#lib/services/performance/browser-performance-capture.js";
 import { entityTemplateStore } from "../../stores/entity-templates/entity-template-store.svelte";
+import { featureFlags } from "../../stores/feature-flags.svelte";
 
 /**
  * Core system bootstrapping.
@@ -33,9 +34,14 @@ export function bootSystem(stores: {
 
   // Initialize staging state
   stores.sessionModeStore.isStaging = IS_STAGING;
+  featureFlags.applyUrlOverrides();
+  void featureFlags.refresh();
 
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);
+    if (stores.vault.bootDiagnostics?.status !== "failed") {
+      stores.vault.bootDiagnostics?.recordFailure("unexpected");
+    }
   });
 
   return true;

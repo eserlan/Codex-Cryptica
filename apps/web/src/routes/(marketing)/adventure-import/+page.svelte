@@ -1,8 +1,15 @@
 <script lang="ts">
   import { basePath } from "#lib/utils/base-path.js";
   import { safeJsonLd } from "#lib/utils/json-ld.js";
+  import { onMount } from "svelte";
+  import { IS_STAGING } from "#lib/config/index.js";
+  import {
+    CANONICAL_ORIGIN,
+    isCanonicalProductionHost,
+  } from "./canonical-origin.js";
   import { createCopier } from "./copy-feedback.svelte.js";
   import StagedConversion from "./StagedConversion.svelte";
+  import ReferenceFields from "./ReferenceFields.svelte";
   import {
     CANONICAL_CONVERSION_PROMPT,
     COVERAGE_REPORT_PROMPT,
@@ -16,7 +23,12 @@
   } from "./conversion-guide.js";
 
   const cleanBase = basePath();
-  const pageUrl = "https://codexcryptica.com/adventure-import";
+  let showNonProductionNote = $state(false);
+  onMount(() => {
+    showNonProductionNote =
+      IS_STAGING || !isCanonicalProductionHost(window.location.hostname);
+  });
+  const pageUrl = `${CANONICAL_ORIGIN}/adventure-import`;
 
   const promptCopier = createCopier(CANONICAL_CONVERSION_PROMPT);
   const linkCopier = createCopier(LINK_HANDOFF_TEXT);
@@ -52,7 +64,7 @@
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://codexcryptica.com",
+        item: CANONICAL_ORIGIN,
       },
       {
         "@type": "ListItem",
@@ -243,8 +255,32 @@
           class="underline"
           href="{cleanBase}/adventure-import/prompt.txt">prompt.txt</a
         >). It only works if your assistant can open web pages; local models and
-        chats without browsing need the full prompt instead.
+        chats without browsing need the full prompt instead. If the assistant
+        says it cannot open the link, or its reply shows the prompt did not end
+        with the end marker, use <strong>Copy conversion prompt</strong> and paste
+        the full prompt instead.
       </p>
+      {#if showNonProductionNote}
+        <p
+          class="rounded-xl border border-theme-border/60 bg-theme-surface/50 p-3 text-sm text-theme-text/90"
+          data-testid="non-production-canonical-note"
+        >
+          <span
+            class="icon-[lucide--info] mr-1 inline-block h-4 w-4 align-text-bottom"
+            aria-hidden="true"
+          ></span>
+          This is not production. The copied prompt and guide link point at the production
+          ({CANONICAL_ORIGIN}) schema and guide. To compare, open this
+          environment's own
+          <a class="underline" href="{cleanBase}/schemas/adventure-json/v1.json"
+            >schema</a
+          >
+          and
+          <a class="underline" href="{cleanBase}/adventure-import/prompt.txt"
+            >prompt.txt</a
+          >.
+        </p>
+      {/if}
       <p class="text-sm text-theme-text/90">
         <strong>This page is a guide, not a converter.</strong> You can't upload
         or paste your adventure here.
@@ -278,6 +314,7 @@
       </div>
 
       <pre
+        id="canonical-prompt"
         class="overflow-x-auto rounded-xl border border-theme-border/60 bg-theme-bg/80 p-4 text-xs md:text-sm font-mono text-theme-text/90 whitespace-pre-wrap leading-relaxed">{CANONICAL_CONVERSION_PROMPT}</pre>
     </section>
 
@@ -417,6 +454,8 @@
       </div>
     </section>
 
+    <ReferenceFields />
+
     <!-- Fidelity limits -->
     <section
       aria-labelledby="fidelity-heading"
@@ -518,12 +557,12 @@
         Common Validation Errors &amp; Troubleshooting
       </h2>
       <div class="space-y-3">
-        {#each TROUBLESHOOTING_ERRORS as err (err.code)}
+        {#each TROUBLESHOOTING_ERRORS as err (err.codes.join(" / "))}
           <div
             class="rounded-2xl border border-theme-border/60 bg-theme-surface/35 p-5 space-y-1.5"
           >
             <h3 class="font-mono text-sm font-bold text-theme-text">
-              {err.code}
+              {err.codes.join(" / ")}
             </h3>
             <p class="text-sm text-theme-text/90">
               <strong>Cause:</strong>

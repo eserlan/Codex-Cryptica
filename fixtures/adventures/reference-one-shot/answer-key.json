@@ -1,12 +1,18 @@
 {
   "adventureFile": "adventure.md",
   "sections": [
-    { "sourceId": "ros-overview", "title": "The Last Grind" },
+    {
+      "sourceId": "ros-overview",
+      "title": "The Last Grind"
+    },
     {
       "sourceId": "ros-scene-1-landing",
       "title": "Scene 1: The Ferry Landing"
     },
-    { "sourceId": "ros-scene-2-yard", "title": "Scene 2: The Mill Yard" },
+    {
+      "sourceId": "ros-scene-2-yard",
+      "title": "Scene 2: The Mill Yard"
+    },
     {
       "sourceId": "ros-scene-3-wheel-room",
       "title": "Scene 3: The Wheel Room"
@@ -19,13 +25,36 @@
       "sourceId": "ros-scene-4-cellar",
       "title": "Scene 4: The Miller's Cellar"
     },
-    { "sourceId": "ros-cast", "title": "Cast", "container": true },
-    { "sourceId": "ros-npc-maren", "title": "Maren Holt" },
-    { "sourceId": "ros-npc-tobiah", "title": "Tobiah Reed" },
-    { "sourceId": "ros-npc-wick", "title": "Wick" },
-    { "sourceId": "ros-ending", "title": "Ending", "container": true },
-    { "sourceId": "ros-ending-restored", "title": "Ending: The Mill Turns" },
-    { "sourceId": "ros-ending-flooded", "title": "Ending: The Water Takes It" }
+    {
+      "sourceId": "ros-cast",
+      "title": "Cast",
+      "container": true
+    },
+    {
+      "sourceId": "ros-npc-maren",
+      "title": "Maren Holt"
+    },
+    {
+      "sourceId": "ros-npc-tobiah",
+      "title": "Tobiah Reed"
+    },
+    {
+      "sourceId": "ros-npc-wick",
+      "title": "Wick"
+    },
+    {
+      "sourceId": "ros-ending",
+      "title": "Ending",
+      "container": true
+    },
+    {
+      "sourceId": "ros-ending-restored",
+      "title": "Ending: The Mill Turns"
+    },
+    {
+      "sourceId": "ros-ending-flooded",
+      "title": "Ending: The Water Takes It"
+    }
   ],
   "npcs": [
     {
@@ -114,6 +143,143 @@
       "id": "ending-flooded",
       "description": "The cellar floods, Tobiah buys the mill, and Maren leaves the bend.",
       "sourceId": "ros-ending-flooded"
+    }
+  ],
+  "actionableDetails": [
+    {
+      "sourceId": "ros-scene-1-landing",
+      "category": "read-aloud",
+      "detail": "The party sees a rotting jetty, a silent stone mill with its wheel hanging still, and a woman waiting with folded arms."
+    },
+    {
+      "sourceId": "ros-scene-1-landing",
+      "category": "interaction",
+      "detail": "Maren Holt meets the party at the jetty and asks them to restart the mill."
+    },
+    {
+      "sourceId": "ros-scene-1-landing",
+      "category": "trigger",
+      "detail": "If the party arrives after dark, Maren is absent and Scene 2 begins with the gate already open."
+    },
+    {
+      "sourceId": "ros-scene-1-landing",
+      "category": "interaction",
+      "detail": "The reed path left of the jetty leads toward the shrine."
+    },
+    {
+      "sourceId": "ros-scene-2-yard",
+      "category": "clue",
+      "detail": "A ledger page records a lock fitted to the sluice pin the week before the miller vanished."
+    },
+    {
+      "sourceId": "ros-scene-2-yard",
+      "category": "trigger",
+      "detail": "If the party makes noise in the yard, Wick arrives from the wheel room within a few turns and the Scene 3 encounter begins on alert."
+    },
+    {
+      "sourceId": "ros-scene-2-yard",
+      "category": "gm-only",
+      "detail": "Tobiah Reed filed the sluice pin through from the inside so the wheel would jam and the mill would stop."
+    },
+    {
+      "sourceId": "ros-scene-3-wheel-room",
+      "category": "interaction",
+      "detail": "Wick and his wolfhound guard the sluice lever that frees the jammed gear."
+    },
+    {
+      "sourceId": "ros-scene-3-wheel-room",
+      "category": "trigger",
+      "detail": "Once the lever is pulled, the wheel turns and the cellar water starts to rise, leaving about five turns to finish the cellar."
+    },
+    {
+      "sourceId": "ros-scene-3-wheel-room",
+      "category": "alternate-outcome",
+      "detail": "If a character names Tobiah's debt or shows the filed pin, Wick lowers his cudgel and steps aside."
+    },
+    {
+      "sourceId": "ros-scene-3-wheel-room",
+      "category": "actor-reaction",
+      "detail": "Wick yields if his hound is hurt."
+    },
+    {
+      "sourceId": "ros-scene-3-wheel-room",
+      "category": "gm-only",
+      "detail": "Wick is owed three months of pay by Tobiah and will switch sides if he hears Tobiah never meant to pay him."
+    },
+    {
+      "sourceId": "ros-branch-shrine",
+      "category": "interaction",
+      "detail": "A side path offering a calm blessing and a hint toward the cellar."
+    },
+    {
+      "sourceId": "ros-branch-shrine",
+      "category": "consequence",
+      "detail": "The clay lamp gives a calm blessing: the next roll can be repeated once."
+    },
+    {
+      "sourceId": "ros-branch-shrine",
+      "category": "gm-only",
+      "detail": "The shrine's keeper is long dead and Maren leaves the bread there in her father's memory."
+    },
+    {
+      "sourceId": "ros-scene-4-cellar",
+      "category": "trigger",
+      "detail": "If the party stays more than five turns, the water reaches the ceiling."
+    },
+    {
+      "sourceId": "ros-scene-4-cellar",
+      "category": "alternate-outcome",
+      "detail": "Staying too long means the party must leave without the miller or swim out at a cost."
+    },
+    {
+      "sourceId": "ros-scene-4-cellar",
+      "category": "clue",
+      "detail": "Aldous carries a second copy of the sluice lock receipt."
+    },
+    {
+      "sourceId": "ros-scene-4-cellar",
+      "category": "actor-reaction",
+      "detail": "If the party arrives with Wick as an ally, Aldous speaks freely."
+    },
+    {
+      "sourceId": "ros-scene-4-cellar",
+      "category": "gm-only",
+      "detail": "Aldous hid in the cellar himself and Tobiah did not take him."
+    },
+    {
+      "sourceId": "ros-npc-maren",
+      "category": "actor-reaction",
+      "detail": "Maren wants the mill running again to pay her late mother's debt before the bailiff comes."
+    },
+    {
+      "sourceId": "ros-npc-tobiah",
+      "category": "actor-reaction",
+      "detail": "Tobiah wants the mill to fail so the bailiff will sell it cheaply to him."
+    },
+    {
+      "sourceId": "ros-npc-wick",
+      "category": "actor-reaction",
+      "detail": "Wick wants his unpaid wages and a safe road out of the valley."
+    },
+    {
+      "sourceId": "ros-ending-restored",
+      "category": "trigger",
+      "detail": "The sluice pin sabotage is exposed and Tobiah Reed is named."
+    },
+    {
+      "sourceId": "ros-ending-restored",
+      "category": "consequence",
+      "detail": "The bailiff cannot sell the mill, Maren keeps her home and the village eats."
+    },
+    {
+      "sourceId": "ros-ending-flooded",
+      "category": "trigger",
+      "detail": "The party leaves without exposing Tobiah, or the cellar floods with the miller inside."
+    },
+    {
+      "sourceId": "ros-ending-flooded",
+      "category": "consequence",
+      "detail": "The bailiff sells the mill to Tobiah and Maren leaves the bend for good."
     }
   ]
 }
