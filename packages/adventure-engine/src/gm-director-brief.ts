@@ -989,12 +989,10 @@ function collectOpenEpistemicUncertainties(
   }
 }
 
-function collectRevealedPackageSecretIds(
+function collectSummarizedPackageSecretIds(
   session: AdventureSession,
-  packageSecretIds: ReadonlySet<string>,
 ): Set<string> {
-  const turnIds = new Set<string>();
-  const summarizedIds = new Set([
+  return new Set([
     ...(session.packageProgress?.revealedSecretIds ?? []),
     ...session.hiddenState.secrets
       .filter((secret) => secret.status === "revealed")
@@ -1007,6 +1005,14 @@ function collectRevealedPackageSecretIds(
       )
       .map((record) => record.id),
   ]);
+}
+
+function collectLegacyPackageSecretReveals(
+  session: AdventureSession,
+  packageSecretIds: ReadonlySet<string>,
+  summarizedIds: ReadonlySet<string>,
+): Set<string> {
+  const turnIds = new Set<string>();
   // packageProgress is the durable summary for current sessions. The bounded
   // turn lookup retains compatibility for package secrets missing from it.
   if ([...packageSecretIds].some((id) => !summarizedIds.has(id))) {
@@ -1016,6 +1022,19 @@ function collectRevealedPackageSecretIds(
       }
     }
   }
+  return turnIds;
+}
+
+function collectRevealedPackageSecretIds(
+  session: AdventureSession,
+  packageSecretIds: ReadonlySet<string>,
+): Set<string> {
+  const summarizedIds = collectSummarizedPackageSecretIds(session);
+  const turnIds = collectLegacyPackageSecretReveals(
+    session,
+    packageSecretIds,
+    summarizedIds,
+  );
   return new Set([...summarizedIds, ...turnIds]);
 }
 
