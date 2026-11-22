@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795374261,
+  "updated_at": 1795375852,
   "candidates": [
     {
       "id": "reddit-44466817164-image-only-entity-labels-are-available-o",
@@ -22,14 +22,14 @@
       "created_at": 1795349378
     },
     {
-      "id": "reddit-45053421492-local-campaign-folders-in-firefox-and-sa",
-      "title": "Local campaign folders in Firefox and Safari",
-      "body": "If your campaign is already in a local folder, using Firefox or Safari could leave you looking for another way to open it. I added local-folder vault support for both browsers in Codex Cryptica.\n\n- Select an existing campaign folder from the vault flow.\n- Open its material as a vault.\n- Keep Firefox or Safari in your GM workflow.\n\nAre your campaign notes in a folder, a cloud drive, or another tool?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-yours.jpg)",
+      "id": "reddit-45053421492-oracle-suggestions-when-you-want-a-promp",
+      "title": "Oracle suggestions when you want a prompt",
+      "body": "I sometimes want a prompt on screen, but I don\u2019t want a row of buttons deciding what stays in view throughout a scene. Codex Cryptica\u2019s Oracle suggestions can now stay tucked away on mobile until a player opens them.\n\n- Choose when to reveal suggested actions.\n- Bring them up when a player wants a nudge.\n- Continue free play with the suggestion tray tucked away.\n\nDo you keep prompts visible during a scene, or bring them up only when a player asks for help?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-yours.jpg",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
       "source_id": "45053421492",
       "status": "approved",
-      "created_at": 1795374261
+      "created_at": 1795375852
     }
   ]
 }
