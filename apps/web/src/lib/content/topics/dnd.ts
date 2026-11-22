@@ -4,6 +4,7 @@ export const DND_TOPIC_CONFIG = {
   slug: "dnd",
   canonicalPath: "/topics/dnd",
   label: "fantasy",
+  jobsNavLabel: "DM jobs",
   title: "Running D&D: Help for Your Next Session",
   metaTitle: "D&D Dungeon Master Help: Prep, Run and Track | Codex Cryptica",
   description:

@@ -7,7 +7,8 @@ import type { TopicJobHubConfig } from "./job-hub-types";
 export const NEW_GM_TOPIC_CONFIG = {
   slug: "new-gm",
   canonicalPath: "/topics/new-gm",
-  label: "getting started",
+  label: "fantasy",
+  jobsNavLabel: "First session steps",
   title: "New Game Master? Run Your First Tabletop RPG Session",
   metaTitle:
     "New Game Master Guide: Run Your First RPG Session | Codex Cryptica",

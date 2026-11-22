@@ -9,12 +9,19 @@ import {
   buildJobHubBreadcrumbJsonLd,
 } from "./job-hub-json-ld";
 import { topicEntries } from "../discovery/entries/topics";
+import { PUBLIC_LABELS } from "../labels";
+import { getPublicContentByLabel } from "../labels/aggregate";
 
 const answerSlugs = new Set(getAllAnswerSlugs());
 
 describe("new GM topic hub", () => {
   it("is a system-neutral first-session pathway, separate from the D&D DM hub", () => {
     expect(NEW_GM_TOPIC_CONFIG.canonicalPath).toBe("/topics/new-gm");
+    expect(PUBLIC_LABELS).toContain(NEW_GM_TOPIC_CONFIG.label);
+    expect(
+      getPublicContentByLabel(NEW_GM_TOPIC_CONFIG.label).length,
+    ).toBeGreaterThan(0);
+    expect(NEW_GM_TOPIC_CONFIG.jobsNavLabel).toBe("First session steps");
     expect(NEW_GM_TOPIC_CONFIG.jobs.map((job) => job.id)).toEqual([
       "choose",
       "agree",
