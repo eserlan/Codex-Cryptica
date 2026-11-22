@@ -106,7 +106,7 @@ describe("/topics route", () => {
     const collection = docs.find((d) => d["@type"] === "CollectionPage");
     const crumbs = docs.find((d) => d["@type"] === "BreadcrumbList");
     expect(collection.mainEntity["@type"]).toBe("ItemList");
-    expect(collection.mainEntity.itemListElement).toHaveLength(7);
+    expect(collection.mainEntity.itemListElement).toHaveLength(8);
     expect(crumbs.itemListElement).toHaveLength(3);
     expect(crumbs.itemListElement[2].item).toBe(
       "https://codexcryptica.com/topics",
