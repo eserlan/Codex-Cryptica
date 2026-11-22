@@ -406,6 +406,7 @@
                 onclick={handleGenerate}
                 disabled={isRevising}
                 title="Revise sound bite"
+                aria-label="Revise sound bite for {entity.title}"
               >
                 <span
                   aria-hidden="true"
@@ -420,6 +421,7 @@
                 onclick={startEditing}
                 disabled={isRevising}
                 title="Edit transcript text"
+                aria-label="Edit Text: sound-bite transcript for {entity.title}"
               >
                 <span aria-hidden="true" class="icon-[lucide--edit] w-3 h-3"
                 ></span>
@@ -435,6 +437,7 @@
                 class="flex items-center gap-1 text-xs text-theme-accent hover:opacity-80 transition-opacity"
                 onclick={() => p2pHost.broadcastSoundBitePlay(entity.id)}
                 title="Play sound bite for all connected guests"
+                aria-label="Play for all: sound bite for {entity.title}"
               >
                 <span aria-hidden="true" class="icon-[lucide--radio] w-3 h-3"
                 ></span>
@@ -447,6 +450,7 @@
               class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
               onclick={handleCopy}
               title="Copy transcript"
+              aria-label="Copy sound bite transcript for {entity.title}"
             >
               <span aria-hidden="true" class="icon-[lucide--copy] w-3 h-3"
               ></span>
@@ -460,6 +464,7 @@
                   class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-text transition-colors"
                   onclick={() => soundBiteService.discardResult()}
                   title="Discard unsaved changes and restore original"
+                  aria-label="Discard unsaved changes to the sound bite for {entity.title}"
                 >
                   <span
                     aria-hidden="true"
@@ -472,6 +477,7 @@
                 class="flex items-center gap-1 text-xs text-theme-accent hover:opacity-80 transition-opacity"
                 onclick={handleSave}
                 title="Save sound bite to entity"
+                aria-label="Save sound bite to {entity.title}"
               >
                 <span aria-hidden="true" class="icon-[lucide--save] w-3 h-3"
                 ></span>
@@ -482,6 +488,7 @@
                 class="flex items-center gap-1 text-xs text-theme-muted hover:text-theme-danger transition-colors"
                 onclick={handleDelete}
                 title="Remove saved sound bite"
+                aria-label="Remove saved sound bite from {entity.title}"
               >
                 <span aria-hidden="true" class="icon-[lucide--trash-2] w-3 h-3"
                 ></span>
