@@ -1,5 +1,7 @@
 import { session } from "./reducer-fixtures";
 import { describe, expect, it } from "vitest";
+import * as schemas from "../src/schemas";
+import * as publicApi from "../src";
 import {
   migrateAdventureSession,
   parseAdventureSession,
@@ -7,6 +9,37 @@ import {
 } from "../src";
 
 describe("adventure schemas", () => {
+  it("preserves the complete runtime API at the original module and package entry point", () => {
+    const exports = [
+      "CURRENT_ADVENTURE_SCHEMA_VERSION",
+      "MAX_ACTOR_FACT_CHARS",
+      "MAX_ACTOR_REMEMBERED_FACTS",
+      "MAX_GENERATION_INPUT_CHARS",
+      "MAX_OOC_EXCHANGES",
+      "MAX_PACKAGE_PROGRESS_ENTRIES",
+      "MAX_PLACES",
+      "MAX_PLACE_ALIASES",
+      "MAX_SERIALIZED_STATE_CHARS",
+      "MAX_STORY_SO_FAR_CHARS",
+      "MAX_TEXT_CHARS",
+      "adventureSessionSchema",
+      "hiddenPatchSchema",
+      "migrateAdventureSession",
+      "parseAdventureSession",
+      "parseAdventureSessionForRecovery",
+      "parseTurnProposal",
+      "scenarioEventSchema",
+      "turnProposalSchema",
+      "validateGenerationBudget",
+      "validateStateBudget",
+      "visiblePatchSchema",
+    ];
+    expect(Object.keys(schemas).sort()).toEqual(exports);
+    for (const name of exports as Array<keyof typeof schemas>) {
+      expect(publicApi[name]).toBe(schemas[name]);
+    }
+  });
+
   it("requires exactly one discriminated player character", () => {
     expect(() => parseAdventureSession({})).toThrow();
   });
