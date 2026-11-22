@@ -121,6 +121,14 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     linkText: "See the campaign manager",
     href: "/solutions/campaign-manager",
   },
+  relatedTopics: [
+    {
+      title: "New Game Master",
+      href: "/topics/new-gm",
+      description:
+        "Follow the first-session journey from choosing an adventure and Session 0 to improvisation and notes.",
+    },
+  ],
   relatedTools: [
     {
       title: "RPG NPC generator",
@@ -170,6 +178,7 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     uniqueValue:
       "The beginner-GM entry point: a seven-step path to a first session, an explicit list of what a new GM genuinely doesn't need (voices, rules mastery, worldbuilding, props), and a worked minimal prep packet, routing into the deeper existing session-prep and campaign-organisation answers rather than duplicating them.",
     relatedIntents: [
+      "topic-new-gm",
       "answer-beginner-start",
       "answer-session-zero",
       "answer-session-prep",
