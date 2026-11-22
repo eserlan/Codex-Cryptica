@@ -1,11 +1,11 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   getGuestHistory,
   addGuestHistory,
   removeGuestHistory,
   clearGuestHistory,
 } from "./guest-history";
-import type { StorageLike } from "#lib/utils/runtime-deps.js";
+import type { Clock, StorageLike } from "#lib/utils/runtime-deps.js";
 
 class MockStorage implements StorageLike {
   private data: Record<string, string> = {};
@@ -23,56 +23,51 @@ class MockStorage implements StorageLike {
 
 describe("GuestHistory Service", () => {
   let mockStorage: StorageLike;
+  let currentTime: number;
+  let clock: Clock;
 
   beforeEach(() => {
     mockStorage = new MockStorage();
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
+    currentTime = new Date("2026-06-22T22:00:00Z").getTime();
+    clock = { now: () => currentTime };
   });
 
   it("should return empty history when storage is empty", () => {
-    expect(getGuestHistory(mockStorage)).toEqual([]);
+    expect(getGuestHistory(mockStorage, clock)).toEqual([]);
   });
 
   it("should add a history entry correctly", () => {
-    addGuestHistory("pub-1", "Test Vault 1", mockStorage);
-    const history = getGuestHistory(mockStorage);
+    addGuestHistory("pub-1", "Test Vault 1", mockStorage, clock);
+    const history = getGuestHistory(mockStorage, clock);
     expect(history).toHaveLength(1);
     expect(history[0].publishId).toBe("pub-1");
     expect(history[0].vaultTitle).toBe("Test Vault 1");
-    expect(history[0].lastAccessed).toBeDefined();
+    expect(history[0].lastAccessed).toBe("2026-06-22T22:00:00.000Z");
   });
 
   it("should update lastAccessed when adding the same publishId again", () => {
-    vi.setSystemTime(new Date("2026-06-22T22:00:00Z"));
-    addGuestHistory("pub-1", "Original Title", mockStorage);
-    const firstTime = getGuestHistory(mockStorage)[0].lastAccessed;
+    addGuestHistory("pub-1", "Original Title", mockStorage, clock);
+    const firstTime = getGuestHistory(mockStorage, clock)[0].lastAccessed;
 
-    vi.setSystemTime(new Date("2026-06-22T22:02:00Z"));
-    addGuestHistory("pub-1", "Updated Title", mockStorage);
-    const history = getGuestHistory(mockStorage);
+    currentTime += 120_000;
+    addGuestHistory("pub-1", "Updated Title", mockStorage, clock);
+    const history = getGuestHistory(mockStorage, clock);
     expect(history).toHaveLength(1);
     expect(history[0].vaultTitle).toBe("Updated Title");
     expect(history[0].lastAccessed).not.toBe(firstTime);
-    expect(history[0].lastAccessed).toBe(
-      new Date("2026-06-22T22:02:00Z").toISOString(),
-    );
+    expect(history[0].lastAccessed).toBe("2026-06-22T22:02:00.000Z");
   });
 
   it("should sort entries by lastAccessed descending", () => {
-    vi.setSystemTime(new Date("2026-06-22T22:00:00Z"));
-    addGuestHistory("pub-1", "Vault 1", mockStorage);
+    addGuestHistory("pub-1", "Vault 1", mockStorage, clock);
 
-    vi.setSystemTime(new Date("2026-06-22T22:01:00Z"));
-    addGuestHistory("pub-2", "Vault 2", mockStorage);
+    currentTime += 60_000;
+    addGuestHistory("pub-2", "Vault 2", mockStorage, clock);
 
-    vi.setSystemTime(new Date("2026-06-22T22:02:00Z"));
-    addGuestHistory("pub-3", "Vault 3", mockStorage);
+    currentTime += 60_000;
+    addGuestHistory("pub-3", "Vault 3", mockStorage, clock);
 
-    const history = getGuestHistory(mockStorage);
+    const history = getGuestHistory(mockStorage, clock);
     expect(history).toHaveLength(3);
     expect(history[0].publishId).toBe("pub-3");
     expect(history[1].publishId).toBe("pub-2");
@@ -80,12 +75,11 @@ describe("GuestHistory Service", () => {
   });
 
   it("should cap history at 10 items", () => {
-    const baseTime = new Date("2026-06-22T22:00:00Z").getTime();
     for (let i = 1; i <= 12; i++) {
-      vi.setSystemTime(new Date(baseTime + i * 1000));
-      addGuestHistory(`pub-${i}`, `Vault ${i}`, mockStorage);
+      currentTime += 1000;
+      addGuestHistory(`pub-${i}`, `Vault ${i}`, mockStorage, clock);
     }
-    const history = getGuestHistory(mockStorage);
+    const history = getGuestHistory(mockStorage, clock);
     expect(history).toHaveLength(10);
     // The oldest entries (pub-1, pub-2) should be evicted because they have the oldest timestamps
     const ids = history.map((h) => h.publishId);
@@ -98,10 +92,10 @@ describe("GuestHistory Service", () => {
   });
 
   it("should remove a specific entry", () => {
-    addGuestHistory("pub-1", "Vault 1", mockStorage);
-    addGuestHistory("pub-2", "Vault 2", mockStorage);
-    removeGuestHistory("pub-1", mockStorage);
-    const history = getGuestHistory(mockStorage);
+    addGuestHistory("pub-1", "Vault 1", mockStorage, clock);
+    addGuestHistory("pub-2", "Vault 2", mockStorage, clock);
+    removeGuestHistory("pub-1", mockStorage, clock);
+    const history = getGuestHistory(mockStorage, clock);
     expect(history).toHaveLength(1);
     expect(history[0].publishId).toBe("pub-2");
   });
@@ -114,6 +108,21 @@ describe("GuestHistory Service", () => {
 
   it("should handle corrupted json in storage gracefully", () => {
     mockStorage.setItem("guest_history", "corrupted-non-json");
-    expect(getGuestHistory(mockStorage)).toEqual([]);
+    expect(getGuestHistory(mockStorage, clock)).toEqual([]);
+  });
+
+  it("uses the injected clock for legacy entries without a timestamp", () => {
+    mockStorage.setItem(
+      "guest_history",
+      JSON.stringify([{ publishId: "pub-legacy", vaultTitle: "Old Vault" }]),
+    );
+
+    expect(getGuestHistory(mockStorage, clock)).toEqual([
+      {
+        publishId: "pub-legacy",
+        vaultTitle: "Old Vault",
+        lastAccessed: "2026-06-22T22:00:00.000Z",
+      },
+    ]);
   });
 });
