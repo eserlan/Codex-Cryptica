@@ -1,8 +1,8 @@
 <script lang="ts">
   import { fly } from "svelte/transition";
   import { marked } from "marked";
-  import DOMPurify from "dompurify";
   import { browser } from "$app/env";
+  import { sanitizeMarkdownHtml } from "#lib/utils/markdown.js";
   import { deriveEntityTypePalette } from "schema";
   import type { Entity } from "schema";
   import { categories } from "#lib/stores/categories.svelte.js";
@@ -39,10 +39,7 @@
   let tooltipContent = $derived(
     hoveredEntity?.content
       ? browser
-        ? DOMPurify.sanitize(marked.parse(hoveredEntity.content) as string, {
-            ALLOWED_URI_REGEXP:
-              /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-          })
+        ? sanitizeMarkdownHtml(marked.parse(hoveredEntity.content) as string)
         : (marked.parse(hoveredEntity.content) as string)
       : '<span class="italic text-theme-muted">No data available</span>',
   );

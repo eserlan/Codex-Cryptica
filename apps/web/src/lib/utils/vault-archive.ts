@@ -179,6 +179,54 @@ export async function parseVaultArchive(
   };
 }
 
+async function normalizeAdventureVaultId(
+  path: string[],
+  readText: () => Promise<string>,
+  vaultId: string,
+): Promise<Blob | null> {
+  if (
+    path.length !== 3 ||
+    path[0] !== ".codex" ||
+    path[1] !== "adventures" ||
+    !/^[a-zA-Z0-9_-]{1,160}\.json$/.test(path[2])
+  ) {
+    return null;
+  }
+  try {
+    const raw: unknown = JSON.parse(await readText());
+    const parsed = parseAdventureSessionForRecovery(raw);
+    if (parsed.session.id === path[2].slice(0, -5)) {
+      return new Blob([JSON.stringify({ ...(raw as object), vaultId })]);
+    }
+  } catch {
+    // Keep unreadable documents byte-for-byte so recovery remains possible.
+  }
+  return null;
+}
+
+async function writeVaultEntries(
+  vaultId: string,
+  entries: Iterable<{
+    path: string[];
+    content: Blob | File;
+    readText: () => Promise<string>;
+  }>,
+): Promise<number> {
+  const root = await getOpfsRoot();
+  let written = 0;
+  for (const { path, content, readText } of entries) {
+    const rewritten = await normalizeAdventureVaultId(path, readText, vaultId);
+    await writeOpfsFile(
+      [VAULTS_DIR, vaultId, ...path],
+      rewritten ?? content,
+      root,
+      vaultId,
+    );
+    written++;
+  }
+  return written;
+}
+
 /**
  * Writes an already-parsed archive's files into a freshly created vault's
  * OPFS directory. Returns the number of files written.
@@ -187,33 +235,30 @@ export async function writeArchiveToVault(
   vaultId: string,
   archive: ImportedVaultArchive,
 ): Promise<number> {
-  const root = await getOpfsRoot();
-  let written = 0;
-  for (const { path, bytes } of archive.files) {
-    let content = bytes;
-    if (
-      path.length === 3 &&
-      path[0] === ".codex" &&
-      path[1] === "adventures" &&
-      /^[a-zA-Z0-9_-]{1,160}\.json$/.test(path[2])
-    ) {
-      try {
-        const raw: unknown = JSON.parse(strFromU8(bytes));
-        const parsed = parseAdventureSessionForRecovery(raw);
-        if (parsed.session.id === path[2].slice(0, -5)) {
-          content = strToU8(JSON.stringify({ ...(raw as object), vaultId }));
-        }
-      } catch {
-        // Keep unreadable documents byte-for-byte so recovery remains possible.
-      }
-    }
-    await writeOpfsFile(
-      [VAULTS_DIR, vaultId, ...path],
-      new Blob([content as BlobPart]),
-      root,
-      vaultId,
-    );
-    written++;
-  }
-  return written;
+  return writeVaultEntries(
+    vaultId,
+    archive.files.map(({ path, bytes }) => ({
+      path,
+      content: new Blob([bytes as BlobPart]),
+      readText: async () => strFromU8(bytes),
+    })),
+  );
+}
+
+/**
+ * Writes files picked via `<input type="file" webkitdirectory>` into a vault's
+ * OPFS directory. Returns the number of files written.
+ */
+export async function writeFolderFilesToVault(
+  vaultId: string,
+  files: Array<{ path: string[]; file: File }>,
+): Promise<number> {
+  return writeVaultEntries(
+    vaultId,
+    files.map(({ path, file }) => ({
+      path,
+      content: file,
+      readText: () => file.text(),
+    })),
+  );
 }

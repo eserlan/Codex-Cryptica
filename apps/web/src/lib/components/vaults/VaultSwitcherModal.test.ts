@@ -7,30 +7,44 @@ import VaultSwitcherModal from "./VaultSwitcherModal.svelte";
 import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
 import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
-const { createVaultMock, importFromFolderMock, vaultRegistryMock } = vi.hoisted(
-  () => ({
-    createVaultMock: vi.fn(async () => "vault-1"),
-    importFromFolderMock: vi.fn(async () => true),
-    vaultRegistryMock: {
-      availableVaults: [] as Array<{
-        id: string;
-        name: string;
-        createdAt?: number;
-        lastOpenedAt: number;
-        entityCount: number;
-      }>,
-      activeVaultId: null as string | null,
-      renameVault: vi.fn(async () => undefined),
-      deleteVault: vi.fn(async () => undefined),
-    },
-  }),
-);
+const {
+  createVaultMock,
+  importFromFolderMock,
+  loadFilesMock,
+  pickFolderFilesFallbackMock,
+  writeFolderFilesToVaultMock,
+  vaultRegistryMock,
+} = vi.hoisted(() => ({
+  createVaultMock: vi.fn(async () => "vault-1"),
+  importFromFolderMock: vi.fn(async () => true),
+  loadFilesMock: vi.fn(async () => undefined),
+  pickFolderFilesFallbackMock: vi.fn<
+    (confirmEmptySelection?: () => boolean | Promise<boolean>) => Promise<{
+      folderName: string;
+      files: Array<{ path: string[]; file: File }>;
+    } | null>
+  >(async () => null),
+  writeFolderFilesToVaultMock: vi.fn(async () => 0),
+  vaultRegistryMock: {
+    availableVaults: [] as Array<{
+      id: string;
+      name: string;
+      createdAt?: number;
+      lastOpenedAt: number;
+      entityCount: number;
+    }>,
+    activeVaultId: null as string | null,
+    renameVault: vi.fn(async () => undefined),
+    deleteVault: vi.fn(async () => undefined),
+  },
+}));
 
 vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     createVault: createVaultMock,
     importFromFolder: importFromFolderMock,
     switchVault: vi.fn(async () => undefined),
+    loadFiles: loadFilesMock,
     loadFromFolder: vi.fn(async () => undefined),
     saveToFolder: vi.fn(async () => undefined),
     hasFolderHandle: false,
@@ -39,6 +53,27 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
     errorMessage: "",
   },
 }));
+
+vi.mock("#lib/utils/fs.js", async () => {
+  const actual =
+    await vi.importActual<typeof import("#lib/utils/fs.js")>(
+      "#lib/utils/fs.js",
+    );
+  return {
+    ...actual,
+    pickFolderFilesFallback: pickFolderFilesFallbackMock,
+  };
+});
+
+vi.mock("#lib/utils/vault-archive.js", async () => {
+  const actual = await vi.importActual<
+    typeof import("#lib/utils/vault-archive.js")
+  >("#lib/utils/vault-archive.js");
+  return {
+    ...actual,
+    writeFolderFilesToVault: writeFolderFilesToVaultMock,
+  };
+});
 
 vi.mock("#lib/stores/vault-registry.svelte.js", () => ({
   vaultRegistry: vaultRegistryMock,
@@ -260,5 +295,126 @@ describe("VaultSwitcherModal", () => {
 
     modalUIStore.closeQuickStartModal();
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+  });
+
+  it("opens a local folder as a new vault via fallback in browsers without showDirectoryPicker (e.g. Firefox)", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    const sampleFile = new File(["# NPC"], "npc.md", { type: "text/markdown" });
+    pickFolderFilesFallbackMock.mockResolvedValueOnce({
+      folderName: "MyFirefoxVault",
+      files: [{ path: ["entities", "npc.md"], file: sampleFile }],
+    });
+    writeFolderFilesToVaultMock.mockResolvedValueOnce(1);
+
+    const { onClose } = renderModal();
+    await fireEvent.click(screen.getByRole("button", { name: /open folder/i }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(createVaultMock).toHaveBeenCalledWith("MyFirefoxVault");
+    expect(writeFolderFilesToVaultMock).toHaveBeenCalledWith("vault-1", [
+      { path: ["entities", "npc.md"], file: sampleFile },
+    ]);
+    expect(loadFilesMock).toHaveBeenCalledWith(false);
+    expect(notificationStore.notify).toHaveBeenCalledWith(
+      expect.stringContaining('Loaded "MyFirefoxVault" into browser storage'),
+      "info",
+    );
+  });
+
+  it("does nothing and shows no error when the fallback folder picker is cancelled", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    pickFolderFilesFallbackMock.mockResolvedValueOnce(null);
+
+    const { onClose } = renderModal();
+    await fireEvent.click(screen.getByRole("button", { name: /open folder/i }));
+
+    await waitFor(() => expect(pickFolderFilesFallbackMock).toHaveBeenCalled());
+    expect(createVaultMock).not.toHaveBeenCalled();
+    expect(writeFolderFilesToVaultMock).not.toHaveBeenCalled();
+    expect(notificationStore.notify).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("creates an empty vault when the fallback picker selects an empty folder", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    vi.mocked(notificationStore.confirm).mockResolvedValueOnce(true);
+    pickFolderFilesFallbackMock.mockImplementationOnce(async (confirm) =>
+      (await confirm?.()) ? { folderName: "Imported Vault", files: [] } : null,
+    );
+    const { onClose } = renderModal();
+
+    await fireEvent.click(screen.getByRole("button", { name: /open folder/i }));
+
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(notificationStore.confirm).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: "Empty Folder Selection",
+        confirmLabel: "Continue",
+      }),
+    );
+    expect(createVaultMock).toHaveBeenCalledWith("Imported Vault");
+    expect(writeFolderFilesToVaultMock).toHaveBeenCalledWith("vault-1", []);
+  });
+
+  it("reports a possibly partial failure when importing a folder into a new vault", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    pickFolderFilesFallbackMock.mockResolvedValueOnce({
+      folderName: "Imported Vault",
+      files: [{ path: ["note.md"], file: new File(["note"], "note.md") }],
+    });
+    writeFolderFilesToVaultMock.mockRejectedValueOnce(
+      new Error("Quota exceeded"),
+    );
+    renderModal();
+
+    await fireEvent.click(screen.getByRole("button", { name: /new vault/i }));
+    await fireEvent.input(screen.getByLabelText("New Vault Name"), {
+      target: { value: "Imported Vault" },
+    });
+    await fireEvent.click(screen.getByRole("button", { name: /import/i }));
+
+    await waitFor(() =>
+      expect(notificationStore.notify).toHaveBeenCalledWith(
+        expect.stringContaining("import may be partial"),
+        "error",
+        true,
+      ),
+    );
+  });
+
+  it("reports a possibly partial failure when restoring a folder into an existing vault", async () => {
+    const { notificationStore } =
+      await import("#lib/stores/ui/notification.svelte.js");
+    vaultRegistry.availableVaults = [
+      {
+        id: "vault-existing",
+        name: "Existing Vault",
+        createdAt: Date.now(),
+        lastOpenedAt: Date.now(),
+        entityCount: 0,
+      },
+    ];
+    pickFolderFilesFallbackMock.mockResolvedValueOnce({
+      folderName: "Backup",
+      files: [{ path: ["note.md"], file: new File(["note"], "note.md") }],
+    });
+    writeFolderFilesToVaultMock.mockRejectedValueOnce(
+      new Error("Quota exceeded"),
+    );
+    renderModal();
+
+    await fireEvent.click(screen.getByTitle("Restore from Folder"));
+
+    await waitFor(() =>
+      expect(notificationStore.notify).toHaveBeenCalledWith(
+        expect.stringContaining("import may be partial"),
+        "error",
+        true,
+      ),
+    );
   });
 });

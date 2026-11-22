@@ -2,7 +2,7 @@
   import { vault } from "#lib/stores/vault.svelte.js";
   import { parserService } from "#lib/services/parser.js";
   import { browser } from "$app/env";
-  import DOMPurify from "dompurify";
+  import { sanitizeMarkdownHtml } from "#lib/utils/markdown.js";
   import { getIconClass } from "#lib/utils/icon.js";
   import { categories } from "#lib/stores/categories.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
@@ -59,12 +59,7 @@
     renderTimeout = setTimeout(async () => {
       try {
         const html = await parserService.parse(content);
-        const sanitized = browser
-          ? DOMPurify.sanitize(html, {
-              ALLOWED_URI_REGEXP:
-                /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-            })
-          : html;
+        const sanitized = browser ? sanitizeMarkdownHtml(html) : html;
         renderCache.set(cacheKey, sanitized);
 
         // Only update if the entity/content is still the same
@@ -251,12 +246,7 @@
 
               <div class="prose prose-invert prose-sm max-w-none text-gray-300">
                 {#await parserService.parse(entity.lore) then html}
-                  {@html browser
-                    ? DOMPurify.sanitize(html, {
-                        ALLOWED_URI_REGEXP:
-                          /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-                      })
-                    : html}
+                  {@html browser ? sanitizeMarkdownHtml(html) : html}
                 {/await}
               </div>
             </div>
