@@ -271,7 +271,8 @@ export class AdventureRuntime {
     const cancelled =
       (cause instanceof DOMException && cause.name === "AbortError") ||
       message === "cancelled";
-    this.state.lastTurnRejection = this.toTurnRejection(cause);
+    const turnRejection = this.toTurnRejection(cause);
+    if (turnRejection) this.state.lastTurnRejection = turnRejection;
     this.state.errorMessage = turnErrorCopy(cause, message);
     this.state.phase =
       retryPhase === "ready" && message === "offline"
