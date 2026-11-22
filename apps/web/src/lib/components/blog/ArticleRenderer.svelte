@@ -4,7 +4,7 @@
   import DOMPurify from "dompurify";
   import { browser } from "$app/env";
   import { basePath } from "#lib/utils/base-path.js";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { lightboxStore } from "#lib/stores/ui/lightbox.svelte.js";
 
   // Enable heading IDs for table of contents anchors
   marked.use(gfmHeadingId());
@@ -32,37 +32,23 @@
         })
       : renderedHtml,
   );
+  function openImageLightbox(target: EventTarget | null) {
+    if (!(target instanceof HTMLImageElement)) return;
+    const rect = target.getBoundingClientRect();
+    lightboxStore.open(target.src, target.alt || "Image", {
+      x: rect.left,
+      y: rect.top,
+      width: rect.width,
+      height: rect.height,
+    });
+  }
 </script>
 
 <article
   class="blog-content prose prose-invert max-w-none break-words text-lg leading-relaxed prose-p:text-theme-text/80 prose-headings:text-theme-text prose-a:text-theme-primary hover:prose-a:text-theme-primary/80 prose-strong:text-theme-text prose-code:text-theme-primary/90 prose-pre:bg-theme-surface prose-pre:border prose-pre:border-theme-border prose-pre:overflow-x-auto"
-  onclickcapture={(e) => {
-    const target = e.target as HTMLElement;
-    if (target && target.tagName === "IMG") {
-      const img = target as HTMLImageElement;
-      const rect = img.getBoundingClientRect();
-      modalUIStore.openLightbox(img.src, img.alt || "Image", {
-        x: rect.left,
-        y: rect.top,
-        width: rect.width,
-        height: rect.height,
-      });
-    }
-  }}
+  onclickcapture={(e) => openImageLightbox(e.target)}
   onkeydowncapture={(e) => {
-    if (e.key === "Enter") {
-      const target = e.target as HTMLElement;
-      if (target && target.tagName === "IMG") {
-        const img = target as HTMLImageElement;
-        const rect = img.getBoundingClientRect();
-        modalUIStore.openLightbox(img.src, img.alt || "Image", {
-          x: rect.left,
-          y: rect.top,
-          width: rect.width,
-          height: rect.height,
-        });
-      }
-    }
+    if (e.key === "Enter") openImageLightbox(e.target);
   }}
   role="presentation"
 >

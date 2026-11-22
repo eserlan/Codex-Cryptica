@@ -21,7 +21,7 @@
   import MarketingFooter from "./MarketingFooter.svelte";
   import ReportProblemButton from "#lib/components/feedback/ReportProblemButton.svelte";
   import { feedbackAreaFor } from "feedback-engine";
-  import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
+  import { lightboxStore } from "#lib/stores/ui/lightbox.svelte.js";
   import {
     MARKETING_NAV,
     PUBLIC_LAYOUT,
@@ -32,7 +32,7 @@
 
   let hasOpenedLightbox = $state(false);
   $effect(() => {
-    if (modalUIStore.lightbox.show) {
+    if (lightboxStore.state.show) {
       hasOpenedLightbox = true;
     }
   });
@@ -205,12 +205,13 @@
   </div>
 
   {#if hasOpenedLightbox}
-    {#await import("#lib/components/zen/ZenImageLightbox.svelte") then { default: ZenImageLightbox }}
-      {#if ZenImageLightbox}
-        <ZenImageLightbox
-          bind:show={modalUIStore.lightbox.show}
-          imageUrl={modalUIStore.lightbox.imageUrl}
-          title={modalUIStore.lightbox.title}
+    {#await import("#lib/components/ui/ImageLightboxBase.svelte") then { default: ImageLightboxBase }}
+      {#if ImageLightboxBase}
+        <ImageLightboxBase
+          bind:show={lightboxStore.state.show}
+          imageUrl={lightboxStore.state.imageUrl}
+          title={lightboxStore.state.title}
+          originRect={lightboxStore.state.originRect}
         />
       {/if}
     {/await}

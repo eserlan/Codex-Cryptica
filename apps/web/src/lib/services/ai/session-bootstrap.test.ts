@@ -5,24 +5,28 @@ vi.mock("$app/env", () => ({ browser: true }));
 const {
   getSessionTurnstileTokenMock,
   oracleSetTokenProvider,
+  oracleSetSessionToken,
   proposerSetTokenProvider,
+  proposerSetSessionToken,
 } = vi.hoisted(() => ({
   getSessionTurnstileTokenMock: vi.fn(async () => "challenge-token"),
   oracleSetTokenProvider: vi.fn(),
+  oracleSetSessionToken: vi.fn(),
   proposerSetTokenProvider: vi.fn(),
+  proposerSetSessionToken: vi.fn(),
 }));
 vi.mock("#lib/services/publishing/turnstile.js", () => ({
   getSessionTurnstileToken: getSessionTurnstileTokenMock,
 }));
 vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
   oracleBridge: {
-    setSessionToken: vi.fn(),
+    setSessionToken: oracleSetSessionToken,
     setTokenProvider: oracleSetTokenProvider,
   },
 }));
 vi.mock("#lib/cloud-bridge/proposer-bridge.js", () => ({
   proposerBridge: {
-    setSessionToken: vi.fn(),
+    setSessionToken: proposerSetSessionToken,
     setTokenProvider: proposerSetTokenProvider,
   },
 }));
@@ -197,5 +201,90 @@ describe("getAiSessionToken", () => {
     expect(getSessionTurnstileTokenMock).toHaveBeenCalledTimes(1);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     vi.unstubAllGlobals();
+  });
+});
+
+describe("public-session-bootstrap and public-to-app handoff", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    localStorage.clear();
+    sessionStorage.clear();
+    vi.stubEnv(
+      "VITE_ORACLE_PROXY_URL",
+      "https://oracle-proxy.example.workers.dev",
+    );
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it("ensurePublicAiSession attaches a session manager to aiClientManager without touching worker bridges or solving Turnstile", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { aiClientManager } = await import("@codex/ai-engine");
+    const setSessionManagerSpy = vi.spyOn(aiClientManager, "setSessionManager");
+    const { ensurePublicAiSession } =
+      await import("./public-session-bootstrap");
+
+    const manager = ensurePublicAiSession();
+
+    expect(manager).not.toBeNull();
+    expect(setSessionManagerSpy).toHaveBeenCalledWith(manager);
+    expect(oracleSetTokenProvider).not.toHaveBeenCalled();
+    expect(proposerSetTokenProvider).not.toHaveBeenCalled();
+    expect(oracleSetSessionToken).not.toHaveBeenCalled();
+    expect(proposerSetSessionToken).not.toHaveBeenCalled();
+    expect(getSessionTurnstileTokenMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    setSessionManagerSpy.mockRestore();
+  });
+
+  it("reuses the public AiSessionManager when initAiSession attaches worker relays and pushes subsequent refreshes/invalidations", async () => {
+    let n = 0;
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ token: `t-${++n}`, expiresAt: 4102444800 }),
+          { status: 200 },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    const { ensurePublicAiSession, getAiSessionToken } =
+      await import("./public-session-bootstrap");
+    const { initAiSession } = await import("./session-bootstrap");
+
+    // 1. Public marketing page initializes & mints a capability token first.
+    const publicManager = ensurePublicAiSession();
+    expect(await getAiSessionToken()).toBe("t-1");
+    expect(getSessionTurnstileTokenMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // 2. Navigating to (app) wires worker relays onto the SAME manager without re-minting.
+    initAiSession();
+    expect(oracleSetTokenProvider).toHaveBeenCalledTimes(1);
+    expect(proposerSetTokenProvider).toHaveBeenCalledTimes(1);
+    expect(await getAiSessionToken()).toBe("t-1");
+    expect(getSessionTurnstileTokenMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+
+    // 3. Subsequent invalidation + refresh pushes cleared (null) and refreshed token to both bridges.
+    expect(await getAiSessionToken(true)).toBe("t-2");
+    expect(publicManager).not.toBeNull();
+    expect(oracleSetSessionToken).toHaveBeenNthCalledWith(1, null);
+    expect(proposerSetSessionToken).toHaveBeenNthCalledWith(1, null);
+    expect(oracleSetSessionToken).toHaveBeenNthCalledWith(2, {
+      token: "t-2",
+      expiresAt: 4102444800,
+    });
+    expect(proposerSetSessionToken).toHaveBeenNthCalledWith(2, {
+      token: "t-2",
+      expiresAt: 4102444800,
+    });
   });
 });

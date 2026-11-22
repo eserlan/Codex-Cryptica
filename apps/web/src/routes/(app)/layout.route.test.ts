@@ -5,6 +5,7 @@ import { tick } from "svelte";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sessionBootstrap from "#lib/services/ai/session-bootstrap.js";
 import * as turnstileService from "#lib/services/publishing/turnstile.js";
+import * as capacitorBridgeModule from "#lib/services/mobile/capacitor-bridge.js";
 
 const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
   () => ({
@@ -622,14 +623,22 @@ describe("+layout.svelte", () => {
     expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 
-  it("does not trigger Turnstile or AI session bootstrap on mount at /", async () => {
+  it("wires capacitorBridge.init and initAiSession on mount without eagerly solving Turnstile or calling getAiSessionToken", async () => {
+    const capSpy = vi
+      .spyOn(capacitorBridgeModule.capacitorBridge, "init")
+      .mockResolvedValue(undefined);
+    const initAiSpy = vi.spyOn(sessionBootstrap, "initAiSession");
     const turnstileSpy = vi.spyOn(turnstileService, "getSessionTurnstileToken");
     const sessionTokenSpy = vi.spyOn(sessionBootstrap, "getAiSessionToken");
 
     try {
       render(LayoutTestHost);
       await tick();
-      await Promise.resolve();
+
+      await waitFor(() => {
+        expect(capSpy).toHaveBeenCalledTimes(1);
+        expect(initAiSpy).toHaveBeenCalledTimes(1);
+      });
 
       expect(turnstileSpy).not.toHaveBeenCalled();
       expect(sessionTokenSpy).not.toHaveBeenCalled();
@@ -637,6 +646,8 @@ describe("+layout.svelte", () => {
         document.head.querySelectorAll("#codex-turnstile-script"),
       ).toHaveLength(0);
     } finally {
+      capSpy.mockRestore();
+      initAiSpy.mockRestore();
       turnstileSpy.mockRestore();
       sessionTokenSpy.mockRestore();
     }

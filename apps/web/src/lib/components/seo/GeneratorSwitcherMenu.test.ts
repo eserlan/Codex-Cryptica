@@ -3,7 +3,8 @@
 import { render, screen, fireEvent } from "@testing-library/svelte";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import GeneratorSwitcherMenu from "./GeneratorSwitcherMenu.svelte";
-import { themeStore } from "#lib/stores/theme.svelte.js";
+import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
+import { THEME_STORAGE_KEY } from "#lib/theme/theme-dom.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -32,11 +33,27 @@ if (typeof Element !== "undefined" && !Element.prototype.animate) {
 
 describe("GeneratorSwitcherMenu", () => {
   beforeEach(() => {
-    themeStore.worldThemeId = "workspace";
+    localStorage.clear();
+    publicThemeStore.clear();
+  });
+
+  it("falls back to stored world theme from localStorage when publicThemeStore is cleared", async () => {
+    localStorage.setItem(THEME_STORAGE_KEY, "horror");
+    render(GeneratorSwitcherMenu, {
+      props: {
+        canonicalPath: "/generators/faction",
+        eyebrow: "Faction Generator",
+      },
+    });
+
+    await fireEvent.click(screen.getByRole("button"));
+
+    expect(screen.getByText("Vampire Clan Generator")).toBeTruthy();
+    expect(screen.queryByText("RPG Item & Loot Generator")).toBeNull();
   });
 
   it("shows fantasy-only generators when the world theme is fantasy", async () => {
-    themeStore.worldThemeId = "fantasy";
+    publicThemeStore.setTheme("fantasy");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/faction",
@@ -52,7 +69,7 @@ describe("GeneratorSwitcherMenu", () => {
   });
 
   it("lists generators from the shared catalogue under its categories", async () => {
-    themeStore.worldThemeId = "scifi";
+    publicThemeStore.setTheme("scifi");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/world",
@@ -72,7 +89,7 @@ describe("GeneratorSwitcherMenu", () => {
   });
 
   it("hides fantasy-only generators and horror-only generators outside those themes", async () => {
-    themeStore.worldThemeId = "cyberpunk";
+    publicThemeStore.setTheme("cyberpunk");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/faction",
@@ -95,7 +112,7 @@ describe("GeneratorSwitcherMenu", () => {
   });
 
   it("hides the nomad clan generator in Pirate mode", async () => {
-    themeStore.worldThemeId = "pirate";
+    publicThemeStore.setTheme("pirate");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/ship-generator",
@@ -110,7 +127,7 @@ describe("GeneratorSwitcherMenu", () => {
   });
 
   it("hides the nomad clan generator in Cosmic Horror mode", async () => {
-    themeStore.worldThemeId = "cosmic_horror";
+    publicThemeStore.setTheme("cosmic_horror");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/faction",
@@ -124,7 +141,7 @@ describe("GeneratorSwitcherMenu", () => {
   });
 
   it("keeps the nomad clan generator in Cyberpunk mode", async () => {
-    themeStore.worldThemeId = "cyberpunk";
+    publicThemeStore.setTheme("cyberpunk");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/faction",
@@ -138,7 +155,7 @@ describe("GeneratorSwitcherMenu", () => {
   });
 
   it("shows horror-only generators when the world theme is horror", async () => {
-    themeStore.worldThemeId = "horror";
+    publicThemeStore.setTheme("horror");
     render(GeneratorSwitcherMenu, {
       props: {
         canonicalPath: "/generators/faction",

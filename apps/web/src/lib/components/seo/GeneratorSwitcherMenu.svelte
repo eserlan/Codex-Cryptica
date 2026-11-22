@@ -2,7 +2,8 @@
   import { basePath } from "#lib/utils/base-path.js";
   import { browser } from "$app/env";
   import { fade } from "svelte/transition";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
+  import { readStoredWorldThemeId } from "#lib/theme/theme-dom.js";
   import {
     generatorPath,
     groupGeneratorCatalogue,
@@ -41,7 +42,7 @@
   }));
 
   const visibleGroups = $derived.by(() => {
-    const themeId = themeStore.worldThemeId;
+    const themeId = publicThemeStore.themeId ?? readStoredWorldThemeId();
     const isFantasy = themeId === "fantasy" || themeId === "workspace";
     const isHorror = themeId === "horror";
 

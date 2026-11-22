@@ -8,8 +8,12 @@
   import { safeJsonLd } from "#lib/utils/json-ld.js";
   import { attributionStore } from "#lib/services/analytics/attribution.js";
   import MarketingShell from "#lib/components/seo/MarketingShell.svelte";
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { appearanceStore } from "#lib/stores/appearance.svelte.js";
   import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
+  import {
+    applyPublicThemePreview,
+    setPublicThemePreviewActive,
+  } from "#lib/theme/theme-dom.js";
   import {
     trackEvent,
     initCodexAnalyticsBridge,
@@ -70,7 +74,14 @@
   // the active browsing genre; only an explicit new genre changes it.
   // This never writes localStorage, IndexedDB or the active vault's OPFS.
   $effect(() => {
-    if (browser) themeStore.previewTheme(publicThemeStore.themeId);
+    if (browser) {
+      setPublicThemePreviewActive(true);
+      applyPublicThemePreview(
+        publicThemeStore.themeId,
+        appearanceStore.appAppearanceId,
+        appearanceStore.resolvedAppAppearanceId,
+      );
+    }
   });
 
   // Tears down window.__codexAnalytics.track when leaving (marketing) — e.g.
@@ -81,7 +92,14 @@
   onDestroy(() => {
     resetCodexAnalyticsBridge();
     // The app/vault layout owns its theme when leaving marketing routes.
-    themeStore.previewTheme(null);
+    if (browser) {
+      setPublicThemePreviewActive(false);
+      applyPublicThemePreview(
+        null,
+        appearanceStore.appAppearanceId,
+        appearanceStore.resolvedAppAppearanceId,
+      );
+    }
   });
 </script>
 

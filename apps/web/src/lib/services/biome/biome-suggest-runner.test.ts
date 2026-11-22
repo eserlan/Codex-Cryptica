@@ -61,4 +61,66 @@ describe("createBiomeSuggestRunner", () => {
     });
     await expect(runner({ system: "s", user: "u" })).rejects.toThrow("no key");
   });
+
+  it("invokes ensureSession before getModel when no API key is configured, and skips it when an API key exists", async () => {
+    const order: string[] = [];
+    const ensureSession = vi.fn(async () => {
+      order.push("ensureSession");
+    });
+    const getModel = vi.fn(async () => {
+      order.push("getModel");
+      return {
+        generateContent: vi.fn(async () => ({
+          response: { text: () => '{"suggestions":[]}' },
+        })),
+      };
+    });
+
+    const publicRunner = createBiomeSuggestRunner({
+      aiClient: { getModel },
+      settings: { effectiveApiKey: null, modelName: "" },
+      ensureSession,
+    });
+    await publicRunner({ system: "SYS", user: "USR" });
+    expect(order).toEqual(["ensureSession", "getModel"]);
+
+    ensureSession.mockClear();
+    const keyedRunner = createBiomeSuggestRunner({
+      aiClient: { getModel },
+      settings: { effectiveApiKey: "user-key", modelName: "" },
+      ensureSession,
+    });
+    await keyedRunner({ system: "SYS", user: "USR" });
+    expect(ensureSession).not.toHaveBeenCalled();
+  });
+
+  it("aborts without calling getModel if signal aborts during ensureSession and propagates ensureSession errors", async () => {
+    const controller = new AbortController();
+    const getModel = vi.fn();
+    const abortingRunner = createBiomeSuggestRunner({
+      aiClient: { getModel },
+      settings: { effectiveApiKey: null, modelName: "" },
+      ensureSession: async () => {
+        controller.abort();
+      },
+    });
+
+    await expect(
+      abortingRunner({ system: "SYS", user: "USR", signal: controller.signal }),
+    ).rejects.toMatchObject({ name: "AbortError" });
+    expect(getModel).not.toHaveBeenCalled();
+
+    const failingRunner = createBiomeSuggestRunner({
+      aiClient: { getModel },
+      settings: { effectiveApiKey: null, modelName: "" },
+      ensureSession: async () => {
+        throw new Error("session failed");
+      },
+    });
+
+    await expect(failingRunner({ system: "SYS", user: "USR" })).rejects.toThrow(
+      "session failed",
+    );
+    expect(getModel).not.toHaveBeenCalled();
+  });
 });
