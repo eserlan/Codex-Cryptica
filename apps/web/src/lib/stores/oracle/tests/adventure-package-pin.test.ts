@@ -183,6 +183,17 @@ describe("retry and leave", () => {
     expect(await ctx.manager.retryPackageCheck()).toBe(false);
     expect(ctx.manager.phase).toBe("package-unavailable");
 
+    // A recorded refusal on the current session must survive retrying the same
+    // unavailable package check until a turn commits or another session opens.
+    const refusal = {
+      reason: "turn-rejected",
+      revision: ctx.manager.session!.revision,
+      recordedAt: "2026-11-22T12:00:00.000Z",
+    };
+    ctx.manager.lastTurnRejection = refusal;
+    expect(await ctx.manager.retryPackageCheck()).toBe(false);
+    expect(ctx.manager.lastTurnRejection).toEqual(refusal);
+
     ctx.setMode("ok");
     expect(await ctx.manager.retryPackageCheck()).toBe(true);
     expect(ctx.manager.phase).toBe("ready");

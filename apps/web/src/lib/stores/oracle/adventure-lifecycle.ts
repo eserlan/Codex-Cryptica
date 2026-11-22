@@ -75,7 +75,13 @@ export class AdventureLifecycle {
     const check = await this.runtime.deps.packages.verifyPin(session);
     if (check.status === "available") return false;
     if (!isCurrent()) return true;
-    this.state.lastTurnRejection = null;
+    if (
+      !this.state.session ||
+      this.state.session.id !== session.id ||
+      this.state.session.vaultId !== session.vaultId
+    ) {
+      this.state.lastTurnRejection = null;
+    }
     this.state.session = session;
     await this.runtime.enterPackageUnavailable(check.otherVersionAvailable);
     return true;
