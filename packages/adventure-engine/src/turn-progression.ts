@@ -56,6 +56,7 @@ export interface ClassifyTurnProgressOptions {
   pursuedScenario?: ScenarioItem;
   priorTurns?: readonly CommittedAdventureTurn[];
   priorFacts?: readonly ProvisionalFact[];
+  priorState?: PriorProgressionState;
   scenarioTurnIds?: ReadonlySet<string>;
 }
 
@@ -515,12 +516,14 @@ function buildTurnContext(
     turn,
     session,
     scope,
-    prior: resolvePriorProgressionState(
-      turn,
-      session,
-      options?.priorTurns,
-      options?.priorFacts,
-    ),
+    prior:
+      options?.priorState ??
+      resolvePriorProgressionState(
+        turn,
+        session,
+        options?.priorTurns,
+        options?.priorFacts,
+      ),
     scenarioEvents: collectTurnScenarioEvents(session, turn.id),
     pkgEvents: (session.packageProgress?.events ?? []).filter(
       (e) => e.turnId === turn.id && e.certainty === "confirmed",

@@ -2,6 +2,10 @@ import { isDeliberateRepeat, threadTopicWords } from "./dialogue-pacing";
 import { scenarioEventTurnIds } from "./scenario-collection";
 import { isQuietTurn } from "./scene-pacing";
 import {
+  buildPriorProgressionStateIndex,
+  type PriorProgressionState,
+} from "./turn-progression-scope";
+import {
   buildPursuedThreadScope,
   classifyTurnProgress,
   hasOtherScenarioScopedActivity,
@@ -205,8 +209,8 @@ function turnEngagesThread(
       : turnLinksToPursuedScenario(turn, session, pursuedScenario, scope);
   }
   if (
-    classification.kind === "repeated-non-answer" ||
-    classification.nonAnswer
+    isInvestigativeInquiry(turn.playerAction) &&
+    (classification.kind === "repeated-non-answer" || classification.nonAnswer)
   ) {
     return true;
   }
@@ -234,7 +238,7 @@ function nextActionContinuesThread(
   session: AdventureSession,
   pursuedScenario: ScenarioItem | undefined,
   scope: PursuedThreadScope | undefined,
-  repeatedNonAnswerTurns: number,
+  threadTopic: ReadonlySet<string>,
 ): boolean {
   if (nextAction === undefined) return true;
   if (scope && pursuedScenario) {
@@ -245,11 +249,11 @@ function nextActionContinuesThread(
       scope,
     );
   }
+  const actionTopics = threadTopicWords(nextAction);
+  if (threadTopic.size > 0)
+    return [...threadTopic].some((word) => actionTopics.has(word));
   if (EXPLICIT_INVESTIGATIVE_INTENT_RE.test(nextAction)) return true;
-  return (
-    repeatedNonAnswerTurns >= MULTI_WITNESS_NON_ANSWER_LIMIT &&
-    isInvestigativeInquiry(nextAction)
-  );
+  return false;
 }
 
 function selectRecommendedAngle(
@@ -304,15 +308,15 @@ function isNonAdvancingThreadTurn(
   session: AdventureSession,
   pursuedScenario: ScenarioItem | undefined,
   scope: PursuedThreadScope | undefined,
-  turnIndex: number,
   scenarioTurnIds: ReadonlySet<string>,
+  priorState: PriorProgressionState | undefined,
 ): { stop: boolean; classification?: TurnProgressClassification } {
   if (isDisengagingCurrentThread(turn.playerAction, session, scope)) {
     return { stop: true };
   }
   const classification = classifyTurnProgress(turn, session, {
     pursuedScenario,
-    priorTurns: session.turns.slice(0, turnIndex),
+    priorState,
     scenarioTurnIds,
   });
   const advances = pursuedScenario
@@ -334,6 +338,11 @@ function scanTrailingStall(
   let turnsWithoutAdvancement = 0;
   let repeatedNonAnswerTurns = 0;
   let lastTurnKind: TurnProgressKind | undefined;
+  let threadTopic = new Set<string>();
+  const priorStates = buildPriorProgressionStateIndex(
+    session,
+    new Set(session.turns.slice(lookbackStart).map((turn) => turn.id)),
+  );
 
   for (let i = session.turns.length - 1; i >= lookbackStart; i -= 1) {
     const turn = session.turns[i]!;
@@ -343,8 +352,8 @@ function scanTrailingStall(
       session,
       pursuedScenario,
       scope,
-      i,
       scenarioTurnIds,
+      priorStates.get(turn.id),
     );
     if (stop) break;
     if (
@@ -353,17 +362,36 @@ function scanTrailingStall(
     ) {
       continue;
     }
+    if (!scope) {
+      const topic = threadTopicWords(turn.playerAction);
+      if (topic.size === 0) break;
+      if (turnsWithoutAdvancement > 0) {
+        const shared = new Set(
+          [...threadTopic].filter((word) => topic.has(word)),
+        );
+        if (shared.size === 0) break;
+        threadTopic = shared;
+      } else {
+        threadTopic = topic;
+      }
+    }
     turnsWithoutAdvancement += 1;
     if (
-      classification.kind === "repeated-non-answer" ||
-      classification.nonAnswer
+      isInvestigativeInquiry(turn.playerAction) &&
+      (classification.kind === "repeated-non-answer" ||
+        classification.nonAnswer)
     ) {
       repeatedNonAnswerTurns += 1;
     }
     lastTurnKind ??= classification.kind;
   }
 
-  return { turnsWithoutAdvancement, repeatedNonAnswerTurns, lastTurnKind };
+  return {
+    turnsWithoutAdvancement,
+    repeatedNonAnswerTurns,
+    lastTurnKind,
+    threadTopic,
+  };
 }
 
 function shouldSkipUnscopedFallback(
@@ -384,7 +412,11 @@ function isInvestigativeActive(
   pursuedScenario: ScenarioItem | undefined,
   hasActivePackageScene: boolean,
   nextAction: string | undefined,
-  counts: { turnsWithoutAdvancement: number; repeatedNonAnswerTurns: number },
+  counts: {
+    turnsWithoutAdvancement: number;
+    repeatedNonAnswerTurns: number;
+    threadTopic: ReadonlySet<string>;
+  },
 ): boolean {
   if (
     pursuedScenario ||
@@ -392,6 +424,12 @@ function isInvestigativeActive(
     session.visibleState.situation
   ) {
     return true;
+  }
+  if (nextAction && counts.threadTopic.size > 0) {
+    const actionTopics = threadTopicWords(nextAction);
+    if (![...counts.threadTopic].some((word) => actionTopics.has(word))) {
+      return false;
+    }
   }
   if (counts.repeatedNonAnswerTurns >= MULTI_WITNESS_NON_ANSWER_LIMIT) {
     return true;
@@ -462,7 +500,7 @@ export function investigativeProgressPacing(
       session,
       pursuedScenario,
       scope,
-      counts.repeatedNonAnswerTurns,
+      counts.threadTopic,
     );
 
   return {

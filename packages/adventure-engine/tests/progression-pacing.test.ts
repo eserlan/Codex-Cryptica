@@ -1861,4 +1861,38 @@ describe("Turn progression classifier (#5110)", () => {
       )?.recommendedAngle,
     ).toBe("trail-exhausted");
   });
+
+  it("keeps unscoped non-answer recovery on the current inquiry topic", () => {
+    const unrelatedInquiries = [
+      makeTurn(
+        0,
+        "Ask the ferryman about the missing ledger?",
+        "The ferryman says they do not know about the ledger.",
+      ),
+      makeTurn(
+        1,
+        "Ask the watch about the bell tower?",
+        "The watch has no idea about the bell tower.",
+      ),
+      makeTurn(
+        2,
+        "Ask the cook about the burnt stew?",
+        "The cook cannot say anything about the stew.",
+      ),
+    ];
+    const session = parseAdventureSession({
+      ...baseSession(),
+      turns: unrelatedInquiries,
+    });
+
+    const pacing = investigativeProgressPacing(
+      session,
+      "Investigate the lighthouse signal",
+    );
+
+    expect(pacing?.repeatedNonAnswerTurns ?? 0).toBeLessThan(
+      MULTI_WITNESS_NON_ANSWER_LIMIT,
+    );
+    expect(pacing?.recoveryDue).not.toBe(true);
+  });
 });
