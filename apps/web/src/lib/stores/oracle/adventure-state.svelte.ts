@@ -19,8 +19,19 @@ export class AdventureState {
     | "ready-to-resolve"
     | "offline"
     | "error"
+    | "package-unavailable"
   >("idle");
   draft = $state("");
+  /** Composer input mode: canonical Play action vs out-of-character Ask GM clarification. */
+  composerMode = $state<"play" | "ooc">("play");
+  /** Unsent Ask GM question draft, preserved separately from the Play action draft. */
+  oocDraft = $state("");
+  /** True while an out-of-character Ask GM clarification request is in flight. */
+  oocGenerating = $state(false);
+  /** True while a pending roll outcome is being persisted. */
+  rollMutationPending = $state(false);
+  /** Error message for the most recent OOC clarification attempt, if any. */
+  oocErrorMessage = $state<string | null>(null);
   /** Uncommitted player-visible narration, cleared on failure or cancellation. */
   streamedNarration = $state("");
   errorMessage = $state<string | null>(null);
@@ -35,6 +46,10 @@ export class AdventureState {
    */
   starting = $state(false);
   lastRollResult = $state<string | null>(null);
+  /** Set while the pinned package is missing or changed; Retry or Leave recovers. */
+  packageUnavailable = $state<{
+    otherVersionAvailable: boolean | null;
+  } | null>(null);
   readOnly = $state(false);
   lease = $state<AdventureControlLease | null>(null);
 
@@ -59,5 +74,10 @@ export class AdventureState {
   /** Turns with a resolved roll, in commit order (FR-012). */
   get rollHistory() {
     return this.session ? getRollHistory(this.session) : [];
+  }
+
+  /** Out-of-character Ask GM exchanges persisted on the session. */
+  get oocExchanges() {
+    return this.session?.oocExchanges ?? [];
   }
 }

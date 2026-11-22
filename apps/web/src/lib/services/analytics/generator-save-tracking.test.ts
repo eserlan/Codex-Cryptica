@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   trackSaveToCodex,
+  trackSaveHandoffFailed,
   countRelatedEntities,
   bucketCount,
   type SaveToCodexInput,
@@ -94,6 +95,50 @@ describe("trackSaveToCodex", () => {
     expect(storage.getItem("codex-cryptica-has-saved-to-vault")).toBe("true");
     expect(storage.getItem("codex-cryptica-attribution-first")).toBeNull();
     expect(storage.getItem("codex-cryptica-attribution-latest")).toBeNull();
+  });
+});
+
+describe("trackSaveHandoffFailed", () => {
+  it("emits one generator_handoff_failed with only bucketed, content-free properties", () => {
+    const storage = makeStorage();
+    const track = vi_track();
+
+    trackSaveHandoffFailed(
+      {
+        generatorType: "npc",
+        isHubBatch: true,
+        itemCount: 3,
+        // Extra content must never reach the payload.
+        ...({ title: "The Hollow Crown" } as object),
+      },
+      { win: { zaraz: { track: track.fn } } },
+    );
+
+    expect(track.eventNames()).toEqual(["generator_handoff_failed"]);
+    const [, props] = track.callFor("generator_handoff_failed");
+    expect(props).toEqual({
+      generator_type: "npc",
+      is_hub_batch: true,
+      item_count_bucket: "2-5",
+    });
+    expect(Object.keys(props)).toEqual([
+      "generator_type",
+      "is_hub_batch",
+      "item_count_bucket",
+    ]);
+    expect(JSON.stringify(props)).not.toContain("The Hollow Crown");
+    expect(storage.getItem("codex-cryptica-has-saved-to-vault")).toBeNull();
+  });
+
+  it("never emits the success events", () => {
+    const track = vi_track();
+    trackSaveHandoffFailed(
+      { generatorType: "npc", isHubBatch: false, itemCount: 1 },
+      { win: { zaraz: { track: track.fn } } },
+    );
+    expect(track.eventNames()).not.toContain("entity_saved");
+    expect(track.eventNames()).not.toContain("vault_created");
+    expect(track.eventNames()).not.toContain("related_entity_created");
   });
 });
 

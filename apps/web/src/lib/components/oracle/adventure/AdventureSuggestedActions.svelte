@@ -101,8 +101,14 @@
         aria-hidden="true"
       ></span>
     </summary>
+    <!-- The composer extras pane is the only scroll container for this list.
+         A second, height-limited scroller traps touch gestures on phones and
+         can leave later, multi-line actions hidden behind the input dock. -->
     <div
-      class="flex max-h-36 flex-col gap-2 overflow-y-auto overscroll-contain border-t border-theme-border p-2"
+      class="flex flex-col gap-2 border-t border-theme-border px-2 pt-2 pb-3"
+      role="group"
+      aria-label="Suggested actions"
+      data-testid="adventure-suggested-actions-list"
     >
       {@render actionList(
         "min-h-11 w-full rounded-lg border border-theme-border bg-theme-surface px-3 py-2 text-left text-sm leading-relaxed whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50",

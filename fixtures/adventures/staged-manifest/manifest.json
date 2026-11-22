@@ -1,0 +1,171 @@
+{
+  "kind": "codex-cryptica.adventure-checkpoint",
+  "manifestVersion": 1,
+  "status": "complete",
+  "metadata": {
+    "formatVersion": "adventure-json/v1",
+    "id": "long-sample",
+    "title": "Long Sample",
+    "version": "1.0.0",
+    "premise": {
+      "background": "A border town and a ridge tower.",
+      "hook": "Find out why the beacon went dark."
+    },
+    "source": {
+      "title": "Long Sample",
+      "license": "CC0-1.0"
+    }
+  },
+  "source": {
+    "fileName": "long-sample.pdf",
+    "pageCount": 120,
+    "unreadable": [
+      {
+        "from": 111,
+        "to": 120,
+        "note": "Scanned appendix, not readable."
+      }
+    ]
+  },
+  "sections": [
+    {
+      "key": "s01",
+      "title": "The Town",
+      "pages": {
+        "from": 1,
+        "to": 40
+      },
+      "idPrefix": "town-",
+      "chunkFile": "chunk-01.json",
+      "owns": [
+        {
+          "id": "town-loc-square",
+          "collection": "locations",
+          "page": 3
+        },
+        {
+          "id": "town-actor-reeve",
+          "collection": "actors",
+          "page": 5
+        },
+        {
+          "id": "town-scene-meeting",
+          "collection": "scenes",
+          "page": 4
+        }
+      ],
+      "expectedCounts": {
+        "locations": 1,
+        "actors": 1,
+        "scenes": 1
+      }
+    },
+    {
+      "key": "s02",
+      "title": "The Ridge",
+      "pages": {
+        "from": 41,
+        "to": 80
+      },
+      "idPrefix": "ridge-",
+      "chunkFile": "chunk-02.json",
+      "owns": [
+        {
+          "id": "ridge-loc-tower",
+          "collection": "locations",
+          "page": 45
+        },
+        {
+          "id": "ridge-clue-oil",
+          "collection": "clues",
+          "page": 50
+        }
+      ],
+      "expectedCounts": {
+        "locations": 1,
+        "clues": 1
+      }
+    },
+    {
+      "key": "s03",
+      "title": "The Deep",
+      "pages": {
+        "from": 81,
+        "to": 110
+      },
+      "idPrefix": "deep-",
+      "chunkFile": "chunk-03.json",
+      "owns": [
+        {
+          "id": "deep-actor-warden",
+          "collection": "actors",
+          "page": 85
+        },
+        {
+          "id": "deep-ending-relit",
+          "collection": "endings",
+          "page": 95
+        }
+      ],
+      "expectedCounts": {
+        "actors": 1,
+        "endings": 1
+      }
+    }
+  ],
+  "sharedIds": [
+    {
+      "id": "deep-actor-warden",
+      "collection": "actors",
+      "owner": "s03"
+    }
+  ],
+  "completed": [
+    {
+      "section": "s01",
+      "file": "chunk-01.json",
+      "counts": {
+        "locations": 1,
+        "actors": 1,
+        "scenes": 1
+      }
+    },
+    {
+      "section": "s02",
+      "file": "chunk-02.json",
+      "counts": {
+        "locations": 1,
+        "clues": 1
+      }
+    },
+    {
+      "section": "s03",
+      "file": "chunk-03.json",
+      "counts": {
+        "actors": 1,
+        "endings": 1
+      }
+    }
+  ],
+  "pending": [
+    {
+      "id": "ridge-loc-tower",
+      "referencedBy": "town-actor-reeve",
+      "expectedIn": "s02"
+    },
+    {
+      "id": "deep-actor-warden",
+      "referencedBy": "ridge-clue-oil",
+      "expectedIn": "s03"
+    }
+  ],
+  "gaps": [
+    {
+      "pages": {
+        "from": 111,
+        "to": 120
+      },
+      "note": "Scanned appendix, not converted."
+    }
+  ]
+}

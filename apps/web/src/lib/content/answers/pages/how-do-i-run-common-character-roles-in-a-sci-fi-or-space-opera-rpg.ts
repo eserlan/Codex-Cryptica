@@ -169,6 +169,7 @@ export const howDoIRunCommonCharacterRolesInASciFiOrSpaceOperaRpg: AnswerConfigI
       "how-do-you-make-an-alien-species-feel-believable",
       "how-do-i-run-common-character-roles-in-a-fantasy-rpg",
       "does-an-rpg-party-need-balanced-roles",
+      "how-do-i-run-a-sci-fi-horror-rpg",
     ],
     discovery: {
       id: "answer-sci-fi-character-roles",

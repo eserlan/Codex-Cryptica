@@ -677,11 +677,9 @@ export function configureCloudBackup(): void {
     base,
     // A previously consented backup remains protected if the UI flag changes.
     artworkScope: artworkRuntime.scope,
-    ...(import.meta.env.VITE_ADVENTURE_ARTWORK === "true"
-      ? {
-          artworkConsent: artworkRuntime.consent,
-        }
-      : {}),
+    // Keep the service dependency wired for the session. The runtime flag
+    // controls whether the settings are shown, and may turn on after boot.
+    artworkConsent: artworkRuntime.consent,
     timing: timeCloudBackupSave,
     // Everything the consent screen promises: entities, maps, canvases,
     // session journals, and the media the first three reference.

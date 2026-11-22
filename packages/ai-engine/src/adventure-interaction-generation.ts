@@ -54,8 +54,9 @@ async function parseWithRepair(
     request.onNarration?.("");
     // Never chain from an invalid reply: repair the same uncommitted action
     // against the last committed conversation ID.
+    const hint = error.validationHint ? ` (${error.validationHint})` : "";
     const repaired = await send(
-      "Previous JSON failed validation. Return a complete corrected JSON proposal with all required fields.",
+      `Previous JSON failed validation${hint}. Return a complete corrected JSON proposal with all required fields.`,
       preferStream,
     );
     return {
@@ -64,6 +65,9 @@ async function parseWithRepair(
     };
   }
 }
+
+export const DEFAULT_ADVENTURE_MODEL = "luna-fast";
+export const DEFAULT_ADVENTURE_REASONING_EFFORT = "low" as const;
 
 /** Generates and stages replies; only the context acknowledgement commits history. */
 export class AdventureInteractionGeneration {
@@ -79,6 +83,7 @@ export class AdventureInteractionGeneration {
     options: AdventureGenerationOptions,
   ): Promise<AdventureTurnProposal> {
     const signal = options.signal ?? request.signal;
+    const modelName = options.modelName ?? DEFAULT_ADVENTURE_MODEL;
     let interaction: AdventureInteraction;
     const { transport, send } = this.createSender(
       request,
@@ -87,11 +92,7 @@ export class AdventureInteractionGeneration {
       options,
       () => interaction,
     );
-    interaction = this.context.prepare(
-      request.session,
-      prompt,
-      options.modelName ?? "luna-fast",
-    );
+    interaction = this.context.prepare(request.session, prompt, modelName);
 
     try {
       const initial = await sendWithExpiryRecovery(send, () => {
@@ -111,7 +112,7 @@ export class AdventureInteractionGeneration {
       interaction.pending = {
         id: result.id,
         revision: request.session.revision,
-        modelName: options.modelName ?? "luna-fast",
+        modelName,
         state: result.state,
         sourceEntries: result.sourceEntries,
       };
@@ -147,11 +148,13 @@ export class AdventureInteractionGeneration {
         repair,
       );
       const params = {
-        model: options.modelName ?? "luna-fast",
+        model: options.modelName ?? DEFAULT_ADVENTURE_MODEL,
         input: prepared.input,
         systemInstruction: instruction,
         previousInteractionId: interaction.previousInteractionId,
         generationConfig: { responseMimeType: "application/json" },
+        reasoningEffort:
+          options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT,
         signal,
       };
       const result = await transport.send(request, params, preferStream);

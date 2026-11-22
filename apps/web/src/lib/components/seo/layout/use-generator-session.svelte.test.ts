@@ -38,10 +38,11 @@ function setup(
   } = {},
 ) {
   const generate = options.generate ?? vi.fn(async () => output);
+  let canonicalPath = $state("/generators/npc");
   let session!: ReturnType<typeof useGeneratorSession>;
   const cleanup = $effect.root(() => {
     session = useGeneratorSession({
-      getCanonicalPath: () => "/generators/npc",
+      getCanonicalPath: () => canonicalPath,
       getInitialDraft: () => null,
       getInitialDraftIsUserGenerated: () => false,
       getAutoGenerateExplicit: () => options.autoGenerateExplicit ?? true,
@@ -56,7 +57,15 @@ function setup(
     });
   });
   flushSync();
-  return { session, generate, cleanup };
+  return {
+    session,
+    generate,
+    cleanup,
+    setCanonicalPath(path: string) {
+      canonicalPath = path;
+      flushSync();
+    },
+  };
 }
 
 describe("useGeneratorSession", () => {
@@ -126,10 +135,42 @@ describe("useGeneratorSession", () => {
     expect(ctx.session.userGenerationSucceeded).toBe(false);
     expect(ctx.session.isBusy).toBe(false);
     expect(hub.addEntity).not.toHaveBeenCalled();
+    expect(track).toHaveBeenCalledWith("generator_failed", {
+      generator_type: "npc",
+    });
     expect(track).not.toHaveBeenCalledWith(
       "generator_completed",
       expect.anything(),
     );
+    expect(
+      track.mock.calls.filter(
+        ([eventName]) => eventName === "generator_failed",
+      ),
+    ).toEqual([["generator_failed", { generator_type: "npc" }]]);
+  });
+
+  it("does not report a generation failure when hub provenance recording throws", async () => {
+    const ctx = setup();
+    cleanup = ctx.cleanup;
+    hub.addProvenance.mockImplementationOnce(() => {
+      throw new Error("invalid session hub entity");
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await ctx.session.handleGenerate();
+
+    expect(ctx.session.generatedData).toEqual(output);
+    expect(ctx.session.userGenerationSucceeded).toBe(true);
+    expect(ctx.session.errorMessage).toBeNull();
+    expect(track).toHaveBeenCalledWith("generator_completed", {
+      generator_type: "npc",
+    });
+    expect(track).not.toHaveBeenCalledWith(
+      "generator_failed",
+      expect.anything(),
+    );
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 
   it("shows streamed previews as they arrive", async () => {
@@ -148,6 +189,39 @@ describe("useGeneratorSession", () => {
 
     expect(seenDuringRun).toMatchObject({ title: "Preview" });
     expect(ctxRef.session.generatedData).toEqual(output);
+  });
+
+  it("ignores streamed previews and results after navigating to another generator", async () => {
+    let release!: (value: typeof output) => void;
+    let emitPreview!: (value: typeof output) => void;
+    const generate = vi.fn(
+      (opts: { onPreview?: (value: typeof output) => void }) => {
+        emitPreview = opts.onPreview!;
+        return new Promise<typeof output>((resolve) => {
+          release = resolve;
+        });
+      },
+    );
+    const ctx = setup({ generate, supportsStreaming: true });
+    cleanup = ctx.cleanup;
+
+    const pending = ctx.session.handleGenerate();
+    emitPreview({ ...output, title: "Old route preview" });
+    expect(ctx.session.generatedData?.title).toBe("Old route preview");
+
+    ctx.setCanonicalPath("/generators/urban-fantasy-faction");
+    expect(ctx.session.generatedData).toBeNull();
+    expect(ctx.session.isBusy).toBe(false);
+
+    emitPreview({ ...output, title: "Late old route preview" });
+    release({ ...output, title: "Old route result" });
+    await pending;
+
+    expect(ctx.session.generatedData).toBeNull();
+    expect(hub.addEntity).not.toHaveBeenCalled();
+    expect(track).not.toHaveBeenCalledWith("generator_completed", {
+      generator_type: "npc",
+    });
   });
 
   it("ignores a second generate while one is running", async () => {

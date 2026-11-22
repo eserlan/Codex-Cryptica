@@ -130,6 +130,23 @@ describe("deriveAdventureHeaderStatus", () => {
       }).phoneLabel,
     ).toBe("Resolving roll");
   });
+
+  it("uses safe, actionable copy when the pinned package is unavailable", () => {
+    expect(
+      deriveAdventureHeaderStatus({
+        readOnly: true,
+        phase: "package-unavailable",
+        pendingRoll: null,
+      }),
+    ).toEqual({
+      phoneLabel: "Package unavailable",
+      desktopLabel: "Package unavailable",
+      tone: "danger",
+      icon: "icon-[lucide--alert-circle]",
+      urgent: true,
+      busy: false,
+    });
+  });
 });
 
 describe("derivePhoneToolsSummary", () => {

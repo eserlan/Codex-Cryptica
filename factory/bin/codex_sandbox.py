@@ -68,7 +68,7 @@ def git_metadata_roots(worktree, expected_common_dir=None):
 
 def run_sandboxed(command, cwd, *, writable_roots=(), readable_roots=(),
                   git_common_dir=None, bun_cache_dir=None, writable_git_metadata=False,
-                  fallow_prechecked=False, timeout=None):
+                  fallow_prechecked=False, timeout=None, copy_bun_cache=False):
     """Run a command with no inherited credentials, network or user Codex config.
 
     The worktree is read-only by default. Callers can grant write access to the
@@ -81,7 +81,8 @@ def run_sandboxed(command, cwd, *, writable_roots=(), readable_roots=(),
     cwd = Path(cwd).resolve()
     codex = Path(codex).resolve()
 
-    with tempfile.TemporaryDirectory(prefix="codex-factory-sandbox-") as temp_name:
+    scratch_parent = Path(bun_cache_dir).resolve().parent if copy_bun_cache else None
+    with tempfile.TemporaryDirectory(prefix="codex-factory-sandbox-", dir=scratch_parent) as temp_name:
         temp_dir = Path(temp_name).resolve()
         home = temp_dir / "home"
         home.mkdir()
@@ -92,6 +93,14 @@ def run_sandboxed(command, cwd, *, writable_roots=(), readable_roots=(),
         cache_dir = Path(bun_cache_dir).resolve() if bun_cache_dir else temp_dir / "bun-cache"
         if bun_cache_dir:
             filesystem[str(cache_dir)] = "read"
+        if copy_bun_cache:
+            # Bun may create temporary files inside its cache during install.
+            install_cache = temp_dir / "install-cache"
+            subprocess.run(
+                ["cp", "-a", "--reflink=auto", "--", str(cache_dir), str(install_cache)],
+                check=True, capture_output=True,
+            )
+            cache_dir = install_cache
         for root in writable_roots:
             filesystem[str(Path(root).resolve())] = "write"
         for root in git_metadata_roots(cwd, git_common_dir):
@@ -122,6 +131,7 @@ def run_sandboxed(command, cwd, *, writable_roots=(), readable_roots=(),
             "CODEX_HOME": str(home),
             "XDG_CONFIG_HOME": str(home / ".config"),
             "XDG_CACHE_HOME": str(home / ".cache"),
+            "BUN_TMPDIR": str(temp_dir),
             "TMPDIR": str(temp_dir),
             "TMP": str(temp_dir),
             "TEMP": str(temp_dir),

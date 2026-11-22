@@ -153,6 +153,28 @@ describe("AdventureFocusPlay", () => {
     ).toBeTruthy();
   });
 
+  it("themes the independent scene, transcript, and tools scroll regions", async () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    const scenePanel = screen.getByTestId("adventure-artwork-panel");
+    const storyViewport = screen.getByTestId("adventure-play-viewport");
+
+    expect(scenePanel.classList.contains("adventure-scrollbar")).toBe(true);
+    expect(storyViewport.classList.contains("adventure-scrollbar")).toBe(true);
+    expect(scenePanel.classList.contains("@4xl:overflow-y-auto")).toBe(true);
+    expect(storyViewport.classList.contains("overflow-y-auto")).toBe(true);
+    expect(storyViewport.contains(scenePanel)).toBe(false);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    const tools = screen.getByRole("complementary", {
+      name: "Adventure tools",
+    });
+    expect(tools.classList.contains("adventure-scrollbar")).toBe(true);
+    expect(tools.classList.contains("overflow-y-auto")).toBe(true);
+  });
+
   it("uses a compact mobile shell with the action dock outside the narrative scroll", () => {
     render(AdventureFocusPlay, { props: props() });
 

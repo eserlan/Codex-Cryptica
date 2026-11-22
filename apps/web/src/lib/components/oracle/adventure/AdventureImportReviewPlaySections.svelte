@@ -1,5 +1,13 @@
 <script lang="ts">
-  import type { AdventureJsonV1 } from "@codex/adventure-engine";
+  import type {
+    AdventureJsonScene,
+    AdventureJsonV1,
+  } from "@codex/adventure-engine";
+  import AdventureImportReviewCollectionSection, {
+    type ReviewCollectionItem,
+  } from "./AdventureImportReviewCollectionSection.svelte";
+  import { countUnresolvedByEntityId } from "./adventure-review-collection-helpers.js";
+  import AdventureReviewUnresolvedMarker from "./AdventureReviewUnresolvedMarker.svelte";
   import AdventureReviewSourceCitation from "./AdventureReviewSourceCitation.svelte";
   import AdventureReviewEpistemicBadge from "./AdventureReviewEpistemicBadge.svelte";
   import AdventureReviewVisibilityControl from "./AdventureReviewVisibilityControl.svelte";
@@ -21,58 +29,64 @@
     if (!readAloud) return [];
     return Array.isArray(readAloud) ? readAloud : [readAloud];
   }
+
+  const unresolvedByEntityId = $derived(
+    countUnresolvedByEntityId(draft.unresolved),
+  );
+
+  const sceneEntries = $derived<ReviewCollectionItem<AdventureJsonScene>[]>(
+    draft.scenes.map((scene, index) => ({
+      item: scene,
+      index,
+      id: scene.id,
+      title: scene.title,
+      searchText: `${scene.summary} ${scene.body ?? ""}`,
+    })),
+  );
 </script>
 
-<section
-  class="space-y-3 rounded-xl border border-theme-border bg-theme-surface p-5"
-  aria-labelledby="review-scenes-heading"
-  data-testid="review-scenes"
+<AdventureImportReviewCollectionSection
+  collectionKey="scenes"
+  title="Scenes"
+  emptyMessage="No scenes in this module."
+  entries={sceneEntries}
 >
-  <h2
-    id="review-scenes-heading"
-    class="font-header text-lg font-semibold text-theme-text"
-  >
-    Scenes ({draft.scenes.length})
-  </h2>
-  {#if draft.scenes.length === 0}
-    <p class="text-sm text-theme-text">No scenes in this module.</p>
-  {:else}
-    <ul class="space-y-3">
-      {#each draft.scenes as scene, index (scene.id)}
-        <li
-          class="space-y-2 rounded-lg border border-theme-border bg-theme-bg p-4"
-        >
-          <div class="flex flex-wrap items-center justify-between gap-2">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="font-semibold text-theme-text">{scene.title}</span>
-              <span class="font-mono text-xs text-theme-text">{scene.id}</span>
-              <AdventureReviewSourceCitation sourceRef={scene.sourceRef} />
-            </div>
-            <AdventureReviewEpistemicBadge status={scene.epistemicStatus} />
-          </div>
-          <p class="text-sm text-theme-text">{scene.summary}</p>
-          {#each formatReadAloud(scene.readAloud) as excerpt}
-            <blockquote
-              class="border-l-2 border-theme-primary/50 pl-3 text-sm italic text-theme-text"
-            >
-              {excerpt}
-            </blockquote>
-          {/each}
-          {#if scene.conditions && scene.conditions.length > 0}
-            <p class="text-xs text-theme-text">
-              Conditions: {scene.conditions.join("; ")}
-            </p>
-          {/if}
-          <AdventureReviewVisibilityControl
-            collection="scenes"
-            {index}
-            visibility={scene.visibility}
-            label={`scene ${scene.title}`}
-            disabled={isLocked}
-            onToggle={() => onToggleVisibility("scenes", index)}
-          />
-        </li>
-      {/each}
-    </ul>
-  {/if}
-</section>
+  {#snippet recordHeaderBadges(entry)}
+    {@const scene = entry.item as AdventureJsonScene}
+    <AdventureReviewSourceCitation sourceRef={scene.sourceRef} />
+    <AdventureReviewUnresolvedMarker
+      entityId={scene.id}
+      count={unresolvedByEntityId.get(scene.id) ?? 0}
+    />
+    <span
+      class="rounded-full border border-theme-border bg-theme-surface px-2 py-0.5 text-xs font-medium text-theme-text"
+    >
+      {scene.visibility === "gm-only" ? "GM-only" : "Player-visible"}
+    </span>
+    <AdventureReviewEpistemicBadge status={scene.epistemicStatus} />
+  {/snippet}
+  {#snippet recordBody(entry)}
+    {@const scene = entry.item as AdventureJsonScene}
+    <p class="text-sm text-theme-text">{scene.summary}</p>
+    {#each formatReadAloud(scene.readAloud) as excerpt}
+      <blockquote
+        class="border-l-2 border-theme-primary/50 pl-3 text-sm italic text-theme-text"
+      >
+        {excerpt}
+      </blockquote>
+    {/each}
+    {#if scene.conditions && scene.conditions.length > 0}
+      <p class="text-xs text-theme-text">
+        Conditions: {scene.conditions.join("; ")}
+      </p>
+    {/if}
+    <AdventureReviewVisibilityControl
+      collection="scenes"
+      index={entry.index}
+      visibility={scene.visibility}
+      label={`scene ${scene.title}`}
+      disabled={isLocked}
+      onToggle={() => onToggleVisibility("scenes", entry.index)}
+    />
+  {/snippet}
+</AdventureImportReviewCollectionSection>

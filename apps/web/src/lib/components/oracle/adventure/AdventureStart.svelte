@@ -24,6 +24,7 @@
     characters = [],
     scenarioSeed,
     sourcePackage,
+    startSceneId,
     onScenarioStarted,
     onCancelScenario,
     onClearSourcePackage,
@@ -38,6 +39,7 @@
     characters?: Array<{ id: string; name: string }>;
     scenarioSeed?: ScenarioState;
     sourcePackage?: AdventureSourcePackageRef;
+    startSceneId?: string;
     onScenarioStarted?: () => void;
     onCancelScenario?: () => void;
     onClearSourcePackage?: () => void;
@@ -104,8 +106,11 @@
             ],
           }
         : {}),
-      ...(scenarioSeed ? { scenarioSeed } : {}),
-      ...(sourcePackage ? { sourcePackage } : {}),
+      ...(scenarioSeed ? { scenarioSeed: $state.snapshot(scenarioSeed) } : {}),
+      ...(sourcePackage
+        ? { sourcePackage: $state.snapshot(sourcePackage) }
+        : {}),
+      ...(sourcePackage && startSceneId ? { startSceneId } : {}),
     };
   }
 
@@ -139,8 +144,12 @@
 
   function describeStartFailure(cause: unknown): string {
     const message = cause instanceof Error ? cause.message : "";
+    if (message === "invalid-adventure-package")
+      return "This adventure package reference is invalid. Re-import the package and retry. Your choices are preserved.";
     if (message === "invalid-adventure-setup")
       return "Some details are too long or invalid. Shorten them and retry. Your choices are preserved.";
+    if (message === "adventure-package-unavailable")
+      return describeAdventureStartFailure("package-unavailable");
     return "Could not start this adventure. Your choices are preserved.";
   }
 

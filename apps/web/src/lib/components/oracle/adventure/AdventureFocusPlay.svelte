@@ -1,7 +1,8 @@
 <!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { tick } from "svelte";
+  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
   import { bodyPortal, containTab } from "./adventure-phone-surface";
   import {
@@ -19,6 +20,8 @@
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
+  import AdventurePackageAudit from "./AdventurePackageAudit.svelte";
+  import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
   import AdventureManagementMenu from "./AdventureManagementMenu.svelte";
   import AdventurePlay from "./AdventurePlay.svelte";
   import AdventureComposer from "./AdventureComposer.svelte";
@@ -173,8 +176,13 @@
     }),
   );
   const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
+  const oocEventVersion = $derived(
+    (manager.oocExchanges ?? manager.session?.oocExchanges ?? [])
+      .map((item) => `${item.id}:${item.status}`)
+      .join(","),
+  );
   const visibleEventVersion = $derived(
-    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}`,
+    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}:${oocEventVersion}:${manager.oocGenerating ? "1" : "0"}`,
   );
 
   type AdventurePortraitProp = {
@@ -187,7 +195,9 @@
     loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
   };
 
-  const artworkFlagEnabled = import.meta.env.VITE_ADVENTURE_ARTWORK === "true";
+  const artworkFlagEnabled = $derived(
+    featureFlags.isEnabled("adventureArtwork"),
+  );
   let artworkEnabled = $state(artworkPreferences.enabled);
   let artworkCatalogue = $state<readonly ArtworkAsset[]>([]);
   let artworkDisplay = $state<ArtworkDisplayService>();
@@ -200,8 +210,12 @@
     });
   });
 
-  onMount(() => {
-    if (!artworkFlagEnabled) return;
+  $effect(() => {
+    if (!artworkFlagEnabled) {
+      artworkDisplay = undefined;
+      artworkCatalogue = [];
+      return;
+    }
     let active = true;
     let resources: ReturnType<typeof createDisplayService> | undefined;
     try {
@@ -375,10 +389,12 @@
 <svelte:window onkeydown={handleWindowKeydown} />
 
 {#snippet utilities()}
-  {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+  {#if artworkFlagEnabled}
     <ArtworkSettings preferences={artworkPreferences} />
     <AdventureArtworkCueDetails summary={cueSummary} />
   {/if}
+  <AdventurePackageProgress {manager} />
+  <AdventurePackageAudit {manager} />
   <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
@@ -584,11 +600,11 @@
       <aside
         aria-label="Current scene"
         data-testid="adventure-artwork-panel"
-        class="hidden @4xl:block @4xl:w-80 @4xl:shrink-0 @4xl:overflow-y-auto @4xl:border-r @4xl:border-theme-border @4xl:bg-theme-surface/40 @4xl:p-4 @6xl:w-96"
+        class="adventure-scrollbar hidden @4xl:block @4xl:w-80 @4xl:shrink-0 @4xl:overflow-y-auto @4xl:border-r @4xl:border-theme-border @4xl:bg-theme-surface/40 @4xl:p-4 @6xl:w-96"
       >
         <AdventureStateSummary {manager} variant="panel">
           {#snippet media()}
-            {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+            {#if artworkFlagEnabled}
               <AdventureArtworkFeature
                 session={manager.session}
                 entities={vault.entities}
@@ -611,7 +627,7 @@
     >
       <!-- fallow-ignore-next-line css-broken-reference -->
       <main
-        class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
+        class="adventure-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
         bind:this={playViewport}
         data-testid="adventure-play-viewport"
       >
@@ -654,7 +670,7 @@
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <aside
       bind:this={utilitiesSheet}
-      class="absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
+      class="adventure-scrollbar absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
       id="adventure-utilities"
       aria-label="Adventure tools"
       onkeydown={(event) => {
@@ -744,3 +760,57 @@
     </aside>
   {/if}
 </section>
+
+<style>
+  /* Native, theme-aware scrollbars for independently scrolling Adventure panes.
+     Keep this scoped to play rather than overriding scrollbars across the app. */
+  .adventure-scrollbar {
+    --adventure-scrollbar-track: var(--color-bg-primary);
+    --adventure-scrollbar-thumb: color-mix(
+      in srgb,
+      var(--color-accent-primary) 80%,
+      var(--color-bg-surface)
+    );
+    --adventure-scrollbar-thumb-hover: color-mix(
+      in srgb,
+      var(--color-accent-primary) 90%,
+      var(--color-bg-surface)
+    );
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--adventure-scrollbar-thumb)
+      var(--adventure-scrollbar-track);
+  }
+
+  /* Fallback for engines without the standard scrollbar properties. */
+  .adventure-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar-track {
+    background: var(--adventure-scrollbar-track);
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--adventure-scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--adventure-scrollbar-thumb-hover);
+  }
+
+  @media (forced-colors: active) {
+    .adventure-scrollbar {
+      scrollbar-color: auto;
+      scrollbar-width: auto;
+    }
+
+    .adventure-scrollbar::-webkit-scrollbar,
+    .adventure-scrollbar::-webkit-scrollbar-track,
+    .adventure-scrollbar::-webkit-scrollbar-thumb,
+    .adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+      all: revert;
+    }
+  }
+</style>

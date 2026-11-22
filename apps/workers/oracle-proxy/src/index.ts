@@ -7,6 +7,7 @@
  */
 
 import { handleStarterTileDecksRoute } from "./starter-tile-decks";
+import { handleFeatureFlagsRequest } from "./feature-flags";
 import { handleListPublicListings } from "./directory";
 import { handleCopyrightReport } from "./reports";
 import { handleFeedbackReport } from "./feedback-reports";
@@ -135,6 +136,10 @@ export default {
         return new Response("Method not allowed", { status: 405 });
       }
       return handleCachedAssetGallery(request, env, ctx);
+    }
+
+    if (pathname === "/api/flags") {
+      return handleFeatureFlagsRequest(request, env);
     }
 
     if (pathname.startsWith("/api/starter-tile-decks/")) {

@@ -1,5 +1,5 @@
 import type { IStorageAdapter, SerializedGraph } from "../types";
-import { createPeer, type PeerFactory } from "./peer-factory";
+import { createPeer, loadPeerJs, type PeerFactory } from "./peer-factory";
 import { debugStore } from "../../stores/debug.svelte";
 import {
   type IdGenerator,
@@ -40,6 +40,7 @@ export class P2PClientAdapter implements IStorageAdapter {
   }
 
   async init(): Promise<void> {
+    if (this.peerFactory === createPeer) await loadPeerJs();
     return new Promise((resolve, reject) => {
       this.peer = this.peerFactory(undefined, { debug: 1 });
 

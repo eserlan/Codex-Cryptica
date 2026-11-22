@@ -84,7 +84,7 @@ def gate(job_id, merge, codex_sandbox=False, fallow_prechecked=False):
     round_dir = FACTORY / "jobs" / job_id / f"round-{job['round']}"
     commit = git(worktree, "rev-parse", "HEAD").strip()
     protected = protected_changes(worktree)
-    bun_cache_dir = REPO / ".worktrees/.codex-bun-cache"
+    bun_cache_dir = FACTORY / "jobs" / job_id / "codex" / "bun-cache"
     code, log, seconds = run_checks(
         worktree,
         codex_sandbox=codex_sandbox,

@@ -21,6 +21,7 @@ export interface EvaluationTurn {
   errorMessages?: string[];
   recap?: AdventureRecap;
   transcript?: PlayerTranscript;
+  packageRecordIds?: ReadonlyArray<string>;
 }
 
 export type RubricDimension =
@@ -237,6 +238,27 @@ export function scorePlayerAgency(turn: EvaluationTurn): number {
   return pattern.test(combined) ? 0 : 1;
 }
 
+function buildPostRevealSession(
+  turn: EvaluationTurn,
+  session?: AdventureSession,
+): AdventureSession | undefined {
+  if (turn.session) return turn.session;
+  if (!session || turn.proposal.kind !== "complete") return session;
+  const revealedOnTurn = new Set(turn.proposal.revealSecretIds);
+  if (revealedOnTurn.size === 0) return session;
+  return {
+    ...session,
+    hiddenState: {
+      ...session.hiddenState,
+      secrets: session.hiddenState.secrets.map((secret) =>
+        revealedOnTurn.has(secret.id)
+          ? { ...secret, status: "revealed" as const }
+          : secret,
+      ),
+    },
+  };
+}
+
 export function scoreSecrecy(
   turn: EvaluationTurn,
   canaries: string[] = [],
@@ -247,18 +269,22 @@ export function scoreSecrecy(
   }
 
   const playerTexts = collectPlayerFacingTexts(turn).map(normalizeText);
-  if (session) {
-    for (const text of playerTexts) {
-      if (detectHiddenTextLeakage(session, text).length > 0) return 0;
-    }
+  const postRevealSession = buildPostRevealSession(turn, session);
+  if (
+    postRevealSession &&
+    playerTexts.some(
+      (text) => detectHiddenTextLeakage(postRevealSession, text).length > 0,
+    )
+  ) {
+    return 0;
   }
 
   const secrets = collectSecretLeakageSources(turn, canaries);
-  for (const secret of secrets) {
-    if (playerTexts.some((text) => text.includes(secret))) return 0;
-  }
-
-  return 1;
+  return secrets.some((secret) =>
+    playerTexts.some((text) => text.includes(secret)),
+  )
+    ? 0
+    : 1;
 }
 
 function scenarioProgressionValid(
@@ -360,7 +386,7 @@ export function scoreCanonSafety(turn: EvaluationTurn): number {
   );
 
   return !hasProvisionalCanonicalFacts(turn, next, canonicalTitles) &&
-    !hasUnattributedCanonicalFacts(next) &&
+    !hasUnattributedCanonicalFacts(next, turn.packageRecordIds) &&
     !mutatesCanon(prev, next)
     ? 1
     : 0;
@@ -380,6 +406,7 @@ function hasProvisionalCanonicalFacts(
 
 function hasUnattributedCanonicalFacts(
   next: AdventureSession | undefined,
+  packageRecordIds?: ReadonlyArray<string>,
 ): boolean {
   if (!next) return false;
   const visible = [
@@ -390,13 +417,19 @@ function hasUnattributedCanonicalFacts(
     ...next.visibleState.objectives,
     ...next.visibleState.relationships,
   ];
+  const validSourceIds = new Set(
+    next.sourceRecords.map((record) => record.recordId),
+  );
+  if (packageRecordIds && packageRecordIds.length > 0) {
+    for (const id of packageRecordIds) {
+      validSourceIds.add(id);
+    }
+    validSourceIds.add("premise");
+  }
   return visible.some(
     (fact) =>
       fact.source === "canonical" &&
-      (!fact.sourceRecordId ||
-        !next.sourceRecords.some(
-          (record) => record.recordId === fact.sourceRecordId,
-        )),
+      (!fact.sourceRecordId || !validSourceIds.has(fact.sourceRecordId)),
   );
 }
 

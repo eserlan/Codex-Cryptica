@@ -70,7 +70,7 @@ describe("adventure stateless content generation", () => {
     expect(context.get(session.id)).toBe(retained);
   });
 
-  it("streams narration from a self-contained prompt and clears retained context", async () => {
+  it("buffers narration until the complete proposal is validated and clears retained context", async () => {
     const context = new AdventureInteractionContext();
     const retained = context.get(session.id);
     const previews: string[] = [];
@@ -102,7 +102,7 @@ describe("adventure stateless content generation", () => {
         {},
       ),
     ).resolves.toMatchObject({ kind: "complete" });
-    expect(previews).toEqual(["The road opens."]);
+    expect(previews).toEqual([]);
     expect(context.get(session.id)).not.toBe(retained);
   });
 

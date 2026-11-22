@@ -13,6 +13,14 @@ describe("GuestExporter", () => {
     lore: "Top secret GM only note",
     artDirection: "GM visual description",
     adventureArtwork: { version: 2, privatePath: "images/artwork_secret.png" },
+    adventureSource: {
+      packageId: "pkg",
+      packageVersion: "1.0.0",
+      packageHash: "abc",
+      actorIds: ["actor-1"],
+      encounterIds: ["enc-1"],
+      sourceTitle: "Source",
+    },
     connections: [
       { target: "entity-2", type: "neutral" },
       { target: "entity-3", type: "friendly", label: "Ally" },
@@ -79,6 +87,7 @@ describe("GuestExporter", () => {
     expect(exportedE1.lore).toBeUndefined();
     expect(exportedE1.artDirection).toBeUndefined();
     expect(exportedE1.adventureArtwork).toBeUndefined();
+    expect(exportedE1.adventureSource).toBeUndefined();
     expect((exportedE1 as any)._path).toBeUndefined();
   });
   it("never exposes private artwork snapshot paths through ordinary media fields", () => {

@@ -19,6 +19,12 @@
   import ShareButton from "#lib/components/ShareButton.svelte";
   import { buildMysteryPlayerHandout } from "./generator-copy";
   import { pointCrawlHeading } from "./point-crawl-heading.js";
+  import GeneratorContinuationCallout from "./GeneratorContinuationCallout.svelte";
+  import "./seo-markdown.css";
+  import {
+    getGeneratorContinuationConfig,
+    shouldShowGeneratorContinuation,
+  } from "./generator-continuation";
 
   const HIDDEN_TAGS = new Set([
     "imported-draft",
@@ -41,7 +47,12 @@
     generatedData,
     aiFallbackDismissed,
     isBusy,
+    isGenerationInProgress = isBusy,
     isExampleDraft,
+    generatorType = undefined,
+    canFollowUp = false,
+    saveError = null,
+    isSaving = false,
     generatedSingular,
     variant,
     worldTheme,
@@ -76,7 +87,12 @@
     generatedData: GeneratorOutput | null;
     aiFallbackDismissed: boolean;
     isBusy: boolean;
+    isGenerationInProgress?: boolean;
     isExampleDraft: boolean;
+    generatorType?: string;
+    canFollowUp?: boolean;
+    saveError?: string | null;
+    isSaving?: boolean;
     generatedSingular: string;
     variant: "default" | "names";
     worldTheme: string;
@@ -126,6 +142,18 @@
   let isMysteryDraft = $derived(
     generatedData?.labels?.includes("mystery-generator") ?? false,
   );
+  let continuationConfig = $derived(
+    getGeneratorContinuationConfig(generatorType),
+  );
+  let showContinuationCallout = $derived(
+    shouldShowGeneratorContinuation({
+      generatorType,
+      userGenerationSucceeded: canFollowUp,
+      isExampleDraft,
+      isBusy: isBusy || isGenerationInProgress,
+      variant,
+    }),
+  );
 
   $effect(() => {
     if (!isBusy) {
@@ -156,7 +184,7 @@
   tabindex="-1"
   role="region"
   aria-label="Generated Output Workspace"
-  class="relative flex-grow min-w-0 p-6 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
+  class="relative flex-grow min-w-0 p-4 md:p-8 bg-theme-surface/30 border border-theme-border/60 rounded-2xl shadow-sm flex flex-col min-h-[400px]"
 >
   {#if isBusy}
     <div
@@ -230,10 +258,12 @@
               class="flex flex-wrap items-center overflow-hidden rounded-lg border border-theme-primary/25 bg-theme-bg/35 shadow-sm"
               aria-label="Draft actions"
             >
-              {#if variant !== "names"}
+              {#if variant !== "names" && !showContinuationCallout}
                 <button
                   type="button"
                   onclick={onSaveToCodex}
+                  disabled={isGenerationInProgress || isSaving}
+                  aria-busy={isSaving}
                   class="px-4 py-2 bg-theme-primary text-theme-on-primary font-bold uppercase font-header tracking-wider text-micro hover:brightness-110 transition-all"
                   id="save-to-codex-btn"
                   title="Import this draft into your local Codex Cryptica vault"
@@ -493,6 +523,26 @@
         </div>
       {/snippet}
       {@render generatedDocument()}
+      {#if showContinuationCallout && continuationConfig}
+        <GeneratorContinuationCallout
+          config={continuationConfig}
+          disabled={isGenerationInProgress}
+          {isSaving}
+          {saveError}
+          {onSaveToCodex}
+        />
+      {:else if saveError}
+        <div
+          role="alert"
+          class="mt-6 flex items-start gap-2 rounded-xl border border-theme-danger/40 bg-theme-danger/10 p-3 text-xs text-theme-text"
+        >
+          <span
+            class="icon-[lucide--alert-circle] mt-0.5 h-4 w-4 shrink-0 text-theme-text"
+            aria-hidden="true"
+          ></span>
+          <span>{saveError}</span>
+        </div>
+      {/if}
     </div>
   {:else}
     <div
@@ -534,43 +584,3 @@
     {/if}
   </div>
 {/if}
-
-<style>
-  .seo-md :global(h2) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.25rem;
-    margin: 1.5rem 0 0.75rem;
-    border-bottom: 1px solid
-      color-mix(in srgb, var(--color-border) 40%, transparent);
-    padding-bottom: 0.25rem;
-  }
-  /* Desaturated heading — primary actions keep saturated red (#1272) */
-  .seo-md :global(h3) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin: 1rem 0 0.5rem;
-    color: color-mix(in srgb, var(--color-primary) 65%, var(--color-text));
-  }
-  /* Nested body/planet subheading inside a section (e.g. Major Bodies), one level under h3 */
-  .seo-md :global(h4) {
-    font-family: var(--font-header);
-    font-weight: 700;
-    font-size: 0.95rem;
-    margin: 0.85rem 0 0.35rem;
-    color: color-mix(in srgb, var(--color-primary) 45%, var(--color-text));
-  }
-  .seo-md :global(ul) {
-    list-style: disc;
-    margin-left: 1rem;
-  }
-  .seo-md :global(p) {
-    margin-bottom: 0.75rem;
-  }
-  .seo-md :global(.seo-label) {
-    text-shadow: 0 0 10px
-      color-mix(in srgb, var(--color-primary) 70%, transparent);
-    filter: brightness(1.2);
-  }
-</style>

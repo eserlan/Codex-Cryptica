@@ -17,3 +17,4 @@ factory/
 .claude/agents/
 .claude/skills/factory/
 fixtures/adventures/reference-one-shot/variants/
+fixtures/adventures/preflight/unparseable.json

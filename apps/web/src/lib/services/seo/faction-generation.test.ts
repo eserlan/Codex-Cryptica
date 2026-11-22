@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { renderMarkdown } from "#lib/utils/markdown.js";
 import { FactionGenerationService } from "./faction-generation";
 import type { GeneratorOutput } from "./generator-helpers";
 
@@ -20,6 +21,7 @@ describe("FactionGenerationService", () => {
       recordInputs,
       summarizeResolvedInputs: () => "genre: gothic",
       formatRecentInputsNote: (inputs) => ` Recent: ${inputs.join(", ")}`,
+      isAIAllowed: () => true,
     });
 
     await service.generateFaction({ theme: "fantasy", useAI: true });
@@ -40,11 +42,98 @@ describe("FactionGenerationService", () => {
       recordInputs: vi.fn(),
       summarizeResolvedInputs: () => "",
       formatRecentInputsNote: () => "",
+      isAIAllowed: () => true,
     });
 
     const output = await service.generateFaction({ useAI: false });
 
     expect(output).toHaveProperty("title");
     expect(output).toHaveProperty("content");
+  });
+
+  it("uses local urban fantasy generation without calling AI when disabled", async () => {
+    const runModel = vi.fn();
+    const service = new FactionGenerationService({
+      runWithAIFallback: async (useAI, aiAttempt, local) =>
+        (useAI ? await aiAttempt() : local()) as unknown as GeneratorOutput,
+      runModel,
+      getSessionContext: () => "",
+      recentInputs: () => [],
+      recordInputs: vi.fn(),
+      summarizeResolvedInputs: () => "",
+      formatRecentInputsNote: () => "",
+      isAIAllowed: () => true,
+    });
+
+    const output = await service.generateUrbanFantasyFaction({
+      mode: "Street-level magic",
+      factionType: "Occult Gang",
+      scope: "Neighbourhood",
+      moralPosture: "Street-level survivors",
+      useAI: false,
+    });
+
+    expect(runModel).not.toHaveBeenCalled();
+    expect(output.type).toBe("faction");
+    expect(output.summary).toContain("occult gang");
+    expect(output.content).toContain("### How to use them at the table");
+    expect(output.lore).toContain("**Immediate Hook**:");
+  });
+
+  it("keeps SVG image references out of rendered local faction content", async () => {
+    const service = new FactionGenerationService({
+      runWithAIFallback: async (useAI, aiAttempt, local) =>
+        (useAI ? await aiAttempt() : local()) as unknown as GeneratorOutput,
+      runModel: vi.fn(),
+      getSessionContext: () => "",
+      recentInputs: () => [],
+      recordInputs: vi.fn(),
+      summarizeResolvedInputs: () => "",
+      formatRecentInputsNote: () => "",
+      isAIAllowed: () => true,
+    });
+    const output = await service.generateUrbanFantasyFaction({
+      campaignContext:
+        'The market keeps a quiet ward. <svg><filter><feImage href="https://tracker.example/pixel.png"></feImage></filter></svg>',
+      useAI: false,
+    });
+    const renderedContent = renderMarkdown(output.content);
+
+    expect(output.content).toContain("The market keeps a quiet ward.");
+    expect(renderedContent).not.toMatch(
+      /<svg\b|<feimage\b|<filter\b|href\s*=/i,
+    );
+    expect(renderedContent).not.toContain("tracker.example");
+  });
+
+  it("uses local urban fantasy generation when the global AI policy disallows AI", async () => {
+    const runModel = vi.fn();
+    const getSessionContext = vi.fn(() => "Private campaign context");
+    let requestedAI: boolean | undefined;
+    const service = new FactionGenerationService({
+      runWithAIFallback: async (useAI, aiAttempt, local) => {
+        requestedAI = useAI;
+        return (useAI === false
+          ? local()
+          : await aiAttempt()) as unknown as GeneratorOutput;
+      },
+      runModel,
+      getSessionContext,
+      recentInputs: () => [],
+      recordInputs: vi.fn(),
+      summarizeResolvedInputs: () => "",
+      formatRecentInputsNote: () => "",
+      isAIAllowed: () => false,
+    });
+
+    const output = await service.generateUrbanFantasyFaction({
+      campaignContext: "Private campaign input",
+      useAI: true,
+    });
+
+    expect(requestedAI).toBe(false);
+    expect(runModel).not.toHaveBeenCalled();
+    expect(getSessionContext).not.toHaveBeenCalled();
+    expect(output.type).toBe("faction");
   });
 });

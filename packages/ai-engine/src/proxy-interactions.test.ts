@@ -43,7 +43,13 @@ describe("buffered proxy interactions", () => {
   });
 
   it("forwards all settings, explicit store:false and the abort signal", async () => {
-    const { client, fetcher } = interactions(Response.json({ id: "new" }));
+    const { client, fetcher } = interactions(
+      Response.json({
+        id: "new",
+        modelKey: "gemini-flash-lite",
+        usage: { inputTokens: 19, outputTokens: 7 },
+      }),
+    );
     const signal = new AbortController().signal;
     expect(
       await client.send({
@@ -52,9 +58,15 @@ describe("buffered proxy interactions", () => {
         previousInteractionId: "old",
         systemInstruction: "system",
         generationConfig: {},
+        reasoningEffort: "high",
         signal,
       }),
-    ).toEqual({ id: "new", text: "" });
+    ).toEqual({
+      id: "new",
+      text: "",
+      modelKey: "gemini-flash-lite",
+      usage: { inputTokens: 19, outputTokens: 7 },
+    });
     expect(JSON.parse(fetcher.mock.calls[0][1]!.body as string)).toEqual({
       model: "luna-fast",
       input: "hello",
@@ -62,6 +74,7 @@ describe("buffered proxy interactions", () => {
       previous_interaction_id: "old",
       system_instruction: "system",
       generationConfig: {},
+      reasoning_effort: "high",
     });
     expect(fetcher.mock.calls[0][1]!.signal).toBe(signal);
   });
@@ -73,6 +86,16 @@ describe("buffered proxy interactions", () => {
       "You appear to be offline",
     );
     expect(fetcher).not.toHaveBeenCalled();
+  });
+
+  it("allows requests when the runtime does not report online status", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(
+      undefined as unknown as boolean,
+    );
+    const { client, fetcher } = interactions(Response.json({ id: "new" }));
+
+    await expect(client.send(params)).resolves.toMatchObject({ id: "new" });
+    expect(fetcher).toHaveBeenCalledOnce();
   });
 
   it.each([409, 400])(
@@ -89,6 +112,34 @@ describe("buffered proxy interactions", () => {
       );
     },
   );
+
+  it("preserves usage.reasoningTokens when present and omits it when absent", async () => {
+    const withReasoning = interactions(
+      Response.json({
+        id: "r1",
+        text: "ok",
+        usage: { inputTokens: 10, outputTokens: 5, reasoningTokens: 12 },
+      }),
+    );
+    const res1 = await withReasoning.client.send(params);
+    expect(res1.usage).toEqual({
+      inputTokens: 10,
+      outputTokens: 5,
+      reasoningTokens: 12,
+    });
+    expect(res1.usage?.reasoningTokens).toBe(12);
+
+    const withoutReasoning = interactions(
+      Response.json({
+        id: "r2",
+        text: "ok",
+        usage: { inputTokens: 10, outputTokens: 5 },
+      }),
+    );
+    const res2 = await withoutReasoning.client.send(params);
+    expect(res2.usage).toEqual({ inputTokens: 10, outputTokens: 5 });
+    expect("reasoningTokens" in res2.usage!).toBe(false);
+  });
 
   it("uses the fallback message for malformed error bodies", async () => {
     const { client } = interactions(new Response("not JSON", { status: 502 }));

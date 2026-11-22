@@ -11,7 +11,7 @@
 
   const TITLE = "Generator examples";
   const DESCRIPTION =
-    "Curated, unedited output from the Codex Cryptica generators: settlements, factions and encounters you can read in full and take straight to the table.";
+    "Curated generator outputs and hand-written showcase scenarios from Codex Cryptica: settlements, factions, ships and adventures you can read in full and take straight to the table.";
   const SEO_IMAGE =
     "https://assets.codexcryptica.com/announcements/ship-cinder-wren.jpg";
   const SEO_IMAGE_ALT =
@@ -42,9 +42,9 @@
       >
         {TITLE}
       </h1>
-      <p class="text-lg leading-relaxed text-theme-muted">
-        {DESCRIPTION} Each page shows the full output, the settings that produced
-        it, and a short note on what makes it usable.
+      <p class="text-lg leading-relaxed text-theme-text">
+        {DESCRIPTION} Each page shows the full piece, the generator settings or scenario
+        setup behind it, and a short note on what makes it usable.
       </p>
     </div>
 
@@ -67,9 +67,15 @@
             {/if}
             <div class="flex flex-1 flex-col p-5">
               <p
-                class="mb-2 font-mono text-xs uppercase tracking-[0.18em] text-theme-muted"
+                class="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-xs uppercase tracking-[0.18em] text-theme-text"
               >
-                {example.genre} · {example.kind}
+                <span>{example.genre} · {example.kind}</span>
+                {#if example.provenance === "authored"}
+                  <span
+                    class="whitespace-nowrap rounded border border-theme-border px-1.5 text-theme-text"
+                    >Hand-written</span
+                  >
+                {/if}
               </p>
               <h2
                 class="font-header text-lg font-bold text-theme-text transition-colors group-hover:text-theme-primary"

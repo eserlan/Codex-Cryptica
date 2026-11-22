@@ -263,6 +263,30 @@ Luna finds these in almost every generator PR. Check each guard in the diff agai
 
 ## Trust, Privacy & Public Boundaries
 
+### Execution boundaries and round trips
+
+- When changing a runner or build command, trace which checkout supplies the executable
+  code and what environment, filesystem and network access that code inherits. Use harmless
+  fixtures for dependency lifecycle scripts and branch-authored checks to verify the actual
+  runner mode (PR #4921). An isolated agent review does not establish that host subprocesses
+  are isolated.
+- Trace a valid upstream value through save, reload and the original consumer. Use independently
+  optional bounds, long or whitespace-bearing identifiers where allowed, and non-authoritative
+  state. A stricter persistence schema can reject or rewrite an otherwise valid identifier
+  (PR #4950, Copilot finding acted on by the PR fixer).
+
+### Inventory and output at the actual boundary
+
+- For staged or partial conversion, check that inventory entries have expected IDs or counts
+  and reconcile those with actual output. A positive completion record or a valid empty array
+  can hide omitted content. Test a missing entry in a completed chunk and a source with no
+  page numbers (PR #4942).
+- For model grounding and visibility, inspect the final serialized prompt and persisted or
+  rendered output. Include headers, labels, recaps, previews and error paths. Put imported
+  strings in quoted data even in headers (PR #4932). Check a short secret, a clue revelation,
+  a hidden title and a rejected generation (PRs #4935, #4949). A canary that never appears in
+  the tested path proves little.
+
 ### Untrusted Markdown, HTML and Remote Tracking (Constitution IV)
 
 - **Issue**: Rendering imported, generated, or remote text through `{@html}` without sanitizing it creates an XSS boundary. Furthermore, default DOMPurify configurations permit `<img>` tags and `https:`, `data:`, and `blob:` URLs. If untrusted AI model output or imported notes contain `![tracking](https://attacker.com/pixel.png)`, the browser automatically issues a remote fetch, leaking the user's IP address, timestamp, and session metadata—violating local-first privacy (Constitution Principle IV).
@@ -503,6 +527,12 @@ PR #4582 drew three findings for one `fixed inset-0` play surface:
   `packages/schema` (`THEMES` plus the `_light` / `_dark` variants), compositing any `/NN` opacity
   over the surface it sits on. `bg-theme-primary text-theme-bg` is **not** safe in every theme;
   use `text-theme-on-primary`, which `app.css` overrides where the background token fails.
+- **Rendered states and nested elements**: Check the actual element after global styles,
+  variant styles and ancestor opacity are applied. Inline `code` can override both colour and
+  font size, so the parent paragraph's contrast is insufficient (PR #4951). Include focus rings,
+  hover text, control borders and disabled labels where applicable (PRs #4933, #4943, #4944).
+  Record the lowest ratio with its theme and state. A clean changed-line regex check does not
+  demonstrate the contrast of a global selector or an ancestor background.
 - **Check** (from `packages/schema`; edit the two pairs to the classes under review):
 
 ```sh
@@ -544,6 +574,17 @@ and `text-theme-on-primary` on primary.
   and desktop before pushing.
 
 ## Event Bus & Lifecycles
+
+### Recovery and partial results
+
+- Start the review in the failing state and follow the user-facing repair and Retry action
+  through the real persistence adapter. Missing, changed and unreadable records can take
+  different branches. Verify that the repair can write what Retry needs to read and leaves
+  unrelated records intact (PR #4944).
+- Check every save or export while generation is pending, after failure and after a retry.
+  Exercise both keyboard/form submission and the handler. A preview can look harmless yet
+  be persisted with the wrong entity type before validation (PR #4937). Check that the
+  successful path still saves a finalized result.
 
 ### Subscription Memory Leaks in Stores & Tests
 
@@ -626,6 +667,16 @@ class FeatureStore {
 - **Pattern**: Always store timer IDs and invoke `clearTimeout()` in cleanup functions (`onDestroy` or `$effect` return). Add unit tests using `vi.useFakeTimers()` to verify that rapid successive calls properly debounce, and that timers cancel cleanly when superseded.
 
 ## Data Gating & Optimization
+
+### Bounds before expensive work
+
+- Trace the largest supported input from lookup to rendering and count reads, parses, hashes,
+  sorts, allocations and DOM nodes. Apply the bound before expensive work. A 4,000-character
+  result does not limit how many packages were read or how many records were materialised
+  (PRs #4932, #4935, #4944).
+- Check first open and retry using a large collection, plus empty and one-sided inputs.
+  Pagination must preserve access to the last entry. A minimum-only or maximum-only value
+  must still describe a bound when rendered (PR #4943).
 
 ### Redundant Debounced Auto-Saves
 

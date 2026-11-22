@@ -1,5 +1,6 @@
 import type { CorsEnv } from "./cors";
 import type { D1DatabaseLike } from "./answer-aggregates";
+import type { KVNamespaceLike } from "./feature-flags";
 
 export interface Env extends CorsEnv {
   GEMINI_API_KEY: string;
@@ -8,6 +9,7 @@ export interface Env extends CorsEnv {
   ALLOW_CLOUDFLARE_PAGES_PREVIEW_ORIGINS?: string;
   AI?: any;
   BUCKET?: any; // R2Bucket
+  FEATURE_FLAGS?: KVNamespaceLike;
   TURNSTILE_SECRET_KEY?: string;
   CODEX_AUTOMATION_KEY?: string;
   PUBLISH_CREATE_RATE_LIMITER?: {

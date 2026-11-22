@@ -17,7 +17,7 @@
     theme?: string;
     initialDraft?: GeneratorOutput | null;
     generate: (options: { useAI: boolean }) => Promise<GeneratorOutput>;
-    formFields: Snippet<[() => void]>;
+    formFields: Snippet<[() => void, boolean]>;
     relatedLinks?: { href: string; label: string }[];
     outputLead?: Snippet;
     generateLabel?: string;
@@ -41,7 +41,7 @@
 <h1>{pageTitle}</h1>
 <p data-testid="page-theme">{theme}</p>
 <p data-testid="initial-draft">{initialDraft?.title ?? "No initial draft"}</p>
-{@render formFields(() => void trigger())}
+{@render formFields(() => void trigger(), false)}
 {@render outputLead?.()}
 <p data-testid="generate-label">{generateLabel ?? ""}</p>
 <p data-testid="ai-toggle-scope">{aiToggleScope ?? ""}</p>

@@ -28,9 +28,11 @@ The PR reviewer (dev-agents "Luna") repeatedly finds the defects below after thi
 Run these sweeps on every review; they are where most second and third review rounds come from.
 
 0. **Mechanical checks first**: Run `bun run lint:changed`. Besides ESLint and Prettier it runs
-   `scripts/check-ui-patterns.mjs` on the changed lines (theme contrast, `renderMarkdown`
-   without `allowImages: false`, responsive `order-*`, `setTimeout` without cleanup, root-path `goto`/`redirect` without
-   `resolve()`), and the
+   `scripts/check-ui-patterns.mjs` on the changed lines (theme contrast including `danger`/`warning`,
+   `state-contrast` on `hover:`/`disabled:`/`focus-visible:`, `border-contrast` on outlined
+   interactive controls, `modal-focus` on raw `aria-modal`/`role="dialog"`, `renderMarkdown`
+   without `allowImages: false`, responsive `order-*`, `setTimeout` without cleanup, root-path
+   `goto`/`redirect` without `resolve()`), and the
    discovery audit when discovery content changes. `test:changed` covers the sitemap against the
    discovery registry. See [docs/local-pr-checks.md](../../../docs/local-pr-checks.md). Do not
    re-derive by hand what these already compute, but the UI pattern rules are regex heuristics:
@@ -63,17 +65,33 @@ Run these sweeps on every review; they are where most second and third review ro
    the real persistence adapter returns on failure (it may resolve `false`), and what earlier
    steps are left if a later step fails. For abortable work, follow the `AbortSignal` all the way
    to `fetch`, and check that `pointercancel` cancels rather than completes a gesture.
+   For recovery and streaming changes, follow the actual action through the real adapter or
+   save handler using [Recovery and partial results](references/patterns.md#recovery-and-partial-results).
 6. **Worst-case budgets**: Compute per-frame work from the supported extremes (minimum zoom,
    minimum cell size, large viewport), not a typical map; caps must not silently drop items.
+   For retrieval, proposal, and list changes, trace work before the output cap: reject O(N²)
+   lookups (`find`/`includes`/`JSON.stringify` inside loops) and unbounded DOM lists over
+   imported/user data (require pagination or virtualization), and require a scale/overflow unit
+   test (e.g. 400+ records or cap+overflow items) that asserts both latency and schema validity.
+   Check decode, hash, sort, allocation and rendered rows on both the initial path and retry. See
+   [Bounds before expensive work](references/patterns.md#bounds-before-expensive-work).
 7. **Claims**: Every capability, rule, number and privacy claim in changed content, help copy, or
    the PR description has a code path or a cited source. Evergreen blog posts go through the
    discovery registry. The PR description matches `git diff origin/staging...HEAD --stat`.
    A new user-facing workflow or control has a Help entry (`apps/web/src/lib/content/help`, and
    the `help-engine` feature registry when the in-app assistant should know it).
-8. **Re-review the fix**: A fix is new code. Re-run the relevant sweep over the fix itself, and
-   for heuristics, re-run the whole counterexample table. Most second-round findings are defects
-   in the first round's fix. Automated fixer commits go through the same gates (sweep 0, tests,
-   type-check) before they are pushed.
+8. **Re-review the fix**: A fix is new code. Re-run the relevant sweep over the fix itself and
+   sweep **every sibling in the touched module** (every loop for O(N²), every interactive state for
+   contrast, every `await` for vault/dismissal races, every imported string for Markdown/URL
+   escaping) before pushing. For heuristics, re-run the whole counterexample table. Most
+   second-round findings are defects in the first round's fix or missed siblings in the same file.
+   Automated fixer commits go through the same gates (sweep 0, tests, type-check) before they are
+   pushed.
+
+For applicable sweeps, record the concrete case, the code path or check used, and the
+observed result in the review notes. For a UI change, include the worst rendered contrast
+pair and state when contrast applies. For a recovery or data boundary change, include the
+failing or edge input and what reaches the real sink. Say when a check could not be run.
 
 ## Review Output Guidelines
 

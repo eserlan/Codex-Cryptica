@@ -25,8 +25,164 @@ function dependencies() {
     store: vi.fn(),
     track: vi.fn(),
     countRelatedEntities: vi.fn().mockReturnValue(2),
+    trackFailure: vi.fn(),
   };
 }
+
+const hubEntity: SessionEntity = {
+  id: "one",
+  type: "note",
+  title: "One",
+  content: "Draft",
+  lore: "",
+  labels: [],
+  status: "draft",
+  reuseEnabled: true,
+  pinned: false,
+  createdOrder: 1,
+};
+
+const pointCrawlFailureOutput: GeneratorOutput = {
+  type: "note",
+  title: "Fen",
+  summary: "s",
+  content: "c",
+  lore: "l",
+  labels: [],
+  status: "draft",
+  pointCrawl: {
+    title: "Fen",
+    premise: "p",
+    genre: "Classic Fantasy",
+    scale: "Region",
+    pointCount: 1,
+    density: "Balanced branching",
+    dangerLevel: "Moderate / Hazardous",
+    secretFrequency: "Standard (1-2 secret routes)",
+    startNodeId: "n1",
+    goalNodeIds: ["n1"],
+    warnings: [],
+    nodes: [
+      {
+        id: "n1",
+        name: "Node 1",
+        role: "start",
+        layer: 0,
+        rail: 0,
+        summary: "s",
+        sensoryDescription: "d",
+        whyVisit: "w",
+        encounterOrHazard: "e",
+        clueOrReward: "c",
+        unlocksRouteIds: [],
+      },
+    ],
+    routes: [],
+  },
+} as GeneratorOutput;
+
+function businessOutput(): GeneratorOutput {
+  return {
+    ...businessGeneratorOutputFor(
+      generateBusinessLocal({
+        genre: "Classic Fantasy",
+        businessType: "Blacksmith",
+        scale: "established",
+      }),
+    ),
+  } as GeneratorOutput;
+}
+
+type Deps = ReturnType<typeof dependencies>;
+
+const paths: Array<{
+  name: string;
+  expected: { generatorType: string; isHubBatch: boolean };
+  run: (deps: Deps) => unknown;
+}> = [
+  {
+    name: "single result",
+    expected: { generatorType: "npc", isHubBatch: false },
+    run: (deps) =>
+      saveGeneratorOutput(output, { content: "", lore: "" }, "npc", deps),
+  },
+  {
+    name: "business",
+    expected: { generatorType: "business", isHubBatch: true },
+    run: (deps) =>
+      saveGeneratorOutput(
+        businessOutput(),
+        { kind: "adventure" } as never,
+        "business",
+        deps,
+      ),
+  },
+  {
+    name: "point crawl",
+    expected: { generatorType: "point-crawl", isHubBatch: true },
+    run: (deps) =>
+      saveGeneratorOutput(
+        pointCrawlFailureOutput,
+        { content: "", lore: "" },
+        "point-crawl",
+        deps,
+      ),
+  },
+  {
+    name: "session hub",
+    expected: { generatorType: "hub", isHubBatch: true },
+    run: (deps) =>
+      saveSessionHubEntities([hubEntity], {}, [hubEntity], "hub", deps),
+  },
+];
+
+describe.each(paths)("handoff failure signal: $name", (path) => {
+  const settle = async (deps: Deps) => {
+    try {
+      await path.run(deps);
+      return undefined;
+    } catch (error) {
+      return error;
+    }
+  };
+
+  it("tracks once, skips track and rethrows the same error when store throws", async () => {
+    const deps = dependencies();
+    const storageError = new Error("storage blocked");
+    deps.store.mockImplementation(() => {
+      throw storageError;
+    });
+
+    expect(await settle(deps)).toBe(storageError);
+    expect(deps.trackFailure).toHaveBeenCalledOnce();
+    expect(deps.trackFailure).toHaveBeenCalledWith({
+      ...path.expected,
+      itemCount: expect.any(Number),
+    });
+    expect(deps.track).not.toHaveBeenCalled();
+  });
+
+  it("does not call trackFailure when store succeeds", async () => {
+    const deps = dependencies();
+    expect(await settle(deps)).toBeUndefined();
+    expect(deps.track).toHaveBeenCalledOnce();
+    expect(deps.trackFailure).not.toHaveBeenCalled();
+  });
+
+  it("rethrows the storage error when trackFailure throws", async () => {
+    const deps = dependencies();
+    const storageError = new Error("storage blocked");
+    deps.store.mockImplementation(() => {
+      throw storageError;
+    });
+    deps.trackFailure.mockImplementation(() => {
+      throw new Error("analytics broke");
+    });
+
+    expect(await settle(deps)).toBe(storageError);
+    expect(deps.track).not.toHaveBeenCalled();
+  });
+});
 
 describe("generator save flows", () => {
   beforeEach(() => vi.restoreAllMocks());

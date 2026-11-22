@@ -23,6 +23,114 @@ type InteractionParams = Parameters<
 >[0];
 
 describe("adventure retained generation", () => {
+  it("forwards a selected reasoning effort to the interaction transport", async () => {
+    const calls: InteractionParams[] = [];
+    const generator = new AdventureInteractionGeneration(
+      {
+        getModel,
+        async sendInteraction(params) {
+          calls.push(params);
+          return { id: "effort-turn", text: completeResponse };
+        },
+      },
+      new AdventureInteractionContext(),
+    );
+
+    await generator.generate(
+      request,
+      buildAdventurePrompt(request),
+      "instruction",
+      { reasoningEffort: "medium" },
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].model).toBe("luna-fast");
+    expect(calls[0].reasoningEffort).toBe("medium");
+  });
+
+  it("defaults Adventure Mode interactions to luna-fast at low reasoning effort", async () => {
+    const calls: InteractionParams[] = [];
+    const generator = new AdventureInteractionGeneration(
+      {
+        getModel,
+        async sendInteraction(params) {
+          calls.push(params);
+          return { id: "default-turn", text: completeResponse };
+        },
+      },
+      new AdventureInteractionContext(),
+    );
+
+    await generator.generate(
+      request,
+      buildAdventurePrompt(request),
+      "instruction",
+      {},
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0].model).toBe("luna-fast");
+    expect(calls[0].reasoningEffort).toBe("low");
+  });
+
+  it("parses a single fenced JSON proposal without triggering a repair call", async () => {
+    const calls: InteractionParams[] = [];
+    const generator = new AdventureInteractionGeneration(
+      {
+        getModel,
+        async sendInteraction(params) {
+          calls.push(params);
+          return {
+            id: "fenced-turn",
+            text: `\`\`\`json\n${completeResponse}\n\`\`\``,
+          };
+        },
+      },
+      new AdventureInteractionContext(),
+    );
+
+    const proposal = await generator.generate(
+      request,
+      buildAdventurePrompt(request),
+      "instruction",
+      {},
+    );
+
+    expect(calls).toHaveLength(1);
+    expect(proposal.kind).toBe("complete");
+  });
+
+  it("includes concise schema-path hints in the repair prompt on validation failure", async () => {
+    const calls: InteractionParams[] = [];
+    const generator = new AdventureInteractionGeneration(
+      {
+        getModel,
+        async sendInteraction(params) {
+          calls.push(params);
+          return {
+            id: `hint-turn-${calls.length}`,
+            text:
+              calls.length === 1
+                ? JSON.stringify({ kind: "complete" })
+                : completeResponse,
+          };
+        },
+      },
+      new AdventureInteractionContext(),
+    );
+
+    await generator.generate(
+      request,
+      buildAdventurePrompt(request),
+      "instruction",
+      {},
+    );
+
+    expect(calls).toHaveLength(2);
+    expect(calls[1].input).toContain("Previous JSON failed validation (");
+    expect(calls[1].input).toContain("narration");
+  });
+
   it("rebuilds full state once on expiry and stages the new ID until acknowledgement", async () => {
     const calls: InteractionParams[] = [];
     const context = new AdventureInteractionContext();

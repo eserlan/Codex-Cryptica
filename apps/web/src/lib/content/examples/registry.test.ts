@@ -74,6 +74,19 @@ describe("example schema", () => {
     ).not.toThrow();
   });
 
+  it("requires a provenance note for authored examples", () => {
+    expect(() =>
+      make({ slug: "authored-bare", provenance: "authored" }),
+    ).toThrow();
+    expect(() =>
+      make({
+        slug: "authored-ok",
+        provenance: "authored",
+        provenanceNote: "Written by hand for this page, not generated.",
+      }),
+    ).not.toThrow();
+  });
+
   it("does not demand a note for raw output", () => {
     expect(() => make({ slug: "raw-ok", provenance: "raw" })).not.toThrow();
   });
@@ -253,6 +266,29 @@ describe("the published examples", () => {
     expect(tippingPoint.annotation.paragraphs.join(" ")).toContain(
       "persuade at least two more senators",
     );
+  });
+
+  it("publishes The Last Shift as a hand-written scenario with a Vault setup", () => {
+    const lastShift = examples["the-last-shift-sci-fi-horror-scenario"];
+    expect(lastShift).toBeDefined();
+    expect(lastShift.provenance).toBe("authored");
+    expect(lastShift.kind).toBe("adventure");
+    expect(
+      lastShift.output.some(
+        (block) =>
+          "heading" in block && Boolean(block.heading?.includes("Vault")),
+      ),
+    ).toBe(true);
+    const keyFields = JSON.stringify([
+      lastShift.seo,
+      lastShift.title,
+      lastShift.name,
+      lastShift.summary,
+    ]);
+    expect(keyFields).not.toMatch(/mothership/i);
+    expect(
+      lastShift.relatedForPages.some((page) => page.href === "/for/mothership"),
+    ).toBe(true);
   });
 
   it("keys every example by its own slug", () => {

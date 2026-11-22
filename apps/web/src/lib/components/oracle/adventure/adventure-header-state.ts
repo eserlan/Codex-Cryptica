@@ -29,11 +29,25 @@ export function deriveAdventureHeaderStatus({
   pendingRoll,
   elapsedLabel,
 }: AdventureHeaderStatusInput): AdventureHeaderStatus {
-  const desktopLabel = readOnly
-    ? "Read-only in this tab"
-    : phase === "offline"
-      ? "Waiting for connection"
-      : phase;
+  const desktopLabel =
+    phase === "package-unavailable"
+      ? "Package unavailable"
+      : readOnly
+        ? "Read-only in this tab"
+        : phase === "offline"
+          ? "Waiting for connection"
+          : phase;
+
+  if (phase === "package-unavailable") {
+    return {
+      phoneLabel: "Package unavailable",
+      desktopLabel,
+      tone: "danger",
+      icon: "icon-[lucide--alert-circle]",
+      urgent: true,
+      busy: false,
+    };
+  }
 
   if (readOnly) {
     return {

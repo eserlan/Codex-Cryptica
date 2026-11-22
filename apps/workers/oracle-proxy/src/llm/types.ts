@@ -52,7 +52,7 @@ export interface LlmModelDefinition {
   };
 }
 
-export type ReasoningEffort = "minimal" | "low" | "medium" | "high";
+export type ReasoningEffort = "minimal" | "low" | "medium" | "high" | "xhigh";
 
 export interface OperationDefaults {
   operation: LlmOperation;

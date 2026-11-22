@@ -1,21 +1,32 @@
 import type { ZodIssue } from "zod";
 import {
+  ADVENTURE_JSON_REFERENCES,
+  ENTITY_COLLECTIONS,
+} from "./reference-contract";
+import { entrySceneId } from "./entry-scene";
+import { UNKNOWN_SCENE_PROGRESSION } from "./unresolved-codes";
+import {
   ADVENTURE_JSON_V1_FORMAT_VERSION,
   AdventureJsonV1Schema,
   type AdventureJsonV1,
   type AdventureJsonScene,
 } from "./schema";
 
+export const ADVENTURE_JSON_VALIDATION_ERROR_CODES = [
+  "INVALID_FORMAT_VERSION",
+  "INVALID_VISIBILITY",
+  "SCHEMA_VALIDATION_ERROR",
+  "DUPLICATE_ID",
+  "UNRESOLVED_REFERENCE",
+  "SELF_REFERENCE",
+  "HIERARCHY_CYCLE",
+  "DEAD_END_CYCLE",
+  "UNREACHABLE_SCENE",
+  "DUPLICATE_SCENE_PROGRESSION",
+] as const;
+
 export type AdventureJsonValidationErrorCode =
-  | "INVALID_FORMAT_VERSION"
-  | "INVALID_VISIBILITY"
-  | "SCHEMA_VALIDATION_ERROR"
-  | "DUPLICATE_ID"
-  | "UNRESOLVED_REFERENCE"
-  | "SELF_REFERENCE"
-  | "HIERARCHY_CYCLE"
-  | "DEAD_END_CYCLE"
-  | "UNREACHABLE_SCENE";
+  (typeof ADVENTURE_JSON_VALIDATION_ERROR_CODES)[number];
 
 export interface AdventureJsonValidationError {
   code: AdventureJsonValidationErrorCode;
@@ -27,33 +38,6 @@ export interface AdventureJsonValidationError {
 export type AdventureJsonValidationResult =
   | { ok: true; value: AdventureJsonV1 }
   | { ok: false; errors: AdventureJsonValidationError[] };
-
-type EntityCollectionName =
-  | "locations"
-  | "actors"
-  | "factions"
-  | "scenes"
-  | "encounters"
-  | "clues"
-  | "rumours"
-  | "items"
-  | "secrets"
-  | "endings"
-  | "unresolved";
-
-const ENTITY_COLLECTIONS: readonly EntityCollectionName[] = [
-  "locations",
-  "actors",
-  "factions",
-  "scenes",
-  "encounters",
-  "clues",
-  "rumours",
-  "items",
-  "secrets",
-  "endings",
-  "unresolved",
-];
 
 function formatPath(path: PropertyKey[]): string | undefined {
   if (path.length === 0) return undefined;
@@ -178,218 +162,68 @@ function checkReference(
   }
 }
 
+const REFERENCE_TARGET_LABEL = {
+  any: "entity",
+  locations: "location",
+  actors: "actor",
+  factions: "faction",
+  scenes: "scene",
+} as const;
+
+function referenceValues(
+  value: unknown,
+  segments: readonly string[],
+  path: string,
+): Array<{ id: string; path: string }> {
+  const [segment, ...rest] = segments;
+  if (segment === undefined) {
+    return typeof value === "string" ? [{ id: value, path }] : [];
+  }
+  if (segment === "*") {
+    return Array.isArray(value)
+      ? value.flatMap((item, index) =>
+          referenceValues(item, rest, `${path}[${index}]`),
+        )
+      : [];
+  }
+  if (value === null || typeof value !== "object") return [];
+  return referenceValues(
+    (value as Record<string, unknown>)[segment],
+    rest,
+    `${path}.${segment}`,
+  );
+}
+
 function validateReferences(
   pkg: AdventureJsonV1,
   allIds: Set<string>,
   errors: AdventureJsonValidationError[],
 ): void {
-  const locationIds = new Set(pkg.locations.map((l) => l.id));
-  const actorIds = new Set(pkg.actors.map((a) => a.id));
-  const factionIds = new Set(pkg.factions.map((f) => f.id));
-  const sceneIds = new Set(pkg.scenes.map((s) => s.id));
-
-  pkg.locations.forEach((loc, i) => {
-    checkReference(
-      errors,
-      loc.id,
-      loc.parentLocationId,
-      locationIds,
-      "location",
-      `locations[${i}].parentLocationId`,
+  const idsByCollection = new Map(
+    ENTITY_COLLECTIONS.map((collection) => [
+      collection,
+      new Set(pkg[collection].map(({ id }) => id)),
+    ]),
+  );
+  for (const collection of ENTITY_COLLECTIONS) {
+    const fields = ADVENTURE_JSON_REFERENCES.filter(
+      (field) => field.source === collection,
     );
-    loc.connections?.forEach((conn, j) => {
-      checkReference(
-        errors,
-        loc.id,
-        conn.targetLocationId,
-        locationIds,
-        "location",
-        `locations[${i}].connections[${j}].targetLocationId`,
-      );
+    pkg[collection].forEach((record, index) => {
+      for (const field of fields) {
+        const allowedIds =
+          field.target === "any" ? allIds : idsByCollection.get(field.target)!;
+        const label = REFERENCE_TARGET_LABEL[field.target];
+        for (const { id, path } of referenceValues(
+          record,
+          field.segments,
+          `${collection}[${index}]`,
+        )) {
+          checkReference(errors, record.id, id, allowedIds, label, path);
+        }
+      }
     });
-  });
-
-  pkg.actors.forEach((actor, i) => {
-    checkReference(
-      errors,
-      actor.id,
-      actor.factionId,
-      factionIds,
-      "faction",
-      `actors[${i}].factionId`,
-    );
-    checkReference(
-      errors,
-      actor.id,
-      actor.locationId,
-      locationIds,
-      "location",
-      `actors[${i}].locationId`,
-    );
-  });
-
-  pkg.scenes.forEach((scene, i) => {
-    checkReference(
-      errors,
-      scene.id,
-      scene.locationId,
-      locationIds,
-      "location",
-      `scenes[${i}].locationId`,
-    );
-    scene.branches?.forEach((branch, j) => {
-      checkReference(
-        errors,
-        scene.id,
-        branch.targetSceneId,
-        sceneIds,
-        "scene",
-        `scenes[${i}].branches[${j}].targetSceneId`,
-      );
-    });
-  });
-
-  pkg.encounters.forEach((enc, i) => {
-    checkReference(
-      errors,
-      enc.id,
-      enc.sceneId,
-      sceneIds,
-      "scene",
-      `encounters[${i}].sceneId`,
-    );
-    checkReference(
-      errors,
-      enc.id,
-      enc.locationId,
-      locationIds,
-      "location",
-      `encounters[${i}].locationId`,
-    );
-    enc.actorIds?.forEach((actorId, j) => {
-      checkReference(
-        errors,
-        enc.id,
-        actorId,
-        actorIds,
-        "actor",
-        `encounters[${i}].actorIds[${j}]`,
-      );
-    });
-  });
-
-  pkg.clues.forEach((clue, i) => {
-    checkReference(
-      errors,
-      clue.id,
-      clue.leadTargetId,
-      allIds,
-      "entity",
-      `clues[${i}].leadTargetId`,
-    );
-    checkReference(
-      errors,
-      clue.id,
-      clue.placedLocationId,
-      locationIds,
-      "location",
-      `clues[${i}].placedLocationId`,
-    );
-    checkReference(
-      errors,
-      clue.id,
-      clue.placedActorId,
-      actorIds,
-      "actor",
-      `clues[${i}].placedActorId`,
-    );
-    checkReference(
-      errors,
-      clue.id,
-      clue.placedSceneId,
-      sceneIds,
-      "scene",
-      `clues[${i}].placedSceneId`,
-    );
-    checkReference(
-      errors,
-      clue.id,
-      clue.alternativeSourceId,
-      allIds,
-      "entity",
-      `clues[${i}].alternativeSourceId`,
-    );
-  });
-
-  pkg.rumours.forEach((rumour, i) => {
-    checkReference(
-      errors,
-      rumour.id,
-      rumour.sourceActorId,
-      actorIds,
-      "actor",
-      `rumours[${i}].sourceActorId`,
-    );
-    checkReference(
-      errors,
-      rumour.id,
-      rumour.sourceLocationId,
-      locationIds,
-      "location",
-      `rumours[${i}].sourceLocationId`,
-    );
-    checkReference(
-      errors,
-      rumour.id,
-      rumour.targetEntityId,
-      allIds,
-      "entity",
-      `rumours[${i}].targetEntityId`,
-    );
-  });
-
-  pkg.items.forEach((item, i) => {
-    checkReference(
-      errors,
-      item.id,
-      item.locationId,
-      locationIds,
-      "location",
-      `items[${i}].locationId`,
-    );
-    checkReference(
-      errors,
-      item.id,
-      item.actorId,
-      actorIds,
-      "actor",
-      `items[${i}].actorId`,
-    );
-  });
-
-  pkg.secrets.forEach((secret, i) => {
-    secret.relatedEntityIds?.forEach((targetId, j) => {
-      checkReference(
-        errors,
-        secret.id,
-        targetId,
-        allIds,
-        "entity",
-        `secrets[${i}].relatedEntityIds[${j}]`,
-      );
-    });
-  });
-
-  pkg.unresolved.forEach((item, i) => {
-    checkReference(
-      errors,
-      item.id,
-      item.relatedEntityId,
-      allIds,
-      "entity",
-      `unresolved[${i}].relatedEntityId`,
-    );
-  });
+  }
 }
 
 function traceLocationParentChain(
@@ -461,11 +295,30 @@ function validateLocationHierarchyCycles(
 function validateSceneReachability(
   scenes: AdventureJsonScene[],
   sceneMap: Map<string, AdventureJsonScene>,
+  unresolved: AdventureJsonV1["unresolved"],
   errors: AdventureJsonValidationError[],
 ): void {
   if (scenes.length <= 1) return;
 
-  const entryId = scenes[0]!.id;
+  const progressionUnknown = new Set<string>();
+  unresolved.forEach((item, index) => {
+    if (item.code !== UNKNOWN_SCENE_PROGRESSION || !item.relatedEntityId) {
+      return;
+    }
+
+    if (progressionUnknown.has(item.relatedEntityId)) {
+      errors.push({
+        code: "DUPLICATE_SCENE_PROGRESSION",
+        message: `More than one UNKNOWN_SCENE_PROGRESSION entry names scene "${item.relatedEntityId}".`,
+        path: `unresolved[${index}]`,
+        entityId: item.id,
+      });
+      return;
+    }
+
+    progressionUnknown.add(item.relatedEntityId);
+  });
+  const entryId = entrySceneId({ scenes })!;
   const reachable = new Set<string>([entryId]);
   const queue: string[] = [entryId];
   let queueIndex = 0;
@@ -488,6 +341,8 @@ function validateSceneReachability(
     if (
       i > 0 &&
       !reachable.has(scene.id) &&
+      !progressionUnknown.has(scene.id) &&
+      // Deprecated legacy exemption, kept so existing v1 packages stay valid.
       scene.epistemicStatus !== "ambiguous"
     ) {
       errors.push({
@@ -648,7 +503,7 @@ function validateSceneGraph(
     }
   });
 
-  validateSceneReachability(pkg.scenes, sceneMap, errors);
+  validateSceneReachability(pkg.scenes, sceneMap, pkg.unresolved, errors);
   validateMandatorySceneCycles(pkg.scenes, sceneMap, sceneIndex, errors);
 }
 

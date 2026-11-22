@@ -13,6 +13,25 @@ const behavior = (correction?: string) =>
   }).behavior;
 
 describe("retry correction in the GM prompt", () => {
+  it("instructs the GM to resolve paraphrased questions and follow a new target", () => {
+    const prompt = buildAdventurePrompt({
+      session: session(),
+      phase: "action",
+      playerAction:
+        "Question the wounded driver about the attack and the missing mules.",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.behavior).toContain("even when the player paraphrases");
+    expect(prompt.behavior).toContain(
+      "Follow the current action's intended target",
+    );
+    expect(prompt.behavior).toContain("do not invent an unfinished question");
+    expect(prompt.serialized).toContain("Question the wounded driver");
+    expect(prompt.behavior).toContain(
+      "Do not give a witness knowledge they could not have",
+    );
+  });
   it("tells the GM why the previous reply could not be used", () => {
     expect(behavior("it named a GM-only secret")).toContain(
       "CORRECTION: your previous reply to this same turn could not be used (it named a GM-only secret)",

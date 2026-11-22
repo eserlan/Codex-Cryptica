@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import type { AdventureSession } from "@codex/adventure-engine";
+import {
+  parseAdventureSession,
+  type AdventureSession,
+} from "@codex/adventure-engine";
 import {
   adventureDiagnosticDeltaJson,
   adventureDiagnosticJson,
@@ -139,6 +142,37 @@ describe("GM-only Adventure review capture", () => {
     expect(result).toContain("The merchant secretly destroyed the stock.");
   });
 
+  it("omits package progress and its private event notes from JSON exports", () => {
+    const source: AdventureSession = {
+      ...exampleSession(),
+      packageProgress: {
+        sceneId: "scene-1",
+        version: 1,
+        records: [{ id: "secret-1", kind: "secret", status: "active" }],
+        events: [
+          {
+            id: "event-1",
+            turnId: "turn-1",
+            recordId: "secret-1",
+            kind: "secret",
+            from: "unvisited",
+            to: "active",
+            certainty: "confirmed",
+            note: "PACKAGE-LEDGER-PRIVATE-MARKER",
+          },
+        ],
+      },
+    };
+
+    const result = adventureReviewJson(source);
+
+    expect(JSON.parse(result)).not.toHaveProperty("packageProgress");
+    expect(result).not.toContain("PACKAGE-LEDGER-PRIVATE-MARKER");
+    expect(source.packageProgress?.events?.[0]?.note).toBe(
+      "PACKAGE-LEDGER-PRIVATE-MARKER",
+    );
+  });
+
   it("includes every turn, hidden scenarios, event ledger and provisional entities in Markdown", () => {
     const report = adventureReviewMarkdown(exampleSession());
     expect(report).toContain("GM-only review copy");
@@ -254,6 +288,66 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(out.summary.stalledScenes).toBe(0);
   });
 
+  it("flags repeated empty timeAdvance waits as quiet and breaks the run when a timed turn changes visible state", () => {
+    const source = manyTurns(5);
+    const emptyWait = (i: number) => ({
+      ...source.turns[i]!,
+      timeAdvance: { minutes: 1440, cause: "Waiting another day" },
+      revealedSecretIds: [],
+      provisionalFactIds: [],
+      visiblePatch: {
+        objectives: { add: [], update: [], removeIds: [] },
+        activeCharacters: { add: [], update: [], removeIds: [] },
+        knownFacts: { add: [], update: [], removeIds: [] },
+        relationships: { add: [], update: [], removeIds: [] },
+      },
+      hiddenPatch: {
+        secrets: { add: [], update: [], removeIds: [] },
+        gmThreads: { add: [], update: [], removeIds: [] },
+      },
+    });
+    source.turns = source.turns.map((_, i) => emptyWait(i));
+
+    const stalledOut = JSON.parse(
+      adventureDiagnosticJson(source, { recentTurns: 5 }),
+    );
+    expect(
+      stalledOut.turns.every(
+        (t: { signals: { quiet?: boolean } }) => t.signals.quiet === true,
+      ),
+    ).toBe(true);
+    expect(stalledOut.summary.quietTurns).toBe(5);
+    expect(stalledOut.summary.longestQuietRun).toBe(5);
+    expect(stalledOut.summary.stalledScenes).toBe(1);
+
+    // A timed turn with an observable change breaks the quiet run
+    source.turns[4] = {
+      ...emptyWait(4),
+      visiblePatch: {
+        ...emptyWait(4).visiblePatch,
+        knownFacts: {
+          add: [
+            {
+              id: "f-wait",
+              text: "The permit arrived.",
+              source: "provisional",
+            },
+          ],
+          update: [],
+          removeIds: [],
+        },
+      },
+    } as never;
+
+    const recoveredOut = JSON.parse(
+      adventureDiagnosticJson(source, { recentTurns: 5 }),
+    );
+    expect(recoveredOut.turns[4].signals).toEqual({ stateChanges: 1 });
+    expect(recoveredOut.summary.quietTurns).toBe(0);
+    expect(recoveredOut.summary.longestQuietRun).toBe(4);
+    expect(recoveredOut.summary.stalledScenes).toBe(1);
+  });
+
   it("reports what the engine dropped from a turn, condensed or full, and totals it", () => {
     const source = manyTurns(6);
     source.turns[0] = {
@@ -342,6 +436,36 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(Object.values(out.integrityChecks).flat()).toEqual([]);
   });
 
+  it("reports only safe dialogue-loop counts and recovery status", () => {
+    const source = manyTurns(4);
+    const actions = [
+      "Who is owed the debt?",
+      "Who is the lender for this debt?",
+      "Why does the ledger omit the debt's creditor?",
+      "Who does this debt belong to?",
+    ];
+    const replies = [
+      "I cannot name the creditor from this record.",
+      "I don't know who the lender is.",
+      "The clerk can't say who holds the debt.",
+      "I won't guess at the creditor's identity.",
+    ];
+    source.turns = source.turns.map((turn, index) => ({
+      ...turn,
+      playerAction: actions[index]!,
+      narration: replies[index]!,
+      timeAdvance: undefined,
+      provisionalFactIds: [],
+    }));
+    const out = JSON.parse(adventureDiagnosticJson(source));
+    expect(out.summary.dialogueLoopTurns).toBe(4);
+    expect(out.summary.dialogueRecoveryDue).toBe(true);
+    expect(out._readme).toContain("dialogueLoopTurns");
+    const fresh = JSON.parse(adventureDiagnosticJson(exampleSession()));
+    expect(fresh.summary.dialogueLoopTurns).toBe(0);
+    expect(fresh.summary.dialogueRecoveryDue).toBe(false);
+  });
+
   it("is smaller than the full copy for long sessions", () => {
     const source = manyTurns(60);
     expect(adventureDiagnosticJson(source).length).toBeLessThan(
@@ -362,6 +486,45 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(checks.turnsRevealingUnknownSecrets).toEqual(["turn-1"]);
     expect(checks.nonContiguousTurnSequences).toEqual(["turn-1"]);
     expect(checks.secretsMarkedRevealedWithoutTurn).toEqual(["secret-1"]);
+  });
+
+  it("recognizes scenario reveals after reload and still flags unknown IDs on condensed turns", () => {
+    const source = exampleSession();
+    source.playerCharacter = {
+      kind: "provisional",
+      name: "Mara",
+      description: "Traveler",
+    };
+    source.hiddenState.secrets = [];
+    const scenario = source.scenarioCollection!.items[0]!;
+    scenario.origin = { kind: "manual", manualId: "manual-1" };
+    scenario.secretBindings.truth = "scenario-truth-1";
+    scenario.secretBindings.eventIds = { "event-1": "scenario-event-1" };
+    scenario.revealedSecretIds = ["scenario-truth-1"];
+    source.turns[0]!.revealedSecretIds = ["scenario-truth-1"];
+
+    const reloaded = parseAdventureSession(JSON.parse(JSON.stringify(source)));
+    const beforeDiagnostics = structuredClone(reloaded);
+    const diagnostic = JSON.parse(
+      adventureDiagnosticJson(reloaded, { recentTurns: 0 }),
+    );
+
+    expect(diagnostic.integrityChecks.turnsRevealingUnknownSecrets).toEqual([]);
+    expect(diagnostic.turns[0].detail).toBe("condensed");
+    expect(reloaded).toEqual(beforeDiagnostics);
+
+    const withUnknownReveal = structuredClone(reloaded);
+    withUnknownReveal.turns[0]!.revealedSecretIds.push("unknown-secret");
+    const beforeUnknownDiagnostics = structuredClone(withUnknownReveal);
+    const unknownDiagnostic = JSON.parse(
+      adventureDiagnosticJson(withUnknownReveal, { recentTurns: 0 }),
+    );
+
+    expect(
+      unknownDiagnostic.integrityChecks.turnsRevealingUnknownSecrets,
+    ).toEqual(["turn-1"]);
+    expect(unknownDiagnostic.turns[0].detail).toBe("condensed");
+    expect(withUnknownReveal).toEqual(beforeUnknownDiagnostics);
   });
 
   it("handles a session with no turns", () => {

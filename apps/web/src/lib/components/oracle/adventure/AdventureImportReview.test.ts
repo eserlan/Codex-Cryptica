@@ -155,6 +155,13 @@ function createMemoryIO(): AdventurePackageFileIO & {
       const prefix = dir.endsWith("/") ? dir : `${dir}/`;
       return [...files.keys()].filter((key) => key.startsWith(prefix));
     },
+    async listLimited(dir: string, limit: number) {
+      const entries = await io.list(dir);
+      return {
+        entries: entries.slice(0, limit),
+        truncated: entries.length > limit,
+      };
+    },
     async remove(path: string) {
       files.delete(path);
     },
@@ -182,11 +189,16 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
       ).toBe(initialHash);
     });
 
+    await fireEvent.click(screen.getByTestId("review-secrets-summary"));
     expect(
       screen.getByTestId("secret-classification-0").textContent?.trim(),
     ).toContain("GM-only");
     expect(screen.queryByTestId("secret-toggle-0")).toBeNull();
 
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    await fireEvent.click(
+      screen.getByTestId("review-locations-record-summary-0"),
+    );
     expect(
       screen.getByTestId("locations-visibility-0").textContent?.trim(),
     ).toBe("Player-visible");
@@ -226,6 +238,10 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
       },
     });
 
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    await fireEvent.click(
+      screen.getByTestId("review-locations-record-summary-0"),
+    );
     await fireEvent.click(screen.getByTestId("adventure-approve-button"));
     await waitFor(() => {
       expect(
@@ -263,6 +279,10 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
       },
     });
 
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    await fireEvent.click(
+      screen.getByTestId("review-locations-record-summary-0"),
+    );
     await fireEvent.click(screen.getByTestId("locations-visibility-toggle-0"));
     await fireEvent.click(screen.getByTestId("adventure-cancel-button"));
 
@@ -347,6 +367,20 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     });
 
     const diff = screen.getByTestId("adventure-import-diff");
+    const summary = screen.getByTestId("review-import-summary");
+    const unresolved = screen.getByTestId("review-unresolved");
+    expect(
+      Boolean(
+        summary.compareDocumentPosition(unresolved) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
+    expect(
+      Boolean(
+        diff.compareDocumentPosition(unresolved) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+      ),
+    ).toBe(true);
     expect(diff.textContent).toContain("the-mill-mystery");
     expect(diff.textContent).toContain("v1.0.0");
     expect(diff.textContent).toContain("Scene 1: The Ferry Landing");
@@ -437,7 +471,7 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
     expect(screen.queryByTestId("adventure-import-diff")).toBeNull();
   });
 
-  it("displays sourceRef page citations (p. N / pp. N–M) on entities", () => {
+  it("displays sourceRef page citations (p. N / pp. N–M) on entities", async () => {
     const draft = createTestAdventureJson();
     render(AdventureImportReview, {
       props: {
@@ -447,11 +481,622 @@ describe("AdventureImportReview (AdventureJsonV1)", () => {
       },
     });
 
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    await fireEvent.click(screen.getByTestId("review-secrets-summary"));
+
     const refs = screen
       .getAllByTestId("entity-source-ref")
       .map((el) => el.textContent?.trim());
     expect(refs).toContain("p. 1 · Scene 1: The Ferry Landing");
     expect(refs).toContain("pp. 2–4 · Scene 2: The Wheel Room");
     expect(refs).toContain("p. 3");
+  });
+
+  it("renders a compact above-the-fold review receipt with identity, hook, validation status, accurate collection counts, and collapsed disclosures by default (#5060)", async () => {
+    const draft = createTestAdventureJson();
+    draft.source.publisher = "Riverstone Press";
+    draft.source.publishedDate = "2026-04-01";
+    draft.source.url = "https://example.com/mill-mystery";
+    draft.source.documentHash = "a".repeat(64);
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    // Above-the-fold identity & hook
+    expect(
+      screen.getByRole("heading", { level: 1, name: "The Mill Mystery" }),
+    ).toBeTruthy();
+    expect(
+      screen.getByTestId("adventure-header-system").textContent?.trim(),
+    ).toBe("System-agnostic");
+    expect(
+      screen.getByTestId("adventure-header-authors").textContent?.trim(),
+    ).toBe("By A. Author");
+    expect(
+      screen.getByTestId("adventure-header-tone-genre").textContent?.trim(),
+    ).toBe("tense · mystery");
+    expect(
+      screen.getByTestId("adventure-header-hook").textContent?.trim(),
+    ).toBe("Maren asks the party to inspect the sluice gate.");
+
+    // Validation status & exact counts derived from parsed package
+    const validationStatus = screen.getByTestId("review-validation-status");
+    expect(validationStatus.getAttribute("role")).toBe("status");
+    expect(validationStatus.textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "Validated · 1 unresolved item",
+    );
+    expect(
+      screen
+        .getByTestId("review-import-total-count")
+        .textContent?.replace(/\s+/g, " ")
+        .trim(),
+    ).toBe("8 imported records across 7 collections");
+
+    expect(screen.getByTestId("review-count-locations").textContent).toContain(
+      "2",
+    );
+    expect(screen.getByTestId("review-count-actors").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-scenes").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-encounters").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-clues").textContent).toContain("1");
+    expect(screen.getByTestId("review-count-secrets").textContent).toContain(
+      "1",
+    );
+    expect(screen.getByTestId("review-count-unresolved").textContent).toContain(
+      "1",
+    );
+
+    // Zero-count optional collections are reported as 0
+    const emptyLine = screen.getByTestId("review-empty-collections");
+    expect(emptyLine.textContent).toContain("Factions (0)");
+    expect(emptyLine.textContent).toContain("Rumours (0)");
+    expect(emptyLine.textContent).toContain("Items (0)");
+    expect(emptyLine.textContent).toContain("Endings (0)");
+
+    // Source details disclosure is collapsed by default, but reachable on demand
+    const sourceDetails = screen.getByTestId(
+      "review-source-details",
+    ) as HTMLDetailsElement;
+    expect(sourceDetails.open).toBe(false);
+    await fireEvent.click(screen.getByTestId("review-source-details-summary"));
+    sourceDetails.open = true;
+    expect(sourceDetails.open).toBe(true);
+    expect(sourceDetails.textContent).toContain("Riverstone Press");
+    expect(sourceDetails.textContent).toContain("CC0-1.0");
+    expect(sourceDetails.textContent).toContain("a".repeat(64));
+
+    // Detailed import sections default to collapsed while unresolved summary remains visible
+    expect(screen.getByTestId("review-unresolved").textContent).toContain(
+      "Unresolved (1)",
+    );
+    for (const disclosureId of [
+      "review-locations-disclosure",
+      "review-actors-disclosure",
+      "review-scenes-disclosure",
+      "review-encounters-disclosure",
+      "review-clues-disclosure",
+      "review-secrets-disclosure",
+    ]) {
+      const details = screen.getByTestId(disclosureId) as HTMLDetailsElement;
+      expect(details.open).toBe(false);
+    }
+  });
+
+  it("visually caps long hook, description, and background prose with keyboard-accessible Read more / Show less controls (#5060)", async () => {
+    const draft = createTestAdventureJson();
+    const longHook = `${"A signal flare arcs above the flooded transformer yard while the backup generator coughs black smoke. ".repeat(4)}Final hook sentence.`;
+    const longDescription = `${"An industrial horror scenario aboard a decaying orbital power relay with eleven interconnected maintenance rooms. ".repeat(4)}Final description sentence.`;
+    const longBackground = `${"Three shifts ago the coolant pumps seized and the night crew sealed the lower conduit bulkhead from the inside. ".repeat(4)}Final background sentence.`;
+
+    draft.premise.hook = longHook;
+    draft.description = longDescription;
+    draft.premise.background = longBackground;
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    // Header hook is truncated initially
+    const headerHook = screen.getByTestId("adventure-header-hook");
+    expect(headerHook.textContent).not.toContain("Final hook sentence.");
+    const headerToggle = screen.getByTestId("adventure-header-hook-toggle");
+    expect(headerToggle.getAttribute("aria-expanded")).toBe("false");
+    await fireEvent.click(headerToggle);
+    expect(headerToggle.getAttribute("aria-expanded")).toBe("true");
+    expect(headerHook.textContent).toContain("Final hook sentence.");
+    await fireEvent.click(headerToggle);
+    expect(headerToggle.getAttribute("aria-expanded")).toBe("false");
+
+    // Premise and Source description, background, and hook toggles work independently
+    const metaDesc = screen.getByTestId("review-metadata-description");
+    expect(metaDesc.textContent).not.toContain("Final description sentence.");
+    const descToggle = screen.getByTestId("review-description-read-more");
+    await fireEvent.click(descToggle);
+    expect(metaDesc.textContent).toContain("Final description sentence.");
+
+    const metaBg = screen.getByTestId("review-metadata-background");
+    expect(metaBg.textContent).not.toContain("Final background sentence.");
+    const bgToggle = screen.getByTestId("review-background-read-more");
+    await fireEvent.click(bgToggle);
+    expect(metaBg.textContent).toContain("Final background sentence.");
+
+    const metaHook = screen.getByTestId("review-metadata-hook");
+    expect(metaHook.textContent).not.toContain("Final hook sentence.");
+    const hookToggle = screen.getByTestId("review-hook-read-more");
+    await fireEvent.click(hookToggle);
+    expect(metaHook.textContent).toContain("Final hook sentence.");
+  });
+
+  it("announces validation failure in the import summary when draft checks fail and never implies validated (#5060)", () => {
+    const invalidDraft = createTestAdventureJson();
+    // Introduce an unresolved reference so validator fails
+    invalidDraft.scenes = [
+      {
+        ...invalidDraft.scenes[0]!,
+        locationId: "non-existent-location",
+      },
+    ];
+
+    render(AdventureImportReview, {
+      props: {
+        draft: invalidDraft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const status = screen.getByTestId("review-validation-status");
+    expect(status.getAttribute("role")).toBe("alert");
+    expect(status.textContent?.replace(/\s+/g, " ").trim()).toBe(
+      "Validation failed (1 error)",
+    );
+    expect(status.textContent).not.toContain("Validated");
+
+    const errorBox = screen.getByTestId("review-validation-errors");
+    expect(errorBox.textContent).toContain("UNRESOLVED_REFERENCE");
+    expect(errorBox.textContent).toContain("non-existent-location");
+  });
+
+  it("handles zero unresolved items, seven unresolved items, large 120-item sets, and mixed blocking/unclassified triage (#5062)", async () => {
+    // 1. Zero unresolved items and valid draft -> unresolved section omitted
+    const zeroDraft = createTestAdventureJson();
+    zeroDraft.unresolved = [];
+    const { unmount: unmountZero } = render(AdventureImportReview, {
+      props: { draft: zeroDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    expect(screen.queryByTestId("review-unresolved")).toBeNull();
+    unmountZero();
+
+    // 2. Seven unresolved items (Electric Razor scale): collapsed by default, unclassified label, approval allowed
+    const sevenDraft = createTestAdventureJson();
+    sevenDraft.unresolved = Array.from({ length: 7 }, (_, i) => ({
+      id: `amb-${i + 1}`,
+      code: "MISSING_HEADING",
+      message: `Unlabelled subsection ${i + 1} needs GM review before play.`,
+      context: `Page ${i + 1}`,
+      epistemicStatus: i % 2 === 0 ? "unresolved" : "ambiguous",
+    }));
+    const { unmount: unmountSeven } = render(AdventureImportReview, {
+      props: { draft: sevenDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    const unresolvedSection = screen.getByTestId("review-unresolved");
+    expect(unresolvedSection.textContent).toContain("Unresolved (7)");
+    expect(
+      screen.getByTestId("review-unresolved-policy").textContent,
+    ).toContain("Approval is allowed under current validation rules");
+    expect(
+      (
+        screen.getByTestId(
+          "review-unresolved-disclosure-0",
+        ) as HTMLDetailsElement
+      ).open,
+    ).toBe(false);
+    expect(screen.queryByTestId("review-unresolved-body-0")).toBeNull();
+    expect(
+      screen
+        .getByTestId("review-unresolved-classification-0")
+        .textContent?.trim(),
+    ).toBe("Unclassified / needs review");
+
+    await fireEvent.click(screen.getByTestId("review-unresolved-summary-0"));
+    expect(
+      screen.getByTestId("review-unresolved-body-0").textContent,
+    ).toContain("Unlabelled subsection 1 needs GM review before play.");
+    unmountSeven();
+
+    // 3. Large 120-item unresolved set: bounded 50-item window, all collapsed by default
+    const largeDraft = createTestAdventureJson();
+    largeDraft.unresolved = Array.from({ length: 120 }, (_, i) => ({
+      id: `amb-large-${i + 1}`,
+      code: "AMBIGUOUS_DETAIL",
+      message: `Ambiguous detail ${i + 1}`,
+      epistemicStatus: "ambiguous",
+    }));
+    const { unmount: unmountLarge } = render(AdventureImportReview, {
+      props: { draft: largeDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(50);
+    expect(
+      screen.getByTestId("review-unresolved-window-status").textContent?.trim(),
+    ).toBe("Showing 50 of 120");
+    await fireEvent.click(screen.getByTestId("review-unresolved-show-more"));
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(100);
+    unmountLarge();
+
+    // 4. Mixed blocking validator error + unclassified unresolved items with classification filter
+    const mixedDraft = createTestAdventureJson();
+    mixedDraft.scenes = [
+      {
+        ...mixedDraft.scenes[0]!,
+        locationId: "missing-loc-id",
+      },
+    ];
+    render(AdventureImportReview, {
+      props: { draft: mixedDraft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+    expect(
+      screen
+        .getByTestId("review-unresolved-policy")
+        .textContent?.replace(/\s+/g, " "),
+    ).toContain("Approval is blocked by 1 validator error");
+    expect(
+      screen
+        .getByTestId("review-unresolved-classification-0")
+        .textContent?.trim(),
+    ).toBe("Blocking");
+    expect(
+      screen
+        .getByTestId("review-unresolved-classification-1")
+        .textContent?.trim(),
+    ).toBe("Unclassified / needs review");
+
+    await fireEvent.click(
+      screen.getByTestId("review-unresolved-filter-blocking"),
+    );
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(1);
+    await fireEvent.click(
+      screen.getByTestId("review-unresolved-filter-unclassified"),
+    );
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(1);
+    await fireEvent.click(screen.getByTestId("review-unresolved-filter-all"));
+    expect(
+      screen.getByTestId("review-unresolved-list").querySelectorAll("li")
+        .length,
+    ).toBe(2);
+  });
+
+  it("supports progressive disclosure, search/filtering, and windowed rendering for large 250-location packages without mutating package data or leaking secrets (#5061)", async () => {
+    const draft = createTestAdventureJson();
+    draft.locations = Array.from({ length: 250 }, (_, idx) => ({
+      id: `loc-room-${idx + 1}`,
+      name: `Substation Room ${idx + 1}`,
+      summary: `Full detail body for Substation Room ${idx + 1}.`,
+      visibility: idx % 2 === 0 ? "player-visible" : "gm-only",
+      epistemicStatus: idx % 3 === 0 ? "explicit" : "inferred",
+      sourceRef: { page: (idx % 20) + 1, section: `Sector ${idx + 1}` },
+    }));
+    draft.locations[0]!.id = "constructor";
+    draft.unresolved = [
+      {
+        id: "amb-loc-245",
+        code: "AMBIGUOUS_EXIT",
+        message: "Doorway target is unlabelled on the blueprint.",
+        relatedEntityId: "loc-room-245",
+        epistemicStatus: "ambiguous",
+      },
+    ];
+
+    const snapshotBefore = JSON.stringify(draft);
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    // 1. Before expanding Locations, zero location rows or bodies are rendered
+    expect(screen.queryByTestId("review-locations-list")).toBeNull();
+    expect(screen.queryByTestId("review-locations-record-body-0")).toBeNull();
+
+    // 2. Expanding Locations (250) renders only the bounded first window (50 compact headers) and zero full bodies
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    const list = screen.getByTestId("review-locations-list");
+    expect(list.querySelectorAll("li").length).toBe(50);
+    expect(screen.queryByTestId("review-locations-record-body-0")).toBeNull();
+    expect(
+      screen.getByTestId("review-locations-record-summary-0").textContent,
+    ).toContain("constructor");
+    expect(
+      screen.getByTestId("review-locations-window-status").textContent?.trim(),
+    ).toBe("Showing 50 of 250");
+
+    // 3. Clicking "Show 50 more" expands the window to 100 items
+    await fireEvent.click(screen.getByTestId("review-locations-show-more"));
+    expect(list.querySelectorAll("li").length).toBe(100);
+    expect(
+      screen.getByTestId("review-locations-window-status").textContent?.trim(),
+    ).toBe("Showing 100 of 250");
+
+    // 4. Filtering by identifier or title locates a record beyond the initial window and preserves provenance, visibility, and unresolved marker
+    const filterInput = screen.getByTestId(
+      "review-locations-filter",
+    ) as HTMLInputElement;
+    await fireEvent.input(filterInput, { target: { value: "loc-room-245" } });
+    expect(
+      screen
+        .getByTestId("review-locations-filter-count")
+        .textContent?.replace(/\s+/g, " ")
+        .trim(),
+    ).toBe("1 match of 250");
+    expect(list.querySelectorAll("li").length).toBe(1);
+
+    const summary245 = screen.getByTestId(
+      "review-locations-record-summary-244",
+    );
+    expect(summary245.textContent).toContain("Substation Room 245");
+    expect(summary245.textContent).toContain("loc-room-245");
+    expect(summary245.textContent).toContain("Player-visible");
+    expect(summary245.textContent).toContain("inferred");
+    expect(
+      screen.getByTestId("entity-unresolved-marker-loc-room-245").textContent,
+    ).toContain("1 unresolved");
+
+    // Full body of record 245 is only rendered after expanding the record
+    expect(screen.queryByTestId("review-locations-record-body-244")).toBeNull();
+    await fireEvent.click(summary245);
+    const body245 = screen.getByTestId("review-locations-record-body-244");
+    expect(body245.textContent).toContain(
+      "Full detail body for Substation Room 245.",
+    );
+
+    // 5. Filtering with no matches shows a clear empty-filter state
+    await fireEvent.input(filterInput, {
+      target: { value: "no-such-room-id" },
+    });
+    expect(
+      screen.getByTestId("review-locations-no-matches").textContent,
+    ).toContain("No locations match");
+
+    // 6. Closing and reopening the category does not mutate package contents or leak secrets
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    expect(screen.queryByTestId("review-locations-list")).toBeNull();
+    await fireEvent.click(screen.getByTestId("review-locations-summary"));
+    expect(JSON.stringify(draft)).toBe(snapshotBefore);
+    expect(screen.queryByTestId("review-secrets-record-body-0")).toBeNull();
+  });
+
+  it("keeps GM-only secrets, clues, and rumours out of collapsed record summaries", async () => {
+    const draft = createTestAdventureJson();
+    const secretText = "Wick hid the ledger inside the millstone.";
+    const clueText = "The millhand forged the ferry log.";
+    const rumourText = "The bell rings when the ledger is moved.";
+    draft.secrets[0]!.text = secretText;
+    draft.clues[0]!.text = clueText;
+    draft.clues[0]!.visibility = "gm-only";
+    draft.rumours = [
+      {
+        id: "rumour-ledger",
+        text: rumourText,
+        truth: "unverified",
+        visibility: "gm-only",
+        epistemicStatus: "inferred",
+      },
+    ];
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    for (const { collection, text } of [
+      { collection: "secrets", text: secretText },
+      { collection: "clues", text: clueText },
+      { collection: "rumours", text: rumourText },
+    ]) {
+      await fireEvent.click(screen.getByTestId(`review-${collection}-summary`));
+      const recordSummary = screen.getByTestId(
+        `review-${collection}-record-summary-0`,
+      );
+      expect(recordSummary.textContent).not.toContain(text);
+      expect(
+        screen.queryByTestId(`review-${collection}-record-body-0`),
+      ).toBeNull();
+
+      await fireEvent.click(recordSummary);
+      expect(
+        screen.getByTestId(`review-${collection}-record-body-0`).textContent,
+      ).toContain(text);
+    }
+  });
+
+  it("shows unresolved markers on every matching collection record", async () => {
+    const draft = createTestAdventureJson();
+    draft.factions = [
+      {
+        id: "faction-mill",
+        name: "Mill Workers",
+        summary: "The mill workers.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ];
+    draft.rumours = [
+      {
+        id: "rumour-mill",
+        text: "The wheel turns by itself.",
+        truth: "unverified",
+        visibility: "player-visible",
+        epistemicStatus: "ambiguous",
+      },
+    ];
+    draft.items = [
+      {
+        id: "item-key",
+        name: "Winch Key",
+        summary: "A brass key.",
+        visibility: "player-visible",
+        epistemicStatus: "explicit",
+      },
+    ];
+    draft.endings = [
+      {
+        id: "ending-open",
+        title: "Open the sluice",
+        description: "The river runs free.",
+        epistemicStatus: "inferred",
+      },
+    ];
+    const relatedEntityIds = [
+      "loc-landing",
+      "actor-wick",
+      "scene-landing",
+      "enc-wheel",
+      "clue-prints",
+      "rumour-mill",
+      "item-key",
+      "secret-1",
+      "ending-open",
+      "faction-mill",
+    ];
+    draft.unresolved = relatedEntityIds.map((relatedEntityId, index) => ({
+      id: `unresolved-${index}`,
+      code: "UNRESOLVED_REFERENCE",
+      message: "This reference needs review.",
+      relatedEntityId,
+      epistemicStatus: "unresolved" as const,
+    }));
+
+    render(AdventureImportReview, {
+      props: { draft, onApprove: vi.fn(), onCancel: vi.fn() },
+    });
+
+    for (const collection of [
+      "locations",
+      "actors",
+      "scenes",
+      "encounters",
+      "clues",
+      "rumours",
+      "items",
+      "secrets",
+      "endings",
+      "factions",
+    ]) {
+      await fireEvent.click(screen.getByTestId(`review-${collection}-summary`));
+    }
+
+    for (const entityId of relatedEntityIds) {
+      expect(
+        screen.getByTestId(`entity-unresolved-marker-${entityId}`).textContent,
+      ).toContain("1 unresolved");
+    }
+  });
+
+  it("keeps Cancel, Approve, and Start adventure accessible in a sticky footer without silent auto-start (#5063)", async () => {
+    const draft = createTestAdventureJson();
+    const onApprove = vi.fn().mockResolvedValue(undefined);
+    const onStartAdventure = vi.fn();
+
+    render(AdventureImportReview, {
+      props: {
+        draft,
+        onApprove,
+        onStartAdventure,
+        onCancel: vi.fn(),
+      },
+    });
+
+    const footer = screen.getByTestId("adventure-review-footer");
+    const review = screen.getByTestId("adventure-import-review");
+    const content = screen.getByTestId("adventure-review-content");
+    expect(review.className).toContain("grid-rows-[minmax(0,1fr)_auto]");
+    expect(content.className).toContain("overflow-y-auto");
+    expect(review.lastElementChild).toBe(footer);
+    const footerText = footer.textContent?.replace(/\s+/g, " ");
+    expect(footerText).toContain("Validation stays on this device");
+    expect(footerText).toContain(
+      "Imported packages are not included in Cloud Backup",
+    );
+    expect(footerText).toContain(
+      "relevant excerpts may be sent to your selected Oracle AI provider",
+    );
+    const noticeLink = footer.querySelector('a[href="#adventure-ai-notice"]');
+    expect(noticeLink).toBeTruthy();
+
+    // Approve does not silently auto-start
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+    await waitFor(() => {
+      expect(onApprove).toHaveBeenCalledTimes(1);
+    });
+    expect(onStartAdventure).not.toHaveBeenCalled();
+
+    const startButton = await screen.findByTestId(
+      "adventure-review-start-button",
+    );
+    await fireEvent.click(startButton);
+    expect(onStartAdventure).toHaveBeenCalledTimes(1);
+    expect(onStartAdventure.mock.calls[0]![1]).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("shows blocking feedback in the sticky footer and never approves invalid drafts (#5063)", async () => {
+    const invalidDraft = createTestAdventureJson();
+    invalidDraft.scenes = [
+      {
+        ...invalidDraft.scenes[0]!,
+        locationId: "missing-loc-for-footer-test",
+      },
+    ];
+    const onApprove = vi.fn();
+
+    render(AdventureImportReview, {
+      props: {
+        draft: invalidDraft,
+        onApprove,
+        onCancel: vi.fn(),
+      },
+    });
+
+    const footer = screen.getByTestId("adventure-review-footer");
+    expect(footer.textContent?.replace(/\s+/g, " ")).toContain(
+      "Blocked: 1 validation error",
+    );
+
+    await fireEvent.click(screen.getByTestId("adventure-approve-button"));
+    expect(onApprove).not.toHaveBeenCalled();
+    expect(screen.getByTestId("adventure-approve-error").textContent).toContain(
+      "missing-loc-for-footer-test",
+    );
   });
 });

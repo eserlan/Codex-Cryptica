@@ -1,8 +1,14 @@
 name: Promote Staging to Production
 
+run-name: Promote Staging to Production (${{ inputs.dispatch_id || github.run_number }})
+
 on:
   workflow_dispatch:
     inputs:
+      dispatch_id:
+        description: "Unique identifier used by the release runbook to track this promotion"
+        required: false
+        type: string
       staging_run_id:
         description: "Staging workflow run ID to promote (leave blank for latest successful staging run)"
         required: false

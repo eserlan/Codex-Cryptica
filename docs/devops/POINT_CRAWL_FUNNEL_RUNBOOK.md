@@ -14,7 +14,7 @@ The code side shipped in [#4382](https://github.com/eserlan/Codex-Cryptica/pull/
 - **`seo_entry` step-change**: `seo_entry` fires for organic-search landings starting **2026-10-25**.
 - **Privacy boundary**: Nothing after the redirect into the vault app is observed or tracked. `public_generator_action_clicked` (`action = "save_to_codex"`), `entity_saved`, and `vault_created` are **pre-import intent signals** only—never report them as confirmed vault persistence or retention.
 
-See [ZARAZ_ANALYTICS.md](./ZARAZ_ANALYTICS.md) for the full event schema.
+See [ZARAZ_ANALYTICS.md](./ZARAZ_ANALYTICS.md) for the full event schema. For all public generators, see [PUBLIC_GENERATOR_GROWTH_RUNBOOK.md](./PUBLIC_GENERATOR_GROWTH_RUNBOOK.md).
 
 ---
 

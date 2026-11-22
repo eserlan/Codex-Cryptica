@@ -1,0 +1,23 @@
+{
+  "conflicts": [
+    {
+      "id": "bridge-material",
+      "claims": [
+        {
+          "text": "The bridge is made of timber.",
+          "distinguishingTerm": "timber",
+          "sourceRef": {
+            "page": 5
+          }
+        },
+        {
+          "text": "The bridge is made of stone.",
+          "distinguishingTerm": "stone",
+          "sourceRef": {
+            "page": 6
+          }
+        }
+      ]
+    }
+  ]
+}

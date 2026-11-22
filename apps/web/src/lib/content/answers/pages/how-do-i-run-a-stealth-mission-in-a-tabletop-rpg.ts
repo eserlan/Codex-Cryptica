@@ -272,6 +272,7 @@ export const howDoIRunAStealthMissionInATabletopRpg: AnswerConfigInput = {
     "how-do-i-give-specialist-characters-spotlight",
     "how-do-i-improvise-npcs-in-dnd",
     "how-do-i-run-secret-doors-in-dnd",
+    "how-do-i-run-a-sci-fi-horror-rpg",
   ],
   discovery: {
     id: "answer-run-stealth-mission-in-tabletop-rpg",

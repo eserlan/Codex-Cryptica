@@ -1,6 +1,8 @@
 import {
+  adventureOocService,
   adventureSummaryService,
   adventureTurnGenerationService,
+  type AdventureOocService,
   type AdventureSummaryService,
   type AdventureTurnGenerationService,
 } from "@codex/ai-engine";
@@ -41,6 +43,27 @@ export function defaultSummaryService(): Pick<
           requestId,
           workerOptions,
         ) as ReturnType<AdventureSummaryService["summarize"]>
+      ).finally(removeCancellation);
+    },
+  };
+}
+
+/** Stateless OOC clarification call, in the worker when ready and on this thread otherwise. */
+export function defaultOocService(): Pick<AdventureOocService, "ask"> {
+  return {
+    ask: (request, options) => {
+      if (!oracleBridge.isReady)
+        return adventureOocService.ask(request, options);
+      const signal = options?.signal;
+      const { signal: _signal, ...workerOptions } = options ?? {};
+      const requestId = `ooc-${++nextAdventureTurnRequestId}`;
+      const removeCancellation = forwardWorkerCancellation(requestId, signal);
+      return (
+        oracleBridge.askAdventureOoc(
+          $state.snapshot(request),
+          requestId,
+          workerOptions,
+        ) as ReturnType<AdventureOocService["ask"]>
       ).finally(removeCancellation);
     },
   };

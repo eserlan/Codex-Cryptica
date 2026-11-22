@@ -55,4 +55,33 @@ describe("saveEntityImageFile", () => {
     });
     expect(deps.updateEntity).not.toHaveBeenCalled();
   });
+
+  it("does not update after the Vault changes while the image is being saved", async () => {
+    let canUpdate = true;
+    const deps = {
+      ...makeDeps(),
+      saveImageToVault: vi.fn(async () => {
+        canUpdate = false;
+        return { image: "img/a.png", thumbnail: "t" };
+      }),
+      canUpdate: () => canUpdate,
+    };
+    const result = await saveEntityImageFile(
+      "e1",
+      new File(["x"], "a.png", { type: "image/png" }),
+      deps,
+    );
+    expect(result.ok).toBe(false);
+    expect(deps.updateEntity).not.toHaveBeenCalled();
+  });
+
+  it("reports a missing entity when the update returns false", async () => {
+    const deps = { ...makeDeps(), updateEntity: vi.fn(async () => false) };
+    const result = await saveEntityImageFile(
+      "e1",
+      new File(["x"], "a.png", { type: "image/png" }),
+      deps,
+    );
+    expect(result.ok).toBe(false);
+  });
 });
