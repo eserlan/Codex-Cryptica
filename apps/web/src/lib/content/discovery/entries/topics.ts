@@ -129,6 +129,14 @@ export const topicEntries: DiscoveryEntryInput[] = [
       "tools-session-prep-builder",
       "answer-prepare-session-step-by-step",
       "topic-dnd-beginners",
+      "topic-new-gm",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "topic-new-gm",
+        reason:
+          "The new GM hub guides first-time Game Masters through one first session across RPG systems; this D&D hub remains a job-based reference for ongoing Dungeon Master work.",
+      },
     ],
     indexable: true,
     status: "live",
@@ -154,8 +162,14 @@ export const topicEntries: DiscoveryEntryInput[] = [
       "topic-dnd",
       "topic-dnd-beginners",
       "tools-session-prep-builder",
+      "answer-first-time-gm-hub",
     ],
     acknowledgedOverlap: [
+      {
+        with: "answer-first-time-gm-hub",
+        reason:
+          "The Answer teaches the basics of becoming a GM in one article; this topic hub sequences several established Answers and a prep tool into a complete first-session path.",
+      },
       {
         with: "topic-dnd",
         reason:
