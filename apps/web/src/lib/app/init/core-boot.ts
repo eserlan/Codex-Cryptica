@@ -39,6 +39,9 @@ export function bootSystem(stores: {
 
   stores.vault.init().catch((error: any) => {
     console.error("Vault initialization failed", error);
+    if (stores.vault.bootDiagnostics?.status !== "failed") {
+      stores.vault.bootDiagnostics?.recordFailure("unexpected");
+    }
   });
 
   return true;

@@ -51,14 +51,21 @@ describe("bootSystem", () => {
     spy.mockRestore();
   });
 
-  it("should handle vault initialization failure", async () => {
+  it("should handle vault initialization failure and record boot failure when unexpected", async () => {
     const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    const recordFailure = vi.fn();
     const mockStores = {
       categories: { init: vi.fn() },
       timeline: { init: vi.fn() },
       graph: { init: vi.fn() },
       calendar: { init: vi.fn() },
-      vault: { init: vi.fn().mockRejectedValue(new Error("Vault fail")) },
+      vault: {
+        init: vi.fn().mockRejectedValue(new Error("Vault fail")),
+        bootDiagnostics: {
+          status: "booting",
+          recordFailure,
+        },
+      },
       sessionModeStore: { isStaging: false },
     };
 
@@ -71,6 +78,7 @@ describe("bootSystem", () => {
       "Vault initialization failed",
       expect.any(Error),
     );
+    expect(recordFailure).toHaveBeenCalledWith("unexpected");
     consoleSpy.mockRestore();
   });
 });

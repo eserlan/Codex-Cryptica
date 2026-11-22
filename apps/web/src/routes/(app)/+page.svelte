@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { resolve } from "$app/paths";
   import { vault } from "#lib/stores/vault.svelte.js";
+  import { readVaultBootSnapshot } from "#lib/stores/vault/boot-diagnostics.svelte.js";
   import { page } from "$app/state";
   import { fade } from "svelte/transition";
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -19,7 +21,9 @@
   } from "#lib/services/seo/import-handler.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import PendingImportNotice from "#lib/components/PendingImportNotice.svelte";
+  import VaultStartupRecovery from "#lib/components/vault/VaultStartupRecovery.svelte";
   import WelcomeGraphPreview from "#lib/components/welcome/WelcomeGraphPreview.svelte";
+  import { isVersionSkewError } from "../../hooks.client";
   import {
     trackWelcomeFirstClick,
     type WelcomeAction,
@@ -84,32 +88,69 @@
   ];
   const schemaOrgString = $derived(safeJsonLd(SCHEMA_ORG));
 
-  const logChunkError = (name: string, error: any) => {
+  function classifyChunkFailure(error: unknown): string {
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      return "offline";
+    }
+    if (isVersionSkewError(error)) {
+      return "version_skew";
+    }
+    return "chunk_load_failed";
+  }
+
+  const logChunkError = (name: string, error: unknown) => {
+    const reason = classifyChunkFailure(error);
     if (isSpecialEnv) {
-      console.error(`Failed to load ${name}`, error);
+      console.error(`Failed to load ${name} (${reason})`);
     } else {
       import("#lib/stores/debug.svelte.js")
         .then((m) => {
           if (m?.debugStore) {
-            m.debugStore.error(`Failed to lazy-load component: ${name}`, error);
+            m.debugStore.error(`Failed to lazy-load component: ${name}`, {
+              reason,
+            });
           }
         })
-        .catch((e) => {
-          console.error(
-            `Failed to lazy-load component: ${name} (and debug store failed too)`,
-            error,
-            e,
-          );
+        .catch(() => {
+          console.error(`Failed to lazy-load component: ${name} (${reason})`);
         });
     }
   };
 
+  let graphChunkStatus = $state<"idle" | "loading" | "loaded" | "error">(
+    "idle",
+  );
+  let graphChunkReason = $state<string | undefined>(undefined);
+  let graphChunkInFlight: Promise<void> | null = null;
+
+  function loadGraphView() {
+    if (GraphView || graphChunkInFlight) return;
+    graphChunkStatus = "loading";
+    graphChunkReason = undefined;
+    graphChunkInFlight = import("../../lib/components/GraphView.svelte")
+      .then((m) => {
+        GraphView = m?.default ?? null;
+        if (GraphView) {
+          graphChunkStatus = "loaded";
+        } else {
+          graphChunkStatus = "error";
+          graphChunkReason = "chunk_load_failed";
+        }
+      })
+      .catch((err) => {
+        graphChunkStatus = "error";
+        graphChunkReason = classifyChunkFailure(err);
+        logChunkError("GraphView", err);
+      })
+      .finally(() => {
+        graphChunkInFlight = null;
+      });
+  }
+
   // Lazy load components when needed using relative paths for reliable resolution
   function loadHeavyComponents() {
-    if (!GraphView) {
-      import("../../lib/components/GraphView.svelte")
-        .then((m) => (GraphView = m?.default))
-        .catch((err) => logChunkError("GraphView", err));
+    if (!GraphView && graphChunkStatus === "idle") {
+      loadGraphView();
     }
     if (!FrontPage) {
       import("../../lib/components/world/FrontPage.svelte")
@@ -256,6 +297,19 @@
     };
   });
 
+  const boot = $derived(readVaultBootSnapshot(vault.bootDiagnostics));
+  const chunkDiagnosticSummary = $derived.by(() => {
+    const base = boot.summary ?? "Area: graph";
+    return graphChunkReason
+      ? `${base}\nGraph chunk error: ${graphChunkReason}`
+      : base;
+  });
+  const isShowingAppSurface = $derived(
+    !onboardingStore.isLandingPageVisible ||
+      (!building && page.url.searchParams.has("demo")) ||
+      isGuestMode,
+  );
+
   // Consolidate reactive pre-loading and fallback loading into a single effect
   // to prevent race conditions during dynamic imports.
   $effect(() => {
@@ -265,7 +319,7 @@
 
     if (
       (isSkippingLanding || isVaultReady) &&
-      (!GraphView ||
+      ((!GraphView && graphChunkStatus === "idle") ||
         !FrontPage ||
         !EntityDetailPanel ||
         !EmbeddedEntityView ||
@@ -360,21 +414,54 @@
       <div class="absolute inset-0 p-4 md:p-6 bg-chrome-bg">
         <GuestChatPanel />
       </div>
-    {:else if GraphView && (vault.isInitialized || vault.status === "loading" || isGuestMode)}
-      {#key vault.activeVaultId}
-        <GraphView bind:selectedId={vault.selectedEntityId} />
-      {/key}
-    {:else if !onboardingStore.isLandingPageVisible || (!building && page.url.searchParams.has("demo"))}
-      <div
-        class="absolute inset-0 bg-chrome-bg flex items-center justify-center"
-        aria-hidden="true"
-      >
+    {:else if isShowingAppSurface}
+      {#if !isGuestMode && !vault.isInitialized && (boot.status === "failed" || boot.status === "timed_out")}
         <div
-          class="text-theme-muted font-mono text-xs animate-pulse uppercase tracking-widest"
+          class="absolute inset-0 bg-chrome-bg flex items-center justify-center p-4"
         >
-          {themeStore.resolveJargon("graph_loading")}
+          <VaultStartupRecovery
+            mode={boot.status === "timed_out"
+              ? "vault-stalled"
+              : "vault-failed"}
+            area="graph"
+            phase={boot.phase}
+            errorCode={boot.errorCode}
+            isRetrying={false}
+            diagnosticSummary={boot.summary}
+            onRetry={() => vault.retryInit?.()}
+          />
         </div>
-      </div>
+      {:else if graphChunkStatus === "error"}
+        <div
+          class="absolute inset-0 bg-chrome-bg flex items-center justify-center p-4"
+        >
+          <VaultStartupRecovery
+            mode="chunk-failed"
+            area="graph"
+            errorCode={graphChunkReason}
+            isRetrying={false}
+            diagnosticSummary={chunkDiagnosticSummary}
+            onRetry={loadGraphView}
+            secondaryHref={resolve("/(app)/table")}
+            secondaryLabel="Open Entity Table"
+          />
+        </div>
+      {:else if GraphView && (vault.isInitialized || isGuestMode)}
+        {#key vault.activeVaultId}
+          <GraphView bind:selectedId={vault.selectedEntityId} />
+        {/key}
+      {:else}
+        <div
+          class="absolute inset-0 bg-chrome-bg flex items-center justify-center"
+          aria-hidden="true"
+        >
+          <div
+            class="text-theme-text font-mono text-xs animate-pulse uppercase tracking-widest"
+          >
+            {themeStore.resolveJargon("graph_loading")}
+          </div>
+        </div>
+      {/if}
     {/if}
   </div>
 
