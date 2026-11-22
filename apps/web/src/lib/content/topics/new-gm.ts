@@ -28,15 +28,15 @@ export const NEW_GM_TOPIC_CONFIG = {
     },
     supportingLinks: [
       {
-        title: "How do I run a successful Session 0?",
-        href: "/answers/how-do-i-run-a-successful-session-0",
-        description: "Agree on the kind of game everyone wants before the first scene.",
+        title: "How can I practise DMing without a group?",
+        href: "/answers/how-can-i-practise-being-a-dungeon-master-without-a-group",
+        description: "Rehearse an opening scene before running for other people.",
         badge: "Answer",
       },
       {
-        title: "Session Prep Builder",
-        href: "/tools/session-prep-builder",
-        description: "Turn a small scenario idea into a practical run sheet.",
+        title: "What are the pros and cons of becoming a Dungeon Master?",
+        href: "/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
+        description: "Know what the role involves before committing to a campaign.",
         badge: "Tool",
       },
     ],
