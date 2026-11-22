@@ -47,14 +47,14 @@
       >
         {hasUnseenMinorReleases ? "What's New" : "Recent Updates"}
       </h2>
-      <p class="mt-1 text-xs text-theme-muted uppercase tracking-wide sm:text-micro sm:tracking-[0.2em]">
+      <p class="mt-1 text-xs text-theme-text uppercase tracking-wide sm:text-micro sm:tracking-[0.2em]">
         <span class="hidden sm:inline">Codex Cryptica </span>v{VERSION}
         {!hasUnseenMinorReleases ? " · Up to date" : ""}
       </p>
     </div>
     <button
       onclick={close}
-      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-theme-muted transition-colors hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-theme-text transition-colors hover:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
       aria-label="Close"
       type="button"
     >
@@ -75,12 +75,12 @@
           class="mb-3 flex flex-col justify-between gap-1 border-b border-theme-border/30 pb-2 sm:mb-4 sm:flex-row sm:items-baseline sm:gap-0"
         >
           <h3
-            class="text-sm font-bold text-theme-primary uppercase font-header tracking-wide break-words sm:text-base sm:tracking-widest"
+            class="text-sm font-bold text-theme-text uppercase font-header tracking-wide break-words sm:text-base sm:tracking-widest"
           >
             {release.title}
           </h3>
           <span
-            class="shrink-0 text-xs font-header uppercase tracking-wider text-theme-muted sm:text-micro"
+            class="shrink-0 text-xs font-header uppercase tracking-wider text-theme-text sm:text-micro"
           >
             v{release.version} // {release.date}
           </span>
@@ -109,13 +109,13 @@
   >
     <button
       onclick={close}
-      class="inline-flex min-h-11 items-center justify-center rounded-xl border border-theme-primary bg-theme-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-theme-bg transition-all shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] hover:border-theme-secondary hover:bg-theme-secondary sm:py-3"
+      class="inline-flex min-h-11 items-center justify-center rounded-xl border border-theme-primary bg-theme-primary px-6 py-2.5 text-xs font-bold uppercase tracking-widest text-theme-on-primary transition-all shadow-[0_0_20px_rgba(var(--color-theme-primary-rgb),0.25)] hover:border-theme-secondary sm:py-3"
       type="button"
     >
       {hasUnseenMinorReleases ? "Acknowledge Updates" : "Done"}
     </button>
     <div
-      class="mt-4 hidden text-nano font-header uppercase tracking-[0.3em] text-theme-muted sm:block"
+      class="mt-4 hidden text-nano font-header uppercase tracking-[0.3em] text-theme-text sm:block"
     >
       Archive synchronization protocols maintained
     </div>
