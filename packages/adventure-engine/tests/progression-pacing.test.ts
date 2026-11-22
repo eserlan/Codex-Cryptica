@@ -15,6 +15,7 @@ import {
 } from "../src";
 import { createLivingSettlementWorldEntrySession } from "./living-settlement-fixture";
 import { session as baseSession } from "./reducer-fixtures";
+import { buildPriorProgressionStateIndex } from "../src/turn-progression-scope";
 
 const now = "2026-11-10T12:00:00.000Z";
 
@@ -81,6 +82,50 @@ function makeScenario(
 }
 
 describe("Turn progression classifier (#5110)", () => {
+  it("shares prior fact prefixes without including facts from later turns", () => {
+    const withFact = (sequence: number, id: string, text: string) => {
+      const turn = makeTurn(sequence, "Wait", "You wait.");
+      return {
+        ...turn,
+        visiblePatch: {
+          ...turn.visiblePatch,
+          knownFacts: {
+            add: [{ id, text, source: "canonical" }],
+            update: [],
+            removeIds: [],
+          },
+        },
+      };
+    };
+    const turns = [
+      withFact(0, "fact-1", "The west gate is locked."),
+      withFact(1, "fact-2", "The north door is barred."),
+      makeTurn(2, "Wait", "You wait."),
+    ];
+    const session = parseAdventureSession({ ...baseSession(), turns });
+    const priorStates = buildPriorProgressionStateIndex(
+      session,
+      new Set(["turn-1", "turn-2"]),
+    );
+
+    expect([...priorStates.get("turn-1")!.priorKnownFacts]).toContain(
+      "The west gate is locked.",
+    );
+    expect([...priorStates.get("turn-1")!.priorKnownFacts]).not.toContain(
+      "The north door is barred.",
+    );
+    expect(
+      priorStates
+        .get("turn-2")!
+        .priorNormalizedFacts.has("the north door is barred."),
+    ).toBe(true);
+    expect(
+      priorStates
+        .get("turn-1")!
+        .priorNormalizedFacts.has("the north door is barred."),
+    ).toBe(false);
+  });
+
   it("classifies all 9 TurnProgressKind categories accurately with negative guards", () => {
     // 1. scenario-stage-or-status-change
     const stageTurn = makeTurn(

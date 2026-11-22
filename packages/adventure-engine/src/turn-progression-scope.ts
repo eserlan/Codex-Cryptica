@@ -17,8 +17,8 @@ export interface PursuedThreadScope {
 }
 
 export interface PriorProgressionState {
-  priorKnownFacts: string[];
-  priorNormalizedFacts: Set<string>;
+  priorKnownFacts: Iterable<string>;
+  priorNormalizedFacts: Pick<ReadonlySet<string>, "has">;
   priorVisitedLocations: Set<string>;
   priorSituation: string | null | undefined;
   priorDispositions: Map<string, string>;
@@ -434,15 +434,15 @@ function snapshotPriorProgressionState(
   turn: CommittedAdventureTurn,
   lastTouched: LastTouchedSequenceIndex,
   priorFacts: readonly string[],
+  priorFactCount: number,
+  priorFactFirstIndex: ReadonlyMap<string, number>,
   priorLocations: ReadonlySet<string>,
   priorSituation: string | null | undefined,
   hasPriorSituation: boolean,
   priorDispositions: ReadonlyMap<string, string>,
 ): PriorProgressionState {
-  const facts = [
-    ...initialPriorFacts(session, turn, lastTouched),
-    ...priorFacts,
-  ];
+  const initialFacts = initialPriorFacts(session, turn, lastTouched);
+  const initialNormalizedFacts = new Set(initialFacts.map(normalizeText));
   const locations = new Set(priorLocations);
   if (session.worldEntry?.location.name) {
     locations.add(normalizeText(session.worldEntry.location.name));
@@ -455,8 +455,23 @@ function snapshotPriorProgressionState(
     locations.add(normalizeText(currentLocation.text));
   }
   return {
-    priorKnownFacts: facts,
-    priorNormalizedFacts: new Set(facts.map(normalizeText)),
+    priorKnownFacts: {
+      *[Symbol.iterator]() {
+        yield* initialFacts;
+        for (let index = 0; index < priorFactCount; index += 1) {
+          yield priorFacts[index]!;
+        }
+      },
+    },
+    priorNormalizedFacts: {
+      has(value) {
+        const firstIndex = priorFactFirstIndex.get(value);
+        return (
+          initialNormalizedFacts.has(value) ||
+          (firstIndex !== undefined && firstIndex < priorFactCount)
+        );
+      },
+    },
     priorVisitedLocations: locations,
     priorSituation: hasPriorSituation
       ? priorSituation
@@ -468,6 +483,20 @@ function snapshotPriorProgressionState(
   };
 }
 
+function appendPriorFactHistory(
+  turn: CommittedAdventureTurn,
+  priorFacts: string[],
+  firstIndexByNormalizedFact: Map<string, number>,
+): void {
+  for (const fact of turn.visiblePatch.knownFacts.add) {
+    const normalized = normalizeText(fact.text);
+    if (!firstIndexByNormalizedFact.has(normalized)) {
+      firstIndexByNormalizedFact.set(normalized, priorFacts.length);
+    }
+    priorFacts.push(fact.text);
+  }
+}
+
 export function buildPriorProgressionStateIndex(
   session: AdventureSession,
   targetTurnIds: ReadonlySet<string>,
@@ -475,6 +504,7 @@ export function buildPriorProgressionStateIndex(
   const lastTouched = buildLastTouchedSequenceIndex(session);
   const results = new Map<string, PriorProgressionState>();
   const priorFacts: string[] = [];
+  const priorFactFirstIndex = new Map<string, number>();
   const priorLocations = new Set<string>();
   const priorDispositions = new Map<string, string>();
   let priorSituation: string | null | undefined;
@@ -488,6 +518,8 @@ export function buildPriorProgressionStateIndex(
           turn,
           lastTouched,
           priorFacts,
+          priorFacts.length,
+          priorFactFirstIndex,
           priorLocations,
           priorSituation,
           hasPriorSituation,
@@ -496,9 +528,7 @@ export function buildPriorProgressionStateIndex(
       );
     }
 
-    priorFacts.push(
-      ...turn.visiblePatch.knownFacts.add.map((fact) => fact.text),
-    );
+    appendPriorFactHistory(turn, priorFacts, priorFactFirstIndex);
     if (turn.visiblePatch.location?.text)
       priorLocations.add(normalizeText(turn.visiblePatch.location.text));
     if (turn.visiblePatch.situation !== undefined) {

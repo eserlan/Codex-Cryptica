@@ -117,7 +117,7 @@ export function isInvestigativeInquiry(action: string): boolean {
 function isConcretePhysicalEvidence(
   factText: string,
   turnNarration: string,
-  priorNormalizedFacts: ReadonlySet<string>,
+  priorNormalizedFacts: Pick<ReadonlySet<string>, "has">,
 ): boolean {
   const normalized = normalizeText(factText);
   if (!normalized || priorNormalizedFacts.has(normalized)) return false;
@@ -475,12 +475,17 @@ function matchUsefulNegativeFinding(ctx: TurnContext): CategoryMatch | null {
       (text) =>
         NEGATIVE_FINDING_RE.test(text) && !WITNESS_DENIAL_FACT_RE.test(text),
     );
-  const priorNegatives = prior.priorKnownFacts.filter((prev) =>
-    NEGATIVE_FINDING_RE.test(prev),
-  );
-  const hasNovel = negatives.some(
-    (cand) => !priorNegatives.some((prev) => sharesNegativeTarget(cand, prev)),
-  );
+  const hasNovel = negatives.some((candidate) => {
+    for (const previous of prior.priorKnownFacts) {
+      if (
+        NEGATIVE_FINDING_RE.test(previous) &&
+        sharesNegativeTarget(candidate, previous)
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
   if (!hasNovel) return null;
 
   const advances = scope
