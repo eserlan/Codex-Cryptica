@@ -1027,6 +1027,56 @@ describe("AdventureFocusPlay", () => {
         screen.queryByRole("complementary", { name: "Adventure tools" }),
       ).toBeNull();
     });
+
+    it("pins the flush scene strip before the viewport and keeps transcript and dock visible when expanded", async () => {
+      render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+
+      const wrap = screen.getByTestId("adventure-scene-strip-wrap");
+      const viewport = screen.getByTestId("adventure-play-viewport");
+      const dock = screen.getByTestId("adventure-action-dock");
+      const details = screen.getByTestId(
+        "adventure-scene-details",
+      ) as HTMLDetailsElement;
+
+      expect(wrap.classList.contains("@4xl:hidden")).toBe(true);
+      expect(wrap.classList.contains("pt-3")).toBe(false);
+      expect(wrap.classList.contains("px-3")).toBe(false);
+      expect(viewport.contains(wrap)).toBe(false);
+      expect(
+        wrap.compareDocumentPosition(viewport) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+
+      const summary = details.querySelector("summary")!;
+      await fireEvent.click(summary);
+      expect(details.open).toBe(true);
+      expect(screen.getByTestId("adventure-play-viewport")).toBeTruthy();
+      expect(screen.getByTestId("adventure-action-dock")).toBe(dock);
+      expect(screen.getByTestId("adventure-header-status")).toBeTruthy();
+    });
+
+    it("bounds expanded scene details max-height when a keyboard overlay shrinks visualViewport", async () => {
+      render(AdventureFocusPlay, { props: props({ manager: sceneManager() }) });
+      const body = screen.getByTestId("adventure-scene-details-body");
+      expect(body.style.maxHeight).toBe("");
+
+      viewport.height = window.innerHeight - 300;
+      viewport.dispatchEvent(new Event("resize"));
+
+      await waitFor(() => {
+        const px = Number.parseInt(body.style.maxHeight, 10);
+        expect(Number.isFinite(px)).toBe(true);
+        expect(px).toBeGreaterThanOrEqual(80);
+        expect(px).toBeLessThanOrEqual(256);
+      });
+
+      viewport.height = window.innerHeight;
+      viewport.dispatchEvent(new Event("resize"));
+
+      await waitFor(() => {
+        expect(body.style.maxHeight).toBe("");
+      });
+    });
   });
 
   it("is not a dialog and stays in place on wider screens", () => {
