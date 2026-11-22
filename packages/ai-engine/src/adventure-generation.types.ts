@@ -3,6 +3,7 @@ import type {
   buildAdventurePrompt,
   AdventureSession,
   AdventureWorldStyle,
+  PromptAdventurePackage,
   ResolvedSourceExcerpt,
   SuppliedRollOutcome,
 } from "@codex/adventure-engine";
@@ -18,6 +19,8 @@ export interface AdventureTurnGenerationRequest {
   worldStyle?: AdventureWorldStyle;
   /** Why the previous reply could not be used; set only on the one automatic retry. */
   correction?: string;
+  /** Scene-context excerpts of the pinned adventure package; plain data. */
+  adventurePackage?: PromptAdventurePackage;
   signal?: AbortSignal;
   /** Ephemeral player-facing preview; never a committed or trusted turn. */
   onNarration?: (text: string) => void;
@@ -41,6 +44,7 @@ export interface AdventureAIClient {
     previousInteractionId?: string | null;
     storeConversation?: boolean;
     generationConfig?: Record<string, unknown>;
+    reasoningEffort?: "low" | "medium" | "high" | "xhigh";
     signal?: AbortSignal;
   }) => Promise<{ id: string; text: string }>;
   sendInteractionStream?: (params: {
@@ -49,6 +53,7 @@ export interface AdventureAIClient {
     systemInstruction?: string;
     previousInteractionId?: string | null;
     generationConfig?: Record<string, unknown>;
+    reasoningEffort?: "low" | "medium" | "high" | "xhigh";
     signal?: AbortSignal;
   }) => AsyncIterable<
     | { type: "started" }
@@ -61,6 +66,7 @@ export interface AdventureAIClient {
 export interface AdventureGenerationOptions {
   apiKey?: string;
   modelName?: string;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
   signal?: AbortSignal;
 }
 

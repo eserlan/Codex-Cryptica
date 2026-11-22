@@ -8,9 +8,11 @@
   import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
   import { computeTurnArtworkReveals } from "#lib/services/adventure/artwork/turn-artwork-reveals.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import AdventureTurnArtwork from "./artwork/AdventureTurnArtwork.svelte";
   import AdventureNarrativeTurn from "./AdventureNarrativeTurn.svelte";
+  import AdventureOocTurn from "./AdventureOocTurn.svelte";
 
   let { manager }: { manager: AdventureManager } = $props();
 
@@ -23,7 +25,7 @@
   });
 
   const artworkEnabled = $derived(
-    import.meta.env.VITE_ADVENTURE_ARTWORK === "true" && preferencesEnabled,
+    featureFlags.isEnabled("adventureArtwork") && preferencesEnabled,
   );
   let artworkDisplay = $state.raw<ArtworkDisplayService | null>(null);
   $effect(() => {
@@ -96,7 +98,42 @@
     return manager.rollHistory.find((entry) => entry.turn.sequence === sequence)
       ?.resolvedRoll;
   }
+
+  let oocExchanges = $derived(
+    manager.oocExchanges ?? manager.session?.oocExchanges ?? [],
+  );
+
+  function oocForTurnCount(turnCount: number, isLatestSlot: boolean) {
+    return oocExchanges.filter((exchange) =>
+      isLatestSlot
+        ? exchange.afterTurnCount >= turnCount
+        : exchange.afterTurnCount === turnCount,
+    );
+  }
 </script>
+
+{#snippet committedTurnBlock(
+  turn: NonNullable<AdventureManager["transcript"]>["turns"][number],
+  index: number,
+  totalTurns: number,
+)}
+  {@const reveal = turnReveals.get(turn.sequence)}
+  {@const turnCountAfter = index + 1}
+  {@const isLastTurn = index === totalTurns - 1}
+  <div class="space-y-3">
+    <AdventureNarrativeTurn {turn} roll={rollFor(turn.sequence)} />
+    {#if reveal && artworkDisplay}
+      <AdventureTurnArtwork
+        {reveal}
+        display={artworkDisplay}
+        resolve={(path) => vault.resolveImageUrl(path)}
+      />
+    {/if}
+    {#each oocForTurnCount(turnCountAfter, isLastTurn) as exchange (exchange.id)}
+      <AdventureOocTurn {exchange} {manager} />
+    {/each}
+  </div>
+{/snippet}
 
 <div
   class="space-y-5"
@@ -104,19 +141,12 @@
   aria-label="Adventure transcript"
   data-testid="adventure-narrative"
 >
+  {#each oocForTurnCount(0, (manager.transcript?.turns.length ?? 0) === 0) as exchange (exchange.id)}
+    <AdventureOocTurn {exchange} {manager} />
+  {/each}
   {#if manager.transcript}
-    {#each manager.transcript.turns as turn (turn.sequence)}
-      {@const reveal = turnReveals.get(turn.sequence)}
-      <div class="space-y-3">
-        <AdventureNarrativeTurn {turn} roll={rollFor(turn.sequence)} />
-        {#if reveal && artworkDisplay}
-          <AdventureTurnArtwork
-            {reveal}
-            display={artworkDisplay}
-            resolve={(path) => vault.resolveImageUrl(path)}
-          />
-        {/if}
-      </div>
+    {#each manager.transcript.turns as turn, index (turn.sequence)}
+      {@render committedTurnBlock(turn, index, manager.transcript.turns.length)}
     {/each}
   {/if}
   {#if manager.phase === "generating" && manager.streamedNarration}

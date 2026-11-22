@@ -542,6 +542,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/for/mothership</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/for/cyberpunk-red</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -1623,6 +1628,11 @@
   </url>
   <url>
     <loc>https://codexcryptica.com/examples/the-treasurys-tipping-point-karrow-council-vote</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://codexcryptica.com/examples/the-last-shift-sci-fi-horror-scenario</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

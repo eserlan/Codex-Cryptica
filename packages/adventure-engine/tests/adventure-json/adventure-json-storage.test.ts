@@ -4,7 +4,9 @@ import {
   approveAdventurePackage,
   computeAdventureJsonHash,
   listApprovedAdventurePackages,
+  hasOtherApprovedAdventureVersion,
   loadStoredAdventurePackage,
+  MAX_ALTERNATE_ADVENTURE_VERSIONS_TO_SCAN,
   parseAdventureMarkdown,
   saveAdventurePackage,
   saveApprovedAdventureJson,
@@ -38,6 +40,13 @@ function createMemoryIO(): AdventurePackageFileIO & {
     async list(dir) {
       const prefix = dir.endsWith("/") ? dir : `${dir}/`;
       return [...files.keys()].filter((key) => key.startsWith(prefix));
+    },
+    async listLimited(dir, limit) {
+      const entries = await io.list(dir);
+      return {
+        entries: entries.slice(0, limit),
+        truncated: entries.length > limit,
+      };
     },
     async remove(path) {
       files.delete(path);
@@ -151,6 +160,88 @@ describe("AdventureJsonV1 storage", () => {
     expect(reorderedResult.status).toBe("deduplicated");
     expect(reorderedResult.hash).toBe(first.hash);
     expect(io.files.get(first.path)).toBe(bytesBefore);
+  });
+
+  it("restores a changed native hash-path file only from its exact original content", async () => {
+    const io = createMemoryIO();
+    const original = makeSampleJson();
+    const { path, hash } = await saveApprovedAdventureJson(io, original);
+    const altered = makeSampleJson({ title: "Changed on disk" });
+    io.files.set(path, JSON.stringify(altered));
+
+    await expect(loadStoredAdventurePackage(io, hash)).rejects.toThrow(
+      "hash mismatch",
+    );
+    const restored = await saveApprovedAdventureJson(io, original);
+
+    expect(restored.status).toBe("created");
+    expect(restored.hash).toBe(hash);
+    expect(await loadStoredAdventurePackage(io, hash)).toMatchObject({
+      hash,
+      package: original,
+    });
+    const separateVersion = await saveApprovedAdventureJson(io, altered);
+    expect(separateVersion.hash).not.toBe(hash);
+    expect((await loadStoredAdventurePackage(io, hash))?.package).toEqual(
+      original,
+    );
+  });
+
+  it("restores malformed bytes at the pinned hash path after re-import", async () => {
+    const io = createMemoryIO();
+    const original = makeSampleJson();
+    const { path, hash } = await saveApprovedAdventureJson(io, original);
+    io.files.set(path, "{not valid JSON");
+
+    await expect(loadStoredAdventurePackage(io, hash)).rejects.toThrow();
+    const restored = await saveApprovedAdventureJson(io, original);
+
+    expect(restored.status).toBe("created");
+    expect(restored.hash).toBe(hash);
+    expect(await loadStoredAdventurePackage(io, hash)).toMatchObject({
+      hash,
+      package: original,
+    });
+  });
+
+  it("bounds alternate-version checks and does not retain an approved package list", async () => {
+    const io = createMemoryIO();
+    const pinned = makeSampleJson({ id: "pinned" });
+    const pinnedSaved = await saveApprovedAdventureJson(io, pinned);
+    for (
+      let index = 0;
+      index <= MAX_ALTERNATE_ADVENTURE_VERSIONS_TO_SCAN;
+      index++
+    ) {
+      await saveApprovedAdventureJson(
+        io,
+        makeSampleJson({ id: `other-${index}`, title: `Other ${index}` }),
+      );
+    }
+
+    await expect(
+      hasOtherApprovedAdventureVersion(io, "absent", pinnedSaved.hash),
+    ).resolves.toBeNull();
+    await saveApprovedAdventureJson(
+      io,
+      makeSampleJson({ id: "pinned", version: "2.0.0" }),
+    );
+    await expect(
+      hasOtherApprovedAdventureVersion(io, "pinned", pinnedSaved.hash),
+    ).resolves.toBeNull();
+    const matchingIO = createMemoryIO();
+    const matchingPinned = await saveApprovedAdventureJson(matchingIO, pinned);
+    await saveApprovedAdventureJson(
+      matchingIO,
+      makeSampleJson({ id: "pinned", version: "2.0.0" }),
+    );
+    await expect(
+      hasOtherApprovedAdventureVersion(
+        matchingIO,
+        "pinned",
+        matchingPinned.hash,
+      ),
+    ).resolves.toBe(true);
   });
 
   it("stores changed same-id content under a new hash without touching the earlier file", async () => {

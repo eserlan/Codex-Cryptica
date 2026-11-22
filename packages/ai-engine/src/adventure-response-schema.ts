@@ -240,6 +240,59 @@ export const adventureTurnResponseSchema = {
           maxItems: 8,
           items: idSchema,
         },
+        packageEvents: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              recordId: idSchema,
+              kind: {
+                type: "string",
+                enum: ["scene", "encounter", "clue", "secret"],
+              },
+              to: {
+                type: "string",
+                enum: [
+                  "unvisited",
+                  "available",
+                  "active",
+                  "resolved",
+                  "altered",
+                  "skipped",
+                ],
+              },
+              certainty: { type: "string", enum: ["claimed", "confirmed"] },
+              note: { ...textSchema, maxLength: 240 },
+              supersedes: idSchema,
+            },
+            required: ["recordId", "kind", "to", "certainty", "note"],
+          },
+        },
+        actorEvents: {
+          type: "array",
+          maxItems: 8,
+          items: {
+            type: "object",
+            properties: {
+              actorId: idSchema,
+              status: {
+                type: "string",
+                enum: ["present", "absent", "dead"],
+              },
+              disposition: {
+                type: "string",
+                enum: ["hostile", "wary", "neutral", "friendly", "allied"],
+              },
+              fact: { ...textSchema, maxLength: 160 },
+              certainty: { type: "string", enum: ["claimed", "confirmed"] },
+              note: { ...textSchema, maxLength: 240 },
+              supersedes: idSchema,
+            },
+            required: ["actorId", "certainty", "note"],
+          },
+        },
         sceneTransition: {
           type: "object",
           properties: {
@@ -250,6 +303,7 @@ export const adventureTurnResponseSchema = {
         visiblePatch: {
           type: "object",
           properties: {
+            packageSceneId: idSchema,
             location: { anyOf: [newStateFactSchema, { type: "null" }] },
             situation: { anyOf: [newStateFactSchema, { type: "null" }] },
             objectives: patchSchema(newStateFactSchema, stateFactSchema),
@@ -319,11 +373,49 @@ export const adventureTurnResponseSchema = {
   ],
 } as const;
 
+export interface InvalidAdventureResponseError extends Error {
+  validationHint?: string;
+}
+
+function summarizeValidationError(cause: unknown): string {
+  if (cause instanceof SyntaxError) return "Response was not valid JSON.";
+  if (
+    cause &&
+    typeof cause === "object" &&
+    "issues" in cause &&
+    Array.isArray((cause as { issues?: unknown[] }).issues)
+  ) {
+    const issues = (
+      cause as {
+        issues: Array<{ path?: Array<string | number>; message?: string }>;
+      }
+    ).issues
+      .slice(0, 4)
+      .map((issue) => {
+        const path =
+          issue.path && issue.path.length > 0 ? issue.path.join(".") : "root";
+        return `${path}: ${issue.message ?? "invalid"}`;
+      });
+    if (issues.length > 0) return issues.join("; ").slice(0, 300);
+  }
+  return "Schema validation failed.";
+}
+
+function stripSingleJsonFence(text: string): string {
+  const trimmed = text.trim();
+  const match = /^```(?:json)?\s*\n?([\s\S]*?)\n?```$/i.exec(trimmed);
+  return match ? match[1]!.trim() : trimmed;
+}
+
 export function parseAdventureResponse(text: string): AdventureTurnProposal {
   try {
-    return parseTurnProposal(JSON.parse(text));
-  } catch {
-    throw new Error("invalid-adventure-response");
+    return parseTurnProposal(JSON.parse(stripSingleJsonFence(text)));
+  } catch (cause) {
+    const error = new Error(
+      "invalid-adventure-response",
+    ) as InvalidAdventureResponseError;
+    error.validationHint = summarizeValidationError(cause);
+    throw error;
   }
 }
 
@@ -337,7 +429,9 @@ export function buildAdventureContentInput(serialized: string) {
   };
 }
 
-export function isInvalidAdventureResponse(error: unknown): error is Error {
+export function isInvalidAdventureResponse(
+  error: unknown,
+): error is InvalidAdventureResponseError {
   return (
     error instanceof Error && error.message === "invalid-adventure-response"
   );

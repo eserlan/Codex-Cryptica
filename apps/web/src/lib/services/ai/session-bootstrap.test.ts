@@ -2,13 +2,17 @@ import { afterEach, describe, expect, it, vi, beforeEach } from "vitest";
 
 vi.mock("$app/environment", () => ({ browser: true }));
 vi.mock("$app/env", () => ({ browser: true }));
-vi.mock("#lib/services/publishing/turnstile.js", () => ({
-  getSessionTurnstileToken: vi.fn(async () => "challenge-token"),
-}));
-
-const { oracleSetTokenProvider, proposerSetTokenProvider } = vi.hoisted(() => ({
+const {
+  getSessionTurnstileTokenMock,
+  oracleSetTokenProvider,
+  proposerSetTokenProvider,
+} = vi.hoisted(() => ({
+  getSessionTurnstileTokenMock: vi.fn(async () => "challenge-token"),
   oracleSetTokenProvider: vi.fn(),
   proposerSetTokenProvider: vi.fn(),
+}));
+vi.mock("#lib/services/publishing/turnstile.js", () => ({
+  getSessionTurnstileToken: getSessionTurnstileTokenMock,
 }));
 vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
   oracleBridge: {
@@ -52,12 +56,17 @@ describe("session-bootstrap worker token-provider wiring", () => {
     vi.unstubAllEnvs();
   });
 
-  it("wires a pull-token provider into both bridges when the session manager is created", async () => {
+  it("wires a pull-token provider into both bridges without eager challenge or fetch", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
     const { initAiSession } = await import("./session-bootstrap");
     initAiSession();
 
     expect(oracleSetTokenProvider).toHaveBeenCalledWith(expect.any(Function));
     expect(proposerSetTokenProvider).toHaveBeenCalledWith(expect.any(Function));
+    expect(getSessionTurnstileTokenMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
   });
 
   it("the wired provider resolves rather than rejecting when the handshake fails", async () => {
@@ -149,6 +158,44 @@ describe("getAiSessionToken", () => {
     const { getAiSessionToken } = await import("./session-bootstrap");
 
     await expect(getAiSessionToken()).resolves.toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it("lazily mints once across concurrent callers and worker pull requests", async () => {
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ token: "t-lazy", expiresAt: 4102444800 }),
+          {
+            status: 200,
+          },
+        ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+    const { initAiSession, getAiSessionToken } =
+      await import("./session-bootstrap");
+
+    initAiSession();
+    expect(getSessionTurnstileTokenMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+
+    const workerProvider = oracleSetTokenProvider.mock
+      .calls[0][0] as () => Promise<{
+      token: string;
+      expiresAt: number;
+    } | null>;
+
+    const [t1, t2, workerSnapshot] = await Promise.all([
+      getAiSessionToken(),
+      getAiSessionToken(),
+      workerProvider(),
+    ]);
+
+    expect(t1).toBe("t-lazy");
+    expect(t2).toBe("t-lazy");
+    expect(workerSnapshot).toEqual({ token: "t-lazy", expiresAt: 4102444800 });
+    expect(getSessionTurnstileTokenMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     vi.unstubAllGlobals();
   });
 });

@@ -123,6 +123,40 @@ describe("world entry session and GM contract", () => {
     }
   });
 
+  it("lets the Oracle improvise without breaking canon or secrecy", () => {
+    const session = parseAdventureSession(rawSession());
+    for (const phase of ["opening", "action", "roll-resolution"] as const) {
+      const { behavior } = buildAdventurePrompt({
+        session,
+        phase,
+        playerAction: "Who is owed the money in this village ledger?",
+        anchors: [],
+        relevant: [],
+      });
+      expect(behavior).toContain("GM IMPROVISATIONAL AUTHORITY:");
+      expect(behavior).toContain(
+        "Invent credible institutions, customs, debts",
+      );
+      expect(behavior).toContain("CHALLENGED EXPLANATIONS:");
+      expect(behavior).toContain("Clarify or repair the world's explanation");
+      expect(behavior).toContain("Never conflate an NPC's limited knowledge");
+      expect(behavior).toContain("Repeated paraphrases of the same question");
+      expect(behavior).toContain(
+        "do not settle source facts explicitly marked ambiguous or unresolved",
+      );
+      expect(behavior).toContain("Record consequential new public details");
+      expect(behavior).toContain(
+        "or unrevealed decisions in GM-only hidden state",
+      );
+      expect(behavior).toContain(
+        "Canonical source records outrank provisional session material",
+      );
+      expect(behavior).toContain(
+        "reveal scenario secrets only through justified fictional discovery",
+      );
+    }
+  });
+
   it("adds a bounded world style block only when a style is supplied", () => {
     const session = parseAdventureSession(rawSession());
     const base = {
@@ -170,6 +204,33 @@ describe("world entry session and GM contract", () => {
       "The opening may weave in one small background sign",
     );
     expect(JSON.parse(prompt.state).worldEntry.at.year).toBe(618);
+  });
+
+  it("uses the structured date over stale premise labels without mutating the session", () => {
+    const raw = rawSession();
+    raw.premise = "Place: Northbrook. World date: 1 AQ. Explore freely.";
+    raw.worldEntry.at = {
+      year: 101,
+      precision: "year",
+      calendarRevision: 1,
+      label: "1 AQ",
+    };
+    const session = parseAdventureSession(raw);
+    const beforePrompt = structuredClone(session);
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+    });
+    const promptDate = JSON.parse(prompt.state).worldEntry.at;
+
+    expect(prompt.behavior).toContain(
+      "The structured worldEntry.at date is authoritative.",
+    );
+    expect(promptDate.year).toBe(101);
+    expect(promptDate).not.toHaveProperty("label");
+    expect(session).toEqual(beforePrompt);
   });
 
   it("accepts custom-calendar dates beyond Gregorian month and day bounds", () => {

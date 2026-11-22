@@ -1,4 +1,5 @@
 import type {
+  AdventureOocService,
   AdventureSummaryService,
   AdventureTurnGenerationService,
 } from "@codex/ai-engine";
@@ -20,10 +21,15 @@ import {
   adventureContextService,
   type AdventureContextService,
 } from "#lib/services/adventure/adventure-context-service.js";
+import {
+  adventurePackageContextCache,
+  type AdventurePackageContextCache,
+} from "#lib/services/adventure/adventure-package-context.js";
 import { diceEngine as defaultDiceEngine } from "dice-engine";
 import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import {
   defaultGenerationService,
+  defaultOocService,
   defaultSummaryService,
   clearDefaultGenerationInteraction,
   confirmDefaultGenerationInteraction,
@@ -33,12 +39,16 @@ export interface AdventureManagerDependencies {
   generation?: Pick<AdventureTurnGenerationService, "generate">;
   /** Folds older turns into the rolling story notes. */
   summary?: Pick<AdventureSummaryService, "summarize">;
+  /** Stateless read-only OOC clarification service. */
+  ooc?: Pick<AdventureOocService, "ask">;
   clearGenerationInteraction?: (sessionId: string) => Promise<void>;
   confirmGenerationInteraction?: (
     sessionId: string,
     revision?: number,
   ) => Promise<void>;
   context?: AdventureContextService;
+  /** Loads and caches the pinned adventure package of a package session. */
+  packages?: Pick<AdventurePackageContextCache, "load" | "peek" | "verifyPin">;
   authority?: AdventureControlAuthority;
   coordinator?: AdventureControlCoordinator;
   now?: () => string;
@@ -52,9 +62,11 @@ export function resolveAdventureDependencies({
   repository = adventureSessionRepository,
   generation = defaultGenerationService(),
   summary = defaultSummaryService(),
+  ooc = defaultOocService(),
   clearGenerationInteraction = clearDefaultGenerationInteraction,
   confirmGenerationInteraction = confirmDefaultGenerationInteraction,
   context = adventureContextService,
+  packages = adventurePackageContextCache,
   authority = adventureControlAuthority,
   coordinator = adventureControlCoordinator,
   now = () => new Date().toISOString(),
@@ -66,9 +78,11 @@ export function resolveAdventureDependencies({
     repository,
     generation,
     summary,
+    ooc,
     clearGenerationInteraction,
     confirmGenerationInteraction,
     context,
+    packages,
     authority,
     coordinator,
     now,

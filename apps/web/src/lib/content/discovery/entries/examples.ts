@@ -517,4 +517,36 @@ export const exampleEntries: DiscoveryEntryInput[] = [
     indexable: true,
     status: "live",
   },
+  {
+    id: "example-the-last-shift",
+    pageKind: "example",
+    canonicalPath: "/examples/the-last-shift-sci-fi-horror-scenario",
+    primaryIntent: "sci fi horror one shot example",
+    intentAliases: [
+      "sci fi horror scenario example",
+      "abandoned space station adventure example",
+      "sci fi horror adventure example",
+    ],
+    audience: "Tabletop RPG game masters",
+    userJob: "see-an-example",
+    uniqueValue:
+      "A hand-written, system-neutral sci-fi horror scenario with location nodes, redundant clues, an escalation clock and a Vault setup, small enough to run in one session or two short ones.",
+    parentCluster: "adventure-design",
+    relatedIntents: [
+      "generator-one-shot-adventure-generator",
+      "for-cosmic-horror",
+      "for-starship-campaigns",
+      "for-mothership",
+      "example-venting-helix",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "generator-one-shot-adventure-generator",
+        reason:
+          "The generator creates new one-shot adventures (create); this page presents one finished, hand-written sci-fi horror scenario to read and run (see-an-example).",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
 ];

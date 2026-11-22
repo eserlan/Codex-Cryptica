@@ -49,8 +49,9 @@ export function createWorldEntryStart(
   const location: WorldEntryContext["location"] = setup.locationId
     ? { kind: "canonical", recordId: setup.locationId, name: locationName }
     : { kind: "provisional", name: locationName };
-  const when = setup.at
-    ? " World date: " + calendarEngine.format(setup.at, calendar) + "."
+  const at = canonicalWorldEntryDate(setup.at, calendar);
+  const when = at
+    ? " World date: " + calendarEngine.format(at, calendar) + "."
     : " World date is unspecified; do not invent an exact year.";
   const intent =
     setup.intent === "scene"
@@ -99,13 +100,23 @@ export function createWorldEntryStart(
       // DateSelection and TemporalMetadata have only primitive fields. A shallow
       // copy deliberately unwraps Svelte $state proxies (which structuredClone
       // rejects with DataCloneError) while retaining year-only precision.
-      ...(setup.at ? { at: { ...setup.at } } : {}),
+      ...(at ? { at } : {}),
       intent: setup.intent,
       ...(setup.intent === "scene"
         ? { scenePrompt: setup.scenePrompt.trim().slice(0, 600) }
         : {}),
     },
   };
+}
+
+/** The structured date fields are authoritative; a saved display label may be stale. */
+function canonicalWorldEntryDate(
+  value: WorldEntrySetup["at"],
+  calendar: WorldCalendar,
+): WorldEntrySetup["at"] {
+  if (!value) return undefined;
+  const { label: _label, ...date } = value;
+  return { ...date, label: calendarEngine.format(date, calendar) };
 }
 
 /** Keep errors actionable without leaking private Vault/Oracle payloads. */

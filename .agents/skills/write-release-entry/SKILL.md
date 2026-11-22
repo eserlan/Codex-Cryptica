@@ -21,10 +21,12 @@ one good entry here is the entire editorial job of a release.
    - The "shipped since" / recent release sections of `specs/roadmap.md` and
      any new `specs/NNN-*/spec.md` directories.
 
-2. **Pick the version.** One minor step above the highest of the top
-   `releases.json` entry and `apps/web/package.json` — e.g. if the top entry
-   is 0.29.0 and the package is 0.28.0, the new entry is 0.30.0. Never reuse
-   a number already present in the file. Use `"type": "minor"`.
+2. **Pick the version from the release label.** For a `minor` release, use
+   the next minor version above the highest of the top `releases.json` entry
+   and `apps/web/package.json` (for example, 0.29.0 becomes 0.30.0). For a
+   `major` release, use the next major version with minor and patch set to
+   zero (for example, 0.29.0 becomes 1.0.0). Never reuse a number already
+   present in the file. Set `type` to the matching `"minor"` or `"major"`.
 
 3. **Write the entry** (prepend to the array):
    - Shape: `{ version, title, date, type, highlights: [] }` — match the
@@ -38,7 +40,8 @@ one good entry here is the entire editorial job of a release.
      acronyms. Say "Labels", never "Tags" (Constitution XII).
 
 4. **Sync `specs/roadmap.md`.** Convert the "shipped since" section (or
-   create a release section) titled `### vX.Y.0 — Title (date)` listing the
+   create a release section) titled `### vX.Y.0 — Title (date)` for minor or
+   `### vX.0.0 — Title (date)` for major, listing the
    associated specs. Roadmap entries MAY be technical; releases.json MUST NOT.
 
 5. **Validate.** Run `bunx vitest run src/lib/components/modals/ChangelogModal.test.ts`
@@ -49,10 +52,11 @@ one good entry here is the entire editorial job of a release.
      `config/index.ts`, or the service-worker `CACHE_VERSION` by hand —
      `merge-staging-to-main.yml` runs `scripts/bump-web-version.mjs` on main
      after promotion and owns all three.
-   - Ensure the **most recently merged PR into `staging` carries the `minor`
-     label** at promotion time — that is what makes the auto-bump minor and
-     triggers the formal GitHub release (`X.Y.0` versions only).
-   - Commit as `🔖 release: vX.Y.0 — <Title>` and push to `staging` (confirm
+   - Ensure the **most recently merged PR into `staging` carries the matching
+     `minor` or `major` label** at promotion time — that is what makes the
+     auto-bump and triggers the formal GitHub release (`X.Y.0` or `X.0.0`).
+   - Commit as `🔖 release: vX.Y.0 — <Title>` for minor or
+     `🔖 release: vX.0.0 — <Title>` for major, and push to `staging` (confirm
      with the user if they haven't already said where to push).
    - The user then runs the `Promote Staging to Production` workflow
      manually; everything downstream (merge to main, version bump, GitHub

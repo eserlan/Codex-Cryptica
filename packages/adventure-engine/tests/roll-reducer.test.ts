@@ -24,6 +24,62 @@ function pendingSession() {
 }
 
 describe("roll transitions", () => {
+  it("rejects package secrets in player-facing roll copy", () => {
+    const result = applyRollRequest(
+      session(),
+      {
+        ...request,
+        setupNarration: "You notice the duke poisoned the well.",
+      },
+      {
+        ...meta,
+        packageGmOnlyText: ["The duke poisoned the well"],
+      },
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-text",
+            field: "root.setupNarration",
+            sourceRef: "pinned-package-text",
+          },
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain("The duke poisoned the well");
+  });
+
+  it("rejects hidden package IDs in roll copy with opaque package-id diagnostics", () => {
+    const result = applyRollRequest(
+      session(),
+      {
+        ...request,
+        stakes: "Alert hidden-actor-7 in the vault",
+      },
+      {
+        ...meta,
+        packageRecordIds: ["hidden-actor-7"],
+      },
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      errors: [
+        {
+          code: "hidden-leakage",
+          diagnostic: {
+            guard: "package-id",
+            field: "root.stakes",
+            sourceRef: "pinned-package-id",
+          },
+        },
+      ],
+    });
+    expect(JSON.stringify(result)).not.toContain("hidden-actor-7");
+  });
+
   it("records and resolves exactly one outcome with its dice snapshot", () => {
     const current = session();
     const pending = applyRollRequest(current, request, meta);
@@ -95,6 +151,11 @@ describe("roll transitions", () => {
         {
           code: "hidden-leakage",
           message: "The response contains unrevealed GM information.",
+          diagnostic: {
+            guard: "scenario-secret",
+            field: "root.uncertainty",
+            sourceRef: "session-secret",
+          },
         },
       ],
     });

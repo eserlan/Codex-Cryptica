@@ -4,7 +4,16 @@ import {
 } from "#lib/services/adventure/world-style.js";
 import { themeStore } from "#lib/stores/theme.svelte.js";
 import { AdventureGroundingService } from "#lib/services/adventure/adventure-grounding-service.js";
-import type { AdventureSession, CommitMetadata } from "@codex/adventure-engine";
+import {
+  packageProgressIndex,
+  adventureJsonGmOnlyText,
+  adventureJsonHiddenRecordIds,
+  authorisedPackageRevelationScope,
+  detectHiddenTextLeakage,
+  detectPackageTextLeakage,
+  type AdventureSession,
+  type CommitMetadata,
+} from "@codex/adventure-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
@@ -20,6 +29,8 @@ import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-pref
 export class AdventureRuntime {
   activeRestoreRequest = 0;
   generationController: AbortController | null = null;
+  oocController: AbortController | null = null;
+  readonly grounding: AdventureGroundingService;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
   readonly summarizer: AdventureSummarizer;
@@ -31,9 +42,11 @@ export class AdventureRuntime {
   ) {
     const grounding = new AdventureGroundingService(
       deps.context,
-      (session) => this.verifySession(session),
+      (session) => this.verifyGenerationSession(session),
       () => worldStyleForTheme(themeStore.worldThemeId),
+      deps.packages,
     );
+    this.grounding = grounding;
     deps.generation = grounding.wrap(deps.generation);
     this.background = new AdventureBackground(deps.idGenerator, grounding, () =>
       genreForTheme(themeStore.worldThemeId),
@@ -76,12 +89,77 @@ export class AdventureRuntime {
     this.assertCurrentSession(session);
   }
 
+  private async verifyGenerationSession(
+    session: AdventureSession,
+  ): Promise<void> {
+    await this.verifySession(session);
+    if (!session.sourcePackage) return;
+    const pin = await this.deps.packages.verifyPin(session);
+    if (pin.status === "available") return;
+    await this.enterPackageUnavailable(pin.otherVersionAvailable);
+    throw new Error("adventure-package-unavailable");
+  }
+
   narrationPreview(sessionId: string, signal?: AbortSignal) {
+    const session = this.state.session;
+    const guardMeta = session?.id === sessionId ? this.packageMetadata() : {};
+    let suppressed = false;
     return (text: string) => {
       if (signal?.aborted || this.state.session?.id !== sessionId) return;
-      if (this.state.phase !== "generating") return;
+      if (this.state.phase !== "generating" || suppressed) return;
+      const currentSession = this.state.session;
+      if (
+        detectHiddenTextLeakage(currentSession, text).length > 0 ||
+        detectPackageTextLeakage(text, guardMeta, currentSession).length > 0
+      ) {
+        suppressed = true;
+        this.state.streamedNarration = "";
+        return;
+      }
       this.state.streamedNarration = text;
     };
+  }
+
+  /** Package guards, scene IDs and progress-ledger indexes for the cached package. */
+  packageMetadata(): Pick<
+    CommitMetadata,
+    | "packageSceneIds"
+    | "packageRecordIds"
+    | "packageGmOnlyText"
+    | "packageSecretTexts"
+    | "packageRecordKinds"
+    | "packageSceneBranches"
+    | "packageActorIds"
+  > {
+    const session = this.state.session;
+    const pkg = session && this.deps.packages.peek(session);
+    if (!pkg) return {};
+    const scope = authorisedPackageRevelationScope(session.packageProgress);
+    return {
+      ...packageProgressIndex(pkg),
+      packageSceneIds: pkg.scenes.map((scene) => scene.id),
+      packageRecordIds: adventureJsonHiddenRecordIds(pkg),
+      packageGmOnlyText: adventureJsonGmOnlyText(pkg, scope),
+      packageSecretTexts: Object.fromEntries(
+        pkg.secrets.map((secret) => [secret.id, secret.text]),
+      ),
+    };
+  }
+
+  /**
+   * Persists an OOC exchange update without touching provider interaction
+   * history, artwork reveals, or rolling story-so-far summarization.
+   */
+  async saveOocExchange(
+    previous: AdventureSession,
+    next: AdventureSession,
+  ): Promise<AdventureSession> {
+    await this.verifySession(previous);
+    const saved = await this.deps.repository.save(previous.revision, next);
+    if (!saved.ok) throw saved.error;
+    this.assertCurrentSession(previous);
+    this.state.session = saved.session;
+    return saved.session;
   }
 
   newTurnMetadata(playerAction: string): CommitMetadata {
@@ -90,6 +168,7 @@ export class AdventureRuntime {
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
+      ...this.packageMetadata(),
     };
   }
 
@@ -98,6 +177,7 @@ export class AdventureRuntime {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
+      ...this.packageMetadata(),
     };
   }
 
@@ -125,15 +205,26 @@ export class AdventureRuntime {
     // A provider reply is provisional until the OPFS write has succeeded.
     // A failed acknowledgement cannot undo a saved turn; discard the remote
     // optimization and reconstruct from saved local state on the next action.
-    try {
-      await this.deps.confirmGenerationInteraction(
-        saved.session.id,
-        saved.session.revision,
-      );
-    } catch {
+    // Also discard retained provider history when the package scene changes so
+    // GM-only context from the previous scene does not persist on the provider.
+    const sceneChanged =
+      previous.packageProgress?.sceneId !==
+      saved.session.packageProgress?.sceneId;
+    if (sceneChanged) {
       await this.deps
         .clearGenerationInteraction(saved.session.id)
         .catch(() => {});
+    } else {
+      try {
+        await this.deps.confirmGenerationInteraction(
+          saved.session.id,
+          saved.session.revision,
+        );
+      } catch {
+        await this.deps
+          .clearGenerationInteraction(saved.session.id)
+          .catch(() => {});
+      }
     }
     // Fold older turns into the story notes while the player reads.
     this.summarizer.schedule(saved.session, summaryLifecycle);
@@ -174,28 +265,74 @@ export class AdventureRuntime {
           ? retryPhase
           : "error";
   }
+
+  private async handleTurnGenerationFailure(
+    cause: unknown,
+    signal: AbortSignal,
+    retryPhase: "ready" | "ready-to-resolve",
+  ): Promise<void> {
+    const isCurrentGeneration =
+      !signal.aborted && this.generationController?.signal === signal;
+    if (isCurrentGeneration && this.state.session) {
+      await this.deps
+        .clearGenerationInteraction(this.state.session.id)
+        .catch(() => {});
+    }
+    if (
+      cause instanceof Error &&
+      cause.message === "adventure-package-unavailable" &&
+      this.state.phase === "package-unavailable"
+    )
+      return;
+    this.recordTurnGenerationError(cause, signal, retryPhase);
+  }
+
+  /**
+   * Re-checks a package session's pin. On failure, enters the recoverable
+   * `package-unavailable` state (when the signal is still current) and returns
+   * false so the caller makes no model call.
+   */
+  async packageStillAvailable(signal: AbortSignal): Promise<boolean> {
+    const session = this.state.session;
+    if (!session?.sourcePackage) return true;
+    const check = await this.deps.packages.verifyPin(session);
+    if (check.status === "available") return true;
+    if (!signal.aborted && this.generationController?.signal === signal) {
+      await this.enterPackageUnavailable(check.otherVersionAvailable);
+    }
+    return false;
+  }
+
+  async enterPackageUnavailable(
+    otherVersionAvailable: boolean | null,
+  ): Promise<void> {
+    this.state.phase = "package-unavailable";
+    this.state.errorCause = "package-unavailable";
+    this.state.packageUnavailable = { otherVersionAvailable };
+    this.state.readOnly = true;
+    this.state.streamedNarration = "";
+    this.state.errorMessage = null;
+    await this.deps.coordinator.stop();
+    if (this.state.lease) {
+      await this.deps.authority.release(this.state.lease);
+      this.state.lease = null;
+    }
+  }
+
   async runTurnGeneration(
     generate: (signal: AbortSignal) => Promise<void>,
     retryPhase: "ready" | "ready-to-resolve",
   ): Promise<void> {
     const signal = this.startTurnGeneration();
     try {
+      if (!(await this.packageStillAvailable(signal))) return;
       await generate(signal);
     } catch (cause) {
       // Discard any uncommitted remote response after a rejected patch,
       // cancelled generation, lost lease or failed local save.
       // An older cancelled turn may settle after a newer one has started.
       // Never clear the newer turn's provider context from that stale catch.
-      if (
-        !signal.aborted &&
-        this.generationController?.signal === signal &&
-        this.state.session
-      ) {
-        await this.deps
-          .clearGenerationInteraction(this.state.session.id)
-          .catch(() => {});
-      }
-      this.recordTurnGenerationError(cause, signal, retryPhase);
+      await this.handleTurnGenerationFailure(cause, signal, retryPhase);
     } finally {
       this.endTurnGeneration(signal);
     }

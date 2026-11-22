@@ -2,6 +2,7 @@ import type { AdventureSession } from "@codex/adventure-engine";
 import type { AdventureControlLease } from "#lib/services/adventure/adventure-control-lease.js";
 import { systemClock, type Clock } from "#lib/utils/runtime-deps.js";
 
+import { PACKAGE_UNAVAILABLE_COPY } from "#lib/services/adventure/adventure-start-failure.js";
 import type { AdventureRuntime } from "./adventure-runtime";
 
 function isReadOnlyLoad(
@@ -48,6 +49,7 @@ export class AdventureLifecycle {
     if (loaded.condition === "unreadable") throw loaded.error;
     if (!isRequestCurrent()) return;
     const readOnly = isReadOnlyLoad(loaded);
+    if (await this.openUnavailable(loaded.session, isRequestCurrent)) return;
     const opened = await this.acquireAndRefreshOpenedSession(
       vaultId,
       sessionId,
@@ -62,6 +64,20 @@ export class AdventureLifecycle {
     }
     this.activateOpenedSession(opened.session, opened.readOnly, opened.lease);
     await this.resumeRecordedRollIfNeeded(isRequestCurrent);
+  }
+
+  /** Shows a package session whose pinned package fails its check, read-only. */
+  private async openUnavailable(
+    session: AdventureSession,
+    isCurrent: () => boolean,
+  ): Promise<boolean> {
+    if (!session.sourcePackage || session.status !== "active") return false;
+    const check = await this.runtime.deps.packages.verifyPin(session);
+    if (check.status === "available") return false;
+    if (!isCurrent()) return true;
+    this.state.session = session;
+    await this.runtime.enterPackageUnavailable(check.otherVersionAvailable);
+    return true;
   }
 
   private async acquireAndRefreshOpenedSession(
@@ -189,6 +205,14 @@ export class AdventureLifecycle {
   ) {
     this.state.session = session;
     this.state.readOnly = readOnly;
+    this.state.composerMode = "play";
+    this.state.oocDraft = "";
+    this.state.oocGenerating = false;
+    this.state.rollMutationPending = false;
+    this.state.oocErrorMessage = null;
+    this.state.packageUnavailable = null;
+    if (this.state.errorCause === "package-unavailable")
+      this.state.errorCause = null;
     if (lease) {
       this.state.lease = lease;
       this.runtime.deps.coordinator.start(lease);
@@ -215,6 +239,10 @@ export class AdventureLifecycle {
     this.state.session = null;
     this.state.readOnly = false;
     this.state.draft = "";
+    this.state.composerMode = "play";
+    this.state.oocDraft = "";
+    this.state.oocGenerating = false;
+    this.state.oocErrorMessage = null;
     this.state.streamedNarration = "";
     this.state.errorMessage = null;
     this.state.lastRollResult = null;
@@ -299,6 +327,8 @@ export class AdventureLifecycle {
     this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
+    this.runtime.oocController?.abort();
+    this.runtime.oocController = null;
     if (this.state.session) {
       void this.runtime.deps.clearGenerationInteraction(this.state.session.id);
     }
@@ -307,12 +337,25 @@ export class AdventureLifecycle {
       await this.runtime.deps.authority.release(this.state.lease);
       this.state.lease = null;
     }
-    this.state.session = null;
-    this.state.readOnly = false;
-    this.state.draft = "";
-    this.state.errorMessage = null;
-    this.state.lastRollResult = null;
-    this.state.phase = "idle";
+    this.resetAdventureView();
+    this.state.packageUnavailable = null;
+    if (this.state.errorCause === "package-unavailable")
+      this.state.errorCause = null;
+  }
+
+  /**
+   * Re-runs open() for a session paused by a missing or changed package. It
+   * never generates a turn and never moves the session to another version.
+   */
+  async retryPackageCheck(): Promise<boolean> {
+    const session = this.state.session;
+    if (!session || this.state.phase !== "package-unavailable") return false;
+    await this.open(session.vaultId, session.id);
+    return (
+      !this.state.readOnly &&
+      this.state.phase !== "package-unavailable" &&
+      this.state.lease !== null
+    );
   }
 
   /**
@@ -349,6 +392,13 @@ export class AdventureLifecycle {
   ): Promise<AdventureSession> {
     const loaded = await this.runtime.deps.repository.load(vaultId, sessionId);
     if (loaded.condition === "unreadable") throw loaded.error;
+    if (
+      loaded.session.sourcePackage &&
+      (await this.runtime.deps.packages.verifyPin(loaded.session)).status ===
+        "unavailable"
+    ) {
+      throw new Error(PACKAGE_UNAVAILABLE_COPY);
+    }
     const now = this.runtime.deps.now();
     const resumed: AdventureSession = {
       ...loaded.session,
@@ -372,6 +422,9 @@ export class AdventureLifecycle {
     this.runtime.summarizer.cancel();
     this.runtime.generationController?.abort();
     this.runtime.generationController = null;
+    this.runtime.oocController?.abort();
+    this.runtime.oocController = null;
+    this.state.oocGenerating = false;
     await this.runtime.deps.coordinator.stop();
     this.state.lease = null;
   }

@@ -252,4 +252,47 @@ describe("AdventureEntryChoices", () => {
     }
     expect(screen.getByTestId("adventure-json-dropzone")).toBeTruthy();
   });
+
+  it("stacks the Adventure JSON dropzone header and full-width CTA on mobile and stays stacked when disabled (#4986)", async () => {
+    const { rerender } = render(AdventureEntryChoices, {
+      props: { onDiscover: vi.fn(), onOwnPremise: vi.fn(), canImport: true },
+    });
+
+    const header = screen.getByTestId("adventure-import-header");
+    expect(header.className).toContain("flex-col");
+    expect(header.className).toContain("sm:flex-row");
+    expect(header.className).not.toContain("flex-wrap");
+
+    const uploadButton = screen.getByTestId("adventure-import");
+    expect(uploadButton.className).toContain("w-full");
+    expect(uploadButton.className).toContain("sm:w-auto");
+    expect(uploadButton.className).toContain("min-h-11");
+    expect(uploadButton.getAttribute("aria-describedby")).toBe(
+      "adventure-import-description",
+    );
+
+    const footer = screen.getByTestId("adventure-import-footer");
+    expect(footer.className).toContain("flex-col");
+    expect(footer.className).toContain("sm:flex-row");
+
+    expect(
+      screen.getByTestId("adventure-import-guide-link").className,
+    ).toContain("max-w-full");
+    expect(
+      screen.getByTestId("adventure-experimental-import-label").className,
+    ).toContain("max-w-full");
+
+    await rerender({
+      onDiscover: vi.fn(),
+      onOwnPremise: vi.fn(),
+      canImport: false,
+    });
+    expect(
+      (screen.getByTestId("adventure-import") as HTMLButtonElement).disabled,
+    ).toBe(true);
+    expect(screen.getByTestId("adventure-import-header").className).toContain(
+      "flex-col",
+    );
+    expect(screen.getByText(/ready owner Vault/)).toBeTruthy();
+  });
 });

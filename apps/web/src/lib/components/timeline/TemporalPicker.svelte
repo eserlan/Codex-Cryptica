@@ -18,6 +18,7 @@
   import {
     formatDirectDateInput,
     normalizedSelectionForSave,
+    dateChangePatch,
     optionPatch,
     parsePickerDateInput,
     precisionPatch,
@@ -134,7 +135,9 @@
           Math.floor(Math.abs(wheelAccumulator) / threshold);
         wheelAccumulator -= ticks * threshold;
 
-        const patch = { year: activeSelection.year + ticks * stepSize };
+        const patch = dateChangePatch({
+          year: activeSelection.year + ticks * stepSize,
+        });
         activeSelection = calendarEngine.applyParentChange(
           activeSelection,
           patch,
@@ -207,7 +210,7 @@
   };
 
   const selectEra = (era: any) => {
-    const patch: Partial<DateSelection> = { year: era.start_year };
+    const patch = dateChangePatch({ year: era.start_year });
     activeSelection = calendarEngine.applyParentChange(
       activeSelection,
       patch,
@@ -218,7 +221,7 @@
   };
 
   const handleSelectCalendarEra = (targetYear: number) => {
-    const patch: Partial<DateSelection> = { year: targetYear };
+    const patch = dateChangePatch({ year: targetYear });
     activeSelection = calendarEngine.applyParentChange(
       activeSelection,
       patch,
@@ -330,7 +333,7 @@
 
     activeSelection = calendarEngine.applyParentChange(
       activeSelection,
-      patch,
+      dateChangePatch(patch),
       calendarStore.getSnapshot(),
     );
     directEntryModes[colId] = false;

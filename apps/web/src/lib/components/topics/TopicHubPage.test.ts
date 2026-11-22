@@ -1,12 +1,15 @@
 /** @vitest-environment jsdom */
 
-import { render, screen } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/svelte";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+const pathState = vi.hoisted(() => ({ base: "" }));
 vi.mock("$app/paths", () => ({
-  base: "",
+  get base() {
+    return pathState.base;
+  },
   asset: (p: string) => p,
-  resolve: (p: string) => p,
+  resolve: (p: string) => `${pathState.base}${p}`,
 }));
 vi.mock("$app/environment", () => ({ browser: false }));
 
@@ -14,6 +17,7 @@ import TopicHubPage from "./TopicHubPage.svelte";
 import { TOPIC_LAYOUT } from "./topic-layout.js";
 import { HEIST_TOPIC_CONFIG } from "#lib/content/topics/heists.js";
 import { STAR_SYSTEMS_TOPIC_CONFIG } from "#lib/content/topics/star-systems.js";
+import * as discoveryTracking from "#lib/services/analytics/discovery-tracking.js";
 
 describe("TopicHubPage layout", () => {
   it("uses the wide canvas rather than a single reading column", () => {
@@ -109,5 +113,169 @@ describe("TopicHubPage layout", () => {
     expect(section.querySelectorAll("ul > li")).toHaveLength(
       HEIST_TOPIC_CONFIG.workedExamples.length,
     );
+  });
+
+  it("renders the thesis intro before the first thesis point", () => {
+    render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+    const section = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-thesis`,
+    )?.parentElement as HTMLElement;
+    const intro = section.querySelector(":scope > p") as HTMLElement;
+    expect(intro.textContent?.trim()).toBe(
+      STAR_SYSTEMS_TOPIC_CONFIG.copy.thesisIntro,
+    );
+    const firstPoint = section.querySelector("h3") as HTMLElement;
+    expect(
+      intro.compareDocumentPosition(firstPoint) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("renders no thesis intro paragraph for hubs without one", () => {
+    render(TopicHubPage, { props: { config: HEIST_TOPIC_CONFIG } });
+
+    const section = document.getElementById(`${HEIST_TOPIC_CONFIG.slug}-thesis`)
+      ?.parentElement as HTMLElement;
+    expect(section.querySelector(":scope > p")).toBeNull();
+  });
+
+  it("renders the Star Systems hero from the config", () => {
+    const { container } = render(TopicHubPage, {
+      props: { config: STAR_SYSTEMS_TOPIC_CONFIG },
+    });
+
+    const hero = container.querySelector("header figure img") as HTMLElement;
+    const config = STAR_SYSTEMS_TOPIC_CONFIG.heroImage;
+    expect(hero.getAttribute("src")).toBe(config.src);
+    expect(hero.getAttribute("alt")).toBe(config.alt);
+    expect(hero.getAttribute("width")).toBe("1600");
+    expect(hero.getAttribute("height")).toBe("900");
+  });
+
+  it("renders the example diagram only when the example has one", () => {
+    const { unmount } = render(TopicHubPage, {
+      props: { config: STAR_SYSTEMS_TOPIC_CONFIG },
+    });
+    const section = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-examples`,
+    )?.parentElement as HTMLElement;
+    expect(
+      section.querySelector('[data-testid="topic-example-diagram"]'),
+    ).not.toBeNull();
+    unmount();
+
+    const { diagram: _diagram, ...inlineExample } =
+      STAR_SYSTEMS_TOPIC_CONFIG.inlineExample;
+    render(TopicHubPage, {
+      props: { config: { ...STAR_SYSTEMS_TOPIC_CONFIG, inlineExample } },
+    });
+    const bare = document.getElementById(
+      `${STAR_SYSTEMS_TOPIC_CONFIG.slug}-examples`,
+    )?.parentElement as HTMLElement;
+    expect(
+      bare.querySelector('[data-testid="topic-example-diagram"]'),
+    ).toBeNull();
+    expect(
+      Array.from(bare.querySelectorAll("dt")).map((d) => d.textContent?.trim()),
+    ).toEqual(inlineExample.parts.map((part) => part.term));
+  });
+
+  it("renders no diagram on the Heists hub", () => {
+    const { container } = render(TopicHubPage, {
+      props: { config: HEIST_TOPIC_CONFIG },
+    });
+    expect(
+      container.querySelector('[data-testid="topic-example-diagram"]'),
+    ).toBeNull();
+  });
+
+  describe("primary action", () => {
+    afterEach(() => {
+      pathState.base = "";
+      vi.restoreAllMocks();
+    });
+
+    it("renders an accessible, focusable generator link before the thesis", () => {
+      const { container } = render(TopicHubPage, {
+        props: { config: STAR_SYSTEMS_TOPIC_CONFIG },
+      });
+
+      const cta = screen.getByTestId("topic-primary-cta");
+      const link = screen.getByRole("link", {
+        name: /Generate a Star System/,
+      });
+      expect(cta.contains(link)).toBe(true);
+      expect(link.getAttribute("href")).toBe("/generators/star-system");
+      expect(link.getAttribute("tabindex")).not.toBe("-1");
+      expect(link.className).toContain("min-h-[44px]");
+      expect(link.className).toContain("focus-visible:outline");
+      expect(link.className).toContain("focus-visible:outline-theme-text");
+
+      const header = container.querySelector("header") as HTMLElement;
+      const thesis = document.getElementById("star-systems-thesis")
+        ?.parentElement as HTMLElement;
+      expect(
+        header.compareDocumentPosition(cta) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(
+        cta.compareDocumentPosition(thesis) & Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+    });
+
+    it("prefixes the href with the base path", () => {
+      pathState.base = "/codex";
+      render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+      expect(
+        screen
+          .getByRole("link", { name: /Generate a Star System/ })
+          .getAttribute("href"),
+      ).toBe("/codex/generators/star-system");
+    });
+
+    it("keeps the secondary link text readable on hover", () => {
+      render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+      const link = screen.getByRole("link", { name: /learn the method/i });
+      expect(link.className).toContain("text-theme-text");
+      expect(link.className).toContain("hover:decoration-theme-text");
+      expect(link.className).not.toContain("hover:text-theme-primary");
+    });
+
+    it("renders nothing for hubs without a primary action", () => {
+      render(TopicHubPage, { props: { config: HEIST_TOPIC_CONFIG } });
+
+      expect(screen.queryByTestId("topic-primary-cta")).toBeNull();
+    });
+
+    it("tracks each link once as a topic_primary_cta click", async () => {
+      const spy = vi
+        .spyOn(discoveryTracking, "trackDiscoveryClick")
+        .mockImplementation(() => {});
+      render(TopicHubPage, { props: { config: STAR_SYSTEMS_TOPIC_CONFIG } });
+
+      await fireEvent.click(
+        screen.getByRole("link", { name: /Generate a Star System/ }),
+      );
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy.mock.calls[0][0]).toMatchObject({
+        sourceKind: "topic",
+        sourceId: "star-systems",
+        placement: "topic_primary_cta",
+        targetKind: "generator",
+        targetId: "star-system",
+      });
+
+      await fireEvent.click(
+        screen.getByRole("link", { name: "Or learn the method first" }),
+      );
+      expect(spy).toHaveBeenCalledTimes(2);
+      expect(spy.mock.calls[1][0]).toMatchObject({
+        placement: "topic_primary_cta",
+        targetKind: "answer",
+        targetId: "how-to-create-a-sci-fi-star-system-for-an-rpg",
+      });
+    });
   });
 });

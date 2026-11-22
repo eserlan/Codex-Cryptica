@@ -1,5 +1,6 @@
-import { SEARCH_INDEX_COMPRESSION_FORMAT } from "@codex/search-engine";
 import type { CompressedSearchIndex, SearchEngine } from "@codex/search-engine";
+
+const SEARCH_INDEX_COMPRESSION_FORMAT = "fflate-json-v1" as const;
 import type * as Comlink from "comlink";
 
 type DebugLogger = {

@@ -153,6 +153,28 @@ describe("AdventureFocusPlay", () => {
     ).toBeTruthy();
   });
 
+  it("themes the independent scene, transcript, and tools scroll regions", async () => {
+    render(AdventureFocusPlay, { props: props() });
+
+    const scenePanel = screen.getByTestId("adventure-artwork-panel");
+    const storyViewport = screen.getByTestId("adventure-play-viewport");
+
+    expect(scenePanel.classList.contains("adventure-scrollbar")).toBe(true);
+    expect(storyViewport.classList.contains("adventure-scrollbar")).toBe(true);
+    expect(scenePanel.classList.contains("@4xl:overflow-y-auto")).toBe(true);
+    expect(storyViewport.classList.contains("overflow-y-auto")).toBe(true);
+    expect(storyViewport.contains(scenePanel)).toBe(false);
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    const tools = screen.getByRole("complementary", {
+      name: "Adventure tools",
+    });
+    expect(tools.classList.contains("adventure-scrollbar")).toBe(true);
+    expect(tools.classList.contains("overflow-y-auto")).toBe(true);
+  });
+
   it("uses a compact mobile shell with the action dock outside the narrative scroll", () => {
     render(AdventureFocusPlay, { props: props() });
 
@@ -216,16 +238,53 @@ describe("AdventureFocusPlay", () => {
 
   it("can end the adventure from the management menu", async () => {
     const m = manager();
-    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    const repo = {
+      list: vi
+        .fn()
+        .mockResolvedValueOnce({
+          entries: [
+            {
+              id: "adventure-2",
+              title: "Salt Marsh",
+              status: "active",
+              loadCondition: "normal",
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          entries: [
+            {
+              id: "adventure-1",
+              title: "The Drowned March",
+              status: "archived",
+              revision: 2,
+              loadCondition: "normal",
+            },
+          ],
+        }),
+    } as any;
+    render(AdventureFocusPlay, {
+      props: props({ manager: m, repository: repo }),
+    });
 
     await fireEvent.click(
       screen.getByTestId("adventure-management-menu-button"),
     );
+    await waitFor(() => expect(repo.list).toHaveBeenCalledOnce());
     await fireEvent.click(
       screen.getByRole("menuitem", { name: /end adventure/i }),
     );
 
     expect(m.end).toHaveBeenCalledOnce();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(
+      await screen.findByRole("button", {
+        name: "Delete archived adventure The Drowned March",
+      }),
+    ).toBeTruthy();
+    expect(repo.list).toHaveBeenCalledTimes(2);
   });
 
   it("shows the current situation without opening the tools panel", () => {
@@ -794,6 +853,7 @@ describe("AdventureFocusPlay", () => {
           name: "Switch to Salt Marsh",
         }),
       ).toBeTruthy();
+      expect(repo.list).toHaveBeenCalledTimes(1);
 
       // Open Discoveries from sheet -> portaled directly under surface, not trapped in sheet
       const discoveriesTrigger = within(sheet).getByRole("button", {
@@ -835,7 +895,9 @@ describe("AdventureFocusPlay", () => {
 
       const live = screen.getByTestId("adventure-phone-live-status");
       expect(live.getAttribute("aria-live")).toBe("polite");
-      expect(live.textContent).toBe("");
+      expect(live.textContent).toBe(
+        "No pending discoveries or active situations in Adventure tools.",
+      );
       expect(screen.queryByTestId("adventure-tools-badge")).toBeNull();
       expect(
         screen.getByRole("button", { name: "Adventure tools" }),
@@ -876,6 +938,18 @@ describe("AdventureFocusPlay", () => {
       ).toBeTruthy();
       expect(live.textContent).toBe(
         "1 discovery, 1 active situation in Adventure tools.",
+      );
+
+      const cleared = manager();
+      cleared.session.provisionalFacts = [];
+      cleared.session.scenarioCollection = {
+        focusedScenarioId: null,
+        items: [],
+      };
+      await rerender(props({ manager: cleared }));
+
+      expect(live.textContent).toBe(
+        "No pending discoveries or active situations in Adventure tools.",
       );
     });
 

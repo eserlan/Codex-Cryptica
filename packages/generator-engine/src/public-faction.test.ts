@@ -13,12 +13,67 @@ import {
   factionConfig,
 } from "./public-faction";
 import { NAME_BAN_PROMPT } from "./public-npc";
+import {
+  buildUrbanFantasyFactionPrompt,
+  generateUrbanFantasyFactionLocal,
+  parseUrbanFantasyFactionResponse,
+  resolveUrbanFantasyFaction,
+  urbanFantasyFactionConfig,
+  urbanFantasyFactionSchema,
+} from "./public-urban-fantasy-faction";
 
 function seededRng(seed = 1): () => number {
   let s = seed >>> 0;
   return () => {
     s = (s * 1664525 + 1013904223) >>> 0;
     return s / 0x100000000;
+  };
+}
+
+function urbanFantasyAiResponse(
+  overrides: Partial<{
+    title: string;
+    summary: string;
+    content: string;
+    lore: string;
+    labels: string[];
+  }> = {},
+) {
+  return {
+    title: "The Night Registry",
+    summary: "A civic office protects a hidden neighbourhood agreement.",
+    content: `### Genre labels
+Urban fantasy · modern fantasy · hidden-world politics
+
+### What they control
+The Registry controls access to an unlisted transit platform.
+
+### What they want
+It wants to keep the crossing open to residents.
+
+### Why they are dangerous
+It can redirect city resources without public oversight.
+
+### How to use them at the table
+Ask the party to mediate when a station closure threatens a community.`,
+    lore: `### At a Glance
+- **📍 Base**: an unlisted transit platform
+- **Resource**: trusted night-shift dispatchers
+- **Symbol**: a punched blue transit token
+- **Secret**: its public safety reports were edited
+- **Immediate Hook**: a commuter leaves the same impossible voicemail at three stations
+
+### Notable NPCs
+- **👤 Mara Venn**: a municipal planner who reads gaps in city records.
+- **👤 Theo Barrow**: a night dispatcher who tracks rerouted calls.
+
+### Internal Conflict
+Its leaders disagree about whether to disclose a supernatural incident.
+
+### Rival Faction
+- **👥 Northside Mutual**: offers residents an open deal in exchange for control of the crossing.`,
+    labels: ["urban-fantasy", "hidden-world"],
+    ...overrides,
   };
 }
 
@@ -197,5 +252,374 @@ describe("dark fantasy faction (#1136)", () => {
   it("throws on invalid JSON", () => {
     const { resolved } = buildDarkFactionPrompt({}, "", seededRng(16));
     expect(() => parseDarkFactionResponse("nope", resolved)).toThrow();
+  });
+});
+
+describe("urban fantasy faction (#1137)", () => {
+  it("offers each required city mode, faction type, scope and moral posture", () => {
+    expect(urbanFantasyFactionConfig.modes).toEqual(
+      expect.arrayContaining([
+        "Hidden-world city politics",
+        "Occult crime",
+        "Monster diplomacy",
+        "Magical bureaucracy",
+        "Street-level magic",
+        "Paranormal investigation",
+        "Corporate occult",
+      ]),
+    );
+    expect(urbanFantasyFactionConfig.types).toEqual(
+      expect.arrayContaining([
+        "Mage Cabal",
+        "Monster Court",
+        "Paranormal Agency",
+        "Occult Gang",
+        "Hunter Lodge",
+        "Fae Market",
+        "Supernatural Corporation",
+        "Secret Council",
+      ]),
+    );
+    expect(urbanFantasyFactionConfig.scopes).toEqual(
+      expect.arrayContaining([
+        "Neighbourhood",
+        "City District",
+        "Whole City",
+        "Transit Network",
+        "University",
+        "Corporate Campus",
+        "Hidden Market",
+        "Regional Network",
+      ]),
+    );
+    expect(urbanFantasyFactionConfig.moralPostures).toEqual(
+      expect.arrayContaining([
+        "Protective but secretive",
+        "Predatory but lawful",
+        "Pragmatic brokers",
+        "Idealistic investigators",
+        "Ancient aristocrats",
+        "Street-level survivors",
+      ]),
+    );
+    expect(urbanFantasyFactionSchema.axes.map((axis) => axis.id)).toEqual([
+      "mode",
+      "factionType",
+      "scope",
+      "moralPosture",
+      "goal",
+      "conflict",
+      "hook",
+    ]);
+    expect(
+      urbanFantasyFactionSchema.axes[0].pool({
+        genre: "",
+        values: {},
+        traits: [],
+      }),
+    ).toEqual(urbanFantasyFactionConfig.modes);
+  });
+
+  it("keeps valid selections in the local faction output and includes every section", () => {
+    const options = {
+      mode: "Paranormal investigation",
+      factionType: "Paranormal Agency",
+      scope: "Transit Network",
+      moralPosture: "Idealistic investigators",
+    };
+    const resolved = resolveUrbanFantasyFaction(options, seededRng(20));
+    const out = generateUrbanFantasyFactionLocal(options, seededRng(20));
+
+    expect(resolved).toMatchObject(options);
+    expect(out.type).toBe("faction");
+    expect(out.summary).toContain("paranormal agency");
+    expect(out.summary).toContain("transit network");
+    expect(out.summary).not.toContain("\n");
+    expect(`${out.content}\n${out.lore}`).not.toMatch(/vampire|horror/i);
+    expect(out.content).toContain("### Genre labels");
+    expect(out.content).toContain("### What they control");
+    expect(out.content).toContain("### What they want");
+    expect(out.content).toContain("### Why they are dangerous");
+    expect(out.content).toContain("### How to use them at the table");
+    expect(out.lore).toContain("### At a Glance");
+    for (const field of [
+      "**📍 Base**:",
+      "**Resource**:",
+      "**Symbol**:",
+      "**Secret**:",
+      "**Immediate Hook**:",
+    ]) {
+      expect(out.lore).toContain(field);
+    }
+    expect(out.lore).toContain("### Notable NPCs");
+    expect(out.lore).toContain("### Internal Conflict");
+    expect(out.lore).toContain("### Rival Faction");
+    expect(out.labels).toEqual(
+      expect.arrayContaining([
+        "urban-fantasy",
+        "modern-fantasy",
+        "supernatural-faction",
+        "hidden-world",
+      ]),
+    );
+  });
+
+  it("includes the selected options in the AI prompt", () => {
+    const { systemInstruction, userMessage, resolved } =
+      buildUrbanFantasyFactionPrompt(
+        {
+          mode: "Corporate occult",
+          factionType: "Supernatural Corporation",
+          scope: "Corporate Campus",
+          moralPosture: "Pragmatic brokers",
+        },
+        "- Existing: The Night Registry (faction)",
+        seededRng(21),
+      );
+
+    expect(systemInstruction).toContain("modern institutions");
+    expect(systemInstruction).toContain("### Genre labels");
+    expect(userMessage).toContain("- Urban Fantasy Mode: Corporate occult");
+    expect(userMessage).toContain("- Faction Type: Supernatural Corporation");
+    expect(userMessage).toContain("- Operating Scope: Corporate Campus");
+    expect(userMessage).toContain("- Moral Posture: Pragmatic brokers");
+    expect(userMessage).toContain(`- Faction Name: ${resolved.name}`);
+  });
+
+  it("rejects malformed or incomplete AI faction responses", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(22));
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse("not json", resolved),
+    ).toThrow();
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify({ title: "The Permit Office", summary: "A faction." }),
+        resolved,
+      ),
+    ).toThrow(/missing required content/);
+  });
+
+  it("rejects headings and field labels with empty section values", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(23));
+    const response = urbanFantasyAiResponse({
+      summary: "A faction with an agenda.",
+      content: `### Genre labels
+
+### What they control
+
+### What they want
+
+### Why they are dangerous
+
+### How to use them at the table`,
+      lore: `### At a Glance
+- **📍 Base**:
+- **Resource**:
+- **Symbol**:
+- **Secret**:
+- **Immediate Hook**:
+
+### Notable NPCs
+- **👤 **:
+- **👤 **:
+
+### Internal Conflict
+
+### Rival Faction
+- **👥 **:`,
+    });
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(JSON.stringify(response), resolved),
+    ).toThrow(/missing required content/);
+  });
+
+  it("rejects required structure contained only inside Markdown code fences", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(232));
+    const valid = urbanFantasyAiResponse();
+    const response = urbanFantasyAiResponse({
+      content: `\n\`\`\`md\n${valid.content}\n\`\`\``,
+      lore: `\n~~~md\n${valid.lore}\n~~~`,
+    });
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(JSON.stringify(response), resolved),
+    ).toThrow(/missing required content/);
+  });
+
+  it("rejects whitespace-only NPC and rival names", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(231));
+    const validLore = urbanFantasyAiResponse().lore;
+    const whitespaceNpcLore = validLore
+      .replace("Mara Venn", "   ")
+      .replace("Theo Barrow", " \t ");
+    const whitespaceRivalLore = validLore.replace("Northside Mutual", "   ");
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify(urbanFantasyAiResponse({ lore: whitespaceNpcLore })),
+        resolved,
+      ),
+    ).toThrow(/2-3 named Notable NPC bullets/);
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify(urbanFantasyAiResponse({ lore: whitespaceRivalLore })),
+        resolved,
+      ),
+    ).toThrow(/exactly one named Rival Faction/);
+  });
+
+  it("rejects multiple named rival factions", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt(
+      {},
+      "",
+      seededRng(2321),
+    );
+    const validLore = urbanFantasyAiResponse().lore;
+    const multipleRivals = validLore.replace(
+      "- **👥 Northside Mutual**: offers residents an open deal in exchange for control of the crossing.",
+      "- **👥 Northside Mutual**: offers residents an open deal in exchange for control of the crossing.\n- **👥 The Night Registry**: a second rival.",
+    );
+
+    expect(() =>
+      parseUrbanFantasyFactionResponse(
+        JSON.stringify(urbanFantasyAiResponse({ lore: multipleRivals })),
+        resolved,
+      ),
+    ).toThrow(/exactly one named Rival Faction/);
+  });
+
+  it("uses only fixed labels and ignores model-provided functional labels", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt(
+      {},
+      "",
+      seededRng(2322),
+    );
+    const output = parseUrbanFantasyFactionResponse(
+      JSON.stringify(
+        urbanFantasyAiResponse({
+          labels: ["mystery-generator", "user-label", "urban-fantasy"],
+        }),
+      ),
+      resolved,
+    );
+
+    expect(output.labels).not.toContain("mystery-generator");
+    expect(output.labels).not.toContain("user-label");
+    expect(output.labels).toContain("urban-fantasy");
+  });
+
+  it("strips Markdown images and HTML media from every model field before saving", () => {
+    const { resolved } = buildUrbanFantasyFactionPrompt({}, "", seededRng(24));
+    const response = urbanFantasyAiResponse({
+      title: "The Registry ![title](https://tracker.example/title.png)",
+      summary:
+        "A civic office keeps order. ![summary](https://tracker.example/summary.png) <style>@import url(https://tracker.example/summary.css);</style>",
+      content: urbanFantasyAiResponse().content.replace(
+        "controls access to an unlisted transit platform",
+        'controls access ![data](data:image/png;base64,AAAA) to a transit platform <span style="background-image:url(https://tracker.example/content.png)">record</span> <input type="image" src="https://tracker.example/image-input.png"><input type="image" src="data:image/png;base64,AAAA"><input type="image" src="blob:https://app.example/image-id"><svg><filter><feImage href="https://tracker.example/remote-svg.png"></feImage></filter></svg><svg><filter><feImage href="data:image/png;base64,AAAA"></feImage></filter></svg><svg><filter><feImage href="blob:https://app.example/svg-image"></feImage></filter></svg>',
+      ),
+      lore: urbanFantasyAiResponse()
+        .lore.replace(
+          "a punched blue transit token",
+          '![blob](blob:https://app.example/abc) <img src="https://tracker.example/symbol.png"> <link rel="stylesheet" href="https://tracker.example/lore.css">',
+        )
+        .replace(
+          "a municipal planner who reads gaps in city records.",
+          'a municipal planner who reads gaps in city records. <video src="https://tracker.example/clip.mp4"></video>',
+        ),
+      labels: ["![label](https://tracker.example/label.png)", "urban-fantasy"],
+    });
+
+    const output = parseUrbanFantasyFactionResponse(
+      JSON.stringify(response),
+      resolved,
+    );
+    const savedFields = [
+      output.title,
+      output.summary,
+      output.content,
+      output.lore,
+      ...output.labels,
+    ].join("\n");
+
+    expect(savedFields).not.toMatch(/https?:\/\/tracker\.example/);
+    expect(savedFields).not.toMatch(/data:image|blob:/);
+    expect(savedFields).not.toMatch(/<\/?(?:img|video|input)\b/i);
+    expect(savedFields).not.toMatch(/<svg\b|<feimage\b|<filter\b|href\s*=/i);
+    expect(savedFields).not.toMatch(/style\s*=|<style\b|@import|url\(/i);
+    expect(output.title).toContain("title");
+    expect(output.summary).toContain("summary");
+    expect(output.labels).not.toContain("label");
+  });
+
+  it("strips media syntax from campaign context in local results", () => {
+    const output = generateUrbanFantasyFactionLocal(
+      {
+        campaignContext:
+          'The west market district. ![map](https://tracker.example/map.png) <audio src="https://tracker.example/ambience.mp3"></audio> <span style="background-image:url(https://tracker.example/context.png)">market</span> <style>@import url(https://tracker.example/context.css);</style> <input type="image" src="https://tracker.example/context-input.png"> <svg><filter><feImage href="https://tracker.example/context-svg.png"></feImage></filter></svg>',
+      },
+      seededRng(25),
+    );
+
+    expect(output.content).toContain("The west market district.");
+    expect(output.content).not.toContain("tracker.example");
+    expect(output.content).not.toContain("<audio");
+    expect(output.content).not.toContain("<input");
+    expect(output.content).not.toMatch(/<svg\b|<feimage\b|<filter\b|href\s*=/i);
+    expect(output.content).not.toMatch(/style\s*=|<style\b|@import|url\(/i);
+  });
+
+  it("sanitizes custom options before resolving and generating local factions", () => {
+    const customInputs = [
+      "![custom option](https://attacker.example/remote.png)",
+      "![custom option](data:image/png;base64,AAAA)",
+      "![custom option](blob:https://attacker.example/image-id)",
+      '<img src="https://attacker.example/html.png" alt="custom option">',
+      '<input type="image" src="https://attacker.example/input.png">',
+      '<input type="image" src="data:image/png;base64,AAAA">',
+      '<input type="image" src="blob:https://attacker.example/image-id">',
+      '<svg><filter><feImage href="https://attacker.example/svg.png"></feImage></filter></svg>',
+      '<svg><filter><feImage href="data:image/png;base64,AAAA"></feImage></filter></svg>',
+      '<svg><filter><feImage href="blob:https://attacker.example/svg-image"></feImage></filter></svg>',
+      '<span style="background-image:url(https://attacker.example/style.png)">custom option</span>',
+      "<style>@import url(https://attacker.example/import.css);</style>custom option",
+      '<table title="a > b" background="https://attacker.example/table.png">custom option</table>',
+      '<svg><rect fill="url(https://attacker.example/paint.svg#paint)"/></svg>',
+    ];
+    const optionKeys = [
+      "mode",
+      "factionType",
+      "scope",
+      "moralPosture",
+    ] as const;
+    let seed = 30;
+
+    for (const optionKey of optionKeys) {
+      for (const customValue of customInputs) {
+        const options = { [optionKey]: customValue };
+        const resolved = resolveUrbanFantasyFaction(options, seededRng(seed));
+        const output = generateUrbanFantasyFactionLocal(
+          options,
+          seededRng(seed),
+        );
+        const savedContent = [
+          resolved.mode,
+          resolved.factionType,
+          resolved.scope,
+          resolved.moralPosture,
+          output.summary,
+          output.content,
+          output.lore,
+        ].join("\n");
+
+        expect(resolved[optionKey].trim()).toBeTruthy();
+        expect(savedContent).not.toMatch(
+          /https?:\/\/attacker\.example|data:image|blob:|<img\b|<input\b|<svg\b|<feimage\b|<filter\b|href\s*=|style\s*=|<style\b|@import|url\(/i,
+        );
+        seed += 1;
+      }
+    }
   });
 });

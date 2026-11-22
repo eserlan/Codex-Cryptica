@@ -6,6 +6,10 @@ import {
   type SessionEntity,
 } from "generator-engine";
 import {
+  trackSaveHandoffFailed,
+  type SaveHandoffFailedInput,
+} from "#lib/services/analytics/generator-save-tracking.js";
+import {
   buildGeneratorSavePayload,
   buildHubSaveDrafts,
   type GeneratorSaveLayout,
@@ -20,9 +24,30 @@ export interface GeneratorSaveFlowDependencies {
     relatedEntityCount: number;
   }) => void;
   countRelatedEntities: (content: string, references?: string[]) => number;
+  /** Defaults to `trackSaveHandoffFailed`. */
+  trackFailure?: (details: SaveHandoffFailedInput) => void;
 }
 
 const PENDING_IMPORT_KEY = "__codex_pending_import";
+
+// Store runs before track, so a throwing store yields the failure signal and
+// never entity_saved; the original error is always the one rethrown.
+function stagePendingImport(
+  value: unknown,
+  failure: SaveHandoffFailedInput,
+  dependencies: GeneratorSaveFlowDependencies,
+): void {
+  try {
+    dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(value));
+  } catch (error) {
+    try {
+      (dependencies.trackFailure ?? trackSaveHandoffFailed)(failure);
+    } catch {
+      // Analytics must never mask the storage error.
+    }
+    throw error;
+  }
+}
 
 /** Prepare and persist one generated result, returning its outbound URL query. */
 export async function saveGeneratorOutput(
@@ -47,7 +72,11 @@ export async function saveGeneratorOutput(
     // The public page hands over the business and its people; outside parties
     // stay in the text (no vault here to match them against).
     const drafts = buildBusinessImportDrafts(data.business);
-    dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(drafts));
+    stagePendingImport(
+      drafts,
+      { generatorType, isHubBatch: true, itemCount: drafts.length },
+      dependencies,
+    );
     dependencies.track({
       generatorType,
       isHubBatch: true,
@@ -64,7 +93,11 @@ export async function saveGeneratorOutput(
       mapImageDataUrl,
       status: data.status,
     });
-    dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(drafts));
+    stagePendingImport(
+      drafts,
+      { generatorType, isHubBatch: true, itemCount: drafts.length },
+      dependencies,
+    );
     dependencies.track({
       generatorType,
       isHubBatch: true,
@@ -83,7 +116,11 @@ export async function saveGeneratorOutput(
   }
 
   const payload = buildGeneratorSavePayload(data, layout, mapImageDataUrl);
-  dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(payload));
+  stagePendingImport(
+    payload,
+    { generatorType, isHubBatch: false, itemCount: 1 },
+    dependencies,
+  );
   dependencies.track({
     generatorType,
     isHubBatch: false,
@@ -105,7 +142,11 @@ export function saveSessionHubEntities(
   dependencies: GeneratorSaveFlowDependencies,
 ): string {
   const drafts = buildHubSaveDrafts(entities, provenance, allEntities);
-  dependencies.store(PENDING_IMPORT_KEY, JSON.stringify(drafts));
+  stagePendingImport(
+    drafts,
+    { generatorType, isHubBatch: true, itemCount: drafts.length },
+    dependencies,
+  );
   dependencies.track({
     generatorType,
     isHubBatch: true,

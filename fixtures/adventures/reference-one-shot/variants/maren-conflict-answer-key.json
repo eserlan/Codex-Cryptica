@@ -1,0 +1,23 @@
+{
+  "conflicts": [
+    {
+      "id": "maren-motivation",
+      "claims": [
+        {
+          "text": "Maren wants the mill running again to pay off her late mother's debt before the bailiff comes.",
+          "distinguishingTerm": "running",
+          "sourceRef": {
+            "anchor": "ros-npc-maren"
+          }
+        },
+        {
+          "text": "Maren wants the mill wrecked so that her late mother's debt dies with it.",
+          "distinguishingTerm": "wrecked",
+          "sourceRef": {
+            "anchor": "ros-npc-maren"
+          }
+        }
+      ]
+    }
+  ]
+}

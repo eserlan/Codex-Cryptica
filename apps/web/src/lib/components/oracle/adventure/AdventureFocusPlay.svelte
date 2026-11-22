@@ -1,7 +1,8 @@
 <!-- fallow-ignore-file complexity -- Existing full-screen play layout; discovery save wiring is covered by focused tests. -->
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
-  import { onMount, tick } from "svelte";
+  import { tick } from "svelte";
+  import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
   import { KeyboardInset } from "#lib/services/help-assistant/keyboard-inset.svelte.js";
   import { bodyPortal, containTab } from "./adventure-phone-surface";
   import {
@@ -11,7 +12,10 @@
   import { batchFilterPromotableFacts } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
   import { extractActiveHeardScenarios } from "#lib/stores/oracle/adventure-scenarios.js";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
+  import type {
+    AdventureListResult,
+    AdventureSessionRepository,
+  } from "#lib/services/adventure/adventure-session-repository.js";
   import {
     formatWorldElapsedMinutes,
     type ProvisionalFact,
@@ -19,6 +23,8 @@
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
+  import AdventurePackageAudit from "./AdventurePackageAudit.svelte";
+  import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
   import AdventureManagementMenu from "./AdventureManagementMenu.svelte";
   import AdventurePlay from "./AdventurePlay.svelte";
   import AdventureComposer from "./AdventureComposer.svelte";
@@ -72,6 +78,25 @@
     onResume: (sessionId: string) => Promise<void>;
     onResumeArchived: (sessionId: string) => Promise<void>;
   } = $props();
+
+  // The archive and inline management controls mount together in the phone
+  // sheet. Share their in-flight full listing so opening the sheet reads each
+  // adventure file only once.
+  let archiveListRequest: {
+    vaultId: string;
+    promise: Promise<AdventureListResult>;
+  } | null = null;
+  function listAdventureSessions(requestedVaultId: string, forceFresh = false) {
+    if (!forceFresh && archiveListRequest?.vaultId === requestedVaultId)
+      return archiveListRequest.promise;
+    const promise = repository.list(requestedVaultId);
+    archiveListRequest = { vaultId: requestedVaultId, promise };
+    return promise;
+  }
+
+  function invalidateAdventureSessions(): void {
+    archiveListRequest = null;
+  }
 
   // Matches the surface's own `sm:` breakpoint for full-screen phone play.
   let phone = $state(false);
@@ -178,8 +203,13 @@
     }),
   );
   const pendingRollId = $derived(manager.session?.pendingRoll?.id ?? null);
+  const oocEventVersion = $derived(
+    (manager.oocExchanges ?? manager.session?.oocExchanges ?? [])
+      .map((item) => `${item.id}:${item.status}`)
+      .join(","),
+  );
   const visibleEventVersion = $derived(
-    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}`,
+    `${transcriptLength}:${manager.phase}:${pendingRollId ?? ""}:${manager.streamedNarration?.length ?? 0}:${oocEventVersion}:${manager.oocGenerating ? "1" : "0"}`,
   );
 
   type AdventurePortraitProp = {
@@ -192,7 +222,9 @@
     loadFull?: (signal: AbortSignal) => Promise<ArtworkBlobHandle | null>;
   };
 
-  const artworkFlagEnabled = import.meta.env.VITE_ADVENTURE_ARTWORK === "true";
+  const artworkFlagEnabled = $derived(
+    featureFlags.isEnabled("adventureArtwork"),
+  );
   let artworkEnabled = $state(artworkPreferences.enabled);
   let artworkCatalogue = $state<readonly ArtworkAsset[]>([]);
   let artworkDisplay = $state<ArtworkDisplayService>();
@@ -205,8 +237,12 @@
     });
   });
 
-  onMount(() => {
-    if (!artworkFlagEnabled) return;
+  $effect(() => {
+    if (!artworkFlagEnabled) {
+      artworkDisplay = undefined;
+      artworkCatalogue = [];
+      return;
+    }
     let active = true;
     let resources: ReturnType<typeof createDisplayService> | undefined;
     try {
@@ -328,6 +364,7 @@
 
   function closeTools(): void {
     utilitiesOpen = false;
+    archiveListRequest = null;
     toolsButton?.focus();
   }
 
@@ -343,6 +380,7 @@
     if (!utilitiesOpen || event.key !== "Escape" || event.defaultPrevented) {
       return;
     }
+    // ui-check-ignore: The full-screen phone surface already traps Tab with containTab.
     if (focusElement?.querySelector('[role="dialog"][aria-modal="true"]')) {
       return;
     }
@@ -379,16 +417,46 @@
 <svelte:document bind:fullscreenElement />
 <svelte:window onkeydown={handleWindowKeydown} />
 
+{#snippet adventureControls(inToolsSheet: boolean)}
+  <AdventureProvisionalFacts
+    variant={inToolsSheet ? "sheet" : "header"}
+    overlayHost={inToolsSheet ? focusElement : undefined}
+    facts={manager.session?.provisionalFacts ?? []}
+    dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
+    onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
+    canDismiss={!manager.readOnly &&
+      manager.phase !== "generating" &&
+      !manager.session?.pendingRoll}
+    {existingTitles}
+    onAdd={onAddProvisionalFact}
+    onAddAll={onAddAllProvisionalFacts}
+  />
+  <AdventureSituationsDialog
+    variant={inToolsSheet ? "sheet" : "header"}
+    overlayHost={inToolsSheet ? focusElement : undefined}
+    {manager}
+    onAction={inToolsSheet ? closeTools : undefined}
+  />
+{/snippet}
+
 {#snippet utilities()}
-  {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+  {#if artworkFlagEnabled}
     <ArtworkSettings preferences={artworkPreferences} />
     <AdventureArtworkCueDetails summary={cueSummary} />
   {/if}
+  <AdventurePackageProgress {manager} />
+  <AdventurePackageAudit {manager} />
   <AdventureSituationSettings {manager} onAction={closeTools} />
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />
-  <AdventureArchive {repository} {vaultId} {onResume} {onResumeArchived} />
+  <AdventureArchive
+    {repository}
+    {vaultId}
+    {onResume}
+    {onResumeArchived}
+    listEntries={listAdventureSessions}
+  />
 {/snippet}
 
 <section
@@ -410,7 +478,7 @@
     <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       <button
         type="button"
-        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-10 sm:min-w-10"
+        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-10 sm:min-w-10"
         onclick={() => void manager.close()}
         title="Leave adventure (saves automatically)"
         aria-label="Leave adventure"
@@ -431,7 +499,7 @@
           class={[
             "flex items-center gap-1.5 truncate text-xs font-medium sm:block sm:text-sm sm:font-normal",
             phone && headerStatus.tone === "danger"
-              ? "text-theme-danger"
+              ? "text-theme-text"
               : "text-theme-text",
           ]}
           data-testid="adventure-header-status"
@@ -476,23 +544,12 @@
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       {#if !phone}
         <div class="hidden sm:contents">
-          <AdventureProvisionalFacts
-            facts={manager.session?.provisionalFacts ?? []}
-            dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
-            onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
-            canDismiss={!manager.readOnly &&
-              manager.phase !== "generating" &&
-              !manager.session?.pendingRoll}
-            {existingTitles}
-            onAdd={onAddProvisionalFact}
-            onAddAll={onAddAllProvisionalFacts}
-          />
-          <AdventureSituationsDialog {manager} />
+          {@render adventureControls(false)}
         </div>
       {/if}
       <button
         bind:this={toolsButton}
-        class="relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-12 sm:px-3"
+        class="relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text px-2 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-12 sm:px-3"
         type="button"
         aria-label={phone ? phoneToolsSummary.ariaLabel : "Adventure tools"}
         title={phone ? phoneToolsSummary.ariaLabel : "Adventure tools"}
@@ -519,7 +576,7 @@
             class={[
               "pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none tabular-nums",
               phoneToolsSummary.badgeTone === "danger"
-                ? "border border-theme-danger bg-theme-surface text-theme-danger"
+                ? "border border-theme-border-interactive bg-theme-surface text-theme-text"
                 : "bg-theme-primary text-theme-on-primary",
             ]}
           >
@@ -529,14 +586,14 @@
           <span
             aria-hidden="true"
             data-testid="adventure-tools-urgent-dot"
-            class="pointer-events-none absolute right-1 top-1 h-2 w-2 rounded-full bg-theme-danger"
+            class="pointer-events-none absolute right-1 top-1 h-2 w-2 rounded-full border border-theme-text bg-theme-danger"
           ></span>
         {/if}
       </button>
       {#if !phone}
         <div class="hidden sm:contents">
           <button
-            class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
+            class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-text px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
             type="button"
             aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
             aria-pressed={isFullscreen}
@@ -557,7 +614,9 @@
             {manager}
             {repository}
             {vaultId}
+            listEntries={listAdventureSessions}
             onSwitch={onResume}
+            onAction={invalidateAdventureSessions}
           />
         </div>
       {/if}
@@ -589,11 +648,11 @@
       <aside
         aria-label="Current scene"
         data-testid="adventure-artwork-panel"
-        class="hidden @4xl:block @4xl:w-80 @4xl:shrink-0 @4xl:overflow-y-auto @4xl:border-r @4xl:border-theme-border @4xl:bg-theme-surface/40 @4xl:p-4 @6xl:w-96"
+        class="adventure-scrollbar hidden @4xl:block @4xl:w-80 @4xl:shrink-0 @4xl:overflow-y-auto @4xl:border-r @4xl:border-theme-border @4xl:bg-theme-surface/40 @4xl:p-4 @6xl:w-96"
       >
         <AdventureStateSummary {manager} variant="panel">
           {#snippet media()}
-            {#if import.meta.env.VITE_ADVENTURE_ARTWORK === "true"}
+            {#if artworkFlagEnabled}
               <AdventureArtworkFeature
                 session={manager.session}
                 entities={vault.entities}
@@ -616,7 +675,7 @@
     >
       <!-- fallow-ignore-next-line css-broken-reference -->
       <main
-        class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
+        class="adventure-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-3 sm:p-4 @4xl:p-6"
         bind:this={playViewport}
         data-testid="adventure-play-viewport"
       >
@@ -659,7 +718,7 @@
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <aside
       bind:this={utilitiesSheet}
-      class="absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
+      class="adventure-scrollbar absolute inset-x-0 bottom-0 z-30 max-h-[80%] overflow-y-auto rounded-t-xl border-t border-theme-border bg-theme-surface p-4 shadow-2xl"
       id="adventure-utilities"
       aria-label="Adventure tools"
       onkeydown={(event) => {
@@ -683,7 +742,7 @@
         <button
           bind:this={toolsCloseButton}
           type="button"
-          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           aria-label="Close adventure tools"
           onclick={closeTools}
         >
@@ -695,27 +754,9 @@
           class="mb-4 space-y-2 border-b border-theme-border pb-4"
           data-testid="adventure-tools-mobile-controls"
         >
-          <AdventureProvisionalFacts
-            variant="sheet"
-            overlayHost={focusElement}
-            facts={manager.session?.provisionalFacts ?? []}
-            dismissedIds={manager.session?.dismissedProvisionalFactIds ?? []}
-            onDismiss={(ids) => manager.dismissDiscoveries(ids).then(() => {})}
-            canDismiss={!manager.readOnly &&
-              manager.phase !== "generating" &&
-              !manager.session?.pendingRoll}
-            {existingTitles}
-            onAdd={onAddProvisionalFact}
-            onAddAll={onAddAllProvisionalFacts}
-          />
-          <AdventureSituationsDialog
-            variant="sheet"
-            overlayHost={focusElement}
-            {manager}
-            onAction={closeTools}
-          />
+          {@render adventureControls(true)}
           <button
-            class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-text px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
             type="button"
             aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
             aria-pressed={isFullscreen}
@@ -740,6 +781,7 @@
             {manager}
             {repository}
             {vaultId}
+            listEntries={listAdventureSessions}
             onSwitch={onResume}
             onAction={closeTools}
           />
@@ -749,3 +791,57 @@
     </aside>
   {/if}
 </section>
+
+<style>
+  /* Native, theme-aware scrollbars for independently scrolling Adventure panes.
+     Keep this scoped to play rather than overriding scrollbars across the app. */
+  .adventure-scrollbar {
+    --adventure-scrollbar-track: var(--color-bg-primary);
+    --adventure-scrollbar-thumb: color-mix(
+      in srgb,
+      var(--color-accent-primary) 80%,
+      var(--color-bg-surface)
+    );
+    --adventure-scrollbar-thumb-hover: color-mix(
+      in srgb,
+      var(--color-accent-primary) 90%,
+      var(--color-bg-surface)
+    );
+
+    scrollbar-width: thin;
+    scrollbar-color: var(--adventure-scrollbar-thumb)
+      var(--adventure-scrollbar-track);
+  }
+
+  /* Fallback for engines without the standard scrollbar properties. */
+  .adventure-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar-track {
+    background: var(--adventure-scrollbar-track);
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--adventure-scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  .adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--adventure-scrollbar-thumb-hover);
+  }
+
+  @media (forced-colors: active) {
+    .adventure-scrollbar {
+      scrollbar-color: auto;
+      scrollbar-width: auto;
+    }
+
+    .adventure-scrollbar::-webkit-scrollbar,
+    .adventure-scrollbar::-webkit-scrollbar-track,
+    .adventure-scrollbar::-webkit-scrollbar-thumb,
+    .adventure-scrollbar::-webkit-scrollbar-thumb:hover {
+      all: revert;
+    }
+  }
+</style>

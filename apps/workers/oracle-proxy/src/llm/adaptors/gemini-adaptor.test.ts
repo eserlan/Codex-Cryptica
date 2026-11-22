@@ -183,6 +183,58 @@ describe("forwardInteractionToGemini (legacy Interactions API parity)", () => {
     expect(sent.system_instruction).toBe("Be terse.");
   });
 
+  it("passes xhigh to Gemini 4 Hydrogen and caps older Gemini models at high", async () => {
+    const fetcher = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ id: "v1_x", steps: [] }), {
+          status: 200,
+        }),
+    );
+
+    await forwardInteractionToGemini(
+      { model: "gemini-4-hydrogen", input: "hi", reasoning_effort: "low" },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+    await forwardInteractionToGemini(
+      { model: "gemini-4-hydrogen", input: "hi", reasoning_effort: "xhigh" },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+    await forwardInteractionToGemini(
+      { model: "gemini-3.5-flash-lite", input: "hi", reasoning_effort: "xhigh" },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+    await forwardInteractionToGemini(
+      { model: "gemini-4-hydrogen", input: "hi" },
+      env,
+      fetcher as unknown as typeof fetch,
+    );
+
+    const lowBody = JSON.parse(
+      (fetcher.mock.calls[0] as unknown as [string, RequestInit])[1]
+        .body as string,
+    );
+    const xhighBody = JSON.parse(
+      (fetcher.mock.calls[1] as unknown as [string, RequestInit])[1]
+        .body as string,
+    );
+    const olderBody = JSON.parse(
+      (fetcher.mock.calls[2] as unknown as [string, RequestInit])[1]
+        .body as string,
+    );
+    const omittedBody = JSON.parse(
+      (fetcher.mock.calls[3] as unknown as [string, RequestInit])[1]
+        .body as string,
+    );
+
+    expect(lowBody.generation_config).toEqual({ thinking_level: "low" });
+    expect(xhighBody.generation_config).toEqual({ thinking_level: "xhigh" });
+    expect(olderBody.generation_config).toEqual({ thinking_level: "high" });
+    expect(omittedBody.generation_config).toBeUndefined();
+  });
+
   it("reports a transport error without throwing", async () => {
     const fetcher = vi.fn(async () => {
       throw new Error("network down");

@@ -130,6 +130,23 @@ describe("deriveAdventureHeaderStatus", () => {
       }).phoneLabel,
     ).toBe("Resolving roll");
   });
+
+  it("uses safe, actionable copy when the pinned package is unavailable", () => {
+    expect(
+      deriveAdventureHeaderStatus({
+        readOnly: true,
+        phase: "package-unavailable",
+        pendingRoll: null,
+      }),
+    ).toEqual({
+      phoneLabel: "Package unavailable",
+      desktopLabel: "Package unavailable",
+      tone: "danger",
+      icon: "icon-[lucide--alert-circle]",
+      urgent: true,
+      busy: false,
+    });
+  });
 });
 
 describe("derivePhoneToolsSummary", () => {
@@ -168,7 +185,7 @@ describe("derivePhoneToolsSummary", () => {
     );
   });
 
-  it("returns plain label and no badge when counts are zero in normal state", () => {
+  it("announces the empty state and omits the badge when counts are zero", () => {
     expect(
       derivePhoneToolsSummary({
         discoveriesCount: 0,
@@ -180,7 +197,8 @@ describe("derivePhoneToolsSummary", () => {
       badgeCount: 0,
       badgeText: null,
       badgeTone: "neutral",
-      liveAnnouncement: "",
+      liveAnnouncement:
+        "No pending discoveries or active situations in Adventure tools.",
     });
   });
 

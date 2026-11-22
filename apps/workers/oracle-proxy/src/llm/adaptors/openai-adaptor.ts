@@ -360,7 +360,15 @@ export function buildOpenAiInteractionPayload(
     // freeform-generation/structured-generation level as a reasonable
     // single default; revisit independently if this path proves too slow
     // or too shallow once it's actually measured.
-    reasoning: { effort: "low" },
+    reasoning: {
+      effort:
+        body.reasoning_effort === "medium" ||
+        body.reasoning_effort === "high" ||
+        body.reasoning_effort === "xhigh" ||
+        body.reasoning_effort === "low"
+          ? body.reasoning_effort
+          : "low",
+    },
   };
   if (body.previous_interaction_id) {
     payload.previous_response_id = body.previous_interaction_id;

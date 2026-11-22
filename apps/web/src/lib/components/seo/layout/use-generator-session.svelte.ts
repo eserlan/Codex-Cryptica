@@ -58,6 +58,7 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
   let currentEntityId = $state<string | null>(null);
 
   let currentPagePath = $state<string | undefined>(undefined);
+  let generationRunId = 0;
   let appliedInitialDraft: GeneratorOutput | null | undefined;
   let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
 
@@ -69,6 +70,10 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     const initialDraft = inputs.getInitialDraft();
     const initialIsUserGenerated = inputs.getInitialDraftIsUserGenerated();
     if (canonicalPath !== currentPagePath) {
+      generationRunId += 1;
+      isGenerating = false;
+      hasStreamedPreview = false;
+      errorMessage = null;
       currentPagePath = canonicalPath;
       userGenerated = initialIsUserGenerated;
       userGenerationSucceeded = initialIsUserGenerated;
@@ -161,8 +166,23 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     );
   }
 
+  function generateOutput(
+    useAI: boolean,
+    onPreview: (preview: GeneratorOutput) => void,
+  ) {
+    if (useAI && inputs.getSupportsStreaming()) {
+      return inputs.generate({ useAI, onPreview });
+    }
+    return inputs.generate({ useAI });
+  }
+
   async function handleGenerate(options: { forceAI?: boolean } = {}) {
     if (isGenerating) return;
+    const requestId = ++generationRunId;
+    const requestPath = inputs.getCanonicalPath();
+    const isCurrentRequest = () =>
+      requestId === generationRunId &&
+      requestPath === inputs.getCanonicalPath();
     userGenerated = true;
     userGenerationSucceeded = false;
     isGenerating = true;
@@ -177,27 +197,42 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     const useAINow = shouldUseAI(options.forceAI);
     try {
       const onPreview = (preview: GeneratorOutput) => {
+        if (!isCurrentRequest()) return;
         generatedData = preview;
         isExampleDraft = false;
         hasStreamedPreview = true;
       };
-      generatedData =
-        useAINow && inputs.getSupportsStreaming()
-          ? await inputs.generate({ useAI: useAINow, onPreview })
-          : await inputs.generate({ useAI: useAINow });
+      let result: GeneratorOutput;
+      try {
+        result = await generateOutput(useAINow, onPreview);
+      } catch (err: any) {
+        if (isCurrentRequest()) {
+          // Keep analytics content-free; the displayed error can contain
+          // provider or user-specific details and must never be sent.
+          trackEvent("generator_failed", { generator_type: generatorType });
+          errorMessage = "Failed to generate: " + (err.message || err);
+        }
+        return;
+      }
+
+      if (!isCurrentRequest()) return;
+      generatedData = result;
       userGenerationSucceeded = true;
       isExampleDraft = false;
       // #1796: only on the success path — a caught error below means the
       // generation did not complete, so it must not count as one.
       trackEvent("generator_completed", { generator_type: generatorType });
 
-      if (generatedData) recordCurrentOutputInHub(generatedData);
-
-      await scrollToOutputIfStacked();
-    } catch (err: any) {
-      errorMessage = "Failed to generate: " + (err.message || err);
+      try {
+        if (result) recordCurrentOutputInHub(result);
+        await scrollToOutputIfStacked();
+      } catch (err) {
+        // Generation has already succeeded. Hub bookkeeping or scrolling
+        // failures must not turn that run into a generation failure.
+        console.warn("Failed to finish generated-result bookkeeping:", err);
+      }
     } finally {
-      isGenerating = false;
+      if (isCurrentRequest()) isGenerating = false;
     }
   }
 

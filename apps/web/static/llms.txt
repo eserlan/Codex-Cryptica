@@ -150,6 +150,7 @@ The pages above are informational landing pages; these are the canonical, no-log
 - [Vampire Clan Generator](https://codexcryptica.com/generators/vampire-clan): Create undead factions with bloodlines, feeding habits, dark agendas, and table-ready hooks. Works without login, then imports into your local Codex vault.
 - [Cyberpunk Nomad Clan Generator](https://codexcryptica.com/generators/nomad-clan): Create road-hardened nomad clans with convoy culture, territory routes, internal tensions, and campaign-ready hooks. Works without login, then imports into your local Codex vault.
 - [Dark Fantasy Faction Generator](https://codexcryptica.com/generators/dark-fantasy-faction): Create fallen orders, cursed noble houses, plague cults, witch-hunters, corpse guilds, and desperate powers with agendas, secrets, NPCs, and table-ready hooks. Works without login, then imports into your local Codex vault.
+- [Urban Fantasy Faction Generator](https://codexcryptica.com/generators/urban-fantasy-faction): Build supernatural city factions, not cities: mage cabals, monster courts, paranormal agencies, occult crews and modern institutions with agendas, NPCs and playable conflicts. Generate locally without an account, then save a faction draft to your browser-local Codex.
 <!-- LLMS-GENERATORS:END -->
 
 ## Answer Pages

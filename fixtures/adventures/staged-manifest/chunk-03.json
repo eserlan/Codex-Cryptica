@@ -1,0 +1,46 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "long-sample",
+  "title": "Long Sample",
+  "version": "1.0.0",
+  "premise": {
+    "background": "A border town and a ridge tower.",
+    "hook": "Find out why the beacon went dark."
+  },
+  "source": {
+    "title": "Long Sample",
+    "license": "CC0-1.0"
+  },
+  "locations": [],
+  "actors": [
+    {
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "id": "deep-actor-warden",
+      "name": "The Warden",
+      "summary": "The keeper who hid the oil.",
+      "locationId": "town-loc-square",
+      "sourceRef": {
+        "page": 85
+      }
+    }
+  ],
+  "factions": [],
+  "scenes": [],
+  "encounters": [],
+  "clues": [],
+  "rumours": [],
+  "items": [],
+  "secrets": [],
+  "endings": [
+    {
+      "id": "deep-ending-relit",
+      "description": "The beacon is relit.",
+      "epistemicStatus": "explicit",
+      "sourceRef": {
+        "page": 95
+      }
+    }
+  ],
+  "unresolved": []
+}

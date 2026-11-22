@@ -259,13 +259,6 @@
   }
 
   onMount(() => {
-    // Warm up the capability session on generator pages so the invisible
-    // challenge solves in the background while the user reads the page/options,
-    // avoiding on-click freezes or latency.
-    void import("#lib/services/ai/session-bootstrap.js").then((m) =>
-      m.initAiSessionEager(),
-    );
-
     return mountGeneratorPage({
       slug,
       hubTheme: initialHubTheme,
@@ -395,12 +388,13 @@
       onReplace={replaceOutput}
     />
   {/snippet}
-  {#snippet formFields(trigger)}
+  {#snippet formFields(trigger, isBusy)}
     <GeneratorPageFormFields
       {slug}
       bind:activeTheme
       {urlHubTheme}
       {trigger}
+      {isBusy}
       bind:npc={forms.npc}
       bind:settlement={forms.settlement}
       bind:magicItem={forms.magicItem}
@@ -424,6 +418,7 @@
       bind:vampireClan={forms.vampireClan}
       bind:nomadClan={forms.nomadClan}
       bind:darkFaction={forms.darkFaction}
+      bind:urbanFantasyFaction={forms.urbanFantasyFaction}
       bind:names={forms.names}
       bind:dndNpc={forms.dndNpc}
       bind:pantheon={forms.pantheon}

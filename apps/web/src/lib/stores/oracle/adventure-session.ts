@@ -3,7 +3,10 @@ import {
   applyRollRequest,
   seedPlaces,
 } from "@codex/adventure-engine";
-import type { CommitMetadata } from "@codex/adventure-engine";
+import type {
+  CommitMetadata,
+  HiddenLeakageDiagnostic,
+} from "@codex/adventure-engine";
 import { diceParser } from "dice-engine";
 import type {
   AdventureSession,
@@ -12,6 +15,32 @@ import type {
   ScenarioState,
   WorldEntryContext,
 } from "@codex/adventure-engine";
+
+function copySourcePackageRef(
+  ref: AdventureSourcePackageRef,
+): AdventureSourcePackageRef {
+  return {
+    packageId: ref.packageId,
+    version: ref.version,
+    formatVersion: ref.formatVersion,
+    hash: ref.hash,
+  };
+}
+
+/** Deep-copies plain JSON-compatible data while stripping Svelte reactive Proxies. */
+function plainClone<T>(value: T): T {
+  if (Array.isArray(value)) {
+    return value.map((item) => plainClone(item)) as unknown as T;
+  }
+  if (value !== null && typeof value === "object") {
+    const copy: Record<string, unknown> = {};
+    for (const [key, entry] of Object.entries(value)) {
+      if (entry !== undefined) copy[key] = plainClone(entry);
+    }
+    return copy as T;
+  }
+  return value;
+}
 
 /** An opening is committed once it has a turn or a pending opening roll. */
 export function hasCommittedOpening(
@@ -46,7 +75,7 @@ export function initialSession(input: {
     premise: input.premise,
     sourceRecords: input.sourceRecords ?? [],
     ...(input.sourcePackage
-      ? { sourcePackage: structuredClone(input.sourcePackage) }
+      ? { sourcePackage: copySourcePackageRef(input.sourcePackage) }
       : {}),
     ...(input.scenarioSeed
       ? {
@@ -54,7 +83,7 @@ export function initialSession(input: {
             version: 1 as const,
             items: [
               {
-                ...structuredClone(input.scenarioSeed),
+                ...plainClone(input.scenarioSeed),
                 knowledge: "heard" as const,
                 anchorRefs: [],
                 revealedSecretIds: [],
@@ -71,9 +100,7 @@ export function initialSession(input: {
           },
         }
       : {}),
-    ...(input.worldEntry
-      ? { worldEntry: structuredClone(input.worldEntry) }
-      : {}),
+    ...(input.worldEntry ? { worldEntry: plainClone(input.worldEntry) } : {}),
     visibleState: initialVisibleState(input.worldEntry, input.idGenerator),
     hiddenState: initialHiddenState(input.scenarioSeed, input.idGenerator),
     provisionalFacts: [],
@@ -96,17 +123,32 @@ export function validateRollExpression(proposal: {
   }
 }
 
+/** Proposal validation rejection carrying optional opaque leakage diagnostics. */
+export class AdventureProposalError extends Error {
+  constructor(
+    message: string,
+    readonly diagnostic?: HiddenLeakageDiagnostic,
+  ) {
+    super(message);
+    this.name = "AdventureProposalError";
+  }
+}
+
 /** All reducers share this discriminated success/error contract. */
 export function acceptedSession(
   result: {
     ok: boolean;
     value?: AdventureSession;
-    errors?: { message: string }[];
+    errors?: { message: string; diagnostic?: HiddenLeakageDiagnostic }[];
   },
   fallback: string,
 ): AdventureSession {
   if (result.ok && result.value) return result.value;
-  throw new Error(result.errors?.[0]?.message ?? fallback);
+  const first = result.errors?.[0];
+  throw new AdventureProposalError(
+    first?.message ?? fallback,
+    first?.diagnostic,
+  );
 }
 
 export function proposedSession(

@@ -30,6 +30,7 @@ class CodexFactoryTests(unittest.TestCase):
             (repo_root / "factory/codex-routing.json").read_text()
         )
         (factory / "config.json").write_text(json.dumps({
+            "concurrency": 2,
             "ports": {"base": 5300, "step": 10},
             "labels": {"needs_human": "factory:needs-human"},
         }))
@@ -51,6 +52,18 @@ class CodexFactoryTests(unittest.TestCase):
             (roles / role.name).write_text(role.read_text())
         self.job = dict(id="001-test", worktree=str(self.worktree), branch="factory/001-test",
                         base="staging", issue=12, round=1, round_limit=3, stage="build", pr=None)
+
+    def test_runner_slots_allow_distinct_jobs_and_release_after_exit(self):
+        with module.runner_slot(self.runner, 12):
+            with self.assertRaisesRegex(module.RunnerBusy, "Issue #12"):
+                with module.runner_slot(self.runner, 12):
+                    self.fail("duplicate runner acquired a slot")
+            with module.runner_slot(self.runner, 13):
+                with self.assertRaisesRegex(module.RunnerBusy, "All 2"):
+                    with module.runner_slot(self.runner, 14):
+                        self.fail("runner exceeded capacity")
+            with module.runner_slot(self.runner, 14):
+                pass
 
     def result(self, code=0):
         events = [{"type": "thread.started", "thread_id": "session-1"},
@@ -164,7 +177,7 @@ class CodexFactoryTests(unittest.TestCase):
              patch.object(module, "run_sandboxed", return_value=subprocess.CompletedProcess([], 0, "", "")) as sandbox:
             self.runner.prepare_dependencies(self.job)
 
-        cache = self.root / ".worktrees/.codex-bun-cache"
+        cache = self.folder / "codex/bun-cache"
         bootstrap.assert_called_once_with(self.job, cache)
         args, kwargs = sandbox.call_args.args[0], sandbox.call_args.kwargs
         self.assertEqual(args[:3], ["bun", "install", "--frozen-lockfile"])
@@ -175,6 +188,7 @@ class CodexFactoryTests(unittest.TestCase):
         self.assertEqual(kwargs["cwd"], self.worktree.resolve())
         self.assertEqual(kwargs["writable_roots"], [self.worktree.resolve()])
         self.assertEqual(kwargs["bun_cache_dir"], cache)
+        self.assertTrue(kwargs["copy_bun_cache"])
         self.assertNotEqual(kwargs["bun_cache_dir"], "/home/user/.bun/install/cache")
 
     @unittest.skipUnless(module.shutil.which("codex") and module.shutil.which("bun"),
@@ -182,7 +196,7 @@ class CodexFactoryTests(unittest.TestCase):
     def test_fresh_worktree_dependencies_install_inside_sandbox(self):
         self.create_registry_dependency_project()
         self.assertFalse((self.worktree / "node_modules").exists())
-        cache = self.root / ".worktrees/.codex-bun-cache"
+        cache = self.folder / "codex/bun-cache"
         bootstrapped = {}
         original_bootstrap = self.runner.bootstrap_dependency_cache
 
@@ -210,8 +224,8 @@ class CodexFactoryTests(unittest.TestCase):
                          "requires local Bun and Codex sandbox CLIs")
     def test_missing_cached_registry_package_fails_without_network(self):
         self.create_registry_dependency_project()
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         with patch.object(self.runner, "bootstrap_dependency_cache"):
             with self.assertRaisesRegex(RuntimeError, "Sandboxed Bun dependency install failed"):
                 self.runner.prepare_dependencies(self.job)
@@ -230,8 +244,8 @@ class CodexFactoryTests(unittest.TestCase):
         workspace = self.worktree / "packages/demo"
         workspace.mkdir(parents=True)
         (workspace / "package.json").write_text(json.dumps({"name": "demo", "version": "1.0.0"}))
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         captured = {}
 
         def fake_run(args, cwd=None, env=None, **kwargs):
@@ -260,8 +274,8 @@ class CodexFactoryTests(unittest.TestCase):
         self.assertNotEqual(captured["env"]["BUN_INSTALL_CACHE_DIR"], "/home/user/.bun/install/cache")
 
     def test_cache_bootstrap_bounds_workspace_manifest_bytes(self):
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         package = self.worktree / "package.json"
 
         package.write_text(json.dumps({"workspaces": ["packages/*"]}))
@@ -288,8 +302,8 @@ class CodexFactoryTests(unittest.TestCase):
     def test_cache_bootstrap_rejects_external_lockfile_sources(self):
         (self.worktree / "package.json").write_text(json.dumps({"workspaces": []}))
         (self.worktree / "bun.lock").write_text('{"source":"https://attacker.example/package.tgz"}\n')
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         with patch.object(module.subprocess, "run") as run:
             with self.assertRaisesRegex(RuntimeError, "Only HTTPS packages from registry.npmjs.org"):
                 self.runner.bootstrap_dependency_cache(self.job, cache)
@@ -297,8 +311,8 @@ class CodexFactoryTests(unittest.TestCase):
 
     def test_cache_bootstrap_decodes_and_rejects_escaped_external_sources(self):
         (self.worktree / "package.json").write_text(json.dumps({"workspaces": []}))
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         invalid_sources = (
             "https://attacker.example/package.tgz",
             "ftp://attacker.example/package.tgz",
@@ -319,8 +333,8 @@ class CodexFactoryTests(unittest.TestCase):
         (self.worktree / "bun.lock").write_text(
             '/*"*/\n{\n  "source": "https:\\/\\/attacker.example/package.tgz",\n}\n'
         )
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         with patch.object(module.subprocess, "run") as run:
             with self.assertRaisesRegex(RuntimeError, "Only HTTPS packages from registry.npmjs.org"):
                 self.runner.bootstrap_dependency_cache(self.job, cache)
@@ -334,16 +348,16 @@ class CodexFactoryTests(unittest.TestCase):
         (self.worktree / "bun.lock").write_text(
             json.dumps({"packages": {"is-number": [f"is-number@{source}"]}}) + "\n"
         )
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         expected = subprocess.CompletedProcess([], 0, "cache ready", "")
         with patch.object(module.subprocess, "run", return_value=expected) as run:
             self.runner.bootstrap_dependency_cache(self.job, cache)
         self.assertEqual(run.call_count, 1)
 
     def test_cache_bootstrap_rejects_external_manifest_sources(self):
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
         (self.worktree / "bun.lock").write_text('{"lockfileVersion":1}\n')
         for source in ("https://attacker.example/package.tgz", "workspace:*"):
             with self.subTest(source=source):
@@ -581,14 +595,24 @@ class CodexFactoryTests(unittest.TestCase):
         )
         sandbox = importlib.util.module_from_spec(sandbox_spec)
         sandbox_spec.loader.exec_module(sandbox)
-        cache = self.root / ".worktrees/.codex-bun-cache"
-        cache.mkdir(parents=True)
+        cache = self.folder / "codex/bun-cache"
+        cache.mkdir(parents=True, exist_ok=True)
+        (cache / "package").write_text("seeded")
         captured = {"configs": []}
+        real_run = subprocess.run
 
         def fake_run(args, cwd=None, env=None, **kwargs):
+            if args[0] == "cp":
+                return real_run(args, **kwargs)
             captured["args"] = args
             captured["env"] = env
             captured["configs"].append((Path(env["CODEX_HOME"]) / "config.toml").read_text())
+            if args[-1] == "install":
+                install_cache = Path(env["BUN_INSTALL_CACHE_DIR"])
+                captured["install_cache"] = install_cache
+                self.assertEqual(install_cache.parent, Path(env["BUN_TMPDIR"]))
+                self.assertEqual((install_cache / "package").read_text(), "seeded")
+                (install_cache / "package").write_text("changed")
             return subprocess.CompletedProcess(args, 0, "", "")
 
         with patch.object(sandbox.shutil, "which", return_value="/usr/bin/codex"), \
@@ -596,7 +620,7 @@ class CodexFactoryTests(unittest.TestCase):
             sandbox.run_sandboxed(
                 ["bun", "install"], cwd=self.worktree,
                 writable_roots=[self.worktree], git_common_dir=self.git_common,
-                bun_cache_dir=cache,
+                bun_cache_dir=cache, copy_bun_cache=True,
             )
             sandbox.run_sandboxed(
                 ["bun", "fallow"], cwd=self.worktree,
@@ -605,6 +629,8 @@ class CodexFactoryTests(unittest.TestCase):
             )
 
         self.assertEqual(captured["env"]["BUN_INSTALL_CACHE_DIR"], str(cache.resolve()))
+        self.assertFalse(captured["install_cache"].exists())
+        self.assertEqual((cache / "package").read_text(), "seeded")
         self.assertEqual(captured["env"]["NPM_CONFIG_IGNORE_SCRIPTS"], "true")
         self.assertEqual(captured["env"]["GIT_CONFIG_VALUE_0"], "/dev/null")
         self.assertEqual(captured["env"]["CODEX_FACTORY_FALLOW_PRECHECKED"], "1")

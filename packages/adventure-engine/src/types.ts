@@ -207,6 +207,8 @@ export interface HiddenStatePatch {
 export interface VisibleStateProposalPatch {
   location?: NewStateFact | null;
   situation?: NewStateFact | null;
+  /** A package scene the player's own actions reached; never persisted on the turn. */
+  packageSceneId?: string;
   objectives: ProposalCollectionPatch<StateFact, NewStateFact>;
   activeCharacters: ProposalCollectionPatch<StateFact, NewStateFact>;
   knownFacts: ProposalCollectionPatch<StateFact, NewStateFact>;
@@ -407,6 +409,25 @@ export interface AdventureSourcePackageRef {
   hash: string;
 }
 
+export type AdventureOocExchangeStatus = "pending" | "answered" | "failed";
+
+/**
+ * Out-of-character (OOC) clarification exchange. Kept separate from committed
+ * narrative turns so OOC questions never advance world time, triggers, or story state.
+ */
+export interface AdventureOocExchange {
+  id: string;
+  kind: "ooc";
+  question: string;
+  answer?: string;
+  status: AdventureOocExchangeStatus;
+  errorMessage?: string;
+  /** Number of committed narrative turns (`session.turns.length`) when first asked. */
+  afterTurnCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface AdventureSession {
   schemaVersion: 3;
   id: string;
@@ -422,6 +443,8 @@ export interface AdventureSession {
   sourceRecords: SourceRecordReference[];
   /** Optional pinned adventure package reference; absent on unimported or legacy sessions. */
   sourcePackage?: AdventureSourcePackageRef;
+  /** The pinned package's current scene; absent on sessions without a package. */
+  packageProgress?: PackageProgress;
   /** Optional structured situations; absent on ordinary adventures. */
   scenarioCollection?: ScenarioCollection;
   /** Additive world-entry setup; absent in old and ordinary adventures. */
@@ -448,6 +471,8 @@ export interface AdventureSession {
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
+  /** Optional bounded OOC clarification exchanges; separate from canonical gameplay turns. */
+  oocExchanges?: AdventureOocExchange[];
   pendingRoll: PendingRoll | null;
   /** Phase 2, additive. Absent/empty on a schemaVersion 1 document. */
   dicePresets: DicePreset[];
@@ -459,6 +484,27 @@ export interface ScenarioElaborationProposal {
   scenarioId: string;
   stage: ScenarioElaborationStage;
   discovery?: string;
+}
+
+/** A model-proposed ledger entry; the engine assigns the event ID. */
+export interface PackageEventProposal {
+  recordId: string;
+  kind: PackageRecordKind;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+
+/** A model-proposed actor state update; the engine assigns the event ID. */
+export interface ActorEventProposal {
+  actorId: string;
+  status?: ActorProposalStatus;
+  disposition?: ActorDisposition;
+  fact?: string;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
 }
 
 export interface CompletedTurnProposal {
@@ -479,6 +525,10 @@ export interface CompletedTurnProposal {
   provisionalFacts: NewProvisionalFact[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
+  /** GM-only package progress; checked by the ledger reducer. */
+  packageEvents?: PackageEventProposal[];
+  /** GM-only package actor progress; checked by the actor ledger reducer. */
+  actorEvents?: ActorEventProposal[];
 }
 
 export interface RollRequiredProposal {
@@ -494,11 +544,87 @@ export interface RollRequiredProposal {
 export type AdventureTurnProposal =
   CompletedTurnProposal | RollRequiredProposal;
 
+export type PackageRecordKind = "scene" | "encounter" | "clue" | "secret";
+export type PackageProgressStatus =
+  "unvisited" | "available" | "active" | "resolved" | "altered" | "skipped";
+export interface PackageProgressRecord {
+  id: string;
+  kind: PackageRecordKind;
+  status: PackageProgressStatus;
+}
+export interface PackageProgressEvent {
+  id: string;
+  turnId: string;
+  recordId: string;
+  kind: PackageRecordKind;
+  from: PackageProgressStatus;
+  to: PackageProgressStatus;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+export type ActorProposalStatus = "present" | "absent" | "dead";
+export type ActorProgressStatus = "unknown" | ActorProposalStatus;
+export type ActorDisposition =
+  "hostile" | "wary" | "neutral" | "friendly" | "allied";
+export interface PackageActorState {
+  actorId: string;
+  status: ActorProgressStatus;
+  disposition: ActorDisposition;
+  facts: string[];
+}
+export interface PackageActorEvent {
+  id: string;
+  turnId: string;
+  actorId: string;
+  fromStatus?: ActorProgressStatus;
+  status?: ActorProposalStatus;
+  fromDisposition?: ActorDisposition;
+  disposition?: ActorDisposition;
+  fact?: string;
+  certainty: "claimed" | "confirmed";
+  note: string;
+  supersedes?: string;
+}
+/** `version`, `records` and `events` are all present or all absent. */
+export interface PackageProgress {
+  sceneId: string;
+  version?: 1;
+  records?: PackageProgressRecord[];
+  events?: PackageProgressEvent[];
+  actors?: PackageActorState[];
+  actorEvents?: PackageActorEvent[];
+  revealedSecretIds?: string[];
+}
+
 export interface CommitMetadata {
   turnId: string;
   inputId: string;
   now: string;
   playerAction?: string;
+  /** Scene IDs of the pinned package, so a reported scene move can be checked. */
+  packageSceneIds?: readonly string[];
+  /** Record ID to kind for the pinned package; turns the progress ledger on. */
+  packageRecordKinds?: Readonly<Record<string, PackageRecordKind>>;
+  /** Scene ID to the target scene IDs of its branches. */
+  packageSceneBranches?: Readonly<Record<string, readonly string[]>>;
+  /** Actor IDs of the pinned package; enables actor progress tracking. */
+  packageActorIds?: readonly string[];
+  /** Hidden package references and text used to reject accidental player leaks. */
+  packageRecordIds?: readonly string[];
+  packageGmOnlyText?: readonly string[];
+  /** Map of package secret IDs to text so explicitly revealed secrets are exempted from package-text guards. */
+  packageSecretTexts?: Readonly<Record<string, string>>;
+}
+
+export type HiddenLeakageGuard =
+  "scenario-secret" | "package-text" | "package-id";
+
+/** Leak-safe classification of a commit-time secrecy rejection (never contains secret text or raw hidden IDs). */
+export interface HiddenLeakageDiagnostic {
+  guard: HiddenLeakageGuard;
+  field: string;
+  sourceRef: string;
 }
 
 export interface AdventureValidationError {
@@ -516,6 +642,7 @@ export interface AdventureValidationError {
     | "id-allocation-failed"
     | "incompatible-version";
   message: string;
+  diagnostic?: HiddenLeakageDiagnostic;
 }
 
 export type Result<T, E> = { ok: true; value: T } | { ok: false; errors: E };

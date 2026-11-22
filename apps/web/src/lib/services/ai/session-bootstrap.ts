@@ -17,12 +17,13 @@ import { proposerBridge } from "#lib/cloud-bridge/proposer-bridge.js";
  * supplies the DOM-bound Turnstile solve, which that package can't do
  * itself.
  *
- * Wiring is separate from warming because the two have different reach.
+ * `initAiSession()` wires the shared `aiClientManager` and both worker pull/push
+ * hooks app-wide without loading Turnstile or issuing a challenge.
  * `aiClientManager` is a module singleton shared by *every* caller, including
  * the public no-login generators under `(marketing)/generators` and
  * `(marketing)/tools` (see `services/seo/generator-engine.ts`). Those pages
- * generate without ever mounting the `(app)` layout, so wiring has to happen
- * app-wide or their requests go out unauthenticated and get 401'd.
+ * generate without ever mounting the `(app)` layout, so wiring happens app-wide
+ * while the first AI or proxy call triggers the Turnstile handshake lazily.
  *
  * The Oracle and Proposer AI Web Workers each carry their own isolated
  * `aiClientManager` instance (Workers don't share module state with the main
@@ -115,17 +116,4 @@ export async function getAiSessionToken(
  */
 export function initAiSession(): void {
   ensureSessionManager();
-}
-
-/**
- * Wire *and* pre-solve, so the first generation doesn't wait on a handshake.
- *
- * Only for surfaces where generation is the point — issuing a challenge to
- * someone who may never generate is a wasted Turnstile solve.
- */
-export function initAiSessionEager(): void {
-  const manager = ensureSessionManager();
-  // Failures are non-fatal: a request that arrives without a token still
-  // reaches the proxy, which decides whether to reject it.
-  if (manager) void manager.getToken();
 }

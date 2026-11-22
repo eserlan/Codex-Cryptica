@@ -29,6 +29,7 @@
     calendar,
     canDiscover,
     canImport,
+    onCreatureImportBusyChange = () => {},
     onDiscover,
     onSurpriseMe,
     onScenarioStarted,
@@ -46,6 +47,7 @@
     calendar: WorldCalendar;
     canDiscover: boolean;
     canImport: boolean;
+    onCreatureImportBusyChange?: (busy: boolean) => void;
     onDiscover: () => void;
     onSurpriseMe: () => void;
     onScenarioStarted: () => void;
@@ -66,6 +68,7 @@
     {onSurpriseMe}
     onOwnPremise={() => {
       draft.sourcePackage = undefined;
+      draft.startSceneId = undefined;
       draft.approach = "premise";
     }}
     onEnterWorld={() => (draft.approach = "world")}
@@ -87,7 +90,11 @@
     </p>
   {/if}
 
-  <ApprovedAdventurePackages {library} onStart={draft.fromPackage} />
+  <ApprovedAdventurePackages
+    {library}
+    onStart={draft.fromPackage}
+    {onCreatureImportBusyChange}
+  />
 {:else if !selectedRumour && draft.approach === "import-review" && imports.draft}
   <AdventureImportReview
     bind:draft={imports.draft}
@@ -151,10 +158,12 @@
     {characters}
     scenarioSeed={selectedRumour?.scenario}
     sourcePackage={draft.sourcePackage}
+    startSceneId={draft.startSceneId}
     {onScenarioStarted}
     onCancelScenario={rumours.cancel}
     onClearSourcePackage={() => {
       draft.sourcePackage = undefined;
+      draft.startSceneId = undefined;
     }}
   />
 {/if}

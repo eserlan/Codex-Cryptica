@@ -739,4 +739,156 @@ describe("GeneratorOutputCard", () => {
       expect(props.onDismissAiFallback).toHaveBeenCalledTimes(1);
     });
   });
+
+  describe("Wave 1 continuation callout", () => {
+    function renderCard(overrides: Partial<Record<string, unknown>> = {}) {
+      const onSaveToCodex = vi.fn();
+      const result = render(GeneratorOutputCard, {
+        props: {
+          generatedData: sampleData,
+          aiFallbackDismissed: false,
+          isBusy: false,
+          isGenerationInProgress: false,
+          isExampleDraft: false,
+          generatorType: "npc",
+          canFollowUp: true,
+          generatedSingular: "NPC",
+          variant: "default" as const,
+          worldTheme: "Classic Fantasy",
+          documentContent: sampleData.content,
+          documentSections: sampleSections,
+          copied: false,
+          copiedSectionId: null,
+          contextTrimmed: false,
+          onDismissAiFallback: vi.fn(),
+          onSaveToCodex,
+          onCopyMarkdown: vi.fn(),
+          onCopySection: vi.fn(),
+          onContainerClick: vi.fn(),
+          onContainerKeydown: vi.fn(),
+          onSelectHubEntity: vi.fn(),
+          onSaveHubToCodex: vi.fn(),
+          ...overrides,
+        },
+      });
+      return { ...result, onSaveToCodex };
+    }
+
+    it("renders the continuation callout with a single #save-to-codex-btn for Wave 1 generators after explicit generation", async () => {
+      const { container, onSaveToCodex } = renderCard({
+        generatorType: "star-system",
+        canFollowUp: true,
+        isExampleDraft: false,
+      });
+
+      const callout = screen.getByTestId("generator-continuation-callout");
+      // The mobile callout must not revert to 12–14px body text.
+      expect(callout.querySelector("h3")?.classList.contains("text-lg")).toBe(
+        true,
+      );
+      expect(callout.querySelector("p")?.classList.contains("text-lg")).toBe(
+        true,
+      );
+      expect(callout.querySelector("ul")?.classList.contains("text-lg")).toBe(
+        true,
+      );
+      expect(callout.textContent).toContain("Keep this system connected");
+      expect(callout.textContent).toContain(
+        "No account needed; stored locally in this browser.",
+      );
+      expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+      expect(
+        screen.queryByRole("button", { name: "Save to Codex" }),
+      ).toBeNull();
+
+      const addBtn = screen.getByRole("button", { name: "Add to my Codex" });
+      expect(addBtn.id).toBe("save-to-codex-btn");
+      expect(addBtn.classList.contains("whitespace-normal")).toBe(true);
+      expect(addBtn.classList.contains("min-w-0")).toBe(true);
+      expect(addBtn.classList.contains("max-w-full")).toBe(true);
+      await fireEvent.click(addBtn);
+      expect(onSaveToCodex).toHaveBeenCalledTimes(1);
+    });
+
+    it("hides the callout and keeps Save to Codex on seed/example drafts, unconfirmed runs, busy states, and Wave 2 generators", () => {
+      for (const overrides of [
+        { generatorType: "npc", canFollowUp: false, isExampleDraft: true },
+        { generatorType: "npc", canFollowUp: false, isExampleDraft: false },
+        { generatorType: "npc", canFollowUp: true, isBusy: true },
+        {
+          generatorType: "origin-generator",
+          canFollowUp: true,
+          isGenerationInProgress: true,
+        },
+        { generatorType: "point-crawl", canFollowUp: true },
+      ]) {
+        const { unmount } = renderCard(overrides);
+        expect(
+          screen.queryByTestId("generator-continuation-callout"),
+        ).toBeNull();
+        expect(
+          screen.getByRole("button", { name: "Save to Codex" }),
+        ).toBeTruthy();
+        unmount();
+      }
+    });
+
+    it("never renders the callout or save button for variant='names'", () => {
+      const { container } = renderCard({
+        generatorType: "npc",
+        canFollowUp: true,
+        variant: "names",
+      });
+      expect(screen.queryByTestId("generator-continuation-callout")).toBeNull();
+      expect(container.querySelector("#save-to-codex-btn")).toBeNull();
+    });
+
+    it("renders a visible role='alert' saveError inside the continuation callout", () => {
+      renderCard({
+        generatorType: "origin-generator",
+        canFollowUp: true,
+        saveError:
+          "Storage access is blocked. Please copy the Markdown below instead.",
+      });
+      const alert = screen.getByRole("alert");
+      expect(alert.textContent).toContain("Storage access is blocked");
+    });
+  });
+
+  it("disables the save button and marks it busy while saving", () => {
+    const base = {
+      generatedData: sampleData,
+      aiFallbackDismissed: false,
+      isBusy: false,
+      isExampleDraft: false,
+      generatedSingular: "Faction",
+      variant: "default" as const,
+      worldTheme: "Classic Fantasy",
+      documentContent: sampleData.content,
+      documentSections: sampleSections,
+      copied: false,
+      copiedSectionId: null,
+      contextTrimmed: false,
+      onDismissAiFallback: vi.fn(),
+      onSaveToCodex: vi.fn(),
+      onCopyMarkdown: vi.fn(),
+      onCopySection: vi.fn(),
+      onContainerClick: vi.fn(),
+      onContainerKeydown: vi.fn(),
+      onSelectHubEntity: vi.fn(),
+      onSaveHubToCodex: vi.fn(),
+    };
+    const saving = render(GeneratorOutputCard, {
+      props: { ...base, isSaving: true },
+    });
+    const busy = saving.container.querySelector("#save-to-codex-btn")!;
+    expect(busy.hasAttribute("disabled")).toBe(true);
+    expect(busy.getAttribute("aria-busy")).toBe("true");
+    saving.unmount();
+
+    const idle = render(GeneratorOutputCard, { props: base });
+    const button = idle.container.querySelector("#save-to-codex-btn")!;
+    expect(button.hasAttribute("disabled")).toBe(false);
+    expect(button.getAttribute("aria-busy")).toBe("false");
+  });
 });

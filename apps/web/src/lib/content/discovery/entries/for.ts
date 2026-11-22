@@ -100,6 +100,21 @@ export const forEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "for-mothership",
+    pageKind: "for",
+    canonicalPath: "/for/mothership",
+    primaryIntent: "mothership rpg campaign manager",
+    intentAliases: ["mothership warden toolkit"],
+    audience: "Mothership Wardens",
+    userJob: "adopt-workflow",
+    uniqueValue:
+      "Warden prep for sci-fi horror: ships, crew, employers, evidence and escalating threats linked as story notes.",
+    parentCluster: "system-guides",
+    relatedIntents: ["example-the-last-shift"],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "for-vampire-the-masquerade",
     pageKind: "for",
     canonicalPath: "/for/vampire-the-masquerade",

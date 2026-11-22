@@ -1,0 +1,60 @@
+{
+  "formatVersion": "adventure-json/v1",
+  "id": "long-sample",
+  "title": "Long Sample",
+  "version": "1.0.0",
+  "premise": {
+    "background": "A border town and a ridge tower.",
+    "hook": "Find out why the beacon went dark."
+  },
+  "source": {
+    "title": "Long Sample",
+    "license": "CC0-1.0"
+  },
+  "locations": [
+    {
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "id": "town-loc-square",
+      "name": "Market Square",
+      "summary": "The town's central square.",
+      "sourceRef": {
+        "page": 3
+      }
+    }
+  ],
+  "actors": [
+    {
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "id": "town-actor-reeve",
+      "name": "Reeve Tomas",
+      "summary": "The worried village official.",
+      "locationId": "ridge-loc-tower",
+      "sourceRef": {
+        "page": 5
+      }
+    }
+  ],
+  "factions": [],
+  "scenes": [
+    {
+      "visibility": "player-visible",
+      "epistemicStatus": "explicit",
+      "id": "town-scene-meeting",
+      "title": "The Reeve's Request",
+      "summary": "The party is asked to climb the ridge.",
+      "locationId": "town-loc-square",
+      "sourceRef": {
+        "page": 4
+      }
+    }
+  ],
+  "encounters": [],
+  "clues": [],
+  "rumours": [],
+  "items": [],
+  "secrets": [],
+  "endings": [],
+  "unresolved": []
+}

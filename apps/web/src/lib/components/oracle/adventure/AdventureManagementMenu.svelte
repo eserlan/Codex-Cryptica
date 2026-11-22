@@ -5,6 +5,7 @@
 
   import type {
     AdventureArchiveEntry,
+    AdventureListResult,
     AdventureSessionRepository,
   } from "#lib/services/adventure/adventure-session-repository.js";
 
@@ -15,6 +16,7 @@
     onSwitch,
     variant = "menu",
     onAction,
+    listEntries,
   }: {
     manager: AdventureManager;
     repository?: AdventureSessionRepository;
@@ -22,6 +24,10 @@
     onSwitch?: (sessionId: string) => Promise<void>;
     variant?: "menu" | "inline";
     onAction?: () => void;
+    listEntries?: (
+      vaultId: string,
+      forceFresh?: boolean,
+    ) => Promise<AdventureListResult>;
   } = $props();
 
   // Other adventures in this Vault that can be played right now.
@@ -33,7 +39,8 @@
     }
     const requested = vaultId;
     try {
-      const { entries } = await repository.list(requested);
+      const { entries } = await (listEntries?.(requested) ??
+        repository.list(requested));
       if (requested !== vaultId) return;
       others = entries.filter(
         (entry) =>
@@ -97,6 +104,7 @@
 
   const open = async (position?: "first" | "last") => {
     isOpen = true;
+    // fallow-ignore-next-line code-duplication -- Matching menu entry focus keeps keyboard navigation consistent with VaultActionsMenu.
     void loadOthers();
     if (!position) return;
     await tick();
@@ -140,6 +148,7 @@
   };
 </script>
 
+<!-- fallow-ignore-next-line complexity -- Inline and menu variants intentionally share this focused adventure control surface. -->
 {#if manager.session}
   {#if variant === "inline"}
     <section
@@ -150,7 +159,7 @@
       {#if manager.readOnly}
         <button
           type="button"
-          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-danger/40 px-3 py-2 text-left text-sm font-medium text-theme-danger transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-danger"
+          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
           onclick={() => run(() => void forceEnd())}
         >
           <span
@@ -162,7 +171,7 @@
       {:else}
         <button
           type="button"
-          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-border px-3 py-2 text-left text-sm font-medium text-theme-danger transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-danger"
+          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
           onclick={() => run(() => void manager.end())}
         >
           <span
@@ -175,7 +184,7 @@
       {#each others as other (other.id)}
         <button
           type="button"
-          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-border px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
           onclick={() => run(() => void switchTo(other.id))}
         >
           <span
@@ -187,7 +196,7 @@
       {/each}
       <button
         type="button"
-        class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-border px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+        class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
         onclick={() => run(() => void manager.close())}
       >
         <span
@@ -208,7 +217,7 @@
       <button
         bind:this={triggerEl}
         type="button"
-        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         onclick={() => (isOpen ? close() : void open())}
         onkeydown={handleTriggerKeydown}
         aria-haspopup="menu"
@@ -236,7 +245,7 @@
             <button
               type="button"
               role="menuitem"
-              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-danger hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-danger"
+              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
               onclick={() => run(() => void forceEnd())}
             >
               <span
@@ -248,7 +257,7 @@
             <button
               type="button"
               role="menuitem"
-              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-danger hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-danger"
+              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
               onclick={() => run(() => void manager.end())}
             >
               <span

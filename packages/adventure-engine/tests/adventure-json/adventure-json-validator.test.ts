@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  ADVENTURE_JSON_REFERENCES,
+  ADVENTURE_JSON_VALIDATION_ERROR_CODES,
+  AdventureJsonV1Schema,
+  ENTITY_COLLECTIONS,
   validateAdventureJson,
   type AdventureJsonV1,
 } from "../../src/adventure-json";
@@ -12,11 +16,130 @@ const REFERENCE_FIXTURE_PATH = resolve(
   "fixtures/adventures/reference-one-shot/adventure.v1.json",
 );
 
+const KEYED_SANDBOX_FIXTURE_PATH = resolve(
+  REPO_ROOT,
+  "fixtures/adventures/keyed-sandbox/adventure.v1.json",
+);
+
+function loadKeyedSandboxFixture(): AdventureJsonV1 {
+  return JSON.parse(
+    readFileSync(KEYED_SANDBOX_FIXTURE_PATH, "utf8"),
+  ) as AdventureJsonV1;
+}
+
 function loadReferenceFixture(): AdventureJsonV1 {
   return JSON.parse(
     readFileSync(REFERENCE_FIXTURE_PATH, "utf8"),
   ) as AdventureJsonV1;
 }
+
+function referenceFixture() {
+  const fixture = loadReferenceFixture();
+  fixture.factions.push({
+    id: "test-faction",
+    name: "Test faction",
+    summary: "",
+    epistemicStatus: "explicit",
+    visibility: "gm-only",
+  });
+  fixture.rumours.push({
+    id: "test-rumour",
+    text: "An unverified report.",
+    truth: "unverified",
+    epistemicStatus: "explicit",
+    visibility: "gm-only",
+  });
+  fixture.clues.push({ ...fixture.clues[0]!, id: "another-clue" });
+  fixture.rumours.push({ ...fixture.rumours[0]!, id: "another-rumour" });
+  for (const id of ["test-unresolved", "another-unresolved"]) {
+    fixture.unresolved.push({
+      id,
+      code: "example-code",
+      message: "The source omits this.",
+      epistemicStatus: "unresolved",
+    });
+  }
+  return fixture;
+}
+
+type ReferenceField = (typeof ADVENTURE_JSON_REFERENCES)[number];
+
+function setReference(
+  fixture: AdventureJsonV1,
+  field: ReferenceField,
+  targetId: string,
+) {
+  const ownerIndex = field.source === "locations" ? 1 : 0;
+  const owner = fixture[field.source][ownerIndex]!;
+  const properties = owner as unknown as Record<string, unknown>;
+  const [key, repeat, child] = field.segments;
+  const prefix = `${field.source}[${ownerIndex}].${key}`;
+  if (!repeat) {
+    properties[key] = targetId;
+    return prefix;
+  }
+  const items = properties[key];
+  const existing = Array.isArray(items) ? items : [];
+  const item = child
+    ? {
+        [child]: targetId,
+        description: "Test link",
+        ...(field.source === "scenes" ? { optional: true } : {}),
+      }
+    : targetId;
+  properties[key] = [...existing, item];
+  return `${prefix}[${existing.length}]${child ? `.${child}` : ""}`;
+}
+
+describe("Adventure JSON v1 reference contract", () => {
+  it("covers the checked fields and eleven entity collections", () => {
+    expect(
+      new Set(ADVENTURE_JSON_REFERENCES.map(({ path }) => path)).size,
+    ).toBe(21);
+    expect(ENTITY_COLLECTIONS).toHaveLength(11);
+  });
+
+  it.each(ADVENTURE_JSON_REFERENCES)("enforces $path", (field) => {
+    for (const collection of field.allowedTargets) {
+      const fixture = referenceFixture();
+      const ownerIndex = field.source === "locations" ? 1 : 0;
+      const owner = fixture[field.source][ownerIndex]!;
+      const target = fixture[collection].find(({ id }) => id !== owner.id)!;
+      setReference(fixture, field, target.id);
+      expect(AdventureJsonV1Schema.safeParse(fixture).success).toBe(true);
+      expect(validateAdventureJson(fixture).ok).toBe(true);
+    }
+
+    const fixture = referenceFixture();
+    const owner = fixture[field.source][field.source === "locations" ? 1 : 0]!;
+    const wrongCollection = ENTITY_COLLECTIONS.find(
+      (collection) =>
+        collection !== field.source &&
+        !field.allowedTargets.includes(collection),
+    );
+    const cases = [
+      [fixture.id, field.diagnostics.missingOrWrongTarget],
+      [owner.id, field.diagnostics.selfReference],
+      ...(wrongCollection
+        ? [
+            [
+              fixture[wrongCollection][0]!.id,
+              field.diagnostics.missingOrWrongTarget,
+            ],
+          ]
+        : []),
+    ];
+    for (const [id, code] of cases) {
+      const invalid = referenceFixture();
+      const path = setReference(invalid, field, id!);
+      expect(path.replaceAll(/\[\d+\]/g, "[index]")).toBe(field.diagnosticPath);
+      const result = validateAdventureJson(invalid);
+      expect(result.ok ? [] : result.errors).toContainEqual(
+        expect.objectContaining({ code, path, entityId: owner.id }),
+      );
+    }
+  });
+});
 
 describe("Adventure JSON v1 semantic validator", () => {
   it("validates the shipped CC0 reference one-shot fixture with zero errors", () => {
@@ -74,6 +197,20 @@ describe("Adventure JSON v1 semantic validator", () => {
           'For an unresolved item, choose "ambiguous" when the source is unclear or contradictory, or "unresolved" when the source does not answer it.',
         path: "unresolved[0].epistemicStatus",
       });
+    }
+  });
+
+  it("exports 10 unique validation codes including the ones tested here", () => {
+    expect(ADVENTURE_JSON_VALIDATION_ERROR_CODES).toHaveLength(10);
+    expect(new Set(ADVENTURE_JSON_VALIDATION_ERROR_CODES).size).toBe(10);
+    for (const code of [
+      "INVALID_FORMAT_VERSION",
+      "INVALID_VISIBILITY",
+      "HIERARCHY_CYCLE",
+      "DEAD_END_CYCLE",
+      "UNRESOLVED_REFERENCE",
+    ] as const) {
+      expect(ADVENTURE_JSON_VALIDATION_ERROR_CODES).toContain(code);
     }
   });
 
@@ -218,6 +355,77 @@ describe("Adventure JSON v1 semantic validator", () => {
       expect(result.errors.some((e) => e.code === "UNREACHABLE_SCENE")).toBe(
         true,
       );
+    }
+  });
+
+  it("validates the keyed sandbox fixture with unreachable explicit scenes", () => {
+    expect(validateAdventureJson(loadKeyedSandboxFixture()).ok).toBe(true);
+  });
+
+  it("raises UNREACHABLE_SCENE once when a progression entry is removed", () => {
+    const fixture = loadKeyedSandboxFixture();
+    const target = fixture.scenes[3]!;
+    fixture.unresolved = fixture.unresolved.filter(
+      (u) => u.relatedEntityId !== target.id,
+    );
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      const errors = result.errors.filter(
+        (e) => e.code === "UNREACHABLE_SCENE",
+      );
+      expect(result.errors).toHaveLength(1);
+      expect(errors[0]?.path).toBe("scenes[3]");
+      expect(errors[0]?.entityId).toBe(target.id);
+    }
+  });
+
+  it("rejects duplicate progression entries for the same unreachable scene", () => {
+    const fixture = loadKeyedSandboxFixture();
+    const target = fixture.scenes[3]!;
+    const progressionEntry = fixture.unresolved.find(
+      (item) => item.relatedEntityId === target.id,
+    )!;
+    fixture.unresolved.push({
+      ...progressionEntry,
+      id: "duplicate-unknown-progression",
+    });
+
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors).toContainEqual({
+        code: "DUPLICATE_SCENE_PROGRESSION",
+        message: `More than one UNKNOWN_SCENE_PROGRESSION entry names scene "${target.id}".`,
+        path: `unresolved[${fixture.unresolved.length - 1}]`,
+        entityId: "duplicate-unknown-progression",
+      });
+    }
+  });
+
+  it("still accepts an unreachable ambiguous scene without a progression entry", () => {
+    const fixture = loadKeyedSandboxFixture();
+    fixture.scenes[3]!.epistemicStatus = "ambiguous";
+    fixture.unresolved = fixture.unresolved.filter(
+      (u) => u.relatedEntityId !== fixture.scenes[3]!.id,
+    );
+    expect(validateAdventureJson(fixture).ok).toBe(true);
+  });
+
+  it("does not exempt a scene because a progression entry names another scene", () => {
+    const fixture = loadKeyedSandboxFixture();
+    const entry = fixture.unresolved.find(
+      (u) => u.relatedEntityId === fixture.scenes[3]!.id,
+    )!;
+    entry.relatedEntityId = fixture.scenes[2]!.id;
+    const result = validateAdventureJson(fixture);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(
+        result.errors
+          .filter((e) => e.code === "UNREACHABLE_SCENE")
+          .map((e) => e.path),
+      ).toEqual(["scenes[3]"]);
     }
   });
 

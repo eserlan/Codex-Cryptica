@@ -4,7 +4,7 @@ export const statSheets: FeatureEntry = {
   id: "stat-sheets",
   title: "Stat Sheets",
   summary:
-    "Track hit points, resources and rollable actions on an entity; reuse field layouts and compatible presentation templates.",
+    "Track hit points, resources and rollable actions on an entity; reuse field layouts, compatible presentation templates, and Species/Ancestry trait packages with non-destructive effective stat adjustments.",
   channel: "production",
   routes: ["/(app)"],
   areas: ["entity-detail"],
@@ -79,6 +79,17 @@ export const statSheets: FeatureEntry = {
         "Choose Undo on the change to put the old values back.",
       ],
       actionIds: ["stat-sheets.open", "stat-sheets.merchant-help"],
+    },
+    {
+      id: "species-and-ancestry-traits",
+      title: "Create and apply a Species/Ancestry trait package",
+      steps: [
+        "On a Creature's Stats tab, enable Use as a Species/Ancestry definition and add traits with signed adjustments targeting number field IDs or keys.",
+        "On a Character or NPC's Stats tab, choose the species under Species/Ancestry and review the preview before pressing Apply.",
+        "Typed base numbers are never rewritten; effective values show alongside them, while dice rolls and formulas still use the base values.",
+        "Use Change to switch species or pull edits from the Creature, or Remove to clear only the species' adjustments.",
+      ],
+      actionIds: ["stat-sheets.open", "stat-sheets.help"],
     },
   ],
   helpIds: ["stat-sheets", "merchant-sheets", "sharing-templates"],

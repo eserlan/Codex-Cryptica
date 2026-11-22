@@ -2,7 +2,7 @@
   import { vault } from "#lib/stores/vault.svelte.js";
   import type { EntityIndexEntry } from "#lib/utils/entity-mention-detector.js";
   import HelpZenDetailSurface from "#lib/components/help-assistant/HelpZenDetailSurface.svelte";
-  import MarkdownEditor from "#lib/components/MarkdownEditor.svelte";
+  import MarkdownEditor from "#lib/components/LazyMarkdownEditor.svelte";
   import TemporalEditor from "#lib/components/timeline/TemporalEditor.svelte";
   import { revisionService } from "#lib/services/RevisionService.svelte.js";
   import DetailProposals from "#lib/components/entity-detail/proposals/DetailProposals.svelte";

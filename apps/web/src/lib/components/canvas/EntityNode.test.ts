@@ -443,6 +443,29 @@ describe("EntityNode card variants", () => {
     const hoverTitle = await screen.findByTestId("image-only-hover-title");
     expect(hoverTitle.textContent).toContain("Portrait Hero");
     expect(hoverTitle.className).toContain("opacity-0");
+    expect(hoverTitle.className).toContain("group-focus-visible:opacity-100");
+    expect(hoverTitle.querySelector("div")?.className).toContain("bg-black/90");
+  });
+
+  it("reveals faction member labels when the member receives keyboard focus", () => {
+    vaultMock.entities = {
+      e1: entity({
+        type: "faction",
+        title: "Black Eagles",
+        connections: [{ target: "e2", type: "part_of", strength: 1 }],
+      }),
+      e2: entity({ id: "e2", type: "character", title: "Vargas" }),
+    };
+
+    renderNode("e1", { cardView: "image_only" });
+
+    const member = screen.getByRole("button", { name: "Vargas" });
+    expect(member.querySelector("div.absolute")?.className).toContain(
+      "group-focus-visible/member:opacity-100",
+    );
+    expect(member.querySelector("div.absolute > div")?.className).toContain(
+      "bg-black/90",
+    );
   });
 
   it("keeps info overlay visible with opacity-100 when showImageLabels is true", async () => {

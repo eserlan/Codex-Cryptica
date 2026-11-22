@@ -11,6 +11,7 @@ import { AdventureRolls } from "./adventure-rolls";
 import { AdventureTools } from "./adventure-tools";
 import type { AdventureScenarios } from "./adventure-scenarios";
 import type { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventure-artwork-session.js";
+import type { AdventureJsonV1 } from "@codex/adventure-engine";
 export type { AdventureManagerDependencies } from "./adventure-dependencies";
 export { hasCommittedOpening } from "./adventure-session";
 
@@ -60,6 +61,12 @@ export class AdventureManager extends AdventureState {
     ...args: Parameters<AdventureLifecycle["open"]>
   ): ReturnType<AdventureLifecycle["open"]> {
     return this.lifecycle.open(...args);
+  }
+
+  retryPackageCheck(
+    ...args: Parameters<AdventureLifecycle["retryPackageCheck"]>
+  ): ReturnType<AdventureLifecycle["retryPackageCheck"]> {
+    return this.lifecycle.retryPackageCheck(...args);
   }
 
   tryTakeControl(
@@ -120,6 +127,24 @@ export class AdventureManager extends AdventureState {
     ...args: Parameters<AdventureActions["submitSuggestedAction"]>
   ): ReturnType<AdventureActions["submitSuggestedAction"]> {
     return this.actions.submitSuggestedAction(...args);
+  }
+
+  setComposerMode(
+    ...args: Parameters<AdventureActions["setComposerMode"]>
+  ): ReturnType<AdventureActions["setComposerMode"]> {
+    return this.actions.setComposerMode(...args);
+  }
+
+  submitOocQuestion(
+    ...args: Parameters<AdventureActions["submitOocQuestion"]>
+  ): ReturnType<AdventureActions["submitOocQuestion"]> {
+    return this.actions.submitOocQuestion(...args);
+  }
+
+  retryOocQuestion(
+    ...args: Parameters<AdventureActions["retryOocQuestion"]>
+  ): ReturnType<AdventureActions["retryOocQuestion"]> {
+    return this.actions.retryOocQuestion(...args);
   }
 
   recordRollOutcome(
@@ -218,6 +243,17 @@ export class AdventureManager extends AdventureState {
     ...args: Parameters<AdventureScenarios["dismissDiscoveries"]>
   ) {
     return this.scenarios.dismissDiscoveries(...args);
+  }
+
+  /** The session's pinned package, or null without one or when it cannot load. Read-only. */
+  async loadSourcePackage(): Promise<AdventureJsonV1 | null> {
+    const session = this.session;
+    if (!session?.sourcePackage) return null;
+    try {
+      return await this.runtime.deps.packages.load(session);
+    } catch {
+      return null;
+    }
   }
 
   mutateLocalArtwork(...args: Parameters<AdventureArtworkSession["mutate"]>) {

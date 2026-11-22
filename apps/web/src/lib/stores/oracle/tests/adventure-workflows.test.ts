@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { buildAdventurePrompt } from "@codex/adventure-engine";
 import { AdventureOpening } from "../adventure-opening";
 import { AdventureLifecycle } from "../adventure-lifecycle";
 import { AdventureActions } from "../adventure-actions";
@@ -8,6 +9,7 @@ import { proposedSession } from "../adventure-session";
 import {
   completeProposal,
   createAdventureRuntime,
+  referencePackageCache,
   rollProposal,
   startInput,
 } from "./adventure-fixtures";
@@ -262,5 +264,210 @@ describe("AdventureRuntime scope checks", () => {
       "stale-adventure-context",
     );
     expect(state.session).toBeNull();
+  });
+});
+
+describe("package-grounded actions", () => {
+  const movedTo = (packageSceneId: string) => ({
+    ...completeProposal,
+    visiblePatch: { ...completeProposal.visiblePatch, packageSceneId },
+  });
+
+  function packageRuntime(replies: unknown[]) {
+    const generate = vi.fn(
+      async (_request?: unknown) => replies.shift() ?? completeProposal,
+    );
+    return {
+      generate,
+      ...createAdventureRuntime(
+        { generation: { generate } as any, packages: referencePackageCache() },
+        { sceneId: "ros-scene-1-landing" },
+      ),
+    };
+  }
+
+  it("retrieves the new scene on the turn after a reported scene move", async () => {
+    const { runtime, state, generate } = packageRuntime([
+      movedTo("ros-scene-2-yard"),
+    ]);
+    const actions = new AdventureActions(runtime);
+    await actions.submitAction("Walk to the yard");
+    expect(state.session?.packageProgress).toMatchObject({
+      sceneId: "ros-scene-2-yard",
+      version: 1,
+    });
+    const records = state.session?.packageProgress?.records;
+    expect(records?.find((r) => r.id === "ros-scene-2-yard")?.status).toBe(
+      "active",
+    );
+    expect(records?.find((r) => r.id === "ros-scene-1-landing")?.status).toBe(
+      "available",
+    );
+    await actions.submitAction("Look around");
+    const sceneOf = (call: number) =>
+      (generate.mock.calls[call] as any)[0].adventurePackage.playerSafe[0].id;
+    expect(sceneOf(0)).toBe("ros-scene-1-landing");
+    expect(sceneOf(1)).toBe("ros-scene-2-yard");
+  });
+
+  it("commits proposed package events and drops rejected ones", async () => {
+    const proposed = (recordId: string, kind: string) => ({
+      ...completeProposal,
+      packageEvents: [
+        {
+          recordId,
+          kind,
+          to: "resolved",
+          certainty: "confirmed",
+          note: "Done.",
+        },
+      ],
+    });
+    const { runtime, state } = packageRuntime([
+      proposed("ros-scene-1-landing", "scene"),
+      proposed("no-such-record", "scene"),
+    ]);
+    const actions = new AdventureActions(runtime);
+    await actions.submitAction("Finish here");
+    expect(
+      state.session?.packageProgress?.records?.find(
+        (r) => r.id === "ros-scene-1-landing",
+      )?.status,
+    ).toBe("resolved");
+    await actions.submitAction("Try something else");
+    expect(state.session?.turns).toHaveLength(2);
+    expect(state.session?.turns.at(-1)?.dropped).toContain(
+      "packageEvents: unknown record no-such-record",
+    );
+  });
+
+  it("keeps the scene when the model reports one the package does not have", async () => {
+    const { runtime, state } = packageRuntime([movedTo("no-such-scene")]);
+    await new AdventureActions(runtime).submitAction("Wander off");
+    expect(state.session?.turns).toHaveLength(1);
+    expect(state.session?.packageProgress).toMatchObject({
+      sceneId: "ros-scene-1-landing",
+    });
+  });
+
+  it("sends the same package context on the automatic retry", async () => {
+    const refused = { ...completeProposal, revealSecretIds: ["unknown"] };
+    const { runtime, state, generate } = packageRuntime([
+      refused,
+      completeProposal,
+    ]);
+    await new AdventureActions(runtime).submitAction("Look around");
+    expect(generate).toHaveBeenCalledTimes(2);
+    const [first, second] = generate.mock.calls.map((call) => call[0] as any);
+    expect(first.correction).toBeUndefined();
+    expect(second.correction).toBeTruthy();
+    expect(first.adventurePackage.playerSafe.length).toBeGreaterThan(0);
+    expect(second.adventurePackage).toEqual(first.adventurePackage);
+    expect(state.session?.turns).toHaveLength(1);
+  });
+
+  it("clears retained interaction on scene change and rejects prior-scene GM-only text", async () => {
+    const { runtime, state, deps, generate } = packageRuntime([
+      movedTo("ros-scene-2-yard"),
+      {
+        ...completeProposal,
+        narration:
+          "The ferryman mentions that the shrine's keeper is long dead. Maren leaves the bread there in her father's memory.",
+      },
+      completeProposal,
+    ]);
+    const clearInteraction = vi.spyOn(deps, "clearGenerationInteraction");
+    const actions = new AdventureActions(runtime);
+
+    await actions.submitAction("Walk to the yard");
+    expect(state.session?.packageProgress).toMatchObject({
+      sceneId: "ros-scene-2-yard",
+    });
+    expect(clearInteraction).toHaveBeenCalledWith(state.session!.id);
+
+    await actions.submitAction("Ask about the shrine");
+    expect(generate).toHaveBeenCalledTimes(3);
+    expect((generate.mock.calls[2]![0] as any).correction).toBeTruthy();
+    expect(state.session?.turns).toHaveLength(2);
+  });
+
+  it("does not treat rumour truth enum values in GM-only excerpts as leaked prose", async () => {
+    const generate = vi.fn(async () => ({
+      ...completeProposal,
+      narration:
+        "That is true enough, the ferryman admits, though the river hides worse.",
+    }));
+    const { runtime, state } = createAdventureRuntime(
+      { generation: { generate } as any, packages: referencePackageCache() },
+      { sceneId: "ros-scene-1-landing" },
+    );
+    await new AdventureActions(runtime).submitAction("Question the ferryman");
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(state.session?.turns).toHaveLength(1);
+  });
+
+  it("persists NPC disposition and facts across scene revisits without mutating the package", async () => {
+    const packages = referencePackageCache();
+    const replies = [
+      {
+        ...completeProposal,
+        actorEvents: [
+          {
+            actorId: "actor-maren-holt",
+            status: "present",
+            disposition: "hostile",
+            fact: "Accused of tampering with the sluice gate.",
+            certainty: "confirmed",
+            note: "Player confronted Maren on the landing.",
+          },
+        ],
+      },
+      movedTo("ros-scene-2-yard"),
+      movedTo("ros-scene-1-landing"),
+      completeProposal,
+    ];
+    const generate = vi.fn(
+      async (_request?: unknown) => replies.shift() ?? completeProposal,
+    );
+    const { runtime, state } = createAdventureRuntime(
+      { generation: { generate } as any, packages },
+      { sceneId: "ros-scene-1-landing" },
+    );
+    const pkgBefore = structuredClone(await packages.load(state.session!));
+    const actions = new AdventureActions(runtime);
+
+    await actions.submitAction("Accuse Maren of tampering");
+    await actions.submitAction("Walk to the mill yard");
+    await actions.submitAction("Return to the ferry landing");
+    await actions.submitAction("Speak to Maren again");
+
+    const promptProgress = (callIndex: number) => {
+      const prompt = buildAdventurePrompt(
+        generate.mock.calls[callIndex]![0] as any,
+      );
+      return JSON.parse(prompt.state)["GM-ONLY package progress"];
+    };
+    // Call 0: opening action at scene 1; Call 1: move to scene 2 (scene 1 progress still active);
+    // Call 2: in scene 2 (actor-maren-holt is not featured, omitted from prompt);
+    // Call 3: back in scene 1 (actor-maren-holt disposition, status, and fact are surfaced).
+    expect(promptProgress(2)?.actors).toBeUndefined();
+    expect(promptProgress(3)?.actors).toEqual([
+      {
+        actorId: "actor-maren-holt",
+        status: "present",
+        disposition: "hostile",
+        facts: ["Accused of tampering with the sluice gate."],
+      },
+    ]);
+    expect(state.session?.packageProgress?.actors).toEqual([
+      {
+        actorId: "actor-maren-holt",
+        status: "present",
+        disposition: "hostile",
+        facts: ["Accused of tampering with the sluice gate."],
+      },
+    ]);
+    const pkgAfter = await packages.load(state.session!);
+    expect(pkgAfter).toEqual(pkgBefore);
   });
 });

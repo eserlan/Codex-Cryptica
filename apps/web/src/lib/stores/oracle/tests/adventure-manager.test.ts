@@ -6,13 +6,50 @@ import {
   completeProposal,
   rollProposal,
   dependencies,
+  packageRef,
+  referencePackage,
+  referencePackageCache,
+  startInput,
 } from "./adventure-fixtures";
+
+const multiStartPackage = {
+  ...referencePackage,
+  scenes: [
+    ...referencePackage.scenes,
+    {
+      id: "alt-start",
+      title: "Alt",
+      summary: "Elsewhere",
+      visibility: "player-visible" as const,
+      optional: true,
+    },
+  ],
+};
+
+async function startedProgress(startSceneId?: string) {
+  const deps: any = dependencies();
+  const savePinned = vi.fn(deps.repository.savePinned);
+  deps.repository.savePinned = savePinned;
+  deps.packages = referencePackageCache(async () => ({
+    hash: packageRef.hash,
+    path: "",
+    package: multiStartPackage,
+    originFormat: "adventure-json/v1",
+  }));
+  await new AdventureManager(deps).start({
+    ...startInput,
+    sourcePackage: packageRef,
+    ...(startSceneId ? { startSceneId } : {}),
+  });
+  return savePinned.mock.calls[0]?.[0] as AdventureSession;
+}
 
 describe("AdventureManager", () => {
   it("uses the coordinated save path when starting from an imported package", async () => {
     const deps: any = dependencies();
     const savePinned = vi.fn(deps.repository.savePinned);
     deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache();
     const manager = new AdventureManager(deps);
 
     await manager.start({
@@ -24,17 +61,72 @@ describe("AdventureManager", () => {
         name: "Mara",
         description: "Guide",
       },
-      sourcePackage: {
-        packageId: "imported-module",
-        version: "1.0.0",
-        formatVersion: "adventure-json/v1",
-        hash: "a".repeat(64),
-      },
+      sourcePackage: packageRef,
     });
 
     expect(savePinned).toHaveBeenCalledOnce();
     const pinnedSession = savePinned.mock.calls[0]?.[0] as AdventureSession;
-    expect(pinnedSession.sourcePackage?.hash).toBe("a".repeat(64));
+    expect(pinnedSession.sourcePackage?.hash).toBe(packageRef.hash);
+    expect(pinnedSession.packageProgress).toEqual({
+      sceneId: "ros-scene-1-landing",
+    });
+  });
+
+  it("starts at a chosen start candidate", async () => {
+    const saved = await startedProgress("alt-start");
+    expect(saved.packageProgress).toEqual({ sceneId: "alt-start" });
+    expect("startSceneId" in saved).toBe(false);
+  });
+
+  it.each(["nope", "ros-scene-2-yard"])(
+    "falls back to the entry scene for %s",
+    async (id) => {
+      const saved = await startedProgress(id);
+      expect(saved.packageProgress).toEqual({ sceneId: "ros-scene-1-landing" });
+      expect("startSceneId" in saved).toBe(false);
+    },
+  );
+
+  it("does not save anything when the pinned package cannot be loaded", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => null as any);
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-unavailable");
+    expect(savePinned).not.toHaveBeenCalled();
+    expect(manager.errorCause).toBe("package-unavailable");
+  });
+
+  it("does not save anything when the pinned package has no scenes", async () => {
+    const deps: any = dependencies();
+    const savePinned = vi.fn(deps.repository.savePinned);
+    deps.repository.savePinned = savePinned;
+    deps.packages = referencePackageCache(async () => ({
+      status: "approved",
+      hash: packageRef.hash,
+      package: { ...referencePackage, scenes: [] },
+    }));
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({ ...startInput, sourcePackage: packageRef }),
+    ).rejects.toThrow("adventure-package-has-no-scenes");
+    expect(savePinned).not.toHaveBeenCalled();
+  });
+
+  it("gives a session without a package no packageProgress", async () => {
+    const deps: any = dependencies();
+    const save = vi.fn(deps.repository.save);
+    deps.repository.save = save;
+    const manager = new AdventureManager(deps);
+
+    await manager.start(startInput);
+
+    expect(save.mock.calls[0]?.[1]).not.toHaveProperty("packageProgress");
   });
 
   it("saves local artwork changes through adventure ownership and rejects stale revisions", async () => {
@@ -1499,4 +1591,122 @@ it("does not dispatch when lookup is superseded by the same session ID in anothe
   expect(generate).toHaveBeenCalledTimes(calls);
   expect(manager.session?.vaultId).toBe("vault-2");
   expect(manager.session?.turns).toHaveLength(1);
+});
+
+describe("AdventureManager.loadSourcePackage", () => {
+  it("returns null when the session has no sourcePackage", async () => {
+    const deps: any = dependencies();
+    const load = vi.fn(async () => referencePackage);
+    deps.packages = { load };
+    const manager = new AdventureManager(deps);
+    manager.session = { id: "s1", vaultId: "vault-1" } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBeNull();
+    expect(load).not.toHaveBeenCalled();
+  });
+
+  it("delegates to deps.packages.load when sourcePackage is set", async () => {
+    const deps: any = dependencies();
+    const load = vi.fn(async () => referencePackage);
+    deps.packages = { load };
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      sourcePackage: packageRef,
+    } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBe(referencePackage);
+    expect(load).toHaveBeenCalledWith(manager.session);
+  });
+
+  it("returns null when deps.packages.load rejects", async () => {
+    const deps: any = dependencies();
+    deps.packages = {
+      load: vi.fn(async () => {
+        throw new Error("missing package");
+      }),
+    };
+    const manager = new AdventureManager(deps);
+    manager.session = {
+      id: "s1",
+      vaultId: "vault-1",
+      sourcePackage: packageRef,
+    } as AdventureSession;
+
+    expect(await manager.loadSourcePackage()).toBeNull();
+  });
+});
+
+describe("AdventureManager.start proxy and package validation (#4983)", () => {
+  it("starts cleanly when sourcePackage and worldEntry are JS Proxies and preserves pin + start scene", async () => {
+    const deps: any = dependencies();
+    deps.packages = {
+      verifyPin: vi.fn(async () => ({ status: "ok" })),
+      load: vi.fn(async () => referencePackage),
+    };
+    const manager = new AdventureManager(deps);
+    const proxiedPackage = new Proxy({ ...packageRef }, {});
+    const proxiedWorldEntry = new Proxy(
+      {
+        version: 1 as const,
+        location: new Proxy(
+          { kind: "provisional" as const, name: "Harbor Pier" },
+          {},
+        ),
+        intent: "explore" as const,
+      },
+      {},
+    );
+
+    const started = await manager.start({
+      vaultId: "vault-1",
+      title: "Starliner Cook",
+      premise: "The galley reactor hums.",
+      playerCharacter: {
+        kind: "provisional",
+        name: "Starliner Cook",
+        description: "Space man engineer",
+      },
+      sourcePackage: proxiedPackage,
+      worldEntry: proxiedWorldEntry,
+    });
+
+    expect(started.sourcePackage).toEqual(packageRef);
+    expect(() => structuredClone(started.sourcePackage)).not.toThrow();
+    expect(started.packageProgress?.sceneId).toBe(
+      referencePackage.scenes[0]?.id,
+    );
+    expect(started.worldEntry?.location.name).toBe("Harbor Pier");
+  });
+
+  it("rejects an invalid package reference with invalid-adventure-package before persisting", async () => {
+    const deps: any = dependencies();
+    const save = vi.spyOn(deps.repository, "save");
+    const savePinned = vi.spyOn(deps.repository, "savePinned");
+    const manager = new AdventureManager(deps);
+
+    await expect(
+      manager.start({
+        vaultId: "vault-1",
+        title: "Starliner Cook",
+        premise: "The galley reactor hums.",
+        playerCharacter: {
+          kind: "provisional",
+          name: "Starliner Cook",
+          description: "Space man engineer",
+        },
+        sourcePackage: {
+          packageId: "starliner-cook",
+          version: "1.0.0",
+          formatVersion: "adventure-json/v1",
+          hash: "not-a-valid-sha256",
+        },
+      }),
+    ).rejects.toThrow("invalid-adventure-package");
+
+    expect(save).not.toHaveBeenCalled();
+    expect(savePinned).not.toHaveBeenCalled();
+    expect(manager.session).toBeNull();
+  });
 });

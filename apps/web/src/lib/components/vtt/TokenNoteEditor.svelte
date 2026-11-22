@@ -215,6 +215,7 @@
       class="flex w-full items-center justify-center gap-1.5 rounded-lg border border-theme-primary/40 px-2 py-1.5 text-meta font-bold text-theme-primary transition-colors hover:bg-theme-primary/10 disabled:cursor-not-allowed disabled:opacity-60"
       onclick={onGenerateEncounter}
       disabled={generating}
+      aria-busy={generating}
       data-testid="token-note-generate-encounter"
     >
       <span

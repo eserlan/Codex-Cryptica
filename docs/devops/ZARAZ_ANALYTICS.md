@@ -99,7 +99,10 @@ user-authored content.
 | `seo_entry`                        | A marketing page is visited with new UTM, AI-referral or organic-search attribution    | `entry_page_type` (`generator` \| `solutions` \| `comparison` \| `alternatives` \| `blog` \| `importer` \| `tools` \| `topics` \| `other`) |
 | `generator_started`                | A visitor submits a generator form (not the silent auto-draft on page load)            | `generator_type`                                                                                                                           |
 | `generator_completed`              | Generation succeeds                                                                    | `generator_type`                                                                                                                           |
-| `entity_saved`                     | "Save to Codex" is clicked                                                             | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                                    |
+| `generator_failed`                 | An explicit generation fails                                                           | `generator_type` only; no error text or generated content                                                                                  |
+| `generator_refinement_cancelled`   | A visitor cancels public refinement                                                    | `generator_type`                                                                                                                           |
+| `entity_saved`                     | Pending draft is staged in browser `localStorage` (before redirect)                    | `generator_type`, `is_hub_batch`, `item_count`, `is_first_saved_entity`                                                                    |
+| `generator_handoff_failed`         | Staging the pending draft in `localStorage` throws; no `entity_saved` fires            | `generator_type`, `is_hub_batch`, `item_count_bucket` (`0`, `1`, `2-5`, `6+`); no text, titles, IDs or error message                       |
 | `vault_created`                    | `entity_saved` fires with `is_first_saved_entity: true`                                | `generator_type`, `is_hub_batch`, `item_count`                                                                                             |
 | `related_entity_created`           | A save includes one or more `[[wiki-links]]`/references                                | `related_entity_count` (bucketed: `"0"`, `"1"`, `"2-5"`, `"6+"`)                                                                           |
 | `discovery_page_viewed`            | A supported discovery page is viewed (once per page per visit — see below)             | `source_kind`, `source_id`, `path`                                                                                                         |
@@ -210,9 +213,12 @@ Generator events carry `generator_type: "point-crawl"` (the last segment of
   funnel starting at step 3 for direct generator traffic.
 - Show `action = copy` and `action = open_codex` as separate series. Copy is
   valid product utility, not a failed save.
-- `entity_saved` and `vault_created` are **pre-import intent signals**, fired
-  on the outbound click. They do not confirm the entity was persisted or
-  retained in a vault, and no report should claim downstream retention.
+- `open_codex` with `source = save_confirmation` now fires automatically when
+  the staged draft hands off to the app. There is no confirmation click any
+  more.
+- `entity_saved` and `vault_created` are **pre-import intent signals**: they
+  fire after the pending draft is staged in browser storage and before the
+  outbound redirect. They do not confirm import or downstream retention.
 - Per-Answer effectiveness is step 1 → step 2 split by `source_id`; the
   `placement` property separates the prose CTA from related-tool links.
 - Compare two equal weekly windows after the content/CTA changes (#4369,

@@ -45,3 +45,12 @@ We will offload the core intelligence of the Lore Oracle—specifically text gen
 - **Serialization Overhead**: Large data sets (e.g., passing a snapshot of all vault entities for discovery) must be cloned across the worker boundary.
 - **Dependency Management**: Services used in the worker must be "worker-safe," avoiding dependencies on browser globals like `window`, `document`, or `localStorage` unless appropriately guarded.
 - **Debugging**: Errors in workers can be harder to trace; the `OracleBridge` must implement robust error propagation to the main-thread `debugStore`.
+
+## Lazy start
+
+The Oracle and Proposer workers are no longer created when `OracleBridge` and `ProposerBridge` load. Each bridge loads its worker with a dynamic `import()` on the first real request, so neither worker script is fetched on `/` until the Oracle or Proposer is used. `apps/web/scripts/check-entry-graph.mjs` fails the build if either worker appears on the entry graph of `/`.
+
+- **`isReady`** is still synchronous. It means "available": `true` in the browser until a worker load has failed or `terminate()` was called, whether or not the worker has started. Consumers therefore keep choosing the worker path (with `Comlink.proxy` callbacks) exactly as before.
+- **First use**: `textGeneration` and `draftingEngine` return a stand-in whose methods start the worker (one shared load), then forward the call. Reading the getters never starts the worker.
+- **Setup calls before start**: `setTokenProvider` and `setSessionToken` are stored (only the latest token, including `null`) and applied to the worker, provider first, before the first request is forwarded. After start they are forwarded immediately.
+- **Load failure**: the bridge logs the error and sets `isReady` to `false`. The Oracle request that triggered the load uses the main-thread text-generation service; later reads of the getters throw so other consumers use their main-thread fallback. The Proposer logs and returns `[]` from then on. A bridge never restarts after a failure or `terminate()`.
