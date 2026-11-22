@@ -126,6 +126,35 @@ describe("AdventureComposer", () => {
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
   });
 
+  it("matches the mobile mode switch, textarea, and submit button baseline height on phone", async () => {
+    const m = manager("ready");
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    const field = screen.getByLabelText("What do you do?");
+    const send = screen.getByTestId("adventure-submit-button");
+
+    expect(modes.className).toContain("min-h-[50px]");
+    expect(field.className).toContain("min-h-[50px]");
+    expect(send.className).toContain("min-h-[50px]");
+    expect(send.className).toContain("min-w-[50px]");
+    expect(field.className).toContain("sm:min-h-11");
+    expect(send.className).toContain("sm:min-h-11");
+  });
+
+  it("recalculates the textarea baseline when resizing from phone to desktop", async () => {
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: manager("ready"), phone: true },
+    });
+    const field = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+
+    await waitFor(() => expect(field.style.height).toBe("50px"));
+    await rerender({ manager: manager("ready"), phone: false });
+    await waitFor(() => expect(field.style.height).toBe("44px"));
+  });
+
   it("preserves desktop mode controls without showing the phone switch", () => {
     const m = manager("ready");
     m.composerMode = "play";
