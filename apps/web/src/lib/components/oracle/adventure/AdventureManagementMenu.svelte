@@ -5,6 +5,7 @@
 
   import type {
     AdventureArchiveEntry,
+    AdventureListResult,
     AdventureSessionRepository,
   } from "#lib/services/adventure/adventure-session-repository.js";
 
@@ -13,20 +14,33 @@
     repository,
     vaultId,
     onSwitch,
+    variant = "menu",
+    onAction,
+    listEntries,
   }: {
     manager: AdventureManager;
     repository?: AdventureSessionRepository;
     vaultId?: string;
     onSwitch?: (sessionId: string) => Promise<void>;
+    variant?: "menu" | "inline";
+    onAction?: () => void;
+    listEntries?: (
+      vaultId: string,
+      forceFresh?: boolean,
+    ) => Promise<AdventureListResult>;
   } = $props();
 
   // Other adventures in this Vault that can be played right now.
   let others = $state<AdventureArchiveEntry[]>([]);
   async function loadOthers() {
-    if (!repository || !vaultId) return;
+    if (!repository || !vaultId) {
+      others = [];
+      return;
+    }
     const requested = vaultId;
     try {
-      const { entries } = await repository.list(requested);
+      const { entries } = await (listEntries?.(requested) ??
+        repository.list(requested));
       if (requested !== vaultId) return;
       others = entries.filter(
         (entry) =>
@@ -38,6 +52,13 @@
       others = [];
     }
   }
+
+  $effect(() => {
+    if (variant !== "inline" || !manager.session) return;
+    void vaultId;
+    void manager.session.id;
+    void loadOthers();
+  });
   async function switchTo(id: string) {
     try {
       await onSwitch?.(id);
@@ -83,6 +104,7 @@
 
   const open = async (position?: "first" | "last") => {
     isOpen = true;
+    // fallow-ignore-next-line code-duplication -- Matching menu entry focus keeps keyboard navigation consistent with VaultActionsMenu.
     void loadOthers();
     if (!position) return;
     await tick();
@@ -93,6 +115,7 @@
 
   const run = (action: () => void) => {
     close();
+    onAction?.();
     action();
   };
 
@@ -125,91 +148,150 @@
   };
 </script>
 
+<!-- fallow-ignore-next-line complexity -- Inline and menu variants intentionally share this focused adventure control surface. -->
 {#if manager.session}
-  <div
-    class="relative"
-    onfocusout={(event) => {
-      if (!event.currentTarget.contains(event.relatedTarget as Node | null))
-        close();
-    }}
-  >
-    <button
-      bind:this={triggerEl}
-      type="button"
-      class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
-      onclick={() => (isOpen ? close() : void open())}
-      onkeydown={handleTriggerKeydown}
-      aria-haspopup="menu"
-      aria-expanded={isOpen}
-      aria-controls="adventure-management-menu"
+  {#if variant === "inline"}
+    <section
       aria-label="Adventure management"
-      data-testid="adventure-management-menu-button"
+      class="space-y-1.5"
+      data-testid="adventure-management-inline"
     >
-      <span class="icon-[lucide--more-vertical] h-4 w-4" aria-hidden="true"
-      ></span>
-    </button>
-
-    {#if isOpen}
-      <div
-        bind:this={menuEl}
-        id="adventure-management-menu"
-        role="menu"
-        aria-label="Adventure management"
-        tabindex="-1"
-        class="absolute right-0 z-[90] mt-2 w-56 rounded-md border border-theme-border bg-theme-surface p-1 shadow-xl"
-        onkeydown={handleMenuKeydown}
-        data-testid="adventure-management-menu"
+      {#if manager.readOnly}
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
+          onclick={() => run(() => void forceEnd())}
+        >
+          <span
+            class="icon-[lucide--unlock] h-4 w-4 shrink-0"
+            aria-hidden="true"
+          ></span>
+          <span>Force end stuck adventure</span>
+        </button>
+      {:else}
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
+          onclick={() => run(() => void manager.end())}
+        >
+          <span
+            class="icon-[lucide--log-out] h-4 w-4 shrink-0"
+            aria-hidden="true"
+          ></span>
+          <span>End adventure</span>
+        </button>
+      {/if}
+      {#each others as other (other.id)}
+        <button
+          type="button"
+          class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+          onclick={() => run(() => void switchTo(other.id))}
+        >
+          <span
+            class="icon-[lucide--arrow-right-left] h-4 w-4 shrink-0"
+            aria-hidden="true"
+          ></span>
+          <span class="truncate">Switch to {other.title}</span>
+        </button>
+      {/each}
+      <button
+        type="button"
+        class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+        onclick={() => run(() => void manager.close())}
       >
-        {#if manager.readOnly}
-          <button
-            type="button"
-            role="menuitem"
-            class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-danger hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-danger"
-            onclick={() => run(() => void forceEnd())}
-          >
-            <span
-              class="icon-[lucide--unlock] mr-2 inline-block h-3.5 w-3.5"
-              aria-hidden="true"
-            ></span>Force end stuck adventure
-          </button>
-        {:else}
-          <button
-            type="button"
-            role="menuitem"
-            class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-danger hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-danger"
-            onclick={() => run(() => void manager.end())}
-          >
-            <span
-              class="icon-[lucide--log-out] mr-2 inline-block h-3.5 w-3.5"
-              aria-hidden="true"
-            ></span>End adventure
-          </button>
-        {/if}
-        {#each others as other (other.id)}
+        <span
+          class="icon-[lucide--arrow-left] h-4 w-4 shrink-0"
+          aria-hidden="true"
+        ></span>
+        <span>Leave adventure</span>
+      </button>
+    </section>
+  {:else}
+    <div
+      class="relative"
+      onfocusout={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+          close();
+      }}
+    >
+      <button
+        bind:this={triggerEl}
+        type="button"
+        class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        onclick={() => (isOpen ? close() : void open())}
+        onkeydown={handleTriggerKeydown}
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        aria-controls="adventure-management-menu"
+        aria-label="Adventure management"
+        data-testid="adventure-management-menu-button"
+      >
+        <span class="icon-[lucide--more-vertical] h-4 w-4" aria-hidden="true"
+        ></span>
+      </button>
+
+      {#if isOpen}
+        <div
+          bind:this={menuEl}
+          id="adventure-management-menu"
+          role="menu"
+          aria-label="Adventure management"
+          tabindex="-1"
+          class="absolute right-0 z-[90] mt-2 w-56 rounded-md border border-theme-border bg-theme-surface p-1 shadow-xl"
+          onkeydown={handleMenuKeydown}
+          data-testid="adventure-management-menu"
+        >
+          {#if manager.readOnly}
+            <button
+              type="button"
+              role="menuitem"
+              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
+              onclick={() => run(() => void forceEnd())}
+            >
+              <span
+                class="icon-[lucide--unlock] mr-2 inline-block h-3.5 w-3.5"
+                aria-hidden="true"
+              ></span>Force end stuck adventure
+            </button>
+          {:else}
+            <button
+              type="button"
+              role="menuitem"
+              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
+              onclick={() => run(() => void manager.end())}
+            >
+              <span
+                class="icon-[lucide--log-out] mr-2 inline-block h-3.5 w-3.5"
+                aria-hidden="true"
+              ></span>End adventure
+            </button>
+          {/if}
+          {#each others as other (other.id)}
+            <button
+              type="button"
+              role="menuitem"
+              class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
+              onclick={() => run(() => void switchTo(other.id))}
+            >
+              <span
+                class="icon-[lucide--arrow-right-left] mr-2 inline-block h-3.5 w-3.5"
+                aria-hidden="true"
+              ></span>Switch to {other.title}
+            </button>
+          {/each}
           <button
             type="button"
             role="menuitem"
             class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
-            onclick={() => run(() => void switchTo(other.id))}
+            onclick={() => run(() => void manager.close())}
           >
             <span
-              class="icon-[lucide--arrow-right-left] mr-2 inline-block h-3.5 w-3.5"
+              class="icon-[lucide--arrow-left] mr-2 inline-block h-3.5 w-3.5"
               aria-hidden="true"
-            ></span>Switch to {other.title}
+            ></span>Leave adventure
           </button>
-        {/each}
-        <button
-          type="button"
-          role="menuitem"
-          class="w-full rounded-md px-3 py-2 text-left text-sm text-theme-text hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
-          onclick={() => run(() => void manager.close())}
-        >
-          <span
-            class="icon-[lucide--arrow-left] mr-2 inline-block h-3.5 w-3.5"
-            aria-hidden="true"
-          ></span>Leave adventure
-        </button>
-      </div>
-    {/if}
-  </div>
+        </div>
+      {/if}
+    </div>
+  {/if}
 {/if}

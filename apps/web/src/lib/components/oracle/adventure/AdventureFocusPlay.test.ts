@@ -238,16 +238,53 @@ describe("AdventureFocusPlay", () => {
 
   it("can end the adventure from the management menu", async () => {
     const m = manager();
-    render(AdventureFocusPlay, { props: props({ manager: m }) });
+    const repo = {
+      list: vi
+        .fn()
+        .mockResolvedValueOnce({
+          entries: [
+            {
+              id: "adventure-2",
+              title: "Salt Marsh",
+              status: "active",
+              loadCondition: "normal",
+            },
+          ],
+        })
+        .mockResolvedValueOnce({
+          entries: [
+            {
+              id: "adventure-1",
+              title: "The Drowned March",
+              status: "archived",
+              revision: 2,
+              loadCondition: "normal",
+            },
+          ],
+        }),
+    } as any;
+    render(AdventureFocusPlay, {
+      props: props({ manager: m, repository: repo }),
+    });
 
     await fireEvent.click(
       screen.getByTestId("adventure-management-menu-button"),
     );
+    await waitFor(() => expect(repo.list).toHaveBeenCalledOnce());
     await fireEvent.click(
       screen.getByRole("menuitem", { name: /end adventure/i }),
     );
 
     expect(m.end).toHaveBeenCalledOnce();
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(
+      await screen.findByRole("button", {
+        name: "Delete archived adventure The Drowned March",
+      }),
+    ).toBeTruthy();
+    expect(repo.list).toHaveBeenCalledTimes(2);
   });
 
   it("shows the current situation without opening the tools panel", () => {
@@ -676,6 +713,393 @@ describe("AdventureFocusPlay", () => {
         expect(surface.style.top).toBe("40px");
         expect(surface.style.height).toBe(window.innerHeight - 300 + "px");
       });
+    });
+
+    it("renders a single-row compact header with 44px touch targets and no desktop toolbar controls", () => {
+      const m = manager();
+      const longTitle =
+        "The Endless Chronicles of the Sunken Lantern Marsh and Forgotten Causeway";
+      m.session.title = longTitle;
+      m.session.provisionalFacts = [
+        {
+          id: "barrow-1",
+          kind: "place",
+          name: "Sunken Barrow",
+          summary: "Flooded crypts.",
+          introducedOnTurnId: "t1",
+          visibility: "player-visible",
+        },
+      ];
+      m.session.scenarioCollection = {
+        focusedScenarioId: null,
+        items: [
+          {
+            id: "sit-1",
+            knowledge: "heard",
+            status: "open",
+            playerVisible: { rumour: "Bell rings", lead: "Belfry" },
+            events: [],
+            anchorRefs: [],
+          },
+        ],
+      };
+
+      render(AdventureFocusPlay, { props: props({ manager: m }) });
+
+      const surface = screen.getByTestId("adventure-play-surface");
+      const header = surface.querySelector("header")!;
+      expect(header.className).toContain("flex-nowrap");
+
+      const heading = within(header).getByRole("heading", { name: longTitle });
+      expect(heading.className).toContain("truncate");
+      expect(heading.getAttribute("title")).toBe(longTitle);
+      expect(heading.getAttribute("aria-label")).toBe(longTitle);
+
+      const leaveBtn = within(header).getByRole("button", {
+        name: "Leave adventure",
+      });
+      const toolsBtn = within(header).getByRole("button", {
+        name: "Adventure tools (1 discovery, 1 active situation)",
+      });
+      expect(leaveBtn.className).toContain("min-h-11");
+      expect(leaveBtn.className).toContain("min-w-11");
+      expect(toolsBtn.className).toContain("min-h-11");
+      expect(toolsBtn.className).toContain("min-w-11");
+      expect(within(header).getAllByRole("button")).toHaveLength(2);
+
+      expect(
+        within(header).queryByTestId("adventure-management-menu-button"),
+      ).toBeNull();
+      expect(
+        within(header).queryByRole("button", { name: /fullscreen/i }),
+      ).toBeNull();
+      expect(
+        within(header).queryByRole("button", { name: /review \d+ adventure/i }),
+      ).toBeNull();
+      expect(
+        within(header).queryByRole("button", { name: /adventure situations/i }),
+      ).toBeNull();
+      expect(screen.getByTestId("adventure-tools-badge").textContent).toBe("2");
+    });
+
+    it("relocates Discoveries, Situations, Fullscreen, and Management into the tools sheet and portals sub-dialogs", async () => {
+      const m = manager();
+      const longTitle =
+        "The Endless Chronicles of the Sunken Lantern Marsh and Forgotten Causeway";
+      m.session.title = longTitle;
+      m.session.provisionalFacts = [
+        {
+          id: "barrow-1",
+          kind: "place",
+          name: "Sunken Barrow",
+          summary: "Flooded crypts.",
+          introducedOnTurnId: "t1",
+          visibility: "player-visible",
+        },
+      ];
+      m.session.scenarioCollection = {
+        focusedScenarioId: "sit-1",
+        items: [
+          {
+            id: "sit-1",
+            knowledge: "heard",
+            status: "open",
+            playerVisible: { rumour: "Bell rings", lead: "Belfry" },
+            events: [],
+            anchorRefs: [],
+          },
+        ],
+      };
+      const repo = {
+        list: vi.fn().mockResolvedValue({
+          entries: [
+            {
+              id: "adventure-2",
+              title: "Salt Marsh",
+              status: "active",
+              loadCondition: "normal",
+            },
+          ],
+        }),
+      } as any;
+
+      render(AdventureFocusPlay, {
+        props: props({ manager: m, repository: repo }),
+      });
+
+      await fireEvent.click(
+        screen.getByRole("button", {
+          name: "Adventure tools (1 discovery, 1 active situation)",
+        }),
+      );
+
+      const sheet = screen.getByRole("complementary", {
+        name: "Adventure tools",
+      });
+      expect(
+        within(sheet).getByTestId("adventure-tools-full-title").textContent,
+      ).toBe(longTitle);
+      expect(
+        within(sheet).getByTestId("adventure-tools-mobile-controls"),
+      ).toBeTruthy();
+      expect(
+        within(sheet).getByRole("button", { name: "Fullscreen" }),
+      ).toBeTruthy();
+      expect(
+        within(sheet).getByRole("button", { name: "End adventure" }),
+      ).toBeTruthy();
+      expect(
+        await within(sheet).findByRole("button", {
+          name: "Switch to Salt Marsh",
+        }),
+      ).toBeTruthy();
+      expect(repo.list).toHaveBeenCalledTimes(1);
+
+      // Open Discoveries from sheet -> portaled directly under surface, not trapped in sheet
+      const discoveriesTrigger = within(sheet).getByRole("button", {
+        name: "Review 1 adventure discovery",
+      });
+      await fireEvent.click(discoveriesTrigger);
+
+      const surface = screen.getByTestId("adventure-play-surface");
+      const discoveryOverlay = screen.getByTestId(
+        "adventure-discovery-overlay",
+      );
+      expect(discoveryOverlay.parentElement).toBe(surface);
+      expect(sheet.contains(discoveryOverlay)).toBe(false);
+      expect(
+        screen.getByRole("dialog", { name: "Review discoveries" }),
+      ).toBeTruthy();
+
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Close discoveries" }),
+      );
+
+      // Open Situations from sheet -> portaled directly under surface
+      const situationsTrigger = within(sheet).getByRole("button", {
+        name: "Adventure situations (1 active)",
+      });
+      await fireEvent.click(situationsTrigger);
+      const situationsOverlay = screen.getByTestId(
+        "adventure-situations-overlay",
+      );
+      expect(situationsOverlay.parentElement).toBe(surface);
+      expect(sheet.contains(situationsOverlay)).toBe(false);
+    });
+
+    it("updates badge count, aria-label, and polite live region when discoveries or situations change", async () => {
+      const m = manager();
+      const { rerender } = render(AdventureFocusPlay, {
+        props: props({ manager: m }),
+      });
+
+      const live = screen.getByTestId("adventure-phone-live-status");
+      expect(live.getAttribute("aria-live")).toBe("polite");
+      expect(live.textContent).toBe(
+        "No pending discoveries or active situations in Adventure tools.",
+      );
+      expect(screen.queryByTestId("adventure-tools-badge")).toBeNull();
+      expect(
+        screen.getByRole("button", { name: "Adventure tools" }),
+      ).toBeTruthy();
+
+      const updated = manager();
+      updated.session.provisionalFacts = [
+        {
+          id: "barrow-1",
+          kind: "place",
+          name: "Sunken Barrow",
+          summary: "Flooded crypts.",
+          introducedOnTurnId: "t1",
+          visibility: "player-visible",
+        },
+      ];
+      updated.session.scenarioCollection = {
+        focusedScenarioId: null,
+        items: [
+          {
+            id: "sit-1",
+            knowledge: "heard",
+            status: "open",
+            playerVisible: { rumour: "Bell rings", lead: "Belfry" },
+            events: [],
+            anchorRefs: [],
+          },
+        ],
+      };
+
+      await rerender(props({ manager: updated }));
+
+      expect(screen.getByTestId("adventure-tools-badge").textContent).toBe("2");
+      expect(
+        screen.getByRole("button", {
+          name: "Adventure tools (1 discovery, 1 active situation)",
+        }),
+      ).toBeTruthy();
+      expect(live.textContent).toBe(
+        "1 discovery, 1 active situation in Adventure tools.",
+      );
+
+      const cleared = manager();
+      cleared.session.provisionalFacts = [];
+      cleared.session.scenarioCollection = {
+        focusedScenarioId: null,
+        items: [],
+      };
+      await rerender(props({ manager: cleared }));
+
+      expect(live.textContent).toBe(
+        "No pending discoveries or active situations in Adventure tools.",
+      );
+    });
+
+    it("manages focus, wraps Tab inside the open sheet, and enforces Escape precedence for nested dialogs", async () => {
+      const m = manager();
+      m.session.provisionalFacts = [
+        {
+          id: "barrow-1",
+          kind: "place",
+          name: "Sunken Barrow",
+          summary: "Flooded crypts.",
+          introducedOnTurnId: "t1",
+          visibility: "player-visible",
+        },
+      ];
+      render(AdventureFocusPlay, { props: props({ manager: m }) });
+
+      const toolsButton = screen.getByRole("button", {
+        name: "Adventure tools (1 discovery)",
+      });
+      toolsButton.focus();
+      await fireEvent.click(toolsButton);
+
+      const sheet = screen.getByRole("complementary", {
+        name: "Adventure tools",
+      });
+      await waitFor(() =>
+        expect(sheet.contains(document.activeElement)).toBe(true),
+      );
+
+      // Tab wraps inside the open sheet
+      const closeBtn = within(sheet).getByRole("button", {
+        name: "Close adventure tools",
+      });
+      closeBtn.focus();
+      await fireEvent.keyDown(sheet, { key: "Tab", shiftKey: true });
+      expect(sheet.contains(document.activeElement)).toBe(true);
+      expect(document.activeElement).not.toBe(closeBtn);
+
+      // Open sub-dialog from sheet -> first Escape closes sub-dialog only
+      const discoveriesTrigger = within(sheet).getByRole("button", {
+        name: "Review 1 adventure discovery",
+      });
+      await fireEvent.click(discoveriesTrigger);
+      expect(
+        screen.getByRole("dialog", { name: "Review discoveries" }),
+      ).toBeTruthy();
+
+      await fireEvent.keyDown(window, { key: "Escape" });
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("dialog", { name: "Review discoveries" }),
+        ).toBeNull();
+        expect(
+          screen.getByRole("complementary", { name: "Adventure tools" }),
+        ).toBeTruthy();
+        expect(document.activeElement).toBe(discoveriesTrigger);
+      });
+
+      // Second Escape closes the tools sheet and restores focus to header tools button
+      await fireEvent.keyDown(window, { key: "Escape" });
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("complementary", { name: "Adventure tools" }),
+        ).toBeNull();
+        expect(document.activeElement).toBe(toolsButton);
+      });
+    });
+
+    it("keeps compact header stable across phases and surfaces urgent states, 0-count Discoveries, and switch errors safely", async () => {
+      const m = manager();
+      m.phase = "generating";
+      const { rerender } = render(AdventureFocusPlay, {
+        props: props({ manager: m }),
+      });
+
+      const status = () => screen.getByTestId("adventure-header-status");
+      expect(status().textContent).toContain("Generating…");
+
+      const pending = manager();
+      pending.session.pendingRoll = { id: "r1", prompt: "Jump" } as any;
+      await rerender(props({ manager: pending }));
+      expect(status().textContent).toContain("Roll needed");
+
+      const offline = manager();
+      offline.phase = "offline";
+      await rerender(props({ manager: offline }));
+      expect(status().textContent).toContain("Waiting for connection");
+
+      const ro = manager();
+      ro.readOnly = true;
+      await rerender(props({ manager: ro }));
+      expect(status().textContent).toContain("Read-only in this tab");
+      expect(screen.getByTestId("adventure-tools-urgent-dot")).toBeTruthy();
+
+      const onResume = vi.fn().mockRejectedValue(new Error("boom"));
+      const repo = {
+        list: vi.fn().mockResolvedValue({
+          entries: [
+            {
+              id: "adv-2",
+              title: "Salt Marsh",
+              status: "active",
+              loadCondition: "normal",
+            },
+          ],
+        }),
+      } as any;
+      await rerender(props({ manager: ro, repository: repo, onResume }));
+
+      await fireEvent.click(
+        screen.getByRole("button", {
+          name: "Adventure tools (read-only recovery available)",
+        }),
+      );
+      const sheet = screen.getByRole("complementary", {
+        name: "Adventure tools",
+      });
+      expect(
+        within(sheet).getByRole("button", {
+          name: /force end stuck adventure/i,
+        }),
+      ).toBeTruthy();
+
+      // 0-count Discoveries still opens empty state cleanly and restores focus
+      const zeroDiscoveriesBtn = within(sheet).getByRole("button", {
+        name: "Adventure discoveries (0 awaiting review)",
+      });
+      await fireEvent.click(zeroDiscoveriesBtn);
+      expect(
+        screen.getByText(
+          "All discoveries reviewed. You can return to your adventure.",
+        ),
+      ).toBeTruthy();
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Close discoveries" }),
+      );
+      await waitFor(() =>
+        expect(document.activeElement).toBe(zeroDiscoveriesBtn),
+      );
+
+      // Failed switch closes sheet without crashing
+      const switchBtn = await within(sheet).findByRole("button", {
+        name: "Switch to Salt Marsh",
+      });
+      await fireEvent.click(switchBtn);
+      expect(onResume).toHaveBeenCalledWith("adv-2");
+      expect(
+        screen.queryByRole("complementary", { name: "Adventure tools" }),
+      ).toBeNull();
     });
   });
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type {
     AdventureArchiveEntry,
+    AdventureListResult,
     AdventureSessionRepository,
   } from "#lib/services/adventure/adventure-session-repository.js";
   import AdventureTranscript from "./AdventureTranscript.svelte";
@@ -26,12 +27,17 @@
     onResume,
     onResumeArchived,
     confirm = (options) => notificationStore.confirm(options),
+    listEntries,
   }: {
     repository: AdventureSessionRepository;
     vaultId: string;
     onResume?: (sessionId: string) => Promise<void>;
     onResumeArchived?: (sessionId: string) => Promise<void>;
     confirm?: Confirm;
+    listEntries?: (
+      vaultId: string,
+      forceFresh?: boolean,
+    ) => Promise<AdventureListResult>;
   } = $props();
   let entries = $state<AdventureArchiveEntry[]>([]);
   let selected = $state<string | null>(null);
@@ -58,9 +64,10 @@
     );
   });
 
-  async function refresh(requestedVaultId = vaultId) {
+  async function refresh(requestedVaultId = vaultId, forceFresh = false) {
     const request = ++refreshRequest;
-    const result = await repository.list(requestedVaultId);
+    const result = await (listEntries?.(requestedVaultId, forceFresh) ??
+      repository.list(requestedVaultId));
     if (request !== refreshRequest || requestedVaultId !== vaultId) return;
     entries = result.entries;
   }
@@ -104,7 +111,7 @@
       selected = null;
       selectedSession = null;
     }
-    await refresh();
+    await refresh(vaultId, true);
   }
 
   function describeArchiveError(message: string): string {
@@ -152,7 +159,7 @@
     renamingId = null;
     renameDraft = "";
     renameError = null;
-    await refresh();
+    await refresh(vaultId, true);
   }
 
   async function duplicateAdventure(entry: AdventureArchiveEntry) {
@@ -164,7 +171,7 @@
       duplicateError = describeArchiveError(result.error.message);
       return;
     }
-    await refresh();
+    await refresh(vaultId, true);
   }
 
   async function resumeArchivedAdventure(entry: AdventureArchiveEntry) {

@@ -414,4 +414,42 @@ describe("AdventureProvisionalFacts", () => {
     }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
+
+  it("stays mounted at 0 count in sheet variant, opens empty state cleanly, and portals to overlayHost", async () => {
+    const overlayHost = document.createElement("div");
+    document.body.appendChild(overlayHost);
+
+    try {
+      render(AdventureProvisionalFacts, {
+        props: {
+          facts: [],
+          existingTitles: [],
+          onAdd: vi.fn(),
+          variant: "sheet",
+          overlayHost,
+        },
+      });
+
+      const trigger = screen.getByRole("button", {
+        name: "Adventure discoveries (0 awaiting review)",
+      });
+      expect(trigger.textContent).toContain("Discoveries");
+      expect(trigger.textContent).toContain("0");
+
+      await fireEvent.click(trigger);
+
+      const overlay = screen.getByTestId("adventure-discovery-overlay");
+      expect(overlay.parentElement).toBe(overlayHost);
+      expect(
+        screen.getByText(
+          "All discoveries reviewed. You can return to your adventure.",
+        ),
+      ).toBeTruthy();
+
+      await fireEvent.keyDown(window, { key: "Escape" });
+      expect(screen.queryByTestId("adventure-discovery-overlay")).toBeNull();
+    } finally {
+      overlayHost.remove();
+    }
+  });
 });
