@@ -127,6 +127,11 @@
       ? `top: ${keyboard.offsetTop}px; height: ${keyboard.visibleHeight}px; bottom: auto;`
       : undefined,
   );
+  const sceneDetailsMaxHeightPx = $derived(
+    phone && keyboard.visibleHeight > 0 && keyboard.inset > 0
+      ? Math.min(256, Math.max(80, Math.floor(keyboard.visibleHeight * 0.28)))
+      : undefined,
+  );
 
   // Phone play covers the app chrome: move focus in, keep it in, and give it
   // back on exit.
@@ -630,11 +635,11 @@
 
   {#if manager.session && manager.recap}
     <!-- Narrow surfaces: the scene strip is pinned above the transcript. -->
-    <div
-      class="shrink-0 px-3 pt-3 @4xl:hidden"
-      data-testid="adventure-scene-strip-wrap"
-    >
-      <AdventureStateSummary {manager} />
+    <div class="shrink-0 @4xl:hidden" data-testid="adventure-scene-strip-wrap">
+      <AdventureStateSummary
+        {manager}
+        maxExpandedHeightPx={sceneDetailsMaxHeightPx}
+      />
     </div>
   {/if}
 

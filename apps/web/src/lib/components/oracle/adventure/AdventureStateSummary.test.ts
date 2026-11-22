@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import { createRawSnippet } from "svelte";
-import { render, screen } from "@testing-library/svelte";
+import { fireEvent, render, screen, within } from "@testing-library/svelte";
 import { describe, expect, it } from "vitest";
 import AdventureStateSummary from "./AdventureStateSummary.svelte";
 
@@ -21,19 +21,154 @@ describe("AdventureStateSummary", () => {
           text: "Tiny village in the high slopes of nombe",
         },
         situation: { id: "sit-1", text: "Sela is fixing a shutter." },
+        elapsedTimeLabel: "45m",
         objectives: [],
         activeCharacters: [],
         knownFacts: [],
         recentTurnSummaries: [],
       }),
     });
-    const details = screen.getByTestId("adventure-scene-details");
-    expect(details).toHaveProperty("open", false);
-    expect(details.querySelector("summary")?.textContent).toContain(
+    const details = screen.getByTestId(
+      "adventure-scene-details",
+    ) as HTMLDetailsElement;
+    const summary = details.querySelector("summary")!;
+    const body = screen.getByTestId("adventure-scene-details-body");
+
+    expect(details.open).toBe(false);
+    expect(summary.className).toContain("flex");
+    expect(summary.className).toContain("touch-target");
+    expect(summary.getAttribute("aria-label")).toBe(
+      "Scene details: Tiny village in the high slopes of nombe",
+    );
+    expect(summary.getAttribute("title")).toBe(
       "Tiny village in the high slopes of nombe",
     );
-    expect(details.querySelector("summary")?.className).toContain("flex");
-    expect(screen.getByText("Sela is fixing a shutter.")).toBeTruthy();
+    expect(summary.textContent).toContain(
+      "Tiny village in the high slopes of nombe",
+    );
+    expect(summary.textContent).not.toContain("Scene details");
+    expect(summary.textContent).not.toContain("45m");
+    expect(summary.querySelector(".truncate")).toBeTruthy();
+
+    expect(
+      within(body).getByTestId("adventure-scene-elapsed").textContent,
+    ).toContain("45m");
+    expect(within(body).getByText("Sela is fixing a shutter.")).toBeTruthy();
+  });
+
+  it("toggles disclosure on click and collapses on Escape with focus restoration", async () => {
+    render(AdventureStateSummary, {
+      manager: manager({
+        location: { id: "loc-1", text: "The lantern road" },
+        situation: { id: "sit-1", text: "The ward is failing" },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+      }),
+    });
+
+    const details = screen.getByTestId(
+      "adventure-scene-details",
+    ) as HTMLDetailsElement;
+    const summary = details.querySelector("summary")!;
+    const body = screen.getByTestId("adventure-scene-details-body");
+
+    // Escape while collapsed does nothing
+    const collapsedEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    details.dispatchEvent(collapsedEvent);
+    expect(collapsedEvent.defaultPrevented).toBe(false);
+    expect(details.open).toBe(false);
+
+    // Click opens details; Escape collapses it and restores focus to summary
+    await fireEvent.click(summary);
+    expect(details.open).toBe(true);
+
+    const openEvent = new KeyboardEvent("keydown", {
+      key: "Escape",
+      bubbles: true,
+      cancelable: true,
+    });
+    body.dispatchEvent(openEvent);
+    expect(openEvent.defaultPrevented).toBe(true);
+    expect(details.open).toBe(false);
+    expect(document.activeElement).toBe(summary);
+  });
+
+  it("falls back to 'Current situation' when location is missing or blank and shows empty body state", async () => {
+    const { rerender } = render(AdventureStateSummary, {
+      manager: manager({
+        location: { id: "loc-1", text: "   " },
+        situation: undefined,
+        elapsedTimeLabel: "   ",
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+      }),
+    });
+
+    const details = screen.getByTestId("adventure-scene-details");
+    const summary = details.querySelector("summary")!;
+    expect(summary.textContent).toContain("Current situation");
+    expect(summary.getAttribute("aria-label")).toBe(
+      "Scene details: Current situation",
+    );
+    expect(summary.getAttribute("title")).toBe("Current situation");
+    expect(screen.queryByTestId("adventure-scene-location")).toBeNull();
+    expect(screen.queryByTestId("adventure-scene-elapsed")).toBeNull();
+    expect(screen.getByTestId("adventure-scene-empty").textContent).toContain(
+      "No additional scene details yet.",
+    );
+
+    await rerender({
+      manager: manager({
+        location: undefined,
+        situation: undefined,
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+      }),
+    });
+    expect(summary.textContent).toContain("Current situation");
+    expect(screen.getByTestId("adventure-scene-empty")).toBeTruthy();
+  });
+
+  it("bounds expanded body scroll height and applies optional maxExpandedHeightPx", async () => {
+    const { rerender } = render(AdventureStateSummary, {
+      manager: manager({
+        location: { id: "loc-1", text: "The lantern road" },
+        situation: { id: "sit-1", text: "The ward is failing" },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+      }),
+    });
+
+    const body = screen.getByTestId("adventure-scene-details-body");
+    expect(body.className).toContain("overflow-y-auto");
+    expect(body.className).toContain("overscroll-contain");
+    expect(body.className).toContain("max-h-[min(32dvh,16rem)]");
+    expect(body.style.maxHeight).toBe("");
+
+    await rerender({
+      manager: manager({
+        location: { id: "loc-1", text: "The lantern road" },
+        situation: { id: "sit-1", text: "The ward is failing" },
+        objectives: [],
+        activeCharacters: [],
+        knownFacts: [],
+        recentTurnSummaries: [],
+      }),
+      maxExpandedHeightPx: 140,
+    });
+    expect(body.style.maxHeight).toBe("140px");
   });
 
   it("renders nothing when there is no active session", () => {
@@ -108,8 +243,19 @@ describe("AdventureStateSummary", () => {
         recentTurnSummaries: [],
       }),
     });
+    const summary = screen
+      .getByTestId("adventure-scene-details")
+      .querySelector("summary")!;
+    const truncated = summary.querySelector(".truncate");
+    expect(truncated).toBeTruthy();
+    expect(truncated?.className).toContain("min-w-0");
+    expect(truncated?.className).toContain("flex-1");
+    expect(summary.getAttribute("title")).toBe(long);
+    expect(summary.getAttribute("aria-label")).toBe(`Scene details: ${long}`);
+
     const full = screen.getByTestId("adventure-scene-location");
     expect(full.textContent).toContain(long);
+    expect(full.className).toContain("break-words");
     expect(full.querySelector(".truncate")).toBeNull();
   });
 
