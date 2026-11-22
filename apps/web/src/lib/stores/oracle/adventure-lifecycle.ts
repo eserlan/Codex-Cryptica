@@ -75,6 +75,7 @@ export class AdventureLifecycle {
     const check = await this.runtime.deps.packages.verifyPin(session);
     if (check.status === "available") return false;
     if (!isCurrent()) return true;
+    this.state.lastTurnRejection = null;
     this.state.session = session;
     await this.runtime.enterPackageUnavailable(check.otherVersionAvailable);
     return true;
@@ -379,6 +380,7 @@ export class AdventureLifecycle {
     await this.runtime.deps.coordinator.stop();
     this.state.lease = null;
     this.state.session = null;
+    this.state.lastTurnRejection = null;
     this.state.readOnly = false;
     this.state.errorMessage = null;
     this.state.phase = "idle";

@@ -63,7 +63,12 @@ describe("package pin on open", () => {
     async (mode) => {
       const ctx = setup();
       const session = await startPackageSession(ctx);
-      ctx.manager.close();
+      await ctx.manager.close();
+      ctx.manager.lastTurnRejection = {
+        reason: "engine-refused",
+        revision: session.revision,
+        recordedAt: "2026-11-22T00:00:00.000Z",
+      };
       ctx.setMode(mode);
       ctx.deps.generation.generate.mockClear();
       ctx.deps.repository.save.mockClear();
@@ -79,6 +84,7 @@ describe("package pin on open", () => {
       expect(ctx.deps.repository.archive).not.toHaveBeenCalled();
       expect(ctx.manager.session?.turns).toEqual(session.turns);
       expect(ctx.manager.session?.revision).toBe(session.revision);
+      expect(ctx.manager.lastTurnRejection).toBeNull();
     },
   );
 

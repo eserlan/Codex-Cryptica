@@ -1258,10 +1258,16 @@ describe("AdventureManager Phase 2 tools", () => {
     // lease for an otherwise-orphaned active session.
     manager.readOnly = true;
     manager.lease = null;
+    manager.lastTurnRejection = {
+      reason: "engine-refused",
+      revision: manager.session!.revision,
+      recordedAt: "2026-11-22T00:00:00.000Z",
+    };
 
     await manager.forceEnd();
 
     expect(manager.session).toBeNull();
+    expect(manager.lastTurnRejection).toBeNull();
     expect(manager.readOnly).toBe(false);
     expect(manager.phase).toBe("idle");
     expect(coordinatorStop).toHaveBeenCalled();
