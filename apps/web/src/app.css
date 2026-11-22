@@ -244,6 +244,7 @@
     --theme-action-text: var(--color-accent-deep);
 
     --bg-texture: none;
+    --bg-texture-overlay: none;
     --color-warning: #eab308;
     --color-danger: #ef4444;
 
@@ -279,6 +280,14 @@
   html.skip-landing .marketing-layer,
   html.dismissed-landing .marketing-layer {
     display: none !important;
+  }
+
+  .marketing-layer {
+    background-image: radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      color-mix(in srgb, var(--color-accent-primary) 6%, transparent),
+      transparent 70%
+    );
   }
 
   html[data-app-appearance="neutral-light"] {

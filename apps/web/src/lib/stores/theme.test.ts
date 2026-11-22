@@ -324,4 +324,72 @@ describe("ThemeStore", () => {
       expect(root.style.getPropertyValue("--font-display-val")).toBe(header);
     });
   });
+
+  describe("Texture & Overlay Optimization", () => {
+    it("emits a pure-CSS radial-gradient wash instead of url('/themes/workspace_grain.svg') for workspace and workspace_dark", async () => {
+      const root = document.documentElement;
+
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("workspace");
+      expect(store.activeTheme.id).toBe("workspace");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      const lightOverlay = root.style.getPropertyValue("--bg-texture-overlay");
+      expect(lightOverlay).not.toBe("");
+      expect(lightOverlay).toContain("radial-gradient(");
+      expect(lightOverlay).not.toContain("url(");
+      expect(lightOverlay).not.toContain("workspace_grain.svg");
+
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("workspace");
+      expect(store.activeTheme.id).toBe("workspace_dark");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      const darkOverlay = root.style.getPropertyValue("--bg-texture-overlay");
+      expect(darkOverlay).not.toBe("");
+      expect(darkOverlay).toContain("radial-gradient(");
+      expect(darkOverlay).not.toContain("url(");
+      expect(darkOverlay).not.toContain("workspace_grain.svg");
+    });
+
+    it("preserves SVG texture overlays for genre themes, clears textures on textureless themes, and restores gradient when switching back to workspace", async () => {
+      const root = document.documentElement;
+
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("fantasy");
+      expect(root.style.getPropertyValue("--bg-texture")).toContain(
+        "url('/themes/parchment.svg')",
+      );
+      expect(root.style.getPropertyValue("--bg-texture-overlay")).toContain(
+        "url('/themes/parchment.svg')",
+      );
+
+      // Switching directly from a textured theme back to workspace must clear url(...)
+      await store.setTheme("workspace");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      const restoredOverlay = root.style.getPropertyValue(
+        "--bg-texture-overlay",
+      );
+      expect(restoredOverlay).toContain("radial-gradient(");
+      expect(restoredOverlay).not.toContain("url(");
+
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("fantasy");
+      expect(store.activeTheme.id).toBe("fantasy_dark");
+      expect(root.style.getPropertyValue("--bg-texture-overlay")).toContain(
+        "url('/themes/leather.svg')",
+      );
+
+      await store.setTheme("fallout");
+      const falloutOverlay = root.style.getPropertyValue(
+        "--bg-texture-overlay",
+      );
+      expect(falloutOverlay).toContain("radial-gradient(");
+      expect(falloutOverlay).toContain("url('/themes/crt.svg')");
+
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("scifi");
+      expect(store.activeTheme.id).toBe("scifi_light");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      expect(root.style.getPropertyValue("--bg-texture-overlay")).toBe("none");
+    });
+  });
 });
