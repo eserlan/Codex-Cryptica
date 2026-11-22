@@ -202,7 +202,7 @@
   <button
     bind:this={triggerButton}
     type="button"
-    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-text px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
     aria-label={visibleFacts.length > 0
       ? `Review ${visibleFacts.length} adventure ${visibleFacts.length === 1 ? "discovery" : "discoveries"}`
       : "Adventure discoveries (0 awaiting review)"}

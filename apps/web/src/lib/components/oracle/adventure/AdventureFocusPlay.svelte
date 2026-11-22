@@ -352,6 +352,7 @@
     if (!utilitiesOpen || event.key !== "Escape" || event.defaultPrevented) {
       return;
     }
+    // ui-check-ignore: The full-screen phone surface already traps Tab with containTab.
     if (focusElement?.querySelector('[role="dialog"][aria-modal="true"]')) {
       return;
     }
@@ -421,7 +422,7 @@
     <div class="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
       <button
         type="button"
-        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-10 sm:min-w-10"
+        class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-10 sm:min-w-10"
         onclick={() => void manager.close()}
         title="Leave adventure (saves automatically)"
         aria-label="Leave adventure"
@@ -442,7 +443,7 @@
           class={[
             "flex items-center gap-1.5 truncate text-xs font-medium sm:block sm:text-sm sm:font-normal",
             phone && headerStatus.tone === "danger"
-              ? "text-theme-danger"
+              ? "text-theme-text"
               : "text-theme-text",
           ]}
           data-testid="adventure-header-status"
@@ -503,7 +504,7 @@
       {/if}
       <button
         bind:this={toolsButton}
-        class="relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border px-2 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-12 sm:px-3"
+        class="relative flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text px-2 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:min-h-12 sm:px-3"
         type="button"
         aria-label={phone ? phoneToolsSummary.ariaLabel : "Adventure tools"}
         title={phone ? phoneToolsSummary.ariaLabel : "Adventure tools"}
@@ -530,7 +531,7 @@
             class={[
               "pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none tabular-nums",
               phoneToolsSummary.badgeTone === "danger"
-                ? "border border-theme-danger bg-theme-surface text-theme-danger"
+                ? "border border-theme-border-interactive bg-theme-surface text-theme-text"
                 : "bg-theme-primary text-theme-on-primary",
             ]}
           >
@@ -547,7 +548,7 @@
       {#if !phone}
         <div class="hidden sm:contents">
           <button
-            class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-border px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
+            class="hidden min-h-12 items-center gap-2 rounded-md border border-theme-text px-3 text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:inline-flex"
             type="button"
             aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
             aria-pressed={isFullscreen}
@@ -694,7 +695,7 @@
         <button
           bind:this={toolsCloseButton}
           type="button"
-          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-border text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+          class="flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-md border border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
           aria-label="Close adventure tools"
           onclick={closeTools}
         >
@@ -726,7 +727,7 @@
             onAction={closeTools}
           />
           <button
-            class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+            class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-text px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
             type="button"
             aria-label={isFullscreen ? "Fullscreen active" : "Fullscreen"}
             aria-pressed={isFullscreen}

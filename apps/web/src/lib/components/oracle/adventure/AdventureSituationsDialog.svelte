@@ -97,7 +97,7 @@
   <button
     bind:this={triggerButton}
     type="button"
-    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-border px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+    class="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg border border-theme-text px-3 py-2 text-sm font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
     aria-label={`Adventure situations (${activeScenarios.length} active)`}
     aria-expanded={expanded}
     aria-controls="adventure-situations-dialog"
@@ -123,7 +123,7 @@
   <button
     bind:this={triggerButton}
     type="button"
-    class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md border border-theme-border px-2.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:gap-2 sm:px-3 sm:text-sm"
+    class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md border border-theme-text px-2.5 text-xs font-medium text-theme-text transition hover:border-theme-primary hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary sm:gap-2 sm:px-3 sm:text-sm"
     aria-label={activeScenarios.length > 0
       ? `Adventure situations (${activeScenarios.length} active)`
       : "Adventure situations"}
