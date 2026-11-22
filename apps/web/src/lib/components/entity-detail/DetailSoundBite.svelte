@@ -421,7 +421,7 @@
                 onclick={startEditing}
                 disabled={isRevising}
                 title="Edit transcript text"
-                aria-label="Edit sound bite transcript for {entity.title}"
+                aria-label="Edit Text: sound-bite transcript for {entity.title}"
               >
                 <span aria-hidden="true" class="icon-[lucide--edit] w-3 h-3"
                 ></span>
@@ -437,7 +437,7 @@
                 class="flex items-center gap-1 text-xs text-theme-accent hover:opacity-80 transition-opacity"
                 onclick={() => p2pHost.broadcastSoundBitePlay(entity.id)}
                 title="Play sound bite for all connected guests"
-                aria-label="Play sound bite for all connected guests"
+                aria-label="Play for all: sound bite for {entity.title}"
               >
                 <span aria-hidden="true" class="icon-[lucide--radio] w-3 h-3"
                 ></span>
