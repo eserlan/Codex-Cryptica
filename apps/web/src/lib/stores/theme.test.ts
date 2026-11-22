@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { readFileSync } from "node:fs";
 import { ThemeStore, type IThemeStorage } from "./theme.svelte";
-import { DEFAULT_JARGON } from "schema";
+import { DEFAULT_JARGON, THEMES } from "schema";
 
 vi.mock("$app/environment", () => ({
   browser: true,
@@ -322,6 +323,118 @@ describe("ThemeStore", () => {
       const header = root.style.getPropertyValue("--font-header-val");
       expect(header).toContain("Fraunces");
       expect(root.style.getPropertyValue("--font-display-val")).toBe(header);
+    });
+  });
+
+  describe("Texture & Overlay Optimization", () => {
+    it("keeps the welcome wash above 4.5:1 contrast for Workspace light muted text", () => {
+      const stylesheet = readFileSync("src/app.css", "utf8");
+      const marketingLayer = stylesheet.match(
+        /^\s*\.marketing-layer\s*\{([^}]+)\}/m,
+      )?.[1];
+      const washOpacity = marketingLayer?.match(
+        /color-mix\(in srgb, var\(--color-accent-primary\)\s+([\d.]+)%,\s*transparent\)/,
+      )?.[1];
+
+      expect(washOpacity).toBeDefined();
+
+      const toRgb = (hex: string) =>
+        hex
+          .match(/[\da-f]{2}/gi)!
+          .map((channel) => Number.parseInt(channel, 16));
+      const linearize = (channel: number) => {
+        const normalized = channel / 255;
+        return normalized <= 0.04045
+          ? normalized / 12.92
+          : ((normalized + 0.055) / 1.055) ** 2.4;
+      };
+      const luminance = (channels: number[]) =>
+        channels
+          .map(linearize)
+          .reduce(
+            (sum, channel, index) =>
+              sum + channel * [0.2126, 0.7152, 0.0722][index],
+            0,
+          );
+
+      const tokens = THEMES.workspace.tokens;
+      const opacity = Number(washOpacity) / 100;
+      const background = toRgb(tokens.background).map(
+        (channel, index) =>
+          channel * (1 - opacity) + toRgb(tokens.primary)[index] * opacity,
+      );
+      const text = toRgb(tokens.secondary);
+      const [lighter, darker] = [luminance(background), luminance(text)].sort(
+        (a, b) => b - a,
+      );
+
+      expect((lighter + 0.05) / (darker + 0.05)).toBeGreaterThanOrEqual(4.5);
+    });
+
+    it("emits a pure-CSS radial-gradient wash instead of url('/themes/workspace_grain.svg') for workspace and workspace_dark", async () => {
+      const root = document.documentElement;
+
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("workspace");
+      expect(store.activeTheme.id).toBe("workspace");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      const lightOverlay = root.style.getPropertyValue("--bg-texture-overlay");
+      expect(lightOverlay).not.toBe("");
+      expect(lightOverlay).toContain("radial-gradient(");
+      expect(lightOverlay).not.toContain("url(");
+      expect(lightOverlay).not.toContain("workspace_grain.svg");
+
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("workspace");
+      expect(store.activeTheme.id).toBe("workspace_dark");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      const darkOverlay = root.style.getPropertyValue("--bg-texture-overlay");
+      expect(darkOverlay).not.toBe("");
+      expect(darkOverlay).toContain("radial-gradient(");
+      expect(darkOverlay).not.toContain("url(");
+      expect(darkOverlay).not.toContain("workspace_grain.svg");
+    });
+
+    it("preserves SVG texture overlays for genre themes, clears textures on textureless themes, and restores gradient when switching back to workspace", async () => {
+      const root = document.documentElement;
+
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("fantasy");
+      expect(root.style.getPropertyValue("--bg-texture")).toContain(
+        "url('/themes/parchment.svg')",
+      );
+      expect(root.style.getPropertyValue("--bg-texture-overlay")).toContain(
+        "url('/themes/parchment.svg')",
+      );
+
+      // Switching directly from a textured theme back to workspace must clear url(...)
+      await store.setTheme("workspace");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      const restoredOverlay = root.style.getPropertyValue(
+        "--bg-texture-overlay",
+      );
+      expect(restoredOverlay).toContain("radial-gradient(");
+      expect(restoredOverlay).not.toContain("url(");
+
+      store.setAppAppearance("neutral-dark");
+      await store.setTheme("fantasy");
+      expect(store.activeTheme.id).toBe("fantasy_dark");
+      expect(root.style.getPropertyValue("--bg-texture-overlay")).toContain(
+        "url('/themes/leather.svg')",
+      );
+
+      await store.setTheme("fallout");
+      const falloutOverlay = root.style.getPropertyValue(
+        "--bg-texture-overlay",
+      );
+      expect(falloutOverlay).toContain("radial-gradient(");
+      expect(falloutOverlay).toContain("url('/themes/crt.svg')");
+
+      store.setAppAppearance("neutral-light");
+      await store.setTheme("scifi");
+      expect(store.activeTheme.id).toBe("scifi_light");
+      expect(root.style.getPropertyValue("--bg-texture")).toBe("none");
+      expect(root.style.getPropertyValue("--bg-texture-overlay")).toBe("none");
     });
   });
 });

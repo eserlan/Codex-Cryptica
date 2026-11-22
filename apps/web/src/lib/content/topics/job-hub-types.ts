@@ -32,6 +32,8 @@ export interface TopicJobHubConfig {
   canonicalPath: string;
   /** Public cluster label shown as the hub's chip. */
   label: string;
+  /** Accessible name for the navigation linking to each job section. */
+  jobsNavLabel: string;
   title: string;
   metaTitle: string;
   description: string;

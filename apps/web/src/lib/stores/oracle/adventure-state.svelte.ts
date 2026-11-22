@@ -5,6 +5,7 @@ import {
   type AdventureSession,
 } from "@codex/adventure-engine";
 import type { AdventureControlLease } from "#lib/services/adventure/adventure-control-lease.js";
+import type { TurnRejectionDiagnostic } from "#lib/services/adventure/adventure-review-capture.js";
 import type { AdventureStartFailure } from "#lib/services/adventure/adventure-start-failure.js";
 
 /** Reactive view state shared by the adventure workflows. */
@@ -35,6 +36,8 @@ export class AdventureState {
   /** Uncommitted player-visible narration, cleared on failure or cancellation. */
   streamedNarration = $state("");
   errorMessage = $state<string | null>(null);
+  /** Details of the most recent engine-refused Play turn (never committed to session.turns). */
+  lastTurnRejection = $state<TurnRejectionDiagnostic | null>(null);
   /**
    * Typed cause of the last start/opening failure. UI maps it to fixed,
    * user-safe copy instead of showing `errorMessage` text verbatim.

@@ -12,11 +12,13 @@
     phone = false,
     keyboardOpen = false,
     suggestionChips = false,
+    overlayHost,
   }: {
     manager: AdventureManager;
     phone?: boolean;
     keyboardOpen?: boolean;
     suggestionChips?: boolean;
+    overlayHost?: HTMLElement;
   } = $props();
 
   let isOocMode = $derived(manager.composerMode === "ooc");
@@ -49,7 +51,15 @@
       (!isOocMode && playBlockedByRoll),
   );
   let textarea = $state<HTMLTextAreaElement>();
+  let cancelButton = $state<HTMLButtonElement>();
   let typing = $state(false);
+
+  async function focusCancelAfterSuggestion(): Promise<void> {
+    await tick();
+    if (busy && !manager.rollMutationPending) {
+      cancelButton?.focus();
+    }
+  }
 
   function selectMode(mode: "play" | "ooc") {
     if (manager.setComposerMode) {
@@ -81,13 +91,14 @@
   // Long prose scrolls inside the field so it never pushes the dock offscreen.
   $effect(() => {
     const content = activeDraft;
+    const minHeight = phone ? 50 : 44;
     if (!textarea || typeof content !== "string") return;
     void tick().then(() => {
       if (!textarea) return;
       textarea.style.height = "auto";
       const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
-      const maxHeight = Math.max(44, Math.min(192, visibleHeight * 0.3));
-      textarea.style.height = `${Math.min(textarea.scrollHeight, maxHeight)}px`;
+      const maxHeight = Math.max(minHeight, Math.min(192, visibleHeight * 0.3));
+      textarea.style.height = `${Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight))}px`;
       textarea.style.overflowY =
         textarea.scrollHeight > maxHeight ? "auto" : "hidden";
     });
@@ -187,6 +198,7 @@
     </div>
     {#if !manager.rollMutationPending}
       <button
+        bind:this={cancelButton}
         class="min-h-11 rounded-md border border-theme-text/75 px-3 text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
         type="button"
         onclick={() => manager.cancel()}>Cancel</button
@@ -206,6 +218,8 @@
     {disabled}
     visible={suggestionsVisible}
     chips={suggestionChips}
+    {overlayHost}
+    onSubmitStart={focusCancelAfterSuggestion}
   />
   {#if manager.errorMessage}
     <p class="text-sm text-theme-text" role="alert">
@@ -236,7 +250,7 @@
        instead of consuming a separate line of story space. -->
   <div
     class={phone && modeSwitchVisible
-      ? "inline-flex shrink-0 items-center gap-0.5 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
+      ? "inline-flex min-h-[50px] shrink-0 items-center gap-0.5 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
       : "hidden"}
     role="group"
     aria-label="Composer mode"
@@ -294,7 +308,7 @@
       bind:this={textarea}
       id="adventure-action"
       rows="1"
-      class="min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+      class="min-h-[50px] sm:min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       value={activeDraft}
       oninput={(event) => updateDraft(event.currentTarget.value)}
       onfocus={() => (typing = true)}
@@ -309,7 +323,7 @@
       placeholder={inputPlaceholder}
     ></textarea>
     <button
-      class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+      class="flex min-h-[50px] min-w-[50px] sm:min-h-11 sm:min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
       type="submit"
       aria-label={isOocMode ? "Submit question to GM" : "Submit action"}
       data-testid="adventure-submit-button"
@@ -327,14 +341,16 @@
 {/snippet}
 
 <div
-  class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
+  class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-1.5 sm:gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
   data-testid="adventure-action-dock"
 >
   <!-- Only optional controls scroll, including all expanded suggested actions.
        Keep a single touch-scroll container so long choices remain reachable.
        The textarea/Send row stays fixed at the bottom when the keyboard opens. -->
   <div
-    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain pb-2"
+    class={phone
+      ? "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain"
+      : "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain pb-2"}
     data-testid="adventure-dock-extras"
   >
     {@render dockExtrasContent()}

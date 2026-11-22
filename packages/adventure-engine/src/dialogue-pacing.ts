@@ -53,6 +53,12 @@ const TOPIC_ALIASES: Record<string, string> = {
   register: "record",
 };
 
+const EXTRA_TOPIC_STOP_WORDS = new Set(
+  "him his her hers herself himself themselves one two three some such other another more most much many very only even also onto over under".split(
+    " ",
+  ),
+);
+
 export function topicWords(value: string): Set<string> {
   const words = value.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
   return new Set(
@@ -60,6 +66,13 @@ export function topicWords(value: string): Set<string> {
       .filter((word) => word.length > 2 && !STOP_WORDS.has(word))
       .map((word) => TOPIC_ALIASES[word] ?? word),
   );
+}
+
+/** Topic words excluding common pronouns, quantifiers, and prepositions. */
+export function threadTopicWords(value: string): Set<string> {
+  const words = topicWords(value);
+  for (const stop of EXTRA_TOPIC_STOP_WORDS) words.delete(stop);
+  return words;
 }
 
 function intersects(a: ReadonlySet<string>, b: ReadonlySet<string>): boolean {
@@ -75,15 +88,16 @@ function sharedTopic(actions: string[]): Set<string> {
   );
 }
 
+const DELIBERATE_REPEAT_RE =
+  /^(repeat|keep asking|ask again|continue repeating|insist again)\b/;
+
+export function isDeliberateRepeat(action: string): boolean {
+  return DELIBERATE_REPEAT_RE.test(action.trim().toLowerCase());
+}
+
 export function isInquiry(action: string): boolean {
+  if (isDeliberateRepeat(action)) return false;
   const cleaned = action.trim().toLowerCase();
-  if (
-    /^(repeat|keep asking|ask again|continue repeating|insist again)\b/.test(
-      cleaned,
-    )
-  ) {
-    return false;
-  }
   return (
     cleaned.includes("?") ||
     /^(?:ask|tell|explain|who|what|where|when|why|how|which|whether|is|are|can|could|do|does|did|so|but|no\b|i mean)\b/.test(
@@ -93,7 +107,7 @@ export function isInquiry(action: string): boolean {
   );
 }
 
-function isNonAnswer(narration: string): boolean {
+export function isNonAnswer(narration: string): boolean {
   return /\b(?:don.t|do not|doesn.t|does not|didn.t|did not|can.t|cannot|couldn.t|could not|won.t|will not|wouldn.t|would not|isn.t|is not|aren.t|are not|no idea|no record|not sure|not certain|unable to|unknown|no way to|can.t say|won.t guess)\b/i.test(
     narration,
   );

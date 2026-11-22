@@ -9,6 +9,31 @@ export interface ParseResult {
   content: string;
 }
 
+/** Sanitizes rendered Markdown without allowing passive remote resource loads. */
+export function sanitizeMarkdownHtml(html: string): string {
+  return DOMPurify.sanitize(html, {
+    ADD_TAGS: ["mark"],
+    ADD_ATTR: ["class"],
+    FORBID_TAGS: [
+      "audio",
+      "embed",
+      "iframe",
+      "img",
+      "link",
+      "object",
+      "picture",
+      "source",
+      "style",
+      "svg",
+      "track",
+      "video",
+    ],
+    FORBID_ATTR: ["background", "data", "poster", "src", "srcset", "style"],
+    ALLOWED_URI_REGEXP:
+      /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
+  });
+}
+
 export function renderMarkdown(
   text: string,
   options: {
@@ -35,7 +60,7 @@ export function renderMarkdown(
     // blank line between paragraphs (#3481) — off by default so every other
     // caller's existing CommonMark rendering is unchanged.
     const renderer =
-      options.allowImages === false ? new marked.Renderer() : undefined;
+      options.allowImages === true ? undefined : new marked.Renderer();
     if (renderer) renderer.image = ({ text: altText }) => altText;
     const markdownOptions = { breaks: options.breaks, renderer };
     const rawHtml = options.inline
@@ -44,20 +69,12 @@ export function renderMarkdown(
 
     if (!browser) return rawHtml;
 
-    return DOMPurify.sanitize(rawHtml, {
-      ADD_TAGS: ["mark"],
-      ADD_ATTR: ["class"],
-      ALLOWED_URI_REGEXP:
-        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-    });
+    return sanitizeMarkdownHtml(rawHtml);
   } catch (e) {
     console.error("Markdown rendering failed", e);
     // Fallback: sanitize the original content before injecting via {@html}
     // Always sanitize in fallback mode for security, even in SSR
-    return DOMPurify.sanitize(text, {
-      ALLOWED_URI_REGEXP:
-        /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
-    });
+    return sanitizeMarkdownHtml(text);
   }
 }
 

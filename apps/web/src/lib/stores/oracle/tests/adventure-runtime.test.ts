@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AdventureState } from "../adventure-state.svelte";
 import { resolveAdventureDependencies } from "../adventure-dependencies";
 import { acceptedSession, proposedSession } from "../adventure-session";
+import { AdventureTurnRejectedError } from "../adventure-turn-retry";
 import {
   completeProposal,
   createAdventureRuntime,
@@ -217,6 +218,28 @@ describe("AdventureRuntime", () => {
     state.errorMessage = "new error";
     runtime.recordTurnGenerationError(new Error("old error"), signal, "ready");
     expect(state.errorMessage).toBe("new error");
+  });
+
+  it("retains the latest refusal when a retry fails offline", () => {
+    const { runtime, state } = createAdventureRuntime();
+    const firstSignal = runtime.startTurnGeneration();
+    runtime.recordTurnGenerationError(
+      new AdventureTurnRejectedError("engine-refused"),
+      firstSignal,
+      "ready",
+    );
+    const refusal = state.lastTurnRejection;
+
+    const retrySignal = runtime.startTurnGeneration();
+    runtime.recordTurnGenerationError(
+      new Error("offline"),
+      retrySignal,
+      "ready",
+    );
+
+    expect(state.lastTurnRejection).toBe(refusal);
+    expect(state.lastTurnRejection?.reason).toBe("engine-refused");
+    expect(state.phase).toBe("offline");
   });
 });
 

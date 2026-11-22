@@ -30,6 +30,16 @@ describe("markdown.ts utility", () => {
       expect(html).toContain("<h1>Hello</h1>");
     });
 
+    it("prevents passive resources in Markdown images and raw HTML", () => {
+      const html = renderMarkdown(
+        '![pixel](https://tracker.example/p.gif)\n\n<img src="https://tracker.example/raw.gif"><video poster="https://tracker.example/poster.jpg"><source src="https://tracker.example/video.mp4"></video><input type="image" src="https://tracker.example/input.gif"><table background="https://tracker.example/table.gif"></table><div style="background:url(https://tracker.example/bg)">text</div><style>@import url(https://tracker.example/theme.css)</style>',
+      );
+
+      assertNoRemoteResourceFetches(html);
+      expect(html).toContain("pixel");
+      expect(html).toContain("text");
+    });
+
     it("should highlight search queries using <mark> tags", () => {
       const text = "The quick brown fox";
       const html = renderMarkdown(text, { query: "quick" });

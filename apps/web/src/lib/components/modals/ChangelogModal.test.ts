@@ -68,8 +68,31 @@ describe("ChangelogModal", () => {
     });
 
     expect(acknowledgeButton.className).toContain("bg-theme-primary");
-    expect(acknowledgeButton.className).toContain("text-theme-bg");
+    expect(acknowledgeButton.className).toContain("text-theme-on-primary");
     expect(acknowledgeButton.className).toContain("border-theme-primary");
     expect(acknowledgeButton.className).not.toContain("text-black");
+  });
+
+  it("keeps the dialog fixed while making only the release notes keyboard-scrollable", () => {
+    render(ChangelogModal);
+
+    const dialog = screen.getByRole("dialog");
+    const notes = screen.getByRole("region", { name: "Release notes" });
+    const closeButton = screen.getByRole("button", { name: "Close" });
+    const footerCopy = screen.getByText(
+      "Archive synchronization protocols maintained",
+    );
+
+    expect(dialog.style.overflow).toBe("hidden");
+    expect(dialog.className).toContain("h-[calc(100dvh-2rem)]");
+    expect(notes.className).toContain("min-h-0");
+    expect(notes.className).toContain("overflow-y-auto");
+    expect(notes.tabIndex).toBe(0);
+    notes.focus();
+    expect(document.activeElement).toBe(notes);
+
+    expect(closeButton.className).toContain("h-11");
+    expect(footerCopy.className).toContain("hidden");
+    expect(footerCopy.className).toContain("sm:block");
   });
 });

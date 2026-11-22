@@ -630,13 +630,47 @@ describe("AdventureFocusPlay", () => {
       }
     });
 
-    it("keeps suggested actions in the collapsed list", () => {
+    it("opens suggested actions in an overlay portaled to the play surface and closes on select or Escape", async () => {
       const m = manager();
+      m.session.turns = [
+        { id: "turn-1", kind: "opening", text: "A wrecked hull." },
+      ];
       m.suggestedActions = ["Search the wreckage"];
+      m.submitSuggestedAction = vi.fn(async () => {});
       render(AdventureFocusPlay, { props: props({ manager: m }) });
-      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
-        "DETAILS",
+
+      const surface = screen.getByTestId("adventure-play-surface");
+      const dock = screen.getByTestId("adventure-action-dock");
+      const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
+      expect(toggle.textContent).toContain("1 suggested action");
+      expect(
+        screen.queryByTestId("adventure-suggested-actions-overlay"),
+      ).toBeNull();
+
+      // Open and verify portal target is surface (outside dock)
+      await fireEvent.click(toggle);
+      const overlay = screen.getByTestId("adventure-suggested-actions-overlay");
+      expect(overlay.parentElement).toBe(surface);
+      expect(dock.contains(overlay)).toBe(false);
+
+      // Escape closes the sheet cleanly
+      await fireEvent.keyDown(window, { key: "Escape" });
+      expect(
+        screen.queryByTestId("adventure-suggested-actions-overlay"),
+      ).toBeNull();
+
+      // Reopen and select choice
+      await fireEvent.click(toggle);
+      await fireEvent.click(
+        screen.getByRole("button", { name: "Search the wreckage" }),
       );
+      expect(m.submitSuggestedAction).toHaveBeenCalledOnce();
+      expect(m.submitSuggestedAction).toHaveBeenCalledWith(
+        "Search the wreckage",
+      );
+      expect(
+        screen.queryByTestId("adventure-suggested-actions-overlay"),
+      ).toBeNull();
     });
 
     it("renders as a modal dialog outside any transformed host and takes focus", async () => {
