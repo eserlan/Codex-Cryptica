@@ -190,7 +190,7 @@ describe("pickFolderFilesFallback", () => {
   it("returns a folder selection when the selected folder has no files", async () => {
     const clickSpy = vi
       .spyOn(HTMLInputElement.prototype, "click")
-      .mockImplementation(function () {
+      .mockImplementation(function (this: HTMLInputElement) {
         this.dispatchEvent(new Event("change"));
       });
 
