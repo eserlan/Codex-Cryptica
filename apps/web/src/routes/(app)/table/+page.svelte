@@ -3,6 +3,7 @@
   import { page } from "$app/state";
   import { categories } from "#lib/stores/categories.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
+  import { readVaultBootSnapshot } from "#lib/stores/vault/boot-diagnostics.svelte.js";
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import { guestVault } from "#lib/stores/guest-vault.svelte.js";
   import {
@@ -17,6 +18,7 @@
   import { computeVaultDistribution } from "#lib/components/table/vaultDistribution.js";
   import { sortEntities } from "#lib/components/table/entityTableSort.js";
   import EmptyState from "#lib/components/ui/EmptyState.svelte";
+  import VaultStartupRecovery from "#lib/components/vault/VaultStartupRecovery.svelte";
   import {
     computeConnectionCounts,
     countIncompleteEntities,
@@ -30,6 +32,29 @@
   // Peer view (like /map, /timeline): reads the already-active vault from the store.
   const vaultId = $derived(vault.activeVaultId);
   const totalEntities = $derived(vault.allEntities.length);
+  const boot = $derived(readVaultBootSnapshot(vault.bootDiagnostics));
+  const hasBootFault = $derived(
+    !vault.isGuest &&
+      (boot.status === "failed" || boot.status === "timed_out") &&
+      (!vault.isInitialized || totalEntities === 0),
+  );
+  const isTableLoading = $derived(
+    !vault.isInitialized ||
+      (!vault.isGuest && totalEntities === 0 && boot.status === "booting"),
+  );
+  const hasVaultError = $derived(
+    !vault.isGuest && vault.status === "error" && totalEntities === 0,
+  );
+  const tableViewState = $derived.by(() => {
+    if (hasBootFault) {
+      return boot.status === "timed_out" ? "vault-stalled" : "vault-failed";
+    }
+    if (isTableLoading) return "loading";
+    if (hasVaultError) return "vault-error";
+    if (!vaultId) return "no-vault";
+    if (totalEntities === 0) return "empty";
+    return "ready";
+  });
   const performance: TablePerformance = new TablePerformance(() => ({
     entityCount: totalEntities,
     resultCount: rows.length,
@@ -133,7 +158,22 @@
     </a>
   </header>
 
-  {#if !vault.isInitialized}
+  {#if tableViewState === "vault-stalled" || tableViewState === "vault-failed" || tableViewState === "vault-error"}
+    <div class="flex flex-1 items-center justify-center p-4">
+      <VaultStartupRecovery
+        mode={tableViewState === "vault-stalled"
+          ? "vault-stalled"
+          : "vault-failed"}
+        area="tables"
+        phase={boot.phase}
+        errorCode={boot.errorCode ??
+          (tableViewState === "vault-error" ? "vault_load_failed" : undefined)}
+        isRetrying={false}
+        diagnosticSummary={boot.summary}
+        onRetry={() => vault.retryInit?.()}
+      />
+    </div>
+  {:else if tableViewState === "loading"}
     <div
       class="flex flex-1 items-center justify-center text-sm text-theme-muted"
       data-testid="entity-table-loading"
@@ -144,19 +184,19 @@
       ></span>
       Loading vault…
     </div>
-  {:else if !vaultId}
+  {:else if tableViewState === "no-vault"}
     <EmptyState
       icon="icon-[lucide--table]"
       headline="No vault open"
       body="Open a vault to browse its entities in table view."
     />
-  {:else if totalEntities === 0}
+  {:else if tableViewState === "empty"}
     <EmptyState
       icon="icon-[lucide--table]"
       headline="No entities yet"
       body="Create entities in this vault and they'll show up here as rows."
     />
-  {:else}
+  {:else if vaultId}
     <TableControls
       {filters}
       {vaultId}

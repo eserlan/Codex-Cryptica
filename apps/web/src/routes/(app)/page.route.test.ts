@@ -4,6 +4,14 @@ import RoutePage from "./+page.svelte";
 import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
 import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 import { demoService } from "#lib/services/demo.js";
+import { vault } from "#lib/stores/vault.svelte.js";
+import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
+
+const { mockRouteState } = vi.hoisted(() => ({
+  mockRouteState: {
+    rejectGraphImport: false,
+  },
+}));
 
 vi.mock("$app/state", () => ({
   page: { url: new URL("http://localhost/"), params: {} },
@@ -23,6 +31,19 @@ vi.mock("#lib/stores/vault.svelte.js", () => ({
     entities: {},
     isGuest: false,
     status: "idle",
+    retryInit: vi.fn(),
+    bootDiagnostics: {
+      status: "ready",
+      activePhase: "ready",
+      errorCode: null,
+      formatDiagnosticSummary: () =>
+        "Vault startup diagnostics\nStatus: ready\nPhase: ready",
+    },
+  },
+}));
+vi.mock("#lib/stores/ui/feedback-dialog.svelte.js", () => ({
+  feedbackDialog: {
+    open: vi.fn(),
   },
 }));
 vi.mock("#lib/stores/ui/layout-ui.svelte.js", () => ({
@@ -53,9 +74,17 @@ vi.mock("#lib/config/index.js", () => ({
 }));
 
 // Stub out the lazily-imported heavy components so dynamic imports resolve instantly
-vi.mock("../../lib/components/GraphView.svelte", async () => ({
-  default: (await import("./__tests__/GraphViewStub.svelte")).default,
-}));
+vi.mock("../../lib/components/GraphView.svelte", async () => {
+  const stub = (await import("./__tests__/GraphViewStub.svelte")).default;
+  return {
+    get default() {
+      if (mockRouteState.rejectGraphImport) {
+        throw new Error("Failed to fetch dynamically imported module");
+      }
+      return stub;
+    },
+  };
+});
 vi.mock("../../lib/components/world/FrontPage.svelte", async () => ({
   default: (await import("./__tests__/FrontPageStub.svelte")).default,
 }));
@@ -72,6 +101,27 @@ vi.mock("../../lib/components/guest/GuestChatPanel.svelte", async () => ({
   default: (await import("./__tests__/EmbeddedEntityViewStub.svelte")).default, // reusing a stub
 }));
 
+beforeEach(() => {
+  onboardingStore.dismissedWorldPage = false;
+  onboardingStore.skipWelcomeScreen = true;
+  onboardingStore.dismissedLandingPage = true;
+  modalUIStore.showSettings = false;
+  modalUIStore.showDiceModal = false;
+  modalUIStore.closeQuickStartModal();
+  vi.mocked(demoService.startDemo).mockClear();
+  mockRouteState.rejectGraphImport = false;
+  (vault as any).isInitialized = true;
+  (vault as any).isGuest = false;
+  (vault as any).status = "idle";
+  (vault as any).bootDiagnostics.status = "ready";
+  (vault as any).bootDiagnostics.activePhase = "ready";
+  (vault as any).bootDiagnostics.errorCode = null;
+  (vault as any).bootDiagnostics.formatDiagnosticSummary = () =>
+    "Vault startup diagnostics\nStatus: ready\nPhase: ready";
+  vi.mocked((vault as any).retryInit).mockClear();
+  vi.mocked(feedbackDialog.open).mockClear();
+});
+
 describe("root +page.svelte — front page overlay keydown", () => {
   beforeAll(() => {
     // jsdom doesn't implement the Web Animations API used by Svelte transitions
@@ -81,16 +131,6 @@ describe("root +page.svelte — front page overlay keydown", () => {
         cancel: vi.fn(),
       }) as any;
     }
-  });
-
-  beforeEach(() => {
-    onboardingStore.dismissedWorldPage = false;
-    onboardingStore.skipWelcomeScreen = true;
-    onboardingStore.dismissedLandingPage = true;
-    modalUIStore.showSettings = false;
-    modalUIStore.showDiceModal = false;
-    modalUIStore.closeQuickStartModal();
-    vi.mocked(demoService.startDemo).mockClear();
   });
 
   it("presents the root landing page as a private local-first RPG vault", () => {
@@ -141,6 +181,42 @@ describe("root +page.svelte — front page overlay keydown", () => {
     // second copy in the page was a visible duplicate.
     expect(screen.queryByRole("contentinfo")).toBeNull();
     expect(screen.queryByRole("link", { name: /^terms$/i })).toBeNull();
+  });
+
+  it("renders .marketing-layer without inline --bg-texture-overlay or url() background-image so the hero headline is the LCP candidate", () => {
+    onboardingStore.skipWelcomeScreen = false;
+    onboardingStore.dismissedLandingPage = false;
+
+    const { container } = render(RoutePage);
+
+    const marketingLayer = container.querySelector(".marketing-layer");
+    expect(marketingLayer).toBeTruthy();
+    expect(marketingLayer?.className).toContain("bg-theme-bg");
+    const inlineBg =
+      (marketingLayer as HTMLElement)?.style.backgroundImage ?? "";
+    expect(inlineBg).not.toContain("--bg-texture-overlay");
+    expect(inlineBg).not.toContain("url(");
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: /private rpg lore vault/i,
+      }),
+    ).toBeTruthy();
+  });
+
+  it("omits .marketing-layer and preserves --bg-texture-overlay on front-page-overlay when landing is dismissed", async () => {
+    onboardingStore.skipWelcomeScreen = true;
+    onboardingStore.dismissedLandingPage = true;
+
+    const { container } = render(RoutePage);
+
+    expect(container.querySelector(".marketing-layer")).toBeNull();
+    const overlay = await waitFor(() =>
+      screen.getByTestId("front-page-overlay"),
+    );
+    expect(overlay.style.backgroundImage).toContain(
+      "var(--bg-texture-overlay)",
+    );
   });
 
   it("renders complete Open Graph and Twitter Card tags in head", () => {
@@ -279,5 +355,75 @@ describe("root +page.svelte — front page overlay keydown", () => {
     await fireEvent.click(screen.getByText(/or start from a themed vault/i));
 
     expect(demoService.startDemo).not.toHaveBeenCalled();
+  });
+});
+
+describe("root +page.svelte — startup and chunk failure recovery", () => {
+  it.each([
+    {
+      bootStatus: "timed_out" as const,
+      expectedMode: "vault-stalled",
+      errorCode: null,
+    },
+    {
+      bootStatus: "failed" as const,
+      expectedMode: "vault-failed",
+      errorCode: "vault_load_failed",
+    },
+  ])(
+    "renders VaultStartupRecovery for $bootStatus without destructive reset copy and wires Retry + Report",
+    async ({ bootStatus, expectedMode, errorCode }) => {
+      onboardingStore.skipWelcomeScreen = true;
+      onboardingStore.dismissedLandingPage = true;
+      (vault as any).isInitialized = false;
+      (vault as any).status = bootStatus === "failed" ? "error" : "loading";
+      (vault as any).bootDiagnostics.status = bootStatus;
+      (vault as any).bootDiagnostics.activePhase = "vault_data_ready";
+      (vault as any).bootDiagnostics.errorCode = errorCode;
+      (vault as any).bootDiagnostics.formatDiagnosticSummary = () =>
+        `Vault startup diagnostics\nStatus: ${bootStatus}\nPhase: vault_data_ready`;
+
+      render(RoutePage);
+
+      const recovery = screen.getByTestId("vault-startup-recovery");
+      expect(recovery.getAttribute("data-recovery-mode")).toBe(expectedMode);
+      expect(screen.queryByTestId("graph-view-stub")).toBeNull();
+      expect(recovery.textContent).not.toMatch(
+        /clear site data|indexeddb|opfs|reset.*vault/i,
+      );
+
+      await fireEvent.click(screen.getByTestId("vault-recovery-retry"));
+      expect((vault as any).retryInit).toHaveBeenCalledOnce();
+
+      await fireEvent.click(screen.getByTestId("vault-recovery-report"));
+      expect(feedbackDialog.open).toHaveBeenCalledWith({
+        kind: "problem",
+        area: "graph",
+        description: `Vault startup diagnostics\nStatus: ${bootStatus}\nPhase: vault_data_ready`,
+      });
+    },
+  );
+
+  it("renders chunk-failed recovery when GraphView import fails and mounts GraphView after Retry succeeds", async () => {
+    onboardingStore.skipWelcomeScreen = true;
+    onboardingStore.dismissedLandingPage = true;
+    mockRouteState.rejectGraphImport = true;
+
+    render(RoutePage);
+
+    const recovery = await waitFor(() =>
+      screen.getByTestId("vault-startup-recovery"),
+    );
+    expect(recovery.getAttribute("data-recovery-mode")).toBe("chunk-failed");
+    expect(screen.getByTestId("vault-recovery-reload")).toBeTruthy();
+    const secondary = screen.getByTestId("vault-recovery-secondary");
+    expect(secondary.getAttribute("href")).toBe("/(app)/table");
+
+    mockRouteState.rejectGraphImport = false;
+    await fireEvent.click(screen.getByTestId("vault-recovery-retry"));
+
+    await waitFor(() => {
+      expect(screen.getByTestId("graph-view-stub")).toBeTruthy();
+    });
   });
 });

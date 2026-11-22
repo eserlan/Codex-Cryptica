@@ -75,6 +75,13 @@ export class AdventureLifecycle {
     const check = await this.runtime.deps.packages.verifyPin(session);
     if (check.status === "available") return false;
     if (!isCurrent()) return true;
+    if (
+      !this.state.session ||
+      this.state.session.id !== session.id ||
+      this.state.session.vaultId !== session.vaultId
+    ) {
+      this.state.lastTurnRejection = null;
+    }
     this.state.session = session;
     await this.runtime.enterPackageUnavailable(check.otherVersionAvailable);
     return true;
@@ -210,6 +217,7 @@ export class AdventureLifecycle {
     this.state.oocGenerating = false;
     this.state.rollMutationPending = false;
     this.state.oocErrorMessage = null;
+    this.state.lastTurnRejection = null;
     this.state.packageUnavailable = null;
     if (this.state.errorCause === "package-unavailable")
       this.state.errorCause = null;
@@ -245,6 +253,7 @@ export class AdventureLifecycle {
     this.state.oocErrorMessage = null;
     this.state.streamedNarration = "";
     this.state.errorMessage = null;
+    this.state.lastTurnRejection = null;
     this.state.lastRollResult = null;
     this.state.phase = "idle";
   }
@@ -377,6 +386,7 @@ export class AdventureLifecycle {
     await this.runtime.deps.coordinator.stop();
     this.state.lease = null;
     this.state.session = null;
+    this.state.lastTurnRejection = null;
     this.state.readOnly = false;
     this.state.errorMessage = null;
     this.state.phase = "idle";

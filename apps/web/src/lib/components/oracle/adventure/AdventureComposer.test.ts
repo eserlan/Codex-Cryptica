@@ -126,6 +126,35 @@ describe("AdventureComposer", () => {
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
   });
 
+  it("matches the mobile mode switch, textarea, and submit button baseline height on phone", async () => {
+    const m = manager("ready");
+    render(AdventureComposer, { props: { manager: m, phone: true } });
+
+    const modes = screen.getByTestId("adventure-mobile-mode-switch");
+    const field = screen.getByLabelText("What do you do?");
+    const send = screen.getByTestId("adventure-submit-button");
+
+    expect(modes.className).toContain("min-h-[50px]");
+    expect(field.className).toContain("min-h-[50px]");
+    expect(send.className).toContain("min-h-[50px]");
+    expect(send.className).toContain("min-w-[50px]");
+    expect(field.className).toContain("sm:min-h-11");
+    expect(send.className).toContain("sm:min-h-11");
+  });
+
+  it("recalculates the textarea baseline when resizing from phone to desktop", async () => {
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: manager("ready"), phone: true },
+    });
+    const field = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+
+    await waitFor(() => expect(field.style.height).toBe("50px"));
+    await rerender({ manager: manager("ready"), phone: false });
+    await waitFor(() => expect(field.style.height).toBe("44px"));
+  });
+
   it("preserves desktop mode controls without showing the phone switch", () => {
     const m = manager("ready");
     m.composerMode = "play";
@@ -204,16 +233,21 @@ describe("AdventureComposer", () => {
     expect(dock.contains(send)).toBe(true);
   });
 
-  it("hides phone suggestions while typing", async () => {
+  it("hides phone suggestions while typing without clearing the draft", async () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m, phone: true } });
     const suggestions = screen.getByTestId("adventure-suggested-actions");
-    const field = screen.getByLabelText("What do you do?");
+    const field = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
     expect(suggestions.className).not.toBe("hidden");
+    expect(field.value).toBe("Cross the flooded causeway");
 
     await fireEvent.focus(field);
     expect(suggestions.className).toBe("hidden");
+    expect(field.value).toBe("Cross the flooded causeway");
+    expect(m.draft).toBe("Cross the flooded causeway");
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
 
     await fireEvent.blur(field);
@@ -231,7 +265,7 @@ describe("AdventureComposer", () => {
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
   });
 
-  it("keeps free action visible beside a compact dropdown of suggested actions", () => {
+  it("keeps free action visible beside a compact pill trigger for suggested actions", () => {
     const m = manager("ready");
     m.suggestedActions = [
       "Steady the shutter as Sela lifts it.",
@@ -241,23 +275,21 @@ describe("AdventureComposer", () => {
     render(AdventureComposer, { props: { manager: m } });
 
     const suggestions = screen.getByTestId("adventure-suggested-actions");
-    expect(suggestions.tagName).toBe("DETAILS");
-    expect((suggestions as HTMLDetailsElement).open).toBe(false);
-    expect(suggestions.className).not.toContain("overflow-x-auto");
-    const actionButtons = suggestions.querySelectorAll("button");
-    expect(actionButtons).toHaveLength(3);
-    expect(actionButtons[0].className).toContain("w-full");
-    expect(actionButtons[0].className).not.toContain("line-clamp");
-    expect(actionButtons[0].parentElement?.className).not.toContain("max-h-36");
-    expect(actionButtons[0].parentElement?.className).not.toContain(
-      "overflow-y-auto",
-    );
+    expect(suggestions.tagName).toBe("DIV");
+    expect(suggestions.querySelector("details")).toBeNull();
+    const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
+    expect(toggle.textContent).toContain("3 suggested actions");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(toggle.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(
+      screen.queryByTestId("adventure-suggested-actions-sheet"),
+    ).toBeNull();
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Submit action" })).toBeTruthy();
     expect(screen.getByTestId("adventure-action-dock")).toBeTruthy();
   });
 
-  it("scrolls phone suggestions in the dock rather than clipping nested options", async () => {
+  it("opens phone suggestions in a bounded bottom sheet and trims dead phone padding", async () => {
     const m = manager("ready");
     m.suggestedActions = [
       "Look over the storehouse account board and compare the grain tallies.",
@@ -266,24 +298,25 @@ describe("AdventureComposer", () => {
     ];
     render(AdventureComposer, { props: { manager: m, phone: true } });
 
-    const suggestions = screen.getByTestId(
-      "adventure-suggested-actions",
-    ) as HTMLDetailsElement;
-    await fireEvent.click(suggestions.querySelector("summary")!);
-    expect(suggestions.open).toBe(true);
-
     const extras = screen.getByTestId("adventure-dock-extras");
+    expect(extras.className).not.toContain("pb-2");
+
+    await fireEvent.click(
+      screen.getByTestId("adventure-suggested-actions-toggle"),
+    );
+
+    const sheet = screen.getByTestId("adventure-suggested-actions-sheet");
+    expect(sheet.getAttribute("role")).toBe("dialog");
+    expect(sheet.className).toContain("max-h-[65%]");
     const list = screen.getByTestId("adventure-suggested-actions-list");
-    expect(extras.contains(list)).toBe(true);
-    expect(extras.className).toContain("overflow-y-auto");
-    expect(list.className).not.toContain("overflow-y-auto");
-    expect(list.className).not.toContain("max-h-36");
-    expect(list.className).toContain("pb-3");
+    expect(list.className).toContain("overflow-y-auto");
 
     const actions = list.querySelectorAll("button");
     expect(actions).toHaveLength(3);
     for (const action of actions) {
+      expect(action.className).toContain("min-h-11");
       expect(action.className).toContain("whitespace-normal");
+      expect(action.className).toContain("break-words");
       expect(action.className).not.toContain("truncate");
       expect(action.className).not.toContain("line-clamp");
     }
@@ -292,7 +325,11 @@ describe("AdventureComposer", () => {
     expect(m.submitSuggestedAction).toHaveBeenCalledExactlyOnceWith(
       m.suggestedActions[2],
     );
-    // Actions can scroll while the free-text input remains outside the pane.
+    expect(
+      screen.queryByTestId("adventure-suggested-actions-sheet"),
+    ).toBeNull();
+
+    // The free-text input remains outside the extras pane.
     const freeAction = screen.getByLabelText("What do you do?");
     expect(extras.contains(freeAction)).toBe(false);
   });
@@ -364,11 +401,12 @@ describe("AdventureComposer", () => {
     m.suggestedActions = ["Search the wreckage"];
     render(AdventureComposer, { props: { manager: m } });
 
-    const suggestions = screen.getByTestId(
-      "adventure-suggested-actions",
-    ) as HTMLDetailsElement;
-    await fireEvent.click(suggestions.querySelector("summary")!);
-    expect(suggestions.open).toBe(true);
+    await fireEvent.click(
+      screen.getByTestId("adventure-suggested-actions-toggle"),
+    );
+    expect(
+      screen.getByTestId("adventure-suggested-actions-sheet"),
+    ).toBeTruthy();
 
     await fireEvent.click(
       screen.getByRole("button", { name: "Search the wreckage" }),
@@ -376,6 +414,9 @@ describe("AdventureComposer", () => {
 
     expect(m.submitSuggestedAction).toHaveBeenCalledOnce();
     expect(m.submitSuggestedAction).toHaveBeenCalledWith("Search the wreckage");
+    expect(
+      screen.queryByTestId("adventure-suggested-actions-sheet"),
+    ).toBeNull();
   });
 
   it("shows a control retry without allowing read-only actions", async () => {
@@ -389,10 +430,19 @@ describe("AdventureComposer", () => {
     expect(screen.getByText(/Another tab may be controlling/)).toBeTruthy();
     const submit = screen.getByRole("button", { name: "Submit action" });
     expect(submit.hasAttribute("disabled")).toBe(true);
-    const suggested = screen.getByTestId("adventure-suggested-actions");
-    expect(
-      (suggested.querySelector("button") as HTMLButtonElement).disabled,
-    ).toBe(true);
+
+    // Trigger stays enabled so choices remain readable, while choices stay disabled.
+    const toggle = screen.getByTestId(
+      "adventure-suggested-actions-toggle",
+    ) as HTMLButtonElement;
+    expect(toggle.disabled).toBe(false);
+    await fireEvent.click(toggle);
+    const choice = screen.getByRole("button", {
+      name: "Steady the shutter",
+    }) as HTMLButtonElement;
+    expect(choice.disabled).toBe(true);
+    await fireEvent.click(choice);
+    expect(m.submitSuggestedAction).not.toHaveBeenCalled();
 
     const retry = screen.getByRole("button", { name: "Try to take control" });
     await fireEvent.click(retry);
@@ -442,31 +492,53 @@ describe("AdventureComposer", () => {
     },
   );
 
-  it("keeps a just-clicked suggested action in the DOM (disabled) once generating starts", async () => {
+  it("keeps phone trigger and desktop chip mounted in DOM once generating starts", async () => {
     const m = manager("ready");
     m.suggestedActions = ["Search the wreckage"];
-    const { rerender } = render(AdventureComposer, { props: { manager: m } });
+    const { rerender, unmount } = render(AdventureComposer, {
+      props: { manager: m, phone: true },
+    });
 
-    const summary = screen
-      .getByTestId("adventure-suggested-actions")
-      .querySelector("summary");
-    expect(summary).not.toBeNull();
-    await fireEvent.click(summary!);
-    const button = screen.getByRole("button", { name: "Search the wreckage" });
-    button.focus();
-    expect(document.activeElement).toBe(button);
-
-    // Simulate the phase flipping to "generating" right after the click, as
-    // the real manager does once submitSuggestedAction resolves — the real
-    // manager's suggestedActions getter still reflects the prior turn until
-    // the new one commits, so it stays populated during generating too.
     const generating = manager("generating");
     generating.suggestedActions = ["Search the wreckage"];
-    await rerender({ manager: generating });
+    m.submitSuggestedAction = vi.fn(() => {
+      void rerender({ manager: generating, phone: true });
+    });
 
-    // The button must still exist in the DOM (merely disabled elsewhere),
-    // not be torn out — see the component comment for why that matters.
-    expect(document.body.contains(button)).toBe(true);
+    const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
+    await fireEvent.click(toggle);
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Search the wreckage" }),
+    );
+
+    // The trigger must stay mounted in the DOM (merely hidden), not torn out.
+    expect(document.body.contains(toggle)).toBe(true);
+    expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
+      "hidden",
+    );
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole("button", { name: "Cancel" }),
+      ),
+    );
+    unmount();
+
+    const desktopReady = manager("ready");
+    desktopReady.suggestedActions = ["Search the wreckage"];
+    const desktop = render(AdventureComposer, {
+      props: { manager: desktopReady, suggestionChips: true },
+    });
+    const chipButton = screen.getByRole("button", {
+      name: "Search the wreckage",
+    });
+    chipButton.focus();
+    expect(document.activeElement).toBe(chipButton);
+
+    await desktop.rerender({
+      manager: { ...generating },
+      suggestionChips: true,
+    });
+    expect(document.body.contains(chipButton)).toBe(true);
   });
 });
 
@@ -549,13 +621,16 @@ describe("AdventureComposer layout and chips", () => {
       );
     });
 
-    it("keeps the collapsed list on phones and for the default", () => {
+    it("keeps the compact pill trigger on phones and for the default", () => {
       const m = manager("ready");
       m.suggestedActions = ["Search the wreckage"];
       render(AdventureComposer, { props: { manager: m, phone: true } });
-      expect(screen.getByTestId("adventure-suggested-actions").tagName).toBe(
-        "DETAILS",
-      );
+      const group = screen.getByTestId("adventure-suggested-actions");
+      expect(group.tagName).toBe("DIV");
+      expect(group.querySelector("details")).toBeNull();
+      const toggle = screen.getByTestId("adventure-suggested-actions-toggle");
+      expect(toggle.textContent).toContain("1 suggested action");
+      expect(toggle.getAttribute("aria-expanded")).toBe("false");
     });
 
     it("disables chips when read-only and hides them while a roll is pending", () => {
