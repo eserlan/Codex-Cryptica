@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795348146,
+  "updated_at": 1795349378,
   "candidates": [
     {
       "id": "reddit-44466817164-image-only-entity-labels-are-available-o",
@@ -12,14 +12,14 @@
       "created_at": 1795081945
     },
     {
-      "id": "reddit-45012792136-a-field-by-field-guide-to-adventure-json",
-      "title": "A field-by-field guide to Adventure JSON imports",
-      "body": "A field name in an Adventure JSON file doesn\u2019t tell you where its value will go or whether it will survive an import. I rewrote the Adventure JSON guide for Codex Cryptica, the campaign tool I build for my own table.\n\n- Look up individual fields\n- See how fields map during import\n- Check what information is preserved\n- Use the reference while preparing or reviewing a file\n\nWhen you work with structured adventure files, which fields are hardest to reason about?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-45012792136-6.png)",
+      "id": "reddit-45012792136-more-of-the-adventure-transcript-on-a-ph",
+      "title": "More of the Adventure transcript on a phone",
+      "body": "On a phone, a tall header can leave too little room for the scene transcript. I tightened the play header in Codex Cryptica, the campaign tool I build for my own table.\n\n- Keep more of the transcript in view\n- Find Play and Ask GM beside each other\n- Reach either mode while the adventure is running\n\nOn a phone, which control do you most want close to the transcript?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-45012792136-7.png)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-45012792136-6.png",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-45012792136-7.png",
       "source_id": "45012792136",
       "status": "approved",
-      "created_at": 1795348146
+      "created_at": 1795349378
     }
   ]
 }
