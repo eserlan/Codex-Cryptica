@@ -36,7 +36,7 @@ describe("AdventureStateSummary", () => {
 
     expect(details.open).toBe(false);
     expect(summary.className).toContain("flex");
-    expect(summary.className).toContain("min-h-9");
+    expect(summary.className).toContain("touch-target");
     expect(summary.getAttribute("aria-label")).toBe(
       "Scene details: Tiny village in the high slopes of nombe",
     );

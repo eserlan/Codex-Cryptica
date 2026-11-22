@@ -122,7 +122,7 @@
         bind:this={summaryEl}
         aria-label={`Scene details: ${summaryLocation}`}
         title={summaryLocation}
-        class="flex min-h-9 cursor-pointer list-none items-center gap-1.5 px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-surface/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-theme-primary sm:px-4 [&::-webkit-details-marker]:hidden"
+        class="touch-target flex cursor-pointer list-none items-center gap-1.5 px-3 py-1.5 text-xs text-theme-text transition-colors hover:bg-theme-surface/60 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-theme-primary sm:px-4 [&::-webkit-details-marker]:hidden"
       >
         <span
           class="icon-[lucide--map-pin] h-3.5 w-3.5 shrink-0 text-theme-muted"
