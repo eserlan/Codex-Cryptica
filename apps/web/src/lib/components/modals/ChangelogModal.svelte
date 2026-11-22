@@ -75,12 +75,12 @@
           class="mb-3 flex flex-col justify-between gap-1 border-b border-theme-border/30 pb-2 sm:mb-4 sm:flex-row sm:items-baseline sm:gap-0"
         >
           <h3
-            class="text-sm font-bold text-theme-primary uppercase font-header tracking-wide sm:text-base sm:tracking-widest"
+            class="text-sm font-bold text-theme-primary uppercase font-header tracking-wide break-words sm:text-base sm:tracking-widest"
           >
             {release.title}
           </h3>
           <span
-            class="shrink-0 text-micro font-header uppercase tracking-wider text-theme-muted"
+            class="shrink-0 text-xs font-header uppercase tracking-wider text-theme-muted sm:text-micro"
           >
             v{release.version} // {release.date}
           </span>
@@ -95,7 +95,7 @@
                 class="icon-[lucide--sparkles] mt-0.5 h-4 w-4 shrink-0 text-theme-primary opacity-60 transition-opacity group-hover:opacity-100"
                 aria-hidden="true"
               ></span>
-              <span>{highlight}</span>
+              <span class="min-w-0 break-words">{highlight}</span>
             </li>
           {/each}
         </ul>
