@@ -37,3 +37,4 @@ export * from "./historical-anchor";
 export * from "./package-progress";
 export * from "./package-progress-view";
 export * from "./ooc";
+export * from "./gm-director-brief";
