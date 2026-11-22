@@ -348,13 +348,19 @@ describe("AdventureSuggestedActions", () => {
     await fireEvent.click(
       screen.getByTestId("adventure-suggested-actions-toggle"),
     );
-    expect(
-      screen.getByTestId("adventure-suggested-actions-sheet"),
-    ).toBeTruthy();
+    const sheet = screen.getByTestId("adventure-suggested-actions-sheet");
+    const closeButton = screen.getByTestId("adventure-suggested-actions-close");
+    await waitFor(() => expect(document.activeElement).toBe(closeButton));
+    expect(sheet).toBeTruthy();
     await rerender({ manager: m, disabled: false, visible: true, chips: true });
     expect(
       screen.queryByTestId("adventure-suggested-actions-sheet"),
     ).toBeNull();
+    const chipsToggle = screen.getByTestId(
+      "adventure-suggested-actions-toggle",
+    );
+    await waitFor(() => expect(document.activeElement).toBe(chipsToggle));
+    expect(chipsToggle.isConnected).toBe(true);
     expect(
       screen.getByRole("button", { name: "Inspect the gate" }),
     ).toBeTruthy();

@@ -30,6 +30,7 @@
   let sheetOpen = $state(false);
   let submitting = $state(false);
   let triggerButton = $state<HTMLButtonElement>();
+  let chipsToggleButton = $state<HTMLButtonElement>();
   let closeButton = $state<HTMLButtonElement>();
 
   const count = $derived(manager.suggestedActions.length);
@@ -52,6 +53,9 @@
   $effect(() => {
     if (sheetOpen && (!visible || chips || count === 0)) {
       sheetOpen = false;
+      if (visible && chips && count > 0) {
+        void tick().then(() => chipsToggleButton?.focus());
+      }
     }
   });
 
@@ -117,6 +121,7 @@
   <div class={chipContainerClass} data-testid="adventure-suggested-actions">
     <div class="flex justify-center">
       <button
+        bind:this={chipsToggleButton}
         type="button"
         class="inline-flex items-center gap-1.5 rounded-full border border-theme-border bg-theme-bg px-3 py-1 text-xs font-medium text-theme-text transition hover:bg-theme-primary/10 hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         aria-expanded={!chipsCollapsed}
