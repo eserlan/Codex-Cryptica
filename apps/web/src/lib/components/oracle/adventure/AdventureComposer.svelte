@@ -81,12 +81,12 @@
   // Long prose scrolls inside the field so it never pushes the dock offscreen.
   $effect(() => {
     const content = activeDraft;
+    const minHeight = phone ? 50 : 44;
     if (!textarea || typeof content !== "string") return;
     void tick().then(() => {
       if (!textarea) return;
       textarea.style.height = "auto";
       const visibleHeight = window.visualViewport?.height ?? window.innerHeight;
-      const minHeight = phone ? 50 : 44;
       const maxHeight = Math.max(minHeight, Math.min(192, visibleHeight * 0.3));
       textarea.style.height = `${Math.max(minHeight, Math.min(textarea.scrollHeight, maxHeight))}px`;
       textarea.style.overflowY =

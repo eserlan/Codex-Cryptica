@@ -142,6 +142,19 @@ describe("AdventureComposer", () => {
     expect(send.className).toContain("sm:min-h-11");
   });
 
+  it("recalculates the textarea baseline when resizing from phone to desktop", async () => {
+    const { rerender } = render(AdventureComposer, {
+      props: { manager: manager("ready"), phone: true },
+    });
+    const field = screen.getByLabelText(
+      "What do you do?",
+    ) as HTMLTextAreaElement;
+
+    await waitFor(() => expect(field.style.height).toBe("50px"));
+    await rerender({ manager: manager("ready"), phone: false });
+    await waitFor(() => expect(field.style.height).toBe("44px"));
+  });
+
   it("preserves desktop mode controls without showing the phone switch", () => {
     const m = manager("ready");
     m.composerMode = "play";
