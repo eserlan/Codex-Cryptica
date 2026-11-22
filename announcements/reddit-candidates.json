@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795372428,
+  "updated_at": 1795374261,
   "candidates": [
     {
       "id": "reddit-44466817164-image-only-entity-labels-are-available-o",
@@ -22,14 +22,14 @@
       "created_at": 1795349378
     },
     {
-      "id": "reddit-45053421492-a-practical-first-stop-for-new-gms",
-      "title": "A practical first stop for new GMs",
-      "body": "Before a first session, there are a lot of choices to make and no obvious order to make them in. I built Codex Cryptica\u2019s [system-neutral New GM hub](https://codexcryptica.com/topics/new-gm) to give those choices a starting order.\n\n- A seven-step path from choosing something runnable to keeping useful notes after the session.\n- Guidance on Session 0 and what can wait until later.\n- A worked example of a minimal prep packet for an opening scene.\n\nWhich part of your first session was hardest to prepare?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-45053421492-0.png)",
-      "url": "https://codexcryptica.com/topics/new-gm",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-45053421492-0.png",
+      "id": "reddit-45053421492-local-campaign-folders-in-firefox-and-sa",
+      "title": "Local campaign folders in Firefox and Safari",
+      "body": "If your campaign is already in a local folder, using Firefox or Safari could leave you looking for another way to open it. I added local-folder vault support for both browsers in Codex Cryptica.\n\n- Select an existing campaign folder from the vault flow.\n- Open its material as a vault.\n- Keep Firefox or Safari in your GM workflow.\n\nAre your campaign notes in a folder, a cloud drive, or another tool?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-yours.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-yours.jpg",
       "source_id": "45053421492",
       "status": "approved",
-      "created_at": 1795372427
+      "created_at": 1795374261
     }
   ]
 }
