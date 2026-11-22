@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795081945,
+  "updated_at": 1795344745,
   "candidates": [
     {
       "id": "reddit-44466817164-image-only-entity-labels-are-available-o",
@@ -10,6 +10,16 @@
       "source_id": "44466817164",
       "status": "approved",
       "created_at": 1795081945
+    },
+    {
+      "id": "reddit-45012792136-ask-the-gm-without-moving-the-scene",
+      "title": "Ask the GM without moving the scene",
+      "body": "A table question can end up in the same box as a character\u2019s next move, turning a clarification into part of the fiction. I added Ask GM mode to Codex Cryptica, the campaign tool I build for my own table.\n\n- Ask for a clarification during a scene\n- Leave game time unchanged\n- Keep the current story as it is\n- Return to Play when you\u2019re ready\n\nWhich kinds of mid-scene questions do you prefer to handle out of character?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-45012792136-4.png)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/announcements/release-45012792136-4.png",
+      "source_id": "45012792136",
+      "status": "approved",
+      "created_at": 1795344745
     }
   ]
 }
