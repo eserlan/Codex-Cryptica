@@ -14,7 +14,7 @@ export const NEW_GM_TOPIC_CONFIG = {
     "First time running a tabletop RPG? Learn what a GM actually does, choose a small adventure, prepare Session 0, run your first game and keep useful notes. Works beyond D&D.",
   leadParagraph:
     "You do not need to memorise a rulebook, invent an entire world or perform character voices to become a Game Master. Start with one manageable session. These steps cover what to do before the game, what to say when the players surprise you, and what to keep afterwards. They work for D&D, Pathfinder, horror games and other tabletop RPGs.",
-  ogImage: "https://assets.codexcryptica.com/og/dungeons-and-dragons.jpg",
+  ogImage: "https://assets.codexcryptica.com/og/how-do-i-start-gming-for-the-first-time.jpg",
   ogImageAlt:
     "A tabletop Game Master's screen with dice, notes and a map ready for a first session",
 
@@ -37,7 +37,7 @@ export const NEW_GM_TOPIC_CONFIG = {
         title: "What are the pros and cons of becoming a Dungeon Master?",
         href: "/answers/what-are-the-pros-and-cons-of-becoming-a-dungeon-master",
         description: "Know what the role involves before committing to a campaign.",
-        badge: "Tool",
+        badge: "Answer",
       },
     ],
   },
