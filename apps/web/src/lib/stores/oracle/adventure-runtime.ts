@@ -20,7 +20,10 @@ import { AdventureBackground } from "./adventure-background";
 import { AdventureScenarios } from "./adventure-scenarios";
 import { AdventurePlaceLinker } from "./adventure-places";
 import { AdventureSummarizer } from "./adventure-summary";
-import { turnErrorCopy } from "./adventure-turn-retry";
+import {
+  AdventureTurnRejectedError,
+  turnErrorCopy,
+} from "./adventure-turn-retry";
 import { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventure-artwork-session.js";
 import { assignCommittedPlaceArtwork } from "#lib/services/adventure/artwork/committed-place-artwork.js";
 import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
@@ -228,6 +231,7 @@ export class AdventureRuntime {
     }
     // Fold older turns into the story notes while the player reads.
     this.summarizer.schedule(saved.session, summaryLifecycle);
+    this.state.lastTurnRejection = null;
     return saved.session;
   }
 
@@ -246,6 +250,16 @@ export class AdventureRuntime {
     }
   }
 
+  private toTurnRejection(cause: unknown) {
+    if (!(cause instanceof AdventureTurnRejectedError)) return null;
+    return {
+      reason: cause.reason,
+      ...(cause.diagnostic ? { diagnostic: cause.diagnostic } : {}),
+      revision: this.state.session?.revision ?? 0,
+      recordedAt: this.deps.now(),
+    };
+  }
+
   recordTurnGenerationError(
     cause: unknown,
     signal: AbortSignal,
@@ -257,6 +271,7 @@ export class AdventureRuntime {
     const cancelled =
       (cause instanceof DOMException && cause.name === "AbortError") ||
       message === "cancelled";
+    this.state.lastTurnRejection = this.toTurnRejection(cause);
     this.state.errorMessage = turnErrorCopy(cause, message);
     this.state.phase =
       retryPhase === "ready" && message === "offline"

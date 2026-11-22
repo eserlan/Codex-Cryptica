@@ -118,6 +118,7 @@
         diagnostic = true;
         const result = copyDiagnosticSnapshot(session, diagnosticStorage(), {
           forceFull: format === "diagnostic-full",
+          lastTurnRejection: manager.lastTurnRejection,
         });
         text = result.text;
         label = result.isDelta

@@ -1,4 +1,7 @@
-import type { AdventureSession } from "@codex/adventure-engine";
+import type {
+  AdventureSession,
+  HiddenLeakageDiagnostic,
+} from "@codex/adventure-engine";
 import {
   dialogueLoopPacing,
   formatWorldElapsedMinutes,
@@ -166,9 +169,18 @@ const DIAGNOSTIC_README = [
   "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
 ].join(" ");
 
+export interface TurnRejectionDiagnostic {
+  reason: string;
+  diagnostic?: HiddenLeakageDiagnostic;
+  revision: number;
+  recordedAt: string;
+}
+
 export interface AdventureDiagnosticOptions {
   /** Turns that keep their full patches. Older turns are condensed. */
   recentTurns?: number;
+  /** Most recent uncommitted turn refusal (if any), for mobile/on-device triage. */
+  lastTurnRejection?: TurnRejectionDiagnostic | null;
 }
 
 export interface DiagnosticStorage {
@@ -412,6 +424,9 @@ export function adventureDiagnosticJson(
     {
       _readme: DIAGNOSTIC_README,
       summary: diagnosticSummary(session, cutoff, lastTurn),
+      ...(options.lastTurnRejection
+        ? { lastTurnRejection: options.lastTurnRejection }
+        : {}),
       integrityChecks: integrityChecks(session),
       state: diagnosticState(session),
       turns: diagnosticTurns(session, cutoff),
@@ -598,6 +613,9 @@ export function adventureDiagnosticDeltaJson(
         newTurnsCount: newTurns.length,
       },
       summary: diagnosticSummary(session, cutoff, lastTurn),
+      ...(options.lastTurnRejection
+        ? { lastTurnRejection: options.lastTurnRejection }
+        : {}),
       integrityChecks: integrityChecks(session),
       stateChanges,
       turns: newTurns,

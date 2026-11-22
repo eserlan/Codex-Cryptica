@@ -210,6 +210,7 @@ export class AdventureLifecycle {
     this.state.oocGenerating = false;
     this.state.rollMutationPending = false;
     this.state.oocErrorMessage = null;
+    this.state.lastTurnRejection = null;
     this.state.packageUnavailable = null;
     if (this.state.errorCause === "package-unavailable")
       this.state.errorCause = null;
@@ -245,6 +246,7 @@ export class AdventureLifecycle {
     this.state.oocErrorMessage = null;
     this.state.streamedNarration = "";
     this.state.errorMessage = null;
+    this.state.lastTurnRejection = null;
     this.state.lastRollResult = null;
     this.state.phase = "idle";
   }

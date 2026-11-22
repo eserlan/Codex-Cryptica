@@ -645,4 +645,43 @@ describe("Adventure diagnostic JSON for AI", () => {
     expect(afterCorrupt.isDelta).toBe(false);
     expect(typeof adventureDiagnosticDeltaJson).toBe("function");
   });
+
+  it("includes lastTurnRejection in full and delta diagnostic snapshots only when present", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    const rejection = {
+      reason: "hidden-leakage",
+      diagnostic: {
+        guard: "scenario-secret" as const,
+        field: "narration",
+        sourceRef: "scenario-1#truth",
+      },
+      revision: session.revision,
+      recordedAt: "2026-11-22T11:45:00.000Z",
+    };
+
+    const cleanFull = JSON.parse(adventureDiagnosticJson(session));
+    expect(cleanFull.lastTurnRejection).toBeUndefined();
+
+    const rejectedFull = JSON.parse(
+      adventureDiagnosticJson(session, { lastTurnRejection: rejection }),
+    );
+    expect(rejectedFull.lastTurnRejection).toEqual(rejection);
+
+    copyDiagnosticSnapshot(session, storage);
+    saveDiagnosticBaseline(session, storage);
+
+    const rejectedDelta = JSON.parse(
+      copyDiagnosticSnapshot(session, storage, {
+        lastTurnRejection: rejection,
+      }).text,
+    );
+    expect(rejectedDelta.lastTurnRejection).toEqual(rejection);
+  });
 });
