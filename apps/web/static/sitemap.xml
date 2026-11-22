@@ -102,6 +102,11 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://codexcryptica.com/topics/new-gm</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://codexcryptica.com/topics/dnd-beginners</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
