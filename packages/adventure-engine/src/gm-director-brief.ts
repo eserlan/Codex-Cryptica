@@ -5,7 +5,17 @@ import {
   matchesScenarioLocation,
   type LocationContext,
 } from "./contextual-rumours";
-import { dialogueLoopPacing, isInquiry, topicWords } from "./dialogue-pacing";
+import {
+  dialogueLoopPacing,
+  isInquiry,
+  threadTopicWords,
+} from "./dialogue-pacing";
+import {
+  investigativeProgressPacing,
+  type InvestigativePacing,
+  type InvestigativeRecoveryAngle,
+} from "./investigative-pacing";
+import { isPlayerVisibleScenarioEvent } from "./turn-progression";
 import { sceneStallPacing } from "./scene-pacing";
 import type {
   ActorDisposition,
@@ -105,6 +115,11 @@ export interface GMDirectorBrief {
   pursuedScenarios: DirectorPursuedScenario[];
   otherOpenHeardScenarioIds: string[];
   packageContext?: DirectorPackageContext;
+  progression?: {
+    turnsWithoutAdvancement: number;
+    repeatedNonAnswerTurns: number;
+    recommendedAngle?: InvestigativeRecoveryAngle;
+  };
   suggestedActionKinds: DirectorActionKind[];
 }
 
@@ -149,39 +164,7 @@ const DISENGAGEMENT_RE =
 const INVESTIGATIVE_RE =
   /\b(?:investigat\w*|clue|clues|lead|leads|rumour|rumours|rumor|rumors|gossip|local\s+news|news\b|mystery|suspect\w*|witness\w*|search\w*|inspect\w*|examin\w*|follow\s+up|look\s+into|check\s+out|what\s+happened|who\s+is\s+behind|missing|vanish\w*|disappear\w*|secret\w*|trail|tracks|evidence)\b/i;
 
-const BRIEF_STOP_WORDS = new Set([
-  "him",
-  "his",
-  "her",
-  "hers",
-  "herself",
-  "himself",
-  "themselves",
-  "one",
-  "two",
-  "three",
-  "some",
-  "such",
-  "other",
-  "another",
-  "more",
-  "most",
-  "much",
-  "many",
-  "very",
-  "only",
-  "even",
-  "also",
-  "onto",
-  "over",
-  "under",
-]);
-
-function briefTopicWords(value: string): Set<string> {
-  const words = topicWords(value);
-  for (const stop of BRIEF_STOP_WORDS) words.delete(stop);
-  return words;
-}
+const briefTopicWords = threadTopicWords;
 
 function clipText(value: string, limit: number): string {
   const cleaned = value.replace(/\s+/g, " ").trim();
@@ -191,17 +174,6 @@ function clipText(value: string, limit: number): string {
 
 function normalizePhrase(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-function isPlayerVisibleScenarioEvent(
-  scenario: ScenarioItem,
-  event: ScenarioEvent,
-): boolean {
-  if (event.visibility === "player") return true;
-  const secretId = Object.hasOwn(scenario.secretBindings.eventIds, event.id)
-    ? scenario.secretBindings.eventIds[event.id]
-    : undefined;
-  return Boolean(secretId && scenario.revealedSecretIds.includes(secretId));
 }
 
 function isLocationBoundScenario(scenario: ScenarioItem): boolean {
@@ -1142,21 +1114,43 @@ function isInvestigationActive(
   );
 }
 
+function isSceneStallInvestigation(
+  session: AdventureSession,
+  mode: GMDirectorBrief["mode"],
+  effectiveAction: string | undefined,
+  pursuedCount: number,
+  dialogue: ReturnType<typeof dialogueLoopPacing>,
+  investigative?: InvestigativePacing,
+): boolean {
+  if (dialogue && !dialogue.recoveryDue && dialogue.repeatedTurns >= 3) {
+    return false;
+  }
+  if (investigative?.recoveryDue) return true;
+  if (dialogue || !sceneStallPacing(session)?.stalled) return false;
+  return isInvestigationActive(session, mode, effectiveAction, pursuedCount);
+}
+
 function determineScenePosture(
   session: AdventureSession,
   phase: GMDirectorBriefInput["phase"],
   mode: GMDirectorBrief["mode"],
   effectiveAction: string | undefined,
   pursuedCount: number,
+  investigative?: InvestigativePacing,
 ): DirectorScenePosture {
-  const dialogueLoop = dialogueLoopPacing(session, effectiveAction);
-  if (dialogueLoop?.recoveryDue) return "dialogue-loop";
-
-  const stalled = sceneStallPacing(session);
+  const dialogue = dialogueLoopPacing(session, effectiveAction);
+  if (dialogue?.recoveryDue) {
+    return "dialogue-loop";
+  }
   if (
-    stalled?.stalled &&
-    !dialogueLoop &&
-    isInvestigationActive(session, mode, effectiveAction, pursuedCount)
+    isSceneStallInvestigation(
+      session,
+      mode,
+      effectiveAction,
+      pursuedCount,
+      dialogue,
+      investigative,
+    )
   ) {
     return "stalled-investigation";
   }
@@ -1177,13 +1171,38 @@ function activePursuitActionKinds(
   return ["investigate", "converse", "walk-away"];
 }
 
+function stalledActionKinds(
+  pursued: readonly RankedCandidate[],
+): DirectorActionKind[] {
+  const primary = pursued[0];
+  const onSiteCrisis =
+    primary?.matchesLocation && primary.item.stage === "revelation-crisis";
+  return onSiteCrisis
+    ? ["investigate", "intervene", "walk-away"]
+    : ["investigate", "travel", "walk-away"];
+}
+
+function shouldUseStalledActions(
+  mode: GMDirectorBrief["mode"],
+  posture: DirectorScenePosture,
+  investigative?: InvestigativePacing,
+): boolean {
+  if (posture === "dialogue-loop" || posture === "stalled-investigation") {
+    return true;
+  }
+  return (
+    mode !== "open-world" && (investigative?.repeatedNonAnswerTurns ?? 0) >= 2
+  );
+}
+
 function determineSuggestedActionKinds(
   mode: GMDirectorBrief["mode"],
   posture: DirectorScenePosture,
   pursued: readonly RankedCandidate[],
+  investigative?: InvestigativePacing,
 ): DirectorActionKind[] {
-  if (posture === "dialogue-loop" || posture === "stalled-investigation") {
-    return ["investigate", "travel", "walk-away"];
+  if (shouldUseStalledActions(mode, posture, investigative)) {
+    return stalledActionKinds(pursued);
   }
   if (mode === "active-pursuit") return activePursuitActionKinds(pursued);
   if (mode === "package-scene") {
@@ -1245,6 +1264,11 @@ function shedSecondaryPursued(brief: GMDirectorBrief): boolean {
 }
 
 const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
+  (b) => {
+    if (!b.progression) return false;
+    delete b.progression;
+    return true;
+  },
   shedSecondaryPursued,
   shedPursuedDetails,
   shedPackageExtras,
@@ -1280,18 +1304,17 @@ function resolveEffectiveAction(
 }
 
 /**
- * Pure, deterministic, budget-aware GM-only synthesis of active focus,
- * established facts vs. potential developments, and scene posture.
+ * Pure, deterministic, budget-aware GM-only synthesis paired with the single
+ * investigative pacing evaluation for the turn.
  */
-export function buildGMDirectorBrief(
-  input: GMDirectorBriefInput,
-): GMDirectorBrief | undefined {
+export function buildGMDirectorBriefWithPacing(input: GMDirectorBriefInput): {
+  brief: GMDirectorBrief | undefined;
+  investigative: InvestigativePacing | undefined;
+} {
   const limit =
     input.maxChars === undefined
       ? MAX_DIRECTOR_BRIEF_CHARS
       : Math.min(MAX_DIRECTOR_BRIEF_CHARS, input.maxChars);
-  if (!Number.isFinite(limit) || limit <= 0) return undefined;
-
   const effectiveAction = resolveEffectiveAction(input);
   const location = currentLocationContext(input.session);
   const openHeard = candidateScenariosForLocation(input.session).filter(
@@ -1313,16 +1336,42 @@ export function buildGMDirectorBrief(
       : packageContext
         ? "package-scene"
         : "open-world";
+  const investigative = investigativeProgressPacing(
+    input.session,
+    effectiveAction,
+    {
+      pursuedScenario: pursued[0]?.item,
+      hasActivePackageScene: Boolean(packageContext),
+    },
+  );
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return { brief: undefined, investigative };
+  }
   const scenePosture = determineScenePosture(
     input.session,
     input.phase,
     mode,
     effectiveAction,
     pursued.length,
+    investigative,
   );
   const currentPlace = resolveCurrentPlace(input.session);
+  const emitProgression =
+    investigative &&
+    scenePosture !== "calm-conversation" &&
+    (investigative.recoveryDue ||
+      (mode !== "open-world" && investigative.repeatedNonAnswerTurns >= 2));
+  const progression = emitProgression
+    ? {
+        turnsWithoutAdvancement: investigative.turnsWithoutAdvancement,
+        repeatedNonAnswerTurns: investigative.repeatedNonAnswerTurns,
+        ...(investigative.recommendedAngle
+          ? { recommendedAngle: investigative.recommendedAngle }
+          : {}),
+      }
+    : undefined;
 
-  return enforceBriefBudget(
+  const brief = enforceBriefBudget(
     {
       advisory: true,
       mode,
@@ -1333,12 +1382,25 @@ export function buildGMDirectorBrief(
       ),
       otherOpenHeardScenarioIds: otherIds,
       ...(packageContext ? { packageContext } : {}),
+      ...(progression ? { progression } : {}),
       suggestedActionKinds: determineSuggestedActionKinds(
         mode,
         scenePosture,
         pursued,
+        investigative,
       ),
     },
     limit,
   );
+  return { brief, investigative };
+}
+
+/**
+ * Pure, deterministic, budget-aware GM-only synthesis of active focus,
+ * established facts vs. potential developments, and scene posture.
+ */
+export function buildGMDirectorBrief(
+  input: GMDirectorBriefInput,
+): GMDirectorBrief | undefined {
+  return buildGMDirectorBriefWithPacing(input).brief;
 }

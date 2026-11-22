@@ -3,7 +3,7 @@ import {
   type PromptAdventurePackage,
 } from "./context-budget";
 import {
-  buildGMDirectorBrief,
+  buildGMDirectorBriefWithPacing,
   MAX_DIRECTOR_BRIEF_CHARS,
 } from "./gm-director-brief";
 import { MAX_SERIALIZED_STATE_CHARS } from "./schemas";
@@ -14,6 +14,7 @@ import { worldEntryPacing } from "./world-entry-pacing";
 import { projectVisibleState } from "./prompt-state";
 import { sceneStallPacing } from "./scene-pacing";
 import { dialogueLoopPacing } from "./dialogue-pacing";
+import type { InvestigativePacing } from "./investigative-pacing";
 import { PROMPT_TRANSCRIPT_TURNS } from "./story-summary";
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import { projectGmHistoricalAnchor } from "./historical-anchor";
@@ -47,27 +48,41 @@ export interface AdventurePromptInput {
   adventurePackage?: PromptAdventurePackage;
 }
 
+function stalledSceneLine(
+  stalled: NonNullable<ReturnType<typeof sceneStallPacing>>,
+): string {
+  if (stalled.quietElapsedMinutes > 0) {
+    return `STALLED SCENE: the last ${stalled.quietTurns} turns (${formatWorldElapsedMinutes(stalled.quietElapsedMinutes)} of fictional time) changed nothing observable. Stop repeating unchanged waiting: deliver a grounded update, outcome, or next step for any pending process (even unthreaded), or make a concrete scene change; never invent canon, leak truths, force a crisis or artificial deadline, or decide the player's response.`;
+  }
+  return `STALLED SCENE: the last ${stalled.quietTurns} turns changed nothing in the world: no new fact, character, place or consequence. In this turn, change something concrete: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Do not repeat any detail from the previous turns, and still never decide the player's response.`;
+}
+
+function shouldEmitInvestigativeRecovery(
+  dialogue: ReturnType<typeof dialogueLoopPacing>,
+  investigative: InvestigativePacing | undefined,
+): investigative is InvestigativePacing {
+  if (!investigative?.recoveryDue) return false;
+  return !(dialogue && !dialogue.recoveryDue && dialogue.repeatedTurns >= 3);
+}
+
 /** Choose one targeted pacing nudge, keeping generic stall logic out of the GM. */
 function sceneRecoveryBehavior(
   stalled: ReturnType<typeof sceneStallPacing>,
   dialogue: ReturnType<typeof dialogueLoopPacing>,
+  investigative: InvestigativePacing | undefined,
 ): string[] {
   if (dialogue?.recoveryDue) {
     return [
       `DIALOGUE LOOP RECOVERY: The last ${dialogue.repeatedTurns} exchanges repeated a related question without a substantive answer. Address the CURRENT player question rather than rephrasing an NPC's ignorance or recycling the same options. Clarify a mistaken explanation or decide a compatible, previously unspecified world detail and commit consequential facts. If this NPC genuinely cannot know, preserve that limit and offer a specific, independently useful avenue of inquiry where credible. Do not force a quest, invent an unrelated clue or crisis, reveal hidden truths without discovery, or choose for the player.`,
     ];
   }
-  if (stalled?.stalled && !dialogue) {
-    if (stalled.quietElapsedMinutes > 0) {
-      return [
-        `STALLED SCENE: the last ${stalled.quietTurns} turns (${formatWorldElapsedMinutes(stalled.quietElapsedMinutes)} of fictional time) changed nothing observable. Stop repeating unchanged waiting: deliver a grounded update, outcome, or next step for any pending process (even unthreaded), or make a concrete scene change; never invent canon, leak truths, force a crisis or artificial deadline, or decide the player's response.`,
-      ];
-    }
+  if (shouldEmitInvestigativeRecovery(dialogue, investigative)) {
+    const angle = investigative.recommendedAngle ?? "alternate-route";
     return [
-      `STALLED SCENE: the last ${stalled.quietTurns} turns changed nothing in the world: no new fact, character, place or consequence. In this turn, change something concrete: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Do not repeat any detail from the previous turns, and still never decide the player's response.`,
+      `INVESTIGATIVE STALL RECOVERY: ${investigative.turnsWithoutAdvancement} turns without meaningful thread advancement (${investigative.repeatedNonAnswerTurns} repeated non-answers; recommended angle: ${angle}). Make one grounded move via ${angle}: open an alternate physical or record route, introduce an observable off-screen consequence, let the player re-evaluate existing clues, or honestly confirm this trail is exhausted. Preserve witness knowledge limits—never make a witness omniscient, plant compulsory clues, leak unrevealed secrets, or force an artificial crisis—and never offer recursive "ask them again" suggestedActions.`,
     ];
   }
-  return [];
+  return stalled?.stalled && !dialogue ? [stalledSceneLine(stalled)] : [];
 }
 
 export function buildAdventurePrompt(input: AdventurePromptInput) {
@@ -80,77 +95,6 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     input.session,
     input.playerAction,
   );
-  const phaseInstruction =
-    input.phase === "opening"
-      ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
-      : input.phase === "roll-resolution"
-        ? "This is a roll resolution. Apply the supplied roll outcome to the pending situation and return the resulting complete proposal."
-        : "This is an action turn. Resolve the player's submitted action and return a complete or roll-required proposal.";
-  const behavior = [
-    "Act as the adventure GM.",
-    ...(worldEntry
-      ? worldEntryBehavior(worldEntry, input.session, pacing)
-      : []),
-    ...(input.session.historicalAnchor
-      ? historicalAnchorBehavior(input.session.historicalAnchor)
-      : []),
-    phaseInstruction,
-    "Treat a described action or question as the character doing it, even when the player paraphrases instead of writing dialogue. Answer the substance in the same turn: for example, questioning a witness about an attack means asking what they saw, not waiting for the player to repeat the question verbatim. Follow the current action's intended target when the player switches people or activities; an earlier conversation does not prevent that switch. A present witness may respond even if absent from activeCharacters. Ask for clarification only when a material detail is genuinely ambiguous; do not invent an unfinished question. Respect established knowledge and uncertainty: a witness can say what they know, do not know, or offer a credible lead. Do not give a witness knowledge they could not have; that is different from the GM deciding a new, compatible hidden fact.",
-    ...worldStyleBehavior(input.worldStyle),
-    "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
-    'You are the world, so speak in the fiction. Never say what has or has not been "established", never refer to your own knowledge or to being an AI, and never refuse a harmless question about the scene.',
-    'Prose craft: write vivid, grounded tabletop GM narration in 2–3 short paragraphs (roughly 90–160 words), addressing the player as "you" rather than third person. Ground each turn in one or two concrete physical details (smell, texture, sound, light, or posture), pair NPC dialogue with brief body-language beats, and weave in all relevant player-visible details from the current scene and NPC excerpts naturally without info-dumping.',
-    "Scene details are yours to decide: when the player asks about, or hands you, a detail nobody has fixed yet (time of day, weather, light, a minor NPC's name, a price, a distance), choose a fitting answer in character and commit it. If the player says you decide, decide. The ban on inventing precise calendar dates does not apply to scene details; keep a detail consistent once chosen.",
-    "GM IMPROVISATIONAL AUTHORITY: You are responsible for the parts of the world not yet specified. Invent credible institutions, customs, debts, procedures, NPC motives and relationships, identities and causal links when needed for a coherent, playable answer. Preserve canonical records, already committed facts and explicit scenario truths; do not settle source facts explicitly marked ambiguous or unresolved. When GM-ONLY historicalAnchor lists openMechanisms, never invent or narrow those mechanisms until committed play establishes them, even when a coherent answer would otherwise call for deciding them. An unspecified detail is not an established mystery or a prohibition on deciding. Record consequential new public details in visible state/provisionalFacts, or unrevealed decisions in GM-only hidden state, then keep them consistent.",
-    "CHALLENGED EXPLANATIONS: When the player notices a contradiction or an implausible premise, take the objection seriously. Clarify or repair the world's explanation with the smallest plausible addition consistent with binding facts. Let a knowledgeable NPC explain how their own institution actually works; acknowledge a mistaken earlier account rather than defending it. Never conflate an NPC's limited knowledge with the GM having no answer. Repeated paraphrases of the same question require a materially new explanation, discovery, or clear next step, not another version of the same refusal.",
-    "A character may not know something, but a reply must never be a dead end. Let the NPC offer a name, point to someone or somewhere that knows more, or let the player notice a visible clue. When the player repeats a question about the same unknown, someone present offers a concrete observable clue or safe lead; do not disclose GM-only truths, and reveal scenario secrets only through justified fictional discovery.",
-    "Do not repeat the ambient detail (sounds, hearth, cups, weather) used in the previous turn; vary the sensory colour or leave it out. If the last few turns stayed in one scene without new information, change something: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Never decide the player's response.",
-    "Places: currentPlace is where the player is now and knownPlaces lists the places they have been to; people and facts listed under elsewhere are not here unless the story brings them back. When the player travels to a different place, set moveTo: use placeId for a known place, copied from knownPlaces and never made up, or name (with a short relation such as \"below Tiny village\") for a new one. Never set moveTo for movement inside the same place, and keep a place's recorded name instead of inventing a variant. A place marked canonical is a Vault location: its source record outranks anything you would invent about it. A place may be known by more than one name; use a recorded name rather than a variant. People who should travel with the player must appear in this turn's activeCharacters patch.",
-    "Visual cues: when creating a place via moveTo.cues, or when the current place lacks visual tags (placeCues), include 1 to 4 lowercase cues from: forest, woodland, mountain, hills, plains, desert, swamp, river, coast, ocean, island, tundra, snow, cave, ruins, village, town, city, harbour, road, castle, temple, tavern, market, farm, space-station, starship, laboratory, industrial, urban, rural, wilderness, interior, exterior, quiet, busy, ominous, hopeful, mysterious, day, night, dawn, dusk, rain, fog, winter, summer.",
-    "Present NPCs: keep named NPCs currently in the scene in visiblePatch.activeCharacters (add when they join, remove when they leave). Whenever adding or updating an NPC, include up to 8 concise lowercase cues that help illustrate them. Aim for 5 when supported, choosing useful details from ancestry or species, role, setting, clothing, physical appearance, and distinguishing features. For catalogue matching, include a fitting familiar ancestry and role when known, such as human, elf, worker, official, guard, merchant, scholar, or explorer. Other cues are not limited to these examples: choose specific descriptions that fit the character and setting, such as space-station, uniform, or silver hair. Use only details the player can perceive or already knows; use fewer cues rather than inventing unsupported details. Keep established appearance consistent and never expose hidden information.",
-    'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
-    ...sceneRecoveryBehavior(stalled, dialogueRecovery),
-    "Canonical source records outrank provisional session material.",
-    ...(input.correction
-      ? [
-          `CORRECTION: your previous reply to this same turn could not be used (${input.correction.slice(0, 300)}). Answer the same turn again as one complete reply and avoid that problem.`,
-        ]
-      : []),
-    ...(scenarios.length
-      ? [
-          "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
-          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios, and never in the turn a rumour is first revealed.",
-          "Voluntary engagement: when the player investigates an emerging lead, consequential actions must advance the situation, reveal a credible witness, expose a discoverable clue, or resolve the matter; avoid endlessly substituting unrelated mundane chores.",
-          "Peaceful/off-script: if the player ignores or declines a lead, or pursues ordinary daily life, allow peaceful exploration without forced villains, artificial deadlines, or mandatory combat.",
-          "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
-          "Never rewrite the original GM-only scenario truth merely to manufacture a twist or prolong play.",
-          "When a scenario specifies the core truth but leaves supporting identities, motives, or mechanisms open, you may invent compatible answers as investigation makes them relevant, except for any mechanism listed in GM-ONLY historicalAnchor.openMechanisms, which must remain undecided until committed play establishes it. Commit other material choices to GM-only state before relying on them, and reveal only what the character can discover; do not keep a solvable mystery permanently vague merely because the scenario did not name every detail.",
-          "Present actors with credible motives and reactions; new developments must follow established facts or player actions.",
-          "Respect the player's right to ignore, abandon, revisit or resolve a situation without forcing escalation.",
-          "Distinguish hearsay, observation and interpretation. Only reveal scenario secrets through justified fictional discovery.",
-          "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
-          "When all scenarios are resolved or abandoned, or when the player pursues everyday life, portray ongoing unscripted world activity, routine tasks, peaceful interactions or travel without manufacturing artificial crises or forcing a new quest.",
-        ]
-      : []),
-    "World time is elapsed fictional minutes since adventure entry, not device time; the chosen Vault date may have only year precision. Never invent a precise calendar date or advance based on chat turn count.",
-    "Return timeAdvance only for a completed turn when meaningful fictional time actually passes: waiting, sleeping, travel or an explicitly timed event. Supply whole positive minutes, a causal description and a developments array (possibly empty). Do not advance merely for talking or because another model response occurred.",
-    "TimeAdvance developments are GM-ONLY events tied to existing hidden gmThreads or open scenario IDs; describe credible actions or consequences by those actors during the elapsed time. Only generate events consistent with their motives, available time, prior facts and observed actions. Do not force dramatic escalation. Update the same gmThreads through hiddenPatch when its state genuinely changes.",
-    "Pending processes without a gmThread or open scenario: keep timeAdvance.developments empty (never invent a threadId); after meaningful time passes, commit a grounded outcome, update, or next step in visiblePatch/provisionalFacts or a new GM-only hiddenPatch.gmThreads entry (never leak it). Brief waits are valid; don't repeat unchanged waiting, force crises/deadlines, or deny player choice (accept, reject, abandon, wait).",
-    "When in-world time passes or the player returns to a location with off-screen consequences, describe the observable aftermath rather than treating the world as frozen, and reveal the consequence secret via revealSecretIds only upon justified discovery.",
-    "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
-    "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
-    "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
-    "GM-ONLY director brief is an advisory synthesis of active focus, established facts vs. potential developments, and scene posture; follow unexpected player actions over it and never treat potential items as already established. Never leak gmTruthRef, pressure, or internal IDs, and never populate visiblePatch.situation solely to manufacture an objective in open-world or calm scenes.",
-    "Source excerpts are world knowledge, not proof of character knowledge. Preserve period applicability and uncertainty labels; retrieved secrets or hidden identities are never revealed merely because they were retrieved.",
-    "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
-    "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry so the player may choose to save it to Codex. Set provisionalFacts[].scenarioId only to an existing scenario ID from playerScenarios or GM-ONLY scenarios—never to a package record ID (such as a clue, encounter, secret, or scene ID). Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
-    "For every newly created fact (including add entries, location, situation, hidden state, and provisionalFacts), omit id. IDs are assigned when the turn is committed. Include an id only to update, remove, or reveal existing state.",
-    "Omit optional fields when they have no value; never use empty strings as placeholder IDs.",
-    "Narration may be up to 2,000 characters; all other text fields must be 600 characters or fewer.",
-    "Include exactly three concise suggestedActions tailored to the playerCharacter's personality, traits, and situation, representing genuinely distinct supported approaches (such as investigate, intervene, travel, converse, wait, or walk away) rather than three rephrasings of the same question. They are optional player choices, never actions you have decided for the character.",
-    ...packageBehavior(input.adventurePackage),
-    "Return only the requested structured schema.",
-  ].join(" ");
   const baseState = {
     playerVisibleState: projectVisibleState(input.session),
     playerScenarios: playerScenarioCollectionProjection(input.session),
@@ -199,13 +143,85 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
   };
   const headroom =
     MAX_SERIALIZED_STATE_CHARS - JSON.stringify(baseState).length - 40;
-  const directorBrief = buildGMDirectorBrief({
-    session: input.session,
-    phase: input.phase,
-    playerAction: input.playerAction,
-    adventurePackage: input.adventurePackage,
-    maxChars: Math.min(MAX_DIRECTOR_BRIEF_CHARS, Math.max(0, headroom)),
-  });
+  const { brief: directorBrief, investigative } =
+    buildGMDirectorBriefWithPacing({
+      session: input.session,
+      phase: input.phase,
+      playerAction: input.playerAction,
+      adventurePackage: input.adventurePackage,
+      maxChars: Math.min(MAX_DIRECTOR_BRIEF_CHARS, Math.max(0, headroom)),
+    });
+  const phaseInstruction =
+    input.phase === "opening"
+      ? "This is the opening scene. No player action is expected yet; introduce an immediate situation and return a complete or roll-required proposal instead of asking the player for input."
+      : input.phase === "roll-resolution"
+        ? "This is a roll resolution. Apply the supplied roll outcome to the pending situation and return the resulting complete proposal."
+        : "This is an action turn. Resolve the player's submitted action and return a complete or roll-required proposal.";
+  const behavior = [
+    "Act as the adventure GM.",
+    ...(worldEntry
+      ? worldEntryBehavior(worldEntry, input.session, pacing)
+      : []),
+    ...(input.session.historicalAnchor
+      ? historicalAnchorBehavior(input.session.historicalAnchor)
+      : []),
+    phaseInstruction,
+    "Treat a described action or question as the character doing it, even when the player paraphrases instead of writing dialogue. Answer the substance in the same turn: for example, questioning a witness about an attack means asking what they saw, not waiting for the player to repeat the question verbatim. Follow the current action's intended target when the player switches people or activities; an earlier conversation does not prevent that switch. A present witness may respond even if absent from activeCharacters. Ask for clarification only when a material detail is genuinely ambiguous; do not invent an unfinished question. Respect established knowledge and uncertainty: a witness can say what they know, do not know, or offer a credible lead. Do not give a witness knowledge they could not have; that is different from the GM deciding a new, compatible hidden fact.",
+    ...worldStyleBehavior(input.worldStyle),
+    "Never choose the player character's voluntary actions, dialogue, decisions, thoughts, or feelings.",
+    'You are the world, so speak in the fiction. Never say what has or has not been "established", never refer to your own knowledge or to being an AI, and never refuse a harmless question about the scene.',
+    'Prose craft: write vivid, grounded tabletop GM narration in 2–3 short paragraphs (roughly 90–160 words), addressing the player as "you" rather than third person. Ground each turn in one or two concrete physical details (smell, texture, sound, light, or posture), pair NPC dialogue with brief body-language beats, and weave in all relevant player-visible details from the current scene and NPC excerpts naturally without info-dumping.',
+    "Scene details are yours to decide: when the player asks about, or hands you, a detail nobody has fixed yet (time of day, weather, light, a minor NPC's name, a price, a distance), choose a fitting answer in character and commit it. If the player says you decide, decide. The ban on inventing precise calendar dates does not apply to scene details; keep a detail consistent once chosen.",
+    "GM IMPROVISATIONAL AUTHORITY: You are responsible for the parts of the world not yet specified. Invent credible institutions, customs, debts, procedures, NPC motives and relationships, identities and causal links when needed for a coherent, playable answer. Preserve canonical records, already committed facts and explicit scenario truths; do not settle source facts explicitly marked ambiguous or unresolved. When GM-ONLY historicalAnchor lists openMechanisms, never invent or narrow those mechanisms until committed play establishes them, even when a coherent answer would otherwise call for deciding them. An unspecified detail is not an established mystery or a prohibition on deciding. Record consequential new public details in visible state/provisionalFacts, or unrevealed decisions in GM-only hidden state, then keep them consistent.",
+    "CHALLENGED EXPLANATIONS: When the player notices a contradiction or an implausible premise, take the objection seriously. Clarify or repair the world's explanation with the smallest plausible addition consistent with binding facts. Let a knowledgeable NPC explain how their own institution actually works; acknowledge a mistaken earlier account rather than defending it. Never conflate an NPC's limited knowledge with the GM having no answer. Repeated paraphrases of the same question require a materially new explanation, discovery, or clear next step, not another version of the same refusal.",
+    "A character may not know something, but a reply must never be a dead end. Let the NPC offer a name, point to someone or somewhere that knows more, or let the player notice a visible clue. When the player repeats a question about the same unknown, someone present offers a concrete observable clue or safe lead; do not disclose GM-only truths, and reveal scenario secrets only through justified fictional discovery.",
+    "Do not repeat the ambient detail (sounds, hearth, cups, weather) used in the previous turn; vary the sensory colour or leave it out. If the last few turns stayed in one scene without new information, change something: someone arrives or leaves, an object or sound draws attention, or an off-screen consequence reaches the scene. Never decide the player's response.",
+    "Places: currentPlace is where the player is now and knownPlaces lists the places they have been to; people and facts listed under elsewhere are not here unless the story brings them back. When the player travels to a different place, set moveTo: use placeId for a known place, copied from knownPlaces and never made up, or name (with a short relation such as \"below Tiny village\") for a new one. Never set moveTo for movement inside the same place, and keep a place's recorded name instead of inventing a variant. A place marked canonical is a Vault location: its source record outranks anything you would invent about it. A place may be known by more than one name; use a recorded name rather than a variant. People who should travel with the player must appear in this turn's activeCharacters patch.",
+    "Visual cues: when creating a place via moveTo.cues, or when the current place lacks visual tags (placeCues), include 1 to 4 lowercase cues from: forest, woodland, mountain, hills, plains, desert, swamp, river, coast, ocean, island, tundra, snow, cave, ruins, village, town, city, harbour, road, castle, temple, tavern, market, farm, space-station, starship, laboratory, industrial, urban, rural, wilderness, interior, exterior, quiet, busy, ominous, hopeful, mysterious, day, night, dawn, dusk, rain, fog, winter, summer.",
+    "Present NPCs: keep named NPCs currently in the scene in visiblePatch.activeCharacters (add when they join, remove when they leave). Whenever adding or updating an NPC, include up to 8 concise lowercase cues that help illustrate them. Aim for 5 when supported, choosing useful details from ancestry or species, role, setting, clothing, physical appearance, and distinguishing features. For catalogue matching, include a fitting familiar ancestry and role when known, such as human, elf, worker, official, guard, merchant, scholar, or explorer. Other cues are not limited to these examples: choose specific descriptions that fit the character and setting, such as space-station, uniform, or silver hair. Use only details the player can perceive or already knows; use fewer cues rather than inventing unsupported details. Keep established appearance consistent and never expose hidden information.",
+    'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
+    ...sceneRecoveryBehavior(stalled, dialogueRecovery, investigative),
+    "Canonical source records outrank provisional session material.",
+    ...(input.correction
+      ? [
+          `CORRECTION: your previous reply to this same turn could not be used (${input.correction.slice(0, 300)}). Answer the same turn again as one complete reply and avoid that problem.`,
+        ]
+      : []),
+    ...(scenarios.length
+      ? [
+          "For an active scenario, portray an evolving situation rather than an assigned quest; never force objectives, rewards, scripted beats or a climax.",
+          "Progressive elaboration ladder: actively pursued rumours escalate across three bounded stages: hearsay (unverified talk) -> actionable-clue (concrete witness, clue or trail) -> revelation-crisis (core truth uncovered, moral dilemma, active confrontation or urgent consequence). Advance at most one stage per turn using elaborateScenarios, and never in the turn a rumour is first revealed.",
+          "Voluntary engagement: when the player investigates an emerging lead, consequential actions must advance the situation, reveal a credible witness, expose a discoverable clue, or resolve the matter; avoid endlessly substituting unrelated mundane chores.",
+          "Peaceful/off-script: if the player ignores or declines a lead, or pursues ordinary daily life, allow peaceful exploration without forced villains, artificial deadlines, or mandatory combat.",
+          "A rumour may be exaggerated, mistaken, harmless or mundane. It does not need to become an adventure.",
+          "Never rewrite the original GM-only scenario truth merely to manufacture a twist or prolong play.",
+          "When a scenario specifies the core truth but leaves supporting identities, motives, or mechanisms open, you may invent compatible answers as investigation makes them relevant, except for any mechanism listed in GM-ONLY historicalAnchor.openMechanisms, which must remain undecided until committed play establishes it. Commit other material choices to GM-only state before relying on them, and reveal only what the character can discover; do not keep a solvable mystery permanently vague merely because the scenario did not name every detail.",
+          "Present actors with credible motives and reactions; new developments must follow established facts or player actions.",
+          "Respect the player's right to ignore, abandon, revisit or resolve a situation without forcing escalation.",
+          "Distinguish hearsay, observation and interpretation. Only reveal scenario secrets through justified fictional discovery.",
+          "The GM-ONLY scenario block is secret preparation and must never be paraphrased into narration, hints, suggested actions, roll prompts or recaps before disclosure.",
+          "When all scenarios are resolved or abandoned, or when the player pursues everyday life, portray ongoing unscripted world activity, routine tasks, peaceful interactions or travel without manufacturing artificial crises or forcing a new quest.",
+        ]
+      : []),
+    "World time is elapsed fictional minutes since adventure entry, not device time; the chosen Vault date may have only year precision. Never invent a precise calendar date or advance based on chat turn count.",
+    "Return timeAdvance only for a completed turn when meaningful fictional time actually passes: waiting, sleeping, travel or an explicitly timed event. Supply whole positive minutes, a causal description and a developments array (possibly empty). Do not advance merely for talking or because another model response occurred.",
+    "TimeAdvance developments are GM-ONLY events tied to existing hidden gmThreads or open scenario IDs; describe credible actions or consequences by those actors during the elapsed time. Only generate events consistent with their motives, available time, prior facts and observed actions. Do not force dramatic escalation. Update the same gmThreads through hiddenPatch when its state genuinely changes.",
+    "Pending processes without a gmThread or open scenario: keep timeAdvance.developments empty (never invent a threadId); after meaningful time passes, commit a grounded outcome, update, or next step in visiblePatch/provisionalFacts or a new GM-only hiddenPatch.gmThreads entry (never leak it). Brief waits are valid; don't repeat unchanged waiting, force crises/deadlines, or deny player choice (accept, reject, abandon, wait).",
+    "When in-world time passes or the player returns to a location with off-screen consequences, describe the observable aftermath rather than treating the world as frozen, and reveal the consequence secret via revealSecretIds only upon justified discovery.",
+    "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
+    "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
+    "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
+    "GM-ONLY director brief is an advisory synthesis of active focus, established facts vs. potential developments, and scene posture; follow unexpected player actions over it and never treat potential items as already established. Never leak gmTruthRef, pressure, or internal IDs, and never populate visiblePatch.situation solely to manufacture an objective in open-world or calm scenes.",
+    "Source excerpts are world knowledge, not proof of character knowledge. Preserve period applicability and uncertainty labels; retrieved secrets or hidden identities are never revealed merely because they were retrieved.",
+    "Source excerpt lore is GM-only: use it to drive consequences and reveals, but never state it to the player unless it is fictionally discovered.",
+    "When a meaningful new player-visible person, place, faction, item, event, or clue enters play, add one concise provisionalFacts entry so the player may choose to save it to Codex. Set provisionalFacts[].scenarioId only to an existing scenario ID from playerScenarios or GM-ONLY scenarios—never to a package record ID (such as a clue, encounter, secret, or scene ID). Never include any canonical/source record or fact already present in the supplied state; do not add fleeting details, duplicates, or any GM-only information.",
+    "For every newly created fact (including add entries, location, situation, hidden state, and provisionalFacts), omit id. IDs are assigned when the turn is committed. Include an id only to update, remove, or reveal existing state.",
+    "Omit optional fields when they have no value; never use empty strings as placeholder IDs.",
+    "Narration may be up to 2,000 characters; all other text fields must be 600 characters or fewer.",
+    'Include exactly three concise suggestedActions tailored to the playerCharacter\'s personality, traits, and situation: distinct approaches (physical inspection, another lead/location, intervening, conversing, waiting, or walking away)—no rephrasings or recursive "ask them again" prompts; never decided by you.',
+    ...packageBehavior(input.adventurePackage),
+    "Return only the requested structured schema.",
+  ].join(" ");
   const state = JSON.stringify({
     ...baseState,
     ...(directorBrief ? { "GM-ONLY director brief": directorBrief } : {}),
