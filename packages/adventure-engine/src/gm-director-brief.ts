@@ -119,6 +119,10 @@ export interface GMDirectorBriefInput {
 const MAX_PURSUED_SCENARIOS = 2;
 const MAX_OTHER_SCENARIO_IDS = 6;
 const RECENT_EVENT_TURN_WINDOW = 3;
+// Keep historical lookups on prompt generation bounded. Older scenario events
+// still rank by their authored timestamps; package reveal state is summarised
+// in packageProgress when available.
+const DIRECTOR_HISTORY_LOOKBACK_TURNS = 256;
 
 const STAGE_WEIGHT: Record<ScenarioElaborationStage, number> = {
   "revelation-crisis": 3,
@@ -527,9 +531,14 @@ function buildRankingContext(
   const investigative = Boolean(
     effectiveAction && INVESTIGATIVE_RE.test(effectiveAction),
   );
-  const turnIndexById = new Map(
-    session.turns.map((turn, idx) => [turn.id, idx]),
+  const historyStart = Math.max(
+    0,
+    session.turns.length - DIRECTOR_HISTORY_LOOKBACK_TURNS,
   );
+  const turnIndexById = new Map<string, number>();
+  for (let idx = historyStart; idx < session.turns.length; idx += 1) {
+    turnIndexById.set(session.turns[idx]!.id, idx);
+  }
   return {
     focusedId: session.scenarioCollection?.focusedScenarioId ?? null,
     location,
@@ -982,24 +991,32 @@ function collectOpenEpistemicUncertainties(
 
 function collectRevealedPackageSecretIds(
   session: AdventureSession,
+  packageSecretIds: ReadonlySet<string>,
 ): Set<string> {
-  const turnIds = session.turns.flatMap((turn) => turn.revealedSecretIds);
-  const hiddenIds = session.hiddenState.secrets
-    .filter((secret) => secret.status === "revealed")
-    .map((secret) => secret.id);
-  const resolvedIds = (session.packageProgress?.records ?? [])
-    .filter(
-      (r) =>
-        r.kind === "secret" &&
-        (r.status === "resolved" || r.status === "altered"),
-    )
-    .map((r) => r.id);
-  return new Set([
+  const turnIds = new Set<string>();
+  const summarizedIds = new Set([
     ...(session.packageProgress?.revealedSecretIds ?? []),
-    ...turnIds,
-    ...hiddenIds,
-    ...resolvedIds,
+    ...session.hiddenState.secrets
+      .filter((secret) => secret.status === "revealed")
+      .map((secret) => secret.id),
+    ...(session.packageProgress?.records ?? [])
+      .filter(
+        (record) =>
+          record.kind === "secret" &&
+          (record.status === "resolved" || record.status === "altered"),
+      )
+      .map((record) => record.id),
   ]);
+  // packageProgress is the durable summary for current sessions. The bounded
+  // turn lookup retains compatibility for package secrets missing from it.
+  if ([...packageSecretIds].some((id) => !summarizedIds.has(id))) {
+    for (const turn of session.turns.slice(-DIRECTOR_HISTORY_LOOKBACK_TURNS)) {
+      for (const id of turn.revealedSecretIds) {
+        if (packageSecretIds.has(id) && !summarizedIds.has(id)) turnIds.add(id);
+      }
+    }
+  }
+  return new Set([...summarizedIds, ...turnIds]);
 }
 
 function collectUnrevealedSecretUncertainties(
@@ -1007,7 +1024,12 @@ function collectUnrevealedSecretUncertainties(
   gmOnly: readonly PackageExcerpt[],
   push: (text: string) => void,
 ): void {
-  const revealed = collectRevealedPackageSecretIds(session);
+  const packageSecretIds = new Set(
+    gmOnly
+      .filter((excerpt) => excerpt.kind === "secret")
+      .map((excerpt) => excerpt.id),
+  );
+  const revealed = collectRevealedPackageSecretIds(session, packageSecretIds);
   for (const excerpt of gmOnly) {
     if (excerpt.kind === "secret" && !revealed.has(excerpt.id)) {
       push(`Unrevealed secret (${excerpt.id}).`);
@@ -1249,7 +1271,7 @@ export function buildGMDirectorBrief(
     input.maxChars === undefined
       ? MAX_DIRECTOR_BRIEF_CHARS
       : Math.min(MAX_DIRECTOR_BRIEF_CHARS, input.maxChars);
-  if (limit <= 0) return undefined;
+  if (!Number.isFinite(limit) || limit <= 0) return undefined;
 
   const effectiveAction = resolveEffectiveAction(input);
   const location = currentLocationContext(input.session);

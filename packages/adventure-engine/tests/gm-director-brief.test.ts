@@ -478,6 +478,14 @@ describe("GMDirectorBrief (#5109)", () => {
         session: s,
         phase: "action",
         playerAction: "Ask about Quay berth 1",
+        maxChars: Number.NaN,
+      }),
+    ).toBeUndefined();
+    expect(
+      buildGMDirectorBrief({
+        session: s,
+        phase: "action",
+        playerAction: "Ask about Quay berth 1",
         maxChars: 15,
       }),
     ).toBeUndefined();
@@ -859,6 +867,55 @@ describe("GMDirectorBrief (#5109)", () => {
         u.includes("unresolved encounter (encounter-unresolved-watch)"),
       ),
     ).toBe(true);
+  });
+
+  it("uses recent legacy turn reveals when package progress has no reveal summary", () => {
+    const refPkg = AdventureJsonV1Schema.parse(
+      JSON.parse(
+        readFileSync(
+          resolve(
+            import.meta.dir,
+            "../../../fixtures/adventures/reference-one-shot/adventure.v1.json",
+          ),
+          "utf8",
+        ),
+      ),
+    );
+    const s = baseSession();
+    s.sourcePackage = {
+      packageId: refPkg.id,
+      version: refPkg.version,
+      formatVersion: refPkg.formatVersion,
+      hash: "a".repeat(64),
+    };
+    s.turns = Array.from({ length: 300 }, (_, index) =>
+      makeTurn(index + 1, "Continue the investigation", "The scene continues."),
+    );
+    s.turns.at(-1)!.revealedSecretIds = ["secret-shrine-bread"];
+    s.packageProgress = {
+      version: 1,
+      sceneId: "ros-scene-1-landing",
+      records: [],
+      events: [],
+      actors: [],
+      actorEvents: [],
+    };
+    const adventurePackage = retrieveAdventureJsonContext(refPkg, {
+      sceneId: "ros-scene-1-landing",
+    });
+
+    const brief = buildGMDirectorBrief({
+      session: parseAdventureSession(s),
+      phase: "action",
+      playerAction: "Continue the investigation",
+      adventurePackage,
+    })!;
+
+    expect(
+      brief.packageContext!.openUncertainties.some((item) =>
+        item.includes("secret-shrine-bread"),
+      ),
+    ).toBe(false);
   });
 
   it("produces a valid open-world brief across opening, action, and roll-resolution for empty/resolved collections", () => {
