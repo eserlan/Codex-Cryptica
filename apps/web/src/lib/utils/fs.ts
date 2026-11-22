@@ -59,6 +59,89 @@ export function getFileSystemAccessUnsupportedMessage(
   }
 }
 
+export interface PickedFolderFiles {
+  folderName: string;
+  files: Array<{ path: string[]; file: File }>;
+}
+
+/**
+ * Normalizes a FileList from `<input type="file" webkitdirectory>` into a
+ * vault folder name and vault-root-relative path segments (stripping the
+ * selected top-level folder prefix). Returns null when no files are present.
+ */
+export function parseWebkitDirectoryFiles(
+  fileList: FileList | readonly File[],
+): PickedFolderFiles | null {
+  const list = Array.from(fileList);
+  if (list.length === 0) return null;
+
+  let folderName = "";
+  const files: Array<{ path: string[]; file: File }> = [];
+
+  for (const file of list) {
+    const raw = file.webkitRelativePath || file.name;
+    const segments = raw.split("/").filter((s) => s.length > 0 && s !== ".");
+    if (segments.length === 0) continue;
+
+    if (segments.length > 1) {
+      if (!folderName) folderName = segments[0];
+      files.push({ path: segments.slice(1), file });
+    } else {
+      files.push({ path: segments, file });
+    }
+  }
+
+  if (files.length === 0) return null;
+  return { folderName: folderName || "Imported Vault", files };
+}
+
+/**
+ * Cross-browser folder picker fallback using `<input type="file" webkitdirectory>`
+ * for browsers without `window.showDirectoryPicker` (Firefox, Safari, Brave
+ * with the File System Access flag off). Returns null if the user cancels.
+ */
+export function pickFolderFilesFallback(): Promise<PickedFolderFiles | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.webkitdirectory = true;
+    input.multiple = true;
+    input.style.position = "fixed";
+    input.style.left = "-9999px";
+    input.style.opacity = "0";
+
+    let settled = false;
+    let focusTimer: ReturnType<typeof setTimeout> | undefined;
+
+    const finish = (result: PickedFolderFiles | null) => {
+      if (settled) return;
+      settled = true;
+      if (focusTimer !== undefined) clearTimeout(focusTimer);
+      window.removeEventListener("focus", onWindowFocus);
+      input.remove();
+      resolve(result);
+    };
+
+    const onWindowFocus = () => {
+      // Fallback for browsers that don't fire `cancel` on file inputs.
+      focusTimer = setTimeout(() => {
+        if (!settled) {
+          finish(input.files ? parseWebkitDirectoryFiles(input.files) : null);
+        }
+      }, 400);
+    };
+
+    input.addEventListener("change", () => {
+      finish(input.files ? parseWebkitDirectoryFiles(input.files) : null);
+    });
+    input.addEventListener("cancel", () => finish(null));
+    window.addEventListener("focus", onWindowFocus, { once: true });
+
+    document.body.appendChild(input);
+    input.click();
+  });
+}
+
 /**
  * Wraps window.showDirectoryPicker with a feature check so unsupported
  * browsers (e.g. Brave with the file-system-access-api flag disabled) throw

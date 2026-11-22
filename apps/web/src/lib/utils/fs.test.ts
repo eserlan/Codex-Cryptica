@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   walkDirectory,
   pickDirectory,
+  parseWebkitDirectoryFiles,
   isFileSystemAccessSupported,
   detectFileSystemAccessBrowser,
   getFileSystemAccessUnsupportedMessage,
@@ -146,5 +147,37 @@ describe("walkDirectory", () => {
     expect(entries[0].path).toEqual(["good.md"]);
     // The subdir walk failed, so it should trigger onError
     expect(onError).toHaveBeenCalledWith(expect.any(Error), ["sub"]);
+  });
+});
+
+describe("parseWebkitDirectoryFiles", () => {
+  it("strips the top-level folder prefix into folderName and vault-relative paths", () => {
+    const f1 = new File(["# NPC"], "npc.md", { type: "text/markdown" });
+    Object.defineProperty(f1, "webkitRelativePath", {
+      value: "MyCampaign/entities/npc.md",
+    });
+    const f2 = new File(["{}"], "maps.json", { type: "application/json" });
+    Object.defineProperty(f2, "webkitRelativePath", {
+      value: "MyCampaign/.codex/maps.json",
+    });
+
+    const result = parseWebkitDirectoryFiles([f1, f2]);
+    expect(result).not.toBeNull();
+    expect(result!.folderName).toBe("MyCampaign");
+    expect(result!.files).toEqual([
+      { path: ["entities", "npc.md"], file: f1 },
+      { path: [".codex", "maps.json"], file: f2 },
+    ]);
+  });
+
+  it("returns null for an empty file list and falls back to Imported Vault when no folder prefix exists", () => {
+    expect(parseWebkitDirectoryFiles([])).toBeNull();
+
+    const loose = new File(["hi"], "note.md");
+    const result = parseWebkitDirectoryFiles([loose]);
+    expect(result).toEqual({
+      folderName: "Imported Vault",
+      files: [{ path: ["note.md"], file: loose }],
+    });
   });
 });

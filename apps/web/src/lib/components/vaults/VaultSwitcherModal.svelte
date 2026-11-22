@@ -5,7 +5,12 @@
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import ModalShell from "#lib/components/ui/ModalShell.svelte";
-  import { pickDirectory } from "#lib/utils/fs.js";
+  import {
+    isFileSystemAccessSupported,
+    pickDirectory,
+    pickFolderFilesFallback,
+  } from "#lib/utils/fs.js";
+  import { writeFolderFilesToVault } from "#lib/utils/vault-archive.js";
 
   let { onClose }: { onClose: () => void } = $props();
 
@@ -39,9 +44,61 @@
   let editingId = $state<string | null>(null);
   let editName = $state("");
 
+  const handleFolderError = (e: unknown, fallbackMessage?: string) => {
+    if (e instanceof Error && e.name === "AbortError") return;
+    if (e instanceof Error && e.name === "NotSupportedError") {
+      notificationStore.notify(e.message, "error", true);
+      return;
+    }
+    console.error(e);
+    if (fallbackMessage) {
+      const msg = e instanceof Error && e.message ? e.message : fallbackMessage;
+      notificationStore.notify(msg, "error", true);
+    }
+  };
+
+  const ensureFallbackTarget = async (
+    pickedName: string,
+    options?: { vaultName?: string; targetVault?: VaultRecord },
+  ) => {
+    const existing = options?.targetVault;
+    if (existing) {
+      if (existing.id !== vaultRegistry.activeVaultId) {
+        await vault.switchVault(existing.id);
+      }
+      return { vaultId: existing.id, name: existing.name };
+    }
+    const name = options?.vaultName?.trim() || pickedName;
+    return { vaultId: await vault.createVault(name), name };
+  };
+
+  const importFolderViaFallback = async (options?: {
+    vaultName?: string;
+    targetVault?: VaultRecord;
+  }) => {
+    const picked = await pickFolderFilesFallback();
+    if (!picked) return;
+    const { vaultId, name } = await ensureFallbackTarget(
+      picked.folderName,
+      options,
+    );
+    const count = await writeFolderFilesToVault(vaultId, picked.files);
+    await vault.loadFiles(false);
+    const suffix = count === 1 ? "" : "s";
+    notificationStore.notify(
+      `Loaded "${name}" into browser storage (${count} file${suffix}). Live folder sync requires Chrome or Edge.`,
+      "info",
+    );
+    if (!options?.targetVault) onClose();
+  };
+
   const handleLoadFromFolder = async () => {
     isLoading = true;
     try {
+      if (!isFileSystemAccessSupported()) {
+        await importFolderViaFallback();
+        return;
+      }
       const handle = await pickDirectory({ mode: "readwrite" });
       const success = await vault.importFromFolder(handle);
       if (success) {
@@ -51,12 +108,7 @@
         showCreate = true;
       }
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") return;
-      if (e instanceof Error && e.name === "NotSupportedError") {
-        notificationStore.notify(e.message, "error", true);
-        return;
-      }
-      console.error(e);
+      handleFolderError(e, "Failed to load folder.");
     } finally {
       isLoading = false;
     }
@@ -139,6 +191,10 @@
     if (!newVaultName.trim()) return;
     isLoading = true;
     try {
+      if (!isFileSystemAccessSupported()) {
+        await importFolderViaFallback({ vaultName: newVaultName });
+        return;
+      }
       // 1. Get handle immediately (must be user triggered)
       const handle = await pickDirectory({ mode: "read" });
 
@@ -155,13 +211,7 @@
         onClose();
       }
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") return;
-      if (e instanceof Error && e.name === "NotSupportedError") {
-        notificationStore.notify(e.message, "error", true);
-        return;
-      }
-      console.error(e);
-      // Errors are primarily handled by vault.errorMessage now
+      handleFolderError(e);
     } finally {
       isLoading = false;
     }
@@ -170,18 +220,17 @@
   const handleImportToVault = async (v: VaultRecord) => {
     isLoading = true;
     try {
+      if (!isFileSystemAccessSupported()) {
+        await importFolderViaFallback({ targetVault: v });
+        return;
+      }
       const handle = await pickDirectory({ mode: "read" });
       if (v.id !== vaultRegistry.activeVaultId) {
         await vault.switchVault(v.id);
       }
       await vault.importFromFolder(handle);
     } catch (e) {
-      if (e instanceof Error && e.name === "AbortError") return;
-      if (e instanceof Error && e.name === "NotSupportedError") {
-        notificationStore.notify(e.message, "error", true);
-        return;
-      }
-      console.error(e);
+      handleFolderError(e);
     } finally {
       isLoading = false;
     }
