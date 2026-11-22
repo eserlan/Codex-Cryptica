@@ -5,6 +5,8 @@ import { VaultEntityEditing } from "./vault/entity-editing";
 import { VaultConnectionRouting } from "./vault/connection-routing";
 import { VaultViews } from "./vault/vault-views";
 import { VaultBootstrap } from "./vault/bootstrap";
+import { VaultBootDiagnostics } from "./vault/boot-diagnostics.svelte";
+import type { LoadFilesOptions } from "./vault/sync-store.svelte";
 import { VaultTranscripts } from "./vault/transcripts";
 import { PublishRegistryLoader } from "./vault/publish-registry-loader";
 import { vaultRegistry } from "./vault-registry.svelte";
@@ -74,6 +76,7 @@ export class VaultStore {
   public serviceRegistry!: ServiceRegistry;
   public searchStore!: SearchStore;
   public deadImagePruner!: DeadExternalImagePruner;
+  public readonly bootDiagnostics: VaultBootDiagnostics;
   private lifecycleManager: VaultLifecycleManager;
   private storageManager: VaultStorageManager;
   private messenger: VaultMessenger;
@@ -215,19 +218,24 @@ export class VaultStore {
     this.storageManager = storage;
     this.lifecycleManager = lifecycle;
     this.messenger = messenger;
-    this.bootstrap = new VaultBootstrap(this, lifecycle);
+    this.bootDiagnostics = new VaultBootDiagnostics();
+    this.bootstrap = new VaultBootstrap(this, lifecycle, this.bootDiagnostics);
   }
 
   async init() {
     return this.bootstrap.init();
   }
 
+  async retryInit() {
+    return this.bootstrap.retryInit();
+  }
+
   broadcastVaultUpdate() {
     this.messenger.broadcastVaultUpdate();
   }
 
-  async loadFiles(skipSyncIfWarm = true) {
-    return this.syncStore.loadFiles(skipSyncIfWarm);
+  async loadFiles(skipSyncIfWarm = true, options?: LoadFilesOptions) {
+    return this.syncStore.loadFiles(skipSyncIfWarm, options);
   }
 
   async loadFromFolder() {

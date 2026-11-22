@@ -113,4 +113,35 @@ describe("VaultRegistryStore.init — default vault", () => {
     expect(vaultRegistry.activeVaultId).toBeNull();
     expect(vaultRegistry.isInitialized).toBe(true);
   });
+
+  it("leaves isInitialized false when init fails so a retry actually re-runs setup", async () => {
+    vi.mocked(getDB).mockRejectedValueOnce(new Error("IDB blocked"));
+
+    await expect(vaultRegistry.init()).rejects.toThrow("IDB blocked");
+    expect(vaultRegistry.isInitialized).toBe(false);
+
+    await vaultRegistry.init();
+    expect(vaultRegistry.isInitialized).toBe(true);
+    expect(vaultRegistry.activeVaultId).toBe("default");
+  });
+
+  it("deduplicates concurrent init calls", async () => {
+    let resolveDb!: (v: any) => void;
+    vi.mocked(getDB).mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveDb = resolve;
+        }),
+    );
+
+    const p1 = vaultRegistry.init();
+    const p2 = vaultRegistry.init();
+
+    await vi.waitFor(() => expect(getDB).toHaveBeenCalledTimes(1));
+    resolveDb(db);
+    await Promise.all([p1, p2]);
+
+    expect(getDB).toHaveBeenCalledTimes(1);
+    expect(vaultRegistry.isInitialized).toBe(true);
+  });
 });
