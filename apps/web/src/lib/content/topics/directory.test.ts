@@ -58,13 +58,14 @@ describe("topic directory registry", () => {
     }
   });
 
-  it("lists the seven expected topics in order and never the index", () => {
+  it("lists the eight expected topics in order and never the index", () => {
     expect(listLiveTopics().map((t) => t.href)).toEqual([
       "/topics/heists",
       "/topics/puzzles",
       "/topics/pirates",
       "/topics/solo-rpg",
       "/topics/dnd",
+      "/topics/new-gm",
       "/topics/dnd-beginners",
       "/topics/star-systems",
     ]);
