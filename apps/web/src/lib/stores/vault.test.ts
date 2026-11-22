@@ -416,25 +416,23 @@ describe("VaultStore", () => {
       expect(coordinator).not.toBeNull();
     });
 
-    it("should fall back to guest mode when bootstrap fails", async () => {
-      const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue({
-        ok: true,
-        json: async () => ({ entities: {} }),
-      } as Response);
-      vi.spyOn(vaultRegistry, "init").mockRejectedValueOnce(
-        new Error("Bootstrap failed"),
-      );
+    it("records boot failure without falling back to guest mode and recovers on retryInit", async () => {
+      vi.spyOn(vaultRegistry, "init")
+        .mockRejectedValueOnce(new Error("Bootstrap failed"))
+        .mockResolvedValueOnce(undefined);
 
-      try {
-        await testVault.init();
+      await testVault.init();
 
-        expect(sessionModeStore.isGuestMode).toBe(true);
-        expect(testVault.isInitialized).toBe(true);
-        expect(testVault.status).toBe("idle");
-        expect(fetchMock).toHaveBeenCalledWith("/vault-samples/fantasy.json");
-      } finally {
-        fetchMock.mockRestore();
-      }
+      expect(sessionModeStore.isGuestMode).toBe(false);
+      expect(testVault.isInitialized).toBe(false);
+      expect(testVault.status).toBe("error");
+      expect(testVault.bootDiagnostics.status).toBe("failed");
+      expect(testVault.bootDiagnostics.errorCode).toBe("registry_failed");
+
+      await testVault.retryInit();
+
+      expect(testVault.isInitialized).toBe(true);
+      expect(testVault.bootDiagnostics.status).toBe("ready");
     });
   });
 

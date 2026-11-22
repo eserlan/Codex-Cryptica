@@ -9,6 +9,7 @@ import RoutePage from "./+page.svelte";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { graph } from "#lib/stores/graph.svelte.js";
 import { explorerUIStore } from "#lib/stores/ui/explorer-ui.svelte.js";
+import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
 
 vi.mock("$app/paths", () => ({
   base: "",
@@ -31,15 +32,39 @@ type MutableVaultMock = {
   bulkDelete?: any;
   activeVaultId: string | null;
   isInitialized: boolean;
+  isGuest?: boolean;
+  status?: string;
   allEntities: Entity[];
+  retryInit: ReturnType<typeof vi.fn>;
+  bootDiagnostics: {
+    status: "idle" | "booting" | "ready" | "failed" | "timed_out";
+    activePhase: string | null;
+    errorCode: string | null;
+    formatDiagnosticSummary: () => string;
+  };
 };
 
 vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
     activeVaultId: null as string | null,
     isInitialized: false,
+    isGuest: false,
+    status: "idle",
     allEntities: [] as Entity[],
     bulkDelete: vi.fn(),
+    retryInit: vi.fn(),
+    bootDiagnostics: {
+      status: "idle",
+      activePhase: null,
+      errorCode: null,
+      formatDiagnosticSummary: () =>
+        "Vault startup diagnostics\nStatus: idle\nPhase: none",
+    },
+  },
+}));
+vi.mock("#lib/stores/ui/feedback-dialog.svelte.js", () => ({
+  feedbackDialog: {
+    open: vi.fn(),
   },
 }));
 
@@ -65,7 +90,14 @@ describe("/table page", () => {
     mockPage.url = new URL("http://localhost/table");
     mutableVault.activeVaultId = "v1";
     mutableVault.isInitialized = true;
+    mutableVault.isGuest = false;
+    mutableVault.status = "idle";
     mutableVault.allEntities = [];
+    mutableVault.bootDiagnostics.status = "ready";
+    mutableVault.bootDiagnostics.activePhase = "ready";
+    mutableVault.bootDiagnostics.errorCode = null;
+    mutableVault.bootDiagnostics.formatDiagnosticSummary = () =>
+      "Vault startup diagnostics\nStatus: ready\nPhase: ready";
     // typeFilters/labelFilters now read from these module-level singletons
     // (shared with the Graph view), not private component state, so they
     // must be reset between tests to avoid cross-test leakage.
@@ -584,5 +616,85 @@ describe("/table page", () => {
     ).toContain("1 selected");
     await fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByTestId("entity-table-selection-toolbar")).toBeNull();
+  });
+
+  it.each([
+    {
+      bootStatus: "timed_out" as const,
+      isInitialized: false,
+      vaultStatus: "loading",
+      expectedMode: "vault-stalled",
+      errorCode: null,
+    },
+    {
+      bootStatus: "failed" as const,
+      isInitialized: false,
+      vaultStatus: "error",
+      expectedMode: "vault-failed",
+      errorCode: "registry_failed",
+    },
+    {
+      bootStatus: "ready" as const,
+      isInitialized: true,
+      vaultStatus: "error",
+      expectedMode: "vault-failed",
+      errorCode: null,
+    },
+  ])(
+    "renders VaultStartupRecovery for $bootStatus (initialized=$isInitialized) instead of infinite loader or 'No entities yet'",
+    async ({
+      bootStatus,
+      isInitialized,
+      vaultStatus,
+      expectedMode,
+      errorCode,
+    }) => {
+      mutableVault.isInitialized = isInitialized;
+      mutableVault.status = vaultStatus;
+      mutableVault.allEntities = [];
+      mutableVault.bootDiagnostics.status = bootStatus;
+      mutableVault.bootDiagnostics.activePhase = "vault_data_ready";
+      mutableVault.bootDiagnostics.errorCode = errorCode;
+      mutableVault.bootDiagnostics.formatDiagnosticSummary = () =>
+        `Vault startup diagnostics\nStatus: ${bootStatus}`;
+
+      render(RoutePage);
+
+      const recovery = screen.getByTestId("vault-startup-recovery");
+      expect(recovery.getAttribute("data-recovery-mode")).toBe(expectedMode);
+      expect(screen.queryByTestId("entity-table-loading")).toBeNull();
+      expect(screen.queryByText("No entities yet")).toBeNull();
+      expect(recovery.textContent).not.toMatch(
+        /clear site data|indexeddb|opfs|reset.*vault/i,
+      );
+
+      await fireEvent.click(screen.getByTestId("vault-recovery-retry"));
+      expect(mutableVault.retryInit).toHaveBeenCalledOnce();
+
+      await fireEvent.click(screen.getByTestId("vault-recovery-report"));
+      expect(feedbackDialog.open).toHaveBeenCalledWith({
+        kind: "problem",
+        area: "tables",
+        description: `Vault startup diagnostics\nStatus: ${bootStatus}`,
+      });
+    },
+  );
+
+  it("shows loading while retrying from initialized error state and shows vault-stalled if retry times out with 0 entities", () => {
+    mutableVault.isInitialized = true;
+    mutableVault.status = "loading";
+    mutableVault.allEntities = [];
+    mutableVault.bootDiagnostics.status = "booting";
+
+    const { unmount } = render(RoutePage);
+    expect(screen.getByTestId("entity-table-loading")).toBeTruthy();
+    expect(screen.queryByText("No entities yet")).toBeNull();
+    unmount();
+
+    mutableVault.bootDiagnostics.status = "timed_out";
+    render(RoutePage);
+    const recovery = screen.getByTestId("vault-startup-recovery");
+    expect(recovery.getAttribute("data-recovery-mode")).toBe("vault-stalled");
+    expect(screen.queryByText("No entities yet")).toBeNull();
   });
 });
