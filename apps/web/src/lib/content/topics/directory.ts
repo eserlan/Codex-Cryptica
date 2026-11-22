@@ -62,12 +62,20 @@ export const TOPIC_LISTINGS: readonly TopicListing[] = [
     order: 5,
   },
   {
+    discoveryId: "topic-new-gm",
+    title: "New Game Master",
+    summary:
+      "A first-session pathway for new GMs: choose an adventure, align the table, prepare, improvise and keep notes.",
+    icon: "icon-[lucide--graduation-cap]",
+    order: 6,
+  },
+  {
     discoveryId: "topic-dnd-beginners",
     title: "D&D for Beginners",
     summary:
       "The play loop, character-sheet orientation, dice mechanics, and combat turns for new players.",
     icon: "icon-[lucide--book-open]",
-    order: 6,
+    order: 7,
   },
   {
     discoveryId: "topic-star-systems",
@@ -75,7 +83,7 @@ export const TOPIC_LISTINGS: readonly TopicListing[] = [
     summary:
       "Design a playable star system, from destinations and routes to factions and a flashpoint, with guides and generators for sci-fi campaigns.",
     icon: "icon-[lucide--orbit]",
-    order: 7,
+    order: 8,
   },
 ];
 

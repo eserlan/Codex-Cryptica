@@ -26,6 +26,7 @@ const resolves = (href: string): boolean => {
     "/topics/puzzles",
     "/topics/heists",
     "/topics/dnd-beginners",
+    "/topics/new-gm",
     "/solutions/rpg-knowledge-graph",
     "/explore",
   ].includes(path);

@@ -109,13 +109,13 @@
     </ul>
   </section>
 
-  <nav aria-label="DM jobs" class="mb-10">
+  <nav aria-label={config.jobsNavLabel} class="mb-10">
     <ul class="flex list-none flex-wrap gap-2">
       {#each config.jobs as job (job.id)}
         <li>
           <a
             href="#{config.slug}-{job.id}"
-            class="inline-flex min-h-[24px] items-center border border-theme-border px-3 py-1 font-mono text-xs text-theme-text transition-colors hover:border-theme-primary hover:text-theme-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-accent"
+            class="inline-flex min-h-[24px] items-center border border-theme-text px-3 py-1 font-mono text-xs text-theme-text transition-colors hover:border-theme-primary hover:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
             >{job.heading}</a
           >
         </li>
