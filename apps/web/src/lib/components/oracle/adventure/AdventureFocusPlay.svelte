@@ -12,7 +12,10 @@
   import { batchFilterPromotableFacts } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
   import { extractActiveHeardScenarios } from "#lib/stores/oracle/adventure-scenarios.js";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
-  import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
+  import type {
+    AdventureListResult,
+    AdventureSessionRepository,
+  } from "#lib/services/adventure/adventure-session-repository.js";
   import {
     formatWorldElapsedMinutes,
     type ProvisionalFact,
@@ -75,6 +78,21 @@
     onResume: (sessionId: string) => Promise<void>;
     onResumeArchived: (sessionId: string) => Promise<void>;
   } = $props();
+
+  // The archive and inline management controls mount together in the phone
+  // sheet. Share their in-flight full listing so opening the sheet reads each
+  // adventure file only once.
+  let archiveListRequest: {
+    vaultId: string;
+    promise: Promise<AdventureListResult>;
+  } | null = null;
+  function listAdventureSessions(requestedVaultId: string, forceFresh = false) {
+    if (!forceFresh && archiveListRequest?.vaultId === requestedVaultId)
+      return archiveListRequest.promise;
+    const promise = repository.list(requestedVaultId);
+    archiveListRequest = { vaultId: requestedVaultId, promise };
+    return promise;
+  }
 
   // Matches the surface's own `sm:` breakpoint for full-screen phone play.
   let phone = $state(false);
@@ -337,6 +355,7 @@
 
   function closeTools(): void {
     utilitiesOpen = false;
+    archiveListRequest = null;
     toolsButton?.focus();
   }
 
@@ -422,7 +441,13 @@
   <AdventureCorrectionForm {manager} />
   <AdventureRollHistory {manager} />
   <AdventureResourceCounters {manager} />
-  <AdventureArchive {repository} {vaultId} {onResume} {onResumeArchived} />
+  <AdventureArchive
+    {repository}
+    {vaultId}
+    {onResume}
+    {onResumeArchived}
+    listEntries={listAdventureSessions}
+  />
 {/snippet}
 
 <section
@@ -552,7 +577,7 @@
           <span
             aria-hidden="true"
             data-testid="adventure-tools-urgent-dot"
-            class="pointer-events-none absolute right-1 top-1 h-2 w-2 rounded-full bg-theme-danger"
+            class="pointer-events-none absolute right-1 top-1 h-2 w-2 rounded-full border border-theme-text bg-theme-danger"
           ></span>
         {/if}
       </button>
@@ -580,6 +605,7 @@
             {manager}
             {repository}
             {vaultId}
+            listEntries={listAdventureSessions}
             onSwitch={onResume}
           />
         </div>
@@ -745,6 +771,7 @@
             {manager}
             {repository}
             {vaultId}
+            listEntries={listAdventureSessions}
             onSwitch={onResume}
             onAction={closeTools}
           />

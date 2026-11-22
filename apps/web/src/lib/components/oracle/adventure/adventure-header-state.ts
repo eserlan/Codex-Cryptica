@@ -164,7 +164,7 @@ function liveAnnouncement(countParts: string[], readOnly: boolean): string {
   if (countParts.length === 0) {
     return readOnly
       ? "Read-only in this tab. Recovery options in Adventure tools."
-      : "";
+      : "No pending discoveries or active situations in Adventure tools.";
   }
   return readOnly
     ? countParts.join(", ") +

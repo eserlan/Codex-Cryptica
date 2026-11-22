@@ -5,6 +5,7 @@
 
   import type {
     AdventureArchiveEntry,
+    AdventureListResult,
     AdventureSessionRepository,
   } from "#lib/services/adventure/adventure-session-repository.js";
 
@@ -15,6 +16,7 @@
     onSwitch,
     variant = "menu",
     onAction,
+    listEntries,
   }: {
     manager: AdventureManager;
     repository?: AdventureSessionRepository;
@@ -22,6 +24,10 @@
     onSwitch?: (sessionId: string) => Promise<void>;
     variant?: "menu" | "inline";
     onAction?: () => void;
+    listEntries?: (
+      vaultId: string,
+      forceFresh?: boolean,
+    ) => Promise<AdventureListResult>;
   } = $props();
 
   // Other adventures in this Vault that can be played right now.
@@ -33,7 +39,8 @@
     }
     const requested = vaultId;
     try {
-      const { entries } = await repository.list(requested);
+      const { entries } = await (listEntries?.(requested) ??
+        repository.list(requested));
       if (requested !== vaultId) return;
       others = entries.filter(
         (entry) =>

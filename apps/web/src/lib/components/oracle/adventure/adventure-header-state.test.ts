@@ -185,7 +185,7 @@ describe("derivePhoneToolsSummary", () => {
     );
   });
 
-  it("returns plain label and no badge when counts are zero in normal state", () => {
+  it("announces the empty state and omits the badge when counts are zero", () => {
     expect(
       derivePhoneToolsSummary({
         discoveriesCount: 0,
@@ -197,7 +197,8 @@ describe("derivePhoneToolsSummary", () => {
       badgeCount: 0,
       badgeText: null,
       badgeTone: "neutral",
-      liveAnnouncement: "",
+      liveAnnouncement:
+        "No pending discoveries or active situations in Adventure tools.",
     });
   });
 

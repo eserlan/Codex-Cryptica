@@ -816,6 +816,7 @@ describe("AdventureFocusPlay", () => {
           name: "Switch to Salt Marsh",
         }),
       ).toBeTruthy();
+      expect(repo.list).toHaveBeenCalledTimes(1);
 
       // Open Discoveries from sheet -> portaled directly under surface, not trapped in sheet
       const discoveriesTrigger = within(sheet).getByRole("button", {
@@ -857,7 +858,9 @@ describe("AdventureFocusPlay", () => {
 
       const live = screen.getByTestId("adventure-phone-live-status");
       expect(live.getAttribute("aria-live")).toBe("polite");
-      expect(live.textContent).toBe("");
+      expect(live.textContent).toBe(
+        "No pending discoveries or active situations in Adventure tools.",
+      );
       expect(screen.queryByTestId("adventure-tools-badge")).toBeNull();
       expect(
         screen.getByRole("button", { name: "Adventure tools" }),
@@ -898,6 +901,18 @@ describe("AdventureFocusPlay", () => {
       ).toBeTruthy();
       expect(live.textContent).toBe(
         "1 discovery, 1 active situation in Adventure tools.",
+      );
+
+      const cleared = manager();
+      cleared.session.provisionalFacts = [];
+      cleared.session.scenarioCollection = {
+        focusedScenarioId: null,
+        items: [],
+      };
+      await rerender(props({ manager: cleared }));
+
+      expect(live.textContent).toBe(
+        "No pending discoveries or active situations in Adventure tools.",
       );
     });
 
