@@ -134,6 +134,38 @@ export const topicEntries: DiscoveryEntryInput[] = [
     status: "live",
   },
   {
+    id: "topic-new-gm",
+    pageKind: "hub",
+    canonicalPath: "/topics/new-gm",
+    primaryIntent: "new game master first session learning path",
+    intentAliases: [
+      "new gm guide",
+      "how to start game mastering a tabletop rpg",
+      "first time gm session checklist",
+      "beginner game master resources",
+    ],
+    audience: "People preparing to run their first tabletop roleplaying game, regardless of ruleset",
+    userJob: "navigate",
+    uniqueValue:
+      "A five-step, system-neutral first-session journey from choosing a starter adventure through Session 0, preparation, improvisation and recap. It curates existing Answers and a practical prep tool rather than replacing the first-time GM how-to Answer or competing with the D&D-specific DM hub.",
+    parentCluster: "beginner-gm",
+    clusters: ["beginner-entry", "gm-skills"],
+    relatedIntents: [
+      "topic-dnd",
+      "topic-dnd-beginners",
+      "tools-session-prep-builder",
+    ],
+    acknowledgedOverlap: [
+      {
+        with: "topic-dnd",
+        reason:
+          "The D&D hub is a system-specific reference for established DM jobs; this hub is a beginner-first learning sequence for any tabletop RPG.",
+      },
+    ],
+    indexable: true,
+    status: "live",
+  },
+  {
     id: "topic-dnd-beginners",
     pageKind: "hub",
     canonicalPath: "/topics/dnd-beginners",
