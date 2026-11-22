@@ -285,7 +285,7 @@
   .marketing-layer {
     background-image: radial-gradient(
       ellipse 80% 50% at 50% 0%,
-      color-mix(in srgb, var(--color-accent-primary) 6%, transparent),
+      color-mix(in srgb, var(--color-accent-primary) 1%, transparent),
       transparent 70%
     );
   }
