@@ -12,11 +12,13 @@
     phone = false,
     keyboardOpen = false,
     suggestionChips = false,
+    overlayHost,
   }: {
     manager: AdventureManager;
     phone?: boolean;
     keyboardOpen?: boolean;
     suggestionChips?: boolean;
+    overlayHost?: HTMLElement;
   } = $props();
 
   let isOocMode = $derived(manager.composerMode === "ooc");
@@ -49,7 +51,15 @@
       (!isOocMode && playBlockedByRoll),
   );
   let textarea = $state<HTMLTextAreaElement>();
+  let cancelButton = $state<HTMLButtonElement>();
   let typing = $state(false);
+
+  async function focusCancelAfterSuggestion(): Promise<void> {
+    await tick();
+    if (busy && !manager.rollMutationPending) {
+      cancelButton?.focus();
+    }
+  }
 
   function selectMode(mode: "play" | "ooc") {
     if (manager.setComposerMode) {
@@ -188,6 +198,7 @@
     </div>
     {#if !manager.rollMutationPending}
       <button
+        bind:this={cancelButton}
         class="min-h-11 rounded-md border border-theme-text/75 px-3 text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
         type="button"
         onclick={() => manager.cancel()}>Cancel</button
@@ -207,6 +218,8 @@
     {disabled}
     visible={suggestionsVisible}
     chips={suggestionChips}
+    {overlayHost}
+    onSubmitStart={focusCancelAfterSuggestion}
   />
   {#if manager.errorMessage}
     <p class="text-sm text-theme-text" role="alert">
@@ -328,14 +341,16 @@
 {/snippet}
 
 <div
-  class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
+  class="z-10 flex min-h-0 max-h-[55%] shrink-0 flex-col gap-1.5 sm:gap-2 overflow-hidden border-t border-theme-border bg-theme-surface px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] sm:px-4 sm:pt-3"
   data-testid="adventure-action-dock"
 >
   <!-- Only optional controls scroll, including all expanded suggested actions.
        Keep a single touch-scroll container so long choices remain reachable.
        The textarea/Send row stays fixed at the bottom when the keyboard opens. -->
   <div
-    class="mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain pb-2"
+    class={phone
+      ? "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain"
+      : "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain pb-2"}
     data-testid="adventure-dock-extras"
   >
     {@render dockExtrasContent()}

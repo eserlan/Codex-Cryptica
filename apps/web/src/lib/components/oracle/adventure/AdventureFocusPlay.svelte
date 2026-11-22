@@ -692,6 +692,7 @@
         {phone}
         keyboardOpen={keyboard.keyboardOpen}
         suggestionChips={!phone}
+        overlayHost={focusElement}
       />
     </div>
   </div>
