@@ -1,7 +1,10 @@
 <script lang="ts">
   import { basePath } from "#lib/utils/base-path.js";
   import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
-  import { resolveThemeJargon } from "#lib/theme/theme-dom.js";
+  import {
+    readStoredWorldThemeId,
+    resolveThemeJargon,
+  } from "#lib/theme/theme-dom.js";
   import { SITE_AUTHOR } from "#lib/config/index.js";
   import PublicPageContainer from "#lib/components/seo/PublicPageContainer.svelte";
   import { PUBLIC_LAYOUT } from "#lib/components/seo/marketing-shell.js";
@@ -154,7 +157,7 @@
           >
             <span
               >{resolveThemeJargon(
-                publicThemeStore.themeId,
+                publicThemeStore.themeId ?? readStoredWorldThemeId(),
                 "blog_action",
               )}</span
             >

@@ -1,7 +1,10 @@
 <script lang="ts">
   import { basePath } from "#lib/utils/base-path.js";
   import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
-  import { resolveThemeJargon } from "#lib/theme/theme-dom.js";
+  import {
+    readStoredWorldThemeId,
+    resolveThemeJargon,
+  } from "#lib/theme/theme-dom.js";
   import ArticleRenderer from "#lib/components/blog/ArticleRenderer.svelte";
   import BlogTableOfContents from "#lib/components/blog/BlogTableOfContents.svelte";
   import { extractBlogToc } from "#lib/components/blog/blog-toc.js";
@@ -192,7 +195,10 @@
             ·
           </span>
           <span
-            >{resolveThemeJargon(publicThemeStore.themeId, "blog_entry")}</span
+            >{resolveThemeJargon(
+              publicThemeStore.themeId ?? readStoredWorldThemeId(),
+              "blog_entry",
+            )}</span
           >
         </div>
 
