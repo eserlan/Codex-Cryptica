@@ -186,6 +186,11 @@ export const howDoIStartGmingForTheFirstTime: AnswerConfigInput = {
     ],
     acknowledgedOverlap: [
       {
+        with: "topic-new-gm",
+        reason:
+          "This standalone Answer explains how to begin GMing; the new GM hub is a curated cross-article first-session journey and tool navigator.",
+      },
+      {
         with: "answer-beginner-start",
         reason:
           "That answer is for a first-time player wondering how to get into the hobby; this answer is for someone specifically taking on the GM role, a distinct and narrower intent.",
