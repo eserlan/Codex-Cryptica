@@ -10,6 +10,8 @@ import type { ResolvedSourceExcerpt } from "./types";
 
 /** The most the two rendered package blocks may take in the prompt. */
 export const MAX_ADVENTURE_PACKAGE_PROMPT_CHARS = 6_000;
+/** Upper bound for the system behavior prompt so combined worldEntry + scenarios never truncate. */
+export const MAX_BEHAVIOR_PROMPT_CHARS = 20_000;
 
 const PACKAGE_PLAYER_SAFE_KEY = "Adventure package (player-safe source)";
 const PACKAGE_GM_ONLY_KEY = "GM-ONLY adventure package";
@@ -174,7 +176,7 @@ export function allocatePromptBudget(
     throw new Error("state-budget-exceeded");
   }
   const result = {
-    behavior: trimText(input.behavior, 16_000),
+    behavior: trimText(input.behavior, MAX_BEHAVIOR_PROMPT_CHARS),
     state: input.state,
     anchors: trimExcerpts(input.anchors, 24_000, 8_000),
     relevant: trimExcerpts(input.relevant, 12_000, 6_000),

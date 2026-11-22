@@ -53,7 +53,7 @@ const TOPIC_ALIASES: Record<string, string> = {
   register: "record",
 };
 
-function topicWords(value: string): Set<string> {
+export function topicWords(value: string): Set<string> {
   const words = value.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
   return new Set(
     words
@@ -75,7 +75,7 @@ function sharedTopic(actions: string[]): Set<string> {
   );
 }
 
-function isInquiry(action: string): boolean {
+export function isInquiry(action: string): boolean {
   const cleaned = action.trim().toLowerCase();
   if (
     /^(repeat|keep asking|ask again|continue repeating|insist again)\b/.test(
