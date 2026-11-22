@@ -47,7 +47,9 @@
       >
         {hasUnseenMinorReleases ? "What's New" : "Recent Updates"}
       </h2>
-      <p class="mt-1 text-xs text-theme-text uppercase tracking-wide sm:text-micro sm:tracking-[0.2em]">
+      <p
+        class="mt-1 text-xs text-theme-text uppercase tracking-wide sm:text-micro sm:tracking-[0.2em]"
+      >
         <span class="hidden sm:inline">Codex Cryptica </span>v{VERSION}
         {!hasUnseenMinorReleases ? " · Up to date" : ""}
       </p>
