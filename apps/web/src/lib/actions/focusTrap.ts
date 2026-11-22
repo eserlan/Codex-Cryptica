@@ -86,7 +86,9 @@ export function focusTrap(node: HTMLElement) {
     destroy() {
       destroyed = true;
       node.removeEventListener("keydown", handleKeydown);
-      triggerEl?.focus();
+      if (triggerEl && isVisible(triggerEl)) {
+        triggerEl.focus();
+      }
     },
   };
 }
