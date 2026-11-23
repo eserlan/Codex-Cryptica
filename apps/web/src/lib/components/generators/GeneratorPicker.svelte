@@ -2,8 +2,8 @@
   import {
     getGenerator,
     listGenerators,
-    type GeneratorId,
-  } from "generator-engine";
+  } from "generator-engine/campaign-registry";
+  import type { GeneratorId } from "generator-engine/campaign-generator-types";
   import { getDelveLocationTypeLabel } from "#lib/utils/delve-terminology.js";
   import type { GeneratorFavoritesStore } from "#lib/stores/ui/generator-favorites.svelte.js";
   import {

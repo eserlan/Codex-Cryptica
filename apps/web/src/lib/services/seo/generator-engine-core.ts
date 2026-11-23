@@ -2,83 +2,117 @@ import {
   buildNpcPrompt,
   parseNpcResponse,
   generateNpcLocal,
+  type NpcGeneratorOptions,
+} from "generator-engine/public-npc";
+import {
   buildMagicItemPrompt,
   parseMagicItemResponse,
   generateMagicItemLocal,
+  type MagicItemGeneratorOptions,
+} from "generator-engine/public-magic-item";
+import {
   buildMinorMagicItemPrompt,
   parseMinorMagicItemResponse,
   generateMinorMagicItemLocal,
+  type MinorMagicItemGeneratorOptions,
+} from "generator-engine/public-minor-magic-item";
+import {
   buildArtifactPrompt,
   parseArtifactResponse,
   generateArtifactLocal,
+  type ArtifactGeneratorOptions,
+} from "generator-engine/public-artifact";
+import {
   buildQuestPrompt,
   parseQuestResponse,
   generateQuestLocal,
+  type QuestGeneratorOptions,
+} from "generator-engine/public-quest";
+import {
   buildRumourPrompt,
   parseRumourResponse,
   generateRumourLocal,
+  type RumourGeneratorOptions,
+} from "generator-engine/public-rumour";
+import {
   buildEncounterPrompt,
   parseEncounterResponse,
   generateEncounterLocal,
+  type EncounterGeneratorOptions,
+} from "generator-engine/public-encounter";
+import {
   buildPuzzlePrompt,
   parsePuzzleResponse,
   generatePuzzleLocal,
+  type PuzzleGeneratorOptions,
+} from "generator-engine/public-puzzle";
+import {
   buildVillainPrompt,
   parseVillainResponse,
   generateVillainLocal,
+  type ResolvedVillain,
+  type VillainGeneratorOptions,
+} from "generator-engine/public-villain";
+import {
   generateVillainStaged,
   villainStatsLog,
+} from "generator-engine/villain-staged";
+import {
   buildComicBookEventPrompt,
   parseComicBookEventResponse,
   generateComicBookEventLocal,
+  type ComicBookEventGeneratorOptions,
+} from "generator-engine/public-comic-book-event";
+import {
   generateOneShotLocal,
   regenerateOneShotLocal,
   buildOneShotRegenPrompt,
   applyOneShotRegenResponse,
   oneShotToOutput,
-  runOneShotStages,
-  type OneShotProgressStep,
-  type OneShotAdventure,
-  type OneShotGeneratorOptions,
   type OneShotRegenResult,
   type OneShotRegenTarget,
+  resolveOneShot,
+} from "generator-engine/public-one-shot";
+import {
+  runOneShotStages,
+  type OneShotProgressStep,
+} from "generator-engine/one-shot-staged";
+import {
   buildVillainSchemePrompt,
   parseVillainSchemeResponse,
   generateVillainSchemeLocal,
+  type VillainSchemeGeneratorOptions,
+} from "generator-engine/public-villain-scheme";
+import {
   buildPersonalityPrompt,
   parsePersonalityResponse,
   generatePersonalityLocal,
+  type PersonalityGeneratorOptions,
+} from "generator-engine/public-personality";
+import {
   buildHolidayPrompt,
   parseHolidayResponse,
   generateHolidayLocal,
   type HolidayGeneratorOptions,
+} from "generator-engine/public-holiday";
+import {
   buildSettlementPrompt,
   parseSettlementResponse,
   generateSettlementLocal,
-  type NpcGeneratorOptions,
-  type MagicItemGeneratorOptions,
-  type MinorMagicItemGeneratorOptions,
-  type ArtifactGeneratorOptions,
+  type SettlementGeneratorOptions,
+} from "generator-engine/public-settlement";
+import {
   type FactionGeneratorOptions,
-  type FactionRosterGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
   type DarkFactionGeneratorOptions,
-  type UrbanFantasyFactionGeneratorOptions,
-  type QuestGeneratorOptions,
-  type RumourGeneratorOptions,
-  type EncounterGeneratorOptions,
-  type PuzzleGeneratorOptions,
-  type ResolvedVillain,
-  type VillainGeneratorOptions,
-  type ComicBookEventGeneratorOptions,
-  type VillainSchemeGeneratorOptions,
-  type PersonalityGeneratorOptions,
-  type SettlementGeneratorOptions,
-  type PublicGeneratorOutput,
-  generateConceptSeed,
-  resolveOneShot,
-} from "generator-engine";
+} from "generator-engine/public-faction";
+import { type FactionRosterGeneratorOptions } from "generator-engine/public-faction-roster";
+import { type UrbanFantasyFactionGeneratorOptions } from "generator-engine/public-urban-fantasy-faction";
+import { generateConceptSeed } from "generator-engine/concept-seed";
+import type { OneShotAdventure } from "generator-engine/one-shot-types";
+import type { OneShotGeneratorOptions } from "generator-engine/one-shot-types";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import { getSessionContext } from "./session-context";
 import { villainDomainHistoryStore } from "./villain-domain-history";
 import {

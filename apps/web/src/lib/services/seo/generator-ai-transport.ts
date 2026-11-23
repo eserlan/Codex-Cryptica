@@ -1,7 +1,14 @@
-import { aiClientManager } from "@codex/ai-engine";
-import { classifyApiError } from "@codex/ai-engine";
-import type { PublicGeneratorOutput } from "generator-engine";
+import { classifyApiError } from "@codex/ai-engine/api-error-classifier";
+import { ensureAiSession } from "#lib/services/ai/session-bootstrap.js";
+import { loadConfiguredAIEngine } from "#lib/services/ai/ai-engine-loader.js";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import type { GeneratorOutput } from "./generator-helpers";
+
+type AIClientManager = Pick<
+  typeof import("@codex/ai-engine").aiClientManager,
+  "getModel"
+>;
+type AIClientManagerLoader = () => Promise<AIClientManager>;
 
 /** Single source of truth for the generator model id (#1494). */
 export const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
@@ -99,7 +106,18 @@ async function streamModelPreview(
 export class GeneratorAITransport {
   private streamPreview: ((text: string) => void) | undefined;
 
-  constructor(private clientManager = aiClientManager) {}
+  constructor(
+    private readonly clientManager?: AIClientManager,
+    private readonly loadClientManager: AIClientManagerLoader = async () => {
+      await ensureAiSession();
+      await loadConfiguredAIEngine();
+      return (await import("@codex/ai-engine/client-manager")).aiClientManager;
+    },
+  ) {}
+
+  private async getClientManager(): Promise<AIClientManager> {
+    return this.clientManager ?? this.loadClientManager();
+  }
 
   async generateWithPreview<T>(
     generate: () => Promise<T>,
@@ -166,11 +184,9 @@ export class GeneratorAITransport {
     emitPreview = true,
     signal?: AbortSignal,
   ): Promise<string> {
-    const model = await this.clientManager.getModel(
-      "",
-      GENERATOR_MODEL_ID,
-      systemInstruction,
-    );
+    const model = await (
+      await this.getClientManager()
+    ).getModel("", GENERATOR_MODEL_ID, systemInstruction);
     if (signal?.aborted) {
       throw (
         signal.reason ??
@@ -209,11 +225,9 @@ export class GeneratorAITransport {
    * earlier sections (council-vote's paths vs. its own roster).
    */
   async startChat(systemInstruction: string) {
-    const model = await this.clientManager.getModel(
-      "",
-      GENERATOR_MODEL_ID,
-      systemInstruction,
-    );
+    const model = await (
+      await this.getClientManager()
+    ).getModel("", GENERATOR_MODEL_ID, systemInstruction);
     return model.startChat({ history: [] });
   }
 

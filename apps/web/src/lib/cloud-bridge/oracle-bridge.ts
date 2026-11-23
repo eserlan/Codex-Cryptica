@@ -2,7 +2,8 @@ import * as Comlink from "comlink";
 import { browser } from "$app/env";
 import type { TextGenerationService } from "schema";
 import type { CachedToken } from "@codex/ai-engine";
-import { textGenerationService as defaultTextGeneration } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
+import { registerWorkerSessionBridge } from "./worker-session-bridge.js";
 
 const NOT_INITIALIZED = "[OracleBridge] Worker not initialized";
 
@@ -219,5 +220,6 @@ export class OracleBridge {
 }
 
 export const oracleBridge = new OracleBridge({
-  fallbackTextGeneration: defaultTextGeneration,
+  fallbackTextGeneration: lazyOracleAIServices.textGenerationService,
 });
+registerWorkerSessionBridge(oracleBridge);

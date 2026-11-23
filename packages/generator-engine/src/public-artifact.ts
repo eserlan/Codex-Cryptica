@@ -5,7 +5,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * that serve as worldbuilding anchors and campaign engines (#2387).
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

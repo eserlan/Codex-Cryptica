@@ -677,6 +677,14 @@ export {
   type DelveDossierInput,
 } from "./dungeon/delve-dossier";
 export {
+  GeneratorSession,
+  acceptedEntityToLoreEntry,
+  buildGeneratorLoreEntries,
+  buildGeneratorSessionInput,
+  draftToAcceptedEntity,
+  type GeneratorAcceptedEntity,
+} from "./generator-session";
+export {
   CampaignGeneratorService,
   assertValidLanguageFallback,
   campaignGeneratorService,
@@ -686,14 +694,6 @@ export {
   type GeneratorVaultGateway,
   type CampaignGeneratorServiceDeps,
 } from "./campaign-generator-service";
-export {
-  GeneratorSession,
-  acceptedEntityToLoreEntry,
-  buildGeneratorLoreEntries,
-  buildGeneratorSessionInput,
-  draftToAcceptedEntity,
-  type GeneratorAcceptedEntity,
-} from "./generator-session";
 export * from "./session-hub-helpers";
 export * from "./graph-flow-layout";
 export {

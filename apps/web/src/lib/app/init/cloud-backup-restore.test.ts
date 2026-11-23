@@ -33,6 +33,34 @@ beforeEach(() => {
 });
 
 describe("cloud backup restore adapters", () => {
+  it("loads adventure recovery only when restoring adventure sessions", async () => {
+    const loadRecovery = vi.fn().mockResolvedValue({
+      parseAdventureSessionForRecovery: vi.fn((raw: any) => ({
+        session: { id: raw.id },
+      })),
+    });
+    const restore = createCloudBackupRestore(loadRecovery);
+    expect(loadRecovery).not.toHaveBeenCalled();
+
+    await restore.importMaps!("new-vault", []);
+    expect(loadRecovery).not.toHaveBeenCalled();
+
+    mocks.vault.getActiveVaultHandle.mockResolvedValue({});
+    await restore.importAdventures!("new-vault", [{ id: "journey-1" }]);
+    expect(loadRecovery).toHaveBeenCalledOnce();
+  });
+
+  it("propagates a failed lazy Adventure load without writing a partial restore", async () => {
+    const restore = createCloudBackupRestore(
+      vi.fn().mockRejectedValue(new Error("Adventure chunk unavailable")),
+    );
+
+    await expect(
+      restore.importAdventures!("new-vault", [{ id: "journey-1" }]),
+    ).rejects.toThrow("Adventure chunk unavailable");
+    expect(mocks.writeOpfsFile).not.toHaveBeenCalled();
+  });
+
   it("restores adventure documents with destination ownership and preserves artwork", async () => {
     const root = {};
     mocks.vault.getActiveVaultHandle.mockResolvedValue(root);

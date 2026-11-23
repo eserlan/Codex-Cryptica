@@ -7,7 +7,7 @@
  * generator page and the in-app generator picker cannot drift apart. Adding a generator means adding one entry
  * here; a test fails if a served, self-canonical slug is missing.
  */
-import type { GeneratorId } from "generator-engine";
+import type { GeneratorId } from "generator-engine/campaign-generator-types";
 import type { ValidSlug } from "#lib/components/seo/generator-page-meta.js";
 
 export const GENERATOR_CATEGORIES = [

@@ -2,6 +2,8 @@
 
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
+import { businessGeneratorOutput } from "generator-engine/business-output";
+import { generateBusinessLocal } from "generator-engine/business-local";
 import type { GeneratedDraft } from "generator-engine";
 import GeneratorDraftReview from "./GeneratorDraftReview.svelte";
 
@@ -453,8 +455,6 @@ describe("GeneratorDraftReview", () => {
 
 describe("GeneratorDraftReview business drafts", () => {
   async function businessDraft() {
-    const { generateBusinessLocal, businessGeneratorOutput } =
-      await import("generator-engine");
     const doc = generateBusinessLocal({
       genre: "Classic Fantasy",
       businessType: "Blacksmith",

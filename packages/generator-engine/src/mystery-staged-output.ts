@@ -1,4 +1,4 @@
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { stripMysteryMarkdownImages } from "./public-mystery";
 import { list, record, text, type Obj } from "./mystery-obj";
 import { buildMysteryGraph } from "./mystery-graph";

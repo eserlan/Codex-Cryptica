@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createEmptySessionPrep } from "generator-engine";
+import { createEmptySessionPrep } from "generator-engine/session-prep";
 import { previewSessionPrepStep } from "./session-prep-steps";
 
 describe("previewSessionPrepStep", () => {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OneShotRegenTarget } from "generator-engine";
+  import type { OneShotRegenTarget } from "generator-engine/public-one-shot";
 
   let {
     target,

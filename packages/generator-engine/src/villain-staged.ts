@@ -26,7 +26,7 @@ import {
   formatCampaignContextBlock,
 } from "./campaign-context";
 import { parseVillainResponse, type ResolvedVillain } from "./public-villain";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { defaultRng } from "./random-utils";
 import {
   FIXING_DETAIL,

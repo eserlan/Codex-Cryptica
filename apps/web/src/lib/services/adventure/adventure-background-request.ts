@@ -3,7 +3,7 @@ import {
   type AdventureSession,
   type GroundingContext,
 } from "@codex/adventure-engine";
-import type { GeneratorRunRequest } from "generator-engine";
+import type { GeneratorRunRequest } from "generator-engine/campaign-generator-types";
 import { worldStyleForTheme } from "./world-style";
 
 /** Uses only prepared Adventure sources, never an unfiltered present-day sample. */

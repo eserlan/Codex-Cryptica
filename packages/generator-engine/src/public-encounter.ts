@@ -13,7 +13,7 @@ import { formatPublicScenarioConcept } from "./public-scenario-diversity";
  * parseEncounterResponse, and falls back to generateEncounterLocal.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

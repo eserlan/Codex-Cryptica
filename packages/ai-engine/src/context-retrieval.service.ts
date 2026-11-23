@@ -1,4 +1,5 @@
 import { isEntityVisible } from "schema";
+import { getConsolidatedContext } from "./text-generation-context";
 import type { ContextRetrievalService, VaultMinimal } from "schema";
 import { entityContentHash, type LoreEntry } from "@codex/oracle-engine";
 import { getAISearchService, type AISearchService } from "./config";
@@ -23,11 +24,7 @@ export class DefaultContextRetrievalService implements ContextRetrievalService {
   }
 
   getConsolidatedContext(entity: any, options?: { isGuest?: boolean }): string {
-    const parts = [];
-    if (!options?.isGuest && entity.lore?.trim())
-      parts.push(entity.lore.trim());
-    if (entity.content?.trim()) parts.push(entity.content.trim());
-    return parts.join("\n\n");
+    return getConsolidatedContext(entity, options);
   }
 
   private escapeRegExp(str: string): string {

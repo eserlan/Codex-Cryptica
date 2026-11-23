@@ -1,4 +1,4 @@
-import type { SessionEntity } from "generator-engine";
+import type { SessionEntity } from "generator-engine/session-hub-helpers";
 
 export interface GeneratorCopyDocument {
   title: string;

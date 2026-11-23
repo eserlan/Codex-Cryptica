@@ -10,7 +10,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * Genre is derived from the hub context by the caller; defaults to "Fantasy".
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";

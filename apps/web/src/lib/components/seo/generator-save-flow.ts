@@ -1,10 +1,8 @@
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import {
-  buildBusinessImportDrafts,
-  buildPointCrawlSaveDrafts,
-  type ProvenanceRecord,
-  type SessionEntity,
-} from "generator-engine";
+import type {
+  ProvenanceRecord,
+  SessionEntity,
+} from "generator-engine/session-hub-helpers";
 import {
   trackSaveHandoffFailed,
   type SaveHandoffFailedInput,
@@ -69,6 +67,8 @@ export async function saveGeneratorOutput(
   }
 
   if (data.business) {
+    const { buildBusinessImportDrafts } =
+      await import("generator-engine/business-save");
     // The public page hands over the business and its people; outside parties
     // stay in the text (no vault here to match them against).
     const drafts = buildBusinessImportDrafts(data.business);
@@ -88,6 +88,8 @@ export async function saveGeneratorOutput(
 
   const pointCrawl = data.pointCrawl ?? (data.metadata?.pointCrawlState as any);
   if (pointCrawl) {
+    const { buildPointCrawlSaveDrafts } =
+      await import("generator-engine/point-crawl-save");
     const drafts = buildPointCrawlSaveDrafts(pointCrawl, {
       selectedNodeIds,
       mapImageDataUrl,

@@ -1,22 +1,38 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { onlineStatus } from "#lib/stores/online.svelte.js";
   import {
     businessSectionLabel,
     type BusinessDocument,
     type BusinessSectionId,
-  } from "generator-engine";
-  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+  } from "generator-engine/business-state";
+  import { businessGeneratorOutput } from "generator-engine/business-output";
+  import { regenerateBusinessSection } from "generator-engine/business-regenerate";
+  import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
   import RefineNotice from "./RefineNotice.svelte";
+  type GeneratorEngine =
+    (typeof import("#lib/services/seo/generator-engine.js"))["generatorEngine"];
 
   let {
     business,
     useAI = false,
     onReplace,
+    onReplaceOutput = undefined,
+    loadEngine = async () =>
+      (await import("#lib/services/seo/generator-engine.js")).generatorEngine,
   }: {
     business: BusinessDocument;
     useAI?: boolean;
-    onReplace: (next: BusinessDocument) => void;
+    onReplace?: (next: BusinessDocument) => void;
+    onReplaceOutput?: (output: GeneratorOutput) => void;
+    loadEngine?: () => Promise<GeneratorEngine>;
   } = $props();
+
+  const canUseAI = $derived(
+    useAI &&
+      onlineStatus.current &&
+      (typeof navigator === "undefined" || navigator.onLine),
+  );
 
   let busyId = $state<BusinessSectionId | null>(null);
   let steer = $state("");
@@ -75,6 +91,8 @@
     return businessSectionLabel(id);
   }
 
+  // Keep request identity, abort handling, and replacement guards in one tested action boundary.
+  // fallow-ignore-next-line complexity
   async function rewrite(id: BusinessSectionId, label: string) {
     if (busyId) return;
     busyId = id;
@@ -82,20 +100,33 @@
     warnings = [];
     const started = business;
     const current = ++token;
-    controller = new AbortController();
+    const requestController = new AbortController();
+    controller = requestController;
     try {
-      const result = await generatorEngine.regenerateBusinessSection(
-        started,
-        id,
-        {
-          useAI,
-          instruction: useAI ? steer : "",
-          signal: controller.signal,
-        },
-      );
+      if (current !== token || business !== started) return;
+      let result;
+      if (canUseAI) {
+        const engine = await loadEngine();
+        if (current !== token || business !== started) return;
+        result = await engine.regenerateBusinessSection(started, id, {
+          useAI: true,
+          instruction: steer,
+          signal: requestController.signal,
+        });
+      } else {
+        result = await regenerateBusinessSection(started, id, {
+          useAI: false,
+          instruction: "",
+          signal: requestController.signal,
+        });
+      }
       if (current !== token || business !== started) return;
       warnings = result.warnings;
-      onReplace(result.document);
+      if (onReplaceOutput)
+        onReplaceOutput(
+          businessGeneratorOutput(result.document) as GeneratorOutput,
+        );
+      else onReplace?.(result.document);
       const part = describe(id, label);
       notice = successNotice(result.renamed, steer, part);
     } catch {
@@ -124,11 +155,11 @@
     Refine one part
   </h2>
   <p class="mt-1 text-micro text-theme-text leading-relaxed">
-    Rewrite a single section{useAI ? ", or tell it what to change" : ""}.
+    Rewrite a single section{canUseAI ? ", or tell it what to change" : ""}.
     Everything else stays as it is.
   </p>
 
-  {#if useAI}
+  {#if canUseAI}
     <label class="mt-3 flex flex-col gap-1 text-micro text-theme-text">
       <span>Steer (optional)</span>
       <textarea

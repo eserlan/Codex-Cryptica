@@ -2,7 +2,7 @@
 // props (`theme`, `canonicalPath`, `eyebrow`). Kept separate from
 // SEOGeneratorLayout.svelte so these lookups can be unit tested without a
 // component harness.
-import { themeIdToLabel } from "generator-engine";
+import { themeIdToLabel } from "generator-engine/theme-id-labels";
 
 export const THEME_TO_WORLD_ID: Record<string, string> = {
   "Classic Fantasy": "fantasy",

@@ -1,20 +1,17 @@
 import {
-  buildMysteryPrompt,
   extractMysteryNames,
-  generateConceptSeed,
   generateMysteryLocal,
-  generateMysteryStaged,
   parseMysteryResponse,
   type MysteryGeneratorOptions,
-  type OneShotProgressStep,
-} from "generator-engine";
+} from "generator-engine/public-mystery";
+import { generateConceptSeed } from "generator-engine/concept-seed";
+import { generateMysteryStaged } from "generator-engine/mystery-staged";
+import { type OneShotProgressStep } from "generator-engine/one-shot-staged";
 import {
-  formatRecentInputsNote,
-  generationInputHistoryStore,
   generationNameHistoryStore,
   generationSeedHistoryStore,
-  summarizeResolvedInputs,
 } from "./generation-input-history";
+import { prepareMysteryGeneration } from "./mystery-generation-inputs.js";
 import { GeneratorEngineSpecialized } from "./generator-engine-specialized";
 import { LANGUAGE_GENERATION_CONFIG } from "./generator-ai-transport";
 import type { GeneratorOutput } from "./generator-helpers";
@@ -41,30 +38,14 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
       staged = true,
       ...mysteryOptions
     } = options;
-    const recentInputs = generationInputHistoryStore.recent(
-      "mystery-investigation",
-    );
-    const recentNames = generationNameHistoryStore.recent(
-      "mystery-investigation",
-    );
-    const combinedAvoid = [
-      ...new Set([...(mysteryOptions.avoidNames ?? []), ...recentNames]),
-    ];
-    const prompt = buildMysteryPrompt(
-      { ...mysteryOptions, avoidNames: combinedAvoid },
-      formatRecentInputsNote(recentInputs),
-    );
-    generationInputHistoryStore.record(
-      "mystery-investigation",
-      summarizeResolvedInputs(prompt.resolved),
-    );
+    const history = prepareMysteryGeneration(mysteryOptions);
+    const { prompt } = history;
     return this.runWithAIFallback(
       useAI,
       () => this.generateMysteryWithAI(prompt, { onProgress, signal, staged }),
       () => {
         const local = generateMysteryLocal(prompt.resolved);
-        const names = extractMysteryNames(local);
-        generationNameHistoryStore.record("mystery-investigation", names);
+        history.recordLocalOutput(local);
         return local;
       },
       signal,
@@ -72,7 +53,7 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
   }
 
   private async generateMysteryWithAI(
-    prompt: ReturnType<typeof buildMysteryPrompt>,
+    prompt: ReturnType<typeof prepareMysteryGeneration>["prompt"],
     controls: MysteryRunControls,
   ): Promise<GeneratorOutput> {
     controls.signal?.throwIfAborted();
@@ -84,7 +65,7 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
   }
 
   private async generateMysteryByStages(
-    prompt: ReturnType<typeof buildMysteryPrompt>,
+    prompt: ReturnType<typeof prepareMysteryGeneration>["prompt"],
     controls: MysteryRunControls,
   ): Promise<GeneratorOutput | null> {
     try {
@@ -141,7 +122,7 @@ export class GeneratorEngineMystery extends GeneratorEngineSpecialized {
   }
 
   private async generateMysteryOnePass(
-    prompt: ReturnType<typeof buildMysteryPrompt>,
+    prompt: ReturnType<typeof prepareMysteryGeneration>["prompt"],
     signal?: AbortSignal,
   ): Promise<GeneratorOutput> {
     signal?.throwIfAborted();

@@ -16,9 +16,11 @@ import { resolveCultureNaming } from "#lib/services/generators/generator-culture
 import {
   getDefaultInstruction,
   resolveEntityType,
-  type GeneratorRunRequest,
-  type GeneratorVaultContext,
-} from "generator-engine";
+} from "generator-engine/campaign-registry";
+import type {
+  GeneratorRunRequest,
+  GeneratorVaultContext,
+} from "generator-engine/campaign-generator-types";
 import type { Entity } from "schema";
 
 export type CampaignGenerateInput = Pick<

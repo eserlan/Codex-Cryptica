@@ -202,6 +202,8 @@ export interface CloudBackupDeps {
    * ordering (fetch, then create, then import) without a real vault.
    */
   restore?: {
+    /** Loads and validates required collection readers before creating a vault. */
+    prepareAdventures?: (adventures: unknown[]) => Promise<void>;
     createVault: (name: string) => Promise<string>;
     importEntities: (vaultId: string, entities: unknown[]) => Promise<void>;
     /** Writes the restored maps and canvases back into the new vault. */

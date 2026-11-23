@@ -6,7 +6,7 @@
   import { themeStore } from "#lib/stores/theme.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
-  import { textGenerationService } from "@codex/ai-engine";
+  import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
   import { entityTemplateService } from "#lib/services/EntityTemplateService.svelte.js";
   import { entityTemplateStore } from "#lib/stores/entity-templates/entity-template-store.svelte.js";
   import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
@@ -220,7 +220,8 @@
           : "";
 
       loadingStatus = "Generating related entity...";
-      const result = await textGenerationService.generateRelatedEntity!(
+      const result = await lazyOracleAIServices.textGenerationService
+        .generateRelatedEntity!(
         oracle.effectiveApiKey || "",
         oracle.settingsManager.modelName,
         {
@@ -337,7 +338,7 @@
   <!-- svelte-ignore a11y_click_events_have_key_events -->
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <div
-    class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-y-auto"
+    class="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 overflow-auto"
     transition:fade={{ duration: 200 }}
     onclick={onClose}
   >
@@ -384,7 +385,7 @@
       </div>
 
       <!-- CONTENT STAGES -->
-      <div class="px-8 py-6 max-h-[70vh] overflow-y-auto">
+      <div class="px-8 py-6 max-h-[70vh] overflow-auto">
         {#if stage === "configure"}
           {#if !aiEnabled}
             <div

@@ -5,8 +5,9 @@ import { debugStore } from "#lib/stores/debug.svelte.js";
 import {
   type GuideStep,
   ONBOARDING_TOUR,
-  HELP_ARTICLES,
-} from "#lib/config/help-content.js";
+} from "#lib/config/help-onboarding-tour.js";
+import type { HelpArticle } from "#lib/config/help-articles.js";
+import { HELP_ARTICLE_IDS } from "#lib/config/help-article-metadata.js";
 import { searchStore as defaultSearchStore } from "./search.svelte";
 import { onboardingStore } from "#lib/stores/ui/onboarding.svelte.js";
 import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
@@ -20,6 +21,7 @@ interface HelpStoreState {
 }
 
 const SEARCH_FIELDS = ["title", "labels", "content"];
+type HelpArticleLoader = () => Promise<HelpArticle[]>;
 
 export class HelpStore {
   // Walkthrough State
@@ -40,27 +42,36 @@ export class HelpStore {
   isHelpOpen = $state(false);
   expandedId = $state<string | null>(null);
   isInitialized = $state(false);
+  articlesLoading = $state(false);
+  articlesError = $state<string | null>(null);
+  private articles = $state.raw<HelpArticle[]>([]);
+  private articlesPromise: Promise<HelpArticle[]> | undefined;
 
   // Dependencies
   private onboardingStore: typeof onboardingStore;
   private modalUIStore: typeof modalUIStore;
   private searchStore: typeof defaultSearchStore;
   private storage: StorageLike;
+  private loadHelpArticles: HelpArticleLoader;
+
+  get loadedArticles(): readonly HelpArticle[] {
+    return this.articles;
+  }
 
   /**
    * searchResults is an explicit derived property to ensure caching
    * and reactive updates when searchQuery or isInitialized changes.
    */
   searchResults = $derived.by(() => {
-    if (!this.isInitialized) return HELP_ARTICLES;
+    if (!this.articles.length) return [];
 
     const query = this.searchQuery;
-    if (!query) return HELP_ARTICLES;
+    if (!query) return this.articles;
 
     if (!this.index) {
       void this.ensureIndex();
       const q = query.toLowerCase();
-      return HELP_ARTICLES.filter(
+      return this.articles.filter(
         (a) =>
           a.id.toLowerCase().includes(q) ||
           a.title.toLowerCase().includes(q) ||
@@ -76,7 +87,7 @@ export class HelpStore {
     });
 
     if (allMatches.size > 0) {
-      return HELP_ARTICLES.filter((a) => allMatches.has(a.id));
+      return this.articles.filter((a) => allMatches.has(a.id));
     } else {
       return [];
     }
@@ -97,11 +108,14 @@ export class HelpStore {
     modal: typeof modalUIStore = modalUIStore,
     searchStore: typeof defaultSearchStore = defaultSearchStore,
     storage: StorageLike = browserStorage,
+    loadHelpArticles: HelpArticleLoader = async () =>
+      (await import("#lib/config/help-articles.js")).HELP_ARTICLES,
   ) {
     this.onboardingStore = onboarding;
     this.modalUIStore = modal;
     this.searchStore = searchStore;
     this.storage = storage;
+    this.loadHelpArticles = loadHelpArticles;
     // Init handled explicitly in layout
   }
 
@@ -132,16 +146,42 @@ export class HelpStore {
     this.isInitialized = true;
   }
 
+  /** Loads the article catalogue only when the Help surface or Cif needs it. */
+  async ensureArticles(): Promise<HelpArticle[]> {
+    if (this.articles.length) return this.articles;
+    this.articlesLoading = true;
+    this.articlesError = null;
+    this.articlesPromise ??= this.loadHelpArticles()
+      .then((articles) => {
+        this.articles = articles;
+        return articles;
+      })
+      .catch((error: unknown) => {
+        this.articlesPromise = undefined;
+        this.articlesError =
+          error instanceof Error
+            ? error.message
+            : "Help articles could not be loaded.";
+        throw error;
+      })
+      .finally(() => {
+        this.articlesLoading = false;
+      });
+    return this.articlesPromise;
+  }
+
   /**
    * Ensures the FlexSearch index is built, loading flexsearch dynamically.
    */
   async ensureIndex(force = false) {
-    if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
-      return;
     if (this.isBuildingIndex) return;
     this.isBuildingIndex = true;
     try {
+      const articles = await this.ensureArticles();
+      if (this.index && !force && this.indexedCount === articles.length) return;
       await this.buildIndex(force);
+    } catch (error) {
+      console.error("Failed to load Help articles", error);
     } finally {
       this.isBuildingIndex = false;
     }
@@ -163,8 +203,8 @@ export class HelpStore {
    * Useful during development if articles change without a full reload.
    */
   async buildIndex(force = false) {
-    if (this.index && !force && this.indexedCount === HELP_ARTICLES.length)
-      return;
+    const articles = await this.ensureArticles();
+    if (this.index && !force && this.indexedCount === articles.length) return;
 
     const FlexSearch = (await import("flexsearch")).default;
     const doc = new FlexSearch.Document({
@@ -176,8 +216,8 @@ export class HelpStore {
       },
     });
 
-    HELP_ARTICLES.forEach((article) => doc.add(article as any));
-    this.indexedCount = HELP_ARTICLES.length;
+    articles.forEach((article) => doc.add(article as any));
+    this.indexedCount = articles.length;
     this.index = doc;
   }
 
@@ -292,13 +332,15 @@ export class HelpStore {
   }
 
   selectArticle(id: string): boolean {
-    const articleExists = HELP_ARTICLES.some((article) => article.id === id);
-    if (!articleExists) {
+    if (!HELP_ARTICLE_IDS.has(id)) {
       this.clearArticleSelection();
       return false;
     }
 
     this.expandedId = id;
+    // Selection is driven by the lightweight catalogue, so direct links and
+    // CIF actions can open immediately while article bodies load in parallel.
+    void this.ensureArticles().catch(() => {});
     return true;
   }
 
@@ -306,11 +348,10 @@ export class HelpStore {
     this.expandedId = null;
   }
 
-  openHelpToArticle(id: string) {
+  async openHelpToArticle(id: string): Promise<void> {
+    if (!this.selectArticle(id)) return;
+    this.modalUIStore.openSettings("help");
     void this.ensureIndex();
-    if (this.selectArticle(id)) {
-      this.modalUIStore.openSettings("help");
-    }
   }
 
   openHelpWindow() {

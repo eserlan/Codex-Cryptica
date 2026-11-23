@@ -3,7 +3,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * Public names generator — framework-free port of the SEO names generator.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";

@@ -5,7 +5,7 @@
     type PrepConsequences,
     type SessionPrep,
     type SessionPrepStep,
-  } from "generator-engine";
+  } from "generator-engine/session-prep";
   import SessionPrepItemList from "./SessionPrepItemList.svelte";
   import SessionPrepClueList from "./SessionPrepClueList.svelte";
   import { prepFieldClass } from "./prep-field-styles";

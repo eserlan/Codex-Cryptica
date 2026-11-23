@@ -1,8 +1,6 @@
 <script lang="ts">
-  import {
-    isPublishedBfrdDoomGuidance,
-    type GeneratorMechanicsBundle,
-  } from "generator-engine";
+  import { isPublishedBfrdDoomGuidance } from "generator-engine/tov-mechanics-parser";
+  import type { GeneratorMechanicsBundle } from "generator-engine/tov-mechanics-schema";
 
   type QuickNpcData = Extract<
     GeneratorMechanicsBundle,

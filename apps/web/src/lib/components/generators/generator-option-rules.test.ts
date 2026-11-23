@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   adventureConfig,
   dungeonConfig,
-  getGenerator,
   getVillainThreatScales,
   worldConfig,
-  themeIdToLabel,
 } from "generator-engine";
+import { getGenerator } from "generator-engine/campaign-registry";
+import { themeIdToLabel } from "generator-engine/public-faction-constants";
 import {
   getNextOptionValues,
   getThemedChoices,

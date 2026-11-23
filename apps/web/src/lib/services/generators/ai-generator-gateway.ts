@@ -6,6 +6,7 @@ import type {
 } from "generator-engine";
 import { createIncrementalJsonScanner } from "generator-engine";
 import { extractJsonObject } from "@codex/runtime";
+import { ensureAiSession } from "#lib/services/ai/session-bootstrap.js";
 import {
   aiClientManager,
   InteractionExpiredError,
@@ -25,7 +26,10 @@ const GENERATOR_GENERATION_CONFIG = {
 };
 
 export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
-  constructor(private readonly clientManager: DefaultAIClientManager) {}
+  constructor(
+    private readonly clientManager: DefaultAIClientManager,
+    private readonly prepareProxySession: () => Promise<void> = ensureAiSession,
+  ) {}
 
   async complete(
     prompt: string,
@@ -33,6 +37,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
     options?: AIGeneratorCompleteOptions,
   ) {
     const interaction = options?.interaction;
+    await this.prepareProxySession();
     const generationConfig = {
       ...GENERATOR_GENERATION_CONFIG,
       ...options?.generationConfig,
@@ -136,6 +141,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       ...GENERATOR_GENERATION_CONFIG,
       ...options?.generationConfig,
     };
+    await this.prepareProxySession();
     const model = await this.clientManager.getModel(
       "",
       GENERATOR_MODEL,
@@ -214,6 +220,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
   }
 
   async startChat(systemInstruction: string): Promise<AIGeneratorChatSession> {
+    await this.prepareProxySession();
     const model = await this.clientManager.getModel(
       "",
       GENERATOR_MODEL,

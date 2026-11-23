@@ -1,4 +1,7 @@
-import { type SessionEntity, type ProvenanceRecord } from "generator-engine";
+import type {
+  SessionEntity,
+  ProvenanceRecord,
+} from "generator-engine/session-hub-helpers";
 import {
   type IdGenerator,
   systemIdGenerator,

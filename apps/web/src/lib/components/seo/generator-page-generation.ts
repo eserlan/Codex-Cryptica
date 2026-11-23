@@ -1,13 +1,48 @@
 import {
   collectSessionNames,
   collectSessionTraits,
-  extractPartialJsonStringFields,
-  type OneShotProgressStep,
-} from "generator-engine";
-import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+} from "generator-engine/public-dungeon";
+import { extractPartialJsonStringFields } from "generator-engine/streaming/incremental-json";
+import { type OneShotProgressStep } from "generator-engine/one-shot-staged";
 import { resolvePlotTwistPremiseForGeneration } from "#lib/services/seo/generator-handoffs.js";
 import type { ValidSlug } from "./generator-page-meta";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { generateLocally } from "./generator-page-local-generation.js";
+
+type GeneratorEngine =
+  (typeof import("#lib/services/seo/generator-engine.js"))["generatorEngine"];
+
+let generatorEnginePromise: Promise<GeneratorEngine> | undefined;
+
+function loadGeneratorEngine(): Promise<GeneratorEngine> {
+  generatorEnginePromise ??= import("#lib/services/seo/generator-engine.js")
+    .then(({ generatorEngine }) => generatorEngine)
+    .catch((error: unknown) => {
+      generatorEnginePromise = undefined;
+      throw error;
+    });
+  return generatorEnginePromise;
+}
+
+function createLazyGeneratorEngine(): GeneratorEngine {
+  return new Proxy(
+    {},
+    {
+      get:
+        (_target, property) =>
+        (...args: unknown[]) =>
+          loadGeneratorEngine().then((engine) => {
+            const method = Reflect.get(engine, property);
+            if (typeof method !== "function") {
+              throw new Error(
+                `Generator method ${String(property)} is unavailable.`,
+              );
+            }
+            return Reflect.apply(method, engine, args);
+          }),
+    },
+  ) as GeneratorEngine;
+}
 
 export const NON_STREAMABLE_SLUGS: readonly ValidSlug[] = [
   "council-vote",
@@ -116,7 +151,7 @@ export interface GenerationContext {
   onOneShotProgress?: (steps: OneShotProgressStep[] | null) => void;
   /** Cancels a staged one-shot when a new one starts or the page goes away. */
   oneShotRuns?: OneShotRunControl;
-  engine?: typeof generatorEngine;
+  engine?: GeneratorEngine;
 }
 
 export interface OneShotRunControl {
@@ -147,7 +182,7 @@ export type GeneratorHandlers = Record<ValidSlug, GeneratorHandler>;
 export function createGeneratorHandlers(
   ctx: GenerationContext,
 ): GeneratorHandlers {
-  const engine = ctx.engine ?? generatorEngine;
+  const engine = ctx.engine ?? createLazyGeneratorEngine();
   // Both adventure slugs run the staged route with the live step list.
   const generateAdventure = (useAI: boolean) => {
     ctx.onOneShotProgress?.(null);
@@ -161,7 +196,7 @@ export function createGeneratorHandlers(
       signal: ctx.oneShotRuns?.start(),
     } as never);
   };
-  return {
+  const handlers = {
     npc: (useAI) =>
       engine.generateNPC({ ...(ctx.npc as object), useAI } as never),
     settlement: (useAI) =>
@@ -441,31 +476,45 @@ export function createGeneratorHandlers(
       } as never);
     },
   } as GeneratorHandlers;
+  if (!ctx.engine) {
+    for (const [slug, handler] of Object.entries(handlers) as Array<
+      [ValidSlug, GeneratorHandler]
+    >) {
+      handlers[slug] = (useAI) => {
+        if (useAI) return handler(true);
+        ctx.onOneShotProgress?.(null);
+        return generateLocally(slug, ctx);
+      };
+    }
+  }
+  return handlers;
 }
 
 export function createGenerate(options: {
   getSlug: () => ValidSlug;
   getHandlers: () => GeneratorHandlers;
-  engine?: typeof generatorEngine;
+  engine?: GeneratorEngine;
 }): (args: {
   useAI: boolean;
   onPreview?: (preview: GeneratorOutput) => void;
 }) => Promise<GeneratorOutput> {
-  const engine = options.engine ?? generatorEngine;
   return async ({ useAI, onPreview }) => {
     const slug = options.getSlug();
     const handlers = options.getHandlers();
     const handler = handlers[slug];
     if (!handler) throw new Error(`No generator implemented for slug: ${slug}`);
+    const useAIForRun =
+      useAI && (typeof navigator === "undefined" || navigator.onLine);
     const streamable = isStreamableSlug(slug);
-    if (useAI && onPreview && streamable) {
+    if (useAIForRun && onPreview && streamable) {
+      const engine = options.engine ?? (await loadGeneratorEngine());
       return engine.generateWithPreview(
-        () => handler(useAI),
+        () => handler(useAIForRun),
         (raw) => {
           onPreview(buildPreviewOutput(raw));
         },
       );
     }
-    return handler(useAI);
+    return handler(useAIForRun);
   };
 }

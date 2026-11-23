@@ -1,11 +1,13 @@
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+import { isPublishedBfrdDoomGuidance } from "generator-engine/tov-mechanics-parser";
 import {
-  isPublishedBfrdDoomGuidance,
-  type ProvenanceRecord,
-  type SessionEntity,
   type TovMagicItemMechanics,
   type TovEncounterMechanics,
-} from "generator-engine";
+} from "generator-engine/tov-mechanics-schema";
+import type {
+  ProvenanceRecord,
+  SessionEntity,
+} from "generator-engine/session-hub-helpers";
 
 export interface GeneratorSaveLayout {
   content: string;

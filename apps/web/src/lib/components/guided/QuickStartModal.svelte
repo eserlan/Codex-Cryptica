@@ -6,8 +6,8 @@
     parseStarterConstellationResponse,
     getStarterConstellationPreview,
     STARTER_CONSTELLATION_THEME_IDS,
-    type StarterConstellationResult,
-  } from "generator-engine";
+  } from "generator-engine/starter-constellation";
+  import type { StarterConstellationResult } from "generator-engine/starter-constellation-types";
   import ModalShell from "#lib/components/ui/ModalShell.svelte";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";

@@ -6,7 +6,7 @@ import {
   type CanvasEdge,
   type CanvasNode,
 } from "@codex/canvas-engine";
-import { type AdventureNodeType } from "generator-engine";
+import type { AdventureNodeType } from "generator-engine/adventure/adventure-graph-types";
 import {
   normalizeEntityCardViewPreference,
   resolveEntityCardVariant,

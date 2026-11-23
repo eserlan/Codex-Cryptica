@@ -32,6 +32,41 @@ describe("GeneratorAITransport", () => {
     transport = new GeneratorAITransport(clientManager as any);
   });
 
+  it("loads the default AI client only when a model request starts", async () => {
+    const loadClientManager = vi.fn().mockResolvedValue({
+      getModel: vi.fn().mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => " ready " },
+        }),
+      }),
+    });
+    const lazyTransport = new GeneratorAITransport(
+      undefined,
+      loadClientManager,
+    );
+
+    expect(loadClientManager).not.toHaveBeenCalled();
+    await expect(lazyTransport.runModel("system", "user")).resolves.toBe(
+      "ready",
+    );
+    expect(loadClientManager).toHaveBeenCalledOnce();
+  });
+
+  it("surfaces a failed default client load to the existing caller error path", async () => {
+    const loadClientManager = vi
+      .fn()
+      .mockRejectedValue(new Error("AI client unavailable"));
+    const lazyTransport = new GeneratorAITransport(
+      undefined,
+      loadClientManager,
+    );
+
+    await expect(lazyTransport.runModel("system", "user")).rejects.toThrow(
+      "AI client unavailable",
+    );
+    expect(loadClientManager).toHaveBeenCalledOnce();
+  });
+
   describe("runModel", () => {
     it("returns the trimmed non-streaming response text", async () => {
       clientManager.getModel.mockResolvedValue({

@@ -5,7 +5,7 @@ import { onlineStatus } from "#lib/stores/online.svelte.js";
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { trackEvent } from "#lib/services/analytics/zaraz-analytics.js";
 import type { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
-import type { getContextSelection } from "generator-engine";
+import type { getContextSelection } from "generator-engine/session-hub-helpers";
 import { recordGeneratedEntity } from "./record-generated-entity";
 
 type DocumentLayout = ReturnType<typeof getGeneratorDocumentLayout>;
@@ -15,6 +15,7 @@ export interface GeneratorSessionInputs {
   getCanonicalPath: () => string | undefined;
   getInitialDraft: () => GeneratorOutput | null;
   getInitialDraftIsUserGenerated: () => boolean;
+  getInitialUseAI?: () => boolean | undefined;
   getAutoGenerateExplicit: () => boolean;
   getAiModeRequired: () => boolean;
   getSupportsStreaming: () => boolean;
@@ -51,13 +52,14 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
   let generatedData = $state<GeneratorOutput | null>(null);
   let isExampleDraft = $state(false);
   let errorMessage = $state<string | null>(null);
-  let useAI = $state(true);
+  let useAI = $state(inputs.getInitialUseAI?.() ?? true);
   // Dismissal flag for the "AI was unavailable, used local" notice; reset on
   // each new generation so a later failure shows it again.
   let aiFallbackDismissed = $state(false);
   let currentEntityId = $state<string | null>(null);
 
   let currentPagePath = $state<string | undefined>(undefined);
+  let restoredUseAIPath: string | undefined;
   let generationRunId = 0;
   let appliedInitialDraft: GeneratorOutput | null | undefined;
   let autoDraftAttemptedForPath = $state<string | undefined>(undefined);
@@ -76,6 +78,15 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
       errorMessage = null;
       currentPagePath = canonicalPath;
       userGenerated = initialIsUserGenerated;
+      const restoredUseAI = inputs.getInitialUseAI?.();
+      if (
+        restoredUseAI !== undefined &&
+        canonicalPath !== undefined &&
+        restoredUseAIPath !== canonicalPath
+      ) {
+        useAI = restoredUseAI;
+        restoredUseAIPath = canonicalPath;
+      }
       userGenerationSucceeded = initialIsUserGenerated;
       generatedData = initialDraft;
       isExampleDraft = !initialIsUserGenerated;

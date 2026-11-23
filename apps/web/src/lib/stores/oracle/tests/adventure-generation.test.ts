@@ -13,7 +13,10 @@ import {
 } from "../adventure-generation.svelte";
 import { completeProposal } from "./adventure-fixtures";
 
-const bridgeState = vi.hoisted(() => ({ ready: false }));
+const { bridgeState, ensureAiSessionMock } = vi.hoisted(() => ({
+  bridgeState: { ready: false },
+  ensureAiSessionMock: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("#lib/cloud-bridge/oracle-bridge.js", () => ({
   oracleBridge: {
@@ -35,13 +38,42 @@ vi.mock("@codex/ai-engine", () => ({
     confirmInteraction: vi.fn(),
   },
 }));
+vi.mock("#lib/services/ai/session-bootstrap.js", () => ({
+  ensureAiSession: ensureAiSessionMock,
+}));
 
 afterEach(() => {
   vi.clearAllMocks();
+  ensureAiSessionMock.mockResolvedValue(undefined);
   bridgeState.ready = false;
 });
 
 describe("adventure generation adapter", () => {
+  it("loads the local AI service only when generation is requested", async () => {
+    const localGenerate = vi.fn().mockResolvedValue(completeProposal);
+    const load = vi.fn().mockResolvedValue({
+      adventureTurnGenerationService: { generate: localGenerate },
+    });
+    const service = defaultGenerationService(load as any);
+
+    expect(load).not.toHaveBeenCalled();
+    await expect(service.generate({ phase: "opening" } as any)).resolves.toBe(
+      completeProposal,
+    );
+    expect(load).toHaveBeenCalledOnce();
+    expect(localGenerate).toHaveBeenCalledOnce();
+  });
+
+  it("surfaces a failed lazy AI chunk load to the requesting action", async () => {
+    const load = vi.fn().mockRejectedValue(new Error("chunk-unavailable"));
+    const service = defaultGenerationService(load as any);
+
+    await expect(service.generate({ phase: "opening" } as any)).rejects.toThrow(
+      "chunk-unavailable",
+    );
+    expect(load).toHaveBeenCalledOnce();
+  });
+
   it("uses the local service while the worker is unavailable", async () => {
     vi.mocked(adventureTurnGenerationService.generate).mockResolvedValue(
       completeProposal,
@@ -79,6 +111,9 @@ describe("adventure generation adapter", () => {
       { phase: "action", signal: controller.signal, onNarration } as any,
       { signal: controller.signal },
     );
+    await vi.waitFor(() =>
+      expect(oracleBridge.generateAdventureTurn).toHaveBeenCalledOnce(),
+    );
     const [request, requestId, options, narration] = vi.mocked(
       oracleBridge.generateAdventureTurn,
     ).mock.calls[0];
@@ -98,6 +133,27 @@ describe("adventure generation adapter", () => {
       "session",
       1,
     );
+  });
+
+  it("registers the AI session before the first ready-worker generation", async () => {
+    bridgeState.ready = true;
+    const order: string[] = [];
+    ensureAiSessionMock.mockImplementation(async () => {
+      order.push("session");
+    });
+    vi.mocked(oracleBridge.generateAdventureTurn).mockImplementation(
+      async () => {
+        order.push("worker");
+        return completeProposal;
+      },
+    );
+
+    await expect(
+      defaultGenerationService().generate({ phase: "opening" } as any),
+    ).resolves.toBe(completeProposal);
+
+    expect(order).toEqual(["session", "worker"]);
+    expect(ensureAiSessionMock).toHaveBeenCalledOnce();
   });
 
   it("rejects an already cancelled request before contacting the worker", () => {
@@ -210,6 +266,9 @@ describe("story summary adapter", () => {
     void defaultSummaryService().summarize(request, {
       signal: controller.signal,
     });
+    await vi.waitFor(() =>
+      expect(oracleBridge.summarizeAdventure).toHaveBeenCalledOnce(),
+    );
     controller.abort();
     expect(oracleBridge.cancelAdventureTurn).toHaveBeenCalledWith(
       vi.mocked(oracleBridge.summarizeAdventure).mock.calls[0]![1],

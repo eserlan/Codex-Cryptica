@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { rollNames, type NameParts } from "generator-engine";
+  import { rollNames, type NameParts } from "generator-engine/public-names";
   import QuickNameRow from "./QuickNameRow.svelte";
   import {
     trackPublicGeneratorAction,

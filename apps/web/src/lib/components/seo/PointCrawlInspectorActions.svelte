@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PointCrawlRegenTarget } from "generator-engine";
+  import type { PointCrawlRegenTarget } from "generator-engine/point-crawl-state";
 
   let {
     target,
@@ -17,12 +17,13 @@
     onRegeneratePart: (
       target: PointCrawlRegenTarget,
       instruction?: string,
-    ) => void;
+    ) => void | Promise<void>;
   } = $props();
 
   let showSteeringInput = $state(false);
   let steeringNote = $state("");
   let previousTarget = "";
+  let actionFailed = $state(false);
 
   $effect(() => {
     const currentTarget = `${target.kind}:${target.id}`;
@@ -33,9 +34,15 @@
     }
   });
 
-  function submitRegen(event?: SubmitEvent): void {
+  async function submitRegen(event?: SubmitEvent): Promise<void> {
     event?.preventDefault();
-    onRegeneratePart(target, steeringNote.trim() || undefined);
+    actionFailed = false;
+    try {
+      await onRegeneratePart(target, steeringNote.trim() || undefined);
+    } catch {
+      actionFailed = true;
+      return;
+    }
     showSteeringInput = false;
     steeringNote = "";
   }
@@ -65,6 +72,12 @@
     ></span>{label}</button
   >
 </div>
+
+{#if actionFailed}
+  <p class="mt-2 text-xs text-theme-text" role="alert">
+    The refinement could not load. Your point crawl was left unchanged.
+  </p>
+{/if}
 
 {#if showSteeringInput && canUseAI}
   <form class="mt-2.5 flex items-center gap-2" onsubmit={submitRegen}>

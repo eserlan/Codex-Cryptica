@@ -4,60 +4,79 @@ import {
   buildDungeonRetryMessage,
   parseDungeonResponseDetailed,
   generateDungeonLocal,
-  generateDungeonStaged,
+  type DungeonGeneratorOptions,
+} from "generator-engine/public-dungeon";
+import { generateDungeonStaged } from "generator-engine/dungeon-staged";
+import {
   buildAdventurePrompt,
   buildAdventureRetryMessage,
   parseAdventureResponseDetailed,
   generateAdventureLocal,
+  type AdventureGeneratorOptions,
+} from "generator-engine/public-adventure";
+import {
   generateAdventureStaged,
   adventureStatsLog,
+} from "generator-engine/adventure-staged";
+import {
   buildPlotTwistPrompt,
   parsePlotTwistResponse,
   generatePlotTwistLocal,
-  type DungeonGeneratorOptions,
-  type AdventureGeneratorOptions,
   type PlotTwistGeneratorOptions,
-  type WorldGeneratorOptions,
-  type StarSystemGeneratorOptions,
-  type ConstellationGeneratorOptions,
-  type AlienRaceGeneratorOptions,
-  type CreatureGeneratorOptions,
-  type PublicGeneratorOutput,
+} from "generator-engine/public-plot-twist";
+import { type WorldGeneratorOptions } from "generator-engine/public-world";
+import { type StarSystemGeneratorOptions } from "generator-engine/public-star-system";
+import { type ConstellationGeneratorOptions } from "generator-engine/public-constellation";
+import { type AlienRaceGeneratorOptions } from "generator-engine/public-alien-race";
+import { type CreatureGeneratorOptions } from "generator-engine/public-creature";
+import {
   buildTomePrompt,
   generateTomeLocalFromResolved,
   resolveTome,
   generateTomeTwoPass,
-  generateTomeStaged,
-  tomeStatsLog,
   type TomeGeneratorOptions,
-  type StagedProgressStep,
+} from "generator-engine/public-tome";
+import { generateTomeStaged, tomeStatsLog } from "generator-engine/tome-staged";
+import {
   generatePointCrawlLocal,
-  generatePointCrawlStaged,
-  regeneratePointCrawlPart,
-  regeneratePointCrawlPartLocal,
   resolvePointCrawl,
   pointCrawlToOutput,
   type PointCrawlGeneratorOptions,
+} from "generator-engine/public-point-crawl";
+import { generatePointCrawlStaged } from "generator-engine/point-crawl-staged";
+import {
+  regeneratePointCrawlPart,
+  regeneratePointCrawlPartLocal,
+  type RegeneratePointCrawlPartResult as PointCrawlRegenResult,
+} from "generator-engine/point-crawl-repair";
+import {
   type PointCrawlNetwork,
   type PointCrawlRegenTarget,
-  type PointCrawlRegenResult,
-  type OneShotProgressStep,
-  generateBusinessStaged,
-  generateBusinessLocal,
+} from "generator-engine/point-crawl-state";
+import { type OneShotProgressStep } from "generator-engine/one-shot-staged";
+import { generateBusinessStaged } from "generator-engine/business-staged";
+import { generateBusinessLocal } from "generator-engine/business-local";
+import {
   businessToOutput,
-  businessGeneratorOutput,
-  regenerateBusinessSection as regenerateBusinessSectionPart,
   type BusinessDocument,
   type BusinessGeneratorOptions,
   type BusinessSectionId,
-  type RegenerateBusinessSectionResult,
-} from "generator-engine";
+} from "generator-engine/business-state";
+import { businessGeneratorOutput } from "generator-engine/business-output";
+import { type RegenerateBusinessSectionResult } from "generator-engine/business-regenerate";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
+import type { StagedProgressStep } from "generator-engine/staged-progress";
+import { regenerateBusinessSection as regenerateBusinessSectionPart } from "generator-engine/business-regenerate";
 import { getSessionContext } from "./session-context";
 import {
   generationInputHistoryStore,
   summarizeResolvedInputs,
   formatRecentInputsNote,
 } from "./generation-input-history";
+import {
+  recordTomeHistory,
+  tomeVariationOptions,
+} from "./tome-generation-history";
 
 import type { GeneratorOutput } from "./generator-helpers";
 import { ONE_SHOT_GENERATION_CONFIG } from "./generator-ai-transport";
@@ -91,23 +110,6 @@ async function runWithSingleRepair<
   const second = parse(retryText);
   if (second.problems.length === 0) return second.output;
   return second.rejected ? first.output : second.output;
-}
-
-function recordTomeHistory(
-  output: GeneratorOutput,
-  inputSummary: string,
-  selectedDeceptionKey?: string,
-): void {
-  generationInputHistoryStore.record(
-    "tome",
-    selectedDeceptionKey
-      ? `${inputSummary}, deceptionKey: ${selectedDeceptionKey}`
-      : inputSummary,
-  );
-  generationInputHistoryStore.record(
-    "tome-mysteries",
-    (output as PublicGeneratorOutput).tomeFacts?.deception,
-  );
 }
 
 export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
@@ -322,18 +324,8 @@ export class GeneratorEngineSpecialized extends GeneratorEngineWorldbuilding {
       staged = true,
       ...tomeOptions
     } = options;
-    const recentInputs = generationInputHistoryStore.recent("tome");
-    const recentMysteries =
-      generationInputHistoryStore.recent("tome-mysteries");
-    const avoidDeceptionKeys = recentInputs.flatMap((entry) => {
-      const match = entry.match(/deceptionKey: ([^,|]+)/);
-      return match ? [match[1].trim()] : [];
-    });
-    const variedOptions = {
-      ...tomeOptions,
-      avoidDeceptionKeys,
-      avoidDeceptions: recentMysteries,
-    };
+    const { recentInputs, ...variedOptions } =
+      tomeVariationOptions(tomeOptions);
     let inputSummary = "";
     let selectedDeceptionKey: string | undefined;
     const generateLocal = () => {

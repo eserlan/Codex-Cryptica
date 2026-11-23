@@ -22,7 +22,7 @@
  * every generator with an in-app, vault-grounded sibling.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 export {
   GROUNDED_MODE,
   FREEFORM_MODE,

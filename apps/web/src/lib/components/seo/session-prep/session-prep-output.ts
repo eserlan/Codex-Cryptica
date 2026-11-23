@@ -6,7 +6,7 @@ import {
   toSessionPrepLore,
   type SessionPrep,
   type SessionPrepGuidance,
-} from "generator-engine";
+} from "generator-engine/session-prep";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { SessionPrepService } from "#lib/services/seo/session-prep-service.js";
 

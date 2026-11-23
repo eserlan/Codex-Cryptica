@@ -1,4 +1,4 @@
-import type { DungeonStagedStats } from "generator-engine";
+import type { DungeonStagedStats } from "generator-engine/dungeon-staged-types";
 
 /** Log counts only: generated campaign issue text must stay out of diagnostics. */
 export function logDungeonStagedStats(stats: DungeonStagedStats): void {

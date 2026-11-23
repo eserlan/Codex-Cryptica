@@ -3,7 +3,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * Public Language generator — framework-free conlang generator.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { NAME_BAN_PROMPT } from "./public-npc";

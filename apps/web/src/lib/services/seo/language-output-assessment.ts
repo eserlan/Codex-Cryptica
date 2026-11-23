@@ -1,4 +1,4 @@
-import { assessLanguageOutput } from "generator-engine";
+import { assessLanguageOutput } from "generator-engine/language-output-assessment";
 
-export type { LanguageOutputAssessment } from "generator-engine";
+export type { LanguageOutputAssessment } from "generator-engine/language-output-assessment";
 export { assessLanguageOutput };

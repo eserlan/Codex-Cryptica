@@ -8,7 +8,7 @@
  * generator needs and dropping the rest.
  */
 import { GeneratorAITransport } from "./generator-ai-transport";
-import { classifyApiError } from "@codex/ai-engine";
+import { classifyApiError } from "@codex/ai-engine/api-error-classifier";
 
 export const MONSTERLABS_PROMPT_CHAR_LIMIT = 1000;
 

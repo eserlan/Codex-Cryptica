@@ -2,7 +2,10 @@ import { vault } from "#lib/stores/vault.svelte.js";
 import { cloudBackupStore } from "#lib/stores/cloud-backup.svelte.js";
 import { onDurableVaultChange } from "#lib/stores/vault/registry.js";
 import { vaultEventBus } from "#lib/stores/vault/events.svelte.js";
-import { configureCloudBackup } from "./cloud-backup-config";
+import {
+  configureCloudBackup,
+  ensureAdventureBackupChangeListener,
+} from "./cloud-backup-config";
 
 /** Configure backup and restore the current vault's opt-in state. */
 export function initializeCloudBackup(): () => void {
@@ -11,7 +14,16 @@ export function initializeCloudBackup(): () => void {
   // state rather than "off" and a fresh consent prompt (spec 162, FR-020).
   const hydrateCloudBackup = () => {
     const activeVaultId = vault.activeVaultId;
-    if (activeVaultId) void cloudBackupStore.hydrate(activeVaultId);
+    if (!activeVaultId) return;
+    void cloudBackupStore.hydrate(activeVaultId);
+    // A reload may restore Adventure consent before the user visits Backup
+    // settings. Attach the shared repository listener during vault activation.
+    void ensureAdventureBackupChangeListener(activeVaultId).catch((error) => {
+      console.warn(
+        "[CloudBackup] Could not prepare Adventure change tracking",
+        error,
+      );
+    });
   };
   hydrateCloudBackup();
   window.addEventListener("vault-switched", hydrateCloudBackup);

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { GeneratedDraft } from "generator-engine";
+  import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
   import { renderMarkdown } from "#lib/utils/markdown.js";
 
   /**

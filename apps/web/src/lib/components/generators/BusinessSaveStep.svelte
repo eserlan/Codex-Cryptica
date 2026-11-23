@@ -1,8 +1,6 @@
 <script lang="ts">
-  import type {
-    BusinessRelationshipLabel,
-    BusinessSavePlan,
-  } from "generator-engine";
+  import type { BusinessSavePlan } from "generator-engine/business-save";
+  import type { BusinessRelationshipLabel } from "generator-engine/business-state";
   import type { BusinessSaveChoices } from "#lib/services/generators/business-vault-save.js";
 
   let {

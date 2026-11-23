@@ -21,7 +21,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  *      (required, validated on parse).
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson, sanitizeText } from "./llm-response-utils";

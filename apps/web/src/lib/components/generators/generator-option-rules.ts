@@ -1,21 +1,27 @@
+import { adventureConfig } from "generator-engine/public-adventure";
+import {
+  dungeonConfig,
+  forGenre as forDungeonGenre,
+} from "generator-engine/public-dungeon";
+import {
+  getVillainThreatScales,
+  villainConfig,
+} from "generator-engine/public-villain";
+import { worldConfig } from "generator-engine/public-world";
 import {
   adventureArchetypesForTheme,
-  adventureConfig,
   adventureTonesForTheme,
-  dungeonConfig,
   factionTypesForTheme,
-  forDungeonGenre,
   getGenerator,
-  getVillainThreatScales,
   npcRacesForTheme,
   npcRolesForTheme,
   settlementTypesForTheme,
-  themeIdToLabel,
-  villainConfig,
-  worldConfig,
-  type GeneratorId,
-  type GeneratorOptionDefinition,
-} from "generator-engine";
+} from "generator-engine/campaign-registry";
+import type {
+  GeneratorId,
+  GeneratorOptionDefinition,
+} from "generator-engine/campaign-generator-types";
+import { themeIdToLabel } from "generator-engine/public-faction-constants";
 
 type OptionValues = Record<string, unknown>;
 type ThemedChoices = Record<string, readonly string[]>;

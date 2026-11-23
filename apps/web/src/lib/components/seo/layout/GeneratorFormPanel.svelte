@@ -26,6 +26,9 @@
     aiToggleScope,
     offlineMessage,
     showSubmitButton,
+    generationReady = true,
+    generationSetupError = false,
+    onRetryGenerationSetup = () => {},
     busyLabel,
     generateLabel,
     generatedSingular,
@@ -51,6 +54,9 @@
     aiToggleScope?: string;
     offlineMessage?: string;
     showSubmitButton: boolean;
+    generationReady?: boolean;
+    generationSetupError?: boolean;
+    onRetryGenerationSetup?: () => void;
     busyLabel?: string;
     generateLabel?: string;
     generatedSingular: string;
@@ -83,7 +89,7 @@
     method={canonicalPath ? "GET" : undefined}
     onsubmit={(event) => {
       event.preventDefault();
-      if (showSubmitButton) onGenerate();
+      if (showSubmitButton && generationReady) onGenerate();
     }}
   >
     {@render formFields(onGenerate, isBusy)}
@@ -92,6 +98,9 @@
       {isOnline}
       {aiModeRequired}
       {showSubmitButton}
+      {generationReady}
+      {generationSetupError}
+      {onRetryGenerationSetup}
       {busyLabel}
       {generateLabel}
       {generatedSingular}
