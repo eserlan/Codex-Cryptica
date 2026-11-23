@@ -45,6 +45,12 @@ describe("theme-dom", () => {
       SCIFI_LIGHT.id,
     );
     expect(
+      resolveStylingTemplate("space-opera-resistance", "neutral-dark").id,
+    ).toBe("space-opera-resistance_dark");
+    expect(resolveStylingTemplate("space-western", "neutral-light").id).toBe(
+      "space-western_light",
+    );
+    expect(
       resolveStylingTemplate("nonexistent-theme", "neutral-light").id,
     ).toBe(DEFAULT_THEME.id);
     expect(resolveStylingTemplate(null, "neutral-light").id).toBe(

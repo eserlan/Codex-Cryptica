@@ -18,6 +18,8 @@ import {
   WESTERN_DARK,
   STEAMPUNK_DARK,
   SUPERHERO_DARK,
+  SPACE_OPERA_RESISTANCE_DARK,
+  SPACE_WESTERN_LIGHT,
 } from "schema";
 import type {
   StylingTemplate,
@@ -95,6 +97,7 @@ const DARK_VARIANTS: Partial<Record<WorldThemeId, StylingTemplate>> = {
   western: WESTERN_DARK,
   steampunk: STEAMPUNK_DARK,
   superhero: SUPERHERO_DARK,
+  "space-opera-resistance": SPACE_OPERA_RESISTANCE_DARK,
 };
 
 const LIGHT_VARIANTS: Partial<Record<WorldThemeId, StylingTemplate>> = {
@@ -107,6 +110,7 @@ const LIGHT_VARIANTS: Partial<Record<WorldThemeId, StylingTemplate>> = {
   starwars: STARWARS_LIGHT,
   startrek: STARTREK_LIGHT,
   lancer: LANCER_LIGHT,
+  "space-western": SPACE_WESTERN_LIGHT,
 };
 
 export function resolveStylingTemplate(

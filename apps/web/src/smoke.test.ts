@@ -68,9 +68,9 @@ describe("Web App Smoke Test", () => {
       expect(appHtmlContent).toContain(`"${themeId}"`);
       expect(appHtmlContent).toContain(`"${themeId}": {`);
     }
-    expect(appHtmlContent).toContain('theme = "space_opera_resistance_dark"');
-    expect(appHtmlContent).toContain('theme = "space_western_light"');
-    expect(appHtmlContent).toContain("space_opera_resistance_dark: {");
-    expect(appHtmlContent).toContain("space_western_light: {");
+    expect(appHtmlContent).toContain('theme = "space-opera-resistance_dark"');
+    expect(appHtmlContent).toContain('theme = "space-western_light"');
+    expect(appHtmlContent).toContain('"space-opera-resistance_dark": {');
+    expect(appHtmlContent).toContain('"space-western_light": {');
   });
 });
