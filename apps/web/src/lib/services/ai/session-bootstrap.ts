@@ -1,13 +1,7 @@
-import type { CachedToken } from "@codex/ai-engine";
-import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
-import { proposerBridge } from "#lib/cloud-bridge/proposer-bridge.js";
 import {
-  ensurePublicAiSession,
-  getAiSessionSnapshot,
-  getAiSessionToken,
-  requiresCapabilitySession,
-  setSessionTokenRelay,
-} from "./public-session-bootstrap.js";
+  installWorkerTokenProvider,
+  relaySessionToken,
+} from "#lib/cloud-bridge/worker-session-bridge.js";
 
 /**
  * Attaches worker push/pull capability-token relays to the shared session
@@ -17,30 +11,39 @@ import {
  * worker bridges (`oracleBridge` / `proposerBridge`).
  */
 
-export { requiresCapabilitySession, getAiSessionToken };
+export function requiresCapabilitySession(proxyUrl: string): boolean {
+  if (!import.meta.env.DEV) return true;
 
-function relayTokenToWorkers(token: CachedToken | null): void {
-  oracleBridge.setSessionToken(token);
-  proposerBridge.setSessionToken(token);
+  const hostname = new URL(proxyUrl).hostname;
+  return hostname !== "localhost" && hostname !== "127.0.0.1";
 }
 
-function attachWorkerSessionRelays(): void {
-  setSessionTokenRelay(relayTokenToWorkers);
+export async function getAiSessionToken(
+  forceRefresh = false,
+): Promise<string | null> {
+  const { getAiSessionToken: getToken } =
+    await import("./public-session-bootstrap.js");
+  return getToken(forceRefresh);
+}
+
+async function attachWorkerSessionRelays(): Promise<void> {
+  const { ensurePublicAiSession, getAiSessionSnapshot, setSessionTokenRelay } =
+    await import("./public-session-bootstrap.js");
+  setSessionTokenRelay(relaySessionToken);
   const manager = ensurePublicAiSession();
   if (!manager) return;
-  oracleBridge.setTokenProvider(getAiSessionSnapshot);
-  proposerBridge.setTokenProvider(getAiSessionSnapshot);
+  installWorkerTokenProvider(getAiSessionSnapshot);
 }
 
 /**
  * Wire the shared capability-token manager and both worker push/pull hooks
  * without solving Turnstile or issuing a network request.
  */
-export function initAiSession(): void {
-  attachWorkerSessionRelays();
+export async function initAiSession(): Promise<void> {
+  await attachWorkerSessionRelays();
 }
 
 /** Prepare the capability session and worker relays before an AI operation. */
 export async function ensureAiSession(): Promise<void> {
-  attachWorkerSessionRelays();
+  await attachWorkerSessionRelays();
 }

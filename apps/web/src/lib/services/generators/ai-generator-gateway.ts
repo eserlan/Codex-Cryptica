@@ -7,12 +7,9 @@ import type {
 import { createIncrementalJsonScanner } from "generator-engine";
 import { extractJsonObject } from "@codex/runtime";
 import { ensureAiSession } from "#lib/services/ai/session-bootstrap.js";
-import {
-  aiClientManager,
-  InteractionExpiredError,
-  GENERATOR_INTERACTION_MODEL_KEY,
-  type DefaultAIClientManager,
-} from "@codex/ai-engine";
+
+type DefaultAIClientManager =
+  (typeof import("@codex/ai-engine/client-manager"))["aiClientManager"];
 
 // Only matters for the non-interaction Gemini-SDK-shaped path below —
 // the Interactions path uses GENERATOR_INTERACTION_MODEL_KEY instead, which
@@ -27,9 +24,16 @@ const GENERATOR_GENERATION_CONFIG = {
 
 export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
   constructor(
-    private readonly clientManager: DefaultAIClientManager,
+    private readonly clientManager?: DefaultAIClientManager,
     private readonly prepareProxySession: () => Promise<void> = ensureAiSession,
   ) {}
+
+  private async loadClientManager(): Promise<DefaultAIClientManager> {
+    return (
+      this.clientManager ??
+      (await import("@codex/ai-engine/client-manager")).aiClientManager
+    );
+  }
 
   async complete(
     prompt: string,
@@ -38,14 +42,16 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
   ) {
     const interaction = options?.interaction;
     await this.prepareProxySession();
+    const clientModule = await import("@codex/ai-engine/client-manager");
+    const clientManager = this.clientManager ?? clientModule.aiClientManager;
     const generationConfig = {
       ...GENERATOR_GENERATION_CONFIG,
       ...options?.generationConfig,
     };
     if (interaction) {
       try {
-        const result = await this.clientManager.sendInteraction({
-          model: GENERATOR_INTERACTION_MODEL_KEY,
+        const result = await clientManager.sendInteraction({
+          model: clientModule.GENERATOR_INTERACTION_MODEL_KEY,
           input: interaction.input,
           systemInstruction,
           previousInteractionId: interaction.previousInteractionId,
@@ -59,9 +65,9 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
           usedInteraction: true,
         };
       } catch (err) {
-        if (!(err instanceof InteractionExpiredError)) throw err;
-        const result = await this.clientManager.sendInteraction({
-          model: GENERATOR_INTERACTION_MODEL_KEY,
+        if (!(err instanceof clientModule.InteractionExpiredError)) throw err;
+        const result = await clientManager.sendInteraction({
+          model: clientModule.GENERATOR_INTERACTION_MODEL_KEY,
           input: interaction.replayPrompt ?? prompt,
           systemInstruction,
           previousInteractionId: null,
@@ -78,7 +84,7 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       }
     }
 
-    const model = await this.clientManager.getModel(
+    const model = await clientManager.getModel(
       "",
       GENERATOR_MODEL,
       systemInstruction,
@@ -142,7 +148,8 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
       ...options?.generationConfig,
     };
     await this.prepareProxySession();
-    const model = await this.clientManager.getModel(
+    const clientManager = await this.loadClientManager();
+    const model = await clientManager.getModel(
       "",
       GENERATOR_MODEL,
       systemInstruction,
@@ -221,7 +228,8 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
 
   async startChat(systemInstruction: string): Promise<AIGeneratorChatSession> {
     await this.prepareProxySession();
-    const model = await this.clientManager.getModel(
+    const clientManager = await this.loadClientManager();
+    const model = await clientManager.getModel(
       "",
       GENERATOR_MODEL,
       systemInstruction,
@@ -284,4 +292,4 @@ export class ProxyAIGeneratorGateway implements AIGeneratorGateway {
 }
 
 export const aiGeneratorGateway: AIGeneratorGateway =
-  new ProxyAIGeneratorGateway(aiClientManager);
+  new ProxyAIGeneratorGateway();
