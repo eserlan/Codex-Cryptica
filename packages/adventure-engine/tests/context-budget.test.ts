@@ -43,7 +43,7 @@ describe("current-turn prompt input", () => {
   it("keeps an exact player action after a long premise", () => {
     const currentSession = longSession();
     const playerAction =
-      'Examine the brass seal: read the maker\'s marks and the inscription. ' +
+      "Examine the brass seal: read the maker's marks and the inscription. " +
       "Look closely. ".repeat(30);
     const prompt = buildAdventurePrompt({
       session: currentSession,
