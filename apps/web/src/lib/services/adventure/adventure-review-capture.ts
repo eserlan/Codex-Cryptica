@@ -160,6 +160,122 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
 
 export const DEFAULT_DIAGNOSTIC_RECENT_TURNS = 20;
 
+/** #5110 TurnProgressKind values that count as observable advancement. */
+const MEANINGFUL_PROGRESS_CATEGORIES = new Set([
+  "scenario-stage-or-status-change",
+  "actionable-discovery",
+  "obstacle-advanced-or-resolved",
+  "causal-state-change",
+  "consequential-player-choice",
+  "useful-negative-finding",
+]);
+
+/**
+ * Bounded #5112 generation roll-up for the GM-only diagnostic summary.
+ * Counts and categories only; legacy turns without metadata count as
+ * `unknown`, never a guessed classification. Scenario IDs are GM-only.
+ */
+type GenerationTally = {
+  transportCounts: { interaction: number; stateless: number; unknown: number };
+  threadModeCounts: {
+    new: number;
+    continued: number;
+    reset: number;
+    unknown: number;
+  };
+  progressCategoryCounts: Record<string, number>;
+  turnsWithGeneration: number;
+  lastResetReason: string | null;
+  resetWithoutReason: boolean;
+  lastProgressCategory: string | null;
+  recentProgressCategories: string[];
+};
+
+function tallyGeneration(session: AdventureSession): GenerationTally {
+  const tally: GenerationTally = {
+    transportCounts: { interaction: 0, stateless: 0, unknown: 0 },
+    threadModeCounts: { new: 0, continued: 0, reset: 0, unknown: 0 },
+    progressCategoryCounts: {},
+    turnsWithGeneration: 0,
+    lastResetReason: null,
+    resetWithoutReason: false,
+    lastProgressCategory: null,
+    recentProgressCategories: [],
+  };
+  for (const turn of session.turns) {
+    const generation = turn.generation;
+    if (!generation) {
+      tally.transportCounts.unknown += 1;
+      tally.threadModeCounts.unknown += 1;
+      continue;
+    }
+    tally.turnsWithGeneration += 1;
+    tally.transportCounts[generation.transport ?? "unknown"] += 1;
+    tally.threadModeCounts[generation.threadMode ?? "unknown"] += 1;
+    if (generation.threadMode === "reset") {
+      if (generation.resetReason)
+        tally.lastResetReason = generation.resetReason;
+      else tally.resetWithoutReason = true;
+    }
+    if (generation.progressCategory)
+      recordProgress(tally, generation.progressCategory);
+  }
+  return tally;
+}
+
+function recordProgress(tally: GenerationTally, category: string): void {
+  tally.progressCategoryCounts[category] =
+    (tally.progressCategoryCounts[category] ?? 0) + 1;
+  tally.lastProgressCategory = category;
+  tally.recentProgressCategories.push(category);
+  if (tally.recentProgressCategories.length > 5)
+    tally.recentProgressCategories.shift();
+}
+
+function generationSummary(session: AdventureSession) {
+  const {
+    transportCounts,
+    threadModeCounts,
+    progressCategoryCounts,
+    turnsWithGeneration,
+    lastResetReason,
+    resetWithoutReason,
+    lastProgressCategory,
+    recentProgressCategories,
+  } = tallyGeneration(session);
+
+  const items = session.scenarioCollection?.items ?? [];
+  const lastScenarioIds =
+    [...session.turns]
+      .reverse()
+      .find((turn) => turn.generation?.scenarioIds?.length)?.generation
+      ?.scenarioIds ?? [];
+  const recentMeaningful = recentProgressCategories.filter((category) =>
+    MEANINGFUL_PROGRESS_CATEGORIES.has(category),
+  ).length;
+
+  return {
+    turnsWithGeneration,
+    turnsWithoutGeneration: session.turns.length - turnsWithGeneration,
+    transportCounts,
+    threadModeCounts,
+    threadReuseTurns: threadModeCounts.continued,
+    resets: threadModeCounts.reset,
+    // Null when no reset was recorded; "unknown" when a reset was recorded
+    // without a reason. Never guesses a reason.
+    lastResetReason: lastResetReason ?? (resetWithoutReason ? "unknown" : null),
+    focusedScenarioId: session.scenarioCollection?.focusedScenarioId ?? null,
+    activeScenarioIds: items
+      .filter((item) => item.status === "open")
+      .map((item) => item.id),
+    lastScenarioIds,
+    progressCategoryCounts,
+    lastProgressCategory,
+    recentProgressCategories,
+    recentMeaningfulProgressTurns: recentMeaningful,
+  };
+}
+
 const DIAGNOSTIC_README = [
   "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
   "It contains hidden secrets and GM threads. Do not share with players.",
@@ -168,6 +284,8 @@ const DIAGNOSTIC_README = [
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
   "turns: oldest first. Every turn, condensed or full, carries signals; a missing signal means false or 0: quiet (changed nothing in the world), locationChanged, and stateChanges (visible entries added, updated or removed). summary.longestQuietRun and summary.stalledScenes count quiet streaks, a stalled scene being every fourth quiet turn in a row. A turn's dropped list names the parts of the model's reply the engine left out because they could not apply (an unknown id, a step not allowed yet); the turn itself committed, and summary.droppedParts totals them. Turns marked detail 'condensed' keep only action, narration, time, dropped and signals; detail 'full' also keeps every state patch.",
   "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
+  "generation: per-turn GM-only transport diagnostics (#5112), present only on instrumented committed turns; absent means legacy/unknown, never guess it. transport is 'interaction' (retained provider history) or 'stateless' (fresh context, including fallback after a provider failure); a stateless turn is never retained history. threadMode is 'new', 'continued' (provider thread reused) or 'reset'; resetReason names the recorded cause and lastResetReason in the summary is null when no reset was recorded and 'unknown' when a reset had no reason. modelKey is a model registry key only. summary.generation rolls up thread reuse/reset counts, the last reset reason, focused/active scenario IDs and the recent #5110 progress categories; summary.droppedParts and lastTurnRejection stay the channels for omitted reply parts and rejected turns, which carry no committed generation record.",
+  "To capture and interpret a diagnostic for a stalled adventure: copy it while the stall is visible, then compare summary.generation with the quiet and investigative counters. A run of 'stateless' turns after 'interaction' turns points at provider fallback; a reset names why the thread restarted; repeated 'no-observable-change' or 'repeated-non-answer' progress categories alongside quiet turns mean nothing is advancing, while a meaningful recent category with a long quiet run points at a committed change the player never saw. Turns without generation are pre-instrumentation history: treat them as unknown, not as retained success.",
 ].join(" ");
 
 export interface TurnRejectionDiagnostic {
@@ -284,6 +402,7 @@ function diagnosticTurns(session: AdventureSession, cutoff: number) {
       timeAdvance: turn.timeAdvance ?? null,
       committedAt: turn.committedAt,
       ...(turn.dropped ? { dropped: turn.dropped } : {}),
+      ...(turn.generation ? { generation: turn.generation } : {}),
       signals,
     };
   });
@@ -393,6 +512,7 @@ function diagnosticSummary(
     timeToFirstSign: discoveryMetrics.timeToFirstSign,
     timeToFirstActionableLead: discoveryMetrics.timeToFirstActionableLead,
     ...diagnosticTurnSummary(session, cutoff, lastTurn),
+    generation: generationSummary(session),
     lastPlayedAt: session.lastPlayedAt,
   };
 }

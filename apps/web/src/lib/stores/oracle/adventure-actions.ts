@@ -10,6 +10,10 @@ import {
 import { proposedSession, validateRollExpression } from "./adventure-session";
 import { generateAcceptedTurn } from "./adventure-turn-retry";
 import { abortReason } from "./adventure-generation.svelte";
+import {
+  generationDescriptorFor,
+  sceneBoundaryResetReason,
+} from "./adventure-runtime";
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
@@ -86,13 +90,25 @@ export class AdventureActions {
     const next = await generateAcceptedTurn({
       generate: (correction) =>
         this.generateActionProposal(session, action, signal, correction),
-      apply: ({ prepared, proposal }) => {
+      apply: ({ prepared, proposal }, attempt) => {
         if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
         validateRollExpression(proposal);
         return proposedSession(
           prepared,
           proposal,
-          this.runtime.newTurnMetadata(action),
+          this.runtime.newTurnMetadata(
+            action,
+            generationDescriptorFor(proposal, {
+              resetReason:
+                attempt === 2
+                  ? "rejected-turn"
+                  : sceneBoundaryResetReason(
+                      prepared,
+                      proposal,
+                      this.runtime.deps.packages.peek(prepared),
+                    ),
+            }),
+          ),
           "turn-rejected",
         );
       },

@@ -23,7 +23,11 @@ import {
   turnErrorCopy,
 } from "./adventure-turn-retry";
 
-import type { AdventureRuntime } from "./adventure-runtime";
+import {
+  generationDescriptorFor,
+  sceneBoundaryResetReason,
+  type AdventureRuntime,
+} from "./adventure-runtime";
 
 function storageFailure(cause: unknown): AdventureStartFailure | null {
   const name =
@@ -261,9 +265,9 @@ export class AdventureOpening {
       return await generateAcceptedTurn({
         generate: (correction) =>
           this.generateOpeningProposal(session, signal, correction),
-        apply: ({ prepared, proposal }) => {
+        apply: ({ prepared, proposal }, attempt) => {
           if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
-          return this.openingSession(prepared, proposal);
+          return this.openingSession(prepared, proposal, attempt);
         },
         signal,
         resetProviderContext: () =>
@@ -303,12 +307,25 @@ export class AdventureOpening {
     proposal:
       | Parameters<typeof applyCompletedTurn>[1]
       | Parameters<typeof applyRollRequest>[1],
+    attempt: 1 | 2 = 1,
   ): AdventureSession {
     validateRollExpression(proposal);
     return proposedSession(
       session,
       proposal,
-      this.runtime.newTurnMetadata(""),
+      this.runtime.newTurnMetadata(
+        "",
+        generationDescriptorFor(proposal, {
+          resetReason:
+            attempt === 2
+              ? "rejected-turn"
+              : sceneBoundaryResetReason(
+                  session,
+                  proposal,
+                  this.runtime.deps.packages.peek(session),
+                ),
+        }),
+      ),
       "opening-rejected",
     );
   }
