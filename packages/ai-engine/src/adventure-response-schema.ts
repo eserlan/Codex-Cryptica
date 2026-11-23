@@ -147,6 +147,36 @@ const newProvisionalFactSchema = {
   },
 } as const;
 
+const newCausalCommitmentSchema = {
+  type: "object",
+  required: ["kind", "commitmentClass", "subject", "summary"],
+  properties: {
+    kind: {
+      type: "string",
+      enum: ["motive", "mechanism", "identity", "action", "link"],
+    },
+    commitmentClass: {
+      type: "string",
+      enum: ["supporting-explanation", "belief-testimony", "speculative-plan"],
+    },
+    subject: textSchema,
+    summary: textSchema,
+    actorRef: {
+      type: "object",
+      required: ["tier", "value"],
+      properties: {
+        tier: {
+          type: "string",
+          enum: ["source-record", "provisional-fact", "name"],
+        },
+        value: textSchema,
+      },
+    },
+    scenarioId: idSchema,
+    contested: { type: "boolean" },
+  },
+} as const;
+
 const scenarioElaborationSchema = {
   type: "object",
   required: ["scenarioId", "stage"],
@@ -336,6 +366,11 @@ export const adventureTurnResponseSchema = {
         revealScenarioIds: { type: "array", items: idSchema },
         elaborateScenarios: { type: "array", items: scenarioElaborationSchema },
         provisionalFacts: { type: "array", items: newProvisionalFactSchema },
+        causalCommitments: {
+          type: "array",
+          maxItems: 4,
+          items: newCausalCommitmentSchema,
+        },
         sourceRecordIds: { type: "array", items: idSchema },
         suggestedActions: {
           type: "array",

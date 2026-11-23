@@ -24,7 +24,7 @@ Produce an all-in-one, consolidated **Spec + Plan + Tasks** document for focused
    - **Spec**: Problem statement, explicit boundaries (In/Out), and measurable acceptance criteria.
    - **Plan & Tech**: Affected files, data flow (Runes/DI), UI tokens, technical decisions, and negative/cancellation paths.
    - **Tasks**: TDD-first sequence with bite-sized tasks and the impacted-only verification gate.
-4. **Present Output**: Output the filled mini-spec directly in chat (or as an artifact if requested).
+4. **Write the File (always)**: ALWAYS write the filled mini-spec to a Markdown file — never leave it only in chat. Default location: `specs/<issue-or-feature-slug>/mini-spec.md` (create the directory if needed; use the path the user gives when they name one). Then reply in chat with a link to that file and a one-line summary; do not paste the whole document into chat unless the user asks for it inline as well.
 
 ---
 

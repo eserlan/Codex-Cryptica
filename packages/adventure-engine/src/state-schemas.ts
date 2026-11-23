@@ -71,6 +71,33 @@ export const newProvisionalFactSchema = provisionalFactSchema
   .omit({ id: true, introducedOnTurnId: true })
   .strict();
 
+export const causalCommitmentSchema = z.object({
+  id,
+  kind: z.enum(["motive", "mechanism", "identity", "action", "link"]),
+  commitmentClass: z.enum([
+    "supporting-explanation",
+    "belief-testimony",
+    "speculative-plan",
+  ]),
+  subject: text,
+  summary: text,
+  actorRef: z
+    .object({
+      tier: z.enum(["source-record", "provisional-fact", "name"]),
+      value: text,
+    })
+    .strict()
+    .optional(),
+  scenarioId: id.optional(),
+  status: z.enum(["committed", "contested"]),
+  sourceTurnId: id,
+  sourceRevision: z.number().int().nonnegative(),
+});
+export const newCausalCommitmentSchema = causalCommitmentSchema
+  .omit({ id: true, status: true, sourceTurnId: true, sourceRevision: true })
+  .extend({ contested: z.boolean().optional() })
+  .strict();
+
 const collectionPatch = <TAdd extends z.ZodType, TUpdate extends z.ZodType>(
   addSchema: TAdd,
   updateSchema: TUpdate,

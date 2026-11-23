@@ -101,6 +101,28 @@ describe("adventure structured response contract", () => {
     );
   });
 
+  it("offers optional bounded causalCommitments", () => {
+    const complete = adventureTurnResponseSchema.oneOf[0];
+    expect(complete.properties.causalCommitments.maxItems).toBe(4);
+    expect(complete.required).not.toContain("causalCommitments");
+    const base = JSON.parse(completeResponse) as Record<string, unknown>;
+    const entry = {
+      kind: "motive",
+      commitmentClass: "supporting-explanation",
+      subject: "Mara",
+      summary: "Guides travellers to fund the mill repairs.",
+    };
+    const parse = (causalCommitments: unknown) =>
+      parseAdventureResponse(JSON.stringify({ ...base, causalCommitments }));
+    expect(parse([entry])).toMatchObject({ causalCommitments: [entry] });
+    expect(() => parse(Array(5).fill(entry))).toThrow(
+      "invalid-adventure-response",
+    );
+    expect(() => parse([{ ...entry, kind: "unknown" }])).toThrow(
+      "invalid-adventure-response",
+    );
+  });
+
   it("offers optional bounded actorEvents", () => {
     const complete = adventureTurnResponseSchema.oneOf[0];
     expect(complete.properties.actorEvents.maxItems).toBe(8);

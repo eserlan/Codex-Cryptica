@@ -124,6 +124,7 @@
         oracle.vault.createEntity(type, title, data),
       linkPlaceRecord: (name, recordId) =>
         manager.linkPlaceRecord(name, recordId),
+      updateEntityLore: (id, lore) => oracle.vault.updateEntity(id, { lore }),
       notify: (message, level) => notificationStore.notify(message, level),
     });
     configureAdventureSurfaceRuntime(oracle.vault, manager, {
@@ -204,6 +205,7 @@
   $effect(() => {
     if (!adventure || !promotions) return;
     void promotions.autoPromote(existingEntityTitles);
+    void promotions.syncContested();
   });
 
   $effect(() => {
