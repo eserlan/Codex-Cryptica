@@ -1,4 +1,5 @@
 import { mergeProvisionalFacts } from "./provisional-facts";
+import { mergeCausalCommitments } from "./causal-commitments";
 import { systemIdGenerator } from "@codex/runtime";
 import {
   classifyHiddenLeakageFinding,
@@ -317,6 +318,7 @@ export function applyCompletedTurn(
     candidate.provisionalFacts,
     materialized,
   );
+  applyCausalCommitments(candidate, materialized);
   const turn = createCommittedTurn(
     session,
     proposal,
@@ -357,6 +359,21 @@ export function applyCompletedTurn(
     );
   }
   return result;
+}
+
+function applyCausalCommitments(
+  candidate: AdventureSession,
+  materialized: MaterializedTurnState,
+): void {
+  if (
+    materialized.causalCommitments.length === 0 &&
+    !candidate.causalCommitments
+  )
+    return;
+  candidate.causalCommitments = mergeCausalCommitments(
+    candidate.causalCommitments,
+    materialized,
+  );
 }
 
 function applyTurnWorldTimeAndPressures(
@@ -440,6 +457,11 @@ function createCommittedTurn(
       ...materialized.provisionalFacts.map((fact) => fact.id),
       ...materialized.updatedProvisionalFacts.map((fact) => fact.id),
     ],
+    ...(materialized.causalCommitments.length
+      ? {
+          causalCommitmentIds: materialized.causalCommitments.map((e) => e.id),
+        }
+      : {}),
     committedAt: now,
     ...(timeAdvance
       ? {

@@ -151,6 +151,7 @@ function playerFacingStrings(
       revealSecretIds: _reveals,
       packageEvents: _packageEvents,
       actorEvents: _actorEvents,
+      causalCommitments: _commitments,
       timeAdvance,
       ...visible
     } = proposal;
@@ -513,11 +514,19 @@ function proposedHiddenSources(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
 ): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  const commitments = (proposal.causalCommitments ?? []).map(
+    (entry, index) => ({
+      id: `proposed-commitment-${index}`,
+      text: entry.summary,
+      status: "hidden" as const,
+    }),
+  );
   if (!proposal.hiddenPatch?.secrets || !proposal.hiddenPatch.gmThreads) {
-    return [];
+    return commitments;
   }
 
   return [
+    ...commitments,
     ...proposal.hiddenPatch.secrets.add.map((secret, index) => ({
       id: `proposed-secret-${index}`,
       text: secret.text,
@@ -610,6 +619,11 @@ function detectHiddenTextFields(
     [
       ...session.hiddenState.secrets,
       ...session.hiddenState.gmThreads,
+      ...(session.causalCommitments ?? []).map((entry) => ({
+        id: entry.id,
+        text: entry.summary,
+        status: "hidden" as const,
+      })),
       ...structuredSecrets,
     ].map((secret) => [secret.id, secret]),
   );

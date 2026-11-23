@@ -2,6 +2,10 @@ import { existingIds, type IdFactory } from "./reducer-ids";
 import { error, idAllocationError } from "./reducer-result";
 import { materializeProvisionalFacts } from "./provisional-facts";
 import {
+  materializeCausalCommitments,
+  type MaterializedCausalCommitments,
+} from "./causal-commitments";
+import {
   applyHiddenPatch,
   applyVisiblePatch,
   materializeHiddenPatch,
@@ -22,6 +26,7 @@ export type MaterializedTurnState = {
   hiddenState: AdventureSession["hiddenState"];
   provisionalFacts: ProvisionalFact[];
   updatedProvisionalFacts: ProvisionalFact[];
+  causalCommitments: MaterializedCausalCommitments["causalCommitments"];
   visiblePatch: VisibleStatePatch;
   hiddenPatch: HiddenStatePatch;
   /** Parts of the model's patches that could not apply and were left out. */
@@ -63,6 +68,14 @@ export function materializeTurnState(
     createId,
   );
   if ("error" in materializedFacts) return materializedFacts;
+  const materializedCommitments = materializeCausalCommitments(
+    session,
+    proposal.causalCommitments ?? [],
+    turnId,
+    ids,
+    createId,
+  );
+  if ("error" in materializedCommitments) return materializedCommitments;
   const dropped: string[] = [];
   const visibleApplied = sanitizeVisiblePatch(
     session.visibleState,
@@ -87,6 +100,7 @@ export function materializeTurnState(
     hiddenState: hiddenState.value,
     provisionalFacts: materializedFacts.provisionalFacts,
     updatedProvisionalFacts: materializedFacts.updatedProvisionalFacts,
+    causalCommitments: materializedCommitments.causalCommitments,
     visiblePatch: visibleApplied,
     hiddenPatch: hiddenApplied,
     dropped,
