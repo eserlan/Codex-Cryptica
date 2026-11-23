@@ -1,8 +1,11 @@
 /** @vitest-environment jsdom */
 
 import { fireEvent, render, screen, within } from "@testing-library/svelte";
-import { describe, expect, it, vi } from "vitest";
+import { tick } from "svelte";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import AdventurePlay from "./AdventurePlay.svelte";
+
+afterEach(() => vi.useRealTimers());
 
 function manager(
   phase: "ready" | "generating",
@@ -62,30 +65,43 @@ function manager(
 }
 
 describe("AdventurePlay", () => {
-  it("shows a pending Oracle status without removing the composer field", () => {
-    render(AdventurePlay, { props: { manager: manager("generating") } });
+  it("shows a rotating Oracle status without removing the composer field", async () => {
+    vi.useFakeTimers();
+    const { unmount } = render(AdventurePlay, {
+      props: { manager: manager("generating") },
+    });
 
-    expect(
-      screen.getByTestId("adventure-generating-status").textContent,
-    ).toContain("The Oracle traces the threads of consequence…");
     const composer = within(screen.getByTestId("adventure-action-dock"));
+    const status = screen.getByTestId("adventure-generating-message");
+    expect(status.textContent).toContain(
+      "The Oracle traces the threads of consequence…",
+    );
     expect(composer.getByRole("status").textContent).toContain(
       "Oracle is responding…",
     );
-    expect(composer.getByRole("status").textContent).toContain(
-      "Playing: Cross the flooded causeway",
-    );
+    expect(
+      composer.getByText("Playing: Cross the flooded causeway"),
+    ).toBeTruthy();
+    expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
+    await vi.advanceTimersByTimeAsync(2_800);
+    await tick();
+    expect(status.textContent).toContain("Fate gathers around your choice…");
     // The field stays mounted (just hidden) rather than being torn out —
     // removing a focused element from the DOM mid-interaction silently
     // exits native fullscreen in Chrome.
     expect(screen.getByLabelText("What do you do?")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeTruthy();
+    unmount();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("does not show a pending status when the player can act", () => {
     render(AdventurePlay, { props: { manager: manager("ready") } });
 
     expect(screen.queryByTestId("adventure-generating-status")).toBeNull();
+    expect(
+      screen.getByTestId("adventure-pending-generation-row").className,
+    ).toBe("hidden");
   });
 
   it("switches between Play and Ask GM while preserving each mode's unsent draft text", async () => {

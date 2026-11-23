@@ -22,7 +22,7 @@ Illustrations follow a fixed precedence order:
 
 ## AI provenance and credits
 
-Curated stock illustrations in the public catalogue are team-generated AI artwork that has been human-reviewed for public safety and quality. Every displayed illustration shows an **AI illustration** label and a **Credits** summary when available.
+Curated stock illustrations in the public catalogue are team-generated AI artwork that has been human-reviewed for public safety and quality. Open an illustration in the lightbox to see its **AI illustration** label and **Credits** summary when available.
 
 ## Controls
 

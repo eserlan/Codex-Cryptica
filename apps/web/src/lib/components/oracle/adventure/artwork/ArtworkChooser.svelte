@@ -8,7 +8,7 @@
     dismiss,
     restore,
   }: {
-    options: readonly { id: string; label: string; credit: string }[];
+    options: readonly { id: string; label: string }[];
     readOnly?: boolean;
     keep: () => Promise<boolean>;
     choose: (id: string) => Promise<boolean>;
@@ -92,8 +92,9 @@
                 class="min-h-10 text-left underline focus-visible:outline-2 focus-visible:outline-theme-primary"
                 disabled={busy || readOnly}
                 onclick={() => void run(() => choose(option.id), true)}
-                >{option.label}</button
-              ><span class="ml-2 text-xs">{option.credit}</span>
+              >
+                {option.label}
+              </button>
             </li>
           {/each}
         </ul>

@@ -59,7 +59,8 @@ describe("current adventure artwork", () => {
     expect(
       (await screen.findByAltText("A forest road")).getAttribute("src"),
     ).toBe("blob:catalogue");
-    expect(screen.getByText(/AI illustration/).textContent).toContain("Artist");
+    expect(screen.queryByText(/AI illustration/)).toBeNull();
+    expect(screen.queryByText("Artist")).toBeNull();
     expect(load).toHaveBeenCalledOnce();
   });
   it("shows the current linked Vault image and hides it when disabled", async () => {
@@ -73,7 +74,7 @@ describe("current adventure artwork", () => {
         "src",
       ),
     ).toBe("blob:forest");
-    expect(screen.getByText("Vault image")).toBeTruthy();
+    expect(screen.queryByText("Vault image")).toBeNull();
     preferences.setEnabled(false);
     await waitFor(() =>
       expect(screen.queryByAltText("Illustration of Forest")).toBeNull(),

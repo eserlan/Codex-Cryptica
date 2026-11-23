@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import type { ArtworkAsset } from "@codex/adventure-artwork-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import type { ArtworkDisplayService } from "#lib/services/adventure/artwork/artwork-display-service.js";
@@ -76,24 +75,6 @@
       : new Map(),
   );
 
-  const generationMessages = [
-    "The Oracle traces the threads of consequence…",
-    "Fate gathers around your choice…",
-    "The world shifts in answer to your action…",
-    "The next turn of the tale is taking shape…",
-  ];
-  let generationMessageIndex = $state(0);
-  let generationMessage = $derived(generationMessages[generationMessageIndex]!);
-
-  onMount(() => {
-    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
-    const interval = window.setInterval(() => {
-      generationMessageIndex =
-        (generationMessageIndex + 1) % generationMessages.length;
-    }, 2_800);
-    return () => window.clearInterval(interval);
-  });
-
   function rollFor(sequence: number) {
     return manager.rollHistory.find((entry) => entry.turn.sequence === sequence)
       ?.resolvedRoll;
@@ -161,18 +142,5 @@
         narration: manager.streamedNarration,
       }}
     />
-  {:else if manager.phase === "generating"}
-    <div
-      class="flex items-center gap-2 text-sm text-theme-text"
-      role="status"
-      aria-live="off"
-      data-testid="adventure-generating-status"
-    >
-      <span
-        aria-hidden="true"
-        class="icon-[lucide--sparkles] h-4 w-4 motion-safe:animate-pulse"
-      ></span>
-      <span>{generationMessage}</span>
-    </div>
   {/if}
 </div>
