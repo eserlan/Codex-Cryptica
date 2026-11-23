@@ -1,16 +1,6 @@
 {
-  "updated_at": 1795375852,
+  "updated_at": 1795427671,
   "candidates": [
-    {
-      "id": "reddit-44466817164-image-only-entity-labels-are-available-o",
-      "title": "Image-only entity labels are available on keyboard focus",
-      "body": "When an entity has only an image, identifying it in a busy canvas or faction view can be awkward without hovering. I made image-only entity labels appear on keyboard focus in both views.\n\n- Identify image-only entities in the canvas\n- Identify image-only entities in faction views\n- Reveal labels by moving keyboard focus\n- Read the label without needing to hover\n\nWhere would keyboard-revealed labels help you more, on a canvas or in a faction view?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/entity-labels-example.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/blog/entity-labels-example.png",
-      "source_id": "44466817164",
-      "status": "approved",
-      "created_at": 1795081945
-    },
     {
       "id": "reddit-45012792136-more-of-the-adventure-transcript-on-a-ph",
       "title": "More of the Adventure transcript on a phone",
