@@ -8,7 +8,11 @@ import {
 import { acceptedSession } from "./adventure-session";
 import { generateAcceptedTurn } from "./adventure-turn-retry";
 
-import type { AdventureRuntime } from "./adventure-runtime";
+import {
+  generationDescriptorFor,
+  sceneBoundaryResetReason,
+  type AdventureRuntime,
+} from "./adventure-runtime";
 
 export class AdventureRolls {
   private readonly state;
@@ -91,12 +95,20 @@ export class AdventureRolls {
     const next = await generateAcceptedTurn({
       generate: (correction) =>
         this.generateRollResolution(session, signal, correction),
-      apply: (proposal) =>
+      apply: (proposal, attempt) =>
         acceptedSession(
           resolveRecordedRoll(
             session,
             proposal,
-            this.runtime.newTurnMetadata(pendingRoll.playerAction),
+            this.runtime.newTurnMetadata(
+              pendingRoll.playerAction,
+              generationDescriptorFor(proposal, {
+                resetReason:
+                  attempt === 2
+                    ? "rejected-turn"
+                    : sceneBoundaryResetReason(session, proposal),
+              }),
+            ),
           ),
           "roll-rejected",
         ),

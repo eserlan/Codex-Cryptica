@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createPlayerTranscript,
   parseAdventureSession,
   type AdventureSession,
 } from "@codex/adventure-engine";
@@ -726,5 +727,193 @@ describe("Adventure diagnostic JSON for AI", () => {
       }).text,
     );
     expect(rejectedDelta.lastTurnRejection).toEqual(rejection);
+  });
+});
+
+describe("Adventure diagnostic generation metadata (#5112)", () => {
+  function threeTurnSession(): AdventureSession {
+    const base = exampleSession();
+    base.scenarioCollection!.focusedScenarioId = "scenario-1";
+    const template = base.turns[0]!;
+    base.turns = [
+      {
+        ...template,
+        id: "turn-1",
+        sequence: 0,
+        generation: {
+          modelKey: "gemini-flash-lite",
+          reasoningEffort: "high",
+          transport: "interaction",
+          threadMode: "new",
+          requestChars: 1200,
+          sourceCounts: { secrets: 1 },
+          scenarioIds: ["scenario-1"],
+          progressCategory: "no-observable-change",
+        },
+      },
+      {
+        ...template,
+        id: "turn-2",
+        sequence: 1,
+        generation: {
+          modelKey: "gemini-flash-lite",
+          reasoningEffort: "high",
+          transport: "interaction",
+          threadMode: "continued",
+          requestChars: 1300,
+          scenarioIds: ["scenario-1"],
+          progressCategory: "actionable-discovery",
+        },
+      },
+      // Stateless fallback after provider failure: a fresh thread, never
+      // retained history.
+      {
+        ...template,
+        id: "turn-3",
+        sequence: 2,
+        generation: {
+          transport: "stateless",
+          threadMode: "reset",
+          resetReason: "provider-expiry",
+          scenarioIds: ["scenario-1"],
+          progressCategory: "repeated-non-answer",
+        },
+      },
+    ];
+    base.provisionalFacts = base.provisionalFacts.map((fact) => ({
+      ...fact,
+      introducedOnTurnId: "turn-1",
+    }));
+    return base;
+  }
+
+  it("includes per-turn generation metadata and a bounded summary in the full diagnostic", () => {
+    const source = threeTurnSession();
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 3 }));
+    expect(out.turns[0].generation.transport).toBe("interaction");
+    expect(out.turns[1].generation.threadMode).toBe("continued");
+    expect(out.turns[2].generation).toMatchObject({
+      transport: "stateless",
+      threadMode: "reset",
+      resetReason: "provider-expiry",
+    });
+    // A stateless fallback is classified as a fresh/reset thread, never as
+    // retained reuse.
+    expect(out.summary.generation).toMatchObject({
+      turnsWithGeneration: 3,
+      turnsWithoutGeneration: 0,
+      transportCounts: { interaction: 2, stateless: 1, unknown: 0 },
+      threadModeCounts: { new: 1, continued: 1, reset: 1, unknown: 0 },
+      threadReuseTurns: 1,
+      resets: 1,
+      lastResetReason: "provider-expiry",
+      focusedScenarioId: "scenario-1",
+      activeScenarioIds: ["scenario-1"],
+      lastScenarioIds: ["scenario-1"],
+      lastProgressCategory: "repeated-non-answer",
+      recentProgressCategories: [
+        "no-observable-change",
+        "actionable-discovery",
+        "repeated-non-answer",
+      ],
+      recentMeaningfulProgressTurns: 1,
+    });
+    expect(out._readme).toContain("generation:");
+    expect(out._readme).toContain("capture and interpret a diagnostic");
+  });
+
+  it("keeps generation metadata on condensed turns and in delta new turns", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const source = threeTurnSession();
+    const condensed = JSON.parse(
+      adventureDiagnosticJson(source, { recentTurns: 0 }),
+    );
+    expect(
+      condensed.turns.every(
+        (t: { detail: string }) => t.detail === "condensed",
+      ),
+    ).toBe(true);
+    expect(condensed.turns[2].generation.resetReason).toBe("provider-expiry");
+
+    copyDiagnosticSnapshot(source, storage);
+    saveDiagnosticBaseline(source, storage);
+    const next = threeTurnSession();
+    next.revision = 3;
+    next.turns.push({
+      ...next.turns[2]!,
+      id: "turn-4",
+      sequence: 3,
+      generation: {
+        transport: "interaction",
+        threadMode: "reset",
+        resetReason: "scene-boundary",
+        progressCategory: "causal-state-change",
+      },
+    });
+    const delta = JSON.parse(copyDiagnosticSnapshot(next, storage).text);
+    expect(delta.turns).toHaveLength(1);
+    expect(delta.turns[0].generation).toMatchObject({
+      transport: "interaction",
+      threadMode: "reset",
+      resetReason: "scene-boundary",
+    });
+    expect(delta.summary.generation.lastResetReason).toBe("scene-boundary");
+    expect(delta.summary.generation.resets).toBe(2);
+  });
+
+  it("marks legacy turns without generation metadata as unknown and absent", () => {
+    const out = JSON.parse(adventureDiagnosticJson(exampleSession()));
+    expect(out.turns[0]).not.toHaveProperty("generation");
+    expect(out.summary.generation).toMatchObject({
+      turnsWithGeneration: 0,
+      turnsWithoutGeneration: 1,
+      transportCounts: { interaction: 0, stateless: 0, unknown: 1 },
+      threadModeCounts: { new: 0, continued: 0, reset: 0, unknown: 1 },
+      threadReuseTurns: 0,
+      resets: 0,
+      lastResetReason: null,
+      lastProgressCategory: null,
+      progressCategoryCounts: {},
+      recentProgressCategories: [],
+    });
+    expect(out.summary.generation.activeScenarioIds).toEqual(["scenario-1"]);
+  });
+
+  it("records no generation for rejected or uncommitted turns", () => {
+    // A rejected turn never commits, so it leaves no generation record; the
+    // rejection diagnostic is the only channel. Same for a failed save: the
+    // diagnostic only ever describes committed turns.
+    const source = exampleSession();
+    source.turns = [];
+    const out = JSON.parse(
+      adventureDiagnosticJson(source, {
+        lastTurnRejection: {
+          reason: "hidden-leakage",
+          revision: source.revision,
+          recordedAt: "2026-11-22T11:45:00.000Z",
+        },
+      }),
+    );
+    expect(out.turns).toEqual([]);
+    expect(out.summary.generation.turnsWithGeneration).toBe(0);
+    expect(out.summary.generation.resets).toBe(0);
+    expect(out.lastTurnRejection.reason).toBe("hidden-leakage");
+  });
+
+  it("keeps generation and GM content out of the player projection", () => {
+    const source = threeTurnSession();
+    const transcript = createPlayerTranscript(source);
+    const rendered = JSON.stringify(transcript);
+    expect(rendered).not.toContain("generation");
+    expect(rendered).not.toContain("resetReason");
+    expect(rendered).not.toContain("scenario-1");
+    expect(rendered).not.toContain("gemini-flash-lite");
+    expect(rendered).not.toContain("provider-expiry");
   });
 });

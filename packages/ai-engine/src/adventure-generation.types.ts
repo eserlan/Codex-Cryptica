@@ -2,6 +2,7 @@ import type { LoreDeltaTracker } from "@codex/oracle-engine";
 import type {
   buildAdventurePrompt,
   AdventureSession,
+  AdventureTurnProposal,
   AdventureWorldStyle,
   PromptAdventurePackage,
   ResolvedSourceExcerpt,
@@ -70,7 +71,30 @@ export interface AdventureGenerationOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * #5112: how a generation was produced, reported by the service so the app
+ * layer can build the committed-turn generation descriptor. The app fills in
+ * thread/reset classification and the model registry key at capture time;
+ * the service reports only what the transport decision actually was.
+ */
+export interface AdventureGenerationInfo {
+  /** Model registry key, when the service can resolve one. Never a raw provider ID. */
+  modelKey?: string;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
+  /** Provider-managed interaction vs. stateless generation. */
+  transport?: "interaction" | "stateless";
+}
+
 export type AdventurePrompt = ReturnType<typeof buildAdventurePrompt>;
+
+/**
+ * A generation result: the validated turn proposal plus, when the service
+ * could classify it, how it was produced. Extra field is additive; older
+ * callers that ignore it keep working.
+ */
+export type AdventureTurnGenerationResult = AdventureTurnProposal & {
+  generationInfo?: AdventureGenerationInfo;
+};
 
 export interface AdventureInteraction {
   /** Only acknowledged after the local OPFS session commits this proposal. */

@@ -82,6 +82,45 @@ export const turnProposalSchema = z.discriminatedUnion("kind", [
   rollProposalSchema,
 ]);
 
+export const generationReasoningEffortSchema = z.enum([
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+]);
+export const generationTransportSchema = z.enum(["interaction", "stateless"]);
+export const generationThreadModeSchema = z.enum(["new", "continued", "reset"]);
+export const generationResetReasonSchema = z.enum([
+  "turn-refresh",
+  "provider-expiry",
+  "model-change",
+  "source-change",
+  "scene-boundary",
+  "revision-mismatch",
+  "rejected-turn",
+  "app-lifetime",
+  "unknown",
+]);
+
+/**
+ * Bounded, privacy-conscious generation diagnostics. All fields optional so
+ * legacy turns parse; unknown keys are stripped rather than rejected so a
+ * future additive field never breaks an older reader.
+ */
+export const generationMetadataSchema = z.object({
+  modelKey: z.string().min(1).max(120).optional(),
+  reasoningEffort: generationReasoningEffortSchema.optional(),
+  transport: generationTransportSchema.optional(),
+  threadMode: generationThreadModeSchema.optional(),
+  resetReason: generationResetReasonSchema.optional(),
+  requestChars: z.number().int().nonnegative().optional(),
+  sourceCounts: z
+    .record(z.string().min(1).max(64), z.number().int().nonnegative())
+    .optional(),
+  scenarioIds: z.array(id).max(32).optional(),
+  progressCategory: z.string().min(1).max(64).optional(),
+});
+
 export const persistedTurnSchema = z.object({
   id,
   sequence: z.number().int().nonnegative(),
@@ -97,6 +136,7 @@ export const persistedTurnSchema = z.object({
   sourceRecordIds: z.array(id),
   provisionalFactIds: z.array(id),
   causalCommitmentIds: z.array(id).optional(),
+  generation: generationMetadataSchema.optional(),
   committedAt: timestamp,
   timeAdvance: timeAdvanceSchema
     .pick({ minutes: true, cause: true })

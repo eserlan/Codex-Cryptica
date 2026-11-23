@@ -23,6 +23,7 @@ describe("adventure schemas", () => {
       "MAX_STORY_SO_FAR_CHARS",
       "MAX_TEXT_CHARS",
       "adventureSessionSchema",
+      "generationMetadataSchema",
       "hiddenPatchSchema",
       "migrateAdventureSession",
       "parseAdventureSession",

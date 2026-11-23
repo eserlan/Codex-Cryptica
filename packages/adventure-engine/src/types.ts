@@ -283,6 +283,42 @@ export interface WorldTimeState {
   }>;
 }
 
+/**
+ * Privacy-conscious generation diagnostics stamped on a committed turn.
+ * Registry keys, bounded enums and counts only — never prompt bodies,
+ * narration, secrets, API keys or provider raw model strings.
+ * GM-only; player surfaces must never receive this.
+ */
+export type GenerationReasoningEffort = "low" | "medium" | "high" | "xhigh";
+export type GenerationTransport = "interaction" | "stateless";
+export type GenerationThreadMode = "new" | "continued" | "reset";
+export type GenerationResetReason =
+  | "turn-refresh"
+  | "provider-expiry"
+  | "model-change"
+  | "source-change"
+  | "scene-boundary"
+  | "revision-mismatch"
+  | "rejected-turn"
+  | "app-lifetime"
+  | "unknown";
+
+export interface GenerationMetadata {
+  /** Model registry key only; the string "unknown" when no mapping exists. */
+  modelKey?: string;
+  reasoningEffort?: GenerationReasoningEffort;
+  /** How the reply was produced: retained provider interaction vs. stateless. */
+  transport?: GenerationTransport;
+  threadMode?: GenerationThreadMode;
+  resetReason?: GenerationResetReason;
+  requestChars?: number;
+  sourceCounts?: Record<string, number>;
+  /** Selected scenario IDs. GM-only. */
+  scenarioIds?: string[];
+  /** #5110 TurnProgressKind, classified at commit. */
+  progressCategory?: string;
+}
+
 export interface CommittedAdventureTurn {
   id: string;
   sequence: number;
@@ -298,6 +334,8 @@ export interface CommittedAdventureTurn {
   sourceRecordIds: string[];
   provisionalFactIds: string[];
   causalCommitmentIds?: string[];
+  /** Absent on pre-#5112 turns; absent fields are `unknown`, never guessed. */
+  generation?: GenerationMetadata;
   committedAt: string;
   /** Player-safe time interval; private developments live in worldTime. */
   timeAdvance?: { minutes: number; cause: string };
@@ -655,6 +693,12 @@ export interface CommitMetadata {
   packageGmOnlyText?: readonly string[];
   /** Map of package secret IDs to text so explicitly revealed secrets are exempted from package-text guards. */
   packageSecretTexts?: Readonly<Record<string, string>>;
+  /**
+   * Generation descriptor supplied by the app layer from the actual
+   * transport decision. `applyCompletedTurn` stamps it on the committed
+   * turn; an absent descriptor stays absent.
+   */
+  generation?: GenerationMetadata;
 }
 
 export type HiddenLeakageGuard =

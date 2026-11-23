@@ -13,7 +13,11 @@ export {
   adventureSessionSchema,
 } from "./session-schema";
 export { MAX_PLACES, MAX_PLACE_ALIASES } from "./place-schemas";
-export { turnProposalSchema, parseTurnProposal } from "./turn-schemas";
+export {
+  turnProposalSchema,
+  parseTurnProposal,
+  generationMetadataSchema,
+} from "./turn-schemas";
 
 export { scenarioEventSchema } from "./scenario-schemas";
 export { migrateAdventureSession } from "./session-migration";

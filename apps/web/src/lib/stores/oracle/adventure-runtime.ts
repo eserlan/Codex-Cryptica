@@ -12,8 +12,13 @@ import {
   detectHiddenTextLeakage,
   detectPackageTextLeakage,
   type AdventureSession,
+  type AdventureTurnProposal,
   type CommitMetadata,
+  type GenerationMetadata,
+  type GenerationResetReason,
+  type GenerationThreadMode,
 } from "@codex/adventure-engine";
+import type { AdventureGenerationInfo } from "@codex/ai-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
@@ -27,6 +32,66 @@ import {
 import { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventure-artwork-session.js";
 import { assignCommittedPlaceArtwork } from "#lib/services/adventure/artwork/committed-place-artwork.js";
 import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
+
+/**
+ * #5112: builds the committed-turn generation descriptor from the actual
+ * transport decision recorded on the generation result. Fields this layer
+ * cannot observe stay absent (`unknown`), never guessed.
+ */
+export function generationDescriptorFor(
+  proposal:
+    | (AdventureTurnProposal & { generationInfo?: AdventureGenerationInfo })
+    | undefined,
+  extras: {
+    modelKey?: string;
+    requestChars?: number;
+    sourceCounts?: Record<string, number>;
+    scenarioIds?: string[];
+    threadMode?: GenerationThreadMode;
+    resetReason?: GenerationResetReason;
+  } = {},
+): GenerationMetadata | undefined {
+  const info = proposal?.generationInfo;
+  if (!info && !extras.resetReason && !extras.threadMode) return undefined;
+  const metadata: GenerationMetadata = {};
+  const modelKey = extras.modelKey ?? info?.modelKey;
+  if (modelKey) metadata.modelKey = modelKey;
+  if (info?.reasoningEffort) metadata.reasoningEffort = info.reasoningEffort;
+  if (info?.transport) metadata.transport = info.transport;
+  // A recorded reset reason implies a reset; stateless carries no retained
+  // thread at all, so each stateless turn starts a fresh one.
+  metadata.threadMode =
+    extras.threadMode ??
+    (extras.resetReason
+      ? "reset"
+      : info?.transport === "stateless"
+        ? "new"
+        : undefined);
+  if (extras.resetReason) metadata.resetReason = extras.resetReason;
+  if (extras.requestChars !== undefined)
+    metadata.requestChars = extras.requestChars;
+  if (extras.sourceCounts) metadata.sourceCounts = extras.sourceCounts;
+  if (extras.scenarioIds) metadata.scenarioIds = extras.scenarioIds;
+  return metadata;
+}
+
+/**
+ * #5112: the proposal declares a move to a different package scene, which is
+ * exactly when `saveTurn` discards retained provider history.
+ */
+export function sceneBoundaryResetReason(
+  session: AdventureSession,
+  proposal: AdventureTurnProposal,
+): GenerationResetReason | undefined {
+  const sceneId =
+    proposal.kind === "complete"
+      ? proposal.visiblePatch.packageSceneId
+      : undefined;
+  if (sceneId !== undefined && sceneId !== session.packageProgress?.sceneId) {
+    return "scene-boundary";
+  }
+  return undefined;
+}
 
 /** Shared generation lifetime and persistence boundary for all workflows. */
 export class AdventureRuntime {
@@ -165,22 +230,30 @@ export class AdventureRuntime {
     return saved.session;
   }
 
-  newTurnMetadata(playerAction: string): CommitMetadata {
+  newTurnMetadata(
+    playerAction: string,
+    generation?: GenerationMetadata,
+  ): CommitMetadata {
     return {
       turnId: this.deps.idGenerator(),
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
       ...this.packageMetadata(),
+      ...(generation ? { generation } : {}),
     };
   }
 
-  rollMetadata(inputId: string): CommitMetadata {
+  rollMetadata(
+    inputId: string,
+    generation?: GenerationMetadata,
+  ): CommitMetadata {
     return {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
       ...this.packageMetadata(),
+      ...(generation ? { generation } : {}),
     };
   }
 

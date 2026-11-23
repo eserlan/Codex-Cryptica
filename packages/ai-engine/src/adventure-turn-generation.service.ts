@@ -5,12 +5,18 @@ import {
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import type {
   AdventureAIClient,
+  AdventureGenerationInfo,
   AdventureTurnGenerationRequest,
+  AdventureTurnGenerationResult,
   AdventurePrompt,
   AdventureGenerationOptions,
 } from "./adventure-generation.types";
 import { AdventureInteractionContext } from "./adventure-interaction-context";
-import { AdventureInteractionGeneration } from "./adventure-interaction-generation";
+import {
+  AdventureInteractionGeneration,
+  DEFAULT_ADVENTURE_MODEL,
+  DEFAULT_ADVENTURE_REASONING_EFFORT,
+} from "./adventure-interaction-generation";
 import { AdventureContentGeneration } from "./adventure-content-generation";
 import { streamAborted } from "./adventure-narration-stream";
 import {
@@ -20,7 +26,9 @@ import {
 
 export type {
   AdventureAIClient,
+  AdventureGenerationInfo,
   AdventureTurnGenerationRequest,
+  AdventureTurnGenerationResult,
 } from "./adventure-generation.types";
 export { extractAdventureNarrationPrefix } from "./adventure-narration-stream";
 
@@ -58,30 +66,60 @@ export class AdventureTurnGenerationService {
     this.interactionContext.confirm(sessionId, savedRevision);
   }
 
+  /** #5112: classify how a proposal was produced for committed-turn diagnostics. */
+  private withGenerationInfo(
+    proposal: AdventureTurnProposal,
+    transport: AdventureGenerationInfo["transport"],
+    options: AdventureGenerationOptions,
+  ): AdventureTurnGenerationResult {
+    // The selection name is our registry key (both transports default to
+    // the same key); never a provider-returned raw model string (#5112 Q3).
+    const generationInfo: AdventureGenerationInfo = {
+      transport,
+      modelKey: options.modelName ?? DEFAULT_ADVENTURE_MODEL,
+    };
+    // Interaction generation always sends an effort (defaulting to "low");
+    // stateless generation only honours one when explicitly requested.
+    const reasoningEffort =
+      transport === "interaction"
+        ? (options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT)
+        : options.reasoningEffort;
+    if (reasoningEffort) generationInfo.reasoningEffort = reasoningEffort;
+    return Object.assign(proposal, { generationInfo });
+  }
+
   private async generateBuffered(
     request: AdventureTurnGenerationRequest,
     prompt: AdventurePrompt,
     systemInstruction: string,
     options: AdventureGenerationOptions,
     forceStructuredOutput = false,
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     streamAborted(options.signal ?? request.signal);
     if (
       this.aiClient.sendInteraction &&
       !options.apiKey &&
       !forceStructuredOutput
     ) {
-      return this.interactionGeneration.generate(
+      return this.withGenerationInfo(
+        await this.interactionGeneration.generate(
+          request,
+          prompt,
+          systemInstruction,
+          options,
+        ),
+        "interaction",
+        options,
+      );
+    }
+    return this.withGenerationInfo(
+      await this.contentGeneration.buffered(
         request,
         prompt,
         systemInstruction,
         options,
-      );
-    }
-    return this.contentGeneration.buffered(
-      request,
-      prompt,
-      systemInstruction,
+      ),
+      "stateless",
       options,
     );
   }
@@ -89,7 +127,7 @@ export class AdventureTurnGenerationService {
   async generate(
     request: AdventureTurnGenerationRequest,
     options: AdventureGenerationOptions = {},
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       throw new Error("offline");
     }
@@ -109,10 +147,14 @@ export class AdventureTurnGenerationService {
       (this.aiClient.sendInteraction || this.aiClient.sendInteractionStream)
     ) {
       try {
-        return await this.interactionGeneration.generate(
-          request,
-          prompt,
-          systemInstruction,
+        return this.withGenerationInfo(
+          await this.interactionGeneration.generate(
+            request,
+            prompt,
+            systemInstruction,
+            options,
+          ),
+          "interaction",
           options,
         );
       } catch (error) {
@@ -139,7 +181,7 @@ export class AdventureTurnGenerationService {
     systemInstruction: string,
     options: AdventureGenerationOptions,
     fallbackToStateless: boolean,
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     const signal = options.signal ?? request.signal;
     if (request.onNarration) {
       try {
@@ -149,7 +191,9 @@ export class AdventureTurnGenerationService {
           systemInstruction,
           options,
         );
-        if (streamed) return streamed;
+        if (streamed) {
+          return this.withGenerationInfo(streamed, "stateless", options);
+        }
       } catch (error) {
         // A complete stream can still contain malformed JSON or a response
         // that violates the turn schema. Retry once with the provider's

@@ -34,6 +34,7 @@ import {
 } from "./package-progress";
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
+import { classifyTurnProgress } from "./turn-progression";
 import type {
   ActorEventProposal,
   AdventureSession,
@@ -41,6 +42,7 @@ import type {
   AdventureValidationError,
   CommitMetadata,
   CommittedAdventureTurn,
+  GenerationMetadata,
   PackageEventProposal,
   PackageProgress,
   Result,
@@ -432,6 +434,21 @@ function applyTurnWorldTimeAndPressures(
   return { ok: true };
 }
 
+/** Defensive copy so later caller mutation cannot rewrite a committed turn. */
+function copyGenerationMetadata(
+  generation: GenerationMetadata,
+): GenerationMetadata {
+  return {
+    ...generation,
+    ...(generation.sourceCounts
+      ? { sourceCounts: { ...generation.sourceCounts } }
+      : {}),
+    ...(generation.scenarioIds
+      ? { scenarioIds: [...generation.scenarioIds] }
+      : {}),
+  };
+}
+
 function createCommittedTurn(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
@@ -443,7 +460,7 @@ function createCommittedTurn(
     { kind: "complete" }
   >["timeAdvance"],
 ): CommittedAdventureTurn {
-  return {
+  const turn: CommittedAdventureTurn = {
     id: meta.turnId,
     sequence: session.turns.length,
     inputId: meta.inputId,
@@ -473,4 +490,13 @@ function createCommittedTurn(
       : {}),
     suggestedActions: proposal.suggestedActions,
   };
+  if (meta.generation) {
+    // #5110 classification is computed here, verbatim, so every consumer
+    // shares one progress vocabulary; a supplied value never overrides it.
+    turn.generation = {
+      ...copyGenerationMetadata(meta.generation),
+      progressCategory: classifyTurnProgress(turn, session).kind,
+    };
+  }
+  return turn;
 }
