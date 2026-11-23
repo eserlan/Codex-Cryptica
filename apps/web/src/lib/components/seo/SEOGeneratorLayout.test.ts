@@ -93,6 +93,32 @@ describe("SEOGeneratorLayout Theming Sync", () => {
     expect(vaultThemeSpy).not.toHaveBeenCalled();
   });
 
+  it("emits a pre-paint theme bootstrap only for customizable genres (#5149)", () => {
+    const mockGenerate = vi.fn().mockResolvedValue({});
+    const { unmount } = render(SEOGeneratorLayout, {
+      props: {
+        theme: "Classic Fantasy",
+        isThemeCustomizable: true,
+        generate: mockGenerate,
+        formFields: noopSnippet,
+      },
+    });
+    expect(document.head.innerHTML).toContain("window.__codexApplyTheme");
+    expect(document.head.innerHTML).toContain('"fantasy"');
+    unmount();
+    document.head.innerHTML = "";
+
+    render(SEOGeneratorLayout, {
+      props: {
+        theme: "Classic Fantasy",
+        isThemeCustomizable: false,
+        generate: mockGenerate,
+        formFields: noopSnippet,
+      },
+    });
+    expect(document.head.innerHTML).not.toContain("window.__codexApplyTheme");
+  });
+
   it("does not overwrite the next public page's explicit theme on navigation", async () => {
     render(SEOGeneratorLayout, {
       props: {

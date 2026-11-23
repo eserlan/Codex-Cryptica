@@ -1,7 +1,7 @@
 <!-- This layout keeps route-level slots and their recovery contracts together; SEOGeneratorLayout tests cover them. -->
 <!-- fallow-ignore-file complexity -->
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onMount, untrack } from "svelte";
   import type { Snippet } from "svelte";
   import { browser } from "$app/env";
   import { saveGeneratorOutputForReload } from "./generator-output-reload.js";
@@ -26,6 +26,7 @@
     type ClipboardService,
   } from "#lib/services/ClipboardService.js";
   import { when } from "#lib/utils/when.js";
+  import { themeBootstrapScript } from "#lib/theme/theme-bootstrap.js";
   import { registerShellCtaHandler } from "./marketing-shell";
   import {
     resolveWorldThemeId,
@@ -254,6 +255,12 @@
     );
   });
   const activeThemeId = $derived(resolveWorldThemeId(theme));
+  // Pre-paint genre bootstrap (#5149): the prerendered head applies the
+  // initial genre before the body parses, so the page does not flash the
+  // workspace theme until the effect below runs on hydration.
+  const themeBootstrap = themeBootstrapScript(
+    untrack(() => (isThemeCustomizable ? activeThemeId : null)),
+  );
   // Stable per-page generator identifier for analytics (#1796) — derived from
   // the page's own canonical path (or the eyebrow label as a fallback) so
   // it's available immediately, before any generation happens, unlike
@@ -422,6 +429,14 @@
     isSendingToMonsterLabs={handoffs.monsterLabsFlow.state === "loading"}
   />
 {/snippet}
+
+<svelte:head>
+  {#if themeBootstrap}
+    <!-- Apply the page genre before the body is parsed to avoid a first-paint flash. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html themeBootstrap}
+  {/if}
+</svelte:head>
 
 <SEOGeneratorHead
   title={pageTitle}
