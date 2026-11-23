@@ -18,6 +18,10 @@ export const biomeExplorer = new BiomeExplorerStore({
   suggest: createBiomeSuggestRunner({
     aiClient: createLazyAIClientManager(),
     settings: oracle,
+    ensureSession: async () => {
+      const mod = await import("#lib/services/ai/public-session-bootstrap.js");
+      mod.ensurePublicAiSession();
+    },
   }),
   isVaultWritable: () => false,
   now: () => systemClock.now(),

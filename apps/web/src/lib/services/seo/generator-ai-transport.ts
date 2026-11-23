@@ -1,14 +1,24 @@
 import { classifyApiError } from "@codex/ai-engine/api-error-classifier";
-import { ensureAiSession } from "#lib/services/ai/session-bootstrap.js";
-import { loadConfiguredAIEngine } from "#lib/services/ai/ai-engine-loader.js";
 import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import type { GeneratorOutput } from "./generator-helpers";
 
 type AIClientManager = Pick<
-  typeof import("@codex/ai-engine").aiClientManager,
+  typeof import("@codex/ai-engine/client-manager").aiClientManager,
   "getModel"
 >;
 type AIClientManagerLoader = () => Promise<AIClientManager>;
+
+async function loadDefaultClientManager(): Promise<AIClientManager> {
+  const session = await import(
+    "#lib/services/ai/public-session-bootstrap.js"
+  );
+  session.ensurePublicAiSession();
+  const { loadConfiguredAIEngine } = await import(
+    "#lib/services/ai/ai-engine-loader.js"
+  );
+  await loadConfiguredAIEngine();
+  return (await import("@codex/ai-engine/client-manager")).aiClientManager;
+}
 
 /** Single source of truth for the generator model id (#1494). */
 export const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
@@ -108,15 +118,21 @@ export class GeneratorAITransport {
 
   constructor(
     private readonly clientManager?: AIClientManager,
-    private readonly loadClientManager: AIClientManagerLoader = async () => {
-      await ensureAiSession();
-      await loadConfiguredAIEngine();
-      return (await import("@codex/ai-engine/client-manager")).aiClientManager;
-    },
+    private readonly loadClientManager: AIClientManagerLoader =
+      loadDefaultClientManager,
   ) {}
 
   private async getClientManager(): Promise<AIClientManager> {
     return this.clientManager ?? this.loadClientManager();
+  }
+
+  private throwIfAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) {
+      throw (
+        signal.reason ??
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    }
   }
 
   async generateWithPreview<T>(
@@ -184,15 +200,15 @@ export class GeneratorAITransport {
     emitPreview = true,
     signal?: AbortSignal,
   ): Promise<string> {
-    const model = await (
-      await this.getClientManager()
-    ).getModel("", GENERATOR_MODEL_ID, systemInstruction);
-    if (signal?.aborted) {
-      throw (
-        signal.reason ??
-        new DOMException("The operation was aborted", "AbortError")
-      );
-    }
+    this.throwIfAborted(signal);
+    const clientManager = await this.getClientManager();
+    this.throwIfAborted(signal);
+    const model = await clientManager.getModel(
+      "",
+      GENERATOR_MODEL_ID,
+      systemInstruction,
+    );
+    this.throwIfAborted(signal);
     const request = generationConfig
       ? {
           contents: [{ role: "user", parts: [{ text: userMessage }] }],
@@ -225,9 +241,11 @@ export class GeneratorAITransport {
    * earlier sections (council-vote's paths vs. its own roster).
    */
   async startChat(systemInstruction: string) {
-    const model = await (
-      await this.getClientManager()
-    ).getModel("", GENERATOR_MODEL_ID, systemInstruction);
+    const model = await (await this.getClientManager()).getModel(
+      "",
+      GENERATOR_MODEL_ID,
+      systemInstruction,
+    );
     return model.startChat({ history: [] });
   }
 

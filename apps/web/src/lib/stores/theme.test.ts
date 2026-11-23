@@ -437,4 +437,26 @@ describe("ThemeStore", () => {
       expect(root.style.getPropertyValue("--bg-texture-overlay")).toBe("none");
     });
   });
+
+  describe("Marketing -> App Reset", () => {
+    it("unconditionally re-applies theme tokens on init() even when worldThemeId is unchanged", async () => {
+      store.setAppAppearance("neutral-light");
+      document.documentElement.dataset.worldTheme = "pirate";
+      document.documentElement.style.setProperty(
+        "--color-accent-primary",
+        "#123456",
+      );
+
+      mockStorage.loadFromDisk = vi.fn().mockResolvedValue("workspace");
+      await store.init();
+
+      expect(store.worldThemeId).toBe("workspace");
+      expect(document.documentElement.dataset.worldTheme).toBe("workspace");
+      expect(
+        document.documentElement.style.getPropertyValue(
+          "--color-accent-primary",
+        ),
+      ).toBe(THEMES.workspace.tokens.primary);
+    });
+  });
 });

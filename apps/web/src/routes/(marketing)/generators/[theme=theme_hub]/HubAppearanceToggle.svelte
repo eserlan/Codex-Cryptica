@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { themeStore } from "#lib/stores/theme.svelte.js";
+  import { appearanceStore } from "#lib/stores/appearance.svelte.js";
 
   const modes = [
     { id: "neutral-light", label: "Light", icon: "icon-[lucide--sun]" },
@@ -21,12 +21,12 @@
       type="button"
       title="Switch to {mode.label} Mode"
       aria-label="{mode.label} mode"
-      aria-pressed={themeStore.resolvedAppAppearanceId === mode.id}
-      class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {themeStore.resolvedAppAppearanceId ===
+      aria-pressed={appearanceStore.resolvedAppAppearanceId === mode.id}
+      class="flex items-center gap-1.5 rounded px-3 py-1.5 text-xs font-bold tracking-wide uppercase transition-all {appearanceStore.resolvedAppAppearanceId ===
       mode.id
         ? selectedClass
         : idleClass}"
-      onclick={() => themeStore.setAppAppearance(mode.id)}
+      onclick={() => appearanceStore.setAppAppearance(mode.id)}
     >
       <span class="{mode.icon} h-3.5 w-3.5" aria-hidden="true"></span>
       <span class="hidden sm:inline">{mode.label}</span>

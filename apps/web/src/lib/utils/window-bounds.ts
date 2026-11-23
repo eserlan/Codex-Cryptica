@@ -30,13 +30,20 @@ export const MIN_WINDOW_WIDTH = 340;
 export const MIN_WINDOW_HEIGHT = 380;
 export const WINDOW_MARGIN = 8;
 
-export function getViewportSize(): ViewportSize {
-  if (typeof window === "undefined") {
+type WindowViewportSource = Pick<Window, "innerWidth" | "innerHeight">;
+
+export function getViewportSize(
+  viewportWindow: WindowViewportSource | undefined = typeof window ===
+  "undefined"
+    ? undefined
+    : window,
+): ViewportSize {
+  if (!viewportWindow) {
     return { width: 1024, height: 768 };
   }
   return {
-    width: window.innerWidth ?? 1024,
-    height: window.innerHeight ?? 768,
+    width: viewportWindow.innerWidth ?? 1024,
+    height: viewportWindow.innerHeight ?? 768,
   };
 }
 

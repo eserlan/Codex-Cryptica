@@ -1,24 +1,4 @@
-import {
-  THEMES,
-  DEFAULT_THEME,
-  DEFAULT_JARGON,
-  WORKSPACE_DARK,
-  FANTASY_DARK,
-  PIRATE_DARK,
-  MODERN_DARK,
-  SCIFI_LIGHT,
-  CYBERPUNK_LIGHT,
-  APOCALYPTIC_LIGHT,
-  HORROR_LIGHT,
-  COSMIC_HORROR_LIGHT,
-  FALLOUT_LIGHT,
-  STARWARS_LIGHT,
-  STARTREK_LIGHT,
-  LANCER_LIGHT,
-  WESTERN_DARK,
-  STEAMPUNK_DARK,
-  SUPERHERO_DARK,
-} from "schema";
+import { THEMES, DEFAULT_THEME } from "schema";
 import type {
   StylingTemplate,
   JargonMap,
@@ -28,16 +8,24 @@ import type {
 } from "schema";
 import { browser } from "$app/env";
 import { getDB } from "../utils/idb";
-import { hexToRgb } from "../utils/color";
 import { getOpfsRoot, getVaultDir, readFileAsText } from "../utils/opfs";
 import { updateVaultConfig } from "../utils/vault-config";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
+import {
+  APPEARANCE_STORAGE_KEY,
+  THEME_STORAGE_KEY,
+  applyThemeTokensToDocument,
+  getThemeJargon,
+  isPublicThemePreviewActive,
+  resolveStylingTemplate,
+  resolveThemeJargon,
+  setPublicThemePreviewActive,
+} from "#lib/theme/theme-dom.js";
+import { AppearanceStore, appearanceStore } from "./appearance.svelte";
 
 import { guestVault } from "./guest-vault.svelte";
 import { vaultRegistry } from "./vault-registry.svelte";
 
-const STORAGE_KEY = "codex-cryptica-active-theme";
-const APPEARANCE_KEY = "codex-cryptica-app-appearance";
 const CONFIG_PATH = [".codex", "config.json"];
 
 export interface IThemeStorage {
@@ -51,11 +39,72 @@ export interface IThemeStorage {
   saveToDisk(vaultId: string, id: string): Promise<void>;
 }
 
+const defaultThemeStorage: IThemeStorage = {
+  loadLocal() {
+    if (!browser) return null;
+    try {
+      return localStorage.getItem(THEME_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  },
+  saveLocal(id) {
+    if (!browser) return;
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, id);
+    } catch {
+      // ignore
+    }
+  },
+  loadAppAppearance() {
+    if (!browser) return null;
+    try {
+      return localStorage.getItem(APPEARANCE_STORAGE_KEY);
+    } catch {
+      return null;
+    }
+  },
+  saveAppAppearance(id) {
+    if (!browser) return;
+    try {
+      localStorage.setItem(APPEARANCE_STORAGE_KEY, id);
+    } catch {
+      // ignore
+    }
+  },
+  async loadFromCache(vaultId) {
+    const db = await getDB();
+    return await db.get("settings", `theme_${vaultId}`);
+  },
+  async saveToCache(vaultId, id) {
+    const db = await getDB();
+    await db.put("settings", id, `theme_${vaultId}`);
+  },
+  async loadFromDisk(vaultId) {
+    try {
+      const root = await getOpfsRoot();
+      const vaultDir = await getVaultDir(root, vaultId);
+      const json = await readFileAsText(vaultDir, CONFIG_PATH);
+      const config = JSON.parse(json);
+      return config.theme || null;
+    } catch {
+      return null;
+    }
+  },
+  async saveToDisk(vaultId, themeId) {
+    try {
+      await updateVaultConfig(vaultId, (config) => {
+        config.theme = themeId;
+      });
+    } catch (err) {
+      console.warn("[ThemeStore] Failed to save theme to disk", err);
+    }
+  },
+};
+
 export class ThemeStore {
-  appAppearanceId = $state<AppAppearanceId>("system");
   worldThemeId = $state<WorldThemeId>(DEFAULT_THEME.id);
   previewThemeId = $state<WorldThemeId | null>(null);
-  isSystemDark = $state<boolean>(false);
 
   /**
    * Optional callback for when the theme is explicitly changed.
@@ -66,80 +115,34 @@ export class ThemeStore {
   private sessionModeStore: typeof sessionModeStore;
   private storage: IThemeStorage;
   private getVault: () => any;
+  private appearance: AppearanceStore;
 
-  activeTheme = $derived.by(() => {
-    const rawId = this.previewThemeId || this.worldThemeId || DEFAULT_THEME.id;
-    const id = rawId.replace(/_(light|dark)$/, "") as WorldThemeId;
-    const isDark = this.resolvedAppAppearanceId === "neutral-dark";
+  get appAppearanceId(): AppAppearanceId {
+    return this.appearance.appAppearanceId;
+  }
 
-    if (isDark) {
-      switch (id) {
-        case "workspace":
-          return WORKSPACE_DARK;
-        case "fantasy":
-          return FANTASY_DARK;
-        case "pirate":
-          return PIRATE_DARK;
-        case "modern":
-          return MODERN_DARK;
-        case "western":
-          return WESTERN_DARK;
-        case "steampunk":
-          return STEAMPUNK_DARK;
-        case "superhero":
-          return SUPERHERO_DARK;
-        default:
-          return (THEMES as any)[id] || DEFAULT_THEME;
-      }
-    } else {
-      switch (id) {
-        case "workspace":
-          return THEMES.workspace;
-        case "fantasy":
-          return THEMES.fantasy;
-        case "pirate":
-          return THEMES.pirate;
-        case "modern":
-          return THEMES.modern;
-        case "scifi":
-          return SCIFI_LIGHT;
-        case "cyberpunk":
-          return CYBERPUNK_LIGHT;
-        case "apocalyptic":
-          return APOCALYPTIC_LIGHT;
-        case "horror":
-          return HORROR_LIGHT;
-        case "cosmic_horror":
-          return COSMIC_HORROR_LIGHT;
-        case "fallout":
-          return FALLOUT_LIGHT;
-        case "starwars":
-          return STARWARS_LIGHT;
-        case "startrek":
-          return STARTREK_LIGHT;
-        case "lancer":
-          return LANCER_LIGHT;
-        case "western":
-          return THEMES.western;
-        case "steampunk":
-          return THEMES.steampunk;
-        case "superhero":
-          return THEMES.superhero;
-        default:
-          return DEFAULT_THEME;
-      }
-    }
-  });
+  set appAppearanceId(value: AppAppearanceId) {
+    this.appearance.appAppearanceId = value;
+  }
 
-  resolvedAppAppearanceId = $derived<ResolvedAppAppearanceId>(
-    this.appAppearanceId === "system"
-      ? this.isSystemDark
-        ? "neutral-dark"
-        : "neutral-light"
-      : this.appAppearanceId === "neutral-dark"
-        ? "neutral-dark"
-        : "neutral-light",
+  get isSystemDark(): boolean {
+    return this.appearance.isSystemDark;
+  }
+
+  set isSystemDark(value: boolean) {
+    this.appearance.isSystemDark = value;
+  }
+
+  activeTheme = $derived.by(() =>
+    resolveStylingTemplate(
+      this.previewThemeId || this.worldThemeId,
+      this.resolvedAppAppearanceId,
+    ),
   );
+
+  get resolvedAppAppearanceId(): ResolvedAppAppearanceId {
+    return this.appearance.resolvedAppAppearanceId;
+  }
 
   get currentThemeId(): string {
     return this.worldThemeId;
@@ -152,74 +155,29 @@ export class ThemeStore {
   /**
    * Resolved jargon for the active theme, falling back to defaults.
    */
-  jargon = $derived({
-    ...DEFAULT_JARGON,
-    ...(this.activeTheme.jargon || {}),
-  } as JargonMap);
+  jargon = $derived(getThemeJargon(this.activeTheme));
 
   /**
    * Helper to resolve a jargon key with optional pluralization.
    */
   resolveJargon(key: keyof JargonMap, count?: number): string {
-    if (count !== undefined && count !== 1) {
-      const pluralKey = `${String(key)}_plural`;
-      if (this.jargon[pluralKey]) return this.jargon[pluralKey];
-    }
-    return this.jargon[key] || DEFAULT_JARGON[key] || String(key);
+    return resolveThemeJargon(this.activeTheme, key, count);
   }
 
   constructor(
     sessionStore: typeof sessionModeStore = sessionModeStore,
     getVault?: () => any,
-    storage: IThemeStorage = {
-      loadLocal() {
-        if (!browser) return null;
-        return localStorage.getItem(STORAGE_KEY);
-      },
-      saveLocal(id) {
-        if (!browser) return;
-        localStorage.setItem(STORAGE_KEY, id);
-      },
-      loadAppAppearance() {
-        if (!browser) return null;
-        return localStorage.getItem(APPEARANCE_KEY);
-      },
-      saveAppAppearance(id) {
-        if (!browser) return;
-        localStorage.setItem(APPEARANCE_KEY, id);
-      },
-      async loadFromCache(vaultId) {
-        const db = await getDB();
-        return await db.get("settings", `theme_${vaultId}`);
-      },
-      async saveToCache(vaultId, id) {
-        const db = await getDB();
-        await db.put("settings", id, `theme_${vaultId}`);
-      },
-      async loadFromDisk(vaultId) {
-        try {
-          const root = await getOpfsRoot();
-          const vaultDir = await getVaultDir(root, vaultId);
-          const json = await readFileAsText(vaultDir, CONFIG_PATH);
-          const config = JSON.parse(json);
-          return config.theme || null;
-        } catch {
-          return null;
-        }
-      },
-      async saveToDisk(vaultId, themeId) {
-        try {
-          await updateVaultConfig(vaultId, (config) => {
-            config.theme = themeId;
-          });
-        } catch (err) {
-          console.warn("[ThemeStore] Failed to save theme to disk", err);
-        }
-      },
-    },
+    storage: IThemeStorage = defaultThemeStorage,
+    appearance?: AppearanceStore,
   ) {
     this.sessionModeStore = sessionStore;
     this.storage = storage;
+    this.appearance =
+      appearance ??
+      new AppearanceStore({
+        load: () => this.storage.loadAppAppearance(),
+        save: (id) => this.storage.saveAppAppearance(id),
+      });
     // Read the active vault id from the lightweight vault registry rather than
     // dynamically importing the full vault store. vault.svelte pulls in the
     // heavy search-orchestrator `.svelte.ts` chain (via vault → lifecycle /
@@ -231,39 +189,6 @@ export class ThemeStore {
     // avoiding the theme↔vault circular import.
     this.getVault =
       getVault || (() => ({ activeVaultId: vaultRegistry.activeVaultId }));
-
-    // Media query listener for prefers-color-scheme
-    if (
-      browser &&
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function"
-    ) {
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      this.isSystemDark = mediaQuery.matches;
-
-      // Use modern addEventListener if available, fallback to addListener
-      const listener = (e: MediaQueryListEvent) => {
-        this.isSystemDark = e.matches;
-      };
-      if (mediaQuery.addEventListener) {
-        mediaQuery.addEventListener("change", listener);
-      } else if (mediaQuery.addListener) {
-        mediaQuery.addListener(listener);
-      }
-    }
-
-    // Apply initial app appearance
-    const initialAppearance = this.storage.loadAppAppearance();
-    if (
-      initialAppearance &&
-      (initialAppearance === "neutral-light" ||
-        initialAppearance === "neutral-dark" ||
-        initialAppearance === "system")
-    ) {
-      this.appAppearanceId = initialAppearance;
-    } else {
-      this.appAppearanceId = "system";
-    }
 
     // Apply initial theme
     const initial = this.storage.loadLocal();
@@ -297,10 +222,17 @@ export class ThemeStore {
   async init() {
     if (!browser) return;
 
+    setPublicThemePreviewActive(false);
+
     if (this.sessionModeStore.isGuestMode) {
       if (guestVault.activeTheme?.id) {
         await this.setTheme(guestVault.activeTheme.id);
       }
+      this.applyTheme(
+        this.activeTheme,
+        this.resolvedAppAppearanceId,
+        this.appAppearanceId,
+      );
       return;
     }
 
@@ -320,6 +252,14 @@ export class ThemeStore {
         this.worldThemeId = stored as WorldThemeId;
       }
     }
+
+    // Always re-apply tokens on app entry so any residual marketing preview
+    // CSS variables are cleared even when worldThemeId itself is unchanged.
+    this.applyTheme(
+      this.activeTheme,
+      this.resolvedAppAppearanceId,
+      this.appAppearanceId,
+    );
   }
 
   async loadForVault(vaultId: string) {
@@ -428,10 +368,10 @@ export class ThemeStore {
   }
 
   setAppAppearance(id: AppAppearanceId) {
-    this.appAppearanceId = id;
-    if (browser && !this.sessionModeStore.isDemoMode) {
-      this.storage.saveAppAppearance(id);
-    }
+    this.appearance.setAppAppearance(
+      id,
+      browser && !this.sessionModeStore.isDemoMode,
+    );
   }
 
   previewTheme(id: string | null) {
@@ -443,213 +383,25 @@ export class ThemeStore {
     appearance: ResolvedAppAppearanceId,
     appearanceChoice: AppAppearanceId,
   ) {
-    if (typeof document === "undefined") return;
-
-    const root = document.documentElement;
-    const tokens = theme.tokens;
-    root.dataset.theme = theme.id;
-    root.dataset.appAppearance = appearance;
-    root.dataset.appAppearanceChoice = appearanceChoice;
-    root.dataset.worldTheme = (
-      this.previewThemeId || this.worldThemeId
-    ).replace(/_(light|dark)$/, "");
-
-    root.style.setProperty("--color-bg-primary", tokens.background);
-    root.style.setProperty("--color-bg-surface", tokens.surface);
-    root.style.setProperty("--color-accent-primary", tokens.primary);
-    root.style.setProperty("--color-accent-dim", tokens.secondary);
-    root.style.setProperty("--color-accent-dark", tokens.secondary);
-    root.style.setProperty("--color-accent-deep", tokens.background);
-    root.style.setProperty("--color-border-primary", tokens.border);
-
-    // Base accent alias (for --color-theme-accent and --color-theme-danger)
-    root.style.setProperty("--color-accent", tokens.accent);
-
-    // RGB versions for rgba() usage in shadows/overlays
-    root.style.setProperty(
-      "--color-accent-primary-rgb",
-      hexToRgb(tokens.primary),
-    );
-    root.style.setProperty("--color-theme-accent-rgb", hexToRgb(tokens.accent));
-    // Compatibility aliases
-    root.style.setProperty("--theme-primary-rgb", hexToRgb(tokens.primary));
-    root.style.setProperty("--theme-accent-rgb", hexToRgb(tokens.accent));
-
-    root.style.setProperty("--color-text-primary", tokens.text);
-    root.style.setProperty(
-      "--color-text-muted",
-      tokens.metaText ?? tokens.secondary,
-    );
-    root.style.setProperty(
-      "--color-text-dim",
-      tokens.metaText ?? tokens.secondary,
-    );
-
-    // Semantic tokens for cross-surface contrast compliance
-    root.style.setProperty("--text-primary", tokens.text);
-    root.style.setProperty(
-      "--text-secondary",
-      tokens.sectionTitle ?? tokens.secondary,
-    );
-    root.style.setProperty("--text-muted", tokens.metaText ?? tokens.secondary);
-    root.style.setProperty("--link", tokens.link ?? tokens.primary);
-    root.style.setProperty(
-      "--icon-interactive",
-      tokens.iconActive ?? tokens.primary,
-    );
-    root.style.setProperty(
-      "--border-interactive",
-      tokens.selectedBorder ?? tokens.primary,
-    );
-
-    root.style.setProperty("--color-theme-accent", tokens.accent);
-    root.style.setProperty("--theme-title-ink", tokens.titleInk ?? tokens.text);
-    root.style.setProperty(
-      "--theme-section-title",
-      tokens.sectionTitle ?? tokens.secondary,
-    );
-    root.style.setProperty(
-      "--theme-meta-text",
-      tokens.metaText ?? tokens.secondary,
-    );
-    root.style.setProperty(
-      "--theme-icon-default",
-      tokens.iconDefault ?? tokens.secondary,
-    );
-    root.style.setProperty(
-      "--theme-icon-active",
-      tokens.iconActive ?? tokens.primary,
-    );
-    root.style.setProperty("--theme-focus", tokens.focus ?? tokens.accent);
-    root.style.setProperty(
-      "--theme-panel-fill",
-      tokens.panelFill ?? tokens.surface,
-    );
-    root.style.setProperty(
-      "--theme-panel-muted",
-      tokens.panelMuted ??
-        `color-mix(in srgb, ${tokens.surface}, ${tokens.background} 28%)`,
-    );
-    root.style.setProperty(
-      "--theme-selected-bg",
-      tokens.selectedBg ??
-        `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 86%)`,
-    );
-    root.style.setProperty(
-      "--theme-selected-border",
-      tokens.selectedBorder ??
-        `color-mix(in srgb, ${tokens.primary}, ${tokens.background} 42%)`,
-    );
-    root.style.setProperty(
-      "--theme-focus-bg",
-      tokens.focusBg ??
-        `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 84%)`,
-    );
-    root.style.setProperty(
-      "--theme-focus-border",
-      tokens.focusBorder ??
-        `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 42%)`,
-    );
-    root.style.setProperty(
-      "--theme-action-bg",
-      tokens.actionBg ?? tokens.primary,
-    );
-    root.style.setProperty(
-      "--theme-action-hover",
-      tokens.actionHover ?? tokens.secondary,
-    );
-    root.style.setProperty(
-      "--theme-action-text",
-      tokens.actionText ?? tokens.background,
-    );
-
-    root.style.setProperty("--color-oracle-primary", tokens.accent);
-    root.style.setProperty(
-      "--color-oracle-dim",
-      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 30%)`,
-    );
-    root.style.setProperty(
-      "--color-oracle-dark",
-      `color-mix(in srgb, ${tokens.accent}, ${tokens.background} 60%)`,
-    );
-
-    root.style.setProperty("--font-header-val", tokens.fontHeader);
-    root.style.setProperty("--font-body-val", tokens.fontBody);
-    root.style.setProperty(
-      "--font-display-val",
-      tokens.fontDisplay ?? tokens.fontHeader,
-    );
-    root.style.setProperty(
-      "--theme-border-width",
-      `${theme.graph.nodeBorderWidth}px`,
-    );
-    root.style.setProperty(
-      "--theme-edge-stroke-width",
-      `${theme.graph.edgeWidth}px`,
-    );
-
-    // Theme specific visual behaviors
-    let glow = "none";
-    if (theme.id === "cyberpunk") glow = `0 0 15px ${tokens.primary}44`;
-    if (theme.id === "horror") glow = `0 0 20px ${tokens.primary}33`;
-    if (theme.id === "fantasy") glow = `0 0 14px ${tokens.accent}44`;
-    // Phosphor bloom: neon green bleeds into surrounding glass like a real CRT tube
-    if (theme.id === "fallout")
-      glow = `0 0 18px ${tokens.primary}55, 0 0 6px ${tokens.primary}33`;
-    root.style.setProperty("--theme-glow", glow);
-
-    // Phosphor text-shadow for CRT header glow — bleeds light from characters into the screen glass
-    let textGlow = "none";
-    if (theme.id === "fallout")
-      textGlow = `0 0 4px ${tokens.primary}80, 0 0 1px ${tokens.primary}`;
-    root.style.setProperty("--theme-text-glow", textGlow);
-
-    let radius = "2px"; // Gothic/Terminal default
-    if (theme.id === "modern") radius = "12px";
-    if (theme.id === "fantasy") radius = "3px"; // Firmer, less app-like fantasy
-    if (theme.id === "horror") radius = "0px"; // Sharp corners for horror
-    if (tokens.borderRadius) radius = tokens.borderRadius;
-    root.style.setProperty("--theme-border-radius", radius);
-
-    if (tokens.texture === "workspace_grain.svg") {
-      const workspaceWash = `radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, ${tokens.accent} 5%, transparent), transparent 70%)`;
-      root.style.setProperty("--bg-texture", "none");
-      root.style.setProperty("--bg-texture-overlay", workspaceWash);
-      root.style.setProperty(
-        "--theme-card-backdrop",
-        tokens.textureCardBlur ? `blur(${tokens.textureCardBlur})` : "none",
-      );
-    } else if (tokens.texture) {
-      const alpha = tokens.textureOverlayAlpha ?? "80";
-      root.style.setProperty(
-        "--bg-texture",
-        `url('/themes/${tokens.texture}')`,
-      );
-      // CRT vignette: radial dark-edge gradient layered above the scanline texture
-      const vignette =
-        theme.id === "fallout"
-          ? `radial-gradient(ellipse at center, transparent 55%, ${tokens.background}CC 100%), `
-          : "";
-      root.style.setProperty(
-        "--bg-texture-overlay",
-        `${vignette}linear-gradient(${tokens.background}${alpha}, ${tokens.background}${alpha}), url('/themes/${tokens.texture}')`,
-      );
-      root.style.setProperty(
-        "--theme-card-backdrop",
-        tokens.textureCardBlur ? `blur(${tokens.textureCardBlur})` : "none",
-      );
-    } else {
-      root.style.setProperty("--bg-texture", "none");
-      root.style.setProperty("--bg-texture-overlay", "none");
-      root.style.setProperty("--theme-card-backdrop", "none");
-    }
+    if (isPublicThemePreviewActive()) return;
+    applyThemeTokensToDocument({
+      theme,
+      worldThemeId: this.previewThemeId || this.worldThemeId,
+      appearance,
+      appearanceChoice,
+    });
   }
 }
 
 const THEME_KEY = "__codex_theme_instance__";
 export const themeStore: ThemeStore =
   (globalThis as any)[THEME_KEY] ??
-  ((globalThis as any)[THEME_KEY] = new ThemeStore());
+  ((globalThis as any)[THEME_KEY] = new ThemeStore(
+    sessionModeStore,
+    undefined,
+    defaultThemeStorage,
+    appearanceStore,
+  ));
 
 if (typeof window !== "undefined" && import.meta.env.DEV) {
   (window as any).themeStore = themeStore;

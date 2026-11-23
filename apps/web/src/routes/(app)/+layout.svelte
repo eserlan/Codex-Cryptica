@@ -316,6 +316,15 @@
   });
 
   onMount(() => {
+    if (browser) {
+      void import("#lib/services/ai/session-bootstrap.js").then((m) =>
+        m.initAiSession(),
+      );
+      void import("#lib/services/mobile/capacitor-bridge.js").then((m) =>
+        m.capacitorBridge.init(),
+      );
+    }
+
     initAudioEngine({
       vault,
       oracle,
