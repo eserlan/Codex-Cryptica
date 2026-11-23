@@ -24,14 +24,23 @@ function relayTokenToWorkers(token: CachedToken | null): void {
   proposerBridge.setSessionToken(token);
 }
 
-/**
- * Wire the shared capability-token manager and both worker push/pull hooks
- * without solving Turnstile or issuing a network request.
- */
-export function initAiSession(): void {
+function attachWorkerSessionRelays(): void {
   setSessionTokenRelay(relayTokenToWorkers);
   const manager = ensurePublicAiSession();
   if (!manager) return;
   oracleBridge.setTokenProvider(getAiSessionSnapshot);
   proposerBridge.setTokenProvider(getAiSessionSnapshot);
+}
+
+/**
+ * Wire the shared capability-token manager and both worker push/pull hooks
+ * without solving Turnstile or issuing a network request.
+ */
+export function initAiSession(): void {
+  attachWorkerSessionRelays();
+}
+
+/** Prepare the capability session and worker relays before an AI operation. */
+export async function ensureAiSession(): Promise<void> {
+  attachWorkerSessionRelays();
 }

@@ -200,7 +200,7 @@ describe("GeneratorAITransport", () => {
 
       const scopedTransport = new GeneratorAITransport(undefined, async () => {
         await ensureSession();
-        return clientManager;
+        return clientManager as any;
       });
       await scopedTransport.runModel("sys", "usr");
 
@@ -251,7 +251,7 @@ describe("GeneratorAITransport", () => {
       const preEnsureSession = vi.fn();
       const preTransport = new GeneratorAITransport(undefined, async () => {
         preEnsureSession();
-        return clientManager;
+        return clientManager as any;
       });
 
       await expect(
@@ -269,7 +269,7 @@ describe("GeneratorAITransport", () => {
       const midController = new AbortController();
       const midTransport = new GeneratorAITransport(undefined, async () => {
         midController.abort();
-        return clientManager;
+        return clientManager as any;
       });
 
       await expect(
@@ -299,7 +299,7 @@ describe("GeneratorAITransport", () => {
 
       const scopedTransport = new GeneratorAITransport(undefined, async () => {
         await ensureSession();
-        return clientManager;
+        return clientManager as any;
       });
       await scopedTransport.startChat("sys");
 

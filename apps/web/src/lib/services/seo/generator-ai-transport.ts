@@ -9,13 +9,10 @@ type AIClientManager = Pick<
 type AIClientManagerLoader = () => Promise<AIClientManager>;
 
 async function loadDefaultClientManager(): Promise<AIClientManager> {
-  const session = await import(
-    "#lib/services/ai/public-session-bootstrap.js"
-  );
+  const session = await import("#lib/services/ai/public-session-bootstrap.js");
   session.ensurePublicAiSession();
-  const { loadConfiguredAIEngine } = await import(
-    "#lib/services/ai/ai-engine-loader.js"
-  );
+  const { loadConfiguredAIEngine } =
+    await import("#lib/services/ai/ai-engine-loader.js");
   await loadConfiguredAIEngine();
   return (await import("@codex/ai-engine/client-manager")).aiClientManager;
 }
@@ -118,8 +115,7 @@ export class GeneratorAITransport {
 
   constructor(
     private readonly clientManager?: AIClientManager,
-    private readonly loadClientManager: AIClientManagerLoader =
-      loadDefaultClientManager,
+    private readonly loadClientManager: AIClientManagerLoader = loadDefaultClientManager,
   ) {}
 
   private async getClientManager(): Promise<AIClientManager> {
@@ -241,11 +237,9 @@ export class GeneratorAITransport {
    * earlier sections (council-vote's paths vs. its own roster).
    */
   async startChat(systemInstruction: string) {
-    const model = await (await this.getClientManager()).getModel(
-      "",
-      GENERATOR_MODEL_ID,
-      systemInstruction,
-    );
+    const model = await (
+      await this.getClientManager()
+    ).getModel("", GENERATOR_MODEL_ID, systemInstruction);
     return model.startChat({ history: [] });
   }
 
