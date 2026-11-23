@@ -3,7 +3,7 @@ import { oracle } from "#lib/stores/oracle.svelte.js";
 import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
 import * as Comlink from "comlink";
 import { upsertMarkdownSection } from "#lib/utils/markdown.js";
-import { BANNED_NAMES } from "generator-engine";
+import { BANNED_NAMES } from "generator-engine/naming-policy";
 
 export const personalitySectionTitle = "Personality & Voice";
 

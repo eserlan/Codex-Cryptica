@@ -2,6 +2,7 @@
 
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
+import { preloadCode } from "$app/navigation";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sessionBootstrap from "#lib/services/ai/session-bootstrap.js";
 import * as turnstileService from "#lib/services/publishing/turnstile.js";
@@ -21,6 +22,12 @@ vi.mock("$app/paths", () => ({
   base: "",
   asset: (p: string) => p,
   resolve: (p: string) => p,
+  match: async (path: string) =>
+    path.endsWith("/canvas")
+      ? { id: "/(app)/canvas", params: {} }
+      : path.endsWith("/map")
+        ? { id: "/(app)/map", params: {} }
+        : null,
 }));
 vi.mock("$app/state", () => ({
   page: {
@@ -329,6 +336,14 @@ describe("+layout.svelte", () => {
     });
   });
 
+  it("does not preload map or canvas chunks before a vault session exists", async () => {
+    (vault as any).activeVaultId = null;
+    vi.mocked(preloadCode).mockClear();
+    render(LayoutTestHost);
+    await tick();
+    expect(preloadCode).not.toHaveBeenCalled();
+  });
+
   it("keeps offline shell caching inactive on non-vault app routes", async () => {
     page.url = new URL("http://localhost/dice") as typeof page.url;
 
@@ -433,6 +448,22 @@ describe("+layout.svelte", () => {
     await vi.advanceTimersByTimeAsync(100);
 
     expect(helpStore.openHelpToArticle).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("opens known Help hashes from metadata without preloading article bodies", async () => {
+    vi.useFakeTimers();
+    vi.mocked(helpStore.openHelpToArticle).mockClear();
+    helpStore.isInitialized = true;
+    page.url = new URL(
+      "http://localhost/world#help/family-tree",
+    ) as typeof page.url;
+
+    render(LayoutTestHost);
+    await tick();
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(helpStore.openHelpToArticle).toHaveBeenCalledWith("family-tree");
     vi.useRealTimers();
   });
 

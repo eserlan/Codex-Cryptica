@@ -1,7 +1,10 @@
 <script lang="ts">
   import { fade } from "svelte/transition";
   import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-  import type { ProvenanceRecord, SessionEntity } from "generator-engine";
+  import type {
+    ProvenanceRecord,
+    SessionEntity,
+  } from "generator-engine/session-hub-helpers";
   import { renderGeneratorLore } from "#lib/components/seo/markdown-renderers.js";
   import ProvenanceBadge from "../ProvenanceBadge.svelte";
 

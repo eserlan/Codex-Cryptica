@@ -7,6 +7,10 @@ vi.mock("@codex/ai-engine", () => ({
   },
 }));
 
+vi.mock("#lib/services/ai/session-bootstrap.js", () => ({
+  ensureAiSession: vi.fn(async () => {}),
+}));
+
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // Mock Svelte 5 effects and derived stubs for test environment before importing the store

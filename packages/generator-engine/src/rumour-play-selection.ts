@@ -1,4 +1,4 @@
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 
 /** A single selected rumour. gmOnly must never enter player-facing UI, logs or URLs. */
 export interface SelectedRumourForPlay {

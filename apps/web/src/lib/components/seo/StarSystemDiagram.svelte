@@ -2,9 +2,9 @@
   import {
     buildStarSystemDiagram,
     colorForBodyType,
-    STAR_TYPE_COLORS,
-  } from "generator-engine";
-  import type { StarSystemBody } from "generator-engine";
+  } from "generator-engine/star-system-diagram";
+  import { STAR_TYPE_COLORS } from "generator-engine/public-star-system";
+  import type { StarSystemBody } from "generator-engine/public-star-system";
   import { svgToPngBlob } from "#lib/utils/svg-export.js";
 
   let {

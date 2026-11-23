@@ -2,7 +2,10 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import { createEmptySessionPrep, type SessionPrep } from "generator-engine";
+import {
+  createEmptySessionPrep,
+  type SessionPrep,
+} from "generator-engine/session-prep";
 import SessionPrepBuilderForm from "./SessionPrepBuilderForm.svelte";
 
 vi.mock("#lib/services/seo/session-prep-service.js", () => ({

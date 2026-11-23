@@ -1,4 +1,4 @@
-import { businessConfig } from "generator-engine";
+import { businessConfig } from "generator-engine/public-business";
 
 /**
  * When the genre changes, a business type from the old genre's list is reset

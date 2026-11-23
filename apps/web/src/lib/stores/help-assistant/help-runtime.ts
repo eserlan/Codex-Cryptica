@@ -5,7 +5,6 @@ import { resolve } from "$app/paths";
 import { basePath } from "#lib/utils/base-path.js";
 import { page } from "$app/state";
 import { FEATURE_REGISTRY, type DestinationId } from "help-engine";
-import { getHelpArticles } from "#lib/config/help-content.js";
 import { HelpActionRunner } from "#lib/services/help-assistant/help-action-runner.js";
 import { buildFallback } from "#lib/services/help-assistant/help-fallback.js";
 import { generatorsAvailable } from "#lib/services/help-assistant/generator-availability.js";
@@ -16,6 +15,10 @@ import {
   locateCifHome,
 } from "#lib/services/help-assistant/cif-flight.svelte.js";
 import { helpStore } from "#lib/stores/help.svelte.js";
+import {
+  HELP_ARTICLE_IDS,
+  HELP_ARTICLE_TITLES,
+} from "#lib/config/help-article-metadata.js";
 import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 import { feedbackDialog } from "#lib/stores/ui/feedback-dialog.svelte.js";
@@ -38,8 +41,7 @@ import { reportPanelStore } from "#lib/stores/ui/report-panel.svelte.js";
  * dependencies through constructors so tests can supply fakes; this is the one
  * place the real stores are plugged in.
  */
-const articleTitles = () =>
-  new Map(getHelpArticles().map((article) => [article.id, article.title]));
+const articleTitles = () => HELP_ARTICLE_TITLES;
 
 export const helpContext = new HelpContextStore({
   getRouteId: () => page.route.id,
@@ -62,10 +64,12 @@ export const helpContext = new HelpContextStore({
   aiEnabled: () => !discoveryPolicyStore.aiDisabled,
 });
 
-const helpIds = () => new Set(getHelpArticles().map((article) => article.id));
+const helpIds = () => HELP_ARTICLE_IDS;
 
 export const helpAssistant = new HelpAssistantStore({
-  client: helpClient,
+  client: {
+    ask: (input) => helpClient.ask(input),
+  },
   context: helpContext,
   fallback: (error, context) => {
     const titles = articleTitles();

@@ -1,5 +1,5 @@
 import { formatPublicAnchoredScenarioCue } from "./public-scenario-diversity";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { themeIdToLabel } from "./public-faction-constants";

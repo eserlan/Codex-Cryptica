@@ -2,22 +2,24 @@
   import { onMount } from "svelte";
   import HelpTab from "#lib/components/help/HelpTab.svelte";
   import { helpStore } from "#lib/stores/help.svelte.js";
-  import { getHelpArticleIdFromHash } from "#lib/components/help/help-direct-link.js";
-
-  const selectArticleFromHash = () => {
-    const articleId = getHelpArticleIdFromHash(window.location.hash);
-    if (articleId) {
-      helpStore.selectArticle(articleId);
-    } else {
-      helpStore.clearArticleSelection();
-    }
-  };
+  import { createHelpHashArticleSelector } from "#lib/components/help/help-direct-link.js";
+  let articleLoadFailed = $state(false);
 
   onMount(() => {
-    selectArticleFromHash();
-    window.addEventListener("hashchange", selectArticleFromHash);
-    return () =>
-      window.removeEventListener("hashchange", selectArticleFromHash);
+    const selector = createHelpHashArticleSelector({
+      getHash: () => window.location.hash,
+      selectArticle: (id) => helpStore.selectArticle(id),
+      clearSelection: () => helpStore.clearArticleSelection(),
+      ensureArticles: () => helpStore.ensureArticles(),
+      onStart: () => (articleLoadFailed = false),
+      onError: () => (articleLoadFailed = true),
+    });
+    void selector.selectFromHash();
+    window.addEventListener("hashchange", selector.selectFromHash);
+    return () => {
+      selector.dispose();
+      window.removeEventListener("hashchange", selector.selectFromHash);
+    };
   });
 </script>
 
@@ -39,5 +41,17 @@
     </p>
   </div>
 
-  <HelpTab isStandalone={true} />
+  {#if helpStore.articlesLoading && !helpStore.loadedArticles.length}
+    <p class="text-sm text-theme-text" role="status">Loading help articles…</p>
+  {:else if articleLoadFailed}
+    <div class="space-y-3" role="alert">
+      <p class="text-sm text-theme-text">Help articles could not be loaded.</p>
+      <button
+        class="rounded bg-theme-primary px-3 py-2 text-sm font-bold text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        onclick={() => window.location.reload()}>Reload page to retry</button
+      >
+    </div>
+  {:else}
+    <HelpTab isStandalone={true} />
+  {/if}
 </div>

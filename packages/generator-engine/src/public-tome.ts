@@ -11,7 +11,7 @@
 import type {
   PublicGeneratorOutput,
   TomeCanonicalFacts,
-} from "./public-generator-adapters";
+} from "./public-generator-types";
 import type { SuggestedConnection } from "./campaign-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {

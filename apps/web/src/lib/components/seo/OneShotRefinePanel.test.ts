@@ -26,6 +26,38 @@ describe("OneShotRefinePanel", () => {
     expect(next.content).toContain("## GM Briefing");
   });
 
+  it("uses local regeneration if the connection drops before Redo", async () => {
+    const output = generateOneShotLocal({ durationHours: 3 });
+    const onReplace = vi.fn();
+    const loadEngine = vi.fn();
+    const originalOnline = navigator.onLine;
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      value: false,
+    });
+    window.dispatchEvent(new Event("offline"));
+    render(OneShotRefinePanel, {
+      props: {
+        output: output as never,
+        onReplace,
+        loadEngine: loadEngine as never,
+        useAI: true,
+      },
+    });
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: `Regenerate scene ${output.oneShot!.scenes[1].title}`,
+      }),
+    );
+    await waitFor(() => expect(onReplace).toHaveBeenCalledOnce());
+    expect(loadEngine).not.toHaveBeenCalled();
+    Object.defineProperty(navigator, "onLine", {
+      configurable: true,
+      value: originalOnline,
+    });
+    window.dispatchEvent(new Event(originalOnline ? "online" : "offline"));
+  });
+
   it("drops a late result when a newer adventure replaced the old one", async () => {
     const first = generateOneShotLocal({ durationHours: 3 });
     const second = generateOneShotLocal({ durationHours: 4 });
@@ -35,18 +67,56 @@ describe("OneShotRefinePanel", () => {
       .mockReturnValue(new Promise((resolve) => (finish = resolve)) as never);
     const onReplace = vi.fn();
     const { rerender } = render(OneShotRefinePanel, {
-      props: { output: first as never, onReplace },
+      props: { output: first as never, onReplace, useAI: true },
     });
     await fireEvent.click(
       screen.getByRole("button", {
         name: `Regenerate scene ${first.oneShot!.scenes[1].title}`,
       }),
     );
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
     await rerender({ output: second as never, onReplace });
     finish({ adventure: structuredClone(first.oneShot), warnings: [] });
     await new Promise((r) => setTimeout(r, 20));
     expect(onReplace).not.toHaveBeenCalled();
     spy.mockRestore();
+  });
+
+  it("does not start regeneration when the selected result changes during engine loading", async () => {
+    const first = generateOneShotLocal({ durationHours: 3 });
+    const second = generateOneShotLocal({ durationHours: 4 });
+    let finishLoad: (engine: any) => void = () => {};
+    const regenerate = vi.fn();
+    const loadEngine = vi.fn(
+      () =>
+        new Promise<any>((resolve) => {
+          finishLoad = resolve;
+        }),
+    );
+    const { rerender } = render(OneShotRefinePanel, {
+      props: {
+        output: first as never,
+        onReplace: vi.fn(),
+        loadEngine: loadEngine as never,
+        useAI: true,
+      },
+    });
+
+    await fireEvent.click(
+      screen.getByRole("button", {
+        name: `Regenerate scene ${first.oneShot!.scenes[1].title}`,
+      }),
+    );
+    await waitFor(() => expect(loadEngine).toHaveBeenCalledOnce());
+    await rerender({
+      output: second as never,
+      onReplace: vi.fn(),
+      loadEngine: loadEngine as never,
+      useAI: true,
+    });
+    finishLoad({ regenerateOneShotPart: regenerate });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(regenerate).not.toHaveBeenCalled();
   });
 
   it("drops a pending result when the panel is destroyed", async () => {
@@ -65,6 +135,7 @@ describe("OneShotRefinePanel", () => {
       }),
     );
 
+    await waitFor(() => expect(spy).toHaveBeenCalledTimes(1));
     const signal = spy.mock.calls[0]?.[2]?.signal;
     expect(signal).toBeInstanceOf(AbortSignal);
     unmount();
@@ -98,13 +169,15 @@ describe("OneShotRefinePanel", () => {
       target: { value: "make the guard bribable" },
     });
     await fireEvent.click(apply);
-    expect(spy).toHaveBeenCalledWith(
-      output.oneShot,
-      { kind: "scene", id: scene.id },
-      expect.objectContaining({
-        useAI: true,
-        instruction: "make the guard bribable",
-      }),
+    await waitFor(() =>
+      expect(spy).toHaveBeenCalledWith(
+        output.oneShot,
+        { kind: "scene", id: scene.id },
+        expect.objectContaining({
+          useAI: true,
+          instruction: "make the guard bribable",
+        }),
+      ),
     );
     expect(
       screen.queryByLabelText(`How to revise scene ${scene.title}`),

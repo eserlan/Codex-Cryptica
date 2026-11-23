@@ -2,7 +2,7 @@
 
 import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import { generateRumourLocal } from "generator-engine";
+import { generateRumourLocal } from "generator-engine/public-rumour";
 import RumourPlayActions from "./RumourPlayActions.svelte";
 
 function seededRng(seed = 7) {

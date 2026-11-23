@@ -1,16 +1,25 @@
+const mockGenerateRelatedEntity = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    name: "Generated Name",
+    type: "character",
+    summary: "Generated summary.",
+    description: "Generated description.",
+    labels: ["generated-label"],
+    plotHook: "Generated plot hook",
+    relationshipBack: "rival",
+  }),
+);
+
 vi.mock("@codex/ai-engine", () => ({
-  textGenerationService: {
-    generateRelatedEntity: vi.fn().mockResolvedValue({
-      name: "Generated Name",
-      type: "character",
-      summary: "Generated summary.",
-      description: "Generated description.",
-      labels: ["generated-label"],
-      plotHook: "Generated plot hook",
-      relationshipBack: "rival",
-    }),
-  },
   isAIEnabled: vi.fn().mockReturnValue(true),
+}));
+
+vi.mock("#lib/stores/oracle/lazy-ai-engine-services.js", () => ({
+  lazyOracleAIServices: {
+    textGenerationService: {
+      generateRelatedEntity: mockGenerateRelatedEntity,
+    },
+  },
 }));
 
 /** @vitest-environment jsdom */
@@ -19,7 +28,7 @@ import { render, fireEvent, screen, waitFor } from "@testing-library/svelte";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import RelatedEntityModal from "./RelatedEntityModal.svelte";
 import { vault } from "#lib/stores/vault.svelte.js";
-import { textGenerationService } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 
 const mockDiscoveryPolicyStore = vi.hoisted(() => ({
@@ -200,8 +209,12 @@ describe("RelatedEntityModal", () => {
     const generateBtn = screen.getByText("Generate");
     await fireEvent.click(generateBtn);
 
-    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalled();
-    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+    expect(
+      lazyOracleAIServices.textGenerationService.generateRelatedEntity,
+    ).toHaveBeenCalled();
+    expect(
+      lazyOracleAIServices.textGenerationService.generateRelatedEntity,
+    ).toHaveBeenCalledWith(
       "test-api-key",
       expect.any(String),
       expect.any(Object),
@@ -257,7 +270,9 @@ describe("RelatedEntityModal", () => {
     const generateBtn = screen.getByText("Generate");
     await fireEvent.click(generateBtn);
 
-    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+    expect(
+      lazyOracleAIServices.textGenerationService.generateRelatedEntity,
+    ).toHaveBeenCalledWith(
       "test-api-key",
       expect.any(String),
       expect.any(Object),
@@ -284,7 +299,9 @@ describe("RelatedEntityModal", () => {
 
     expect(screen.getByText("AI Features Disabled")).toBeDefined();
     expect(screen.queryByText("Generate")).toBeNull();
-    expect(textGenerationService.generateRelatedEntity).not.toHaveBeenCalled();
+    expect(
+      lazyOracleAIServices.textGenerationService.generateRelatedEntity,
+    ).not.toHaveBeenCalled();
   });
 
   it("does not show generation controls for guest sessions", async () => {
@@ -298,7 +315,9 @@ describe("RelatedEntityModal", () => {
 
     expect(screen.getByText("Host Only")).toBeDefined();
     expect(screen.queryByText("Generate")).toBeNull();
-    expect(textGenerationService.generateRelatedEntity).not.toHaveBeenCalled();
+    expect(
+      lazyOracleAIServices.textGenerationService.generateRelatedEntity,
+    ).not.toHaveBeenCalled();
   });
 
   it("allows generation when AI is enabled without a custom API key", async () => {
@@ -314,7 +333,9 @@ describe("RelatedEntityModal", () => {
     const generateBtn = screen.getByText("Generate");
     await fireEvent.click(generateBtn);
 
-    expect(textGenerationService.generateRelatedEntity).toHaveBeenCalledWith(
+    expect(
+      lazyOracleAIServices.textGenerationService.generateRelatedEntity,
+    ).toHaveBeenCalledWith(
       "",
       expect.any(String),
       expect.any(Object),

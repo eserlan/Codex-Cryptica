@@ -30,6 +30,16 @@ vi.mock("#lib/cloud-bridge/proposer-bridge.js", () => ({
     setTokenProvider: proposerSetTokenProvider,
   },
 }));
+vi.mock("#lib/cloud-bridge/worker-session-bridge.js", () => ({
+  relaySessionToken: vi.fn((token) => {
+    oracleSetSessionToken(token);
+    proposerSetSessionToken(token);
+  }),
+  installWorkerTokenProvider: vi.fn((provider) => {
+    oracleSetTokenProvider(provider);
+    proposerSetTokenProvider(provider);
+  }),
+}));
 
 import { requiresCapabilitySession } from "./session-bootstrap";
 
@@ -64,7 +74,7 @@ describe("session-bootstrap worker token-provider wiring", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const { initAiSession } = await import("./session-bootstrap");
-    initAiSession();
+    await initAiSession();
 
     expect(oracleSetTokenProvider).toHaveBeenCalledWith(expect.any(Function));
     expect(proposerSetTokenProvider).toHaveBeenCalledWith(expect.any(Function));
@@ -83,7 +93,7 @@ describe("session-bootstrap worker token-provider wiring", () => {
     );
 
     const { initAiSession } = await import("./session-bootstrap");
-    initAiSession();
+    await initAiSession();
 
     const provider = proposerSetTokenProvider.mock
       .calls[0][0] as () => Promise<{
@@ -179,7 +189,7 @@ describe("getAiSessionToken", () => {
     const { initAiSession, getAiSessionToken } =
       await import("./session-bootstrap");
 
-    initAiSession();
+    await initAiSession();
     expect(getSessionTurnstileTokenMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
 
@@ -266,7 +276,7 @@ describe("public-session-bootstrap and public-to-app handoff", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     // 2. Navigating to (app) wires worker relays onto the SAME manager without re-minting.
-    initAiSession();
+    await initAiSession();
     expect(oracleSetTokenProvider).toHaveBeenCalledTimes(1);
     expect(proposerSetTokenProvider).toHaveBeenCalledTimes(1);
     expect(await getAiSessionToken()).toBe("t-1");

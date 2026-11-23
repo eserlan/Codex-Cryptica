@@ -10,7 +10,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * generate*Local helpers on failure. Session context is injected as a string.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

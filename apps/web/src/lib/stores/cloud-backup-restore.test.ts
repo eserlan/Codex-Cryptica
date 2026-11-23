@@ -25,6 +25,7 @@ function material(bundle: unknown) {
 }
 function target(): NonNullable<CloudBackupDeps["restore"]> {
   return {
+    prepareAdventures: vi.fn(async () => {}),
     createVault: vi.fn(async () => "new-vault"),
     importEntities: vi.fn(async () => {}),
     importMaps: vi.fn(async () => {}),
@@ -35,6 +36,30 @@ function target(): NonNullable<CloudBackupDeps["restore"]> {
 }
 
 describe("cloud backup restore", () => {
+  it("preflights adventure readers before creating or writing the destination", async () => {
+    const restore = target();
+    const log: string[] = [];
+    restore.prepareAdventures = async () => {
+      log.push("prepare");
+      throw new Error("Adventure chunk unavailable");
+    };
+    restore.createVault = async () => {
+      log.push("create");
+      return "new-vault";
+    };
+
+    await expect(
+      restoreCloudBackupIntoNewVault(
+        createInertRuntime(),
+        restore,
+        credentials,
+        material({ entities: [1], adventures: [{ id: "journey-1" }] }),
+      ),
+    ).rejects.toThrow("Adventure chunk unavailable");
+    expect(log).toEqual(["prepare"]);
+    expect(restore.importEntities).not.toHaveBeenCalled();
+  });
+
   it("creates the vault before importing collections in order", async () => {
     const restore = target();
     const log: string[] = [];

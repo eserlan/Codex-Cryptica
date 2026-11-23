@@ -7,7 +7,7 @@
     type PointCrawlNode,
     type PointCrawlRegenTarget,
     type PointCrawlRoute,
-  } from "generator-engine";
+  } from "generator-engine/point-crawl-state";
   import PointCrawlInspectorActions from "./PointCrawlInspectorActions.svelte";
 
   let {

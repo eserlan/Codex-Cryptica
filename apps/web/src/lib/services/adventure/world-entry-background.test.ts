@@ -5,20 +5,27 @@ import {
   ensureScenarioSecrets,
   type AdventureSession,
 } from "@codex/adventure-engine";
-import { generateRumourLocal } from "generator-engine";
+import { generateRumourLocal } from "generator-engine/public-rumour";
+import { initialSession } from "#lib/stores/oracle/adventure-session.js";
+import { startInput } from "#lib/stores/oracle/tests/adventure-fixtures.js";
 import { seedWorldEntryBackground } from "./world-entry-background";
 
-function session(): AdventureSession {
-  return {
-    id: "local-session-123",
-    worldEntry: {
-      version: 1,
-      location: { kind: "provisional", name: "Northbrook" },
-      intent: "explore",
-    },
-    hiddenState: { secrets: [], gmThreads: [] },
-    turns: [],
-  } as unknown as AdventureSession;
+function session(withWorldEntry = true): AdventureSession {
+  let id = 0;
+  return initialSession({
+    ...startInput,
+    now: "2026-11-03T12:00:00Z",
+    idGenerator: () => `session-${++id}`,
+    ...(withWorldEntry
+      ? {
+          worldEntry: {
+            version: 1 as const,
+            location: { kind: "provisional" as const, name: "Northbrook" },
+            intent: "explore" as const,
+          },
+        }
+      : {}),
+  });
 }
 
 describe("world entry background situations", () => {
@@ -64,8 +71,7 @@ describe("world entry background situations", () => {
     n = 0;
     const second = seedWorldEntryBackground(session(), () => `id-${++n}`);
     expect(first.scenarioCollection).toEqual(second.scenarioCollection);
-    const ordinary = session();
-    delete ordinary.worldEntry;
+    const ordinary = session(false);
     expect(seedWorldEntryBackground(ordinary, () => "id")).toBe(ordinary);
   });
 

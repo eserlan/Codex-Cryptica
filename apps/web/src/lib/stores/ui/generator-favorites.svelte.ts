@@ -1,5 +1,5 @@
-import type { GeneratorId } from "generator-engine";
-import { isSupportedGenerator } from "generator-engine";
+import type { GeneratorId } from "generator-engine/campaign-generator-types";
+import { isSupportedGenerator } from "generator-engine/campaign-registry";
 import type { UIPersistence } from "./persistence";
 import {
   UIPersistence as DefaultPersistence,

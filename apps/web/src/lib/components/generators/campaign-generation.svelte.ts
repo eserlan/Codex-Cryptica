@@ -1,11 +1,11 @@
-import {
-  campaignGeneratorService,
-  extractPartialJsonStringFields,
-  type CampaignGeneratorService,
-  type GeneratedDraft,
-  type GenerationEvent,
-  type GeneratorRunRequest,
-} from "generator-engine";
+import { campaignGeneratorService } from "generator-engine/campaign-generator-service";
+import { extractPartialJsonStringFields } from "generator-engine/streaming/incremental-json";
+import type { CampaignGeneratorService } from "generator-engine/campaign-generator-service";
+import type {
+  GeneratedDraft,
+  GenerationEvent,
+  GeneratorRunRequest,
+} from "generator-engine/campaign-generator-types";
 import { publishGeneratedCapture } from "#lib/services/generator-journal-capture.js";
 import { systemClock } from "#lib/utils/runtime-deps.js";
 import {

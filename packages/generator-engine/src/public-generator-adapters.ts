@@ -22,114 +22,12 @@ import type { LanguageGeneratorOptions } from "./public-language";
 import type {
   GeneratedDraft,
   GeneratorRunRequest,
-  SuggestedConnection,
 } from "./campaign-generator-types";
-import type { GeneratorMechanicsBundle } from "./tov-mechanics-schema";
-import type { LanguageProfileV1 } from "schema";
-import type { OneShotAdventure } from "./one-shot-types";
-import type { PointCrawlNetwork } from "./point-crawl-state";
-import type { MysteryGraph } from "./mystery-graph";
-import type { StarSystemBody } from "./public-star-system";
-import type {
-  ConstellationPattern,
-  ConstellationInterpretation,
-  NightSkyData,
-} from "./public-constellation";
-
-/** Minimal subset of the SEO GeneratorOutput used by public pages. */
-/**
- * Structured canonical facts behind a generated tome. The prose is derived
- * from these, so audits and Oracle can check text against facts instead of
- * guessing at them.
- */
-export interface TomeCanonicalFacts {
-  author: string;
-  custodian: string;
-  associatedLocation: string;
-  /** Exact quantity and unit of lost material (leaves vs gatherings). */
-  missingMaterial: string;
-  bookClaim: string;
-  deception: string;
-  objectiveTruth: string;
-  actionableClue: string;
-  /** The one rule or procedure the whole book turns on, stated once. */
-  centralRule: string;
-  /** How the artefact was made (handwritten, printed, copied, facsimile). */
-  productionMethod: string;
-  /** Who introduced the error (author, copyist, translator, glossator, censor). */
-  errorSource: string;
-}
-
-export interface PublicGeneratorOutput {
-  type: string;
-  /**
-   * Vault entity sub-kind (e.g. "language" on notes) so drafts saved through
-   * the marketing funnel stay detectable by kind-based vault scans (FR-008).
-   */
-  kind?: string;
-  title: string;
-  summary?: string;
-  content: string;
-  lore: string;
-  labels: string[];
-  status: "active" | "draft";
-  /**
-   * Set when AI generation was requested but failed and the engine fell back to
-   * local tables. Lets the UI surface a friendly "AI was unavailable" notice
-   * (#1494). Absent on ordinary AI or explicitly-local results.
-   */
-  aiFallback?: boolean;
-  /** The AI draft is complete but its editorial review didn't finish. */
-  aiReviewSkipped?: boolean;
-  /** Parts written from templates because their AI step didn't finish. */
-  aiPartialFallback?: string[];
-  languageProfile?: LanguageProfileV1;
-  languageProfileVersion?: 1;
-  /** Structured major-body list for star systems, driving the mechanical side-view diagram. */
-  bodies?: StarSystemBody[];
-  /** Primary star's spectral class/type (e.g. "G", "M", "Neutron Star"), for star systems. */
-  starType?: string;
-  /** Structured star-pattern data for constellations, for a future diagram. */
-  pattern?: ConstellationPattern;
-  /** Constellation generator's cultural interpretation(s) of `pattern`. */
-  interpretations?: ConstellationInterpretation[];
-  /** Night-sky mode's full set of constellations for one culture. */
-  nightSky?: NightSkyData;
-  /**
-   * Optional structured observance calendar so clients can retain the coherent
-   * relationship between a calendar overview and its individual entries.
-   */
-  observances?: Array<{
-    name: string;
-    type: string;
-    when: string;
-    observers: string;
-    traditions: string;
-    tension: string;
-  }>;
-  /**
-   * Short label for the dominant conflict domain driving a BBEG villain's
-   * plan (e.g. "Political Corruption", "Cult Ritual"). Used to track domain
-   * variety across a session so repeated generations don't default to the
-   * same domain (#2325 follow-up).
-   */
-  conflictDomain?: string;
-  /**
-   * Optional connections or relationships to other entities.
-   */
-  connections?: SuggestedConnection[];
-  /** Structured one-shot adventure, kept so single scenes can be regenerated. */
-  oneShot?: OneShotAdventure;
-  /** Structured point-crawl network, kept so single nodes/routes can be regenerated and saved. */
-  pointCrawl?: PointCrawlNetwork;
-  mysteryGraph?: MysteryGraph;
-  /** Structured canonical facts for tomes; prose is derived from these. */
-  tomeFacts?: TomeCanonicalFacts;
-  /** Optional rules system id (e.g. "tales-of-the-valiant"). */
-  systemId?: string;
-  /** Structured game mechanics bundle if generated under a specific rules system. */
-  mechanics?: GeneratorMechanicsBundle;
-}
+import type { PublicGeneratorOutput } from "./public-generator-types";
+export type {
+  PublicGeneratorOutput,
+  TomeCanonicalFacts,
+} from "./public-generator-types";
 
 /** First non-blank value, or the last one if all are blank. */
 function firstNonBlank(...values: Array<string | undefined>): string {

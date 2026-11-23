@@ -15,7 +15,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * state that actually changes the fiction, and escape options whose availability follows the security response.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

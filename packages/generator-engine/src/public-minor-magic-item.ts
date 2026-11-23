@@ -9,7 +9,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * creative problem-solving rather than numerical +X bonuses or major campaign artefacts.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";

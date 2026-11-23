@@ -6,6 +6,9 @@
     isOnline,
     aiModeRequired,
     showSubmitButton,
+    generationReady = true,
+    generationSetupError = false,
+    onRetryGenerationSetup = () => {},
     busyLabel = undefined,
     generateLabel = undefined,
     generatedSingular,
@@ -17,6 +20,9 @@
     isOnline: boolean;
     aiModeRequired: boolean;
     showSubmitButton: boolean;
+    generationReady?: boolean;
+    generationSetupError?: boolean;
+    onRetryGenerationSetup?: () => void;
     busyLabel?: string;
     generateLabel?: string;
     generatedSingular: string;
@@ -35,7 +41,7 @@
 {#if showSubmitButton}
   <button
     type="submit"
-    disabled={isBusy || (aiModeRequired && !isOnline)}
+    disabled={isBusy || !generationReady || (aiModeRequired && !isOnline)}
     aria-busy={isBusy}
     class="w-full py-3 mt-4 bg-theme-primary text-theme-bg font-bold uppercase font-header tracking-widest text-xs rounded-xl shadow-lg hover:brightness-110 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
     id="generate-button"
@@ -47,10 +53,25 @@
         aria-hidden="true"
       ></span>
       {busyLabel ?? "Forging..."}
+    {:else if !generationReady}
+      Preparing local generator…
     {:else}
       {generateLabel ?? `Generate ${generatedSingular}`}
     {/if}
   </button>
+{/if}
+
+{#if generationSetupError}
+  <p class="mt-2 text-helper text-theme-text" role="alert">
+    The generator could not be prepared.
+    <button type="button" class="underline" onclick={onRetryGenerationSetup}
+      >Reload page to retry</button
+    >
+  </p>
+{:else if !generationReady}
+  <p class="mt-2 text-helper text-theme-text" role="status">
+    Preparing this generator for offline use…
+  </p>
 {/if}
 
 {#if showSubmitButton && !aiModeRequired}

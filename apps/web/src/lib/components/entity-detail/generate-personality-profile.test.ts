@@ -4,7 +4,7 @@ import { personalitySectionTitle } from "./generate-personality";
 import { oracle } from "#lib/stores/oracle.svelte.js";
 import { upsertMarkdownSection } from "#lib/utils/markdown.js";
 import { buildRelatedEntityContext } from "@codex/oracle-engine";
-import { buildPersonalityPrompt } from "generator-engine";
+import { buildPersonalityPrompt } from "generator-engine/public-personality";
 
 vi.mock("#lib/stores/oracle.svelte.js", () => ({
   oracle: {
@@ -38,7 +38,7 @@ vi.mock("@codex/oracle-engine", () => ({
   buildRelatedEntityContext: vi.fn(() => []),
 }));
 
-vi.mock("generator-engine", () => ({
+vi.mock("generator-engine/public-personality", () => ({
   buildPersonalityPrompt: vi.fn((options, entityContext) => ({
     systemInstruction: "system instruction",
     userMessage: `user message${entityContext ? ` with context: ${entityContext}` : ""}`,

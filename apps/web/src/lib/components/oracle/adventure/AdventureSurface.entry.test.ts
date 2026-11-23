@@ -9,6 +9,9 @@ const env = vi.hoisted(() => ({
   activeVaultId: "vault-1",
   isGuest: false,
   openActive: vi.fn(async () => false),
+  loadAdventureManager: vi.fn(),
+  prepareAdventureBackup: vi.fn(async () => {}),
+  adventureManager: null as any,
   setWorldEntryRumourGenerator: vi.fn((callback: unknown) => {
     env.worldEntryRumourGenerator = callback;
   }),
@@ -68,28 +71,29 @@ const env = vi.hoisted(() => ({
   importAdventurePdfFile: vi.fn(),
 }));
 
-vi.mock("#lib/stores/oracle.svelte.js", () => ({
-  oracle: {
-    vault: {
-      get isInitialized() {
-        return env.vaultReady;
+vi.mock("#lib/stores/oracle.svelte.js", () => {
+  return {
+    oracle: {
+      vault: {
+        get isInitialized() {
+          return env.vaultReady;
+        },
+        get activeVaultId() {
+          return env.activeVaultId;
+        },
+        entities: {},
+        allEntities: [],
+        getSpecificVaultHandle: vi.fn(),
       },
-      get activeVaultId() {
-        return env.activeVaultId;
+      get adventure() {
+        return null;
       },
-      entities: {},
-      allEntities: [],
-      getSpecificVaultHandle: vi.fn(),
+      loadAdventureManager: env.loadAdventureManager,
     },
-    adventure: {
-      session: null,
-      openActive: env.openActive,
-      open: env.openSession,
-      resumeArchived: env.resumeArchived,
-      setWorldEntryRumourGenerator: env.setWorldEntryRumourGenerator,
-      readOnly: false,
-    },
-  },
+  };
+});
+vi.mock("#lib/app/init/cloud-backup-config.js", () => ({
+  ensureAdventureBackupChangeListener: env.prepareAdventureBackup,
 }));
 vi.mock("#lib/stores/vault.svelte.js", () => ({
   vault: {
@@ -212,10 +216,24 @@ async function storedApproved(pkg: any) {
 }
 
 beforeEach(() => {
+  env.prepareAdventureBackup.mockReset();
+  env.prepareAdventureBackup.mockResolvedValue(undefined);
   env.openIntentGeneratorWorkflow.mockClear();
   env.openActive.mockClear();
   env.openSession.mockClear();
   env.resumeArchived.mockClear();
+  env.adventureManager = {
+    session: null,
+    openActive: env.openActive,
+    open: env.openSession,
+    resumeArchived: env.resumeArchived,
+    setWorldEntryRumourGenerator: env.setWorldEntryRumourGenerator,
+    readOnly: false,
+    switchTo: vi.fn(),
+    linkPlaceRecord: vi.fn(),
+  };
+  env.loadAdventureManager.mockReset();
+  env.loadAdventureManager.mockResolvedValue(env.adventureManager);
   env.approvedPackages = [];
   env.listApprovedPackages.mockReset();
   env.listApprovedPackages.mockImplementation(async () => env.approvedPackages);
@@ -245,6 +263,46 @@ describe("AdventureSurface entry", () => {
     expect(env.worldEntryRumourGenerator).toEqual(expect.any(Function));
   });
 
+  it("shows a retry action after manager loading fails", async () => {
+    env.loadAdventureManager
+      .mockRejectedValueOnce(new Error("manager chunk unavailable"))
+      .mockResolvedValueOnce(env.adventureManager);
+    render(AdventureSurface);
+
+    await screen.findByText("Adventure mode could not be loaded.");
+    await fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    await screen.findByTestId("adventure-entry-choices");
+    expect(env.loadAdventureManager).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps local Adventure available when persisted backup consent is malformed", async () => {
+    env.prepareAdventureBackup.mockRejectedValueOnce(
+      new Error("invalid stored consent"),
+    );
+
+    render(AdventureSurface);
+
+    await screen.findByTestId("adventure-entry-choices");
+    expect(env.loadAdventureManager).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not configure a manager after the surface unmounts during loading", async () => {
+    let resolveManager!: (manager: any) => void;
+    env.loadAdventureManager.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveManager = resolve;
+      }),
+    );
+    const view = render(AdventureSurface);
+    view.unmount();
+
+    resolveManager(env.adventureManager);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(env.setWorldEntryRumourGenerator).not.toHaveBeenCalled();
+  });
+
   it("starts on approach choices and opens the existing Rumour Generator", async () => {
     render(AdventureSurface);
     await screen.findByTestId("adventure-entry-choices");
@@ -257,11 +315,13 @@ describe("AdventureSurface entry", () => {
     expect(env.openActive).toHaveBeenCalledWith("vault-1");
   });
 
-  it("does not look for an active adventure until the Vault has loaded", () => {
+  it("does not look for an active adventure until the Vault has loaded", async () => {
     env.vaultReady = false;
     render(AdventureSurface);
     expect(env.openActive).not.toHaveBeenCalled();
-    expect(screen.getByText("Checking for an active adventure…")).toBeTruthy();
+    expect(
+      await screen.findByText("Checking for an active adventure…"),
+    ).toBeTruthy();
     expect(screen.queryByTestId("adventure-entry-choices")).toBeNull();
   });
 

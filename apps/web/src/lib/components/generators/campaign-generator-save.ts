@@ -1,9 +1,7 @@
-import {
-  buildBusinessSavePlan,
-  composeDraftVaultFields,
-  type GeneratedDraft,
-  type CampaignGeneratorService,
-} from "generator-engine";
+import { buildBusinessSavePlan } from "generator-engine/business-save";
+import { composeDraftVaultFields } from "generator-engine/campaign-generator-service-core";
+import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
+import type { CampaignGeneratorService } from "generator-engine/campaign-generator-service";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { layoutUIStore } from "#lib/stores/ui/layout-ui.svelte.js";
 import { revisionService } from "#lib/services/RevisionService.svelte.js";

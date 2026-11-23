@@ -1,6 +1,6 @@
 <script lang="ts">
   import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
-  import type { SessionEntity } from "generator-engine";
+  import type { SessionEntity } from "generator-engine/session-hub-helpers";
 
   let {
     onSelect,

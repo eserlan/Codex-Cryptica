@@ -1,15 +1,17 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { pointCrawlToOutput } from "generator-engine/public-point-crawl";
+  import { regeneratePointCrawlPartLocal } from "generator-engine/point-crawl-repair";
   import {
-    pointCrawlToOutput,
     renderPointCrawlGmSheet,
     formatRouteConnectionLabel,
     type PointCrawlNode,
     type PointCrawlRegenTarget,
-  } from "generator-engine";
-  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+  } from "generator-engine/point-crawl-state";
   import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
   import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
+  import { onlineStatus } from "#lib/stores/online.svelte.js";
+  import { isCurrentPointCrawlRefinement } from "./point-crawl-refinement.js";
 
   let {
     output,
@@ -22,7 +24,12 @@
   } = $props();
 
   const crawl = $derived(output.pointCrawl);
-  const canUseAI = $derived(useAI && !discoveryPolicyStore.aiDisabled);
+  const canUseAI = $derived(
+    useAI &&
+      onlineStatus.current &&
+      (typeof navigator === "undefined" || navigator.onLine) &&
+      !discoveryPolicyStore.aiDisabled,
+  );
   let busyId = $state<string | null>(null);
   let warnings = $state<string[]>([]);
   let notice = $state<string | null>(null);
@@ -30,6 +37,23 @@
   let revisionText = $state("");
   let requestToken = 0;
   let requestController: AbortController | null = null;
+  let observedCrawl = $state.raw<unknown>(undefined);
+
+  $effect(() => {
+    const currentCrawl = crawl;
+    if (observedCrawl === undefined) {
+      observedCrawl = currentCrawl;
+      return;
+    }
+    if (currentCrawl === observedCrawl) return;
+    observedCrawl = currentCrawl;
+    requestController?.abort();
+    requestController = null;
+    requestToken += 1;
+    busyId = null;
+    warnings = [];
+    notice = null;
+  });
 
   onDestroy(() => {
     requestController?.abort();
@@ -37,7 +61,12 @@
   });
 
   function isCurrentRequest(token: number, startedFrom: typeof crawl) {
-    return token === requestToken && output.pointCrawl === startedFrom;
+    return isCurrentPointCrawlRefinement(
+      token,
+      requestToken,
+      output.pointCrawl,
+      startedFrom,
+    );
   }
 
   function settle(token: number) {
@@ -57,17 +86,31 @@
     notice = null;
     const startedFrom = crawl;
     const token = ++requestToken;
-    requestController = new AbortController();
+    const controller = new AbortController();
+    requestController = controller;
     try {
-      const result = await generatorEngine.regeneratePointCrawlPart(
-        crawl,
-        target,
-        {
-          useAI: canUseAI,
+      if (!isCurrentRequest(token, startedFrom)) return;
+      let result;
+      if (canUseAI) {
+        const { generatorEngine } =
+          await import("#lib/services/seo/generator-engine.js");
+        if (!isCurrentRequest(token, startedFrom)) return;
+        result = await generatorEngine.regeneratePointCrawlPart(
+          startedFrom,
+          target,
+          {
+            useAI: true,
+            instruction,
+            signal: controller.signal,
+          },
+        );
+      } else {
+        result = regeneratePointCrawlPartLocal(
+          startedFrom,
+          target,
           instruction,
-          signal: requestController.signal,
-        },
-      );
+        );
+      }
       if (!isCurrentRequest(token, startedFrom)) return;
       warnings = result.warnings;
       if (result.crawl === startedFrom) return;
@@ -75,7 +118,7 @@
       const partLabel = target.kind === "node" ? "location" : "route";
       notice = `${instruction ? "Revised" : "Rewrote"} the ${partLabel}. Network topology and sibling points are unchanged.`;
     } catch {
-      if (token === requestToken) {
+      if (isCurrentRequest(token, startedFrom)) {
         notice = "That didn't work. Nothing was changed.";
       }
     } finally {

@@ -18,7 +18,7 @@ import {
   type SessionPrepRequest,
   type SessionPrepStep,
   type SessionPrepSuggestion,
-} from "generator-engine";
+} from "generator-engine/session-prep";
 import {
   GeneratorAITransport,
   LANGUAGE_GENERATION_CONFIG,

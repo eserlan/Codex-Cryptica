@@ -2,7 +2,7 @@
   import {
     businessSectionLabel,
     type BusinessSectionId,
-  } from "generator-engine";
+  } from "generator-engine/business-state";
 
   let {
     fallbackSections = [],

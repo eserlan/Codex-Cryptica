@@ -127,12 +127,14 @@ vi.mock("#lib/stores/theme.svelte.js", () => ({
   },
 }));
 
-vi.mock("@codex/ai-engine", () => ({
-  contextRetrievalService: {
-    retrieveContext: mocks.retrieveContext,
-    getConsolidatedContext: vi.fn((entity: any) =>
-      [entity.chronicle, entity.content].filter(Boolean).join("\n\n"),
-    ),
+vi.mock("#lib/stores/oracle/lazy-ai-engine-services.js", () => ({
+  lazyOracleAIServices: {
+    contextRetrievalService: {
+      retrieveContext: mocks.retrieveContext,
+      getConsolidatedContext: vi.fn((entity: any) =>
+        [entity.chronicle, entity.content].filter(Boolean).join("\n\n"),
+      ),
+    },
   },
 }));
 

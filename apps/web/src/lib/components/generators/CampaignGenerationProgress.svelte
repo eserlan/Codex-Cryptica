@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getThemeLoadingMessages } from "generator-engine";
+  import { getThemeLoadingMessages } from "generator-engine/loading-messages";
   let {
     themeId,
     currentPhase,

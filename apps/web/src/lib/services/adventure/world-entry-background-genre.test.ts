@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
 const generateRumourLocal = vi.hoisted(() => vi.fn());
-vi.mock("generator-engine", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("generator-engine")>();
+vi.mock("generator-engine/public-rumour", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("generator-engine/public-rumour")>();
   generateRumourLocal.mockImplementation(actual.generateRumourLocal);
   return { ...actual, generateRumourLocal };
 });

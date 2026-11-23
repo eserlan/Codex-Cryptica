@@ -11,7 +11,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  *   4. How does it become an adventure? (hooks)
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

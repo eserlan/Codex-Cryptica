@@ -14,7 +14,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * objective scale axis) — no genre selector, unlike most public generators.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

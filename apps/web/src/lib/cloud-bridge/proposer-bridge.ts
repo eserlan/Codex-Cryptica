@@ -5,6 +5,7 @@ import {
   systemIdGenerator,
 } from "#lib/utils/runtime-deps.js";
 import type { CachedToken } from "@codex/ai-engine";
+import { registerWorkerSessionBridge } from "./worker-session-bridge.js";
 
 const defaultLoadWorker = (): Promise<Worker> =>
   import("#lib/workers/proposer.worker?worker").then((m) => new m.default());
@@ -195,3 +196,4 @@ export class ProposerBridge {
 }
 
 export const proposerBridge = new ProposerBridge();
+registerWorkerSessionBridge(proposerBridge);
