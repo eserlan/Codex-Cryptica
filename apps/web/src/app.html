@@ -173,6 +173,10 @@
           "startrek",
           "western",
           "superhero",
+          "pirate",
+          "cosmic_horror",
+          "lancer",
+          "steampunk",
         ];
         if (!baseThemes.includes(storedTheme)) {
           storedTheme = "workspace";
@@ -429,6 +433,94 @@
             muted: "#bac5dd",
             dim: "#8896b3",
           },
+          pirate: {
+            bg: "#f3ead8",
+            surface: "#e8dcc4",
+            text: "#1f2933",
+            primary: "#164e63",
+            secondary: "#475569",
+            border: "rgba(92, 72, 48, 0.48)",
+            texture: "nautical_chart.svg",
+            muted: "#52616b",
+            dim: "#52616b",
+          },
+          pirate_dark: {
+            bg: "#101c24",
+            surface: "#1a2a32",
+            text: "#e7eee9",
+            primary: "#67a6b8",
+            secondary: "#9aaab0",
+            border: "rgba(119, 153, 158, 0.46)",
+            texture: "harbour_night.svg",
+            muted: "#b2c0c0",
+            dim: "#b2c0c0",
+          },
+          cosmic_horror: {
+            bg: "#07131a",
+            surface: "#10242b",
+            text: "#e2f3ef",
+            primary: "#5eead4",
+            secondary: "#99f6e4",
+            border: "rgba(94, 234, 212, 0.32)",
+            texture: "eldritch_cartography.svg",
+            muted: "#99f6e4",
+            dim: "#5eead4",
+          },
+          cosmic_horror_light: {
+            bg: "#edf4f0",
+            surface: "#fafcf9",
+            text: "#102a2a",
+            primary: "#0f766e",
+            secondary: "#115e59",
+            border: "rgba(15, 118, 110, 0.3)",
+            texture: "eldritch_cartography.svg",
+            muted: "#115e59",
+            dim: "#0f766e",
+          },
+          lancer: {
+            bg: "#0b0f17",
+            surface: "#121c28",
+            text: "#c8e6f0",
+            primary: "#22d3ee",
+            secondary: "#67b8cc",
+            border: "rgba(34, 211, 238, 0.22)",
+            texture: "tactical_hud.svg",
+            muted: "#67b8cc",
+            dim: "#22d3ee",
+          },
+          lancer_light: {
+            bg: "#f1f4f7",
+            surface: "#ffffff",
+            text: "#1e2d42",
+            primary: "#1d4ed8",
+            secondary: "#2563eb",
+            border: "rgba(29, 78, 216, 0.25)",
+            texture: "tactical_hud.svg",
+            muted: "#2563eb",
+            dim: "#1d4ed8",
+          },
+          steampunk: {
+            bg: "#0d0b08",
+            surface: "#1a1510",
+            text: "#e8dcc8",
+            primary: "#c9921a",
+            secondary: "#d4a852",
+            border: "rgba(201, 146, 26, 0.35)",
+            texture: "rust.svg",
+            muted: "#d4a852",
+            dim: "#c9921a",
+          },
+          steampunk_dark: {
+            bg: "#070503",
+            surface: "#110e09",
+            text: "#f0e8d5",
+            primary: "#d4a852",
+            secondary: "#c9921a",
+            border: "rgba(212, 168, 82, 0.3)",
+            texture: "rust.svg",
+            muted: "#c9921a",
+            dim: "#d4a852",
+          },
         };
 
         function applyTheme(baseTheme) {
@@ -441,6 +533,8 @@
             else if (baseTheme === "modern") theme = "modern_dark";
             else if (baseTheme === "western") theme = "western_dark";
             else if (baseTheme === "superhero") theme = "superhero_dark";
+            else if (baseTheme === "pirate") theme = "pirate_dark";
+            else if (baseTheme === "steampunk") theme = "steampunk_dark";
           } else {
             if (baseTheme === "scifi") theme = "scifi_light";
             else if (baseTheme === "cyberpunk") theme = "cyberpunk_light";
@@ -449,6 +543,9 @@
             else if (baseTheme === "fallout") theme = "fallout_light";
             else if (baseTheme === "starwars") theme = "starwars_light";
             else if (baseTheme === "startrek") theme = "startrek_light";
+            else if (baseTheme === "cosmic_horror")
+              theme = "cosmic_horror_light";
+            else if (baseTheme === "lancer") theme = "lancer_light";
           }
 
           if (!themes[theme]) return;
@@ -553,6 +650,38 @@
               header: "'Oswald', sans-serif",
               body: "'Comic Neue', sans-serif",
               display: "'Bangers', cursive",
+            },
+            pirate: {
+              header: "'Alegreya', serif",
+              body: "'Inter', sans-serif",
+            },
+            pirate_dark: {
+              header: "'Alegreya', serif",
+              body: "'Inter', sans-serif",
+            },
+            cosmic_horror: {
+              header: "'Spectral', serif",
+              body: "'Spectral', serif",
+            },
+            cosmic_horror_light: {
+              header: "'Spectral', serif",
+              body: "'Spectral', serif",
+            },
+            lancer: {
+              header: "'Share Tech Mono', monospace",
+              body: "'Inter', sans-serif",
+            },
+            lancer_light: {
+              header: "'Share Tech Mono', monospace",
+              body: "'Inter', sans-serif",
+            },
+            steampunk: {
+              header: "'Spectral', serif",
+              body: "'Spectral', serif",
+            },
+            steampunk_dark: {
+              header: "'Spectral', serif",
+              body: "'Spectral', serif",
             },
           };
           const f = fonts[theme] || fonts.workspace;

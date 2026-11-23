@@ -22,27 +22,12 @@
     createDiscoveryViewGuard,
   } from "#lib/services/analytics/discovery-tracking.js";
   import { trackDiscoveryClick } from "#lib/actions/trackDiscoveryClick.js";
+  import { themeBootstrapScript } from "#lib/theme/theme-bootstrap.js";
 
   let { data }: { data: PageData } = $props();
   let config: LandingPageConfig = $derived(data.config);
   let labels = $derived(landingPageLabels(config));
-  let themeBootstrap = $derived.by(() => {
-    if (!config.theme) return "";
-
-    // Keep arbitrary config strings from closing the inline script element.
-    const serializedTheme = JSON.stringify(config.theme).replaceAll(
-      "<",
-      "\\u003C",
-    );
-
-    return (
-      "<" +
-      "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
-      serializedTheme +
-      ");</" +
-      "script>"
-    );
-  });
+  let themeBootstrap = $derived(themeBootstrapScript(config.theme));
 
   const DEFAULT_SECTION_ORDER: LandingPageSection[] = [
     "hero",
