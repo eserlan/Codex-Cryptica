@@ -29,7 +29,7 @@ describe("generation info classification (#5112)", () => {
       }),
     });
     const result = await service.generate(request);
-    expect(result.generationInfo).toEqual({
+    expect(result.generationInfo).toMatchObject({
       transport: "stateless",
       modelKey: "luna-fast",
     });
@@ -47,7 +47,7 @@ describe("generation info classification (#5112)", () => {
       }),
     });
     const result = await service.generate(request);
-    expect(result.generationInfo).toEqual({
+    expect(result.generationInfo).toMatchObject({
       transport: "stateless",
       modelKey: "luna-fast",
     });
@@ -68,7 +68,7 @@ describe("generation info classification (#5112)", () => {
     const result = await service.generate(request, {
       reasoningEffort: "high",
     });
-    expect(result.generationInfo).toEqual({
+    expect(result.generationInfo).toMatchObject({
       transport: "interaction",
       modelKey: "luna-fast",
       reasoningEffort: "high",
@@ -88,10 +88,17 @@ describe("generation info classification (#5112)", () => {
       })),
     });
     const result = await service.generate(request);
-    expect(result.generationInfo).toEqual({
+    expect(result.generationInfo).toMatchObject({
       transport: "interaction",
       modelKey: "luna-fast",
       reasoningEffort: "low",
+      threadMode: "new",
+    });
+    expect(result.generationInfo?.requestChars).toBeGreaterThan(0);
+    expect(result.generationInfo?.sourceCounts).toEqual({
+      anchors: 0,
+      relevant: 0,
+      retained: 0,
     });
   });
 

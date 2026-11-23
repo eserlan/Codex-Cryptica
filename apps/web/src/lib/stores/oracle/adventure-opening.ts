@@ -319,7 +319,11 @@ export class AdventureOpening {
           resetReason:
             attempt === 2
               ? "rejected-turn"
-              : sceneBoundaryResetReason(session, proposal),
+              : sceneBoundaryResetReason(
+                  session,
+                  proposal,
+                  this.runtime.deps.packages.peek(session),
+                ),
         }),
       ),
       "opening-rejected",

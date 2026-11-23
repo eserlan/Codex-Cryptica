@@ -2,6 +2,7 @@ import type { AdventureTurnProposal } from "@codex/adventure-engine";
 import { InteractionExpiredError } from "./client-manager";
 import type {
   AdventureAIClient,
+  AdventureGenerationInfo,
   AdventureInteraction,
   AdventureTurnGenerationRequest,
   AdventurePrompt,
@@ -24,6 +25,47 @@ type SendInteraction = (
   repair?: string,
   preferStream?: boolean,
 ) => Promise<InteractionResult>;
+
+function attachInteractionDiagnostics(
+  proposal: AdventureTurnProposal,
+  result: InteractionResult,
+  systemInstruction: string,
+  threadMode: NonNullable<AdventureGenerationInfo["threadMode"]>,
+  resetReason: AdventureGenerationInfo["resetReason"],
+): AdventureTurnProposal {
+  const sentPayload = JSON.parse(result.input) as Record<string, unknown>;
+  const scenarios = result.state["GM-ONLY scenarios"];
+  return Object.assign(proposal, {
+    generationInfo: {
+      threadMode: resetReason ? "reset" : threadMode,
+      requestChars: result.input.length + systemInstruction.length,
+      sourceCounts: {
+        anchors: Array.isArray(sentPayload.anchors)
+          ? sentPayload.anchors.length
+          : 0,
+        relevant: Array.isArray(sentPayload.relevant)
+          ? sentPayload.relevant.length
+          : 0,
+        retained: Array.isArray(sentPayload.retainedSourceIds)
+          ? sentPayload.retainedSourceIds.length
+          : 0,
+      },
+      scenarioIds: Array.isArray(scenarios)
+        ? scenarios
+            .flatMap((item) =>
+              item &&
+              typeof item === "object" &&
+              "id" in item &&
+              typeof item.id === "string"
+                ? [item.id]
+                : [],
+            )
+            .slice(0, 32)
+        : [],
+      ...(resetReason ? { resetReason } : {}),
+    },
+  });
+}
 
 /** Recovery is bounded to one fresh request; repair failures are not expiry retries. */
 async function sendWithExpiryRecovery(
@@ -93,12 +135,19 @@ export class AdventureInteractionGeneration {
       () => interaction,
     );
     interaction = this.context.prepare(request.session, prompt, modelName);
+    let resetReason = interaction.resetReason;
+    const threadMode = interaction.previousInteractionId
+      ? "continued"
+      : resetReason
+        ? "reset"
+        : "new";
 
     try {
       const initial = await sendWithExpiryRecovery(send, () => {
         // Retention expiry: rebuild from current session and local transcript.
         this.context.clear(request.session.id);
         interaction = this.context.get(request.session.id);
+        resetReason = "provider-expiry";
       });
       const { result, proposal } = await parseWithRepair(
         initial,
@@ -116,7 +165,13 @@ export class AdventureInteractionGeneration {
         state: result.state,
         sourceEntries: result.sourceEntries,
       };
-      return proposal;
+      return attachInteractionDiagnostics(
+        proposal,
+        result,
+        systemInstruction,
+        threadMode,
+        resetReason,
+      );
     } catch (error) {
       // Never retain a conversation containing a rejected/aborted output.
       this.context.clear(request.session.id);

@@ -71,12 +71,39 @@ export class AdventureTurnGenerationService {
     proposal: AdventureTurnProposal,
     transport: AdventureGenerationInfo["transport"],
     options: AdventureGenerationOptions,
+    prompt: AdventurePrompt,
   ): AdventureTurnGenerationResult {
     // The selection name is our registry key (both transports default to
     // the same key); never a provider-returned raw model string (#5112 Q3).
+    const priorInfo =
+      (proposal as AdventureTurnGenerationResult).generationInfo ?? {};
     const generationInfo: AdventureGenerationInfo = {
+      ...priorInfo,
       transport,
       modelKey: options.modelName ?? DEFAULT_ADVENTURE_MODEL,
+      requestChars: priorInfo.requestChars ?? prompt.serialized.length,
+      sourceCounts: priorInfo.sourceCounts ?? {
+        anchors: Math.min(prompt.anchors.length, 1000),
+        relevant: Math.min(prompt.relevant.length, 1000),
+      },
+      scenarioIds:
+        priorInfo.scenarioIds ??
+        (() => {
+          const state = JSON.parse(prompt.state) as Record<string, unknown>;
+          const scenarios = state["GM-ONLY scenarios"];
+          return Array.isArray(scenarios)
+            ? scenarios
+                .flatMap((item) =>
+                  item &&
+                  typeof item === "object" &&
+                  "id" in item &&
+                  typeof item.id === "string"
+                    ? [item.id]
+                    : [],
+                )
+                .slice(0, 32)
+            : [];
+        })(),
     };
     // Interaction generation always sends an effort (defaulting to "low");
     // stateless generation only honours one when explicitly requested.
@@ -110,6 +137,7 @@ export class AdventureTurnGenerationService {
         ),
         "interaction",
         options,
+        prompt,
       );
     }
     return this.withGenerationInfo(
@@ -121,6 +149,7 @@ export class AdventureTurnGenerationService {
       ),
       "stateless",
       options,
+      prompt,
     );
   }
 
@@ -156,6 +185,7 @@ export class AdventureTurnGenerationService {
           ),
           "interaction",
           options,
+          prompt,
         );
       } catch (error) {
         if (!canUseStatelessFallback(error)) throw error;
@@ -192,7 +222,12 @@ export class AdventureTurnGenerationService {
           options,
         );
         if (streamed) {
-          return this.withGenerationInfo(streamed, "stateless", options);
+          return this.withGenerationInfo(
+            streamed,
+            "stateless",
+            options,
+            prompt,
+          );
         }
       } catch (error) {
         // A complete stream can still contain malformed JSON or a response

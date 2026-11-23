@@ -113,12 +113,35 @@ export const generationMetadataSchema = z.object({
   transport: generationTransportSchema.optional(),
   threadMode: generationThreadModeSchema.optional(),
   resetReason: generationResetReasonSchema.optional(),
-  requestChars: z.number().int().nonnegative().optional(),
+  requestChars: z.number().int().nonnegative().max(1_000_000).optional(),
   sourceCounts: z
-    .record(z.string().min(1).max(64), z.number().int().nonnegative())
+    .record(
+      z.string().min(1).max(32),
+      z.number().int().nonnegative().max(1_000_000),
+    )
+    .superRefine((counts, context) => {
+      if (Object.keys(counts).length > 8) {
+        context.addIssue({
+          code: "custom",
+          message: "too many source count categories",
+        });
+      }
+    })
     .optional(),
   scenarioIds: z.array(id).max(32).optional(),
-  progressCategory: z.string().min(1).max(64).optional(),
+  progressCategory: z
+    .enum([
+      "scenario-stage-or-status-change",
+      "actionable-discovery",
+      "obstacle-advanced-or-resolved",
+      "causal-state-change",
+      "consequential-player-choice",
+      "useful-negative-finding",
+      "repeated-non-answer",
+      "ordinary-interaction",
+      "no-observable-change",
+    ])
+    .optional(),
 });
 
 export const persistedTurnSchema = z.object({

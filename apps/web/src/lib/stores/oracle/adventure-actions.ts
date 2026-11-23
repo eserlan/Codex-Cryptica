@@ -102,7 +102,11 @@ export class AdventureActions {
               resetReason:
                 attempt === 2
                   ? "rejected-turn"
-                  : sceneBoundaryResetReason(prepared, proposal),
+                  : sceneBoundaryResetReason(
+                      prepared,
+                      proposal,
+                      this.runtime.deps.packages.peek(prepared),
+                    ),
             }),
           ),
           "turn-rejected",

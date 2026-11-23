@@ -56,6 +56,13 @@ describe("generationDescriptorFor (#5112)", () => {
 });
 
 describe("sceneBoundaryResetReason (#5112)", () => {
+  const sourcePackage = {
+    scenes: [{ id: "entrance" }, { id: "hall" }],
+    encounters: [],
+    clues: [],
+    secrets: [],
+    actors: [],
+  } as never;
   it("detects a declared scene move, and only a declared one", () => {
     const { state } = createAdventureRuntime();
     const session = state.session!;
@@ -67,17 +74,24 @@ describe("sceneBoundaryResetReason (#5112)", () => {
         packageSceneId: "hall",
       },
     };
-    expect(sceneBoundaryResetReason(session, proposal)).toBe("scene-boundary");
+    expect(sceneBoundaryResetReason(session, proposal, sourcePackage)).toBe(
+      "scene-boundary",
+    );
     expect(
-      sceneBoundaryResetReason(session, {
-        ...completeProposal,
-        visiblePatch: {
-          ...completeProposal.visiblePatch,
-          packageSceneId: "entrance",
+      sceneBoundaryResetReason(
+        session,
+        {
+          ...completeProposal,
+          visiblePatch: {
+            ...completeProposal.visiblePatch,
+            packageSceneId: "entrance",
+          },
         },
-      }),
+        sourcePackage,
+      ),
     ).toBeUndefined();
     expect(sceneBoundaryResetReason(session, completeProposal)).toBeUndefined();
+    expect(sceneBoundaryResetReason(session, proposal)).toBeUndefined();
   });
 });
 

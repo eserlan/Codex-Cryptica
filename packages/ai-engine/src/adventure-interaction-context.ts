@@ -77,15 +77,23 @@ export class AdventureInteractionContext {
     modelName: string,
   ): AdventureInteraction {
     let interaction = this.get(session.id);
+    let resetReason: AdventureInteraction["resetReason"];
     // A revision mismatch means the game was changed by a non-model action,
     // a failed save, or a cancelled turn: rebuild from authoritative OPFS.
-    if (
-      interaction.pending ||
-      (interaction.modelName !== null && interaction.modelName !== modelName) ||
-      (interaction.revision !== null &&
-        interaction.revision !== session.revision) ||
-      interaction.successfulTurns >= CONTEXT_REFRESH_TURNS
-    ) {
+    if (interaction.pending) resetReason = "revision-mismatch";
+    else if (
+      interaction.modelName !== null &&
+      interaction.modelName !== modelName
+    )
+      resetReason = "model-change";
+    else if (
+      interaction.revision !== null &&
+      interaction.revision !== session.revision
+    )
+      resetReason = "revision-mismatch";
+    else if (interaction.successfulTurns >= CONTEXT_REFRESH_TURNS)
+      resetReason = "turn-refresh";
+    if (resetReason) {
       this.clear(session.id);
       interaction = this.get(session.id);
     }
@@ -98,10 +106,11 @@ export class AdventureInteractionContext {
         return oldHash && oldHash !== adventureSourceHash(source);
       })
     ) {
+      resetReason = "source-change";
       this.clear(session.id);
       interaction = this.get(session.id);
     }
-
+    interaction.resetReason = resetReason;
     return interaction;
   }
 }

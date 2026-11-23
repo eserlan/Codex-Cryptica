@@ -114,4 +114,24 @@ describe("generation metadata on committed turns", () => {
     tampered.turns[0].generation.transport = "telepathy";
     expect(() => parseAdventureSession(tampered)).toThrow();
   });
+
+  it("rejects unbounded source-count keys and unknown progress categories", () => {
+    const result = applyCompletedTurn(session(), proposal(), {
+      ...meta,
+      generation,
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const tooManySources = JSON.parse(JSON.stringify(result.value));
+    tooManySources.turns[0].generation.sourceCounts = Object.fromEntries(
+      Array.from({ length: 9 }, (_, index) => [`source-${index}`, 1]),
+    );
+    expect(() => parseAdventureSession(tooManySources)).toThrow();
+    const oversizedRequest = JSON.parse(JSON.stringify(result.value));
+    oversizedRequest.turns[0].generation.requestChars = 1_000_001;
+    expect(() => parseAdventureSession(oversizedRequest)).toThrow();
+    const invalidCategory = JSON.parse(JSON.stringify(result.value));
+    invalidCategory.turns[0].generation.progressCategory = "invented-category";
+    expect(() => parseAdventureSession(invalidCategory)).toThrow();
+  });
 });

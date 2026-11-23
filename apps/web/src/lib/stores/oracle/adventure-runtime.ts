@@ -38,6 +38,47 @@ import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-pref
  * transport decision recorded on the generation result. Fields this layer
  * cannot observe stay absent (`unknown`), never guessed.
  */
+// fallow-ignore-next-line complexity
+function addThreadDiagnostics(
+  metadata: GenerationMetadata,
+  info: AdventureGenerationInfo | undefined,
+  extras: {
+    threadMode?: GenerationThreadMode;
+    resetReason?: GenerationResetReason;
+  },
+): void {
+  metadata.threadMode =
+    extras.threadMode ??
+    (info?.transport === "stateless"
+      ? "new"
+      : extras.resetReason || info?.resetReason
+        ? "reset"
+        : info?.threadMode);
+  const resetReason =
+    info?.transport === "stateless"
+      ? undefined
+      : (extras.resetReason ?? info?.resetReason);
+  if (resetReason) metadata.resetReason = resetReason;
+}
+
+// fallow-ignore-next-line complexity
+function addPromptDiagnostics(
+  metadata: GenerationMetadata,
+  info: AdventureGenerationInfo | undefined,
+  extras: {
+    requestChars?: number;
+    sourceCounts?: Record<string, number>;
+    scenarioIds?: string[];
+  },
+): void {
+  const requestChars = extras.requestChars ?? info?.requestChars;
+  const sourceCounts = extras.sourceCounts ?? info?.sourceCounts;
+  const scenarioIds = extras.scenarioIds ?? info?.scenarioIds;
+  if (requestChars !== undefined) metadata.requestChars = requestChars;
+  if (sourceCounts) metadata.sourceCounts = sourceCounts;
+  if (scenarioIds) metadata.scenarioIds = scenarioIds;
+}
+
 export function generationDescriptorFor(
   proposal:
     | (AdventureTurnProposal & { generationInfo?: AdventureGenerationInfo })
@@ -58,20 +99,8 @@ export function generationDescriptorFor(
   if (modelKey) metadata.modelKey = modelKey;
   if (info?.reasoningEffort) metadata.reasoningEffort = info.reasoningEffort;
   if (info?.transport) metadata.transport = info.transport;
-  // A recorded reset reason implies a reset; stateless carries no retained
-  // thread at all, so each stateless turn starts a fresh one.
-  metadata.threadMode =
-    extras.threadMode ??
-    (extras.resetReason
-      ? "reset"
-      : info?.transport === "stateless"
-        ? "new"
-        : undefined);
-  if (extras.resetReason) metadata.resetReason = extras.resetReason;
-  if (extras.requestChars !== undefined)
-    metadata.requestChars = extras.requestChars;
-  if (extras.sourceCounts) metadata.sourceCounts = extras.sourceCounts;
-  if (extras.scenarioIds) metadata.scenarioIds = extras.scenarioIds;
+  addThreadDiagnostics(metadata, info, extras);
+  addPromptDiagnostics(metadata, info, extras);
   return metadata;
 }
 
@@ -82,12 +111,18 @@ export function generationDescriptorFor(
 export function sceneBoundaryResetReason(
   session: AdventureSession,
   proposal: AdventureTurnProposal,
+  sourcePackage?: Parameters<typeof packageProgressIndex>[0],
 ): GenerationResetReason | undefined {
   const sceneId =
     proposal.kind === "complete"
       ? proposal.visiblePatch.packageSceneId
       : undefined;
-  if (sceneId !== undefined && sceneId !== session.packageProgress?.sceneId) {
+  if (
+    sceneId !== undefined &&
+    sourcePackage !== undefined &&
+    packageProgressIndex(sourcePackage).packageSceneIds.includes(sceneId) &&
+    sceneId !== session.packageProgress?.sceneId
+  ) {
     return "scene-boundary";
   }
   return undefined;

@@ -83,6 +83,16 @@ export interface AdventureGenerationInfo {
   reasoningEffort?: "low" | "medium" | "high" | "xhigh";
   /** Provider-managed interaction vs. stateless generation. */
   transport?: "interaction" | "stateless";
+  requestChars?: number;
+  sourceCounts?: Record<string, number>;
+  scenarioIds?: string[];
+  threadMode?: "new" | "continued" | "reset";
+  resetReason?:
+    | "turn-refresh"
+    | "provider-expiry"
+    | "model-change"
+    | "source-change"
+    | "revision-mismatch";
 }
 
 export type AdventurePrompt = ReturnType<typeof buildAdventurePrompt>;
@@ -105,6 +115,7 @@ export interface AdventureInteraction {
   stateSnapshot: Record<string, unknown> | null;
   sourceHashes: Map<string, string>;
   modelName: string | null;
+  resetReason?: AdventureGenerationInfo["resetReason"];
   /** A validated model reply is not necessarily a committed adventure turn. */
   pending: {
     id: string;
