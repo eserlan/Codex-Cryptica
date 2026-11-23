@@ -177,6 +177,8 @@
           "cosmic_horror",
           "lancer",
           "steampunk",
+          "space-opera-resistance",
+          "space-western",
         ];
         if (!baseThemes.includes(storedTheme)) {
           storedTheme = "workspace";
@@ -521,6 +523,50 @@
             muted: "#c9921a",
             dim: "#d4a852",
           },
+          "space-opera-resistance": {
+            bg: "#020617",
+            surface: "#0f172a",
+            text: "#f8fafc",
+            primary: "#eab308",
+            secondary: "#fef08a",
+            border: "rgba(234, 179, 8, 0.4)",
+            texture: "resistance_console.svg",
+            muted: "#cbd5e1",
+            dim: "#94a3b8",
+          },
+          space_opera_resistance_dark: {
+            bg: "#000000",
+            surface: "#09090b",
+            text: "#e2e8f0",
+            primary: "#ef4444",
+            secondary: "#b91c1c",
+            border: "rgba(239, 68, 68, 0.3)",
+            texture: "resistance_console.svg",
+            muted: "#94a3b8",
+            dim: "#64748b",
+          },
+          "space-western": {
+            bg: "#0f1117",
+            surface: "#181b23",
+            text: "#f3f4f6",
+            primary: "#d97706",
+            secondary: "#b45309",
+            border: "rgba(217, 119, 6, 0.35)",
+            texture: "rust.svg",
+            muted: "#d1d5db",
+            dim: "#9ca3af",
+          },
+          space_western_light: {
+            bg: "#f7f1e7",
+            surface: "#ece3d3",
+            text: "#29180c",
+            primary: "#b45309",
+            secondary: "#78350f",
+            border: "rgba(180, 83, 9, 0.4)",
+            texture: "rust.svg",
+            muted: "#78350f",
+            dim: "#92400e",
+          },
         };
 
         function applyTheme(baseTheme) {
@@ -535,6 +581,8 @@
             else if (baseTheme === "superhero") theme = "superhero_dark";
             else if (baseTheme === "pirate") theme = "pirate_dark";
             else if (baseTheme === "steampunk") theme = "steampunk_dark";
+            else if (baseTheme === "space-opera-resistance")
+              theme = "space_opera_resistance_dark";
           } else {
             if (baseTheme === "scifi") theme = "scifi_light";
             else if (baseTheme === "cyberpunk") theme = "cyberpunk_light";
@@ -546,6 +594,8 @@
             else if (baseTheme === "cosmic_horror")
               theme = "cosmic_horror_light";
             else if (baseTheme === "lancer") theme = "lancer_light";
+            else if (baseTheme === "space-western")
+              theme = "space_western_light";
           }
 
           if (!themes[theme]) return;
@@ -682,6 +732,22 @@
             steampunk_dark: {
               header: "'Spectral', serif",
               body: "'Spectral', serif",
+            },
+            "space-opera-resistance": {
+              header: "'Orbitron', sans-serif",
+              body: "'Inter', sans-serif",
+            },
+            space_opera_resistance_dark: {
+              header: "'Orbitron', sans-serif",
+              body: "'Inter', sans-serif",
+            },
+            "space-western": {
+              header: "'Alegreya', serif",
+              body: "'Inter', sans-serif",
+            },
+            space_western_light: {
+              header: "'Alegreya', serif",
+              body: "'Inter', sans-serif",
             },
           };
           const f = fonts[theme] || fonts.workspace;

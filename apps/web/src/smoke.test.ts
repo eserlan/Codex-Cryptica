@@ -57,4 +57,20 @@ describe("Web App Smoke Test", () => {
       /western_dark:\s*\{[^}]*body:\s*"'Inter', sans-serif",?\s*\}/,
     );
   });
+
+  it("bootstraps configured space genre hub themes before hydration", () => {
+    const appHtmlContent = fs.readFileSync(
+      path.resolve(__dirname, "app.html"),
+      "utf-8",
+    );
+
+    for (const themeId of ["space-opera-resistance", "space-western"]) {
+      expect(appHtmlContent).toContain(`"${themeId}"`);
+      expect(appHtmlContent).toContain(`"${themeId}": {`);
+    }
+    expect(appHtmlContent).toContain('theme = "space_opera_resistance_dark"');
+    expect(appHtmlContent).toContain('theme = "space_western_light"');
+    expect(appHtmlContent).toContain("space_opera_resistance_dark: {");
+    expect(appHtmlContent).toContain("space_western_light: {");
+  });
 });
