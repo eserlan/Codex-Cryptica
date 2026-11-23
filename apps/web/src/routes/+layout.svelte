@@ -15,17 +15,11 @@
   // of truth.
   const robotsOverride = import.meta.env.VITE_ROBOTS_DIRECTIVE?.trim();
 
-  // Importing session-bootstrap remains an AI-feature responsibility. Keep
-  // cold public routes free of token/session setup until an AI request starts.
   onMount(() => {
     // The app booted, so its chunks loaded: hand chunk failures from here on
     // to the version-skew handling in hooks.client.ts (see app.html).
     window.__codexDisarmStaleBuildRecovery?.();
-    const stopShellCanonical = watchShellCanonical(document);
-    void import("#lib/services/mobile/capacitor-bridge.js").then((m) =>
-      m.capacitorBridge.init(),
-    );
-    return stopShellCanonical;
+    return watchShellCanonical(document);
   });
 </script>
 
