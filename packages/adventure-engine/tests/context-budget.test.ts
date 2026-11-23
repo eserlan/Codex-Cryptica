@@ -33,7 +33,6 @@ describe("allocatePromptBudget", () => {
   });
 });
 
-
 describe("current-turn prompt input", () => {
   const longSession = () => ({
     ...session(),
