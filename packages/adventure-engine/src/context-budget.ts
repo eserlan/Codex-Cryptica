@@ -202,7 +202,9 @@ export function allocatePromptBudget(
     anchors: result.anchors,
     relevant: result.relevant,
     transcript: parseJsonPayload(result.transcript),
-    input: parseJsonPayload(trimText(input.input, 600)),
+    // The current player action and roll result are authoritative. Trimming
+    // serialized JSON here can cut them off after a long adventure premise.
+    input: JSON.parse(input.input) as unknown,
   });
   if (serialized.length > MAX_GENERATION_INPUT_CHARS)
     throw new Error("generation-budget-exceeded");
