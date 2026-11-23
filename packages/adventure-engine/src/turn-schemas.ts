@@ -11,6 +11,7 @@ import {
   visiblePatchSchema,
   hiddenPatchSchema,
   newProvisionalFactSchema,
+  newCausalCommitmentSchema,
   persistedVisiblePatchSchema,
   persistedHiddenPatchSchema,
 } from "./state-schemas";
@@ -54,6 +55,7 @@ const completeProposalSchema = z.object({
     .max(8)
     .optional(),
   provisionalFacts: z.array(newProvisionalFactSchema),
+  causalCommitments: z.array(newCausalCommitmentSchema).max(4).optional(),
   sourceRecordIds: z.array(id),
   suggestedActions: z.array(text).length(3).optional(),
   packageEvents: z.array(packageEventProposalSchema).max(8).optional(),
@@ -94,6 +96,7 @@ export const persistedTurnSchema = z.object({
   revealedSecretIds: z.array(secretIdSchema),
   sourceRecordIds: z.array(id),
   provisionalFactIds: z.array(id),
+  causalCommitmentIds: z.array(id).optional(),
   committedAt: timestamp,
   timeAdvance: timeAdvanceSchema
     .pick({ minutes: true, cause: true })

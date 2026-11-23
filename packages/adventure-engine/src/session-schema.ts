@@ -4,6 +4,7 @@ import {
   visibleStateSchema,
   hiddenStateSchema,
   provisionalFactSchema,
+  causalCommitmentSchema,
 } from "./state-schemas";
 import { dicePresetSchema, pendingRollSchema } from "./roll-schemas";
 import { worldTimeSchema } from "./world-time-schemas";
@@ -103,6 +104,7 @@ export const adventureSessionSchema = z
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
+    causalCommitments: z.array(causalCommitmentSchema).optional(),
     dismissedProvisionalFactIds: z.array(id).max(60).optional().default([]),
     turns: z.array(persistedTurnSchema),
     oocExchanges: z

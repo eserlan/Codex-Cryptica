@@ -118,6 +118,41 @@ export interface ProvisionalFact {
   scenarioId?: string;
 }
 
+export type CausalCommitmentKind =
+  "motive" | "mechanism" | "identity" | "action" | "link";
+
+/** Epistemic class of an emergent GM commitment; source/seed truth and established facts live elsewhere. */
+export type CausalCommitmentClass =
+  "supporting-explanation" | "belief-testimony" | "speculative-plan";
+
+/** Tiered actor handle: Vault record, then provisional fact, then plain name. */
+export interface CausalActorRef {
+  tier: "source-record" | "provisional-fact" | "name";
+  value: string;
+}
+
+/**
+ * A GM-only emergent causal commitment (#5111). Contested entries are
+ * quarantined from the Director brief and reviewed by the user in Vault lore.
+ */
+export interface CausalCommitment {
+  id: string;
+  kind: CausalCommitmentKind;
+  commitmentClass: CausalCommitmentClass;
+  subject: string;
+  summary: string;
+  actorRef?: CausalActorRef;
+  scenarioId?: string;
+  status: "committed" | "contested";
+  sourceTurnId: string;
+  sourceRevision: number;
+}
+
+export type NewCausalCommitment = Omit<
+  CausalCommitment,
+  "id" | "status" | "sourceTurnId" | "sourceRevision"
+> & { contested?: boolean };
+
 /**
  * One dice group or modifier from a resolved roll's trace. Structurally the
  * same shape as `dice-engine`'s `PartResult` (#3443), but declared locally
@@ -262,6 +297,7 @@ export interface CommittedAdventureTurn {
   revealedSecretIds: string[];
   sourceRecordIds: string[];
   provisionalFactIds: string[];
+  causalCommitmentIds?: string[];
   committedAt: string;
   /** Player-safe time interval; private developments live in worldTime. */
   timeAdvance?: { minutes: number; cause: string };
@@ -468,6 +504,8 @@ export interface AdventureSession {
   visibleState: VisibleAdventureState;
   hiddenState: HiddenAdventureState;
   provisionalFacts: ProvisionalFact[];
+  /** GM-only emergent causal commitments (#5111); absent on older sessions. */
+  causalCommitments?: CausalCommitment[];
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
@@ -523,6 +561,8 @@ export interface CompletedTurnProposal {
   /** Scenarios escalated along the progressive elaboration ladder in this turn. */
   elaborateScenarios?: ScenarioElaborationProposal[];
   provisionalFacts: NewProvisionalFact[];
+  /** Meaningful emergent causal commitments only; never fleeting detail. */
+  causalCommitments?: NewCausalCommitment[];
   sourceRecordIds: string[];
   suggestedActions?: string[];
   /** GM-only package progress; checked by the ledger reducer. */

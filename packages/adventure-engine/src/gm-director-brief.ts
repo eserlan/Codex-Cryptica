@@ -21,6 +21,7 @@ import type {
   ActorDisposition,
   ActorProgressStatus,
   AdventureSession,
+  CausalCommitment,
   PackageProgress,
   PackageProgressStatus,
   Place,
@@ -48,6 +49,13 @@ export type DirectorScenePosture =
   | "calm-conversation"
   | "progressing";
 
+export interface DirectorCommitmentEntry {
+  id: string;
+  kind: CausalCommitment["kind"];
+  subject: string;
+  summary: string;
+}
+
 export interface DirectorPursuedScenario {
   scenarioId: string;
   provenance: DirectorProvenance;
@@ -69,9 +77,11 @@ export interface DirectorPursuedScenario {
       text: string;
     }>;
     actors: string[];
+    committedExplanations?: DirectorCommitmentEntry[];
   };
   potential: {
     openUncertainties: string[];
+    speculativeCommitments?: DirectorCommitmentEntry[];
     pressure?: {
       actor: string;
       goal: string;
@@ -113,6 +123,7 @@ export interface GMDirectorBrief {
     sourceRecordId?: string;
   };
   pursuedScenarios: DirectorPursuedScenario[];
+  committedExplanations?: DirectorCommitmentEntry[];
   otherOpenHeardScenarioIds: string[];
   packageContext?: DirectorPackageContext;
   progression?: {
@@ -696,6 +707,64 @@ function collectKnownPlayerFacts(
   return facts.slice(0, 4);
 }
 
+const MAX_COMMITMENT_ENTRIES = 3;
+
+function toCommitmentEntry(
+  commitment: CausalCommitment,
+): DirectorCommitmentEntry {
+  return {
+    id: clipText(commitment.id, 180),
+    kind: commitment.kind,
+    subject: clipText(commitment.subject, 180),
+    summary: clipText(commitment.summary, 180),
+  };
+}
+
+function collectCommittedExplanations(
+  session: AdventureSession,
+  scenarioId: string,
+): DirectorCommitmentEntry[] {
+  return (session.causalCommitments ?? [])
+    .filter(
+      (c) =>
+        c.status === "committed" &&
+        c.commitmentClass === "supporting-explanation" &&
+        c.scenarioId === scenarioId,
+    )
+    .slice(0, MAX_COMMITMENT_ENTRIES)
+    .map(toCommitmentEntry);
+}
+
+function collectSpeculativeCommitments(
+  session: AdventureSession,
+  scenarioId: string,
+): DirectorCommitmentEntry[] {
+  return (session.causalCommitments ?? [])
+    .filter(
+      (c) =>
+        c.status === "committed" &&
+        (c.commitmentClass === "belief-testimony" ||
+          c.commitmentClass === "speculative-plan") &&
+        c.scenarioId === scenarioId,
+    )
+    .slice(0, MAX_COMMITMENT_ENTRIES)
+    .map(toCommitmentEntry);
+}
+
+function collectUnscopedCommittedExplanations(
+  session: AdventureSession,
+): DirectorCommitmentEntry[] {
+  return (session.causalCommitments ?? [])
+    .filter(
+      (c) =>
+        c.status === "committed" &&
+        c.commitmentClass === "supporting-explanation" &&
+        !c.scenarioId,
+    )
+    .slice(0, MAX_COMMITMENT_ENTRIES)
+    .map(toCommitmentEntry);
+}
+
 const STAGE_UNCERTAINTY: Record<ScenarioElaborationStage, string> = {
   hearsay: "Still hearsay; concrete witness or physical clue is open.",
   "actionable-clue":
@@ -771,6 +840,11 @@ function buildPursuedScenario(
     visibility: event.visibility,
     text: clipText(event.text, 180),
   }));
+  const committedExplanations = collectCommittedExplanations(session, item.id);
+  const speculativeCommitments = collectSpeculativeCommitments(
+    session,
+    item.id,
+  );
 
   return {
     scenarioId: item.id,
@@ -792,9 +866,11 @@ function buildPursuedScenario(
       knownPlayerFacts: collectKnownPlayerFacts(item, session),
       latestConsequentialEvents,
       actors: collectScenarioActors(item, session),
+      ...(committedExplanations.length > 0 ? { committedExplanations } : {}),
     },
     potential: {
       openUncertainties: collectOpenUncertainties(item, truthRevealed),
+      ...(speculativeCommitments.length > 0 ? { speculativeCommitments } : {}),
       ...(item.pressure
         ? {
             pressure: {
@@ -1217,6 +1293,7 @@ function determineSuggestedActionKinds(
 
 const PURSUED_SHEDDERS: Array<(entry: DirectorPursuedScenario) => boolean> = [
   (e) => e.potential.nextDevelopmentKinds.pop() !== undefined,
+  (e) => e.potential.speculativeCommitments?.pop() !== undefined,
   (e) => e.potential.openUncertainties.pop() !== undefined,
   (e) => e.established.latestConsequentialEvents.shift() !== undefined,
   (e) => e.established.knownPlayerFacts.pop() !== undefined,
@@ -1226,6 +1303,8 @@ const PURSUED_SHEDDERS: Array<(entry: DirectorPursuedScenario) => boolean> = [
     delete e.potential.pressure;
     return true;
   },
+  // Established explanations shed last, before gmTruthRef is ever touched.
+  (e) => e.established.committedExplanations?.pop() !== undefined,
 ];
 
 function shedPursuedDetails(brief: GMDirectorBrief): boolean {
@@ -1263,6 +1342,15 @@ function shedSecondaryPursued(brief: GMDirectorBrief): boolean {
   return true;
 }
 
+function shedTopLevelCommittedExplanations(brief: GMDirectorBrief): boolean {
+  if (!brief.committedExplanations?.length) return false;
+  brief.committedExplanations.pop();
+  if (brief.committedExplanations.length === 0) {
+    delete brief.committedExplanations;
+  }
+  return true;
+}
+
 const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
   (b) => {
     if (!b.progression) return false;
@@ -1271,6 +1359,7 @@ const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
   },
   shedSecondaryPursued,
   shedPursuedDetails,
+  shedTopLevelCommittedExplanations,
   shedPackageExtras,
   (b) => b.otherOpenHeardScenarioIds.pop() !== undefined,
   (b) => {
@@ -1355,44 +1444,81 @@ export function buildGMDirectorBriefWithPacing(input: GMDirectorBriefInput): {
     pursued.length,
     investigative,
   );
-  const currentPlace = resolveCurrentPlace(input.session);
-  const emitProgression =
+  const brief = enforceBriefBudget(
+    assembleDirectorBrief({
+      input,
+      mode,
+      scenePosture,
+      pursued,
+      otherIds,
+      packageContext,
+      investigative,
+    }),
+    limit,
+  );
+  return { brief, investigative };
+}
+
+function directorProgression(
+  investigative: InvestigativePacing | undefined,
+  scenePosture: DirectorScenePosture,
+  mode: GMDirectorBrief["mode"],
+): GMDirectorBrief["progression"] {
+  const emit =
     investigative &&
     scenePosture !== "calm-conversation" &&
     (investigative.recoveryDue ||
       (mode !== "open-world" && investigative.repeatedNonAnswerTurns >= 2));
-  const progression = emitProgression
-    ? {
-        turnsWithoutAdvancement: investigative.turnsWithoutAdvancement,
-        repeatedNonAnswerTurns: investigative.repeatedNonAnswerTurns,
-        ...(investigative.recommendedAngle
-          ? { recommendedAngle: investigative.recommendedAngle }
-          : {}),
-      }
-    : undefined;
+  if (!emit) return undefined;
+  return {
+    turnsWithoutAdvancement: investigative.turnsWithoutAdvancement,
+    repeatedNonAnswerTurns: investigative.repeatedNonAnswerTurns,
+    ...(investigative.recommendedAngle
+      ? { recommendedAngle: investigative.recommendedAngle }
+      : {}),
+  };
+}
 
-  const brief = enforceBriefBudget(
-    {
-      advisory: true,
+function assembleDirectorBrief(args: {
+  input: GMDirectorBriefInput;
+  mode: GMDirectorBrief["mode"];
+  scenePosture: DirectorScenePosture;
+  pursued: ReturnType<typeof rankOpenHeardScenarios>["pursued"];
+  otherIds: string[];
+  packageContext: DirectorPackageContext | undefined;
+  investigative: InvestigativePacing | undefined;
+}): GMDirectorBrief {
+  const { input, mode, scenePosture, pursued, otherIds } = args;
+  const currentPlace = resolveCurrentPlace(input.session);
+  const unscopedExplanations = collectUnscopedCommittedExplanations(
+    input.session,
+  );
+  const progression = directorProgression(
+    args.investigative,
+    scenePosture,
+    mode,
+  );
+  return {
+    advisory: true,
+    mode,
+    scenePosture,
+    ...(currentPlace ? { currentPlace } : {}),
+    pursuedScenarios: pursued.map((entry) =>
+      buildPursuedScenario(entry, input.session),
+    ),
+    ...(unscopedExplanations.length > 0
+      ? { committedExplanations: unscopedExplanations }
+      : {}),
+    otherOpenHeardScenarioIds: otherIds,
+    ...(args.packageContext ? { packageContext: args.packageContext } : {}),
+    ...(progression ? { progression } : {}),
+    suggestedActionKinds: determineSuggestedActionKinds(
       mode,
       scenePosture,
-      ...(currentPlace ? { currentPlace } : {}),
-      pursuedScenarios: pursued.map((entry) =>
-        buildPursuedScenario(entry, input.session),
-      ),
-      otherOpenHeardScenarioIds: otherIds,
-      ...(packageContext ? { packageContext } : {}),
-      ...(progression ? { progression } : {}),
-      suggestedActionKinds: determineSuggestedActionKinds(
-        mode,
-        scenePosture,
-        pursued,
-        investigative,
-      ),
-    },
-    limit,
-  );
-  return { brief, investigative };
+      pursued,
+      args.investigative,
+    ),
+  };
 }
 
 /**

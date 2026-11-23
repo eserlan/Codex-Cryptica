@@ -161,11 +161,13 @@
       oracle.vault.createEntity(type, title, data),
     linkPlaceRecord: (name, recordId) =>
       oracle.adventure.linkPlaceRecord(name, recordId),
+    updateEntityLore: (id, lore) => oracle.vault.updateEntity(id, { lore }),
     notify: (message, level) => notificationStore.notify(message, level),
   });
 
   $effect(() => {
     void promotions.autoPromote(existingEntityTitles);
+    void promotions.syncContested();
   });
 
   $effect(() => {
