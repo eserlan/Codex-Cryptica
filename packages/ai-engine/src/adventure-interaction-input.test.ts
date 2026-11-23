@@ -68,4 +68,38 @@ describe("adventure continuation payloads", () => {
     expect(payload).not.toHaveProperty("transcript");
     expect(payload).not.toHaveProperty("responseRepair");
   });
+
+  it("retains the exact current action when provider history is reused", () => {
+    const longSession = {
+      ...session,
+      premise: "The city is facing a water crisis. ".repeat(17),
+    };
+    const context = new AdventureInteractionContext().get(longSession.id);
+    const initial = buildAdventureInteractionInput(
+      buildAdventurePrompt({
+        ...request,
+        session: longSession,
+      }),
+      context,
+    );
+    context.previousInteractionId = "previous-provider-interaction";
+    context.stateSnapshot = initial.state;
+
+    const playerAction = "Ask the charcoal-burner to guide me to the shelter.";
+    const continued = buildAdventureInteractionInput(
+      buildAdventurePrompt({
+        ...request,
+        session: longSession,
+        phase: "action",
+        playerAction,
+      }),
+      context,
+    );
+    const payload = JSON.parse(continued.input);
+
+    expect(payload.input.phase).toBe("action");
+    expect(payload.input.playerAction).toBe(playerAction);
+    expect(payload.input.adventure.premise).toBe(longSession.premise);
+    expect(payload).not.toHaveProperty("transcript");
+  });
 });
