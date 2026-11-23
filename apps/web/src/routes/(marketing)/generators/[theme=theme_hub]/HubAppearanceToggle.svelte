@@ -6,7 +6,7 @@
     { id: "neutral-dark", label: "Dark", icon: "icon-[lucide--moon]" },
   ] as const;
   // ui-check-ignore: Preserve the existing hub appearance colours during extraction.
-  const selectedClass = "bg-theme-primary text-theme-bg shadow-sm";
+  const selectedClass = "bg-theme-primary text-theme-on-primary shadow-sm";
   // ui-check-ignore: Preserve the existing hub appearance colours during extraction.
   const idleClass = "text-theme-muted hover:text-theme-text";
 </script>

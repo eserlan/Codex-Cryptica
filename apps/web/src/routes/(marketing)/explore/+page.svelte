@@ -12,6 +12,7 @@
   import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { HUB_SLUG_TO_THEME_ID } from "#lib/components/seo/generator-theme-maps.js";
   import { isPublicLabel } from "#lib/content/labels.js";
+  import { themeBootstrapScript } from "#lib/theme/theme-bootstrap.js";
   import type { PageData } from "./$types";
 
   let { data }: { data: PageData } = $props();
@@ -29,22 +30,7 @@
       : null,
   );
 
-  const themeBootstrap = $derived.by(() => {
-    if (!labelThemeId) return "";
-
-    const serializedTheme = JSON.stringify(labelThemeId).replaceAll(
-      "<",
-      "\\u003C",
-    );
-
-    return (
-      "<" +
-      "script>window.__codexApplyTheme && window.__codexApplyTheme(" +
-      serializedTheme +
-      ");</" +
-      "script>"
-    );
-  });
+  const themeBootstrap = $derived(themeBootstrapScript(labelThemeId));
 
   // A genre label becomes the browsing context. Clearing the filter does
   // not discard that context, so linked public pages remain themed.
