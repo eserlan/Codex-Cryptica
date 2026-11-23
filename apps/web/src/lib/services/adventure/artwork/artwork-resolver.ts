@@ -1,5 +1,6 @@
 import {
   CUE_SYNONYMS,
+  isNpcDemographicCue,
   isNpcPersonCue,
   isSettingCue,
   normalizeArtworkCues,
@@ -128,6 +129,12 @@ export function describeVisiblePerson(
       return isSettingCue(CUE_SYNONYMS[lower] ?? lower);
     }),
   );
+  const demographicCues = normalizeArtworkCues(
+    tokens.filter((token) => {
+      const lower = token.trim().toLowerCase();
+      return isNpcDemographicCue(CUE_SYNONYMS[lower] ?? lower);
+    }),
+  );
   return {
     subject: person.sourceRecordId
       ? { kind: "entity", id: person.sourceRecordId }
@@ -136,5 +143,6 @@ export function describeVisiblePerson(
     genre: artworkGenreForTheme(theme),
     primaryCues,
     ...(settingCues.length > 0 ? { settingCues } : {}),
+    ...(demographicCues.length > 0 ? { demographicCues } : {}),
   };
 }

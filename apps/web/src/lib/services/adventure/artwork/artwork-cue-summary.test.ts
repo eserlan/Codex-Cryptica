@@ -55,12 +55,15 @@ describe("summarizeArtworkCues", () => {
       place: {
         name: "Kettleford",
         cues: ["village", "river", "busy"],
+        unmappedCues: [],
         match: "loc-fantasy-river-01",
       },
       npcs: [
         {
           name: "Mill apprentice",
           cues: ["worker", "human"],
+          unmappedCues: [],
+          demographicCues: [],
           match: null,
         },
       ],

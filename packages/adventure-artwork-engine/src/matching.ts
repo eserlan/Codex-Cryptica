@@ -1,6 +1,8 @@
 import type { ArtworkAsset } from "./catalogue";
 import {
+  isNpcAgeCue,
   isNpcAncestryCue,
+  isNpcGenderCue,
   isNpcGenericRoleCue,
   normalizeArtworkCues,
 } from "./cues";
@@ -11,6 +13,46 @@ export interface ArtworkCues {
   settingCues?: readonly string[];
   moodCues?: readonly string[];
   timeCues?: readonly string[];
+  demographicCues?: readonly string[];
+}
+
+const GENDER_DEMOGRAPHIC_WEIGHT = 24;
+const AGE_DEMOGRAPHIC_WEIGHT = 12;
+
+function scoreDemographicDimension(
+  assetCues: readonly string[],
+  queryCues: ReadonlySet<string>,
+  predicate: (cue: string) => boolean,
+  weight: number,
+): number {
+  const queryMatches = [...queryCues].filter(predicate);
+  if (queryMatches.length === 0) return 0;
+  const assetMatches = assetCues.filter(predicate);
+  if (assetMatches.length === 0) return 0;
+  return assetMatches.some((cue) => queryCues.has(cue)) ? weight : -weight;
+}
+
+function scoreNpcDemographicMatch(
+  asset: ArtworkAsset,
+  demographicCues: ReadonlySet<string>,
+): number {
+  if (demographicCues.size === 0) return 0;
+  const assetDemographics = asset.demographicCues ?? [];
+  if (assetDemographics.length === 0) return 0;
+  return (
+    scoreDemographicDimension(
+      assetDemographics,
+      demographicCues,
+      isNpcGenderCue,
+      GENDER_DEMOGRAPHIC_WEIGHT,
+    ) +
+    scoreDemographicDimension(
+      assetDemographics,
+      demographicCues,
+      isNpcAgeCue,
+      AGE_DEMOGRAPHIC_WEIGHT,
+    )
+  );
 }
 
 function scoreNpcPrimaryMatch(cue: string): number {
@@ -38,6 +80,7 @@ function scoreAsset(
     all: ReadonlySet<string>;
     mood: ReadonlySet<string>;
     time: ReadonlySet<string>;
+    demographic: ReadonlySet<string>;
   },
 ): number | null {
   const matchedPrimary = asset.primaryCues.filter((value) =>
@@ -52,8 +95,11 @@ function scoreAsset(
           0,
         )
       : matchedPrimary.length * 8;
+  const demographicScore =
+    type === "npc" ? scoreNpcDemographicMatch(asset, sets.demographic) : 0;
   return (
     primaryScore +
+    demographicScore +
     asset.settingCues.filter((value) => sets.all.has(value)).length * 4 +
     asset.moodCues.filter((value) => sets.mood.has(value)).length +
     asset.timeCues.filter((value) => sets.time.has(value)).length -
@@ -68,13 +114,15 @@ export function matchArtwork(
   const primary = new Set(normalizeArtworkCues(cues.primaryCues));
   const mood = new Set(normalizeArtworkCues(cues.moodCues ?? []));
   const time = new Set(normalizeArtworkCues(cues.timeCues ?? []));
+  const demographic = new Set(normalizeArtworkCues(cues.demographicCues ?? []));
   const all = new Set([
     ...primary,
     ...normalizeArtworkCues(cues.settingCues ?? []),
     ...mood,
     ...time,
+    ...demographic,
   ]);
-  const sets = { primary, all, mood, time };
+  const sets = { primary, all, mood, time, demographic };
   let best: ArtworkAsset | null = null;
   let bestScore = -Infinity;
   for (const asset of assets) {

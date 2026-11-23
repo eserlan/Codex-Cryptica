@@ -135,6 +135,26 @@ describe("visible artwork subject", () => {
   });
 
   it("returns null for missing person and empty cues for unknown descriptors", () => {
+    expect(
+      describeVisiblePerson({ id: "n8", name: "Ivenna Surr" }, "fantasy", {
+        facts: [
+          "A woman waits beside a tide-marked post; she is a human scholar.",
+        ],
+      }),
+    ).toMatchObject({
+      primaryCues: ["human", "scholar"],
+      demographicCues: ["female"],
+    });
+
+    expect(
+      describeVisiblePerson({ id: "n9", name: "Tarran" }, "fantasy", {
+        facts: ["Young beach boy salvaging scraps."],
+      }),
+    ).toMatchObject({
+      primaryCues: [],
+      demographicCues: ["young", "male"],
+    });
+
     expect(describeVisiblePerson(undefined, "fantasy")).toBeNull();
     expect(
       describeVisiblePerson(

@@ -8,6 +8,7 @@
 
 import { handleStarterTileDecksRoute } from "./starter-tile-decks";
 import { handleFeatureFlagsRequest } from "./feature-flags";
+import { handleArtworkDemandRoute } from "./artwork-demand";
 import { handleListPublicListings } from "./directory";
 import { handleCopyrightReport } from "./reports";
 import { handleFeedbackReport } from "./feedback-reports";
@@ -272,6 +273,13 @@ export default {
     if (pathname === "/api/feedback/reports") {
       return handleFeedbackReport(request, env);
     }
+
+    const artworkDemandResponse = await handleArtworkDemandRoute(
+      request,
+      env,
+      pathname,
+    );
+    if (artworkDemandResponse) return artworkDemandResponse;
 
     const copyrightReportResponse = await handleCopyrightReportRoute(
       request,

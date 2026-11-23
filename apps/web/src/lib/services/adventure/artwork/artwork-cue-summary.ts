@@ -1,5 +1,7 @@
 import { type Place, type StateFact } from "@codex/adventure-engine";
 import {
+  CUE_SYNONYMS,
+  isArtworkCue,
   matchArtwork,
   type ArtworkAsset,
 } from "@codex/adventure-artwork-engine";
@@ -18,16 +20,43 @@ import {
   type ArtworkNpcSession,
 } from "./npc-portrait-selection";
 
+const SAFE_RAW_CUE_PATTERN = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
+
+function collectUnmappedStructuredCues(
+  rawCues: readonly string[] | undefined,
+): string[] {
+  if (!rawCues || rawCues.length === 0) return [];
+  const result = new Set<string>();
+  for (const raw of rawCues) {
+    const normalized = raw.trim().toLowerCase().replace(/\s+/g, " ");
+    if (
+      normalized.length === 0 ||
+      normalized.length > 32 ||
+      !SAFE_RAW_CUE_PATTERN.test(normalized)
+    ) {
+      continue;
+    }
+    const mapped = CUE_SYNONYMS[normalized] ?? normalized;
+    if (!isArtworkCue(mapped)) {
+      result.add(normalized);
+    }
+  }
+  return [...result].sort();
+}
+
 export interface ArtworkCueIndicator {
   genre: string;
   place: {
     name: string;
     cues: readonly string[];
+    unmappedCues?: readonly string[];
     match: string | null;
   } | null;
   npcs: Array<{
     name: string;
     cues: readonly string[];
+    unmappedCues?: readonly string[];
+    demographicCues?: readonly string[];
     match: string | null;
   }>;
 }
@@ -52,23 +81,31 @@ function summarizeNpcFact(
   fact: StateFact,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
-): { name: string; cues: readonly string[]; match: string | null } {
-  const name = fact.text.split(/[.,:—–-]/, 1)[0]?.trim() || fact.text;
+): {
+  name: string;
+  cues: readonly string[];
+  unmappedCues: readonly string[];
+  demographicCues: readonly string[];
+  match: string | null;
+} {
+  const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+  const name = firstPart ? firstPart.trim() : fact.text;
+  const unmappedCues = collectUnmappedStructuredCues(fact.cues);
   const cues = describeVisiblePerson(
-    {
-      id: fact.id,
-      name,
-      aliases: [],
-      ...(fact.sourceRecordId ? { sourceRecordId: fact.sourceRecordId } : {}),
-    },
+    { id: fact.id, name, aliases: [], sourceRecordId: fact.sourceRecordId },
     theme,
-    { facts: [fact.text, ...(fact.cues ?? [])] },
+    { facts: fact.cues ? [fact.text, ...fact.cues] : [fact.text] },
   );
-  const matched = cues ? (matchArtwork(catalogue, cues)?.id ?? null) : null;
+  if (!cues) {
+    return { name, cues: [], unmappedCues, demographicCues: [], match: null };
+  }
+  const matched = matchArtwork(catalogue, cues);
   return {
     name,
-    cues: cues?.primaryCues ?? [],
-    match: matched,
+    cues: cues.primaryCues,
+    unmappedCues,
+    demographicCues: cues.demographicCues ? cues.demographicCues : [],
+    match: matched ? matched.id : null,
   };
 }
 
@@ -101,6 +138,7 @@ export function summarizeArtworkCues(
       ? {
           name: place.name,
           cues: placeCues?.primaryCues ?? [],
+          unmappedCues: collectUnmappedStructuredCues(place.cues),
           match: resolvePlaceCueMatch(placeSelected, placeCues, catalogue),
         }
       : null,
