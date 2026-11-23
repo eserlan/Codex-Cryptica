@@ -366,15 +366,22 @@
 
 {#snippet freeActionInputRow()}
   <div
-    class={actionControlsVisible || (phone && modeSwitchVisible)
+    class={actionControlsVisible || modeSwitchVisible
       ? "flex min-w-0 items-end gap-2"
       : "hidden"}
     data-testid="adventure-free-action"
   >
     {@render desktopModeSwitch()}
     {@render mobileModeSwitch()}
-    {@render freeActionTextarea()}
-    {@render freeActionSubmit()}
+    <div
+      class={actionControlsVisible || phone
+        ? "flex min-w-0 flex-1 items-end gap-2"
+        : "hidden"}
+      data-testid="adventure-free-action-controls"
+    >
+      {@render freeActionTextarea()}
+      {@render freeActionSubmit()}
+    </div>
   </div>
 {/snippet}
 

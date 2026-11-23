@@ -478,17 +478,26 @@ describe("AdventureComposer", () => {
 
   it.each(["awaiting-roll", "ready-to-resolve"] as const)(
     "hides competing action controls while a roll is %s",
-    (phase) => {
+    async (phase) => {
       const m = manager(phase);
       m.suggestedActions = ["Hold the sea wall"];
+      m.setComposerMode = vi.fn();
       render(AdventureComposer, { props: { manager: m } });
 
       expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
         "hidden",
       );
       expect(screen.getByTestId("adventure-free-action").className).toBe(
-        "hidden",
+        "flex min-w-0 items-end gap-2",
       );
+      expect(
+        screen.getByTestId("adventure-free-action-controls").className,
+      ).toBe("hidden");
+      expect(
+        screen.getByTestId("adventure-composer-mode-bar").className,
+      ).not.toBe("hidden");
+      await fireEvent.click(screen.getByTestId("adventure-mode-ooc"));
+      expect(m.setComposerMode).toHaveBeenCalledWith("ooc");
     },
   );
 
