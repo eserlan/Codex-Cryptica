@@ -143,7 +143,7 @@
         aria-label="Suggested actions"
       >
         {@render actionList(
-          "min-h-10 max-w-full rounded-2xl border border-theme-border bg-theme-bg px-3 py-1.5 text-left text-sm leading-snug whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50",
+          "min-h-10 max-w-full rounded-2xl border border-theme-border bg-theme-bg px-3 py-1.5 text-left text-sm leading-snug whitespace-normal text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary disabled:opacity-50 xl:flex-1",
         )}
       </div>
     {/if}

@@ -577,26 +577,29 @@ it("offers opening recovery after reload even without a stored error", () => {
 });
 
 describe("AdventureComposer layout and chips", () => {
-  it("aligns the composer with the story column", () => {
+  it("keeps the input column bounded and lets suggestions use wide screens", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m } });
     const extras = screen.getByTestId("adventure-dock-extras");
     const form = screen.getByTestId("adventure-free-action").closest("form")!;
-    for (const el of [extras, form]) {
-      expect(el.className).toContain("max-w-3xl");
-      expect(el.className).toContain("mx-auto");
-    }
+    expect(extras.className).toContain("max-w-none");
+    expect(extras.className).toContain("mx-auto");
+    expect(form.className).toContain("max-w-3xl");
+    expect(form.className).toContain("mx-auto");
   });
 
-  it("keeps chips on the story column width like the input", () => {
+  it("allows suggestion chips to expand on wide screens while keeping the input bounded", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
     const extras = screen.getByTestId("adventure-dock-extras");
-    expect(extras.className).toContain("max-w-3xl");
+    expect(extras.className).toContain("max-w-none");
     expect(extras.className).toContain("mx-auto");
     expect(extras.className).not.toContain("max-w-6xl");
+    expect(
+      screen.getByRole("button", { name: "Ask the innkeeper" }).className,
+    ).toContain("xl:flex-1");
     expect(
       screen.getByTestId("adventure-free-action").closest("form")!.className,
     ).toContain("max-w-3xl");

@@ -2,7 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 import ArtworkChooser from "./ArtworkChooser.svelte";
 
-const options = [{ id: "a", label: "Forest path", credit: "Codex Cryptica" }];
+const options = [{ id: "a", label: "Forest path" }];
 
 describe("artwork controls", () => {
   it("lets a player select an eligible illustration and close the chooser", async () => {
@@ -19,6 +19,7 @@ describe("artwork controls", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Choose another" }),
     );
+    expect(screen.queryByText("Codex Cryptica")).toBeNull();
     await fireEvent.click(screen.getByRole("button", { name: "Forest path" }));
     expect(choose).toHaveBeenCalledWith("a");
     await waitFor(() =>

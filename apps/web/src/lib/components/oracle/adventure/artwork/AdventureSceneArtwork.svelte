@@ -89,15 +89,6 @@
           </button>
         {/if}
       </div>
-      {#if handle}<figcaption
-          class={// ui-check-ignore: The spec asks for a de-emphasised muted line; full text is in the lightbox.
-          ["truncate px-3 py-1 text-helper", "text-theme-muted"]}
-          data-testid="adventure-scene-artwork-caption"
-        >
-          {aiIllustration ? "AI illustration" : "Vault image"}{credit
-            ? ` · ${credit}`
-            : ""}
-        </figcaption>{/if}
     </figure>
   {/if}
 </div>

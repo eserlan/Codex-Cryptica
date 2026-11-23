@@ -50,6 +50,7 @@ describe("adventure location controls", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: "Choose another" }),
     );
+    expect(screen.queryByText("Artist")).toBeNull();
     await fireEvent.click(screen.getByRole("button", { name: "Forest road" }));
     await waitFor(() => expect(mutate).toHaveBeenCalledOnce());
     expect(mutate.mock.calls[0][1]).toMatchObject({
