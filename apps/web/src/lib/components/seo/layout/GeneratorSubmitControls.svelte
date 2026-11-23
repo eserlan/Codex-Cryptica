@@ -62,14 +62,14 @@
 {/if}
 
 {#if generationSetupError}
-  <p class="mt-2 text-micro text-theme-text" role="alert">
+  <p class="mt-2 text-helper text-theme-text" role="alert">
     The generator could not be prepared.
     <button type="button" class="underline" onclick={onRetryGenerationSetup}
       >Reload page to retry</button
     >
   </p>
 {:else if !generationReady}
-  <p class="mt-2 text-micro text-theme-text" role="status">
+  <p class="mt-2 text-helper text-theme-text" role="status">
     Preparing this generator for offline use…
   </p>
 {/if}
