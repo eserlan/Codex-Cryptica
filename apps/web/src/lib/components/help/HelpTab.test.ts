@@ -3,11 +3,15 @@ import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
 
 const open = vi.hoisted(() => vi.fn());
+const helpState = vi.hoisted(() => ({ articlesError: false }));
 vi.mock("#lib/stores/ui/feedback-dialog.svelte.js", () => ({
   feedbackDialog: { open },
 }));
 vi.mock("#lib/stores/help.svelte.js", () => ({
   helpStore: {
+    get articlesError() {
+      return helpState.articlesError;
+    },
     searchQuery: "",
     searchResults: [],
     expandedId: null,
@@ -27,6 +31,17 @@ vi.mock("#lib/utils/markdown.js", () => ({ renderMarkdown: (s: string) => s }));
 import HelpTab from "./HelpTab.svelte";
 
 describe("HelpTab", () => {
+  it("offers reload recovery when the article index chunk fails", async () => {
+    helpState.articlesError = true;
+    const reloadPage = vi.fn();
+    render(HelpTab, { props: { reloadPage } });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Reload page to retry" }),
+    );
+    expect(reloadPage).toHaveBeenCalledOnce();
+    helpState.articlesError = false;
+  });
+
   it("offers Report a problem once, for the help area", async () => {
     open.mockClear();
     render(HelpTab, { props: {} });

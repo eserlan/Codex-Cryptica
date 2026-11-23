@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PrepSource } from "generator-engine";
+  import type { PrepSource } from "generator-engine/session-prep";
 
   let { source }: { source: PrepSource } = $props();
 </script>

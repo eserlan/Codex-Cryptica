@@ -39,10 +39,7 @@ import {
 import { CloudBackupDirtyStore } from "#lib/stores/cloud-backup-dirty.js";
 import { createCloudBackupRestore } from "./cloud-backup-restore";
 import { createArtworkBackupRuntime } from "#lib/stores/cloud-backup-artwork-runtime.js";
-import {
-  AdventureSessionRepository,
-  adventureSessionRepository,
-} from "#lib/services/adventure/adventure-session-repository.js";
+import type { AdventureSessionRepository } from "#lib/services/adventure/adventure-session-repository.js";
 import { browserStorage, systemIdGenerator } from "#lib/utils/runtime-deps.js";
 import { vaultRegistry } from "#lib/stores/vault-registry.svelte.js";
 import { SharedVaultJoin } from "#lib/stores/shared-vault-join.js";
@@ -70,11 +67,48 @@ const artworkRuntime = createArtworkBackupRuntime({
   requireFullPush: (vaultId) => dirty.requireFullPush(vaultId),
   newRemovalId: () => systemIdGenerator.uuid(),
 });
-const adventures = new AdventureSessionRepository(async (vaultId) => {
-  const root = await vault.getSpecificVaultHandle(vaultId);
-  if (!root) throw new Error("Vault unavailable for backup");
-  return root;
-});
+let adventuresPromise: Promise<AdventureSessionRepository> | undefined;
+
+function loadAdventureRepository(): Promise<AdventureSessionRepository> {
+  adventuresPromise ??=
+    import("#lib/services/adventure/adventure-session-repository.js")
+      .then(({ adventureSessionRepository }) => {
+        const repository = adventureSessionRepository;
+        repository.setRootResolver(async (vaultId) => {
+          const root = await vault.getSpecificVaultHandle(vaultId);
+          if (!root) throw new Error("Vault unavailable for backup");
+          return root;
+        });
+        return repository;
+      })
+      .catch((error: unknown) => {
+        adventuresPromise = undefined;
+        throw error;
+      });
+  return adventuresPromise;
+}
+
+/** Prepare the shared repository listener before an opted-in Adventure write. */
+export async function ensureAdventureBackupChangeListener(
+  vaultId: string,
+): Promise<void> {
+  if (
+    vault.activeVaultId !== vaultId ||
+    !(await artworkRuntime.consent.read(vaultId)).enabled
+  ) {
+    return;
+  }
+  const repository = await loadAdventureRepository();
+  repository.setChangeListener(async (changedVaultId) => {
+    let enabled = true;
+    try {
+      enabled = (await artworkRuntime.consent.read(changedVaultId)).enabled;
+    } catch {
+      // A full backup is safer than losing a change when consent cannot be read.
+    }
+    if (enabled) await cloudBackupStore.recordLocalChange(changedVaultId);
+  });
+}
 
 /**
  * Silent stage timings for the worker-or-not question (counts, bytes and ms
@@ -108,9 +142,11 @@ async function resolveAdventureInclusion(
   ) {
     throw new Error("Adventure backup inclusion is not authorised.");
   }
+  await ensureAdventureBackupChangeListener(vaultId);
+  const adventures = await loadAdventureRepository();
   return {
     consented: true as const,
-    readAdventures: () => {
+    readAdventures: async () => {
       if (vault.activeVaultId !== vaultId) {
         throw new Error("The active Vault changed.");
       }
@@ -708,14 +744,5 @@ export function configureCloudBackup(): void {
       })),
     activeVaultId: () => vault.activeVaultId ?? null,
     restore: createCloudBackupRestore(),
-  });
-  adventureSessionRepository.setChangeListener(async (vaultId) => {
-    let enabled = true;
-    try {
-      enabled = (await artworkRuntime.consent.read(vaultId)).enabled;
-    } catch {
-      // A full backup is safer than losing a change when consent cannot be read.
-    }
-    if (enabled) await cloudBackupStore.recordLocalChange(vaultId);
   });
 }

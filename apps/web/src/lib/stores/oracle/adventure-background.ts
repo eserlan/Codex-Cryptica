@@ -4,7 +4,7 @@ import {
   type AdventureSession,
   type GroundingContext,
 } from "@codex/adventure-engine";
-import type { RumourSelectionInput } from "generator-engine";
+import type { RumourSelectionInput } from "generator-engine/rumour-play-selection";
 import { abortReason, isAbort } from "./adventure-generation.svelte";
 
 /** Prepares optional world-entry rumours without committing partial state. */

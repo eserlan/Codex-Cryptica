@@ -4,7 +4,7 @@ import { avoidNamesExcludingContext } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
 import { factionConfig } from "./public-faction-constants";
 import { NAME_BAN_PROMPT } from "./public-npc";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { type Rng, defaultRng } from "./random-utils";
 
 export const holidayConfig = {

@@ -1,10 +1,10 @@
 import {
   CampaignGeneratorService,
-  adventureStatsLog,
-  heistStatsLog,
-  tomeStatsLog,
   type CampaignGeneratorServiceDeps,
-} from "generator-engine";
+} from "generator-engine/campaign-generator-service";
+import { adventureStatsLog } from "generator-engine/adventure-staged";
+import { heistStatsLog } from "generator-engine/heist-staged";
+import { tomeStatsLog } from "generator-engine/tome-staged";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { aiGeneratorGateway } from "#lib/services/generators/ai-generator-gateway.js";
 import { generatorSessionManager } from "#lib/services/generators/generator-session-manager.js";

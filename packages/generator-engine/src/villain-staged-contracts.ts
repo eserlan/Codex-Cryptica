@@ -1,4 +1,4 @@
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import type { Rng } from "./random-utils";
 import type { StagedProgress, StagedProgressStep } from "./staged-progress";
 import type { JsonObject } from "./staged-runtime";

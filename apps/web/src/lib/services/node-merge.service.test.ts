@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { NodeMergeService } from "./node-merge.service.svelte";
 import { vault } from "../stores/vault.svelte";
-import { textGenerationService } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
 
 let mockApiKey: string | null = "test-key";
 let mockTier: "lite" | "advanced" = "lite";
@@ -23,9 +23,11 @@ vi.mock("../stores/oracle/hooks", () => ({
   getOracleTier: () => mockTier,
 }));
 
-vi.mock("@codex/ai-engine", () => ({
-  textGenerationService: {
-    generateMergeProposal: vi.fn(),
+vi.mock("#lib/stores/oracle/lazy-ai-engine-services.js", () => ({
+  lazyOracleAIServices: {
+    textGenerationService: {
+      generateMergeProposal: vi.fn(),
+    },
   },
 }));
 
@@ -129,10 +131,9 @@ describe("NodeMergeService", () => {
         content: "S",
       } as any;
 
-      vi.mocked(textGenerationService.generateMergeProposal).mockResolvedValue({
-        body: "AI Body",
-        lore: "AI Lore",
-      });
+      vi.mocked(
+        lazyOracleAIServices.textGenerationService.generateMergeProposal,
+      ).mockResolvedValue({ body: "AI Body", lore: "AI Lore" });
 
       const proposal = await service.proposeMerge({
         sourceNodeIds: ["t", "s"],
@@ -142,7 +143,9 @@ describe("NodeMergeService", () => {
 
       expect(proposal.suggestedBody).toBe("AI Body");
       expect(proposal.suggestedFrontmatter.lore).toBe("AI Lore");
-      expect(textGenerationService.generateMergeProposal).toHaveBeenCalled();
+      expect(
+        lazyOracleAIServices.textGenerationService.generateMergeProposal,
+      ).toHaveBeenCalled();
     });
 
     it("should allow AI merge even if AI key is missing (fallback to proxy)", async () => {
@@ -164,9 +167,9 @@ describe("NodeMergeService", () => {
         content: "S",
       } as any;
 
-      vi.mocked(textGenerationService.generateMergeProposal).mockResolvedValue({
-        body: "AI Result",
-      });
+      vi.mocked(
+        lazyOracleAIServices.textGenerationService.generateMergeProposal,
+      ).mockResolvedValue({ body: "AI Result" });
 
       const proposal = await service.proposeMerge({
         sourceNodeIds: ["t", "s"],
@@ -175,7 +178,9 @@ describe("NodeMergeService", () => {
       });
 
       expect(proposal.suggestedBody).toBe("AI Result");
-      expect(textGenerationService.generateMergeProposal).toHaveBeenCalledWith(
+      expect(
+        lazyOracleAIServices.textGenerationService.generateMergeProposal,
+      ).toHaveBeenCalledWith(
         "",
         expect.any(String),
         expect.any(Object),

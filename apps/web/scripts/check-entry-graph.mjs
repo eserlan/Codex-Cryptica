@@ -35,7 +35,40 @@ export const ENTRY_GRAPH_DENYLIST = [
   "flexsearch",
   "node_modules/peerjs/",
   "campaign-generator-registry",
+  "src/lib/config/help-articles.ts",
+  "packages/ai-engine/src/client-manager.ts",
+  "packages/graph-engine/src/",
+  "packages/adventure-engine/src/",
+  "src/lib/stores/oracle/adventure-manager.svelte.ts",
+  "layout.worker",
+  "packages/gdrive-sync/src/",
+  "cytoscape",
 ];
+
+/** Heavy runtime that must stay off the first-load graph of public generators. */
+export const GENERATOR_ROUTE_CHECKS = [
+  "/(marketing)/generators/[slug=generator_slug]",
+  "/(marketing)/generators/[theme=theme_hub]/[slug=generator_slug]",
+  "/(marketing)/tools/session-prep-builder",
+  "/(marketing)/tools/idea-developer",
+].map((route) => ({
+  route,
+  denylist: [
+    "campaign-generator-registry",
+    // Keep pure error classification available to render local/offline forms.
+    // The model manager/client and generation services are action-only.
+    "packages/ai-engine/src/client-manager.ts",
+    "packages/ai-engine/src/direct-ai-client.ts",
+    "packages/ai-engine/src/text-generation-",
+    "packages/ai-engine/src/image-generation.service.ts",
+    "packages/ai-engine/src/context-retrieval.service.ts",
+    "packages/adventure-engine/src/",
+    "@tiptap/",
+    "prosemirror-",
+    "cytoscape",
+    "packages/graph-engine/src/",
+  ],
+}));
 
 const MANIFEST_PATH = ".svelte-kit/output/client/.vite/manifest.json";
 const WORKER_REF = /workers\/[\w.-]+-[\w-]+\.js/g;
@@ -57,14 +90,26 @@ export function findAppEntry(manifest) {
  * (start, app) and the root layout, `(app)` layout and `(app)` page nodes.
  */
 export function findRootEntryKeys(manifest, appCode) {
-  const route = /"\/\(app\)":\[(\d+),\[([\d,]*)\]/.exec(appCode);
+  return findRouteEntryKeys(manifest, appCode, "/(app)");
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Manifest entry nodes for one built route plus its shared layout nodes. */
+export function findRouteEntryKeys(manifest, appCode, routePath) {
+  const route = new RegExp(
+    `${escapeRegExp(JSON.stringify(routePath))}:\\[(\\d+),\\[([\\d,]*)\\]\\]`,
+  ).exec(appCode);
   if (!route) {
-    throw new Error('Could not find the "/(app)" route in the built app.js');
+    throw new Error(
+      `Could not find the "${routePath}" route in the built app.js`,
+    );
   }
   const nodeIndexes = new Set([0, Number(route[1])]);
-  for (const n of route[2].split(",").filter(Boolean)) {
+  for (const n of route[2].split(",").filter(Boolean))
     nodeIndexes.add(Number(n));
-  }
   const keys = [];
   for (const [key, item] of Object.entries(manifest)) {
     if (!item.isEntry) continue;
@@ -100,6 +145,11 @@ export function collectStaticClosure(manifest, startKeys) {
  * to `_app`'s parent (the build dir), or null when it does not exist.
  */
 export function analyzeEntryGraph({ manifest, readText }) {
+  return analyzeRouteEntryGraph({ manifest, readText, routePath: "/(app)" });
+}
+
+/** Analyze one route's static module graph; dynamic imports are excluded. */
+export function analyzeRouteEntryGraph({ manifest, readText, routePath }) {
   const appItem = findAppEntry(manifest);
   if (!appItem) throw new Error("Manifest has no app.js entry");
   const appCode = readText(appItem.file);
@@ -107,7 +157,7 @@ export function analyzeEntryGraph({ manifest, readText }) {
 
   const keys = collectStaticClosure(
     manifest,
-    findRootEntryKeys(manifest, appCode),
+    findRouteEntryKeys(manifest, appCode, routePath),
   );
   const chunks = [];
   const modules = new Map(); // module -> chunk files
@@ -132,7 +182,7 @@ export function analyzeEntryGraph({ manifest, readText }) {
     }
   }
   chunks.sort();
-  return { chunks, modules, workers };
+  return { routePath, chunks, modules, workers };
 }
 
 /** One message per denylisted module or worker on the graph. */
@@ -146,7 +196,7 @@ export function findViolations(graph, denylist = ENTRY_GRAPH_DENYLIST) {
       const pattern = denylist.find((p) => name.includes(p));
       if (pattern) {
         violations.push(
-          `Denylisted ${kind} "${name}" (matches "${pattern}") is on the entry graph of / in chunk ${chunkFiles.join(", ")}`,
+          `Denylisted ${kind} "${name}" (matches "${pattern}") is on the entry graph of ${graph.routePath ?? "/"} in chunk ${chunkFiles.join(", ")}`,
         );
       }
     }
@@ -173,6 +223,7 @@ export function formatReport(graph) {
 export function checkEntryGraph({
   appDir,
   denylist = ENTRY_GRAPH_DENYLIST,
+  generatorRouteChecks = GENERATOR_ROUTE_CHECKS,
   exists = existsSync,
   read = (path) => readFileSync(path, "utf8"),
 }) {
@@ -195,9 +246,29 @@ export function checkEntryGraph({
         return exists(path) ? read(path) : null;
       },
     });
+    const routeGraphs = generatorRouteChecks.map(({ route }) =>
+      analyzeRouteEntryGraph({
+        manifest: JSON.parse(read(manifestPath)),
+        readText: (file) => {
+          const path = join(buildDir, file);
+          return exists(path) ? read(path) : null;
+        },
+        routePath: route,
+      }),
+    );
+    const errors = [
+      ...findViolations(graph, denylist),
+      ...routeGraphs.flatMap((routeGraph, index) =>
+        findViolations(routeGraph, generatorRouteChecks[index].denylist),
+      ),
+    ];
+    const routeSummary = routeGraphs.map(
+      (routeGraph) =>
+        `Static chunks on ${routeGraph.routePath} (${routeGraph.chunks.length})`,
+    );
     return {
-      errors: findViolations(graph, denylist),
-      report: formatReport(graph),
+      errors,
+      report: [formatReport(graph), ...routeSummary].join("\n"),
     };
   } catch (err) {
     return {
@@ -218,5 +289,7 @@ if (process.argv[1] && resolve(process.argv[1]) === __filename) {
     for (const error of errors) console.error(`check-entry-graph: ${error}`);
     process.exit(1);
   }
-  console.log("check-entry-graph: no denylisted modules or workers on /");
+  console.log(
+    "check-entry-graph: no denylisted modules or workers on checked routes",
+  );
 }

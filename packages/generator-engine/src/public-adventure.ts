@@ -18,7 +18,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * Output describes a situation with multiple avenues of action.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { bannedNamesIn } from "./naming-policy";
 import {

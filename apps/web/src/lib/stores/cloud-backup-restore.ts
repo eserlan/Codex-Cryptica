@@ -132,6 +132,11 @@ export async function restoreCloudBackupIntoNewVault(
     collections.sessionJournals = [];
     collections.adventures = [];
   }
+  if (collections.adventures.length > 0) {
+    if (!restore.prepareAdventures)
+      throw new Error("Adventure restore is not available.");
+    await restore.prepareAdventures(collections.adventures);
+  }
   const vaultTitle = material.manifest.vaultTitle;
   const vaultId = await restore.createVault(vaultTitle);
   await importCollections(restore, vaultId, collections);

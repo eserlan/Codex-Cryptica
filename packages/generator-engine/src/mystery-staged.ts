@@ -5,7 +5,7 @@ import { checkClues } from "./mystery-clue-checks";
 import { checkPressure, checkAudit } from "./mystery-pressure-checks";
 import { uniqueIds } from "./mystery-stage-validation";
 import { mysteryStagePrompts } from "./mystery-stage-prompts";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import type { ResolvedMysteryOptions } from "./public-mystery";
 import {
   readJsonObject,

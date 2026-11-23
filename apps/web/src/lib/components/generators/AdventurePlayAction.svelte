@@ -1,9 +1,7 @@
 <script lang="ts">
-  import {
-    selectAdventureForPlay,
-    type GeneratedDraft,
-    type SelectedAdventureForPlay,
-  } from "generator-engine";
+  import { selectAdventureForPlay } from "generator-engine/adventure-play-selection";
+  import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
+  import type { SelectedAdventureForPlay } from "generator-engine/adventure-play-selection";
 
   let {
     draft,

@@ -25,7 +25,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * string.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

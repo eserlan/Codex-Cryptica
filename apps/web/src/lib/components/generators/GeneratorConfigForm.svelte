@@ -1,7 +1,10 @@
 <script lang="ts">
-  import { listGenerators } from "generator-engine";
-  import type { AIPolicy, GeneratorRunRequest } from "generator-engine";
-  import type { GeneratorId } from "generator-engine";
+  import { listGenerators } from "generator-engine/campaign-registry";
+  import type {
+    AIPolicy,
+    GeneratorId,
+    GeneratorRunRequest,
+  } from "generator-engine/campaign-generator-types";
   import GeneratorPicker from "./GeneratorPicker.svelte";
   import GeneratorOptions from "./GeneratorOptions.svelte";
   import GeneratorLanguagePicker from "./GeneratorLanguagePicker.svelte";

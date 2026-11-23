@@ -1,4 +1,4 @@
-import { aiClientManager } from "@codex/ai-engine";
+import { createLazyAIClientManager } from "#lib/services/lazy-ai-client-manager.js";
 import { createBiomeSuggestRunner } from "#lib/services/biome/biome-suggest-runner.js";
 import { oracle } from "./oracle.svelte";
 import { clipboardService } from "#lib/services/ClipboardService.js";
@@ -16,7 +16,7 @@ export const biomeExplorer = new BiomeExplorerStore({
   copyText: (text) => clipboardService.copyContent({ markdown: text }),
   isAiAllowed: () => !discoveryPolicyStore.aiDisabled,
   suggest: createBiomeSuggestRunner({
-    aiClient: aiClientManager,
+    aiClient: createLazyAIClientManager(),
     settings: oracle,
     ensureSession: async () => {
       const mod = await import("#lib/services/ai/public-session-bootstrap.js");

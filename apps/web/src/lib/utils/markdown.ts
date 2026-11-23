@@ -9,8 +9,16 @@ export interface ParseResult {
   content: string;
 }
 
-/** Sanitizes rendered Markdown without allowing passive remote resource loads. */
-export function sanitizeMarkdownHtml(html: string): string {
+/**
+ * Sanitizes rendered Markdown without allowing passive remote resource loads.
+ * With `allowImages`, `<img src>` survives (other resource tags stay banned);
+ * only use it for a user's own content they opted to show with images.
+ */
+export function sanitizeMarkdownHtml(
+  html: string,
+  options: { allowImages?: boolean } = {},
+): string {
+  const allowImages = options.allowImages === true;
   return DOMPurify.sanitize(html, {
     ADD_TAGS: ["mark"],
     ADD_ATTR: ["class"],
@@ -18,7 +26,7 @@ export function sanitizeMarkdownHtml(html: string): string {
       "audio",
       "embed",
       "iframe",
-      "img",
+      ...(allowImages ? [] : ["img"]),
       "link",
       "object",
       "picture",
@@ -28,7 +36,9 @@ export function sanitizeMarkdownHtml(html: string): string {
       "track",
       "video",
     ],
-    FORBID_ATTR: ["background", "data", "poster", "src", "srcset", "style"],
+    FORBID_ATTR: allowImages
+      ? ["background", "data", "poster", "srcset", "style"]
+      : ["background", "data", "poster", "src", "srcset", "style"],
     ALLOWED_URI_REGEXP:
       /^(?:(?:https?|mailto|tel|data|blob):|[^&#?./]?(?:[#/?]|$))/i,
   });
@@ -69,12 +79,16 @@ export function renderMarkdown(
 
     if (!browser) return rawHtml;
 
-    return sanitizeMarkdownHtml(rawHtml);
+    return sanitizeMarkdownHtml(rawHtml, {
+      allowImages: options.allowImages === true,
+    });
   } catch (e) {
     console.error("Markdown rendering failed", e);
     // Fallback: sanitize the original content before injecting via {@html}
     // Always sanitize in fallback mode for security, even in SSR
-    return sanitizeMarkdownHtml(text);
+    return sanitizeMarkdownHtml(text, {
+      allowImages: options.allowImages === true,
+    });
   }
 }
 

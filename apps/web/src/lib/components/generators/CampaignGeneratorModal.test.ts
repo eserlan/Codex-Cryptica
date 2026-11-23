@@ -109,11 +109,10 @@ vi.mock("#lib/stores/ui/notification.svelte.js", () => ({
   },
 }));
 
-vi.mock("generator-engine", async () => {
-  const actual =
-    await vi.importActual<typeof import("generator-engine")>(
-      "generator-engine",
-    );
+vi.mock("generator-engine/campaign-generator-service", async () => {
+  const actual = await vi.importActual<
+    typeof import("generator-engine/campaign-generator-service")
+  >("generator-engine/campaign-generator-service");
   const draft: import("generator-engine").GeneratedDraft = {
     title: "The Observatory of Weeping Veins",
     entityType: "location",

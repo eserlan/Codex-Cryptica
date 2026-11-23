@@ -7,7 +7,17 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./naming-policy": "./src/naming-policy.ts"
+    "./naming-policy": "./src/naming-policy.ts",
+    "./loading-messages": "./src/loading-messages.ts",
+    "./campaign-registry": "./src/campaign-registry.ts",
+    "./campaign-generator-service": "./src/campaign-generator-service.ts",
+    "./starter-constellation": "./src/starter-constellation.ts",
+    "./public-generator-adapters": "./src/public-generator-adapters.ts",
+    "./public-generator-types": "./src/public-generator-types.ts",
+    "./session-hub-helpers": "./src/session-hub-helpers.ts",
+    "./session-prep": "./src/public-session-prep.ts",
+    "./smart": "./src/smart/index.ts",
+    "./*": "./src/*.ts"
   },
   "scripts": {
     "test": "bun test",

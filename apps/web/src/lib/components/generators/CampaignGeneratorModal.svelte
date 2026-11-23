@@ -3,10 +3,8 @@
   import { goto } from "$app/navigation";
   import { resolve } from "$app/paths";
   import { page } from "$app/state";
-  import {
-    selectRumourForPlay,
-    type SelectedAdventureForPlay,
-  } from "generator-engine";
+  import { selectRumourForPlay } from "generator-engine/rumour-play-selection";
+  import type { SelectedAdventureForPlay } from "generator-engine/adventure-play-selection";
   import { systemIdGenerator } from "#lib/utils/runtime-deps.js";
   import {
     rumourAdventureHandoff,
@@ -38,11 +36,11 @@
     findSingleQuestHook,
     suggestPrimaryLanguageId,
   } from "#lib/services/generators/generator-vault-context.js";
-  import {
-    isSupportedGenerator,
-    type GeneratedDraft,
-    type GeneratorId,
-  } from "generator-engine";
+  import { isSupportedGenerator } from "generator-engine/campaign-registry";
+  import type {
+    GeneratedDraft,
+    GeneratorId,
+  } from "generator-engine/campaign-generator-types";
   import { generatorSessionManager } from "#lib/services/generators/generator-session-manager.js";
   import { createCampaignGeneratorService } from "./campaign-generator-service.js";
   import {

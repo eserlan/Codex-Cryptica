@@ -1,7 +1,5 @@
-import {
-  buildLanguageRepairPrompt,
-  type PublicGeneratorOutput,
-} from "generator-engine";
+import { buildLanguageRepairPrompt } from "generator-engine/language-profile";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import { LANGUAGE_GENERATION_CONFIG } from "./generator-ai-transport";
 import { assessLanguageOutput } from "./language-output-assessment";
 

@@ -4,7 +4,7 @@ import {
   resolveGeneratorSection,
 } from "./generator-categories";
 import type { GeneratorId } from "generator-engine";
-import { listGenerators } from "generator-engine";
+import { listGenerators } from "generator-engine/campaign-registry";
 import { GENERATOR_CATALOGUE } from "#lib/content/generator-catalogue.js";
 
 describe("generator-categories", () => {

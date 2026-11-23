@@ -7,10 +7,8 @@ const { mockGetModel, mockEnsurePublicAiSession } = vi.hoisted(() => ({
   mockEnsurePublicAiSession: vi.fn(),
 }));
 
-vi.mock("@codex/ai-engine", () => ({
-  aiClientManager: {
-    getModel: mockGetModel,
-  },
+vi.mock("#lib/services/lazy-ai-client-manager.js", () => ({
+  createLazyAIClientManager: () => ({ getModel: mockGetModel }),
 }));
 
 vi.mock("#lib/services/ai/public-session-bootstrap.js", () => ({

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CloudBackupDeps } from "#lib/stores/cloud-backup-types.js";
-import { configureCloudBackup } from "./cloud-backup-config";
+import {
+  configureCloudBackup,
+  ensureAdventureBackupChangeListener,
+} from "./cloud-backup-config";
 
 const mocks = vi.hoisted(() => ({
   configure: vi.fn<(deps: CloudBackupDeps) => void>(),
@@ -26,11 +29,13 @@ const mocks = vi.hoisted(() => ({
   fetch: vi.fn(),
   readAdventures: vi.fn(),
   setChangeListener: vi.fn(),
+  recordLocalChange: vi.fn(),
 }));
 vi.mock("#lib/services/adventure/adventure-session-repository.js", () => ({
-  adventureSessionRepository: { setChangeListener: mocks.setChangeListener },
-  AdventureSessionRepository: class {
-    readAllForBackup = mocks.readAdventures;
+  adventureSessionRepository: {
+    readAllForBackup: mocks.readAdventures,
+    setChangeListener: mocks.setChangeListener,
+    setRootResolver: vi.fn(),
   },
 }));
 vi.mock("#lib/stores/vault.svelte.js", () => ({ vault: mocks.vault }));
@@ -41,7 +46,10 @@ vi.mock("#lib/stores/canvas-registry.svelte.js", () => ({
   canvasRegistry: mocks.canvases,
 }));
 vi.mock("#lib/stores/cloud-backup.svelte.js", () => ({
-  cloudBackupStore: { configure: mocks.configure },
+  cloudBackupStore: {
+    configure: mocks.configure,
+    recordLocalChange: mocks.recordLocalChange,
+  },
   cloudBackupBrowserStorage: () => mocks.storage,
 }));
 vi.mock("#lib/stores/cloud-backup-base.js", () => ({
@@ -95,7 +103,7 @@ describe("cloud backup configuration", () => {
     const deps = configured();
     expect(deps.artworkScope).toBeDefined();
     expect(deps.artworkConsent).toBeDefined();
-    expect(mocks.setChangeListener).toHaveBeenCalledOnce();
+    expect(mocks.setChangeListener).not.toHaveBeenCalled();
   });
   it("does not request adventure documents unless the upload scope has consent", async () => {
     mocks.buildPayload.mockResolvedValue({ snapshot: true });
@@ -114,6 +122,7 @@ describe("cloud backup configuration", () => {
     expect(inclusion.consented).toBe(true);
     await inclusion.readAdventures();
     expect(mocks.readAdventures).toHaveBeenCalledWith("vault-1", undefined);
+    expect(mocks.setChangeListener).toHaveBeenCalledOnce();
   });
   it("rejects an inclusion request without stored consent before reading adventures", async () => {
     mocks.getSetting.mockResolvedValue(undefined);
@@ -121,6 +130,19 @@ describe("cloud backup configuration", () => {
     await expect(
       deps.buildPayload("vault-1", undefined, { includeAdventures: true }),
     ).rejects.toThrow();
+    expect(mocks.readAdventures).not.toHaveBeenCalled();
+  });
+  it("tracks the first Adventure edit after persisted consent is restored", async () => {
+    mocks.getSetting.mockResolvedValue({
+      enabled: true,
+      remoteRemovalPending: false,
+    });
+    await ensureAdventureBackupChangeListener("vault-1");
+    expect(mocks.setChangeListener).toHaveBeenCalledOnce();
+
+    await mocks.setChangeListener.mock.calls[0][0]("vault-1");
+
+    expect(mocks.recordLocalChange).toHaveBeenCalledWith("vault-1");
     expect(mocks.readAdventures).not.toHaveBeenCalled();
   });
   it("refuses expanded payloads for a Vault that is no longer active", async () => {

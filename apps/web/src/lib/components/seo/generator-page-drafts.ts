@@ -1,4 +1,4 @@
-import { generatePointCrawlLocal } from "generator-engine";
+import { generatePointCrawlLocal } from "generator-engine/public-point-crawl";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
 

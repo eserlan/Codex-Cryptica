@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { Entity } from "schema";
 import { CanvasSchema, type Canvas } from "@codex/canvas-engine";
-import { AdventureFlowLayout } from "generator-engine";
+import { AdventureFlowLayout } from "generator-engine/adventure/adventure-flow-layout";
 import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";

@@ -1,7 +1,21 @@
-import { aiClientManager } from "@codex/ai-engine";
-import { classifyApiError } from "@codex/ai-engine";
-import type { PublicGeneratorOutput } from "generator-engine";
+import { classifyApiError } from "@codex/ai-engine/api-error-classifier";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import type { GeneratorOutput } from "./generator-helpers";
+
+type AIClientManager = Pick<
+  typeof import("@codex/ai-engine/client-manager").aiClientManager,
+  "getModel"
+>;
+type AIClientManagerLoader = () => Promise<AIClientManager>;
+
+async function loadDefaultClientManager(): Promise<AIClientManager> {
+  const session = await import("#lib/services/ai/public-session-bootstrap.js");
+  session.ensurePublicAiSession();
+  const { loadConfiguredAIEngine } =
+    await import("#lib/services/ai/ai-engine-loader.js");
+  await loadConfiguredAIEngine();
+  return (await import("@codex/ai-engine/client-manager")).aiClientManager;
+}
 
 /** Single source of truth for the generator model id (#1494). */
 export const GENERATOR_MODEL_ID = "gemini-3.5-flash-lite";
@@ -98,22 +112,22 @@ async function streamModelPreview(
  */
 export class GeneratorAITransport {
   private streamPreview: ((text: string) => void) | undefined;
-  private readonly ensureSession: () => Promise<void> | void;
 
   constructor(
-    private clientManager = aiClientManager,
-    ensureSession?: () => Promise<void> | void,
-  ) {
-    if (ensureSession) {
-      this.ensureSession = ensureSession;
-    } else if (clientManager === aiClientManager) {
-      this.ensureSession = async () => {
-        const mod =
-          await import("#lib/services/ai/public-session-bootstrap.js");
-        mod.ensurePublicAiSession();
-      };
-    } else {
-      this.ensureSession = () => {};
+    private readonly clientManager?: AIClientManager,
+    private readonly loadClientManager: AIClientManagerLoader = loadDefaultClientManager,
+  ) {}
+
+  private async getClientManager(): Promise<AIClientManager> {
+    return this.clientManager ?? this.loadClientManager();
+  }
+
+  private throwIfAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) {
+      throw (
+        signal.reason ??
+        new DOMException("The operation was aborted", "AbortError")
+      );
     }
   }
 
@@ -170,15 +184,6 @@ export class GeneratorAITransport {
     return toSeoOutput(local());
   }
 
-  private throwIfAborted(signal?: AbortSignal): void {
-    if (signal?.aborted) {
-      throw (
-        signal.reason ??
-        new DOMException("The operation was aborted", "AbortError")
-      );
-    }
-  }
-
   /**
    * Shared AI call: resolve the model once (single source for the model id),
    * run the prompt, and return trimmed text. Each generator keeps its own
@@ -192,9 +197,9 @@ export class GeneratorAITransport {
     signal?: AbortSignal,
   ): Promise<string> {
     this.throwIfAborted(signal);
-    await this.ensureSession();
+    const clientManager = await this.getClientManager();
     this.throwIfAborted(signal);
-    const model = await this.clientManager.getModel(
+    const model = await clientManager.getModel(
       "",
       GENERATOR_MODEL_ID,
       systemInstruction,
@@ -232,12 +237,9 @@ export class GeneratorAITransport {
    * earlier sections (council-vote's paths vs. its own roster).
    */
   async startChat(systemInstruction: string) {
-    await this.ensureSession();
-    const model = await this.clientManager.getModel(
-      "",
-      GENERATOR_MODEL_ID,
-      systemInstruction,
-    );
+    const model = await (
+      await this.getClientManager()
+    ).getModel("", GENERATOR_MODEL_ID, systemInstruction);
     return model.startChat({ history: [] });
   }
 
@@ -246,13 +248,23 @@ export class GeneratorAITransport {
     userMessage: string,
     signal?: AbortSignal,
   ): Promise<string> {
-    this.throwIfAborted(signal);
+    if (signal?.aborted) {
+      throw (
+        signal.reason ??
+        new DOMException("The operation was aborted", "AbortError")
+      );
+    }
     const result = signal
       ? await chat.sendMessageStream(userMessage, { signal })
       : await chat.sendMessageStream(userMessage);
     let text = "";
     for await (const chunk of result.stream) {
-      this.throwIfAborted(signal);
+      if (signal?.aborted) {
+        throw (
+          signal.reason ??
+          new DOMException("The operation was aborted", "AbortError")
+        );
+      }
       text += chunk.text();
     }
     return text.trim();

@@ -1,7 +1,7 @@
 <script lang="ts">
   import "./seo-markdown.css";
   import { fade } from "svelte/transition";
-  import type { SessionEntity } from "generator-engine";
+  import type { SessionEntity } from "generator-engine/session-hub-helpers";
   import {
     renderGeneratorMarkdown,
     renderGeneratorLore,

@@ -1,5 +1,5 @@
 import { resolveEntitySilhouette } from "schema";
-import type { SessionEntity } from "generator-engine";
+import type { SessionEntity } from "generator-engine/session-hub-helpers";
 import type {
   CreatedGeneratorShare,
   GeneratorShareCreateInput,

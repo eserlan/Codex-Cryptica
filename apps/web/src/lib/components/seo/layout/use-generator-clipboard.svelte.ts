@@ -1,5 +1,5 @@
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import type { SessionEntity } from "generator-engine";
+import type { SessionEntity } from "generator-engine/session-hub-helpers";
 import type { ClipboardService } from "#lib/services/ClipboardService.js";
 import { trackPublicGeneratorAction } from "#lib/services/analytics/zaraz-analytics.js";
 import {

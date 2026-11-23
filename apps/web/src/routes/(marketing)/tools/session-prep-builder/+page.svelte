@@ -12,7 +12,7 @@
     createEmptySessionPrep,
     type SessionPrep,
     type SessionPrepGuidance,
-  } from "generator-engine";
+  } from "generator-engine/session-prep";
   import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 
   const service = createSessionPrepService();

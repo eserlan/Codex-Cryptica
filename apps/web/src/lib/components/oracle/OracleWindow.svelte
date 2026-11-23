@@ -11,9 +11,20 @@
   import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
   import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
-  import AdventureSurface from "./adventure/AdventureSurface.svelte";
+  type AdventureSurfaceComponent =
+    typeof import("./adventure/AdventureSurface.svelte").default;
+  let AdventureSurfaceComponent = $state<AdventureSurfaceComponent | null>(
+    null,
+  );
   let adventureMode = $state(false);
   let creatureImportBusy = $state(false);
+
+  async function openAdventureMode() {
+    adventureMode = true;
+    AdventureSurfaceComponent ??= (
+      await import("./adventure/AdventureSurface.svelte")
+    ).default;
+  }
 
   const _isPopup = $derived(page.url.pathname === resolve(`oracle`));
 
@@ -165,15 +176,22 @@
         class="rounded-md px-3 py-2 text-xs text-theme-primary {adventureMode
           ? 'bg-theme-primary/15'
           : ''}"
-        onclick={() => (adventureMode = !adventureMode)}
+        onclick={() => {
+          if (adventureMode) adventureMode = false;
+          else void openAdventureMode();
+        }}
         aria-pressed={adventureMode}>Adventure</button
       >
     </div>
 
-    {#if adventureMode}
-      <AdventureSurface
+    {#if adventureMode && AdventureSurfaceComponent}
+      <AdventureSurfaceComponent
         onCreatureImportBusyChange={(busy) => (creatureImportBusy = busy)}
       />
+    {:else if adventureMode}
+      <p class="p-4 text-sm text-theme-text" role="status">
+        Loading Adventure mode…
+      </p>
     {:else}
       <OracleChat
         onOpenSettings={() => {

@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { defaultIdFactory, type PrepClue } from "generator-engine";
+  import {
+    defaultIdFactory,
+    type PrepClue,
+  } from "generator-engine/session-prep";
   import PrepAiTag from "./PrepAiTag.svelte";
   import { autosize } from "./prep-autosize";
   import {

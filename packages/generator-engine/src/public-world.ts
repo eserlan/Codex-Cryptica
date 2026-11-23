@@ -4,7 +4,7 @@
  * an AI-enhanced draft is requested; this module remains pure and reusable.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { withPublicCreativeCue } from "./public-creative-diversity";

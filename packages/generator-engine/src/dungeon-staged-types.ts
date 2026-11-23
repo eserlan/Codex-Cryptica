@@ -1,6 +1,6 @@
 /** Contracts shared by the dungeon stages and their runner. */
 import type { DungeonJson } from "./public-dungeon";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import type { Rng } from "./random-utils";
 import type { DraftCheck } from "./staged-runtime";
 import type { StagedProgress, StagedProgressStep } from "./staged-progress";

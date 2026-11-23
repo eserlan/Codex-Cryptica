@@ -3,7 +3,7 @@
   import { createCharacterDefaults } from "./generator-page-character-defaults";
   import { createSettingDefaults } from "./generator-page-setting-defaults";
   import { createAdventureDefaults } from "./generator-page-adventure-defaults";
-  import type { OneShotProgressStep } from "generator-engine";
+  import type { OneShotProgressStep } from "generator-engine/one-shot-staged";
   import GeneratorPageOutputExtras from "./GeneratorPageOutputExtras.svelte";
   import QuickNamesPanel from "./QuickNamesPanel.svelte";
   import {
@@ -12,7 +12,6 @@
     culturesForTheme,
   } from "./quick-names";
   import { nameGeneratorConfig } from "#lib/services/seo/generator-config.js";
-  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
   import { onlineStatus } from "#lib/stores/online.svelte.js";
   import { onDestroy, onMount, untrack } from "svelte";
   import { browser } from "$app/env";
@@ -45,6 +44,12 @@
     showsStagedProgress,
     isStreamableSlug,
   } from "./generator-page-generation";
+  import { preloadLocalGenerator } from "./generator-page-local-generation.js";
+  import { consumeGeneratorOutputAfterReload } from "./generator-output-reload.js";
+  import {
+    consumeGeneratorSetupState,
+    saveGeneratorSetupState,
+  } from "./generator-setup-recovery.js";
   import {
     initializeHandoffState,
     setupHandoffNavigation,
@@ -209,6 +214,24 @@
       fallbackTheme: factionConfig.themes[0],
     }),
   );
+  const setupRecovery = untrack(() =>
+    browser
+      ? consumeGeneratorSetupState<typeof forms>(meta.canonicalPath)
+      : null,
+  );
+  if (setupRecovery) {
+    for (const [key, value] of Object.entries(setupRecovery.forms)) {
+      if (key in forms && value && typeof value === "object")
+        Object.assign(forms[key as keyof typeof forms], value);
+    }
+    activeTheme = setupRecovery.activeTheme;
+  }
+  const setupRecoveryOutput = setupRecovery?.output ?? null;
+  const setupRecoveryUseAI = setupRecovery?.useAI ?? true;
+  const setupRecoveryPath = setupRecovery ? meta.canonicalPath : undefined;
+  const setupRecoveryOutputForPath = $derived(
+    meta.canonicalPath === setupRecoveryPath ? setupRecoveryOutput : null,
+  );
   let lastSlug = $state(_initialSlug);
 
   // The one-shot genre drives its skin (see syncGeneratorTheme), so a hub URL
@@ -259,7 +282,7 @@
   }
 
   onMount(() => {
-    return mountGeneratorPage({
+    const cleanup = mountGeneratorPage({
       slug,
       hubTheme: initialHubTheme,
       urlHubTheme,
@@ -270,6 +293,7 @@
       setActiveTheme,
       applyWorldHandoff: applyPendingDevelopWorld,
     });
+    return cleanup;
   });
 
   const loadRemixDraft = createGeneratorRemixLoader({
@@ -289,8 +313,28 @@
 
   /** Live steps while a one-shot is generated in stages. */
   let oneShotProgress = $state<OneShotProgressStep[] | null>(null);
+  let generationReady = $state(false);
+  let generationSetupError = $state(false);
+  let generationSetupRequest = 0;
   const oneShotRuns = createOneShotRunControl();
   onDestroy(oneShotRuns.dispose);
+
+  async function prepareGeneratorEngine(targetSlug: ValidSlug = slug) {
+    const request = ++generationSetupRequest;
+    generationReady = false;
+    generationSetupError = false;
+    try {
+      await preloadLocalGenerator(targetSlug);
+      if (request === generationSetupRequest) generationReady = true;
+    } catch {
+      if (request === generationSetupRequest) generationSetupError = true;
+    }
+  }
+
+  $effect(() => {
+    const currentSlug = slug;
+    void prepareGeneratorEngine(currentSlug);
+  });
 
   const GENERATE_HANDLERS = createGeneratorHandlers({
     ...forms,
@@ -313,14 +357,60 @@
     slug === "names" ? activeTheme : FANTASY_NAME_THEME,
   );
 
+  let reloadedOutput = $state<GeneratorOutput | null>(null);
+  $effect(() => {
+    const activeRecoveryKey = meta.canonicalPath;
+    reloadedOutput = consumeGeneratorOutputAfterReload(activeRecoveryKey);
+  });
   const initialDraft = $derived(
-    remixDraft ??
+    setupRecoveryOutputForPath ??
+      reloadedOutput ??
+      remixDraft ??
       ((handoffState.questPremise && slug === "plot-twist-generator") ||
       (handoffState.factionContext && slug === "faction-roster") ||
       (handoffState.npcContext && slug === "npc")
         ? null
         : (initialDraftOverride ?? slugDrafts[slug] ?? null)),
   );
+
+  // Recovery saves the route form, AI preference, and current output as one operation.
+  // fallow-ignore-next-line complexity
+  async function reloadAfterGeneratorSetupFailure(recovery?: {
+    output?: GeneratorOutput;
+    useAI: boolean;
+  }) {
+    const currentOutput =
+      recovery?.output ??
+      setupRecoveryOutputForPath ??
+      reloadedOutput ??
+      undefined;
+    if (
+      !saveGeneratorSetupState(meta.canonicalPath, {
+        forms,
+        activeTheme,
+        useAI: recovery?.useAI ?? setupRecoveryUseAI,
+        output: currentOutput,
+      })
+    ) {
+      try {
+        if (currentOutput)
+          await navigator.clipboard.writeText(
+            JSON.stringify(currentOutput, null, 2),
+          );
+        window.alert(
+          currentOutput
+            ? "The generated result was copied. Reload was cancelled."
+            : "Could not preserve the form values. Reload was cancelled.",
+        );
+      } catch {
+        window.alert(
+          "Could not preserve this generated result. Copy it before reloading.",
+        );
+      }
+      return;
+    }
+    window.location.reload();
+  }
 </script>
 
 {#snippet quickNames()}
@@ -334,11 +424,17 @@
     nameTypeChoices={nameGeneratorConfig.nameTypes}
     isOnline={onlineStatus.current}
     askAi={(query) =>
-      askQuickNamesAi((options) => generatorEngine.generateNames(options), {
-        ...forms.names,
-        theme: namesTheme,
-        query,
-      })}
+      askQuickNamesAi(
+        async (options) =>
+          (
+            await import("#lib/services/seo/generator-engine.js")
+          ).generatorEngine.generateNames(options),
+        {
+          ...forms.names,
+          theme: namesTheme,
+          query,
+        },
+      )}
   />
 {/snippet}
 
@@ -350,6 +446,7 @@
   eyebrow={meta.eyebrow}
   introText={meta.introText}
   canonicalPath={meta.canonicalPath}
+  recoveryKey={meta.canonicalPath}
   ogImage={meta.ogImage}
   ogImageAlt={meta.ogImageAlt}
   keywords={meta.keywords ?? []}
@@ -359,10 +456,17 @@
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
   supportsStreaming={isStreamableSlug(slug)}
+  {generationReady}
+  {generationSetupError}
+  onRetryGenerationSetup={reloadAfterGeneratorSetupFailure}
   {generate}
   progressSteps={showsStagedProgress(slug) ? oneShotProgress : null}
   {initialDraft}
-  initialDraftIsUserGenerated={Boolean(remixDraft)}
+  initialDraftIsUserGenerated={Boolean(
+    remixDraft || reloadedOutput || setupRecoveryOutputForPath,
+  )}
+  initialUseAI={setupRecoveryUseAI}
+  initialUseAIPath={setupRecoveryPath}
   {backHref}
   {backLabel}
   variant={slug === "names" || slug === "fantasy-names" ? "names" : "default"}
@@ -383,6 +487,7 @@
   {#snippet outputExtras(output, replaceOutput, useAI)}
     <GeneratorPageOutputExtras
       {slug}
+      recoveryKey={meta.canonicalPath}
       {output}
       {useAI}
       onReplace={replaceOutput}

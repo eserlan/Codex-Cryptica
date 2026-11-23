@@ -1,5 +1,5 @@
 import { withPublicCreativeCue } from "./public-creative-diversity";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { asRecord, asString, parseFencedJson } from "./llm-response-utils";

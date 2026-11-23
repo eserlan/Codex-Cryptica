@@ -1,5 +1,5 @@
 /** Framework-free contracts and local fallback for the mystery generator. */
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

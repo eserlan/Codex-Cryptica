@@ -1,10 +1,8 @@
 import { oracleBridge } from "../cloud-bridge/oracle-bridge";
-import { contextRetrievalService as defaultContextRetrieval } from "@codex/ai-engine";
-import { textGenerationService as defaultTextGeneration } from "@codex/ai-engine";
-import { imageGenerationService as defaultImageGeneration } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "./oracle/lazy-ai-engine-services.js";
 import { searchService as defaultSearchService } from "@codex/search-orchestrator";
 import { entityDb } from "../utils/entity-db";
-import { graph as defaultGraph } from "./graph.svelte";
+import { createLazyOracleGraph } from "./oracle/lazy-graph-store.js";
 import { vault as defaultVault } from "./vault.svelte";
 import { themeStore as defaultThemeStore } from "./theme.svelte";
 import { sessionActivity } from "../services/SessionActivityService";
@@ -51,10 +49,12 @@ import { OracleContextManager } from "./oracle/context-manager.svelte";
 import { OracleActionManager } from "./oracle/action-manager.svelte";
 import { OracleSettingsManager } from "./oracle/settings-manager.svelte";
 import { OracleRevisionManager } from "./oracle/revision-manager.svelte";
-import {
-  AdventureManager,
-  adventureManager as defaultAdventureManager,
-} from "./oracle/adventure-manager.svelte";
+import type { AdventureManager } from "./oracle/adventure-manager.svelte";
+
+const defaultGraph = createLazyOracleGraph();
+const defaultContextRetrieval = lazyOracleAIServices.contextRetrievalService;
+const defaultTextGeneration = lazyOracleAIServices.textGenerationService;
+const defaultImageGeneration = lazyOracleAIServices.imageGenerationService;
 
 export type { ChatMessage, UndoableAction };
 
@@ -66,7 +66,8 @@ export class OracleStore implements IOracleStore {
   actions: OracleActionManager;
   settingsManager: OracleSettingsManager;
   revision: OracleRevisionManager;
-  adventure: AdventureManager;
+  adventure = $state.raw<AdventureManager | null>(null);
+  private adventureLoading: Promise<AdventureManager> | null = null;
 
   // Reactive UI state
   get isOpen() {
@@ -249,7 +250,7 @@ export class OracleStore implements IOracleStore {
     this.settingsManager =
       deps.settingsManager ?? new OracleSettingsManager(this);
     this.revision = deps.revision ?? new OracleRevisionManager(this);
-    this.adventure = deps.adventure ?? defaultAdventureManager;
+    this.adventure = deps.adventure ?? null;
 
     // Initialize Event Bus for Hybrid Communication
     if (
@@ -279,11 +280,26 @@ export class OracleStore implements IOracleStore {
     this.eventBus?.close();
     this.eventBus = null;
     this.chat.destroy();
-    void this.adventure.destroy();
+    if (this.adventure) void this.adventure.destroy();
     if (this.vaultSwitchedHandler && typeof window !== "undefined") {
       window.removeEventListener("vault-switched", this.vaultSwitchedHandler);
       this.vaultSwitchedHandler = null;
     }
+  }
+
+  /** Loads the adventure manager only when the Adventure surface is activated. */
+  async loadAdventureManager(): Promise<AdventureManager> {
+    if (this.adventure) return this.adventure;
+    this.adventureLoading ??= import("./oracle/adventure-manager.svelte.js")
+      .then(({ adventureManager }) => {
+        this.adventure = adventureManager;
+        return adventureManager;
+      })
+      .catch((error: unknown) => {
+        this.adventureLoading = null;
+        throw error;
+      });
+    return this.adventureLoading;
   }
 
   private handleWorkerEvent(event: any) {

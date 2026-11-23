@@ -2,7 +2,7 @@ import type { OracleExecutionContext } from "@codex/oracle-engine";
 import { oracleBridge } from "../../cloud-bridge/oracle-bridge";
 import * as Comlink from "comlink";
 import { appEventBus } from "@codex/events";
-import { interactionSessions } from "@codex/ai-engine";
+import { interactionSessions } from "@codex/ai-engine/interaction-session";
 import { getConnectionProposer } from "./hooks";
 import { withLoreTemplate } from "./lore-template";
 import type { OracleUiSnapshot, IOracleStore } from "./types";

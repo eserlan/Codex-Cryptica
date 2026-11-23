@@ -1,9 +1,12 @@
+<!-- This layout keeps route-level slots and their recovery contracts together; SEOGeneratorLayout tests cover them. -->
+<!-- fallow-ignore-file complexity -->
 <script lang="ts">
   import { onMount } from "svelte";
   import type { Snippet } from "svelte";
   import { browser } from "$app/env";
+  import { saveGeneratorOutputForReload } from "./generator-output-reload.js";
   import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-  import type { OneShotProgressStep } from "generator-engine";
+  import type { OneShotProgressStep } from "generator-engine/one-shot-staged";
   import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
   import { splitMarkdownForCopy } from "#lib/components/seo/markdown-sections.js";
   import { getGeneratorDocumentLayout } from "#lib/components/seo/generator-document-layout.js";
@@ -14,7 +17,10 @@
   import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
   import { onlineStatus } from "#lib/stores/online.svelte.js";
   import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
-  import { getContextSelection, type SessionEntity } from "generator-engine";
+  import {
+    getContextSelection,
+    type SessionEntity,
+  } from "generator-engine/session-hub-helpers";
   import {
     clipboardService as defaultClipboardService,
     type ClipboardService,
@@ -32,7 +38,6 @@
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
   import GeneratorFormPanel from "./layout/GeneratorFormPanel.svelte";
-  import GeneratorDiagrams from "./layout/GeneratorDiagrams.svelte";
   import GeneratorRail from "./layout/GeneratorRail.svelte";
   import GeneratorModals from "./layout/GeneratorModals.svelte";
   import { useGeneratorSession } from "./layout/use-generator-session.svelte";
@@ -44,6 +49,7 @@
 
   let {
     canonicalPath,
+    recoveryKey = canonicalPath,
     pageTitle = "Free RPG Generator | Codex Cryptica",
     metaDescription = "Generate high-quality detailed campaign drafts using our interactive local-first generators.",
     eyebrow = "Free RPG Tool",
@@ -78,6 +84,8 @@
     clipboardService = defaultClipboardService,
     autoGenerateExplicit = false,
     initialDraftIsUserGenerated = false,
+    initialUseAI = undefined,
+    initialUseAIPath = undefined,
     explainerText = undefined,
     showGeneratorSwitcher = true,
     aiModeRequired = false,
@@ -86,6 +94,9 @@
     wideForm = false,
     singleColumn = false,
     showSubmitButton = true,
+    generationReady = true,
+    generationSetupError = false,
+    onRetryGenerationSetup = () => {},
 
     /** Public discovery labels (#2762). Chips linking to `/explore?label=X`. */
     /** Extra controls under the output card, e.g. per-part regeneration. */
@@ -107,6 +118,7 @@
      */
   }: {
     canonicalPath?: string;
+    recoveryKey?: string;
     pageTitle?: string;
     metaDescription?: string;
     ogImage?: string;
@@ -148,6 +160,8 @@
     clipboardService?: ClipboardService;
     autoGenerateExplicit?: boolean;
     initialDraftIsUserGenerated?: boolean;
+    initialUseAI?: boolean;
+    initialUseAIPath?: string;
     explainerText?: string;
     showGeneratorSwitcher?: boolean;
     aiModeRequired?: boolean;
@@ -156,6 +170,12 @@
     wideForm?: boolean;
     singleColumn?: boolean;
     showSubmitButton?: boolean;
+    generationReady?: boolean;
+    generationSetupError?: boolean;
+    onRetryGenerationSetup?: (recovery?: {
+      output?: GeneratorOutput;
+      useAI: boolean;
+    }) => void;
     backHref?: string;
     backLabel?: string;
   } = $props();
@@ -163,6 +183,40 @@
   // The Quick Names lead changes DOM position at the same breakpoint as the
   // visual layout, keeping keyboard focus order aligned on phones and desktop.
   let isNarrowViewport = $state(false);
+  let diagramsRetryAttempt = $state(0);
+  let diagramRecoveryError = $state(false);
+  function loadGeneratorDiagrams(): Promise<
+    typeof import("./layout/GeneratorDiagrams.svelte")
+  > {
+    return diagramsRetryAttempt === 0
+      ? import("./layout/GeneratorDiagrams.svelte")
+      : (import("./layout/GeneratorDiagrams.svelte?retry") as Promise<
+          typeof import("./layout/GeneratorDiagrams.svelte")
+        >);
+  }
+  function recoverDiagramLoad() {
+    const currentOutput = session.generatedData;
+    if (
+      currentOutput &&
+      saveGeneratorOutputForReload(recoveryKey ?? "", currentOutput)
+    ) {
+      window.location.reload();
+    } else {
+      diagramRecoveryError = true;
+    }
+  }
+  async function copyDiagramOutputForRecovery() {
+    const currentOutput = session.generatedData;
+    if (!currentOutput) return;
+    try {
+      await navigator.clipboard.writeText(
+        JSON.stringify(currentOutput, null, 2),
+      );
+      diagramRecoveryError = false;
+    } catch {
+      diagramRecoveryError = true;
+    }
+  }
   onMount(() => {
     if (typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(max-width: 1023px)");
@@ -177,7 +231,9 @@
   });
 
   let outputCard = $state<HTMLElement | null>(null);
-  let diagrams = $state<ReturnType<typeof GeneratorDiagrams> | null>(null);
+  type GeneratorDiagramsComponent =
+    (typeof import("./layout/GeneratorDiagrams.svelte"))["default"];
+  let diagrams = $state<ReturnType<GeneratorDiagramsComponent> | null>(null);
   let selectedHubEntity = $state<SessionEntity | null>(null);
 
   // Offline awareness (#1494): generator pages still work offline using local
@@ -185,6 +241,18 @@
   // comes from the shared `onlineStatus` store (seeded at module load, so no
   // post-mount "assumed online" flash).
   const isOnline = $derived(onlineStatus.current);
+  // Keep the supported output-shape checks explicit; covered by layout output tests.
+  // fallow-ignore-next-line complexity
+  const hasGeneratorDiagrams = $derived.by(() => {
+    const output = session.generatedData;
+    return Boolean(
+      output &&
+      ((output.bodies?.length ?? 0) > 0 ||
+        (output.pattern?.stars?.length ?? 0) > 0 ||
+        (output.pointCrawl?.nodes?.length ?? 0) > 0 ||
+        output.mysteryGraph),
+    );
+  });
   const activeThemeId = $derived(resolveWorldThemeId(theme));
   // Stable per-page generator identifier for analytics (#1796) — derived from
   // the page's own canonical path (or the eyebrow label as a fallback) so
@@ -210,6 +278,8 @@
     getCanonicalPath: () => canonicalPath,
     getInitialDraft: () => initialDraft,
     getInitialDraftIsUserGenerated: () => initialDraftIsUserGenerated,
+    getInitialUseAI: () =>
+      initialUseAIPath === canonicalPath ? initialUseAI : undefined,
     getAutoGenerateExplicit: () => autoGenerateExplicit,
     getAiModeRequired: () => aiModeRequired,
     getSupportsStreaming: () => supportsStreaming,
@@ -220,6 +290,19 @@
     getOutputCard: () => outputCard,
     generate: (opts) => generate(opts),
   });
+  const effectiveUseAI = $derived(
+    session.useAI &&
+      isOnline &&
+      (typeof navigator === "undefined" || navigator.onLine),
+  );
+  function retryGeneratorSetup() {
+    onRetryGenerationSetup?.({
+      output: session.userGenerationSucceeded
+        ? (session.generatedData ?? undefined)
+        : undefined,
+      useAI: session.useAI,
+    });
+  }
 
   const documentLayout = $derived(
     getGeneratorDocumentLayout(session.generatedData),
@@ -404,8 +487,13 @@
         {backHref}
         {backLabel}
         {formFields}
-        onGenerate={() => void session.handleGenerate()}
+        onGenerate={() => {
+          if (generationReady) void session.handleGenerate();
+        }}
         isBusy={session.isBusy}
+        {generationReady}
+        {generationSetupError}
+        onRetryGenerationSetup={retryGeneratorSetup}
         {isOnline}
         {aiModeRequired}
         {aiDataNotice}
@@ -428,15 +516,44 @@
       {/if}
       <!-- The scroll target after Generate: the result, not the lead. -->
       <div class="flex flex-col scroll-mt-20" bind:this={outputCard}>
-        <GeneratorDiagrams
-          bind:this={diagrams}
-          generatedData={session.generatedData}
-          useAI={session.useAI}
-          onReplaceOutput={!session.isExampleDraft
-            ? session.replaceOutput
-            : undefined}
-          onCopy={clipboard.trackDiagramCopy}
-        />
+        {#if hasGeneratorDiagrams}
+          {#key diagramsRetryAttempt}
+            {#await loadGeneratorDiagrams() then { default: GeneratorDiagrams }}
+              <GeneratorDiagrams
+                bind:this={diagrams}
+                generatedData={session.generatedData}
+                {recoveryKey}
+                useAI={effectiveUseAI}
+                onReplaceOutput={!session.isExampleDraft
+                  ? session.replaceOutput
+                  : undefined}
+                onCopy={clipboard.trackDiagramCopy}
+              />
+            {:catch}
+              <p class="text-sm text-theme-text" role="alert">
+                The diagram tools could not load.
+                {#if diagramsRetryAttempt === 0}
+                  <button
+                    class="underline"
+                    onclick={() => (diagramsRetryAttempt += 1)}>Retry</button
+                  >
+                {:else if diagramRecoveryError}
+                  <button
+                    class="underline"
+                    onclick={copyDiagramOutputForRecovery}>Copy result</button
+                  >
+                  <span role="status"
+                    >Could not preserve the result for reload.</span
+                  >
+                {:else}
+                  <button class="underline" onclick={recoverDiagramLoad}
+                    >Reload to recover</button
+                  >
+                {/if}
+              </p>
+            {/await}
+          {/key}
+        {/if}
         {#if outputLead && session.isExampleDraft}
           <details class="group rounded-2xl border border-theme-border/50">
             <summary
@@ -457,7 +574,7 @@
           {@render outputExtras(
             session.generatedData,
             session.replaceOutput,
-            session.useAI,
+            effectiveUseAI,
           )}
         {/if}
       </div>
@@ -481,6 +598,8 @@
   <RelatedLinksSection {relatedLinks} />
 
   <GeneratorModals
+    {recoveryKey}
+    recoveryOutput={session.generatedData}
     {selectedHubEntity}
     onCloseHubEntity={() => (selectedHubEntity = null)}
     {refinement}

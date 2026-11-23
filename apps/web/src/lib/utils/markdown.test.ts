@@ -40,6 +40,16 @@ describe("markdown.ts utility", () => {
       expect(html).toContain("text");
     });
 
+    it("keeps images only when allowImages is requested", () => {
+      const html = renderMarkdown("![art](https://example.com/a.png)", {
+        allowImages: true,
+      });
+      expect(html).toContain('<img src="https://example.com/a.png" alt="art">');
+      expect(renderMarkdown("![art](https://example.com/a.png)")).not.toContain(
+        "<img",
+      );
+    });
+
     it("should highlight search queries using <mark> tags", () => {
       const text = "The quick brown fox";
       const html = renderMarkdown(text, { query: "quick" });

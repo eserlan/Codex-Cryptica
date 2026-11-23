@@ -1,9 +1,9 @@
+import { generateRumourLocal } from "generator-engine/public-rumour";
 import {
-  generateRumourLocal,
   selectRumourForPlay,
   type RumourSelectionInput,
   type SelectedRumourForPlay,
-} from "generator-engine";
+} from "generator-engine/rumour-play-selection";
 import {
   currentLocationContext,
   needsContextualRumours,

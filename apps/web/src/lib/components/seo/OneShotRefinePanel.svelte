@@ -1,23 +1,37 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
-  import { oneShotToOutput, renderGmSheet } from "generator-engine";
-  import type { OneShotRegenTarget } from "generator-engine";
-  import { generatorEngine } from "#lib/services/seo/generator-engine.js";
+  import { onlineStatus } from "#lib/stores/online.svelte.js";
+  import {
+    oneShotToOutput,
+    regenerateOneShotLocal,
+    renderGmSheet,
+  } from "generator-engine/public-one-shot";
+  import type { OneShotRegenTarget } from "generator-engine/public-one-shot";
   import OneShotPartRow from "./OneShotPartRow.svelte";
   import RefineNotice from "./RefineNotice.svelte";
   import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
+  type GeneratorEngine =
+    (typeof import("#lib/services/seo/generator-engine.js"))["generatorEngine"];
 
   let {
     output,
     useAI = false,
     onReplace,
+    loadEngine = async () =>
+      (await import("#lib/services/seo/generator-engine.js")).generatorEngine,
   }: {
     output: GeneratorOutput;
     useAI?: boolean;
     onReplace: (output: GeneratorOutput) => void;
+    loadEngine?: () => Promise<GeneratorEngine>;
   } = $props();
 
   const adventure = $derived(output.oneShot);
+  const canUseAI = $derived(
+    useAI &&
+      onlineStatus.current &&
+      (typeof navigator === "undefined" || navigator.onLine),
+  );
   let busyId = $state<string | null>(null);
   let warnings = $state<string[]>([]);
   let notice = $state<string | null>(null);
@@ -39,6 +53,8 @@
     requestController = null;
   }
 
+  // Keep request identity, abort handling, and replacement guards in one tested action boundary.
+  // fallow-ignore-next-line complexity
   async function regenerate(target: OneShotRegenTarget, instruction = "") {
     if (!adventure || busyId) return;
     busyId = target.id;
@@ -46,13 +62,24 @@
     notice = null;
     const startedFrom = adventure;
     const token = ++requestToken;
-    requestController = new AbortController();
+    const controller = new AbortController();
+    requestController = controller;
     try {
-      const result = await generatorEngine.regenerateOneShotPart(
-        adventure,
-        target,
-        { useAI, instruction, signal: requestController.signal },
-      );
+      if (!isCurrentRequest(token, startedFrom) || controller.signal.aborted)
+        return;
+      let result;
+      if (canUseAI) {
+        const engine = await loadEngine();
+        if (!isCurrentRequest(token, startedFrom) || controller.signal.aborted)
+          return;
+        result = await engine.regenerateOneShotPart(adventure, target, {
+          useAI: true,
+          instruction,
+          signal: controller.signal,
+        });
+      } else {
+        result = regenerateOneShotLocal(adventure, target);
+      }
       // A new generation arrived while we waited; don't overwrite it.
       if (!isCurrentRequest(token, startedFrom)) return;
       warnings = result.warnings;
@@ -104,8 +131,9 @@
       </button>
     </div>
     <p class="mt-1 text-micro text-theme-muted leading-relaxed">
-      Rewrite a single scene or NPC{useAI ? ", or tell it what to change" : ""}.
-      The core truth, clues, times and links stay as they are.
+      Rewrite a single scene or NPC{canUseAI
+        ? ", or tell it what to change"
+        : ""}. The core truth, clues, times and links stay as they are.
     </p>
 
     <ul class="mt-3 flex flex-col gap-1.5">
@@ -115,7 +143,7 @@
           label={`scene ${scene.title}`}
           meta={`${scene.minutes} min · ${scene.essential ? "essential" : "optional"}`}
           {busyId}
-          {useAI}
+          useAI={canUseAI}
           {buttonClass}
           onRun={regenerate}
         />
@@ -129,7 +157,7 @@
           label={`NPC ${npc.name}`}
           meta={npc.role}
           {busyId}
-          {useAI}
+          useAI={canUseAI}
           {buttonClass}
           onRun={regenerate}
         />

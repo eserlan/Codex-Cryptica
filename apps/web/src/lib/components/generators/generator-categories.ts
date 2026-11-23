@@ -1,4 +1,4 @@
-import type { GeneratorId } from "generator-engine";
+import type { GeneratorId } from "generator-engine/campaign-generator-types";
 import {
   GENERATOR_CATALOGUE,
   GENERATOR_CATEGORIES,

@@ -1,4 +1,4 @@
-import type { ConceptSeed } from "generator-engine";
+import type { ConceptSeed } from "generator-engine/concept-seed";
 import {
   browserSessionStorage,
   type StorageLike,

@@ -1,8 +1,6 @@
-import {
-  DelveTopologyGenerator,
-  DelveFlowLayout,
-  type DelveCanvasDocument,
-} from "generator-engine";
+import { DelveTopologyGenerator } from "generator-engine/dungeon/delve-topology-generator";
+import { DelveFlowLayout } from "generator-engine/dungeon/delve-flow-layout";
+import type { DelveCanvasDocument } from "generator-engine/dungeon/delve-builder-types";
 import { type Clock, systemClock } from "#lib/utils/runtime-deps.js";
 
 export interface DungeonDelveServiceDeps {

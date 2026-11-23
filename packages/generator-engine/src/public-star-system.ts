@@ -13,7 +13,7 @@
  * Generator draft pre-populated with this system's context.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson, sanitizeText } from "./llm-response-utils";
 import { defaultRng, pickFrom, type Rng } from "./random-utils";
 import { withPublicCreativeCue } from "./public-creative-diversity";

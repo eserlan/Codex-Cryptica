@@ -2,6 +2,7 @@ import { oracle } from "#lib/stores/oracle.svelte.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { importQueue } from "#lib/stores/import-queue.svelte.js";
 import { aiClientManager } from "@codex/ai-engine";
+import { ensureAiSession } from "#lib/services/ai/session-bootstrap.js";
 import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 import { connectionModeStore } from "#lib/stores/ui/connection-mode.svelte.js";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -455,6 +456,7 @@ export class ImportSettingsController {
         this.importMode = "oracle";
         lockedMode = "oracle";
 
+        if (!apiKey) await ensureAiSession();
         await runOracleFileAnalysis(file, result, hash, isMarkdown, signal, {
           aiClientManager: this.deps.aiClientManager,
           apiKey,

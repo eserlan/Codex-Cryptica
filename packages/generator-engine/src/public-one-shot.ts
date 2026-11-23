@@ -9,7 +9,7 @@
  * touching the rest.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import { formatPublicScenarioConcept } from "./public-scenario-diversity";

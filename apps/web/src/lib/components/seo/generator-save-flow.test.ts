@@ -9,6 +9,7 @@ import {
   saveGeneratorOutput,
   saveSessionHubEntities,
 } from "./generator-save-flow";
+import { preloadLocalGenerator } from "./generator-page-local-generation.js";
 
 const output: GeneratorOutput = {
   type: "location",
@@ -182,6 +183,33 @@ describe.each(paths)("handoff failure signal: $name", (path) => {
     expect(await settle(deps)).toBe(storageError);
     expect(deps.track).not.toHaveBeenCalled();
   });
+});
+
+describe("offline generator save adapter readiness", () => {
+  it.each(["business", "point-crawl"] as const)(
+    "saves a %s result offline after route setup preloads its adapter",
+    async (slug) => {
+      await preloadLocalGenerator(slug);
+      const originalFetch = globalThis.fetch;
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() => Promise.reject(new Error("offline"))),
+      );
+      try {
+        const deps = dependencies();
+        const result = await saveGeneratorOutput(
+          slug === "business" ? businessOutput() : pointCrawlFailureOutput,
+          { content: "", lore: "" },
+          slug,
+          deps,
+        );
+        expect(result).toContain(`generator-${slug}`);
+        expect(deps.store).toHaveBeenCalledOnce();
+      } finally {
+        vi.stubGlobal("fetch", originalFetch);
+      }
+    },
+  );
 });
 
 describe("generator save flows", () => {

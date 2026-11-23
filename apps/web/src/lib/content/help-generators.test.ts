@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GENERATORS } from "help-engine";
-import { listGenerators } from "generator-engine";
+import { listGenerators } from "generator-engine/campaign-registry";
 
 /**
  * The help package may not import the generator registry, so it carries a

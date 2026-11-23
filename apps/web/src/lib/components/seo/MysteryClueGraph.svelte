@@ -5,7 +5,7 @@
     type MysteryGraph,
     type MysteryGraphDiagramNode,
     type MysteryGraphNodeKind,
-  } from "generator-engine";
+  } from "generator-engine/mystery-graph";
   import {
     FULL_VIEW,
     MAX_ZOOM,

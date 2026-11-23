@@ -8,6 +8,16 @@ import {
   createOneShotRunControl,
   showsStagedProgress,
 } from "./generator-page-generation";
+import { preloadLocalGenerator } from "./generator-page-local-generation.js";
+import { LOCAL_GENERATOR_SLUGS } from "./generator-page-local-generation.js";
+import { GENERATOR_SLUGS } from "./generator-slugs.js";
+import { BANNED_NAMES } from "generator-engine/naming-policy";
+import {
+  generationInputHistoryStore,
+  generationNameHistoryStore,
+} from "#lib/services/seo/generation-input-history.js";
+import { prepareMysteryGeneration } from "#lib/services/seo/mystery-generation-inputs.js";
+import { villainDomainHistoryStore } from "#lib/services/seo/villain-domain-history.js";
 import type { ValidSlug } from "./generator-page-meta";
 
 function makeFakeEngine(): any {
@@ -255,6 +265,42 @@ describe("generator-page-generation", () => {
   });
 
   describe("showsStagedProgress", () => {
+    it("keeps Mystery input history and avoids names from prior local cases", async () => {
+      const ctx = makeCtx();
+      ctx.mysteryInvestigation = {
+        genre: "Classic Fantasy",
+        mysteryType: "Murder",
+      };
+      delete ctx.engine;
+      const handlers = createGeneratorHandlers(ctx);
+      const beforeInputs = generationInputHistoryStore.recent(
+        "mystery-investigation",
+      ).length;
+      const beforeNames = generationNameHistoryStore.recent(
+        "mystery-investigation",
+      ).length;
+
+      const result = await handlers["mystery-investigation"](false);
+      expect(
+        generationInputHistoryStore.recent("mystery-investigation").length,
+      ).toBeGreaterThan(beforeInputs);
+      const recordedNames = generationNameHistoryStore.recent(
+        "mystery-investigation",
+      );
+      expect(recordedNames.length).toBeGreaterThan(beforeNames);
+      expect(recordedNames.some((name) => result.content.includes(name))).toBe(
+        true,
+      );
+
+      const nextPrompt = prepareMysteryGeneration({
+        genre: "Classic Fantasy",
+        mysteryType: "Murder",
+      });
+      expect(nextPrompt.prompt.userMessage).toContain(
+        `Already used names — do not reuse: ${recordedNames.join(", ")}`,
+      );
+    });
+
     it.each([
       "adventure-generator",
       "adventure-idea-generator",
@@ -315,6 +361,123 @@ describe("generator-page-generation", () => {
   });
 
   describe("createGeneratorHandlers", () => {
+    it("has a local-only path for every public generator route", () => {
+      expect([...LOCAL_GENERATOR_SLUGS].sort()).toEqual(
+        GENERATOR_SLUGS.filter((slug) => slug !== "random").toSorted(),
+      );
+    });
+
+    it("uses the route-local tables for the first click after going offline", async () => {
+      const ctx = makeCtx();
+      delete ctx.engine;
+      const handlers = createGeneratorHandlers(ctx);
+      const generate = createGenerate({
+        getSlug: () => "npc",
+        getHandlers: () => handlers,
+      });
+
+      await preloadLocalGenerator("npc");
+      const fetchSpy = vi.fn(() => Promise.reject(new Error("offline")));
+      const originalFetch = globalThis.fetch;
+      const originalOnline = navigator.onLine;
+      vi.stubGlobal("fetch", fetchSpy);
+      Object.defineProperty(navigator, "onLine", {
+        configurable: true,
+        value: false,
+      });
+      try {
+        const output = await generate({ useAI: true });
+        expect(output.type).toBe("character");
+        expect(output.title).toBeTruthy();
+        expect(fetchSpy).not.toHaveBeenCalled();
+      } finally {
+        vi.stubGlobal("fetch", originalFetch);
+        Object.defineProperty(navigator, "onLine", {
+          configurable: true,
+          value: originalOnline,
+        });
+      }
+    });
+
+    it("uses the Night Sky local generator and keeps its structured catalogue", async () => {
+      const ctx = makeCtx();
+      delete ctx.engine;
+      ctx.constellation = { mode: "night-sky", genre: "Classic Fantasy" };
+      const handlers = createGeneratorHandlers(ctx);
+      const result = await handlers.constellation(false);
+
+      expect(result.nightSky?.constellations.length).toBeGreaterThanOrEqual(8);
+      expect(result.nightSky?.constellations.length).toBeLessThanOrEqual(15);
+      expect(result.content).toContain("The ");
+      const banned = new Set(BANNED_NAMES.map((name) => name.toLowerCase()));
+      const generatedNames = result.nightSky!.constellations.map((entry) =>
+        entry.constellation.interpretations[0]?.name.toLowerCase(),
+      );
+      expect(generatedNames.every((name) => name && !banned.has(name))).toBe(
+        true,
+      );
+    });
+
+    it("preserves local heist and council name history", async () => {
+      const ctx = makeCtx();
+      delete ctx.engine;
+      const handlers = createGeneratorHandlers(ctx);
+      const beforeHeist = generationNameHistoryStore.recent("heist").length;
+      const beforeCouncil =
+        generationNameHistoryStore.recent("council-vote").length;
+
+      await handlers.heist(false);
+      await handlers["council-vote"](false);
+
+      expect(generationNameHistoryStore.recent("heist").length).toBeGreaterThan(
+        beforeHeist,
+      );
+      expect(
+        generationNameHistoryStore.recent("council-vote").length,
+      ).toBeGreaterThan(beforeCouncil);
+    });
+
+    it("records local BBEG domains and tome mystery selections", async () => {
+      const ctx = makeCtx();
+      delete ctx.engine;
+      const handlers = createGeneratorHandlers(ctx);
+      const beforeDomains = villainDomainHistoryStore.recent().length;
+      const beforeMysteries =
+        generationInputHistoryStore.recent("tome-mysteries").length;
+
+      await handlers["bbeg-generator"](false);
+      await handlers.tome(false);
+
+      expect(villainDomainHistoryStore.recent().length).toBeGreaterThan(
+        beforeDomains,
+      );
+      expect(
+        generationInputHistoryStore.recent("tome-mysteries").length,
+      ).toBeGreaterThan(beforeMysteries);
+      expect(generationInputHistoryStore.recent("tome").length).toBeGreaterThan(
+        0,
+      );
+    });
+
+    it.each([
+      ["dnd-npc", "character"],
+      ["one-shot-adventure-generator", "note"],
+      ["point-crawl", "note"],
+      ["business", "faction"],
+    ] as const)("keeps local output structure for %s", async (slug, type) => {
+      const ctx = makeCtx();
+      if (slug === "one-shot-adventure-generator")
+        ctx.oneShot = { durationHours: 3, partySize: 4 };
+      delete ctx.engine;
+      const handlers = createGeneratorHandlers(ctx);
+      await preloadLocalGenerator(slug);
+      const result = await handlers[slug](false);
+      expect(result.type).toBe(type);
+      expect(result.title).toBeTruthy();
+      expect(result.content).toBeTruthy();
+      expect(result.status).toBe("active");
+    });
+
     it("maps every ValidSlug to a handler function", async () => {
       const ctx = makeCtx();
       const handlers = createGeneratorHandlers(ctx);

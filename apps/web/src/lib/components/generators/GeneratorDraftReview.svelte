@@ -1,10 +1,8 @@
 <script lang="ts">
-  import {
-    buildBusinessSavePlan,
-    renderBusinessContent,
-    type BusinessDocument,
-    type GeneratedDraft,
-  } from "generator-engine";
+  import { buildBusinessSavePlan } from "generator-engine/business-save";
+  import { renderBusinessContent } from "generator-engine/business-state";
+  import type { BusinessDocument } from "generator-engine/business-state";
+  import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
   import type { BusinessSaveChoices } from "#lib/services/generators/business-vault-save.js";
   import BusinessFallbackNote from "#lib/components/seo/BusinessFallbackNote.svelte";
   import BusinessRefinePanel from "#lib/components/seo/BusinessRefinePanel.svelte";

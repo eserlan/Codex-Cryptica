@@ -3,7 +3,7 @@ import {
   isSessionPrepStepEmpty,
   type SessionPrep,
   type SessionPrepStep,
-} from "generator-engine";
+} from "generator-engine/session-prep";
 
 export interface SessionPrepStepInfo {
   /** Short section name used on the run sheet and in the adjust view. */

@@ -1,9 +1,7 @@
 <script lang="ts">
-  import {
-    selectRumourForPlay,
-    type GeneratedDraft,
-    type SelectedRumourForPlay,
-  } from "generator-engine";
+  import { selectRumourForPlay } from "generator-engine/rumour-play-selection";
+  import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
+  import type { SelectedRumourForPlay } from "generator-engine/rumour-play-selection";
 
   let {
     draft,

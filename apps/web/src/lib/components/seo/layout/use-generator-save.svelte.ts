@@ -1,7 +1,7 @@
 import { goto } from "$app/navigation";
 import { resolve } from "$app/paths";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
-import type { SessionEntity } from "generator-engine";
+import type { SessionEntity } from "generator-engine/session-hub-helpers";
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
 import { trackPublicGeneratorAction } from "#lib/services/analytics/zaraz-analytics.js";
 import {

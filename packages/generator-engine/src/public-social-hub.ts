@@ -6,7 +6,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
  * Migrated onto the smart deterministic framework (#2534).
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

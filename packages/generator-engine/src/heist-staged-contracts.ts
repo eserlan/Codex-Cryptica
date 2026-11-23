@@ -1,5 +1,5 @@
 import type { StagedProgress, StagedProgressStep } from "./staged-progress";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import type { Rng } from "./random-utils";
 import type { ConceptSeed } from "./concept-seed";
 

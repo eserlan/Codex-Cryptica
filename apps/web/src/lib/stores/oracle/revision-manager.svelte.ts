@@ -5,7 +5,7 @@ import {
 import type { Entity } from "schema";
 import { getConnectionProposer } from "./hooks";
 import { withLoreTemplate } from "./lore-template";
-import { interactionSessions } from "@codex/ai-engine";
+import { interactionSessions } from "@codex/ai-engine/interaction-session";
 import type {
   EntityRevisionRequest,
   EntityRevisionResult,

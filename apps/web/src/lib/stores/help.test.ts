@@ -5,7 +5,7 @@ vi.mock("$app/environment", () => ({
 }));
 
 import { HelpStore } from "./help.svelte";
-import { HELP_ARTICLES } from "#lib/config/help-content.js";
+import { HELP_ARTICLES } from "#lib/config/help-articles.js";
 import { modalUIStore } from "#lib/stores/ui/modal-ui.svelte.js";
 
 describe("HelpStore", () => {
@@ -20,7 +20,95 @@ describe("HelpStore", () => {
     };
     helpStore = new HelpStore(undefined, undefined, undefined, mockStorage);
     await helpStore.init();
+    await helpStore.ensureArticles();
     helpStore.reset();
+  });
+
+  it("loads article data only when Help asks for it", async () => {
+    const loader = vi.fn().mockResolvedValue(HELP_ARTICLES);
+    const store = new HelpStore(
+      undefined,
+      undefined,
+      undefined,
+      mockStorage,
+      loader,
+    );
+    await store.init();
+
+    expect(loader).not.toHaveBeenCalled();
+    await store.ensureArticles();
+    await store.ensureArticles();
+    expect(loader).toHaveBeenCalledOnce();
+  });
+
+  it("allows article loading to retry after a failed lazy import", async () => {
+    const loader = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Help chunk unavailable"))
+      .mockResolvedValueOnce(HELP_ARTICLES);
+    const store = new HelpStore(
+      undefined,
+      undefined,
+      undefined,
+      mockStorage,
+      loader,
+    );
+
+    await expect(store.ensureArticles()).rejects.toThrow(
+      "Help chunk unavailable",
+    );
+    await expect(store.ensureArticles()).resolves.toBe(HELP_ARTICLES);
+    expect(loader).toHaveBeenCalledTimes(2);
+  });
+
+  it("selects a known article immediately while its body chunk loads", async () => {
+    let resolveArticles!: (articles: typeof HELP_ARTICLES) => void;
+    const loader = vi.fn(
+      () =>
+        new Promise<typeof HELP_ARTICLES>((resolve) => {
+          resolveArticles = resolve;
+        }),
+    );
+    const store = new HelpStore(
+      undefined,
+      undefined,
+      undefined,
+      mockStorage,
+      loader,
+    );
+
+    const selection = store.selectArticle("intro");
+    expect(store.articlesLoading).toBe(true);
+    expect(selection).toBe(true);
+    expect(store.expandedId).toBe("intro");
+    resolveArticles(HELP_ARTICLES);
+
+    await store.ensureArticles();
+    expect(store.expandedId).toBe("intro");
+    expect(store.articlesError).toBeNull();
+  });
+
+  it("keeps known direct selection open when article loading fails and retries", async () => {
+    const loader = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Help chunk unavailable"))
+      .mockResolvedValueOnce(HELP_ARTICLES);
+    const store = new HelpStore(
+      undefined,
+      undefined,
+      undefined,
+      mockStorage,
+      loader,
+    );
+
+    expect(store.selectArticle("intro")).toBe(true);
+    expect(store.expandedId).toBe("intro");
+    await expect(store.ensureArticles()).rejects.toThrow(
+      "Help chunk unavailable",
+    );
+    expect(store.articlesError).toBe("Help chunk unavailable");
+    await expect(store.ensureArticles()).resolves.toBe(HELP_ARTICLES);
+    expect(store.articlesError).toBeNull();
   });
 
   it("should support constructor injection for UI, Search, and Storage stores", () => {
@@ -155,7 +243,7 @@ describe("HelpStore", () => {
     expect(store.hasSeen("test-tour")).toBe(true);
   });
 
-  it("should handle help center operations", () => {
+  it("should handle help center operations", async () => {
     helpStore.toggleArticle("intro");
     expect((helpStore as any).expandedId).toBe("intro");
 
@@ -163,13 +251,13 @@ describe("HelpStore", () => {
     expect((helpStore as any).expandedId).toBeNull();
 
     modalUIStore.openSettings = vi.fn();
-    helpStore.openHelpToArticle("intro");
+    await helpStore.openHelpToArticle("intro");
     expect((helpStore as any).expandedId).toBe("intro");
     expect(modalUIStore.openSettings).toHaveBeenCalledWith("help");
   });
 
-  it("should safely reject an unknown direct Help article", () => {
-    helpStore.selectArticle("intro");
+  it("should safely reject an unknown direct Help article", async () => {
+    await helpStore.selectArticle("intro");
     expect(helpStore.selectArticle("missing-article")).toBe(false);
     expect((helpStore as any).expandedId).toBeNull();
   });

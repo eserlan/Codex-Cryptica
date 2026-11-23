@@ -1,4 +1,4 @@
-import { factionConfig } from "generator-engine";
+import { factionConfig } from "generator-engine/public-faction";
 // Pure lookup tables and functions for reconciling a hub genre/theme (from
 // the URL or localStorage) with the per-generator theme/genre state used
 // across the SEO generator pages.

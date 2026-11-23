@@ -94,6 +94,30 @@ export default defineConfig({
         __dirname,
         "../../packages/adventure-engine/src/index.ts",
       ),
+      "@codex/ai-engine/api-error-classifier": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/api-error-classifier.ts",
+      ),
+      "@codex/ai-engine/config": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/config.ts",
+      ),
+      "@codex/ai-engine/interaction-session": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/interaction-session.ts",
+      ),
+      "@codex/ai-engine/client-manager": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/client-manager.ts",
+      ),
+      "@codex/ai-engine/session-manager": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/session-manager.ts",
+      ),
+      "@codex/ai-engine/text-generation-context": resolve(
+        __dirname,
+        "../../packages/ai-engine/src/text-generation-context.ts",
+      ),
       "@codex/ai-engine": resolve(
         __dirname,
         "../../packages/ai-engine/src/index.ts",

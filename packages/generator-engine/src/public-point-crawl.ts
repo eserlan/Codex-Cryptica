@@ -8,7 +8,7 @@
 import { formatCampaignContextBlock } from "./campaign-context";
 import { parseFencedJson } from "./llm-response-utils";
 import type { StagedProgressStep } from "./staged-progress";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { repairPointCrawlPlayability } from "./point-crawl-playability";
 import {
   POINT_CRAWL_DANGER_LEVELS,

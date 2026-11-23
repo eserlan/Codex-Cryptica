@@ -9,7 +9,7 @@ import {
   type DelveEdgeData,
   type DelveRoomNodeData,
 } from "generator-engine";
-import { aiClientManager } from "@codex/ai-engine";
+import { createLazyAIClientManager } from "#lib/services/lazy-ai-client-manager.js";
 import { extractJsonObject } from "@codex/runtime";
 import { oracle } from "#lib/stores/oracle.svelte.js";
 import { vault } from "#lib/stores/vault.svelte.js";
@@ -145,7 +145,7 @@ export function isPlaceholderDelveAreaName(
 export class DelveAreaEnhancementService {
   constructor(
     private readonly vaultGateway: LocationVaultGateway = vault,
-    private readonly aiClient: AreaEnhancementAIClient = aiClientManager,
+    private readonly aiClient: AreaEnhancementAIClient = createLazyAIClientManager(),
     private readonly settings: AreaEnhancementSettings = oracle,
     private readonly stockingService = new DelveStockingService(),
     private readonly clock: Clock = systemClock,

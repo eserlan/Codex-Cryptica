@@ -34,6 +34,41 @@ describe("GeneratorAITransport", () => {
     transport = new GeneratorAITransport(clientManager as any);
   });
 
+  it("loads the default AI client only when a model request starts", async () => {
+    const loadClientManager = vi.fn().mockResolvedValue({
+      getModel: vi.fn().mockResolvedValue({
+        generateContent: vi.fn().mockResolvedValue({
+          response: { text: () => " ready " },
+        }),
+      }),
+    });
+    const lazyTransport = new GeneratorAITransport(
+      undefined,
+      loadClientManager,
+    );
+
+    expect(loadClientManager).not.toHaveBeenCalled();
+    await expect(lazyTransport.runModel("system", "user")).resolves.toBe(
+      "ready",
+    );
+    expect(loadClientManager).toHaveBeenCalledOnce();
+  });
+
+  it("surfaces a failed default client load to the existing caller error path", async () => {
+    const loadClientManager = vi
+      .fn()
+      .mockRejectedValue(new Error("AI client unavailable"));
+    const lazyTransport = new GeneratorAITransport(
+      undefined,
+      loadClientManager,
+    );
+
+    await expect(lazyTransport.runModel("system", "user")).rejects.toThrow(
+      "AI client unavailable",
+    );
+    expect(loadClientManager).toHaveBeenCalledOnce();
+  });
+
   describe("runModel", () => {
     it("returns the trimmed non-streaming response text", async () => {
       clientManager.getModel.mockResolvedValue({
@@ -163,20 +198,17 @@ describe("GeneratorAITransport", () => {
         };
       });
 
-      const scopedTransport = new GeneratorAITransport(
-        clientManager as any,
-        ensureSession,
-      );
+      const scopedTransport = new GeneratorAITransport(undefined, async () => {
+        await ensureSession();
+        return clientManager as any;
+      });
       await scopedTransport.runModel("sys", "usr");
 
       expect(order).toEqual(["ensureSession", "getModel"]);
 
-      const failingTransport = new GeneratorAITransport(
-        clientManager as any,
-        async () => {
-          throw new Error("session unavailable");
-        },
-      );
+      const failingTransport = new GeneratorAITransport(undefined, async () => {
+        throw new Error("session unavailable");
+      });
       await expect(failingTransport.runModel("sys", "usr")).rejects.toThrow(
         "session unavailable",
       );
@@ -217,10 +249,10 @@ describe("GeneratorAITransport", () => {
       const preController = new AbortController();
       preController.abort();
       const preEnsureSession = vi.fn();
-      const preTransport = new GeneratorAITransport(
-        clientManager as any,
-        preEnsureSession,
-      );
+      const preTransport = new GeneratorAITransport(undefined, async () => {
+        preEnsureSession();
+        return clientManager as any;
+      });
 
       await expect(
         preTransport.runModel(
@@ -235,12 +267,10 @@ describe("GeneratorAITransport", () => {
       expect(clientManager.getModel).not.toHaveBeenCalled();
 
       const midController = new AbortController();
-      const midTransport = new GeneratorAITransport(
-        clientManager as any,
-        async () => {
-          midController.abort();
-        },
-      );
+      const midTransport = new GeneratorAITransport(undefined, async () => {
+        midController.abort();
+        return clientManager as any;
+      });
 
       await expect(
         midTransport.runModel(
@@ -267,10 +297,10 @@ describe("GeneratorAITransport", () => {
         return { startChat };
       });
 
-      const scopedTransport = new GeneratorAITransport(
-        clientManager as any,
-        ensureSession,
-      );
+      const scopedTransport = new GeneratorAITransport(undefined, async () => {
+        await ensureSession();
+        return clientManager as any;
+      });
       await scopedTransport.startChat("sys");
 
       expect(order).toEqual(["ensureSession", "getModel"]);

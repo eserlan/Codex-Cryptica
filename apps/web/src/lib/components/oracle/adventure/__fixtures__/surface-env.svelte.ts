@@ -2,6 +2,7 @@ import { vi } from "vitest";
 
 /** Reactive stand-in for the oracle store, so tests can change the Vault. */
 export const surfaceEnv = $state({
+  loadAdventureManager: vi.fn(),
   vault: {
     isInitialized: true,
     activeVaultId: "vault-1" as string | null,
@@ -27,3 +28,7 @@ export const surfaceEnv = $state({
     resumeArchived: vi.fn(),
   },
 });
+
+surfaceEnv.loadAdventureManager.mockImplementation(
+  async () => surfaceEnv.adventure,
+);
