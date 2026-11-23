@@ -574,7 +574,7 @@
             aria-hidden="true"
             data-testid="adventure-tools-badge"
             class={[
-              "pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none tabular-nums",
+              "pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-micro font-bold leading-none tabular-nums",
               phoneToolsSummary.badgeTone === "danger"
                 ? "border border-theme-border-interactive bg-theme-surface text-theme-text"
                 : "bg-theme-primary text-theme-on-primary",

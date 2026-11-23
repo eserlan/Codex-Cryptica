@@ -31,7 +31,9 @@
   let portraitSrc = $state<string | null>(null);
   let portraitFailed = $state(false);
 
-  const md = (text: string | undefined) => (text ? renderMarkdown(text) : "");
+  const md = (text: string | undefined) =>
+    // ui-check-ignore: report renders the user's own entity text; inline images are the report feature, hidden when portraits are off
+    text ? renderMarkdown(text, { allowImages: true }) : "";
   const hideImages = $derived(view.showVisual === false);
   const showSilhouette = $derived(
     !portraitSrc &&
