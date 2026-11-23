@@ -92,7 +92,13 @@
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
   let isDocumentVisible = $state(true);
-  let serviceWorkerSession: VaultServiceWorkerSession | undefined;
+  // $state so the vault-session $effect below re-runs once registration
+  // resolves; a plain let would leave the effect with no tracked
+  // dependencies (it short-circuits while this is still undefined), so the
+  // active-vault seed message would never be sent on a first visit.
+  let serviceWorkerSession = $state<VaultServiceWorkerSession | undefined>(
+    undefined,
+  );
 
   const isVaultCacheSessionActive = () => {
     const base = basePath();
