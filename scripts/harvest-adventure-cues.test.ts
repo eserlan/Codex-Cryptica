@@ -74,6 +74,33 @@ describe("harvestSnapshot", () => {
     ]);
   });
 
+  it("extracts scene cues from the active visible situation and place", () => {
+    const items = harvestSnapshot({
+      state: {
+        currentPlaceId: "p1",
+        places: [
+          { id: "p1", name: "Flooded Crypt", cues: ["ruins", "ominous"] },
+        ],
+        visibleState: {
+          situation: {
+            id: "s1",
+            text: "The party explores the crypt at night.",
+            cues: [],
+          },
+          activeCharacters: [],
+        },
+      },
+    });
+
+    expect(items.find((item) => item.type === "scene")).toMatchObject({
+      type: "scene",
+      knownCues: expect.arrayContaining(["ruins", "ominous", "night"]),
+      matchedAssetId: "scene-fantasy-delve-01",
+    });
+    expect(JSON.stringify(items)).not.toContain("Flooded Crypt");
+    expect(JSON.stringify(items)).not.toContain("party explores");
+  });
+
   it("filters place and character names repeated in structured cues", () => {
     const items = harvestSnapshot({
       state: {

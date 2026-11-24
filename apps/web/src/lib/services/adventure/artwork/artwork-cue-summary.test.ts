@@ -172,7 +172,6 @@ describe("summarizeArtworkCues", () => {
       {
         vaultId: "v1",
         currentPlaceId: "p1",
-        currentSituation: "Exploring dark ruins at night in the rain.",
         places: [
           {
             id: "p1",
@@ -181,6 +180,12 @@ describe("summarizeArtworkCues", () => {
           },
         ],
         visibleState: {
+          situation: {
+            id: "situation-1",
+            text: "Exploring dark ruins at night in the rain.",
+            source: "provisional",
+            cues: [],
+          },
           activeCharacters: [
             {
               id: "m1",
@@ -200,7 +205,12 @@ describe("summarizeArtworkCues", () => {
       },
       "v1",
       {
-        "ent-monster-1": { id: "ent-monster-1", type: "Creature" },
+        "ent-monster-1": {
+          id: "ent-monster-1",
+          type: "creature",
+          title: "Salt Stalker",
+          aliases: ["Salt-Stalker"],
+        },
       },
       true,
       "fantasy",
@@ -213,6 +223,7 @@ describe("summarizeArtworkCues", () => {
       match: null,
     });
     expect(summary?.scene?.cues).toContain("ruins");
+    expect(summary?.scene?.cues).toContain("night");
     expect(summary?.npcs.map((n) => n.name)).toEqual(["Ivenna Surr"]);
     expect(summary?.monsters).toEqual([
       {
@@ -222,5 +233,7 @@ describe("summarizeArtworkCues", () => {
         match: null,
       },
     ]);
+    expect(summary?.monsters?.[0]?.unmappedCues).not.toContain("salt stalker");
+    expect(summary?.monsters?.[0]?.unmappedCues).not.toContain("salt-stalker");
   });
 });

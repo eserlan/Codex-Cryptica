@@ -114,15 +114,22 @@ export interface ArtworkCueIndicator {
   }>;
 }
 
-type CueSession = ArtworkPlaceSession &
-  Pick<ArtworkNpcSession, "visibleState"> & {
-    places?: readonly Place[];
-    currentSituation?: string | null;
+type CueSession = ArtworkPlaceSession & {
+  visibleState?: NonNullable<ArtworkNpcSession["visibleState"]> & {
+    situation?: StateFact;
   };
+  places?: readonly Place[];
+};
 
 function collectVisibleEntityNames(
   places: readonly Place[] | undefined,
   facts: readonly StateFact[],
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & { title?: string; aliases?: readonly string[] }
+    >
+  >,
 ): Set<string> {
   const names = new Set<string>();
   for (const place of places ?? []) {
@@ -130,6 +137,13 @@ function collectVisibleEntityNames(
     if (normalized) names.add(normalized);
   }
   for (const fact of facts) {
+    const entity = fact.sourceRecordId
+      ? entities[fact.sourceRecordId]
+      : undefined;
+    for (const name of [entity?.title, ...(entity?.aliases ?? [])]) {
+      const normalized = name?.trim().toLowerCase().replace(/\s+/g, " ");
+      if (normalized) names.add(normalized);
+    }
     const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
     const normalizedName = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
     if (normalizedName) names.add(normalizedName);
@@ -185,12 +199,21 @@ function summarizeNpcFact(
 
 function isMonsterFact(
   fact: StateFact,
-  entities: Readonly<Record<string, ArtworkPlaceEntity & { type?: string }>>,
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & {
+        type?: string;
+        title?: string;
+        aliases?: readonly string[];
+      }
+    >
+  >,
 ): boolean {
   const entityType = fact.sourceRecordId
     ? entities[fact.sourceRecordId]?.type
     : undefined;
-  if (entityType === "Creature") return true;
+  if (entityType === "creature") return true;
   return (fact.cues ?? []).some((cue) =>
     MONSTER_CUES.has(cue.trim().toLowerCase()),
   );
@@ -199,7 +222,6 @@ function isMonsterFact(
 function summarizeMonsterFact(
   fact: StateFact,
   theme: string | undefined,
-  catalogue: readonly ArtworkAsset[],
   entityNames: ReadonlySet<string>,
 ): {
   name: string;
@@ -215,12 +237,11 @@ function summarizeMonsterFact(
     { facts: fact.cues ? [fact.text, ...fact.cues] : [fact.text] },
   );
   const unmappedCues = collectUnmappedStructuredCues(fact.cues, entityNames);
-  const matched = cues ? matchArtwork(catalogue, cues) : null;
   return {
     name,
     cues: cues ? cues.primaryCues : [],
     unmappedCues,
-    match: matched ? matched.id : null,
+    match: null,
   };
 }
 
@@ -315,7 +336,16 @@ function summarizeSceneAndAtmosphere(
 export function summarizeArtworkCues(
   session: CueSession | null,
   activeVaultId: string | null | undefined,
-  entities: Readonly<Record<string, ArtworkPlaceEntity & { type?: string }>>,
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & {
+        type?: string;
+        title?: string;
+        aliases?: readonly string[];
+      }
+    >
+  >,
   enabled: boolean,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
@@ -335,7 +365,11 @@ export function summarizeArtworkCues(
   );
   const placeMatch = resolvePlaceCueMatch(placeSelected, placeCues, catalogue);
   const { hereCharacters } = filterHereCharacters(session);
-  const entityNames = collectVisibleEntityNames(session.places, hereCharacters);
+  const entityNames = collectVisibleEntityNames(
+    session.places,
+    hereCharacters,
+    entities,
+  );
   const monsterFacts = hereCharacters.filter((fact) =>
     isMonsterFact(fact, entities),
   );
@@ -344,14 +378,14 @@ export function summarizeArtworkCues(
   );
   const envSlots = summarizeSceneAndAtmosphere(
     place,
-    session.currentSituation,
+    session.visibleState?.situation?.text,
     entityNames,
     genre,
     placeMatch,
     catalogue,
   );
   const monsters = monsterFacts.map((fact) =>
-    summarizeMonsterFact(fact, theme, catalogue, entityNames),
+    summarizeMonsterFact(fact, theme, entityNames),
   );
 
   return {

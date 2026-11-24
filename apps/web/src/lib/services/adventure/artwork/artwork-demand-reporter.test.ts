@@ -112,7 +112,7 @@ describe("ArtworkDemandReporter", () => {
           {
             name: "Salt Stalker",
             cues: [],
-            unmappedCues: ["monster", "salt-stalker"],
+            unmappedCues: ["monster"],
             match: null,
           },
         ],
@@ -126,6 +126,8 @@ describe("ArtworkDemandReporter", () => {
     );
     expect(types).toEqual(["scene", "atmosphere", "monster"]);
     expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("Salt Stalker");
+    expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("salt stalker");
+    expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("salt-stalker");
   });
 
   it("bounds cue arrays to the worker limits before sending", () => {

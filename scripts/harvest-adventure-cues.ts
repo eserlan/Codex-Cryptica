@@ -35,7 +35,9 @@ interface CharacterEntry {
 export interface DiagnosticSnapshot {
   state?: {
     places?: PlaceEntry[];
+    currentPlaceId?: string | null;
     visibleState?: {
+      situation?: CharacterEntry;
       activeCharacters?: CharacterEntry[];
     };
   };
@@ -238,6 +240,41 @@ function harvestAtmosphere(
   };
 }
 
+function harvestScene(
+  situation: CharacterEntry | undefined,
+  place: PlaceEntry | undefined,
+  genre: NonNullable<ArtworkCues["genre"]>,
+): HarvestedDemand | null {
+  if (!situation?.text) return null;
+  const situationWords = situation.text.toLowerCase().match(/[a-z]+/g) ?? [];
+  const knownCues = normalizeArtworkCues([
+    ...(situation.cues ?? []),
+    ...situationWords,
+    ...(place?.cues ?? []),
+  ]).sort();
+  const rawPlaceCues = place?.cues ?? [];
+  const unmappedCues = collectUnmapped(rawPlaceCues, [
+    place?.name ?? "",
+    situation.text,
+  ]);
+  if (knownCues.length + unmappedCues.length === 0) return null;
+  const asset = knownCues.length
+    ? matchArtwork(seedArtwork, {
+        type: "scene",
+        genre,
+        primaryCues: knownCues,
+      })
+    : null;
+  return {
+    type: "scene",
+    genre,
+    knownCues,
+    unmappedCues,
+    demographicCues: [],
+    matchedAssetId: asset ? asset.id : null,
+  };
+}
+
 function readActiveCharacters(visibleState?: {
   activeCharacters?: CharacterEntry[];
 }): CharacterEntry[] {
@@ -269,10 +306,18 @@ export function harvestSnapshot(
   const atmospheres = rawPlaces
     .map((place) => harvestAtmosphere(place, genre))
     .filter((item): item is HarvestedDemand => item !== null);
+  const activePlace = rawPlaces.find(
+    (place) => place.id === snapshot.state?.currentPlaceId,
+  );
+  const scene = harvestScene(
+    snapshot.state?.visibleState?.situation,
+    activePlace,
+    genre,
+  );
   const chars = rawChars
     .map((char) => harvestCharacter(char, genre))
     .filter((item): item is HarvestedDemand => item !== null);
-  return [...places, ...atmospheres, ...chars];
+  return [...places, ...atmospheres, ...(scene ? [scene] : []), ...chars];
 }
 
 function parseCliArgs(args: readonly string[]): {
