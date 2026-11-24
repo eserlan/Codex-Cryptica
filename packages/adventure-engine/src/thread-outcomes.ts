@@ -260,8 +260,6 @@ function resolveOutcomeTargets(
 
 function hasSufficientEvidence(
   proposal: ThreadOutcomeProposal,
-  scenarioTarget: ScenarioItem | undefined,
-  turnId: string,
   supportingFactIds: readonly string[],
   supportingCommitmentIds: readonly string[],
 ): boolean {
@@ -271,11 +269,7 @@ function hasSufficientEvidence(
   if (supportingFactIds.length > 0 || supportingCommitmentIds.length > 0) {
     return true;
   }
-  return Boolean(
-    scenarioTarget?.events.some(
-      (event) => event.visibility === "player" && event.turnId === turnId,
-    ),
-  );
+  return false;
 }
 
 function reconcileSingleOutcome(
@@ -298,13 +292,7 @@ function reconcileSingleOutcome(
   const { supportingFactIds, supportingCommitmentIds } =
     resolveSupportingEvidence(proposal, evidence);
   if (
-    !hasSufficientEvidence(
-      proposal,
-      scenarioTarget,
-      turn.id,
-      supportingFactIds,
-      supportingCommitmentIds,
-    )
+    !hasSufficientEvidence(proposal, supportingFactIds, supportingCommitmentIds)
   ) {
     dropped.push(
       `threadOutcomes: insufficient committed evidence for ${proposal.result}`,
@@ -357,7 +345,7 @@ export function reconcileThreadOutcomes(
 function normalizeThreadKey(title: string): string {
   return title
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
 }
 
@@ -435,8 +423,9 @@ export function reconcileDuplicateEmergentThreads(
         thread.status === "open" &&
         ((existing.linkedScenarioId &&
           existing.linkedScenarioId === thread.linkedScenarioId) ||
-          normalizeThreadKey(existing.title) ===
-            normalizeThreadKey(thread.title)),
+          (normalizeThreadKey(existing.title).length > 0 &&
+            normalizeThreadKey(existing.title) ===
+              normalizeThreadKey(thread.title))),
     );
     if (matchIndex === -1) {
       result.push(thread);
@@ -537,6 +526,7 @@ export function applyReviewedThreadOutcomes(
   if (!lastTurn || approvals.length === 0) {
     return { session, dropped: [] };
   }
+  let reconciledApprovals = approvals;
   if (session.emergentThreads?.length) {
     const deduped = reconcileDuplicateEmergentThreads(session.emergentThreads);
     session.emergentThreads = deduped.threads;
@@ -547,8 +537,13 @@ export function applyReviewedThreadOutcomes(
       session.focusedEmergentThreadId =
         deduped.idRemap[session.focusedEmergentThreadId]!;
     }
+    reconciledApprovals = approvals.map((approval) =>
+      approval.threadId && deduped.idRemap[approval.threadId]
+        ? { ...approval, threadId: deduped.idRemap[approval.threadId]! }
+        : approval,
+    );
   }
   const dropped: string[] = [];
-  reconcileThreadOutcomes(session, lastTurn, approvals, now, dropped);
+  reconcileThreadOutcomes(session, lastTurn, reconciledApprovals, now, dropped);
   return { session, dropped };
 }

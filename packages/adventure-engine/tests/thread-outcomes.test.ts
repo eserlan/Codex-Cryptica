@@ -7,6 +7,8 @@ import {
   buildGMDirectorBrief,
   inspectLegacyThreadOutcomeCandidates,
   parseAdventureSession,
+  playerScenarioProjection,
+  projectPlayerEmergentThreads,
   reconcileDuplicateEmergentThreads,
   type AdventureSession,
   type CompletedTurnProposal,
@@ -249,6 +251,50 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     );
   });
 
+  it("does not treat a same-turn scenario discovery as committed outcome evidence", () => {
+    const s = session();
+    const heardScenario = {
+      ...scenario(),
+      id: "sc-hearing",
+      knowledge: "heard" as const,
+    };
+    heardScenario.events.push({
+      id: "discovery-1",
+      kind: "discovery",
+      visibility: "player",
+      text: "The witness offers a new clue.",
+      at: meta.now,
+      turnId: "turn-2",
+    });
+    s.scenarioCollection = {
+      version: 1,
+      items: [heardScenario],
+      focusedScenarioId: heardScenario.id,
+    };
+
+    const after = commit(
+      s,
+      {
+        playerAction: "Request a hearing.",
+        narration: "The witness agrees to speak later.",
+        threadOutcomes: [
+          {
+            scenarioId: heardScenario.id,
+            result: "achieved",
+            reason: "The witness agreed to a hearing.",
+          },
+        ],
+      },
+      2,
+    );
+
+    expect(after.scenarioCollection?.items[0]?.status).toBe("open");
+    expect(after.scenarioCollection?.items[0]?.outcome).toBeUndefined();
+    expect(after.turns.at(-1)?.dropped).toContain(
+      "threadOutcomes: insufficient committed evidence for achieved",
+    );
+  });
+
   it("3. supports alternate outcomes (failed, abandoned, cold) and tracks scenario vs emergent outcomes separately in Director brief and recap", () => {
     let s = session();
     const heardScenario = {
@@ -356,6 +402,78 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     const recap = buildAdventureRecap(s);
     expect(recap.knownLeads?.[0]?.outcome?.result).toBe("failed");
     expect(recap.emergentLeads?.[0]?.outcome?.result).toBe("abandoned");
+
+    s.scenarioCollection!.items[0]!.outcome!.supportingFactIds = [
+      "private-fact-id",
+    ];
+    s.scenarioCollection!.items[0]!.outcome!.supportingCommitmentIds = [
+      "private-scenario-commitment-id",
+    ];
+    s.emergentThreads![0]!.outcome!.supportingCommitmentIds = [
+      "private-emergent-commitment-id",
+    ];
+    const scenarioProjection = playerScenarioProjection(
+      s.scenarioCollection!.items[0]!,
+    );
+    const emergentProjection = projectPlayerEmergentThreads(s);
+    const safeRecap = buildAdventureRecap(s);
+    expect(JSON.stringify(scenarioProjection)).not.toContain("private-");
+    expect(JSON.stringify(emergentProjection)).not.toContain("private-");
+    expect(JSON.stringify(safeRecap)).not.toContain("private-");
+  });
+
+  it("selects the most recently resolved outcomes by outcome sequence", () => {
+    const s = session();
+    const makeOutcome = (sequence: number) => ({
+      result: "achieved" as const,
+      reason: `Resolved at ${sequence}`,
+      sourceTurnId: `turn-${sequence}`,
+      supportingFactIds: [],
+      supportingCommitmentIds: [],
+      recordedAt: meta.now,
+      sequence,
+    });
+    s.scenarioCollection = {
+      version: 1,
+      focusedScenarioId: null,
+      items: [1, 5, 2, 4].map((sequence) => ({
+        ...scenario(),
+        id: `scenario-${sequence}`,
+        knowledge: "heard" as const,
+        outcome: makeOutcome(sequence),
+        status: "resolved" as const,
+      })),
+    };
+    s.emergentThreads = [1, 5, 2, 4].map((sequence) => ({
+      id: `thread-${sequence}`,
+      title: `Thread ${sequence}`,
+      status: "resolved" as const,
+      outcome: makeOutcome(sequence),
+      provenance: "play" as const,
+      topicTokens: [],
+      linkedPersonIds: [],
+      linkedPlaceIds: [],
+      linkedFactIds: [],
+      linkedCommitmentIds: [],
+      openQuestions: [],
+      knownConsequences: [],
+      gmOnlyDevelopments: [],
+      createdAtTurnId: "turn-1",
+      updatedAtTurnId: `turn-${sequence}`,
+      turnCount: sequence,
+    }));
+
+    const brief = buildGMDirectorBrief({
+      session: s,
+      phase: "action",
+      playerAction: "Look around.",
+    });
+    expect(
+      brief?.resolvedOutcomes?.scenario.map((outcome) => outcome.id),
+    ).toEqual(["scenario-2", "scenario-4", "scenario-5"]);
+    expect(
+      brief?.resolvedOutcomes?.emergent.map((outcome) => outcome.id),
+    ).toEqual(["thread-2", "thread-4", "thread-5"]);
   });
 
   it("4. idempotent retry, conflicting second reply, and reload/rehydration do not double-close or overwrite outcomes", () => {
@@ -679,6 +797,32 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
       "achieved",
     );
     expect(applied.session.turns).toHaveLength(1);
+
+    const approvedDuplicate = applyReviewedThreadOutcomes(
+      parsed,
+      [
+        {
+          threadId: "em-legacy-dup",
+          result: "achieved",
+          reason: "The reviewed duplicate is resolved.",
+          supportingFactIds: ["fact-water-1"],
+        },
+      ],
+      meta.now,
+    );
+    expect(approvedDuplicate.dropped).toEqual([]);
+    expect(approvedDuplicate.session.emergentThreads?.[0]?.id).toBe(
+      "em-legacy-1",
+    );
+    expect(
+      approvedDuplicate.session.emergentThreads?.[0]?.outcome?.result,
+    ).toBe("achieved");
+
+    const nonAsciiTitles = reconcileDuplicateEmergentThreads([
+      { ...parsed.emergentThreads![0]!, id: "em-jp-1", title: "王位を守る" },
+      { ...parsed.emergentThreads![0]!, id: "em-jp-2", title: "失われた剣" },
+    ]);
+    expect(nonAsciiTitles.threads).toHaveLength(2);
 
     // Prompt builds cleanly within budget
     const promptResult = buildAdventurePrompt({

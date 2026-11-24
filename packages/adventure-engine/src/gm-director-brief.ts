@@ -189,6 +189,7 @@ function buildResolvedOutcomes(
 ): GMDirectorBrief["resolvedOutcomes"] {
   const scenario = (session.scenarioCollection?.items ?? [])
     .filter((item) => item.knowledge === "heard" && item.outcome)
+    .sort((a, b) => a.outcome!.sequence - b.outcome!.sequence)
     .slice(-3)
     .map((item) => ({
       id: item.id,
@@ -206,6 +207,7 @@ function buildResolvedOutcomes(
     }));
   const emergent = (session.emergentThreads ?? [])
     .filter((thread) => thread.status !== "open" && thread.outcome)
+    .sort((a, b) => a.outcome!.sequence - b.outcome!.sequence)
     .slice(-3)
     .map((thread) => ({
       id: thread.id,

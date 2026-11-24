@@ -104,6 +104,11 @@ export interface ThreadOutcome {
   unresolvedConsequences?: string[];
 }
 
+export type PlayerThreadOutcome = Omit<
+  ThreadOutcome,
+  "sourceTurnId" | "supportingFactIds" | "supportingCommitmentIds"
+>;
+
 export interface ThreadOutcomeProposal {
   threadId?: string;
   scenarioId?: string;
@@ -524,7 +529,7 @@ export interface KnownLeadRecap {
   lead: string;
   goal?: string;
   status: ScenarioStatus;
-  outcome?: ThreadOutcome;
+  outcome?: PlayerThreadOutcome;
   focused: boolean;
   lastUpdate?: string;
 }
@@ -936,7 +941,7 @@ export interface AdventureRecap {
     title: string;
     goal?: string;
     status: EmergentThreadStatus;
-    outcome?: ThreadOutcome;
+    outcome?: PlayerThreadOutcome;
     focused: boolean;
     openQuestion?: string;
   }>;
