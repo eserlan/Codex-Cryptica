@@ -60,6 +60,7 @@ function addThreadDiagnostics(
       ? undefined
       : (extras.resetReason ?? info?.resetReason);
   if (resetReason) metadata.resetReason = resetReason;
+  if (info?.directorDelivery) metadata.directorDelivery = info.directorDelivery;
 }
 
 // fallow-ignore-next-line complexity

@@ -185,6 +185,13 @@ type GenerationTally = {
     unknown: number;
   };
   progressCategoryCounts: Record<string, number>;
+  directorDeliveryCounts: {
+    included: number;
+    truncated: number;
+    omitted: number;
+    retained: number;
+    unknown: number;
+  };
   turnsWithGeneration: number;
   lastResetReason: string | null;
   lastRevisionMismatchCause: string | null;
@@ -210,6 +217,13 @@ function tallyGeneration(session: AdventureSession): GenerationTally {
     transportCounts: { interaction: 0, stateless: 0, unknown: 0 },
     threadModeCounts: { new: 0, continued: 0, reset: 0, unknown: 0 },
     progressCategoryCounts: {},
+    directorDeliveryCounts: {
+      included: 0,
+      truncated: 0,
+      omitted: 0,
+      retained: 0,
+      unknown: 0,
+    },
     turnsWithGeneration: 0,
     lastResetReason: null,
     lastRevisionMismatchCause: null,
@@ -222,11 +236,14 @@ function tallyGeneration(session: AdventureSession): GenerationTally {
     if (!generation) {
       tally.transportCounts.unknown += 1;
       tally.threadModeCounts.unknown += 1;
+      tally.directorDeliveryCounts.unknown += 1;
       continue;
     }
     tally.turnsWithGeneration += 1;
     tally.transportCounts[generation.transport ?? "unknown"] += 1;
     tally.threadModeCounts[generation.threadMode ?? "unknown"] += 1;
+    const deliveryStatus = generation.directorDelivery?.status ?? "unknown";
+    tally.directorDeliveryCounts[deliveryStatus] += 1;
     recordReset(tally, generation);
     if (generation.progressCategory)
       recordProgress(tally, generation.progressCategory);
@@ -279,6 +296,7 @@ function generationSummary(session: AdventureSession) {
       .map((item) => item.id),
     lastScenarioIds,
     progressCategoryCounts: tally.progressCategoryCounts,
+    directorDelivery: tally.directorDeliveryCounts,
     lastProgressCategory: tally.lastProgressCategory,
     recentProgressCategories: tally.recentProgressCategories,
     recentMeaningfulProgressTurns: recentMeaningful,

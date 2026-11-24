@@ -4,6 +4,7 @@ import type {
   AdventureSession,
   AdventureTurnProposal,
   AdventureWorldStyle,
+  DirectorDeliveryTrace,
   GenerationResetReason,
   GenerationThreadMode,
   PromptAdventurePackage,
@@ -96,6 +97,8 @@ export interface AdventureGenerationInfo {
   threadMode?: GenerationThreadMode;
   /** Bounded reason when the provider thread was actually reset. */
   resetReason?: GenerationResetReason;
+  /** Bounded trace of Director guidance actually delivered on the outgoing request (#5195). */
+  directorDelivery?: DirectorDeliveryTrace;
 }
 
 export type AdventurePrompt = ReturnType<typeof buildAdventurePrompt>;

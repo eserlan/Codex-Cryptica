@@ -138,6 +138,9 @@ export class AdventureInteractionGeneration {
         ...(preparation.resetReason
           ? { resetReason: preparation.resetReason }
           : {}),
+        ...(result.directorDelivery
+          ? { directorDelivery: result.directorDelivery }
+          : {}),
       };
       return Object.assign(proposal, { generationInfo });
     } catch (error) {

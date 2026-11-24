@@ -122,6 +122,24 @@ const localSaveOperationSchema = z.enum([
   "unknown",
 ]);
 
+const directorDeliverySchema = z.object({
+  status: z.enum(["included", "truncated", "omitted", "retained", "unknown"]),
+  reason: z.enum([
+    "delivered",
+    "budget",
+    "disabled",
+    "not-applicable",
+    "retained-unchanged",
+    "unknown",
+  ]),
+  deliveredChars: z.number().int().nonnegative().max(100_000),
+  focusedScenarioId: id.optional(),
+  recoveryReason: z
+    .enum(["none", "dialogue", "investigative", "both"])
+    .optional(),
+  requestedDevelopmentKind: z.string().min(1).max(80).optional(),
+});
+
 export const generationMetadataSchema = z.object({
   modelKey: z.string().min(1).max(120).optional(),
   reasoningEffort: generationReasoningEffortSchema.optional(),
@@ -129,6 +147,7 @@ export const generationMetadataSchema = z.object({
   threadMode: generationThreadModeSchema.optional(),
   resetReason: generationResetReasonSchema.optional(),
   revisionMismatchCause: localSaveOperationSchema.optional(),
+  directorDelivery: directorDeliverySchema.optional(),
   requestChars: z.number().int().nonnegative().max(1_000_000).optional(),
   sourceCounts: z
     .record(
