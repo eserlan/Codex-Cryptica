@@ -123,4 +123,47 @@ describe("adventure interaction transport", () => {
       "interaction-stream-incomplete",
     );
   });
+
+  it("streams progressive narration previews when metadata precedes narration and suppresses same-turn secrets", async () => {
+    const cleanPreviews: string[] = [];
+    const cleanPrefix =
+      '{"kind":"complete","hiddenPatch":{"secrets":{"add":[],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"narration":"';
+    const cleanTransport = new AdventureInteractionTransport({
+      getModel,
+      async *sendInteractionStream() {
+        yield { type: "delta" as const, text: `${cleanPrefix}Lantern ` };
+        yield { type: "delta" as const, text: 'light."}' };
+        yield {
+          type: "complete" as const,
+          text: `${cleanPrefix}Lantern light."}`,
+          id: "ok-1",
+        };
+      },
+    });
+    await cleanTransport.send(
+      { ...request, onNarration: (text) => cleanPreviews.push(text) },
+      params,
+    );
+    expect(cleanPreviews).toEqual(["Lantern ", "Lantern light."]);
+
+    const leakedPreviews: string[] = [];
+    const secret = "The bailiff forged the seal.";
+    const leakedPrefix = `{"kind":"complete","hiddenPatch":{"secrets":{"add":[{"text":"${secret}"}],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"narration":"`;
+    const leakedTransport = new AdventureInteractionTransport({
+      getModel,
+      async *sendInteractionStream() {
+        yield { type: "delta" as const, text: `${leakedPrefix}${secret}` };
+        yield {
+          type: "complete" as const,
+          text: `${leakedPrefix}${secret}"}`,
+          id: "leak-1",
+        };
+      },
+    });
+    await leakedTransport.send(
+      { ...request, onNarration: (text) => leakedPreviews.push(text) },
+      params,
+    );
+    expect(leakedPreviews).toEqual([]);
+  });
 });

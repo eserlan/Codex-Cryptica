@@ -32,6 +32,16 @@ describe("adventure structured response contract", () => {
         (schema) => schema.properties.kind.enum[0],
       ),
     ).toEqual(["complete", "roll-required"]);
+    const [completeSchema, rollSchema] = adventureTurnResponseSchema.oneOf;
+    expect(completeSchema.propertyOrdering.indexOf("hiddenPatch")).toBeLessThan(
+      completeSchema.propertyOrdering.indexOf("narration"),
+    );
+    expect(
+      completeSchema.propertyOrdering.indexOf("revealSecretIds"),
+    ).toBeLessThan(completeSchema.propertyOrdering.indexOf("narration"));
+    expect(rollSchema.propertyOrdering.indexOf("kind")).toBeLessThan(
+      rollSchema.propertyOrdering.indexOf("setupNarration"),
+    );
   });
 
   it("parses complete and roll-required proposals", () => {

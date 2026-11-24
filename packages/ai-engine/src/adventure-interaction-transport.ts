@@ -2,7 +2,10 @@ import type {
   AdventureAIClient,
   AdventureTurnGenerationRequest,
 } from "./adventure-generation.types";
-import { streamAborted } from "./adventure-narration-stream";
+import {
+  createNarrationPreviewPublisher,
+  streamAborted,
+} from "./adventure-narration-stream";
 
 type InteractionParams = Parameters<
   NonNullable<AdventureAIClient["sendInteraction"]>
@@ -69,18 +72,20 @@ export class AdventureInteractionTransport {
     let buffer = "";
     let finalId = "";
     let completed = false;
+    const publishPreview = createNarrationPreviewPublisher(request);
     // The proxy returns only player-safe model_output text, never thought/GM-only events.
     for await (const event of sendStream.call(this.aiClient, params)) {
       streamAborted(params.signal);
       if (event.type === "error") throw new Error(event.error);
-      if (event.type === "delta") buffer += event.text;
+      if (event.type === "delta") {
+        buffer += event.text;
+        publishPreview(buffer);
+      }
       if (event.type === "complete") {
         buffer = event.text || buffer;
         finalId = event.id;
         completed = true;
       }
-      // Buffer provider deltas. The complete response may add new GM-only
-      // facts that cannot be screened while narration is still arriving.
     }
     streamAborted(params.signal);
     if (!completed || !finalId)
