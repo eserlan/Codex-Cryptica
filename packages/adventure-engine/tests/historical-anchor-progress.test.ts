@@ -6,7 +6,7 @@ import {
 import {
   anchorSession,
   calendar,
-  overBudgetAnchorSession,
+  overDurableBudgetAnchorSession,
 } from "./historical-anchor-fixtures";
 import { now, session } from "./reducer-fixtures";
 
@@ -167,7 +167,7 @@ describe("historical anchor progress", () => {
   });
 
   it("rejects transitions that exceed the session state budget", () => {
-    const anchored = overBudgetAnchorSession();
+    const anchored = overDurableBudgetAnchorSession();
     const before = structuredClone(anchored);
     expect(
       transitionHistoricalAnchorProgress(anchored, {

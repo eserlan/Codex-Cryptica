@@ -27,6 +27,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
 	non_blog_files="$(printf '%s\n' "$changed_files" | grep -Ev "$skip_pattern" || true)"
 	if [ -n "$non_blog_files" ]; then
 		blog_only=false
+		push_remote_sha="$remote_sha"
 		break
 	fi
 done
@@ -35,7 +36,12 @@ if [ "$blog_only" = "true" ]; then
 	exit 0
 fi
 
-base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
+base=""
+if [ -n "${push_remote_sha:-}" ] && [ "$push_remote_sha" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$push_remote_sha" 2>/dev/null; then
+	base="$push_remote_sha"
+else
+	base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
+fi
 if command -v bun >/dev/null 2>&1; then
 	bun scripts/lint-changed.mjs --base "$base"
 else

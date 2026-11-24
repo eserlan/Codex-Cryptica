@@ -4,7 +4,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism, setPriority } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
-import { getChangedFiles } from "./lint-changed.mjs";
+import { getChangedFiles, parseGateCliArgs } from "./lint-changed.mjs";
 
 const TEST_EXTENSIONS = [".test.ts", ".spec.ts", ".test.js", ".spec.js"];
 
@@ -203,9 +203,10 @@ function throttleLocalRun() {
 export function runTestChanged({
   base,
   head = "HEAD",
+  committedOnly = false,
   cwd = process.cwd(),
 } = {}) {
-  const changedFiles = getChangedFiles({ base, head, cwd });
+  const changedFiles = getChangedFiles({ base, head, committedOnly, cwd });
   const testFilesSet = new Set();
 
   for (const file of changedFiles) {
@@ -241,13 +242,10 @@ export function runTestChanged({
 }
 
 if (import.meta.main) {
-  const baseIndex = process.argv.indexOf("--base");
-  const base = baseIndex !== -1 ? process.argv[baseIndex + 1] : undefined;
-  const headIndex = process.argv.indexOf("--head");
-  const head = headIndex !== -1 ? process.argv[headIndex + 1] : "HEAD";
+  const { committedOnly, base, head } = parseGateCliArgs();
 
   throttleLocalRun();
-  const success = runTestChanged({ base, head });
+  const success = runTestChanged({ base, head, committedOnly });
   if (!success) {
     process.exit(1);
   }

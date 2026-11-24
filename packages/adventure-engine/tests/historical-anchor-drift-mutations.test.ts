@@ -13,7 +13,7 @@ import {
   anchorSession,
   calendar,
   eventSnapshot,
-  overBudgetAnchorSession,
+  overDurableBudgetAnchorSession,
 } from "./historical-anchor-fixtures";
 import { now } from "./reducer-fixtures";
 
@@ -206,7 +206,7 @@ describe("historical anchor drift mutations", () => {
   });
 
   it("retains operation-specific failures when resulting session state exceeds the budget", () => {
-    const anchored = overBudgetAnchorSession();
+    const anchored = overDurableBudgetAnchorSession();
     const before = structuredClone(anchored);
     expect(() => parseAdventureSession(anchored)).toThrow(
       "state-budget-exceeded",

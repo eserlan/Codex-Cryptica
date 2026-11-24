@@ -20,6 +20,8 @@
     "lint:affected": "bun run --filter '*' lint -- --cache --cache-strategy content",
     "lint:changed": "bun scripts/lint-changed.mjs",
     "lint:types": "bun run --filter '*' lint:types",
+    "typecheck:changed": "bun scripts/typecheck-changed.mjs",
+    "pr:gate": "bun scripts/pr-gate.mjs",
     "lint:fix": "bun run --filter '*' lint -- --fix",
     "format:changed": "bun scripts/lint-changed.mjs --fix",
     "test": "bun run --filter '*' test",
@@ -64,7 +66,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,svelte}": [
-      "eslint --fix",
+      "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --fix",
       "prettier --write"
     ],
     "*.{md,json}": [
@@ -77,11 +79,12 @@
     "@emnapi/runtime": "^1.10.0",
     "@eslint/js": "^10.0.1",
     "@types/js-yaml": "^4.0.9",
+    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "commitlint-config-gitmoji": "^2.3.1",
     "esbuild": "^0.28.0",
     "eslint": "10.11.0",
     "eslint-plugin-svelte": "^3.17.1",
-    "fallow": "^3.27.0",
+    "fallow": "^3.48.0",
     "feedback-engine": "workspace:*",
     "gitmoji-cli": "^9.7.0",
     "globals": "^17.6.0",
