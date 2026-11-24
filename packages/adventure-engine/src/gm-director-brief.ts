@@ -1,3 +1,19 @@
+import {
+  DIRECTOR_HISTORY_LOOKBACK_TURNS,
+  MAX_DIRECTOR_BRIEF_CHARS,
+  MAX_OTHER_SCENARIO_IDS,
+  type DirectorActionKind,
+  type DirectorProvenance,
+  type DirectorConfidence,
+  type DirectorScenePosture,
+  type DirectorCommitmentEntry,
+  type DirectorPursuedScenario,
+  type DirectorPackageContext,
+  type GMDirectorBrief,
+  type GMDirectorBriefInput,
+} from "./gm-director-brief-contract";
+import { enforceBriefBudget } from "./gm-director-brief-budget";
+import { appendUniqueClipped, clipText } from "./gm-director-brief-text";
 import type { PromptAdventurePackage } from "./context-budget";
 import {
   candidateScenariosForLocation,
@@ -13,142 +29,35 @@ import {
 import {
   investigativeProgressPacing,
   type InvestigativePacing,
-  type InvestigativeRecoveryAngle,
 } from "./investigative-pacing";
 import { isPlayerVisibleScenarioEvent } from "./turn-progression";
 import { sceneStallPacing } from "./scene-pacing";
 import type {
-  ActorDisposition,
-  ActorProgressStatus,
   AdventureSession,
   CausalCommitment,
   PackageProgress,
   PackageProgressStatus,
   Place,
   ScenarioElaborationStage,
-  ScenarioEvent,
   ScenarioItem,
   SourceRecordReference,
 } from "./types";
 
-/** Hard upper bound for the serialized GM-only director brief. */
-export const MAX_DIRECTOR_BRIEF_CHARS = 2_400;
-
-export type DirectorActionKind =
-  "investigate" | "intervene" | "travel" | "converse" | "wait" | "walk-away";
-
-export type DirectorProvenance =
-  "player-action" | "focused-scenario" | "recent-event" | "current-location";
-
-export type DirectorConfidence = "high" | "medium" | "low";
-
-export type DirectorScenePosture =
-  | "opening"
-  | "dialogue-loop"
-  | "stalled-investigation"
-  | "calm-conversation"
-  | "progressing";
-
-export interface DirectorCommitmentEntry {
-  id: string;
-  kind: CausalCommitment["kind"];
-  subject: string;
-  summary: string;
-}
-
-export interface DirectorPursuedScenario {
-  scenarioId: string;
-  provenance: DirectorProvenance;
-  confidence: DirectorConfidence;
-  stage: ScenarioElaborationStage;
-  gmTruthRef: {
-    secretId: string;
-    truth: string;
-    truthRevealed: boolean;
-    ifInvestigatedSecretId?: string;
-    ifInvestigated?: string;
-  };
-  established: {
-    knownPlayerFacts: string[];
-    latestConsequentialEvents: Array<{
-      id: string;
-      kind: ScenarioEvent["kind"];
-      visibility: ScenarioEvent["visibility"];
-      text: string;
-    }>;
-    actors: string[];
-    committedExplanations?: DirectorCommitmentEntry[];
-  };
-  potential: {
-    openUncertainties: string[];
-    speculativeCommitments?: DirectorCommitmentEntry[];
-    pressure?: {
-      actor: string;
-      goal: string;
-      currentStance: string;
-      trigger: string;
-      expectedConsequence: string;
-      triggeredAtMinute?: number;
-    };
-    nextDevelopmentKinds: string[];
-  };
-}
-
-export interface DirectorPackageContext {
-  sceneId?: string;
-  activeRecordIds: string[];
-  establishedActors: Array<{
-    actorId: string;
-    status: ActorProgressStatus;
-    disposition: ActorDisposition;
-    facts?: string[];
-  }>;
-  latestEvents: Array<{
-    id: string;
-    recordId: string;
-    certainty: "claimed" | "confirmed";
-    to: PackageProgressStatus;
-    note: string;
-  }>;
-  openUncertainties: string[];
-}
-
-export interface GMDirectorBrief {
-  advisory: true;
-  mode: "active-pursuit" | "package-scene" | "open-world";
-  scenePosture: DirectorScenePosture;
-  currentPlace?: {
-    id?: string;
-    name: string;
-    sourceRecordId?: string;
-  };
-  pursuedScenarios: DirectorPursuedScenario[];
-  committedExplanations?: DirectorCommitmentEntry[];
-  otherOpenHeardScenarioIds: string[];
-  packageContext?: DirectorPackageContext;
-  progression?: {
-    turnsWithoutAdvancement: number;
-    repeatedNonAnswerTurns: number;
-    recommendedAngle?: InvestigativeRecoveryAngle;
-  };
-  suggestedActionKinds: DirectorActionKind[];
-}
-
-export interface GMDirectorBriefInput {
-  session: AdventureSession;
-  phase: "opening" | "action" | "roll-resolution";
-  playerAction?: string;
-  adventurePackage?: PromptAdventurePackage;
-  maxChars?: number;
-}
+export { MAX_DIRECTOR_BRIEF_CHARS } from "./gm-director-brief-contract";
+export type {
+  DirectorActionKind,
+  DirectorProvenance,
+  DirectorConfidence,
+  DirectorScenePosture,
+  DirectorCommitmentEntry,
+  DirectorPursuedScenario,
+  DirectorPackageContext,
+  GMDirectorBrief,
+  GMDirectorBriefInput,
+} from "./gm-director-brief-contract";
 
 const MAX_PURSUED_SCENARIOS = 2;
-const MAX_OTHER_SCENARIO_IDS = 6;
 const RECENT_EVENT_TURN_WINDOW = 3;
-// Keep historical lookups on prompt generation bounded. Older scenario events
-// still rank by their authored timestamps; package reveal state is summarised
-// in packageProgress when available.
-const DIRECTOR_HISTORY_LOOKBACK_TURNS = 256;
 
 const STAGE_WEIGHT: Record<ScenarioElaborationStage, number> = {
   "revelation-crisis": 3,
@@ -176,12 +85,6 @@ const INVESTIGATIVE_RE =
   /\b(?:investigat\w*|clue|clues|lead|leads|rumour|rumours|rumor|rumors|gossip|local\s+news|news\b|mystery|suspect\w*|witness\w*|search\w*|inspect\w*|examin\w*|follow\s+up|look\s+into|check\s+out|what\s+happened|who\s+is\s+behind|missing|vanish\w*|disappear\w*|secret\w*|trail|tracks|evidence)\b/i;
 
 const briefTopicWords = threadTopicWords;
-
-function clipText(value: string, limit: number): string {
-  const cleaned = value.replace(/\s+/g, " ").trim();
-  if (cleaned.length <= limit) return cleaned;
-  return `${cleaned.slice(0, Math.max(0, limit - 1))}…`;
-}
 
 function normalizePhrase(value: string): string {
   return value.toLowerCase().replace(/\s+/g, " ").trim();
@@ -686,8 +589,7 @@ function collectKnownPlayerFacts(
 ): string[] {
   const facts: string[] = [];
   const push = (text: string) => {
-    const clipped = clipText(text, 180);
-    if (clipped && !facts.includes(clipped)) facts.push(clipped);
+    appendUniqueClipped(facts, text, 180);
   };
 
   push(scenario.playerVisible.rumour);
@@ -1111,8 +1013,7 @@ function collectPackageUncertainties(
 ): string[] {
   const items: string[] = [];
   const push = (text: string) => {
-    const clipped = clipText(text, 140);
-    if (clipped && !items.includes(clipped)) items.push(clipped);
+    appendUniqueClipped(items, text, 140);
   };
   collectClaimedUncertainties(session.packageProgress, push);
   collectOpenEpistemicUncertainties(session.packageProgress, allExcerpts, push);
@@ -1289,96 +1190,6 @@ function determineSuggestedActionKinds(
   return posture === "opening"
     ? ["converse", "investigate", "travel"]
     : ["converse", "travel", "wait"];
-}
-
-const PURSUED_SHEDDERS: Array<(entry: DirectorPursuedScenario) => boolean> = [
-  (e) => e.potential.nextDevelopmentKinds.pop() !== undefined,
-  (e) => e.potential.speculativeCommitments?.pop() !== undefined,
-  (e) => e.potential.openUncertainties.pop() !== undefined,
-  (e) => e.established.latestConsequentialEvents.shift() !== undefined,
-  (e) => e.established.knownPlayerFacts.pop() !== undefined,
-  (e) => e.established.actors.pop() !== undefined,
-  (e) => {
-    if (!e.potential.pressure) return false;
-    delete e.potential.pressure;
-    return true;
-  },
-  // Established explanations shed last, before gmTruthRef is ever touched.
-  (e) => e.established.committedExplanations?.pop() !== undefined,
-];
-
-function shedPursuedDetails(brief: GMDirectorBrief): boolean {
-  for (const shed of PURSUED_SHEDDERS) {
-    for (let i = brief.pursuedScenarios.length - 1; i >= 0; i -= 1) {
-      if (shed(brief.pursuedScenarios[i]!)) return true;
-    }
-  }
-  return false;
-}
-
-const PACKAGE_SHEDDERS: Array<(pkg: DirectorPackageContext) => boolean> = [
-  (p) => p.openUncertainties.pop() !== undefined,
-  (p) => p.latestEvents.shift() !== undefined,
-  (p) => p.establishedActors.pop() !== undefined,
-  (p) => p.activeRecordIds.pop() !== undefined,
-];
-
-function shedPackageExtras(brief: GMDirectorBrief): boolean {
-  const pkg = brief.packageContext;
-  if (!pkg) return false;
-  for (const shed of PACKAGE_SHEDDERS) {
-    if (shed(pkg)) return true;
-  }
-  return false;
-}
-
-function shedSecondaryPursued(brief: GMDirectorBrief): boolean {
-  if (brief.pursuedScenarios.length <= 1) return false;
-  const removed = brief.pursuedScenarios.pop()!;
-  brief.otherOpenHeardScenarioIds = [
-    removed.scenarioId,
-    ...brief.otherOpenHeardScenarioIds,
-  ].slice(0, MAX_OTHER_SCENARIO_IDS);
-  return true;
-}
-
-function shedTopLevelCommittedExplanations(brief: GMDirectorBrief): boolean {
-  if (!brief.committedExplanations?.length) return false;
-  brief.committedExplanations.pop();
-  if (brief.committedExplanations.length === 0) {
-    delete brief.committedExplanations;
-  }
-  return true;
-}
-
-const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
-  (b) => {
-    if (!b.progression) return false;
-    delete b.progression;
-    return true;
-  },
-  shedSecondaryPursued,
-  shedPursuedDetails,
-  shedTopLevelCommittedExplanations,
-  shedPackageExtras,
-  (b) => b.otherOpenHeardScenarioIds.pop() !== undefined,
-  (b) => {
-    if (!b.currentPlace) return false;
-    delete b.currentPlace;
-    return true;
-  },
-];
-
-function enforceBriefBudget(
-  brief: GMDirectorBrief,
-  limit: number,
-): GMDirectorBrief | undefined {
-  if (limit <= 0) return undefined;
-  while (JSON.stringify(brief).length > limit) {
-    const shed = BRIEF_SHEDDERS.some((step) => step(brief));
-    if (!shed) return undefined;
-  }
-  return brief;
 }
 
 function resolveEffectiveAction(
