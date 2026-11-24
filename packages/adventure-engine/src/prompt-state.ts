@@ -38,8 +38,21 @@ export function projectVisibleState(
   session: AdventureSession,
 ): VisibleAdventureState | Record<string, unknown> {
   const places = session.places;
+  const knownPeople = session.people?.length
+    ? {
+        knownPeople: session.people.map((person) => ({
+          id: person.id,
+          name: person.name,
+          ...(person.aliases.length ? { aliases: person.aliases } : {}),
+        })),
+      }
+    : {};
   const here = places?.find((place) => place.id === session.currentPlaceId);
-  if (!places?.length) return session.visibleState;
+  if (!places?.length) {
+    return Object.keys(knownPeople).length > 0
+      ? { ...session.visibleState, ...knownPeople }
+      : session.visibleState;
+  }
   const state = session.visibleState;
   const elsewhere = places
     .filter((place) => place.id !== here?.id)
@@ -66,15 +79,7 @@ export function projectVisibleState(
     knownPlaces: places.map(describe),
     ...(here ? { currentPlace: describe(here) } : {}),
     ...(elsewhere.length > 0 ? { elsewhere } : {}),
-    ...(session.people?.length
-      ? {
-          knownPeople: session.people.map((person) => ({
-            id: person.id,
-            name: person.name,
-            ...(person.aliases.length ? { aliases: person.aliases } : {}),
-          })),
-        }
-      : {}),
+    ...knownPeople,
     ...(session.scenes?.length
       ? {
           knownScenes: session.scenes.map((scene) => ({

@@ -116,6 +116,8 @@ export interface ProvisionalFact {
   introducedOnTurnId?: string;
   sourceOocExchangeId?: string;
   provenance?: "play" | "ooc";
+  supersededById?: string;
+  aliases?: string[];
   visibility: "player-visible" | "gm-only";
   scenarioId?: string;
 }
@@ -131,6 +133,8 @@ export interface NewOocDecision {
   kind: ProvisionalFact["kind"];
   name: string;
   summary: string;
+  aliases?: string[];
+  supersedesName?: string;
   visibility: ProvisionalFact["visibility"];
 }
 

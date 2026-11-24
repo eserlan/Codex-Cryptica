@@ -6,6 +6,11 @@ import {
   type HiddenLeakageFinding,
 } from "./hidden-state";
 import { projectPlayerHistoricalAnchor } from "./historical-anchor";
+import {
+  mergeDuplicatePeople,
+  resolvePersonByReference,
+  syncPersonFromFact,
+} from "./people";
 import { projectVisibleState } from "./prompt-state";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { MAX_OOC_EXCHANGES, MAX_TEXT_CHARS } from "./schemas";
@@ -278,7 +283,7 @@ export function buildAdventureOocPrompt(
     "If the player asks about unrevealed secrets, hidden motives, unvisited rooms, or facts their character has not established yet, classify as secret-refusal and state simply that this is not yet known from what has been observed in play, without hinting at or confirming any hidden truth.",
     "For rules or mechanics questions, classify as meta-rules and give grounded guidance only when the selected system and accessible context support it; otherwise state that the current context does not specify that rule.",
     "For hypothetical or brainstorming questions (e.g. 'What if...?'), classify as hypothetical and keep alternatives out of decisions.",
-    'Return compact JSON only: {"answer": string, "classification": "established"|"hypothetical"|"meta-rules"|"canon-conflict"|"secret-refusal", "decisions": [{"kind": "person"|"place"|"faction"|"item"|"event"|"clue"|"other", "name": string, "summary": string, "visibility": "player-visible"|"gm-only"}]}. Only include new or newly clarified world facts in decisions when classification is "established"; omit existing canonical records.',
+    'Return compact JSON only: {"answer": string, "classification": "established"|"hypothetical"|"meta-rules"|"canon-conflict"|"secret-refusal", "decisions": [{"kind": "person"|"place"|"faction"|"item"|"event"|"clue"|"other", "name": string, "summary": string, "aliases"?: string[], "supersedesName"?: string, "visibility": "player-visible"|"gm-only"}]}. Only include new or newly clarified world facts in decisions when classification is "established"; omit existing canonical records. Reuse knownPeople entries and aliases rather than creating duplicate NPCs when a title or surname is omitted, and set supersedesName when a player correction reconciles a prior provisional claim.',
   ]
     .filter(Boolean)
     .join(" ");
@@ -512,10 +517,130 @@ export function upsertAdventureOocExchange(
   };
 }
 
+function markSupersededFacts(
+  facts: ProvisionalFact[],
+  normTarget: string,
+  survivingFactId: string,
+): void {
+  for (let i = 0; i < facts.length; i += 1) {
+    const fact = facts[i]!;
+    const matches =
+      fact.id !== survivingFactId &&
+      !fact.supersededById &&
+      fact.name.trim().toLowerCase() === normTarget;
+    if (matches) facts[i] = { ...fact, supersededById: survivingFactId };
+  }
+}
+
+function reconcileSupersededDecision(
+  facts: ProvisionalFact[],
+  people: AdventureSession["people"],
+  supersedesName: string,
+  canonicalNames: ReadonlySet<string>,
+  survivingFactId: string,
+  survivingPersonId: string | undefined,
+): AdventureSession["people"] {
+  const normTarget = supersedesName.trim().toLowerCase();
+  if (!normTarget || canonicalNames.has(normTarget)) return people;
+  markSupersededFacts(facts, normTarget, survivingFactId);
+  if (!people?.length || !survivingPersonId) return people;
+  const others = people.filter((p) => p.id !== survivingPersonId);
+  const duplicate = resolvePersonByReference(others, supersedesName);
+  if (!duplicate.person || duplicate.reason === "ambiguous") return people;
+  return mergeDuplicatePeople(people, survivingPersonId, duplicate.person.id)
+    .people;
+}
+
+function upsertOocProvisionalFact(
+  facts: ProvisionalFact[],
+  decision: NewOocDecision,
+  exchangeId: string,
+  createId: () => string,
+): string {
+  const normName = decision.name.trim().toLowerCase();
+  const existingIndex = facts.findIndex(
+    (fact) =>
+      fact.kind === decision.kind &&
+      !fact.supersededById &&
+      fact.name.trim().toLowerCase() === normName,
+  );
+  if (existingIndex < 0) {
+    const factId = createId();
+    facts.push({
+      id: factId,
+      kind: decision.kind,
+      name: decision.name.trim(),
+      summary: decision.summary.trim(),
+      ...(decision.aliases?.length ? { aliases: decision.aliases } : {}),
+      sourceOocExchangeId: exchangeId,
+      provenance: "ooc",
+      visibility: decision.visibility,
+    });
+    return factId;
+  }
+  const existing = facts[existingIndex]!;
+  const promoteVisibility =
+    existing.visibility === "gm-only" &&
+    decision.visibility === "player-visible";
+  facts[existingIndex] = {
+    ...existing,
+    summary: decision.summary.trim() || existing.summary,
+    ...(decision.aliases?.length ? { aliases: decision.aliases } : {}),
+    ...(promoteVisibility ? { visibility: "player-visible" as const } : {}),
+  };
+  return existing.id;
+}
+
+function applyOocDecision(
+  facts: ProvisionalFact[],
+  people: AdventureSession["people"],
+  decision: NewOocDecision,
+  exchangeId: string,
+  canonicalNames: ReadonlySet<string>,
+  createId: () => string,
+): { factId: string; people: AdventureSession["people"] } | null {
+  const normName = decision.name.trim().toLowerCase();
+  if (!normName || canonicalNames.has(normName)) return null;
+  const factId = upsertOocProvisionalFact(
+    facts,
+    decision,
+    exchangeId,
+    createId,
+  );
+
+  let nextPeople = people;
+  let survivingPersonId: string | undefined;
+  if (decision.kind === "person" && decision.visibility === "player-visible") {
+    const synced = syncPersonFromFact(
+      nextPeople ?? [],
+      {
+        name: decision.name,
+        factId,
+        aliases: decision.aliases,
+        visibility: decision.visibility,
+      },
+      createId,
+    );
+    nextPeople = synced.people;
+    survivingPersonId = synced.person?.id;
+  }
+  if (decision.supersedesName) {
+    nextPeople = reconcileSupersededDecision(
+      facts,
+      nextPeople,
+      decision.supersedesName,
+      canonicalNames,
+      factId,
+      survivingPersonId,
+    );
+  }
+  return { factId, people: nextPeople };
+}
+
 /**
  * Atomically persists an answered OOC exchange together with any accepted
- * session-scoped world decisions into `session.provisionalFacts`, preserving
- * idempotency on retry/replay of the same `exchange.id`.
+ * session-scoped world decisions into `session.provisionalFacts` and
+ * `session.people`, preserving idempotency and correction lineage.
  */
 export function commitAdventureOocExchange(
   session: AdventureSession,
@@ -530,40 +655,21 @@ export function commitAdventureOocExchange(
     ),
   );
   const nextFacts: ProvisionalFact[] = [...session.provisionalFacts];
+  let nextPeople = session.people ? [...session.people] : undefined;
   const committedFactIds: string[] = [];
 
   for (const decision of decisions.slice(0, MAX_OOC_DECISIONS_PER_REPLY)) {
-    const normName = decision.name.trim().toLowerCase();
-    if (!normName || canonicalNames.has(normName)) continue;
-    const existingIndex = nextFacts.findIndex(
-      (fact) =>
-        fact.kind === decision.kind &&
-        fact.name.trim().toLowerCase() === normName,
+    const applied = applyOocDecision(
+      nextFacts,
+      nextPeople,
+      decision,
+      exchange.id,
+      canonicalNames,
+      createId,
     );
-    if (existingIndex >= 0) {
-      const existing = nextFacts[existingIndex]!;
-      nextFacts[existingIndex] = {
-        ...existing,
-        summary: decision.summary.trim() || existing.summary,
-        ...(existing.visibility === "gm-only" &&
-        decision.visibility === "player-visible"
-          ? { visibility: "player-visible" as const }
-          : {}),
-      };
-      committedFactIds.push(existing.id);
-      continue;
-    }
-    const id = createId();
-    nextFacts.push({
-      id,
-      kind: decision.kind,
-      name: decision.name.trim(),
-      summary: decision.summary.trim(),
-      sourceOocExchangeId: exchange.id,
-      provenance: "ooc",
-      visibility: decision.visibility,
-    });
-    committedFactIds.push(id);
+    if (!applied) continue;
+    committedFactIds.push(applied.factId);
+    nextPeople = applied.people;
   }
 
   const enrichedExchange: AdventureOocExchange = {
@@ -578,5 +684,6 @@ export function commitAdventureOocExchange(
   return {
     ...withExchange,
     provisionalFacts: nextFacts.slice(-60),
+    ...(nextPeople !== undefined ? { people: nextPeople } : {}),
   };
 }

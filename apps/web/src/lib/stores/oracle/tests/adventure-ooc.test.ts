@@ -444,6 +444,7 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
     );
     expect(revisions).toEqual([2, 3, 4, 5, 6, 7]);
   });
+
   it("commits established OOC decisions atomically into provisionalFacts while leaving hypotheticals and leaks uncommitted", async () => {
     const base = dependencies();
     let replyIndex = 0;
