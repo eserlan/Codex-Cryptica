@@ -57,11 +57,35 @@ function isUnmappedCue(cue: string): boolean {
   return !isArtworkCue(CUE_SYNONYMS[cue] ?? cue);
 }
 
-function collectUnmapped(rawCues: readonly string[] = []): string[] {
+function containsPrivateText(
+  cue: string,
+  privateText: readonly string[],
+): boolean {
+  const normalizedCue = cue.replace(/[^a-z0-9]+/g, " ").trim();
+  if (!normalizedCue) return true;
+  return privateText.some((text) => {
+    const normalizedText = text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
+    return ` ${normalizedText} `.includes(` ${normalizedCue} `);
+  });
+}
+
+function collectUnmapped(
+  rawCues: readonly string[] = [],
+  privateText: readonly string[] = [],
+): string[] {
   const normalized = rawCues.map((raw) =>
     raw.trim().toLowerCase().replace(/\s+/g, " "),
   );
-  return [...new Set(normalized.filter(isUnmappedCue))].sort();
+  return [
+    ...new Set(
+      normalized.filter(
+        (cue) => isUnmappedCue(cue) && !containsPrivateText(cue, privateText),
+      ),
+    ),
+  ].sort();
 }
 
 function matchPlaceId(
@@ -84,7 +108,7 @@ function harvestPlace(
   const words = place.name.toLowerCase().match(/[a-z]+/g) ?? [];
   const rawCues = place.cues ?? [];
   const knownCues = normalizeArtworkCues([...rawCues, ...words]).sort();
-  const unmappedCues = collectUnmapped(rawCues);
+  const unmappedCues = collectUnmapped(rawCues, [place.name]);
   if (knownCues.length + unmappedCues.length === 0) return null;
 
   return {
@@ -135,7 +159,7 @@ function harvestCharacter(
   const demographicCues = normalizeArtworkCues(
     tokens.filter((t) => isNpcDemographicCue(mapCue(t))),
   ).sort();
-  const unmappedCues = collectUnmapped(char.cues);
+  const unmappedCues = collectUnmapped(char.cues, [char.text]);
   if (knownCues.length + unmappedCues.length + demographicCues.length === 0) {
     return null;
   }

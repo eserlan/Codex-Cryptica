@@ -18,6 +18,16 @@ export interface ArtworkDemandReporterDeps {
   isEnabled?: () => boolean;
 }
 
+const MAX_CUE_ITEMS = 16;
+const MAX_DEMOGRAPHIC_CUE_ITEMS = 8;
+
+function boundedCues(
+  cues: readonly string[] | undefined,
+  maxItems: number,
+): string[] {
+  return [...new Set(cues ?? [])].sort().slice(0, maxItems);
+}
+
 function normalizeCatalogueMatchId(match: string | null): string | null {
   if (!match) return null;
   // Vault/private image matches carry prefixes like "vault:..." — do not leak paths.
@@ -43,6 +53,7 @@ function buildSignature(payload: ArtworkDemandReportPayload): string {
  */
 export class ArtworkDemandReporter {
   private readonly sentSignatures = new Set<string>();
+  private activeSessionId: string | null = null;
   private readonly fetchFn: (
     input: string,
     init?: RequestInit,
@@ -75,15 +86,23 @@ export class ArtworkDemandReporter {
     void this.send(payload);
   }
 
-  reportFromSummary(summary: ArtworkCueIndicator | null): void {
+  reportFromSummary(
+    summary: ArtworkCueIndicator | null,
+    sessionId: string | null,
+  ): void {
+    if (sessionId !== this.activeSessionId) {
+      this.sentSignatures.clear();
+      this.activeSessionId = sessionId;
+    }
+    if (!sessionId) return;
     if (!summary || !this.isEnabled() || !this.isOnline()) return;
 
     if (summary.place) {
       this.enqueuePayload({
         type: "location",
         genre: summary.genre,
-        knownCues: [...summary.place.cues].sort(),
-        unmappedCues: [...(summary.place.unmappedCues ?? [])].sort(),
+        knownCues: boundedCues(summary.place.cues, MAX_CUE_ITEMS),
+        unmappedCues: boundedCues(summary.place.unmappedCues, MAX_CUE_ITEMS),
         demographicCues: [],
         matchedAssetId: normalizeCatalogueMatchId(summary.place.match),
       });
@@ -93,9 +112,12 @@ export class ArtworkDemandReporter {
       this.enqueuePayload({
         type: "npc",
         genre: summary.genre,
-        knownCues: [...npc.cues].sort(),
-        unmappedCues: [...(npc.unmappedCues ?? [])].sort(),
-        demographicCues: [...(npc.demographicCues ?? [])].sort(),
+        knownCues: boundedCues(npc.cues, MAX_CUE_ITEMS),
+        unmappedCues: boundedCues(npc.unmappedCues, MAX_CUE_ITEMS),
+        demographicCues: boundedCues(
+          npc.demographicCues,
+          MAX_DEMOGRAPHIC_CUE_ITEMS,
+        ),
         matchedAssetId: normalizeCatalogueMatchId(npc.match),
       });
     }
