@@ -9,8 +9,8 @@ import {
 } from "./session-migration";
 import { validateScenarioIdentitySpace } from "./scenario-identity";
 import {
-  MAX_SERIALIZED_STATE_CHARS,
-  validateStateBudget,
+  MAX_DURABLE_STATE_CHARS,
+  validateDurableStateBudget,
 } from "./session-budget";
 
 export function parseAdventureSession(input: unknown): AdventureSession {
@@ -26,7 +26,7 @@ function readValidatedSession(input: unknown): AdventureSession {
 }
 
 function assertStateBudget(parsed: AdventureSession): void {
-  if (!validateStateBudget(parsed)) {
+  if (!validateDurableStateBudget(parsed)) {
     throw new Error("state-budget-exceeded");
   }
 }
@@ -82,5 +82,5 @@ function assertLegacyStateBudget(
     worldEntry: parsed.worldEntry,
     worldTime: parsed.worldTime,
   }).length;
-  if (legacyStateLength > MAX_SERIALIZED_STATE_CHARS) throw cause;
+  if (legacyStateLength > MAX_DURABLE_STATE_CHARS) throw cause;
 }

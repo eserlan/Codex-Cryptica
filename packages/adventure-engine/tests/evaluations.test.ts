@@ -376,6 +376,72 @@ describe("adventure rubric evaluations", () => {
         session: lostPerson,
       }),
     ).toBe(0);
+
+    const prevAtSquare = makeSession({
+      places: [
+        { id: "place-1", name: "Oakhaven Square" },
+        { id: "place-2", name: "Old Weigh-House" },
+      ],
+      currentPlaceId: "place-1",
+      visibleState: {
+        ...prev.visibleState,
+        location: {
+          id: "loc-1",
+          text: "Oakhaven Square",
+          source: "provisional",
+          placeId: "place-1",
+        },
+        situation: {
+          id: "sit-1",
+          text: "Crowds mill around the well.",
+          source: "provisional",
+        },
+      },
+    });
+    const staleAfterMove = makeSession({
+      ...prevAtSquare,
+      currentPlaceId: "place-2",
+      visibleState: {
+        ...prevAtSquare.visibleState,
+        location: {
+          id: "loc-1",
+          text: "Oakhaven Square",
+          source: "provisional",
+          placeId: "place-1",
+        },
+      },
+    });
+    expect(
+      scoreContinuity({
+        narration: "You arrive at the weigh-house.",
+        proposal: completeProposal(),
+        previousSession: prevAtSquare,
+        session: staleAfterMove,
+      }),
+    ).toBe(0);
+
+    const coherentAfterMove = makeSession({
+      ...prevAtSquare,
+      currentPlaceId: "place-2",
+      visibleState: {
+        ...prevAtSquare.visibleState,
+        location: {
+          id: "loc-2",
+          text: "By the canal locks outside the weigh-house",
+          source: "provisional",
+          placeId: "place-2",
+        },
+        situation: undefined,
+      },
+    });
+    expect(
+      scoreContinuity({
+        narration: "You arrive at the weigh-house.",
+        proposal: completeProposal(),
+        previousSession: prevAtSquare,
+        session: coherentAfterMove,
+      }),
+    ).toBe(1);
   });
 
   it("detects canon safety violations when duplicating canonical titles or overwriting canonical facts", () => {
