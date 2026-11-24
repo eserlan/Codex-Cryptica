@@ -185,6 +185,25 @@ async function runWorkspaceTests(workspace, files, cwd) {
   return false;
 }
 
+export async function runWorkspaceGroups(
+  workspaceGroups,
+  runWorkspace,
+  parallel = Boolean(process.env.CI),
+) {
+  const entries = Array.from(workspaceGroups.entries());
+  if (parallel) {
+    return Promise.all(
+      entries.map(([workspace, files]) => runWorkspace(workspace, files)),
+    );
+  }
+
+  const results = [];
+  for (const [workspace, files] of entries) {
+    results.push(await runWorkspace(workspace, files));
+  }
+  return results;
+}
+
 /**
  * Local runs share the machine with an editor and browser, so cap vitest at
  * half the cores and drop the test processes' scheduling priority (children
@@ -243,10 +262,9 @@ export async function runTestChanged({
     );
   }
 
-  const results = await Promise.all(
-    Array.from(workspaceGroups.entries()).map(([workspace, files]) =>
-      runWorkspaceTests(workspace, files, cwd),
-    ),
+  const results = await runWorkspaceGroups(
+    workspaceGroups,
+    (workspace, files) => runWorkspaceTests(workspace, files, cwd),
   );
 
   return results.every(Boolean);
