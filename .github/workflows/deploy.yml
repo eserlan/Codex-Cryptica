@@ -248,6 +248,10 @@ jobs:
           path: |
             apps/web/.svelte-kit
             apps/web/node_modules/.vite
+            packages/ai-engine/node_modules/.vite
+            packages/audio-engine/node_modules/.vite
+            packages/gdrive-sync/node_modules/.vite
+            packages/map-engine/node_modules/.vite
             packages/vault-engine/node_modules/.vite
           key: ${{ runner.os }}-test-${{ github.ref_name }}-${{ hashFiles('**/bun.lock') }}-${{ github.run_id }}
           restore-keys: |
@@ -266,9 +270,7 @@ jobs:
           fi
 
           if [ "$FULL" = "true" ] || [ -z "$BASE_SHA" ]; then
-            for workspace in $WORKSPACES; do
-              bun run --filter "$workspace" test
-            done
+            printf '%s\n' $WORKSPACES | xargs -P 4 -I{} bun run --filter "{}" test
           else
             bun scripts/test-changed.mjs --base "$BASE_SHA"
           fi

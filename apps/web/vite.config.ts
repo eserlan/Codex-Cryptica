@@ -34,9 +34,58 @@ if (process.env.VITE_USE_POLLING === "true") {
   usePolling = true;
 }
 
+const NODE_TEST_PREFIXES = [
+  "src/lib/utils/**",
+  "src/lib/config/**",
+  "src/lib/services/adventure/**",
+  "../../functions/**",
+  "src/lib/content/**",
+  "../../packages/ai-engine/src/prompts/**",
+  "../../packages/ai-engine/src/capability-guard*",
+  "../../packages/ai-engine/src/text-generation*",
+  "src/lib/services/node-merge*",
+  "src/lib/services/vtt-session*",
+  "src/lib/services/cache*",
+  "src/lib/stores/categories*",
+  "src/lib/stores/dice-history*",
+  "src/lib/stores/canvas-registry*",
+  "src/lib/stores/vault-batch*",
+  "src/lib/stores/vault/entities*",
+  "src/lib/stores/vault/entity-*",
+  "src/lib/stores/vault/events*",
+  "src/lib/stores/vault/lifecycle*",
+  "src/lib/stores/vault/migration*",
+  "src/lib/stores/vault/registry*",
+  "src/lib/stores/vault/relationships*",
+  "src/lib/stores/vault/search-store*",
+  "src/lib/stores/vault/service-registry*",
+  "src/lib/stores/vault/sync-store*",
+  "src/lib/stores/vault/asset-store*",
+  "src/lib/stores/oracle-connections*",
+  "src/lib/stores/world*",
+  "src/lib/components/world/front-page/**",
+  "src/lib/components/entity-detail/detail-tabs*",
+  "src/lib/components/explorer/EntityListGrouping*",
+  "src/lib/components/layout/app-header-actions*",
+  "src/lib/components/map/map-fog-painter*",
+  "src/lib/components/map/map-page-actions*",
+  "src/lib/components/map/vtt-ui*",
+  "src/lib/components/oracle/chat-message*",
+  "src/lib/components/search/search-focus*",
+  "src/lib/components/zen/ZenContent*",
+  "src/lib/workers/**",
+  "src/smoke*",
+];
+
+const NODE_TEST_GLOBS = NODE_TEST_PREFIXES.map((pattern) =>
+  pattern.endsWith("/**")
+    ? `${pattern}/*.{test,spec}.{js,ts}`
+    : `${pattern}.{test,spec}.{js,ts}`,
+);
+
 export default defineConfig({
   plugins: [
-    tailwindcss(),
+    ...(process.env.VITEST ? [] : [tailwindcss()]),
     sveltekit({
       // The app checks for service-worker updates on launch and tab return.
       version: { pollInterval: 0 },
@@ -73,20 +122,24 @@ export default defineConfig({
       },
     }) as any,
     svelteTesting(),
-    visualizer({
-      emitFile: true,
-      filename: "bundle-report.html",
-      template: "treemap",
-      gzipSize: true,
-      brotliSize: true,
-    }),
-    visualizer({
-      emitFile: true,
-      filename: "bundle-stats.json",
-      template: "raw-data",
-      gzipSize: true,
-      brotliSize: true,
-    }),
+    ...(process.env.VITEST
+      ? []
+      : [
+          visualizer({
+            emitFile: true,
+            filename: "bundle-report.html",
+            template: "treemap",
+            gzipSize: true,
+            brotliSize: true,
+          }),
+          visualizer({
+            emitFile: true,
+            filename: "bundle-stats.json",
+            template: "raw-data",
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]),
   ],
   resolve: {
     alias: {
@@ -234,74 +287,40 @@ export default defineConfig({
     rollupOptions: {},
   },
   test: {
-    include: [
-      "src/**/*.{test,spec}.{js,ts}",
-      // Build scripts keep their tests colocated (e.g. inject-shell-og).
-      "scripts/**/*.{test,spec}.{js,ts}",
-      // Cloudflare Pages Functions live at the repo root and aren't their own
-      // workspace, so they ride along with the web app's test run (#2864).
-      "../../functions/**/*.{test,spec}.{js,ts}",
-    ],
-    environment: "jsdom",
     globals: true,
-    pool: "forks",
+    pool: "threads",
     fsModuleCache: true,
     // Leave half the cores free locally so a test run doesn't freeze the
     // machine; CI keeps vitest's default. VITEST_MAX_WORKERS overrides both.
     maxWorkers: process.env.CI ? undefined : "50%",
     silent: true,
     testTimeout: 15000,
-    setupFiles: ["tests/setup.ts"],
-    environmentMatchGlobs: [
-      ["src/lib/utils/**", "node"],
-      ["src/lib/config/**", "node"],
-      ["src/lib/seo/**", "node"],
-      ["src/lib/services/adventure/**", "node"],
-      ["../../functions/**", "node"],
-      ["src/lib/content/**", "node"],
-      ["../../packages/ai-engine/src/prompts/**", "node"],
-      ["../../packages/ai-engine/src/capability-guard*", "node"],
-      ["../../packages/ai-engine/src/client-manager*", "node"],
-      ["../../packages/ai-engine/src/image-generation*", "node"],
-      ["../../packages/ai-engine/src/text-generation*", "node"],
-      ["src/lib/services/node-merge*", "node"],
-      ["src/lib/services/vtt-session*", "node"],
-      ["src/lib/services/cache*", "node"],
-      ["src/lib/stores/categories*", "node"],
-      ["src/lib/stores/dice-history*", "node"],
-      ["src/lib/stores/graph*", "node"],
-      ["src/lib/stores/theme*", "node"],
-      ["src/lib/stores/map-registry*", "node"],
-      ["src/lib/stores/canvas-registry*", "node"],
-      ["src/lib/stores/vault-batch*", "node"],
-      ["src/lib/stores/vault/entities*", "node"],
-      ["src/lib/stores/vault/entity-*", "node"],
-      ["src/lib/stores/vault/events*", "node"],
-      ["src/lib/stores/vault/lifecycle*", "node"],
-      ["src/lib/stores/vault/messenger*", "node"],
-      ["src/lib/stores/vault/migration*", "node"],
-      ["src/lib/stores/vault/registry*", "node"],
-      ["src/lib/stores/vault/relationships*", "node"],
-      ["src/lib/stores/vault/search-store*", "node"],
-      ["src/lib/stores/vault/service-registry*", "node"],
-      ["src/lib/stores/vault/sync-store*", "node"],
-      ["src/lib/stores/vault/asset-store*", "node"],
-      ["src/lib/stores/oracle-connections*", "node"],
-      ["src/lib/stores/oracle/tests/gm-secrecy*", "node"],
-      ["src/lib/stores/world*", "node"],
-      ["src/lib/components/world/front-page/**", "node"],
-      ["src/lib/components/entity-detail/detail-tabs*", "node"],
-      ["src/lib/components/explorer/EntityListGrouping*", "node"],
-      ["src/lib/components/layout/app-header-actions*", "node"],
-      ["src/lib/components/map/map-fog-painter*", "node"],
-      ["src/lib/components/map/map-page-actions*", "node"],
-      ["src/lib/components/map/vtt-ui*", "node"],
-      ["src/lib/components/oracle/chat-message*", "node"],
-      ["src/lib/components/search/search-focus*", "node"],
-      ["src/lib/components/zen/ZenContent*", "node"],
-      ["src/lib/hooks/**", "node"],
-      ["src/lib/workers/**", "node"],
-      ["src/smoke*", "node"],
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "node",
+          environment: "node",
+          include: NODE_TEST_GLOBS,
+          setupFiles: ["tests/setup.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "jsdom",
+          environment: "jsdom",
+          include: [
+            "src/**/*.{test,spec}.{js,ts}",
+            "scripts/**/*.{test,spec}.{js,ts}",
+            // Cloudflare Pages Functions live at the repo root and aren't their own
+            // workspace, so they ride along with the web app's test run (#2864).
+            "../../functions/**/*.{test,spec}.{js,ts}",
+          ],
+          exclude: [...NODE_TEST_GLOBS, "**/node_modules/**", "**/.git/**"],
+          setupFiles: ["tests/setup.ts"],
+        },
+      },
     ],
     coverage: {
       provider: "v8",

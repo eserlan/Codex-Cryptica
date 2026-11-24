@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DefaultTextGenerationService } from "./text-generation.service.svelte";
 import { resolvePronounsLocally } from "./resolve-pronouns";
