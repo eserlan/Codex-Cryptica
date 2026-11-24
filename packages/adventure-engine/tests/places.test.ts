@@ -560,6 +560,10 @@ describe("what the model and the player see", () => {
       "Tiny village, smoke curling from stone chimneys",
     );
     expect(retained.visibleState.location?.placeId).toBe("p-high");
+    expect(retained.turns[0]?.visiblePatch.location).toEqual(
+      retained.visibleState.location,
+    );
+    expect(retained.turns[0]?.visiblePatch.location?.placeId).toBe("p-high");
     expect(retained.visibleState.situation?.text).toBe(
       "Villagers pause to watch your arrival.",
     );

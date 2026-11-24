@@ -265,6 +265,7 @@ function reconcileMoveLocationAndSituation(
     visiblePatch.location = synthesised;
   } else if (state.location && !state.location.placeId) {
     state.location = { ...state.location, placeId: targetPlace.id };
+    visiblePatch.location = state.location;
   }
   if (visiblePatch.situation === undefined && state.situation !== undefined) {
     delete state.situation;
