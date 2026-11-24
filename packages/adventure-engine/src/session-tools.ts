@@ -11,7 +11,7 @@ import {
 } from "./emergent-threads";
 import { applyVisiblePatch } from "./reducer";
 import { isHere } from "./places";
-import { validateStateBudget } from "./schemas";
+import { validateDurableStateBudget } from "./schemas";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { formatWorldElapsedMinutes } from "./world-time";
 import type {
@@ -163,7 +163,7 @@ export function applyStateCorrection(
   candidate.visibleState = visible.value;
   candidate.revision += 1;
   candidate.updatedAt = now;
-  if (!validateStateBudget(candidate)) {
+  if (!validateDurableStateBudget(candidate)) {
     return error(
       "state-budget-exceeded",
       "The correction would exceed the compact adventure state limit.",

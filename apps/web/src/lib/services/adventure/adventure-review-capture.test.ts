@@ -820,6 +820,14 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
     });
     expect(out._readme).toContain("generation:");
     expect(out._readme).toContain("capture and interpret a diagnostic");
+    expect(out.summary.stateBudget).toMatchObject({
+      hotBudgetChars: 48_000,
+      durableBudgetChars: 256_000,
+      warning: false,
+      exceedsHotBudget: false,
+      exceedsDurableBudget: false,
+    });
+    expect(out.summary.stateBudget.sections.visibleState).toBeGreaterThan(0);
   });
 
   it("keeps generation metadata on condensed turns and in delta new turns", () => {

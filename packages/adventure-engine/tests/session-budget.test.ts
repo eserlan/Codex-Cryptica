@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_DURABLE_STATE_CHARS,
   MAX_GENERATION_INPUT_CHARS,
   MAX_SERIALIZED_STATE_CHARS,
+  STATE_BUDGET_WARNING_RATIO,
+  measureStateBudget,
+  validateDurableStateBudget,
   validateGenerationBudget,
   validateStateBudget,
 } from "../src/session-budget";
@@ -63,5 +67,59 @@ describe("session budgets", () => {
     expect(
       validateGenerationBudget("x".repeat(MAX_GENERATION_INPUT_CHARS + 1)),
     ).toBe(false);
+  });
+
+  it("measures per-section sizes and flags warning at 80% of hot budget", () => {
+    const input = session();
+    const baseline = measureStateBudget(input);
+    expect(baseline.warning).toBe(false);
+    expect(baseline.exceedsHotBudget).toBe(false);
+    expect(baseline.exceedsDurableBudget).toBe(false);
+    expect(baseline.hotBudgetChars).toBe(MAX_SERIALIZED_STATE_CHARS);
+    expect(baseline.durableBudgetChars).toBe(MAX_DURABLE_STATE_CHARS);
+    expect(Object.keys(baseline.sections)).toEqual([
+      "visibleState",
+      "hiddenState",
+      "provisionalFacts",
+      "dismissedProvisionalFactIds",
+      "scenarioCollection",
+      "worldEntry",
+      "historicalAnchor",
+      "worldTime",
+      "places",
+      "storySoFar",
+    ]);
+
+    const threshold = Math.floor(
+      MAX_SERIALIZED_STATE_CHARS * STATE_BUDGET_WARNING_RATIO,
+    );
+    const pad = Math.max(1, threshold - baseline.totalChars + 200);
+    input.visibleState.knownFacts.push({
+      id: "warn-fact",
+      text: "x".repeat(pad),
+      source: "canonical",
+    });
+    const warned = measureStateBudget(input);
+    expect(warned.warning).toBe(true);
+    expect(warned.exceedsHotBudget).toBe(false);
+    expect(warned.sections.visibleState).toBeGreaterThan(pad);
+  });
+
+  it("allows durable state beyond 48k up to MAX_DURABLE_STATE_CHARS", () => {
+    const input = session();
+    input.visibleState.knownFacts.push({
+      id: "durable-fact",
+      text: "x".repeat(60_000),
+      source: "canonical",
+    });
+    expect(validateStateBudget(input)).toBe(false);
+    expect(validateDurableStateBudget(input)).toBe(true);
+
+    input.visibleState.knownFacts.push({
+      id: "runaway-fact",
+      text: "x".repeat(MAX_DURABLE_STATE_CHARS),
+      source: "canonical",
+    });
+    expect(validateDurableStateBudget(input)).toBe(false);
   });
 });

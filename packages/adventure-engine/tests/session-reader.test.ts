@@ -3,7 +3,7 @@ import {
   parseAdventureSession,
   parseAdventureSessionForRecovery,
 } from "../src/session-reader";
-import { MAX_SERIALIZED_STATE_CHARS } from "../src/session-budget";
+import { MAX_DURABLE_STATE_CHARS } from "../src/session-budget";
 import { now, scenario, session } from "./reducer-fixtures";
 
 function legacyRecoveryDocument() {
@@ -21,24 +21,50 @@ function legacyRecoveryDocument() {
       })),
     },
   };
-  input.visibleState.knownFacts = Array.from({ length: 55 }, (_, index) => ({
+  input.scenarioState.events = Array.from({ length: 100 }, (_, index) => ({
+    id: `gm-${index}`,
+    kind: "discovery",
+    visibility: "gm",
+    text: "e".repeat(600),
+    at: now,
+  }));
+  input.visibleState.knownFacts = Array.from({ length: 60 }, (_, index) => ({
     id: `fact-${index}`,
     text: "x".repeat(600),
     source: "provisional",
   }));
-  input.visibleState.objectives = Array.from({ length: 18 }, (_, index) => ({
+  input.visibleState.objectives = Array.from({ length: 20 }, (_, index) => ({
     id: `obj-${index}`,
     text: "y".repeat(600),
     source: "provisional",
   }));
   input.visibleState.activeCharacters = Array.from(
-    { length: 12 },
+    { length: 30 },
     (_, index) => ({
       id: `char-${index}`,
       text: "z".repeat(600),
       source: "provisional",
     }),
   );
+  input.visibleState.relationships = Array.from({ length: 40 }, (_, index) => ({
+    id: `rel-${index}`,
+    text: "r".repeat(600),
+    source: "provisional",
+    subjectId: `char-${index % 30}`,
+    disposition: "d".repeat(600),
+  }));
+  input.hiddenState.secrets = Array.from({ length: 38 }, (_, index) => ({
+    id: `sec-${index}`,
+    text: "s".repeat(600),
+    revealCondition: "c".repeat(600),
+    status: "hidden",
+  }));
+  input.hiddenState.gmThreads = Array.from({ length: 40 }, (_, index) => ({
+    id: `thr-${index}`,
+    text: "t".repeat(600),
+    revealCondition: "g".repeat(600),
+    status: "hidden",
+  }));
   const legacyLength = () =>
     JSON.stringify({
       visibleState: input.visibleState,
@@ -46,14 +72,14 @@ function legacyRecoveryDocument() {
       provisionalFacts: input.provisionalFacts,
       scenarioState: input.scenarioState,
     }).length;
-  let excess = legacyLength() - MAX_SERIALIZED_STATE_CHARS;
+  let excess = legacyLength() - MAX_DURABLE_STATE_CHARS;
   for (const fact of input.visibleState.knownFacts.toReversed()) {
     const reduction = Math.min(excess, 599);
     fact.text = fact.text.slice(reduction);
     excess -= reduction;
     if (excess === 0) break;
   }
-  expect(legacyLength()).toBe(MAX_SERIALIZED_STATE_CHARS);
+  expect(legacyLength()).toBe(MAX_DURABLE_STATE_CHARS);
   return input;
 }
 
@@ -103,5 +129,20 @@ describe("session reader", () => {
     expect(() => parseAdventureSessionForRecovery(input)).toThrow(
       "state-budget-exceeded",
     );
+  });
+
+  it("loads durable sessions beyond 48k when within MAX_DURABLE_STATE_CHARS", () => {
+    const input = session();
+    input.visibleState.knownFacts = Array.from({ length: 60 }, (_, index) => ({
+      id: `long-fact-${index}`,
+      text: "x".repeat(580),
+      source: "provisional" as const,
+    }));
+    input.visibleState.objectives = Array.from({ length: 20 }, (_, index) => ({
+      id: `long-obj-${index}`,
+      text: "y".repeat(580),
+      source: "provisional" as const,
+    }));
+    expect(parseAdventureSession(input)).toEqual(input);
   });
 });

@@ -28,9 +28,15 @@ export {
 } from "./session-reader";
 export {
   MAX_SERIALIZED_STATE_CHARS,
+  MAX_DURABLE_STATE_CHARS,
+  STATE_BUDGET_WARNING_RATIO,
   MAX_GENERATION_INPUT_CHARS,
+  measureStateBudget,
   validateStateBudget,
+  validateDurableStateBudget,
   validateGenerationBudget,
+  type StateBudgetSectionKey,
+  type StateBudgetBreakdown,
 } from "./session-budget";
 export type {
   VisibleStatePatch as SchemaVisiblePatch,

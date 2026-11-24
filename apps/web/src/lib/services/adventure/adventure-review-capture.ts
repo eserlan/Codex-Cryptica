@@ -8,6 +8,7 @@ import {
   formatWorldElapsedMinutes,
   investigativeProgressPacing,
   isQuietTurn,
+  measureStateBudget,
   revealedSecretIds as knownRevealedSecretIds,
   SCENE_STALL_TURN_LIMIT,
   scenarioEventTurnIds,
@@ -663,6 +664,7 @@ function diagnosticSummary(
     },
     generation: generationSummary(session),
     emergentThreads: emergentThreadSummary(session),
+    stateBudget: measureStateBudget(session),
     lastPlayedAt: session.lastPlayedAt,
   };
 }
