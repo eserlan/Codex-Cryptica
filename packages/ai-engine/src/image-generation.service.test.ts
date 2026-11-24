@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { DefaultImageGenerationService } from "./image-generation.service";
 import * as capabilityGuard from "./capability-guard";

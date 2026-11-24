@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
 import { AdventureOocService } from "./adventure-ooc.service";
 import type { AdventureOocRequest } from "@codex/adventure-engine";
