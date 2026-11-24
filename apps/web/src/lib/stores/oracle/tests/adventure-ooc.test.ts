@@ -211,7 +211,9 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
           "According to the contract briefing, the payout is 60kcr per survivor.",
       };
     });
-    const confirmInteraction = vi.fn(async () => {});
+    const confirmInteraction = vi.fn(
+      async (_sessionId: string, _revision?: number) => {},
+    );
 
     const manager = new AdventureManager({
       ...base,
@@ -244,7 +246,9 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
     await manager.submitOocQuestion();
 
     expect(generateTurn).not.toHaveBeenCalled();
-    expect(confirmInteraction).not.toHaveBeenCalled();
+    expect(confirmInteraction.mock.calls.map((call) => call[1])).toEqual([
+      2, 3,
+    ]);
     expect(askOoc).toHaveBeenCalledTimes(1);
     expect(oocRequests[0]?.kind).toBe("ooc");
     expect(manager.oocDraft).toBe("");
@@ -409,5 +413,35 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
     expect(reloaded.oocExchanges[0]?.answer).toBe(
       "Clarified: What can I see here?",
     );
+  });
+
+  it("reconciles Play interaction revision across consecutive OOC saves", async () => {
+    const base = dependencies();
+    const confirmGenerationInteraction = vi.fn(
+      async (_sessionId: string, _revision?: number) => undefined,
+    );
+    const manager = new AdventureManager({
+      ...base,
+      confirmGenerationInteraction,
+      ooc: {
+        ask: vi.fn(
+          async (request: AdventureOocRequest) =>
+            `Clarified: ${request.question}`,
+        ),
+      },
+    } as any);
+    await manager.start(startInput);
+    confirmGenerationInteraction.mockClear();
+
+    await manager.submitOocQuestion("First?");
+    await manager.submitOocQuestion("Second?");
+    await manager.submitOocQuestion("Third?");
+
+    // Each OOC exchange saves pending (+1) then answered (+1) = 6 confirmations
+    expect(confirmGenerationInteraction).toHaveBeenCalledTimes(6);
+    const revisions = confirmGenerationInteraction.mock.calls.map(
+      (call) => call[1],
+    );
+    expect(revisions).toEqual([2, 3, 4, 5, 6, 7]);
   });
 });

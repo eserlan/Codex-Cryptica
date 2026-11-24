@@ -420,4 +420,136 @@ describe("Adventure OOC clarification engine", () => {
       buildStorySummaryRequest(session),
     );
   });
+
+  it("carries bounded chronological answered OOC context into Play prompts with provenance and turn order", async () => {
+    const { buildAdventurePrompt } = await import("../src");
+    let session = makeSession();
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-ilona",
+        kind: "ooc",
+        question: "Who is the quest giver here?",
+        answer: "Envoy Ilona Marshall is the quest giver.",
+        status: "answered",
+        afterTurnCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-pending",
+        kind: "ooc",
+        question: "Unfinished question?",
+        status: "pending",
+        afterTurnCount: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-failed",
+        kind: "ooc",
+        question: "Failed question?",
+        status: "failed",
+        errorMessage: "Question cancelled.",
+        afterTurnCount: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-dock",
+        kind: "ooc",
+        question: "Where is she waiting?",
+        answer: "At Berthing Ring C.",
+        status: "answered",
+        afterTurnCount: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "seek out Ilona",
+      anchors: [],
+      relevant: [],
+    });
+    const state = JSON.parse(prompt.state) as {
+      oocExchanges?: Array<Record<string, unknown>>;
+    };
+    expect(state.oocExchanges).toEqual([
+      {
+        id: "ooc-ilona",
+        afterTurnCount: 0,
+        provenance: "ooc",
+        status: "answered",
+        binding: "non-binding-ooc",
+        question: "Who is the quest giver here?",
+        answer: "Envoy Ilona Marshall is the quest giver.",
+      },
+      {
+        id: "ooc-dock",
+        afterTurnCount: 1,
+        provenance: "ooc",
+        status: "answered",
+        binding: "non-binding-ooc",
+        question: "Where is she waiting?",
+        answer: "At Berthing Ring C.",
+      },
+    ]);
+    expect(prompt.behavior).toContain("non-binding-ooc");
+    expect(JSON.parse(prompt.serialized).input.playerAction).toBe(
+      "seek out Ilona",
+    );
+  });
+
+  it("bounds Play OOC context to the newest exchanges within budget without truncating playerAction", async () => {
+    const { buildAdventurePrompt } = await import("../src");
+    let session = makeSession();
+    for (let i = 1; i <= 8; i += 1) {
+      session = upsertAdventureOocExchange(
+        session,
+        {
+          id: `ooc-${i}`,
+          kind: "ooc",
+          question: `Question ${i}?`,
+          answer: `Answer ${i}: ` + "detail ".repeat(80),
+          status: "answered",
+          afterTurnCount: i,
+          createdAt: now,
+          updatedAt: now,
+        },
+        now,
+      );
+    }
+
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Keep this exact player action intact.",
+      anchors: [],
+      relevant: [],
+    });
+    const state = JSON.parse(prompt.state) as {
+      oocExchanges: Array<{ id: string }>;
+    };
+    expect(state.oocExchanges.length).toBeLessThanOrEqual(6);
+    expect(state.oocExchanges.at(-1)?.id).toBe("ooc-8");
+    expect(JSON.parse(prompt.serialized).input.playerAction).toBe(
+      "Keep this exact player action intact.",
+    );
+  });
 });

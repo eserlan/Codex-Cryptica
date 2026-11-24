@@ -250,8 +250,9 @@ export class AdventureRuntime {
   }
 
   /**
-   * Persists an OOC exchange update without touching provider interaction
-   * history, artwork reveals, or rolling story-so-far summarization.
+   * Persists an OOC exchange update and reconciles the retained Play
+   * interaction revision for the `+1` local save without writing OOC turns
+   * into remote provider history, artwork reveals, or story-so-far summaries.
    */
   async saveOocExchange(
     previous: AdventureSession,
@@ -262,6 +263,10 @@ export class AdventureRuntime {
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
     this.state.session = saved.session;
+    await this.deps.confirmGenerationInteraction(
+      saved.session.id,
+      saved.session.revision,
+    );
     return saved.session;
   }
 

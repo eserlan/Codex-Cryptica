@@ -18,6 +18,7 @@ import type { InvestigativePacing } from "./investigative-pacing";
 import { PROMPT_TRANSCRIPT_TURNS } from "./story-summary";
 import { candidateScenariosForLocation } from "./contextual-rumours";
 import { projectGmHistoricalAnchor } from "./historical-anchor";
+import { projectOocPromptExchanges } from "./ooc";
 import { formatWorldElapsedMinutes } from "./world-time";
 import type {
   AdventureSession,
@@ -154,9 +155,11 @@ function buildBasePromptState(
 ) {
   const focusedScenarioId = input.session.scenarioCollection?.focusedScenarioId;
   const worldEntry = input.session.worldEntry;
+  const oocExchanges = projectOocPromptExchanges(input.session);
   return {
     playerVisibleState: projectVisibleState(input.session),
     playerScenarios: playerScenarioCollectionProjection(input.session),
+    ...(oocExchanges.length > 0 ? { oocExchanges } : {}),
     "GM-ONLY scenarios": scenarios.map((scenario) => ({
       id: scenario.id,
       status: scenario.status,
@@ -266,6 +269,11 @@ function sceneBehavior(
     "Visual cues: when creating a place via moveTo.cues, or when the current place lacks visual tags (placeCues), include 1 to 4 lowercase cues from: forest, woodland, mountain, hills, plains, desert, swamp, river, coast, ocean, island, tundra, snow, cave, ruins, village, town, city, harbour, road, castle, temple, tavern, market, farm, space-station, starship, laboratory, industrial, urban, rural, wilderness, interior, exterior, quiet, busy, ominous, hopeful, mysterious, day, night, dawn, dusk, rain, fog, winter, summer.",
     "Present NPCs: keep named NPCs currently in the scene in visiblePatch.activeCharacters (add when they join, remove when they leave). Whenever adding or updating an NPC, include up to 8 concise lowercase cues that help illustrate them. Aim for 5 when supported, choosing useful details from ancestry or species, role, setting, clothing, physical appearance, and distinguishing features. For catalogue matching, include a fitting familiar ancestry and role when known, such as human, elf, worker, official, guard, merchant, scholar, or explorer. Other cues are not limited to these examples: choose specific descriptions that fit the character and setting, such as space-station, uniform, or silver hair. Use only details the player can perceive or already knows; use fewer cues rather than inventing unsupported details. Keep established appearance consistent and never expose hidden information.",
     'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
+    ...(projectOocPromptExchanges(input.session).length > 0
+      ? [
+          "State oocExchanges are recent Ask GM out-of-character clarifications ordered by afterTurnCount (binding: non-binding-ooc unless explicitly committed). Use them for continuity, but do not treat non-binding OOC discussion as observed in-character knowledge or let it override canonical source records.",
+        ]
+      : []),
     ...(options.directorEnabled
       ? sceneRecoveryBehavior(
           options.stalled,

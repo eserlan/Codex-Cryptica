@@ -916,4 +916,59 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
     expect(rendered).not.toContain("gemini-flash-lite");
     expect(rendered).not.toContain("provider-expiry");
   });
+
+  it("includes Ask GM (OOC) exchanges in full and delta AI GM diagnostic JSON copies", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+
+    const initial = exampleSession();
+    initial.oocExchanges = [
+      {
+        id: "ooc-1",
+        kind: "ooc",
+        question: "Who is the quest giver?",
+        answer: "Envoy Ilona Marshall.",
+        status: "answered",
+        afterTurnCount: 1,
+        createdAt: "2026-11-22T11:30:00.000Z",
+        updatedAt: "2026-11-22T11:30:05.000Z",
+      },
+    ];
+
+    const full = copyDiagnosticSnapshot(initial, storage);
+    expect(full.isDelta).toBe(false);
+    expect(JSON.parse(full.text).state.oocExchanges).toEqual(
+      initial.oocExchanges,
+    );
+    saveDiagnosticBaseline(initial, storage);
+
+    const next = exampleSession();
+    next.revision = initial.revision + 1;
+    next.oocExchanges = [
+      ...initial.oocExchanges,
+      {
+        id: "ooc-2",
+        kind: "ooc",
+        question: "Where is she waiting?",
+        answer: "Berthing Ring C.",
+        status: "answered",
+        afterTurnCount: 1,
+        createdAt: "2026-11-22T11:31:00.000Z",
+        updatedAt: "2026-11-22T11:31:05.000Z",
+      },
+    ];
+
+    const delta = copyDiagnosticSnapshot(next, storage);
+    expect(delta.isDelta).toBe(true);
+    expect(JSON.parse(delta.text).stateChanges.oocExchanges).toEqual({
+      added: [next.oocExchanges[1]],
+      updated: [],
+      removedIds: [],
+    });
+  });
 });
