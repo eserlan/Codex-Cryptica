@@ -1,15 +1,46 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { normalizeTokenVisibility } from "map-engine";
 import type { TokenStateUpdateInput } from "../../../types/vtt";
 import { createFullEncounterSessionFixture } from "./map-session-test-fixtures";
 import { VTTTokenSync } from "./vtt-token-sync";
 
+function createTimerScheduler() {
+  let now = 0;
+  let nextId = 0;
+  const scheduled = new Map<number, { dueAt: number; callback: () => void }>();
+  const scheduleTimeout = vi.fn((callback: () => void, delay: number) => {
+    const id = ++nextId;
+    scheduled.set(id, { dueAt: now + delay, callback });
+    return id;
+  });
+  const cancelTimeout = vi.fn((id: number) => {
+    scheduled.delete(id);
+  });
+
+  function advanceBy(ms: number) {
+    now += ms;
+    while (true) {
+      const next = [...scheduled.entries()].sort(
+        ([, left], [, right]) => left.dueAt - right.dueAt,
+      )[0];
+      if (!next || next[1].dueAt > now) return;
+      scheduled.delete(next[0]);
+      next[1].callback();
+    }
+  }
+
+  return { scheduleTimeout, cancelTimeout, advanceBy };
+}
+
 function setup() {
+  const timers = createTimerScheduler();
   const deps = {
     emit: vi.fn(),
     persistDraft: vi.fn(),
     queueSessionSnapshotBroadcast: vi.fn(),
     broadcastSessionSnapshotNow: vi.fn(),
+    scheduleTimeout: timers.scheduleTimeout,
+    cancelTimeout: timers.cancelTimeout,
   };
   const session = {
     tokens: createFullEncounterSessionFixture().tokens,
@@ -29,10 +60,8 @@ function setup() {
       },
     ),
   };
-  return { deps, session, sync: new VTTTokenSync(deps, session) };
+  return { deps, session, timers, sync: new VTTTokenSync(deps, session) };
 }
-
-afterEach(() => vi.useRealTimers());
 
 describe("token sync publication", () => {
   it("publishes local lifecycle changes or persists them when silent", () => {
@@ -90,60 +119,61 @@ describe("optimistic token changes", () => {
   it.each(["move", "rotation"] as const)(
     "reverts an unconfirmed %s after 500ms",
     (kind) => {
-      vi.useFakeTimers();
-      const { sync, session, deps } = setup();
+      const { sync, session, deps, timers } = setup();
       const previous = session.tokens["token-1"];
       sync.request(kind, previous.id, { x: 300, rotation: 90 }, false);
-      vi.advanceTimersByTime(499);
+      expect(deps.scheduleTimeout).toHaveBeenCalledWith(
+        expect.any(Function),
+        500,
+      );
+      timers.advanceBy(499);
       expect(session.tokens[previous.id].x).toBe(300);
-      vi.advanceTimersByTime(1);
+      timers.advanceBy(1);
       expect(session.tokens[previous.id]).toEqual(previous);
       expect(deps.persistDraft).toHaveBeenCalledOnce();
     },
   );
 
   it.each(["move", "rotation"] as const)("keeps a confirmed %s", (kind) => {
-    vi.useFakeTimers();
-    const { sync, session } = setup();
+    const { sync, session, timers } = setup();
     sync.request(kind, "token-1", { x: 300 }, false);
     sync.confirm(kind, "token-1");
-    vi.advanceTimersByTime(500);
+    timers.advanceBy(500);
     expect(session.tokens["token-1"].x).toBe(300);
   });
 
   it("replaces a previous timer and retains the last request's starting state", () => {
-    vi.useFakeTimers();
-    const { sync, session } = setup();
+    const { sync, session, timers } = setup();
     sync.request("move", "token-1", { x: 200 }, false);
-    vi.advanceTimersByTime(250);
+    timers.advanceBy(250);
     sync.request("move", "token-1", { x: 300 }, false);
-    vi.advanceTimersByTime(250);
+    timers.advanceBy(250);
     expect(session.tokens["token-1"].x).toBe(300);
-    vi.advanceTimersByTime(250);
+    timers.advanceBy(250);
     expect(session.tokens["token-1"].x).toBe(200);
   });
 
   it("clears both kinds of timer on reset", () => {
-    vi.useFakeTimers();
-    const { sync, session, deps } = setup();
+    const { sync, session, deps, timers } = setup();
     sync.request("move", "token-1", { x: 300 }, false);
     sync.request("rotation", "token-1", { rotation: 90 }, false);
     sync.clear();
-    vi.advanceTimersByTime(500);
+    timers.advanceBy(500);
     expect(session.tokens["token-1"]).toMatchObject({ x: 300, rotation: 90 });
     expect(deps.persistDraft).not.toHaveBeenCalled();
+    expect(deps.cancelTimeout).toHaveBeenCalledTimes(2);
   });
 
   it("does not schedule missing or persistent requests, or resurrect removed tokens", () => {
-    vi.useFakeTimers();
-    const { sync, session, deps } = setup();
+    const { sync, session, deps, timers } = setup();
     expect(sync.request("move", "missing", { x: 0 }, false)).toBeNull();
     sync.request("move", "token-1", { x: 300 }, true);
-    vi.advanceTimersByTime(500);
+    expect(deps.scheduleTimeout).not.toHaveBeenCalled();
+    timers.advanceBy(500);
     expect(session.tokens["token-1"].x).toBe(300);
     sync.request("rotation", "token-1", { rotation: 90 }, false);
     delete session.tokens["token-1"];
-    vi.advanceTimersByTime(500);
+    timers.advanceBy(500);
     expect(session.tokens["token-1"]).toBeUndefined();
     expect(deps.persistDraft).not.toHaveBeenCalled();
   });

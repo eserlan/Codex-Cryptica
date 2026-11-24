@@ -39,6 +39,8 @@ export interface VTTTokenManagerDependencies {
   getMyPeerId: () => string | null;
   queueSessionSnapshotBroadcast: () => void;
   broadcastSessionSnapshotNow: () => void;
+  scheduleTimeout?: (callback: () => void, delay: number) => number;
+  cancelTimeout?: (timeoutId: number) => void;
   addTokenToInitiativeState?: (tokenId: string) => void;
   removeTokenFromInitiativeState?: (tokenId: string) => void;
   cloneInitiativeState?: (sourceId: string, cloneId: string) => void;
