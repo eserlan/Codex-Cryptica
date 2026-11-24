@@ -1,7 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import { allocatePromptBudget } from "../src/context-budget";
 import { buildAdventurePrompt } from "../src/prompt";
-import { MAX_GENERATION_INPUT_CHARS } from "../src/session-budget";
+import {
+  MAX_GENERATION_INPUT_CHARS,
+  MAX_SERIALIZED_STATE_CHARS,
+} from "../src/session-budget";
 import { session } from "./reducer-fixtures";
 
 describe("allocatePromptBudget", () => {
@@ -120,5 +123,41 @@ describe("current-turn prompt input", () => {
         relevant: [],
       }),
     ).toThrow("generation-budget-exceeded");
+  });
+
+  it("bounds oversized durable state sections to MAX_SERIALIZED_STATE_CHARS in prompts without mutating session", () => {
+    const currentSession = session();
+    currentSession.hiddenState.secrets = Array.from({ length: 30 }, (_, i) => ({
+      id: `secret-${i}`,
+      text: `Secret ${i}: ${"s".repeat(1_500)}`,
+      status: "hidden" as const,
+    }));
+    currentSession.provisionalFacts = Array.from({ length: 30 }, (_, i) => ({
+      id: `prov-${i}`,
+      kind: "clue" as const,
+      name: `Clue ${i}`,
+      summary: "p".repeat(1_500),
+      visibility: "player-visible" as const,
+    }));
+    currentSession.storySoFar = {
+      text: "Earlier events. ".repeat(2_000),
+      throughSequence: 10,
+      updatedAt: currentSession.updatedAt,
+    };
+
+    const prompt = buildAdventurePrompt({
+      session: currentSession,
+      phase: "action",
+      playerAction: "Inspect the ledger.",
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(prompt.state.length).toBeLessThanOrEqual(MAX_SERIALIZED_STATE_CHARS);
+    expect(prompt.serialized.length).toBeLessThanOrEqual(
+      MAX_GENERATION_INPUT_CHARS,
+    );
+    expect(currentSession.hiddenState.secrets).toHaveLength(30);
+    expect(currentSession.provisionalFacts).toHaveLength(30);
   });
 });

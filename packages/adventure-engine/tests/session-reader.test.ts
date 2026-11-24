@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { buildAdventurePrompt } from "../src/prompt";
+import { MAX_SERIALIZED_STATE_CHARS } from "../src/session-budget";
 import {
   parseAdventureSession,
   parseAdventureSessionForRecovery,
@@ -131,7 +133,7 @@ describe("session reader", () => {
     );
   });
 
-  it("loads durable sessions beyond 48k when within MAX_DURABLE_STATE_CHARS", () => {
+  it("loads durable sessions beyond 48k when within MAX_DURABLE_STATE_CHARS and builds the next prompt", () => {
     const input = session();
     input.visibleState.knownFacts = Array.from({ length: 60 }, (_, index) => ({
       id: `long-fact-${index}`,
@@ -143,6 +145,18 @@ describe("session reader", () => {
       text: "y".repeat(580),
       source: "provisional" as const,
     }));
-    expect(parseAdventureSession(input)).toEqual(input);
+    const loaded = parseAdventureSession(input);
+    expect(loaded).toEqual(input);
+
+    const prompt = buildAdventurePrompt({
+      session: loaded,
+      phase: "action",
+      playerAction: "Look around the room.",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.state.length).toBeLessThanOrEqual(MAX_SERIALIZED_STATE_CHARS);
+    expect(loaded.visibleState.knownFacts).toHaveLength(60);
+    expect(loaded.visibleState.objectives).toHaveLength(20);
   });
 });
