@@ -121,24 +121,6 @@ describe("artwork-demand worker endpoint", () => {
       parseArtworkDemandPayload({
         type: "location",
         genre: "fantasy",
-        knownCues: ["Ivenna Surr said hello!"],
-        unmappedCues: [],
-        demographicCues: [],
-      }),
-    ).toBeNull();
-
-    expect(
-      parseArtworkDemandPayload({
-        type: "invalid-type",
-        genre: "fantasy",
-        knownCues: ["forest"],
-      }),
-    ).toBeNull();
-
-    expect(
-      parseArtworkDemandPayload({
-        type: "location",
-        genre: "fantasy",
         knownCues: Array.from({ length: 17 }, () => "coast"),
         unmappedCues: [],
         demographicCues: [],
@@ -152,6 +134,24 @@ describe("artwork-demand worker endpoint", () => {
         knownCues: [],
         unmappedCues: [],
         demographicCues: Array.from({ length: 9 }, () => "female"),
+      }),
+    ).toBeNull();
+
+    expect(
+      parseArtworkDemandPayload({
+        type: "location",
+        genre: "fantasy",
+        knownCues: ["Ivenna Surr said hello!"],
+        unmappedCues: [],
+        demographicCues: [],
+      }),
+    ).toBeNull();
+
+    expect(
+      parseArtworkDemandPayload({
+        type: "invalid-type",
+        genre: "fantasy",
+        knownCues: ["forest"],
       }),
     ).toBeNull();
   });

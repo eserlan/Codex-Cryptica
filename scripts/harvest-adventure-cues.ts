@@ -35,20 +35,47 @@ interface CharacterEntry {
 export interface DiagnosticSnapshot {
   state?: {
     places?: PlaceEntry[];
+    currentPlaceId?: string | null;
     visibleState?: {
+      situation?: CharacterEntry;
       activeCharacters?: CharacterEntry[];
     };
   };
 }
 
 export interface HarvestedDemand {
-  type: "location" | "npc";
+  type: "location" | "npc" | "scene" | "atmosphere" | "monster";
   genre: NonNullable<ArtworkCues["genre"]>;
   knownCues: string[];
   unmappedCues: string[];
   demographicCues: string[];
   matchedAssetId: string | null;
 }
+
+const MONSTER_CUES = new Set([
+  "monster",
+  "creature",
+  "beast",
+  "undead",
+  "aberration",
+  "fiend",
+  "dragon",
+]);
+const ATMOSPHERE_CUES = new Set([
+  "quiet",
+  "busy",
+  "ominous",
+  "hopeful",
+  "mysterious",
+  "day",
+  "night",
+  "dawn",
+  "dusk",
+  "rain",
+  "fog",
+  "winter",
+  "summer",
+]);
 
 const SAFE_RAW_CUE = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
 
@@ -144,6 +171,12 @@ function matchNpcId(
   return asset ? asset.id : null;
 }
 
+function isMonsterCharacter(char: CharacterEntry): boolean {
+  return (char.cues ?? []).some((c) =>
+    MONSTER_CUES.has(c.trim().toLowerCase()),
+  );
+}
+
 function harvestCharacter(
   char: CharacterEntry,
   genre: NonNullable<ArtworkCues["genre"]>,
@@ -164,6 +197,16 @@ function harvestCharacter(
     return null;
   }
 
+  if (isMonsterCharacter(char)) {
+    return {
+      type: "monster",
+      genre,
+      knownCues,
+      unmappedCues,
+      demographicCues: [],
+      matchedAssetId: null,
+    };
+  }
   return {
     type: "npc",
     genre,
@@ -172,6 +215,101 @@ function harvestCharacter(
     demographicCues,
     matchedAssetId: matchNpcId(knownCues, settingCues, demographicCues, genre),
   };
+}
+
+function harvestAtmosphere(
+  place: PlaceEntry,
+  genre: NonNullable<ArtworkCues["genre"]>,
+): HarvestedDemand | null {
+  const atmoCues = normalizeArtworkCues(place.cues ?? []).filter((c) =>
+    ATMOSPHERE_CUES.has(c),
+  );
+  if (atmoCues.length === 0) return null;
+  const asset = matchArtwork(seedArtwork, {
+    type: "atmosphere",
+    genre,
+    primaryCues: atmoCues,
+  });
+  return {
+    type: "atmosphere",
+    genre,
+    knownCues: atmoCues.sort(),
+    unmappedCues: [],
+    demographicCues: [],
+    matchedAssetId: asset ? asset.id : null,
+  };
+}
+
+function harvestScene(
+  situation: CharacterEntry | undefined,
+  place: PlaceEntry | undefined,
+  genre: NonNullable<ArtworkCues["genre"]>,
+): HarvestedDemand | null {
+  if (!situation?.text) return null;
+  const knownCues = collectSceneKnownCues(situation, place);
+  const unmappedCues = collectSceneUnmappedCues(situation, place);
+  if (knownCues.length + unmappedCues.length === 0) return null;
+
+  return {
+    type: "scene",
+    genre,
+    knownCues,
+    unmappedCues,
+    demographicCues: [],
+    matchedAssetId: matchSceneId(knownCues, genre),
+  };
+}
+
+function collectSceneKnownCues(
+  situation: CharacterEntry,
+  place: PlaceEntry | undefined,
+): string[] {
+  return normalizeArtworkCues([
+    ...readCues(situation.cues),
+    ...readWords(situation.text),
+    ...readCues(placeCues(place)),
+  ]).sort();
+}
+
+function readCues(cues: readonly string[] | undefined): readonly string[] {
+  return cues ?? [];
+}
+
+function readWords(text: string): string[] {
+  return text.toLowerCase().match(/[a-z]+/g) ?? [];
+}
+
+function placeCues(
+  place: PlaceEntry | undefined,
+): readonly string[] | undefined {
+  return place?.cues;
+}
+
+function placeName(place: PlaceEntry | undefined): string {
+  return place?.name ?? "";
+}
+
+function collectSceneUnmappedCues(
+  situation: CharacterEntry,
+  place: PlaceEntry | undefined,
+): string[] {
+  return collectUnmapped(readCues(placeCues(place)), [
+    placeName(place),
+    situation.text,
+  ]);
+}
+
+function matchSceneId(
+  knownCues: readonly string[],
+  genre: NonNullable<ArtworkCues["genre"]>,
+): string | null {
+  if (knownCues.length === 0) return null;
+  const asset = matchArtwork(seedArtwork, {
+    type: "scene",
+    genre,
+    primaryCues: knownCues,
+  });
+  return asset ? asset.id : null;
 }
 
 function readActiveCharacters(visibleState?: {
@@ -202,10 +340,21 @@ export function harvestSnapshot(
   const places = rawPlaces
     .map((place) => harvestPlace(place, genre))
     .filter((item): item is HarvestedDemand => item !== null);
+  const atmospheres = rawPlaces
+    .map((place) => harvestAtmosphere(place, genre))
+    .filter((item): item is HarvestedDemand => item !== null);
+  const activePlace = rawPlaces.find(
+    (place) => place.id === snapshot.state?.currentPlaceId,
+  );
+  const scene = harvestScene(
+    snapshot.state?.visibleState?.situation,
+    activePlace,
+    genre,
+  );
   const chars = rawChars
     .map((char) => harvestCharacter(char, genre))
     .filter((item): item is HarvestedDemand => item !== null);
-  return [...places, ...chars];
+  return [...places, ...atmospheres, ...(scene ? [scene] : []), ...chars];
 }
 
 function parseCliArgs(args: readonly string[]): {
