@@ -62,6 +62,13 @@ export class ArtworkDemandReporter {
   private readonly isOnline: () => boolean;
   private readonly isEnabled: () => boolean;
 
+  private prepareSession(sessionId: string | null): boolean {
+    if (sessionId === this.activeSessionId) return sessionId !== null;
+    this.sentSignatures.clear();
+    this.activeSessionId = sessionId;
+    return sessionId !== null;
+  }
+
   constructor(deps: ArtworkDemandReporterDeps = {}) {
     this.fetchFn = deps.fetchFn ?? ((input, init) => fetch(input, init));
     this.resolveProxyUrl = deps.resolveProxyUrl ?? resolveOracleProxyUrl;
@@ -128,18 +135,17 @@ export class ArtworkDemandReporter {
     summary: ArtworkCueIndicator | null,
     sessionId: string | null,
   ): void {
-    if (sessionId !== this.activeSessionId) {
-      this.sentSignatures.clear();
-      this.activeSessionId = sessionId;
-    }
-    if (!sessionId) return;
+    if (!this.prepareSession(sessionId)) return;
     if (!summary || !this.isEnabled() || !this.isOnline()) return;
 
-    if (summary.place)
-      this.enqueueSlot("location", summary.genre, summary.place);
-    if (summary.scene) this.enqueueSlot("scene", summary.genre, summary.scene);
-    if (summary.atmosphere)
-      this.enqueueSlot("atmosphere", summary.genre, summary.atmosphere);
+    const singleSlots = [
+      { type: "location", slot: summary.place },
+      { type: "scene", slot: summary.scene },
+      { type: "atmosphere", slot: summary.atmosphere },
+    ] as const;
+    for (const { type, slot } of singleSlots) {
+      if (slot) this.enqueueSlot(type, summary.genre, slot);
+    }
     this.enqueueAll("npc", summary.genre, summary.npcs);
     this.enqueueAll("monster", summary.genre, summary.monsters ?? []);
   }

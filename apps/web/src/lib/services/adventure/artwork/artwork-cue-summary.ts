@@ -25,32 +25,36 @@ import {
 
 const SAFE_RAW_CUE_PATTERN = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
 
+function normalizeSafeStructuredCue(raw: string): string | null {
+  const normalized = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  return normalized.length > 0 &&
+    normalized.length <= 32 &&
+    SAFE_RAW_CUE_PATTERN.test(normalized)
+    ? normalized
+    : null;
+}
+
+function isPrivateOrArtworkCue(
+  normalized: string,
+  entityNames: ReadonlySet<string>,
+): boolean {
+  if (isArtworkCue(CUE_SYNONYMS[normalized] ?? normalized)) return true;
+  const cueWords = ` ${normalized.replace(/[^a-z0-9]+/g, " ").trim()} `;
+  return [...entityNames].some((visibleText) => {
+    const visibleWords = ` ${visibleText.replace(/[^a-z0-9]+/g, " ").trim()} `;
+    return visibleWords.includes(cueWords);
+  });
+}
+
 function collectUnmappedStructuredCues(
   rawCues: readonly string[] | undefined,
   entityNames: ReadonlySet<string>,
 ): string[] {
-  if (!rawCues || rawCues.length === 0) return [];
-  const result = new Set<string>();
-  for (const raw of rawCues) {
-    const normalized = raw.trim().toLowerCase().replace(/\s+/g, " ");
-    if (
-      normalized.length === 0 ||
-      normalized.length > 32 ||
-      !SAFE_RAW_CUE_PATTERN.test(normalized)
-    ) {
-      continue;
-    }
-    const mapped = CUE_SYNONYMS[normalized] ?? normalized;
-    const cueWords = normalized.replace(/[^a-z0-9]+/g, " ").trim();
-    const appearsInVisibleText = [...entityNames].some((visibleText) => {
-      const visibleWords = ` ${visibleText.replace(/[^a-z0-9]+/g, " ").trim()} `;
-      return visibleWords.includes(` ${cueWords} `);
-    });
-    if (!appearsInVisibleText && !isArtworkCue(mapped)) {
-      result.add(normalized);
-    }
-  }
-  return [...result].sort();
+  const unmapped = (rawCues ?? [])
+    .map(normalizeSafeStructuredCue)
+    .filter((cue): cue is string => cue !== null)
+    .filter((cue) => !isPrivateOrArtworkCue(cue, entityNames));
+  return [...new Set(unmapped)].sort();
 }
 
 const MONSTER_CUES = new Set<string>([

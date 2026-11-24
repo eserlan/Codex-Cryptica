@@ -31,6 +31,7 @@ describe("ArtworkDemandReporter", () => {
       isOnline: () => true,
     });
     disabled.reportFromSummary(sampleSummary, "session-1");
+    disabled.reportFromSummary(sampleSummary, null);
     expect(fetchFn).not.toHaveBeenCalled();
 
     const offline = new ArtworkDemandReporter({
