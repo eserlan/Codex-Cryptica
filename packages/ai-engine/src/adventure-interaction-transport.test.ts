@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AdventureInteractionTransport } from "./adventure-interaction-transport";
+import { adventureTurnResponseSchema } from "./adventure-response-schema";
 import { session } from "./adventure-generation.test-fixtures";
 
 const request = {
@@ -124,7 +125,15 @@ describe("adventure interaction transport", () => {
     );
   });
 
-  it("streams progressive narration previews when metadata precedes narration and suppresses same-turn secrets", async () => {
+  it("streams progressive narration previews only when the provider enforces ordered schema and suppresses same-turn secrets", async () => {
+    const orderedGeminiParams = {
+      ...params,
+      model: "gemini-4-hydrogen",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: adventureTurnResponseSchema,
+      },
+    };
     const cleanPreviews: string[] = [];
     const cleanPrefix =
       '{"kind":"complete","hiddenPatch":{"secrets":{"add":[],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"revealSecretIds":[],"narration":"';
@@ -142,9 +151,31 @@ describe("adventure interaction transport", () => {
     });
     await cleanTransport.send(
       { ...request, onNarration: (text) => cleanPreviews.push(text) },
-      params,
+      orderedGeminiParams,
     );
     expect(cleanPreviews).toEqual(["Lantern ", "Lantern light."]);
+
+    const openAiPreviews: string[] = [];
+    await cleanTransport.send(
+      { ...request, onNarration: (text) => openAiPreviews.push(text) },
+      {
+        ...params,
+        model: "luna-fast",
+        generationConfig: orderedGeminiParams.generationConfig,
+      },
+    );
+    expect(openAiPreviews).toEqual([]);
+
+    const missingSchemaPreviews: string[] = [];
+    await cleanTransport.send(
+      { ...request, onNarration: (text) => missingSchemaPreviews.push(text) },
+      {
+        ...params,
+        model: "gemini-4-hydrogen",
+        generationConfig: { responseMimeType: "application/json" },
+      },
+    );
+    expect(missingSchemaPreviews).toEqual([]);
 
     const leakedPreviews: string[] = [];
     const secret = "The bailiff forged the seal.";
@@ -162,7 +193,7 @@ describe("adventure interaction transport", () => {
     });
     await leakedTransport.send(
       { ...request, onNarration: (text) => leakedPreviews.push(text) },
-      params,
+      orderedGeminiParams,
     );
     expect(leakedPreviews).toEqual([]);
   });
