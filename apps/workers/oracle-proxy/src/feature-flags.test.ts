@@ -45,7 +45,7 @@ describe("feature flags worker endpoint (/api/flags)", () => {
     const body = await response.json();
     expect(body).toEqual({
       env: "prod",
-      flags: { adventureArtwork: true },
+      flags: { ...DEFAULT_FEATURE_FLAGS, adventureArtwork: true },
       source: "kv",
     });
   });
@@ -75,7 +75,7 @@ describe("feature flags worker endpoint (/api/flags)", () => {
     expect(get).toHaveBeenCalledWith("flags:staging");
     expect(await response.json()).toEqual({
       env: "staging",
-      flags: { adventureArtwork: true },
+      flags: { ...DEFAULT_FEATURE_FLAGS, adventureArtwork: true },
       source: "kv",
     });
   });
@@ -136,7 +136,7 @@ describe("feature flags worker endpoint (/api/flags)", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
       env: "prod",
-      flags: { adventureArtwork: false },
+      flags: { ...DEFAULT_FEATURE_FLAGS, adventureArtwork: false },
       source: "kv",
     });
   });

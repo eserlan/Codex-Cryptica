@@ -44,6 +44,7 @@ function validateAssetCues(
     settingCues: readonly string[];
     moodCues: readonly string[];
     timeCues: readonly string[];
+    demographicCues?: readonly string[];
     excludes: readonly string[];
   },
   ctx: z.RefinementCtx,
@@ -53,6 +54,7 @@ function validateAssetCues(
     ...asset.settingCues,
     ...asset.moodCues,
     ...asset.timeCues,
+    ...(asset.demographicCues ?? []),
     ...asset.excludes,
   ];
   if (
@@ -122,6 +124,7 @@ const assetSchema = z
     settingCues: z.array(cue),
     moodCues: z.array(cue),
     timeCues: z.array(cue),
+    demographicCues: z.array(cue).optional(),
     excludes: z.array(cue),
     alt: text.max(240),
     variants: z.object({ preview: variant, display: variant }).strict(),

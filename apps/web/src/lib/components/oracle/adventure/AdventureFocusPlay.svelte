@@ -51,6 +51,7 @@
   import { createDisplayService } from "#lib/services/adventure/artwork/create-display-service.js";
   import { defaultArtworkCatalogue } from "#lib/services/adventure/artwork/default-artwork-catalogue.js";
   import { summarizeArtworkCues } from "#lib/services/adventure/artwork/artwork-cue-summary.js";
+  import { artworkDemandReporter } from "#lib/services/adventure/artwork/artwork-demand-reporter.js";
   import { selectPresentNpcPortrait } from "#lib/services/adventure/artwork/npc-portrait-selection.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -285,6 +286,13 @@
         )
       : null,
   );
+
+  $effect(() => {
+    artworkDemandReporter.reportFromSummary(
+      cueSummary,
+      manager.session?.id ?? null,
+    );
+  });
 
   $effect(() => {
     const selection = selectedNpcPortrait;

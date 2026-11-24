@@ -85,6 +85,12 @@ export const ARTWORK_CUES = [
   "fog",
   "winter",
   "summer",
+  "female",
+  "male",
+  "androgynous",
+  "young",
+  "adult",
+  "aged",
 ] as const;
 
 const allowed = new Set<string>(ARTWORK_CUES);
@@ -136,6 +142,10 @@ const NPC_ANCESTRY_CUES = new Set<string>([
   "dragonborn",
   "gnome",
 ]);
+
+const NPC_GENDER_CUES = new Set<string>(["female", "male", "androgynous"]);
+
+const NPC_AGE_CUES = new Set<string>(["young", "adult", "aged"]);
 
 const NPC_GENERIC_ROLE_CUES = new Set<string>(["worker", "traveller"]);
 
@@ -201,6 +211,22 @@ export const CUE_SYNONYMS: Readonly<Record<string, string>> = {
   blacksmith: "smith",
   thief: "rogue",
   minstrel: "bard",
+  woman: "female",
+  lady: "female",
+  girl: "female",
+  man: "male",
+  gentleman: "male",
+  boy: "male",
+  nonbinary: "androgynous",
+  "non-binary": "androgynous",
+  youth: "young",
+  teen: "young",
+  teenager: "young",
+  "middle-aged": "adult",
+  middleaged: "adult",
+  elderly: "aged",
+  old: "aged",
+  ancient: "aged",
 };
 
 export function isArtworkCue(value: string): boolean {
@@ -221,6 +247,18 @@ export function isNpcAncestryCue(value: string): boolean {
 
 export function isNpcGenericRoleCue(value: string): boolean {
   return NPC_GENERIC_ROLE_CUES.has(value);
+}
+
+export function isNpcGenderCue(value: string): boolean {
+  return NPC_GENDER_CUES.has(value);
+}
+
+export function isNpcAgeCue(value: string): boolean {
+  return NPC_AGE_CUES.has(value);
+}
+
+export function isNpcDemographicCue(value: string): boolean {
+  return NPC_GENDER_CUES.has(value) || NPC_AGE_CUES.has(value);
 }
 
 /** Bound and filter already player-visible structured cues, never raw narration. */

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   AdventureJsonV1Schema,
   MAX_ADVENTURE_PACKAGE_PROMPT_CHARS,
+  MAX_BEHAVIOR_PROMPT_CHARS,
   MAX_GENERATION_INPUT_CHARS,
   allocatePromptBudget,
   buildAdventurePrompt,
@@ -94,7 +95,7 @@ describe("package-grounded prompt", () => {
     ]) {
       expect(behavior).toContain(fragment);
     }
-    expect(behavior.length).toBeLessThan(16_000);
+    expect(behavior.length).toBeLessThan(MAX_BEHAVIOR_PROMPT_CHARS);
     expect(
       behavior.endsWith("Return only the requested structured schema."),
     ).toBe(true);
