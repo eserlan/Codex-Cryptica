@@ -704,4 +704,89 @@ describe("Adventure OOC clarification engine", () => {
     expect(leakedInDecision.classification).toBe("secret-refusal");
     expect(leakedInDecision.decisions).toEqual([]);
   });
+
+  it("syncs session.people across modes and records superseding correction lineage", async () => {
+    const { commitAdventureOocExchange, buildAdventurePrompt } =
+      await import("../src");
+    let session = makeSession();
+    let seq = 0;
+    const nextId = () => `id-${++seq}`;
+
+    // First commit a wrong split provisional fact
+    session = commitAdventureOocExchange(
+      session,
+      {
+        id: "ooc-wrong",
+        kind: "ooc",
+        question: "Who is Marshall?",
+        answer: "Envoy Marshall is a clerk.",
+        status: "answered",
+        classification: "established",
+        afterTurnCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      [
+        {
+          kind: "person",
+          name: "Envoy Marshall",
+          summary: "Council clerk.",
+          visibility: "player-visible",
+        },
+      ],
+      now,
+      nextId,
+    );
+    expect(session.people).toHaveLength(1);
+
+    // Player corrects: "Envoy Ilona Marshall is one person, not two"
+    session = commitAdventureOocExchange(
+      session,
+      {
+        id: "ooc-fix",
+        kind: "ooc",
+        question: "I meant Envoy Marshall Ilona as one person.",
+        answer: "Understood, Envoy Ilona Marshall is that single liaison.",
+        status: "answered",
+        classification: "established",
+        afterTurnCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      [
+        {
+          kind: "person",
+          name: "Envoy Ilona Marshall",
+          summary: "Council liaison at the old weigh-house.",
+          aliases: ["Envoy Marshall"],
+          supersedesName: "Envoy Marshall",
+          visibility: "player-visible",
+        },
+      ],
+      now,
+      nextId,
+    );
+
+    expect(session.people).toHaveLength(1);
+    const wrongFact = session.provisionalFacts.find(
+      (f) => f.name === "Envoy Marshall",
+    );
+    const rightFact = session.provisionalFacts.find(
+      (f) => f.name === "Envoy Ilona Marshall",
+    );
+    expect(wrongFact?.supersededById).toBe(rightFact?.id);
+
+    const playPrompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "seek out Ilona",
+      anchors: [],
+      relevant: [],
+    });
+    const state = JSON.parse(playPrompt.state) as {
+      playerVisibleState: { knownPeople?: Array<{ name: string }> };
+    };
+    expect(state.playerVisibleState.knownPeople?.length).toBe(1);
+    expect(playPrompt.behavior).toContain("knownPeople");
+  });
 });

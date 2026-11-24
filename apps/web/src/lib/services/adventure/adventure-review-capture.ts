@@ -350,6 +350,11 @@ function integrityChecks(session: AdventureSession) {
           (!secret.revealedOnTurnId || !turnIds.has(secret.revealedOnTurnId)),
       )
       .map((secret) => secret.id),
+    orphanedPersonFactLinks: (session.people ?? []).flatMap((person) =>
+      person.linkedFactIds
+        .filter((factId) => !factIds.has(factId))
+        .map((factId) => ({ personId: person.id, factId })),
+    ),
   };
 }
 
@@ -516,6 +521,22 @@ function diagnosticSummary(
     timeToFirstSign: discoveryMetrics.timeToFirstSign,
     timeToFirstActionableLead: discoveryMetrics.timeToFirstActionableLead,
     ...diagnosticTurnSummary(session, cutoff, lastTurn),
+    ooc: {
+      totalExchanges: (session.oocExchanges ?? []).length,
+      answeredCount: (session.oocExchanges ?? []).filter(
+        (entry) => entry.status === "answered",
+      ).length,
+      establishedDecisionsCount: (session.oocExchanges ?? []).reduce(
+        (sum, entry) => sum + (entry.committedFactIds?.length ?? 0),
+        0,
+      ),
+      latestExchangeIds: (session.oocExchanges ?? [])
+        .slice(-5)
+        .map((entry) => entry.id),
+      oocSourcedFactCount: session.provisionalFacts.filter(
+        (fact) => fact.provenance === "ooc",
+      ).length,
+    },
     generation: generationSummary(session),
     lastPlayedAt: session.lastPlayedAt,
   };

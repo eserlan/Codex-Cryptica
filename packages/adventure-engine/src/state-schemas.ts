@@ -66,6 +66,8 @@ export const provisionalFactSchema = z.object({
   introducedOnTurnId: id.optional(),
   sourceOocExchangeId: id.optional(),
   provenance: z.enum(["play", "ooc"]).optional(),
+  supersededById: id.optional(),
+  aliases: z.array(text).max(8).optional(),
   visibility: z.enum(["player-visible", "gm-only"]),
   scenarioId: id.optional(),
 });
@@ -75,6 +77,8 @@ export const newProvisionalFactSchema = provisionalFactSchema
     introducedOnTurnId: true,
     sourceOocExchangeId: true,
     provenance: true,
+    supersededById: true,
+    aliases: true,
   })
   .strict();
 
@@ -91,6 +95,8 @@ export const newOocDecisionSchema = z
     kind: provisionalFactSchema.shape.kind,
     name: text,
     summary: text,
+    aliases: z.array(text).max(8).optional(),
+    supersedesName: text.optional(),
     visibility: provisionalFactSchema.shape.visibility,
   })
   .strict();

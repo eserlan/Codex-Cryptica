@@ -970,5 +970,15 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       updated: [],
       removedIds: [],
     });
+
+    const parsedFull = JSON.parse(full.text);
+    expect(parsedFull.summary.ooc).toEqual({
+      totalExchanges: 1,
+      answeredCount: 1,
+      establishedDecisionsCount: 0,
+      latestExchangeIds: ["ooc-1"],
+      oocSourcedFactCount: 0,
+    });
+    expect(parsedFull.integrityChecks.orphanedPersonFactLinks).toEqual([]);
   });
 });
