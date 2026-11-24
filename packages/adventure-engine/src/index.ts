@@ -30,6 +30,7 @@ export * from "./place-names";
 export * from "./people-types";
 export * from "./people";
 export * from "./npc-presence";
+export * from "./emergent-threads";
 export * from "./scene-types";
 export * from "./scene-identities";
 export * from "./source-package";

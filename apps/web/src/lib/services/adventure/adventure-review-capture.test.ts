@@ -1064,4 +1064,60 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       },
     ]);
   });
+
+  it("reports separate emergentThreads summary without fabricating seed scenario discovery metrics (#5177)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.emergentThreads = [
+      {
+        id: "em-water-1",
+        title: "Water Rationing Order: Lower cisterns shut",
+        status: "open",
+        provenance: "mixed",
+        topicTokens: ["water", "rationing", "cisterns"],
+        linkedPersonIds: ["p-1"],
+        linkedPlaceIds: ["pl-1", "pl-2"],
+        linkedFactIds: ["f-1"],
+        linkedCommitmentIds: ["c-1"],
+        openQuestions: ["Who ordered the shutoff?"],
+        knownConsequences: ["Lower cisterns were shut."],
+        gmOnlyDevelopments: ["Secret guild bribe"],
+        createdAtTurnId: "turn-1",
+        updatedAtTurnId: "turn-2",
+        turnCount: 3,
+      },
+    ];
+    session.focusedEmergentThreadId = "em-water-1";
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.timeToFirstSign).toBeNull();
+    expect(parsed.summary.timeToFirstActionableLead).toBeNull();
+    expect(parsed.summary.emergentThreads).toEqual({
+      total: 1,
+      open: 1,
+      resolved: 0,
+      abandoned: 0,
+      cold: 0,
+      focusedEmergentThreadId: "em-water-1",
+      threads: [
+        {
+          id: "em-water-1",
+          title: "Water Rationing Order: Lower cisterns shut",
+          status: "open",
+          provenance: "mixed",
+          turnCount: 3,
+          linkedFactCount: 1,
+          linkedPersonCount: 1,
+          linkedPlaceCount: 2,
+        },
+      ],
+    });
+  });
 });

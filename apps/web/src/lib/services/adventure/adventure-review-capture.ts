@@ -504,6 +504,31 @@ function diagnosticTurnSummary(
   };
 }
 
+function emergentThreadSummary(session: AdventureSession) {
+  const threads = session.emergentThreads ?? [];
+  const countStatus = (status: string) =>
+    threads.filter((t) => t.status === status).length;
+  return {
+    total: threads.length,
+    open: countStatus("open"),
+    resolved: countStatus("resolved"),
+    abandoned: countStatus("abandoned"),
+    cold: countStatus("cold"),
+    focusedEmergentThreadId: session.focusedEmergentThreadId ?? null,
+    threads: threads.slice(-6).map((t) => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+      provenance: t.provenance,
+      turnCount: t.turnCount,
+      linkedFactCount: t.linkedFactIds.length,
+      linkedPersonCount: t.linkedPersonIds.length,
+      linkedPlaceCount: t.linkedPlaceIds.length,
+      ...(t.linkedScenarioId ? { linkedScenarioId: t.linkedScenarioId } : {}),
+    })),
+  };
+}
+
 function diagnosticSummary(
   session: AdventureSession,
   cutoff: number,
@@ -541,6 +566,7 @@ function diagnosticSummary(
       ).length,
     },
     generation: generationSummary(session),
+    emergentThreads: emergentThreadSummary(session),
     lastPlayedAt: session.lastPlayedAt,
   };
 }

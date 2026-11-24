@@ -89,6 +89,29 @@ export interface HiddenSecret {
   revealedOnTurnId?: string;
 }
 
+export type EmergentThreadStatus = "open" | "resolved" | "abandoned" | "cold";
+
+export interface EmergentThread {
+  id: string;
+  title: string;
+  status: EmergentThreadStatus;
+  provenance: "play" | "ooc" | "mixed";
+  topicTokens: string[];
+  linkedPersonIds: string[];
+  linkedPlaceIds: string[];
+  linkedFactIds: string[];
+  linkedCommitmentIds: string[];
+  openQuestions: string[];
+  knownConsequences: string[];
+  /** GM-only conjectures and outstanding developments; never exposed to players. */
+  gmOnlyDevelopments: string[];
+  /** Optional explicit compatible link to an authored ScenarioItem without converting it. */
+  linkedScenarioId?: string;
+  createdAtTurnId: string;
+  updatedAtTurnId: string;
+  turnCount: number;
+}
+
 export interface HiddenThread {
   id: string;
   text: string;
@@ -569,6 +592,10 @@ export interface AdventureSession {
   provisionalFacts: ProvisionalFact[];
   /** GM-only emergent causal commitments (#5111); absent on older sessions. */
   causalCommitments?: CausalCommitment[];
+  /** Durable player-led emergent investigation threads (#5177); separate from scenarioCollection. */
+  emergentThreads?: EmergentThread[];
+  /** Optional player-focused emergent thread ID; never fabricates a scenarioId. */
+  focusedEmergentThreadId?: string | null;
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
@@ -792,6 +819,13 @@ export interface AdventureRecap {
   recentTurnSummaries: string[];
   elapsedTimeLabel?: string;
   knownLeads?: KnownLeadRecap[];
+  emergentLeads?: Array<{
+    id: string;
+    title: string;
+    status: EmergentThreadStatus;
+    focused: boolean;
+    openQuestion?: string;
+  }>;
 }
 
 /** A roll history entry: a committed turn paired with the roll it resolved. */
