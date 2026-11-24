@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -140,11 +140,26 @@ export function resolveGitBase(cwd = process.cwd()) {
   return null;
 }
 
+export function buildEslintArgs(lintFiles, { fix = false } = {}) {
+  const args = [
+    "eslint",
+    "--cache",
+    "--cache-strategy",
+    "content",
+    "--cache-location",
+    "node_modules/.cache/eslint/",
+  ];
+  if (fix) args.push("--fix");
+  args.push(...lintFiles);
+  return args;
+}
+
 // fallow-ignore-next-line complexity -- git diff and status fallbacks are covered by lint-changed tests.
 export function getChangedFiles({
   base,
   head = "HEAD",
   stagedOnly = false,
+  committedOnly = false,
   cwd = process.cwd(),
 } = {}) {
   const fileSet = new Set();
@@ -179,8 +194,8 @@ export function getChangedFiles({
     }
   }
 
-  // Also include any currently uncommitted working tree changes when not checking a specific base commit range
-  if (!base) {
+  // Include working-tree modifications locally unless --committed-only is set.
+  if (!committedOnly) {
     try {
       const uncommittedOutput = execFileSync("git", ["status", "--porcelain"], {
         cwd,
@@ -203,14 +218,122 @@ export function getChangedFiles({
   return Array.from(fileSet);
 }
 
+export function runBufferedCommand(label, cmd, args, cwd, onSpawn) {
+  return new Promise((resolvePromise) => {
+    const startedAt = Date.now();
+    const child = spawn(cmd, args, {
+      cwd,
+      stdio: ["ignore", "pipe", "pipe"],
+      shell: process.platform === "win32",
+    });
+    onSpawn?.(child, true);
+    let output = "";
+    const append = (chunk) => {
+      output += chunk.toString();
+    };
+    child.stdout?.on("data", append);
+    child.stderr?.on("data", append);
+    child.on("close", (code) => {
+      onSpawn?.(child, false);
+      resolvePromise({
+        name: label,
+        label,
+        ok: code === 0,
+        code: code ?? 1,
+        durationMs: Date.now() - startedAt,
+        output,
+      });
+    });
+    child.on("error", (err) => {
+      onSpawn?.(child, false);
+      resolvePromise({
+        name: label,
+        label,
+        ok: false,
+        code: 1,
+        durationMs: Date.now() - startedAt,
+        output: `${output}\n${err.message}`.trim(),
+      });
+    });
+  });
+}
+
+function addContentLintSteps(steps, changedFiles, base, cwd) {
+  const answerFiles = filterAnswerPageFiles(changedFiles, cwd);
+  if (answerFiles.length > 0) {
+    steps.push({
+      label: `Answer editorial (${answerFiles.length} file(s))`,
+      cmd: "bun",
+      args: ["scripts/check-answer-editorial.ts", "--files", ...answerFiles],
+    });
+  }
+  const uiFiles = filterUiPatternFiles(changedFiles, cwd);
+  if (uiFiles.length > 0) {
+    const uiBase = base ?? resolveGitBase(cwd);
+    steps.push({
+      label: `UI patterns (${uiFiles.length} file(s))`,
+      cmd: "bun",
+      args: [
+        "scripts/check-ui-patterns.mjs",
+        ...(uiBase ? ["--base", uiBase] : []),
+        "--files",
+        ...uiFiles,
+      ],
+    });
+  }
+  if (touchesDiscoveryContent(changedFiles)) {
+    steps.push(
+      {
+        label: "Answer mesh (reciprocal links)",
+        cmd: "bun",
+        args: ["scripts/check-answer-mesh.ts"],
+      },
+      {
+        label: "Discovery intent audit",
+        cmd: "bun",
+        args: ["scripts/discovery-audit.mjs"],
+      },
+    );
+  }
+}
+
+function buildLintSteps({
+  changedFiles,
+  lintFiles,
+  formatFiles,
+  fix,
+  base,
+  cwd,
+}) {
+  const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
+  const steps = [];
+  if (lintFiles.length > 0) {
+    steps.push({
+      label: `ESLint (${lintFiles.length} file(s))`,
+      cmd: runner,
+      args: buildEslintArgs(lintFiles, { fix }),
+    });
+  }
+  if (formatFiles.length > 0) {
+    steps.push({
+      label: `Prettier (${formatFiles.length} file(s))`,
+      cmd: runner,
+      args: ["prettier", fix ? "--write" : "--check", ...formatFiles],
+    });
+  }
+  addContentLintSteps(steps, changedFiles, base, cwd);
+  return steps;
+}
+
 // fallow-ignore-next-line complexity -- both lint and format outcomes are handled by the changed-file validation path.
-export function runLintChanged({
+export async function runLintChanged({
   base,
   head = "HEAD",
   fix = false,
+  committedOnly = false,
   cwd = process.cwd(),
 } = {}) {
-  const changedFiles = getChangedFiles({ base, head, cwd });
+  const changedFiles = getChangedFiles({ base, head, committedOnly, cwd });
   const lintFiles = filterLintableFiles(changedFiles, cwd);
   const formatFiles = filterFormattableFiles(changedFiles, cwd);
 
@@ -223,113 +346,61 @@ export function runLintChanged({
     `🔍 Checking ${lintFiles.length} lintable / ${formatFiles.length} formattable changed file(s)...`,
   );
 
-  let success = true;
+  const steps = buildLintSteps({
+    changedFiles,
+    lintFiles,
+    formatFiles,
+    fix,
+    base,
+    cwd,
+  });
 
-  if (lintFiles.length > 0) {
-    const args = ["eslint"];
-    if (fix) args.push("--fix");
-    args.push(...lintFiles);
-    try {
-      console.log(`\n🧹 Running ESLint on ${lintFiles.length} file(s)...`);
-      const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
-      execFileSync(runner, args, {
-        cwd,
-        stdio: "inherit",
-        shell: process.platform === "win32",
-      });
-      console.log("✅ ESLint passed.");
-    } catch {
-      success = false;
-      console.error("❌ ESLint failed.");
-    }
-  }
+  // Run sequentially when --fix writes files, concurrently when read-only.
+  const results = fix
+    ? await steps.reduce(async (accPromise, step) => {
+        const acc = await accPromise;
+        acc.push(
+          await runBufferedCommand(step.label, step.cmd, step.args, cwd),
+        );
+        return acc;
+      }, Promise.resolve([]))
+    : await Promise.all(
+        steps.map((step) =>
+          runBufferedCommand(step.label, step.cmd, step.args, cwd),
+        ),
+      );
 
-  if (formatFiles.length > 0) {
-    const args = ["prettier", fix ? "--write" : "--check", ...formatFiles];
-    try {
-      console.log(
-        `\n🎨 Checking formatting on ${formatFiles.length} file(s)...`,
-      );
-      const runner = process.platform === "win32" ? "npx.cmd" : "bunx";
-      execFileSync(runner, args, {
-        cwd,
-        stdio: "inherit",
-        shell: process.platform === "win32",
-      });
-      console.log("✅ Prettier check passed.");
-    } catch {
-      success = false;
-      console.error("❌ Prettier check failed.");
-    }
-  }
-
-  const answerFiles = filterAnswerPageFiles(changedFiles, cwd);
-  if (answerFiles.length > 0) {
-    try {
-      console.log(
-        `\n📝 Checking Answer editorial rules on ${answerFiles.length} file(s)...`,
-      );
-      execFileSync(
-        "bun",
-        ["scripts/check-answer-editorial.ts", "--files", ...answerFiles],
-        { cwd, stdio: "inherit" },
-      );
-    } catch {
-      success = false;
-      console.error("❌ Answer editorial check failed.");
-    }
-  }
-
-  const uiFiles = filterUiPatternFiles(changedFiles, cwd);
-  if (uiFiles.length > 0) {
-    const uiBase = base ?? resolveGitBase(cwd);
-    try {
-      console.log(`\n🎨 Checking UI patterns on ${uiFiles.length} file(s)...`);
-      execFileSync(
-        "bun",
-        [
-          "scripts/check-ui-patterns.mjs",
-          ...(uiBase ? ["--base", uiBase] : []),
-          "--files",
-          ...uiFiles,
-        ],
-        { cwd, stdio: "inherit" },
-      );
-    } catch {
-      success = false;
-      console.error("❌ UI pattern check failed.");
+  for (const result of results) {
+    console.log(`${result.ok ? "✅" : "❌"} ${result.label}`);
+    if (!result.ok && result.output.trim()) {
+      console.error(result.output.trimEnd());
     }
   }
 
   if (touchesDiscoveryContent(changedFiles)) {
-    for (const [label, script] of [
-      ["Answer mesh (reciprocal links)", "scripts/check-answer-mesh.ts"],
-      ["Discovery intent audit", "scripts/discovery-audit.mjs"],
-    ]) {
-      try {
-        console.log(`\n🕸️  Checking ${label}...`);
-        execFileSync("bun", [script], { cwd, stdio: "inherit" });
-      } catch {
-        success = false;
-        console.error(`❌ ${label} check failed.`);
-      }
-    }
     console.log(
       "\n💡 Content changed: run /codex-review and verify every feature, UI path or 'automatically does X' claim against code before pushing.",
     );
   }
 
-  return success;
+  return results.every((result) => result.ok);
+}
+
+export function parseGateCliArgs(argv = process.argv) {
+  const baseIndex = argv.indexOf("--base");
+  const headIndex = argv.indexOf("--head");
+  return {
+    fix: argv.includes("--fix"),
+    committedOnly: argv.includes("--committed-only"),
+    verbose: argv.includes("--verbose"),
+    base: baseIndex !== -1 ? argv[baseIndex + 1] : undefined,
+    head: headIndex !== -1 ? argv[headIndex + 1] : "HEAD",
+  };
 }
 
 if (import.meta.main) {
-  const fix = process.argv.includes("--fix");
-  const baseIndex = process.argv.indexOf("--base");
-  const base = baseIndex !== -1 ? process.argv[baseIndex + 1] : undefined;
-  const headIndex = process.argv.indexOf("--head");
-  const head = headIndex !== -1 ? process.argv[headIndex + 1] : "HEAD";
-
-  const success = runLintChanged({ base, head, fix });
+  const { fix, committedOnly, base, head } = parseGateCliArgs();
+  const success = await runLintChanged({ base, head, fix, committedOnly });
   if (!success) {
     process.exit(1);
   }
