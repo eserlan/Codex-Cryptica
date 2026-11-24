@@ -210,33 +210,11 @@ function shrinkStorySoFar(
   return true;
 }
 
-function shrinkVisibleTextFact(
-  bounded: Record<string, unknown>,
-  visible: Record<string, unknown>,
-  key: "situation" | "location",
-  maxChars: number,
-): boolean {
-  const fact = cloneObject(visible[key]);
-  if (!fact || typeof fact.text !== "string") return false;
-  const original = fact.text;
-  visible[key] = { ...fact, text: "" };
-  if (!serializedFits(bounded, maxChars)) return false;
-  const keep = largestFit(original.length, (len) => {
-    visible[key] = { ...fact, text: trimHead(original, len) };
-    return serializedFits(bounded, maxChars);
-  });
-  visible[key] = { ...fact, text: trimHead(original, keep) };
-  return true;
-}
-
 function shrinkFallbackStrings(
   bounded: Record<string, unknown>,
-  visible: Record<string, unknown> | undefined,
   maxChars: number,
 ): void {
-  if (shrinkStorySoFar(bounded, maxChars) || !visible) return;
-  if (shrinkVisibleTextFact(bounded, visible, "situation", maxChars)) return;
-  shrinkVisibleTextFact(bounded, visible, "location", maxChars);
+  shrinkStorySoFar(bounded, maxChars);
 }
 
 /**
@@ -289,7 +267,6 @@ export function boundPromptState<T extends Record<string, unknown>>(
     [visible, "objectives", "end"],
     [gmState, "gmThreads", "end"],
     [gmState, "secrets", "end"],
-    [playerScenarios, "items", "start"],
     [bounded, "GM-ONLY scenarios", "start"],
   ];
   for (const target of targets) {
@@ -297,6 +274,36 @@ export function boundPromptState<T extends Record<string, unknown>>(
     if (serializedFits(bounded, maxChars)) return bounded as T;
   }
 
-  shrinkFallbackStrings(bounded, visible, maxChars);
+  const scenarioItems = playerScenarios?.items;
+  if (Array.isArray(scenarioItems)) {
+    for (const item of scenarioItems) {
+      if (!item || typeof item !== "object") continue;
+      shrinkArrayTarget(bounded, maxChars, [
+        item as Record<string, unknown>,
+        "events",
+        "end",
+      ]);
+      if (serializedFits(bounded, maxChars)) return bounded as T;
+    }
+  }
+
+  shrinkArrayTarget(bounded, maxChars, [playerScenarios, "items", "start"]);
+  if (playerScenarios && Array.isArray(playerScenarios.items)) {
+    const focusedId = playerScenarios.focusedScenarioId;
+    if (
+      focusedId != null &&
+      !playerScenarios.items.some(
+        (item) =>
+          item &&
+          typeof item === "object" &&
+          (item as Record<string, unknown>).id === focusedId,
+      )
+    ) {
+      playerScenarios.focusedScenarioId = null;
+    }
+  }
+  if (serializedFits(bounded, maxChars)) return bounded as T;
+
+  shrinkFallbackStrings(bounded, maxChars);
   return bounded as T;
 }

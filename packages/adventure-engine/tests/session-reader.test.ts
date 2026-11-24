@@ -191,6 +191,11 @@ describe("session reader", () => {
     });
 
     expect(prompt.state.length).toBeLessThanOrEqual(MAX_SERIALIZED_STATE_CHARS);
+    const projectedScenarios = JSON.parse(prompt.state).playerScenarios;
+    expect(projectedScenarios.items).toHaveLength(1);
+    expect(projectedScenarios.focusedScenarioId).toBe("scenario-1");
+    expect(projectedScenarios.items[0].events.length).toBeGreaterThan(0);
+    expect(projectedScenarios.items[0].events.length).toBeLessThan(90);
     expect(loaded.scenarioCollection?.items[0]?.events).toHaveLength(90);
   });
 });
