@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  MAX_BEHAVIOR_PROMPT_CHARS,
   applyCompletedTurn,
   buildAdventurePrompt,
   isQuietTurn,
@@ -162,7 +163,7 @@ describe("scene stall pacing", () => {
     expect(behavior).toContain("force a crisis or artificial deadline");
     expect(behavior).toContain("decide the player's response");
 
-    // World Entry timed-stall prompts must remain under the 16,000-char budget without truncation
+    // World Entry timed-stall prompts must remain under the configured behavior budget without truncation
     const worldEntryStall = behaviorFor(
       session(
         [
@@ -180,7 +181,7 @@ describe("scene stall pacing", () => {
         },
       ),
     );
-    expect(worldEntryStall.length).toBeLessThan(16_000);
+    expect(worldEntryStall.length).toBeLessThan(MAX_BEHAVIOR_PROMPT_CHARS);
     expect(
       worldEntryStall.endsWith("Return only the requested structured schema."),
     ).toBe(true);
