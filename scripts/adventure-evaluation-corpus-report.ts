@@ -66,8 +66,30 @@ export interface CorpusTurnReport {
     threadMode: string;
     resetClassification: string;
     generationAttempts: number;
+    directorDelivery?: {
+      status: string;
+      reason: string;
+      deliveredChars: number;
+      recoveryReason?: string;
+    };
+    actionResolution?: {
+      outcome: string;
+      validation: string;
+      evidenceCategory: string;
+      droppedCount?: number;
+    };
+    repeatedSuggestedActions?: boolean;
   };
   executionFailure?: "generation" | "commit";
+}
+
+export interface CorpusTraceSummary {
+  directorDeliveryCounts: Record<string, number>;
+  actionOutcomeCounts: Record<string, number>;
+  actionValidationCounts: Record<string, number>;
+  unknownTelemetryTurns: number;
+  repeatedUnchangedSuggestions: number;
+  falseInterventions: number;
 }
 
 export interface CorpusCaseReport {
@@ -83,6 +105,7 @@ export interface CorpusCaseReport {
   passed: boolean;
   rubrics: RubricScores;
   progression: AdventureEvaluationCaseResult["progression"];
+  traceSummary?: CorpusTraceSummary;
   metrics: CorpusCallMetrics;
   turns: CorpusTurnReport[];
 }
@@ -241,6 +264,50 @@ function progressionFields(
   };
 }
 
+function deliveryFieldsForTurn(
+  delivery: AdventureEvaluationCaseResult["telemetry"]["turns"][number]["directorDelivery"],
+): Partial<NonNullable<CorpusTurnReport["generation"]>> {
+  if (!delivery) return {};
+  return {
+    directorDelivery: {
+      status: delivery.status,
+      reason: delivery.reason,
+      deliveredChars: delivery.deliveredChars,
+      ...(delivery.recoveryReason
+        ? { recoveryReason: delivery.recoveryReason }
+        : {}),
+    },
+  };
+}
+
+function actionFieldsForTurn(
+  action: AdventureEvaluationCaseResult["telemetry"]["turns"][number]["actionResolution"],
+): Partial<NonNullable<CorpusTurnReport["generation"]>> {
+  if (!action) return {};
+  return {
+    actionResolution: {
+      outcome: action.outcome,
+      validation: action.validation,
+      evidenceCategory: action.evidenceCategory,
+      ...(action.droppedCount !== undefined
+        ? { droppedCount: action.droppedCount }
+        : {}),
+    },
+  };
+}
+
+function traceFieldsForTurn(
+  telemetry: AdventureEvaluationCaseResult["telemetry"]["turns"][number],
+): Partial<NonNullable<CorpusTurnReport["generation"]>> {
+  return {
+    ...deliveryFieldsForTurn(telemetry.directorDelivery),
+    ...actionFieldsForTurn(telemetry.actionResolution),
+    ...(telemetry.repeatedSuggestedActions
+      ? { repeatedSuggestedActions: true }
+      : {}),
+  };
+}
+
 function generationFields(
   telemetry: AdventureEvaluationCaseResult["telemetry"]["turns"][number],
 ): NonNullable<CorpusTurnReport["generation"]> {
@@ -253,6 +320,7 @@ function generationFields(
     threadMode: telemetry.threadMode,
     resetClassification: telemetry.resetClassification,
     generationAttempts: telemetry.generationAttempts,
+    ...traceFieldsForTurn(telemetry),
   };
 }
 
@@ -300,6 +368,104 @@ function evaluationStatus(
     : "fail";
 }
 
+function incrementCount(counts: Record<string, number>, key: string): void {
+  counts[key] = (counts[key] ?? 0) + 1;
+}
+
+const DELIVERED_DIRECTOR_STATUSES = new Set([
+  "included",
+  "truncated",
+  "retained",
+]);
+const IGNORED_RECOVERY_REASONS = new Set<string | undefined>([
+  undefined,
+  "",
+  "none",
+]);
+
+export function isFalseIntervention(
+  delivery: NonNullable<CorpusTurnReport["generation"]>["directorDelivery"],
+  outcome: string,
+): boolean {
+  if (!delivery || outcome !== "unresolved") return false;
+  return (
+    !IGNORED_RECOVERY_REASONS.has(delivery.recoveryReason) &&
+    DELIVERED_DIRECTOR_STATUSES.has(delivery.status)
+  );
+}
+
+function recordUnknownTurnTrace(summary: CorpusTraceSummary): void {
+  incrementCount(summary.directorDeliveryCounts, "unknown");
+  incrementCount(summary.actionOutcomeCounts, "unknown");
+  incrementCount(summary.actionValidationCounts, "unknown");
+  summary.unknownTelemetryTurns += 1;
+}
+
+function isMissingTrace(
+  gen: NonNullable<CorpusTurnReport["generation"]>,
+): boolean {
+  return !gen.directorDelivery || !gen.actionResolution;
+}
+
+function recordGenerationTraceFlags(
+  summary: CorpusTraceSummary,
+  gen: NonNullable<CorpusTurnReport["generation"]>,
+  outcome: string,
+): void {
+  if (isMissingTrace(gen)) summary.unknownTelemetryTurns += 1;
+  if (gen.repeatedSuggestedActions) summary.repeatedUnchangedSuggestions += 1;
+  if (isFalseIntervention(gen.directorDelivery, outcome)) {
+    summary.falseInterventions += 1;
+  }
+}
+
+function traceLabels(gen: NonNullable<CorpusTurnReport["generation"]>) {
+  return {
+    deliveryStatus: gen.directorDelivery
+      ? gen.directorDelivery.status
+      : "unknown",
+    outcome: gen.actionResolution ? gen.actionResolution.outcome : "unknown",
+    validation: gen.actionResolution
+      ? gen.actionResolution.validation
+      : "unknown",
+  };
+}
+
+function recordTurnTrace(
+  summary: CorpusTraceSummary,
+  turn: CorpusTurnReport,
+): void {
+  const gen = turn.generation;
+  if (!gen) {
+    recordUnknownTurnTrace(summary);
+    return;
+  }
+  const { deliveryStatus, outcome, validation } = traceLabels(gen);
+  incrementCount(summary.directorDeliveryCounts, deliveryStatus);
+  incrementCount(summary.actionOutcomeCounts, outcome);
+  incrementCount(summary.actionValidationCounts, validation);
+  recordGenerationTraceFlags(summary, gen, outcome);
+}
+
+function summarizeCaseTraces(
+  turns: CorpusTurnReport[],
+  telemetryTurns: number[],
+): CorpusTraceSummary {
+  const summary: CorpusTraceSummary = {
+    directorDeliveryCounts: {},
+    actionOutcomeCounts: {},
+    actionValidationCounts: {},
+    unknownTelemetryTurns: 0,
+    repeatedUnchangedSuggestions: 0,
+    falseInterventions: 0,
+  };
+  const reachedTurns = new Set(telemetryTurns);
+  for (const turn of turns) {
+    if (reachedTurns.has(turn.turn)) recordTurnTrace(summary, turn);
+  }
+  return summary;
+}
+
 export function buildCorpusCaseReport(
   prepared: PreparedCorpusCase,
   condition: AdventureEvaluationCondition,
@@ -330,6 +496,10 @@ export function buildCorpusCaseReport(
       unnecessaryEscalation: result.unnecessaryEscalation,
     },
     progression: result.progression,
+    traceSummary: summarizeCaseTraces(
+      turns,
+      result.telemetry.turns.map((turn) => turn.turn),
+    ),
     metrics,
     turns,
   };

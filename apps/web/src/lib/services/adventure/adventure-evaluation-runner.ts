@@ -10,9 +10,12 @@ import {
   evaluateAdventureRun,
   parseAdventureSession,
   resolveRecordedRoll,
+  type ActionResolutionTrace,
   type AdventureSession,
   type AdventureTurnProposal,
+  type DirectorDeliveryTrace,
   type EvaluationTurn,
+  type GenerationMetadata,
   type GenerationResetReason,
   type GenerationThreadMode,
   type TurnProgressKind,
@@ -83,6 +86,9 @@ export interface AdventureEvaluationTurnTelemetry {
   generationAttempts: number;
   committed: boolean;
   progressKind?: TurnProgressKind;
+  directorDelivery?: DirectorDeliveryTrace;
+  actionResolution?: ActionResolutionTrace;
+  repeatedSuggestedActions?: boolean;
   expectedSignals: {
     substantiveAnswer?: boolean;
     actionableProgression?: boolean;
@@ -644,6 +650,42 @@ function accumulateExpectedSignals(
   progression.expectedSignalsFailed += signals.length - met;
 }
 
+function resolveTelemetryActionResolution(
+  commit: ReturnType<typeof commitProposal>,
+  proposal: EvaluationProposal,
+): ActionResolutionTrace | undefined {
+  if (commit.committed) {
+    return commit.session.turns.at(-1)?.generation?.actionResolution;
+  }
+  if (commit.failed) {
+    return {
+      outcome: "unresolved",
+      validation: "rejected",
+      evidenceCategory: "rejected-turn",
+    };
+  }
+  if (proposal.kind === "roll-required") {
+    return {
+      outcome: "roll-required",
+      validation: "accepted",
+      evidenceCategory: "roll-pending",
+    };
+  }
+  return undefined;
+}
+
+function hasRepeatedSuggestions(
+  previousSession: AdventureSession,
+  proposal: EvaluationProposal,
+): boolean {
+  const prev = previousSession.turns.at(-1)?.suggestedActions;
+  const next = proposal.suggestedActions;
+  if (!prev?.length || !next?.length || prev.length !== next.length) {
+    return false;
+  }
+  return prev.every((item, idx) => item === next[idx]);
+}
+
 export class AdventureEvaluationRunner {
   constructor(
     private readonly generation: EvaluationGenerationService,
@@ -1059,7 +1101,7 @@ export class AdventureEvaluationRunner {
       generated.attemptsMade,
       proposal,
       evaluation,
-      commit.committed,
+      commit,
       progressKind,
       state,
     );
@@ -1071,12 +1113,18 @@ export class AdventureEvaluationRunner {
     attemptsMade: number,
     proposal: EvaluationProposal,
     evaluation: EvaluationTurn,
-    committed: boolean,
+    commit: ReturnType<typeof commitProposal>,
     progressKind: TurnProgressKind | undefined,
     state: CaseExecutionState,
   ): void {
-    const { step, index, contextMode } = prepared;
+    const { previousSession, step, index, contextMode } = prepared;
+    const committed = commit.committed;
     const generationInfo = generationInfoOf(proposal);
+    const actionResolution = resolveTelemetryActionResolution(commit, proposal);
+    const repeatedSuggestedActions = hasRepeatedSuggestions(
+      previousSession,
+      proposal,
+    );
     state.turnTelemetry.push({
       turn: index + 1,
       modelKey: unknownWhenMissing(generationInfo.modelKey),
@@ -1093,6 +1141,11 @@ export class AdventureEvaluationRunner {
       generationAttempts: attemptsMade,
       committed,
       ...(progressKind ? { progressKind } : {}),
+      ...(generationInfo.directorDelivery
+        ? { directorDelivery: generationInfo.directorDelivery }
+        : {}),
+      ...(actionResolution ? { actionResolution } : {}),
+      ...(repeatedSuggestedActions ? { repeatedSuggestedActions: true } : {}),
       expectedSignals: expectedSignalsFor(
         step,
         evaluation,
@@ -1216,9 +1269,32 @@ function groundingPurpose(
   return "action";
 }
 
+const GENERATION_METADATA_KEYS = [
+  "modelKey",
+  "reasoningEffort",
+  "transport",
+  "threadMode",
+  "resetReason",
+  "directorDelivery",
+  "requestChars",
+  "sourceCounts",
+  "scenarioIds",
+] as const;
+
+function generationMetadataFromInfo(
+  info: AdventureGenerationInfo | undefined,
+): GenerationMetadata | undefined {
+  if (!info) return undefined;
+  const out: Record<string, unknown> = {};
+  for (const key of GENERATION_METADATA_KEYS) {
+    if (info[key] !== undefined) out[key] = info[key];
+  }
+  return out as GenerationMetadata;
+}
+
 function commitProposal(
   session: AdventureSession,
-  proposal: AdventureTurnProposal,
+  proposal: EvaluationProposal,
   testCase: AdventureEvaluationCase,
   step: AdventureEvaluationStep,
   index: number,
@@ -1226,11 +1302,13 @@ function commitProposal(
 ): { session: AdventureSession; failed: boolean; committed: boolean } {
   if (proposal.kind !== "complete")
     return { session, failed: false, committed: false };
+  const generation = generationMetadataFromInfo(proposal.generationInfo);
   const metadata = {
     turnId: `${testCase.id}-turn-${index + 1}`,
     inputId: `${testCase.id}-input-${index + 1}`,
     now: commitNow(),
     playerAction: step.playerAction,
+    ...(generation ? { generation } : {}),
   };
   const committed =
     step.phase === "roll-resolution"
