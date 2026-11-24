@@ -11,6 +11,7 @@ import { playerScenarioCollectionProjection } from "./scenario-state";
 import { ensureScenarioSecrets } from "./hidden-state";
 import { packageProgressPromptSummary } from "./package-progress";
 import { worldEntryPacing } from "./world-entry-pacing";
+import { compactHotPromptState } from "./prompt-compaction";
 import { boundPromptState, projectVisibleState } from "./prompt-state";
 import { sceneStallPacing } from "./scene-pacing";
 import { dialogueLoopPacing } from "./dialogue-pacing";
@@ -163,7 +164,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     input.playerAction,
   );
   const baseState = boundPromptState(
-    buildBasePromptState(input, scenarios, pacing),
+    compactHotPromptState(buildBasePromptState(input, scenarios, pacing)),
     MAX_SERIALIZED_STATE_CHARS,
   );
   const headroom =
