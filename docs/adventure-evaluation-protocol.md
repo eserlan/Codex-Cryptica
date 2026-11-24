@@ -175,6 +175,23 @@ Ran the corrected local-proxy harness at low effort with Director off/on and ret
 
 Both arms had zero rubric failures, NPC-knowledge violations, repeated non-answers, or causal-consistency failures; each produced one useful negative finding and one quiet outcome. Meaningful scenario advances were 1 off and 2 on. The Director-on sample used 12,233 more input tokens and cost $0.001084 more, with 1.95 seconds more summed request latency. The eighth turn was classified as the scripted provider-history reset in both arms. One sample per arm is not a pass-rate estimate or causal result.
 
+### Synthetic Adventure Corpus (#5160)
+
+Keep The Last Grind as a targeted regression. The separate synthetic corpus in `scripts/adventure-evaluation-corpus-fixtures.ts` adds two independent adventures, each with an investigation path and a quiet/off-script path. The paths cover witness knowledge limits, repeated questions, physical clues, uncertain testimony, earned reveals, partial actions, player corrections, context reset recovery, peaceful detours, and return visits.
+
+Run the deterministic fixture, beat-scoring, capture, and report tests in CI. A live comparison is explicitly opt-in and pairs the same fixture path, initial session, and actions across Director-on/off:
+
+```bash
+bun scripts/adventure-corpus-eval.ts --live --samples 3 \
+  --efforts low --contexts retained --directors off,on \
+  --proxy http://127.0.0.1:8787 \
+  --output /tmp/gm-director-corpus-live
+```
+
+Without `--live`, the command only prints the selected run count and makes no provider calls. Live reports contain per-turn player-facing output, expected-beat coverage (`present`, `partial`, or `absent`), hard-gate results, progression signals, context/reset metadata, and available usage metrics. The authored-beat matcher is a transparent phrase-coverage signal, not a semantic judge. Prompts and GM-only text are never written; output is redacted when the secrecy hard gate fails. Missing provider usage or registry pricing remains `unavailable`.
+
+The default one-sample report is descriptive. The report marks a treatment comparison eligible for review only when every path has at least three paired samples under both treatments on at least two fixtures. This threshold is necessary for a treatment claim, not proof of causation by itself. Do not infer a default change without consistent predeclared progression gains, clean secrecy/canon/agency gates, and the measured latency/cost trade-off.
+
 ### Existing Live-Model Baseline Recording Template
 
 Record one row per evaluated provider/model during manual or live-API benchmark runs:

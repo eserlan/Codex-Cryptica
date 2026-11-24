@@ -38,7 +38,12 @@ export interface ProxyCallRecord {
   failureClass?: string;
 }
 
-interface CliOptions {
+export interface AdventureEvaluationProxyConfig {
+  proxy: string;
+  origin: string;
+}
+
+export interface CliOptions {
   live: boolean;
   efforts: Array<"low" | "medium">;
   directors: boolean[];
@@ -49,7 +54,7 @@ interface CliOptions {
   output: string;
 }
 
-function parseChoices<T extends string>(
+export function parseChoices<T extends string>(
   raw: string,
   allowed: readonly T[],
   label: string,
@@ -61,12 +66,12 @@ function parseChoices<T extends string>(
   return [...new Set(values as T[])];
 }
 
-function parseDirectors(raw: string): boolean[] {
+export function parseDirectors(raw: string): boolean[] {
   const values = parseChoices(raw, ["on", "off"] as const, "Directors");
   return values.map((value) => value === "on");
 }
 
-function parseSampleCount(raw: string): number {
+export function parseSampleCount(raw: string): number {
   const samples = Number(raw);
   if (!Number.isInteger(samples) || samples < 1 || samples > 3) {
     throw new Error("Samples must be an integer from 1 to 3.");
@@ -74,7 +79,7 @@ function parseSampleCount(raw: string): number {
   return samples;
 }
 
-function parseLocalProxy(raw: string): string {
+export function parseLocalProxy(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw);
@@ -115,7 +120,7 @@ function hasNoQueryOrFragment(url: URL): boolean {
   return !url.search && !url.hash;
 }
 
-function parseOrigin(raw: string): string {
+export function parseOrigin(raw: string): string {
   let url: URL;
   try {
     url = new URL(raw);
@@ -138,13 +143,23 @@ function isPlainHttpOrigin(url: URL): boolean {
   return isHttpProtocol(url) && hasNoCredentials(url) && url.pathname === "/";
 }
 
-function parseCli(): CliOptions {
+export interface CliDefaults {
+  efforts: string;
+  contexts: string;
+  output: string;
+}
+
+export function parseEvaluationCliArgs(
+  args: string[],
+  defaults: CliDefaults,
+): CliOptions {
   const { values } = parseArgs({
+    args,
     options: {
       live: { type: "boolean", default: false },
-      efforts: { type: "string", default: "low,medium" },
+      efforts: { type: "string", default: defaults.efforts },
       directors: { type: "string", default: "off,on" },
-      contexts: { type: "string", default: "retained,reconstructed" },
+      contexts: { type: "string", default: defaults.contexts },
       samples: { type: "string", default: "1" },
       proxy: {
         type: "string",
@@ -156,10 +171,11 @@ function parseCli(): CliOptions {
       },
       output: {
         type: "string",
-        default: "docs/experiments/gm-director-matrix-live-2026-11-24",
+        default: defaults.output,
       },
     },
     strict: true,
+    allowPositionals: false,
   });
   return {
     live: values.live!,
@@ -179,6 +195,14 @@ function parseCli(): CliOptions {
     origin: parseOrigin(values.origin!),
     output: resolve(values.output!),
   };
+}
+
+function parseCli(): CliOptions {
+  return parseEvaluationCliArgs(process.argv.slice(2), {
+    efforts: "low,medium",
+    contexts: "retained,reconstructed",
+    output: "docs/experiments/gm-director-matrix-live-2026-11-24",
+  });
 }
 
 function conditionsFor(cli: CliOptions): AdventureEvaluationCondition[] {
@@ -204,8 +228,8 @@ function makeCase(sample: number): AdventureEvaluationCase {
   };
 }
 
-function createGenerationService(
-  cli: CliOptions,
+export function createGenerationService(
+  cli: AdventureEvaluationProxyConfig,
   calls: ProxyCallRecord[],
 ): AdventureTurnGenerationService {
   const authenticatedFetch: typeof fetch = (input, init) => {
@@ -479,11 +503,12 @@ function estimatedPrice(
   return calls.reduce((sum, call) => sum + priceForCall(call), 0);
 }
 
-function callTotals(calls: ProxyCallRecord[]) {
+export function callTotals(calls: ProxyCallRecord[]) {
   const inputTokens = readUsageTotal(calls, "inputTokens");
   const outputTokens = readUsageTotal(calls, "outputTokens");
   const reasoningTokens = readUsageTotal(calls, "reasoningTokens");
   const price = estimatedPrice(calls, inputTokens, outputTokens);
+  const unavailable = "unavailable" as const;
   return {
     modelCalls: calls.length,
     completedRequests: calls.filter((call) => call.completed).length,
@@ -499,9 +524,9 @@ function callTotals(calls: ProxyCallRecord[]) {
           .filter((key): key is string => Boolean(key)),
       ),
     ],
-    inputTokens: inputTokens ?? "unavailable",
-    outputTokens: outputTokens ?? "unavailable",
-    reasoningTokens: reasoningTokens ?? "unavailable",
+    inputTokens: inputTokens ?? unavailable,
+    outputTokens: outputTokens ?? unavailable,
+    reasoningTokens: reasoningTokens ?? unavailable,
     estimatedPriceUsd: roundedPrice(price),
   };
 }

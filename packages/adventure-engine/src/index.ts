@@ -7,6 +7,7 @@ export * from "./session-tools";
 export * from "./context-budget";
 export * from "./prompt";
 export * from "./evaluations";
+export * from "./evaluation-beats";
 export * from "./scenario-state";
 export * from "./scenario-schemas";
 export * from "./scenario-migration";
