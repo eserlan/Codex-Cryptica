@@ -80,6 +80,25 @@ type CueSession = ArtworkPlaceSession &
     places?: readonly Place[];
   };
 
+function collectVisibleEntityNames(
+  places: readonly Place[] | undefined,
+  facts: readonly StateFact[],
+): Set<string> {
+  const names = new Set<string>();
+  for (const place of places ?? []) {
+    const normalized = place.name.trim().toLowerCase().replace(/\s+/g, " ");
+    if (normalized) names.add(normalized);
+  }
+  for (const fact of facts) {
+    const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+    const normalizedName = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
+    if (normalizedName) names.add(normalizedName);
+    const visibleText = fact.text.trim().toLowerCase().replace(/\s+/g, " ");
+    if (visibleText) names.add(visibleText);
+  }
+  return names;
+}
+
 /** Summarize active place/NPC artwork cues and whether the catalogue matched them. */
 function resolvePlaceCueMatch(
   placeSelected: ReturnType<typeof currentPlaceSelection>,
@@ -146,18 +165,7 @@ export function summarizeArtworkCues(
     theme,
   );
   const { hereCharacters } = filterHereCharacters(session);
-  const entityNames = new Set<string>();
-  for (const item of session.places ?? []) {
-    const normalized = item.name.trim().toLowerCase().replace(/\s+/g, " ");
-    if (normalized) entityNames.add(normalized);
-  }
-  for (const fact of hereCharacters) {
-    const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
-    const normalized = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
-    if (normalized) entityNames.add(normalized);
-    const visibleText = fact.text.trim().toLowerCase().replace(/\s+/g, " ");
-    if (visibleText) entityNames.add(visibleText);
-  }
+  const entityNames = collectVisibleEntityNames(session.places, hereCharacters);
 
   return {
     genre,
