@@ -128,38 +128,55 @@ function collectVisibleTextSet(visible: unknown): {
   return { texts, sourceRecordIds };
 }
 
+function hasVisibleSecretCopy(
+  secret: JsonRecord,
+  visibleCopy: { texts: Set<string>; sourceRecordIds: Set<string> },
+): boolean {
+  if (
+    typeof secret.id === "string" &&
+    visibleCopy.sourceRecordIds.has(secret.id)
+  ) {
+    return true;
+  }
+  return (
+    typeof secret.text === "string" &&
+    visibleCopy.texts.has(secret.text.trim().toLowerCase())
+  );
+}
+
+function compactRevealedSecretEntry(
+  secret: unknown,
+  visibleCopy: { texts: Set<string>; sourceRecordIds: Set<string> },
+  maxTextChars?: number,
+): unknown {
+  if (!isRecord(secret) || secret.status !== "revealed") return secret;
+  const result: JsonRecord = { id: secret.id, status: "revealed" };
+  if (secret.revealedOnTurnId !== undefined) {
+    result.revealedOnTurnId = secret.revealedOnTurnId;
+  }
+  if (
+    typeof secret.text === "string" &&
+    !hasVisibleSecretCopy(secret, visibleCopy)
+  ) {
+    result.text =
+      maxTextChars !== undefined
+        ? clipText(secret.text, maxTextChars)
+        : secret.text;
+  }
+  return result;
+}
+
 function compactRevealedSecrets(
   gmState: unknown,
   visibleCopy: { texts: Set<string>; sourceRecordIds: Set<string> },
   maxTextChars?: number,
 ): unknown {
-  if (!isRecord(gmState)) return gmState;
-  const secrets = Array.isArray(gmState.secrets) ? gmState.secrets : undefined;
-  if (!secrets) return gmState;
+  if (!isRecord(gmState) || !Array.isArray(gmState.secrets)) return gmState;
   return {
     ...gmState,
-    secrets: secrets.map((secret) => {
-      if (!isRecord(secret) || secret.status !== "revealed") return secret;
-      const hasVisibleCopy =
-        (typeof secret.id === "string" &&
-          visibleCopy.sourceRecordIds.has(secret.id)) ||
-        (typeof secret.text === "string" &&
-          visibleCopy.texts.has(secret.text.trim().toLowerCase()));
-      const retainedText =
-        !hasVisibleCopy && typeof secret.text === "string"
-          ? maxTextChars !== undefined
-            ? clipText(secret.text, maxTextChars)
-            : secret.text
-          : undefined;
-      return {
-        id: secret.id,
-        status: "revealed",
-        ...(secret.revealedOnTurnId !== undefined
-          ? { revealedOnTurnId: secret.revealedOnTurnId }
-          : {}),
-        ...(retainedText !== undefined ? { text: retainedText } : {}),
-      };
-    }),
+    secrets: gmState.secrets.map((secret) =>
+      compactRevealedSecretEntry(secret, visibleCopy, maxTextChars),
+    ),
   };
 }
 
@@ -243,6 +260,55 @@ function compactVisibleState(
   };
 }
 
+const SUPERSEDED_PROVISIONAL_KEYS = [
+  "visibility",
+  "provenance",
+  "introducedOnTurnId",
+  "sourceOocExchangeId",
+  "scenarioId",
+] as const;
+
+function compactSupersededProvisionalFact(
+  entry: JsonRecord,
+  briefChars: number,
+): JsonRecord {
+  const result: JsonRecord = {
+    id: entry.id,
+    kind: entry.kind,
+    supersededById: entry.supersededById,
+  };
+  if (typeof entry.name === "string") {
+    result.name = clipText(entry.name, briefChars);
+  }
+  for (const key of SUPERSEDED_PROVISIONAL_KEYS) {
+    if (entry[key] !== undefined) result[key] = entry[key];
+  }
+  return result;
+}
+
+function compactProvisionalFactEntry(
+  entry: unknown,
+  keepFull: boolean,
+  briefChars: number,
+): unknown {
+  if (!isRecord(entry)) return entry;
+  if (
+    typeof entry.supersededById === "string" &&
+    entry.supersededById.length > 0
+  ) {
+    return compactSupersededProvisionalFact(entry, briefChars);
+  }
+  if (keepFull) return entry;
+  const result: JsonRecord = { ...entry };
+  if (typeof entry.name === "string") {
+    result.name = clipText(entry.name, briefChars);
+  }
+  if (typeof entry.summary === "string") {
+    result.summary = clipText(entry.summary, briefChars);
+  }
+  return result;
+}
+
 function compactProvisionalFacts(
   facts: unknown,
   recentFull = HOT_FACT_RECENT_FULL,
@@ -252,60 +318,18 @@ function compactProvisionalFacts(
   const activeIndices: number[] = [];
   for (let i = 0; i < facts.length; i += 1) {
     const entry = facts[i];
-    if (
-      !isRecord(entry) ||
-      typeof entry.supersededById !== "string" ||
-      entry.supersededById.length === 0
-    ) {
-      activeIndices.push(i);
-    }
+    const isSuperseded =
+      isRecord(entry) &&
+      typeof entry.supersededById === "string" &&
+      entry.supersededById.length > 0;
+    if (!isSuperseded) activeIndices.push(i);
   }
   const activeCutoff = Math.max(0, activeIndices.length - recentFull);
   const fullActiveSet = new Set(activeIndices.slice(activeCutoff));
 
-  return facts.map((entry, index) => {
-    if (!isRecord(entry)) return entry;
-    if (
-      typeof entry.supersededById === "string" &&
-      entry.supersededById.length > 0
-    ) {
-      return {
-        id: entry.id,
-        kind: entry.kind,
-        ...(typeof entry.name === "string"
-          ? { name: clipText(entry.name, briefChars) }
-          : {}),
-        supersededById: entry.supersededById,
-        ...(entry.visibility !== undefined
-          ? { visibility: entry.visibility }
-          : {}),
-        ...(entry.provenance !== undefined
-          ? { provenance: entry.provenance }
-          : {}),
-        ...(entry.introducedOnTurnId !== undefined
-          ? { introducedOnTurnId: entry.introducedOnTurnId }
-          : {}),
-        ...(entry.sourceOocExchangeId !== undefined
-          ? { sourceOocExchangeId: entry.sourceOocExchangeId }
-          : {}),
-        ...(entry.scenarioId !== undefined
-          ? { scenarioId: entry.scenarioId }
-          : {}),
-      };
-    }
-    if (fullActiveSet.has(index)) {
-      return entry;
-    }
-    return {
-      ...entry,
-      ...(typeof entry.name === "string"
-        ? { name: clipText(entry.name, briefChars) }
-        : {}),
-      ...(typeof entry.summary === "string"
-        ? { summary: clipText(entry.summary, briefChars) }
-        : {}),
-    };
-  });
+  return facts.map((entry, index) =>
+    compactProvisionalFactEntry(entry, fullActiveSet.has(index), briefChars),
+  );
 }
 
 function applyScenarioCompaction(
