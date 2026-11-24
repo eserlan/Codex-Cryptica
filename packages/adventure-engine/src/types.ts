@@ -27,6 +27,8 @@ export interface StateFact {
   text: string;
   source: "canonical" | "provisional" | "revealed-secret";
   sourceRecordId?: string;
+  /** Optional AdventurePerson ID linking this scene-presence entry to session.people. */
+  personId?: string;
   /** Where this fact belongs. Absent means it applies everywhere (legacy and unplaced facts). */
   placeId?: string;
   /** Optional visual artwork cues emitted by the GM (used for activeCharacters). */
@@ -87,6 +89,29 @@ export interface HiddenSecret {
   revealedOnTurnId?: string;
 }
 
+export type EmergentThreadStatus = "open" | "resolved" | "abandoned" | "cold";
+
+export interface EmergentThread {
+  id: string;
+  title: string;
+  status: EmergentThreadStatus;
+  provenance: "play" | "ooc" | "mixed";
+  topicTokens: string[];
+  linkedPersonIds: string[];
+  linkedPlaceIds: string[];
+  linkedFactIds: string[];
+  linkedCommitmentIds: string[];
+  openQuestions: string[];
+  knownConsequences: string[];
+  /** GM-only conjectures and outstanding developments; never exposed to players. */
+  gmOnlyDevelopments: string[];
+  /** Optional explicit compatible link to an authored ScenarioItem without converting it. */
+  linkedScenarioId?: string;
+  createdAtTurnId: string;
+  updatedAtTurnId: string;
+  turnCount: number;
+}
+
 export interface HiddenThread {
   id: string;
   text: string;
@@ -116,6 +141,8 @@ export interface ProvisionalFact {
   introducedOnTurnId?: string;
   sourceOocExchangeId?: string;
   provenance?: "play" | "ooc";
+  supersededById?: string;
+  aliases?: string[];
   visibility: "player-visible" | "gm-only";
   scenarioId?: string;
 }
@@ -131,6 +158,8 @@ export interface NewOocDecision {
   kind: ProvisionalFact["kind"];
   name: string;
   summary: string;
+  aliases?: string[];
+  supersedesName?: string;
   visibility: ProvisionalFact["visibility"];
 }
 
@@ -319,6 +348,20 @@ export type GenerationResetReason =
   | "app-lifetime"
   | "unknown";
 
+export type LocalSaveOperation =
+  | "turn-commit"
+  | "ooc-exchange"
+  | "artwork-save"
+  | "dice-preset"
+  | "resource-counter"
+  | "state-correction"
+  | "scenario-update"
+  | "place-link"
+  | "story-summary"
+  | "session-resume"
+  | "external-or-concurrent"
+  | "unknown";
+
 export interface GenerationMetadata {
   /** Model registry key only; the string "unknown" when no mapping exists. */
   modelKey?: string;
@@ -327,6 +370,8 @@ export interface GenerationMetadata {
   transport?: GenerationTransport;
   threadMode?: GenerationThreadMode;
   resetReason?: GenerationResetReason;
+  /** Bounded GM-only local persistence cause when `resetReason === "revision-mismatch"`. */
+  revisionMismatchCause?: LocalSaveOperation;
   requestChars?: number;
   sourceCounts?: Record<string, number>;
   /** Selected scenario IDs. GM-only. */
@@ -563,6 +608,10 @@ export interface AdventureSession {
   provisionalFacts: ProvisionalFact[];
   /** GM-only emergent causal commitments (#5111); absent on older sessions. */
   causalCommitments?: CausalCommitment[];
+  /** Durable player-led emergent investigation threads (#5177); separate from scenarioCollection. */
+  emergentThreads?: EmergentThread[];
+  /** Optional player-focused emergent thread ID; never fabricates a scenarioId. */
+  focusedEmergentThreadId?: string | null;
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
   turns: CommittedAdventureTurn[];
@@ -786,6 +835,13 @@ export interface AdventureRecap {
   recentTurnSummaries: string[];
   elapsedTimeLabel?: string;
   knownLeads?: KnownLeadRecap[];
+  emergentLeads?: Array<{
+    id: string;
+    title: string;
+    status: EmergentThreadStatus;
+    focused: boolean;
+    openQuestion?: string;
+  }>;
 }
 
 /** A roll history entry: a committed turn paired with the roll it resolved. */

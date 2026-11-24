@@ -52,6 +52,27 @@ const storySoFarSchema = z
   })
   .strict();
 
+export const emergentThreadSchema = z
+  .object({
+    id,
+    title: z.string().trim().min(1).max(160),
+    status: z.enum(["open", "resolved", "abandoned", "cold"]),
+    provenance: z.enum(["play", "ooc", "mixed"]),
+    topicTokens: z.array(z.string().trim().min(1).max(48)).max(16),
+    linkedPersonIds: z.array(id).max(24),
+    linkedPlaceIds: z.array(id).max(24),
+    linkedFactIds: z.array(id).max(32),
+    linkedCommitmentIds: z.array(id).max(24),
+    openQuestions: z.array(text).max(8),
+    knownConsequences: z.array(text).max(12),
+    gmOnlyDevelopments: z.array(text).max(8),
+    linkedScenarioId: id.optional(),
+    createdAtTurnId: id,
+    updatedAtTurnId: id,
+    turnCount: z.number().int().nonnegative(),
+  })
+  .strict();
+
 export const adventureSessionSchema = z
   .object({
     schemaVersion: z.literal(CURRENT_ADVENTURE_SCHEMA_VERSION),
@@ -105,6 +126,8 @@ export const adventureSessionSchema = z
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
     causalCommitments: z.array(causalCommitmentSchema).optional(),
+    emergentThreads: z.array(emergentThreadSchema).max(16).optional(),
+    focusedEmergentThreadId: id.nullable().optional(),
     dismissedProvisionalFactIds: z.array(id).max(60).optional().default([]),
     turns: z.array(persistedTurnSchema),
     oocExchanges: z

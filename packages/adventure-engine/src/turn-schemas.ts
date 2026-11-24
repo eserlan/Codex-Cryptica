@@ -107,12 +107,28 @@ export const generationResetReasonSchema = z.enum([
  * legacy turns parse; unknown keys are stripped rather than rejected so a
  * future additive field never breaks an older reader.
  */
+const localSaveOperationSchema = z.enum([
+  "turn-commit",
+  "ooc-exchange",
+  "artwork-save",
+  "dice-preset",
+  "resource-counter",
+  "state-correction",
+  "scenario-update",
+  "place-link",
+  "story-summary",
+  "session-resume",
+  "external-or-concurrent",
+  "unknown",
+]);
+
 export const generationMetadataSchema = z.object({
   modelKey: z.string().min(1).max(120).optional(),
   reasoningEffort: generationReasoningEffortSchema.optional(),
   transport: generationTransportSchema.optional(),
   threadMode: generationThreadModeSchema.optional(),
   resetReason: generationResetReasonSchema.optional(),
+  revisionMismatchCause: localSaveOperationSchema.optional(),
   requestChars: z.number().int().nonnegative().max(1_000_000).optional(),
   sourceCounts: z
     .record(

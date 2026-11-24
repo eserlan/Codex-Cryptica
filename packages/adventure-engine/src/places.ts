@@ -1,3 +1,7 @@
+import {
+  detectCompanionTravelIds,
+  reconcileDuplicateActiveCharacters,
+} from "./npc-presence";
 import { MAX_PLACES } from "./schemas";
 import { matchPlace, withAlias } from "./place-names";
 import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
@@ -116,11 +120,16 @@ interface TagContext {
   previousId: string | undefined;
   /** People not mentioned in a move turn stay where the player left them. */
   park: boolean;
+  /** Non-move updates to knownFacts preserve their earlier place; activeCharacters move to currentId. */
+  keepEarlierPlace: boolean;
 }
 
 function placeFor(fact: StateFact, c: TagContext): string | undefined {
   if (c.touched.has(fact.id)) {
-    const stayed = c.moved ? undefined : c.earlier.get(fact.id)?.placeId;
+    const stayed =
+      c.keepEarlierPlace && !c.moved
+        ? c.earlier.get(fact.id)?.placeId
+        : undefined;
     return stayed ?? c.currentId;
   }
   return c.park && c.moved ? c.previousId : undefined;
@@ -195,6 +204,7 @@ export function applyPlaces(
   visiblePatch: VisibleStatePatch,
   createId: IdFactory,
   placeCues?: readonly string[],
+  travelContext?: { playerAction: string; narration: string },
 ): PlaceStepResult {
   const ids = existingIds(candidate);
   const seeded = resolveSeededPlaces(previous, ids, createId);
@@ -215,8 +225,20 @@ export function applyPlaces(
   const moved = Boolean(move) && currentId !== seeded.previousId;
   const state = candidate.visibleState;
   const tag = (key: "knownFacts" | "activeCharacters", park: boolean) => {
+    const touched = touchedIds(visiblePatch[key]);
+    if (key === "activeCharacters" && moved && travelContext) {
+      for (const companionId of detectCompanionTravelIds(
+        previous.visibleState.activeCharacters,
+        travelContext.playerAction,
+        travelContext.narration,
+        seeded.previousId,
+        touched,
+      )) {
+        touched.add(companionId);
+      }
+    }
     const context: TagContext = {
-      touched: touchedIds(visiblePatch[key]),
+      touched,
       earlier: new Map(
         previous.visibleState[key].map((fact) => [fact.id, fact]),
       ),
@@ -224,11 +246,16 @@ export function applyPlaces(
       currentId,
       previousId: seeded.previousId,
       park,
+      keepEarlierPlace: !park,
     };
     state[key] = state[key].map((fact) => tagFact(fact, context));
   };
   tag("knownFacts", false);
   tag("activeCharacters", true);
+  state.activeCharacters = reconcileDuplicateActiveCharacters(
+    state.activeCharacters,
+    candidate.people,
+  );
   return { ok: true };
 }
 

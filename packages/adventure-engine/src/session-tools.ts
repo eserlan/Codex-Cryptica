@@ -4,6 +4,11 @@
  * reducer.ts (turn/roll transitions) per the module-per-concern layout
  * established in Phase 1. See specs/2306-adventure-phase-2-play-tools/.
  */
+import {
+  projectPlayerEmergentThreads,
+  setFocusedEmergentThread,
+  updateEmergentThreadStatus,
+} from "./emergent-threads";
 import { applyVisiblePatch } from "./reducer";
 import { isHere } from "./places";
 import { validateStateBudget } from "./schemas";
@@ -67,6 +72,21 @@ export function buildAdventureRecap(
       focused: projectedScenarios.focusedScenarioId === item.id,
       lastUpdate: item.events.at(-1)?.text,
     }));
+  const emergentLeads = projectPlayerEmergentThreads(session)
+    .filter(
+      (thread) =>
+        thread.status === "open" ||
+        session.focusedEmergentThreadId === thread.id,
+    )
+    .map((thread) => ({
+      id: thread.id,
+      title: thread.title,
+      status: thread.status,
+      focused: session.focusedEmergentThreadId === thread.id,
+      ...(thread.openQuestions.at(-1)
+        ? { openQuestion: thread.openQuestions.at(-1) }
+        : {}),
+    }));
   const elapsedTimeLabel =
     session.worldTime && session.worldTime.elapsedMinutes > 0
       ? formatWorldElapsedMinutes(session.worldTime.elapsedMinutes)
@@ -83,8 +103,30 @@ export function buildAdventureRecap(
     ),
     recentTurnSummaries: recentTurns.map((turn) => turn.narration),
     ...(knownLeads.length > 0 ? { knownLeads } : {}),
+    ...(emergentLeads.length > 0 ? { emergentLeads } : {}),
     ...(elapsedTimeLabel ? { elapsedTimeLabel } : {}),
   };
+}
+
+export function followEmergentThread(
+  session: AdventureSession,
+  threadId: string,
+): AdventureSession {
+  return setFocusedEmergentThread(session, threadId);
+}
+
+export function unfollowEmergentThread(
+  session: AdventureSession,
+): AdventureSession {
+  return setFocusedEmergentThread(session, null);
+}
+
+export function closeEmergentThread(
+  session: AdventureSession,
+  threadId: string,
+  status: "resolved" | "abandoned" | "cold" = "resolved",
+): AdventureSession {
+  return updateEmergentThreadStatus(session, threadId, status);
 }
 
 /** Turns with a resolvedRoll, in commit order — see data-model.md "Resolved Roll snapshot". */

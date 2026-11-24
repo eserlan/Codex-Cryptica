@@ -970,5 +970,186 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       updated: [],
       removedIds: [],
     });
+    const parsedFull = JSON.parse(full.text);
+    expect(parsedFull.summary.ooc).toEqual({
+      totalExchanges: 1,
+      answeredCount: 1,
+      establishedDecisionsCount: 0,
+      latestExchangeIds: ["ooc-1"],
+      oocSourcedFactCount: 0,
+    });
+    expect(parsedFull.integrityChecks.orphanedPersonFactLinks).toEqual([]);
+  });
+
+  it("does not count responsive witness replies with epistemic limits as repeated-non-answer in diagnostic summary (#5175)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "turn-1",
+        playerAction: "Who is your employer?",
+        narration:
+          'Servant: "Master Vale; the steward is inside. I don\'t know the other household."',
+      },
+      {
+        ...session.turns[0]!,
+        id: "turn-2",
+        playerAction: "Where was the order returned, and who saw it?",
+        narration:
+          "Steward names the office, recipient and time, but cannot identify additional witnesses.",
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.recentProgressCategories).not.toContain(
+      "repeated-non-answer",
+    );
+    expect(parsed.summary.repeatedNonAnswerTurns).toBe(0);
+    expect(parsed.summary.investigativeRecoveryDue).toBe(false);
+  });
+
+  it("flags duplicate activeCharacters resolving to the same person in integrityChecks (#5176)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.places = [
+      { id: "p-market", name: "Market" },
+      { id: "p-office", name: "Office" },
+    ];
+    session.currentPlaceId = "p-office";
+    session.people = [
+      {
+        id: "person-mara",
+        name: "Mara, the porter",
+        aliases: ["Mara"],
+        linkedFactIds: [],
+      },
+    ];
+    session.visibleState.activeCharacters = [
+      {
+        id: "char-a",
+        text: "Mara, the porter",
+        source: "provisional",
+        placeId: "p-market",
+      },
+      {
+        id: "char-b",
+        text: "Mara",
+        source: "provisional",
+        placeId: "p-office",
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.integrityChecks.duplicateActiveCharacterPresence).toEqual([
+      {
+        personId: "person-mara",
+        name: "Mara, the porter",
+        activeCharacterIds: ["char-a", "char-b"],
+        placeIds: ["p-market", "p-office"],
+      },
+    ]);
+  });
+
+  it("reports separate emergentThreads summary without fabricating seed scenario discovery metrics (#5177)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.emergentThreads = [
+      {
+        id: "em-water-1",
+        title: "Water Rationing Order: Lower cisterns shut",
+        status: "open",
+        provenance: "mixed",
+        topicTokens: ["water", "rationing", "cisterns"],
+        linkedPersonIds: ["p-1"],
+        linkedPlaceIds: ["pl-1", "pl-2"],
+        linkedFactIds: ["f-1"],
+        linkedCommitmentIds: ["c-1"],
+        openQuestions: ["Who ordered the shutoff?"],
+        knownConsequences: ["Lower cisterns were shut."],
+        gmOnlyDevelopments: ["Secret guild bribe"],
+        createdAtTurnId: "turn-1",
+        updatedAtTurnId: "turn-2",
+        turnCount: 3,
+      },
+    ];
+    session.focusedEmergentThreadId = "em-water-1";
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.timeToFirstSign).toBeNull();
+    expect(parsed.summary.timeToFirstActionableLead).toBeNull();
+    expect(parsed.summary.emergentThreads).toEqual({
+      total: 1,
+      open: 1,
+      resolved: 0,
+      abandoned: 0,
+      cold: 0,
+      focusedEmergentThreadId: "em-water-1",
+      threads: [
+        {
+          id: "em-water-1",
+          title: "Water Rationing Order: Lower cisterns shut",
+          status: "open",
+          provenance: "mixed",
+          turnCount: 3,
+          linkedFactCount: 1,
+          linkedPersonCount: 1,
+          linkedPlaceCount: 2,
+          linkedCommitmentCount: 1,
+          openQuestionCount: 1,
+          knownConsequenceCount: 1,
+        },
+      ],
+    });
+  });
+
+  it("reports lastRevisionMismatchCause in GM-only summary.generation (#5178)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        generation: {
+          transport: "interaction",
+          threadMode: "reset",
+          resetReason: "revision-mismatch",
+          revisionMismatchCause: "state-correction",
+        },
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.lastResetReason).toBe("revision-mismatch");
+    expect(parsed.summary.generation.lastRevisionMismatchCause).toBe(
+      "state-correction",
+    );
   });
 });

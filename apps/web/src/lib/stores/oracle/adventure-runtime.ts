@@ -17,6 +17,7 @@ import {
   type GenerationMetadata,
   type GenerationResetReason,
   type GenerationThreadMode,
+  type LocalSaveOperation,
 } from "@codex/adventure-engine";
 import type { AdventureGenerationInfo } from "@codex/ai-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
@@ -133,6 +134,11 @@ export class AdventureRuntime {
   activeRestoreRequest = 0;
   generationController: AbortController | null = null;
   oocController: AbortController | null = null;
+  private lastLocalSave: {
+    sessionId: string;
+    revision: number;
+    op: LocalSaveOperation;
+  } | null = null;
   readonly grounding: AdventureGroundingService;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
@@ -158,11 +164,56 @@ export class AdventureRuntime {
     this.placeLinker = new AdventurePlaceLinker(deps);
     this.artwork = new AdventureArtworkSession(state, {
       verify: (lease) => deps.authority.verify(lease),
-      save: (revision, session) => deps.repository.save(revision, session),
+      save: async (revision, session) => {
+        const res = await deps.repository.save(revision, session);
+        if (res.ok) {
+          await this.reconcileLocalSave("artwork-save", res.session, true);
+        }
+        return res;
+      },
     });
-    this.scenarios = new AdventureScenarios(state, deps, (session) =>
-      this.verifySession(session),
+    this.scenarios = new AdventureScenarios(
+      state,
+      deps,
+      (session) => this.verifySession(session),
+      (saved) => this.reconcileLocalSave("scenario-update", saved, true),
     );
+  }
+
+  /**
+   * Records a local persistence operation and, when it does not invalidate
+   * retained provider history, advances `confirmGenerationInteraction` to the
+   * saved revision so subsequent Play turns stay `continued`.
+   */
+  async reconcileLocalSave(
+    op: LocalSaveOperation,
+    saved: AdventureSession,
+    reconcileInteraction = true,
+  ): Promise<void> {
+    this.lastLocalSave = {
+      sessionId: saved.id,
+      revision: saved.revision,
+      op,
+    };
+    if (!reconcileInteraction) return;
+    try {
+      await this.deps.confirmGenerationInteraction(saved.id, saved.revision);
+    } catch {
+      await this.deps.clearGenerationInteraction(saved.id).catch(() => {});
+    }
+  }
+
+  revisionMismatchCauseFor(
+    session: AdventureSession | null,
+    resetReason: GenerationResetReason | undefined,
+  ): LocalSaveOperation | undefined {
+    if (resetReason !== "revision-mismatch" || !session) return undefined;
+    if (!this.lastLocalSave || this.lastLocalSave.sessionId !== session.id) {
+      return "unknown";
+    }
+    return this.lastLocalSave.revision === session.revision
+      ? this.lastLocalSave.op
+      : "external-or-concurrent";
   }
 
   async verifyControl(): Promise<void> {
@@ -262,7 +313,17 @@ export class AdventureRuntime {
     const saved = await this.deps.repository.save(previous.revision, next);
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
+    this.lastLocalSave = {
+      sessionId: saved.session.id,
+      revision: saved.session.revision,
+      op: "turn-commit",
+    };
     this.state.session = saved.session;
+    this.lastLocalSave = {
+      sessionId: saved.session.id,
+      revision: saved.session.revision,
+      op: "ooc-exchange",
+    };
     await this.deps.confirmGenerationInteraction(
       saved.session.id,
       saved.session.revision,
@@ -270,17 +331,34 @@ export class AdventureRuntime {
     return saved.session;
   }
 
+  private withMismatchCause(
+    generation?: GenerationMetadata,
+  ): GenerationMetadata | undefined {
+    if (
+      !generation ||
+      generation.resetReason !== "revision-mismatch" ||
+      generation.revisionMismatchCause
+    ) {
+      return generation;
+    }
+    const cause =
+      this.revisionMismatchCauseFor(this.state.session, "revision-mismatch") ??
+      "unknown";
+    return { ...generation, revisionMismatchCause: cause };
+  }
+
   newTurnMetadata(
     playerAction: string,
     generation?: GenerationMetadata,
   ): CommitMetadata {
+    const enriched = this.withMismatchCause(generation);
     return {
       turnId: this.deps.idGenerator(),
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
       ...this.packageMetadata(),
-      ...(generation ? { generation } : {}),
+      ...(enriched ? { generation: enriched } : {}),
     };
   }
 
@@ -288,12 +366,13 @@ export class AdventureRuntime {
     inputId: string,
     generation?: GenerationMetadata,
   ): CommitMetadata {
+    const enriched = this.withMismatchCause(generation);
     return {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
       ...this.packageMetadata(),
-      ...(generation ? { generation } : {}),
+      ...(enriched ? { generation: enriched } : {}),
     };
   }
 
@@ -318,6 +397,11 @@ export class AdventureRuntime {
     const saved = await this.deps.repository.save(previous.revision, candidate);
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
+    this.lastLocalSave = {
+      sessionId: saved.session.id,
+      revision: saved.session.revision,
+      op: "turn-commit",
+    };
     // A provider reply is provisional until the OPFS write has succeeded.
     // A failed acknowledgement cannot undo a saved turn; discard the remote
     // optimization and reconstruct from saved local state on the next action.

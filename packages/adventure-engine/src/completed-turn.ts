@@ -15,7 +15,8 @@ import {
   parseTurnProposal,
   validateStateBudget,
 } from "./schemas";
-import type { IdFactory } from "./reducer-ids";
+import { updateEmergentThreadsOnTurn } from "./emergent-threads";
+import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import { error, updatedSession } from "./reducer-result";
 import {
   hasImmutableScenarioRewrite,
@@ -288,7 +289,7 @@ export function applyCompletedTurn(
   if (revealError) return error(revealError.code, revealError.message);
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
-  const { time, timeAdvance } = clock;
+  const { timeAdvance } = clock;
   resolvePackageProgress(candidate, proposal, meta, dropped);
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
@@ -299,23 +300,17 @@ export function applyCompletedTurn(
     materialized.visiblePatch,
     createId,
     proposal.placeCues,
+    { playerAction: meta.playerAction ?? "", narration: proposal.narration },
   );
   if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
-  if (time.value && clock.applied) {
-    const pressureResult = applyTurnWorldTimeAndPressures(
-      candidate,
-      proposal,
-      time.value,
-      meta.turnId,
-      now,
-    );
-    if (!pressureResult.ok) {
-      return error(
-        "state-budget-exceeded",
-        "A scenario event history has reached its limit.",
-      );
-    }
-  }
+  const clockError = applyClockAndPressures(
+    candidate,
+    proposal,
+    clock,
+    meta.turnId,
+    now,
+  );
+  if (clockError) return clockError;
   candidate.provisionalFacts = mergeProvisionalFacts(
     candidate.provisionalFacts,
     materialized,
@@ -349,6 +344,12 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
+  const nextEmergent = updateEmergentThreadsOnTurn(
+    candidate,
+    turn,
+    () => allocateId(existingIds(candidate), createId) ?? createId(),
+  );
+  if (nextEmergent.length > 0) candidate.emergentThreads = nextEmergent;
   if (dropped.length > 0) {
     turn.dropped = boundDroppedReasons(dropped);
   }
@@ -361,6 +362,28 @@ export function applyCompletedTurn(
     );
   }
   return result;
+}
+
+function applyClockAndPressures(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  clock: ReturnType<typeof resolveClock>,
+  turnId: string,
+  now: string,
+) {
+  if (!clock.time.value || !clock.applied) return null;
+  const pressureResult = applyTurnWorldTimeAndPressures(
+    candidate,
+    proposal,
+    clock.time.value,
+    turnId,
+    now,
+  );
+  if (pressureResult.ok) return null;
+  return error(
+    "state-budget-exceeded",
+    "A scenario event history has reached its limit.",
+  );
 }
 
 function applyCausalCommitments(

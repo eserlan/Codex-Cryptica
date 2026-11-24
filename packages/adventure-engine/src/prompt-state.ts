@@ -1,3 +1,4 @@
+import { reconcileDuplicateActiveCharacters } from "./npc-presence";
 import { isHere } from "./places";
 import type {
   AdventureSession,
@@ -38,14 +39,31 @@ export function projectVisibleState(
   session: AdventureSession,
 ): VisibleAdventureState | Record<string, unknown> {
   const places = session.places;
+  const knownPeople = session.people?.length
+    ? {
+        knownPeople: session.people.map((person) => ({
+          id: person.id,
+          name: person.name,
+          ...(person.aliases.length ? { aliases: person.aliases } : {}),
+        })),
+      }
+    : {};
   const here = places?.find((place) => place.id === session.currentPlaceId);
-  if (!places?.length) return session.visibleState;
+  if (!places?.length) {
+    return Object.keys(knownPeople).length > 0
+      ? { ...session.visibleState, ...knownPeople }
+      : session.visibleState;
+  }
   const state = session.visibleState;
+  const activeCharacters = reconcileDuplicateActiveCharacters(
+    state.activeCharacters,
+    session.people,
+  );
   const elsewhere = places
     .filter((place) => place.id !== here?.id)
     .map((place) => ({
       ...describe(place),
-      people: state.activeCharacters
+      people: activeCharacters
         .filter((fact) => fact.placeId === place.id)
         .slice(-MAX_ELSEWHERE_PER_PLACE)
         .map((fact) => brief(fact.text)),
@@ -57,7 +75,7 @@ export function projectVisibleState(
     .filter((place) => place.people.length > 0 || place.facts.length > 0);
   return {
     ...state,
-    activeCharacters: state.activeCharacters
+    activeCharacters: activeCharacters
       .filter((fact) => isHere(fact, session))
       .map(withoutPlaceTag),
     knownFacts: state.knownFacts
@@ -66,15 +84,7 @@ export function projectVisibleState(
     knownPlaces: places.map(describe),
     ...(here ? { currentPlace: describe(here) } : {}),
     ...(elsewhere.length > 0 ? { elsewhere } : {}),
-    ...(session.people?.length
-      ? {
-          knownPeople: session.people.map((person) => ({
-            id: person.id,
-            name: person.name,
-            ...(person.aliases.length ? { aliases: person.aliases } : {}),
-          })),
-        }
-      : {}),
+    ...knownPeople,
     ...(session.scenes?.length
       ? {
           knownScenes: session.scenes.map((scene) => ({

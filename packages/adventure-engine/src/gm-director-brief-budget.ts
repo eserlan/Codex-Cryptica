@@ -65,6 +65,15 @@ function shedTopLevelCommittedExplanations(brief: GMDirectorBrief): boolean {
   return true;
 }
 
+function shedEmergentThreadExtras(brief: GMDirectorBrief): boolean {
+  const emergent = brief.pursuedEmergentThread;
+  if (!emergent) return false;
+  if (emergent.gmOnlyDevelopments?.pop() !== undefined) return true;
+  if (emergent.established.knownConsequences.pop() !== undefined) return true;
+  if (emergent.established.openQuestions.pop() !== undefined) return true;
+  return false;
+}
+
 const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
   (b) => {
     if (!b.progression) return false;
@@ -73,6 +82,7 @@ const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
   },
   shedSecondaryPursued,
   shedPursuedDetails,
+  shedEmergentThreadExtras,
   shedTopLevelCommittedExplanations,
   shedPackageExtras,
   (b) => b.otherOpenHeardScenarioIds.pop() !== undefined,

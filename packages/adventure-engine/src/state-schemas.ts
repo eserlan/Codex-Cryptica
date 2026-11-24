@@ -6,6 +6,7 @@ const stateFactSchema = z.object({
   text,
   source: z.enum(["canonical", "provisional", "revealed-secret"]),
   sourceRecordId: id.optional(),
+  personId: id.optional(),
   placeId: id.optional(),
   cues: z.array(z.string().trim().min(1).max(40)).max(8).optional(),
 });
@@ -66,6 +67,8 @@ export const provisionalFactSchema = z.object({
   introducedOnTurnId: id.optional(),
   sourceOocExchangeId: id.optional(),
   provenance: z.enum(["play", "ooc"]).optional(),
+  supersededById: id.optional(),
+  aliases: z.array(text).max(8).optional(),
   visibility: z.enum(["player-visible", "gm-only"]),
   scenarioId: id.optional(),
 });
@@ -75,6 +78,8 @@ export const newProvisionalFactSchema = provisionalFactSchema
     introducedOnTurnId: true,
     sourceOocExchangeId: true,
     provenance: true,
+    supersededById: true,
+    aliases: true,
   })
   .strict();
 
@@ -91,6 +96,8 @@ export const newOocDecisionSchema = z
     kind: provisionalFactSchema.shape.kind,
     name: text,
     summary: text,
+    aliases: z.array(text).max(8).optional(),
+    supersedesName: text.optional(),
     visibility: provisionalFactSchema.shape.visibility,
   })
   .strict();

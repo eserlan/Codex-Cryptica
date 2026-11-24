@@ -269,11 +269,7 @@ function sceneBehavior(
     "Visual cues: when creating a place via moveTo.cues, or when the current place lacks visual tags (placeCues), include 3 to 4 lowercase catalogue cues when supported (1 to 4 minimum) balancing setting, framing, mood, and time/weather from: forest, woodland, mountain, hills, plains, desert, swamp, river, coast, ocean, island, tundra, snow, cave, ruins, village, town, city, harbour, road, castle, temple, tavern, market, farm, space-station, starship, laboratory, industrial, urban, rural, wilderness; framing: interior, exterior; mood: quiet, busy, ominous, hopeful, mysterious; time/weather: day, night, dawn, dusk, rain, fog, winter, summer. You may also add 1 to 2 concise specific cues (such as foundry, crypt, cathedral, subway, or bazaar) when no catalogue tag captures what the place actually is.",
     "Present NPCs: keep named NPCs currently in the scene in visiblePatch.activeCharacters (add when they join, remove when they leave). Whenever adding or updating an NPC, include up to 8 concise lowercase cues that help illustrate them. Aim for 5 when supported, prioritizing catalogue-matched tags whenever perceived or known: ancestry (human, elf, dwarf, halfling, orc, tiefling, dragonborn, gnome), role (worker, official, guard, merchant, scholar, explorer, traveller, noble, elder, innkeeper, healer, smith, informant, cleric, wizard, rogue, bard, ranger, fighter, paladin, druid, barbarian, warlock, monk, bandit, cultist, witch, urchin, goblin, necromancer), gender (female, male, androgynous), age (young, adult, aged), and setting when relevant (e.g. tavern, market, harbour, town, space-station). Add at most 1 to 2 specific extra cues (such as uniform, silver hair, or diplomat) only when no catalogue tag covers an essential visible detail or role. Use only details the player can perceive or already knows; use fewer cues rather than inventing unsupported details. Keep established appearance consistent and never expose hidden information.",
     'Sometimes the player writes to you rather than to the character, for example a line starting "To dm" or "OOC", or a correction about where they are or who is present. Treat it as a correction to the fiction, not as something the character says: apply it to the state patch (location, characters present), then continue the scene briefly in the new situation. Do not narrate the player\'s out-of-character words as speech, and do not argue with the correction.',
-    ...(projectOocPromptExchanges(input.session).length > 0
-      ? [
-          "State oocExchanges are recent Ask GM out-of-character clarifications ordered by afterTurnCount (binding: non-binding-ooc unless explicitly committed). Use them for continuity, but do not treat non-binding OOC discussion as observed in-character knowledge or let it override canonical source records.",
-        ]
-      : []),
+    ...oocContinuityBehavior(input.session),
     ...(options.directorEnabled
       ? sceneRecoveryBehavior(
           options.stalled,
@@ -288,6 +284,21 @@ function sceneBehavior(
         ]
       : []),
   ];
+}
+
+function oocContinuityBehavior(session: AdventureSession): string[] {
+  const rules: string[] = [];
+  if (projectOocPromptExchanges(session).length > 0) {
+    rules.push(
+      "State oocExchanges are recent Ask GM out-of-character clarifications ordered by afterTurnCount (binding: non-binding-ooc unless explicitly committed). Use them for continuity, but do not treat non-binding OOC discussion as observed in-character knowledge or let it override canonical source records.",
+    );
+  }
+  if (session.people?.length) {
+    rules.push(
+      "Reuse existing knownPeople identities and aliases when the player uses a partial name, title, or reordered name; never invent a second unrelated NPC for the same character, and clarify rather than guessing if a name matches multiple distinct people.",
+    );
+  }
+  return rules;
 }
 
 function scenarioBehavior(
