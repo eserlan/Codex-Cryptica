@@ -111,6 +111,23 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
       2,
     );
 
+    s.causalCommitments = [
+      {
+        id: "gm-only-commitment-1",
+        kind: "action",
+        commitmentClass: "supporting-explanation",
+        subject: "The council",
+        summary: "The council committed to ratifying the compact.",
+        status: "committed",
+        sourceTurnId: "turn-2",
+        sourceRevision: 2,
+      },
+    ];
+    const supportingFactId = s.provisionalFacts.find(
+      (fact) => fact.visibility === "player-visible",
+    )?.id;
+    if (!supportingFactId) throw new Error("Expected committed player fact");
+
     // Turn 3: Sealed compact & public proclamation -> goal achieved, side mysteries remain
     s = commit(
       s,
@@ -139,6 +156,8 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
             result: "achieved",
             reason:
               "Council ratified, sealed, and publicly proclaimed the water-access compact.",
+            supportingFactIds: [supportingFactId],
+            supportingCommitmentIds: ["gm-only-commitment-1"],
             unresolvedConsequences: [
               "Sándor's original order and who hired the courier remain unconfirmed",
               "Long-term compliance by the upper-ward guild is untested",
@@ -158,6 +177,12 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     expect(resolvedThread.outcome?.result).toBe("achieved");
     expect(resolvedThread.outcome?.sourceTurnId).toBe("turn-3");
     expect(resolvedThread.outcome?.supportingFactIds.length).toBeGreaterThan(0);
+    expect(resolvedThread.linkedCommitmentIds).toContain(
+      "gm-only-commitment-1",
+    );
+    expect(JSON.stringify(projectPlayerEmergentThreads(s))).not.toContain(
+      "gm-only-commitment-1",
+    );
     expect(resolvedThread.outcome?.unresolvedConsequences).toEqual([
       "Sándor's original order and who hired the courier remain unconfirmed",
       "Long-term compliance by the upper-ward guild is untested",

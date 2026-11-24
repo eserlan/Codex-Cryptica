@@ -714,12 +714,20 @@ export function selectPursuedEmergentThread(
 
 /** Spoiler-safe player projection stripping `gmOnlyDevelopments`. */
 export function projectPlayerEmergentThreads(session: AdventureSession): Array<
-  Omit<EmergentThread, "gmOnlyDevelopments" | "outcome"> & {
+  Omit<
+    EmergentThread,
+    "gmOnlyDevelopments" | "outcome" | "linkedCommitmentIds"
+  > & {
     outcome?: PlayerThreadOutcome;
   }
 > {
   return (session.emergentThreads ?? []).map((thread) => {
-    const { gmOnlyDevelopments: _gmOnly, outcome, ...playerSafe } = thread;
+    const {
+      gmOnlyDevelopments: _gmOnly,
+      outcome,
+      linkedCommitmentIds: _linkedCommitmentIds,
+      ...playerSafe
+    } = thread;
     if (!outcome) return playerSafe;
     const {
       sourceTurnId: _sourceTurnId,
