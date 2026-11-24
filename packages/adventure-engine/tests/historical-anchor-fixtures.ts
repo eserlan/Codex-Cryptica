@@ -63,10 +63,23 @@ export function anchorSession(
 
 export function overBudgetAnchorSession(): AdventureSession {
   const anchored = anchorSession();
-  anchored.visibleState.knownFacts = Array.from({ length: 60 }, (_, index) => ({
+  anchored.visibleState.knownFacts = Array.from({ length: 55 }, (_, index) => ({
     id: `fact-${index}`,
     text: "x".repeat(600),
     source: "canonical",
   }));
+  anchored.visibleState.objectives = Array.from({ length: 18 }, (_, index) => ({
+    id: `obj-${index}`,
+    text: "y".repeat(600),
+    source: "canonical",
+  }));
+  anchored.visibleState.activeCharacters = Array.from(
+    { length: 12 },
+    (_, index) => ({
+      id: `char-${index}`,
+      text: "z".repeat(600),
+      source: "canonical",
+    }),
+  );
   return anchored;
 }
