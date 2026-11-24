@@ -532,6 +532,9 @@ function emergentThreadSummary(session: AdventureSession) {
       linkedFactCount: t.linkedFactIds.length,
       linkedPersonCount: t.linkedPersonIds.length,
       linkedPlaceCount: t.linkedPlaceIds.length,
+      linkedCommitmentCount: t.linkedCommitmentIds.length,
+      openQuestionCount: t.openQuestions.length,
+      knownConsequenceCount: t.knownConsequences.length,
       ...(t.linkedScenarioId ? { linkedScenarioId: t.linkedScenarioId } : {}),
     })),
   };

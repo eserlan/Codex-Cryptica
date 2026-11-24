@@ -340,4 +340,139 @@ describe("Emergent player-led GM threads (#5177)", () => {
     s = closeEmergentThread(s, threadId, "cold");
     expect(s.emergentThreads![0]!.status).toBe("cold");
   });
+
+  it("bootstraps an ongoing 35-turn case mid-play, links knownFacts without provisionalFacts, and avoids raw inspection-command titles (#5185)", () => {
+    let s = session();
+    s.places = [{ id: "p-gate", name: "Cistern Gate" }];
+    s.currentPlaceId = "p-gate";
+    s.people = [
+      {
+        id: "p-ilona",
+        name: "Envoy Ilona",
+        aliases: ["Ilona"],
+        linkedFactIds: [],
+      },
+      {
+        id: "p-tomas",
+        name: "Clerk Tomas",
+        aliases: ["Tomas"],
+        linkedFactIds: [],
+      },
+    ];
+    s.visibleState.objectives = [
+      {
+        id: "obj-water",
+        text: "Water compact: unequal cistern access",
+        source: "provisional",
+      },
+    ];
+
+    // Simulate 35 prior turns before emergent-thread tracking was enabled
+    for (let i = 1; i <= 35; i += 1) {
+      const isWaterTurn = i >= 32;
+      s = commit(
+        s,
+        {
+          playerAction: isWaterTurn
+            ? `Ask Envoy Ilona and Clerk Tomas about water compact access (${i}).`
+            : `Walk along lane ${i}.`,
+          narration: isWaterTurn
+            ? "Ilona points to the cistern gate latch and Tomas's water compact."
+            : "The street is quiet.",
+        },
+        i,
+      );
+    }
+    // Simulate feature turning on mid-play (no emergentThreads yet)
+    delete s.emergentThreads;
+    s.focusedEmergentThreadId = null;
+
+    // 3 clue-inspection turns with empty provisionalFacts but non-empty knownFacts.add
+    s = commit(
+      s,
+      {
+        playerAction:
+          "Inspect the clay around the neighboring gate's latch for a mark or sign of recent use.",
+        narration:
+          "Fresh clay smudges around the cistern gate latch match Clerk Tomas's boot.",
+        visiblePatch: {
+          ...baseTurn().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "Clay smudges on the cistern gate latch match Clerk Tomas's boot.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      36,
+    );
+    s = commit(
+      s,
+      {
+        playerAction: "Examine the cistern gate seal.",
+        narration: "The cistern gate seal was pried open last night.",
+        visiblePatch: {
+          ...baseTurn().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "Cistern gate seal was pried open.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      37,
+    );
+    s = commit(
+      s,
+      {
+        playerAction:
+          "Check the latch marks against the water compact delivery log.",
+        narration:
+          "The latch marks align with the midnight water compact delivery.",
+        visiblePatch: {
+          ...baseTurn().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "Latch marks align with midnight water compact delivery.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      38,
+    );
+
+    expect(s.emergentThreads).toHaveLength(1);
+    const thread = s.emergentThreads![0]!;
+    expect(thread.title).toBe("Water compact: unequal cistern access");
+    expect(thread.title).not.toContain("Inspect the clay");
+    expect(thread.linkedFactIds.length).toBeGreaterThanOrEqual(3);
+    expect(thread.linkedPersonIds).toEqual(
+      expect.arrayContaining(["p-ilona", "p-tomas"]),
+    );
+    expect(s.focusedEmergentThreadId).toBeNull();
+
+    // Director still auto-selects the case even when focusedEmergentThreadId is null
+    const brief = buildGMDirectorBrief({
+      session: s,
+      phase: "action",
+      playerAction: "Question Clerk Tomas about the latch marks.",
+    });
+    expect(brief?.mode).toBe("active-pursuit");
+    expect(brief?.pursuedEmergentThread?.threadId).toBe(thread.id);
+  });
 });
