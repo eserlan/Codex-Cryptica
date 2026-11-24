@@ -235,9 +235,15 @@ describe("completed turn commits", () => {
     next.revealSecretIds = ["missing"];
     const unknown = applyCompletedTurn(session(), next, meta);
     expect(!unknown.ok && unknown.errors[0]?.code).toBe("unknown-secret");
+    const durableLarge = session();
+    durableLarge.visibleState.knownFacts = [
+      { id: "durable-large", text: "x".repeat(60_000), source: "provisional" },
+    ];
+    expect(applyCompletedTurn(durableLarge, proposal(), meta).ok).toBe(true);
+
     const large = session();
     large.visibleState.knownFacts = [
-      { id: "large", text: "x".repeat(60_000), source: "provisional" },
+      { id: "large", text: "x".repeat(260_000), source: "provisional" },
     ];
     const before = structuredClone(large);
     const budget = applyCompletedTurn(large, proposal(), meta);

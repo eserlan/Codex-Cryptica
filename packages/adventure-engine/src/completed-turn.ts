@@ -11,9 +11,9 @@ import {
 } from "./hidden-state";
 import { applyScenarioTimePressures, applyTimeAdvance } from "./world-time";
 import {
-  MAX_SERIALIZED_STATE_CHARS,
+  MAX_DURABLE_STATE_CHARS,
   parseTurnProposal,
-  validateStateBudget,
+  validateDurableStateBudget,
 } from "./schemas";
 import { updateEmergentThreadsOnTurn } from "./emergent-threads";
 import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
@@ -377,10 +377,10 @@ export function applyCompletedTurn(
   }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
-  if (!validateStateBudget(candidate)) {
+  if (!validateDurableStateBudget(candidate)) {
     return error(
       "state-budget-exceeded",
-      `The compact adventure state exceeds ${MAX_SERIALIZED_STATE_CHARS} characters.`,
+      `The durable adventure state exceeds ${MAX_DURABLE_STATE_CHARS} characters.`,
     );
   }
   return result;
