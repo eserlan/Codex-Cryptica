@@ -134,6 +134,26 @@ describe("artwork-demand worker endpoint", () => {
         knownCues: ["forest"],
       }),
     ).toBeNull();
+
+    expect(
+      parseArtworkDemandPayload({
+        type: "location",
+        genre: "fantasy",
+        knownCues: Array.from({ length: 17 }, () => "coast"),
+        unmappedCues: [],
+        demographicCues: [],
+      }),
+    ).toBeNull();
+
+    expect(
+      parseArtworkDemandPayload({
+        type: "npc",
+        genre: "fantasy",
+        knownCues: [],
+        unmappedCues: [],
+        demographicCues: Array.from({ length: 9 }, () => "female"),
+      }),
+    ).toBeNull();
   });
 
   it("increments hit_count on repeated cue tuples and aggregates unmapped summary", async () => {

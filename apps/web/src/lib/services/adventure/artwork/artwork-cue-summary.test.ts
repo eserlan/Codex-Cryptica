@@ -19,6 +19,37 @@ const locationAsset = {
 } as unknown as ArtworkAsset;
 
 describe("summarizeArtworkCues", () => {
+  it("omits visible entity names from unmapped telemetry cues", () => {
+    const summary = summarizeArtworkCues(
+      {
+        vaultId: "v1",
+        currentPlaceId: "p1",
+        places: [
+          { id: "p1", name: "Kettleford", cues: ["Kettleford", "salt garden"] },
+        ],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "npc-1",
+              text: "Mira Vale, a wary traveller.",
+              cues: ["Mira Vale", "ledger-keeper"],
+              source: "provisional",
+              placeId: "p1",
+            },
+          ],
+        },
+      },
+      "v1",
+      {},
+      true,
+      "fantasy",
+      [],
+    );
+
+    expect(summary?.place?.unmappedCues).toEqual(["salt garden"]);
+    expect(summary?.npcs[0]?.unmappedCues).toEqual(["ledger-keeper"]);
+  });
+
   it("reports place and NPC cues with their catalogue match or missing status", () => {
     const summary = summarizeArtworkCues(
       {

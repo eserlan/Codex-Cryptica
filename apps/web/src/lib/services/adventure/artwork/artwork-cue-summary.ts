@@ -22,8 +22,17 @@ import {
 
 const SAFE_RAW_CUE_PATTERN = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
 
+function isPrivateOrMappedCue(
+  normalized: string,
+  mapped: string,
+  entityNames: ReadonlySet<string>,
+): boolean {
+  return entityNames.has(normalized) || isArtworkCue(mapped);
+}
+
 function collectUnmappedStructuredCues(
   rawCues: readonly string[] | undefined,
+  entityNames: ReadonlySet<string>,
 ): string[] {
   if (!rawCues || rawCues.length === 0) return [];
   const result = new Set<string>();
@@ -37,7 +46,7 @@ function collectUnmappedStructuredCues(
       continue;
     }
     const mapped = CUE_SYNONYMS[normalized] ?? normalized;
-    if (!isArtworkCue(mapped)) {
+    if (!isPrivateOrMappedCue(normalized, mapped, entityNames)) {
       result.add(normalized);
     }
   }
@@ -81,6 +90,7 @@ function summarizeNpcFact(
   fact: StateFact,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
+  entityNames: ReadonlySet<string>,
 ): {
   name: string;
   cues: readonly string[];
@@ -90,7 +100,7 @@ function summarizeNpcFact(
 } {
   const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
   const name = firstPart ? firstPart.trim() : fact.text;
-  const unmappedCues = collectUnmappedStructuredCues(fact.cues);
+  const unmappedCues = collectUnmappedStructuredCues(fact.cues, entityNames);
   const cues = describeVisiblePerson(
     { id: fact.id, name, aliases: [], sourceRecordId: fact.sourceRecordId },
     theme,
@@ -131,6 +141,16 @@ export function summarizeArtworkCues(
     theme,
   );
   const { hereCharacters } = filterHereCharacters(session);
+  const entityNames = new Set<string>();
+  for (const item of session.places ?? []) {
+    const normalized = item.name.trim().toLowerCase().replace(/\s+/g, " ");
+    if (normalized) entityNames.add(normalized);
+  }
+  for (const fact of hereCharacters) {
+    const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+    const normalized = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
+    if (normalized) entityNames.add(normalized);
+  }
 
   return {
     genre,
@@ -138,12 +158,12 @@ export function summarizeArtworkCues(
       ? {
           name: place.name,
           cues: placeCues?.primaryCues ?? [],
-          unmappedCues: collectUnmappedStructuredCues(place.cues),
+          unmappedCues: collectUnmappedStructuredCues(place.cues, entityNames),
           match: resolvePlaceCueMatch(placeSelected, placeCues, catalogue),
         }
       : null,
     npcs: hereCharacters.map((fact) =>
-      summarizeNpcFact(fact, theme, catalogue),
+      summarizeNpcFact(fact, theme, catalogue, entityNames),
     ),
   };
 }
