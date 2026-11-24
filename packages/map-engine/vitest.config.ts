@@ -13,7 +13,9 @@ export default defineConfig({
     __HMR_ENABLE_OVERLAY__: "false",
   },
   test: {
-    environment: "jsdom",
+    environment: "node",
+    pool: "threads",
+    fsModuleCache: true,
     globals: true,
     include: ["src/**/*.{test,spec}.{js,ts}", "tests/**/*.{test,spec}.{js,ts}"],
     coverage: {

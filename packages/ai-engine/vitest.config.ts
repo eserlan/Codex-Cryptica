@@ -33,8 +33,11 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "jsdom",
+    environment: "node",
+    pool: "threads",
+    fsModuleCache: true,
     globals: true,
+    testTimeout: 15000,
     include: ["src/**/*.{test,spec}.{js,ts}", "tests/**/*.{test,spec}.{js,ts}"],
     coverage: {
       provider: "v8",

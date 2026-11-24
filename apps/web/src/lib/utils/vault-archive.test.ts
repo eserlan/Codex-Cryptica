@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { zipSync, strToU8 } from "fflate";
 import { initialSession } from "#lib/stores/oracle/adventure-session.js";

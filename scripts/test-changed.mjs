@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 
-import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { availableParallelism, setPriority } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
-import { getChangedFiles, parseGateCliArgs } from "./lint-changed.mjs";
+import {
+  getChangedFiles,
+  parseGateCliArgs,
+  runBufferedCommand,
+} from "./lint-changed.mjs";
 
 const TEST_EXTENSIONS = [".test.ts", ".spec.ts", ".test.js", ".spec.js"];
 
@@ -129,24 +132,25 @@ export function getWorkspaceTestInvocation(workspace, packageName, files) {
   };
 }
 
-function runWebTests(files, cwd) {
-  const relativeFiles = files.map((file) =>
-    relative("apps/web", file).replace(/\\/g, "/"),
-  );
-  execFileSync("bunx", ["vitest", "run", ...relativeFiles], {
-    cwd: resolve(cwd, "apps/web"),
-    stdio: "inherit",
-  });
-}
+export function resolveWorkspaceCommand(workspace, files, cwd) {
+  if (workspace === "apps/web") {
+    const relativeFiles = files.map((file) =>
+      relative("apps/web", file).replace(/\\/g, "/"),
+    );
+    return {
+      cmd: "bunx",
+      args: ["vitest", "run", ...relativeFiles],
+      cwd: resolve(cwd, "apps/web"),
+    };
+  }
 
-function runPackageTests(workspace, files, cwd) {
   if (workspace === "root") {
     const invocation = getWorkspaceTestInvocation(workspace, "", files);
-    execFileSync("bun", invocation.args, {
+    return {
+      cmd: "bun",
+      args: invocation.args,
       cwd: resolve(cwd, invocation.cwd),
-      stdio: "inherit",
-    });
-    return;
+    };
   }
 
   const manifestPath = resolve(cwd, workspace, "package.json");
@@ -156,25 +160,48 @@ function runPackageTests(workspace, files, cwd) {
     manifest.name,
     files,
   );
-  execFileSync("bun", invocation.args, {
+  return {
+    cmd: "bun",
+    args: invocation.args,
     cwd: resolve(cwd, invocation.cwd),
-    stdio: "inherit",
-  });
+  };
 }
 
-function runWorkspaceTests(workspace, files, cwd) {
-  try {
-    if (workspace === "apps/web") {
-      runWebTests(files, cwd);
-    } else {
-      runPackageTests(workspace, files, cwd);
-    }
+async function runWorkspaceTests(workspace, files, cwd) {
+  const {
+    cmd,
+    args,
+    cwd: runCwd,
+  } = resolveWorkspaceCommand(workspace, files, cwd);
+  const result = await runBufferedCommand(workspace, cmd, args, runCwd);
+  if (result.output.trim()) {
+    console.log(result.output.trimEnd());
+  }
+  if (result.ok) {
     console.log(`✅ ${workspace} tests passed.`);
     return true;
-  } catch {
-    console.error(`❌ ${workspace} tests failed.`);
-    return false;
   }
+  console.error(`❌ ${workspace} tests failed.`);
+  return false;
+}
+
+export async function runWorkspaceGroups(
+  workspaceGroups,
+  runWorkspace,
+  parallel = Boolean(process.env.CI),
+) {
+  const entries = Array.from(workspaceGroups.entries());
+  if (parallel) {
+    return Promise.all(
+      entries.map(([workspace, files]) => runWorkspace(workspace, files)),
+    );
+  }
+
+  const results = [];
+  for (const [workspace, files] of entries) {
+    results.push(await runWorkspace(workspace, files));
+  }
+  return results;
 }
 
 /**
@@ -200,7 +227,7 @@ function throttleLocalRun() {
   }
 }
 
-export function runTestChanged({
+export async function runTestChanged({
   base,
   head = "HEAD",
   committedOnly = false,
@@ -229,23 +256,25 @@ export function runTestChanged({
   }
 
   const workspaceGroups = groupTestsByWorkspace(allTestFiles);
-  let allPassed = true;
-
   for (const [workspace, files] of workspaceGroups.entries()) {
     console.log(
       `\n🧪 Running tests for ${workspace} (${files.length} test file(s))...`,
     );
-    if (!runWorkspaceTests(workspace, files, cwd)) allPassed = false;
   }
 
-  return allPassed;
+  const results = await runWorkspaceGroups(
+    workspaceGroups,
+    (workspace, files) => runWorkspaceTests(workspace, files, cwd),
+  );
+
+  return results.every(Boolean);
 }
 
 if (import.meta.main) {
   const { committedOnly, base, head } = parseGateCliArgs();
 
   throttleLocalRun();
-  const success = runTestChanged({ base, head, committedOnly });
+  const success = await runTestChanged({ base, head, committedOnly });
   if (!success) {
     process.exit(1);
   }
