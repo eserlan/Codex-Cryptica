@@ -289,7 +289,7 @@ export function boundPromptState<T extends Record<string, unknown>>(
     [visible, "objectives", "end"],
     [gmState, "gmThreads", "end"],
     [gmState, "secrets", "end"],
-    [playerScenarios, "scenarios", "start"],
+    [playerScenarios, "items", "start"],
     [bounded, "GM-ONLY scenarios", "start"],
   ];
   for (const target of targets) {

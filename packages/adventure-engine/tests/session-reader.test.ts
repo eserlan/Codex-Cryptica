@@ -159,4 +159,38 @@ describe("session reader", () => {
     expect(loaded.visibleState.knownFacts).toHaveLength(60);
     expect(loaded.visibleState.objectives).toHaveLength(20);
   });
+
+  it("bounds a durable heard scenario with a large event history before building the next prompt", () => {
+    const input = session();
+    const heardScenario = scenario();
+    heardScenario.knowledge = "heard";
+    heardScenario.events = Array.from({ length: 90 }, (_, index) => ({
+      id: `event-${index}`,
+      kind: "discovery" as const,
+      visibility: "player" as const,
+      text: "x".repeat(600),
+      at: now,
+    }));
+    input.scenarioCollection = {
+      version: 1,
+      items: [heardScenario],
+      focusedScenarioId: "scenario-1",
+    };
+
+    const loaded = parseAdventureSession(input);
+    expect(JSON.stringify(loaded.scenarioCollection).length).toBeGreaterThan(
+      MAX_SERIALIZED_STATE_CHARS,
+    );
+
+    const prompt = buildAdventurePrompt({
+      session: loaded,
+      phase: "action",
+      playerAction: "Follow the rumour.",
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(prompt.state.length).toBeLessThanOrEqual(MAX_SERIALIZED_STATE_CHARS);
+    expect(loaded.scenarioCollection?.items[0]?.events).toHaveLength(90);
+  });
 });
