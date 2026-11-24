@@ -482,4 +482,187 @@ describe("what the model and the player see", () => {
       }),
     ).toThrow();
   });
+
+  it("synthesises visibleState.location and clears stale situation on moveTo without location/situation patches (#5187)", () => {
+    const start = placedSession();
+    start.places = [
+      { id: "p-lane", name: "The cobbled lane" },
+      {
+        id: "p-weigh",
+        name: "Old weigh-house",
+        relation: "by the canal",
+        sourceRecordId: "vault-weigh-1",
+      },
+    ];
+    start.currentPlaceId = "p-lane";
+    start.visibleState.location = fact(
+      "loc-lane",
+      "In the cobbled lane",
+      "p-lane",
+    );
+    start.visibleState.situation = fact(
+      "sit-lane",
+      "Shadows gather near the lane's crooked shutters.",
+    );
+
+    const after = commit(
+      start,
+      turn({
+        moveTo: { placeId: "p-weigh" },
+        narration: "You slip out of the lane and reach the old weigh-house.",
+      }),
+    );
+
+    expect(after.currentPlaceId).toBe("p-weigh");
+    expect(after.visibleState.location).toMatchObject({
+      text: "Old weigh-house (by the canal)",
+      source: "canonical",
+      sourceRecordId: "vault-weigh-1",
+      placeId: "p-weigh",
+    });
+    expect(after.visibleState.situation).toBeUndefined();
+    expect(after.turns[0]?.visiblePatch.location).toEqual(
+      after.visibleState.location,
+    );
+    expect(after.turns[0]?.visiblePatch.situation).toBeNull();
+  });
+
+  it("replaces a stale visiblePatch.location pointing to the old place, but retains a consistent richer description", () => {
+    const start = placedSession();
+    start.visibleState.location = fact("loc-low", "Lower village", "p-low");
+
+    const stalePatchTurn = turn({
+      moveTo: { placeId: "p-high" },
+    });
+    stalePatchTurn.visiblePatch.location = {
+      text: "Lower village",
+      source: "provisional",
+    };
+    const replaced = commit(start, stalePatchTurn);
+    expect(replaced.currentPlaceId).toBe("p-high");
+    expect(replaced.visibleState.location?.text).toBe("Tiny village");
+    expect(replaced.visibleState.location?.placeId).toBe("p-high");
+
+    const richPatchTurn = turn({
+      moveTo: { placeId: "p-high" },
+    });
+    richPatchTurn.visiblePatch.location = {
+      text: "Tiny village, smoke curling from stone chimneys",
+      source: "provisional",
+    };
+    richPatchTurn.visiblePatch.situation = {
+      text: "Villagers pause to watch your arrival.",
+      source: "provisional",
+    };
+    const retained = commit(start, richPatchTurn);
+    expect(retained.currentPlaceId).toBe("p-high");
+    expect(retained.visibleState.location?.text).toBe(
+      "Tiny village, smoke curling from stone chimneys",
+    );
+    expect(retained.visibleState.location?.placeId).toBe("p-high");
+    expect(retained.visibleState.situation?.text).toBe(
+      "Villagers pause to watch your arrival.",
+    );
+  });
+
+  it("does not overwrite visibleState.location or situation on an invalid moveTo or no-move turn", () => {
+    const start = placedSession();
+    start.visibleState.location = fact("loc-low", "Lower village", "p-low");
+    start.visibleState.situation = fact("sit-low", "Rain patters on slate.");
+
+    const invalid = commit(start, turn({ moveTo: { placeId: "unknown-id" } }));
+    expect(invalid.currentPlaceId).toBe("p-low");
+    expect(invalid.visibleState.location?.text).toBe("Lower village");
+    expect(invalid.visibleState.situation?.text).toBe("Rain patters on slate.");
+
+    const noMove = commit(start, turn());
+    expect(noMove.currentPlaceId).toBe("p-low");
+    expect(noMove.visibleState.location?.text).toBe("Lower village");
+    expect(noMove.visibleState.situation?.text).toBe("Rain patters on slate.");
+  });
+
+  it("moves escort companions without duplicating identity and keeps recap/projection coherent", () => {
+    const start = placedSession();
+    start.places = [
+      { id: "p-lane", name: "The cobbled lane" },
+      { id: "p-weigh", name: "Old weigh-house" },
+    ];
+    start.currentPlaceId = "p-lane";
+    start.people = [
+      {
+        id: "person-witness",
+        name: "Corin",
+        aliases: [],
+        firstSeenTurnId: "t-0",
+      },
+    ];
+    start.visibleState.location = fact(
+      "loc-lane",
+      "The cobbled lane",
+      "p-lane",
+    );
+    start.visibleState.activeCharacters = [
+      {
+        id: "c-witness",
+        text: "Corin the witness, clutching his ledger",
+        source: "provisional",
+        personId: "person-witness",
+        placeId: "p-lane",
+      },
+    ];
+
+    const result = applyCompletedTurn(
+      start,
+      turn({
+        moveTo: { placeId: "p-weigh" },
+        narration:
+          "Corin the witness walks with you out of the lane and into the old weigh-house.",
+      }),
+      {
+        ...meta,
+        playerAction:
+          "Leave the lane and take the witness Corin to the old weigh-house.",
+      },
+      meta.now,
+      nextId,
+    );
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error("Expected turn to commit");
+    const after = result.value;
+
+    expect(after.currentPlaceId).toBe("p-weigh");
+    expect(after.visibleState.location?.text).toBe("Old weigh-house");
+    expect(after.visibleState.activeCharacters).toHaveLength(1);
+    expect(after.visibleState.activeCharacters[0]?.placeId).toBe("p-weigh");
+
+    const recap = buildAdventureRecap(after);
+    expect(recap.location?.text).toBe("Old weigh-house");
+    expect(recap.activeCharacters.map((c) => c.personId)).toEqual([
+      "person-witness",
+    ]);
+  });
+
+  it("reuses place registry ID when returning to a previously visited place and preserves legacy sessions", () => {
+    const start = placedSession();
+    start.visibleState.location = fact("loc-low", "Lower village", "p-low");
+
+    const atHigh = commit(start, turn({ moveTo: { placeId: "p-high" } }));
+    expect(atHigh.currentPlaceId).toBe("p-high");
+    expect(atHigh.visibleState.location?.text).toBe("Tiny village");
+
+    const backResult = applyCompletedTurn(
+      atHigh,
+      turn({ moveTo: { name: "Lower village" } }),
+      { turnId: "turn-2", inputId: "input-2", now: meta.now },
+      meta.now,
+      nextId,
+    );
+    expect(backResult.ok).toBe(true);
+    if (!backResult.ok) throw new Error("Expected return turn");
+    expect(backResult.value.currentPlaceId).toBe("p-low");
+    expect(backResult.value.places).toHaveLength(2);
+    expect(backResult.value.visibleState.location?.text).toBe(
+      "Lower village (below Tiny village)",
+    );
+  });
 });
