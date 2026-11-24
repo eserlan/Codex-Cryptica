@@ -54,6 +54,57 @@ function promptScenarioIds(prompt: AdventurePrompt): string[] {
     : [];
 }
 
+function promptDiagnostics(
+  prompt: AdventurePrompt,
+): Pick<
+  AdventureGenerationInfo,
+  "requestChars" | "sourceCounts" | "scenarioIds"
+> {
+  return {
+    requestChars: prompt.serialized.length,
+    sourceCounts: {
+      anchors: Math.min(prompt.anchors.length, 1000),
+      relevant: Math.min(prompt.relevant.length, 1000),
+    },
+    scenarioIds: promptScenarioIds(prompt),
+  };
+}
+
+function effectiveReasoningEffort(
+  transport: AdventureGenerationInfo["transport"],
+  options: AdventureGenerationOptions,
+): AdventureGenerationInfo["reasoningEffort"] {
+  return transport === "interaction"
+    ? (options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT)
+    : options.reasoningEffort;
+}
+
+function buildGenerationInfo(
+  proposal: AdventureTurnGenerationResult,
+  transport: AdventureGenerationInfo["transport"],
+  options: AdventureGenerationOptions,
+  prompt: AdventurePrompt,
+): AdventureGenerationInfo {
+  const priorInfo = proposal.generationInfo ?? {};
+  const diagnostics = promptDiagnostics(prompt);
+  const generationInfo: AdventureGenerationInfo = {
+    ...priorInfo,
+    ...diagnostics,
+    requestChars: priorInfo.requestChars ?? diagnostics.requestChars,
+    sourceCounts: priorInfo.sourceCounts ?? diagnostics.sourceCounts,
+    scenarioIds: priorInfo.scenarioIds ?? diagnostics.scenarioIds,
+    transport,
+    modelKey: options.modelName ?? DEFAULT_ADVENTURE_MODEL,
+  };
+  if (transport === "stateless") {
+    generationInfo.threadMode = "new";
+    delete generationInfo.resetReason;
+  }
+  const reasoningEffort = effectiveReasoningEffort(transport, options);
+  if (reasoningEffort) generationInfo.reasoningEffort = reasoningEffort;
+  return generationInfo;
+}
+
 /** Coordinates turn generation while keeping the existing import path and API. */
 export class AdventureTurnGenerationService {
   private readonly interactionContext = new AdventureInteractionContext();
@@ -88,32 +139,12 @@ export class AdventureTurnGenerationService {
     options: AdventureGenerationOptions,
     prompt: AdventurePrompt,
   ): AdventureTurnGenerationResult {
-    // The selection name is our registry key (both transports default to
-    // the same key); never a provider-returned raw model string (#5112 Q3).
-    const generationInfo: AdventureGenerationInfo = {
-      ...(proposal.generationInfo ?? {}),
+    const generationInfo = buildGenerationInfo(
+      proposal,
       transport,
-      modelKey: options.modelName ?? DEFAULT_ADVENTURE_MODEL,
-      requestChars:
-        proposal.generationInfo?.requestChars ?? prompt.serialized.length,
-      sourceCounts: proposal.generationInfo?.sourceCounts ?? {
-        anchors: Math.min(prompt.anchors.length, 1000),
-        relevant: Math.min(prompt.relevant.length, 1000),
-      },
-      scenarioIds:
-        proposal.generationInfo?.scenarioIds ?? promptScenarioIds(prompt),
-    };
-    if (transport === "stateless") {
-      generationInfo.threadMode = "new";
-      delete generationInfo.resetReason;
-    }
-    // Interaction generation always sends an effort (defaulting to "low");
-    // stateless generation only honours one when explicitly requested.
-    const reasoningEffort =
-      transport === "interaction"
-        ? (options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT)
-        : options.reasoningEffort;
-    if (reasoningEffort) generationInfo.reasoningEffort = reasoningEffort;
+      options,
+      prompt,
+    );
     return Object.assign(proposal, { generationInfo });
   }
 
@@ -215,7 +246,12 @@ export class AdventureTurnGenerationService {
         options,
       );
       return {
-        result: this.withGenerationInfo(proposal, "interaction", options, prompt),
+        result: this.withGenerationInfo(
+          proposal,
+          "interaction",
+          options,
+          prompt,
+        ),
         fallbackToStateless: false,
       };
     } catch (error) {
@@ -257,7 +293,12 @@ export class AdventureTurnGenerationService {
           options,
         );
         if (streamed) {
-          return this.withGenerationInfo(streamed, "stateless", options, prompt);
+          return this.withGenerationInfo(
+            streamed,
+            "stateless",
+            options,
+            prompt,
+          );
         }
       } catch (error) {
         // A complete stream can still contain malformed JSON or a response
