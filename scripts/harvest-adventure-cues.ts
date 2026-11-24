@@ -246,33 +246,70 @@ function harvestScene(
   genre: NonNullable<ArtworkCues["genre"]>,
 ): HarvestedDemand | null {
   if (!situation?.text) return null;
-  const situationWords = situation.text.toLowerCase().match(/[a-z]+/g) ?? [];
-  const knownCues = normalizeArtworkCues([
-    ...(situation.cues ?? []),
-    ...situationWords,
-    ...(place?.cues ?? []),
-  ]).sort();
-  const rawPlaceCues = place?.cues ?? [];
-  const unmappedCues = collectUnmapped(rawPlaceCues, [
-    place?.name ?? "",
-    situation.text,
-  ]);
+  const knownCues = collectSceneKnownCues(situation, place);
+  const unmappedCues = collectSceneUnmappedCues(situation, place);
   if (knownCues.length + unmappedCues.length === 0) return null;
-  const asset = knownCues.length
-    ? matchArtwork(seedArtwork, {
-        type: "scene",
-        genre,
-        primaryCues: knownCues,
-      })
-    : null;
+
   return {
     type: "scene",
     genre,
     knownCues,
     unmappedCues,
     demographicCues: [],
-    matchedAssetId: asset ? asset.id : null,
+    matchedAssetId: matchSceneId(knownCues, genre),
   };
+}
+
+function collectSceneKnownCues(
+  situation: CharacterEntry,
+  place: PlaceEntry | undefined,
+): string[] {
+  return normalizeArtworkCues([
+    ...readCues(situation.cues),
+    ...readWords(situation.text),
+    ...readCues(placeCues(place)),
+  ]).sort();
+}
+
+function readCues(cues: readonly string[] | undefined): readonly string[] {
+  return cues ?? [];
+}
+
+function readWords(text: string): string[] {
+  return text.toLowerCase().match(/[a-z]+/g) ?? [];
+}
+
+function placeCues(
+  place: PlaceEntry | undefined,
+): readonly string[] | undefined {
+  return place?.cues;
+}
+
+function placeName(place: PlaceEntry | undefined): string {
+  return place?.name ?? "";
+}
+
+function collectSceneUnmappedCues(
+  situation: CharacterEntry,
+  place: PlaceEntry | undefined,
+): string[] {
+  return collectUnmapped(readCues(placeCues(place)), [
+    placeName(place),
+    situation.text,
+  ]);
+}
+
+function matchSceneId(
+  knownCues: readonly string[],
+  genre: NonNullable<ArtworkCues["genre"]>,
+): string | null {
+  if (knownCues.length === 0) return null;
+  const asset = matchArtwork(seedArtwork, {
+    type: "scene",
+    genre,
+    primaryCues: knownCues,
+  });
+  return asset ? asset.id : null;
 }
 
 function readActiveCharacters(visibleState?: {

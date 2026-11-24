@@ -132,25 +132,52 @@ function collectVisibleEntityNames(
   >,
 ): Set<string> {
   const names = new Set<string>();
-  for (const place of places ?? []) {
-    const normalized = place.name.trim().toLowerCase().replace(/\s+/g, " ");
-    if (normalized) names.add(normalized);
-  }
+  addPlaceNames(names, places);
+  addFactNames(names, facts, entities);
+  return names;
+}
+
+function addNormalizedName(names: Set<string>, name: string | undefined): void {
+  const normalized = name?.trim().toLowerCase().replace(/\s+/g, " ");
+  if (normalized) names.add(normalized);
+}
+
+function addPlaceNames(
+  names: Set<string>,
+  places: readonly Place[] | undefined,
+): void {
+  for (const place of places ?? []) addNormalizedName(names, place.name);
+}
+
+function addFactNames(
+  names: Set<string>,
+  facts: readonly StateFact[],
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & { title?: string; aliases?: readonly string[] }
+    >
+  >,
+): void {
   for (const fact of facts) {
     const entity = fact.sourceRecordId
       ? entities[fact.sourceRecordId]
       : undefined;
-    for (const name of [entity?.title, ...(entity?.aliases ?? [])]) {
-      const normalized = name?.trim().toLowerCase().replace(/\s+/g, " ");
-      if (normalized) names.add(normalized);
-    }
+    addEntityNames(names, entity);
     const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
-    const normalizedName = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
-    if (normalizedName) names.add(normalizedName);
-    const visibleText = fact.text.trim().toLowerCase().replace(/\s+/g, " ");
-    if (visibleText) names.add(visibleText);
+    addNormalizedName(names, firstPart);
+    addNormalizedName(names, fact.text);
   }
-  return names;
+}
+
+function addEntityNames(
+  names: Set<string>,
+  entity:
+    | (ArtworkPlaceEntity & { title?: string; aliases?: readonly string[] })
+    | undefined,
+): void {
+  addNormalizedName(names, entity?.title);
+  for (const alias of entity?.aliases ?? []) addNormalizedName(names, alias);
 }
 
 /** Summarize active place/NPC artwork cues and whether the catalogue matched them. */
