@@ -5,6 +5,7 @@ import type {
   ActorProgressStatus,
   AdventureSession,
   CausalCommitment,
+  EmergentThreadStatus,
   PackageProgressStatus,
   ScenarioElaborationStage,
   ScenarioEvent,
@@ -92,6 +93,22 @@ export interface DirectorPackageContext {
   openUncertainties: string[];
 }
 
+export interface DirectorEmergentThread {
+  threadId: string;
+  title: string;
+  status: EmergentThreadStatus;
+  provenance: "play" | "ooc" | "mixed";
+  linkedScenarioId?: string;
+  established: {
+    knownConsequences: string[];
+    openQuestions: string[];
+    linkedFactCount: number;
+    linkedPersonCount: number;
+    linkedPlaceCount: number;
+  };
+  gmOnlyDevelopments?: string[];
+}
+
 export interface GMDirectorBrief {
   advisory: true;
   mode: "active-pursuit" | "package-scene" | "open-world";
@@ -102,6 +119,7 @@ export interface GMDirectorBrief {
     sourceRecordId?: string;
   };
   pursuedScenarios: DirectorPursuedScenario[];
+  pursuedEmergentThread?: DirectorEmergentThread;
   committedExplanations?: DirectorCommitmentEntry[];
   otherOpenHeardScenarioIds: string[];
   packageContext?: DirectorPackageContext;

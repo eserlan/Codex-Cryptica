@@ -15,7 +15,8 @@ import {
   parseTurnProposal,
   validateStateBudget,
 } from "./schemas";
-import type { IdFactory } from "./reducer-ids";
+import { updateEmergentThreadsOnTurn } from "./emergent-threads";
+import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import { error, updatedSession } from "./reducer-result";
 import {
   hasImmutableScenarioRewrite,
@@ -349,6 +350,12 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
+  const nextEmergent = updateEmergentThreadsOnTurn(
+    candidate,
+    turn,
+    () => allocateId(existingIds(candidate), createId) ?? createId(),
+  );
+  if (nextEmergent.length > 0) candidate.emergentThreads = nextEmergent;
   if (dropped.length > 0) {
     turn.dropped = boundDroppedReasons(dropped);
   }
