@@ -194,6 +194,56 @@ describe("causal commitments", () => {
     expect(current).toEqual(session());
   });
 
+  it("keeps public testimony separate from its private unverified interpretation", () => {
+    const current = session();
+    const testimony = "Wick says Tobiah paid him to keep the lever set.";
+    const privateSummary =
+      "Wick claims Tobiah gave the order; payment and motive remain unverified.";
+    const proposal = withCommitments([
+      motive(privateSummary, {
+        commitmentClass: "belief-testimony",
+        subject: "Wick",
+        actorRef: { tier: "name", value: "Wick" },
+      }),
+    ]);
+    proposal.narration = testimony;
+    proposal.visiblePatch.knownFacts.add = [
+      { text: testimony, source: "provisional" },
+    ];
+
+    let id = 0;
+    const result = applyCompletedTurn(
+      current,
+      proposal,
+      meta,
+      now,
+      () => `c-${++id}`,
+    );
+
+    expect(result.ok).toBe(true);
+  });
+
+  it("rejects a belief-testimony commitment copied verbatim into public facts", () => {
+    const current = session();
+    const testimony = "Wick says Tobiah paid him to keep the lever set.";
+    const leaky = withCommitments([
+      motive(testimony, {
+        commitmentClass: "belief-testimony",
+        subject: "Wick",
+        actorRef: { tier: "name", value: "Wick" },
+      }),
+    ]);
+    leaky.visiblePatch.knownFacts.add = [
+      { text: testimony, source: "provisional" },
+    ];
+
+    const result = applyCompletedTurn(current, leaky, meta, now, () => "c-1");
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.errors[0]?.code).toBe("hidden-leakage");
+    expect(current).toEqual(session());
+  });
+
   it("behaves exactly as before when a proposal has no causal commitments", () => {
     const current = session();
     const result = applyCompletedTurn(

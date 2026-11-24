@@ -30,7 +30,7 @@ describe("ArtworkDemandReporter", () => {
       isEnabled: () => false,
       isOnline: () => true,
     });
-    disabled.reportFromSummary(sampleSummary);
+    disabled.reportFromSummary(sampleSummary, "session-1");
     expect(fetchFn).not.toHaveBeenCalled();
 
     const offline = new ArtworkDemandReporter({
@@ -39,7 +39,7 @@ describe("ArtworkDemandReporter", () => {
       isEnabled: () => true,
       isOnline: () => false,
     });
-    offline.reportFromSummary(sampleSummary);
+    offline.reportFromSummary(sampleSummary, "session-1");
     expect(fetchFn).not.toHaveBeenCalled();
   });
 
@@ -54,8 +54,8 @@ describe("ArtworkDemandReporter", () => {
       isOnline: () => true,
     });
 
-    reporter.reportFromSummary(sampleSummary);
-    reporter.reportFromSummary(sampleSummary);
+    reporter.reportFromSummary(sampleSummary, "session-1");
+    reporter.reportFromSummary(sampleSummary, "session-1");
 
     expect(fetchFn).toHaveBeenCalledTimes(2);
     const firstCallBody = JSON.parse(
@@ -114,7 +114,7 @@ describe("ArtworkDemandReporter", () => {
           match: null,
         },
       ],
-    });
+    }, "session-1");
 
     expect(fetchFn).toHaveBeenCalledTimes(3);
     const types = fetchFn.mock.calls.map(
@@ -122,5 +122,59 @@ describe("ArtworkDemandReporter", () => {
     );
     expect(types).toEqual(["scene", "atmosphere", "monster"]);
     expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("Salt Stalker");
+  });
+
+  it("bounds cue arrays to the worker limits before sending", () => {
+    const fetchFn = vi.fn<
+      (input: string, init?: RequestInit) => Promise<Response>
+    >(async () => new Response("{}", { status: 200 }));
+    const reporter = new ArtworkDemandReporter({
+      fetchFn,
+      resolveProxyUrl: () => "https://oracle-proxy.test",
+      isEnabled: () => true,
+      isOnline: () => true,
+    });
+
+    reporter.reportFromSummary({
+      genre: "fantasy",
+      place: {
+        name: "Private place name",
+        cues: Array.from({ length: 17 }, (_, index) => `cue-${index}`),
+        unmappedCues: Array.from({ length: 17 }, (_, index) => `unknown ${index}`),
+        match: null,
+      },
+      npcs: [{
+        name: "Private character name",
+        cues: [],
+        unmappedCues: [],
+        demographicCues: ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+        match: null,
+      }],
+    }, "session-1");
+
+    const location = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, string[]>;
+    const npc = JSON.parse(String(fetchFn.mock.calls[1]?.[1]?.body)) as Record<string, string[]>;
+    expect(location.knownCues).toHaveLength(16);
+    expect(location.unmappedCues).toHaveLength(16);
+    expect(npc.demographicCues).toHaveLength(8);
+  });
+
+  it("deduplicates within a session and reports again in a new session", () => {
+    const fetchFn = vi.fn<
+      (input: string, init?: RequestInit) => Promise<Response>
+    >(async () => new Response("{}", { status: 200 }));
+    const reporter = new ArtworkDemandReporter({
+      fetchFn,
+      resolveProxyUrl: () => "https://oracle-proxy.test",
+      isEnabled: () => true,
+      isOnline: () => true,
+    });
+
+    reporter.reportFromSummary(sampleSummary, "session-1");
+    reporter.reportFromSummary(sampleSummary, "session-1");
+    reporter.reportFromSummary(sampleSummary, "session-2");
+
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+    expect(String(fetchFn.mock.calls[2]?.[1]?.body)).toContain('"type":"location"');
   });
 });

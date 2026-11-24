@@ -27,6 +27,7 @@ const SAFE_RAW_CUE_PATTERN = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
 
 function collectUnmappedStructuredCues(
   rawCues: readonly string[] | undefined,
+  entityNames: ReadonlySet<string>,
 ): string[] {
   if (!rawCues || rawCues.length === 0) return [];
   const result = new Set<string>();
@@ -40,7 +41,12 @@ function collectUnmappedStructuredCues(
       continue;
     }
     const mapped = CUE_SYNONYMS[normalized] ?? normalized;
-    if (!isArtworkCue(mapped)) {
+    const cueWords = normalized.replace(/[^a-z0-9]+/g, " ").trim();
+    const appearsInVisibleText = [...entityNames].some((visibleText) => {
+      const visibleWords = ` ${visibleText.replace(/[^a-z0-9]+/g, " ").trim()} `;
+      return visibleWords.includes(` ${cueWords} `);
+    });
+    if (!appearsInVisibleText && !isArtworkCue(mapped)) {
       result.add(normalized);
     }
   }
@@ -110,6 +116,25 @@ type CueSession = ArtworkPlaceSession &
     currentSituation?: string | null;
   };
 
+function collectVisibleEntityNames(
+  places: readonly Place[] | undefined,
+  facts: readonly StateFact[],
+): Set<string> {
+  const names = new Set<string>();
+  for (const place of places ?? []) {
+    const normalized = place.name.trim().toLowerCase().replace(/\s+/g, " ");
+    if (normalized) names.add(normalized);
+  }
+  for (const fact of facts) {
+    const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+    const normalizedName = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
+    if (normalizedName) names.add(normalizedName);
+    const visibleText = fact.text.trim().toLowerCase().replace(/\s+/g, " ");
+    if (visibleText) names.add(visibleText);
+  }
+  return names;
+}
+
 /** Summarize active place/NPC artwork cues and whether the catalogue matched them. */
 function resolvePlaceCueMatch(
   placeSelected: ReturnType<typeof currentPlaceSelection>,
@@ -125,6 +150,7 @@ function summarizeNpcFact(
   fact: StateFact,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
+  entityNames: ReadonlySet<string>,
 ): {
   name: string;
   cues: readonly string[];
@@ -134,7 +160,7 @@ function summarizeNpcFact(
 } {
   const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
   const name = firstPart ? firstPart.trim() : fact.text;
-  const unmappedCues = collectUnmappedStructuredCues(fact.cues);
+  const unmappedCues = collectUnmappedStructuredCues(fact.cues, entityNames);
   const cues = describeVisiblePerson(
     { id: fact.id, name, aliases: [], sourceRecordId: fact.sourceRecordId },
     theme,
@@ -170,6 +196,7 @@ function summarizeMonsterFact(
   fact: StateFact,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
+  entityNames: ReadonlySet<string>,
 ): {
   name: string;
   cues: readonly string[];
@@ -183,7 +210,7 @@ function summarizeMonsterFact(
     theme,
     { facts: fact.cues ? [fact.text, ...fact.cues] : [fact.text] },
   );
-  const unmappedCues = collectUnmappedStructuredCues(fact.cues);
+  const unmappedCues = collectUnmappedStructuredCues(fact.cues, entityNames);
   const matched = cues ? matchArtwork(catalogue, cues) : null;
   return {
     name,
@@ -210,6 +237,7 @@ function summarizeAtmosphereSlot(
 function summarizeSceneSlot(
   normalized: readonly string[],
   place: Place | null,
+  entityNames: ReadonlySet<string>,
   genre: NonNullable<ArtworkCues["genre"]>,
   atmoMatch: string | null,
   placeMatch: string | null,
@@ -233,7 +261,10 @@ function summarizeSceneSlot(
   });
   return {
     cues: normalized,
-    unmappedCues: collectUnmappedStructuredCues(place ? place.cues : undefined),
+    unmappedCues: collectUnmappedStructuredCues(
+      place ? place.cues : undefined,
+      entityNames,
+    ),
     match: resolved.kind === "catalogue" ? resolved.assetId : null,
   };
 }
@@ -252,6 +283,7 @@ function collectSceneCues(
 function summarizeSceneAndAtmosphere(
   place: Place | null,
   currentSituation: string | null | undefined,
+  entityNames: ReadonlySet<string>,
   genre: NonNullable<ArtworkCues["genre"]>,
   placeMatch: string | null,
   catalogue: readonly ArtworkAsset[],
@@ -264,6 +296,7 @@ function summarizeSceneAndAtmosphere(
   const scene = summarizeSceneSlot(
     normalized,
     place,
+    entityNames,
     genre,
     atmosphere ? atmosphere.match : null,
     placeMatch,
@@ -298,6 +331,7 @@ export function summarizeArtworkCues(
   );
   const placeMatch = resolvePlaceCueMatch(placeSelected, placeCues, catalogue);
   const { hereCharacters } = filterHereCharacters(session);
+  const entityNames = collectVisibleEntityNames(session.places, hereCharacters);
   const monsterFacts = hereCharacters.filter((fact) =>
     isMonsterFact(fact, entities),
   );
@@ -307,12 +341,13 @@ export function summarizeArtworkCues(
   const envSlots = summarizeSceneAndAtmosphere(
     place,
     session.currentSituation,
+    entityNames,
     genre,
     placeMatch,
     catalogue,
   );
   const monsters = monsterFacts.map((fact) =>
-    summarizeMonsterFact(fact, theme, catalogue),
+    summarizeMonsterFact(fact, theme, catalogue, entityNames),
   );
 
   return {
@@ -321,11 +356,13 @@ export function summarizeArtworkCues(
       ? {
           name: place.name,
           cues: placeCues?.primaryCues ?? [],
-          unmappedCues: collectUnmappedStructuredCues(place.cues),
+          unmappedCues: collectUnmappedStructuredCues(place.cues, entityNames),
           match: placeMatch,
         }
       : null,
-    npcs: npcFacts.map((fact) => summarizeNpcFact(fact, theme, catalogue)),
+    npcs: npcFacts.map((fact) =>
+      summarizeNpcFact(fact, theme, catalogue, entityNames),
+    ),
     ...envSlots,
     ...(monsters.length > 0 ? { monsters } : {}),
   };

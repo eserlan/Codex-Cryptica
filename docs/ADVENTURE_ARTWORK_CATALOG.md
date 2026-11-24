@@ -337,11 +337,11 @@ All 20 contemporary NPC portraits are listed in the live inventory above.
 
 ---
 
-## 4. Scenes & Atmospheres Roadmap (38 Needed, 16:9)
+## 4. Scenes & Atmospheres Roadmap (41 Needed, 16:9)
 
 Format: `1280×720` display WebP (`<= 384 KB`), `320×180` preview WebP (`<= 32 KB`).
 
-### Atmospheres (`type: "atmosphere"`, 16 Needed)
+### Atmospheres (`type: "atmosphere"`, 17 Needed)
 
 Used by `resolveSceneWithAtmosphere()` as mood/weather fallbacks when a scene lacks specific art:
 
@@ -365,7 +365,7 @@ Used by `resolveSceneWithAtmosphere()` as mood/weather fallbacks when a scene la
 | `atmo-horror-rain-01`        | `horror`          | `rain`, `ominous`, `night`          | Torrential storm rain lashing dark shuttered windows in pale lightning flash.                                |
 | `atmo-horror-dusk-01`        | `horror`          | `dusk`, `ominous`, `quiet`          | Blood-orange dying sunset behind bare winter branches and circling crows.                                    |
 
-### Scene Beats (`type: "scene"`, 22 Needed)
+### Scene Beats (`type: "scene"`, 24 Needed)
 
 | Target ID                        | Genres            | Primary / Setting / Mood Cues                   | Description                                                                                                                      |
 | :------------------------------- | :---------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |

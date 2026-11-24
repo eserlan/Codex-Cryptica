@@ -1,0 +1,584 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-24T01:53:29.340Z",
+  "fixture": "synthetic-northbrook-bell",
+  "fixtureActions": 8,
+  "samples": 1,
+  "proxy": "http://127.0.0.1:8787",
+  "origin": "http://localhost:5173",
+  "model": "luna-fast",
+  "conditions": [
+    {
+      "modelName": "luna-fast",
+      "reasoningEffort": "low",
+      "directorEnabled": false,
+      "contextMode": "retained"
+    },
+    {
+      "modelName": "luna-fast",
+      "reasoningEffort": "low",
+      "directorEnabled": true,
+      "contextMode": "retained"
+    }
+  ],
+  "results": [
+    {
+      "condition": {
+        "modelName": "luna-fast",
+        "reasoningEffort": "low",
+        "directorEnabled": false,
+        "contextMode": "retained"
+      },
+      "sample": 1,
+      "status": "pass",
+      "rubrics": {
+        "agency": 1,
+        "secrecy": 1,
+        "continuity": 1,
+        "canonSafety": 1,
+        "consequenceCredibility": 1,
+        "unnecessaryEscalation": 1
+      },
+      "progression": {
+        "meaningfulAdvancement": 1,
+        "committedTurns": 8,
+        "substantiveAnswers": 8,
+        "actionableProgression": 8,
+        "usefulNegativeFindings": 1,
+        "causalStateChanges": 0,
+        "committedFactReuse": 0,
+        "causalConsistencyChecks": 0,
+        "causalConsistencyFailures": 0,
+        "npcKnowledgeChecks": 1,
+        "npcKnowledgeViolations": 0,
+        "validQuietOutcomes": 1,
+        "repeatedNonAnswers": 0,
+        "agencyPreserved": 8,
+        "expectedSignalsMet": 12,
+        "expectedSignalsFailed": 0,
+        "retryAttempts": 0
+      },
+      "executionFailures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "new",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "actionable-discovery",
+          "expectedSignals": {
+            "substantiveAnswer": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 2,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "actionable-discovery",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 3,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "repeated-non-answer",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 4,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "actionable-discovery",
+          "expectedSignals": {
+            "usefulNegativeFinding": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 5,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "ordinary-interaction",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 6,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "ordinary-interaction",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 7,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "consequential-player-choice",
+          "expectedSignals": {
+            "quietOutcome": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 8,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "new",
+          "resetClassification": "scripted",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "consequential-player-choice",
+          "expectedSignals": {
+            "substantiveAnswer": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        }
+      ],
+      "usage": {
+        "modelCalls": 8,
+        "completedRequests": 8,
+        "failureClasses": [],
+        "latencyMs": 51997,
+        "actualModelKeys": ["luna-fast"],
+        "inputTokens": 78462,
+        "outputTokens": 5367,
+        "reasoningTokens": 1730,
+        "estimatedPriceUsd": 0.01053
+      }
+    },
+    {
+      "condition": {
+        "modelName": "luna-fast",
+        "reasoningEffort": "low",
+        "directorEnabled": true,
+        "contextMode": "retained"
+      },
+      "sample": 1,
+      "status": "pass",
+      "rubrics": {
+        "agency": 1,
+        "secrecy": 1,
+        "continuity": 1,
+        "canonSafety": 1,
+        "consequenceCredibility": 1,
+        "unnecessaryEscalation": 1
+      },
+      "progression": {
+        "meaningfulAdvancement": 2,
+        "committedTurns": 8,
+        "substantiveAnswers": 8,
+        "actionableProgression": 8,
+        "usefulNegativeFindings": 1,
+        "causalStateChanges": 0,
+        "committedFactReuse": 0,
+        "causalConsistencyChecks": 0,
+        "causalConsistencyFailures": 0,
+        "npcKnowledgeChecks": 1,
+        "npcKnowledgeViolations": 0,
+        "validQuietOutcomes": 1,
+        "repeatedNonAnswers": 0,
+        "agencyPreserved": 8,
+        "expectedSignalsMet": 12,
+        "expectedSignalsFailed": 0,
+        "retryAttempts": 0
+      },
+      "executionFailures": [],
+      "turns": [
+        {
+          "turn": 1,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "new",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "actionable-discovery",
+          "expectedSignals": {
+            "substantiveAnswer": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 2,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "actionable-discovery",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 3,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "repeated-non-answer",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 4,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "actionable-discovery",
+          "expectedSignals": {
+            "usefulNegativeFinding": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 5,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "ordinary-interaction",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 6,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "ordinary-interaction",
+          "expectedSignals": {
+            "substantiveAnswer": true,
+            "actionableProgression": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 7,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "continued",
+          "resetClassification": "none",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "consequential-player-choice",
+          "expectedSignals": {
+            "quietOutcome": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        },
+        {
+          "turn": 8,
+          "modelKey": "luna-fast",
+          "requestedEffort": "low",
+          "actualEffort": "low",
+          "contextMode": "retained",
+          "transport": "interaction",
+          "threadMode": "new",
+          "resetClassification": "scripted",
+          "generationAttempts": 1,
+          "committed": true,
+          "progressKind": "ordinary-interaction",
+          "expectedSignals": {
+            "substantiveAnswer": true
+          },
+          "npcKnowledgeViolations": 0,
+          "rubrics": {
+            "agency": 1,
+            "secrecy": 1,
+            "continuity": 1,
+            "canonSafety": 1,
+            "consequenceCredibility": 1,
+            "unnecessaryEscalation": 1
+          },
+          "rubricFailures": [],
+          "canonFailures": [],
+          "consequenceFailures": []
+        }
+      ],
+      "usage": {
+        "modelCalls": 8,
+        "completedRequests": 8,
+        "failureClasses": [],
+        "latencyMs": 53947,
+        "actualModelKeys": ["luna-fast"],
+        "inputTokens": 90695,
+        "outputTokens": 5090,
+        "reasoningTokens": 1530,
+        "estimatedPriceUsd": 0.011614
+      }
+    }
+  ]
+}

@@ -5,10 +5,14 @@ import type {
   AdventureGenerationInfo,
   AdventureInteraction,
   AdventureTurnGenerationRequest,
+  AdventureTurnGenerationResult,
   AdventurePrompt,
   AdventureGenerationOptions,
 } from "./adventure-generation.types";
-import { AdventureInteractionContext } from "./adventure-interaction-context";
+import {
+  AdventureInteractionContext,
+  type AdventureInteractionPreparation,
+} from "./adventure-interaction-context";
 import { buildAdventureInteractionInput } from "./adventure-interaction-input";
 import { AdventureInteractionTransport } from "./adventure-interaction-transport";
 import { streamAborted } from "./adventure-narration-stream";
@@ -25,47 +29,6 @@ type SendInteraction = (
   repair?: string,
   preferStream?: boolean,
 ) => Promise<InteractionResult>;
-
-function attachInteractionDiagnostics(
-  proposal: AdventureTurnProposal,
-  result: InteractionResult,
-  systemInstruction: string,
-  threadMode: NonNullable<AdventureGenerationInfo["threadMode"]>,
-  resetReason: AdventureGenerationInfo["resetReason"],
-): AdventureTurnProposal {
-  const sentPayload = JSON.parse(result.input) as Record<string, unknown>;
-  const scenarios = result.state["GM-ONLY scenarios"];
-  return Object.assign(proposal, {
-    generationInfo: {
-      threadMode: resetReason ? "reset" : threadMode,
-      requestChars: result.input.length + systemInstruction.length,
-      sourceCounts: {
-        anchors: Array.isArray(sentPayload.anchors)
-          ? sentPayload.anchors.length
-          : 0,
-        relevant: Array.isArray(sentPayload.relevant)
-          ? sentPayload.relevant.length
-          : 0,
-        retained: Array.isArray(sentPayload.retainedSourceIds)
-          ? sentPayload.retainedSourceIds.length
-          : 0,
-      },
-      scenarioIds: Array.isArray(scenarios)
-        ? scenarios
-            .flatMap((item) =>
-              item &&
-              typeof item === "object" &&
-              "id" in item &&
-              typeof item.id === "string"
-                ? [item.id]
-                : [],
-            )
-            .slice(0, 32)
-        : [],
-      ...(resetReason ? { resetReason } : {}),
-    },
-  });
-}
 
 /** Recovery is bounded to one fresh request; repair failures are not expiry retries. */
 async function sendWithExpiryRecovery(
@@ -123,9 +86,10 @@ export class AdventureInteractionGeneration {
     prompt: AdventurePrompt,
     systemInstruction: string,
     options: AdventureGenerationOptions,
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     const signal = options.signal ?? request.signal;
     const modelName = options.modelName ?? DEFAULT_ADVENTURE_MODEL;
+    let preparation: AdventureInteractionPreparation;
     let interaction: AdventureInteraction;
     const { transport, send } = this.createSender(
       request,
@@ -134,20 +98,23 @@ export class AdventureInteractionGeneration {
       options,
       () => interaction,
     );
-    interaction = this.context.prepare(request.session, prompt, modelName);
-    let resetReason = interaction.resetReason;
-    const threadMode = interaction.previousInteractionId
-      ? "continued"
-      : resetReason
-        ? "reset"
-        : "new";
+    preparation = this.context.prepareWithMetadata(
+      request.session,
+      prompt,
+      modelName,
+    );
+    interaction = preparation.interaction;
 
     try {
       const initial = await sendWithExpiryRecovery(send, () => {
         // Retention expiry: rebuild from current session and local transcript.
         this.context.clear(request.session.id);
         interaction = this.context.get(request.session.id);
-        resetReason = "provider-expiry";
+        preparation = {
+          interaction,
+          threadMode: "reset",
+          resetReason: "provider-expiry",
+        };
       });
       const { result, proposal } = await parseWithRepair(
         initial,
@@ -165,13 +132,14 @@ export class AdventureInteractionGeneration {
         state: result.state,
         sourceEntries: result.sourceEntries,
       };
-      return attachInteractionDiagnostics(
-        proposal,
-        result,
-        systemInstruction,
-        threadMode,
-        resetReason,
-      );
+      const generationInfo: AdventureGenerationInfo = {
+        transport: "interaction",
+        threadMode: preparation.threadMode,
+        ...(preparation.resetReason
+          ? { resetReason: preparation.resetReason }
+          : {}),
+      };
+      return Object.assign(proposal, { generationInfo });
     } catch (error) {
       // Never retain a conversation containing a rejected/aborted output.
       this.context.clear(request.session.id);

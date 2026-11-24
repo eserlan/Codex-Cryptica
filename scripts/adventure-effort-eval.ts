@@ -12,6 +12,7 @@ import {
   adventureJsonHiddenRecordIds,
   adventureJsonRecordIds,
   applyRollRequest,
+  buildAdventurePrompt,
   buildAdventureRecap,
   createPlayerTranscript,
   evaluateAdventureRun,
@@ -32,7 +33,7 @@ import { initialSession } from "../apps/web/src/lib/stores/oracle/adventure-sess
 import { ProxyInteractions } from "../packages/ai-engine/src/proxy-interactions";
 
 type Effort = "low" | "medium" | "high" | "xhigh";
-type StepConfig = {
+export type StepConfig = {
   id: string;
   playerAction?: string;
   sourceRefs: string[];
@@ -54,11 +55,21 @@ type Fixture = {
 
 type CallRecord = {
   requestedEffort: Effort;
+  directorEnabled: boolean;
   actualModelKey?: string;
   elapsedMs: number;
+  interactionInputChars?: number;
+  systemInstructionChars?: number;
+  directorOnPromptChars?: number;
+  directorOffPromptChars?: number;
+  directorPromptDeltaChars?: number;
   inputTokens?: number;
   outputTokens?: number;
   reasoningTokens?: number;
+};
+type EffortRunConfig = {
+  rollOutcome?: SuppliedRollOutcome;
+  directorEnabled?: boolean;
 };
 
 type RollSetupRecord = {
@@ -80,6 +91,8 @@ type TurnRecord = {
   endingReached?: boolean;
   repairCount: number;
   error?: string;
+  /** Bounded schema diagnostic; captured only for low-effort failures. */
+  validationHint?: string;
   rollSetup?: RollSetupRecord;
   calls: CallRecord[];
 };
@@ -101,12 +114,41 @@ function parseEfforts(raw: string): Effort[] {
   return [...new Set(efforts)] as Effort[];
 }
 
+export function getEffortValidationHint(
+  cause: unknown,
+  effort: Effort,
+): string | undefined {
+  if (effort !== "low") return undefined;
+  return validationHintFromError(cause);
+}
+
+function validationHintFromError(cause: unknown): string | undefined {
+  if (!(
+    cause instanceof Error && cause.message === "invalid-adventure-response"
+  )) {
+    return undefined;
+  }
+  return boundedValidationHint(Reflect.get(cause, "validationHint"));
+}
+
+function boundedValidationHint(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const hint = value.slice(0, 300);
+  return hint || undefined;
+}
+
 function parseRepeats(raw: string): number {
   const repeats = Number(raw);
   if (!Number.isInteger(repeats) || repeats < 1 || repeats > 10) {
     throw new Error("Repeats must be an integer from 1 to 10.");
   }
   return repeats;
+}
+
+export function parseDirectorTreatment(raw: string): boolean {
+  if (raw === "on") return true;
+  if (raw === "off") return false;
+  throw new Error("Director treatment must be on or off.");
 }
 
 function parseCli() {
@@ -121,6 +163,7 @@ function parseCli() {
         default: process.env.ORACLE_PROXY_ORIGIN ?? "http://localhost:5173",
       },
       model: { type: "string", default: "luna-fast" },
+      director: { type: "string", default: "on" },
       efforts: { type: "string", default: "low,medium,high,xhigh" },
       repeats: { type: "string", default: "1" },
       output: { type: "string", default: DEFAULT_OUTPUT },
@@ -133,6 +176,7 @@ function parseCli() {
     proxy: values.proxy!,
     origin: values.origin!,
     model: values.model!,
+    directorEnabled: parseDirectorTreatment(values.director!),
     efforts: parseEfforts(values.efforts!),
     repeats: parseRepeats(values.repeats!),
     output: resolve(values.output!),
@@ -187,9 +231,16 @@ async function makeSession(
   return parseAdventureSession(session);
 }
 
-function revealErrors(turn: StepConfig, proposal: AdventureTurnProposal) {
+function revealErrors(
+  turn: StepConfig,
+  proposal: AdventureTurnProposal,
+  previouslyRevealedIds: readonly string[] = [],
+) {
   if (proposal.kind !== "complete") return [];
-  const permitted = new Set(turn.revealOnSuccess ?? []);
+  const permitted = new Set([
+    ...previouslyRevealedIds,
+    ...(turn.revealOnSuccess ?? []),
+  ]);
   return (proposal.revealSecretIds ?? []).filter((id) => !permitted.has(id));
 }
 
@@ -277,6 +328,7 @@ function extractEndingTitle(
   ending?: AdventureJsonV1["endings"][number],
 ): string | undefined {
   if (!ending) return undefined;
+  if (!ending.title) return undefined;
   return ending.title
     .replace(/^ending:\s*/i, "")
     .trim()
@@ -327,6 +379,7 @@ function createGenerationHarness(
   proxyUrl: string,
   origin: string,
   effort: Effort,
+  directorEnabled: boolean,
   calls: CallRecord[],
 ) {
   const sessionToken = process.env.ORACLE_SESSION_TOKEN;
@@ -344,20 +397,80 @@ function createGenerationHarness(
       );
     },
     async sendInteraction(params: any) {
-      const started = performance.now();
-      const result = await interactions.send(params);
-      calls.push({
-        requestedEffort: effort,
-        actualModelKey: result.modelKey,
-        elapsedMs: Math.round(performance.now() - started),
-        inputTokens: result.usage?.inputTokens,
-        outputTokens: result.usage?.outputTokens,
-        reasoningTokens: result.usage?.reasoningTokens,
-      });
-      return result;
+      return sendEffortProxyInteraction(
+        interactions,
+        params,
+        effort,
+        directorEnabled,
+        calls,
+      );
     },
   };
-  return new GenerationService(client as any);
+  const generation = new GenerationService(client as any);
+  const generate = generation.generate.bind(generation);
+  generation.generate = async (request, options) => {
+    const withDirectorChars = JSON.stringify(
+      buildAdventurePrompt({ ...request, directorEnabled: true }),
+    ).length;
+    const withoutDirectorChars = JSON.stringify(
+      buildAdventurePrompt({ ...request, directorEnabled: false }),
+    ).length;
+    const startIndex = calls.length;
+    try {
+      return await generate({ ...request, directorEnabled }, options);
+    } finally {
+      for (const call of calls.slice(startIndex)) {
+        call.directorOnPromptChars = withDirectorChars;
+        call.directorOffPromptChars = withoutDirectorChars;
+        call.directorPromptDeltaChars =
+          withDirectorChars - withoutDirectorChars;
+      }
+    }
+  };
+  return generation;
+}
+
+async function sendEffortProxyInteraction(
+  interactions: ProxyInteractions,
+  params: any,
+  effort: Effort,
+  directorEnabled: boolean,
+  calls: CallRecord[],
+) {
+  const started = performance.now();
+  const result = await interactions.send(params);
+  const usage = result.usage;
+  calls.push({
+    requestedEffort: effort,
+    directorEnabled,
+    actualModelKey: result.modelKey,
+    elapsedMs: elapsedSince(started),
+    interactionInputChars: stringLength(params.input),
+    systemInstructionChars: stringLength(params.systemInstruction),
+    inputTokens: usageValue(usage, "inputTokens"),
+    outputTokens: usageValue(usage, "outputTokens"),
+    reasoningTokens: usageValue(usage, "reasoningTokens"),
+  });
+  return result;
+}
+
+type ProxyInteractionUsage = NonNullable<
+  Awaited<ReturnType<ProxyInteractions["send"]>>["usage"]
+>;
+
+function elapsedSince(started: number): number {
+  return Math.round(performance.now() - started);
+}
+
+function stringLength(value: unknown): number {
+  return String(value ?? "").length;
+}
+
+function usageValue(
+  usage: ProxyInteractionUsage | undefined,
+  key: keyof ProxyInteractionUsage,
+): number | undefined {
+  return usage?.[key];
 }
 
 function buildFallbackProposal(): AdventureTurnProposal {
@@ -673,11 +786,7 @@ function collectForbiddenLeaks(
   hardFailures: string[],
   previouslyRevealedIds: readonly string[],
 ): { forbiddenTexts: string[]; forbiddenFactLeaks: string[] } {
-  const forbiddenIds = forbiddenSecretIds(
-    step,
-    fixture,
-    previouslyRevealedIds,
-  );
+  const forbiddenIds = forbiddenSecretIds(step, fixture, previouslyRevealedIds);
   const forbiddenTexts = forbiddenIds
     .map((id) => adventure.secrets.find((secret) => secret.id === id)?.text)
     .filter((value): value is string => typeof value === "string");
@@ -688,7 +797,11 @@ function collectForbiddenLeaks(
   const exactLeaks = forbiddenTexts.filter((text) =>
     forbiddenSurface.includes(text.toLocaleLowerCase()),
   );
-  const phraseLeaks = collectPhraseLeaks(forbiddenIds, fixture, forbiddenSurface);
+  const phraseLeaks = collectPhraseLeaks(
+    forbiddenIds,
+    fixture,
+    forbiddenSurface,
+  );
   if (exactLeaks.length) {
     hardFailures.push(`${step.id}: exact forbidden source text leaked`);
   }
@@ -703,15 +816,13 @@ function collectForbiddenLeaks(
   };
 }
 
-function buildStepRequest(
+export function buildStepRequest(
   step: StepConfig,
   index: number,
   before: AdventureSession,
   adventure: AdventureJsonV1,
 ) {
-  const packageContext = retrieveAdventureJsonContext(adventure, {
-    sceneId: before.packageProgress?.sceneId,
-  });
+  const packageContext = buildStepPackageContext(step, before, adventure);
   return {
     session: before,
     phase: (index === 0 ? "opening" : "action") as "opening" | "action",
@@ -723,6 +834,76 @@ function buildStepRequest(
       gmOnly: packageContext.gmOnly,
     },
   };
+}
+
+type StepSourceRecord = { id: string; sourceRef?: { anchor?: string } };
+
+function sourceRefMatches(
+  record: StepSourceRecord,
+  reference: string,
+): boolean {
+  return record.id === reference || record.sourceRef?.anchor === reference;
+}
+
+function findReferencedIds<T extends StepSourceRecord>(
+  records: readonly T[],
+  references: readonly string[],
+): string[] {
+  return references.flatMap((reference) => {
+    const record = records.find((candidate) =>
+      sourceRefMatches(candidate, reference),
+    );
+    return record ? [record.id] : [];
+  });
+}
+
+function buildStepPackageContext(
+  step: StepConfig,
+  before: AdventureSession,
+  adventure: AdventureJsonV1,
+) {
+  const sceneIds = findReferencedIds(adventure.scenes, step.sourceRefs);
+  const focusSceneIds = uniqueIds(
+    sceneIds.length > 0 ? sceneIds : [before.packageProgress?.sceneId],
+  );
+  const locationIds = findReferencedIds(adventure.locations, step.sourceRefs);
+  const focusedActorIds = uniqueIds(
+    step.sourceRefs.flatMap((reference) =>
+      adventure.actors
+        .filter((actor) => sourceRefMatches(actor, reference))
+        .map((actor) => actor.id),
+    ),
+  );
+  const contexts = focusSceneIds.map((sceneId, index) =>
+    retrieveAdventureJsonContext(adventure, {
+      sceneId,
+      ...(focusedActorIds.length ? { actorIds: focusedActorIds } : {}),
+      ...(index === 0 && locationIds.length
+        ? { locationId: locationIds[0] }
+        : {}),
+    }),
+  );
+  return {
+    playerSafe: uniqueContextExcerpts(contexts, "playerSafe"),
+    gmOnly: uniqueContextExcerpts(contexts, "gmOnly"),
+  };
+}
+
+function uniqueIds(ids: Array<string | undefined>): string[] {
+  return [...new Set(ids.filter((id): id is string => Boolean(id)))];
+}
+
+function uniqueContextExcerpts(
+  contexts: ReturnType<typeof retrieveAdventureJsonContext>[],
+  key: "playerSafe" | "gmOnly",
+) {
+  return [
+    ...new Map(
+      contexts
+        .flatMap((context) => context[key])
+        .map((excerpt) => [excerpt.id, excerpt]),
+    ).values(),
+  ];
 }
 
 function buildStepMeta(
@@ -779,6 +960,7 @@ async function executeProposedStep(params: {
   effort: Effort;
   model: string;
   hardFailures: string[];
+  previouslyRevealedIds: string[];
 }): Promise<{ outcome: StepOutcome; initialUnexpectedRevealIds: string[] }> {
   const proposal = await params.generation.generate(
     buildStepRequest(
@@ -789,7 +971,11 @@ async function executeProposedStep(params: {
     ),
     { modelName: params.model, reasoningEffort: params.effort },
   );
-  const initialUnexpectedRevealIds = revealErrors(params.step, proposal);
+  const initialUnexpectedRevealIds = revealErrors(
+    params.step,
+    proposal,
+    params.previouslyRevealedIds,
+  );
   const meta = buildStepMeta(
     params.step,
     params.index,
@@ -834,11 +1020,12 @@ function collectUnexpectedReveals(
   initialUnexpectedRevealIds: string[],
   proposal: AdventureTurnProposal,
   hardFailures: string[],
+  previouslyRevealedIds: readonly string[] = [],
 ): string[] {
   const unexpectedRevealIds = [
     ...new Set([
       ...initialUnexpectedRevealIds,
-      ...revealErrors(step, proposal),
+      ...revealErrors(step, proposal, previouslyRevealedIds),
     ]),
   ];
   if (unexpectedRevealIds.length) {
@@ -937,6 +1124,7 @@ function buildSuccessStepResult(params: {
   turnCalls: CallRecord[];
   allPackageRecordIds: string[];
   hardFailures: string[];
+  previouslyRevealedIds: string[];
 }): {
   nextSession: AdventureSession;
   record: TurnRecord;
@@ -948,6 +1136,7 @@ function buildSuccessStepResult(params: {
     params.initialUnexpectedRevealIds,
     outcome.proposal,
     params.hardFailures,
+    params.previouslyRevealedIds,
   );
   const { forbiddenTexts, forbiddenFactLeaks } = collectForbiddenLeaks(
     step,
@@ -955,7 +1144,10 @@ function buildSuccessStepResult(params: {
     params.adventure,
     [outcome.rollSetup?.narration, outcome.narration],
     params.hardFailures,
-    params.before.packageProgress?.revealedSecretIds ?? [],
+    [
+      ...(params.before.packageProgress?.revealedSecretIds ?? []),
+      ...params.previouslyRevealedIds,
+    ],
   );
   const record = buildSuccessTurnRecord({
     step,
@@ -986,6 +1178,7 @@ function buildFailedStepResult(params: {
   turnCalls: CallRecord[];
   allPackageRecordIds: string[];
   cause: unknown;
+  effort: Effort;
   hardFailures: string[];
 }): {
   nextSession: AdventureSession;
@@ -994,6 +1187,7 @@ function buildFailedStepResult(params: {
 } {
   const errMsg =
     params.cause instanceof Error ? params.cause.message : String(params.cause);
+  const validationHint = getEffortValidationHint(params.cause, params.effort);
   const proposal = buildFallbackProposal();
   params.hardFailures.push(`${params.step.id}: generation failed: ${errMsg}`);
   return {
@@ -1012,6 +1206,7 @@ function buildFailedStepResult(params: {
       committed: false,
       repairCount: Math.max(0, params.turnCalls.length - 1),
       error: errMsg,
+      ...(validationHint ? { validationHint } : {}),
       calls: params.turnCalls,
     },
     evalTurn: {
@@ -1043,6 +1238,7 @@ async function runSingleStep(params: {
   model: string;
   allPackageRecordIds: string[];
   hardFailures: string[];
+  previouslyRevealedIds: string[];
 }) {
   const turnCallsStart = params.calls.length;
   try {
@@ -1057,6 +1253,7 @@ async function runSingleStep(params: {
       effort: params.effort,
       model: params.model,
       hardFailures: params.hardFailures,
+      previouslyRevealedIds: params.previouslyRevealedIds,
     });
     return buildSuccessStepResult({
       step: params.step,
@@ -1068,6 +1265,7 @@ async function runSingleStep(params: {
       turnCalls: params.calls.slice(turnCallsStart),
       allPackageRecordIds: params.allPackageRecordIds,
       hardFailures: params.hardFailures,
+      previouslyRevealedIds: params.previouslyRevealedIds,
     });
   } catch (cause) {
     return buildFailedStepResult({
@@ -1077,6 +1275,7 @@ async function runSingleStep(params: {
       turnCalls: params.calls.slice(turnCallsStart),
       allPackageRecordIds: params.allPackageRecordIds,
       cause,
+      effort: params.effort,
       hardFailures: params.hardFailures,
     });
   }
@@ -1110,6 +1309,95 @@ function isRunPassed(
   return turnCount === expectedCount;
 }
 
+interface EffortStepsResult {
+  nextSession: AdventureSession;
+  evaluated: EvaluationTurn[];
+  turnRecords: TurnRecord[];
+}
+
+async function executeEffortSteps(params: {
+  allSteps: StepConfig[];
+  fixture: Fixture;
+  adventure: AdventureJsonV1;
+  session: AdventureSession;
+  generation: GenerationService;
+  calls: CallRecord[];
+  repeat: number;
+  effort: Effort;
+  model: string;
+  allPackageRecordIds: string[];
+  hardFailures: string[];
+}): Promise<EffortStepsResult> {
+  let session = params.session;
+  const evaluated: EvaluationTurn[] = [];
+  const turnRecords: TurnRecord[] = [];
+  const harnessRevealedSecretIds = new Set<string>();
+  for (const [index, step] of params.allSteps.entries()) {
+    const outcome = await runSingleStep({
+      step,
+      index,
+      fixture: params.fixture,
+      adventure: params.adventure,
+      session,
+      generation: params.generation,
+      calls: params.calls,
+      repeat: params.repeat,
+      effort: params.effort,
+      model: params.model,
+      allPackageRecordIds: params.allPackageRecordIds,
+      hardFailures: params.hardFailures,
+      previouslyRevealedIds: revealedIdsFor(session, harnessRevealedSecretIds),
+    });
+    session = outcome.nextSession;
+    turnRecords.push(outcome.record);
+    evaluated.push(outcome.evalTurn);
+    updateHarnessRevealedIds(outcome.record, step, harnessRevealedSecretIds);
+    if (!outcome.record.committed) break;
+  }
+  return { nextSession: session, evaluated, turnRecords };
+}
+
+function revealedIdsFor(
+  session: AdventureSession,
+  harnessIds: Set<string>,
+): string[] {
+  return [
+    ...new Set([
+      ...(session.packageProgress?.revealedSecretIds ?? []),
+      ...harnessIds,
+    ]),
+  ];
+}
+
+function updateHarnessRevealedIds(
+  record: TurnRecord,
+  step: StepConfig,
+  harnessIds: Set<string>,
+): void {
+  if (!record.committed) return;
+  addRevealedIds(harnessIds, step.revealOnSuccess ?? []);
+  addAuthorizedProposalReveals(harnessIds, record);
+}
+
+function addRevealedIds(ids: Set<string>, revealed: readonly string[]): void {
+  for (const id of revealed) ids.add(id);
+}
+
+function addAuthorizedProposalReveals(
+  ids: Set<string>,
+  record: TurnRecord,
+): void {
+  const unexpected = new Set(record.unexpectedRevealIds);
+  for (const id of proposedRevealIds(record)) {
+    if (!unexpected.has(id)) ids.add(id);
+  }
+}
+
+function proposedRevealIds(record: TurnRecord): string[] {
+  if (record.proposal.kind !== "complete") return [];
+  return record.proposal.revealSecretIds ?? [];
+}
+
 async function executeEffort(
   fixture: Fixture,
   adventure: AdventureJsonV1,
@@ -1118,53 +1406,54 @@ async function executeEffort(
   proxyUrl: string,
   origin: string,
   model: string,
+  directorEnabled: boolean,
 ) {
   const calls: CallRecord[] = [];
-  const generation = createGenerationHarness(proxyUrl, origin, effort, calls);
-  let session = await makeSession(fixture, adventure, new Date().toISOString());
+  const generation = createGenerationHarness(
+    proxyUrl,
+    origin,
+    effort,
+    directorEnabled,
+    calls,
+  );
+  const session = await makeSession(
+    fixture,
+    adventure,
+    new Date().toISOString(),
+  );
   const allPackageRecordIds = [
     ...adventureJsonRecordIds(adventure),
     ...adventure.endings.map((ending) => ending.id),
   ];
-  const evaluated: EvaluationTurn[] = [];
-  const turnRecords: TurnRecord[] = [];
   const hardFailures: string[] = [];
   const allSteps = buildAllSteps(adventure, fixture);
-
-  for (const [index, step] of allSteps.entries()) {
-    const outcome = await runSingleStep({
-      step,
-      index,
-      fixture,
-      adventure,
-      session,
-      generation,
-      calls,
-      repeat,
-      effort,
-      model,
-      allPackageRecordIds,
-      hardFailures,
-    });
-    session = outcome.nextSession;
-    turnRecords.push(outcome.record);
-    evaluated.push(outcome.evalTurn);
-    if (!outcome.record.committed) break;
-  }
-
-  const rubric = evaluateAdventureRun(evaluated, []);
+  const execution = await executeEffortSteps({
+    allSteps,
+    fixture,
+    adventure,
+    session,
+    generation,
+    calls,
+    repeat,
+    effort,
+    model,
+    allPackageRecordIds,
+    hardFailures,
+  });
+  const rubric = evaluateAdventureRun(execution.evaluated, []);
   return {
     effort,
+    directorEnabled,
     repeat,
     requestedModel: model,
     calls,
-    turns: turnRecords,
+    turns: execution.turnRecords,
     rubric,
     hardFailures,
     passed: isRunPassed(
       rubric.passed,
       hardFailures,
-      turnRecords.length,
+      execution.turnRecords.length,
       allSteps.length,
     ),
   };
@@ -1216,7 +1505,7 @@ function summarizeRunRow(result: any): string {
     0,
   );
   const tokens = `${sumCallField(result.calls, (c) => c.inputTokens)} / ${sumCallField(result.calls, (c) => c.outputTokens)} (${sumCallField(result.calls, (c) => c.reasoningTokens)})`;
-  return `| ${result.effort} | ${result.repeat} | ${models} | ${committedTurns}/${result.turns.length} | ${rollCount} | ${repairCount} | ${result.calls.length} | ${median} ms | ${tokens} | ${result.passed ? "PASS" : "FAIL"} | ${result.rubric.passed ? "PASS" : "FAIL"} | ${result.hardFailures.length} |`;
+  return `| ${result.effort} | ${result.directorEnabled ? "on" : "off"} | ${result.repeat} | ${models} | ${committedTurns}/${result.turns.length} | ${rollCount} | ${repairCount} | ${result.calls.length} | ${median} ms | ${tokens} | ${result.passed ? "PASS" : "FAIL"} | ${result.rubric.passed ? "PASS" : "FAIL"} | ${result.hardFailures.length} |`;
 }
 
 function formatTurnRollLines(rollSetup?: RollSetupRecord): string[] {
@@ -1231,11 +1520,28 @@ function formatTurnRollLines(rollSetup?: RollSetupRecord): string[] {
 
 function formatTurnCallLines(calls: CallRecord[]): string[] {
   if (calls.length === 0) return [];
-  const models = calls
-    .map((call) => escapeMarkdownOutput(call.actualModelKey ?? "unknown"))
-    .join(", ");
-  const latency = calls.reduce((sum, call) => sum + call.elapsedMs, 0);
-  return [`_Model: ${models} · Latency: ${latency} ms_`, ""];
+  return ["Model calls:", ...calls.map(formatTurnCallLine), ""];
+}
+
+function formatTurnCallLine(call: CallRecord, index: number): string {
+  const model = escapeMarkdownOutput(modelKeyOrUnknown(call.actualModelKey));
+  const promptImpact = directorPromptDelta(call.directorPromptDeltaChars);
+  const treatment = call.directorEnabled ? "on" : "off";
+  return `- ${index + 1}. ${model} / ${call.requestedEffort}, Director ${treatment} · ${call.elapsedMs} ms · request input ${displayOptional(call.interactionInputChars)} chars + instruction ${displayOptional(call.systemInstructionChars)} chars${promptImpact} · ${displayOptional(call.inputTokens)} input / ${displayOptional(call.outputTokens)} output tokens (${displayOptional(call.reasoningTokens)} reasoning)`;
+}
+
+function modelKeyOrUnknown(value: string | undefined): string {
+  return value ?? "unknown";
+}
+
+function displayOptional(value: number | undefined): number | "?" {
+  return value ?? "?";
+}
+
+function directorPromptDelta(chars: number | undefined): string {
+  return chars === undefined
+    ? ""
+    : ` · Director delta ${chars} prompt-object chars`;
 }
 
 function formatTurnBeatLines(
@@ -1272,6 +1578,12 @@ function formatTurnMarkdown(turn: TurnRecord): string[] {
   if (turn.error) {
     lines.push(`> Run note: ${escapeMarkdownOutput(turn.error)}`, "");
   }
+  if (turn.validationHint) {
+    lines.push(
+      `> Validation hint: ${escapeMarkdownOutput(turn.validationHint)}`,
+      "",
+    );
+  }
   return [
     ...lines,
     ...formatTurnRollLines(turn.rollSetup),
@@ -1304,18 +1616,24 @@ function formatResultSection(result: any): string[] {
   ];
 }
 
+function reportRollCaveat(runConfig?: EffortRunConfig): string {
+  return runConfig?.rollOutcome
+    ? `> Scripted roll outcome: \`${runConfig.rollOutcome.kind} ${runConfig.rollOutcome.value}\` at every effort level.`
+    : "> Baseline caveat: this capture predates scripted roll replay. A turn that requested a roll left the path pending, so later scripted actions are not a continuous playthrough.";
+}
+
+function reportDirectorTreatment(runConfig?: EffortRunConfig): string {
+  return runConfig?.directorEnabled === false ? "off" : "on";
+}
+
 function reportMarkdown(
   fixture: Fixture,
   results: any[],
   proxy: string,
   origin: string,
-  runConfig?: { rollOutcome?: SuppliedRollOutcome },
+  runConfig?: EffortRunConfig,
   generatedAt = new Date().toISOString(),
 ) {
-  const caveat = runConfig?.rollOutcome
-    ? `> Scripted roll outcome: \`${runConfig.rollOutcome.kind} ${runConfig.rollOutcome.value}\` at every effort level.`
-    : "> Baseline caveat: this capture predates scripted roll replay. A turn that requested a roll left the path pending, so later scripted actions are not a continuous playthrough.";
-
   return [
     `# ${fixture.title.replace(/: Luna effort comparison$/, "")} — live effort comparison`,
     "",
@@ -1325,12 +1643,14 @@ function reportMarkdown(
     `Adventure: \`${fixture.id}\` · fixed player actions · fresh interaction per run`,
     "",
     "> This report contains model output. Expected-beat reviews remain pending for human assessment; automated rubric scores are safety and state checks, not a prose-quality judge.",
-    caveat,
+    reportRollCaveat(runConfig),
     "",
     "## Summary",
     "",
-    "| Effort | Repeat | Actual model(s) | Turns committed | Rolls | Repairs | Calls | Median latency | Tokens in/out (reason) | Run | Rubric | Hard failures |",
-    "|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+    `> Director treatment: ${reportDirectorTreatment(runConfig)}. Request character counts are submitted text only; provider-reported token counts include retained context. Director delta is an exact character-count difference between prompt objects built from the same local state, not a token estimate.`,
+    "",
+    "| Effort | Director | Repeat | Actual model(s) | Turns committed | Rolls | Repairs | Calls | Median latency | Tokens in/out (reason) | Run | Rubric | Hard failures |",
+    "|---|---|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ...results.map(summarizeRunRow),
     ...results.flatMap(formatResultSection),
     "## Review guide",
@@ -1377,6 +1697,7 @@ function logDryRun(
         adventure: adventure.id,
         steps: fixture.runs.length + 1,
         model: cli.model,
+        director: cli.directorEnabled ? "on" : "off",
         efforts: cli.efforts,
         repeats: cli.repeats,
         baseModelRequests:
@@ -1409,6 +1730,7 @@ async function runLiveComparison(
           cli.proxy,
           cli.origin,
           cli.model,
+          cli.directorEnabled,
         ),
       );
     }
@@ -1422,6 +1744,7 @@ async function runLiveComparison(
     origin: cli.origin,
     runConfig: {
       model: cli.model,
+      directorEnabled: cli.directorEnabled,
       efforts: cli.efforts,
       repeats: cli.repeats,
       scriptedStepsPerEffort: fixture.runs.length + 1,

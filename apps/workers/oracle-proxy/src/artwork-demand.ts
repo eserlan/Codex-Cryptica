@@ -33,6 +33,14 @@ const MAX_ASSET_ID_LENGTH = 100;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
+function isWithinCueArrayLimit(raw: readonly unknown[], maxItems: number): boolean {
+  return raw.length <= maxItems;
+}
+
+function isValidCueValue(normalized: string, pattern: RegExp): boolean {
+  return normalized.length > 0 && normalized.length <= MAX_CUE_LENGTH && pattern.test(normalized);
+}
+
 export interface ArtworkDemandPayload {
   type: ArtworkDemandType;
   genre: ArtworkDemandGenre;
@@ -81,17 +89,12 @@ function sanitizeCueArray(
 ): string[] | null {
   if (raw === undefined) return [];
   if (!Array.isArray(raw)) return null;
+  if (!isWithinCueArrayLimit(raw, maxItems)) return null;
   const unique = new Set<string>();
   for (const item of raw) {
     if (typeof item !== "string") return null;
     const normalized = item.trim().toLowerCase().replace(/\s+/g, " ");
-    if (
-      normalized.length === 0 ||
-      normalized.length > MAX_CUE_LENGTH ||
-      !pattern.test(normalized)
-    ) {
-      return null;
-    }
+    if (!isValidCueValue(normalized, pattern)) return null;
     unique.add(normalized);
     if (unique.size > maxItems) return null;
   }

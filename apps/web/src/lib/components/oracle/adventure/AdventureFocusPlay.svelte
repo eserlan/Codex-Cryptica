@@ -288,7 +288,10 @@
   );
 
   $effect(() => {
-    artworkDemandReporter.reportFromSummary(cueSummary);
+    artworkDemandReporter.reportFromSummary(
+      cueSummary,
+      manager.session?.id ?? null,
+    );
   });
 
   $effect(() => {

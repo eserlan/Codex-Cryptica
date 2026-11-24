@@ -90,7 +90,12 @@ function playerVisibleProposalPayload(
   proposal: AdventureTurnProposal,
 ): unknown {
   if (proposal.kind === "complete") {
-    const { hiddenPatch: _hidden, timeAdvance, ...visible } = proposal;
+    const {
+      hiddenPatch: _hidden,
+      causalCommitments: _commitments,
+      timeAdvance,
+      ...visible
+    } = proposal;
     return {
       ...visible,
       ...(timeAdvance
@@ -377,19 +382,41 @@ function resolvesPendingRoll(
   );
 }
 
-export function scoreCanonSafety(turn: EvaluationTurn): number {
+export type CanonSafetyFailure =
+  | "duplicate-canonical-title"
+  | "unattributed-canonical-fact"
+  | "canonical-source-record-mutated"
+  | "canonical-fact-demoted";
+
+/** Bounded diagnostics for the canon-safety rubric. */
+export function canonSafetyFailures(
+  turn: EvaluationTurn,
+): CanonSafetyFailure[] {
   const next = turn.session;
   const prev = turn.previousSession;
   const canonicalSources = (next ?? prev)?.sourceRecords ?? [];
   const canonicalTitles = new Set(
     canonicalSources.map((record) => normalizeText(record.displayName)),
   );
+  const failures: CanonSafetyFailure[] = [];
 
-  return !hasProvisionalCanonicalFacts(turn, next, canonicalTitles) &&
-    !hasUnattributedCanonicalFacts(next, turn.packageRecordIds) &&
-    !mutatesCanon(prev, next)
-    ? 1
-    : 0;
+  if (hasProvisionalCanonicalFacts(turn, next, canonicalTitles)) {
+    failures.push("duplicate-canonical-title");
+  }
+  if (hasUnattributedCanonicalFacts(next, turn.packageRecordIds)) {
+    failures.push("unattributed-canonical-fact");
+  }
+  if (mutatesCanonicalSourceRecords(prev, next)) {
+    failures.push("canonical-source-record-mutated");
+  }
+  if (prev && next && demotesCanonicalFacts(prev, next)) {
+    failures.push("canonical-fact-demoted");
+  }
+  return failures;
+}
+
+export function scoreCanonSafety(turn: EvaluationTurn): number {
+  return canonSafetyFailures(turn).length === 0 ? 1 : 0;
 }
 
 function hasProvisionalCanonicalFacts(
@@ -433,7 +460,7 @@ function hasUnattributedCanonicalFacts(
   );
 }
 
-function mutatesCanon(
+function mutatesCanonicalSourceRecords(
   prev: AdventureSession | undefined,
   next: AdventureSession | undefined,
 ): boolean {
@@ -452,7 +479,7 @@ function mutatesCanon(
     })
   )
     return true;
-  return demotesCanonicalFacts(prev, next);
+  return false;
 }
 
 function demotesCanonicalFacts(
@@ -470,14 +497,33 @@ function demotesCanonicalFacts(
   ].some((fact) => previousIds.has(fact.id) && fact.source !== "canonical");
 }
 
-function validateProposalConsequences(turn: EvaluationTurn): boolean {
-  if (turn.proposal.kind !== "complete") return true;
-  const baseline = turn.previousSession ?? turn.session;
-  if (!baseline) return true;
-  return (
-    hasValidDevelopmentThreads(turn.proposal, baseline) &&
-    hasValidElaborations(turn.proposal, baseline)
-  );
+export type ConsequenceCredibilityFailure =
+  | "invalid-development-thread"
+  | "same-turn-reveal-and-elaboration"
+  | "unknown-elaboration-scenario"
+  | "elaboration-on-ineligible-scenario"
+  | "elaboration-stage-unchanged"
+  | "elaboration-stage-regression"
+  | "elaboration-skips-stage"
+  | "invalid-propagated-event";
+
+/** Bounded diagnostics for the consequence-credibility rubric. */
+export function consequenceCredibilityFailures(
+  turn: EvaluationTurn,
+): ConsequenceCredibilityFailure[] {
+  const failures: ConsequenceCredibilityFailure[] = [];
+  if (turn.proposal.kind === "complete") {
+    const baseline = turn.previousSession ?? turn.session;
+    if (baseline && !hasValidDevelopmentThreads(turn.proposal, baseline)) {
+      failures.push("invalid-development-thread");
+    }
+    if (baseline)
+      failures.push(...scenarioElaborationFailures(turn.proposal, baseline));
+  }
+  if (!validatePropagatedEvents(turn.session)) {
+    failures.push("invalid-propagated-event");
+  }
+  return failures;
 }
 
 function hasValidDevelopmentThreads(
@@ -496,10 +542,10 @@ function hasValidDevelopmentThreads(
   );
 }
 
-function hasValidElaborations(
+function scenarioElaborationFailures(
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
   baseline: AdventureSession,
-): boolean {
+): ConsequenceCredibilityFailure[] {
   const newlyRevealed = new Set(proposal.revealScenarioIds ?? []);
   const scenarios = new Map(
     (baseline.scenarioCollection?.items ?? []).map((scenario) => [
@@ -507,16 +553,24 @@ function hasValidElaborations(
       scenario,
     ]),
   );
-  return (proposal.elaborateScenarios ?? []).every((elaboration) => {
-    if (newlyRevealed.has(elaboration.scenarioId)) return false;
-    const scenario = scenarios.get(elaboration.scenarioId);
-    return Boolean(
-      scenario &&
-      scenario.knowledge === "heard" &&
-      scenario.status === "open" &&
-      STAGE_ORDER[elaboration.stage] - STAGE_ORDER[scenario.stage] === 1,
-    );
-  });
+  return (proposal.elaborateScenarios ?? []).flatMap(
+    (elaboration): ConsequenceCredibilityFailure[] => {
+      if (newlyRevealed.has(elaboration.scenarioId)) {
+        return ["same-turn-reveal-and-elaboration"];
+      }
+      const scenario = scenarios.get(elaboration.scenarioId);
+      if (!scenario) return ["unknown-elaboration-scenario"];
+      if (scenario.knowledge !== "heard" || scenario.status !== "open") {
+        return ["elaboration-on-ineligible-scenario"];
+      }
+      const stageDelta =
+        STAGE_ORDER[elaboration.stage] - STAGE_ORDER[scenario.stage];
+      if (stageDelta === 0) return ["elaboration-stage-unchanged"];
+      if (stageDelta < 0) return ["elaboration-stage-regression"];
+      if (stageDelta > 1) return ["elaboration-skips-stage"];
+      return [];
+    },
+  );
 }
 
 function validatePropagatedEvents(
@@ -564,9 +618,7 @@ function hasSharedPropagationAnchor(
 }
 
 export function scoreConsequenceCredibility(turn: EvaluationTurn): number {
-  if (!validateProposalConsequences(turn)) return 0;
-  if (!validatePropagatedEvents(turn.session)) return 0;
-  return 1;
+  return consequenceCredibilityFailures(turn).length === 0 ? 1 : 0;
 }
 
 export function scoreUnnecessaryEscalation(turn: EvaluationTurn): number {

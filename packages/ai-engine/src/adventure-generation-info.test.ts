@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AdventureTurnGenerationService } from "./adventure-turn-generation.service";
+import { InteractionExpiredError } from "./client-manager";
 import {
   session,
   completeResponse,
@@ -32,7 +33,14 @@ describe("generation info classification (#5112)", () => {
     expect(result.generationInfo).toMatchObject({
       transport: "stateless",
       modelKey: "luna-fast",
+      threadMode: "new",
     });
+    expect(result.generationInfo?.requestChars).toBeGreaterThan(0);
+    expect(result.generationInfo?.sourceCounts).toEqual({
+      anchors: 0,
+      relevant: 0,
+    });
+    expect(result.generationInfo?.scenarioIds).toEqual([]);
   });
 
   it("classifies stateless fallback after a retained-history failure", async () => {
@@ -50,6 +58,7 @@ describe("generation info classification (#5112)", () => {
     expect(result.generationInfo).toMatchObject({
       transport: "stateless",
       modelKey: "luna-fast",
+      threadMode: "new",
     });
   });
 
@@ -72,6 +81,7 @@ describe("generation info classification (#5112)", () => {
       transport: "interaction",
       modelKey: "luna-fast",
       reasoningEffort: "high",
+      threadMode: "new",
     });
   });
 
@@ -94,12 +104,58 @@ describe("generation info classification (#5112)", () => {
       reasoningEffort: "low",
       threadMode: "new",
     });
-    expect(result.generationInfo?.requestChars).toBeGreaterThan(0);
-    expect(result.generationInfo?.sourceCounts).toEqual({
-      anchors: 0,
-      relevant: 0,
-      retained: 0,
+  });
+
+  it("reports continued provider history only after the prior turn is confirmed", async () => {
+    const service = new AdventureTurnGenerationService({
+      getModel: async () => ({
+        async generateContent() {
+          return { response: { text: () => completeResponse } };
+        },
+      }),
+      sendInteraction: vi.fn(async () => ({
+        id: "interaction-1",
+        text: completeResponse,
+      })),
     });
+
+    const first = await service.generate(request);
+    expect(first.generationInfo?.threadMode).toBe("new");
+    service.confirmInteraction(session.id, 1);
+    const second = await service.generate({
+      ...request,
+      session: { ...session, revision: 1 },
+    });
+
+    expect(second.generationInfo).toMatchObject({
+      transport: "interaction",
+      threadMode: "continued",
+    });
+  });
+
+  it("reports a provider-expiry reset when a fresh interaction succeeds", async () => {
+    let calls = 0;
+    const service = new AdventureTurnGenerationService({
+      getModel: async () => ({
+        async generateContent() {
+          return { response: { text: () => completeResponse } };
+        },
+      }),
+      sendInteraction: vi.fn(async () => {
+        calls += 1;
+        if (calls === 1) throw new InteractionExpiredError("expired");
+        return { id: "interaction-fresh", text: completeResponse };
+      }),
+    });
+
+    const result = await service.generate(request);
+
+    expect(result.generationInfo).toMatchObject({
+      transport: "interaction",
+      threadMode: "reset",
+      resetReason: "provider-expiry",
+    });
+    expect(calls).toBe(2);
   });
 
   it("records nothing extra on the proposal beyond generationInfo", async () => {
