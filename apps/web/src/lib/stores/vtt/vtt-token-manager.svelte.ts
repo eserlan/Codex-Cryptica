@@ -22,7 +22,10 @@ import {
 import { updatedToken, moveLinkedTokens } from "./vtt-token-updates";
 import { VTTTokenOwnership } from "./vtt-token-ownership";
 import { VTTTokenSelection } from "./vtt-token-selection";
-import { VTTTokenSync } from "./vtt-token-sync";
+import {
+  VTTTokenSync,
+  type TokenSyncTimerDependencies,
+} from "./vtt-token-sync";
 import {
   type IdGenerator,
   systemIdGenerator,
@@ -30,7 +33,7 @@ import {
 
 export { normalizeToken } from "map-engine";
 
-export interface VTTTokenManagerDependencies {
+interface VTTTokenManagerBaseDependencies {
   emit: (message: VTTMessage) => void;
   getMapStore: () => any;
   getVault: () => any;
@@ -46,6 +49,9 @@ export interface VTTTokenManagerDependencies {
   getActiveLayer: () => MapLayer;
   isLayerLocked: (layer: MapLayer) => boolean;
 }
+
+export type VTTTokenManagerDependencies = VTTTokenManagerBaseDependencies &
+  TokenSyncTimerDependencies;
 
 export class VTTTokenManager {
   tokens = $state<Record<string, Token>>({});
