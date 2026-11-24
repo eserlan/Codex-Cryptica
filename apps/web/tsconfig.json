@@ -1,6 +1,13 @@
 {
   "extends": "$app/tsconfig",
   "compilerOptions": {
+    "paths": {
+      "$lib": ["./src/lib"],
+      "$lib/*": ["./src/lib/*"],
+      "$app/types": ["./.svelte-kit/types/index.d.ts"],
+      "#lib": ["./src/lib/index.js"],
+      "#lib/*": ["./src/lib/*"]
+    },
     "rewriteRelativeImportExtensions": true,
     "allowJs": true,
     "checkJs": true,
