@@ -217,24 +217,27 @@ function shrinkFallbackStrings(
   shrinkStorySoFar(bounded, maxChars);
 }
 
-/**
- * Bounds a projected prompt-state payload to `maxChars` without mutating the
- * durable session. Only activates when the full projection exceeds `maxChars`.
- */
-export function boundPromptState<T extends Record<string, unknown>>(
-  state: T,
-  maxChars: number,
-): T {
-  if (serializedFits(state, maxChars)) return state;
-
-  const bounded: Record<string, unknown> = { ...state };
+function clonePromptStateSections(state: Record<string, unknown>): {
+  bounded: Record<string, unknown>;
+  visible: Record<string, unknown> | undefined;
+  gmState: Record<string, unknown> | undefined;
+  playerScenarios: Record<string, unknown> | undefined;
+} {
+  const bounded = { ...state };
   const visible = cloneObject(bounded.playerVisibleState);
   if (visible) bounded.playerVisibleState = visible;
   const gmState = cloneObject(bounded["GM-ONLY state"]);
   if (gmState) bounded["GM-ONLY state"] = gmState;
   const playerScenarios = cloneObject(bounded.playerScenarios);
   if (playerScenarios) bounded.playerScenarios = playerScenarios;
+  return { bounded, visible, gmState, playerScenarios };
+}
 
+function capPromptStateSections(
+  bounded: Record<string, unknown>,
+  visible: Record<string, unknown> | undefined,
+  gmState: Record<string, unknown> | undefined,
+): void {
   if (
     typeof bounded.storySoFar === "string" &&
     bounded.storySoFar.length > MAX_PROMPT_STORY_CHARS
@@ -252,8 +255,14 @@ export function boundPromptState<T extends Record<string, unknown>>(
     ["secrets", "gmThreads"],
     MAX_PROMPT_ITEM_TEXT_CHARS,
   );
-  if (serializedFits(bounded, maxChars)) return bounded as T;
+}
 
+function shrinkPromptCollections(
+  bounded: Record<string, unknown>,
+  maxChars: number,
+  visible: Record<string, unknown> | undefined,
+  gmState: Record<string, unknown> | undefined,
+): boolean {
   const targets: ArrayTarget[] = [
     [visible, "elsewhere", "end"],
     [visible, "knownScenes", "end"],
@@ -271,37 +280,74 @@ export function boundPromptState<T extends Record<string, unknown>>(
   ];
   for (const target of targets) {
     shrinkArrayTarget(bounded, maxChars, target);
-    if (serializedFits(bounded, maxChars)) return bounded as T;
+    if (serializedFits(bounded, maxChars)) return true;
   }
+  return false;
+}
 
+function shrinkPlayerScenarioEvents(
+  bounded: Record<string, unknown>,
+  maxChars: number,
+  playerScenarios: Record<string, unknown> | undefined,
+): void {
   const scenarioItems = playerScenarios?.items;
-  if (Array.isArray(scenarioItems)) {
-    for (const item of scenarioItems) {
-      if (!item || typeof item !== "object") continue;
-      shrinkArrayTarget(bounded, maxChars, [
-        item as Record<string, unknown>,
-        "events",
-        "end",
-      ]);
-      if (serializedFits(bounded, maxChars)) return bounded as T;
-    }
+  if (!Array.isArray(scenarioItems)) return;
+  for (const item of scenarioItems) {
+    if (!item || typeof item !== "object") continue;
+    shrinkArrayTarget(bounded, maxChars, [
+      item as Record<string, unknown>,
+      "events",
+      "end",
+    ]);
+    if (serializedFits(bounded, maxChars)) return;
+  }
+}
+
+function shrinkPlayerScenarioItems(
+  bounded: Record<string, unknown>,
+  maxChars: number,
+  playerScenarios: Record<string, unknown> | undefined,
+): void {
+  shrinkArrayTarget(bounded, maxChars, [playerScenarios, "items", "start"]);
+  if (!playerScenarios || !Array.isArray(playerScenarios.items)) return;
+  const focusedId = playerScenarios.focusedScenarioId;
+  if (
+    focusedId == null ||
+    playerScenarios.items.some(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        (item as Record<string, unknown>).id === focusedId,
+    )
+  ) {
+    return;
+  }
+  playerScenarios.focusedScenarioId = null;
+}
+
+/**
+ * Bounds a projected prompt-state payload to `maxChars` without mutating the
+ * durable session. Only activates when the full projection exceeds `maxChars`.
+ */
+export function boundPromptState<T extends Record<string, unknown>>(
+  state: T,
+  maxChars: number,
+): T {
+  if (serializedFits(state, maxChars)) return state;
+
+  const { bounded, visible, gmState, playerScenarios } =
+    clonePromptStateSections(state);
+  capPromptStateSections(bounded, visible, gmState);
+  if (serializedFits(bounded, maxChars)) return bounded as T;
+
+  if (shrinkPromptCollections(bounded, maxChars, visible, gmState)) {
+    return bounded as T;
   }
 
-  shrinkArrayTarget(bounded, maxChars, [playerScenarios, "items", "start"]);
-  if (playerScenarios && Array.isArray(playerScenarios.items)) {
-    const focusedId = playerScenarios.focusedScenarioId;
-    if (
-      focusedId != null &&
-      !playerScenarios.items.some(
-        (item) =>
-          item &&
-          typeof item === "object" &&
-          (item as Record<string, unknown>).id === focusedId,
-      )
-    ) {
-      playerScenarios.focusedScenarioId = null;
-    }
-  }
+  shrinkPlayerScenarioEvents(bounded, maxChars, playerScenarios);
+  if (serializedFits(bounded, maxChars)) return bounded as T;
+
+  shrinkPlayerScenarioItems(bounded, maxChars, playerScenarios);
   if (serializedFits(bounded, maxChars)) return bounded as T;
 
   shrinkFallbackStrings(bounded, maxChars);
