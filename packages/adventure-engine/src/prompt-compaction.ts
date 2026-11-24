@@ -23,6 +23,21 @@ function clipText(text: string, maxChars: number): string {
   return `${text.slice(0, maxChars - 1)}…`;
 }
 
+function compactPlayerVisibleSummary(playerVisible: unknown): unknown {
+  if (typeof playerVisible === "string") {
+    return clipText(playerVisible, HOT_FACT_BRIEF_CHARS);
+  }
+  if (!isRecord(playerVisible)) return undefined;
+  const summary: JsonRecord = { ...playerVisible };
+  for (const key of ["rumour", "lead", "source"] as const) {
+    const val = summary[key];
+    if (typeof val === "string") {
+      summary[key] = clipText(val, HOT_FACT_BRIEF_CHARS);
+    }
+  }
+  return summary;
+}
+
 function compactColdPlayerScenario(
   item: unknown,
   recentEvents = HOT_SCENARIO_RECENT_EVENTS,
@@ -40,13 +55,12 @@ function compactColdPlayerScenario(
     return item;
   }
   const latest = item.events.at(-1);
+  const playerVisible = compactPlayerVisibleSummary(item.playerVisible);
   return {
     id: item.id,
     status,
     ...(item.knowledge !== undefined ? { knowledge: item.knowledge } : {}),
-    ...(typeof item.playerVisible === "string"
-      ? { playerVisible: clipText(item.playerVisible, HOT_FACT_BRIEF_CHARS) }
-      : {}),
+    ...(playerVisible !== undefined ? { playerVisible } : {}),
     eventCount: item.events.length,
     ...(latest ? { latestEvent: latest } : {}),
   };

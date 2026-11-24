@@ -112,9 +112,26 @@ describe("prompt-compaction (#5204)", () => {
     expect(longSession).toEqual(before);
     // Active hidden secrets stay intact while cold scenario prose is compacted
     expect(prompt.state).toContain("secret-39");
-    // Cold candidate scenarios retain baselineTruth and secretBindings
+    // Cold candidate scenarios retain baselineTruth, secretBindings, and structured playerVisible
     expect(prompt.state).toContain("truth-cold-0");
     expect(prompt.state).toContain(scenario().gmOnly.truth);
+    const parsedLongState = JSON.parse(prompt.state) as {
+      playerScenarios: {
+        items: Array<{
+          id: string;
+          playerVisible?: { rumour?: string; lead?: string };
+        }>;
+      };
+    };
+    const coldPlayerScenario = parsedLongState.playerScenarios.items.find(
+      (item) => item.id === "scenario-cold-0",
+    );
+    expect(coldPlayerScenario?.playerVisible?.rumour).toBe(
+      scenario().playerVisible.rumour,
+    );
+    expect(coldPlayerScenario?.playerVisible?.lead).toBe(
+      scenario().playerVisible.lead,
+    );
     // Revealed secrets without a visible copy retain their revealed text
     expect(prompt.state).toContain("Secret 0:");
   });
