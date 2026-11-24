@@ -1,3 +1,4 @@
+import { reconcileDuplicateActiveCharacters } from "./npc-presence";
 import { isHere } from "./places";
 import type {
   AdventureSession,
@@ -54,11 +55,15 @@ export function projectVisibleState(
       : session.visibleState;
   }
   const state = session.visibleState;
+  const activeCharacters = reconcileDuplicateActiveCharacters(
+    state.activeCharacters,
+    session.people,
+  );
   const elsewhere = places
     .filter((place) => place.id !== here?.id)
     .map((place) => ({
       ...describe(place),
-      people: state.activeCharacters
+      people: activeCharacters
         .filter((fact) => fact.placeId === place.id)
         .slice(-MAX_ELSEWHERE_PER_PLACE)
         .map((fact) => brief(fact.text)),
@@ -70,7 +75,7 @@ export function projectVisibleState(
     .filter((place) => place.people.length > 0 || place.facts.length > 0);
   return {
     ...state,
-    activeCharacters: state.activeCharacters
+    activeCharacters: activeCharacters
       .filter((fact) => isHere(fact, session))
       .map(withoutPlaceTag),
     knownFacts: state.knownFacts

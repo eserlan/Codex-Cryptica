@@ -27,6 +27,8 @@ export interface StateFact {
   text: string;
   source: "canonical" | "provisional" | "revealed-secret";
   sourceRecordId?: string;
+  /** Optional AdventurePerson ID linking this scene-presence entry to session.people. */
+  personId?: string;
   /** Where this fact belongs. Absent means it applies everywhere (legacy and unplaced facts). */
   placeId?: string;
   /** Optional visual artwork cues emitted by the GM (used for activeCharacters). */

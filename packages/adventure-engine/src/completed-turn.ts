@@ -299,6 +299,7 @@ export function applyCompletedTurn(
     materialized.visiblePatch,
     createId,
     proposal.placeCues,
+    { playerAction: proposal.playerAction, narration: proposal.narration },
   );
   if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
   if (time.value && clock.applied) {
