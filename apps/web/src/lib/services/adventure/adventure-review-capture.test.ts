@@ -1217,4 +1217,103 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       requestedDevelopmentKind: "surface-witness-or-clue",
     });
   });
+
+  it("summarizes #5196 action resolution counts, pendingRoll, lastTurnRejection, and legacy unknown turns", () => {
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "t-legacy",
+        generation: undefined,
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-resolved",
+        sequence: 1,
+        generation: {
+          transport: "interaction",
+          threadMode: "continued",
+          directorDelivery: {
+            status: "included",
+            reason: "delivered",
+            deliveredChars: 200,
+            recoveryReason: "none",
+          },
+          actionResolution: {
+            outcome: "resolved",
+            validation: "accepted",
+            evidenceCategory: "movement",
+          },
+        },
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-corrected-unresolved",
+        sequence: 2,
+        generation: {
+          transport: "stateless",
+          threadMode: "new",
+          actionResolution: {
+            outcome: "unresolved",
+            validation: "corrected",
+            evidenceCategory: "dropped-patch",
+            droppedCount: 1,
+            droppedKinds: ["state-patch"],
+          },
+        },
+      },
+    ];
+    session.pendingRoll = {
+      id: "roll-1",
+      inputId: "in-roll",
+      playerAction: "Pick the lock",
+      setupNarration: "The tumbler resists.",
+      uncertainty: "Whether the pick snaps.",
+      stakes: "Opens the door or alerts the watch.",
+      resolutionStatus: "awaiting-outcome",
+      createdAt: "2026-11-24T12:00:00.000Z",
+    };
+
+    const diag = JSON.parse(
+      adventureDiagnosticJson(session, {
+        lastTurnRejection: {
+          reason: "hidden-leakage",
+          actionResolution: {
+            outcome: "unresolved",
+            validation: "rejected",
+            evidenceCategory: "rejected-turn",
+          },
+          revision: 3,
+          recordedAt: "2026-11-24T12:01:00.000Z",
+        },
+      }),
+    );
+
+    expect(diag.summary.generation.actionOutcome).toEqual({
+      resolved: 1,
+      "roll-required": 0,
+      "credible-blocked": 0,
+      clarification: 0,
+      unresolved: 1,
+      unknown: 1,
+    });
+    expect(diag.summary.generation.actionValidation).toEqual({
+      accepted: 1,
+      corrected: 1,
+      rejected: 0,
+      unknown: 1,
+    });
+    expect(diag.summary.generation.pendingRollActionResolution).toEqual({
+      outcome: "roll-required",
+      validation: "accepted",
+      evidenceCategory: "roll-pending",
+    });
+    expect(diag.lastTurnRejection.actionResolution).toEqual({
+      outcome: "unresolved",
+      validation: "rejected",
+      evidenceCategory: "rejected-turn",
+    });
+    expect(diag.turns[1].generation.directorDelivery.status).toBe("included");
+    expect(diag.turns[1].generation.actionResolution.outcome).toBe("resolved");
+  });
 });

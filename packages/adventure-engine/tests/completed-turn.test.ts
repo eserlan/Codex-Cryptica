@@ -237,7 +237,7 @@ describe("completed turn commits", () => {
     expect(!unknown.ok && unknown.errors[0]?.code).toBe("unknown-secret");
     const large = session();
     large.visibleState.knownFacts = [
-      { id: "large", text: "x".repeat(40_000), source: "provisional" },
+      { id: "large", text: "x".repeat(60_000), source: "provisional" },
     ];
     const before = structuredClone(large);
     const budget = applyCompletedTurn(large, proposal(), meta);

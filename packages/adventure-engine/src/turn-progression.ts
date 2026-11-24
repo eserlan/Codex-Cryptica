@@ -31,6 +31,8 @@ export {
   hasOtherScenarioScopedActivity,
   isPlayerVisibleScenarioEvent,
   matchesPursuedTokens,
+  resolvePriorProgressionState,
+  type PriorProgressionState,
   type PursuedThreadScope,
 };
 
@@ -69,7 +71,7 @@ const COMMITMENT_ACTION_RE =
 const INVESTIGATIVE_INQUIRY_PREFIX_RE =
   /^(?:i\s+)?(?:ask|question|inquire|enquire|interview|interrogate|press|probe|talk\s+to|speak\s+(?:to|with)|check\s+with)\b/i;
 
-const ACTIVE_INSPECTION_RE =
+export const ACTIVE_INSPECTION_RE =
   /\b(?:search|inspect|examine|check|investigate|look\s+(?:at|in|inside|under|around|behind|for)|open|probe|test|verify|audit|read|count|weigh|measure|scan|sweep|excavate|dig|trace)\b/i;
 
 const EXTRA_NON_ANSWER_RE =

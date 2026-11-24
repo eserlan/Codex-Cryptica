@@ -385,6 +385,43 @@ export interface DirectorDeliveryTrace {
   requestedDevelopmentKind?: string;
 }
 
+export type ActionResolutionOutcome =
+  | "resolved"
+  | "roll-required"
+  | "credible-blocked"
+  | "clarification"
+  | "unresolved"
+  | "unknown";
+
+export type ActionValidationDisposition =
+  "accepted" | "corrected" | "rejected" | "unknown";
+
+export type ActionEvidenceCategory =
+  | "roll-resolved"
+  | "roll-pending"
+  | "movement"
+  | "discovery"
+  | "state-patch"
+  | "witness-limit"
+  | "observation"
+  | "credible-block"
+  | "clarification"
+  | "non-answer"
+  | "quiet-play"
+  | "dropped-patch"
+  | "rejected-turn"
+  | "none";
+
+/** Bounded GM-only trace of how the submitted player action was fulfilled and validated (#5196). */
+export interface ActionResolutionTrace {
+  outcome: ActionResolutionOutcome;
+  validation: ActionValidationDisposition;
+  evidenceCategory: ActionEvidenceCategory;
+  droppedCount?: number;
+  droppedKinds?: string[];
+  resolvedRoll?: boolean;
+}
+
 export interface GenerationMetadata {
   /** Model registry key only; the string "unknown" when no mapping exists. */
   modelKey?: string;
@@ -397,6 +434,8 @@ export interface GenerationMetadata {
   revisionMismatchCause?: LocalSaveOperation;
   /** Bounded GM-only trace of Director guidance actually delivered on the committed request (#5195). */
   directorDelivery?: DirectorDeliveryTrace;
+  /** Bounded GM-only trace of action fulfilment and reducer validation (#5196). */
+  actionResolution?: ActionResolutionTrace;
   requestChars?: number;
   sourceCounts?: Record<string, number>;
   /** Selected scenario IDs. GM-only. */

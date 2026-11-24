@@ -140,6 +140,37 @@ const directorDeliverySchema = z.object({
   requestedDevelopmentKind: z.string().min(1).max(80).optional(),
 });
 
+const actionResolutionSchema = z.object({
+  outcome: z.enum([
+    "resolved",
+    "roll-required",
+    "credible-blocked",
+    "clarification",
+    "unresolved",
+    "unknown",
+  ]),
+  validation: z.enum(["accepted", "corrected", "rejected", "unknown"]),
+  evidenceCategory: z.enum([
+    "roll-resolved",
+    "roll-pending",
+    "movement",
+    "discovery",
+    "state-patch",
+    "witness-limit",
+    "observation",
+    "credible-block",
+    "clarification",
+    "non-answer",
+    "quiet-play",
+    "dropped-patch",
+    "rejected-turn",
+    "none",
+  ]),
+  droppedCount: z.number().int().positive().max(32).optional(),
+  droppedKinds: z.array(z.string().min(1).max(40)).max(16).optional(),
+  resolvedRoll: z.boolean().optional(),
+});
+
 export const generationMetadataSchema = z.object({
   modelKey: z.string().min(1).max(120).optional(),
   reasoningEffort: generationReasoningEffortSchema.optional(),
@@ -148,6 +179,7 @@ export const generationMetadataSchema = z.object({
   resetReason: generationResetReasonSchema.optional(),
   revisionMismatchCause: localSaveOperationSchema.optional(),
   directorDelivery: directorDeliverySchema.optional(),
+  actionResolution: actionResolutionSchema.optional(),
   requestChars: z.number().int().nonnegative().max(1_000_000).optional(),
   sourceCounts: z
     .record(
