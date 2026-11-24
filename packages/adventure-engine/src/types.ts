@@ -346,6 +346,20 @@ export type GenerationResetReason =
   | "app-lifetime"
   | "unknown";
 
+export type LocalSaveOperation =
+  | "turn-commit"
+  | "ooc-exchange"
+  | "artwork-save"
+  | "dice-preset"
+  | "resource-counter"
+  | "state-correction"
+  | "scenario-update"
+  | "place-link"
+  | "story-summary"
+  | "session-resume"
+  | "external-or-concurrent"
+  | "unknown";
+
 export interface GenerationMetadata {
   /** Model registry key only; the string "unknown" when no mapping exists. */
   modelKey?: string;
@@ -354,6 +368,8 @@ export interface GenerationMetadata {
   transport?: GenerationTransport;
   threadMode?: GenerationThreadMode;
   resetReason?: GenerationResetReason;
+  /** Bounded GM-only local persistence cause when `resetReason === "revision-mismatch"`. */
+  revisionMismatchCause?: LocalSaveOperation;
   requestChars?: number;
   sourceCounts?: Record<string, number>;
   /** Selected scenario IDs. GM-only. */

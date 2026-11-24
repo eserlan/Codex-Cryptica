@@ -186,10 +186,23 @@ type GenerationTally = {
   progressCategoryCounts: Record<string, number>;
   turnsWithGeneration: number;
   lastResetReason: string | null;
+  lastRevisionMismatchCause: string | null;
   resetWithoutReason: boolean;
   lastProgressCategory: string | null;
   recentProgressCategories: string[];
 };
+
+function recordReset(
+  tally: GenerationTally,
+  generation: NonNullable<AdventureSession["turns"][number]["generation"]>,
+): void {
+  if (generation.threadMode !== "reset") return;
+  if (generation.resetReason) tally.lastResetReason = generation.resetReason;
+  else tally.resetWithoutReason = true;
+  if (generation.revisionMismatchCause) {
+    tally.lastRevisionMismatchCause = generation.revisionMismatchCause;
+  }
+}
 
 function tallyGeneration(session: AdventureSession): GenerationTally {
   const tally: GenerationTally = {
@@ -198,6 +211,7 @@ function tallyGeneration(session: AdventureSession): GenerationTally {
     progressCategoryCounts: {},
     turnsWithGeneration: 0,
     lastResetReason: null,
+    lastRevisionMismatchCause: null,
     resetWithoutReason: false,
     lastProgressCategory: null,
     recentProgressCategories: [],
@@ -212,11 +226,7 @@ function tallyGeneration(session: AdventureSession): GenerationTally {
     tally.turnsWithGeneration += 1;
     tally.transportCounts[generation.transport ?? "unknown"] += 1;
     tally.threadModeCounts[generation.threadMode ?? "unknown"] += 1;
-    if (generation.threadMode === "reset") {
-      if (generation.resetReason)
-        tally.lastResetReason = generation.resetReason;
-      else tally.resetWithoutReason = true;
-    }
+    recordReset(tally, generation);
     if (generation.progressCategory)
       recordProgress(tally, generation.progressCategory);
   }
@@ -232,46 +242,44 @@ function recordProgress(tally: GenerationTally, category: string): void {
     tally.recentProgressCategories.shift();
 }
 
-function generationSummary(session: AdventureSession) {
-  const {
-    transportCounts,
-    threadModeCounts,
-    progressCategoryCounts,
-    turnsWithGeneration,
-    lastResetReason,
-    resetWithoutReason,
-    lastProgressCategory,
-    recentProgressCategories,
-  } = tallyGeneration(session);
+function lastScenarioIdsFrom(session: AdventureSession): string[] {
+  for (let i = session.turns.length - 1; i >= 0; i -= 1) {
+    const ids = session.turns[i]?.generation?.scenarioIds;
+    if (ids?.length) return ids;
+  }
+  return [];
+}
 
+function generationSummary(session: AdventureSession) {
+  const tally = tallyGeneration(session);
   const items = session.scenarioCollection?.items ?? [];
-  const lastScenarioIds =
-    [...session.turns]
-      .reverse()
-      .find((turn) => turn.generation?.scenarioIds?.length)?.generation
-      ?.scenarioIds ?? [];
-  const recentMeaningful = recentProgressCategories.filter((category) =>
+  const lastScenarioIds = lastScenarioIdsFrom(session);
+  const recentMeaningful = tally.recentProgressCategories.filter((category) =>
     MEANINGFUL_PROGRESS_CATEGORIES.has(category),
   ).length;
 
   return {
-    turnsWithGeneration,
-    turnsWithoutGeneration: session.turns.length - turnsWithGeneration,
-    transportCounts,
-    threadModeCounts,
-    threadReuseTurns: threadModeCounts.continued,
-    resets: threadModeCounts.reset,
+    turnsWithGeneration: tally.turnsWithGeneration,
+    turnsWithoutGeneration: session.turns.length - tally.turnsWithGeneration,
+    transportCounts: tally.transportCounts,
+    threadModeCounts: tally.threadModeCounts,
+    threadReuseTurns: tally.threadModeCounts.continued,
+    resets: tally.threadModeCounts.reset,
     // Null when no reset was recorded; "unknown" when a reset was recorded
     // without a reason. Never guesses a reason.
-    lastResetReason: lastResetReason ?? (resetWithoutReason ? "unknown" : null),
+    lastResetReason:
+      tally.lastResetReason ?? (tally.resetWithoutReason ? "unknown" : null),
+    ...(tally.lastRevisionMismatchCause
+      ? { lastRevisionMismatchCause: tally.lastRevisionMismatchCause }
+      : {}),
     focusedScenarioId: session.scenarioCollection?.focusedScenarioId ?? null,
     activeScenarioIds: items
       .filter((item) => item.status === "open")
       .map((item) => item.id),
     lastScenarioIds,
-    progressCategoryCounts,
-    lastProgressCategory,
-    recentProgressCategories,
+    progressCategoryCounts: tally.progressCategoryCounts,
+    lastProgressCategory: tally.lastProgressCategory,
+    recentProgressCategories: tally.recentProgressCategories,
     recentMeaningfulProgressTurns: recentMeaningful,
   };
 }
