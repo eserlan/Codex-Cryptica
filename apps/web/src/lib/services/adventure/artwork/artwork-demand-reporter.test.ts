@@ -84,4 +84,43 @@ describe("ArtworkDemandReporter", () => {
     expect(JSON.stringify(firstCallBody)).not.toContain("Twelve-Reed");
     expect(JSON.stringify(secondCallBody)).not.toContain("Ivenna");
   });
+
+  it("forwards scene, atmosphere, and monster payloads without leaking names", () => {
+    const fetchFn = vi.fn<
+      (input: string, init?: RequestInit) => Promise<Response>
+    >(async () => new Response("{}", { status: 200 }));
+    const reporter = new ArtworkDemandReporter({
+      fetchFn,
+      resolveProxyUrl: () => "https://oracle-proxy.test",
+      isEnabled: () => true,
+      isOnline: () => true,
+    });
+
+    reporter.reportFromSummary({
+      genre: "fantasy",
+      place: null,
+      npcs: [],
+      scene: { cues: ["ruins", "night"], unmappedCues: [], match: null },
+      atmosphere: {
+        cues: ["ominous", "rain"],
+        unmappedCues: [],
+        match: "atmo-fantasy-ominous-01",
+      },
+      monsters: [
+        {
+          name: "Salt Stalker",
+          cues: [],
+          unmappedCues: ["monster", "salt-stalker"],
+          match: null,
+        },
+      ],
+    });
+
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    const types = fetchFn.mock.calls.map(
+      (call) => (JSON.parse(String(call[1]?.body)) as { type: string }).type,
+    );
+    expect(types).toEqual(["scene", "atmosphere", "monster"]);
+    expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("Salt Stalker");
+  });
 });

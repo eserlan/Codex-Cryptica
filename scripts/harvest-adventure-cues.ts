@@ -42,13 +42,38 @@ export interface DiagnosticSnapshot {
 }
 
 export interface HarvestedDemand {
-  type: "location" | "npc";
+  type: "location" | "npc" | "scene" | "atmosphere" | "monster";
   genre: NonNullable<ArtworkCues["genre"]>;
   knownCues: string[];
   unmappedCues: string[];
   demographicCues: string[];
   matchedAssetId: string | null;
 }
+
+const MONSTER_CUES = new Set([
+  "monster",
+  "creature",
+  "beast",
+  "undead",
+  "aberration",
+  "fiend",
+  "dragon",
+]);
+const ATMOSPHERE_CUES = new Set([
+  "quiet",
+  "busy",
+  "ominous",
+  "hopeful",
+  "mysterious",
+  "day",
+  "night",
+  "dawn",
+  "dusk",
+  "rain",
+  "fog",
+  "winter",
+  "summer",
+]);
 
 const SAFE_RAW_CUE = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
 
@@ -120,6 +145,12 @@ function matchNpcId(
   return asset ? asset.id : null;
 }
 
+function isMonsterCharacter(char: CharacterEntry): boolean {
+  return (char.cues ?? []).some((c) =>
+    MONSTER_CUES.has(c.trim().toLowerCase()),
+  );
+}
+
 function harvestCharacter(
   char: CharacterEntry,
   genre: NonNullable<ArtworkCues["genre"]>,
@@ -140,6 +171,16 @@ function harvestCharacter(
     return null;
   }
 
+  if (isMonsterCharacter(char)) {
+    return {
+      type: "monster",
+      genre,
+      knownCues,
+      unmappedCues,
+      demographicCues: [],
+      matchedAssetId: null,
+    };
+  }
   return {
     type: "npc",
     genre,
@@ -147,6 +188,29 @@ function harvestCharacter(
     unmappedCues,
     demographicCues,
     matchedAssetId: matchNpcId(knownCues, settingCues, demographicCues, genre),
+  };
+}
+
+function harvestAtmosphere(
+  place: PlaceEntry,
+  genre: NonNullable<ArtworkCues["genre"]>,
+): HarvestedDemand | null {
+  const atmoCues = normalizeArtworkCues(place.cues ?? []).filter((c) =>
+    ATMOSPHERE_CUES.has(c),
+  );
+  if (atmoCues.length === 0) return null;
+  const asset = matchArtwork(seedArtwork, {
+    type: "atmosphere",
+    genre,
+    primaryCues: atmoCues,
+  });
+  return {
+    type: "atmosphere",
+    genre,
+    knownCues: atmoCues.sort(),
+    unmappedCues: [],
+    demographicCues: [],
+    matchedAssetId: asset ? asset.id : null,
   };
 }
 
@@ -178,10 +242,13 @@ export function harvestSnapshot(
   const places = rawPlaces
     .map((place) => harvestPlace(place, genre))
     .filter((item): item is HarvestedDemand => item !== null);
+  const atmospheres = rawPlaces
+    .map((place) => harvestAtmosphere(place, genre))
+    .filter((item): item is HarvestedDemand => item !== null);
   const chars = rawChars
     .map((char) => harvestCharacter(char, genre))
     .filter((item): item is HarvestedDemand => item !== null);
-  return [...places, ...chars];
+  return [...places, ...atmospheres, ...chars];
 }
 
 function parseCliArgs(args: readonly string[]): {

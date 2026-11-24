@@ -3,7 +3,7 @@ import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
 import type { ArtworkCueIndicator } from "./artwork-cue-summary";
 
 export interface ArtworkDemandReportPayload {
-  type: "location" | "npc";
+  type: "location" | "npc" | "scene" | "atmosphere" | "monster";
   genre: string;
   knownCues: string[];
   unmappedCues: string[];
@@ -75,30 +75,51 @@ export class ArtworkDemandReporter {
     void this.send(payload);
   }
 
+  private enqueueSlot(
+    type: ArtworkDemandReportPayload["type"],
+    genre: string,
+    slot: {
+      cues: readonly string[];
+      unmappedCues?: readonly string[];
+      demographicCues?: readonly string[];
+      match: string | null;
+    },
+  ): void {
+    this.enqueuePayload({
+      type,
+      genre,
+      knownCues: [...slot.cues].sort(),
+      unmappedCues: [...(slot.unmappedCues ?? [])].sort(),
+      demographicCues: [...(slot.demographicCues ?? [])].sort(),
+      matchedAssetId: normalizeCatalogueMatchId(slot.match),
+    });
+  }
+
+  private enqueueAll(
+    type: ArtworkDemandReportPayload["type"],
+    genre: string,
+    slots: readonly {
+      cues: readonly string[];
+      unmappedCues?: readonly string[];
+      demographicCues?: readonly string[];
+      match: string | null;
+    }[],
+  ): void {
+    for (const slot of slots) {
+      this.enqueueSlot(type, genre, slot);
+    }
+  }
+
   reportFromSummary(summary: ArtworkCueIndicator | null): void {
     if (!summary || !this.isEnabled() || !this.isOnline()) return;
 
-    if (summary.place) {
-      this.enqueuePayload({
-        type: "location",
-        genre: summary.genre,
-        knownCues: [...summary.place.cues].sort(),
-        unmappedCues: [...(summary.place.unmappedCues ?? [])].sort(),
-        demographicCues: [],
-        matchedAssetId: normalizeCatalogueMatchId(summary.place.match),
-      });
-    }
-
-    for (const npc of summary.npcs) {
-      this.enqueuePayload({
-        type: "npc",
-        genre: summary.genre,
-        knownCues: [...npc.cues].sort(),
-        unmappedCues: [...(npc.unmappedCues ?? [])].sort(),
-        demographicCues: [...(npc.demographicCues ?? [])].sort(),
-        matchedAssetId: normalizeCatalogueMatchId(npc.match),
-      });
-    }
+    if (summary.place)
+      this.enqueueSlot("location", summary.genre, summary.place);
+    if (summary.scene) this.enqueueSlot("scene", summary.genre, summary.scene);
+    if (summary.atmosphere)
+      this.enqueueSlot("atmosphere", summary.genre, summary.atmosphere);
+    this.enqueueAll("npc", summary.genre, summary.npcs);
+    this.enqueueAll("monster", summary.genre, summary.monsters ?? []);
   }
 
   private async send(payload: ArtworkDemandReportPayload): Promise<void> {
