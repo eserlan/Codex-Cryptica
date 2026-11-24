@@ -20,6 +20,57 @@ import type {
 
 export const MAX_OOC_ANSWER_CHARS = 2_000;
 export const MAX_OOC_PROMPT_EXCHANGES = 6;
+export const MAX_OOC_PROMPT_CHARS = 2_400;
+
+export interface ProjectedOocPromptExchange {
+  id: string;
+  afterTurnCount: number;
+  provenance: "ooc";
+  status: "answered";
+  /**
+   * Non-binding OOC discussion by default; additive hook for #5169 (02/03)
+   * committed decisions without altering existing projection consumers.
+   */
+  binding: "non-binding-ooc" | "committed-decision";
+  question: string;
+  answer: string;
+}
+
+/**
+ * Projects a bounded, chronological slice of answered OOC exchanges for model
+ * context, preserving exchange IDs, provenance, and turn ordering while
+ * excluding pending/failed/cancelled entries.
+ */
+export function projectOocPromptExchanges(
+  session: AdventureSession,
+  maxChars = MAX_OOC_PROMPT_CHARS,
+): ProjectedOocPromptExchange[] {
+  const answered = (session.oocExchanges ?? [])
+    .filter(
+      (entry) => entry.status === "answered" && Boolean(entry.answer?.trim()),
+    )
+    .slice(-MAX_OOC_PROMPT_EXCHANGES)
+    .map((entry) => ({
+      id: entry.id,
+      afterTurnCount: entry.afterTurnCount,
+      provenance: "ooc" as const,
+      status: "answered" as const,
+      binding: "non-binding-ooc" as const,
+      question: entry.question,
+      answer: entry.answer!.trim(),
+    }));
+  if (answered.length === 0) return [];
+  const bounded: ProjectedOocPromptExchange[] = [];
+  let usedChars = 0;
+  for (let i = answered.length - 1; i >= 0; i -= 1) {
+    const item = answered[i]!;
+    const itemChars = JSON.stringify(item).length;
+    if (bounded.length > 0 && usedChars + itemChars > maxChars) break;
+    bounded.unshift(item);
+    usedChars += itemChars;
+  }
+  return bounded;
+}
 
 export const OOC_SAFE_SECRET_REPLY =
   "You don't know that yet from what your character has observed, and the GM cannot clarify unrevealed details out of character.";
@@ -110,15 +161,7 @@ export function projectPlayerSafeOocState(
   session: AdventureSession,
 ): Record<string, unknown> {
   const historicalAnchor = projectPlayerHistoricalAnchor(session);
-  const recentOoc = (session.oocExchanges ?? [])
-    .filter(
-      (entry) => entry.status === "answered" && Boolean(entry.answer?.trim()),
-    )
-    .slice(-MAX_OOC_PROMPT_EXCHANGES)
-    .map((entry) => ({
-      question: entry.question,
-      answer: entry.answer,
-    }));
+  const recentOoc = projectOocPromptExchanges(session);
   return {
     adventure: {
       title: session.title,

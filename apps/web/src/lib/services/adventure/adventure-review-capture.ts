@@ -531,6 +531,7 @@ function diagnosticState(session: AdventureSession) {
     storySoFar: session.storySoFar ?? null,
     provisionalFacts: session.provisionalFacts,
     sourceRecords: session.sourceRecords,
+    oocExchanges: session.oocExchanges ?? [],
     pendingRoll: session.pendingRoll ?? null,
   };
 }
@@ -651,7 +652,12 @@ function diffDiagnosticState(
   next: ReturnType<typeof diagnosticState>,
 ): Record<string, unknown> {
   const changes: Record<string, unknown> = {};
-  const topArrayKeys = ["places", "provisionalFacts", "sourceRecords"] as const;
+  const topArrayKeys = [
+    "places",
+    "provisionalFacts",
+    "sourceRecords",
+    "oocExchanges",
+  ] as const;
   for (const key of topArrayKeys) {
     const arrayDiff = diffIdArray(
       prev[key] as Array<{ id: string }>,
