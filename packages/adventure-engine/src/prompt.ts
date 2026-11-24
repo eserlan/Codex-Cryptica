@@ -320,14 +320,14 @@ function worldTimeBehavior(): string[] {
     "When in-world time passes or the player returns to a location with off-screen consequences, describe the observable aftermath rather than treating the world as frozen, and reveal the consequence secret via revealSecretIds only upon justified discovery.",
     "Never copy timeAdvance.developments into narration, suggested actions or player-visible state unless the player has a justified way to observe the consequences. Do not reveal hidden rumours just because hours passed.",
     "Do not reveal unrevealed GM state; return explicit reveal IDs only when fictionally discovered.",
-    "The GM-ONLY state block is not player knowledge and must never be copied into narration or roll copy.",
+    "Never copy GM-ONLY state into player-facing text or roll copy.",
   ];
 }
 
 function directorStateBehavior(directorEnabled: boolean): string[] {
   if (!directorEnabled) return [];
   return [
-    "GM-ONLY director brief is an advisory synthesis of active focus, established facts vs. potential developments, and scene posture; follow unexpected player actions over it and never treat potential items as already established. Never leak gmTruthRef, pressure, or internal IDs, and never manufacture an objective via visiblePatch.situation in open-world or calm scenes.",
+    "The GM-ONLY director brief is advisory: follow player actions, separate facts from possibilities, and never expose gmTruthRef, pressure, or internal IDs or invent calm open-world objectives.",
   ];
 }
 
@@ -342,9 +342,8 @@ function sourceBehavior(): string[] {
 function causalCommitmentBehavior(directorEnabled: boolean): string[] {
   if (!directorEnabled) return [];
   return [
-    "Record consequential invented motives/mechanisms once as GM-only causalCommitments; each item uses kind exactly one of motive, mechanism, identity, action, or link, and commitmentClass exactly one of supporting-explanation, belief-testimony, or speculative-plan—never substitute one field for the other. Include subject and summary; set contested:true only on possible canon conflict, and never contradict a committed one.",
-    "A causalCommitment is a private continuity note, not dialogue, a known fact, or a revelation. Never repeat a causalCommitment summary verbatim in narration or player-visible fields. Keep any player-visible statement separately attributed to its speaker.",
-    "For commitmentClass belief-testimony, the GM-only summary must identify the claimant and mark the claim as unverified; do not turn the claim into established truth. Put only the speaker's actual, player-known testimony in visible facts, and track its unresolved truth or significance separately in the private commitment.",
+    "Record consequential invented motives, mechanisms, identities, actions, and links as GM-only causalCommitments with kind (motive|mechanism|identity|action|link), commitmentClass (supporting-explanation|belief-testimony|speculative-plan), subject, and summary. Use contested:true only for canon conflicts.",
+    "Keep causalCommitments private: never present or repeat their summaries as dialogue, facts, or revelations. For belief-testimony, name the claimant, mark it unverified, and expose only their actual known testimony.",
   ];
 }
 
@@ -424,17 +423,15 @@ function worldEntryBehavior(
   pacing = worldEntryPacing(session),
 ): string[] {
   return [
-    "This is an open-ended World Entry scene in an existing Vault, not a pre-written quest. Establish the selected place as a lived-in environment; include ordinary sensory details, plausible actors and immediately available interactions, and stop for the player to choose an action.",
-    "Do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist merely to make the start exciting. An uneventful scene or a quiet conversation is valid.",
+    "Open World Entry in an existing Vault: establish a lived-in place with ordinary sensory details, plausible actors and immediate interactions, then leave the choice to the player. A quiet scene is valid; do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist.",
     "GM-only world-entry scenarios are situations already unfolding in the world, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed unnoticed rather than contradicting canon.",
     "The structured worldEntry.at date is authoritative. If premise text contains a conflicting date, treat that wording as stale and follow worldEntry.at without changing the saved session or in-world date.",
-    "A seed can surface in many ways, not only through conversation: physical traces, locals behaving differently, objects or notices, consequences such as closures, shortages, price changes or extra guards, people affected by it, or overheard talk. Choose whatever fits the current scene and the seed's hidden truth.",
-    "Signs are small, observable and deniable: show what can be seen or heard, never the GM truth, and never frame a sign as a quest, objective or obligation. The player may ignore it.",
+    "Surface seeds through fitting observable details: traces, changed behaviour, objects, notices, local consequences, affected people or overheard talk. Keep signs small and deniable, never reveal GM truth or frame them as quests, objectives or obligations; the player may ignore them.",
     "For scenarioCollection seeds, knowledge=unheard means unnoticed. When a player-visible sign or hearsay surfaces, include its scenario ID in revealScenarioIds; this atomically marks it heard and records a discovery event. This reveals only the lead, never its GM truth. Advance at most one stage per turn. Legacy gmThreads alone use hiddenPatch.gmThreads for visibility updates.",
     "Candidate rumours and leads are contextual to the player's current location. When the player asks an NPC about local news, gossip or rumours, or looks around for local leads: draw upon a fitting unnoticed seed for the current settlement or scene, and include its scenario ID in revealScenarioIds to record the discovery. Present it strictly as local hearsay or opinion, never as an assigned quest, mission objective or obligation. If no seed fits or the area is quiet, report ordinary peaceful life or that all has been quiet (a meaningful empty result) without inventing forced conflict.",
-    "When the player explores, asks around or investigates a sign, naturally reveal at most one further plausible lead, clue or hearsay from the relevant seed. Do not dump every seed, assign quests or turn every mundane interaction into an ominous event.",
+    "When the player explores, asks around or investigates a sign, reveal at most one further plausible lead or clue from the relevant seed. Do not dump seeds, assign quests or make every mundane interaction ominous.",
     "Avoid endlessly substituting unrelated chores (such as fetching water or fixing windows) when the player actively asks about local news or pursues an emerging lead: offer a concrete person, place or decision to follow (via revealScenarioIds or elaborateScenarios), while keeping it optional. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
-    "If the player deliberately ignores or declines a sign or lead, let them explore peacefully without repeated prompts, cyclic re-revelation, or forced escalation.",
+    "If the player ignores or declines a sign or lead, let them explore peacefully without repeated prompts, re-revelation or forced escalation.",
     "Keep each seeded secret's original GM truth unchanged. A seed's underlying situation develops only when committed player actions or explicit in-world time passage justify it; otherwise only its visibility changes. Never raise a situation's stakes merely because another chat turn passed.",
     "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest. When speaking with locals in a settlement, one suggestedAction may offer asking about local news.",
     ...(pacing?.signDue

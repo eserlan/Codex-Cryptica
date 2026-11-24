@@ -22,28 +22,28 @@ const makePrompt = (directorEnabled?: boolean) =>
 describe("QA Director prompt treatment", () => {
   it("keeps Director guidance enabled by default", () => {
     const prompt = makePrompt();
-    expect(prompt.behavior).toContain("GM-ONLY director brief is an advisory");
+    expect(prompt.behavior).toContain("The GM-ONLY director brief is advisory");
     expect(prompt.behavior).toContain("Progressive elaboration ladder:");
     expect(prompt.behavior).toContain("Voluntary engagement:");
     expect(prompt.behavior).toContain(
       "never re-reveal an already-heard scenario",
     );
     expect(prompt.behavior).toContain("causalCommitments");
-    expect(prompt.behavior).toContain("kind exactly one of motive, mechanism");
-    expect(prompt.behavior).toContain("commitmentClass exactly one of");
     expect(prompt.behavior).toContain(
-      "Never repeat a causalCommitment summary verbatim in narration or player-visible fields",
+      "kind (motive|mechanism|identity|action|link)",
     );
     expect(prompt.behavior).toContain(
-      "GM-only summary must identify the claimant and mark the claim as unverified",
+      "commitmentClass (supporting-explanation|belief-testimony|speculative-plan)",
     );
+    expect(prompt.behavior).toContain("Keep causalCommitments private");
+    expect(prompt.behavior).toContain("name the claimant, mark it unverified");
   });
 
   it("omits only Director-specific guidance in the off treatment", () => {
     const prompt = makePrompt(false);
     expect(prompt.behavior).not.toContain("GM-ONLY director brief");
     expect(prompt.behavior).not.toContain(
-      "Record consequential invented motives/mechanisms",
+      "Record consequential invented motives, mechanisms",
     );
     expect(prompt.behavior).not.toContain("Progressive elaboration ladder:");
     expect(prompt.behavior).not.toContain("Voluntary engagement:");
