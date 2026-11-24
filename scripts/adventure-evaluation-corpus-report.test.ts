@@ -6,6 +6,7 @@ import { prepareCorpusCase } from "./adventure-evaluation-corpus-builder";
 import { evaluatePreparedCorpusCase } from "./adventure-evaluation-corpus-runner";
 import {
   capturePlayerFacingOutputs,
+  isFalseIntervention,
   markdownCorpusReport,
   pairedEvidenceStatus,
   type CapturedPlayerOutput,
@@ -122,9 +123,10 @@ describe("adventure evaluation corpus reports", () => {
   });
 
   it("marks generation failure as blocked and the unreached authored beat absent", async () => {
+    const prepared = quietPath();
     const report = await evaluatePreparedCorpusCase(
       { generate: async () => Promise.reject(new Error("proxy unavailable")) },
-      quietPath(),
+      prepared,
       ADVENTURE_EVALUATION_CONDITIONS[0]!,
       () => ({ ...metrics, modelCalls: 1, completedRequests: 0 }),
     );
@@ -139,6 +141,72 @@ describe("adventure evaluation corpus reports", () => {
     expect(secondTurn.playerFacingOutput).toBe(
       "[no player-facing output generated]",
     );
+    expect(report.traceSummary).toEqual({
+      directorDeliveryCounts: { unknown: 1 },
+      actionOutcomeCounts: { unknown: 1 },
+      actionValidationCounts: { unknown: 1 },
+      unknownTelemetryTurns: 1,
+      repeatedUnchangedSuggestions: 0,
+      falseInterventions: 0,
+    });
+    expect(
+      markdownCorpusReport({
+        generatedAt: "2026-11-24T00:00:00.000Z",
+        samples: 1,
+        evidence: pairedEvidenceStatus([], []),
+        reports: [report],
+      }),
+    ).toMatch(
+      /\| 2 \| .* \| .* \| .* \| not evaluated \| not reached \| not reached \| not reached \|/,
+    );
+  });
+
+  it("counts a false intervention only when Director guidance was delivered", () => {
+    const unresolvedWithRecovery = {
+      recoveryReason: "dialogue",
+    } as const;
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "included" },
+        "unresolved",
+      ),
+    ).toBe(true);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "truncated" },
+        "unresolved",
+      ),
+    ).toBe(true);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "retained" },
+        "unresolved",
+      ),
+    ).toBe(true);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "omitted" },
+        "unresolved",
+      ),
+    ).toBe(false);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "unknown" },
+        "unresolved",
+      ),
+    ).toBe(false);
+    expect(
+      isFalseIntervention(
+        { recoveryReason: "none", status: "included" },
+        "unresolved",
+      ),
+    ).toBe(false);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "included" },
+        "resolved",
+      ),
+    ).toBe(false);
   });
 
   it("records scripted provider reset classification on the corrected return step", async () => {
@@ -320,5 +388,83 @@ describe("adventure evaluation corpus reports", () => {
     const output = captured[0]!.text;
     expect(output).toContain("[truncated]");
     expect(output.length).toBeLessThan(2_050);
+  });
+
+  function stubbedTraceGenerate(prepared: ReturnType<typeof quietPath>) {
+    let call = 0;
+    return async () => {
+      call += 1;
+      const base = completeProposal(
+        quietNarration(prepared, prepared.steps[call - 1]!.playerAction),
+      );
+      const suggestedActions: [string, string, string] = [
+        "Wait",
+        "Listen",
+        "Stroll",
+      ];
+      if (call > 1) return { ...base, suggestedActions };
+      return {
+        ...base,
+        suggestedActions,
+        generationInfo: {
+          transport: "interaction" as const,
+          threadMode: "new" as const,
+          directorDelivery: {
+            status: "included" as const,
+            reason: "delivered" as const,
+            deliveredChars: 140,
+            recoveryReason: "none" as const,
+          },
+        },
+      };
+    };
+  }
+
+  function assertTraceReport(
+    report: Awaited<ReturnType<typeof evaluatePreparedCorpusCase>>,
+    markdown: string,
+  ): void {
+    const firstGen = report.turns[0]!.generation!;
+    const secondGen = report.turns[1]!.generation!;
+    expect(firstGen.directorDelivery!.status).toBe("included");
+    expect(firstGen.actionResolution).toMatchObject({
+      outcome: "resolved",
+      validation: "accepted",
+      evidenceCategory: "quiet-play",
+    });
+    expect(secondGen.directorDelivery).toBeUndefined();
+    expect(secondGen.actionResolution).toBeUndefined();
+    expect(secondGen.repeatedSuggestedActions).toBe(true);
+    expect(report.traceSummary).toEqual({
+      directorDeliveryCounts: { included: 1, unknown: 1 },
+      actionOutcomeCounts: { resolved: 1, unknown: 1 },
+      actionValidationCounts: { accepted: 1, unknown: 1 },
+      unknownTelemetryTurns: 1,
+      repeatedUnchangedSuggestions: 1,
+      falseInterventions: 0,
+    });
+    expect(markdown).toContain("Director / Action");
+    expect(markdown).toContain("included / resolved/accepted");
+    expect(markdown).toContain("unknown / unknown/unknown");
+    expect(markdown).toContain(
+      "missing telemetry is unknown, not a failed action",
+    );
+  }
+
+  it("exposes #5195 Director delivery and #5196 action fulfilment traces separately from unknown legacy telemetry (#5197)", async () => {
+    const prepared = quietPath();
+    const report = await evaluatePreparedCorpusCase(
+      { generate: stubbedTraceGenerate(prepared) },
+      prepared,
+      ADVENTURE_EVALUATION_CONDITIONS[0]!,
+      () => metrics,
+    );
+    const markdown = markdownCorpusReport({
+      generatedAt: "2026-11-24T00:00:00.000Z",
+      samples: 1,
+      evidence: pairedEvidenceStatus([], []),
+      reports: [report],
+    });
+    assertTraceReport(report, markdown);
   });
 });
