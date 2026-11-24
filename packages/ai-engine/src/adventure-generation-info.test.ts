@@ -170,4 +170,116 @@ describe("generation info classification (#5112)", () => {
     expect(result.kind).toBe("complete");
     expect(Object.keys(result)).not.toContain("modelKey");
   });
+
+  it("traces Director delivery for enabled, disabled, retained, stateless fallback, and retry recovery (#5195)", async () => {
+    const { buildAdventurePrompt } = await import("@codex/adventure-engine");
+    const { computeDirectorDeliveryTrace } =
+      await import("./adventure-interaction-input");
+
+    // 1. Director enabled (stateless): included with deliveredChars > 0
+    const statelessService = new AdventureTurnGenerationService({
+      getModel: async () => ({
+        async generateContent() {
+          return { response: { text: () => completeResponse } };
+        },
+      }),
+    });
+    const enabledRes = await statelessService.generate(request);
+    expect(enabledRes.generationInfo?.directorDelivery).toMatchObject({
+      status: "included",
+      reason: "delivered",
+      recoveryReason: "none",
+    });
+    expect(
+      enabledRes.generationInfo?.directorDelivery?.deliveredChars,
+    ).toBeGreaterThan(0);
+
+    // 2. Director disabled: omitted with reason "disabled" and deliveredChars 0
+    const disabledRes = await statelessService.generate({
+      ...request,
+      directorEnabled: false,
+    });
+    expect(disabledRes.generationInfo?.directorDelivery).toMatchObject({
+      status: "omitted",
+      reason: "disabled",
+      deliveredChars: 0,
+    });
+
+    // 3. Budget-truncated and budget-omitted prompts
+    const built = buildAdventurePrompt({
+      ...request,
+      directorEnabled: true,
+    });
+    const parsedState = JSON.parse(built.state) as Record<string, unknown>;
+    const truncatedPrompt = {
+      ...built,
+      directorMeta: { ...built.directorMeta!, truncatedByBudget: true },
+    };
+    expect(
+      computeDirectorDeliveryTrace(
+        truncatedPrompt,
+        { state: parsedState },
+        parsedState,
+        false,
+      ),
+    ).toMatchObject({ status: "truncated", reason: "budget" });
+
+    const { "GM-ONLY director brief": _drop, ...withoutBrief } = parsedState;
+    const omittedPrompt = {
+      ...built,
+      directorMeta: { ...built.directorMeta!, omittedByBudget: true },
+    };
+    expect(
+      computeDirectorDeliveryTrace(
+        omittedPrompt,
+        { state: withoutBrief },
+        withoutBrief,
+        false,
+      ),
+    ).toMatchObject({ status: "omitted", reason: "budget", deliveredChars: 0 });
+
+    // 4. Retained interaction (delta unchanged -> retained; expiry retry -> included)
+    let calls = 0;
+    const interactionService = new AdventureTurnGenerationService({
+      getModel: async () => ({
+        async generateContent() {
+          return { response: { text: () => completeResponse } };
+        },
+      }),
+      sendInteraction: vi.fn(async () => {
+        calls += 1;
+        if (calls === 2) throw new InteractionExpiredError("expired");
+        return { id: `int-${calls}`, text: completeResponse };
+      }),
+    });
+    const first = await interactionService.generate(request);
+    expect(first.generationInfo?.directorDelivery?.status).toBe("included");
+    interactionService.confirmInteraction(session.id, session.revision + 1);
+
+    // Second call expires on attempt 1 and succeeds on attempt 2 (full state resent)
+    const retried = await interactionService.generate({
+      ...request,
+      session: { ...session, revision: session.revision + 1 },
+      phase: "action",
+      playerAction: "Look around",
+    });
+    expect(retried.generationInfo?.directorDelivery?.status).toBe("included");
+    expect(
+      retried.generationInfo?.directorDelivery?.deliveredChars,
+    ).toBeGreaterThan(0);
+    interactionService.confirmInteraction(session.id, session.revision + 2);
+
+    // Third call with identical brief in delta -> retained
+    const continued = await interactionService.generate({
+      ...request,
+      session: { ...session, revision: session.revision + 2 },
+      phase: "action",
+      playerAction: "Look around",
+    });
+    expect(continued.generationInfo?.directorDelivery).toMatchObject({
+      status: "retained",
+      reason: "retained-unchanged",
+      deliveredChars: 0,
+    });
+  });
 });

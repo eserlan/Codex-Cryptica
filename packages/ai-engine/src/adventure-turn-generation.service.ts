@@ -9,6 +9,7 @@ import type {
   AdventurePrompt,
 } from "./adventure-generation.types";
 import { AdventureInteractionContext } from "./adventure-interaction-context";
+import { computeDirectorDeliveryTrace } from "./adventure-interaction-input";
 import {
   AdventureInteractionGeneration,
   DEFAULT_ADVENTURE_MODEL,
@@ -99,6 +100,14 @@ function buildGenerationInfo(
   if (transport === "stateless") {
     generationInfo.threadMode = "new";
     delete generationInfo.resetReason;
+    const payload = JSON.parse(prompt.serialized) as Record<string, unknown>;
+    const fullState = JSON.parse(prompt.state) as Record<string, unknown>;
+    generationInfo.directorDelivery = computeDirectorDeliveryTrace(
+      prompt,
+      payload,
+      fullState,
+      false,
+    );
   }
   const reasoningEffort = effectiveReasoningEffort(transport, options);
   if (reasoningEffort) generationInfo.reasoningEffort = reasoningEffort;

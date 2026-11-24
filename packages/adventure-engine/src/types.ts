@@ -362,6 +362,29 @@ export type LocalSaveOperation =
   | "external-or-concurrent"
   | "unknown";
 
+export type DirectorDeliveryStatus =
+  "included" | "truncated" | "omitted" | "retained" | "unknown";
+
+export type DirectorDeliveryReason =
+  | "delivered"
+  | "budget"
+  | "disabled"
+  | "not-applicable"
+  | "retained-unchanged"
+  | "unknown";
+
+export type DirectorRecoveryReason =
+  "none" | "dialogue" | "investigative" | "both";
+
+export interface DirectorDeliveryTrace {
+  status: DirectorDeliveryStatus;
+  reason: DirectorDeliveryReason;
+  deliveredChars: number;
+  focusedScenarioId?: string;
+  recoveryReason?: DirectorRecoveryReason;
+  requestedDevelopmentKind?: string;
+}
+
 export interface GenerationMetadata {
   /** Model registry key only; the string "unknown" when no mapping exists. */
   modelKey?: string;
@@ -372,6 +395,8 @@ export interface GenerationMetadata {
   resetReason?: GenerationResetReason;
   /** Bounded GM-only local persistence cause when `resetReason === "revision-mismatch"`. */
   revisionMismatchCause?: LocalSaveOperation;
+  /** Bounded GM-only trace of Director guidance actually delivered on the committed request (#5195). */
+  directorDelivery?: DirectorDeliveryTrace;
   requestChars?: number;
   sourceCounts?: Record<string, number>;
   /** Selected scenario IDs. GM-only. */

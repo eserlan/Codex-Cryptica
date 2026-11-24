@@ -88,6 +88,71 @@ function sceneRecoveryBehavior(
   return stalled?.stalled && !dialogue ? [stalledSceneLine(stalled)] : [];
 }
 
+function resolveDirectorRecoveryReason(
+  dialogueRecovery: ReturnType<typeof dialogueLoopPacing>,
+  investigative: ReturnType<
+    typeof buildGMDirectorBriefWithPacing
+  >["investigative"],
+) {
+  const dialogueDue = Boolean(dialogueRecovery?.recoveryDue);
+  const investigativeDue = Boolean(investigative?.recoveryDue);
+  if (dialogueDue && investigativeDue) return "both" as const;
+  if (dialogueDue) return "dialogue" as const;
+  if (investigativeDue) return "investigative" as const;
+  return "none" as const;
+}
+
+function resolveDirectorTargetFields(
+  directorBrief: ReturnType<typeof buildGMDirectorBriefWithPacing>["brief"],
+) {
+  if (!directorBrief) return {};
+  const topScenario = directorBrief.pursuedScenarios[0];
+  const focusedScenarioId =
+    topScenario?.scenarioId ?? directorBrief.pursuedEmergentThread?.threadId;
+  const requestedDevelopmentKind =
+    topScenario?.potential.nextDevelopmentKinds[0] ??
+    directorBrief.suggestedActionKinds[0];
+  return {
+    ...(focusedScenarioId ? { focusedScenarioId } : {}),
+    ...(requestedDevelopmentKind ? { requestedDevelopmentKind } : {}),
+  };
+}
+
+function buildDirectorMeta(params: {
+  directorEnabled: boolean;
+  directorBrief: ReturnType<typeof buildGMDirectorBriefWithPacing>["brief"];
+  headroom: number;
+  dialogueRecovery: ReturnType<typeof dialogueLoopPacing>;
+  investigative: ReturnType<
+    typeof buildGMDirectorBriefWithPacing
+  >["investigative"];
+}) {
+  const {
+    directorEnabled,
+    directorBrief,
+    headroom,
+    dialogueRecovery,
+    investigative,
+  } = params;
+  const briefChars = directorBrief ? JSON.stringify(directorBrief).length : 0;
+  const omittedByBudget = directorEnabled && headroom <= 0;
+  const truncatedByBudget =
+    directorEnabled &&
+    !omittedByBudget &&
+    headroom < MAX_DIRECTOR_BRIEF_CHARS &&
+    briefChars >= Math.max(0, headroom - 80);
+  return {
+    enabled: directorEnabled,
+    omittedByBudget,
+    truncatedByBudget,
+    recoveryReason: resolveDirectorRecoveryReason(
+      dialogueRecovery,
+      investigative,
+    ),
+    ...resolveDirectorTargetFields(directorBrief),
+  };
+}
+
 export function buildAdventurePrompt(input: AdventurePromptInput) {
   const scenarios = candidateScenariosForLocation(input.session);
   const worldEntry = input.session.worldEntry;
@@ -110,6 +175,13 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     });
   const directorEnabled = input.directorEnabled !== false;
   const directorBrief = directorEnabled ? generatedDirectorBrief : undefined;
+  const directorMeta = buildDirectorMeta({
+    directorEnabled,
+    directorBrief,
+    headroom,
+    dialogueRecovery,
+    investigative,
+  });
   const behavior = buildPromptBehavior(input, {
     worldEntry,
     pacing,
@@ -139,6 +211,7 @@ export function buildAdventurePrompt(input: AdventurePromptInput) {
     anchors: input.anchors,
     relevant: input.relevant,
     adventurePackage: input.adventurePackage,
+    directorMeta,
     transcript: JSON.stringify(
       input.session.turns.slice(-PROMPT_TRANSCRIPT_TURNS).map((turn) => ({
         playerAction: turn.playerAction,

@@ -1152,4 +1152,69 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       "state-correction",
     );
   });
+
+  it("summarizes bounded directorDelivery counts and preserves legacy unknown (#5195)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "t-legacy",
+        generation: undefined,
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-included",
+        generation: {
+          transport: "interaction",
+          threadMode: "new",
+          directorDelivery: {
+            status: "included",
+            reason: "delivered",
+            deliveredChars: 420,
+            focusedScenarioId: "scen-1",
+            recoveryReason: "none",
+            requestedDevelopmentKind: "surface-witness-or-clue",
+          },
+        },
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-retained",
+        generation: {
+          transport: "interaction",
+          threadMode: "continued",
+          directorDelivery: {
+            status: "retained",
+            reason: "retained-unchanged",
+            deliveredChars: 0,
+          },
+        },
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.directorDelivery).toEqual({
+      included: 1,
+      truncated: 0,
+      omitted: 0,
+      retained: 1,
+      unknown: 1,
+    });
+    expect(parsed.turns[1].generation.directorDelivery).toEqual({
+      status: "included",
+      reason: "delivered",
+      deliveredChars: 420,
+      focusedScenarioId: "scen-1",
+      recoveryReason: "none",
+      requestedDevelopmentKind: "surface-witness-or-clue",
+    });
+  });
 });
