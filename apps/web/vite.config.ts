@@ -245,6 +245,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     pool: "forks",
+    fsModuleCache: true,
     // Leave half the cores free locally so a test run doesn't freeze the
     // machine; CI keeps vitest's default. VITEST_MAX_WORKERS overrides both.
     maxWorkers: process.env.CI ? undefined : "50%",
@@ -255,6 +256,7 @@ export default defineConfig({
       ["src/lib/utils/**", "node"],
       ["src/lib/config/**", "node"],
       ["src/lib/seo/**", "node"],
+      ["src/lib/services/adventure/**", "node"],
       ["../../functions/**", "node"],
       ["src/lib/content/**", "node"],
       ["../../packages/ai-engine/src/prompts/**", "node"],
@@ -285,6 +287,7 @@ export default defineConfig({
       ["src/lib/stores/vault/sync-store*", "node"],
       ["src/lib/stores/vault/asset-store*", "node"],
       ["src/lib/stores/oracle-connections*", "node"],
+      ["src/lib/stores/oracle/tests/gm-secrecy*", "node"],
       ["src/lib/stores/world*", "node"],
       ["src/lib/components/world/front-page/**", "node"],
       ["src/lib/components/entity-detail/detail-tabs*", "node"],

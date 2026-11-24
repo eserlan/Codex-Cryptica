@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import {
+  buildEslintArgs,
   filterAnswerPageFiles,
   filterFormattableFiles,
   filterLintableFiles,
   filterUiPatternFiles,
+  getChangedFiles,
   isIgnoredPath,
   touchesDiscoveryContent,
 } from "./lint-changed.mjs";
@@ -96,5 +98,26 @@ describe("lint-changed", () => {
       "apps/web/src/lib/components/generators/GeneratorConfigForm.svelte",
     );
     expect(filtered).not.toContain("node_modules/dummy/README.md");
+  });
+
+  test("builds cached eslint args with optional --fix", () => {
+    expect(buildEslintArgs(["a.ts"])).toEqual([
+      "eslint",
+      "--cache",
+      "--cache-strategy",
+      "content",
+      "--cache-location",
+      "node_modules/.cache/eslint/",
+      "a.ts",
+    ]);
+    expect(buildEslintArgs(["a.ts"], { fix: true })).toContain("--fix");
+  });
+
+  test("respects committedOnly when base is specified", () => {
+    const committed = getChangedFiles({
+      base: "HEAD",
+      committedOnly: true,
+    });
+    expect(committed).toEqual([]);
   });
 });
