@@ -46,6 +46,21 @@ function commitStatus(committed: boolean): string {
   return committed ? "yes" : "no";
 }
 
+function actionColumn(
+  action: NonNullable<CorpusTurnReport["generation"]>["actionResolution"],
+): string {
+  return action ? `${action.outcome}/${action.validation}` : "unknown/unknown";
+}
+
+function traceColumn(turn: CorpusTurnReport): string {
+  const gen = turn.generation;
+  if (!gen) return "not reached";
+  const delivery = gen.directorDelivery
+    ? gen.directorDelivery.status
+    : "unknown";
+  return `${delivery} / ${actionColumn(gen.actionResolution)}`;
+}
+
 function renderTurn(turn: CorpusTurnReport): string[] {
   const beatText = turn.authoredBeats
     .map((beat) => `${safeMarkdown(beat.label)}: **${beat.status}**`)
@@ -58,7 +73,7 @@ function renderTurn(turn: CorpusTurnReport): string[] {
     ? `${turn.generation.contextMode}/${turn.generation.resetClassification}`
     : "not reached";
   return [
-    `| ${turn.turn} | ${safeMarkdown(turn.playerAction)} | ${beatText} | ${coverage} | ${hardGates} | ${progressionSummary(turn)} | ${generation} |`,
+    `| ${turn.turn} | ${safeMarkdown(turn.playerAction)} | ${beatText} | ${coverage} | ${hardGates} | ${progressionSummary(turn)} | ${generation} | ${traceColumn(turn)} |`,
     "",
     "**Player-facing output:**",
     "",
@@ -83,9 +98,14 @@ function renderCorpusCase(item: CorpusCaseReport): string[] {
     `Result: ${item.status}; rubrics ${rubricSummary(item.rubrics)}  `,
     `Progression: ${item.progression.meaningfulAdvancement} advances; ${item.progression.substantiveAnswers} answers; ${item.progression.actionableProgression} routes; ${item.progression.usefulNegativeFindings} negative findings; ${item.progression.validQuietOutcomes} quiet outcomes; ${item.progression.npcKnowledgeViolations} NPC knowledge violations  `,
     `Calls: ${item.metrics.completedRequests}/${item.metrics.modelCalls} completed; latency ${item.metrics.latencyMs} ms; tokens ${item.metrics.inputTokens}/${item.metrics.outputTokens}; cost ${cost}`,
+    ...(item.traceSummary
+      ? [
+          `Traces: unknown telemetry ${item.traceSummary.unknownTelemetryTurns}; repeated suggestions ${item.traceSummary.repeatedUnchangedSuggestions}; false interventions ${item.traceSummary.falseInterventions} (missing telemetry is unknown, not a failed action)`,
+        ]
+      : []),
     "",
-    "| Turn | Player action | Authored beat | Coverage | Hard gates | Progression | Context / reset |",
-    "| ---: | --- | --- | --- | --- | --- | --- |",
+    "| Turn | Player action | Authored beat | Coverage | Hard gates | Progression | Context / reset | Director / Action |",
+    "| ---: | --- | --- | --- | --- | --- | --- | --- |",
   ];
   return [...header, ...item.turns.flatMap(renderTurn)];
 }
