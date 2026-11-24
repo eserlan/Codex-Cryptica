@@ -1,6 +1,8 @@
 import type { AdventureSession } from "./types";
 
-export const MAX_SERIALIZED_STATE_CHARS = 32_000;
+// Temporary headroom for growing investigation state. See #5183 for bounded
+// active-memory compaction; this is not permission for unbounded history.
+export const MAX_SERIALIZED_STATE_CHARS = 48_000;
 export const MAX_GENERATION_INPUT_CHARS = 96_000;
 
 export function validateStateBudget(session: AdventureSession): boolean {
