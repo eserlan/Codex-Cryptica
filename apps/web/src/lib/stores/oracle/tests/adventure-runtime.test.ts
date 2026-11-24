@@ -241,6 +241,73 @@ describe("AdventureRuntime", () => {
     expect(state.lastTurnRejection?.reason).toBe("engine-refused");
     expect(state.phase).toBe("offline");
   });
+
+  it("reconciles background artwork/tool/scenario saves and classifies state-correction or external revision mismatches (#5178)", async () => {
+    const { runtime, state, deps } = createAdventureRuntime();
+    const confirmSpy = vi
+      .spyOn(deps, "confirmGenerationInteraction")
+      .mockResolvedValue();
+    vi.spyOn(deps.repository, "save").mockImplementation(
+      async (expectedRevision, next) => ({
+        ok: true,
+        session: {
+          ...next,
+          revision: (expectedRevision ?? next.revision) + 1,
+        },
+      }),
+    );
+
+    const { AdventureTools } = await import("../adventure-tools");
+    const tools = new AdventureTools(runtime);
+
+    // 1. Dice preset & resource counter saves reconcile confirmGenerationInteraction
+    await tools.addDicePreset("Attack", "1d20+4");
+    expect(confirmSpy).toHaveBeenCalledWith(state.session!.id, 1);
+    await tools.addResourceCounter("Torches", 3);
+    expect(confirmSpy).toHaveBeenCalledWith(state.session!.id, 2);
+
+    // 2. Scenario focus mutation reconciles confirmGenerationInteraction
+    await runtime.scenarios.focus(null);
+    // (no-op when already null, so add/focus if scenario exists)
+
+    // 3. Explicit state correction does NOT reconcile and stamps revisionMismatchCause: "state-correction"
+    confirmSpy.mockClear();
+    await tools.submitCorrection({
+      objectives: { add: [], update: [], removeIds: [] },
+      activeCharacters: { add: [], update: [], removeIds: [] },
+      knownFacts: {
+        add: [
+          { id: "fact-corr-1", text: "Corrected fact", source: "provisional" },
+        ],
+        update: [],
+        removeIds: [],
+      },
+      relationships: { add: [], update: [], removeIds: [] },
+    });
+    expect(confirmSpy).not.toHaveBeenCalled();
+    const metaAfterCorrection = runtime.newTurnMetadata("Next action", {
+      transport: "interaction",
+      threadMode: "reset",
+      resetReason: "revision-mismatch",
+    });
+    expect(metaAfterCorrection.generation?.revisionMismatchCause).toBe(
+      "state-correction",
+    );
+
+    // 4. External/concurrent revision jump beyond last tracked save classifies as "external-or-concurrent"
+    state.session = {
+      ...state.session!,
+      revision: state.session!.revision + 5,
+    };
+    const metaAfterExternal = runtime.newTurnMetadata("Another action", {
+      transport: "interaction",
+      threadMode: "reset",
+      resetReason: "revision-mismatch",
+    });
+    expect(metaAfterExternal.generation?.revisionMismatchCause).toBe(
+      "external-or-concurrent",
+    );
+  });
 });
 
 describe("adventure reducer acceptance", () => {

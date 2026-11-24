@@ -27,6 +27,7 @@ export class AdventureScenarios {
     private readonly verifySession: (
       session: AdventureSession,
     ) => Promise<void>,
+    private readonly onSaved?: (session: AdventureSession) => Promise<void>,
   ) {}
 
   add(item: ScenarioItem): Promise<AdventureSession> {
@@ -131,6 +132,7 @@ export class AdventureScenarios {
     if (!saved.ok) throw saved.error;
     await this.verifySession(session);
     this.state.session = saved.session;
+    if (this.onSaved) await this.onSaved(saved.session);
     return saved.session;
   }
 }

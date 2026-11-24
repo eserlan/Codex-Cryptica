@@ -1071,4 +1071,33 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       ],
     });
   });
+
+  it("reports lastRevisionMismatchCause in GM-only summary.generation (#5178)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        generation: {
+          transport: "interaction",
+          threadMode: "reset",
+          resetReason: "revision-mismatch",
+          revisionMismatchCause: "state-correction",
+        },
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.lastResetReason).toBe("revision-mismatch");
+    expect(parsed.summary.generation.lastRevisionMismatchCause).toBe(
+      "state-correction",
+    );
+  });
 });
