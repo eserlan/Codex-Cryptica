@@ -160,4 +160,51 @@ describe("adventure stateless content generation", () => {
       generator.stream(request, prompt, "instruction", {}),
     ).rejects.toThrow("stream-failed");
   });
+
+  it("streams progressive narration when hiddenPatch precedes narration and suppresses same-turn leaks", async () => {
+    const parsed = JSON.parse(completeResponse);
+    const ordered = JSON.stringify({
+      kind: parsed.kind,
+      hiddenPatch: parsed.hiddenPatch,
+      revealSecretIds: parsed.revealSecretIds,
+      narration: "A lantern flickers in the mist.",
+      visiblePatch: parsed.visiblePatch,
+      provisionalFacts: parsed.provisionalFacts,
+      sourceRecordIds: parsed.sourceRecordIds,
+    });
+    const cut = ordered.indexOf("in the mist.");
+    const previews: string[] = [];
+    const generator = new AdventureContentGeneration(
+      {
+        async getModel() {
+          return {
+            async generateContent() {
+              throw new Error("unused");
+            },
+            async *generateContentStream() {
+              yield { type: "delta" as const, text: ordered.slice(0, cut) };
+              yield { type: "delta" as const, text: ordered.slice(cut) };
+              yield { type: "complete" as const, text: ordered };
+            },
+          };
+        },
+      },
+      new AdventureInteractionContext(),
+    );
+    await expect(
+      generator.stream(
+        { ...request, onNarration: (text) => previews.push(text) },
+        prompt,
+        "instruction",
+        {},
+      ),
+    ).resolves.toMatchObject({
+      kind: "complete",
+      narration: "A lantern flickers in the mist.",
+    });
+    expect(previews).toEqual([
+      "A lantern flickers ",
+      "A lantern flickers in the mist.",
+    ]);
+  });
 });

@@ -46,6 +46,24 @@ describe("adventure retained generation", () => {
     expect(calls).toHaveLength(1);
     expect(calls[0].model).toBe("luna-fast");
     expect(calls[0].reasoningEffort).toBe("medium");
+    const responseSchema = calls[0].generationConfig?.responseSchema as {
+      oneOf: Array<{ propertyOrdering: string[] }>;
+    };
+    expect(responseSchema.oneOf[0].propertyOrdering).toEqual(
+      expect.arrayContaining([
+        "kind",
+        "hiddenPatch",
+        "revealSecretIds",
+        "packageEvents",
+        "actorEvents",
+        "narration",
+      ]),
+    );
+    expect(
+      responseSchema.oneOf[0].propertyOrdering.indexOf("packageEvents"),
+    ).toBeLessThan(
+      responseSchema.oneOf[0].propertyOrdering.indexOf("narration"),
+    );
   });
 
   it("defaults Adventure Mode interactions to luna-fast at low reasoning effort", async () => {

@@ -26,6 +26,7 @@ export * from "./contextual-rumours";
 export * from "./grounding";
 export * from "./places";
 export * from "./prompt-state";
+export * from "./prompt-compaction";
 export * from "./story-summary";
 export * from "./place-names";
 export * from "./people-types";
