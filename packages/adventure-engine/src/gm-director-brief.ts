@@ -1,3 +1,4 @@
+import { selectPursuedEmergentThread } from "./emergent-threads";
 import { buildPackageContext } from "./gm-director-package-context";
 import {
   determineScenePosture,
@@ -92,13 +93,17 @@ function prepareDirectorScene(
     input.session,
     input.adventurePackage,
   );
+  const pursuedEmergent =
+    pursued.length === 0
+      ? selectPursuedEmergentThread(input.session, effectiveAction)
+      : undefined;
   const mode: GMDirectorBrief["mode"] =
-    pursued.length > 0
+    pursued.length > 0 || pursuedEmergent
       ? "active-pursuit"
       : packageContext
         ? "package-scene"
         : "open-world";
-  return { pursued, otherIds, packageContext, mode };
+  return { pursued, pursuedEmergent, otherIds, packageContext, mode };
 }
 
 /**
@@ -114,10 +119,8 @@ export function buildGMDirectorBriefWithPacing(input: GMDirectorBriefInput): {
       ? MAX_DIRECTOR_BRIEF_CHARS
       : Math.min(MAX_DIRECTOR_BRIEF_CHARS, input.maxChars);
   const effectiveAction = resolveEffectiveAction(input);
-  const { pursued, otherIds, packageContext, mode } = prepareDirectorScene(
-    input,
-    effectiveAction,
-  );
+  const { pursued, pursuedEmergent, otherIds, packageContext, mode } =
+    prepareDirectorScene(input, effectiveAction);
   const investigative = investigativeProgressPacing(
     input.session,
     effectiveAction,
@@ -143,6 +146,7 @@ export function buildGMDirectorBriefWithPacing(input: GMDirectorBriefInput): {
       mode,
       scenePosture,
       pursued,
+      pursuedEmergent,
       otherIds,
       packageContext,
       investigative,
@@ -157,11 +161,13 @@ function assembleDirectorBrief(args: {
   mode: GMDirectorBrief["mode"];
   scenePosture: DirectorScenePosture;
   pursued: readonly RankedCandidate[];
+  pursuedEmergent: ReturnType<typeof selectPursuedEmergentThread>;
   otherIds: string[];
   packageContext: DirectorPackageContext | undefined;
   investigative: InvestigativePacing | undefined;
 }): GMDirectorBrief {
-  const { input, mode, scenePosture, pursued, otherIds } = args;
+  const { input, mode, scenePosture, pursued, pursuedEmergent, otherIds } =
+    args;
   const currentPlace = resolveCurrentPlace(input.session);
   const unscopedExplanations = collectCommittedExplanations(input.session);
   const progression = directorProgression(
@@ -169,6 +175,27 @@ function assembleDirectorBrief(args: {
     scenePosture,
     mode,
   );
+  const pursuedEmergentThread = pursuedEmergent
+    ? {
+        threadId: pursuedEmergent.id,
+        title: clipText(pursuedEmergent.title, 120),
+        status: pursuedEmergent.status,
+        provenance: pursuedEmergent.provenance,
+        ...(pursuedEmergent.linkedScenarioId
+          ? { linkedScenarioId: pursuedEmergent.linkedScenarioId }
+          : {}),
+        established: {
+          knownConsequences: pursuedEmergent.knownConsequences.slice(-4),
+          openQuestions: pursuedEmergent.openQuestions.slice(-3),
+          linkedFactCount: pursuedEmergent.linkedFactIds.length,
+          linkedPersonCount: pursuedEmergent.linkedPersonIds.length,
+          linkedPlaceCount: pursuedEmergent.linkedPlaceIds.length,
+        },
+        ...(pursuedEmergent.gmOnlyDevelopments.length > 0
+          ? { gmOnlyDevelopments: pursuedEmergent.gmOnlyDevelopments.slice(-3) }
+          : {}),
+      }
+    : undefined;
   return {
     advisory: true,
     mode,
@@ -177,6 +204,7 @@ function assembleDirectorBrief(args: {
     pursuedScenarios: pursued.map((entry) =>
       buildPursuedScenario(entry, input.session),
     ),
+    ...(pursuedEmergentThread ? { pursuedEmergentThread } : {}),
     ...(unscopedExplanations.length > 0
       ? { committedExplanations: unscopedExplanations }
       : {}),

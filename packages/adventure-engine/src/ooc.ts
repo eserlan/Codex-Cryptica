@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { syncEmergentThreadsFromOoc } from "./emergent-threads";
 import { allocatePromptBudget } from "./context-budget";
 import {
   detectHiddenTextLeakage,
@@ -681,9 +682,18 @@ export function commitAdventureOocExchange(
     enrichedExchange,
     now,
   );
-  return {
+  const withFacts = {
     ...withExchange,
     provisionalFacts: nextFacts.slice(-60),
     ...(nextPeople !== undefined ? { people: nextPeople } : {}),
+  };
+  const nextEmergent = syncEmergentThreadsFromOoc(
+    withFacts,
+    enrichedExchange,
+    committedFactIds,
+  );
+  return {
+    ...withFacts,
+    ...(nextEmergent ? { emergentThreads: nextEmergent } : {}),
   };
 }
