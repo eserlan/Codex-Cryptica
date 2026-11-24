@@ -417,13 +417,85 @@ function packageIdLeakage(
   );
 }
 
-/** Checks partial player-facing text against the session's unrevealed secrets. */
+export interface PreviewLeakageContext {
+  hiddenPatch?: Extract<
+    AdventureTurnProposal,
+    { kind: "complete" }
+  >["hiddenPatch"];
+  revealSecretIds?: string[];
+  packageEvents?: Extract<
+    AdventureTurnProposal,
+    { kind: "complete" }
+  >["packageEvents"];
+  actorEvents?: Extract<
+    AdventureTurnProposal,
+    { kind: "complete" }
+  >["actorEvents"];
+}
+
+function emptyPatchList() {
+  return { add: [], update: [], removeIds: [] };
+}
+
+function emptyVisiblePatch(): Extract<
+  AdventureTurnProposal,
+  { kind: "complete" }
+>["visiblePatch"] {
+  return {
+    objectives: emptyPatchList(),
+    activeCharacters: emptyPatchList(),
+    knownFacts: emptyPatchList(),
+    relationships: emptyPatchList(),
+  };
+}
+
+function emptyHiddenPatch(): Extract<
+  AdventureTurnProposal,
+  { kind: "complete" }
+>["hiddenPatch"] {
+  return {
+    secrets: emptyPatchList(),
+    gmThreads: emptyPatchList(),
+  };
+}
+
+/** Checks partial player-facing text against session and optional same-turn unrevealed secrets. */
 export function detectHiddenTextLeakage(
   sessionInput: AdventureSession,
   text: string,
+  context?: PreviewLeakageContext,
 ): HiddenLeakageFinding[] {
   const session = ensureScenarioSecrets(sessionInput);
-  return detectHiddenTextFields(session, [["root", text]], new Set());
+  if (!context) {
+    return detectHiddenTextFields(session, [["root", text]], new Set());
+  }
+  const proposal: Extract<AdventureTurnProposal, { kind: "complete" }> = {
+    kind: "complete",
+    narration: text,
+    visiblePatch: emptyVisiblePatch(),
+    hiddenPatch: context.hiddenPatch ?? emptyHiddenPatch(),
+    revealSecretIds: context.revealSecretIds ?? [],
+    provisionalFacts: [],
+    sourceRecordIds: [],
+    ...(context.packageEvents ? { packageEvents: context.packageEvents } : {}),
+    ...(context.actorEvents ? { actorEvents: context.actorEvents } : {}),
+  };
+  const constrained = constrainHiddenSecretVisibility(session, proposal);
+  const revealed = new Set(constrained.revealSecretIds);
+  const findings = detectHiddenTextFields(
+    session,
+    [["root", text]],
+    revealed,
+    proposedHiddenSources(session, constrained),
+  );
+  const normalizedText = normalize(text);
+  for (const secretText of proposedPackageSecretTexts(constrained)) {
+    const needle = normalize(secretText);
+    if (needle.length >= 3 && normalizedText.includes(needle)) {
+      findings.push({ field: "root", secretId: "proposed-package-event" });
+    }
+  }
+  return findings;
 }
 
 export function historicalAnchorSecretSources(
@@ -521,28 +593,53 @@ function proposedHiddenSources(
       status: "hidden" as const,
     }),
   );
-  if (!proposal.hiddenPatch?.secrets || !proposal.hiddenPatch.gmThreads) {
-    return commitments;
-  }
-
   return [
     ...commitments,
-    ...proposal.hiddenPatch.secrets.add.map((secret, index) => ({
+    ...proposedSecretSources(proposal.hiddenPatch?.secrets),
+    ...proposedThreadSources(session, proposal.hiddenPatch?.gmThreads),
+  ];
+}
+
+function proposedSecretSources(
+  patch:
+    | Extract<
+        AdventureTurnProposal,
+        { kind: "complete" }
+      >["hiddenPatch"]["secrets"]
+    | undefined,
+): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  if (!patch) return [];
+  return [
+    ...patch.add.map((secret, index) => ({
       id: `proposed-secret-${index}`,
       text: secret.text,
       status: secret.status,
     })),
-    ...proposal.hiddenPatch.secrets.update.map((secret) => ({
+    ...patch.update.map((secret) => ({
       id: secret.id,
       text: secret.text,
       status: secret.status,
     })),
-    ...proposal.hiddenPatch.gmThreads.add.map((thread, index) => ({
+  ];
+}
+
+function proposedThreadSources(
+  session: AdventureSession,
+  patch:
+    | Extract<
+        AdventureTurnProposal,
+        { kind: "complete" }
+      >["hiddenPatch"]["gmThreads"]
+    | undefined,
+): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  if (!patch) return [];
+  return [
+    ...patch.add.map((thread, index) => ({
       id: `proposed-thread-${index}`,
       text: thread.text,
       status: thread.status,
     })),
-    ...proposal.hiddenPatch.gmThreads.update.map((thread) => {
+    ...patch.update.map((thread) => {
       const previous = session.hiddenState.gmThreads.find(
         (candidate) => candidate.id === thread.id,
       );

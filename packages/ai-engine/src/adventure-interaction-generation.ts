@@ -16,6 +16,7 @@ import {
 import { buildAdventureInteractionInput } from "./adventure-interaction-input";
 import { AdventureInteractionTransport } from "./adventure-interaction-transport";
 import { streamAborted } from "./adventure-narration-stream";
+import { adventureTurnResponseSchema } from "./adventure-response-schema";
 import {
   parseAdventureResponse,
   isInvalidAdventureResponse,
@@ -178,7 +179,10 @@ export class AdventureInteractionGeneration {
         input: prepared.input,
         systemInstruction: instruction,
         previousInteractionId: interaction.previousInteractionId,
-        generationConfig: { responseMimeType: "application/json" },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: adventureTurnResponseSchema,
+        },
         reasoningEffort:
           options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT,
         signal,
