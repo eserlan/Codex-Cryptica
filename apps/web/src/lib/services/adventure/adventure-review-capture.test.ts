@@ -980,4 +980,39 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
     });
     expect(parsedFull.integrityChecks.orphanedPersonFactLinks).toEqual([]);
   });
+
+  it("does not count responsive witness replies with epistemic limits as repeated-non-answer in diagnostic summary (#5175)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "turn-1",
+        playerAction: "Who is your employer?",
+        narration:
+          'Servant: "Master Vale; the steward is inside. I don\'t know the other household."',
+      },
+      {
+        ...session.turns[0]!,
+        id: "turn-2",
+        playerAction: "Where was the order returned, and who saw it?",
+        narration:
+          "Steward names the office, recipient and time, but cannot identify additional witnesses.",
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.recentProgressCategories).not.toContain(
+      "repeated-non-answer",
+    );
+    expect(parsed.summary.repeatedNonAnswerTurns).toBe(0);
+    expect(parsed.summary.investigativeRecoveryDue).toBe(false);
+  });
 });
