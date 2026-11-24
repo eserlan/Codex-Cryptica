@@ -47,6 +47,21 @@ describe("GM-only improv secrecy at the commit boundary", () => {
     }
   });
 
+  it("checks available secret additions when a malformed patch omits gmThreads", () => {
+    const text = "The sealed ledger names the witness";
+    expect(
+      detectHiddenTextLeakage(session(), text, {
+        hiddenPatch: {
+          secrets: {
+            add: [{ text, status: "hidden" }],
+            update: [],
+            removeIds: [],
+          },
+        },
+      } as never),
+    ).toContainEqual({ field: "root", secretId: "proposed-secret-0" });
+  });
+
   it("rejects a new secret marked revealed without an existing reveal ID", () => {
     const draft = proposal();
     draft.narration = hiddenCreditor;

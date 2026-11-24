@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { AdventureInteractionTransport } from "./adventure-interaction-transport";
+import { adventureTurnResponseSchema } from "./adventure-response-schema";
 import { session } from "./adventure-generation.test-fixtures";
 
 const request = {
@@ -122,5 +123,78 @@ describe("adventure interaction transport", () => {
     await expect(transport.send(request, params)).rejects.toThrow(
       "interaction-stream-incomplete",
     );
+  });
+
+  it("streams progressive narration previews only when the provider enforces ordered schema and suppresses same-turn secrets", async () => {
+    const orderedGeminiParams = {
+      ...params,
+      model: "gemini-4-hydrogen",
+      generationConfig: {
+        responseMimeType: "application/json",
+        responseSchema: adventureTurnResponseSchema,
+      },
+    };
+    const cleanPreviews: string[] = [];
+    const cleanPrefix =
+      '{"kind":"complete","hiddenPatch":{"secrets":{"add":[],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"revealSecretIds":[],"narration":"';
+    const cleanTransport = new AdventureInteractionTransport({
+      getModel,
+      async *sendInteractionStream() {
+        yield { type: "delta" as const, text: `${cleanPrefix}Lantern ` };
+        yield { type: "delta" as const, text: 'light."}' };
+        yield {
+          type: "complete" as const,
+          text: `${cleanPrefix}Lantern light."}`,
+          id: "ok-1",
+        };
+      },
+    });
+    await cleanTransport.send(
+      { ...request, onNarration: (text) => cleanPreviews.push(text) },
+      orderedGeminiParams,
+    );
+    expect(cleanPreviews).toEqual(["Lantern ", "Lantern light."]);
+
+    const openAiPreviews: string[] = [];
+    await cleanTransport.send(
+      { ...request, onNarration: (text) => openAiPreviews.push(text) },
+      {
+        ...params,
+        model: "luna-fast",
+        generationConfig: orderedGeminiParams.generationConfig,
+      },
+    );
+    expect(openAiPreviews).toEqual([]);
+
+    const missingSchemaPreviews: string[] = [];
+    await cleanTransport.send(
+      { ...request, onNarration: (text) => missingSchemaPreviews.push(text) },
+      {
+        ...params,
+        model: "gemini-4-hydrogen",
+        generationConfig: { responseMimeType: "application/json" },
+      },
+    );
+    expect(missingSchemaPreviews).toEqual([]);
+
+    const leakedPreviews: string[] = [];
+    const secret = "The bailiff forged the seal.";
+    const leakedPrefix = `{"kind":"complete","hiddenPatch":{"secrets":{"add":[{"text":"${secret}","status":"hidden"}],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"revealSecretIds":[],"narration":"`;
+    const leakedTransport = new AdventureInteractionTransport({
+      getModel,
+      async *sendInteractionStream() {
+        yield { type: "delta" as const, text: `${leakedPrefix}${secret}` };
+        yield {
+          type: "complete" as const,
+          text: `${leakedPrefix}${secret}"}`,
+          id: "leak-1",
+        };
+      },
+    });
+    await leakedTransport.send(
+      { ...request, onNarration: (text) => leakedPreviews.push(text) },
+      orderedGeminiParams,
+    );
+    expect(leakedPreviews).toEqual([]);
   });
 });
