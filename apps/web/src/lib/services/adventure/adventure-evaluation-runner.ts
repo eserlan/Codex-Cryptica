@@ -785,6 +785,7 @@ export class AdventureEvaluationRunner {
         commitNow,
         state,
       );
+      if (state.executionFailures.length > 0) break;
     }
 
     const runScore = evaluateAdventureRun(

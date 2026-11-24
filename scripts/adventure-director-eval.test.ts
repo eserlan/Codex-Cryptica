@@ -1,6 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
 import { describe, expect, it } from "bun:test";
+import {
+  instrumentStatelessProxyFetch,
+  type ProxyCallRecord,
+} from "./adventure-director-eval";
 
 const repoRoot = resolve(import.meta.dir, "..");
 const scriptPath = resolve(import.meta.dir, "adventure-director-eval.ts");
@@ -61,5 +65,105 @@ describe("synthetic GM Director live evaluation CLI", () => {
       }
       expect(error).toContain("Proxy URL must target a local loopback host.");
     }
+  });
+
+  it("rejects credential-bearing or non-origin values before persisting a report", () => {
+    for (const origin of [
+      "https://user:private-value@example.com",
+      "https://example.com/path?token=private-value",
+    ]) {
+      let error = "";
+      try {
+        execFileSync("bun", [scriptPath, "--origin", origin], {
+          cwd: repoRoot,
+          encoding: "utf8",
+          timeout: 10_000,
+        });
+      } catch (caught) {
+        error = String((caught as { stderr?: Buffer }).stderr ?? caught);
+      }
+      expect(error).toContain("Origin must not contain credentials");
+      expect(error).not.toContain("private-value");
+    }
+  });
+
+  it("captures stateless response usage while leaving the response readable", async () => {
+    const calls: ProxyCallRecord[] = [];
+    const responseBody = {
+      modelKey: "luna-fast",
+      usage: {
+        promptTokens: 18,
+        completionTokens: 7,
+      },
+      content: "synthetic response",
+    };
+    const fetcher = instrumentStatelessProxyFetch(
+      async () =>
+        new Response(JSON.stringify(responseBody), {
+          headers: { "content-type": "application/json" },
+        }),
+      (call) => calls.push(call),
+    );
+
+    const response = await fetcher("http://127.0.0.1:8787", {
+      method: "POST",
+    });
+
+    expect(await response.json()).toEqual(responseBody);
+    expect(calls).toHaveLength(1);
+    expect(calls[0]).toMatchObject({
+      actualModelKey: "luna-fast",
+      usage: { inputTokens: 18, outputTokens: 7 },
+      completed: true,
+    });
+    expect(calls[0]?.elapsedMs).toBeGreaterThanOrEqual(0);
+    expect(calls[0]).not.toHaveProperty("content");
+  });
+
+  it("records bounded stateless failures without retaining response bodies", async () => {
+    const calls: ProxyCallRecord[] = [];
+    const fetcher = instrumentStatelessProxyFetch(
+      async () =>
+        new Response(JSON.stringify({ error: { message: "private-value" } }), {
+          status: 502,
+          headers: { "content-type": "application/json" },
+        }),
+      (call) => calls.push(call),
+    );
+
+    const response = await fetcher("http://127.0.0.1:8787", {
+      method: "POST",
+    });
+
+    expect(calls[0]).toMatchObject({
+      completed: false,
+      failureClass: "provider-unavailable",
+    });
+    expect(calls[0]).not.toHaveProperty("usage");
+    expect(calls[0]).not.toHaveProperty("private-value");
+    expect(await response.json()).toEqual({
+      error: { message: "private-value" },
+    });
+  });
+
+  it("records network failures before rethrowing them", async () => {
+    const calls: ProxyCallRecord[] = [];
+    const fetcher = instrumentStatelessProxyFetch(
+      async () => {
+        throw new Error("failed to reach proxy");
+      },
+      (call) => calls.push(call),
+    );
+
+    await expect(fetcher("http://127.0.0.1:8787")).rejects.toThrow(
+      "failed to reach proxy",
+    );
+    expect(calls).toEqual([
+      {
+        elapsedMs: expect.any(Number),
+        completed: false,
+        failureClass: "provider-unavailable",
+      },
+    ]);
   });
 });

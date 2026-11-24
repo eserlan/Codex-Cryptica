@@ -509,6 +509,40 @@ describe("AdventureEvaluationRunner", () => {
     expect(confirmInteraction).toHaveBeenCalledTimes(1);
   });
 
+  it("stops a multi-turn sequence after generation retries are exhausted", async () => {
+    const generate = vi.fn(async () => {
+      throw new Error("provider unavailable");
+    });
+    const runner = new AdventureEvaluationRunner({ generate }, ["luna-fast"], {
+      reasoningEffort: "low",
+      commitNow: () => now,
+    });
+
+    const [result] = await runner.run([
+      {
+        id: "stop-after-generation-failure",
+        session: makeSession(),
+        playerAction: "Check the watch ledger.",
+        playerCharacterName: "Kestrel",
+        canaries: [],
+        turns: [
+          {
+            playerAction: "Check the watch ledger.",
+            retryOnGenerationFailure: true,
+          },
+          { playerAction: "Ask the clerk about the bell." },
+        ],
+      },
+    ]);
+
+    expect(generate).toHaveBeenCalledTimes(2);
+    expect(result?.cases[0]?.executionFailures).toEqual([
+      { turn: 1, kind: "generation" },
+    ]);
+    expect(result?.telemetry.turns).toHaveLength(1);
+    expect(result?.cases[0]?.passed).toBe(false);
+  });
+
   it("scores stable committed-fact reuse and fails an unmarked causal contradiction", async () => {
     const commitment = {
       kind: "motive" as const,
@@ -727,11 +761,12 @@ describe("AdventureEvaluationRunner", () => {
   it("fails continuity when a complete proposal is rejected without a pending roll", async () => {
     const clearInteraction = vi.fn();
     const confirmInteraction = vi.fn();
+    const generate = vi.fn(async () =>
+      completeProposal({ revealSecretIds: ["unknown-secret"] }),
+    );
     const runner = new AdventureEvaluationRunner(
       {
-        generate: vi.fn(async () =>
-          completeProposal({ revealSecretIds: ["unknown-secret"] }),
-        ),
+        generate,
         clearInteraction,
         confirmInteraction,
       },
@@ -746,6 +781,10 @@ describe("AdventureEvaluationRunner", () => {
         playerAction: "Look around the market.",
         playerCharacterName: "Kestrel",
         canaries: [],
+        turns: [
+          { playerAction: "Look around the market." },
+          { playerAction: "Ask the baker about the bell." },
+        ],
       },
     ]);
 
@@ -754,6 +793,8 @@ describe("AdventureEvaluationRunner", () => {
     expect(result?.cases[0]?.executionFailures).toEqual([
       { turn: 1, kind: "commit" },
     ]);
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(result?.telemetry.turns).toHaveLength(1);
     expect(clearInteraction).toHaveBeenCalledTimes(1);
     expect(confirmInteraction).not.toHaveBeenCalled();
   });

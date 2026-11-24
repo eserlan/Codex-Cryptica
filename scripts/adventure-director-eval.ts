@@ -30,7 +30,7 @@ type Usage = {
 };
 type ModelPricing = NonNullable<ReturnType<typeof getModel>>["pricing"];
 
-interface ProxyCallRecord {
+export interface ProxyCallRecord {
   actualModelKey?: string;
   elapsedMs: number;
   usage?: Usage;
@@ -115,6 +115,29 @@ function hasNoQueryOrFragment(url: URL): boolean {
   return !url.search && !url.hash;
 }
 
+function parseOrigin(raw: string): string {
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new Error("Origin must be a plain HTTP(S) origin.");
+  }
+  if (!isSafeOrigin(url)) {
+    throw new Error(
+      "Origin must not contain credentials, a path, a query, or a fragment.",
+    );
+  }
+  return url.origin;
+}
+
+function isSafeOrigin(url: URL): boolean {
+  return isPlainHttpOrigin(url) && hasNoQueryOrFragment(url);
+}
+
+function isPlainHttpOrigin(url: URL): boolean {
+  return isHttpProtocol(url) && hasNoCredentials(url) && url.pathname === "/";
+}
+
 function parseCli(): CliOptions {
   const { values } = parseArgs({
     options: {
@@ -153,7 +176,7 @@ function parseCli(): CliOptions {
     ),
     samples: parseSampleCount(values.samples!),
     proxy: parseLocalProxy(values.proxy!),
-    origin: values.origin!,
+    origin: parseOrigin(values.origin!),
     output: resolve(values.output!),
   };
 }
@@ -192,12 +215,16 @@ function createGenerationService(
     if (sessionToken) headers.set("Authorization", `Bearer ${sessionToken}`);
     return fetch(input, { ...init, headers });
   };
+  const statelessFetch = instrumentStatelessProxyFetch(
+    authenticatedFetch,
+    (call) => calls.push(call),
+  );
   const interactions = new ProxyInteractions(cli.proxy, authenticatedFetch);
   const client: AdventureAIClient = {
     async getModel(_apiKey, modelName, systemInstruction) {
       return createProxyModel(modelName, systemInstruction, {
         getProxyUrl: () => cli.proxy,
-        doFetch: authenticatedFetch,
+        doFetch: statelessFetch,
       });
     },
     async sendInteraction(params) {
@@ -244,6 +271,157 @@ function proxyFailureClass(error: unknown): string {
     categories.find(([pattern]) => pattern.test(message))?.[1] ??
     "generation-request-failed"
   );
+}
+
+function finiteUsageToken(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) && value >= 0
+    ? value
+    : undefined;
+}
+
+function isUsageRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object";
+}
+
+function normalizedUsageToken(
+  usage: Record<string, unknown>,
+  canonicalKey: string,
+  legacyKey: string,
+): number | undefined {
+  return (
+    finiteUsageToken(usage[canonicalKey]) ?? finiteUsageToken(usage[legacyKey])
+  );
+}
+
+function hasUsageTokens(
+  inputTokens: number | undefined,
+  outputTokens: number | undefined,
+  reasoningTokens: number | undefined,
+): boolean {
+  return (
+    inputTokens !== undefined ||
+    outputTokens !== undefined ||
+    reasoningTokens !== undefined
+  );
+}
+
+function optionalUsageField(
+  key: keyof Usage,
+  value: number | undefined,
+): Partial<Usage> {
+  return value === undefined ? {} : { [key]: value };
+}
+
+function normalizeProxyUsage(value: unknown): Usage | undefined {
+  if (!isUsageRecord(value)) return undefined;
+  const inputTokens = normalizedUsageToken(
+    value,
+    "inputTokens",
+    "promptTokens",
+  );
+  const outputTokens = normalizedUsageToken(
+    value,
+    "outputTokens",
+    "completionTokens",
+  );
+  const reasoningTokens = finiteUsageToken(value.reasoningTokens);
+  if (!hasUsageTokens(inputTokens, outputTokens, reasoningTokens))
+    return undefined;
+  return {
+    ...optionalUsageField("inputTokens", inputTokens),
+    ...optionalUsageField("outputTokens", outputTokens),
+    ...optionalUsageField("reasoningTokens", reasoningTokens),
+  };
+}
+
+async function responseMetadata(
+  response: Response,
+): Promise<Record<string, unknown> | undefined> {
+  if (!response.headers.get("content-type")?.includes("application/json")) {
+    return undefined;
+  }
+  const value: unknown = await response
+    .clone()
+    .json()
+    .catch(() => undefined);
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
+function responseCallRecord(
+  response: Response,
+  metadata: Record<string, unknown> | undefined,
+  elapsedMs: number,
+): ProxyCallRecord {
+  return {
+    ...responseModelKey(metadata),
+    elapsedMs,
+    ...responseUsage(metadata),
+    ...responseCompletion(response),
+    ...responseFailure(response),
+  };
+}
+
+function responseModelKey(
+  metadata: Record<string, unknown> | undefined,
+): Pick<ProxyCallRecord, "actualModelKey"> | Record<string, never> {
+  return typeof metadata?.modelKey === "string"
+    ? { actualModelKey: metadata.modelKey }
+    : {};
+}
+
+function responseUsage(
+  metadata: Record<string, unknown> | undefined,
+): Pick<ProxyCallRecord, "usage"> | Record<string, never> {
+  const usage = normalizeProxyUsage(metadata?.usage);
+  return usage ? { usage } : {};
+}
+
+function responseCompletion(
+  response: Response,
+): Pick<ProxyCallRecord, "completed"> {
+  return { completed: response.ok };
+}
+
+function responseFailure(
+  response: Response,
+): Pick<ProxyCallRecord, "failureClass"> | Record<string, never> {
+  return response.ok
+    ? {}
+    : {
+        failureClass: proxyFailureClass(new Error(String(response.status))),
+      };
+}
+
+/** Records bounded stateless proxy metadata without consuming its response. */
+export function instrumentStatelessProxyFetch(
+  fetcher: typeof fetch,
+  onCall: (call: ProxyCallRecord) => void,
+): typeof fetch {
+  return async (input, init) => {
+    const started = performance.now();
+    let response: Response;
+    try {
+      response = await fetcher(input, init);
+    } catch (error) {
+      onCall({
+        elapsedMs: Math.round(performance.now() - started),
+        completed: false,
+        failureClass: proxyFailureClass(error),
+      });
+      throw error;
+    }
+    const metadata = await responseMetadata(response);
+    onCall(
+      responseCallRecord(
+        response,
+        metadata,
+        Math.round(performance.now() - started),
+      ),
+    );
+    return response;
+  };
 }
 
 function readUsageTotal(
