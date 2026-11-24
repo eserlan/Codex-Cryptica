@@ -112,6 +112,90 @@ describe("prompt-compaction (#5204)", () => {
     expect(longSession).toEqual(before);
     // Active hidden secrets stay intact while cold scenario prose is compacted
     expect(prompt.state).toContain("secret-39");
+    // Cold candidate scenarios retain baselineTruth and secretBindings
+    expect(prompt.state).toContain("truth-cold-0");
+    expect(prompt.state).toContain(scenario().gmOnly.truth);
+    // Revealed secrets without a visible copy retain their revealed text
+    expect(prompt.state).toContain("Secret 0:");
+  });
+
+  it("compacts oversized provisionalFacts (up to 60) while preserving IDs and provenance", () => {
+    const s = session();
+    s.provisionalFacts = Array.from({ length: 60 }, (_, i) => ({
+      id: `prov-${i}`,
+      kind: "clue" as const,
+      name: `Provisional Clue ${i}: ${"n".repeat(550)}`,
+      summary: `Detailed summary for clue ${i}: ${"d".repeat(550)}`,
+      introducedOnTurnId: `turn-${i}`,
+      provenance: i % 2 === 0 ? ("play" as const) : ("ooc" as const),
+      ...(i % 2 === 1 ? { sourceOocExchangeId: `ooc-${i}` } : {}),
+      ...(i < 20 ? { supersededById: `prov-${i + 20}` } : {}),
+      visibility: "player-visible" as const,
+      scenarioId: "scenario-1",
+    }));
+
+    const before = structuredClone(s);
+    expect(parseAdventureSession(s)).toEqual(s);
+
+    const prompt = buildAdventurePrompt({
+      session: s,
+      phase: "play",
+      playerAction: "Review all clues",
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(prompt.state.length).toBeLessThanOrEqual(MAX_SERIALIZED_STATE_CHARS);
+    expect(s).toEqual(before);
+
+    const parsedState = JSON.parse(prompt.state) as {
+      provisionalFacts: Array<Record<string, unknown>>;
+    };
+    expect(parsedState.provisionalFacts).toHaveLength(60);
+    // Superseded fact preserves id, supersededById, and provenance
+    expect(parsedState.provisionalFacts[0]).toMatchObject({
+      id: "prov-0",
+      supersededById: "prov-20",
+      introducedOnTurnId: "turn-0",
+      provenance: "play",
+      scenarioId: "scenario-1",
+    });
+    expect(parsedState.provisionalFacts[0].summary).toBeUndefined();
+    // Most recent active fact stays intact
+    expect(parsedState.provisionalFacts[59].summary).toContain(
+      "Detailed summary for clue 59",
+    );
+  });
+
+  it("omits revealed secret text only when an equivalent player-visible copy is present", () => {
+    const s = buildLongInvestigationSession();
+    s.visibleState.knownFacts.push({
+      id: "fact-copy",
+      text: s.hiddenState.secrets[1]!.text,
+      source: "canonical",
+    });
+
+    const prompt = buildAdventurePrompt({
+      session: s,
+      phase: "play",
+      playerAction: "Check revealed secrets",
+      anchors: [],
+      relevant: [],
+    });
+
+    const parsedState = JSON.parse(prompt.state) as {
+      "GM-ONLY state": {
+        secrets: Array<{ id: string; status: string; text?: string }>;
+      };
+    };
+    const secret0 = parsedState["GM-ONLY state"].secrets.find(
+      (sec) => sec.id === "secret-0",
+    );
+    const secret1 = parsedState["GM-ONLY state"].secrets.find(
+      (sec) => sec.id === "secret-1",
+    );
+    expect(secret0?.text).toContain("Secret 0:");
+    expect(secret1?.text).toBeUndefined();
   });
 
   it("is deterministic and idempotent", () => {
