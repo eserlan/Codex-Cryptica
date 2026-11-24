@@ -1,3 +1,4 @@
+import { deduplicateActiveCharactersPatch } from "./npc-presence";
 import { existingIds, type IdFactory } from "./reducer-ids";
 import { error, idAllocationError } from "./reducer-result";
 import { materializeProvisionalFacts } from "./provisional-facts";
@@ -77,10 +78,10 @@ export function materializeTurnState(
   );
   if ("error" in materializedCommitments) return materializedCommitments;
   const dropped: string[] = [];
-  const visibleApplied = sanitizeVisiblePatch(
-    session.visibleState,
-    visiblePatch.value,
-    dropped,
+  const visibleApplied = deduplicateActiveCharactersPatch(
+    sanitizeVisiblePatch(session.visibleState, visiblePatch.value, dropped),
+    session.visibleState.activeCharacters,
+    session.people,
   );
   const hiddenApplied = sanitizeHiddenPatch(
     session.hiddenState,

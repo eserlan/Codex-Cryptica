@@ -1016,6 +1016,55 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
     expect(parsed.summary.investigativeRecoveryDue).toBe(false);
   });
 
+  it("flags duplicate activeCharacters resolving to the same person in integrityChecks (#5176)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.places = [
+      { id: "p-market", name: "Market" },
+      { id: "p-office", name: "Office" },
+    ];
+    session.currentPlaceId = "p-office";
+    session.people = [
+      {
+        id: "person-mara",
+        name: "Mara, the porter",
+        aliases: ["Mara"],
+        linkedFactIds: [],
+      },
+    ];
+    session.visibleState.activeCharacters = [
+      {
+        id: "char-a",
+        text: "Mara, the porter",
+        source: "provisional",
+        placeId: "p-market",
+      },
+      {
+        id: "char-b",
+        text: "Mara",
+        source: "provisional",
+        placeId: "p-office",
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.integrityChecks.duplicateActiveCharacterPresence).toEqual([
+      {
+        personId: "person-mara",
+        name: "Mara, the porter",
+        activeCharacterIds: ["char-a", "char-b"],
+        placeIds: ["p-market", "p-office"],
+      },
+    ]);
+  });
+
   it("reports separate emergentThreads summary without fabricating seed scenario discovery metrics (#5177)", () => {
     const store = new Map<string, string>();
     const storage = {

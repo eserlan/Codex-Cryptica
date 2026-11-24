@@ -4,6 +4,7 @@ import type {
 } from "@codex/adventure-engine";
 import {
   dialogueLoopPacing,
+  findDuplicateActiveCharacterPresence,
   formatWorldElapsedMinutes,
   investigativeProgressPacing,
   isQuietTurn,
@@ -363,6 +364,8 @@ function integrityChecks(session: AdventureSession) {
         .filter((factId) => !factIds.has(factId))
         .map((factId) => ({ personId: person.id, factId })),
     ),
+    duplicateActiveCharacterPresence:
+      findDuplicateActiveCharacterPresence(session),
   };
 }
 
