@@ -42,7 +42,6 @@
     controls.options().map((asset) => ({
       id: asset.id,
       label: asset.alt,
-      credit: asset.provenance.attribution,
     })),
   );
   const selected = $derived(

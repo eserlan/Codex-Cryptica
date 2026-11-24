@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import AdventureSceneArtwork from "./AdventureSceneArtwork.svelte";
 
 describe("adventure scene illustration", () => {
-  it("shows a modest illustration with public credits and a clear AI label", async () => {
+  it("shows a modest illustration without a visible attribution", async () => {
     const release = vi.fn();
     const load = vi.fn(async () => ({ url: "blob:scene", release }));
     const { unmount } = render(AdventureSceneArtwork, {
@@ -17,14 +17,9 @@ describe("adventure scene illustration", () => {
     expect(
       (await screen.findByAltText("A forest road")).getAttribute("src"),
     ).toBe("blob:scene");
-    const caption = screen.getByTestId("adventure-scene-artwork-caption");
-    expect(caption.className).toContain("text-theme-muted");
-    expect(caption.className).toContain("truncate");
-    expect(caption.className).toContain("text-helper");
-    expect(caption.className).not.toContain("text-theme-text");
-    expect(screen.getByText(/AI illustration/).textContent).toContain(
-      "Codex Cryptica",
-    );
+    expect(screen.queryByTestId("adventure-scene-artwork-caption")).toBeNull();
+    expect(screen.queryByText(/AI illustration/)).toBeNull();
+    expect(screen.queryByText(/Codex Cryptica/)).toBeNull();
     unmount();
     expect(release).toHaveBeenCalledOnce();
   });

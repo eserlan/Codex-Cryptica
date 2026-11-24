@@ -478,17 +478,26 @@ describe("AdventureComposer", () => {
 
   it.each(["awaiting-roll", "ready-to-resolve"] as const)(
     "hides competing action controls while a roll is %s",
-    (phase) => {
+    async (phase) => {
       const m = manager(phase);
       m.suggestedActions = ["Hold the sea wall"];
+      m.setComposerMode = vi.fn();
       render(AdventureComposer, { props: { manager: m } });
 
       expect(screen.getByTestId("adventure-suggested-actions").className).toBe(
         "hidden",
       );
       expect(screen.getByTestId("adventure-free-action").className).toBe(
-        "hidden",
+        "flex min-w-0 items-end gap-2",
       );
+      expect(
+        screen.getByTestId("adventure-free-action-controls").className,
+      ).toBe("hidden");
+      expect(
+        screen.getByTestId("adventure-composer-mode-bar").className,
+      ).not.toBe("hidden");
+      await fireEvent.click(screen.getByTestId("adventure-mode-ooc"));
+      expect(m.setComposerMode).toHaveBeenCalledWith("ooc");
     },
   );
 
@@ -577,26 +586,29 @@ it("offers opening recovery after reload even without a stored error", () => {
 });
 
 describe("AdventureComposer layout and chips", () => {
-  it("aligns the composer with the story column", () => {
+  it("keeps the input column bounded and lets suggestions use wide screens", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m } });
     const extras = screen.getByTestId("adventure-dock-extras");
     const form = screen.getByTestId("adventure-free-action").closest("form")!;
-    for (const el of [extras, form]) {
-      expect(el.className).toContain("max-w-3xl");
-      expect(el.className).toContain("mx-auto");
-    }
+    expect(extras.className).toContain("max-w-none");
+    expect(extras.className).toContain("mx-auto");
+    expect(form.className).toContain("max-w-3xl");
+    expect(form.className).toContain("mx-auto");
   });
 
-  it("keeps chips on the story column width like the input", () => {
+  it("allows suggestion chips to expand on wide screens while keeping the input bounded", () => {
     const m = manager("ready");
     m.suggestedActions = ["Ask the innkeeper"];
     render(AdventureComposer, { props: { manager: m, suggestionChips: true } });
     const extras = screen.getByTestId("adventure-dock-extras");
-    expect(extras.className).toContain("max-w-3xl");
+    expect(extras.className).toContain("max-w-none");
     expect(extras.className).toContain("mx-auto");
     expect(extras.className).not.toContain("max-w-6xl");
+    expect(
+      screen.getByRole("button", { name: "Ask the innkeeper" }).className,
+    ).toContain("xl:flex-1");
     expect(
       screen.getByTestId("adventure-free-action").closest("form")!.className,
     ).toContain("max-w-3xl");
