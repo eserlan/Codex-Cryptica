@@ -593,28 +593,53 @@ function proposedHiddenSources(
       status: "hidden" as const,
     }),
   );
-  if (!proposal.hiddenPatch?.secrets || !proposal.hiddenPatch.gmThreads) {
-    return commitments;
-  }
-
   return [
     ...commitments,
-    ...proposal.hiddenPatch.secrets.add.map((secret, index) => ({
+    ...proposedSecretSources(proposal.hiddenPatch?.secrets),
+    ...proposedThreadSources(session, proposal.hiddenPatch?.gmThreads),
+  ];
+}
+
+function proposedSecretSources(
+  patch:
+    | Extract<
+        AdventureTurnProposal,
+        { kind: "complete" }
+      >["hiddenPatch"]["secrets"]
+    | undefined,
+): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  if (!patch) return [];
+  return [
+    ...patch.add.map((secret, index) => ({
       id: `proposed-secret-${index}`,
       text: secret.text,
       status: secret.status,
     })),
-    ...proposal.hiddenPatch.secrets.update.map((secret) => ({
+    ...patch.update.map((secret) => ({
       id: secret.id,
       text: secret.text,
       status: secret.status,
     })),
-    ...proposal.hiddenPatch.gmThreads.add.map((thread, index) => ({
+  ];
+}
+
+function proposedThreadSources(
+  session: AdventureSession,
+  patch:
+    | Extract<
+        AdventureTurnProposal,
+        { kind: "complete" }
+      >["hiddenPatch"]["gmThreads"]
+    | undefined,
+): Array<{ id: string; text: string; status: "hidden" | "revealed" }> {
+  if (!patch) return [];
+  return [
+    ...patch.add.map((thread, index) => ({
       id: `proposed-thread-${index}`,
       text: thread.text,
       status: thread.status,
     })),
-    ...proposal.hiddenPatch.gmThreads.update.map((thread) => {
+    ...patch.update.map((thread) => {
       const previous = session.hiddenState.gmThreads.find(
         (candidate) => candidate.id === thread.id,
       );

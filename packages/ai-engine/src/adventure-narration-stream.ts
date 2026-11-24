@@ -1,5 +1,6 @@
 import {
   detectHiddenTextLeakage,
+  hiddenPatchSchema,
   type PreviewLeakageContext,
 } from "@codex/adventure-engine";
 import type { AdventureTurnGenerationRequest } from "./adventure-generation.types";
@@ -125,6 +126,7 @@ function findJsonValueEnd(input: string, start: number): number | null {
 interface ParsedPrefixMetadata {
   kind?: string;
   hasHiddenPatch: boolean;
+  hasRevealSecretIds: boolean;
   previewContext: PreviewLeakageContext;
 }
 
@@ -136,17 +138,18 @@ const METADATA_RECORDERS: Record<
     if (typeof parsed === "string") meta.kind = parsed;
   },
   hiddenPatch: (parsed, meta) => {
-    if (parsed && typeof parsed === "object") {
-      meta.hasHiddenPatch = true;
-      meta.previewContext.hiddenPatch =
-        parsed as PreviewLeakageContext["hiddenPatch"];
-    }
+    const result = hiddenPatchSchema.safeParse(parsed);
+    if (!result.success) return;
+    meta.hasHiddenPatch = true;
+    meta.previewContext.hiddenPatch = result.data;
   },
   revealSecretIds: (parsed, meta) => {
-    if (Array.isArray(parsed)) {
-      meta.previewContext.revealSecretIds = parsed.filter(
-        (item): item is string => typeof item === "string",
-      );
+    if (
+      Array.isArray(parsed) &&
+      parsed.every((item): item is string => typeof item === "string")
+    ) {
+      meta.hasRevealSecretIds = true;
+      meta.previewContext.revealSecretIds = parsed;
     }
   },
   packageEvents: (parsed, meta) => {
@@ -188,7 +191,9 @@ function readNextProperty(
 
 function isNarrationKeyReady(key: string, meta: ParsedPrefixMetadata): boolean {
   if (key === "narration") {
-    return meta.kind === "complete" && meta.hasHiddenPatch;
+    return (
+      meta.kind === "complete" && meta.hasHiddenPatch && meta.hasRevealSecretIds
+    );
   }
   if (key === "setupNarration") {
     return meta.kind === "roll-required";
@@ -198,14 +203,15 @@ function isNarrationKeyReady(key: string, meta: ParsedPrefixMetadata): boolean {
 
 /**
  * Extracts progressive narration only after leading secrecy metadata is complete:
- * - For `complete` turns: `kind` and `hiddenPatch` must be completely parsed before
- *   top-level `narration` can emit.
+ * - For `complete` turns: valid `kind`, `hiddenPatch`, and `revealSecretIds` must
+ *   be completely parsed before top-level `narration` can emit.
  * - For `roll-required` turns: `kind` must be parsed before `setupNarration` can emit.
  * Falls back to `{ ready: false, narration: "" }` if `narration` precedes `hiddenPatch`.
  */
 export function extractSafeNarrationState(buffer: string): SafeNarrationState {
   const meta: ParsedPrefixMetadata = {
     hasHiddenPatch: false,
+    hasRevealSecretIds: false,
     previewContext: {},
   };
   let i = skipLeadingJsonFence(buffer);

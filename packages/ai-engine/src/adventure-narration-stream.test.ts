@@ -84,7 +84,7 @@ describe("adventure narration streaming", () => {
     ).rejects.toThrow("Cancelled");
   });
 
-  it("extracts progressive narration only after hiddenPatch is complete and buffers if narration comes first", () => {
+  it("extracts progressive narration only after valid secrecy metadata and buffers if narration comes first", () => {
     // Non-compliant order: narration before hiddenPatch must buffer.
     expect(
       extractSafeNarrationState(
@@ -97,14 +97,28 @@ describe("adventure narration streaming", () => {
       '{"secrets":{"add":[],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}}';
     expect(
       extractSafeNarrationState(
-        `{"kind":"complete","hiddenPatch":${hiddenPatch},"narration":"A\\nroad\\u0021`,
+        `{"kind":"complete","hiddenPatch":${hiddenPatch},"revealSecretIds":[],"narration":"A\\nroad\\u0021`,
       ),
     ).toMatchObject({ ready: true, narration: "A\nroad!" });
+
+    // A malformed patch or missing required reveal list cannot open the gate.
+    const partialPatch =
+      '{"secrets":{"add":[{"text":"hidden fact","status":"hidden"}],"update":[],"removeIds":[]}}';
+    expect(
+      extractSafeNarrationState(
+        `{"kind":"complete","hiddenPatch":${partialPatch},"revealSecretIds":[],"narration":"hidden fact`,
+      ),
+    ).toMatchObject({ ready: false, narration: "" });
+    expect(
+      extractSafeNarrationState(
+        `{"kind":"complete","hiddenPatch":${hiddenPatch},"narration":"A secret`,
+      ),
+    ).toMatchObject({ ready: false, narration: "" });
 
     // Incomplete escape sequence at end of chunk is withheld until completed.
     expect(
       extractSafeNarrationState(
-        `{"kind":"complete","hiddenPatch":${hiddenPatch},"narration":"A\\u00`,
+        `{"kind":"complete","hiddenPatch":${hiddenPatch},"revealSecretIds":[],"narration":"A\\u00`,
       ),
     ).toMatchObject({ ready: true, narration: "A" });
 
@@ -127,7 +141,7 @@ describe("adventure narration streaming", () => {
       onNarration: (text) => previews.push(text),
     });
 
-    const prefix = `{"kind":"complete","hiddenPatch":{"secrets":{"add":[{"text":"${secret}"}],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"narration":"`;
+    const prefix = `{"kind":"complete","hiddenPatch":{"secrets":{"add":[{"text":"${secret}","status":"hidden"}],"update":[],"removeIds":[]},"gmThreads":{"add":[],"update":[],"removeIds":[]}},"revealSecretIds":[],"narration":"`;
     publish(`${prefix}A lantern flickers.`);
     publish(`${prefix}A lantern flickers. ${secret}`);
     publish(`${prefix}A lantern flickers. ${secret} More text.`);
