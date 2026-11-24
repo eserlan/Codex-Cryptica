@@ -1,4 +1,5 @@
 import { detectHiddenLeakage, detectHiddenTextLeakage } from "./hidden-state";
+import { isStaleLocationForMove } from "./places";
 import type {
   AdventureRecap,
   AdventureSession,
@@ -309,6 +310,7 @@ export function scoreContinuity(turn: EvaluationTurn): number {
   if (!hasValidCurrentPlace(next) || !hasUniqueVisibleIds(next)) return 0;
   if (!prev) return 1;
   return hasMonotonicTime(prev, next) &&
+    hasCoherentPlaceLocation(prev, next) &&
     retainsPeople(prev, next) &&
     progressesScenarios(prev, next) &&
     resolvesPendingRoll(turn, prev, next)
@@ -321,6 +323,51 @@ function hasValidCurrentPlace(session: AdventureSession): boolean {
     !session.currentPlaceId ||
     (session.places ?? []).some((place) => place.id === session.currentPlaceId)
   );
+}
+
+/**
+ * Verifies that `visibleState.location` and `visibleState.situation` do not
+ * contradict `currentPlaceId` after a place transition. Allows richer model
+ * descriptions that do not repeat the old place name.
+ */
+export function hasCoherentPlaceLocation(
+  prev: AdventureSession,
+  next: AdventureSession,
+): boolean {
+  if (!next.currentPlaceId || !next.places?.length) return true;
+  const currentPlace = next.places.find(
+    (place) => place.id === next.currentPlaceId,
+  );
+  if (!currentPlace) return false;
+  if (
+    next.visibleState.location?.placeId &&
+    next.visibleState.location.placeId !== next.currentPlaceId
+  ) {
+    return false;
+  }
+  const moved =
+    Boolean(prev.currentPlaceId) && prev.currentPlaceId !== next.currentPlaceId;
+  if (!moved) return true;
+  const prevPlace = (prev.places ?? []).find(
+    (place) => place.id === prev.currentPlaceId,
+  );
+  if (
+    isStaleLocationForMove(
+      next.visibleState.location,
+      prevPlace,
+      prev.visibleState.location,
+      currentPlace,
+    )
+  ) {
+    return false;
+  }
+  if (
+    prev.visibleState.situation &&
+    next.visibleState.situation?.id === prev.visibleState.situation.id
+  ) {
+    return false;
+  }
+  return true;
 }
 
 function hasUniqueVisibleIds(session: AdventureSession): boolean {
