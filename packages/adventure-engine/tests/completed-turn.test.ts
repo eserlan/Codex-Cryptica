@@ -235,13 +235,79 @@ describe("completed turn commits", () => {
     next.revealSecretIds = ["missing"];
     const unknown = applyCompletedTurn(session(), next, meta);
     expect(!unknown.ok && unknown.errors[0]?.code).toBe("unknown-secret");
+    const durableLarge = session();
+    durableLarge.visibleState.knownFacts = [
+      { id: "durable-large", text: "x".repeat(60_000), source: "provisional" },
+    ];
+    expect(applyCompletedTurn(durableLarge, proposal(), meta).ok).toBe(true);
+
     const large = session();
     large.visibleState.knownFacts = [
-      { id: "large", text: "x".repeat(60_000), source: "provisional" },
+      { id: "large", text: "x".repeat(260_000), source: "provisional" },
     ];
     const before = structuredClone(large);
     const budget = applyCompletedTurn(large, proposal(), meta);
     expect(!budget.ok && budget.errors[0]?.code).toBe("state-budget-exceeded");
     expect(large).toEqual(before);
+  });
+
+  it("preserves legacy session location/situation on no-move turns and updates actionResolution on synthesised moves", () => {
+    const legacy = session();
+    delete legacy.places;
+    delete legacy.currentPlaceId;
+    legacy.visibleState.location = {
+      id: "loc-legacy",
+      text: "The old quay",
+      source: "provisional",
+    };
+    legacy.visibleState.situation = {
+      id: "sit-legacy",
+      text: "Fog drifts across the pilings.",
+      source: "provisional",
+    };
+
+    const noMove = applyCompletedTurn(legacy, proposal(), meta, now);
+    expect(noMove.ok).toBe(true);
+    if (!noMove.ok) throw new Error("Expected legacy turn");
+    expect(noMove.value.visibleState.location?.text).toBe("The old quay");
+    expect(noMove.value.visibleState.situation?.text).toBe(
+      "Fog drifts across the pilings.",
+    );
+
+    const movedProposal = proposal();
+    movedProposal.moveTo = { name: "Customs house" };
+    const moved = applyCompletedTurn(
+      noMove.value,
+      movedProposal,
+      {
+        turnId: "turn-2",
+        inputId: "input-2",
+        playerAction: "Walk to the customs house",
+        now,
+        generation: {
+          mode: "play",
+          model: "test-model",
+          sourceCounts: {
+            worldEntry: 0,
+            scenarios: 0,
+            visibleFacts: 0,
+            hiddenFacts: 0,
+          },
+          scenarioIds: [],
+          retried: false,
+        },
+      },
+      now,
+    );
+    expect(moved.ok).toBe(true);
+    if (!moved.ok) throw new Error("Expected move turn");
+    expect(moved.value.visibleState.location?.text).toBe("Customs house");
+    expect(moved.value.visibleState.situation).toBeUndefined();
+    expect(
+      moved.value.turns.at(-1)?.generation?.actionResolution,
+    ).toMatchObject({
+      outcome: "resolved",
+      evidenceCategory: "movement",
+    });
   });
 });
