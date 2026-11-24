@@ -64,14 +64,23 @@ function hasVisibleStateDelta(turn: CommittedAdventureTurn): boolean {
     patch.knownFacts,
     patch.activeCharacters,
     patch.objectives,
+    patch.relationships,
   ].some(hasCollectionDelta);
-  const hasTurnRefs = [
-    turn.provisionalFactIds.length,
-    turn.sourceRecordIds.length,
-    turn.revealedSecretIds.length,
-  ].some((len) => len > 0);
+  const hasTurnRefs =
+    turn.provisionalFactIds.length > 0 || turn.revealedSecretIds.length > 0;
   return (
     hasPatchFields || hasCollections || hasTurnRefs || turn.timeAdvance != null
+  );
+}
+
+function hasProgressDelta(progress: TurnProgressClassification): boolean {
+  return (
+    progress.kind === "scenario-stage-or-status-change" ||
+    progress.kind === "actionable-discovery" ||
+    progress.kind === "obstacle-advanced-or-resolved" ||
+    progress.kind === "causal-state-change" ||
+    progress.kind === "consequential-player-choice" ||
+    progress.kind === "useful-negative-finding"
   );
 }
 
@@ -128,12 +137,16 @@ function isStatePatchProgress(
 function resolveOutcomeAndEvidence(
   turn: CommittedAdventureTurn,
   progress: TurnProgressClassification,
+  packageSceneMoved: boolean,
 ): {
   outcome: ActionResolutionOutcome;
   evidenceCategory: ActionEvidenceCategory;
 } {
-  const hasVisibleDelta = hasVisibleStateDelta(turn);
-  const moved = turn.visiblePatch.location !== undefined;
+  const hasVisibleDelta =
+    hasVisibleStateDelta(turn) ||
+    hasProgressDelta(progress) ||
+    packageSceneMoved;
+  const moved = turn.visiblePatch.location !== undefined || packageSceneMoved;
 
   const rules: Array<
     [boolean, ActionResolutionOutcome, ActionEvidenceCategory]
@@ -180,11 +193,13 @@ function resolveOutcomeAndEvidence(
 export function classifyActionResolution(
   turn: CommittedAdventureTurn,
   progress: TurnProgressClassification,
+  options: { packageSceneMoved?: boolean } = {},
 ): ActionResolutionTrace {
   const validation = turn.dropped?.length ? "corrected" : "accepted";
   const { outcome, evidenceCategory } = resolveOutcomeAndEvidence(
     turn,
     progress,
+    options.packageSceneMoved ?? false,
   );
   return {
     outcome,

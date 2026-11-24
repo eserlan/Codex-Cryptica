@@ -35,7 +35,10 @@ import {
 } from "./package-progress";
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
-import { classifyTurnProgress } from "./turn-progression";
+import {
+  classifyTurnProgress,
+  resolvePriorProgressionState,
+} from "./turn-progression";
 import { classifyActionResolution } from "./action-resolution";
 import type {
   ActorEventProposal,
@@ -198,9 +201,10 @@ function resolvePackageProgress(
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
   meta: CommitMetadata,
   dropped: string[],
-): void {
+): boolean {
   const moveTo = validSceneMove(candidate, proposal, meta, dropped);
   const before = candidate.packageProgress;
+  const packageSceneMoved = moveTo !== undefined && moveTo !== before?.sceneId;
   const index = packageIndexFromMeta(meta);
   const proposed = proposal.packageEvents ?? [];
   const proposedActors = proposal.actorEvents ?? [];
@@ -220,12 +224,13 @@ function resolvePackageProgress(
       meta,
       dropped,
     );
-    return;
+    return packageSceneMoved;
   }
   dropMissingPackageProposals(proposed, proposedActors, dropped);
   if (moveTo !== undefined) {
     candidate.packageProgress = { ...before, sceneId: moveTo };
   }
+  return packageSceneMoved;
 }
 
 const MAX_DROPPED_REASONS = 24;
@@ -291,7 +296,12 @@ export function applyCompletedTurn(
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
   const { timeAdvance } = clock;
-  resolvePackageProgress(candidate, proposal, meta, dropped);
+  const packageSceneMoved = resolvePackageProgress(
+    candidate,
+    proposal,
+    meta,
+    dropped,
+  );
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   const placeStep = applyPlaces(
@@ -355,9 +365,15 @@ export function applyCompletedTurn(
     turn.dropped = boundDroppedReasons(dropped);
   }
   if (turn.generation) {
-    const progress = classifyTurnProgress(turn, session);
+    const progress = classifyTurnProgress(turn, candidate, {
+      priorState: resolvePriorProgressionState(turn, session),
+    });
     turn.generation.progressCategory = progress.kind;
-    turn.generation.actionResolution = classifyActionResolution(turn, progress);
+    turn.generation.actionResolution = classifyActionResolution(
+      turn,
+      progress,
+      { packageSceneMoved },
+    );
   }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;

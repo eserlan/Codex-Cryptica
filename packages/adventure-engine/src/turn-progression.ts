@@ -31,6 +31,8 @@ export {
   hasOtherScenarioScopedActivity,
   isPlayerVisibleScenarioEvent,
   matchesPursuedTokens,
+  resolvePriorProgressionState,
+  type PriorProgressionState,
   type PursuedThreadScope,
 };
 

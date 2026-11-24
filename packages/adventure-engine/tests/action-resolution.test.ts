@@ -325,6 +325,155 @@ describe("Action fulfilment trace (#5196)", () => {
     });
   });
 
+  it("does not treat source references as a state change, but counts relationships", () => {
+    const base = makeSession();
+    const sourceOnly = commitTurn(
+      base,
+      "drop-source-only",
+      "Update the nonexistent dock record",
+      completeProposal({
+        narration: "You flip through the pages.",
+        sourceRecordIds: ["record-cited-by-the-response"],
+        visiblePatch: {
+          ...makeBaseProposal().visiblePatch,
+          knownFacts: {
+            add: [],
+            update: [
+              { id: "missing-fact", source: "canonical", text: "Updated text" },
+            ],
+            removeIds: [],
+          },
+        },
+      }),
+    );
+    expect(sourceOnly.turns.at(-1)?.generation?.actionResolution).toMatchObject(
+      {
+        outcome: "unresolved",
+        evidenceCategory: "dropped-patch",
+      },
+    );
+
+    const relationshipAndDrop = commitTurn(
+      base,
+      "drop-with-relationship",
+      "Update the nonexistent dock record and ask Vance for help",
+      completeProposal({
+        narration: "Vance agrees to help you.",
+        visiblePatch: {
+          ...makeBaseProposal().visiblePatch,
+          knownFacts: {
+            add: [],
+            update: [
+              { id: "missing-fact", source: "canonical", text: "Updated text" },
+            ],
+            removeIds: [],
+          },
+          relationships: {
+            add: [
+              {
+                source: "provisional",
+                text: "Vance is willing to help.",
+                subjectId: "char-harbormaster",
+                disposition: "helpful",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      }),
+    );
+    expect(
+      relationshipAndDrop.turns.at(-1)?.generation?.actionResolution,
+    ).toMatchObject({
+      outcome: "resolved",
+      validation: "corrected",
+      evidenceCategory: "state-patch",
+    });
+  });
+
+  it("classifies accepted scenario and package-scene progress from committed state", () => {
+    const base = makeSession();
+    const heardScenario = {
+      version: 1 as const,
+      id: "scenario-1",
+      origin: { kind: "manual" as const, manualId: "seed-1" },
+      playerVisible: { rumour: "Lights on the road", lead: "The old mill" },
+      knowledge: "heard" as const,
+      stage: "hearsay" as const,
+      status: "open" as const,
+      events: [],
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: {
+        truth: "truth-1",
+        ifInvestigated: "investigated-1",
+        eventIds: {},
+      },
+      gmOnly: {
+        truth: "Smugglers signal from the mill",
+        ifInvestigated: "Crates beneath the floor",
+      },
+    };
+    const scenarioSession: AdventureSession = {
+      ...base,
+      scenarioCollection: {
+        version: 1,
+        items: [heardScenario],
+        focusedScenarioId: "scenario-1",
+      },
+    };
+    const scenarioAdvanced = commitTurn(
+      scenarioSession,
+      "scenario-only",
+      "Investigate the old mill",
+      completeProposal({
+        narration: "You find a fresh trail leading beneath the waterwheel.",
+        elaborateScenarios: [
+          {
+            scenarioId: "scenario-1",
+            stage: "actionable-clue",
+            discovery: "A fresh trail beneath the waterwheel",
+          },
+        ],
+      }),
+    );
+    expect(
+      scenarioAdvanced.turns.at(-1)?.generation?.actionResolution,
+    ).toMatchObject({ outcome: "resolved", evidenceCategory: "discovery" });
+
+    const packageSession: AdventureSession = {
+      ...base,
+      sourcePackage: {
+        packageId: "reference-one-shot",
+        version: "1.0.0",
+        formatVersion: "adventure-json/v1",
+        hash: "a".repeat(64),
+      },
+      packageProgress: { sceneId: "scene-entry" },
+    };
+    const sceneMoveProposal = completeProposal({
+      narration: "You step into the old mill.",
+      visiblePatch: {
+        ...makeBaseProposal().visiblePatch,
+        packageSceneId: "scene-mill",
+      },
+    });
+    const moved = applyCompletedTurn(packageSession, sceneMoveProposal, {
+      turnId: "turn-package-scene",
+      inputId: "package-scene-only",
+      now: "2026-11-24T12:05:00.000Z",
+      playerAction: "Enter the old mill",
+      packageSceneIds: ["scene-entry", "scene-mill"],
+      generation: { transport: "stateless", threadMode: "new" },
+    });
+    expect(moved.ok).toBe(true);
+    if (!moved.ok) return;
+    expect(
+      moved.value.turns.at(-1)?.generation?.actionResolution,
+    ).toMatchObject({ outcome: "resolved", evidenceCategory: "movement" });
+  });
+
   it("preserves uninstrumented legacy turns and round-trips through persistedTurnSchema", () => {
     const base = makeSession();
     const legacy = applyCompletedTurn(
