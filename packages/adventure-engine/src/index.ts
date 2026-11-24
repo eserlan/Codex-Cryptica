@@ -19,6 +19,7 @@ export * from "./world-entry-pacing";
 export * from "./scene-pacing";
 export * from "./dialogue-pacing";
 export * from "./turn-progression";
+export * from "./action-resolution";
 export * from "./investigative-pacing";
 export * from "./contextual-rumours";
 

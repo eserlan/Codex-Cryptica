@@ -192,6 +192,20 @@ type GenerationTally = {
     retained: number;
     unknown: number;
   };
+  actionOutcomeCounts: {
+    resolved: number;
+    "roll-required": number;
+    "credible-blocked": number;
+    clarification: number;
+    unresolved: number;
+    unknown: number;
+  };
+  actionValidationCounts: {
+    accepted: number;
+    corrected: number;
+    rejected: number;
+    unknown: number;
+  };
   turnsWithGeneration: number;
   lastResetReason: string | null;
   lastRevisionMismatchCause: string | null;
@@ -212,6 +226,43 @@ function recordReset(
   }
 }
 
+function recordTurnActionAndDelivery(
+  tally: GenerationTally,
+  generation: NonNullable<AdventureSession["turns"][number]["generation"]>,
+): void {
+  tally.directorDeliveryCounts[
+    generation.directorDelivery?.status ?? "unknown"
+  ] += 1;
+  tally.actionOutcomeCounts[
+    generation.actionResolution?.outcome ?? "unknown"
+  ] += 1;
+  tally.actionValidationCounts[
+    generation.actionResolution?.validation ?? "unknown"
+  ] += 1;
+}
+
+function recordTurnGeneration(
+  tally: GenerationTally,
+  generation:
+    NonNullable<AdventureSession["turns"][number]["generation"]> | undefined,
+): void {
+  if (!generation) {
+    tally.transportCounts.unknown += 1;
+    tally.threadModeCounts.unknown += 1;
+    tally.directorDeliveryCounts.unknown += 1;
+    tally.actionOutcomeCounts.unknown += 1;
+    tally.actionValidationCounts.unknown += 1;
+    return;
+  }
+  tally.turnsWithGeneration += 1;
+  tally.transportCounts[generation.transport ?? "unknown"] += 1;
+  tally.threadModeCounts[generation.threadMode ?? "unknown"] += 1;
+  recordTurnActionAndDelivery(tally, generation);
+  recordReset(tally, generation);
+  if (generation.progressCategory)
+    recordProgress(tally, generation.progressCategory);
+}
+
 function tallyGeneration(session: AdventureSession): GenerationTally {
   const tally: GenerationTally = {
     transportCounts: { interaction: 0, stateless: 0, unknown: 0 },
@@ -224,6 +275,20 @@ function tallyGeneration(session: AdventureSession): GenerationTally {
       retained: 0,
       unknown: 0,
     },
+    actionOutcomeCounts: {
+      resolved: 0,
+      "roll-required": 0,
+      "credible-blocked": 0,
+      clarification: 0,
+      unresolved: 0,
+      unknown: 0,
+    },
+    actionValidationCounts: {
+      accepted: 0,
+      corrected: 0,
+      rejected: 0,
+      unknown: 0,
+    },
     turnsWithGeneration: 0,
     lastResetReason: null,
     lastRevisionMismatchCause: null,
@@ -232,21 +297,7 @@ function tallyGeneration(session: AdventureSession): GenerationTally {
     recentProgressCategories: [],
   };
   for (const turn of session.turns) {
-    const generation = turn.generation;
-    if (!generation) {
-      tally.transportCounts.unknown += 1;
-      tally.threadModeCounts.unknown += 1;
-      tally.directorDeliveryCounts.unknown += 1;
-      continue;
-    }
-    tally.turnsWithGeneration += 1;
-    tally.transportCounts[generation.transport ?? "unknown"] += 1;
-    tally.threadModeCounts[generation.threadMode ?? "unknown"] += 1;
-    const deliveryStatus = generation.directorDelivery?.status ?? "unknown";
-    tally.directorDeliveryCounts[deliveryStatus] += 1;
-    recordReset(tally, generation);
-    if (generation.progressCategory)
-      recordProgress(tally, generation.progressCategory);
+    recordTurnGeneration(tally, turn.generation);
   }
   return tally;
 }
@@ -297,6 +348,17 @@ function generationSummary(session: AdventureSession) {
     lastScenarioIds,
     progressCategoryCounts: tally.progressCategoryCounts,
     directorDelivery: tally.directorDeliveryCounts,
+    actionOutcome: tally.actionOutcomeCounts,
+    actionValidation: tally.actionValidationCounts,
+    ...(session.pendingRoll
+      ? {
+          pendingRollActionResolution: {
+            outcome: "roll-required" as const,
+            validation: "accepted" as const,
+            evidenceCategory: "roll-pending" as const,
+          },
+        }
+      : {}),
     lastProgressCategory: tally.lastProgressCategory,
     recentProgressCategories: tally.recentProgressCategories,
     recentMeaningfulProgressTurns: recentMeaningful,
@@ -318,6 +380,11 @@ const DIAGNOSTIC_README = [
 export interface TurnRejectionDiagnostic {
   reason: string;
   diagnostic?: HiddenLeakageDiagnostic;
+  actionResolution?: {
+    outcome: "unresolved";
+    validation: "rejected";
+    evidenceCategory: "rejected-turn";
+  };
   revision: number;
   recordedAt: string;
 }

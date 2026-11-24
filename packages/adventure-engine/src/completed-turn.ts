@@ -36,6 +36,7 @@ import {
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
 import { classifyTurnProgress } from "./turn-progression";
+import { classifyActionResolution } from "./action-resolution";
 import type {
   ActorEventProposal,
   AdventureSession,
@@ -352,6 +353,11 @@ export function applyCompletedTurn(
   if (nextEmergent.length > 0) candidate.emergentThreads = nextEmergent;
   if (dropped.length > 0) {
     turn.dropped = boundDroppedReasons(dropped);
+  }
+  if (turn.generation) {
+    const progress = classifyTurnProgress(turn, session);
+    turn.generation.progressCategory = progress.kind;
+    turn.generation.actionResolution = classifyActionResolution(turn, progress);
   }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;

@@ -453,6 +453,11 @@ export class AdventureRuntime {
     return {
       reason: cause.reason,
       ...(cause.diagnostic ? { diagnostic: cause.diagnostic } : {}),
+      actionResolution: {
+        outcome: "unresolved" as const,
+        validation: "rejected" as const,
+        evidenceCategory: "rejected-turn" as const,
+      },
       revision: this.state.session?.revision ?? 0,
       recordedAt: this.deps.now(),
     };
