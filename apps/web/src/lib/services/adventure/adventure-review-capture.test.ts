@@ -1116,6 +1116,9 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
           linkedFactCount: 1,
           linkedPersonCount: 1,
           linkedPlaceCount: 2,
+          linkedCommitmentCount: 1,
+          openQuestionCount: 1,
+          knownConsequenceCount: 1,
         },
       ],
     });

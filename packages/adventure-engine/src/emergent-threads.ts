@@ -53,28 +53,71 @@ function collectTurnTopicTokens(
   return [...tokens].slice(0, MAX_THREAD_TOKENS);
 }
 
-function collectTurnPersonIds(
-  turn: CommittedAdventureTurn,
-  session: AdventureSession,
+function collectTurnFactIds(turn: CommittedAdventureTurn): string[] {
+  return [
+    ...turn.provisionalFactIds,
+    ...turn.visiblePatch.knownFacts.add.map((f) => f.id),
+    ...turn.visiblePatch.knownFacts.update.map((f) => f.id),
+  ];
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function collectMentionedPersonIds(
+  text: string,
+  people: readonly NonNullable<AdventureSession["people"]>[number][],
 ): string[] {
-  const people = session.people ?? [];
-  if (people.length === 0) return [];
+  const matched: string[] = [];
+  for (const person of people) {
+    const names = [person.name, ...person.aliases].filter(
+      (n) => n.trim().length >= 3,
+    );
+    const hit = names.some((name) =>
+      new RegExp(`\\b${escapeRegex(name.trim())}\\b`, "i").test(text),
+    );
+    if (hit) matched.push(person.id);
+  }
+  return matched;
+}
+
+function collectActivePatchPersonIds(
+  turn: CommittedAdventureTurn,
+  people: readonly NonNullable<AdventureSession["people"]>[number][],
+): string[] {
   const ids: string[] = [];
   for (const char of [
     ...turn.visiblePatch.activeCharacters.add,
     ...turn.visiblePatch.activeCharacters.update,
   ]) {
     const baseName = (char.text.split(/[,(—]|\s+-\s+/)[0] ?? char.text).trim();
-    const res = baseName
-      ? resolvePersonByReference(people, baseName)
-      : { person: null };
+    if (!baseName) continue;
+    const res = resolvePersonByReference(people, baseName);
     if (res.person) ids.push(res.person.id);
   }
-  for (const factId of turn.provisionalFactIds) {
-    const owner = people.find((p) => p.linkedFactIds.includes(factId));
-    if (owner) ids.push(owner.id);
-  }
-  return [...new Set(ids)];
+  return ids;
+}
+
+function collectTurnPersonIds(
+  turn: CommittedAdventureTurn,
+  session: AdventureSession,
+): string[] {
+  const people = session.people ?? [];
+  if (people.length === 0) return [];
+  const factOwners = turn.provisionalFactIds
+    .map((factId) => people.find((p) => p.linkedFactIds.includes(factId))?.id)
+    .filter((id): id is string => Boolean(id));
+  return [
+    ...new Set([
+      ...collectActivePatchPersonIds(turn, people),
+      ...factOwners,
+      ...collectMentionedPersonIds(
+        `${turn.playerAction}\n${turn.narration}`,
+        people,
+      ),
+    ]),
+  ];
 }
 
 function collectTurnCommitmentIds(
@@ -189,15 +232,52 @@ function hasEmergenceThreshold(
   return hasPriorTopicOverlap(session, turn.id, tokens);
 }
 
+const IMPERATIVE_ACTION_PREFIX_RE =
+  /^(?:i\s+)?(?:inspect|examine|check|search|look\s+(?:at|around|for)|ask|question|inquire|investigate|probe)\s+(?:the\s+)?/i;
+
+function matchingObjectiveOrSituation(
+  session: AdventureSession,
+  tokens: readonly string[],
+): string | undefined {
+  const candidates = [
+    ...session.visibleState.objectives.map((o) => o.text),
+    ...(session.visibleState.situation
+      ? [session.visibleState.situation.text]
+      : []),
+  ];
+  for (const text of candidates) {
+    const candTokens = [...threadTopicWords(text)];
+    if (countOverlap(candTokens, tokens) >= 1) return text.trim().slice(0, 120);
+  }
+  return undefined;
+}
+
 function deriveThreadTitle(
+  session: AdventureSession,
   turn: CommittedAdventureTurn,
   facts: readonly ProvisionalFact[],
+  tokens: readonly string[],
 ): string {
   const firstFact = facts.find((f) => f.visibility === "player-visible");
   if (firstFact) {
     return `${firstFact.name}: ${firstFact.summary}`.slice(0, 120);
   }
-  return turn.playerAction.trim().slice(0, 120) || "Improvised investigation";
+  const caseSubject = matchingObjectiveOrSituation(session, tokens);
+  if (caseSubject) return caseSubject;
+
+  const recurringFact = session.visibleState.knownFacts.find(
+    (f) => countOverlap([...threadTopicWords(f.text)], tokens) >= 2,
+  );
+  if (recurringFact) return recurringFact.text.trim().slice(0, 120);
+
+  const cleanedAction = turn.playerAction
+    .trim()
+    .replace(IMPERATIVE_ACTION_PREFIX_RE, "");
+  return (
+    cleanedAction.slice(0, 120) ||
+    turn.playerAction.trim().slice(0, 120) ||
+    "Improvised investigation"
+  );
 }
 
 function collectGmDevelopments(
@@ -223,8 +303,11 @@ function mergeIntoThread(
   tokens: readonly string[],
   personIds: readonly string[],
   commitmentIds: readonly string[],
+  placeIdOverride?: string,
 ): EmergentThread {
-  const placeIds = session.currentPlaceId ? [session.currentPlaceId] : [];
+  const resolvedPlaceId = placeIdOverride ?? session.currentPlaceId;
+  const placeIds = resolvedPlaceId ? [resolvedPlaceId] : [];
+  const factIds = collectTurnFactIds(turn);
   const consequences = turn.visiblePatch.knownFacts.add.map((f) => f.text);
   const questions = isInvestigativeInquiry(turn.playerAction)
     ? [turn.playerAction.trim()]
@@ -249,7 +332,7 @@ function mergeIntoThread(
     ),
     linkedFactIds: pushBoundedUnique(
       thread.linkedFactIds,
-      turn.provisionalFactIds,
+      factIds,
       MAX_THREAD_FACTS,
     ),
     linkedCommitmentIds: pushBoundedUnique(
@@ -277,6 +360,88 @@ function mergeIntoThread(
   };
 }
 
+function collectSeedAnchorTokens(
+  session: AdventureSession,
+  currentTokens: readonly string[],
+): Set<string> {
+  const anchor = new Set<string>(currentTokens);
+  for (const obj of session.visibleState.objectives) {
+    const objTokens = [...threadTopicWords(obj.text)];
+    if (countOverlap(objTokens, currentTokens) >= 1) {
+      for (const t of objTokens) anchor.add(t);
+    }
+  }
+  return anchor;
+}
+
+function bootstrapEmergentThreadFromHistory(
+  session: AdventureSession,
+  currentTurn: CommittedAdventureTurn,
+  currentTokens: readonly string[],
+  currentFacts: readonly ProvisionalFact[],
+  createId: () => string,
+): EmergentThread | undefined {
+  const priorTurns = session.turns
+    .filter((t) => t.id !== currentTurn.id)
+    .slice(-12);
+  if (priorTurns.length === 0) return undefined;
+
+  const anchorTokens = collectSeedAnchorTokens(session, currentTokens);
+  const related = priorTurns.filter((prev) => {
+    const prevFacts = session.provisionalFacts.filter((f) =>
+      prev.provisionalFactIds.includes(f.id),
+    );
+    const prevTokens = collectTurnTopicTokens(prev, prevFacts);
+    return countOverlap(prevTokens, [...anchorTokens]) >= 1;
+  });
+  if (related.length === 0) return undefined;
+
+  const hasOoc = (session.oocExchanges ?? []).some(
+    (ooc) =>
+      ooc.status === "answered" &&
+      ooc.classification === "established" &&
+      countOverlap([...threadTopicWords(ooc.question)], [...anchorTokens]) >= 1,
+  );
+  let seeded: EmergentThread = {
+    id: createId(),
+    title: deriveThreadTitle(session, currentTurn, currentFacts, [
+      ...anchorTokens,
+    ]),
+    status: "open",
+    provenance: hasOoc ? "mixed" : "play",
+    topicTokens: [...anchorTokens].slice(0, MAX_THREAD_TOKENS),
+    linkedPersonIds: [],
+    linkedPlaceIds: [],
+    linkedFactIds: [],
+    linkedCommitmentIds: [],
+    openQuestions: [],
+    knownConsequences: [],
+    gmOnlyDevelopments: [],
+    createdAtTurnId: related[0]!.id,
+    updatedAtTurnId: related[0]!.id,
+    turnCount: 0,
+  };
+  for (const prev of related) {
+    const prevFacts = session.provisionalFacts.filter((f) =>
+      prev.provisionalFactIds.includes(f.id),
+    );
+    const prevTokens = collectTurnTopicTokens(prev, prevFacts);
+    const prevPersons = collectTurnPersonIds(prev, session);
+    const prevCommits = collectTurnCommitmentIds(prev, session);
+    const prevPlaceId = prev.visiblePatch.location?.placeId;
+    seeded = mergeIntoThread(
+      seeded,
+      prev,
+      session,
+      prevTokens,
+      prevPersons,
+      prevCommits,
+      prevPlaceId,
+    );
+  }
+  return seeded;
+}
+
 /**
  * Deterministically tracks substantive player-led investigations as durable
  * emergent threads, isolated from seeded scenarios and casual chatter.
@@ -295,12 +460,8 @@ export function updateEmergentThreadsOnTurn(
 
   const tokens = collectTurnTopicTokens(turn, facts);
   const personIds = collectTurnPersonIds(turn, session);
-  const matched = findBestMatchingThread(
-    existing,
-    tokens,
-    personIds,
-    turn.provisionalFactIds,
-  );
+  const factIds = collectTurnFactIds(turn);
+  const matched = findBestMatchingThread(existing, tokens, personIds, factIds);
   if (matched) {
     const updated = mergeIntoThread(
       matched,
@@ -320,24 +481,35 @@ export function updateEmergentThreadsOnTurn(
     return existing;
   }
 
-  const created: EmergentThread = mergeIntoThread(
-    {
-      id: createId(),
-      title: deriveThreadTitle(turn, facts),
-      status: "open",
-      provenance: "play",
-      topicTokens: [],
-      linkedPersonIds: [],
-      linkedPlaceIds: [],
-      linkedFactIds: [],
-      linkedCommitmentIds: [],
-      openQuestions: [],
-      knownConsequences: [],
-      gmOnlyDevelopments: [],
-      createdAtTurnId: turn.id,
-      updatedAtTurnId: turn.id,
-      turnCount: 0,
-    },
+  const bootstrapped =
+    existing.length === 0
+      ? bootstrapEmergentThreadFromHistory(
+          session,
+          turn,
+          tokens,
+          facts,
+          createId,
+        )
+      : undefined;
+  const baseThread: EmergentThread = bootstrapped ?? {
+    id: createId(),
+    title: deriveThreadTitle(session, turn, facts, tokens),
+    status: "open",
+    provenance: "play",
+    topicTokens: [],
+    linkedPersonIds: [],
+    linkedPlaceIds: [],
+    linkedFactIds: [],
+    linkedCommitmentIds: [],
+    openQuestions: [],
+    knownConsequences: [],
+    gmOnlyDevelopments: [],
+    createdAtTurnId: turn.id,
+    updatedAtTurnId: turn.id,
+    turnCount: 0,
+  };
+  const created = mergeIntoThread(
+    baseThread,
     turn,
     session,
     tokens,
