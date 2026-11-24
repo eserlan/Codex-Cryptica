@@ -475,4 +475,103 @@ describe("Emergent player-led GM threads (#5177)", () => {
     expect(brief?.mode).toBe("active-pursuit");
     expect(brief?.pursuedEmergentThread?.threadId).toBe(thread.id);
   });
+
+  it("keeps one coherent case when an inspection thread is followed by returning to a contact to report evidence (#5185 follow-up)", () => {
+    let s = session();
+    s.places = [{ id: "p-gate", name: "Cistern Gate" }];
+    s.currentPlaceId = "p-gate";
+    s.people = [
+      {
+        id: "p-ilona",
+        name: "Envoy Ilona",
+        aliases: ["Ilona"],
+        linkedFactIds: [],
+      },
+    ];
+    s.visibleState.situation = {
+      id: "sit-1",
+      text: "Standing near the Cistern Gate as evening settles over the lower ward, with rain-slick cobbles and lanterns flickering along the canal wall.",
+      source: "provisional",
+    };
+
+    // Turns 1-2: Inspection thread (no people linked yet)
+    s = commit(
+      s,
+      {
+        playerAction: "Inspect the clay around the gate latch.",
+        narration: "Fresh clay smudges coat the iron latch.",
+        visiblePatch: {
+          ...baseTurn().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "Clay smudges coat the iron latch.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      1,
+    );
+    s = commit(
+      s,
+      {
+        playerAction: "Examine the latch pin for tampering.",
+        narration: "The latch pin was filed down recently.",
+        visiblePatch: {
+          ...baseTurn().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "Latch pin was filed down recently.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      2,
+    );
+    expect(s.emergentThreads).toHaveLength(1);
+    const initialId = s.emergentThreads![0]!.id;
+
+    // Turn 3: Return to contact and report evidence with low lexical overlap to "clay/latch"
+    s = commit(
+      s,
+      {
+        playerAction:
+          "Return to Envoy Ilona at the ward post and report what we found.",
+        narration:
+          "Envoy Ilona studies your notes carefully and records the tampering.",
+        visiblePatch: {
+          ...baseTurn().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "Envoy Ilona logged the ward tampering report.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      3,
+    );
+
+    expect(s.emergentThreads).toHaveLength(1);
+    expect(s.emergentThreads![0]!.id).toBe(initialId);
+    expect(s.emergentThreads![0]!.turnCount).toBe(3);
+    expect(s.emergentThreads![0]!.linkedFactIds).toHaveLength(3);
+    expect(s.emergentThreads![0]!.linkedPersonIds).toContain("p-ilona");
+    expect(s.emergentThreads![0]!.title).not.toContain(
+      "Standing near the Cistern Gate",
+    );
+  });
 });
