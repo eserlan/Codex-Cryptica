@@ -423,7 +423,7 @@ function worldEntryBehavior(
   pacing = worldEntryPacing(session),
 ): string[] {
   return [
-    "Open World Entry in an existing Vault: establish a lived-in place with ordinary sensory details, plausible actors and immediate interactions, then leave the choice to the player. A quiet scene is valid; do not force a villain, danger, quest, investigation, reward, objective, climax or timed twist.",
+    "An open-ended World Entry scene in an existing Vault, not a pre-written quest: establish a lived-in place with sensory detail, plausible actors and immediate interactions, then let the player choose. Quiet scenes are valid; do not force villains, danger, quests, investigation, rewards, objectives, climaxes or timed twists.",
     "GM-only world-entry scenarios are situations already unfolding in the world, NOT rumours the player already knows or canonical Vault facts. Respect established sources, date and location; leave any incompatible seed unnoticed rather than contradicting canon.",
     "The structured worldEntry.at date is authoritative. If premise text contains a conflicting date, treat that wording as stale and follow worldEntry.at without changing the saved session or in-world date.",
     "Surface seeds through fitting observable details: traces, changed behaviour, objects, notices, local consequences, affected people or overheard talk. Keep signs small and deniable, never reveal GM truth or frame them as quests, objectives or obligations; the player may ignore them.",
@@ -431,7 +431,7 @@ function worldEntryBehavior(
     "Candidate rumours and leads are contextual to the player's current location. When the player asks an NPC about local news, gossip or rumours, or looks around for local leads: draw upon a fitting unnoticed seed for the current settlement or scene, and include its scenario ID in revealScenarioIds to record the discovery. Present it strictly as local hearsay or opinion, never as an assigned quest, mission objective or obligation. If no seed fits or the area is quiet, report ordinary peaceful life or that all has been quiet (a meaningful empty result) without inventing forced conflict.",
     "When the player explores, asks around or investigates a sign, reveal at most one further plausible lead or clue from the relevant seed. Do not dump seeds, assign quests or make every mundane interaction ominous.",
     "Avoid endlessly substituting unrelated chores (such as fetching water or fixing windows) when the player actively asks about local news or pursues an emerging lead: offer a concrete person, place or decision to follow (via revealScenarioIds or elaborateScenarios), while keeping it optional. A quiet conversation may stay quiet, but the surrounding world should still feel lived in.",
-    "If the player ignores or declines a sign or lead, let them explore peacefully without repeated prompts, re-revelation or forced escalation.",
+    "If the player deliberately ignores or declines a sign or lead, let them explore peacefully without repeated prompts, cyclic re-revelation, or forced escalation.",
     "Keep each seeded secret's original GM truth unchanged. A seed's underlying situation develops only when committed player actions or explicit in-world time passage justify it; otherwise only its visibility changes. Never raise a situation's stakes merely because another chat turn passed.",
     "When a sign is present in the scene, one suggestedAction may invite a closer look at it, phrased as an option, never as accepting a quest. When speaking with locals in a settlement, one suggestedAction may offer asking about local news.",
     ...(pacing?.signDue
@@ -439,7 +439,7 @@ function worldEntryBehavior(
           `PACING: At least ${pacing.quietTurns} turns have passed without any player-observable seed surfacing (eligible candidate IDs: ${pacing.eligibleScenarioIds.length > 0 ? pacing.eligibleScenarioIds.join(", ") : "legacy gmThreads"}). In this turn, weave one small background sign from one of these seeds into the scene, include its scenario ID in revealScenarioIds to record the discovery (for legacy gmThreads use hiddenPatch.gmThreads), and offer at least one suggestedAction with a concrete person, place or choice to follow up.`,
         ]
       : []),
-    "Use only period-appropriate established sources as current facts. Sources tagged historical are prior history, not present actors; undated/uncertain sources are not guaranteed to exist then; never project future events backward or invent precision.",
+    "Use only period-appropriate established sources as current facts; historical sources are prior history, and undated/uncertain sources may not yet exist. Never project future events backward or invent precision.",
     "The selected start date is in-world time, not device time. Keep the world date and location consistent across turns unless committed in-world actions change them.",
     "When the player returns to a previously visited location, reflect established facts, prior conversations, and committed scenario consequences. Do not reset or contradict what has already transpired.",
     ...(worldEntry.intent === "scene"
