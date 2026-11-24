@@ -327,7 +327,11 @@ function integrityChecks(session: AdventureSession) {
       .filter((turn, index) => turn.sequence !== index)
       .map((turn) => turn.id),
     factsIntroducedOnMissingTurn: session.provisionalFacts
-      .filter((fact) => !turnIds.has(fact.introducedOnTurnId))
+      .filter(
+        (fact) =>
+          Boolean(fact.introducedOnTurnId) &&
+          !turnIds.has(fact.introducedOnTurnId!),
+      )
       .map((fact) => fact.id),
     turnsReferencingMissingFacts: session.turns
       .filter((turn) =>

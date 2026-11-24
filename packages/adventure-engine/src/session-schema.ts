@@ -116,6 +116,17 @@ export const adventureSessionSchema = z
             question: text,
             answer: narration.optional(),
             status: z.enum(["pending", "answered", "failed"]),
+            classification: z
+              .enum([
+                "established",
+                "hypothetical",
+                "meta-rules",
+                "canon-conflict",
+                "secret-refusal",
+              ])
+              .optional(),
+            committedFactIds: z.array(id).max(16).optional(),
+            conflictNotice: text.optional(),
             errorMessage: text.optional(),
             afterTurnCount: z.number().int().nonnegative(),
             createdAt: timestamp,

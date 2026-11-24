@@ -113,9 +113,25 @@ export interface ProvisionalFact {
   kind: "person" | "place" | "faction" | "item" | "event" | "clue" | "other";
   name: string;
   summary: string;
-  introducedOnTurnId: string;
+  introducedOnTurnId?: string;
+  sourceOocExchangeId?: string;
+  provenance?: "play" | "ooc";
   visibility: "player-visible" | "gm-only";
   scenarioId?: string;
+}
+
+export type OocReplyClassification =
+  | "established"
+  | "hypothetical"
+  | "meta-rules"
+  | "canon-conflict"
+  | "secret-refusal";
+
+export interface NewOocDecision {
+  kind: ProvisionalFact["kind"];
+  name: string;
+  summary: string;
+  visibility: ProvisionalFact["visibility"];
 }
 
 export type CausalCommitmentKind =
@@ -495,6 +511,9 @@ export interface AdventureOocExchange {
   question: string;
   answer?: string;
   status: AdventureOocExchangeStatus;
+  classification?: OocReplyClassification;
+  committedFactIds?: string[];
+  conflictNotice?: string;
   errorMessage?: string;
   /** Number of committed narrative turns (`session.turns.length`) when first asked. */
   afterTurnCount: number;
