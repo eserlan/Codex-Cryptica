@@ -1,6 +1,7 @@
 import { describe, expect, it } from "bun:test";
 import { allocatePromptBudget } from "../src/context-budget";
 import { buildAdventurePrompt } from "../src/prompt";
+import { boundPromptState } from "../src/prompt-state";
 import {
   MAX_GENERATION_INPUT_CHARS,
   MAX_SERIALIZED_STATE_CHARS,
@@ -159,5 +160,45 @@ describe("current-turn prompt input", () => {
     );
     expect(currentSession.hiddenState.secrets).toHaveLength(30);
     expect(currentSession.provisionalFacts).toHaveLength(30);
+  });
+
+  it("retains the focused newest scenario and keeps GM/player scenario projections consistent when pruning", () => {
+    const scenarios = ["s-old-1", "s-old-2", "s-mid-3", "s-new-focused"];
+    const bounded = boundPromptState(
+      {
+        playerVisibleState: { knownFacts: [] },
+        playerScenarios: {
+          focusedScenarioId: "s-new-focused",
+          items: scenarios.map((id) => ({
+            id,
+            knowledge: "heard",
+            playerVisible: { rumour: `Rumour for ${id}`, lead: `Lead ${id}` },
+            events: [],
+          })),
+        },
+        "GM-ONLY scenarios": scenarios.map((id) => ({
+          id,
+          knowledge: "heard",
+          focused: id === "s-new-focused",
+          baselineTruth: { truth: `Truth for ${id}: ${"x".repeat(400)}` },
+          secretBindings: { truth: `secret-${id}`, eventIds: {} },
+          hiddenEvents: [],
+        })),
+      },
+      1_400,
+    );
+
+    const gmRemaining = bounded["GM-ONLY scenarios"] as Array<{ id: string }>;
+    const playerRemaining = bounded.playerScenarios as {
+      focusedScenarioId: string | null;
+      items: Array<{ id: string }>;
+    };
+    const gmIds = gmRemaining.map((item) => item.id);
+    const playerIds = playerRemaining.items.map((item) => item.id);
+
+    expect(gmIds).toContain("s-new-focused");
+    expect(playerIds).toContain("s-new-focused");
+    expect(playerRemaining.focusedScenarioId).toBe("s-new-focused");
+    expect(playerIds).toEqual(gmIds);
   });
 });

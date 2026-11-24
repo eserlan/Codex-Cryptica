@@ -257,11 +257,168 @@ function capPromptStateSections(
   );
 }
 
+function scenarioItemId(item: unknown): string | undefined {
+  if (!item || typeof item !== "object") return undefined;
+  const id = (item as Record<string, unknown>).id;
+  return typeof id === "string" ? id : undefined;
+}
+
+function isFocusedScenarioEntry(
+  item: unknown,
+  focusedId: string | undefined,
+): boolean {
+  if (!item || typeof item !== "object") return false;
+  const record = item as Record<string, unknown>;
+  if (focusedId && record.id === focusedId) return true;
+  return record.focused === true;
+}
+
+function prioritizeScenarioSlice(
+  items: unknown[],
+  count: number,
+  focusedId: string | undefined,
+): unknown[] {
+  if (count <= 0) return [];
+  if (count >= items.length) return items;
+  const focusedIdx = items.findIndex((item) =>
+    isFocusedScenarioEntry(item, focusedId),
+  );
+  if (focusedIdx === -1 || focusedIdx >= items.length - count) {
+    return items.slice(items.length - count);
+  }
+  const tailCount = count - 1;
+  const tail = tailCount > 0 ? items.slice(items.length - tailCount) : [];
+  return [items[focusedIdx], ...tail];
+}
+
+function reconcileFocusedScenarioId(
+  playerScenarios: Record<string, unknown> | undefined,
+): void {
+  if (!playerScenarios || !Array.isArray(playerScenarios.items)) return;
+  const focusedId = playerScenarios.focusedScenarioId;
+  if (focusedId == null) return;
+  const stillPresent = playerScenarios.items.some(
+    (item) => scenarioItemId(item) === focusedId,
+  );
+  if (!stillPresent) {
+    playerScenarios.focusedScenarioId = null;
+  }
+}
+
+function syncScenariosAfterGmPrune(
+  bounded: Record<string, unknown>,
+  playerScenarios: Record<string, unknown> | undefined,
+): void {
+  const gmItems = bounded["GM-ONLY scenarios"];
+  if (!Array.isArray(gmItems) || !playerScenarios) return;
+  const gmIds = new Set(
+    gmItems.map(scenarioItemId).filter((id): id is string => id !== undefined),
+  );
+  if (Array.isArray(playerScenarios.items)) {
+    playerScenarios.items = playerScenarios.items.filter((item) => {
+      const id = scenarioItemId(item);
+      return id !== undefined && gmIds.has(id);
+    });
+  }
+  reconcileFocusedScenarioId(playerScenarios);
+}
+
+function syncGmScenariosAfterPlayerPrune(
+  bounded: Record<string, unknown>,
+  playerScenarios: Record<string, unknown> | undefined,
+): void {
+  const gmItems = bounded["GM-ONLY scenarios"];
+  if (
+    !Array.isArray(gmItems) ||
+    !playerScenarios ||
+    !Array.isArray(playerScenarios.items)
+  ) {
+    return;
+  }
+  const playerIds = new Set(
+    playerScenarios.items
+      .map(scenarioItemId)
+      .filter((id): id is string => id !== undefined),
+  );
+  bounded["GM-ONLY scenarios"] = gmItems.filter((item) => {
+    if (!item || typeof item !== "object") return false;
+    const rec = item as Record<string, unknown>;
+    if (rec.knowledge === "unheard") return true;
+    const id = scenarioItemId(item);
+    return id !== undefined && playerIds.has(id);
+  });
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function captureScenarioSnapshot(
+  bounded: Record<string, unknown>,
+  container: Record<string, unknown>,
+  key: string,
+  items: unknown[],
+): () => void {
+  const playerScenarios = isRecord(bounded.playerScenarios)
+    ? bounded.playerScenarios
+    : undefined;
+  const origPlayerItems = Array.isArray(playerScenarios?.items)
+    ? [...playerScenarios.items]
+    : undefined;
+  const origGmItems = Array.isArray(bounded["GM-ONLY scenarios"])
+    ? [...bounded["GM-ONLY scenarios"]]
+    : undefined;
+  const origFocused = playerScenarios?.focusedScenarioId;
+
+  return () => {
+    container[key] = items;
+    if (playerScenarios && origPlayerItems) {
+      playerScenarios.items = origPlayerItems;
+      playerScenarios.focusedScenarioId = origFocused;
+    }
+    if (origGmItems) bounded["GM-ONLY scenarios"] = origGmItems;
+  };
+}
+
+function shrinkPrioritizedScenarioList(
+  bounded: Record<string, unknown>,
+  maxChars: number,
+  container: Record<string, unknown> | undefined,
+  key: string,
+  focusedId: string | undefined,
+  onChange: () => void,
+): void {
+  const items = container?.[key];
+  if (
+    !container ||
+    !Array.isArray(items) ||
+    !items.length ||
+    serializedFits(bounded, maxChars)
+  ) {
+    return;
+  }
+  const restore = captureScenarioSnapshot(bounded, container, key, items);
+  const applySlice = (count: number) => {
+    restore();
+    container[key] = prioritizeScenarioSlice(items, count, focusedId);
+    onChange();
+  };
+
+  applySlice(0);
+  if (!serializedFits(bounded, maxChars)) return;
+  const keep = largestFit(items.length, (count) => {
+    applySlice(count);
+    return serializedFits(bounded, maxChars);
+  });
+  applySlice(keep);
+}
+
 function shrinkPromptCollections(
   bounded: Record<string, unknown>,
   maxChars: number,
   visible: Record<string, unknown> | undefined,
   gmState: Record<string, unknown> | undefined,
+  playerScenarios: Record<string, unknown> | undefined,
 ): boolean {
   const targets: ArrayTarget[] = [
     [visible, "elsewhere", "end"],
@@ -276,13 +433,24 @@ function shrinkPromptCollections(
     [visible, "objectives", "end"],
     [gmState, "gmThreads", "end"],
     [gmState, "secrets", "end"],
-    [bounded, "GM-ONLY scenarios", "start"],
   ];
   for (const target of targets) {
     shrinkArrayTarget(bounded, maxChars, target);
     if (serializedFits(bounded, maxChars)) return true;
   }
-  return false;
+  const focusedId =
+    typeof playerScenarios?.focusedScenarioId === "string"
+      ? playerScenarios.focusedScenarioId
+      : undefined;
+  shrinkPrioritizedScenarioList(
+    bounded,
+    maxChars,
+    bounded,
+    "GM-ONLY scenarios",
+    focusedId,
+    () => syncScenariosAfterGmPrune(bounded, playerScenarios),
+  );
+  return serializedFits(bounded, maxChars);
 }
 
 function shrinkPlayerScenarioEvents(
@@ -308,21 +476,21 @@ function shrinkPlayerScenarioItems(
   maxChars: number,
   playerScenarios: Record<string, unknown> | undefined,
 ): void {
-  shrinkArrayTarget(bounded, maxChars, [playerScenarios, "items", "start"]);
-  if (!playerScenarios || !Array.isArray(playerScenarios.items)) return;
-  const focusedId = playerScenarios.focusedScenarioId;
-  if (
-    focusedId == null ||
-    playerScenarios.items.some(
-      (item) =>
-        item &&
-        typeof item === "object" &&
-        (item as Record<string, unknown>).id === focusedId,
-    )
-  ) {
-    return;
-  }
-  playerScenarios.focusedScenarioId = null;
+  const focusedId =
+    typeof playerScenarios?.focusedScenarioId === "string"
+      ? playerScenarios.focusedScenarioId
+      : undefined;
+  shrinkPrioritizedScenarioList(
+    bounded,
+    maxChars,
+    playerScenarios,
+    "items",
+    focusedId,
+    () => {
+      reconcileFocusedScenarioId(playerScenarios);
+      syncGmScenariosAfterPlayerPrune(bounded, playerScenarios);
+    },
+  );
 }
 
 /**
@@ -340,7 +508,15 @@ export function boundPromptState<T extends Record<string, unknown>>(
   capPromptStateSections(bounded, visible, gmState);
   if (serializedFits(bounded, maxChars)) return bounded as T;
 
-  if (shrinkPromptCollections(bounded, maxChars, visible, gmState)) {
+  if (
+    shrinkPromptCollections(
+      bounded,
+      maxChars,
+      visible,
+      gmState,
+      playerScenarios,
+    )
+  ) {
     return bounded as T;
   }
 
