@@ -68,7 +68,9 @@ export function buildAdventureRecap(
     .map((item) => ({
       id: item.id,
       lead: item.playerVisible.lead,
+      ...(item.goal ? { goal: item.goal } : {}),
       status: item.status,
+      ...(item.outcome ? { outcome: structuredClone(item.outcome) } : {}),
       focused: projectedScenarios.focusedScenarioId === item.id,
       lastUpdate: item.events.at(-1)?.text,
     }));
@@ -76,12 +78,15 @@ export function buildAdventureRecap(
     .filter(
       (thread) =>
         thread.status === "open" ||
+        Boolean(thread.outcome) ||
         session.focusedEmergentThreadId === thread.id,
     )
     .map((thread) => ({
       id: thread.id,
       title: thread.title,
+      ...(thread.goal ? { goal: thread.goal } : {}),
       status: thread.status,
+      ...(thread.outcome ? { outcome: structuredClone(thread.outcome) } : {}),
       focused: session.focusedEmergentThreadId === thread.id,
       ...(thread.openQuestions.at(-1)
         ? { openQuestion: thread.openQuestions.at(-1) }

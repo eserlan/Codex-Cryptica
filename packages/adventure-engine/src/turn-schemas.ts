@@ -6,6 +6,8 @@ import {
   narration,
   timestamp,
   MAX_TEXT_CHARS,
+  threadGoalSchema,
+  threadOutcomeResultSchema,
 } from "./schema-primitives";
 import {
   visiblePatchSchema,
@@ -28,6 +30,19 @@ const scenarioElaborationProposalSchema = z
     scenarioId: id,
     stage: z.enum(["hearsay", "actionable-clue", "revelation-crisis"]),
     discovery: text.optional(),
+  })
+  .strict();
+
+const threadOutcomeProposalSchema = z
+  .object({
+    threadId: id.optional(),
+    scenarioId: id.optional(),
+    goal: threadGoalSchema.optional(),
+    result: threadOutcomeResultSchema,
+    reason: text,
+    supportingFactIds: z.array(id).max(16).optional(),
+    supportingCommitmentIds: z.array(id).max(16).optional(),
+    unresolvedConsequences: z.array(text).max(6).optional(),
   })
   .strict();
 
@@ -60,6 +75,7 @@ const completeProposalSchema = z.object({
   suggestedActions: z.array(text).length(3).optional(),
   packageEvents: z.array(packageEventProposalSchema).max(8).optional(),
   actorEvents: z.array(actorEventProposalSchema).max(8).optional(),
+  threadOutcomes: z.array(threadOutcomeProposalSchema).max(4).optional(),
 });
 
 const rollProposalSchema = z.object({

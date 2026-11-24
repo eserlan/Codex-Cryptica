@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { id, text, timestamp } from "./schema-primitives";
+import {
+  id,
+  text,
+  timestamp,
+  threadGoalSchema,
+  threadOutcomeSchema,
+} from "./schema-primitives";
 
 const eventSecretBindings = z.unknown().transform((value, context) => {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -135,10 +141,12 @@ export const scenarioItemSchema = z
     gmOnly: z.object({ truth: text, ifInvestigated: text.optional() }).strict(),
     pressure: scenarioPressureSchema.optional(),
     knowledge: z.enum(["unheard", "heard"]),
+    goal: threadGoalSchema.optional(),
     stage: z
       .enum(["hearsay", "actionable-clue", "revelation-crisis"])
       .default("hearsay"),
     status: z.enum(["open", "resolved", "abandoned"]),
+    outcome: threadOutcomeSchema.optional(),
     events: z.array(scenarioEventSchema).max(100),
     anchorRefs: z.array(id).max(12),
     revealedSecretIds: z.array(id).max(102).default([]),

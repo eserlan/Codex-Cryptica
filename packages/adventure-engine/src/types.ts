@@ -91,10 +91,36 @@ export interface HiddenSecret {
 
 export type EmergentThreadStatus = "open" | "resolved" | "abandoned" | "cold";
 
+export type ThreadOutcomeResult = "achieved" | "failed" | "abandoned" | "cold";
+
+export interface ThreadOutcome {
+  result: ThreadOutcomeResult;
+  reason: string;
+  sourceTurnId: string;
+  supportingFactIds: string[];
+  supportingCommitmentIds: string[];
+  recordedAt: string;
+  sequence: number;
+  unresolvedConsequences?: string[];
+}
+
+export interface ThreadOutcomeProposal {
+  threadId?: string;
+  scenarioId?: string;
+  goal?: string;
+  result: ThreadOutcomeResult;
+  reason: string;
+  supportingFactIds?: string[];
+  supportingCommitmentIds?: string[];
+  unresolvedConsequences?: string[];
+}
+
 export interface EmergentThread {
   id: string;
   title: string;
+  goal?: string;
   status: EmergentThreadStatus;
+  outcome?: ThreadOutcome;
   provenance: "play" | "ooc" | "mixed";
   topicTokens: string[];
   linkedPersonIds: string[];
@@ -496,7 +522,9 @@ export type ScenarioStatus = "open" | "resolved" | "abandoned";
 export interface KnownLeadRecap {
   id: string;
   lead: string;
+  goal?: string;
   status: ScenarioStatus;
+  outcome?: ThreadOutcome;
   focused: boolean;
   lastUpdate?: string;
 }
@@ -558,7 +586,9 @@ export type ScenarioElaborationStage =
 
 export interface ScenarioState extends ScenarioSeed {
   version: 1;
+  goal?: string;
   status: ScenarioStatus;
+  outcome?: ThreadOutcome;
   stage: ScenarioElaborationStage;
   events: ScenarioEvent[];
 }
@@ -739,6 +769,8 @@ export interface CompletedTurnProposal {
   packageEvents?: PackageEventProposal[];
   /** GM-only package actor progress; checked by the actor ledger reducer. */
   actorEvents?: ActorEventProposal[];
+  /** Structured goal-aware outcomes for emergent threads or scenarios. */
+  threadOutcomes?: ThreadOutcomeProposal[];
 }
 
 export interface RollRequiredProposal {
@@ -902,7 +934,9 @@ export interface AdventureRecap {
   emergentLeads?: Array<{
     id: string;
     title: string;
+    goal?: string;
     status: EmergentThreadStatus;
+    outcome?: ThreadOutcome;
     focused: boolean;
     openQuestion?: string;
   }>;

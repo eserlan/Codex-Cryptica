@@ -156,6 +156,75 @@ export function buildGMDirectorBriefWithPacing(input: GMDirectorBriefInput): {
   return { brief, investigative };
 }
 
+function buildDirectorEmergentThread(
+  pursuedEmergent: ReturnType<typeof selectPursuedEmergentThread>,
+): GMDirectorBrief["pursuedEmergentThread"] {
+  if (!pursuedEmergent) return undefined;
+  return {
+    threadId: pursuedEmergent.id,
+    title: clipText(pursuedEmergent.title, 120),
+    ...(pursuedEmergent.goal
+      ? { goal: clipText(pursuedEmergent.goal, 160) }
+      : {}),
+    status: pursuedEmergent.status,
+    provenance: pursuedEmergent.provenance,
+    ...(pursuedEmergent.linkedScenarioId
+      ? { linkedScenarioId: pursuedEmergent.linkedScenarioId }
+      : {}),
+    established: {
+      knownConsequences: pursuedEmergent.knownConsequences.slice(-4),
+      openQuestions: pursuedEmergent.openQuestions.slice(-3),
+      linkedFactCount: pursuedEmergent.linkedFactIds.length,
+      linkedPersonCount: pursuedEmergent.linkedPersonIds.length,
+      linkedPlaceCount: pursuedEmergent.linkedPlaceIds.length,
+    },
+    ...(pursuedEmergent.gmOnlyDevelopments.length > 0
+      ? { gmOnlyDevelopments: pursuedEmergent.gmOnlyDevelopments.slice(-3) }
+      : {}),
+  };
+}
+
+function buildResolvedOutcomes(
+  session: AdventureSession,
+): GMDirectorBrief["resolvedOutcomes"] {
+  const scenario = (session.scenarioCollection?.items ?? [])
+    .filter((item) => item.knowledge === "heard" && item.outcome)
+    .slice(-3)
+    .map((item) => ({
+      id: item.id,
+      source: "scenario" as const,
+      title: clipText(item.playerVisible.lead, 100),
+      ...(item.goal ? { goal: clipText(item.goal, 120) } : {}),
+      result: item.outcome!.result,
+      reason: clipText(item.outcome!.reason, 160),
+      ...(item.outcome!.unresolvedConsequences?.length
+        ? {
+            unresolvedConsequences:
+              item.outcome!.unresolvedConsequences.slice(-2),
+          }
+        : {}),
+    }));
+  const emergent = (session.emergentThreads ?? [])
+    .filter((thread) => thread.status !== "open" && thread.outcome)
+    .slice(-3)
+    .map((thread) => ({
+      id: thread.id,
+      source: "emergent" as const,
+      title: clipText(thread.title, 100),
+      ...(thread.goal ? { goal: clipText(thread.goal, 120) } : {}),
+      result: thread.outcome!.result,
+      reason: clipText(thread.outcome!.reason, 160),
+      ...(thread.outcome!.unresolvedConsequences?.length
+        ? {
+            unresolvedConsequences:
+              thread.outcome!.unresolvedConsequences.slice(-2),
+          }
+        : {}),
+    }));
+  if (scenario.length === 0 && emergent.length === 0) return undefined;
+  return { scenario, emergent };
+}
+
 function assembleDirectorBrief(args: {
   input: GMDirectorBriefInput;
   mode: GMDirectorBrief["mode"];
@@ -175,27 +244,8 @@ function assembleDirectorBrief(args: {
     scenePosture,
     mode,
   );
-  const pursuedEmergentThread = pursuedEmergent
-    ? {
-        threadId: pursuedEmergent.id,
-        title: clipText(pursuedEmergent.title, 120),
-        status: pursuedEmergent.status,
-        provenance: pursuedEmergent.provenance,
-        ...(pursuedEmergent.linkedScenarioId
-          ? { linkedScenarioId: pursuedEmergent.linkedScenarioId }
-          : {}),
-        established: {
-          knownConsequences: pursuedEmergent.knownConsequences.slice(-4),
-          openQuestions: pursuedEmergent.openQuestions.slice(-3),
-          linkedFactCount: pursuedEmergent.linkedFactIds.length,
-          linkedPersonCount: pursuedEmergent.linkedPersonIds.length,
-          linkedPlaceCount: pursuedEmergent.linkedPlaceIds.length,
-        },
-        ...(pursuedEmergent.gmOnlyDevelopments.length > 0
-          ? { gmOnlyDevelopments: pursuedEmergent.gmOnlyDevelopments.slice(-3) }
-          : {}),
-      }
-    : undefined;
+  const pursuedEmergentThread = buildDirectorEmergentThread(pursuedEmergent);
+  const resolvedOutcomes = buildResolvedOutcomes(input.session);
   return {
     advisory: true,
     mode,
@@ -205,6 +255,7 @@ function assembleDirectorBrief(args: {
       buildPursuedScenario(entry, input.session),
     ),
     ...(pursuedEmergentThread ? { pursuedEmergentThread } : {}),
+    ...(resolvedOutcomes ? { resolvedOutcomes } : {}),
     ...(unscopedExplanations.length > 0
       ? { committedExplanations: unscopedExplanations }
       : {}),

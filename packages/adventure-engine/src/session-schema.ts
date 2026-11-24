@@ -1,5 +1,12 @@
 import { z } from "zod";
-import { id, text, narration, timestamp } from "./schema-primitives";
+import {
+  id,
+  text,
+  narration,
+  timestamp,
+  threadGoalSchema,
+  threadOutcomeSchema,
+} from "./schema-primitives";
 import {
   visibleStateSchema,
   hiddenStateSchema,
@@ -56,7 +63,9 @@ export const emergentThreadSchema = z
   .object({
     id,
     title: z.string().trim().min(1).max(160),
+    goal: threadGoalSchema.optional(),
     status: z.enum(["open", "resolved", "abandoned", "cold"]),
+    outcome: threadOutcomeSchema.optional(),
     provenance: z.enum(["play", "ooc", "mixed"]),
     topicTokens: z.array(z.string().trim().min(1).max(48)).max(16),
     linkedPersonIds: z.array(id).max(24),

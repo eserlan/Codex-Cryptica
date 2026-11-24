@@ -190,6 +190,36 @@ const scenarioElaborationSchema = {
   },
 } as const;
 
+const threadOutcomeProposalSchema = {
+  type: "object",
+  required: ["result", "reason"],
+  properties: {
+    threadId: idSchema,
+    scenarioId: idSchema,
+    goal: { ...textSchema, maxLength: 240 },
+    result: {
+      type: "string",
+      enum: ["achieved", "failed", "abandoned", "cold"],
+    },
+    reason: textSchema,
+    supportingFactIds: {
+      type: "array",
+      maxItems: 16,
+      items: idSchema,
+    },
+    supportingCommitmentIds: {
+      type: "array",
+      maxItems: 16,
+      items: idSchema,
+    },
+    unresolvedConsequences: {
+      type: "array",
+      maxItems: 6,
+      items: textSchema,
+    },
+  },
+} as const;
+
 function patchSchema(
   addItemSchema: Record<string, unknown>,
   updateItemSchema: Record<string, unknown>,
@@ -243,6 +273,7 @@ export const adventureTurnResponseSchema = {
         "packageEvents",
         "actorEvents",
         "elaborateScenarios",
+        "threadOutcomes",
         "narration",
         "timeAdvance",
         "moveTo",
@@ -384,6 +415,11 @@ export const adventureTurnResponseSchema = {
         revealSecretIds: { type: "array", items: { type: "string" } },
         revealScenarioIds: { type: "array", items: idSchema },
         elaborateScenarios: { type: "array", items: scenarioElaborationSchema },
+        threadOutcomes: {
+          type: "array",
+          maxItems: 4,
+          items: threadOutcomeProposalSchema,
+        },
         provisionalFacts: { type: "array", items: newProvisionalFactSchema },
         causalCommitments: {
           type: "array",

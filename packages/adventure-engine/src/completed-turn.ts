@@ -16,6 +16,7 @@ import {
   validateDurableStateBudget,
 } from "./schemas";
 import { updateEmergentThreadsOnTurn } from "./emergent-threads";
+import { reconcileThreadOutcomes } from "./thread-outcomes";
 import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import { error, updatedSession } from "./reducer-result";
 import {
@@ -361,6 +362,13 @@ export function applyCompletedTurn(
     () => allocateId(existingIds(candidate), createId) ?? createId(),
   );
   if (nextEmergent.length > 0) candidate.emergentThreads = nextEmergent;
+  reconcileThreadOutcomes(
+    candidate,
+    turn,
+    proposal.threadOutcomes,
+    now,
+    dropped,
+  );
   if (dropped.length > 0) {
     turn.dropped = boundDroppedReasons(dropped);
   }

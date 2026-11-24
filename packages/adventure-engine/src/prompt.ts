@@ -303,6 +303,7 @@ function buildPromptBehavior(
     ...directorStateBehavior(options.directorEnabled),
     ...sourceBehavior(),
     ...causalCommitmentBehavior(options.directorEnabled),
+    ...threadOutcomeBehavior(options.directorEnabled),
     "For every newly created fact (add entries, location, situation, hidden state, provisionalFacts), omit id; IDs are assigned on commit. Include an id only to update, remove, or reveal existing state.",
     "Omit valueless optional fields; never use empty-string placeholder IDs.",
     "Narration up to 2,000 characters; all other text fields 600 or fewer.",
@@ -440,6 +441,13 @@ function causalCommitmentBehavior(directorEnabled: boolean): string[] {
   return [
     "Record consequential invented motives, mechanisms, identities, actions, and links as GM-only causalCommitments with kind (motive|mechanism|identity|action|link), commitmentClass (supporting-explanation|belief-testimony|speculative-plan), subject, and summary. Use contested:true only for canon conflicts.",
     "Keep causalCommitments private: never present or repeat their summaries as dialogue, facts, or revelations. For belief-testimony, name the claimant, mark it unverified, and expose only their actual known testimony.",
+  ];
+}
+
+function threadOutcomeBehavior(directorEnabled: boolean): string[] {
+  if (!directorEnabled) return [];
+  return [
+    "When a pursued emergent thread or open scenario goal is genuinely achieved, definitively failed, deliberately abandoned by the player, or gone cold, emit threadOutcomes targeting its existing threadId or scenarioId with result (achieved|failed|abandoned|cold), a player-safe reason, and supportingFactIds/supportingCommitmentIds (or same-turn committed facts). Never emit threadOutcomes for mere promises, requests, speculation, or suggested actions; keep remaining side mysteries in unresolvedConsequences without closing the session.",
   ];
 }
 
