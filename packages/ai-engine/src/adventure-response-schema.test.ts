@@ -170,7 +170,21 @@ describe("adventure structured response contract", () => {
       moveTo: { name: "Kettleford Mill", cues: ["river", "village"] },
       placeCues: ["market", "busy"],
     });
-    const completeProps = adventureTurnResponseSchema.oneOf[0].properties;
+    const completeProps = adventureTurnResponseSchema.oneOf[0]
+      .properties as unknown as {
+      placeCues?: unknown;
+      moveTo: { properties: { cues?: unknown } };
+      visiblePatch: {
+        properties: {
+          activeCharacters: {
+            properties: {
+              add: { items: { properties: { cues?: unknown } } };
+              update: { items: { properties: { cues?: unknown } } };
+            };
+          };
+        };
+      };
+    };
     expect(completeProps.placeCues).toBeDefined();
     expect(completeProps.moveTo.properties.cues).toBeDefined();
     expect(

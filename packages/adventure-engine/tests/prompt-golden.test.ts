@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -86,7 +86,7 @@ describe("emergent prompt golden files", () => {
     it(`${name} output is byte-identical to the recorded output`, () => {
       const actual = JSON.stringify(buildAdventurePrompt(build()));
       const path = join(goldenDir, `${name}.golden`);
-      if (process.env.UPDATE_PROMPT_GOLDEN && !existsSync(path)) {
+      if (process.env.UPDATE_PROMPT_GOLDEN) {
         writeFileSync(path, actual);
       }
       expect(actual).toBe(readFileSync(path, "utf8"));

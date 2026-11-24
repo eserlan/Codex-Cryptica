@@ -4,6 +4,8 @@ import type {
   AdventureSession,
   AdventureTurnProposal,
   AdventureWorldStyle,
+  GenerationResetReason,
+  GenerationThreadMode,
   PromptAdventurePackage,
   ResolvedSourceExcerpt,
   SuppliedRollOutcome,
@@ -22,6 +24,10 @@ export interface AdventureTurnGenerationRequest {
   correction?: string;
   /** Scene-context excerpts of the pinned adventure package; plain data. */
   adventurePackage?: PromptAdventurePackage;
+  /** QA-only Director treatment; omitted in production requests. */
+  directorEnabled?: boolean;
+  /** QA-only transport condition. `stateless` bypasses retained interactions. */
+  contextMode?: "retained" | "reconstructed";
   signal?: AbortSignal;
   /** Ephemeral player-facing preview; never a committed or trusted turn. */
   onNarration?: (text: string) => void;
@@ -73,9 +79,8 @@ export interface AdventureGenerationOptions {
 
 /**
  * #5112: how a generation was produced, reported by the service so the app
- * layer can build the committed-turn generation descriptor. The app fills in
- * thread/reset classification and the model registry key at capture time;
- * the service reports only what the transport decision actually was.
+ * layer can build the committed-turn generation descriptor. Values are
+ * bounded diagnostics from the actual transport and prompt selection.
  */
 export interface AdventureGenerationInfo {
   /** Model registry key, when the service can resolve one. Never a raw provider ID. */
@@ -83,16 +88,14 @@ export interface AdventureGenerationInfo {
   reasoningEffort?: "low" | "medium" | "high" | "xhigh";
   /** Provider-managed interaction vs. stateless generation. */
   transport?: "interaction" | "stateless";
+  /** Bounded request/source diagnostics for committed-turn review. */
   requestChars?: number;
   sourceCounts?: Record<string, number>;
   scenarioIds?: string[];
-  threadMode?: "new" | "continued" | "reset";
-  resetReason?:
-    | "turn-refresh"
-    | "provider-expiry"
-    | "model-change"
-    | "source-change"
-    | "revision-mismatch";
+  /** Actual provider-thread state observed by the generation service. */
+  threadMode?: GenerationThreadMode;
+  /** Bounded reason when the provider thread was actually reset. */
+  resetReason?: GenerationResetReason;
 }
 
 export type AdventurePrompt = ReturnType<typeof buildAdventurePrompt>;
@@ -115,7 +118,6 @@ export interface AdventureInteraction {
   stateSnapshot: Record<string, unknown> | null;
   sourceHashes: Map<string, string>;
   modelName: string | null;
-  resetReason?: AdventureGenerationInfo["resetReason"];
   /** A validated model reply is not necessarily a committed adventure turn. */
   pending: {
     id: string;

@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   aggregateScores,
   buildAdventureRecap,
+  canonSafetyFailures,
+  consequenceCredibilityFailures,
   createPlayerTranscript,
   createScenarioState,
   evaluateAdventureRun,
@@ -272,6 +274,45 @@ describe("adventure rubric evaluations", () => {
     ).toBe(0);
   });
 
+  it("keeps private causal commitments out of player-facing secrecy scoring", () => {
+    const privateSummary =
+      "Wick is owed three months of pay and wants a safe road out of the valley.";
+    const proposal = completeProposal({
+      causalCommitments: [
+        {
+          kind: "motive",
+          commitmentClass: "supporting-explanation",
+          subject: "Wick",
+          summary: privateSummary,
+        },
+      ],
+    });
+    const before = makeSession();
+
+    expect(
+      scoreSecrecy({
+        narration:
+          "Wick keeps his reasons to himself and waits for your reply.",
+        proposal,
+        previousSession: before,
+        gmOnlyLore: [privateSummary],
+      }),
+    ).toBe(1);
+
+    const leakedProposal = completeProposal({
+      narration: `Wick admits it: ${privateSummary}`,
+      causalCommitments: proposal.causalCommitments,
+    });
+    expect(
+      scoreSecrecy({
+        narration: leakedProposal.narration,
+        proposal: leakedProposal,
+        previousSession: before,
+        gmOnlyLore: [privateSummary],
+      }),
+    ).toBe(0);
+  });
+
   it("detects secret leakage across narration, recap, transcript, errors, and unheard scenarios", () => {
     const session = makeSession();
     const leakProposal = completeProposal({
@@ -349,13 +390,15 @@ describe("adventure rubric evaluations", () => {
         },
       ],
     });
-    expect(
-      scoreCanonSafety({
-        narration: "The well stands before you.",
-        proposal: duplicatedTitle,
-        previousSession: prev,
-      }),
-    ).toBe(0);
+    const duplicateTurn = {
+      narration: "The well stands before you.",
+      proposal: duplicatedTitle,
+      previousSession: prev,
+    };
+    expect(scoreCanonSafety(duplicateTurn)).toBe(0);
+    expect(canonSafetyFailures(duplicateTurn)).toContain(
+      "duplicate-canonical-title",
+    );
 
     const overwrittenFact = makeSession({
       visibleState: {
@@ -402,14 +445,16 @@ describe("adventure rubric evaluations", () => {
         },
       },
     ]) {
-      expect(
-        scoreCanonSafety({
-          narration: "The market is busy.",
-          proposal: completeProposal(),
-          previousSession: prev,
-          session: makeSession({ visibleState }),
-        }),
-      ).toBe(0);
+      const turn = {
+        narration: "The market is busy.",
+        proposal: completeProposal(),
+        previousSession: prev,
+        session: makeSession({ visibleState }),
+      };
+      expect(scoreCanonSafety(turn)).toBe(0);
+      expect(canonSafetyFailures(turn)).toContain(
+        "unattributed-canonical-fact",
+      );
     }
   });
 
@@ -513,25 +558,66 @@ describe("adventure rubric evaluations", () => {
         developments: [{ threadId: "unknown-thread", text: "Ghost event" }],
       },
     });
-    expect(
-      scoreConsequenceCredibility({
-        narration: "You wait.",
-        proposal: unknownThread,
-        previousSession: prev,
-      }),
-    ).toBe(0);
+    const unknownThreadTurn = {
+      narration: "You wait.",
+      proposal: unknownThread,
+      previousSession: prev,
+    };
+    expect(scoreConsequenceCredibility(unknownThreadTurn)).toBe(0);
+    expect(consequenceCredibilityFailures(unknownThreadTurn)).toEqual([
+      "invalid-development-thread",
+    ]);
 
     const sameTurnElaborate = completeProposal({
       revealScenarioIds: ["scen-2"],
       elaborateScenarios: [{ scenarioId: "scen-2", stage: "actionable-clue" }],
     });
-    expect(
-      scoreConsequenceCredibility({
-        narration: "Everything happens at once.",
-        proposal: sameTurnElaborate,
-        previousSession: prev,
+    const sameTurnElaborateTurn = {
+      narration: "Everything happens at once.",
+      proposal: sameTurnElaborate,
+      previousSession: prev,
+    };
+    expect(scoreConsequenceCredibility(sameTurnElaborateTurn)).toBe(0);
+    expect(consequenceCredibilityFailures(sameTurnElaborateTurn)).toEqual([
+      "same-turn-reveal-and-elaboration",
+    ]);
+
+    const stageJumpTurn = {
+      narration: "A clue appears.",
+      proposal: completeProposal({
+        elaborateScenarios: [
+          { scenarioId: "scen-1", stage: "revelation-crisis" },
+        ],
       }),
-    ).toBe(0);
+      previousSession: prev,
+    };
+    expect(consequenceCredibilityFailures(stageJumpTurn)).toEqual([
+      "elaboration-skips-stage",
+    ]);
+
+    const unchangedStageTurn = {
+      narration: "The bell story remains hearsay.",
+      proposal: completeProposal({
+        elaborateScenarios: [{ scenarioId: "scen-1", stage: "hearsay" }],
+      }),
+      previousSession: prev,
+    };
+    expect(consequenceCredibilityFailures(unchangedStageTurn)).toEqual([
+      "elaboration-stage-unchanged",
+    ]);
+
+    const unknownElaborationTurn = {
+      narration: "A clue appears.",
+      proposal: completeProposal({
+        elaborateScenarios: [
+          { scenarioId: "missing-scenario", stage: "actionable-clue" },
+        ],
+      }),
+      previousSession: prev,
+    };
+    expect(consequenceCredibilityFailures(unknownElaborationTurn)).toEqual([
+      "unknown-elaboration-scenario",
+    ]);
   });
 
   it("flags unnecessary escalation when player declines a lead or acts ordinarily", () => {

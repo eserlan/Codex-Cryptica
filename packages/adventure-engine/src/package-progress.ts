@@ -223,15 +223,26 @@ function clonePackageProgress(
   return {
     sceneId: progress.sceneId,
     version: 1,
-    records: structuredClone(progress.records ?? []),
-    events: structuredClone(progress.events ?? []),
-    ...(includeActors || progress.actors !== undefined
-      ? { actors: structuredClone(progress.actors ?? []) }
-      : {}),
-    ...(includeActors || progress.actorEvents !== undefined
-      ? { actorEvents: structuredClone(progress.actorEvents ?? []) }
-      : {}),
+    records: cloneProgressArray(progress.records),
+    events: cloneProgressArray(progress.events),
+    ...cloneOptionalProgressArray(progress, "revealedSecretIds", false),
+    ...cloneOptionalProgressArray(progress, "actors", includeActors),
+    ...cloneOptionalProgressArray(progress, "actorEvents", includeActors),
   };
+}
+
+function cloneProgressArray<T>(values: T[] | undefined): T[] {
+  return structuredClone(values ?? []);
+}
+
+function cloneOptionalProgressArray(
+  progress: PackageProgress,
+  key: "revealedSecretIds" | "actors" | "actorEvents",
+  includeWhenMissing: boolean,
+): Partial<PackageProgress> {
+  const value = progress[key];
+  if (!includeWhenMissing && value === undefined) return {};
+  return { [key]: structuredClone(value ?? []) };
 }
 
 /**

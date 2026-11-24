@@ -1,0 +1,2049 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>The Last Grind — turn-by-turn golden comparison</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f2f1e9;
+        --panel: #fffdf8;
+        --ink: #1e2927;
+        --muted: #586563;
+        --line: #d6d6c9;
+        --accent: #176b62;
+        --bad: #963b35;
+        --good: #276b4b;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #151d1c;
+          --panel: #202b29;
+          --ink: #edf2ec;
+          --muted: #b7c3bd;
+          --line: #45514d;
+          --accent: #80c9b4;
+          --bad: #ffaaa0;
+          --good: #9cddb1;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+      }
+      main {
+        width: min(100% - 2rem, 1400px);
+        margin: auto;
+        padding: 2rem 0 4rem;
+      }
+      header {
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 1.2rem;
+      }
+      h1 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        line-height: 1.1;
+      }
+      h2 {
+        margin: 0.1rem 0 0.6rem;
+      }
+      h3 {
+        font-size: 1rem;
+        margin: 0.2rem 0 0.5rem;
+        color: var(--accent);
+      }
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        margin: 1rem 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.8rem;
+      }
+      .answer,
+      .golden {
+        background: color-mix(in srgb, var(--panel), var(--bg) 35%);
+        border: 1px solid var(--line);
+        border-radius: 0.5rem;
+        padding: 0.85rem;
+        min-width: 0;
+      }
+      .golden {
+        border-top: 3px solid var(--accent);
+      }
+      .answer pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font: inherit;
+        margin: 0.4rem 0;
+      }
+      .status {
+        font-weight: 750;
+      }
+      .bad {
+        color: var(--bad);
+      }
+      .ok {
+        color: var(--good);
+      }
+      .muted,
+      .meta {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .meta {
+        margin: 0.4rem 0;
+      }
+      .action {
+        color: var(--muted);
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0.7rem;
+        margin: 1rem 0;
+      }
+      .stat {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+      }
+      .stat b {
+        display: block;
+        font-size: 1.2rem;
+      }
+      .notice {
+        border-left: 4px solid var(--bad);
+        padding: 0.7rem 1rem;
+        background: var(--panel);
+      }
+      footer {
+        color: var(--muted);
+        margin-top: 1rem;
+      }
+      @media (max-width: 850px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media print {
+        main {
+          width: 100%;
+          padding: 0;
+        }
+        .grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        section {
+          break-inside: avoid;
+        }
+      }
+      .focus-run {
+        border-top: 4px solid var(--accent);
+      }
+      .focus-grid {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+      }
+      .focus-turn,
+      .focus-opening {
+        border-top: 1px solid var(--line);
+        padding-top: 0.8rem;
+        margin-top: 1rem;
+      }
+      .focus-card h4,
+      .focus-run h4 {
+        margin: 0.15rem 0 0.45rem;
+      }
+      .narration {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        margin: 0.4rem 0;
+      }
+      .call-signal {
+        overflow-wrap: anywhere;
+        border-top: 1px dotted var(--line);
+        padding-top: 0.35rem;
+      }
+      .signal-box {
+        margin: 0.8rem 0;
+        background: color-mix(in srgb, var(--panel), var(--bg) 25%);
+        border-radius: 0.5rem;
+        padding: 0.8rem;
+      }
+      .note-good {
+        border-left-color: var(--good);
+      }
+      @media (max-width: 850px) {
+        .focus-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .pair-run {
+        border-top: 4px solid var(--accent);
+      }
+      .pair-turn {
+        border-top: 1px solid var(--line);
+        padding-top: 0.8rem;
+        margin-top: 1rem;
+      }
+      .pair-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.8rem;
+      }
+      .pair-grid > .answer {
+        border-top: 3px solid var(--accent);
+      }
+      .pair-grid > .absent {
+        opacity: 0.85;
+      }
+      .failure-box {
+        border-left: 4px solid var(--bad);
+      }
+      @media (max-width: 850px) {
+        .pair-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .iteration-report .iteration-table-wrap {
+        overflow-x: auto;
+        margin: 1rem 0;
+      }
+      .iteration-report .iteration-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+      .iteration-report .iteration-table th,
+      .iteration-report .iteration-table td {
+        border: 1px solid var(--line);
+        padding: 0.65rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      .iteration-report .iteration-table thead th {
+        background: color-mix(in srgb, var(--panel), var(--bg) 35%);
+      }
+      .iteration-report .iteration-turn {
+        border-top: 1px solid var(--line);
+        padding: 0.7rem 0;
+      }
+      .iteration-report .iteration-turn summary {
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .iteration-report .iteration-turn h4 {
+        margin: 0.8rem 0 0.35rem;
+      }
+      .iteration-report .iteration-beats li + li {
+        margin-top: 0.45rem;
+      }
+      .iteration-report .iteration-status {
+        font-weight: 750;
+      }
+      .iteration-report .iteration-status.conditional,
+      .iteration-report .iteration-status.partial {
+        color: #8a5b00;
+      }
+      .iteration-report .iteration-status.fail {
+        color: var(--bad);
+      }
+      .iteration-report .iteration-narration {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        border-left: 3px solid var(--accent);
+        padding-left: 0.85rem;
+      }
+      @media (max-width: 850px) {
+        .iteration-report .iteration-table {
+          min-width: 720px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <p class="meta">
+          2026-11-23T15:25:31.266Z · luna-fast · fixture
+          the-last-grind-effort-golden-set · local proxy
+        </p>
+        <h1>The Last Grind: output vs golden dataset</h1>
+        <p>
+          The original low/medium run and the first Director treatment pair
+          remain below. The 2026-11-24 Director-on iterations are added next and
+          compared turn by turn with the same golden beats. Automated gates and
+          manual beat judgements are reported separately.
+        </p>
+        <p class="notice">
+          <b>Initial low/medium comparison failed overall.</b> Low ended after
+          an invalid response at the first action turn. Medium completed all
+          eight turns but failed the secrecy rubric. This single pair is
+          descriptive, not causal.
+        </p>
+      </header>
+      <div class="stats">
+        <div class="stat">
+          <b>Low · FAIL</b>3 calls · 25.9 s · 27,468 in / 1,817 out · $0.0037
+        </div>
+        <div class="stat">
+          <b>Medium · FAIL</b>12 calls · 276.1 s · 137,394 in / 26,842 out ·
+          $0.0272
+        </div>
+        <div class="stat">
+          <b>Rubric</b>Low continuity 0.5; medium secrecy 0.875
+        </div>
+        <div class="stat">
+          <b>Effort-only test</b>Director mode and context retention were not
+          varied in this harness run.
+        </div>
+      </div>
+      <section class="pair-run" aria-labelledby="pair-run-title">
+        <h2 id="pair-run-title">
+          Matched comparison · Low effort, Director off vs on
+        </h2>
+        <p class="meta">
+          Off: 2026-11-23T23:21:19.172Z · On: 2026-11-23T23:22:35.364Z ·
+          luna-fast · same golden fixture, scripted actions and roll 18 ·
+          independent stochastic runs
+        </p>
+        <p class="notice note-good">
+          <b>Director off: PASS.</b> 8/8 turns committed; safety/state rubric
+          passed. <b>Director on: FAIL.</b> 4/8 committed; stopped at
+          negotiate-with-wick after a hidden-state rejection. Expected-beat
+          matching is not part of this automated pass; 19 golden beats remain
+          for human review. One run per treatment is descriptive, not a stable
+          pass-rate estimate.
+        </p>
+        <div class="stats">
+          <div class="stat">
+            <b>OFF · PASS</b>12 calls · 3 repairs · 131,845 in / 9,223 out
+            tokens
+          </div>
+          <div class="stat">
+            <b>ON · FAIL</b>8 calls · 3 repairs · 82,688 in / 6,784 out tokens
+          </div>
+          <div class="stat">
+            <b>8853 / 9358 ms</b>Median call latency · off / on
+          </div>
+          <div class="stat">
+            <b>104 / 69 s</b>Summed call time · on run is truncated
+          </div>
+        </div>
+        <section class="signal-box" aria-labelledby="pair-signal-title">
+          <h3 id="pair-signal-title">Where Director changes the request</h3>
+          <ul>
+            <li>
+              Off system instruction: 25,047–25,118 chars. On: 25,730–25,801
+              chars (the Director-on behavior adds about 683 characters to this
+              field).
+            </li>
+            <li>
+              Per-call provider input: off 7,124–15,295 tokens; on 7,408–13,274
+              tokens. Total on/off tokens are not comparable because the on run
+              stopped early.
+            </li>
+            <li>
+              The harness rebuilds both prompt objects locally for each observed
+              request. Their exact character-count delta ranged from 1,965–3,813
+              chars in off states and 1,965–3,483 chars in on states. This is a
+              character delta, not a token estimate or a second provider call.
+            </li>
+            <li>
+              Actual request payload sizes varied with transcript/state: off
+              5,322–19,269 chars; on 5,907–13,735 chars.
+            </li>
+          </ul>
+        </section>
+        <section
+          class="signal-box failure-box"
+          aria-labelledby="on-failure-title"
+        >
+          <h3 id="on-failure-title">Director-on failure detail</h3>
+          <p>
+            The response repeated its new GM-only
+            <code>causalCommitments[0].summary</code> in player-visible
+            <code>visiblePatch.knownFacts.add[0].text</code>. Replaying the
+            recorded proposals through the reducer identifies the rejection at
+            that field: the hidden-state guard treated the proposed commitment
+            as hidden during the same turn. The Director-off control explicitly
+            omits <code>causalCommitments</code>, so it avoids this specific
+            conflict.
+          </p>
+          <p class="meta">
+            Opaque reducer diagnostic: guard <code>scenario-secret</code> ·
+            field <code>root.visiblePatch.knownFacts.add[0].text</code> ·
+            sourceRef <code>session-secret</code>. The raw hidden text is not
+            needed to locate the failure.
+          </p>
+        </section>
+        <section class="signal-box" aria-labelledby="coverage-note-title">
+          <h3 id="coverage-note-title">Golden-beat read</h3>
+          <p>
+            The off run now narrates rising water and finds Aldous's lock
+            receipt, but still omits Maren's bailiff/debt urgency, the ledger's
+            lock-on-pin clue, the shrine's reroll/cellar hint, and Tobiah's
+            purchase motive. The Director-on run stops before the lever and
+            cellar turns. The improved authored-trigger wording is promising,
+            but one sample cannot establish that it caused the coverage change.
+          </p>
+        </section>
+        <article class="pair-turn">
+          <h3>Opening scene · no golden step</h3>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                The ferry bumps against the rotting jetty, its wet boards
+                flexing under your boots. Across the reeds, a tall stone mill
+                stands silent, its great wheel hanging above brown water. A
+                woman in a patched coat waits on the planks, arms folded;
+                weariness tightens her face as she watches you approach. “Rowan?
+                I’m Maren Holt—the miller’s daughter.” She shifts her weight,
+                jaw set. “The mill’s stopped, and Greywater Bend is running out
+                of bread. My father’s vanished. Can you help me get the mill
+                turning again?”
+              </p>
+              <p class="meta">
+                1 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 6565 ms · request 5322
+                chars + system instruction 25118 chars · provider 7124 input /
+                589 output tokens (0 reasoning) · on/off prompt-object delta
+                1965 chars
+              </p>
+            </article>
+            <article class="answer">
+              <h4>Low · Director on</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                The ferry bumps against the rotting jetty, its wet boards
+                flexing beneath your feet. Across the reeds, Greywater Bend’s
+                tall stone mill stands silent, its great wheel hanging above
+                brown water. A woman in a patched coat waits on the planks with
+                her arms folded; weariness tightens her face as she watches you
+                approach. “I’m Maren Holt, the miller’s daughter,” she says, jaw
+                set. “The mill’s stopped, and the village is running short of
+                bread. I need it working again.” Her gaze flicks toward the
+                mill, then back to you. A path leads from the jetty toward the
+                mill yard; another slips left between the reeds. “If you’ve
+                questions, ask. If you’re willing to help, I’ll show you what I
+                can.”
+              </p>
+              <p class="meta">
+                1 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director on · 7490 ms · request 5907
+                chars + system instruction 25801 chars · provider 7408 input /
+                922 output tokens (155 reasoning) · on/off prompt-object delta
+                1965 chars
+              </p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>opening-at-landing</h3>
+          <p class="action">
+            <b>Golden player action:</b> I ask Maren what happened to the miller
+            and why the mill has to be restarted today.
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>Maren asks for help restarting the mill.</li>
+              <li>
+                The mill has stopped and the village needs flour or bread.
+              </li>
+              <li>
+                Maren&#39;s urgency is connected to the bailiff and her
+                mother&#39;s debt, without inventing a precise deadline.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                Maren’s folded arms loosen, though her mouth stays tight. “The
+                mill stopped sometime yesterday. I found the wheel still and the
+                gate shut; I couldn’t get the machinery moving again.” She
+                glances toward the stone mill across the reeds. “I don’t know
+                where my father is. He wasn’t there when I went looking, and he
+                hasn’t come back.” At your question about today, she rubs a
+                thumb over a frayed cuff. “The village stores are nearly gone.
+                If the mill stays silent, there’ll be no fresh flour for bread.”
+                Her eyes return to yours, intent and tired. “That’s why I’m
+                asking now—not because I know what happened to him.”
+              </p>
+              <p class="meta">
+                2 provider call(s) · 1 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 5463 ms · request 7715
+                chars + system instruction 25047 chars · provider 9848 input /
+                490 output tokens (0 reasoning) · on/off prompt-object delta
+                3241 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director off · 6082 ms · request 7886
+                chars + system instruction 25047 chars · provider 9881 input /
+                510 output tokens (0 reasoning) · on/off prompt-object delta
+                3241 chars
+              </p>
+            </article>
+            <article class="answer">
+              <h4>Low · Director on</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                Maren’s folded arms loosen, though her mouth stays tight. “I
+                don’t know where my father is. When I found the mill stopped, he
+                was gone. I’ve searched what I could, but there’s no sign of him
+                here.” She glances across the reeds toward the wheel, then meets
+                your eyes again. “The village stores are low. Flour’s what keeps
+                bread on the table, and every day the mill stays still leaves
+                less to share. I can’t tell you how much time we have before it
+                becomes a real crisis—but I won’t wait for empty shelves to find
+                out.” A plank gives a dull creak under Maren’s boot as she turns
+                toward the mill. “If you want to help, we should see what
+                stopped the wheel. The yard’s just along the path.”
+              </p>
+              <p class="meta">
+                2 provider call(s) · 1 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director on · 6249 ms · request 8010
+                chars + system instruction 25730 chars · provider 10341 input /
+                514 output tokens (118 reasoning) · on/off prompt-object delta
+                3215 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director on · 7223 ms · request 8371
+                chars + system instruction 25730 chars · provider 10403 input /
+                571 output tokens (167 reasoning) · on/off prompt-object delta
+                3215 chars
+              </p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>inspect-yard-ledger</h3>
+          <p class="action">
+            <b>Golden player action:</b> At the mill yard, I inspect the damp
+            ledger carefully. What useful evidence can I read?
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>
+                The ledger can reveal that a lock was fitted to the sluice pin
+                the week before the miller vanished.
+              </li>
+              <li>
+                The evidence suggests deliberate interference but does not by
+                itself prove who filed the pin.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You cross from the jetty along the path to the mill yard, where
+                damp ledger pages lie beneath the overhang by the shut gate. The
+                paper is swollen and smells faintly of sour ink, but several
+                lines remain readable. The latest entry records a routine grind
+                yesterday morning; below it, a note in a different, hurried hand
+                reads: “wheel stopped before noon—sluice clear.” No later work
+                is listed. A column of flour deliveries shows two village orders
+                still unfilled. The final legible entry mentions a small sack
+                set aside for “Tobiah,” with no reason given. The pages are too
+                blurred to make out whether the miller wrote the hurried note,
+                and the ledger says nothing about where he went.
+              </p>
+              <p class="meta">
+                2 provider call(s) · 1 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 6977 ms · request 8548
+                chars + system instruction 25047 chars · provider 12791 input /
+                660 output tokens (0 reasoning) · on/off prompt-object delta
+                3337 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director off · 12311 ms · request 8749
+                chars + system instruction 25047 chars · provider 12825 input /
+                1003 output tokens (316 reasoning) · on/off prompt-object delta
+                3337 chars
+              </p>
+            </article>
+            <article class="answer">
+              <h4>Low · Director on</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                At the mill yard, the ledger’s swollen cover sticks briefly to
+                the table before giving way. The damp has blurred several
+                columns, but careful reading leaves a few lines clear: flour
+                deliveries were entered as usual until the final page, where the
+                last tally ends abruptly mid-entry. Beside it, a note in a
+                different hand records that the mill’s wheel was “held fast” and
+                asks for the miller—without saying who wrote it or when. The
+                page smells of wet paper and old grain. There’s no clear
+                explanation for the jam, and the ledger doesn’t say where the
+                miller went, but the unfinished tally suggests the stoppage
+                interrupted work rather than simply ending a recorded shift. The
+                note may give you a person to ask about the wheel—or a reason to
+                inspect it directly.
+              </p>
+              <p class="meta">
+                2 provider call(s) · 1 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director on · 9358 ms · request 8032
+                chars + system instruction 25730 chars · provider 13226 input /
+                928 output tokens (322 reasoning) · on/off prompt-object delta
+                3311 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director on · 9772 ms · request 8310
+                chars + system instruction 25730 chars · provider 13274 input /
+                839 output tokens (258 reasoning) · on/off prompt-object delta
+                3311 chars
+              </p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>optional-reed-shrine</h3>
+          <p class="action">
+            <b>Golden player action:</b> Before entering the mill, I take the
+            reed path and examine the shrine. Is there anything here that can
+            help us?
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>
+                The shrine is optional and can be left without blocking the main
+                adventure.
+              </li>
+              <li>
+                A visit may grant one repeat of a later roll to calm, persuade,
+                or resist fear, plus a hint toward the cellar.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You follow the narrow reed path away from the mill yard to a
+                little riverside shrine, its weathered stones tucked beneath a
+                bent willow. A shallow offering bowl sits on the low altar;
+                rainwater clouds its surface, and someone has recently laid a
+                twist of clean linen beside it. The shrine is quiet, but the
+                linen is dry and carefully folded—a small sign that someone has
+                been here lately. A wooden board nailed to the altar bears a
+                faded custom: mill workers leave a token here before a difficult
+                repair, then carry it back as a promise to finish the work.
+                There’s no name or explanation attached to the linen, and
+                nothing here tells you where the miller went. Still, the path
+                continues along the bank toward the mill’s waterworks.
+              </p>
+              <p class="meta">
+                1 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 8586 ms · request 13513
+                chars + system instruction 25047 chars · provider 9344 input /
+                841 output tokens (184 reasoning) · on/off prompt-object delta
+                3569 chars
+              </p>
+            </article>
+            <article class="answer">
+              <h4>Low · Director on</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You take the reed path away from the mill yard. It narrows
+                between shoulder-high stalks, then opens onto a little stone
+                shrine above the marshy water. Someone has swept its flat
+                threshold clean, though the carved figure beneath the shallow
+                roof is worn smooth by rain and touch. A small clay lamp sits in
+                a niche, still holding a little oil and a dry wick. There’s no
+                sign of the missing miller here, and nothing at the shrine
+                explains the wheel’s stoppage. But the lamp could give you
+                steady light if you need to inspect a dim part of the mill.
+                Beside it, a fresh smear of grey flour marks the stone ledge; it
+                might have come from anyone passing through, but it’s newer than
+                the moss around it.
+              </p>
+              <p class="meta">
+                2 provider call(s) · 1 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director on · 9724 ms · request 12686
+                chars + system instruction 25730 chars · provider 9258 input /
+                968 output tokens (446 reasoning) · on/off prompt-object delta
+                3483 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director on · 9204 ms · request 12976
+                chars + system instruction 25730 chars · provider 9311 input /
+                930 output tokens (306 reasoning) · on/off prompt-object delta
+                3483 chars
+              </p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>negotiate-with-wick</h3>
+          <p class="action">
+            <b>Golden player action:</b> I return to the mill and enter the
+            wheel room, where Wick blocks the sluice lever. I show him the
+            ledger evidence and ask why he is helping Tobiah.
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>
+                Wick can be approached through conversation; combat is not
+                mandatory.
+              </li>
+              <li>
+                Naming Tobiah&#39;s debt or showing the filed-pin evidence can
+                make Wick lower his cudgel and step aside.
+              </li>
+              <li>
+                Do not reveal Wick&#39;s unpaid wages or private motive until
+                the conversation earns that disclosure.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You leave the shrine and return along the reed path to the mill
+                yard. Inside the wheel room, the air is cool and close, with a
+                steady drip somewhere behind the machinery. Wick stands between
+                you and the sluice lever, one hand braced on its housing. You
+                show him the damp ledger and ask why he’s helping Tobiah. Wick’s
+                eyes linger on the note about the clear sluice, then flick back
+                to you. His shoulders stay squared against the lever. “Tobiah
+                asked me to keep people from pulling at things they don’t
+                understand,” he says, clipped but not angry. “That’s why I’m
+                here. The ledger doesn’t tell you what this lever will do.” He
+                leaves the way past him open, but doesn’t move aside from the
+                mechanism.
+              </p>
+              <p class="meta">
+                1 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 11276 ms · request 14904
+                chars + system instruction 25047 chars · provider 9635 input /
+                1000 output tokens (360 reasoning) · on/off prompt-object delta
+                3475 chars
+              </p>
+            </article>
+            <article class="answer">
+              <h4>Low · Director on</h4>
+              <p class="status bad">
+                Rejected at commit · The response contains unrevealed GM
+                information.
+              </p>
+              <p class="narration">
+                You leave the reeds and return to the mill, following the yard’s
+                narrow entrance into the wheel room. The air is close with damp
+                timber and old flour. A man stands between you and the sluice
+                lever, one hand braced against its handle. When you show him the
+                ledger note, his eyes linger on the words “held fast.” “Wick,”
+                he says, without moving aside. “Tobiah paid me to keep the lever
+                set. That’s why I’m here.” His shoulders square as he looks from
+                the page to you. “I don’t know who wrote your note, and I’m not
+                telling you more than I know.” The lever remains within reach,
+                but Wick is still in your way.
+              </p>
+              <p class="meta">
+                1 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director on · 9951 ms · request 13735
+                chars + system instruction 25730 chars · provider 9467 input /
+                1112 output tokens (460 reasoning) · on/off prompt-object delta
+                3429 chars
+              </p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>pull-the-lever</h3>
+          <p class="action">
+            <b>Golden player action:</b> Once we are ready, I pull the sluice
+            lever and immediately head down the cellar stairs.
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>
+                The wheel starts turning and water begins rising in the cellar.
+              </li>
+              <li>The party has about five turns to act in the cellar.</li>
+              <li>
+                The GM makes the time pressure clear while leaving Rowan&#39;s
+                next action to the player.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You twist hard against Wick’s grip, slip past his braced arm,
+                and haul the sluice lever down. Iron clanks through the wheel
+                room; the jammed shaft shudders, then begins to turn with a
+                deep, uneven groan. Behind you, Wick curses and the hound barks,
+                but neither catches you as you hurry down the narrow cellar
+                stair. The air below is cool and close. Water is already moving
+                over the stone floor around your boots, and the wheel’s renewed
+                rumble vibrates through the walls. The stair opens into the
+                miller’s cellar, where shelves and scattered stores stand above
+                the creeping water.
+              </p>
+              <p class="meta">
+                2 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 6509 ms · request 18580
+                chars + system instruction 25047 chars · provider 10650 input /
+                400 output tokens (140 reasoning) · on/off prompt-object delta
+                3491 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director off · 9578 ms · request 7173
+                chars + system instruction 25064 chars · provider 12954 input /
+                856 output tokens (135 reasoning) · on/off prompt-object delta
+                3491 chars
+              </p>
+            </article>
+            <article class="answer absent">
+              <h4>Low · Director on</h4>
+              <p>Not reached; this run stopped earlier.</p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>free-aldous-and-find-receipt</h3>
+          <p class="action">
+            <b>Golden player action:</b> I get Aldous out of the chair, ask what
+            happened, and check whether he has anything that can corroborate the
+            ledger.
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>
+                Aldous is alive, bound, and in immediate danger from the rising
+                water.
+              </li>
+              <li>
+                A second copy of the sluice-lock receipt can corroborate the
+                ledger.
+              </li>
+              <li>
+                The GM may reveal that Aldous hid himself, rather than being
+                abducted by Tobiah, through Aldous&#39;s answer or evidence.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You wade through the cold water to the chair, its iron bolts
+                fixed deep into the cellar floor. The thin man’s wrists are
+                tied; you loosen the knots and pull the gag free. He coughs,
+                then takes a sharp breath, blinking up at you. “Aldous,” he
+                rasps. “I’m the miller.” At your questions, his gaze drops to
+                the water. “I came down here when the mill stopped. I can’t tell
+                you more just now.” You search his coat and find a folded
+                receipt, its ink blurred at the edges but still legible: it
+                records a lock for the sluice pin. It matches the kind of record
+                described in the ledger, though it offers no explanation for why
+                the sluice stopped.
+              </p>
+              <p class="meta">
+                2 provider call(s) · 1 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 8853 ms · request 19083
+                chars + system instruction 25047 chars · provider 10733 input /
+                845 output tokens (240 reasoning) · on/off prompt-object delta
+                3813 chars
+              </p>
+              <p class="meta call-signal">
+                Call 2: luna-fast / low, Director off · 10163 ms · request 19269
+                chars + system instruction 25047 chars · provider 10765 input /
+                1025 output tokens (361 reasoning) · on/off prompt-object delta
+                3813 chars
+              </p>
+            </article>
+            <article class="answer absent">
+              <h4>Low · Director on</h4>
+              <p>Not reached; this run stopped earlier.</p>
+            </article>
+          </div>
+        </article>
+        <article class="pair-turn">
+          <h3>confront-tobiah</h3>
+          <p class="action">
+            <b>Golden player action:</b> With the receipt and ledger as
+            evidence, I confront Tobiah and give him a chance to answer before
+            deciding what to do.
+          </p>
+          <aside class="golden">
+            <h4>Golden expected beats</h4>
+            <ol>
+              <li>The evidence supports exposing Tobiah&#39;s sabotage.</li>
+              <li>
+                Tobiah wanted the mill to fail so he could buy it cheaply.
+              </li>
+              <li>
+                The GM presents consequences and leaves the final response or
+                decision to Rowan.
+              </li>
+            </ol>
+            <p class="meta">Human beat review remains pending.</p>
+          </aside>
+          <div class="pair-grid">
+            <article class="answer">
+              <h4>Low · Director off</h4>
+              <p class="status ok">Committed</p>
+              <p class="narration">
+                You climb the narrow stair from the cellar, leaving the water
+                sloshing around the bolted chair below. In the wheel room, the
+                machinery keeps turning with a heavy, rhythmic thump. Wick is
+                gone; the door to the yard stands open, and you find Tobiah
+                there beside the mill wall, watching the wheel through a gap in
+                the stonework. You lay out the ledger and the sluice-pin receipt
+                and give him room to explain. Tobiah’s fingers tighten around
+                the brim of his cap. “I asked Wick to keep anyone from pulling
+                that lever,” he says. “I knew there was a lock on the sluice
+                pin. I don’t know who put it there, or why.” His eyes move from
+                the receipt to you. “If Aldous is alive, ask him what he knows.
+                I won’t make up an answer for him.”
+              </p>
+              <p class="meta">
+                1 provider call(s) · 0 repair(s) · 0 guarded leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta call-signal">
+                Call 1: luna-fast / low, Director off · 11316 ms · request 13148
+                chars + system instruction 25047 chars · provider 15295 input /
+                1004 output tokens (349 reasoning) · on/off prompt-object delta
+                3813 chars
+              </p>
+            </article>
+            <article class="answer absent">
+              <h4>Low · Director on</h4>
+              <p>Not reached; this run stopped earlier.</p>
+            </article>
+          </div>
+        </article>
+      </section>
+
+      <section
+        class="iteration-report"
+        aria-labelledby="iteration-results-title"
+      >
+        <h2 id="iteration-results-title">
+          Director-on iterations · low effort
+        </h2>
+        <p class="meta">
+          Final sample: 2026-11-24T00:31:42.091Z UTC · luna-fast · low ·
+          Director on · local app and proxy · same Last Grind fixture, eight
+          scripted turns, fixed roll 18.
+        </p>
+        <p>
+          <b>Why the first Director-on sample failed:</b> the Director added a
+          private causal commitment, then the generated response copied its
+          summary into player-visible facts. The reducer correctly rejected that
+          secrecy conflict. We kept the guard strict and clarified the prompt to
+          keep private continuity notes separate from attributed testimony.
+          Later retries also exposed invented reveal IDs and source references,
+          which led to exact-ID and provenance guidance. A separate evaluation
+          bug counted private commitment metadata as player-facing text; the
+          secrecy rubric now excludes that private field while still checking
+          narration and other player-visible output.
+        </p>
+        <p class="notice note-good">
+          <b>Selected result: PASS.</b> 8/8 turns committed, 9 calls, 0 repairs,
+          no hard failures, and all six automated rubric dimensions scored 1.0.
+          Manual golden review: 16 met, 1 partial, 2
+          conditional/source-dependent.
+        </p>
+        <div class="table-wrapper iteration-table-wrap">
+          <table class="iteration-table">
+            <caption>
+              Director-on iteration history; every sampled run used low effort
+              on luna-fast.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Sample</th>
+                <th scope="col">Turns committed</th>
+                <th scope="col">Calls / repairs</th>
+                <th scope="col">Input / output tokens</th>
+                <th scope="col">Automated result</th>
+                <th scope="col">Finding</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">v5</th>
+                <td>8/8</td>
+                <td>11 / 2</td>
+                <td>122,299 / 7,855</td>
+                <td class="iteration-status met">PASS · 6/6 rubrics</td>
+                <td>
+                  First clean full run. Missed Maren’s specific debt urgency and
+                  Wick’s step-aside condition.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">v6</th>
+                <td>3/4</td>
+                <td>4 / 0</td>
+                <td>41,033 / 2,534</td>
+                <td class="iteration-status fail">FAIL</td>
+                <td>
+                  Reducer rejected the shrine response: it invented reveal IDs
+                  and cited unrevealed source data.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">v7</th>
+                <td>8/8</td>
+                <td>9 / 0</td>
+                <td>97,147 / 6,907</td>
+                <td class="iteration-status met">PASS · 6/6 rubrics</td>
+                <td>
+                  Exact five-turn pressure and the full ending landed; Maren’s
+                  creditor reason was omitted.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">v8</th>
+                <td>8/8</td>
+                <td>11 / 2</td>
+                <td>119,568 / 7,709</td>
+                <td class="iteration-status met">PASS · 6/6 rubrics</td>
+                <td>
+                  Strong full run, but the timer became generic and Maren’s debt
+                  urgency was still missing.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">v9</th>
+                <td>8/8</td>
+                <td>10 / 0</td>
+                <td>114,230 / 7,053</td>
+                <td class="iteration-status fail">FAIL · harness finding</td>
+                <td>
+                  The ledger clue was earned on turn 3, but the global leak scan
+                  forgot that reveal and flagged its later repetition. The
+                  evaluator now carries successful golden reveals forward.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">v10</th>
+                <td>0 provider turns</td>
+                <td>0 / 0</td>
+                <td>0 / 0</td>
+                <td>Not sampled</td>
+                <td>
+                  The local app and proxy had stopped after the session restart;
+                  they were restarted and health-checked before v11.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">v11 · selected</th>
+                <td>8/8</td>
+                <td>9 / 0</td>
+                <td>100,770 / 7,994</td>
+                <td class="iteration-status met">PASS · 6/6 rubrics</td>
+                <td>
+                  Includes Maren’s debt pressure, cellar hint, five-turn timer,
+                  Aldous’s self-hiding, and Tobiah’s motive. No forbidden leaks
+                  or unexpected reveal IDs.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="stats">
+          <div class="stat">
+            <b>Golden review</b>16 met · 1 partial · 2 conditional
+          </div>
+          <div class="stat"><b>All turns</b>8/8 committed</div>
+          <div class="stat"><b>Calls / repairs</b>9 / 0</div>
+          <div class="stat"><b>Token use</b>100,770 input / 7,994 output</div>
+          <div class="stat">
+            <b>Time / estimated cost</b>85.6 s summed calls · ≈$0.0141
+          </div>
+          <div class="stat">
+            <b>Rubric</b>Agency, secrecy, continuity, canon safety, consequence
+            credibility, escalation: all 1.0
+          </div>
+        </div>
+        <p class="muted">
+          The gate score is automated; the beat labels below are a manual
+          comparison against the golden text. A single stochastic sample is
+          evidence of a good output, not a measured pass rate. The conditional
+          receipt beat is not treated as an engine failure: the authored secret
+          says the spare receipt is found when the ledger was not read, while
+          this scripted route reads it first.
+        </p>
+        <h3 id="turn-review-title">
+          Selected run · output turn by turn against golden beats
+        </h3>
+        <p class="muted">
+          Open a turn to read the full player-facing narration and its
+          golden-beat notes. Native disclosures keep the text searchable with
+          the browser’s Find command.
+        </p>
+        <details class="iteration-turn">
+          <summary>Turn 1 · opening · opening context</summary>
+          <p class="action"><b>Golden player action:</b> [opening scene]</p>
+          <p class="muted">
+            Opening scene; the golden set has no scored beat for this turn.
+          </p>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            The ferry noses into the rotting jetty with a wooden groan. Across
+            the reeds, a tall stone mill stands silent, its great wheel hanging
+            above the brown water. A woman in a patched coat waits on the
+            planks, arms folded; weariness sharpens her gaze as she looks you
+            over. “Rowan? I’m Maren Holt—the miller’s daughter. The mill has
+            stopped, my father’s vanished, and Greywater Bend is running short
+            of bread.” Her jaw tightens, then she gestures toward the path
+            leading from the jetty to the mill yard. “I need someone to get it
+            running again. My mother’s debt still has to be paid, and the
+            bailiff will come to collect.”
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 2 · opening-at-landing · 3/3 beats met; conditional and partial
+            beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> I ask Maren what happened to the miller
+            and why the mill has to be restarted today.
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status met">Met.</strong> Maren asks for
+              help restarting the mill.<br /><span class="muted"
+                >The opening turn already asks for help; Maren repeats the need
+                to restart the mill.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> The mill has
+              stopped and the village needs flour or bread.<br /><span
+                class="muted"
+                >Maren says the village is short on flour.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> Maren&#39;s
+              urgency is connected to the bailiff and her mother&#39;s debt,
+              without inventing a precise deadline.<br /><span class="muted"
+                >She names her mother’s debt and the bailiff collecting, without
+                giving a made-up date.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            Maren’s folded arms loosen, but her fingers remain hooked in the
+            patched cuffs. “The miller’s my father, Aldous. He vanished, and I
+            can’t tell you where he went—I only know he’s gone.” Her mouth
+            tightens at the question of today. “The village is already short on
+            flour. And my mother’s debt is still unpaid; the bailiff will come
+            to collect. If the mill stays dead, there’ll be no way to pay him.”
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 3 · inspect-yard-ledger · 1/2 beats met; conditional and
+            partial beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> At the mill yard, I inspect the damp
+            ledger carefully. What useful evidence can I read?
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status partial">Partial.</strong> The
+              ledger can reveal that a lock was fitted to the sluice pin the
+              week before the miller vanished.<br /><span class="muted"
+                >The lock-on-pin entry is found, but this sample does not give
+                the expected week-before timing.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> The evidence
+              suggests deliberate interference but does not by itself prove who
+              filed the pin.<br /><span class="muted"
+                >It indicates deliberate securing and names no culprit.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            The mill yard is churned into slick mud. Split sacks spill grey
+            powder beside the mill door, and the ledger hangs from a nail, its
+            pages swollen and rough with damp. You ease it open carefully,
+            supporting the brittle sheets so they do not tear. Most entries have
+            bled into grey smears, but one line remains legible: a lock was
+            fitted to the sluice pin. That is no ordinary record of a
+            breakdown—the mill was deliberately stopped. The ledger offers no
+            name beside the entry, but the sluice itself lies beyond the mill
+            door.
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 4 · optional-reed-shrine · 2/2 beats met; conditional and
+            partial beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> Before entering the mill, I take the
+            reed path and examine the shrine. Is there anything here that can
+            help us?
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status met">Met.</strong> The shrine is
+              optional and can be left without blocking the main adventure.<br /><span
+                class="muted"
+                >The player visits the branch and can leave it freely.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> A visit may
+              grant one repeat of a later roll to calm, persuade, or resist
+              fear, plus a hint toward the cellar.<br /><span class="muted"
+                >The narration gives one repeat for a later eligible roll and a
+                cellar hint.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            You follow the reed path away from the mill yard until the stalks
+            open around a ring of leaning stones. A clay lamp sits in the
+            centre, and fresh bread rests beside it, its crust still uncracked.
+            The place is quiet enough that the reeds’ whisper seems to gather
+            around the little flame. As you examine the shrine, a sudden calm
+            settles over the moment—not a voice or a command, just a steadying
+            warmth from the lamp. You notice a small mark on one stone: a simple
+            arrow scratched toward the mill, with the word “cellar” beneath it.
+            The lamp’s blessing lingers: once during this adventure, you may
+            repeat your next roll to calm someone, persuade someone, or resist
+            fear.
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 5 · negotiate-with-wick · 2/3 beats met; conditional and
+            partial beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> I return to the mill and enter the
+            wheel room, where Wick blocks the sluice lever. I show him the
+            ledger evidence and ask why he is helping Tobiah.
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status met">Met.</strong> Wick can be
+              approached through conversation; combat is not mandatory.<br /><span
+                class="muted"
+                >The scripted approach is conversation; the response does not
+                require combat.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status conditional">Conditional.</strong>
+              Naming Tobiah&#39;s debt or showing the filed-pin evidence can
+              make Wick lower his cudgel and step aside.<br /><span
+                class="muted"
+                >Wick keeps guarding the lever. The action shows the lock entry,
+                not proof that the pin was filed, and does not name Tobiah’s
+                debt.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> Do not reveal
+              Wick&#39;s unpaid wages or private motive until the conversation
+              earns that disclosure.<br /><span class="muted"
+                >Wick’s wages and private motive remain unrevealed.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            You leave the shrine and enter the Wheel Room. Two low lanterns cast
+            wavering light over the jammed gear and groaning wheel shaft. Wick,
+            a broad man with a cudgel, stands between you and the sluice lever;
+            his wolfhound growls close at his heel. You show him the ledger
+            entry. He glances at it, then watches you over the cudgel’s raised
+            head. “Because Tobiah hired me to keep people off that lever,” he
+            says, shifting his weight but not stepping aside. “That ledger says
+            someone fitted a lock. It doesn’t tell you why I took the job.” The
+            hound’s growl deepens as Wick keeps his place by the mechanism.
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 6 · pull-the-lever · 3/3 beats met; conditional and partial
+            beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> Once we are ready, I pull the sluice
+            lever and immediately head down the cellar stairs.
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status met">Met.</strong> The wheel
+              starts turning and water begins rising in the cellar.<br /><span
+                class="muted"
+                >The wheel starts and cellar water rises.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> The party has
+              about five turns to act in the cellar.<br /><span class="muted"
+                >The timer is stated as about five turns.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> The GM makes
+              the time pressure clear while leaving Rowan&#39;s next action to
+              the player.<br /><span class="muted"
+                >The danger is clear and the narration stops before choosing
+                Rowan’s next action.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            You slip past Wick’s sweeping cudgel and wrench the sluice lever
+            down. The mechanism jolts; the jammed gear grinds free, and the
+            wheel shaft begins turning with a shudder that runs through the
+            stone floor. Wick’s wolfhound snaps at your heels, but you’re
+            already taking the narrow stair into the cellar. Cold water is
+            spreading across the cellar floor and climbing. You have about five
+            turns to finish what you came to do before it becomes a serious
+            problem. Above, the wheel’s steady rumble swallows Wick’s shouted
+            words.
+          </p>
+          <p class="meta">
+            Committed · 2 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 7 · free-aldous-and-find-receipt · 2/3 beats met; conditional
+            and partial beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> I get Aldous out of the chair, ask what
+            happened, and check whether he has anything that can corroborate the
+            ledger.
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status met">Met.</strong> Aldous is
+              alive, bound, and in immediate danger from the rising water.<br /><span
+                class="muted"
+                >Aldous is alive and bound while rising water surrounds the
+                party.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status conditional">Conditional.</strong>
+              A second copy of the sluice-lock receipt can corroborate the
+              ledger.<br /><span class="muted"
+                >No second receipt is found. The package describes that copy as
+                a fallback when the ledger was not read; this run already
+                revealed the ledger clue, so this golden beat conflicts with the
+                authored condition.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> The GM may
+              reveal that Aldous hid himself, rather than being abducted by
+              Tobiah, through Aldous&#39;s answer or evidence.<br /><span
+                class="muted"
+                >Aldous says he hid himself and that Tobiah did not take
+                him.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            The chair’s iron bolts rasp against the stone as you work Aldous
+            free. Water swirls around your boots; once the gag comes out, he
+            gulps a breath and coughs hard, shoulders trembling beneath his
+            soaked coat. He looks from you to the rising water. “I hid here,” he
+            says hoarsely. “Tobiah didn’t take me. I tied myself up—if anyone
+            found me, I wanted it to look like I’d been taken. I was trying to
+            keep Maren clear of the theft.” You search his coat while he catches
+            his breath. There’s no second receipt to add to the ledger evidence,
+            but the damp fabric and his account corroborate that he is Aldous,
+            alive and bound in the cellar. His eyes flick toward the stair. “Get
+            us out before the water does.”
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <details class="iteration-turn">
+          <summary>
+            Turn 8 · confront-tobiah · 3/3 beats met; conditional and partial
+            beats noted
+          </summary>
+          <p class="action">
+            <b>Golden player action:</b> With the receipt and ledger as
+            evidence, I confront Tobiah and give him a chance to answer before
+            deciding what to do.
+          </p>
+          <h4>Golden beats · manual review</h4>
+          <ol class="iteration-beats">
+            <li>
+              <strong class="iteration-status met">Met.</strong> The evidence
+              supports exposing Tobiah&#39;s sabotage.<br /><span class="muted"
+                >The ledger and Aldous’s account support the
+                confrontation.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> Tobiah wanted
+              the mill to fail so he could buy it cheaply.<br /><span
+                class="muted"
+                >Tobiah admits filing the pin to buy the mill cheaply.</span
+              >
+            </li>
+            <li>
+              <strong class="iteration-status met">Met.</strong> The GM presents
+              consequences and leaves the final response or decision to
+              Rowan.<br /><span class="muted"
+                >Consequences remain in view and no response or verdict is
+                chosen for Rowan.</span
+              >
+            </li>
+          </ol>
+          <h4>Director-on output</h4>
+          <p class="iteration-narration">
+            You go up from the cellar to the Mill Yard, where Tobiah Reed stands
+            beside the mill door, neat cuffs untouched by the mud. The ledger is
+            evidence of interference, but there is no receipt in your
+            possession; Aldous’s account is the other thing you can put to him.
+            You give Tobiah the chance to answer. His polite expression thins as
+            he studies the ledger. “I filed the pin from inside,” he says, voice
+            low. “I wanted the mill to fail, so the bailiff would sell it
+            cheaply to me. I didn’t take Aldous.” The admission lands amid the
+            mill’s renewed rumble. Tobiah’s gaze shifts toward the road, then
+            back to you; he does not try to leave. From the cellar below, the
+            water continues to climb, and Aldous is still there unless you bring
+            him up.
+          </p>
+          <p class="meta">
+            Committed · 1 provider call(s) · 0 repair(s) · 0 forbidden leaks · 0
+            unexpected reveal IDs
+          </p>
+        </details>
+        <p class="meta">
+          Reproducible raw output:
+          <code>/tmp/adventure-5113-low-on-v11/results.json</code> and
+          <code>/tmp/adventure-5113-low-on-v11/results.md</code>. The package’s
+          spare-receipt condition is in
+          <code>fixtures/adventures/reference-one-shot/adventure.v1.json</code>,
+          secret <code>secret-aldous-cellar</code>.
+        </p>
+      </section>
+
+      <section>
+        <h2>Opening scene (no golden step)</h2>
+        <div class="grid">
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p><b>Player action:</b> [opening scene]</p>
+              <p><b>GM output</b></p>
+              <pre>
+The ferry bumps against the rotting jetty, its wet planks slick beneath your boots. Across the reeds, a tall stone mill stands silent, its great wheel hanging above brown water. A woman in a patched coat waits with her arms folded; fatigue tightens her face as she sizes you up.
+
+“Maren Holt,” she says, jaw set. “The mill’s stopped, and the village is running short of flour. My father’s vanished. I need the mill turning again before the bailiff comes for what my mother owed.” She glances toward the mill, then back at you. “Will you help?”</pre>
+              <p class="meta">
+                1 call(s) · 8848 ms · 0 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / low, 8848 ms, 7282 input / 741 output
+                tokens, 0 reasoning
+              </p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p><b>Player action:</b> [opening scene]</p>
+              <p><b>GM output</b></p>
+              <pre>
+The ferry bumps against the rotting jetty, its wet rope creaking as brown water laps the planks. Across the reeds, a tall stone mill stands silent, its great wheel hanging still. A woman in a patched coat waits with her arms folded; the wind has reddened her knuckles.
+
+“I’m Maren Holt,” she says, jaw tight. “The mill’s stopped, and the village is running short of bread. My father’s vanished. I need someone to get the mill turning again.” She glances toward the dark mill, then back to you. “There’s a path to the yard, and another through the reeds to the shrine. I can tell you what I know.”</pre>
+              <p class="meta">
+                1 call(s) · 13353 ms · 0 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 13353 ms, 7282 input / 1311 output
+                tokens, 473 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>1. opening-at-landing</h2>
+        <p class="action">
+          <b>Golden player action:</b> I ask Maren what happened to the miller
+          and why the mill has to be restarted today.
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>Maren asks for help restarting the mill.</li>
+              <li>
+                The mill has stopped and the village needs flour or bread.
+              </li>
+              <li>
+                Maren's urgency is connected to the bailiff and her mother's
+                debt, without inventing a precise deadline.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+            <p class="meta">
+              <b>Forbidden fact guards:</b> secret-after-dark,
+              secret-tobiah-motive
+            </p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer">
+              <div class="status bad">
+                Not committed · invalid-adventure-response
+              </div>
+              <p>
+                <b>Player action:</b> I ask Maren what happened to the miller
+                and why the mill has to be restarted today.
+              </p>
+              <p class="muted">No narration was returned.</p>
+              <p class="meta">
+                2 call(s) · 17124 ms · 1 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / low, 8769 ms, 10065 input / 550 output
+                tokens, 0 reasoning
+              </p>
+              <p class="meta">
+                Call 2: luna-fast / low, 8355 ms, 10121 input / 526 output
+                tokens, 0 reasoning
+              </p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> I ask Maren what happened to the miller
+                and why the mill has to be restarted today.
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+Maren’s folded arms loosen; she rubs a thumb over a frayed seam in her coat. “I can’t tell you what happened to him. I wasn’t there when he went missing. When I found the mill stopped, he was gone.” Her eyes flick toward the stone mill, then back to you. “I’ve asked around, but no one’s given me a straight answer.”
+
+“As for today—the village’s flour is nearly gone. The mill is where we grind what’s left. If it stays still, there’ll be no bread to stretch it.” Her voice sharpens, though she keeps her hands at her sides. “I’m not asking you to solve everything before you go. Just help get the wheel turning, and we’ll have a little breathing room.”</pre>
+              <p class="meta">
+                2 call(s) · 30455 ms · 1 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 15178 ms, 10652 input / 1391 output
+                tokens, 1000 reasoning
+              </p>
+              <p class="meta">
+                Call 2: luna-fast / medium, 15277 ms, 10714 input / 1343 output
+                tokens, 901 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>2. inspect-yard-ledger</h2>
+        <p class="action">
+          <b>Golden player action:</b> At the mill yard, I inspect the damp
+          ledger carefully. What useful evidence can I read?
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>
+                The ledger can reveal that a lock was fitted to the sluice pin
+                the week before the miller vanished.
+              </li>
+              <li>
+                The evidence suggests deliberate interference but does not by
+                itself prove who filed the pin.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+            <p class="meta">
+              <b>Forbidden fact guards:</b> secret-filed-pin,
+              secret-tobiah-motive, secret-yard-noise
+            </p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer absent">
+              <p>Not reached in this run.</p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> At the mill yard, I inspect the damp
+                ledger carefully. What useful evidence can I read?
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+The path brings you into the mill yard, where packed earth lies beneath the mill’s shadow. A damp ledger rests under the eaves, its leather cover swollen at the edges. You ease apart the pages carefully; several columns have bled into gray blots, but the last legible delivery entry is clear enough: four sacks of grain received, three milled. The space for the fourth sack’s destination is blank, with a faint charcoal smear beside it.
+
+There’s no name or explanation to settle what happened to that sack, but the entry gives you something concrete to trace. The ink hasn’t run across that line, and the smear looks like someone rubbed at the page rather than water washing it away.</pre>
+              <p class="meta">
+                1 call(s) · 27551 ms · 0 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 27551 ms, 14349 input / 2692 output
+                tokens, 2035 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>3. optional-reed-shrine</h2>
+        <p class="action">
+          <b>Golden player action:</b> Before entering the mill, I take the reed
+          path and examine the shrine. Is there anything here that can help us?
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>
+                The shrine is optional and can be left without blocking the main
+                adventure.
+              </li>
+              <li>
+                A visit may grant one repeat of a later roll to calm, persuade,
+                or resist fear, plus a hint toward the cellar.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+            <p class="meta">
+              <b>Forbidden fact guards:</b> secret-shrine-bread
+            </p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer absent">
+              <p>Not reached in this run.</p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> Before entering the mill, I take the reed
+                path and examine the shrine. Is there anything here that can
+                help us?
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+You leave the mill yard by the narrow reed path, which winds to a small shrine on a rise above the wet ground. The air smells of crushed reeds and cold stone. Someone has left a shallow wooden bowl beneath the shrine’s weathered niche; a thin dusting of grey flour clings inside, protected from the damp. It is not enough to identify who brought it, but it is unusually far from the mill’s yard and gives you a trail worth following.
+
+A few pale grains are caught in a crack in the path leading back toward the mill. The shrine itself offers no sign of the missing miller, but the flour may connect this place to the mill’s lost supply.</pre>
+              <p class="meta">
+                2 call(s) · 31031 ms · 1 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 17960 ms, 9181 input / 1727 output
+                tokens, 872 reasoning
+              </p>
+              <p class="meta">
+                Call 2: luna-fast / medium, 13071 ms, 9213 input / 1374 output
+                tokens, 516 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>4. negotiate-with-wick</h2>
+        <p class="action">
+          <b>Golden player action:</b> I return to the mill and enter the wheel
+          room, where Wick blocks the sluice lever. I show him the ledger
+          evidence and ask why he is helping Tobiah.
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>
+                Wick can be approached through conversation; combat is not
+                mandatory.
+              </li>
+              <li>
+                Naming Tobiah's debt or showing the filed-pin evidence can make
+                Wick lower his cudgel and step aside.
+              </li>
+              <li>
+                Do not reveal Wick's unpaid wages or private motive until the
+                conversation earns that disclosure.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+            <p class="meta">
+              <b>Forbidden fact guards:</b> secret-wick-wages,
+              secret-wick-motivation
+            </p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer absent">
+              <p>Not reached in this run.</p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> I return to the mill and enter the wheel
+                room, where Wick blocks the sluice lever. I show him the ledger
+                evidence and ask why he is helping Tobiah.
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+Wick’s shoulders ease when he sees you’re not reaching for the lever. “Tobiah hired me to keep it shut,” he says, stepping aside. “He told me the miller wanted the sluice held until someone checked the wheel. Said he’d pay me for making sure nobody started it first.” His mouth twists. “I haven’t seen the miller, and I can’t swear Tobiah was telling the truth.”
+
+The ledger’s blank entry has clearly unsettled him; he looks once more at the smeared line, then leaves the lever within your reach. The iron is slick with condensation, and a low trickle moves somewhere beyond the wheel housing. You can inspect the mechanism or decide whether to trust Wick’s account, but the sluice remains shut for now.</pre>
+              <p class="meta">
+                2 call(s) · 42423 ms · 0 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 19184 ms, 9430 input / 1710 output
+                tokens, 1233 reasoning
+              </p>
+              <p class="meta">
+                Call 2: luna-fast / medium, 23239 ms, 12706 input / 2286 output
+                tokens, 1552 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>5. pull-the-lever</h2>
+        <p class="action">
+          <b>Golden player action:</b> Once we are ready, I pull the sluice
+          lever and immediately head down the cellar stairs.
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>
+                The wheel starts turning and water begins rising in the cellar.
+              </li>
+              <li>The party has about five turns to act in the cellar.</li>
+              <li>
+                The GM makes the time pressure clear while leaving Rowan's next
+                action to the player.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+            <p class="meta"><b>Forbidden fact guards:</b> secret-miller-hid</p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer absent">
+              <p>Not reached in this run.</p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> Once we are ready, I pull the sluice lever
+                and immediately head down the cellar stairs.
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+You haul the iron lever down. It catches, then drops with a clang that shudders through the room. The wheel shaft groans against its jammed gear; after a wrenching grind, the gear turns and the wheel begins to move. Wick steps back, cudgel lowered, while the wolfhound’s growl follows you toward the narrow stair.
+
+Below, the cellar air is cold and close. Water is already spreading across the floor, climbing around the lowest stored crates as you descend. The stair ends at the flooded cellar; the water is rising, and the turning mill throbs through the stone above you.</pre>
+              <p class="meta">
+                1 call(s) · 20696 ms · 0 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 20696 ms, 10475 input / 1981 output
+                tokens, 1008 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>6. free-aldous-and-find-receipt</h2>
+        <p class="action">
+          <b>Golden player action:</b> I get Aldous out of the chair, ask what
+          happened, and check whether he has anything that can corroborate the
+          ledger.
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>
+                Aldous is alive, bound, and in immediate danger from the rising
+                water.
+              </li>
+              <li>
+                A second copy of the sluice-lock receipt can corroborate the
+                ledger.
+              </li>
+              <li>
+                The GM may reveal that Aldous hid himself, rather than being
+                abducted by Tobiah, through Aldous's answer or evidence.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+            <p class="meta">
+              <b>Forbidden fact guards:</b> secret-tobiah-motive
+            </p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer absent">
+              <p>Not reached in this run.</p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> I get Aldous out of the chair, ask what
+                happened, and check whether he has anything that can corroborate
+                the ledger.
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+You work the wet knots loose and haul Aldous clear of the bolted chair. His boots scrape stone as he slumps against you, coughing through the gag; you pull it free. The water swirls around your ankles. He blinks hard, then presses a damp, folded slip into your hand.
+
+“I’m not ready to explain how I came to be here,” he says, eyes fixed on the paper. “That’s a receipt for the lock on the sluice pin. It proves the lock was bought; it doesn’t tell you where the missing grain went.” The receipt bears a mill’s mark and a description of the lock. Aldous grips your sleeve as another wash of water laps over the cellar floor.</pre>
+              <p class="meta">
+                1 call(s) · 24868 ms · 0 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 24868 ms, 10632 input / 2397 output
+                tokens, 1690 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <section>
+        <h2>7. confront-tobiah</h2>
+        <p class="action">
+          <b>Golden player action:</b> With the receipt and ledger as evidence,
+          I confront Tobiah and give him a chance to answer before deciding what
+          to do.
+        </p>
+        <div class="grid">
+          <aside class="golden">
+            <h3>Golden expected beats</h3>
+            <ol>
+              <li>The evidence supports exposing Tobiah's sabotage.</li>
+              <li>
+                Tobiah wanted the mill to fail so he could buy it cheaply.
+              </li>
+              <li>
+                The GM presents consequences and leaves the final response or
+                decision to Rowan.
+              </li>
+            </ol>
+            <p class="meta">
+              Human review required; the harness leaves beat judgements pending.
+            </p>
+          </aside>
+          <div>
+            <h3>Low effort</h3>
+            <article class="answer absent">
+              <p>Not reached in this run.</p>
+            </article>
+          </div>
+          <div>
+            <h3>Medium effort</h3>
+            <article class="answer">
+              <div class="status ok">Committed</div>
+              <p>
+                <b>Player action:</b> With the receipt and ledger as evidence, I
+                confront Tobiah and give him a chance to answer before deciding
+                what to do.
+              </p>
+              <p><b>GM output</b></p>
+              <pre>
+Before you can press him further, hurried steps clatter down the narrow stair. A lean man in a work coat stops short at the sight of Aldous and the papers in your hand. “Tobiah,” he says, jaw tightening as he looks from the ledger to the receipt. You lay out the discrepancy and give him room to answer.
+
+“I hired Wick to keep the sluice shut until the wheel was checked,” Tobiah says, rubbing a flour-stained thumb against his palm. “I didn’t take that fourth sack. The receipt proves a lock was bought, not who moved grain.” He offers to show you his payment accounts upstairs, if you want to verify what he paid Wick. Behind him, the wheel’s steady clatter vibrates through the stair rail.</pre>
+              <p class="meta">
+                2 call(s) · 85689 ms · 1 repair(s) · 0 forbidden leaks · 0
+                unexpected reveals
+              </p>
+              <p class="meta">
+                Call 1: luna-fast / medium, 46259 ms, 16363 input / 4689 output
+                tokens, 3897 reasoning
+              </p>
+              <p class="meta">
+                Call 2: luna-fast / medium, 39430 ms, 16397 input / 3941 output
+                tokens, 3359 reasoning
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+      <footer>
+        Costs estimated at the registered luna-fast rates ($0.10/M input,
+        $0.50/M output). Reasoning tokens are included in output tokens. Source:
+        low vs medium live run; expected-beat reviews remain pending. The raw
+        harness JSON and Markdown remain in
+        <code>/tmp/adventure-5113-live/</code>.
+      </footer>
+    </main>
+  </body>
+</html>
