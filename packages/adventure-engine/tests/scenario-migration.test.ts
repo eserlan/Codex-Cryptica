@@ -233,6 +233,22 @@ describe("scenario v3 migration", () => {
       }));
       facts[facts.length - 1]!.text = "x";
       const input = structuredClone(base);
+      input.visibleState.objectives = Array.from(
+        { length: 18 },
+        (_, index) => ({
+          id: `obj-${index}`,
+          text: "y".repeat(580),
+          source: "provisional",
+        }),
+      );
+      input.visibleState.activeCharacters = Array.from(
+        { length: 10 },
+        (_, index) => ({
+          id: `char-${index}`,
+          text: "z".repeat(580),
+          source: "provisional",
+        }),
+      );
       input.visibleState.knownFacts = facts;
       const legacyState = (document: Record<string, any>) =>
         JSON.stringify({

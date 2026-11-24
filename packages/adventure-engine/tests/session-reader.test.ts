@@ -21,11 +21,24 @@ function legacyRecoveryDocument() {
       })),
     },
   };
-  input.visibleState.knownFacts = Array.from({ length: 50 }, (_, index) => ({
+  input.visibleState.knownFacts = Array.from({ length: 55 }, (_, index) => ({
     id: `fact-${index}`,
     text: "x".repeat(600),
     source: "provisional",
   }));
+  input.visibleState.objectives = Array.from({ length: 18 }, (_, index) => ({
+    id: `obj-${index}`,
+    text: "y".repeat(600),
+    source: "provisional",
+  }));
+  input.visibleState.activeCharacters = Array.from(
+    { length: 12 },
+    (_, index) => ({
+      id: `char-${index}`,
+      text: "z".repeat(600),
+      source: "provisional",
+    }),
+  );
   const legacyLength = () =>
     JSON.stringify({
       visibleState: input.visibleState,
