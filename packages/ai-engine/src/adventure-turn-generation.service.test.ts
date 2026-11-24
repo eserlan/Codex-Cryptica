@@ -22,6 +22,33 @@ if (typeof navigator === "undefined") {
 }
 
 describe("AdventureTurnGenerationService", () => {
+  it("uses stateless generation for reconstructed-context evaluation arms", async () => {
+    const sendInteraction = vi.fn(async () => ({
+      id: "interaction-1",
+      text: completeResponse,
+    }));
+    const getModel = vi.fn(async () => ({
+      async generateContent() {
+        return { response: { text: () => completeResponse } };
+      },
+    }));
+    const service = new AdventureTurnGenerationService({
+      getModel,
+      sendInteraction,
+    });
+
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+      contextMode: "reconstructed",
+    });
+
+    expect(sendInteraction).not.toHaveBeenCalled();
+    expect(getModel).toHaveBeenCalledOnce();
+  });
+
   it.each([
     "interaction-client-unavailable",
     "interaction-stream-unavailable",

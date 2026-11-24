@@ -1,10 +1,21 @@
-import type { AdventureSession } from "@codex/adventure-engine";
+import type {
+  AdventureSession,
+  GenerationResetReason,
+  GenerationThreadMode,
+  ResolvedSourceExcerpt,
+} from "@codex/adventure-engine";
 import { LoreDeltaTracker } from "@codex/oracle-engine";
 import type {
   AdventureInteraction,
   AdventurePrompt,
 } from "./adventure-generation.types";
 import { adventureSourceHash } from "./adventure-interaction-input";
+
+export interface AdventureInteractionPreparation {
+  interaction: AdventureInteraction;
+  threadMode: GenerationThreadMode;
+  resetReason?: GenerationResetReason;
+}
 
 // Continue long stories across many turns; refresh from local state before
 // retained provider history becomes excessively large. Expiry and invalid IDs
@@ -76,41 +87,83 @@ export class AdventureInteractionContext {
     prompt: AdventurePrompt,
     modelName: string,
   ): AdventureInteraction {
-    let interaction = this.get(session.id);
-    let resetReason: AdventureInteraction["resetReason"];
-    // A revision mismatch means the game was changed by a non-model action,
-    // a failed save, or a cancelled turn: rebuild from authoritative OPFS.
-    if (interaction.pending) resetReason = "revision-mismatch";
-    else if (
-      interaction.modelName !== null &&
-      interaction.modelName !== modelName
-    )
-      resetReason = "model-change";
-    else if (
-      interaction.revision !== null &&
-      interaction.revision !== session.revision
-    )
-      resetReason = "revision-mismatch";
-    else if (interaction.successfulTurns >= CONTEXT_REFRESH_TURNS)
-      resetReason = "turn-refresh";
+    return this.prepareWithMetadata(session, prompt, modelName).interaction;
+  }
+
+  prepareWithMetadata(
+    session: AdventureSession,
+    prompt: AdventurePrompt,
+    modelName: string,
+  ): AdventureInteractionPreparation {
+    let interaction = this.interactions.get(session.id);
+    if (!interaction) {
+      return { interaction: this.get(session.id), threadMode: "new" };
+    }
+    let resetReason = interactionResetReason(interaction, session, modelName);
     if (resetReason) {
-      this.clear(session.id);
-      interaction = this.get(session.id);
+      interaction = this.reset(session.id);
     }
     // Provider histories cannot delete earlier source text. A changed
     // canonical record must start a clean thread to avoid stale canon.
-    const sources = [...prompt.anchors, ...prompt.relevant];
-    if (
-      sources.some((source) => {
-        const oldHash = interaction.sourceHashes.get(source.recordId);
-        return oldHash && oldHash !== adventureSourceHash(source);
-      })
-    ) {
+    if (!resetReason && hasChangedSource(interaction, prompt)) {
       resetReason = "source-change";
-      this.clear(session.id);
-      interaction = this.get(session.id);
+      interaction = this.reset(session.id);
     }
-    interaction.resetReason = resetReason;
-    return interaction;
+
+    return {
+      interaction,
+      threadMode: interactionThreadMode(interaction, resetReason),
+      ...(resetReason ? { resetReason } : {}),
+    };
   }
+
+  private reset(sessionId: string): AdventureInteraction {
+    this.clear(sessionId);
+    return this.get(sessionId);
+  }
+}
+
+function interactionResetReason(
+  interaction: AdventureInteraction,
+  session: AdventureSession,
+  modelName: string,
+): GenerationResetReason | undefined {
+  if (interaction.pending) return "rejected-turn";
+  if (interaction.modelName !== null && interaction.modelName !== modelName) {
+    return "model-change";
+  }
+  if (
+    interaction.revision !== null &&
+    interaction.revision !== session.revision
+  ) {
+    return "revision-mismatch";
+  }
+  if (interaction.successfulTurns >= CONTEXT_REFRESH_TURNS) {
+    return "turn-refresh";
+  }
+  return undefined;
+}
+
+function hasChangedSource(
+  interaction: AdventureInteraction,
+  prompt: AdventurePrompt,
+): boolean {
+  const sources = [...prompt.anchors, ...prompt.relevant];
+  return sources.some((source) => sourceChanged(interaction, source));
+}
+
+function sourceChanged(
+  interaction: AdventureInteraction,
+  source: ResolvedSourceExcerpt,
+): boolean {
+  const oldHash = interaction.sourceHashes.get(source.recordId);
+  return Boolean(oldHash && oldHash !== adventureSourceHash(source));
+}
+
+function interactionThreadMode(
+  interaction: AdventureInteraction,
+  resetReason?: GenerationResetReason,
+): GenerationThreadMode {
+  if (resetReason) return "reset";
+  return interaction.previousInteractionId ? "continued" : "new";
 }

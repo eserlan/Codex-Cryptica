@@ -258,6 +258,12 @@ describe("HistoricalAnchor contract", () => {
 
     expect(prompt.behavior).toContain("For an active scenario");
     expect(prompt.behavior).toContain(
+      "when their action reaches an authored trigger, faithfully show its relevant player-facing facts, clues, rewards, and consequences instead of suppressing them as scripted beats",
+    );
+    expect(prompt.behavior).toContain(
+      "Keep GM-ONLY truths gated until justified discovery.",
+    );
+    expect(prompt.behavior).toContain(
       "except for any mechanism listed in GM-ONLY historicalAnchor.openMechanisms, which must remain undecided until committed play establishes it",
     );
   });
