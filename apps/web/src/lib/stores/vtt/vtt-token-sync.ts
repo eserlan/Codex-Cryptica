@@ -5,12 +5,22 @@ import type {
 } from "../../../types/vtt";
 import { tokenGeometryChanged } from "./vtt-token-updates";
 
-interface TokenSyncDependencies {
+export type TokenSyncTimerDependencies =
+  | {
+      scheduleTimeout: (callback: () => void, delay: number) => number;
+      cancelTimeout: (timeoutId: number) => void;
+    }
+  | {
+      scheduleTimeout?: never;
+      cancelTimeout?: never;
+    };
+
+type TokenSyncDependencies = {
   emit: (message: VTTMessage) => void;
   persistDraft: () => void;
   queueSessionSnapshotBroadcast: () => void;
   broadcastSessionSnapshotNow: () => void;
-}
+} & TokenSyncTimerDependencies;
 
 interface TokenSyncSession {
   tokens: Record<string, Token>;
@@ -43,7 +53,11 @@ export class VTTTokenSync {
   constructor(
     private deps: TokenSyncDependencies,
     private session: TokenSyncSession,
-  ) {}
+  ) {
+    if (Boolean(deps.scheduleTimeout) !== Boolean(deps.cancelTimeout)) {
+      throw new Error("Token sync timeout callbacks must be provided together");
+    }
+  }
 
   publish(message: VTTMessage, silent: boolean) {
     if (silent) this.deps.persistDraft();
@@ -90,13 +104,13 @@ export class VTTTokenSync {
   confirm(kind: PendingKind, tokenId: string) {
     const timeoutId = this.pending[kind].get(tokenId);
     if (timeoutId === undefined) return;
-    clearTimeout(timeoutId);
+    this.cancelTimeout(timeoutId);
     this.pending[kind].delete(tokenId);
   }
 
   private scheduleRevert(kind: PendingKind, tokenId: string, previous: Token) {
     this.confirm(kind, tokenId);
-    const timeoutId = window.setTimeout(() => {
+    const timeoutId = this.scheduleTimeout(() => {
       if (this.session.tokens[tokenId]) {
         this.session.tokens = {
           ...this.session.tokens,
@@ -111,8 +125,22 @@ export class VTTTokenSync {
 
   clear() {
     for (const pending of Object.values(this.pending)) {
-      for (const timeoutId of pending.values()) clearTimeout(timeoutId);
+      for (const timeoutId of pending.values()) this.cancelTimeout(timeoutId);
       pending.clear();
+    }
+  }
+
+  private scheduleTimeout(callback: () => void, delay: number): number {
+    return this.deps.scheduleTimeout
+      ? this.deps.scheduleTimeout(callback, delay)
+      : window.setTimeout(callback, delay);
+  }
+
+  private cancelTimeout(timeoutId: number): void {
+    if (this.deps.cancelTimeout) {
+      this.deps.cancelTimeout(timeoutId);
+    } else {
+      window.clearTimeout(timeoutId);
     }
   }
 }
