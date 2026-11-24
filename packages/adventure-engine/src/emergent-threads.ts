@@ -158,6 +158,18 @@ function countOverlap(a: readonly string[], b: readonly string[]): number {
   return count;
 }
 
+const REPORT_EVIDENCE_RE =
+  /\b(?:report|tell|inform|explain|show|bring|return\s+to|debrief|update|share\s+(?:what|the\s+evidence|the\s+findings)|what\s+(?:we|i)\s+found)\b/i;
+
+function threadAllTopicTokens(thread: EmergentThread): string[] {
+  const extra = [
+    thread.title,
+    ...thread.knownConsequences.slice(-4),
+    ...thread.openQuestions.slice(-3),
+  ].flatMap((text) => [...threadTopicWords(text)]);
+  return [...new Set([...thread.topicTokens, ...extra])];
+}
+
 function findBestMatchingThread(
   threads: readonly EmergentThread[],
   tokens: readonly string[],
@@ -168,7 +180,8 @@ function findBestMatchingThread(
   let bestScore = 0;
   for (const thread of threads) {
     if (thread.status !== "open") continue;
-    const tokenScore = countOverlap(thread.topicTokens, tokens);
+    const allTokens = threadAllTopicTokens(thread);
+    const tokenScore = countOverlap(allTokens, tokens);
     const factScore = countOverlap(thread.linkedFactIds, factIds);
     const personScore = countOverlap(thread.linkedPersonIds, personIds);
     // Never merge solely on shared location; require topic or fact/person+topic signal.
@@ -184,6 +197,66 @@ function findBestMatchingThread(
     }
   }
   return bestScore >= 2 ? best : undefined;
+}
+
+function hasUnrelatedNewClue(
+  facts: readonly ProvisionalFact[],
+  thread: EmergentThread,
+): boolean {
+  const clues = facts.filter((f) => f.kind === "clue" || f.kind === "event");
+  if (clues.length === 0) return false;
+  const threadTokens = threadAllTopicTokens(thread);
+  return clues.every(
+    (f) =>
+      countOverlap(
+        [...threadTopicWords(`${f.name} ${f.summary}`)],
+        threadTokens,
+      ) === 0,
+  );
+}
+
+function findContinuationThread(
+  threads: readonly EmergentThread[],
+  session: AdventureSession,
+  turn: CommittedAdventureTurn,
+  tokens: readonly string[],
+  personIds: readonly string[],
+  facts: readonly ProvisionalFact[],
+): EmergentThread | undefined {
+  const openThreads = threads.filter((t) => t.status === "open");
+  if (openThreads.length === 0) return undefined;
+
+  // 1. Shared active objective bridge (objective overlaps both current turn and an open thread)
+  const objMatches = openThreads.filter((thread) =>
+    session.visibleState.objectives.some((obj) => {
+      const objTokens = [...threadTopicWords(obj.text)];
+      return (
+        countOverlap(objTokens, tokens) >= 1 &&
+        countOverlap(objTokens, threadAllTopicTokens(thread)) >= 1
+      );
+    }),
+  );
+  if (objMatches.length === 1) return objMatches[0];
+
+  // 2. Contact/witness continuity when not introducing an unrelated new clue
+  if (personIds.length > 0) {
+    const personMatches = openThreads.filter(
+      (t) =>
+        countOverlap(t.linkedPersonIds, personIds) >= 1 &&
+        !hasUnrelatedNewClue(facts, t),
+    );
+    if (personMatches.length === 1) return personMatches[0];
+  }
+
+  // 3. Explicit return-to-contact / report-evidence turn on the sole open case
+  if (
+    openThreads.length === 1 &&
+    REPORT_EVIDENCE_RE.test(turn.playerAction) &&
+    !hasUnrelatedNewClue(facts, openThreads[0]!)
+  ) {
+    return openThreads[0];
+  }
+  return undefined;
 }
 
 function countStrongSignals(
@@ -239,15 +312,16 @@ function matchingObjectiveOrSituation(
   session: AdventureSession,
   tokens: readonly string[],
 ): string | undefined {
-  const candidates = [
-    ...session.visibleState.objectives.map((o) => o.text),
-    ...(session.visibleState.situation
-      ? [session.visibleState.situation.text]
-      : []),
-  ];
-  for (const text of candidates) {
-    const candTokens = [...threadTopicWords(text)];
-    if (countOverlap(candTokens, tokens) >= 1) return text.trim().slice(0, 120);
+  for (const obj of session.visibleState.objectives) {
+    const candTokens = [...threadTopicWords(obj.text)];
+    if (countOverlap(candTokens, tokens) >= 1) {
+      return obj.text.trim().slice(0, 120);
+    }
+  }
+  const sitText = session.visibleState.situation?.text?.trim();
+  if (sitText && sitText.length <= 80) {
+    const sitTokens = [...threadTopicWords(sitText)];
+    if (countOverlap(sitTokens, tokens) >= 1) return sitText;
   }
   return undefined;
 }
@@ -461,7 +535,9 @@ export function updateEmergentThreadsOnTurn(
   const tokens = collectTurnTopicTokens(turn, facts);
   const personIds = collectTurnPersonIds(turn, session);
   const factIds = collectTurnFactIds(turn);
-  const matched = findBestMatchingThread(existing, tokens, personIds, factIds);
+  const matched =
+    findBestMatchingThread(existing, tokens, personIds, factIds) ??
+    findContinuationThread(existing, session, turn, tokens, personIds, facts);
   if (matched) {
     const updated = mergeIntoThread(
       matched,
