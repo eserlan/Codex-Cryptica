@@ -321,4 +321,82 @@ describe("adventure evaluation corpus reports", () => {
     expect(output).toContain("[truncated]");
     expect(output.length).toBeLessThan(2_050);
   });
+
+  function stubbedTraceGenerate(prepared: ReturnType<typeof quietPath>) {
+    let call = 0;
+    return async () => {
+      call += 1;
+      const base = completeProposal(
+        quietNarration(prepared, prepared.steps[call - 1]!.playerAction),
+      );
+      const suggestedActions: [string, string, string] = [
+        "Wait",
+        "Listen",
+        "Stroll",
+      ];
+      if (call > 1) return { ...base, suggestedActions };
+      return {
+        ...base,
+        suggestedActions,
+        generationInfo: {
+          transport: "interaction" as const,
+          threadMode: "new" as const,
+          directorDelivery: {
+            status: "included" as const,
+            reason: "delivered" as const,
+            deliveredChars: 140,
+            recoveryReason: "none" as const,
+          },
+        },
+      };
+    };
+  }
+
+  function assertTraceReport(
+    report: Awaited<ReturnType<typeof evaluatePreparedCorpusCase>>,
+    markdown: string,
+  ): void {
+    const firstGen = report.turns[0]!.generation!;
+    const secondGen = report.turns[1]!.generation!;
+    expect(firstGen.directorDelivery!.status).toBe("included");
+    expect(firstGen.actionResolution).toMatchObject({
+      outcome: "resolved",
+      validation: "accepted",
+      evidenceCategory: "quiet-play",
+    });
+    expect(secondGen.directorDelivery).toBeUndefined();
+    expect(secondGen.actionResolution).toBeUndefined();
+    expect(secondGen.repeatedSuggestedActions).toBe(true);
+    expect(report.traceSummary).toEqual({
+      directorDeliveryCounts: { included: 1, unknown: 1 },
+      actionOutcomeCounts: { resolved: 1, unknown: 1 },
+      actionValidationCounts: { accepted: 1, unknown: 1 },
+      unknownTelemetryTurns: 1,
+      repeatedUnchangedSuggestions: 1,
+      falseInterventions: 0,
+    });
+    expect(markdown).toContain("Director / Action");
+    expect(markdown).toContain("included / resolved/accepted");
+    expect(markdown).toContain("unknown / unknown/unknown");
+    expect(markdown).toContain(
+      "missing telemetry is unknown, not a failed action",
+    );
+  }
+
+  it("exposes #5195 Director delivery and #5196 action fulfilment traces separately from unknown legacy telemetry (#5197)", async () => {
+    const prepared = quietPath();
+    const report = await evaluatePreparedCorpusCase(
+      { generate: stubbedTraceGenerate(prepared) },
+      prepared,
+      ADVENTURE_EVALUATION_CONDITIONS[0]!,
+      () => metrics,
+    );
+    const markdown = markdownCorpusReport({
+      generatedAt: "2026-11-24T00:00:00.000Z",
+      samples: 1,
+      evidence: pairedEvidenceStatus([], []),
+      reports: [report],
+    });
+    assertTraceReport(report, markdown);
+  });
 });
