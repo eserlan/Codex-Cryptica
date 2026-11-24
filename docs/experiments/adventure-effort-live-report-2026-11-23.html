@@ -16,6 +16,7 @@
         --accent: #176b62;
         --bad: #963b35;
         --good: #276b4b;
+        --status-warning: #8a5b00;
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -27,6 +28,7 @@
           --accent: #80c9b4;
           --bad: #ffaaa0;
           --good: #9cddb1;
+          --status-warning: #f0cc67;
         }
       }
       * {
@@ -258,7 +260,7 @@
       }
       .iteration-report .iteration-status.conditional,
       .iteration-report .iteration-status.partial {
-        color: #8a5b00;
+        color: var(--status-warning);
       }
       .iteration-report .iteration-status.fail {
         color: var(--bad);

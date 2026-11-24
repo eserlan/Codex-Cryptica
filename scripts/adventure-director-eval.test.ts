@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "bun:test";
 import {
   instrumentStatelessProxyFetch,
+  makeLiveReport,
+  markdownReport,
   type ProxyCallRecord,
 } from "./adventure-director-eval";
 
@@ -65,6 +67,31 @@ describe("synthetic GM Director live evaluation CLI", () => {
       }
       expect(error).toContain("Proxy URL must target a local loopback host.");
     }
+  });
+
+  it("omits proxy path credentials from JSON and Markdown reports", () => {
+    const report = makeLiveReport(
+      {
+        samples: 1,
+        proxy: "http://127.0.0.1:8787/private-token",
+        origin: "http://localhost:5173",
+      },
+      [],
+      [],
+    );
+    const json = JSON.stringify(report);
+    const markdown = markdownReport({
+      generatedAt: report.generatedAt,
+      proxy: report.proxy,
+      origin: report.origin,
+      fixtureActions: report.fixtureActions,
+      samples: report.samples,
+      results: report.results,
+    });
+
+    expect(report.proxy).toBe("http://127.0.0.1:8787");
+    expect(json).not.toContain("private-token");
+    expect(markdown).not.toContain("private-token");
   });
 
   it("rejects credential-bearing or non-origin values before persisting a report", () => {

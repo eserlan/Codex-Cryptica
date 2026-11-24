@@ -512,7 +512,7 @@ function roundedPrice(price: number | undefined): number | "unavailable" {
     : "unavailable";
 }
 
-function markdownReport(report: {
+export function markdownReport(report: {
   generatedAt: string;
   proxy: string;
   origin: string;
@@ -673,8 +673,8 @@ async function runSelectedConditions(
   return results;
 }
 
-function makeLiveReport(
-  cli: CliOptions,
+export function makeLiveReport(
+  cli: Pick<CliOptions, "samples" | "proxy" | "origin">,
   conditions: AdventureEvaluationCondition[],
   results: Awaited<ReturnType<typeof runSelectedConditions>>,
 ) {
@@ -685,7 +685,7 @@ function makeLiveReport(
     fixture: "synthetic-northbrook-bell",
     fixtureActions: GM_DIRECTOR_EVALUATION_STEPS.length,
     samples: cli.samples,
-    proxy: cli.proxy,
+    proxy: new URL(cli.proxy).origin,
     origin: cli.origin,
     model: "luna-fast",
     conditions,
@@ -704,7 +704,7 @@ async function writeLiveReport(
       `${cli.output}.md`,
       markdownReport({
         generatedAt: report.generatedAt,
-        proxy: cli.proxy,
+        proxy: report.proxy,
         origin: cli.origin,
         fixtureActions: GM_DIRECTOR_EVALUATION_STEPS.length,
         samples: cli.samples,
