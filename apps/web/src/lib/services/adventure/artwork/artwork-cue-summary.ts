@@ -27,7 +27,12 @@ function isPrivateOrMappedCue(
   mapped: string,
   entityNames: ReadonlySet<string>,
 ): boolean {
-  return entityNames.has(normalized) || isArtworkCue(mapped);
+  const cueWords = normalized.replace(/[^a-z0-9]+/g, " ").trim();
+  const appearsInVisibleText = [...entityNames].some((visibleText) => {
+    const visibleWords = ` ${visibleText.replace(/[^a-z0-9]+/g, " ").trim()} `;
+    return visibleWords.includes(` ${cueWords} `);
+  });
+  return appearsInVisibleText || isArtworkCue(mapped);
 }
 
 function collectUnmappedStructuredCues(
@@ -150,6 +155,8 @@ export function summarizeArtworkCues(
     const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
     const normalized = firstPart?.trim().toLowerCase().replace(/\s+/g, " ");
     if (normalized) entityNames.add(normalized);
+    const visibleText = fact.text.trim().toLowerCase().replace(/\s+/g, " ");
+    if (visibleText) entityNames.add(visibleText);
   }
 
   return {

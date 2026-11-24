@@ -50,6 +50,31 @@ describe("summarizeArtworkCues", () => {
     expect(summary?.npcs[0]?.unmappedCues).toEqual(["ledger-keeper"]);
   });
 
+  it("omits a name cue embedded in a longer visible fact", () => {
+    const summary = summarizeArtworkCues(
+      {
+        vaultId: "v1",
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "npc-1",
+              text: "Mira Vale is waiting by the old mill",
+              cues: ["Mira Vale", "old mill", "ledger-keeper"],
+              source: "provisional",
+            },
+          ],
+        },
+      },
+      "v1",
+      {},
+      true,
+      "fantasy",
+      [],
+    );
+
+    expect(summary?.npcs[0]?.unmappedCues).toEqual(["ledger-keeper"]);
+  });
+
   it("reports place and NPC cues with their catalogue match or missing status", () => {
     const summary = summarizeArtworkCues(
       {
