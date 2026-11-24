@@ -552,7 +552,6 @@ describe("Adventure OOC clarification engine", () => {
       "Keep this exact player action intact.",
     );
   });
-
   it("grants grounded improvisational agency in OOC prompts and parses structured decisions with plain-text fallback", async () => {
     const {
       buildAdventureOocPrompt,
