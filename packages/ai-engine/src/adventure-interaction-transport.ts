@@ -2,7 +2,10 @@ import type {
   AdventureAIClient,
   AdventureTurnGenerationRequest,
 } from "./adventure-generation.types";
-import { streamAborted } from "./adventure-narration-stream";
+import {
+  createNarrationPreviewPublisher,
+  streamAborted,
+} from "./adventure-narration-stream";
 
 type InteractionParams = Parameters<
   NonNullable<AdventureAIClient["sendInteraction"]>
@@ -14,6 +17,26 @@ const BUFFERED_FALLBACK_ERRORS = new Set([
   "interaction-stream-incomplete",
   "interaction-stream-read-error",
 ]);
+
+function supportsProviderOrderedSchema(params: InteractionParams): boolean {
+  const model = params.model.trim().toLowerCase();
+  // OpenAI Interactions (e.g. `luna-fast` / `gpt-*` via oracle-proxy) use
+  // schema-less `json_object` mode and do not enforce `propertyOrdering`, so
+  // progressive previews must stay buffered until provider-enforced ordering exists.
+  if (!model.startsWith("gemini-")) return false;
+  const config = params.generationConfig as
+    { responseMimeType?: unknown; responseSchema?: unknown } | undefined;
+  if (config?.responseMimeType !== "application/json") return false;
+  const schema = config.responseSchema as
+    { oneOf?: Array<{ propertyOrdering?: unknown }> } | undefined;
+  return Boolean(
+    schema?.oneOf?.some(
+      (variant) =>
+        Array.isArray(variant.propertyOrdering) &&
+        variant.propertyOrdering.includes("narration"),
+    ),
+  );
+}
 
 /** Sends one uncommitted turn; all retries use the same continuation ID. */
 export class AdventureInteractionTransport {
@@ -69,18 +92,22 @@ export class AdventureInteractionTransport {
     let buffer = "";
     let finalId = "";
     let completed = false;
+    const publishPreview = supportsProviderOrderedSchema(params)
+      ? createNarrationPreviewPublisher(request)
+      : () => {};
     // The proxy returns only player-safe model_output text, never thought/GM-only events.
     for await (const event of sendStream.call(this.aiClient, params)) {
       streamAborted(params.signal);
       if (event.type === "error") throw new Error(event.error);
-      if (event.type === "delta") buffer += event.text;
+      if (event.type === "delta") {
+        buffer += event.text;
+        publishPreview(buffer);
+      }
       if (event.type === "complete") {
         buffer = event.text || buffer;
         finalId = event.id;
         completed = true;
       }
-      // Buffer provider deltas. The complete response may add new GM-only
-      // facts that cannot be screened while narration is still arriving.
     }
     streamAborted(params.signal);
     if (!completed || !finalId)
