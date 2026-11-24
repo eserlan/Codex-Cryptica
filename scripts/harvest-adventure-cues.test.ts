@@ -77,13 +77,17 @@ describe("harvestSnapshot", () => {
   it("filters place and character names repeated in structured cues", () => {
     const items = harvestSnapshot({
       state: {
-        places: [{ id: "p1", name: "Kettleford", cues: ["Kettleford", "salt garden"] }],
+        places: [
+          { id: "p1", name: "Kettleford", cues: ["Kettleford", "salt garden"] },
+        ],
         visibleState: {
-          activeCharacters: [{
-            id: "c1",
-            text: "Mira Vale, a keeper of the old road.",
-            cues: ["Mira Vale", "old road"],
-          }],
+          activeCharacters: [
+            {
+              id: "c1",
+              text: "Mira Vale, a keeper of the old road.",
+              cues: ["Mira Vale", "old road"],
+            },
+          ],
         },
       },
     });

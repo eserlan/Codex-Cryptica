@@ -96,25 +96,28 @@ describe("ArtworkDemandReporter", () => {
       isOnline: () => true,
     });
 
-    reporter.reportFromSummary({
-      genre: "fantasy",
-      place: null,
-      npcs: [],
-      scene: { cues: ["ruins", "night"], unmappedCues: [], match: null },
-      atmosphere: {
-        cues: ["ominous", "rain"],
-        unmappedCues: [],
-        match: "atmo-fantasy-ominous-01",
-      },
-      monsters: [
-        {
-          name: "Salt Stalker",
-          cues: [],
-          unmappedCues: ["monster", "salt-stalker"],
-          match: null,
+    reporter.reportFromSummary(
+      {
+        genre: "fantasy",
+        place: null,
+        npcs: [],
+        scene: { cues: ["ruins", "night"], unmappedCues: [], match: null },
+        atmosphere: {
+          cues: ["ominous", "rain"],
+          unmappedCues: [],
+          match: "atmo-fantasy-ominous-01",
         },
-      ],
-    }, "session-1");
+        monsters: [
+          {
+            name: "Salt Stalker",
+            cues: [],
+            unmappedCues: ["monster", "salt-stalker"],
+            match: null,
+          },
+        ],
+      },
+      "session-1",
+    );
 
     expect(fetchFn).toHaveBeenCalledTimes(3);
     const types = fetchFn.mock.calls.map(
@@ -135,25 +138,38 @@ describe("ArtworkDemandReporter", () => {
       isOnline: () => true,
     });
 
-    reporter.reportFromSummary({
-      genre: "fantasy",
-      place: {
-        name: "Private place name",
-        cues: Array.from({ length: 17 }, (_, index) => `cue-${index}`),
-        unmappedCues: Array.from({ length: 17 }, (_, index) => `unknown ${index}`),
-        match: null,
+    reporter.reportFromSummary(
+      {
+        genre: "fantasy",
+        place: {
+          name: "Private place name",
+          cues: Array.from({ length: 17 }, (_, index) => `cue-${index}`),
+          unmappedCues: Array.from(
+            { length: 17 },
+            (_, index) => `unknown ${index}`,
+          ),
+          match: null,
+        },
+        npcs: [
+          {
+            name: "Private character name",
+            cues: [],
+            unmappedCues: [],
+            demographicCues: ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+            match: null,
+          },
+        ],
       },
-      npcs: [{
-        name: "Private character name",
-        cues: [],
-        unmappedCues: [],
-        demographicCues: ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
-        match: null,
-      }],
-    }, "session-1");
+      "session-1",
+    );
 
-    const location = JSON.parse(String(fetchFn.mock.calls[0]?.[1]?.body)) as Record<string, string[]>;
-    const npc = JSON.parse(String(fetchFn.mock.calls[1]?.[1]?.body)) as Record<string, string[]>;
+    const location = JSON.parse(
+      String(fetchFn.mock.calls[0]?.[1]?.body),
+    ) as Record<string, string[]>;
+    const npc = JSON.parse(String(fetchFn.mock.calls[1]?.[1]?.body)) as Record<
+      string,
+      string[]
+    >;
     expect(location.knownCues).toHaveLength(16);
     expect(location.unmappedCues).toHaveLength(16);
     expect(npc.demographicCues).toHaveLength(8);
@@ -175,6 +191,8 @@ describe("ArtworkDemandReporter", () => {
     reporter.reportFromSummary(sampleSummary, "session-2");
 
     expect(fetchFn).toHaveBeenCalledTimes(4);
-    expect(String(fetchFn.mock.calls[2]?.[1]?.body)).toContain('"type":"location"');
+    expect(String(fetchFn.mock.calls[2]?.[1]?.body)).toContain(
+      '"type":"location"',
+    );
   });
 });

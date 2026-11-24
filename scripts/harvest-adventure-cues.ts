@@ -82,11 +82,17 @@ function isUnmappedCue(cue: string): boolean {
   return !isArtworkCue(CUE_SYNONYMS[cue] ?? cue);
 }
 
-function containsPrivateText(cue: string, privateText: readonly string[]): boolean {
+function containsPrivateText(
+  cue: string,
+  privateText: readonly string[],
+): boolean {
   const normalizedCue = cue.replace(/[^a-z0-9]+/g, " ").trim();
   if (!normalizedCue) return true;
   return privateText.some((text) => {
-    const normalizedText = text.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    const normalizedText = text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, " ")
+      .trim();
     return ` ${normalizedText} `.includes(` ${normalizedCue} `);
   });
 }
@@ -98,9 +104,13 @@ function collectUnmapped(
   const normalized = rawCues.map((raw) =>
     raw.trim().toLowerCase().replace(/\s+/g, " "),
   );
-  return [...new Set(normalized.filter((cue) =>
-    isUnmappedCue(cue) && !containsPrivateText(cue, privateText),
-  ))].sort();
+  return [
+    ...new Set(
+      normalized.filter(
+        (cue) => isUnmappedCue(cue) && !containsPrivateText(cue, privateText),
+      ),
+    ),
+  ].sort();
 }
 
 function matchPlaceId(

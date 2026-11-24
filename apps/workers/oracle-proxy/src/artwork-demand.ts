@@ -33,12 +33,19 @@ const MAX_ASSET_ID_LENGTH = 100;
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 100;
 
-function isWithinCueArrayLimit(raw: readonly unknown[], maxItems: number): boolean {
+function isWithinCueArrayLimit(
+  raw: readonly unknown[],
+  maxItems: number,
+): boolean {
   return raw.length <= maxItems;
 }
 
 function isValidCueValue(normalized: string, pattern: RegExp): boolean {
-  return normalized.length > 0 && normalized.length <= MAX_CUE_LENGTH && pattern.test(normalized);
+  return (
+    normalized.length > 0 &&
+    normalized.length <= MAX_CUE_LENGTH &&
+    pattern.test(normalized)
+  );
 }
 
 export interface ArtworkDemandPayload {
