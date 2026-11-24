@@ -1,25 +1,10 @@
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import {
-  MAX_OOC_ANSWER_CHARS,
+  parseAdventureOocModelReply,
   type AdventureOocRequest,
   type AdventureOocResponse,
 } from "@codex/adventure-engine";
 import type { AdventureAIClient } from "./adventure-turn-generation.service";
-
-function stripCodeFence(text: string): string {
-  return text
-    .trim()
-    .replace(/^```[a-z]*\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
-}
-
-function validateOocReplyLength(answer: string): string {
-  if (answer.length > MAX_OOC_ANSWER_CHARS) {
-    throw new Error("ooc-answer-too-long");
-  }
-  return answer;
-}
 
 function buildOocGeneratePayload(request: AdventureOocRequest) {
   return {
@@ -29,7 +14,7 @@ function buildOocGeneratePayload(request: AdventureOocRequest) {
         parts: [{ text: request.serializedPrompt }],
       },
     ],
-    generationConfig: { responseMimeType: "text/plain" },
+    generationConfig: { responseMimeType: "application/json" },
   };
 }
 
@@ -65,9 +50,9 @@ export class AdventureOocService {
     );
     const raw = result.response.text();
     signal?.throwIfAborted();
-    const answer = validateOocReplyLength(stripCodeFence(raw));
-    if (!answer) throw new Error("empty-ooc-answer");
-    return { kind: "ooc", answer };
+    const parsed = parseAdventureOocModelReply(raw);
+    if (!parsed.answer) throw new Error("empty-ooc-answer");
+    return parsed;
   }
 }
 

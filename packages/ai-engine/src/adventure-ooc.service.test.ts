@@ -64,4 +64,42 @@ describe("AdventureOocService", () => {
       "ooc-answer-too-long",
     );
   });
+
+  it("parses structured OOC JSON replies with classification and decisions", async () => {
+    const generateContent = vi.fn().mockResolvedValue({
+      response: {
+        text: () =>
+          JSON.stringify({
+            answer: "Envoy Ilona Marshall is the council's quest giver.",
+            classification: "established",
+            decisions: [
+              {
+                kind: "person",
+                name: "Envoy Ilona Marshall",
+                summary: "Council quest giver.",
+                visibility: "player-visible",
+              },
+            ],
+          }),
+      },
+    });
+    const service = new AdventureOocService({
+      getModel: vi.fn().mockResolvedValue({ generateContent }),
+    });
+
+    const response = await service.ask(sampleRequest);
+    expect(response).toEqual({
+      kind: "ooc",
+      answer: "Envoy Ilona Marshall is the council's quest giver.",
+      classification: "established",
+      decisions: [
+        {
+          kind: "person",
+          name: "Envoy Ilona Marshall",
+          summary: "Council quest giver.",
+          visibility: "player-visible",
+        },
+      ],
+    });
+  });
 });

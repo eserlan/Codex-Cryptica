@@ -444,4 +444,87 @@ describe("AdventureManager Ask GM (OOC) clarifications", () => {
     );
     expect(revisions).toEqual([2, 3, 4, 5, 6, 7]);
   });
+  it("commits established OOC decisions atomically into provisionalFacts while leaving hypotheticals and leaks uncommitted", async () => {
+    const base = dependencies();
+    let replyIndex = 0;
+    const replies = [
+      {
+        kind: "ooc" as const,
+        answer:
+          "Envoy Ilona Marshall is the council's quest giver at the old weigh-house.",
+        classification: "established" as const,
+        decisions: [
+          {
+            kind: "person" as const,
+            name: "Envoy Ilona Marshall",
+            summary: "Council liaison and quest giver at the old weigh-house.",
+            visibility: "player-visible" as const,
+          },
+        ],
+      },
+      {
+        kind: "ooc" as const,
+        answer:
+          "Hypothetically, a smuggler could have intercepted the message.",
+        classification: "hypothetical" as const,
+        decisions: [
+          {
+            kind: "person" as const,
+            name: "Hypothetical Smuggler",
+            summary: "Should never be committed.",
+            visibility: "player-visible" as const,
+          },
+        ],
+      },
+      {
+        kind: "ooc" as const,
+        answer: "Safe looking reply",
+        classification: "established" as const,
+        decisions: [
+          {
+            kind: "clue" as const,
+            name: "Secret",
+            summary: canarySecretText,
+            visibility: "player-visible" as const,
+          },
+        ],
+      },
+    ];
+    const manager = new AdventureManager({
+      ...base,
+      packages: packageCacheFor(canaryReferencePackage),
+      ooc: {
+        ask: vi.fn(async () => replies[replyIndex++]!),
+      },
+    } as any);
+    await manager.start({
+      ...startInput,
+      sourcePackage: packageRefFor(canaryReferencePackage),
+    });
+    const turnsBefore = manager.session!.turns.length;
+
+    await manager.submitOocQuestion("Who is the quest giver?");
+    expect(manager.session?.turns).toHaveLength(turnsBefore);
+    expect(manager.session?.provisionalFacts).toContainEqual(
+      expect.objectContaining({
+        kind: "person",
+        name: "Envoy Ilona Marshall",
+        provenance: "ooc",
+        sourceOocExchangeId: manager.oocExchanges[0]?.id,
+      }),
+    );
+
+    const factCountAfterEstablished = manager.session!.provisionalFacts.length;
+    await manager.submitOocQuestion("What if the quest giver were a smuggler?");
+    expect(manager.session!.provisionalFacts).toHaveLength(
+      factCountAfterEstablished,
+    );
+
+    await manager.submitOocQuestion("Who is secretly behind this?");
+    expect(manager.session!.provisionalFacts).toHaveLength(
+      factCountAfterEstablished,
+    );
+    expect(manager.oocExchanges.at(-1)?.answer).toBe(OOC_SAFE_SECRET_REPLY);
+    expect(manager.oocExchanges.at(-1)?.classification).toBe("secret-refusal");
+  });
 });

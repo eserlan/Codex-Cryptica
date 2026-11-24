@@ -63,12 +63,36 @@ export const provisionalFactSchema = z.object({
   ]),
   name: text,
   summary: text,
-  introducedOnTurnId: id,
+  introducedOnTurnId: id.optional(),
+  sourceOocExchangeId: id.optional(),
+  provenance: z.enum(["play", "ooc"]).optional(),
   visibility: z.enum(["player-visible", "gm-only"]),
   scenarioId: id.optional(),
 });
 export const newProvisionalFactSchema = provisionalFactSchema
-  .omit({ id: true, introducedOnTurnId: true })
+  .omit({
+    id: true,
+    introducedOnTurnId: true,
+    sourceOocExchangeId: true,
+    provenance: true,
+  })
+  .strict();
+
+export const oocReplyClassificationSchema = z.enum([
+  "established",
+  "hypothetical",
+  "meta-rules",
+  "canon-conflict",
+  "secret-refusal",
+]);
+
+export const newOocDecisionSchema = z
+  .object({
+    kind: provisionalFactSchema.shape.kind,
+    name: text,
+    summary: text,
+    visibility: provisionalFactSchema.shape.visibility,
+  })
   .strict();
 
 export const causalCommitmentSchema = z.object({
