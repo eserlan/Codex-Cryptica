@@ -5,14 +5,22 @@ import type {
 } from "../../../types/vtt";
 import { tokenGeometryChanged } from "./vtt-token-updates";
 
-interface TokenSyncDependencies {
+export type TokenSyncTimerDependencies =
+  | {
+      scheduleTimeout: (callback: () => void, delay: number) => number;
+      cancelTimeout: (timeoutId: number) => void;
+    }
+  | {
+      scheduleTimeout?: never;
+      cancelTimeout?: never;
+    };
+
+type TokenSyncDependencies = {
   emit: (message: VTTMessage) => void;
   persistDraft: () => void;
   queueSessionSnapshotBroadcast: () => void;
   broadcastSessionSnapshotNow: () => void;
-  scheduleTimeout?: (callback: () => void, delay: number) => number;
-  cancelTimeout?: (timeoutId: number) => void;
-}
+} & TokenSyncTimerDependencies;
 
 interface TokenSyncSession {
   tokens: Record<string, Token>;
@@ -45,7 +53,11 @@ export class VTTTokenSync {
   constructor(
     private deps: TokenSyncDependencies,
     private session: TokenSyncSession,
-  ) {}
+  ) {
+    if (Boolean(deps.scheduleTimeout) !== Boolean(deps.cancelTimeout)) {
+      throw new Error("Token sync timeout callbacks must be provided together");
+    }
+  }
 
   publish(message: VTTMessage, silent: boolean) {
     if (silent) this.deps.persistDraft();

@@ -116,6 +116,25 @@ describe("token sync publication", () => {
 });
 
 describe("optimistic token changes", () => {
+  it("rejects an incomplete custom timeout adapter", () => {
+    const timers = createTimerScheduler();
+    const dependencies = {
+      emit: vi.fn(),
+      persistDraft: vi.fn(),
+      queueSessionSnapshotBroadcast: vi.fn(),
+      broadcastSessionSnapshotNow: vi.fn(),
+      scheduleTimeout: timers.scheduleTimeout,
+    };
+    const session = {
+      tokens: createFullEncounterSessionFixture().tokens,
+      updateToken: vi.fn(() => null),
+    };
+
+    expect(() => new VTTTokenSync(dependencies as never, session)).toThrow(
+      "Token sync timeout callbacks must be provided together",
+    );
+  });
+
   it.each(["move", "rotation"] as const)(
     "reverts an unconfirmed %s after 500ms",
     (kind) => {
