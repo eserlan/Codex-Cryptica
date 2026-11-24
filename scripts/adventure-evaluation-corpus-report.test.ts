@@ -173,6 +173,18 @@ describe("adventure evaluation corpus reports", () => {
     ).toBe(true);
     expect(
       isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "truncated" },
+        "unresolved",
+      ),
+    ).toBe(true);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "retained" },
+        "unresolved",
+      ),
+    ).toBe(true);
+    expect(
+      isFalseIntervention(
         { ...unresolvedWithRecovery, status: "omitted" },
         "unresolved",
       ),
@@ -181,6 +193,18 @@ describe("adventure evaluation corpus reports", () => {
       isFalseIntervention(
         { ...unresolvedWithRecovery, status: "unknown" },
         "unresolved",
+      ),
+    ).toBe(false);
+    expect(
+      isFalseIntervention(
+        { recoveryReason: "none", status: "included" },
+        "unresolved",
+      ),
+    ).toBe(false);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "included" },
+        "resolved",
       ),
     ).toBe(false);
   });

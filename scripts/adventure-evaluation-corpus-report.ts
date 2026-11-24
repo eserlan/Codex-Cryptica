@@ -372,19 +372,25 @@ function incrementCount(counts: Record<string, number>, key: string): void {
   counts[key] = (counts[key] ?? 0) + 1;
 }
 
+const DELIVERED_DIRECTOR_STATUSES = new Set([
+  "included",
+  "truncated",
+  "retained",
+]);
+const IGNORED_RECOVERY_REASONS = new Set<string | undefined>([
+  undefined,
+  "",
+  "none",
+]);
+
 export function isFalseIntervention(
   delivery: NonNullable<CorpusTurnReport["generation"]>["directorDelivery"],
   outcome: string,
 ): boolean {
-  if (!delivery || !delivery.recoveryReason) return false;
-  const guidanceWasDelivered =
-    delivery.status === "included" ||
-    delivery.status === "truncated" ||
-    delivery.status === "retained";
+  if (!delivery || outcome !== "unresolved") return false;
   return (
-    guidanceWasDelivered &&
-    delivery.recoveryReason !== "none" &&
-    outcome === "unresolved"
+    !IGNORED_RECOVERY_REASONS.has(delivery.recoveryReason) &&
+    DELIVERED_DIRECTOR_STATUSES.has(delivery.status)
   );
 }
 
