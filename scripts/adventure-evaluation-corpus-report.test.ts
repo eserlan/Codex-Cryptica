@@ -6,6 +6,7 @@ import { prepareCorpusCase } from "./adventure-evaluation-corpus-builder";
 import { evaluatePreparedCorpusCase } from "./adventure-evaluation-corpus-runner";
 import {
   capturePlayerFacingOutputs,
+  isFalseIntervention,
   markdownCorpusReport,
   pairedEvidenceStatus,
   type CapturedPlayerOutput,
@@ -122,9 +123,10 @@ describe("adventure evaluation corpus reports", () => {
   });
 
   it("marks generation failure as blocked and the unreached authored beat absent", async () => {
+    const prepared = quietPath();
     const report = await evaluatePreparedCorpusCase(
       { generate: async () => Promise.reject(new Error("proxy unavailable")) },
-      quietPath(),
+      prepared,
       ADVENTURE_EVALUATION_CONDITIONS[0]!,
       () => ({ ...metrics, modelCalls: 1, completedRequests: 0 }),
     );
@@ -139,6 +141,48 @@ describe("adventure evaluation corpus reports", () => {
     expect(secondTurn.playerFacingOutput).toBe(
       "[no player-facing output generated]",
     );
+    expect(report.traceSummary).toEqual({
+      directorDeliveryCounts: { unknown: 1 },
+      actionOutcomeCounts: { unknown: 1 },
+      actionValidationCounts: { unknown: 1 },
+      unknownTelemetryTurns: 1,
+      repeatedUnchangedSuggestions: 0,
+      falseInterventions: 0,
+    });
+    expect(
+      markdownCorpusReport({
+        generatedAt: "2026-11-24T00:00:00.000Z",
+        samples: 1,
+        evidence: pairedEvidenceStatus([], []),
+        reports: [report],
+      }),
+    ).toMatch(
+      /\| 2 \| .* \| .* \| .* \| not evaluated \| not reached \| not reached \| not reached \|/,
+    );
+  });
+
+  it("counts a false intervention only when Director guidance was delivered", () => {
+    const unresolvedWithRecovery = {
+      recoveryReason: "dialogue",
+    } as const;
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "included" },
+        "unresolved",
+      ),
+    ).toBe(true);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "omitted" },
+        "unresolved",
+      ),
+    ).toBe(false);
+    expect(
+      isFalseIntervention(
+        { ...unresolvedWithRecovery, status: "unknown" },
+        "unresolved",
+      ),
+    ).toBe(false);
   });
 
   it("records scripted provider reset classification on the corrected return step", async () => {

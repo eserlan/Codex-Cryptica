@@ -372,12 +372,20 @@ function incrementCount(counts: Record<string, number>, key: string): void {
   counts[key] = (counts[key] ?? 0) + 1;
 }
 
-function isFalseIntervention(
+export function isFalseIntervention(
   delivery: NonNullable<CorpusTurnReport["generation"]>["directorDelivery"],
   outcome: string,
 ): boolean {
   if (!delivery || !delivery.recoveryReason) return false;
-  return delivery.recoveryReason !== "none" && outcome === "unresolved";
+  const guidanceWasDelivered =
+    delivery.status === "included" ||
+    delivery.status === "truncated" ||
+    delivery.status === "retained";
+  return (
+    guidanceWasDelivered &&
+    delivery.recoveryReason !== "none" &&
+    outcome === "unresolved"
+  );
 }
 
 function recordUnknownTurnTrace(summary: CorpusTraceSummary): void {
@@ -433,7 +441,10 @@ function recordTurnTrace(
   recordGenerationTraceFlags(summary, gen, outcome);
 }
 
-function summarizeCaseTraces(turns: CorpusTurnReport[]): CorpusTraceSummary {
+function summarizeCaseTraces(
+  turns: CorpusTurnReport[],
+  telemetryTurns: number[],
+): CorpusTraceSummary {
   const summary: CorpusTraceSummary = {
     directorDeliveryCounts: {},
     actionOutcomeCounts: {},
@@ -442,8 +453,9 @@ function summarizeCaseTraces(turns: CorpusTurnReport[]): CorpusTraceSummary {
     repeatedUnchangedSuggestions: 0,
     falseInterventions: 0,
   };
+  const reachedTurns = new Set(telemetryTurns);
   for (const turn of turns) {
-    recordTurnTrace(summary, turn);
+    if (reachedTurns.has(turn.turn)) recordTurnTrace(summary, turn);
   }
   return summary;
 }
@@ -478,7 +490,10 @@ export function buildCorpusCaseReport(
       unnecessaryEscalation: result.unnecessaryEscalation,
     },
     progression: result.progression,
-    traceSummary: summarizeCaseTraces(turns),
+    traceSummary: summarizeCaseTraces(
+      turns,
+      result.telemetry.turns.map((turn) => turn.turn),
+    ),
     metrics,
     turns,
   };

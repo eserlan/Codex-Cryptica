@@ -54,7 +54,7 @@ function actionColumn(
 
 function traceColumn(turn: CorpusTurnReport): string {
   const gen = turn.generation;
-  if (!gen) return "unknown / unknown/unknown";
+  if (!gen) return "not reached";
   const delivery = gen.directorDelivery
     ? gen.directorDelivery.status
     : "unknown";
