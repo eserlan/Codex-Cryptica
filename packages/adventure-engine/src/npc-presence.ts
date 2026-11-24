@@ -55,48 +55,87 @@ export function resolvePersonIdForFact(
   return {};
 }
 
+function findUniqueByRecord(
+  sourceRecordId: string | undefined,
+  existingActive: readonly StateFact[],
+): StateFact | undefined {
+  if (!sourceRecordId) return undefined;
+  const matches = existingActive.filter(
+    (e) => e.sourceRecordId === sourceRecordId,
+  );
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function findUniqueByPerson(
+  candidate: Pick<StateFact, "sourceRecordId">,
+  candPersonId: string | undefined,
+  existingActive: readonly StateFact[],
+  people: readonly AdventurePerson[] | undefined,
+): StateFact | undefined {
+  if (!candPersonId) return undefined;
+  const matches = existingActive.filter((e) => {
+    if (hasSourceConflict(candidate, e)) return false;
+    const res = resolvePersonIdForFact(e, people);
+    return !res.ambiguous && res.personId === candPersonId;
+  });
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
+function findUniqueByName(
+  candidate: Pick<StateFact, "text" | "sourceRecordId">,
+  candPersonId: string | undefined,
+  existingActive: readonly StateFact[],
+  people: readonly AdventurePerson[] | undefined,
+): StateFact | undefined {
+  const normName = extractNpcPresenceName(candidate.text).toLowerCase();
+  if (!normName) return undefined;
+  const matches = existingActive.filter((e) => {
+    if (hasSourceConflict(candidate, e)) return false;
+    const ePerson = resolvePersonIdForFact(e, people);
+    if (ePerson.ambiguous) return false;
+    if (candPersonId && ePerson.personId && candPersonId !== ePerson.personId) {
+      return false;
+    }
+    return extractNpcPresenceName(e.text).toLowerCase() === normName;
+  });
+  return matches.length === 1 ? matches[0] : undefined;
+}
+
 function findMatchingActiveCharacter(
   candidate: Pick<StateFact, "text" | "sourceRecordId" | "personId">,
   existingActive: readonly StateFact[],
   people: readonly AdventurePerson[] | undefined,
 ): StateFact | undefined {
-  if (candidate.sourceRecordId) {
-    const byRecord = existingActive.filter(
-      (e) => e.sourceRecordId === candidate.sourceRecordId,
-    );
-    if (byRecord.length === 1) return byRecord[0];
-    if (byRecord.length > 1) return undefined;
-  }
+  const byRecord = findUniqueByRecord(candidate.sourceRecordId, existingActive);
+  if (byRecord) return byRecord;
 
   const candPerson = resolvePersonIdForFact(candidate, people);
   if (candPerson.ambiguous) return undefined;
 
-  if (candPerson.personId) {
-    const byPerson = existingActive.filter((e) => {
-      if (hasSourceConflict(candidate, e)) return false;
-      const res = resolvePersonIdForFact(e, people);
-      return !res.ambiguous && res.personId === candPerson.personId;
-    });
-    if (byPerson.length === 1) return byPerson[0];
-    if (byPerson.length > 1) return undefined;
-  }
+  return (
+    findUniqueByPerson(
+      candidate,
+      candPerson.personId,
+      existingActive,
+      people,
+    ) ??
+    findUniqueByName(candidate, candPerson.personId, existingActive, people)
+  );
+}
 
-  const normName = extractNpcPresenceName(candidate.text).toLowerCase();
-  if (!normName) return undefined;
-  const byName = existingActive.filter((e) => {
-    if (hasSourceConflict(candidate, e)) return false;
-    const ePerson = resolvePersonIdForFact(e, people);
-    if (ePerson.ambiguous) return false;
-    if (
-      candPerson.personId &&
-      ePerson.personId &&
-      candPerson.personId !== ePerson.personId
-    ) {
-      return false;
-    }
-    return extractNpcPresenceName(e.text).toLowerCase() === normName;
-  });
-  return byName.length === 1 ? byName[0] : undefined;
+function pickMergedCues(
+  existingCues: readonly string[] | undefined,
+  incomingCues: readonly string[] | undefined,
+): string[] | undefined {
+  if (incomingCues?.length) return [...incomingCues];
+  if (existingCues?.length) return [...existingCues];
+  return undefined;
+}
+
+function pickMergedText(existingText: string, incomingText: string): string {
+  return incomingText.trim().length >= existingText.trim().length
+    ? incomingText
+    : existingText;
 }
 
 function mergePresenceEntry(
@@ -104,25 +143,17 @@ function mergePresenceEntry(
   incoming: StateFact,
   resolvedPersonId?: string,
 ): StateFact {
-  const cues = incoming.cues?.length
-    ? incoming.cues
-    : existing.cues?.length
-      ? existing.cues
-      : undefined;
+  const cues = pickMergedCues(existing.cues, incoming.cues);
   const sourceRecordId = incoming.sourceRecordId ?? existing.sourceRecordId;
   const personId = incoming.personId ?? existing.personId ?? resolvedPersonId;
-  const text =
-    incoming.text.trim().length >= existing.text.trim().length
-      ? incoming.text
-      : existing.text;
   return {
     ...existing,
     ...incoming,
     id: existing.id,
-    text,
+    text: pickMergedText(existing.text, incoming.text),
     ...(sourceRecordId ? { sourceRecordId } : {}),
     ...(personId ? { personId } : {}),
-    ...(cues ? { cues: [...cues] } : {}),
+    ...(cues ? { cues } : {}),
   };
 }
 
@@ -183,6 +214,19 @@ export function deduplicateActiveCharactersPatch(
   };
 }
 
+function mergeReconciledPair(newer: StateFact, older: StateFact): StateFact {
+  const cues = pickMergedCues(older.cues, newer.cues);
+  const sourceRecordId = newer.sourceRecordId ?? older.sourceRecordId;
+  const personId = newer.personId ?? older.personId;
+  return {
+    ...newer,
+    text: pickMergedText(older.text, newer.text),
+    ...(sourceRecordId ? { sourceRecordId } : {}),
+    ...(personId ? { personId } : {}),
+    ...(cues ? { cues } : {}),
+  };
+}
+
 /**
  * Safe, idempotent reconciliation for sessions that already contain duplicate
  * `activeCharacters` entries for the same unambiguous person. Keeps the most
@@ -201,7 +245,6 @@ export function reconcileDuplicateActiveCharacters(
     const personId = resolvePersonIdForFact(entry, people).personId;
     const enriched =
       personId && !entry.personId ? { ...entry, personId } : entry;
-
     const newerMatch = findMatchingActiveCharacter(
       enriched,
       keptReverse,
@@ -209,31 +252,10 @@ export function reconcileDuplicateActiveCharacters(
     );
     if (newerMatch) {
       const idx = keptReverse.indexOf(newerMatch);
-      // `newerMatch` is the later entry, so it stays primary for placeId/text,
-      // while inheriting any missing cues/sourceRecordId/personId from `enriched`.
-      keptReverse[idx] = mergePresenceEntry(
-        {
-          ...newerMatch,
-          text:
-            newerMatch.text.trim().length >= enriched.text.trim().length
-              ? newerMatch.text
-              : enriched.text,
-        },
-        newerMatch,
-        enriched.personId ?? newerMatch.personId,
-      );
-      if (!keptReverse[idx]!.cues?.length && enriched.cues?.length) {
-        keptReverse[idx] = { ...keptReverse[idx]!, cues: [...enriched.cues] };
-      }
-      if (!keptReverse[idx]!.sourceRecordId && enriched.sourceRecordId) {
-        keptReverse[idx] = {
-          ...keptReverse[idx]!,
-          sourceRecordId: enriched.sourceRecordId,
-        };
-      }
-      continue;
+      keptReverse[idx] = mergeReconciledPair(newerMatch, enriched);
+    } else {
+      keptReverse.push(enriched);
     }
-    keptReverse.push(enriched);
   }
 
   return keptReverse.reverse();
