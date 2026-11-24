@@ -108,6 +108,11 @@ describe("summarizeArtworkCues", () => {
 
     expect(summary).toEqual({
       genre: "fantasy",
+      atmosphere: {
+        cues: ["busy"],
+        unmappedCues: [],
+        match: null,
+      },
       place: {
         name: "Kettleford",
         cues: ["village", "river", "busy"],
@@ -160,5 +165,75 @@ describe("summarizeArtworkCues", () => {
     );
 
     expect(summary?.place?.match).toBe("loc-fantasy-river-01");
+  });
+
+  it("summarizes scene, atmosphere, and Creature/monster entries separately from NPCs", () => {
+    const summary = summarizeArtworkCues(
+      {
+        vaultId: "v1",
+        currentPlaceId: "p1",
+        places: [
+          {
+            id: "p1",
+            name: "Flooded Crypt",
+            cues: ["ruins", "ominous", "night"],
+          },
+        ],
+        visibleState: {
+          situation: {
+            id: "situation-1",
+            text: "Exploring dark ruins at night in the rain.",
+            source: "provisional",
+            cues: [],
+          },
+          activeCharacters: [
+            {
+              id: "m1",
+              text: "Salt Stalker, a blind reef aberration.",
+              source: "canonical",
+              sourceRecordId: "ent-monster-1",
+              cues: ["monster", "salt-stalker"],
+            },
+            {
+              id: "c1",
+              text: "Ivenna Surr, human scholar.",
+              source: "provisional",
+              cues: ["human", "scholar"],
+            },
+          ],
+        },
+      },
+      "v1",
+      {
+        "ent-monster-1": {
+          id: "ent-monster-1",
+          type: "creature",
+          title: "Salt Stalker",
+          aliases: ["Salt-Stalker"],
+        },
+      },
+      true,
+      "fantasy",
+      [locationAsset],
+    );
+
+    expect(summary?.atmosphere).toEqual({
+      cues: ["ominous", "night", "rain"],
+      unmappedCues: [],
+      match: null,
+    });
+    expect(summary?.scene?.cues).toContain("ruins");
+    expect(summary?.scene?.cues).toContain("night");
+    expect(summary?.npcs.map((n) => n.name)).toEqual(["Ivenna Surr"]);
+    expect(summary?.monsters).toEqual([
+      {
+        name: "Salt Stalker",
+        cues: [],
+        unmappedCues: ["monster"],
+        match: null,
+      },
+    ]);
+    expect(summary?.monsters?.[0]?.unmappedCues).not.toContain("salt stalker");
+    expect(summary?.monsters?.[0]?.unmappedCues).not.toContain("salt-stalker");
   });
 });

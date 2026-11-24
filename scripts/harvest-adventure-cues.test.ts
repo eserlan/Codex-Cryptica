@@ -24,7 +24,7 @@ describe("harvestSnapshot", () => {
       },
     });
 
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
     expect(items[0]).toMatchObject({
       type: "location",
       genre: "fantasy",
@@ -32,6 +32,11 @@ describe("harvestSnapshot", () => {
       unmappedCues: ["salt garden"],
     });
     expect(items[1]).toMatchObject({
+      type: "atmosphere",
+      genre: "fantasy",
+      knownCues: ["day", "ominous"],
+    });
+    expect(items[2]).toMatchObject({
       type: "npc",
       genre: "fantasy",
       knownCues: ["human", "scholar"],
@@ -42,15 +47,58 @@ describe("harvestSnapshot", () => {
     expect(JSON.stringify(items)).not.toContain("Twelve-Reed");
   });
 
-  it("skips empty places and characters cleanly", () => {
-    expect(
-      harvestSnapshot({
-        state: {
-          places: [{ id: "p2", name: "Xyzzy", cues: [] }],
-          visibleState: { activeCharacters: [] },
+  it("classifies monster/creature entries separately from NPCs", () => {
+    const items = harvestSnapshot({
+      state: {
+        places: [],
+        visibleState: {
+          activeCharacters: [
+            {
+              id: "m1",
+              text: "Salt Stalker",
+              cues: ["monster", "salt-stalker"],
+            },
+          ],
         },
-      }),
-    ).toEqual([]);
+      },
+    });
+    expect(items).toEqual([
+      {
+        type: "monster",
+        genre: "fantasy",
+        knownCues: [],
+        unmappedCues: ["monster"],
+        demographicCues: [],
+        matchedAssetId: null,
+      },
+    ]);
+  });
+
+  it("extracts scene cues from the active visible situation and place", () => {
+    const items = harvestSnapshot({
+      state: {
+        currentPlaceId: "p1",
+        places: [
+          { id: "p1", name: "Flooded Crypt", cues: ["ruins", "ominous"] },
+        ],
+        visibleState: {
+          situation: {
+            id: "s1",
+            text: "The party explores the crypt at night.",
+            cues: [],
+          },
+          activeCharacters: [],
+        },
+      },
+    });
+
+    expect(items.find((item) => item.type === "scene")).toMatchObject({
+      type: "scene",
+      knownCues: expect.arrayContaining(["ruins", "ominous", "night"]),
+      matchedAssetId: "scene-fantasy-delve-01",
+    });
+    expect(JSON.stringify(items)).not.toContain("Flooded Crypt");
+    expect(JSON.stringify(items)).not.toContain("party explores");
   });
 
   it("filters place and character names repeated in structured cues", () => {
@@ -75,5 +123,16 @@ describe("harvestSnapshot", () => {
     expect(items[1]?.unmappedCues).toEqual([]);
     expect(JSON.stringify(items)).not.toContain("kettleford");
     expect(JSON.stringify(items)).not.toContain("mira vale");
+  });
+
+  it("skips empty places and characters cleanly", () => {
+    expect(
+      harvestSnapshot({
+        state: {
+          places: [{ id: "p2", name: "Xyzzy", cues: [] }],
+          visibleState: { activeCharacters: [] },
+        },
+      }),
+    ).toEqual([]);
   });
 });

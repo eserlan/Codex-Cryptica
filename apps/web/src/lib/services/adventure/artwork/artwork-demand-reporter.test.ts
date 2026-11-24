@@ -31,6 +31,7 @@ describe("ArtworkDemandReporter", () => {
       isOnline: () => true,
     });
     disabled.reportFromSummary(sampleSummary, "session-1");
+    disabled.reportFromSummary(sampleSummary, null);
     expect(fetchFn).not.toHaveBeenCalled();
 
     const offline = new ArtworkDemandReporter({
@@ -85,6 +86,50 @@ describe("ArtworkDemandReporter", () => {
     expect(JSON.stringify(secondCallBody)).not.toContain("Ivenna");
   });
 
+  it("forwards scene, atmosphere, and monster payloads without leaking names", () => {
+    const fetchFn = vi.fn<
+      (input: string, init?: RequestInit) => Promise<Response>
+    >(async () => new Response("{}", { status: 200 }));
+    const reporter = new ArtworkDemandReporter({
+      fetchFn,
+      resolveProxyUrl: () => "https://oracle-proxy.test",
+      isEnabled: () => true,
+      isOnline: () => true,
+    });
+
+    reporter.reportFromSummary(
+      {
+        genre: "fantasy",
+        place: null,
+        npcs: [],
+        scene: { cues: ["ruins", "night"], unmappedCues: [], match: null },
+        atmosphere: {
+          cues: ["ominous", "rain"],
+          unmappedCues: [],
+          match: "atmo-fantasy-ominous-01",
+        },
+        monsters: [
+          {
+            name: "Salt Stalker",
+            cues: [],
+            unmappedCues: ["monster"],
+            match: null,
+          },
+        ],
+      },
+      "session-1",
+    );
+
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    const types = fetchFn.mock.calls.map(
+      (call) => (JSON.parse(String(call[1]?.body)) as { type: string }).type,
+    );
+    expect(types).toEqual(["scene", "atmosphere", "monster"]);
+    expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("Salt Stalker");
+    expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("salt stalker");
+    expect(JSON.stringify(fetchFn.mock.calls)).not.toContain("salt-stalker");
+  });
+
   it("bounds cue arrays to the worker limits before sending", () => {
     const fetchFn = vi.fn<
       (input: string, init?: RequestInit) => Promise<Response>
@@ -95,38 +140,42 @@ describe("ArtworkDemandReporter", () => {
       isEnabled: () => true,
       isOnline: () => true,
     });
-    const denseSummary: ArtworkCueIndicator = {
-      genre: "fantasy",
-      place: {
-        name: "Private place name",
-        cues: Array.from({ length: 17 }, (_, index) => `cue-${index}`),
-        unmappedCues: Array.from(
-          { length: 17 },
-          (_, index) => `unknown ${index}`,
-        ),
-        match: null,
-      },
-      npcs: [
-        {
-          name: "Private character name",
-          cues: [],
-          demographicCues: ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+
+    reporter.reportFromSummary(
+      {
+        genre: "fantasy",
+        place: {
+          name: "Private place name",
+          cues: Array.from({ length: 17 }, (_, index) => `cue-${index}`),
+          unmappedCues: Array.from(
+            { length: 17 },
+            (_, index) => `unknown ${index}`,
+          ),
           match: null,
         },
-      ],
-    };
+        npcs: [
+          {
+            name: "Private character name",
+            cues: [],
+            unmappedCues: [],
+            demographicCues: ["a", "b", "c", "d", "e", "f", "g", "h", "i"],
+            match: null,
+          },
+        ],
+      },
+      "session-1",
+    );
 
-    reporter.reportFromSummary(denseSummary, "session-1");
-
-    const locationBody = JSON.parse(
+    const location = JSON.parse(
       String(fetchFn.mock.calls[0]?.[1]?.body),
     ) as Record<string, string[]>;
-    const npcBody = JSON.parse(
-      String(fetchFn.mock.calls[1]?.[1]?.body),
-    ) as Record<string, string[]>;
-    expect(locationBody.knownCues).toHaveLength(16);
-    expect(locationBody.unmappedCues).toHaveLength(16);
-    expect(npcBody.demographicCues).toHaveLength(8);
+    const npc = JSON.parse(String(fetchFn.mock.calls[1]?.[1]?.body)) as Record<
+      string,
+      string[]
+    >;
+    expect(location.knownCues).toHaveLength(16);
+    expect(location.unmappedCues).toHaveLength(16);
+    expect(npc.demographicCues).toHaveLength(8);
   });
 
   it("deduplicates within a session and reports again in a new session", () => {
@@ -145,6 +194,8 @@ describe("ArtworkDemandReporter", () => {
     reporter.reportFromSummary(sampleSummary, "session-2");
 
     expect(fetchFn).toHaveBeenCalledTimes(4);
-    expect(String(fetchFn.mock.calls[2]?.[1]?.body)).not.toContain("session-2");
+    expect(String(fetchFn.mock.calls[2]?.[1]?.body)).toContain(
+      '"type":"location"',
+    );
   });
 });

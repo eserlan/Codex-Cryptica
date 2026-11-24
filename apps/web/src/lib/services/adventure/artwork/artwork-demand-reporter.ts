@@ -3,7 +3,7 @@ import { featureFlags } from "#lib/stores/feature-flags.svelte.js";
 import type { ArtworkCueIndicator } from "./artwork-cue-summary";
 
 export interface ArtworkDemandReportPayload {
-  type: "location" | "npc";
+  type: "location" | "npc" | "scene" | "atmosphere" | "monster";
   genre: string;
   knownCues: string[];
   unmappedCues: string[];
@@ -62,6 +62,13 @@ export class ArtworkDemandReporter {
   private readonly isOnline: () => boolean;
   private readonly isEnabled: () => boolean;
 
+  private prepareSession(sessionId: string | null): boolean {
+    if (sessionId === this.activeSessionId) return sessionId !== null;
+    this.sentSignatures.clear();
+    this.activeSessionId = sessionId;
+    return sessionId !== null;
+  }
+
   constructor(deps: ArtworkDemandReporterDeps = {}) {
     this.fetchFn = deps.fetchFn ?? ((input, init) => fetch(input, init));
     this.resolveProxyUrl = deps.resolveProxyUrl ?? resolveOracleProxyUrl;
@@ -86,41 +93,61 @@ export class ArtworkDemandReporter {
     void this.send(payload);
   }
 
+  private enqueueSlot(
+    type: ArtworkDemandReportPayload["type"],
+    genre: string,
+    slot: {
+      cues: readonly string[];
+      unmappedCues?: readonly string[];
+      demographicCues?: readonly string[];
+      match: string | null;
+    },
+  ): void {
+    this.enqueuePayload({
+      type,
+      genre,
+      knownCues: boundedCues(slot.cues, MAX_CUE_ITEMS),
+      unmappedCues: boundedCues(slot.unmappedCues, MAX_CUE_ITEMS),
+      demographicCues: boundedCues(
+        slot.demographicCues,
+        MAX_DEMOGRAPHIC_CUE_ITEMS,
+      ),
+      matchedAssetId: normalizeCatalogueMatchId(slot.match),
+    });
+  }
+
+  private enqueueAll(
+    type: ArtworkDemandReportPayload["type"],
+    genre: string,
+    slots: readonly {
+      cues: readonly string[];
+      unmappedCues?: readonly string[];
+      demographicCues?: readonly string[];
+      match: string | null;
+    }[],
+  ): void {
+    for (const slot of slots) {
+      this.enqueueSlot(type, genre, slot);
+    }
+  }
+
   reportFromSummary(
     summary: ArtworkCueIndicator | null,
     sessionId: string | null,
   ): void {
-    if (sessionId !== this.activeSessionId) {
-      this.sentSignatures.clear();
-      this.activeSessionId = sessionId;
-    }
-    if (!sessionId) return;
+    if (!this.prepareSession(sessionId)) return;
     if (!summary || !this.isEnabled() || !this.isOnline()) return;
 
-    if (summary.place) {
-      this.enqueuePayload({
-        type: "location",
-        genre: summary.genre,
-        knownCues: boundedCues(summary.place.cues, MAX_CUE_ITEMS),
-        unmappedCues: boundedCues(summary.place.unmappedCues, MAX_CUE_ITEMS),
-        demographicCues: [],
-        matchedAssetId: normalizeCatalogueMatchId(summary.place.match),
-      });
+    const singleSlots = [
+      { type: "location", slot: summary.place },
+      { type: "scene", slot: summary.scene },
+      { type: "atmosphere", slot: summary.atmosphere },
+    ] as const;
+    for (const { type, slot } of singleSlots) {
+      if (slot) this.enqueueSlot(type, summary.genre, slot);
     }
-
-    for (const npc of summary.npcs) {
-      this.enqueuePayload({
-        type: "npc",
-        genre: summary.genre,
-        knownCues: boundedCues(npc.cues, MAX_CUE_ITEMS),
-        unmappedCues: boundedCues(npc.unmappedCues, MAX_CUE_ITEMS),
-        demographicCues: boundedCues(
-          npc.demographicCues,
-          MAX_DEMOGRAPHIC_CUE_ITEMS,
-        ),
-        matchedAssetId: normalizeCatalogueMatchId(npc.match),
-      });
-    }
+    this.enqueueAll("npc", summary.genre, summary.npcs);
+    this.enqueueAll("monster", summary.genre, summary.monsters ?? []);
   }
 
   private async send(payload: ArtworkDemandReportPayload): Promise<void> {

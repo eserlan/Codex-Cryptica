@@ -970,7 +970,6 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
       updated: [],
       removedIds: [],
     });
-
     const parsedFull = JSON.parse(full.text);
     expect(parsedFull.summary.ooc).toEqual({
       totalExchanges: 1,
