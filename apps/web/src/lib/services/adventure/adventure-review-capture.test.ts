@@ -997,7 +997,6 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
         playerAction: "Who is your employer?",
         narration:
           'Servant: "Master Vale; the steward is inside. I don\'t know the other household."',
-        progress: undefined,
       },
       {
         ...session.turns[0]!,
@@ -1005,7 +1004,6 @@ describe("Adventure diagnostic generation metadata (#5112)", () => {
         playerAction: "Where was the order returned, and who saw it?",
         narration:
           "Steward names the office, recipient and time, but cannot identify additional witnesses.",
-        progress: undefined,
       },
     ];
 

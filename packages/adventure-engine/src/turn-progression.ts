@@ -140,26 +140,28 @@ function extractQuotedSegments(narration: string): Set<string> {
   return quoted;
 }
 
+function isExcludedClause(cleaned: string): boolean {
+  return (
+    !cleaned ||
+    isTurnNonAnswer(cleaned) ||
+    WITNESS_DEFLECTION_RE.test(cleaned) ||
+    NEGATIVE_FINDING_RE.test(cleaned) ||
+    SPEAKER_FRAMING_RE.test(cleaned) ||
+    REDIRECT_ONLY_RE.test(cleaned)
+  );
+}
+
 function isSubstantiveAffirmativeClause(
   rawClause: string,
   inQuotes: boolean,
   actionTopic: ReadonlySet<string>,
 ): boolean {
   const cleaned = stripSurroundingQuotes(rawClause);
-  if (!cleaned) return false;
-  if (isTurnNonAnswer(cleaned) || WITNESS_DEFLECTION_RE.test(cleaned)) {
+  if (isExcludedClause(cleaned) || contentWordCount(cleaned) < 2) {
     return false;
   }
-  if (NEGATIVE_FINDING_RE.test(cleaned)) return false;
-  if (SPEAKER_FRAMING_RE.test(cleaned) || REDIRECT_ONLY_RE.test(cleaned)) {
-    return false;
-  }
-  if (contentWordCount(cleaned) < 2) return false;
   if (inQuotes || ANSWER_DELIVERY_RE.test(cleaned)) return true;
-  for (const word of threadTopicWords(cleaned)) {
-    if (actionTopic.has(word)) return true;
-  }
-  return false;
+  return [...threadTopicWords(cleaned)].some((word) => actionTopic.has(word));
 }
 
 const SUMMON_REQUEST_RE =
