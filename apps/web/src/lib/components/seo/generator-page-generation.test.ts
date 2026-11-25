@@ -1032,6 +1032,20 @@ describe("offline magic item wiring", () => {
     expect(output.lore).toContain("**🧭 Scope**: ");
   });
 
+  it("keeps the artifact campaign context and form choices in the offline draft", async () => {
+    const output = await generateLocally("artifact-generator", {
+      artifact: {
+        campaignContext: "The Salt Guild of Brindel",
+        curseCost: "None (Pure Burden of Custody)",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("The Salt Guild of Brindel");
+    expect(output.lore).toContain("no supernatural price");
+    expect(output.lore).toContain("- **Setting / Theme**: Classic Fantasy");
+  });
+
   it("keeps the faction campaign context in the offline GM notes", async () => {
     const output = await generateLocally("faction", {
       faction: {
