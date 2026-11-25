@@ -1,0 +1,133 @@
+import { describe, expect, it } from "vitest";
+import {
+  SLUG_GUIDES,
+  defaultGuideForSlug,
+  getGeneratorGuide,
+} from "./generator-page-guides";
+import type { GeneratorGuide } from "./generator-page-guides";
+
+/**
+ * Length of the word runs compared between guides. Long enough that ordinary
+ * shared phrasing ("the rest of the party") does not trip it, short enough
+ * that a template sentence with only the generator name swapped still shares
+ * several runs with its source.
+ */
+const SHINGLE_WORDS = 8;
+
+function guideWords(guide: GeneratorGuide): string[] {
+  return [guide.summary, ...guide.tips.map((tip) => tip.detail)]
+    .join(" ")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function shingles(words: string[]): Set<string> {
+  const runs = new Set<string>();
+  for (let i = 0; i + SHINGLE_WORDS <= words.length; i += 1) {
+    runs.add(words.slice(i, i + SHINGLE_WORDS).join(" "));
+  }
+  return runs;
+}
+
+/**
+ * Returns each word run that appears in more than one slug's guide. Catches
+ * copied sentences and name-swapped templates, which differ only in a word or
+ * two and so still share most of their runs.
+ */
+function findSharedGuideCopy(guides: Record<string, GeneratorGuide>) {
+  const owners = new Map<string, Set<string>>();
+  for (const [slug, guide] of Object.entries(guides)) {
+    for (const run of shingles(guideWords(guide))) {
+      const set = owners.get(run) ?? new Set<string>();
+      set.add(slug);
+      owners.set(run, set);
+    }
+  }
+  return [...owners.entries()]
+    .filter(([, slugs]) => slugs.size > 1)
+    .map(([run, slugs]) => ({ run, slugs: [...slugs].sort() }));
+}
+
+function guide(summary: string, detail = "A short tip."): GeneratorGuide {
+  return { summary, tips: [{ title: "Tip", detail }] };
+}
+
+describe("generator guide distinctness", () => {
+  it("has no copy shared across specific guides", () => {
+    expect(
+      findSharedGuideCopy(SLUG_GUIDES as Record<string, GeneratorGuide>),
+    ).toEqual([]);
+  });
+
+  it("has no copy shared with the fallback template", () => {
+    // The template is the same for every slug, so one copy is enough to
+    // compare against. Its title is a placeholder that no real guide uses.
+    const template = defaultGuideForSlug("tome" as never, "Placeholder Title");
+    expect(
+      findSharedGuideCopy({
+        ...(SLUG_GUIDES as Record<string, GeneratorGuide>),
+        "fallback-template": template,
+      }).filter((hit) => hit.slugs.includes("fallback-template")),
+    ).toEqual([]);
+  });
+
+  it("detects a new guide that copies a fallback template sentence", () => {
+    const template = defaultGuideForSlug("tome" as never, "Placeholder Title");
+    const copied = guide("A new guide for the tome.", template.tips[0].detail);
+    const found = findSharedGuideCopy({
+      "fallback-template": template,
+      tome: copied,
+    });
+    expect(found.length).toBeGreaterThan(0);
+    expect(found[0].slugs).toEqual(["fallback-template", "tome"]);
+  });
+
+  it("detects a sentence copied between two guides", () => {
+    const shared =
+      "Pick two or three bodies where rival factions or scarce resources collide, and leave the rest as landmarks.";
+    const found = findSharedGuideCopy({
+      "star-system": guide("A system guide.", shared),
+      "ship-generator": guide("A ship guide.", shared),
+    });
+    expect(found.length).toBeGreaterThan(0);
+    expect(found[0].slugs).toEqual(["ship-generator", "star-system"]);
+  });
+
+  it("detects a name-swapped template sentence", () => {
+    const template = (name: string) =>
+      `Use the ${name} to draft a structured, system-agnostic starting point you can drop straight into prep or live play.`;
+    const found = findSharedGuideCopy({
+      tome: guide(template("Tome Generator")),
+      "ship-generator": guide(template("Ship Generator")),
+    });
+    expect(found.length).toBeGreaterThan(0);
+    expect(found[0].slugs).toEqual(["ship-generator", "tome"]);
+  });
+
+  it("allows short phrases that any two guides might share", () => {
+    expect(
+      findSharedGuideCopy({
+        a: guide("Roll once, then keep what fits your table."),
+        b: guide("Roll once, then cut anything your players will skip."),
+      }),
+    ).toEqual([]);
+  });
+
+  it("serves every specific guide instead of the template", () => {
+    for (const [slug, specific] of Object.entries(SLUG_GUIDES)) {
+      expect(getGeneratorGuide(slug as never, "Any Title")).toBe(specific);
+    }
+    expect(Object.keys(SLUG_GUIDES)).toContain("magic-item");
+  });
+
+  it("returns a specific guide for a slug that has one, and the template otherwise", () => {
+    expect(
+      getGeneratorGuide("star-system", "Star System Generator").summary,
+    ).toContain("playable region map");
+    expect(getGeneratorGuide("tome", "Tome Generator").summary).toContain(
+      "Tome Generator",
+    );
+  });
+});
