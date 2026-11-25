@@ -156,6 +156,17 @@ describe("generateFactionLocal offline wording", () => {
     );
   });
 
+  it.each([
+    ["Union Rapid Response Unit", "a union rapid response unit"],
+    ["NHP Research Consortium", "an nhp research consortium"],
+  ])("uses the spoken article for %s", (type, phrase) => {
+    const out = generateFactionLocal(
+      { theme: "Lancer", type, scope },
+      seededRng(3),
+    );
+    expect(out.content).toContain(` is ${phrase} `);
+  });
+
   it("describes the scope as a place without a 'level' suffix", () => {
     const out = generateFactionLocal({ theme: "Pirate", scope }, seededRng(3));
     expect(out.summary).toContain("operating across the single city.");
