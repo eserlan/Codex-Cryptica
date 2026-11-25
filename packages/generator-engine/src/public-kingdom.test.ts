@@ -49,6 +49,19 @@ describe("generateKingdomLocal", () => {
     expect(out.lore).toContain("Common but regulated");
   });
 
+  it("treats blank option values as unset instead of printing them", () => {
+    const out = generateKingdomLocal(
+      { polityType: "  ", scale: " ", magicLevel: "" },
+      seededRng(8),
+    );
+    expect(out.summary).not.toMatch(/^An? {2}|^A in/);
+    expect(out.lore).toContain("- **Scale**: Mid-sized nation");
+    expect(out.lore).toContain("- **Magic Level**: Common but regulated");
+    expect(kingdomConfig.polityTypes).toContain(
+      out.lore.match(/\*\*Polity Type\*\*: (.*)/)?.[1],
+    );
+  });
+
   it("leaves out the Campaign Context section when no context is given", () => {
     const out = generateKingdomLocal({ campaignContext: "   " }, seededRng(2));
     expect(out.lore).not.toContain("### Campaign Context");

@@ -119,14 +119,18 @@ function resolveKingdom(
   rng: Rng,
 ): ResolvedKingdom {
   return {
-    polityType: options.polityType || pickFrom(kingdomConfig.polityTypes, rng),
+    polityType:
+      options.polityType?.trim() || pickFrom(kingdomConfig.polityTypes, rng),
     governmentStyle:
-      options.governmentStyle || pickFrom(kingdomConfig.governmentStyles, rng),
-    geography: options.geography || pickFrom(kingdomConfig.geographies, rng),
-    scale: options.scale || kingdomConfig.scales[2],
+      options.governmentStyle?.trim() ||
+      pickFrom(kingdomConfig.governmentStyles, rng),
+    geography:
+      options.geography?.trim() || pickFrom(kingdomConfig.geographies, rng),
+    scale: options.scale?.trim() || kingdomConfig.scales[2],
     conflictLevel:
-      options.conflictLevel || pickFrom(kingdomConfig.conflictLevels, rng),
-    magicLevel: options.magicLevel || kingdomConfig.magicLevels[2],
+      options.conflictLevel?.trim() ||
+      pickFrom(kingdomConfig.conflictLevels, rng),
+    magicLevel: options.magicLevel?.trim() || kingdomConfig.magicLevels[2],
     campaignContext: options.campaignContext?.trim() || undefined,
     namingDirective: pickFrom(KINGDOM_NAMING_STYLES, rng),
     varianceSeed: Math.floor(rng() * 99991) + 10,
