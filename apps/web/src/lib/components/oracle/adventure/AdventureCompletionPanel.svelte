@@ -123,7 +123,7 @@
   <div class="mt-4 flex flex-wrap items-center gap-2">
     <button
       type="button"
-      class="inline-flex min-h-10 items-center gap-1.5 rounded-md bg-theme-primary px-3.5 py-2 text-sm font-semibold text-theme-on-primary transition hover:ring-2 hover:ring-theme-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary motion-reduce:transition-none"
+      class="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-theme-text bg-theme-surface px-3.5 py-2 text-sm font-semibold text-theme-text transition hover:ring-2 hover:ring-theme-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary motion-reduce:transition-none"
       disabled={busy}
       onclick={() => void onContinue()}
     >

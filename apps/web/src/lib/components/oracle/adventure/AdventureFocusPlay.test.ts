@@ -630,6 +630,93 @@ describe("AdventureFocusPlay", () => {
     });
   });
 
+  it("does not close or archive a different session if it changes during acknowledgement", async () => {
+    let resolveAck!: () => void;
+    const activeManager = manager();
+    activeManager.session = {
+      ...activeManager.session,
+      status: "active",
+      revision: 1,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      acknowledgedOutcomeIds: [],
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [],
+      visibleState: {
+        ...activeManager.session.visibleState,
+        knownFacts: [{ id: "impact-1", text: "The eastern gate is open." }],
+      },
+      turns: [{ id: "turn-complete" }],
+      emergentThreads: [
+        {
+          id: "thread-1",
+          status: "resolved",
+          goal: "Open the eastern gate",
+          outcome: {
+            result: "achieved",
+            reason: "The gate was opened.",
+            sourceTurnId: "turn-complete",
+            supportingFactIds: ["impact-1"],
+            supportingCommitmentIds: [],
+            recordedAt: "2026-01-01T00:00:00.000Z",
+            sequence: 1,
+          },
+        },
+      ],
+    };
+    activeManager.acknowledgeCompletion = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          resolveAck = resolve;
+        }),
+    );
+    vi.spyOn(repository, "list").mockResolvedValue({
+      effectiveActiveId: "adventure-1",
+      entries: [
+        {
+          id: "adventure-2",
+          title: "Another adventure",
+          status: "active",
+          loadCondition: "normal",
+        },
+      ],
+    });
+
+    render(AdventureFocusPlay, { props: props({ manager: activeManager }) });
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Adventure tools" }),
+    );
+    expect(
+      await screen.findByRole("button", {
+        name: "Resume active adventure Another adventure",
+      }),
+    ).toBeTruthy();
+    await fireEvent.click(
+      within(screen.getByTestId("adventure-completion-panel")).getByRole(
+        "button",
+        { name: "Finish for now" },
+      ),
+    );
+
+    const managementButton = screen.getByTestId(
+      "adventure-management-menu-button",
+    ) as HTMLButtonElement;
+    expect(managementButton.disabled).toBe(true);
+    expect(
+      screen.queryByRole("button", {
+        name: "Resume active adventure Another adventure",
+      }),
+    ).toBeNull();
+
+    activeManager.session = { ...activeManager.session, id: "adventure-2" };
+    resolveAck();
+
+    await waitFor(() => {
+      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+    });
+    expect(activeManager.end).not.toHaveBeenCalled();
+    expect(activeManager.close).not.toHaveBeenCalled();
+  });
+
   it("lets Escape close an active nested discoveries dialog before dismissing completion", async () => {
     const activeManager = manager();
     activeManager.session = {

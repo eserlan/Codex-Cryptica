@@ -227,9 +227,11 @@
     eventId: string,
   ): Promise<void> {
     if (completionActionBusy) return;
+    const completionSessionId = manager.session?.id;
     completionActionBusy = true;
     try {
       await dismissCompletion(eventId, false);
+      if (manager.session?.id !== completionSessionId) return;
       await manager.close();
     } catch {
       notificationStore.notify(
@@ -243,9 +245,11 @@
 
   async function handleFinishFromCompletion(eventId: string): Promise<void> {
     if (completionActionBusy) return;
+    const completionSessionId = manager.session?.id;
     completionActionBusy = true;
     try {
       await dismissCompletion(eventId, false);
+      if (manager.session?.id !== completionSessionId) return;
       await manager.end();
     } catch {
       notificationStore.notify(
@@ -553,6 +557,7 @@
   <AdventureArchive
     {repository}
     {vaultId}
+    disabled={completionActionBusy}
     {onResume}
     {onResumeArchived}
     listEntries={listAdventureSessions}
@@ -727,6 +732,7 @@
             {manager}
             {repository}
             {vaultId}
+            disabled={completionActionBusy}
             listEntries={listAdventureSessions}
             onSwitch={onResume}
             onAction={invalidateAdventureSessions}
@@ -908,6 +914,7 @@
             {manager}
             {repository}
             {vaultId}
+            disabled={completionActionBusy}
             listEntries={listAdventureSessions}
             onSwitch={onResume}
             onAction={closeTools}

@@ -24,6 +24,7 @@
   let {
     repository,
     vaultId,
+    disabled = false,
     onResume,
     onResumeArchived,
     confirm = (options) => notificationStore.confirm(options),
@@ -31,6 +32,7 @@
   }: {
     repository: AdventureSessionRepository;
     vaultId: string;
+    disabled?: boolean;
     onResume?: (sessionId: string) => Promise<void>;
     onResumeArchived?: (sessionId: string) => Promise<void>;
     confirm?: Confirm;
@@ -241,8 +243,12 @@
           onCancelRename={cancelRename}
           onStartRename={() => startRename(entry)}
           onDuplicate={() => void duplicateAdventure(entry)}
-          onResume={onResume ? () => void onResume(entry.id) : undefined}
-          onResumeArchived={() => void resumeArchivedAdventure(entry)}
+          onResume={!disabled && onResume
+            ? () => void onResume(entry.id)
+            : undefined}
+          onResumeArchived={!disabled
+            ? () => void resumeArchivedAdventure(entry)
+            : undefined}
           onDelete={() => void deleteAdventure(entry)}
           onOpen={() => void open(entry.id)}
         />

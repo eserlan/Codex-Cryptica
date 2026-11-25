@@ -15,6 +15,7 @@
     vaultId,
     onSwitch,
     variant = "menu",
+    disabled = false,
     onAction,
     listEntries,
   }: {
@@ -23,6 +24,7 @@
     vaultId?: string;
     onSwitch?: (sessionId: string) => Promise<void>;
     variant?: "menu" | "inline";
+    disabled?: boolean;
     onAction?: () => void;
     listEntries?: (
       vaultId: string,
@@ -60,6 +62,7 @@
     void loadOthers();
   });
   async function switchTo(id: string) {
+    if (disabled) return;
     try {
       await onSwitch?.(id);
     } catch (cause) {
@@ -159,6 +162,7 @@
       {#if manager.readOnly}
         <button
           type="button"
+          {disabled}
           class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
           onclick={() => run(() => void forceEnd())}
         >
@@ -171,6 +175,7 @@
       {:else}
         <button
           type="button"
+          {disabled}
           class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-danger/10 focus-visible:outline-2 focus-visible:outline-theme-text"
           onclick={() => run(() => void manager.end())}
         >
@@ -184,6 +189,7 @@
       {#each others as other (other.id)}
         <button
           type="button"
+          {disabled}
           class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
           onclick={() => run(() => void switchTo(other.id))}
         >
@@ -196,6 +202,7 @@
       {/each}
       <button
         type="button"
+        {disabled}
         class="flex min-h-11 w-full items-center gap-2.5 rounded-lg border border-theme-text px-3 py-2 text-left text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-theme-primary"
         onclick={() => run(() => void manager.close())}
       >
@@ -217,6 +224,7 @@
       <button
         bind:this={triggerEl}
         type="button"
+        {disabled}
         class="flex min-h-10 min-w-10 items-center justify-center rounded-md border sm:min-h-12 sm:min-w-12 border-theme-text text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
         onclick={() => (isOpen ? close() : void open())}
         onkeydown={handleTriggerKeydown}
@@ -237,6 +245,7 @@
           role="menu"
           aria-label="Adventure management"
           tabindex="-1"
+          inert={disabled}
           class="absolute right-0 z-[90] mt-2 w-56 rounded-md border border-theme-border bg-theme-surface p-1 shadow-xl"
           onkeydown={handleMenuKeydown}
           data-testid="adventure-management-menu"

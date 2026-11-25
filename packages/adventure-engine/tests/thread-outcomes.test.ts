@@ -1013,6 +1013,102 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     expect(selectPendingAdventureCompletion(nextTurn)).toBeNull();
   });
 
+  it("allows commitment-supported completions without displaying private commitments", () => {
+    const s = session();
+    s.turns = [{ id: "turn-complete" } as AdventureSession["turns"][number]];
+    s.emergentThreads = [
+      {
+        id: "thread-commitment",
+        title: "The eastern gate",
+        goal: "Open the eastern gate",
+        status: "resolved",
+        provenance: "play",
+        topicTokens: [],
+        linkedPersonIds: [],
+        linkedPlaceIds: [],
+        linkedFactIds: [],
+        linkedCommitmentIds: ["private-commitment"],
+        openQuestions: [],
+        knownConsequences: [],
+        gmOnlyDevelopments: [],
+        createdAtTurnId: "turn-1",
+        updatedAtTurnId: "turn-complete",
+        turnCount: 2,
+        outcome: {
+          result: "achieved",
+          reason: "The gate was opened.",
+          sourceTurnId: "turn-complete",
+          supportingFactIds: [],
+          supportingCommitmentIds: ["private-commitment"],
+          recordedAt: meta.now,
+          sequence: 1,
+        },
+      },
+    ];
+
+    const completion = selectPendingAdventureCompletion(s);
+    expect(completion?.heading).toBe("Open the eastern gate");
+    expect(completion?.epilogue).toBe("The gate was opened.");
+    expect(completion?.worldImpacts).toEqual([]);
+    expect(JSON.stringify(completion)).not.toContain("private-commitment");
+  });
+
+  it("uses a heard scenario lead when its mirrored emergent thread has no goal", () => {
+    const s = session();
+    s.turns = [{ id: "turn-complete" } as AdventureSession["turns"][number]];
+    s.visibleState.knownFacts = [
+      { id: "fact-gate", text: "The eastern gate stands open." },
+    ];
+    const outcome = {
+      result: "achieved" as const,
+      reason: "The gate stands open.",
+      sourceTurnId: "turn-complete",
+      supportingFactIds: ["fact-gate"],
+      supportingCommitmentIds: [],
+      recordedAt: meta.now,
+      sequence: 1,
+    };
+    s.scenarioCollection = {
+      version: 1,
+      focusedScenarioId: null,
+      items: [
+        {
+          ...scenario(),
+          id: "scenario-gate",
+          knowledge: "heard",
+          status: "resolved",
+          outcome,
+        },
+      ],
+    };
+    s.emergentThreads = [
+      {
+        id: "thread-gate",
+        title: "The eastern gate",
+        linkedScenarioId: "scenario-gate",
+        status: "resolved",
+        provenance: "play",
+        topicTokens: [],
+        linkedPersonIds: [],
+        linkedPlaceIds: [],
+        linkedFactIds: [],
+        linkedCommitmentIds: [],
+        openQuestions: [],
+        knownConsequences: [],
+        gmOnlyDevelopments: [],
+        createdAtTurnId: "turn-1",
+        updatedAtTurnId: "turn-complete",
+        turnCount: 2,
+        outcome,
+      },
+    ];
+
+    const completion = selectPendingAdventureCompletion(s);
+    expect(completion?.source).toBe("scenario");
+    expect(completion?.heading).toBe("The old mill");
+    expect(completion?.worldImpacts).toEqual(["The eastern gate stands open."]);
+  });
+
   it("8. ignores clue chains without an explicit goal and blocks GM-only commitments/secrets from completion UI (#5192)", () => {
     let s = session();
     s.hiddenState.secrets.push({

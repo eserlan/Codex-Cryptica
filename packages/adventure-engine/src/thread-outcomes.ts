@@ -616,7 +616,7 @@ function resolveCommittedWorldImpacts(
   return impacts;
 }
 
-function buildCompletionCandidate(
+function buildEligibleCompletionCandidate(
   session: AdventureSession,
   source: "emergent" | "scenario",
   targetId: string,
@@ -630,13 +630,13 @@ function buildCompletionCandidate(
     session,
     outcome.supportingFactIds,
   );
-  if (worldImpacts.length === 0) {
+  if (
+    outcome.supportingFactIds.length === 0 &&
+    outcome.supportingCommitmentIds.length === 0
+  ) {
     return null;
   }
   const eventId = completionEventId(source, targetId, outcome);
-  if ((session.acknowledgedOutcomeIds ?? []).includes(eventId)) {
-    return null;
-  }
   const safeHeading = heading.trim().slice(0, 160);
   const safeEpilogue = outcome.reason.trim().slice(0, 400);
   if (
@@ -660,6 +660,26 @@ function buildCompletionCandidate(
   };
 }
 
+function buildCompletionCandidate(
+  session: AdventureSession,
+  source: "emergent" | "scenario",
+  targetId: string,
+  heading: string,
+  outcome: ThreadOutcome,
+): AdventureCompletionSummary | null {
+  const candidate = buildEligibleCompletionCandidate(
+    session,
+    source,
+    targetId,
+    heading,
+    outcome,
+  );
+  return candidate &&
+    !(session.acknowledgedOutcomeIds ?? []).includes(candidate.eventId)
+    ? candidate
+    : null;
+}
+
 function completionOutcomeIdentity(outcome: ThreadOutcome): string {
   return JSON.stringify([
     outcome.sourceTurnId,
@@ -676,13 +696,26 @@ function hasMirroredEmergentCompletion(
   outcome: ThreadOutcome,
 ): boolean {
   const identity = completionOutcomeIdentity(outcome);
-  return (session.emergentThreads ?? []).some(
-    (thread) =>
-      thread.linkedScenarioId === scenarioId &&
-      thread.status === "resolved" &&
-      thread.outcome !== undefined &&
-      completionOutcomeIdentity(thread.outcome) === identity,
-  );
+  return (session.emergentThreads ?? []).some((thread) => {
+    if (
+      thread.linkedScenarioId !== scenarioId ||
+      thread.status !== "resolved" ||
+      !thread.goal?.trim() ||
+      !thread.outcome ||
+      completionOutcomeIdentity(thread.outcome) !== identity
+    ) {
+      return false;
+    }
+    return (
+      buildEligibleCompletionCandidate(
+        session,
+        "emergent",
+        thread.id,
+        thread.goal.trim(),
+        thread.outcome,
+      ) !== null
+    );
+  });
 }
 
 function selectEmergentCompletion(
