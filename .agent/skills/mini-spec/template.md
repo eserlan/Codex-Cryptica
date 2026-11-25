@@ -56,7 +56,8 @@
 - [ ] **Task 2: Core Logic / Engine** — Implement business logic, state mutations, or store handlers.
 - [ ] **Task 3: UI Integration** — Wire into Svelte 5 components with semantic tokens and Iconify icons.
 - [ ] **Task 4: Edge Cases & Polish** — Handle empty states, loading indicators, or error states.
-- [ ] **Task 5: Verification Gate** — Execute repository quality checks.
+- [ ] **Task 5: Local Review (`codex-review`)** — Run `codex-review` (Sweeps 0–8) on `git diff origin/staging...HEAD`, fix findings, and stamp `HEAD` (`bun scripts/codex-review-stamp.mjs`).
+- [ ] **Task 6: Verification Gate** — Execute repository quality checks.
 
 ---
 
