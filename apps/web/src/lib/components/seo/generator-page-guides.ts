@@ -358,12 +358,33 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use the scale to set their reach",
         detail:
-          "In the offline draft, Choose their scale is repeated in What they control, so a single city and a kingdom-wide network read as different threats. A single city and a kingdom-wide network therefore read as different threats in the same sentence.",
+          "In the offline draft, Choose their scale is repeated in What they control, so a single city and a kingdom-wide network read as different threats.",
       },
       {
         title: "Let the vibe set the goal and the trouble",
         detail:
           "In the offline draft, Choose a vibe decides the goal, the internal conflict and the immediate hook. With the type unchanged, a cyberpunk vibe and a cosmic horror vibe still get different goals and hooks.",
+      },
+    ],
+  },
+  "minor-magic-item": {
+    summary:
+      "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
+    tips: [
+      {
+        title: "Set the usage limit before the effect",
+        detail:
+          "The usage limit tells players how often the item can help them. A single-use item suits one dramatic moment, while fragile charges give a few uses before it breaks.",
+      },
+      {
+        title: "Use the quirk as a cost",
+        detail:
+          "The quirk can be a sensory or environmental side effect, such as chalky residue or a sudden draft. Treat it as a giveaway or cost only when the generated detail fits, and set Quirk or Side Effect to 'None' when it should be clean.",
+      },
+      {
+        title: "Match the effect to the scene, not the vibe",
+        detail:
+          "The same effect can appear under different vibes, sometimes with only the heading changed. Read the effect against what the party is doing right now before you decide what it means.",
       },
     ],
   },
