@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  acknowledgeAdventureCompletion,
   applyCompletedTurn,
   applyReviewedThreadOutcomes,
   buildAdventurePrompt,
   buildAdventureRecap,
   buildGMDirectorBrief,
+  completionEventId,
   inspectLegacyThreadOutcomeCandidates,
   parseAdventureSession,
   playerScenarioProjection,
   projectPlayerEmergentThreads,
   reconcileDuplicateEmergentThreads,
+  selectPendingAdventureCompletion,
   type AdventureSession,
   type CompletedTurnProposal,
 } from "../src";
@@ -858,5 +861,248 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
       relevant: [],
     });
     expect(promptResult.behavior).toContain("threadOutcomes");
+  });
+
+  it("7. selects newly committed goal completion once and persists non-destructive acknowledgement (#5192)", () => {
+    let s = session();
+    s = commit(
+      s,
+      {
+        playerAction: "Investigate the blocked canal sluice.",
+        narration: "You inspect the forged sluice order.",
+        provisionalFacts: [
+          {
+            kind: "clue",
+            name: "Forged Order",
+            summary: "The sluice was shut with a forged seal.",
+            visibility: "player-visible",
+          },
+        ],
+        visiblePatch: {
+          ...proposal().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "The eastern sluice was shut with a forged seal.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      1,
+    );
+    // Clue turn alone does not trigger completion
+    expect(selectPendingAdventureCompletion(s)).toBeNull();
+
+    const threadId = s.emergentThreads![0]!.id;
+    const linkedScenario = {
+      ...scenario(),
+      id: "scenario-water-compact",
+      knowledge: "heard" as const,
+      goal: "Secure fair water access for the lower ward",
+    };
+    s.emergentThreads![0]!.linkedScenarioId = linkedScenario.id;
+    s.scenarioCollection = {
+      version: 1,
+      focusedScenarioId: null,
+      items: [linkedScenario],
+    };
+    s = commit(
+      s,
+      {
+        playerAction: "Present the compact to the council.",
+        narration: "The council ratifies and proclaims the water compact.",
+        visiblePatch: {
+          ...proposal().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "The water-access compact was ratified and publicly proclaimed.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+        threadOutcomes: [
+          {
+            threadId,
+            scenarioId: linkedScenario.id,
+            goal: "Secure fair water access for the lower ward",
+            result: "achieved",
+            reason:
+              "Council ratified and publicly proclaimed the water-access compact.",
+            unresolvedConsequences: ["Who hired the courier remains unknown"],
+          },
+        ],
+      },
+      2,
+    );
+
+    const pending = selectPendingAdventureCompletion(s);
+    expect(pending).not.toBeNull();
+    expect(pending?.heading).toBe(
+      "Secure fair water access for the lower ward",
+    );
+    expect(pending?.worldImpacts).toEqual([
+      "The water-access compact was ratified and publicly proclaimed.",
+    ]);
+    expect(pending?.unresolvedConsequences).toEqual([
+      "Who hired the courier remains unknown",
+    ]);
+    expect(pending?.eventId).toBe(
+      completionEventId("emergent", threadId, { sourceTurnId: "turn-2" }),
+    );
+
+    // Pending roll hides completion until roll settles
+    s.pendingRoll = {
+      id: "roll-1",
+      setupNarration: "Roll",
+      uncertainty: "Uncertain",
+      stakes: "High",
+      sourceRecordIds: [],
+    };
+    expect(selectPendingAdventureCompletion(s)).toBeNull();
+    s.pendingRoll = null;
+
+    // Acknowledging persists on session without closing it
+    const ack = acknowledgeAdventureCompletion(
+      s,
+      pending!.eventId,
+      s.revision,
+      meta.now,
+    );
+    expect(ack.ok).toBe(true);
+    if (!ack.ok) return;
+    expect(ack.changed).toBe(true);
+    expect(ack.session.status).toBe("active");
+    expect(selectPendingAdventureCompletion(ack.session)).toBeNull();
+
+    // Idempotent repeat acknowledgement is a no-op
+    const repeat = acknowledgeAdventureCompletion(
+      ack.session,
+      pending!.eventId,
+      ack.session.revision,
+      meta.now,
+    );
+    expect(repeat.ok).toBe(true);
+    if (repeat.ok) expect(repeat.changed).toBe(false);
+
+    // Stale revision fails cleanly
+    const stale = acknowledgeAdventureCompletion(
+      ack.session,
+      "emergent:other:turn-9",
+      ack.session.revision - 1,
+      meta.now,
+    );
+    expect(stale).toEqual({ ok: false, reason: "stale-revision" });
+
+    // Advancing another turn does not re-trigger the old completion
+    const nextTurn = commit(
+      ack.session,
+      {
+        playerAction: "Ask about the courier.",
+        narration: "A clerk points north.",
+      },
+      3,
+    );
+    expect(selectPendingAdventureCompletion(nextTurn)).toBeNull();
+  });
+
+  it("8. ignores clue chains without an explicit goal and blocks GM-only commitments/secrets from completion UI (#5192)", () => {
+    let s = session();
+    s.hiddenState.secrets.push({
+      id: "sec-hidden-culprit",
+      text: "The harbourmaster burned the ledger.",
+      status: "hidden",
+    });
+
+    // Two-turn clue chain with no explicit goal
+    s = commit(
+      s,
+      {
+        playerAction: "Inspect the charred ledger.",
+        narration: "Ash flakes off the binding.",
+        provisionalFacts: [
+          {
+            kind: "clue",
+            name: "Charred Ledger",
+            summary: "The harbour ledger was burned.",
+            visibility: "player-visible",
+          },
+        ],
+        visiblePatch: {
+          ...proposal().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "The harbour ledger was burned.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      1,
+    );
+    const threadId = s.emergentThreads![0]!.id;
+
+    s = commit(
+      s,
+      {
+        playerAction: "Close the ledger note.",
+        narration: "You tuck the ash sample away.",
+        causalCommitments: [
+          {
+            kind: "motive",
+            commitmentClass: "supporting-explanation",
+            subject: "Harbourmaster",
+            summary: "Hid smuggling debts.",
+          },
+        ],
+        threadOutcomes: [
+          {
+            threadId,
+            result: "achieved",
+            reason: "Finished inspecting the charred ledger.",
+          },
+        ],
+      },
+      2,
+    );
+    // Neither an explicit goal nor player-visible world impacts exist -> null
+    expect(selectPendingAdventureCompletion(s)).toBeNull();
+
+    // Even with an explicit goal, GM-only secret text in unresolvedConsequences is stripped
+    s.emergentThreads![0]!.goal = "Uncover who burned the ledger";
+    s.emergentThreads![0]!.outcome!.supportingFactIds = [
+      s.provisionalFacts[0]!.id,
+    ];
+    s.emergentThreads![0]!.outcome!.unresolvedConsequences = [
+      "The harbourmaster burned the ledger.",
+      "Smugglers still operate at night.",
+    ];
+    const filtered = selectPendingAdventureCompletion(s);
+    expect(filtered?.unresolvedConsequences).toEqual([
+      "Smugglers still operate at night.",
+    ]);
+
+    // Long scenario IDs (>= 150 chars) still produce distinct completion event IDs across turns
+    const longId = "sc-" + "x".repeat(152);
+    const idA = completionEventId("scenario", longId, {
+      sourceTurnId: "turn-a",
+    });
+    const idB = completionEventId("scenario", longId, {
+      sourceTurnId: "turn-b",
+    });
+    expect(idA.length).toBeLessThanOrEqual(160);
+    expect(idB.length).toBeLessThanOrEqual(160);
+    expect(idA).not.toBe(idB);
   });
 });

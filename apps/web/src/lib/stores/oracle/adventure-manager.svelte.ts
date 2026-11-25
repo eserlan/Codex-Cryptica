@@ -245,6 +245,12 @@ export class AdventureManager extends AdventureState {
     return this.scenarios.dismissDiscoveries(...args);
   }
 
+  acknowledgeCompletion(
+    ...args: Parameters<AdventureScenarios["acknowledgeCompletion"]>
+  ) {
+    return this.scenarios.acknowledgeCompletion(...args);
+  }
+
   /** The session's pinned package, or null without one or when it cannot load. Read-only. */
   async loadSourcePackage(): Promise<AdventureJsonV1 | null> {
     const session = this.session;

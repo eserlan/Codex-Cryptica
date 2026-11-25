@@ -713,6 +713,8 @@ export interface AdventureSession {
   focusedEmergentThreadId?: string | null;
   /** Review decisions, separate from immutable committed discovery history. */
   dismissedProvisionalFactIds?: string[];
+  /** One-time completion epilogue event IDs already shown/dismissed by the player. */
+  acknowledgedOutcomeIds?: string[];
   turns: CommittedAdventureTurn[];
   /** Optional bounded OOC clarification exchanges; separate from canonical gameplay turns. */
   oocExchanges?: AdventureOocExchange[];

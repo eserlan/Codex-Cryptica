@@ -1,4 +1,6 @@
+import { detectHiddenTextLeakage } from "./hidden-state";
 import { scenarioEventSchema } from "./scenario-schemas";
+import { validateDurableStateBudget } from "./schemas";
 import type {
   AdventureSession,
   CommittedAdventureTurn,
@@ -9,6 +11,29 @@ import type {
   ThreadOutcomeProposal,
   ThreadOutcomeResult,
 } from "./types";
+
+export interface AdventureCompletionSummary {
+  eventId: string;
+  source: "emergent" | "scenario";
+  targetId: string;
+  result: "achieved" | "failed";
+  heading: string;
+  epilogue: string;
+  worldImpacts: string[];
+  unresolvedConsequences: string[];
+}
+
+export type AcknowledgeCompletionResult =
+  | { ok: true; session: AdventureSession; changed: boolean }
+  | {
+      ok: false;
+      reason:
+        | "stale-revision"
+        | "read-only-session"
+        | "pending-roll"
+        | "invalid-event"
+        | "state-budget-exceeded";
+    };
 
 export interface LegacyOutcomeCandidate {
   threadId: string;
@@ -546,4 +571,224 @@ export function applyReviewedThreadOutcomes(
   const dropped: string[] = [];
   reconcileThreadOutcomes(session, lastTurn, reconciledApprovals, now, dropped);
   return { session, dropped };
+}
+
+function fnv1a32(input: string, seed: number): string {
+  let hash = seed >>> 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
+/** Stable completion-event ID used to deduplicate one-time epilogue panels. */
+export function completionEventId(
+  source: "emergent" | "scenario",
+  targetId: string,
+  outcome: Pick<ThreadOutcome, "sourceTurnId">,
+): string {
+  const raw = `${source}:${targetId}:${outcome.sourceTurnId}`;
+  if (raw.length <= 160) return raw;
+  const digest = `${fnv1a32(raw, 0x811c9dc5)}${fnv1a32(raw, 0x9e3779b9)}`;
+  return `${source}:${digest}:${targetId.slice(0, 120)}`.slice(0, 160);
+}
+
+function resolveCommittedWorldImpacts(
+  session: AdventureSession,
+  factIds: readonly string[],
+): string[] {
+  const impacts: string[] = [];
+  for (const id of factIds) {
+    if (impacts.length >= 3) break;
+    const known = session.visibleState.knownFacts.find((f) => f.id === id);
+    if (known?.text.trim()) {
+      impacts.push(known.text.trim());
+      continue;
+    }
+    const prov = session.provisionalFacts.find(
+      (f) => f.id === id && f.visibility === "player-visible",
+    );
+    if (prov?.summary.trim()) {
+      impacts.push(`${prov.name}: ${prov.summary}`.trim());
+    }
+  }
+  return impacts;
+}
+
+function buildCompletionCandidate(
+  session: AdventureSession,
+  source: "emergent" | "scenario",
+  targetId: string,
+  heading: string,
+  outcome: ThreadOutcome,
+): AdventureCompletionSummary | null {
+  if (outcome.result !== "achieved" && outcome.result !== "failed") {
+    return null;
+  }
+  const worldImpacts = resolveCommittedWorldImpacts(
+    session,
+    outcome.supportingFactIds,
+  );
+  if (worldImpacts.length === 0) {
+    return null;
+  }
+  const eventId = completionEventId(source, targetId, outcome);
+  if ((session.acknowledgedOutcomeIds ?? []).includes(eventId)) {
+    return null;
+  }
+  const safeHeading = heading.trim().slice(0, 160);
+  const safeEpilogue = outcome.reason.trim().slice(0, 400);
+  if (
+    detectHiddenTextLeakage(session, safeHeading).length > 0 ||
+    detectHiddenTextLeakage(session, safeEpilogue).length > 0
+  ) {
+    return null;
+  }
+  const unresolvedConsequences = (outcome.unresolvedConsequences ?? [])
+    .filter((note) => detectHiddenTextLeakage(session, note).length === 0)
+    .slice(0, 3);
+  return {
+    eventId,
+    source,
+    targetId,
+    result: outcome.result,
+    heading: safeHeading,
+    epilogue: safeEpilogue,
+    worldImpacts,
+    unresolvedConsequences,
+  };
+}
+
+function completionOutcomeIdentity(outcome: ThreadOutcome): string {
+  return JSON.stringify([
+    outcome.sourceTurnId,
+    outcome.result,
+    outcome.reason,
+    outcome.supportingFactIds,
+    outcome.supportingCommitmentIds,
+  ]);
+}
+
+function hasMirroredEmergentCompletion(
+  session: AdventureSession,
+  scenarioId: string,
+  outcome: ThreadOutcome,
+): boolean {
+  const identity = completionOutcomeIdentity(outcome);
+  return (session.emergentThreads ?? []).some(
+    (thread) =>
+      thread.linkedScenarioId === scenarioId &&
+      thread.status === "resolved" &&
+      thread.outcome !== undefined &&
+      completionOutcomeIdentity(thread.outcome) === identity,
+  );
+}
+
+function selectEmergentCompletion(
+  session: AdventureSession,
+  lastTurnId: string,
+): AdventureCompletionSummary | null {
+  for (const thread of session.emergentThreads ?? []) {
+    const outcome = thread.outcome;
+    if (
+      !outcome ||
+      thread.status !== "resolved" ||
+      outcome.sourceTurnId !== lastTurnId ||
+      !thread.goal?.trim()
+    ) {
+      continue;
+    }
+    const summary = buildCompletionCandidate(
+      session,
+      "emergent",
+      thread.id,
+      thread.goal.trim(),
+      outcome,
+    );
+    if (summary) return summary;
+  }
+  return null;
+}
+
+function selectScenarioCompletion(
+  session: AdventureSession,
+  lastTurnId: string,
+): AdventureCompletionSummary | null {
+  for (const scenario of session.scenarioCollection?.items ?? []) {
+    const outcome = scenario.outcome;
+    if (
+      !outcome ||
+      scenario.knowledge !== "heard" ||
+      scenario.status !== "resolved" ||
+      outcome.sourceTurnId !== lastTurnId
+    ) {
+      continue;
+    }
+    if (hasMirroredEmergentCompletion(session, scenario.id, outcome)) continue;
+    const summary = buildCompletionCandidate(
+      session,
+      "scenario",
+      scenario.id,
+      scenario.goal?.trim() || scenario.playerVisible.lead,
+      outcome,
+    );
+    if (summary) return summary;
+  }
+  return null;
+}
+
+/**
+ * Returns the single newly committed, significant goal completion eligible for
+ * the one-time Adventure Complete epilogue panel, or `null` when none applies.
+ * Only inspects outcomes committed on the latest turn so old/replayed outcomes
+ * and minor clue chains never trigger a celebration.
+ */
+export function selectPendingAdventureCompletion(
+  session: AdventureSession,
+): AdventureCompletionSummary | null {
+  if (session.status !== "active" || session.pendingRoll) return null;
+  const lastTurn = session.turns.at(-1);
+  if (!lastTurn) return null;
+  return (
+    selectEmergentCompletion(session, lastTurn.id) ??
+    selectScenarioCompletion(session, lastTurn.id)
+  );
+}
+
+/**
+ * Non-destructively records that the player has seen/dismissed a completion
+ * epilogue so reload, retry, or mode switches never repeat it.
+ */
+export function acknowledgeAdventureCompletion(
+  session: AdventureSession,
+  eventId: string,
+  expectedRevision: number,
+  now = session.updatedAt,
+): AcknowledgeCompletionResult {
+  if (session.revision !== expectedRevision) {
+    return { ok: false, reason: "stale-revision" };
+  }
+  if (session.status !== "active") {
+    return { ok: false, reason: "read-only-session" };
+  }
+  if (session.pendingRoll) {
+    return { ok: false, reason: "pending-roll" };
+  }
+  const trimmed = eventId.trim();
+  if (!trimmed || trimmed.length > 160) {
+    return { ok: false, reason: "invalid-event" };
+  }
+  const existing = session.acknowledgedOutcomeIds ?? [];
+  if (existing.includes(trimmed)) {
+    return { ok: true, session, changed: false };
+  }
+  const copy = structuredClone(session);
+  copy.acknowledgedOutcomeIds = [...existing, trimmed].slice(-32);
+  copy.revision += 1;
+  copy.updatedAt = now;
+  if (!validateDurableStateBudget(copy)) {
+    return { ok: false, reason: "state-budget-exceeded" };
+  }
+  return { ok: true, session: copy, changed: true };
 }

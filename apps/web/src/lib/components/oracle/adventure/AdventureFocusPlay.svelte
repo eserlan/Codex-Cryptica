@@ -18,10 +18,12 @@
   } from "#lib/services/adventure/adventure-session-repository.js";
   import {
     formatWorldElapsedMinutes,
+    selectPendingAdventureCompletion,
     type ProvisionalFact,
   } from "@codex/adventure-engine";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
+  import AdventureCompletionPanel from "./AdventureCompletionPanel.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
   import AdventurePackageAudit from "./AdventurePackageAudit.svelte";
   import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
@@ -170,6 +172,90 @@
   let fullscreenElement = $state<Element | null>(null);
   let fullscreenTransitioning = $state(false);
   let playViewport = $state<HTMLElement>();
+  let dismissedCompletionIds = $state<string[]>([]);
+  let completionActionBusy = $state(false);
+  const rawPendingCompletion = $derived(
+    manager.session &&
+      manager.phase !== "generating" &&
+      !manager.streamedNarration &&
+      !manager.session.pendingRoll
+      ? selectPendingAdventureCompletion(manager.session)
+      : null,
+  );
+  const pendingCompletion = $derived(
+    rawPendingCompletion &&
+      !dismissedCompletionIds.includes(rawPendingCompletion.eventId)
+      ? rawPendingCompletion
+      : null,
+  );
+
+  async function dismissCompletion(
+    eventId: string,
+    restoreFocus = true,
+  ): Promise<void> {
+    if (!manager.readOnly) {
+      try {
+        await manager.acknowledgeCompletion(eventId);
+      } catch {
+        notificationStore.notify(
+          "Dismissed for this view, but the acknowledgement could not be saved.",
+          "error",
+        );
+      }
+    }
+    if (!dismissedCompletionIds.includes(eventId)) {
+      dismissedCompletionIds = [...dismissedCompletionIds, eventId];
+    }
+    if (restoreFocus) {
+      void tick().then(() => {
+        focusElement?.querySelector<HTMLElement>("textarea")?.focus();
+      });
+    }
+  }
+
+  async function handleContinueFromCompletion(eventId: string): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await dismissCompletion(eventId, true);
+    } finally {
+      completionActionBusy = false;
+    }
+  }
+
+  async function handleFindAnotherFromCompletion(
+    eventId: string,
+  ): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await dismissCompletion(eventId, false);
+      await manager.close();
+    } catch {
+      notificationStore.notify(
+        "Unable to leave this adventure right now. Please try again.",
+        "error",
+      );
+    } finally {
+      completionActionBusy = false;
+    }
+  }
+
+  async function handleFinishFromCompletion(eventId: string): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await dismissCompletion(eventId, false);
+      await manager.end();
+    } catch {
+      notificationStore.notify(
+        "Unable to archive this adventure right now. You can retry or continue exploring.",
+        "error",
+      );
+    } finally {
+      completionActionBusy = false;
+    }
+  }
   const isFullscreen = $derived(fullscreenElement === focusElement);
   const transcriptLength = $derived(manager.transcript?.turns.length ?? 0);
   const elapsedLabel = $derived(
@@ -384,12 +470,18 @@
     }
   }
 
+  function hasNestedModal(): boolean {
+    return Boolean(
+      // ui-check-ignore: The full-screen phone surface already traps Tab with containTab.
+      focusElement?.querySelector('[role="dialog"][aria-modal="true"]'),
+    );
+  }
+
   function handleWindowKeydown(event: KeyboardEvent): void {
     if (!utilitiesOpen || event.key !== "Escape" || event.defaultPrevented) {
       return;
     }
-    // ui-check-ignore: The full-screen phone surface already traps Tab with containTab.
-    if (focusElement?.querySelector('[role="dialog"][aria-modal="true"]')) {
+    if (hasNestedModal()) {
       return;
     }
     event.preventDefault();
@@ -477,6 +569,19 @@
   aria-labelledby="adventure-heading"
   data-testid="adventure-play-surface"
   onkeydown={(event) => {
+    if (
+      pendingCompletion &&
+      event.key === "Escape" &&
+      !event.defaultPrevented &&
+      !completionActionBusy &&
+      !utilitiesOpen &&
+      !hasNestedModal()
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      void handleContinueFromCompletion(pendingCompletion.eventId);
+      return;
+    }
     if (phone && focusElement) containTab(event, focusElement);
   }}
 >
@@ -691,6 +796,19 @@
           <AdventureScenarioControls {manager} />
           <AdventurePlay {manager} showComposer={false} />
           <AdventureRollPrompt {manager} />
+          {#if pendingCompletion}
+            <AdventureCompletionPanel
+              completion={pendingCompletion}
+              readOnly={manager.readOnly}
+              busy={completionActionBusy}
+              onContinue={() =>
+                handleContinueFromCompletion(pendingCompletion.eventId)}
+              onFindAnother={() =>
+                handleFindAnotherFromCompletion(pendingCompletion.eventId)}
+              onFinish={() =>
+                handleFinishFromCompletion(pendingCompletion.eventId)}
+            />
+          {/if}
         </div>
       </main>
       <!-- The composer stays outside the story scroll, visible above the keyboard
