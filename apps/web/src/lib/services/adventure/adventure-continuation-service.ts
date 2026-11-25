@@ -13,7 +13,7 @@ export interface ContinuationServiceDeps {
   generateDraft?: (
     request: GeneratorRunRequest,
     signal?: AbortSignal,
-  ) => Promise<{ title?: string; content?: string }>;
+  ) => Promise<{ title?: string; summary?: string }>;
   isOnline?: () => boolean;
   aiEnabled?: () => boolean;
 }
@@ -29,12 +29,16 @@ function buildContinuationRequest(
 ): GeneratorRunRequest {
   const style = worldStyleForTheme(themeId);
   return {
-    generatorId: "rumour",
+    generatorId: "quest",
     themeId,
     useAI: true,
-    options: {},
+    options: {
+      genre: candidate.genreHint ?? style?.name ?? "Genre-agnostic",
+    },
     instructions: [
-      "Write one short, grounded next-adventure pitch from the player-visible hook below.",
+      "Return one concise next-adventure pitch grounded only in the selected player-visible hook below.",
+      "Use the required quest generator output contract, but keep its summary to one complete sentence and its title short.",
+      "Do not add causes, motives, characters, places, or events absent from the hook. Preserve uncertainty; this is a possible direction, not a confirmed fact or mandatory crisis.",
       ...(style ? [`World style: ${style.name}. ${style.description}`] : []),
       "Keep all uncertainty explicit: treat unresolved leads as possibilities, never confirmed conspiracies or mandatory crises.",
       `Anchor type: ${candidate.anchorType}`,
@@ -58,11 +62,16 @@ function buildContinuationRequest(
 function applySafeEnrichment(
   session: AdventureSession,
   candidate: AdventureContinuationCandidate,
-  generated: { title?: string; content?: string },
+  generated: { title?: string; summary?: string },
 ): EnrichedContinuationResult {
-  const nextTitle = generated.title?.trim().slice(0, 120);
-  const nextPremise = generated.content?.trim().slice(0, 320);
-  if (!nextTitle || !nextPremise) {
+  const nextTitle = generated.title?.trim();
+  const nextPremise = generated.summary?.trim();
+  if (
+    !nextTitle ||
+    !nextPremise ||
+    nextTitle.length > 100 ||
+    nextPremise.length > 320
+  ) {
     return { candidate, enriched: false };
   }
   if (

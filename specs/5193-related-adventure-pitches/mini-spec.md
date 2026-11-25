@@ -15,7 +15,7 @@ After an adventure arc reaches a committed outcome (#5191 / #5192), players who 
     - Never reads or exposes `gmOnly`, `hiddenState`, unrevealed `ScenarioItem` secrets, `causalCommitments` summaries as proven motives, or `unheard` scenarios.
     - Composes up to 3 genuinely distinct pitches (at most one per anchor type when distinct evidence supports them; fewer than 3 when evidence is scarce—no filler, repetition, or mandatory crisis) plus a separate fresh/unrelated continuation option.
     - Genre-agnostic templates (no hardcoded fantasy or water-compact narrative; works for sci-fi, modern, or any Vault style).
-  - Optional bounded AI pitch enrichment reusing the existing generator gateway (`aiGeneratorGateway` / `#4534` Idea & Adventure generators) only when the user explicitly chooses to explore ideas, with immediate deterministic seed/manual fallback when offline or on generation failure.
+  - Optional bounded AI pitch enrichment reusing the existing generator gateway (`aiGeneratorGateway` / `#4534` Idea & Adventure generators) only when the user explicitly chooses to explore ideas, with a single-pitch output contract and immediate deterministic seed/manual fallback when offline or on generation failure.
   - Non-mutating preview & provenance: previewing candidates never mutates `scenarioCollection`, `AdventureSession`, `sourcePackage`, or Vault canon, and tracks `sourceRevision` so stale candidates regenerate cleanly after world changes while preserving earlier dismissals.
 - **Out of Scope**:
   - Automatically creating `ScenarioItem` entries, `AdventureSession` records, or Vault entities on preview.

@@ -1,5 +1,6 @@
 import { detectHiddenTextLeakage } from "./hidden-state";
 import { fnv1a32 } from "./thread-outcomes";
+import { isPlayerVisibleScenarioEvent } from "./turn-progression-scope";
 import type {
   AdventureContinuationCandidate,
   AdventureContinuationSet,
@@ -44,20 +45,14 @@ function clip(text: string, maxChars: number): string {
 }
 
 function collectPlayerSafeFacts(session: AdventureSession) {
-  const known = session.visibleState.knownFacts
-    .filter((f) => isPlayerSafeText(session, f.text))
-    .map((f) => ({
-      id: f.id,
-      text: f.text.trim(),
-      sourceRecordId: f.sourceRecordId,
-      placeId: f.placeId,
-    }));
+  const known = session.visibleState.knownFacts.map((f) => ({
+    id: f.id,
+    text: f.text.trim(),
+    sourceRecordId: f.sourceRecordId,
+    placeId: f.placeId,
+  }));
   const provisional = session.provisionalFacts
-    .filter(
-      (f) =>
-        f.visibility === "player-visible" &&
-        isPlayerSafeText(session, `${f.name} ${f.summary}`),
-    )
+    .filter((f) => f.visibility === "player-visible")
     .map((f) => ({
       id: f.id,
       kind: f.kind,
@@ -67,14 +62,13 @@ function collectPlayerSafeFacts(session: AdventureSession) {
 }
 
 function appendOutcomeNotes(
-  session: AdventureSession,
   ownerId: string,
   outcome: ThreadOutcome | undefined,
   notes: UnresolvedNote[],
 ): void {
   if (!outcome) return;
   for (const note of outcome.unresolvedConsequences ?? []) {
-    if (!isPlayerSafeText(session, note)) continue;
+    if (!note.trim()) continue;
     notes.push({
       id: `${ownerId}:${note.slice(0, 32)}`,
       text: note.trim(),
@@ -87,12 +81,22 @@ function collectUnresolvedNotes(session: AdventureSession): UnresolvedNote[] {
   const notes: UnresolvedNote[] = [];
   for (const thread of session.emergentThreads ?? []) {
     if (thread.status !== "open") {
-      appendOutcomeNotes(session, thread.id, thread.outcome, notes);
+      appendOutcomeNotes(thread.id, thread.outcome, notes);
     }
   }
   for (const scenario of session.scenarioCollection?.items ?? []) {
-    if (scenario.knowledge === "heard" && scenario.status !== "open") {
-      appendOutcomeNotes(session, scenario.id, scenario.outcome, notes);
+    if (scenario.knowledge !== "heard") continue;
+    if (scenario.status !== "open") {
+      appendOutcomeNotes(scenario.id, scenario.outcome, notes);
+    }
+    for (const event of scenario.events) {
+      if (!isPlayerVisibleScenarioEvent(scenario, event)) continue;
+      if (!event.text.trim()) continue;
+      notes.push({
+        id: event.id,
+        text: event.text.trim(),
+        sourceIds: [event.id],
+      });
     }
   }
   return notes;
@@ -111,7 +115,6 @@ function findBestCharacterAnchor(
   const candidates = (session.people ?? []).filter((person) => {
     const name = person.name.trim();
     if (!name || name.toLowerCase() === playerName) return false;
-    if (!isPlayerSafeText(session, name)) return false;
     return (
       resolvedPersonIds.has(person.id) ||
       person.linkedFactIds.length > 0 ||
@@ -182,7 +185,6 @@ function buildPlaceCandidate(
       .flatMap((t) => t.linkedPlaceIds),
   );
   const place = (session.places ?? []).find((p) => {
-    if (!isPlayerSafeText(session, p.name)) return false;
     const hasFact = facts.known.some(
       (f) =>
         f.placeId === p.id ||
@@ -331,8 +333,18 @@ export function selectAdventureContinuationCandidates(
     .filter((c) => !dismissed.has(c.id) && passesSecrecyGuard(session, c))
     .slice(0, 3);
 
+  // Each pitch must have evidence distinct from the earlier selected pitches.
+  // Preserve anchor priority while declining a second framing of the same hook.
+  const distinctCandidates: AdventureContinuationCandidate[] = [];
+  const usedEvidence = new Set<string>();
+  for (const candidate of candidates) {
+    if (candidate.sourceRecordIds.some((id) => usedEvidence.has(id))) continue;
+    distinctCandidates.push(candidate);
+    for (const id of candidate.sourceRecordIds) usedEvidence.add(id);
+  }
+
   return {
-    candidates,
+    candidates: distinctCandidates,
     freshOption: {
       title: "Start something unrelated",
       premise:

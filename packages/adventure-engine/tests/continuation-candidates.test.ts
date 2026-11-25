@@ -14,16 +14,26 @@ function sciFiSession(): AdventureSession {
       id: "p-tech",
       name: "Chief Engineer Vance",
       aliases: ["Vance"],
-      linkedFactIds: ["kf-valve"],
+      linkedFactIds: ["kf-person"],
     },
   ];
   s.places = [{ id: "pl-bay", name: "Docking Bay 4" }];
   s.visibleState.knownFacts = [
     {
-      id: "kf-valve",
-      text: "Chief Engineer Vance logged an unauthorized valve bypass in Docking Bay 4.",
+      id: "kf-person",
+      text: "Chief Engineer Vance logged an unauthorized valve bypass.",
+      source: "provisional",
+    },
+    {
+      id: "kf-place",
+      text: "Coolant pressure fell in Docking Bay 4.",
       source: "provisional",
       placeId: "pl-bay",
+    },
+    {
+      id: "kf-event",
+      text: "The missing thruster telemetry chip has not been recovered.",
+      source: "provisional",
     },
   ];
   s.emergentThreads = [
@@ -36,7 +46,7 @@ function sciFiSession(): AdventureSession {
         result: "achieved",
         reason: "Auxiliary coolant lines were rerouted and stabilized.",
         sourceTurnId: "t-5",
-        supportingFactIds: ["kf-valve"],
+        supportingFactIds: ["kf-event"],
         supportingCommitmentIds: [],
         recordedAt: "2026-11-25T00:00:00.000Z",
         sequence: 4,
@@ -111,6 +121,10 @@ describe("selectAdventureContinuationCandidates (#5193)", () => {
       expect(c.uncertainty.length).toBeGreaterThan(0);
       expect(c.genreHint).toBe("hard-sci-fi");
     }
+    const evidenceIds = set.candidates.flatMap(
+      (candidate) => candidate.sourceRecordIds,
+    );
+    expect(new Set(evidenceIds).size).toBe(evidenceIds.length);
   });
 
   it("2. never leaks GM-only secrets, gmOnlyDevelopments, or unheard scenario truth", () => {
@@ -154,5 +168,70 @@ describe("selectAdventureContinuationCandidates (#5193)", () => {
     });
     expect(afterDismiss.candidates).toHaveLength(0);
     expect(afterDismiss.freshOption).toBeTruthy();
+  });
+
+  it("uses heard player-visible scenario events as event evidence", () => {
+    const s = session();
+    const heardScenario = {
+      ...scenario(),
+      id: "heard-scenario",
+      knowledge: "heard" as const,
+      events: [
+        {
+          id: "visible-event",
+          kind: "discovery" as const,
+          visibility: "player" as const,
+          text: "The relay's emergency beacon began transmitting again.",
+          at: "2026-11-25T00:00:00.000Z",
+        },
+        {
+          id: "hidden-event",
+          kind: "discovery" as const,
+          visibility: "gm" as const,
+          text: "A saboteur reactivated the beacon.",
+          at: "2026-11-25T00:00:00.000Z",
+        },
+      ],
+    };
+    s.scenarioCollection = {
+      version: 1,
+      items: [heardScenario],
+      focusedScenarioId: null,
+    };
+
+    const candidates = selectAdventureContinuationCandidates(s).candidates;
+    const eventCandidate = candidates.find(
+      (candidate) => candidate.anchorType === "event",
+    );
+    expect(eventCandidate?.sourceRecordIds).toContain("visible-event");
+    expect(JSON.stringify(eventCandidate)).toContain(
+      "began transmitting again",
+    );
+    expect(JSON.stringify(candidates)).not.toContain("saboteur");
+  });
+
+  it("does not create multiple pitches from the same known fact", () => {
+    const s = session();
+    s.people = [
+      {
+        id: "p-1",
+        name: "Engineer Vance",
+        aliases: [],
+        linkedFactIds: ["kf-1"],
+      },
+    ];
+    s.places = [{ id: "pl-1", name: "Relay Bay" }];
+    s.visibleState.knownFacts = [
+      {
+        id: "kf-1",
+        text: "Engineer Vance reported a failure in Relay Bay.",
+        source: "provisional",
+        placeId: "pl-1",
+      },
+    ];
+
+    const candidates = selectAdventureContinuationCandidates(s).candidates;
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.anchorType).toBe("character");
   });
 });
