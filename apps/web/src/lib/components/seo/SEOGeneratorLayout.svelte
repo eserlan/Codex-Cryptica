@@ -554,20 +554,24 @@
                 {#if diagramsRetryAttempt === 0}
                   <button
                     class="underline"
-                    onclick={() => (diagramsRetryAttempt += 1)}>Retry</button
+                    onclick={() => (diagramsRetryAttempt += 1)}
                   >
+                    Retry
+                  </button>
                 {:else if diagramRecoveryError}
                   <button
                     class="underline"
-                    onclick={copyDiagramOutputForRecovery}>Copy result</button
+                    onclick={copyDiagramOutputForRecovery}
                   >
-                  <span role="status"
-                    >Could not preserve the result for reload.</span
-                  >
+                    Copy result
+                  </button>
+                  <span role="status">
+                    Could not preserve the result for reload.
+                  </span>
                 {:else}
-                  <button class="underline" onclick={recoverDiagramLoad}
-                    >Reload to recover</button
-                  >
+                  <button class="underline" onclick={recoverDiagramLoad}>
+                    Reload to recover
+                  </button>
                 {/if}
               </p>
             {/await}
