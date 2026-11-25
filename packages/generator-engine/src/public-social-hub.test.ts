@@ -80,8 +80,150 @@ describe("generateTavernLocal", () => {
     );
     expect(out.summary).toContain("dockside tavern");
     expect(out.summary).toContain("coastal port");
-    expect(out.content).toContain("ghost ship arrived");
+    expect(out.content).not.toContain("ghost ship arrived");
+    expect(out.lore).toContain(
+      "### Campaign Context\na harbour locked down after a ghost ship arrived",
+    );
     expect(out.lore).toContain("Dockside Tavern");
+  });
+
+  it("omits the campaign section when the context is blank", () => {
+    const out = generateTavernLocal({ campaignContext: "   " }, seededRng(3));
+    expect(out.lore).not.toContain("### Campaign Context");
+    expect(out.content).not.toContain("main conflict");
+  });
+
+  it("chooses a or an from the word that follows", () => {
+    const vowels = generateTavernLocal(
+      {
+        type: "Adventurer Lodge",
+        atmosphere: "Eerie and hushed",
+        settlementType: "Island monastery",
+      },
+      seededRng(4),
+    );
+    expect(vowels.summary).toMatch(/^An eerie and hushed adventurer lodge /);
+    expect(vowels.summary).toContain("in an island monastery.");
+    expect(vowels.content).toContain("is an adventurer lodge in an island");
+
+    const consonants = generateTavernLocal(
+      {
+        type: "Guildhall",
+        atmosphere: "Rowdy and welcoming",
+        settlementType: "Market town",
+      },
+      seededRng(4),
+    );
+    expect(consonants.summary).toMatch(/^A rowdy and welcoming guildhall /);
+    expect(consonants.content).toContain("is a guildhall in a market town");
+  });
+
+  it("chooses articles from common initial sounds in custom values", () => {
+    const out = generateTavernLocal(
+      {
+        type: "University inn",
+        atmosphere: "Honest and watchful",
+      },
+      seededRng(4),
+    );
+
+    expect(out.summary).toMatch(/^An honest and watchful university inn /);
+    expect(out.content).toContain("is a university inn");
+  });
+
+  it("writes Tavern / Inn as 'tavern and inn' in prose", () => {
+    const out = generateTavernLocal({ type: "Tavern / Inn" }, seededRng(2));
+    expect(out.summary).toContain("tavern and inn");
+    expect(out.content).not.toContain("tavern / inn");
+    expect(out.lore).toContain("**Type**: Tavern / Inn");
+  });
+
+  it("lets wealth level, clientele, atmosphere and settlement change the GM notes", () => {
+    const poor = generateTavernLocal(
+      {
+        atmosphere: "Rowdy and welcoming",
+        wealthLevel: "Destitute (dirt floors, watered-down drinks)",
+        clientele: "Soldiers and mercenaries",
+        settlementType: "Frontier outpost",
+      },
+      seededRng(6),
+    );
+    const rich = generateTavernLocal(
+      {
+        atmosphere: "Cold and professional",
+        wealthLevel: "Wealthy (exclusive clientele)",
+        clientele: "Merchants and traders",
+        settlementType: "Capital city",
+      },
+      seededRng(6),
+    );
+    expect(poor.lore).toContain("Thin barley beer");
+    expect(poor.content).toContain("packed dirt");
+    expect(poor.lore).toContain("one-handed sergeant");
+    expect(poor.lore).toContain("quick to break up a fight");
+    expect(poor.lore).toContain("one rider short");
+    expect(rich.lore).toContain("Amber brandy");
+    expect(rich.content).toContain("A doorman decides who gets in");
+    expect(rich.lore).toContain("wool trader");
+    expect(rich.lore).toContain("impossible to read");
+    expect(rich.lore).toContain("palace clerk");
+    expect(rich.lore).not.toContain("Thin barley beer");
+  });
+
+  it("keeps typed-in custom values for every dropdown", () => {
+    const out = generateTavernLocal(
+      {
+        type: "Floating barge inn",
+        atmosphere: "Smoky and conspiratorial",
+        settlementType: "Swamp hamlet",
+        wealthLevel: "Ostentatious",
+        clientele: "River pilots",
+      },
+      seededRng(8),
+    );
+    expect(out.summary).toBe(
+      "A smoky and conspiratorial floating barge inn serving river pilots in a swamp hamlet.",
+    );
+    expect(out.content).toContain("The wealth level is ostentatious");
+    expect(out.lore).toContain("priced for an ostentatious house");
+    expect(out.lore).toContain("the river pilots crowd");
+    expect(out.lore).toContain("smoky and conspiratorial mood");
+    expect(out.lore).toContain("this swamp hamlet");
+  });
+
+  it("never gives the owner and both patrons the same name", () => {
+    for (let seed = 1; seed <= 300; seed++) {
+      const out = generateTavernLocal({}, seededRng(seed));
+      const owner = /\*\*Owner\*\*: (\w+)/.exec(out.lore)?.[1];
+      const patronSection = out.lore.split("### Notable Patrons")[1] ?? "";
+      const patronLines = patronSection.split("### Rumours")[0];
+      const patrons = [...patronLines.matchAll(/^- \*\*(\w+)\*\*: /gm)].map(
+        (match) => match[1],
+      );
+      expect(patrons).toHaveLength(2);
+      expect(new Set([owner, ...patrons]).size).toBe(3);
+    }
+  });
+
+  it("keeps owner and patron names distinct when the random source repeats", () => {
+    const out = generateTavernLocal({}, () => 0);
+    const owner = /\*\*Owner\*\*: ([^,]+)/.exec(out.lore)?.[1];
+    const patronSection = out.lore.split("### Notable Patrons")[1] ?? "";
+    const patronLines = patronSection.split("### Rumours")[0];
+    const patrons = [...patronLines.matchAll(/^- \*\*([^*]+)\*\*: /gm)].map(
+      (match) => match[1],
+    );
+    expect(patrons).toHaveLength(2);
+    expect(new Set([owner, ...patrons]).size).toBe(3);
+  });
+
+  it("writes no en or em dashes and no stock faction seed", () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const out = generateTavernLocal({}, seededRng(seed));
+      const text = [out.summary, out.content, out.lore].join("\n");
+      expect(text).not.toMatch(/[–—]/);
+      expect(out.lore).not.toContain("Faction behind");
+    }
   });
 });
 
