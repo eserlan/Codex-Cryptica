@@ -660,6 +660,31 @@ function buildCompletionCandidate(
   };
 }
 
+function completionOutcomeIdentity(outcome: ThreadOutcome): string {
+  return JSON.stringify([
+    outcome.sourceTurnId,
+    outcome.result,
+    outcome.reason,
+    outcome.supportingFactIds,
+    outcome.supportingCommitmentIds,
+  ]);
+}
+
+function hasMirroredEmergentCompletion(
+  session: AdventureSession,
+  scenarioId: string,
+  outcome: ThreadOutcome,
+): boolean {
+  const identity = completionOutcomeIdentity(outcome);
+  return (session.emergentThreads ?? []).some(
+    (thread) =>
+      thread.linkedScenarioId === scenarioId &&
+      thread.status === "resolved" &&
+      thread.outcome !== undefined &&
+      completionOutcomeIdentity(thread.outcome) === identity,
+  );
+}
+
 function selectEmergentCompletion(
   session: AdventureSession,
   lastTurnId: string,
@@ -700,6 +725,7 @@ function selectScenarioCompletion(
     ) {
       continue;
     }
+    if (hasMirroredEmergentCompletion(session, scenario.id, outcome)) continue;
     const summary = buildCompletionCandidate(
       session,
       "scenario",

@@ -192,7 +192,18 @@
   async function dismissCompletion(
     eventId: string,
     restoreFocus = true,
-  ): Promise<void> {
+  ): Promise<boolean> {
+    if (!manager.readOnly) {
+      try {
+        await manager.acknowledgeCompletion(eventId);
+      } catch {
+        notificationStore.notify(
+          "Could not save this dismissal. Please retry.",
+          "error",
+        );
+        return false;
+      }
+    }
     if (!dismissedCompletionIds.includes(eventId)) {
       dismissedCompletionIds = [...dismissedCompletionIds, eventId];
     }
@@ -201,12 +212,7 @@
         focusElement?.querySelector<HTMLElement>("textarea")?.focus();
       });
     }
-    if (manager.readOnly) return;
-    try {
-      await manager.acknowledgeCompletion(eventId);
-    } catch {
-      // Dismissal remains non-destructive in the current view even if a concurrent save occurred.
-    }
+    return true;
   }
 
   async function handleFindAnotherFromCompletion(
@@ -215,7 +221,7 @@
     if (completionActionBusy) return;
     completionActionBusy = true;
     try {
-      await dismissCompletion(eventId, false);
+      if (!(await dismissCompletion(eventId, false))) return;
       await manager.close();
     } catch {
       notificationStore.notify(
@@ -554,6 +560,12 @@
   aria-labelledby="adventure-heading"
   data-testid="adventure-play-surface"
   onkeydown={(event) => {
+    if (pendingCompletion && event.key === "Escape" && !completionActionBusy) {
+      event.preventDefault();
+      event.stopPropagation();
+      void dismissCompletion(pendingCompletion.eventId);
+      return;
+    }
     if (phone && focusElement) containTab(event, focusElement);
   }}
 >
@@ -773,7 +785,9 @@
               completion={pendingCompletion}
               readOnly={manager.readOnly}
               busy={completionActionBusy}
-              onContinue={() => dismissCompletion(pendingCompletion.eventId)}
+              onContinue={async () => {
+                await dismissCompletion(pendingCompletion.eventId);
+              }}
               onFindAnother={() =>
                 handleFindAnotherFromCompletion(pendingCompletion.eventId)}
               onFinish={() =>

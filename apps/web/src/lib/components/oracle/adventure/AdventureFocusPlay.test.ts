@@ -475,6 +475,64 @@ describe("AdventureFocusPlay", () => {
     ).toBeNull();
   });
 
+  it("keeps a completion pending when acknowledgement fails and handles Escape from the composer", async () => {
+    const activeManager = manager();
+    activeManager.session = {
+      ...activeManager.session,
+      status: "active",
+      revision: 1,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      acknowledgedOutcomeIds: [],
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [],
+      visibleState: {
+        ...activeManager.session.visibleState,
+        knownFacts: [{ id: "impact-1", text: "The eastern gate is open." }],
+      },
+      turns: [{ id: "turn-complete" }],
+      emergentThreads: [
+        {
+          id: "thread-1",
+          status: "resolved",
+          goal: "Open the eastern gate",
+          outcome: {
+            result: "achieved",
+            reason: "The gate was opened.",
+            sourceTurnId: "turn-complete",
+            supportingFactIds: ["impact-1"],
+            supportingCommitmentIds: [],
+            recordedAt: "2026-01-01T00:00:00.000Z",
+            sequence: 1,
+          },
+        },
+      ],
+    };
+    activeManager.acknowledgeCompletion = vi
+      .fn()
+      .mockRejectedValue(new Error("revision-conflict"));
+    const testProps = props({ manager: activeManager });
+    render(AdventureFocusPlay, { props: testProps });
+
+    const panel = screen.getByTestId("adventure-completion-panel");
+    await fireEvent.keyDown(screen.getByLabelText("What do you do?"), {
+      key: "Escape",
+    });
+
+    await waitFor(() => {
+      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
+
+    await fireEvent.click(
+      within(panel).getByRole("button", { name: "Find another adventure" }),
+    );
+    await waitFor(() => {
+      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(2);
+    });
+    expect(activeManager.close).not.toHaveBeenCalled();
+    expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
+  });
+
   it("keeps the adventure surface visible when fullscreen is denied", async () => {
     render(AdventureFocusPlay, { props: props() });
     const surface = screen.getByTestId("adventure-play-surface");

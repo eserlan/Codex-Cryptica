@@ -898,6 +898,18 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     expect(selectPendingAdventureCompletion(s)).toBeNull();
 
     const threadId = s.emergentThreads![0]!.id;
+    const linkedScenario = {
+      ...scenario(),
+      id: "scenario-water-compact",
+      knowledge: "heard" as const,
+      goal: "Secure fair water access for the lower ward",
+    };
+    s.emergentThreads![0]!.linkedScenarioId = linkedScenario.id;
+    s.scenarioCollection = {
+      version: 1,
+      focusedScenarioId: null,
+      items: [linkedScenario],
+    };
     s = commit(
       s,
       {
@@ -919,6 +931,7 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
         threadOutcomes: [
           {
             threadId,
+            scenarioId: linkedScenario.id,
             goal: "Secure fair water access for the lower ward",
             result: "achieved",
             reason:
