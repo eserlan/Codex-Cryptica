@@ -351,7 +351,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does this puzzle generator require a specific RPG system?",
         answer:
-          "No. It is system-neutral by default, with optional D&D, Pathfinder 2e, and Tales of the Valiant tailoring.",
+          "No. It is system-neutral by default. You can choose D&D 5e, Pathfinder 2e or Tales of the Valiant under System tailoring: the AI draft uses that system, and an offline draft records it with any party level and player count in the GM notes.",
       },
       {
         question: "Will a puzzle require one spell or character class?",
@@ -361,7 +361,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What happens when players fail?",
         answer:
-          "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
+          "Failure pressure decides. With None, a failed attempt only gives feedback. Otherwise it adds a complication, a clock, danger or a fight, and the party still has a way forward.",
       },
       {
         question: "What makes this the best RPG puzzle generator to try?",
