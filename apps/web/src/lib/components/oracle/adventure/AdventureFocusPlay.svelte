@@ -227,11 +227,17 @@
     }
   }
 
-  async function handleFinishFromCompletion(): Promise<void> {
+  async function handleFinishFromCompletion(eventId: string): Promise<void> {
     if (completionActionBusy) return;
     completionActionBusy = true;
     try {
+      if (!manager.readOnly) {
+        await manager.acknowledgeCompletion(eventId);
+      }
       await manager.end();
+      if (!dismissedCompletionIds.includes(eventId)) {
+        dismissedCompletionIds = [...dismissedCompletionIds, eventId];
+      }
     } catch {
       notificationStore.notify(
         "Unable to archive this adventure right now. You can retry or continue exploring.",
@@ -770,7 +776,8 @@
               onContinue={() => dismissCompletion(pendingCompletion.eventId)}
               onFindAnother={() =>
                 handleFindAnotherFromCompletion(pendingCompletion.eventId)}
-              onFinish={() => handleFinishFromCompletion()}
+              onFinish={() =>
+                handleFinishFromCompletion(pendingCompletion.eventId)}
             />
           {/if}
         </div>

@@ -573,13 +573,25 @@ export function applyReviewedThreadOutcomes(
   return { session, dropped };
 }
 
+function fnv1a32(input: string, seed: number): string {
+  let hash = seed >>> 0;
+  for (let i = 0; i < input.length; i += 1) {
+    hash ^= input.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, "0");
+}
+
 /** Stable completion-event ID used to deduplicate one-time epilogue panels. */
 export function completionEventId(
   source: "emergent" | "scenario",
   targetId: string,
   outcome: Pick<ThreadOutcome, "sourceTurnId">,
 ): string {
-  return `${source}:${targetId}:${outcome.sourceTurnId}`.slice(0, 160);
+  const raw = `${source}:${targetId}:${outcome.sourceTurnId}`;
+  if (raw.length <= 160) return raw;
+  const digest = `${fnv1a32(raw, 0x811c9dc5)}${fnv1a32(raw, 0x9e3779b9)}`;
+  return `${source}:${digest}:${targetId.slice(0, 120)}`.slice(0, 160);
 }
 
 function resolveCommittedWorldImpacts(

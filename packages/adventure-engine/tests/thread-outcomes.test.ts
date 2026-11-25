@@ -1079,5 +1079,17 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     expect(filtered?.unresolvedConsequences).toEqual([
       "Smugglers still operate at night.",
     ]);
+
+    // Long scenario IDs (>= 150 chars) still produce distinct completion event IDs across turns
+    const longId = "sc-" + "x".repeat(152);
+    const idA = completionEventId("scenario", longId, {
+      sourceTurnId: "turn-a",
+    });
+    const idB = completionEventId("scenario", longId, {
+      sourceTurnId: "turn-b",
+    });
+    expect(idA.length).toBeLessThanOrEqual(160);
+    expect(idB.length).toBeLessThanOrEqual(160);
+    expect(idA).not.toBe(idB);
   });
 });
