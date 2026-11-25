@@ -118,6 +118,19 @@ describe("generateTavernLocal", () => {
     expect(consonants.content).toContain("is a guildhall in a market town");
   });
 
+  it("chooses articles from common initial sounds in custom values", () => {
+    const out = generateTavernLocal(
+      {
+        type: "University inn",
+        atmosphere: "Honest and watchful",
+      },
+      seededRng(4),
+    );
+
+    expect(out.summary).toMatch(/^An honest and watchful university inn /);
+    expect(out.content).toContain("is a university inn");
+  });
+
   it("writes Tavern / Inn as 'tavern and inn' in prose", () => {
     const out = generateTavernLocal({ type: "Tavern / Inn" }, seededRng(2));
     expect(out.summary).toContain("tavern and inn");
