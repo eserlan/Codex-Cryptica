@@ -1039,6 +1039,29 @@ describe("offline magic item wiring", () => {
     expect(output.content).not.toContain("The flooded barony of Mere");
   });
 
+  it("passes typed-in kingdom options and context to the offline draft", async () => {
+    const output = await generateLocally("kingdom", {
+      kingdom: {
+        polityType: "Sky Barony",
+        governmentStyle: "Rule by lottery",
+        geography: "Floating isles",
+        scale: "Two valleys",
+        conflictLevel: "Cold war",
+        magicLevel: "Outlawed",
+        campaignContext: "The Shattered Heights",
+      },
+    } as never);
+    expect(output.summary).toBe(
+      "A sky barony in floating isles, ruled by a system of rule by lottery and facing cold war.",
+    );
+    expect(output.content).toContain("Magic in the realm is outlawed");
+    expect(output.lore).toContain("- **Scale**: Two valleys");
+    expect(output.lore).toContain(
+      "### Campaign Context\nThe Shattered Heights",
+    );
+    expect(output.content).not.toContain("The Shattered Heights");
+  });
+
   it("uses the chosen vibe and keeps the campaign context in the offline roster GM notes", async () => {
     const output = await generateLocally("faction-roster", {
       factionRoster: {

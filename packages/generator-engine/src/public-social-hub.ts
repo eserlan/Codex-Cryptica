@@ -489,7 +489,7 @@ ${details.rumours.map((rumour) => `- ${rumour}`).join("\n")}
 }
 
 /** Three different placeholder names, so the owner and patrons never share one. */
-function distinctNames(rng: Rng): [string, string, string] {
+export function distinctNames(rng: Rng): [string, string, string] {
   const names: string[] = [];
   for (let tries = 0; names.length < 3 && tries < 50; tries++) {
     const name = generateName(rng);

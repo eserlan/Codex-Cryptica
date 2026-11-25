@@ -11,15 +11,13 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
 
 import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
-import {
-  type Rng,
-  defaultRng,
-  pickFrom,
-  generatePlaceholderName as generateName,
-} from "./random-utils";
+import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { buildRealmName, buildCapitalName } from "./realm-names";
 import { formatCampaignContextBlock } from "./campaign-context";
+import { buildKingdomDetails } from "./public-kingdom-details";
+import { distinctNames } from "./public-social-hub";
+import { withArticle } from "./public-settlement-community";
 
 export const kingdomConfig = {
   polityTypes: [
@@ -194,86 +192,83 @@ export function parseKingdomResponse(text: string): PublicGeneratorOutput {
   };
 }
 
+const KINGDOM_TABLE_USES = [
+  (_title: string, prose: string) =>
+    `Use ${prose} as the political backdrop for a campaign, the home of a patron, or the prize in a struggle for power. The hidden problem gives any visit a way to grow into something bigger.`,
+  (title: string) =>
+    `${title} works best as a pressure cooker: every faction the party works with is also playing against the others, and the hidden problem is what makes it personal.`,
+  (_title: string, prose: string) =>
+    `Drop the party into ${prose} when you need a setting with real political weight. They should be able to solve the immediate problems while making the underlying one worse.`,
+  (_title: string, prose: string) =>
+    `Use ${prose} as the backdrop for missions that seem self-contained but slowly reveal that everything connects to the hidden problem.`,
+  (title: string) =>
+    `${title} is most useful when the party has to choose a side, and each side has something worth supporting and something worth opposing.`,
+] as const;
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** The realm's name mid-sentence: "the Vorath Kingdom", not "The Vorath Kingdom". */
+function realmInProse(title: string): string {
+  return title.replace(/^The /, "the ");
+}
+
 export function generateKingdomLocal(
   options: KingdomGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveKingdom(options, rng);
   const trouble = pickFrom(kingdomConfig.troubles, rng);
-  const rulerName = generateName(rng);
-  const factionName1 = `The ${generateName(rng)} ${pickFrom(["Order", "Council", "League", "Brotherhood", "Guild"], rng)}`;
-  const factionName2 = `The ${generateName(rng)} ${pickFrom(["Compact", "Circle", "Assembly", "Society", "House"], rng)}`;
+  const [rulerName, factionRoot1, factionRoot2] = distinctNames(rng);
+  const factionName1 = `The ${factionRoot1} ${pickFrom(["Order", "Council", "League", "Brotherhood", "Guild"], rng)}`;
+  const factionName2 = `The ${factionRoot2} ${pickFrom(["Compact", "Circle", "Assembly", "Society", "House"], rng)}`;
   const realmName = buildRealmName(resolved.polityType, rng);
   const capitalName = buildCapitalName(rng);
+  const realmProse = realmInProse(realmName);
+  const details = buildKingdomDetails({ ...resolved, trouble }, rng);
 
-  const summary = `A ${resolved.conflictLevel.toLowerCase()} ${resolved.polityType.toLowerCase()} set in ${resolved.geography.toLowerCase()}, ruled by a ${resolved.governmentStyle.toLowerCase()}.`;
-
-  const capitalRoles = [
-    `Its capital, ${capitalName}, serves as the seat of power and the heart of its culture.`,
-    `${capitalName}, the capital, is where the real decisions are made — usually behind closed doors.`,
-    `Power flows through ${capitalName}: whoever controls the capital controls the realm, and everyone knows it.`,
-    `The capital, ${capitalName}, is both the realm's showcase and its most contested ground.`,
-    `${capitalName} holds the realm together. Whether it can continue to do so is another question.`,
-  ] as const;
-
-  const societyDescriptions = [
-    `The population lives under the tension of a realm at ${resolved.conflictLevel.toLowerCase()}. Loyalty is currency, and old alliances are being quietly renegotiated. The ruling class projects stability but its grip is tested daily.`,
-    `Life for most people means navigating the gap between what the realm officially is and what it actually is. At ${resolved.conflictLevel.toLowerCase()}, that gap is wide enough to fall through.`,
-    `The people have learned to read the signs of a realm under strain. Prices shift, officials grow terse, and certain names stop appearing in public discourse. The current ${resolved.conflictLevel.toLowerCase()} is not invisible — it is just unspoken.`,
-    `Beneath the official order, the real social compact runs on favors, precedent, and carefully maintained fictions. A realm at ${resolved.conflictLevel.toLowerCase()} puts all three under pressure simultaneously.`,
-    `The ruling class has managed the realm's tensions long enough to be good at it. What they are not good at is admitting how much has changed.`,
-  ] as const;
-
-  const kingdomHowToUse = [
-    (n: string) =>
-      `Use ${n} as the political backdrop for a campaign, the origin of a patron, or the prize in a succession conflict. The hidden trouble gives any visit the potential to escalate into something bigger.`,
-    (n: string) =>
-      `${n} works best as a pressure cooker — a setting where every faction the party works with is also playing against every other. The hidden trouble is the thing that makes it personal.`,
-    (n: string) =>
-      `Drop the party into ${n} when you need a setting with genuine political weight. They should be able to solve immediate problems while making the underlying ones worse.`,
-    (n: string) =>
-      `Use ${n} as the backdrop for missions that seem self-contained but gradually reveal that everything connects to the realm's central crisis.`,
-    (n: string) =>
-      `${n} is most useful when the party has to choose a side — and every side has something genuinely worth supporting and something genuinely worth opposing.`,
-  ] as const;
+  const summary = `${capitalise(withArticle(resolved.polityType.trim().toLowerCase()))} in ${details.setting}, ruled by ${details.ruledBy} and ${details.conflictState}.`;
 
   const content = `### The Realm
-${realmName} is a ${resolved.scale.toLowerCase()} ${resolved.polityType.toLowerCase()} occupying ${resolved.geography.toLowerCase()} terrain. ${pickFrom(capitalRoles, rng)}${resolved.campaignContext ? ` In ${resolved.campaignContext}, it sits at the centre of the main conflict.` : ""}
+${realmName} lies in ${details.setting} and holds ${details.territory}. ${details.seat}, ${capitalName}, is ${details.capitalNote}.
 
 ### Government & Power
-${rulerName} leads through a system of ${resolved.governmentStyle.toLowerCase()}. The realm's magic level is ${resolved.magicLevel.toLowerCase()}, which shapes both its military capability and its social order. ${trouble}.
+${details.power(rulerName)} ${details.magicLine} ${trouble}.
 
 ### Society & Culture
-${pickFrom(societyDescriptions, rng)}
+${details.society}
 
 ### How to use it at the table
-${pickFrom(kingdomHowToUse, rng)(realmName)}`;
+${pickFrom(KINGDOM_TABLE_USES, rng)(realmName, realmProse)}`;
+
+  const campaignSection = resolved.campaignContext
+    ? `\n\n### Campaign Context\n${resolved.campaignContext}`
+    : "";
 
   const lore = `### At a Glance
 - **Polity Type**: ${resolved.polityType}
-- **Ruler**: ${rulerName} — calculating, cautious, and sitting on a secret
-- **Capital**: ${capitalName} — walled, busy, and watched
+- **Ruler**: ${rulerName}, ${details.rulerNote}
+- **Capital**: ${capitalName}, ${details.capitalNote}
 - **Scale**: ${resolved.scale}
 - **Magic Level**: ${resolved.magicLevel}
 - **Conflict Level**: ${resolved.conflictLevel}
 - **Hidden Problem**: ${trouble}
-- **Immediate Hook**: A royal messenger arrived three days ago and has not been seen since
+- **Immediate Hook**: ${details.hook}
 
 ### Major Factions
-- **${factionName1}**: Controls access to the realm's key resource and wants more influence at court
-- **${factionName2}**: Opposes the current ruler — quietly, for now
+- **${factionName1}**: Controls ${details.resource}, and wants more say in how the realm is run
+- **${factionName2}**: ${details.opposition}
 
 ### Rumours & Hooks
-- The ruler has been sending unmarked correspondence to a foreign power
-- A border garrison was found abandoned — no bodies, no signs of battle
-- ${factionName1} is recruiting outside its usual membership
+${details.rumours.map((rumour) => `- ${rumour}`).join("\n")}
 
 ### Entity Seeds
-- **👤 ${rulerName} (ruler)**: The ruler of the kingdom.
-- **👥 ${factionName1}**: A major faction within the kingdom.
-- **👥 ${factionName2}**: A rival faction within the kingdom.
-- **📍 ${capitalName} (capital)**: The capital city.
-- **📅 Crisis behind ${trouble.split("—")[0].trim()}**: The active campaign threat.`;
+- **👤 ${rulerName} (ruler)**: Head of ${realmProse}, and the person the hidden problem threatens most.
+- **👥 ${factionName1}**: The faction that holds ${details.resource}.
+- **👥 ${factionName2}**: The ruler's main opposition.
+- **📍 ${capitalName} (capital)**: ${capitalise(details.capitalNote)}.
+- ${details.troubleSeed}${campaignSection}`;
 
   return {
     type: "faction",
