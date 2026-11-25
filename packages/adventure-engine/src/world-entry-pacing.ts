@@ -54,10 +54,33 @@ function hasActionableDiscoveryOnTurn(
   return eventIndex > 0 && playerEvents[eventIndex]?.kind === "discovery";
 }
 
+function hadActiveLeadInvestigation(
+  turn: CommittedAdventureTurn,
+  session: AdventureSession,
+): boolean {
+  if (turn.generation?.progressCategory === "actionable-discovery") {
+    return true;
+  }
+  const { visiblePatch } = turn;
+  if (
+    visiblePatch.knownFacts.add.length > 0 ||
+    visiblePatch.knownFacts.update.length > 0 ||
+    visiblePatch.activeCharacters.add.length > 0 ||
+    visiblePatch.relationships.add.length > 0
+  ) {
+    return true;
+  }
+  return session.provisionalFacts.some(
+    (f) =>
+      f.introducedOnTurnId === turn.id && f.visibility === "player-visible",
+  );
+}
+
 function hadPlayerSeedActivity(
   turn: CommittedAdventureTurn,
   session: AdventureSession,
   playerTurnIds: ReadonlySet<string>,
+  hasActiveLead: boolean,
 ): boolean {
   if (playerTurnIds.has(turn.id)) return true;
   if (turn.revealedSecretIds.length > 0) return true;
@@ -69,6 +92,9 @@ function hadPlayerSeedActivity(
         Boolean(f.scenarioId),
     )
   ) {
+    return true;
+  }
+  if (hasActiveLead && hadActiveLeadInvestigation(turn, session)) {
     return true;
   }
   if (!session.scenarioCollection) {
@@ -116,10 +142,20 @@ export function worldEntryPacing(
 
   if (!hasHiddenThread && eligibleScenarioIds.length === 0) return undefined;
 
+  const hasActiveLead =
+    activeLeadIds.length > 0 ||
+    Boolean(session.scenarioCollection?.focusedScenarioId);
   const playerTurnIds = playerScenarioEventTurnIds(session);
   let quietTurns = 0;
   for (let i = session.turns.length - 1; i >= 0; i -= 1) {
-    if (hadPlayerSeedActivity(session.turns[i]!, session, playerTurnIds)) {
+    if (
+      hadPlayerSeedActivity(
+        session.turns[i]!,
+        session,
+        playerTurnIds,
+        hasActiveLead,
+      )
+    ) {
       break;
     }
     quietTurns += 1;
