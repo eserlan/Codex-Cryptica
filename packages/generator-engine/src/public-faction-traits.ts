@@ -959,6 +959,46 @@ export const FACTION_CONFLICT_TRAITS: TraitMap = {
     "clandestine",
     "pragmatic",
   ],
+  "A member was seen in daylight, and the others are split over who should be punished.":
+    ["exposure", "rivalry", "secretive"],
+  "Witnesses to their hidden rites remember things that never happened.": [
+    "exposure",
+    "taint",
+    "esoteric",
+  ],
+  "A junior engineer is copying their core records and selling them to a rival firm.":
+    ["betrayal", "information", "rivalry"],
+  "Their automated systems have started making decisions their own leaders cannot explain.":
+    ["technology", "exposure", "succession"],
+  "A leaked payroll proves they have been bribing the city council for years.":
+    ["exposure", "corporate", "law-enforcement"],
+  "A foreman is skimming pressure gauges and reselling the parts on the black market.":
+    ["betrayal", "criminal", "industrial"],
+  "The founders disagree over whether to sell their patents to a foreign empire.":
+    ["succession", "industrial", "rivalry"],
+  "Their workers have begun to strike, and the board is split on how hard to push back.":
+    ["oppression", "industrial", "rebellious"],
+  "A raider chief has offered to sell their location to the scavengers.": [
+    "betrayal",
+    "predatory",
+    "salvage",
+  ],
+  "Their water supply is failing, and the council is split between rationing and raiding.":
+    ["scarcity", "survival", "violent"],
+  "A rival settlement claims their stockpile is poisoned, and some of their own believe it.":
+    ["taint", "rivalry", "exposure"],
+  "A foreman is selling the company's survey maps to a rival outfit.": [
+    "betrayal",
+    "information",
+    "rivalry",
+  ],
+  "Their claim is disputed, and each family blames another for the last killing.":
+    ["rivalry", "violent", "tribal"],
+  "A drifter they took in has started remembering a crime they committed.": [
+    "exposure",
+    "taint",
+    "local",
+  ],
 };
 
 export const FACTION_HOOK_TRAITS: TraitMap = {
@@ -987,6 +1027,40 @@ export const FACTION_HOOK_TRAITS: TraitMap = {
     "feudal",
     "rivalry",
     "administrative",
+  ],
+  "They invite the party to a private rite where the price of attendance is a secret the party must share.":
+    ["esoteric", "secretive", "coven"],
+  "They offer protection from a hunter, if the party carries a message to the hunter's employer.":
+    ["protective", "diplomatic", "inquisition"],
+  "They offer the party a free upgrade that quietly reports every move back to them.":
+    ["information", "corporate", "clandestine"],
+  "Their security contractor has been breached, and they need outsiders to find the leak before the press does.":
+    ["exposure", "corporate", "information"],
+  "They want the party to carry an encrypted drive through a checkpoint they do not control.":
+    ["logistics", "clandestine", "information"],
+  "They need an engineer who can open a locked foundry without the guild noticing.":
+    ["industrial", "clandestine", "logistics"],
+  "They offer a share of a new engine's profits in return for an escort along the rail line.":
+    ["industrial", "trade", "logistics"],
+  "They ask the party to recover a stolen boiler before a rival firm uses it for sabotage.":
+    ["industrial", "rivalry", "logistics"],
+  "They need a supply run to a half-flooded depot that no one has returned from.":
+    ["scarcity", "wasteland", "logistics"],
+  "They offer safe passage through their walls if the party guards a convoy for a week.":
+    ["protective", "survival", "logistics"],
+  "They ask the party to find a missing scout who knows the way to the reactor.":
+    ["exploration", "survival", "technology"],
+  "They need a sealed telegram carried to the fort before the railroad men arrive.":
+    ["logistics", "military", "regional"],
+  "They offer land and protection to a family the party has been hunting.": [
+    "protective",
+    "debt",
+    "local",
+  ],
+  "They hire the party to recover stolen cattle before the spring drive.": [
+    "trade",
+    "local",
+    "logistics",
   ],
 };
 

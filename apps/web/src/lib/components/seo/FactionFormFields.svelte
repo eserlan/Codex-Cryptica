@@ -113,9 +113,9 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="faction-campaign-context" class={labelClass}
-    >Add campaign context</label
-  >
+  <label for="faction-campaign-context" class={labelClass}>
+    Add campaign context
+  </label>
   <textarea
     id="faction-campaign-context"
     name="campaign_context"
@@ -129,8 +129,9 @@
     id="faction-campaign-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Add a city, frontier, villain, war, or campaign tension to aim the faction
-    at your table.
+    Add a city, frontier, villain, war, or campaign tension. AI drafts use it to
+    aim the faction at your table; offline drafts keep it in GM notes with a
+    broad setting line for you to adapt.
   </p>
 </div>
 

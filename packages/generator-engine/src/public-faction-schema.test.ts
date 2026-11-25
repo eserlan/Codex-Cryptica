@@ -79,10 +79,12 @@ describe("faction trait annotations", () => {
     for (const align of factionConfig.alignments) {
       expect(FACTION_ALIGNMENT_TRAITS[align]).toBeDefined();
     }
-    for (const conflict of factionConfig.conflicts) {
+    for (const conflict of Object.values(
+      factionConfig.conflictsByTheme,
+    ).flat()) {
       expect(FACTION_CONFLICT_TRAITS[conflict]).toBeDefined();
     }
-    for (const hook of factionConfig.hooks) {
+    for (const hook of Object.values(factionConfig.hooksByTheme).flat()) {
       expect(FACTION_HOOK_TRAITS[hook]).toBeDefined();
     }
   });
