@@ -31,17 +31,32 @@ export function createArtworkLoader(
   });
 }
 
+/** Installed collection URLs must stay protected from automatic cache eviction. */
+const protectedArtworkStorage: Pick<Storage, "getItem"> = {
+  getItem(key) {
+    if (typeof localStorage === "undefined") {
+      throw new Error("Artwork collection index storage is unavailable");
+    }
+    return localStorage.getItem(key);
+  },
+};
+
+export function readProtectedArtworkUrls(
+  storage: Pick<Storage, "getItem"> = protectedArtworkStorage,
+): ReadonlySet<string> {
+  return new Set(
+    Object.values(readCollectionIndex(storage).collections).flatMap((files) =>
+      files.map((file) => file.id),
+    ),
+  );
+}
+
 /** Construct lazily in a browser so server rendering never touches DOM globals. */
 export function createBrowserArtworkLoader(): ArtworkCache {
   return createArtworkLoader({
     open: (name) => caches.open(name),
     locks: navigator.locks,
-    protectedUrls: async () =>
-      new Set(
-        Object.values(readCollectionIndex(localStorage).collections).flatMap(
-          (files) => files.map((file) => file.id),
-        ),
-      ),
+    protectedUrls: async () => readProtectedArtworkUrls(),
     fetch: (url, init) => fetch(url, init),
     digest: async (bytes) => {
       const hash = await crypto.subtle.digest("SHA-256", bytes);
