@@ -47,3 +47,4 @@ export * from "./ooc";
 export * from "./gm-director-brief";
 export * from "./causal-commitments";
 export * from "./thread-outcomes";
+export * from "./continuation-candidates";

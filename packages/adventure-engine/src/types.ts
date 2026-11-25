@@ -956,3 +956,27 @@ export interface RollHistoryEntry {
 }
 
 export type StateCorrectionOutcome = "applied" | "stale-revision";
+
+export type ContinuationAnchorType = "character" | "place" | "event";
+
+export interface AdventureContinuationCandidate {
+  id: string;
+  sourceOutcomeId?: string;
+  anchorType: ContinuationAnchorType;
+  sourceRecordIds: string[];
+  playerSafeTitle: string;
+  playerSafePremise: string;
+  uncertainty: string;
+  sourceRevision: number;
+  genreHint?: string;
+}
+
+export interface AdventureContinuationSet {
+  candidates: AdventureContinuationCandidate[];
+  freshOption: {
+    title: string;
+    premise: string;
+  };
+  sourceRevision: number;
+  sourceOutcomeId?: string;
+}
