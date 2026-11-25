@@ -878,12 +878,6 @@ export function parseMinorMagicItemResponse(
   };
 }
 
-/** GM-notes section for the campaign context; empty when none is given. */
-function campaignSectionFor(campaignContext?: string): string {
-  const text = campaignContext?.trim() ?? "";
-  return text ? `\n\n### Campaign Context\n${text}` : "";
-}
-
 export function generateMinorMagicItemLocal(
   options: MinorMagicItemGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -1157,8 +1151,6 @@ export function generateMinorMagicItemLocal(
   const conciseUtility =
     utility.replace(/\s*\([^)]*\)/, "").trim() || selectedUtilityKey;
 
-  const campaignSection = campaignSectionFor(resolved.campaignContext);
-
   const content = `### Description
 ${pickFrom(appearanceDetails, rng)}`;
 
@@ -1179,7 +1171,7 @@ ${quirk}
 ${tactical}
 
 ### Provenance & Rumour
-${provenance}${campaignSection}`;
+${provenance}`;
 
   return {
     type: "item",

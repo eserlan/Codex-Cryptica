@@ -67,26 +67,6 @@ describe("generateMinorMagicItemLocal", () => {
   });
 });
 
-describe("generateMinorMagicItemLocal campaign context", () => {
-  it("writes the campaign context into the GM notes when provided", () => {
-    const out = generateMinorMagicItemLocal(
-      { campaignContext: "  The Salt Guild of Brindel  " },
-      seededRng(3),
-    );
-    expect(out.lore).toContain(
-      "### Campaign Context\nThe Salt Guild of Brindel",
-    );
-  });
-
-  it("omits the campaign section when the context is blank", () => {
-    const out = generateMinorMagicItemLocal(
-      { campaignContext: "   " },
-      seededRng(3),
-    );
-    expect(out.lore).not.toContain("### Campaign Context");
-  });
-});
-
 describe("buildMinorMagicItemPrompt", () => {
   it("embeds genre, form, usageLimit, utility, activation, quirk, ban prompt, and consistency pass", () => {
     const { userMessage, resolved } = buildMinorMagicItemPrompt(
