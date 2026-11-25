@@ -505,4 +505,89 @@ describe("world entry pacing", () => {
       });
     },
   );
+
+  it("does not mark signDue when an open heard lead is actively investigated with knownFacts or actionable-discovery", () => {
+    const activeLead = scenarioItem(
+      "rumour-1",
+      "heard",
+      "Northbrook",
+      "actionable-clue",
+    );
+    const unheardSeed = scenarioItem("rumour-2", "unheard", "Northbrook");
+
+    const investigativeTurn = turn(1);
+    investigativeTurn.visiblePatch.knownFacts.add.push({
+      id: "fact-1",
+      text: "Tapping the wedge produces a low ring.",
+      source: "provisional",
+    });
+
+    const sWithFact = session([investigativeTurn], {
+      scenarioCollection: {
+        version: 1,
+        items: [activeLead, unheardSeed],
+        focusedScenarioId: null,
+      },
+    });
+    expect(worldEntryPacing(sWithFact)).toEqual({
+      quietTurns: 0,
+      signDue: false,
+      eligibleScenarioIds: ["rumour-2"],
+      activeLeadIds: ["rumour-1"],
+    });
+    expect(promptFor(sWithFact).behavior).not.toContain("PACING:");
+
+    const discoveryTurn = turn(2);
+    discoveryTurn.generation = {
+      modelKey: "luna-fast",
+      transport: "interaction",
+      threadMode: "continued",
+      progressCategory: "actionable-discovery",
+    };
+    const sWithDiscovery = session([discoveryTurn], {
+      scenarioCollection: {
+        version: 1,
+        items: [activeLead, unheardSeed],
+        focusedScenarioId: "rumour-1",
+      },
+    });
+    expect(worldEntryPacing(sWithDiscovery)?.signDue).toBe(false);
+    expect(worldEntryPacing(sWithDiscovery)?.quietTurns).toBe(0);
+  });
+
+  it("still marks signDue on idle turns with an open heard lead, and on knownFacts before any lead is heard", () => {
+    const activeLead = scenarioItem(
+      "rumour-1",
+      "heard",
+      "Northbrook",
+      "actionable-clue",
+    );
+    const unheardSeed = scenarioItem("rumour-2", "unheard", "Northbrook");
+
+    // Idle turn (no knownFacts, no actionable-discovery) while a heard lead exists
+    const sIdleWithLead = session([turn(1)], {
+      scenarioCollection: {
+        version: 1,
+        items: [activeLead, unheardSeed],
+        focusedScenarioId: null,
+      },
+    });
+    expect(worldEntryPacing(sIdleWithLead)?.signDue).toBe(true);
+
+    // Pre-lead turn with a generic knownFact (no active heard lead yet)
+    const genericFactTurn = turn(1);
+    genericFactTurn.visiblePatch.knownFacts.add.push({
+      id: "fact-generic",
+      text: "The market stalls sell apples.",
+      source: "provisional",
+    });
+    const sPreLead = session([genericFactTurn], {
+      scenarioCollection: {
+        version: 1,
+        items: [unheardSeed],
+        focusedScenarioId: null,
+      },
+    });
+    expect(worldEntryPacing(sPreLead)?.signDue).toBe(true);
+  });
 });

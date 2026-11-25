@@ -92,12 +92,11 @@ export function needsContextualRumours(
   const heardCount = items.filter((item) => item.knowledge === "heard").length;
   if (heardCount >= MAX_SCENARIO_COLLECTION_ITEMS) return false;
 
-  // If there are already unheard candidate rumours for this location, we don't need more
-  const hasUnheardForLocation = items.some(
-    (item) =>
-      item.knowledge === "unheard" && matchesScenarioLocation(item, loc),
+  // If there are already open scenarios (unheard or heard) for this location, we don't need another batch
+  const hasOpenForLocation = items.some(
+    (item) => item.status === "open" && matchesScenarioLocation(item, loc),
   );
-  if (hasUnheardForLocation) return false;
+  if (hasOpenForLocation) return false;
 
   // If there are legacy gmThreads/secrets and no collection at all, check if legacy threads exist
   if (
