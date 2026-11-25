@@ -224,3 +224,16 @@ export function createCaseExecutionState(
     executedTurns: [],
   };
 }
+
+export interface EvaluationCommit {
+  session: AdventureSession;
+  failed: boolean;
+  committed: boolean;
+}
+
+export interface EvaluationExecutionDependencies {
+  generation: EvaluationGenerationService;
+  options: AdventureEvaluationRunnerOptions;
+  now: () => number;
+  commitNow: () => string;
+}

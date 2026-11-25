@@ -5,6 +5,10 @@ import {
   type AdventureTurnProposal,
   type EvaluationTurn,
 } from "@codex/adventure-engine";
+import type {
+  AdventureEvaluationCase,
+  PreparedEvaluationStep,
+} from "./adventure-evaluation-model";
 
 export const now = "2026-11-10T10:00:00.000Z";
 
@@ -123,6 +127,43 @@ export function makeEvaluation(
     previousSession: session,
     session,
     canaries: [],
+    ...overrides,
+  };
+}
+
+export function makeCase(
+  overrides: Partial<AdventureEvaluationCase> = {},
+): AdventureEvaluationCase {
+  return {
+    id: "evaluation-case",
+    session: makeSession(),
+    playerAction: "Check the watch ledger.",
+    playerCharacterName: "Kestrel",
+    canaries: [],
+    ...overrides,
+  };
+}
+
+export function makePreparedStep(
+  overrides: Partial<PreparedEvaluationStep> = {},
+): PreparedEvaluationStep {
+  const testCase = makeCase();
+  return {
+    previousSession: testCase.session,
+    step: { playerAction: testCase.playerAction },
+    index: 0,
+    contextMode: undefined,
+    request: {
+      session: testCase.session,
+      playerAction: testCase.playerAction,
+      phase: "action",
+      anchors: [],
+      relevant: [],
+    },
+    generationOptions: { modelName: "luna-fast" },
+    anchors: [],
+    relevant: [],
+    clearInteraction: () => undefined,
     ...overrides,
   };
 }
