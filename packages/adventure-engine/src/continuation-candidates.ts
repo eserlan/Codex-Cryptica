@@ -1,4 +1,5 @@
 import { detectHiddenTextLeakage } from "./hidden-state";
+import { addScenario, type ScenarioCommandResult } from "./scenario-collection";
 import { fnv1a32 } from "./thread-outcomes";
 import { isPlayerVisibleScenarioEvent } from "./turn-progression-scope";
 import type {
@@ -6,6 +7,7 @@ import type {
   AdventureContinuationSet,
   AdventureSession,
   ContinuationAnchorType,
+  ScenarioItem,
   ThreadOutcome,
 } from "./types";
 
@@ -45,13 +47,13 @@ function clip(text: string, maxChars: number): string {
 }
 
 function collectPlayerSafeFacts(session: AdventureSession) {
-  const known = session.visibleState.knownFacts.map((f) => ({
+  const known = (session.visibleState?.knownFacts ?? []).map((f) => ({
     id: f.id,
     text: f.text.trim(),
     sourceRecordId: f.sourceRecordId,
     placeId: f.placeId,
   }));
-  const provisional = session.provisionalFacts
+  const provisional = (session.provisionalFacts ?? [])
     .filter((f) => f.visibility === "player-visible")
     .map((f) => ({
       id: f.id,
@@ -121,7 +123,7 @@ function findBestCharacterAnchor(
   session: AdventureSession,
   facts: ReturnType<typeof collectPlayerSafeFacts>,
 ) {
-  const playerName = session.playerCharacter.name.trim().toLowerCase();
+  const playerName = (session.playerCharacter?.name ?? "").trim().toLowerCase();
   const resolvedPersonIds = new Set(
     (session.emergentThreads ?? [])
       .filter((t) => t.status !== "open")
@@ -422,4 +424,62 @@ export function selectAdventureContinuationCandidates(
       ? { sourceOutcomeId: options.sourceOutcomeId }
       : {}),
   };
+}
+
+/**
+ * Converts a player-selected continuation pitch into a bounded, idempotent
+ * `ScenarioItem` with `kind: "manual"` origin keyed by `candidate.id`.
+ */
+export function buildContinuationScenarioSeed(
+  candidate: AdventureContinuationCandidate,
+  gmOnlyTruth?: string,
+): ScenarioItem {
+  const idHash = fnv1a32(candidate.id, 0x811c9dc5);
+  const secHash = fnv1a32(candidate.id, 0x9e3779b9);
+  const truth = gmOnlyTruth?.trim().slice(0, 600) || candidate.uncertainty;
+  return {
+    version: 1,
+    id: `sc-cont-${idHash}`,
+    origin: {
+      kind: "manual",
+      manualId: candidate.id,
+    },
+    goal: candidate.playerSafeTitle.slice(0, 240),
+    playerVisible: {
+      rumour: candidate.playerSafePremise.slice(0, 600),
+      lead: candidate.playerSafeTitle.slice(0, 600),
+    },
+    gmOnly: { truth },
+    knowledge: "heard",
+    stage: "hearsay",
+    status: "open",
+    events: [],
+    anchorRefs: candidate.sourceRecordIds.slice(0, 12),
+    revealedSecretIds: [],
+    secretBindings: {
+      truth: `sec-cont-${secHash}`,
+      eventIds: {},
+    },
+  };
+}
+
+/**
+ * Opt-in launch of one chosen continuation pitch into the active
+ * `AdventureSession` without mutating prior outcomes or canon.
+ * Idempotent across retries, double-clicks, and reloads.
+ */
+export function launchContinuationCandidate(
+  session: AdventureSession,
+  candidate: AdventureContinuationCandidate,
+  expectedRevision: number,
+  now = session.updatedAt,
+  gmOnlyTruth?: string,
+): ScenarioCommandResult {
+  const item = buildContinuationScenarioSeed(candidate, gmOnlyTruth);
+  const result = addScenario(session, item, expectedRevision, now);
+  if (!result.ok || !result.changed) return result;
+  if (result.session.scenarioCollection) {
+    result.session.scenarioCollection.focusedScenarioId = item.id;
+  }
+  return result;
 }

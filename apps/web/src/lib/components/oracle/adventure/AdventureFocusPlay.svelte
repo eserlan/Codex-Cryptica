@@ -18,7 +18,9 @@
   } from "#lib/services/adventure/adventure-session-repository.js";
   import {
     formatWorldElapsedMinutes,
+    selectAdventureContinuationCandidates,
     selectPendingAdventureCompletion,
+    type AdventureContinuationCandidate,
     type ProvisionalFact,
   } from "@codex/adventure-engine";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -188,6 +190,13 @@
       ? rawPendingCompletion
       : null,
   );
+  const continuationSet = $derived(
+    pendingCompletion && manager.session
+      ? selectAdventureContinuationCandidates(manager.session, {
+          sourceOutcomeId: pendingCompletion.eventId,
+        })
+      : null,
+  );
 
   async function dismissCompletion(
     eventId: string,
@@ -250,6 +259,25 @@
     } catch {
       notificationStore.notify(
         "Unable to archive this adventure right now. You can retry or continue exploring.",
+        "error",
+      );
+    } finally {
+      completionActionBusy = false;
+    }
+  }
+
+  async function handleLaunchContinuation(
+    eventId: string,
+    candidate: AdventureContinuationCandidate,
+  ): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await manager.launchContinuation(candidate);
+      await dismissCompletion(eventId);
+    } catch {
+      notificationStore.notify(
+        "Unable to launch that story right now. Please try again.",
         "error",
       );
     } finally {
@@ -799,6 +827,7 @@
           {#if pendingCompletion}
             <AdventureCompletionPanel
               completion={pendingCompletion}
+              {continuationSet}
               readOnly={manager.readOnly}
               busy={completionActionBusy}
               onContinue={() =>
@@ -807,6 +836,8 @@
                 handleFindAnotherFromCompletion(pendingCompletion.eventId)}
               onFinish={() =>
                 handleFinishFromCompletion(pendingCompletion.eventId)}
+              onLaunchContinuation={(candidate) =>
+                handleLaunchContinuation(pendingCompletion.eventId, candidate)}
             />
           {/if}
         </div>
