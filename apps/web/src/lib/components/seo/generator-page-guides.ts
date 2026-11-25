@@ -346,6 +346,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  quest: {
+    summary:
+      "Each result is a quest with a hook, a location, a key NPC, a threat, a complication, a twist and a reward. The vibe sets the hook, the complication and the names, and the GM notes hold the scope and any campaign context.",
+    tips: [
+      {
+        title: "Pick the vibe first",
+        detail:
+          "Choose a vibe changes the Tone, Scope, Location Type, Main Threat, Twist and Reward options, so each vibe offers its own choices. It also sets the hook, the complication and the key NPC's name.",
+      },
+      {
+        title: "Read the scope in the GM notes",
+        detail:
+          "Scope appears as a Core Field in the GM notes, drawn from the labels of the vibe you chose, such as City-wide for Cyberpunk or Territory-scale (frontier) for Western.",
+      },
+      {
+        title: "Give the campaign context a situation",
+        detail:
+          "Optional Campaign Context is preserved in a dedicated GM-note section, separate from the hook and threat. Write a situation the GM can connect to the quest.",
+      },
+    ],
+  },
   "faction-roster": {
     summary:
       "An offline draft is a note listing 3 to 6 members of one faction, each with a duty, motive, stance, immediate want, leverage point and connection to another member. The AI draft is prompted for the selected number and these details, though its returned structure can vary. Any people already named in the faction you paste in take the first places.",

@@ -1034,6 +1034,21 @@ describe("offline magic item wiring", () => {
     expect(output.title).toBe("The Salt Guild's Notable Members");
   });
 
+  it("keeps quest campaign context and scope in the offline GM notes", async () => {
+    const output = await generateLocally("quest", {
+      quest: {
+        genre: "Cyberpunk",
+        campaignContext: "The Salt Guild controls the rail yards.",
+      },
+      getActiveTheme: () => "Cyberpunk / Corporate",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild controls the rail yards.");
+    expect(output.content).not.toContain("Salt Guild");
+    expect(output.lore).toContain("**🧭 Scope**: ");
+  });
+
   it("keeps the artifact campaign context and form choices in the offline draft", async () => {
     const output = await generateLocally("artifact-generator", {
       artifact: {
