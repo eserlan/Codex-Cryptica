@@ -157,7 +157,7 @@
     id="minor-magic-item-campaign-context-help"
     class="text-micro text-theme-muted leading-relaxed"
   >
-    Add a world, region, merchant guild, or current situation to ground this
-    item in your table.
+    Add a world, region, merchant guild, or current situation. Offline drafts
+    keep it in the GM notes, and the AI draft is built around it.
   </p>
 </div>
