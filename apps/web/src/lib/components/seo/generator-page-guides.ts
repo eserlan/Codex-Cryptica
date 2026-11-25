@@ -551,6 +551,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "social-hub": {
+    summary:
+      "Use this when the party needs a place to meet people in any genre, from a Western saloon to a cyberpunk hacker café. Each draft names the venue, its operator and its regulars, then gives you one hidden problem with an opening hook and rumours to feed in over later visits.",
+    tips: [
+      {
+        title: "Set Genre / Setting before anything else",
+        detail:
+          "The Venue type and Primary clientele lists change with Genre / Setting, so a Lancer table is offered a mech bay canteen and off-duty pilots rather than a mead hall. The genre also shapes the names and the signature drink or service.",
+      },
+      {
+        title: "Use Atmosphere and Wealth level to dress the room",
+        detail:
+          "Atmosphere colours how the operator treats strangers, and Wealth level runs from watered drinks at Destitute to someone on the door turning people away at Wealthy. If none of the six choices fits, type your own and the draft keeps your wording.",
+      },
+      {
+        title: "Hold the hidden problem back",
+        detail:
+          "Lead with the Immediate Hook and save the rumours for return visits, so the Hidden Problem, such as a debt coming due or a fugitive on the staff, surfaces slowly. In offline drafts, an Entity Seed names the person, faction or place behind it, and text from Campaign context (optional) gets its own GM notes section.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "Writing useful rumours",
+      },
+      {
+        href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+        label: "Memorable NPCs with little prep",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

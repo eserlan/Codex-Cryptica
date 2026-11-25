@@ -425,7 +425,7 @@ export const TROUBLE_TRAITS: TraitMap = {
     "desperate",
     "scarcity",
   ],
-  "A recent violent incident was quietly buried — the responsible party may still be inside":
+  "A recent violent incident was quietly buried, and the responsible party may still be inside":
     ["crime", "clandestine", "betrayal"],
   "A protected criminal is hiding among the staff": [
     "criminal",
