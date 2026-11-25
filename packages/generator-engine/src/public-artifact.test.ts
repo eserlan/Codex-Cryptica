@@ -177,3 +177,180 @@ describe("public-artifact generator", () => {
     }
   });
 });
+
+function sectionOf(lore: string, heading: string): string {
+  const start = lore.indexOf(`### ${heading}`);
+  if (start < 0) return "";
+  const rest = lore.slice(start + heading.length + 4);
+  const next = rest.indexOf("\n### ");
+  return (next < 0 ? rest : rest.slice(0, next)).trim();
+}
+
+const baseOptions = {
+  genre: "Classic Fantasy",
+  form: artifactConfig.forms[0],
+  originEra: artifactConfig.originEras[0],
+  powerTier: artifactConfig.powerTiers[0],
+  currentStatus: artifactConfig.currentStatuses[0],
+  curseCost: artifactConfig.curseCosts[0],
+};
+
+describe("generateArtifactLocal offline options", () => {
+  it("keeps the campaign context in the GM notes", () => {
+    const local = generateArtifactLocal(
+      { ...baseOptions, campaignContext: "The Salt Guild of Brindel" },
+      seededRng(7),
+    );
+    expect(local.lore).toContain("### Campaign Context");
+    expect(local.lore).toContain("The Salt Guild of Brindel");
+  });
+
+  it("omits the campaign section when the context is blank", () => {
+    const local = generateArtifactLocal(
+      { ...baseOptions, campaignContext: "   " },
+      seededRng(7),
+    );
+    expect(local.lore).not.toContain("Campaign Context");
+  });
+
+  it("gives each curse option its own cost paragraph", () => {
+    const costs = artifactConfig.curseCosts.map((curseCost) =>
+      sectionOf(
+        generateArtifactLocal({ ...baseOptions, curseCost }, seededRng(3))
+          .lore!,
+        "Cost, Curse, Corruption, or Taboo",
+      ),
+    );
+    expect(new Set(costs).size).toBe(artifactConfig.curseCosts.length);
+    expect(costs[5]).toContain("no supernatural price");
+  });
+
+  it("falls back to a genre cost for a custom curse", () => {
+    const cost = sectionOf(
+      generateArtifactLocal(
+        { ...baseOptions, curseCost: "Typed by a GM" },
+        seededRng(3),
+      ).lore!,
+      "Cost, Curse, Corruption, or Taboo",
+    );
+    expect(cost).toBeTruthy();
+    expect(cost).not.toContain("no supernatural price");
+  });
+
+  it("gives heroic and regional tiers a smaller ascendant power than cataclysmic", () => {
+    const ascendant = (powerTier: string) =>
+      sectionOf(
+        generateArtifactLocal({ ...baseOptions, powerTier }, seededRng(3))
+          .lore!,
+        "Artifact Powers & Manifestations",
+      ).match(/Ascendant \/ Zenith Powers\*\*: (.*)/)?.[1];
+    const [heroic, regional, cataclysmic] =
+      artifactConfig.powerTiers.map(ascendant);
+    expect(heroic).toBeTruthy();
+    expect(new Set([heroic, regional, cataclysmic]).size).toBe(3);
+    expect(cataclysmic).toContain("Rewrites local reality");
+  });
+
+  it("leads the hooks with the one that matches the current status", () => {
+    const hooksFor = (currentStatus: string) =>
+      sectionOf(
+        generateArtifactLocal({ ...baseOptions, currentStatus }, seededRng(3))
+          .lore!,
+        "Adventure Hooks",
+      );
+    expect(hooksFor(artifactConfig.currentStatuses[1])).toMatch(
+      /^\*\*The Vault Break\*\*/,
+    );
+    expect(hooksFor(artifactConfig.currentStatuses[0])).toMatch(
+      /^\*\*The Lost Sanctuary\*\*/,
+    );
+  });
+
+  it("names the artifact after its item form and uses that noun in the prose", () => {
+    const local = generateArtifactLocal(
+      { ...baseOptions, form: "Garment / Shroud" },
+      seededRng(11),
+    );
+    expect(
+      ["Shroud", "Mantle", "Cloak"].some((noun) => local.title?.endsWith(noun)),
+    ).toBe(true);
+    expect(local.content).not.toContain("garment / shroud");
+    expect(local.content).not.toMatch(/ \/ /);
+  });
+
+  it("uses another form noun when every title for the first noun is excluded", () => {
+    const form = "Garment / Shroud";
+    const seed = 1;
+    const initiallyResolved = resolveArtifact(
+      { genre: "Classic Fantasy", form },
+      seededRng(seed),
+    );
+    const adjectives = [
+      "Solar",
+      "Cinder",
+      "Primordial",
+      "Astral",
+      "Crown-Breaker",
+      "Dusk",
+      "Radiant",
+      "Sovereign",
+      "World-Ender",
+      "Glimmer",
+      "Thorn",
+      "Eternity",
+    ];
+    const avoidNames = adjectives.map(
+      (adjective) => `${adjective} ${initiallyResolved.formNoun}`,
+    );
+
+    const resolved = resolveArtifact(
+      { genre: "Classic Fantasy", form, avoidNames },
+      seededRng(seed),
+    );
+    const local = generateArtifactLocal(
+      { ...baseOptions, form, avoidNames },
+      seededRng(seed),
+    );
+
+    expect(avoidNames).toContain(
+      `${adjectives[0]} ${initiallyResolved.formNoun}`,
+    );
+    expect(resolved.suggestedName).not.toBe("Eternity's Relic");
+    expect(resolved.suggestedName).not.toMatch(/ Relic$/);
+    expect(avoidNames).not.toContain(resolved.suggestedName);
+    expect(resolved.suggestedName).toMatch(
+      new RegExp(` ${resolved.formNoun}$`),
+    );
+    expect(local.title).toBe(resolved.suggestedName);
+    expect(
+      local.content?.replace(local.title ?? "", "").toLowerCase(),
+    ).toContain(resolved.formNoun.toLowerCase());
+    expect(
+      ["Shroud", "Mantle", "Cloak"].some((noun) =>
+        resolved.suggestedName.endsWith(noun),
+      ),
+    ).toBe(true);
+  });
+
+  it("uses the era as a readable phrase in the prose", () => {
+    const local = generateArtifactLocal(
+      { ...baseOptions, originEra: "Primordial / Mythic Age" },
+      seededRng(11),
+    );
+    expect(local.lore).toContain("Forged during the primordial or mythic age");
+    expect(local.lore).not.toContain("primordial / mythic age");
+  });
+
+  it("gives different vibe groups different factions and destruction methods", () => {
+    const lore = (genre: string, seed: number) =>
+      generateArtifactLocal({ ...baseOptions, genre }, seededRng(seed)).lore!;
+    const tech = lore("Cyberpunk / Corporate", 9);
+    const magic = lore("Classic Fantasy", 9);
+    expect(sectionOf(tech, "Interested Factions & Pursuers")).not.toEqual(
+      sectionOf(magic, "Interested Factions & Pursuers"),
+    );
+    expect(sectionOf(tech, "Destruction or Sealing Conditions")).not.toContain(
+      "dragon-bile",
+    );
+  });
+});

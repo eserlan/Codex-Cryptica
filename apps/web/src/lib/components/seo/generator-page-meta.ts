@@ -232,13 +232,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
   },
   faction: {
     pageTitle:
-      "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Clans | Codex Cryptica",
+      "RPG Faction Generator | Fantasy Guilds, Cyberpunk Megacorps & Vampire Courts | Codex Cryptica",
     metaDescription:
-      "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator. Save drafts to your vault.",
+      "Generate detailed RPG factions. Perfect as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator. Save drafts to your vault.",
     introTitle: "RPG Faction Generator",
     eyebrow: "Faction Generator",
     introText:
-      "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, sci-fi empire builder, or gothic vampire clan generator with distinct agendas, conflicts, and NPCs.",
+      "Forge campaign-ready organizations across any genre. Use it as a fantasy guild generator, cyberpunk megacorp creator, or gothic vampire court generator with distinct agendas, conflicts, and NPCs.",
     canonicalPath: "/generators/faction",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-faction.jpg",
@@ -255,7 +255,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the faction generator create?",
         answer:
-          "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, vampire covens, space federations, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
+          "It generates a complete RPG faction across any genre — fantasy guilds, cyberpunk megacorps, gothic vampire courts, and more. Each result includes a name, agenda, internal conflict, rival faction, notable NPCs, and a ready-to-use GM hook.",
       },
       {
         question: "Can I use it without an account?",
@@ -265,7 +265,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I aim the faction at my current campaign?",
         answer:
-          "Yes. Add optional campaign context — a location, villain, ongoing conflict, or political tension — and the generator will fit the faction to your table rather than producing a generic result.",
+          "Yes. Add optional campaign context, such as a location, villain, ongoing conflict, or political tension. Offline drafts keep it in the GM notes and add a line to What they control, and the AI draft is built around it.",
       },
       {
         question: "How does saving a generated faction work?",
@@ -351,7 +351,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Does this puzzle generator require a specific RPG system?",
         answer:
-          "No. It is system-neutral by default, with optional D&D, Pathfinder 2e, and Tales of the Valiant tailoring.",
+          "No. It is system-neutral by default. You can choose D&D 5e, Pathfinder 2e or Tales of the Valiant under System tailoring: the AI draft uses that system, and an offline draft records it with any party level and player count in the GM notes.",
       },
       {
         question: "Will a puzzle require one spell or character class?",
@@ -361,7 +361,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What happens when players fail?",
         answer:
-          "The generator includes fail-forward escalation: failures can add pressure, cost resources, or change the situation while preserving a path forward.",
+          "Failure pressure decides. With None, a failed attempt only gives feedback. Otherwise it adds a complication, a clock, danger or a fight, and the party still has a way forward.",
       },
       {
         question: "What makes this the best RPG puzzle generator to try?",
