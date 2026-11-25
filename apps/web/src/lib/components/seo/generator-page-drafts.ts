@@ -1,8 +1,10 @@
 import { generatePointCrawlLocal } from "generator-engine/public-point-crawl";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import type { ValidSlug } from "./generator-page-meta";
+import { extendedSlugDrafts } from "./generator-page-drafts-extended";
 
 export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
+  ...extendedSlugDrafts,
   holiday: {
     type: "note",
     title: "Lanterns for the Returning Tide",

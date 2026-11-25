@@ -36,6 +36,7 @@
     slugMeta,
   } from "./generator-page-meta";
   import { slugDrafts } from "./generator-page-drafts";
+  import { getGeneratorGuide } from "./generator-page-guides";
   import { withCategoryRelatedLinks } from "#lib/content/generator-catalogue.js";
   import {
     createGenerate,
@@ -452,6 +453,7 @@
   keywords={meta.keywords ?? []}
   labels={meta.labels ?? []}
   faqs={meta.faqs ?? []}
+  guide={meta.guide ?? getGeneratorGuide(slug, meta.introTitle)}
   {relatedLinks}
   bind:theme={activeTheme}
   isThemeCustomizable={shouldSyncGeneratorTheme(slug)}
