@@ -346,6 +346,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "faction-roster": {
+    summary:
+      "Each draft is a note listing 3 to 6 members of one faction, with a duty, a motive, a stance, what they want right now, a leverage point and a connection to another member. Any people already named in the faction you paste in take the first places.",
+    tips: [
+      {
+        title: "Paste in the named people",
+        detail:
+          "In The faction field, paste a generated faction with its Notable NPCs list. Each named person keeps their name and description and takes a place before any new members are added.",
+      },
+      {
+        title: "Set the roster emphasis",
+        detail:
+          "In Roster emphasis, Public face puts the authority figure and the true believer on the roster, and Internal dissent puts the conflicted member and the internal problem there. Field operators and New blood each bring the recent recruit in.",
+      },
+      {
+        title: "Let the vibe name the new members",
+        detail:
+          "The Choose a vibe field sets the names of members the faction does not already name, so a Cyberpunk roster gets names such as Mira and Kade. Text in Add campaign context (optional) goes into the GM notes under Campaign Context, not into the member text.",
+      },
+    ],
+  },
   "minor-magic-item": {
     summary:
       "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",

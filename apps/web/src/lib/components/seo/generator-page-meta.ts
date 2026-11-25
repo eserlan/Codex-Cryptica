@@ -308,17 +308,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the faction roster generator create?",
         answer:
-          "It generates 3 to 6 notable members of a faction, each with a role, a personal motive distinct from the faction's own goal, a stance toward the faction (loyalist, zealot, opportunist, trapped, reformer, secret traitor, or similar), a distinctive trait, an immediate hook, a leverage point, and a connection to another member on the same roster.",
+          "It generates 3 to 6 notable members of a faction, each with a role, a personal motive distinct from the faction's own goal, a stance toward the faction (loyalist, zealot, opportunist, trapped, reformer, secret traitor, or similar), a distinctive trait, what they want right now, a leverage point, and a connection to another member on the same roster.",
       },
       {
         question: "Will the roster always be a leader and underlings?",
         answer:
-          "No. Choosing a structure — hierarchy, cell network, council, warband, corporate ladder, or congregation — changes the shape of the roster to match, so a clandestine cult produces a genuinely different roster than a corporation.",
+          "No. No. Choosing a structure (hierarchy, cell network, council, warband, corporate ladder, or congregation) changes how each member's duty and the roster's summary describe the group. The AI draft also reshapes the roster to match, so a clandestine cult produces a genuinely different roster than a corporation.",
       },
       {
         question: "How does saving a generated roster work?",
         answer:
-          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity. Each member section also has its own Open as Character action to continue developing that member individually.",
+          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Note entity. Each member section also has its own Open as Character action to continue developing that member individually.",
       },
     ],
     relatedLinks: [
