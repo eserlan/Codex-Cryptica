@@ -348,7 +348,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "artifact-generator": {
     summary:
-      "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. Campaign context goes into the GM notes, and the vibe decides which factions, rumours and hooks appear.",
+      "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. GM notes retain your campaign setting, while its vibe shapes the factions, rumours and hooks.",
     tips: [
       {
         title: "Set the curse to set the cost",
