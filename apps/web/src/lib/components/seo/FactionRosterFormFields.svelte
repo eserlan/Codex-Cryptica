@@ -45,8 +45,9 @@
     id="faction-roster-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    The roster inherits this faction's ideology, goals, methods, and internal
-    tensions — the more specific this is, the more the members reflect it.
+    Offline drafts use the faction's name and any people in its Notable NPCs
+    list. The AI draft also inherits its ideology, goals, methods, and internal
+    tensions, so the more specific this is, the more the members reflect it.
   </p>
 </div>
 
@@ -107,9 +108,9 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="faction-roster-campaign-context" class={labelClass}
-    >Add campaign context (optional)</label
-  >
+  <label for="faction-roster-campaign-context" class={labelClass}>
+    Add campaign context (optional)
+  </label>
   <textarea
     id="faction-roster-campaign-context"
     name="campaign_context"

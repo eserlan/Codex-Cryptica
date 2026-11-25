@@ -367,6 +367,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "faction-roster": {
+    summary:
+      "An offline draft is a note listing 3 to 6 members of one faction, each with a duty, motive, stance, immediate want, leverage point and connection to another member. The AI draft is prompted for the selected number and these details, though its returned structure can vary. Any people already named in the faction you paste in take the first places.",
+    tips: [
+      {
+        title: "Paste in the named people",
+        detail:
+          "In The faction field, paste a generated faction with its Notable NPCs list. Each named person keeps their name and description and takes a place before any new members are added.",
+      },
+      {
+        title: "Set the roster emphasis",
+        detail:
+          "In Roster emphasis, Public face puts the authority figure and the true believer on the roster, and Internal dissent puts the conflicted member and the internal problem there. Field operators and New blood each bring the recent recruit in.",
+      },
+      {
+        title: "Let the vibe name the new members",
+        detail:
+          "The Choose a vibe field sets the names of members the faction does not already name, so a Cyberpunk roster gets names such as Mira and Kade. Text in Add campaign context (optional) goes into the GM notes under Campaign Context, not into the member text.",
+      },
+    ],
+  },
   "artifact-generator": {
     summary:
       "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. GM notes retain your campaign setting, while its vibe shapes the factions, rumours and hooks.",
@@ -569,6 +590,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
         label: "Designing puzzles that do not stall",
+      },
+    ],
+  },
+  "social-hub": {
+    summary:
+      "Use this when the party needs a place to meet people in any genre, from a Western saloon to a cyberpunk hacker café. Each draft names the venue, its operator and its regulars, then gives you one hidden problem with an opening hook and rumours to feed in over later visits.",
+    tips: [
+      {
+        title: "Set Genre / Setting before anything else",
+        detail:
+          "The Venue type and Primary clientele lists change with Genre / Setting, so a Lancer table is offered a mech bay canteen and off-duty pilots rather than a mead hall. The genre also shapes the names and the signature drink or service.",
+      },
+      {
+        title: "Use Atmosphere and Wealth level to dress the room",
+        detail:
+          "Atmosphere colours how the operator treats strangers, and Wealth level runs from watered drinks at Destitute to someone on the door turning people away at Wealthy. If none of the six choices fits, type your own and the draft keeps your wording.",
+      },
+      {
+        title: "Hold the hidden problem back",
+        detail:
+          "Lead with the Immediate Hook and save the rumours for return visits, so the Hidden Problem, such as a debt coming due or a fugitive on the staff, surfaces slowly. In offline drafts, an Entity Seed names the person, faction or place behind it, and text from Campaign context (optional) gets its own GM notes section.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "Writing useful rumours",
+      },
+      {
+        href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+        label: "Memorable NPCs with little prep",
       },
     ],
   },
