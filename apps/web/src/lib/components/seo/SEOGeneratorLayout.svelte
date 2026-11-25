@@ -35,7 +35,9 @@
     resolveGeneratedSingular,
   } from "./generator-page-identity";
   import FaqSection from "./FaqSection.svelte";
+  import GeneratorGuideSection from "./GeneratorGuideSection.svelte";
   import RelatedLinksSection from "./RelatedLinksSection.svelte";
+  import type { GeneratorGuide } from "./generator-page-guides";
   import GeneratorOutputCard from "./GeneratorOutputCard.svelte";
   import SEOGeneratorHead from "./SEOGeneratorHead.svelte";
   import GeneratorFormPanel from "./layout/GeneratorFormPanel.svelte";
@@ -62,6 +64,7 @@
     labels = [],
     relatedLinks = [],
     faqs = [],
+    guide = undefined,
     theme = $bindable("Classic Fantasy"),
     isThemeCustomizable = false,
     supportsStreaming = false,
@@ -131,6 +134,7 @@
     introText?: string;
     relatedLinks?: { href: string; label: string }[];
     faqs?: { question: string; answer: string }[];
+    guide?: GeneratorGuide;
     theme?: string;
     isThemeCustomizable?: boolean;
     supportsStreaming?: boolean;
@@ -609,6 +613,7 @@
     </div>
   </div>
 
+  <GeneratorGuideSection {introTitle} {guide} />
   <FaqSection {introTitle} {faqs} />
   <RelatedLinksSection {relatedLinks} />
 

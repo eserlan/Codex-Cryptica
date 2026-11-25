@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { slugMeta, type ValidSlug } from "./generator-page-meta";
+import { slugDrafts } from "./generator-page-drafts";
+import { getGeneratorGuide } from "./generator-page-guides";
 
 const allExpectedSlugs: ValidSlug[] = [
   "business",
@@ -207,6 +209,19 @@ describe("generator-page-meta completeness and social preview tags", () => {
       );
       expect(pageTitle.length).toBeLessThanOrEqual(70);
       expect(pageTitle.startsWith("Point Crawl Generator")).toBe(true);
+    });
+
+    it("provides a pre-rendered initial draft and usage guide for every valid generator slug", () => {
+      for (const slug of allExpectedSlugs) {
+        const draft = slugDrafts[slug];
+        expect(draft, `Missing slugDrafts entry for ${slug}`).toBeTruthy();
+        expect(draft!.title.trim().length).toBeGreaterThan(0);
+        expect(draft!.content.trim().length).toBeGreaterThan(0);
+
+        const guide = getGeneratorGuide(slug, slugMeta[slug].introTitle);
+        expect(guide.summary.trim().length).toBeGreaterThan(20);
+        expect(guide.tips.length).toBeGreaterThanOrEqual(2);
+      }
     });
   });
 });
