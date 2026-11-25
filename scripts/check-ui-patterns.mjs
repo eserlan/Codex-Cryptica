@@ -171,11 +171,11 @@ function minimumRatio(names) {
   return isIcon || isLarge ? 3 : 4.5;
 }
 
-/** A theme token with the class's /NN opacity (and optional extra opacity), composited over a ground. */
-function shownColour(tokens, [, name, alpha], ground, extraOpacity = 1) {
+/** A theme token with the class's /NN opacity, composited over a ground. */
+function shownColour(tokens, [, name, alpha], ground) {
   const colour = parseColour(TOKEN_FOR[name](tokens));
   if (!colour) return null;
-  const opacity = (alpha ? +alpha / 100 : 1) * colour[3] * extraOpacity;
+  const opacity = (alpha ? +alpha / 100 : 1) * colour[3];
   return over([...colour.slice(0, 3), opacity], ground);
 }
 
@@ -184,9 +184,16 @@ function themeRatio(tokens, fg, bg, extraOpacity = 1) {
   let lowest = Infinity;
   for (const value of [tokens.background, tokens.surface]) {
     const page = parseColour(value);
-    const ground = page && (bg ? shownColour(tokens, bg, page) : page);
-    const text = ground && shownColour(tokens, fg, ground, extraOpacity);
-    if (text) lowest = Math.min(lowest, contrastRatio(text, ground));
+    const groupBackground = page && (bg ? shownColour(tokens, bg, page) : page);
+    const groupText =
+      groupBackground && shownColour(tokens, fg, groupBackground);
+    if (page && groupBackground && groupText) {
+      // `opacity-*` applies to the rendered element as a group: both its fill
+      // and its text are composited over the page by the same amount.
+      const ground = over([...groupBackground.slice(0, 3), extraOpacity], page);
+      const text = over([...groupText.slice(0, 3), extraOpacity], page);
+      lowest = Math.min(lowest, contrastRatio(text, ground));
+    }
   }
   return lowest;
 }
