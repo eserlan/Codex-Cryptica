@@ -367,4 +367,47 @@ describe("contextual rumours domain pipeline", () => {
       "does not match active location",
     );
   });
+
+  it("does not request a new rumour batch when the current location already has open heard rumours", () => {
+    const h1 = mockScenario("h1", "heard", "Oakhaven", "loc-oakhaven");
+    const session = mockSession({
+      scenarioCollection: {
+        version: 1,
+        items: [h1],
+        focusedScenarioId: null,
+      },
+    });
+
+    expect(
+      needsContextualRumours(session, {
+        name: "Oakhaven",
+        recordId: "loc-oakhaven",
+      }),
+    ).toBe(false);
+  });
+
+  it("requests a new rumour batch when all rumours at the current location are resolved or abandoned", () => {
+    const resolved = {
+      ...mockScenario("h1", "heard", "Oakhaven", "loc-oakhaven"),
+      status: "resolved" as const,
+    };
+    const abandoned = {
+      ...mockScenario("h2", "heard", "Oakhaven", "loc-oakhaven"),
+      status: "abandoned" as const,
+    };
+    const session = mockSession({
+      scenarioCollection: {
+        version: 1,
+        items: [resolved, abandoned],
+        focusedScenarioId: null,
+      },
+    });
+
+    expect(
+      needsContextualRumours(session, {
+        name: "Oakhaven",
+        recordId: "loc-oakhaven",
+      }),
+    ).toBe(true);
+  });
 });
