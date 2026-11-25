@@ -1017,6 +1017,15 @@ describe("offline magic item wiring", () => {
     }
   });
 
+  it("keeps the minor magic item campaign context in the offline GM notes", async () => {
+    const output = await generateLocally("minor-magic-item", {
+      minorMagicItem: { campaignContext: "The Salt Guild of Brindel" },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("The Salt Guild of Brindel");
+  });
+
   it("keeps the campaign context in the offline GM notes", async () => {
     const output = await generateLocally("magic-item", {
       magicItem: { type: "Amulet", campaignContext: "The Ash Court of Veyra" },
