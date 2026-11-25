@@ -95,4 +95,53 @@ describe("AdventureCompletionPanel (#5192)", () => {
     await fireEvent.keyDown(panel, { key: "Escape" });
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
+
+  it("reveals related adventure pitches on opt-in click and launches chosen story (#5194)", async () => {
+    const onLaunchContinuation = vi.fn();
+    render(AdventureCompletionPanel, {
+      completion: sampleCompletion(),
+      continuationSet: {
+        sourceRevision: 4,
+        sourceOutcomeId: "emergent:em-1:turn-4",
+        freshOption: {
+          title: "Start something unrelated",
+          premise: "Begin a fresh adventure.",
+        },
+        candidates: [
+          {
+            id: "cont:character:p-1:em-1",
+            anchorType: "character",
+            sourceRecordIds: ["p-1"],
+            playerSafeTitle: "Follow up with Clerk Sándor",
+            playerSafePremise: "Ask Sándor about the countersigned order.",
+            uncertainty: "What Sándor knows next remains unconfirmed.",
+            sourceRevision: 4,
+          },
+        ],
+      },
+      onContinue: vi.fn(),
+      onFindAnother: vi.fn(),
+      onFinish: vi.fn(),
+      onLaunchContinuation,
+    });
+
+    expect(
+      screen.queryByTestId("adventure-completion-related-list"),
+    ).toBeNull();
+    await fireEvent.click(
+      screen.getByRole("button", { name: /related adventures/i }),
+    );
+    expect(
+      screen.getByTestId("adventure-completion-related-list"),
+    ).toBeTruthy();
+    expect(screen.getByText("Follow up with Clerk Sándor")).toBeTruthy();
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: /launch story/i }),
+    );
+    expect(onLaunchContinuation).toHaveBeenCalledTimes(1);
+    expect(onLaunchContinuation.mock.calls[0]?.[0]?.id).toBe(
+      "cont:character:p-1:em-1",
+    );
+  });
 });

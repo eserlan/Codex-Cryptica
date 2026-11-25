@@ -1,28 +1,44 @@
 <script lang="ts">
-  import type { AdventureCompletionSummary } from "@codex/adventure-engine";
+  import type {
+    AdventureCompletionSummary,
+    AdventureContinuationCandidate,
+    AdventureContinuationSet,
+  } from "@codex/adventure-engine";
 
   let {
     completion,
+    continuationSet = null,
     readOnly = false,
     busy = false,
     onContinue,
     onFindAnother,
     onFinish,
+    onLaunchContinuation,
   }: {
     completion: AdventureCompletionSummary;
+    continuationSet?: AdventureContinuationSet | null;
     readOnly?: boolean;
     busy?: boolean;
     onContinue: () => void | Promise<void>;
     onFindAnother: () => void | Promise<void>;
     onFinish: () => void | Promise<void>;
+    onLaunchContinuation?: (
+      candidate: AdventureContinuationCandidate,
+    ) => void | Promise<void>;
   } = $props();
 
+  let showRelated = $state(false);
   const headingId = $derived(
     `adventure-completion-heading-${completion.eventId}`,
   );
   const descId = $derived(`adventure-completion-desc-${completion.eventId}`);
   const badgeLabel = $derived(
     completion.result === "achieved" ? "Adventure Complete" : "Arc Concluded",
+  );
+  const hasRelated = $derived(
+    !readOnly &&
+      Boolean(onLaunchContinuation) &&
+      (continuationSet?.candidates.length ?? 0) > 0,
   );
 
   function handleKeydown(event: KeyboardEvent): void {
@@ -139,6 +155,21 @@
       <span aria-hidden="true" class="icon-[lucide--book-open] h-4 w-4"></span>
       <span>Find another adventure</span>
     </button>
+    {#if hasRelated}
+      <button
+        type="button"
+        class="inline-flex min-h-10 items-center gap-1.5 rounded-md border border-theme-text px-3 py-2 text-sm font-medium text-theme-text transition hover:bg-theme-primary/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary motion-reduce:transition-none"
+        aria-expanded={showRelated}
+        disabled={busy}
+        onclick={() => {
+          showRelated = !showRelated;
+        }}
+      >
+        <span aria-hidden="true" class="icon-[lucide--git-branch] h-4 w-4"
+        ></span>
+        <span>Related adventures</span>
+      </button>
+    {/if}
     {#if !readOnly}
       <button
         type="button"
@@ -151,4 +182,46 @@
       </button>
     {/if}
   </div>
+
+  {#if showRelated && hasRelated && continuationSet}
+    <div
+      class="mt-4 space-y-2.5 border-t border-theme-border pt-3"
+      data-testid="adventure-completion-related-list"
+    >
+      <p class="text-xs font-semibold uppercase tracking-wide text-theme-text">
+        Optional related threads
+      </p>
+      {#each continuationSet.candidates as candidate (candidate.id)}
+        <div
+          class="flex flex-col gap-2 rounded-lg border border-theme-border bg-theme-bg/60 p-3 sm:flex-row sm:items-center sm:justify-between"
+          data-testid="adventure-continuation-card"
+        >
+          <div class="min-w-0 space-y-1">
+            <div class="flex flex-wrap items-center gap-2">
+              <span
+                class="rounded bg-theme-primary/15 px-1.5 py-0.5 text-xs font-semibold capitalize text-theme-text"
+              >
+                {candidate.anchorType}
+              </span>
+              <h4 class="text-sm font-semibold text-theme-text">
+                {candidate.playerSafeTitle}
+              </h4>
+            </div>
+            <p class="text-xs text-theme-text">{candidate.playerSafePremise}</p>
+            <p class="text-xs text-theme-text">{candidate.uncertainty}</p>
+          </div>
+          <button
+            type="button"
+            class="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-md bg-theme-primary px-3 py-1.5 text-xs font-semibold text-theme-on-primary transition hover:ring-2 hover:ring-theme-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary motion-reduce:transition-none"
+            disabled={busy}
+            onclick={() => void onLaunchContinuation?.(candidate)}
+          >
+            <span aria-hidden="true" class="icon-[lucide--play] h-3.5 w-3.5"
+            ></span>
+            <span>Launch story</span>
+          </button>
+        </div>
+      {/each}
+    </div>
+  {/if}
 </div>

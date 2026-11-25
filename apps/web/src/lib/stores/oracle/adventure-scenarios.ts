@@ -3,10 +3,12 @@ import {
   addScenario,
   advanceManualWorldTime,
   dismissAdventureDiscoveries,
+  launchContinuationCandidate,
   linkAdventurePlaceRecord,
   recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
+  type AdventureContinuationCandidate,
   type ScenarioItem,
   type ScenarioStatus,
 } from "@codex/adventure-engine";
@@ -97,6 +99,21 @@ export class AdventureScenarios {
         eventId,
         session.revision,
         this.deps.now(),
+      ),
+    );
+  }
+
+  launchContinuation(
+    candidate: AdventureContinuationCandidate,
+    gmOnlyTruth?: string,
+  ): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      launchContinuationCandidate(
+        session,
+        candidate,
+        session.revision,
+        this.deps.now(),
+        gmOnlyTruth,
       ),
     );
   }

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildContinuationScenarioSeed,
+  launchContinuationCandidate,
   selectAdventureContinuationCandidates,
   type AdventureSession,
 } from "../src";
@@ -154,5 +156,62 @@ describe("selectAdventureContinuationCandidates (#5193)", () => {
     });
     expect(afterDismiss.candidates).toHaveLength(0);
     expect(afterDismiss.freshOption).toBeTruthy();
+  });
+
+  it("4. launches one chosen candidate idempotently without mutating prior outcome or sourcePackage (#5194)", () => {
+    const s = sciFiSession();
+    s.sourcePackage = {
+      packageId: "pkg-station",
+      version: "1.0.0",
+      formatVersion: "adventure-json/v1",
+      hash: "a".repeat(64),
+    };
+    const set = selectAdventureContinuationCandidates(s, {
+      sourceOutcomeId: "emergent:em-coolant:t-5",
+    });
+    const chosen = set.candidates[0]!;
+    const seed = buildContinuationScenarioSeed(chosen);
+    expect(seed.origin).toEqual({ kind: "manual", manualId: chosen.id });
+
+    const launched = launchContinuationCandidate(
+      s,
+      chosen,
+      s.revision,
+      "2026-11-25T01:00:00.000Z",
+    );
+    expect(launched.ok).toBe(true);
+    if (!launched.ok) return;
+    expect(launched.changed).toBe(true);
+    expect(launched.session.scenarioCollection?.items).toHaveLength(2);
+    expect(launched.session.scenarioCollection?.focusedScenarioId).toBe(
+      seed.id,
+    );
+    expect(launched.session.emergentThreads![0]!.status).toBe("resolved");
+    expect(launched.session.emergentThreads![0]!.outcome?.result).toBe(
+      "achieved",
+    );
+    expect(launched.session.sourcePackage?.packageId).toBe("pkg-station");
+
+    // Idempotent retry / double-click does not add a duplicate scenario
+    const retry = launchContinuationCandidate(
+      launched.session,
+      chosen,
+      launched.session.revision,
+      "2026-11-25T01:00:01.000Z",
+    );
+    expect(retry.ok).toBe(true);
+    if (retry.ok) {
+      expect(retry.changed).toBe(false);
+      expect(retry.session.scenarioCollection?.items).toHaveLength(2);
+    }
+
+    // Stale revision is rejected cleanly
+    const stale = launchContinuationCandidate(
+      launched.session,
+      set.candidates[1]!,
+      launched.session.revision - 1,
+      "2026-11-25T01:00:02.000Z",
+    );
+    expect(stale).toEqual({ ok: false, reason: "stale-revision" });
   });
 });
