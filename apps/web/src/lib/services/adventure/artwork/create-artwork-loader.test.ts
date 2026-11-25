@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   createArtworkLoader,
   readProtectedArtworkUrls,
@@ -13,6 +13,8 @@ const variant = {
   sha256: "a".repeat(64),
 };
 describe("artwork loader assembly", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
   it("protects installed artwork URLs from the injected collection index", () => {
     const protectedUrl =
       "https://assets.codexcryptica.com/adventure-artwork/forest.webp";
@@ -44,6 +46,18 @@ describe("artwork loader assembly", () => {
     };
 
     expect(() => readProtectedArtworkUrls(storage)).toThrow();
+  });
+
+  it("fails closed when browser storage cannot read the collection index", () => {
+    vi.stubGlobal("localStorage", {
+      getItem: vi.fn(() => {
+        throw new DOMException("Storage access is blocked", "SecurityError");
+      }),
+    });
+
+    expect(() => readProtectedArtworkUrls()).toThrow(
+      "Storage access is blocked",
+    );
   });
 
   it("uses a validated browser cache hit without fetching", async () => {

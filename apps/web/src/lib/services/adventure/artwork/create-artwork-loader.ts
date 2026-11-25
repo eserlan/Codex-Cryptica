@@ -2,7 +2,6 @@ import { ArtworkCache } from "./artwork-cache";
 import { BrowserArtworkCache } from "./browser-artwork-cache";
 import { createArtworkCacheLock } from "./browser-cache-lock";
 import { readCollectionIndex } from "./collection-storage";
-import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 export interface ArtworkLoaderDependencies {
   open(name: string): Promise<Cache>;
@@ -33,8 +32,17 @@ export function createArtworkLoader(
 }
 
 /** Installed collection URLs must stay protected from automatic cache eviction. */
+const protectedArtworkStorage: Pick<Storage, "getItem"> = {
+  getItem(key) {
+    if (typeof localStorage === "undefined") {
+      throw new Error("Artwork collection index storage is unavailable");
+    }
+    return localStorage.getItem(key);
+  },
+};
+
 export function readProtectedArtworkUrls(
-  storage: StorageLike = browserStorage,
+  storage: Pick<Storage, "getItem"> = protectedArtworkStorage,
 ): ReadonlySet<string> {
   return new Set(
     Object.values(readCollectionIndex(storage).collections).flatMap((files) =>
