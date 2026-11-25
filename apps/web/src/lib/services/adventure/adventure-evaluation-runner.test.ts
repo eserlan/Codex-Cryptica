@@ -1,15 +1,24 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, expectTypeOf, it, vi } from "vitest";
 import {
-  createScenarioState,
   parseAdventureSession,
   type AdventureSession,
-  type AdventureTurnProposal,
 } from "@codex/adventure-engine";
 import {
   AdventureEvaluationRunner,
   adventureEvaluationRunner,
 } from "./adventure-evaluation-runner";
-import type { AdventureEvaluationCase } from "./adventure-evaluation-runner";
+import type {
+  AdventureEvaluationCase,
+  AdventureEvaluationCaseResult,
+  AdventureEvaluationCondition,
+  AdventureEvaluationConditionResult,
+  AdventureEvaluationResetClassification,
+  AdventureEvaluationResult,
+  AdventureEvaluationRunnerOptions,
+  AdventureEvaluationStep,
+  AdventureEvaluationTelemetry,
+  AdventureEvaluationTurnTelemetry,
+} from "./adventure-evaluation-runner";
 import type {
   AdventureGenerationOptions,
   AdventureTurnGenerationRequest,
@@ -19,111 +28,44 @@ import {
   GM_DIRECTOR_EVALUATION_STEPS,
 } from "../../../../../../packages/adventure-engine/tests/fixtures/gm-director-evaluation";
 
-const now = "2026-11-10T10:00:00.000Z";
-
-const emptyVisible = {
-  objectives: { add: [], update: [], removeIds: [] },
-  activeCharacters: { add: [], update: [], removeIds: [] },
-  knownFacts: { add: [], update: [], removeIds: [] },
-  relationships: { add: [], update: [], removeIds: [] },
-};
-
-const emptyHidden = {
-  secrets: { add: [], update: [], removeIds: [] },
-  gmThreads: { add: [], update: [], removeIds: [] },
-};
-
-function completeProposal(
-  overrides: Partial<Extract<AdventureTurnProposal, { kind: "complete" }>> = {},
-): Extract<AdventureTurnProposal, { kind: "complete" }> {
-  return {
-    kind: "complete",
-    narration: "A quiet breeze moves across the market square.",
-    visiblePatch: emptyVisible,
-    hiddenPatch: emptyHidden,
-    revealSecretIds: [],
-    provisionalFacts: [],
-    sourceRecordIds: [],
-    ...overrides,
-  };
-}
-
-function makeSession(): AdventureSession {
-  return parseAdventureSession({
-    schemaVersion: 3,
-    id: "eval-session-1",
-    vaultId: "vault-1",
-    title: "Market Square",
-    status: "active",
-    createdAt: now,
-    updatedAt: now,
-    lastPlayedAt: now,
-    revision: 0,
-    playerCharacter: { kind: "canonical", recordId: "pc-1", name: "Kestrel" },
-    premise: "Evening in Oakhaven.",
-    sourceRecords: [
-      {
-        recordId: "pc-1",
-        recordType: "character",
-        displayName: "Kestrel",
-        role: "player-character",
-        availability: "available",
-      },
-      {
-        recordId: "loc-1",
-        recordType: "location",
-        displayName: "Oakhaven Market",
-        role: "anchor",
-        availability: "available",
-      },
-    ],
-    places: [
-      { id: "place-1", name: "Oakhaven Market", sourceRecordId: "loc-1" },
-    ],
-    currentPlaceId: "place-1",
-    scenarioCollection: {
-      version: 1,
-      focusedScenarioId: null,
-      items: [
-        {
-          ...createScenarioState({
-            id: "scen-1",
-            origin: { kind: "manual", manualId: "m-1" },
-            playerVisible: {
-              rumour: "The baker's cart arrived late.",
-              lead: "South Gate",
-            },
-            gmOnly: { truth: "Bandits demanded a toll at the ford." },
-          }),
-          knowledge: "heard",
-          anchorRefs: ["loc-1"],
-          revealedSecretIds: [],
-          secretBindings: { truth: "truth-1", eventIds: {} },
-        },
-      ],
-    },
-    worldTime: { version: 1, elapsedMinutes: 0, events: [] },
-    visibleState: {
-      objectives: [],
-      activeCharacters: [],
-      knownFacts: [],
-      relationships: [],
-    },
-    hiddenState: {
-      secrets: [{ id: "sec-1", text: "CANARY-TOLL-COIN", status: "hidden" }],
-      gmThreads: [
-        { id: "thread-1", text: "South Gate watch", status: "hidden" },
-      ],
-    },
-    provisionalFacts: [],
-    turns: [],
-    pendingRoll: null,
-    dicePresets: [],
-    resourceCounters: [],
-  });
-}
+import {
+  now,
+  emptyVisible,
+  completeProposal,
+  makeSession,
+} from "./adventure-evaluation.fixtures";
 
 describe("AdventureEvaluationRunner", () => {
+  it("preserves the public evaluation contracts at the original import path", () => {
+    expectTypeOf<
+      Awaited<ReturnType<AdventureEvaluationRunner["run"]>>
+    >().toEqualTypeOf<AdventureEvaluationResult[]>();
+    expectTypeOf<
+      Awaited<ReturnType<AdventureEvaluationRunner["runConditionMatrix"]>>
+    >().toEqualTypeOf<AdventureEvaluationConditionResult[]>();
+    expectTypeOf<AdventureEvaluationResult["cases"]>().toEqualTypeOf<
+      AdventureEvaluationCaseResult[]
+    >();
+    expectTypeOf<AdventureEvaluationCase["turns"]>().toEqualTypeOf<
+      AdventureEvaluationStep[] | undefined
+    >();
+    expectTypeOf<
+      AdventureEvaluationResult["telemetry"]
+    >().toEqualTypeOf<AdventureEvaluationTelemetry>();
+    expectTypeOf<AdventureEvaluationTelemetry["turns"]>().toEqualTypeOf<
+      AdventureEvaluationTurnTelemetry[]
+    >();
+    expectTypeOf<
+      AdventureEvaluationTurnTelemetry["resetClassification"]
+    >().toEqualTypeOf<AdventureEvaluationResetClassification>();
+    expectTypeOf<
+      AdventureEvaluationConditionResult["condition"]
+    >().toEqualTypeOf<AdventureEvaluationCondition>();
+    expectTypeOf<
+      NonNullable<ConstructorParameters<typeof AdventureEvaluationRunner>[2]>
+    >().toEqualTypeOf<AdventureEvaluationRunnerOptions>();
+  });
+
   it("forwards QA Director treatment and reasoning effort to generation", async () => {
     const generate = vi.fn(async () => completeProposal());
     const runner = new AdventureEvaluationRunner({ generate }, ["luna-fast"], {
