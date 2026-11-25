@@ -446,6 +446,21 @@ describe("generateFactionRosterLocal offline output", () => {
     }
   });
 
+  it("does not add a case-variant of an already-named person", () => {
+    const output = generateFactionRosterLocal(
+      {
+        factionContext:
+          "Faction: The Chrome Choir\n### Notable NPCs\n- **👤 mira**: Runs the night shift.",
+        theme: "Cyberpunk / Corporate",
+        size: "3",
+      },
+      seededRng(7),
+    );
+
+    const headings = output.content.match(/^### .+$/gm) ?? [];
+    expect(headings.filter((heading) => /mira/i.test(heading))).toHaveLength(1);
+  });
+
   it("weights the roster toward the chosen emphasis", () => {
     for (let seed = 1; seed <= 20; seed++) {
       const out = generateFactionRosterLocal(

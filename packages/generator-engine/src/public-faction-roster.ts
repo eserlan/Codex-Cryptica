@@ -505,9 +505,11 @@ export function generateFactionRosterLocal(
     0,
     size,
   );
-  const takenNames = new Set(notableNpcs.map((npc) => npc.name));
+  const takenNames = new Set(
+    notableNpcs.map((npc) => npc.name.trim().toLowerCase()),
+  );
   const freshPool = rosterNamePool(theme).filter(
-    (name) => !takenNames.has(name),
+    (name) => !takenNames.has(name.trim().toLowerCase()),
   );
   const names = [
     ...notableNpcs.map((npc) => npc.name),

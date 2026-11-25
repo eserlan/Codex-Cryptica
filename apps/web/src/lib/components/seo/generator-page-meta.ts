@@ -308,12 +308,12 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the faction roster generator create?",
         answer:
-          "It generates 3 to 6 notable members of a faction, each with a role, a personal motive distinct from the faction's own goal, a stance toward the faction (loyalist, zealot, opportunist, trapped, reformer, secret traitor, or similar), a distinctive trait, what they want right now, a leverage point, and a connection to another member on the same roster.",
+          "An offline draft contains 3 to 6 notable faction members, each with a role, personal motive, stance, distinctive trait, immediate want, leverage point and connection to another member. The AI draft is prompted for this shape and selected count, though its returned structure can vary.",
       },
       {
         question: "Will the roster always be a leader and underlings?",
         answer:
-          "No. No. Choosing a structure (hierarchy, cell network, council, warband, corporate ladder, or congregation) changes how each member's duty and the roster's summary describe the group. The AI draft also reshapes the roster to match, so a clandestine cult produces a genuinely different roster than a corporation.",
+          "No. Choosing a structure (hierarchy, cell network, council, warband, corporate ladder, or congregation) changes synthesized duties for new offline members and the roster summary. Existing named people's copied descriptions stay as written. The AI draft is prompted to reshape duties to match the structure.",
       },
       {
         question: "How does saving a generated roster work?",

@@ -348,7 +348,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "faction-roster": {
     summary:
-      "Each draft is a note listing 3 to 6 members of one faction, with a duty, a motive, a stance, what they want right now, a leverage point and a connection to another member. Any people already named in the faction you paste in take the first places.",
+      "An offline draft is a note listing 3 to 6 members of one faction, each with a duty, motive, stance, immediate want, leverage point and connection to another member. The AI draft is prompted for the selected number and these details, though its returned structure can vary. Any people already named in the faction you paste in take the first places.",
     tips: [
       {
         title: "Paste in the named people",
