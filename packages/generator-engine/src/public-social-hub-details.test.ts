@@ -141,6 +141,15 @@ describe("generateSocialHubLocal option-driven detail (#5241)", () => {
     expect(INHABITANT_NAMES_BY_GENRE.Cyberpunk).toContain(owner);
     expect(out.title.startsWith(`${owner}'s `)).toBe(true);
   });
+
+  it("names space-faring venues after the operator and keeps worn names elsewhere", () => {
+    for (const genre of ["Lancer", "Space Western", "Sci-Fi"]) {
+      const out = generateSocialHubLocal({ genre }, seededRng(3));
+      expect(out.title).toMatch(/^\w+'s (Bay|Dock|Zone|Platform|Hub)$/);
+    }
+    const western = generateSocialHubLocal({ genre: "Western" }, seededRng(3));
+    expect(western.title).toMatch(/^The \w+ \w+$/);
+  });
 });
 
 describe("social-hub detail helpers", () => {
