@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795427671,
+  "updated_at": 1795629600,
   "candidates": [
     {
       "id": "reddit-45012792136-more-of-the-adventure-transcript-on-a-ph",
@@ -20,6 +20,16 @@
       "source_id": "45053421492",
       "status": "approved",
       "created_at": 1795375852
+    },
+    {
+      "id": "reddit-45669588322-what-happens-after-an-adventure-mode-goa",
+      "title": "What happens after an Adventure Mode goal is resolved?",
+      "body": "A finished goal can leave the table wondering whether that story thread ends there. I built a one-time epilogue followed by spoiler-safe ideas for related adventures you can launch in the same session.\n\n- A closing moment for the resolved goal\n- Follow-on ideas that avoid spoiling the next story\n- A way to start a related adventure right away\n\nWhen a character completes a major goal, do you prefer a quiet ending or a hook into the next adventure?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
+      "url": "",
+      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
+      "source_id": "45669588322",
+      "status": "approved",
+      "created_at": 1795629600
     }
   ]
 }
