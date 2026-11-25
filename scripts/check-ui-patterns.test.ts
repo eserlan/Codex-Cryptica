@@ -111,6 +111,11 @@ describe("contrast — cases PR review flagged", () => {
     ).toContain("state-contrast");
     expect(
       rules(
+        '<button class="bg-theme-primary text-theme-on-primary hover:opacity-90">Continue</button>',
+      ),
+    ).toContain("state-contrast");
+    expect(
+      rules(
         '<button class="text-theme-text disabled:opacity-35">Next</button>',
       ),
     ).toContain("state-contrast");

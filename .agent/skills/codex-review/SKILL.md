@@ -93,6 +93,12 @@ observed result in the review notes. For a UI change, include the worst rendered
 pair and state when contrast applies. For a recovery or data boundary change, include the
 failing or edge input and what reaches the real sink. Say when a check could not be run.
 
+When the review passes with zero open findings, stamp the reviewed `HEAD` commit so `.husky/pre-push` can verify it:
+
+```bash
+bun scripts/codex-review-stamp.mjs
+```
+
 ## Review Output Guidelines
 
 When executing a code review under this skill, strictly follow these constraints for the output:

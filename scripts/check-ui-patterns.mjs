@@ -146,6 +146,7 @@ const HOVER_FG_CLASS =
   /^hover:text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
 const HOVER_BG_CLASS =
   /^hover:bg-theme-(bg|surface|primary|accent|secondary|danger|warning)(?:\/(\d+))?$/;
+const HOVER_OPACITY_CLASS = /^hover:opacity-(\d+)$/;
 const DISABLED_FG_CLASS =
   /^disabled:text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
 const DISABLED_OPACITY_CLASS = /^disabled:opacity-(\d+)$/;
@@ -225,29 +226,44 @@ export function contrastProblems(variant, themes) {
   // Hover state foreground/background contrast
   const hoverFgToken = variant.find((t) => HOVER_FG_CLASS.test(t.name));
   const hoverBgToken = variant.find((t) => HOVER_BG_CLASS.test(t.name));
-  if (hoverFgToken || (hoverBgToken && fg)) {
+  const hoverOpacityToken = variant.find((t) =>
+    HOVER_OPACITY_CLASS.test(t.name),
+  );
+  if (hoverFgToken || ((hoverBgToken || hoverOpacityToken) && fg)) {
     const effectiveFg = hoverFgToken
       ? hoverFgToken.name.match(HOVER_FG_CLASS)
       : fg;
     const effectiveBg = hoverBgToken
       ? hoverBgToken.name.match(HOVER_BG_CLASS)
       : bg;
-    const anchor = hoverFgToken ?? hoverBgToken;
+    const hoverOpacity = hoverOpacityToken
+      ? +hoverOpacityToken.name.match(HOVER_OPACITY_CLASS)[1] / 100
+      : 1;
+    const anchor = hoverFgToken ?? hoverBgToken ?? hoverOpacityToken;
     if (effectiveFg && anchor) {
-      const worst = worstThemeFor(themes, effectiveFg, effectiveBg, minimum);
+      const worst = worstThemeFor(
+        themes,
+        effectiveFg,
+        effectiveBg,
+        minimum,
+        hoverOpacity,
+      );
       if (worst) {
         const lines = [
           ...new Set(
-            [hoverFgToken?.line, hoverBgToken?.line, fgToken?.line].filter(
-              Boolean,
-            ),
+            [
+              hoverFgToken?.line,
+              hoverBgToken?.line,
+              hoverOpacityToken?.line,
+              fgToken?.line,
+            ].filter(Boolean),
           ),
         ];
         problems.push({
           rule: "state-contrast",
           line: anchor.line,
           lines,
-          message: `${hoverFgToken?.name ?? fgToken?.name}${hoverBgToken ? ` on ${hoverBgToken.name}` : bgToken ? ` on ${bgToken.name}` : ""} is ${worst.ratio.toFixed(2)}:1 on hover in ${worst.theme} (needs ${minimum}:1).`,
+          message: `${hoverFgToken?.name ?? fgToken?.name}${hoverBgToken ? ` on ${hoverBgToken.name}` : bgToken ? ` on ${bgToken.name}` : ""}${hoverOpacityToken ? ` (${hoverOpacityToken.name})` : ""} is ${worst.ratio.toFixed(2)}:1 on hover in ${worst.theme} (needs ${minimum}:1).`,
         });
       }
     }

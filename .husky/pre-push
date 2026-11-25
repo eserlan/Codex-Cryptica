@@ -44,6 +44,9 @@ else
 fi
 if command -v bun >/dev/null 2>&1; then
 	bun scripts/lint-changed.mjs --base "$base"
+	if [ "${SKIP_CODEX_REVIEW:-0}" != "1" ]; then
+		bun scripts/codex-review-stamp.mjs --check
+	fi
 else
 	echo "Bun is required to run the changed-file lint before pushing." >&2
 	exit 1
