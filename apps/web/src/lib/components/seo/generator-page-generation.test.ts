@@ -1031,6 +1031,20 @@ describe("offline magic item wiring", () => {
     expect(output.lore).toContain("- **Setting / Theme**: Classic Fantasy");
   });
 
+  it("keeps the faction campaign context in the offline GM notes", async () => {
+    const output = await generateLocally("faction", {
+      faction: {
+        campaignContext: "The Salt Guild of Brindel",
+        theme: "Classic Fantasy",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild of Brindel");
+    expect(output.content).not.toContain("Salt Guild");
+  });
+
   it("keeps the minor magic item campaign context in the offline GM notes", async () => {
     const output = await generateLocally("minor-magic-item", {
       minorMagicItem: { campaignContext: "The Salt Guild of Brindel" },
