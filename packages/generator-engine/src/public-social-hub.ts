@@ -474,7 +474,16 @@ function distinctNames(rng: Rng): [string, string, string] {
     const name = generateName(rng);
     if (!names.includes(name)) names.push(name);
   }
-  while (names.length < 3) names.push(`${names[0]} the Younger`);
+  while (names.length < 3) {
+    const base = names[0] ?? "Aeldar";
+    let candidate = base;
+    let suffix = 2;
+    while (names.includes(candidate)) {
+      candidate = `${base} ${suffix}`;
+      suffix += 1;
+    }
+    names.push(candidate);
+  }
   return [names[0], names[1], names[2]];
 }
 

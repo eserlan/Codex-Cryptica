@@ -189,6 +189,18 @@ describe("generateTavernLocal", () => {
     }
   });
 
+  it("keeps owner and patron names distinct when the random source repeats", () => {
+    const out = generateTavernLocal({}, () => 0);
+    const owner = /\*\*Owner\*\*: ([^,]+)/.exec(out.lore)?.[1];
+    const patronSection = out.lore.split("### Notable Patrons")[1] ?? "";
+    const patronLines = patronSection.split("### Rumours")[0];
+    const patrons = [...patronLines.matchAll(/^- \*\*([^*]+)\*\*: /gm)].map(
+      (match) => match[1],
+    );
+    expect(patrons).toHaveLength(2);
+    expect(new Set([owner, ...patrons]).size).toBe(3);
+  });
+
   it("writes no en or em dashes and no stock faction seed", () => {
     for (let seed = 1; seed <= 60; seed++) {
       const out = generateTavernLocal({}, seededRng(seed));
