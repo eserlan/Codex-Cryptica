@@ -346,6 +346,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "artifact-generator": {
+    summary:
+      "Each result is a named relic with dormant, awakened and ascendant powers, an attunement ritual, a cost, factions that want it, adventure hooks and a way to destroy it. GM notes retain your campaign setting, while its vibe shapes the factions, rumours and hooks.",
+    tips: [
+      {
+        title: "Set the curse to set the cost",
+        detail:
+          "In the offline draft, Curse / Cost / Drawback sets the Cost, Curse, Corruption, or Taboo paragraph. Choose None (Pure Burden of Custody) for a relic that is heavy to keep but has no supernatural price.",
+      },
+      {
+        title: "Let the status open the adventure",
+        detail:
+          "In the offline draft, Current Status puts one matching hook first. A relic Sealed in Royal / High-Security Vault opens with a vault break, while one Lost in Ruined Sanctuary opens with getting into the sanctuary.",
+      },
+      {
+        title: "Use the tier to set how far it reaches",
+        detail:
+          "Power Tier / Scope changes only the Ascendant / Zenith Powers line. Heroic Wonder and Regional Masterpiece give it a smaller reach than Cataclysmic Power, and the dormant and awakened powers stay the same at every tier.",
+      },
+    ],
+  },
   faction: {
     summary:
       "Each result is a named faction with a type, a scale, a goal, an internal conflict, an immediate hook, two named NPCs and a rival faction. Campaign context goes into the GM notes, and the vibe changes the goal, conflict and hook.",
