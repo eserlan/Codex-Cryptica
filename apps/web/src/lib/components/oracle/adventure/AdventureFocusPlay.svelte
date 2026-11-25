@@ -192,16 +192,15 @@
   async function dismissCompletion(
     eventId: string,
     restoreFocus = true,
-  ): Promise<boolean> {
+  ): Promise<void> {
     if (!manager.readOnly) {
       try {
         await manager.acknowledgeCompletion(eventId);
       } catch {
         notificationStore.notify(
-          "Could not save this dismissal. Please retry.",
+          "Dismissed for this view, but the acknowledgement could not be saved.",
           "error",
         );
-        return false;
       }
     }
     if (!dismissedCompletionIds.includes(eventId)) {
@@ -212,7 +211,6 @@
         focusElement?.querySelector<HTMLElement>("textarea")?.focus();
       });
     }
-    return true;
   }
 
   async function handleContinueFromCompletion(eventId: string): Promise<void> {
@@ -231,7 +229,7 @@
     if (completionActionBusy) return;
     completionActionBusy = true;
     try {
-      if (!(await dismissCompletion(eventId, false))) return;
+      await dismissCompletion(eventId, false);
       await manager.close();
     } catch {
       notificationStore.notify(
@@ -247,13 +245,8 @@
     if (completionActionBusy) return;
     completionActionBusy = true;
     try {
-      if (!manager.readOnly) {
-        await manager.acknowledgeCompletion(eventId);
-      }
+      await dismissCompletion(eventId, false);
       await manager.end();
-      if (!dismissedCompletionIds.includes(eventId)) {
-        dismissedCompletionIds = [...dismissedCompletionIds, eventId];
-      }
     } catch {
       notificationStore.notify(
         "Unable to archive this adventure right now. You can retry or continue exploring.",

@@ -475,65 +475,93 @@ describe("AdventureFocusPlay", () => {
     ).toBeNull();
   });
 
-  it("keeps a completion pending when acknowledgement fails and handles Escape from the composer", async () => {
-    const activeManager = manager();
-    activeManager.session = {
-      ...activeManager.session,
-      status: "active",
-      revision: 1,
-      updatedAt: "2026-01-01T00:00:00.000Z",
-      acknowledgedOutcomeIds: [],
-      hiddenState: { secrets: [], gmThreads: [] },
-      provisionalFacts: [],
-      visibleState: {
-        ...activeManager.session.visibleState,
-        knownFacts: [{ id: "impact-1", text: "The eastern gate is open." }],
-      },
-      turns: [{ id: "turn-complete" }],
-      emergentThreads: [
-        {
-          id: "thread-1",
-          status: "resolved",
-          goal: "Open the eastern gate",
-          outcome: {
-            result: "achieved",
-            reason: "The gate was opened.",
-            sourceTurnId: "turn-complete",
-            supportingFactIds: ["impact-1"],
-            supportingCommitmentIds: [],
-            recordedAt: "2026-01-01T00:00:00.000Z",
-            sequence: 1,
-          },
+  it("dismisses a completion locally and proceeds with follow-up actions even when acknowledgement fails", async () => {
+    const makeCompletionManager = () => {
+      const m = manager();
+      m.session = {
+        ...m.session,
+        status: "active",
+        revision: 1,
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        acknowledgedOutcomeIds: [],
+        hiddenState: { secrets: [], gmThreads: [] },
+        provisionalFacts: [],
+        visibleState: {
+          ...m.session.visibleState,
+          knownFacts: [{ id: "impact-1", text: "The eastern gate is open." }],
         },
-      ],
+        turns: [{ id: "turn-complete" }],
+        emergentThreads: [
+          {
+            id: "thread-1",
+            status: "resolved",
+            goal: "Open the eastern gate",
+            outcome: {
+              result: "achieved",
+              reason: "The gate was opened.",
+              sourceTurnId: "turn-complete",
+              supportingFactIds: ["impact-1"],
+              supportingCommitmentIds: [],
+              recordedAt: "2026-01-01T00:00:00.000Z",
+              sequence: 1,
+            },
+          },
+        ],
+      };
+      m.acknowledgeCompletion = vi
+        .fn()
+        .mockRejectedValue(new Error("revision-conflict"));
+      return m;
     };
-    activeManager.acknowledgeCompletion = vi
-      .fn()
-      .mockRejectedValue(new Error("revision-conflict"));
-    const testProps = props({ manager: activeManager });
-    render(AdventureFocusPlay, { props: testProps });
 
-    const panel = screen.getByTestId("adventure-completion-panel");
+    const escapeManager = makeCompletionManager();
+    const { unmount } = render(AdventureFocusPlay, {
+      props: props({ manager: escapeManager }),
+    });
+    expect(screen.getByTestId("adventure-completion-panel")).toBeTruthy();
+
     await fireEvent.keyDown(screen.getByLabelText("What do you do?"), {
       key: "Escape",
     });
-
     await waitFor(() => {
-      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+      expect(escapeManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("adventure-completion-panel")).toBeNull();
     });
-    expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
+    unmount();
 
+    const findAnotherManager = makeCompletionManager();
+    const findRender = render(AdventureFocusPlay, {
+      props: props({ manager: findAnotherManager }),
+    });
     await fireEvent.click(
-      within(panel).getByRole("button", { name: "Find another adventure" }),
+      within(screen.getByTestId("adventure-completion-panel")).getByRole(
+        "button",
+        { name: "Find another adventure" },
+      ),
     );
     await waitFor(() => {
-      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(2);
+      expect(findAnotherManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+      expect(findAnotherManager.close).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("adventure-completion-panel")).toBeNull();
     });
-    expect(activeManager.close).not.toHaveBeenCalled();
-    expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
+    findRender.unmount();
+
+    const finishManager = makeCompletionManager();
+    render(AdventureFocusPlay, { props: props({ manager: finishManager }) });
+    await fireEvent.click(
+      within(screen.getByTestId("adventure-completion-panel")).getByRole(
+        "button",
+        { name: "Finish for now" },
+      ),
+    );
+    await waitFor(() => {
+      expect(finishManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+      expect(finishManager.end).toHaveBeenCalledTimes(1);
+      expect(screen.queryByTestId("adventure-completion-panel")).toBeNull();
+    });
   });
 
-  it("guards concurrent completion dismissals while saving and re-enables controls on failure", async () => {
+  it("guards concurrent completion dismissals while saving and still dismisses locally on failure", async () => {
     let rejectAck!: (reason?: unknown) => void;
     const activeManager = manager();
     activeManager.session = {
@@ -566,15 +594,12 @@ describe("AdventureFocusPlay", () => {
         },
       ],
     };
-    activeManager.acknowledgeCompletion = vi
-      .fn()
-      .mockImplementationOnce(
-        () =>
-          new Promise<void>((_resolve, reject) => {
-            rejectAck = reject;
-          }),
-      )
-      .mockResolvedValueOnce(undefined);
+    activeManager.acknowledgeCompletion = vi.fn().mockImplementationOnce(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectAck = reject;
+        }),
+    );
 
     render(AdventureFocusPlay, { props: props({ manager: activeManager }) });
 
@@ -601,13 +626,6 @@ describe("AdventureFocusPlay", () => {
 
     rejectAck(new Error("revision-conflict"));
     await waitFor(() => {
-      expect(continueButton.disabled).toBe(false);
-    });
-    expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
-
-    await fireEvent.click(continueButton);
-    await waitFor(() => {
-      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(2);
       expect(screen.queryByTestId("adventure-completion-panel")).toBeNull();
     });
   });
