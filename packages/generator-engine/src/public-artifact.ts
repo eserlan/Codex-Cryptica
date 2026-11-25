@@ -505,9 +505,23 @@ export interface ArtifactGeneratorOptions {
   avoidNames?: string[];
 }
 
+/** Names and prose nouns for each preset item form, so titles match the form. */
+const FORM_NOUNS: Partial<Record<string, readonly string[]>> = {
+  "Relic / Holy Symbol": ["Relic", "Sigil", "Reliquary"],
+  "Weapon / Implement of War": ["Blade", "Spear", "Warhammer"],
+  "Crown / Regalia of Rule": ["Crown", "Diadem", "Circlet"],
+  "Tome / Sealed Archive": ["Tome", "Codex", "Grimoire"],
+  "Jewel / Heartstone": ["Jewel", "Heartstone", "Gem"],
+  "Vessel / Urn": ["Urn", "Vessel", "Ewer"],
+  "Mechanism / Grand Apparatus": ["Engine", "Apparatus", "Mechanism"],
+  "Garment / Shroud": ["Shroud", "Mantle", "Cloak"],
+  "Talisman / Idol": ["Talisman", "Idol", "Amulet"],
+};
+
 export interface ResolvedArtifact {
   genre: string;
   form: string;
+  formNoun: string;
   originEra: string;
   powerTier: string;
   currentStatus: string;
@@ -516,38 +530,46 @@ export interface ResolvedArtifact {
   suggestedName: string;
 }
 
+/** Picks an unused "Adjective Noun" name; the noun is fixed when a preset form has one. */
+function pickArtifactName(
+  themeNames: { adjs: readonly string[]; nouns: readonly string[] },
+  presetNoun: string | undefined,
+  banned: ReadonlySet<string>,
+  rng: Rng,
+): string {
+  for (let i = 0; i < 20; i++) {
+    const candidate = `${pickFrom(themeNames.adjs, rng)} ${presetNoun ?? pickFrom(themeNames.nouns, rng)}`;
+    if (!banned.has(candidate)) return candidate;
+  }
+  return `${generateName(rng)}'s Relic`;
+}
+
 export function resolveArtifact(
   options: ArtifactGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): ResolvedArtifact {
   const genre = options.genre || pickFrom(artifactConfig.genres, rng);
   const themePool = namesByTheme[genre] ?? namesByTheme["Classic Fantasy"];
-  const banned = new Set(options.avoidNames ?? []);
-
-  let candidateName = "";
-  for (let i = 0; i < 20; i++) {
-    const adj = pickFrom(themePool.adjs, rng);
-    const noun = pickFrom(themePool.nouns, rng);
-    const candidate = `${adj} ${noun}`;
-    if (!banned.has(candidate)) {
-      candidateName = candidate;
-      break;
-    }
-  }
-  if (!candidateName) {
-    candidateName = `${generateName(rng)}'s Relic`;
-  }
+  const form = options.form || pickFrom(artifactConfig.forms, rng);
+  const presetNouns = FORM_NOUNS[form];
+  const presetNoun = presetNouns ? pickFrom(presetNouns, rng) : undefined;
 
   return {
     genre,
-    form: options.form || pickFrom(artifactConfig.forms, rng),
+    form,
+    formNoun: presetNoun ?? form.toLowerCase(),
     originEra: options.originEra || pickFrom(artifactConfig.originEras, rng),
     powerTier: options.powerTier || pickFrom(artifactConfig.powerTiers, rng),
     currentStatus:
       options.currentStatus || pickFrom(artifactConfig.currentStatuses, rng),
     curseCost: options.curseCost || pickFrom(artifactConfig.curseCosts, rng),
     campaignContext: options.campaignContext?.trim() || undefined,
-    suggestedName: candidateName,
+    suggestedName: pickArtifactName(
+      themePool,
+      presetNoun,
+      new Set(options.avoidNames ?? []),
+      rng,
+    ),
   };
 }
 
@@ -720,6 +742,202 @@ export function parseArtifactResponse(
   };
 }
 
+/** GM-notes section for the campaign context; empty when none is given. */
+function campaignSectionFor(campaignContext?: string): string {
+  return campaignContext ? `\n\n### Campaign Context\n${campaignContext}` : "";
+}
+
+/** Picks up to `count` different items, in random order. */
+function pickDistinct<T>(items: readonly T[], count: number, rng: Rng): T[] {
+  const pool = [...items];
+  const picked: T[] = [];
+  while (picked.length < count && pool.length > 0) {
+    const index = Math.floor(rng() * pool.length);
+    picked.push(...pool.splice(index, 1));
+  }
+  return picked;
+}
+
+/** Ascendant power at the heroic and regional tiers, in `powerTiers` order. */
+const smallerReachAscendant: Record<GenreCausality, [string, string]> = {
+  technological: [
+    "Projects a short-range lattice shield that stops a single squad's gunfire for one minute.",
+    "Locks every networked device in one district, shutting down traffic lights, doors and comms for an hour.",
+  ],
+  "western-frontier": [
+    "Turns a single revolver's shots aside, so the bearer cannot be hit by bullets for a few heartbeats.",
+    "Calls a dust storm over one town, blinding riders and holding a posse back for a full day.",
+  ],
+  "steampunk-industrial": [
+    "Overcharges a single boiler, lifting a cart or carriage clear of the street for a minute.",
+    "Stalls every steam engine in one district, leaving its factories silent until the relic is calmed.",
+  ],
+  "post-apocalyptic": [
+    "Heals minor wounds and filters the air around the bearer, keeping them alive inside a poison cloud.",
+    "Floods one settlement's wells with purifying light, cleansing contamination for a full season.",
+  ],
+  occult: [
+    "Lets the bearer see one ghost in a room and speak with it briefly.",
+    "Pulls the shadows of one village into a single night that lasts three days.",
+  ],
+  magical: [
+    "Gives the bearer a brief glow of courage that steadies allies against fear and shock.",
+    "Ends a drought over one county, so rain falls across the fields for a full season.",
+  ],
+};
+
+/** Curse / cost lines, in `curseCosts` order. */
+const CURSE_LINES: readonly string[] = [
+  "Each use requires a measure of the bearer's blood, poured into the relic's cavity until the bearer grows weak.",
+  "Each use spreads a grey rot through the bearer's skin and memories, slowly and without a known cure.",
+  "The bearer must keep a strict taboo: they must never lie, break a vow, or refuse a plea for help.",
+  "The relic's glow draws horrors and rival hunters to the bearer from every direction, wherever they travel.",
+  "Each day in the bearer's keeping, a memory fades, while nightmares of the relic's old keepers grow sharper.",
+  "The relic has no supernatural price, but it is heavy, hard to hide and must be guarded at all times.",
+];
+
+/** Hook for each `currentStatuses` entry, listed first in the hooks section. */
+const STATUS_HOOKS: readonly string[] = [
+  "**The Lost Sanctuary**: The relic lies in a ruined sanctuary, and the party must find a way in before its wardens return.",
+  "**The Vault Break**: The relic is sealed in a high-security vault, and the party must open it without raising the alarm.",
+  "**The Usurper**: A tyrant or rival holds the relic in open defiance, and the party has been hired to take it back.",
+  "**The Hidden Relic**: The relic is disguised as ordinary wreckage, and the party must find it before a buyer does.",
+  "**The Reforging**: The relic lies in shards across the region, and the party must recover every piece before someone reassembles it.",
+  "**The Deep Find**: The relic lies submerged in a remote and dangerous place, and the party must reach it before the depths or rivals do.",
+];
+
+const factionsByCausality: Record<GenreCausality, string[]> = {
+  technological: [
+    "**The Ascendancy Directorate**: Seeks to lock the relic in corporate vaults to control the network it can override.",
+    "**The Null Collective**: Anti-technology saboteurs who want the relic destroyed before it wakes the machines.",
+    "**A Rogue Systems Architect**: Hunts the relic to rewrite its core code, and will kill for the source keys.",
+  ],
+  "western-frontier": [
+    "**The Territorial Railroad Company**: Wants the relic for land claims along the new line and will hire gunmen to take it.",
+    "**A Circuit Preacher's Flock**: Believes the relic is a holy sign and will guard it against outlaws and the government.",
+    "**The Territory Marshal**: Wants the relic sealed away under the law before a rival gang can claim it.",
+  ],
+  "steampunk-industrial": [
+    "**The Guild of Horologists**: Seeks to take the relic apart for its escapements and keep its secrets within the guild.",
+    "**The Boiler Syndicate**: Industrial barons who want its pressurised aether to power a city's engines and crush their rivals.",
+    "**A Luddite Brotherhood**: Smashes automata and wants the relic destroyed before it powers another war machine.",
+  ],
+  "post-apocalyptic": [
+    "**The Bunker Warlord**: Holds the stronghold's reactors and wants the relic's power to rule the survivor settlements.",
+    "**The Salvage Caravans**: Scavengers who will trade almost anything for the relic's pre-war parts and fuel.",
+    "**The Sterile Priesthood**: Believes the relic's signal is a judgement and wants it switched off for good.",
+  ],
+  occult: [
+    "**The Ash Cult of Veil-Keepers**: Seeks to bind the relic's shadows to their own rites, even at the cost of their lives.",
+    "**The Night Inquisition**: Hunts the relic and its bearers, believing the whispers are a plague from beyond.",
+    "**A Grave Heiress**: Desperate to reclaim her family's lost heirloom, and ready to bargain with the dead to get it.",
+  ],
+  magical: [
+    "**The Sovereign's Oathbound**: Knights sworn to bring the relic to their king's throne before a rival can claim it.",
+    "**The Order of the Sunflame**: Priests who seek to purify the relic in holy fire and return it to the temples.",
+    "**A Dragon Lord in Exile**: Wants the relic to reclaim a fallen throne, and will burn anyone who stands in the way.",
+  ],
+};
+
+const rumorsByCausality: Record<GenreCausality, string[]> = {
+  technological: [
+    "Dockworkers swear the relic hums in its sleep, and that its lights blink in time with the city's traffic signals.",
+    "Scholars argue whether it was built by a lost corporate intelligence or by a people who left the stars behind.",
+    "Some say the relic only obeys someone whose neural implant has been wiped clean.",
+  ],
+  "western-frontier": [
+    "Drovers say the relic brings rain, but also that cattle die wherever it is carried.",
+    "Some claim it was taken from a dead gunslinger who still rides the trail at night.",
+    "Folk tales say it answers only to a bearer who has lost a family and still keeps riding.",
+  ],
+  "steampunk-industrial": [
+    "Engineers claim the relic runs cooler in a clockmaker's hands and hotter in a banker's.",
+    "Dock workers say its steam whistle warns of boiler explosions three days early.",
+    "Some say the inventor who forged it vanished inside his own machine.",
+  ],
+  "post-apocalyptic": [
+    "Survivors believe the relic's glow is a sign that the old world is about to return.",
+    "Traders claim it can cure the sickness, though every healer who tried to use it has died.",
+    "Some say the relic was once a weapon, and its builders kept it sealed for good reason.",
+  ],
+  occult: [
+    "Villagers say the relic is a mirror of the dead, and anyone who looks too long sees their own grave.",
+    "Scholars debate whether its maker was a fallen saint or a demon who pretended to be one.",
+    "Old songs claim its shadow only fades when the bearer tells a true secret.",
+  ],
+  magical: [
+    "Common folk believe the artifact brings bountiful harvests, but in truth, it leeches fertility from neighboring lands to fuel its miracles.",
+    "Scholars debate whether the creator was a benevolent demigod or a mad sorcerer who doomed their entire civilization.",
+    "The relic's true power, so the story goes, only answers to someone who has lost everything they loved.",
+  ],
+};
+
+const hooksByCausality: Record<GenreCausality, string[]> = {
+  technological: [
+    "**The Data Heist**: The relic's keys are kept in a corporate server vault, and a rebel crew hires the party to steal them.",
+    "**The Dead Signal**: The relic has begun broadcasting, and a city's machines are failing one by one. The party must find the source and cut it.",
+    "**The Buyer**: A rival firm will pay well for the relic, and the party is asked to deliver it to a secret lab.",
+  ],
+  "western-frontier": [
+    "**The Stagecoach Run**: The relic is being carried across the territory by a small escort, and the party must reach the fort first.",
+    "**The Ghost Town**: The relic was hidden in an abandoned mining town, where the spirits of its old owners still guard it.",
+    "**The Bounty**: A gang leader has put a price on the relic, and the party is hired to bring it in alive.",
+  ],
+  "steampunk-industrial": [
+    "**The Foundry Raid**: The relic is locked in a guild foundry, and the party must break in before its engines are taken apart.",
+    "**The Boiler Fire**: A pressurised relic is about to explode in the factory district, and someone must vent it safely.",
+    "**The Auction**: The relic is to be sold at a secret auction, and the party must win it or steal it.",
+  ],
+  "post-apocalyptic": [
+    "**The Bunker Run**: The relic's reactors are in a sealed bunker, and the party must breach it before the raiders do.",
+    "**The Caravan Escort**: A salvage caravan carrying the relic is under attack, and the party must hold the road.",
+    "**The Dead Reactor**: The relic's power core is failing, and the party must find fuel before the settlement goes dark.",
+  ],
+  occult: [
+    "**The Crypt Vigil**: The relic lies in an unmarked crypt, and anyone who spends the night there may wake changed.",
+    "**The Haunted Heir**: A grieving noble wants the relic back, but its spirits demand a bargain first.",
+    "**The Mirror Hunt**: A cult has stolen the relic, and the party must follow the reflections to find it.",
+  ],
+  magical: [
+    "**The Royal Heist**: The relic is locked in a royal treasury, and rebels hire the party to steal it.",
+    "**The Sacred Escort**: The relic must reach a distant shrine before rival pursuers intercept it.",
+    "**The Dragon's Demand**: A dragon has claimed the relic as a debt, and the party must pay it or fight.",
+  ],
+};
+
+const destructionByCausality: Record<GenreCausality, string[]> = {
+  technological: [
+    "Must be fed into a plasma furnace until its core lattice melts, and the crucible sealed afterwards.",
+    "Can only be unmade by overloading it with its own signal at the exact moment its twin relic is destroyed.",
+    "Must be erased by a full cold reset of its source network, performed by someone who will not survive it.",
+  ],
+  "western-frontier": [
+    "Must be buried in consecrated ground beneath a fresh grave, marked with iron and salt.",
+    "Can only be broken by striking it with an iron cross blessed at dawn, in the open desert.",
+    "Must be given to fire in a sacred ashpit while a hymn is sung through the night.",
+  ],
+  "steampunk-industrial": [
+    "Must be sunk into the boiling core of the city's central furnace until its escapements melt.",
+    "Can only be stopped by hammering its governor with a mercury hammer until the balance wheels seize.",
+    "Must be dropped into a deep brine vent that drowns its pressurised aether.",
+  ],
+  "post-apocalyptic": [
+    "Must be reburied in its sealed bunker, with the reactor shut down by hand, a task that costs one person their life.",
+    "Can only be scrapped by melting its alloy in a salvage forge fired with pre-war fuel.",
+    "Must be detonated in a dead zone, with the blast sealed inside a lead vault.",
+  ],
+  occult: [
+    "Must be burned at the grave of its first keeper while the bearer speaks the true name of the thing that owns it.",
+    "Can only be sealed by walling it into a crypt with the ashes of nine mourners.",
+    "Must be drowned in running water at midnight, while its reflection is shattered.",
+  ],
+  magical: [
+    "Must be plunged into the molten heart of the volcanic caldera where it was first forged, while quenched in the tears of a true sovereign.",
+    "Can only be unmade by striking it against its identical twin relic at the exact apex of a solar eclipse.",
+    "Must be dissolved in an alchemical vat of primeval dragon-bile over seven days and seven nights without interruption.",
+  ],
+};
+
 export function generateArtifactLocal(
   options: ArtifactGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -728,14 +946,17 @@ export function generateArtifactLocal(
   const {
     genre,
     form,
+    formNoun,
     originEra,
     powerTier,
     currentStatus,
     curseCost,
+    campaignContext,
     suggestedName,
   } = resolved;
 
   const causality = getGenreCausality(genre);
+  const eraPhrase = originEra.toLowerCase().replace(" / ", " or ");
   const powersHeading =
     causality === "technological"
       ? "Precursor Capabilities & Subroutines"
@@ -748,27 +969,27 @@ export function generateArtifactLocal(
 
   const appearances: Record<GenreCausality, string[]> = {
     technological: [
-      `The ${suggestedName} is a monolithic ${form.toLowerCase()} forged from a seamless, non-reflective black alloy that absorbs ambient light and laser scanning. Its surface feels chillingly cold to the touch, inscribed with microscopic fractal superconducting traces that pulse with a faint cerulean glow whenever a sentient observer approaches.`,
-      `Engineered as a complex ${form.toLowerCase()}, the ${suggestedName} hovers weightlessly inside a magnetic containment cradle. Its outer chassis is composed of translucent diamondoid lattice housing a dense, swirling core of Bose-Einstein condensate.`,
+      `The ${suggestedName} is a monolithic ${formNoun.toLowerCase()} forged from a seamless, non-reflective black alloy that absorbs ambient light and laser scanning. Its surface feels chillingly cold to the touch, inscribed with microscopic fractal superconducting traces that pulse with a faint cerulean glow whenever a sentient observer approaches.`,
+      `Engineered as a complex ${formNoun.toLowerCase()}, the ${suggestedName} hovers weightlessly inside a magnetic containment cradle. Its outer chassis is composed of translucent diamondoid lattice housing a dense, swirling core of Bose-Einstein condensate.`,
     ],
     "western-frontier": [
-      `The ${suggestedName} takes the form of a heavy, weather-beaten ${form.toLowerCase()}. Hammered from black meteoric iron and bound with cured buffalo rawhide and stamped brass bands, it carries the scent of mountain thunder and charred wood. Strange frontier brandings line its spine, radiating steady warmth even in winter gales.`,
-      `Housed in an ironwood case with hand-cast pewter fittings, the ${suggestedName} is an ancient ${form.toLowerCase()} worn smooth by generations of trail dust, dried tobacco, and frontier river water.`,
+      `The ${suggestedName} takes the form of a heavy, weather-beaten ${formNoun.toLowerCase()}. Hammered from black meteoric iron and bound with cured buffalo rawhide and stamped brass bands, it carries the scent of mountain thunder and charred wood. Strange frontier brandings line its spine, radiating steady warmth even in winter gales.`,
+      `Housed in an ironwood case with hand-cast pewter fittings, the ${suggestedName} is an ancient ${formNoun.toLowerCase()} worn smooth by generations of trail dust, dried tobacco, and frontier river water.`,
     ],
     "steampunk-industrial": [
-      `The ${suggestedName} is a towering masterpiece of clockwork and metallurgy in the shape of a grand ${form.toLowerCase()}. Polished brass bezels, oil-rubbed bronze dials, and sapphire jewel bearings enclose a hermetically sealed chamber filled with luminescent, pressurized aether.`,
+      `The ${suggestedName} is a towering masterpiece of clockwork and metallurgy in the shape of a grand ${formNoun.toLowerCase()}. Polished brass bezels, oil-rubbed bronze dials, and sapphire jewel bearings enclose a hermetically sealed chamber filled with luminescent, pressurized aether.`,
       `Constructed from riveted boiler-plate steel and precision-cut platinum escapements, the ${suggestedName} hums with a deep, rhythmic mechanical heartbeat that resonates through floorboards.`,
     ],
     "post-apocalyptic": [
-      `The ${suggestedName} is a battle-scarred pre-collapse ${form.toLowerCase()} recovered from deep within a sealed subterranean bunker. Its heavy military composite casing is scorched and pitted, yet its diagnostic status indicators remain defiantly lit in amber phosphor.`,
+      `The ${suggestedName} is a battle-scarred pre-collapse ${formNoun.toLowerCase()} recovered from deep within a sealed subterranean bunker. Its heavy military composite casing is scorched and pitted, yet its diagnostic status indicators remain defiantly lit in amber phosphor.`,
       `Assembled from heavy lead shielding, salvaged titanium rods, and sealed reactor components, the ${suggestedName} emits a soft, reassuring hum and a faint scent of hot circuit boards.`,
     ],
     occult: [
-      `The ${suggestedName} is an unsettling ${form.toLowerCase()} carved from a dense, petrified bone-like mineral that seems warm and faintly supple. Dark, dried arterial veining runs across its contours, and in absolute silence, observers hear what sounds like quiet breathing.`,
+      `The ${suggestedName} is an unsettling ${formNoun.toLowerCase()} carved from a dense, petrified bone-like mineral that seems warm and faintly supple. Dark, dried arterial veining runs across its contours, and in absolute silence, observers hear what sounds like quiet breathing.`,
       `Bound in blackened velvet and tarnished silver lace, the ${suggestedName} casts an unnatural shadow that does not align with ambient candles, leaving a scent of grave lilies and old copper in the room.`,
     ],
     magical: [
-      `The ${suggestedName} is a legendary ${form.toLowerCase()} forged in the heart of a fallen star during the ${originEra.toLowerCase()}. It gleams with an unyielding celestial brilliance, inlaid with true-gold runes that hum with ancient harmonic resonance when drawn from its silk scabbard.`,
+      `The ${suggestedName} is a legendary ${formNoun.toLowerCase()} forged in the heart of a fallen star during the ${eraPhrase}. It gleams with an unyielding celestial brilliance, inlaid with true-gold runes that hum with ancient harmonic resonance when drawn from its silk scabbard.`,
       `Crafted from a single flawless shard of primordial crystal bound in dragon-gold filigree, the ${suggestedName} feels weightless in the hand of the worthy and unmovable as a mountain to the unjust.`,
     ],
   };
@@ -863,37 +1084,31 @@ export function generateArtifactLocal(
     ],
   };
 
-  const factions = [
-    `**The Iron Hegemony / Crown Council**: Seeks to secure the artifact to cement their uncontested reign over the province.`,
-    `**The Brotherhood of the Veil**: A secretive order of lorekeepers dedicated to finding and sealing the relic before it destroys society.`,
-    `**An Itinerant Champion / Outlaw Lord**: Driven by personal vengeance to seize the artifact and strike down their former masters.`,
-  ];
-
-  const rumors = [
-    `Common folk believe the artifact brings bountiful harvests, but in truth, it leeches fertility from neighboring lands to fuel its miracles.`,
-    `Scholars debate whether the creator was a benevolent demigod or a mad sorcerer who doomed their entire civilization.`,
-    `The relic's true power, so the story goes, only answers to someone who has lost everything they loved.`,
-  ];
-
-  const hooks = [
-    `**The Heist**: The artifact has been locked in a high-security vault by a corrupt tyrant, and a rebel coalition hires the party to extract it.`,
-    `**The Escort**: The party is entrusted with delivering the dormant relic across hostile territory to an ancient sanctuary before rival pursuers intercept them.`,
-    `**The Purge**: The relic has begun awakening on its own, causing supernatural anomalies across the countryside; the party must find its hiding spot and neutralize it.`,
-  ];
-
-  const destruction = [
-    `Must be plunged into the molten heart of the volcanic caldera where it was first forged, while quenched in the tears of a true sovereign.`,
-    `Can only be unmade by striking it against its identical twin relic at the exact apex of a solar eclipse.`,
-    `Must be dissolved in an alchemical vat of primeval dragon-bile over the course of seven days and seven nights without interruption.`,
-  ];
+  const factions = factionsByCausality[causality];
+  const rumors = rumorsByCausality[causality];
+  const hookPool = hooksByCausality[causality];
+  const destructionPool = destructionByCausality[causality];
 
   const content = `### Description
 ${pickFrom(appearances[causality], rng)}`;
 
   const powers = powersByCausality[causality];
+  const tierIndex = artifactConfig.powerTiers.indexOf(powerTier);
+  const ascendant =
+    tierIndex === 0 || tierIndex === 1
+      ? smallerReachAscendant[causality][tierIndex]
+      : powers.ascendant;
+  const curseIndex = artifactConfig.curseCosts.indexOf(curseCost);
+  const cost =
+    curseIndex >= 0 ? CURSE_LINES[curseIndex] : pickFrom(costs[causality], rng);
+  const statusIndex = artifactConfig.currentStatuses.indexOf(currentStatus);
+  const hookLines =
+    statusIndex >= 0
+      ? [STATUS_HOOKS[statusIndex], ...pickDistinct(hookPool, 2, rng)]
+      : pickDistinct(hookPool, 3, rng);
   const attunement = pickFrom(attunements[causality], rng);
-  const cost = pickFrom(costs[causality], rng);
-  const destructionMethod = pickFrom(destruction, rng);
+  const destructionMethod = pickFrom(destructionPool, rng);
+  const campaignSection = campaignSectionFor(campaignContext);
 
   const lore = `### Quick Reference
 - **Item Form**: ${form}
@@ -906,7 +1121,7 @@ ${pickFrom(appearances[causality], rng)}`;
 ### ${powersHeading}
 - **Dormant Powers**: ${powers.dormant}
 - **Awakened Powers**: ${powers.awakened}
-- **Ascendant / Zenith Powers**: ${powers.ascendant}
+- **Ascendant / Zenith Powers**: ${ascendant}
 
 ### Attunement & Awakening Requirements
 ${attunement}
@@ -915,7 +1130,7 @@ ${attunement}
 ${cost}
 
 ### Known History & Previous Keepers
-Forged during the ${originEra.toLowerCase()} by master artisans whose names have been scrubbed from historical archives. Passed through the hands of three fallen dynasties, each of which collapsed shortly after tapping into its ascendant powers.
+Forged during the ${eraPhrase} by master artisans whose names have been scrubbed from historical archives. Passed through the hands of three fallen dynasties, each of which collapsed shortly after tapping into its ascendant powers.
 
 ### Interested Factions & Pursuers
 ${factions.join("\n\n")}
@@ -924,10 +1139,10 @@ ${factions.join("\n\n")}
 ${rumors.map((r) => `- ${r}`).join("\n")}
 
 ### Adventure Hooks
-${hooks.join("\n\n")}
+${hookLines.join("\n\n")}
 
 ### Destruction or Sealing Conditions
-${destructionMethod}`;
+${destructionMethod}${campaignSection}`;
 
   return {
     type: "item",
