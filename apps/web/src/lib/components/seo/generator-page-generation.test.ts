@@ -1017,6 +1017,28 @@ describe("offline magic item wiring", () => {
     }
   });
 
+  it("passes typed-in tavern options and context to the offline draft", async () => {
+    const output = await generateLocally("tavern", {
+      tavern: {
+        type: "Floating barge inn",
+        atmosphere: "Smoky and conspiratorial",
+        settlementType: "Swamp hamlet",
+        wealthLevel: "Ostentatious",
+        clientele: "River pilots",
+        campaignContext: "The flooded barony of Mere",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.summary).toBe(
+      "A smoky and conspiratorial floating barge inn serving river pilots in a swamp hamlet.",
+    );
+    expect(output.lore).toContain(
+      "### Campaign Context\nThe flooded barony of Mere",
+    );
+    expect(output.content).not.toContain("The flooded barony of Mere");
+  });
+
   it("keeps the minor magic item campaign context in the offline GM notes", async () => {
     const output = await generateLocally("minor-magic-item", {
       minorMagicItem: { campaignContext: "The Salt Guild of Brindel" },

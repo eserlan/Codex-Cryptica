@@ -627,7 +627,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Tavern Generator | Free RPG Inn & Alehouse Creator | Codex Cryptica",
     metaDescription:
-      "Generate a detailed RPG tavern or inn with owner, patrons, rumours, trouble, and adventure hooks. Works without login. Save into your Codex Cryptica campaign vault.",
+      "Generate a detailed RPG tavern or inn with an owner, regular patrons, rumours, a hidden problem and an opening hook. Works without login. Save into your Codex Cryptica campaign vault.",
     introTitle: "Tavern Generator",
     eyebrow: "Tavern Generator",
     introText:

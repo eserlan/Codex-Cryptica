@@ -97,9 +97,9 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="tavern-context" class={labelClass}
-    >Campaign context (optional)</label
-  >
+  <label for="tavern-context" class={labelClass}>
+    Campaign context (optional)
+  </label>
   <textarea
     id="tavern-context"
     bind:value={campaignContext}
@@ -112,8 +112,8 @@
     id="tavern-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Add a city, region, ongoing conflict, or campaign tension to aim the tavern
-    at your table.
+    Add a city, region, ongoing conflict or campaign tension. Offline drafts
+    keep it in the GM notes, and the AI draft is built around it.
   </p>
 </div>
 

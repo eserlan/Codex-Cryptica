@@ -1699,7 +1699,11 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Entity Seeds");
       expect(res.lore).toContain("- **📍");
       expect(res.lore).toContain("- **👤");
-      expect(res.lore).toContain("- **👥");
+      const seedLines = (res.lore.split("### Entity Seeds")[1] ?? "")
+        .split("\n")
+        .filter((line) => line.startsWith("- **"));
+      expect(seedLines).toHaveLength(4);
+      expect(res.lore).not.toContain("Faction behind");
       expect(res.lore).not.toContain("- **Character**:");
       expect(res.lore).not.toContain("- **Location**:");
       expect(res.lore).not.toContain("- **Faction**:");
@@ -1707,14 +1711,15 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
 
-    it("should include campaign context in local fallback output", async () => {
+    it("should keep campaign context in the local fallback GM notes", async () => {
       const res = await engine.generateTavern({
         type: "Roadside Inn",
         campaignContext: "a cursed forest road",
         useAI: false,
       });
 
-      expect(res.content).toContain("a cursed forest road");
+      expect(res.lore).toContain("### Campaign Context\na cursed forest road");
+      expect(res.content).not.toContain("a cursed forest road");
     });
 
     it("should call clientManager when useAI is true and succeed", async () => {

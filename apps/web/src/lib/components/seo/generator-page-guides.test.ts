@@ -130,4 +130,21 @@ describe("generator guide distinctness", () => {
       "Tome Generator",
     );
   });
+
+  it("serves the tavern guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide("tavern", "Tavern Generator");
+    expect(guide).toBe(SLUG_GUIDES.tavern);
+    expect(guide.summary).not.toContain("Tavern Generator");
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Wealth level",
+      "Primary clientele",
+      "Settlement type",
+      "Campaign context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
 });
