@@ -201,4 +201,69 @@ describe("current-turn prompt input", () => {
     expect(playerRemaining.focusedScenarioId).toBe("s-new-focused");
     expect(playerIds).toEqual(gmIds);
   });
+
+  it("builds a valid prompt within MAX_SERIALIZED_STATE_CHARS for a maximal schema-valid durable session", () => {
+    const base = session();
+    const scenarios = Array.from({ length: 8 }, (_, idx) => ({
+      version: 1 as const,
+      id: `sc-max-${idx}`,
+      origin: {
+        kind: "rumour" as const,
+        batchId: "batch-1",
+        index: (idx % 6) + 1,
+      },
+      playerVisible: {
+        rumour: `Rumour ${idx}: `.padEnd(220, "r"),
+        lead: `Lead ${idx}: `.padEnd(160, "l"),
+      },
+      gmOnly: { truth: `Truth ${idx}: `.padEnd(240, "t") },
+      knowledge: "heard" as const,
+      stage: "actionable-clue" as const,
+      status: "open" as const,
+      events: Array.from({ length: 12 }, (_, evIdx) => ({
+        id: `ev-${idx}-${evIdx}`,
+        kind: "discovery" as const,
+        visibility: "player" as const,
+        text: `Observed clue ${idx}-${evIdx}: `.padEnd(180, "e"),
+        at: "2026-11-25T00:00:00.000Z",
+        turnId: `turn-${evIdx}`,
+      })),
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: { truth: `sec-truth-${idx}`, eventIds: {} },
+    }));
+    const heavySession = {
+      ...base,
+      scenarioCollection: {
+        version: 1 as const,
+        items: scenarios,
+        focusedScenarioId: "sc-max-7",
+      },
+      provisionalFacts: Array.from({ length: 45 }, (_, idx) => ({
+        id: `pf-${idx}`,
+        kind: "clue" as const,
+        name: `Clue ${idx}`,
+        summary: `Summary ${idx}: `.padEnd(200, "p"),
+        visibility: "player-visible" as const,
+      })),
+    };
+
+    const prompt = buildAdventurePrompt({
+      session: heavySession,
+      phase: "action",
+      playerAction: "Ask the council about the eighth rumour.",
+      anchors: [],
+      relevant: [],
+    });
+
+    const parsed = JSON.parse(prompt.serialized) as {
+      state: {
+        playerScenarios?: { focusedScenarioId?: string | null };
+      };
+    };
+    expect(JSON.stringify(parsed.state).length).toBeLessThanOrEqual(
+      MAX_SERIALIZED_STATE_CHARS,
+    );
+    expect(parsed.state.playerScenarios?.focusedScenarioId).toBe("sc-max-7");
+  });
 });

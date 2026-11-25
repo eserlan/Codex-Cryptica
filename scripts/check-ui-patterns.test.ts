@@ -131,6 +131,21 @@ describe("contrast — cases PR review flagged", () => {
     ).not.toContain("state-contrast");
   });
 
+  it("flags sub-minimum UI font sizes (min-text-size)", () => {
+    expect(
+      rules('<button class="text-theme-text">Cancel</button>'),
+    ).not.toContain("min-text-size");
+    expect(
+      rules('<p class="text-[11px] text-theme-text">Status</p>'),
+    ).toContain("min-text-size");
+    expect(
+      rules('<span class="sm:text-[10px] text-theme-text">Note</span>'),
+    ).toContain("min-text-size");
+    expect(
+      rules('<p class="text-xs text-theme-text">Readable</p>'),
+    ).not.toContain("min-text-size");
+  });
+
   it("flags low-contrast outlined interactive control borders (border-contrast)", () => {
     expect(
       rules(

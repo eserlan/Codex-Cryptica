@@ -509,6 +509,25 @@ function hasTopLevelFalseOption(argument, property) {
   return isFalse;
 }
 
+const SUB_MINIMUM_TEXT_CLASS =
+  /^(?:[a-z0-9-]+:)*text-(?:\[(?:[0-9]|10|11)px\]|\[0?\.[0-6]\d*rem\]|2xs)$/;
+
+/** Sub-minimum UI font sizes below the 12px readable floor (excluding badge-only text-micro). */
+export function smallTextProblems(variants) {
+  const problems = [];
+  for (const variant of variants) {
+    for (const token of variant) {
+      if (!SUB_MINIMUM_TEXT_CLASS.test(token.name)) continue;
+      problems.push({
+        rule: "min-text-size",
+        line: token.line,
+        message: `${token.name} is below the 12px minimum readable UI text size. Use text-xs or larger for readable copy.`,
+      });
+    }
+  }
+  return problems;
+}
+
 /** A base order differing from a responsive one on the same element. */
 export function visualOrderProblems(variants) {
   const problems = [];
@@ -666,6 +685,7 @@ export function checkSource(source, file, themes) {
     for (const variant of variants)
       problems.push(...contrastProblems(variant, themes));
     problems.push(
+      ...smallTextProblems(variants),
       ...visualOrderProblems(variants),
       ...timerProblems(source, file),
       ...modalFocusProblems(source, file),
