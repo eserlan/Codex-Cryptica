@@ -13,7 +13,7 @@ export interface ContinuationServiceDeps {
   generateDraft?: (
     request: GeneratorRunRequest,
     signal?: AbortSignal,
-  ) => Promise<{ title?: string; summary?: string }>;
+  ) => Promise<{ title?: string; summary?: string; content?: string }>;
   isOnline?: () => boolean;
   aiEnabled?: () => boolean;
 }
@@ -61,13 +61,26 @@ function buildContinuationRequest(
   };
 }
 
+const MARKDOWN_HEADING_PATTERN = /^#{1,6}\s/m;
+
+function extractBoundedPitch(generated: {
+  summary?: string;
+  content?: string;
+}): string | undefined {
+  const summary = generated.summary?.trim();
+  if (summary) return summary;
+  const content = generated.content?.trim();
+  if (!content || MARKDOWN_HEADING_PATTERN.test(content)) return undefined;
+  return content;
+}
+
 function applySafeEnrichment(
   session: AdventureSession,
   candidate: AdventureContinuationCandidate,
-  generated: { title?: string; summary?: string },
+  generated: { title?: string; summary?: string; content?: string },
 ): EnrichedContinuationResult {
   const nextTitle = generated.title?.trim();
-  const nextPremise = generated.summary?.trim();
+  const nextPremise = extractBoundedPitch(generated);
   if (
     !nextTitle ||
     !nextPremise ||

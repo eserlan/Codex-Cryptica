@@ -128,6 +128,37 @@ describe("AdventureContinuationService (#5193)", () => {
     const result = await service.enrichCandidate(s, candidate);
     expect(result.enriched).toBe(false);
     expect(result.candidate).toBe(candidate);
+
+    // Contract-conforming quest response with empty summary and bounded content enriches cleanly
+    const questContentService = new AdventureContinuationService({
+      isOnline: () => true,
+      generateDraft: vi.fn().mockResolvedValue({
+        title: "Canal Counter-Signature",
+        summary: "",
+        content: "Someone else may have countersigned Sándor's canal order.",
+      }),
+    });
+    const questContentResult = await questContentService.enrichCandidate(
+      s,
+      candidate,
+    );
+    expect(questContentResult.enriched).toBe(true);
+    expect(questContentResult.candidate.playerSafePremise).toBe(
+      "Someone else may have countersigned Sándor's canal order.",
+    );
+
+    // Multi-section markdown content is rejected when summary is empty
+    const headingService = new AdventureContinuationService({
+      isOnline: () => true,
+      generateDraft: vi.fn().mockResolvedValue({
+        title: "Canal Counter-Signature",
+        summary: "",
+        content: "### Hook\nSomeone else countersigned the order.",
+      }),
+    });
+    const headingResult = await headingService.enrichCandidate(s, candidate);
+    expect(headingResult.enriched).toBe(false);
+    expect(headingResult.candidate).toBe(candidate);
   });
 
   it("propagates AbortSignal cancellation cleanly", async () => {

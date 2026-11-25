@@ -234,4 +234,52 @@ describe("selectAdventureContinuationCandidates (#5193)", () => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0]?.anchorType).toBe("character");
   });
+
+  it("does not duplicate an unresolved consequence with empty supportingFactIds across character and event pitches", () => {
+    const s = session();
+    s.people = [
+      {
+        id: "p-1",
+        name: "Engineer Vance",
+        aliases: [],
+        linkedFactIds: [],
+      },
+    ];
+    s.emergentThreads = [
+      {
+        id: "em-1",
+        title: "Stabilize the relay",
+        goal: "Stabilize the relay",
+        status: "resolved",
+        outcome: {
+          result: "achieved",
+          reason: "Power was restored.",
+          sourceTurnId: "t-1",
+          supportingFactIds: [],
+          supportingCommitmentIds: [],
+          recordedAt: "2026-11-25T00:00:00.000Z",
+          sequence: 1,
+          unresolvedConsequences: [
+            "Engineer Vance still refuses to explain the missing logbook",
+          ],
+        },
+        provenance: "play",
+        topicTokens: ["relay"],
+        linkedPersonIds: ["p-1"],
+        linkedPlaceIds: [],
+        linkedFactIds: [],
+        linkedCommitmentIds: [],
+        openQuestions: [],
+        knownConsequences: [],
+        gmOnlyDevelopments: [],
+        createdAtTurnId: "t-1",
+        updatedAtTurnId: "t-1",
+        turnCount: 1,
+      },
+    ];
+
+    const candidates = selectAdventureContinuationCandidates(s).candidates;
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]?.anchorType).toBe("character");
+  });
 });

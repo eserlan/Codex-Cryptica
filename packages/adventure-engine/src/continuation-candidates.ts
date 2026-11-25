@@ -193,7 +193,11 @@ function buildCharacterCandidate(
       ...(person.sourceRecordId ? [person.sourceRecordId] : []),
       ...person.linkedFactIds.slice(0, 3),
       ...(relatedFact ? [relatedFact.id] : []),
-      ...(relatedNote?.sourceIds ?? []),
+      ...(relatedNote
+        ? relatedNote.sourceIds.length > 0
+          ? relatedNote.sourceIds
+          : [relatedNote.id]
+        : []),
     ]),
   ].slice(0, 6);
   if (sourceRecordIds.length === 0) sourceRecordIds.push(person.id);
