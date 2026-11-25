@@ -146,6 +146,7 @@ const HOVER_FG_CLASS =
   /^hover:text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
 const HOVER_BG_CLASS =
   /^hover:bg-theme-(bg|surface|primary|accent|secondary|danger|warning)(?:\/(\d+))?$/;
+const HOVER_OPACITY_CLASS = /^hover:opacity-(\d+)$/;
 const DISABLED_FG_CLASS =
   /^disabled:text-theme-(text|muted|primary|secondary|accent|on-primary|bg|danger|warning)(?:\/(\d+))?$/;
 const DISABLED_OPACITY_CLASS = /^disabled:opacity-(\d+)$/;
@@ -170,11 +171,11 @@ function minimumRatio(names) {
   return isIcon || isLarge ? 3 : 4.5;
 }
 
-/** A theme token with the class's /NN opacity (and optional extra opacity), composited over a ground. */
-function shownColour(tokens, [, name, alpha], ground, extraOpacity = 1) {
+/** A theme token with the class's /NN opacity, composited over a ground. */
+function shownColour(tokens, [, name, alpha], ground) {
   const colour = parseColour(TOKEN_FOR[name](tokens));
   if (!colour) return null;
-  const opacity = (alpha ? +alpha / 100 : 1) * colour[3] * extraOpacity;
+  const opacity = (alpha ? +alpha / 100 : 1) * colour[3];
   return over([...colour.slice(0, 3), opacity], ground);
 }
 
@@ -183,9 +184,16 @@ function themeRatio(tokens, fg, bg, extraOpacity = 1) {
   let lowest = Infinity;
   for (const value of [tokens.background, tokens.surface]) {
     const page = parseColour(value);
-    const ground = page && (bg ? shownColour(tokens, bg, page) : page);
-    const text = ground && shownColour(tokens, fg, ground, extraOpacity);
-    if (text) lowest = Math.min(lowest, contrastRatio(text, ground));
+    const groupBackground = page && (bg ? shownColour(tokens, bg, page) : page);
+    const groupText =
+      groupBackground && shownColour(tokens, fg, groupBackground);
+    if (page && groupBackground && groupText) {
+      // `opacity-*` applies to the rendered element as a group: both its fill
+      // and its text are composited over the page by the same amount.
+      const ground = over([...groupBackground.slice(0, 3), extraOpacity], page);
+      const text = over([...groupText.slice(0, 3), extraOpacity], page);
+      lowest = Math.min(lowest, contrastRatio(text, ground));
+    }
   }
   return lowest;
 }
@@ -225,29 +233,44 @@ export function contrastProblems(variant, themes) {
   // Hover state foreground/background contrast
   const hoverFgToken = variant.find((t) => HOVER_FG_CLASS.test(t.name));
   const hoverBgToken = variant.find((t) => HOVER_BG_CLASS.test(t.name));
-  if (hoverFgToken || (hoverBgToken && fg)) {
+  const hoverOpacityToken = variant.find((t) =>
+    HOVER_OPACITY_CLASS.test(t.name),
+  );
+  if (hoverFgToken || ((hoverBgToken || hoverOpacityToken) && fg)) {
     const effectiveFg = hoverFgToken
       ? hoverFgToken.name.match(HOVER_FG_CLASS)
       : fg;
     const effectiveBg = hoverBgToken
       ? hoverBgToken.name.match(HOVER_BG_CLASS)
       : bg;
-    const anchor = hoverFgToken ?? hoverBgToken;
+    const hoverOpacity = hoverOpacityToken
+      ? +hoverOpacityToken.name.match(HOVER_OPACITY_CLASS)[1] / 100
+      : 1;
+    const anchor = hoverFgToken ?? hoverBgToken ?? hoverOpacityToken;
     if (effectiveFg && anchor) {
-      const worst = worstThemeFor(themes, effectiveFg, effectiveBg, minimum);
+      const worst = worstThemeFor(
+        themes,
+        effectiveFg,
+        effectiveBg,
+        minimum,
+        hoverOpacity,
+      );
       if (worst) {
         const lines = [
           ...new Set(
-            [hoverFgToken?.line, hoverBgToken?.line, fgToken?.line].filter(
-              Boolean,
-            ),
+            [
+              hoverFgToken?.line,
+              hoverBgToken?.line,
+              hoverOpacityToken?.line,
+              fgToken?.line,
+            ].filter(Boolean),
           ),
         ];
         problems.push({
           rule: "state-contrast",
           line: anchor.line,
           lines,
-          message: `${hoverFgToken?.name ?? fgToken?.name}${hoverBgToken ? ` on ${hoverBgToken.name}` : bgToken ? ` on ${bgToken.name}` : ""} is ${worst.ratio.toFixed(2)}:1 on hover in ${worst.theme} (needs ${minimum}:1).`,
+          message: `${hoverFgToken?.name ?? fgToken?.name}${hoverBgToken ? ` on ${hoverBgToken.name}` : bgToken ? ` on ${bgToken.name}` : ""}${hoverOpacityToken ? ` (${hoverOpacityToken.name})` : ""} is ${worst.ratio.toFixed(2)}:1 on hover in ${worst.theme} (needs ${minimum}:1).`,
         });
       }
     }

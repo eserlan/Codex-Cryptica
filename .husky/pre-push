@@ -43,7 +43,10 @@ else
 	base="$(git merge-base HEAD origin/staging 2>/dev/null || git rev-parse HEAD^ 2>/dev/null || git hash-object -t tree /dev/null)"
 fi
 if command -v bun >/dev/null 2>&1; then
-	bun scripts/lint-changed.mjs --base "$base"
+	bun scripts/lint-changed.mjs --base "$base" || exit $?
+	if [ "${SKIP_CODEX_REVIEW:-0}" != "1" ]; then
+		bun scripts/codex-review-stamp.mjs --check
+	fi
 else
 	echo "Bun is required to run the changed-file lint before pushing." >&2
 	exit 1
