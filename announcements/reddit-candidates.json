@@ -1,5 +1,5 @@
 {
-  "updated_at": 1795630918,
+  "updated_at": 1795632390,
   "candidates": [
     {
       "id": "reddit-45012792136-more-of-the-adventure-transcript-on-a-ph",
@@ -22,14 +22,14 @@
       "created_at": 1795375852
     },
     {
-      "id": "reddit-45669588322-setting-details-from-ask-gm-can-carry-in",
-      "title": "Setting details from Ask GM can carry into play",
-      "body": "A player can establish an NPC\u2019s name or role before they appear, but that detail needs to be there when the scene begins. Ask GM can now pass compatible setting details to the Adventure GM, which can reuse them consistently during play.\n\n- An established NPC name stays available\n- A character\u2019s role carries into the adventure\n- Less need to repeat details once play is underway\n\nWhat small detail from a player\u2019s question has become important in one of your games?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-chat-example.png)",
+      "id": "reddit-45669588322-preview-a-generator-before-using-it-for-",
+      "title": "Preview a generator before using it for your campaign",
+      "body": "Generator options can be hard to judge when you haven\u2019t seen the kind of draft they produce. I added sample drafts and usage guides to the generator pages so GMs can get a feel for each tool before building campaign content.\n\n- Sample drafts to preview\n- Guidance for using each generator\n- A clearer sense of what to expect before starting\n\nWhat would help you decide whether a generator fits your campaign: a sample, setup guidance, or both?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg)",
       "url": "",
-      "image_url": "https://assets.codexcryptica.com/images/blog/oracle-capabilities/oracle-chat-example.png",
+      "image_url": "https://assets.codexcryptica.com/screenshots/generator-adventure-generator.jpg",
       "source_id": "45669588322",
       "status": "approved",
-      "created_at": 1795630918
+      "created_at": 1795632390
     }
   ]
 }
