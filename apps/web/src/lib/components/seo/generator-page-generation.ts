@@ -207,6 +207,7 @@ export function createGeneratorHandlers(
     "magic-item": (useAI) =>
       engine.generateMagicItem({
         ...(ctx.magicItem as object),
+        theme: ctx.getActiveTheme(),
         useAI,
       } as never),
     "minor-magic-item": (useAI) =>
@@ -226,6 +227,7 @@ export function createGeneratorHandlers(
     item: (useAI) =>
       engine.generateMagicItem({
         ...(ctx.magicItem as object),
+        theme: ctx.getActiveTheme(),
         useAI,
       } as never),
     faction: (useAI) =>

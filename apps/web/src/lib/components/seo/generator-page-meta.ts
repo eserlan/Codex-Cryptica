@@ -94,11 +94,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Magic Item Generator | Free Fantasy RPG Loot Tool | Codex Cryptica",
     metaDescription:
-      "Generate fantasy RPG magic items with lore, abilities, quirks, and campaign hooks. Copy the draft or save it into your local campaign vault.",
+      "Generate fantasy RPG magic items with a description, magical properties, and lore. Copy the draft or save it into your local campaign vault.",
     introTitle: "Magic Item Generator",
     eyebrow: "Magic Item Generator",
     introText:
-      "Create a campaign-ready magic item with lore, abilities, and quirks. Works without login.",
+      "Create a magic item with a description, magical properties, and lore. Works without login.",
     canonicalPath: "/generators/magic-item",
     labels: ["fantasy"],
     ogImage:

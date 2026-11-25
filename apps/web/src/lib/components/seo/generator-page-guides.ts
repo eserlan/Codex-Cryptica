@@ -6,7 +6,7 @@ export interface GeneratorGuide {
   links?: { href: string; label: string }[];
 }
 
-const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
+export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   "star-system": {
     summary:
       "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
@@ -346,6 +346,33 @@ const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "magic-item": {
+    summary:
+      "Pick an item type and a rarity, and the generator names the item, describes how it looks and feels, and writes GM notes with a magical property and a line of history. Treat the result as a first draft to tune for your table.",
+    tips: [
+      {
+        title: "Match the effect to the rarity you picked",
+        detail:
+          "The rarity you pick does not decide the effect, so check that the two agree. A minor trick on a Legendary item, or a strong power on a Common one, means one of them should change.",
+      },
+      {
+        title: "Treat the magical property as a clue first",
+        detail:
+          "Effects vary by genre: in a Classic Fantasy setting, a hum that points toward fresh water or a glow near the undead works best as a hint, then becomes a tool once the players trust it. Pick the effect that suits the scene you are running.",
+      },
+      {
+        title: "Put the history on your own map",
+        detail:
+          "In a Classic Fantasy setting, the history line names a source such as a red dragon's hoard or a paladin who fell at the Siege of Shadowkeep. Swap those names for places in your world, or keep one as a rumour the players can chase.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "How much loot and how many magic items to give players",
+      },
+    ],
+  },
   item: {
     summary:
       "Even mundane gear or signature keepsakes carry story weight when you add a maker's mark, a quirk of wear, and a previous owner who might want it back.",
@@ -436,7 +463,7 @@ const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
 };
 
-function defaultGuideForSlug(
+export function defaultGuideForSlug(
   _slug: ValidSlug,
   introTitle: string,
 ): GeneratorGuide {

@@ -47,9 +47,9 @@
 />
 
 <div class="flex flex-col gap-1.5">
-  <label for="magic-item-campaign-context" class={labelClass}
-    >Add campaign context</label
-  >
+  <label for="magic-item-campaign-context" class={labelClass}>
+    Add campaign context
+  </label>
   <textarea
     id="magic-item-campaign-context"
     name="campaign_context"
@@ -63,7 +63,7 @@
     id="magic-item-campaign-context-help"
     class="text-micro text-theme-text/60 leading-relaxed"
   >
-    Name the campaign, region, or faction this belongs to. Anything you name
-    here is kept and the item is built to fit it.
+    Name the campaign, region, or faction this belongs to. Offline drafts keep
+    it in the GM notes, and the AI draft is built to fit it.
   </p>
 </div>

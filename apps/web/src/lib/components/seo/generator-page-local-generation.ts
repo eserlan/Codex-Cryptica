@@ -53,12 +53,18 @@ const loaders: Record<ValidSlug, LocalGeneratorLoader> = {
   "magic-item": async () => {
     const mod = await import("generator-engine/public-magic-item");
     return (ctx) =>
-      mod.generateMagicItemLocal(ctx.magicItem as never) as GeneratorOutput;
+      mod.generateMagicItemLocal({
+        ...(ctx.magicItem as object),
+        theme: ctx.getActiveTheme(),
+      } as never) as GeneratorOutput;
   },
   item: async () => {
     const mod = await import("generator-engine/public-magic-item");
     return (ctx) =>
-      mod.generateMagicItemLocal(ctx.magicItem as never) as GeneratorOutput;
+      mod.generateMagicItemLocal({
+        ...(ctx.magicItem as object),
+        theme: ctx.getActiveTheme(),
+      } as never) as GeneratorOutput;
   },
   "minor-magic-item": async () => {
     const mod = await import("generator-engine/public-minor-magic-item");
