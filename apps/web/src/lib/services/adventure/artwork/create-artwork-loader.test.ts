@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { createArtworkLoader } from "./create-artwork-loader";
+import {
+  createArtworkLoader,
+  readProtectedArtworkUrls,
+} from "./create-artwork-loader";
+import { COLLECTION_INDEX_KEY } from "./collection-storage";
 const variant = {
   url: "https://assets.codexcryptica.com/adventure-artwork/a.webp",
   mime: "image/webp" as const,
@@ -9,6 +13,39 @@ const variant = {
   sha256: "a".repeat(64),
 };
 describe("artwork loader assembly", () => {
+  it("protects installed artwork URLs from the injected collection index", () => {
+    const protectedUrl =
+      "https://assets.codexcryptica.com/adventure-artwork/forest.webp";
+    const storage = {
+      getItem: vi.fn((key: string) =>
+        key === COLLECTION_INDEX_KEY
+          ? JSON.stringify({
+              version: 1,
+              collections: {
+                forest: [{ id: protectedUrl, bytes: 12 }],
+              },
+              suppressed: [],
+            })
+          : null,
+      ),
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+
+    expect([...readProtectedArtworkUrls(storage)]).toEqual([protectedUrl]);
+    expect(storage.getItem).toHaveBeenCalledWith(COLLECTION_INDEX_KEY);
+  });
+
+  it("rejects an invalid injected collection index", () => {
+    const storage = {
+      getItem: () => "invalid json",
+      setItem: vi.fn(),
+      removeItem: vi.fn(),
+    };
+
+    expect(() => readProtectedArtworkUrls(storage)).toThrow();
+  });
+
   it("uses a validated browser cache hit without fetching", async () => {
     const fetcher = vi.fn();
     const loader = createArtworkLoader({

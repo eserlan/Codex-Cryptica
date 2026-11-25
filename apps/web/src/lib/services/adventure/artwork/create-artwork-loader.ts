@@ -2,6 +2,7 @@ import { ArtworkCache } from "./artwork-cache";
 import { BrowserArtworkCache } from "./browser-artwork-cache";
 import { createArtworkCacheLock } from "./browser-cache-lock";
 import { readCollectionIndex } from "./collection-storage";
+import { browserStorage, type StorageLike } from "#lib/utils/runtime-deps.js";
 
 export interface ArtworkLoaderDependencies {
   open(name: string): Promise<Cache>;
@@ -31,17 +32,23 @@ export function createArtworkLoader(
   });
 }
 
+/** Installed collection URLs must stay protected from automatic cache eviction. */
+export function readProtectedArtworkUrls(
+  storage: StorageLike = browserStorage,
+): ReadonlySet<string> {
+  return new Set(
+    Object.values(readCollectionIndex(storage).collections).flatMap((files) =>
+      files.map((file) => file.id),
+    ),
+  );
+}
+
 /** Construct lazily in a browser so server rendering never touches DOM globals. */
 export function createBrowserArtworkLoader(): ArtworkCache {
   return createArtworkLoader({
     open: (name) => caches.open(name),
     locks: navigator.locks,
-    protectedUrls: async () =>
-      new Set(
-        Object.values(readCollectionIndex(localStorage).collections).flatMap(
-          (files) => files.map((file) => file.id),
-        ),
-      ),
+    protectedUrls: async () => readProtectedArtworkUrls(),
     fetch: (url, init) => fetch(url, init),
     digest: async (bytes) => {
       const hash = await crypto.subtle.digest("SHA-256", bytes);
