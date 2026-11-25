@@ -11,6 +11,7 @@ import {
   generateDarkFactionLocal,
   darkFactionConfig,
   factionConfig,
+  resolveFaction,
 } from "./public-faction";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
@@ -117,6 +118,107 @@ describe("generateFactionLocal", () => {
   it("is deterministic for a fixed seed", () => {
     expect(generateFactionLocal({}, seededRng(9))).toEqual(
       generateFactionLocal({}, seededRng(9)),
+    );
+  });
+});
+
+describe("generateFactionLocal offline wording", () => {
+  const scope = "Single city";
+
+  it("uses 'An' before a vowel-led alignment and type", () => {
+    const out = generateFactionLocal(
+      {
+        theme: "Classic Fantasy",
+        alignment: factionConfig.alignments[1],
+        type: "Arcane Circle",
+        scope,
+      },
+      seededRng(3),
+    );
+    expect(out.summary).toMatch(
+      /^An idealistic but compromised arcane circle /,
+    );
+    expect(out.content).toContain(" is an arcane circle ");
+  });
+
+  it("uses 'A' before a consonant-led alignment", () => {
+    const out = generateFactionLocal(
+      {
+        theme: "Classic Fantasy",
+        alignment: factionConfig.alignments[2],
+        type: "Merchant Guild",
+        scope,
+      },
+      seededRng(3),
+    );
+    expect(out.summary).toMatch(
+      /^A pragmatic and profit-driven merchant guild /,
+    );
+  });
+
+  it.each([
+    ["Union Rapid Response Unit", "a union rapid response unit"],
+    ["NHP Research Consortium", "an nhp research consortium"],
+  ])("uses the spoken article for %s", (type, phrase) => {
+    const out = generateFactionLocal(
+      { theme: "Lancer", type, scope },
+      seededRng(3),
+    );
+    expect(out.content).toContain(` is ${phrase} `);
+  });
+
+  it("describes the scope as a place without a 'level' suffix", () => {
+    const out = generateFactionLocal({ theme: "Pirate", scope }, seededRng(3));
+    expect(out.summary).toContain("operating across the single city.");
+    expect(out.summary).not.toMatch(/\blevel\b/);
+  });
+
+  it("keeps the campaign context in the GM notes, not in the public text", () => {
+    const out = generateFactionLocal(
+      {
+        theme: "Classic Fantasy",
+        campaignContext: "The Salt Guild of Brindel",
+      },
+      seededRng(3),
+    );
+    expect(out.lore).toContain(
+      "### Campaign Context\nThe Salt Guild of Brindel",
+    );
+    expect(out.content).not.toContain("Salt Guild");
+    expect(out.content).toContain("Within the campaign setting");
+  });
+
+  it("omits the campaign section when the context is blank", () => {
+    const out = generateFactionLocal(
+      { theme: "Classic Fantasy", campaignContext: "  " },
+      seededRng(3),
+    );
+    expect(out.lore).not.toContain("Campaign Context");
+    expect(out.content).not.toContain("Within the campaign setting");
+  });
+
+  it("draws hooks and conflicts from the pool for the chosen vibe", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const resolved = resolveFaction(
+        { theme: "Vampire / Gothic Noir" },
+        seededRng(seed),
+      );
+      expect(factionConfig.hooksByTheme["Vampire / Gothic Noir"]).toContain(
+        resolved.hook,
+      );
+      expect(factionConfig.conflictsByTheme["Vampire / Gothic Noir"]).toContain(
+        resolved.conflict,
+      );
+      expect(factionConfig.hooksByTheme["Cyberpunk / Corporate"]).not.toContain(
+        resolved.hook,
+      );
+    }
+  });
+
+  it("falls back to the Classic Fantasy pools for an unknown vibe", () => {
+    const resolved = resolveFaction({ theme: "Typed by a GM" }, seededRng(2));
+    expect(factionConfig.hooksByTheme["Classic Fantasy"]).toContain(
+      resolved.hook,
     );
   });
 });

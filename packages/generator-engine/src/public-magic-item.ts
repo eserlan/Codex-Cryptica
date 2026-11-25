@@ -11,7 +11,12 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
 
 import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
-import { type Rng, defaultRng, pickFrom } from "./random-utils";
+import {
+  type Rng,
+  defaultRng,
+  indefiniteArticle,
+  pickFrom,
+} from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 
@@ -416,11 +421,6 @@ export function parseMagicItemResponse(
       : ["rpg-item", "imported-draft"],
     status: "active",
   };
-}
-
-/** "an" before a vowel sound, otherwise "a": "an amulet", "a wand". */
-function indefiniteArticle(noun: string): string {
-  return /^[aeiou]/i.test(noun.trim()) ? "an" : "a";
 }
 
 export function generateMagicItemLocal(

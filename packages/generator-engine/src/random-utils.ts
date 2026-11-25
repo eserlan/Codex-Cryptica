@@ -43,3 +43,13 @@ const PLACEHOLDER_NAME_SUFFIXES = [
 export function generatePlaceholderName(rng: Rng = defaultRng): string {
   return `${pickFrom(PLACEHOLDER_NAME_PREFIXES, rng)}${pickFrom(PLACEHOLDER_NAME_SUFFIXES, rng)}`;
 }
+
+/** "an" before a vowel sound, otherwise "a": "an amulet", "a wand". */
+export function indefiniteArticle(noun: string): string {
+  const trimmed = noun.trim();
+  // These supported faction types start with a consonant sound despite their
+  // written initial, or a spoken initialism whose first letter is a vowel sound.
+  if (/^union\b/i.test(trimmed)) return "a";
+  if (/^NHP\b/i.test(trimmed)) return "an";
+  return /^[aeiou]/i.test(trimmed) ? "an" : "a";
+}
