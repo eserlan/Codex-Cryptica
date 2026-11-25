@@ -83,6 +83,13 @@ const BRIEF_SHEDDERS: Array<(brief: GMDirectorBrief) => boolean> = [
   shedSecondaryPursued,
   shedPursuedDetails,
   shedEmergentThreadExtras,
+  (b) => {
+    if (!b.resolvedOutcomes) return false;
+    if (b.resolvedOutcomes.emergent.shift() !== undefined) return true;
+    if (b.resolvedOutcomes.scenario.shift() !== undefined) return true;
+    delete b.resolvedOutcomes;
+    return true;
+  },
   shedTopLevelCommittedExplanations,
   shedPackageExtras,
   (b) => b.otherOpenHeardScenarioIds.pop() !== undefined,

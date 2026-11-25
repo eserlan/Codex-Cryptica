@@ -40,8 +40,22 @@ export function playerScenarioProjection(
       // A source record may be GM-only; do not expose its ID or provenance.
     },
     playerVisible: structuredClone(scenario.playerVisible),
+    ...(scenario.goal ? { goal: scenario.goal } : {}),
     stage: scenario.stage ?? "hearsay",
     status: scenario.status,
+    ...(scenario.outcome
+      ? {
+          outcome: (() => {
+            const {
+              sourceTurnId: _sourceTurnId,
+              supportingFactIds: _supportingFactIds,
+              supportingCommitmentIds: _supportingCommitmentIds,
+              ...playerSafeOutcome
+            } = scenario.outcome;
+            return structuredClone(playerSafeOutcome);
+          })(),
+        }
+      : {}),
     events: (scenario.events ?? [])
       .filter((event) => {
         if (event.visibility === "player") return true;

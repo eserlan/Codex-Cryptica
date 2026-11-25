@@ -8,6 +8,7 @@ import type {
   EmergentThread,
   EmergentThreadStatus,
   ProvisionalFact,
+  PlayerThreadOutcome,
 } from "./types";
 
 export const MAX_EMERGENT_THREADS = 16;
@@ -712,8 +713,28 @@ export function selectPursuedEmergentThread(
 }
 
 /** Spoiler-safe player projection stripping `gmOnlyDevelopments`. */
-export function projectPlayerEmergentThreads(session: AdventureSession) {
-  return (session.emergentThreads ?? []).map(
-    ({ gmOnlyDevelopments: _gmOnly, ...playerSafe }) => playerSafe,
-  );
+export function projectPlayerEmergentThreads(session: AdventureSession): Array<
+  Omit<
+    EmergentThread,
+    "gmOnlyDevelopments" | "outcome" | "linkedCommitmentIds"
+  > & {
+    outcome?: PlayerThreadOutcome;
+  }
+> {
+  return (session.emergentThreads ?? []).map((thread) => {
+    const {
+      gmOnlyDevelopments: _gmOnly,
+      outcome,
+      linkedCommitmentIds: _linkedCommitmentIds,
+      ...playerSafe
+    } = thread;
+    if (!outcome) return playerSafe;
+    const {
+      sourceTurnId: _sourceTurnId,
+      supportingFactIds: _supportingFactIds,
+      supportingCommitmentIds: _supportingCommitmentIds,
+      ...playerSafeOutcome
+    } = outcome;
+    return { ...playerSafe, outcome: playerSafeOutcome };
+  });
 }

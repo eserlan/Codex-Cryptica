@@ -612,7 +612,9 @@ function emergentThreadSummary(session: AdventureSession) {
     threads: threads.slice(-6).map((t) => ({
       id: t.id,
       title: t.title,
+      ...(t.goal ? { goal: t.goal } : {}),
       status: t.status,
+      ...(t.outcome ? { outcomeResult: t.outcome.result } : {}),
       provenance: t.provenance,
       turnCount: t.turnCount,
       linkedFactCount: t.linkedFactIds.length,

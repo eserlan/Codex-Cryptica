@@ -96,6 +96,7 @@ export interface DirectorPackageContext {
 export interface DirectorEmergentThread {
   threadId: string;
   title: string;
+  goal?: string;
   status: EmergentThreadStatus;
   provenance: "play" | "ooc" | "mixed";
   linkedScenarioId?: string;
@@ -109,6 +110,16 @@ export interface DirectorEmergentThread {
   gmOnlyDevelopments?: string[];
 }
 
+export interface DirectorOutcomeSummary {
+  id: string;
+  source: "scenario" | "emergent";
+  title: string;
+  goal?: string;
+  result: "achieved" | "failed" | "abandoned" | "cold";
+  reason: string;
+  unresolvedConsequences?: string[];
+}
+
 export interface GMDirectorBrief {
   advisory: true;
   mode: "active-pursuit" | "package-scene" | "open-world";
@@ -120,6 +131,10 @@ export interface GMDirectorBrief {
   };
   pursuedScenarios: DirectorPursuedScenario[];
   pursuedEmergentThread?: DirectorEmergentThread;
+  resolvedOutcomes?: {
+    scenario: DirectorOutcomeSummary[];
+    emergent: DirectorOutcomeSummary[];
+  };
   committedExplanations?: DirectorCommitmentEntry[];
   otherOpenHeardScenarioIds: string[];
   packageContext?: DirectorPackageContext;
