@@ -123,17 +123,18 @@
   >
     <summary
       class="cursor-pointer text-meta font-bold uppercase tracking-wider text-theme-text/80"
-      >Advanced system-specific details</summary
     >
+      Advanced system-specific details
+    </summary>
     <p class="mt-1 text-micro leading-relaxed text-theme-muted">
       Optional mechanical context for the selected system. These never make a
       class, spell, or ability mandatory.
     </p>
     <div class="mt-3 grid gap-3 sm:grid-cols-2">
       <div class="flex flex-col gap-1.5">
-        <label for="puzzle-party-level" class={labelClass}
-          >Party level or competence</label
-        ><input
+        <label for="puzzle-party-level" class={labelClass}>
+          Party level or competence
+        </label><input
           id="puzzle-party-level"
           name="party_level"
           bind:value={partyLevel}
@@ -141,9 +142,9 @@
         />
       </div>
       <div class="flex flex-col gap-1.5">
-        <label for="puzzle-player-count" class={labelClass}
-          >Number of players</label
-        ><input
+        <label for="puzzle-player-count" class={labelClass}>
+          Number of players
+        </label><input
           id="puzzle-player-count"
           name="player_count"
           bind:value={playerCount}
@@ -156,9 +157,9 @@
 {/if}
 
 <div class="flex flex-col gap-1.5">
-  <label for="puzzle-capabilities" class={labelClass}
-    >PC capabilities to make matter</label
-  ><textarea
+  <label for="puzzle-capabilities" class={labelClass}>
+    PC capabilities to make matter
+  </label><textarea
     id="puzzle-capabilities"
     name="capabilities"
     bind:value={capabilities}
@@ -176,9 +177,9 @@
   </p>
 </div>
 <div class="flex flex-col gap-1.5">
-  <label for="puzzle-consequence" class={labelClass}
-    >Optional downstream consequence</label
-  ><textarea
+  <label for="puzzle-consequence" class={labelClass}>
+    Optional downstream consequence
+  </label><textarea
     id="puzzle-consequence"
     name="downstream_consequence"
     bind:value={downstreamConsequence}
@@ -195,9 +196,9 @@
   </p>
 </div>
 <div class="flex flex-col gap-1.5">
-  <label for="puzzle-context" class={labelClass}
-    >Optional campaign context</label
-  ><textarea
+  <label for="puzzle-context" class={labelClass}>
+    Optional campaign context
+  </label><textarea
     id="puzzle-context"
     name="campaign_context"
     bind:value={campaignContext}
@@ -210,7 +211,8 @@
     id="puzzle-context-help"
     class="text-micro text-theme-muted leading-relaxed"
   >
-    Add a location, villain, or situation to ground this encounter.
+    Add a location, villain, or situation. Offline drafts keep it in the GM
+    notes, and the AI draft builds the puzzle around it.
   </p>
 </div>
 
@@ -227,7 +229,8 @@
     }}
     class="flex items-center gap-1.5 px-3 py-1.5 bg-theme-surface/60 border border-theme-border/60 rounded-lg text-micro font-bold uppercase tracking-wider text-theme-text hover:bg-theme-primary hover:text-theme-bg hover:border-theme-primary transition-all cursor-pointer"
     title="Randomize puzzle options and generate a draft"
-    ><span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise
-    Me</button
   >
+    <span class="icon-[lucide--dices] w-3.5 h-3.5" aria-hidden="true"></span> Surprise
+    Me
+  </button>
 </div>

@@ -482,6 +482,33 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  puzzle: {
+    summary:
+      "Each draft puts an obstacle between the party and the Puzzle purpose you choose, then gives you clues, spotlight prompts, alternate solutions and what a failed attempt does. The intended solution and the escalating hints sit in the GM notes, so you can read the setup aloud and keep the answer back.",
+    tips: [
+      {
+        title: "Let Puzzle style pick the obstacle",
+        detail:
+          "Offline drafts choose the obstacle from the Puzzle style: Social gives a suspicious gatekeeper or two guards who disagree, Mechanical a locked mechanism or a panel of gears. A style you type yourself gets a plain obstacle, so describe it in your own words.",
+      },
+      {
+        title: "Use Complexity to set the solution length",
+        detail:
+          "In offline drafts, Complexity sets how many linked actions the GM-only solution needs: two for Simple, three for Moderate and four for Elaborate. Pair a long chain with Failure pressure set to None if you want players to experiment without cost.",
+      },
+      {
+        title: "Name what your party can actually do",
+        detail:
+          "Abilities listed in PC capabilities to make matter are treated as openings, never requirements: an offline draft names them in the spotlight section, and the AI draft is told to make them useful. Participation style then says whether one character, two or three, or the whole party leads the solve.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+        label: "Designing puzzles that do not stall",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(
