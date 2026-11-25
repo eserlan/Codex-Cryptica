@@ -23,6 +23,8 @@ export interface EnrichedContinuationResult {
   enriched: boolean;
 }
 
+type DraftGenerator = NonNullable<ContinuationServiceDeps["generateDraft"]>;
+
 function buildContinuationRequest(
   candidate: AdventureContinuationCandidate,
   themeId: string,
@@ -90,6 +92,33 @@ function applySafeEnrichment(
   };
 }
 
+function canEnrich(deps: ContinuationServiceDeps): boolean {
+  const online =
+    deps.isOnline?.() ?? (typeof navigator === "undefined" || navigator.onLine);
+  const enabled = deps.aiEnabled?.() ?? true;
+  return Boolean(deps.generateDraft && enabled && online);
+}
+
+async function generateSafeEnrichment(
+  session: AdventureSession,
+  candidate: AdventureContinuationCandidate,
+  themeId: string,
+  signal: AbortSignal | undefined,
+  generateDraft: DraftGenerator,
+): Promise<EnrichedContinuationResult> {
+  try {
+    const generated = await generateDraft(
+      buildContinuationRequest(candidate, themeId),
+      signal,
+    );
+    signal?.throwIfAborted();
+    return applySafeEnrichment(session, candidate, generated);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return { candidate, enriched: false };
+  }
+}
+
 /**
  * Builds deterministic player-safe continuation pitches and optionally
  * polishes a chosen pitch via the existing generator gateway with full
@@ -112,24 +141,16 @@ export class AdventureContinuationService {
     signal?: AbortSignal,
   ): Promise<EnrichedContinuationResult> {
     signal?.throwIfAborted();
-    const online =
-      this.deps.isOnline?.() ??
-      (typeof navigator === "undefined" || navigator.onLine);
-    const enabled = this.deps.aiEnabled?.() ?? true;
-    if (!this.deps.generateDraft || !enabled || !online) {
+    const generateDraft = this.deps.generateDraft;
+    if (!generateDraft || !canEnrich(this.deps)) {
       return { candidate, enriched: false };
     }
-
-    try {
-      const generated = await this.deps.generateDraft(
-        buildContinuationRequest(candidate, themeId),
-        signal,
-      );
-      signal?.throwIfAborted();
-      return applySafeEnrichment(session, candidate, generated);
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return { candidate, enriched: false };
-    }
+    return generateSafeEnrichment(
+      session,
+      candidate,
+      themeId,
+      signal,
+      generateDraft,
+    );
   }
 }

@@ -77,29 +77,44 @@ function appendOutcomeNotes(
   }
 }
 
-function collectUnresolvedNotes(session: AdventureSession): UnresolvedNote[] {
+function collectThreadNotes(session: AdventureSession): UnresolvedNote[] {
   const notes: UnresolvedNote[] = [];
   for (const thread of session.emergentThreads ?? []) {
     if (thread.status !== "open") {
       appendOutcomeNotes(thread.id, thread.outcome, notes);
     }
   }
+  return notes;
+}
+
+function appendHeardScenarioEvents(
+  scenario: NonNullable<
+    AdventureSession["scenarioCollection"]
+  >["items"][number],
+  notes: UnresolvedNote[],
+): void {
+  for (const event of scenario.events) {
+    if (!isPlayerVisibleScenarioEvent(scenario, event)) continue;
+    const text = event.text.trim();
+    if (!text) continue;
+    notes.push({ id: event.id, text, sourceIds: [event.id] });
+  }
+}
+
+function collectScenarioNotes(session: AdventureSession): UnresolvedNote[] {
+  const notes: UnresolvedNote[] = [];
   for (const scenario of session.scenarioCollection?.items ?? []) {
     if (scenario.knowledge !== "heard") continue;
     if (scenario.status !== "open") {
       appendOutcomeNotes(scenario.id, scenario.outcome, notes);
     }
-    for (const event of scenario.events) {
-      if (!isPlayerVisibleScenarioEvent(scenario, event)) continue;
-      if (!event.text.trim()) continue;
-      notes.push({
-        id: event.id,
-        text: event.text.trim(),
-        sourceIds: [event.id],
-      });
-    }
+    appendHeardScenarioEvents(scenario, notes);
   }
   return notes;
+}
+
+function collectUnresolvedNotes(session: AdventureSession): UnresolvedNote[] {
+  return [...collectThreadNotes(session), ...collectScenarioNotes(session)];
 }
 
 function findBestCharacterAnchor(
@@ -124,6 +139,39 @@ function findBestCharacterAnchor(
   return candidates.find((p) => resolvedPersonIds.has(p.id)) ?? candidates[0];
 }
 
+function characterPremise(
+  personName: string,
+  facts: ReturnType<typeof collectPlayerSafeFacts>,
+  notes: readonly UnresolvedNote[],
+): string {
+  const lower = personName.toLowerCase();
+  const relatedNote = notes.find((note) =>
+    note.text.toLowerCase().includes(lower),
+  );
+  if (relatedNote) {
+    return clip(`Follow up on ${personName}: ${relatedNote.text}`, 240);
+  }
+  const relatedFact = facts.known.find((fact) =>
+    fact.text.toLowerCase().includes(lower),
+  );
+  if (relatedFact) {
+    return clip(`Revisit ${personName} regarding: ${relatedFact.text}`, 240);
+  }
+  return clip(
+    `Revisit ${personName} to see what remains unsettled after recent events.`,
+    240,
+  );
+}
+
+function continuationMetadata(options: SelectContinuationOptions) {
+  return {
+    ...(options.sourceOutcomeId
+      ? { sourceOutcomeId: options.sourceOutcomeId }
+      : {}),
+    ...(options.genreHint ? { genreHint: options.genreHint } : {}),
+  };
+}
+
 function buildCharacterCandidate(
   session: AdventureSession,
   facts: ReturnType<typeof collectPlayerSafeFacts>,
@@ -134,19 +182,12 @@ function buildCharacterCandidate(
   const person = findBestCharacterAnchor(session, facts);
   if (!person) return null;
 
-  const lower = person.name.toLowerCase();
-  const relatedNote = notes.find((n) => n.text.toLowerCase().includes(lower));
-  const relatedFact = facts.known.find((f) =>
-    f.text.toLowerCase().includes(lower),
+  const relatedFact = facts.known.find((fact) =>
+    fact.text.toLowerCase().includes(person.name.toLowerCase()),
   );
-  const premise = relatedNote
-    ? clip(`Follow up on ${person.name}: ${relatedNote.text}`, 240)
-    : relatedFact
-      ? clip(`Revisit ${person.name} regarding: ${relatedFact.text}`, 240)
-      : clip(
-          `Revisit ${person.name} to see what remains unsettled after recent events.`,
-          240,
-        );
+  const relatedNote = notes.find((note) =>
+    note.text.toLowerCase().includes(person.name.toLowerCase()),
+  );
   const sourceRecordIds = [
     ...new Set([
       ...(person.sourceRecordId ? [person.sourceRecordId] : []),
@@ -159,17 +200,56 @@ function buildCharacterCandidate(
 
   return {
     id: stableCandidateId("character", person.id, outcomeScope),
-    ...(options.sourceOutcomeId
-      ? { sourceOutcomeId: options.sourceOutcomeId }
-      : {}),
+    ...continuationMetadata(options),
     anchorType: "character",
     sourceRecordIds,
     playerSafeTitle: clip(`Follow up with ${person.name}`, 100),
-    playerSafePremise: premise,
+    playerSafePremise: characterPremise(person.name, facts, notes),
     uncertainty: `What ${person.name} knows or chooses next remains unconfirmed.`,
     sourceRevision: session.revision,
-    ...(options.genreHint ? { genreHint: options.genreHint } : {}),
   };
+}
+
+function findBestPlaceAnchor(
+  session: AdventureSession,
+  facts: ReturnType<typeof collectPlayerSafeFacts>,
+  notes: readonly UnresolvedNote[],
+) {
+  const resolvedPlaceIds = new Set(
+    (session.emergentThreads ?? [])
+      .filter((thread) => thread.status !== "open")
+      .flatMap((thread) => thread.linkedPlaceIds),
+  );
+  return (session.places ?? []).find((place) => {
+    const hasFact = facts.known.some(
+      (fact) =>
+        fact.placeId === place.id ||
+        fact.text.toLowerCase().includes(place.name.toLowerCase()),
+    );
+    const hasNote = notes.some((note) =>
+      note.text.toLowerCase().includes(place.name.toLowerCase()),
+    );
+    return resolvedPlaceIds.has(place.id) || hasFact || hasNote;
+  });
+}
+
+function placePremise(
+  placeId: string,
+  placeName: string,
+  facts: ReturnType<typeof collectPlayerSafeFacts>,
+  notes: readonly UnresolvedNote[],
+): string {
+  const lower = placeName.toLowerCase();
+  const placeNote = notes.find((note) =>
+    note.text.toLowerCase().includes(lower),
+  );
+  if (placeNote) return clip(`Return to ${placeName}: ${placeNote.text}`, 240);
+  const placeFact = facts.known.find(
+    (fact) =>
+      fact.placeId === placeId || fact.text.toLowerCase().includes(lower),
+  );
+  if (placeFact) return clip(`Revisit ${placeName}: ${placeFact.text}`, 240);
+  return clip(`Return to ${placeName} to check what has changed since.`, 240);
 }
 
 function buildPlaceCandidate(
@@ -179,37 +259,17 @@ function buildPlaceCandidate(
   outcomeScope: string,
   options: SelectContinuationOptions,
 ): AdventureContinuationCandidate | null {
-  const resolvedPlaceIds = new Set(
-    (session.emergentThreads ?? [])
-      .filter((t) => t.status !== "open")
-      .flatMap((t) => t.linkedPlaceIds),
-  );
-  const place = (session.places ?? []).find((p) => {
-    const hasFact = facts.known.some(
-      (f) =>
-        f.placeId === p.id ||
-        f.text.toLowerCase().includes(p.name.toLowerCase()),
-    );
-    const hasNote = notes.some((n) =>
-      n.text.toLowerCase().includes(p.name.toLowerCase()),
-    );
-    return resolvedPlaceIds.has(p.id) || hasFact || hasNote;
-  });
+  const place = findBestPlaceAnchor(session, facts, notes);
   if (!place) return null;
 
-  const placeNote = notes.find((n) =>
-    n.text.toLowerCase().includes(place.name.toLowerCase()),
+  const placeNote = notes.find((note) =>
+    note.text.toLowerCase().includes(place.name.toLowerCase()),
   );
   const placeFact = facts.known.find(
-    (f) =>
-      f.placeId === place.id ||
-      f.text.toLowerCase().includes(place.name.toLowerCase()),
+    (fact) =>
+      fact.placeId === place.id ||
+      fact.text.toLowerCase().includes(place.name.toLowerCase()),
   );
-  const premise = placeNote
-    ? clip(`Return to ${place.name}: ${placeNote.text}`, 240)
-    : placeFact
-      ? clip(`Revisit ${place.name}: ${placeFact.text}`, 240)
-      : clip(`Return to ${place.name} to check what has changed since.`, 240);
   const sourceRecordIds = [
     ...new Set([
       ...(place.sourceRecordId ? [place.sourceRecordId] : [place.id]),
@@ -220,17 +280,35 @@ function buildPlaceCandidate(
 
   return {
     id: stableCandidateId("place", place.id, outcomeScope),
-    ...(options.sourceOutcomeId
-      ? { sourceOutcomeId: options.sourceOutcomeId }
-      : {}),
+    ...continuationMetadata(options),
     anchorType: "place",
     sourceRecordIds,
     playerSafeTitle: clip(`Return to ${place.name}`, 100),
-    playerSafePremise: premise,
+    playerSafePremise: placePremise(place.id, place.name, facts, notes),
     uncertainty: `Conditions around ${place.name} may have shifted since your last visit.`,
     sourceRevision: session.revision,
-    ...(options.genreHint ? { genreHint: options.genreHint } : {}),
   };
+}
+
+function findEventEvidence(
+  notes: readonly UnresolvedNote[],
+  facts: ReturnType<typeof collectPlayerSafeFacts>,
+  usedTexts: readonly string[],
+) {
+  const usedLower = new Set(usedTexts.map((text) => text.toLowerCase()));
+  const note = notes.find((item) => !usedLower.has(item.text.toLowerCase()));
+  if (note) {
+    return {
+      text: note.text,
+      sourceRecordIds: note.sourceIds.length > 0 ? note.sourceIds : [note.id],
+    };
+  }
+  const eventFact = facts.provisional.find(
+    (fact) => fact.kind === "event" && !usedLower.has(fact.text.toLowerCase()),
+  );
+  return eventFact
+    ? { text: eventFact.text, sourceRecordIds: [eventFact.id] }
+    : undefined;
 }
 
 function buildEventCandidate(
@@ -241,27 +319,13 @@ function buildEventCandidate(
   outcomeScope: string,
   options: SelectContinuationOptions,
 ): AdventureContinuationCandidate | null {
-  const usedLower = new Set(usedTexts.map((t) => t.toLowerCase()));
-  const note = notes.find((n) => !usedLower.has(n.text.toLowerCase()));
-  const eventFact = !note
-    ? facts.provisional.find(
-        (f) => f.kind === "event" && !usedLower.has(f.text.toLowerCase()),
-      )
-    : undefined;
-  const text = note?.text ?? eventFact?.text;
-  if (!text) return null;
-
-  const sourceRecordIds = note
-    ? note.sourceIds.length > 0
-      ? note.sourceIds
-      : [note.id]
-    : [eventFact!.id];
+  const evidence = findEventEvidence(notes, facts, usedTexts);
+  if (!evidence) return null;
+  const { text, sourceRecordIds } = evidence;
 
   return {
     id: stableCandidateId("event", fnv1a32(text, 0x811c9dc5), outcomeScope),
-    ...(options.sourceOutcomeId
-      ? { sourceOutcomeId: options.sourceOutcomeId }
-      : {}),
+    ...continuationMetadata(options),
     anchorType: "event",
     sourceRecordIds: sourceRecordIds.slice(0, 6),
     playerSafeTitle: clip(text, 90),
@@ -272,7 +336,6 @@ function buildEventCandidate(
     uncertainty:
       "How this situation unfolds—and who else becomes involved—remains open.",
     sourceRevision: session.revision,
-    ...(options.genreHint ? { genreHint: options.genreHint } : {}),
   };
 }
 
