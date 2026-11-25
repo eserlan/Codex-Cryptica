@@ -13,7 +13,7 @@ export interface ContinuationServiceDeps {
   generateDraft?: (
     request: GeneratorRunRequest,
     signal?: AbortSignal,
-  ) => Promise<{ title?: string; content?: string }>;
+  ) => Promise<{ title?: string; summary?: string; content?: string }>;
   isOnline?: () => boolean;
   aiEnabled?: () => boolean;
 }
@@ -23,18 +23,24 @@ export interface EnrichedContinuationResult {
   enriched: boolean;
 }
 
+type DraftGenerator = NonNullable<ContinuationServiceDeps["generateDraft"]>;
+
 function buildContinuationRequest(
   candidate: AdventureContinuationCandidate,
   themeId: string,
 ): GeneratorRunRequest {
   const style = worldStyleForTheme(themeId);
   return {
-    generatorId: "rumour",
+    generatorId: "quest",
     themeId,
     useAI: true,
-    options: {},
+    options: {
+      genre: candidate.genreHint ?? style?.name ?? "Genre-agnostic",
+    },
     instructions: [
-      "Write one short, grounded next-adventure pitch from the player-visible hook below.",
+      "Return one concise next-adventure pitch grounded only in the selected player-visible hook below.",
+      "Use the required quest generator output contract, but keep its summary to one complete sentence and its title short.",
+      "Do not add causes, motives, characters, places, or events absent from the hook. Preserve uncertainty; this is a possible direction, not a confirmed fact or mandatory crisis.",
       ...(style ? [`World style: ${style.name}. ${style.description}`] : []),
       "Keep all uncertainty explicit: treat unresolved leads as possibilities, never confirmed conspiracies or mandatory crises.",
       `Anchor type: ${candidate.anchorType}`,
@@ -55,14 +61,32 @@ function buildContinuationRequest(
   };
 }
 
+const MARKDOWN_HEADING_PATTERN = /^#{1,6}\s/m;
+
+function extractBoundedPitch(generated: {
+  summary?: string;
+  content?: string;
+}): string | undefined {
+  const summary = generated.summary?.trim();
+  if (summary) return summary;
+  const content = generated.content?.trim();
+  if (!content || MARKDOWN_HEADING_PATTERN.test(content)) return undefined;
+  return content;
+}
+
 function applySafeEnrichment(
   session: AdventureSession,
   candidate: AdventureContinuationCandidate,
-  generated: { title?: string; content?: string },
+  generated: { title?: string; summary?: string; content?: string },
 ): EnrichedContinuationResult {
-  const nextTitle = generated.title?.trim().slice(0, 120);
-  const nextPremise = generated.content?.trim().slice(0, 320);
-  if (!nextTitle || !nextPremise) {
+  const nextTitle = generated.title?.trim();
+  const nextPremise = extractBoundedPitch(generated);
+  if (
+    !nextTitle ||
+    !nextPremise ||
+    nextTitle.length > 100 ||
+    nextPremise.length > 320
+  ) {
     return { candidate, enriched: false };
   }
   if (
@@ -79,6 +103,33 @@ function applySafeEnrichment(
     },
     enriched: true,
   };
+}
+
+function canEnrich(deps: ContinuationServiceDeps): boolean {
+  const online =
+    deps.isOnline?.() ?? (typeof navigator === "undefined" || navigator.onLine);
+  const enabled = deps.aiEnabled?.() ?? true;
+  return Boolean(deps.generateDraft && enabled && online);
+}
+
+async function generateSafeEnrichment(
+  session: AdventureSession,
+  candidate: AdventureContinuationCandidate,
+  themeId: string,
+  signal: AbortSignal | undefined,
+  generateDraft: DraftGenerator,
+): Promise<EnrichedContinuationResult> {
+  try {
+    const generated = await generateDraft(
+      buildContinuationRequest(candidate, themeId),
+      signal,
+    );
+    signal?.throwIfAborted();
+    return applySafeEnrichment(session, candidate, generated);
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return { candidate, enriched: false };
+  }
 }
 
 /**
@@ -103,24 +154,16 @@ export class AdventureContinuationService {
     signal?: AbortSignal,
   ): Promise<EnrichedContinuationResult> {
     signal?.throwIfAborted();
-    const online =
-      this.deps.isOnline?.() ??
-      (typeof navigator === "undefined" || navigator.onLine);
-    const enabled = this.deps.aiEnabled?.() ?? true;
-    if (!this.deps.generateDraft || !enabled || !online) {
+    const generateDraft = this.deps.generateDraft;
+    if (!generateDraft || !canEnrich(this.deps)) {
       return { candidate, enriched: false };
     }
-
-    try {
-      const generated = await this.deps.generateDraft(
-        buildContinuationRequest(candidate, themeId),
-        signal,
-      );
-      signal?.throwIfAborted();
-      return applySafeEnrichment(session, candidate, generated);
-    } catch (error) {
-      if (signal?.aborted) throw error;
-      return { candidate, enriched: false };
-    }
+    return generateSafeEnrichment(
+      session,
+      candidate,
+      themeId,
+      signal,
+      generateDraft,
+    );
   }
 }

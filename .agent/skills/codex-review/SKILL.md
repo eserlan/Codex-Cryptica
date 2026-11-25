@@ -41,7 +41,9 @@ Run these sweeps on every review; they are where most second and third review ro
 1. **Revert check (tests)**: For each changed hunk, name the test that fails if the hunk is
    reverted. No name means a missing or non-discriminating test. See
    [The Revert Check](references/patterns.md#the-revert-check-would-any-test-fail) for the recurring
-   ways a green suite proves nothing.
+   ways a green suite proves nothing. For services wrapping `generateDraft` / AI generators,
+   include a negative test with the real generator's multi-item or malformed output shape (not
+   only clean mocked items) and assert `options.genre` / theme propagation.
 2. **Sibling sweep**: When a defect or a fix applies to one instance, enumerate the siblings and
    check each: every button with the same contrast pair, every model field interpolated into the
    same Markdown, every AI entry point (retry, regenerate) behind the disclosure, every opener path
@@ -51,12 +53,21 @@ Run these sweeps on every review; they are where most second and third review ro
    dropped `avoidIds`, PR #4365).
    For a new function or option, enumerate its input space (every culture, theme, mode, entity
    kind, empty and maximum case) and check the sibling functions that take the same input.
+   For multi-item selectors over `AdventureSession`, verify every player-visible source collection
+   on the schema is covered (e.g. `ScenarioItem.events` with `visibility === "player"`, not only
+   `outcome.unresolvedConsequences`) and test that distinct candidates do not reuse the same
+   primary `sourceRecordIds`.
 3. **Model-output guards**: Check each parse/validation guard in the diff against
    [Model-Output Shape Guards](references/patterns.md#model-output-shape-guards-that-let-junk-through)
    (`null`/array/`{}`, `NaN`, unescaped `RegExp`, duplicate ids, missing maximum, graph
    reachability, silent truncation). Every new validator, user-input or config parser included,
    gets a bad-input table in its test: repeats, a missing field, an unknown id, a duplicate id,
-   empty input and the over-limit case, each with the expected outcome.
+   empty input and the over-limit case, each with the expected outcome. When calling `generateDraft`
+   with an existing `generatorId` (e.g. `"rumour"`), inspect the real prompt and options in
+   `packages/generator-engine` (`public-rumour.ts`, `campaign-generator-registry.ts`): reject
+   multi-item tables or GM-note markers rather than `.slice()`-truncating `content`, and pass
+   `options.genre` explicitly so unmapped `themeId`s (e.g. `"workspace"`) do not fall back to
+   `"Classic Fantasy"`.
 4. **Heuristic checks**: Any regex over generated prose needs a counterexample table in its test
    (flagged and not-flagged, with unrelated clauses, lists and punctuation). See
    [Heuristic Prose Checks](references/patterns.md#heuristic-prose-checks-regex-validators).
@@ -72,9 +83,11 @@ Run these sweeps on every review; they are where most second and third review ro
    minimum cell size, large viewport), not a typical map; caps must not silently drop items.
    For prompt/session changes, verify a maximal schema-valid durable session still builds `buildAdventurePrompt` under `MAX_SERIALIZED_STATE_CHARS` without throwing or dropping `focusedScenarioId`.
    For retrieval, proposal, and list changes, trace work before the output cap: reject O(N²)
-   lookups (`find`/`includes`/`JSON.stringify` inside loops) and unbounded DOM lists over
-   imported/user data (require pagination or virtualization), and require a scale/overflow unit
-   test (e.g. 400+ records or cap+overflow items) that asserts both latency and schema validity.
+   lookups (`find`/`includes`/`JSON.stringify` inside loops, and `detectHiddenTextLeakage(session, ...)`
+   inside loops since it rebuilds the hidden-state needle map per call—precompute a matcher once
+   per session instead) and unbounded DOM lists over imported/user data (require pagination or
+   virtualization), and require a scale/overflow unit test (e.g. 400+ records or cap+overflow
+   items) that asserts both latency and schema validity.
    Check decode, hash, sort, allocation and rendered rows on both the initial path and retry. See
    [Bounds before expensive work](references/patterns.md#bounds-before-expensive-work).
 7. **Claims**: Every capability, rule, number and privacy claim in changed content, help copy, or
