@@ -11,6 +11,22 @@ Use this skill when given a PR link (or PR number) that has review comments, req
 
 ## Workflow Steps
 
+### 0. Claim Any Active `dev-agents` Review Run First
+
+Before inspecting or fixing, check if `dev-agents` has an active or open review run on the PR (look for `<!-- dev-agents:pr-review run=pr-review-<number>-<sha> -->` or `pr-review-findings` in `gh pr view <number> --json comments`). If a `pr-review-...` run ID is present and not already superseded, claim it immediately so the automated fixer pauses instead of racing you:
+
+```bash
+gh pr comment <number> --body "/dev-agents claim pr-review-<number>-<commit-sha>"
+```
+
+Claims pause fixing for up to 30 minutes. If local work may take longer, add the `pause:fix` label before the claim expires and keep it until the fixes are pushed. Then remove `pause:fix` so the new PR head can be reviewed:
+
+```bash
+gh pr edit <number> --add-label "pause:fix"
+# After pushing the fixes:
+gh pr edit <number> --remove-label "pause:fix"
+```
+
 ### 1. Fetch PR & Review Comments
 
 Fetch PR status, branch metadata, and review feedback across all 3 GitHub endpoints:
