@@ -112,28 +112,39 @@ function hasRepeatedSuggestions(
   return prev.every((item, idx) => item === next[idx]);
 }
 
+function baseTurnTelemetry(
+  prepared: PreparedEvaluationStep,
+  attemptsMade: number,
+  options: AdventureEvaluationRunnerOptions,
+  generationInfo?: AdventureGenerationInfo,
+) {
+  const { step, index, contextMode } = prepared;
+  return {
+    turn: index + 1,
+    modelKey: unknownWhenMissing(generationInfo?.modelKey),
+    requestedEffort: unspecifiedWhenMissing(options.reasoningEffort),
+    actualEffort: unknownWhenMissing(generationInfo?.reasoningEffort),
+    contextMode: unspecifiedWhenMissing(contextMode),
+    transport: unknownWhenMissing(generationInfo?.transport),
+    threadMode: unknownWhenMissing(generationInfo?.threadMode),
+    resetClassification: evaluationResetClassification(
+      generationInfo,
+      contextMode,
+      step,
+    ),
+    generationAttempts: attemptsMade,
+  };
+}
+
 export function buildFailedTurnTelemetry(
   prepared: PreparedEvaluationStep,
   attemptsMade: number,
   options: AdventureEvaluationRunnerOptions,
 ): AdventureEvaluationTurnTelemetry {
-  const { step, index, contextMode } = prepared;
   return {
-    turn: index + 1,
-    modelKey: "unknown",
-    requestedEffort: options.reasoningEffort ?? "unspecified",
-    actualEffort: "unknown",
-    contextMode: contextMode ?? "unspecified",
-    transport: "unknown",
-    threadMode: "unknown",
-    resetClassification: evaluationResetClassification(
-      undefined,
-      contextMode,
-      step,
-    ),
-    generationAttempts: attemptsMade,
+    ...baseTurnTelemetry(prepared, attemptsMade, options),
     committed: false,
-    expectedSignals: failedExpectedSignals(step),
+    expectedSignals: failedExpectedSignals(prepared.step),
     npcKnowledgeViolations: 0,
   };
 }
@@ -158,7 +169,7 @@ export function buildGeneratedTurnTelemetry(
   }: GeneratedTurnTelemetryInput,
   options: AdventureEvaluationRunnerOptions,
 ): AdventureEvaluationTurnTelemetry {
-  const { previousSession, step, index, contextMode } = prepared;
+  const { previousSession, step } = prepared;
   const committed = commit.committed;
   const generationInfo = generationInfoOf(proposal);
   const actionResolution = resolveTelemetryActionResolution(commit, proposal);
@@ -167,19 +178,7 @@ export function buildGeneratedTurnTelemetry(
     proposal,
   );
   return {
-    turn: index + 1,
-    modelKey: unknownWhenMissing(generationInfo.modelKey),
-    requestedEffort: unspecifiedWhenMissing(options.reasoningEffort),
-    actualEffort: unknownWhenMissing(generationInfo.reasoningEffort),
-    contextMode: unspecifiedWhenMissing(contextMode),
-    transport: unknownWhenMissing(generationInfo.transport),
-    threadMode: unknownWhenMissing(generationInfo.threadMode),
-    resetClassification: evaluationResetClassification(
-      generationInfo,
-      contextMode,
-      step,
-    ),
-    generationAttempts: attemptsMade,
+    ...baseTurnTelemetry(prepared, attemptsMade, options, generationInfo),
     committed,
     ...(progressKind ? { progressKind } : {}),
     ...(generationInfo.directorDelivery
@@ -242,4 +241,23 @@ export function recordRubricTelemetry(
       );
     }
   });
+}
+
+export function buildCaseTelemetry(
+  state: CaseExecutionState,
+  startedAt: number,
+  expansionCount: number,
+  now: () => number,
+): AdventureEvaluationTelemetry {
+  return {
+    modelCalls: state.modelCalls,
+    retrievalHydrations: state.retrievalHydrations,
+    serializedStateChars: state.serializedStateChars,
+    generationInputChars: state.generationInputChars,
+    durationMs: Math.max(0, now() - startedAt),
+    expansionCount,
+    providerUsage: "unavailable",
+    estimatedPrice: "unavailable",
+    turns: state.turnTelemetry,
+  };
 }

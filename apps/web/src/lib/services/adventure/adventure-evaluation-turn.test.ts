@@ -1,15 +1,33 @@
 import { describe, expect, it } from "vitest";
 import {
+  commitEvaluationTurn,
   commitProposal,
   makeEvaluationTurn,
 } from "./adventure-evaluation-turn";
 import {
   completeProposal,
   makeCase,
+  makePreparedStep,
   now,
+  rollProposal,
 } from "./adventure-evaluation.fixtures";
 
 describe("adventure evaluation turn", () => {
+  it("evaluates the committed session while retaining the previous session for continuity", () => {
+    const testCase = makeCase();
+    const prepared = makePreparedStep({ previousSession: testCase.session });
+    const { commit, evaluation } = commitEvaluationTurn(
+      testCase,
+      prepared,
+      completeProposal(),
+      () => now,
+    );
+    expect(evaluation.previousSession).toBe(testCase.session);
+    expect(evaluation.session).toBe(commit.session);
+    expect(commit.session.revision).toBe(1);
+    expect(evaluation).not.toHaveProperty("commitFailed");
+  });
+
   it("commits a completed turn with stable identifiers and filtered generation metadata", () => {
     const testCase = makeCase();
     const proposal = Object.assign(completeProposal(), {
@@ -64,11 +82,7 @@ describe("adventure evaluation turn", () => {
 
   it("does not commit roll requests and builds their player-facing evaluation", () => {
     const testCase = makeCase();
-    const proposal = {
-      kind: "roll-required" as const,
-      setupNarration: "Test the latch.",
-      roll: { formula: "1d20", reason: "Open the latch" },
-    };
+    const proposal = rollProposal({ setupNarration: "Test the latch." });
     const commit = commitProposal(
       testCase.session,
       proposal,
@@ -127,7 +141,7 @@ describe("adventure evaluation turn", () => {
           recordId: "loc-2",
           displayName: "Tower",
           content: "Bell",
-          role: "relevant",
+          role: "turn-source",
           lore: "relevant lore",
         },
       ],

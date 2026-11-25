@@ -5,7 +5,10 @@ import {
   type EvaluationTurn,
   type TurnProgressKind,
 } from "@codex/adventure-engine";
-import type { AdventureEvaluationStep } from "./adventure-evaluation-model";
+import type {
+  AdventureEvaluationStep,
+  AdventureEvaluationTurnTelemetry,
+} from "./adventure-evaluation-model";
 
 const ACTIONABLE_PROGRESS_KINDS = new Set<TurnProgressKind>([
   "scenario-stage-or-status-change",
@@ -52,10 +55,7 @@ export function hasSubstantiveAnswer(
 }
 
 export function hasActionableRoute(evaluation: EvaluationTurn): boolean {
-  const suggestionText =
-    evaluation.proposal.kind === "complete"
-      ? (evaluation.proposal.suggestedActions ?? []).join(" ")
-      : (evaluation.proposal.suggestedActions ?? []).join(" ");
+  const suggestionText = (evaluation.proposal.suggestedActions ?? []).join(" ");
   return /\b(?:check|read|inspect|visit|ask|show|return|follow|compare|search|seek|look|take)\b.{0,100}\b(?:ledger|archive|tower|witness|clerk|record|rope|latch|market|bell)\b/i.test(
     `${evaluation.narration}\n${suggestionText}`,
   );
@@ -119,51 +119,46 @@ export function isValidQuietOutcome(
   );
 }
 
+type ExpectedSignals = AdventureEvaluationTurnTelemetry["expectedSignals"];
+
+function requestedExpectedSignals(
+  step: AdventureEvaluationStep,
+  evaluate: (signal: keyof ExpectedSignals) => boolean,
+): ExpectedSignals {
+  return {
+    ...(step.expectsSubstantiveAnswer
+      ? { substantiveAnswer: evaluate("substantiveAnswer") }
+      : {}),
+    ...(step.expectsActionableProgression
+      ? { actionableProgression: evaluate("actionableProgression") }
+      : {}),
+    ...(step.expectsUsefulNegativeFinding
+      ? { usefulNegativeFinding: evaluate("usefulNegativeFinding") }
+      : {}),
+    ...(step.quietOutcome ? { quietOutcome: evaluate("quietOutcome") } : {}),
+  };
+}
+
 export function expectedSignalsFor(
   step: AdventureEvaluationStep,
   evaluation: EvaluationTurn,
   committed: boolean,
   progressKind?: TurnProgressKind,
-) {
-  return {
-    ...(step.expectsSubstantiveAnswer
-      ? {
-          substantiveAnswer: hasSubstantiveAnswer(evaluation, progressKind),
-        }
-      : {}),
-    ...(step.expectsActionableProgression
-      ? {
-          actionableProgression: isActionableProgress(evaluation, progressKind),
-        }
-      : {}),
-    ...(step.expectsUsefulNegativeFinding
-      ? {
-          usefulNegativeFinding: hasUsefulNegativeFinding(
-            step,
-            evaluation,
-            progressKind,
-          ),
-        }
-      : {}),
-    ...(step.quietOutcome
-      ? { quietOutcome: isValidQuietOutcome(step, evaluation, committed) }
-      : {}),
+): ExpectedSignals {
+  const checks = {
+    substantiveAnswer: () => hasSubstantiveAnswer(evaluation, progressKind),
+    actionableProgression: () => isActionableProgress(evaluation, progressKind),
+    usefulNegativeFinding: () =>
+      hasUsefulNegativeFinding(step, evaluation, progressKind),
+    quietOutcome: () => isValidQuietOutcome(step, evaluation, committed),
   };
+  return requestedExpectedSignals(step, (signal) => checks[signal]());
 }
 
 export function failedExpectedSignals(
   step: AdventureEvaluationStep,
-): ReturnType<typeof expectedSignalsFor> {
-  return {
-    ...(step.expectsSubstantiveAnswer ? { substantiveAnswer: false } : {}),
-    ...(step.expectsActionableProgression
-      ? { actionableProgression: false }
-      : {}),
-    ...(step.expectsUsefulNegativeFinding
-      ? { usefulNegativeFinding: false }
-      : {}),
-    ...(step.quietOutcome ? { quietOutcome: false } : {}),
-  };
+): ExpectedSignals {
+  return requestedExpectedSignals(step, () => false);
 }
 
 export function npcKnowledgeViolationCount(

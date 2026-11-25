@@ -39,6 +39,20 @@ export function completeProposal(
   };
 }
 
+export function rollProposal(
+  overrides: Partial<
+    Extract<AdventureTurnProposal, { kind: "roll-required" }>
+  > = {},
+): Extract<AdventureTurnProposal, { kind: "roll-required" }> {
+  return {
+    kind: "roll-required",
+    uncertainty: "Can the latch be opened?",
+    stakes: "The latch could break.",
+    sourceRecordIds: [],
+    ...overrides,
+  };
+}
+
 export function makeSession(): AdventureSession {
   return parseAdventureSession({
     schemaVersion: 3,

@@ -86,7 +86,7 @@ describe("adventure evaluation signals", () => {
     const hidden = completeProposal({
       hiddenPatch: {
         secrets: {
-          add: [{ text: "Secret Tunnel" }],
+          add: [{ text: "Secret Tunnel", status: "hidden" }],
           update: [],
           removeIds: [],
         },

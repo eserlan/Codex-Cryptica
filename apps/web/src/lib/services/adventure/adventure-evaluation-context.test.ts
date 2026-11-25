@@ -107,6 +107,7 @@ describe("adventure evaluation context", () => {
         purpose: "opening" as const,
         anchors,
         relevant: [],
+        sessionKnowledge: "{}",
       }));
       const counter = vi.fn().mockReturnValueOnce(4).mockReturnValueOnce(7);
       const prepared = await prepareEvaluationStep(

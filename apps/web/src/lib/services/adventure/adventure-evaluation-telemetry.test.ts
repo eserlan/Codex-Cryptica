@@ -9,6 +9,7 @@ import {
   completeProposal,
   makeEvaluation,
   makePreparedStep,
+  rollProposal,
 } from "./adventure-evaluation.fixtures";
 
 describe("adventure evaluation telemetry", () => {
@@ -126,10 +127,7 @@ describe("adventure evaluation telemetry", () => {
       validation: "rejected",
       evidenceCategory: "rejected-turn",
     });
-    const proposal = {
-      kind: "roll-required" as const,
-      roll: { formula: "1d20", reason: "Open latch" },
-    };
+    const proposal = rollProposal();
     expect(
       buildGeneratedTurnTelemetry(
         { ...input, proposal, commit: { ...input.commit, failed: false } },

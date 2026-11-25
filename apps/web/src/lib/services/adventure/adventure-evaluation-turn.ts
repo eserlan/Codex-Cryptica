@@ -15,6 +15,7 @@ import type {
   AdventureEvaluationStep,
   EvaluationCommit,
   EvaluationProposal,
+  PreparedEvaluationStep,
 } from "./adventure-evaluation-model";
 
 const GENERATION_METADATA_KEYS = [
@@ -101,4 +102,32 @@ export function makeEvaluationTurn(
     recap: buildAdventureRecap(session),
     transcript: createPlayerTranscript(session),
   };
+}
+
+export function commitEvaluationTurn(
+  testCase: AdventureEvaluationCase,
+  prepared: PreparedEvaluationStep,
+  proposal: EvaluationProposal,
+  commitNow: () => string,
+): { commit: EvaluationCommit; evaluation: EvaluationTurn } {
+  const { previousSession, step, index, anchors, relevant } = prepared;
+  const commit = commitProposal(
+    previousSession,
+    proposal,
+    testCase,
+    step,
+    index,
+    commitNow,
+  );
+  const evaluation = makeEvaluationTurn(
+    testCase,
+    step,
+    proposal,
+    previousSession,
+    commit.session,
+    commit.failed,
+    anchors,
+    relevant,
+  );
+  return { commit, evaluation };
 }

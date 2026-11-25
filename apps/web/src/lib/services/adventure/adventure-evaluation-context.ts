@@ -12,6 +12,12 @@ import type {
   EvaluationExecutionDependencies,
 } from "./adventure-evaluation-model";
 
+interface EvaluationContext {
+  anchors: ResolvedSourceExcerpt[];
+  relevant: ResolvedSourceExcerpt[];
+  hydrations: number;
+}
+
 export async function prepareEvaluationStep(
   testCase: AdventureEvaluationCase,
   provider: string,
@@ -33,8 +39,7 @@ export async function prepareEvaluationStep(
     options,
   );
   state.retrievalHydrations += context.hydrations;
-  recordPromptSizes(previousSession, step, phase, context, state, options);
-  const request: PreparedEvaluationStep["request"] = {
+  const promptInput = {
     session: previousSession,
     phase,
     playerAction: step.playerAction,
@@ -43,6 +48,10 @@ export async function prepareEvaluationStep(
     ...(options.directorEnabled === undefined
       ? {}
       : { directorEnabled: options.directorEnabled }),
+  };
+  recordPromptSizes(promptInput, state);
+  const request = {
+    ...promptInput,
     ...(options.contextMode === undefined
       ? {}
       : { contextMode: options.contextMode }),
@@ -71,26 +80,10 @@ export async function prepareEvaluationStep(
 }
 
 function recordPromptSizes(
-  session: AdventureSession,
-  step: AdventureEvaluationStep,
-  phase: "opening" | "action" | "roll-resolution",
-  context: {
-    anchors: ResolvedSourceExcerpt[];
-    relevant: ResolvedSourceExcerpt[];
-  },
+  input: Parameters<typeof buildAdventurePrompt>[0],
   state: CaseExecutionState,
-  options: AdventureEvaluationRunnerOptions,
 ): void {
-  const prompt = buildAdventurePrompt({
-    session,
-    phase,
-    playerAction: step.playerAction,
-    anchors: context.anchors,
-    relevant: context.relevant,
-    ...(options.directorEnabled === undefined
-      ? {}
-      : { directorEnabled: options.directorEnabled }),
-  });
+  const prompt = buildAdventurePrompt(input);
   state.serializedStateChars = Math.max(
     state.serializedStateChars,
     JSON.stringify(prompt.state).length,
@@ -107,11 +100,7 @@ async function resolveStepContext(
   step: AdventureEvaluationStep,
   testCase: AdventureEvaluationCase,
   options: AdventureEvaluationRunnerOptions,
-): Promise<{
-  anchors: ResolvedSourceExcerpt[];
-  relevant: ResolvedSourceExcerpt[];
-  hydrations: number;
-}> {
+): Promise<EvaluationContext> {
   const supplied = suppliedContext(step, testCase);
   if (supplied) return supplied;
   if (!options.grounding) {
@@ -158,13 +147,7 @@ export function evaluationSteps(
 function suppliedContext(
   step: AdventureEvaluationStep,
   testCase: AdventureEvaluationCase,
-):
-  | {
-      anchors: ResolvedSourceExcerpt[];
-      relevant: ResolvedSourceExcerpt[];
-      hydrations: number;
-    }
-  | undefined {
+): EvaluationContext | undefined {
   if (
     !step.anchors &&
     !step.relevant &&
