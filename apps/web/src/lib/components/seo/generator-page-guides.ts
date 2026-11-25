@@ -363,7 +363,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Give the campaign context a situation",
         detail:
-          "Text in Optional Campaign Context goes into the GM notes under Campaign Context. It does not change the hook or the threat, so write a situation the GM can connect to the quest.",
+          "Optional Campaign Context is preserved in a dedicated GM-note section, separate from the hook and threat. Write a situation the GM can connect to the quest.",
       },
     ],
   },
