@@ -358,7 +358,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use the quirk as a cost",
         detail:
-          "The quirk is a visible side effect, such as chalky residue or a sudden draft, that gives the item away. Keep it when the item should cost something, and set Quirk or Side Effect to 'None' when it should be clean.",
+          "The quirk can be a sensory or environmental side effect, such as chalky residue or a sudden draft. Treat it as a giveaway or cost only when the generated detail fits, and set Quirk or Side Effect to 'None' when it should be clean.",
       },
       {
         title: "Match the effect to the scene, not the vibe",

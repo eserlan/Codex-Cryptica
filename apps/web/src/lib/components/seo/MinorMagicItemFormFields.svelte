@@ -155,7 +155,7 @@
   ></textarea>
   <p
     id="minor-magic-item-campaign-context-help"
-    class="text-micro text-theme-muted leading-relaxed"
+    class="text-helper text-theme-text leading-relaxed"
   >
     Add a world, region, merchant guild, or current situation. Offline drafts
     keep it in the GM notes, and the AI draft is built around it.
