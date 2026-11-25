@@ -573,7 +573,7 @@ export function applyReviewedThreadOutcomes(
   return { session, dropped };
 }
 
-function fnv1a32(input: string, seed: number): string {
+export function fnv1a32(input: string, seed: number): string {
   let hash = seed >>> 0;
   for (let i = 0; i < input.length; i += 1) {
     hash ^= input.charCodeAt(i);
