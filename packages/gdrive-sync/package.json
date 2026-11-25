@@ -15,14 +15,14 @@
     "@codex/runtime": "workspace:*",
     "@codex/sync-engine": "workspace:*",
     "comlink": "^4.4.2",
-    "idb": "^8.0.3",
+    "idb": "^8.0.4",
     "schema": "workspace:*"
   },
   "devDependencies": {
     "@types/google.accounts": "^0.0.18",
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "typescript": "^6.0.3",
-    "vite": "^8.0.14",
-    "vitest": "^5.0.0"
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1"
   }
 }

@@ -14,8 +14,8 @@
     "dice-engine": "workspace:*"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.1.1"
   }
 }
