@@ -539,11 +539,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Social Hub Generator | RPG Venue Generator for Any Genre | Codex Cryptica",
     metaDescription:
-      "Generate a genre-agnostic social gathering location — from cyberpunk noodle bars to western saloons to fantasy inns. Works without login. Save into your Codex Cryptica campaign vault.",
+      "Generate a social venue for any genre, from cyberpunk noodle bars to Western saloons and fantasy inns, with an operator, regulars, rumours and a hidden problem. Works without login. Save into your Codex Cryptica campaign vault.",
     introTitle: "Social Hub Generator",
     eyebrow: "Social Hub Generator",
     introText:
-      "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
+      "Create a campaign-ready social venue for any genre. Pick the setting, venue type, atmosphere, wealth level and clientele, and get a named location with an operator, regulars, rumours and a hidden problem.",
     canonicalPath: "/generators/social-hub",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-social-hub.jpg",

@@ -266,7 +266,7 @@ export const socialHubConfig = {
   } as Record<string, string[]>,
   troubles: [
     "The owner owes a dangerous debt that is coming due",
-    "A recent violent incident was quietly buried — the responsible party may still be inside",
+    "A recent violent incident was quietly buried, and the responsible party may still be inside",
     "A protected criminal is hiding among the staff",
     "A back room connects to something the owner refuses to discuss",
     "A faction is using the venue as a dead-drop without the owner's knowledge",
