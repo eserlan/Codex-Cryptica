@@ -1,13 +1,13 @@
 ---
 name: write-generator-guide
-description: Write a page-specific "How to use the …" guide for public generator pages (/generators/[slug]) so they replace the shared fallback template. Covers reading real generator output, writing a summary and three tips, enforcing distinct copy with a test, and the noindex alternative when no real guide is possible.
+description: Write a page-specific "How to use the …" guide for one public generator page (/generators/[slug]) at a time, so it replaces the shared fallback template. Covers reading real generator output, writing a summary and three tips, enforcing distinct copy with a test, and the noindex alternative when no real guide is possible.
 ---
 
 # Write a Generator Guide
 
 Each public generator page shows a "How to use the …" section. The section reads from `SLUG_GUIDES` in `apps/web/src/lib/components/seo/generator-page-guides.ts`. When a slug has no entry, `defaultGuideForSlug` supplies a template. That template ignores the slug, so every fallback page carries the same summary and tips with only the name changed. This gives readers little page-specific help. Google's scaled content abuse policy concerns many pages produced primarily to manipulate rankings rather than help users; repeated sections alone do not establish a policy violation ([Google Search Central spam policies](https://developers.google.com/search/docs/essentials/spam-policies)).
 
-This skill replaces the fallback with copy written for each generator.
+This skill replaces the fallback with copy written for one generator per run.
 
 ## Hard rules
 
@@ -17,11 +17,11 @@ This skill replaces the fallback with copy written for each generator.
 - **British English**, plain language, no hype. New copy must not use em dashes (U+2014) or en dashes (U+2013); use commas, colons, parentheses or full stops. Some older guides contain dashes; leave them unless you are rewriting that guide.
 - If a real guide is not possible for a page, use the noindex alternative below. Do not leave the template indexable.
 
-## Batching
+## One slug per run
 
-Work in batches of 3 to 5 related slugs per PR, for example the faction variants (`faction`, `faction-roster`, `dark-fantasy-faction`, `urban-fantasy-faction`) or the magic item set. Related generators are where copy is most likely to overlap, and the distinctness test checks them against each other in the same run. Do not exceed 5 slugs per PR.
+Each run handles exactly one slug, on its own branch, in its own PR. Do not batch slugs, even closely related ones. The distinctness test still compares the new guide with every existing guide, so overlap with related generators that already have guides is caught.
 
-## Steps (for each slug in the batch)
+## Steps
 
 1. **Confirm the slug.** It must be in `GENERATOR_SLUGS` (`apps/web/src/lib/components/seo/generator-slugs.ts`) and must not already have a `SLUG_GUIDES` entry. Read the page's intro title and description in `generator-page-meta.ts`.
 
@@ -35,17 +35,17 @@ Work in batches of 3 to 5 related slugs per PR, for example the faction variants
 
 6. **Add the entry** to `SLUG_GUIDES`, following the shape of the existing entries (`summary`, `tips`, optional `links` to related Answer pages or generators that exist).
 
-## After the batch
+## Validate and ship
 
-7. **Run the tests:** `bun scripts/test-changed.mjs --base origin/staging`. If the distinctness test reports shared copy, it names the slugs and the shared words. Rewrite the new guide. Only edit an older guide if it is part of this batch.
+7. **Run the tests:** `bun scripts/test-changed.mjs --base origin/staging`. If the distinctness test reports shared copy, it names the slugs and the shared words. Rewrite the new guide. Do not edit an older guide to make the test pass.
 
-8. **Check public copy.** Follow `docs/seo/generator-content-review.md`. Confirm each guide matches what its generator produces. Also compare the page's own meta description, intro text and form help text with the real output, and note any Answer page, topic hub or example that claims something different. Report mismatches in the PR; do not fix them in a guide PR.
+8. **Check public copy.** Follow `docs/seo/generator-content-review.md`. Confirm the guide matches what the generator produces. Also compare the page's own meta description, intro text and form help text with the real output, and note any Answer page, topic hub or example that claims something different. Report mismatches in the PR; do not fix them in a guide PR.
 
 9. **Validate** with the PR gate in `AGENTS.md`: `bun scripts/lint-changed.mjs --base origin/staging`, the affected workspace type-check (`bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web`), and the Fallow audit (`bunx fallow audit --format json --quiet --explain --gate-marker agent`) before committing.
 
-10. **PR body** must include a **"Public copy reviewed"** note for each slug: what output you checked and whether any other page needed changes ("No changes needed" is valid). If the work is tracked by GitHub issues, close each slug's issue from the PR.
+10. **PR body** must include a **"Public copy reviewed"** note for the slug: what output you checked and whether any other page needed changes ("No changes needed" is valid). If the work is tracked by GitHub issues, close the slug's issue from the PR.
 
-11. **After deploy,** fetch each live `/generators/<slug>` page and confirm the new summary is in the server HTML.
+11. **After deploy,** fetch the live `/generators/<slug>` page and confirm the new summary is in the server HTML.
 
 ## Noindex alternative
 
