@@ -358,12 +358,12 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Treat the magical property as a clue first",
         detail:
-          "Effects such as a hum that points toward fresh water or a glow near the undead work best when they first appear as a hint, then become a tool once the players trust them.",
+          "Effects vary by genre: in a Classic Fantasy setting, a hum that points toward fresh water or a glow near the undead works best as a hint, then becomes a tool once the players trust it. Pick the effect that suits the scene you are running.",
       },
       {
         title: "Put the history on your own map",
         detail:
-          "The history line names a source such as a red dragon's hoard or a paladin who fell at the Siege of Shadowkeep. Swap those names for places in your world, or keep one as a rumour the players can chase.",
+          "In a Classic Fantasy setting, the history line names a source such as a red dragon's hoard or a paladin who fell at the Siege of Shadowkeep. Swap those names for places in your world, or keep one as a rumour the players can chase.",
       },
     ],
     links: [

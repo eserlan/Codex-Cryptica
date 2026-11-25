@@ -8,7 +8,10 @@ import {
   createOneShotRunControl,
   showsStagedProgress,
 } from "./generator-page-generation";
-import { preloadLocalGenerator } from "./generator-page-local-generation.js";
+import {
+  generateLocally,
+  preloadLocalGenerator,
+} from "./generator-page-local-generation.js";
 import { LOCAL_GENERATOR_SLUGS } from "./generator-page-local-generation.js";
 import { GENERATOR_SLUGS } from "./generator-slugs.js";
 import { BANNED_NAMES } from "generator-engine/naming-policy";
@@ -718,6 +721,20 @@ describe("generator-page-generation", () => {
       );
     });
 
+    it("passes activeTheme as theme for magic-item and item (AI path)", async () => {
+      for (const slug of ["magic-item", "item"] as const) {
+        const ctx = makeCtx({ activeTheme: "Cyberpunk / Corporate" });
+        const handlers = createGeneratorHandlers(ctx);
+        await handlers[slug](true);
+        expect(
+          (ctx as unknown as { _engine: ReturnType<typeof makeFakeEngine> })
+            ._engine.generateMagicItem,
+        ).toHaveBeenCalledWith(
+          expect.objectContaining({ theme: "Cyberpunk / Corporate" }),
+        );
+      }
+    });
+
     it("includes avoidNames for world generation from session entities", async () => {
       const engine = makeFakeEngine();
       const ctx = makeCtx({ sessionEntities: [{ name: "Existing" }], engine });
@@ -986,5 +1003,25 @@ describe("generator-page-generation", () => {
       await generate({ useAI: true });
       expect(engine.generateFaction).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe("offline magic item wiring", () => {
+  it("uses the page's active theme for magic-item and item", async () => {
+    for (const slug of ["magic-item", "item"] as const) {
+      const output = await generateLocally(slug, {
+        magicItem: { type: "Amulet" },
+        getActiveTheme: () => "Cyberpunk / Corporate",
+      } as never);
+      expect(output.lore).toContain("- **Theme**: Cyberpunk / Corporate");
+    }
+  });
+
+  it("keeps the campaign context in the offline GM notes", async () => {
+    const output = await generateLocally("magic-item", {
+      magicItem: { type: "Amulet", campaignContext: "The Ash Court of Veyra" },
+      getActiveTheme: () => "Classic Fantasy",
+    } as never);
+    expect(output.lore).toContain("The Ash Court of Veyra");
   });
 });
