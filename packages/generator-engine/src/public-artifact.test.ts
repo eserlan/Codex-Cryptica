@@ -280,7 +280,7 @@ describe("generateArtifactLocal offline options", () => {
 
   it("uses another form noun when every title for the first noun is excluded", () => {
     const form = "Garment / Shroud";
-    const seed = 11;
+    const seed = 1;
     const initiallyResolved = resolveArtifact(
       { genre: "Classic Fantasy", form },
       seededRng(seed),
@@ -307,6 +307,10 @@ describe("generateArtifactLocal offline options", () => {
       { genre: "Classic Fantasy", form, avoidNames },
       seededRng(seed),
     );
+    const local = generateArtifactLocal(
+      { ...baseOptions, form, avoidNames },
+      seededRng(seed),
+    );
 
     expect(avoidNames).toContain(
       `${adjectives[0]} ${initiallyResolved.formNoun}`,
@@ -314,6 +318,13 @@ describe("generateArtifactLocal offline options", () => {
     expect(resolved.suggestedName).not.toBe("Eternity's Relic");
     expect(resolved.suggestedName).not.toMatch(/ Relic$/);
     expect(avoidNames).not.toContain(resolved.suggestedName);
+    expect(resolved.suggestedName).toMatch(
+      new RegExp(` ${resolved.formNoun}$`),
+    );
+    expect(local.title).toBe(resolved.suggestedName);
+    expect(
+      local.content?.replace(local.title ?? "", "").toLowerCase(),
+    ).toContain(resolved.formNoun.toLowerCase());
     expect(
       ["Shroud", "Mantle", "Cloak"].some((noun) =>
         resolved.suggestedName.endsWith(noun),

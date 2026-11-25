@@ -536,15 +536,19 @@ function pickArtifactName(
   presetNouns: readonly string[] | undefined,
   banned: ReadonlySet<string>,
   rng: Rng,
-): string {
+): { name: string; formNoun?: string } {
   const nouns = presetNouns?.length ? presetNouns : [undefined];
   for (const noun of nouns) {
     for (let i = 0; i < 20; i++) {
       const candidate = `${pickFrom(themeNames.adjs, rng)} ${noun ?? pickFrom(themeNames.nouns, rng)}`;
-      if (!banned.has(candidate)) return candidate;
+      if (!banned.has(candidate)) return { name: candidate, formNoun: noun };
     }
   }
-  return `${generateName(rng)}'s ${presetNouns?.[0] ?? "Relic"}`;
+  const formNoun = presetNouns?.[0];
+  return {
+    name: `${generateName(rng)}'s ${formNoun ?? "Relic"}`,
+    formNoun,
+  };
 }
 
 export function resolveArtifact(
@@ -556,25 +560,26 @@ export function resolveArtifact(
   const form = options.form || pickFrom(artifactConfig.forms, rng);
   const presetNouns = FORM_NOUNS[form];
   const presetNoun = presetNouns ? pickFrom(presetNouns, rng) : undefined;
+  const artifactName = pickArtifactName(
+    themePool,
+    presetNouns
+      ? [presetNoun!, ...presetNouns.filter((noun) => noun !== presetNoun)]
+      : undefined,
+    new Set(options.avoidNames ?? []),
+    rng,
+  );
 
   return {
     genre,
     form,
-    formNoun: presetNoun ?? form.toLowerCase(),
+    formNoun: artifactName.formNoun ?? presetNoun ?? form.toLowerCase(),
     originEra: options.originEra || pickFrom(artifactConfig.originEras, rng),
     powerTier: options.powerTier || pickFrom(artifactConfig.powerTiers, rng),
     currentStatus:
       options.currentStatus || pickFrom(artifactConfig.currentStatuses, rng),
     curseCost: options.curseCost || pickFrom(artifactConfig.curseCosts, rng),
     campaignContext: options.campaignContext?.trim() || undefined,
-    suggestedName: pickArtifactName(
-      themePool,
-      presetNouns
-        ? [presetNoun!, ...presetNouns.filter((noun) => noun !== presetNoun)]
-        : undefined,
-      new Set(options.avoidNames ?? []),
-      rng,
-    ),
+    suggestedName: artifactName.name,
   };
 }
 
