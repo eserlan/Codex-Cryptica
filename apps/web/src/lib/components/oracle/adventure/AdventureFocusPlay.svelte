@@ -189,9 +189,17 @@
       : null,
   );
 
-  async function dismissCompletion(eventId: string): Promise<void> {
+  async function dismissCompletion(
+    eventId: string,
+    restoreFocus = true,
+  ): Promise<void> {
     if (!dismissedCompletionIds.includes(eventId)) {
       dismissedCompletionIds = [...dismissedCompletionIds, eventId];
+    }
+    if (restoreFocus) {
+      void tick().then(() => {
+        focusElement?.querySelector<HTMLElement>("textarea")?.focus();
+      });
     }
     if (manager.readOnly) return;
     try {
@@ -207,19 +215,28 @@
     if (completionActionBusy) return;
     completionActionBusy = true;
     try {
-      await dismissCompletion(eventId);
+      await dismissCompletion(eventId, false);
       await manager.close();
+    } catch {
+      notificationStore.notify(
+        "Unable to leave this adventure right now. Please try again.",
+        "error",
+      );
     } finally {
       completionActionBusy = false;
     }
   }
 
-  async function handleFinishFromCompletion(eventId: string): Promise<void> {
+  async function handleFinishFromCompletion(): Promise<void> {
     if (completionActionBusy) return;
     completionActionBusy = true;
     try {
-      await dismissCompletion(eventId);
       await manager.end();
+    } catch {
+      notificationStore.notify(
+        "Unable to archive this adventure right now. You can retry or continue exploring.",
+        "error",
+      );
     } finally {
       completionActionBusy = false;
     }
@@ -753,8 +770,7 @@
               onContinue={() => dismissCompletion(pendingCompletion.eventId)}
               onFindAnother={() =>
                 handleFindAnotherFromCompletion(pendingCompletion.eventId)}
-              onFinish={() =>
-                handleFinishFromCompletion(pendingCompletion.eventId)}
+              onFinish={() => handleFinishFromCompletion()}
             />
           {/if}
         </div>

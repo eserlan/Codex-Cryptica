@@ -41,6 +41,8 @@ describe("AdventureCompletionPanel (#5192)", () => {
     const panel = screen.getByTestId("adventure-completion-panel");
     expect(panel.getAttribute("role")).toBe("region");
     expect(panel.getAttribute("aria-labelledby")).toBeTruthy();
+    const live = panel.querySelector('[aria-live="polite"]');
+    expect(live?.textContent).toContain("Adventure Complete");
     expect(
       screen.getByText("Secure fair water access for the lower ward"),
     ).toBeTruthy();

@@ -43,6 +43,9 @@
   onkeydown={handleKeydown}
   class="rounded-xl border border-theme-primary/40 bg-theme-surface p-4 text-theme-text shadow-md transition-opacity motion-reduce:transition-none sm:p-5"
 >
+  <div class="sr-only" aria-live="polite" aria-atomic="true">
+    {badgeLabel}: {completion.heading}. {completion.epilogue}
+  </div>
   <div class="flex items-start justify-between gap-3">
     <div class="min-w-0 space-y-1">
       <p
@@ -120,7 +123,7 @@
   <div class="mt-4 flex flex-wrap items-center gap-2">
     <button
       type="button"
-      class="inline-flex min-h-10 items-center gap-1.5 rounded-md bg-theme-primary px-3.5 py-2 text-sm font-semibold text-theme-on-primary transition hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary motion-reduce:transition-none"
+      class="inline-flex min-h-10 items-center gap-1.5 rounded-md bg-theme-primary px-3.5 py-2 text-sm font-semibold text-theme-on-primary transition hover:ring-2 hover:ring-theme-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary motion-reduce:transition-none"
       disabled={busy}
       onclick={() => void onContinue()}
     >

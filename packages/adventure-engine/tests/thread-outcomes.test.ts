@@ -999,4 +999,85 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
     );
     expect(selectPendingAdventureCompletion(nextTurn)).toBeNull();
   });
+
+  it("8. ignores clue chains without an explicit goal and blocks GM-only commitments/secrets from completion UI (#5192)", () => {
+    let s = session();
+    s.hiddenState.secrets.push({
+      id: "sec-hidden-culprit",
+      text: "The harbourmaster burned the ledger.",
+      status: "hidden",
+    });
+
+    // Two-turn clue chain with no explicit goal
+    s = commit(
+      s,
+      {
+        playerAction: "Inspect the charred ledger.",
+        narration: "Ash flakes off the binding.",
+        provisionalFacts: [
+          {
+            kind: "clue",
+            name: "Charred Ledger",
+            summary: "The harbour ledger was burned.",
+            visibility: "player-visible",
+          },
+        ],
+        visiblePatch: {
+          ...proposal().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "The harbour ledger was burned.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      1,
+    );
+    const threadId = s.emergentThreads![0]!.id;
+
+    s = commit(
+      s,
+      {
+        playerAction: "Close the ledger note.",
+        narration: "You tuck the ash sample away.",
+        causalCommitments: [
+          {
+            kind: "motive",
+            commitmentClass: "supporting-explanation",
+            subject: "Harbourmaster",
+            summary: "Hid smuggling debts.",
+          },
+        ],
+        threadOutcomes: [
+          {
+            threadId,
+            result: "achieved",
+            reason: "Finished inspecting the charred ledger.",
+          },
+        ],
+      },
+      2,
+    );
+    // Neither an explicit goal nor player-visible world impacts exist -> null
+    expect(selectPendingAdventureCompletion(s)).toBeNull();
+
+    // Even with an explicit goal, GM-only secret text in unresolvedConsequences is stripped
+    s.emergentThreads![0]!.goal = "Uncover who burned the ledger";
+    s.emergentThreads![0]!.outcome!.supportingFactIds = [
+      s.provisionalFacts[0]!.id,
+    ];
+    s.emergentThreads![0]!.outcome!.unresolvedConsequences = [
+      "The harbourmaster burned the ledger.",
+      "Smugglers still operate at night.",
+    ];
+    const filtered = selectPendingAdventureCompletion(s);
+    expect(filtered?.unresolvedConsequences).toEqual([
+      "Smugglers still operate at night.",
+    ]);
+  });
 });

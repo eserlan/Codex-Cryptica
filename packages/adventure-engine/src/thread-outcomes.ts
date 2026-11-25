@@ -1,3 +1,4 @@
+import { detectHiddenTextLeakage } from "./hidden-state";
 import { scenarioEventSchema } from "./scenario-schemas";
 import { validateDurableStateBudget } from "./schemas";
 import type {
@@ -613,28 +614,37 @@ function buildCompletionCandidate(
   if (outcome.result !== "achieved" && outcome.result !== "failed") {
     return null;
   }
-  if (
-    outcome.supportingFactIds.length === 0 &&
-    outcome.supportingCommitmentIds.length === 0
-  ) {
+  const worldImpacts = resolveCommittedWorldImpacts(
+    session,
+    outcome.supportingFactIds,
+  );
+  if (worldImpacts.length === 0) {
     return null;
   }
   const eventId = completionEventId(source, targetId, outcome);
   if ((session.acknowledgedOutcomeIds ?? []).includes(eventId)) {
     return null;
   }
+  const safeHeading = heading.trim().slice(0, 160);
+  const safeEpilogue = outcome.reason.trim().slice(0, 400);
+  if (
+    detectHiddenTextLeakage(session, safeHeading).length > 0 ||
+    detectHiddenTextLeakage(session, safeEpilogue).length > 0
+  ) {
+    return null;
+  }
+  const unresolvedConsequences = (outcome.unresolvedConsequences ?? [])
+    .filter((note) => detectHiddenTextLeakage(session, note).length === 0)
+    .slice(0, 3);
   return {
     eventId,
     source,
     targetId,
     result: outcome.result,
-    heading: heading.trim().slice(0, 160),
-    epilogue: outcome.reason.trim().slice(0, 400),
-    worldImpacts: resolveCommittedWorldImpacts(
-      session,
-      outcome.supportingFactIds,
-    ),
-    unresolvedConsequences: (outcome.unresolvedConsequences ?? []).slice(0, 3),
+    heading: safeHeading,
+    epilogue: safeEpilogue,
+    worldImpacts,
+    unresolvedConsequences,
   };
 }
 
@@ -647,17 +657,16 @@ function selectEmergentCompletion(
     if (
       !outcome ||
       thread.status !== "resolved" ||
-      outcome.sourceTurnId !== lastTurnId
+      outcome.sourceTurnId !== lastTurnId ||
+      !thread.goal?.trim()
     ) {
       continue;
     }
-    const significant = Boolean(thread.goal?.trim()) || thread.turnCount >= 2;
-    if (!significant) continue;
     const summary = buildCompletionCandidate(
       session,
       "emergent",
       thread.id,
-      thread.goal?.trim() || thread.title,
+      thread.goal.trim(),
       outcome,
     );
     if (summary) return summary;
