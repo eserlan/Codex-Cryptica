@@ -11,6 +11,7 @@ on:
       - "docs/**"
   pull_request:
     branches: [main, staging]
+    types: [opened, synchronize, reopened, labeled]
     paths:
       - "apps/**"
       - "packages/**"
@@ -28,6 +29,10 @@ on:
         description: Base ref for an affected-only manual run
         type: string
         default: staging
+      deploy_preview:
+        description: Deploy a Cloudflare Pages preview for this branch
+        type: boolean
+        default: false
 
 concurrency:
   group: "cloudflare-pages-${{ github.ref }}"
@@ -350,6 +355,10 @@ jobs:
           cp "$REPORT" apps/web/build/bundle-report.html
 
       - name: Upload intermediate artifact
+        if: |
+          (github.event_name == 'push' && github.ref_name == 'staging') ||
+          (github.event_name == 'workflow_dispatch' && inputs.deploy_preview == true) ||
+          (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'preview'))
         uses: actions/upload-artifact@v7
         with:
           name: dist
@@ -412,9 +421,14 @@ jobs:
 
   deploy:
     # Deployment is independent from the test/coverage jobs; coverage follows it.
+    # PR preview deploys are opt-in via the `preview` label or `workflow_dispatch` `deploy_preview=true`.
     if: |
       always() &&
-      (github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request') &&
+      (
+        (github.event_name == 'push' && github.ref_name == 'staging') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_preview == true) ||
+        (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'preview'))
+      ) &&
       needs.build.result == 'success' &&
       (needs.lint.result == 'success' || needs.lint.result == 'skipped') &&
       (needs.type-check.result == 'success' || needs.type-check.result == 'skipped')
@@ -463,13 +477,13 @@ jobs:
             -f source_branch=staging
 
       - name: Deploy Preview to Cloudflare Pages
-        if: github.event_name == 'pull_request' && env.CLOUDFLARE_API_TOKEN != ''
+        if: (github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.deploy_preview == true && github.ref_name != 'staging' && github.ref_name != 'main')) && env.CLOUDFLARE_API_TOKEN != ''
         id: deploy_preview
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref }}
+          command: pages deploy dist --project-name=codex-cryptica --branch=${{ github.head_ref || github.ref_name }}
 
       - name: Comment on PR
         if: github.event_name == 'pull_request' && success() && env.CLOUDFLARE_API_TOKEN != ''
