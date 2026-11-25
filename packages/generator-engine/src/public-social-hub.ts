@@ -29,7 +29,6 @@ import {
 import { resolveSmart, type LockedValue } from "./smart";
 import { socialHubConfig } from "./public-social-hub-config";
 import { buildTavernDetails } from "./public-tavern-details";
-import { withArticle } from "./public-settlement-community";
 
 function capitalise(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
