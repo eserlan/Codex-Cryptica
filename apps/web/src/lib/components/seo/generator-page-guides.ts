@@ -346,6 +346,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  quest: {
+    summary:
+      "Each result is a quest with a hook, a location, a key NPC, a threat, a complication, a twist and a reward. The vibe sets the hook, the complication and the names, and the GM notes hold the scope and any campaign context.",
+    tips: [
+      {
+        title: "Pick the vibe first",
+        detail:
+          "Choose a vibe changes the Tone, Scope, Location Type, Main Threat, Twist and Reward options, so each vibe offers its own choices. It also sets the hook, the complication and the key NPC's name.",
+      },
+      {
+        title: "Read the scope in the GM notes",
+        detail:
+          "Scope appears as a Core Field in the GM notes, drawn from the labels of the vibe you chose, such as City-wide for Cyberpunk or Territory-scale (frontier) for Western.",
+      },
+      {
+        title: "Give the campaign context a situation",
+        detail:
+          "Text in Optional Campaign Context goes into the GM notes under Campaign Context. It does not change the hook or the threat, so write a situation the GM can connect to the quest.",
+      },
+    ],
+  },
   "minor-magic-item": {
     summary:
       "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",

@@ -19,6 +19,7 @@ import {
 import { parseFencedJson } from "./llm-response-utils";
 import { formatCampaignContextBlock } from "./campaign-context";
 import { formatPublicScenarioConcept } from "./public-scenario-diversity";
+import { INHABITANT_NAMES_BY_GENRE } from "./public-settlement-inhabitant-names";
 
 export const themeToQuestGenre: Record<string, string> = {
   "Classic Fantasy": "Classic Fantasy",
@@ -40,6 +41,22 @@ export const themeToQuestGenre: Record<string, string> = {
 
 export function questGenreForTheme(theme: string): string {
   return themeToQuestGenre[theme] ?? theme;
+}
+
+/**
+ * The themed pool for a quest genre. The themed records are keyed by vibe
+ * label ("Cyberpunk / Corporate") while a quest carries its genre ("Cyberpunk"),
+ * so the lookup goes through `questGenreForTheme`. Returns undefined when no
+ * vibe maps to the genre, so callers fall back to the generic pool.
+ */
+export function themedQuestPool<T extends string>(
+  record: Readonly<Record<string, readonly T[]>>,
+  genre: string,
+): readonly T[] | undefined {
+  const key = Object.keys(record).find(
+    (vibe) => questGenreForTheme(vibe) === genre,
+  );
+  return key ? record[key] : undefined;
 }
 
 export const questConfig = {
@@ -461,13 +478,13 @@ export const questConfig = {
   hooks: [
     "A local official offers a reward to find a missing heir before a rival claims the title.",
     "Strange lights above the old tower have kept the village awake for three nights.",
-    "A caravan was found empty on the road -- no blood, no tracks, just silence.",
+    "A caravan was found empty on the road: no blood, no tracks, just silence.",
     "An imprisoned criminal offers the location of a cache in exchange for a pardon.",
     "A temple guardian collapses mid-ceremony, whispering a single forbidden name.",
     "A child wanders into town carrying an item that should not exist.",
   ],
   complications: [
-    "The client is hiding their true motive -- the real target is someone the party knows.",
+    "The client is hiding their true motive: the real target is someone the party knows.",
     "The threat has already moved; the location the party was sent to is a decoy.",
     "A second party has been hired for the same job and has a head start.",
     "The threat is connected to a powerful patron who expects the party to look away.",
@@ -644,67 +661,272 @@ export interface ResolvedQuest {
   twist: string;
   reward: string;
   campaignContext?: string;
+  npcName: string;
   questName: string;
+}
+
+export interface QuestHookPool {
+  hooks: readonly string[];
+  complications: readonly string[];
+}
+
+const PIRATE_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A fragmented treasure chart has surfaced in a neutral port, but each piece is held by a different crew.",
+    "A blockade has trapped a convoy of families and medicine ships behind a reef passage that only opens at low tide.",
+    "A ghost vessel has returned without its crew, carrying a log that names the next ship it will claim.",
+    "A captain was arrested under a false name, and the party must reach the prison island before the fleet sails.",
+    "A mutiny is brewing aboard a ship whose articles protect both the crew and the captain who broke them.",
+    "A sea-monster hunt is actually a rescue mission for sailors stranded on an island that appears only in storms.",
+  ],
+  complications: [
+    "The chart is genuine, but following it violates a truce that keeps three ports from going to war.",
+    "The naval officer offering the contract has quietly voided the crew's pardon.",
+    "The rescued cargo belongs to a harbour community that cannot survive without it.",
+    "A rival crew knows the party's route because one of the allies is trying to buy their own freedom.",
+    "The apparent curse is tied to a real historical atrocity that the port's rulers want buried.",
+    "The safest harbour is controlled by someone the party just betrayed at sea.",
+  ],
+};
+
+const SUPERHERO_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A live broadcast cuts to a villain's ultimatum that names the party by their civilian identities.",
+    "A rescue goes right on camera, but the footage conveniently omits who caused the disaster in the first place.",
+    "A rival hero team claims the case first, and their methods are not the party's own.",
+    "An anonymous tip arrives with photographic proof of who really funded last month's catastrophe.",
+    "A city council schedules an emergency vote on hero oversight, and someone wants the party's testimony tonight.",
+    "A former mentor's costume turns up abandoned at the scene of a disaster no one has claimed.",
+  ],
+  complications: [
+    "The villain's demands turn out to rest on a grievance the city has been ignoring for years.",
+    "Stopping the scheme in public risks exposing a party member's secret identity for good.",
+    "The press already has a narrative, and the truth does not fit it.",
+    "Saving everyone in the building means letting the actual target walk away clean.",
+    "The client offering the reward has their own reasons for wanting this handled quietly.",
+    "A former ally turns up on the wrong side of the line, and refuses to explain why.",
+  ],
+};
+
+const TECHNOLOGICAL_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A corporate courier has gone dark with a shipment that the district's network is now hunting for.",
+    "A city-wide outage has locked a client's vault, and the only person who can reopen it is a fugitive.",
+    "An unregistered ship has docked at the relay station and is refusing every hail except one from the party's contact.",
+    "A leaked memo names a dead engineer as the author of a system that is still running.",
+    "The station's automated defences have started shutting down the wrong sectors, and no one can say why.",
+    "A rival crew is selling stolen prototype drives, each carrying the same unfinished signal.",
+  ],
+  complications: [
+    "The client who hired the party owns the company that built the system they are trying to disable.",
+    "Every route off the station is watched, and the watchers report to the people the party is investigating.",
+    "The engineer who could help is bound by a contract that forbids speaking to outsiders, and breaking it means a lethal implant.",
+    "Fixing the fault will also switch off life support for an entire residential block.",
+    "A second team has already copied the data and is offering to sell it to the party's rivals.",
+    "The rescue signal is real, but it is being broadcast from a trap set to lure the party into a blackout.",
+  ],
+};
+
+const OCCULT_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A coven has asked the party to retrieve a relic from a vault that has not been opened since the last eclipse.",
+    "Villagers who went into the old mine came out speaking in a voice that is not their own.",
+    "A courier delivered a sealed box to the wrong address, and the recipient has not been seen since.",
+    "A noble's portrait now shows a face that is slowly becoming the face of their heir.",
+    "Every bell in the district rang at midnight, though the towers are empty and the bells were removed years ago.",
+    "A cult member has confessed to a murder in a town that does not appear on any map.",
+  ],
+  complications: [
+    "The ritual needs a living witness, and the only one who qualifies is someone the party has promised to protect.",
+    "The relic is bound to the family that owns the vault, and breaking the seal will bring them back to claim it.",
+    "The road the party is standing on was burned off every map last winter, so no one else will know to look for it.",
+    "The patron seems calm about the danger because the danger is already inside the party's own camp.",
+    "Attempting the rite in daylight costs the caster a year of memories, but the shadows only answer at dusk.",
+    "The witnesses remember the event differently, and each version names a different party member as the culprit.",
+  ],
+};
+
+const POLITICAL_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A council vote on the disputed charter has been brought forward by three days, with no explanation given.",
+    "A leaked letter shows that the city's treasurer has been paying a rival faction for information.",
+    "A candidate for the regency was found dead in a locked carriage, and the coroner has since been replaced.",
+    "The guild that keeps the harbour records has refused to release the ledgers from the last election.",
+    "A journalist offers the party a dossier on the mayor, in exchange for proof that a key witness is still alive.",
+    "A petition signed by every clerk in the guild names the party as the only intermediary they trust.",
+  ],
+  complications: [
+    "The witness is protected by the same official the party needs to expose.",
+    "Publishing the dossier would ruin an ally who funded the party's last job.",
+    "Every faction in the city claims the evidence it wants the party to find is the one that will clear it.",
+    "The clerks' petition is a trap set by the official who wants the ledgers to vanish.",
+    "The party's contact on the council has been offered a seat if they stop asking questions.",
+    "The vote is being rigged in plain sight, and calling it out could start a riot in the market.",
+  ],
+};
+
+const FRONTIER_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A stagecoach carrying a payroll box has not reached the next town, and its driver's horses came back alone.",
+    "A rancher offers a reward for stolen cattle and warns the party not to ask the sheriff for help.",
+    "A preacher has been raising money to rebuild a church that burned down a year ago.",
+    "A railroad surveyor has vanished, and his last map shows a canyon the company says does not exist.",
+    "Ranchers near the river are paying a toll to a gang that has no name and no horses.",
+    "A bounty poster shows a face the party has met before, and the reward is larger than the town's annual tax.",
+  ],
+  complications: [
+    "The sheriff is paid by the same people who want the party gone before the next election.",
+    "The stolen cattle were sold to a company that the party's employer partly owns.",
+    "The preacher's congregation believes the money was spent honestly and will fight anyone who says otherwise.",
+    "The canyon exists, and the surveyor's crew is still inside, guarded by men who want the claim kept quiet.",
+    "The toll gang has friends in every town on the route, and a stranger asking questions will be recognised by nightfall.",
+    "The man on the bounty poster is innocent of the crime, but the only proof is in a town that has already burned.",
+  ],
+};
+
+const WASTELAND_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A water convoy from the old reservoir is overdue, and its escort has sent up only a flare.",
+    "Scavengers have pried open a sealed shelter, and the air inside is still breathable.",
+    "A settlement traded its last working generator for a map that promises a clean spring.",
+    "A radio broadcast reads a list of names every night, and one belongs to someone who died in the first winter.",
+    "A raider chief has taken a child from the market and asked for the party's medical kit in return.",
+    "The old seed vault has reopened, and its keeper says the party are the first visitors she has seen in ten years.",
+  ],
+  complications: [
+    "The water is poisoned at the source, and the only people who can clean it are the ones who poisoned it.",
+    "The shelter was sealed on purpose, and whoever sealed it still has the keys.",
+    "The clean spring on the map is already claimed by a settlement that will not share it.",
+    "Every name on the broadcast belongs to someone who once owed the party a debt.",
+    "The raider chief will trade the child for the kit, but a truce would leave the market to starve.",
+    "The seed vault holds the last viable crop, and its keeper will share it only with someone who promises to stay.",
+  ],
+};
+
+const STEAMPUNK_HOOK_POOL: QuestHookPool = {
+  hooks: [
+    "A pressure engine in the foundry district has begun exhaling steam that smells of burnt sugar.",
+    "An airship bound for the northern reach has dropped out of the sky, and its last signal came from a dry lake.",
+    "A clockwork guild has commissioned a mechanical courier, which keeps delivering letters to a house that burned down.",
+    "A boiler explosion killed a foreman whose logbook records a second, unexplained engine on the same site.",
+    "A mechanical tutor has started teaching children an address that does not exist, and its brass gears are warm to the touch.",
+    "The city's steam mains have been diverted to a private estate, and the dockworkers want someone to stop it.",
+  ],
+  complications: [
+    "The estate belongs to the guild that paid for the boiler inspection, and the inspector is the foreman's brother.",
+    "The second engine powers the very airships the party's patron has invested in.",
+    "Fixing the mains means cutting heat to the hospital wards for three nights.",
+    "The mechanical courier was built to carry a message that the guild does not want read in public.",
+    "The brass gears in the tutor are wired to a memory the guild has been trying to erase.",
+    "Every workshop in the district holds a copy of the same faulty blueprint, and the guild will pay to keep it that way.",
+  ],
+};
+
+const GENERIC_HOOK_POOL: QuestHookPool = {
+  hooks: questConfig.hooks,
+  complications: questConfig.complications,
+};
+
+/**
+ * Hook and complication pools by quest genre. Vibes without an entry use the
+ * generic fantasy pool, which is the right fit for Classic Fantasy and the
+ * other fantasy vibes.
+ */
+export const QUEST_HOOK_POOLS: Readonly<Record<string, QuestHookPool>> = {
+  Pirate: PIRATE_HOOK_POOL,
+  Superhero: SUPERHERO_HOOK_POOL,
+  Cyberpunk: TECHNOLOGICAL_HOOK_POOL,
+  "Sci-Fi": TECHNOLOGICAL_HOOK_POOL,
+  Lancer: TECHNOLOGICAL_HOOK_POOL,
+  "Space Fantasy": TECHNOLOGICAL_HOOK_POOL,
+  "Optimistic Exploration Sci-Fi": TECHNOLOGICAL_HOOK_POOL,
+  "Space Western": TECHNOLOGICAL_HOOK_POOL,
+  "Dark Fantasy": OCCULT_HOOK_POOL,
+  "Cosmic Horror": OCCULT_HOOK_POOL,
+  "Political Intrigue": POLITICAL_HOOK_POOL,
+  Western: FRONTIER_HOOK_POOL,
+  "Post-Apocalyptic": WASTELAND_HOOK_POOL,
+  Steampunk: STEAMPUNK_HOOK_POOL,
+};
+
+/**
+ * Person-name pool for the key NPC and the quest title. Genres with no pool of
+ * their own are mapped to the nearest one, and anything else falls back to
+ * Fantasy, so a Cyberpunk quest is not named like a fantasy village elder.
+ */
+const QUEST_NAME_POOL_ALIAS: Readonly<Record<string, string>> = {
+  "Political Intrigue": "Modern",
+  Lancer: "Sci-Fi",
+  "Space Fantasy": "Sci-Fi",
+};
+
+function questNamePool(genre: string): readonly string[] {
+  const key = QUEST_NAME_POOL_ALIAS[genre] ?? genre;
+  const candidates = [
+    key,
+    key.replace(/^Classic /, ""),
+    key.replace(/ \/ .*/, ""),
+    key.split(" ")[0],
+  ];
+  for (const candidate of candidates) {
+    const pool = INHABITANT_NAMES_BY_GENRE[candidate];
+    if (pool) return pool;
+  }
+  return INHABITANT_NAMES_BY_GENRE.Fantasy;
+}
+
+/**
+ * Lower-case a label for use mid-sentence, but keep all-caps acronyms such as
+ * "AI" so "Rogue AI" does not read as "rogue ai".
+ */
+function lowerCaseKeepingAcronyms(label: string): string {
+  return label
+    .split(" ")
+    .map((word) => (/^[A-Z]{2,}$/.test(word) ? word : word.toLowerCase()))
+    .join(" ");
+}
+
+function withIndefiniteArticle(phrase: string): string {
+  return `${/^[aeiou]/i.test(phrase) ? "an" : "a"} ${phrase}`;
+}
+
+function capitaliseFirst(phrase: string): string {
+  return phrase.charAt(0).toUpperCase() + phrase.slice(1);
 }
 
 function resolveQuest(options: QuestGeneratorOptions, rng: Rng): ResolvedQuest {
   const genre = questGenreForTheme(
     options.genre || pickFrom(questConfig.genres, rng),
   );
-  const usesDedicatedPools =
-    genre === "Pirate" || genre === "Cosmic Horror" || genre === "Superhero";
+  const pick = (
+    chosen: string | undefined,
+    themed: Readonly<Record<string, readonly string[]>>,
+    generic: readonly string[],
+  ) => chosen || pickFrom(themedQuestPool(themed, genre) ?? generic, rng);
+  const npcName = pickFrom(questNamePool(genre), rng);
   return {
     genre,
-    tone:
-      options.tone ||
-      pickFrom(
-        usesDedicatedPools
-          ? questConfig.tonesByTheme[genre]
-          : questConfig.tones,
-        rng,
-      ),
-    scope:
-      options.scope ||
-      pickFrom(
-        usesDedicatedPools
-          ? questConfig.scopesByTheme[genre]
-          : questConfig.scopes,
-        rng,
-      ),
-    locationType:
-      options.locationType ||
-      pickFrom(
-        usesDedicatedPools
-          ? questConfig.locationTypesByTheme[genre]
-          : questConfig.locationTypes,
-        rng,
-      ),
-    threat:
-      options.threat ||
-      pickFrom(
-        usesDedicatedPools
-          ? questConfig.threatsByTheme[genre]
-          : questConfig.threats,
-        rng,
-      ),
-    twist:
-      options.twist ||
-      pickFrom(
-        usesDedicatedPools
-          ? (questConfig.twistsByTheme[genre] ?? questConfig.twists)
-          : questConfig.twists,
-        rng,
-      ),
-    reward:
-      options.reward ||
-      pickFrom(
-        usesDedicatedPools
-          ? questConfig.rewardsByTheme[genre]
-          : questConfig.rewards,
-        rng,
-      ),
+    tone: pick(options.tone, questConfig.tonesByTheme, questConfig.tones),
+    scope: pick(options.scope, questConfig.scopesByTheme, questConfig.scopes),
+    locationType: pick(
+      options.locationType,
+      questConfig.locationTypesByTheme,
+      questConfig.locationTypes,
+    ),
+    threat: pick(
+      options.threat,
+      questConfig.threatsByTheme,
+      questConfig.threats,
+    ),
+    twist: pick(options.twist, questConfig.twistsByTheme, questConfig.twists),
+    reward: pick(
+      options.reward,
+      questConfig.rewardsByTheme,
+      questConfig.rewards,
+    ),
     campaignContext: options.campaignContext?.trim() || undefined,
-    questName: `${generateName(rng)}'s ${pickFrom(["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"], rng)}`,
+    npcName,
+    questName: `${npcName}'s ${pickFrom(["Gambit", "Bargain", "Reckoning", "Shadow", "Legacy", "Trial"], rng)}`,
   };
 }
 
@@ -775,55 +997,10 @@ export function generateQuestLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveQuest(options, rng);
-  const pirateHooks = [
-    "A fragmented treasure chart has surfaced in a neutral port, but each piece is held by a different crew.",
-    "A blockade has trapped a convoy of families and medicine ships behind a reef passage that only opens at low tide.",
-    "A ghost vessel has returned without its crew, carrying a log that names the next ship it will claim.",
-    "A captain was arrested under a false name, and the party must reach the prison island before the fleet sails.",
-    "A mutiny is brewing aboard a ship whose articles protect both the crew and the captain who broke them.",
-    "A sea-monster hunt is actually a rescue mission for sailors stranded on an island that appears only in storms.",
-  ];
-  const pirateComplications = [
-    "The chart is genuine, but following it violates a truce that keeps three ports from going to war.",
-    "The naval officer offering the contract has quietly voided the crew's pardon.",
-    "The rescued cargo belongs to a harbour community that cannot survive without it.",
-    "A rival crew knows the party's route because one of the allies is trying to buy their own freedom.",
-    "The apparent curse is tied to a real historical atrocity that the port's rulers want buried.",
-    "The safest harbour is controlled by someone the party just betrayed at sea.",
-  ];
-  const superheroHooks = [
-    "A live broadcast cuts to a villain's ultimatum that names the party by their civilian identities.",
-    "A rescue goes right on camera, but the footage conveniently omits who caused the disaster in the first place.",
-    "A rival hero team claims the case first, and their methods are not the party's own.",
-    "An anonymous tip arrives with photographic proof of who really funded last month's catastrophe.",
-    "A city council schedules an emergency vote on hero oversight, and someone wants the party's testimony tonight.",
-    "A former mentor's costume turns up abandoned at the scene of a disaster no one has claimed.",
-  ];
-  const superheroComplications = [
-    "The villain's demands turn out to rest on a grievance the city has been ignoring for years.",
-    "Stopping the scheme in public risks exposing a party member's secret identity for good.",
-    "The press already has a narrative, and the truth does not fit it.",
-    "Saving everyone in the building means letting the actual target walk away clean.",
-    "The client offering the reward has their own reasons for wanting this handled quietly.",
-    "A former ally turns up on the wrong side of the line, and refuses to explain why.",
-  ];
-  const hook = pickFrom(
-    resolved.genre === "Pirate"
-      ? pirateHooks
-      : resolved.genre === "Superhero"
-        ? superheroHooks
-        : questConfig.hooks,
-    rng,
-  );
-  const complication = pickFrom(
-    resolved.genre === "Pirate"
-      ? pirateComplications
-      : resolved.genre === "Superhero"
-        ? superheroComplications
-        : questConfig.complications,
-    rng,
-  );
-  const npcName = generateName(rng);
+  const pool = QUEST_HOOK_POOLS[resolved.genre] ?? GENERIC_HOOK_POOL;
+  const hook = pickFrom(pool.hooks, rng);
+  const complication = pickFrom(pool.complications, rng);
+  const npcName = resolved.npcName;
   const locationName = `The ${generateName(rng)} ${resolved.locationType}`;
 
   const npcStakeVariants = [
@@ -834,12 +1011,16 @@ export function generateQuestLocal(
     `The party's first impression of ${npcName} will be of someone straightforward. That impression is accurate in the ways that do not matter.`,
   ] as const;
 
+  const threatPhrase = withIndefiniteArticle(
+    lowerCaseKeepingAcronyms(resolved.threat),
+  );
+  const ThreatPhrase = capitaliseFirst(threatPhrase);
   const threatVariants = [
-    `The central danger is a ${resolved.threat.toLowerCase()}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`,
-    `The threat is a ${resolved.threat.toLowerCase()} that has already shaped local behavior — people are routing around it, not reporting it, and quietly adjusting their plans.`,
-    `A ${resolved.threat.toLowerCase()} forms the core danger. The party will not be the first to notice it. They may be the first willing to do something about it.`,
-    `The central danger — a ${resolved.threat.toLowerCase()} — has been allowed to persist long enough that dealing with it now will create ripples beyond the immediate problem.`,
-    `At the center of this is a ${resolved.threat.toLowerCase()}. Its history in this place is longer than anyone has told the party yet.`,
+    `The central danger is ${threatPhrase}. It has been active long enough to leave evidence, earn fear, and create a power vacuum that others are already trying to fill.`,
+    `The threat is ${threatPhrase} that has already shaped local behavior: people are routing around it, not reporting it, and quietly adjusting their plans.`,
+    `${ThreatPhrase} forms the core danger. The party will not be the first to notice it. They may be the first willing to do something about it.`,
+    `The central danger, ${threatPhrase}, has been allowed to persist long enough that dealing with it now will create ripples beyond the immediate problem.`,
+    `At the center of this is ${threatPhrase}. Its history in this place is longer than anyone has told the party yet.`,
   ] as const;
 
   const npcStake = pickFrom(npcStakeVariants, rng);
@@ -848,8 +1029,8 @@ export function generateQuestLocal(
   const content = `### The Hook
 ${hook}
 
-${resolved.campaignContext ? `### Campaign Fit\nThis quest ties into ${resolved.campaignContext}. The threat and location should reflect existing tensions or unresolved threads.\n` : ""}### Location
-${locationName} serves as the primary setting -- a ${resolved.locationType.toLowerCase()} shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
+### Location
+${locationName} serves as the primary setting, shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
 
 ### Key NPC
 **${npcName}** is the immediate contact, patron, or obstacle. ${npcStake}
@@ -861,13 +1042,18 @@ ${threatDesc}`;
     `Beyond its face value, it opens a door in the wider campaign: a contact, a route, or a secret the party could not otherwise reach.`,
     `The reward is real. What it enables matters more than what it is worth.`,
     `On its own terms it is fair. As a campaign asset, it is more valuable than it appears.`,
-    `The party earns something tangible — and inherits something they will not fully understand until later.`,
+    `The party earns something tangible, and inherits something they will not fully understand until later.`,
     `Take the face value seriously. Then consider what having it changes about the party's position going forward.`,
   ] as const;
 
+  const campaignSection = resolved.campaignContext
+    ? `\n\n### Campaign Context\n${resolved.campaignContext}`
+    : "";
+
   const lore = `### Core Fields
-- **📍 Setting**: ${locationName}, a ${resolved.locationType.toLowerCase()} shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
+- **📍 Setting**: ${locationName}, shaped by ${resolved.genre.toLowerCase()} conventions and a ${resolved.tone.toLowerCase()} atmosphere.
 - **📅 Threat**: ${threatDesc}
+- **🧭 Scope**: ${resolved.scope}
 
 ### Complication
 ${complication}
@@ -876,10 +1062,10 @@ ${complication}
 - **👤 ${npcName}**: The immediate contact, patron, or obstacle. ${npcStake}
 
 ### The Twist
-${resolved.twist}. Reveal this only once the party is committed -- it should recast earlier scenes in a new light.
+${resolved.twist}. Reveal this only once the party is committed: it should recast earlier scenes in a new light.
 
 ### Reward
-${resolved.reward}. ${pickFrom(rewardClosers, rng)}`;
+${resolved.reward}. ${pickFrom(rewardClosers, rng)}${campaignSection}`;
 
   return {
     type: "event",

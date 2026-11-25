@@ -48,6 +48,7 @@ export { artifactConfig } from "generator-engine/public-artifact";
 export {
   questConfig,
   questGenreForTheme,
+  themedQuestPool,
   themeToQuestGenre,
 } from "generator-engine/public-quest";
 export { rumourConfig } from "generator-engine/public-rumour";

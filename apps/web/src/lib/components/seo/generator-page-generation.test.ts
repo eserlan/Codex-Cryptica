@@ -1017,6 +1017,21 @@ describe("offline magic item wiring", () => {
     }
   });
 
+  it("uses the chosen vibe and keeps the campaign context in the offline quest GM notes", async () => {
+    const output = await generateLocally("quest", {
+      quest: {
+        genre: "Cyberpunk",
+        campaignContext: "The Salt Guild controls the rail yards.",
+      },
+      getActiveTheme: () => "Cyberpunk / Corporate",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild controls the rail yards.");
+    expect(output.content).not.toContain("Salt Guild");
+    expect(output.lore).toContain("**🧭 Scope**: ");
+  });
+
   it("keeps the minor magic item campaign context in the offline GM notes", async () => {
     const output = await generateLocally("minor-magic-item", {
       minorMagicItem: { campaignContext: "The Salt Guild of Brindel" },

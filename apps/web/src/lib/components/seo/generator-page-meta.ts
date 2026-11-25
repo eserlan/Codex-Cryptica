@@ -409,7 +409,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     introTitle: "RPG Quest Generator",
     eyebrow: "Quest Hook Generator",
     introText:
-      "Create campaign-ready adventure seeds and quest hooks. Set the genre, tone, threat, and twist, then import into your local vault.",
+      "Create campaign-ready adventure seeds and quest hooks. Choose a vibe, then set the tone, threat, and twist. Import the result into your local vault.",
     canonicalPath: "/generators/quest",
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-quest.jpg",
     ogImageAlt:
