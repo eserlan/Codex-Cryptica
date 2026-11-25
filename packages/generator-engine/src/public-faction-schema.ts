@@ -181,8 +181,8 @@ export function buildFactionSchema(): SmartGeneratorSchema {
       {
         id: "conflict",
         label: "Internal Conflict",
-        pool: () =>
-          factionConfig.conflicts.map((v) =>
+        pool: (ctx) =>
+          forTheme(factionConfig.conflictsByTheme, ctx.genre).map((v) =>
             annotate(
               v,
               FACTION_CONFLICT_TRAITS,
@@ -194,8 +194,8 @@ export function buildFactionSchema(): SmartGeneratorSchema {
       {
         id: "hook",
         label: "Immediate Hook",
-        pool: () =>
-          factionConfig.hooks.map((v) =>
+        pool: (ctx) =>
+          forTheme(factionConfig.hooksByTheme, ctx.genre).map((v) =>
             annotate(v, FACTION_HOOK_TRAITS, FACTION_RULES, FACTION_AFFINITIES),
           ),
       },

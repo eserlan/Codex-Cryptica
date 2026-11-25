@@ -43,3 +43,8 @@ const PLACEHOLDER_NAME_SUFFIXES = [
 export function generatePlaceholderName(rng: Rng = defaultRng): string {
   return `${pickFrom(PLACEHOLDER_NAME_PREFIXES, rng)}${pickFrom(PLACEHOLDER_NAME_SUFFIXES, rng)}`;
 }
+
+/** "an" before a vowel sound, otherwise "a": "an amulet", "a wand". */
+export function indefiniteArticle(noun: string): string {
+  return /^[aeiou]/i.test(noun.trim()) ? "an" : "a";
+}

@@ -17,6 +17,7 @@ import {
   defaultRng,
   pickFrom,
   generatePlaceholderName as generateName,
+  indefiniteArticle,
 } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 
@@ -196,7 +197,12 @@ export function generateFactionLocal(
   const base = selectSmartFactionBase(factionType, traits, rng);
   const resource = selectSmartFactionResource(factionType, traits, rng);
 
-  const summary = `A ${alignment.toLowerCase()} ${factionType.toLowerCase()} operating at the ${scope.toLowerCase()} level.`;
+  const profile = `${alignment.toLowerCase()} ${factionType.toLowerCase()}`;
+  const opening = `${indefiniteArticle(profile)} ${profile}`;
+  const summary = `${opening.charAt(0).toUpperCase()}${opening.slice(1)} operating across the ${scope.toLowerCase()}.`;
+  const campaignSection = campaignContext
+    ? `\n\n### Campaign Context\n${campaignContext}`
+    : "";
 
   const factionControlClosers = [
     `Their reach is felt in every trade deal, guarded rumor, and carefully placed favor.`,
@@ -236,7 +242,7 @@ export function generateFactionLocal(
   ] as const;
 
   const content = `### What they control
-${name} is a ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. ${pickFrom(factionControlClosers, rng)}${campaignContext ? ` In ${campaignContext}, they already have fingers in the most contested disputes.` : ""}
+${name} is ${indefiniteArticle(factionType)} ${factionType.toLowerCase()} with a firm grip on key resources across the ${scope.toLowerCase()}. ${pickFrom(factionControlClosers, rng)}${campaignContext ? " Within the campaign setting, they already have fingers in the most contested disputes." : ""}
 
 ### What they want
 ${goal} ${pickFrom(factionWantClosers, rng)}
@@ -263,7 +269,7 @@ ${pickFrom(factionHowToUse, rng)(name)}`;
 ${conflict}
 
 ### Rival Faction
-- **👥 ${rival}**: Pursuing the same influence, relic, or route — and will reach it first if the party does nothing.`;
+- **👥 ${rival}**: Pursuing the same influence, relic, or route — and will reach it first if the party does nothing.${campaignSection}`;
 
   return {
     type: "faction",
