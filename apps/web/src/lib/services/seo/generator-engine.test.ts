@@ -268,7 +268,10 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).toContain("merchant guild");
       expect(res.content).toContain("What they control");
       expect(res.content).toContain("What they want");
-      expect(res.content).toContain(
+      expect(res.lore).toContain(
+        "### Campaign Context\na canal city split by old guild rivalries",
+      );
+      expect(res.content).not.toContain(
         "a canal city split by old guild rivalries",
       );
       expect(res.lore).toContain("Internal Conflict");
