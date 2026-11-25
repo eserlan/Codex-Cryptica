@@ -278,6 +278,49 @@ describe("generateArtifactLocal offline options", () => {
     expect(local.content).not.toMatch(/ \/ /);
   });
 
+  it("uses another form noun when every title for the first noun is excluded", () => {
+    const form = "Garment / Shroud";
+    const seed = 11;
+    const initiallyResolved = resolveArtifact(
+      { genre: "Classic Fantasy", form },
+      seededRng(seed),
+    );
+    const adjectives = [
+      "Solar",
+      "Cinder",
+      "Primordial",
+      "Astral",
+      "Crown-Breaker",
+      "Dusk",
+      "Radiant",
+      "Sovereign",
+      "World-Ender",
+      "Glimmer",
+      "Thorn",
+      "Eternity",
+    ];
+    const avoidNames = adjectives.map(
+      (adjective) => `${adjective} ${initiallyResolved.formNoun}`,
+    );
+
+    const resolved = resolveArtifact(
+      { genre: "Classic Fantasy", form, avoidNames },
+      seededRng(seed),
+    );
+
+    expect(avoidNames).toContain(
+      `${adjectives[0]} ${initiallyResolved.formNoun}`,
+    );
+    expect(resolved.suggestedName).not.toBe("Eternity's Relic");
+    expect(resolved.suggestedName).not.toMatch(/ Relic$/);
+    expect(avoidNames).not.toContain(resolved.suggestedName);
+    expect(
+      ["Shroud", "Mantle", "Cloak"].some((noun) =>
+        resolved.suggestedName.endsWith(noun),
+      ),
+    ).toBe(true);
+  });
+
   it("uses the era as a readable phrase in the prose", () => {
     const local = generateArtifactLocal(
       { ...baseOptions, originEra: "Primordial / Mythic Age" },

@@ -533,15 +533,18 @@ export interface ResolvedArtifact {
 /** Picks an unused "Adjective Noun" name; the noun is fixed when a preset form has one. */
 function pickArtifactName(
   themeNames: { adjs: readonly string[]; nouns: readonly string[] },
-  presetNoun: string | undefined,
+  presetNouns: readonly string[] | undefined,
   banned: ReadonlySet<string>,
   rng: Rng,
 ): string {
-  for (let i = 0; i < 20; i++) {
-    const candidate = `${pickFrom(themeNames.adjs, rng)} ${presetNoun ?? pickFrom(themeNames.nouns, rng)}`;
-    if (!banned.has(candidate)) return candidate;
+  const nouns = presetNouns?.length ? presetNouns : [undefined];
+  for (const noun of nouns) {
+    for (let i = 0; i < 20; i++) {
+      const candidate = `${pickFrom(themeNames.adjs, rng)} ${noun ?? pickFrom(themeNames.nouns, rng)}`;
+      if (!banned.has(candidate)) return candidate;
+    }
   }
-  return `${generateName(rng)}'s Relic`;
+  return `${generateName(rng)}'s ${presetNouns?.[0] ?? "Relic"}`;
 }
 
 export function resolveArtifact(
@@ -566,7 +569,9 @@ export function resolveArtifact(
     campaignContext: options.campaignContext?.trim() || undefined,
     suggestedName: pickArtifactName(
       themePool,
-      presetNoun,
+      presetNouns
+        ? [presetNoun!, ...presetNouns.filter((noun) => noun !== presetNoun)]
+        : undefined,
       new Set(options.avoidNames ?? []),
       rng,
     ),
