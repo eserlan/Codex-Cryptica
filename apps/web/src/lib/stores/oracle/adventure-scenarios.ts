@@ -1,4 +1,5 @@
 import {
+  acknowledgeAdventureCompletion,
   addScenario,
   advanceManualWorldTime,
   dismissAdventureDiscoveries,
@@ -89,6 +90,17 @@ export class AdventureScenarios {
     );
   }
 
+  acknowledgeCompletion(eventId: string): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      acknowledgeAdventureCompletion(
+        session,
+        eventId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
   linkPlaceRecord(name: string, recordId: string): Promise<AdventureSession> {
     return this.mutate((session) =>
       linkAdventurePlaceRecord(
@@ -116,7 +128,11 @@ export class AdventureScenarios {
   }
 
   private async mutate(
-    command: (session: AdventureSession) => ReturnType<typeof addScenario>,
+    command: (
+      session: AdventureSession,
+    ) =>
+      | { ok: true; session: AdventureSession; changed: boolean }
+      | { ok: false; reason: string },
   ): Promise<AdventureSession> {
     const session = this.state.session;
     if (!session) throw new Error("no-active-adventure");

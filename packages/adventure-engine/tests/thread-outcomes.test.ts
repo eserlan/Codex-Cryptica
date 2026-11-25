@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
+  acknowledgeAdventureCompletion,
   applyCompletedTurn,
   applyReviewedThreadOutcomes,
   buildAdventurePrompt,
   buildAdventureRecap,
   buildGMDirectorBrief,
+  completionEventId,
   inspectLegacyThreadOutcomeCandidates,
   parseAdventureSession,
   playerScenarioProjection,
   projectPlayerEmergentThreads,
   reconcileDuplicateEmergentThreads,
+  selectPendingAdventureCompletion,
   type AdventureSession,
   type CompletedTurnProposal,
 } from "../src";
@@ -858,5 +861,142 @@ describe("Goal-aware story arc outcomes (#5191)", () => {
       relevant: [],
     });
     expect(promptResult.behavior).toContain("threadOutcomes");
+  });
+
+  it("7. selects newly committed goal completion once and persists non-destructive acknowledgement (#5192)", () => {
+    let s = session();
+    s = commit(
+      s,
+      {
+        playerAction: "Investigate the blocked canal sluice.",
+        narration: "You inspect the forged sluice order.",
+        provisionalFacts: [
+          {
+            kind: "clue",
+            name: "Forged Order",
+            summary: "The sluice was shut with a forged seal.",
+            visibility: "player-visible",
+          },
+        ],
+        visiblePatch: {
+          ...proposal().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "The eastern sluice was shut with a forged seal.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+      },
+      1,
+    );
+    // Clue turn alone does not trigger completion
+    expect(selectPendingAdventureCompletion(s)).toBeNull();
+
+    const threadId = s.emergentThreads![0]!.id;
+    s = commit(
+      s,
+      {
+        playerAction: "Present the compact to the council.",
+        narration: "The council ratifies and proclaims the water compact.",
+        visiblePatch: {
+          ...proposal().visiblePatch,
+          knownFacts: {
+            add: [
+              {
+                text: "The water-access compact was ratified and publicly proclaimed.",
+                source: "provisional",
+              },
+            ],
+            update: [],
+            removeIds: [],
+          },
+        },
+        threadOutcomes: [
+          {
+            threadId,
+            goal: "Secure fair water access for the lower ward",
+            result: "achieved",
+            reason:
+              "Council ratified and publicly proclaimed the water-access compact.",
+            unresolvedConsequences: ["Who hired the courier remains unknown"],
+          },
+        ],
+      },
+      2,
+    );
+
+    const pending = selectPendingAdventureCompletion(s);
+    expect(pending).not.toBeNull();
+    expect(pending?.heading).toBe(
+      "Secure fair water access for the lower ward",
+    );
+    expect(pending?.worldImpacts).toEqual([
+      "The water-access compact was ratified and publicly proclaimed.",
+    ]);
+    expect(pending?.unresolvedConsequences).toEqual([
+      "Who hired the courier remains unknown",
+    ]);
+    expect(pending?.eventId).toBe(
+      completionEventId("emergent", threadId, { sourceTurnId: "turn-2" }),
+    );
+
+    // Pending roll hides completion until roll settles
+    s.pendingRoll = {
+      id: "roll-1",
+      setupNarration: "Roll",
+      uncertainty: "Uncertain",
+      stakes: "High",
+      sourceRecordIds: [],
+    };
+    expect(selectPendingAdventureCompletion(s)).toBeNull();
+    s.pendingRoll = null;
+
+    // Acknowledging persists on session without closing it
+    const ack = acknowledgeAdventureCompletion(
+      s,
+      pending!.eventId,
+      s.revision,
+      meta.now,
+    );
+    expect(ack.ok).toBe(true);
+    if (!ack.ok) return;
+    expect(ack.changed).toBe(true);
+    expect(ack.session.status).toBe("active");
+    expect(selectPendingAdventureCompletion(ack.session)).toBeNull();
+
+    // Idempotent repeat acknowledgement is a no-op
+    const repeat = acknowledgeAdventureCompletion(
+      ack.session,
+      pending!.eventId,
+      ack.session.revision,
+      meta.now,
+    );
+    expect(repeat.ok).toBe(true);
+    if (repeat.ok) expect(repeat.changed).toBe(false);
+
+    // Stale revision fails cleanly
+    const stale = acknowledgeAdventureCompletion(
+      ack.session,
+      "emergent:other:turn-9",
+      ack.session.revision - 1,
+      meta.now,
+    );
+    expect(stale).toEqual({ ok: false, reason: "stale-revision" });
+
+    // Advancing another turn does not re-trigger the old completion
+    const nextTurn = commit(
+      ack.session,
+      {
+        playerAction: "Ask about the courier.",
+        narration: "A clerk points north.",
+      },
+      3,
+    );
+    expect(selectPendingAdventureCompletion(nextTurn)).toBeNull();
   });
 });

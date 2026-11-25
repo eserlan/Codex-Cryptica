@@ -138,6 +138,7 @@ export const adventureSessionSchema = z
     emergentThreads: z.array(emergentThreadSchema).max(16).optional(),
     focusedEmergentThreadId: id.nullable().optional(),
     dismissedProvisionalFactIds: z.array(id).max(60).optional().default([]),
+    acknowledgedOutcomeIds: z.array(id).max(32).optional(),
     turns: z.array(persistedTurnSchema),
     oocExchanges: z
       .array(

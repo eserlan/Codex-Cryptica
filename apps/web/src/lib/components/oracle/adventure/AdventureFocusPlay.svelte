@@ -18,10 +18,12 @@
   } from "#lib/services/adventure/adventure-session-repository.js";
   import {
     formatWorldElapsedMinutes,
+    selectPendingAdventureCompletion,
     type ProvisionalFact,
   } from "@codex/adventure-engine";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
+  import AdventureCompletionPanel from "./AdventureCompletionPanel.svelte";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
   import AdventurePackageAudit from "./AdventurePackageAudit.svelte";
   import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
@@ -170,6 +172,58 @@
   let fullscreenElement = $state<Element | null>(null);
   let fullscreenTransitioning = $state(false);
   let playViewport = $state<HTMLElement>();
+  let dismissedCompletionIds = $state<string[]>([]);
+  let completionActionBusy = $state(false);
+  const rawPendingCompletion = $derived(
+    manager.session &&
+      manager.phase !== "generating" &&
+      !manager.streamedNarration &&
+      !manager.session.pendingRoll
+      ? selectPendingAdventureCompletion(manager.session)
+      : null,
+  );
+  const pendingCompletion = $derived(
+    rawPendingCompletion &&
+      !dismissedCompletionIds.includes(rawPendingCompletion.eventId)
+      ? rawPendingCompletion
+      : null,
+  );
+
+  async function dismissCompletion(eventId: string): Promise<void> {
+    if (!dismissedCompletionIds.includes(eventId)) {
+      dismissedCompletionIds = [...dismissedCompletionIds, eventId];
+    }
+    if (manager.readOnly) return;
+    try {
+      await manager.acknowledgeCompletion(eventId);
+    } catch {
+      // Dismissal remains non-destructive in the current view even if a concurrent save occurred.
+    }
+  }
+
+  async function handleFindAnotherFromCompletion(
+    eventId: string,
+  ): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await dismissCompletion(eventId);
+      await manager.close();
+    } finally {
+      completionActionBusy = false;
+    }
+  }
+
+  async function handleFinishFromCompletion(eventId: string): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await dismissCompletion(eventId);
+      await manager.end();
+    } finally {
+      completionActionBusy = false;
+    }
+  }
   const isFullscreen = $derived(fullscreenElement === focusElement);
   const transcriptLength = $derived(manager.transcript?.turns.length ?? 0);
   const elapsedLabel = $derived(
@@ -691,6 +745,18 @@
           <AdventureScenarioControls {manager} />
           <AdventurePlay {manager} showComposer={false} />
           <AdventureRollPrompt {manager} />
+          {#if pendingCompletion}
+            <AdventureCompletionPanel
+              completion={pendingCompletion}
+              readOnly={manager.readOnly}
+              busy={completionActionBusy}
+              onContinue={() => dismissCompletion(pendingCompletion.eventId)}
+              onFindAnother={() =>
+                handleFindAnotherFromCompletion(pendingCompletion.eventId)}
+              onFinish={() =>
+                handleFinishFromCompletion(pendingCompletion.eventId)}
+            />
+          {/if}
         </div>
       </main>
       <!-- The composer stays outside the story scroll, visible above the keyboard
