@@ -142,8 +142,33 @@ describe("contrast — cases PR review flagged", () => {
       rules('<span class="sm:text-[10px] text-theme-text">Note</span>'),
     ).toContain("min-text-size");
     expect(
+      rules('<span class="text-[11.9px] text-theme-text">Note</span>'),
+    ).toContain("min-text-size");
+    expect(
+      rules('<span class="text-[0.7rem] text-theme-text">Note</span>'),
+    ).toContain("min-text-size");
+    expect(
+      rules('<span class="text-[0.75rem] text-theme-text">Note</span>'),
+    ).not.toContain("min-text-size");
+    expect(
       rules('<p class="text-xs text-theme-text">Readable</p>'),
     ).not.toContain("min-text-size");
+  });
+
+  it("composites hover element opacity across text and fill", () => {
+    const variant = classVariants(
+      '<button class="bg-theme-primary text-theme-on-primary hover:opacity-90">Continue</button>',
+    )[0];
+
+    expect(
+      contrastProblems(
+        variant,
+        themes.filter((theme) => theme.id === "horror"),
+      ),
+    ).toEqual([]);
+    expect(contrastProblems(variant, themes)[0]?.message).toContain(
+      "4.04:1 on hover in startrek_light (needs 4.5:1)",
+    );
   });
 
   it("flags low-contrast outlined interactive control borders (border-contrast)", () => {
