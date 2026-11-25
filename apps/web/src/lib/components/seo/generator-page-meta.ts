@@ -308,17 +308,17 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What does the faction roster generator create?",
         answer:
-          "It generates 3 to 6 notable members of a faction, each with a role, a personal motive distinct from the faction's own goal, a stance toward the faction (loyalist, zealot, opportunist, trapped, reformer, secret traitor, or similar), a distinctive trait, an immediate hook, a leverage point, and a connection to another member on the same roster.",
+          "An offline draft contains 3 to 6 notable faction members, each with a role, personal motive, stance, distinctive trait, immediate want, leverage point and connection to another member. The AI draft is prompted for this shape and selected count, though its returned structure can vary.",
       },
       {
         question: "Will the roster always be a leader and underlings?",
         answer:
-          "No. Choosing a structure — hierarchy, cell network, council, warband, corporate ladder, or congregation — changes the shape of the roster to match, so a clandestine cult produces a genuinely different roster than a corporation.",
+          "No. Choosing a structure (hierarchy, cell network, council, warband, corporate ladder, or congregation) changes synthesized duties for new offline members and the roster summary. Existing named people's copied descriptions stay as written. The AI draft is prompted to reshape duties to match the structure.",
       },
       {
         question: "How does saving a generated roster work?",
         answer:
-          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Faction entity. Each member section also has its own Open as Character action to continue developing that member individually.",
+          "Clicking 'Save to Codex' stores the roster draft in your browser's local storage. Open Codex Cryptica and it imports automatically as a Note entity. Each member section also has its own Open as Character action to continue developing that member individually.",
       },
     ],
     relatedLinks: [
@@ -539,11 +539,11 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     pageTitle:
       "Social Hub Generator | RPG Venue Generator for Any Genre | Codex Cryptica",
     metaDescription:
-      "Generate a genre-agnostic social gathering location — from cyberpunk noodle bars to western saloons to fantasy inns. Works without login. Save into your Codex Cryptica campaign vault.",
+      "Generate a social venue for any genre, from cyberpunk noodle bars to Western saloons and fantasy inns, with an operator, regulars, rumours and a hidden problem. Works without login. Save into your Codex Cryptica campaign vault.",
     introTitle: "Social Hub Generator",
     eyebrow: "Social Hub Generator",
     introText:
-      "Create a campaign-ready social venue for any genre. Pick your setting, venue type, and atmosphere — get a named location with regulars, rumours, and a hidden problem.",
+      "Create a campaign-ready social venue for any genre. Pick the setting, venue type, atmosphere, wealth level and clientele, and get a named location with an operator, regulars, rumours and a hidden problem.",
     canonicalPath: "/generators/social-hub",
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-social-hub.jpg",

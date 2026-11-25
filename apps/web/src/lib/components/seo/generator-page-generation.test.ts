@@ -1039,6 +1039,23 @@ describe("offline magic item wiring", () => {
     expect(output.content).not.toContain("The flooded barony of Mere");
   });
 
+  it("uses the chosen vibe and keeps the campaign context in the offline roster GM notes", async () => {
+    const output = await generateLocally("faction-roster", {
+      factionRoster: {
+        factionContext: "[Faction Context]\nFaction: The Salt Guild",
+        theme: "Cyberpunk / Corporate",
+        campaignContext: "The Salt Guild controls the rail yards.",
+        size: "3",
+      },
+      getActiveTheme: () => "Cyberpunk / Corporate",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.lore).toContain("### Campaign Context");
+    expect(output.lore).toContain("The Salt Guild controls the rail yards.");
+    expect(output.content).not.toContain("rail yards");
+    expect(output.title).toBe("The Salt Guild's Notable Members");
+  });
+
   it("keeps the artifact campaign context and form choices in the offline draft", async () => {
     const output = await generateLocally("artifact-generator", {
       artifact: {
@@ -1065,6 +1082,40 @@ describe("offline magic item wiring", () => {
     expect(output.lore).toContain("### Campaign Context");
     expect(output.lore).toContain("The Salt Guild of Brindel");
     expect(output.content).not.toContain("Salt Guild");
+  });
+
+  it("passes typed-in social hub options and context to the offline draft", async () => {
+    const output = await generateLocally("social-hub", {
+      socialHub: {
+        genre: "Clockwork Venice",
+        venueType: "Floating gondola bar",
+        atmosphere: "Sleepy and gossipy",
+        wealthLevel: "Ruinously rich",
+        clientele: "Masked courtiers",
+        campaignContext: "The drowned doge's funeral week",
+      },
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.summary).toBe(
+      "A sleepy and gossipy floating gondola bar serving masked courtiers.",
+    );
+    expect(output.lore).toContain("**Theme / Genre**: Clockwork Venice");
+    expect(output.lore).toContain("**Wealth Level**: Ruinously rich");
+    expect(output.lore).toContain(
+      "### Campaign Context\nThe drowned doge's funeral week",
+    );
+    expect(output.content).not.toContain("funeral week");
+  });
+
+  it("falls back to built-in social hub options when the page passes none", async () => {
+    const output = await generateLocally("social-hub", {
+      socialHub: {},
+      getActiveTheme: () => "Classic Fantasy",
+      getSessionEntities: () => [],
+    } as never);
+    expect(output.labels).toContain("social-hub-generator");
+    expect(output.lore).not.toContain("### Campaign Context");
   });
 
   it("keeps the minor magic item campaign context in the offline GM notes", async () => {

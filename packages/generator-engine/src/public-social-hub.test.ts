@@ -42,7 +42,10 @@ describe("generateSocialHubLocal", () => {
       seededRng(2),
     );
     expect(out.summary).toContain("noodle bar");
-    expect(out.content).toContain("a district under corporate curfew");
+    expect(out.content).not.toContain("a district under corporate curfew");
+    expect(out.lore).toContain(
+      "### Campaign Context\na district under corporate curfew",
+    );
     expect(out.lore).toContain("Noodle Bar");
     expect(out.lore).toContain("Cold and professional");
   });

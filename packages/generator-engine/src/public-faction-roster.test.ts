@@ -8,6 +8,7 @@ import {
   extractFactionNotableNpcs,
 } from "./public-faction-roster";
 import { NAME_BAN_PROMPT } from "./public-npc";
+import { INHABITANT_NAMES_BY_GENRE } from "./public-settlement-inhabitant-names";
 
 // A realistic faction-generator output, matching the exact "- **👤 Name**:
 // description" convention every public-faction.ts variant renders.
@@ -370,5 +371,141 @@ describe("parseFactionRosterResponse", () => {
 
   it("throws on invalid JSON", () => {
     expect(() => parseFactionRosterResponse("nope", resolved)).toThrow();
+  });
+});
+
+describe("generateFactionRosterLocal offline output", () => {
+  const roleLines = (content: string) =>
+    [...content.matchAll(/^### .+? \u2014 (.+)$/gm)].map((m) => m[1]);
+  const nameHeadings = (content: string) =>
+    [...content.matchAll(/^### (.+?) \u2014 /gm)].map((m) => m[1]);
+  const fieldLines = (content: string, label: string) =>
+    [
+      ...content.matchAll(new RegExp(`^- \\*\\*${label}\\*\\*: (.+)$`, "gm")),
+    ].map((m) => m[1]);
+
+  it("gives every duty line a correct article for its role", () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const out = generateFactionRosterLocal(
+        { size: "6", factionContext: undefined },
+        seededRng(seed),
+      );
+      expect(out.content).not.toMatch(/\ba [aeiou]/i);
+    }
+    const out = generateFactionRosterLocal({ size: "6" }, seededRng(3));
+    expect(out.content).toContain("Handles what an authority figure");
+    expect(out.content).toContain("Handles what a true believer");
+  });
+
+  it("gives each member its own motive and 'wants right now', not one shared sentence", () => {
+    const out = generateFactionRosterLocal(
+      { size: "6", factionContext: FACTION_WITH_NOTABLE_NPCS },
+      seededRng(5),
+    );
+    expect(new Set(fieldLines(out.content, "Motive")).size).toBe(6);
+    expect(new Set(fieldLines(out.content, "Wants right now")).size).toBe(6);
+  });
+
+  it("names fresh members from the vibe's name pool, with no repeats", () => {
+    const out = generateFactionRosterLocal(
+      { size: "4", theme: "Cyberpunk / Corporate", factionContext: undefined },
+      seededRng(7),
+    );
+    const names = nameHeadings(out.content);
+    expect(names).toHaveLength(4);
+    expect(new Set(names).size).toBe(4);
+    for (const name of names) {
+      expect(INHABITANT_NAMES_BY_GENRE.Cyberpunk).toContain(name);
+    }
+  });
+
+  it("falls back to the fantasy name pool for a vibe with no name pool of its own", () => {
+    const out = generateFactionRosterLocal(
+      { size: "3", theme: "Vampire / Gothic Noir", factionContext: undefined },
+      seededRng(9),
+    );
+    for (const name of nameHeadings(out.content)) {
+      expect(INHABITANT_NAMES_BY_GENRE.Fantasy).toContain(name);
+    }
+  });
+
+  it("keeps the faction's named people first, then fills the rest from the vibe pool", () => {
+    const out = generateFactionRosterLocal(
+      {
+        size: "4",
+        theme: "Cyberpunk / Corporate",
+        factionContext: FACTION_WITH_NOTABLE_NPCS,
+      },
+      seededRng(11),
+    );
+    const names = nameHeadings(out.content);
+    expect(names.slice(0, 2)).toEqual(["Aelon", "Aelwen"]);
+    expect(new Set(names).size).toBe(4);
+    for (const fresh of names.slice(2)) {
+      expect(INHABITANT_NAMES_BY_GENRE.Cyberpunk).toContain(fresh);
+    }
+  });
+
+  it("does not add a case-variant of an already-named person", () => {
+    const output = generateFactionRosterLocal(
+      {
+        factionContext:
+          "Faction: The Chrome Choir\n### Notable NPCs\n- **👤 mira**: Runs the night shift.",
+        theme: "Cyberpunk / Corporate",
+        size: "3",
+      },
+      seededRng(7),
+    );
+
+    const headings = output.content.match(/^### .+$/gm) ?? [];
+    expect(headings.filter((heading) => /mira/i.test(heading))).toHaveLength(1);
+  });
+
+  it("weights the roster toward the chosen emphasis", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const out = generateFactionRosterLocal(
+        { size: "3", emphasis: "Public face", factionContext: undefined },
+        seededRng(seed),
+      );
+      const roles = roleLines(out.content);
+      expect(roles).toContain("Authority figure");
+      expect(roles).toContain("True believer");
+    }
+  });
+
+  it("still builds a full roster for a custom emphasis that matches no archetype", () => {
+    const out = generateFactionRosterLocal(
+      {
+        size: "5",
+        emphasis: "Something else entirely",
+        factionContext: undefined,
+      },
+      seededRng(13),
+    );
+    expect(out.content.match(/^### /gm)).toHaveLength(5);
+    expect(new Set(roleLines(out.content)).size).toBe(5);
+  });
+
+  it("puts the campaign context in the GM notes, not the public member text", () => {
+    const out = generateFactionRosterLocal(
+      {
+        size: "3",
+        campaignContext: "The Salt Guild controls the rail yards.",
+        factionContext: undefined,
+      },
+      seededRng(15),
+    );
+    expect(out.lore).toContain(
+      "### Campaign Context\nThe Salt Guild controls the rail yards.",
+    );
+    expect(out.content).not.toContain("Salt Guild");
+  });
+
+  it("adds no campaign section when the context is blank", () => {
+    const out = generateFactionRosterLocal(
+      { size: "3", campaignContext: "   ", factionContext: undefined },
+      seededRng(15),
+    );
+    expect(out.lore).not.toContain("### Campaign Context");
   });
 });

@@ -115,6 +115,27 @@ describe("generator guide distinctness", () => {
     ).toEqual([]);
   });
 
+  it("serves the social hub guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide("social-hub", "Social Hub Generator");
+    expect(guide).toBe(SLUG_GUIDES["social-hub"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("social-hub", "Social Hub Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Genre / Setting",
+      "Venue type",
+      "Primary clientele",
+      "Atmosphere",
+      "Wealth level",
+      "Campaign context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves every specific guide instead of the template", () => {
     for (const [slug, specific] of Object.entries(SLUG_GUIDES)) {
       expect(getGeneratorGuide(slug as never, "Any Title")).toBe(specific);

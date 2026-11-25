@@ -274,6 +274,7 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.content).not.toContain(
         "a canal city split by old guild rivalries",
       );
+      expect(res.lore).toContain("a canal city split by old guild rivalries");
       expect(res.lore).toContain("Internal Conflict");
       expect(res.lore).toContain("At a Glance");
       expect(res.lore).toContain("- **📍 Base**");
@@ -1598,7 +1599,11 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.lore).toContain("### Entity Seeds");
       expect(res.lore).toContain("- **📍");
       expect(res.lore).toContain("- **👤");
-      expect(res.lore).toContain("- **👥");
+      const seedLines = (res.lore.split("### Entity Seeds")[1] ?? "")
+        .split("\n")
+        .filter((line) => line.startsWith("- **"));
+      expect(seedLines).toHaveLength(4);
+      expect(res.lore).not.toContain("Faction behind");
       expect(res.lore).not.toContain("- **Character**:");
       expect(res.lore).not.toContain("- **Location**:");
       expect(res.lore).not.toContain("- **Faction**:");
@@ -1614,7 +1619,10 @@ describe("DefaultGeneratorEngine", () => {
         useAI: false,
       });
 
-      expect(res.content).toContain("a lawless frontier town");
+      expect(res.lore).toContain(
+        "### Campaign Context\na lawless frontier town",
+      );
+      expect(res.content).not.toContain("a lawless frontier town");
     });
 
     it("should use genre-appropriate venue types in local fallback", async () => {
