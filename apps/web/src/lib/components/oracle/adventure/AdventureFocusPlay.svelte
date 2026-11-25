@@ -215,6 +215,16 @@
     return true;
   }
 
+  async function handleContinueFromCompletion(eventId: string): Promise<void> {
+    if (completionActionBusy) return;
+    completionActionBusy = true;
+    try {
+      await dismissCompletion(eventId, true);
+    } finally {
+      completionActionBusy = false;
+    }
+  }
+
   async function handleFindAnotherFromCompletion(
     eventId: string,
   ): Promise<void> {
@@ -467,12 +477,18 @@
     }
   }
 
+  function hasNestedModal(): boolean {
+    return Boolean(
+      // ui-check-ignore: The full-screen phone surface already traps Tab with containTab.
+      focusElement?.querySelector('[role="dialog"][aria-modal="true"]'),
+    );
+  }
+
   function handleWindowKeydown(event: KeyboardEvent): void {
     if (!utilitiesOpen || event.key !== "Escape" || event.defaultPrevented) {
       return;
     }
-    // ui-check-ignore: The full-screen phone surface already traps Tab with containTab.
-    if (focusElement?.querySelector('[role="dialog"][aria-modal="true"]')) {
+    if (hasNestedModal()) {
       return;
     }
     event.preventDefault();
@@ -560,10 +576,17 @@
   aria-labelledby="adventure-heading"
   data-testid="adventure-play-surface"
   onkeydown={(event) => {
-    if (pendingCompletion && event.key === "Escape" && !completionActionBusy) {
+    if (
+      pendingCompletion &&
+      event.key === "Escape" &&
+      !event.defaultPrevented &&
+      !completionActionBusy &&
+      !utilitiesOpen &&
+      !hasNestedModal()
+    ) {
       event.preventDefault();
       event.stopPropagation();
-      void dismissCompletion(pendingCompletion.eventId);
+      void handleContinueFromCompletion(pendingCompletion.eventId);
       return;
     }
     if (phone && focusElement) containTab(event, focusElement);
@@ -785,9 +808,8 @@
               completion={pendingCompletion}
               readOnly={manager.readOnly}
               busy={completionActionBusy}
-              onContinue={async () => {
-                await dismissCompletion(pendingCompletion.eventId);
-              }}
+              onContinue={() =>
+                handleContinueFromCompletion(pendingCompletion.eventId)}
               onFindAnother={() =>
                 handleFindAnotherFromCompletion(pendingCompletion.eventId)}
               onFinish={() =>

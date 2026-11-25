@@ -533,6 +533,145 @@ describe("AdventureFocusPlay", () => {
     expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
   });
 
+  it("guards concurrent completion dismissals while saving and re-enables controls on failure", async () => {
+    let rejectAck!: (reason?: unknown) => void;
+    const activeManager = manager();
+    activeManager.session = {
+      ...activeManager.session,
+      status: "active",
+      revision: 1,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      acknowledgedOutcomeIds: [],
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [],
+      visibleState: {
+        ...activeManager.session.visibleState,
+        knownFacts: [{ id: "impact-1", text: "The eastern gate is open." }],
+      },
+      turns: [{ id: "turn-complete" }],
+      emergentThreads: [
+        {
+          id: "thread-1",
+          status: "resolved",
+          goal: "Open the eastern gate",
+          outcome: {
+            result: "achieved",
+            reason: "The gate was opened.",
+            sourceTurnId: "turn-complete",
+            supportingFactIds: ["impact-1"],
+            supportingCommitmentIds: [],
+            recordedAt: "2026-01-01T00:00:00.000Z",
+            sequence: 1,
+          },
+        },
+      ],
+    };
+    activeManager.acknowledgeCompletion = vi
+      .fn()
+      .mockImplementationOnce(
+        () =>
+          new Promise<void>((_resolve, reject) => {
+            rejectAck = reject;
+          }),
+      )
+      .mockResolvedValueOnce(undefined);
+
+    render(AdventureFocusPlay, { props: props({ manager: activeManager }) });
+
+    const panel = screen.getByTestId("adventure-completion-panel");
+    const continueButton = within(panel).getByRole("button", {
+      name: "Continue exploring",
+    }) as HTMLButtonElement;
+
+    await fireEvent.click(continueButton);
+    expect(continueButton.disabled).toBe(true);
+    expect(
+      (
+        within(panel).getByRole("button", {
+          name: "Dismiss adventure completion",
+        }) as HTMLButtonElement
+      ).disabled,
+    ).toBe(true);
+
+    // Rapid Escape or second click while in-flight does not trigger a duplicate request
+    await fireEvent.keyDown(screen.getByLabelText("What do you do?"), {
+      key: "Escape",
+    });
+    expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(1);
+
+    rejectAck(new Error("revision-conflict"));
+    await waitFor(() => {
+      expect(continueButton.disabled).toBe(false);
+    });
+    expect(screen.getByTestId("adventure-completion-panel")).toBe(panel);
+
+    await fireEvent.click(continueButton);
+    await waitFor(() => {
+      expect(activeManager.acknowledgeCompletion).toHaveBeenCalledTimes(2);
+      expect(screen.queryByTestId("adventure-completion-panel")).toBeNull();
+    });
+  });
+
+  it("lets Escape close an active nested discoveries dialog before dismissing completion", async () => {
+    const activeManager = manager();
+    activeManager.session = {
+      ...activeManager.session,
+      status: "active",
+      revision: 1,
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      acknowledgedOutcomeIds: [],
+      hiddenState: { secrets: [], gmThreads: [] },
+      provisionalFacts: [
+        {
+          id: "barrow-1",
+          kind: "place",
+          name: "Sunken Barrow",
+          summary: "Flooded crypts.",
+          introducedOnTurnId: "turn-complete",
+          visibility: "player-visible",
+        },
+      ],
+      visibleState: {
+        ...activeManager.session.visibleState,
+        knownFacts: [{ id: "impact-1", text: "The eastern gate is open." }],
+      },
+      turns: [{ id: "turn-complete" }],
+      emergentThreads: [
+        {
+          id: "thread-1",
+          status: "resolved",
+          goal: "Open the eastern gate",
+          outcome: {
+            result: "achieved",
+            reason: "The gate was opened.",
+            sourceTurnId: "turn-complete",
+            supportingFactIds: ["impact-1"],
+            supportingCommitmentIds: [],
+            recordedAt: "2026-01-01T00:00:00.000Z",
+            sequence: 1,
+          },
+        },
+      ],
+    };
+    activeManager.acknowledgeCompletion = vi.fn().mockResolvedValue(undefined);
+
+    render(AdventureFocusPlay, { props: props({ manager: activeManager }) });
+
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Review 1 adventure discovery" }),
+    );
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeTruthy();
+
+    await fireEvent.keyDown(dialog, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(activeManager.acknowledgeCompletion).not.toHaveBeenCalled();
+    expect(screen.getByTestId("adventure-completion-panel")).toBeTruthy();
+  });
+
   it("keeps the adventure surface visible when fullscreen is denied", async () => {
     render(AdventureFocusPlay, { props: props() });
     const surface = screen.getByTestId("adventure-play-surface");
