@@ -180,9 +180,19 @@ The first 38 assets below are `type: "location"` (`1280×720` display, `320×180
 
 Format: `1280×720` display WebP (`<= 384 KB`), `320×180` preview WebP (`<= 32 KB`). Items marked **[SEED]** complete the 24-location baseline.
 
-### Fantasy Locations (20 / 20 Complete)
+### Fantasy Locations (20 / 20 Core Complete)
 
-All planned fantasy locations are live.
+All 20 core planned fantasy locations are live.
+
+#### Fantasy Locations — Adventure-Derived Expansion Candidates (3 Needed)
+
+Candidates surfaced from live Solo Adventure Mode sessions (e.g. _The Salt-Bloom Testimony_):
+
+| Priority / ID          | Status | Primary Cues             | Setting / Mood / Time                                      | Description                                                                                                                                                    |
+| :--------------------- | :----- | :----------------------- | :--------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `loc-fantasy-coast-01` | Needed | `coast`, `city`, `ocean` | `urban`, `exterior` · `ominous`, `mysterious` · `day`      | Tidal fantasy city of black basalt reefs, pale salt flats, seawall steps, and white salt-flower crust at low water.                                            |
+| `loc-fantasy-ruins-02` | Needed | `ruins`, `coast`         | `exterior`, `wilderness` · `ominous`, `mysterious` · `day` | Seasonal seabed plaza of leaning reef-stone pillars and pale salt garden with shallow tidewater threading through carved stone grooves.                        |
+| `loc-fantasy-cave-02`  | Needed | `cave`, `ruins`          | `interior` · `ominous`, `mysterious` · `night`             | Flooded fitted-stone subterranean service passage with shallow dark water on sloping flagstones, an amber-glass oil lamp in a niche, and a low sealed doorway. |
 
 ### Contemporary Locations (11 Needed → 16 Total)
 
@@ -268,12 +278,14 @@ All 18 race and class portraits are listed in the live inventory above.
 | P0 (Published)    | `npc-fantasy-goblin-01`      | Expressive goblin tinker or guide with oversized pack; non-standard ally/mascot/trickster                          | `goblin`      | `cave`, `tavern` · `busy`, `mysterious` · `day`                |
 | P0 (Published)    | `npc-fantasy-necromancer-01` | Pale necromancer / dark sorcerer with ritual focus; unmistakable mastermind villain, not generic wizard            | `necromancer` | `castle`, `ruins`, `interior` · `ominous` · `night`            |
 
-**P1 optional diversity follow-up (not counted in the 42-portrait target):**
+**P1 optional diversity & adventure-derived follow-up (not counted in the 43-portrait target):**
 
 - `npc-fantasy-guard-03`: female town watch officer/captain, clearly not another heavily armoured male silhouette.
 - `npc-fantasy-worker-03`: female smith/craftsperson at anvil, to diversify town service roles.
 - `npc-fantasy-construct-01`: friendly animated construct/golem as companion or witness (requires `construct` cue).
 - `npc-fantasy-fey-01`: fey trickster/forest emissary with nonhuman features (requires `fey` cue).
+- `npc-fantasy-official-02` (`official`, `scholar`, `human` · `coast`, `urban`, `exterior` · `ominous`, `mysterious` · `day`): meticulous female tide-ledger keeper in a salt-stained wool coat cradling a thick ledger beside a tide-marked stone post.
+- `npc-fantasy-urchin-02` (`urchin`, `human` · `coast`, `exterior` · `hopeful`, `mysterious` · `day`): scrappy coastal beach-salvager youth in rolled-cuff linen and patched vest carrying salvaged cordage and brass scraps along wet reef stone.
 - If the first elder is male, consider an elderly woman reeve/wise elder variant as a subsequent identity-diversity option without assuming that all elders are interchangeable.
 
 **Metadata and production gate:** retain 3:4 portrait composition, readable silhouette at thumbnail size, varied age/gender/ancestry, descriptive non-canonical alt text, WebP budget and approved provenance/licence metadata. Register in the manifest only once the actual reviewed files exist; never count placeholders as live. Route the eight role terms through cue extraction/normalisation before expecting them to match; broad place cues (`village`, `tavern`, etc.) must not override explicit NPC roles. See [#4818](https://github.com/eserlan/Codex-Cryptica/issues/4818) for cue/metadata fixes on existing assets and matching tests.
@@ -325,59 +337,62 @@ All 20 contemporary NPC portraits are listed in the live inventory above.
 
 ---
 
-## 4. Scenes & Atmospheres Roadmap (38 Needed, 16:9)
+## 4. Scenes & Atmospheres Roadmap (41 Needed, 16:9)
 
 Format: `1280×720` display WebP (`<= 384 KB`), `320×180` preview WebP (`<= 32 KB`).
 
-### Atmospheres (`type: "atmosphere"`, 16 Needed)
+### Atmospheres (`type: "atmosphere"`, 17 Needed)
 
 Used by `resolveSceneWithAtmosphere()` as mood/weather fallbacks when a scene lacks specific art:
 
-| Target ID                    | Genres            | Cues                                | Description                                                                     |
-| :--------------------------- | :---------------- | :---------------------------------- | :------------------------------------------------------------------------------ |
-| `atmo-neutral-rain-01`       | `neutral`         | `rain`, `night`, `ominous`          | Driving silver rain across dark slate rooftops and puddle reflections at night. |
-| `atmo-neutral-fog-01`        | `neutral`         | `fog`, `dawn`, `mysterious`         | Thick pearl-grey morning mist drifting over silent reedbeds and silhouettes.    |
-| `atmo-neutral-winter-01`     | `neutral`         | `winter`, `snow`, `quiet`           | Soft falling snowflakes through pale twilight over frosted evergreens.          |
-| `atmo-neutral-summer-01`     | `neutral`         | `summer`, `day`, `hopeful`          | Warm golden-hour sunbeams and drifting pollen over wild meadow grass.           |
-| `atmo-neutral-night-01`      | `neutral`         | `night`, `quiet`, `mysterious`      | Clear deep-indigo starry sky and crescent moon above distant dark ridgelines.   |
-| `atmo-neutral-dusk-01`       | `neutral`         | `dusk`, `hopeful`, `quiet`          | Rich amber and violet sunset horizon reflecting across still water.             |
-| `atmo-fantasy-ominous-01`    | `fantasy`         | `ominous`, `night`, `rain`          | Forked purple lightning cracking behind jagged mountain spires.                 |
-| `atmo-fantasy-mysterious-01` | `fantasy`         | `mysterious`, `fog`, `dawn`         | Faint emerald willow-wisps hovering over misted ancient standing stones.        |
-| `atmo-fantasy-hopeful-01`    | `fantasy`         | `hopeful`, `dawn`, `day`            | Radiant sunrise breaking through golden clouds over a distant valley kingdom.   |
-| `atmo-contemporary-rain-01`  | `contemporary`    | `rain`, `night`, `urban`            | Blurred neon traffic reflections through a rain-beaded windowpane at night.     |
-| `atmo-contemporary-dusk-01`  | `contemporary`    | `dusk`, `quiet`, `urban`            | Amber sodium streetlights flickering on at twilight over quiet rooftops.        |
-| `atmo-scifi-mysterious-01`   | `science-fiction` | `mysterious`, `night`, `starship`   | Glowing violet nebula cloud and distant binary stars in deep space.             |
-| `atmo-scifi-ominous-01`      | `science-fiction` | `ominous`, `night`, `space-station` | Red emergency klaxon glow pulsing along a shadowed station bulkhead.            |
-| `atmo-horror-fog-01`         | `horror`          | `fog`, `ominous`, `night`           | Choking cold ground fog rolling across crooked iron fenceposts in moonlight.    |
-| `atmo-horror-rain-01`        | `horror`          | `rain`, `ominous`, `night`          | Torrential storm rain lashing dark shuttered windows in pale lightning flash.   |
-| `atmo-horror-dusk-01`        | `horror`          | `dusk`, `ominous`, `quiet`          | Blood-orange dying sunset behind bare winter branches and circling crows.       |
+| Target ID                    | Genres            | Cues                                | Description                                                                                                  |
+| :--------------------------- | :---------------- | :---------------------------------- | :----------------------------------------------------------------------------------------------------------- |
+| `atmo-neutral-rain-01`       | `neutral`         | `rain`, `night`, `ominous`          | Driving silver rain across dark slate rooftops and puddle reflections at night.                              |
+| `atmo-neutral-fog-01`        | `neutral`         | `fog`, `dawn`, `mysterious`         | Thick pearl-grey morning mist drifting over silent reedbeds and silhouettes.                                 |
+| `atmo-neutral-winter-01`     | `neutral`         | `winter`, `snow`, `quiet`           | Soft falling snowflakes through pale twilight over frosted evergreens.                                       |
+| `atmo-neutral-summer-01`     | `neutral`         | `summer`, `day`, `hopeful`          | Warm golden-hour sunbeams and drifting pollen over wild meadow grass.                                        |
+| `atmo-neutral-night-01`      | `neutral`         | `night`, `quiet`, `mysterious`      | Clear deep-indigo starry sky and crescent moon above distant dark ridgelines.                                |
+| `atmo-neutral-dusk-01`       | `neutral`         | `dusk`, `hopeful`, `quiet`          | Rich amber and violet sunset horizon reflecting across still water.                                          |
+| `atmo-fantasy-ominous-01`    | `fantasy`         | `ominous`, `night`, `rain`          | Forked purple lightning cracking behind jagged mountain spires.                                              |
+| `atmo-fantasy-mysterious-01` | `fantasy`         | `mysterious`, `fog`, `dawn`         | Faint emerald willow-wisps hovering over misted ancient standing stones.                                     |
+| `atmo-fantasy-hopeful-01`    | `fantasy`         | `hopeful`, `dawn`, `day`            | Radiant sunrise breaking through golden clouds over a distant valley kingdom.                                |
+| `atmo-fantasy-coast-01`      | `fantasy`         | `coast`, `ocean`, `ominous`, `day`  | Rising low-tide seawater creeping across dark reef grooves and pale salt flats under overcast coastal light. |
+| `atmo-contemporary-rain-01`  | `contemporary`    | `rain`, `night`, `urban`            | Blurred neon traffic reflections through a rain-beaded windowpane at night.                                  |
+| `atmo-contemporary-dusk-01`  | `contemporary`    | `dusk`, `quiet`, `urban`            | Amber sodium streetlights flickering on at twilight over quiet rooftops.                                     |
+| `atmo-scifi-mysterious-01`   | `science-fiction` | `mysterious`, `night`, `starship`   | Glowing violet nebula cloud and distant binary stars in deep space.                                          |
+| `atmo-scifi-ominous-01`      | `science-fiction` | `ominous`, `night`, `space-station` | Red emergency klaxon glow pulsing along a shadowed station bulkhead.                                         |
+| `atmo-horror-fog-01`         | `horror`          | `fog`, `ominous`, `night`           | Choking cold ground fog rolling across crooked iron fenceposts in moonlight.                                 |
+| `atmo-horror-rain-01`        | `horror`          | `rain`, `ominous`, `night`          | Torrential storm rain lashing dark shuttered windows in pale lightning flash.                                |
+| `atmo-horror-dusk-01`        | `horror`          | `dusk`, `ominous`, `quiet`          | Blood-orange dying sunset behind bare winter branches and circling crows.                                    |
 
-### Scene Beats (`type: "scene"`, 22 Needed)
+### Scene Beats (`type: "scene"`, 24 Needed)
 
-| Target ID                        | Genres            | Primary / Setting / Mood Cues                   | Description                                                                    |
-| :------------------------------- | :---------------- | :---------------------------------------------- | :----------------------------------------------------------------------------- |
-| `scene-neutral-camp-01`          | `neutral`         | `forest`, `wilderness`, `night`, `quiet`        | Crackling stone-ringed campfire in a sheltered clearing under stars.           |
-| `scene-neutral-voyage-01`        | `neutral`         | `ocean`, `day`, `hopeful`                       | Wooden or metal vessel deck cutting through sunlit whitecap waves.             |
-| `scene-neutral-parley-01`        | `neutral`         | `interior`, `quiet`, `mysterious`               | Two shadowed figures seated across a lantern-lit table with spread maps.       |
-| `scene-neutral-chase-01`         | `neutral`         | `road`, `dusk`, `ominous`                       | Dust-kicked winding trail at twilight with urgent lantern glow ahead.          |
-| `scene-fantasy-camp-01`          | `fantasy`         | `forest`, `wilderness`, `night`, `hopeful`      | Adventuring party's warm campfire beside tethered pack mules and bedrolls.     |
-| `scene-fantasy-ambush-01`        | `fantasy`         | `road`, `forest`, `ominous`, `dusk`             | Overturned merchant wagon blocking a shadowed forest pass at dusk.             |
-| `scene-fantasy-delve-01`         | `fantasy`         | `cave`, `ruins`, `mysterious`, `night`          | Torchlight illuminating a half-opened sealed stone vault door underground.     |
-| `scene-fantasy-council-01`       | `fantasy`         | `castle`, `interior`, `busy`, `ominous`         | Candlelit war-table strewn with carved wooden tokens and parchment scrolls.    |
-| `scene-fantasy-ritual-01`        | `fantasy`         | `temple`, `ruins`, `mysterious`, `night`        | Glowing chalk circle and brazier flames inside a ruined moonlit sanctuary.     |
-| `scene-fantasy-market-01`        | `fantasy`         | `market`, `town`, `busy`, `hopeful`             | Close-up of an open wooden merchant chest, coin purse, and map in sunlight.    |
-| `scene-contemporary-stakeout-01` | `contemporary`    | `city`, `urban`, `night`, `rain`                | Dashboard view through rain-streaked windshield watching a lit doorway.        |
-| `scene-contemporary-archive-01`  | `contemporary`    | `laboratory`, `interior`, `quiet`, `mysterious` | Desk lamp illuminating spread newspaper clippings, polaroids, and red string.  |
-| `scene-contemporary-transit-01`  | `contemporary`    | `road`, `rural`, `dusk`, `quiet`                | Empty late-night train car seats passing dark countryside silhouettes.         |
-| `scene-contemporary-breach-01`   | `contemporary`    | `industrial`, `night`, `ominous`                | Cut chain-link fence and flashlight beam sweeping a dark warehouse yard.       |
-| `scene-scifi-eva-01`             | `science-fiction` | `space-station`, `exterior`, `ominous`, `night` | Tethered spacewalk over damaged hull plating above a glowing planet curve.     |
-| `scene-scifi-boarding-01`        | `science-fiction` | `starship`, `interior`, `ominous`, `night`      | Sparks and smoke curling from a breached airlock bulkhead door.                |
-| `scene-scifi-scan-01`            | `science-fiction` | `laboratory`, `interior`, `mysterious`, `quiet` | Holographic terrain and life-sign telemetry hovering above a darkened table.   |
-| `scene-scifi-landing-01`         | `science-fiction` | `desert`, `exterior`, `hopeful`, `dawn`         | Dust-plumed shuttlecraft touching down on alien frontier flats at dawn.        |
-| `scene-horror-ritual-01`         | `horror`          | `cave`, `interior`, `ominous`, `night`          | Dripping candle-wax altar and scratched symbols on damp cellar flagstones.     |
-| `scene-horror-search-01`         | `horror`          | `castle`, `interior`, `mysterious`, `night`     | Narrow flashlight or lantern beam cutting a dust-choked attic hallway.         |
-| `scene-horror-discovery-01`      | `horror`          | `swamp`, `fog`, `ominous`, `dawn`               | Half-submerged rowboat and abandoned lantern drifting in grey marsh reeds.     |
-| `scene-horror-siege-01`          | `horror`          | `village`, `interior`, `ominous`, `night`       | Barricaded timber door rattling against pale fog creeping under the threshold. |
+| Target ID                        | Genres            | Primary / Setting / Mood Cues                   | Description                                                                                                                      |
+| :------------------------------- | :---------------- | :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------- |
+| `scene-neutral-camp-01`          | `neutral`         | `forest`, `wilderness`, `night`, `quiet`        | Crackling stone-ringed campfire in a sheltered clearing under stars.                                                             |
+| `scene-neutral-voyage-01`        | `neutral`         | `ocean`, `day`, `hopeful`                       | Wooden or metal vessel deck cutting through sunlit whitecap waves.                                                               |
+| `scene-neutral-parley-01`        | `neutral`         | `interior`, `quiet`, `mysterious`               | Two shadowed figures seated across a lantern-lit table with spread maps.                                                         |
+| `scene-neutral-chase-01`         | `neutral`         | `road`, `dusk`, `ominous`                       | Dust-kicked winding trail at twilight with urgent lantern glow ahead.                                                            |
+| `scene-fantasy-camp-01`          | `fantasy`         | `forest`, `wilderness`, `night`, `hopeful`      | Adventuring party's warm campfire beside tethered pack mules and bedrolls.                                                       |
+| `scene-fantasy-ambush-01`        | `fantasy`         | `road`, `forest`, `ominous`, `dusk`             | Overturned merchant wagon blocking a shadowed forest pass at dusk.                                                               |
+| `scene-fantasy-delve-01`         | `fantasy`         | `cave`, `ruins`, `mysterious`, `night`          | Torchlight illuminating a half-opened sealed stone vault door underground.                                                       |
+| `scene-fantasy-delve-02`         | `fantasy`         | `cave`, `ruins`, `ominous`, `night`             | Hand-held cloudy amber-glass oil lamp lighting a low, scratched stone doorway as dark floodwater rises along the passage floor.  |
+| `scene-fantasy-stealth-01`       | `fantasy`         | `ruins`, `coast`, `ominous`, `day`              | Cloaked figure slipping along the shadow of a leaning reef-stone pillar while distant armed wardens search a salt-crusted court. |
+| `scene-fantasy-council-01`       | `fantasy`         | `castle`, `interior`, `busy`, `ominous`         | Candlelit war-table strewn with carved wooden tokens and parchment scrolls.                                                      |
+| `scene-fantasy-ritual-01`        | `fantasy`         | `temple`, `ruins`, `mysterious`, `night`        | Glowing chalk circle and brazier flames inside a ruined moonlit sanctuary.                                                       |
+| `scene-fantasy-market-01`        | `fantasy`         | `market`, `town`, `busy`, `hopeful`             | Close-up of an open wooden merchant chest, coin purse, and map in sunlight.                                                      |
+| `scene-contemporary-stakeout-01` | `contemporary`    | `city`, `urban`, `night`, `rain`                | Dashboard view through rain-streaked windshield watching a lit doorway.                                                          |
+| `scene-contemporary-archive-01`  | `contemporary`    | `laboratory`, `interior`, `quiet`, `mysterious` | Desk lamp illuminating spread newspaper clippings, polaroids, and red string.                                                    |
+| `scene-contemporary-transit-01`  | `contemporary`    | `road`, `rural`, `dusk`, `quiet`                | Empty late-night train car seats passing dark countryside silhouettes.                                                           |
+| `scene-contemporary-breach-01`   | `contemporary`    | `industrial`, `night`, `ominous`                | Cut chain-link fence and flashlight beam sweeping a dark warehouse yard.                                                         |
+| `scene-scifi-eva-01`             | `science-fiction` | `space-station`, `exterior`, `ominous`, `night` | Tethered spacewalk over damaged hull plating above a glowing planet curve.                                                       |
+| `scene-scifi-boarding-01`        | `science-fiction` | `starship`, `interior`, `ominous`, `night`      | Sparks and smoke curling from a breached airlock bulkhead door.                                                                  |
+| `scene-scifi-scan-01`            | `science-fiction` | `laboratory`, `interior`, `mysterious`, `quiet` | Holographic terrain and life-sign telemetry hovering above a darkened table.                                                     |
+| `scene-scifi-landing-01`         | `science-fiction` | `desert`, `exterior`, `hopeful`, `dawn`         | Dust-plumed shuttlecraft touching down on alien frontier flats at dawn.                                                          |
+| `scene-horror-ritual-01`         | `horror`          | `cave`, `interior`, `ominous`, `night`          | Dripping candle-wax altar and scratched symbols on damp cellar flagstones.                                                       |
+| `scene-horror-search-01`         | `horror`          | `castle`, `interior`, `mysterious`, `night`     | Narrow flashlight or lantern beam cutting a dust-choked attic hallway.                                                           |
+| `scene-horror-discovery-01`      | `horror`          | `swamp`, `fog`, `ominous`, `dawn`               | Half-submerged rowboat and abandoned lantern drifting in grey marsh reeds.                                                       |
+| `scene-horror-siege-01`          | `horror`          | `village`, `interior`, `ominous`, `night`       | Barricaded timber door rattling against pale fog creeping under the threshold.                                                   |
 
 ---
 
@@ -510,6 +525,7 @@ Covers every remaining Codex Cryptica theme in [`art-direction-catalogue.ts`](..
 
 1. **Extend `ARTWORK_CUES` ([`cues.ts`](../packages/adventure-artwork-engine/src/cues.ts))**:
    - **Active role & archetype cues**: `noble`, `cleric`, `rogue`, `bard`, `elder`, `witch`, `cultist`, `bandit`, `official`, `urchin`, `goblin`, `necromancer`, `innkeeper`, `healer`, `smith`, `informant` (plus ancestry/class cues) are now active in `cues.ts`.
+   - **NPC demographic cues (gender & age — soft secondary tier)**: `female`, `male`, `androgynous` (gender/presentation) and `young`, `adult`, `aged` (age) are active in `cues.ts` and scored via `demographicCues` in [`matching.ts`](../packages/adventure-artwork-engine/src/matching.ts) as a soft secondary tier (`+24`/`-24` for gender, `+12`/`-12` for age) rather than `primaryCues` or hard `excludes`. Keeping them out of `primaryCues` and `excludes` ensures sparse role/ancestry coverage still falls back gracefully instead of returning `null`, and keeps pure age cues (`young`, `adult`, `aged`) distinct from `128`-point role archetypes (`urchin`, `elder`).
    - **Remaining proposed fantasy cues**: `construct` and `fey` when those assets/queries are supported.
    - **Other genre roles (proposed unless already active)**: `mage`, `captain`, `pilot`, `medic`, `hunter`, `android`, `hacker`, `outlaw`.
    - **Matching correctness**: existing asset `primaryCues`, synonym normalisation, and role-over-setting priority are implemented for [#4818](https://github.com/eserlan/Codex-Cryptica/issues/4818).

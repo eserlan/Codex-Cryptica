@@ -6,7 +6,7 @@ import {
   validateLanguageNameBans,
 } from "./language-profile";
 import { parseLanguageResponse } from "./public-language";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 
 export interface LanguageOutputAssessment {
   output?: PublicGeneratorOutput;

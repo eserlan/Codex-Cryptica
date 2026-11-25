@@ -1,7 +1,10 @@
 /** @vitest-environment jsdom */
 
 import { describe, expect, it, vi } from "vitest";
-import { createEmptySessionPrep, type SessionPrep } from "generator-engine";
+import {
+  createEmptySessionPrep,
+  type SessionPrep,
+} from "generator-engine/session-prep";
 import type { SessionPrepService } from "#lib/services/seo/session-prep-service.js";
 import { renderGeneratorMarkdown } from "#lib/components/seo/markdown-renderers.js";
 import { EXAMPLE_SESSION_PREP } from "./example-prep";

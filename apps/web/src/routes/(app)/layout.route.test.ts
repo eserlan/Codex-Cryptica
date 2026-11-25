@@ -2,9 +2,11 @@
 
 import { render, screen, waitFor } from "@testing-library/svelte";
 import { tick } from "svelte";
+import { preloadCode } from "$app/navigation";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as sessionBootstrap from "#lib/services/ai/session-bootstrap.js";
 import * as turnstileService from "#lib/services/publishing/turnstile.js";
+import * as capacitorBridgeModule from "#lib/services/mobile/capacitor-bridge.js";
 
 const { quickNoteScratchpadMock, setVaultSessionActiveMock } = vi.hoisted(
   () => ({
@@ -20,6 +22,12 @@ vi.mock("$app/paths", () => ({
   base: "",
   asset: (p: string) => p,
   resolve: (p: string) => p,
+  match: async (path: string) =>
+    path.endsWith("/canvas")
+      ? { id: "/(app)/canvas", params: {} }
+      : path.endsWith("/map")
+        ? { id: "/(app)/map", params: {} }
+        : null,
 }));
 vi.mock("$app/state", () => ({
   page: {
@@ -328,6 +336,14 @@ describe("+layout.svelte", () => {
     });
   });
 
+  it("does not preload map or canvas chunks before a vault session exists", async () => {
+    (vault as any).activeVaultId = null;
+    vi.mocked(preloadCode).mockClear();
+    render(LayoutTestHost);
+    await tick();
+    expect(preloadCode).not.toHaveBeenCalled();
+  });
+
   it("keeps offline shell caching inactive on non-vault app routes", async () => {
     page.url = new URL("http://localhost/dice") as typeof page.url;
 
@@ -432,6 +448,22 @@ describe("+layout.svelte", () => {
     await vi.advanceTimersByTimeAsync(100);
 
     expect(helpStore.openHelpToArticle).not.toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it("opens known Help hashes from metadata without preloading article bodies", async () => {
+    vi.useFakeTimers();
+    vi.mocked(helpStore.openHelpToArticle).mockClear();
+    helpStore.isInitialized = true;
+    page.url = new URL(
+      "http://localhost/world#help/family-tree",
+    ) as typeof page.url;
+
+    render(LayoutTestHost);
+    await tick();
+    await vi.advanceTimersByTimeAsync(100);
+
+    expect(helpStore.openHelpToArticle).toHaveBeenCalledWith("family-tree");
     vi.useRealTimers();
   });
 
@@ -622,14 +654,22 @@ describe("+layout.svelte", () => {
     expect(modalUIStore.openVaultThemePrompt).not.toHaveBeenCalled();
   });
 
-  it("does not trigger Turnstile or AI session bootstrap on mount at /", async () => {
+  it("wires capacitorBridge.init and initAiSession on mount without eagerly solving Turnstile or calling getAiSessionToken", async () => {
+    const capSpy = vi
+      .spyOn(capacitorBridgeModule.capacitorBridge, "init")
+      .mockResolvedValue(undefined);
+    const initAiSpy = vi.spyOn(sessionBootstrap, "initAiSession");
     const turnstileSpy = vi.spyOn(turnstileService, "getSessionTurnstileToken");
     const sessionTokenSpy = vi.spyOn(sessionBootstrap, "getAiSessionToken");
 
     try {
       render(LayoutTestHost);
       await tick();
-      await Promise.resolve();
+
+      await waitFor(() => {
+        expect(capSpy).toHaveBeenCalledTimes(1);
+        expect(initAiSpy).toHaveBeenCalledTimes(1);
+      });
 
       expect(turnstileSpy).not.toHaveBeenCalled();
       expect(sessionTokenSpy).not.toHaveBeenCalled();
@@ -637,6 +677,8 @@ describe("+layout.svelte", () => {
         document.head.querySelectorAll("#codex-turnstile-script"),
       ).toHaveLength(0);
     } finally {
+      capSpy.mockRestore();
+      initAiSpy.mockRestore();
       turnstileSpy.mockRestore();
       sessionTokenSpy.mockRestore();
     }

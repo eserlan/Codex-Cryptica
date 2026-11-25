@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  MAX_SERIALIZED_STATE_CHARS,
+  MAX_DURABLE_STATE_CHARS,
   migrateAdventureSession,
   parseAdventureSession,
   parseAdventureSessionForRecovery,
@@ -233,6 +233,51 @@ describe("scenario v3 migration", () => {
       }));
       facts[facts.length - 1]!.text = "x";
       const input = structuredClone(base);
+      input.visibleState.objectives = Array.from(
+        { length: 20 },
+        (_, index) => ({
+          id: `obj-${index}`,
+          text: "y".repeat(580),
+          source: "provisional",
+        }),
+      );
+      input.visibleState.activeCharacters = Array.from(
+        { length: 30 },
+        (_, index) => ({
+          id: `char-${index}`,
+          text: "z".repeat(580),
+          source: "provisional",
+        }),
+      );
+      input.visibleState.relationships = Array.from(
+        { length: 40 },
+        (_, index) => ({
+          id: `rel-${index}`,
+          text: "r".repeat(600),
+          source: "provisional",
+          subjectId: `char-${index % 30}`,
+          disposition: "d".repeat(600),
+        }),
+      );
+      input.hiddenState.secrets = Array.from({ length: 30 }, (_, index) => ({
+        id: `sec-${index}`,
+        text: "s".repeat(600),
+        revealCondition: "c".repeat(600),
+        status: "hidden",
+      }));
+      input.hiddenState.gmThreads = Array.from({ length: 40 }, (_, index) => ({
+        id: `thr-${index}`,
+        text: "t".repeat(600),
+        revealCondition: "g".repeat(600),
+        status: "hidden",
+      }));
+      input.scenarioState.events = Array.from({ length: 100 }, (_, index) => ({
+        id: `gm-${index}`,
+        kind: "discovery",
+        visibility: "gm",
+        text: "e".repeat(560),
+        at,
+      }));
       input.visibleState.knownFacts = facts;
       const legacyState = (document: Record<string, any>) =>
         JSON.stringify({
@@ -254,13 +299,13 @@ describe("scenario v3 migration", () => {
         worldTime: migrated.worldTime,
       }).length;
       const migrationGrowth = newBaseLength - oldBaseLength;
-      const tailLength = MAX_SERIALIZED_STATE_CHARS - oldBaseLength + 1;
+      const tailLength = MAX_DURABLE_STATE_CHARS - oldBaseLength + 1;
       if (migrationGrowth <= 0 || tailLength < 1 || tailLength > 600) continue;
       input.visibleState.knownFacts.at(-1)!.text = "x".repeat(tailLength);
       const parsed = parseAdventureSessionForRecovery(input);
       if (parsed.mode === "legacy-read-only-recovery") {
         recovery = parsed;
-        expect(legacyState(input)).toBe(MAX_SERIALIZED_STATE_CHARS);
+        expect(legacyState(input)).toBe(MAX_DURABLE_STATE_CHARS);
         expect(parsed.exportDocument).toEqual(input);
         expect(parsed.session.scenarioCollection?.items).toHaveLength(1);
       }

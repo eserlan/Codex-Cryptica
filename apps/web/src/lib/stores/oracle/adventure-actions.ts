@@ -1,5 +1,6 @@
 import {
-  guardAdventureOocAnswer,
+  commitAdventureOocExchange,
+  guardAdventureOocReply,
   MAX_TEXT_CHARS,
   isInWorldActionQuestion,
   OOC_REDIRECT_TO_PLAY_REPLY,
@@ -10,6 +11,10 @@ import {
 import { proposedSession, validateRollExpression } from "./adventure-session";
 import { generateAcceptedTurn } from "./adventure-turn-retry";
 import { abortReason } from "./adventure-generation.svelte";
+import {
+  generationDescriptorFor,
+  sceneBoundaryResetReason,
+} from "./adventure-runtime";
 
 import type { AdventureRuntime } from "./adventure-runtime";
 
@@ -86,13 +91,25 @@ export class AdventureActions {
     const next = await generateAcceptedTurn({
       generate: (correction) =>
         this.generateActionProposal(session, action, signal, correction),
-      apply: ({ prepared, proposal }) => {
+      apply: ({ prepared, proposal }, attempt) => {
         if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
         validateRollExpression(proposal);
         return proposedSession(
           prepared,
           proposal,
-          this.runtime.newTurnMetadata(action),
+          this.runtime.newTurnMetadata(
+            action,
+            generationDescriptorFor(proposal, {
+              resetReason:
+                attempt === 2
+                  ? "rejected-turn"
+                  : sceneBoundaryResetReason(
+                      prepared,
+                      proposal,
+                      this.runtime.deps.packages.peek(prepared),
+                    ),
+            }),
+          ),
           "turn-rejected",
         );
       },
@@ -263,7 +280,7 @@ export class AdventureActions {
       initialSession,
       upsertAdventureOocExchange(initialSession, pendingExchange, now),
     );
-    const finalAnswer = await this.resolveOocAnswer(
+    const guarded = await this.resolveOocReply(
       withPending,
       params.question,
       signal,
@@ -271,27 +288,45 @@ export class AdventureActions {
     const answeredAt = this.runtime.deps.now();
     const answeredExchange: AdventureOocExchange = {
       ...pendingExchange,
-      answer: finalAnswer,
+      answer: guarded.answer,
       status: "answered",
+      ...(guarded.classification
+        ? { classification: guarded.classification }
+        : {}),
+      ...(guarded.conflictNotice
+        ? { conflictNotice: guarded.conflictNotice }
+        : {}),
       updatedAt: answeredAt,
     };
     await this.runtime.saveOocExchange(
       withPending,
-      upsertAdventureOocExchange(withPending, answeredExchange, answeredAt),
+      commitAdventureOocExchange(
+        withPending,
+        answeredExchange,
+        guarded.decisions,
+        answeredAt,
+        this.runtime.deps.idGenerator,
+      ),
     );
     if (params.clearDraftOnSuccess) {
       this.state.oocDraft = "";
     }
   }
 
-  private async resolveOocAnswer(
+  private async resolveOocReply(
     session: AdventureSession,
     question: string,
     signal: AbortSignal,
-  ): Promise<string> {
+  ): Promise<ReturnType<typeof guardAdventureOocReply>> {
     if (signal.aborted) throw abortReason(signal);
     if (isInWorldActionQuestion(question)) {
-      return OOC_REDIRECT_TO_PLAY_REPLY;
+      return {
+        answer: OOC_REDIRECT_TO_PLAY_REPLY,
+        classification: "meta-rules",
+        decisions: [],
+        leaked: false,
+        findings: [],
+      };
     }
     const request = await this.runtime.grounding.prepareOoc(
       session,
@@ -301,11 +336,11 @@ export class AdventureActions {
     if (signal.aborted) throw abortReason(signal);
     const response = await this.runtime.deps.ooc.ask(request, { signal });
     if (signal.aborted) throw abortReason(signal);
-    return guardAdventureOocAnswer(
-      response.answer,
+    return guardAdventureOocReply(
+      response,
       session,
       this.runtime.packageMetadata(),
-    ).answer;
+    );
   }
 
   private async recordFailedOocExchange(

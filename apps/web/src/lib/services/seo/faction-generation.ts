@@ -2,9 +2,6 @@ import {
   buildFactionPrompt,
   parseFactionResponse,
   generateFactionLocal,
-  buildFactionRosterPrompt,
-  parseFactionRosterResponse,
-  generateFactionRosterLocal,
   buildVampirePrompt,
   parseVampireResponse,
   generateVampireLocal,
@@ -14,17 +11,24 @@ import {
   buildDarkFactionPrompt,
   parseDarkFactionResponse,
   generateDarkFactionLocal,
-  buildUrbanFantasyFactionPrompt,
-  parseUrbanFantasyFactionResponse,
-  generateUrbanFantasyFactionLocal,
   type FactionGeneratorOptions,
-  type FactionRosterGeneratorOptions,
   type VampireGeneratorOptions,
   type NomadClanGeneratorOptions,
   type DarkFactionGeneratorOptions,
+} from "generator-engine/public-faction";
+import {
+  buildFactionRosterPrompt,
+  parseFactionRosterResponse,
+  generateFactionRosterLocal,
+  type FactionRosterGeneratorOptions,
+} from "generator-engine/public-faction-roster";
+import {
+  buildUrbanFantasyFactionPrompt,
+  parseUrbanFantasyFactionResponse,
+  generateUrbanFantasyFactionLocal,
   type UrbanFantasyFactionGeneratorOptions,
-  type PublicGeneratorOutput,
-} from "generator-engine";
+} from "generator-engine/public-urban-fantasy-faction";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import type { GeneratorOutput } from "./generator-helpers";
 
 type FactionGenerationDependencies = {

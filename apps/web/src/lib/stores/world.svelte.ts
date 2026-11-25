@@ -8,8 +8,7 @@ import {
 import { entityDb } from "#lib/utils/entity-db.js";
 import { vault } from "#lib/stores/vault.svelte.js";
 import { oracle } from "#lib/stores/oracle.svelte.js";
-import { imageGenerationService } from "@codex/ai-engine";
-import { textGenerationService } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
 import { DEFAULT_CF_IMAGE_MODEL } from "@codex/oracle-engine";
 
 const WORLD_IMAGE_MODEL = "gemini-2.5-flash-image";
@@ -37,7 +36,7 @@ const worldService = new WorldServiceImplementation({
         targetModel = oracle.settings.cloudflareModel || DEFAULT_CF_IMAGE_MODEL;
       }
 
-      return imageGenerationService.generateImage(
+      return lazyOracleAIServices.imageGenerationService.generateImage(
         targetKey,
         prompt,
         targetModel,
@@ -58,7 +57,7 @@ const worldService = new WorldServiceImplementation({
   getApiKey: () => oracle.effectiveApiKey || "",
   getImageModel: () => WORLD_IMAGE_MODEL,
   getSummaryModel: () => oracle.modelName,
-  getSummaryGenerator: () => textGenerationService,
+  getSummaryGenerator: () => lazyOracleAIServices.textGenerationService,
 });
 
 const activityService = new ActivityServiceImplementation({

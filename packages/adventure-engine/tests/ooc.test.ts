@@ -420,4 +420,373 @@ describe("Adventure OOC clarification engine", () => {
       buildStorySummaryRequest(session),
     );
   });
+
+  it("carries bounded chronological answered OOC context into Play prompts with provenance and turn order", async () => {
+    const { buildAdventurePrompt } = await import("../src");
+    let session = makeSession();
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-ilona",
+        kind: "ooc",
+        question: "Who is the quest giver here?",
+        answer: "Envoy Ilona Marshall is the quest giver.",
+        status: "answered",
+        afterTurnCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-pending",
+        kind: "ooc",
+        question: "Unfinished question?",
+        status: "pending",
+        afterTurnCount: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-failed",
+        kind: "ooc",
+        question: "Failed question?",
+        status: "failed",
+        errorMessage: "Question cancelled.",
+        afterTurnCount: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+    session = upsertAdventureOocExchange(
+      session,
+      {
+        id: "ooc-dock",
+        kind: "ooc",
+        question: "Where is she waiting?",
+        answer: "At Berthing Ring C.",
+        status: "answered",
+        afterTurnCount: 1,
+        createdAt: now,
+        updatedAt: now,
+      },
+      now,
+    );
+
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "seek out Ilona",
+      anchors: [],
+      relevant: [],
+    });
+    const state = JSON.parse(prompt.state) as {
+      oocExchanges?: Array<Record<string, unknown>>;
+    };
+    expect(state.oocExchanges).toEqual([
+      {
+        id: "ooc-ilona",
+        afterTurnCount: 0,
+        provenance: "ooc",
+        status: "answered",
+        binding: "non-binding-ooc",
+        question: "Who is the quest giver here?",
+        answer: "Envoy Ilona Marshall is the quest giver.",
+      },
+      {
+        id: "ooc-dock",
+        afterTurnCount: 1,
+        provenance: "ooc",
+        status: "answered",
+        binding: "non-binding-ooc",
+        question: "Where is she waiting?",
+        answer: "At Berthing Ring C.",
+      },
+    ]);
+    expect(prompt.behavior).toContain("non-binding-ooc");
+    expect(JSON.parse(prompt.serialized).input.playerAction).toBe(
+      "seek out Ilona",
+    );
+  });
+
+  it("bounds Play OOC context to the newest exchanges within budget without truncating playerAction", async () => {
+    const { buildAdventurePrompt } = await import("../src");
+    let session = makeSession();
+    for (let i = 1; i <= 8; i += 1) {
+      session = upsertAdventureOocExchange(
+        session,
+        {
+          id: `ooc-${i}`,
+          kind: "ooc",
+          question: `Question ${i}?`,
+          answer: `Answer ${i}: ` + "detail ".repeat(80),
+          status: "answered",
+          afterTurnCount: i,
+          createdAt: now,
+          updatedAt: now,
+        },
+        now,
+      );
+    }
+
+    const prompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "Keep this exact player action intact.",
+      anchors: [],
+      relevant: [],
+    });
+    const state = JSON.parse(prompt.state) as {
+      oocExchanges: Array<{ id: string }>;
+    };
+    expect(state.oocExchanges.length).toBeLessThanOrEqual(6);
+    expect(state.oocExchanges.at(-1)?.id).toBe("ooc-8");
+    expect(JSON.parse(prompt.serialized).input.playerAction).toBe(
+      "Keep this exact player action intact.",
+    );
+  });
+
+  it("grants grounded improvisational agency in OOC prompts and parses structured decisions with plain-text fallback", async () => {
+    const {
+      buildAdventureOocPrompt,
+      parseAdventureOocModelReply,
+      guardAdventureOocReply,
+      commitAdventureOocExchange,
+      projectOocPromptExchanges,
+    } = await import("../src");
+
+    const prompt = buildAdventureOocPrompt({
+      session: makeSession(),
+      question: "Who is the quest giver?",
+      anchors: [],
+      relevant: [],
+    });
+    expect(prompt.systemInstruction).toContain(
+      "GROUNDED IMPROVISATIONAL AGENCY",
+    );
+    expect(prompt.systemInstruction).toContain('"classification"');
+
+    const parsed = parseAdventureOocModelReply(
+      JSON.stringify({
+        answer:
+          "Envoy Ilona Marshall is the council's quest giver at the old weigh-house.",
+        classification: "established",
+        decisions: [
+          {
+            kind: "person",
+            name: "Envoy Ilona Marshall",
+            summary: "Council liaison and quest giver at the old weigh-house.",
+            visibility: "player-visible",
+          },
+        ],
+      }),
+    );
+    expect(parsed.classification).toBe("established");
+    expect(parsed.decisions).toHaveLength(1);
+
+    const plainFallback = parseAdventureOocModelReply(
+      "Body Save uses your Body modifier against the target DC.",
+    );
+    expect(plainFallback).toEqual({
+      kind: "ooc",
+      answer: "Body Save uses your Body modifier against the target DC.",
+    });
+
+    const session = makeSession();
+    const guarded = guardAdventureOocReply(parsed, session);
+    expect(guarded.leaked).toBe(false);
+    expect(guarded.decisions).toHaveLength(1);
+
+    let nextId = 0;
+    const exchange = {
+      id: "ooc-ilona-1",
+      kind: "ooc" as const,
+      question: "Who is the quest giver?",
+      answer: guarded.answer,
+      status: "answered" as const,
+      classification: guarded.classification,
+      afterTurnCount: 0,
+      createdAt: now,
+      updatedAt: now,
+    };
+    const committed = commitAdventureOocExchange(
+      session,
+      exchange,
+      guarded.decisions,
+      now,
+      () => `fact-ooc-${++nextId}`,
+    );
+    expect(committed.provisionalFacts).toContainEqual({
+      id: "fact-ooc-1",
+      kind: "person",
+      name: "Envoy Ilona Marshall",
+      summary: "Council liaison and quest giver at the old weigh-house.",
+      sourceOocExchangeId: "ooc-ilona-1",
+      provenance: "ooc",
+      visibility: "player-visible",
+    });
+    expect(committed.oocExchanges?.at(-1)?.committedFactIds).toEqual([
+      "fact-ooc-1",
+    ]);
+    expect(projectOocPromptExchanges(committed).at(-1)?.binding).toBe(
+      "committed-decision",
+    );
+
+    // Idempotent retry/replay of the same exchange does not duplicate the fact
+    const replayed = commitAdventureOocExchange(
+      committed,
+      exchange,
+      guarded.decisions,
+      now,
+      () => `fact-ooc-${++nextId}`,
+    );
+    expect(
+      replayed.provisionalFacts.filter(
+        (f) => f.name === "Envoy Ilona Marshall",
+      ),
+    ).toHaveLength(1);
+  });
+
+  it("drops proposed decisions on hypothetical, meta-rules, canon-conflict, and secret-leaking replies", async () => {
+    const { guardAdventureOocReply } = await import("../src");
+    const session = makeSession();
+
+    for (const classification of [
+      "hypothetical",
+      "meta-rules",
+      "canon-conflict",
+      "secret-refusal",
+    ] as const) {
+      const guarded = guardAdventureOocReply(
+        {
+          kind: "ooc",
+          answer: "Non-binding discussion.",
+          classification,
+          decisions: [
+            {
+              kind: "person",
+              name: "Smuggler",
+              summary: "Hypothetical smuggler.",
+              visibility: "player-visible",
+            },
+          ],
+        },
+        session,
+      );
+      expect(guarded.decisions).toEqual([]);
+    }
+
+    const leakedInDecision = guardAdventureOocReply(
+      {
+        kind: "ooc",
+        answer: "Safe-looking answer.",
+        classification: "established",
+        decisions: [
+          {
+            kind: "clue",
+            name: "Leaked Clue",
+            summary: "CANARY-CORPORATE-BLACK-SITE-SABOTAGE",
+            visibility: "player-visible",
+          },
+        ],
+      },
+      session,
+    );
+    expect(leakedInDecision.leaked).toBe(true);
+    expect(leakedInDecision.answer).toBe(OOC_SAFE_SECRET_REPLY);
+    expect(leakedInDecision.classification).toBe("secret-refusal");
+    expect(leakedInDecision.decisions).toEqual([]);
+  });
+
+  it("syncs session.people across modes and records superseding correction lineage", async () => {
+    const { commitAdventureOocExchange, buildAdventurePrompt } =
+      await import("../src");
+    let session = makeSession();
+    let seq = 0;
+    const nextId = () => `id-${++seq}`;
+
+    // First commit a wrong split provisional fact
+    session = commitAdventureOocExchange(
+      session,
+      {
+        id: "ooc-wrong",
+        kind: "ooc",
+        question: "Who is Marshall?",
+        answer: "Envoy Marshall is a clerk.",
+        status: "answered",
+        classification: "established",
+        afterTurnCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      [
+        {
+          kind: "person",
+          name: "Envoy Marshall",
+          summary: "Council clerk.",
+          visibility: "player-visible",
+        },
+      ],
+      now,
+      nextId,
+    );
+    expect(session.people).toHaveLength(1);
+
+    // Player corrects: "Envoy Ilona Marshall is one person, not two"
+    session = commitAdventureOocExchange(
+      session,
+      {
+        id: "ooc-fix",
+        kind: "ooc",
+        question: "I meant Envoy Marshall Ilona as one person.",
+        answer: "Understood, Envoy Ilona Marshall is that single liaison.",
+        status: "answered",
+        classification: "established",
+        afterTurnCount: 0,
+        createdAt: now,
+        updatedAt: now,
+      },
+      [
+        {
+          kind: "person",
+          name: "Envoy Ilona Marshall",
+          summary: "Council liaison at the old weigh-house.",
+          aliases: ["Envoy Marshall"],
+          supersedesName: "Envoy Marshall",
+          visibility: "player-visible",
+        },
+      ],
+      now,
+      nextId,
+    );
+
+    expect(session.people).toHaveLength(1);
+    const wrongFact = session.provisionalFacts.find(
+      (f) => f.name === "Envoy Marshall",
+    );
+    const rightFact = session.provisionalFacts.find(
+      (f) => f.name === "Envoy Ilona Marshall",
+    );
+    expect(wrongFact?.supersededById).toBe(rightFact?.id);
+
+    const playPrompt = buildAdventurePrompt({
+      session,
+      phase: "action",
+      playerAction: "seek out Ilona",
+      anchors: [],
+      relevant: [],
+    });
+    const state = JSON.parse(playPrompt.state) as {
+      playerVisibleState: { knownPeople?: Array<{ name: string }> };
+    };
+    expect(state.playerVisibleState.knownPeople?.length).toBe(1);
+    expect(playPrompt.behavior).toContain("knownPeople");
+  });
 });

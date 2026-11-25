@@ -2,14 +2,14 @@
   "name": "codex-cryptica",
   "private": true,
   "type": "module",
-  "packageManager": "bun@1.3.14",
+  "packageManager": "bun@1.4.3",
   "workspaces": [
     "apps/*",
     "apps/workers/*",
     "packages/*"
   ],
   "engines": {
-    "bun": ">=1.3.0"
+    "bun": ">=1.4.0"
   },
   "scripts": {
     "preinstall": "node -e \"if (!/bun/.test(process.env.npm_config_user_agent || '')) { console.error('\\u001b[31mError: Please use Bun to install dependencies in this repository (run \\`bun install\\`).\\u001b[0m\\n'); process.exit(1); }\"",
@@ -20,6 +20,8 @@
     "lint:affected": "bun run --filter '*' lint -- --cache --cache-strategy content",
     "lint:changed": "bun scripts/lint-changed.mjs",
     "lint:types": "bun run --filter '*' lint:types",
+    "typecheck:changed": "bun scripts/typecheck-changed.mjs",
+    "pr:gate": "bun scripts/pr-gate.mjs",
     "lint:fix": "bun run --filter '*' lint -- --fix",
     "format:changed": "bun scripts/lint-changed.mjs --fix",
     "test": "bun run --filter '*' test",
@@ -64,7 +66,7 @@
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,svelte}": [
-      "eslint --fix",
+      "eslint --cache --cache-strategy content --cache-location node_modules/.cache/eslint/ --fix",
       "prettier --write"
     ],
     "*.{md,json}": [
@@ -72,35 +74,47 @@
     ]
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.1",
-    "@emnapi/core": "^1.10.0",
-    "@emnapi/runtime": "^1.10.0",
+    "@commitlint/cli": "^21.2.4",
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
     "@eslint/js": "^10.0.1",
     "@types/js-yaml": "^4.0.9",
+    "@typescript/native-preview": "^7.0.0-dev.20260707.2",
     "commitlint-config-gitmoji": "^2.3.1",
-    "esbuild": "^0.28.0",
+    "esbuild": "^0.28.2",
     "eslint": "10.11.0",
-    "eslint-plugin-svelte": "^3.17.1",
-    "fallow": "^3.27.0",
+    "eslint-plugin-svelte": "^3.24.1",
+    "fallow": "^3.48.0",
     "feedback-engine": "workspace:*",
     "gitmoji-cli": "^9.7.0",
-    "globals": "^17.6.0",
+    "globals": "^17.14.0",
     "husky": "^9.1.7",
-    "js-yaml": "^5.2.1",
-    "lint-staged": "^17.0.5",
+    "js-yaml": "^5.5.0",
+    "lint-staged": "^17.6.2",
     "potrace": "^2.1.8",
     "prettier": "3.9.8",
-    "prettier-plugin-svelte": "^4.0.1",
-    "rollup-plugin-visualizer": "^7.0.1",
-    "svelte-eslint-parser": "^1.6.1",
+    "prettier-plugin-svelte": "^4.2.0",
+    "rollup-plugin-visualizer": "^7.3.0",
+    "svelte-eslint-parser": "^1.12.0",
     "ts-morph": "^28.0.0",
     "typescript": "6.0.3",
-    "typescript-eslint": "^8.59.4",
-    "vite": "^8.0.14",
-    "wrangler": "^4.126.0"
+    "typescript-eslint": "^8.74.0",
+    "vite": "^8.3.8",
+    "wrangler": "^4.168.0"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
-    "@tiptap/extension-bubble-menu": "^3.23.6"
+    "@tiptap/extension-bubble-menu": "^3.35.0"
+  },
+  "overrides": {
+    "@tailwindcss/typography>postcss-selector-parser": "^6.1.5",
+    "brace-expansion": "^5.1.0",
+    "cosmiconfig>js-yaml": "^4.3.2",
+    "fast-uri": "^3.1.7",
+    "ip-address": "^10.7.4",
+    "nanoid": "^3.3.20",
+    "postcss": "^8.5.33",
+    "source-map-js": "^1.2.4",
+    "svelte-eslint-parser>postcss-selector-parser": "^7.1.6"
   }
 }

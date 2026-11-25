@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { AIPolicy } from "generator-engine";
+  import type { AIPolicy } from "generator-engine/campaign-generator-types";
 
   let {
     instructions = $bindable(""),

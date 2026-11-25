@@ -5,7 +5,7 @@ import {
   type HexCoord,
 } from "map-engine";
 import { HexDiscoveryService, formatSeed } from "hex-crawl-engine";
-import { aiClientManager } from "@codex/ai-engine";
+import { createLazyAIClientManager } from "#lib/services/lazy-ai-client-manager.js";
 import { HexCrawlStore } from "#lib/stores/hex-crawl/hex-crawl.svelte.js";
 import { HexCrawlMoveObserver } from "#lib/stores/hex-crawl/hex-crawl-move-observer.js";
 import { RegionGenerationStore } from "#lib/stores/hex-crawl/region-generation.svelte.js";
@@ -117,7 +117,7 @@ export function createHexCrawlServices(): HexCrawlServices {
 
   const controller = new HexDiscoveryController({
     service: new HexDiscoveryService({ rng: Math.random, clock: systemClock }),
-    aiClient: aiClientManager,
+    aiClient: createLazyAIClientManager(),
     settings: oracle,
     isAiDisabled: () => discoveryPolicyStore.aiDisabled,
     isGuest: () => sessionModeStore.isGuestMode,

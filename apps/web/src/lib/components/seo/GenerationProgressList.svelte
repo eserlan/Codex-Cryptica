@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { OneShotProgressStep } from "generator-engine";
+  import type { OneShotProgressStep } from "generator-engine/one-shot-staged";
 
   let { steps }: { steps: OneShotProgressStep[] } = $props();
 

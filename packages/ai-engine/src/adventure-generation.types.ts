@@ -2,7 +2,11 @@ import type { LoreDeltaTracker } from "@codex/oracle-engine";
 import type {
   buildAdventurePrompt,
   AdventureSession,
+  AdventureTurnProposal,
   AdventureWorldStyle,
+  DirectorDeliveryTrace,
+  GenerationResetReason,
+  GenerationThreadMode,
   PromptAdventurePackage,
   ResolvedSourceExcerpt,
   SuppliedRollOutcome,
@@ -21,6 +25,10 @@ export interface AdventureTurnGenerationRequest {
   correction?: string;
   /** Scene-context excerpts of the pinned adventure package; plain data. */
   adventurePackage?: PromptAdventurePackage;
+  /** QA-only Director treatment; omitted in production requests. */
+  directorEnabled?: boolean;
+  /** QA-only transport condition. `stateless` bypasses retained interactions. */
+  contextMode?: "retained" | "reconstructed";
   signal?: AbortSignal;
   /** Ephemeral player-facing preview; never a committed or trusted turn. */
   onNarration?: (text: string) => void;
@@ -70,7 +78,39 @@ export interface AdventureGenerationOptions {
   signal?: AbortSignal;
 }
 
+/**
+ * #5112: how a generation was produced, reported by the service so the app
+ * layer can build the committed-turn generation descriptor. Values are
+ * bounded diagnostics from the actual transport and prompt selection.
+ */
+export interface AdventureGenerationInfo {
+  /** Model registry key, when the service can resolve one. Never a raw provider ID. */
+  modelKey?: string;
+  reasoningEffort?: "low" | "medium" | "high" | "xhigh";
+  /** Provider-managed interaction vs. stateless generation. */
+  transport?: "interaction" | "stateless";
+  /** Bounded request/source diagnostics for committed-turn review. */
+  requestChars?: number;
+  sourceCounts?: Record<string, number>;
+  scenarioIds?: string[];
+  /** Actual provider-thread state observed by the generation service. */
+  threadMode?: GenerationThreadMode;
+  /** Bounded reason when the provider thread was actually reset. */
+  resetReason?: GenerationResetReason;
+  /** Bounded trace of Director guidance actually delivered on the outgoing request (#5195). */
+  directorDelivery?: DirectorDeliveryTrace;
+}
+
 export type AdventurePrompt = ReturnType<typeof buildAdventurePrompt>;
+
+/**
+ * A generation result: the validated turn proposal plus, when the service
+ * could classify it, how it was produced. Extra field is additive; older
+ * callers that ignore it keep working.
+ */
+export type AdventureTurnGenerationResult = AdventureTurnProposal & {
+  generationInfo?: AdventureGenerationInfo;
+};
 
 export interface AdventureInteraction {
   /** Only acknowledged after the local OPFS session commits this proposal. */

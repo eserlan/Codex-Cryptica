@@ -2,15 +2,21 @@ import type { AdventureTurnProposal } from "@codex/adventure-engine";
 import { InteractionExpiredError } from "./client-manager";
 import type {
   AdventureAIClient,
+  AdventureGenerationInfo,
   AdventureInteraction,
   AdventureTurnGenerationRequest,
+  AdventureTurnGenerationResult,
   AdventurePrompt,
   AdventureGenerationOptions,
 } from "./adventure-generation.types";
-import { AdventureInteractionContext } from "./adventure-interaction-context";
+import {
+  AdventureInteractionContext,
+  type AdventureInteractionPreparation,
+} from "./adventure-interaction-context";
 import { buildAdventureInteractionInput } from "./adventure-interaction-input";
 import { AdventureInteractionTransport } from "./adventure-interaction-transport";
 import { streamAborted } from "./adventure-narration-stream";
+import { adventureTurnResponseSchema } from "./adventure-response-schema";
 import {
   parseAdventureResponse,
   isInvalidAdventureResponse,
@@ -81,9 +87,10 @@ export class AdventureInteractionGeneration {
     prompt: AdventurePrompt,
     systemInstruction: string,
     options: AdventureGenerationOptions,
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     const signal = options.signal ?? request.signal;
     const modelName = options.modelName ?? DEFAULT_ADVENTURE_MODEL;
+    let preparation: AdventureInteractionPreparation;
     let interaction: AdventureInteraction;
     const { transport, send } = this.createSender(
       request,
@@ -92,13 +99,23 @@ export class AdventureInteractionGeneration {
       options,
       () => interaction,
     );
-    interaction = this.context.prepare(request.session, prompt, modelName);
+    preparation = this.context.prepareWithMetadata(
+      request.session,
+      prompt,
+      modelName,
+    );
+    interaction = preparation.interaction;
 
     try {
       const initial = await sendWithExpiryRecovery(send, () => {
         // Retention expiry: rebuild from current session and local transcript.
         this.context.clear(request.session.id);
         interaction = this.context.get(request.session.id);
+        preparation = {
+          interaction,
+          threadMode: "reset",
+          resetReason: "provider-expiry",
+        };
       });
       const { result, proposal } = await parseWithRepair(
         initial,
@@ -116,7 +133,17 @@ export class AdventureInteractionGeneration {
         state: result.state,
         sourceEntries: result.sourceEntries,
       };
-      return proposal;
+      const generationInfo: AdventureGenerationInfo = {
+        transport: "interaction",
+        threadMode: preparation.threadMode,
+        ...(preparation.resetReason
+          ? { resetReason: preparation.resetReason }
+          : {}),
+        ...(result.directorDelivery
+          ? { directorDelivery: result.directorDelivery }
+          : {}),
+      };
+      return Object.assign(proposal, { generationInfo });
     } catch (error) {
       // Never retain a conversation containing a rejected/aborted output.
       this.context.clear(request.session.id);
@@ -152,7 +179,10 @@ export class AdventureInteractionGeneration {
         input: prepared.input,
         systemInstruction: instruction,
         previousInteractionId: interaction.previousInteractionId,
-        generationConfig: { responseMimeType: "application/json" },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: adventureTurnResponseSchema,
+        },
         reasoningEffort:
           options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT,
         signal,

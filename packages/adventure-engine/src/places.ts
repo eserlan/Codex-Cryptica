@@ -1,5 +1,9 @@
+import {
+  detectCompanionTravelIds,
+  reconcileDuplicateActiveCharacters,
+} from "./npc-presence";
 import { MAX_PLACES } from "./schemas";
-import { matchPlace, withAlias } from "./place-names";
+import { matchPlace, normalizePlaceName, withAlias } from "./place-names";
 import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import type {
   AdventureSession,
@@ -116,11 +120,16 @@ interface TagContext {
   previousId: string | undefined;
   /** People not mentioned in a move turn stay where the player left them. */
   park: boolean;
+  /** Non-move updates to knownFacts preserve their earlier place; activeCharacters move to currentId. */
+  keepEarlierPlace: boolean;
 }
 
 function placeFor(fact: StateFact, c: TagContext): string | undefined {
   if (c.touched.has(fact.id)) {
-    const stayed = c.moved ? undefined : c.earlier.get(fact.id)?.placeId;
+    const stayed =
+      c.keepEarlierPlace && !c.moved
+        ? c.earlier.get(fact.id)?.placeId
+        : undefined;
     return stayed ?? c.currentId;
   }
   return c.park && c.moved ? c.previousId : undefined;
@@ -188,6 +197,83 @@ function applyActivePlaceCues(
   );
 }
 
+/**
+ * True when `location` is missing, tagged to another place, or still clearly
+ * describes the previous place after a committed move rather than the target.
+ */
+export function isStaleLocationForMove(
+  location: StateFact | undefined,
+  previousPlace: Place | undefined,
+  previousLocation: StateFact | undefined,
+  targetPlace: Place,
+): boolean {
+  if (!location) return true;
+  if (location.placeId && location.placeId !== targetPlace.id) return true;
+  if (matchPlace([targetPlace], location.text)) return false;
+  if (previousPlace && matchPlace([previousPlace], location.text)) return true;
+  if (
+    previousLocation &&
+    normalizePlaceName(location.text) ===
+      normalizePlaceName(previousLocation.text)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+function buildPlaceLocationFact(
+  place: Place,
+  ids: Set<string>,
+  createId: IdFactory,
+): StateFact | null {
+  const id = allocateId(ids, createId);
+  if (!id) return null;
+  const text = place.relation
+    ? `${place.name} (${place.relation})`
+    : place.name;
+  return {
+    id,
+    text: text.slice(0, 240),
+    source: place.sourceRecordId ? "canonical" : "provisional",
+    ...(place.sourceRecordId ? { sourceRecordId: place.sourceRecordId } : {}),
+    placeId: place.id,
+  };
+}
+
+function reconcileMoveLocationAndSituation(
+  candidate: AdventureSession,
+  previous: AdventureSession,
+  visiblePatch: VisibleStatePatch,
+  targetPlace: Place | undefined,
+  previousPlace: Place | undefined,
+  ids: Set<string>,
+  createId: IdFactory,
+): PlaceStepResult {
+  if (!targetPlace) return { ok: true };
+  const state = candidate.visibleState;
+  if (
+    isStaleLocationForMove(
+      state.location,
+      previousPlace,
+      previous.visibleState.location,
+      targetPlace,
+    )
+  ) {
+    const synthesised = buildPlaceLocationFact(targetPlace, ids, createId);
+    if (!synthesised) return { ok: false, message: "id-allocation-failed" };
+    state.location = synthesised;
+    visiblePatch.location = synthesised;
+  } else if (state.location && !state.location.placeId) {
+    state.location = { ...state.location, placeId: targetPlace.id };
+    visiblePatch.location = state.location;
+  }
+  if (visiblePatch.situation === undefined && state.situation !== undefined) {
+    delete state.situation;
+    visiblePatch.situation = null;
+  }
+  return { ok: true };
+}
+
 export function applyPlaces(
   candidate: AdventureSession,
   previous: AdventureSession,
@@ -195,6 +281,7 @@ export function applyPlaces(
   visiblePatch: VisibleStatePatch,
   createId: IdFactory,
   placeCues?: readonly string[],
+  travelContext?: { playerAction: string; narration: string },
 ): PlaceStepResult {
   const ids = existingIds(candidate);
   const seeded = resolveSeededPlaces(previous, ids, createId);
@@ -213,10 +300,38 @@ export function applyPlaces(
   else delete candidate.currentPlaceId;
 
   const moved = Boolean(move) && currentId !== seeded.previousId;
+  if (moved && currentId) {
+    const targetPlace = list.find((place) => place.id === currentId);
+    const previousPlace = seeded.previousId
+      ? list.find((place) => place.id === seeded.previousId)
+      : undefined;
+    const reconciled = reconcileMoveLocationAndSituation(
+      candidate,
+      previous,
+      visiblePatch,
+      targetPlace,
+      previousPlace,
+      ids,
+      createId,
+    );
+    if (!reconciled.ok) return reconciled;
+  }
   const state = candidate.visibleState;
   const tag = (key: "knownFacts" | "activeCharacters", park: boolean) => {
+    const touched = touchedIds(visiblePatch[key]);
+    if (key === "activeCharacters" && moved && travelContext) {
+      for (const companionId of detectCompanionTravelIds(
+        previous.visibleState.activeCharacters,
+        travelContext.playerAction,
+        travelContext.narration,
+        seeded.previousId,
+        touched,
+      )) {
+        touched.add(companionId);
+      }
+    }
     const context: TagContext = {
-      touched: touchedIds(visiblePatch[key]),
+      touched,
       earlier: new Map(
         previous.visibleState[key].map((fact) => [fact.id, fact]),
       ),
@@ -224,11 +339,16 @@ export function applyPlaces(
       currentId,
       previousId: seeded.previousId,
       park,
+      keepEarlierPlace: !park,
     };
     state[key] = state[key].map((fact) => tagFact(fact, context));
   };
   tag("knownFacts", false);
   tag("activeCharacters", true);
+  state.activeCharacters = reconcileDuplicateActiveCharacters(
+    state.activeCharacters,
+    candidate.people,
+  );
   return { ok: true };
 }
 

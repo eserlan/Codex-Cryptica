@@ -1,7 +1,12 @@
 import { type Place, type StateFact } from "@codex/adventure-engine";
 import {
+  CUE_SYNONYMS,
+  isArtworkCue,
   matchArtwork,
+  normalizeArtworkCues,
+  resolveSceneWithAtmosphere,
   type ArtworkAsset,
+  type ArtworkCues,
 } from "@codex/adventure-artwork-engine";
 import {
   artworkGenreForTheme,
@@ -18,24 +23,162 @@ import {
   type ArtworkNpcSession,
 } from "./npc-portrait-selection";
 
+const SAFE_RAW_CUE_PATTERN = /^[a-z0-9]+(?:[ -][a-z0-9]+)*$/;
+
+function normalizeSafeStructuredCue(raw: string): string | null {
+  const normalized = raw.trim().toLowerCase().replace(/\s+/g, " ");
+  return normalized.length > 0 &&
+    normalized.length <= 32 &&
+    SAFE_RAW_CUE_PATTERN.test(normalized)
+    ? normalized
+    : null;
+}
+
+function isPrivateOrArtworkCue(
+  normalized: string,
+  entityNames: ReadonlySet<string>,
+): boolean {
+  if (isArtworkCue(CUE_SYNONYMS[normalized] ?? normalized)) return true;
+  const cueWords = ` ${normalized.replace(/[^a-z0-9]+/g, " ").trim()} `;
+  return [...entityNames].some((visibleText) => {
+    const visibleWords = ` ${visibleText.replace(/[^a-z0-9]+/g, " ").trim()} `;
+    return visibleWords.includes(cueWords);
+  });
+}
+
+function collectUnmappedStructuredCues(
+  rawCues: readonly string[] | undefined,
+  entityNames: ReadonlySet<string>,
+): string[] {
+  const unmapped = (rawCues ?? [])
+    .map(normalizeSafeStructuredCue)
+    .filter((cue): cue is string => cue !== null)
+    .filter((cue) => !isPrivateOrArtworkCue(cue, entityNames));
+  return [...new Set(unmapped)].sort();
+}
+
+const MONSTER_CUES = new Set<string>([
+  "monster",
+  "creature",
+  "beast",
+  "undead",
+  "aberration",
+  "fiend",
+  "dragon",
+]);
+
+const ATMOSPHERE_CUES = new Set<string>([
+  "quiet",
+  "busy",
+  "ominous",
+  "hopeful",
+  "mysterious",
+  "day",
+  "night",
+  "dawn",
+  "dusk",
+  "rain",
+  "fog",
+  "winter",
+  "summer",
+]);
+
+export interface CueSummarySlot {
+  cues: readonly string[];
+  unmappedCues: readonly string[];
+  match: string | null;
+}
+
 export interface ArtworkCueIndicator {
   genre: string;
   place: {
     name: string;
     cues: readonly string[];
+    unmappedCues?: readonly string[];
     match: string | null;
   } | null;
   npcs: Array<{
     name: string;
     cues: readonly string[];
+    unmappedCues?: readonly string[];
+    demographicCues?: readonly string[];
+    match: string | null;
+  }>;
+  scene?: CueSummarySlot | null;
+  atmosphere?: CueSummarySlot | null;
+  monsters?: Array<{
+    name: string;
+    cues: readonly string[];
+    unmappedCues: readonly string[];
     match: string | null;
   }>;
 }
 
-type CueSession = ArtworkPlaceSession &
-  Pick<ArtworkNpcSession, "visibleState"> & {
-    places?: readonly Place[];
+type CueSession = ArtworkPlaceSession & {
+  visibleState?: NonNullable<ArtworkNpcSession["visibleState"]> & {
+    situation?: StateFact;
   };
+  places?: readonly Place[];
+};
+
+function collectVisibleEntityNames(
+  places: readonly Place[] | undefined,
+  facts: readonly StateFact[],
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & { title?: string; aliases?: readonly string[] }
+    >
+  >,
+): Set<string> {
+  const names = new Set<string>();
+  addPlaceNames(names, places);
+  addFactNames(names, facts, entities);
+  return names;
+}
+
+function addNormalizedName(names: Set<string>, name: string | undefined): void {
+  const normalized = name?.trim().toLowerCase().replace(/\s+/g, " ");
+  if (normalized) names.add(normalized);
+}
+
+function addPlaceNames(
+  names: Set<string>,
+  places: readonly Place[] | undefined,
+): void {
+  for (const place of places ?? []) addNormalizedName(names, place.name);
+}
+
+function addFactNames(
+  names: Set<string>,
+  facts: readonly StateFact[],
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & { title?: string; aliases?: readonly string[] }
+    >
+  >,
+): void {
+  for (const fact of facts) {
+    const entity = fact.sourceRecordId
+      ? entities[fact.sourceRecordId]
+      : undefined;
+    addEntityNames(names, entity);
+    const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+    addNormalizedName(names, firstPart);
+    addNormalizedName(names, fact.text);
+  }
+}
+
+function addEntityNames(
+  names: Set<string>,
+  entity:
+    | (ArtworkPlaceEntity & { title?: string; aliases?: readonly string[] })
+    | undefined,
+): void {
+  addNormalizedName(names, entity?.title);
+  for (const alias of entity?.aliases ?? []) addNormalizedName(names, alias);
+}
 
 /** Summarize active place/NPC artwork cues and whether the catalogue matched them. */
 function resolvePlaceCueMatch(
@@ -52,30 +195,184 @@ function summarizeNpcFact(
   fact: StateFact,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
-): { name: string; cues: readonly string[]; match: string | null } {
-  const name = fact.text.split(/[.,:—–-]/, 1)[0]?.trim() || fact.text;
+  entityNames: ReadonlySet<string>,
+): {
+  name: string;
+  cues: readonly string[];
+  unmappedCues: readonly string[];
+  demographicCues: readonly string[];
+  match: string | null;
+} {
+  const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+  const name = firstPart ? firstPart.trim() : fact.text;
+  const unmappedCues = collectUnmappedStructuredCues(fact.cues, entityNames);
   const cues = describeVisiblePerson(
-    {
-      id: fact.id,
-      name,
-      aliases: [],
-      ...(fact.sourceRecordId ? { sourceRecordId: fact.sourceRecordId } : {}),
-    },
+    { id: fact.id, name, aliases: [], sourceRecordId: fact.sourceRecordId },
     theme,
-    { facts: [fact.text, ...(fact.cues ?? [])] },
+    { facts: fact.cues ? [fact.text, ...fact.cues] : [fact.text] },
   );
-  const matched = cues ? (matchArtwork(catalogue, cues)?.id ?? null) : null;
+  if (!cues) {
+    return { name, cues: [], unmappedCues, demographicCues: [], match: null };
+  }
+  const matched = matchArtwork(catalogue, cues);
   return {
     name,
-    cues: cues?.primaryCues ?? [],
-    match: matched,
+    cues: cues.primaryCues,
+    unmappedCues,
+    demographicCues: cues.demographicCues ? cues.demographicCues : [],
+    match: matched ? matched.id : null,
+  };
+}
+
+function isMonsterFact(
+  fact: StateFact,
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & {
+        type?: string;
+        title?: string;
+        aliases?: readonly string[];
+      }
+    >
+  >,
+): boolean {
+  const entityType = fact.sourceRecordId
+    ? entities[fact.sourceRecordId]?.type
+    : undefined;
+  if (entityType === "creature") return true;
+  return (fact.cues ?? []).some((cue) =>
+    MONSTER_CUES.has(cue.trim().toLowerCase()),
+  );
+}
+
+function summarizeMonsterFact(
+  fact: StateFact,
+  theme: string | undefined,
+  entityNames: ReadonlySet<string>,
+): {
+  name: string;
+  cues: readonly string[];
+  unmappedCues: readonly string[];
+  match: string | null;
+} {
+  const firstPart = fact.text.split(/[.,:—–-]/, 1)[0];
+  const name = firstPart ? firstPart.trim() : fact.text;
+  const cues = describeVisiblePerson(
+    { id: fact.id, name, aliases: [], sourceRecordId: fact.sourceRecordId },
+    theme,
+    { facts: fact.cues ? [fact.text, ...fact.cues] : [fact.text] },
+  );
+  const unmappedCues = collectUnmappedStructuredCues(fact.cues, entityNames);
+  return {
+    name,
+    cues: cues ? cues.primaryCues : [],
+    unmappedCues,
+    match: null,
+  };
+}
+
+function summarizeAtmosphereSlot(
+  atmoCues: readonly string[],
+  genre: NonNullable<ArtworkCues["genre"]>,
+  catalogue: readonly ArtworkAsset[],
+): CueSummarySlot | undefined {
+  if (atmoCues.length === 0) return undefined;
+  const asset = matchArtwork(catalogue, {
+    type: "atmosphere",
+    genre,
+    primaryCues: atmoCues,
+  });
+  return { cues: atmoCues, unmappedCues: [], match: asset ? asset.id : null };
+}
+
+function summarizeSceneSlot(
+  normalized: readonly string[],
+  place: Place | null,
+  entityNames: ReadonlySet<string>,
+  genre: NonNullable<ArtworkCues["genre"]>,
+  atmoMatch: string | null,
+  placeMatch: string | null,
+  catalogue: readonly ArtworkAsset[],
+): CueSummarySlot | undefined {
+  if (normalized.length === 0) return undefined;
+  const sceneAsset = matchArtwork(catalogue, {
+    type: "scene",
+    genre,
+    primaryCues: normalized,
+  });
+  const resolved = resolveSceneWithAtmosphere({
+    hasExplicitCommittedScene: true,
+    sceneSelection: sceneAsset
+      ? { kind: "catalogue", assetId: sceneAsset.id }
+      : { kind: "none" },
+    atmosphereMatch: atmoMatch,
+    locationSelection: placeMatch
+      ? { kind: "catalogue", assetId: placeMatch }
+      : { kind: "none" },
+  });
+  return {
+    cues: normalized,
+    unmappedCues: collectUnmappedStructuredCues(
+      place ? place.cues : undefined,
+      entityNames,
+    ),
+    match: resolved.kind === "catalogue" ? resolved.assetId : null,
+  };
+}
+
+function collectSceneCues(
+  place: Place | null,
+  currentSituation: string | null | undefined,
+): string[] {
+  const situationWords = currentSituation
+    ? (currentSituation.toLowerCase().match(/[a-z]+/g) ?? [])
+    : [];
+  const placeCues = place && place.cues ? place.cues : [];
+  return normalizeArtworkCues([...placeCues, ...situationWords]);
+}
+
+function summarizeSceneAndAtmosphere(
+  place: Place | null,
+  currentSituation: string | null | undefined,
+  entityNames: ReadonlySet<string>,
+  genre: NonNullable<ArtworkCues["genre"]>,
+  placeMatch: string | null,
+  catalogue: readonly ArtworkAsset[],
+): { scene?: CueSummarySlot; atmosphere?: CueSummarySlot } {
+  const normalized = collectSceneCues(place, currentSituation);
+  const atmoCues = normalized.filter((c) => ATMOSPHERE_CUES.has(c));
+  const atmosphere = summarizeAtmosphereSlot(atmoCues, genre, catalogue);
+  if (!currentSituation) return atmosphere ? { atmosphere } : {};
+
+  const scene = summarizeSceneSlot(
+    normalized,
+    place,
+    entityNames,
+    genre,
+    atmosphere ? atmosphere.match : null,
+    placeMatch,
+    catalogue,
+  );
+  return {
+    ...(scene ? { scene } : {}),
+    ...(atmosphere ? { atmosphere } : {}),
   };
 }
 
 export function summarizeArtworkCues(
   session: CueSession | null,
   activeVaultId: string | null | undefined,
-  entities: Readonly<Record<string, ArtworkPlaceEntity>>,
+  entities: Readonly<
+    Record<
+      string,
+      ArtworkPlaceEntity & {
+        type?: string;
+        title?: string;
+        aliases?: readonly string[];
+      }
+    >
+  >,
   enabled: boolean,
   theme: string | undefined,
   catalogue: readonly ArtworkAsset[],
@@ -93,7 +390,30 @@ export function summarizeArtworkCues(
     catalogue,
     theme,
   );
+  const placeMatch = resolvePlaceCueMatch(placeSelected, placeCues, catalogue);
   const { hereCharacters } = filterHereCharacters(session);
+  const entityNames = collectVisibleEntityNames(
+    session.places,
+    hereCharacters,
+    entities,
+  );
+  const monsterFacts = hereCharacters.filter((fact) =>
+    isMonsterFact(fact, entities),
+  );
+  const npcFacts = hereCharacters.filter(
+    (fact) => !isMonsterFact(fact, entities),
+  );
+  const envSlots = summarizeSceneAndAtmosphere(
+    place,
+    session.visibleState?.situation?.text,
+    entityNames,
+    genre,
+    placeMatch,
+    catalogue,
+  );
+  const monsters = monsterFacts.map((fact) =>
+    summarizeMonsterFact(fact, theme, entityNames),
+  );
 
   return {
     genre,
@@ -101,11 +421,14 @@ export function summarizeArtworkCues(
       ? {
           name: place.name,
           cues: placeCues?.primaryCues ?? [],
-          match: resolvePlaceCueMatch(placeSelected, placeCues, catalogue),
+          unmappedCues: collectUnmappedStructuredCues(place.cues, entityNames),
+          match: placeMatch,
         }
       : null,
-    npcs: hereCharacters.map((fact) =>
-      summarizeNpcFact(fact, theme, catalogue),
+    npcs: npcFacts.map((fact) =>
+      summarizeNpcFact(fact, theme, catalogue, entityNames),
     ),
+    ...envSlots,
+    ...(monsters.length > 0 ? { monsters } : {}),
   };
 }

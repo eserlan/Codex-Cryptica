@@ -12,8 +12,14 @@ import {
   detectHiddenTextLeakage,
   detectPackageTextLeakage,
   type AdventureSession,
+  type AdventureTurnProposal,
   type CommitMetadata,
+  type GenerationMetadata,
+  type GenerationResetReason,
+  type GenerationThreadMode,
+  type LocalSaveOperation,
 } from "@codex/adventure-engine";
+import type { AdventureGenerationInfo } from "@codex/ai-engine";
 import type { AdventureManagerDependencies } from "./adventure-dependencies";
 import type { AdventureState } from "./adventure-state.svelte";
 import { AdventureBackground } from "./adventure-background";
@@ -28,11 +34,112 @@ import { AdventureArtworkSession } from "#lib/services/adventure/artwork/adventu
 import { assignCommittedPlaceArtwork } from "#lib/services/adventure/artwork/committed-place-artwork.js";
 import { artworkPreferences } from "#lib/services/adventure/artwork/artwork-preferences.js";
 
+/**
+ * #5112: builds the committed-turn generation descriptor from the actual
+ * transport decision recorded on the generation result. Fields this layer
+ * cannot observe stay absent (`unknown`), never guessed.
+ */
+// fallow-ignore-next-line complexity
+function addThreadDiagnostics(
+  metadata: GenerationMetadata,
+  info: AdventureGenerationInfo | undefined,
+  extras: {
+    threadMode?: GenerationThreadMode;
+    resetReason?: GenerationResetReason;
+  },
+): void {
+  metadata.threadMode =
+    extras.threadMode ??
+    (info?.transport === "stateless"
+      ? "new"
+      : extras.resetReason || info?.resetReason
+        ? "reset"
+        : info?.threadMode);
+  const resetReason =
+    info?.transport === "stateless"
+      ? undefined
+      : (extras.resetReason ?? info?.resetReason);
+  if (resetReason) metadata.resetReason = resetReason;
+  if (info?.directorDelivery) metadata.directorDelivery = info.directorDelivery;
+}
+
+// fallow-ignore-next-line complexity
+function addPromptDiagnostics(
+  metadata: GenerationMetadata,
+  info: AdventureGenerationInfo | undefined,
+  extras: {
+    requestChars?: number;
+    sourceCounts?: Record<string, number>;
+    scenarioIds?: string[];
+  },
+): void {
+  const requestChars = extras.requestChars ?? info?.requestChars;
+  const sourceCounts = extras.sourceCounts ?? info?.sourceCounts;
+  const scenarioIds = extras.scenarioIds ?? info?.scenarioIds;
+  if (requestChars !== undefined) metadata.requestChars = requestChars;
+  if (sourceCounts) metadata.sourceCounts = sourceCounts;
+  if (scenarioIds) metadata.scenarioIds = scenarioIds;
+}
+
+export function generationDescriptorFor(
+  proposal:
+    | (AdventureTurnProposal & { generationInfo?: AdventureGenerationInfo })
+    | undefined,
+  extras: {
+    modelKey?: string;
+    requestChars?: number;
+    sourceCounts?: Record<string, number>;
+    scenarioIds?: string[];
+    threadMode?: GenerationThreadMode;
+    resetReason?: GenerationResetReason;
+  } = {},
+): GenerationMetadata | undefined {
+  const info = proposal?.generationInfo;
+  if (!info && !extras.resetReason && !extras.threadMode) return undefined;
+  const metadata: GenerationMetadata = {};
+  const modelKey = extras.modelKey ?? info?.modelKey;
+  if (modelKey) metadata.modelKey = modelKey;
+  if (info?.reasoningEffort) metadata.reasoningEffort = info.reasoningEffort;
+  if (info?.transport) metadata.transport = info.transport;
+  addThreadDiagnostics(metadata, info, extras);
+  addPromptDiagnostics(metadata, info, extras);
+  return metadata;
+}
+
+/**
+ * #5112: the proposal declares a move to a different package scene, which is
+ * exactly when `saveTurn` discards retained provider history.
+ */
+export function sceneBoundaryResetReason(
+  session: AdventureSession,
+  proposal: AdventureTurnProposal,
+  sourcePackage?: Parameters<typeof packageProgressIndex>[0],
+): GenerationResetReason | undefined {
+  const sceneId =
+    proposal.kind === "complete"
+      ? proposal.visiblePatch.packageSceneId
+      : undefined;
+  if (
+    sceneId !== undefined &&
+    sourcePackage !== undefined &&
+    packageProgressIndex(sourcePackage).packageSceneIds.includes(sceneId) &&
+    sceneId !== session.packageProgress?.sceneId
+  ) {
+    return "scene-boundary";
+  }
+  return undefined;
+}
+
 /** Shared generation lifetime and persistence boundary for all workflows. */
 export class AdventureRuntime {
   activeRestoreRequest = 0;
   generationController: AbortController | null = null;
   oocController: AbortController | null = null;
+  private lastLocalSave: {
+    sessionId: string;
+    revision: number;
+    op: LocalSaveOperation;
+  } | null = null;
   readonly grounding: AdventureGroundingService;
   readonly background: AdventureBackground;
   readonly scenarios: AdventureScenarios;
@@ -58,11 +165,56 @@ export class AdventureRuntime {
     this.placeLinker = new AdventurePlaceLinker(deps);
     this.artwork = new AdventureArtworkSession(state, {
       verify: (lease) => deps.authority.verify(lease),
-      save: (revision, session) => deps.repository.save(revision, session),
+      save: async (revision, session) => {
+        const res = await deps.repository.save(revision, session);
+        if (res.ok) {
+          await this.reconcileLocalSave("artwork-save", res.session, true);
+        }
+        return res;
+      },
     });
-    this.scenarios = new AdventureScenarios(state, deps, (session) =>
-      this.verifySession(session),
+    this.scenarios = new AdventureScenarios(
+      state,
+      deps,
+      (session) => this.verifySession(session),
+      (saved) => this.reconcileLocalSave("scenario-update", saved, true),
     );
+  }
+
+  /**
+   * Records a local persistence operation and, when it does not invalidate
+   * retained provider history, advances `confirmGenerationInteraction` to the
+   * saved revision so subsequent Play turns stay `continued`.
+   */
+  async reconcileLocalSave(
+    op: LocalSaveOperation,
+    saved: AdventureSession,
+    reconcileInteraction = true,
+  ): Promise<void> {
+    this.lastLocalSave = {
+      sessionId: saved.id,
+      revision: saved.revision,
+      op,
+    };
+    if (!reconcileInteraction) return;
+    try {
+      await this.deps.confirmGenerationInteraction(saved.id, saved.revision);
+    } catch {
+      await this.deps.clearGenerationInteraction(saved.id).catch(() => {});
+    }
+  }
+
+  revisionMismatchCauseFor(
+    session: AdventureSession | null,
+    resetReason: GenerationResetReason | undefined,
+  ): LocalSaveOperation | undefined {
+    if (resetReason !== "revision-mismatch" || !session) return undefined;
+    if (!this.lastLocalSave || this.lastLocalSave.sessionId !== session.id) {
+      return "unknown";
+    }
+    return this.lastLocalSave.revision === session.revision
+      ? this.lastLocalSave.op
+      : "external-or-concurrent";
   }
 
   async verifyControl(): Promise<void> {
@@ -150,8 +302,9 @@ export class AdventureRuntime {
   }
 
   /**
-   * Persists an OOC exchange update without touching provider interaction
-   * history, artwork reveals, or rolling story-so-far summarization.
+   * Persists an OOC exchange update and reconciles the retained Play
+   * interaction revision for the `+1` local save without writing OOC turns
+   * into remote provider history, artwork reveals, or story-so-far summaries.
    */
   async saveOocExchange(
     previous: AdventureSession,
@@ -161,26 +314,66 @@ export class AdventureRuntime {
     const saved = await this.deps.repository.save(previous.revision, next);
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
+    this.lastLocalSave = {
+      sessionId: saved.session.id,
+      revision: saved.session.revision,
+      op: "turn-commit",
+    };
     this.state.session = saved.session;
+    this.lastLocalSave = {
+      sessionId: saved.session.id,
+      revision: saved.session.revision,
+      op: "ooc-exchange",
+    };
+    await this.deps.confirmGenerationInteraction(
+      saved.session.id,
+      saved.session.revision,
+    );
     return saved.session;
   }
 
-  newTurnMetadata(playerAction: string): CommitMetadata {
+  private withMismatchCause(
+    generation?: GenerationMetadata,
+  ): GenerationMetadata | undefined {
+    if (
+      !generation ||
+      generation.resetReason !== "revision-mismatch" ||
+      generation.revisionMismatchCause
+    ) {
+      return generation;
+    }
+    const cause =
+      this.revisionMismatchCauseFor(this.state.session, "revision-mismatch") ??
+      "unknown";
+    return { ...generation, revisionMismatchCause: cause };
+  }
+
+  newTurnMetadata(
+    playerAction: string,
+    generation?: GenerationMetadata,
+  ): CommitMetadata {
+    const enriched = this.withMismatchCause(generation);
     return {
       turnId: this.deps.idGenerator(),
       inputId: this.deps.idGenerator(),
       playerAction,
       now: this.deps.now(),
       ...this.packageMetadata(),
+      ...(enriched ? { generation: enriched } : {}),
     };
   }
 
-  rollMetadata(inputId: string): CommitMetadata {
+  rollMetadata(
+    inputId: string,
+    generation?: GenerationMetadata,
+  ): CommitMetadata {
+    const enriched = this.withMismatchCause(generation);
     return {
       turnId: this.deps.idGenerator(),
       inputId,
       now: this.deps.now(),
       ...this.packageMetadata(),
+      ...(enriched ? { generation: enriched } : {}),
     };
   }
 
@@ -205,6 +398,11 @@ export class AdventureRuntime {
     const saved = await this.deps.repository.save(previous.revision, candidate);
     if (!saved.ok) throw saved.error;
     this.assertCurrentSession(previous);
+    this.lastLocalSave = {
+      sessionId: saved.session.id,
+      revision: saved.session.revision,
+      op: "turn-commit",
+    };
     // A provider reply is provisional until the OPFS write has succeeded.
     // A failed acknowledgement cannot undo a saved turn; discard the remote
     // optimization and reconstruct from saved local state on the next action.
@@ -255,6 +453,11 @@ export class AdventureRuntime {
     return {
       reason: cause.reason,
       ...(cause.diagnostic ? { diagnostic: cause.diagnostic } : {}),
+      actionResolution: {
+        outcome: "unresolved" as const,
+        validation: "rejected" as const,
+        evidenceCategory: "rejected-turn" as const,
+      },
       revision: this.state.session?.revision ?? 0,
       recordedAt: this.deps.now(),
     };

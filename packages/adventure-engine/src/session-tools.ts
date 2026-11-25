@@ -4,9 +4,14 @@
  * reducer.ts (turn/roll transitions) per the module-per-concern layout
  * established in Phase 1. See specs/2306-adventure-phase-2-play-tools/.
  */
+import {
+  projectPlayerEmergentThreads,
+  setFocusedEmergentThread,
+  updateEmergentThreadStatus,
+} from "./emergent-threads";
 import { applyVisiblePatch } from "./reducer";
 import { isHere } from "./places";
-import { validateStateBudget } from "./schemas";
+import { validateDurableStateBudget } from "./schemas";
 import { playerScenarioCollectionProjection } from "./scenario-state";
 import { formatWorldElapsedMinutes } from "./world-time";
 import type {
@@ -63,9 +68,29 @@ export function buildAdventureRecap(
     .map((item) => ({
       id: item.id,
       lead: item.playerVisible.lead,
+      ...(item.goal ? { goal: item.goal } : {}),
       status: item.status,
+      ...(item.outcome ? { outcome: structuredClone(item.outcome) } : {}),
       focused: projectedScenarios.focusedScenarioId === item.id,
       lastUpdate: item.events.at(-1)?.text,
+    }));
+  const emergentLeads = projectPlayerEmergentThreads(session)
+    .filter(
+      (thread) =>
+        thread.status === "open" ||
+        Boolean(thread.outcome) ||
+        session.focusedEmergentThreadId === thread.id,
+    )
+    .map((thread) => ({
+      id: thread.id,
+      title: thread.title,
+      ...(thread.goal ? { goal: thread.goal } : {}),
+      status: thread.status,
+      ...(thread.outcome ? { outcome: structuredClone(thread.outcome) } : {}),
+      focused: session.focusedEmergentThreadId === thread.id,
+      ...(thread.openQuestions.at(-1)
+        ? { openQuestion: thread.openQuestions.at(-1) }
+        : {}),
     }));
   const elapsedTimeLabel =
     session.worldTime && session.worldTime.elapsedMinutes > 0
@@ -83,8 +108,30 @@ export function buildAdventureRecap(
     ),
     recentTurnSummaries: recentTurns.map((turn) => turn.narration),
     ...(knownLeads.length > 0 ? { knownLeads } : {}),
+    ...(emergentLeads.length > 0 ? { emergentLeads } : {}),
     ...(elapsedTimeLabel ? { elapsedTimeLabel } : {}),
   };
+}
+
+export function followEmergentThread(
+  session: AdventureSession,
+  threadId: string,
+): AdventureSession {
+  return setFocusedEmergentThread(session, threadId);
+}
+
+export function unfollowEmergentThread(
+  session: AdventureSession,
+): AdventureSession {
+  return setFocusedEmergentThread(session, null);
+}
+
+export function closeEmergentThread(
+  session: AdventureSession,
+  threadId: string,
+  status: "resolved" | "abandoned" | "cold" = "resolved",
+): AdventureSession {
+  return updateEmergentThreadStatus(session, threadId, status);
 }
 
 /** Turns with a resolvedRoll, in commit order — see data-model.md "Resolved Roll snapshot". */
@@ -121,7 +168,7 @@ export function applyStateCorrection(
   candidate.visibleState = visible.value;
   candidate.revision += 1;
   candidate.updatedAt = now;
-  if (!validateStateBudget(candidate)) {
+  if (!validateDurableStateBudget(candidate)) {
     return error(
       "state-budget-exceeded",
       "The correction would exceed the compact adventure state limit.",

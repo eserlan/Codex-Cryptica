@@ -1,29 +1,37 @@
+import { BANNED_NAMES } from "generator-engine/public-npc";
 import {
-  BANNED_NAMES,
   buildAlienRacePrompt,
-  buildConstellationPrompt,
-  buildCreaturePrompt,
-  buildNightSkyPrompt,
-  buildStarSystemPrompt,
-  buildWorldPrompt,
   generateAlienRaceLocal,
-  generateConstellationLocal,
-  generateCreatureLocal,
-  generateNightSkyLocal,
-  generateStarSystemLocal,
-  generateWorldLocal,
   parseAlienRaceResponse,
-  parseConstellationResponse,
-  parseCreatureResponse,
-  parseNightSkyResponse,
-  parseStarSystemResponse,
-  parseWorldResponse,
   type AlienRaceGeneratorOptions,
+} from "generator-engine/public-alien-race";
+import {
+  buildConstellationPrompt,
+  buildNightSkyPrompt,
+  generateConstellationLocal,
+  generateNightSkyLocal,
+  parseConstellationResponse,
+  parseNightSkyResponse,
   type ConstellationGeneratorOptions,
+} from "generator-engine/public-constellation";
+import {
+  buildCreaturePrompt,
+  generateCreatureLocal,
+  parseCreatureResponse,
   type CreatureGeneratorOptions,
+} from "generator-engine/public-creature";
+import {
+  buildStarSystemPrompt,
+  generateStarSystemLocal,
+  parseStarSystemResponse,
   type StarSystemGeneratorOptions,
+} from "generator-engine/public-star-system";
+import {
+  buildWorldPrompt,
+  generateWorldLocal,
+  parseWorldResponse,
   type WorldGeneratorOptions,
-} from "generator-engine";
+} from "generator-engine/public-world";
 import type { GeneratorOutput } from "./generator-helpers";
 
 type RunWithAIFallback = (

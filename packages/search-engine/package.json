@@ -11,14 +11,14 @@
     "lint": "eslint \"src/**/*.ts\""
   },
   "dependencies": {
-    "comlink": "^4.4.1",
+    "comlink": "^4.4.2",
     "fflate": "^0.8.3",
     "flexsearch": "^0.8.212",
     "schema": "workspace:*"
   },
   "devDependencies": {
-    "@vitest/coverage-v8": "^5.0.0",
+    "@vitest/coverage-v8": "^5.1.1",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.0"
+    "vitest": "^5.1.1"
   }
 }

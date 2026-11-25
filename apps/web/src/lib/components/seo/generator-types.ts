@@ -1,4 +1,6 @@
-export type { ValidSlug } from "./generator-slugs";
+import type { ValidSlug } from "./generator-slugs";
+import type { GeneratorGuide } from "./generator-page-guides";
+export type { ValidSlug };
 
 export type SlugMetaEntry = {
   pageTitle: string;
@@ -31,5 +33,6 @@ export type SlugMetaEntry = {
     exclusiveLabel?: string;
     inlineImageCaption?: string;
   }[];
+  guide?: GeneratorGuide;
   relatedLinks?: { href: string; label: string }[];
 };

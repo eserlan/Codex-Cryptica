@@ -6,6 +6,9 @@ import {
 } from "../src/session-schema";
 import { now, session } from "./reducer-fixtures";
 
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 describe("session schema composition", () => {
   it("defaults additive records and preserves independently parsed artwork", () => {
     const input = {
@@ -68,5 +71,19 @@ describe("session schema composition", () => {
         oocExchanges: Array(MAX_OOC_EXCHANGES + 1).fill(exchange),
       }).success,
     ).toBe(false);
+  });
+
+  it("keeps z.record fields in persisted turn/session schemas bounded", () => {
+    for (const file of ["session-schema.ts", "turn-schemas.ts"]) {
+      const source = readFileSync(
+        path.resolve(import.meta.dirname, "..", "src", file),
+        "utf8",
+      );
+      const recordMatches = [...source.matchAll(/z\s*\.\s*record\s*\(/g)];
+      for (const match of recordMatches) {
+        const window = source.slice(match.index, match.index + 320);
+        expect(window).toMatch(/superRefine|Object\.keys\([^)]+\)\.length/);
+      }
+    }
   });
 });

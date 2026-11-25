@@ -1,4 +1,12 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function expectDocumentTheme(page: Page, theme: string) {
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.dataset.worldTheme),
+    )
+    .toBe(theme);
+}
 
 const themes = [
   { slug: "fantasy", h1: "Fantasy RPG Generators", localStorageId: "fantasy" },
@@ -75,53 +83,24 @@ test.describe("Generator Theme Hubs", () => {
 
   test("visiting a hub applies its theme immediately", async ({ page }) => {
     await page.goto("/generators/cyberpunk");
-
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          localStorage.getItem("codex-cryptica-active-theme"),
-        ),
-      )
-      .toBe("cyberpunk");
-
-    await expect
-      .poll(() =>
-        page.evaluate(() => document.documentElement.dataset.worldTheme),
-      )
-      .toBe("cyberpunk");
+    await expectDocumentTheme(page, "cyberpunk");
   });
 
-  test("card click sets correct localStorage theme and navigates", async ({
-    page,
-  }) => {
+  test("card click keeps the genre theme and navigates", async ({ page }) => {
     await page.goto("/generators/cyberpunk", { waitUntil: "networkidle" });
 
-    // Wait for the theme to be applied to ensure any async vault initialization has settled
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          localStorage.getItem("codex-cryptica-active-theme"),
-        ),
-      )
-      .toBe("cyberpunk");
+    await expectDocumentTheme(page, "cyberpunk");
 
     const firstCard = page.locator("ul > li > a").first();
     const href = await firstCard.getAttribute("href");
 
     await firstCard.click();
 
-    await expect
-      .poll(() =>
-        page.evaluate(() =>
-          localStorage.getItem("codex-cryptica-active-theme"),
-        ),
-      )
-      .toBe("cyberpunk");
-
     await expect(page).toHaveURL(
       new RegExp(href!.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$"),
       { timeout: 15000 },
     );
+    await expectDocumentTheme(page, "cyberpunk");
   });
 
   test("unknown theme returns 404", async ({ page }) => {

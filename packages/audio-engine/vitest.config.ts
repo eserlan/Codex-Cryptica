@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [svelte()],
   test: {
     environment: "jsdom",
+    pool: "threads",
+    fsModuleCache: true,
     include: ["src/**/*.test.ts"],
     coverage: {
       provider: "v8",

@@ -193,3 +193,11 @@ Before an opening, action, dice resolution or background rumour generation, Orac
 In **Enter Your World**, a few hidden situations are already unfolding around your character. They show up as small details, such as tracks, a closed shop, nervous locals, a posted notice or overheard talk, and you can ignore or follow any of them. If several turns pass quietly, Oracle adds one such detail to the scene. A detail never becomes a quest by itself; situations only develop through your actions or time passing in the story.
 
 If world information cannot be loaded, generation stops so you can retry. Your committed progress, action draft and any recorded dice result remain available. Restore a missing selected character, location or source record, or edit your selection, before retrying. If no opening has been committed, use **Retry opening**; this is also available after reopening the adventure. A successful lookup with no matches can continue with provisional details. Optional rumour generation can use a local fallback after its world lookup succeeds. AI generation needs an available, configured Oracle; inspecting existing play remains local.
+
+## Completing a story arc
+
+When you achieve or conclude a pursued adventure goal with committed world facts, Adventure Mode shows a one-time completion panel summarising what changed and any remaining open threads. Dismissing it never deletes your progress or closes the world:
+
+- **Continue exploring**: closes the panel and keeps your current adventure session active so you can follow remaining leads or explore freely.
+- **Find another adventure**: closes the current view and returns to the Adventure start and archive screen without archiving the session, so it stays active to resume later.
+- **Finish for now**: acknowledges the completion and archives the current session. You can still read or resume archived adventures from the Archive list.

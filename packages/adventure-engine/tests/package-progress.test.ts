@@ -66,6 +66,31 @@ describe("package scene progress", () => {
     expect(next.packageProgress).toEqual(before.packageProgress);
   });
 
+  it("preserves revealed package secrets while writing scene progress", () => {
+    const before = packageSession();
+    const p = movedTo("ros-scene-2-yard");
+    p.revealSecretIds = ["secret-ledger-lock"];
+    const result = applyCompletedTurn(before, p, {
+      ...meta,
+      packageSceneIds: sceneIds,
+      packageRecordKinds: {
+        "ros-scene-1-landing": "scene",
+        "ros-scene-2-yard": "scene",
+        "secret-ledger-lock": "secret",
+      },
+      packageSecretTexts: {
+        "secret-ledger-lock": "The ledger records a sluice-pin lock.",
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error(JSON.stringify(result.errors));
+    expect(result.value.packageProgress?.revealedSecretIds).toEqual([
+      "secret-ledger-lock",
+    ]);
+    expect(() => parseAdventureSession(result.value)).not.toThrow();
+  });
+
   it("rejects exact GM-only package text and hidden IDs in player output", () => {
     const secret = "The duke poisoned the well";
     const leakedText = proposal();

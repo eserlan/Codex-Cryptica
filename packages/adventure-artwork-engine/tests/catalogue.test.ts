@@ -131,3 +131,48 @@ it("recognizes all 12 added NPC archetype and role cues", () => {
     "urchin",
   ]);
 });
+
+it("accepts demographic gender and age cues on npc assets and normalizes synonyms", () => {
+  for (const cue of [
+    "female",
+    "male",
+    "androgynous",
+    "young",
+    "adult",
+    "aged",
+  ]) {
+    expect(isArtworkCue(cue)).toBe(true);
+  }
+  expect(
+    normalizeArtworkCues(["woman", "youth", "elderly", "non-binary"]),
+  ).toEqual(["female", "young", "aged", "androgynous"]);
+  const parsed = parseCatalogue([
+    {
+      ...asset,
+      id: "npc-fantasy-official-02",
+      type: "npc",
+      primaryCues: ["official", "scholar"],
+      demographicCues: ["female", "adult"],
+      variants: {
+        preview: { ...variant, width: 240, height: 320 },
+        display: { ...variant, width: 768, height: 1024 },
+      },
+    },
+  ]);
+  expect(parsed[0]?.demographicCues).toEqual(["female", "adult"]);
+  expect(() =>
+    parseCatalogue([
+      {
+        ...asset,
+        id: "npc-bad-demo",
+        type: "npc",
+        primaryCues: ["scholar"],
+        demographicCues: ["unknown-demographic"],
+        variants: {
+          preview: { ...variant, width: 240, height: 320 },
+          display: { ...variant, width: 768, height: 1024 },
+        },
+      },
+    ]),
+  ).toThrow();
+});

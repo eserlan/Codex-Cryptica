@@ -1,5 +1,5 @@
-import { aiClientManager } from "@codex/ai-engine";
-import type { PublicGeneratorOutput } from "generator-engine";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
+import { createLazyAIClientManager } from "#lib/services/lazy-ai-client-manager.js";
 import { getSessionContext } from "./session-context";
 import {
   generationInputHistoryStore,
@@ -21,7 +21,7 @@ export class GeneratorEngineBase {
   protected readonly worldGeneration: WorldGenerationService;
   protected readonly factionGeneration: FactionGenerationService;
 
-  constructor(clientManager = aiClientManager) {
+  constructor(clientManager = createLazyAIClientManager()) {
     this.transport = new GeneratorAITransport(clientManager);
     const sharedDependencies = this.createSharedGenerationDependencies();
     this.factionGeneration = new FactionGenerationService(sharedDependencies);

@@ -1,7 +1,7 @@
 <script lang="ts">
   import "../../app.css";
   import { browser } from "$app/env";
-  import { resolve } from "$app/paths";
+  import { match, resolve } from "$app/paths";
   import { basePath } from "#lib/utils/base-path.js";
   import { page } from "$app/state";
   import { onMount, onDestroy } from "svelte";
@@ -19,10 +19,11 @@
   import { quickNoteStore } from "#lib/stores/quicknote.svelte.js";
   import { appEventBus, CrossTabBroadcaster } from "@codex/events";
   import { demoService } from "#lib/services/demo.js";
-  import { configureGDriveSync, initGDriveSync } from "@codex/gdrive-sync";
+  import { configureGDriveSyncLoader } from "#lib/services/gdrive-sync-loader.js";
+  import { createLazyAIClientManager } from "#lib/services/lazy-ai-client-manager.js";
   import { getDB, DB_NAME, DB_VERSION } from "#lib/utils/idb.js";
-  import { HELP_ARTICLES } from "#lib/config/help-content.js";
   import { getHelpArticleIdFromHash } from "#lib/components/help/help-direct-link.js";
+  import { HELP_ARTICLE_IDS } from "#lib/config/help-article-metadata.js";
   import { VERSION } from "#lib/config/index.js";
   import releases from "#lib/content/changelog/releases.json";
   import { THEMES, isEntityVisible } from "schema";
@@ -76,7 +77,6 @@
   import "#lib/stores/proposer.svelte.js";
   import "#lib/cloud-bridge/p2p/guest-bootstrap.js";
   import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
-  import { aiClientManager } from "@codex/ai-engine";
   import { writeOpfsFile, deleteOpfsEntry } from "#lib/utils/opfs.js";
 
   let { children } = $props();
@@ -92,7 +92,13 @@
   let mapSession = $state<any>(null);
   let VTTSharedImageLightbox = $state<any>(null);
   let isDocumentVisible = $state(true);
-  let serviceWorkerSession: VaultServiceWorkerSession | undefined;
+  // $state so the vault-session $effect below re-runs once registration
+  // resolves; a plain let would leave the effect with no tracked
+  // dependencies (it short-circuits while this is still undefined), so the
+  // active-vault seed message would never be sent on a first visit.
+  let serviceWorkerSession = $state<VaultServiceWorkerSession | undefined>(
+    undefined,
+  );
 
   const isVaultCacheSessionActive = () => {
     const base = basePath();
@@ -279,6 +285,25 @@
     void ensureRandomSourcesLoaded();
   });
 
+  // Map and canvas only matter once a real Vault session is active. Keeping
+  // these route chunks out of the landing shell avoids loading their editor
+  // runtimes during a cold visit to `/`.
+  const resolveWorkspacePath = resolve as unknown as (path: string) => string;
+  $effect(() => {
+    if (!vault.activeVaultId) return;
+    void Promise.all([
+      match(resolveWorkspacePath("/canvas")),
+      match(resolveWorkspacePath("/map")),
+    ])
+      .then(([canvasRoute, mapRoute]) =>
+        Promise.all([
+          canvasRoute ? preloadCode(canvasRoute.id) : Promise.resolve(),
+          mapRoute ? preloadCode(mapRoute.id) : Promise.resolve(),
+        ]),
+      )
+      .catch(() => {});
+  });
+
   // Initialization Logic
   $effect(() => {
     // This layout only serves workspace routes — always boot except on landing page
@@ -297,12 +322,21 @@
   });
 
   onMount(() => {
+    if (browser) {
+      void import("#lib/services/ai/session-bootstrap.js").then((m) =>
+        m.initAiSession(),
+      );
+      void import("#lib/services/mobile/capacitor-bridge.js").then((m) =>
+        m.capacitorBridge.init(),
+      );
+    }
+
     initAudioEngine({
       vault,
       oracle,
       debugStore,
       oracleBridge,
-      aiClientManager,
+      aiClientManager: createLazyAIClientManager(),
       writeOpfsFile,
       deleteOpfsEntry,
     });
@@ -312,7 +346,7 @@
       initOnboardingFunnel();
       helpStore.init();
       await themeStore.init();
-      configureGDriveSync({
+      configureGDriveSyncLoader(() => ({
         getDB,
         dbName: DB_NAME,
         dbVersion: DB_VERSION,
@@ -332,13 +366,8 @@
             (await vault.getSpecificVaultHandle(id)) ?? null,
         },
         listVaults: () => vaultRegistry.listVaults(),
-      });
-      void initGDriveSync();
+      }));
 
-      // Preload heavy route chunks so first navigation is instant
-      preloadCode("/(app)/canvas").catch(() => {});
-
-      preloadCode("/(app)/map").catch(() => {});
       serviceWorkerSession = registerServiceWorker();
       serviceWorkerSession.setVaultSessionActive(isVaultCacheSessionActive());
 
@@ -435,17 +464,24 @@
   }
 
   // Help Hash Navigation
+  let helpHashTimer: ReturnType<typeof setTimeout> | undefined;
+
   $effect(() => {
     if (!helpStore.isInitialized || isPopup) return;
     const articleId = getHelpArticleIdFromHash(page.url.hash);
-    if (
-      articleId &&
-      HELP_ARTICLES.some((article) => article.id === articleId)
-    ) {
-      setTimeout(() => {
-        helpStore.openHelpToArticle(articleId);
-      }, 100);
-    }
+    if (!articleId || !HELP_ARTICLE_IDS.has(articleId)) return;
+    let active = true;
+    helpHashTimer = setTimeout(() => {
+      helpHashTimer = undefined;
+      if (active) helpStore.openHelpToArticle(articleId);
+    }, 100);
+    return () => {
+      active = false;
+      if (helpHashTimer) {
+        clearTimeout(helpHashTimer);
+        helpHashTimer = undefined;
+      }
+    };
   });
 
   // Demo Logic
@@ -697,7 +733,7 @@
         <!-- fallow-ignore-next-line css-broken-reference -->
         <div
           bind:this={routeContentEl}
-          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-y-auto outline-none"
+          class="min-h-0 min-w-0 flex-1 flex flex-col h-full overflow-auto outline-none"
           tabindex="-1"
           inert={(isEntityExplorerWorkspace &&
             !!layoutUIStore.focusedEntityId) ||

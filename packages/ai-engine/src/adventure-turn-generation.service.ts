@@ -1,16 +1,20 @@
-import {
-  buildAdventurePrompt,
-  type AdventureTurnProposal,
-} from "@codex/adventure-engine";
+import { buildAdventurePrompt } from "@codex/adventure-engine";
 import { aiClientManager as defaultAiClientManager } from "./client-manager";
 import type {
   AdventureAIClient,
-  AdventureTurnGenerationRequest,
-  AdventurePrompt,
   AdventureGenerationOptions,
+  AdventureGenerationInfo,
+  AdventureTurnGenerationRequest,
+  AdventureTurnGenerationResult,
+  AdventurePrompt,
 } from "./adventure-generation.types";
 import { AdventureInteractionContext } from "./adventure-interaction-context";
-import { AdventureInteractionGeneration } from "./adventure-interaction-generation";
+import { computeDirectorDeliveryTrace } from "./adventure-interaction-input";
+import {
+  AdventureInteractionGeneration,
+  DEFAULT_ADVENTURE_MODEL,
+  DEFAULT_ADVENTURE_REASONING_EFFORT,
+} from "./adventure-interaction-generation";
 import { AdventureContentGeneration } from "./adventure-content-generation";
 import { streamAborted } from "./adventure-narration-stream";
 import {
@@ -20,7 +24,10 @@ import {
 
 export type {
   AdventureAIClient,
+  AdventureGenerationInfo,
   AdventureTurnGenerationRequest,
+  AdventureTurnGenerationResult,
+  AdventureGenerationOptions,
 } from "./adventure-generation.types";
 export { extractAdventureNarrationPrefix } from "./adventure-narration-stream";
 
@@ -29,6 +36,82 @@ function canUseStatelessFallback(error: unknown): boolean {
   return /interaction-client-unavailable|interaction-stream-unavailable|interaction.*(?:unsupported|not supported|not available)/.test(
     reason,
   );
+}
+
+function promptScenarioIds(prompt: AdventurePrompt): string[] {
+  const state = JSON.parse(prompt.state) as Record<string, unknown>;
+  const scenarios = state["GM-ONLY scenarios"];
+  return Array.isArray(scenarios)
+    ? scenarios
+        .flatMap((item) =>
+          item &&
+          typeof item === "object" &&
+          "id" in item &&
+          typeof item.id === "string"
+            ? [item.id]
+            : [],
+        )
+        .slice(0, 32)
+    : [];
+}
+
+function promptDiagnostics(
+  prompt: AdventurePrompt,
+): Pick<
+  AdventureGenerationInfo,
+  "requestChars" | "sourceCounts" | "scenarioIds"
+> {
+  return {
+    requestChars: prompt.serialized.length,
+    sourceCounts: {
+      anchors: Math.min(prompt.anchors.length, 1000),
+      relevant: Math.min(prompt.relevant.length, 1000),
+    },
+    scenarioIds: promptScenarioIds(prompt),
+  };
+}
+
+function effectiveReasoningEffort(
+  transport: AdventureGenerationInfo["transport"],
+  options: AdventureGenerationOptions,
+): AdventureGenerationInfo["reasoningEffort"] {
+  return transport === "interaction"
+    ? (options.reasoningEffort ?? DEFAULT_ADVENTURE_REASONING_EFFORT)
+    : options.reasoningEffort;
+}
+
+function buildGenerationInfo(
+  proposal: AdventureTurnGenerationResult,
+  transport: AdventureGenerationInfo["transport"],
+  options: AdventureGenerationOptions,
+  prompt: AdventurePrompt,
+): AdventureGenerationInfo {
+  const priorInfo = proposal.generationInfo ?? {};
+  const diagnostics = promptDiagnostics(prompt);
+  const generationInfo: AdventureGenerationInfo = {
+    ...priorInfo,
+    ...diagnostics,
+    requestChars: priorInfo.requestChars ?? diagnostics.requestChars,
+    sourceCounts: priorInfo.sourceCounts ?? diagnostics.sourceCounts,
+    scenarioIds: priorInfo.scenarioIds ?? diagnostics.scenarioIds,
+    transport,
+    modelKey: options.modelName ?? DEFAULT_ADVENTURE_MODEL,
+  };
+  if (transport === "stateless") {
+    generationInfo.threadMode = "new";
+    delete generationInfo.resetReason;
+    const payload = JSON.parse(prompt.serialized) as Record<string, unknown>;
+    const fullState = JSON.parse(prompt.state) as Record<string, unknown>;
+    generationInfo.directorDelivery = computeDirectorDeliveryTrace(
+      prompt,
+      payload,
+      fullState,
+      false,
+    );
+  }
+  const reasoningEffort = effectiveReasoningEffort(transport, options);
+  if (reasoningEffort) generationInfo.reasoningEffort = reasoningEffort;
+  return generationInfo;
 }
 
 /** Coordinates turn generation while keeping the existing import path and API. */
@@ -58,38 +141,65 @@ export class AdventureTurnGenerationService {
     this.interactionContext.confirm(sessionId, savedRevision);
   }
 
+  /** #5112: classify how a proposal was produced for committed-turn diagnostics. */
+  private withGenerationInfo(
+    proposal: AdventureTurnGenerationResult,
+    transport: AdventureGenerationInfo["transport"],
+    options: AdventureGenerationOptions,
+    prompt: AdventurePrompt,
+  ): AdventureTurnGenerationResult {
+    const generationInfo = buildGenerationInfo(
+      proposal,
+      transport,
+      options,
+      prompt,
+    );
+    return Object.assign(proposal, { generationInfo });
+  }
+
   private async generateBuffered(
     request: AdventureTurnGenerationRequest,
     prompt: AdventurePrompt,
     systemInstruction: string,
     options: AdventureGenerationOptions,
     forceStructuredOutput = false,
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     streamAborted(options.signal ?? request.signal);
     if (
+      request.contextMode !== "reconstructed" &&
       this.aiClient.sendInteraction &&
       !options.apiKey &&
       !forceStructuredOutput
     ) {
-      return this.interactionGeneration.generate(
+      return this.withGenerationInfo(
+        await this.interactionGeneration.generate(
+          request,
+          prompt,
+          systemInstruction,
+          options,
+        ),
+        "interaction",
+        options,
+        prompt,
+      );
+    }
+    return this.withGenerationInfo(
+      await this.contentGeneration.buffered(
         request,
         prompt,
         systemInstruction,
         options,
-      );
-    }
-    return this.contentGeneration.buffered(
-      request,
-      prompt,
-      systemInstruction,
+      ),
+      "stateless",
       options,
+      prompt,
     );
   }
 
   async generate(
     request: AdventureTurnGenerationRequest,
     options: AdventureGenerationOptions = {},
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       throw new Error("offline");
     }
@@ -100,36 +210,78 @@ export class AdventureTurnGenerationService {
       prompt.behavior +
       "\n\nReturn only valid JSON that matches this response schema:\n" +
       JSON.stringify(adventureTurnResponseSchema);
+    return this.generateWithPrompt(request, prompt, systemInstruction, options);
+  }
 
-    // System-proxy requests use provider-managed history by default. Custom
-    // API keys remain on the stateless direct-SDK path, without cloud storage.
-    let fallbackToStateless = false;
-    if (
-      !options.apiKey &&
-      (this.aiClient.sendInteraction || this.aiClient.sendInteractionStream)
-    ) {
-      try {
-        return await this.interactionGeneration.generate(
-          request,
-          prompt,
-          systemInstruction,
-          options,
-        );
-      } catch (error) {
-        if (!canUseStatelessFallback(error)) throw error;
-        // Providers that cannot store conversations retain the original
-        // stateless structured streaming path. No remote ID is persisted.
-        this.clearInteraction(request.session.id);
-        fallbackToStateless = true;
-      }
-    }
-
+  private async generateWithPrompt(
+    request: AdventureTurnGenerationRequest,
+    prompt: AdventurePrompt,
+    systemInstruction: string,
+    options: AdventureGenerationOptions,
+  ): Promise<AdventureTurnGenerationResult> {
+    const interaction = await this.tryInteraction(
+      request,
+      prompt,
+      systemInstruction,
+      options,
+    );
+    if (interaction.result) return interaction.result;
     return this.generateStateless(
       request,
       prompt,
       systemInstruction,
       options,
-      fallbackToStateless,
+      interaction.fallbackToStateless,
+    );
+  }
+
+  private async tryInteraction(
+    request: AdventureTurnGenerationRequest,
+    prompt: AdventurePrompt,
+    systemInstruction: string,
+    options: AdventureGenerationOptions,
+  ): Promise<{
+    result?: AdventureTurnGenerationResult;
+    fallbackToStateless: boolean;
+  }> {
+    if (!this.canUseInteraction(request, options)) {
+      return { fallbackToStateless: false };
+    }
+    try {
+      const proposal = await this.interactionGeneration.generate(
+        request,
+        prompt,
+        systemInstruction,
+        options,
+      );
+      return {
+        result: this.withGenerationInfo(
+          proposal,
+          "interaction",
+          options,
+          prompt,
+        ),
+        fallbackToStateless: false,
+      };
+    } catch (error) {
+      if (!canUseStatelessFallback(error)) throw error;
+      // Providers that cannot store conversations retain the original
+      // stateless structured streaming path. No remote ID is persisted.
+      this.clearInteraction(request.session.id);
+      return { fallbackToStateless: true };
+    }
+  }
+
+  private canUseInteraction(
+    request: AdventureTurnGenerationRequest,
+    options: AdventureGenerationOptions,
+  ): boolean {
+    return (
+      request.contextMode !== "reconstructed" &&
+      !options.apiKey &&
+      Boolean(
+        this.aiClient.sendInteraction || this.aiClient.sendInteractionStream,
+      )
     );
   }
 
@@ -139,7 +291,7 @@ export class AdventureTurnGenerationService {
     systemInstruction: string,
     options: AdventureGenerationOptions,
     fallbackToStateless: boolean,
-  ): Promise<AdventureTurnProposal> {
+  ): Promise<AdventureTurnGenerationResult> {
     const signal = options.signal ?? request.signal;
     if (request.onNarration) {
       try {
@@ -149,7 +301,14 @@ export class AdventureTurnGenerationService {
           systemInstruction,
           options,
         );
-        if (streamed) return streamed;
+        if (streamed) {
+          return this.withGenerationInfo(
+            streamed,
+            "stateless",
+            options,
+            prompt,
+          );
+        }
       } catch (error) {
         // A complete stream can still contain malformed JSON or a response
         // that violates the turn schema. Retry once with the provider's

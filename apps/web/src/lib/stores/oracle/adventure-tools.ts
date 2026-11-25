@@ -6,6 +6,7 @@ import {
   removeResourceCounter,
   applyStateCorrection,
   type AdventureSession,
+  type LocalSaveOperation,
   type VisibleStatePatch,
   type StateCorrectionOutcome,
 } from "@codex/adventure-engine";
@@ -28,6 +29,7 @@ export class AdventureTools {
 
   private async persistLocalMutation(
     next: AdventureSession,
+    op: LocalSaveOperation,
   ): Promise<AdventureSession> {
     if (!this.state.session) throw new Error("no-active-session");
     const saved = await this.runtime.deps.repository.save(
@@ -36,6 +38,7 @@ export class AdventureTools {
     );
     if (!saved.ok) throw saved.error;
     this.state.session = saved.session;
+    await this.runtime.reconcileLocalSave(op, saved.session, true);
     return saved.session;
   }
 
@@ -65,6 +68,11 @@ export class AdventureTools {
       throw saved.error;
     }
     this.state.session = saved.session;
+    await this.runtime.reconcileLocalSave(
+      "state-correction",
+      saved.session,
+      false,
+    );
     return "applied";
   }
 
@@ -77,13 +85,14 @@ export class AdventureTools {
     );
     await this.persistLocalMutation(
       acceptedSession(result, "invalid-dice-preset"),
+      "dice-preset",
     );
   }
 
   async removeDicePreset(presetId: string): Promise<void> {
     const session = this.requireWritableSession();
     const next = removeDicePreset(session, presetId, this.runtime.deps.now());
-    await this.persistLocalMutation(next);
+    await this.persistLocalMutation(next, "dice-preset");
   }
 
   async addResourceCounter(label: string, initialValue: number): Promise<void> {
@@ -95,6 +104,7 @@ export class AdventureTools {
     );
     await this.persistLocalMutation(
       acceptedSession(result, "invalid-resource-counter"),
+      "resource-counter",
     );
   }
 
@@ -111,6 +121,7 @@ export class AdventureTools {
     );
     await this.persistLocalMutation(
       acceptedSession(result, "invalid-resource-counter"),
+      "resource-counter",
     );
   }
 
@@ -121,6 +132,6 @@ export class AdventureTools {
       counterId,
       this.runtime.deps.now(),
     );
-    await this.persistLocalMutation(next);
+    await this.persistLocalMutation(next, "resource-counter");
   }
 }

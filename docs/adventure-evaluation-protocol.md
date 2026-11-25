@@ -123,6 +123,77 @@ For **#5083 live-model verification**, run the repeated ledger questioning twice
 
 ## Live-Model Baseline Recording Template
 
+### GM Director Treatment Comparison (#5113)
+
+Use the synthetic bell-ringer action script in `packages/adventure-engine/tests/fixtures/gm-director-evaluation.ts`. Start every arm from the same cloned session and action sequence. Compare `luna-fast` with `low` and `medium` reasoning, Director guidance on and off, and retained versus reconstructed context (eight conditions). The off treatment is QA-only and must not change production defaults. Keep shared schemas, reducers, secrecy rules, and canon checks identical.
+
+Run deterministic stubbed coverage in CI. Live provider runs are manual and explicitly opt-in; never add paid calls to CI. Record each condition's sample count, model key, requested effort, actual transport/reset classification, substantive-answer/progression outcome, causal consistency, NPC knowledge integrity, agency, secrecy/canon stop-ship results, latency, and provider-reported token usage. Calculate estimated price only when provider usage and the model registry price are both available; otherwise write `unavailable`. Do not infer token counts from prompt characters or assert interaction reuse where transport metadata says `unknown`.
+
+For an explicit local-proxy run, use:
+
+```bash
+bun scripts/adventure-director-eval.ts --live \
+  --efforts low,medium --directors off,on \
+  --contexts retained,reconstructed --samples 1 \
+  --proxy http://127.0.0.1:8787 \
+  --output /tmp/gm-director-matrix
+```
+
+Without `--live`, the script prints the selected matrix and makes no provider calls. A live run writes a Markdown summary and JSON with aggregate scores, bounded per-turn failure/reset codes, and available usage; it does not write prompts or generated narration. `--samples` accepts 1–3 and the default matrix has eight conditions.
+
+One stochastic run per condition is descriptive and does not support a causal claim. Before changing a global model or effort default, require at least three paired replays per condition on two synthetic fixtures, a consistent improvement against a predeclared progression score, no secrecy/canon/agency stop-ship failure, and a documented latency/cost trade-off. Peaceful outcomes and genuinely exhausted trails can pass; invented clues, forced escalation, and repeated non-answers fail.
+
+| Fixture               | Director | Effort     | Context                | Samples | Progression | Stop-ship failures | Latency | Tokens / cost | Notes |
+| --------------------- | -------- | ---------- | ---------------------- | ------- | ----------- | ------------------ | ------- | ------------- | ----- |
+| Bell-ringer synthetic | on/off   | low/medium | retained/reconstructed |         |             |                    |         |               |       |
+
+### Recorded Live Baseline (2026-11-23)
+
+Ran `bun scripts/adventure-effort-eval.ts --efforts low,medium --repeats 1` through the local proxy (`127.0.0.1:8787`) against the existing **The Last Grind** fixture. This is an existing baseline comparison of reasoning effort only; it does **not** isolate Director treatment or retained versus reconstructed context. One sample per effort is descriptive, not causal.
+
+| Effort | Calls | Committed turns | Latency (sum of model calls) | Tokens (input / output) | Estimated cost | Result                                                            |
+| ------ | ----- | --------------- | ---------------------------- | ----------------------- | -------------- | ----------------------------------------------------------------- |
+| low    | 3     | 1/2             | 26.0 s                       | 27,468 / 1,817          | $0.0037        | Fail: one `invalid-adventure-response`; continuity rubric 0.5.    |
+| medium | 12    | 8/8             | 276.1 s                      | 137,394 / 26,842        | $0.0272        | Fail: secrecy rubric 0.875; remaining reported dimensions passed. |
+
+Both runs used `luna-fast`. Costs are estimates from registry rates ($0.10/M input and $0.50/M output tokens); reasoning tokens are included in output tokens. Total: 15 calls, 164,862 input tokens, 28,659 output tokens, approximately $0.0308. The harness report is in `/tmp/adventure-5113-live/` and contains generated narration; only the aggregate findings above are retained here. Expected-beat checks remain pending human review. Do not infer an effort winner from this single pair.
+
+### Director-on Follow-up (2026-11-24)
+
+After correcting the Director prompt and harness issues described in the [turn-by-turn report](experiments/adventure-effort-live-report-2026-11-23.html), reran The Last Grind at low effort with Director enabled through the local app and proxy. The selected sample completed 8/8 turns in 9 calls with no retries or hard failures; all six automated rubric dimensions scored 1.0. Usage was 100,770 input and 7,994 output tokens over 85.6 seconds of summed model-call time, approximately $0.0141 at the registry rates above. Maren’s debt urgency, the shrine reward and cellar hint, the five-turn timer, Aldous’s self-hiding, and Tobiah’s motive appeared in the output.
+
+Manual golden review recorded 16 beats met, one partial (the ledger clue omits the week-before timing), and two conditional/source-dependent. Wick remains at the lever because the player showed the lock entry but not proof of filing or Tobiah’s debt. The spare receipt was not found; the authored `secret-aldous-cellar` describes it as a fallback when the party did not read the ledger, while this scripted route reads it first, so the golden expectation needs human reconciliation with that condition. A single sample shows a good Director-on output but does not estimate a pass rate or establish a causal improvement.
+
+### Synthetic Bell-Ringer Pair (2026-11-24)
+
+Ran the corrected local-proxy harness at low effort with Director off/on and retained context, using one cloned Northbrook fixture per arm. The sanitized [comparison report](experiments/gm-director-low-retained-2026-11-24.md) includes per-turn transport and rubric diagnostics; its adjacent JSON records exact usage. These two samples are descriptive only. They do not establish a Director effect or justify changing model defaults.
+
+| Director | Result | Turns | Rubrics (`A/S/C/CS/CC/UE`) | Expected signals | Calls | Latency | Input / output tokens | Estimated cost |
+| -------- | ------ | ----- | -------------------------- | ---------------- | ----- | ------- | --------------------- | -------------- |
+| off      | Pass   | 8/8   | 1/1/1/1/1/1                | 12/12            | 8     | 52.0 s  | 78,462 / 5,367        | $0.010530      |
+| on       | Pass   | 8/8   | 1/1/1/1/1/1                | 12/12            | 8     | 53.9 s  | 90,695 / 5,090        | $0.011614      |
+
+Both arms had zero rubric failures, NPC-knowledge violations, repeated non-answers, or causal-consistency failures; each produced one useful negative finding and one quiet outcome. Meaningful scenario advances were 1 off and 2 on. The Director-on sample used 12,233 more input tokens and cost $0.001084 more, with 1.95 seconds more summed request latency. The eighth turn was classified as the scripted provider-history reset in both arms. One sample per arm is not a pass-rate estimate or causal result.
+
+### Synthetic Adventure Corpus (#5160)
+
+Keep The Last Grind as a targeted regression. The separate synthetic corpus in `scripts/adventure-evaluation-corpus-fixtures.ts` adds two independent adventures, each with an investigation path and a quiet/off-script path. The paths cover witness knowledge limits, repeated questions, physical clues, uncertain testimony, earned reveals, partial actions, player corrections, context reset recovery, peaceful detours, and return visits.
+
+Run the deterministic fixture, beat-scoring, capture, and report tests in CI. A live comparison is explicitly opt-in and pairs the same fixture path, initial session, and actions across Director-on/off:
+
+```bash
+bun scripts/adventure-corpus-eval.ts --live --samples 3 \
+  --efforts low --contexts retained --directors off,on \
+  --proxy http://127.0.0.1:8787 \
+  --output /tmp/gm-director-corpus-live
+```
+
+Without `--live`, the command only prints the selected run count and makes no provider calls. Live reports contain per-turn player-facing output, expected-beat coverage (`present`, `partial`, or `absent`), hard-gate results, progression signals, context/reset metadata, and available usage metrics. The authored-beat matcher is a transparent phrase-coverage signal, not a semantic judge. Prompts and GM-only text are never written; output is redacted when the secrecy hard gate fails. Missing provider usage or registry pricing remains `unavailable`.
+
+The default one-sample report is descriptive. The report marks a treatment comparison eligible for review only when every path has at least three paired samples under both treatments on at least two fixtures. This threshold is necessary for a treatment claim, not proof of causation by itself. Do not infer a default change without consistent predeclared progression gains, clean secrecy/canon/agency gates, and the measured latency/cost trade-off.
+
+### Existing Live-Model Baseline Recording Template
+
 Record one row per evaluated provider/model during manual or live-API benchmark runs:
 
 | Date | Provider / Model | Scenario / Lane                    | Turns | Model Calls | Peak Context (chars) | Avg Turn Latency (ms) | Expansion Count | Rubric Scores (`A/S/C/CS/CC/UE`) | Qualitative Issues |

@@ -1,9 +1,17 @@
 import { z } from "zod";
-import { id, text, narration, timestamp } from "./schema-primitives";
+import {
+  id,
+  text,
+  narration,
+  timestamp,
+  threadGoalSchema,
+  threadOutcomeSchema,
+} from "./schema-primitives";
 import {
   visibleStateSchema,
   hiddenStateSchema,
   provisionalFactSchema,
+  causalCommitmentSchema,
 } from "./state-schemas";
 import { dicePresetSchema, pendingRollSchema } from "./roll-schemas";
 import { worldTimeSchema } from "./world-time-schemas";
@@ -48,6 +56,29 @@ const storySoFarSchema = z
     text: z.string().trim().min(1).max(MAX_STORY_SO_FAR_CHARS),
     throughSequence: z.number().int().nonnegative(),
     updatedAt: timestamp,
+  })
+  .strict();
+
+export const emergentThreadSchema = z
+  .object({
+    id,
+    title: z.string().trim().min(1).max(160),
+    goal: threadGoalSchema.optional(),
+    status: z.enum(["open", "resolved", "abandoned", "cold"]),
+    outcome: threadOutcomeSchema.optional(),
+    provenance: z.enum(["play", "ooc", "mixed"]),
+    topicTokens: z.array(z.string().trim().min(1).max(48)).max(16),
+    linkedPersonIds: z.array(id).max(24),
+    linkedPlaceIds: z.array(id).max(24),
+    linkedFactIds: z.array(id).max(32),
+    linkedCommitmentIds: z.array(id).max(24),
+    openQuestions: z.array(text).max(8),
+    knownConsequences: z.array(text).max(12),
+    gmOnlyDevelopments: z.array(text).max(8),
+    linkedScenarioId: id.optional(),
+    createdAtTurnId: id,
+    updatedAtTurnId: id,
+    turnCount: z.number().int().nonnegative(),
   })
   .strict();
 
@@ -103,7 +134,11 @@ export const adventureSessionSchema = z
     visibleState: visibleStateSchema,
     hiddenState: hiddenStateSchema,
     provisionalFacts: z.array(provisionalFactSchema).max(60),
+    causalCommitments: z.array(causalCommitmentSchema).optional(),
+    emergentThreads: z.array(emergentThreadSchema).max(16).optional(),
+    focusedEmergentThreadId: id.nullable().optional(),
     dismissedProvisionalFactIds: z.array(id).max(60).optional().default([]),
+    acknowledgedOutcomeIds: z.array(id).max(32).optional(),
     turns: z.array(persistedTurnSchema),
     oocExchanges: z
       .array(
@@ -114,6 +149,17 @@ export const adventureSessionSchema = z
             question: text,
             answer: narration.optional(),
             status: z.enum(["pending", "answered", "failed"]),
+            classification: z
+              .enum([
+                "established",
+                "hypothetical",
+                "meta-rules",
+                "canon-conflict",
+                "secret-refusal",
+              ])
+              .optional(),
+            committedFactIds: z.array(id).max(16).optional(),
+            conflictNotice: text.optional(),
             errorMessage: text.optional(),
             afterTurnCount: z.number().int().nonnegative(),
             createdAt: timestamp,

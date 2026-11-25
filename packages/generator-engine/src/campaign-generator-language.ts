@@ -4,7 +4,7 @@ import {
   validateLanguageNameBans,
 } from "./language-profile";
 import type { LanguageGeneratorOptions } from "./public-language";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import type {
   GeneratorOutput,
   GeneratorRunRequest,

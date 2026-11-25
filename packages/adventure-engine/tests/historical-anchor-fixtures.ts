@@ -6,6 +6,7 @@ import type {
   HistoricalEventSnapshot,
 } from "../src/historical-anchor-types";
 import type { AdventureSession } from "../src/types";
+import { MAX_DURABLE_STATE_CHARS } from "../src/session-budget";
 import { now, session } from "./reducer-fixtures";
 
 export const calendar: WorldCalendar = {
@@ -61,12 +62,36 @@ export function anchorSession(
   return { ...session(), historicalAnchor: created.anchor };
 }
 
-export function overBudgetAnchorSession(): AdventureSession {
+export function overDurableBudgetAnchorSession(): AdventureSession {
   const anchored = anchorSession();
-  anchored.visibleState.knownFacts = Array.from({ length: 60 }, (_, index) => ({
+  anchored.visibleState.knownFacts = Array.from({ length: 55 }, (_, index) => ({
     id: `fact-${index}`,
     text: "x".repeat(600),
     source: "canonical",
   }));
+  anchored.visibleState.objectives = Array.from({ length: 18 }, (_, index) => ({
+    id: `obj-${index}`,
+    text: "y".repeat(600),
+    source: "canonical",
+  }));
+  anchored.visibleState.activeCharacters = Array.from(
+    { length: 12 },
+    (_, index) => ({
+      id: `char-${index}`,
+      text: "z".repeat(600),
+      source: "canonical",
+    }),
+  );
+  anchored.provisionalFacts = Array.from({ length: 60 }, (_, index) => ({
+    id: `provisional-${index}`,
+    kind: "other",
+    name: "n".repeat(600),
+    summary: "s".repeat(600),
+    aliases: Array.from({ length: 8 }, () => "a".repeat(600)),
+    visibility: "gm-only",
+  }));
+  if (JSON.stringify(anchored).length <= MAX_DURABLE_STATE_CHARS) {
+    throw new Error("Fixture must exceed the durable state budget.");
+  }
   return anchored;
 }

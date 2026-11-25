@@ -100,4 +100,33 @@ describe("adventure retained conversation context", () => {
     });
     expect(context.prepare(saved, changed, "luna-fast")).not.toBe(interaction);
   });
+
+  it("reconciles three consecutive OOC saves without revision-mismatch while still resetting on external jumps", () => {
+    const context = new AdventureInteractionContext();
+    const interaction = pending(context, 0);
+    context.confirm(session.id, 1);
+    expect(interaction.revision).toBe(1);
+
+    // Three OOC follow-ups between Play turns (pending + answered = +2 each = +6 revisions)
+    for (let rev = 2; rev <= 7; rev += 1) {
+      context.confirm(session.id, rev);
+    }
+    expect(interaction.revision).toBe(7);
+    expect(
+      context.prepare(
+        { ...session, revision: 7 },
+        buildAdventurePrompt(request),
+        "luna-fast",
+      ),
+    ).toBe(interaction);
+
+    // An unrelated Play-side/external save at revision 9 still triggers a clean reset
+    expect(
+      context.prepare(
+        { ...session, revision: 9 },
+        buildAdventurePrompt(request),
+        "luna-fast",
+      ),
+    ).not.toBe(interaction);
+  });
 });

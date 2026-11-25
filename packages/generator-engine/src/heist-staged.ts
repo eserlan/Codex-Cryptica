@@ -34,7 +34,7 @@ import {
   type JsonObject,
 } from "./staged-runtime";
 import type { HeistGeneratorOptions, HeistPrompt } from "./public-heist";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import type {
   HeistStageId,
   HeistStagedDeps,

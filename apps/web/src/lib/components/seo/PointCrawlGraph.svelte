@@ -1,13 +1,13 @@
 <script lang="ts">
   import { onDestroy } from "svelte";
+  import { buildPointCrawlDiagramLayout } from "generator-engine/point-crawl-layout";
   import {
-    buildPointCrawlDiagramLayout,
     pointCrawlNodeRoleSymbol,
     type PointCrawlNetwork,
     type PointCrawlNode,
     type PointCrawlRoute,
     type PointCrawlRegenTarget,
-  } from "generator-engine";
+  } from "generator-engine/point-crawl-state";
   import { svgToPngBlob } from "#lib/utils/svg-export.js";
   import { discoveryPolicyStore } from "#lib/stores/ui/discovery-policy.svelte.js";
   import { focusTrap } from "#lib/actions/focusTrap.js";

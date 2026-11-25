@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { generateAdventureGraphTopology } from "./adventure-graph-generator";
 import { validateAdventureGraph } from "./adventure-graph-validator";
-import type { PublicGeneratorOutput } from "../public-generator-adapters";
+import type { PublicGeneratorOutput } from "../public-generator-types";
 
 const MOCK_ADVENTURE_OUTPUT: PublicGeneratorOutput = {
   // The fixture had drifted from the type: it predates `type`, `lore` and

@@ -9,11 +9,13 @@ import {
   promoteProvisionalFacts,
   type FactPromotionDeps,
 } from "#lib/services/adventure/adventure-provisional-fact-creator.js";
+import { syncContestedCommitments } from "#lib/services/adventure/contested-lore.js";
 
 interface PromotionDependencies {
   getSession: () => AdventureSession | null;
   getVaultId: () => string | null | undefined;
-  getEntities: () => Pick<Entity, "id" | "title">[];
+  getEntities: () => Pick<Entity, "id" | "title" | "lore">[];
+  updateEntityLore?: (id: string, lore: string) => Promise<boolean>;
   isReady: () => boolean;
   isAutoPromote: () => boolean;
   createEntity: FactPromotionDeps["createEntity"];
@@ -114,6 +116,33 @@ export class AdventureSurfacePromotion {
       );
     this.notifyAdded("Added", added);
   };
+
+  private syncingContested = false;
+
+  /** Mirror contested GM commitments into Vault lore for manual review. */
+  async syncContested(): Promise<void> {
+    const session = this.deps.getSession();
+    if (!session || !this.deps.isReady() || !this.deps.updateEntityLore) return;
+    if (
+      !(session.causalCommitments ?? []).some((e) => e.status === "contested")
+    )
+      return;
+    if (this.syncingContested) return;
+    this.syncingContested = true;
+    const updateEntityLore = this.deps.updateEntityLore;
+    try {
+      await syncContestedCommitments(session, {
+        isCurrent: () => this.deps.getSession()?.id === session.id,
+        getEntity: (id) =>
+          this.deps.getEntities().find((entity) => entity.id === id),
+        updateEntityLore,
+      });
+    } catch (error) {
+      console.error("Contested lore sync error:", error);
+    } finally {
+      this.syncingContested = false;
+    }
+  }
 
   async autoPromote(existingTitles: string[]): Promise<void> {
     const session = this.deps.getSession();

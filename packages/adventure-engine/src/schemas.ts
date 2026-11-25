@@ -13,7 +13,11 @@ export {
   adventureSessionSchema,
 } from "./session-schema";
 export { MAX_PLACES, MAX_PLACE_ALIASES } from "./place-schemas";
-export { turnProposalSchema, parseTurnProposal } from "./turn-schemas";
+export {
+  turnProposalSchema,
+  parseTurnProposal,
+  generationMetadataSchema,
+} from "./turn-schemas";
 
 export { scenarioEventSchema } from "./scenario-schemas";
 export { migrateAdventureSession } from "./session-migration";
@@ -24,9 +28,15 @@ export {
 } from "./session-reader";
 export {
   MAX_SERIALIZED_STATE_CHARS,
+  MAX_DURABLE_STATE_CHARS,
+  STATE_BUDGET_WARNING_RATIO,
   MAX_GENERATION_INPUT_CHARS,
+  measureStateBudget,
   validateStateBudget,
+  validateDurableStateBudget,
   validateGenerationBudget,
+  type StateBudgetSectionKey,
+  type StateBudgetBreakdown,
 } from "./session-budget";
 export type {
   VisibleStatePatch as SchemaVisiblePatch,

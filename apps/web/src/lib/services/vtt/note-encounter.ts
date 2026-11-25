@@ -1,4 +1,4 @@
-import { themeIdToLabel } from "generator-engine";
+import { themeIdToLabel } from "generator-engine/public-faction-constants";
 import { generatorEngine } from "#lib/services/seo/generator-engine.js";
 
 /** What a generated encounter needs to know about where it is happening. */

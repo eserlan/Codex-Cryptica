@@ -4,14 +4,51 @@ import { mapRegistry } from "#lib/stores/map-registry.svelte.js";
 import { canvasRegistry } from "#lib/stores/canvas-registry.svelte.js";
 import { getDB } from "#lib/utils/idb.js";
 import { writeOpfsFile } from "#lib/utils/opfs.js";
-import { parseAdventureSessionForRecovery } from "@codex/adventure-engine";
 import { isSafeRestoredAssetPath } from "#lib/services/cloud-backup-restore-path.js";
 
+type AdventureRecoveryModule = Pick<
+  typeof import("@codex/adventure-engine"),
+  "parseAdventureSessionForRecovery"
+>;
+type AdventureRecoveryLoader = () => Promise<AdventureRecoveryModule>;
+
 /** Writes restored records and raw media into the newly created vault. */
-export function createCloudBackupRestore(): NonNullable<
-  CloudBackupDeps["restore"]
-> {
+export function createCloudBackupRestore(
+  loadAdventureRecovery: AdventureRecoveryLoader = async () =>
+    import("@codex/adventure-engine"),
+): NonNullable<CloudBackupDeps["restore"]> {
+  const preparedAdventures = new WeakMap<
+    unknown[],
+    { id: string; raw: Record<string, unknown> }[]
+  >();
+  const prepareAdventures = async (adventures: unknown[]) => {
+    const seen = new Set<string>();
+    const inputs = adventures.map((input) => {
+      if (!input || typeof input !== "object" || Array.isArray(input))
+        throw new Error("Invalid adventure in backup.");
+      const raw = input as Record<string, unknown>;
+      const id = raw.id;
+      if (
+        typeof id !== "string" ||
+        !/^[a-zA-Z0-9_-]{1,160}$/.test(id) ||
+        seen.has(id)
+      )
+        throw new Error("Invalid or duplicate adventure ID in backup.");
+      seen.add(id);
+      return { id, raw };
+    });
+    if (inputs.length === 0) return;
+    const { parseAdventureSessionForRecovery } = await loadAdventureRecovery();
+    for (const { id, raw } of inputs) {
+      const parsed = parseAdventureSessionForRecovery(raw);
+      if (parsed.session.id !== id)
+        throw new Error("Invalid adventure identity in backup.");
+    }
+    preparedAdventures.set(adventures, inputs);
+  };
+
   return {
+    prepareAdventures,
     createVault: (name: string) => vault.createVault(name),
     // `createVault` switches to the new vault before this runs, so these
     // writes land there rather than in whatever the user had open.
@@ -49,22 +86,12 @@ export function createCloudBackupRestore(): NonNullable<
     importAdventures: async (vaultId: string, adventures: unknown[]) => {
       if (vault.activeVaultId !== vaultId)
         throw new Error("The destination Vault is no longer open.");
-      const seen = new Set<string>();
-      const documents = adventures.map((input) => {
-        if (!input || typeof input !== "object" || Array.isArray(input))
-          throw new Error("Invalid adventure in backup.");
-        const raw = input as Record<string, unknown>;
-        const id = raw.id;
-        if (
-          typeof id !== "string" ||
-          !/^[a-zA-Z0-9_-]{1,160}$/.test(id) ||
-          seen.has(id)
-        )
-          throw new Error("Invalid or duplicate adventure ID in backup.");
-        const parsed = parseAdventureSessionForRecovery(raw);
-        if (parsed.session.id !== id)
-          throw new Error("Invalid adventure identity in backup.");
-        seen.add(id);
+      if (!preparedAdventures.has(adventures)) {
+        await prepareAdventures(adventures);
+      }
+      const inputs = preparedAdventures.get(adventures) ?? [];
+      if (inputs.length === 0) return;
+      const documents = inputs.map(({ id, raw }) => {
         return { id, data: JSON.stringify({ ...raw, vaultId }) };
       });
       const root = await vault.getActiveVaultHandle();

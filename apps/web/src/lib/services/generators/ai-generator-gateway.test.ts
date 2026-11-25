@@ -7,6 +7,57 @@ import {
 import { ProxyAIGeneratorGateway } from "./ai-generator-gateway";
 
 describe("ProxyAIGeneratorGateway", () => {
+  it("prepares the capability session before a no-key completion request", async () => {
+    const order: string[] = [];
+    const gateway = new ProxyAIGeneratorGateway(
+      {
+        getModel: async () => {
+          order.push("request");
+          return {
+            generateContent: async () => ({
+              response: { text: () => '{"title":"Done"}' },
+            }),
+          };
+        },
+      } as never,
+      async () => {
+        order.push("session");
+      },
+    );
+
+    await gateway.complete("prompt", "system");
+
+    expect(order).toEqual(["session", "request"]);
+  });
+
+  it("prepares the capability session before a no-key streaming request", async () => {
+    const order: string[] = [];
+    const gateway = new ProxyAIGeneratorGateway(
+      {
+        getModel: async () => {
+          order.push("request");
+          return {
+            async *generateContentStream() {
+              yield { type: "delta", text: '{"title":"Done"}' };
+              yield { type: "complete", text: '{"title":"Done"}' };
+            },
+          };
+        },
+      } as never,
+      async () => {
+        order.push("session");
+      },
+    );
+
+    const events = [];
+    for await (const event of gateway.completeStream("prompt", "system")) {
+      events.push(event);
+    }
+
+    expect(order).toEqual(["session", "request"]);
+    expect(events.at(-1)).toMatchObject({ type: "complete" });
+  });
+
   it("preserves an array envelope for downstream shape validation", async () => {
     const gateway = new ProxyAIGeneratorGateway({
       sendInteraction: async () => ({
@@ -314,6 +365,29 @@ describe("ProxyAIGeneratorGateway", () => {
   });
 
   describe("startChat", () => {
+    it("prepares the proxy session before resolving the chat model", async () => {
+      const calls: string[] = [];
+      const client = {
+        getModel: async () => {
+          calls.push("model");
+          return {
+            startChat: () => ({
+              sendMessageStream: async () => ({
+                stream: (async function* () {})(),
+              }),
+            }),
+          };
+        },
+      };
+      const gateway = new ProxyAIGeneratorGateway(client as never, async () => {
+        calls.push("session");
+      });
+
+      await gateway.startChat("system instruction");
+
+      expect(calls).toEqual(["session", "model"]);
+    });
+
     it("opens one session and lets multiple turns share it, extracting JSON from each reply", async () => {
       const responses = [
         '{"title":"Foundation"} trailing garbage',

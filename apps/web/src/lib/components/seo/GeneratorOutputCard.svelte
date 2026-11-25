@@ -3,7 +3,8 @@
   import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
   import { renderGeneratorMarkdown } from "#lib/components/seo/markdown-renderers.js";
   import type { MarkdownSectionForCopy } from "#lib/components/seo/markdown-sections.js";
-  import type { OneShotProgressStep, SessionEntity } from "generator-engine";
+  import type { OneShotProgressStep } from "generator-engine/one-shot-staged";
+  import type { SessionEntity } from "generator-engine/session-hub-helpers";
   import SessionHubWidget from "./SessionHubWidget.svelte";
   import GeneratorAiNotice, { hasAiNotice } from "./GeneratorAiNotice.svelte";
   import GenerationProgressList from "./GenerationProgressList.svelte";
@@ -135,7 +136,7 @@
     isSendingToMonsterLabs?: boolean;
   } = $props();
 
-  import { getThemeLoadingMessages } from "generator-engine";
+  import { getThemeLoadingMessages } from "generator-engine/loading-messages";
 
   let loadingIndex = $state(0);
   let activeMessages = $derived(getThemeLoadingMessages(worldTheme));

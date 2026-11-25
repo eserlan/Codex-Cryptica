@@ -4,7 +4,7 @@ import {
   type PointCrawlNetwork,
   type PointCrawlNodeRole,
   type PointCrawlStructuralRole,
-} from "generator-engine";
+} from "generator-engine/point-crawl-state";
 
 const ROLE_ICONS: Record<
   PointCrawlNodeRole | PointCrawlStructuralRole,

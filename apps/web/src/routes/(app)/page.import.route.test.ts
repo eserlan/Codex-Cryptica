@@ -51,6 +51,7 @@ vi.mock("#lib/services/demo.js", () => ({
   demoService: { startDemo: vi.fn() },
 }));
 vi.mock("#lib/config/index.js", () => ({
+  VERSION: "0.0.0-test",
   SCHEMA_ORG: {},
   DISCORD_URL: "https://discord.gg/5UUMCChF2u",
   REDDIT_URL: "https://www.reddit.com/r/codexcryptica/",

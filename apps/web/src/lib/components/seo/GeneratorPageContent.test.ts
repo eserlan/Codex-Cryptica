@@ -8,14 +8,33 @@ import { UIPersistence } from "#lib/stores/ui/persistence.js";
 import { hubContext } from "#lib/stores/hub-context.svelte.js";
 import { publicThemeStore } from "#lib/stores/public-theme.svelte.js";
 import GeneratorPageContent from "./GeneratorPageContent.svelte";
+import { saveGeneratorOutputForReload } from "./generator-output-reload.js";
 
 const generateBusiness = vi.hoisted(() => vi.fn());
+const preloadLocalGenerator = vi.hoisted(() => vi.fn(async () => {}));
 vi.mock("./SEOGeneratorLayout.svelte", async () => ({
   default: (await import("./test-fixtures/GeneratorPageLayoutHarness.svelte"))
     .default,
 }));
 vi.mock("#lib/services/seo/generator-engine.js", () => ({
   generatorEngine: { generateBusiness },
+}));
+vi.mock("./generator-page-local-generation.js", () => ({
+  preloadLocalGenerator,
+  generateLocally: (
+    slug: string,
+    context: {
+      business: Record<string, unknown>;
+      getActiveTheme: () => string;
+    },
+  ) => {
+    if (slug !== "business") throw new Error(`Unexpected test slug: ${slug}`);
+    return generateBusiness({
+      ...context.business,
+      genre: context.getActiveTheme(),
+      useAI: false,
+    });
+  },
 }));
 vi.mock("#lib/stores/session-hub.svelte.js", () => ({
   sessionHubStore: { entities: [] },
@@ -67,6 +86,46 @@ describe("generator page composition", () => {
     generateBusiness
       .mockReset()
       .mockResolvedValue({ ...draft, title: "Generated business" });
+    preloadLocalGenerator.mockReset().mockResolvedValue(undefined);
+  });
+
+  it("preloads the selected local generator after a client-side slug change", async () => {
+    const view = renderBusiness();
+    await waitFor(() =>
+      expect(preloadLocalGenerator).toHaveBeenCalledWith("business"),
+    );
+
+    await view.rerender({
+      slug: "social-hub",
+      persistence,
+      initialDraftOverride: draft,
+    } as never);
+
+    await waitFor(() =>
+      expect(preloadLocalGenerator).toHaveBeenLastCalledWith("social-hub"),
+    );
+  });
+
+  it("clears a recovered output when switching to another generator slug", async () => {
+    const recovered = {
+      ...draft,
+      title: "Recovered business result",
+    } as GeneratorOutput;
+    saveGeneratorOutputForReload("/generators/business", recovered);
+    const view = renderBusiness();
+    await waitFor(() =>
+      expect(screen.getByTestId("initial-draft").textContent).toBe(
+        "Recovered business result",
+      ),
+    );
+
+    await view.rerender({ slug: "social-hub", persistence } as never);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("initial-draft").textContent).not.toBe(
+        "Recovered business result",
+      ),
+    );
   });
 
   it("preserves overrides and forwards edited reactive form state to generation", async () => {

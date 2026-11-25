@@ -1,4 +1,4 @@
-import { resolveEntityType } from "generator-engine";
+import { resolveEntityType } from "generator-engine/campaign-registry";
 import type { Entity } from "schema";
 import type { SheetKind } from "@codex/stat-sheet-engine";
 import { vault } from "#lib/stores/vault.svelte.js";

@@ -1,6 +1,6 @@
 <!-- fallow-ignore-file css-broken-reference -- overflow-y-auto is a valid Tailwind utility; the class check misreads it. -->
 <script lang="ts">
-  import { tick } from "svelte";
+  import { onMount, tick } from "svelte";
   import { MAX_TEXT_CHARS } from "@codex/adventure-engine";
   import type { AdventureManager } from "#lib/stores/oracle/adventure-manager.svelte.js";
   import AdventureControlRetry from "./AdventureControlRetry.svelte";
@@ -53,6 +53,22 @@
   let textarea = $state<HTMLTextAreaElement>();
   let cancelButton = $state<HTMLButtonElement>();
   let typing = $state(false);
+  const generationMessages = [
+    "The Oracle traces the threads of consequence…",
+    "Fate gathers around your choice…",
+    "The world shifts in answer to your action…",
+    "The next turn of the tale is taking shape…",
+  ];
+  let generationMessageIndex = $state(0);
+
+  onMount(() => {
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+    const interval = window.setInterval(() => {
+      generationMessageIndex =
+        (generationMessageIndex + 1) % generationMessages.length;
+    }, 2_800);
+    return () => window.clearInterval(interval);
+  });
 
   async function focusCancelAfterSuggestion(): Promise<void> {
     await tick();
@@ -122,60 +138,109 @@
   );
 </script>
 
-{#snippet modeSwitchBar()}
+{#snippet desktopModeSwitch()}
   <div
     class={!phone && modeSwitchVisible
-      ? "flex flex-wrap items-center justify-between gap-2"
+      ? "inline-flex shrink-0 items-center self-end rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
       : "hidden"}
+    role="group"
+    aria-label="Composer mode"
     data-testid="adventure-composer-mode-bar"
   >
-    <div
-      class="inline-flex items-center gap-1 rounded-lg border border-theme-text/75 bg-theme-bg p-0.5"
-      role="group"
-      aria-label="Composer mode"
-      data-testid="adventure-composer-mode-switch"
+    <button
+      type="button"
+      class={isOocMode
+        ? "inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        : "inline-flex min-h-10 items-center gap-1.5 rounded-md bg-theme-primary px-2.5 py-1 text-sm font-semibold text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
+      aria-pressed={!isOocMode}
+      data-testid="adventure-mode-play"
+      onclick={() => selectMode("play")}
     >
-      <button
-        type="button"
-        class={isOocMode
-          ? "inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-          : "inline-flex min-h-8 items-center gap-1.5 rounded-md bg-theme-primary px-2.5 py-1 text-xs font-semibold text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
-        aria-pressed={!isOocMode}
-        data-testid="adventure-mode-play"
-        onclick={() => selectMode("play")}
-      >
-        <span aria-hidden="true" class="icon-[lucide--swords] h-3.5 w-3.5"
-        ></span>
-        <span>Play</span>
-      </button>
-      <button
-        type="button"
-        class={isOocMode
-          ? "inline-flex min-h-8 items-center gap-1.5 rounded-md bg-theme-primary px-2.5 py-1 text-xs font-semibold text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-          : "inline-flex min-h-8 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
-        aria-pressed={isOocMode}
-        data-testid="adventure-mode-ooc"
-        onclick={() => selectMode("ooc")}
-      >
-        <span
-          aria-hidden="true"
-          class="icon-[lucide--message-circle-question] h-3.5 w-3.5"
-        ></span>
-        <span>Ask GM</span>
-      </button>
-    </div>
-    {#if isOocMode}
-      <p class="text-xs text-theme-text" data-testid="adventure-ooc-mode-hint">
-        Out of character · No game time elapsed · No story changes
-      </p>
-    {/if}
+      <span aria-hidden="true" class="icon-[lucide--swords] h-4 w-4"></span>
+      <span>Play</span>
+    </button>
+    <button
+      type="button"
+      class={isOocMode
+        ? "inline-flex min-h-10 items-center gap-1.5 rounded-md bg-theme-primary px-2.5 py-1 text-sm font-semibold text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+        : "inline-flex min-h-10 items-center gap-1.5 rounded-md px-2.5 py-1 text-sm font-semibold text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"}
+      aria-pressed={isOocMode}
+      data-testid="adventure-mode-ooc"
+      onclick={() => selectMode("ooc")}
+    >
+      <span
+        aria-hidden="true"
+        class="icon-[lucide--message-circle-question] h-4 w-4"
+      ></span>
+      <span>Ask GM</span>
+    </button>
   </div>
 {/snippet}
 
+{#snippet desktopModeHint()}
+  {#if !phone && isOocMode}
+    <p class="text-xs text-theme-text" data-testid="adventure-ooc-mode-hint">
+      Out of character · No game time elapsed · No story changes
+    </p>
+  {/if}
+{/snippet}
+
+{#snippet freeActionTextarea()}
+  <label class="sr-only" for="adventure-action">
+    {isOocMode
+      ? "Ask the GM a question (out of character)…"
+      : "What do you do?"}
+  </label>
+  <textarea
+    maxlength={isOocMode ? MAX_TEXT_CHARS : undefined}
+    bind:this={textarea}
+    id="adventure-action"
+    rows="1"
+    class="min-h-[50px] sm:min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+    value={activeDraft}
+    oninput={(event) => updateDraft(event.currentTarget.value)}
+    onfocus={() => (typing = true)}
+    onblur={() => (typing = false)}
+    onkeydown={(event) => {
+      if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault();
+        submitDraft();
+      }
+    }}
+    {disabled}
+    placeholder={inputPlaceholder}
+  ></textarea>
+{/snippet}
+
+{#snippet freeActionSubmit()}
+  <button
+    class="flex min-h-[50px] min-w-[50px] sm:min-h-11 sm:min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
+    type="submit"
+    aria-label={isOocMode ? "Submit question to GM" : "Submit action"}
+    data-testid="adventure-submit-button"
+    disabled={disabled || !activeDraft.trim()}
+  >
+    <span
+      class={isOocMode
+        ? "icon-[lucide--message-circle-question] h-4 w-4"
+        : "icon-[lucide--send] h-4 w-4"}
+      aria-hidden="true"
+    ></span>
+    <span class="hidden sm:inline">{isOocMode ? "Ask" : "Send"}</span>
+  </button>
+{/snippet}
+
 {#snippet pendingGenerationRow()}
-  <div class={busy ? "flex items-center justify-between gap-3 py-1" : "hidden"}>
-    <div class="min-w-0" role="status">
-      <p class="flex items-center gap-2 text-sm text-theme-text">
+  <div
+    class={busy ? "flex items-center justify-between gap-3 py-1" : "hidden"}
+    data-testid="adventure-pending-generation-row"
+  >
+    <div class="min-w-0">
+      <p
+        class="flex items-center gap-2 text-sm text-theme-text"
+        aria-hidden="true"
+        data-testid="adventure-generating-message"
+      >
         <span
           class="icon-[lucide--sparkles] h-4 w-4 shrink-0 motion-safe:animate-pulse"
           aria-hidden="true"
@@ -184,8 +249,17 @@
           ? "Recording roll outcome…"
           : manager.oocGenerating
             ? "GM is answering (out of character)…"
-            : "Oracle is responding…"}
+            : generationMessages[generationMessageIndex]}
       </p>
+      {#if busy}
+        <span class="sr-only" role="status">
+          {manager.rollMutationPending
+            ? "Recording roll outcome…"
+            : manager.oocGenerating
+              ? "GM is answering (out of character)…"
+              : "Oracle is responding…"}
+        </span>
+      {/if}
       {#if manager.oocGenerating && manager.oocDraft?.trim()}
         <p class="truncate text-xs text-theme-text" title={manager.oocDraft}>
           Asking GM: {manager.oocDraft}
@@ -292,51 +366,22 @@
 
 {#snippet freeActionInputRow()}
   <div
-    class={actionControlsVisible || (phone && modeSwitchVisible)
+    class={actionControlsVisible || modeSwitchVisible
       ? "flex min-w-0 items-end gap-2"
       : "hidden"}
     data-testid="adventure-free-action"
   >
+    {@render desktopModeSwitch()}
     {@render mobileModeSwitch()}
-    <label class="sr-only" for="adventure-action">
-      {isOocMode
-        ? "Ask the GM a question (out of character)…"
-        : "What do you do?"}
-    </label>
-    <textarea
-      maxlength={isOocMode ? MAX_TEXT_CHARS : undefined}
-      bind:this={textarea}
-      id="adventure-action"
-      rows="1"
-      class="min-h-[50px] sm:min-h-11 min-w-0 flex-1 resize-none rounded-lg border border-theme-text/75 bg-theme-bg px-3 py-2 text-base leading-relaxed text-theme-text placeholder:text-theme-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-      value={activeDraft}
-      oninput={(event) => updateDraft(event.currentTarget.value)}
-      onfocus={() => (typing = true)}
-      onblur={() => (typing = false)}
-      onkeydown={(event) => {
-        if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) {
-          event.preventDefault();
-          submitDraft();
-        }
-      }}
-      {disabled}
-      placeholder={inputPlaceholder}
-    ></textarea>
-    <button
-      class="flex min-h-[50px] min-w-[50px] sm:min-h-11 sm:min-w-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-theme-primary px-3 py-2 text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-text"
-      type="submit"
-      aria-label={isOocMode ? "Submit question to GM" : "Submit action"}
-      data-testid="adventure-submit-button"
-      disabled={disabled || !activeDraft.trim()}
+    <div
+      class={actionControlsVisible || phone
+        ? "flex min-w-0 flex-1 items-end gap-2"
+        : "hidden"}
+      data-testid="adventure-free-action-controls"
     >
-      <span
-        class={isOocMode
-          ? "icon-[lucide--message-circle-question] h-4 w-4"
-          : "icon-[lucide--send] h-4 w-4"}
-        aria-hidden="true"
-      ></span>
-      <span class="hidden sm:inline">{isOocMode ? "Ask" : "Send"}</span>
-    </button>
+      {@render freeActionTextarea()}
+      {@render freeActionSubmit()}
+    </div>
   </div>
 {/snippet}
 
@@ -350,7 +395,7 @@
   <div
     class={phone
       ? "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain"
-      : "mx-auto min-h-0 w-full max-w-3xl overflow-y-auto overscroll-contain pb-2"}
+      : "mx-auto min-h-0 w-full max-w-none overflow-y-auto overscroll-contain pb-2"}
     data-testid="adventure-dock-extras"
   >
     {@render dockExtrasContent()}
@@ -362,7 +407,7 @@
       submitDraft();
     }}
   >
-    {@render modeSwitchBar()}
+    {@render desktopModeHint()}
     {@render pendingGenerationRow()}
     {@render freeActionInputRow()}
   </form>

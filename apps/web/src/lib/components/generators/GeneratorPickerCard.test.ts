@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/svelte";
-import { getGenerator } from "generator-engine";
+import { getGenerator } from "generator-engine/campaign-registry";
 import { describe, expect, it, vi } from "vitest";
 import GeneratorPickerCard from "./GeneratorPickerCard.svelte";
 

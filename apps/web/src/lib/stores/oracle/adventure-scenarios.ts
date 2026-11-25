@@ -1,11 +1,14 @@
 import {
+  acknowledgeAdventureCompletion,
   addScenario,
   advanceManualWorldTime,
   dismissAdventureDiscoveries,
+  launchContinuationCandidate,
   linkAdventurePlaceRecord,
   recordScenarioTheory,
   setScenarioFocus,
   setScenarioStatus,
+  type AdventureContinuationCandidate,
   type ScenarioItem,
   type ScenarioStatus,
 } from "@codex/adventure-engine";
@@ -27,6 +30,7 @@ export class AdventureScenarios {
     private readonly verifySession: (
       session: AdventureSession,
     ) => Promise<void>,
+    private readonly onSaved?: (session: AdventureSession) => Promise<void>,
   ) {}
 
   add(item: ScenarioItem): Promise<AdventureSession> {
@@ -88,6 +92,32 @@ export class AdventureScenarios {
     );
   }
 
+  acknowledgeCompletion(eventId: string): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      acknowledgeAdventureCompletion(
+        session,
+        eventId,
+        session.revision,
+        this.deps.now(),
+      ),
+    );
+  }
+
+  launchContinuation(
+    candidate: AdventureContinuationCandidate,
+    gmOnlyTruth?: string,
+  ): Promise<AdventureSession> {
+    return this.mutate((session) =>
+      launchContinuationCandidate(
+        session,
+        candidate,
+        session.revision,
+        this.deps.now(),
+        gmOnlyTruth,
+      ),
+    );
+  }
+
   linkPlaceRecord(name: string, recordId: string): Promise<AdventureSession> {
     return this.mutate((session) =>
       linkAdventurePlaceRecord(
@@ -115,7 +145,11 @@ export class AdventureScenarios {
   }
 
   private async mutate(
-    command: (session: AdventureSession) => ReturnType<typeof addScenario>,
+    command: (
+      session: AdventureSession,
+    ) =>
+      | { ok: true; session: AdventureSession; changed: boolean }
+      | { ok: false; reason: string },
   ): Promise<AdventureSession> {
     const session = this.state.session;
     if (!session) throw new Error("no-active-adventure");
@@ -131,6 +165,7 @@ export class AdventureScenarios {
     if (!saved.ok) throw saved.error;
     await this.verifySession(session);
     this.state.session = saved.session;
+    if (this.onSaved) await this.onSaved(saved.session);
     return saved.session;
   }
 }

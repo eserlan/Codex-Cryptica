@@ -3,10 +3,12 @@ import {
   buildRefinementPrompt,
   normalizeRefinementDocument,
   parseRefinementResponse,
-  type RefinableSource,
-  type RefinementDocument,
-  type RefinementProposal,
-} from "generator-engine";
+} from "generator-engine/generator-refinement";
+import type {
+  RefinableSource,
+  RefinementDocument,
+  RefinementProposal,
+} from "generator-engine/generator-refinement";
 import {
   GeneratorAITransport,
   LANGUAGE_GENERATION_CONFIG,

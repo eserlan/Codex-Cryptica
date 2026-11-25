@@ -147,6 +147,36 @@ const newProvisionalFactSchema = {
   },
 } as const;
 
+const newCausalCommitmentSchema = {
+  type: "object",
+  required: ["kind", "commitmentClass", "subject", "summary"],
+  properties: {
+    kind: {
+      type: "string",
+      enum: ["motive", "mechanism", "identity", "action", "link"],
+    },
+    commitmentClass: {
+      type: "string",
+      enum: ["supporting-explanation", "belief-testimony", "speculative-plan"],
+    },
+    subject: textSchema,
+    summary: textSchema,
+    actorRef: {
+      type: "object",
+      required: ["tier", "value"],
+      properties: {
+        tier: {
+          type: "string",
+          enum: ["source-record", "provisional-fact", "name"],
+        },
+        value: textSchema,
+      },
+    },
+    scenarioId: idSchema,
+    contested: { type: "boolean" },
+  },
+} as const;
+
 const scenarioElaborationSchema = {
   type: "object",
   required: ["scenarioId", "stage"],
@@ -157,6 +187,36 @@ const scenarioElaborationSchema = {
       enum: ["hearsay", "actionable-clue", "revelation-crisis"],
     },
     discovery: textSchema,
+  },
+} as const;
+
+const threadOutcomeProposalSchema = {
+  type: "object",
+  required: ["result", "reason"],
+  properties: {
+    threadId: idSchema,
+    scenarioId: idSchema,
+    goal: { ...textSchema, maxLength: 240 },
+    result: {
+      type: "string",
+      enum: ["achieved", "failed", "abandoned", "cold"],
+    },
+    reason: textSchema,
+    supportingFactIds: {
+      type: "array",
+      maxItems: 16,
+      items: idSchema,
+    },
+    supportingCommitmentIds: {
+      type: "array",
+      maxItems: 16,
+      items: idSchema,
+    },
+    unresolvedConsequences: {
+      type: "array",
+      maxItems: 6,
+      items: textSchema,
+    },
   },
 } as const;
 
@@ -204,6 +264,26 @@ export const adventureTurnResponseSchema = {
         "revealSecretIds",
         "provisionalFacts",
         "sourceRecordIds",
+      ],
+      propertyOrdering: [
+        "kind",
+        "hiddenPatch",
+        "revealSecretIds",
+        "revealScenarioIds",
+        "packageEvents",
+        "actorEvents",
+        "elaborateScenarios",
+        "threadOutcomes",
+        "narration",
+        "timeAdvance",
+        "moveTo",
+        "placeCues",
+        "personRefs",
+        "visiblePatch",
+        "provisionalFacts",
+        "causalCommitments",
+        "sourceRecordIds",
+        "suggestedActions",
       ],
       properties: {
         kind: { type: "string", enum: ["complete"] },
@@ -335,7 +415,17 @@ export const adventureTurnResponseSchema = {
         revealSecretIds: { type: "array", items: { type: "string" } },
         revealScenarioIds: { type: "array", items: idSchema },
         elaborateScenarios: { type: "array", items: scenarioElaborationSchema },
+        threadOutcomes: {
+          type: "array",
+          maxItems: 4,
+          items: threadOutcomeProposalSchema,
+        },
         provisionalFacts: { type: "array", items: newProvisionalFactSchema },
+        causalCommitments: {
+          type: "array",
+          maxItems: 4,
+          items: newCausalCommitmentSchema,
+        },
         sourceRecordIds: { type: "array", items: idSchema },
         suggestedActions: {
           type: "array",
@@ -348,6 +438,15 @@ export const adventureTurnResponseSchema = {
     {
       type: "object",
       required: ["kind", "uncertainty", "stakes", "sourceRecordIds"],
+      propertyOrdering: [
+        "kind",
+        "setupNarration",
+        "uncertainty",
+        "stakes",
+        "dice",
+        "sourceRecordIds",
+        "suggestedActions",
+      ],
       properties: {
         kind: { type: "string", enum: ["roll-required"] },
         setupNarration: { ...textSchema, maxLength: 2_000 },

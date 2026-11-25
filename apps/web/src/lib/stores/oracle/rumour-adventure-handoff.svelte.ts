@@ -2,11 +2,9 @@ import {
   createScenarioState,
   type ScenarioState,
 } from "@codex/adventure-engine";
-import type {
-  GeneratedDraft,
-  SelectedRumourForPlay,
-  SelectedAdventureForPlay,
-} from "generator-engine";
+import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
+import type { SelectedRumourForPlay } from "generator-engine/rumour-play-selection";
+import type { SelectedAdventureForPlay } from "generator-engine/adventure-play-selection";
 
 export type PendingAdventureHandoff = {
   vaultId: string;

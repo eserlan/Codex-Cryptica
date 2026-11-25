@@ -11,7 +11,7 @@
  * by surrounding whitespace or casing.
  */
 
-import { contextRetrievalService } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
 
 /** Minimal interface matching the vault store subset used by context retrieval. */
 interface VaultLike {
@@ -65,13 +65,14 @@ export async function buildRetrievedWorldContext(
   try {
     const retrievedParts = await Promise.all(
       queries.map(async (query) => {
-        const retrieved = await contextRetrievalService.retrieveContext(
-          query,
-          new Set<string>(),
-          vault as any,
-          frontpageEntityId,
-          isImage,
-        );
+        const retrieved =
+          await lazyOracleAIServices.contextRetrievalService.retrieveContext(
+            query,
+            new Set<string>(),
+            vault as any,
+            frontpageEntityId,
+            isImage,
+          );
         return retrieved.content.trim();
       }),
     );

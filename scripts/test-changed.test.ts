@@ -5,6 +5,8 @@ import {
   getWorkspaceTestInvocation,
   groupTestsByWorkspace,
   isUnitTestFile,
+  resolveWorkspaceCommand,
+  runWorkspaceGroups,
 } from "./test-changed.mjs";
 
 describe("test-changed", () => {
@@ -98,5 +100,63 @@ describe("test-changed", () => {
   test("leaves CI and explicit worker overrides untouched", () => {
     expect(getLocalTestEnv({ CI: "true" }, 8)).toEqual({});
     expect(getLocalTestEnv({ VITEST_MAX_WORKERS: "6" }, 8)).toEqual({});
+  });
+
+  test("runs local workspace groups serially and CI groups in parallel", async () => {
+    const groups = new Map([
+      ["apps/web", ["apps/web/src/example.test.ts"]],
+      ["packages/ai-engine", ["packages/ai-engine/src/example.test.ts"]],
+    ]);
+    const measureConcurrency = async (parallel: boolean) => {
+      let active = 0;
+      let maximum = 0;
+      const run = async () => {
+        active += 1;
+        maximum = Math.max(maximum, active);
+        await new Promise((resolve) => setTimeout(resolve, 1));
+        active -= 1;
+        return true;
+      };
+
+      await runWorkspaceGroups(groups, run, parallel);
+      return maximum;
+    };
+
+    expect(await measureConcurrency(false)).toBe(1);
+    expect(await measureConcurrency(true)).toBe(2);
+  });
+
+  test("resolves buffered commands for apps/web, packages, and root", () => {
+    const webCmd = resolveWorkspaceCommand(
+      "apps/web",
+      ["apps/web/src/lib/foo.test.ts"],
+      "/repo",
+    );
+    expect(webCmd).toEqual({
+      cmd: "bunx",
+      args: ["vitest", "run", "src/lib/foo.test.ts"],
+      cwd: "/repo/apps/web",
+    });
+
+    const rootCmd = resolveWorkspaceCommand(
+      "root",
+      ["scripts/test-changed.test.ts"],
+      "/repo",
+    );
+    expect(rootCmd).toEqual({
+      cmd: "bun",
+      args: ["test", "scripts/test-changed.test.ts"],
+      cwd: "/repo",
+    });
+  });
+
+  test("throws when resolving an unknown package workspace without package.json", () => {
+    expect(() =>
+      resolveWorkspaceCommand(
+        "packages/does-not-exist",
+        ["packages/does-not-exist/foo.test.ts"],
+        "/repo",
+      ),
+    ).toThrow();
   });
 });

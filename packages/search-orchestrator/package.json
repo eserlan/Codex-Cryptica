@@ -12,11 +12,11 @@
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
-    "svelte": "^5.0.0"
+    "svelte": "^5.59.1"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
-    "eslint": "^10.11.0"
+    "eslint": "^10.15.0"
   },
   "dependencies": {
     "@codex/events": "workspace:*",
@@ -25,7 +25,7 @@
     "@codex/search-engine": "workspace:*",
     "@codex/vault-engine": "workspace:*",
     "comlink": "^4.4.2",
-    "dexie": "^4.4.2",
+    "dexie": "^4.4.7",
     "schema": "workspace:*"
   }
 }

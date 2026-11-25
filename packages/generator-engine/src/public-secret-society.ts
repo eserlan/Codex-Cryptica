@@ -1,5 +1,5 @@
 import { withPublicCreativeCue } from "./public-creative-diversity";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson } from "./llm-response-utils";
 import {
   type Rng,

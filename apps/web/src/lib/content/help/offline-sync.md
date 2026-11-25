@@ -20,6 +20,15 @@ By default, campaign data is stored in the browser's **Origin Private File Syste
 
 Uploading only happens when you explicitly use a feature that needs it, such as an AI request, publishing, or an opted-in cloud destination.
 
+## What Works Offline — and What Does Not
+
+Two different things make Codex feel offline-capable, and they have different limits:
+
+- **Your vault data** lives in OPFS on your device (see below). Once a vault has been opened and saved on this device, you can keep viewing and editing it without a connection; changes stay on the device until a sync or backup feature runs.
+- **The app itself** is kept ready by a service worker that caches only the vault app's shell (its code and assets) after you have used a vault while online. Reloading a previously used vault offline therefore works. Public pages — the landing pages, `/tools`, `/generators`, `/blog` and similar discovery pages — are deliberately never stored in that cache, so they need a connection and always show the current published version rather than a stale copy.
+
+After an update is published, the next visit picks it up automatically; you do not need to clear your browser cache. This offline behaviour is tested in Chromium-based browsers. Other browsers may differ in how they retain the app shell, but your vault data in OPFS is unaffected by that.
+
 ## Saving & Loading with Local Folders
 
 You can mirror your internal vault to a folder on your computer. This is separate from Codex's app-managed **Cloud copy** setting.

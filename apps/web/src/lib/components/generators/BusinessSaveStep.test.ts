@@ -1,11 +1,9 @@
 /** @vitest-environment jsdom */
 import { fireEvent, render, screen } from "@testing-library/svelte";
 import { describe, expect, it, vi } from "vitest";
-import {
-  buildBusinessSavePlan,
-  generateBusinessLocal,
-  type BusinessSavePlan,
-} from "generator-engine";
+import { buildBusinessSavePlan } from "generator-engine/business-save";
+import { generateBusinessLocal } from "generator-engine/business-local";
+import type { BusinessSavePlan } from "generator-engine/business-save";
 import BusinessSaveStep from "./BusinessSaveStep.svelte";
 
 function seeded(seed: number): () => number {

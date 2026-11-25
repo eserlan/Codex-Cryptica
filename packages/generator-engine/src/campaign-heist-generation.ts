@@ -9,7 +9,7 @@ import type {
   GenerationEvent,
   GeneratorRunRequest,
 } from "./campaign-generator-types";
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 
 /** Campaign transport adapter; the heist policy itself lives in the shared flow. */
 export async function* streamCampaignHeist(

@@ -5,58 +5,82 @@ import {
   buildTavernPrompt,
   parseTavernResponse,
   generateTavernLocal,
+  type SocialHubGeneratorOptions,
+  type TavernGeneratorOptions,
+} from "generator-engine/public-social-hub";
+import {
   buildOriginPrompt,
   parseOriginResponse,
   generateOriginLocal,
+  type OriginGeneratorOptions,
+} from "generator-engine/public-origin";
+import {
   buildCouncilVoteFoundationPrompt,
   runCouncilVoteStaged,
   generateCouncilVoteLocal,
   extractCouncilVoteNames,
+  type CouncilVoteGeneratorOptions,
+} from "generator-engine/public-council-vote";
+import {
   buildHeistPrompt,
   generateHeistLocal,
-  generateHeistStaged,
   extractHeistNames,
-  generateConceptSeed,
+  type HeistGeneratorOptions,
+} from "generator-engine/public-heist";
+import {
+  generateHeistStaged,
   heistStatsLog,
+} from "generator-engine/heist-staged";
+import { generateConceptSeed } from "generator-engine/concept-seed";
+import {
   buildSecretSocietyPrompt,
   parseSecretSocietyResponse,
   generateSecretSocietyLocal,
+  type SecretSocietyGeneratorOptions,
+} from "generator-engine/public-secret-society";
+import {
   buildKingdomPrompt,
   parseKingdomResponse,
   generateKingdomLocal,
+  type KingdomGeneratorOptions,
+} from "generator-engine/public-kingdom";
+import {
   buildNationPrompt,
   parseNationResponse,
   generateNationLocal,
+  type NationGeneratorOptions,
+} from "generator-engine/public-nation";
+import {
   buildPantheonPrompt,
   parsePantheonResponse,
   generatePantheonLocal,
+  type PantheonGeneratorOptions,
+} from "generator-engine/public-pantheon";
+import {
   buildNamesPrompt,
   parseNamesResponse,
   generateNamesLocal,
+  type NamesGeneratorOptions,
+} from "generator-engine/public-names";
+import {
   buildShipPrompt,
   parseShipResponse,
   generateShipLocal,
+  type ShipGeneratorOptions,
+} from "generator-engine/public-ship";
+import {
   buildLanguagePrompt,
   generateLanguageLocal,
+  type LanguageGeneratorOptions,
+  languageConfig,
+} from "generator-engine/public-language";
+import {
   buildNewsSheetPrompt,
   parseNewsSheetResponse,
   generateNewsSheetLocal,
-  type SocialHubGeneratorOptions,
-  type TavernGeneratorOptions,
-  type OriginGeneratorOptions,
-  type CouncilVoteGeneratorOptions,
-  type HeistGeneratorOptions,
-  type SecretSocietyGeneratorOptions,
-  type KingdomGeneratorOptions,
-  type NationGeneratorOptions,
-  type PantheonGeneratorOptions,
-  type NamesGeneratorOptions,
-  type ShipGeneratorOptions,
-  type LanguageGeneratorOptions,
   type NewsSheetGeneratorOptions,
-  type OneShotProgressStep,
-  languageConfig,
-} from "generator-engine";
+} from "generator-engine/public-news-sheet";
+import { type OneShotProgressStep } from "generator-engine/one-shot-staged";
 import { getSessionContext } from "./session-context";
 import {
   generationInputHistoryStore,

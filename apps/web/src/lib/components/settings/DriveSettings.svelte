@@ -1,14 +1,7 @@
 <script lang="ts">
   import { driveStore } from "#lib/stores/drive.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
-  import {
-    connectVaultToDrive,
-    disconnectVaultFromDrive,
-    pushVaultToDrive,
-    pullVaultFromDrive,
-    listDriveVaults,
-    importVaultFromDrive,
-  } from "@codex/gdrive-sync";
+  import { loadGDriveSync } from "#lib/services/gdrive-sync-loader.js";
   import { onMount } from "svelte";
   import { getDB } from "#lib/utils/idb.js";
   import { SyncRegistry, CloudSyncMetadataService } from "@codex/sync-engine";
@@ -20,6 +13,7 @@
   let manualFolderId = $state("");
   let showManualInput = $state(false);
   let metadata = $state<any>(null);
+  let driveChunkFailed = $state(false);
 
   // Vault importer state
   let isLoadingDriveVaults = $state(false);
@@ -28,11 +22,24 @@
 
   const hasClientId = !!import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-  async function loadMetadata() {
-    if (!vault.activeVaultId) return;
+  async function loadDriveSync() {
+    try {
+      const sync = await loadGDriveSync();
+      driveChunkFailed = false;
+      return sync;
+    } catch (error) {
+      driveChunkFailed = true;
+      throw error;
+    }
+  }
+
+  async function loadMetadata(vaultId = vault.activeVaultId) {
+    if (!vaultId || vault.activeVaultId !== vaultId) return;
     const db = await getDB();
     const ms = new CloudSyncMetadataService(new SyncRegistry(db));
-    metadata = await ms.getMetadata(vault.activeVaultId);
+    const nextMetadata = await ms.getMetadata(vaultId);
+    if (vault.activeVaultId !== vaultId) return;
+    metadata = nextMetadata;
     // Mirrored onto the store so the destination picker can tell whether this
     // vault is on Drive without repeating the lookup.
     driveStore.metadata = metadata;
@@ -46,11 +53,13 @@
   });
 
   async function handleConnect() {
+    const targetVaultId = vault.activeVaultId;
+    const targetFolderId = showManualInput ? manualFolderId : undefined;
     console.log(
       "[DriveSettings] handleConnect triggered. Active Vault ID:",
       vault.activeVaultId,
     );
-    if (!vault.activeVaultId) {
+    if (!targetVaultId) {
       console.warn("[DriveSettings] Cannot connect: No active vault ID found.");
       notificationStore.notify("No active vault selected.", "error");
       return;
@@ -58,14 +67,13 @@
     isConnecting = true;
     try {
       console.log("[DriveSettings] Starting connectVaultToDrive flow...");
-      await connectVaultToDrive(
-        vault.activeVaultId,
-        showManualInput ? manualFolderId : undefined,
-      );
+      const driveSync = await loadDriveSync();
+      if (vault.activeVaultId !== targetVaultId) return;
+      await driveSync.connectVaultToDrive(targetVaultId, targetFolderId);
       console.log(
         "[DriveSettings] connectVaultToDrive complete. Loading metadata...",
       );
-      await loadMetadata();
+      await loadMetadata(targetVaultId);
       notificationStore.notify("Connected to Google Drive", "success");
     } catch (e: any) {
       console.error("[DriveSettings] Connection flow failed:", e);
@@ -79,7 +87,8 @@
   }
 
   async function handleDisconnect() {
-    if (!vault.activeVaultId) return;
+    const targetVaultId = vault.activeVaultId;
+    if (!targetVaultId) return;
     const confirmed = await notificationStore.confirm({
       title: "Disconnect Google Drive?",
       message:
@@ -89,23 +98,37 @@
     });
 
     if (confirmed) {
-      await disconnectVaultFromDrive(vault.activeVaultId);
-      metadata = null;
-      driveStore.metadata = null;
-      notificationStore.notify("Google Drive disconnected", "info");
+      try {
+        const driveSync = await loadDriveSync();
+        if (vault.activeVaultId !== targetVaultId) return;
+        await driveSync.disconnectVaultFromDrive(targetVaultId);
+        if (vault.activeVaultId !== targetVaultId) return;
+        metadata = null;
+        driveStore.metadata = null;
+        notificationStore.notify("Google Drive disconnected", "info");
+      } catch (e: any) {
+        notificationStore.notify(
+          e.message || "Failed to disconnect Google Drive",
+          "error",
+        );
+      }
     }
   }
 
   async function handlePush() {
-    if (!vault.activeVaultId) return;
+    const targetVaultId = vault.activeVaultId;
+    if (!targetVaultId) return;
     isPushing = true;
     notificationStore.notify(
       "Cloud sync started in background. You can continue working.",
       "info",
     );
     try {
-      await pushVaultToDrive(vault.activeVaultId);
-      await loadMetadata();
+      const driveSync = await loadDriveSync();
+      if (vault.activeVaultId !== targetVaultId) return;
+      await driveSync.pushVaultToDrive(targetVaultId);
+      if (vault.activeVaultId !== targetVaultId) return;
+      await loadMetadata(targetVaultId);
       notificationStore.notify("Vault saved to Google Drive", "success");
     } catch (e: any) {
       notificationStore.notify(e.message || "Failed to push to Drive", "error");
@@ -115,7 +138,8 @@
   }
 
   async function handlePull() {
-    if (!vault.activeVaultId) return;
+    const targetVaultId = vault.activeVaultId;
+    if (!targetVaultId) return;
     const confirmed = await notificationStore.confirm({
       title: "Overwrite from Cloud?",
       message:
@@ -132,8 +156,11 @@
       "info",
     );
     try {
-      await pullVaultFromDrive(vault.activeVaultId);
-      await loadMetadata();
+      const driveSync = await loadDriveSync();
+      if (vault.activeVaultId !== targetVaultId) return;
+      await driveSync.pullVaultFromDrive(targetVaultId);
+      if (vault.activeVaultId !== targetVaultId) return;
+      await loadMetadata(targetVaultId);
       notificationStore.notify("Vault loaded from Google Drive", "success");
     } catch (e: any) {
       notificationStore.notify(
@@ -149,7 +176,8 @@
     isLoadingDriveVaults = true;
     driveVaults = null;
     try {
-      driveVaults = await listDriveVaults();
+      const driveSync = await loadDriveSync();
+      driveVaults = await driveSync.listDriveVaults();
     } catch (e: any) {
       notificationStore.notify(
         e.message || "Failed to list Drive vaults",
@@ -164,7 +192,8 @@
     isImporting = true;
     notificationStore.notify(`Importing vault "${name}" from Drive…`, "info");
     try {
-      await importVaultFromDrive(id, name);
+      const driveSync = await loadDriveSync();
+      await driveSync.importVaultFromDrive(id, name);
       driveVaults = null;
       await loadMetadata();
       notificationStore.notify(`Vault "${name}" loaded from Drive`, "success");
@@ -207,6 +236,22 @@
         The <code>VITE_GOOGLE_CLIENT_ID</code> environment variable is not set. Google
         Drive integration is currently disabled.
       </p>
+    </div>
+  {/if}
+
+  {#if driveChunkFailed}
+    <div
+      class="mb-4 space-y-2 rounded-lg border border-theme-border bg-theme-surface p-4"
+      role="alert"
+    >
+      <p class="text-sm text-theme-text">
+        Google Drive tools failed to load. Reload this page to try again.
+      </p>
+      <button
+        type="button"
+        class="rounded bg-theme-primary px-3 py-2 text-sm font-bold text-theme-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-theme-primary"
+        onclick={() => window.location.reload()}>Reload page</button
+      >
     </div>
   {/if}
 

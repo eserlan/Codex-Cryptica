@@ -6,7 +6,7 @@ import { upsertMarkdownSection } from "#lib/utils/markdown.js";
 import {
   buildPersonalityPrompt,
   parsePersonalityResponse,
-} from "generator-engine";
+} from "generator-engine/public-personality";
 import { buildRelatedEntityContext } from "@codex/oracle-engine";
 import { personalitySectionTitle } from "./generate-personality";
 

@@ -7,7 +7,7 @@ import {
   concatenateBody,
 } from "../../../../../packages/editor-core/src/operations/merge-utils";
 import { vault as defaultVault } from "../stores/vault.svelte";
-import { textGenerationService } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
 import { TIER_MODES } from "schema";
 import type { LocalEntity } from "../stores/vault/types";
 import { getOracleApiKey, getOracleTier } from "../stores/oracle/hooks";
@@ -118,13 +118,14 @@ export class NodeMergeService {
         lore: n.frontmatter.lore,
       });
 
-      const aiProposal = await textGenerationService.generateMergeProposal(
-        apiKey,
-        modelName,
-        mapToAiEntity(targetContent),
-        sources.map(mapToAiEntity),
-        { isGuest: this.deps.vault.isGuest },
-      );
+      const aiProposal =
+        await lazyOracleAIServices.textGenerationService.generateMergeProposal(
+          apiKey,
+          modelName,
+          mapToAiEntity(targetContent),
+          sources.map(mapToAiEntity),
+          { isGuest: this.deps.vault.isGuest },
+        );
 
       suggestedFrontmatter = mergeFrontmatter(targetContent, sources);
       suggestedBody = aiProposal.body;

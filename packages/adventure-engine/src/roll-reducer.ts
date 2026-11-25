@@ -5,6 +5,8 @@ import {
 } from "./hidden-state";
 import { parseTurnProposal } from "./schemas";
 import { applyCompletedTurn } from "./completed-turn";
+import { classifyTurnProgress } from "./turn-progression";
+import { classifyActionResolution } from "./action-resolution";
 import { error, updatedSession } from "./reducer-result";
 import type {
   AdventureSession,
@@ -128,5 +130,13 @@ export function resolveRecordedRoll(
     bands: pendingRoll.dice?.bands,
     outcome: pendingRoll.suppliedOutcome!,
   };
+  if (resolvedTurn.generation) {
+    const progress = classifyTurnProgress(resolvedTurn, session);
+    resolvedTurn.generation.progressCategory = progress.kind;
+    resolvedTurn.generation.actionResolution = classifyActionResolution(
+      resolvedTurn,
+      progress,
+    );
+  }
   return { ok: true, value: candidate };
 }

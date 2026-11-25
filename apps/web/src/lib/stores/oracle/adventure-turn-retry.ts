@@ -22,15 +22,20 @@ const reasonOf = (cause: unknown) =>
 const diagnosticOf = (cause: unknown): HiddenLeakageDiagnostic | undefined =>
   cause instanceof AdventureProposalError ? cause.diagnostic : undefined;
 
-/** The result of applying a reply, or why the engine refused it. */
+/**
+ * The result of applying a reply, or why the engine refused it. `attempt`
+ * (1, then 2) tells the applier that the first reply was rejected and the
+ * provider context was reset before this retry — #5112 `rejected-turn`.
+ */
 function tryApply<Generated, Accepted>(
-  apply: (generated: Generated) => Accepted,
+  apply: (generated: Generated, attempt: 1 | 2) => Accepted,
   generated: Generated,
+  attempt: 1 | 2,
 ):
   | { ok: true; value: Accepted }
   | { ok: false; reason: string; diagnostic?: HiddenLeakageDiagnostic } {
   try {
-    return { ok: true, value: apply(generated) };
+    return { ok: true, value: apply(generated, attempt) };
   } catch (cause) {
     return {
       ok: false,
@@ -50,17 +55,17 @@ function tryApply<Generated, Accepted>(
  */
 export async function generateAcceptedTurn<Generated, Accepted>(options: {
   generate: (correction?: string) => Promise<Generated>;
-  apply: (generated: Generated) => Accepted;
+  apply: (generated: Generated, attempt: 1 | 2) => Accepted;
   signal: AbortSignal;
   /** Drop the provider's record of the refused reply before asking again. */
   resetProviderContext: () => Promise<void> | void;
 }): Promise<Accepted> {
   const { generate, apply, signal } = options;
-  const first = tryApply(apply, await generate());
+  const first = tryApply(apply, await generate(), 1);
   if (first.ok) return first.value;
   if (signal.aborted) throw new DOMException("Cancelled", "AbortError");
   await Promise.resolve(options.resetProviderContext()).catch(() => {});
-  const second = tryApply(apply, await generate(first.reason));
+  const second = tryApply(apply, await generate(first.reason), 2);
   if (second.ok) return second.value;
   throw new AdventureTurnRejectedError(second.reason, second.diagnostic);
 }

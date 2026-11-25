@@ -22,6 +22,33 @@ if (typeof navigator === "undefined") {
 }
 
 describe("AdventureTurnGenerationService", () => {
+  it("uses stateless generation for reconstructed-context evaluation arms", async () => {
+    const sendInteraction = vi.fn(async () => ({
+      id: "interaction-1",
+      text: completeResponse,
+    }));
+    const getModel = vi.fn(async () => ({
+      async generateContent() {
+        return { response: { text: () => completeResponse } };
+      },
+    }));
+    const service = new AdventureTurnGenerationService({
+      getModel,
+      sendInteraction,
+    });
+
+    await service.generate({
+      session,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+      contextMode: "reconstructed",
+    });
+
+    expect(sendInteraction).not.toHaveBeenCalled();
+    expect(getModel).toHaveBeenCalledOnce();
+  });
+
   it.each([
     "interaction-client-unavailable",
     "interaction-stream-unavailable",
@@ -712,7 +739,12 @@ describe("AdventureTurnGenerationService", () => {
     expect(JSON.parse(calls[1].input).retainedSourceIds).toEqual(["barrow"]);
     expect(JSON.parse(calls[1].input).state).toBeUndefined();
     expect(JSON.parse(calls[1].input).transcript).toBeUndefined();
-    expect(JSON.parse(calls[1].input).stateDelta).toEqual({});
+    expect(JSON.parse(calls[1].input).stateDelta).toEqual({
+      "GM-ONLY director brief": expect.objectContaining({
+        mode: "open-world",
+        advisory: true,
+      }),
+    });
     // A long-running scene keeps its provider conversation beyond turn 20.
     expect(calls[20].previousInteractionId).toBe("response-20");
     expect(JSON.parse(calls[20].input).anchors).toHaveLength(0);

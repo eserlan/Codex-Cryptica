@@ -9,7 +9,7 @@
 
 import { type Clock, systemClock } from "@codex/runtime";
 import { AdventureFlowLayout } from "./adventure-flow-layout";
-import type { PublicGeneratorOutput } from "../public-generator-adapters";
+import type { PublicGeneratorOutput } from "../public-generator-types";
 import type {
   AdventureCanvasDocument,
   AdventureEdge,

@@ -1,47 +1,15 @@
-import { browser } from "$app/env";
 import {
-  AiSessionManager,
-  aiClientManager,
-  type CachedToken,
-} from "@codex/ai-engine";
-import { getSessionTurnstileToken } from "#lib/services/publishing/turnstile.js";
-import { oracleBridge } from "#lib/cloud-bridge/oracle-bridge.js";
-import { proposerBridge } from "#lib/cloud-bridge/proposer-bridge.js";
+  installWorkerTokenProvider,
+  relaySessionToken,
+} from "#lib/cloud-bridge/worker-session-bridge.js";
 
 /**
- * Wires the shared `aiClientManager` to a session manager that mints
- * anti-abuse capability tokens.
+ * Attaches worker push/pull capability-token relays to the shared session
+ * manager owned by `public-session-bootstrap.ts`.
  *
- * This is the only place the web app touches the token flow. Attachment,
- * queueing and refresh all live inside `@codex/ai-engine` — the app just
- * supplies the DOM-bound Turnstile solve, which that package can't do
- * itself.
- *
- * `initAiSession()` wires the shared `aiClientManager` and both worker pull/push
- * hooks app-wide without loading Turnstile or issuing a challenge.
- * `aiClientManager` is a module singleton shared by *every* caller, including
- * the public no-login generators under `(marketing)/generators` and
- * `(marketing)/tools` (see `services/seo/generator-engine.ts`). Those pages
- * generate without ever mounting the `(app)` layout, so wiring happens app-wide
- * while the first AI or proxy call triggers the Turnstile handshake lazily.
- *
- * The Oracle and Proposer AI Web Workers each carry their own isolated
- * `aiClientManager` instance (Workers don't share module state with the main
- * thread) and have no DOM, so neither can solve a Turnstile challenge or
- * mint a token itself. `onTokenChange` below relays every mint/refresh/clear
- * from this, the one real session manager, into both workers — see
- * `RelayedSessionToken` in `@codex/ai-engine` for the worker-side half.
- *
- * That push alone leaves a race: a worker created (or a relayed token that
- * expires) between two pushes has nothing valid cached until the next one
- * fires. `provideTokenSnapshot` below closes it — it's wired into both
- * bridges as a pull hook a worker can call immediately before it sends a
- * request, instead of only being pushed to.
+ * Called on `(app)` layout mount so marketing and root layouts never pull in
+ * worker bridges (`oracleBridge` / `proposerBridge`).
  */
-
-const PROXY_URL =
-  import.meta.env.VITE_ORACLE_PROXY_URL ||
-  "https://oracle-proxy.espen-erlandsen.workers.dev";
 
 export function requiresCapabilitySession(proxyUrl: string): boolean {
   if (!import.meta.env.DEV) return true;
@@ -50,70 +18,32 @@ export function requiresCapabilitySession(proxyUrl: string): boolean {
   return hostname !== "localhost" && hostname !== "127.0.0.1";
 }
 
-let sessionManager: AiSessionManager | null = null;
-
-function relayTokenToWorkers(token: CachedToken | null): void {
-  oracleBridge.setSessionToken(token);
-  proposerBridge.setSessionToken(token);
-}
-
-/**
- * Answers a Worker's on-demand pull (see `RelayedSessionToken.setPuller`)
- * with a fresh token snapshot, running the Turnstile handshake if none is
- * cached yet. This is what closes the residual race `onTokenChange`/
- * `relayTokenToWorkers` alone can't: a Worker created, or a relayed token
- * that expires, between two pushes now asks for a snapshot immediately
- * before its next request instead of waiting on the next mint/refresh/clear.
- */
-function provideTokenSnapshot(
-  forceRefresh = false,
-): Promise<CachedToken | null> {
-  const manager = ensureSessionManager();
-  return manager
-    ? manager.getTokenSnapshot(forceRefresh)
-    : Promise.resolve(null);
-}
-
-function ensureSessionManager(): AiSessionManager | null {
-  if (!browser || !requiresCapabilitySession(PROXY_URL)) return null;
-  if (!sessionManager) {
-    sessionManager = new AiSessionManager({
-      proxyUrl: PROXY_URL,
-      solveChallenge: getSessionTurnstileToken,
-      onTokenChange: relayTokenToWorkers,
-    });
-    aiClientManager.setSessionManager(sessionManager);
-    oracleBridge.setTokenProvider(provideTokenSnapshot);
-    proposerBridge.setTokenProvider(provideTokenSnapshot);
-  }
-  return sessionManager;
-}
-
-/**
- * Bearer token for callers that talk to the proxy directly instead of through
- * `aiClientManager` (the contextual help assistant, #3427). Resolves `null`
- * when no session is required (a local development proxy) or none could be
- * obtained; the proxy is the authority on whether that is acceptable.
- *
- * `forceRefresh` discards the cached token first, for the one retry after a
- * 401 that `aiClientManager` also makes.
- */
 export async function getAiSessionToken(
   forceRefresh = false,
 ): Promise<string | null> {
-  const manager = ensureSessionManager();
-  if (!manager) return null;
-  if (forceRefresh) manager.invalidate();
-  return manager.getToken();
+  const { getAiSessionToken: getToken } =
+    await import("./public-session-bootstrap.js");
+  return getToken(forceRefresh);
+}
+
+async function attachWorkerSessionRelays(): Promise<void> {
+  const { ensurePublicAiSession, getAiSessionSnapshot, setSessionTokenRelay } =
+    await import("./public-session-bootstrap.js");
+  setSessionTokenRelay(relaySessionToken);
+  const manager = ensurePublicAiSession();
+  if (!manager) return;
+  installWorkerTokenProvider(getAiSessionSnapshot);
 }
 
 /**
- * Wire the token flow without solving a challenge.
- *
- * Cheap and side-effect-free, so it belongs on every page: a visitor reading
- * the blog costs nothing, but if they wander into a public generator the
- * token is minted on demand and the manager queues the request behind it.
+ * Wire the shared capability-token manager and both worker push/pull hooks
+ * without solving Turnstile or issuing a network request.
  */
-export function initAiSession(): void {
-  ensureSessionManager();
+export async function initAiSession(): Promise<void> {
+  await attachWorkerSessionRelays();
+}
+
+/** Prepare the capability session and worker relays before an AI operation. */
+export async function ensureAiSession(): Promise<void> {
+  await attachWorkerSessionRelays();
 }

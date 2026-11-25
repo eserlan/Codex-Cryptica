@@ -56,7 +56,7 @@ describe("FeatureFlagsStore", () => {
     );
     expect(store.isEnabled("adventureArtwork")).toBe(true);
     expect(storage.getItem("codex-feature-flags-cache:staging")).toBe(
-      JSON.stringify({ adventureArtwork: true }),
+      JSON.stringify({ ...DEFAULT_FEATURE_FLAGS, adventureArtwork: true }),
     );
   });
 

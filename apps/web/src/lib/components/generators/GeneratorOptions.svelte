@@ -1,9 +1,9 @@
 <script lang="ts">
-  import {
-    getGenerator,
-    type GeneratorId,
-    type GeneratorOptionDefinition,
-  } from "generator-engine";
+  import { getGenerator } from "generator-engine/campaign-registry";
+  import type {
+    GeneratorId,
+    GeneratorOptionDefinition,
+  } from "generator-engine/campaign-generator-types";
   import SelectWithCustomOption from "#lib/components/forms/SelectWithCustomOption.svelte";
   import {
     getThemedChoices,

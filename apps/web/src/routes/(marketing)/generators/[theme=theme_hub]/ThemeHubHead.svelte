@@ -7,13 +7,20 @@
     hubCanonicalUrl,
     hubStructuredData,
   } from "./theme-hub-metadata";
+  import { themeBootstrapScript } from "#lib/theme/theme-bootstrap.js";
   const cleanBase = basePath();
   let { theme, config }: { theme: ThemeSlug; config: ThemeConfig } = $props();
   const canonicalUrl = $derived(hubCanonicalUrl(theme));
   const structuredData = $derived(hubStructuredData(theme, config));
+  const themeBootstrap = $derived(themeBootstrapScript(config.localStorageId));
 </script>
 
 <svelte:head>
+  {#if themeBootstrap}
+    <!-- Apply the hub genre before the body is parsed to avoid a first-paint flash. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+    {@html themeBootstrap}
+  {/if}
   <title>{config.metaTitle}</title>
   <meta name="description" content={config.metaDescription} />
   <meta name="robots" content="index, follow" />

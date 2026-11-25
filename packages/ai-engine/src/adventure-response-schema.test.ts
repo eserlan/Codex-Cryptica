@@ -32,6 +32,16 @@ describe("adventure structured response contract", () => {
         (schema) => schema.properties.kind.enum[0],
       ),
     ).toEqual(["complete", "roll-required"]);
+    const [completeSchema, rollSchema] = adventureTurnResponseSchema.oneOf;
+    expect(completeSchema.propertyOrdering.indexOf("hiddenPatch")).toBeLessThan(
+      completeSchema.propertyOrdering.indexOf("narration"),
+    );
+    expect(
+      completeSchema.propertyOrdering.indexOf("revealSecretIds"),
+    ).toBeLessThan(completeSchema.propertyOrdering.indexOf("narration"));
+    expect(rollSchema.propertyOrdering.indexOf("kind")).toBeLessThan(
+      rollSchema.propertyOrdering.indexOf("setupNarration"),
+    );
   });
 
   it("parses complete and roll-required proposals", () => {
@@ -101,6 +111,28 @@ describe("adventure structured response contract", () => {
     );
   });
 
+  it("offers optional bounded causalCommitments", () => {
+    const complete = adventureTurnResponseSchema.oneOf[0];
+    expect(complete.properties.causalCommitments.maxItems).toBe(4);
+    expect(complete.required).not.toContain("causalCommitments");
+    const base = JSON.parse(completeResponse) as Record<string, unknown>;
+    const entry = {
+      kind: "motive",
+      commitmentClass: "supporting-explanation",
+      subject: "Mara",
+      summary: "Guides travellers to fund the mill repairs.",
+    };
+    const parse = (causalCommitments: unknown) =>
+      parseAdventureResponse(JSON.stringify({ ...base, causalCommitments }));
+    expect(parse([entry])).toMatchObject({ causalCommitments: [entry] });
+    expect(() => parse(Array(5).fill(entry))).toThrow(
+      "invalid-adventure-response",
+    );
+    expect(() => parse([{ ...entry, kind: "unknown" }])).toThrow(
+      "invalid-adventure-response",
+    );
+  });
+
   it("offers optional bounded actorEvents", () => {
     const complete = adventureTurnResponseSchema.oneOf[0];
     expect(complete.properties.actorEvents.maxItems).toBe(8);
@@ -148,7 +180,21 @@ describe("adventure structured response contract", () => {
       moveTo: { name: "Kettleford Mill", cues: ["river", "village"] },
       placeCues: ["market", "busy"],
     });
-    const completeProps = adventureTurnResponseSchema.oneOf[0].properties;
+    const completeProps = adventureTurnResponseSchema.oneOf[0]
+      .properties as unknown as {
+      placeCues?: unknown;
+      moveTo: { properties: { cues?: unknown } };
+      visiblePatch: {
+        properties: {
+          activeCharacters: {
+            properties: {
+              add: { items: { properties: { cues?: unknown } } };
+              update: { items: { properties: { cues?: unknown } } };
+            };
+          };
+        };
+      };
+    };
     expect(completeProps.placeCues).toBeDefined();
     expect(completeProps.moveTo.properties.cues).toBeDefined();
     expect(

@@ -3,6 +3,7 @@ import { resolveOracleProxyUrl } from "#lib/config/oracle-proxy.js";
 
 export const DEFAULT_FEATURE_FLAGS = {
   adventureArtwork: false,
+  artworkDemandTelemetry: false,
 } as const;
 
 export type FeatureFlagName = keyof typeof DEFAULT_FEATURE_FLAGS;
@@ -12,6 +13,7 @@ const KNOWN_FLAG_KEYS = Object.keys(DEFAULT_FEATURE_FLAGS) as FeatureFlagName[];
 
 const BUILD_ENV_MAP: Record<FeatureFlagName, string> = {
   adventureArtwork: "VITE_ADVENTURE_ARTWORK",
+  artworkDemandTelemetry: "VITE_ARTWORK_DEMAND_TELEMETRY",
 };
 
 const CACHE_KEY_PREFIX = "codex-feature-flags-cache:";

@@ -2,7 +2,7 @@
   import type {
     CampaignGeneratorDefinition,
     GeneratorId,
-  } from "generator-engine";
+  } from "generator-engine/campaign-generator-types";
 
   let {
     gen,

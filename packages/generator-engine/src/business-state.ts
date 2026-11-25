@@ -4,7 +4,7 @@
  * rivals, pressure and hooks; it is not a shop inventory.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 
 export type BusinessScale =
   "tiny" | "small" | "established" | "regional" | "major";

@@ -1,4 +1,5 @@
 import { mergeProvisionalFacts } from "./provisional-facts";
+import { mergeCausalCommitments } from "./causal-commitments";
 import { systemIdGenerator } from "@codex/runtime";
 import {
   classifyHiddenLeakageFinding,
@@ -10,11 +11,13 @@ import {
 } from "./hidden-state";
 import { applyScenarioTimePressures, applyTimeAdvance } from "./world-time";
 import {
-  MAX_SERIALIZED_STATE_CHARS,
+  MAX_DURABLE_STATE_CHARS,
   parseTurnProposal,
-  validateStateBudget,
+  validateDurableStateBudget,
 } from "./schemas";
-import type { IdFactory } from "./reducer-ids";
+import { updateEmergentThreadsOnTurn } from "./emergent-threads";
+import { reconcileThreadOutcomes } from "./thread-outcomes";
+import { allocateId, existingIds, type IdFactory } from "./reducer-ids";
 import { error, updatedSession } from "./reducer-result";
 import {
   hasImmutableScenarioRewrite,
@@ -33,6 +36,11 @@ import {
 } from "./package-progress";
 import { applyPlaces } from "./places";
 import { materializeTurnState, type MaterializedTurnState } from "./turn-state";
+import {
+  classifyTurnProgress,
+  resolvePriorProgressionState,
+} from "./turn-progression";
+import { classifyActionResolution } from "./action-resolution";
 import type {
   ActorEventProposal,
   AdventureSession,
@@ -40,6 +48,7 @@ import type {
   AdventureValidationError,
   CommitMetadata,
   CommittedAdventureTurn,
+  GenerationMetadata,
   PackageEventProposal,
   PackageProgress,
   Result,
@@ -193,9 +202,10 @@ function resolvePackageProgress(
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
   meta: CommitMetadata,
   dropped: string[],
-): void {
+): boolean {
   const moveTo = validSceneMove(candidate, proposal, meta, dropped);
   const before = candidate.packageProgress;
+  const packageSceneMoved = moveTo !== undefined && moveTo !== before?.sceneId;
   const index = packageIndexFromMeta(meta);
   const proposed = proposal.packageEvents ?? [];
   const proposedActors = proposal.actorEvents ?? [];
@@ -215,12 +225,13 @@ function resolvePackageProgress(
       meta,
       dropped,
     );
-    return;
+    return packageSceneMoved;
   }
   dropMissingPackageProposals(proposed, proposedActors, dropped);
   if (moveTo !== undefined) {
     candidate.packageProgress = { ...before, sceneId: moveTo };
   }
+  return packageSceneMoved;
 }
 
 const MAX_DROPPED_REASONS = 24;
@@ -285,8 +296,13 @@ export function applyCompletedTurn(
   if (revealError) return error(revealError.code, revealError.message);
   const dropped = [...materialized.dropped];
   const clock = resolveClock(session, proposal, meta.turnId, dropped);
-  const { time, timeAdvance } = clock;
-  resolvePackageProgress(candidate, proposal, meta, dropped);
+  const { timeAdvance } = clock;
+  const packageSceneMoved = resolvePackageProgress(
+    candidate,
+    proposal,
+    meta,
+    dropped,
+  );
   candidate.visibleState = materialized.visibleState;
   candidate.hiddenState = materialized.hiddenState;
   const placeStep = applyPlaces(
@@ -296,27 +312,22 @@ export function applyCompletedTurn(
     materialized.visiblePatch,
     createId,
     proposal.placeCues,
+    { playerAction: meta.playerAction ?? "", narration: proposal.narration },
   );
   if (!placeStep.ok) return error("conflicting-patch", placeStep.message);
-  if (time.value && clock.applied) {
-    const pressureResult = applyTurnWorldTimeAndPressures(
-      candidate,
-      proposal,
-      time.value,
-      meta.turnId,
-      now,
-    );
-    if (!pressureResult.ok) {
-      return error(
-        "state-budget-exceeded",
-        "A scenario event history has reached its limit.",
-      );
-    }
-  }
+  const clockError = applyClockAndPressures(
+    candidate,
+    proposal,
+    clock,
+    meta.turnId,
+    now,
+  );
+  if (clockError) return clockError;
   candidate.provisionalFacts = mergeProvisionalFacts(
     candidate.provisionalFacts,
     materialized,
   );
+  applyCausalCommitments(candidate, materialized);
   const turn = createCommittedTurn(
     session,
     proposal,
@@ -345,18 +356,79 @@ export function applyCompletedTurn(
     dropped,
   );
   if (elaborationError) return elaborationError;
+  const nextEmergent = updateEmergentThreadsOnTurn(
+    candidate,
+    turn,
+    () => allocateId(existingIds(candidate), createId) ?? createId(),
+  );
+  if (nextEmergent.length > 0) candidate.emergentThreads = nextEmergent;
+  reconcileThreadOutcomes(
+    candidate,
+    turn,
+    proposal.threadOutcomes,
+    now,
+    dropped,
+  );
   if (dropped.length > 0) {
     turn.dropped = boundDroppedReasons(dropped);
   }
+  if (turn.generation) {
+    const progress = classifyTurnProgress(turn, candidate, {
+      priorState: resolvePriorProgressionState(turn, session),
+    });
+    turn.generation.progressCategory = progress.kind;
+    turn.generation.actionResolution = classifyActionResolution(
+      turn,
+      progress,
+      { packageSceneMoved },
+    );
+  }
   const result = updatedSession(candidate, now);
   candidate.lastPlayedAt = now;
-  if (!validateStateBudget(candidate)) {
+  if (!validateDurableStateBudget(candidate)) {
     return error(
       "state-budget-exceeded",
-      `The compact adventure state exceeds ${MAX_SERIALIZED_STATE_CHARS} characters.`,
+      `The durable adventure state exceeds ${MAX_DURABLE_STATE_CHARS} characters.`,
     );
   }
   return result;
+}
+
+function applyClockAndPressures(
+  candidate: AdventureSession,
+  proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
+  clock: ReturnType<typeof resolveClock>,
+  turnId: string,
+  now: string,
+) {
+  if (!clock.time.value || !clock.applied) return null;
+  const pressureResult = applyTurnWorldTimeAndPressures(
+    candidate,
+    proposal,
+    clock.time.value,
+    turnId,
+    now,
+  );
+  if (pressureResult.ok) return null;
+  return error(
+    "state-budget-exceeded",
+    "A scenario event history has reached its limit.",
+  );
+}
+
+function applyCausalCommitments(
+  candidate: AdventureSession,
+  materialized: MaterializedTurnState,
+): void {
+  if (
+    materialized.causalCommitments.length === 0 &&
+    !candidate.causalCommitments
+  )
+    return;
+  candidate.causalCommitments = mergeCausalCommitments(
+    candidate.causalCommitments,
+    materialized,
+  );
 }
 
 function applyTurnWorldTimeAndPressures(
@@ -415,6 +487,21 @@ function applyTurnWorldTimeAndPressures(
   return { ok: true };
 }
 
+/** Defensive copy so later caller mutation cannot rewrite a committed turn. */
+function copyGenerationMetadata(
+  generation: GenerationMetadata,
+): GenerationMetadata {
+  return {
+    ...generation,
+    ...(generation.sourceCounts
+      ? { sourceCounts: { ...generation.sourceCounts } }
+      : {}),
+    ...(generation.scenarioIds
+      ? { scenarioIds: [...generation.scenarioIds] }
+      : {}),
+  };
+}
+
 function createCommittedTurn(
   session: AdventureSession,
   proposal: Extract<AdventureTurnProposal, { kind: "complete" }>,
@@ -426,7 +513,7 @@ function createCommittedTurn(
     { kind: "complete" }
   >["timeAdvance"],
 ): CommittedAdventureTurn {
-  return {
+  const turn: CommittedAdventureTurn = {
     id: meta.turnId,
     sequence: session.turns.length,
     inputId: meta.inputId,
@@ -440,6 +527,11 @@ function createCommittedTurn(
       ...materialized.provisionalFacts.map((fact) => fact.id),
       ...materialized.updatedProvisionalFacts.map((fact) => fact.id),
     ],
+    ...(materialized.causalCommitments.length
+      ? {
+          causalCommitmentIds: materialized.causalCommitments.map((e) => e.id),
+        }
+      : {}),
     committedAt: now,
     ...(timeAdvance
       ? {
@@ -451,4 +543,13 @@ function createCommittedTurn(
       : {}),
     suggestedActions: proposal.suggestedActions,
   };
+  if (meta.generation) {
+    // #5110 classification is computed here, verbatim, so every consumer
+    // shares one progress vocabulary; a supplied value never overrides it.
+    turn.generation = {
+      ...copyGenerationMetadata(meta.generation),
+      progressCategory: classifyTurnProgress(turn, session).kind,
+    };
+  }
+  return turn;
 }

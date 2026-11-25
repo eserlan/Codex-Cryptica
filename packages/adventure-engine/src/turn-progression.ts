@@ -31,6 +31,8 @@ export {
   hasOtherScenarioScopedActivity,
   isPlayerVisibleScenarioEvent,
   matchesPursuedTokens,
+  resolvePriorProgressionState,
+  type PriorProgressionState,
   type PursuedThreadScope,
 };
 
@@ -69,7 +71,7 @@ const COMMITMENT_ACTION_RE =
 const INVESTIGATIVE_INQUIRY_PREFIX_RE =
   /^(?:i\s+)?(?:ask|question|inquire|enquire|interview|interrogate|press|probe|talk\s+to|speak\s+(?:to|with)|check\s+with)\b/i;
 
-const ACTIVE_INSPECTION_RE =
+export const ACTIVE_INSPECTION_RE =
   /\b(?:search|inspect|examine|check|investigate|look\s+(?:at|in|inside|under|around|behind|for)|open|probe|test|verify|audit|read|count|weigh|measure|scan|sweep|excavate|dig|trace)\b/i;
 
 const EXTRA_NON_ANSWER_RE =
@@ -103,8 +105,121 @@ export function isDisengagementAction(action: string): boolean {
   return DISENGAGEMENT_ACTION_RE.test(action);
 }
 
+const SPEAKER_FRAMING_RE =
+  /^(?:the\s+)?[\w'-]+(?:\s+[\w'-]+){0,3}\s+(?:says?|mutters?|replies?|replied|answers?|answered|sighs?|shrugs?|frowns?|hesitates?|nods?|shakes?\s+(?:his|her|their)\s+head|flips?\s+a\s+page|glances?\s+(?:away|aside|down|up)|stares?|pauses?)\b/i;
+
+const REDIRECT_ONLY_RE =
+  /^(?:you\s+(?:should|can|could|might)\s+)?(?:ask|check|try|go|speak|talk|look)\s+(?:at|with|to|in|elsewhere|around|the)\b/i;
+
+const ANSWER_DELIVERY_RE =
+  /\b(?:names?|named|identifies?|identified|confirms?|confirmed|explains?|explained|reveals?|revealed|offers?|offered|hands?|handed|reports?|reported|admits?|admitted)\b/i;
+
+const AFFIRMATIVE_STOP_WORDS = new Set(
+  "a an the and or but though although yet however so if in on at to of for from by with as is are was were be been being he she they it we you i his her their its my your our this that these those there here".split(
+    " ",
+  ),
+);
+
+function stripSurroundingQuotes(text: string): string {
+  return text.replace(/^["'“”‘’]+|["'“”‘’]+$/g, "").trim();
+}
+
+function contentWordCount(text: string): number {
+  const words = text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s'-]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length >= 2 && !AFFIRMATIVE_STOP_WORDS.has(w));
+  return words.length;
+}
+
+function extractQuotedSegments(narration: string): Set<string> {
+  const quoted = new Set<string>();
+  const re = /["“]([^"”]+)["”]/g;
+  for (const match of narration.matchAll(re)) {
+    if (match[1]) quoted.add(match[1]);
+  }
+  return quoted;
+}
+
+function isExcludedClause(cleaned: string): boolean {
+  return (
+    !cleaned ||
+    isTurnNonAnswer(cleaned) ||
+    WITNESS_DEFLECTION_RE.test(cleaned) ||
+    NEGATIVE_FINDING_RE.test(cleaned) ||
+    SPEAKER_FRAMING_RE.test(cleaned) ||
+    REDIRECT_ONLY_RE.test(cleaned)
+  );
+}
+
+function isSubstantiveAffirmativeClause(
+  rawClause: string,
+  inQuotes: boolean,
+  actionTopic: ReadonlySet<string>,
+): boolean {
+  const cleaned = stripSurroundingQuotes(rawClause);
+  if (isExcludedClause(cleaned) || contentWordCount(cleaned) < 2) {
+    return false;
+  }
+  if (inQuotes || ANSWER_DELIVERY_RE.test(cleaned)) return true;
+  return [...threadTopicWords(cleaned)].some((word) => actionTopic.has(word));
+}
+
+const SUMMON_REQUEST_RE =
+  /\b(?:bring|summon|fetch|call\s+(?:for|in)|send\s+for)\b/i;
+
+function hasFulfilledInquiryPatch(
+  turn: CommittedAdventureTurn,
+  actionTopic: ReadonlySet<string>,
+): boolean {
+  if (actionTopic.size === 0 || !SUMMON_REQUEST_RE.test(turn.playerAction)) {
+    return false;
+  }
+  return turn.visiblePatch.activeCharacters.add.some((entry) => {
+    for (const word of threadTopicWords(entry.text)) {
+      if (actionTopic.has(word)) return true;
+    }
+    return false;
+  });
+}
+
+function hasResponsiveAnswerWithQualification(
+  turn: CommittedAdventureTurn,
+): boolean {
+  const actionTopic = threadTopicWords(turn.playerAction);
+  if (hasFulfilledInquiryPatch(turn, actionTopic)) return true;
+
+  const quotedSegments = extractQuotedSegments(turn.narration);
+  const clauses = turn.narration
+    .split(/[.!?;:\n]+|,?\s+\b(?:but|though|although|yet|however)\b\s+/i)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  for (const clause of clauses) {
+    const cleaned = stripSurroundingQuotes(clause);
+    const inQuotes =
+      /^["“]/.test(clause) ||
+      /["”]$/.test(clause) ||
+      [...quotedSegments].some((q) => cleaned && q.includes(cleaned));
+    if (isSubstantiveAffirmativeClause(clause, inQuotes, actionTopic)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function isTurnNonAnswer(narration: string): boolean {
   return isNonAnswer(narration) || EXTRA_NON_ANSWER_RE.test(narration);
+}
+
+/**
+ * Returns true when an investigative inquiry turn's narration is genuinely
+ * unanswered, rather than a responsive answer paired with an epistemic limit.
+ */
+export function isUnansweredInquiryTurn(turn: CommittedAdventureTurn): boolean {
+  if (!isTurnNonAnswer(turn.narration)) return false;
+  return !hasResponsiveAnswerWithQualification(turn);
 }
 
 export function isInvestigativeInquiry(action: string): boolean {
@@ -400,8 +515,12 @@ function isNewLocationTravel(ctx: TurnContext): boolean {
   }
   const travelDeflection =
     isInvestigativeInquiry(ctx.turn.playerAction) &&
-    isTurnNonAnswer(ctx.turn.narration);
-  return !WITNESS_DEFLECTION_RE.test(ctx.turn.narration) && !travelDeflection;
+    isUnansweredInquiryTurn(ctx.turn);
+  return (
+    (!WITNESS_DEFLECTION_RE.test(ctx.turn.narration) ||
+      hasResponsiveAnswerWithQualification(ctx.turn)) &&
+    !travelDeflection
+  );
 }
 
 function locationOrObjMatchesScope(
@@ -569,7 +688,7 @@ export function classifyTurnProgress(
     matchUsefulNegativeFinding(ctx),
   ].filter((item): item is CategoryMatch => item !== null);
 
-  const nonAnswerNarration = isTurnNonAnswer(turn.narration);
+  const nonAnswerNarration = isUnansweredInquiryTurn(turn);
   const inquiryNonAnswer =
     !isDeliberateRepeat(turn.playerAction) &&
     isInvestigativeInquiry(turn.playerAction) &&

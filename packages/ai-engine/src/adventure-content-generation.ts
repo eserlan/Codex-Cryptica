@@ -8,6 +8,7 @@ import type {
 import { AdventureInteractionContext } from "./adventure-interaction-context";
 import {
   collectAdventureStream,
+  createNarrationPreviewPublisher,
   streamAborted,
   type AdventureStream,
   type AdventureStreamEvent,
@@ -55,9 +56,8 @@ export class AdventureContentGeneration {
     const input = buildAdventureContentInput(prompt.serialized);
     streamAborted(signal);
     const stream = await streamModel.generateContentStream(input, signal);
-    // Stream provider transport, but never publish an unchecked JSON prefix:
-    // later fields may introduce new unrevealed GM-only facts.
-    const buffer = await collectAdventureStream(stream, () => {}, signal);
+    const publishPreview = createNarrationPreviewPublisher(request);
+    const buffer = await collectAdventureStream(stream, publishPreview, signal);
     return parseAdventureResponse(buffer);
   }
 

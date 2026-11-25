@@ -2019,4 +2019,116 @@ describe("Turn progression classifier (#5110)", () => {
     );
     expect(pacing?.recoveryDue).not.toBe(true);
   });
+
+  it("distinguishes responsive witness replies with epistemic limits from genuine non-answers (#5175)", () => {
+    const responsiveTurns = [
+      // 1. Direct answer + epistemic limit
+      makeTurn(
+        0,
+        "Who is your employer?",
+        'The servant answers: "Master Vale; the steward is inside. I don\'t know the other household."',
+      ),
+      // 2. Summoned person arriving + fulfilled request with caveat
+      makeTurn(
+        1,
+        "Bring the steward and explain the deliveries.",
+        "The steward appears, confirms the deliveries and offers a ledger, though he cannot say who signed the outer manifest.",
+        {
+          visiblePatch: {
+            ...makeTurn(1, "", "").visiblePatch,
+            activeCharacters: {
+              add: [
+                { id: "steward-1", text: "Steward", source: "provisional" },
+              ],
+              update: [],
+              removeIds: [],
+            },
+          },
+        },
+      ),
+      // 3. Partial answer with limitation
+      makeTurn(
+        2,
+        "Where was the order returned, and who saw it?",
+        "The steward names the harbour office, recipient Master Vale, and noon delivery time, but cannot identify additional witnesses.",
+      ),
+    ];
+
+    const responsiveSession = parseAdventureSession({
+      ...baseSession(),
+      turns: responsiveTurns,
+    });
+
+    for (const turn of responsiveTurns) {
+      const classified = classifyTurnProgress(turn, responsiveSession);
+      expect(classified.kind).not.toBe("repeated-non-answer");
+      expect(classified.nonAnswer).toBe(false);
+    }
+
+    const responsivePacing = investigativeProgressPacing(
+      responsiveSession,
+      "Ask the steward who signed the manifest?",
+    );
+    expect(responsivePacing?.repeatedNonAnswerTurns ?? 0).toBe(0);
+    expect(responsivePacing?.recoveryDue).not.toBe(true);
+
+    const brief = buildGMDirectorBrief({
+      session: responsiveSession,
+      phase: "action",
+      playerAction: "Ask the steward who signed the manifest?",
+    });
+    expect(brief?.investigativeRecoveryDue).not.toBe(true);
+
+    // 4-6. Actual refusal, duplicated evasions, and question genuinely unanswered after incidental facts
+    const evasionTurns = [
+      makeTurn(
+        0,
+        "Ask the gatekeeper who ordered the deliveries?",
+        'The gatekeeper shakes his head. "I refuse to say, and I have nothing to add."',
+      ),
+      makeTurn(
+        1,
+        "Press the gatekeeper again about the deliveries?",
+        'The gatekeeper stares past you. "I don\'t know who ordered the deliveries; ask at the office."',
+      ),
+      makeTurn(
+        2,
+        "Question the clerk about who ordered the deliveries?",
+        'The lantern flickers on the damp stone. "There is no record here, and I cannot name anyone."',
+        {
+          visiblePatch: {
+            ...makeTurn(2, "", "").visiblePatch,
+            knownFacts: {
+              add: [
+                {
+                  id: "incidental-1",
+                  text: "Office tally lists 4 crates unpaid.",
+                  source: "provisional",
+                },
+              ],
+              update: [],
+              removeIds: [],
+            },
+          },
+        },
+      ),
+    ];
+    const evasionSession = parseAdventureSession({
+      ...baseSession(),
+      turns: evasionTurns,
+    });
+
+    for (const turn of evasionTurns) {
+      const classified = classifyTurnProgress(turn, evasionSession);
+      expect(classified.kind).toBe("repeated-non-answer");
+      expect(classified.nonAnswer).toBe(true);
+    }
+
+    const evasionPacing = investigativeProgressPacing(
+      evasionSession,
+      "Ask the watchman who ordered the deliveries?",
+    );
+    expect(evasionPacing?.repeatedNonAnswerTurns).toBe(3);
+    expect(evasionPacing?.recoveryDue).toBe(true);
+  });
 });

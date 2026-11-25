@@ -9,6 +9,7 @@ import {
   sanitizeHelpContext,
   validateRegistry,
 } from "help-engine";
+import { HELP_ARTICLE_METADATA } from "#lib/config/help-article-metadata.js";
 
 const helpDir = join(__dirname, "help");
 const articles = readdirSync(helpDir)
@@ -27,6 +28,14 @@ describe("help registry against the real in-app help articles", () => {
 
   it("includes the Session Hub article this spike added", () => {
     expect(helpIds.has("session-hub")).toBe(true);
+  });
+
+  it("keeps the lightweight Cif index aligned with article IDs and titles", () => {
+    const byId = (items: readonly { id: string; title: string }[]) =>
+      [...items].sort((a, b) => a.id.localeCompare(b.id));
+    expect(byId(HELP_ARTICLE_METADATA)).toEqual(
+      byId(articles.map(({ id, title }) => ({ id, title }))),
+    );
   });
 
   it("includes the Tales of the Valiant campaign guide article", () => {

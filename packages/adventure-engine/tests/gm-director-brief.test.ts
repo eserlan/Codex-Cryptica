@@ -1248,10 +1248,20 @@ describe("GMDirectorBrief (#5109)", () => {
   });
 
   it("omits GM-ONLY director brief cleanly when baseState approaches MAX_SERIALIZED_STATE_CHARS without throwing", () => {
-    const filler = "X".repeat(558);
+    const filler = "X".repeat(561);
     const largeFacts = Array.from({ length: 50 }, (_, idx) => ({
       id: `fact-${idx}`,
       text: `Known fact ${idx}: ${filler}`,
+      source: "canonical" as const,
+    }));
+    const largeObjectives = Array.from({ length: 18 }, (_, idx) => ({
+      id: `obj-${idx}`,
+      text: `Objective ${idx}: ${filler}`,
+      source: "canonical" as const,
+    }));
+    const largeCharacters = Array.from({ length: 7 }, (_, idx) => ({
+      id: `char-${idx}`,
+      text: `Character ${idx}: ${filler}`,
       source: "canonical" as const,
     }));
     const s = parseAdventureSession({
@@ -1259,6 +1269,8 @@ describe("GMDirectorBrief (#5109)", () => {
       visibleState: {
         ...baseSession().visibleState,
         knownFacts: largeFacts,
+        objectives: largeObjectives,
+        activeCharacters: largeCharacters,
       },
       scenarioCollection: {
         version: 1,

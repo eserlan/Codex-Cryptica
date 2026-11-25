@@ -13,7 +13,7 @@ import { formatPublicScenarioConcept } from "./public-scenario-diversity";
  * shows up in the GM-only `lore` field.
  */
 
-import type { PublicGeneratorOutput } from "./public-generator-adapters";
+import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
 import {
   type Rng,

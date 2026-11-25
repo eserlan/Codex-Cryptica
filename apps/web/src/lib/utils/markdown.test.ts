@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
 import {
   renderMarkdown,
@@ -38,6 +39,16 @@ describe("markdown.ts utility", () => {
       assertNoRemoteResourceFetches(html);
       expect(html).toContain("pixel");
       expect(html).toContain("text");
+    });
+
+    it("keeps images only when allowImages is requested", () => {
+      const html = renderMarkdown("![art](https://example.com/a.png)", {
+        allowImages: true,
+      });
+      expect(html).toContain('<img src="https://example.com/a.png" alt="art">');
+      expect(renderMarkdown("![art](https://example.com/a.png)")).not.toContain(
+        "<img",
+      );
     });
 
     it("should highlight search queries using <mark> tags", () => {

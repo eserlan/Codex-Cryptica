@@ -1,13 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import type { CampaignGeneratorServiceDeps } from "generator-engine";
+import type { CampaignGeneratorServiceDeps } from "generator-engine/campaign-generator-service";
 const captured = vi.hoisted(() => ({
   deps: null as CampaignGeneratorServiceDeps | null,
 }));
-vi.mock("generator-engine", async () => {
-  const actual =
-    await vi.importActual<typeof import("generator-engine")>(
-      "generator-engine",
-    );
+vi.mock("generator-engine/campaign-generator-service", async () => {
+  const actual = await vi.importActual<
+    typeof import("generator-engine/campaign-generator-service")
+  >("generator-engine/campaign-generator-service");
   return {
     ...actual,
     CampaignGeneratorService: class {

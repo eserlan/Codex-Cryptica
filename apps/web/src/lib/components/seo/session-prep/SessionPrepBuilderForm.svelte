@@ -16,7 +16,7 @@
     type SessionPrepStep,
     type SessionPrepSuggestion,
     type TurnedDownIdea,
-  } from "generator-engine";
+  } from "generator-engine/session-prep";
   import {
     SESSION_PREP_SEED_MAX_LENGTH,
     type SessionPrepService,

@@ -68,4 +68,86 @@ describe("adventure continuation payloads", () => {
     expect(payload).not.toHaveProperty("transcript");
     expect(payload).not.toHaveProperty("responseRepair");
   });
+
+  it("retains the exact current action when provider history is reused", () => {
+    const longSession = {
+      ...session,
+      premise: "The city is facing a water crisis. ".repeat(17),
+    };
+    const context = new AdventureInteractionContext().get(longSession.id);
+    const initial = buildAdventureInteractionInput(
+      buildAdventurePrompt({
+        ...request,
+        session: longSession,
+      }),
+      context,
+    );
+    context.previousInteractionId = "previous-provider-interaction";
+    context.stateSnapshot = initial.state;
+
+    const playerAction = "Ask the charcoal-burner to guide me to the shelter.";
+    const continued = buildAdventureInteractionInput(
+      buildAdventurePrompt({
+        ...request,
+        session: longSession,
+        phase: "action",
+        playerAction,
+      }),
+      context,
+    );
+    const payload = JSON.parse(continued.input);
+
+    expect(payload.input.phase).toBe("action");
+    expect(payload.input.playerAction).toBe(playerAction);
+    expect(payload.input.adventure.premise).toBe(longSession.premise);
+    expect(payload).not.toHaveProperty("transcript");
+  });
+
+  it("carries newly answered OOC exchanges in stateDelta on continued Play turns", () => {
+    const context = new AdventureInteractionContext().get(session.id);
+    const initial = buildAdventureInteractionInput(
+      buildAdventurePrompt(request),
+      context,
+    );
+    context.previousInteractionId = "previous-provider-interaction";
+    context.stateSnapshot = initial.state;
+
+    const withOoc = {
+      ...session,
+      oocExchanges: [
+        {
+          id: "ooc-1",
+          kind: "ooc" as const,
+          question: "Who is the quest giver?",
+          answer: "Envoy Ilona Marshall is the quest giver.",
+          status: "answered" as const,
+          afterTurnCount: 0,
+          createdAt: "2026-11-20T12:00:00.000Z",
+          updatedAt: "2026-11-20T12:00:00.000Z",
+        },
+      ],
+    };
+    const continued = buildAdventureInteractionInput(
+      buildAdventurePrompt({
+        ...request,
+        session: withOoc,
+        phase: "action",
+        playerAction: "seek out Ilona",
+      }),
+      context,
+    );
+    const payload = JSON.parse(continued.input);
+
+    expect(payload.stateDelta.oocExchanges).toEqual([
+      {
+        id: "ooc-1",
+        afterTurnCount: 0,
+        provenance: "ooc",
+        status: "answered",
+        binding: "non-binding-ooc",
+        question: "Who is the quest giver?",
+        answer: "Envoy Ilona Marshall is the quest giver.",
+      },
+    ]);
+  });
 });

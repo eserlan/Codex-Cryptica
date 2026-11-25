@@ -1,5 +1,5 @@
 import { sessionHubStore } from "#lib/stores/session-hub.svelte.js";
-import { getContextSelection } from "generator-engine";
+import { getContextSelection } from "generator-engine/session-hub-helpers";
 
 export const SESSION_DRAFTS_KEY = "SESSION_DRAFTS";
 

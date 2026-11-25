@@ -3,7 +3,11 @@
   import { graph } from "#lib/stores/graph.svelte.js";
   import { vault } from "#lib/stores/vault.svelte.js";
   import { categories } from "#lib/stores/categories.svelte.js";
-  import { getGraphStyles, MAX_TRANSITION_ELEMENTS } from "graph-engine";
+  import {
+    getGraphStyles,
+    MAX_TRANSITION_ELEMENTS,
+    preloadGraphCore,
+  } from "graph-engine";
   import { NodeHighlight } from "./graph/node-highlight";
 
   import { themeStore } from "#lib/stores/theme.svelte.js";
@@ -228,6 +232,12 @@
     if (!vault.isGuest) {
       onboardingFunnel.track("graph_opened");
     }
+    void preloadGraphCore().catch((error: unknown) => {
+      debugStore.log(
+        "Graph core preload failed; it will load when opened",
+        error,
+      );
+    });
     void graph.init();
     controller.init(container, graphStyle);
     if (typeof ResizeObserver !== "undefined") {
@@ -856,7 +866,7 @@
 <style>
   :global(.selected-source) {
     box-shadow: 0 0 20px #facc15;
-    z-index: 1000 !important;
+    z-index: 1000;
   }
 
   /* Discovery Pulse Animation */

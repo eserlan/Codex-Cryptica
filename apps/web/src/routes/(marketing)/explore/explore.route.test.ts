@@ -110,6 +110,7 @@ describe("/explore route", () => {
       "/topics/pirates",
       "/topics/solo-rpg",
       "/topics/dnd",
+      "/topics/new-gm",
       "/topics/dnd-beginners",
       "/topics/star-systems",
     ]);
@@ -121,6 +122,7 @@ describe("/explore route", () => {
       "/topics/pirates",
       "/topics/solo-rpg",
       "/topics/dnd",
+      "/topics/new-gm",
       "/topics/dnd-beginners",
       "/topics/star-systems",
     ]) {
@@ -136,6 +138,7 @@ describe("/explore route", () => {
       "Pirates & High Seas",
       "Solo RPGs",
       "Running D&D",
+      "New Game Master",
       "D&D for Beginners",
       "Star Systems & Sci-Fi",
     ]);

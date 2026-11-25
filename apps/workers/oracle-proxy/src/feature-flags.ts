@@ -7,6 +7,7 @@ export interface KVNamespaceLike {
 
 export const DEFAULT_FEATURE_FLAGS = {
   adventureArtwork: false,
+  artworkDemandTelemetry: false,
 } as const;
 
 export type FeatureFlagName = keyof typeof DEFAULT_FEATURE_FLAGS;

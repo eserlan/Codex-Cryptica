@@ -59,7 +59,7 @@ describe("BusinessRefinePanel", () => {
     regenerate.mockResolvedValue({ document: next, warnings: [] });
     const onReplace = vi.fn();
     render(BusinessRefinePanel, {
-      props: { business: d, useAI: false, onReplace },
+      props: { business: d, useAI: true, onReplace },
     });
     await fireEvent.click(
       screen.getByRole("button", { name: /Rewrite current pressure/i }),
@@ -68,7 +68,7 @@ describe("BusinessRefinePanel", () => {
     expect(regenerate).toHaveBeenCalledWith(
       d,
       "pressure",
-      expect.objectContaining({ useAI: false }),
+      expect.objectContaining({ useAI: true }),
     );
     expect(
       screen.getByText(
@@ -118,7 +118,7 @@ describe("BusinessRefinePanel", () => {
       warnings: [],
     });
     render(BusinessRefinePanel, {
-      props: { business: d, useAI: false, onReplace: vi.fn() },
+      props: { business: d, useAI: true, onReplace: vi.fn() },
     });
     await fireEvent.click(
       screen.getByRole("button", {
@@ -137,7 +137,7 @@ describe("BusinessRefinePanel", () => {
     regenerate.mockResolvedValue(undefined);
     const onReplace = vi.fn();
     render(BusinessRefinePanel, {
-      props: { business: doc(), useAI: false, onReplace },
+      props: { business: doc(), useAI: true, onReplace },
     });
     await fireEvent.click(
       screen.getByRole("button", { name: /Rewrite current pressure/i }),
@@ -153,7 +153,7 @@ describe("BusinessRefinePanel", () => {
     regenerate.mockReturnValue(new Promise((resolve) => (finish = resolve)));
     const d = doc();
     render(BusinessRefinePanel, {
-      props: { business: d, useAI: false, onReplace: vi.fn() },
+      props: { business: d, useAI: true, onReplace: vi.fn() },
     });
     await fireEvent.click(
       screen.getByRole("button", { name: /Rewrite current pressure/i }),
@@ -161,7 +161,7 @@ describe("BusinessRefinePanel", () => {
     await fireEvent.click(
       screen.getByRole("button", { name: /Rewrite current pressure/i }),
     );
-    expect(regenerate).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(regenerate).toHaveBeenCalledTimes(1));
     finish({ document: d, warnings: [] });
   });
 });

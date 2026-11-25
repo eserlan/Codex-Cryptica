@@ -4,11 +4,13 @@
 
 {#if mapStore.showFog}
   <div class="flex items-center gap-2 px-2 max-sm:w-full">
-    <span
+    <label
+      for="map-brush-radius"
       class="text-nano text-theme-muted font-bold tracking-tighter uppercase"
-      >Brush Size</span
+      >Brush Size</label
     >
     <input
+      id="map-brush-radius"
       type="range"
       min="10"
       max="500"

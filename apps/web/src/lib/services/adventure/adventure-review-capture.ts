@@ -4,9 +4,11 @@ import type {
 } from "@codex/adventure-engine";
 import {
   dialogueLoopPacing,
+  findDuplicateActiveCharacterPresence,
   formatWorldElapsedMinutes,
   investigativeProgressPacing,
   isQuietTurn,
+  measureStateBudget,
   revealedSecretIds as knownRevealedSecretIds,
   SCENE_STALL_TURN_LIMIT,
   scenarioEventTurnIds,
@@ -160,6 +162,210 @@ export function adventureReviewMarkdown(session: AdventureSession): string {
 
 export const DEFAULT_DIAGNOSTIC_RECENT_TURNS = 20;
 
+/** #5110 TurnProgressKind values that count as observable advancement. */
+const MEANINGFUL_PROGRESS_CATEGORIES = new Set([
+  "scenario-stage-or-status-change",
+  "actionable-discovery",
+  "obstacle-advanced-or-resolved",
+  "causal-state-change",
+  "consequential-player-choice",
+  "useful-negative-finding",
+]);
+
+/**
+ * Bounded #5112 generation roll-up for the GM-only diagnostic summary.
+ * Counts and categories only; legacy turns without metadata count as
+ * `unknown`, never a guessed classification. Scenario IDs are GM-only.
+ */
+type GenerationTally = {
+  transportCounts: { interaction: number; stateless: number; unknown: number };
+  threadModeCounts: {
+    new: number;
+    continued: number;
+    reset: number;
+    unknown: number;
+  };
+  progressCategoryCounts: Record<string, number>;
+  directorDeliveryCounts: {
+    included: number;
+    truncated: number;
+    omitted: number;
+    retained: number;
+    unknown: number;
+  };
+  actionOutcomeCounts: {
+    resolved: number;
+    "roll-required": number;
+    "credible-blocked": number;
+    clarification: number;
+    unresolved: number;
+    unknown: number;
+  };
+  actionValidationCounts: {
+    accepted: number;
+    corrected: number;
+    rejected: number;
+    unknown: number;
+  };
+  turnsWithGeneration: number;
+  lastResetReason: string | null;
+  lastRevisionMismatchCause: string | null;
+  resetWithoutReason: boolean;
+  lastProgressCategory: string | null;
+  recentProgressCategories: string[];
+};
+
+function recordReset(
+  tally: GenerationTally,
+  generation: NonNullable<AdventureSession["turns"][number]["generation"]>,
+): void {
+  if (generation.threadMode !== "reset") return;
+  if (generation.resetReason) tally.lastResetReason = generation.resetReason;
+  else tally.resetWithoutReason = true;
+  if (generation.revisionMismatchCause) {
+    tally.lastRevisionMismatchCause = generation.revisionMismatchCause;
+  }
+}
+
+function recordTurnActionAndDelivery(
+  tally: GenerationTally,
+  generation: NonNullable<AdventureSession["turns"][number]["generation"]>,
+): void {
+  tally.directorDeliveryCounts[
+    generation.directorDelivery?.status ?? "unknown"
+  ] += 1;
+  tally.actionOutcomeCounts[
+    generation.actionResolution?.outcome ?? "unknown"
+  ] += 1;
+  tally.actionValidationCounts[
+    generation.actionResolution?.validation ?? "unknown"
+  ] += 1;
+}
+
+function recordTurnGeneration(
+  tally: GenerationTally,
+  generation:
+    NonNullable<AdventureSession["turns"][number]["generation"]> | undefined,
+): void {
+  if (!generation) {
+    tally.transportCounts.unknown += 1;
+    tally.threadModeCounts.unknown += 1;
+    tally.directorDeliveryCounts.unknown += 1;
+    tally.actionOutcomeCounts.unknown += 1;
+    tally.actionValidationCounts.unknown += 1;
+    return;
+  }
+  tally.turnsWithGeneration += 1;
+  tally.transportCounts[generation.transport ?? "unknown"] += 1;
+  tally.threadModeCounts[generation.threadMode ?? "unknown"] += 1;
+  recordTurnActionAndDelivery(tally, generation);
+  recordReset(tally, generation);
+  if (generation.progressCategory)
+    recordProgress(tally, generation.progressCategory);
+}
+
+function tallyGeneration(session: AdventureSession): GenerationTally {
+  const tally: GenerationTally = {
+    transportCounts: { interaction: 0, stateless: 0, unknown: 0 },
+    threadModeCounts: { new: 0, continued: 0, reset: 0, unknown: 0 },
+    progressCategoryCounts: {},
+    directorDeliveryCounts: {
+      included: 0,
+      truncated: 0,
+      omitted: 0,
+      retained: 0,
+      unknown: 0,
+    },
+    actionOutcomeCounts: {
+      resolved: 0,
+      "roll-required": 0,
+      "credible-blocked": 0,
+      clarification: 0,
+      unresolved: 0,
+      unknown: 0,
+    },
+    actionValidationCounts: {
+      accepted: 0,
+      corrected: 0,
+      rejected: 0,
+      unknown: 0,
+    },
+    turnsWithGeneration: 0,
+    lastResetReason: null,
+    lastRevisionMismatchCause: null,
+    resetWithoutReason: false,
+    lastProgressCategory: null,
+    recentProgressCategories: [],
+  };
+  for (const turn of session.turns) {
+    recordTurnGeneration(tally, turn.generation);
+  }
+  return tally;
+}
+
+function recordProgress(tally: GenerationTally, category: string): void {
+  tally.progressCategoryCounts[category] =
+    (tally.progressCategoryCounts[category] ?? 0) + 1;
+  tally.lastProgressCategory = category;
+  tally.recentProgressCategories.push(category);
+  if (tally.recentProgressCategories.length > 5)
+    tally.recentProgressCategories.shift();
+}
+
+function lastScenarioIdsFrom(session: AdventureSession): string[] {
+  for (let i = session.turns.length - 1; i >= 0; i -= 1) {
+    const ids = session.turns[i]?.generation?.scenarioIds;
+    if (ids?.length) return ids;
+  }
+  return [];
+}
+
+function generationSummary(session: AdventureSession) {
+  const tally = tallyGeneration(session);
+  const items = session.scenarioCollection?.items ?? [];
+  const lastScenarioIds = lastScenarioIdsFrom(session);
+  const recentMeaningful = tally.recentProgressCategories.filter((category) =>
+    MEANINGFUL_PROGRESS_CATEGORIES.has(category),
+  ).length;
+
+  return {
+    turnsWithGeneration: tally.turnsWithGeneration,
+    turnsWithoutGeneration: session.turns.length - tally.turnsWithGeneration,
+    transportCounts: tally.transportCounts,
+    threadModeCounts: tally.threadModeCounts,
+    threadReuseTurns: tally.threadModeCounts.continued,
+    resets: tally.threadModeCounts.reset,
+    // Null when no reset was recorded; "unknown" when a reset was recorded
+    // without a reason. Never guesses a reason.
+    lastResetReason:
+      tally.lastResetReason ?? (tally.resetWithoutReason ? "unknown" : null),
+    ...(tally.lastRevisionMismatchCause
+      ? { lastRevisionMismatchCause: tally.lastRevisionMismatchCause }
+      : {}),
+    focusedScenarioId: session.scenarioCollection?.focusedScenarioId ?? null,
+    activeScenarioIds: items
+      .filter((item) => item.status === "open")
+      .map((item) => item.id),
+    lastScenarioIds,
+    progressCategoryCounts: tally.progressCategoryCounts,
+    directorDelivery: tally.directorDeliveryCounts,
+    actionOutcome: tally.actionOutcomeCounts,
+    actionValidation: tally.actionValidationCounts,
+    ...(session.pendingRoll
+      ? {
+          pendingRollActionResolution: {
+            outcome: "roll-required" as const,
+            validation: "accepted" as const,
+            evidenceCategory: "roll-pending" as const,
+          },
+        }
+      : {}),
+    lastProgressCategory: tally.lastProgressCategory,
+    recentProgressCategories: tally.recentProgressCategories,
+    recentMeaningfulProgressTurns: recentMeaningful,
+  };
+}
+
 const DIAGNOSTIC_README = [
   "GM-only diagnostic snapshot of one solo adventure, written for an LLM to read.",
   "It contains hidden secrets and GM threads. Do not share with players.",
@@ -168,11 +374,18 @@ const DIAGNOSTIC_README = [
   "source 'provisional' means the Oracle invented it in play; it is not backed by a Vault record.",
   "turns: oldest first. Every turn, condensed or full, carries signals; a missing signal means false or 0: quiet (changed nothing in the world), locationChanged, and stateChanges (visible entries added, updated or removed). summary.longestQuietRun and summary.stalledScenes count quiet streaks, a stalled scene being every fourth quiet turn in a row. A turn's dropped list names the parts of the model's reply the engine left out because they could not apply (an unknown id, a step not allowed yet); the turn itself committed, and summary.droppedParts totals them. Turns marked detail 'condensed' keep only action, narration, time, dropped and signals; detail 'full' also keeps every state patch.",
   "timeAdvance is null when a turn did not move the fictional clock. Time is in minutes.",
+  "generation: per-turn GM-only transport, Director-delivery (#5195), and action-fulfilment (#5196) diagnostics, present only on instrumented committed turns; absent means legacy/unknown, never guess it. transport is 'interaction' (retained provider history) or 'stateless' (fresh context, including fallback after a provider failure); a stateless turn is never retained history. threadMode is 'new', 'continued' (provider thread reused) or 'reset'; resetReason names the recorded cause and lastResetReason in the summary is null when no reset was recorded and 'unknown' when a reset had no reason. modelKey is a model registry key only. directorDelivery records whether Director guidance was included, truncated, omitted, or retained-unchanged on the outgoing request; actionResolution records the committed outcome (resolved, roll-required, credible-blocked, clarification, unresolved, unknown) and reducer validation (accepted, corrected, rejected, unknown). Retained conversation is not evidence of action compliance, sent Director advice is not proof of obedience, and proposed outcome is not necessarily the committed outcome. summary.generation rolls up thread reuse/reset counts, directorDelivery, actionOutcome, actionValidation, focused/active scenario IDs and recent #5110 progress categories; summary.droppedParts, pendingRoll, and lastTurnRejection stay the channels for omitted reply parts, pending rolls, and rejected turns.",
+  "To capture and interpret a diagnostic for a stalled adventure: copy it while the stall is visible, then compare summary.generation with the quiet and investigative counters. A run of 'stateless' turns after 'interaction' turns points at provider fallback; a reset names why the thread restarted; repeated 'no-observable-change' or 'repeated-non-answer' progress categories alongside quiet turns mean nothing is advancing, while a meaningful recent category with a long quiet run points at a committed change the player never saw. Turns without generation are pre-instrumentation history: treat them as unknown, not as retained success.",
 ].join(" ");
 
 export interface TurnRejectionDiagnostic {
   reason: string;
   diagnostic?: HiddenLeakageDiagnostic;
+  actionResolution?: {
+    outcome: "unresolved";
+    validation: "rejected";
+    evidenceCategory: "rejected-turn";
+  };
   revision: number;
   recordedAt: string;
 }
@@ -209,7 +422,11 @@ function integrityChecks(session: AdventureSession) {
       .filter((turn, index) => turn.sequence !== index)
       .map((turn) => turn.id),
     factsIntroducedOnMissingTurn: session.provisionalFacts
-      .filter((fact) => !turnIds.has(fact.introducedOnTurnId))
+      .filter(
+        (fact) =>
+          Boolean(fact.introducedOnTurnId) &&
+          !turnIds.has(fact.introducedOnTurnId!),
+      )
       .map((fact) => fact.id),
     turnsReferencingMissingFacts: session.turns
       .filter((turn) =>
@@ -228,6 +445,13 @@ function integrityChecks(session: AdventureSession) {
           (!secret.revealedOnTurnId || !turnIds.has(secret.revealedOnTurnId)),
       )
       .map((secret) => secret.id),
+    orphanedPersonFactLinks: (session.people ?? []).flatMap((person) =>
+      person.linkedFactIds
+        .filter((factId) => !factIds.has(factId))
+        .map((factId) => ({ personId: person.id, factId })),
+    ),
+    duplicateActiveCharacterPresence:
+      findDuplicateActiveCharacterPresence(session),
   };
 }
 
@@ -284,6 +508,7 @@ function diagnosticTurns(session: AdventureSession, cutoff: number) {
       timeAdvance: turn.timeAdvance ?? null,
       committedAt: turn.committedAt,
       ...(turn.dropped ? { dropped: turn.dropped } : {}),
+      ...(turn.generation ? { generation: turn.generation } : {}),
       signals,
     };
   });
@@ -373,6 +598,36 @@ function diagnosticTurnSummary(
   };
 }
 
+function emergentThreadSummary(session: AdventureSession) {
+  const threads = session.emergentThreads ?? [];
+  const countStatus = (status: string) =>
+    threads.filter((t) => t.status === status).length;
+  return {
+    total: threads.length,
+    open: countStatus("open"),
+    resolved: countStatus("resolved"),
+    abandoned: countStatus("abandoned"),
+    cold: countStatus("cold"),
+    focusedEmergentThreadId: session.focusedEmergentThreadId ?? null,
+    threads: threads.slice(-6).map((t) => ({
+      id: t.id,
+      title: t.title,
+      ...(t.goal ? { goal: t.goal } : {}),
+      status: t.status,
+      ...(t.outcome ? { outcomeResult: t.outcome.result } : {}),
+      provenance: t.provenance,
+      turnCount: t.turnCount,
+      linkedFactCount: t.linkedFactIds.length,
+      linkedPersonCount: t.linkedPersonIds.length,
+      linkedPlaceCount: t.linkedPlaceIds.length,
+      linkedCommitmentCount: t.linkedCommitmentIds.length,
+      openQuestionCount: t.openQuestions.length,
+      knownConsequenceCount: t.knownConsequences.length,
+      ...(t.linkedScenarioId ? { linkedScenarioId: t.linkedScenarioId } : {}),
+    })),
+  };
+}
+
 function diagnosticSummary(
   session: AdventureSession,
   cutoff: number,
@@ -393,6 +648,25 @@ function diagnosticSummary(
     timeToFirstSign: discoveryMetrics.timeToFirstSign,
     timeToFirstActionableLead: discoveryMetrics.timeToFirstActionableLead,
     ...diagnosticTurnSummary(session, cutoff, lastTurn),
+    ooc: {
+      totalExchanges: (session.oocExchanges ?? []).length,
+      answeredCount: (session.oocExchanges ?? []).filter(
+        (entry) => entry.status === "answered",
+      ).length,
+      establishedDecisionsCount: (session.oocExchanges ?? []).reduce(
+        (sum, entry) => sum + (entry.committedFactIds?.length ?? 0),
+        0,
+      ),
+      latestExchangeIds: (session.oocExchanges ?? [])
+        .slice(-5)
+        .map((entry) => entry.id),
+      oocSourcedFactCount: session.provisionalFacts.filter(
+        (fact) => fact.provenance === "ooc",
+      ).length,
+    },
+    generation: generationSummary(session),
+    emergentThreads: emergentThreadSummary(session),
+    stateBudget: measureStateBudget(session),
     lastPlayedAt: session.lastPlayedAt,
   };
 }
@@ -411,6 +685,7 @@ function diagnosticState(session: AdventureSession) {
     storySoFar: session.storySoFar ?? null,
     provisionalFacts: session.provisionalFacts,
     sourceRecords: session.sourceRecords,
+    oocExchanges: session.oocExchanges ?? [],
     pendingRoll: session.pendingRoll ?? null,
   };
 }
@@ -531,7 +806,12 @@ function diffDiagnosticState(
   next: ReturnType<typeof diagnosticState>,
 ): Record<string, unknown> {
   const changes: Record<string, unknown> = {};
-  const topArrayKeys = ["places", "provisionalFacts", "sourceRecords"] as const;
+  const topArrayKeys = [
+    "places",
+    "provisionalFacts",
+    "sourceRecords",
+    "oocExchanges",
+  ] as const;
   for (const key of topArrayKeys) {
     const arrayDiff = diffIdArray(
       prev[key] as Array<{ id: string }>,

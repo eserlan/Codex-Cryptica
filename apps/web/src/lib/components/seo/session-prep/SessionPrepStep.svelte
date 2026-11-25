@@ -4,7 +4,7 @@
     describeSuggestionOption,
     type SessionPrepStep,
     type SessionPrepSuggestion,
-  } from "generator-engine";
+  } from "generator-engine/session-prep";
 
   let {
     step,

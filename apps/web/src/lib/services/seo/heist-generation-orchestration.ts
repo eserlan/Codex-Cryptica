@@ -1,8 +1,6 @@
-import {
-  runHeistGeneration,
-  type HeistPrompt,
-  type PublicGeneratorOutput,
-} from "generator-engine";
+import { runHeistGeneration } from "generator-engine/heist-generation";
+import { type HeistPrompt } from "generator-engine/public-heist";
+import type { PublicGeneratorOutput } from "generator-engine/public-generator-types";
 import type { GeneratorAITransport } from "./generator-ai-transport";
 
 type HeistChat = Awaited<ReturnType<GeneratorAITransport["startChat"]>>;

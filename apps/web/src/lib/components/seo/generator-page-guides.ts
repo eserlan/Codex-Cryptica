@@ -1,0 +1,480 @@
+import type { ValidSlug } from "./generator-types";
+
+export interface GeneratorGuide {
+  summary: string;
+  tips: { title: string; detail: string }[];
+  links?: { href: string; label: string }[];
+}
+
+const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
+  "star-system": {
+    summary:
+      "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
+    tips: [
+      {
+        title: "Start with the stakes, not every rock",
+        detail:
+          "Pick two or three bodies where rival factions or scarce resources collide, and leave the remaining orbits as landmarks or refueling stops.",
+      },
+      {
+        title: "Use travel hazards to pace scenes",
+        detail:
+          "Radiation belts, debris fields, and sensor-blind Lagrange points create natural complications between stations without needing scripted ambushes.",
+      },
+      {
+        title: "Expand key worlds on demand",
+        detail:
+          "Click Develop This World on any named body in the result to spin up a full planetary profile that inherits the system's tension.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-common-character-roles-in-a-sci-fi-or-space-opera-rpg",
+        label: "Running sci-fi party roles",
+      },
+      {
+        href: "/answers/how-do-i-give-different-civilisations-distinct-strengths-and-weaknesses",
+        label: "Differentiating sci-fi civilisations",
+      },
+    ],
+  },
+  "language-generator": {
+    summary:
+      "A tabletop conlang only needs enough phonology, naming patterns, and 8–12 everyday words to make place names, inscriptions, and NPC titles sound cohesive at the table.",
+    tips: [
+      {
+        title: "Match sound to culture",
+        detail:
+          "Pair clipped consonants with military or bureaucratic tongues and vowel-rich structures with coastal, liturgical, or courtly speech.",
+      },
+      {
+        title: "Reuse roots across the map",
+        detail:
+          "Take two or three generated root words for river, gate, or stone and combine them into local landmarks so players can decode names by ear.",
+      },
+      {
+        title: "Keep idioms playable",
+        detail:
+          "Drop one untranslated greeting or oath into NPC dialogue rather than full sentences—players remember a single recurring phrase.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+        label: "Building distinct cultures",
+      },
+    ],
+  },
+  "origin-generator": {
+    summary:
+      "Strong character origins explain why a hero or villain stepped into danger today—not just what happened to them years ago.",
+    tips: [
+      {
+        title: "Tie the incident to an active faction",
+        detail:
+          "Swap generic disaster details for a named guild, lab, or bloodline already present in your campaign so the backstory creates immediate allies or rivals.",
+      },
+      {
+        title: "Keep one unresolved cost",
+        detail:
+          "The best origin leaves behind a debt, a witness, or a physical tell that the GM can bring back mid-arc.",
+      },
+      {
+        title: "Pair with a personality profile",
+        detail:
+          "Use the generated flaw or vow as the character's default reaction under pressure.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-improvise-npcs-in-dnd",
+        label: "Improvising memorable characters",
+      },
+    ],
+  },
+  personality: {
+    summary:
+      "Memorable RPG characters come from a visible habit, a private pressure, and one contradiction—not a two-page monologue.",
+    tips: [
+      {
+        title: "Lead with one physical tell",
+        detail:
+          "Pick a single posture, vocal cadence, or prop from the draft so you can drop straight into character without acting.",
+      },
+      {
+        title: "Play the want against the fear",
+        detail:
+          "When players push an NPC, decide whether they protect their public reputation or chase their secret goal.",
+      },
+      {
+        title: "Save keepers to your vault",
+        detail:
+          "Use Save to Codex to keep recurring contacts linked to the locations and factions where players met them.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+        label: "Roleplaying NPCs without acting",
+      },
+    ],
+  },
+  npc: {
+    summary:
+      "Every table-ready NPC needs three things: a clear role in the scene, a faction or personal stake, and one secret that changes how the party negotiates with them.",
+    tips: [
+      {
+        title: "Give them an immediate agenda",
+        detail:
+          "Decide what the NPC wants in the next ten minutes before the party even speaks to them.",
+      },
+      {
+        title: "Connect them to a place or faction",
+        detail:
+          "Link the NPC to an existing settlement or guild so their alliances and enemies ripple through the campaign.",
+      },
+      {
+        title: "Leave the secret discoverable",
+        detail:
+          "Plant one visible clue in their gear, companions, or ledger that rewards curious players.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-improvise-npcs-in-dnd",
+        label: "How to improvise NPCs",
+      },
+      {
+        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+        label: "Roleplaying without acting",
+      },
+    ],
+  },
+  settlement: {
+    summary:
+      "A believable settlement exists for a reason—a ford, mine, shrine, or relay—and stays interesting because two local groups disagree on how to run it.",
+    tips: [
+      {
+        title: "Anchor the economy to one export",
+        detail:
+          "Build the market, guards, and visitor traffic around the town's main trade good or strategic choke point.",
+      },
+      {
+        title: "Put the tension on main street",
+        detail:
+          "Show the local conflict in the first scene—a closed gate, a tax dispute, or a ration queue—rather than burying it in lore.",
+      },
+      {
+        title: "Seed three recurring faces",
+        detail:
+          "Pair the settlement with an official, a broker, and a local troublemaker so players have immediate contacts.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-design-a-geographically-realistic-town-or-village",
+        label: "Designing realistic settlements",
+      },
+      {
+        href: "/answers/how-do-i-decide-what-a-settlement-produces-imports-and-exports",
+        label: "Settlement trade and exports",
+      },
+    ],
+  },
+  "adventure-generator": {
+    summary:
+      "Use an adventure outline as a situation with pressure, not a rigid script: set a ticking clock, two competing NPCs, and clues that point forward even when plans go sideways.",
+    tips: [
+      {
+        title: "Start near the inciting pressure",
+        detail:
+          "Open with the witness, contract, or crisis already knocking on the party's door so session one has momentum.",
+      },
+      {
+        title: "Convert to an Adventure Canvas",
+        detail:
+          "Click Open Adventure Canvas on the output to turn locations, factions, and clues into a movable relationship map.",
+      },
+      {
+        title: "Keep outcomes open",
+        detail:
+          "Let player choices determine which faction wins—track only what each side will do if the party ignores them.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-prepare-an-rpg-session-step-by-step",
+        label: "Preparing a session step by step",
+      },
+      {
+        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+        label: "Planning campaign story arcs",
+      },
+    ],
+  },
+  "point-crawl": {
+    summary:
+      "Point crawls replace empty hex-counting with meaningful travel decisions: every node is a landmark or hazard, and every route has a cost, risk, or secret shortcut.",
+    tips: [
+      {
+        title: "Make junctions ask a question",
+        detail:
+          "Give each fork a clear trade-off—fast and exposed versus slow and hidden—so players can make informed choices.",
+      },
+      {
+        title: "Use loops, not straight lines",
+        detail:
+          "At least one alternate loop or secret path prevents dead ends and rewards scouting.",
+      },
+      {
+        title: "Keep node prep to three lines",
+        detail:
+          "What is visible on arrival, what hazard or inhabitant waits here, and what clue points to neighbouring nodes.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
+        label: "Building a point crawl",
+      },
+      {
+        href: "/answers/point-crawl-vs-hex-crawl",
+        label: "Point crawl vs hex crawl",
+      },
+    ],
+  },
+  rumour: {
+    summary:
+      "Great rumours give players actionable leads without spoiling the truth: mix reliable gossip, distorted exaggerations, and dangerous misconceptions.",
+    tips: [
+      {
+        title: "Always name a pursuable lead",
+        detail:
+          "A rumour should mention a specific NPC, dock, ruin, or faction the party can visit right away.",
+      },
+      {
+        title: "Separate player gossip from GM truth",
+        detail:
+          "Read only the rumour bullets aloud; keep the Reality and If Investigated notes behind the screen.",
+      },
+      {
+        title: "Drop two rumours per tavern stop",
+        detail:
+          "Giving players a choice between competing leads turns downtime into player-driven exploration.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
+        label: "Keeping investigations moving",
+      },
+    ],
+  },
+  "bbeg-generator": {
+    summary:
+      "A compelling main villain believes they are solving a real problem—and uses lieutenants, leverage, and a ticking clock so the party feels their reach before meeting them.",
+    tips: [
+      {
+        title: "Define what happens if the party does nothing",
+        detail:
+          "Give the villain three concrete milestones so their scheme advances visibly between sessions.",
+      },
+      {
+        title: "Put lieutenants in the spotlight early",
+        detail:
+          "Let players clash with the villain's agents and policies long before the final confrontation.",
+      },
+      {
+        title: "Offer a moral or tactical flaw",
+        detail:
+          "A blind spot—pride, an oath, or an old ally—gives clever players a way to disrupt the plan without brute force.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+        label: "Making threats feel urgent",
+      },
+    ],
+  },
+  creature: {
+    summary:
+      "Memorable monsters behave like living creatures (or focused hazards) with a habitat, a tell before they strike, and an instinct that tells you when they flee or bargain.",
+    tips: [
+      {
+        title: "Telegraph their signature threat",
+        detail:
+          "Show tracks, scorched masonry, or prey behaviour before initiative starts so players can prepare tactics.",
+      },
+      {
+        title: "Give every creature a non-combat motive",
+        detail:
+          "Territorial defence, hunger, or protecting a nest creates opportunities for stealth, bribery, or retreat.",
+      },
+      {
+        title: "Pair with terrain",
+        detail:
+          "Drop the creature into an environment that favours its movement or senses rather than a flat room.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-balance-rpg-combat-encounters-without-a-tpk",
+        label: "Balancing combat encounters",
+      },
+    ],
+  },
+  "god-generator": {
+    summary:
+      "Deities feel real in a campaign when you see how ordinary people bargain with them—shrines, taboos, rival priesthoods, and small daily prayers.",
+    tips: [
+      {
+        title: "Focus on worship, not cosmic stats",
+        detail:
+          "Define one visible shrine custom and one taboo that players notice when entering a temple town.",
+      },
+      {
+        title: "Give domains human friction",
+        detail:
+          "Two sects of the same god often disagree harder than rival pantheons.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/can-multiple-gods-share-a-domain",
+        label: "Sharing divine domains",
+      },
+    ],
+  },
+  item: {
+    summary:
+      "Even mundane gear or signature keepsakes carry story weight when you add a maker's mark, a quirk of wear, and a previous owner who might want it back.",
+    tips: [
+      {
+        title: "Attach one story hook to loot",
+        detail:
+          "A scratched crest, serial number, or courier seal turns found equipment into an instant lead.",
+      },
+      {
+        title: "Balance power with a clear cost",
+        detail:
+          "Noticeable side effects or maintenance needs make special gear memorable without breaking encounter balance.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-common-should-magic-be-in-a-fantasy-world",
+        label: "Calibrating magic rarity",
+      },
+    ],
+  },
+  business: {
+    summary:
+      "Player-run or NPC businesses shine when they generate leads, debts, and rival pressures—not just bookkeeping spreadsheets.",
+    tips: [
+      {
+        title: "Tie suppliers to adventure hooks",
+        detail:
+          "A delayed shipment or rival guild tariff gives the party a personal reason to investigate.",
+      },
+      {
+        title: "Name two staff members",
+        detail:
+          "A loyal clerk and an ambitious apprentice keep the business alive while the party is out of town.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-a-campaign-where-the-players-own-a-business",
+        label: "Running player-owned businesses",
+      },
+    ],
+  },
+  heist: {
+    summary:
+      "A great RPG heist gives players a clear target, layered security they can scout in advance, and a complication that forces improvisation once they are inside.",
+    tips: [
+      {
+        title: "Reward reconnaissance",
+        detail:
+          "Let every guard shift, delivery schedule, or blueprint detail be discoverable before the job begins.",
+      },
+      {
+        title: "Keep the exit harder than the entry",
+        detail:
+          "Triggering an alarm or rival crew during extraction creates tension without stalling the opening.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-a-stealth-mission-in-a-tabletop-rpg",
+        label: "Running stealth & heist missions",
+      },
+    ],
+  },
+  "mystery-investigation": {
+    summary:
+      "Keep tabletop mysteries moving with three independent clues per revelation so a single failed skill check never stalls the session.",
+    tips: [
+      {
+        title: "Anchor clues to people and places",
+        detail:
+          "Every node in the mystery graph should point to at least one witness, physical trace, or ledger.",
+      },
+      {
+        title: "Escalate when the trail cools",
+        detail:
+          "If players hesitate, have the culprit try to cover their tracks—leaving a fresh lead behind.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-get-a-stalled-rpg-investigation-moving-again",
+        label: "Unsticking stalled investigations",
+      },
+    ],
+  },
+};
+
+function defaultGuideForSlug(
+  _slug: ValidSlug,
+  introTitle: string,
+): GeneratorGuide {
+  return {
+    summary: `Use the ${introTitle} to draft a structured, system-agnostic starting point you can drop straight into prep or live play—then refine the details to match your campaign's factions and tone.`,
+    tips: [
+      {
+        title: "Customize genre and tone first",
+        detail:
+          "Set the genre or tone controls before generating so names, stakes, and vocabulary fit your table's setting.",
+      },
+      {
+        title: "Keep only what sparks play",
+        detail:
+          "Treat the first draft as clay: swap one proper noun or complication to tie it directly to an active thread in your campaign.",
+      },
+      {
+        title: "Save straight to your local vault",
+        detail:
+          "Use Save to Codex to store drafts in your browser-local workspace without creating an account, then link them in your lore graph.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-prepare-an-rpg-session-step-by-step",
+        label: "Preparing an RPG session",
+      },
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Running faction play",
+      },
+    ],
+  };
+}
+
+export function getGeneratorGuide(
+  slug: ValidSlug,
+  introTitle: string,
+): GeneratorGuide {
+  return SLUG_GUIDES[slug] ?? defaultGuideForSlug(slug, introTitle);
+}

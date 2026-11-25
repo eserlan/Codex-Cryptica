@@ -422,4 +422,70 @@ describe("seedArtwork NPC role matching and collision avoidance", () => {
     });
     expect(informantInTavern?.id).toBe("npc-fantasy-informant-01");
   });
+
+  it("uses gender and age demographic cues as a soft tie-breaker without breaking sparse role fallback", () => {
+    const maleGuard = asset("npc-guard-male", {
+      type: "npc",
+      primaryCues: ["guard"],
+      demographicCues: ["male", "adult"],
+    });
+    const femaleGuard = asset("npc-guard-female", {
+      type: "npc",
+      primaryCues: ["guard"],
+      demographicCues: ["female", "adult"],
+    });
+    const agedWizard = asset("npc-wizard-aged", {
+      type: "npc",
+      primaryCues: ["wizard"],
+      demographicCues: ["male", "aged"],
+    });
+    const youngUrchin = asset("npc-urchin-young", {
+      type: "npc",
+      primaryCues: ["urchin"],
+      demographicCues: ["female", "young"],
+    });
+
+    expect(
+      matchArtwork([maleGuard, femaleGuard], {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["guard"],
+        demographicCues: ["female"],
+      })?.id,
+    ).toBe("npc-guard-female");
+
+    expect(
+      matchArtwork([maleGuard, femaleGuard], {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["guard"],
+      })?.id,
+    ).toBe("npc-guard-female");
+
+    // Sparse role fallback: young female wizard still matches the only wizard portrait
+    // rather than dropping to null or matching young female urchin.
+    expect(
+      matchArtwork([agedWizard, youngUrchin], {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["wizard"],
+        demographicCues: ["female", "young"],
+      })?.id,
+    ).toBe("npc-wizard-aged");
+
+    // Explicit excludes on demographic cues still act as a hard gate when set.
+    const excludedGuard = asset("npc-guard-excluded", {
+      type: "npc",
+      primaryCues: ["guard"],
+      excludes: ["female"],
+    });
+    expect(
+      matchArtwork([excludedGuard], {
+        type: "npc",
+        genre: "fantasy",
+        primaryCues: ["guard"],
+        demographicCues: ["female"],
+      }),
+    ).toBeNull();
+  });
 });

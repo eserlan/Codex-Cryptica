@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createPlayerTranscript,
   parseAdventureSession,
   type AdventureSession,
 } from "@codex/adventure-engine";
@@ -726,5 +727,601 @@ describe("Adventure diagnostic JSON for AI", () => {
       }).text,
     );
     expect(rejectedDelta.lastTurnRejection).toEqual(rejection);
+  });
+});
+
+describe("Adventure diagnostic generation metadata (#5112)", () => {
+  function threeTurnSession(): AdventureSession {
+    const base = exampleSession();
+    base.scenarioCollection!.focusedScenarioId = "scenario-1";
+    const template = base.turns[0]!;
+    base.turns = [
+      {
+        ...template,
+        id: "turn-1",
+        sequence: 0,
+        generation: {
+          modelKey: "gemini-flash-lite",
+          reasoningEffort: "high",
+          transport: "interaction",
+          threadMode: "new",
+          requestChars: 1200,
+          sourceCounts: { secrets: 1 },
+          scenarioIds: ["scenario-1"],
+          progressCategory: "no-observable-change",
+        },
+      },
+      {
+        ...template,
+        id: "turn-2",
+        sequence: 1,
+        generation: {
+          modelKey: "gemini-flash-lite",
+          reasoningEffort: "high",
+          transport: "interaction",
+          threadMode: "continued",
+          requestChars: 1300,
+          scenarioIds: ["scenario-1"],
+          progressCategory: "actionable-discovery",
+        },
+      },
+      // Stateless fallback after provider failure: a fresh thread, never
+      // retained history.
+      {
+        ...template,
+        id: "turn-3",
+        sequence: 2,
+        generation: {
+          transport: "stateless",
+          threadMode: "reset",
+          resetReason: "provider-expiry",
+          scenarioIds: ["scenario-1"],
+          progressCategory: "repeated-non-answer",
+        },
+      },
+    ];
+    base.provisionalFacts = base.provisionalFacts.map((fact) => ({
+      ...fact,
+      introducedOnTurnId: "turn-1",
+    }));
+    return base;
+  }
+
+  it("includes per-turn generation metadata and a bounded summary in the full diagnostic", () => {
+    const source = threeTurnSession();
+    const out = JSON.parse(adventureDiagnosticJson(source, { recentTurns: 3 }));
+    expect(out.turns[0].generation.transport).toBe("interaction");
+    expect(out.turns[1].generation.threadMode).toBe("continued");
+    expect(out.turns[2].generation).toMatchObject({
+      transport: "stateless",
+      threadMode: "reset",
+      resetReason: "provider-expiry",
+    });
+    // A stateless fallback is classified as a fresh/reset thread, never as
+    // retained reuse.
+    expect(out.summary.generation).toMatchObject({
+      turnsWithGeneration: 3,
+      turnsWithoutGeneration: 0,
+      transportCounts: { interaction: 2, stateless: 1, unknown: 0 },
+      threadModeCounts: { new: 1, continued: 1, reset: 1, unknown: 0 },
+      threadReuseTurns: 1,
+      resets: 1,
+      lastResetReason: "provider-expiry",
+      focusedScenarioId: "scenario-1",
+      activeScenarioIds: ["scenario-1"],
+      lastScenarioIds: ["scenario-1"],
+      lastProgressCategory: "repeated-non-answer",
+      recentProgressCategories: [
+        "no-observable-change",
+        "actionable-discovery",
+        "repeated-non-answer",
+      ],
+      recentMeaningfulProgressTurns: 1,
+    });
+    expect(out._readme).toContain("generation:");
+    expect(out._readme).toContain("capture and interpret a diagnostic");
+    expect(out.summary.stateBudget).toMatchObject({
+      hotBudgetChars: 48_000,
+      durableBudgetChars: 256_000,
+      warning: false,
+      exceedsHotBudget: false,
+      exceedsDurableBudget: false,
+    });
+    expect(out.summary.stateBudget.sections.visibleState).toBeGreaterThan(0);
+  });
+
+  it("keeps generation metadata on condensed turns and in delta new turns", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const source = threeTurnSession();
+    const condensed = JSON.parse(
+      adventureDiagnosticJson(source, { recentTurns: 0 }),
+    );
+    expect(
+      condensed.turns.every(
+        (t: { detail: string }) => t.detail === "condensed",
+      ),
+    ).toBe(true);
+    expect(condensed.turns[2].generation.resetReason).toBe("provider-expiry");
+
+    copyDiagnosticSnapshot(source, storage);
+    saveDiagnosticBaseline(source, storage);
+    const next = threeTurnSession();
+    next.revision = 3;
+    next.turns.push({
+      ...next.turns[2]!,
+      id: "turn-4",
+      sequence: 3,
+      generation: {
+        transport: "interaction",
+        threadMode: "reset",
+        resetReason: "scene-boundary",
+        progressCategory: "causal-state-change",
+      },
+    });
+    const delta = JSON.parse(copyDiagnosticSnapshot(next, storage).text);
+    expect(delta.turns).toHaveLength(1);
+    expect(delta.turns[0].generation).toMatchObject({
+      transport: "interaction",
+      threadMode: "reset",
+      resetReason: "scene-boundary",
+    });
+    expect(delta.summary.generation.lastResetReason).toBe("scene-boundary");
+    expect(delta.summary.generation.resets).toBe(2);
+  });
+
+  it("marks legacy turns without generation metadata as unknown and absent", () => {
+    const out = JSON.parse(adventureDiagnosticJson(exampleSession()));
+    expect(out.turns[0]).not.toHaveProperty("generation");
+    expect(out.summary.generation).toMatchObject({
+      turnsWithGeneration: 0,
+      turnsWithoutGeneration: 1,
+      transportCounts: { interaction: 0, stateless: 0, unknown: 1 },
+      threadModeCounts: { new: 0, continued: 0, reset: 0, unknown: 1 },
+      threadReuseTurns: 0,
+      resets: 0,
+      lastResetReason: null,
+      lastProgressCategory: null,
+      progressCategoryCounts: {},
+      recentProgressCategories: [],
+    });
+    expect(out.summary.generation.activeScenarioIds).toEqual(["scenario-1"]);
+  });
+
+  it("records no generation for rejected or uncommitted turns", () => {
+    // A rejected turn never commits, so it leaves no generation record; the
+    // rejection diagnostic is the only channel. Same for a failed save: the
+    // diagnostic only ever describes committed turns.
+    const source = exampleSession();
+    source.turns = [];
+    const out = JSON.parse(
+      adventureDiagnosticJson(source, {
+        lastTurnRejection: {
+          reason: "hidden-leakage",
+          revision: source.revision,
+          recordedAt: "2026-11-22T11:45:00.000Z",
+        },
+      }),
+    );
+    expect(out.turns).toEqual([]);
+    expect(out.summary.generation.turnsWithGeneration).toBe(0);
+    expect(out.summary.generation.resets).toBe(0);
+    expect(out.lastTurnRejection.reason).toBe("hidden-leakage");
+  });
+
+  it("keeps generation and GM content out of the player projection", () => {
+    const source = threeTurnSession();
+    const transcript = createPlayerTranscript(source);
+    const rendered = JSON.stringify(transcript);
+    expect(rendered).not.toContain("generation");
+    expect(rendered).not.toContain("resetReason");
+    expect(rendered).not.toContain("scenario-1");
+    expect(rendered).not.toContain("gemini-flash-lite");
+    expect(rendered).not.toContain("provider-expiry");
+  });
+
+  it("includes Ask GM (OOC) exchanges in full and delta AI GM diagnostic JSON copies", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+
+    const initial = exampleSession();
+    initial.oocExchanges = [
+      {
+        id: "ooc-1",
+        kind: "ooc",
+        question: "Who is the quest giver?",
+        answer: "Envoy Ilona Marshall.",
+        status: "answered",
+        afterTurnCount: 1,
+        createdAt: "2026-11-22T11:30:00.000Z",
+        updatedAt: "2026-11-22T11:30:05.000Z",
+      },
+    ];
+
+    const full = copyDiagnosticSnapshot(initial, storage);
+    expect(full.isDelta).toBe(false);
+    expect(JSON.parse(full.text).state.oocExchanges).toEqual(
+      initial.oocExchanges,
+    );
+    saveDiagnosticBaseline(initial, storage);
+
+    const next = exampleSession();
+    next.revision = initial.revision + 1;
+    next.oocExchanges = [
+      ...initial.oocExchanges,
+      {
+        id: "ooc-2",
+        kind: "ooc",
+        question: "Where is she waiting?",
+        answer: "Berthing Ring C.",
+        status: "answered",
+        afterTurnCount: 1,
+        createdAt: "2026-11-22T11:31:00.000Z",
+        updatedAt: "2026-11-22T11:31:05.000Z",
+      },
+    ];
+
+    const delta = copyDiagnosticSnapshot(next, storage);
+    expect(delta.isDelta).toBe(true);
+    expect(JSON.parse(delta.text).stateChanges.oocExchanges).toEqual({
+      added: [next.oocExchanges[1]],
+      updated: [],
+      removedIds: [],
+    });
+    const parsedFull = JSON.parse(full.text);
+    expect(parsedFull.summary.ooc).toEqual({
+      totalExchanges: 1,
+      answeredCount: 1,
+      establishedDecisionsCount: 0,
+      latestExchangeIds: ["ooc-1"],
+      oocSourcedFactCount: 0,
+    });
+    expect(parsedFull.integrityChecks.orphanedPersonFactLinks).toEqual([]);
+  });
+
+  it("does not count responsive witness replies with epistemic limits as repeated-non-answer in diagnostic summary (#5175)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "turn-1",
+        playerAction: "Who is your employer?",
+        narration:
+          'Servant: "Master Vale; the steward is inside. I don\'t know the other household."',
+      },
+      {
+        ...session.turns[0]!,
+        id: "turn-2",
+        playerAction: "Where was the order returned, and who saw it?",
+        narration:
+          "Steward names the office, recipient and time, but cannot identify additional witnesses.",
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.recentProgressCategories).not.toContain(
+      "repeated-non-answer",
+    );
+    expect(parsed.summary.repeatedNonAnswerTurns).toBe(0);
+    expect(parsed.summary.investigativeRecoveryDue).toBe(false);
+  });
+
+  it("flags duplicate activeCharacters resolving to the same person in integrityChecks (#5176)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.places = [
+      { id: "p-market", name: "Market" },
+      { id: "p-office", name: "Office" },
+    ];
+    session.currentPlaceId = "p-office";
+    session.people = [
+      {
+        id: "person-mara",
+        name: "Mara, the porter",
+        aliases: ["Mara"],
+        linkedFactIds: [],
+      },
+    ];
+    session.visibleState.activeCharacters = [
+      {
+        id: "char-a",
+        text: "Mara, the porter",
+        source: "provisional",
+        placeId: "p-market",
+      },
+      {
+        id: "char-b",
+        text: "Mara",
+        source: "provisional",
+        placeId: "p-office",
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.integrityChecks.duplicateActiveCharacterPresence).toEqual([
+      {
+        personId: "person-mara",
+        name: "Mara, the porter",
+        activeCharacterIds: ["char-a", "char-b"],
+        placeIds: ["p-market", "p-office"],
+      },
+    ]);
+  });
+
+  it("reports separate emergentThreads summary without fabricating seed scenario discovery metrics (#5177)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.emergentThreads = [
+      {
+        id: "em-water-1",
+        title: "Water Rationing Order: Lower cisterns shut",
+        status: "open",
+        provenance: "mixed",
+        topicTokens: ["water", "rationing", "cisterns"],
+        linkedPersonIds: ["p-1"],
+        linkedPlaceIds: ["pl-1", "pl-2"],
+        linkedFactIds: ["f-1"],
+        linkedCommitmentIds: ["c-1"],
+        openQuestions: ["Who ordered the shutoff?"],
+        knownConsequences: ["Lower cisterns were shut."],
+        gmOnlyDevelopments: ["Secret guild bribe"],
+        createdAtTurnId: "turn-1",
+        updatedAtTurnId: "turn-2",
+        turnCount: 3,
+      },
+    ];
+    session.focusedEmergentThreadId = "em-water-1";
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.timeToFirstSign).toBeNull();
+    expect(parsed.summary.timeToFirstActionableLead).toBeNull();
+    expect(parsed.summary.emergentThreads).toEqual({
+      total: 1,
+      open: 1,
+      resolved: 0,
+      abandoned: 0,
+      cold: 0,
+      focusedEmergentThreadId: "em-water-1",
+      threads: [
+        {
+          id: "em-water-1",
+          title: "Water Rationing Order: Lower cisterns shut",
+          status: "open",
+          provenance: "mixed",
+          turnCount: 3,
+          linkedFactCount: 1,
+          linkedPersonCount: 1,
+          linkedPlaceCount: 2,
+          linkedCommitmentCount: 1,
+          openQuestionCount: 1,
+          knownConsequenceCount: 1,
+        },
+      ],
+    });
+  });
+
+  it("reports lastRevisionMismatchCause in GM-only summary.generation (#5178)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        generation: {
+          transport: "interaction",
+          threadMode: "reset",
+          resetReason: "revision-mismatch",
+          revisionMismatchCause: "state-correction",
+        },
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.lastResetReason).toBe("revision-mismatch");
+    expect(parsed.summary.generation.lastRevisionMismatchCause).toBe(
+      "state-correction",
+    );
+  });
+
+  it("summarizes bounded directorDelivery counts and preserves legacy unknown (#5195)", () => {
+    const store = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+    };
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "t-legacy",
+        generation: undefined,
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-included",
+        generation: {
+          transport: "interaction",
+          threadMode: "new",
+          directorDelivery: {
+            status: "included",
+            reason: "delivered",
+            deliveredChars: 420,
+            focusedScenarioId: "scen-1",
+            recoveryReason: "none",
+            requestedDevelopmentKind: "surface-witness-or-clue",
+          },
+        },
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-retained",
+        generation: {
+          transport: "interaction",
+          threadMode: "continued",
+          directorDelivery: {
+            status: "retained",
+            reason: "retained-unchanged",
+            deliveredChars: 0,
+          },
+        },
+      },
+    ];
+
+    const snapshot = copyDiagnosticSnapshot(session, storage);
+    const parsed = JSON.parse(snapshot.text);
+    expect(parsed.summary.generation.directorDelivery).toEqual({
+      included: 1,
+      truncated: 0,
+      omitted: 0,
+      retained: 1,
+      unknown: 1,
+    });
+    expect(parsed.turns[1].generation.directorDelivery).toEqual({
+      status: "included",
+      reason: "delivered",
+      deliveredChars: 420,
+      focusedScenarioId: "scen-1",
+      recoveryReason: "none",
+      requestedDevelopmentKind: "surface-witness-or-clue",
+    });
+  });
+
+  it("summarizes #5196 action resolution counts, pendingRoll, lastTurnRejection, and legacy unknown turns", () => {
+    const session = exampleSession();
+    session.turns = [
+      {
+        ...session.turns[0]!,
+        id: "t-legacy",
+        generation: undefined,
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-resolved",
+        sequence: 1,
+        generation: {
+          transport: "interaction",
+          threadMode: "continued",
+          directorDelivery: {
+            status: "included",
+            reason: "delivered",
+            deliveredChars: 200,
+            recoveryReason: "none",
+          },
+          actionResolution: {
+            outcome: "resolved",
+            validation: "accepted",
+            evidenceCategory: "movement",
+          },
+        },
+      },
+      {
+        ...session.turns[0]!,
+        id: "t-corrected-unresolved",
+        sequence: 2,
+        generation: {
+          transport: "stateless",
+          threadMode: "new",
+          actionResolution: {
+            outcome: "unresolved",
+            validation: "corrected",
+            evidenceCategory: "dropped-patch",
+            droppedCount: 1,
+            droppedKinds: ["state-patch"],
+          },
+        },
+      },
+    ];
+    session.pendingRoll = {
+      id: "roll-1",
+      inputId: "in-roll",
+      playerAction: "Pick the lock",
+      setupNarration: "The tumbler resists.",
+      uncertainty: "Whether the pick snaps.",
+      stakes: "Opens the door or alerts the watch.",
+      resolutionStatus: "awaiting-outcome",
+      createdAt: "2026-11-24T12:00:00.000Z",
+    };
+
+    const diag = JSON.parse(
+      adventureDiagnosticJson(session, {
+        lastTurnRejection: {
+          reason: "hidden-leakage",
+          actionResolution: {
+            outcome: "unresolved",
+            validation: "rejected",
+            evidenceCategory: "rejected-turn",
+          },
+          revision: 3,
+          recordedAt: "2026-11-24T12:01:00.000Z",
+        },
+      }),
+    );
+
+    expect(diag.summary.generation.actionOutcome).toEqual({
+      resolved: 1,
+      "roll-required": 0,
+      "credible-blocked": 0,
+      clarification: 0,
+      unresolved: 1,
+      unknown: 1,
+    });
+    expect(diag.summary.generation.actionValidation).toEqual({
+      accepted: 1,
+      corrected: 1,
+      rejected: 0,
+      unknown: 1,
+    });
+    expect(diag.summary.generation.pendingRollActionResolution).toEqual({
+      outcome: "roll-required",
+      validation: "accepted",
+      evidenceCategory: "roll-pending",
+    });
+    expect(diag.lastTurnRejection.actionResolution).toEqual({
+      outcome: "unresolved",
+      validation: "rejected",
+      evidenceCategory: "rejected-turn",
+    });
+    expect(diag.turns[1].generation.directorDelivery.status).toBe("included");
+    expect(diag.turns[1].generation.actionResolution.outcome).toBe("resolved");
   });
 });

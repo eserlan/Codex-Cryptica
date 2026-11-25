@@ -5,7 +5,7 @@ import {
 } from "../src/historical-anchor-mutation";
 import {
   anchorSession,
-  overBudgetAnchorSession,
+  overDurableBudgetAnchorSession,
 } from "./historical-anchor-fixtures";
 import { now, session } from "./reducer-fixtures";
 
@@ -78,7 +78,7 @@ describe("historical anchor mutation checks", () => {
   it("returns the caller's failure message when schema or budget validation fails", () => {
     expect(
       finalizeHistoricalAnchorMutation(
-        overBudgetAnchorSession(),
+        overDurableBudgetAnchorSession(),
         now,
         "Budget failure",
       ),

@@ -1,4 +1,4 @@
-import type { SessionPrep } from "generator-engine";
+import type { SessionPrep } from "generator-engine/session-prep";
 
 /** The missing-courier example from the step-by-step session prep Answer. */
 export const EXAMPLE_SESSION_PREP: SessionPrep = {

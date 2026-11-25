@@ -140,5 +140,12 @@ describe("dice-window-bounds", () => {
       expect(vp.width).toBeGreaterThan(0);
       expect(vp.height).toBeGreaterThan(0);
     });
+
+    it("uses supplied window dimensions", () => {
+      expect(getViewportSize({ innerWidth: 1500, innerHeight: 900 })).toEqual({
+        width: 1500,
+        height: 900,
+      });
+    });
   });
 });

@@ -6,7 +6,16 @@ import {
   formatAdventureJsonExcerpts,
   type AdventureJsonExcerpt,
 } from "./adventure-json/retrieval";
-import type { ResolvedSourceExcerpt } from "./types";
+import type { DirectorRecoveryReason, ResolvedSourceExcerpt } from "./types";
+
+export interface PromptDirectorMeta {
+  enabled: boolean;
+  omittedByBudget: boolean;
+  truncatedByBudget: boolean;
+  focusedScenarioId?: string;
+  recoveryReason: DirectorRecoveryReason;
+  requestedDevelopmentKind?: string;
+}
 
 /** The most the two rendered package blocks may take in the prompt. */
 export const MAX_ADVENTURE_PACKAGE_PROMPT_CHARS = 6_000;
@@ -29,6 +38,7 @@ export interface PromptBudgetInput {
   relevant: ResolvedSourceExcerpt[];
   transcript: string;
   adventurePackage?: PromptAdventurePackage;
+  directorMeta?: PromptDirectorMeta;
 }
 
 export interface PromptBudgetResult {
@@ -39,6 +49,7 @@ export interface PromptBudgetResult {
   transcript: string;
   serialized: string;
   includedSourceIds: string[];
+  directorMeta?: PromptDirectorMeta;
   [PACKAGE_PLAYER_SAFE_KEY]?: string;
   [PACKAGE_GM_ONLY_KEY]?: string;
 }
@@ -202,7 +213,9 @@ export function allocatePromptBudget(
     anchors: result.anchors,
     relevant: result.relevant,
     transcript: parseJsonPayload(result.transcript),
-    input: parseJsonPayload(trimText(input.input, 600)),
+    // The current player action and roll result are authoritative. Trimming
+    // serialized JSON here can cut them off after a long adventure premise.
+    input: JSON.parse(input.input) as unknown,
   });
   if (serialized.length > MAX_GENERATION_INPUT_CHARS)
     throw new Error("generation-budget-exceeded");
@@ -213,5 +226,6 @@ export function allocatePromptBudget(
     includedSourceIds: [...result.anchors, ...result.relevant].map(
       (source) => source.recordId,
     ),
+    ...(input.directorMeta ? { directorMeta: input.directorMeta } : {}),
   };
 }

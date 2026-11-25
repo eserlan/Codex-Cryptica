@@ -177,6 +177,8 @@ describe("GraphContextMenuController", () => {
       "node-1": { id: "node-1", labels: ["important"] },
       "node-2": { id: "node-2", labels: ["IMPORTANT"] },
     };
+    // Mock deps.vault is a plain object (not $state), so reassign selectedNodes to invalidate $derived.
+    controller.selectedNodes = ["node-1", "node-2"];
     expect(controller.isImportant).toBe(true);
     expect(controller.importantActionLabel).toBe("Remove Important");
   });

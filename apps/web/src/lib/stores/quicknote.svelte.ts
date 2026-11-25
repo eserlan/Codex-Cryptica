@@ -4,8 +4,7 @@ import {
   type QuickNoteRecord,
 } from "../services/QuickNoteService";
 import { vaultRegistry as defaultVaultRegistry } from "./vault-registry.svelte";
-import { textGenerationService } from "@codex/ai-engine";
-import { contextRetrievalService } from "@codex/ai-engine";
+import { lazyOracleAIServices } from "#lib/stores/oracle/lazy-ai-engine-services.js";
 import { vaultEventBus } from "./vault/events.svelte";
 import { vault } from "./vault.svelte";
 import { oracle } from "./oracle.svelte";
@@ -304,11 +303,12 @@ export class QuickNoteStore {
       // 1. Retrieve semantic context based on note content to feed into LLM
       let context = "";
       try {
-        const contextRes = await contextRetrievalService.retrieveContext(
-          note.content,
-          new Set<string>(),
-          vault as any,
-        );
+        const contextRes =
+          await lazyOracleAIServices.contextRetrievalService.retrieveContext(
+            note.content,
+            new Set<string>(),
+            vault as any,
+          );
         context = contextRes.content;
       } catch (err) {
         console.warn(
@@ -319,7 +319,7 @@ export class QuickNoteStore {
 
       // 2. Call textGenerationService to generate structured format
       let generatedText = "";
-      await textGenerationService.generateStructuredEntity(
+      await lazyOracleAIServices.textGenerationService.generateStructuredEntity(
         apiKey,
         note.content,
         context,

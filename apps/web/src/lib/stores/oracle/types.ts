@@ -120,7 +120,8 @@ export interface IOracleStore {
   readonly actions: any;
   readonly settingsManager: any;
   readonly revision: any;
-  readonly adventure: AdventureManager;
+  readonly adventure: AdventureManager | null;
+  loadAdventureManager(): Promise<AdventureManager>;
 
   // Lifecycle
   init(): Promise<void>;

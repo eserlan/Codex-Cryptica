@@ -7,6 +7,7 @@ import {
 const mocks = vi.hoisted(() => ({
   vault: { activeVaultId: "vault-1" as string | null },
   configure: vi.fn(),
+  prepareAdventure: vi.fn(),
   hydrate: vi.fn(),
   destroy: vi.fn(),
   recordLocalChange: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("#lib/stores/cloud-backup.svelte.js", () => ({
 }));
 vi.mock("./cloud-backup-config", () => ({
   configureCloudBackup: mocks.configure,
+  ensureAdventureBackupChangeListener: mocks.prepareAdventure,
 }));
 vi.mock("#lib/stores/vault/registry.js", () => ({
   onDurableVaultChange: mocks.onDurableVaultChange,
@@ -34,6 +36,7 @@ const cleanups: (() => void)[] = [];
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.vault.activeVaultId = "vault-1";
+  mocks.prepareAdventure.mockResolvedValue(undefined);
   mocks.onDurableVaultChange.mockReturnValue(mocks.unsubDurable);
   mocks.subscribe.mockReturnValue(mocks.unsubSynced);
 });
@@ -47,9 +50,11 @@ describe("cloud backup lifecycle", () => {
     cleanups.push(cleanup);
     expect(mocks.configure).toHaveBeenCalledBefore(mocks.hydrate);
     expect(mocks.hydrate).toHaveBeenCalledWith("vault-1");
+    expect(mocks.prepareAdventure).toHaveBeenCalledWith("vault-1");
     mocks.vault.activeVaultId = "vault-2";
     window.dispatchEvent(new Event("vault-switched"));
     expect(mocks.hydrate).toHaveBeenLastCalledWith("vault-2");
+    expect(mocks.prepareAdventure).toHaveBeenLastCalledWith("vault-2");
     cleanup();
     window.dispatchEvent(new Event("vault-switched"));
     expect(mocks.hydrate).toHaveBeenCalledTimes(2);

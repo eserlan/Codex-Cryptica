@@ -1,5 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import { allocatePromptBudget } from "../src/context-budget";
+import { buildAdventurePrompt } from "../src/prompt";
+import { boundPromptState } from "../src/prompt-state";
+import {
+  MAX_GENERATION_INPUT_CHARS,
+  MAX_SERIALIZED_STATE_CHARS,
+} from "../src/session-budget";
+import { session } from "./reducer-fixtures";
 
 describe("allocatePromptBudget", () => {
   it("keeps GM-only lore separate and within its own retrieval budget", () => {
@@ -27,5 +34,236 @@ describe("allocatePromptBudget", () => {
       }),
     );
     expect(JSON.parse(result.serialized).relevant[0].lore).toHaveLength(6_000);
+  });
+});
+
+describe("current-turn prompt input", () => {
+  const longSession = () => ({
+    ...session(),
+    // The premise must be longer than the old 600-character total input cap.
+    premise: "A contested spring lies beneath the city. ".repeat(13),
+  });
+
+  it("keeps an exact player action after a long premise", () => {
+    const currentSession = longSession();
+    const playerAction =
+      "Examine the brass seal: read the maker's marks and the inscription. " +
+      "Look closely. ".repeat(30);
+    const prompt = buildAdventurePrompt({
+      session: currentSession,
+      phase: "action",
+      playerAction,
+      anchors: [],
+      relevant: [],
+    });
+    const payload = JSON.parse(prompt.serialized);
+
+    expect(typeof payload.input).toBe("object");
+    expect(payload.input).toEqual({
+      adventure: {
+        title: currentSession.title,
+        premise: currentSession.premise,
+        playerCharacter: currentSession.playerCharacter,
+      },
+      phase: "action",
+      playerAction,
+    });
+    expect(prompt.serialized.length).toBeLessThanOrEqual(
+      MAX_GENERATION_INPUT_CHARS,
+    );
+  });
+
+  it("preserves roll outcomes and the opening phase with long premises", () => {
+    const currentSession = longSession();
+    const rollResolution = {
+      kind: "numeric" as const,
+      value: 19,
+      label: "1d20 = 19",
+      parts: [{ type: "dice" as const, value: 19, sides: 20, rolls: [19] }],
+    };
+    const opening = buildAdventurePrompt({
+      session: currentSession,
+      phase: "opening",
+      anchors: [],
+      relevant: [],
+    });
+    const resolution = buildAdventurePrompt({
+      session: currentSession,
+      phase: "roll-resolution",
+      rollResolution,
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(JSON.parse(opening.serialized).input.phase).toBe("opening");
+    expect(JSON.parse(opening.serialized).input.adventure.premise).toBe(
+      currentSession.premise,
+    );
+    expect(JSON.parse(resolution.serialized).input).toEqual({
+      adventure: {
+        title: currentSession.title,
+        premise: currentSession.premise,
+        playerCharacter: currentSession.playerCharacter,
+      },
+      phase: "roll-resolution",
+      rollResolution,
+    });
+  });
+
+  it("rejects requests beyond the overall budget rather than trimming actions", () => {
+    expect(() =>
+      allocatePromptBudget({
+        behavior: "GM",
+        state: "{}",
+        input: JSON.stringify({
+          phase: "action",
+          playerAction: "x".repeat(MAX_GENERATION_INPUT_CHARS),
+        }),
+        transcript: "[]",
+        anchors: [],
+        relevant: [],
+      }),
+    ).toThrow("generation-budget-exceeded");
+  });
+
+  it("bounds oversized durable state sections to MAX_SERIALIZED_STATE_CHARS in prompts without mutating session", () => {
+    const currentSession = session();
+    currentSession.hiddenState.secrets = Array.from({ length: 30 }, (_, i) => ({
+      id: `secret-${i}`,
+      text: `Secret ${i}: ${"s".repeat(1_500)}`,
+      status: "hidden" as const,
+    }));
+    currentSession.provisionalFacts = Array.from({ length: 30 }, (_, i) => ({
+      id: `prov-${i}`,
+      kind: "clue" as const,
+      name: `Clue ${i}`,
+      summary: "p".repeat(1_500),
+      visibility: "player-visible" as const,
+    }));
+    currentSession.storySoFar = {
+      text: "Earlier events. ".repeat(2_000),
+      throughSequence: 10,
+      updatedAt: currentSession.updatedAt,
+    };
+
+    const prompt = buildAdventurePrompt({
+      session: currentSession,
+      phase: "action",
+      playerAction: "Inspect the ledger.",
+      anchors: [],
+      relevant: [],
+    });
+
+    expect(prompt.state.length).toBeLessThanOrEqual(MAX_SERIALIZED_STATE_CHARS);
+    expect(prompt.serialized.length).toBeLessThanOrEqual(
+      MAX_GENERATION_INPUT_CHARS,
+    );
+    expect(currentSession.hiddenState.secrets).toHaveLength(30);
+    expect(currentSession.provisionalFacts).toHaveLength(30);
+  });
+
+  it("retains the focused newest scenario and keeps GM/player scenario projections consistent when pruning", () => {
+    const scenarios = ["s-old-1", "s-old-2", "s-mid-3", "s-new-focused"];
+    const bounded = boundPromptState(
+      {
+        playerVisibleState: { knownFacts: [] },
+        playerScenarios: {
+          focusedScenarioId: "s-new-focused",
+          items: scenarios.map((id) => ({
+            id,
+            knowledge: "heard",
+            playerVisible: { rumour: `Rumour for ${id}`, lead: `Lead ${id}` },
+            events: [],
+          })),
+        },
+        "GM-ONLY scenarios": scenarios.map((id) => ({
+          id,
+          knowledge: "heard",
+          focused: id === "s-new-focused",
+          baselineTruth: { truth: `Truth for ${id}: ${"x".repeat(400)}` },
+          secretBindings: { truth: `secret-${id}`, eventIds: {} },
+          hiddenEvents: [],
+        })),
+      },
+      1_400,
+    );
+
+    const gmRemaining = bounded["GM-ONLY scenarios"] as Array<{ id: string }>;
+    const playerRemaining = bounded.playerScenarios as {
+      focusedScenarioId: string | null;
+      items: Array<{ id: string }>;
+    };
+    const gmIds = gmRemaining.map((item) => item.id);
+    const playerIds = playerRemaining.items.map((item) => item.id);
+
+    expect(gmIds).toContain("s-new-focused");
+    expect(playerIds).toContain("s-new-focused");
+    expect(playerRemaining.focusedScenarioId).toBe("s-new-focused");
+    expect(playerIds).toEqual(gmIds);
+  });
+
+  it("builds a valid prompt within MAX_SERIALIZED_STATE_CHARS for a maximal schema-valid durable session", () => {
+    const base = session();
+    const scenarios = Array.from({ length: 8 }, (_, idx) => ({
+      version: 1 as const,
+      id: `sc-max-${idx}`,
+      origin: {
+        kind: "rumour" as const,
+        batchId: "batch-1",
+        index: (idx % 6) + 1,
+      },
+      playerVisible: {
+        rumour: `Rumour ${idx}: `.padEnd(220, "r"),
+        lead: `Lead ${idx}: `.padEnd(160, "l"),
+      },
+      gmOnly: { truth: `Truth ${idx}: `.padEnd(240, "t") },
+      knowledge: "heard" as const,
+      stage: "actionable-clue" as const,
+      status: "open" as const,
+      events: Array.from({ length: 12 }, (_, evIdx) => ({
+        id: `ev-${idx}-${evIdx}`,
+        kind: "discovery" as const,
+        visibility: "player" as const,
+        text: `Observed clue ${idx}-${evIdx}: `.padEnd(180, "e"),
+        at: "2026-11-25T00:00:00.000Z",
+        turnId: `turn-${evIdx}`,
+      })),
+      anchorRefs: [],
+      revealedSecretIds: [],
+      secretBindings: { truth: `sec-truth-${idx}`, eventIds: {} },
+    }));
+    const heavySession = {
+      ...base,
+      scenarioCollection: {
+        version: 1 as const,
+        items: scenarios,
+        focusedScenarioId: "sc-max-7",
+      },
+      provisionalFacts: Array.from({ length: 45 }, (_, idx) => ({
+        id: `pf-${idx}`,
+        kind: "clue" as const,
+        name: `Clue ${idx}`,
+        summary: `Summary ${idx}: `.padEnd(200, "p"),
+        visibility: "player-visible" as const,
+      })),
+    };
+
+    const prompt = buildAdventurePrompt({
+      session: heavySession,
+      phase: "action",
+      playerAction: "Ask the council about the eighth rumour.",
+      anchors: [],
+      relevant: [],
+    });
+
+    const parsed = JSON.parse(prompt.serialized) as {
+      state: {
+        playerScenarios?: { focusedScenarioId?: string | null };
+      };
+    };
+    expect(JSON.stringify(parsed.state).length).toBeLessThanOrEqual(
+      MAX_SERIALIZED_STATE_CHARS,
+    );
+    expect(parsed.state.playerScenarios?.focusedScenarioId).toBe("sc-max-7");
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { generateBusinessLocal, type GeneratedDraft } from "generator-engine";
+import { generateBusinessLocal } from "generator-engine/business-local";
+import type { GeneratedDraft } from "generator-engine/campaign-generator-types";
 import {
   CampaignGeneratorSaver,
   type CampaignSaveContext,

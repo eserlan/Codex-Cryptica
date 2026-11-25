@@ -112,4 +112,69 @@ describe("adventure people identities", () => {
     );
     expect(linked[0].sourceRecordId).toBe("entity-morgan");
   });
+
+  it("resolves partial, title-omitted, and reordered names without auto-merging ambiguous matches", async () => {
+    const {
+      derivePersonAliases,
+      resolvePersonByReference,
+      syncPersonFromFact,
+      mergeDuplicatePeople,
+    } = await import("../src/people");
+
+    expect(derivePersonAliases("Envoy Ilona Marshall")).toEqual([
+      "Ilona Marshall",
+      "Ilona",
+      "Marshall",
+    ]);
+
+    let nextId = 0;
+    const synced = syncPersonFromFact(
+      [],
+      {
+        name: "Envoy Ilona Marshall",
+        factId: "fact-1",
+        visibility: "player-visible",
+      },
+      () => `person-${++nextId}`,
+    );
+    expect(synced.people).toHaveLength(1);
+    expect(resolvePersonByReference(synced.people, "Ilona").person?.id).toBe(
+      "person-1",
+    );
+    expect(
+      resolvePersonByReference(synced.people, "Envoy Marshall Ilona").person
+        ?.id,
+    ).toBe("person-1");
+
+    // Re-syncing partial name attaches to the same person rather than creating a second NPC
+    const resynced = syncPersonFromFact(
+      synced.people,
+      {
+        name: "Ilona",
+        factId: "fact-2",
+        visibility: "player-visible",
+      },
+      () => `person-${++nextId}`,
+    );
+    expect(resynced.people).toHaveLength(1);
+    expect(resynced.people[0]?.linkedFactIds).toEqual(["fact-1", "fact-2"]);
+
+    // Adding a second distinct NPC who happens to share the first name makes "Ilona" ambiguous
+    const withSecond = registerOrResolvePerson(resynced.people, {
+      id: "person-2",
+      name: "Ilona Vance",
+      kind: "person",
+      visibility: "player-visible",
+    }).people;
+    const ambiguous = resolvePersonByReference(withSecond, "Ilona");
+    expect(ambiguous.person).toBeNull();
+    expect(ambiguous.reason).toBe("ambiguous");
+
+    // Refuses to merge two people with distinct canonical sourceRecordIds
+    const canonA = linkPersonToCanonical(withSecond, "person-1", "rec-a");
+    const canonB = linkPersonToCanonical(canonA, "person-2", "rec-b");
+    expect(mergeDuplicatePeople(canonB, "person-1", "person-2").merged).toBe(
+      false,
+    );
+  });
 });
