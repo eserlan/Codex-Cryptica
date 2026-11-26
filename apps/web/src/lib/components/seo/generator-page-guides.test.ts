@@ -452,6 +452,10 @@ describe("generator guide distinctness", () => {
     expect(guide.tips).toHaveLength(3);
     expect(guide.links?.length).toBeGreaterThan(0);
     const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    expect(tipText).toContain(
+      "Campaign context (optional) to add relevant details to the lead story",
+    );
+    expect(tipText).not.toContain("rival faction into the classifieds");
     for (const label of [
       "Genre / Setting",
       "Publication type",

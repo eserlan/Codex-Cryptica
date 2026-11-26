@@ -932,7 +932,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Anchor the issue to last session",
         detail:
-          "Fill in Settlement, region, or publication name (optional) and Current crisis or headline event (optional) with a recent party disruption, then use Campaign context (optional) to drag a rival faction into the classifieds.",
+          "Fill in Settlement, region, or publication name (optional) and Current crisis or headline event (optional) with a recent party disruption, then use Campaign context (optional) to add relevant details to the lead story.",
       },
       {
         title: "Split the handout from the truth",
