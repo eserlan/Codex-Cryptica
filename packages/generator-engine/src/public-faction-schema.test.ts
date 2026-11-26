@@ -431,6 +431,19 @@ describe("smart faction generation coherence", () => {
     expect(blank.content).not.toContain("they are a known presence");
   });
 
+  it("does not append a second full stop to a quoted custom conflict", () => {
+    const out = generateNomadClanLocal(
+      { conflict: '"The convoy is cut off."' },
+      seededRng(9),
+    );
+    expect(out.content).toContain(
+      '"The convoy is cut off." This is the crisis',
+    );
+    expect(out.content).not.toContain('"The convoy is cut off.". ');
+    expect(out.lore).toContain('"The convoy is cut off." The clan is managing');
+    expect(out.lore).not.toContain('"The convoy is cut off.". ');
+  });
+
   it("generates compatible local vampire clans across different seeds", () => {
     const rng = seededRng(42);
     for (let i = 0; i < 20; i++) {

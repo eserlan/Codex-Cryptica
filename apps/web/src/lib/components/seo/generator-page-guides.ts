@@ -795,8 +795,16 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
     ],
     links: [
       {
-        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
-        label: "Running faction play",
+        href: "/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+        label: "Turn road travel into real route choices",
+      },
+      {
+        href: "/answers/how-do-you-run-factions-in-a-sandbox-campaign",
+        label: "Advance the clan and its rivals between sessions",
+      },
+      {
+        href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
+        label: "Map the clan's territory as a point crawl",
       },
     ],
   },

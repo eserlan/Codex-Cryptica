@@ -700,7 +700,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I use it without an account?",
         answer:
-          "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy clan notes on this page without logging in. After you generate a result, Add to my Codex stages the draft in your browser's local storage and imports it as a Faction entity when you open Codex Cryptica.",
       },
       {
         question: "Which RPG systems does it work with?",
