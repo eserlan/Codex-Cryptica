@@ -372,4 +372,26 @@ describe("Table Card (6-Element) NPC mode", () => {
       );
     }
   });
+
+  it("keeps table-card Sharp Contradiction free of mismatched occupation or ancestry prefixes", () => {
+    for (let seed = 0; seed < 30; seed++) {
+      const out = generateNpcLocal(
+        {
+          race: "Elf",
+          role: "Mage",
+          alignment: "True Neutral",
+          mode: "table-card",
+          includeDndQuickStats: true,
+        },
+        seededRng(seed),
+      );
+      const contradiction = out.content.match(
+        /- \*\*Sharp Contradiction\*\*: (.+)/,
+      )?.[1];
+      expect(contradiction).toBeTruthy();
+      expect(contradiction).not.toMatch(
+        /^(?:A|An)\s+(?:ruthless mercenary|austere inquisitor|terrifying underworld|burly town blacksmith|haughty elven scholar|greedy moneylender|reclusive hedge wizard|grim cemetery keeper|paranoid smuggler|veteran city watch|aristocratic magistrate|zealous temple priest)\b/i,
+      );
+    }
+  });
 });

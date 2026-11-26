@@ -25,10 +25,10 @@ const CTA_LABEL = "Add to my Codex";
 const NPC_CONTINUATION: GeneratorContinuationConfig = {
   headline: "Give this character a place in your world",
   summary:
-    "Move this NPC into your local Codex vault so their public details and GM-only secrets stay ready for play.",
+    "Stage this NPC for your local Codex vault so their public details and GM-only secrets stay separate and ready for play.",
   capabilities: [
     "Keep public character notes separate from GM-only secrets and hooks",
-    "Connect them to factions, settlements, and active adventures",
+    "Link them to factions, settlements, and campaign notes inside your vault",
     "Build on their story across sessions as your campaign evolves",
   ],
   localFirstNotice: LOCAL_FIRST_NOTICE,
