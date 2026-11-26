@@ -229,7 +229,7 @@ export function generateNamesLocal(
 - **Name Type**: ${resolved.nameType}
 
 ### Usage Suggestions
-Use these names for any ${singular} in a setting inspired by ${resolved.culture}. Combine or modify them freely: drop a syllable, add a prefix, or append a title or epithet for variation.${notes.map((note) => `\n\n${note}`).join("")}`;
+Use these names for any ${singular} in a setting shaped by the ${resolved.culture.toLowerCase()} naming style. Combine or modify them freely: drop a syllable, add a prefix, or append a title or epithet for variation.${notes.map((note) => `\n\n${note}`).join("")}`;
 
   return {
     type: resolved.entityType,
