@@ -96,10 +96,21 @@
         this.rel = 'stylesheet';
       "
     />
-    <!-- Theme fonts: deferred until idle so they never block FCP/LCP -->
+    <!-- Theme fonts: deferred until idle and skipped on default workspace theme -->
     <script>
       (function () {
         function loadThemeFonts() {
+          var activeTheme = (
+            localStorage.getItem("codex-cryptica-active-theme") || "workspace"
+          ).replace(/_(light|dark)$/, "");
+          if (
+            activeTheme === "workspace" &&
+            !document.querySelector(
+              "[data-world-theme]:not([data-world-theme='workspace'])",
+            )
+          ) {
+            return;
+          }
           var l = document.createElement("link");
           l.rel = "stylesheet";
           l.href =
@@ -119,7 +130,6 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional"
       />
     </noscript>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="icon" href="%sveltekit.assets%/favicon.png" />
     <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
     <link rel="llms" href="%sveltekit.assets%/llms.txt" />

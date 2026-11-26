@@ -88,6 +88,24 @@ function loadTurnstile(): Promise<NonNullable<Window["turnstile"]>> {
 }
 
 /**
+ * Pre-warms the Turnstile script in the background before the user clicks
+ * Generate, keeping script download/parse off the INP click path.
+ */
+export function preloadTurnstile(): Promise<void> {
+  if (
+    !browser ||
+    import.meta.env.DEV ||
+    !VITE_TURNSTILE_SITE_KEY ||
+    window.turnstile
+  ) {
+    return Promise.resolve();
+  }
+  return loadTurnstile()
+    .then(() => undefined)
+    .catch(() => undefined);
+}
+
+/**
  * Renders a throwaway invisible widget, executes it, and resolves with the
  * challenge token.
  *

@@ -26,12 +26,24 @@ export function setSessionTokenRelay(
   tokenRelay = cb;
 }
 
+function yieldForPaint(): Promise<void> {
+  if (!browser || typeof requestAnimationFrame !== "function") {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) =>
+    requestAnimationFrame(() => setTimeout(resolve, 0)),
+  );
+}
+
 function ensureSessionManager(): AiSessionManager | null {
   if (!browser || !requiresCapabilitySession(PROXY_URL)) return null;
   if (!sessionManager) {
     sessionManager = new AiSessionManager({
       proxyUrl: PROXY_URL,
-      solveChallenge: getSessionTurnstileToken,
+      solveChallenge: async () => {
+        await yieldForPaint();
+        return getSessionTurnstileToken();
+      },
       onTokenChange: (token) => tokenRelay?.(token),
     });
     aiClientManager.setSessionManager(sessionManager);

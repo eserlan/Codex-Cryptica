@@ -27,7 +27,22 @@
   } from "#lib/services/ClipboardService.js";
   import { when } from "#lib/utils/when.js";
   import { themeBootstrapScript } from "#lib/theme/theme-bootstrap.js";
+  import { preloadTurnstile } from "#lib/services/publishing/turnstile.js";
   import { registerShellCtaHandler } from "./marketing-shell";
+
+  function prewarmTurnstileOnInteract(node: HTMLElement) {
+    const prewarm = () => {
+      if (effectiveUseAI) void preloadTurnstile();
+    };
+    node.addEventListener("focusin", prewarm, { passive: true });
+    node.addEventListener("pointerenter", prewarm, { passive: true });
+    return {
+      destroy() {
+        node.removeEventListener("focusin", prewarm);
+        node.removeEventListener("pointerenter", prewarm);
+      },
+    };
+  }
   import {
     resolveWorldThemeId,
     resolveGeneratorType,
@@ -494,7 +509,10 @@
       <div class="order-1 lg:hidden">{@render outputLead()}</div>
     {/if}
     <!-- Parameters Column: positioned on the left on desktop -->
-    <div class="{columnClasses.form} space-y-6 order-1">
+    <div
+      class="{columnClasses.form} space-y-6 order-1"
+      use:prewarmTurnstileOnInteract
+    >
       <GeneratorFormPanel
         {canonicalPath}
         {eyebrow}
