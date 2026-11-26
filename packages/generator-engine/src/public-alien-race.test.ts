@@ -709,4 +709,27 @@ describe("public-alien-race", () => {
       expect(out.content).toBeTruthy();
     });
   });
+
+  it("writes the relation as a predicate after 'currently', not as a bare noun phrase", () => {
+    const uneasy = generateAlienRaceLocal(
+      { relationToOutsiders: "Uneasy ceasefire" },
+      () => 0,
+    );
+    expect(uneasy.content).toContain(
+      "they are currently in an uneasy ceasefire.",
+    );
+    expect(uneasy.content).toContain(
+      "They are currently in an uneasy ceasefire.",
+    );
+    expect(`${uneasy.summary}\n${uneasy.content}`).not.toMatch(
+      /currently uneasy ceasefire|as uneasy ceasefire/,
+    );
+
+    const client = generateAlienRaceLocal(
+      { relationToOutsiders: "Client species" },
+      () => 0,
+    );
+    expect(client.content).toContain("They are currently a client species.");
+    expect(client.content).not.toMatch(/currently client species/);
+  });
 });

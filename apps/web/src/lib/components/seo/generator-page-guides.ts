@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "alien-race": {
+    summary:
+      "Generate a non-human species whose biology, homeworld, senses and culture follow from one another, with a weakness, a relationship to outsiders and a split inside the species the party can use at the table.",
+    tips: [
+      {
+        title: "Set Home Environment and Body Plan first",
+        detail:
+          "Home Environment and Body Plan do most of the work. Evolutionary Origin and Biology & Lifecycle take their constraints from them, and the Weaknesses & Constraints lore lists what those traits cost. Set Psychology after them, since it shapes temperament and worldview rather than the body.",
+      },
+      {
+        title: "Use Relationship to Other Species as the first friction",
+        detail:
+          "Relationship to Other Species sets the Relations with Outsiders section and its friction line, such as a fight that stopped without either side giving up its point. That friction is the easiest way for the party to meet the species, so write the first encounter around it.",
+      },
+      {
+        title: "Turn the internal split into a choice",
+        detail:
+          "Internal Factions & Conflicts always names two factions: one would trade the species' speciality openly for standing, the other fears that dependence means absorption. The third Adventure Hook in the lore has both factions recruit the party, each telling a partial truth about the other.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-make-an-alien-species-feel-believable",
+        label: "Making an alien species feel believable",
+      },
+      {
+        href: "/answers/what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+        label: "Choosing a ship for a sci-fi party",
+      },
+    ],
+  },
   "star-system": {
     summary:
       "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
