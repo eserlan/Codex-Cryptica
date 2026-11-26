@@ -78,6 +78,15 @@ describe("generateVillainSchemeLocal", () => {
     }
   });
 
+  it("avoids period-comma punctuation and mid-sentence capitals in scale fallbacks", () => {
+    const out = generateVillainSchemeLocal(
+      { powerScale: "Street" },
+      seededRng(5),
+    );
+    expect(out.content).not.toContain(".,");
+    expect(out.lore).toContain("quieter work. Keep the operation");
+  });
+
   it("keeps the local fallback aligned with a built-in Power Scale", () => {
     const out = generateVillainSchemeLocal(
       { powerScale: "Multiversal" },

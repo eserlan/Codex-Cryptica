@@ -637,6 +637,33 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the villain-scheme-generator guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "villain-scheme-generator",
+      "Superhero Villain Scheme Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["villain-scheme-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug(
+        "villain-scheme-generator",
+        "Superhero Villain Scheme Generator",
+      ),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Power Scale",
+      "Tone",
+      "Scheme Type",
+      "Villain Profile",
+      "Optional Campaign Context",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("falls back to the default template for slugs without a specific guide", () => {
     const fallbackSlug = "nonexistent-slug" as never;
     expect(getGeneratorGuide(fallbackSlug, "Custom Generator")).toEqual(

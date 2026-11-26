@@ -239,6 +239,11 @@ const COMPLICATIONS_POOL = [
   "Local authorities are already involved and moving slowly on purpose — someone with real power benefits from the delay.",
 ] as const;
 
+function lowerFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
 /**
  * Local (non-AI) fallback. Deliberately lighter than the AI prompt's full
  * checklist — a usable, internally consistent draft rather than an attempt to
@@ -253,7 +258,7 @@ export function generateVillainSchemeLocal(
     SUPERHERO_POWER_SCALE_FALLBACKS[resolved.powerScale as SuperheroPowerScale];
   const finalStageNumber = scaleFallback?.planStages.length ?? 4;
   const publicActivity = scaleFallback
-    ? `Coordinated disruptions are being reported around ${scaleFallback.territory.charAt(0).toLowerCase()}${scaleFallback.territory.slice(1)}, all following an unexplained pattern.`
+    ? `Coordinated disruptions are being reported around ${lowerFirst(scaleFallback.territory).replace(/\.+$/, "")}, all following an unexplained pattern.`
     : pickFrom(PUBLIC_ACTIVITY_POOL, rng);
   const rumourOne = pickFrom(RUMOUR_POOL, rng);
   const rumourTwo = pickFrom(
@@ -286,7 +291,7 @@ The ${resolved.villainProfile.toLowerCase()} behind ${resolved.schemeName} wants
 Their reasoning holds together on its own terms: a ${resolved.tone.toLowerCase()}, ${resolved.schemeType.toLowerCase()}-flavoured plan that makes sense from inside their own priorities, whatever the wider world would think of it.
 
 ### Current Activity
-The reported public incidents are a cover for quieter work: ${scaleFallback?.methods ?? "positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
+The reported public incidents are a cover for quieter work. ${scaleFallback?.methods ?? "Positioning people, resources, and cover stories so that by the time anyone official asks the right question, the answer is already unreachable."}
 
 ### Resources & Minions
 - **${minionName}** — handles the operation's day-to-day logistics; loyal enough to follow orders, not loyal enough to die for them.
