@@ -109,7 +109,6 @@ describe("generator-continuation", () => {
         .join(" ")
         .match(/[–—]/),
     ).toBeNull();
-
     expect(
       shouldShowGeneratorContinuation({
         generatorType: "encounter",
@@ -125,6 +124,37 @@ describe("generator-continuation", () => {
         userGenerationSucceeded: true,
         isExampleDraft: false,
         isBusy: true,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
+  it("configures the world generator as a Location import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("world");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Location entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(
+      [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
+        .join(" ")
+        .match(/[–—]/),
+    ).toBeNull();
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "world",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "world",
+        userGenerationSucceeded: false,
+        isExampleDraft: true,
+        isBusy: false,
         variant: "default",
       }),
     ).toBe(false);
