@@ -451,6 +451,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "urban-fantasy-faction": {
+    summary:
+      "Each offline draft is a named city faction with a faction type, a mode, an operating scope, a moral posture, a goal, a base, a secret, two named NPCs, a rival and an immediate hook. AI results may vary the NPC count and phrase the secret and internal conflict independently. Use it when a hidden-world group needs a place in a modern city, then decide which parts the party can see.",
+    tips: [
+      {
+        title: "Set the operating scope to size the threat",
+        detail:
+          "Operating scope appears in the summary and in What they control, as in across the neighbourhood or across the transit network. A neighbourhood faction suits one investigation, while a regional network fits a conflict that crosses several districts.",
+      },
+      {
+        title: "Use campaign context for a place or problem",
+        detail:
+          "Text in Add campaign context becomes one sentence in What they control, starting The faction's choices are shaped by. Write a specific place or problem, such as a flooded tunnel, because the sentence uses your words as written and a mood reads less clearly.",
+      },
+      {
+        title: "Check the conflict against the moral posture",
+        detail:
+          "In offline drafts, the Moral posture changes the wording of Why they are dangerous and Internal Conflict, but the conflict comes from a fixed list and the Secret line repeats it. AI results may phrase the secret and internal conflict differently, so decide which details the players learn or discover as clues.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Running faction play",
+      },
+      {
+        href: "/generators/faction",
+        label: "Classic fantasy faction generator",
+      },
+    ],
+  },
   "dark-fantasy-faction": {
     summary:
       "Each result is a named dark fantasy faction shaped by the mode, type, scope and moral posture you pick. You get what it wants, what is tearing it apart, named NPCs, a rival and a hook. Use it when the table needs a power whose cruelty or compromise still makes sense from the inside, such as a plague cult or a corpse guild.",
