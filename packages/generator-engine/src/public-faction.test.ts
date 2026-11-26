@@ -276,6 +276,57 @@ describe("vampire clan", () => {
     expect(out.labels).toContain("vampire-clan");
   });
 
+  it("generateVampireLocal uses 'an' before a vowel-initial archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "Occult Coven" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as an occult coven in the /);
+    expect(out.content).not.toMatch(/\ba occult\b/);
+  });
+
+  it("generateVampireLocal keeps 'a' before a consonant-initial archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "Predatory Brood" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as a predatory brood in the /);
+    expect(out.content).not.toMatch(/\ban predatory\b/);
+  });
+
+  it("generateVampireLocal uses 'a' before a European Court archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "European Court" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as a european court in the /);
+    expect(out.content).not.toMatch(/\ban european\b/);
+  });
+
+  it("generateVampireLocal drops the bloodline hint from the overview but keeps it in the GM reference", () => {
+    const out = generateVampireLocal(
+      { bloodline: "Sanguine Nobles (Charismatic Mind-Benders)" },
+      seededRng(7),
+    );
+    expect(out.content).toContain("of the sanguine nobles lineage");
+    expect(out.content).not.toContain("(Charismatic Mind-Benders)");
+    expect(out.lore).toContain(
+      "- **Bloodline**: Sanguine Nobles (Charismatic Mind-Benders)",
+    );
+  });
+
+  it("generateVampireLocal describes the scope as a place, not a bare fragment", () => {
+    const out = generateVampireLocal({}, seededRng(7));
+    expect(out.content).toMatch(/ in the [^.]+\.\s/);
+    expect(out.content).not.toContain(" across ");
+  });
+
+  it("generateVampireLocal describes the clan as predators, not undead hunters", () => {
+    const out = generateVampireLocal({}, seededRng(7));
+    expect(out.content).toContain("coven of predators");
+    expect(out.content).not.toContain("undead hunters");
+  });
+
   it("buildVampirePrompt includes resolved options and ban prompt", () => {
     const { userMessage, resolved } = buildVampirePrompt(
       { archetype: "Occult Coven" },
