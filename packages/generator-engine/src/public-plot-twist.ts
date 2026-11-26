@@ -355,6 +355,28 @@ function renderOutput(
   };
 }
 
+function lowerFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
+function formatTimingPhrase(timing: string): string {
+  switch (timing.toLowerCase()) {
+    case "any":
+      return "at any point in the arc";
+    case "early":
+      return "early in the arc";
+    case "midpoint":
+      return "at the midpoint";
+    case "climax":
+      return "at the climax";
+    case "aftermath":
+      return "in the aftermath";
+    default:
+      return `during ${timing.toLowerCase()}`;
+  }
+}
+
 export function generatePlotTwistLocal(
   options: PlotTwistGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -370,8 +392,8 @@ export function generatePlotTwistLocal(
       ? SUPERHERO_TWIST_BY_TYPE[type]
       : undefined;
   const reveal = superheroContent
-    ? superheroContent.reveal.replace("{subject}", subject.toLowerCase())
-    : `The situation is exactly as witnessed, but its most important meaning has been misunderstood: the pressure around ${subject.toLowerCase()} is being used to force a choice that benefits someone who cannot act openly.`;
+    ? superheroContent.reveal.replace("{subject}", lowerFirst(subject))
+    : `The situation is exactly as witnessed, but its most important meaning has been misunderstood: the pressure around ${lowerFirst(subject)} is being used to force a choice that benefits someone who cannot act openly.`;
   return renderOutput(resolved, {
     title: `${pickFrom(PLOT_TWIST_TITLE_PREFIXES, rng)}: ${type}`,
     summary: `${type} complication for: ${resolved.premise}`,
@@ -381,7 +403,7 @@ export function generatePlotTwistLocal(
       `Everyone assumes the visible conflict has one obvious cause and that resolving it will restore the old balance.`,
     rationale:
       superheroContent?.rationale ??
-      `The established facts remain true; the reversal comes from the motive and leverage behind them. A ${type.toLowerCase()} fits the ${resolved.genre} tone at ${resolved.impact.toLowerCase()} impact and can land ${resolved.timing.toLowerCase()}.`,
+      `The established facts remain true; the reversal comes from the motive and leverage behind them. A ${type.toLowerCase()} fits the ${resolved.genre} tone at ${resolved.impact.toLowerCase()} impact and can land ${formatTimingPhrase(resolved.timing)}.`,
     foreshadowing: [
       "A witness remembers a detail that does not fit the accepted explanation.",
       "A seemingly helpful action creates a cost for the people the players meant to protect.",
