@@ -64,6 +64,14 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+    const adventureIdea = getGeneratorContinuationConfig(
+      "adventure-idea-generator",
+    );
+    expect(adventureIdea).toMatchObject({
+      headline: "Turn this scenario into an active thread",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {

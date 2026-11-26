@@ -124,6 +124,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "adventure-idea-generator": {
+      headline: "Turn this scenario into an active thread",
+      summary:
+        "Stage this adventure idea for your local Codex vault so its public situation, clues, and GM-only outcomes stay separate and ready to open in Adventure Canvas.",
+      capabilities: [
+        "Keep initial situation, key locations, and clues separate from GM-only complications and outcomes",
+        "Open the scenario in Adventure Canvas to link scenes, actors, and secrets visually",
+        "Connect the thread to existing campaign factions, NPCs, and locations in your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

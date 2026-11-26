@@ -164,6 +164,16 @@ describe("generateAdventureLocal", () => {
     expect(out.title).toBeTruthy();
     expect(out.labels).toContain("adventure");
   });
+
+  it("incorporates a user-supplied seed into Initial Situation", () => {
+    const out = generateAdventureLocal(
+      { seed: "A stolen corporate neural key surfaces at Dock Nine" },
+      seededRng(5),
+    );
+    expect(out.content).toContain(
+      "A stolen corporate neural key surfaces at Dock Nine.",
+    );
+  });
 });
 
 // ---------------------------------------------------------------------------
