@@ -369,6 +369,15 @@ describe("smart faction generation coherence", () => {
       "The convoy is cut off. This is the crisis",
     );
     expect(punctuatedOut.content).not.toContain("off..");
+
+    const quotedOut = generateNomadClanLocal(
+      { conflict: "“The convoy is cut off.”" },
+      seededRng(5),
+    );
+    expect(quotedOut.content).toContain(
+      "“The convoy is cut off.” This is the crisis",
+    );
+    expect(quotedOut.content).not.toContain("off.”.");
   });
 
   it("uses a generated conflict when the custom value contains only whitespace", () => {
@@ -378,15 +387,18 @@ describe("smart faction generation coherence", () => {
     expect(out.lore).toMatch(/- \*\*Secret\*\*: \S/);
   });
 
-  it("writes the campaign context as a phrase without a stray stop, and omits it when blank", () => {
+  it("preserves campaign context punctuation and omits it when blank", () => {
     const withContext = generateNomadClanLocal(
       { campaignContext: "Neo Tokyo. " },
       seededRng(9),
     );
-    expect(withContext.content).toContain(
-      "In Neo Tokyo, they are a known presence",
+    expect(withContext.content).toContain("Campaign context: Neo Tokyo.");
+
+    const abbreviation = generateNomadClanLocal(
+      { campaignContext: "the U.S." },
+      seededRng(9),
     );
-    expect(withContext.content).not.toContain("Tokyo.,");
+    expect(abbreviation.content).toContain("Campaign context: the U.S.");
 
     const blank = generateNomadClanLocal(
       { campaignContext: "  " },

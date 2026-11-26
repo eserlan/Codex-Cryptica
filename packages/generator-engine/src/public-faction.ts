@@ -432,7 +432,7 @@ export function parseNomadClanResponse(
 
 function asSentence(text: string): string {
   const trimmed = text.trim();
-  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+  return /[.!?]["'”’»)]*$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
 
 export function generateNomadClanLocal(
@@ -450,12 +450,12 @@ export function generateNomadClanLocal(
   const roleText = role.toLowerCase();
   const territoryText = territory.toLowerCase();
   // Conflict options are fragments; end them as sentences before the crisis
-  // copy continues, and drop any stop the GM typed after the campaign context.
+  // copy continues. Keep campaign context intact as supplied by the GM.
   const crisis = asSentence(conflict);
-  const contextPhrase = campaignContext?.replace(/[.!?]+$/, "");
+  const contextText = campaignContext?.trim();
 
   const content = `### Who they are
-${name} is a nomad clan (${roleText}) operating across ${territoryText}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${contextPhrase ? ` In ${contextPhrase}, they are a known presence: respected by those who need them, watched by those who profit from stability.` : ""}
+${name} is a nomad clan (${roleText}) operating across ${territoryText}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${contextText ? ` Campaign context: ${contextText}` : ""}
 
 ### How they survive
 ${goal} Their economy runs on what the roads provide — cargo runs, repairs, protection contracts, and trade at waystation markets. Nothing is wasted; everything has a price.
