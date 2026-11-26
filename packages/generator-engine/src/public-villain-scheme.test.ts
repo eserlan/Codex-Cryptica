@@ -178,10 +178,10 @@ describe("buildVillainSchemePrompt", () => {
 describe("parseVillainSchemeResponse", () => {
   const { resolved } = buildVillainSchemePrompt({}, "", seededRng(3));
   const loreWithStages = (count: number) =>
-    `### Objective\nReach the objective.\n${Array.from(
+    `### Objective\nReach the objective.\n\n### Scheme Stages\n${Array.from(
       { length: count },
       (_, index) => `**Stage ${index + 1}: Stage ${index + 1}**`,
-    ).join("\n")}`;
+    ).join("\n")}\n\n### Complications\n- Watchers notice.`;
 
   it("parses fenced JSON and keeps the rich body", () => {
     const json = `\`\`\`json\n${JSON.stringify({
@@ -239,6 +239,22 @@ describe("parseVillainSchemeResponse", () => {
     expect(() =>
       parseVillainSchemeResponse(
         JSON.stringify({ lore: loreWithStages(count) }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
+
+  it("rejects stage markers placed outside the Scheme Stages section", () => {
+    const misplacedLore = [
+      "### Objective",
+      "**Stage 1: Misplaced**",
+      "**Stage 2: Misplaced**",
+      "**Stage 3: Misplaced**",
+      "**Stage 4: Misplaced**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: misplacedLore }),
         resolved,
       ),
     ).toThrow("four to six numbered stages");

@@ -188,13 +188,24 @@ Return only the JSON object. Do not include markdown code block formatting like 
   };
 }
 
+function extractSchemeStagesSection(lore: string): string {
+  const lines = lore.split(/\r?\n/);
+  const start = lines.findIndex((line) => /^###\s+Scheme Stages\b/.test(line));
+  if (start === -1) return "";
+  const rest = lines.slice(start + 1);
+  const end = rest.findIndex((line) => /^###\s/.test(line));
+  return (end === -1 ? rest : rest.slice(0, end)).join("\n");
+}
+
 export function parseVillainSchemeResponse(
   text: string,
   resolved: ResolvedVillainScheme,
 ): PublicGeneratorOutput {
   const data = asRecord(parseFencedJson<unknown>(text));
   const lore = asString(data.lore);
-  const stageCount = lore.match(/^\s*\*\*Stage\s+\d+\s*:/gm)?.length ?? 0;
+  const stagesSection = extractSchemeStagesSection(lore);
+  const stageCount =
+    stagesSection.match(/^\s*\*\*Stage\s+\d+\s*:/gm)?.length ?? 0;
   if (stageCount < 4 || stageCount > 6) {
     throw new Error(
       "Villain scheme lore must contain four to six numbered stages",
