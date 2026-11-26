@@ -301,6 +301,7 @@ export interface ResolvedNomadClan {
   conflict: string;
   goal: string;
   hook: string;
+  secret: string;
   campaignContext?: string;
   name: string;
   traits: readonly string[];
@@ -359,6 +360,7 @@ export function resolveNomadClan(
     conflict: values.conflict,
     goal: values.goal,
     hook: values.hook,
+    secret: pickFrom(nomadClanConfig.secrets, rng),
     campaignContext: options.campaignContext?.trim() || undefined,
     name: generateNomadName(rng),
     traits,
@@ -439,8 +441,17 @@ export function generateNomadClanLocal(
   options: NomadClanGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
-  const { role, tone, territory, conflict, goal, hook, campaignContext, name } =
-    resolveNomadClan(options, rng);
+  const {
+    role,
+    tone,
+    territory,
+    conflict,
+    goal,
+    hook,
+    secret,
+    campaignContext,
+    name,
+  } = resolveNomadClan(options, rng);
   const rival = generateNomadName(rng);
   const leader = generateName(rng);
   const mechanic = generateName(rng);
@@ -470,7 +481,7 @@ ${name} works best as a faction the party keeps running into — on the road, at
 - **📍 Territory**: ${territory}
 - **Fleet**: Mixed convoy — a lead rig, two cargo haulers, and two scout bikes. Plus whatever they have salvaged this season.
 - **Code**: ${tone.split(",")[0]} — don't burn bridges you might need to cross again.
-- **Secret**: ${conflict}
+- **Secret**: ${secret}
 - **Immediate Hook**: ${hook}
 
 ### Notable Members

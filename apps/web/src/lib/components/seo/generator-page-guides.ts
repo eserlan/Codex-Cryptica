@@ -775,22 +775,22 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "nomad-clan": {
     summary:
-      "Use this for a road-based clan in a cyberpunk or post-apocalyptic campaign, one that runs cargo between waystations and fights to keep its routes. Offline drafts give you a clan name, a goal, a crisis, a rival faction, three named members and a short section on how to put the clan in the party's path. AI drafts request two or three members and may organise details differently.",
+      "Generate a road-based clan built for immediate highway friction: a convoy with a clear livelihood, an active route threat, a rival competing for the same stops, a hidden secret, and an immediate hook. Use them when the party needs passage across contested ground, a moving patron, or a dispute at the next fuel depot.",
     tips: [
       {
-        title: "Choose the Main conflict first",
+        title: "Turn Main conflict into a route dilemma",
         detail:
-          "In offline drafts, Main conflict appears as the clan's Secret and opens both What threatens them and Current Crisis. AI drafts use the conflict as input, but may place it differently. Pick the threat your table will meet, or type your own, before you generate.",
+          "Use Main conflict to threaten the convoy's ability to move, not just their reputation. Give the party two routes: a dangerous backroad the clan can guide them through, or a safe corporate highway where they have to pay the toll or sell out the convoy.",
       },
       {
-        title: "Read Clan role and Primary territory together",
+        title: "Pair Clan role and Primary territory for leverage",
         detail:
-          "In offline drafts, Clan role and Primary territory appear in the opening summary, which reads as a nomad clan (courier network) operating across arcology outskirts and perimeter roads. The territory also becomes the Territory line in the Clan Profile. AI drafts use these fields as input but may arrange them differently. Choose a territory the party can reach on the road.",
+          "Match Clan role with Primary territory to decide what the convoy controls that the party cannot easily buy in a city. Ex-Corporate Refugees on borderland checkpoints trade forged transit papers and blind spots, while Tech Scavengers in orbital drop-points control salvage rights and spare parts.",
       },
       {
-        title: "Use Add campaign context for one named place",
+        title: "Anchor the clan with Add campaign context",
         detail:
-          "In offline drafts, text from Add campaign context appears under Who they are as Campaign context: followed by your text. AI drafts are asked to include campaign context, but its placement may vary. The rival faction name is generated separately in offline drafts, so rename it in the Rival Faction section if the table already knows that group.",
+          "Drop one named megacorp, fuel barony, or settlement into Add campaign context so the clan's survival stakes collide with a power your players already know. Then rename the generated Rival Faction to a group from your campaign if you want last session's fallout waiting at the next waystation.",
       },
     ],
     links: [
