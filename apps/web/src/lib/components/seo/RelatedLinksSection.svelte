@@ -9,6 +9,7 @@
 {#if relatedLinks.length > 0}
   <section
     class="border-t border-theme-border/40 px-6 py-12 text-center bg-theme-surface/5"
+    style="content-visibility: auto; contain-intrinsic-size: auto 180px;"
   >
     <div class="max-w-4xl mx-auto">
       <h2

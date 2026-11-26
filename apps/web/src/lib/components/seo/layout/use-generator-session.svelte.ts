@@ -207,6 +207,8 @@ export function useGeneratorSession(inputs: GeneratorSessionInputs) {
     trackEvent("generator_started", { generator_type: generatorType });
     const useAINow = shouldUseAI(options.forceAI);
     try {
+      void scrollToOutputIfStacked();
+
       const onPreview = (preview: GeneratorOutput) => {
         if (!isCurrentRequest()) return;
         generatedData = preview;

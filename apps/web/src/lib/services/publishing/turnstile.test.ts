@@ -323,4 +323,25 @@ describe("getSessionTurnstileToken", () => {
     await vi.runAllTimersAsync();
     expect(document.body.children).toHaveLength(0);
   });
+
+  it("preloadTurnstile injects script idempotently and swallows load errors", async () => {
+    vi.resetModules();
+    vi.stubEnv("DEV", false);
+    vi.stubEnv("VITE_TURNSTILE_SITE_KEY", "test-site-key");
+    delete (window as { turnstile?: unknown }).turnstile;
+
+    const { preloadTurnstile } = await import("./turnstile");
+    const first = preloadTurnstile();
+    const second = preloadTurnstile();
+
+    const scripts = document.head.querySelectorAll("#codex-turnstile-script");
+    expect(scripts).toHaveLength(1);
+
+    scripts[0]?.dispatchEvent(new Event("error"));
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      undefined,
+      undefined,
+    ]);
+    expect(document.head.querySelector("#codex-turnstile-script")).toBeNull();
+  });
 });

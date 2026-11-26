@@ -46,7 +46,10 @@
 </script>
 
 {#if faqs.length > 0}
-  <section class="border-t border-theme-border/60 px-6 py-12">
+  <section
+    class="border-t border-theme-border/60 px-6 py-12"
+    style="content-visibility: auto; contain-intrinsic-size: auto 480px;"
+  >
     <div class="max-w-4xl mx-auto">
       <h2
         class="font-header font-bold text-xl uppercase tracking-wider text-theme-primary mb-6"
