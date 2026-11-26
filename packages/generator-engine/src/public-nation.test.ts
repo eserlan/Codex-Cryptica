@@ -117,3 +117,81 @@ describe("Superhero / Comic Book genre (#3125)", () => {
     expect(out.content).toBeTruthy();
   });
 });
+
+// Wording regressions: the conflict level, polity type and scale are inserted
+// into sentences, so each must read as grammatical English for every value.
+describe("generateNationLocal wording", () => {
+  const base = {
+    genre: "Fantasy",
+    governmentStyle: "Oligarchy",
+    scale: "Mid-sized nation",
+  };
+
+  it("reads the conflict level as a state, not as a noun before the polity", () => {
+    for (const conflictLevel of nationConfig.conflictLevels) {
+      const out = generateNationLocal(
+        { ...base, polityType: "Kingdom", conflictLevel },
+        seededRng(7),
+      );
+      expect(out.summary).toContain(
+        `currently ${conflictLevel.toLowerCase()}.`,
+      );
+      expect(out.summary).toMatch(/^A kingdom operating under oligarchy/);
+      expect(out.summary).not.toMatch(/^A (at|open|total|simmering|post-war)/);
+    }
+  });
+
+  it("never places a conflict phrase directly after a preposition as a noun", () => {
+    for (const conflictLevel of nationConfig.conflictLevels) {
+      const out = generateNationLocal(
+        { ...base, polityType: "Kingdom", conflictLevel },
+        seededRng(11),
+      );
+      expect(out.content).not.toMatch(
+        /\b(at|under|to) (at peace|open conflict|total war|simmering tensions|post-war recovery)\b/,
+      );
+      expect(out.content).not.toMatch(/\bat at\b/);
+    }
+  });
+
+  it("uses 'an' before a vowel-initial polity type", () => {
+    const out = generateNationLocal(
+      {
+        ...base,
+        genre: "Sci-Fi",
+        polityType: "Interstellar Federation",
+        conflictLevel: "At peace",
+      },
+      seededRng(3),
+    );
+    expect(out.summary).toMatch(/^An interstellar federation operating/);
+    expect(out.content).toContain("is an interstellar federation under");
+    expect(out.summary).not.toMatch(/\bA interstellar/);
+  });
+
+  it("uses 'a' before a consonant-initial polity type", () => {
+    const out = generateNationLocal(
+      { ...base, polityType: "Kingdom", conflictLevel: "Total war" },
+      seededRng(5),
+    );
+    expect(out.content).toContain("is a kingdom under oligarchy");
+  });
+
+  it("states the scale once, without repeating the polity noun", () => {
+    const out = generateNationLocal(
+      {
+        ...base,
+        polityType: "City-State",
+        scale: "City-state (single settlement)",
+        conflictLevel: "At peace",
+      },
+      seededRng(9),
+    );
+    expect(out.content).toContain(
+      "is a city-state under oligarchy, at a scale of city-state (single settlement).",
+    );
+    expect(out.content).not.toContain(
+      "city-state (single settlement) city-state",
+    );
+  });
+});

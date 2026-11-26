@@ -295,6 +295,16 @@ export function parseNationResponse(text: string): PublicGeneratorOutput {
   };
 }
 
+// "a" or "an" for a lowercase noun phrase, so "an interstellar federation"
+// reads correctly.
+function withArticle(phrase: string): string {
+  return /^[aeiou]/i.test(phrase) ? `an ${phrase}` : `a ${phrase}`;
+}
+
+function capitalise(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export function generateNationLocal(
   options: NationGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -315,7 +325,9 @@ export function generateNationLocal(
     ? buildCapitalName(rng)
     : generateName(rng).split(" ")[0];
 
-  const summary = `A ${resolved.conflictLevel.toLowerCase()} ${resolved.polityType.toLowerCase()} operating under ${resolved.governmentStyle.toLowerCase()}.`;
+  const conflict = resolved.conflictLevel.toLowerCase();
+  const polity = resolved.polityType.toLowerCase();
+  const summary = `${capitalise(withArticle(polity))} operating under ${resolved.governmentStyle.toLowerCase()}, currently ${conflict}.`;
 
   const capitalDescriptions = [
     `Its centre of power, ${capitalName}, is where decisions are made and deals are struck.`,
@@ -334,11 +346,11 @@ export function generateNationLocal(
   ] as const;
 
   const societyDescriptions = [
-    `The population lives under a state at ${resolved.conflictLevel.toLowerCase()}. Loyalty is shifting, old alliances are being renegotiated, and the ruling structure is projecting strength it may not have.`,
-    `Life at ${resolved.conflictLevel.toLowerCase()} means people have become good at reading the room — which official pronouncements to believe, which to discount, which to quietly plan around.`,
-    `The social order persists, but the terms have been renegotiated so many times under ${resolved.conflictLevel.toLowerCase()} conditions that the original compact is barely recognizable.`,
-    `At ${resolved.conflictLevel.toLowerCase()}, the gap between official narrative and lived experience has become something people navigate rather than question. That is either stability or suppression, depending on who you ask.`,
-    `The ruling structure has adapted to ${resolved.conflictLevel.toLowerCase()} by tightening its grip on information and loosening its grip on things that no longer matter. The population has noticed both.`,
+    `The population lives in a state of ${conflict}. Loyalty is shifting, old alliances are being renegotiated, and the ruling structure is projecting strength it may not have.`,
+    `Life in a state of ${conflict} means people have become good at reading the room — which official pronouncements to believe, which to discount, which to quietly plan around.`,
+    `The social order persists, but the terms have been renegotiated so many times in a state of ${conflict} that the original compact is barely recognizable.`,
+    `In a state of ${conflict}, the gap between official narrative and lived experience has become something people navigate rather than question. That is either stability or suppression, depending on who you ask.`,
+    `The ruling structure has adapted to a state of ${conflict} by tightening its grip on information and loosening its grip on things that no longer matter. The population has noticed both.`,
   ] as const;
 
   const nationHowToUse = [
@@ -355,7 +367,7 @@ export function generateNationLocal(
   ] as const;
 
   const content = `### The State
-${stateName} is a ${resolved.scale.toLowerCase()} ${resolved.polityType.toLowerCase()} under ${resolved.governmentStyle.toLowerCase()}. ${pickFrom(capitalDescriptions, rng)}${resolved.campaignContext ? ` In ${resolved.campaignContext}, it is a key player in the main conflict.` : ""}
+${stateName} is ${withArticle(polity)} under ${resolved.governmentStyle.toLowerCase()}, at a scale of ${resolved.scale.toLowerCase()}. ${pickFrom(capitalDescriptions, rng)}${resolved.campaignContext ? ` In ${resolved.campaignContext}, it is a key player in the main conflict.` : ""}
 
 ### Power Structure
 ${leaderName} holds authority, but that authority is contested. ${trouble}. ${pickFrom(powerStructureClosers, rng)}
