@@ -177,10 +177,19 @@ describe("buildVillainSchemePrompt", () => {
 
 describe("parseVillainSchemeResponse", () => {
   const { resolved } = buildVillainSchemePrompt({}, "", seededRng(3));
+  const loreWithStages = (count: number) =>
+    `### Objective\nReach the objective.\n${Array.from(
+      { length: count },
+      (_, index) => `**Stage ${index + 1}: Stage ${index + 1}**`,
+    ).join("\n")}`;
 
   it("parses fenced JSON and keeps the rich body", () => {
-    const json =
-      '```json\n{"title":"Operation Blackout Signal","content":"### Public Activity\\ny","lore":"### Objective","labels":["villain-scheme"]}\n```';
+    const json = `\`\`\`json\n${JSON.stringify({
+      title: "Operation Blackout Signal",
+      content: "### Public Activity\\ny",
+      lore: loreWithStages(4),
+      labels: ["villain-scheme"],
+    })}\n\`\`\``;
     const out = parseVillainSchemeResponse(json, resolved);
     expect(out.title).toBe("Operation Blackout Signal");
     expect(out.content).toContain("Public Activity");
@@ -189,7 +198,7 @@ describe("parseVillainSchemeResponse", () => {
 
   it("falls back to the resolved scheme name and throws on bad JSON", () => {
     const out = parseVillainSchemeResponse(
-      '{"content":"x","lore":"y"}',
+      JSON.stringify({ content: "x", lore: loreWithStages(4) }),
       resolved,
     );
     expect(out.title).toBe(resolved.schemeName);
@@ -202,7 +211,7 @@ describe("parseVillainSchemeResponse", () => {
         title: { unexpected: true },
         summary: 42,
         content: { unexpected: true },
-        lore: [],
+        lore: loreWithStages(4),
         labels: [{}],
       }),
       resolved,
@@ -210,11 +219,28 @@ describe("parseVillainSchemeResponse", () => {
     expect(out.title).toBe(resolved.schemeName);
     expect(out.summary).toBe("");
     expect(out.content).toBe("");
-    expect(out.lore).toBe("");
+    expect(out.lore).toBe(loreWithStages(4));
     expect(out.labels).toEqual([
       "villain-scheme",
       "villain-scheme-generator",
       "imported-draft",
     ]);
+  });
+
+  it.each([4, 6])("accepts %i numbered Scheme Stages", (count) => {
+    const out = parseVillainSchemeResponse(
+      JSON.stringify({ lore: loreWithStages(count) }),
+      resolved,
+    );
+    expect(out.lore.match(/^\s*\*\*Stage\s+\d+\s*:/gm)).toHaveLength(count);
+  });
+
+  it.each([3, 7, 0])("rejects %i numbered Scheme Stages", (count) => {
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: loreWithStages(count) }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
   });
 });

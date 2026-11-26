@@ -193,6 +193,13 @@ export function parseVillainSchemeResponse(
   resolved: ResolvedVillainScheme,
 ): PublicGeneratorOutput {
   const data = asRecord(parseFencedJson<unknown>(text));
+  const lore = asString(data.lore);
+  const stageCount = lore.match(/^\s*\*\*Stage\s+\d+\s*:/gm)?.length ?? 0;
+  if (stageCount < 4 || stageCount > 6) {
+    throw new Error(
+      "Villain scheme lore must contain four to six numbered stages",
+    );
+  }
   const labels = asArray(data.labels).filter(
     (label): label is string => typeof label === "string",
   );
@@ -201,7 +208,7 @@ export function parseVillainSchemeResponse(
     title: asString(data.title) || resolved.schemeName,
     summary: asString(data.summary),
     content: asString(data.content),
-    lore: asString(data.lore),
+    lore,
     labels: labels.length > 0 ? labels : [...DEFAULT_VILLAIN_SCHEME_LABELS],
     status: "active",
   };
