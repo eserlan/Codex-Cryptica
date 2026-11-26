@@ -1,12 +1,21 @@
+import { VaultSyncState } from "./sync-state.svelte";
+import {
+  VaultSyncError,
+  type LoadFilesOptions,
+  type SyncStoreDependencies,
+} from "./sync-types";
+export {
+  VaultSyncError,
+  type LoadFilesOptions,
+  type SyncStoreDependencies,
+} from "./sync-types";
 import { vaultEventBus } from "./events.svelte";
 import type { LocalEntity } from "./types";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
-import { SyncCoordinator, VaultRepository } from "@codex/vault-engine";
 import { appEventBus } from "@codex/events";
 import { fileIOAdapter } from "./adapters.svelte";
 import { updateLastInternalChange } from "./registry";
-import type { VaultRecord } from "../../utils/idb";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
 import { systemClock } from "#lib/utils/runtime-deps.js";
@@ -23,86 +32,74 @@ import type { PerformanceOperationHandle } from "@codex/performance-observabilit
  */
 const WARM_RECONCILE_DELAY_MS = 1500;
 
-export interface LoadFilesOptions {
-  reuseCache?: boolean;
-  deferAuxiliary?: boolean;
-  throwOnError?: boolean;
-  onCacheReady?: (info: { cacheState: "warm" | "cold"; count: number }) => void;
-  onAuxiliaryDegraded?: (source: string) => void;
-}
-
-export class VaultSyncError extends Error {
-  constructor(
-    public readonly code: "vault_handle_missing" | "vault_load_failed",
-    message: string,
-    public readonly cause?: unknown,
-  ) {
-    super(message);
-    this.name = "VaultSyncError";
-  }
-}
-
-export interface SyncStoreDependencies {
-  activeVaultId: () => string | null;
-  activeVaultRecord: () => VaultRecord | undefined;
-  repository: VaultRepository;
-  getSyncCoordinator: () => Promise<SyncCoordinator | null>;
-  getActiveVaultHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  getActiveFolderHandle: () => Promise<FileSystemDirectoryHandle | undefined>;
-  ensureServicesInitialized: () => Promise<void>;
-  loadMaps: (vaultId: string) => Promise<void>;
-  loadCanvases: (vaultId: string) => Promise<void>;
-  loadPublishRegistry?: (
-    vaultId: string,
-    vaultHandle: FileSystemDirectoryHandle,
-  ) => Promise<void>;
-  updateEntityCount: (vaultId: string, count: number) => Promise<void>;
-  flushPendingSaves?: (timeoutMs?: number) => Promise<void>;
-}
-
 export class SyncStore {
-  private _status = $state<
-    "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error"
-  >("idle");
-  errorMessage = $state<string | null>(null);
-  syncType = $state<"local" | null>(null);
-  /**
-   * Which phase of a load is currently running. Drives a phase-aware loading
-   * indicator: "scanning"/"syncing" have no determinate progress (show an
-   * indeterminate bar), while "parsing" reports real `syncStats.progress`.
-   */
-  loadPhase = $state<null | "scanning" | "syncing" | "parsing">(null);
-  syncStats = $state({
-    updated: 0,
-    created: 0,
-    deleted: 0,
-    failed: 0,
-    total: 0,
-    progress: 0,
-  });
-  failedFiles = $state<{ path: string; error: string }[]>([]);
-  hasConflictFiles = $state(false);
-  hasFolderHandle = $state(false);
+  private state: VaultSyncState;
+
+  private get _status() {
+    return this.state.currentStatus;
+  }
+  private set _status(value: VaultSyncState["currentStatus"]) {
+    this.state.currentStatus = value;
+  }
+
+  get errorMessage() {
+    return this.state.errorMessage;
+  }
+  set errorMessage(value: VaultSyncState["errorMessage"]) {
+    this.state.errorMessage = value;
+  }
+
+  get syncType() {
+    return this.state.syncType;
+  }
+  set syncType(value: VaultSyncState["syncType"]) {
+    this.state.syncType = value;
+  }
+
+  get loadPhase() {
+    return this.state.loadPhase;
+  }
+  set loadPhase(value: VaultSyncState["loadPhase"]) {
+    this.state.loadPhase = value;
+  }
+
+  get syncStats() {
+    return this.state.syncStats;
+  }
+  set syncStats(value: VaultSyncState["syncStats"]) {
+    this.state.syncStats = value;
+  }
+
+  get failedFiles() {
+    return this.state.failedFiles;
+  }
+  set failedFiles(value: VaultSyncState["failedFiles"]) {
+    this.state.failedFiles = value;
+  }
+
+  get hasConflictFiles() {
+    return this.state.hasConflictFiles;
+  }
+  set hasConflictFiles(value: VaultSyncState["hasConflictFiles"]) {
+    this.state.hasConflictFiles = value;
+  }
+
+  get hasFolderHandle() {
+    return this.state.hasFolderHandle;
+  }
+  set hasFolderHandle(value: VaultSyncState["hasFolderHandle"]) {
+    this.state.hasFolderHandle = value;
+  }
 
   get status() {
-    if (this._status === "loading") return "loading";
-    if (this._status === "error") return "error";
-    if (this._status === "needs-permission") return "needs-permission";
-    if (this._status === "saved") return "saved";
-    if (this.deps.repository.pendingSaveCount > 0) return "saving";
-    return this._status;
+    return this.state.status;
   }
-
   get isDirty() {
-    const record = this.deps.activeVaultRecord();
-    if (!record) return false;
-    if (sessionModeStore.isDemoMode || this.status === "loading") return false;
-    return (record.lastInternalChange || 0) > (record.lastSavedToFolder || 0);
+    return this.state.isDirty;
   }
 
   private syncAbortController: AbortController | null = null;
   private warmReconcileTimer: ReturnType<typeof setTimeout> | null = null;
-  private savedTimer: any = null;
   /**
    * The vault whose entities are currently seeded in memory. Used to tell a
    * same-vault reload (where in-memory may hold fresher writes than the cache,
@@ -111,31 +108,20 @@ export class SyncStore {
    */
   private _lastSeededVaultId: string | null = null;
 
-  private unsubscribe: (() => void) | null = null;
-
   constructor(private deps: SyncStoreDependencies) {
+    this.state = new VaultSyncState(deps);
     browserPerformanceCapture.start();
-    this.unsubscribe = appEventBus.subscribe(
-      "SYNC:DRIVE_PULL_COMPLETE",
-      async (event) => {
-        const activeId = this.deps.activeVaultId();
-        if (activeId && event.payload?.vaultId === activeId) {
-          debugStore.log(
-            `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
-          );
-          await cacheService.clearVault(activeId);
-          await this.loadFiles(false);
-          await updateLastInternalChange(activeId);
-        }
-      },
-    );
-  }
-
-  private clearSavedTimer() {
-    if (this.savedTimer) {
-      clearTimeout(this.savedTimer);
-      this.savedTimer = null;
-    }
+    appEventBus.subscribe("SYNC:DRIVE_PULL_COMPLETE", async (event) => {
+      const activeId = this.deps.activeVaultId();
+      if (activeId && event.payload?.vaultId === activeId) {
+        debugStore.log(
+          `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
+        );
+        await cacheService.clearVault(activeId);
+        await this.loadFiles(false);
+        await updateLastInternalChange(activeId);
+      }
+    });
   }
 
   private async waitForSaves(timeoutMs?: number): Promise<void> {
@@ -172,15 +158,6 @@ export class SyncStore {
       this.errorMessage = "Permission denied for local folder.";
       notificationStore.notify("Permission denied for local folder.", "error");
       return false;
-    }
-  }
-
-  destroy() {
-    this.clearSavedTimer();
-    this.cancelWarmReconcile();
-    if (this.unsubscribe) {
-      this.unsubscribe();
-      this.unsubscribe = null;
     }
   }
 
@@ -984,18 +961,8 @@ export class SyncStore {
     }
   }
 
-  setStatus(
-    s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
-  ) {
-    this.clearSavedTimer();
-    this._status = s;
-    if (s === "saved") {
-      this.savedTimer = setTimeout(() => {
-        if (this._status === "saved") {
-          this._status = "idle";
-        }
-      }, 2500);
-    }
+  setStatus(status: VaultSyncState["currentStatus"]) {
+    this.state.setStatus(status);
   }
 
   setErrorMessage(m: string | null) {
