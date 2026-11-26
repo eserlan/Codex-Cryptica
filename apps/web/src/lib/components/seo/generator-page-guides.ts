@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  world: {
+    summary:
+      "Generate a sci-fi planet, moon or artificial world built around one dominant feature, then use its two world tags and campaign pressure to find the settlements and disputes your party meets on arrival.",
+    tips: [
+      {
+        title: "Pick two tags that disagree",
+        detail:
+          "World Tag 1 and World Tag 2 each bring friends, enemies and places into the draft. Choose two with clashing interests, such as Refugees and Megacorps, and the Settlements & Factions section will show the largest settlement and its rival network disagreeing about the future.",
+      },
+      {
+        title: "Open the first session on one hook",
+        detail:
+          "The three Adventure Hooks each name an actor, a cost and a decision. Start with the hook whose helper asks the crew to act before a rival moves, then keep the other two for later arcs once the party understands who is pushing.",
+      },
+      {
+        title: "Decide who survives where",
+        detail:
+          "Habitability shapes the How People Survive section and Civilisation shapes Settlements & Factions. A Hostile world with a Frontier civilisation makes protection the daily problem, so a supply run or rescue is a natural first scene. Type a Dominant feature (optional) to replace the generated one, and the Environment section builds on it.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-to-create-a-sci-fi-star-system-for-an-rpg",
+        label: "Building a sci-fi star system around this world",
+      },
+      {
+        href: "/answers/how-do-scarcity-and-shortages-affect-prices-and-conflict-in-an-rpg-world",
+        label: "How scarcity drives conflict on a world",
+      },
+    ],
+  },
   "star-system": {
     summary:
       "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
