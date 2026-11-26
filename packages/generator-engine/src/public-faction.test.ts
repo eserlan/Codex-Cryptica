@@ -884,22 +884,34 @@ describe("urban fantasy faction (#1137)", () => {
 });
 
 describe("urban fantasy offline wording fixes", () => {
-  it("uses 'an' before a vowel-initial faction type and 'a' otherwise", () => {
+  it("uses article-neutral wording for custom faction types", () => {
     const occult = generateUrbanFantasyFactionLocal(
       { factionType: "Occult Gang" },
       seededRng(40),
     );
-    expect(occult.summary).toMatch(/ is an occult gang operating through /);
-    expect(occult.content).toContain("is an occult gang with a foothold in");
+    expect(occult.summary).toContain("a faction of type occult gang");
+    expect(occult.content).toContain(
+      "is a faction of type occult gang with a foothold in",
+    );
 
-    const lodge = generateUrbanFantasyFactionLocal(
-      { factionType: "Hunter Lodge" },
+    const european = generateUrbanFantasyFactionLocal(
+      { factionType: "European Council" },
       seededRng(40),
     );
-    expect(lodge.summary).toMatch(/ is a hunter lodge operating through /);
-    expect(`${lodge.summary}\n${lodge.content}`).not.toMatch(
-      /\ba (?=[aeiou])/i,
+    expect(european.summary).toContain("a faction of type european council");
+    expect(european.content).toContain(
+      "is a faction of type european council with a foothold in",
     );
+  });
+
+  it("strips trailing punctuation from custom mode before interpolation", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { mode: "Monster diplomacy." },
+      seededRng(40),
+    );
+    expect(out.summary).toContain("operating through monster diplomacy and");
+    expect(out.content).toContain("Their work centres on monster diplomacy.");
+    expect(out.content).not.toContain("diplomacy..");
   });
 
   it("never puts a capital letter after the colon in the risk sentence", () => {

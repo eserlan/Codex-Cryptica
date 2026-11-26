@@ -453,7 +453,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "urban-fantasy-faction": {
     summary:
-      "Each result is a named city faction with a faction type, a mode, an operating scope, a moral posture, a goal, a base, a secret, two named NPCs, a rival and an immediate hook. Use it when a hidden-world group needs a place in a modern city, then decide which parts the party can see.",
+      "Each offline draft is a named city faction with a faction type, a mode, an operating scope, a moral posture, a goal, a base, a secret, two named NPCs, a rival and an immediate hook. AI results may vary the NPC count and phrase the secret and internal conflict independently. Use it when a hidden-world group needs a place in a modern city, then decide which parts the party can see.",
     tips: [
       {
         title: "Set the operating scope to size the threat",
@@ -468,7 +468,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Check the conflict against the moral posture",
         detail:
-          "Moral posture changes the wording of Why they are dangerous and Internal Conflict, but the conflict itself comes from a fixed list. The Secret line in At a Glance repeats that conflict, so decide whether the players learn it or find it as a clue.",
+          "In offline drafts, the Moral posture changes the wording of Why they are dangerous and Internal Conflict, but the conflict comes from a fixed list and the Secret line repeats it. AI results may phrase the secret and internal conflict differently, so decide which details the players learn or discover as clues.",
       },
     ],
     links: [

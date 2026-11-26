@@ -227,13 +227,6 @@ function generateFactionName(rng: Rng): string {
   return pickFrom(FACTION_NAMES, rng);
 }
 
-// Chooses "an" before a vowel letter, so "an occult gang" reads correctly.
-// Custom types can start with any letter, so this is a heuristic, not a
-// pronunciation check.
-function withIndefiniteArticle(phrase: string): string {
-  return `${/^[aeiou]/i.test(phrase) ? "an" : "a"} ${phrase}`;
-}
-
 // Generated names start with "The" (for example "The Crossing Desk"), which
 // reads wrongly mid-sentence as "Bring The Crossing Desk in".
 function lowerLeadingThe(name: string): string {
@@ -504,9 +497,10 @@ export function generateUrbanFantasyFactionLocal(
   const base = pickFrom(urbanFantasyFactionConfig.bases, rng);
   const resource = pickFrom(urbanFantasyFactionConfig.resources, rng);
   const symbol = pickFrom(urbanFantasyFactionConfig.symbols, rng);
-  const typeNoun = withIndefiniteArticle(resolved.factionType.toLowerCase());
+  const typeNoun = `a faction of type ${resolved.factionType.toLowerCase()}`;
   const midSentenceName = lowerLeadingThe(resolved.name);
-  const summary = `${resolved.name} is ${typeNoun} operating through ${resolved.mode.toLowerCase()} and holding influence across the ${resolved.scope.toLowerCase()}.`;
+  const mode = stripTrailingSentencePunctuation(resolved.mode.toLowerCase());
+  const summary = `${resolved.name} is ${typeNoun}, operating through ${mode} and holding influence across the ${resolved.scope.toLowerCase()}.`;
   const campaignContext = resolved.campaignContext
     ? ` The faction's choices are shaped by ${stripTrailingSentencePunctuation(resolved.campaignContext)}.`
     : "";
@@ -515,7 +509,7 @@ export function generateUrbanFantasyFactionLocal(
 Urban fantasy · modern fantasy · supernatural faction · hidden-world politics
 
 ### What they control
-${resolved.name} is ${typeNoun} with a foothold in ${base}. Across the ${resolved.scope.toLowerCase()}, they control ${resource}. Their public-facing work makes them legible to city employees and residents while their supernatural role stays out of ordinary records. Their work centres on ${resolved.mode.toLowerCase()}.${campaignContext}
+${resolved.name} is ${typeNoun} with a foothold in ${base}. Across the ${resolved.scope.toLowerCase()}, they control ${resource}. Their public-facing work makes them legible to city employees and residents while their supernatural role stays out of ordinary records. Their work centres on ${mode}.${campaignContext}
 
 ### What they want
 ${resolved.goal}
