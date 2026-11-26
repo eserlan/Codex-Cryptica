@@ -650,6 +650,21 @@ function isAdvancedSetting(genre: string): boolean {
   );
 }
 
+// Custodians are capitalised noun phrases ("A convent of silent scribes") and
+// locations often begin "The ...". Both need a lowercase definite article
+// once they sit mid-sentence; a custodian's own article must not double up.
+function bareCustodian(custodian: string): string {
+  return custodian.replace(/^(a|an|the)\s+/i, "").toLowerCase();
+}
+
+function definiteCustodian(custodian: string): string {
+  return `the ${bareCustodian(custodian)}`;
+}
+
+function definiteLocation(location: string): string {
+  return location.replace(/^The /, "the ");
+}
+
 function describeBody(format: string): string {
   const normalized = format.toLowerCase();
   if (/vellum|parchment/.test(normalized)) return "vellum or parchment leaves";
@@ -684,21 +699,21 @@ function describeMaterial(resolved: ResolvedTome, advanced: boolean): string {
   const production = advanced
     ? "Its text was copied or printed for the institutions of its setting."
     : "Its text was copied by hand or set for print in keeping with its period.";
-  return `The ${resolved.format.toLowerCase()} has ${describeBody(resolved.format)} and a binding consistent with its stated format. ${production}${sourceMedium} Condition: ${resolved.exactDamage}. ${describeAnnotations(resolved, advanced)}`;
+  return `The ${resolved.format.toLowerCase()} ${/sheaves/i.test(resolved.format) ? "have" : "has"} ${describeBody(resolved.format)} and a binding consistent with its stated format. ${production}${sourceMedium} Condition: ${resolved.exactDamage}. ${describeAnnotations(resolved, advanced)}`;
 }
 
 function describeOrigin(resolved: ResolvedTome, advanced: boolean): string {
   if (advanced) {
-    return `Compiled in the ${resolved.era} by ${resolved.author}, the work records material suppressed by the authorities or organisation that controlled its original access. Its surviving copy passed through several owners before reaching the ${resolved.custodian.toLowerCase()}.`;
+    return `Compiled in the ${resolved.era} by ${resolved.author}, the work records material suppressed by the authorities or organisation that controlled its original access. Its surviving copy passed through several owners before reaching ${definiteCustodian(resolved.custodian)}.`;
   }
-  return `Authored in the ${resolved.era} by ${resolved.author}, the work was suppressed after its claims challenged the beliefs or interests of its original authorities. This ${resolved.rarity.toLowerCase()} passed through several owners before reaching the ${resolved.custodian.toLowerCase()}.`;
+  return `Authored in the ${resolved.era} by ${resolved.author}, the work was suppressed after its claims challenged the beliefs or interests of its original authorities. This ${resolved.rarity.toLowerCase()} passed through several owners before reaching ${definiteCustodian(resolved.custodian)}.`;
 }
 
 function describeClue(resolved: ResolvedTome, advanced: boolean): string {
   const method = advanced
     ? "cross-checking the dates and damaged entries reveals when the evidence can be recovered"
     : "comparing its dated entries with the marginal corrections reveals when the evidence can be found";
-  return `The records point to ${resolved.associatedLocation}; ${method}. On the surface, ${resolved.bookClaim.toLowerCase().replace(/^(page \d+ asserts that|the central thesis asserts that|the text directs that)\s*/i, "")}. However, a key anomaly stands out: ${resolved.actionableClue.toLowerCase().replace(/^[a-z]/, (c) => c.toUpperCase())}.`;
+  return `The records point to ${definiteLocation(resolved.associatedLocation)}; ${method}. On the surface, ${resolved.bookClaim.toLowerCase().replace(/^(page \d+ asserts that|the central thesis asserts that|the text directs that)\s*/i, "")}. However, a key anomaly stands out: ${resolved.actionableClue.toLowerCase().replace(/^[a-z]/, (c) => c.toUpperCase())}.`;
 }
 
 function describeRisk(resolved: ResolvedTome): string {
@@ -707,7 +722,7 @@ function describeRisk(resolved: ResolvedTome): string {
     return `Handling or operating the damaged ${resolved.format.toLowerCase()} exposes the reader to a concrete hazard: its compromised casing, contaminated pages, or unstable components can cause injury unless inspected and secured first.`;
   }
   if (/social|investigation/.test(hazard)) {
-    return `Accessing the material leaves an audit trail. The ${resolved.custodian.toLowerCase()} and interested parties can identify readers, creating a risk of surveillance, questioning, or confiscation.`;
+    return `Accessing the material leaves an audit trail. The ${bareCustodian(resolved.custodian)} and interested parties can identify readers, creating a risk of surveillance, questioning, or confiscation.`;
   }
   if (/mental|obsessive/.test(hazard)) {
     return "Repeated study encourages fixation: the reader starts treating an unresolved pattern in the text as urgent evidence, risking lost sleep and poor decisions until they step away or verify it independently.";
@@ -724,15 +739,15 @@ function describeAdventureHooks(
 ): string[] {
   if (advanced) {
     return [
-      `A source hires the party to recover missing material (${resolved.exactDamage.toLowerCase()}) before the ${resolved.custodian.toLowerCase()} permanently purges access logs.`,
-      `The party discovers that a planned operation at ${resolved.associatedLocation} relies on the document's falsified conclusion; they must verify the authentic record.`,
+      `A source hires the party to recover missing material (${resolved.exactDamage.toLowerCase()}) before ${definiteCustodian(resolved.custodian)} permanently purges access logs.`,
+      `The party discovers that a planned operation at ${definiteLocation(resolved.associatedLocation)} relies on the document's falsified conclusion; they must verify the authentic record.`,
       `A rival faction offers the party unredacted files from the ${resolved.tomeType.toLowerCase()} in exchange for identifying who altered the records.`,
     ];
   }
   return [
-    `An agent of the ${resolved.custodian.toLowerCase()} hires the party to recover missing material (${resolved.exactDamage.toLowerCase()}) before a rival collector does.`,
-    `A local group is acting on the author's flawed conclusion near ${resolved.associatedLocation}; the party must intervene before the error triggers catastrophe.`,
-    `The party inherits an uncatalogued copy whose marginalia reveals the true site beneath ${resolved.associatedLocation}, drawing immediate interest from collectors.`,
+    `An agent of ${definiteCustodian(resolved.custodian)} hires the party to recover missing material (${resolved.exactDamage.toLowerCase()}) before a rival collector does.`,
+    `A local group is acting on the author's flawed conclusion near ${definiteLocation(resolved.associatedLocation)}; the party must intervene before the error triggers catastrophe.`,
+    `The party inherits an uncatalogued copy whose marginalia reveals the true site beneath ${definiteLocation(resolved.associatedLocation)}, drawing immediate interest from collectors.`,
   ];
 }
 
@@ -791,6 +806,8 @@ ${details.clue} The author's central interpretation is compromised by deliberate
 
   const lore = `### At the Table Reference
 
+Let the party find the Actionable Clue by comparing dated entries with the marginal corrections, and keep the Objective Truth hidden until they act on the flawed premise.
+
 ### Ground Truth for the GM
 - **What the Book Claims**: ${resolved.bookClaim}.
 - **The Deception / Flaw**: ${resolved.deceptionOrFlaw}.
@@ -812,7 +829,7 @@ ${details.clue} The author's central interpretation is compromised by deliberate
     type: "item",
     tomeFacts: buildTomeFacts(resolved),
     title: resolved.title,
-    summary: `${resolved.title}: A ${resolved.rarity.toLowerCase()} of ${resolved.tomeType.toLowerCase()} in ${resolved.language}, currently located in the ${resolved.custodian.toLowerCase()}.`,
+    summary: `${resolved.title}: A ${resolved.rarity.toLowerCase()} of ${resolved.tomeType.toLowerCase()} in ${resolved.language}, currently located in ${definiteCustodian(resolved.custodian)}.`,
     content,
     lore,
     labels: [

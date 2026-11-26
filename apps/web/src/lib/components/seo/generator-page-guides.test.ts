@@ -261,9 +261,10 @@ describe("generator guide distinctness", () => {
     expect(
       getGeneratorGuide("star-system", "Star System Generator").summary,
     ).toContain("playable region map");
-    expect(getGeneratorGuide("tome", "Tome Generator").summary).toContain(
-      "Tome Generator",
-    );
+    expect(
+      getGeneratorGuide("villain-scheme-generator", "Villain Scheme Generator")
+        .summary,
+    ).toContain("Villain Scheme Generator");
   });
 
   it("serves the kingdom guide with tips that name its form labels", () => {
@@ -631,6 +632,26 @@ describe("generator guide distinctness", () => {
       "Fairness / Foreshadowing",
       "Avoid / constraints (optional)",
       "World context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
+  it("serves the tome guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("tome", "Tome & Forbidden Book Generator");
+    expect(guide).toBe(SLUG_GUIDES.tome);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("tome", "Tome & Forbidden Book Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Primary Reading Hazard",
+      "Current Custodian",
+      "Concept",
+      "Campaign Context",
     ]) {
       expect(tipText).toContain(label);
     }

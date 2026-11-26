@@ -99,6 +99,37 @@ describe("generator-continuation", () => {
     });
   });
 
+  it("configures the tome as an Item import with GM-only lore and gates it on completed generation", () => {
+    const config = getGeneratorContinuationConfig("tome");
+    expect(config).not.toBeNull();
+    expect(config?.capabilities.join(" ")).toContain("Item entry");
+    expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect(
+      [config?.headline, config?.summary, ...(config?.capabilities ?? [])]
+        .join(" ")
+        .match(/[–—]/),
+    ).toBeNull();
+
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "tome",
+        userGenerationSucceeded: true,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(true);
+    expect(
+      shouldShowGeneratorContinuation({
+        generatorType: "tome",
+        userGenerationSucceeded: false,
+        isExampleDraft: false,
+        isBusy: false,
+        variant: "default",
+      }),
+    ).toBe(false);
+  });
+
   it("returns null for Wave 2, names, and unknown generator types", () => {
     for (const type of [
       "point-crawl",
