@@ -960,7 +960,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "How does Campaign context (optional) affect the draft?",
         answer:
-          "With AI generation on, your campaign context guides the entire pantheon, its deities, and its myths. Offline drafts include your context in an Influence of Campaign Context section while using your selected domain, conflict theme, and worshippers.",
+          "With AI generation on, your campaign context guides the entire pantheon and its myths in Pantheon mode, or shapes the deity and its cult in Single Deity / Spirit mode. Offline drafts display your context in an Influence of Campaign Context section while using your selected domain, worshippers, and, in Pantheon mode, conflict theme.",
       },
     ],
     relatedLinks: [
