@@ -389,4 +389,36 @@ describe("generator guide distinctness", () => {
       ).summary,
     );
   });
+
+  it("serves the dnd-npc guide with tips that name its form labels and output fields", () => {
+    const guide = getGeneratorGuide("dnd-npc", "D&D NPC Generator");
+    expect(guide).toBe(SLUG_GUIDES["dnd-npc"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("dnd-npc", "D&D NPC Generator"),
+    );
+    expect(guide.summary).not.toContain("D&D NPC Generator");
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Prep style",
+      "Table Card (6-Element 60-Second Prep)",
+      "Full Dossier (Detailed Background)",
+      "Choose their role",
+      "Choose their ancestry",
+      "Choose their morality",
+      "Add campaign context",
+      "Class / Archetype",
+      "Table Rating",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
+  it("falls back to the default template for slugs without a specific guide", () => {
+    const fallbackSlug = "nonexistent-slug" as never;
+    expect(getGeneratorGuide(fallbackSlug, "Custom Generator")).toEqual(
+      defaultGuideForSlug(fallbackSlug, "Custom Generator"),
+    );
+  });
 });

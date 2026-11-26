@@ -81,10 +81,19 @@ describe("GuestExporter", () => {
   });
 
   it("should physically delete GM secrets on included entities", () => {
-    const bundle = GuestExporter.export(defaultOptions);
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const bundle = GuestExporter.export({
+      ...defaultOptions,
+      entities: [
+        { ...publicEntity, lore: `GM-only secret: ${secret}` },
+        secretEntity,
+        publicEntity2,
+      ],
+    });
 
     const exportedE1 = bundle.entities.find((e) => e.id === "entity-1")!;
     expect(exportedE1.lore).toBeUndefined();
+    expect(JSON.stringify(bundle)).not.toContain(secret);
     expect(exportedE1.artDirection).toBeUndefined();
     expect(exportedE1.adventureArtwork).toBeUndefined();
     expect(exportedE1.adventureSource).toBeUndefined();

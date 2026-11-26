@@ -7,8 +7,8 @@ heist-generator inconsistency is an example.
 The lightweight, non-blocking review report is:
 
 ```bash
-node scripts/generator-content-impact.mjs --base origin/staging
-node scripts/generator-content-impact.mjs --all
+bun scripts/generator-content-impact.mjs --base origin/staging
+bun scripts/generator-content-impact.mjs --all
 ```
 
 The staging PR workflow runs this as an **advisory** and publishes the output

@@ -106,8 +106,8 @@ export const howDoYouMakeNpcsMemorableWithoutLotsOfPrep: AnswerConfigInput = {
     {
       title: "D&D NPC generator",
       description:
-        "Tailored NPCs for 5th edition campaigns with personality traits and equipment.",
-      href: "/tools/dnd-npc-generator",
+        "Fantasy NPCs with ancestry, role, alignment, a Class / Archetype and CR benchmark, and Table Card or Full Dossier prep.",
+      href: "/generators/dnd-npc",
     },
     {
       title: "Faction generator",

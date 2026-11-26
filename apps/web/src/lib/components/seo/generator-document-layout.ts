@@ -19,6 +19,10 @@ interface LayoutRule {
 // specific labels come first.
 const LAYOUT_RULES: LayoutRule[] = [
   {
+    label: "table-card",
+    railSections: new Set(["At a Glance"]),
+  },
+  {
     label: "vampire-clan",
     railSections: new Set(["GM Reference Information"]),
   },
@@ -282,6 +286,74 @@ function extractBullets(body: string, labels: Set<string>) {
   return { kept: kept.join("\n").trim(), moved };
 }
 
+function extractTableCardSecrets(
+  markdown: string,
+  gmOnlyBullets: string[],
+): string {
+  return splitMarkdownSections(markdown)
+    .map((section) => {
+      const { kept, moved } = extractBullets(
+        section.body,
+        new Set(["Knowledge & Secrets"]),
+      );
+      for (const bullet of moved) {
+        if (!gmOnlyBullets.includes(bullet)) {
+          gmOnlyBullets.push(bullet);
+        }
+      }
+      if (
+        moved.length > 0 &&
+        /^###\s+The Six Elements\b/i.test(kept) &&
+        !kept.includes("GM Reference")
+      ) {
+        const publicCueCount = kept
+          .split("\n")
+          .filter((line) => /^\s*-\s+\*\*[^*]+\*\*:/.test(line)).length;
+        const note =
+          publicCueCount === 5
+            ? "*Five public cues below; the sixth element (secrets) is in GM Reference for spoiler protection.*"
+            : "*The sixth element (secrets) is in GM Reference for spoiler protection.*";
+        return kept.replace(
+          /^(###\s+The Six Elements\b[^\n]*)/i,
+          `$1\n${note}`,
+        );
+      }
+      return kept;
+    })
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+function routeTableCardSecrets(
+  content: string,
+  lore: string,
+  isTableCard: boolean,
+) {
+  if (!isTableCard) {
+    return { content, lore, gmOnlyBullets: [] as string[] };
+  }
+
+  const gmOnlyBullets: string[] = [];
+  const publicContent = extractTableCardSecrets(content, gmOnlyBullets);
+  const privateLore = extractTableCardSecrets(lore, gmOnlyBullets);
+
+  return {
+    content: publicContent,
+    lore: privateLore,
+    gmOnlyBullets,
+  };
+}
+
+function appendGmOnlySecrets(lore: string, bullets: string[]): string {
+  if (bullets.length === 0 || /-\s+\*\*Knowledge & Secrets\*\*/.test(lore)) {
+    return lore;
+  }
+
+  return [lore, `### GM-Only Secrets\n${bullets.join("\n")}`]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
 /**
  * True when a section carries nothing but its own heading — the model emitted
  * `### The Prize` and then wrote nothing under it.
@@ -323,6 +395,16 @@ function keepFirstOccurrence(
   return kept;
 }
 
+function deduplicateMarkdownSections(markdown: string, seen: Set<string>) {
+  const sections = splitMarkdownSections(markdown);
+  return sections.length
+    ? keepFirstOccurrence(sections, seen)
+        .map((section) => section.body)
+        .join("\n\n")
+        .trim()
+    : markdown;
+}
+
 export function getGeneratorDocumentLayout(
   generatedData: GeneratorOutput | null,
 ) {
@@ -333,40 +415,37 @@ export function getGeneratorDocumentLayout(
   const labels = Array.isArray(generatedData.labels)
     ? generatedData.labels
     : [];
-
   // Deduplicate the reader-facing column first, so its headings are the ones
   // that win against any later repeat in `lore`.
   const seenHeadings = new Set<string>();
-  const rawContent = generatedData.content || "";
-  const contentSections = splitMarkdownSections(rawContent);
-  const content = contentSections.length
-    ? keepFirstOccurrence(contentSections, seenHeadings)
-        .map((s) => s.body)
-        .join("\n\n")
-        .trim()
-    : rawContent;
+  const routedTableCard = routeTableCardSecrets(
+    generatedData.content || "",
+    generatedData.lore || "",
+    labels.includes("table-card"),
+  );
+  const gmOnlyBullets = routedTableCard.gmOnlyBullets;
+  const rawContent = routedTableCard.content;
+  const content = deduplicateMarkdownSections(rawContent, seenHeadings);
 
   const rule = LAYOUT_RULES.find((r) => labels.includes(r.label));
   if (!rule) {
-    const rawLore = generatedData.lore || "";
-    const loreSections = splitMarkdownSections(rawLore);
     return {
       content,
-      lore: loreSections.length
-        ? keepFirstOccurrence(loreSections, seenHeadings)
-            .map((s) => s.body)
-            .join("\n\n")
-            .trim()
-        : rawLore,
+      lore: appendGmOnlySecrets(
+        deduplicateMarkdownSections(routedTableCard.lore, seenHeadings),
+        gmOnlyBullets,
+      ),
     };
   }
 
-  const rawLore = generatedData.lore || "";
-  const splitLore = splitMarkdownSections(rawLore);
+  const splitLore = splitMarkdownSections(routedTableCard.lore);
   // Headingless lore has no sections to route, so it stays in the rail whole —
   // the same passthrough this function has always had for that shape.
   if (splitLore.length === 0) {
-    return { content, lore: rawLore };
+    return {
+      content,
+      lore: appendGmOnlySecrets(routedTableCard.lore, gmOnlyBullets),
+    };
   }
   const loreSections = keepFirstOccurrence(splitLore, seenHeadings);
 
@@ -398,11 +477,13 @@ export function getGeneratorDocumentLayout(
     );
   }
 
+  const lore = railSections.join("\n\n").trim();
+
   return {
     content: [content, ...mainDocumentSections]
       .filter(Boolean)
       .join("\n\n")
       .trim(),
-    lore: railSections.join("\n\n").trim(),
+    lore: appendGmOnlySecrets(lore, gmOnlyBullets),
   };
 }

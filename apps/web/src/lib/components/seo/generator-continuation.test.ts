@@ -15,7 +15,9 @@ describe("generator-continuation", () => {
 
     const npc = getGeneratorContinuationConfig("npc");
     const rpgNpc = getGeneratorContinuationConfig("rpg-npc-generator");
+    const dndNpc = getGeneratorContinuationConfig("dnd-npc");
     expect(rpgNpc).toBe(npc);
+    expect(dndNpc).toBe(npc);
     expect(npc).toMatchObject({
       headline: "Give this character a place in your world",
       ctaLabel: "Add to my Codex",
@@ -37,7 +39,6 @@ describe("generator-continuation", () => {
       "alien-race",
       "names",
       "fantasy-names",
-      "dnd-npc",
       "unknown-generator",
       "",
       null,
