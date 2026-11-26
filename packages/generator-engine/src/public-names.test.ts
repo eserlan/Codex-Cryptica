@@ -138,6 +138,9 @@ describe("generateNamesLocal", () => {
     );
     expect(withContext.lore).toContain("### Campaign Context");
     expect(withContext.lore).toContain("does not use campaign context");
+    expect(withContext.lore).toContain(
+      "AI generation is needed to use this context; retry if AI is already enabled.",
+    );
 
     const withoutContext = generateNamesLocal(
       { culture: "Norse / Viking", context: "   ", count: "3" },
@@ -165,6 +168,9 @@ describe("generateNamesLocal", () => {
     );
     expect(vibe.lore).toContain("### Offline Tables");
     expect(vibe.lore).toContain("generic fantasy syllables");
+    expect(vibe.lore).toContain(
+      "AI generation is needed for names in this style; retry if AI is already enabled.",
+    );
 
     const tabled = generateNamesLocal(
       { culture: "Dwarven", count: "3" },

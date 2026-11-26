@@ -214,12 +214,12 @@ export function generateNamesLocal(
   const notes: string[] = [];
   if (!nameGeneratorConfig.culturePrefixes[resolved.culture]) {
     notes.push(
-      `### Offline Tables\nThere are no offline name tables for ${resolved.culture}, so this roll uses the generic fantasy syllables. Turn on AI generation for names in this style.`,
+      `### Offline Tables\nThere are no offline name tables for ${resolved.culture}, so this roll uses the generic fantasy syllables. AI generation is needed for names in this style; retry if AI is already enabled.`,
     );
   }
   if (resolved.context) {
     notes.push(
-      "### Campaign Context\nThe offline roll does not use campaign context. Turn on AI generation to steer these names with it.",
+      "### Campaign Context\nThe offline roll does not use campaign context. AI generation is needed to use this context; retry if AI is already enabled.",
     );
   }
 
