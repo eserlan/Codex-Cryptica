@@ -50,6 +50,13 @@ describe("World Generator", () => {
     expect(output.lore).toContain("## Adventure Hooks");
   });
 
+  it("uses the spoken article for a custom world type starting with one", () => {
+    const output = generateWorldLocal({ worldType: "One-Off World" }, () => 0);
+
+    expect(output.summary).toContain("is a one-off world");
+    expect(output.content).toContain("is a one-off world in a");
+  });
+
   it("avoids a supplied world name when another local option is available", () => {
     const output = generateWorldLocal(
       { avoidNames: [worldConfig.names[0]] },
