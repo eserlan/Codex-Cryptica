@@ -509,6 +509,34 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "fantasy-names": {
+    summary:
+      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+    tips: [
+      {
+        title: "Choose the culture for the sound",
+        detail:
+          "Built-in Culture / Style options shape the sound of the whole batch. Dwarven gives stone and forge compounds such as Balrin Granitefist, while Norse / Viking gives person names ending in -son or -dottir. A custom culture or style label uses generic fantasy tables on the offline roll. Name Type changes the shape, so a Place adds endings such as Keep, Downs or Hollow, and a Faction often starts with The or uses of the.",
+      },
+      {
+        title:
+          "Set Gender / Presentation for full Norse and Celtic person names",
+        detail:
+          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those.",
+      },
+      {
+        title: "Add campaign context when AI is on",
+        detail:
+          "Add campaign context is sent to the AI path, which can tie names to the setting you describe, such as an Assyrian trading port. The offline roll does not read it, so the same batch comes back whatever you type there.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-improvise-npcs-in-dnd",
+        label: "Improvising NPCs in D&D",
+      },
+    ],
+  },
   "minor-magic-item": {
     summary:
       "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
@@ -783,7 +811,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use campaign context with AI on",
         detail:
-          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. The offline roll does not read it, so local results add a note whenever context is present, including after an AI failure. AI generation is needed to use this context; retry if AI is already enabled.",
+          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. Local results ignore it and add a note whenever context is present, including after an AI failure. AI generation is needed to use this context; retry if AI is already enabled.",
       },
     ],
   },
