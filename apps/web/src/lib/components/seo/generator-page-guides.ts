@@ -1095,6 +1095,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "comic-book-event-generator": {
+    summary:
+      "Create a crossover-scale superhero crisis with a public response, four escalation beats, a hidden cause and lasting consequences that reshape your campaign rather than resetting after the finale.",
+    tips: [
+      {
+        title: "Match event type and reach to the arc",
+        detail:
+          "Set Event Type, Scale and Tone to calibrate the crisis from National infrastructure up to Cosmic or Multiversal stakes, leaving street-level threats for single-villain prep.",
+      },
+      {
+        title: "Anchor fallout to your own setting",
+        detail:
+          "Name a city, hero team or recent law in Optional Campaign Context so The Event, True Cause and Lasting Consequences land on institutions and allies your players already recognise.",
+      },
+      {
+        title: "Let players interrupt the escalation track",
+        detail:
+          "Show Stage 1 and Stage 2 in play from How It Unfolds, hold True Cause back in GM Reference, and commit to Lasting Consequences so victories and compromises permanently alter the status quo.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-make-a-campaign-threat-feel-urgent-without-railroading",
+        label: "Advancing the crisis without railroading",
+      },
+      {
+        href: "/answers/how-do-i-plan-story-arcs-for-an-rpg-campaign",
+        label: "Building the next arc from lasting consequences",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

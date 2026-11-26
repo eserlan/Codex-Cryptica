@@ -81,6 +81,15 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const comicEvent = getGeneratorContinuationConfig(
+      "comic-book-event-generator",
+    );
+    expect(comicEvent).toMatchObject({
+      headline: "Track this crisis across your campaign",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {

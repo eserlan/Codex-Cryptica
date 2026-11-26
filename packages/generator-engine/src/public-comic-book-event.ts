@@ -487,6 +487,11 @@ function customEventFlavor(eventType: string): EventTypeFlavor {
   };
 }
 
+function lowerFirst(value: string): string {
+  if (!value) return value;
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
 /**
  * Local (non-AI) fallback. Deliberately lighter than the AI prompt's full
  * checklist — a usable, internally consistent draft rather than an attempt to
@@ -510,7 +515,7 @@ export function generateComicBookEventLocal(
 ${fill(flavor.premise)}
 
 ### Public Response
-${fill(flavor.publicResponse)} At ${resolved.scale} scale, ${scaleHint.toLowerCase()}
+${fill(flavor.publicResponse)} At ${resolved.scale} scale, ${lowerFirst(scaleHint)}
 
 ### How It Unfolds
 **Stage 1: First Signs** — Isolated, easy-to-dismiss reports precede open acknowledgement. Few outside those directly affected take the threat seriously yet.
