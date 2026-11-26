@@ -227,6 +227,23 @@ function generateFactionName(rng: Rng): string {
   return pickFrom(FACTION_NAMES, rng);
 }
 
+// Generated names start with "The" (for example "The Crossing Desk"), which
+// reads wrongly mid-sentence as "Bring The Crossing Desk in".
+function lowerLeadingThe(name: string): string {
+  return name.replace(/^The /, "the ");
+}
+
+// Pool conflicts are full sentences that open with a capital. After a colon
+// they should start lowercase.
+function lowerFirstLetter(sentence: string): string {
+  return sentence.charAt(0).toLowerCase() + sentence.slice(1);
+}
+
+// Campaign context is free text, so a trailing full stop would give "..".
+function stripTrailingSentencePunctuation(text: string): string {
+  return text.replace(/[.!?]+$/, "");
+}
+
 export function resolveUrbanFantasyFaction(
   options: UrbanFantasyFactionGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -480,25 +497,28 @@ export function generateUrbanFantasyFactionLocal(
   const base = pickFrom(urbanFantasyFactionConfig.bases, rng);
   const resource = pickFrom(urbanFantasyFactionConfig.resources, rng);
   const symbol = pickFrom(urbanFantasyFactionConfig.symbols, rng);
-  const summary = `${resolved.name} is a ${resolved.factionType.toLowerCase()} operating through ${resolved.mode.toLowerCase()} and holding influence across the ${resolved.scope.toLowerCase()}.`;
+  const typeNoun = `a faction of type ${resolved.factionType.toLowerCase()}`;
+  const midSentenceName = lowerLeadingThe(resolved.name);
+  const mode = stripTrailingSentencePunctuation(resolved.mode.toLowerCase());
+  const summary = `${resolved.name} is ${typeNoun}, operating through ${mode} and holding influence across the ${resolved.scope.toLowerCase()}.`;
   const campaignContext = resolved.campaignContext
-    ? ` The faction's choices are shaped by ${resolved.campaignContext}.`
+    ? ` The faction's choices are shaped by ${stripTrailingSentencePunctuation(resolved.campaignContext)}.`
     : "";
 
   const content = `### Genre labels
 Urban fantasy · modern fantasy · supernatural faction · hidden-world politics
 
 ### What they control
-${resolved.name} is a ${resolved.factionType.toLowerCase()} with a foothold in ${base}. Across the ${resolved.scope.toLowerCase()}, they control ${resource}. Their public-facing work makes them legible to city employees and residents while their supernatural role stays out of ordinary records.${campaignContext}
+${resolved.name} is ${typeNoun} with a foothold in ${base}. Across the ${resolved.scope.toLowerCase()}, they control ${resource}. Their public-facing work makes them legible to city employees and residents while their supernatural role stays out of ordinary records. Their work centres on ${mode}.${campaignContext}
 
 ### What they want
 ${resolved.goal}
 
 ### Why they are dangerous
-Their posture is ${resolved.moralPosture.toLowerCase()}, and the current strain is simple to name: ${resolved.conflict} They can turn routine access, permits, schedules or trusted relationships into leverage before anyone realises a hidden-world dispute has reached the whole city.
+They are ${resolved.moralPosture.toLowerCase()}, and the current strain is simple to name: ${lowerFirstLetter(resolved.conflict)} They can turn routine access, permits, schedules or trusted relationships into leverage before anyone realises a hidden-world dispute has reached the whole city.
 
 ### How to use them at the table
-Bring ${resolved.name} in when a civic problem has a supernatural cause or when a hidden community needs something from the party. Let the players investigate the records, negotiate between groups, disrupt an illicit exchange or decide who should control a public resource; the faction can be an ally, obstacle or employer without becoming the only source of danger.`;
+Bring ${midSentenceName} in when a civic problem has a supernatural cause or when a hidden community needs something from the party. Let the players investigate the records, negotiate between groups, disrupt an illicit exchange or decide who should control a public resource; the faction can be an ally, obstacle or employer without becoming the only source of danger.`;
 
   const lore = `### At a Glance
 - **📍 Base**: ${base}
@@ -512,7 +532,7 @@ Bring ${resolved.name} in when a civic problem has a supernatural cause or when 
 - **👤 ${secondNpc}**: ${secondRole}.
 
 ### Internal Conflict
-${resolved.conflict} The faction's leaders disagree on whether its ${resolved.moralPosture.toLowerCase()} instincts still protect the people it claims to serve.
+${resolved.conflict} The faction's leaders disagree on whether being ${resolved.moralPosture.toLowerCase()} still protects the people it claims to serve.
 
 ### Rival Faction
 - **👥 ${rival}**: Competes for influence over the ${resolved.scope.toLowerCase()} and is offering residents a more open deal, though it expects control of the resource in return.`;
