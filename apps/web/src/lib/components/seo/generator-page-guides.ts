@@ -790,7 +790,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use Add campaign context for one named place",
         detail:
-          "In offline drafts, text from Add campaign context becomes a sentence under Who they are, beginning In followed by your text. AI drafts are asked to include campaign context, but its placement may vary. The rival faction name is generated separately in offline drafts, so rename it in the Rival Faction section if the table already knows that group.",
+          "In offline drafts, text from Add campaign context appears under Who they are as Campaign context: followed by your text. AI drafts are asked to include campaign context, but its placement may vary. The rival faction name is generated separately in offline drafts, so rename it in the Rival Faction section if the table already knows that group.",
       },
     ],
     links: [

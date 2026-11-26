@@ -161,6 +161,9 @@ describe("generator guide distinctness", () => {
     expect(tipText).toContain(
       "AI drafts are asked to include campaign context",
     );
+    expect(tipText).toContain(
+      "appears under Who they are as Campaign context:",
+    );
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
