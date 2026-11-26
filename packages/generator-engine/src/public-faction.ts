@@ -907,7 +907,7 @@ export function generateDarkFactionLocal(
 
   const { head: postureHead, detail: postureDetail } =
     splitMoralPosture(moralPosture);
-  const summary = `${sentenceCase(`${indefiniteArticle(factionType)} ${factionType.toLowerCase()}`)} operating through ${indefiniteArticle(mode)} ${mode.toLowerCase()}, with a moral posture of ${postureHead.toLowerCase()}.`;
+  const summary = `${sentenceCase(`${indefiniteArticle(factionType)} ${factionType.toLowerCase()}`)} operating through ${indefiniteArticle(mode)} ${mode.toLowerCase()}, with the moral posture “${postureHead}”.`;
 
   const content = `### What they control
 ${name} is ${indefiniteArticle(factionType)} ${factionType.toLowerCase()} with real authority across ${scope.toLowerCase()}, built on the back of the ${mode.toLowerCase()} that made them necessary in the first place.
@@ -916,7 +916,7 @@ ${name} is ${indefiniteArticle(factionType)} ${factionType.toLowerCase()} with r
 ${goal}
 
 ### Why they are dangerous
-${conflict} Their posture is ${postureHead.toLowerCase()}${postureDetail ? `: ${lowerFirst(postureDetail)}.` : "."} They will not stop simply because they are shown to be wrong.
+${conflict} Their chosen posture is “${postureHead}”${postureDetail ? `: ${lowerFirst(postureDetail)}.` : "."} They will not stop simply because they are shown to be wrong.
 
 ### How to use them at the table
 Bring ${name} into play when the party needs a power that is doing something defensible in the worst possible way. Let them be useful, or unavoidable, before the party learns the full cost of what they protect.${campaignContext ? ` Campaign context: ${withSentenceEnd(campaignContext)}` : ""}`;

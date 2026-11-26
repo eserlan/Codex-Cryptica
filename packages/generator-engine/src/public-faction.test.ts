@@ -331,9 +331,9 @@ describe("dark fantasy faction (#1136)", () => {
         },
         seededRng(21),
       );
-      const head = posture.split(" — ")[0].toLowerCase();
+      const head = posture.split(" — ")[0];
       expect(out.summary).toBe(
-        `A mercenary barony operating through a plague city, with a moral posture of ${head}.`,
+        `A mercenary barony operating through a plague city, with the moral posture “${head}”.`,
       );
     }
   });
@@ -367,9 +367,21 @@ describe("dark fantasy faction (#1136)", () => {
       seededRng(23),
     );
     expect(out.content).toContain(
-      "Their posture is openly cruel: they no longer pretend otherwise.",
+      "Their chosen posture is “Openly cruel”: they no longer pretend otherwise.",
     );
     expect(out.content).not.toContain("—");
+  });
+
+  it("quotes noun-phrase postures in the danger section", () => {
+    const out = generateDarkFactionLocal(
+      {
+        moralPosture: "Fallen idealists — they remember what they meant to be",
+      },
+      seededRng(25),
+    );
+    expect(out.content).toContain(
+      "Their chosen posture is “Fallen idealists”: they remember what they meant to be.",
+    );
   });
 
   it("frames campaign context as a sentence without doubled full stops", () => {
