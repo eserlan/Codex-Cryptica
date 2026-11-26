@@ -172,6 +172,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    world: {
+      headline: "Keep this world connected",
+      summary:
+        "Save this world as a Location entry in your local Codex vault so its profile and GM-only lore stay connected to your campaign.",
+      capabilities: [
+        "Store the world profile and environment in one Location entry",
+        "Keep history, current conflicts, mysteries, and adventure hooks as GM-only lore",
+        "Link the world to its factions, settlements, and star system inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

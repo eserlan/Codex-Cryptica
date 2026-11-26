@@ -312,4 +312,51 @@ describe("World Generator", () => {
     expect(output.type).toBe("location");
     expect(output.content).toContain("superhero / comic book");
   });
+
+  it("uses the correct indefinite article before the world type", () => {
+    const ice = generateWorldLocal({ worldType: "Ice World" }, () => 0);
+    const artificial = generateWorldLocal(
+      { worldType: "Artificial World" },
+      () => 0,
+    );
+
+    expect(ice.summary).toMatch(/ is an ice world /);
+    expect(artificial.summary).toMatch(/ is an artificial world /);
+    expect(ice.content).toMatch(/ is an ice world in a /);
+    expect(artificial.content).toMatch(/ is an artificial world in a /);
+    expect(`${ice.summary}\n${artificial.summary}`).not.toMatch(
+      /\ba (ice|artificial)\b/,
+    );
+  });
+
+  it("starts the culture sentence with a capital letter and ends each current conflict with a full stop", () => {
+    const output = generateWorldLocal(
+      {
+        societalModel: "Contested Diplomatic Neutral Zone",
+        worldTagOne: "Warlords",
+        worldTagTwo: "Former Warriors",
+        genre: "Hard Sci-Fi",
+      },
+      () => 0,
+    );
+
+    expect(output.content).toContain(
+      "The contested diplomatic neutral zone shapes who sets the rhythms",
+    );
+    expect(output.lore).not.toMatch(/[a-z] The campaign pressure/);
+    expect(output.lore).toMatch(
+      /\.\s+The campaign pressure is [^.]+, and its costs/,
+    );
+  });
+
+  it("starts the Lancer culture sentence with a capital letter", () => {
+    const output = generateWorldLocal({ genre: "Lancer" }, () => 0);
+
+    expect(output.content).toContain(
+      "The Lancer world frame and its civilian institutions",
+    );
+    expect(output.content).not.toContain(
+      "the Lancer world frame and its civilian institutions",
+    );
+  });
 });
