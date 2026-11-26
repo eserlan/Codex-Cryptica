@@ -469,4 +469,28 @@ describe("public-constellation", () => {
       ).toThrow();
     });
   });
+
+  it("uses the correct indefinite article before a vowel-initial visual impression in every local sentence", () => {
+    const output = generateConstellationLocal(
+      { visualImpression: "Animal", practicalUse: "Navigation" },
+      () => 0,
+    );
+
+    expect(output.summary).toContain("read as an animal,");
+    expect(output.content).toContain("read as an animal. ");
+    expect(output.content).toContain("read as an animal, is how the story");
+    expect(
+      `${output.summary}\n${output.content}`.match(/\ba animal\b/),
+    ).toBeNull();
+  });
+
+  it("keeps the article before a consonant-initial visual impression", () => {
+    const output = generateConstellationLocal(
+      { visualImpression: "Weapon", practicalUse: "Navigation" },
+      () => 0,
+    );
+
+    expect(output.summary).toContain("read as a weapon,");
+    expect(output.content).toContain("read as a weapon. ");
+  });
 });

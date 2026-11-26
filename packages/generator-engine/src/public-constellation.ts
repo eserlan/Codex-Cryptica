@@ -20,7 +20,12 @@
 
 import type { PublicGeneratorOutput } from "./public-generator-types";
 import { parseFencedJson, sanitizeText } from "./llm-response-utils";
-import { defaultRng, pickFrom, type Rng } from "./random-utils";
+import {
+  defaultRng,
+  indefiniteArticle,
+  pickFrom,
+  type Rng,
+} from "./random-utils";
 import { withPublicCreativeCue } from "./public-creative-diversity";
 import { BANNED_NAMES, NAME_BAN_PROMPT } from "./public-npc-constants";
 import { factionConfig } from "./public-faction-constants";
@@ -281,7 +286,7 @@ function originMyth(
     `a warning left by the ancestors, fixed in place so it could never be forgotten`,
     `a guardian who chose to stand watch from above rather than leave the living undefended`,
   ];
-  return `${culture.charAt(0).toUpperCase()}${culture.slice(1)} tell that ${title} is ${pickFrom(causes, rng)}. Its shape, read as a ${visualImpression.toLowerCase()}, is how the story is remembered even by those who have never heard it told in full.`;
+  return `${culture.charAt(0).toUpperCase()}${culture.slice(1)} tell that ${title} is ${pickFrom(causes, rng)}. Its shape, read as ${indefiniteArticle(visualImpression.toLowerCase())} ${visualImpression.toLowerCase()}, is how the story is remembered even by those who have never heard it told in full.`;
 }
 
 function seasonalVisibility(rng: Rng): string {
@@ -341,7 +346,7 @@ function formatConstellationContent(
   return sanitizeText(
     [
       "## Core Concept",
-      `${title} is a constellation ${interpretation.culture} read as a ${visualImpression}. ${interpretation.practicalUse}`,
+      `${title} is a constellation ${interpretation.culture} read as ${indefiniteArticle(visualImpression)} ${visualImpression}. ${interpretation.practicalUse}`,
       "",
       "## Origin Myth",
       interpretation.originMyth,
@@ -438,7 +443,7 @@ export function generateConstellationLocal(
     type: "note",
     kind: "constellation",
     title,
-    summary: `${title} is a constellation ${culture} read as a ${visualImpression.toLowerCase()}, tied to ${practicalUse.toLowerCase()}.`,
+    summary: `${title} is a constellation ${culture} read as ${indefiniteArticle(visualImpression.toLowerCase())} ${visualImpression.toLowerCase()}, tied to ${practicalUse.toLowerCase()}.`,
     content,
     lore,
     pattern,

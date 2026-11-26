@@ -172,6 +172,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    constellation: {
+      headline: "Keep this constellation in your sky",
+      summary:
+        "Save this constellation as a Note entry in your local Codex vault so its origin myth and practical use stay connected to the cultures that read it.",
+      capabilities: [
+        "Store the origin myth and practical use in one Note entry",
+        "Keep the seasonal visibility, omens, and adventure hook as GM-only lore",
+        "Link the constellation to the cultures and places that read it inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**
