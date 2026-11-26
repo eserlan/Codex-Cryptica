@@ -294,6 +294,15 @@ describe("vampire clan", () => {
     expect(out.content).not.toMatch(/\ban predatory\b/);
   });
 
+  it("generateVampireLocal uses 'a' before a European Court archetype", () => {
+    const out = generateVampireLocal(
+      { archetype: "European Court" },
+      seededRng(7),
+    );
+    expect(out.content).toMatch(/operating as a european court in the /);
+    expect(out.content).not.toMatch(/\ban european\b/);
+  });
+
   it("generateVampireLocal drops the bloodline hint from the overview but keeps it in the GM reference", () => {
     const out = generateVampireLocal(
       { bloodline: "Sanguine Nobles (Charismatic Mind-Benders)" },

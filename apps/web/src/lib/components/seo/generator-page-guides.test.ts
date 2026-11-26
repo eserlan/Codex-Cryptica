@@ -154,6 +154,7 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
+    expect(tipText).toContain("In offline drafts, Add campaign context");
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
