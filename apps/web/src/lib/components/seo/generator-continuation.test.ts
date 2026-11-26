@@ -90,6 +90,13 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const plotTwist = getGeneratorContinuationConfig("plot-twist-generator");
+    expect(plotTwist).toMatchObject({
+      headline: "Keep this reversal tied to your plot",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {

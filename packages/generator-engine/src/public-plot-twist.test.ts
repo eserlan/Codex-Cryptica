@@ -184,6 +184,19 @@ describe("generatePlotTwistLocal", () => {
     }
     expect(output.content.match(/^- /gm)?.length).toBeGreaterThanOrEqual(7);
   });
+
+  it("preserves proper-noun capitalization and formats timing phrases grammatically", () => {
+    const anyTiming = generatePlotTwistLocal(
+      {
+        premise: "The party stole a data core for Vance.",
+        timing: "Any",
+      },
+      () => 0.2,
+    );
+    expect(anyTiming.content).toContain("Vance");
+    expect(anyTiming.content).toContain("at any point in the arc.");
+    expect(anyTiming.content).not.toContain("can land any.");
+  });
 });
 
 describe("parsePlotTwistResponse", () => {

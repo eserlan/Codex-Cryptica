@@ -160,6 +160,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "plot-twist-generator": {
+      headline: "Keep this reversal tied to your plot",
+      summary:
+        "Stage this plot twist for your local Codex vault so its reveal, foreshadowing clues, and new player choices stay connected to your campaign.",
+      capabilities: [
+        "Store the reveal, overturned assumption, foreshadowing clues, and player choices in one Note entry",
+        "Keep GM-only timing notes and honoured constraints beside the complication",
+        "Link the reversal to the factions, NPCs, and quests it affects inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

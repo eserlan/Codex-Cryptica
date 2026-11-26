@@ -1126,6 +1126,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "plot-twist-generator": {
+    summary:
+      "Reframe an active campaign problem without invalidating what the party already witnessed, producing a reversal, the assumption it overturns, fair clues and new player choices.",
+    tips: [
+      {
+        title: "Lock in the facts you must protect",
+        detail:
+          "Describe the scene in Current situation / premise, then list protected NPCs or truths in Avoid / constraints (optional) and World context (optional) so the reversal reinterprets motives rather than erasing play.",
+      },
+      {
+        title: "Dial scale, timing and fairness upfront",
+        detail:
+          "Pair Choose a vibe and Twist Type with Impact, When It Hits and Fairness / Foreshadowing to decide whether the turn hits early as a subtle complication or lands at the climax.",
+      },
+      {
+        title: "Plant clues before you spring the turn",
+        detail:
+          "Seed two entries from Foreshadowing in an earlier scene, reveal What Everyone Believed alongside The Reveal, and put New Choices straight in front of the party.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-handle-players-reaching-the-wrong-conclusion-in-an-rpg-mystery",
+        label: "Keeping established facts steady when players theorise",
+      },
+      {
+        href: "/answers/how-do-you-run-a-conspiracy-campaign",
+        label: "Leaking clues before the reversal lands",
+      },
+      {
+        href: "/answers/how-do-you-track-unresolved-plot-hooks-in-an-rpg-campaign",
+        label: "Tracking fallout and unresolved hooks",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(
