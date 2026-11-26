@@ -1163,7 +1163,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "villain-scheme-generator": {
     summary:
-      "Build an escalating superhero plot with public rumours, six discoverable scheme stages, minions and consequences if ignored, ready to attach to any existing or newly minted villain.",
+      "Build an escalating superhero plot with public rumours, four to six discoverable scheme stages, minions and consequences if ignored, ready to attach to any existing or newly minted villain.",
     tips: [
       {
         title: "Dial reach, method and mastermind",

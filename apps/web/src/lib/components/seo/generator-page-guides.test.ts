@@ -649,6 +649,7 @@ describe("generator guide distinctness", () => {
         "Superhero Villain Scheme Generator",
       ),
     );
+    expect(guide.summary).toContain("four to six discoverable scheme stages");
     expect(guide.tips).toHaveLength(3);
     expect(guide.links?.length).toBeGreaterThan(0);
     const tipText = guide.tips.map((tip) => tip.detail).join(" ");
