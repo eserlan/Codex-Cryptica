@@ -76,6 +76,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "pantheon-generator": {
+      headline: "Bring this pantheon into your world",
+      summary:
+        "Stage this pantheon for your local Codex vault so its divine rivalries, clergy, and GM-only hidden problem stay ready for play.",
+      capabilities: [
+        "Store the pantheon's origin, deity roster, and GM-only rumours in one Faction entry",
+        "Link member deities, temples, and cults to settlements and campaign notes inside your vault",
+        "Track schisms, prophetic omens, and shifting alliances across sessions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

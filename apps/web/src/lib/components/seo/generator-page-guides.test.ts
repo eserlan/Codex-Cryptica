@@ -162,6 +162,36 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the pantheon generator guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide(
+      "pantheon-generator",
+      "RPG Pantheon Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["pantheon-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("pantheon-generator", "RPG Pantheon Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips
+      .map((tip) => `${tip.title} ${tip.detail}`)
+      .join(" ");
+    for (const label of [
+      "Pantheon Focus / Width",
+      "Conflict Theme",
+      "Worshippers",
+      "Campaign context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect(tipText).not.toContain("In offline drafts");
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+    expect(guide.links?.map((link) => link.href)).toEqual([
+      "/answers/how-do-you-create-a-pantheon",
+      "/answers/can-multiple-gods-share-a-domain",
+      "/answers/how-do-you-create-a-believable-fictional-religion",
+    ]);
+  });
+
   it("qualifies custom culture behavior for the offline fantasy name roll", () => {
     const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
     const cultureTip = guide.tips.find((tip) =>

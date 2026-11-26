@@ -323,4 +323,92 @@ export const pantheonConfig = {
       "The Seed Ship: A vessel the deity sent ahead of the fleet carrying genetic and cultural archives of every known civilisation, as a gift to whoever finds it last.",
     ],
   } as Record<string, string[]>,
+  pantheonWideDomains: [
+    "wildlands and travel",
+    "dreams and shadows",
+    "hearth and community",
+    "craft, iron, and invention",
+    "oaths, law, and judgement",
+    "tides, storms, and deep waters",
+    "harvest, seasons, and famine",
+    "secrets, ink, and forgotten lore",
+    "thresholds, birth, and funerals",
+    "music, revelry, and grief",
+    "stars, fate, and navigation",
+  ],
+  pantheonFocusedFacets: [
+    "its pure, unyielding essence",
+    "its active or aggressive expression",
+    "its quiet or hidden aspects",
+    "its protective vows and sanctuaries",
+    "its bargains, oaths, and prices",
+    "its omens, prophets, and warnings",
+    "its corruptions and forbidden rites",
+    "its transitions, thresholds, and endings",
+    "its folk superstitions and street shrines",
+    "its ancient, half-remembered origins",
+    "its enforcement among mortal rulers",
+  ],
+  pantheonBalancedRoles: [
+    "a neutral arbiter holding the balance",
+    "a rival claimant challenging the old order",
+    "a keeper of oaths and sacred boundaries",
+    "a wanderer who carries omens between shrines",
+    "a hidden patron of outcasts and dissidents",
+    "a stern judge of broken vows and heresy",
+    "a trickster who tests every mortal bargain",
+    "a guardian of thresholds, endings, and memory",
+    "a herald of upheaval and sudden change",
+    "a quiet steward of daily survival and craft",
+  ],
+  pantheonProblems: [
+    "An ancient prophecy predicts that one of the deities will fall, destabilizing the entire celestial hierarchy.",
+    "Two mortal high priesthoods have begun rewriting the same sacred calendar, and both versions appear to work.",
+    "Prayers to the junior deity are being answered twice as fast as prayers to the head of the pantheon.",
+    "A sealed relic from the pantheon's founding pact has cracked, weakening the oaths sworn in their name.",
+    "One member of the assembly has stopped answering all rites, leaving their temples running on bluffs and old inertia.",
+    "A mortal empire is quietly paying mercenaries to topple the minor shrines before the next alignment.",
+  ],
+  pantheonHooks: [
+    "Omens of celestial alignment have sent local cults into a frenzy of preparations.",
+    "Two rival temples in the same city have declared the same holy day, and both demand the streets.",
+    "A pilgrim arrives carrying a tarnished holy symbol that belongs to a deity the pantheon insists never existed.",
+    "An oracle's latest prophecy names a mortal magistrate as the deciding vote in a divine succession dispute.",
+    "A frontier shrine has begun weeping iron-red water, drawing zealots and profiteers alike.",
+    "A senior priest secretly hires outsiders to recover a stolen liturgical ledger before the synod convenes.",
+  ],
+  pantheonClergy: [
+    {
+      roles:
+        "The High Hierophant oversees the circle of priests, who are divided into keepers of rites and speakers of prophecy.",
+      temples:
+        "Grand stone cathedrals anchor capital cities, while simple stone altars mark major crossroads.",
+    },
+    {
+      roles:
+        "Rotating stewards hold office for one lunar cycle, splitting duties between public alms and sealed tribunal judgements.",
+      temples:
+        "Vaulted sanctuaries sit beside busy markets, backed by modest wayside shrines along trade routes.",
+    },
+    {
+      roles:
+        "Anarchic cell-keepers answer only to shared coded hymns, trading authority whenever a crisis shifts regions.",
+      temples:
+        "Hidden back-room chapels, rooftop beacons, and unmarked meeting halls stand in for formal cathedrals.",
+    },
+    {
+      roles:
+        "Scholar-archivists maintain the canon while itinerant wardens enforce taboos in outlying settlements.",
+      temples:
+        "Fortified abbey-archives guard major relics, supported by open-air stone circles in the hinterlands.",
+    },
+  ],
+  pantheonRumours: [
+    "A forgotten temple of the pantheon lies submerged beneath a contested border basin.",
+    "The high priests of rival deities are meeting in secret to avert an open schism.",
+    "One of the pantheon's sacred relics was pawned decades ago and now sits in a noble's private vault.",
+    "A splinter sect claims the pantheon's founding myth hides a deliberate betrayal of an older spirit.",
+    "Anyone who swears an oath at all three major shrines within a single night hears a fourth, unnamed voice answer.",
+    "Local tax collectors have been quietly skimming temple tithes, and the priesthood knows exactly who.",
+  ],
 };
