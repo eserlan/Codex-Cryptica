@@ -431,7 +431,7 @@ export function parseNomadClanResponse(
 }
 
 function asSentence(text: string): string {
-  const trimmed = text.trim();
+  const trimmed = text.trim().replace(/[;,]+(["'”’»)]*)$/, ".$1");
   return /[.!?]["'”’»)]*$/.test(trimmed) ? trimmed : `${trimmed}.`;
 }
 

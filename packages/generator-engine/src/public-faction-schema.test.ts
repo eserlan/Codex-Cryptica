@@ -378,6 +378,30 @@ describe("smart faction generation coherence", () => {
       "“The convoy is cut off.” This is the crisis",
     );
     expect(quotedOut.content).not.toContain("off.”.");
+
+    const semicolonOut = generateNomadClanLocal(
+      { conflict: "Fuel depot has fallen;" },
+      seededRng(5),
+    );
+    expect(semicolonOut.content).toContain(
+      "Fuel depot has fallen. This is the crisis",
+    );
+    expect(semicolonOut.lore).toContain(
+      "Fuel depot has fallen. The clan is managing it",
+    );
+    expect(semicolonOut.content).not.toContain("fallen;.");
+    expect(semicolonOut.lore).not.toContain("fallen;.");
+
+    const quotedSemicolonOut = generateNomadClanLocal(
+      { conflict: "“Fuel depot has fallen;”" },
+      seededRng(5),
+    );
+    expect(quotedSemicolonOut.content).toContain(
+      "“Fuel depot has fallen.” This is the crisis",
+    );
+    expect(quotedSemicolonOut.lore).toContain(
+      "“Fuel depot has fallen.” The clan is managing it",
+    );
   });
 
   it("uses a generated conflict when the custom value contains only whitespace", () => {
