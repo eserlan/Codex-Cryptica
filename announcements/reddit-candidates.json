@@ -1,16 +1,6 @@
 {
-  "updated_at": 1795695125,
+  "updated_at": 1795721514,
   "candidates": [
-    {
-      "id": "reddit-45053421492-oracle-suggestions-when-you-want-a-promp",
-      "title": "Oracle suggestions when you want a prompt",
-      "body": "I sometimes want a prompt on screen, but I don\u2019t want a row of buttons deciding what stays in view throughout a scene. Codex Cryptica\u2019s Oracle suggestions can now stay tucked away on mobile until a player opens them.\n\n- Choose when to reveal suggested actions.\n- Bring them up when a player wants a nudge.\n- Continue free play with the suggestion tray tucked away.\n\nDo you keep prompts visible during a scene, or bring them up only when a player asks for help?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/screenshots/feature-run.jpg)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/screenshots/feature-run.jpg",
-      "source_id": "45053421492",
-      "status": "approved",
-      "created_at": 1795375852
-    },
     {
       "id": "reddit-45669588322-preview-a-generator-before-using-it-for-",
       "title": "Preview a generator before using it for your campaign",
