@@ -444,6 +444,33 @@ describe("smart faction generation coherence", () => {
     expect(out.lore).not.toContain('"The convoy is cut off.". ');
   });
 
+  it("generates a Secret distinct from Main conflict and Immediate Hook", () => {
+    const customConflict =
+      "Corporate pressure to surrender a cargo or a person";
+    const out = generateNomadClanLocal(
+      { conflict: customConflict },
+      seededRng(12),
+    );
+    const secretMatch = out.lore.match(/- \*\*Secret\*\*: ([^\n]+)/);
+    const hookMatch = out.lore.match(/- \*\*Immediate Hook\*\*: ([^\n]+)/);
+    expect(secretMatch?.[1]).toBeTruthy();
+    expect(secretMatch?.[1]).not.toBe(customConflict);
+    expect(secretMatch?.[1]).not.toBe(hookMatch?.[1]);
+  });
+
+  it("excludes custom conflict text that matches a secret pool entry", () => {
+    const poolSecret = nomadClanConfig.secrets[0];
+    for (let seed = 1; seed <= 30; seed++) {
+      const out = generateNomadClanLocal(
+        { conflict: poolSecret },
+        seededRng(seed),
+      );
+      const secretMatch = out.lore.match(/- \*\*Secret\*\*: ([^\n]+)/);
+      expect(secretMatch?.[1]).toBeTruthy();
+      expect(secretMatch?.[1]).not.toBe(poolSecret);
+    }
+  });
+
   it("generates compatible local vampire clans across different seeds", () => {
     const rng = seededRng(42);
     for (let i = 0; i < 20; i++) {

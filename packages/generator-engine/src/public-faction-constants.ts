@@ -1131,6 +1131,14 @@ export const nomadClanConfig = {
     "Acquire a vehicle capable of reaching the next settlement before the season closes.",
     "Negotiate a truce with a rival clan before the corporate pressure destroys them both.",
   ],
+  secrets: [
+    "The convoy's lead rig carries a black-box transponder that a megacorp thinks was destroyed three years ago.",
+    "Two of the clan's trusted scouts are feeding route timings to a corporate fixer in exchange for medical supplies.",
+    "Half their salvaged fuel comes from siphoning an automated corporate pipeline that is due for an audit this week.",
+    "Their road code hides an old blood debt owed to a rival syndicate that can call in the markers at any time.",
+    "One of the cargo haulers is shielding a runaway AI core disguised as an industrial water purifier.",
+    "The clan's founder quietly bought an arcology residency years ago and left a body double in the lead rig.",
+  ],
 };
 
 // Dark Fantasy / Grimdark Faction (#1136): a genre-locked faction variant,
