@@ -666,6 +666,33 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "nomad-clan": {
+    summary:
+      "Use this for a road-based clan in a cyberpunk or post-apocalyptic campaign, one that runs cargo between waystations and fights to keep its routes. Each draft gives you a clan name, a goal, a crisis, a rival faction, three named members and a short section on how to put the clan in the party's path.",
+    tips: [
+      {
+        title: "Choose the Main conflict first",
+        detail:
+          "The Main conflict text appears three times: as the clan's Secret in the profile, and as the opening line under What threatens them and Current Crisis. Pick the threat your table will meet, or type your own, before you generate.",
+      },
+      {
+        title: "Read Clan role and Primary territory together",
+        detail:
+          "The Clan role and Primary territory fields both appear in the opening summary, which reads as a nomad clan (courier network) operating across arcology outskirts and perimeter roads. Choose a territory the party can reach on the road, because the same wording becomes the Territory line in the Clan Profile.",
+      },
+      {
+        title: "Use Add campaign context for one named place",
+        detail:
+          "A city, megacorp or rival clan typed into Add campaign context becomes one sentence under Who they are, beginning In followed by your text. The rival faction name is generated separately, so rename it in the Rival Faction section if the table already knows that group.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Running faction play",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

@@ -336,6 +336,58 @@ describe("smart faction generation coherence", () => {
     }
   });
 
+  it("describes a local nomad clan's role in brackets, never as 'a <role> convoy'", () => {
+    const territory = nomadClanConfig.territories[0];
+    for (const role of nomadClanConfig.roles) {
+      const out = generateNomadClanLocal({ role, territory }, seededRng(3));
+      expect(out.summary).toBe(
+        `A nomad clan (${role.toLowerCase()}) operating across ${territory.toLowerCase()}.`,
+      );
+      expect(out.summary).not.toMatch(/convoy convoy/i);
+      expect(out.content).toContain(
+        `is a nomad clan (${role.toLowerCase()}) operating across`,
+      );
+    }
+  });
+
+  it("ends a fragment conflict as a sentence before the crisis copy, and does not double a stop it already has", () => {
+    const fragment = "Betrayal by a former ally who sold their route";
+    const fragmentOut = generateNomadClanLocal(
+      { conflict: fragment },
+      seededRng(5),
+    );
+    expect(fragmentOut.content).toContain(
+      `${fragment}. This is the crisis that cannot be deferred.`,
+    );
+    expect(fragmentOut.lore).toContain(`${fragment}. The clan is managing it`);
+
+    const punctuatedOut = generateNomadClanLocal(
+      { conflict: "The convoy is cut off." },
+      seededRng(5),
+    );
+    expect(punctuatedOut.content).toContain(
+      "The convoy is cut off. This is the crisis",
+    );
+    expect(punctuatedOut.content).not.toContain("off..");
+  });
+
+  it("writes the campaign context as a phrase without a stray stop, and omits it when blank", () => {
+    const withContext = generateNomadClanLocal(
+      { campaignContext: "Neo Tokyo. " },
+      seededRng(9),
+    );
+    expect(withContext.content).toContain(
+      "In Neo Tokyo, they are a known presence",
+    );
+    expect(withContext.content).not.toContain("Tokyo.,");
+
+    const blank = generateNomadClanLocal(
+      { campaignContext: "  " },
+      seededRng(9),
+    );
+    expect(blank.content).not.toContain("they are a known presence");
+  });
+
   it("generates compatible local vampire clans across different seeds", () => {
     const rng = seededRng(42);
     for (let i = 0; i < 20; i++) {

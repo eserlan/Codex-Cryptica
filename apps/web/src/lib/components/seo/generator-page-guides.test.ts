@@ -136,6 +136,28 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the nomad clan guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide(
+      "nomad-clan",
+      "Cyberpunk Nomad Clan Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["nomad-clan"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("nomad-clan", "Cyberpunk Nomad Clan Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Main conflict",
+      "Clan role",
+      "Primary territory",
+      "Add campaign context",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves every specific guide instead of the template", () => {
     for (const [slug, specific] of Object.entries(SLUG_GUIDES)) {
       expect(getGeneratorGuide(slug as never, "Any Title")).toBe(specific);
