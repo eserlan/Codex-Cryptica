@@ -136,6 +136,37 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the nomad clan guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide(
+      "nomad-clan",
+      "Cyberpunk Nomad Clan Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["nomad-clan"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("nomad-clan", "Cyberpunk Nomad Clan Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Main conflict",
+      "Clan role",
+      "Primary territory",
+      "Add campaign context",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect(guide.summary).toContain("Offline drafts");
+    expect(guide.summary).toContain("AI drafts request two or three members");
+    expect(tipText).toContain("AI drafts use the conflict as input");
+    expect(tipText).toContain(
+      "AI drafts are asked to include campaign context",
+    );
+    expect(tipText).toContain(
+      "appears under Who they are as Campaign context:",
+    );
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("qualifies custom culture behavior for the offline fantasy name roll", () => {
     const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
     const cultureTip = guide.tips.find((tip) =>

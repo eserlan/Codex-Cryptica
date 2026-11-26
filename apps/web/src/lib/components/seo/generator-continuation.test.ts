@@ -30,6 +30,13 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const nomadClan = getGeneratorContinuationConfig("nomad-clan");
+    expect(nomadClan).toMatchObject({
+      headline: "Keep this clan on the road",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
