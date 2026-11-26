@@ -24,6 +24,7 @@ export class SyncStore {
   private folder: VaultFolderSync;
   private cache: VaultSyncCache;
   private loader: VaultFileLoader;
+  private unsubscribeDrivePull: (() => void) | null = null;
 
   get errorMessage() {
     return this.state.errorMessage;
@@ -108,17 +109,20 @@ export class SyncStore {
       (signal) => this.checkForConflicts(signal),
     );
     browserPerformanceCapture.start();
-    appEventBus.subscribe("SYNC:DRIVE_PULL_COMPLETE", async (event) => {
-      const activeId = this.deps.activeVaultId();
-      if (activeId && event.payload?.vaultId === activeId) {
-        debugStore.log(
-          `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
-        );
-        await cacheService.clearVault(activeId);
-        await this.loadFiles(false);
-        await updateLastInternalChange(activeId);
-      }
-    });
+    this.unsubscribeDrivePull = appEventBus.subscribe(
+      "SYNC:DRIVE_PULL_COMPLETE",
+      async (event) => {
+        const activeId = this.deps.activeVaultId();
+        if (activeId && event.payload?.vaultId === activeId) {
+          debugStore.log(
+            `[SyncStore] GDrive pull completed for active vault ${activeId}. Reloading files...`,
+          );
+          await cacheService.clearVault(activeId);
+          await this.loadFiles(false);
+          await updateLastInternalChange(activeId);
+        }
+      },
+    );
   }
 
   loadFiles(skipSyncIfWarm = true, options: LoadFilesOptions = {}) {
@@ -155,5 +159,12 @@ export class SyncStore {
 
   setHasConflictFiles(v: boolean) {
     this.hasConflictFiles = v;
+  }
+
+  destroy(): void {
+    this.unsubscribeDrivePull?.();
+    this.unsubscribeDrivePull = null;
+    this.cache.dispose();
+    this.state.dispose();
   }
 }

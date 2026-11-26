@@ -119,6 +119,10 @@ export class VaultSyncCache {
     this.warmReconcileTimer = null;
   }
 
+  dispose(): void {
+    this.cancelReconcile();
+  }
+
   /**
    * Discards the fast-start cache and re-reads the vault from OPFS (#2619).
    *

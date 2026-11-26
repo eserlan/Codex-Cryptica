@@ -91,6 +91,15 @@ describe("VaultSyncCache", () => {
     expect(reload).not.toHaveBeenCalled();
   });
 
+  it("cancels a pending reconcile when disposed", async () => {
+    vi.useFakeTimers();
+    const { cache, reload } = fixture();
+    cache.scheduleReconcile("vault-1");
+    cache.dispose();
+    await vi.advanceTimersByTimeAsync(1500);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it("flushes saves before invalidating and reloading, and stops on a failed flush", async () => {
     const { cache, deps, reload } = fixture();
     await cache.reloadFromDisk();

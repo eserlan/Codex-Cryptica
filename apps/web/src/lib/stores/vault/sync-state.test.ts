@@ -44,6 +44,15 @@ describe("VaultSyncState", () => {
     vi.advanceTimersByTime(2500);
     expect(state.status).toBe("error");
   });
+
+  it("clears the saved-status timer when disposed", () => {
+    vi.useFakeTimers();
+    const { state } = createState();
+    state.setStatus("saved");
+    state.dispose();
+    vi.advanceTimersByTime(2500);
+    expect(state.status).toBe("saved");
+  });
 });
 
 describe("VaultSyncError", () => {

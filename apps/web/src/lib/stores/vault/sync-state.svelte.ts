@@ -58,6 +58,10 @@ export class VaultSyncState {
     }
   }
 
+  dispose() {
+    this.clearSavedTimer();
+  }
+
   setStatus(
     s: "idle" | "loading" | "saving" | "saved" | "needs-permission" | "error",
   ) {
