@@ -28,7 +28,7 @@ const NPC_CONTINUATION: GeneratorContinuationConfig = {
     "Stage this NPC for your local Codex vault so their public details and GM-only secrets stay separate and ready for play.",
   capabilities: [
     "Keep public character notes separate from GM-only secrets and hooks",
-    "Link them to factions, settlements, and active adventures inside your vault",
+    "Link them to factions, settlements, and campaign notes inside your vault",
     "Build on their story across sessions as your campaign evolves",
   ],
   localFirstNotice: LOCAL_FIRST_NOTICE,

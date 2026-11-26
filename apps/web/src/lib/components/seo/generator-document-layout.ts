@@ -306,9 +306,16 @@ function extractTableCardSecrets(
         /^###\s+The Six Elements\b/i.test(kept) &&
         !kept.includes("GM Reference")
       ) {
+        const publicCueCount = kept
+          .split("\n")
+          .filter((line) => /^\s*-\s+\*\*[^*]+\*\*:/.test(line)).length;
+        const note =
+          publicCueCount === 5
+            ? "*Five public cues below; the sixth element (secrets) is in GM Reference for spoiler protection.*"
+            : "*The sixth element (secrets) is in GM Reference for spoiler protection.*";
         return kept.replace(
           /^(###\s+The Six Elements\b[^\n]*)/i,
-          "$1\n*Five public cues below; the sixth element (secrets) is in GM Reference for spoiler protection.*",
+          `$1\n${note}`,
         );
       }
       return kept;

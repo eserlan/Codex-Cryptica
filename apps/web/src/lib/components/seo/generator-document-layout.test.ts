@@ -627,4 +627,29 @@ describe("section uniqueness invariant (#2768)", () => {
     expect(layout.lore.match(/\*\*Knowledge & Secrets\*\*:/g)).toHaveLength(1);
     expect(layout.lore).toContain("### GM-Only Secrets");
   });
+
+  it("omits the five-cue count when a malformed Table Card has fewer than five public cues", () => {
+    const secret = "- **Knowledge & Secrets**: Conceals a forged seal.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Sparse NPC",
+      summary: "An incomplete AI draft.",
+      status: "active",
+      labels: ["table-card", "rpg-character"],
+      content: [
+        "### The Six Elements",
+        "- **Immediate Want**: Needs a horse.",
+        "- **Physical Mannerism**: Taps his boots.",
+        secret,
+      ].join("\n"),
+      lore: `### At a Glance\n${secret}`,
+    });
+
+    expect(layout.content).not.toContain("Knowledge & Secrets");
+    expect(layout.content).not.toContain("Five public cues below");
+    expect(layout.content).toContain(
+      "The sixth element (secrets) is in GM Reference for spoiler protection",
+    );
+    expect(layout.lore.match(/\*\*Knowledge & Secrets\*\*:/g)).toHaveLength(1);
+  });
 });
