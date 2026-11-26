@@ -990,6 +990,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "dungeon-generator": {
+    summary:
+      "Generate a multi-sector delve with an original purpose, two rival factions fighting over specific rooms, and a GM reference split between layout, traps, treasures and a central secret.",
+    tips: [
+      {
+        title: "Contrast purpose against current state",
+        detail:
+          "Use Choose a vibe, Original Purpose and Current State & Function to build tension between what the builders intended and who occupies the halls now, then pick Complex Scale to set three to five connected sectors.",
+      },
+      {
+        title: "Play the two factions against their obstacles",
+        detail:
+          "Check each faction's Territory, Goal and Obstacle in Faction Situation before the party arrives: offer a shortcut, bargain or rival secret so players can exploit the standoff instead of clearing every room.",
+      },
+      {
+        title: "Seed local threats before opening the map",
+        detail:
+          "Add a nearby settlement, patron or border conflict in World context (optional) so Adventure Hooks & Rumours tie straight into your campaign, then use Build Delve Canvas when you want an editable room map.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-design-rpg-puzzles-that-do-not-stall-the-game",
+        label: "Keeping obstacles moving without stalling",
+      },
+      {
+        href: "/answers/how-do-i-run-exploration-in-a-huge-ruined-city",
+        label: "Running layered sector-to-sector delves",
+      },
+      {
+        href: "/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
+        label: "Matching delve lethality and pacing to a system",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(
