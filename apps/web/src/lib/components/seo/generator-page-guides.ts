@@ -1023,6 +1023,8 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
         href: "/answers/what-ttrpg-should-i-use-for-a-fantasy-dungeon-crawl",
         label: "Matching delve lethality and pacing to a system",
       },
+    ],
+  },
   "adventure-idea-generator": {
     summary:
       "Draft a situation-first scenario with an inciting pressure, competing factions, clues and non-linear outcomes, then hand your party a crisis with real choices rather than a scripted plot.",
