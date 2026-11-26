@@ -72,6 +72,48 @@ describe("generator save payloads", () => {
     expect(JSON.stringify(bundle)).not.toContain(secret);
   });
 
+  it("keeps council member stances and persuasion routes out of guest exports", () => {
+    const roster =
+      "### Council Members\n- **Ossian Thale** — Initial stance: Leaning. A recorded vote can expose his secret allegiance.";
+    const output = {
+      ...baseOutput,
+      type: "event",
+      content: "### The Proposal\nApprove the harbour levy.",
+      lore: `${roster}\n\n### Investigation Leads\nReview the harbourmaster's manifest.`,
+      labels: ["council-vote", "political-intrigue"],
+      status: "active",
+    } satisfies GeneratorOutput;
+    const layout = getGeneratorDocumentLayout(output);
+    const payload = buildGeneratorSavePayload(output, layout);
+
+    expect(payload.lore).toContain(roster);
+    expect(payload.content).not.toContain("Council Members");
+
+    const entity = {
+      id: "council-vote-1",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "council-vote-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    expect(JSON.stringify(bundle)).not.toContain("Ossian Thale");
+    expect(JSON.stringify(bundle)).not.toContain("Initial stance: Leaning");
+    expect(JSON.stringify(bundle)).not.toContain("secret allegiance");
+  });
+
   it("keeps adventure lore in the vault and omits empty map images", () => {
     const adventure = {
       ...baseOutput,

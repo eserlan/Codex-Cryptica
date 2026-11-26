@@ -35,7 +35,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Count the seats before the speeches",
         detail:
-          "Council Size and Voting Rule set the seats and the threshold, and the Deadline section states both. Current Vote Estimate says no faction starts with a guaranteed majority, so tally each member's Initial stance before the party commits to a plan.",
+          "Council Size sets the seats, Voting Rule describes how the vote is decided or cast, and Deadline sets when the decision is called. Simple Majority, Supermajority and Unanimous define approval thresholds; Veto Power adds a blocking power, and Secret Ballot does not set a threshold. Check the governing body's rule before planning around the starting stances in Current Vote Estimate.",
       },
       {
         title: "Pick the members the party can reach",
