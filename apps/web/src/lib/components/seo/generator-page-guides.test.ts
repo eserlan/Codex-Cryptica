@@ -142,6 +142,9 @@ describe("generator guide distinctness", () => {
       tip.title.includes("culture for the sound"),
     );
 
+    expect(guide.summary).toContain(
+      "Built-in cultures shape offline names; custom culture labels use generic fantasy tables",
+    );
     expect(cultureTip?.detail).toContain("Built-in Culture / Style options");
     expect(cultureTip?.detail).toContain(
       "custom culture or style label uses generic fantasy tables on the offline roll",

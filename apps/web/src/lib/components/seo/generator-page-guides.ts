@@ -511,7 +511,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "fantasy-names": {
     summary:
-      "Each batch gives ten names of one type (person, place, faction or item) in the culture you pick, and each name comes with a short note on its style. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. Each name comes with a short note on its style. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
     tips: [
       {
         title: "Choose the culture for the sound",
