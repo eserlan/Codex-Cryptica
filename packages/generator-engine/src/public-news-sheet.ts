@@ -463,10 +463,15 @@ ${rumours.map((r) => `- ${r}`).join("\n")}
 ### A Message from Our Sponsors
 ${advert}`;
 
+  const censorshipNote =
+    resolved.censorLevel === "Uncensored"
+      ? "Uncensored. The issue ran as filed, though the editor's own bias still shaped the framing."
+      : `${resolved.censorLevel}. Assume at least one story this issue was softened, and one was killed entirely.`;
+
   const lore = `### Editorial Slant
 - **Publication**: ${publicationName} — ${resolved.publicationType}
 - **Ownership / Bias**: ${resolved.bias}. Editor ${editorName} decides what runs — and what gets buried.
-- **Censorship**: ${resolved.censorLevel}. Assume at least one story this issue was softened, and one was killed entirely.
+- **Censorship**: ${censorshipNote}
 
 ### The Truth Behind the Stories
 - **The lead story**: The witness ${witnessName} saw more than was printed; the missing detail identifies someone with the power to make witnesses disappear.

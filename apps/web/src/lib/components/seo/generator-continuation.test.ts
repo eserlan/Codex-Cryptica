@@ -44,6 +44,13 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const newsSheet = getGeneratorContinuationConfig("news-sheet-generator");
+    expect(newsSheet).toMatchObject({
+      headline: "Keep this issue in your campaign archive",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
