@@ -353,6 +353,13 @@ export function resolveNomadClan(
     rng,
   );
 
+  const conflictKey = values.conflict.trim().toLowerCase();
+  const hookKey = values.hook.trim().toLowerCase();
+  const secretPool = nomadClanConfig.secrets.filter((s) => {
+    const key = s.trim().toLowerCase();
+    return key !== conflictKey && key !== hookKey;
+  });
+
   return {
     role: values.role,
     tone: values.tone,
@@ -360,7 +367,10 @@ export function resolveNomadClan(
     conflict: values.conflict,
     goal: values.goal,
     hook: values.hook,
-    secret: pickFrom(nomadClanConfig.secrets, rng),
+    secret: pickFrom(
+      secretPool.length > 0 ? secretPool : nomadClanConfig.secrets,
+      rng,
+    ),
     campaignContext: options.campaignContext?.trim() || undefined,
     name: generateNomadName(rng),
     traits,

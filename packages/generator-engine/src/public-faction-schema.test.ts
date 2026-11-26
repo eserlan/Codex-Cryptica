@@ -458,6 +458,19 @@ describe("smart faction generation coherence", () => {
     expect(secretMatch?.[1]).not.toBe(hookMatch?.[1]);
   });
 
+  it("excludes custom conflict text that matches a secret pool entry", () => {
+    const poolSecret = nomadClanConfig.secrets[0];
+    for (let seed = 1; seed <= 30; seed++) {
+      const out = generateNomadClanLocal(
+        { conflict: poolSecret },
+        seededRng(seed),
+      );
+      const secretMatch = out.lore.match(/- \*\*Secret\*\*: ([^\n]+)/);
+      expect(secretMatch?.[1]).toBeTruthy();
+      expect(secretMatch?.[1]).not.toBe(poolSecret);
+    }
+  });
+
   it("generates compatible local vampire clans across different seeds", () => {
     const rng = seededRng(42);
     for (let i = 0; i < 20; i++) {
