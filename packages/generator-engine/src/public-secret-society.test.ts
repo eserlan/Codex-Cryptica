@@ -177,4 +177,16 @@ describe("Secret Society generator", () => {
     expect(output.summary).toContain("hidden behind a charity.");
     expect(output.content).toContain("They present themselves as a charity,");
   });
+
+  it("uses the indefinite article 'a' before a university group in both output fields", () => {
+    const output = generateSecretSocietyLocal(
+      { publicFace: "university group", tone: "Sinister", scale: "Local cell" },
+      fixedRng,
+    );
+
+    expect(output.summary).toContain("hidden behind a university group.");
+    expect(output.content).toContain(
+      "They present themselves as a university group,",
+    );
+  });
 });
