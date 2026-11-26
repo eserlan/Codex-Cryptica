@@ -295,10 +295,11 @@ export function parseNationResponse(text: string): PublicGeneratorOutput {
   };
 }
 
-// "a" or "an" for a lowercase noun phrase, so "an interstellar federation"
-// reads correctly.
+// Choose the article from the opening sound, not just the first letter.
 function withArticle(phrase: string): string {
-  return /^[aeiou]/i.test(phrase) ? `an ${phrase}` : `a ${phrase}`;
+  const beginsWithVowelSound =
+    /^[aeiou]/i.test(phrase) && !/^(union|united)\b/i.test(phrase);
+  return beginsWithVowelSound ? `an ${phrase}` : `a ${phrase}`;
 }
 
 function capitalise(text: string): string {
@@ -326,8 +327,17 @@ export function generateNationLocal(
     : generateName(rng).split(" ")[0];
 
   const conflict = resolved.conflictLevel.toLowerCase();
+  const summaryConflictPhrases: Record<string, string> = {
+    "At peace": "at peace",
+    "Simmering tensions": "amid simmering tensions",
+    "Open conflict": "in open conflict",
+    "Total war": "at war",
+    "Post-war recovery": "in post-war recovery",
+  };
+  const summaryConflict =
+    summaryConflictPhrases[resolved.conflictLevel] ?? conflict;
   const polity = resolved.polityType.toLowerCase();
-  const summary = `${capitalise(withArticle(polity))} operating under ${resolved.governmentStyle.toLowerCase()}, currently ${conflict}.`;
+  const summary = `${capitalise(withArticle(polity))} operating under ${resolved.governmentStyle.toLowerCase()}, currently ${summaryConflict}.`;
 
   const capitalDescriptions = [
     `Its centre of power, ${capitalName}, is where decisions are made and deals are struck.`,

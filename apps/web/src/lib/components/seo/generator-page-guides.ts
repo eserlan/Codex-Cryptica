@@ -9,7 +9,7 @@ export interface GeneratorGuide {
 export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   nation: {
     summary:
-      "Generate a named state with a leader, two rival power blocs, a centre of power and one hidden problem, then use it as the political backdrop for a campaign.",
+      "Generate a named state with a leader, two or three power blocs, a centre of power and one hidden problem, then use it as the political backdrop for a campaign.",
     tips: [
       {
         title: "Set conflict level and scale first",
@@ -19,12 +19,12 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use the hidden problem as the first hook",
         detail:
-          "The Hidden Problem in At a Glance is repeated as the Crisis entry in Entity Seeds. Let the party uncover it through the state's officials or dissidents, and replace it with your own problem if the campaign already has a secret.",
+          "In offline drafts, the Hidden Problem in At a Glance is repeated as a Crisis entry in Entity Seeds. AI results may structure those seeds differently. Let the party uncover the problem through the state's officials or dissidents, or replace it if the campaign already has a secret.",
       },
       {
-        title: "Give the party a leader and two blocs to meet",
+        title: "Meet the factions behind the state",
         detail:
-          "Power Blocs names two factions with opposing aims, and Entity Seeds lists the leader, both blocs and the centre of power. Each one can become its own Codex entry, so the party has people to deal with from the first session.",
+          "Power Blocs shows which factions compete for influence. Entity Seeds suggests Codex entries that can become people, groups, or places for the party to encounter from the first session.",
       },
     ],
   },

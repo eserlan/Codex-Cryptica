@@ -127,17 +127,22 @@ describe("generateNationLocal wording", () => {
     scale: "Mid-sized nation",
   };
 
-  it("reads the conflict level as a state, not as a noun before the polity", () => {
+  it("uses grammatical phrases for every conflict level in the summary", () => {
+    const expectedConflictPhrases: Record<string, string> = {
+      "At peace": "at peace",
+      "Simmering tensions": "amid simmering tensions",
+      "Open conflict": "in open conflict",
+      "Total war": "at war",
+      "Post-war recovery": "in post-war recovery",
+    };
     for (const conflictLevel of nationConfig.conflictLevels) {
       const out = generateNationLocal(
         { ...base, polityType: "Kingdom", conflictLevel },
         seededRng(7),
       );
-      expect(out.summary).toContain(
-        `currently ${conflictLevel.toLowerCase()}.`,
+      expect(out.summary).toBe(
+        `A kingdom operating under oligarchy, currently ${expectedConflictPhrases[conflictLevel]}.`,
       );
-      expect(out.summary).toMatch(/^A kingdom operating under oligarchy/);
-      expect(out.summary).not.toMatch(/^A (at|open|total|simmering|post-war)/);
     }
   });
 
@@ -167,6 +172,18 @@ describe("generateNationLocal wording", () => {
     expect(out.summary).toMatch(/^An interstellar federation operating/);
     expect(out.content).toContain("is an interstellar federation under");
     expect(out.summary).not.toMatch(/\bA interstellar/);
+  });
+
+  it.each([
+    ["Lancer", "Union Administrative Zone"],
+    ["Optimistic Exploration Sci-Fi", "United Planetary Federation"],
+  ])("uses 'a' before %s polity %s", (genre, polityType) => {
+    const out = generateNationLocal(
+      { ...base, genre, polityType, conflictLevel: "At peace" },
+      seededRng(3),
+    );
+    expect(out.summary).toMatch(/^A (union|united)/);
+    expect(out.content).toContain(`is a ${polityType.toLowerCase()} under`);
   });
 
   it("uses 'a' before a consonant-initial polity type", () => {
