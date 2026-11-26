@@ -30,7 +30,6 @@ If an output schema, live affordance, generator feature or default changes:
 Internal refactors need no additional editorial work when shipped behaviour is
 unchanged. This is a reminder and a candidate list, not a gate.
 
-
 ---
 
 # Generator landing-page migration standard (#5231)
@@ -84,19 +83,19 @@ Then author an introduction and guide that fulfil those promises:
 - Vary angle, voice, headings and number of ideas to suit the generator.
   Do **not** mechanically reproduce three headings from another migrated page.
   The existing \`GeneratorGuide.summary/tips/links\` data shape can be reused;
-  where a particular issue asks for three tips, make each do a *different
-  actual job*, not three variations of the same generic instruction.
+  where a particular issue asks for three tips, make each do a _different
+  actual job_, not three variations of the same generic instruction.
 - Keep copy succinct, human, genre-appropriate and useful even to someone
   who never saves a result. No keyword stuffing, padding or SEO guarantees.
 
 **Editorial contrast examples, not mandated headings:**
 
-| Generator | Natural angle |
-| --- | --- |
-| Nation | Power, legitimacy, competing institutions and a political crisis |
-| Dark Fantasy Faction | Moral compromise, dependency and breaking points |
-| Nomad Clan | Movement, logistics, contested routes and loyalty |
-| Star System | Exploration, distances, resources and travel hazards |
+| Generator            | Natural angle                                                    |
+| -------------------- | ---------------------------------------------------------------- |
+| Nation               | Power, legitimacy, competing institutions and a political crisis |
+| Dark Fantasy Faction | Moral compromise, dependency and breaking points                 |
+| Nomad Clan           | Movement, logistics, contested routes and loyalty                |
+| Star System          | Exploration, distances, resources and travel hazards             |
 
 Avoid boilerplate such as "Keep only what sparks play" or "Customize genre and
 tone first" unless the advice has genuinely become specific to the tool.
@@ -117,7 +116,7 @@ tone first" unless the advice has genuinely become specific to the tool.
 
 - Usually offer **up to three** editorially chosen Answers, if genuinely
   relevant; three is a target for richer tools, **not a quota**.
-- Each link needs a brief description explaining *what the visitor can do*
+- Each link needs a brief description explaining _what the visitor can do_
   after reading it. Avoid generic "Further reading", unrelated session-prep
   links and duplicated/recycled recommendations.
 - Link using crawlable, accessible ordinary anchors with verified canonical
@@ -139,7 +138,7 @@ the result in Codex Cryptica**.
   **#4624/#4625** handoff, not a bespoke importer or duplicate button.
 - On a successful **explicit** generation, keep a concise,
   generator-specific **Add to My Codex** continuation near the finished
-  result/actions. Explain *why retaining this particular output matters*
+  result/actions. Explain _why retaining this particular output matters_
   using only verified importable features. A preloaded example, failure or
   loading state must not masquerade as a successful generated result.
 - Do not force a vault on copy-first tools or get in the way of
