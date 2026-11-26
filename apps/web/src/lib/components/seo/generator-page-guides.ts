@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "secret-society": {
+    summary:
+      "Generate a secret society with a public face that neighbours defend, a hidden truth its inner circle fears, and a GM-only lore sheet covering its leader, taboo, recruitment and sacred object, so the party can meet it through the front first.",
+    tips: [
+      {
+        title: "Choose the public face the party meets first",
+        detail:
+          "Public face is the front the party sees, from a Charity to an Academic society. The Public face section says neighbours defend it, so the first scene can be a favour the society offers in the open, long before anyone asks about its secret.",
+      },
+      {
+        title: "Decide what the truth is worth",
+        detail:
+          "Relationship to truth appears in both What they believe and Secret truth. Whether the doctrine is Entirely fake, a Partial truth or Horrifyingly real changes what the inner circle fears, so settle it before you write the reveal.",
+      },
+      {
+        title: "Use Danger level to set the clock",
+        detail:
+          "Danger level feeds the Current conflict line, where the society's agenda collides with a member who has learned too much. That member is the lever: the GM-only Recruitment and Taboo lines show how they were brought in and what they must never say.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-secret-society-for-an-rpg-campaign",
+        label: "Building a secret society that fits your campaign",
+      },
+      {
+        href: "/answers/how-do-you-run-factions-in-a-sandbox-campaign",
+        label: "Running factions that act between sessions",
+      },
+    ],
+  },
   "star-system": {
     summary:
       "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
