@@ -183,13 +183,13 @@ describe("generateNamesLocal", () => {
     expect(withoutContext.lore).not.toContain("Campaign Context");
   });
 
-  it("describes the culture as inspired by its name, with no dashes in the write-up", () => {
+  it("uses a culture label without choosing an article, with no dashes in the write-up", () => {
     const output = generateNamesLocal(
       { culture: "Sailor's Nickname", nameType: "Person", count: "3" },
       seededRng(8),
     );
     expect(output.lore).toContain(
-      "any person in a setting inspired by Sailor's Nickname.",
+      "any person in a setting shaped by the sailor's nickname naming style.",
     );
     expect(output.lore).not.toContain("-influenced");
     expect(`${output.content}\n${output.lore}`).not.toMatch(/[–—]/);
