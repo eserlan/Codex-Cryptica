@@ -136,6 +136,27 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the vampire clan guide with tips that name its form labels and output lines", () => {
+    const guide = getGeneratorGuide("vampire-clan", "Vampire Clan Generator");
+    expect(guide).toBe(SLUG_GUIDES["vampire-clan"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("vampire-clan", "Vampire Clan Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Choose how they feed",
+      "Choose their weakness",
+      "Add campaign context",
+      "Feeding Habit",
+      "Clan Weakness",
+      "Campaign Fit",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves every specific guide instead of the template", () => {
     for (const [slug, specific] of Object.entries(SLUG_GUIDES)) {
       expect(getGeneratorGuide(slug as never, "Any Title")).toBe(specific);

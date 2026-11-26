@@ -666,6 +666,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "vampire-clan": {
+    summary:
+      "Each result is a vampire clan with a public front, a feeding habit that shows where its members hunt, and a weakness you can turn into a plot point. The GM Reference block holds the clan's dark agenda, its internal conflict, a rival and an adventure hook.",
+    tips: [
+      {
+        title: "Choose how they feed first",
+        detail:
+          "Choose how they feed becomes the Feeding Habit line in the GM Reference block, which tells the table where the clan hunts. Pick the habit that puts them in scenes your party already visits.",
+      },
+      {
+        title: "Turn the weakness into a lever",
+        detail:
+          "Choose their weakness appears as Clan Weakness in the GM Reference block. Pick one the party can realistically reach, then build the adventure hook around it.",
+      },
+      {
+        title: "Ground the clan in your setting",
+        detail:
+          "Add campaign context inserts a Campaign Fit section that reads Use [clan name] in [your text]. Name a real city, guild or threat there so the overview points the clan at your table.",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

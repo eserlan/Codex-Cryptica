@@ -655,12 +655,16 @@ export function generateVampireLocal(
   const rival = `${generateName(rng)} Inquisition`;
   const sire = generateName(rng);
   const thrall = generateName(rng);
+  // The bloodline's parenthetical (e.g. "(Charismatic Mind-Benders)") is a
+  // GM hint for the reference block, not prose, so keep it out of the overview.
+  const bloodlineName = bloodline.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase();
+  const archetypeName = archetype.toLowerCase();
 
   const content = `### Overview
-${name} is a powerful vampire clan of the ${bloodline.toLowerCase()} lineage, operating as a ${archetype.toLowerCase()} across ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
+${name} is a powerful vampire clan of the ${bloodlineName} lineage, operating as ${indefiniteArticle(archetypeName)} ${archetypeName} in the ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
 
 ${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their influence should touch the local halls of power, forgotten catacombs, or ongoing dark mysteries.\n` : ""}### Public Facade
-To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a highly organized coven of undead hunters.
+To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a tightly organised coven of predators.
 
 ### Table Use
 Introduce ${name} when the party enters high-society intrigue, investigates occult occurrences, or needs a powerful but dangerous ally who demands blood or secrets as currency.`;
