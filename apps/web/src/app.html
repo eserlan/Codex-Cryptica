@@ -101,13 +101,38 @@
       (function () {
         var themeFontsLoaded = false;
         var themeObserver = null;
+        var nonWorkspaceThemeSelector =
+          "[data-world-theme]:not([data-world-theme='workspace'])";
 
         function hasNonWorkspaceTheme() {
-          return Boolean(
-            document.querySelector(
-              "[data-world-theme]:not([data-world-theme='workspace'])",
-            ),
+          return Boolean(document.querySelector(nonWorkspaceThemeSelector));
+        }
+
+        function containsNonWorkspaceTheme(node) {
+          if (node.nodeType !== 1) return false;
+          return (
+            node.matches(nonWorkspaceThemeSelector) ||
+            Boolean(node.querySelector(nonWorkspaceThemeSelector))
           );
+        }
+
+        function onThemeMutation(records) {
+          for (var i = 0; i < records.length; i++) {
+            var record = records[i];
+            if (
+              record.type === "attributes" &&
+              record.target.matches(nonWorkspaceThemeSelector)
+            ) {
+              loadThemeFonts();
+              return;
+            }
+            for (var j = 0; j < record.addedNodes.length; j++) {
+              if (containsNonWorkspaceTheme(record.addedNodes[j])) {
+                loadThemeFonts();
+                return;
+              }
+            }
+          }
         }
 
         function loadThemeFonts() {
@@ -117,7 +142,7 @@
           ).replace(/_(light|dark)$/, "");
           if (activeTheme === "workspace" && !hasNonWorkspaceTheme()) {
             if (!themeObserver && "MutationObserver" in window) {
-              themeObserver = new MutationObserver(loadThemeFonts);
+              themeObserver = new MutationObserver(onThemeMutation);
               themeObserver.observe(document.documentElement, {
                 attributes: true,
                 attributeFilter: ["data-world-theme"],
