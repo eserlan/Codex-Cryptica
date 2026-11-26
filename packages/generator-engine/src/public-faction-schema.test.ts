@@ -371,6 +371,13 @@ describe("smart faction generation coherence", () => {
     expect(punctuatedOut.content).not.toContain("off..");
   });
 
+  it("uses a generated conflict when the custom value contains only whitespace", () => {
+    const out = generateNomadClanLocal({ conflict: " \t " }, seededRng(5));
+    expect(out.content).not.toContain("\n. This is the crisis");
+    expect(out.content).toMatch(/### What threatens them\n\S/);
+    expect(out.lore).toMatch(/- \*\*Secret\*\*: \S/);
+  });
+
   it("writes the campaign context as a phrase without a stray stop, and omits it when blank", () => {
     const withContext = generateNomadClanLocal(
       { campaignContext: "Neo Tokyo. " },

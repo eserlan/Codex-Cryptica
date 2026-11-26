@@ -343,8 +343,8 @@ export function resolveNomadClan(
   if (options.territory)
     locked.territory = { value: options.territory, source: "manual" };
   if (options.tone) locked.tone = { value: options.tone, source: "manual" };
-  if (options.conflict)
-    locked.conflict = { value: options.conflict, source: "manual" };
+  if (options.conflict?.trim())
+    locked.conflict = { value: options.conflict.trim(), source: "manual" };
 
   const { values, traits } = resolveSmart(
     nomadClanSchema,

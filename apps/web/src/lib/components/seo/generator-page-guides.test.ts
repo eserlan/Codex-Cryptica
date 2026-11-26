@@ -155,6 +155,12 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(label);
     }
+    expect(guide.summary).toContain("Offline drafts");
+    expect(guide.summary).toContain("AI drafts request two or three members");
+    expect(tipText).toContain("AI drafts use the conflict as input");
+    expect(tipText).toContain(
+      "AI drafts are asked to include campaign context",
+    );
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
