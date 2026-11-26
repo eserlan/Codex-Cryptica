@@ -100,6 +100,14 @@ describe("QuickNoteScratchpad tabs", () => {
     expect(screen.getByTestId("note-history-stub")).toBeTruthy();
     expect(screen.queryByTestId("quicknote-journal-panel")).toBeNull();
   });
+
+  it("gives the quick note editor an accessible name", () => {
+    render(QuickNoteScratchpad, { props: { storage } });
+
+    expect(
+      screen.getByRole("textbox", { name: "Quick note content" }),
+    ).toBeTruthy();
+  });
 });
 
 describe("QuickNoteScratchpad — resizing (#3490)", () => {
