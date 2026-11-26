@@ -185,12 +185,13 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "pantheon-generator": {
     type: "faction",
     title: "The Silent Maw",
-    summary: "A small pantheon of forgotten deities.",
+    summary:
+      "A collection of deities bound by the theme of cosmic balance in a classic fantasy world with shadow at its center.",
     content:
-      "### Origin & Dogma\nThe Silent Maw is a collection of ancient entities who hold sway over the dark and forgotten corners of the world.\n\n### Divine Portfolio\nTheir tenets demand absolute silence and devotion to secrets.",
-    lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult",
+      "### Origin & Dogma\nThe oldest texts describe these deities emerging not at the beginning of time but at its first break — the moment when cosmic balance entered the cosmos and forced a division of responsibility.\n\n### Pantheon Structure\nThe pantheon consists of 3 deities:\n1. **Vaelor**: Represents the domain of Shadow.\n2. **Kaelith**: Serves as a rival claimant challenging the old order.\n3. **Morgath**: Serves as a neutral arbiter holding the balance.\n\n### Divine Alliances & Rivalries\n- **Vaelor** is allied with **Morgath**, but stands in direct opposition to **Kaelith**.\n- **Kaelith** seeks to overthrow the established order of the other deities.",
+    lore: "### At a Glance\n- **Pantheon Name**: The Silent Maw\n- **Conflict Theme**: Cosmic Balance\n- **Worshippers**: Mystery Cult\n- **Hidden Problem**: A sealed relic from the pantheon's founding pact has cracked, weakening the oaths sworn in their name.\n- **Immediate Hook**: Two rival temples in the same city have declared the same holy day, and both demand the streets.\n\n### Deities of the Pantheon\n- **Vaelor**: The primary deity of Shadow.\n- **Kaelith**: Known as a rival claimant challenging the old order.\n- **Morgath**: Known as a neutral arbiter holding the balance.\n\n### Clergy & Temples\n- **Clergy Roles**: Rotating stewards hold office for one lunar cycle, splitting duties between public alms and sealed tribunal judgements.\n- **Temples & Shrines**: Vaulted sanctuaries sit beside busy markets, backed by modest wayside shrines along trade routes.\n\n### Rumours & Legends\n- One of the pantheon's sacred relics was pawned decades ago and now sits in a noble's private vault.\n- The high priests of rival deities are meeting in secret to avert an open schism.\n\n### Entity Seeds\n- **👥 Mystery Cult**: A major temple order or mystery cult dedicated to the worship of the pantheon.",
     labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
-    status: "draft",
+    status: "active",
   },
   "god-generator": {
     type: "character",

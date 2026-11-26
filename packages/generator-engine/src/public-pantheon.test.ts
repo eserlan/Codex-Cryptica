@@ -49,6 +49,32 @@ describe("generatePantheonLocal", () => {
       generatePantheonLocal({ mode: "pantheon" }, seededRng(9)),
     );
   });
+
+  it("assigns distinct deity descriptions in medium/large pantheons and varies problems/hooks across seeds", () => {
+    for (const width of ["balanced", "focused", "wide"] as const) {
+      const out = generatePantheonLocal(
+        { mode: "pantheon", size: "medium", width, domain: "Shadow" },
+        seededRng(3),
+      );
+      const structureBlock =
+        out.content.split("### Pantheon Structure\n")[1]?.split("\n\n")[0] ??
+        "";
+      const descriptions = structureBlock
+        .split("\n")
+        .filter((line) => /^\d+\./.test(line))
+        .map((line) => line.replace(/^\d+\.\s+\*\*[^*]+\*\*:\s*/, ""));
+      expect(descriptions).toHaveLength(5);
+      expect(new Set(descriptions).size).toBe(5);
+    }
+
+    const problems = new Set<string>();
+    for (let seed = 1; seed <= 12; seed++) {
+      const out = generatePantheonLocal({ mode: "pantheon" }, seededRng(seed));
+      const match = out.lore.match(/- \*\*Hidden Problem\*\*: ([^\n]+)/);
+      if (match?.[1]) problems.add(match[1]);
+    }
+    expect(problems.size).toBeGreaterThan(1);
+  });
 });
 
 describe("buildPantheonPrompt", () => {

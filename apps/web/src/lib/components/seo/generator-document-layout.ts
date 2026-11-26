@@ -139,10 +139,11 @@ const LAYOUT_RULES: LayoutRule[] = [
     railSections: new Set([
       "At a Glance",
       "Deities of the Pantheon",
+      "Rumours & Legends",
       "Entity Seeds",
     ]),
     documentBullets: {
-      labels: new Set(["Hidden Problem", "Immediate Hook"]),
+      labels: new Set(["Immediate Hook"]),
       heading: "Secrets & Hooks",
     },
   },

@@ -941,6 +941,33 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "worldbuilding gods",
     ],
     labels: ["religion"],
+    faqs: [
+      {
+        question: "What does the pantheon generator create?",
+        answer:
+          "It creates a divine assembly with an origin myth, a sized deity roster, alliances and rivalries, clergy and temple notes, rumours, a GM-only hidden problem, and an immediate hook.",
+      },
+      {
+        question: "Can I use it without an account?",
+        answer:
+          "Yes. Generate and copy pantheon notes on this page without logging in. After you generate a result, Add to my Codex stages the draft in your browser's local storage and imports it as a Faction entity (or a Character entity in Single Deity / Spirit mode) when you open Codex Cryptica.",
+      },
+      {
+        question: "Can I switch between a full pantheon and a single deity?",
+        answer:
+          "Yes. Use Generate target to switch between Pantheon and Single Deity / Spirit, or adjust Pantheon Size and Pantheon Focus / Width to control how many gods appear and whether they cluster around one domain or span many.",
+      },
+      {
+        question: "How does Campaign context (optional) affect the draft?",
+        answer:
+          "With AI generation on, your campaign context guides the entire pantheon and its myths in Pantheon mode, or shapes the deity and its cult in Single Deity / Spirit mode. Offline drafts display your context in an Influence of Campaign Context section while using your selected domain, worshippers, and, in Pantheon mode, conflict theme.",
+      },
+    ],
+    relatedLinks: [
+      { href: "/generators/god-generator", label: "God & deity generator" },
+      { href: "/generators/faction", label: "Faction generator" },
+      { href: "/generators/settlement", label: "Settlement generator" },
+    ],
   },
   "god-generator": {
     pageTitle:

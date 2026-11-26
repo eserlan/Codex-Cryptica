@@ -367,6 +367,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "pantheon-generator": {
+    summary:
+      "Build an interconnected divine assembly where every deity pulls against the others through a shared Conflict Theme, rival alliances, and a mortal following. Use the result when a region's temples, oaths, and calendar holidays need political weight rather than a flat list of isolated domains.",
+    tips: [
+      {
+        title: "Use Pantheon Focus / Width to set how faiths clash",
+        detail:
+          "Pick Focused (Single Domain Focus) when rival priesthoods argue over who owns one vital sphere like War or Shadow, or Wide (Broad Mythic Pantheon) when towns juggle competing obligations across many gods. In your next session, have two local shrines demand incompatible offerings before the party can cross a border or claim sanctuary.",
+      },
+      {
+        title: "Turn Conflict Theme and alliances into mortal politics",
+        detail:
+          "Pair Conflict Theme with the generated rivalries to decide which mortal orders refuse to share a roof, a treaty, or a succession vote. A Forgotten Pact or Succession War gives you an immediate reason for an abbey to hire the party against a rival sect without waiting for a god to appear in person.",
+      },
+      {
+        title: "Aim Worshippers and Campaign context (optional) at one region",
+        detail:
+          "Match Worshippers to the social layer your players actually deal with, then name a threatened city, dynasty, or borderland inside Campaign context (optional). Treat the generated Hidden Problem and Rumours & Legends as the pressure driving next week's omen or secret priestly council.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-pantheon",
+        label: "Design divine rivalries before filling out domains",
+      },
+      {
+        href: "/answers/can-multiple-gods-share-a-domain",
+        label: "Use overlapping domains to spark temple schisms",
+      },
+      {
+        href: "/answers/how-do-you-create-a-believable-fictional-religion",
+        label: "Turn pantheon myths into daily rites and taboos",
+      },
+    ],
+  },
   quest: {
     summary:
       "Each result is a quest with a hook, a location, a key NPC, a threat, a complication, a twist and a reward. The vibe sets the hook, the complication and the names, and the GM notes hold the scope and any campaign context.",

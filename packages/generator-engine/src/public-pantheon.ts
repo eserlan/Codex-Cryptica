@@ -590,6 +590,36 @@ ${worshipDesc}`;
   const deityNames = Array.from({ length: deityCount }, () =>
     generateName(rng),
   );
+  const clergyProfile = pickFrom(pantheonConfig.pantheonClergy, rng);
+  const problem = pickFrom(pantheonConfig.pantheonProblems, rng);
+  const immediateHook = pickFrom(pantheonConfig.pantheonHooks, rng);
+  const rumourOne = pickFrom(pantheonConfig.pantheonRumours, rng);
+  const remainingRumours = pantheonConfig.pantheonRumours.filter(
+    (r) => r !== rumourOne,
+  );
+  const rumourTwo = pickFrom(
+    remainingRumours.length > 0
+      ? remainingRumours
+      : pantheonConfig.pantheonRumours,
+    rng,
+  );
+
+  const focusedFacetFor = (index: number): string =>
+    pantheonConfig.pantheonFocusedFacets[
+      index % pantheonConfig.pantheonFocusedFacets.length
+    ];
+
+  const wideDomainFor = (index: number): string =>
+    index === 0
+      ? `the domain of ${domain.toLowerCase()}`
+      : pantheonConfig.pantheonWideDomains[
+          (index - 1) % pantheonConfig.pantheonWideDomains.length
+        ];
+
+  const balancedRoleFor = (index: number): string =>
+    index === 0
+      ? `Represents the domain of ${domain}.`
+      : `Serves as ${pantheonConfig.pantheonBalancedRoles[(index - 1) % pantheonConfig.pantheonBalancedRoles.length]}.`;
 
   const pantheonOrigins = [
     `According to legend, the deities of this pantheon were born from a single cosmic event. Under the theme of ${conflictTheme.toLowerCase()}, they divide the control of the cosmos between their spheres of influence.`,
@@ -609,28 +639,10 @@ ${deityNames
     (n, i) =>
       `${i + 1}. **${n}**: ${
         width === "focused"
-          ? `Controls a specific aspect of the ${domain.toLowerCase()} domain (e.g. ${
-              i === 0
-                ? "its pure essence"
-                : i === deityCount - 1
-                  ? "its quiet or hidden aspects"
-                  : "its active or aggressive expression"
-            }).`
+          ? `Controls a specific aspect of the ${domain.toLowerCase()} domain (e.g. ${focusedFacetFor(i)}).`
           : width === "wide"
-            ? `Controls a distinct mythic domain (e.g. ${
-                i === 0
-                  ? `the domain of ${domain.toLowerCase()}`
-                  : i === 1
-                    ? "wildlands and travel"
-                    : i === 2
-                      ? "dreams and shadows"
-                      : "hearth and community"
-              }).`
-            : i === 0
-              ? `Represents the domain of ${domain}.`
-              : i === deityCount - 1
-                ? "A neutral arbiter holding the balance."
-                : "Controls opposing forces of the cosmos."
+            ? `Controls a distinct mythic domain (e.g. ${wideDomainFor(i)}).`
+            : balancedRoleFor(i)
       }`,
   )
   .join("\n")}
@@ -647,8 +659,8 @@ ${deityNames
 - **Pantheon Name**: ${pantheonTitle}
 - **Conflict Theme**: ${conflictTheme}
 - **Worshippers**: ${worshipperType}
-- **Hidden Problem**: An ancient prophecy predicts that one of the deities will fall, destabilizing the entire celestial hierarchy.
-- **Immediate Hook**: Omens of celestial alignment have sent local cults into a frenzy of preparations.
+- **Hidden Problem**: ${problem}
+- **Immediate Hook**: ${immediateHook}
 
 ### Deities of the Pantheon
 ${deityNames
@@ -656,39 +668,23 @@ ${deityNames
     (n, i) =>
       `- **${n}**: ${
         width === "focused"
-          ? `The deity representing a key facet of ${domain.toLowerCase()}${
-              i === 0
-                ? ", depicted as a guardian/warrior."
-                : i === 1
-                  ? ", representing the shadow or depth of the sphere."
-                  : ", guarding the balance/transition points."
-            }`
+          ? `Governs ${focusedFacetFor(i)} within ${domain.toLowerCase()}.`
           : width === "wide"
-            ? `The deity governing ${
-                i === 0
-                  ? domain.toLowerCase()
-                  : i === 1
-                    ? "wildlands and travel"
-                    : i === 2
-                      ? "dreams and shadows"
-                      : "hearth and community"
-              }.`
+            ? `The deity governing ${wideDomainFor(i)}.`
             : i === 0
-              ? `The deity of ${domain}, depicted as a warrior.`
-              : i === 1
-                ? "A mysterious spirit of chaos and shadows."
-                : "An ancient ancestor guarding the gates of death."
+              ? `The primary deity of ${domain}.`
+              : `Known as ${pantheonConfig.pantheonBalancedRoles[(i - 1) % pantheonConfig.pantheonBalancedRoles.length]}.`
       }`,
   )
   .join("\n")}
 
 ### Clergy & Temples
-- **Clergy Roles**: The High Hierophant oversees the circle of priests, who are divided into keepers of rites and speakers of prophecy.
-- **Temples & Shrines**: Grand stone cathedrals are located in capital cities, while simple stone altars mark major crossroads.
+- **Clergy Roles**: ${clergyProfile.roles}
+- **Temples & Shrines**: ${clergyProfile.temples}
 
 ### Rumours & Legends
-- A forgotten temple of the pantheon lies submerged under the local lake.
-- The high priests of the deities are secretly meeting to avert a holy war.
+- ${rumourOne}
+- ${rumourTwo}
 
 ### Entity Seeds
 - **👥 ${worshipperType}**: A major temple order or mystery cult dedicated to the worship of the pantheon.`;
