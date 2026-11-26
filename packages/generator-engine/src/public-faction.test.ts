@@ -371,6 +371,112 @@ describe("dark fantasy faction (#1136)", () => {
     expect(out.summary).toContain("plague cult");
   });
 
+  it("writes a grammatical summary for every moral posture", () => {
+    for (const posture of darkFactionConfig.moralPostures) {
+      const out = generateDarkFactionLocal(
+        {
+          mode: "Plague City",
+          factionType: "Mercenary Barony",
+          scope: darkFactionConfig.scopes[0],
+          moralPosture: posture,
+        },
+        seededRng(21),
+      );
+      const head = posture.split(" — ")[0];
+      expect(out.summary).toBe(
+        `A mercenary barony operating through a plague city, with the moral posture “${head}”.`,
+      );
+    }
+  });
+
+  it("uses 'an' before a vowel-initial custom faction type or mode", () => {
+    const out = generateDarkFactionLocal(
+      {
+        mode: "Undead Empire",
+        factionType: "Inquisition",
+        scope: darkFactionConfig.scopes[0],
+        moralPosture: darkFactionConfig.moralPostures[0],
+      },
+      seededRng(22),
+    );
+    expect(
+      out.summary.startsWith(
+        "An inquisition operating through an undead empire",
+      ),
+    ).toBe(true);
+    expect(out.content).toContain(" is an inquisition with real authority");
+  });
+
+  it("states the posture as a clause in the danger section, without dash fragments", () => {
+    const out = generateDarkFactionLocal(
+      {
+        mode: "Plague City",
+        factionType: "Plague Cult",
+        scope: darkFactionConfig.scopes[0],
+        moralPosture: "Openly cruel — they no longer pretend otherwise",
+      },
+      seededRng(23),
+    );
+    expect(out.content).toContain(
+      "Their chosen posture is “Openly cruel”: they no longer pretend otherwise.",
+    );
+    expect(out.content).not.toContain("—");
+  });
+
+  it("quotes noun-phrase postures in the danger section", () => {
+    const out = generateDarkFactionLocal(
+      {
+        moralPosture: "Fallen idealists — they remember what they meant to be",
+      },
+      seededRng(25),
+    );
+    expect(out.content).toContain(
+      "Their chosen posture is “Fallen idealists”: they remember what they meant to be.",
+    );
+  });
+
+  it("frames campaign context as a sentence without doubled full stops", () => {
+    const plain = generateDarkFactionLocal(
+      { campaignContext: "The plague city of Ashford, under quarantine" },
+      seededRng(24),
+    );
+    expect(plain.content).toContain(
+      "Campaign context: The plague city of Ashford, under quarantine.",
+    );
+
+    const punctuated = generateDarkFactionLocal(
+      { campaignContext: "A cursed kingdom under siege." },
+      seededRng(24),
+    );
+    expect(punctuated.content).toContain(
+      "Campaign context: A cursed kingdom under siege.",
+    );
+    expect(punctuated.content).not.toContain("..");
+  });
+
+  it("never gives the rival or a second NPC the faction's or leader's name", () => {
+    for (let seed = 1; seed <= 500; seed++) {
+      const out = generateDarkFactionLocal({}, seededRng(seed));
+      const rival = /- \*\*👥 (.+?)\*\*/.exec(out.lore)?.[1];
+      const npcs = [...out.lore.matchAll(/- \*\*👤 (.+?)\*\*/g)].map(
+        (m) => m[1],
+      );
+      expect(rival).toBeDefined();
+      expect(rival).not.toBe(out.title);
+      expect(npcs).toHaveLength(2);
+      expect(npcs[1]).not.toBe(npcs[0]);
+    }
+  });
+
+  it("does not repeat the internal conflict as the secret, and fixes the agent sentence", () => {
+    const out = generateDarkFactionLocal({}, seededRng(25));
+    expect(out.lore).toContain("- **Secret**: see Internal Conflict below.");
+    expect(out.lore).not.toContain("Does the parts");
+    expect(out.lore).toContain(
+      "Handles the parts of the work no one else will",
+    );
+  });
+
   it("is deterministic for a fixed seed", () => {
     expect(generateDarkFactionLocal({}, seededRng(13))).toEqual(
       generateDarkFactionLocal({}, seededRng(13)),
