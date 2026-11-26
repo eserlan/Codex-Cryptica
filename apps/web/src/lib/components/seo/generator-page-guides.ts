@@ -708,6 +708,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  names: {
+    summary:
+      "Each run rolls ten names in one culture's style, for a person, place, faction or item, and adds a short usage note for the GM. Use it when you need a batch of names during prep or at the table and want to keep the few that fit.",
+    tips: [
+      {
+        title: "Pick the Name Type first",
+        detail:
+          "Name Type sets the shape. In the Classic Fantasy cultures, Person gives a first name and a surname, such as Kaelra Thornfist. Place gives settlement-style names like Kaelhaven, Faction gives groups like The Thorned Wardens, and Item gives named objects like Elmar's Blade.",
+      },
+      {
+        title: "Choose a vibe before Culture / Style",
+        detail:
+          "On the offline roll, Choose a vibe only changes the Culture / Style list. Cultures under Cyberpunk / Corporate, Vampire / Gothic Noir, Sci-Fi / Space Opera, Modern Conspiracy and Post-Apocalyptic have no offline tables, so their batches use fantasy syllables and the Usage Suggestions say so.",
+      },
+      {
+        title: "Use campaign context with AI on",
+        detail:
+          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. The offline roll does not read it, so the field only adds a note when AI is off.",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(
