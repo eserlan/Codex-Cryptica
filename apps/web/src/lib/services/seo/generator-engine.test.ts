@@ -1811,14 +1811,17 @@ describe("DefaultGeneratorEngine", () => {
       expect(res.labels).toContain("imported-draft");
     });
 
-    it("should include campaign context in local fallback output", async () => {
+    it("should keep campaign context in the kingdom local fallback GM notes", async () => {
       const res = await engine.generateKingdom({
         polityType: "Empire",
         campaignContext: "a crumbling empire on the edge of civil war",
         useAI: false,
       });
 
-      expect(res.content).toContain(
+      expect(res.lore).toContain(
+        "### Campaign Context\na crumbling empire on the edge of civil war",
+      );
+      expect(res.content).not.toContain(
         "a crumbling empire on the edge of civil war",
       );
     });

@@ -592,7 +592,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
     ogImage:
       "https://assets.codexcryptica.com/screenshots/generator-kingdom.jpg",
     ogImageAlt:
-      "Codex Cryptica kingdom generator drafting fantasy realms with rulers, court factions, and borders",
+      "Codex Cryptica kingdom generator drafting fantasy realms with rulers, capitals and rival factions",
     keywords: [
       "kingdom generator",
       "fantasy realm creator",

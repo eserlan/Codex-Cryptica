@@ -152,6 +152,24 @@ describe("generator guide distinctness", () => {
     );
   });
 
+  it("serves the kingdom guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide("kingdom", "Kingdom Generator");
+    expect(guide).toBe(SLUG_GUIDES.kingdom);
+    expect(guide.summary).not.toContain("Kingdom Generator");
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Government style",
+      "Geography",
+      "Conflict level",
+      "Magic level",
+      "Campaign context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the tavern guide with tips that name its form labels", () => {
     const guide = getGeneratorGuide("tavern", "Tavern Generator");
     expect(guide).toBe(SLUG_GUIDES.tavern);
