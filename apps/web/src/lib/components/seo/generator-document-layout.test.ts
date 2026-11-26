@@ -701,4 +701,48 @@ describe("section uniqueness invariant (#2768)", () => {
     expect(layout.lore).not.toContain("### Deities of the Pantheon");
     expect(layout.lore).not.toContain("**Immediate Hook**");
   });
+
+  it("keeps ship profile, complication, secret and hooks in layout.lore while lifting crew and zones into layout.content", () => {
+    const layout = getGeneratorDocumentLayout({
+      type: "location",
+      title: "CSV Meridian",
+      summary: "A worn freighter.",
+      status: "active",
+      labels: ["rpg-ship", "rpg-location", "imported-draft"],
+      content: "## Core Concept\nA worn freighter.",
+      lore: [
+        "### Ship Profile",
+        "- **Class**: Freighter / Frigate",
+        "",
+        "### Captain, Officers & Crew",
+        "- **Captain**: Captain Ren Calder",
+        "",
+        "### Key Zones",
+        "- **🚀 Cargo Hold**: Contested cargo.",
+        "",
+        "### Complication",
+        "The manifest does not match the hold.",
+        "",
+        "### Secret",
+        "The vessel was declared lost ten years ago.",
+        "",
+        "### Adventure Hooks",
+        "- A broker on the docks wants a buyer.",
+      ].join("\n"),
+    });
+
+    expect(layout.content).toContain("## Core Concept");
+    expect(layout.content).toContain("### Captain, Officers & Crew");
+    expect(layout.content).toContain("### Key Zones");
+    expect(layout.content).not.toContain("### Complication");
+    expect(layout.content).not.toContain("### Secret");
+    expect(layout.content).not.toContain("### Adventure Hooks");
+
+    expect(layout.lore).toContain("### Ship Profile");
+    expect(layout.lore).toContain("### Complication");
+    expect(layout.lore).toContain("### Secret");
+    expect(layout.lore).toContain("### Adventure Hooks");
+    expect(layout.lore).not.toContain("### Captain, Officers & Crew");
+    expect(layout.lore).not.toContain("### Key Zones");
+  });
 });

@@ -35,12 +35,12 @@
           {config.headline}
         </h3>
       </div>
-      <p class="text-lg md:text-base text-theme-text/90 leading-relaxed">
+      <p class="text-lg md:text-base text-theme-text leading-relaxed">
         {config.summary}
       </p>
     </div>
 
-    <ul class="space-y-2 text-lg md:text-base text-theme-text/90">
+    <ul class="space-y-2 text-lg md:text-base text-theme-text">
       {#each config.capabilities as capability (capability)}
         <li class="flex items-start gap-2.5">
           <span

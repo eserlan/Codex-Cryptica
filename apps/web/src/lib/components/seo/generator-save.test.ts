@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
+import { GuestExporter } from "@codex/vault-engine";
+import type { Entity } from "schema";
 import type { SessionEntity } from "generator-engine";
 import type { GeneratorOutput } from "#lib/services/seo/generator-engine.js";
 import {
   buildGeneratorSavePayload,
   buildHubSaveDrafts,
 } from "./generator-save";
+import { getGeneratorDocumentLayout } from "./generator-document-layout";
 
 const baseOutput: GeneratorOutput = {
   type: "location",
@@ -28,6 +31,45 @@ describe("generator save payloads", () => {
       content: "*A fallen order.*\n\n## Control\n\nThey command the gates.",
       lore: "The sanctuary lies beneath the city.",
     });
+  });
+
+  it("keeps a renamed ship secret in GM lore through save and guest export", () => {
+    const secret = "The ship was declared lost ten years ago.";
+    const output = {
+      ...baseOutput,
+      type: "location",
+      status: "active",
+      content: "## Core Concept\nA worn freighter.",
+      lore: `### Ship's Secret\n${secret}`,
+      labels: ["rpg-ship", "imported-draft"],
+    } satisfies GeneratorOutput;
+    const layout = getGeneratorDocumentLayout(output);
+    const payload = buildGeneratorSavePayload(output, layout);
+
+    expect(payload.content).not.toContain(secret);
+    expect(payload.lore).toContain(secret);
+
+    const entity = {
+      id: "ship-1",
+      type: payload.type,
+      title: payload.title,
+      content: payload.content,
+      lore: payload.lore,
+      labels: payload.labels,
+      status: payload.status,
+      aliases: [],
+      connections: [],
+    } satisfies Entity;
+    const bundle = GuestExporter.export({
+      entities: [entity],
+      defaultVisibility: "visible",
+      activeTheme: { primaryColor: "#000000" },
+      publishId: "ship-export-test",
+      vaultTitle: "Test Vault",
+      publisherVersion: "test",
+    });
+
+    expect(JSON.stringify(bundle)).not.toContain(secret);
   });
 
   it("keeps adventure lore in the vault and omits empty map images", () => {
