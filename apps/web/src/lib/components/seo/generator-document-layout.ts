@@ -136,12 +136,7 @@ const LAYOUT_RULES: LayoutRule[] = [
   },
   {
     label: "pantheon-generator",
-    railSections: new Set([
-      "At a Glance",
-      "Deities of the Pantheon",
-      "Rumours & Legends",
-      "Entity Seeds",
-    ]),
+    railSections: new Set(["At a Glance", "Rumours & Legends", "Entity Seeds"]),
     documentBullets: {
       labels: new Set(["Immediate Hook"]),
       heading: "Secrets & Hooks",

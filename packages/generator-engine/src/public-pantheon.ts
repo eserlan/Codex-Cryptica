@@ -321,6 +321,35 @@ Return only the JSON object.`,
   };
 }
 
+function formatDeityProfile(d: Record<string, unknown>): string {
+  const name = str(d.name);
+  const role = str(d.divine_role);
+  const header = `#### ${name}${role ? ` — ${role}` : ""}`;
+  const lines: string[] = [];
+  const desc = str(d.description);
+  if (desc) lines.push(desc);
+
+  const worshipParts = [str(d.common_worshippers), str(d.worship_style)].filter(
+    Boolean,
+  );
+
+  const details: [string, string][] = [
+    ["Portfolio", str(d.portfolio)],
+    ["Appearance", str(d.appearance)],
+    ["Personality", str(d.personality)],
+    ["Symbol", str(d.symbol)],
+    ["Worshippers & Practice", worshipParts.join(" — ")],
+    ["Taboo", str(d.taboo)],
+    ["Stance on Conflict", str(d.conflict_relation)],
+  ];
+
+  for (const [label, value] of details) {
+    if (value) lines.push(`- **${label}**: ${value}`);
+  }
+
+  return [header, ...lines].join("\n");
+}
+
 function formatPantheonContent(data: Record<string, unknown>): {
   content: string;
   lore: string;
@@ -330,9 +359,19 @@ function formatPantheonContent(data: Record<string, unknown>): {
   const culture = rec(data.culture);
   const campaignSeeds = rec(data.campaign_seeds);
   const relationships = arr(data.relationships);
+  const publicDogma = str(meta.public_dogma);
+  const omens = arr(culture.omens).map(str).filter(Boolean);
+  const culturalTaboos = arr(culture.taboos).map(str).filter(Boolean);
+
+  const originSection = [
+    str(history.origin_and_dogma),
+    publicDogma ? `**Public Dogma**: ${publicDogma}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   const content = `### Origin & Dogma
-${str(history.origin_and_dogma)}
+${originSection}
 
 ### Pantheon Structure
 ${str(history.structure_and_laws)}
@@ -346,6 +385,21 @@ ${relationships
   .join("\n")}
 `;
 
+  const clergyLines = [
+    culture.clergy_roles
+      ? `- **Clergy Roles**: ${str(culture.clergy_roles)}`
+      : "",
+    culture.temples_and_shrines
+      ? `- **Temples & Shrines**: ${str(culture.temples_and_shrines)}`
+      : "",
+    culture.common_rite ? `- **Common Rite**: ${str(culture.common_rite)}` : "",
+    culture.high_rite ? `- **High Rite**: ${str(culture.high_rite)}` : "",
+    omens.length > 0 ? `- **Omens**: ${omens.join("; ")}` : "",
+    culturalTaboos.length > 0
+      ? `- **Cultural Taboos**: ${culturalTaboos.join("; ")}`
+      : "",
+  ].filter(Boolean);
+
   const lore = `### At a Glance
 - **Pantheon Name**: ${str(data.title)}
 - **Conflict Theme**: ${str(meta.conflict_theme)}
@@ -355,17 +409,11 @@ ${relationships
 
 ### Deities of the Pantheon
 ${arr(data.deities)
-  .map((d) => {
-    const deity = rec(d);
-    return `- **${str(deity.name)}**: ${str(deity.description)} (Portfolio: ${str(deity.portfolio)})`;
-  })
-  .join("\n")}
+  .map((d) => formatDeityProfile(rec(d)))
+  .join("\n\n")}
 
 ### Clergy & Temples
-- **Clergy Roles**: ${str(culture.clergy_roles)}
-- **Temples & Shrines**: ${str(culture.temples_and_shrines)}
-- **Common Rite**: ${str(culture.common_rite)}
-- **High Rite**: ${str(culture.high_rite)}
+${clergyLines.join("\n")}
 
 ### Rumours & Legends
 ${arr(campaignSeeds.rumors)
@@ -430,21 +478,15 @@ export function parsePantheonResponse(
   };
 }
 
-export function generatePantheonLocal(
-  options: PantheonGeneratorOptions = {},
-  rng: Rng = defaultRng,
+function generateSingleDeityLocal(
+  resolved: ResolvedPantheon,
+  rng: Rng,
 ): PublicGeneratorOutput {
-  const resolved = resolvePantheon(options, rng);
   const {
-    mode,
-    sizeCfg,
-    width,
-    genre,
     divineType,
     domain,
     tone,
     worshipperType,
-    conflictTheme,
     campaignContext,
     randomSymbol,
     randomHighlightRitual,
@@ -452,90 +494,89 @@ export function generatePantheonLocal(
     generatedDeityName,
   } = resolved;
 
-  if (mode === "single") {
-    const title = `${generatedDeityName}, the ${tone} ${divineType} of ${domain}`;
-    const summary = `A powerful ${divineType.toLowerCase()} governing the forces of ${domain.toLowerCase()} with a ${tone.toLowerCase()} outlook.`;
+  const title = `${generatedDeityName}, the ${tone} ${divineType} of ${domain}`;
+  const summary = `A powerful ${divineType.toLowerCase()} governing the forces of ${domain.toLowerCase()} with a ${tone.toLowerCase()} outlook.`;
 
-    const deityDescriptions = [
-      `The deity ${generatedDeityName} manifests as a striking presence aligned with ${domain.toLowerCase()}. Commonly depicted carrying ${randomSymbol.toLowerCase()}, their sacred icons can be found carved in old shrines.`,
-      `${generatedDeityName} is a ${divineType.toLowerCase()} whose presence is felt in the ${domain.toLowerCase()} of everyday life rather than dramatic revelation. Their symbol, ${randomSymbol.toLowerCase()}, appears in places of quiet devotion.`,
-      `Those who study ${generatedDeityName} disagree on what form this ${divineType.toLowerCase()} truly takes — only the domain of ${domain.toLowerCase()} is constant across all accounts. Their symbol, ${randomSymbol.toLowerCase()}, predates the oldest written records.`,
-      `${generatedDeityName} is not worshipped through fear but through recognition — this ${divineType.toLowerCase()} governs ${domain.toLowerCase()} because those forces existed before the deity and will outlast them. The symbol, ${randomSymbol.toLowerCase()}, reflects that ancient relationship.`,
-      `Temples to ${generatedDeityName} tend to be built where ${domain.toLowerCase()} is most immediately felt. Their symbol, ${randomSymbol.toLowerCase()}, marks places of significance to the faithful and warning to the uninitiated.`,
-    ] as const;
+  const deityDescriptions = [
+    `The deity ${generatedDeityName} manifests as a striking presence aligned with ${domain.toLowerCase()}. Commonly depicted carrying ${randomSymbol.toLowerCase()}, their sacred icons can be found carved in old shrines.`,
+    `${generatedDeityName} is a ${divineType.toLowerCase()} whose presence is felt in the ${domain.toLowerCase()} of everyday life rather than dramatic revelation. Their symbol, ${randomSymbol.toLowerCase()}, appears in places of quiet devotion.`,
+    `Those who study ${generatedDeityName} disagree on what form this ${divineType.toLowerCase()} truly takes — only the domain of ${domain.toLowerCase()} is constant across all accounts. Their symbol, ${randomSymbol.toLowerCase()}, predates the oldest written records.`,
+    `${generatedDeityName} is not worshipped through fear but through recognition — this ${divineType.toLowerCase()} governs ${domain.toLowerCase()} because those forces existed before the deity and will outlast them. The symbol, ${randomSymbol.toLowerCase()}, reflects that ancient relationship.`,
+    `Temples to ${generatedDeityName} tend to be built where ${domain.toLowerCase()} is most immediately felt. Their symbol, ${randomSymbol.toLowerCase()}, marks places of significance to the faithful and warning to the uninitiated.`,
+  ] as const;
 
-    const divinePortfolios = [
-      `Followers look to ${generatedDeityName} for guidance in matters of ${domain.toLowerCase()}. The deity's tenets demand adhering to the laws of ${tone.toLowerCase()} harmony and resisting the temptations of rival entities.`,
-      `The portfolio of ${generatedDeityName} covers ${domain.toLowerCase()} in all its forms — the benign and the terrible alike. Followers are expected to embrace the full scope, not just the parts that are comfortable.`,
-      `${generatedDeityName}'s domain of ${domain.toLowerCase()} is interpreted differently across sects, but all agree that the deity's ${tone.toLowerCase()} nature shapes how that power is expressed and what price it demands.`,
-      `Devotion to ${generatedDeityName} is understood as submission to the truth of ${domain.toLowerCase()} rather than appeals for personal favor. The deity answers — but not always in ways the petitioner expected.`,
-      `The tenets of ${generatedDeityName} are less a moral code than an acknowledgment of how ${domain.toLowerCase()} works. The ${tone.toLowerCase()} framing sets the deity apart from others who govern similar forces.`,
-    ] as const;
+  const divinePortfolios = [
+    `Followers look to ${generatedDeityName} for guidance in matters of ${domain.toLowerCase()}. The deity's tenets demand adhering to the laws of ${tone.toLowerCase()} harmony and resisting the temptations of rival entities.`,
+    `The portfolio of ${generatedDeityName} covers ${domain.toLowerCase()} in all its forms — the benign and the terrible alike. Followers are expected to embrace the full scope, not just the parts that are comfortable.`,
+    `${generatedDeityName}'s domain of ${domain.toLowerCase()} is interpreted differently across sects, but all agree that the deity's ${tone.toLowerCase()} nature shapes how that power is expressed and what price it demands.`,
+    `Devotion to ${generatedDeityName} is understood as submission to the truth of ${domain.toLowerCase()} rather than appeals for personal favor. The deity answers — but not always in ways the petitioner expected.`,
+    `The tenets of ${generatedDeityName} are less a moral code than an acknowledgment of how ${domain.toLowerCase()} works. The ${tone.toLowerCase()} framing sets the deity apart from others who govern similar forces.`,
+  ] as const;
 
-    const worshipDescriptions = [
-      `The worship of this ${divineType.toLowerCase()} is usually organized as a ${worshipperType.toLowerCase()}. Temples range from modest roadside altars to grand cathedrals built in urban centers.`,
-      `The ${worshipperType.toLowerCase()} that organises worship of ${generatedDeityName} maintains a careful distinction between public-facing practice and the rites reserved for the initiated.`,
-      `Practitioners form ${worshipperType.toLowerCase()} structures that vary significantly by region, but all share the core understanding that ${generatedDeityName} is not petitioned — they are engaged.`,
-      `The ${worshipperType.toLowerCase()} built around this deity tends to attract people who already live close to ${domain.toLowerCase()}. The formal hierarchy is secondary to the lived relationship.`,
-      `Organized worship takes the form of a ${worshipperType.toLowerCase()}, though splinter sects with divergent interpretations of the ${tone.toLowerCase()} doctrine have always complicated the official hierarchy.`,
-    ] as const;
+  const worshipDescriptions = [
+    `The worship of this ${divineType.toLowerCase()} is usually organized as a ${worshipperType.toLowerCase()}. Temples range from modest roadside altars to grand cathedrals built in urban centers.`,
+    `The ${worshipperType.toLowerCase()} that organises worship of ${generatedDeityName} maintains a careful distinction between public-facing practice and the rites reserved for the initiated.`,
+    `Practitioners form ${worshipperType.toLowerCase()} structures that vary significantly by region, but all share the core understanding that ${generatedDeityName} is not petitioned — they are engaged.`,
+    `The ${worshipperType.toLowerCase()} built around this deity tends to attract people who already live close to ${domain.toLowerCase()}. The formal hierarchy is secondary to the lived relationship.`,
+    `Organized worship takes the form of a ${worshipperType.toLowerCase()}, though splinter sects with divergent interpretations of the ${tone.toLowerCase()} doctrine have always complicated the official hierarchy.`,
+  ] as const;
 
-    const deitySecrets = [
-      `Holds a secret fear of their own power being forgotten by mortal hearts.`,
-      `Has been slowly losing influence to a younger divine force and is engineering a crisis to restore relevance.`,
-      `Once granted a mortal a boon that cannot be undone — and has been managing the consequences ever since.`,
-      `Made a bargain with another divine power that fundamentally compromises their stated domain.`,
-      `Their most devoted worshippers know something about the deity that the clergy actively suppresses.`,
-    ] as const;
+  const deitySecrets = [
+    `Holds a secret fear of their own power being forgotten by mortal hearts.`,
+    `Has been slowly losing influence to a younger divine force and is engineering a crisis to restore relevance.`,
+    `Once granted a mortal a boon that cannot be undone — and has been managing the consequences ever since.`,
+    `Made a bargain with another divine power that fundamentally compromises their stated domain.`,
+    `Their most devoted worshippers know something about the deity that the clergy actively suppresses.`,
+  ] as const;
 
-    const deityHooks = [
-      `A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.`,
-      `A sect claiming direct communication with ${generatedDeityName} has emerged, and the established clergy does not know whether to denounce or investigate them.`,
-      `The deity's symbol has started appearing in locations where no worshipper has been — scratched into walls, pressed into mud, burned into wood.`,
-      `A mortal has begun performing miracles attributed to ${generatedDeityName} without any priestly training. The temple wants to know why before the wrong people ask the same question.`,
-      `Something the deity is supposed to protect has gone missing. The clergy is keeping it quiet, but the silence itself is starting to draw attention.`,
-    ] as const;
+  const deityHooks = [
+    `A lost tomb dedicated to this deity has been uncovered, containing a relic that has begun to glow.`,
+    `A sect claiming direct communication with ${generatedDeityName} has emerged, and the established clergy does not know whether to denounce or investigate them.`,
+    `The deity's symbol has started appearing in locations where no worshipper has been — scratched into walls, pressed into mud, burned into wood.`,
+    `A mortal has begun performing miracles attributed to ${generatedDeityName} without any priestly training. The temple wants to know why before the wrong people ask the same question.`,
+    `Something the deity is supposed to protect has gone missing. The clergy is keeping it quiet, but the silence itself is starting to draw attention.`,
+  ] as const;
 
-    const deityTaboos = [
-      `Damaging or defacing sacred symbols of ${domain.toLowerCase()} is believed to bring immediate bad fortune.`,
-      `To speak the deity's name in a place of violence is considered an invitation for consequence — not divine punishment exactly, but a shift in how things go.`,
-      `Worshippers of ${generatedDeityName} do not swear oaths in the deity's name. The deity's attention, once called, is not easily redirected.`,
-      `Those who mock the domain of ${domain.toLowerCase()} in earshot of a shrine are understood to be testing something. Most stop after the first incident.`,
-      `The one true taboo is acting against ${domain.toLowerCase()} while seeking the deity's blessing. The prayers are heard — but the hypocrisy is noted.`,
-    ] as const;
+  const deityTaboos = [
+    `Damaging or defacing sacred symbols of ${domain.toLowerCase()} is believed to bring immediate bad fortune.`,
+    `To speak the deity's name in a place of violence is considered an invitation for consequence — not divine punishment exactly, but a shift in how things go.`,
+    `Worshippers of ${generatedDeityName} do not swear oaths in the deity's name. The deity's attention, once called, is not easily redirected.`,
+    `Those who mock the domain of ${domain.toLowerCase()} in earshot of a shrine are understood to be testing something. Most stop after the first incident.`,
+    `The one true taboo is acting against ${domain.toLowerCase()} while seeking the deity's blessing. The prayers are heard — but the hypocrisy is noted.`,
+  ] as const;
 
-    const deityAdventureHooks = [
-      [
-        `A high priest of the local ${worshipperType.toLowerCase()} hires the adventurers to recover a stolen relic.`,
-        `A heretical sect has arisen, claiming the deity demands a dark and forbidden sacrifice.`,
-      ],
-      [
-        `A dying worshipper gives the party a map and asks them to complete a pilgrimage they cannot finish. They do not explain what waits at the end.`,
-        `Two ${worshipperType.toLowerCase()} sects are escalating toward open conflict over an interpretation of scripture neither side will back down from.`,
-      ],
-      [
-        `The deity has gone silent — no answers to prayers, no signs, no miracles. The clergy wants to know why before the faithful notice.`,
-        `A relic associated with ${generatedDeityName} has been sold to a collector who has no idea what they have purchased.`,
-      ],
-      [
-        `The ${worshipperType.toLowerCase()} has received a vision that contradicts their founding doctrine. They need outside eyes before they decide what to do with it.`,
-        `Someone has been performing the ${randomHighlightRitual.toLowerCase()} incorrectly — and the results have been accumulating somewhere nearby.`,
-      ],
-      [
-        `A noble family is attempting to co-opt the ${worshipperType.toLowerCase()} for political purposes. The hierarchy is divided on whether to resist or accommodate.`,
-        `A ruin recently excavated near the capital contains evidence that ${generatedDeityName}'s history is not what the official texts claim.`,
-      ],
-    ] as const;
+  const deityAdventureHooks = [
+    [
+      `A high priest of the local ${worshipperType.toLowerCase()} hires the adventurers to recover a stolen relic.`,
+      `A heretical sect has arisen, claiming the deity demands a dark and forbidden sacrifice.`,
+    ],
+    [
+      `A dying worshipper gives the party a map and asks them to complete a pilgrimage they cannot finish. They do not explain what waits at the end.`,
+      `Two ${worshipperType.toLowerCase()} sects are escalating toward open conflict over an interpretation of scripture neither side will back down from.`,
+    ],
+    [
+      `The deity has gone silent — no answers to prayers, no signs, no miracles. The clergy wants to know why before the faithful notice.`,
+      `A relic associated with ${generatedDeityName} has been sold to a collector who has no idea what they have purchased.`,
+    ],
+    [
+      `The ${worshipperType.toLowerCase()} has received a vision that contradicts their founding doctrine. They need outside eyes before they decide what to do with it.`,
+      `Someone has been performing the ${randomHighlightRitual.toLowerCase()} incorrectly — and the results have been accumulating somewhere nearby.`,
+    ],
+    [
+      `A noble family is attempting to co-opt the ${worshipperType.toLowerCase()} for political purposes. The hierarchy is divided on whether to resist or accommodate.`,
+      `A ruin recently excavated near the capital contains evidence that ${generatedDeityName}'s history is not what the official texts claim.`,
+    ],
+  ] as const;
 
-    const deityDesc = pickFrom(deityDescriptions, rng);
-    const divinePort = pickFrom(divinePortfolios, rng);
-    const worshipDesc = pickFrom(worshipDescriptions, rng);
-    const deitySecret = pickFrom(deitySecrets, rng);
-    const deityHook = pickFrom(deityHooks, rng);
-    const deityTaboo = pickFrom(deityTaboos, rng);
-    const adventureHookPair = pickFrom(deityAdventureHooks, rng);
+  const deityDesc = pickFrom(deityDescriptions, rng);
+  const divinePort = pickFrom(divinePortfolios, rng);
+  const worshipDesc = pickFrom(worshipDescriptions, rng);
+  const deitySecret = pickFrom(deitySecrets, rng);
+  const deityHook = pickFrom(deityHooks, rng);
+  const deityTaboo = pickFrom(deityTaboos, rng);
+  const adventureHookPair = pickFrom(deityAdventureHooks, rng);
 
-    let content = `### Deity Description
+  let content = `### Deity Description
 ${deityDesc}
 
 ### Divine Portfolio
@@ -544,11 +585,11 @@ ${divinePort}
 ### Worship & Cults
 ${worshipDesc}`;
 
-    if (campaignContext) {
-      content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the deity's worshippers have adapted to these circumstances, altering their rites accordingly.`;
-    }
+  if (campaignContext) {
+    content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the deity's worshippers have adapted to these circumstances, altering their rites accordingly.`;
+  }
 
-    const lore = `### At a Glance
+  const lore = `### At a Glance
 - **👤 Deity Type**: ${divineType}
 - **✨ Primary Domain**: ${domain}
 - **👥 Worshippers**: ${worshipperType}
@@ -567,15 +608,37 @@ ${worshipDesc}`;
 - ${adventureHookPair[0]}
 - ${adventureHookPair[1]}`;
 
-    return {
-      type: "character",
-      title,
-      summary,
-      content,
-      lore,
-      labels: ["rpg-deity", "deity-generator", "imported-draft"],
-      status: "active",
-    };
+  return {
+    type: "character",
+    title,
+    summary,
+    content,
+    lore,
+    labels: ["rpg-deity", "deity-generator", "imported-draft"],
+    status: "active",
+  };
+}
+
+export function generatePantheonLocal(
+  options: PantheonGeneratorOptions = {},
+  rng: Rng = defaultRng,
+): PublicGeneratorOutput {
+  const resolved = resolvePantheon(options, rng);
+  const {
+    mode,
+    sizeCfg,
+    width,
+    genre,
+    domain,
+    worshipperType,
+    conflictTheme,
+    campaignContext,
+    randomHighlightRitual,
+    generatedDeityName,
+  } = resolved;
+
+  if (mode === "single") {
+    return generateSingleDeityLocal(resolved, rng);
   }
 
   const pantheonTitle = `The ${generatedDeityName} Pantheon`;
@@ -586,13 +649,37 @@ ${worshipDesc}`;
         ? `A wide mythic collection of deities representing various domains, bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world.`
         : `A collection of deities bound by the theme of ${conflictTheme.toLowerCase()} in a ${genre.toLowerCase()} world with ${domain.toLowerCase()} at its center.`;
 
-  const deityCount = sizeCfg.min;
-  const deityNames = Array.from({ length: deityCount }, () =>
-    generateName(rng),
-  );
+  const deityCount =
+    sizeCfg.min + Math.floor(rng() * (sizeCfg.max - sizeCfg.min + 1));
+  const usedNames = new Set<string>();
+  const deityNames: string[] = [];
+  for (let i = 0; i < deityCount; i++) {
+    let candidate = generateName(rng);
+    let attempts = 0;
+    while (usedNames.has(candidate) && attempts < 10) {
+      candidate = generateName(rng);
+      attempts++;
+    }
+    if (usedNames.has(candidate)) {
+      candidate = `${candidate} ${i + 1}`;
+    }
+    usedNames.add(candidate);
+    deityNames.push(candidate);
+  }
+
   const clergyProfile = pickFrom(pantheonConfig.pantheonClergy, rng);
   const problem = pickFrom(pantheonConfig.pantheonProblems, rng);
   const immediateHook = pickFrom(pantheonConfig.pantheonHooks, rng);
+  const remainingHooks = pantheonConfig.pantheonHooks.filter(
+    (h) => h !== immediateHook,
+  );
+  const omenText = pickFrom(
+    remainingHooks.length > 0 ? remainingHooks : pantheonConfig.pantheonHooks,
+    rng,
+  );
+  const publicDogma = pickFrom(pantheonConfig.pantheonPublicDogmas, rng);
+  const highRite = pickFrom(pantheonConfig.pantheonHighRites, rng);
+  const culturalTaboo = pickFrom(pantheonConfig.pantheonCulturalTaboos, rng);
   const rumourOne = pickFrom(pantheonConfig.pantheonRumours, rng);
   const remainingRumours = pantheonConfig.pantheonRumours.filter(
     (r) => r !== rumourOne,
@@ -603,6 +690,10 @@ ${worshipDesc}`;
       : pantheonConfig.pantheonRumours,
     rng,
   );
+
+  const symbolPool =
+    pantheonConfig.symbolsByGenre[genre] ??
+    pantheonConfig.symbolsByGenre["Classic Fantasy"];
 
   const focusedFacetFor = (index: number): string =>
     pantheonConfig.pantheonFocusedFacets[
@@ -621,6 +712,94 @@ ${worshipDesc}`;
       ? `Represents the domain of ${domain}.`
       : `Serves as ${pantheonConfig.pantheonBalancedRoles[(index - 1) % pantheonConfig.pantheonBalancedRoles.length]}.`;
 
+  const roleOffset = Math.floor(
+    rng() * pantheonConfig.pantheonDeityRoles.length,
+  );
+  const personalityOffset = Math.floor(
+    rng() * pantheonConfig.pantheonPersonalities.length,
+  );
+  const worshipOffset = Math.floor(
+    rng() * pantheonConfig.pantheonWorshipStyles.length,
+  );
+  const tabooOffset = Math.floor(
+    rng() * pantheonConfig.pantheonDeityTaboos.length,
+  );
+  const conflictOffset = Math.floor(
+    rng() * pantheonConfig.pantheonConflictRelations.length,
+  );
+  const symbolOffset = Math.floor(rng() * symbolPool.length);
+
+  const localDeities = deityNames.map((name, i) => {
+    const portfolio =
+      width === "focused"
+        ? `${domain} (${focusedFacetFor(i)})`
+        : width === "wide"
+          ? wideDomainFor(i)
+          : i === 0
+            ? `${domain} and primary covenant`
+            : `${pantheonConfig.pantheonWideDomains[(i - 1) % pantheonConfig.pantheonWideDomains.length]} (bound to ${domain.toLowerCase()})`;
+
+    const description =
+      width === "focused"
+        ? `Governs ${focusedFacetFor(i)} within ${domain.toLowerCase()}.`
+        : width === "wide"
+          ? `The deity governing ${wideDomainFor(i)}.`
+          : i === 0
+            ? `The primary deity of ${domain}.`
+            : `Known as ${pantheonConfig.pantheonBalancedRoles[(i - 1) % pantheonConfig.pantheonBalancedRoles.length]}.`;
+
+    return {
+      name,
+      description,
+      divine_role:
+        pantheonConfig.pantheonDeityRoles[
+          (roleOffset + i) % pantheonConfig.pantheonDeityRoles.length
+        ],
+      portfolio,
+      personality:
+        pantheonConfig.pantheonPersonalities[
+          (personalityOffset + i) % pantheonConfig.pantheonPersonalities.length
+        ],
+      symbol: symbolPool[(symbolOffset + i) % symbolPool.length],
+      common_worshippers: worshipperType,
+      worship_style:
+        pantheonConfig.pantheonWorshipStyles[
+          (worshipOffset + i) % pantheonConfig.pantheonWorshipStyles.length
+        ],
+      taboo:
+        pantheonConfig.pantheonDeityTaboos[
+          (tabooOffset + i) % pantheonConfig.pantheonDeityTaboos.length
+        ],
+      conflict_relation:
+        pantheonConfig.pantheonConflictRelations[
+          (conflictOffset + i) % pantheonConfig.pantheonConflictRelations.length
+        ],
+    };
+  });
+
+  const relTypeOffset = Math.floor(
+    rng() * pantheonConfig.pantheonRelationshipTypes.length,
+  );
+  const relPressureOffset = Math.floor(
+    rng() * pantheonConfig.pantheonRelationshipPressures.length,
+  );
+  const relationships = deityNames.map((deityA, i) => {
+    const partnerIndex = (i + 1) % deityNames.length;
+    const deityB = deityNames[partnerIndex];
+    const relType =
+      pantheonConfig.pantheonRelationshipTypes[
+        (relTypeOffset + i) % pantheonConfig.pantheonRelationshipTypes.length
+      ];
+    const pressure =
+      pantheonConfig.pantheonRelationshipPressures[
+        (relPressureOffset + i) %
+          pantheonConfig.pantheonRelationshipPressures.length
+      ];
+    return `- **${deityA}** and **${deityB}** (${relType}): ${pressure}`;
+  });
+
+  const priestName = generateName(rng);
+
   const pantheonOrigins = [
     `According to legend, the deities of this pantheon were born from a single cosmic event. Under the theme of ${conflictTheme.toLowerCase()}, they divide the control of the cosmos between their spheres of influence.`,
     `The oldest texts describe these deities emerging not at the beginning of time but at its first break — the moment when ${conflictTheme.toLowerCase()} entered the cosmos and forced a division of responsibility.`,
@@ -631,6 +810,8 @@ ${worshipDesc}`;
 
   let content = `### Origin & Dogma
 ${pickFrom(pantheonOrigins, rng)}
+
+**Public Dogma**: ${publicDogma}
 
 ### Pantheon Structure
 The pantheon consists of ${deityCount} deities:
@@ -648,8 +829,7 @@ ${deityNames
   .join("\n")}
 
 ### Divine Alliances & Rivalries
-- **${deityNames[0]}** is allied with **${deityNames[deityNames.length - 1]}**, but stands in direct opposition to **${deityNames[1]}**.
-- **${deityNames[1]}** seeks to overthrow the established order of the other deities.`;
+${relationships.join("\n")}`;
 
   if (campaignContext) {
     content += `\n\n### Influence of Campaign Context\nIn this campaign setting (${campaignContext}), the struggles of the pantheon are reflected in the shifting boundaries of the mortal kingdoms.`;
@@ -663,31 +843,25 @@ ${deityNames
 - **Immediate Hook**: ${immediateHook}
 
 ### Deities of the Pantheon
-${deityNames
-  .map(
-    (n, i) =>
-      `- **${n}**: ${
-        width === "focused"
-          ? `Governs ${focusedFacetFor(i)} within ${domain.toLowerCase()}.`
-          : width === "wide"
-            ? `The deity governing ${wideDomainFor(i)}.`
-            : i === 0
-              ? `The primary deity of ${domain}.`
-              : `Known as ${pantheonConfig.pantheonBalancedRoles[(i - 1) % pantheonConfig.pantheonBalancedRoles.length]}.`
-      }`,
-  )
-  .join("\n")}
+${localDeities.map((d) => formatDeityProfile(d)).join("\n\n")}
 
 ### Clergy & Temples
 - **Clergy Roles**: ${clergyProfile.roles}
 - **Temples & Shrines**: ${clergyProfile.temples}
+- **Common Rite**: ${randomHighlightRitual}
+- **High Rite**: ${highRite}
+- **Omens**: ${omenText}
+- **Cultural Taboos**: ${culturalTaboo}
 
 ### Rumours & Legends
 - ${rumourOne}
 - ${rumourTwo}
 
 ### Entity Seeds
-- **👥 ${worshipperType}**: A major temple order or mystery cult dedicated to the worship of the pantheon.`;
+- **👤 ${priestName} (Senior Clergy)**: Serves ${deityNames[0]}, quietly negotiating with ${deityNames[1]}'s sect to keep ${conflictTheme.toLowerCase()} from spilling into the streets.
+- **👥 ${worshipperType} of ${deityNames[0]}**: A major temple order or mystery cult dedicated to the worship of ${pantheonTitle}.
+- **📅 The Synod of ${deityNames[1]}**: A contested holy gathering where rival shrines demand recognition over ${domain.toLowerCase()}.
+- **📍 Sanctuary of ${deityNames[deityNames.length - 1]}**: A contested shrine where pilgrims seek mediation between opposing deities.`;
 
   return {
     type: "faction",

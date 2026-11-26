@@ -674,6 +674,10 @@ describe("section uniqueness invariant (#2768)", () => {
         `- **Hidden Problem**: ${hiddenProblem}`,
         "- **Immediate Hook**: Rival temples declared the same holy day.",
         "",
+        "### Deities of the Pantheon",
+        "#### Vaelor — First Arbiter",
+        "- **Portfolio**: Shadow and oaths",
+        "",
         "### Clergy & Temples",
         "- **Clergy Roles**: Rotating stewards.",
         "",
@@ -682,6 +686,8 @@ describe("section uniqueness invariant (#2768)", () => {
       ].join("\n"),
     });
 
+    expect(layout.content).toContain("### Deities of the Pantheon");
+    expect(layout.content).toContain("#### Vaelor — First Arbiter");
     expect(layout.content).toContain("### Clergy & Temples");
     expect(layout.content).toContain("**Immediate Hook**: Rival temples");
     expect(layout.content).not.toContain("Hidden Problem");
@@ -692,6 +698,7 @@ describe("section uniqueness invariant (#2768)", () => {
     expect(layout.lore).toContain(`**Hidden Problem**: ${hiddenProblem}`);
     expect(layout.lore).toContain("### Rumours & Legends");
     expect(layout.lore).toContain(rumour);
+    expect(layout.lore).not.toContain("### Deities of the Pantheon");
     expect(layout.lore).not.toContain("**Immediate Hook**");
   });
 });
