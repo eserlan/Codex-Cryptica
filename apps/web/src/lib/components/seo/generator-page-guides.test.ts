@@ -256,4 +256,38 @@ describe("generator guide distinctness", () => {
       defaultGuideForSlug("nation" as never, "Nation Generator").summary,
     );
   });
+
+  it("serves the urban fantasy faction guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide(
+      "urban-fantasy-faction",
+      "Urban Fantasy Faction Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["urban-fantasy-faction"]);
+    expect(guide.summary).not.toContain("Urban Fantasy Faction Generator");
+    expect(guide.summary).toContain("hidden-world group");
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Operating scope",
+      "Add campaign context",
+      "Moral posture",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
+  it("does not serve the template to the urban fantasy faction page", () => {
+    expect(
+      getGeneratorGuide(
+        "urban-fantasy-faction",
+        "Urban Fantasy Faction Generator",
+      ).summary,
+    ).not.toBe(
+      defaultGuideForSlug(
+        "urban-fantasy-faction",
+        "Urban Fantasy Faction Generator",
+      ).summary,
+    );
+  });
 });

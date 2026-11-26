@@ -882,3 +882,90 @@ describe("urban fantasy faction (#1137)", () => {
     }
   });
 });
+
+describe("urban fantasy offline wording fixes", () => {
+  it("uses article-neutral wording for custom faction types", () => {
+    const occult = generateUrbanFantasyFactionLocal(
+      { factionType: "Occult Gang" },
+      seededRng(40),
+    );
+    expect(occult.summary).toContain("a faction of type occult gang");
+    expect(occult.content).toContain(
+      "is a faction of type occult gang with a foothold in",
+    );
+
+    const european = generateUrbanFantasyFactionLocal(
+      { factionType: "European Council" },
+      seededRng(40),
+    );
+    expect(european.summary).toContain("a faction of type european council");
+    expect(european.content).toContain(
+      "is a faction of type european council with a foothold in",
+    );
+  });
+
+  it("strips trailing punctuation from custom mode before interpolation", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { mode: "Monster diplomacy." },
+      seededRng(40),
+    );
+    expect(out.summary).toContain("operating through monster diplomacy and");
+    expect(out.content).toContain("Their work centres on monster diplomacy.");
+    expect(out.content).not.toContain("diplomacy..");
+  });
+
+  it("never puts a capital letter after the colon in the risk sentence", () => {
+    const out = generateUrbanFantasyFactionLocal({}, seededRng(41));
+    const riskLine = out.content
+      .split("\n")
+      .find((line) => line.includes("simple to name:"));
+    expect(riskLine).toBeDefined();
+    expect(riskLine).toMatch(/simple to name: [a-z]/);
+    expect(riskLine).not.toMatch(/simple to name: [A-Z]/);
+  });
+
+  it("describes the moral posture as a trait, not as a noun phrase used as a possessive", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { moralPosture: "Pragmatic brokers" },
+      seededRng(42),
+    );
+    expect(out.content).toContain("They are pragmatic brokers, and");
+    expect(out.content).not.toContain("posture is");
+    expect(out.lore).toContain(
+      "whether being pragmatic brokers still protects the people it claims to serve.",
+    );
+    expect(out.lore).not.toContain("its pragmatic brokers instincts");
+  });
+
+  it("ends the campaign-context sentence with one full stop", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      {
+        campaignContext: "the Thames flood barrier, which is failing.",
+      },
+      seededRng(43),
+    );
+    expect(out.content).toContain(
+      "The faction's choices are shaped by the Thames flood barrier, which is failing.",
+    );
+    expect(out.content).not.toContain("..");
+  });
+
+  it("omits the campaign-context sentence when no context is given", () => {
+    const out = generateUrbanFantasyFactionLocal({}, seededRng(43));
+    expect(out.content).not.toContain("shaped by");
+  });
+
+  it("uses the selected urban fantasy mode in the offline draft body", () => {
+    const out = generateUrbanFantasyFactionLocal(
+      { mode: "Monster diplomacy" },
+      seededRng(44),
+    );
+    expect(out.content).toContain("Their work centres on monster diplomacy.");
+  });
+
+  it("does not capitalise 'The' in the mid-sentence faction name", () => {
+    const out = generateUrbanFantasyFactionLocal({}, seededRng(45));
+    expect(out.content).not.toMatch(/Bring The /);
+    expect(out.content).toMatch(/Bring (?:the |[A-Z])/);
+  });
+});
