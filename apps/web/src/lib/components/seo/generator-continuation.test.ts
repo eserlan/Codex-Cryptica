@@ -44,6 +44,13 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const ship = getGeneratorContinuationConfig("ship-generator");
+    expect(ship).toMatchObject({
+      headline: "Dock this vessel in your campaign",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {

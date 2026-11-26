@@ -143,6 +143,15 @@ const LAYOUT_RULES: LayoutRule[] = [
     },
   },
   {
+    label: "rpg-ship",
+    railSections: new Set([
+      "Ship Profile",
+      "Complication",
+      "Secret",
+      "Adventure Hooks",
+    ]),
+  },
+  {
     label: "rpg-location",
     railSections: new Set([
       "GM Reference Information",
