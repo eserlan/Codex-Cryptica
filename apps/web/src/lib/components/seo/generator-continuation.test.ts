@@ -72,6 +72,15 @@ describe("generator-continuation", () => {
       ctaLabel: "Add to my Codex",
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
+
+    const oneShot = getGeneratorContinuationConfig(
+      "one-shot-adventure-generator",
+    );
+    expect(oneShot).toMatchObject({
+      headline: "Save this run sheet for tonight's table",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
   });
 
   it("returns null for Wave 2, names, and unknown generator types", () => {
