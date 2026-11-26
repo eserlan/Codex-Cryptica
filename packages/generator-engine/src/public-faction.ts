@@ -655,12 +655,16 @@ export function generateVampireLocal(
   const rival = `${generateName(rng)} Inquisition`;
   const sire = generateName(rng);
   const thrall = generateName(rng);
+  // The bloodline's parenthetical (e.g. "(Charismatic Mind-Benders)") is a
+  // GM hint for the reference block, not prose, so keep it out of the overview.
+  const bloodlineName = bloodline.replace(/\s*\([^)]*\)\s*$/, "").toLowerCase();
+  const archetypeName = archetype.toLowerCase();
 
   const content = `### Overview
-${name} is a powerful vampire clan of the ${bloodline.toLowerCase()} lineage, operating as a ${archetype.toLowerCase()} across ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
+${name} is a powerful vampire clan of the ${bloodlineName} lineage, operating as ${indefiniteArticle(archetypeName)} ${archetypeName} in the ${scope.toLowerCase()}. They hide their predatory activities behind a carefully crafted mortal facade, manipulating events from the dark.
 
 ${campaignContext ? `### Campaign Fit\nUse ${name} in ${campaignContext}. Their influence should touch the local halls of power, forgotten catacombs, or ongoing dark mysteries.\n` : ""}### Public Facade
-To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a highly organized coven of undead hunters.
+To the mortal world, members of ${name} present themselves as wealthy philanthropists, eccentric scholars, or influential patrons. Very few suspect that behind this elegant mask lies a tightly organised coven of predators.
 
 ### Table Use
 Introduce ${name} when the party enters high-society intrigue, investigates occult occurrences, or needs a powerful but dangerous ally who demands blood or secrets as currency.`;
@@ -748,6 +752,42 @@ function generateDarkFactionName(rng: Rng = defaultRng): string {
     "Last Ember",
   ];
   return `${pickFrom(prefixes, rng)}${pickFrom(roots, rng)}`;
+}
+
+// Bounded reroll so a rival or NPC never shares the name it is listed against.
+function rerollUntilDistinct(taken: string, roll: () => string): string {
+  let candidate = roll();
+  for (let attempt = 0; candidate === taken && attempt < 10; attempt++) {
+    candidate = roll();
+  }
+  return candidate;
+}
+
+// Moral postures are "Head — explanation" pairs; the head is a noun phrase
+// that reads well after "with a moral posture of", the explanation a clause.
+function splitMoralPosture(posture: string): { head: string; detail: string } {
+  const [head, ...rest] = posture.split(" — ");
+  return {
+    head: stripSentenceEnd(head),
+    detail: stripSentenceEnd(rest.join(" — ")),
+  };
+}
+
+function stripSentenceEnd(text: string): string {
+  return text.trim().replace(/[.!?]+$/, "");
+}
+
+function withSentenceEnd(text: string): string {
+  const trimmed = text.trim();
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function sentenceCase(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
 export function resolveDarkFaction(
@@ -863,36 +903,38 @@ export function generateDarkFactionLocal(
     name,
     traits,
   } = resolveDarkFaction(options, rng);
-  const rival = generateDarkFactionName(rng);
+  const rival = rerollUntilDistinct(name, () => generateDarkFactionName(rng));
   const leader = generateName(rng);
-  const agent = generateName(rng);
+  const agent = rerollUntilDistinct(leader, () => generateName(rng));
   const base = selectSmartFactionBase(factionType, traits, rng);
   const resource = selectSmartFactionResource(factionType, traits, rng);
 
-  const summary = `A ${moralPosture.split(" —")[0].toLowerCase()} ${factionType.toLowerCase()} operating through a ${mode.toLowerCase()}.`;
+  const { head: postureHead, detail: postureDetail } =
+    splitMoralPosture(moralPosture);
+  const summary = `${sentenceCase(`${indefiniteArticle(factionType)} ${factionType.toLowerCase()}`)} operating through ${indefiniteArticle(mode)} ${mode.toLowerCase()}, with the moral posture “${postureHead}”.`;
 
   const content = `### What they control
-${name} is a ${factionType.toLowerCase()} with real authority across ${scope.toLowerCase()}, built on the back of the ${mode.toLowerCase()} that made them necessary in the first place.
+${name} is ${indefiniteArticle(factionType)} ${factionType.toLowerCase()} with real authority across ${scope.toLowerCase()}, built on the back of the ${mode.toLowerCase()} that made them necessary in the first place.
 
 ### What they want
 ${goal}
 
 ### Why they are dangerous
-${conflict} Their posture — ${moralPosture.toLowerCase()} — means they will not stop simply because they are shown to be wrong.
+${conflict} Their chosen posture is “${postureHead}”${postureDetail ? `: ${lowerFirst(postureDetail)}.` : "."} They will not stop simply because they are shown to be wrong.
 
 ### How to use them at the table
-Bring ${name} into play when the party needs a power that is doing something defensible in the worst possible way. Let them be useful, or unavoidable, before the party learns the full cost of what they protect.${campaignContext ? ` They fit naturally into ${campaignContext}.` : ""}`;
+Bring ${name} into play when the party needs a power that is doing something defensible in the worst possible way. Let them be useful, or unavoidable, before the party learns the full cost of what they protect.${campaignContext ? ` Campaign context: ${withSentenceEnd(campaignContext)}` : ""}`;
 
   const lore = `### At a Glance
 - **📍 Base**: ${base}
 - **Resource**: ${resource}
 - **Symbol**: ${name.split(" ").slice(-2).join(" ")} iconography, worn or branded by the faithful
-- **Secret**: ${conflict}
+- **Secret**: see Internal Conflict below.
 - **Immediate Hook**: ${hook}
 
 ### Notable NPCs
 - **👤 ${leader}**: The one who still believes this was the right choice, and needs everyone else to believe it too.
-- **👤 ${agent}**: Does the parts of the work no one else will, and keeps a private ledger of what it has cost them.
+- **👤 ${agent}**: Handles the parts of the work no one else will, and keeps a private ledger of what it has cost them.
 
 ### Internal Conflict
 ${conflict}

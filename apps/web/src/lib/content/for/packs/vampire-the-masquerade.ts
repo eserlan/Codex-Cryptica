@@ -92,7 +92,7 @@ export const vampireTheMasquerade: LandingPageConfig = {
     {
       title: "Vampire Clan Generator",
       description:
-        "Create custom bloodlines, faction histories, and founder lore for homebrew Vampire clans.",
+        "Create custom bloodlines, public fronts, and GM reference details for homebrew Vampire clans.",
       href: "/generators/vampire-clan",
       badge: "Generator",
     },
