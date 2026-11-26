@@ -62,6 +62,16 @@ describe("AppHeader", () => {
     expect(screen.queryByTestId("staging-banner")).toBeNull();
   });
 
+  it("includes the visible brand in the front-page button's accessible name", () => {
+    render(AppHeader);
+
+    expect(
+      screen.getByRole("button", {
+        name: "Codex Cryptica (CC), go to front page",
+      }),
+    ).toBeTruthy();
+  });
+
   it("shows search controls outside guest mode", () => {
     render(AppHeader);
 
