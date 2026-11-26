@@ -509,6 +509,34 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "fantasy-names": {
+    summary:
+      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+    tips: [
+      {
+        title: "Choose the culture for the sound",
+        detail:
+          "Built-in Culture / Style options shape the sound of the whole batch. Dwarven gives stone and forge compounds such as Balrin Granitefist, while Norse / Viking gives person names ending in -son or -dottir. A custom culture or style label uses generic fantasy tables on the offline roll. Name Type changes the shape, so a Place adds endings such as Keep, Downs or Hollow, and a Faction often starts with The or uses of the.",
+      },
+      {
+        title:
+          "Set Gender / Presentation for full Norse and Celtic person names",
+        detail:
+          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those.",
+      },
+      {
+        title: "Add campaign context when AI is on",
+        detail:
+          "Add campaign context is sent to the AI path, which can tie names to the setting you describe, such as an Assyrian trading port. The offline roll does not read it, so the same batch comes back whatever you type there.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-improvise-npcs-in-dnd",
+        label: "Improvising NPCs in D&D",
+      },
+    ],
+  },
   "minor-magic-item": {
     summary:
       "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
@@ -790,6 +818,27 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
         title: "Ground the clan in your setting",
         detail:
           "In offline drafts, Add campaign context inserts a Campaign Fit section that reads Use [clan name] in [your text]. Name a real city, guild or threat there so the overview points the clan at your table.",
+      },
+    ],
+  },
+  names: {
+    summary:
+      "Each run rolls ten names in one culture's style, for a person, place, faction or item, and adds a short usage note for the GM. Use it when you need a batch of names during prep or at the table and want to keep the few that fit.",
+    tips: [
+      {
+        title: "Pick the Name Type first",
+        detail:
+          "Name Type sets the shape. In the Classic Fantasy cultures, Person gives a first name and a surname, such as Kaelra Thornfist. Place gives settlement-style names like Kaelhaven, Faction gives groups like The Thorned Wardens, and Item gives named objects like Elmar's Blade.",
+      },
+      {
+        title: "Choose a vibe before Culture / Style",
+        detail:
+          "On the offline roll, Choose a vibe only changes the Culture / Style list. Cultures under Cyberpunk / Corporate, Vampire / Gothic Noir, Sci-Fi / Space Opera, Modern Conspiracy and Post-Apocalyptic have no offline tables, so their batches use fantasy syllables and the Usage Suggestions say so.",
+      },
+      {
+        title: "Use campaign context with AI on",
+        detail:
+          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. Local results ignore it and add a note whenever context is present, including after an AI failure. AI generation is needed to use this context; retry if AI is already enabled.",
       },
     ],
   },

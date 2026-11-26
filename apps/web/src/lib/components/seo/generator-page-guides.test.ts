@@ -164,6 +164,42 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("qualifies custom culture behavior for the offline fantasy name roll", () => {
+    const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
+    const cultureTip = guide.tips.find((tip) =>
+      tip.title.includes("culture for the sound"),
+    );
+
+    expect(guide.summary).toContain(
+      "Built-in cultures shape offline names; custom culture labels use generic fantasy tables",
+    );
+    expect(cultureTip?.detail).toContain("Built-in Culture / Style options");
+    expect(cultureTip?.detail).toContain(
+      "custom culture or style label uses generic fantasy tables on the offline roll",
+    );
+  });
+
+  it("distinguishes AI style notes from the offline name list", () => {
+    const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
+
+    expect(guide.summary).toContain(
+      "AI results include a short style note for each name; offline results list names only",
+    );
+  });
+
+  it("limits offline gender guidance to surnames on full Norse and Celtic names", () => {
+    const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
+    const genderTip = guide.tips.find((tip) =>
+      tip.title.includes("Gender / Presentation"),
+    );
+
+    expect(genderTip?.detail).toContain("full person names");
+    expect(genderTip?.detail).toContain("changes the surname only");
+    expect(genderTip?.detail).toContain(
+      "no effect on first-name-only rolls or names in other cultures",
+    );
+  });
+
   it("serves the vampire clan guide with tips that name its form labels and output lines", () => {
     const guide = getGeneratorGuide("vampire-clan", "Vampire Clan Generator");
     expect(guide).toBe(SLUG_GUIDES["vampire-clan"]);
@@ -283,6 +319,38 @@ describe("generator guide distinctness", () => {
     expect(getGeneratorGuide("nation", "Nation Generator").summary).not.toBe(
       defaultGuideForSlug("nation" as never, "Nation Generator").summary,
     );
+  });
+
+  it("serves the names guide with tips that name its form labels and offline limits", () => {
+    const guide = getGeneratorGuide("names", "RPG Name Generator");
+    expect(guide).toBe(SLUG_GUIDES.names);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("names", "RPG Name Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Name Type",
+      "Choose a vibe",
+      "Culture / Style",
+      "Add campaign context",
+      "Usage Suggestions",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    // The offline limits must match the engine: these vibes have no tables.
+    for (const vibe of [
+      "Cyberpunk / Corporate",
+      "Vampire / Gothic Noir",
+      "Sci-Fi / Space Opera",
+      "Modern Conspiracy",
+      "Post-Apocalyptic",
+    ]) {
+      expect(tipText).toContain(vibe);
+    }
+    expect(tipText).toContain("including after an AI failure");
+    expect(tipText).toContain("retry if AI is already enabled");
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
   it("serves the urban fantasy faction guide with tips that name its form labels", () => {
