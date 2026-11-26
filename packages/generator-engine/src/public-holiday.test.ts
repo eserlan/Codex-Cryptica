@@ -121,4 +121,36 @@ describe("public holiday generator", () => {
       ).observances,
     ).toHaveLength(1);
   });
+
+  it("writes a single observance summary as a capitalised sentence that names it", () => {
+    const out = generateHolidayLocal({ setSize: "One observance" }, () => 0.3);
+    expect(out.summary).toMatch(/^[A-Z]/);
+    expect(out.summary).toContain(`${out.title} is marked each year at `);
+    expect(out.summary).not.toMatch(/^[a-z]/);
+  });
+
+  it("keeps the scope's article lowercase in calendar titles, overviews and summaries", () => {
+    const out = generateHolidayLocal(
+      { scope: "A nation", setSize: "A calendar of 3 observances" },
+      () => 0.3,
+    );
+    expect(out.title).toBe("Calendar for a nation");
+    expect(out.summary).toContain("for a nation,");
+    expect(out.content).toContain("across a nation,");
+    expect(out.title).not.toMatch(/A nation/);
+    expect(out.summary).not.toMatch(/ A nation/);
+    expect(out.content).not.toMatch(/(across|for|of) A nation/);
+  });
+
+  it("does not paste free-text culture into the summary", () => {
+    const out = generateHolidayLocal(
+      {
+        setSize: "One observance",
+        culture: "Orbital dockworkers share water under a fragile compact",
+      },
+      () => 0.3,
+    );
+    expect(out.summary).not.toContain("Orbital dockworkers");
+    expect(out.summary).toMatch(/shaped by .+\.$/);
+  });
 });

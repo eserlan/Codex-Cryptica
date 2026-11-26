@@ -172,6 +172,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    holiday: {
+      headline: "Keep this observance in your calendar",
+      summary:
+        "Save this observance or calendar to your local Codex vault so its origin, traditions, and tensions stay connected to the people and places that keep it.",
+      capabilities: [
+        "Store the observance, its origin, and its traditions in one Note entry",
+        "Keep the GM-only history and table hooks in lore, away from the public account",
+        "Link the observance to the factions, places, and people who keep it inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

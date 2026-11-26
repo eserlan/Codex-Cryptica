@@ -284,19 +284,22 @@ export function generateHolidayLocal(
       tension,
     };
   });
+  // Scope options are capitalised noun phrases ("A nation"); mid-sentence and
+  // in titles they need the lowercase article.
+  const scopePhrase = resolved.scope.replace(/^A /, "a ");
   const title =
-    count === 1 ? observances[0]!.name : `${resolved.scope} observances`;
+    count === 1 ? observances[0]!.name : `Calendar for ${scopePhrase}`;
   const content =
     count === 1
       ? `## ${observances[0]!.name}\n\n**Type:** ${observances[0]!.type}\n**When:** ${observances[0]!.when}\n**Observed by:** ${observances[0]!.observers}\n\n### Origin\n${observances[0]!.origin}\n\n### Traditions\n${observances[0]!.traditions}\n\n### Food, dress and symbols\n${observances[0]!.foodOrDress}\n\n### Taboos and variations\n${observances[0]!.taboos} ${observances[0]!.variations}\n\n### What outsiders misunderstand\n${observances[0]!.outsiderMisunderstanding}\n\n### What people believe\n${observances[0]!.publicBelief}\n\n### At the table\n${observances[0]!.tension}`
-      : `## Calendar overview\n\n${count} observances across ${resolved.scope}, mixing seasonal, civic, religious, memorial and local traditions. The shared motifs are mutual protection, contested memory and the obligations owed to absent people.\n\n${observances.map((day) => `## ${day.name}\n\n**Type:** ${day.type}\n**When:** ${day.when}\n**Observed by:** ${day.observers}\n\n### Origin\n${day.origin}\n\n### Traditions\n${day.traditions}\n\n### Food, dress and symbols\n${day.foodOrDress}\n\n### Taboos and regional variations\n${day.taboos} ${day.variations}\n\n### What outsiders misunderstand\n${day.outsiderMisunderstanding}\n\n### What people believe\n${day.publicBelief}${day.hiddenTruth ? `\n\n### Hidden history\n${day.hiddenTruth}` : ""}\n\n### At the table\n${day.tension}`).join("\n\n")}`;
+      : `## Calendar overview\n\n${count} observances across ${scopePhrase}, mixing seasonal, civic, religious, memorial and local traditions. The shared motifs are mutual protection, contested memory and the obligations owed to absent people.\n\n${observances.map((day) => `## ${day.name}\n\n**Type:** ${day.type}\n**When:** ${day.when}\n**Observed by:** ${day.observers}\n\n### Origin\n${day.origin}\n\n### Traditions\n${day.traditions}\n\n### Food, dress and symbols\n${day.foodOrDress}\n\n### Taboos and regional variations\n${day.taboos} ${day.variations}\n\n### What outsiders misunderstand\n${day.outsiderMisunderstanding}\n\n### What people believe\n${day.publicBelief}${day.hiddenTruth ? `\n\n### Hidden history\n${day.hiddenTruth}` : ""}\n\n### At the table\n${day.tension}`).join("\n\n")}`;
   return {
     type: "note",
     title,
     summary:
       count === 1
-        ? `${observances[0]!.when}; a ${observances[0]!.type.toLowerCase()} shaped by ${resolved.culture || resolved.genre}.`
-        : `${count} connected observances for ${resolved.scope}, shaped by ${resolved.culture || resolved.genre}.`,
+        ? `${observances[0]!.name} is marked each year at ${observances[0]!.when}, a ${observances[0]!.type.toLowerCase()} shaped by ${resolved.genre}.`
+        : `${count} connected observances for ${scopePhrase}, shaped by ${resolved.genre}.`,
     content,
     lore: observances.some((day) => day.hiddenTruth)
       ? `## GM-only history\n\n${observances

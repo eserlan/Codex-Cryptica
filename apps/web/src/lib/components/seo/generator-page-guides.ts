@@ -28,6 +28,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  holiday: {
+    summary:
+      "Generate one observance or a connected calendar of festivals, memorials and civic days, each with its origin, traditions, who keeps it, and a tension the party can walk into at the table.",
+    tips: [
+      {
+        title: "Choose Observance scope to decide who keeps the day",
+        detail:
+          "Observance scope sets who keeps each observance, from a local settlement to a religion or a faction. Every entry's Observed by line starts from that scope, and calendar titles and overviews name it too, so pick it before you read the traditions.",
+      },
+      {
+        title: "Use the calendar size to choose one day or a set",
+        detail:
+          "Generate creates a single observance or a calendar of several. A single observance is one note with its timing, origin and table hook. A calendar adds an overview and a separate section for each day, so the set reads as connected rather than as a list of unrelated holidays.",
+      },
+      {
+        title: "Add context fields when the offline draft is too generic",
+        detail:
+          "The offline draft uses Observance scope, the calendar size and the genre, but it does not use Culture, Climate, Religion, history, Important people, Important events or Tone. Those fields feed the AI draft, so use it when you want the observances to follow your setting.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-create-a-believable-fictional-religion",
+        label: "Creating a believable fictional religion",
+      },
+      {
+        href: "/answers/how-do-i-make-different-cultures-feel-distinct-without-relying-on-stereotypes",
+        label: "Making cultures feel distinct",
+      },
+    ],
+  },
   "star-system": {
     summary:
       "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
