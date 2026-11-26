@@ -136,6 +136,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "one-shot-adventure-generator": {
+      headline: "Save this run sheet for tonight's table",
+      summary:
+        "Stage this one-shot for your local Codex vault so the scene list, NPCs, and one-page GM Cheat Sheet stay ready for prep and live play.",
+      capabilities: [
+        "Store the timed scene breakdown, multi-route clues, and GM Cheat Sheet in one Note entry",
+        "Keep essential vs. optional scene budgets and the running-late path handy during play",
+        "Link pre-generated NPCs, locations, or follow-up hooks into your campaign vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

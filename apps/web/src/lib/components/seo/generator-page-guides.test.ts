@@ -548,6 +548,39 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the one-shot-adventure-generator guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "one-shot-adventure-generator",
+      "One-Shot Adventure Builder",
+    );
+    expect(guide).toBe(SLUG_GUIDES["one-shot-adventure-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug(
+        "one-shot-adventure-generator",
+        "One-Shot Adventure Builder",
+      ),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Genre",
+      "Session length",
+      "Players",
+      "Adventure emphasis",
+      "Advanced options",
+      "Structure",
+      "System",
+      "Level or tier",
+      "Starting premise",
+      "Content boundaries",
+      "Optional campaign context",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("falls back to the default template for slugs without a specific guide", () => {
     const fallbackSlug = "nonexistent-slug" as never;
     expect(getGeneratorGuide(fallbackSlug, "Custom Generator")).toEqual(

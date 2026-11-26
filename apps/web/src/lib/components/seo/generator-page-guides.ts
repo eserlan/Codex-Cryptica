@@ -1060,6 +1060,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "one-shot-adventure-generator": {
+    summary:
+      "Build a timed single-session adventure with a GM briefing, three to six essential or optional scenes, multi-route clues, multiple endings and a one-page cheat sheet ready to run tonight.",
+    tips: [
+      {
+        title: "Budget scenes to your real table clock",
+        detail:
+          "Set Genre, Session length, Players and Adventure emphasis to allocate scene minutes plus a buffer, then keep the essential-only total in the GM Cheat Sheet as your fallback if arrivals run long.",
+      },
+      {
+        title: "Shape structure and boundaries upfront",
+        detail:
+          "Open Advanced options to pick Structure, System and Level or tier, paste a hook into Starting premise, and list limits in Content boundaries or Optional campaign context before generating.",
+      },
+      {
+        title: "Swap one weak piece without losing the thread",
+        detail:
+          "Use the scene or NPC regeneration controls to reroll a single room or cast member while keeping Central truth, clues and timelines intact, and drop optional scenes first if the clock tightens.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-write-a-one-shot-adventure",
+        label: "Structuring a four-beat one-shot",
+      },
+      {
+        href: "/answers/how-do-i-pace-an-rpg-one-shot",
+        label: "Cutting optional scenes when running late",
+      },
+      {
+        href: "/answers/how-do-i-run-a-one-shot-rpg-session",
+        label: "Opening in the situation and sharing spotlight",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(
