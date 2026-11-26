@@ -64,6 +64,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "nomad-clan": {
+      headline: "Keep this clan on the road",
+      summary:
+        "Stage this nomad clan for your local Codex vault so their convoy profile, notable members, and rivalries stay ready for play.",
+      capabilities: [
+        "Store the clan's profile, notable members, and rival faction in one Faction entry",
+        "Link this clan to settlements, characters, and campaign notes inside your vault",
+        "Update their routes, crisis, and alliances as your campaign evolves",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

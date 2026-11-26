@@ -773,6 +773,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "nomad-clan": {
+    summary:
+      "Use this for a road-based clan in a cyberpunk or post-apocalyptic campaign, one that runs cargo between waystations and fights to keep its routes. Offline drafts give you a clan name, a goal, a crisis, a rival faction, three named members and a short section on how to put the clan in the party's path. AI drafts request two or three members and may organise details differently.",
+    tips: [
+      {
+        title: "Choose the Main conflict first",
+        detail:
+          "In offline drafts, Main conflict appears as the clan's Secret and opens both What threatens them and Current Crisis. AI drafts use the conflict as input, but may place it differently. Pick the threat your table will meet, or type your own, before you generate.",
+      },
+      {
+        title: "Read Clan role and Primary territory together",
+        detail:
+          "In offline drafts, Clan role and Primary territory appear in the opening summary, which reads as a nomad clan (courier network) operating across arcology outskirts and perimeter roads. The territory also becomes the Territory line in the Clan Profile. AI drafts use these fields as input but may arrange them differently. Choose a territory the party can reach on the road.",
+      },
+      {
+        title: "Use Add campaign context for one named place",
+        detail:
+          "In offline drafts, text from Add campaign context appears under Who they are as Campaign context: followed by your text. AI drafts are asked to include campaign context, but its placement may vary. The rival faction name is generated separately in offline drafts, so rename it in the Rival Faction section if the table already knows that group.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-you-make-travel-interesting-in-a-tabletop-rpg",
+        label: "Turn road travel into real route choices",
+      },
+      {
+        href: "/answers/how-do-you-run-factions-in-a-sandbox-campaign",
+        label: "Advance the clan and its rivals between sessions",
+      },
+      {
+        href: "/answers/how-do-you-build-a-point-crawl-for-an-rpg",
+        label: "Map the clan's territory as a point crawl",
+      },
+    ],
+  },
   "vampire-clan": {
     summary:
       "Each result is a vampire clan with a public front, a feeding habit that shows where its members hunt, and a weakness you can turn into a plot point. The GM Reference block holds the clan's dark agenda, its internal conflict, a rival and an adventure hook.",

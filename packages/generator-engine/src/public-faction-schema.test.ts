@@ -336,6 +336,114 @@ describe("smart faction generation coherence", () => {
     }
   });
 
+  it("describes a local nomad clan's role in brackets, never as 'a <role> convoy'", () => {
+    const territory = nomadClanConfig.territories[0];
+    for (const role of nomadClanConfig.roles) {
+      const out = generateNomadClanLocal({ role, territory }, seededRng(3));
+      expect(out.summary).toBe(
+        `A nomad clan (${role.toLowerCase()}) operating across ${territory.toLowerCase()}.`,
+      );
+      expect(out.summary).not.toMatch(/convoy convoy/i);
+      expect(out.content).toContain(
+        `is a nomad clan (${role.toLowerCase()}) operating across`,
+      );
+    }
+  });
+
+  it("ends a fragment conflict as a sentence before the crisis copy, and does not double a stop it already has", () => {
+    const fragment = "Betrayal by a former ally who sold their route";
+    const fragmentOut = generateNomadClanLocal(
+      { conflict: fragment },
+      seededRng(5),
+    );
+    expect(fragmentOut.content).toContain(
+      `${fragment}. This is the crisis that cannot be deferred.`,
+    );
+    expect(fragmentOut.lore).toContain(`${fragment}. The clan is managing it`);
+
+    const punctuatedOut = generateNomadClanLocal(
+      { conflict: "The convoy is cut off." },
+      seededRng(5),
+    );
+    expect(punctuatedOut.content).toContain(
+      "The convoy is cut off. This is the crisis",
+    );
+    expect(punctuatedOut.content).not.toContain("off..");
+
+    const quotedOut = generateNomadClanLocal(
+      { conflict: "“The convoy is cut off.”" },
+      seededRng(5),
+    );
+    expect(quotedOut.content).toContain(
+      "“The convoy is cut off.” This is the crisis",
+    );
+    expect(quotedOut.content).not.toContain("off.”.");
+
+    const semicolonOut = generateNomadClanLocal(
+      { conflict: "Fuel depot has fallen;" },
+      seededRng(5),
+    );
+    expect(semicolonOut.content).toContain(
+      "Fuel depot has fallen. This is the crisis",
+    );
+    expect(semicolonOut.lore).toContain(
+      "Fuel depot has fallen. The clan is managing it",
+    );
+    expect(semicolonOut.content).not.toContain("fallen;.");
+    expect(semicolonOut.lore).not.toContain("fallen;.");
+
+    const quotedSemicolonOut = generateNomadClanLocal(
+      { conflict: "“Fuel depot has fallen;”" },
+      seededRng(5),
+    );
+    expect(quotedSemicolonOut.content).toContain(
+      "“Fuel depot has fallen.” This is the crisis",
+    );
+    expect(quotedSemicolonOut.lore).toContain(
+      "“Fuel depot has fallen.” The clan is managing it",
+    );
+  });
+
+  it("uses a generated conflict when the custom value contains only whitespace", () => {
+    const out = generateNomadClanLocal({ conflict: " \t " }, seededRng(5));
+    expect(out.content).not.toContain("\n. This is the crisis");
+    expect(out.content).toMatch(/### What threatens them\n\S/);
+    expect(out.lore).toMatch(/- \*\*Secret\*\*: \S/);
+  });
+
+  it("preserves campaign context punctuation and omits it when blank", () => {
+    const withContext = generateNomadClanLocal(
+      { campaignContext: "Neo Tokyo. " },
+      seededRng(9),
+    );
+    expect(withContext.content).toContain("Campaign context: Neo Tokyo.");
+
+    const abbreviation = generateNomadClanLocal(
+      { campaignContext: "the U.S." },
+      seededRng(9),
+    );
+    expect(abbreviation.content).toContain("Campaign context: the U.S.");
+
+    const blank = generateNomadClanLocal(
+      { campaignContext: "  " },
+      seededRng(9),
+    );
+    expect(blank.content).not.toContain("they are a known presence");
+  });
+
+  it("does not append a second full stop to a quoted custom conflict", () => {
+    const out = generateNomadClanLocal(
+      { conflict: '"The convoy is cut off."' },
+      seededRng(9),
+    );
+    expect(out.content).toContain(
+      '"The convoy is cut off." This is the crisis',
+    );
+    expect(out.content).not.toContain('"The convoy is cut off.". ');
+    expect(out.lore).toContain('"The convoy is cut off." The clan is managing');
+    expect(out.lore).not.toContain('"The convoy is cut off.". ');
+  });
+
   it("generates compatible local vampire clans across different seeds", () => {
     const rng = seededRng(42);
     for (let i = 0; i < 20; i++) {

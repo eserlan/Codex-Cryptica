@@ -343,8 +343,8 @@ export function resolveNomadClan(
   if (options.territory)
     locked.territory = { value: options.territory, source: "manual" };
   if (options.tone) locked.tone = { value: options.tone, source: "manual" };
-  if (options.conflict)
-    locked.conflict = { value: options.conflict, source: "manual" };
+  if (options.conflict?.trim())
+    locked.conflict = { value: options.conflict.trim(), source: "manual" };
 
   const { values, traits } = resolveSmart(
     nomadClanSchema,
@@ -430,6 +430,11 @@ export function parseNomadClanResponse(
   };
 }
 
+function asSentence(text: string): string {
+  const trimmed = text.trim().replace(/[;,]+(["'”’»)]*)$/, ".$1");
+  return /[.!?]["'”’»)]*$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
 export function generateNomadClanLocal(
   options: NomadClanGeneratorOptions = {},
   rng: Rng = defaultRng,
@@ -440,15 +445,23 @@ export function generateNomadClanLocal(
   const leader = generateName(rng);
   const mechanic = generateName(rng);
   const scout = generateName(rng);
+  // Roles are noun phrases with mixed plurals ("Family Convoy", "Tech
+  // Scavengers"), so they sit in brackets rather than behind "a".
+  const roleText = role.toLowerCase();
+  const territoryText = territory.toLowerCase();
+  // Conflict options are fragments; end them as sentences before the crisis
+  // copy continues. Keep campaign context intact as supplied by the GM.
+  const crisis = asSentence(conflict);
+  const contextText = campaignContext?.trim();
 
   const content = `### Who they are
-${name} is a ${role.toLowerCase()} operating across ${territory.toLowerCase()}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${campaignContext ? ` In ${campaignContext}, they are a known presence: respected by those who need them, watched by those who profit from stability.` : ""}
+${name} is a nomad clan (${roleText}) operating across ${territoryText}. Their tone is ${tone.toLowerCase()} — every decision is shaped by the road and the people who depend on the convoy.${contextText ? ` Campaign context: ${contextText}` : ""}
 
 ### How they survive
 ${goal} Their economy runs on what the roads provide — cargo runs, repairs, protection contracts, and trade at waystation markets. Nothing is wasted; everything has a price.
 
 ### What threatens them
-${conflict} This is the crisis that cannot be deferred. The clan must resolve it before it costs them a route, a vehicle, or a member.
+${crisis} This is the crisis that cannot be deferred. The clan must resolve it before it costs them a route, a vehicle, or a member.
 
 ### How to use them at the table
 ${name} works best as a faction the party keeps running into — on the road, at fuel stops, in waystation bars. They are reliable in a way most factions are not, but their code has limits and their patience for outsiders who cause problems is short.`;
@@ -466,7 +479,7 @@ ${name} works best as a faction the party keeps running into — on the road, at
 - **👤 ${scout}**: Point rider who has memorised three hundred kilometres of road and is running out of safe routes.
 
 ### Current Crisis
-${conflict} The clan is managing it — for now — but every day without a resolution narrows their options.
+${crisis} The clan is managing it — for now — but every day without a resolution narrows their options.
 
 ### Rival Faction
 - **👥 ${rival}**: Competing for the same routes, safe stops, or cargo contracts. The rivalry is old enough to have its own code of conduct — and new enough that someone recently broke it.`;
@@ -474,7 +487,7 @@ ${conflict} The clan is managing it — for now — but every day without a reso
   return {
     type: "faction",
     title: name,
-    summary: `A ${role.toLowerCase()} convoy operating across ${territory.toLowerCase()}.`,
+    summary: `A nomad clan (${roleText}) operating across ${territoryText}.`,
     content,
     lore,
     labels: ["rpg-faction", "nomad-clan", "imported-draft"],

@@ -700,7 +700,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I use it without an account?",
         answer:
-          "Yes. Generate and copy clan notes on this page without logging in. Save the draft directly into a browser-local Codex Cryptica vault — no sign-up required.",
+          "Yes. Generate and copy clan notes on this page without logging in. After you generate a result, Add to my Codex stages the draft in your browser's local storage and imports it as a Faction entity when you open Codex Cryptica.",
       },
       {
         question: "Which RPG systems does it work with?",
@@ -710,7 +710,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "Can I aim the clan at my current campaign?",
         answer:
-          "Yes. Add optional campaign context — a city, megacorp, rival clan, or active threat — and the generator will fit the clan to your table rather than producing a generic result.",
+          "With AI generation on, campaign context is used as input to tailor the clan, and the draft is asked to include it. Offline drafts display your context under Who they are, but do not use it to tailor the other generated details.",
       },
     ],
     relatedLinks: [
