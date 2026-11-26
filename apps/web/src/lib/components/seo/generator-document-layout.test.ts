@@ -590,4 +590,41 @@ describe("section uniqueness invariant (#2768)", () => {
     expect(layout.content).toContain("A line before any heading.");
     expect(layout.content).toContain("### The Score");
   });
+
+  it("moves table-card Knowledge & Secrets to GM Reference once and notes the sixth element", () => {
+    const secret =
+      "- **Knowledge & Secrets**: Knows the harbour cipher; conceals a stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Vaelgar",
+      summary: "A true neutral elf mage.",
+      status: "active",
+      labels: ["table-card", "mage", "rpg-character"],
+      content: [
+        "### The Six Elements",
+        "- **Immediate Want**: Needs moonstone dust.",
+        "- **Physical Mannerism**: Taps his staff twice.",
+        "- **Sharp Contradiction**: Cultivates fragile orchids despite a ruthless reputation.",
+        "- **Relationship Hook**: Owes the harbourmaster a favour.",
+        "- **Sensory Tag**: Smells of ozone and rain.",
+        secret,
+        "",
+        "### Table Delivery",
+        "Introduce him through his staff tap.",
+      ].join("\n"),
+      lore: [
+        "### At a Glance",
+        "- **Class / Archetype**: Wizard / Level 5",
+        "- **Table Rating**: CR 3",
+        secret,
+      ].join("\n"),
+    });
+
+    expect(layout.content).not.toContain("Knowledge & Secrets");
+    expect(layout.content).toContain(
+      "the sixth element (secrets) is in GM Reference for spoiler protection",
+    );
+    expect(layout.lore.match(/\*\*Knowledge & Secrets\*\*:/g)).toHaveLength(1);
+    expect(layout.lore).toContain("### GM-Only Secrets");
+  });
 });

@@ -65,18 +65,18 @@ export const LOCAL_LEVERAGE_PRICES = [
 ] as const;
 
 export const LOCAL_CONTRADICTIONS = [
-  "A ruthless mercenary captain who tenderly cultivates fragile glasshouse orchids.",
-  "An austere inquisitor who secretly swears like a sailor and drinks cheap grog.",
-  "A terrifying underworld fence who is visibly petrified of small dogs.",
-  "A burly town blacksmith who faints at the sight of open wounds or spilled blood.",
-  "A haughty elven scholar who is an avid, foul-mouthed regular at underground pit fights.",
-  "A greedy moneylender who secretly pays the apothecary bills for local orphans.",
-  "A reclusive hedge wizard who gets painfully lonely and overshares personal gossip with patrons.",
-  "A grim cemetery keeper who secretly writes cheerful, light-hearted romantic poetry.",
-  "A paranoid smuggler who refuses to tell even harmless lies about mundane everyday trivialities.",
-  "A veteran city watch sergeant who carries a pouch of dried breadcrumbs to feed stray pigeons.",
-  "An aristocratic magistrate who spends free weekends disguised as a common labourer digging trenches.",
-  "A zealous temple priest who harbors a compulsive, secret addiction to sugar confectionery.",
+  "Tenderly cultivates fragile glasshouse orchids despite a ruthless reputation.",
+  "Maintains an austere public bearing while swearing like a sailor and drinking cheap grog in private.",
+  "Projects an intimidating presence, yet is visibly petrified of small dogs.",
+  "Has a steady hand in a crisis, yet faints at the sight of open wounds or spilled blood.",
+  "Keeps a haughty, fastidious demeanour by day and frequents raucous underground pit fights by night.",
+  "Drives hard bargains on every copper, yet secretly pays the apothecary bills for local orphans.",
+  "Puts on a reclusive, aloof front, yet gets painfully lonely and overshares gossip with anyone who listens.",
+  "Carries a grim, humourless reputation while secretly writing cheerful romantic poetry.",
+  "Operates in shady circles, yet refuses to tell even harmless white lies about mundane matters.",
+  "Keeps a stern, by-the-book posture while carrying a pouch of breadcrumbs to feed stray pigeons.",
+  "Moves comfortably in high-status circles, yet spends free days disguised as a common labourer digging trenches.",
+  "Preaches strict self-denial while nursing a compulsive, poorly hidden sweet tooth for candied figs.",
 ] as const;
 
 export const LOCAL_SENSORY_TAGS = [
