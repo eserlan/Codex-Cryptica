@@ -211,4 +211,27 @@ describe("generator guide distinctness", () => {
     }
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
+
+  it("serves the nation guide with tips that name its form labels", () => {
+    const guide = getGeneratorGuide("nation", "Nation Generator");
+    expect(guide).toBe(SLUG_GUIDES.nation);
+    expect(guide.summary).not.toContain("Nation Generator");
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    expect(guide.summary).toContain("two or three power blocs");
+    expect(tipText).toContain("In offline drafts");
+    expect(tipText).toContain(
+      "AI results may structure those seeds differently",
+    );
+    for (const label of ["Conflict level", "Scale", "Power Blocs"]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
+  it("does not serve the template to the nation page", () => {
+    expect(getGeneratorGuide("nation", "Nation Generator").summary).not.toBe(
+      defaultGuideForSlug("nation" as never, "Nation Generator").summary,
+    );
+  });
 });
