@@ -112,6 +112,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "dungeon-generator": {
+      headline: "Turn this delve into a playable site",
+      summary:
+        "Stage this dungeon for your local Codex vault as a Location entry, ready to open in the interactive Delve Canvas and room-by-room GM Dossier.",
+      capabilities: [
+        "Keep sector lore and faction standoff separate from GM-only traps, treasures, and the central secret",
+        "Open the delve in the interactive Delve Canvas to rearrange rooms, loops, and hidden shortcuts",
+        "Link the site to nearby settlements, patrons, and campaign notes inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     "adventure-idea-generator": {
       headline: "Turn this scenario into an active thread",
       summary:

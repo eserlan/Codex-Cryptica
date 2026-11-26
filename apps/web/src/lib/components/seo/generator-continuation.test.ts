@@ -58,6 +58,12 @@ describe("generator-continuation", () => {
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
 
+    const dungeon = getGeneratorContinuationConfig("dungeon-generator");
+    expect(dungeon).toMatchObject({
+      headline: "Turn this delve into a playable site",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
     const adventureIdea = getGeneratorContinuationConfig(
       "adventure-idea-generator",
     );
