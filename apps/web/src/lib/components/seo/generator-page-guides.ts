@@ -7,6 +7,27 @@ export interface GeneratorGuide {
 }
 
 export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
+  nation: {
+    summary:
+      "Generate a named state with a leader, two or three power blocs, a centre of power and one hidden problem, then use it as the political backdrop for a campaign.",
+    tips: [
+      {
+        title: "Set conflict level and scale first",
+        detail:
+          "Conflict level changes the Society & Tensions section, from a state at peace to one in total war, so set it before anything else. Scale sets the size of the state, from a single city-state to a continent-spanning dominion.",
+      },
+      {
+        title: "Use the hidden problem as the first hook",
+        detail:
+          "In offline drafts, the Hidden Problem in At a Glance is repeated as a Crisis entry in Entity Seeds. AI results may structure those seeds differently. Let the party uncover the problem through the state's officials or dissidents, or replace it if the campaign already has a secret.",
+      },
+      {
+        title: "Meet the factions behind the state",
+        detail:
+          "Power Blocs shows which factions compete for influence. Entity Seeds suggests Codex entries that can become people, groups, or places for the party to encounter from the first session.",
+      },
+    ],
+  },
   "star-system": {
     summary:
       "Treat a star system as a playable region map rather than an astronomy textbook: every orbit should exist because a faction, resource, or travel hazard gives the crew a reason to go there.",
