@@ -49,6 +49,26 @@ describe("generateNamesLocal", () => {
     expect(first.labels).toContain("name-generator");
   });
 
+  it("uses correct articles in the usage note", () => {
+    const orcish = generateNamesLocal({ culture: "Orcish" }, seededRng(4));
+    const highElf = generateNamesLocal({ culture: "High Elf" }, seededRng(4));
+
+    expect(orcish.lore).toContain("in an orcish-influenced setting");
+    expect(highElf.lore).toContain("in a high elf-influenced setting");
+    expect(orcish.lore).not.toMatch(/\ba orcish\b/);
+  });
+
+  it("does not claim a gender register filter for 'Any'", () => {
+    const output = generateNamesLocal(
+      { culture: "Dwarven", gender: "Any" },
+      seededRng(4),
+    );
+
+    expect(output.content).not.toMatch(/register/i);
+    expect(output.content).not.toMatch(/\ba any\b/i);
+    expect(output.lore).toContain("**Gender / Presentation**: Any");
+  });
+
   it("supports Pirate culture and style alternatives", () => {
     const pirateStyles = nameGeneratorConfig.culturesByTheme.Pirate;
 

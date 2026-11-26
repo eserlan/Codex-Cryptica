@@ -478,6 +478,33 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "fantasy-names": {
+    summary:
+      "Each batch gives ten names of one type (person, place, faction or item) in the culture you pick, and each name comes with a short note on its style. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+    tips: [
+      {
+        title: "Choose the culture for the sound",
+        detail:
+          "Culture / Style sets the sound of the whole batch. Dwarven gives stone and forge compounds such as Balrin Granitefist, while Norse / Viking gives person names ending in -son or -dottir. Name Type then changes the shape, so a Place adds endings such as Keep, Downs or Hollow, and a Faction often starts with The or uses of the.",
+      },
+      {
+        title: "Set Gender / Presentation only for Norse and Celtic people",
+        detail:
+          "On the offline roll, Gender / Presentation changes person names only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). Other cultures return the same names whatever you choose, so Any is fine for them.",
+      },
+      {
+        title: "Add campaign context when AI is on",
+        detail:
+          "Add campaign context is sent to the AI path, which can tie names to the setting you describe, such as an Assyrian trading port. The offline roll does not read it, so the same batch comes back whatever you type there.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-improvise-npcs-in-dnd",
+        label: "Improvising NPCs in D&D",
+      },
+    ],
+  },
   "minor-magic-item": {
     summary:
       "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
