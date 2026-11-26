@@ -920,6 +920,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "ship-generator": {
+    summary:
+      "Build a vessel that acts as a mobile location, a factional pressure cooker and an adventure hook in one draft, then put its crew, key zones and hidden trouble straight onto the table.",
+    tips: [
+      {
+        title: "Match hull, crew and decay to the arc",
+        detail:
+          "Choose Genre, Ship Role and Scale to set how many hands run the decks, then use Condition and Tone to signal whether the vessel is a proud flagship or a patched wreck one bad jump from failure.",
+      },
+      {
+        title: "Run the officer roster as competing loyalties",
+        detail:
+          "Treat the named captain, three officers and crew culture as live scene partners: pick one officer's secret agenda to clash with the captain's orders before the party even reaches the cargo hold.",
+      },
+      {
+        title: "Aim the complication at an active thread",
+        detail:
+          "Use Campaign context (optional) to name a port, syndicate or debt so the Complication, Secret and three Adventure Hooks pull the party toward people and places they already care about.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/what-kind-of-ship-should-a-sci-fi-rpg-party-start-with",
+        label: "Giving a party ship useful flaws and debts",
+      },
+      {
+        href: "/answers/how-do-i-run-ship-to-ship-combat-without-sidelining-the-party",
+        label: "Running ship-to-ship combat for the whole party",
+      },
+      {
+        href: "/answers/how-do-i-make-a-player-base-matter-in-an-rpg-campaign",
+        label: "Making a ship matter as a player base",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

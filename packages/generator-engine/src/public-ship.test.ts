@@ -126,6 +126,20 @@ describe("generateShipLocal", () => {
     // At minimum title or summary should differ
     expect(a.title !== b.title || a.summary !== b.summary).toBe(true);
   });
+
+  it("avoids double 'The The', mid-word hook truncation, and sci-fi bleed in Dark Fantasy", () => {
+    for (let seed = 1; seed <= 25; seed += 1) {
+      const result = generateShipLocal(
+        { genre: "Dark Fantasy" },
+        seededRng(seed),
+      );
+      expect(result.content).not.toContain("The The ");
+      expect(result.content).not.toContain("commands a ");
+      expect(result.content).not.toContain("keeps the drive alive");
+      expect(result.lore).not.toContain("Airlock");
+      expect(result.lore).not.toContain("…");
+    }
+  });
 });
 
 describe("buildShipPrompt", () => {

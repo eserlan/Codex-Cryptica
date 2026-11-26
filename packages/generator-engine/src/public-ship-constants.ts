@@ -883,6 +883,44 @@ export const shipConfig = {
     ],
   } as Record<string, string[]>,
 
+  zonesByGenre: {
+    Fantasy: [
+      "Main Deck",
+      "Cargo Hold",
+      "Captain's Cabin",
+      "Quarterdeck",
+      "Crew Berths",
+    ],
+    "Pirate / Age of Sail": [
+      "Quarterdeck",
+      "Gun Deck",
+      "Cargo Hold",
+      "Captain's Cabin",
+      "Crow's Nest",
+    ],
+    "Dark Fantasy": [
+      "Main Deck",
+      "Bilge",
+      "Cargo Hold",
+      "Captain's Cabin",
+      "Crew Berths",
+    ],
+    Steampunk: [
+      "Gondola Bridge",
+      "Engine Deck",
+      "Boiler Room",
+      "Cargo Hold",
+      "Crew Quarters",
+    ],
+    "Western (River & Rail)": [
+      "Wheelhouse",
+      "Boiler Deck",
+      "Saloon",
+      "Freight Hold",
+      "Passenger Cabins",
+    ],
+  } as Record<string, string[]>,
+
   affiliationsByGenre: {
     "Sci-Fi": [
       "Independent operator",

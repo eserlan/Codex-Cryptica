@@ -5,6 +5,11 @@ interface LayoutRule {
   // Lore sections that stay in the right rail; everything else moves into the
   // main document.
   railSections: Set<string>;
+  // Generators with GM reference lore fail closed when the model varies a
+  // heading: unrecognised sections stay private in the right rail.
+  unrecognizedLoreToRail?: boolean;
+  // Sections intentionally exposed as narrative despite not being in the rail.
+  documentSections?: Set<string>;
   // Bullets inside rail sections whose `- **Label**:` matches are lifted out
   // of the rail and grouped under `heading` in the main document. Use this for
   // verbose, story-bearing bullets (secrets, hooks) embedded in stat blocks.
@@ -141,6 +146,17 @@ const LAYOUT_RULES: LayoutRule[] = [
       labels: new Set(["Immediate Hook"]),
       heading: "Secrets & Hooks",
     },
+  },
+  {
+    label: "rpg-ship",
+    unrecognizedLoreToRail: true,
+    documentSections: new Set(["Captain, Officers & Crew", "Key Zones"]),
+    railSections: new Set([
+      "Ship Profile",
+      "Complication",
+      "Secret",
+      "Adventure Hooks",
+    ]),
   },
   {
     label: "rpg-location",
@@ -450,7 +466,11 @@ export function getGeneratorDocumentLayout(
   const liftedBullets: string[] = [];
 
   for (const section of loreSections) {
-    if (!rule.railSections.has(section.heading)) {
+    if (
+      !rule.railSections.has(section.heading) &&
+      (!rule.unrecognizedLoreToRail ||
+        rule.documentSections?.has(section.heading))
+    ) {
       mainDocumentSections.push(section.body);
       continue;
     }

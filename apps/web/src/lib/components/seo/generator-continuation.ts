@@ -88,6 +88,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "ship-generator": {
+      headline: "Dock this vessel in your campaign",
+      summary:
+        "Stage this ship for your local Codex vault so its hull profile, officer roster, and GM-only secrets stay separate and ready for play.",
+      capabilities: [
+        "Keep public vessel details and key zones separate from GM-only complications and secrets",
+        "Connect the ship to captains, factions, ports, and star systems inside your vault",
+        "Track hull condition, shifting alliances, and hooks across sessions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

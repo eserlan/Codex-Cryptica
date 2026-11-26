@@ -1026,7 +1026,7 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       {
         question: "What genres does the ship generator support?",
         answer:
-          "Sci-Fi, Space Opera, Cyberpunk, Optimistic Exploration Sci-Fi, Space Opera Resistance, Lancer, Post-Apocalyptic, Fantasy, Pirate / Age of Sail, Steampunk, Dark Fantasy, and Western (River & Rail). Each genre has its own roles, names, crew types, and complications.",
+          "Sci-Fi, Space Opera, Cyberpunk, Optimistic Exploration Sci-Fi, Space Opera Resistance, Lancer, Post-Apocalyptic, Fantasy, Pirate / Age of Sail, Steampunk, Dark Fantasy, Western (River & Rail), and Space Western. Each genre has its own roles, names, crew types, and complications.",
       },
       {
         question: "Can I use it for D&D or fantasy RPGs?",
