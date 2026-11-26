@@ -451,6 +451,33 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "dark-fantasy-faction": {
+    summary:
+      "Each result is a named dark fantasy faction shaped by the mode, type, scope and moral posture you pick. You get what it wants, what is tearing it apart, named NPCs, a rival and a hook. Use it when the table needs a power whose cruelty or compromise still makes sense from the inside, such as a plague cult or a corpse guild.",
+    tips: [
+      {
+        title: "Let the mode set the pressure",
+        detail:
+          "Dark fantasy mode is the disaster the faction is built on. The draft says they stand on it in What they control and names it as the place they operate through in the summary, so pick the mode that matches your campaign's crisis.",
+      },
+      {
+        title: "Match the moral posture to the danger",
+        detail:
+          "Moral posture drives the Why they are dangerous section. Openly cruel shows a faction that no longer hides its methods, while Fallen idealists describes a group that once meant well, which gives the party someone to negotiate with.",
+      },
+      {
+        title: "Use the scope and campaign context for place",
+        detail:
+          "Operating scope sets the area named in What they control, so a single plague-stricken village and an entire doomed barony put very different pressure on the party. In the offline draft, anything typed into Add campaign context is added to the end of How to use them at the table as Campaign context.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-run-political-intrigue-and-faction-play",
+        label: "Running faction play",
+      },
+    ],
+  },
   "minor-magic-item": {
     summary:
       "Each result gives you a small item with a description, a quick reference, an effect, a quirk and a suggested use. The usage limit and the way the item is activated decide how it plays, so settle those before you read the effect.",
