@@ -511,7 +511,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   "fantasy-names": {
     summary:
-      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. Each name comes with a short note on its style. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
+      "Each batch gives ten names of one type (person, place, faction or item). Built-in cultures shape offline names; custom culture labels use generic fantasy tables. AI results include a short style note for each name; offline results list names only. Use it to fill a cast list, a set of map labels or a shop board, then keep the names that suit your table and adapt the rest.",
     tips: [
       {
         title: "Choose the culture for the sound",
@@ -519,9 +519,10 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
           "Built-in Culture / Style options shape the sound of the whole batch. Dwarven gives stone and forge compounds such as Balrin Granitefist, while Norse / Viking gives person names ending in -son or -dottir. A custom culture or style label uses generic fantasy tables on the offline roll. Name Type changes the shape, so a Place adds endings such as Keep, Downs or Hollow, and a Faction often starts with The or uses of the.",
       },
       {
-        title: "Set Gender / Presentation only for Norse and Celtic people",
+        title:
+          "Set Gender / Presentation for full Norse and Celtic person names",
         detail:
-          "On the offline roll, Gender / Presentation changes person names only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). Other cultures return the same names whatever you choose, so Any is fine for them.",
+          "On offline full person names, Gender / Presentation changes the surname only in Norse / Viking (-dottir for Feminine, -son for Masculine) and Celtic / Gaelic (Nic or Mac before the surname). It has no effect on first-name-only rolls or names in other cultures, so Any is fine for those.",
       },
       {
         title: "Add campaign context when AI is on",

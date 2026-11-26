@@ -151,6 +151,27 @@ describe("generator guide distinctness", () => {
     );
   });
 
+  it("distinguishes AI style notes from the offline name list", () => {
+    const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
+
+    expect(guide.summary).toContain(
+      "AI results include a short style note for each name; offline results list names only",
+    );
+  });
+
+  it("limits offline gender guidance to surnames on full Norse and Celtic names", () => {
+    const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
+    const genderTip = guide.tips.find((tip) =>
+      tip.title.includes("Gender / Presentation"),
+    );
+
+    expect(genderTip?.detail).toContain("full person names");
+    expect(genderTip?.detail).toContain("changes the surname only");
+    expect(genderTip?.detail).toContain(
+      "no effect on first-name-only rolls or names in other cultures",
+    );
+  });
+
   it("serves the vampire clan guide with tips that name its form labels and output lines", () => {
     const guide = getGeneratorGuide("vampire-clan", "Vampire Clan Generator");
     expect(guide).toBe(SLUG_GUIDES["vampire-clan"]);
