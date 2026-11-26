@@ -815,6 +815,37 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "dnd-npc": {
+    summary:
+      "Build a fantasy NPC with a quick Class / Archetype and Table Rating benchmark, faction tie, and either a six-element Table Card for immediate dialogue or a Full Dossier for recurring campaign play.",
+    tips: [
+      {
+        title: "Match Prep style to the scene",
+        detail:
+          "Leave Prep style on Table Card (6-Element 60-Second Prep) when you need an Immediate Want, Sharp Contradiction, Sensory Tag, and Table Delivery on the spot. Switch to Full Dossier (Detailed Background) for recurring contacts who need Faction Stance & Biases, Leverage & Price, and a deeper Secret.",
+      },
+      {
+        title: "Use role and morality to set stakes",
+        detail:
+          "Choose their role sets the Class / Archetype and Table Rating at the top of At a Glance, from CR 1/2 merchants to CR 3 mages and priests, or Level 3 and CR 1 for custom entries. Pair that with Choose their ancestry and Choose their morality to anchor how they negotiate or push back.",
+      },
+      {
+        title: "Name a dungeon in campaign context",
+        detail:
+          "Adding a dungeon or delve to Add campaign context unlocks lair-specific fields, including Delve Sector / Lair, Tie to Central Secret, and a three-stage Alert & Lair Response. Otherwise, name a local guild, town, or rival so Faction Connection and hooks land in your active arc.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-do-i-improvise-npcs-in-dnd",
+        label: "Improvising NPCs in D&D",
+      },
+      {
+        href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
+        label: "Memorable NPCs without heavy prep",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(

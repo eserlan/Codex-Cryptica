@@ -2,6 +2,54 @@ import { describe, expect, it } from "vitest";
 import { getGeneratorDocumentLayout } from "./generator-document-layout";
 
 describe("getGeneratorDocumentLayout", () => {
+  it("keeps Table Card knowledge and secrets out of player-visible content", () => {
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Elowen Ashford",
+      content: `### The Six Elements\n- **Immediate Want**: Retrieve a sealed ledger.\n- **Knowledge & Secrets**: ${secret}\n\n### Table Delivery\nIntroduce her through her mannerism.`,
+      lore: `### At a Glance\n- **Role**: Rogue\n- **Knowledge & Secrets**: ${secret}`,
+      labels: ["table-card", "npc-generator", "rpg-character"],
+      status: "active",
+    });
+
+    expect(layout.content).not.toContain(secret);
+    expect(layout.content).not.toContain("Knowledge & Secrets");
+    expect(layout.lore).toContain(secret);
+  });
+
+  it("retains Table Card secrets in lore when they are absent from the source lore", () => {
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Elowen Ashford",
+      content: `### The Six Elements\n- **Knowledge & Secrets**: ${secret}`,
+      lore: "### At a Glance\n- **Role**: Rogue",
+      labels: ["table-card", "npc-generator", "rpg-character"],
+      status: "active",
+    });
+
+    expect(layout.content).not.toContain(secret);
+    expect(layout.lore).toContain("### GM-Only Secrets");
+    expect(layout.lore).toContain(secret);
+  });
+
+  it("keeps Table Card secrets private when lore uses an unexpected heading", () => {
+    const secret = "The ledger is a forgery; she conceals the stolen signet.";
+    const layout = getGeneratorDocumentLayout({
+      type: "character",
+      title: "Elowen Ashford",
+      content: "### The Six Elements\n- **Immediate Want**: Retrieve a ledger.",
+      lore: `### Unexpected AI Heading\n- **Knowledge & Secrets**: ${secret}`,
+      labels: ["table-card", "npc-generator", "rpg-character"],
+      status: "active",
+    });
+
+    expect(layout.content).not.toContain(secret);
+    expect(layout.lore).toContain(secret);
+    expect(layout.lore).toContain("### GM-Only Secrets");
+  });
+
   it("splits world narrative from GM reference without duplicating either column", () => {
     const layout = getGeneratorDocumentLayout({
       type: "location",
