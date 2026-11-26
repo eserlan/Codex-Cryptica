@@ -136,6 +136,18 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("qualifies custom culture behavior for the offline fantasy name roll", () => {
+    const guide = getGeneratorGuide("fantasy-names", "Fantasy Names");
+    const cultureTip = guide.tips.find((tip) =>
+      tip.title.includes("culture for the sound"),
+    );
+
+    expect(cultureTip?.detail).toContain("Built-in Culture / Style options");
+    expect(cultureTip?.detail).toContain(
+      "custom culture or style label uses generic fantasy tables on the offline roll",
+    );
+  });
+
   it("serves the vampire clan guide with tips that name its form labels and output lines", () => {
     const guide = getGeneratorGuide("vampire-clan", "Vampire Clan Generator");
     expect(guide).toBe(SLUG_GUIDES["vampire-clan"]);

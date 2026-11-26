@@ -49,13 +49,27 @@ describe("generateNamesLocal", () => {
     expect(first.labels).toContain("name-generator");
   });
 
-  it("uses correct articles in the usage note", () => {
+  it("describes built-in cultures without article errors", () => {
     const orcish = generateNamesLocal({ culture: "Orcish" }, seededRng(4));
     const highElf = generateNamesLocal({ culture: "High Elf" }, seededRng(4));
 
-    expect(orcish.lore).toContain("in an orcish-influenced setting");
-    expect(highElf.lore).toContain("in a high elf-influenced setting");
-    expect(orcish.lore).not.toMatch(/\ba orcish\b/);
+    expect(orcish.lore).toContain(
+      "in a setting shaped by the orcish naming style",
+    );
+    expect(highElf.lore).toContain(
+      "in a setting shaped by the high elf naming style",
+    );
+  });
+
+  it("uses free-form culture labels without article agreement", () => {
+    const ukrainian = generateNamesLocal(
+      { culture: "Ukrainian" },
+      seededRng(4),
+    );
+
+    expect(ukrainian.lore).toContain(
+      "in a setting shaped by the ukrainian naming style",
+    );
   });
 
   it("does not claim a gender register filter for 'Any'", () => {

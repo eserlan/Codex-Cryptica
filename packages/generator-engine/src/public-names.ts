@@ -5,12 +5,7 @@ import { withPublicCreativeCue } from "./public-creative-diversity";
 
 import type { PublicGeneratorOutput } from "./public-generator-types";
 import { NAME_BAN_PROMPT } from "./public-npc";
-import {
-  type Rng,
-  defaultRng,
-  indefiniteArticle,
-  pickFrom,
-} from "./random-utils";
+import { type Rng, defaultRng, pickFrom } from "./random-utils";
 import { parseFencedJson } from "./llm-response-utils";
 import { nameGeneratorConfig } from "./public-names-constants";
 import { type NameParts, patternedName } from "./public-names-patterns";
@@ -207,7 +202,7 @@ export function generateNamesLocal(
 - **Name Type**: ${resolved.nameType}
 
 ### Usage Suggestions
-Use these names for any ${resolved.nameType.toLowerCase()} in ${indefiniteArticle(resolved.culture)} ${resolved.culture.toLowerCase()}-influenced setting. Combine or modify them freely — drop a syllable, add a prefix, or append a title or epithet for variation.`;
+Use these names for any ${resolved.nameType.toLowerCase()} in a setting shaped by the ${resolved.culture.toLowerCase()} naming style. Combine or modify them freely — drop a syllable, add a prefix, or append a title or epithet for variation.`;
 
   return {
     type: resolved.entityType,
