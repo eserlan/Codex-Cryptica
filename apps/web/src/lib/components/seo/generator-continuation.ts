@@ -172,6 +172,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "council-vote": {
+      headline: "Bring this vote to your table",
+      summary:
+        "Save this council vote as an Event entry in your local Codex vault so the proposal, deadline, and each voter's agenda stay connected to your campaign.",
+      capabilities: [
+        "Store the proposal, deadline, and voting rule in one Event entry",
+        "Keep each councillor's stance, persuasion route, and antagonist influence as GM-only lore",
+        "Link the councillors to their NPC and faction entries inside your vault",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
   };
 
 /**

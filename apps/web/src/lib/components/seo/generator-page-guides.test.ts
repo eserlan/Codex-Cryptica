@@ -637,6 +637,26 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the council vote guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide("council-vote", "Council Vote Generator");
+    expect(guide).toBe(SLUG_GUIDES["council-vote"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("council-vote", "Council Vote Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Council Size",
+      "Voting Rule",
+      "Antagonist Influence",
+      "Deadline",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("falls back to the default template for slugs without a specific guide", () => {
     const fallbackSlug = "nonexistent-slug" as never;
     expect(getGeneratorGuide(fallbackSlug, "Custom Generator")).toEqual(

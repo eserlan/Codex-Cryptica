@@ -116,7 +116,7 @@ function resolveCouncilVote(
   const deadline = options.deadline?.trim() || "before the week is out";
   const proposal =
     options.proposal?.trim() ||
-    "a contested proposal that will reshape the region";
+    "A contested proposal that will reshape the region";
   const scope = options.scope || pickFrom(councilVoteConfig.scopes, rng);
   const tone = options.tone || pickFrom(councilVoteConfig.tones, rng);
   const antagonistInfluence =
@@ -1112,7 +1112,7 @@ ${
 }
 
 ### Investigation Leads
-Each councillor's public reputation hides a private agenda; asking around the ${resolved.governingBodyType.toLowerCase()}'s usual haunts is the fastest way to learn who can be swayed and how.
+Each councillor's public reputation hides a private agenda; asking around the usual haunts of the ${resolved.governingBodyType.toLowerCase()} is the fastest way to learn who can be swayed and how.
 
 ### Possible Paths
 At least two coalitions of votes can carry the proposal — persuasion and evidence for the cautious, leverage and favours for the desperate. The costly best solution: win every seat outright, but only by spending every favour and secret in hand — the vote passes clean, and the party leaves owing debts, and making enemies, they cannot yet see the price of.

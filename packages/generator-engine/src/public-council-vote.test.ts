@@ -1132,4 +1132,19 @@ describe("extractCouncilVoteNames", () => {
     };
     expect(extractCouncilVoteNames(output)).toEqual([]);
   });
+
+  it("capitalises the default proposal and avoids a possessive on a multi-word governing body", () => {
+    const output = generateCouncilVoteLocal(
+      { governingBodyType: "Council of Elders" },
+      () => 0,
+    );
+
+    expect(output.content).toContain(
+      "### The Proposal\nA contested proposal that will reshape the region",
+    );
+    expect(output.lore).toContain(
+      "asking around the usual haunts of the council of elders is",
+    );
+    expect(output.lore).not.toContain("elders's");
+  });
 });
