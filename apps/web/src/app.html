@@ -96,10 +96,64 @@
         this.rel = 'stylesheet';
       "
     />
-    <!-- Theme fonts: deferred until idle so they never block FCP/LCP -->
+    <!-- Theme fonts: deferred until idle and skipped on default workspace theme -->
     <script>
       (function () {
+        var themeFontsLoaded = false;
+        var themeObserver = null;
+        var nonWorkspaceThemeSelector =
+          "[data-world-theme]:not([data-world-theme='workspace'])";
+
+        function hasNonWorkspaceTheme() {
+          return Boolean(document.querySelector(nonWorkspaceThemeSelector));
+        }
+
+        function containsNonWorkspaceTheme(node) {
+          if (node.nodeType !== 1) return false;
+          return (
+            node.matches(nonWorkspaceThemeSelector) ||
+            Boolean(node.querySelector(nonWorkspaceThemeSelector))
+          );
+        }
+
+        function onThemeMutation(records) {
+          for (var i = 0; i < records.length; i++) {
+            var record = records[i];
+            if (
+              record.type === "attributes" &&
+              record.target.matches(nonWorkspaceThemeSelector)
+            ) {
+              loadThemeFonts();
+              return;
+            }
+            for (var j = 0; j < record.addedNodes.length; j++) {
+              if (containsNonWorkspaceTheme(record.addedNodes[j])) {
+                loadThemeFonts();
+                return;
+              }
+            }
+          }
+        }
+
         function loadThemeFonts() {
+          if (themeFontsLoaded) return;
+          var activeTheme = (
+            localStorage.getItem("codex-cryptica-active-theme") || "workspace"
+          ).replace(/_(light|dark)$/, "");
+          if (activeTheme === "workspace" && !hasNonWorkspaceTheme()) {
+            if (!themeObserver && "MutationObserver" in window) {
+              themeObserver = new MutationObserver(onThemeMutation);
+              themeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-world-theme"],
+                childList: true,
+                subtree: true,
+              });
+            }
+            return;
+          }
+          themeFontsLoaded = true;
+          if (themeObserver) themeObserver.disconnect();
           var l = document.createElement("link");
           l.rel = "stylesheet";
           l.href =
@@ -119,7 +173,6 @@
         href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&family=Alegreya:ital,wght@0,400;0,700;1,400;1,700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Fira+Code:wght@300;500;700&family=Orbitron:wght@400;700&family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Spectral:ital,wght@0,400;0,700;1,400&family=Bangers&family=Comic+Neue:ital,wght@0,300;0,400;0,700;1,400&display=optional"
       />
     </noscript>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <link rel="icon" href="%sveltekit.assets%/favicon.png" />
     <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
     <link rel="llms" href="%sveltekit.assets%/llms.txt" />

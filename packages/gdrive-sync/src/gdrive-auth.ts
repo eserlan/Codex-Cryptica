@@ -16,6 +16,67 @@ async function waitUntil(
   return true;
 }
 
+const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
+let gisLoadPromise: Promise<boolean> | null = null;
+
+function isGisReady(): boolean {
+  return typeof google !== "undefined" && !!google.accounts?.oauth2;
+}
+
+async function ensureGisLoaded(timeoutMs = 5000): Promise<boolean> {
+  if (isGisReady()) return true;
+  if (typeof document === "undefined" || !document.head) {
+    return waitUntil(isGisReady, { intervalMs: 100, timeoutMs });
+  }
+  if (gisLoadPromise) return gisLoadPromise;
+
+  gisLoadPromise = new Promise<boolean>((resolve) => {
+    const existing = document.head.querySelector(
+      `script[src="${GIS_SCRIPT_URL}"]`,
+    ) as HTMLScriptElement | null;
+    if (existing) {
+      void waitUntil(isGisReady, { intervalMs: 100, timeoutMs }).then(resolve);
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = GIS_SCRIPT_URL;
+    script.async = true;
+    script.defer = true;
+
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      script.removeEventListener("load", onLoad);
+      script.removeEventListener("error", onError);
+      if (!ok) script.remove();
+      resolve(ok);
+    };
+
+    const onLoad = () => {
+      if (isGisReady()) {
+        finish(true);
+      } else {
+        void waitUntil(isGisReady, { intervalMs: 50, timeoutMs: 1000 }).then(
+          finish,
+        );
+      }
+    };
+    const onError = () => finish(false);
+    const timer = setTimeout(() => finish(isGisReady()), timeoutMs);
+
+    script.addEventListener("load", onLoad);
+    script.addEventListener("error", onError);
+    document.head.appendChild(script);
+  }).finally(() => {
+    gisLoadPromise = null;
+  });
+
+  return gisLoadPromise;
+}
+
 const browser = typeof window !== "undefined";
 
 /**
@@ -64,11 +125,8 @@ export class GDriveAuthService implements IGDriveAuthService {
     if (pending) return pending;
 
     const promise = (async () => {
-      // Wait for google library to load if needed (max 5s)
-      const loaded = await waitUntil(
-        () => typeof google !== "undefined" && !!google.accounts?.oauth2,
-        { intervalMs: 100, timeoutMs: 5000 },
-      );
+      // Lazy-load Google Identity Services only when Drive auth is used (max 5s)
+      const loaded = await ensureGisLoaded(5000);
 
       if (!loaded) {
         throw new Error(

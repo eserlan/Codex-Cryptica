@@ -196,4 +196,123 @@ describe("GDriveAuthService", () => {
     await tokenPromise2;
     expect(mockTokenClient.requestAccessToken).toHaveBeenCalledTimes(2);
   });
+
+  it("lazy-loads the GIS script when google.accounts is not yet present", async () => {
+    delete (globalThis as any).google;
+    if (typeof window !== "undefined") {
+      delete (window as any).google;
+    }
+
+    const listeners = new Map<string, Set<() => void>>();
+    let appendedScript: any = null;
+    const fakeHead = {
+      querySelector: vi.fn(() => appendedScript),
+      appendChild: vi.fn((el: any) => {
+        appendedScript = el;
+        return el;
+      }),
+    };
+    vi.stubGlobal("document", {
+      head: fakeHead,
+      createElement: vi.fn(() => ({
+        src: "",
+        async: false,
+        defer: false,
+        addEventListener: vi.fn((ev: string, cb: () => void) => {
+          if (!listeners.has(ev)) listeners.set(ev, new Set());
+          listeners.get(ev)!.add(cb);
+        }),
+        removeEventListener: vi.fn((ev: string, cb: () => void) => {
+          listeners.get(ev)?.delete(cb);
+        }),
+        remove: vi.fn(() => {
+          appendedScript = null;
+        }),
+      })),
+    });
+
+    try {
+      const freshService = new GDriveAuthService();
+      const tokenPromise = freshService.getAccessToken();
+
+      await vi.waitFor(() => expect(appendedScript).not.toBeNull());
+      expect(appendedScript.src).toBe("https://accounts.google.com/gsi/client");
+
+      (globalThis as any).google = {
+        accounts: {
+          oauth2: {
+            initTokenClient: vi.fn().mockImplementation(({ callback }) => {
+              (globalThis as any)._gisCallback = callback;
+              return { requestAccessToken: vi.fn() };
+            }),
+            revoke: vi.fn(),
+          },
+        },
+      };
+      listeners.get("load")?.forEach((cb) => cb());
+
+      await vi.waitFor(() =>
+        expect((freshService as any).resolvers.length).toBe(1),
+      );
+      (globalThis as any)._gisCallback({
+        access_token: "lazy-token",
+        expires_in: "3600",
+      });
+
+      await expect(tokenPromise).resolves.toBe("lazy-token");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("rejects and removes the GIS script if lazy-loading fails", async () => {
+    delete (globalThis as any).google;
+    if (typeof window !== "undefined") {
+      delete (window as any).google;
+    }
+
+    const listeners = new Map<string, Set<() => void>>();
+    let appendedScript: any = null;
+    const removeSpy = vi.fn(() => {
+      appendedScript = null;
+    });
+    vi.stubGlobal("document", {
+      head: {
+        querySelector: vi.fn(() => appendedScript),
+        appendChild: vi.fn((el: any) => {
+          appendedScript = el;
+          return el;
+        }),
+      },
+      createElement: vi.fn(() => ({
+        src: "",
+        async: false,
+        defer: false,
+        addEventListener: vi.fn((ev: string, cb: () => void) => {
+          if (!listeners.has(ev)) listeners.set(ev, new Set());
+          listeners.get(ev)!.add(cb);
+        }),
+        removeEventListener: vi.fn((ev: string, cb: () => void) => {
+          listeners.get(ev)?.delete(cb);
+        }),
+        remove: removeSpy,
+      })),
+    });
+
+    try {
+      const freshService = new GDriveAuthService();
+      const tokenPromise = freshService.getAccessToken();
+
+      await vi.waitFor(() => expect(appendedScript).not.toBeNull());
+      listeners.get("error")?.forEach((cb) => cb());
+
+      await expect(tokenPromise).rejects.toThrow(
+        "Google Identity Services library failed to load",
+      );
+      expect(removeSpy).toHaveBeenCalledOnce();
+      expect(appendedScript).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });

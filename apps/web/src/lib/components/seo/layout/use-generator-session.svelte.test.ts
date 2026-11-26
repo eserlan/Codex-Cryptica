@@ -279,4 +279,48 @@ describe("useGeneratorSession", () => {
     expect(ctx.session.generatedData?.title).toBe("Edited scene");
     expect(ctx.session.currentEntityId).toBe("e9");
   });
+
+  it("scrolls stacked viewports to the output card immediately when generation starts, before generate resolves", async () => {
+    const scrollIntoView = vi.fn();
+    const outputCard = { scrollIntoView } as unknown as HTMLElement;
+    let release!: () => void;
+    const generate = vi.fn(
+      () =>
+        new Promise<typeof output>((resolve) => {
+          release = () => resolve(output);
+        }),
+    );
+
+    const canonicalPath = "/generators/npc";
+    let session!: ReturnType<typeof useGeneratorSession>;
+    cleanup = $effect.root(() => {
+      session = useGeneratorSession({
+        getCanonicalPath: () => canonicalPath,
+        getInitialDraft: () => null,
+        getInitialDraftIsUserGenerated: () => false,
+        getAutoGenerateExplicit: () => true,
+        getAiModeRequired: () => false,
+        getSupportsStreaming: () => false,
+        getSingleColumn: () => true,
+        getGeneratorType: () => "npc",
+        getDocumentLayout: () => ({ content: "Body", lore: "Lore" }) as never,
+        getContextSelection: () => ({ entities: [], trimmed: false }) as never,
+        getOutputCard: () => outputCard,
+        generate: generate as never,
+      });
+    });
+    flushSync();
+
+    const pending = session.handleGenerate();
+    expect(generate).toHaveBeenCalledOnce();
+    await vi.waitFor(() =>
+      expect(scrollIntoView).toHaveBeenCalledWith({
+        behavior: "smooth",
+        block: "start",
+      }),
+    );
+
+    release();
+    await pending;
+  });
 });
