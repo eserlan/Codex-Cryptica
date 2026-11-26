@@ -920,6 +920,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "news-sheet-generator": {
+    summary:
+      "Draft an in-world publication with a player-safe front page, classifieds and street rumours on one side and the editor's slant, hidden truths and adventure hooks on the GM side.",
+    tips: [
+      {
+        title: "Set voice, bias and redaction first",
+        detail:
+          "Pair Genre / Setting and Publication type with Editorial tone, Ownership / bias and Censor level so the sheet's omissions and spin tell players who controls the press before they read the fine print.",
+      },
+      {
+        title: "Anchor the issue to last session",
+        detail:
+          "Fill in Settlement, region, or publication name (optional) and Current crisis or headline event (optional) with a recent party disruption, then use Campaign context (optional) to add relevant details to the lead story.",
+      },
+      {
+        title: "Split the handout from the truth",
+        detail:
+          "Use Hook density to set how many leads sit in the GM section, hand players the front page, notices and rumours as written, and hold The Truth Behind the Stories back until they question a witness.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/how-to-write-an-in-world-newspaper-for-an-rpg",
+        label: "Structuring a playable in-world newspaper",
+      },
+      {
+        href: "/answers/how-do-you-generate-useful-rpg-rumours",
+        label: "Turning street rumours into leads",
+      },
+      {
+        href: "/answers/how-do-you-run-a-conspiracy-campaign",
+        label: "Tracking truth behind the headlines",
+      },
+    ],
+  },
   "ship-generator": {
     summary:
       "Build a vessel that acts as a mobile location, a factional pressure cooker and an adventure hook in one draft, then put its crew, key zones and hidden trouble straight onto the table.",

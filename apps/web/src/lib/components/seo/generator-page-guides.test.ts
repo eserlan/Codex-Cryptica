@@ -440,6 +440,38 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the news-sheet-generator guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "news-sheet-generator",
+      "News Sheet Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["news-sheet-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("news-sheet-generator", "News Sheet Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    expect(tipText).toContain(
+      "Campaign context (optional) to add relevant details to the lead story",
+    );
+    expect(tipText).not.toContain("rival faction into the classifieds");
+    for (const label of [
+      "Genre / Setting",
+      "Publication type",
+      "Editorial tone",
+      "Ownership / bias",
+      "Censor level",
+      "Hook density",
+      "Settlement, region, or publication name (optional)",
+      "Current crisis or headline event (optional)",
+      "Campaign context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the ship-generator guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide("ship-generator", "RPG Ship Generator");
     expect(guide).toBe(SLUG_GUIDES["ship-generator"]);

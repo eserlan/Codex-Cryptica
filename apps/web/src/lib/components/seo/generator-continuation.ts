@@ -88,6 +88,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "news-sheet-generator": {
+      headline: "Keep this issue in your campaign archive",
+      summary:
+        "Stage this news sheet for your local Codex vault so the player-safe handout and GM-only truth behind the stories stay separate.",
+      capabilities: [
+        "Store the front page, notices, and rumours separately from GM-only editorial slant and hooks",
+        "Link the publication, editor, and witnesses to factions and settlements in your vault",
+        "Track follow-up issues and evolving rumours across sessions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     "ship-generator": {
       headline: "Dock this vessel in your campaign",
       summary:

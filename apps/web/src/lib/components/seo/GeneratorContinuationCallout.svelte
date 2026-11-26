@@ -74,7 +74,7 @@
         onclick={onSaveToCodex}
         disabled={disabled || isSaving}
         aria-busy={isSaving}
-        class="inline-flex min-h-[44px] min-w-0 max-w-full shrink-0 items-center justify-center gap-2 whitespace-normal rounded-xl bg-theme-primary px-5 py-2.5 font-header text-sm font-bold uppercase tracking-wider text-theme-on-primary shadow-sm transition-all hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg disabled:cursor-not-allowed disabled:opacity-100"
+        class="inline-flex min-h-[44px] min-w-0 max-w-full shrink-0 items-center justify-center gap-2 whitespace-normal rounded-xl bg-theme-primary px-5 py-2.5 font-header text-sm font-bold uppercase tracking-wider text-theme-on-primary shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-theme-primary focus-visible:ring-offset-2 focus-visible:ring-offset-theme-bg disabled:cursor-not-allowed disabled:opacity-100"
       >
         <span
           class="icon-[lucide--arrow-right] h-4 w-4 shrink-0"

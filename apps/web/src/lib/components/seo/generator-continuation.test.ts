@@ -45,6 +45,12 @@ describe("generator-continuation", () => {
       localFirstNotice: "No account needed; stored locally in this browser.",
     });
 
+    const newsSheet = getGeneratorContinuationConfig("news-sheet-generator");
+    expect(newsSheet).toMatchObject({
+      headline: "Keep this issue in your campaign archive",
+      ctaLabel: "Add to my Codex",
+      localFirstNotice: "No account needed; stored locally in this browser.",
+    });
     const ship = getGeneratorContinuationConfig("ship-generator");
     expect(ship).toMatchObject({
       headline: "Dock this vessel in your campaign",
