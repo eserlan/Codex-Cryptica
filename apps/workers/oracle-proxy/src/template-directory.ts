@@ -10,6 +10,12 @@ import { SuspensionMarkerSchema } from "../../../../packages/schema/src/publishi
 import { readSuspensionMarker, writeSuspensionMarker } from "./suspension";
 import { removeEntityIndexEntry } from "./template-directory-index";
 import {
+  type Clock,
+  type IdGenerator,
+  systemClock,
+  systemIdGenerator,
+} from "./runtime";
+import {
   CACHE_CONTROL,
   PREFIX,
   authorize,
@@ -293,7 +299,9 @@ export async function handleReportTemplateListing(
   request: Request,
   env: TemplateDirectoryEnv,
   listingId: string,
+  deps: { clock?: Clock; idGenerator?: IdGenerator } = {},
 ): Promise<Response> {
+  const { clock = systemClock, idGenerator = systemIdGenerator } = deps;
   if (!env.BUCKET)
     return json(
       request,
@@ -318,7 +326,7 @@ export async function handleReportTemplateListing(
         { error: { message: "A report reason is required" } },
         400,
       );
-    const reportId = crypto.randomUUID();
+    const reportId = idGenerator.uuid();
     await env.BUCKET.put(
       `moderation/template-reports/${reportId}.json`,
       JSON.stringify({
@@ -328,7 +336,7 @@ export async function handleReportTemplateListing(
         reason: body.reason.trim().slice(0, 300),
         details: body.details?.trim().slice(0, 2_000),
         reporterContact: body.reporterContact?.trim().slice(0, 300),
-        receivedAt: new Date().toISOString(),
+        receivedAt: new Date(clock.now()).toISOString(),
       }),
       { httpMetadata: { contentType: "application/json" } },
     );
