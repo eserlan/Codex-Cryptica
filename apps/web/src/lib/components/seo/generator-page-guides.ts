@@ -752,7 +752,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Use campaign context with AI on",
         detail:
-          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. The offline roll does not read it, so the field only adds a note when AI is off.",
+          "Text in Add campaign context steers the AI batch, for example a reclusive mage or harsh and guttural. The offline roll does not read it, so local results add a note whenever context is present, including after an AI failure. AI generation is needed to use this context; retry if AI is already enabled.",
       },
     ],
   },

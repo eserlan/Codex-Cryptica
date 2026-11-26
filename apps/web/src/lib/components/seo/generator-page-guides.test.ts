@@ -284,6 +284,8 @@ describe("generator guide distinctness", () => {
     ]) {
       expect(tipText).toContain(vibe);
     }
+    expect(tipText).toContain("including after an AI failure");
+    expect(tipText).toContain("retry if AI is already enabled");
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 });
