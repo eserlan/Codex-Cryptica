@@ -91,6 +91,93 @@ describe("generateNamesLocal", () => {
     expect(output.content).toContain("Archive Catalogue");
     expect(output.content).not.toContain("Generic Fantasy");
   });
+
+  it("lists each name once, without a sentence repeated under every name", () => {
+    const output = generateNamesLocal(
+      { culture: "Dwarven", nameType: "Faction", count: "5" },
+      seededRng(9),
+    );
+    const items = output.content
+      .split("\n")
+      .filter((line) => line.startsWith("- "));
+    expect(items).toHaveLength(5);
+    for (const item of items) expect(item).toMatch(/^- \*\*[^*]+\*\*$/);
+    expect(output.content).not.toContain("Traditional");
+  });
+
+  it("names the count and the Name Type without a claim about gender filtering", () => {
+    const output = generateNamesLocal(
+      {
+        culture: "Generic Fantasy",
+        nameType: "Person",
+        gender: "Any",
+        count: "4",
+      },
+      seededRng(4),
+    );
+    expect(output.content).toMatch(
+      /^Here are 4 Generic Fantasy style character names\./,
+    );
+    expect(output.content).not.toMatch(/register|filtered/);
+    expect(output.content).not.toMatch(/a any/);
+  });
+
+  it("uses a lowercase plural for a custom Name Type", () => {
+    const output = generateNamesLocal(
+      { nameType: "Ship", count: "3" },
+      seededRng(6),
+    );
+    expect(output.content).toMatch(/style ship names\.$/m);
+    expect(output.content).not.toContain("Ship names");
+  });
+
+  it("tells the GM when campaign context was not used by the offline roll", () => {
+    const withContext = generateNamesLocal(
+      { culture: "Norse / Viking", context: "a reclusive mage", count: "3" },
+      seededRng(2),
+    );
+    expect(withContext.lore).toContain("### Campaign Context");
+    expect(withContext.lore).toContain("does not use campaign context");
+    expect(withContext.lore).toContain(
+      "AI generation is needed to use this context; retry if AI is already enabled.",
+    );
+
+    const withoutContext = generateNamesLocal(
+      { culture: "Norse / Viking", context: "   ", count: "3" },
+      seededRng(2),
+    );
+    expect(withoutContext.lore).not.toContain("Campaign Context");
+  });
+
+  it("describes the culture as inspired by its name, with no dashes in the write-up", () => {
+    const output = generateNamesLocal(
+      { culture: "Sailor's Nickname", nameType: "Person", count: "3" },
+      seededRng(8),
+    );
+    expect(output.lore).toContain(
+      "any person in a setting inspired by Sailor's Nickname.",
+    );
+    expect(output.lore).not.toContain("-influenced");
+    expect(`${output.content}\n${output.lore}`).not.toMatch(/[–—]/);
+  });
+
+  it("says when a culture has no offline tables, and not when it does", () => {
+    const vibe = generateNamesLocal(
+      { theme: "Cyberpunk / Corporate", culture: "Street Handle", count: "3" },
+      seededRng(3),
+    );
+    expect(vibe.lore).toContain("### Offline Tables");
+    expect(vibe.lore).toContain("generic fantasy syllables");
+    expect(vibe.lore).toContain(
+      "AI generation is needed for names in this style; retry if AI is already enabled.",
+    );
+
+    const tabled = generateNamesLocal(
+      { culture: "Dwarven", count: "3" },
+      seededRng(3),
+    );
+    expect(tabled.lore).not.toContain("Offline Tables");
+  });
 });
 
 describe("buildNamesPrompt", () => {

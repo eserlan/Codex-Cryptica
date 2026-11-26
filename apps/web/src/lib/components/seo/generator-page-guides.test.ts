@@ -257,6 +257,38 @@ describe("generator guide distinctness", () => {
     );
   });
 
+  it("serves the names guide with tips that name its form labels and offline limits", () => {
+    const guide = getGeneratorGuide("names", "RPG Name Generator");
+    expect(guide).toBe(SLUG_GUIDES.names);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug("names", "RPG Name Generator"),
+    );
+    expect(guide.tips).toHaveLength(3);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Name Type",
+      "Choose a vibe",
+      "Culture / Style",
+      "Add campaign context",
+      "Usage Suggestions",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    // The offline limits must match the engine: these vibes have no tables.
+    for (const vibe of [
+      "Cyberpunk / Corporate",
+      "Vampire / Gothic Noir",
+      "Sci-Fi / Space Opera",
+      "Modern Conspiracy",
+      "Post-Apocalyptic",
+    ]) {
+      expect(tipText).toContain(vibe);
+    }
+    expect(tipText).toContain("including after an AI failure");
+    expect(tipText).toContain("retry if AI is already enabled");
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the urban fantasy faction guide with tips that name its form labels", () => {
     const guide = getGeneratorGuide(
       "urban-fantasy-faction",
