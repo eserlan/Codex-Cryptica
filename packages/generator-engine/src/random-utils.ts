@@ -50,6 +50,7 @@ export function indefiniteArticle(noun: string): string {
   // These supported faction types start with a consonant sound despite their
   // written initial, or a spoken initialism whose first letter is a vowel sound.
   if (/^union\b/i.test(trimmed)) return "a";
+  if (/^euro/i.test(trimmed)) return "a";
   if (/^NHP\b/i.test(trimmed)) return "an";
   return /^[aeiou]/i.test(trimmed) ? "an" : "a";
 }
