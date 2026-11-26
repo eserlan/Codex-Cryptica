@@ -1,3 +1,5 @@
+import { VaultSyncContext } from "./sync-context";
+import { VaultSyncConflicts } from "./sync-conflicts";
 import { VaultSyncState } from "./sync-state.svelte";
 import {
   VaultSyncError,
@@ -14,7 +16,6 @@ import type { LocalEntity } from "./types";
 import { debugStore } from "../debug.svelte";
 import { cacheService } from "../../services/cache.svelte";
 import { appEventBus } from "@codex/events";
-import { fileIOAdapter } from "./adapters.svelte";
 import { updateLastInternalChange } from "./registry";
 import { sessionModeStore } from "#lib/stores/ui/session-mode.svelte.js";
 import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
@@ -34,6 +35,8 @@ const WARM_RECONCILE_DELAY_MS = 1500;
 
 export class SyncStore {
   private state: VaultSyncState;
+  private context: VaultSyncContext;
+  private conflicts: VaultSyncConflicts;
 
   private get _status() {
     return this.state.currentStatus;
@@ -110,6 +113,10 @@ export class SyncStore {
 
   constructor(private deps: SyncStoreDependencies) {
     this.state = new VaultSyncState(deps);
+    this.context = new VaultSyncContext(deps);
+    this.conflicts = new VaultSyncConflicts(this.context, this.state, () =>
+      this.loadFiles(),
+    );
     browserPerformanceCapture.start();
     appEventBus.subscribe("SYNC:DRIVE_PULL_COMPLETE", async (event) => {
       const activeId = this.deps.activeVaultId();
@@ -124,12 +131,8 @@ export class SyncStore {
     });
   }
 
-  private async waitForSaves(timeoutMs?: number): Promise<void> {
-    if (this.deps.flushPendingSaves) {
-      await this.deps.flushPendingSaves(timeoutMs);
-    } else {
-      await this.deps.repository.waitForAllSaves(timeoutMs);
-    }
+  private waitForSaves(timeoutMs?: number) {
+    return this.context.waitForSaves(timeoutMs);
   }
 
   private async ensureFolderPermission(
@@ -161,10 +164,8 @@ export class SyncStore {
     }
   }
 
-  private isStale(vaultIdAtStart: string, signal?: AbortSignal): boolean {
-    return (
-      this.deps.activeVaultId() !== vaultIdAtStart || (signal?.aborted ?? false)
-    );
+  private isStale(vaultId: string, signal?: AbortSignal) {
+    return this.context.isStale(vaultId, signal);
   }
 
   /**
@@ -920,45 +921,16 @@ export class SyncStore {
     }
   }
 
-  async cleanupConflictFiles(signal?: AbortSignal) {
-    const activeVaultId = this.deps.activeVaultId();
-    if (!activeVaultId) return;
-    const vaultIdAtStart = activeVaultId;
-
-    const syncCoordinator = await this.deps.getSyncCoordinator();
-    if (!syncCoordinator) return;
-
-    const opfsHandle = await this.deps.getActiveVaultHandle();
-    // Fix C8: guard vault switch that may have occurred during the awaits above.
-    if (!opfsHandle || this.isStale(vaultIdAtStart, signal)) return;
-
-    await syncCoordinator.cleanupConflictFiles(
-      activeVaultId,
-      opfsHandle,
-      (status) => {
-        if (!signal?.aborted) this._status = status;
-      },
-      () => this.loadFiles(),
-      signal,
-    );
+  cleanupConflictFiles(signal?: AbortSignal) {
+    return this.conflicts.cleanup(signal);
   }
 
-  private async scanConflicts(signal?: AbortSignal) {
-    const opfsHandle = await this.deps.getActiveVaultHandle();
-    if (!opfsHandle || signal?.aborted) return;
-    const files = await fileIOAdapter.walkDirectory(opfsHandle);
-    if (signal?.aborted) return;
-    this.hasConflictFiles = files.some((f: any) =>
-      f.path[f.path.length - 1].includes(".conflict-"),
-    );
+  private scanConflicts(signal?: AbortSignal) {
+    return this.conflicts.scan(signal);
   }
 
-  async checkForConflicts(signal?: AbortSignal) {
-    try {
-      await this.scanConflicts(signal);
-    } catch {
-      this.hasConflictFiles = false;
-    }
+  checkForConflicts(signal?: AbortSignal) {
+    return this.conflicts.check(signal);
   }
 
   setStatus(status: VaultSyncState["currentStatus"]) {
