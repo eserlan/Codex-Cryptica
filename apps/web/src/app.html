@@ -99,18 +99,36 @@
     <!-- Theme fonts: deferred until idle and skipped on default workspace theme -->
     <script>
       (function () {
+        var themeFontsLoaded = false;
+        var themeObserver = null;
+
+        function hasNonWorkspaceTheme() {
+          return Boolean(
+            document.querySelector(
+              "[data-world-theme]:not([data-world-theme='workspace'])",
+            ),
+          );
+        }
+
         function loadThemeFonts() {
+          if (themeFontsLoaded) return;
           var activeTheme = (
             localStorage.getItem("codex-cryptica-active-theme") || "workspace"
           ).replace(/_(light|dark)$/, "");
-          if (
-            activeTheme === "workspace" &&
-            !document.querySelector(
-              "[data-world-theme]:not([data-world-theme='workspace'])",
-            )
-          ) {
+          if (activeTheme === "workspace" && !hasNonWorkspaceTheme()) {
+            if (!themeObserver && "MutationObserver" in window) {
+              themeObserver = new MutationObserver(loadThemeFonts);
+              themeObserver.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ["data-world-theme"],
+                childList: true,
+                subtree: true,
+              });
+            }
             return;
           }
+          themeFontsLoaded = true;
+          if (themeObserver) themeObserver.disconnect();
           var l = document.createElement("link");
           l.rel = "stylesheet";
           l.href =
