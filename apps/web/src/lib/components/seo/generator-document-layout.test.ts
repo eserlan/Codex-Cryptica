@@ -652,4 +652,46 @@ describe("section uniqueness invariant (#2768)", () => {
     );
     expect(layout.lore.match(/\*\*Knowledge & Secrets\*\*:/g)).toHaveLength(1);
   });
+
+  it("keeps pantheon Hidden Problem and Rumours & Legends in layout.lore so guest exports omit them", () => {
+    const hiddenProblem =
+      "A sealed relic from the founding pact has cracked, weakening every oath.";
+    const rumour =
+      "High priests of rival deities are meeting in secret to avert a schism.";
+    const layout = getGeneratorDocumentLayout({
+      type: "faction",
+      title: "The Silent Maw",
+      summary: "A pantheon bound by cosmic balance.",
+      status: "active",
+      labels: ["rpg-pantheon", "pantheon-generator", "imported-draft"],
+      content: [
+        "### Origin & Dogma",
+        "The pantheon formed after the first break.",
+      ].join("\n"),
+      lore: [
+        "### At a Glance",
+        "- **Pantheon Name**: The Silent Maw",
+        `- **Hidden Problem**: ${hiddenProblem}`,
+        "- **Immediate Hook**: Rival temples declared the same holy day.",
+        "",
+        "### Clergy & Temples",
+        "- **Clergy Roles**: Rotating stewards.",
+        "",
+        "### Rumours & Legends",
+        `- ${rumour}`,
+      ].join("\n"),
+    });
+
+    expect(layout.content).toContain("### Clergy & Temples");
+    expect(layout.content).toContain("**Immediate Hook**: Rival temples");
+    expect(layout.content).not.toContain("Hidden Problem");
+    expect(layout.content).not.toContain(hiddenProblem);
+    expect(layout.content).not.toContain("Rumours & Legends");
+    expect(layout.content).not.toContain(rumour);
+
+    expect(layout.lore).toContain(`**Hidden Problem**: ${hiddenProblem}`);
+    expect(layout.lore).toContain("### Rumours & Legends");
+    expect(layout.lore).toContain(rumour);
+    expect(layout.lore).not.toContain("**Immediate Hook**");
+  });
 });
