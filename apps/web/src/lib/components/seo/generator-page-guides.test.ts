@@ -494,6 +494,34 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the adventure-idea-generator guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "adventure-idea-generator",
+      "Adventure Idea Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["adventure-idea-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug(
+        "adventure-idea-generator",
+        "Adventure Idea Generator",
+      ),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Choose a vibe",
+      "Adventure Type",
+      "Adventure Scale",
+      "Tone",
+      "Starting Seed / Situation (optional)",
+      "World context (optional)",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("falls back to the default template for slugs without a specific guide", () => {
     const fallbackSlug = "nonexistent-slug" as never;
     expect(getGeneratorGuide(fallbackSlug, "Custom Generator")).toEqual(

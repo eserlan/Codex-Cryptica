@@ -990,6 +990,41 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       },
     ],
   },
+  "adventure-idea-generator": {
+    summary:
+      "Draft a situation-first scenario with an inciting pressure, competing factions, clues and non-linear outcomes, then hand your party a crisis with real choices rather than a scripted plot.",
+    tips: [
+      {
+        title: "Frame the scope and stakes first",
+        detail:
+          "Pick Choose a vibe, Adventure Type, Adventure Scale and Tone to set whether the table faces a tight one-shot crisis or a multi-session arc, then check Primary Objective & Pressure for what worsens if nobody acts.",
+      },
+      {
+        title: "Build directly from a table seed",
+        detail:
+          "Paste an unresolved thread into Starting Seed / Situation (optional) with any deadline, and use World context (optional) to name active regions or factions so Clues, Secrets & Discoveries anchor to your world.",
+      },
+      {
+        title: "Leave the ending to the party",
+        detail:
+          "Use Possible Outcomes and Complications & Escalating Pressures in GM Reference as moving consequences rather than targets, then click Open Adventure Canvas when you want to link scenes and NPCs on a board.",
+      },
+    ],
+    links: [
+      {
+        href: "/answers/is-my-rpg-campaign-idea-good",
+        label: "Testing whether a premise creates play",
+      },
+      {
+        href: "/answers/how-do-i-turn-an-rpg-idea-into-an-adventure",
+        label: "Turning a premise into a playable situation",
+      },
+      {
+        href: "/answers/how-do-you-create-quest-hooks-without-railroading",
+        label: "Dropping adventure hooks without railroading",
+      },
+    ],
+  },
 };
 
 export function defaultGuideForSlug(
