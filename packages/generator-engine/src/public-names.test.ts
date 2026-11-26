@@ -49,6 +49,40 @@ describe("generateNamesLocal", () => {
     expect(first.labels).toContain("name-generator");
   });
 
+  it("describes built-in cultures without article errors", () => {
+    const orcish = generateNamesLocal({ culture: "Orcish" }, seededRng(4));
+    const highElf = generateNamesLocal({ culture: "High Elf" }, seededRng(4));
+
+    expect(orcish.lore).toContain(
+      "in a setting shaped by the orcish naming style",
+    );
+    expect(highElf.lore).toContain(
+      "in a setting shaped by the high elf naming style",
+    );
+  });
+
+  it("uses free-form culture labels without article agreement", () => {
+    const ukrainian = generateNamesLocal(
+      { culture: "Ukrainian" },
+      seededRng(4),
+    );
+
+    expect(ukrainian.lore).toContain(
+      "in a setting shaped by the ukrainian naming style",
+    );
+  });
+
+  it("does not claim a gender register filter for 'Any'", () => {
+    const output = generateNamesLocal(
+      { culture: "Dwarven", gender: "Any" },
+      seededRng(4),
+    );
+
+    expect(output.content).not.toMatch(/register/i);
+    expect(output.content).not.toMatch(/\ba any\b/i);
+    expect(output.lore).toContain("**Gender / Presentation**: Any");
+  });
+
   it("supports Pirate culture and style alternatives", () => {
     const pirateStyles = nameGeneratorConfig.culturesByTheme.Pirate;
 
@@ -149,13 +183,13 @@ describe("generateNamesLocal", () => {
     expect(withoutContext.lore).not.toContain("Campaign Context");
   });
 
-  it("describes the culture as inspired by its name, with no dashes in the write-up", () => {
+  it("uses a culture label without choosing an article, with no dashes in the write-up", () => {
     const output = generateNamesLocal(
       { culture: "Sailor's Nickname", nameType: "Person", count: "3" },
       seededRng(8),
     );
     expect(output.lore).toContain(
-      "any person in a setting inspired by Sailor's Nickname.",
+      "any person in a setting shaped by the sailor's nickname naming style.",
     );
     expect(output.lore).not.toContain("-influenced");
     expect(`${output.content}\n${output.lore}`).not.toMatch(/[–—]/);
