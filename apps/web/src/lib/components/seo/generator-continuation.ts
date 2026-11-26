@@ -51,6 +51,7 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
     },
     npc: NPC_CONTINUATION,
     "rpg-npc-generator": NPC_CONTINUATION,
+    "dnd-npc": NPC_CONTINUATION,
     "origin-generator": {
       headline: "Keep developing this origin",
       summary:

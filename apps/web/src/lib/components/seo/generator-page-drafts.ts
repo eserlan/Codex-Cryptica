@@ -168,12 +168,19 @@ export const slugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   "dnd-npc": {
     type: "character",
     title: "Elowen Ashford",
-    summary: "A half-elf rogue with a talent for leverage.",
+    summary:
+      "A chaotic neutral half-elf rogue. Needs someone expendable to retrieve a sealed ledger from the harbour master's office before midnight.",
     content:
-      "### Description\nElowen moves through taverns and guild halls with the easy confidence of someone who knows where the exits are. Her smile is genuine - mostly.\n\n### Secret\nShe carries a stolen signet ring that proves a local noble's son committed a crime the family has paid to bury.",
-    lore: "",
-    labels: ["rpg-npc", "Rogue", "Half-Elf"],
-    status: "draft",
+      "### The Six Elements\n- **Immediate Want**: Needs someone expendable to retrieve a sealed ledger from the harbour master's office before midnight.\n- **Physical Mannerism**: Keeps one thumb hooked in her belt while scanning every doorway.\n- **Sharp Contradiction**: A sharp-tongued fence who quietly pays off the debts of dockside apprentices.\n- **Relationship Hook**: Owes a favour to a disgraced watch captain who still holds her real name.\n- **Sensory Tag**: Smells of damp saltwool and cheap clove oil; speaks in clipped, unhurried sentences.\n- **Knowledge & Secrets**: Knows which warehouse guards take coin; does not know the ledger is a forgery; will never reveal the stolen signet ring sewn into her cloak lining.\n\n### Table Delivery\nIntroduce Elowen through her saltwool scent and doorway-scanning habit before she names the midnight ledger job. Let her dry generosity toward an apprentice show through if the party presses her terms.",
+    lore: "### At a Glance\n- **Class / Archetype**: Rogue / Level 4\n- **Table Rating**: CR 2\n- **Ancestry**: Half-Elf\n- **Role**: Rogue\n- **Immediate Want**: Needs someone expendable to retrieve a sealed ledger from the harbour master's office before midnight.\n- **Mannerism / Vocal Tell**: Keeps one thumb hooked in her belt while scanning every doorway.\n- **Contradiction**: A sharp-tongued fence who quietly pays off the debts of dockside apprentices.\n- **Relationship Hook**: Owes a favour to a disgraced watch captain who still holds her real name.\n- **Sensory Tag**: Smells of damp saltwool and cheap clove oil; speaks in clipped, unhurried sentences.\n- **Knowledge & Secrets**: Knows which warehouse guards take coin; does not know the ledger is a forgery; will never reveal the stolen signet ring sewn into her cloak lining.\n- **Moral Stance**: Chaotic Neutral\n\n### Faction Connection\nThe Lantern Guild, smugglers who treat harbour tariffs as an optional suggestion.",
+    labels: [
+      "table-card",
+      "rogue",
+      "rpg-character",
+      "npc-generator",
+      "imported-draft",
+    ],
+    status: "active",
   },
   "pantheon-generator": {
     type: "faction",

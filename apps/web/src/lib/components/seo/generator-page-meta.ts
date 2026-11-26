@@ -896,6 +896,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "fantasy npc creator",
       "dm prep tool",
     ],
+    faqs: [
+      {
+        question: "What is the difference between Table Card and Full Dossier?",
+        answer:
+          "Table Card (the default) gives you six scannable cues for live play: Immediate Want, Physical Mannerism, Sharp Contradiction, Relationship Hook, Sensory Tag, and Knowledge & Secrets, plus a short Table Delivery note. Full Dossier switches to four background sections (Who they are, What they want, Why they are useful, How to use them at the table) alongside Faction Stance & Biases, Leverage & Price, Secret, and Personality.",
+      },
+      {
+        question: "Does the D&D NPC generator include full 5e stat blocks?",
+        answer:
+          "No. It adds a Class / Archetype and Table Rating benchmark (such as Wizard / Level 5 and CR 3 for a Mage, or Level 3 and CR 1 for custom roles) at the top of At a Glance rather than full combat stat blocks or equipment lists.",
+      },
+      {
+        question: "How does Add campaign context change the NPC?",
+        answer:
+          "Naming a town, guild, or conflict steers AI drafts and anchors offline Dossier drafts. If you mention a dungeon or delve in Add campaign context, both offline and AI drafts also add lair-specific fields and a three-stage Alert & Lair Response.",
+      },
+      {
+        question: "What happens when I save a generated D&D NPC?",
+        answer:
+          "After you generate a result, Add to my Codex stages the NPC in your browser's local storage with no account required. Opening Codex Cryptica imports it as a Character entity with its At a Glance notes, Faction Connection, and labels.",
+      },
+    ],
   },
   "pantheon-generator": {
     pageTitle:
