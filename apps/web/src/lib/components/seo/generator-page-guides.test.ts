@@ -581,6 +581,32 @@ describe("generator guide distinctness", () => {
     expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
   });
 
+  it("serves the comic-book-event-generator guide with tips naming its form labels and without dashes", () => {
+    const guide = getGeneratorGuide(
+      "comic-book-event-generator",
+      "Comic Book Event Generator",
+    );
+    expect(guide).toBe(SLUG_GUIDES["comic-book-event-generator"]);
+    expect(guide).not.toEqual(
+      defaultGuideForSlug(
+        "comic-book-event-generator",
+        "Comic Book Event Generator",
+      ),
+    );
+    expect(guide.tips).toHaveLength(3);
+    expect(guide.links?.length).toBeGreaterThan(0);
+    const tipText = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of [
+      "Event Type",
+      "Scale",
+      "Tone",
+      "Optional Campaign Context",
+    ]) {
+      expect(tipText).toContain(label);
+    }
+    expect([guide.summary, tipText].join(" ")).not.toMatch(/[–—]/);
+  });
+
   it("serves the plot-twist-generator guide with tips naming its form labels and without dashes", () => {
     const guide = getGeneratorGuide(
       "plot-twist-generator",

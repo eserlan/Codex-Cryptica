@@ -148,6 +148,18 @@ const WAVE_1_CONTINUATION_CONFIGS: Record<string, GeneratorContinuationConfig> =
       localFirstNotice: LOCAL_FIRST_NOTICE,
       ctaLabel: CTA_LABEL,
     },
+    "comic-book-event-generator": {
+      headline: "Track this crisis across your campaign",
+      summary:
+        "Stage this comic book event for your local Codex vault so its escalation beats, hidden cause, and lasting consequences stay connected to your world.",
+      capabilities: [
+        "Keep public event beats separate from GM-only true cause, lasting consequences, and hooks",
+        "Link the crisis to affected cities, hero teams, villains, and factions in your vault",
+        "Reference permanent fallout and follow-up arcs across future sessions",
+      ],
+      localFirstNotice: LOCAL_FIRST_NOTICE,
+      ctaLabel: CTA_LABEL,
+    },
     "plot-twist-generator": {
       headline: "Keep this reversal tied to your plot",
       summary:

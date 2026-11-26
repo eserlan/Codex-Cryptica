@@ -135,6 +135,21 @@ describe("generateComicBookEventLocal", () => {
       generateComicBookEventLocal({}, seededRng(9)),
     );
   });
+
+  it("preserves sentence capitalization and acronyms inside scale hints", () => {
+    const national = generateComicBookEventLocal(
+      { scale: "National" },
+      seededRng(5),
+    );
+    const globalOut = generateComicBookEventLocal(
+      { scale: "Global" },
+      seededRng(5),
+    );
+    expect(national.content).toContain(
+      "federal jurisdiction. Threats target infrastructure",
+    );
+    expect(globalOut.content).toContain("UN-chartered");
+  });
 });
 
 describe("buildComicBookEventPrompt", () => {
