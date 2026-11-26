@@ -838,11 +838,15 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
     links: [
       {
         href: "/answers/how-do-i-improvise-npcs-in-dnd",
-        label: "Improvising NPCs in D&D",
+        label: "Improvise an NPC on the spot",
       },
       {
-        href: "/answers/how-do-you-make-npcs-memorable-without-lots-of-prep",
-        label: "Memorable NPCs without heavy prep",
+        href: "/answers/how-do-i-roleplay-npcs-if-im-not-good-at-acting",
+        label: "Run them at the table without acting",
+      },
+      {
+        href: "/answers/how-do-you-keep-track-of-npcs-in-a-long-campaign",
+        label: "Track recurring NPCs across sessions",
       },
     ],
   },

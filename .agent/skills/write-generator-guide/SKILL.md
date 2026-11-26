@@ -43,8 +43,9 @@ Each run handles exactly one slug, on its own branch, in its own PR. Do not batc
    - Include at least one **concrete play consequence** (a decision, conflict, lead, encounter, relationship, or changing situation).
    - Keep lore-creation advice in the GM guide and saving/adoption guidance near the completed result; do not spend a third of the GM guide describing browser storage.
 
-6. **Curate educational continuations and align page copy.**
-   - Add the entry to `SLUG_GUIDES`, optionally with up to three genuinely relevant `links` to verified canonical Answer pages (target for richer tools, not a quota). Assess whether a contextual reciprocal link from an Answer to the generator makes sense, without turning Answers into promotional pages.
+6. **Design an editorial progression and align page copy.**
+   - **Intent → next-step progression → validated links → rationale:** Identify the visitor's starting point and what they have after generating, then pick 1–3 distinct next-step jobs in deliberate reading order (for example: build/understand → run at the table → track across sessions, or prep → encounter → aftermath). Three is a cap, not a quota; one or two strong links beat padding a third.
+   - Inspect candidate Answer pages' actual content and canonical routes before linking, write benefit-led labels showing what the visitor can do next, and assess contextual reciprocal links without adding promotional blocks.
    - Compare the page's meta description, intro text, static sample (`generator-page-drafts*.ts`), FAQs, and any linked Answer/hub copy with the real output. Fix mismatches and output defects (including ignored form options) in the same PR, with tests covering both success and negative paths per `AGENTS.md`.
    - If touching the completed-result continuation CTA, reuse the shared `#5136`/`#4624`/`#4625` handler, keep it compact and only on explicit generation, and keep copy-first use frictionless. Always wire the slug into `apps/web/src/lib/components/seo/generator-continuation.ts` (and update `generator-continuation.test.ts`) when the generator has vault-importable output (non-`names` variants), overriding any prior Wave 2 / unconfigured exclusion.
 
@@ -56,13 +57,13 @@ Each run handles exactly one slug, on its own branch, in its own PR. Do not batc
 
 9. **Validate** with the PR gate in `AGENTS.md`: `bun scripts/lint-changed.mjs --base origin/staging`, the affected workspace type-check (`bunx svelte-check --tsconfig ./tsconfig.json --threshold error` in `apps/web`), `bun scripts/discovery-audit.mjs` if discovery metadata changed, and the Fallow audit (`bunx fallow audit --format json --quiet --explain --gate-marker agent`) before committing. After committing, review the diff against the codex-review checklist (`.agent/skills/codex-review`), then record the stamp with `bun scripts/codex-review-stamp.mjs`. The pre-push hook (`.husky/pre-push`) refuses a push without a current stamp for HEAD, so stamp again after every new commit. Never skip it with `SKIP_CODEX_REVIEW=1`.
 
-10. **PR body** must include a **"Public copy reviewed"** section covering:
-    - Actual controls, defaults, and representative non-AI/AI output inspected (distinguishing static sample from generated output).
-    - The two editorial-proposition sentences.
-    - Curated Answer link choices and reciprocal-link assessment.
-    - Copy / Save / import handoff shape verified, plus any deferred follow-ups linked to `#5136`, `#5046`, or `#4626`.
-    - Each fix made in step 6 with the tests that cover it ("No other page needed changes" when accurate).
-    - Rendered-page check summary (`360px`, `390px`, desktop).
+10. **PR body** must include a **"Public copy reviewed"** section with explicit **Review Evidence & Defect Disposition**:
+    - **Output coherence & role fit:** ≥3 representative non-AI results using page-valid options, plus AI output or schema review (explicitly noting when live AI could not be exercised); confirm no mismatched identities, roles, motivations, or traits.
+    - **Structural integrity:** confirm no missing/duplicate sections, repeated secrets, section-count mismatches, GM-only/public boundary leaks, grammar defects, or placeholder text.
+    - **Stock-content reuse:** compare static samples/fixtures (`generator-page-drafts*.ts`) with real output and linked Answers.
+    - **Adoption truthfulness:** verified imported entity type, sections, spoiler separation, whether links are manual vs auto-created, and any deferred follow-ups (`#5136`, `#5046`, `#4626`).
+    - **Editorial rationale for Answers:** for each selected link, state its progression role, what new value it adds, why overlapping candidates were declined, and your reciprocal-link assessment.
+    - **Disposition & rendered check:** list every finding fixed (with covering tests), deferred (with linked issue), or verified not a defect, plus the `360px`/`390px`/desktop check summary.
       If tracked by a GitHub issue, close the slug's issue from the PR.
 
 11. **After deploy,** fetch the live `/generators/<slug>` page and confirm the new summary is in the server HTML.

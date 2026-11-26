@@ -296,7 +296,28 @@ function extractTableCardSecrets(
         section.body,
         new Set(["Knowledge & Secrets"]),
       );
-      gmOnlyBullets.push(...moved);
+      for (const bullet of moved) {
+        if (!gmOnlyBullets.includes(bullet)) {
+          gmOnlyBullets.push(bullet);
+        }
+      }
+      if (
+        moved.length > 0 &&
+        /^###\s+The Six Elements\b/i.test(kept) &&
+        !kept.includes("GM Reference")
+      ) {
+        const publicCueCount = kept
+          .split("\n")
+          .filter((line) => /^\s*-\s+\*\*[^*]+\*\*:/.test(line)).length;
+        const note =
+          publicCueCount === 5
+            ? "*Five public cues below; the sixth element (secrets) is in GM Reference for spoiler protection.*"
+            : "*The sixth element (secrets) is in GM Reference for spoiler protection.*";
+        return kept.replace(
+          /^(###\s+The Six Elements\b[^\n]*)/i,
+          `$1\n${note}`,
+        );
+      }
       return kept;
     })
     .filter(Boolean)
