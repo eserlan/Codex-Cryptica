@@ -1,16 +1,6 @@
 {
-  "updated_at": 1795632390,
+  "updated_at": 1795695125,
   "candidates": [
-    {
-      "id": "reddit-45012792136-more-of-the-adventure-transcript-on-a-ph",
-      "title": "More of the Adventure transcript on a phone",
-      "body": "On a phone, a tall header can leave too little room for the scene transcript. I tightened the play header in Codex Cryptica, the campaign tool I build for my own table.\n\n- Keep more of the transcript in view\n- Find Play and Ask GM beside each other\n- Reach either mode while the adventure is running\n\nOn a phone, which control do you most want close to the transcript?\n\n[\ud83d\uddbc\ufe0f View Illustration / Reference Guide](https://assets.codexcryptica.com/announcements/release-45012792136-7.png)",
-      "url": "",
-      "image_url": "https://assets.codexcryptica.com/announcements/release-45012792136-7.png",
-      "source_id": "45012792136",
-      "status": "approved",
-      "created_at": 1795349378
-    },
     {
       "id": "reddit-45053421492-oracle-suggestions-when-you-want-a-promp",
       "title": "Oracle suggestions when you want a prompt",
