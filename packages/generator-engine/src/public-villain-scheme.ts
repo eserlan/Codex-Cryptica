@@ -204,9 +204,15 @@ export function parseVillainSchemeResponse(
   const data = asRecord(parseFencedJson<unknown>(text));
   const lore = asString(data.lore);
   const stagesSection = extractSchemeStagesSection(lore);
-  const stageCount =
-    stagesSection.match(/^\s*\*\*Stage\s+\d+\s*:/gm)?.length ?? 0;
-  if (stageCount < 4 || stageCount > 6) {
+  const stageNumbers = Array.from(
+    stagesSection.matchAll(/^\s*\*\*Stage\s+(\d+)\s*:/gm),
+    (match) => Number(match[1]),
+  );
+  const hasSequentialStages =
+    stageNumbers.length >= 4 &&
+    stageNumbers.length <= 6 &&
+    stageNumbers.every((num, index) => num === index + 1);
+  if (!hasSequentialStages) {
     throw new Error(
       "Villain scheme lore must contain four to six numbered stages",
     );

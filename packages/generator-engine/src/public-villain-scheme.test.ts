@@ -259,4 +259,33 @@ describe("parseVillainSchemeResponse", () => {
       ),
     ).toThrow("four to six numbered stages");
   });
+
+  it("rejects duplicate or out-of-order stage numbers", () => {
+    const duplicateLore = [
+      "### Scheme Stages",
+      "**Stage 1: First**",
+      "**Stage 1: Repeated**",
+      "**Stage 1: Again**",
+      "**Stage 1: Still One**",
+    ].join("\n");
+    const outOfOrderLore = [
+      "### Scheme Stages",
+      "**Stage 1: First**",
+      "**Stage 3: Skipped**",
+      "**Stage 2: Late**",
+      "**Stage 4: Fourth**",
+    ].join("\n");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: duplicateLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+    expect(() =>
+      parseVillainSchemeResponse(
+        JSON.stringify({ lore: outOfOrderLore }),
+        resolved,
+      ),
+    ).toThrow("four to six numbered stages");
+  });
 });

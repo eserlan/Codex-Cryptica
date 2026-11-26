@@ -1204,7 +1204,7 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
       {
         title: "Tether the front to your city",
         detail:
-          "Use Optional Campaign Context to name a syndicate, hero team or district so Public Activity, Rumours & Signs and Adventure Hook point straight at places your table watches.",
+          "When generating with AI, use Optional Campaign Context to name a syndicate, hero team or district so Public Activity, Rumours & Signs and Adventure Hook point straight at places your table watches.",
       },
       {
         title: "Advance stages only when heroes delay",
