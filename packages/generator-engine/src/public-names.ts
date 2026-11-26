@@ -180,21 +180,48 @@ export function rollNames(
   return names;
 }
 
+/** Plain-English nouns for the offline write-up, keyed by the Name Type. */
+const NAME_TYPE_NOUNS: Partial<
+  Record<string, { plural: string; singular: string }>
+> = {
+  Person: { plural: "character names", singular: "person" },
+  Place: { plural: "place names", singular: "place" },
+  Faction: { plural: "faction names", singular: "faction" },
+  Item: { plural: "item names", singular: "item" },
+};
+
+function nounsFor(nameType: string): { plural: string; singular: string } {
+  const lower = nameType.toLowerCase();
+  return (
+    NAME_TYPE_NOUNS[nameType] ?? { plural: `${lower} names`, singular: lower }
+  );
+}
+
 export function generateNamesLocal(
   options: NamesGeneratorOptions = {},
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const resolved = resolveNames(options);
   const generated = rollNames(options, rng);
+  const { plural, singular } = nounsFor(resolved.nameType);
 
-  const nameList = generated
-    .map(
-      (n) =>
-        `- **${n}**: Traditional ${resolved.culture} style ${resolved.nameType.toLowerCase()} name.`,
-    )
-    .join("\n");
+  const nameList = generated.map((n) => `- **${n}**`).join("\n");
 
-  const content = `These names follow the traditional ${resolved.culture} style for ${resolved.nameType.toLowerCase()}s.\n\n${nameList}`;
+  const content = `Here are ${generated.length} ${resolved.culture} style ${plural}.\n\n${nameList}`;
+
+  // The offline roll never reads the campaign context, and some cultures have
+  // no offline tables. Say so rather than let the GM assume either.
+  const notes: string[] = [];
+  if (!nameGeneratorConfig.culturePrefixes[resolved.culture]) {
+    notes.push(
+      `### Offline Tables\nThere are no offline name tables for ${resolved.culture}, so this roll uses the generic fantasy syllables. AI generation is needed for names in this style; retry if AI is already enabled.`,
+    );
+  }
+  if (resolved.context) {
+    notes.push(
+      "### Campaign Context\nThe offline roll does not use campaign context. AI generation is needed to use this context; retry if AI is already enabled.",
+    );
+  }
 
   const lore = `### Generator Settings
 - **Culture**: ${resolved.culture}
@@ -202,7 +229,7 @@ export function generateNamesLocal(
 - **Name Type**: ${resolved.nameType}
 
 ### Usage Suggestions
-Use these names for any ${resolved.nameType.toLowerCase()} in a setting shaped by the ${resolved.culture.toLowerCase()} naming style. Combine or modify them freely — drop a syllable, add a prefix, or append a title or epithet for variation.`;
+Use these names for any ${singular} in a setting inspired by ${resolved.culture}. Combine or modify them freely: drop a syllable, add a prefix, or append a title or epithet for variation.${notes.map((note) => `\n\n${note}`).join("")}`;
 
   return {
     type: resolved.entityType,
