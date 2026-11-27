@@ -104,6 +104,9 @@ describe("generator-continuation", () => {
     expect(config).not.toBeNull();
     expect(config?.capabilities.join(" ")).toContain("Note entry");
     expect(config?.capabilities.join(" ")).toContain("GM-only lore");
+    expect([config?.headline, config?.summary].join(" ")).toContain(
+      "constellation or full sky",
+    );
     expect(config?.capabilities.join(" ")).toContain(
       "Night Sky season index stays in public Note content",
     );

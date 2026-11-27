@@ -58,6 +58,7 @@ export function indefiniteArticle(noun: string): string {
     )
   )
     return "a";
+  if (/^ukulele\b/i.test(trimmed)) return "a";
   if (/^(?:hour|honest|honor|heir)/i.test(trimmed)) return "an";
   if (/^NHP\b/i.test(trimmed)) return "an";
   // "One" starts with a /w/ sound when used as a standalone word or prefix.

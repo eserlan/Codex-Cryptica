@@ -512,5 +512,13 @@ describe("public-constellation", () => {
     expect(hourglass.content).toContain(
       "read as an hourglass, is how the story",
     );
+
+    const ukulele = generateConstellationLocal(
+      { visualImpression: "ukulele", practicalUse: "Navigation" },
+      () => 0,
+    );
+    expect(ukulele.summary).toContain("read as a ukulele,");
+    expect(ukulele.content).toContain("read as a ukulele. ");
+    expect(ukulele.content).toContain("read as a ukulele, is how the story");
   });
 });
