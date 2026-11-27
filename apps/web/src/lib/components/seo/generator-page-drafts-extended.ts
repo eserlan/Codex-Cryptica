@@ -95,11 +95,11 @@ export const extendedSlugDrafts: Partial<Record<ValidSlug, GeneratorOutput>> = {
   },
   item: {
     type: "item",
-    title: "Runeheart (Armor)",
+    title: "The Tollwarden's Ring",
     summary: "",
     content:
-      "### Description\nThe Runeheart (Armor) is a armor with an unsettling specificity of design — it was clearly made for a very particular purpose, and whoever holds it can feel that purpose even without knowing what it was.",
-    lore: "### GM Reference Information\n- **Type**: Armor\n- **Rarity**: Uncommon\n- **Theme**: Classic Fantasy\n\n### Magical Properties\n- **Passive Effect**: Grants resistance to cold, but the wearer always feels slightly chilly inside.\n\n### Lore & History\nRecovered from the hoard of a red dragon that ravaged the northern kingdoms.",
+      "### Description\nA broad brass ring worn smooth on the inside, with the outline of a three-arched bridge engraved on its face. Rust-coloured mortar is caught in the middle arch; the band grows faintly warm when pressed to damaged stone.",
+    lore: "### GM Reference Information\n- **Type**: Ring\n- **Rarity**: Common\n- **Theme**: Classic Fantasy\n\n### Magical Properties\n- **Passive Effect**: The ring warms when the wearer touches it to cracked load-bearing masonry. It warns that a surface is damaged but cannot reveal the cause or show whether the rest of the structure is safe.\n\n### Lore & History\nThe old tollwarden used this ring during bridge inspections. His successor insists it was stolen from the tollhouse; the missing ledger records a loan to the mason responsible for the western arch.",
     labels: ["rpg-item", "imported-draft"],
     status: "active",
   },

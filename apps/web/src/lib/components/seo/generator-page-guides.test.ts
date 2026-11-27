@@ -903,3 +903,22 @@ describe("Faction Roster editorial guide", () => {
     expect(guide.links?.every(({ description }) => description)).toBe(true);
   });
 });
+
+describe("RPG Item editorial guide", () => {
+  it("uses the actual controls and curates loot placement, upgrades and trading", () => {
+    const guide = getGeneratorGuide("item", "RPG Item Generator");
+    const detail = guide.tips.map((tip) => tip.detail).join(" ");
+    for (const label of ["Item Type", "Rarity", "Add campaign context"]) {
+      expect(detail).toContain(label);
+    }
+    expect(guide.linksTitle).toBe(
+      "Put found equipment to work in your campaign",
+    );
+    expect(guide.links?.map(({ href }) => href)).toEqual([
+      "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+      "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+      "/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
+    ]);
+    expect(guide.links?.every(({ description }) => description)).toBe(true);
+  });
+});

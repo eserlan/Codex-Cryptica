@@ -543,13 +543,13 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
   },
   item: {
     pageTitle:
-      "RPG Loot & Magic Item Generator | Free Fantasy Equipment Tool | Codex Cryptica",
+      "RPG Item & Loot Generator | Equipment, Curios and Relics | Codex Cryptica",
     metaDescription:
-      "Generate custom RPG loot, magic items, weapons, and relics. Features customizable rarities, properties, and lore backstories.",
+      "Draft distinctive RPG loot with an item type, rarity, physical description, magical property and history. Decide how a found object fits your campaign.",
     introTitle: "RPG Item Generator",
     eyebrow: "Item Generator",
     introText:
-      "Design magic items, weaponry, or rare relics with customizable properties and history. Works without login.",
+      "Give the party something specific to find in a strongbox, at a market or on a defeated foe. Choose the item type and rarity to draft an enchanted weapon, piece of equipment or curio with a description, property and history.",
     canonicalPath: "/generators/item",
     labels: ["fantasy"],
     ogImage: "https://assets.codexcryptica.com/screenshots/generator-item.jpg",
@@ -561,6 +561,28 @@ export const slugMeta: Record<ValidSlug, SlugMetaEntry> = {
       "rpg equipment",
       "tabletop items",
       "relic generator",
+    ],
+    faqs: [
+      {
+        question: "Can I generate completely non-magical equipment?",
+        answer:
+          "This page uses the same generation engine as the Magic Item Generator. Common is a rarity, not a non-magical setting. For a mundane object, retain the appearance and history you like and remove the magical property from your draft.",
+      },
+      {
+        question: "Does Rarity determine the price or strength of an item?",
+        answer:
+          "No fixed price or system-specific balance is guaranteed. Offline generation selects a themed property independently of the chosen rarity, and the AI receives the rarity as context. Decide the item's value and adjust its effect to suit your game's rules and the party's existing equipment.",
+      },
+      {
+        question: "How can I make the loot fit a specific location?",
+        answer:
+          "In Add campaign context, name the place where the object is found, its owner or a relevant faction. Offline results preserve this text in the main document under Campaign Context; AI generation receives it when drafting the item. Review the result and change any history that conflicts with your setting.",
+      },
+      {
+        question: "What is saved when I add an item to Codex Cryptica?",
+        answer:
+          "Add to my Codex saves one Item in your local vault. The description, history and offline campaign context appear in the main document; structured GM reference and magical properties are kept separately. Review the text before sharing it, especially AI drafts. Named references do not automatically become graph connections or inventory entries.",
+      },
     ],
   },
   "social-hub": {

@@ -527,18 +527,23 @@ describe("GeneratorOutputCard", () => {
     expect(onSendToMonsterLabs).toHaveBeenCalledWith(creatureData);
   });
 
-  it("shows Create D&D Magic Item for an item draft when onSendToMonsterLabs is provided", () => {
+  it("preserves Create D&D Magic Item and Copy alongside the near-result Item continuation", async () => {
     const itemData: GeneratorOutput = {
       ...sampleData,
       type: "item",
       labels: ["rpg-item"],
     };
-    render(GeneratorOutputCard, {
+    const onSendToMonsterLabs = vi.fn();
+    const onSaveToCodex = vi.fn();
+    const onCopyMarkdown = vi.fn();
+    const { container } = render(GeneratorOutputCard, {
       props: {
         generatedData: itemData,
         aiFallbackDismissed: false,
         isBusy: false,
         isExampleDraft: false,
+        generatorType: "item",
+        canFollowUp: true,
         generatedSingular: "Item",
         variant: "default",
         worldTheme: "Classic Fantasy",
@@ -548,20 +553,34 @@ describe("GeneratorOutputCard", () => {
         copiedSectionId: null,
         contextTrimmed: false,
         onDismissAiFallback: vi.fn(),
-        onSaveToCodex: vi.fn(),
-        onCopyMarkdown: vi.fn(),
+        onSaveToCodex,
+        onCopyMarkdown,
         onCopySection: vi.fn(),
         onContainerClick: vi.fn(),
         onContainerKeydown: vi.fn(),
         onSelectHubEntity: vi.fn(),
         onSaveHubToCodex: vi.fn(),
-        onSendToMonsterLabs: vi.fn(),
+        onSendToMonsterLabs,
       },
     });
 
+    const handoff = screen.getByRole("button", {
+      name: /create d&d magic item/i,
+    });
+    const callout = screen.getByTestId("generator-continuation-callout");
     expect(
-      screen.getByRole("button", { name: /create d&d magic item/i }),
+      handoff.compareDocumentPosition(callout) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+    expect(container.querySelectorAll("#save-to-codex-btn")).toHaveLength(1);
+    await fireEvent.click(handoff);
+    expect(onSendToMonsterLabs).toHaveBeenCalledWith(itemData);
+    await fireEvent.click(screen.getByRole("button", { name: /^Copy$/ }));
+    expect(onCopyMarkdown).toHaveBeenCalledTimes(1);
+    await fireEvent.click(
+      screen.getByRole("button", { name: "Add to my Codex" }),
+    );
+    expect(onSaveToCodex).toHaveBeenCalledTimes(1);
     expect(
       screen.queryByRole("button", { name: /^create d&d monster$/i }),
     ).toBeNull();

@@ -1005,23 +1005,48 @@ export const SLUG_GUIDES: Partial<Record<ValidSlug, GeneratorGuide>> = {
   },
   item: {
     summary:
-      "Even mundane gear or signature keepsakes carry story weight when you add a maker's mark, a quirk of wear, and a previous owner who might want it back.",
+      "Make a found object worth deciding what to do with, rather than another line on a treasure list. Use the item's appearance, property and former owner to give the party reasons to keep it, return it, trade it or investigate where it came from.",
     tips: [
       {
-        title: "Attach one story hook to loot",
+        title: "Give the find a job in the next scene",
         detail:
-          "A scratched crest, serial number, or courier seal turns found equipment into an instant lead.",
+          "Choose Item Type to suit the person or place holding the loot. A Ring on a magistrate might be recognised at a locked gate; a Potion in an apothecary's cabinet offers an expendable resource the party can spend when it matters.",
       },
       {
-        title: "Balance power with a clear cost",
+        title: "Decide who can afford the find",
         detail:
-          "Noticeable side effects or maintenance needs make special gear memorable without breaking encounter balance.",
+          "Use Rarity to set your intended place in the treasure supply. A Common object might find a buyer locally, while a Very Rare piece could require an introduction to a collector; review the actual property against your game's rules before deciding its value.",
+      },
+      {
+        title: "Leave a trace of the former owner",
+        detail:
+          "Name the place of discovery or a known owner in Add campaign context. Use a visible detail from the description and a fact from Lore & History to plant a clue, then decide who would recognise the object and what they could tell the party.",
+      },
+      {
+        title: "Reward a new use rather than a bigger number",
+        detail:
+          "If the party keeps the object, decide which specific situation its property makes easier and agree any limits before play. A ring that warns of damaged masonry can prompt a route choice without solving the entire crossing for them.",
       },
     ],
+    linksTitle: "Put found equipment to work in your campaign",
     links: [
       {
-        href: "/answers/how-common-should-magic-be-in-a-fantasy-world",
-        label: "Calibrating magic rarity",
+        href: "/answers/how-much-loot-and-how-many-magic-items-should-i-give-my-players",
+        label: "Place treasure where it makes sense",
+        description:
+          "Separate routine possessions from substantial rewards and decide what belongs in the room or owner's pack before a search.",
+      },
+      {
+        href: "/answers/how-do-i-upgrade-a-player-characters-weapon-without-replacing-it",
+        label: "Let a favourite weapon grow with its wielder",
+        description:
+          "If the find is a weapon the party keeps, use its history and situational properties to plan meaningful upgrades instead of constant replacement.",
+      },
+      {
+        href: "/answers/what-can-players-actually-buy-and-sell-in-a-fantasy-settlement",
+        label: "Find a plausible buyer or specialist",
+        description:
+          "When players want to sell or commission equipment, use market scale, specialist availability and named buyers to make the next transaction a decision.",
       },
     ],
   },

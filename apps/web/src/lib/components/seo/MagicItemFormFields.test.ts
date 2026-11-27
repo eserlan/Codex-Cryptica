@@ -21,6 +21,9 @@ describe("MagicItemFormFields", () => {
 
     expect(screen.getByLabelText("Item Type")).toBeTruthy();
     expect(screen.getByLabelText("Rarity")).toBeTruthy();
+    expect(
+      screen.getByText(/main document under Campaign Context/),
+    ).toBeTruthy();
   });
 
   it("updates rarity on selection", async () => {

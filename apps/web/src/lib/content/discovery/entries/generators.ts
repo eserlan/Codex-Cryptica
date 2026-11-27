@@ -666,7 +666,7 @@ export const generatorEntries: DiscoveryEntryInput[] = [
     intentAliases: ["loot generator", "weapon generator for rpgs"],
     userJob: "create",
     uniqueValue:
-      "General loot and equipment across genres, including non-magical gear.",
+      "Loot-focused drafting of individual enchanted objects with appearance, property and provenance for placement as finds or rewards.",
     parentCluster: "item-creation",
     indexable: true,
     status: "live",
