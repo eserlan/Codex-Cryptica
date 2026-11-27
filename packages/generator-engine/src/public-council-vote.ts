@@ -341,6 +341,58 @@ export function parseCouncilVoteFoundation(
   return councilVoteFoundationFromRecord(parseFencedJson(text), resolved);
 }
 
+function parseSetextHeading(
+  line: string,
+  nextLine: string | undefined,
+): { depth: number; heading: string } | null {
+  if (!nextLine) return null;
+  const setextMatch = /^\s{0,3}(=+|-+)\s*$/.exec(nextLine);
+  const trimmed = line.trim();
+  if (
+    !setextMatch ||
+    trimmed.length === 0 ||
+    /^\s{4,}/.test(line) ||
+    /^\s{0,3}(?:#|>|[-*+]\s|\d+\.\s)/.test(line)
+  ) {
+    return null;
+  }
+  return { depth: setextMatch[1][0] === "=" ? 1 : 2, heading: trimmed };
+}
+
+function extractMarkdownHeadings(
+  markdown: string,
+): Array<{ depth: number; heading: string }> {
+  const headings: Array<{ depth: number; heading: string }> = [];
+  const lines = markdown.split(/\r?\n/);
+  let inFence: string | null = null;
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
+    if (fenceMatch) {
+      const marker = fenceMatch[1][0];
+      inFence = inFence === marker ? null : (inFence ?? marker);
+      continue;
+    }
+    if (inFence) continue;
+
+    const atxMatch = /^\s{0,3}(#{1,6})\s+(.+?)\s*$/.exec(line);
+    if (atxMatch) {
+      headings.push({
+        depth: atxMatch[1].length,
+        heading: atxMatch[2].replace(/\s+#+\s*$/, "").trim(),
+      });
+      continue;
+    }
+
+    const setext = parseSetextHeading(line, lines[i + 1]);
+    if (setext) {
+      headings.push(setext);
+      i += 1;
+    }
+  }
+  return headings;
+}
+
 export function readCouncilVoteFoundation(
   reply: string,
   resolved: ResolvedCouncilVote,
@@ -367,11 +419,7 @@ export function readCouncilVoteFoundation(
     "Antagonist Influence",
     "Investigation Leads",
   ];
-  const getHeadings = (markdown: string) =>
-    [...markdown.matchAll(/^(#{1,6})\s+(.+?)\s*#*\s*$/gm)].map(
-      ([, hashes, heading]) => ({ hashes, heading }),
-    );
-  const contentHeadings = getHeadings(parsed.content);
+  const contentHeadings = extractMarkdownHeadings(parsed.content);
   if (
     contentHeadings.some(
       ({ heading }) => !publicSections.has(heading.trim().toLowerCase()),
@@ -380,12 +428,12 @@ export function readCouncilVoteFoundation(
     return null;
   }
 
-  const loreHeadings = getHeadings(parsed.lore);
+  const loreHeadings = extractMarkdownHeadings(parsed.lore);
   if (
     loreHeadings.length !== privateSections.length ||
     loreHeadings.some(
-      ({ hashes, heading }, index) =>
-        hashes !== "###" || heading.trim() !== privateSections[index],
+      ({ depth, heading }, index) =>
+        depth !== 3 || heading.trim() !== privateSections[index],
     )
   ) {
     return null;

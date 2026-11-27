@@ -947,6 +947,24 @@ describe("readCouncilVoteFoundation & readCouncilVotePaths", () => {
       readCouncilVoteFoundation(
         JSON.stringify({
           ...validFoundation,
+          content: `${validFoundation.content}\n\n   ### Council Members\n- **Ossian Thale** — Initial stance: Leaning.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
+          content: `${validFoundation.content}\n\nCouncil Members\n---\n- **Ossian Thale** — Initial stance: Leaning.`,
+        }),
+        resolved,
+      ),
+    ).toBeNull();
+    expect(
+      readCouncilVoteFoundation(
+        JSON.stringify({
+          ...validFoundation,
           lore: `${validFoundation.lore}\n\n### Unclassified Secrets\nA private detail.`,
         }),
         resolved,

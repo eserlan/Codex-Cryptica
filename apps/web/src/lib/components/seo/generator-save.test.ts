@@ -129,6 +129,18 @@ describe("generator save payloads", () => {
     );
 
     expect(leaked).toBeNull();
+
+    const indentedLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n   ### Council Members\n- **Ossian Thale** — Initial stance: Leaning. Secret allegiance.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(indentedLeaked).toBeNull();
   });
 
   it("keeps adventure lore in the vault and omits empty map images", () => {
