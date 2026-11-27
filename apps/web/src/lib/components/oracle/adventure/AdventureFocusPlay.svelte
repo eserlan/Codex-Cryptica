@@ -18,14 +18,12 @@
   } from "#lib/services/adventure/adventure-session-repository.js";
   import {
     formatWorldElapsedMinutes,
-    selectAdventureContinuationCandidates,
-    selectPendingAdventureCompletion,
-    type AdventureContinuationCandidate,
     type ProvisionalFact,
   } from "@codex/adventure-engine";
   import { notificationStore } from "#lib/stores/ui/notification.svelte.js";
   import AdventureArchive from "./AdventureArchive.svelte";
   import AdventureCompletionPanel from "./AdventureCompletionPanel.svelte";
+  import { AdventureFocusCompletion } from "./adventure-focus-completion.svelte.js";
   import AdventureCorrectionForm from "./AdventureCorrectionForm.svelte";
   import AdventurePackageAudit from "./AdventurePackageAudit.svelte";
   import AdventurePackageProgress from "./AdventurePackageProgress.svelte";
@@ -174,116 +172,15 @@
   let fullscreenElement = $state<Element | null>(null);
   let fullscreenTransitioning = $state(false);
   let playViewport = $state<HTMLElement>();
-  let dismissedCompletionIds = $state<string[]>([]);
-  let completionActionBusy = $state(false);
-  const rawPendingCompletion = $derived(
-    manager.session &&
-      manager.phase !== "generating" &&
-      !manager.streamedNarration &&
-      !manager.session.pendingRoll
-      ? selectPendingAdventureCompletion(manager.session)
-      : null,
-  );
-  const pendingCompletion = $derived(
-    rawPendingCompletion &&
-      !dismissedCompletionIds.includes(rawPendingCompletion.eventId)
-      ? rawPendingCompletion
-      : null,
-  );
-  const continuationSet = $derived(
-    pendingCompletion && manager.session
-      ? selectAdventureContinuationCandidates(manager.session, {
-          sourceOutcomeId: pendingCompletion.eventId,
-        })
-      : null,
-  );
-
-  async function dismissCompletion(
-    eventId: string,
-    restoreFocus = true,
-  ): Promise<void> {
-    if (!manager.readOnly) {
-      try {
-        await manager.acknowledgeCompletion(eventId);
-      } catch {
-        notificationStore.notify(
-          "Dismissed for this view, but the acknowledgement could not be saved.",
-          "error",
-        );
-      }
-    }
-    if (!dismissedCompletionIds.includes(eventId)) {
-      dismissedCompletionIds = [...dismissedCompletionIds, eventId];
-    }
-    if (restoreFocus) {
+  const completion = new AdventureFocusCompletion(
+    () => manager,
+    () => {
       void tick().then(() => {
         focusElement?.querySelector<HTMLElement>("textarea")?.focus();
       });
-    }
-  }
-
-  async function handleContinueFromCompletion(eventId: string): Promise<void> {
-    if (completionActionBusy) return;
-    completionActionBusy = true;
-    try {
-      await dismissCompletion(eventId, true);
-    } finally {
-      completionActionBusy = false;
-    }
-  }
-
-  async function handleFindAnotherFromCompletion(
-    eventId: string,
-  ): Promise<void> {
-    if (completionActionBusy) return;
-    completionActionBusy = true;
-    try {
-      await dismissCompletion(eventId, false);
-      await manager.close();
-    } catch {
-      notificationStore.notify(
-        "Unable to leave this adventure right now. Please try again.",
-        "error",
-      );
-    } finally {
-      completionActionBusy = false;
-    }
-  }
-
-  async function handleFinishFromCompletion(eventId: string): Promise<void> {
-    if (completionActionBusy) return;
-    completionActionBusy = true;
-    try {
-      await dismissCompletion(eventId, false);
-      await manager.end();
-    } catch {
-      notificationStore.notify(
-        "Unable to archive this adventure right now. You can retry or continue exploring.",
-        "error",
-      );
-    } finally {
-      completionActionBusy = false;
-    }
-  }
-
-  async function handleLaunchContinuation(
-    eventId: string,
-    candidate: AdventureContinuationCandidate,
-  ): Promise<void> {
-    if (completionActionBusy) return;
-    completionActionBusy = true;
-    try {
-      await manager.launchContinuation(candidate);
-      await dismissCompletion(eventId);
-    } catch {
-      notificationStore.notify(
-        "Unable to launch that story right now. Please try again.",
-        "error",
-      );
-    } finally {
-      completionActionBusy = false;
-    }
-  }
+    },
+  );
+  const pendingCompletion = $derived(completion.pending);
   const isFullscreen = $derived(fullscreenElement === focusElement);
   const transcriptLength = $derived(manager.transcript?.turns.length ?? 0);
   const elapsedLabel = $derived(
@@ -601,13 +498,13 @@
       pendingCompletion &&
       event.key === "Escape" &&
       !event.defaultPrevented &&
-      !completionActionBusy &&
+      !completion.busy &&
       !utilitiesOpen &&
       !hasNestedModal()
     ) {
       event.preventDefault();
       event.stopPropagation();
-      void handleContinueFromCompletion(pendingCompletion.eventId);
+      void completion.continueExploring(pendingCompletion.eventId);
       return;
     }
     if (phone && focusElement) containTab(event, focusElement);
@@ -827,17 +724,16 @@
           {#if pendingCompletion}
             <AdventureCompletionPanel
               completion={pendingCompletion}
-              {continuationSet}
+              continuationSet={completion.continuations}
               readOnly={manager.readOnly}
-              busy={completionActionBusy}
+              busy={completion.busy}
               onContinue={() =>
-                handleContinueFromCompletion(pendingCompletion.eventId)}
+                completion.continueExploring(pendingCompletion.eventId)}
               onFindAnother={() =>
-                handleFindAnotherFromCompletion(pendingCompletion.eventId)}
-              onFinish={() =>
-                handleFinishFromCompletion(pendingCompletion.eventId)}
+                completion.findAnother(pendingCompletion.eventId)}
+              onFinish={() => completion.finish(pendingCompletion.eventId)}
               onLaunchContinuation={(candidate) =>
-                handleLaunchContinuation(pendingCompletion.eventId, candidate)}
+                completion.launch(pendingCompletion.eventId, candidate)}
             />
           {/if}
         </div>
