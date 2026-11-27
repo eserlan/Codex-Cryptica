@@ -7,3 +7,8 @@
 
 **Learning:** An `aria-label` that replaces a control's visible label can fail `label-content-name-mismatch`, even when it describes the action.
 **Action:** When adding action context, keep the visible wording, including responsive abbreviations, inside the accessible name.
+
+## 2026-11-27 - Graph tests must dismiss the world page
+
+**Learning:** `codex_skip_landing` and an idle vault can leave the front page covering the graph, which suspends Cytoscape rendering.
+**Action:** Graph E2Es should wait for `waitForVaultReady`, call `dismissFrontPage`, then wait for the graph canvas before seeding entities.
