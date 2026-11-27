@@ -5,6 +5,7 @@ import {
   type Rng,
   defaultRng,
   generatePlaceholderName,
+  indefiniteArticle,
   pickFrom,
 } from "./random-utils";
 
@@ -155,6 +156,7 @@ export function generateSecretSocietyLocal(
   rng: Rng = defaultRng,
 ): PublicGeneratorOutput {
   const r = resolve(options, rng);
+  const publicFaceArticle = indefiniteArticle(r.publicFace.toLowerCase());
   const leader = generatePlaceholderName(rng);
   const object = pickFrom(
     [
@@ -179,8 +181,8 @@ export function generateSecretSocietyLocal(
   return {
     type: "faction",
     title: r.title,
-    summary: `A ${r.tone.toLowerCase()} ${r.scale.toLowerCase()} society hidden behind a ${r.publicFace.toLowerCase()}.`,
-    content: `### What they believe\n${r.title} teaches that a buried truth can remake the world. Their doctrine is ${r.truthRelationship.toLowerCase()}, and that uncertainty drives every member.\n\n### What they do\nTheir signature ritual is ${ritual}. They recruit through quiet favours, then test loyalty with a vow no outsider hears.\n\n### Public face\nThey present themselves as a ${r.publicFace.toLowerCase()}, useful enough that neighbours defend them.\n\n### Secret truth\nWhat they revere is ${r.truthRelationship.toLowerCase()}; the inner circle knows only enough to fear it.\n\n### Current conflict\nTheir ${r.dangerLevel.toLowerCase()} agenda is colliding with a member who has learned too much.\n\n### Adventure hooks\nFind the missing initiate; expose the false miracle; bargain with the rival cell; decide whether the society's secret should survive.`,
+    summary: `A ${r.tone.toLowerCase()} ${r.scale.toLowerCase()} society hidden behind ${publicFaceArticle} ${r.publicFace.toLowerCase()}.`,
+    content: `### What they believe\n${r.title} teaches that a buried truth can remake the world. Their doctrine is ${r.truthRelationship.toLowerCase()}, and that uncertainty drives every member.\n\n### What they do\nTheir signature ritual is ${ritual}. They recruit through quiet favours, then test loyalty with a vow no outsider hears.\n\n### Public face\nThey present themselves as ${publicFaceArticle} ${r.publicFace.toLowerCase()}, useful enough that neighbours defend them.\n\n### Secret truth\nWhat they revere is ${r.truthRelationship.toLowerCase()}; the inner circle knows only enough to fear it.\n\n### Current conflict\nTheir ${r.dangerLevel.toLowerCase()} agenda is colliding with a member who has learned too much.\n\n### Adventure hooks\nFind the missing initiate; expose the false miracle; bargain with the rival cell; decide whether the society's secret should survive.`,
     lore: `### At a Glance\n- **Leader**: ${leader}, a calm founder with a private fear of the truth.\n- **Taboo**: Never speak the founding name in daylight.\n- **Recruitment**: A favour, a test, then a shared secret.\n- **Hierarchy**: Listeners, keepers, and an unseen inner circle.\n- **Sacred Object**: ${object}.\n- **Meeting Site**: A back room beneath their public institution.\n- **Signs**: A repeated knot-mark and an impossible coincidence.\n\n### Follow-Up Suggestions\nGenerate their leader, sacred site, rival sect, initiation ritual, rumours, or an adventure hook.`,
     labels: ["secret-society", "faction-generator", "imported-draft"],
     status: "active",
