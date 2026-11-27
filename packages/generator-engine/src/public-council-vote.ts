@@ -403,7 +403,7 @@ function extractMarkdownHeadings(
   return headings;
 }
 
-function hasFencedMarkdownHeading(markdown: string): boolean {
+function hasHiddenMarkdownHeading(markdown: string): boolean {
   let inFence: string | null = null;
   for (const line of markdown.split(/\r?\n/)) {
     const fenceMatch = /^\s{0,3}(`{3,}|~{3,})/.exec(line);
@@ -412,7 +412,10 @@ function hasFencedMarkdownHeading(markdown: string): boolean {
       inFence = inFence === marker ? null : (inFence ?? marker);
       continue;
     }
-    if (inFence && /^\s{0,3}(?:>\s*)*#{1,6}\s+/.test(line)) {
+    if (inFence && /^\s*(?:>\s*)*#{1,6}\s+/.test(line)) {
+      return true;
+    }
+    if (!inFence && /^(?: {4,}|\t)\s*(?:>\s*)*#{1,6}\s+/.test(line)) {
       return true;
     }
   }
@@ -452,7 +455,7 @@ export function readCouncilVoteFoundation(
 
   const contentHeadings = extractMarkdownHeadings(parsed.content);
   if (
-    hasFencedMarkdownHeading(parsed.content) ||
+    hasHiddenMarkdownHeading(parsed.content) ||
     hasRawHtmlHeading(parsed.content) ||
     contentHeadings.some(
       ({ heading }) => !publicSections.has(heading.trim().toLowerCase()),
@@ -463,7 +466,7 @@ export function readCouncilVoteFoundation(
 
   const loreHeadings = extractMarkdownHeadings(parsed.lore);
   if (
-    hasFencedMarkdownHeading(parsed.lore) ||
+    hasHiddenMarkdownHeading(parsed.lore) ||
     hasRawHtmlHeading(parsed.lore) ||
     loreHeadings.length !== privateSections.length ||
     loreHeadings.some(

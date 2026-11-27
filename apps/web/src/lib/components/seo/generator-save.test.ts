@@ -321,6 +321,18 @@ describe("generator save payloads", () => {
     );
 
     expect(htmlHeadingContentLeaked).toBeNull();
+
+    const fourSpaceIndentedLeaked = readCouncilVoteFoundation(
+      JSON.stringify({
+        title: "Harbour Levy Vote",
+        content:
+          "### The Proposal\nApprove the harbour levy.\n\n    ### Council Members\n    - **Ossian Thale** — Secret allegiance.",
+        lore: "### Voting Procedure\nSimple majority.\n\n### Current Vote Estimate\nTwo support.\n\n### Council Members\n- **Ossian Thale** — Leaning.\n\n### Antagonist Influence\nNone.\n\n### Investigation Leads\nCheck the manifest.",
+      }),
+      resolved,
+    );
+
+    expect(fourSpaceIndentedLeaked).toBeNull();
   });
 
   it("keeps encounter participants, complication, and outcomes out of guest exports", () => {
